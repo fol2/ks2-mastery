@@ -5,6 +5,7 @@ const rootDir = process.cwd();
 const publicDir = path.join(rootDir, "public");
 const publicSrcDir = path.join(publicDir, "src");
 const publicAssetsDir = path.join(publicDir, "assets");
+const publicVendorDir = path.join(publicDir, "vendor");
 const privacyDir = path.join(publicDir, "privacy");
 const termsDir = path.join(publicDir, "terms");
 
@@ -99,10 +100,12 @@ function staticPage({ title, heading, bodyHtml }) {
 await rm(publicDir, { recursive: true, force: true });
 await mkdir(publicSrcDir, { recursive: true });
 await mkdir(publicAssetsDir, { recursive: true });
+await mkdir(publicVendorDir, { recursive: true });
 await mkdir(privacyDir, { recursive: true });
 await mkdir(termsDir, { recursive: true });
 
 await cp(path.join(rootDir, "assets"), publicAssetsDir, { recursive: true });
+await cp(path.join(rootDir, "vendor"), publicVendorDir, { recursive: true });
 
 const clientSourceFiles = [
   "app.jsx",
