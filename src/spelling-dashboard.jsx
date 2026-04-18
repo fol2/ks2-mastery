@@ -71,15 +71,16 @@ function SpellingDashboard({ subject, profile, onStart }) {
   async function handleStart() {
     setStartError('');
     setStarting(true);
-    const length = prefs.roundLength === 'all' ? Infinity
-      : (mode === 'test' ? 20 : Number(prefs.roundLength) || 20);
+    const length = mode === 'test'
+      ? 20
+      : (prefs.roundLength === 'all' ? 'all' : Number(prefs.roundLength) || 20);
     try {
       const session = await window.KS2Spelling.startSession({
-      mode: mode,
-      yearFilter: prefs.yearFilter,
-      length: length,
-      words: [],
-    });
+        mode: mode,
+        yearFilter: prefs.yearFilter,
+        length: length,
+        words: [],
+      });
       onStart(session, {
         fallbackToSmart: session.fallbackToSmart,
         showCloze: prefs.showCloze,
