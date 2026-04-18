@@ -66,6 +66,8 @@
   var GEMINI_LOCAL_RPM_LIMIT = 10;
   var GEMINI_LOCAL_RPD_LIMIT = 100;
   var GEMINI_FETCH_TIMEOUT_MS = 20000;
+  var GEMINI_MAX_RETRIES = 2;
+  var GEMINI_RETRY_BACKOFF_MS = [300, 800];
   var AUDIO_CACHE_LIMIT = 18;
   var DEFAULT_RATE = 1.05;
   var SLOW_DELTA = 0.12;
@@ -621,7 +623,12 @@
       },
     };
 
-    function attempt(attemptNumber) {
+    // Retry budget: 1 initial + GEMINI_MAX_RETRIES retries. The Gemini 3.1 Flash
+    // TTS preview returns 500 to browser-origin requests frequently — the same
+    // payload over curl succeeds — so a bounded retry with short backoff makes
+    // the experience reliable without masking real failures. Never retry 4xx
+    // (auth/bad request) or 408 (timeout) — those cost 20s and won't improve.
+    function runOnce() {
       var requestController = new AbortController();
       var timeoutId = window.setTimeout(function () { requestController.abort(); }, GEMINI_FETCH_TIMEOUT_MS);
       return fetch(GEMINI_TTS_ENDPOINT + "?key=" + encodeURIComponent(apiKey), {
@@ -651,20 +658,34 @@
             : ((payload && payload.candidates && payload.candidates[0] && payload.candidates[0].content)
               ? "Gemini TTS returned no audio."
               : ("Gemini TTS failed with status " + response.status + "."));
-          var error = createProviderError(errorMessage, response.status, payload);
-          if (attemptNumber === 1 || response.status < 500) throw error;
-          return attempt(attemptNumber + 1);
+          throw createProviderError(errorMessage, response.status, payload);
         })
         .catch(function (err) {
-          var timedOut = requestController.signal.aborted;
-          if (timedOut) throw createProviderError("Gemini TTS timed out.", 408, null);
-          if (attemptNumber === 1) throw err;
-          return attempt(attemptNumber + 1);
+          if (requestController.signal.aborted) throw createProviderError("Gemini TTS timed out.", 408, null);
+          throw err;
         })
         .finally(function () { window.clearTimeout(timeoutId); });
     }
 
+    function attempt(retriesDone) {
+      return runOnce().catch(function (err) {
+        if (retriesDone >= GEMINI_MAX_RETRIES || !isTransientGeminiError(err)) throw err;
+        var delayMs = GEMINI_RETRY_BACKOFF_MS[retriesDone] || 800;
+        return new Promise(function (resolve) { window.setTimeout(resolve, delayMs); })
+          .then(function () { return attempt(retriesDone + 1); });
+      });
+    }
+
     return attempt(0);
+  }
+
+  function isTransientGeminiError(err) {
+    if (!err) return false;
+    var status = Number(err.statusCode) || 0;
+    if (status === 408) return false;
+    if (status >= 400 && status < 500) return false;
+    if (status === 0 || (status >= 500 && status < 600)) return true;
+    return false;
   }
 
   function fetchGeminiSpeech(promptText, voiceName) {
