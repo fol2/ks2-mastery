@@ -8,7 +8,6 @@ const KS2App = (() => {
       providers: {
         google: false,
         facebook: false,
-        instagram: false,
         x: false,
         apple: false,
         email: true,
@@ -261,12 +260,6 @@ function AuthScreen() {
   const socialButtons = [
     { id: 'google', label: 'Sign in with Google', available: providers.google, recommended: true },
     { id: 'facebook', label: 'Sign in with Facebook', available: providers.facebook },
-    {
-      id: 'instagram',
-      label: 'Sign in with Instagram',
-      available: providers.instagram,
-      note: 'Professional account login only.',
-    },
     { id: 'x', label: 'Sign in with X', available: providers.x },
     { id: 'apple', label: 'Sign in with Apple', available: providers.apple },
   ];
@@ -448,7 +441,6 @@ function ProviderBadge({ providerId }) {
   const palette = {
     google: { bg: '#FFFFFF', border: '#DADCE0', fg: '#4285F4', label: 'G' },
     facebook: { bg: '#1877F2', border: '#1877F2', fg: '#FFFFFF', label: 'f' },
-    instagram: { bg: '#E1306C', border: '#E1306C', fg: '#FFFFFF', label: 'ig' },
     x: { bg: '#111111', border: '#111111', fg: '#FFFFFF', label: 'X' },
     apple: { bg: '#111111', border: '#111111', fg: '#FFFFFF', label: 'A' },
   };
@@ -457,7 +449,7 @@ function ProviderBadge({ providerId }) {
     <span style={{
       width: 28,
       height: 28,
-      borderRadius: providerId === 'facebook' || providerId === 'instagram' ? 8 : 999,
+      borderRadius: providerId === 'facebook' ? 8 : 999,
       border: `1px solid ${token.border}`,
       background: token.bg,
       color: token.fg,
@@ -465,7 +457,7 @@ function ProviderBadge({ providerId }) {
       alignItems: 'center',
       justifyContent: 'center',
       fontFamily: TOKENS.fontSans,
-      fontSize: providerId === 'instagram' ? 11 : 17,
+      fontSize: 17,
       fontWeight: 800,
       lineHeight: 1,
       textTransform: providerId === 'facebook' ? 'none' : 'uppercase',
