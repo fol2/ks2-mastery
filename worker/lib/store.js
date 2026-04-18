@@ -93,6 +93,8 @@ export async function ensureSchema(env) {
         )
       `,
       `CREATE INDEX IF NOT EXISTS idx_children_user_id ON children (user_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_user_identities_user_id ON user_identities (user_id)`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_user_identities_user_provider ON user_identities (user_id, provider)`,
       `CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions (user_id)`,
       `CREATE INDEX IF NOT EXISTS idx_spelling_sessions_child_id ON spelling_sessions (child_id)`,
     ];
@@ -129,12 +131,25 @@ function normaliseChildState(row) {
   };
 }
 
+function placeholderEmail(provider) {
+  return `${String(provider || "user").toLowerCase()}-${randomToken(10).toLowerCase()}@users.ks2.invalid`;
+}
+
 export async function getUserByEmail(env, email) {
   await ensureSchema(env);
   const db = requiredDb(env);
   return db
     .prepare(`SELECT * FROM users WHERE email = ?1 LIMIT 1`)
     .bind(safeEmail(email))
+    .first();
+}
+
+export async function getUserById(env, userId) {
+  await ensureSchema(env);
+  const db = requiredDb(env);
+  return db
+    .prepare(`SELECT * FROM users WHERE id = ?1 LIMIT 1`)
+    .bind(userId)
     .first();
 }
 
@@ -152,6 +167,159 @@ export async function createEmailUser(env, { email, passwordHash, passwordSalt }
     .run();
   await ensureSubscription(env, userId);
   return db.prepare(`SELECT * FROM users WHERE id = ?1 LIMIT 1`).bind(userId).first();
+}
+
+async function updateUserEmail(env, userId, email) {
+  const nextEmail = safeEmail(email);
+  if (!nextEmail) return null;
+  await ensureSchema(env);
+  const db = requiredDb(env);
+  await db
+    .prepare(`
+      UPDATE users
+      SET email = ?1,
+          updated_at = ?2
+      WHERE id = ?3
+    `)
+    .bind(nextEmail, now(), userId)
+    .run();
+  return getUserById(env, userId);
+}
+
+export async function getUserByProviderIdentity(env, provider, providerSubject) {
+  await ensureSchema(env);
+  const db = requiredDb(env);
+  return db
+    .prepare(`
+      SELECT users.*
+      FROM user_identities
+      JOIN users ON users.id = user_identities.user_id
+      WHERE user_identities.provider = ?1 AND user_identities.provider_subject = ?2
+      LIMIT 1
+    `)
+    .bind(String(provider || "").trim().toLowerCase(), String(providerSubject || "").trim())
+    .first();
+}
+
+export async function linkIdentityToUser(env, userId, payload) {
+  await ensureSchema(env);
+  const db = requiredDb(env);
+  const provider = String(payload?.provider || "").trim().toLowerCase();
+  const providerSubject = String(payload?.providerSubject || "").trim();
+  const email = safeEmail(payload?.email);
+
+  if (!provider || !providerSubject) {
+    throw new Error("A valid identity provider payload is required.");
+  }
+
+  const existing = await db
+    .prepare(`
+      SELECT *
+      FROM user_identities
+      WHERE provider = ?1 AND provider_subject = ?2
+      LIMIT 1
+    `)
+    .bind(provider, providerSubject)
+    .first();
+
+  if (existing && existing.user_id !== userId) {
+    throw new Error("That sign-in is already linked to another account.");
+  }
+
+  const timestamp = now();
+
+  if (existing) {
+    await db
+      .prepare(`
+        UPDATE user_identities
+        SET email = COALESCE(?1, email)
+        WHERE id = ?2
+      `)
+      .bind(email || null, existing.id)
+      .run();
+  } else {
+    await db
+      .prepare(`
+        INSERT INTO user_identities (
+          id,
+          user_id,
+          provider,
+          provider_subject,
+          email,
+          created_at
+        )
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+      `)
+      .bind(randomToken(18), userId, provider, providerSubject, email || null, timestamp)
+      .run();
+  }
+
+  if (!email) return getUserById(env, userId);
+
+  const user = await getUserById(env, userId);
+  if (!user) return null;
+
+  if (String(user.email || "").endsWith("@users.ks2.invalid")) {
+    const emailOwner = await getUserByEmail(env, email);
+    if (!emailOwner || emailOwner.id === userId) {
+      return updateUserEmail(env, userId, email);
+    }
+  }
+
+  return user;
+}
+
+export async function createSocialUser(env, { email, provider, providerSubject }) {
+  await ensureSchema(env);
+  const db = requiredDb(env);
+  const timestamp = now();
+  const userId = randomToken(18);
+  const resolvedEmail = safeEmail(email) || placeholderEmail(provider);
+
+  await db
+    .prepare(`
+      INSERT INTO users (id, email, password_hash, password_salt, created_at, updated_at)
+      VALUES (?1, ?2, NULL, NULL, ?3, ?3)
+    `)
+    .bind(userId, resolvedEmail, timestamp)
+    .run();
+
+  await ensureSubscription(env, userId);
+  await linkIdentityToUser(env, userId, {
+    provider,
+    providerSubject,
+    email: resolvedEmail.endsWith("@users.ks2.invalid") ? "" : resolvedEmail,
+  });
+
+  return getUserById(env, userId);
+}
+
+export async function findOrCreateUserFromIdentity(env, payload) {
+  const provider = String(payload?.provider || "").trim().toLowerCase();
+  const providerSubject = String(payload?.providerSubject || "").trim();
+  const email = safeEmail(payload?.email);
+
+  if (!provider || !providerSubject) {
+    throw new Error("A valid identity provider payload is required.");
+  }
+
+  const identityUser = await getUserByProviderIdentity(env, provider, providerSubject);
+  if (identityUser) {
+    await linkIdentityToUser(env, identityUser.id, { provider, providerSubject, email });
+    return getUserById(env, identityUser.id);
+  }
+
+  const emailUser = email ? await getUserByEmail(env, email) : null;
+  if (emailUser) {
+    await linkIdentityToUser(env, emailUser.id, { provider, providerSubject, email });
+    return getUserById(env, emailUser.id);
+  }
+
+  return createSocialUser(env, {
+    email,
+    provider,
+    providerSubject,
+  });
 }
 
 export async function ensureSubscription(env, userId) {

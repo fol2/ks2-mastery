@@ -7,11 +7,11 @@ import {
   deleteSessionByHash,
   deleteSpellingSession,
   ensureSchema,
+  findOrCreateUserFromIdentity,
   getChild,
   getSessionBundleByHash,
   getSpellingSession,
   getUserByEmail,
-  listChildren,
   saveChildState,
   saveSpellingSession,
   serialiseSubscription,
@@ -19,6 +19,7 @@ import {
   updateChild,
 } from "./lib/store.js";
 import { cookieOptions, hashPassword, randomToken, safeEmail, sha256, verifyPassword } from "./lib/security.js";
+import { beginOAuthFlow, completeOAuthFlow, providerConfig } from "./lib/oauth.js";
 import {
   SPELLING_MODES,
   advanceSession,
@@ -43,15 +44,46 @@ function secureCookieForRequest(c) {
   return c.req.url.startsWith('https://');
 }
 
-function providerConfig(env) {
-  return {
-    google: Boolean(env.GOOGLE_CLIENT_ID),
-    facebook: Boolean(env.FACEBOOK_CLIENT_ID),
-    instagram: Boolean(env.INSTAGRAM_CLIENT_ID),
-    x: Boolean(env.X_CLIENT_ID),
-    apple: Boolean(env.APPLE_CLIENT_ID),
-    email: true,
-  };
+const OAUTH_STATE_COOKIE = "ks2_oauth_state";
+const OAUTH_PROVIDER_COOKIE = "ks2_oauth_provider";
+const OAUTH_VERIFIER_COOKIE = "ks2_oauth_verifier";
+const OAUTH_NONCE_COOKIE = "ks2_oauth_nonce";
+
+function appOrigin(c) {
+  return new URL(c.req.url).origin;
+}
+
+function clearOauthAttempt(c) {
+  const secure = secureCookieForRequest(c);
+  deleteCookie(c, OAUTH_STATE_COOKIE, cookieOptions(0, secure));
+  deleteCookie(c, OAUTH_PROVIDER_COOKIE, cookieOptions(0, secure));
+  deleteCookie(c, OAUTH_VERIFIER_COOKIE, cookieOptions(0, secure));
+  deleteCookie(c, OAUTH_NONCE_COOKIE, cookieOptions(0, secure));
+}
+
+function redirectWithAuthError(c, message) {
+  clearOauthAttempt(c);
+  return c.redirect(`${appOrigin(c)}/?authError=${encodeURIComponent(String(message || "Could not complete sign-in."))}`, 302);
+}
+
+function setOauthAttempt(c, provider, attempt) {
+  const secure = secureCookieForRequest(c);
+  const ttl = 60 * 10;
+  setCookie(c, OAUTH_STATE_COOKIE, attempt.state, cookieOptions(ttl, secure));
+  setCookie(c, OAUTH_PROVIDER_COOKIE, provider, cookieOptions(ttl, secure));
+  if (attempt.codeVerifier) setCookie(c, OAUTH_VERIFIER_COOKIE, attempt.codeVerifier, cookieOptions(ttl, secure));
+  else deleteCookie(c, OAUTH_VERIFIER_COOKIE, cookieOptions(0, secure));
+  if (attempt.nonce) setCookie(c, OAUTH_NONCE_COOKIE, attempt.nonce, cookieOptions(ttl, secure));
+  else deleteCookie(c, OAUTH_NONCE_COOKIE, cookieOptions(0, secure));
+}
+
+function normaliseCallbackPayload(payload) {
+  return Object.fromEntries(
+    Object.entries(payload || {}).map(([key, value]) => [
+      key,
+      Array.isArray(value) ? String(value[0] || "") : String(value || ""),
+    ]),
+  );
 }
 
 function sanitiseChildPayload(payload) {
@@ -213,6 +245,83 @@ app.post("/api/auth/logout", requireSession, async (c) => {
   await deleteSessionByHash(c.env, c.get("sessionHash"));
   deleteCookie(c, "ks2_session", cookieOptions(0, secureCookieForRequest(c)));
   return json(c, 200, { ok: true });
+});
+
+app.get("/api/auth/:provider/start", async (c) => {
+  const provider = String(c.req.param("provider") || "").trim().toLowerCase();
+  try {
+    const attempt = await beginOAuthFlow(c.env, provider, appOrigin(c));
+    setOauthAttempt(c, provider, attempt);
+    return c.redirect(attempt.url, 302);
+  } catch (error) {
+    return redirectWithAuthError(c, error.message || "Could not start sign-in.");
+  }
+});
+
+async function completeProviderLogin(c, payload) {
+  const provider = String(c.req.param("provider") || "").trim().toLowerCase();
+  const callbackPayload = normaliseCallbackPayload(payload);
+
+  if (callbackPayload.error) {
+    return redirectWithAuthError(c, callbackPayload.error_description || callbackPayload.error);
+  }
+
+  const state = getCookie(c, OAUTH_STATE_COOKIE);
+  const expectedProvider = getCookie(c, OAUTH_PROVIDER_COOKIE);
+  const codeVerifier = getCookie(c, OAUTH_VERIFIER_COOKIE);
+  const nonce = getCookie(c, OAUTH_NONCE_COOKIE);
+
+  if (!state || !expectedProvider || expectedProvider !== provider) {
+    return redirectWithAuthError(c, "Sign-in session expired. Please try again.");
+  }
+
+  if (!callbackPayload.state || callbackPayload.state !== state) {
+    return redirectWithAuthError(c, "Sign-in could not be verified. Please try again.");
+  }
+
+  if (!callbackPayload.code) {
+    return redirectWithAuthError(c, "The provider did not return an authorisation code.");
+  }
+
+  try {
+    const { profile } = await completeOAuthFlow(c.env, provider, appOrigin(c), {
+      code: callbackPayload.code,
+      codeVerifier,
+      nonce,
+      callbackPayload,
+    });
+
+    if (!profile?.subject) {
+      return redirectWithAuthError(c, "The provider did not return a valid account identifier.");
+    }
+
+    const user = await findOrCreateUserFromIdentity(c.env, {
+      provider,
+      providerSubject: profile.subject,
+      email: profile.emailVerified === false ? "" : profile.email,
+    });
+
+    const sessionToken = randomToken(24);
+    const sessionHash = await sha256(sessionToken);
+    await createSession(c.env, user.id, sessionHash);
+
+    clearOauthAttempt(c);
+    setCookie(c, "ks2_session", sessionToken, cookieOptions(60 * 60 * 24 * 30, secureCookieForRequest(c)));
+    return c.redirect(appOrigin(c), 302);
+  } catch (error) {
+    console.error(`OAuth callback failed for ${provider}`, error);
+    return redirectWithAuthError(c, error.message || "Could not complete sign-in.");
+  }
+}
+
+app.get("/api/auth/:provider/callback", async (c) => {
+  const url = new URL(c.req.url);
+  return completeProviderLogin(c, Object.fromEntries(url.searchParams.entries()));
+});
+
+app.post("/api/auth/:provider/callback", async (c) => {
+  const body = await c.req.parseBody().catch(() => ({}));
+  return completeProviderLogin(c, body);
 });
 
 app.get("/api/children", requireSession, async (c) => {
