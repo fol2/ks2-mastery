@@ -230,9 +230,19 @@ function AuthScreen() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [busy, setBusy] = React.useState(false);
-  const [error, setError] = React.useState('');
+  const [error, setError] = React.useState(window.KS2App.getState().lastError || '');
   const appState = window.KS2App.getState();
   const providers = appState.auth.providers || {};
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const authError = params.get('authError');
+    if (!authError) return;
+    setError(authError);
+    params.delete('authError');
+    const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}${window.location.hash}`;
+    window.history.replaceState({}, document.title, nextUrl);
+  }, []);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -249,12 +259,21 @@ function AuthScreen() {
   }
 
   const socialButtons = [
-    { id: 'google', label: 'Continue with Google', available: providers.google, recommended: true },
-    { id: 'facebook', label: 'Continue with Facebook', available: providers.facebook },
-    { id: 'instagram', label: 'Continue with Instagram', available: providers.instagram },
-    { id: 'x', label: 'Continue with X', available: providers.x },
-    { id: 'apple', label: 'Continue with Apple', available: providers.apple },
+    { id: 'google', label: 'Sign in with Google', available: providers.google, recommended: true },
+    { id: 'facebook', label: 'Sign in with Facebook', available: providers.facebook },
+    {
+      id: 'instagram',
+      label: 'Sign in with Instagram',
+      available: providers.instagram,
+      note: 'Professional account login only.',
+    },
+    { id: 'x', label: 'Sign in with X', available: providers.x },
+    { id: 'apple', label: 'Sign in with Apple', available: providers.apple },
   ];
+
+  function startProvider(providerId) {
+    window.location.assign(`/api/auth/${encodeURIComponent(providerId)}/start`);
+  }
 
   return (
     <div style={{
@@ -295,39 +314,58 @@ function AuthScreen() {
           </div>
 
           <div style={{ padding: '22px 30px 30px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
               {socialButtons.map((provider) => (
-                <button
-                  key={provider.id}
-                  disabled={!provider.available}
-                  style={{
-                    flex: '1 1 220px',
-                    padding: '12px 14px',
-                    borderRadius: 12,
-                    border: `1px solid ${provider.available ? TOKENS.line : TOKENS.lineSoft}`,
-                    background: provider.available ? TOKENS.panel : TOKENS.panelSoft,
-                    color: provider.available ? TOKENS.ink : TOKENS.muted,
-                    cursor: provider.available ? 'pointer' : 'not-allowed',
-                    textAlign: 'left',
-                    fontFamily: TOKENS.fontSans,
-                    fontSize: 14,
-                    fontWeight: 700,
-                  }}
-                >
-                  {provider.label}
-                  {!provider.available && (
-                    <span style={{ display: 'block', fontSize: 11.5, color: TOKENS.muted, marginTop: 4 }}>
-                      {provider.recommended ? 'Recommended provider wire pending credentials.' : 'Provider wire pending credentials.'}
+                <div key={provider.id} style={{ width: '100%', maxWidth: 380 }}>
+                  <button
+                    type="button"
+                    onClick={() => provider.available && startProvider(provider.id)}
+                    disabled={!provider.available}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 16,
+                      padding: '14px 20px',
+                      borderRadius: 999,
+                      border: `1.5px solid ${provider.available ? '#B7C0CC' : TOKENS.lineSoft}`,
+                      background: '#FFFFFF',
+                      color: TOKENS.ink,
+                      cursor: provider.available ? 'pointer' : 'not-allowed',
+                      fontFamily: TOKENS.fontSans,
+                      fontSize: 15,
+                      fontWeight: 700,
+                      opacity: provider.available ? 1 : 0.62,
+                      boxShadow: provider.available ? '0 1px 0 rgba(17, 24, 39, 0.04)' : 'none',
+                    }}
+                  >
+                    <span style={{
+                      width: 32,
+                      height: 32,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
+                      <ProviderBadge providerId={provider.id} />
                     </span>
+                    <span>{provider.label}</span>
+                  </button>
+                  {!provider.available && (
+                    <div style={{ padding: '6px 18px 0 50px', fontSize: 11.5, color: TOKENS.muted }}>
+                      {provider.note || (provider.recommended
+                        ? 'Recommended provider wire pending credentials.'
+                        : 'Provider wire pending credentials.')}
+                    </div>
                   )}
-                </button>
+                </div>
               ))}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ flex: 1, height: 1, background: TOKENS.line }} />
               <span style={{ fontSize: 12, color: TOKENS.muted, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                Email for now
+                Or use email
               </span>
               <div style={{ flex: 1, height: 1, background: TOKENS.line }} />
             </div>
@@ -405,5 +443,36 @@ const authFieldStyle = {
   background: TOKENS.panel,
   width: '100%',
 };
+
+function ProviderBadge({ providerId }) {
+  const palette = {
+    google: { bg: '#FFFFFF', border: '#DADCE0', fg: '#4285F4', label: 'G' },
+    facebook: { bg: '#1877F2', border: '#1877F2', fg: '#FFFFFF', label: 'f' },
+    instagram: { bg: '#E1306C', border: '#E1306C', fg: '#FFFFFF', label: 'ig' },
+    x: { bg: '#111111', border: '#111111', fg: '#FFFFFF', label: 'X' },
+    apple: { bg: '#111111', border: '#111111', fg: '#FFFFFF', label: 'A' },
+  };
+  const token = palette[providerId] || { bg: TOKENS.panelSoft, border: TOKENS.line, fg: TOKENS.ink, label: '?' };
+  return (
+    <span style={{
+      width: 28,
+      height: 28,
+      borderRadius: providerId === 'facebook' || providerId === 'instagram' ? 8 : 999,
+      border: `1px solid ${token.border}`,
+      background: token.bg,
+      color: token.fg,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: TOKENS.fontSans,
+      fontSize: providerId === 'instagram' ? 11 : 17,
+      fontWeight: 800,
+      lineHeight: 1,
+      textTransform: providerId === 'facebook' ? 'none' : 'uppercase',
+    }}>
+      {token.label}
+    </span>
+  );
+}
 
 Object.assign(window, { KS2App, LoadingScreen, AuthScreen });
