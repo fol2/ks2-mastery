@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>KS2 Study — Unified Shell</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="vendor/fonts.css" rel="stylesheet">
 
 <style>
   * { box-sizing: border-box; }
@@ -40,9 +38,89 @@
 <body>
   <div id="root"></div>
 
-  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <!-- TEMP boot-diagnostic beacon: prints boot progress + any uncaught error
+       where it is visible without opening the Web Inspector. Remove once the
+       iPhone Safari blank-page issue is resolved. -->
+  <div id="__ks2_boot_beacon" style="position:fixed;top:0;left:0;right:0;padding:10px 14px;background:#FEF3C7;color:#78350F;font:12px/1.35 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;z-index:2147483647;white-space:pre-wrap;box-shadow:0 1px 4px rgba(0,0,0,0.12);max-height:60vh;overflow:auto;">[0.0s] Booting — awaiting first stage</div>
+  <script>
+  (function () {
+    var beacon = document.getElementById("__ks2_boot_beacon");
+    var startedAt = Date.now();
+    var errors = [];
+    var warnings = [];
+    var stages = [];
+    function elapsed() { return ((Date.now() - startedAt) / 1000).toFixed(1) + "s"; }
+    function fmtStages() {
+      if (!stages.length) return "(no stage marker fired yet — script pipeline stuck before CDN)";
+      return stages.map(function (s) { return "[" + s.t + "] " + s.label; }).join("\n");
+    }
+    function render() {
+      if (!beacon) return;
+      if (errors.length) {
+        beacon.style.background = "#FEE2E2";
+        beacon.style.color = "#991B1B";
+        var tail = warnings.length ? "\n\nWarnings:\n" + warnings.join("\n") : "";
+        beacon.textContent = "Boot ERROR at " + elapsed() + "\n\nStages reached:\n" + fmtStages() + "\n\nErrors:\n" + errors.join("\n") + tail;
+        return;
+      }
+      beacon.style.background = "#FEF3C7";
+      beacon.style.color = "#78350F";
+      beacon.textContent = "Booting (" + elapsed() + ")\n" + fmtStages();
+    }
+    window.__ks2_mark = function (label) { stages.push({ t: elapsed(), label: label }); render(); };
+    window.addEventListener("error", function (ev) {
+      // Capture-phase catches resource load failures (script/link/img) too.
+      if (ev && ev.target && ev.target !== window) {
+        var url = ev.target.src || ev.target.href || "(unknown URL)";
+        warnings.push("resource load failed: " + url);
+        render();
+        return;
+      }
+      var m = (ev && ev.error && ev.error.message) || (ev && ev.message) || "Unknown error";
+      var src = ev && ev.filename ? String(ev.filename).replace(location.origin, "") : "";
+      var loc = src ? " (" + src + (ev.lineno ? ":" + ev.lineno : "") + ")" : "";
+      errors.push("error" + loc + ": " + m);
+      render();
+    }, true);
+    window.addEventListener("unhandledrejection", function (ev) {
+      var r = ev && ev.reason;
+      var m = (r && (r.message || r.toString())) || "Unknown rejection";
+      errors.push("unhandledrejection: " + m);
+      render();
+    });
+    // Remove beacon as soon as React has mounted, regardless of non-fatal
+    // resource-load warnings — if the UI is showing, the beacon has done its job.
+    var mo = new MutationObserver(function () {
+      var root = document.getElementById("root");
+      if (root && root.children.length > 0 && errors.length === 0) {
+        beacon.parentNode && beacon.parentNode.removeChild(beacon);
+        mo.disconnect();
+      }
+    });
+    document.addEventListener("DOMContentLoaded", function () {
+      window.__ks2_mark && window.__ks2_mark("DOMContentLoaded");
+      var root = document.getElementById("root");
+      if (root) mo.observe(root, { childList: true });
+    });
+    window.addEventListener("load", function () { window.__ks2_mark && window.__ks2_mark("window.load"); });
+    setInterval(function () {
+      var root = document.getElementById("root");
+      if (beacon && beacon.parentNode && errors.length === 0 && (!root || root.children.length === 0)) render();
+    }, 1000);
+    setTimeout(function () {
+      var root = document.getElementById("root");
+      if (beacon && beacon.parentNode && errors.length === 0 && (!root || root.children.length === 0)) {
+        stages.push({ t: elapsed(), label: "still no React mount after 20s — Babel transpile likely stalled" });
+        render();
+      }
+    }, 20000);
+  })();
+  </script>
+
+  <script src="vendor/react.development.js" onerror="window.__ks2_mark && window.__ks2_mark('ERROR: React local load failed')"></script>
+  <script src="vendor/react-dom.development.js" onerror="window.__ks2_mark && window.__ks2_mark('ERROR: ReactDOM local load failed')"></script>
+  <script src="vendor/babel.min.js" onerror="window.__ks2_mark && window.__ks2_mark('ERROR: Babel local load failed')"></script>
+  <script>window.__ks2_mark && window.__ks2_mark("CDN tags parsed (React " + (window.React && React.version) + ", ReactDOM " + (window.ReactDOM && ReactDOM.version) + ", Babel " + (window.Babel && Babel.version) + ")");</script>
 
   <!-- Content: sentence banks (213 words across six banks) + enriched word list -->
   <script src="vendor/sentence-bank-01.js"></script>
@@ -53,8 +131,11 @@
   <script src="vendor/sentence-bank-06.js"></script>
   <script src="vendor/word-list.js"></script>
   <script src="vendor/word-meta.js"></script>
+  <script>window.__ks2_mark && window.__ks2_mark("content loaded (words=" + ((window.KS2_WORDS || []).length) + ")");</script>
 
+  <script type="text/babel">window.__ks2_mark("text/babel pipeline starting");</script>
   <script type="text/babel" src="src/tokens.jsx"></script>
+  <script type="text/babel">window.__ks2_mark("tokens.jsx done");</script>
   <script type="text/babel" src="src/icons.jsx"></script>
   <script type="text/babel" src="src/primitives.jsx"></script>
   <script type="text/babel" src="src/shell.jsx"></script>
@@ -64,6 +145,7 @@
   <script type="text/babel" src="src/monster-overlay.jsx"></script>
   <script type="text/babel" src="src/collection.jsx"></script>
   <script type="text/babel" src="src/dashboard.jsx"></script>
+  <script type="text/babel">window.__ks2_mark("shell/profile/monsters/collection/dashboard done");</script>
 
   <!-- Spelling engine stack: TTS core → settings UI → engine → dashboard → game → summary -->
   <script src="src/tts-core.jsx"></script>
@@ -72,10 +154,15 @@
   <script type="text/babel" src="src/spelling-dashboard.jsx"></script>
   <script type="text/babel" src="src/spelling-game.jsx"></script>
   <script type="text/babel" src="src/spelling-summary.jsx"></script>
+  <script type="text/babel">window.__ks2_mark("spelling stack done");</script>
 
   <script type="text/babel" src="src/questions.jsx"></script>
   <script type="text/babel" src="src/practice.jsx"></script>
   <script type="text/babel" src="src/tabs.jsx"></script>
   <script type="text/babel" src="src/app.jsx"></script>
+  <script type="text/babel">window.__ks2_mark("app.jsx done");</script>
+  <script type="text/babel">
+    window.__ks2_mark && window.__ks2_mark("final text/babel block executing — all modules parsed");
+  </script>
 </body>
 </html>
