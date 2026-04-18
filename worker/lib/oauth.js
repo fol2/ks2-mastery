@@ -161,7 +161,7 @@ function providerDefinitions(env, origin) {
     x: {
       enabled: socialEnabled && Boolean(env.X_CLIENT_ID),
       clientId: String(env.X_CLIENT_ID || ""),
-      clientSecret: "",
+      clientSecret: String(env.X_CLIENT_SECRET || ""),
       authoriseUrl: "https://twitter.com/i/oauth2/authorize",
       tokenUrl: "https://api.x.com/2/oauth2/token",
       redirectUri: `${origin}/api/auth/x/callback`,
