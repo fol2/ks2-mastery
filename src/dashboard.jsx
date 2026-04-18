@@ -11,21 +11,29 @@ function Dashboard({ onOpenSubject, onOpenCollection, profile, onEditProfile }) 
   const firstName = (profile?.name || 'there').split(' ')[0];
   const pid = profile?.id || 'default';
 
-  // Pick the monster to showcase in the hero: highest-stage caught; else furthest-along uncaught;
-  // else the first Spelling monster as a placeholder.
-  const heroMonster = React.useMemo(() => {
-    if (!window.MonsterEngine || !window.MONSTERS_BY_SUBJECT) return null;
-    const allIds = SUBJECT_ORDER.flatMap(sid => window.MONSTERS_BY_SUBJECT[sid] || []);
-    let best = null;
-    for (const mid of allIds) {
-      const prog = window.MonsterEngine.getMonsterProgress(pid, mid);
-      const monster = window.MONSTERS[mid];
-      if (!monster) continue;
-      const item = { monster, progress: prog, score: prog.mastered + (prog.caught ? 1000 : 0) };
-      if (!best || item.score > best.score) best = item;
-    }
-    return best;
-  }, [pid]);
+  // Gather every Spelling monster (the only subject with monsters today) so the
+  // hero playground can show the whole cohort — catching the 2nd / 3rd friend
+  // should feel visible and adjacent, not hidden in a Codex subpage.
+  // Re-reads on the `monster:progress` event so the playground refreshes when
+  // the spelling game records a mastery in another component tree.
+  const [progressTick, setProgressTick] = React.useState(0);
+  React.useEffect(() => {
+    const handler = () => setProgressTick(t => t + 1);
+    window.addEventListener('monster:progress', handler);
+    return () => window.removeEventListener('monster:progress', handler);
+  }, []);
+
+  const spellingMonsters = React.useMemo(() => {
+    if (!window.MonsterEngine || !window.MONSTERS_BY_SUBJECT) return [];
+    const ids = window.MONSTERS_BY_SUBJECT.spelling || [];
+    return ids
+      .map(mid => {
+        const monster = window.MONSTERS[mid];
+        if (!monster) return null;
+        return { monster, progress: window.MonsterEngine.getMonsterProgress(pid, mid) };
+      })
+      .filter(Boolean);
+  }, [pid, progressTick]);
 
   // Mock per-subject progress
   const progress = {
@@ -60,8 +68,8 @@ function Dashboard({ onOpenSubject, onOpenCollection, profile, onEditProfile }) 
           boxShadow: TOKENS.shadow,
           position: 'relative', overflow: 'hidden',
         }}>
-          {/* Monster playground — the showcase monster walks/bobs here */}
-          <MonsterPlayground heroMonster={heroMonster} onOpenCollection={onOpenCollection} />
+          {/* Monster playground — the whole spelling cohort walks/floats here */}
+          <MonsterPlayground monsters={spellingMonsters} onOpenCollection={onOpenCollection} />
 
           <div style={{ position: 'relative' }}>
             <div style={{
@@ -265,13 +273,18 @@ function WeekBars() {
 }
 
 // ─────────────── MonsterPlayground ───────────────
-// A small walking/bobbing monster that lives DIRECTLY in the hero — no framed scene.
-// Occupies the lower-right portion of the hero card so it doesn't collide with the heading.
-function MonsterPlayground({ heroMonster, onOpenCollection }) {
-  // Walking area — pinned to the bottom-right of the hero card, frameless.
-  const W = 280, H = 110;
+// A cluster of every spelling monster living DIRECTLY in the hero card — no
+// framed scene, no panel. Each monster gets a distinct motion so the scene
+// feels alive:
+//   - Inklet (baby/specialist)  walks left-right along the floor
+//   - Glimmerbug (other specialist) floats in a gentle arc above the floor
+//   - Phaeton (aggregate)       hovers with a slow bob (fills the upper-right)
+// Uncaught monsters appear as soft silhouettes in their egg form so kids can
+// see who's still waiting to join.
+function MonsterPlayground({ monsters, onOpenCollection }) {
+  // Playground frame — a tall strip running along the right side of the hero.
+  const W = 360, H = 150;
 
-  // Monster walks back and forth along the floor, plus a bob + occasional hop.
   const [tick, setTick] = React.useState(0);
   React.useEffect(() => {
     let raf, start = performance.now();
@@ -283,101 +296,134 @@ function MonsterPlayground({ heroMonster, onOpenCollection }) {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  if (!heroMonster) return null;
-
-  const { monster, progress } = heroMonster;
-  const { stage, caught, mastered } = progress;
-
-  // Motion differs by state:
-  //  - Egg (uncaught): stays centered, just a gentle bob. Eggs don't walk.
-  //  - Caught monster: walks across the hero, occasionally hops, slight tilt.
+  if (!monsters || !monsters.length) return null;
   const t = tick / 1000;
-  const SZ = 78;
-  const span = W - 90;
-  let x, bob, hop, tilt, facingRight;
-  if (caught) {
-    const phase = (Math.sin(t * 0.6) + 1) / 2;
-    x = 12 + phase * span;
-    facingRight = Math.cos(t * 0.6) >= 0;
-    bob = Math.sin(t * 3) * 3;
-    hop = (Math.sin(t * 0.6 + 1.2) > 0.985) ? Math.abs(Math.sin(t * 14)) * 14 : 0;
-    tilt = Math.sin(t * 1.5) * 3;
-  } else {
-    x = 12 + span / 2;           // centered
-    facingRight = true;
-    bob = Math.sin(t * 2) * 2.5;  // slow breathing-like bob
-    hop = 0;
-    tilt = 0;
-  }
-  const showStage = caught ? stage : 0;
-  const label = caught ? monster.nameByStage[stage] : 'Unhatched egg';
-  const subLabel = caught
-    ? `Lv ${progress.level} · ${mastered}/100 mastered`
-    : `${mastered}/10 to hatch`;
+
+  // Summary line used in the small right-aligned label.
+  const caughtCount = monsters.filter(m => m.progress.caught).length;
+  const nextUncaught = monsters.find(m => !m.progress.caught);
+  const summaryMain = caughtCount === monsters.length
+    ? `All ${monsters.length} friends caught`
+    : `${caughtCount} of ${monsters.length} caught`;
+  const summarySub  = nextUncaught
+    ? `Next: ${nextUncaught.monster.name}`
+    : 'Keep evolving!';
+
+  // Layout — each monster gets its own slot and motion rig. Kept declarative so
+  // tweaks to roster order / scale are painless.
+  const SLOTS = {
+    inklet:     { x: 20,  floor: 110, size: 74, motion: 'walk'   },
+    glimmerbug: { x: 140, floor:  92, size: 66, motion: 'float'  },
+    phaeton:    { x: 244, floor:  90, size: 96, motion: 'hover'  },
+  };
 
   return (
     <div
       onClick={onOpenCollection}
       title="Open the Monster Codex"
       style={{
-        position: 'absolute', bottom: 16, right: 24, width: W, height: H,
-        cursor: 'pointer', zIndex: 1,
-        pointerEvents: 'auto',
+        position: 'absolute', bottom: 10, right: 16, width: W, height: H,
+        cursor: 'pointer', zIndex: 1, pointerEvents: 'auto',
       }}
     >
       <style>{`
         @keyframes mp-spark-hero { 0%,100% { transform: translateY(0) scale(0.9); opacity: 0; }
-          50% { transform: translateY(-8px) scale(1); opacity: 0.8; } }
+          50% { transform: translateY(-8px) scale(1); opacity: 0.75; } }
       `}</style>
 
-      {/* A couple of sparkles — subtle, integrated into hero */}
-      {caught && [0, 1, 2].map(i => (
-        <div key={i} style={{
-          position: 'absolute',
-          left: `${25 + i * 25}%`, top: `${10 + (i % 2) * 20}%`,
-          width: 5, height: 5, borderRadius: '50%',
-          background: monster.secondary,
-          opacity: 0.6,
-          animation: `mp-spark-hero 3s ${i * 0.9}s ease-in-out infinite`,
-        }} />
-      ))}
+      {monsters.map(({ monster, progress }, idx) => {
+        const slot = SLOTS[monster.id] || { x: 20 + idx * 100, floor: 100, size: 72, motion: 'float' };
+        const { stage, caught, mastered } = progress;
+        const showStage = caught ? stage : 0;
 
-      {/* Monster — walks across the bottom of the hero */}
-      <div style={{
-        position: 'absolute',
-        left: x, bottom: 22 + hop,
-        width: SZ, height: SZ,
-        transform: `translateY(${bob}px) rotate(${tilt}deg) scaleX(${facingRight ? 1 : -1})`,
-        transition: 'transform 0.1s linear',
-        pointerEvents: 'none',
-      }}>
-        <MonsterArt monster={monster} stage={showStage} size={SZ} />
-      </div>
+        // Motion depending on slot.motion. All anchored to slot.floor.
+        let bob = 0, hop = 0, tilt = 0, facingRight = true, offsetX = 0, offsetY = 0;
+        const phaseOffset = (monster.id.charCodeAt(0) % 7) * 0.4;
+        if (caught) {
+          if (slot.motion === 'walk') {
+            const phase = (Math.sin(t * 0.55 + phaseOffset) + 1) / 2;
+            offsetX = phase * 48 - 24;
+            facingRight = Math.cos(t * 0.55 + phaseOffset) >= 0;
+            bob = Math.sin(t * 3 + phaseOffset) * 3;
+            hop = Math.sin(t * 0.55 + phaseOffset + 1.2) > 0.985
+              ? Math.abs(Math.sin(t * 14)) * 10 : 0;
+            tilt = Math.sin(t * 1.5 + phaseOffset) * 3;
+          } else if (slot.motion === 'float') {
+            offsetX = Math.sin(t * 0.9 + phaseOffset) * 22;
+            offsetY = Math.cos(t * 1.1 + phaseOffset) * 14;
+            tilt = Math.sin(t * 2 + phaseOffset) * 4;
+          } else { // hover
+            bob = Math.sin(t * 1.6 + phaseOffset) * 6;
+            tilt = Math.sin(t * 1.2 + phaseOffset) * 2;
+          }
+        } else {
+          // Eggs — slow breathing-like bob.
+          bob = Math.sin(t * 1.8 + phaseOffset) * 2.4;
+        }
 
-      {/* Soft ground shadow — no panel, just a subtle oval */}
-      <div style={{
-        position: 'absolute',
-        left: x + SZ / 2 - 28, bottom: 18,
-        width: 56, height: 6, borderRadius: '50%',
-        background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.18), rgba(0,0,0,0) 70%)',
-        transform: `scaleX(${1 - hop / 60})`,
-      }} />
+        const centerX = slot.x + offsetX;
+        const bottom  = H - slot.floor + offsetY + hop;
+        const shadowScale = 1 - hop / 60;
 
-      {/* Floating name label — tucked in the corner, no panel */}
+        return (
+          <React.Fragment key={monster.id}>
+            {/* Soft ground shadow (only for walkers; floaters drift too far off the floor) */}
+            {slot.motion === 'walk' && (
+              <div style={{
+                position: 'absolute',
+                left: centerX + slot.size / 2 - 26,
+                bottom: H - slot.floor - 4,
+                width: 52, height: 5, borderRadius: '50%',
+                background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.18), rgba(0,0,0,0) 70%)',
+                transform: `scaleX(${shadowScale})`,
+                pointerEvents: 'none',
+              }}/>
+            )}
+
+            {/* Sparkles — only for caught aggregate + phaeton is the showcase */}
+            {caught && monster.id === 'phaeton' && [0, 1, 2].map(i => (
+              <div key={`sp${i}`} style={{
+                position: 'absolute',
+                left: slot.x + 10 + i * 24, bottom: H - slot.floor + 34 + (i % 2) * 10,
+                width: 5, height: 5, borderRadius: '50%',
+                background: monster.secondary,
+                opacity: 0.6,
+                animation: `mp-spark-hero 3s ${i * 0.9}s ease-in-out infinite`,
+                pointerEvents: 'none',
+              }} />
+            ))}
+
+            <div style={{
+              position: 'absolute',
+              left: centerX, bottom,
+              width: slot.size, height: slot.size,
+              transform: `translateY(${bob}px) rotate(${tilt}deg) scaleX(${facingRight ? 1 : -1})`,
+              transition: 'transform 0.1s linear',
+              opacity: caught ? 1 : 0.55,
+              filter: caught ? 'none' : 'saturate(0.6)',
+              pointerEvents: 'none',
+            }}>
+              <MonsterArt monster={monster} stage={showStage} size={slot.size} silhouette={!caught} />
+            </div>
+          </React.Fragment>
+        );
+      })}
+
+      {/* Floating summary label — one short line, aligned bottom-right */}
       <div style={{
-        position: 'absolute', right: 4, bottom: 0,
+        position: 'absolute', right: 4, bottom: -2,
         textAlign: 'right', fontFamily: TOKENS.fontSans,
         pointerEvents: 'none',
       }}>
         <div style={{
           fontFamily: TOKENS.fontSerif, fontSize: 13, fontWeight: 800,
           color: TOKENS.ink, lineHeight: 1.1,
-        }}>{label} <span style={{
+        }}>{summaryMain} <span style={{
           fontSize: 9, fontWeight: 800, letterSpacing: '0.08em',
-          textTransform: 'uppercase', color: monster.primary, marginLeft: 4,
+          textTransform: 'uppercase', color: TOKENS.muted, marginLeft: 4,
         }}>Codex ↗</span></div>
         <div style={{ fontSize: 11, color: TOKENS.muted, fontWeight: 600, marginTop: 1 }}>
-          {subLabel}
+          {summarySub}
         </div>
       </div>
     </div>

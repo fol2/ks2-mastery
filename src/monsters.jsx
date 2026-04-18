@@ -316,15 +316,277 @@ const GLIMMERBUG = {
   },
 };
 
+// ====== SPELLING · PHAETON (both pools) — "Star-Scribe" aggregate monster ======
+// Derives its progress from Inklet + Glimmerbug via MonsterEngine.AGGREGATES.
+// Hatches only once *both* Y3–4 and Y5–6 pools are caught, and only reaches
+// Mega when both pools are fully mastered (100 + 100).
+//
+// Visual arc: cosmic egg → wisp → cometwing scribe → scholar owl → phoenix-sage.
+// Palette is deep indigo + starlight silver + flame orange + gold so it sits
+// clearly apart from the blue Inklet and magenta Glimmerbug in the Codex grid.
+const PHAETON = {
+  id: 'phaeton',
+  name: 'Phaeton',
+  nameByStage: ['Stardrop Egg', 'Aetherwisp', 'Cometwing', 'Starquill Owl', 'Phaeton'],
+  subjectId: 'spelling',
+  pool: 'both',
+  subtitle: 'Both KS2 word lists',
+  primary:   '#3E2C6B', // indigo
+  secondary: '#E8C45A', // gold
+  pale:      '#F6EED7', // warm parchment
+  // Aggregate-specific tuning so the generic Collection / Overlay surfaces can
+  // render correct thresholds without branching everywhere.
+  masteredMax: 200,
+  stageThresholds: [0, 20, 60, 120, 200],
+
+  // Dialog + card copy helpers — read by collection.jsx.
+  growGuidance:
+    "Keep catching words in both Spelling pools. Phaeton hatches as soon as " +
+    "Inklet and Glimmerbug have each been caught, and every word you master " +
+    "from either pool afterwards grows Phaeton toward its Mega form.",
+
+  hatchHook(profileId, progress) {
+    if (progress.caught) return null; // fall back to default caught hook
+    const state = window.MonsterEngine.getState(profileId);
+    const ink  = (state?.inklet?.mastered?.length)     || 0;
+    const glim = (state?.glimmerbug?.mastered?.length) || 0;
+    const inkPart  = ink  >= 10 ? 'Inklet ✓'      : `Inklet ${ink}/10`;
+    const glimPart = glim >= 10 ? 'Glimmerbug ✓'  : `Glimmerbug ${glim}/10`;
+    return {
+      left:  `${inkPart} · ${glimPart}`,
+      right: 'Both needed to hatch',
+    };
+  },
+
+  masteryBreakdown(profileId) {
+    const state = window.MonsterEngine.getState(profileId);
+    const ink  = (state?.inklet?.mastered?.length)     || 0;
+    const glim = (state?.glimmerbug?.mastered?.length) || 0;
+    return [
+      {
+        id: 'inklet',
+        label: 'Inklet (Year 3–4)',
+        detail: 'Every secured word feeds Phaeton.',
+        count: `${ink} / 100`,
+        colour: INKLET.primary,
+      },
+      {
+        id: 'glimmerbug',
+        label: 'Glimmerbug (Year 5–6)',
+        detail: 'Every secured word feeds Phaeton.',
+        count: `${glim} / 100`,
+        colour: GLIMMERBUG.primary,
+      },
+    ];
+  },
+
+  art: {
+    0: (size) => (
+      // Stardrop Egg — floating teardrop with constellation and a glowing rune crack
+      <svg viewBox="0 0 120 120" width={size} height={size}>
+        <ellipse cx="60" cy="66" rx="44" ry="50" fill="#F29A42" opacity="0.14"/>
+        <path d="M60 14 C 38 28, 30 64, 48 94 C 54 106, 66 106, 72 94 C 90 64, 82 28, 60 14 Z"
+              fill="#3E2C6B" stroke="#1F1245" strokeWidth="2" strokeLinejoin="round"/>
+        <path d="M50 28 Q 42 54, 48 82"
+              stroke="#6E58B0" strokeWidth="6" opacity="0.5"
+              fill="none" strokeLinecap="round"/>
+        {/* constellation */}
+        <circle cx="52" cy="40" r="2.4" fill="#E8C45A"/>
+        <circle cx="72" cy="48" r="2.6" fill="#F29A42"/>
+        <circle cx="42" cy="60" r="2"   fill="#E8E4F7"/>
+        <circle cx="66" cy="70" r="2.4" fill="#E8C45A"/>
+        <circle cx="54" cy="82" r="2"   fill="#E8E4F7"/>
+        <circle cx="78" cy="74" r="1.8" fill="#E8C45A"/>
+        <path d="M52 40 L72 48 L66 70 L54 82 M 66 70 L78 74"
+              stroke="#E8C45A" strokeWidth="0.9" fill="none" opacity="0.55"/>
+        {/* glowing rune crack */}
+        <path d="M58 22 L62 28 L57 32 L61 36"
+              stroke="#FFE9A8" strokeWidth="1.8"
+              fill="none" strokeLinecap="round"/>
+      </svg>
+    ),
+    1: (size) => (
+      // Aetherwisp — ghostly wisp with flame head and trailing stars
+      <svg viewBox="0 0 120 120" width={size} height={size}>
+        <circle cx="52" cy="60" r="46" fill="#F29A42" opacity="0.15"/>
+        {/* trailing stars */}
+        <path d="M72 66 Q 96 76, 114 60" stroke="#E8C45A" strokeWidth="3"
+              strokeLinecap="round" fill="none" opacity="0.55"/>
+        <circle cx="94"  cy="72" r="2"   fill="#FFFFFF"/>
+        <circle cx="104" cy="66" r="1.6" fill="#E8C45A"/>
+        <circle cx="112" cy="60" r="1.2" fill="#FFFFFF"/>
+        {/* wispy teardrop body */}
+        <path d="M50 30 Q 28 52, 36 82 Q 52 98, 68 86 Q 82 62, 66 34 Q 58 26, 50 30 Z"
+              fill="#3E2C6B" stroke="#1F1245" strokeWidth="2" strokeLinejoin="round"/>
+        <ellipse cx="54" cy="72" rx="12" ry="16" fill="#6E58B0" opacity="0.55"/>
+        {/* flame head tuft */}
+        <path d="M52 28 Q 48 14, 58 4 Q 66 14, 62 30 Z"
+              fill="#F9E8B8" stroke="#C89A30" strokeWidth="1.5"/>
+        {/* eyes */}
+        <circle cx="48" cy="58" r="3.4" fill="#FFFFFF"/>
+        <circle cx="49" cy="59" r="2.2" fill="#E8C45A"/>
+        <circle cx="64" cy="58" r="3.4" fill="#FFFFFF"/>
+        <circle cx="65" cy="59" r="2.2" fill="#E8C45A"/>
+        <path d="M52 72 Q 58 76, 64 72"
+              stroke="#F29A42" strokeWidth="1.5"
+              fill="none" strokeLinecap="round"/>
+      </svg>
+    ),
+    2: (size) => (
+      // Cometwing — single asymmetric wing, scroll clutched, growing into a bird
+      <svg viewBox="0 0 120 120" width={size} height={size}>
+        <circle cx="60" cy="64" r="52" fill="#F29A42" opacity="0.15"/>
+        {/* left wing */}
+        <path d="M42 54 Q 14 46, 4 68 Q 16 74, 28 68 Q 34 70, 42 64 Z"
+              fill="#3E2C6B" stroke="#1F1245" strokeWidth="2" strokeLinejoin="round"/>
+        <path d="M8 56 L22 62 M10 64 L24 66 M12 72 L26 70"
+              stroke="#E8E4F7" strokeWidth="1" strokeLinecap="round" opacity="0.8"/>
+        {/* pear body */}
+        <path d="M60 34 Q 36 40, 38 78 Q 48 98, 72 98 Q 86 78, 82 42 Q 72 32, 60 34 Z"
+              fill="#3E2C6B" stroke="#1F1245" strokeWidth="2" strokeLinejoin="round"/>
+        <ellipse cx="60" cy="74" rx="16" ry="18" fill="#6E58B0" opacity="0.55"/>
+        {/* flame tufts */}
+        <path d="M56 30 Q 52 16, 62 6 Q 70 16, 66 32 Z"
+              fill="#F9E8B8" stroke="#C89A30" strokeWidth="1.5"/>
+        <path d="M48 30 Q 44 22, 50 14 Q 56 22, 52 32 Z"
+              fill="#F29A42" stroke="#C89A30" strokeWidth="1.2" opacity="0.85"/>
+        {/* clutched scroll */}
+        <rect x="54" y="66" width="20" height="14" rx="2.5"
+              fill="#F4E9CC" stroke="#C89A30" strokeWidth="1.4"/>
+        <path d="M57 70 h14 M57 74 h12" stroke="#3E2C6B" strokeWidth="0.9"/>
+        {/* eyes */}
+        <circle cx="52" cy="52" r="3.6" fill="#FFFFFF"/>
+        <circle cx="52" cy="53" r="2.2" fill="#E8C45A"/>
+        <circle cx="68" cy="52" r="3.6" fill="#FFFFFF"/>
+        <circle cx="68" cy="53" r="2.2" fill="#E8C45A"/>
+        {/* beak */}
+        <path d="M56 60 L60 66 L64 60 Z"
+              fill="#F29A42" stroke="#C89A30" strokeWidth="1"/>
+        {/* feet */}
+        <path d="M52 98 l-3 6 M68 98 l3 6"
+              stroke="#C89A30" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    ),
+    3: (size) => (
+      // Starquill Owl — regal owl, spread wings, open glowing book on lap
+      <svg viewBox="0 0 120 120" width={size} height={size}>
+        <circle cx="60" cy="60" r="54" fill="#F29A42" opacity="0.16"/>
+        <circle cx="60" cy="60" r="40" fill="#E8C45A" opacity="0.08"/>
+        {/* wings */}
+        <path d="M38 50 Q 10 36, 4 58 Q 6 82, 22 86 Q 28 72, 38 62 Z"
+              fill="#3E2C6B" stroke="#1F1245" strokeWidth="2" strokeLinejoin="round"/>
+        <path d="M82 50 Q 110 36, 116 58 Q 114 82, 98 86 Q 92 72, 82 62 Z"
+              fill="#3E2C6B" stroke="#1F1245" strokeWidth="2" strokeLinejoin="round"/>
+        <path d="M8 52 L22 56 M8 62 L22 64 M10 72 L24 70 M12 80 L24 78"
+              stroke="#E8E4F7" strokeWidth="1" strokeLinecap="round" opacity="0.7"/>
+        <path d="M112 52 L98 56 M112 62 L98 64 M110 72 L96 70 M108 80 L96 78"
+              stroke="#E8E4F7" strokeWidth="1" strokeLinecap="round" opacity="0.7"/>
+        {/* body */}
+        <ellipse cx="60" cy="66" rx="26" ry="30" fill="#3E2C6B" stroke="#1F1245" strokeWidth="2"/>
+        <path d="M40 68 q20 -14 40 0 q-4 8 -20 8 q-16 0 -20 -8" fill="#6E58B0"/>
+        <path d="M44 76 q16 -6 32 0" stroke="#E8E4F7" strokeWidth="0.8" fill="none" opacity="0.5"/>
+        {/* head quill flames */}
+        <path d="M42 38 Q 36 22, 46 10 Q 54 22, 50 42 Z"
+              fill="#F9E8B8" stroke="#C89A30" strokeWidth="1.4"/>
+        <path d="M78 38 Q 84 22, 74 10 Q 66 22, 70 42 Z"
+              fill="#F9E8B8" stroke="#C89A30" strokeWidth="1.4"/>
+        {/* big owl eyes */}
+        <circle cx="50" cy="58" r="7"   fill="#FFFFFF"/>
+        <circle cx="51" cy="60" r="5"   fill="#E8C45A"/>
+        <circle cx="52" cy="59" r="2"   fill="#FFFFFF"/>
+        <circle cx="70" cy="58" r="7"   fill="#FFFFFF"/>
+        <circle cx="71" cy="60" r="5"   fill="#E8C45A"/>
+        <circle cx="72" cy="59" r="2"   fill="#FFFFFF"/>
+        {/* beak */}
+        <path d="M56 66 L60 72 L64 66 Z"
+              fill="#F29A42" stroke="#C89A30" strokeWidth="1.2"/>
+        {/* open book on lap */}
+        <path d="M46 86 L60 82 L74 86 L72 96 L60 94 L48 96 Z"
+              fill="#F4E9CC" stroke="#C89A30" strokeWidth="1.4" strokeLinejoin="round"/>
+        <path d="M60 82 L60 94" stroke="#C89A30" strokeWidth="1"/>
+        <path d="M50 88 h6 M50 91 h5 M64 88 h6 M65 91 h5" stroke="#3E2C6B" strokeWidth="0.8"/>
+        {/* feet */}
+        <path d="M54 100 l-2 4 M66 100 l2 4"
+              stroke="#C89A30" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    ),
+    4: (size) => (
+      // Mega Phaeton — phoenix-sage with flame wings, constellation, glyph halo
+      <svg viewBox="0 0 120 120" width={size} height={size}>
+        <circle cx="60" cy="60" r="58" fill="#F29A42" opacity="0.22"/>
+        <circle cx="60" cy="60" r="46" fill="#E8C45A" opacity="0.22"/>
+        {/* orbital sparkles */}
+        <circle cx="12"  cy="30"  r="2.6" fill="#E8C45A"/>
+        <circle cx="108" cy="32"  r="2.4" fill="#F29A42"/>
+        <circle cx="8"   cy="76"  r="2"   fill="#FFFFFF"/>
+        <circle cx="112" cy="78"  r="2.2" fill="#E8C45A"/>
+        <circle cx="20"  cy="106" r="2"   fill="#E8C45A"/>
+        <circle cx="100" cy="106" r="2"   fill="#FFFFFF"/>
+        {/* main flame wings */}
+        <path d="M36 48 Q -4 20, 0 60 Q 4 84, 22 92 Q 30 68, 40 62 Z"
+              fill="#3E2C6B" stroke="#1F1245" strokeWidth="2" strokeLinejoin="round"/>
+        <path d="M84 48 Q 124 20, 120 60 Q 116 84, 98 92 Q 90 68, 80 62 Z"
+              fill="#3E2C6B" stroke="#1F1245" strokeWidth="2" strokeLinejoin="round"/>
+        <path d="M4 30 Q 20 38, 32 56" stroke="#F29A42" strokeWidth="2.5"
+              fill="none" opacity="0.85" strokeLinecap="round"/>
+        <path d="M116 30 Q 100 38, 88 56" stroke="#F29A42" strokeWidth="2.5"
+              fill="none" opacity="0.85" strokeLinecap="round"/>
+        <path d="M6 44 L20 50 M6 56 L22 58 M6 70 L22 68 M10 82 L22 80"
+              stroke="#E8C45A" strokeWidth="1.2" strokeLinecap="round" opacity="0.85"/>
+        <path d="M114 44 L100 50 M114 56 L98 58 M114 70 L98 68 M110 82 L98 80"
+              stroke="#E8C45A" strokeWidth="1.2" strokeLinecap="round" opacity="0.85"/>
+        {/* secondary lower wings */}
+        <path d="M42 88 Q 18 100, 28 112 Q 42 106, 48 98 Z"
+              fill="#6E58B0" stroke="#1F1245" strokeWidth="1.5" opacity="0.85"/>
+        <path d="M78 88 Q 102 100, 92 112 Q 78 106, 72 98 Z"
+              fill="#6E58B0" stroke="#1F1245" strokeWidth="1.5" opacity="0.85"/>
+        {/* floating glyph halo */}
+        <text x="36" y="14" fontSize="9" fill="#E8C45A" fontWeight="800" fontFamily="monospace">A</text>
+        <text x="50" y="8"  fontSize="10" fill="#F29A42" fontWeight="800" fontFamily="monospace">★</text>
+        <text x="62" y="10" fontSize="9" fill="#E8C45A" fontWeight="800" fontFamily="monospace">Z</text>
+        <text x="74" y="8"  fontSize="10" fill="#FFFFFF" fontWeight="800" fontFamily="monospace">✦</text>
+        <text x="82" y="16" fontSize="9" fill="#E8C45A" fontWeight="800" fontFamily="monospace">M</text>
+        {/* regal body */}
+        <ellipse cx="60" cy="66" rx="28" ry="32" fill="#3E2C6B" stroke="#1F1245" strokeWidth="2"/>
+        <path d="M38 66 q22 -16 44 0 q-4 10 -22 10 q-18 0 -22 -10" fill="#6E58B0"/>
+        <path d="M46 76 q14 -6 28 0 M46 82 q14 -4 28 0 M48 88 q12 -4 24 0"
+              stroke="#E8C45A" strokeWidth="1.2" fill="none" opacity="0.7"/>
+        {/* chest gem */}
+        <circle cx="60" cy="86" r="6" fill="#F29A42" stroke="#C89A30" strokeWidth="1"/>
+        <circle cx="60" cy="86" r="2.6" fill="#FFE9A8"/>
+        {/* head plumes */}
+        <path d="M40 36 Q 30 16, 44 4 Q 54 18, 50 40 Z"
+              fill="#F9E8B8" stroke="#C89A30" strokeWidth="1.4"/>
+        <path d="M80 36 Q 90 16, 76 4 Q 66 18, 70 40 Z"
+              fill="#F9E8B8" stroke="#C89A30" strokeWidth="1.4"/>
+        <path d="M50 28 Q 50 16, 60 14 Q 70 16, 70 28 Z"
+              fill="#F29A42" stroke="#C89A30" strokeWidth="1.2"/>
+        {/* fierce regal eyes */}
+        <circle cx="50" cy="54" r="7.5" fill="#FFFFFF"/>
+        <circle cx="52" cy="56" r="5"   fill="#E8C45A"/>
+        <circle cx="53" cy="56" r="2"   fill="#3E2C6B"/>
+        <circle cx="70" cy="54" r="7.5" fill="#FFFFFF"/>
+        <circle cx="68" cy="56" r="5"   fill="#E8C45A"/>
+        <circle cx="67" cy="56" r="2"   fill="#3E2C6B"/>
+        {/* beak */}
+        <path d="M56 64 L60 72 L64 64 Z"
+              fill="#F29A42" stroke="#C89A30" strokeWidth="1.2"/>
+      </svg>
+    ),
+  },
+};
+
 // ----- Registry -----
 const MONSTERS = {
   inklet: INKLET,
   glimmerbug: GLIMMERBUG,
+  phaeton: PHAETON,
 };
 
 // Monsters listed per subject (in order). Stubs for non-spelling — coming soon.
+// Phaeton sits after the two specialist monsters so kids meet them first.
 const MONSTERS_BY_SUBJECT = {
-  spelling:    ['inklet', 'glimmerbug'],
+  spelling:    ['inklet', 'glimmerbug', 'phaeton'],
   arithmetic:  [],
   reasoning:   [],
   grammar:     [],

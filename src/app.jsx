@@ -15,10 +15,30 @@ function App() {
   const [tweaksOpen, setTweaksOpen] = React.useState(false);
   const [profile, setProfile] = React.useState(() => loadProfile());
   const [editingProfile, setEditingProfile] = React.useState(false);
-  // Queue of monster events to show one-at-a-time
-  const [monsterQueue, setMonsterQueue] = React.useState([]);
-  const enqueueMonsterEvent = (ev) => setMonsterQueue(q => [...q, ev]);
-  const dismissMonsterEvent = () => setMonsterQueue(q => q.slice(1));
+  // Two separate monster surfaces:
+  //   overlayQueue — fullscreen celebrations (caught / evolve / mega), one-at-a-time
+  //   toastQueue   — non-blocking level-up badges (bottom-right), stackable
+  // `enqueueMonsterEvent` accepts either a single event or an array so the engine can
+  // emit multiple milestones in one submit (e.g. Inklet levelup + Phaeton catch).
+  const [overlayQueue, setOverlayQueue] = React.useState([]);
+  const [toastQueue, setToastQueue]     = React.useState([]);
+  const toastKeyRef = React.useRef(0);
+  const enqueueMonsterEvent = (payload) => {
+    if (!payload) return;
+    const events = Array.isArray(payload) ? payload : [payload];
+    events.forEach((ev) => {
+      if (!ev) return;
+      if (ev.kind === 'levelup') {
+        toastKeyRef.current += 1;
+        const keyed = { ...ev, key: toastKeyRef.current };
+        setToastQueue(q => [...q, keyed]);
+      } else {
+        setOverlayQueue(q => [...q, ev]);
+      }
+    });
+  };
+  const dismissOverlayEvent = () => setOverlayQueue(q => q.slice(1));
+  const dismissToast        = (key) => setToastQueue(q => q.filter(t => t.key !== key));
 
   // Swap subject palette based on accent style
   const subjectsMap = getSubjects(tweaks.accentStyle);
@@ -126,9 +146,10 @@ function App() {
         />
       )}
 
-      {monsterQueue.length > 0 && (
-        <MonsterOverlay event={monsterQueue[0]} onClose={dismissMonsterEvent} />
+      {overlayQueue.length > 0 && (
+        <MonsterOverlay event={overlayQueue[0]} onClose={dismissOverlayEvent} />
       )}
+      <MonsterToastHost toasts={toastQueue} onDismiss={dismissToast} />
     </div>
   );
 }

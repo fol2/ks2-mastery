@@ -158,23 +158,39 @@ function Topbar({ activeSubject, onGoHome, onNavigate }) {
 }
 
 function SubjectHeader({ subject, activeTab, onTabChange, streak = 7, xp = 1240, profile, onEditProfile, onOpenCollection }) {
-  // For spelling, show the active monster chip instead of the static XP chip
+  // Render EVERY monster for the subject (spelling has three) so the header tells
+  // the real cohort story. Each chip subscribes to `monster:progress` so it can
+  // pulse on every recorded mastery without needing to plumb a callback.
   const pid = profile?.id || 'default';
-  let monsterChipData = null;
-  if (subject.id === 'spelling' && window.MonsterEngine && window.MONSTERS_BY_SUBJECT) {
-    const monsterIds = window.MONSTERS_BY_SUBJECT.spelling || [];
-    // Pick the one with highest mastered (active); fallback to first
-    let best = null;
-    let bestProg = null;
-    for (const mid of monsterIds) {
-      const prog = window.MonsterEngine.getMonsterProgress(pid, mid);
-      if (!bestProg || prog.mastered > bestProg.mastered) {
-        best = window.MONSTERS[mid];
-        bestProg = prog;
-      }
-    }
-    if (best) monsterChipData = { monster: best, progress: bestProg };
-  }
+  const [pulseTicks, setPulseTicks] = React.useState({});
+  React.useEffect(() => {
+    const handler = (evt) => {
+      const detail = evt?.detail || {};
+      if (!detail.monsterId) return;
+      // Ripple the direct monster AND any aggregates that depend on it.
+      const ids = [detail.monsterId, ...(detail.aggregates || [])];
+      setPulseTicks(prev => {
+        const next = { ...prev };
+        for (const id of ids) next[id] = (next[id] || 0) + 1;
+        return next;
+      });
+    };
+    window.addEventListener('monster:progress', handler);
+    return () => window.removeEventListener('monster:progress', handler);
+  }, []);
+
+  const monsterChips = React.useMemo(() => {
+    if (!window.MonsterEngine || !window.MONSTERS_BY_SUBJECT) return [];
+    const ids = window.MONSTERS_BY_SUBJECT[subject.id] || [];
+    return ids
+      .map(mid => {
+        const monster = window.MONSTERS[mid];
+        if (!monster) return null;
+        return { monster, progress: window.MonsterEngine.getMonsterProgress(pid, mid) };
+      })
+      .filter(Boolean);
+  }, [subject.id, pid, pulseTicks]);
+  const hasMonsters = monsterChips.length > 0;
   return (
     <header style={{
       background: TOKENS.panel,
@@ -212,12 +228,17 @@ function SubjectHeader({ subject, activeTab, onTabChange, streak = 7, xp = 1240,
           <Chip tone="accent" icon="flame" style={{ accent: subject.accent, accentTint: subject.accentTint }}>
             {streak} day streak
           </Chip>
-          {monsterChipData ? (
-            <MonsterChip
-              monster={monsterChipData.monster}
-              progress={monsterChipData.progress}
-              onClick={onOpenCollection}
-            />
+          {hasMonsters ? (
+            monsterChips.map(({ monster, progress }) => (
+              <MonsterChip
+                key={monster.id}
+                monster={monster}
+                progress={progress}
+                profileId={pid}
+                pulseKey={pulseTicks[monster.id] || 0}
+                onClick={onOpenCollection}
+              />
+            ))
           ) : (
             <Chip tone="accent" icon="spark" style={{ accent: subject.accent, accentTint: subject.accentTint }}>
               {xp.toLocaleString()} XP

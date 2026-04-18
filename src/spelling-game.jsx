@@ -100,8 +100,10 @@ function SpellingGame({
   function emitMonsterIfNeeded(outcome) {
     if (!outcome || !outcome.justMastered || !MonsterEngine || !onMonsterEvent) return;
     const monsterId = Engine.monsterForWord(cardState.word);
-    const event = MonsterEngine.recordMastery(profileId, monsterId, cardState.word.slug);
-    if (event) onMonsterEvent(event);
+    const events = MonsterEngine.recordMastery(profileId, monsterId, cardState.word.slug);
+    // recordMastery now always returns an array (possibly empty). The app-level
+    // queue handles both single events and arrays, so we can forward as-is.
+    if (events && events.length) onMonsterEvent(events);
   }
 
   function applyResult(result, opts) {

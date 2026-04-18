@@ -9,3 +9,7 @@
 # Claude Code local overrides
 .claude/settings.local.json
 .gstack/
+
+# Browser-verification artefacts
+.playwright-mcp/
+state-*.png
