@@ -11,8 +11,6 @@ Register these callback URLs exactly:
 - X: `https://ks2.eugnel.uk/api/auth/x/callback`
 - Apple: `https://ks2.eugnel.uk/api/auth/apple/callback`
 
-Instagram is not enabled for the public family login flow. Meta documents Instagram Login for Instagram professional accounts only, which does not fit the general parent-and-child sign-in model for this app.
-
 ## Cloudflare secrets
 
 Set provider secrets on the Worker with `wrangler secret put`.

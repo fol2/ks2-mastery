@@ -1,8 +1,5 @@
 import { randomToken, safeEmail, safeJsonParse, sha256 } from "./security.js";
 
-export const INSTAGRAM_PROFESSIONAL_ONLY_MESSAGE =
-  "Instagram sign-in is limited to Instagram professional accounts, so it is not enabled for the public family login flow.";
-
 function socialAuthEnabled(env) {
   return String(env.SOCIAL_LOGIN_WIRE_ENABLED || "true").toLowerCase() !== "false";
 }
@@ -154,10 +151,6 @@ function providerDefinitions(env, origin) {
         };
       },
     },
-    instagram: {
-      enabled: false,
-      disabledMessage: INSTAGRAM_PROFESSIONAL_ONLY_MESSAGE,
-    },
     x: {
       enabled: socialEnabled && Boolean(env.X_CLIENT_ID),
       clientId: String(env.X_CLIENT_ID || ""),
@@ -267,7 +260,6 @@ export function providerConfig(env) {
   return {
     google: socialEnabled && providers.google.enabled,
     facebook: socialEnabled && providers.facebook.enabled,
-    instagram: false,
     x: socialEnabled && providers.x.enabled,
     apple: socialEnabled && providers.apple.enabled,
     email: true,
