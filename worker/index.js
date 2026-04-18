@@ -213,11 +213,21 @@ app.post("/api/auth/register", async (c) => {
   if (existing) return validationError(c, "That email address is already registered.");
 
   const { salt, hash } = await hashPassword(password);
-  const user = await createEmailUser(c.env, {
-    email,
-    passwordHash: hash,
-    passwordSalt: salt,
-  });
+  let user;
+  try {
+    user = await createEmailUser(c.env, {
+      email,
+      passwordHash: hash,
+      passwordSalt: salt,
+    });
+  } catch (error) {
+    // UNIQUE(email) can still fire if a concurrent request passed the pre-check
+    // at the same time. Treat as the same validation error the pre-check gives.
+    if (String(error?.message || "").toLowerCase().includes("unique")) {
+      return validationError(c, "That email address is already registered.");
+    }
+    throw error;
+  }
 
   const sessionToken = randomToken(24);
   const sessionHash = await sha256(sessionToken);

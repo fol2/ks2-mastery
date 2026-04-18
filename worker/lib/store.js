@@ -315,11 +315,16 @@ export async function findOrCreateUserFromIdentity(env, payload) {
     return getUserById(env, emailUser.id);
   }
 
-  return createSocialUser(env, {
-    email,
-    provider,
-    providerSubject,
-  });
+  // Concurrent callbacks for the same provider subject race the create path.
+  // UNIQUE(provider, provider_subject) protects data integrity; on collision
+  // the other request already created the user, so re-fetch and return that.
+  try {
+    return await createSocialUser(env, { email, provider, providerSubject });
+  } catch (error) {
+    const raced = await getUserByProviderIdentity(env, provider, providerSubject);
+    if (raced) return raced;
+    throw error;
+  }
 }
 
 export async function ensureSubscription(env, userId) {

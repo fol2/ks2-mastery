@@ -187,6 +187,29 @@ function runtimeForChild(childId, childState) {
   return { engine, storage };
 }
 
+// Phaeton is an aggregate monster: its stage/level/caught state is derived
+// from the combined mastery of Inklet (Y3-4) and Glimmerbug (Y5-6). Mirrors
+// the legacy client-side AGGREGATES.phaeton computation in monster-engine.jsx.
+function derivePhaetonProgress(monsterState) {
+  const inkCount = (monsterState?.inklet?.mastered?.length) || 0;
+  const glimCount = (monsterState?.glimmerbug?.mastered?.length) || 0;
+  const combined = inkCount + glimCount;
+  const bothCaught = inkCount >= 10 && glimCount >= 10;
+  const bothMax = inkCount >= 100 && glimCount >= 100;
+  let stage = 0;
+  if (bothMax) stage = 4;
+  else if (bothCaught && combined >= 120) stage = 3;
+  else if (bothCaught && combined >= 60) stage = 2;
+  else if (bothCaught && combined >= 20) stage = 1;
+  return {
+    mastered: combined,
+    stage,
+    level: Math.min(10, Math.floor(combined / 20)),
+    caught: stage >= 1,
+    masteredList: [],
+  };
+}
+
 export function buildBootstrapStats(childId, childState) {
   const { engine } = runtimeForChild(childId, childState);
   const monsterState = childState.monsterState || {};
@@ -207,6 +230,7 @@ export function buildBootstrapStats(childId, childState) {
     monsters: {
       inklet: buildMonsterProgress(monsterState, "inklet"),
       glimmerbug: buildMonsterProgress(monsterState, "glimmerbug"),
+      phaeton: derivePhaetonProgress(monsterState),
     },
   };
 }
