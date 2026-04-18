@@ -33,7 +33,7 @@ function Panel({ children, style, title, eyebrow, action, soft, padded = true })
   );
 }
 
-function Btn({ variant = 'primary', icon, iconRight, children, accent, onClick, size = 'md', disabled, style, title }) {
+function Btn({ variant = 'primary', icon, iconRight, children, accent, onClick, size = 'md', disabled, style, title, type = 'button' }) {
   const accentColor = accent || TOKENS.ink;
   const sizes = {
     sm: { pad: '7px 12px', font: 13, iconSize: 14, height: 32 },
@@ -66,6 +66,7 @@ function Btn({ variant = 'primary', icon, iconRight, children, accent, onClick, 
 
   return (
     <button
+      type={type}
       onClick={onClick}
       disabled={disabled}
       title={title}

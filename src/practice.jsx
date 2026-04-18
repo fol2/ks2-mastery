@@ -1,20 +1,129 @@
 // PracticeScreen — the shared layout for all 6 subjects' Practice tab.
-// It renders subject-specific content via <QuestionBody subject={id} />.
+// Other subjects render a generic mock scaffold via QuestionBody. Spelling
+// has a fully-functional dashboard → game → summary flow (subject-specific
+// override; other subjects keep their current mock UI untouched).
 
 function PracticeScreen({ subject, profile, onMonsterEvent }) {
+  if (subject.id === 'spelling') {
+    return (
+      <SpellingPractice
+        subject={subject}
+        profile={profile}
+        onMonsterEvent={onMonsterEvent}
+      />
+    );
+  }
+  return (
+    <GenericPracticeMock
+      subject={subject}
+      profile={profile}
+      onMonsterEvent={onMonsterEvent}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Spelling — dashboard → game → summary flow. Session state is lifted here
+// so summary renders cleanly after game unmounts.
+// ---------------------------------------------------------------------------
+
+function SpellingPractice({ subject, profile, onMonsterEvent }) {
+  const Engine = window.SpellingEngine;
+  const profileId = (profile && profile.id) || 'default';
+
+  // phase: 'dashboard' | 'playing' | 'summary'
+  const [phase, setPhase] = React.useState('dashboard');
+  const [session, setSession] = React.useState(null);
+  const [sessionOpts, setSessionOpts] = React.useState({ showCloze: true, autoSpeak: true });
+  const [summary, setSummary] = React.useState(null);
+
+  function handleStart(newSession, opts) {
+    setSession(newSession);
+    setSessionOpts({
+      showCloze: opts && opts.showCloze !== false,
+      autoSpeak: opts && opts.autoSpeak !== false,
+    });
+    setSummary(null);
+    setPhase('playing');
+  }
+
+  function handleGameEnd(finalSummary) {
+    setSummary(finalSummary);
+    setPhase('summary');
+  }
+
+  function handleNewSession() {
+    setSession(null);
+    setSummary(null);
+    setPhase('dashboard');
+  }
+
+  function handleDrillMistakes({ mode, words }) {
+    if (!Array.isArray(words) || !words.length) return;
+    const modeId = mode === 'single' ? Engine.MODES.SINGLE : Engine.MODES.TROUBLE;
+    const result = Engine.createSession({
+      mode: modeId,
+      words: words,
+      profileId: profileId,
+    });
+    if (!result.ok) return;
+    setSession(result.session);
+    setSummary(null);
+    setPhase('playing');
+  }
+
+  if (phase === 'playing' && session) {
+    return (
+      <SpellingGame
+        session={session}
+        sessionOpts={sessionOpts}
+        subject={subject}
+        profile={profile}
+        onMonsterEvent={onMonsterEvent}
+        onEnd={handleGameEnd}
+      />
+    );
+  }
+
+  if (phase === 'summary' && summary) {
+    return (
+      <SpellingSummary
+        summary={summary}
+        subject={subject}
+        profile={profile}
+        onNewSession={handleNewSession}
+        onDrillMistakes={handleDrillMistakes}
+      />
+    );
+  }
+
+  return (
+    <SpellingDashboard
+      subject={subject}
+      profile={profile}
+      onStart={handleStart}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Generic mock — the original 2-column Practice scaffold for the other
+// five subjects. Untouched behaviour from the pre-production prototype.
+// ---------------------------------------------------------------------------
+
+function GenericPracticeMock({ subject, profile, onMonsterEvent }) {
   const [mode, setMode] = React.useState('smart');
-  const [answered, setAnswered] = React.useState(7);
-  const [correct, setCorrect] = React.useState(5);
-  const [timer, setTimer] = React.useState('04:12');
+  const [answered] = React.useState(7);
+  const [correct] = React.useState(5);
+  const [timer] = React.useState('04:12');
 
   const modes = {
-    spelling:    [['smart','Smart Review'],['sound','Sound-out'],['sight','Sight words'],['test','Spelling test']],
     arithmetic:  [['smart','Smart Review'],['skill','Skill Builder'],['speed','Speed Drill'],['clinic','Error Clinic'],['test','True Test Mode']],
     reasoning:   [['smart','Smart Review'],['skill','Skill Practice'],['worked','Worked Examples'],['faded','Faded Guidance'],['sats','SATs Single'],['satsset','SATs Mini-Set']],
     grammar:     [['learn','Learn a concept'],['smart','Smart mixed review'],['trouble','Weak concepts drill'],['surgery','Sentence surgery'],['builder','Sentence builder'],['worked','Worked examples'],['satsset','KS2-style test']],
     punctuation: [['smart','Smart Review'],['comma','Comma clinic'],['speech','Speech marks'],['apostrophe','Apostrophes'],['test','KS2-style test']],
     reading:     [['guided','Guided practice'],['core','Core practice'],['smart','Smart review'],['evidence','Evidence hunt'],['vocab','Vocabulary in context'],['inference','Inference lab'],['stamina','Stamina builder'],['test','True SATs-style paper']],
-  }[subject.id];
+  }[subject.id] || [['smart','Smart Review']];
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 18 }}>
@@ -178,3 +287,5 @@ function PracticeScreen({ subject, profile, onMonsterEvent }) {
 }
 
 window.PracticeScreen = PracticeScreen;
+window.SpellingPractice = SpellingPractice;
+window.GenericPracticeMock = GenericPracticeMock;

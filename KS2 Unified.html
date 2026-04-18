@@ -44,8 +44,14 @@
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
-  <!-- Data: word banks from the original Spelling file -->
+  <!-- Content: sentence banks (213 words across six banks) + enriched word list -->
   <script src="vendor/sentence-bank-01.js"></script>
+  <script src="vendor/sentence-bank-02.js"></script>
+  <script src="vendor/sentence-bank-03.js"></script>
+  <script src="vendor/sentence-bank-04.js"></script>
+  <script src="vendor/sentence-bank-05.js"></script>
+  <script src="vendor/sentence-bank-06.js"></script>
+  <script src="vendor/word-list.js"></script>
   <script src="vendor/word-meta.js"></script>
 
   <script type="text/babel" src="src/tokens.jsx"></script>
@@ -58,8 +64,15 @@
   <script type="text/babel" src="src/monster-overlay.jsx"></script>
   <script type="text/babel" src="src/collection.jsx"></script>
   <script type="text/babel" src="src/dashboard.jsx"></script>
+
+  <!-- Spelling engine stack: TTS core → settings UI → engine → dashboard → game → summary -->
+  <script src="src/tts-core.jsx"></script>
+  <script type="text/babel" src="src/tts-settings.jsx"></script>
   <script src="src/spelling-engine.jsx"></script>
+  <script type="text/babel" src="src/spelling-dashboard.jsx"></script>
   <script type="text/babel" src="src/spelling-game.jsx"></script>
+  <script type="text/babel" src="src/spelling-summary.jsx"></script>
+
   <script type="text/babel" src="src/questions.jsx"></script>
   <script type="text/babel" src="src/practice.jsx"></script>
   <script type="text/babel" src="src/tabs.jsx"></script>

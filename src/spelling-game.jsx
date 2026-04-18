@@ -1,306 +1,377 @@
-// SpellingGame — the real, working Practice experience for Spelling.
-// Plug into PracticeScreen via QuestionBody switch.
+// Spelling game — production three-phase flow (question → retry → correction)
+// driven by window.SpellingEngine. Renders the card, handles typing, TTS
+// playback, mistake drill chaining and end-of-round transitions.
+//
+// The engine owns all decisions. This component is a thin UI adapter:
+// the only state it adds is local input + phase-derived feedback rendering.
 
-function SpellingGame({ subject, profile, onMonsterEvent }) {
-  const E = window.SpellingEngine;
-  const pid = profile?.id || 'default';
-  const [session, setSession] = React.useState(() => E.createSession({ length: 10 }));
+function SpellingGame({
+  session: initialSession,
+  sessionOpts,
+  subject,
+  profile,
+  onMonsterEvent,
+  onEnd,
+}) {
+  const Engine = window.SpellingEngine;
+  const TTS = window.KS2_TTS;
+  const MonsterEngine = window.MonsterEngine;
+  const profileId = (profile && profile.id) || 'default';
+
+  // The engine mutates the session object in place, so we keep it in a ref.
+  const sessionRef = React.useRef(initialSession);
+
+  const [cardState, setCardState] = React.useState(() => {
+    const advance = Engine.advanceCard(sessionRef.current, profileId);
+    return {
+      done: advance.done,
+      slug: advance.slug,
+      word: advance.word,
+      prompt: advance.prompt,
+      phase: sessionRef.current.phase,
+    };
+  });
   const [typed, setTyped] = React.useState('');
-  const [state, setState] = React.useState('answering'); // answering | marked | done
-  const [lastMark, setLastMark] = React.useState(null);  // { correct, typed }
-  const [showWord, setShowWord] = React.useState(false);
-  const [masteredThisSession, setMasteredThisSession] = React.useState([]);
+  const [feedback, setFeedback] = React.useState(null);
+  const [locked, setLocked] = React.useState(false);
   const inputRef = React.useRef(null);
+  const advanceTimerRef = React.useRef(null);
 
-  const cur = session.items[session.index];
-  const isDone = state === 'done';
+  const showCloze = sessionOpts && sessionOpts.showCloze !== false;
+  const autoSpeak = sessionOpts && sessionOpts.autoSpeak !== false;
+  const session = sessionRef.current;
 
-  // Auto-speak when a new word appears
+  // Auto-speak whenever a new card arrives. Also warm up the next card's
+  // audio so remote TTS is ready by the time we get there.
   React.useEffect(() => {
-    if (!cur || state !== 'answering') return;
-    const id = setTimeout(() => E.speak(cur.word), 250);
-    return () => clearTimeout(id);
-  }, [session.index, state]);
+    if (!cardState.word || cardState.done) return;
+    inputRef.current && inputRef.current.focus();
+    if (!autoSpeak || !TTS || !TTS.isReady || !TTS.isReady()) return;
+    const timer = window.setTimeout(() => {
+      TTS.speak({ word: cardState.word, sentence: cardState.prompt.sentence });
+      const nextSlug = session.queue[0];
+      if (nextSlug) {
+        TTS.warmup({
+          word: Engine.wordBySlug(nextSlug),
+          sentence: Engine.peekPromptSentence(session, nextSlug),
+        });
+      }
+    }, 120);
+    return () => window.clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardState.slug, cardState.phase, autoSpeak]);
 
-  // Focus input on new question
-  React.useEffect(() => {
-    if (state === 'answering') inputRef.current?.focus();
-  }, [session.index, state]);
+  React.useEffect(() => () => {
+    if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
+    if (TTS && TTS.stop) TTS.stop();
+  }, []);
 
-  const submit = () => {
-    if (state !== 'answering' || !typed.trim()) return;
-    const m = E.grade(cur, typed);
-    setLastMark(m);
-    setState('marked');
-    const results = [...session.results, { word: cur.word, ...m, skipped: false }];
-    setSession(s => ({ ...s, results }));
-
-    // Update spaced-repetition mastery. If newly secure, feed the monster.
-    const prog = E.recordAnswer(pid, cur.word, m.correct);
-    if (prog.justMastered) {
-      const monsterId = E.monsterForWord(cur.word);
-      const ev = window.MonsterEngine.recordMastery(pid, monsterId, cur.word);
-      setMasteredThisSession(arr => [...arr, { word: cur.word, monsterId }]);
-      if (ev && onMonsterEvent) onMonsterEvent(ev);
-    }
-  };
-
-  const skip = () => {
-    if (state !== 'answering') return;
-    setLastMark({ correct: false, typed: '' });
-    setState('marked');
-    const results = [...session.results, { word: cur.word, typed: '', correct: false, skipped: true }];
-    setSession(s => ({ ...s, results }));
-  };
-
-  const next = () => {
-    const nextIdx = session.index + 1;
-    if (nextIdx >= session.items.length) {
-      setState('done');
-    } else {
-      setSession(s => ({ ...s, index: nextIdx }));
-      setTyped('');
-      setLastMark(null);
-      setShowWord(false);
-      setState('answering');
-    }
-  };
-
-  const restart = () => {
-    setSession(E.createSession({ length: 10 }));
-    setTyped(''); setLastMark(null); setShowWord(false); setState('answering');
-  };
-
-  const handleKey = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (state === 'answering') submit();
-      else if (state === 'marked') next();
-    }
-  };
-
-  // End-of-session summary
-  if (isDone) {
-    const correct = session.results.filter(r => r.correct).length;
-    const total = session.results.length;
-    const pct = Math.round((correct / total) * 100);
-    const masteredCount = masteredThisSession.length;
-    return (
-      <div>
-        <div style={{
-          textAlign: 'center', padding: '20px 0 28px',
-        }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 92, height: 92, borderRadius: '50%',
-            background: subject.accentTint, color: subject.accent,
-            marginBottom: 16,
-          }}>
-            <Icon name={pct >= 80 ? 'spark' : pct >= 50 ? 'check' : 'target'} size={46} />
-          </div>
-          <h2 style={{
-            margin: 0, fontFamily: TOKENS.fontSerif, fontSize: 32, fontWeight: 800,
-            color: TOKENS.ink, letterSpacing: '-0.02em',
-          }}>
-            {correct} of {total} correct
-          </h2>
-          <p style={{ margin: '6px 0 0', color: TOKENS.muted, fontSize: 15 }}>
-            {pct >= 80 ? "Brilliant session — ready for a stretch?" :
-             pct >= 50 ? "Solid work. Review the tricky ones and try again." :
-             "Good effort. Let's do these again with the hints on."}
-          </p>
-          {masteredCount > 0 && (
-            <div style={{
-              marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '8px 14px', background: '#FFF6DA', border: '1.5px solid #F0D897',
-              borderRadius: 999, fontSize: 13, fontWeight: 700, color: '#7A5A0F',
-            }}>
-              <Icon name="spark" size={14} /> {masteredCount} new word{masteredCount > 1 ? 's' : ''} mastered ·
-              your monster grew
-            </div>
-          )}
-        </div>
-
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-          gap: 10, marginBottom: 22,
-        }}>
-          {session.results.map((r, i) => (
-            <div key={i} style={{
-              padding: '10px 12px', borderRadius: 12,
-              border: `1px solid ${r.correct ? '#B9E3CC' : '#F3C4C1'}`,
-              background: r.correct ? TOKENS.goodSoft : TOKENS.badSoft,
-              display: 'flex', alignItems: 'center', gap: 10,
-            }}>
-              <Icon name={r.correct ? 'check' : 'close'} size={16}
-                color={r.correct ? TOKENS.good : TOKENS.bad} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{
-                  fontFamily: TOKENS.fontSerif, fontSize: 16, fontWeight: 700,
-                  color: TOKENS.ink,
-                }}>{r.word}</div>
-                {!r.correct && r.typed && (
-                  <div style={{ fontSize: 12, color: TOKENS.bad, fontFamily: TOKENS.fontMono }}>
-                    you wrote: {r.typed}
-                  </div>
-                )}
-                {r.skipped && <div style={{ fontSize: 12, color: TOKENS.muted }}>skipped</div>}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-          <Btn variant="secondary" icon="back" onClick={restart}>Try again</Btn>
-          <Btn variant="primary" accent={subject.accent} icon="spark" onClick={restart}>New session</Btn>
-        </div>
-      </div>
-    );
+  function playAudio(slow) {
+    if (!cardState.word || !TTS) return;
+    TTS.speak({
+      word: cardState.word,
+      sentence: cardState.prompt.sentence,
+      slow: Boolean(slow),
+    });
   }
 
-  // Answer / marked view
-  const marked = state === 'marked';
-  const correct = marked && lastMark?.correct;
-  const wrong = marked && !lastMark?.correct;
+  function advance(delayMs) {
+    if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
+    advanceTimerRef.current = window.setTimeout(() => {
+      const next = Engine.advanceCard(session, profileId);
+      if (next.done) {
+        const summary = Engine.finalise(session);
+        onEnd && onEnd(summary);
+        return;
+      }
+      setCardState({
+        done: false,
+        slug: next.slug,
+        word: next.word,
+        prompt: next.prompt,
+        phase: session.phase,
+      });
+      setTyped('');
+      setFeedback(null);
+      setLocked(false);
+    }, delayMs != null ? delayMs : 500);
+  }
+
+  function emitMonsterIfNeeded(outcome) {
+    if (!outcome || !outcome.justMastered || !MonsterEngine || !onMonsterEvent) return;
+    const monsterId = Engine.monsterForWord(cardState.word);
+    const event = MonsterEngine.recordMastery(profileId, monsterId, cardState.word.slug);
+    if (event) onMonsterEvent(event);
+  }
+
+  function applyResult(result, opts) {
+    if (!result) return;
+    if (result.empty) return;
+
+    setFeedback(result.feedback || null);
+    emitMonsterIfNeeded(result.outcome);
+
+    if (result.nextAction === 'advance') {
+      setLocked(true);
+      advance(opts && opts.delayMs);
+      return;
+    }
+
+    // retype → same word, new phase, clear input, refocus.
+    setCardState(prev => ({ ...prev, phase: session.phase }));
+    setTyped('');
+    setLocked(false);
+    window.setTimeout(() => { inputRef.current && inputRef.current.focus(); }, 0);
+
+    // After a wrong submit in question phase the legacy plays slow audio.
+    if (result.phase === 'retry' && autoSpeak && TTS && TTS.isReady && TTS.isReady()) {
+      window.setTimeout(() => {
+        TTS.speak({ word: cardState.word, sentence: cardState.prompt.sentence, slow: true });
+      }, 140);
+    }
+  }
+
+  function handleSubmit(event) {
+    if (event) event.preventDefault();
+    if (locked || !cardState.word) return;
+    const isTest = session.type === 'test';
+    const result = isTest
+      ? Engine.submitTest(session, profileId, typed)
+      : Engine.submitLearning(session, profileId, typed);
+    applyResult(result, { delayMs: isTest ? 320 : 500 });
+  }
+
+  function handleSkip() {
+    if (locked || session.type === 'test' || session.phase !== 'question') return;
+    Engine.skipCurrent(session);
+    setFeedback({
+      kind: 'info',
+      headline: 'Skipped for now.',
+      body: 'This word will come back again later in the round.',
+    });
+    setLocked(true);
+    advance(280);
+  }
+
+  function handleEnd() {
+    if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
+    if (TTS && TTS.stop) TTS.stop();
+    const summary = Engine.finalise(session);
+    onEnd && onEnd(summary);
+  }
+
+  if (cardState.done || !cardState.word) return null;
+
+  const accent = (subject && subject.accent) || TOKENS.ink;
+  const accentTint = (subject && subject.accentTint) || TOKENS.lineSoft;
+
+  const total = session.uniqueWords.length;
+  const progressValue = session.type === 'test'
+    ? session.results.length
+    : Object.values(session.status).filter(info => info.done).length;
+  const checked = session.type === 'test'
+    ? session.results.length
+    : Object.values(session.status).filter(info => info.attempts > 0).length;
+  const wrongCount = session.type === 'test'
+    ? session.results.filter(r => !r.correct).length
+    : Object.values(session.status).filter(info => info.hadWrong).length;
+  const progressLabel = session.type === 'test'
+    ? `${Math.min(session.results.length + 1, total)} of ${total} test words`
+    : `${checked} of ${total} checked · ${progressValue} secured · ${wrongCount} need extra care`;
+
+  const placeholder = session.type === 'test'
+    ? 'Type the spelling and move on'
+    : session.phase === 'retry'
+      ? 'Try once more from memory'
+      : session.phase === 'correction'
+        ? 'Type the correct spelling once'
+        : 'Type the spelling here';
+
+  const submitLabel = session.type === 'test'
+    ? 'Save and next'
+    : session.phase === 'correction'
+      ? 'Lock it in'
+      : session.phase === 'retry'
+        ? 'Try again'
+        : 'Submit';
+
+  const canSkip = session.type === 'learning' && session.phase === 'question' && !locked;
+  const stageLabel = Engine.stageLabel(Engine.getProgress(profileId, cardState.slug).stage);
 
   return (
-    <div>
-      {/* Progress strip */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14,
-        fontSize: 13, color: TOKENS.muted, fontWeight: 600,
-      }}>
-        <span>Word {session.index + 1} of {session.items.length}</span>
-        <div style={{ flex: 1 }}>
-          <ProgressBar value={session.index} max={session.items.length} accent={subject.accent} height={6} />
-        </div>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-      {/* Audio card */}
-      <div style={{
-        display: 'flex', gap: 14, alignItems: 'center', marginBottom: 14,
-        padding: '14px 16px', background: subject.accentTint,
-        border: `1px solid ${subject.accentSoft}`, borderRadius: 14,
-      }}>
-        <button
-          onClick={() => E.speak(cur.word)}
-          title="Hear the word"
-          style={{
-            width: 52, height: 52, borderRadius: '50%', border: 'none',
-            background: subject.accent, color: '#fff', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-          }}><Icon name="volume" size={22} /></button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em',
-            textTransform: 'uppercase', color: subject.accent, marginBottom: 2,
-          }}>Spell this word</div>
-          <div style={{
-            fontFamily: TOKENS.fontSerif, fontSize: 18, color: TOKENS.ink, lineHeight: 1.45,
-          }}>
-            "{cur.masked}"
-          </div>
-        </div>
-        <button
-          onClick={() => E.speak(cur.sentence, 0.9)}
-          title="Hear in a sentence"
-          style={{
-            padding: '8px 12px', borderRadius: 999,
-            background: 'transparent', color: subject.accent,
-            border: `1.5px solid ${subject.accent}`, cursor: 'pointer',
-            fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap',
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-          }}>
-          <Icon name="volume" size={14} /> In context
-        </button>
-      </div>
-
-      {/* Input */}
-      <div style={{ position: 'relative' }}>
-        <input
-          ref={inputRef}
-          value={marked ? (lastMark.typed || '(skipped)') : typed}
-          onChange={e => setTyped(e.target.value)}
-          onKeyDown={handleKey}
-          readOnly={marked}
-          placeholder="Type the word…"
-          autoComplete="off"
-          spellCheck="false"
-          style={{
-            width: '100%', padding: '18px 20px',
-            fontFamily: TOKENS.fontSerif, fontSize: 28, fontWeight: 500,
-            border: `2px solid ${correct ? TOKENS.good : wrong ? TOKENS.bad : TOKENS.line}`,
-            borderRadius: 16,
-            background: correct ? TOKENS.goodSoft : wrong ? TOKENS.badSoft : TOKENS.panel,
-            color: TOKENS.ink,
-            letterSpacing: '0.02em',
-            transition: 'all 0.2s',
-          }}
-        />
-        {marked && (
-          <div style={{
-            position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)',
-            width: 36, height: 36, borderRadius: '50%',
-            background: correct ? TOKENS.good : TOKENS.bad, color: '#fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Icon name={correct ? 'check' : 'close'} size={18} />
-          </div>
-        )}
-      </div>
-
-      {/* Feedback */}
-      {marked && (
+      {/* Session header */}
+      <Panel padded={false} style={{ overflow: 'hidden' }}>
         <div style={{
-          marginTop: 14, padding: '14px 16px',
-          background: correct ? TOKENS.goodSoft : TOKENS.badSoft,
-          border: `1px solid ${correct ? '#B9E3CC' : '#F3C4C1'}`,
-          borderRadius: 14, display: 'flex', gap: 10, alignItems: 'center',
+          padding: '14px 22px', background: accentTint,
+          borderBottom: `1px solid ${subject.accentSoft}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
         }}>
-          <div style={{ flex: 1, fontSize: 14, color: TOKENS.ink2 }}>
-            {correct ? (
-              <>
-                <strong style={{ color: TOKENS.good }}>Correct!</strong> The word is{' '}
-                <strong style={{ fontFamily: TOKENS.fontSerif, fontSize: 17 }}>{cur.word}</strong>.
-              </>
-            ) : (
-              <>
-                <strong style={{ color: TOKENS.bad }}>Not quite.</strong> The word is{' '}
-                <strong style={{ fontFamily: TOKENS.fontSerif, fontSize: 17 }}>{cur.word}</strong>.
-                {' '}You wrote "{lastMark.typed || 'nothing'}".
-              </>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Chip tone="accent" style={{ accent, accentTint: '#fff' }}>{session.label}</Chip>
+            <Chip tone="neutral">{cardState.word.yearLabel}</Chip>
+            <Chip tone="neutral">{stageLabel}</Chip>
+            {session.fallbackToSmart && <Chip tone="warn">No trouble words yet · running Smart</Chip>}
+          </div>
+          <Btn variant="ghost" icon="back" size="sm" onClick={handleEnd}>End session</Btn>
+        </div>
+        <div style={{ padding: '12px 22px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between',
+            fontSize: 12.5, color: TOKENS.muted, fontWeight: 600,
+          }}>
+            <span>{progressLabel}</span>
+            <span>{Math.round((progressValue / Math.max(1, total)) * 100)}%</span>
+          </div>
+          <ProgressBar value={progressValue} max={total} accent={accent} />
+        </div>
+      </Panel>
+
+      {/* Word card */}
+      <Panel padded={false} style={{ overflow: 'hidden' }}>
+        <div style={{ padding: '28px 32px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Btn
+              variant="accent"
+              accent={accent}
+              icon="volume"
+              onClick={() => playAudio(false)}
+            >
+              Play word
+            </Btn>
+            <Btn
+              variant="secondary"
+              icon="volume"
+              onClick={() => playAudio(true)}
+            >
+              Play slowly
+            </Btn>
+            {session.type === 'learning' && (
+              <span style={{ fontSize: 12.5, color: TOKENS.muted }}>
+                Family hidden during live recall.
+              </span>
             )}
           </div>
-          <button onClick={() => E.speak(cur.word)} style={{
-            background: 'transparent', border: 'none', cursor: 'pointer',
-            color: TOKENS.ink2, display: 'flex', alignItems: 'center', gap: 6,
-            fontSize: 12, fontWeight: 700,
-          }}>
-            <Icon name="volume" size={14} /> Hear again
-          </button>
-        </div>
-      )}
 
-      {/* Actions */}
-      <div style={{ display: 'flex', gap: 10, marginTop: 16, justifyContent: 'flex-end' }}>
-        {!marked ? (
-          <>
-            <Btn variant="ghost" icon="hint" onClick={() => setShowWord(s => !s)}>
-              {showWord ? `Hide: ${cur.word}` : 'Show the word'}
-            </Btn>
-            <Btn variant="secondary" onClick={skip}>Skip</Btn>
-            <Btn variant="primary" accent={subject.accent} iconRight="check" onClick={submit} disabled={!typed.trim()}>
-              Check
-            </Btn>
-          </>
-        ) : (
-          <Btn variant="primary" accent={subject.accent} iconRight="next" onClick={next}>
-            {session.index === session.items.length - 1 ? 'Finish' : 'Next word'}
-          </Btn>
-        )}
-      </div>
+          <div style={{
+            padding: '18px 20px',
+            background: TOKENS.panelSoft,
+            border: `1px solid ${TOKENS.line}`,
+            borderRadius: TOKENS.radiusSm,
+            fontSize: 19, lineHeight: 1.55,
+            fontFamily: TOKENS.fontSerif,
+            color: TOKENS.ink,
+            minHeight: 60,
+          }}>
+            {showCloze
+              ? cardState.prompt.cloze
+              : 'Use the audio buttons to hear the word and sentence.'}
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <input
+              ref={inputRef}
+              type="text"
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              placeholder={placeholder}
+              readOnly={locked}
+              aria-label="Type the spelling"
+              autoCapitalize="off" autoCorrect="off" autoComplete="off" spellCheck={false}
+              style={{
+                padding: '14px 16px',
+                fontSize: 18,
+                fontFamily: TOKENS.fontMono,
+                color: TOKENS.ink,
+                background: TOKENS.panel,
+                border: `2px solid ${
+                  feedback && feedback.kind === 'error' ? TOKENS.bad
+                  : feedback && feedback.kind === 'success' ? TOKENS.good
+                  : feedback && feedback.kind === 'info' ? accent
+                  : TOKENS.line
+                }`,
+                borderRadius: TOKENS.radiusSm,
+                outline: 'none',
+                transition: 'border-color 0.15s ease',
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {canSkip && (
+                  <Btn variant="ghost" icon="back" size="md" onClick={handleSkip}>Skip for now</Btn>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Btn
+                  type="submit"
+                  variant="primary"
+                  accent={accent}
+                  iconRight="next"
+                  disabled={locked}
+                >
+                  {submitLabel}
+                </Btn>
+              </div>
+            </div>
+          </form>
+
+          {feedback && <FeedbackBanner feedback={feedback} />}
+        </div>
+      </Panel>
     </div>
   );
 }
 
-window.SpellingGame = SpellingGame;
+function FeedbackBanner({ feedback }) {
+  const palette = feedback.kind === 'success'
+    ? { bg: TOKENS.goodSoft, fg: TOKENS.good, bd: '#B9E3CC' }
+    : feedback.kind === 'error'
+      ? { bg: TOKENS.badSoft,  fg: TOKENS.bad,  bd: '#F3C4C1' }
+      : { bg: TOKENS.warnSoft, fg: TOKENS.warn, bd: '#F0D8A8' };
+  return (
+    <div
+      role="status"
+      style={{
+        padding: '14px 18px',
+        background: palette.bg,
+        color: palette.fg,
+        border: `1px solid ${palette.bd}`,
+        borderRadius: TOKENS.radiusSm,
+        display: 'flex', flexDirection: 'column', gap: 8,
+      }}
+    >
+      <div style={{ fontWeight: 700, fontSize: 14.5 }}>{feedback.headline}</div>
+      {feedback.answer && (
+        <div style={{
+          fontFamily: TOKENS.fontSerif,
+          fontSize: 28,
+          fontWeight: 800,
+          color: TOKENS.ink,
+          letterSpacing: '-0.01em',
+        }}>
+          {feedback.answer}
+        </div>
+      )}
+      {feedback.body && (
+        <div style={{ fontSize: 13.5, color: TOKENS.ink2, lineHeight: 1.5 }}>{feedback.body}</div>
+      )}
+      {feedback.footer && (
+        <div style={{ fontSize: 12.5, color: TOKENS.muted, lineHeight: 1.5 }}>{feedback.footer}</div>
+      )}
+      {Array.isArray(feedback.familyWords) && feedback.familyWords.length > 1 && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+          {feedback.familyWords.map(w => (
+            <span key={w} style={{
+              padding: '3px 8px', borderRadius: 999, fontSize: 12, fontWeight: 700,
+              background: '#fff', color: TOKENS.ink2, border: `1px solid ${TOKENS.line}`,
+              fontFamily: TOKENS.fontMono,
+            }}>{w}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+Object.assign(window, { SpellingGame, FeedbackBanner });
