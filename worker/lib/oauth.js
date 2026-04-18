@@ -190,7 +190,7 @@ function providerDefinitions(env, origin) {
       usePkce: false,
       useNonce: true,
       extraAuthParams: {
-        response_mode: "query",
+        response_mode: "form_post",
       },
       async buildClientSecret() {
         return buildAppleClientSecret(env);

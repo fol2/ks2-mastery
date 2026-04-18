@@ -97,6 +97,13 @@ function sanitiseChildPayload(payload) {
   };
 }
 
+function parseSessionLength(rawLength, mode) {
+  if (mode === SPELLING_MODES.TEST) return 20;
+  if (rawLength === "all" || rawLength === Infinity) return Infinity;
+  const parsed = Number(rawLength);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 20;
+}
+
 function bootstrapPayload(bundle, env) {
   const selectedChild = bundle.selectedChild;
   const childStats = selectedChild
@@ -382,7 +389,7 @@ app.post("/api/spelling/sessions", requireSession, async (c) => {
   const result = createSessionForChild(bundle.selectedChild.id, bundle.childState, {
     mode,
     yearFilter: body.yearFilter || "all",
-    length: Number.isFinite(Number(body.length)) ? Number(body.length) : (body.length === Infinity ? Infinity : 20),
+    length: parseSessionLength(body.length, mode),
     words,
   });
 
