@@ -28,9 +28,6 @@ function PracticeScreen({ subject, profile, onMonsterEvent }) {
 // ---------------------------------------------------------------------------
 
 function SpellingPractice({ subject, profile, onMonsterEvent }) {
-  const Engine = window.SpellingEngine;
-  const profileId = (profile && profile.id) || 'default';
-
   // phase: 'dashboard' | 'playing' | 'summary'
   const [phase, setPhase] = React.useState('dashboard');
   const [session, setSession] = React.useState(null);
@@ -58,16 +55,15 @@ function SpellingPractice({ subject, profile, onMonsterEvent }) {
     setPhase('dashboard');
   }
 
-  function handleDrillMistakes({ mode, words }) {
+  async function handleDrillMistakes({ mode, words }) {
     if (!Array.isArray(words) || !words.length) return;
-    const modeId = mode === 'single' ? Engine.MODES.SINGLE : Engine.MODES.TROUBLE;
-    const result = Engine.createSession({
+    const modeId = mode === 'single' ? window.KS2Spelling.MODES.SINGLE : window.KS2Spelling.MODES.TROUBLE;
+    const nextSession = await window.KS2Spelling.startSession({
       mode: modeId,
-      words: words,
-      profileId: profileId,
-    });
-    if (!result.ok) return;
-    setSession(result.session);
+      words: words.map(word => word.slug),
+    }).catch(() => null);
+    if (!nextSession) return;
+    setSession(nextSession);
     setSummary(null);
     setPhase('playing');
   }

@@ -13,3 +13,9 @@
 # Browser-verification artefacts
 .playwright-mcp/
 state-*.png
+
+# Node / build output
+node_modules/
+public/
+.dist-worker/
+.wrangler/

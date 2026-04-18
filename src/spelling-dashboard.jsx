@@ -4,24 +4,24 @@
 // amend any scientific decisions.
 
 function loadSpellingPrefs(profileId) {
-  try {
-    var raw = localStorage.getItem('ks2-spell-prefs-' + (profileId || 'default'));
-    var parsed = raw ? JSON.parse(raw) : {};
-    return {
-      yearFilter: parsed.yearFilter || 'all',
-      roundLength: parsed.roundLength || '20',
-      showCloze: typeof parsed.showCloze === 'boolean' ? parsed.showCloze : true,
-      autoSpeak: typeof parsed.autoSpeak === 'boolean' ? parsed.autoSpeak : true,
-    };
-  } catch (err) {
-    return { yearFilter: 'all', roundLength: '20', showCloze: true, autoSpeak: true };
-  }
+  var prefs = window.KS2App?.getState()?.spelling?.prefs || {};
+  return {
+    yearFilter: prefs.yearFilter || 'all',
+    roundLength: prefs.roundLength || '20',
+    showCloze: typeof prefs.showCloze === 'boolean' ? prefs.showCloze : true,
+    autoSpeak: typeof prefs.autoSpeak === 'boolean' ? prefs.autoSpeak : true,
+  };
 }
 
 function saveSpellingPrefs(profileId, prefs) {
-  try {
-    localStorage.setItem('ks2-spell-prefs-' + (profileId || 'default'), JSON.stringify(prefs));
-  } catch (err) { /* ignore */ }
+  return window.KS2Spelling.savePrefs(prefs);
+}
+
+function statsForFilter(spellingStats, yearFilter) {
+  if (!spellingStats) return { total: 0, secure: 0, due: 0, fresh: 0, trouble: 0, accuracy: null };
+  if (yearFilter === 'y3-4') return spellingStats.y3_4 || spellingStats.all || { total: 0 };
+  if (yearFilter === 'y5-6') return spellingStats.y5_6 || spellingStats.all || { total: 0 };
+  return spellingStats.all || { total: 0, secure: 0, due: 0, fresh: 0, trouble: 0, accuracy: null };
 }
 
 function modeBlurb(mode) {
@@ -39,47 +39,57 @@ function modeStartLabel(mode) {
 }
 
 function SpellingDashboard({ subject, profile, onStart }) {
-  const Engine = window.SpellingEngine;
   const profileId = (profile && profile.id) || 'default';
+  const [appState, setAppState] = React.useState(() => window.KS2App.getState());
 
   const [mode, setMode] = React.useState('smart');
   const [prefs, setPrefs] = React.useState(() => loadSpellingPrefs(profileId));
-  const [stats, setStats] = React.useState(() => Engine.lifetimeStats(profileId, prefs.yearFilter));
+  const [stats, setStats] = React.useState(() => statsForFilter(appState.spelling && appState.spelling.stats, prefs.yearFilter));
   const [startError, setStartError] = React.useState('');
-
-  // Recompute stats whenever the year filter changes, on profile change, or
-  // after a session ends (parent re-mounts the dashboard).
-  React.useEffect(() => {
-    setStats(Engine.lifetimeStats(profileId, prefs.yearFilter));
-  }, [profileId, prefs.yearFilter]);
+  const [starting, setStarting] = React.useState(false);
 
   React.useEffect(() => {
-    saveSpellingPrefs(profileId, prefs);
-  }, [profileId, prefs]);
+    const unsubscribe = window.KS2App.subscribe(setAppState);
+    window.KS2Spelling.dashboard().catch(() => {});
+    return unsubscribe;
+  }, [profileId]);
+
+  React.useEffect(() => {
+    setPrefs(loadSpellingPrefs(profileId));
+  }, [appState.spelling, profileId]);
+
+  React.useEffect(() => {
+    setStats(statsForFilter(appState.spelling && appState.spelling.stats, prefs.yearFilter));
+  }, [appState.spelling, prefs.yearFilter]);
 
   function updatePref(key, value) {
-    setPrefs(prev => ({ ...prev, [key]: value }));
+    const next = { ...prefs, [key]: value };
+    setPrefs(next);
+    saveSpellingPrefs(profileId, next).catch(() => {});
   }
 
-  function handleStart() {
+  async function handleStart() {
     setStartError('');
+    setStarting(true);
     const length = prefs.roundLength === 'all' ? Infinity
       : (mode === 'test' ? 20 : Number(prefs.roundLength) || 20);
-    const result = Engine.createSession({
+    try {
+      const session = await window.KS2Spelling.startSession({
       mode: mode,
       yearFilter: prefs.yearFilter,
       length: length,
-      profileId: profileId,
+      words: [],
     });
-    if (!result.ok) {
-      setStartError(result.reason || 'Could not start a session.');
-      return;
+      onStart(session, {
+        fallbackToSmart: session.fallbackToSmart,
+        showCloze: prefs.showCloze,
+        autoSpeak: prefs.autoSpeak,
+      });
+    } catch (err) {
+      setStartError(err.message || 'Could not start a session.');
+    } finally {
+      setStarting(false);
     }
-    onStart(result.session, {
-      fallbackToSmart: result.fallback,
-      showCloze: prefs.showCloze,
-      autoSpeak: prefs.autoSpeak,
-    });
   }
 
   const yearOptions = [
@@ -207,9 +217,10 @@ function SpellingDashboard({ subject, profile, onStart }) {
             size="lg"
             accent={subject.accent}
             icon="play"
-            onClick={handleStart}
+            onClick={() => handleStart()}
+            disabled={starting}
           >
-            {modeStartLabel(mode)}
+            {starting ? 'Starting…' : modeStartLabel(mode)}
           </Btn>
           {startError && <Chip tone="bad">{startError}</Chip>}
         </div>

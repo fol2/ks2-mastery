@@ -10,8 +10,6 @@ function formatElapsed(ms) {
 }
 
 function SpellingSummary({ summary, subject, profile, onDrillMistakes, onNewSession }) {
-  const Engine = window.SpellingEngine;
-  const profileId = (profile && profile.id) || 'default';
   const mistakes = Array.isArray(summary.mistakes) ? summary.mistakes : [];
   const hasMistakes = mistakes.length > 0;
 

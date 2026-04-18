@@ -1,13 +1,14 @@
 // Profile setup — first-run onboarding + edit-in-place dialog.
-// Persists to localStorage under 'ks2-profile'.
+// Persists through the server-backed account API.
 
 const PROFILE_KEY = 'ks2-profile';
 
 function loadProfile() {
-  try { return JSON.parse(localStorage.getItem(PROFILE_KEY)); } catch { return null; }
+  return window.KS2App ? window.KS2App.getState().selectedChild : null;
 }
 function saveProfile(p) {
-  localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+  if (!window.KS2App || !p || !p.id) return Promise.resolve(p);
+  return window.KS2App.updateChild(p.id, p);
 }
 
 function initials(name) {
@@ -34,6 +35,7 @@ const GOALS = [
 
 function ProfileOnboarding({ onDone }) {
   const [step, setStep] = React.useState(0);
+  const [saving, setSaving] = React.useState(false);
   const [draft, setDraft] = React.useState({
     name: '',
     yearGroup: 'Y5',
@@ -183,10 +185,14 @@ function ProfileOnboarding({ onDone }) {
   const cur = steps[step];
   const last = step === steps.length - 1;
 
-  const commit = () => {
+  const commit = async () => {
     const profile = { ...draft, createdAt: Date.now() };
-    saveProfile(profile);
-    onDone(profile);
+    setSaving(true);
+    try {
+      await onDone(profile);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -230,8 +236,8 @@ function ProfileOnboarding({ onDone }) {
             ? <Btn variant="secondary" icon="back" onClick={() => setStep(step - 1)}>Back</Btn>
             : <span />}
           {last
-            ? <Btn variant="primary" icon="check" disabled={!cur.valid} onClick={commit}>Finish setup</Btn>
-            : <Btn variant="primary" iconRight="next" disabled={!cur.valid} onClick={() => setStep(step + 1)}>Continue</Btn>}
+            ? <Btn variant="primary" icon="check" disabled={!cur.valid || saving} onClick={commit}>{saving ? 'Saving…' : 'Finish setup'}</Btn>
+            : <Btn variant="primary" iconRight="next" disabled={!cur.valid || saving} onClick={() => setStep(step + 1)}>Continue</Btn>}
         </div>
       </div>
     </div>
@@ -240,7 +246,17 @@ function ProfileOnboarding({ onDone }) {
 
 function ProfileEditDialog({ profile, onSave, onClose }) {
   const [draft, setDraft] = React.useState(profile);
+  const [saving, setSaving] = React.useState(false);
   const update = (k, v) => setDraft(d => ({ ...d, [k]: v }));
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await saveProfile(draft);
+      onSave(draft);
+    } finally {
+      setSaving(false);
+    }
+  }
   return (
     <div style={{
       position: 'fixed', inset: 0, background: 'rgba(29,43,58,0.4)',
@@ -280,7 +296,87 @@ function ProfileEditDialog({ profile, onSave, onClose }) {
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 22 }}>
           <Btn variant="secondary" onClick={onClose}>Cancel</Btn>
-          <Btn variant="primary" icon="check" onClick={() => { saveProfile(draft); onSave(draft); }}>Save</Btn>
+          <Btn variant="primary" icon="check" disabled={saving} onClick={handleSave}>{saving ? 'Saving…' : 'Save'}</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ChildCreateDialog({ onCreate, onClose }) {
+  const [draft, setDraft] = React.useState({
+    name: '',
+    yearGroup: 'Y5',
+    avatarColor: AVATAR_COLORS[0],
+    goal: 'sats',
+    dailyMinutes: 15,
+    weakSubjects: [],
+  });
+  const [saving, setSaving] = React.useState(false);
+  const update = (k, v) => setDraft(d => ({ ...d, [k]: v }));
+  async function handleCreate() {
+    if (draft.name.trim().length < 2) return;
+    setSaving(true);
+    try {
+      await window.KS2App.createChild(draft);
+      onCreate && onCreate();
+    } finally {
+      setSaving(false);
+    }
+  }
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(29,43,58,0.4)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 2100, padding: 20,
+    }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: TOKENS.panel, borderRadius: TOKENS.radiusLg,
+        boxShadow: TOKENS.shadowLg, padding: 28, width: '100%', maxWidth: 520,
+      }}>
+        <h2 style={{ margin: '0 0 16px', fontFamily: TOKENS.fontSerif, fontSize: 22 }}>Add child profile</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <Field label="Name">
+            <input value={draft.name} onChange={e => update('name', e.target.value)}
+              style={{ padding: '10px 12px', border: `2px solid ${TOKENS.line}`, borderRadius: 10, fontSize: 14 }} />
+          </Field>
+          <Field label="Year group">
+            <Select value={draft.yearGroup} onChange={v => update('yearGroup', v)}
+              options={YEAR_GROUPS.map(y => ({ value: y.v, label: y.label }))} />
+          </Field>
+          <Field label="Goal">
+            <Select value={draft.goal} onChange={v => update('goal', v)}
+              options={GOALS.map(g => ({ value: g.v, label: g.label }))} />
+          </Field>
+          <Field label="Daily target (minutes)">
+            <input type="range" min="5" max="60" step="5"
+              value={draft.dailyMinutes}
+              onChange={e => update('dailyMinutes', parseInt(e.target.value))}
+              style={{ accentColor: TOKENS.ink }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: TOKENS.muted }}>
+              <span>5 min</span>
+              <strong style={{ color: TOKENS.ink }}>{draft.dailyMinutes} min/day</strong>
+              <span>60 min</span>
+            </div>
+          </Field>
+          <Field label="Avatar colour">
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {AVATAR_COLORS.map(c => (
+                <button key={c} onClick={() => update('avatarColor', c)}
+                  style={{
+                    width: 32, height: 32, borderRadius: 10, background: c,
+                    border: draft.avatarColor === c ? `3px solid ${TOKENS.ink}` : `3px solid transparent`,
+                    cursor: 'pointer',
+                  }} />
+              ))}
+            </div>
+          </Field>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 22 }}>
+          <Btn variant="secondary" onClick={onClose}>Cancel</Btn>
+          <Btn variant="primary" icon="check" disabled={saving || draft.name.trim().length < 2} onClick={handleCreate}>
+            {saving ? 'Creating…' : 'Create'}
+          </Btn>
         </div>
       </div>
     </div>
@@ -288,6 +384,6 @@ function ProfileEditDialog({ profile, onSave, onClose }) {
 }
 
 Object.assign(window, {
-  ProfileOnboarding, ProfileEditDialog,
+  ProfileOnboarding, ProfileEditDialog, ChildCreateDialog,
   loadProfile, saveProfile, initials, AVATAR_COLORS, YEAR_GROUPS, GOALS,
 });

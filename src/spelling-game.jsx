@@ -13,53 +13,31 @@ function SpellingGame({
   onMonsterEvent,
   onEnd,
 }) {
-  const Engine = window.SpellingEngine;
   const TTS = window.KS2_TTS;
-  const MonsterEngine = window.MonsterEngine;
-  const profileId = (profile && profile.id) || 'default';
-
-  // The engine mutates the session object in place, so we keep it in a ref.
-  const sessionRef = React.useRef(initialSession);
-
-  const [cardState, setCardState] = React.useState(() => {
-    const advance = Engine.advanceCard(sessionRef.current, profileId);
-    return {
-      done: advance.done,
-      slug: advance.slug,
-      word: advance.word,
-      prompt: advance.prompt,
-      phase: sessionRef.current.phase,
-    };
-  });
+  const [session, setSession] = React.useState(initialSession);
   const [typed, setTyped] = React.useState('');
   const [feedback, setFeedback] = React.useState(null);
   const [locked, setLocked] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
   const inputRef = React.useRef(null);
   const advanceTimerRef = React.useRef(null);
 
   const showCloze = sessionOpts && sessionOpts.showCloze !== false;
   const autoSpeak = sessionOpts && sessionOpts.autoSpeak !== false;
-  const session = sessionRef.current;
+  const currentCard = session && session.currentCard;
 
   // Auto-speak whenever a new card arrives. Also warm up the next card's
-  // audio so remote TTS is ready by the time we get there.
+  // audio so browser dictation feels immediate.
   React.useEffect(() => {
-    if (!cardState.word || cardState.done) return;
+    if (!currentCard || !currentCard.word) return;
     inputRef.current && inputRef.current.focus();
     if (!autoSpeak || !TTS || !TTS.isReady || !TTS.isReady()) return;
     const timer = window.setTimeout(() => {
-      TTS.speak({ word: cardState.word, sentence: cardState.prompt.sentence });
-      const nextSlug = session.queue[0];
-      if (nextSlug) {
-        TTS.warmup({
-          word: Engine.wordBySlug(nextSlug),
-          sentence: Engine.peekPromptSentence(session, nextSlug),
-        });
-      }
+      TTS.speak({ word: currentCard.word, sentence: currentCard.prompt.sentence });
     }, 120);
     return () => window.clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardState.slug, cardState.phase, autoSpeak]);
+  }, [currentCard && currentCard.slug, session && session.phase, autoSpeak]);
 
   React.useEffect(() => () => {
     if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
@@ -67,118 +45,150 @@ function SpellingGame({
   }, []);
 
   function playAudio(slow) {
-    if (!cardState.word || !TTS) return;
+    if (!currentCard || !currentCard.word || !TTS) return;
     TTS.speak({
-      word: cardState.word,
-      sentence: cardState.prompt.sentence,
+      word: currentCard.word,
+      sentence: currentCard.prompt.sentence,
       slow: Boolean(slow),
     });
   }
 
   function advance(delayMs) {
     if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
-    advanceTimerRef.current = window.setTimeout(() => {
-      const next = Engine.advanceCard(session, profileId);
-      if (next.done) {
-        const summary = Engine.finalise(session);
-        onEnd && onEnd(summary);
-        return;
+    advanceTimerRef.current = window.setTimeout(async () => {
+      try {
+        const next = await window.KS2Spelling.advance(session.id);
+        if (next.done) {
+          onEnd && onEnd(next.summary);
+          return;
+        }
+        setSession(next.session);
+        setTyped('');
+        setFeedback(null);
+        setLocked(false);
+        setBusy(false);
+      } catch (err) {
+        setFeedback({
+          kind: 'error',
+          headline: 'Connection issue.',
+          body: err.message || 'Could not load the next spelling card.',
+        });
+        setLocked(false);
+        setBusy(false);
       }
-      setCardState({
-        done: false,
-        slug: next.slug,
-        word: next.word,
-        prompt: next.prompt,
-        phase: session.phase,
-      });
-      setTyped('');
-      setFeedback(null);
-      setLocked(false);
     }, delayMs != null ? delayMs : 500);
   }
 
-  function emitMonsterIfNeeded(outcome) {
-    if (!outcome || !outcome.justMastered || !MonsterEngine || !onMonsterEvent) return;
-    const monsterId = Engine.monsterForWord(cardState.word);
-    const events = MonsterEngine.recordMastery(profileId, monsterId, cardState.word.slug);
-    // recordMastery now always returns an array (possibly empty). The app-level
-    // queue handles both single events and arrays, so we can forward as-is.
-    if (events && events.length) onMonsterEvent(events);
+  function emitMonsterIfNeeded(event) {
+    if (!event || !onMonsterEvent) return;
+    onMonsterEvent({
+      ...event,
+      monster: window.MONSTERS && window.MONSTERS[event.monsterId],
+    });
   }
 
-  function applyResult(result, opts) {
-    if (!result) return;
-    if (result.empty) return;
+  function applyResult(payload, opts) {
+    if (!payload || !payload.result) return;
+    if (payload.result.empty) return;
 
-    setFeedback(result.feedback || null);
-    emitMonsterIfNeeded(result.outcome);
+    setFeedback(payload.result.feedback || null);
+    emitMonsterIfNeeded(payload.monsterEvent);
+    if (payload.session) {
+      setSession((prev) => ({
+        ...prev,
+        ...payload.session,
+        currentCard: payload.session.currentCard || (prev && prev.currentCard) || null,
+      }));
+    }
 
-    if (result.nextAction === 'advance') {
+    if (payload.result.nextAction === 'advance') {
       setLocked(true);
+      setBusy(true);
       advance(opts && opts.delayMs);
       return;
     }
 
     // retype → same word, new phase, clear input, refocus.
-    setCardState(prev => ({ ...prev, phase: session.phase }));
     setTyped('');
     setLocked(false);
+    setBusy(false);
     window.setTimeout(() => { inputRef.current && inputRef.current.focus(); }, 0);
 
     // After a wrong submit in question phase the legacy plays slow audio.
-    if (result.phase === 'retry' && autoSpeak && TTS && TTS.isReady && TTS.isReady()) {
+    if (payload.result.phase === 'retry' && autoSpeak && TTS && TTS.isReady && TTS.isReady()) {
       window.setTimeout(() => {
-        TTS.speak({ word: cardState.word, sentence: cardState.prompt.sentence, slow: true });
+        TTS.speak({ word: currentCard.word, sentence: currentCard.prompt.sentence, slow: true });
       }, 140);
     }
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     if (event) event.preventDefault();
-    if (locked || !cardState.word) return;
+    if (locked || busy || !currentCard || !currentCard.word) return;
+    setBusy(true);
     const isTest = session.type === 'test';
-    const result = isTest
-      ? Engine.submitTest(session, profileId, typed)
-      : Engine.submitLearning(session, profileId, typed);
-    applyResult(result, { delayMs: isTest ? 320 : 500 });
+    try {
+      const result = await window.KS2Spelling.submit(session.id, typed);
+      applyResult(result, { delayMs: isTest ? 320 : 500 });
+    } catch (err) {
+      setBusy(false);
+      setFeedback({
+        kind: 'error',
+        headline: 'Could not save that answer.',
+        body: err.message || 'Please try again.',
+      });
+    }
   }
 
-  function handleSkip() {
-    if (locked || session.type === 'test' || session.phase !== 'question') return;
-    Engine.skipCurrent(session);
-    setFeedback({
-      kind: 'info',
-      headline: 'Skipped for now.',
-      body: 'This word will come back again later in the round.',
-    });
-    setLocked(true);
-    advance(280);
+  async function handleSkip() {
+    if (locked || busy || session.type === 'test' || session.phase !== 'question') return;
+    setBusy(true);
+    try {
+      const payload = await window.KS2Spelling.skip(session.id);
+      setFeedback({
+        kind: 'info',
+        headline: 'Skipped for now.',
+        body: 'This word will come back again later in the round.',
+      });
+      if (payload.session) setSession(prev => ({ ...prev, ...payload.session }));
+      setLocked(true);
+      advance(280);
+    } catch (err) {
+      setBusy(false);
+      setFeedback({
+        kind: 'error',
+        headline: 'Could not skip this word.',
+        body: err.message || 'Please try again.',
+      });
+    }
   }
 
   function handleEnd() {
     if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
     if (TTS && TTS.stop) TTS.stop();
-    const summary = Engine.finalise(session);
-    onEnd && onEnd(summary);
+    onEnd && onEnd({
+      label: session.label,
+      cards: [
+        { label: 'Session ended early', value: '—', sub: 'No final score saved' },
+        { label: 'Words checked', value: session.progress.checked, sub: 'Cards attempted before exit' },
+      ],
+      message: 'This session was ended early. Your saved progress up to the latest submission has been kept.',
+      mistakes: [],
+      elapsedMs: 0,
+    });
   }
 
-  if (cardState.done || !cardState.word) return null;
+  if (!currentCard || !currentCard.word) return null;
 
   const accent = (subject && subject.accent) || TOKENS.ink;
   const accentTint = (subject && subject.accentTint) || TOKENS.lineSoft;
 
-  const total = session.uniqueWords.length;
-  const progressValue = session.type === 'test'
-    ? session.results.length
-    : Object.values(session.status).filter(info => info.done).length;
-  const checked = session.type === 'test'
-    ? session.results.length
-    : Object.values(session.status).filter(info => info.attempts > 0).length;
-  const wrongCount = session.type === 'test'
-    ? session.results.filter(r => !r.correct).length
-    : Object.values(session.status).filter(info => info.hadWrong).length;
+  const total = session.progress.total;
+  const progressValue = session.progress.done;
+  const checked = session.progress.checked;
+  const wrongCount = session.progress.wrongCount;
   const progressLabel = session.type === 'test'
-    ? `${Math.min(session.results.length + 1, total)} of ${total} test words`
+    ? `${Math.min(checked + 1, total)} of ${total} test words`
     : `${checked} of ${total} checked · ${progressValue} secured · ${wrongCount} need extra care`;
 
   const placeholder = session.type === 'test'
@@ -194,11 +204,11 @@ function SpellingGame({
     : session.phase === 'correction'
       ? 'Lock it in'
       : session.phase === 'retry'
-        ? 'Try again'
-        : 'Submit';
+      ? 'Try again'
+      : 'Submit';
 
   const canSkip = session.type === 'learning' && session.phase === 'question' && !locked;
-  const stageLabel = Engine.stageLabel(Engine.getProgress(profileId, cardState.slug).stage);
+  const stageLabel = window.KS2Spelling.stageLabel(currentCard.progressStage || 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -212,7 +222,7 @@ function SpellingGame({
         }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <Chip tone="accent" style={{ accent, accentTint: '#fff' }}>{session.label}</Chip>
-            <Chip tone="neutral">{cardState.word.yearLabel}</Chip>
+            <Chip tone="neutral">{currentCard.word.yearLabel}</Chip>
             <Chip tone="neutral">{stageLabel}</Chip>
             {session.fallbackToSmart && <Chip tone="warn">No trouble words yet · running Smart</Chip>}
           </div>
@@ -267,7 +277,7 @@ function SpellingGame({
             minHeight: 60,
           }}>
             {showCloze
-              ? cardState.prompt.cloze
+              ? currentCard.prompt.cloze
               : 'Use the audio buttons to hear the word and sentence.'}
           </div>
 
@@ -278,7 +288,7 @@ function SpellingGame({
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
               placeholder={placeholder}
-              readOnly={locked}
+              readOnly={locked || busy}
               aria-label="Type the spelling"
               autoCapitalize="off" autoCorrect="off" autoComplete="off" spellCheck={false}
               style={{
@@ -310,9 +320,9 @@ function SpellingGame({
                   variant="primary"
                   accent={accent}
                   iconRight="next"
-                  disabled={locked}
+                  disabled={locked || busy}
                 >
-                  {submitLabel}
+                  {busy ? 'Working…' : submitLabel}
                 </Btn>
               </div>
             </div>
