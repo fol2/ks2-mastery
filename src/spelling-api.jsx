@@ -18,12 +18,21 @@ const KS2Spelling = (() => {
     return payload.session;
   }
 
+  // Rebroadcasts the legacy `monster:progress` DOM event that shell.jsx and
+  // dashboard.jsx subscribe to for live-pulsing monster chips. The server now
+  // owns mastery tracking, so we dispatch here after any response that could
+  // have mutated monster counts.
+  function emitProgress(detail) {
+    window.dispatchEvent(new CustomEvent('monster:progress', { detail: detail || null }));
+  }
+
   async function submit(sessionId, typed) {
     const payload = await window.KS2App.requestJson(`/api/spelling/sessions/${encodeURIComponent(sessionId)}/submit`, {
       method: 'POST',
       body: JSON.stringify({ typed }),
     });
     if (payload.monsters) window.KS2App.setSpellingData({ monsters: payload.monsters });
+    emitProgress(payload.monsterEvent);
     return payload;
   }
 
@@ -44,6 +53,7 @@ const KS2Spelling = (() => {
         monsters: payload.monsters,
         spelling: payload.spelling,
       });
+      emitProgress(null);
     }
     return payload;
   }
@@ -56,13 +66,6 @@ const KS2Spelling = (() => {
     return `Next review in ${interval} day${interval === 1 ? '' : 's'}`;
   }
 
-  function progressForSlug(slug) {
-    const selectedChild = window.KS2App.getState().selectedChild;
-    const progress = window.KS2App.getState().spelling?.stats?.all;
-    if (!selectedChild || !progress || !slug) return { stage: 0 };
-    return { stage: 0 };
-  }
-
   return {
     dashboard,
     savePrefs,
@@ -71,7 +74,6 @@ const KS2Spelling = (() => {
     skip,
     advance,
     stageLabel,
-    progressForSlug,
     MODES: {
       SMART: 'smart',
       TROUBLE: 'trouble',

@@ -1,8 +1,6 @@
 // Profile setup — first-run onboarding + edit-in-place dialog.
 // Persists through the server-backed account API.
 
-const PROFILE_KEY = 'ks2-profile';
-
 function loadProfile() {
   return window.KS2App ? window.KS2App.getState().selectedChild : null;
 }
