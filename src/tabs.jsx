@@ -74,6 +74,10 @@ function MasteryChart({ accent }) {
 }
 
 function ProfilesScreen({ subject, profile, onEditProfile }) {
+  const [appState, setAppState] = React.useState(() => window.KS2App.getState());
+  const [addingChild, setAddingChild] = React.useState(false);
+  React.useEffect(() => window.KS2App.subscribe(setAppState), []);
+  const children = appState.children || [];
   const name = profile?.name || 'Learner';
   const yr = profile?.yearGroup || 'Y5';
   const goalLabel = (GOALS.find(g => g.v === profile?.goal) || GOALS[0]).label;
@@ -82,6 +86,47 @@ function ProfilesScreen({ subject, profile, onEditProfile }) {
     : 1;
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+      <Panel eyebrow="Family account" title="Children" action={
+        <Btn variant="secondary" icon="plus" size="sm" disabled={children.length >= 4} onClick={() => setAddingChild(true)}>
+          Add child
+        </Btn>
+      }>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {children.map(child => {
+            const active = profile && child.id === profile.id;
+            return (
+              <div key={child.id} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                gap: 12, padding: '12px 14px', borderRadius: 14,
+                background: active ? subject.accentTint : TOKENS.panelSoft,
+                border: `1px solid ${active ? subject.accentSoft : TOKENS.line}`,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{
+                    width: 42, height: 42, borderRadius: 14,
+                    background: child.avatarColor || subject.accent, color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: TOKENS.fontSerif, fontWeight: 800, fontSize: 15,
+                  }}>{initials(child.name)}</div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14.5, color: TOKENS.ink }}>{child.name}</div>
+                    <div style={{ fontSize: 12.5, color: TOKENS.muted }}>{child.yearGroup} · {(GOALS.find(g => g.v === child.goal) || GOALS[0]).label}</div>
+                  </div>
+                </div>
+                {active ? (
+                  <Chip tone="accent" style={{ accent: subject.accent, accentTint: '#fff' }}>Active</Chip>
+                ) : (
+                  <Btn variant="secondary" size="sm" onClick={() => window.KS2App.selectChild(child.id)}>Switch</Btn>
+                )}
+              </div>
+            );
+          })}
+          <div style={{ fontSize: 12.5, color: TOKENS.muted }}>
+            {children.length} of 4 child profiles in use. Billing is wired, but the app is currently free.
+          </div>
+        </div>
+      </Panel>
+
       <Panel eyebrow="Learner profile" title={name} action={
         <Btn variant="secondary" icon="cog" size="sm" onClick={onEditProfile}>Edit</Btn>
       }>
@@ -144,6 +189,7 @@ function ProfilesScreen({ subject, profile, onEditProfile }) {
           ))}
         </ul>
       </Panel>
+      {addingChild && <ChildCreateDialog onCreate={() => setAddingChild(false)} onClose={() => setAddingChild(false)} />}
     </div>
   );
 }

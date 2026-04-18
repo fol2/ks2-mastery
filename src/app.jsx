@@ -13,7 +13,6 @@ function App() {
   const [tab, setTab]     = React.useState(() => localStorage.getItem('ks2-tab')   || 'practice');
   const [tweaks, setTweaks] = React.useState(DEFAULTS);
   const [tweaksOpen, setTweaksOpen] = React.useState(false);
-  const [profile, setProfile] = React.useState(() => loadProfile());
   const [editingProfile, setEditingProfile] = React.useState(false);
   // Two separate monster surfaces:
   //   overlayQueue — fullscreen celebrations (caught / evolve / mega), one-at-a-time
@@ -23,6 +22,7 @@ function App() {
   const [overlayQueue, setOverlayQueue] = React.useState([]);
   const [toastQueue, setToastQueue]     = React.useState([]);
   const toastKeyRef = React.useRef(0);
+  const [appState, setAppState] = React.useState(() => window.KS2App.getState());
   const enqueueMonsterEvent = (payload) => {
     if (!payload) return;
     const events = Array.isArray(payload) ? payload : [payload];
@@ -47,6 +47,11 @@ function App() {
 
   React.useEffect(() => { localStorage.setItem('ks2-route', route); }, [route]);
   React.useEffect(() => { localStorage.setItem('ks2-tab', tab); },   [tab]);
+  React.useEffect(() => {
+    const unsubscribe = window.KS2App.subscribe(setAppState);
+    window.KS2App.bootstrap().catch(() => {});
+    return unsubscribe;
+  }, []);
 
   // Host edit-mode protocol
   React.useEffect(() => {
@@ -68,10 +73,19 @@ function App() {
   };
 
   const subject = route !== 'home' && route !== 'collection' ? subjectsMap[route] : null;
+  const profile = appState.selectedChild;
 
-  // First-run onboarding
+  if (appState.booting) {
+    return <LoadingScreen message="Loading your secured study space." />;
+  }
+
+  if (!appState.auth.signedIn) {
+    return <AuthScreen />;
+  }
+
+  // First signed-in child onboarding
   if (!profile) {
-    return <ProfileOnboarding onDone={p => setProfile(p)} />;
+    return <ProfileOnboarding onDone={async (p) => { await window.KS2App.createChild(p); }} />;
   }
   const navPattern = tweaks.navPattern;
 
@@ -141,7 +155,7 @@ function App() {
       {editingProfile && (
         <ProfileEditDialog
           profile={profile}
-          onSave={p => { setProfile(p); setEditingProfile(false); }}
+          onSave={() => { setEditingProfile(false); }}
           onClose={() => setEditingProfile(false)}
         />
       )}

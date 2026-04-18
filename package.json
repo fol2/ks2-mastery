@@ -1,0 +1,20 @@
+{
+  "name": "ks2-mastery",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:data": "node ./scripts/build-spelling-data.mjs",
+    "build:runtime": "node ./scripts/build-spelling-runtime.mjs",
+    "build:public": "node ./scripts/build-public.mjs",
+    "build": "npm run build:data && npm run build:runtime && npm run build:public",
+    "check": "npm run build && npx wrangler deploy --dry-run",
+    "deploy": "npm run build && npx wrangler deploy"
+  },
+  "dependencies": {
+    "hono": "^4.8.5"
+  },
+  "devDependencies": {
+    "wrangler": "^4.42.0"
+  }
+}
