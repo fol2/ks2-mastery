@@ -7,12 +7,13 @@
 *.swp
 
 # Claude Code local overrides
-.claude/settings.local.json
+.claude/
 .gstack/
 
 # Browser-verification artefacts
 .playwright-mcp/
 state-*.png
+page-*.yml
 
 # Node / build output
 node_modules/
