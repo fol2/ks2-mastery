@@ -29,17 +29,11 @@ function requestMeta(c) {
   });
 }
 
-function formatErrorStack(error) {
-  if (!error?.stack) return undefined;
-  return String(error.stack)
-    .split("\n")
-    .slice(0, 8)
-    .join("\n");
-}
-
 // Light scrub to keep the runbook's "no cookies/passwords in logs" promise
 // from being quietly broken by a thrown error whose message happens to
-// embed an email, bearer token, or authorisation header.
+// embed an email, bearer token, or authorisation header. Applied to both
+// errorMessage and the stack trace, because most JS engines repeat the
+// message verbatim on stack line 1.
 const EMAIL_PATTERN = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
 const BEARER_PATTERN = /(?:bearer|token|authorization)\s*[=:]?\s*[A-Za-z0-9._\-+=/]{16,}/gi;
 
@@ -48,6 +42,16 @@ function redactErrorMessage(raw) {
   return String(raw)
     .replace(EMAIL_PATTERN, "[redacted-email]")
     .replace(BEARER_PATTERN, "[redacted-secret]");
+}
+
+function formatErrorStack(error) {
+  if (!error?.stack) return undefined;
+  return redactErrorMessage(
+    String(error.stack)
+      .split("\n")
+      .slice(0, 8)
+      .join("\n"),
+  );
 }
 
 function emit(level, event, fields) {
@@ -120,6 +124,11 @@ export function logRequestCompletion(c, response, startedAt) {
   });
 }
 
+// Tables the application assumes exist. If any are missing, migrations
+// have not applied and /api/* routes will 500 even though a SELECT 1
+// succeeds. Keep this list aligned with migrations/0001_initial_schema.sql.
+const REQUIRED_TABLES = ["users", "sessions", "children"];
+
 export async function checkDatabaseHealth(env) {
   if (!env.DB) {
     return { ok: false, detail: "D1 binding is not configured." };
@@ -127,11 +136,23 @@ export async function checkDatabaseHealth(env) {
 
   try {
     await env.DB.prepare("SELECT 1 AS ok").first();
+    const row = await env.DB
+      .prepare(
+        `SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name IN (${REQUIRED_TABLES.map(() => "?").join(",")})`,
+      )
+      .bind(...REQUIRED_TABLES)
+      .first();
+    if (Number(row?.n ?? 0) < REQUIRED_TABLES.length) {
+      return { ok: false, detail: "D1 is reachable but required tables are missing." };
+    }
     return { ok: true, detail: "D1 responded to a ping query." };
   } catch (error) {
-    return {
-      ok: false,
-      detail: error?.message || "D1 ping failed.",
-    };
+    // Surface a generic detail outward; the real error still reaches
+    // Cloudflare logs as a structured entry so operators can debug.
+    emit("error", "health.database.failed", {
+      errorName: error?.name || "Error",
+      errorMessage: redactErrorMessage(error?.message || String(error)),
+    });
+    return { ok: false, detail: "D1 ping failed." };
   }
 }
