@@ -85,6 +85,49 @@ describe("auth protection", () => {
     expect(payload.message).toMatch(/too many sign-in attempts/i);
   });
 
+  it("does not count failed Turnstile checks against login throttles", async () => {
+    await app.fetch(jsonRequest("/api/auth/register", {
+      email: "login-human@example.test",
+      password: "long-enough-password",
+    }), requestEnv());
+
+    const ipHeaders = { "CF-Connecting-IP": "198.51.100.124" };
+
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      const response = await app.fetch(jsonRequest("/api/auth/login", {
+        email: "login-human@example.test",
+        password: "long-enough-password",
+      }, ipHeaders), requestEnv({
+        TURNSTILE_SITE_KEY,
+        TURNSTILE_SECRET_KEY,
+      }));
+      expect(response.status).toBe(400);
+      const payload = await response.json();
+      expect(payload.message).toMatch(/security check/i);
+    }
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
+      success: true,
+      "error-codes": [],
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
+
+    const allowed = await app.fetch(jsonRequest("/api/auth/login", {
+      email: "login-human@example.test",
+      password: "long-enough-password",
+      turnstileToken: "XXXX.DUMMY.TOKEN.XXXX",
+    }, ipHeaders), requestEnv({
+      TURNSTILE_SITE_KEY,
+      TURNSTILE_SECRET_KEY,
+    }));
+
+    expect(allowed.status).toBe(200);
+    const payload = await allowed.json();
+    expect(payload.auth.signedIn).toBe(true);
+  });
+
   it("requires Turnstile for social sign-in start when enabled", async () => {
     const response = await app.fetch(jsonRequest("/api/auth/google/start", {}, {
       "CF-Connecting-IP": "198.51.100.88",
@@ -96,6 +139,49 @@ describe("auth protection", () => {
     expect(response.status).toBe(400);
     const payload = await response.json();
     expect(payload.message).toMatch(/security check/i);
+  });
+
+  it("does not count failed Turnstile checks against social sign-in throttles", async () => {
+    const ipHeaders = { "CF-Connecting-IP": "198.51.100.188" };
+
+    for (let attempt = 0; attempt < 15; attempt += 1) {
+      const response = await app.fetch(jsonRequest("/api/auth/google/start", {}, ipHeaders), requestEnv({
+        TURNSTILE_SITE_KEY,
+        TURNSTILE_SECRET_KEY,
+        GOOGLE_CLIENT_ID: "google-client-id",
+        GOOGLE_CLIENT_SECRET: "google-client-secret",
+      }));
+      expect(response.status).toBe(400);
+      const payload = await response.json();
+      expect(payload.message).toMatch(/security check/i);
+    }
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
+      success: true,
+      "error-codes": [],
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
+
+    const allowed = await app.fetch(new Request(`${BASE}/api/auth/google/start`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "Content-Type": "application/json",
+        ...ipHeaders,
+      },
+      body: JSON.stringify({
+        turnstileToken: "XXXX.DUMMY.TOKEN.XXXX",
+      }),
+    }), requestEnv({
+      TURNSTILE_SITE_KEY,
+      TURNSTILE_SECRET_KEY,
+      GOOGLE_CLIENT_ID: "google-client-id",
+      GOOGLE_CLIENT_SECRET: "google-client-secret",
+    }));
+
+    expect(allowed.status).not.toBe(429);
   });
 
   it("retires the legacy GET social sign-in entrypoint with 405", async () => {
