@@ -1,0 +1,199 @@
+import { buildSignedInBootstrapResponse } from "../contracts/bootstrap-contract.js";
+import { RateLimitError, ValidationError } from "../lib/http.js";
+import { beginOAuthFlow, completeOAuthFlow } from "../lib/oauth.js";
+import { consumeRateLimit } from "../lib/rate-limit.js";
+import {
+  hashPassword,
+  randomToken,
+  sha256,
+  verifyPassword,
+} from "../lib/security.js";
+import { verifyTurnstileToken } from "../lib/turnstile.js";
+import {
+  createUserSession,
+  deleteUserSessionByHash,
+  getSessionBundle,
+} from "../repositories/session-repository.js";
+import {
+  createEmailUserAccount,
+  findOrCreateUserFromProviderIdentity,
+  findUserByEmail,
+} from "../repositories/user-repository.js";
+
+const AUTH_RATE_LIMIT_MESSAGE = "Too many sign-in attempts. Please wait a few minutes and try again.";
+
+async function createAuthenticatedSession(env, userId) {
+  const sessionToken = randomToken(24);
+  const sessionHash = await sha256(sessionToken);
+  await createUserSession(env, userId, sessionHash);
+  const bundle = await getSessionBundle(env, sessionHash);
+  return { sessionToken, bundle };
+}
+
+async function consumeAuthRateLimit(env, bucket, identifier, limit, windowMs, message) {
+  const result = await consumeRateLimit(env, {
+    bucket,
+    identifier,
+    limit,
+    windowMs,
+  });
+  if (result.allowed) return;
+  throw new RateLimitError(message, result.retryAfterSeconds);
+}
+
+async function protectEmailAuth(env, options) {
+  const type = options.action === "register" ? "register" : "login";
+  const turnstile = await verifyTurnstileToken(env, {
+    token: options.turnstileToken,
+    remoteIp: options.ip,
+  });
+  if (!turnstile.success) {
+    throw new ValidationError(turnstile.message || "Complete the security check and try again.");
+  }
+
+  await consumeAuthRateLimit(
+    env,
+    `auth-${type}-ip`,
+    options.ip,
+    type === "register" ? 6 : 10,
+    10 * 60 * 1000,
+    AUTH_RATE_LIMIT_MESSAGE,
+  );
+
+  await consumeAuthRateLimit(
+    env,
+    `auth-${type}-email`,
+    options.email,
+    type === "register" ? 4 : 8,
+    10 * 60 * 1000,
+    AUTH_RATE_LIMIT_MESSAGE,
+  );
+}
+
+async function protectOAuthStart(env, options) {
+  const turnstile = await verifyTurnstileToken(env, {
+    token: options.turnstileToken,
+    remoteIp: options.ip,
+  });
+  if (!turnstile.success) {
+    throw new ValidationError(turnstile.message || "Complete the security check and try again.");
+  }
+
+  await consumeAuthRateLimit(
+    env,
+    `oauth-start-${String(options.provider || "").trim().toLowerCase()}`,
+    options.ip,
+    12,
+    10 * 60 * 1000,
+    "Too many social sign-in attempts. Please wait a few minutes and try again.",
+  );
+}
+
+export async function registerWithEmail(env, credentials, security = {}) {
+  if (!credentials.email || !credentials.email.includes("@")) {
+    throw new ValidationError("Enter a valid email address.");
+  }
+
+  if (credentials.password.length < 8) {
+    throw new ValidationError("Password must be at least eight characters.");
+  }
+
+  await protectEmailAuth(env, {
+    action: "register",
+    email: credentials.email,
+    ip: security.ip || "",
+    turnstileToken: credentials.turnstileToken,
+  });
+
+  const existing = await findUserByEmail(env, credentials.email);
+  if (existing) {
+    throw new ValidationError("That email address is already registered.");
+  }
+
+  const { salt, hash } = await hashPassword(credentials.password);
+  let user;
+
+  try {
+    user = await createEmailUserAccount(env, {
+      email: credentials.email,
+      passwordHash: hash,
+      passwordSalt: salt,
+    });
+  } catch (error) {
+    if (String(error?.message || "").toLowerCase().includes("unique")) {
+      throw new ValidationError("That email address is already registered.");
+    }
+    throw error;
+  }
+
+  const authenticated = await createAuthenticatedSession(env, user.id);
+  return {
+    bundle: authenticated.bundle,
+    sessionToken: authenticated.sessionToken,
+    payload: buildSignedInBootstrapResponse(authenticated.bundle, env),
+  };
+}
+
+export async function loginWithEmail(env, credentials, security = {}) {
+  if (!credentials.email || !credentials.password) {
+    throw new ValidationError("Incorrect email or password.");
+  }
+
+  await protectEmailAuth(env, {
+    action: "login",
+    email: credentials.email,
+    ip: security.ip || "",
+    turnstileToken: credentials.turnstileToken,
+  });
+
+  const user = await findUserByEmail(env, credentials.email);
+  if (!user?.password_hash || !user?.password_salt) {
+    throw new ValidationError("Incorrect email or password.");
+  }
+
+  const valid = await verifyPassword(credentials.password, user.password_salt, user.password_hash);
+  if (!valid) {
+    throw new ValidationError("Incorrect email or password.");
+  }
+
+  const authenticated = await createAuthenticatedSession(env, user.id);
+  return {
+    bundle: authenticated.bundle,
+    sessionToken: authenticated.sessionToken,
+    payload: buildSignedInBootstrapResponse(authenticated.bundle, env),
+  };
+}
+
+export function logoutSession(env, sessionHash) {
+  return deleteUserSessionByHash(env, sessionHash);
+}
+
+export async function startSocialLogin(env, provider, origin, security = {}) {
+  await protectOAuthStart(env, {
+    provider,
+    ip: security.ip || "",
+    turnstileToken: security.turnstileToken,
+  });
+
+  try {
+    return await beginOAuthFlow(env, provider, origin);
+  } catch (error) {
+    throw new ValidationError(error.message || "Could not start sign-in.");
+  }
+}
+
+export async function completeSocialLogin(env, provider, origin, payload) {
+  const { profile } = await completeOAuthFlow(env, provider, origin, payload);
+
+  if (!profile?.subject) {
+    throw new Error("The provider did not return a valid account identifier.");
+  }
+
+  const user = await findOrCreateUserFromProviderIdentity(env, {
+    provider,
+    providerSubject: profile.subject,
+    email: profile.emailVerified === false ? "" : profile.email,
+  });
+
+  return createAuthenticatedSession(env, user.id);
+}
