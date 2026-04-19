@@ -254,6 +254,16 @@ async function exchangeCode(provider, env, code, redirectUri, codeVerifier) {
   return readJsonResponse(response, "The provider did not return an access token.");
 }
 
+// Stable ordering also matters for the bootstrap response validator — do
+// not reorder without updating fixtures.
+export const AUTH_PROVIDER_KEYS = Object.freeze(["google", "facebook", "x", "apple", "email"]);
+
+// Subset used for social sign-in buckets. Keep this in lock-step with
+// providerDefinitions below: a provider that appears here MUST have a
+// configured flow, otherwise protectOAuthStart would create unbounded
+// distinct rate-limit buckets.
+export const OAUTH_PROVIDER_KEYS = Object.freeze(["google", "facebook", "x", "apple"]);
+
 export function providerConfig(env) {
   const socialEnabled = socialAuthEnabled(env);
   const providers = providerDefinitions(env, "https://example.com");

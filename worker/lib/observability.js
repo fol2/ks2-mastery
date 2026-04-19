@@ -94,6 +94,15 @@ export function setLogContext(c, fields) {
   c.set("logContext", { ...current, ...compact(fields || {}) });
 }
 
+export function setSessionLogContext(c, bundle) {
+  if (!bundle) return;
+  setLogContext(c, {
+    userId: bundle.user?.id,
+    sessionId: bundle.session?.id,
+    selectedChildId: bundle.selectedChild?.id,
+  });
+}
+
 export function logInfo(c, event, fields = {}) {
   emit("info", event, { ...requestMeta(c), ...compact(fields) });
 }

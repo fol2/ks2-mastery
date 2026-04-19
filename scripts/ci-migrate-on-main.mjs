@@ -12,6 +12,10 @@ const plan = buildMigrationPlan({
 });
 
 console.log(plan.logMessage);
+if (!plan.shouldRun) {
+  process.exit(0);
+}
+
 const result = spawnSync(
   "npx",
   plan.args,

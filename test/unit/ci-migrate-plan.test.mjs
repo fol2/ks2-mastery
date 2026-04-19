@@ -66,6 +66,7 @@ describe("hasPreviewDatabaseId", () => {
 describe("buildMigrationPlan", () => {
   it("uses the shared remote database for local runs", () => {
     expect(buildMigrationPlan({ env: {} })).toEqual({
+      shouldRun: true,
       args: ["wrangler", "d1", "migrations", "apply", "ks2-mastery-db", "--remote"],
       logMessage: "[predeploy] Applying remote D1 migrations before deploy.",
     });
@@ -78,6 +79,7 @@ describe("buildMigrationPlan", () => {
         hasConfiguredPreviewDatabase: true,
       }),
     ).toEqual({
+      shouldRun: true,
       args: ["wrangler", "d1", "migrations", "apply", "ks2-mastery-db", "--remote"],
       logMessage: "[predeploy] Applying remote D1 migrations before deploy.",
     });
@@ -90,6 +92,7 @@ describe("buildMigrationPlan", () => {
         hasConfiguredPreviewDatabase: true,
       }),
     ).toEqual({
+      shouldRun: true,
       args: [
         "wrangler",
         "d1",
@@ -104,16 +107,17 @@ describe("buildMigrationPlan", () => {
     });
   });
 
-  it("falls back to the shared remote database for non-main CI branches when no preview DB exists", () => {
+  it("skips remote migrations for non-main CI branches when no preview DB exists", () => {
     expect(
       buildMigrationPlan({
         env: { CI: "true", GITHUB_REF_NAME: "feature/d1" },
         hasConfiguredPreviewDatabase: false,
       }),
     ).toEqual({
-      args: ["wrangler", "d1", "migrations", "apply", "ks2-mastery-db", "--remote"],
+      shouldRun: false,
+      args: [],
       logMessage:
-        '[predeploy] CI branch "feature/d1" (GITHUB_REF_NAME) is not main and no preview D1 database is configured; applying D1 migrations to the shared remote database so the preview deploy matches the schema contract.',
+        '[predeploy] CI branch "feature/d1" (GITHUB_REF_NAME) is not main and no preview D1 database is configured; skipping remote D1 migrations so preview builds do not touch the shared database. Configure preview_database_id to restore preview-schema parity.',
     });
   });
 
@@ -124,6 +128,7 @@ describe("buildMigrationPlan", () => {
         hasConfiguredPreviewDatabase: false,
       }),
     ).toEqual({
+      shouldRun: true,
       args: ["wrangler", "d1", "migrations", "apply", "ks2-mastery-db", "--remote"],
       logMessage:
         "[predeploy] CI detected but no branch env var found; running remote D1 migration so failures surface loudly rather than silently.",

@@ -13,65 +13,38 @@ When a task matches an available **gstack** skill or a **Compound Engineering** 
 
 ## What this is
 
-A browser-side React prototype of a KS2 (Year 5/6, UK) study app with six subjects
-(spelling, arithmetic, reasoning, grammar, punctuation, reading). Only **spelling**
-is wired to a real engine; the other five subjects are realistic UI mockups that
-share the same shell. The project is a static HTML prototype intended to be ported
-to Next.js later — references to that are sprinkled through comments.
+A browser-side React app for a KS2 (Year 5/6, UK) study shell with six subjects
+(spelling, arithmetic, reasoning, grammar, punctuation, reading). **Spelling**
+is the real product surface; the other five subjects are realistic UI mockups.
+The frontend is bundled via Vite and served alongside a Cloudflare Worker backend.
 
 ## Running locally
 
-There is **no build step and no package.json**. `KS2 Unified.html` loads
-React 18, ReactDOM, and Babel Standalone from `unpkg.com` (see the three
-`<script>` tags at the bottom of `<body>`), then pulls every file under `src/`
-and `vendor/` via `<script type="text/babel" src="...">`.
-
-Because external `text/babel` scripts are fetched via `fetch()`, `file://` will
-not work — serve the directory over HTTP. For example:
-
 ```bash
-python3 -m http.server 8000   # then open http://localhost:8000/KS2%20Unified.html
+npm install
+npm run build
+npm run dev
 ```
 
-Tests, linters, package manager: **none**. Changes are verified by reloading
-the HTML file in a browser.
+- `index.html` is the canonical entry shell.
+- `npm run build:public` writes production static output to `dist/public/` via atomic swap.
+- `archive/KS2 Unified.html` is a legacy snapshot for historical reference only.
+- Use `npm test` and `npm run test:e2e` for verification.
 
 ## Script load order is load-bearing
 
-`KS2 Unified.html` loads modules in a **deliberate order** because each file
-registers its exports on `window` and later files read them at parse time:
+`index.html` and generated `dist/public/index.html` rely on a deliberate order:
+content globals must load before the frontend bundle entry.
 
 ```
-vendor/sentence-bank-01.js   → window.KS2_SENTENCE_BANK
-vendor/word-meta.js          → window.KS2_WORD_META (depends on sentence bank)
-
-src/tokens.jsx               → TOKENS, SUBJECTS, SUBJECT_ORDER, getSubjects
-src/icons.jsx                → Icon (+ glyph catalogue)
-src/primitives.jsx           → Panel, Btn, Chip, Stat, Field, Select, ProgressBar
-src/shell.jsx                → Sidebar, Topbar, SubjectHeader, SubjectGlyph
-src/profile.jsx              → ProfileOnboarding, ProfileEditDialog, loadProfile
-src/monsters.jsx             → MONSTERS, MONSTERS_BY_SUBJECT, stageFor, levelFor
-src/monster-engine.jsx       → MonsterEngine (plain <script>, not JSX)
-src/monster-overlay.jsx      → MonsterOverlay
-src/collection.jsx           → CollectionScreen
-src/dashboard.jsx            → Dashboard
-src/spelling-engine.jsx      → SpellingEngine (plain <script>, not JSX)
-src/spelling-game.jsx        → SpellingGame
-src/questions.jsx            → QuestionBody + per-subject Q components
-src/practice.jsx             → PracticeScreen
-src/tabs.jsx                 → AnalyticsScreen, ProfilesScreen, SettingsScreen, MethodScreen
-src/app.jsx                  → App root + ReactDOM.createRoot(...).render
+vendor/sentence-bank-01.js … sentence-bank-06.js  → banks on window
+vendor/word-list.js                               → window.KS2_WORDS
+vendor/word-meta.js                               → window.KS2_WORD_META
+src/main.jsx                                      → frontend module entry
 ```
 
-If you add a new module, append its `<script>` tag in the correct slot in
-`KS2 Unified.html` and end the module with
-`Object.assign(window, { NewExport })` or `window.NewExport = NewExport` —
-there is no ES-module bundler.
-
-**Two script types coexist**: use `type="text/babel"` for files with JSX;
-use plain `<script>` for engine files that use no JSX syntax
-(`spelling-engine.jsx`, `monster-engine.jsx`). Mixing it up either slows
-compile or breaks parse.
+If you change content globals or entry assumptions, keep `index.html`,
+`scripts/build-public.mjs`, and tests in sync.
 
 ## High-level architecture
 
@@ -104,6 +77,37 @@ compile or breaks parse.
   `levelup` (every 10), `evolve` (50 / 80), or `mega` (100). Thresholds live in
   `monsters.jsx` (`stageFor`, `levelFor`). Monster art is **inline hand-drawn SVG**
   in `monsters.jsx`; PNG fallbacks in `assets/monsters/` are not currently wired in.
+
+## Worker layering (`worker/`)
+
+The Worker is layered as **composition root → middleware → routes → services → lib**.
+There is deliberately no repository layer — an earlier iteration added thin
+pass-through wrappers and they never grew real logic, so they were removed as
+YAGNI. If cross-cutting persistence concerns appear (row-to-domain adapters,
+caching, transaction wrappers, per-table error translation), re-introduce a
+`worker/repositories/*.js` layer at that point rather than scattering the logic
+across services. Until then:
+
+- **Composition root (`worker/index.js`)** — 29 lines. Wires `instrumentRequest`
+  + `ensureApiSchema` middleware, mounts route groups, delegates the asset path.
+- **Middleware (`worker/middleware/`)** — cross-cutting per-request concerns:
+  request-id + structured log, schema readiness guard, session extraction.
+- **Routes (`worker/routes/`)** — Hono route groups, one per domain. Parse via
+  contracts, delegate to services, serialise via contracts. No business logic.
+- **Services (`worker/services/`)** — the locus of orchestration and business
+  rules (rate-limit, Turnstile gating, session bundle patching, TTS provider
+  selection). Services call `worker/lib/*.js` directly for persistence.
+- **Contracts (`worker/contracts/`)** — request parsing (`parse*Payload`) and
+  response envelope construction (`build*Response`) with runtime shape asserts.
+  Pure functions, unit-testable without a Worker pool.
+- **Lib (`worker/lib/`)** — shared primitives: `store.js` (D1 helpers),
+  `http.js` (HttpError family + handlers), `validation.js`, `observability.js`,
+  provider clients (`tts.js`, `oauth.js`, `turnstile.js`), `rate-limit.js`.
+
+Enum constants that cross layers (`AUTH_PROVIDER_KEYS`, `OAUTH_PROVIDER_KEYS`,
+`TTS_PROVIDER_KEYS`, `MONSTER_IDS`) live next to their authoritative producer
+in `worker/lib/` and are imported by the bootstrap response validator — do not
+duplicate these lists in contracts or services.
 
 ## State persistence (localStorage keys)
 
@@ -145,11 +149,7 @@ British spellings in copy). Keep it that way when editing copy or adding comment
 
 ## Working with `ks2-mastery-legacy`
 
-The sibling directory `/Users/jamesto/Coding/ks2-mastery-legacy` (allow-listed in
-`.claude/settings.local.json`) holds the **pre-unified** prototypes: separate
-`preview - Arithmetic.html`, `preview - Grammar.html` etc., plus sentence banks
-2–6 (`sentence-bank-02.js` … `06.js`) and the full original spelling game.
-When porting a new subject into this unified shell, the legacy HTML is the
-design reference and the `sentence-bank-0N.js` files are the content source that
-has not yet been copied into `vendor/`. Only `sentence-bank-01.js` and
-`word-meta.js` are active in this directory.
+The sibling repo `ks2-mastery-legacy` holds pre-unified HTML prototypes and
+older spelling UX/content. Use it as a design/content reference when checking
+historical behaviour. In this repo, sentence banks 01–06 plus `word-list.js`
+and `word-meta.js` are already vendored and active.

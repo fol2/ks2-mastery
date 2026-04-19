@@ -28,7 +28,7 @@ The app is no longer “static HTML only”: a **Cloudflare Worker** (`worker/`,
 | `vendor/` | Vendored React, Babel, fonts, **all six** `sentence-bank-0N.js`, `word-list.js`, `word-meta.js` |
 | `test/` | Vitest (`*.test.mjs`, Cloudflare Workers test pool) + Playwright E2E (`test/e2e/`) |
 | `docs/social-auth-setup.md` | OAuth / social login wiring notes |
-| `KS2 Unified.html` | **Local static template** (full script pipeline + boot beacon); see “Two shells” below |
+| `archive/KS2 Unified.html` | Archived legacy static template (historical reference only; not used by build/runtime) |
 | `dist/public/` | **Build output** (gitignored): `npm run build:public` builds into `dist/public.tmp` and atomically swaps into `dist/public/`, writing `dist/public/index.html` |
 
 ## Running locally（本機運行）
@@ -41,42 +41,21 @@ npm run dev            # build + local D1 migrations/backfill + Worker + SPA
 
 - **Deploy / dry-run**: `npm run check` / `npm run deploy` (both run `build` first).
 - **Tests**: `npm test` (Vitest + Workers bindings), `npm run test:e2e` (Playwright).
-- **`file://`**: still unreliable for `text/babel` `src=` fetches; prefer HTTP. For a **quick static** preview without the API, you can still serve the repo root — but the **full** app expects `/api/bootstrap` and spelling routes, so use **`npm run dev`** for the supported local full-stack loop.
+- **Entry point**: root **`index.html`** loads sentence-bank globals and boots the Vite module entry (`/src/main.jsx`).
+- **Legacy shell**: `KS2 Unified.html` has been moved to **`archive/KS2 Unified.html`** and is no longer part of build/runtime.
 
-## Two shells / one template（兩套載入：模板 vs 上線）
+## Runtime shell（當前載入方式）
 
-1. **Production-shaped client** — `npm run build:public` reads `KS2 Unified.html`, swaps the `<title>`, and **replaces** the block from the `<!-- Content: sentence banks … -->` comment through `</body>` with a fixed `scriptBlock` defined in `scripts/build-public.mjs`. That block injects **`client-store.jsx`** and **`spelling-api.jsx`**, omits the separate `monster-engine.jsx` / `spelling-engine.jsx` script tags (see shims below), and writes **`dist/public/index.html`** (via an atomic `dist/public.tmp` → `dist/public` rename so Wrangler never sees a half-rebuilt tree). **If you change load order or add modules, update both `KS2 Unified.html` and `build-public.mjs`.**
-
-2. **Root `KS2 Unified.html` (checked in)** — still loads legacy **`monster-engine.jsx`** + **`spelling-engine.jsx`** and all sentence-bank scripts. **`app.jsx` now depends on `window.KS2App` / `window.KS2Spelling`**, which this file **does not** include, so treat the checked-in HTML as a **partial dev template** unless you mirror the `build-public` script tags by hand. The supported full-stack loop is **`npm run dev`**.
+- `npm run build:public` bundles the client with Vite and writes to `dist/public/` via an atomic `dist/public.tmp` swap.
+- Root `index.html` is the canonical shell for local dev and build output generation.
+- `archive/KS2 Unified.html` is retained only for historical debugging/reference.
 
 ## Script load order is load-bearing（載入次序）
 
-### `KS2 Unified.html` (static template)
+### `index.html` and `dist/public/index.html`
 
-React / Babel load from **`vendor/`** (not unpkg). Then content globals:
-
-```
-vendor/sentence-bank-01.js … sentence-bank-06.js  → banks on window
-vendor/word-list.js                               → window.KS2_WORDS (enriched list)
-vendor/word-meta.js                               → window.KS2_WORD_META (depends on banks)
-```
-
-Then JSX modules (each file ends with `Object.assign(window, { … })` or `window.* =` — **no ES-module bundler**):
-
-```
-src/tokens.jsx → icons → primitives → shell → profile → monsters
-src/monster-engine.jsx (plain script)
-src/monster-overlay.jsx → collection → dashboard
-src/tts-core.jsx (plain) → tts-settings → spelling-engine (plain)
-→ spelling-dashboard → spelling-game → spelling-summary
-src/questions.jsx → practice → tabs → app.jsx
-```
-
-Use **`type="text/babel"`** for JSX files; **plain `<script>`** for non-JSX engines (`tts-core.jsx`, `spelling-engine.jsx`, `monster-engine.jsx` in this template).
-
-### `dist/public/index.html` (after `build:public`)
-
-Order is defined in **`scripts/build-public.mjs`**: **`client-store.jsx`** runs after **`shell.jsx`** and before **`profile.jsx`**; **`spelling-api.jsx`** sits after **`tts-settings.jsx`** and before **`spelling-dashboard.jsx`**. **`window.MonsterEngine`** is a **read-only shim** implemented in `client-store.jsx` (backed by `KS2App` monster state from the server), not `monster-engine.jsx`.
+`index.html` loads content globals first (`vendor/sentence-bank-01.js` … `06.js`, `vendor/word-list.js`, `vendor/word-meta.js`) and then the Vite app entry (`/src/main.jsx`).
+Bundle/runtime ordering for generated output remains governed by `scripts/build-public.mjs`. `window.MonsterEngine` is a read-only shim implemented in `client-store.jsx` (backed by `KS2App` server state), not `monster-engine.jsx`.
 
 ## High-level architecture（架構概要）
 
@@ -84,7 +63,7 @@ Order is defined in **`scripts/build-public.mjs`**: **`client-store.jsx`** runs 
 
 - **Nav patterns** — unchanged: `shell.jsx` (`Sidebar`, `Topbar`, `Dashboard`), `tweaks.navPattern`, `window.SUBJECTS` republished from `getSubjects(tweaks.accentStyle)`.
 
-- **Spelling (server-backed)** — `SpellingGame` uses **`window.KS2Spelling`** (`startSession`, `submit`, `advance`, `skip`) → Worker **`spelling-service.js`**. Monster milestones are returned on API responses and rebroadcast (`monster:progress` custom event) for UI chips. Legacy **`SpellingEngine` / `MonsterEngine.recordMastery`** path applies mainly to the **static template** + unit tests that embed the generated runtime.
+- **Spelling (server-backed)** — `SpellingGame` uses **`window.KS2Spelling`** (`startSession`, `submit`, `advance`, `skip`) → Worker **`spelling-service.js`**. Monster milestones are returned on API responses and rebroadcast (`monster:progress` custom event) for UI chips. Legacy **`SpellingEngine` / `MonsterEngine.recordMastery`** remains relevant mainly for historical/test compatibility paths.
 
 - **Tabs** — `SubjectView` → `PracticeScreen`, analytics, profiles, settings, method; **`PracticeScreen`** spelling modes call **`KS2Spelling.startSession`**.
 
