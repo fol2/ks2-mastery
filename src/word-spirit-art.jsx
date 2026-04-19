@@ -183,4 +183,6 @@ if (typeof globalThis !== 'undefined') {
   };
 }
 
-Object.assign(window, { WordSpiritArt, WordSpiritTemplates });
+if (typeof window !== 'undefined') {
+  Object.assign(window, { WordSpiritArt, WordSpiritTemplates });
+}

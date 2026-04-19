@@ -37,6 +37,7 @@ function WordSpiritFrame({
   // for audio playback. Nesting <button> inside <button> is invalid.
   const canClick = typeof onClick === 'function';
   const handleKey = canClick ? (event) => {
+    if (event.target !== event.currentTarget) return;
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       onClick();
@@ -59,7 +60,6 @@ function WordSpiritFrame({
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
         cursor: canClick ? 'pointer' : 'default',
         fontFamily: window.TOKENS.fontSans,
-        outline: 'none',
       }}
     >
       <WordSpiritFrameBody accent={accent} accentTint={accentTint} size={size}>
@@ -317,9 +317,11 @@ function WordSpiritDetailDialog({
   );
 }
 
-Object.assign(window, {
-  WordSpiritCard,
-  WordSpiritSilhouette,
-  WordSpiritWild,
-  WordSpiritDetailDialog,
-});
+if (typeof window !== 'undefined') {
+  Object.assign(window, {
+    WordSpiritCard,
+    WordSpiritSilhouette,
+    WordSpiritWild,
+    WordSpiritDetailDialog,
+  });
+}

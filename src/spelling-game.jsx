@@ -98,7 +98,7 @@ function SpellingGame({
     const slug = (payload.session && payload.session.currentCard && payload.session.currentCard.slug)
       || (currentCard && currentCard.slug)
       || null;
-    const streak = (window.GameEngine && typeof window.GameEngine.getStreak === 'function')
+    const previousStreak = (window.GameEngine && typeof window.GameEngine.getStreak === 'function')
       ? window.GameEngine.getStreak()
       : 0;
     const detail = {
@@ -106,7 +106,7 @@ function SpellingGame({
       correct: Boolean(payload.result.correct),
       slug,
       phase: payload.result.phase || null,
-      streak,
+      streak: payload.result.correct ? (previousStreak + 1) : 0,
       done: Boolean(payload.result.outcome && payload.result.outcome.done),
     };
     try {
@@ -337,7 +337,6 @@ function SpellingGame({
                   : TOKENS.line
                 }`,
                 borderRadius: TOKENS.radiusSm,
-                outline: 'none',
                 transition: 'border-color 0.15s ease',
               }}
             />
