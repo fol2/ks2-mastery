@@ -48,7 +48,9 @@ describe("parseCreateSpellingSessionPayload", () => {
     ).toEqual({
       mode: "smart",
       yearFilter: "all",
-      length: Infinity,
+      // MAX_SAFE_INTEGER is the JSON-safe "unbounded" marker — Infinity
+      // would stringify to null across the Durable Object RPC boundary.
+      length: Number.MAX_SAFE_INTEGER,
       words: ["1", "accident"],
     });
   });

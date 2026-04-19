@@ -9,6 +9,11 @@ import healthRoutes from "./routes/health-routes.js";
 import spellingRoutes from "./routes/spelling-routes.js";
 import ttsRoutes from "./routes/tts-routes.js";
 
+// Durable Object exports — wrangler.jsonc binds `SPELLING_LOCK` to this class.
+// The DO serialises mutations to a child's spelling session + learning state
+// (see worker/durable/spelling-lock.js).
+export { SpellingLockDO } from "./durable/spelling-lock.js";
+
 const app = new Hono();
 
 app.use("*", instrumentRequest);

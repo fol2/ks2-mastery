@@ -15,9 +15,22 @@ import {
   validateSpellingOverview,
 } from "./bootstrap-contract.js";
 
+// JSON.stringify(Infinity) === "null", so the "unbounded round" sentinel
+// must be a finite integer if the payload ever crosses an RPC boundary (the
+// spelling Durable Object, for instance). Use MAX_SAFE_INTEGER as the
+// canonical "bigger than any realistic word bank" marker — every downstream
+// consumer already treats it as a plain numeric length.
+const UNBOUNDED_SESSION_LENGTH = Number.MAX_SAFE_INTEGER;
+
 function parseSessionLength(rawLength, mode) {
   if (mode === SPELLING_MODES.TEST) return 20;
-  if (rawLength === "all" || rawLength === Infinity) return Infinity;
+  if (
+    rawLength === "all"
+    || rawLength === Infinity
+    || rawLength === UNBOUNDED_SESSION_LENGTH
+  ) {
+    return UNBOUNDED_SESSION_LENGTH;
+  }
   const parsed = Number(rawLength);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 20;
 }

@@ -7,21 +7,9 @@ import {
   buildSpellingSkipResponse,
   buildSpellingSubmitResponse,
 } from "../contracts/spelling-contract.js";
-import { NotFoundError, ValidationError } from "../lib/http.js";
-import {
-  advanceSession as advanceSessionState,
-  buildBootstrapStats,
-  createSessionForChild,
-  savePrefs as saveSpellingPreferences,
-  skipSession as skipSessionState,
-  submitSession as submitSessionState,
-} from "../lib/spelling-service.js";
-import {
-  deleteSpellingSession,
-  getSpellingSession,
-  saveChildState,
-  saveSpellingSession,
-} from "../lib/store.js";
+import { invokeSpellingLock } from "../durable/spelling-lock.js";
+import { HttpError, NotFoundError, ValidationError } from "../lib/http.js";
+import { buildBootstrapStats } from "../lib/spelling-service.js";
 import { patchBundleForChildState } from "./bundle-patches.js";
 
 function requireSelectedChild(bundle) {
@@ -31,100 +19,93 @@ function requireSelectedChild(bundle) {
   return bundle.selectedChild;
 }
 
-async function loadActiveSpellingSession(env, bundle, sessionId) {
-  const selectedChild = requireSelectedChild(bundle);
-  const sessionState = await getSpellingSession(env, bundle.user.id, selectedChild.id, sessionId);
-  if (!sessionState) {
-    throw new NotFoundError("Spelling session not found.");
+// Every mutation that touches (spelling session, child state) for a single
+// child is funnelled through the per-child Durable Object so two concurrent
+// requests cannot race each other's read-modify-write. The DO turns an HTTP
+// response into the shape the caller wants; any non-2xx becomes an HttpError
+// with the DO's own `message` preserved for clients.
+async function lockedMutation(env, childId, path, payload) {
+  const response = await invokeSpellingLock(env, childId, path, payload);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = body?.message || "Spelling mutation failed.";
+    if (response.status === 404) throw new NotFoundError(message);
+    if (response.status === 400) throw new ValidationError(message);
+    throw new HttpError(response.status, message, {
+      payload: { ok: false, message },
+    });
   }
-  return { selectedChild, sessionState };
+  return body;
 }
 
 export async function persistSpellingPrefs(env, bundle, _sessionHash, prefs) {
   const selectedChild = requireSelectedChild(bundle);
-  const nextState = saveSpellingPreferences(bundle.childState, prefs);
-  await saveChildState(env, selectedChild.id, nextState);
-  // Prefs are saved on the currently-selected child, so only bundle.childState
-  // changes — patch in memory instead of re-reading the entire bundle.
-  return buildSignedInBootstrapResponse(patchBundleForChildState(bundle, nextState), env);
+  const result = await lockedMutation(env, selectedChild.id, "/prefs", {
+    childId: selectedChild.id,
+    prefs,
+  });
+  return buildSignedInBootstrapResponse(
+    patchBundleForChildState(bundle, result.childState),
+    env,
+  );
 }
 
 export async function startSpellingSession(env, bundle, payload) {
   const selectedChild = requireSelectedChild(bundle);
-  const result = createSessionForChild(selectedChild.id, bundle.childState, payload);
-
-  if (!result.ok) {
-    throw new ValidationError(result.reason);
-  }
-
-  await saveChildState(env, selectedChild.id, result.childState);
-  await saveSpellingSession(
-    env,
-    bundle.user.id,
-    selectedChild.id,
-    result.sessionState.id,
-    result.sessionState,
-  );
-
-  return buildSpellingSessionCreatedResponse(result.payload);
+  const result = await lockedMutation(env, selectedChild.id, "/start", {
+    userId: bundle.user.id,
+    childId: selectedChild.id,
+    payload,
+  });
+  return buildSpellingSessionCreatedResponse(result.session);
 }
 
 export async function submitSpellingAnswer(env, bundle, sessionId, payload) {
-  const { selectedChild, sessionState } = await loadActiveSpellingSession(env, bundle, sessionId);
-  const submission = submitSessionState(selectedChild.id, bundle.childState, sessionState, payload.typed);
-  // engine.submitLearning/submitTest can return `null` when the session is in
-  // a phase that does not accept submissions (e.g. no currentSlug yet, or a
-  // test session that has already finalised). Convert that into a 400 rather
-  // than letting the strict response contract assert a null-result and 500.
-  if (!submission.result) {
-    throw new ValidationError("This spelling card is not accepting an answer right now.");
-  }
-  await saveChildState(env, selectedChild.id, submission.childState);
-  await saveSpellingSession(env, bundle.user.id, selectedChild.id, sessionState.id, sessionState);
-
+  const selectedChild = requireSelectedChild(bundle);
+  const result = await lockedMutation(env, selectedChild.id, "/submit", {
+    userId: bundle.user.id,
+    childId: selectedChild.id,
+    sessionId,
+    typed: payload.typed,
+  });
   return buildSpellingSubmitResponse({
-    result: submission.result,
-    session: submission.payload,
-    monsterEvent: submission.monsterEvent,
-    monsters: buildBootstrapStats(selectedChild.id, submission.childState).monsters,
+    result: result.result,
+    session: result.session,
+    monsterEvent: result.monsterEvent,
+    monsters: result.monsters,
   });
 }
 
 export async function skipSpellingSession(env, bundle, sessionId) {
-  const { selectedChild, sessionState } = await loadActiveSpellingSession(env, bundle, sessionId);
-  const skipped = skipSessionState(selectedChild.id, bundle.childState, sessionState);
-  // engine.skipCurrent is only valid in the `question` phase of a learning
-  // session; any other entry point yields `null`. Surface as a 400 instead of
-  // a generic 500 triggered by the response-shape assertion.
-  if (!skipped.result) {
-    throw new ValidationError("This spelling card cannot be skipped right now.");
-  }
-  await saveChildState(env, selectedChild.id, skipped.childState);
-  await saveSpellingSession(env, bundle.user.id, selectedChild.id, sessionState.id, sessionState);
-
+  const selectedChild = requireSelectedChild(bundle);
+  const result = await lockedMutation(env, selectedChild.id, "/skip", {
+    userId: bundle.user.id,
+    childId: selectedChild.id,
+    sessionId,
+  });
   return buildSpellingSkipResponse({
-    result: skipped.result,
-    session: skipped.payload,
+    result: result.result,
+    session: result.session,
   });
 }
 
 export async function advanceSpellingSession(env, bundle, sessionId) {
-  const { selectedChild, sessionState } = await loadActiveSpellingSession(env, bundle, sessionId);
-  const advanced = advanceSessionState(selectedChild.id, bundle.childState, sessionState);
-  await saveChildState(env, selectedChild.id, advanced.childState);
+  const selectedChild = requireSelectedChild(bundle);
+  const result = await lockedMutation(env, selectedChild.id, "/advance", {
+    userId: bundle.user.id,
+    childId: selectedChild.id,
+    sessionId,
+  });
 
-  if (advanced.done) {
-    await deleteSpellingSession(env, bundle.user.id, selectedChild.id, sessionId);
-    const stats = buildBootstrapStats(selectedChild.id, advanced.childState);
+  if (result.done) {
     return buildSpellingAdvanceDoneResponse({
-      summary: advanced.summary,
-      monsters: stats.monsters,
-      spelling: stats.spelling,
+      summary: result.summary,
+      monsters: result.monsters,
+      spelling: result.spelling,
     });
   }
 
-  await saveSpellingSession(env, bundle.user.id, selectedChild.id, sessionState.id, sessionState);
-  return buildSpellingAdvanceContinueResponse(advanced.payload);
+  return buildSpellingAdvanceContinueResponse(result.session);
 }
 
 export function getSpellingDashboard(bundle) {
