@@ -7,10 +7,11 @@
     "build:data": "node ./scripts/build-spelling-data.mjs",
     "build:runtime": "node ./scripts/build-spelling-runtime.mjs",
     "build:public": "node ./scripts/build-public.mjs",
+    "assert:build-public": "node ./scripts/assert-build-public.mjs",
     "build": "npm run build:data && npm run build:runtime && npm run build:public",
-    "check": "npm run build && npx wrangler deploy --dry-run",
+    "check": "npm run build && npm run assert:build-public && npx wrangler deploy --dry-run",
     "deploy": "npm run build && npx wrangler deploy",
-    "test": "npm run build:public && vitest run",
+    "test": "npm run build:public && npm run assert:build-public && vitest run",
     "test:watch": "npm run build:public && vitest",
     "test:e2e": "node ./scripts/run-e2e.mjs",
     "verify": "npm test && npm run check && npm run test:e2e"
