@@ -68,6 +68,10 @@ Behaviour by context:
 - **GitHub Actions**: the hook reads `GITHUB_REF_NAME` with the same rule.
   Works out of the box in any workflow that runs `npm run deploy` with
   `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` secrets.
+- **Other / ambiguous CI environments**: if `CI=true` is present but neither
+  `WORKERS_CI_BRANCH` nor `GITHUB_REF_NAME` is exposed, the hook now skips
+  remote D1 migrations instead of guessing. Set one of those branch variables
+  explicitly if that CI job genuinely needs branch-aware remote migrations.
 
 If non-main previews still share the main remote DB, keep schema migrations
 backwards-compatible. A preview deploy may prepare the shared database before

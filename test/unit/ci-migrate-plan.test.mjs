@@ -143,17 +143,17 @@ describe("buildMigrationPlan", () => {
     });
   });
 
-  it("runs remotely when CI is detected without a branch env var", () => {
+  it("skips remote migrations when CI is detected without a branch env var", () => {
     expect(
       buildMigrationPlan({
         env: { CI: "true" },
         hasConfiguredPreviewDatabase: false,
       }),
     ).toEqual({
-      shouldRun: true,
-      args: ["wrangler", "d1", "migrations", "apply", "ks2-mastery-db", "--remote"],
+      shouldRun: false,
+      args: [],
       logMessage:
-        "[predeploy] CI detected but no branch env var found; running remote D1 migration so failures surface loudly rather than silently.",
+        "[predeploy] CI detected but no branch env var was provided; skipping remote D1 migrations so ambiguous CI environments do not mutate the shared database. Set GITHUB_REF_NAME or WORKERS_CI_BRANCH to re-enable branch-aware CI migration rules.",
     });
   });
 });

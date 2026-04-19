@@ -68,10 +68,10 @@ export function buildMigrationPlan({
 
   if (inCI && !ciBranch) {
     return {
-      shouldRun: true,
-      args: REMOTE_MIGRATION_ARGS,
+      shouldRun: false,
+      args: [],
       logMessage:
-        "[predeploy] CI detected but no branch env var found; running remote D1 migration so failures surface loudly rather than silently.",
+        "[predeploy] CI detected but no branch env var was provided; skipping remote D1 migrations so ambiguous CI environments do not mutate the shared database. Set GITHUB_REF_NAME or WORKERS_CI_BRANCH to re-enable branch-aware CI migration rules.",
     };
   }
 
