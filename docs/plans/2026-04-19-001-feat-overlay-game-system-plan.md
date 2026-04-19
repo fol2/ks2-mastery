@@ -511,7 +511,16 @@ study keys; zero calls during a scripted event sequence).
 
 ---
 
-- [ ] **Unit 3: Word Spirit card + procedural art pipeline**
+- [x] **Unit 3: Word Spirit card + procedural art pipeline**
+  _Landed in the same spirit as Unit 2: components ship but the
+  DOM-bound render/snapshot tests are deferred to Unit 8 once the jsdom
+  vitest project exists. Pure helpers (`hashSlug`,
+  `wordSpiritTemplateIndex`, `wordSpiritSeededRandom`,
+  `wordSpiritPaletteFor`, `WordSpiritTemplates`, `WordSpiritArt`) are
+  reachable at `globalThis.__ks2WordSpiritArt` for that follow-up.
+  Templates: four generic creature shapes (`Puff`, `Serpent`, `Bird`,
+  `Quad`) shared across subjects; per-subject divergence is a one-line
+  map change when the combat skin needs it._
 
 **Goal:** The per-word collectible component used by Collection,
 Sanctuary, combat skin catch ceremony, and flashcard retrieval.
