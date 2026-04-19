@@ -1,6 +1,6 @@
 import { buildSignedInBootstrapResponse } from "../contracts/bootstrap-contract.js";
 import { RateLimitError, ValidationError } from "../lib/http.js";
-import { beginOAuthFlow, completeOAuthFlow } from "../lib/oauth.js";
+import { OAUTH_PROVIDER_KEYS, beginOAuthFlow, completeOAuthFlow } from "../lib/oauth.js";
 import { consumeRateLimit } from "../lib/rate-limit.js";
 import {
   hashPassword,
@@ -83,7 +83,17 @@ async function protectEmailAuth(env, options) {
   );
 }
 
+const KNOWN_OAUTH_PROVIDERS = new Set(OAUTH_PROVIDER_KEYS);
+
 async function protectOAuthStart(env, options) {
+  // Reject unknown providers BEFORE consuming a rate-limit slot. Without this
+  // guard a caller hitting /api/auth/<random>/start would create an unbounded
+  // number of distinct limiter_key rows in D1 — a slow-burn storage DoS.
+  const provider = String(options.provider || "").trim().toLowerCase();
+  if (!KNOWN_OAUTH_PROVIDERS.has(provider)) {
+    throw new ValidationError("Unknown sign-in provider.");
+  }
+
   const turnstile = await verifyTurnstileToken(env, {
     token: options.turnstileToken,
     remoteIp: options.ip,
@@ -94,7 +104,7 @@ async function protectOAuthStart(env, options) {
 
   await consumeAuthRateLimit(
     env,
-    `oauth-start-${String(options.provider || "").trim().toLowerCase()}`,
+    `oauth-start-${provider}`,
     options.ip,
     AUTH_LIMITS.oauthStart.ip,
     AUTH_WINDOW_MS,

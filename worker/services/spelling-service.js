@@ -79,6 +79,13 @@ export async function startSpellingSession(env, bundle, payload) {
 export async function submitSpellingAnswer(env, bundle, sessionId, payload) {
   const { selectedChild, sessionState } = await loadActiveSpellingSession(env, bundle, sessionId);
   const submission = submitSessionState(selectedChild.id, bundle.childState, sessionState, payload.typed);
+  // engine.submitLearning/submitTest can return `null` when the session is in
+  // a phase that does not accept submissions (e.g. no currentSlug yet, or a
+  // test session that has already finalised). Convert that into a 400 rather
+  // than letting the strict response contract assert a null-result and 500.
+  if (!submission.result) {
+    throw new ValidationError("This spelling card is not accepting an answer right now.");
+  }
   await saveChildLearningState(env, selectedChild.id, submission.childState);
   await saveSpellingSessionState(env, bundle.user.id, selectedChild.id, sessionState.id, sessionState);
 
@@ -93,6 +100,12 @@ export async function submitSpellingAnswer(env, bundle, sessionId, payload) {
 export async function skipSpellingSession(env, bundle, sessionId) {
   const { selectedChild, sessionState } = await loadActiveSpellingSession(env, bundle, sessionId);
   const skipped = skipSessionState(selectedChild.id, bundle.childState, sessionState);
+  // engine.skipCurrent is only valid in the `question` phase of a learning
+  // session; any other entry point yields `null`. Surface as a 400 instead of
+  // a generic 500 triggered by the response-shape assertion.
+  if (!skipped.result) {
+    throw new ValidationError("This spelling card cannot be skipped right now.");
+  }
   await saveChildLearningState(env, selectedChild.id, skipped.childState);
   await saveSpellingSessionState(env, bundle.user.id, selectedChild.id, sessionState.id, sessionState);
 
