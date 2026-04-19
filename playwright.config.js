@@ -35,7 +35,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run build && npx wrangler dev --local --port ${PORT}`,
+    command: `node ./scripts/run-local-dev.mjs --port ${PORT}`,
     url: BASE_URL,
     // CI must always own its server so a run never silently reuses state from
     // another invocation. Locally, an existing `wrangler dev` on the chosen
