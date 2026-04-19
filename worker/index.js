@@ -22,6 +22,15 @@ import { consumeRateLimit } from "./lib/rate-limit.js";
 import { cookieOptions, hashPassword, randomToken, safeEmail, sha256, verifyPassword } from "./lib/security.js";
 import { beginOAuthFlow, completeOAuthFlow, providerConfig } from "./lib/oauth.js";
 import {
+  attachRequestId,
+  checkDatabaseHealth,
+  createRequestId,
+  getRequestId,
+  logError,
+  logRequestCompletion,
+  setLogContext,
+} from "./lib/observability.js";
+import {
   SPELLING_MODES,
   advanceSession,
   buildBootstrapStats,
@@ -66,6 +75,50 @@ function clientIp(c) {
   const forwarded = String(c.req.header("X-Forwarded-For") || "").trim();
   return forwarded ? forwarded.split(",")[0].trim() : "";
 }
+
+function shouldLogRequest(c, response) {
+  const pathname = new URL(c.req.url).pathname;
+  return pathname.startsWith("/api/") || Number(response?.status || 0) >= 500;
+}
+
+app.use("*", async (c, next) => {
+  const requestId = createRequestId(c.req.raw);
+  const startedAt = Date.now();
+
+  c.set("requestId", requestId);
+  c.set("requestStartedAt", startedAt);
+
+  await next();
+
+  attachRequestId(c.res, requestId);
+  if (!c.get("requestLogged") && shouldLogRequest(c, c.res)) {
+    logRequestCompletion(c, c.res, startedAt);
+    c.set("requestLogged", true);
+  }
+});
+
+app.onError((error, c) => {
+  const requestId = getRequestId(c) || createRequestId(c.req.raw);
+  const startedAt = c.get("requestStartedAt") || Date.now();
+
+  c.set("requestId", requestId);
+
+  logError(c, "request.failed", error);
+  const response = json(c, 500, {
+    ok: false,
+    message: "Unexpected server error.",
+    requestId,
+  });
+  attachRequestId(response, requestId);
+
+  if (!c.get("requestLogged") && shouldLogRequest(c, response)) {
+    logRequestCompletion(c, response, startedAt);
+    c.set("requestLogged", true);
+  }
+
+  return response;
+});
+
 
 function clearOauthAttempt(c) {
   const secure = secureCookieForRequest(c);
@@ -294,17 +347,49 @@ async function requireSession(c, next) {
   c.set("sessionBundle", bundle);
   c.set("sessionHash", sessionHash);
   c.set("sessionToken", rawToken);
+  setLogContext(c, {
+    userId: bundle.user.id,
+    sessionId: bundle.session.id,
+    selectedChildId: bundle.selectedChild?.id,
+  });
   return next();
 }
 
 app.use("/api/*", async (c, next) => {
+  if (new URL(c.req.url).pathname === "/api/health") return next();
   try {
     await ensureSchema(c.env);
     return next();
   } catch (error) {
-    console.error("Schema initialisation failed", error);
+    logError(c, "schema.initialisation.failed", error);
     return json(c, 500, { ok: false, message: "Database is not ready." });
   }
+});
+
+app.get("/api/health", async (c) => {
+  const database = await checkDatabaseHealth(c.env);
+  const assets = {
+    ok: Boolean(c.env.ASSETS),
+    detail: c.env.ASSETS ? "Static asset binding is configured." : "Static asset binding is missing.",
+  };
+  const ok = database.ok && assets.ok;
+
+  c.header("Cache-Control", "no-store");
+  return json(c, ok ? 200 : 503, {
+    ok,
+    status: ok ? "ok" : "degraded",
+    service: String(c.env.APP_NAME || "KS2 Mastery"),
+    requestId: getRequestId(c),
+    timestamp: new Date().toISOString(),
+    checks: {
+      database,
+      assets,
+      observability: {
+        ok: true,
+        detail: "Request IDs and structured Worker logs are enabled.",
+      },
+    },
+  });
 });
 
 app.get("/api/bootstrap", async (c) => {
@@ -325,6 +410,11 @@ app.get("/api/bootstrap", async (c) => {
     return json(c, 200, signedOutBootstrapPayload(c.env));
   }
 
+  setLogContext(c, {
+    userId: bundle.user.id,
+    sessionId: bundle.session.id,
+    selectedChildId: bundle.selectedChild?.id,
+  });
   return json(c, 200, bootstrapPayload(bundle, c.env));
 });
 
@@ -364,6 +454,11 @@ app.post("/api/auth/register", async (c) => {
   await createSession(c.env, user.id, sessionHash);
   setCookie(c, "ks2_session", sessionToken, cookieOptions(60 * 60 * 24 * 30, secureCookieForRequest(c)));
   const bundle = await getSessionBundleByHash(c.env, sessionHash);
+  setLogContext(c, {
+    userId: bundle.user.id,
+    sessionId: bundle.session.id,
+    selectedChildId: bundle.selectedChild?.id,
+  });
   return json(c, 201, bootstrapPayload(bundle, c.env));
 });
 
@@ -392,6 +487,11 @@ app.post("/api/auth/login", async (c) => {
   await createSession(c.env, user.id, sessionHash);
   setCookie(c, "ks2_session", sessionToken, cookieOptions(60 * 60 * 24 * 30, secureCookieForRequest(c)));
   const bundle = await getSessionBundleByHash(c.env, sessionHash);
+  setLogContext(c, {
+    userId: bundle.user.id,
+    sessionId: bundle.session.id,
+    selectedChildId: bundle.selectedChild?.id,
+  });
   return json(c, 200, bootstrapPayload(bundle, c.env));
 });
 
@@ -487,9 +587,12 @@ async function completeProviderLogin(c, payload) {
 
     clearOauthAttempt(c);
     setCookie(c, "ks2_session", sessionToken, cookieOptions(60 * 60 * 24 * 30, secureCookieForRequest(c)));
+    setLogContext(c, {
+      userId: user.id,
+    });
     return c.redirect(appOrigin(c), 302);
   } catch (error) {
-    console.error(`OAuth callback failed for ${provider}`, error);
+    logError(c, "auth.oauth.callback.failed", error, { provider });
     return redirectWithAuthError(c, error.message || "Could not complete sign-in.");
   }
 }
