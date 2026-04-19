@@ -439,7 +439,9 @@ the combat skin's HP derivation.
 
 ---
 
-- [ ] **Unit 2: `GameEngine` module — read-only subscriber + overlay storage**
+- [x] **Unit 2: `GameEngine` module — read-only subscriber + overlay storage**
+
+_Landed in commit `68ffde8` — feat(overlay): Unit 2. Module shipped without the DOM-bound test (deferred to Unit 8 per plan, once the jsdom vitest project exists). Factory is reachable at `globalThis.__ks2CreateGameEngine` for that follow-up._
 
 **Goal:** Introduce the overlay's single entry point. Subscribes to
 the study-engine events, exposes a read-only view of overlay state,
