@@ -41,9 +41,15 @@ against production.
 ## Deployment
 
 `npm run deploy` fires the `predeploy` hook (`scripts/ci-migrate-on-main.mjs`)
-before `wrangler deploy`. The hook applies outstanding remote migrations so the
-deployed Worker never boots against a schema it assumes but the database has
-not yet received.
+before `wrangler deploy`. That covers local operators and any CI workflow that
+calls the npm script directly.
+
+Cloudflare Workers Builds often invokes `wrangler deploy` directly. To keep
+that path safe too, `wrangler.jsonc` defines `build.command =
+node ./scripts/workers-build.mjs`. The wrapper runs `npm run build`, then
+invokes `scripts/ci-migrate-on-main.mjs` whenever `WORKERS_CI_BRANCH` is
+present. This keeps preview builds schema-ready even if the dashboard still uses
+the default deploy command.
 
 Behaviour by context:
 
@@ -69,17 +75,11 @@ To wire the automation end-to-end:
 
 1. Cloudflare dashboard → `Workers & Pages` → `ks2-mastery` → `Settings` →
    `Builds`.
-2. Set **Deploy command** to `npm run deploy` (default is `npx wrangler deploy`,
-   which bypasses the hook).
-3. Ensure the build environment exposes `CLOUDFLARE_API_TOKEN` with D1 write
+2. Ensure the build environment exposes `CLOUDFLARE_API_TOKEN` with D1 write
    scope for the `ks2-mastery-db` binding.
-4. Optional but recommended: set `preview_database_id` on the `DB` binding in
+3. Optional but recommended: set `preview_database_id` on the `DB` binding in
    `wrangler.jsonc` so non-main previews can migrate and run against a dedicated
    preview D1 database instead of the shared remote one.
-
-If the deploy command stays at the default, migrations do **not** auto-apply
-and every schema-changing merge to `main` must be preceded by a manual
-`npm run db:migrate:remote` — otherwise `/api/*` returns 500 until it is run.
 
 ## Creating a new migration
 
