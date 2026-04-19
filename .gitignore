@@ -31,3 +31,7 @@ test-results/
 # Operations artefacts
 backups/
 .worktrees
+# Local environment secrets
+.env
+.env.*
+!.env.example
