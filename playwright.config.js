@@ -1,11 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = 8788;
+const PORT = Number(process.env.PLAYWRIGHT_PORT || 8788);
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 
-// Starts `wrangler dev` on a dedicated port before E2E tests. The Worker runs
-// locally with in-memory D1/R2 via miniflare, so state resets between runs
-// when reuseExistingServer is false (which is the default in CI).
+// The E2E suite owns its build and dev server so local runs exercise the same
+// path as CI instead of depending on an ambient `wrangler dev` session. The
+// `npm run test:e2e` wrapper injects a free port for the whole run.
 export default defineConfig({
   testDir: "./test/e2e",
   testMatch: "**/*.spec.js",
@@ -30,7 +30,7 @@ export default defineConfig({
   webServer: {
     command: `npm run build && npx wrangler dev --local --port ${PORT}`,
     url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 180_000,
     stdout: "ignore",
     stderr: "pipe",

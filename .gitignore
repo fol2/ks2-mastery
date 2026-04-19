@@ -18,6 +18,7 @@ page-*.yml
 # Node / build output
 node_modules/
 public/
+dist/
 .dist-worker/
 .wrangler/
 

@@ -12,7 +12,8 @@
     "deploy": "npm run build && npx wrangler deploy",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "node ./scripts/run-e2e.mjs",
+    "verify": "npm test && npm run check && npm run test:e2e"
   },
   "dependencies": {
     "hono": "^4.8.5"
