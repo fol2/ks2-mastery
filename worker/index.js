@@ -692,7 +692,7 @@ app.post("/api/spelling/sessions/:sessionId/submit", requireSession, async (c) =
     ok: true,
     result: submission.result,
     session: submission.payload,
-    monsterEvent: submission.monsterEvent,
+    monsterEvents: submission.monsterEvents,
     monsters: buildBootstrapStats(bundle.selectedChild.id, submission.childState).monsters,
   });
 });

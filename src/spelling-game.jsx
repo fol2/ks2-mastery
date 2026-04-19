@@ -87,12 +87,45 @@ function SpellingGame({
     });
   }
 
+  // Overlay game system contract (R2, R15.3): fire a `window` CustomEvent on
+  // every graded submit so the combat skin and GameEngine can react without
+  // touching engine state. Stays a no-op if nothing subscribes. Payload
+  // mirrors the plan's answer:graded shape — subject, correctness, slug,
+  // phase, and `done` drawn from engine output; streak is read from
+  // GameEngine when it exists (Unit 2), defaulting to 0 otherwise.
+  function emitAnswerGraded(payload) {
+    if (!payload || !payload.result || payload.result.empty) return;
+    const slug = (payload.session && payload.session.currentCard && payload.session.currentCard.slug)
+      || (currentCard && currentCard.slug)
+      || null;
+    const streak = (window.GameEngine && typeof window.GameEngine.getStreak === 'function')
+      ? window.GameEngine.getStreak()
+      : 0;
+    const detail = {
+      subjectId: 'spelling',
+      correct: Boolean(payload.result.correct),
+      slug,
+      phase: payload.result.phase || null,
+      streak,
+      done: Boolean(payload.result.outcome && payload.result.outcome.done),
+    };
+    try {
+      window.dispatchEvent(new CustomEvent('answer:graded', { detail }));
+    } catch { /* CustomEvent unsupported in this environment — safe to skip */ }
+  }
+
   function applyResult(payload, opts) {
     if (!payload || !payload.result) return;
     if (payload.result.empty) return;
 
     setFeedback(payload.result.feedback || null);
-    emitMonsterIfNeeded(payload.monsterEvent);
+    // Fan out every monster event the submit produced. Includes the direct
+    // monster transition plus any aggregate transitions (e.g. Phaeton
+    // hatching in the same submit as Glimmerbug's 10th mastery). Empty
+    // array is normal and common — most submits produce no mastery event.
+    const events = Array.isArray(payload.monsterEvents) ? payload.monsterEvents : [];
+    for (const event of events) emitMonsterIfNeeded(event);
+    emitAnswerGraded(payload);
     if (payload.session) {
       setSession((prev) => ({
         ...prev,

@@ -1,5 +1,6 @@
 import { WORDS, WORD_BY_SLUG } from "../generated/spelling-data.js";
 import { createSpellingEngineRuntime } from "../generated/spelling-runtime.js";
+import { aggregateEventsForWrite } from "./monster-aggregates.js";
 
 export const SPELLING_MODES = Object.freeze({
   SMART: "smart",
@@ -157,6 +158,7 @@ function buildSessionPayload(engine, childId, session, currentCard) {
   const progressStage = resolvedCard && resolvedCard.slug
     ? engine.getProgress(childId, resolvedCard.slug).stage
     : 0;
+  const attemptInfo = buildAttemptInfo(session, resolvedCard?.slug);
   return {
     id: session.id,
     type: session.type,
@@ -171,8 +173,28 @@ function buildSessionPayload(engine, childId, session, currentCard) {
           word: sanitiseWord(resolvedCard.word),
           prompt: resolvedCard.prompt,
           progressStage,
+          attemptInfo,
         }
       : null,
+  };
+}
+
+// Compact projection of the engine's per-slug session.status used by the
+// overlay combat skin's HP bar. Test-mode sessions have no retry phase and
+// no attempt counts, so return null — the skin falls back to plain practice
+// UI in that case. Null is also returned when the caller could not resolve
+// a current card (e.g. between sessions).
+function buildAttemptInfo(session, slug) {
+  if (!session || !slug) return null;
+  if (session.type === "test") return null;
+  const info = session.status?.[slug];
+  if (!info) return null;
+  return {
+    attempts: info.attempts || 0,
+    successes: info.successes || 0,
+    needed: info.needed || 1,
+    hadWrong: Boolean(info.hadWrong),
+    done: Boolean(info.done),
   };
 }
 
@@ -302,13 +324,20 @@ export function submitSession(childId, childState, sessionState, typed) {
     : engine.submitLearning(sessionState, childId, typed);
 
   let monsterState = storage.snapshot().monsterState || {};
-  let monsterEvent = null;
+  const monsterEvents = [];
 
   if (result?.outcome?.justMastered && sessionState.currentSlug) {
     const monsterId = engine.monsterForWord(sessionState.currentSlug);
+    const prevMonsterState = monsterState;
     const monsterUpdate = recordMonsterMastery(monsterState, monsterId, sessionState.currentSlug);
     monsterState = monsterUpdate.state;
-    monsterEvent = monsterUpdate.event;
+    if (monsterUpdate.event) monsterEvents.push(monsterUpdate.event);
+    // Aggregate transitions triggered by this direct write (e.g. Phaeton
+    // hatches when the write that just pushed Glimmerbug to 10 mastered
+    // also satisfies Phaeton's both-caught gate). Direct event first,
+    // aggregate events after — consumers queue them in that order.
+    const aggEvents = aggregateEventsForWrite(prevMonsterState, monsterState, monsterId);
+    for (const ev of aggEvents) monsterEvents.push(ev);
   }
 
   const nextChildState = {
@@ -319,7 +348,7 @@ export function submitSession(childId, childState, sessionState, typed) {
   return {
     result,
     childState: nextChildState,
-    monsterEvent,
+    monsterEvents,
     payload: buildSessionPayload(engine, childId, sessionState, null),
   };
 }

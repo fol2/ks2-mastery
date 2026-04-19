@@ -32,7 +32,19 @@ const KS2Spelling = (() => {
       body: JSON.stringify({ typed }),
     });
     if (payload.monsters) window.KS2App.setSpellingData({ monsters: payload.monsters });
-    emitProgress(payload.monsterEvent);
+    // Fan one `monster:progress` per event — the Worker now returns an
+    // array so a single submit can surface both a direct monster event
+    // (e.g. Glimmerbug caught) and any aggregate events triggered by
+    // the same write (e.g. Phaeton hatch). Empty array is normal.
+    const events = Array.isArray(payload.monsterEvents) ? payload.monsterEvents : [];
+    if (events.length === 0) {
+      // Always fire once with null detail so legacy subscribers that pulse
+      // chips on any submit continue to update. Matches the previous
+      // single-event contract's null-case behaviour.
+      emitProgress(null);
+    } else {
+      for (const event of events) emitProgress(event);
+    }
     return payload;
   }
 
