@@ -2,14 +2,13 @@ import { randomToken, safeEmail, safeJsonParse } from "./security.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SESSION_TTL_MS = 30 * DAY_MS;
-const REQUIRED_TABLES = [
-  "users",
-  "user_identities",
-  "sessions",
-  "children",
-  "child_state",
-  "spelling_sessions",
-  "subscriptions",
+// Each entry must match a file name in `migrations/`. Wrangler records it in
+// the `d1_migrations` tracking table on apply; this list is the contract the
+// Worker verifies at boot. Append a new entry here whenever you add a
+// migration file so a partially-migrated remote DB fails fast instead of
+// running against a schema with missing columns or indexes.
+const EXPECTED_MIGRATIONS = [
+  "0001_initial_schema.sql",
 ];
 const schemaReadyPromises = new WeakMap();
 
@@ -22,27 +21,32 @@ function requiredDb(env) {
   return env.DB;
 }
 
+async function assertMigrationsApplied(db) {
+  const tableCheck = await db
+    .prepare(
+      `SELECT 1 AS ok FROM sqlite_master WHERE type = 'table' AND name = 'd1_migrations' LIMIT 1`,
+    )
+    .first();
+  if (!tableCheck) {
+    throw new Error(
+      "Database migrations have not been applied (d1_migrations tracking table is missing). Run the D1 migration workflow in docs/d1-migrations.md before starting the Worker.",
+    );
+  }
+  const applied = await db.prepare(`SELECT name FROM d1_migrations`).all();
+  const appliedSet = new Set((applied.results || []).map((row) => row.name));
+  const missing = EXPECTED_MIGRATIONS.filter((name) => !appliedSet.has(name));
+  if (missing.length) {
+    throw new Error(
+      `Database migrations have not been applied. Missing: ${missing.join(", ")}. Run the D1 migration workflow in docs/d1-migrations.md before starting the Worker.`,
+    );
+  }
+}
+
 export async function ensureSchema(env) {
   const db = requiredDb(env);
   let readinessPromise = schemaReadyPromises.get(db);
   if (!readinessPromise) {
-    const placeholders = REQUIRED_TABLES.map((_, index) => `?${index + 1}`).join(", ");
-    readinessPromise = db
-      .prepare(`
-        SELECT name
-        FROM sqlite_master
-        WHERE type = 'table' AND name IN (${placeholders})
-      `)
-      .bind(...REQUIRED_TABLES)
-      .all()
-      .then((result) => {
-        const existing = new Set((result.results || []).map((row) => row.name));
-        const missing = REQUIRED_TABLES.filter((tableName) => !existing.has(tableName));
-        if (!missing.length) return;
-        throw new Error(
-          `Database migrations have not been applied. Missing tables: ${missing.join(", ")}. Run the D1 migration workflow in docs/d1-migrations.md before starting the Worker.`,
-        );
-      });
+    readinessPromise = assertMigrationsApplied(db);
     schemaReadyPromises.set(db, readinessPromise);
     readinessPromise.catch(() => {
       schemaReadyPromises.delete(db);

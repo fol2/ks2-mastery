@@ -1,4 +1,9 @@
--- Local development seed data.
+-- ⚠️ LOCAL DEVELOPMENT ONLY — DO NOT RUN AGAINST REMOTE/PRODUCTION D1.
+-- This file inserts a user with a publicly known password. Applying it to
+-- production (e.g. `wrangler d1 execute ks2-mastery-db --remote --file ...`)
+-- creates a guessable login. There is intentionally no db:seed:remote npm
+-- script; keep it that way.
+--
 -- Demo sign-in:
 --   email: demo.parent@example.test
 --   password: demo-password-1234
@@ -20,6 +25,9 @@ VALUES (
   CAST(unixepoch('now') * 1000 AS INTEGER)
 );
 
+-- Resolve the demo user's actual ID from the email so that a pre-existing
+-- local user under a different id (e.g. created through the signup flow
+-- during manual QA) still gets a consistent demo subscription and child.
 INSERT OR IGNORE INTO subscriptions (
   user_id,
   plan_code,
@@ -28,14 +36,15 @@ INSERT OR IGNORE INTO subscriptions (
   created_at,
   updated_at
 )
-VALUES (
-  'seed-demo-user',
+SELECT
+  id,
   'free',
   'active',
   0,
   CAST(unixepoch('now') * 1000 AS INTEGER),
   CAST(unixepoch('now') * 1000 AS INTEGER)
-);
+FROM users
+WHERE email = 'demo.parent@example.test';
 
 INSERT OR IGNORE INTO children (
   id,
@@ -49,9 +58,9 @@ INSERT OR IGNORE INTO children (
   created_at,
   updated_at
 )
-VALUES (
+SELECT
   'seed-demo-child',
-  'seed-demo-user',
+  id,
   'Maya Demo',
   'Y5',
   '#3E6FA8',
@@ -60,7 +69,8 @@ VALUES (
   '[]',
   CAST(unixepoch('now') * 1000 AS INTEGER),
   CAST(unixepoch('now') * 1000 AS INTEGER)
-);
+FROM users
+WHERE email = 'demo.parent@example.test';
 
 INSERT OR IGNORE INTO child_state (
   child_id,

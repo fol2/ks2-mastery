@@ -20,6 +20,7 @@
     "db:seed:local": "npx wrangler d1 execute ks2-mastery-db --local --file ./scripts/d1-seed.sql",
     "dev": "node ./scripts/run-local-dev.mjs",
     "check": "npm run build && npm run assert:build-public && npx wrangler deploy --dry-run",
+    "predeploy": "npm run db:migrate:remote",
     "deploy": "npm run build && npx wrangler deploy",
     "test": "npm run build:public && npm run assert:build-public && vitest run",
     "test:watch": "npm run build:public && vitest",
