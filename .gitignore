@@ -21,6 +21,8 @@ public/
 dist/
 .dist-worker/
 .wrangler/
+.frontend-static/
+src/generated/
 
 # Playwright E2E
 playwright-report/
