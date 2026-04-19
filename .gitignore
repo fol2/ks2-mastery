@@ -30,3 +30,4 @@ test-results/
 
 # Operations artefacts
 backups/
+.worktrees
