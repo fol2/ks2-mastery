@@ -34,8 +34,9 @@
   },
   "migrations": [
     {
-      "tag": "v1-spelling-lock",
-      "new_classes": ["SpellingLockDO"]
+      // Free-plan Durable Objects must be created as SQLite-backed classes.
+      "tag": "v2-spelling-lock-sqlite",
+      "new_sqlite_classes": ["SpellingLockDO"]
     }
   ],
   "assets": {
