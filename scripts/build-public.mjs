@@ -1,20 +1,19 @@
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const rootDir = process.cwd();
-const publicDir = path.join(rootDir, "dist", "public");
-const publicSrcDir = path.join(publicDir, "src");
-const publicAssetsDir = path.join(publicDir, "assets");
-const publicVendorDir = path.join(publicDir, "vendor");
-const privacyDir = path.join(publicDir, "privacy");
-const termsDir = path.join(publicDir, "terms");
-const generatedSubdirs = [
-  publicSrcDir,
-  publicAssetsDir,
-  publicVendorDir,
-  privacyDir,
-  termsDir,
-];
+// `publicFinalDir` is what Wrangler serves. We build into a sibling tmp dir
+// and swap atomically so the live tree is never seen half-rebuilt -- which
+// was the root cause of `EBUSY` on Windows and of stale root-level files
+// (e.g. a future `robots.txt`) lingering across builds.
+const publicFinalDir = path.join(rootDir, "dist", "public");
+const publicBuildDir = path.join(rootDir, "dist", "public.tmp");
+const publicOldDir = path.join(rootDir, "dist", "public.old");
+const publicSrcDir = path.join(publicBuildDir, "src");
+const publicAssetsDir = path.join(publicBuildDir, "assets");
+const publicVendorDir = path.join(publicBuildDir, "vendor");
+const privacyDir = path.join(publicBuildDir, "privacy");
+const termsDir = path.join(publicBuildDir, "terms");
 
 function staticPage({ title, heading, bodyHtml }) {
   return `<!DOCTYPE html>
@@ -104,13 +103,11 @@ function staticPage({ title, heading, bodyHtml }) {
 </html>`;
 }
 
-await mkdir(publicDir, { recursive: true });
-await Promise.all(
-  generatedSubdirs.map((directory) =>
-    rm(directory, { recursive: true, force: true }),
-  ),
-);
-await rm(path.join(publicDir, "index.html"), { force: true });
+// Start from a known-empty build target. Any leftover `.tmp` / `.old` from a
+// previous interrupted run is wiped up front.
+await rm(publicBuildDir, { recursive: true, force: true });
+await rm(publicOldDir, { recursive: true, force: true });
+await mkdir(publicBuildDir, { recursive: true });
 await mkdir(publicSrcDir, { recursive: true });
 await mkdir(publicAssetsDir, { recursive: true });
 await mkdir(publicVendorDir, { recursive: true });
@@ -181,7 +178,7 @@ const transformedHtml = htmlSource
   .replace(/<title>[\s\S]*?<\/title>/, "<title>KS2 Mastery</title>")
   .replace(/[\r\n]+  <!-- Content:[\s\S]*?<\/body>/m, `\n${scriptBlock}\n</body>`);
 
-await writeFile(path.join(publicDir, "index.html"), transformedHtml, "utf8");
+await writeFile(path.join(publicBuildDir, "index.html"), transformedHtml, "utf8");
 
 await writeFile(
   path.join(privacyDir, "index.html"),
@@ -239,3 +236,18 @@ await writeFile(
   }),
   "utf8",
 );
+
+// Atomic swap: move the existing live tree aside, move the freshly built tree
+// into place, then drop the aside. At every moment a consumer (Wrangler dev,
+// deploy upload) sees either the previous complete tree or the new complete
+// tree -- never an in-progress mix. This also guarantees anything that used
+// to sit at the root of `dist/public` is dropped unless this build wrote it.
+try {
+  await rename(publicFinalDir, publicOldDir);
+} catch (error) {
+  if (error.code !== "ENOENT") {
+    throw error;
+  }
+}
+await rename(publicBuildDir, publicFinalDir);
+await rm(publicOldDir, { recursive: true, force: true });
