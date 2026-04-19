@@ -19,3 +19,7 @@ node_modules/
 public/
 .dist-worker/
 .wrangler/
+
+# Playwright E2E
+playwright-report/
+test-results/
