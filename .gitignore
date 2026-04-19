@@ -27,3 +27,6 @@ src/generated/
 # Playwright E2E
 playwright-report/
 test-results/
+
+# Operations artefacts
+backups/
