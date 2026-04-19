@@ -9,12 +9,18 @@
     "build:public": "node ./scripts/build-public.mjs",
     "build": "npm run build:data && npm run build:runtime && npm run build:public",
     "check": "npm run build && npx wrangler deploy --dry-run",
-    "deploy": "npm run build && npx wrangler deploy"
+    "deploy": "npm run build && npx wrangler deploy",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "hono": "^4.8.5"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.14.7",
+    "@playwright/test": "^1.59.1",
+    "vitest": "^4.1.4",
     "wrangler": "^4.42.0"
   }
 }

@@ -228,31 +228,32 @@ export async function linkIdentityToUser(env, userId, payload) {
 
   const timestamp = now();
 
-  if (existing) {
-    await db
-      .prepare(`
-        UPDATE user_identities
-        SET email = COALESCE(?1, email)
-        WHERE id = ?2
-      `)
-      .bind(email || null, existing.id)
-      .run();
-  } else {
-    await db
-      .prepare(`
-        INSERT INTO user_identities (
-          id,
-          user_id,
-          provider,
-          provider_subject,
-          email,
-          created_at
-        )
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-      `)
-      .bind(randomToken(18), userId, provider, providerSubject, email || null, timestamp)
-      .run();
-  }
+  // UPSERT keeps concurrent callers race-safe: two requests that both saw no
+  // existing row will still converge to a single identity row via the conflict
+  // handler instead of one of them failing on UNIQUE(provider, provider_subject).
+  await db
+    .prepare(`
+      INSERT INTO user_identities (
+        id,
+        user_id,
+        provider,
+        provider_subject,
+        email,
+        created_at
+      )
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+      ON CONFLICT(provider, provider_subject) DO UPDATE SET
+        email = COALESCE(excluded.email, user_identities.email)
+    `)
+    .bind(
+      existing?.id || randomToken(18),
+      userId,
+      provider,
+      providerSubject,
+      email || null,
+      timestamp,
+    )
+    .run();
 
   if (!email) return getUserById(env, userId);
 
@@ -303,25 +304,33 @@ export async function findOrCreateUserFromIdentity(env, payload) {
     throw new Error("A valid identity provider payload is required.");
   }
 
-  const identityUser = await getUserByProviderIdentity(env, provider, providerSubject);
-  if (identityUser) {
-    await linkIdentityToUser(env, identityUser.id, { provider, providerSubject, email });
-    return getUserById(env, identityUser.id);
-  }
+  // Shared lookup chain used both for the happy path and for race recovery.
+  // A concurrent callback can win createSocialUser and make our insert fail on
+  // UNIQUE(provider, provider_subject) OR UNIQUE(email); running this after a
+  // failure lets us attach to whichever user the other request just created.
+  const resolveExistingUser = async () => {
+    const byIdentity = await getUserByProviderIdentity(env, provider, providerSubject);
+    if (byIdentity) {
+      await linkIdentityToUser(env, byIdentity.id, { provider, providerSubject, email });
+      return getUserById(env, byIdentity.id);
+    }
+    if (email) {
+      const byEmail = await getUserByEmail(env, email);
+      if (byEmail) {
+        await linkIdentityToUser(env, byEmail.id, { provider, providerSubject, email });
+        return getUserById(env, byEmail.id);
+      }
+    }
+    return null;
+  };
 
-  const emailUser = email ? await getUserByEmail(env, email) : null;
-  if (emailUser) {
-    await linkIdentityToUser(env, emailUser.id, { provider, providerSubject, email });
-    return getUserById(env, emailUser.id);
-  }
+  const existing = await resolveExistingUser();
+  if (existing) return existing;
 
-  // Concurrent callbacks for the same provider subject race the create path.
-  // UNIQUE(provider, provider_subject) protects data integrity; on collision
-  // the other request already created the user, so re-fetch and return that.
   try {
     return await createSocialUser(env, { email, provider, providerSubject });
   } catch (error) {
-    const raced = await getUserByProviderIdentity(env, provider, providerSubject);
+    const raced = await resolveExistingUser();
     if (raced) return raced;
     throw error;
   }
