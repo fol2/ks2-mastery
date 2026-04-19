@@ -337,13 +337,26 @@ async function fetchBinaryAudio(url, headers, body) {
 
   if (!response.ok) throw await buildHttpAudioError(response);
 
-  const audioBuffer = await response.arrayBuffer();
-  if (!audioBuffer.byteLength) {
+  // Pipe the upstream body straight through to the client instead of buffering
+  // the full MP3 in Worker memory first. A multi-second OpenAI/ElevenLabs
+  // response is ~KBs to MBs — buffering delays TTFB to upstream-complete time
+  // and pins memory per concurrent request. Gemini must still buffer because
+  // its audio is embedded in a JSON envelope (see fetchGeminiSpeech).
+  //
+  // We keep a Content-Length === '0' guard so a provider that replies "ok"
+  // but writes no body still fails loudly instead of returning a silent
+  // empty-audio response to the child. `Number(null)` is 0, so only apply
+  // the guard when the header is actually present.
+  const contentLengthHeader = response.headers.get("content-length");
+  if (contentLengthHeader !== null && Number(contentLengthHeader) === 0) {
+    throw providerError("The provider returned no audio.", response.status);
+  }
+  if (!response.body) {
     throw providerError("The provider returned no audio.", response.status);
   }
 
   return {
-    body: audioBuffer,
+    body: response.body,
     contentType: String(response.headers.get("content-type") || "audio/mpeg"),
   };
 }

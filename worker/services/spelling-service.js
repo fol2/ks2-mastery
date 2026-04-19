@@ -1,7 +1,4 @@
-import {
-  buildSignedInBootstrapResponse,
-  buildSignedOutBootstrapResponse,
-} from "../contracts/bootstrap-contract.js";
+import { buildSignedInBootstrapResponse } from "../contracts/bootstrap-contract.js";
 import {
   buildSpellingAdvanceContinueResponse,
   buildSpellingAdvanceDoneResponse,
@@ -23,13 +20,11 @@ import {
   saveChildLearningState,
 } from "../repositories/child-repository.js";
 import {
-  getSessionBundle,
-} from "../repositories/session-repository.js";
-import {
   deleteSpellingSessionState,
   findSpellingSessionState,
   saveSpellingSessionState,
 } from "../repositories/spelling-session-repository.js";
+import { patchBundleForChildState } from "./bundle-patches.js";
 
 function requireSelectedChild(bundle) {
   if (!bundle.selectedChild) {
@@ -47,13 +42,13 @@ async function loadActiveSpellingSession(env, bundle, sessionId) {
   return { selectedChild, sessionState };
 }
 
-export async function persistSpellingPrefs(env, bundle, sessionHash, prefs) {
+export async function persistSpellingPrefs(env, bundle, _sessionHash, prefs) {
   const selectedChild = requireSelectedChild(bundle);
   const nextState = saveSpellingPreferences(bundle.childState, prefs);
   await saveChildLearningState(env, selectedChild.id, nextState);
-  const refreshedBundle = await getSessionBundle(env, sessionHash);
-  if (!refreshedBundle) return buildSignedOutBootstrapResponse(env);
-  return buildSignedInBootstrapResponse(refreshedBundle, env);
+  // Prefs are saved on the currently-selected child, so only bundle.childState
+  // changes — patch in memory instead of re-reading the entire bundle.
+  return buildSignedInBootstrapResponse(patchBundleForChildState(bundle, nextState), env);
 }
 
 export async function startSpellingSession(env, bundle, payload) {
