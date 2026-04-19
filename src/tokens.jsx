@@ -1,5 +1,4 @@
-// Design tokens — the shared visual language.
-// When porting to Next.js: drop these into a Tailwind theme config or CSS variables.
+// Design tokens for the shared visual language used by the browser shell.
 
 const TOKENS = {
   // Neutral surface
