@@ -176,6 +176,14 @@ async function protectEmailAuth(c, email, turnstileToken, action) {
   const ip = clientIp(c);
   const type = action === "register" ? "register" : "login";
 
+  const turnstile = await verifyTurnstileToken(c.env, {
+    token: turnstileToken,
+    remoteIp: ip,
+  });
+  if (!turnstile.success) {
+    return validationFailure(400, turnstile.message || "Complete the security check and try again.");
+  }
+
   const ipLimit = await consumeAuthRateLimit(
     c,
     `auth-${type}-ip`,
@@ -196,14 +204,6 @@ async function protectEmailAuth(c, email, turnstileToken, action) {
   );
   if (emailLimit) return emailLimit;
 
-  const turnstile = await verifyTurnstileToken(c.env, {
-    token: turnstileToken,
-    remoteIp: ip,
-  });
-  if (!turnstile.success) {
-    return validationFailure(400, turnstile.message || "Complete the security check and try again.");
-  }
-
   return null;
 }
 
@@ -222,6 +222,15 @@ async function protectAuthenticatedTtsCall(c, bucket, limit, windowMs) {
 
 async function protectOAuthStart(c, provider, turnstileToken) {
   const ip = clientIp(c);
+
+  const turnstile = await verifyTurnstileToken(c.env, {
+    token: turnstileToken,
+    remoteIp: ip,
+  });
+  if (!turnstile.success) {
+    return validationFailure(400, turnstile.message || "Complete the security check and try again.");
+  }
+
   const rateLimit = await consumeAuthRateLimit(
     c,
     `oauth-start-${String(provider || "").trim().toLowerCase()}`,
@@ -231,14 +240,6 @@ async function protectOAuthStart(c, provider, turnstileToken) {
     "Too many social sign-in attempts. Please wait a few minutes and try again.",
   );
   if (rateLimit) return rateLimit;
-
-  const turnstile = await verifyTurnstileToken(c.env, {
-    token: turnstileToken,
-    remoteIp: ip,
-  });
-  if (!turnstile.success) {
-    return validationFailure(400, turnstile.message || "Complete the security check and try again.");
-  }
 
   return null;
 }
