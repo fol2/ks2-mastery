@@ -242,12 +242,28 @@ await writeFile(
 // deploy upload) sees either the previous complete tree or the new complete
 // tree -- never an in-progress mix. This also guarantees anything that used
 // to sit at the root of `dist/public` is dropped unless this build wrote it.
+let hasPreviousPublicDir = false;
 try {
   await rename(publicFinalDir, publicOldDir);
+  hasPreviousPublicDir = true;
 } catch (error) {
   if (error.code !== "ENOENT") {
     throw error;
   }
 }
-await rename(publicBuildDir, publicFinalDir);
+try {
+  await rename(publicBuildDir, publicFinalDir);
+} catch (error) {
+  if (hasPreviousPublicDir) {
+    try {
+      await rename(publicOldDir, publicFinalDir);
+    } catch (rollbackError) {
+      throw new AggregateError(
+        [error, rollbackError],
+        "Failed to promote dist/public build and rollback previous public directory",
+      );
+    }
+  }
+  throw error;
+}
 await rm(publicOldDir, { recursive: true, force: true });

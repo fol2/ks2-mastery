@@ -1,6 +1,5 @@
 import net from "node:net";
 import { spawn } from "node:child_process";
-import { fileURLToPath } from "node:url";
 
 function findAvailablePort() {
   return new Promise((resolve, reject) => {
@@ -38,18 +37,16 @@ function resolvePort() {
 }
 
 const port = resolvePort() ?? String(await findAvailablePort());
-const playwrightCliPath = fileURLToPath(
-  new URL("../node_modules/playwright/cli.js", import.meta.url),
-);
 
 // Forward extra CLI args (e.g. `npm run test:e2e -- --headed spelling.spec.js`)
 // so the wrapper stays transparent to local debugging workflows.
 const forwardedArgs = process.argv.slice(2);
 
 const child = spawn(
-  process.execPath,
-  [playwrightCliPath, "test", ...forwardedArgs],
+  "npm",
+  ["exec", "--", "playwright", "test", ...forwardedArgs],
   {
+    shell: process.platform === "win32",
     stdio: "inherit",
     env: {
       ...process.env,
