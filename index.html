@@ -45,6 +45,19 @@
     var errors = [];
     var warnings = [];
     var stages = [];
+    var requiredResourceSuffixes = [
+      "/vendor/sentence-bank-01.js",
+      "/vendor/sentence-bank-02.js",
+      "/vendor/sentence-bank-03.js",
+      "/vendor/sentence-bank-04.js",
+      "/vendor/sentence-bank-05.js",
+      "/vendor/sentence-bank-06.js",
+      "/vendor/word-list.js",
+      "/vendor/word-meta.js",
+    ];
+    function isRequiredResource(url) {
+      return requiredResourceSuffixes.some(function (suffix) { return String(url).indexOf(suffix) !== -1; });
+    }
     function elapsed() { return ((Date.now() - startedAt) / 1000).toFixed(1) + "s"; }
     function fmtStages() {
       if (!stages.length) return "(no stage marker fired yet — waiting for the frontend bundle)";
@@ -67,7 +80,12 @@
     window.addEventListener("error", function (ev) {
       if (ev && ev.target && ev.target !== window) {
         var url = ev.target.src || ev.target.href || "(unknown URL)";
-        warnings.push("resource load failed: " + url);
+        var message = "resource load failed: " + url;
+        if (isRequiredResource(url)) {
+          errors.push(message);
+        } else {
+          warnings.push(message);
+        }
         render();
         return;
       }
