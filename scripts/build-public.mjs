@@ -23,6 +23,7 @@ const clientSourceFiles = [
   "primitives.jsx",
   "shell.jsx",
   "client-store.jsx",
+  "game-engine.jsx",
   "profile.jsx",
   "monsters.jsx",
   "monster-overlay.jsx",
