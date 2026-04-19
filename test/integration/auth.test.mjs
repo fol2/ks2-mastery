@@ -185,21 +185,34 @@ describe("GET /api/bootstrap", () => {
 });
 
 describe("OAuth start routes", () => {
-  it("redirects with an error when the provider has no secrets wired up", async () => {
+  it("retires the legacy GET entrypoint with 405 so bookmarks get a clear 'use POST' hint", async () => {
     const response = await SELF.fetch("https://app.test/api/auth/google/start", {
       redirect: "manual",
     });
-    expect(response.status).toBe(302);
-    const location = response.headers.get("location") || "";
-    expect(location).toMatch(/authError=/);
+    expect(response.status).toBe(405);
+    expect(response.headers.get("Allow")).toBe("POST");
   });
 
-  it("redirects with an error for an unknown provider", async () => {
-    const response = await SELF.fetch("https://app.test/api/auth/myspace/start", {
-      redirect: "manual",
+  it("surfaces a 400 with a readable message when the provider has no secrets wired up", async () => {
+    const response = await SELF.fetch("https://app.test/api/auth/google/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
     });
-    expect(response.status).toBe(302);
-    const location = response.headers.get("location") || "";
-    expect(location).toMatch(/authError=/);
+    expect(response.status).toBe(400);
+    const payload = await response.json();
+    expect(payload.ok).toBe(false);
+    expect(String(payload.message || "")).not.toMatch(/^$/);
+  });
+
+  it("surfaces a 400 for an unknown provider", async () => {
+    const response = await SELF.fetch("https://app.test/api/auth/myspace/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+    expect(response.status).toBe(400);
+    const payload = await response.json();
+    expect(payload.ok).toBe(false);
   });
 });

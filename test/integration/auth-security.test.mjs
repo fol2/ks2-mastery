@@ -97,4 +97,37 @@ describe("auth protection", () => {
     const payload = await response.json();
     expect(payload.message).toMatch(/security check/i);
   });
+
+  it("retires the legacy GET social sign-in entrypoint with 405", async () => {
+    const response = await app.fetch(
+      new Request(`${BASE}/api/auth/google/start`, { method: "GET" }),
+      requestEnv(),
+    );
+
+    expect(response.status).toBe(405);
+    expect(response.headers.get("Allow")).toBe("POST");
+    const payload = await response.json();
+    expect(payload.message).toMatch(/post/i);
+  });
+
+  it("uses a single 429 message for IP- and email-bucket throttles to avoid enumeration", async () => {
+    const ipHeaders = { "CF-Connecting-IP": "198.51.100.25" };
+
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const response = await app.fetch(jsonRequest("/api/auth/login", {
+        email: `filler-${attempt}@example.test`,
+        password: "wrong-password",
+      }, ipHeaders), requestEnv());
+      expect(response.status).toBe(400);
+    }
+
+    const ipLimited = await app.fetch(jsonRequest("/api/auth/login", {
+      email: "unknown@example.test",
+      password: "wrong-password",
+    }, ipHeaders), requestEnv());
+    expect(ipLimited.status).toBe(429);
+    const ipPayload = await ipLimited.json();
+    expect(ipPayload.message).not.toMatch(/account/i);
+    expect(ipPayload.message).toMatch(/sign-in attempts/i);
+  });
 });

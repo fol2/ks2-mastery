@@ -255,14 +255,24 @@ function TurnstilePanel({ siteKey, resetNonce, onToken }) {
   React.useEffect(() => {
     if (!siteKey || !containerRef.current) return undefined;
     let cancelled = false;
-    var intervalId = 0;
+    // Stop polling after ~10s so a blocked api.js (ad-blocker, CSP, outage)
+    // cannot pin a 20 Hz loop indefinitely. After the cap, the panel renders
+    // but the widget stays unmounted; the parent surfaces the missing token.
+    const MAX_MOUNT_ATTEMPTS = 200;
+    let mountAttempts = 0;
+    let intervalId = 0;
 
     function clearToken() {
       if (!cancelled) onToken('');
     }
 
     function mountWidget() {
-      if (cancelled || !window.turnstile || !containerRef.current || widgetIdRef.current != null) return;
+      if (cancelled || widgetIdRef.current != null) return;
+      if (!window.turnstile || !containerRef.current) {
+        mountAttempts += 1;
+        if (mountAttempts >= MAX_MOUNT_ATTEMPTS) window.clearInterval(intervalId);
+        return;
+      }
       clearToken();
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: siteKey,

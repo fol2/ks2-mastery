@@ -167,6 +167,11 @@ async function consumeAuthRateLimit(c, bucket, identifier, limit, windowMs, mess
   return validationFailure(429, message, result.retryAfterSeconds);
 }
 
+// Shared wording across IP- and email-bucket throttles: a split message would
+// let an attacker tell whether a given email exists by seeing which 429 kicks
+// in first.
+const AUTH_RATE_LIMIT_MESSAGE = "Too many sign-in attempts. Please wait a few minutes and try again.";
+
 async function protectEmailAuth(c, email, turnstileToken, action) {
   const ip = clientIp(c);
   const type = action === "register" ? "register" : "login";
@@ -177,7 +182,7 @@ async function protectEmailAuth(c, email, turnstileToken, action) {
     ip,
     type === "register" ? 6 : 10,
     10 * 60 * 1000,
-    "Too many sign-in attempts. Please wait a few minutes and try again.",
+    AUTH_RATE_LIMIT_MESSAGE,
   );
   if (ipLimit) return ipLimit;
 
@@ -187,7 +192,7 @@ async function protectEmailAuth(c, email, turnstileToken, action) {
     safeEmail(email),
     type === "register" ? 4 : 8,
     10 * 60 * 1000,
-    "Too many sign-in attempts for that account. Please wait a few minutes and try again.",
+    AUTH_RATE_LIMIT_MESSAGE,
   );
   if (emailLimit) return emailLimit;
 
@@ -200,6 +205,19 @@ async function protectEmailAuth(c, email, turnstileToken, action) {
   }
 
   return null;
+}
+
+async function protectAuthenticatedTtsCall(c, bucket, limit, windowMs) {
+  const sessionHash = c.get("sessionHash");
+  if (!sessionHash) return null;
+  return consumeAuthRateLimit(
+    c,
+    bucket,
+    sessionHash,
+    limit,
+    windowMs,
+    "You are generating speech too quickly. Please slow down and try again shortly.",
+  );
 }
 
 async function protectOAuthStart(c, provider, turnstileToken) {
@@ -289,6 +307,11 @@ app.use("/api/*", async (c, next) => {
 });
 
 app.get("/api/bootstrap", async (c) => {
+  // Bootstrap carries signed-in email, billing state, and child profile data.
+  // Even though the cookie is `HttpOnly`, downstream proxies or stale service
+  // workers could cache the response and leak one user's bootstrap to another.
+  c.header("Cache-Control", "no-store");
+
   const rawToken = getCookie(c, "ks2_session");
   if (!rawToken) {
     return json(c, 200, signedOutBootstrapPayload(c.env));
@@ -383,18 +406,18 @@ async function startOAuthAttempt(c, provider) {
   return attempt;
 }
 
-app.get("/api/auth/:provider/start", async (c) => {
-  const provider = String(c.req.param("provider") || "").trim().toLowerCase();
-  const protectionFailure = await protectOAuthStart(c, provider, "");
-  if (protectionFailure) {
-    return redirectWithAuthError(c, protectionFailure.message);
-  }
-  try {
-    const attempt = await startOAuthAttempt(c, provider);
-    return c.redirect(attempt.url, 302);
-  } catch (error) {
-    return redirectWithAuthError(c, error.message || "Could not start sign-in.");
-  }
+// The browser now always starts social sign-in with a POST that carries a
+// Turnstile token. Keeping the legacy GET variant around meant bookmarks and
+// external `<a href="/api/auth/google/start">` links would 400 the moment
+// Turnstile was turned on, because `protectOAuthStart` was called with an
+// empty token. Return 405 so callers discover the change fast instead of
+// getting a confusing auth-error redirect loop.
+app.get("/api/auth/:provider/start", (c) => {
+  c.header("Allow", "POST");
+  return json(c, 405, {
+    ok: false,
+    message: "Start social sign-in from the web app (POST /api/auth/:provider/start).",
+  });
 });
 
 app.post("/api/auth/:provider/start", async (c) => {
@@ -628,6 +651,9 @@ app.get("/api/tts/voices", requireSession, async (c) => {
     return validationError(c, "That voice catalogue is not supported.");
   }
 
+  const throttle = await protectAuthenticatedTtsCall(c, "tts-voices-session", 20, 10 * 60 * 1000);
+  if (throttle) return applyValidationFailure(c, throttle);
+
   try {
     const voices = await listElevenLabsVoices(c.env);
     return json(c, 200, {
@@ -644,6 +670,12 @@ app.get("/api/tts/voices", requireSession, async (c) => {
 });
 
 app.post("/api/tts/speak", requireSession, async (c) => {
+  // With provider keys now held server-side, every /api/tts/speak call costs
+  // real money on Gemini/OpenAI/ElevenLabs. Cap speech generation per session
+  // so one rogue or runaway client cannot drain the provider budget.
+  const throttle = await protectAuthenticatedTtsCall(c, "tts-speak-session", 120, 10 * 60 * 1000);
+  if (throttle) return applyValidationFailure(c, throttle);
+
   const body = await c.req.json().catch(() => ({}));
   try {
     const audio = await synthesiseSpeech(c.env, body);
