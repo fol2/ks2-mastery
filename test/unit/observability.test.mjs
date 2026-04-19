@@ -2,14 +2,24 @@ import { describe, expect, it } from "vitest";
 import { attachRequestId, createRequestId, REQUEST_ID_HEADER } from "../../worker/lib/observability.js";
 
 describe("createRequestId", () => {
-  it("prefers the Cloudflare ray ID when present", () => {
-    const request = new Request("https://app.test/api/bootstrap", {
-      headers: {
-        "cf-ray": "abc123def456-LHR",
-      },
-    });
+  it("prefers the Cloudflare ray ID when the request carries Cloudflare context", () => {
+    const request = {
+      headers: new Headers({ "cf-ray": "abc123def456-LHR" }),
+      cf: { colo: "LHR" },
+    };
 
     expect(createRequestId(request)).toBe("abc123def456");
+  });
+
+  it("ignores cf-ray when the request did not come through the Cloudflare edge", () => {
+    const request = new Request("https://app.test/api/bootstrap", {
+      headers: { "cf-ray": "abc123def456-LHR" },
+    });
+
+    const requestId = createRequestId(request);
+    expect(requestId).not.toBe("abc123def456");
+    expect(typeof requestId).toBe("string");
+    expect(requestId.length).toBeGreaterThan(10);
   });
 
   it("falls back to a generated ID when no ray ID is present", () => {

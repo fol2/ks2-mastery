@@ -26,4 +26,24 @@ describe("request ID propagation", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("x-request-id")).toBeTruthy();
   });
+
+  it("adds x-request-id to validation-error (4xx) responses", async () => {
+    const response = await SELF.fetch("https://app.test/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "not-an-email", password: "short" }),
+    });
+    expect(response.status).toBe(400);
+    expect(response.headers.get("x-request-id")).toBeTruthy();
+  });
+
+  it("adds x-request-id to auth-required (401) responses", async () => {
+    const response = await SELF.fetch("https://app.test/api/children", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Test" }),
+    });
+    expect(response.status).toBe(401);
+    expect(response.headers.get("x-request-id")).toBeTruthy();
+  });
 });

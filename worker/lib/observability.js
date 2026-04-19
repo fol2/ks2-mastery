@@ -37,6 +37,19 @@ function formatErrorStack(error) {
     .join("\n");
 }
 
+// Light scrub to keep the runbook's "no cookies/passwords in logs" promise
+// from being quietly broken by a thrown error whose message happens to
+// embed an email, bearer token, or authorisation header.
+const EMAIL_PATTERN = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+const BEARER_PATTERN = /(?:bearer|token|authorization)\s*[=:]?\s*[A-Za-z0-9._\-+=/]{16,}/gi;
+
+function redactErrorMessage(raw) {
+  if (raw == null) return String(raw);
+  return String(raw)
+    .replace(EMAIL_PATTERN, "[redacted-email]")
+    .replace(BEARER_PATTERN, "[redacted-secret]");
+}
+
 function emit(level, event, fields) {
   const entry = compact({
     timestamp: new Date().toISOString(),
@@ -50,8 +63,11 @@ function emit(level, event, fields) {
 }
 
 export function createRequestId(request) {
+  // Only trust `cf-ray` when the request actually came through Cloudflare's
+  // edge (request.cf is populated there and absent in service-binding or
+  // test harness calls). Prevents a caller from pinning their own ID.
   const rayId = String(request.headers.get("cf-ray") || "").trim();
-  if (rayId) return rayId.split("-")[0];
+  if (rayId && request.cf) return rayId.split("-")[0];
   if (typeof crypto?.randomUUID === "function") return crypto.randomUUID();
 
   const bytes = crypto.getRandomValues(new Uint8Array(16));
@@ -83,7 +99,7 @@ export function logError(c, event, error, fields = {}) {
     ...requestMeta(c),
     ...compact(fields),
     errorName: error?.name || "Error",
-    errorMessage: error?.message || String(error),
+    errorMessage: redactErrorMessage(error?.message || String(error)),
     stack: formatErrorStack(error),
   });
 }
