@@ -21,6 +21,17 @@ import {
 } from "../repositories/user-repository.js";
 
 const AUTH_RATE_LIMIT_MESSAGE = "Too many sign-in attempts. Please wait a few minutes and try again.";
+const OAUTH_RATE_LIMIT_MESSAGE = "Too many social sign-in attempts. Please wait a few minutes and try again.";
+
+// Sliding window applied to every auth-throttle bucket. Tuned together so
+// the policy is obvious in one glance; change with care — the numbers also
+// appear in integration tests.
+const AUTH_WINDOW_MS = 10 * 60 * 1000;
+const AUTH_LIMITS = {
+  register: { ip: 6, email: 4 },
+  login: { ip: 10, email: 8 },
+  oauthStart: { ip: 12 },
+};
 
 async function createAuthenticatedSession(env, userId) {
   const sessionToken = randomToken(24);
@@ -51,12 +62,14 @@ async function protectEmailAuth(env, options) {
     throw new ValidationError(turnstile.message || "Complete the security check and try again.");
   }
 
+  const limits = AUTH_LIMITS[type];
+
   await consumeAuthRateLimit(
     env,
     `auth-${type}-ip`,
     options.ip,
-    type === "register" ? 6 : 10,
-    10 * 60 * 1000,
+    limits.ip,
+    AUTH_WINDOW_MS,
     AUTH_RATE_LIMIT_MESSAGE,
   );
 
@@ -64,8 +77,8 @@ async function protectEmailAuth(env, options) {
     env,
     `auth-${type}-email`,
     options.email,
-    type === "register" ? 4 : 8,
-    10 * 60 * 1000,
+    limits.email,
+    AUTH_WINDOW_MS,
     AUTH_RATE_LIMIT_MESSAGE,
   );
 }
@@ -83,9 +96,9 @@ async function protectOAuthStart(env, options) {
     env,
     `oauth-start-${String(options.provider || "").trim().toLowerCase()}`,
     options.ip,
-    12,
-    10 * 60 * 1000,
-    "Too many social sign-in attempts. Please wait a few minutes and try again.",
+    AUTH_LIMITS.oauthStart.ip,
+    AUTH_WINDOW_MS,
+    OAUTH_RATE_LIMIT_MESSAGE,
   );
 }
 
@@ -185,8 +198,12 @@ export async function startSocialLogin(env, provider, origin, security = {}) {
 export async function completeSocialLogin(env, provider, origin, payload) {
   const { profile } = await completeOAuthFlow(env, provider, origin, payload);
 
+  // Use ValidationError so a future JSON endpoint that reuses this helper
+  // receives a 400 rather than the unhandled-exception 500 path. The GET/POST
+  // callback routes already wrap the throw in redirectWithAuthError so the
+  // user-facing behaviour is unchanged.
   if (!profile?.subject) {
-    throw new Error("The provider did not return a valid account identifier.");
+    throw new ValidationError("The provider did not return a valid account identifier.");
   }
 
   const user = await findOrCreateUserFromProviderIdentity(env, {

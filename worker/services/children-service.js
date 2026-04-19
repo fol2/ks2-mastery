@@ -1,4 +1,7 @@
-import { buildSignedInBootstrapResponse } from "../contracts/bootstrap-contract.js";
+import {
+  buildSignedInBootstrapResponse,
+  buildSignedOutBootstrapResponse,
+} from "../contracts/bootstrap-contract.js";
 import { buildChildrenIndexResponse } from "../contracts/children-contract.js";
 import { NotFoundError } from "../lib/http.js";
 import {
@@ -11,6 +14,14 @@ import {
   selectSessionChild,
 } from "../repositories/session-repository.js";
 
+// A concurrent logout between the caller's requireSession and our post-write
+// re-read can invalidate the session. Return the signed-out bootstrap payload
+// rather than dereferencing null inside buildSignedInBootstrapResponse.
+function bootstrapAfterMutation(refreshedBundle, env) {
+  if (!refreshedBundle) return buildSignedOutBootstrapResponse(env);
+  return buildSignedInBootstrapResponse(refreshedBundle, env);
+}
+
 export function listChildren(bundle) {
   return buildChildrenIndexResponse(bundle);
 }
@@ -19,7 +30,7 @@ export async function createChildForParent(env, bundle, sessionHash, payload) {
   const child = await createChildProfile(env, bundle.user.id, payload);
   await selectSessionChild(env, bundle.session.id, child.id);
   const refreshedBundle = await getSessionBundle(env, sessionHash);
-  return buildSignedInBootstrapResponse(refreshedBundle, env);
+  return bootstrapAfterMutation(refreshedBundle, env);
 }
 
 export async function updateChildForParent(env, bundle, sessionHash, childId, payload) {
@@ -29,7 +40,7 @@ export async function updateChildForParent(env, bundle, sessionHash, childId, pa
   }
 
   const refreshedBundle = await getSessionBundle(env, sessionHash);
-  return buildSignedInBootstrapResponse(refreshedBundle, env);
+  return bootstrapAfterMutation(refreshedBundle, env);
 }
 
 export async function selectChildForParent(env, bundle, sessionHash, childId) {
@@ -40,5 +51,5 @@ export async function selectChildForParent(env, bundle, sessionHash, childId) {
 
   await selectSessionChild(env, bundle.session.id, child.id);
   const refreshedBundle = await getSessionBundle(env, sessionHash);
-  return buildSignedInBootstrapResponse(refreshedBundle, env);
+  return bootstrapAfterMutation(refreshedBundle, env);
 }

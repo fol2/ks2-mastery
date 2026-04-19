@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { json } from "../lib/http.js";
-import { setLogContext } from "../lib/observability.js";
+import { setSessionLogContext } from "../lib/observability.js";
 import { clearSessionToken, getSessionToken } from "../lib/session-cookie.js";
 import { loadBootstrap } from "../services/bootstrap-service.js";
 
@@ -12,13 +12,7 @@ bootstrapRoutes.get("/bootstrap", async (c) => {
   if (result.clearSession) {
     clearSessionToken(c);
   }
-  if (result.bundle) {
-    setLogContext(c, {
-      userId: result.bundle.user.id,
-      sessionId: result.bundle.session.id,
-      selectedChildId: result.bundle.selectedChild?.id,
-    });
-  }
+  setSessionLogContext(c, result.bundle);
   return json(c, 200, result.payload);
 });
 

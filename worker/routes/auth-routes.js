@@ -7,7 +7,7 @@ import {
   parseOAuthStartPayload,
 } from "../contracts/auth-contract.js";
 import { appOrigin, clientIp, json, readFormBody, readJsonBody } from "../lib/http.js";
-import { logError, setLogContext } from "../lib/observability.js";
+import { logError, setSessionLogContext } from "../lib/observability.js";
 import {
   clearOauthAttempt,
   readOauthAttempt,
@@ -57,11 +57,7 @@ async function completeProviderLogin(c, rawPayload) {
 
     clearOauthAttempt(c);
     setSessionToken(c, authenticated.sessionToken);
-    setLogContext(c, {
-      userId: authenticated.bundle.user.id,
-      sessionId: authenticated.bundle.session.id,
-      selectedChildId: authenticated.bundle.selectedChild?.id,
-    });
+    setSessionLogContext(c, authenticated.bundle);
     return c.redirect(appOrigin(c), 302);
   } catch (error) {
     logError(c, "auth.oauth.callback.failed", error, { provider });
@@ -75,11 +71,7 @@ authRoutes.post("/auth/register", async (c) => {
     ip: clientIp(c),
   });
   setSessionToken(c, authenticated.sessionToken);
-  setLogContext(c, {
-    userId: authenticated.bundle.user.id,
-    sessionId: authenticated.bundle.session.id,
-    selectedChildId: authenticated.bundle.selectedChild?.id,
-  });
+  setSessionLogContext(c, authenticated.bundle);
   return json(c, 201, authenticated.payload);
 });
 
@@ -89,17 +81,19 @@ authRoutes.post("/auth/login", async (c) => {
     ip: clientIp(c),
   });
   setSessionToken(c, authenticated.sessionToken);
-  setLogContext(c, {
-    userId: authenticated.bundle.user.id,
-    sessionId: authenticated.bundle.session.id,
-    selectedChildId: authenticated.bundle.selectedChild?.id,
-  });
+  setSessionLogContext(c, authenticated.bundle);
   return json(c, 200, authenticated.payload);
 });
 
 authRoutes.post("/auth/logout", requireSession, async (c) => {
-  await logoutSession(c.env, c.get("sessionHash"));
-  clearSessionToken(c);
+  // Always clear the cookie, even if the D1 delete throws. A lingering
+  // client cookie that no longer maps to a server row is cheap; a cookie
+  // that points at a still-live session after a failed logout is not.
+  try {
+    await logoutSession(c.env, c.get("sessionHash"));
+  } finally {
+    clearSessionToken(c);
+  }
   return json(c, 200, buildLogoutResponse());
 });
 

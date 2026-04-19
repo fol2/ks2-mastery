@@ -1,5 +1,5 @@
 import { json } from "../lib/http.js";
-import { setLogContext } from "../lib/observability.js";
+import { setSessionLogContext } from "../lib/observability.js";
 import { sha256 } from "../lib/security.js";
 import { clearSessionToken, getSessionToken } from "../lib/session-cookie.js";
 import { getSessionBundle } from "../repositories/session-repository.js";
@@ -20,10 +20,6 @@ export async function requireSession(c, next) {
   c.set("sessionBundle", bundle);
   c.set("sessionHash", sessionHash);
   c.set("sessionToken", sessionToken);
-  setLogContext(c, {
-    userId: bundle.user.id,
-    sessionId: bundle.session.id,
-    selectedChildId: bundle.selectedChild?.id,
-  });
+  setSessionLogContext(c, bundle);
   return next();
 }

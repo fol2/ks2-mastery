@@ -12,9 +12,17 @@ export class HttpError extends Error {
     this.name = "HttpError";
     this.status = status;
 
-    const resolved = options && !("payload" in options) && !("headers" in options)
-      ? { payload: options }
-      : options;
+    // Accept either the canonical `{ payload, headers }` shape or a shorthand
+    // where the options object IS the payload. An empty options object must
+    // fall through to the default `{ ok, message }` body — previously `{}`
+    // was truthy enough to pin `this.payload = {}` and silently erase the
+    // error body on every `new HttpError(status, message)` call.
+    const hasShorthandPayload =
+      options
+      && Object.keys(options).length > 0
+      && !("payload" in options)
+      && !("headers" in options);
+    const resolved = hasShorthandPayload ? { payload: options } : options;
 
     this.payload = resolved.payload || { ok: false, message };
     this.headers = resolved.headers || {};
@@ -97,30 +105,46 @@ function applyHeaders(response, headers) {
 }
 
 export function handleHttpError(error, c) {
-  const requestId = getRequestId(c) || createRequestId(c.req.raw);
-  const startedAt = c.get("requestStartedAt") || Date.now();
-  c.set("requestId", requestId);
+  try {
+    const requestId = getRequestId(c) || createRequestId(c.req.raw);
+    const startedAt = c.get("requestStartedAt") || Date.now();
+    c.set("requestId", requestId);
 
-  let response;
+    let response;
 
-  if (error instanceof HttpError) {
-    response = json(c, error.status, error.payload);
-    applyHeaders(response, error.headers);
-  } else {
-    logError(c, "request.failed", error);
-    response = json(c, 500, {
-      ok: false,
-      message: "Unexpected server error.",
-      requestId,
-    });
+    if (error instanceof HttpError) {
+      response = json(c, error.status, error.payload);
+      applyHeaders(response, error.headers);
+    } else {
+      // Log the unexpected-error path in a separate try so a logging failure
+      // does not cascade into a bare Hono 500 with no response body.
+      try {
+        logError(c, "request.failed", error);
+      } catch {
+        // Swallow — emitting the fallback 500 is more important than logging.
+      }
+      response = json(c, 500, {
+        ok: false,
+        message: "Unexpected server error.",
+        requestId,
+      });
+    }
+
+    attachRequestId(response, requestId);
+
+    if (!c.get("requestLogged") && shouldLogRequest(c, response)) {
+      try {
+        logRequestCompletion(c, response, startedAt);
+      } catch {
+        // Non-fatal — the request already has a response.
+      }
+      c.set("requestLogged", true);
+    }
+
+    return response;
+  } catch {
+    // Last-ditch fallback — any throw inside the error handler itself
+    // (circular error, frozen headers) must not escape to Hono's default path.
+    return c.json({ ok: false, message: "Unexpected server error." }, 500);
   }
-
-  attachRequestId(response, requestId);
-
-  if (!c.get("requestLogged") && shouldLogRequest(c, response)) {
-    logRequestCompletion(c, response, startedAt);
-    c.set("requestLogged", true);
-  }
-
-  return response;
 }

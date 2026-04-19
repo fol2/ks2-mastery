@@ -1,7 +1,8 @@
-import { providerConfig } from "../lib/oauth.js";
+import { MONSTER_IDS } from "../lib/monsters.js";
+import { AUTH_PROVIDER_KEYS, providerConfig } from "../lib/oauth.js";
 import { buildBootstrapStats } from "../lib/spelling-service.js";
 import { serialiseSubscription } from "../lib/store.js";
-import { ttsProviderConfig } from "../lib/tts.js";
+import { TTS_PROVIDER_KEYS, ttsProviderConfig } from "../lib/tts.js";
 import { turnstileConfig } from "../lib/turnstile.js";
 import {
   assertArray,
@@ -36,7 +37,7 @@ function defaultChildStats() {
 
 function validateProviders(providers) {
   assertObject(providers, "Bootstrap auth providers must be an object.");
-  ["google", "facebook", "x", "apple", "email"].forEach((provider) => {
+  AUTH_PROVIDER_KEYS.forEach((provider) => {
     assertBoolean(providers[provider], `Bootstrap auth provider '${provider}' must be a boolean.`);
   });
 }
@@ -49,7 +50,7 @@ function validateTurnstile(turnstile) {
 
 function validateTtsProviders(providers) {
   assertObject(providers, "Bootstrap tts.providers must be an object.");
-  ["browser", "gemini", "openai", "elevenlabs"].forEach((provider) => {
+  TTS_PROVIDER_KEYS.forEach((provider) => {
     assertBoolean(providers[provider], `Bootstrap tts provider '${provider}' must be a boolean.`);
   });
 }
@@ -73,9 +74,12 @@ function validateSpellingOverview(spelling) {
 
 export function validateMonsterCollection(monsters) {
   assertObject(monsters, "Bootstrap monsters must be an object.");
+  // Signed-out payloads legitimately carry `{}` — no catalogue yet. For
+  // signed-in payloads the caller runs this against the populated bundle,
+  // where every MONSTER_ID must resolve to a shaped entry.
   if (!Object.keys(monsters).length) return;
 
-  ["inklet", "glimmerbug", "phaeton"].forEach((monsterId) => {
+  MONSTER_IDS.forEach((monsterId) => {
     const monster = monsters[monsterId];
     assertObject(monster, `Monster '${monsterId}' must be an object.`);
     assertNumber(monster.mastered, `Monster '${monsterId}' mastered must be a number.`);

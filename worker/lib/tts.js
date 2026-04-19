@@ -61,6 +61,10 @@ function elevenLabsApiKey(env) {
   return String(env.ELEVENLABS_TTS_API_KEY || env.ELEVENLABS_API_KEY || "").trim();
 }
 
+// Shared with the bootstrap response validator so both sides stay in lock-
+// step when a new provider is introduced.
+export const TTS_PROVIDER_KEYS = Object.freeze(["browser", "gemini", "openai", "elevenlabs"]);
+
 export function ttsProviderConfig(env) {
   return {
     browser: true,

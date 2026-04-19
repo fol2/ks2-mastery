@@ -1,4 +1,7 @@
-import { buildSignedInBootstrapResponse } from "../contracts/bootstrap-contract.js";
+import {
+  buildSignedInBootstrapResponse,
+  buildSignedOutBootstrapResponse,
+} from "../contracts/bootstrap-contract.js";
 import {
   buildSpellingAdvanceContinueResponse,
   buildSpellingAdvanceDoneResponse,
@@ -49,6 +52,7 @@ export async function persistSpellingPrefs(env, bundle, sessionHash, prefs) {
   const nextState = saveSpellingPreferences(bundle.childState, prefs);
   await saveChildLearningState(env, selectedChild.id, nextState);
   const refreshedBundle = await getSessionBundle(env, sessionHash);
+  if (!refreshedBundle) return buildSignedOutBootstrapResponse(env);
   return buildSignedInBootstrapResponse(refreshedBundle, env);
 }
 

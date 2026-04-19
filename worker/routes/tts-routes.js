@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { json, readJsonBody } from "../lib/http.js";
+import { attachRequestId, getRequestId } from "../lib/observability.js";
 import { requireSession } from "../middleware/require-session.js";
 import { generateSpeechResponse, loadTtsVoices } from "../services/tts-service.js";
 
@@ -12,7 +13,12 @@ ttsRoutes.get("/tts/voices", requireSession, async (c) => {
 });
 
 ttsRoutes.post("/tts/speak", requireSession, async (c) => {
-  return generateSpeechResponse(c.env, c.get("sessionHash"), await readJsonBody(c));
+  // Audio is returned as a streaming Response, so attach X-Request-Id at
+  // construction time rather than relying on the post-next middleware which
+  // may race with the stream already flushing headers to the client.
+  const response = await generateSpeechResponse(c.env, c.get("sessionHash"), await readJsonBody(c));
+  attachRequestId(response, getRequestId(c));
+  return response;
 });
 
 export default ttsRoutes;

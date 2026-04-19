@@ -64,7 +64,7 @@ export function parseCreateSpellingSessionPayload(body) {
     mode,
     yearFilter: asString(payload.yearFilter) || "all",
     length: parseSessionLength(payload.length, mode),
-    words: Array.isArray(payload.words) ? asStringArray(payload.words) : null,
+    words: Array.isArray(payload.words) ? asStringArray(payload.words, { maxItems: 500 }) : null,
   };
 }
 

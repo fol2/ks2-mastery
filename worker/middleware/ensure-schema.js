@@ -1,9 +1,17 @@
-import { json } from "../lib/http.js";
+import { HttpError } from "../lib/http.js";
 import { logError } from "../lib/observability.js";
 import { ensureSchema } from "../lib/store.js";
 
+function isHealthPath(pathname) {
+  return pathname.replace(/\/+$/, "") === "/api/health";
+}
+
 export async function ensureApiSchema(c, next) {
-  if (new URL(c.req.url).pathname === "/api/health") {
+  // The /api/health endpoint must remain callable when schema init is broken
+  // — it is the signal operators rely on to detect the breakage. Normalise
+  // trailing slashes so /api/health/ probes are not silently routed through
+  // the schema guard.
+  if (isHealthPath(new URL(c.req.url).pathname)) {
     return next();
   }
 
@@ -12,6 +20,8 @@ export async function ensureApiSchema(c, next) {
     return next();
   } catch (error) {
     logError(c, "schema.initialisation.failed", error);
-    return json(c, 500, { ok: false, message: "Database is not ready." });
+    throw new HttpError(500, "Database is not ready.", {
+      payload: { ok: false, message: "Database is not ready." },
+    });
   }
 }
