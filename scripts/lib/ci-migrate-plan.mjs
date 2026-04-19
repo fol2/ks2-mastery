@@ -1,5 +1,6 @@
 const MAIN_BRANCHES = new Set(["main", "master"]);
 const CI_BRANCH_ENV_KEYS = ["WORKERS_CI_BRANCH", "GITHUB_REF_NAME"];
+const WORKERS_CI_MIGRATION_OPT_IN_KEY = "WORKERS_CI_APPLY_D1_MIGRATIONS";
 const REMOTE_MIGRATION_ARGS = [
   "wrangler",
   "d1",
@@ -37,6 +38,17 @@ export function buildMigrationPlan({
 } = {}) {
   const ciBranch = detectCiBranch(env);
   const inCI = Boolean(ciBranch) || isTruthyEnv(env.CI);
+  const runningInWorkersBuild = typeof env.WORKERS_CI_BRANCH === "string" && env.WORKERS_CI_BRANCH.length > 0;
+  const workersMigrationOptedIn = isTruthyEnv(env[WORKERS_CI_MIGRATION_OPT_IN_KEY]);
+
+  if (runningInWorkersBuild && !workersMigrationOptedIn) {
+    return {
+      shouldRun: false,
+      args: [],
+      logMessage:
+        `[predeploy] Workers Builds detected for branch "${env.WORKERS_CI_BRANCH}"; skipping remote D1 migrations by default. Set ${WORKERS_CI_MIGRATION_OPT_IN_KEY}=true only after the build environment has a token with D1 write scope.`,
+    };
+  }
 
   if (inCI && ciBranch && !MAIN_BRANCHES.has(ciBranch.value)) {
     if (hasConfiguredPreviewDatabase) {

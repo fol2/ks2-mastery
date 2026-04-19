@@ -33,7 +33,7 @@ if (!workersCiBranch) {
 }
 
 console.log(
-  `[wrangler-build] Workers Builds detected for branch "${workersCiBranch}"; running the production build and preparing D1 schema before deploy.`,
+  `[wrangler-build] Workers Builds detected for branch "${workersCiBranch}"; running the production build and applying D1 schema prep only when explicitly opted in.`,
 );
 await run("npm", ["run", "build"]);
 await run("node", ["./scripts/ci-migrate-on-main.mjs"]);

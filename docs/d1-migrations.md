@@ -48,8 +48,11 @@ Cloudflare Workers Builds often invokes `wrangler deploy` directly. To keep
 that path safe too, `wrangler.jsonc` defines `build.command =
 node ./scripts/workers-build.mjs`. The wrapper is intentionally a no-op unless
 `WORKERS_CI_BRANCH` is present; in Workers Builds it runs `npm run build` and
-then invokes `scripts/ci-migrate-on-main.mjs`. This keeps preview builds
-schema-ready without trapping local `wrangler dev` in a rebuild loop.
+then invokes `scripts/ci-migrate-on-main.mjs`. Remote D1 migrations are
+disabled there by default because the Cloudflare GitHub App token often lacks
+the D1 write scope needed for `wrangler d1 migrations apply`. Set
+`WORKERS_CI_APPLY_D1_MIGRATIONS=true` only after the build environment has a
+token that can actually administer the bound D1 database.
 
 Behaviour by context:
 
@@ -57,10 +60,11 @@ Behaviour by context:
   `wrangler d1 migrations apply … --remote`. Requires `wrangler login` or
   `CLOUDFLARE_API_TOKEN` to be set.
 - **Cloudflare Workers Builds**: the hook reads `WORKERS_CI_BRANCH`. It
-  migrates the shared remote DB on `main`. On every other branch it migrates
-  the preview DB when `preview_database_id` is configured; otherwise it
-  migrates the shared remote DB instead of skipping, so branch previews do not
-  boot against an unapplied schema.
+  skips remote D1 migrations by default. If
+  `WORKERS_CI_APPLY_D1_MIGRATIONS=true` is set, it migrates the shared remote
+  DB on `main`. On every other branch it migrates the preview DB when
+  `preview_database_id` is configured; otherwise it skips instead of touching
+  the shared remote DB.
 - **GitHub Actions**: the hook reads `GITHUB_REF_NAME` with the same rule.
   Works out of the box in any workflow that runs `npm run deploy` with
   `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` secrets.
@@ -75,11 +79,14 @@ To wire the automation end-to-end:
 
 1. Cloudflare dashboard → `Workers & Pages` → `ks2-mastery` → `Settings` →
    `Builds`.
-2. Ensure the build environment exposes `CLOUDFLARE_API_TOKEN` with D1 write
-   scope for the `ks2-mastery-db` binding.
-3. Optional but recommended: set `preview_database_id` on the `DB` binding in
+2. Optional but recommended: set `preview_database_id` on the `DB` binding in
    `wrangler.jsonc` so non-main previews can migrate and run against a dedicated
    preview D1 database instead of the shared remote one.
+3. Only if you want Workers Builds itself to run remote D1 migrations, add
+   `CLOUDFLARE_API_TOKEN` with D1 write scope for `ks2-mastery-db`, then set
+   `WORKERS_CI_APPLY_D1_MIGRATIONS=true`. If either piece is missing, leave the
+   opt-in unset and run remote migrations from a trusted local shell or a CI
+   job with explicit Cloudflare credentials instead.
 
 ## Creating a new migration
 

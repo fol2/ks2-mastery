@@ -75,7 +75,11 @@ describe("buildMigrationPlan", () => {
   it("uses the shared remote database on main in CI", () => {
     expect(
       buildMigrationPlan({
-        env: { CI: "true", WORKERS_CI_BRANCH: "main" },
+        env: {
+          CI: "true",
+          WORKERS_CI_BRANCH: "main",
+          WORKERS_CI_APPLY_D1_MIGRATIONS: "true",
+        },
         hasConfiguredPreviewDatabase: true,
       }),
     ).toEqual({
@@ -88,7 +92,11 @@ describe("buildMigrationPlan", () => {
   it("uses the preview database for non-main CI branches when configured", () => {
     expect(
       buildMigrationPlan({
-        env: { CI: "true", WORKERS_CI_BRANCH: "feature/d1" },
+        env: {
+          CI: "true",
+          WORKERS_CI_BRANCH: "feature/d1",
+          WORKERS_CI_APPLY_D1_MIGRATIONS: "true",
+        },
         hasConfiguredPreviewDatabase: true,
       }),
     ).toEqual({
@@ -104,6 +112,20 @@ describe("buildMigrationPlan", () => {
       ],
       logMessage:
         '[predeploy] CI branch "feature/d1" (WORKERS_CI_BRANCH) is not main; applying D1 migrations to the preview database before deploy.',
+    });
+  });
+
+  it("skips Workers Builds remote migrations on main until the opt-in flag is set", () => {
+    expect(
+      buildMigrationPlan({
+        env: { CI: "true", WORKERS_CI_BRANCH: "main" },
+        hasConfiguredPreviewDatabase: true,
+      }),
+    ).toEqual({
+      shouldRun: false,
+      args: [],
+      logMessage:
+        '[predeploy] Workers Builds detected for branch "main"; skipping remote D1 migrations by default. Set WORKERS_CI_APPLY_D1_MIGRATIONS=true only after the build environment has a token with D1 write scope.',
     });
   });
 
