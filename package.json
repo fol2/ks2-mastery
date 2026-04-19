@@ -7,6 +7,7 @@
     "build:data": "node ./scripts/build-spelling-data.mjs",
     "build:runtime": "node ./scripts/build-spelling-runtime.mjs",
     "build:public": "node ./scripts/build-public.mjs",
+    "assets:optimise:monsters": "node ./scripts/optimise-monster-assets.mjs",
     "assert:build-public": "node ./scripts/assert-build-public.mjs",
     "build": "npm run build:data && npm run build:runtime && npm run build:public",
     "db:migration:create": "npx wrangler d1 migrations create ks2-mastery-db",

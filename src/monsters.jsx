@@ -595,19 +595,26 @@ const MONSTERS_BY_SUBJECT = {
 };
 
 // ----- Small art helper: draws a monster at a given stage -----
-// Prefers PNG images at assets/monsters/{monsterId}-{stage}.png when present;
-// falls back to the hand-made SVG art. Silhouette mode for "not yet caught".
+// Prefers optimised WebP images at assets/monsters/{monsterId}-{stage}.320.webp
+// and .640.webp, then falls back to the hand-made SVG art. Silhouette mode for
+// "not yet caught".
 function MonsterArt({ monster, stage, size = 120, silhouette = false }) {
-  // Cache-bust tag bumped when art assets are refreshed
-  const imgSrc = `assets/monsters/${monster.id}-${stage}.png?v=2`;
+  // The UI never renders these larger than 280px, so 320/640 variants cover
+  // 1x/2x displays without shipping 2048px assets to the browser.
+  const imgBase = `assets/monsters/${monster.id}-${stage}`;
+  const imgSrc = `${imgBase}.320.webp?v=3`;
+  const imgSrcSet = `${imgBase}.320.webp?v=3 1x, ${imgBase}.640.webp?v=3 2x`;
   const [imgOk, setImgOk] = React.useState(true);
 
   const content = imgOk ? (
     <img
       src={imgSrc}
+      srcSet={imgSrcSet}
       alt={`${monster.name} ${MONSTER_STAGES[stage]?.label || ''}`}
       width={size}
       height={size}
+      decoding="async"
+      loading={size > 180 ? 'eager' : 'lazy'}
       draggable={false}
       onError={() => setImgOk(false)}
       style={{
