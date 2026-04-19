@@ -27,6 +27,8 @@ const clientSourceFiles = [
   "profile.jsx",
   "monsters.jsx",
   "monster-overlay.jsx",
+  "word-spirit-art.jsx",
+  "word-spirit.jsx",
   "collection.jsx",
   "dashboard.jsx",
   "tts-core.jsx",
