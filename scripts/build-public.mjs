@@ -2,12 +2,19 @@ import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const rootDir = process.cwd();
-const publicDir = path.join(rootDir, "public");
+const publicDir = path.join(rootDir, "dist", "public");
 const publicSrcDir = path.join(publicDir, "src");
 const publicAssetsDir = path.join(publicDir, "assets");
 const publicVendorDir = path.join(publicDir, "vendor");
 const privacyDir = path.join(publicDir, "privacy");
 const termsDir = path.join(publicDir, "terms");
+const generatedSubdirs = [
+  publicSrcDir,
+  publicAssetsDir,
+  publicVendorDir,
+  privacyDir,
+  termsDir,
+];
 
 function staticPage({ title, heading, bodyHtml }) {
   return `<!DOCTYPE html>
@@ -97,7 +104,13 @@ function staticPage({ title, heading, bodyHtml }) {
 </html>`;
 }
 
-await rm(publicDir, { recursive: true, force: true });
+await mkdir(publicDir, { recursive: true });
+await Promise.all(
+  generatedSubdirs.map((directory) =>
+    rm(directory, { recursive: true, force: true }),
+  ),
+);
+await rm(path.join(publicDir, "index.html"), { force: true });
 await mkdir(publicSrcDir, { recursive: true });
 await mkdir(publicAssetsDir, { recursive: true });
 await mkdir(publicVendorDir, { recursive: true });
