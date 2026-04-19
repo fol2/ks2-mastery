@@ -37,6 +37,41 @@ Until a dedicated staging D1 database exists, treat local D1 as the rehearsal
 environment and production D1 as the only remote target. Once staging is added,
 run the same sequence against staging first and only then against production.
 
+## Deployment
+
+`npm run deploy` fires the `predeploy` hook (`scripts/ci-migrate-on-main.mjs`)
+before `wrangler deploy`. The hook applies outstanding remote migrations so the
+deployed Worker never boots against a schema it assumes but the database has
+not yet received.
+
+Behaviour by context:
+
+- **Local developer**: the hook always runs and invokes
+  `wrangler d1 migrations apply … --remote`. Requires `wrangler login` or
+  `CLOUDFLARE_API_TOKEN` to be set.
+- **Cloudflare Workers Builds**: the hook reads `WORKERS_CI_BRANCH`. It
+  migrates on `main` and skips on every other branch so a feature-branch
+  preview never rewrites production schema.
+- **GitHub Actions**: the hook reads `GITHUB_REF_NAME` with the same rule
+  (migrate on `main`, skip elsewhere). Works out of the box in any workflow
+  that runs `npm run deploy` with `CLOUDFLARE_API_TOKEN` +
+  `CLOUDFLARE_ACCOUNT_ID` secrets.
+
+### Cloudflare Workers Builds — one-time dashboard setup
+
+To wire the automation end-to-end:
+
+1. Cloudflare dashboard → `Workers & Pages` → `ks2-mastery` → `Settings` →
+   `Builds`.
+2. Set **Deploy command** to `npm run deploy` (default is `npx wrangler deploy`,
+   which bypasses the hook).
+3. Ensure the build environment exposes `CLOUDFLARE_API_TOKEN` with D1 write
+   scope for the `ks2-mastery-db` binding.
+
+If the deploy command stays at the default, migrations do **not** auto-apply
+and every schema-changing merge to `main` must be preceded by a manual
+`npm run db:migrate:remote` — otherwise `/api/*` returns 500 until it is run.
+
 ## Creating a new migration
 
 Create a file with Wrangler, then commit the generated SQL:
