@@ -1,5 +1,5 @@
-// Root App — orchestrates navigation, nav pattern, and the Tweaks panel.
-// State is intentionally tiny so each piece maps 1:1 to a Next.js page or layout.
+// Root app for the browser shell. It coordinates auth-aware navigation,
+// dashboard variants, and host-driven tweak editing.
 
 const DEFAULTS = /*EDITMODE-BEGIN*/{
   "navPattern": "dashboard",
@@ -243,7 +243,9 @@ function TweaksPanel({ open, tweaks, onChange, onClose }) {
         border: `1px solid ${TOKENS.line}`, borderRadius: 10,
         fontSize: 11.5, color: TOKENS.muted, lineHeight: 1.5,
       }}>
-        Changes persist in this file — when you port to Next.js, these become layout props.
+        Changes are mirrored to the host edit tool, which rewrites the
+        <code style={{ fontFamily: TOKENS.fontMono, fontSize: 'inherit' }}> DEFAULTS </code>
+        block in this file.
       </div>
     </div>
   );

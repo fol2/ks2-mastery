@@ -1,4 +1,4 @@
-// Shared UI primitives. These match 1:1 to components you'd build in Next.js.
+// Shared UI primitives used across the bundled browser shell.
 
 function Panel({ children, style, title, eyebrow, action, soft, padded = true }) {
   return (

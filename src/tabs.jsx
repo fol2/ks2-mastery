@@ -171,7 +171,7 @@ function ProfilesScreen({ subject, profile, onEditProfile }) {
         <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {[
             ['Export session log (CSV)', 'Every question, answer & time'],
-            ['Export mastery snapshot (JSON)', 'Per-skill state for Next.js import'],
+            ['Export mastery snapshot (JSON)', 'Per-skill state for reporting or migration'],
             ['Share progress with parent', 'Read-only weekly email'],
             ['Reset this subject', 'Keeps your streak, clears mastery'],
           ].map(([t, s], i) => (
