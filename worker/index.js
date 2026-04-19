@@ -18,6 +18,7 @@ import {
   setSelectedChild,
   updateChild,
 } from "./lib/store.js";
+import { consumeRateLimit } from "./lib/rate-limit.js";
 import { cookieOptions, hashPassword, randomToken, safeEmail, sha256, verifyPassword } from "./lib/security.js";
 import { beginOAuthFlow, completeOAuthFlow, providerConfig } from "./lib/oauth.js";
 import {
@@ -29,6 +30,8 @@ import {
   skipSession,
   submitSession,
 } from "./lib/spelling-service.js";
+import { listElevenLabsVoices, synthesiseSpeech, ttsProviderConfig } from "./lib/tts.js";
+import { turnstileConfig, verifyTurnstileToken } from "./lib/turnstile.js";
 
 const app = new Hono();
 
@@ -51,6 +54,17 @@ const OAUTH_NONCE_COOKIE = "ks2_oauth_nonce";
 
 function appOrigin(c) {
   return new URL(c.req.url).origin;
+}
+
+function clientIp(c) {
+  const direct = String(
+    c.req.header("CF-Connecting-IP")
+    || c.req.header("True-Client-IP")
+    || "",
+  ).trim();
+  if (direct) return direct;
+  const forwarded = String(c.req.header("X-Forwarded-For") || "").trim();
+  return forwarded ? forwarded.split(",")[0].trim() : "";
 }
 
 function clearOauthAttempt(c) {
@@ -97,6 +111,120 @@ function sanitiseChildPayload(payload) {
   };
 }
 
+function signedOutBootstrapPayload(env) {
+  return {
+    ok: true,
+    auth: {
+      signedIn: false,
+      providers: providerConfig(env),
+      turnstile: turnstileConfig(env),
+    },
+    billing: {
+      planCode: "free",
+      status: "active",
+      paywallEnabled: false,
+    },
+    children: [],
+    selectedChild: null,
+    spelling: {
+      stats: { all: null, y3_4: null, y5_6: null },
+      prefs: { yearFilter: "all", roundLength: "20", showCloze: true, autoSpeak: true },
+    },
+    monsters: {},
+    tts: {
+      providers: ttsProviderConfig(env),
+    },
+  };
+}
+
+function validationFailure(status, message, retryAfterSeconds = 0) {
+  return {
+    status,
+    message,
+    retryAfterSeconds,
+  };
+}
+
+function applyValidationFailure(c, failure) {
+  if (failure.retryAfterSeconds) {
+    c.header("Retry-After", String(failure.retryAfterSeconds));
+  }
+  return json(c, failure.status, {
+    ok: false,
+    message: failure.message,
+    retryAfterSeconds: failure.retryAfterSeconds || undefined,
+  });
+}
+
+async function consumeAuthRateLimit(c, bucket, identifier, limit, windowMs, message) {
+  const result = await consumeRateLimit(c.env, {
+    bucket,
+    identifier,
+    limit,
+    windowMs,
+  });
+  if (result.allowed) return null;
+  return validationFailure(429, message, result.retryAfterSeconds);
+}
+
+async function protectEmailAuth(c, email, turnstileToken, action) {
+  const ip = clientIp(c);
+  const type = action === "register" ? "register" : "login";
+
+  const ipLimit = await consumeAuthRateLimit(
+    c,
+    `auth-${type}-ip`,
+    ip,
+    type === "register" ? 6 : 10,
+    10 * 60 * 1000,
+    "Too many sign-in attempts. Please wait a few minutes and try again.",
+  );
+  if (ipLimit) return ipLimit;
+
+  const emailLimit = await consumeAuthRateLimit(
+    c,
+    `auth-${type}-email`,
+    safeEmail(email),
+    type === "register" ? 4 : 8,
+    10 * 60 * 1000,
+    "Too many sign-in attempts for that account. Please wait a few minutes and try again.",
+  );
+  if (emailLimit) return emailLimit;
+
+  const turnstile = await verifyTurnstileToken(c.env, {
+    token: turnstileToken,
+    remoteIp: ip,
+  });
+  if (!turnstile.success) {
+    return validationFailure(400, turnstile.message || "Complete the security check and try again.");
+  }
+
+  return null;
+}
+
+async function protectOAuthStart(c, provider, turnstileToken) {
+  const ip = clientIp(c);
+  const rateLimit = await consumeAuthRateLimit(
+    c,
+    `oauth-start-${String(provider || "").trim().toLowerCase()}`,
+    ip,
+    12,
+    10 * 60 * 1000,
+    "Too many social sign-in attempts. Please wait a few minutes and try again.",
+  );
+  if (rateLimit) return rateLimit;
+
+  const turnstile = await verifyTurnstileToken(c.env, {
+    token: turnstileToken,
+    remoteIp: ip,
+  });
+  if (!turnstile.success) {
+    return validationFailure(400, turnstile.message || "Complete the security check and try again.");
+  }
+
+  return null;
+}
+
 function parseSessionLength(rawLength, mode) {
   if (mode === SPELLING_MODES.TEST) return 20;
   if (rawLength === "all" || rawLength === Infinity) return Infinity;
@@ -122,12 +250,16 @@ function bootstrapPayload(bundle, env) {
       signedIn: true,
       user: bundle.user,
       providers: providerConfig(env),
+      turnstile: turnstileConfig(env),
     },
     billing: serialiseSubscription(bundle.subscription),
     children: bundle.children,
     selectedChild,
     spelling: childStats.spelling,
     monsters: childStats.monsters,
+    tts: {
+      providers: ttsProviderConfig(env),
+    },
   };
 }
 
@@ -159,43 +291,14 @@ app.use("/api/*", async (c, next) => {
 app.get("/api/bootstrap", async (c) => {
   const rawToken = getCookie(c, "ks2_session");
   if (!rawToken) {
-    return json(c, 200, {
-      ok: true,
-      auth: {
-        signedIn: false,
-        providers: providerConfig(c.env),
-      },
-      billing: {
-        planCode: "free",
-        status: "active",
-        paywallEnabled: false,
-      },
-      children: [],
-      selectedChild: null,
-      spelling: {
-        stats: { all: null, y3_4: null, y5_6: null },
-        prefs: { yearFilter: "all", roundLength: "20", showCloze: true, autoSpeak: true },
-      },
-      monsters: {},
-    });
+    return json(c, 200, signedOutBootstrapPayload(c.env));
   }
 
   const sessionHash = await sha256(rawToken);
   const bundle = await getSessionBundleByHash(c.env, sessionHash);
   if (!bundle) {
     deleteCookie(c, "ks2_session", cookieOptions(0, secureCookieForRequest(c)));
-    return json(c, 200, {
-      ok: true,
-      auth: { signedIn: false, providers: providerConfig(c.env) },
-      billing: { planCode: "free", status: "active", paywallEnabled: false },
-      children: [],
-      selectedChild: null,
-      spelling: {
-        stats: { all: null, y3_4: null, y5_6: null },
-        prefs: { yearFilter: "all", roundLength: "20", showCloze: true, autoSpeak: true },
-      },
-      monsters: {},
-    });
+    return json(c, 200, signedOutBootstrapPayload(c.env));
   }
 
   return json(c, 200, bootstrapPayload(bundle, c.env));
@@ -208,6 +311,9 @@ app.post("/api/auth/register", async (c) => {
 
   if (!email || !email.includes("@")) return validationError(c, "Enter a valid email address.");
   if (password.length < 8) return validationError(c, "Password must be at least eight characters.");
+
+  const protectionFailure = await protectEmailAuth(c, email, body.turnstileToken, "register");
+  if (protectionFailure) return applyValidationFailure(c, protectionFailure);
 
   const existing = await getUserByEmail(c.env, email);
   if (existing) return validationError(c, "That email address is already registered.");
@@ -242,6 +348,13 @@ app.post("/api/auth/login", async (c) => {
   const email = safeEmail(body.email);
   const password = String(body.password || "");
 
+  if (!email || !password) {
+    return validationError(c, "Incorrect email or password.");
+  }
+
+  const protectionFailure = await protectEmailAuth(c, email, body.turnstileToken, "login");
+  if (protectionFailure) return applyValidationFailure(c, protectionFailure);
+
   const user = await getUserByEmail(c.env, email);
   if (!user?.password_hash || !user?.password_salt) {
     return validationError(c, "Incorrect email or password.");
@@ -264,14 +377,40 @@ app.post("/api/auth/logout", requireSession, async (c) => {
   return json(c, 200, { ok: true });
 });
 
+async function startOAuthAttempt(c, provider) {
+  const attempt = await beginOAuthFlow(c.env, provider, appOrigin(c));
+  setOauthAttempt(c, provider, attempt);
+  return attempt;
+}
+
 app.get("/api/auth/:provider/start", async (c) => {
   const provider = String(c.req.param("provider") || "").trim().toLowerCase();
+  const protectionFailure = await protectOAuthStart(c, provider, "");
+  if (protectionFailure) {
+    return redirectWithAuthError(c, protectionFailure.message);
+  }
   try {
-    const attempt = await beginOAuthFlow(c.env, provider, appOrigin(c));
-    setOauthAttempt(c, provider, attempt);
+    const attempt = await startOAuthAttempt(c, provider);
     return c.redirect(attempt.url, 302);
   } catch (error) {
     return redirectWithAuthError(c, error.message || "Could not start sign-in.");
+  }
+});
+
+app.post("/api/auth/:provider/start", async (c) => {
+  const provider = String(c.req.param("provider") || "").trim().toLowerCase();
+  const body = await c.req.json().catch(() => ({}));
+  const protectionFailure = await protectOAuthStart(c, provider, body.turnstileToken);
+  if (protectionFailure) return applyValidationFailure(c, protectionFailure);
+
+  try {
+    const attempt = await startOAuthAttempt(c, provider);
+    return json(c, 200, {
+      ok: true,
+      redirectUrl: attempt.url,
+    });
+  } catch (error) {
+    return validationError(c, error.message || "Could not start sign-in.");
   }
 });
 
@@ -481,6 +620,48 @@ app.get("/api/spelling/dashboard", requireSession, async (c) => {
     ok: true,
     spelling,
   });
+});
+
+app.get("/api/tts/voices", requireSession, async (c) => {
+  const provider = String(c.req.query("provider") || "elevenlabs").trim().toLowerCase();
+  if (provider !== "elevenlabs") {
+    return validationError(c, "That voice catalogue is not supported.");
+  }
+
+  try {
+    const voices = await listElevenLabsVoices(c.env);
+    return json(c, 200, {
+      ok: true,
+      voices,
+    });
+  } catch (error) {
+    const status = Number(error?.statusCode);
+    return json(c, status >= 400 && status < 500 ? status : 502, {
+      ok: false,
+      message: error.message || "Could not load the voice catalogue.",
+    });
+  }
+});
+
+app.post("/api/tts/speak", requireSession, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  try {
+    const audio = await synthesiseSpeech(c.env, body);
+    return new Response(audio.body, {
+      status: 200,
+      headers: {
+        "Content-Type": audio.contentType,
+        "Cache-Control": "private, no-store",
+        Vary: "Cookie",
+      },
+    });
+  } catch (error) {
+    const status = Number(error?.statusCode);
+    return json(c, status >= 400 && status < 500 ? status : 502, {
+      ok: false,
+      message: error.message || "Could not generate speech.",
+    });
+  }
 });
 
 app.get("*", async (c) => {

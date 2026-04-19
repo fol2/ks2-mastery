@@ -12,6 +12,10 @@ const KS2App = (() => {
         apple: false,
         email: true,
       },
+      turnstile: {
+        enabled: false,
+        siteKey: '',
+      },
     },
     billing: {
       planCode: 'free',
@@ -23,6 +27,14 @@ const KS2App = (() => {
     spelling: {
       stats: { all: null, y3_4: null, y5_6: null },
       prefs: { yearFilter: 'all', roundLength: '20', showCloze: true, autoSpeak: true },
+    },
+    tts: {
+      providers: {
+        browser: true,
+        gemini: false,
+        openai: false,
+        elevenlabs: false,
+      },
     },
     monsters: {},
     lastError: '',
@@ -63,6 +75,7 @@ const KS2App = (() => {
       children: Array.isArray(payload.children) ? payload.children : [],
       selectedChild: payload.selectedChild || null,
       spelling: payload.spelling || state.spelling,
+      tts: payload.tts || state.tts,
       monsters: payload.monsters || {},
       lastError: '',
     });
@@ -80,20 +93,29 @@ const KS2App = (() => {
     }
   }
 
-  async function register(email, password) {
+  async function register(email, password, turnstileToken) {
     const payload = await requestJson('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, turnstileToken }),
     });
     return applyBootstrap(payload);
   }
 
-  async function login(email, password) {
+  async function login(email, password, turnstileToken) {
     const payload = await requestJson('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, turnstileToken }),
     });
     return applyBootstrap(payload);
+  }
+
+  async function beginSocialLogin(providerId, turnstileToken) {
+    const payload = await requestJson(`/api/auth/${encodeURIComponent(providerId)}/start`, {
+      method: 'POST',
+      body: JSON.stringify({ turnstileToken }),
+    });
+    window.location.assign(payload.redirectUrl);
+    return payload;
   }
 
   async function logout() {
@@ -146,6 +168,7 @@ const KS2App = (() => {
     bootstrap,
     login,
     register,
+    beginSocialLogin,
     logout,
     createChild,
     updateChild,
@@ -224,14 +247,111 @@ function LoadingScreen({ message }) {
   );
 }
 
+function TurnstilePanel({ siteKey, resetNonce, onToken }) {
+  const containerRef = React.useRef(null);
+  const widgetIdRef = React.useRef(null);
+  const appliedResetRef = React.useRef(resetNonce);
+
+  React.useEffect(() => {
+    if (!siteKey || !containerRef.current) return undefined;
+    let cancelled = false;
+    var intervalId = 0;
+
+    function clearToken() {
+      if (!cancelled) onToken('');
+    }
+
+    function mountWidget() {
+      if (cancelled || !window.turnstile || !containerRef.current || widgetIdRef.current != null) return;
+      clearToken();
+      widgetIdRef.current = window.turnstile.render(containerRef.current, {
+        sitekey: siteKey,
+        theme: 'light',
+        size: 'flexible',
+        callback(token) { if (!cancelled) onToken(token || ''); },
+        'expired-callback': clearToken,
+        'error-callback': clearToken,
+      });
+      window.clearInterval(intervalId);
+    }
+
+    mountWidget();
+    intervalId = window.setInterval(mountWidget, 50);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      clearToken();
+      if (window.turnstile && widgetIdRef.current != null) {
+        try { window.turnstile.remove(widgetIdRef.current); } catch (err) {}
+      }
+      widgetIdRef.current = null;
+    };
+  }, [siteKey, onToken]);
+
+  React.useEffect(() => {
+    if (appliedResetRef.current === resetNonce) return;
+    appliedResetRef.current = resetNonce;
+    onToken('');
+    if (window.turnstile && widgetIdRef.current != null) {
+      try { window.turnstile.reset(widgetIdRef.current); } catch (err) {}
+    }
+  }, [resetNonce, onToken]);
+
+  if (!siteKey) return null;
+
+  return (
+    <div style={{
+      padding: '14px 16px',
+      borderRadius: 16,
+      border: `1px solid ${TOKENS.line}`,
+      background: TOKENS.panelSoft,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 10,
+    }}>
+      <div style={{
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: TOKENS.muted,
+      }}>Security check</div>
+      <div ref={containerRef} />
+      <div style={{ fontSize: 12.5, color: TOKENS.muted, lineHeight: 1.5 }}>
+        This quick check helps protect sign-in from bots and password spraying.
+      </div>
+    </div>
+  );
+}
+
 function AuthScreen() {
   const [mode, setMode] = React.useState('login');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [busy, setBusy] = React.useState(false);
+  const [socialBusy, setSocialBusy] = React.useState('');
   const [error, setError] = React.useState(window.KS2App.getState().lastError || '');
+  const [turnstileToken, setTurnstileToken] = React.useState('');
+  const [turnstileResetNonce, setTurnstileResetNonce] = React.useState(0);
   const appState = window.KS2App.getState();
   const providers = appState.auth.providers || {};
+  const turnstile = appState.auth.turnstile || { enabled: false, siteKey: '' };
+  const turnstileEnabled = Boolean(turnstile.enabled && turnstile.siteKey);
+  const authLocked = busy || Boolean(socialBusy);
+
+  function resetTurnstile() {
+    if (!turnstileEnabled) return;
+    setTurnstileToken('');
+    setTurnstileResetNonce((value) => value + 1);
+  }
+
+  function currentTurnstileToken() {
+    if (!turnstileEnabled) return '';
+    if (turnstileToken) return turnstileToken;
+    setError('Complete the security check and try again.');
+    return null;
+  }
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -245,14 +365,17 @@ function AuthScreen() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+    const captchaToken = currentTurnstileToken();
+    if (captchaToken === null) return;
     setBusy(true);
     setError('');
     try {
-      if (mode === 'register') await window.KS2App.register(email, password);
-      else await window.KS2App.login(email, password);
+      if (mode === 'register') await window.KS2App.register(email, password, captchaToken);
+      else await window.KS2App.login(email, password, captchaToken);
     } catch (err) {
       setError(err.message || 'Could not sign you in.');
     } finally {
+      resetTurnstile();
       setBusy(false);
     }
   }
@@ -264,8 +387,19 @@ function AuthScreen() {
     { id: 'apple', label: 'Sign in with Apple', available: providers.apple },
   ];
 
-  function startProvider(providerId) {
-    window.location.assign(`/api/auth/${encodeURIComponent(providerId)}/start`);
+  async function startProvider(providerId) {
+    const captchaToken = currentTurnstileToken();
+    if (captchaToken === null) return;
+    setSocialBusy(providerId);
+    setError('');
+    try {
+      await window.KS2App.beginSocialLogin(providerId, captchaToken);
+    } catch (err) {
+      setError(err.message || 'Could not start social sign-in.');
+    } finally {
+      resetTurnstile();
+      setSocialBusy('');
+    }
   }
 
   return (
@@ -307,13 +441,21 @@ function AuthScreen() {
           </div>
 
           <div style={{ padding: '22px 30px 30px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {turnstileEnabled && (
+              <TurnstilePanel
+                siteKey={turnstile.siteKey}
+                resetNonce={turnstileResetNonce}
+                onToken={setTurnstileToken}
+              />
+            )}
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
               {socialButtons.map((provider) => (
                 <div key={provider.id} style={{ width: '100%', maxWidth: 380 }}>
                   <button
                     type="button"
                     onClick={() => provider.available && startProvider(provider.id)}
-                    disabled={!provider.available}
+                    disabled={!provider.available || authLocked}
                     style={{
                       width: '100%',
                       display: 'flex',
@@ -321,15 +463,15 @@ function AuthScreen() {
                       gap: 16,
                       padding: '14px 20px',
                       borderRadius: 999,
-                      border: `1.5px solid ${provider.available ? '#B7C0CC' : TOKENS.lineSoft}`,
+                      border: `1.5px solid ${provider.available && !authLocked ? '#B7C0CC' : TOKENS.lineSoft}`,
                       background: '#FFFFFF',
                       color: TOKENS.ink,
-                      cursor: provider.available ? 'pointer' : 'not-allowed',
+                      cursor: provider.available && !authLocked ? 'pointer' : 'not-allowed',
                       fontFamily: TOKENS.fontSans,
                       fontSize: 15,
                       fontWeight: 700,
-                      opacity: provider.available ? 1 : 0.62,
-                      boxShadow: provider.available ? '0 1px 0 rgba(17, 24, 39, 0.04)' : 'none',
+                      opacity: provider.available && !authLocked ? 1 : 0.62,
+                      boxShadow: provider.available && !authLocked ? '0 1px 0 rgba(17, 24, 39, 0.04)' : 'none',
                     }}
                   >
                     <span style={{
@@ -342,7 +484,7 @@ function AuthScreen() {
                     }}>
                       <ProviderBadge providerId={provider.id} />
                     </span>
-                    <span>{provider.label}</span>
+                    <span>{socialBusy === provider.id ? 'Working…' : provider.label}</span>
                   </button>
                   {!provider.available && (
                     <div style={{ padding: '6px 18px 0 50px', fontSize: 11.5, color: TOKENS.muted }}>
@@ -371,13 +513,15 @@ function AuthScreen() {
                 <button
                   key={value}
                   onClick={() => setMode(value)}
+                  disabled={authLocked}
                   style={{
                     padding: '9px 14px',
                     borderRadius: 999,
                     border: `1px solid ${mode === value ? TOKENS.ink : TOKENS.line}`,
                     background: mode === value ? TOKENS.ink : TOKENS.panel,
                     color: mode === value ? '#fff' : TOKENS.ink2,
-                    cursor: 'pointer',
+                    cursor: authLocked ? 'not-allowed' : 'pointer',
+                    opacity: authLocked ? 0.68 : 1,
                     fontFamily: TOKENS.fontSans,
                     fontSize: 13,
                     fontWeight: 700,
@@ -396,6 +540,7 @@ function AuthScreen() {
                   onChange={(event) => setEmail(event.target.value)}
                   placeholder="you@example.com"
                   autoComplete="email"
+                  disabled={authLocked}
                   style={authFieldStyle}
                 />
               </Field>
@@ -406,6 +551,7 @@ function AuthScreen() {
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder={mode === 'register' ? 'At least 8 characters' : 'Enter your password'}
                   autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                  disabled={authLocked}
                   style={authFieldStyle}
                 />
               </Field>
@@ -413,11 +559,17 @@ function AuthScreen() {
                 <div style={{ fontSize: 12.5, color: TOKENS.muted }}>
                   One adult account can manage up to four child profiles.
                 </div>
-                <Btn type="submit" variant="primary" iconRight="next" disabled={busy}>
+                <Btn type="submit" variant="primary" iconRight="next" disabled={authLocked}>
                   {busy ? 'Working…' : mode === 'register' ? 'Create account' : 'Sign in'}
                 </Btn>
               </div>
             </form>
+
+            {turnstileEnabled && !turnstileToken && (
+              <div style={{ fontSize: 12.5, color: TOKENS.muted }}>
+                Complete the security check before you sign in.
+              </div>
+            )}
 
             {error && <Chip tone="bad">{error}</Chip>}
           </div>

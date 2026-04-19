@@ -9,6 +9,7 @@ const SESSION_TTL_MS = 30 * DAY_MS;
 // running against a schema with missing columns or indexes.
 const EXPECTED_MIGRATIONS = [
   "0001_initial_schema.sql",
+  "0002_request_limits.sql",
 ];
 const schemaReadyPromises = new WeakMap();
 
