@@ -71,7 +71,7 @@ export async function submitSpellingAnswer(env, bundle, sessionId, payload) {
   return buildSpellingSubmitResponse({
     result: result.result,
     session: result.session,
-    monsterEvent: result.monsterEvent,
+    monsterEvents: result.monsterEvents,
     monsters: result.monsters,
   });
 }

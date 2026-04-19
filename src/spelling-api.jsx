@@ -26,14 +26,48 @@ const KS2Spelling = (() => {
     window.dispatchEvent(new CustomEvent('monster:progress', { detail: detail || null }));
   }
 
+  function setSubmitInFlight(next) {
+    const engine = window.GameEngine;
+    if (engine && typeof engine.setSubmitInFlight === 'function') {
+      engine.setSubmitInFlight(next);
+    }
+  }
+
   async function submit(sessionId, typed) {
-    const payload = await window.KS2App.requestJson(`/api/spelling/sessions/${encodeURIComponent(sessionId)}/submit`, {
-      method: 'POST',
-      body: JSON.stringify({ typed }),
-    });
-    if (payload.monsters) window.KS2App.setSpellingData({ monsters: payload.monsters });
-    emitProgress(payload.monsterEvent);
-    return payload;
+    setSubmitInFlight(true);
+    try {
+      const payload = await window.KS2App.requestJson(`/api/spelling/sessions/${encodeURIComponent(sessionId)}/submit`, {
+        method: 'POST',
+        body: JSON.stringify({ typed }),
+      });
+      if (payload.monsters) window.KS2App.setSpellingData({ monsters: payload.monsters });
+      // Fan one `monster:progress` per event — the Worker now returns an
+      // array so a single submit can surface both a direct monster event
+      // (e.g. Glimmerbug caught) and any aggregate events triggered by
+      // the same write (e.g. Phaeton hatch). Empty array is normal.
+      //
+      // Rollback-window compatibility: if this bundle talks to an older
+      // Worker that still returns the singular `monsterEvent` shape, fold
+      // it into the new array contract so downstream readers
+      // (`spelling-game.jsx` `applyResult` chiefly) see one shape. Overwrite
+      // `payload.monsterEvents` so those readers do not need to duplicate
+      // the same legacy check.
+      const events = Array.isArray(payload.monsterEvents)
+        ? payload.monsterEvents
+        : payload.monsterEvent ? [payload.monsterEvent] : [];
+      payload.monsterEvents = events;
+      if (events.length === 0) {
+        // Always fire once with null detail so legacy subscribers that pulse
+        // chips on any submit continue to update. Matches the previous
+        // single-event contract's null-case behaviour.
+        emitProgress(null);
+      } else {
+        for (const event of events) emitProgress(event);
+      }
+      return payload;
+    } finally {
+      setSubmitInFlight(false);
+    }
   }
 
   async function skip(sessionId) {

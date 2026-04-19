@@ -96,7 +96,7 @@ export class SpellingLockDO {
     return json(200, {
       result: submission.result,
       session: submission.payload,
-      monsterEvent: submission.monsterEvent,
+      monsterEvents: submission.monsterEvents,
       monsters: stats.monsters,
       childState: submission.childState,
     });

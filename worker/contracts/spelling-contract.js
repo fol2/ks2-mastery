@@ -100,11 +100,15 @@ export function buildSpellingSubmitResponse(payload) {
   validateSessionPayload(payload.session);
   assertObject(payload.result, "Spelling submit result must be an object.");
   validateMonsterCollection(payload.monsters);
+  invariant(
+    Array.isArray(payload.monsterEvents),
+    "Spelling submit monsterEvents must be an array.",
+  );
   return {
     ok: true,
     result: payload.result,
     session: payload.session,
-    monsterEvent: payload.monsterEvent,
+    monsterEvents: payload.monsterEvents,
     monsters: payload.monsters,
   };
 }
