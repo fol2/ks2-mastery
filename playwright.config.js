@@ -1,6 +1,13 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = Number(process.env.PLAYWRIGHT_PORT || 8788);
+const rawPort = process.env.PLAYWRIGHT_PORT;
+const parsedPort = rawPort === undefined ? 8788 : Number(rawPort);
+if (!Number.isInteger(parsedPort) || parsedPort <= 0 || parsedPort > 65535) {
+  throw new Error(
+    `PLAYWRIGHT_PORT must be an integer between 1 and 65535 (got ${JSON.stringify(rawPort)})`,
+  );
+}
+const PORT = parsedPort;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 
 // The E2E suite owns its build and dev server so local runs exercise the same
@@ -30,7 +37,13 @@ export default defineConfig({
   webServer: {
     command: `npm run build && npx wrangler dev --local --port ${PORT}`,
     url: BASE_URL,
-    reuseExistingServer: false,
+    // CI must always own its server so a run never silently reuses state from
+    // another invocation. Locally, an existing `wrangler dev` on the chosen
+    // port is reused to keep iteration fast; `PLAYWRIGHT_REUSE_SERVER=1`
+    // forces reuse for scripted local pipelines that provision the server
+    // externally.
+    reuseExistingServer:
+      !process.env.CI || process.env.PLAYWRIGHT_REUSE_SERVER === "1",
     timeout: 180_000,
     stdout: "ignore",
     stderr: "pipe",

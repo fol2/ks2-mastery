@@ -2,7 +2,15 @@ name: Delivery pipeline
 
 on:
   push:
+    branches: [main]
   pull_request:
+
+# Cancel superseded runs on the same ref so stale commits do not report against
+# the latest HEAD. `github.ref` carries the PR ref for pull_request events, so
+# rapid PR pushes collapse cleanly.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -25,8 +33,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Resolve Playwright version for cache key
+        id: playwright
+        run: |
+          version=$(node -p "require('@playwright/test/package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
       - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+        run: |
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            npx playwright install-deps chromium
+          else
+            npx playwright install --with-deps chromium
+          fi
 
       - name: Run unit and integration tests
         run: npm test

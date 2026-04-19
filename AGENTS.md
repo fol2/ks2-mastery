@@ -20,14 +20,14 @@ The app is no longer “static HTML only”: a **Cloudflare Worker** (`worker/`,
 | `test/` | Vitest (`*.test.mjs`, Cloudflare Workers test pool) + Playwright E2E (`test/e2e/`) |
 | `docs/social-auth-setup.md` | OAuth / social login wiring notes |
 | `KS2 Unified.html` | **Local static template** (full script pipeline + boot beacon); see “Two shells” below |
-| `public/` | **Build output** (gitignored): `npm run build:public` copies assets and writes `public/index.html` |
+| `dist/public/` | **Build output** (gitignored): `npm run build:public` builds into `dist/public.tmp` and atomically swaps into `dist/public/`, writing `dist/public/index.html` |
 
 ## Running locally（本機運行）
 
 ```bash
 npm install
 npm run build          # data + worker spelling runtime + public site
-npx wrangler dev       # Worker + static assets from ./public (API + SPA)
+npx wrangler dev       # Worker + static assets from ./dist/public (API + SPA)
 ```
 
 - **Deploy / dry-run**: `npm run check` / `npm run deploy` (both run `build` first).
@@ -36,7 +36,7 @@ npx wrangler dev       # Worker + static assets from ./public (API + SPA)
 
 ## Two shells / one template（兩套載入：模板 vs 上線）
 
-1. **Production-shaped client** — `npm run build:public` reads `KS2 Unified.html`, swaps the `<title>`, and **replaces** the block from the `<!-- Content: sentence banks … -->` comment through `</body>` with a fixed `scriptBlock` defined in `scripts/build-public.mjs`. That block injects **`client-store.jsx`** and **`spelling-api.jsx`**, omits the separate `monster-engine.jsx` / `spelling-engine.jsx` script tags (see shims below), and writes **`public/index.html`**. **If you change load order or add modules, update both `KS2 Unified.html` and `build-public.mjs`.**
+1. **Production-shaped client** — `npm run build:public` reads `KS2 Unified.html`, swaps the `<title>`, and **replaces** the block from the `<!-- Content: sentence banks … -->` comment through `</body>` with a fixed `scriptBlock` defined in `scripts/build-public.mjs`. That block injects **`client-store.jsx`** and **`spelling-api.jsx`**, omits the separate `monster-engine.jsx` / `spelling-engine.jsx` script tags (see shims below), and writes **`dist/public/index.html`** (via an atomic `dist/public.tmp` → `dist/public` rename so Wrangler never sees a half-rebuilt tree). **If you change load order or add modules, update both `KS2 Unified.html` and `build-public.mjs`.**
 
 2. **Root `KS2 Unified.html` (checked in)** — still loads legacy **`monster-engine.jsx`** + **`spelling-engine.jsx`** and all sentence-bank scripts. **`app.jsx` now depends on `window.KS2App` / `window.KS2Spelling`**, which this file **does not** include, so treat the checked-in HTML as a **partial dev template** unless you mirror the `build-public` script tags by hand. The supported full-stack loop is **build + `wrangler dev`**.
 
@@ -65,7 +65,7 @@ src/questions.jsx → practice → tabs → app.jsx
 
 Use **`type="text/babel"`** for JSX files; **plain `<script>`** for non-JSX engines (`tts-core.jsx`, `spelling-engine.jsx`, `monster-engine.jsx` in this template).
 
-### `public/index.html` (after `build:public`)
+### `dist/public/index.html` (after `build:public`)
 
 Order is defined in **`scripts/build-public.mjs`**: **`client-store.jsx`** runs after **`shell.jsx`** and before **`profile.jsx`**; **`spelling-api.jsx`** sits after **`tts-settings.jsx`** and before **`spelling-dashboard.jsx`**. **`window.MonsterEngine`** is a **read-only shim** implemented in `client-store.jsx` (backed by `KS2App` monster state from the server), not `monster-engine.jsx`.
 
