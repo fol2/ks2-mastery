@@ -2,6 +2,15 @@
 
 This file provides guidance to Codex, Cursor agents, and other automation when working with code in this repository.
 
+## Preferred agent workflows（代理工作流偏好）
+
+When a task matches an available **gstack** skill or a **Compound Engineering** skill (`ce:*`), agents should **use those skills by default** rather than ad-hoc workflows.
+
+- Prefer **gstack** skills for browser QA, design review, debugging/investigation, shipping, deploy verification, and related agent-driven workflows.
+- Prefer **Compound Engineering** skills for planning, implementation workflow, code review, learnings capture, and other `ce:*` processes.
+- If both are applicable, use the minimal combination that fits the task and follow their documented sequencing.
+- If no relevant skill exists, continue with the best local workflow and state the fallback briefly.
+
 ## What this is（項目定位）
 
 A **browser-side React UI** (Babel Standalone + vendored React) for a KS2 (Year 5/6, UK) study shell with six subjects: spelling, arithmetic, reasoning, grammar, punctuation, and reading. **Spelling** is the real product surface; the other five are realistic **UI mockups** sharing the same shell.
