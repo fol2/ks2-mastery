@@ -17,13 +17,11 @@ import {
   submitSession as submitSessionState,
 } from "../lib/spelling-service.js";
 import {
-  saveChildLearningState,
-} from "../repositories/child-repository.js";
-import {
-  deleteSpellingSessionState,
-  findSpellingSessionState,
-  saveSpellingSessionState,
-} from "../repositories/spelling-session-repository.js";
+  deleteSpellingSession,
+  getSpellingSession,
+  saveChildState,
+  saveSpellingSession,
+} from "../lib/store.js";
 import { patchBundleForChildState } from "./bundle-patches.js";
 
 function requireSelectedChild(bundle) {
@@ -35,7 +33,7 @@ function requireSelectedChild(bundle) {
 
 async function loadActiveSpellingSession(env, bundle, sessionId) {
   const selectedChild = requireSelectedChild(bundle);
-  const sessionState = await findSpellingSessionState(env, bundle.user.id, selectedChild.id, sessionId);
+  const sessionState = await getSpellingSession(env, bundle.user.id, selectedChild.id, sessionId);
   if (!sessionState) {
     throw new NotFoundError("Spelling session not found.");
   }
@@ -45,7 +43,7 @@ async function loadActiveSpellingSession(env, bundle, sessionId) {
 export async function persistSpellingPrefs(env, bundle, _sessionHash, prefs) {
   const selectedChild = requireSelectedChild(bundle);
   const nextState = saveSpellingPreferences(bundle.childState, prefs);
-  await saveChildLearningState(env, selectedChild.id, nextState);
+  await saveChildState(env, selectedChild.id, nextState);
   // Prefs are saved on the currently-selected child, so only bundle.childState
   // changes — patch in memory instead of re-reading the entire bundle.
   return buildSignedInBootstrapResponse(patchBundleForChildState(bundle, nextState), env);
@@ -59,8 +57,8 @@ export async function startSpellingSession(env, bundle, payload) {
     throw new ValidationError(result.reason);
   }
 
-  await saveChildLearningState(env, selectedChild.id, result.childState);
-  await saveSpellingSessionState(
+  await saveChildState(env, selectedChild.id, result.childState);
+  await saveSpellingSession(
     env,
     bundle.user.id,
     selectedChild.id,
@@ -81,8 +79,8 @@ export async function submitSpellingAnswer(env, bundle, sessionId, payload) {
   if (!submission.result) {
     throw new ValidationError("This spelling card is not accepting an answer right now.");
   }
-  await saveChildLearningState(env, selectedChild.id, submission.childState);
-  await saveSpellingSessionState(env, bundle.user.id, selectedChild.id, sessionState.id, sessionState);
+  await saveChildState(env, selectedChild.id, submission.childState);
+  await saveSpellingSession(env, bundle.user.id, selectedChild.id, sessionState.id, sessionState);
 
   return buildSpellingSubmitResponse({
     result: submission.result,
@@ -101,8 +99,8 @@ export async function skipSpellingSession(env, bundle, sessionId) {
   if (!skipped.result) {
     throw new ValidationError("This spelling card cannot be skipped right now.");
   }
-  await saveChildLearningState(env, selectedChild.id, skipped.childState);
-  await saveSpellingSessionState(env, bundle.user.id, selectedChild.id, sessionState.id, sessionState);
+  await saveChildState(env, selectedChild.id, skipped.childState);
+  await saveSpellingSession(env, bundle.user.id, selectedChild.id, sessionState.id, sessionState);
 
   return buildSpellingSkipResponse({
     result: skipped.result,
@@ -113,10 +111,10 @@ export async function skipSpellingSession(env, bundle, sessionId) {
 export async function advanceSpellingSession(env, bundle, sessionId) {
   const { selectedChild, sessionState } = await loadActiveSpellingSession(env, bundle, sessionId);
   const advanced = advanceSessionState(selectedChild.id, bundle.childState, sessionState);
-  await saveChildLearningState(env, selectedChild.id, advanced.childState);
+  await saveChildState(env, selectedChild.id, advanced.childState);
 
   if (advanced.done) {
-    await deleteSpellingSessionState(env, bundle.user.id, selectedChild.id, sessionId);
+    await deleteSpellingSession(env, bundle.user.id, selectedChild.id, sessionId);
     const stats = buildBootstrapStats(selectedChild.id, advanced.childState);
     return buildSpellingAdvanceDoneResponse({
       summary: advanced.summary,
@@ -125,7 +123,7 @@ export async function advanceSpellingSession(env, bundle, sessionId) {
     });
   }
 
-  await saveSpellingSessionState(env, bundle.user.id, selectedChild.id, sessionState.id, sessionState);
+  await saveSpellingSession(env, bundle.user.id, selectedChild.id, sessionState.id, sessionState);
   return buildSpellingAdvanceContinueResponse(advanced.payload);
 }
 

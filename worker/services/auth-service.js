@@ -10,15 +10,13 @@ import {
 } from "../lib/security.js";
 import { verifyTurnstileToken } from "../lib/turnstile.js";
 import {
-  createUserSession,
-  deleteUserSessionByHash,
-  getSessionBundle,
-} from "../repositories/session-repository.js";
-import {
-  createEmailUserAccount,
-  findOrCreateUserFromProviderIdentity,
-  findUserByEmail,
-} from "../repositories/user-repository.js";
+  createEmailUser,
+  createSession,
+  deleteSessionByHash,
+  findOrCreateUserFromIdentity,
+  getSessionBundleByHash,
+  getUserByEmail,
+} from "../lib/store.js";
 
 const AUTH_RATE_LIMIT_MESSAGE = "Too many sign-in attempts. Please wait a few minutes and try again.";
 const OAUTH_RATE_LIMIT_MESSAGE = "Too many social sign-in attempts. Please wait a few minutes and try again.";
@@ -36,8 +34,8 @@ const AUTH_LIMITS = {
 async function createAuthenticatedSession(env, userId) {
   const sessionToken = randomToken(24);
   const sessionHash = await sha256(sessionToken);
-  await createUserSession(env, userId, sessionHash);
-  const bundle = await getSessionBundle(env, sessionHash);
+  await createSession(env, userId, sessionHash);
+  const bundle = await getSessionBundleByHash(env, sessionHash);
   return { sessionToken, bundle };
 }
 
@@ -128,7 +126,7 @@ export async function registerWithEmail(env, credentials, security = {}) {
     turnstileToken: credentials.turnstileToken,
   });
 
-  const existing = await findUserByEmail(env, credentials.email);
+  const existing = await getUserByEmail(env, credentials.email);
   if (existing) {
     throw new ValidationError("That email address is already registered.");
   }
@@ -137,7 +135,7 @@ export async function registerWithEmail(env, credentials, security = {}) {
   let user;
 
   try {
-    user = await createEmailUserAccount(env, {
+    user = await createEmailUser(env, {
       email: credentials.email,
       passwordHash: hash,
       passwordSalt: salt,
@@ -169,7 +167,7 @@ export async function loginWithEmail(env, credentials, security = {}) {
     turnstileToken: credentials.turnstileToken,
   });
 
-  const user = await findUserByEmail(env, credentials.email);
+  const user = await getUserByEmail(env, credentials.email);
   if (!user?.password_hash || !user?.password_salt) {
     throw new ValidationError("Incorrect email or password.");
   }
@@ -188,7 +186,7 @@ export async function loginWithEmail(env, credentials, security = {}) {
 }
 
 export function logoutSession(env, sessionHash) {
-  return deleteUserSessionByHash(env, sessionHash);
+  return deleteSessionByHash(env, sessionHash);
 }
 
 export async function startSocialLogin(env, provider, origin, security = {}) {
@@ -216,7 +214,7 @@ export async function completeSocialLogin(env, provider, origin, payload) {
     throw new ValidationError("The provider did not return a valid account identifier.");
   }
 
-  const user = await findOrCreateUserFromProviderIdentity(env, {
+  const user = await findOrCreateUserFromIdentity(env, {
     provider,
     providerSubject: profile.subject,
     email: profile.emailVerified === false ? "" : profile.email,

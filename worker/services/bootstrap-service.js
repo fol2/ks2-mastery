@@ -1,6 +1,6 @@
 import { buildSignedInBootstrapResponse, buildSignedOutBootstrapResponse } from "../contracts/bootstrap-contract.js";
 import { sha256 } from "../lib/security.js";
-import { getSessionBundle } from "../repositories/session-repository.js";
+import { getSessionBundleByHash } from "../lib/store.js";
 
 export async function loadBootstrap(env, sessionToken) {
   if (!sessionToken) {
@@ -12,7 +12,7 @@ export async function loadBootstrap(env, sessionToken) {
   }
 
   const sessionHash = await sha256(sessionToken);
-  const bundle = await getSessionBundle(env, sessionHash);
+  const bundle = await getSessionBundleByHash(env, sessionHash);
 
   if (!bundle) {
     return {

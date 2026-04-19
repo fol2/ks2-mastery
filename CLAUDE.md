@@ -105,6 +105,37 @@ compile or breaks parse.
   `monsters.jsx` (`stageFor`, `levelFor`). Monster art is **inline hand-drawn SVG**
   in `monsters.jsx`; PNG fallbacks in `assets/monsters/` are not currently wired in.
 
+## Worker layering (`worker/`)
+
+The Worker is layered as **composition root → middleware → routes → services → lib**.
+There is deliberately no repository layer — an earlier iteration added thin
+pass-through wrappers and they never grew real logic, so they were removed as
+YAGNI. If cross-cutting persistence concerns appear (row-to-domain adapters,
+caching, transaction wrappers, per-table error translation), re-introduce a
+`worker/repositories/*.js` layer at that point rather than scattering the logic
+across services. Until then:
+
+- **Composition root (`worker/index.js`)** — 29 lines. Wires `instrumentRequest`
+  + `ensureApiSchema` middleware, mounts route groups, delegates the asset path.
+- **Middleware (`worker/middleware/`)** — cross-cutting per-request concerns:
+  request-id + structured log, schema readiness guard, session extraction.
+- **Routes (`worker/routes/`)** — Hono route groups, one per domain. Parse via
+  contracts, delegate to services, serialise via contracts. No business logic.
+- **Services (`worker/services/`)** — the locus of orchestration and business
+  rules (rate-limit, Turnstile gating, session bundle patching, TTS provider
+  selection). Services call `worker/lib/*.js` directly for persistence.
+- **Contracts (`worker/contracts/`)** — request parsing (`parse*Payload`) and
+  response envelope construction (`build*Response`) with runtime shape asserts.
+  Pure functions, unit-testable without a Worker pool.
+- **Lib (`worker/lib/`)** — shared primitives: `store.js` (D1 helpers),
+  `http.js` (HttpError family + handlers), `validation.js`, `observability.js`,
+  provider clients (`tts.js`, `oauth.js`, `turnstile.js`), `rate-limit.js`.
+
+Enum constants that cross layers (`AUTH_PROVIDER_KEYS`, `OAUTH_PROVIDER_KEYS`,
+`TTS_PROVIDER_KEYS`, `MONSTER_IDS`) live next to their authoritative producer
+in `worker/lib/` and are imported by the bootstrap response validator — do not
+duplicate these lists in contracts or services.
+
 ## State persistence (localStorage keys)
 
 All state is client-side. Keys — with the profile-scoped ones suffixed by
