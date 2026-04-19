@@ -135,23 +135,33 @@
   <script>window.__ks2_mark && window.__ks2_mark("content loaded (words=" + ((window.KS2_WORDS || []).length) + ")");</script>
 
   <script type="text/babel">window.__ks2_mark("text/babel pipeline starting");</script>
+  <!-- Script order kept in sync with scripts/build-public.mjs `clientSourceFiles`.
+       Drift between this static template and the shipped Vite bundle would
+       make local text/babel debugging misleading, so treat this list as a
+       mirror of that build input. JSX files → type="text/babel"; files
+       that use React hooks without JSX ship as plain <script>. -->
   <script type="text/babel" src="src/tokens.jsx"></script>
   <script type="text/babel">window.__ks2_mark("tokens.jsx done");</script>
   <script type="text/babel" src="src/icons.jsx"></script>
   <script type="text/babel" src="src/primitives.jsx"></script>
   <script type="text/babel" src="src/shell.jsx"></script>
+  <script type="text/babel" src="src/client-store.jsx"></script>
+  <script src="src/game-engine.jsx"></script>
   <script type="text/babel" src="src/profile.jsx"></script>
   <script type="text/babel" src="src/monsters.jsx"></script>
-  <script src="src/monster-engine.jsx"></script>
   <script type="text/babel" src="src/monster-overlay.jsx"></script>
+  <script type="text/babel" src="src/word-spirit-art.jsx"></script>
+  <script type="text/babel" src="src/word-spirit.jsx"></script>
   <script type="text/babel" src="src/collection.jsx"></script>
   <script type="text/babel" src="src/dashboard.jsx"></script>
-  <script type="text/babel">window.__ks2_mark("shell/profile/monsters/collection/dashboard done");</script>
+  <script type="text/babel">window.__ks2_mark("shell/store/profile/monsters/spirits/collection/dashboard done");</script>
 
-  <!-- Spelling engine stack: TTS core → settings UI → engine → dashboard → game → summary -->
+  <!-- Spelling stack: TTS core → settings UI → server-side API client → dashboard → game → summary.
+       The legacy client-side spelling-engine.jsx is gone — mastery and
+       session state now live in the Worker (worker/lib/spelling-service.js). -->
   <script src="src/tts-core.jsx"></script>
   <script type="text/babel" src="src/tts-settings.jsx"></script>
-  <script src="src/spelling-engine.jsx"></script>
+  <script src="src/spelling-api.jsx"></script>
   <script type="text/babel" src="src/spelling-dashboard.jsx"></script>
   <script type="text/babel" src="src/spelling-game.jsx"></script>
   <script type="text/babel" src="src/spelling-summary.jsx"></script>

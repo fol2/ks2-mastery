@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   buildBootstrapStats,
+  createSessionForChild,
   recordMonsterMastery,
   savePrefs,
   SPELLING_MODES,
+  submitSession,
 } from "../../worker/lib/spelling-service.js";
 import { aggregateEventsForWrite } from "../../worker/lib/monster-aggregates.js";
 
@@ -153,5 +155,90 @@ describe("recordMonsterMastery — mutation safety", () => {
     const phaeton = events.find((e) => e.monsterId === "phaeton");
     expect(phaeton).toBeDefined();
     expect(phaeton.kind).toBe("caught");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// Session payload contract — what the Worker sends to the client after
+// create / submit. These assert the shape the overlay game system
+// (Unit 1 answer:graded, Unit 2 GameEngine, Unit 4 combat skin HP bar)
+// depends on. If any of these shapes change without an intentional
+// client-side update these tests are the early-warning trip.
+// ─────────────────────────────────────────────────────────────────────
+
+describe("currentCard.attemptInfo — overlay combat HP surface", () => {
+  it("exposes attempts / successes / needed / hadWrong / done for learning sessions", () => {
+    const session = createSessionForChild(CHILD_ID, mkChildState(), {
+      mode: "single",
+      words: ["accident"],
+    });
+    expect(session.ok).toBe(true);
+    const card = session.payload.currentCard;
+    expect(card).not.toBeNull();
+    expect(card.attemptInfo).toMatchObject({
+      attempts: 0,
+      successes: 0,
+      needed: expect.any(Number),
+      hadWrong: false,
+      done: false,
+    });
+    expect(card.attemptInfo.needed).toBeGreaterThanOrEqual(1);
+  });
+
+  it("returns attemptInfo: null for test-mode sessions (no retry phase)", () => {
+    const session = createSessionForChild(CHILD_ID, mkChildState(), {
+      mode: "test",
+      words: ["accident", "accidentally"],
+    });
+    expect(session.ok).toBe(true);
+    // Test mode has no attempts / retry concept, so the overlay combat
+    // skin must see a null attemptInfo and fall back to plain practice UI.
+    expect(session.payload.currentCard.attemptInfo).toBeNull();
+  });
+});
+
+describe("submitSession — monsterEvents[] array contract", () => {
+  it("always returns monsterEvents as an array, even when nothing was mastered", () => {
+    const initial = mkChildState();
+    const session = createSessionForChild(CHILD_ID, initial, {
+      mode: "single",
+      words: ["accident"],
+    });
+    expect(session.ok).toBe(true);
+    // A wrong answer cannot trigger `justMastered`, so no monster event is
+    // expected. The empty-array contract still must hold so the client's
+    // `for (const event of events)` loop in spelling-api.jsx:56 and
+    // spelling-game.jsx:127 never hits a type error on falsy payloads.
+    const submission = submitSession(
+      CHILD_ID,
+      session.childState,
+      session.sessionState,
+      "wrong-answer",
+    );
+    expect(Array.isArray(submission.monsterEvents)).toBe(true);
+    expect(submission.monsterEvents).toEqual([]);
+  });
+
+  it("payload exposes currentCard.attemptInfo after a submit so the HP bar can track retry progress", () => {
+    const session = createSessionForChild(CHILD_ID, mkChildState(), {
+      mode: "single",
+      words: ["accident"],
+    });
+    const submission = submitSession(
+      CHILD_ID,
+      session.childState,
+      session.sessionState,
+      "wrong",
+    );
+    // Whether the engine answered with a `retry` or `advance` phase, the
+    // current-card payload must still carry a serialisable attemptInfo
+    // (or null) — not undefined. The combat skin reads this on every
+    // applyResult call without defensive destructuring.
+    if (submission.payload.currentCard) {
+      expect(
+        submission.payload.currentCard.attemptInfo === null ||
+          typeof submission.payload.currentCard.attemptInfo === "object",
+      ).toBe(true);
+    }
   });
 });
