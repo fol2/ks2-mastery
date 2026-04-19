@@ -27,18 +27,18 @@ The app is no longer “static HTML only”: a **Cloudflare Worker** (`worker/`,
 ```bash
 npm install
 npm run build          # data + worker spelling runtime + public site
-npx wrangler dev       # Worker + static assets from ./dist/public (API + SPA)
+npm run dev            # build + local D1 migrations/backfill + Worker + SPA
 ```
 
 - **Deploy / dry-run**: `npm run check` / `npm run deploy` (both run `build` first).
 - **Tests**: `npm test` (Vitest + Workers bindings), `npm run test:e2e` (Playwright).
-- **`file://`**: still unreliable for `text/babel` `src=` fetches; prefer HTTP. For a **quick static** preview without the API, you can still serve the repo root — but the **full** app expects `/api/bootstrap` and spelling routes, so use **`wrangler dev`** after a build for real behaviour.
+- **`file://`**: still unreliable for `text/babel` `src=` fetches; prefer HTTP. For a **quick static** preview without the API, you can still serve the repo root — but the **full** app expects `/api/bootstrap` and spelling routes, so use **`npm run dev`** for the supported local full-stack loop.
 
 ## Two shells / one template（兩套載入：模板 vs 上線）
 
 1. **Production-shaped client** — `npm run build:public` reads `KS2 Unified.html`, swaps the `<title>`, and **replaces** the block from the `<!-- Content: sentence banks … -->` comment through `</body>` with a fixed `scriptBlock` defined in `scripts/build-public.mjs`. That block injects **`client-store.jsx`** and **`spelling-api.jsx`**, omits the separate `monster-engine.jsx` / `spelling-engine.jsx` script tags (see shims below), and writes **`dist/public/index.html`** (via an atomic `dist/public.tmp` → `dist/public` rename so Wrangler never sees a half-rebuilt tree). **If you change load order or add modules, update both `KS2 Unified.html` and `build-public.mjs`.**
 
-2. **Root `KS2 Unified.html` (checked in)** — still loads legacy **`monster-engine.jsx`** + **`spelling-engine.jsx`** and all sentence-bank scripts. **`app.jsx` now depends on `window.KS2App` / `window.KS2Spelling`**, which this file **does not** include, so treat the checked-in HTML as a **partial dev template** unless you mirror the `build-public` script tags by hand. The supported full-stack loop is **build + `wrangler dev`**.
+2. **Root `KS2 Unified.html` (checked in)** — still loads legacy **`monster-engine.jsx`** + **`spelling-engine.jsx`** and all sentence-bank scripts. **`app.jsx` now depends on `window.KS2App` / `window.KS2Spelling`**, which this file **does not** include, so treat the checked-in HTML as a **partial dev template** unless you mirror the `build-public` script tags by hand. The supported full-stack loop is **`npm run dev`**.
 
 ## Script load order is load-bearing（載入次序）
 

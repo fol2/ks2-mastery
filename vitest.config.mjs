@@ -13,5 +13,6 @@ export default defineConfig({
   test: {
     include: ["test/**/*.test.mjs"],
     globals: false,
+    setupFiles: ["./test/setup.mjs"],
   },
 });

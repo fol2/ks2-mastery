@@ -11,7 +11,8 @@
     {
       "binding": "DB",
       "database_name": "ks2-mastery-db",
-      "database_id": "6c63ae44-358d-43b8-8d24-9bd7ebacc0cb"
+      "database_id": "6c63ae44-358d-43b8-8d24-9bd7ebacc0cb",
+      "migrations_dir": "./migrations"
     }
   ],
   "r2_buckets": [
