@@ -41,19 +41,22 @@ export function buildMigrationPlan({
   if (inCI && ciBranch && !MAIN_BRANCHES.has(ciBranch.value)) {
     if (hasConfiguredPreviewDatabase) {
       return {
+        shouldRun: true,
         args: [...REMOTE_MIGRATION_ARGS, "--preview"],
         logMessage: `[predeploy] CI branch "${ciBranch.value}" (${ciBranch.key}) is not main; applying D1 migrations to the preview database before deploy.`,
       };
     }
 
     return {
-      args: REMOTE_MIGRATION_ARGS,
-      logMessage: `[predeploy] CI branch "${ciBranch.value}" (${ciBranch.key}) is not main and no preview D1 database is configured; applying D1 migrations to the shared remote database so the preview deploy matches the schema contract.`,
+      shouldRun: false,
+      args: [],
+      logMessage: `[predeploy] CI branch "${ciBranch.value}" (${ciBranch.key}) is not main and no preview D1 database is configured; skipping remote D1 migrations so preview builds do not touch the shared database. Configure preview_database_id to restore preview-schema parity.`,
     };
   }
 
   if (inCI && !ciBranch) {
     return {
+      shouldRun: true,
       args: REMOTE_MIGRATION_ARGS,
       logMessage:
         "[predeploy] CI detected but no branch env var found; running remote D1 migration so failures surface loudly rather than silently.",
@@ -61,6 +64,7 @@ export function buildMigrationPlan({
   }
 
   return {
+    shouldRun: true,
     args: REMOTE_MIGRATION_ARGS,
     logMessage: "[predeploy] Applying remote D1 migrations before deploy.",
   };

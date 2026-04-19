@@ -24,6 +24,20 @@
       "bucket_name": "ks2-spelling-buffers"
     }
   ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "SPELLING_LOCK",
+        "class_name": "SpellingLockDO"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1-spelling-lock",
+      "new_classes": ["SpellingLockDO"]
+    }
+  ],
   "assets": {
     "directory": "./dist/public",
     "binding": "ASSETS",
