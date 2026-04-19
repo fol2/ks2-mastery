@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   buildBootstrapStats,
+  recordMonsterMastery,
   savePrefs,
   SPELLING_MODES,
 } from "../../worker/lib/spelling-service.js";
+import { aggregateEventsForWrite } from "../../worker/lib/monster-aggregates.js";
 
 function mkChildState(overrides = {}) {
   return {
@@ -112,5 +114,44 @@ describe("SPELLING_MODES", () => {
       "test",
       "trouble",
     ]);
+  });
+});
+
+describe("recordMonsterMastery — mutation safety", () => {
+  it("does not mutate the caller's monsterState when a word crosses the catch threshold", () => {
+    const monsterState = {
+      glimmerbug: {
+        mastered: Array.from({ length: 9 }, (_, i) => `glim-${i}`),
+        caught: false,
+      },
+    };
+    const snapshot = JSON.parse(JSON.stringify(monsterState));
+    recordMonsterMastery(monsterState, "glimmerbug", "glim-9");
+    expect(monsterState).toEqual(snapshot);
+  });
+
+  it("leaves the aliased 'prev' state unchanged so aggregate diffs still detect Phaeton hatch", () => {
+    // Reproduces `submitSession`'s aliasing sequence verbatim: the caller
+    // stashes `prevMonsterState = monsterState` before calling
+    // `recordMonsterMastery`, then diffs against the returned state via
+    // `aggregateEventsForWrite`. If the function mutated the shared inner
+    // entry, the diff would see prev === next and miss the Phaeton 'caught'
+    // event. This test would fail under that regression.
+    const monsterState = {
+      inklet: {
+        mastered: Array.from({ length: 12 }, (_, i) => `ink-${i}`),
+        caught: true,
+      },
+      glimmerbug: {
+        mastered: Array.from({ length: 9 }, (_, i) => `glim-${i}`),
+        caught: false,
+      },
+    };
+    const prevMonsterState = monsterState;
+    const update = recordMonsterMastery(monsterState, "glimmerbug", "glim-9");
+    const events = aggregateEventsForWrite(prevMonsterState, update.state, "glimmerbug");
+    const phaeton = events.find((e) => e.monsterId === "phaeton");
+    expect(phaeton).toBeDefined();
+    expect(phaeton.kind).toBe("caught");
   });
 });

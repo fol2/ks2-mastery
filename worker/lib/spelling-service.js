@@ -88,14 +88,19 @@ function levelFor(mastered) {
   return Math.min(10, Math.floor(mastered / 10));
 }
 
-function recordMonsterMastery(monsterState, monsterId, wordSlug) {
+export function recordMonsterMastery(monsterState, monsterId, wordSlug) {
   const all = { ...(monsterState || {}) };
-  const entry = all[monsterId] || { mastered: [], caught: false };
-  if (entry.mastered.includes(wordSlug)) return { state: all, event: null };
-  const prevMastered = entry.mastered.length;
+  const prevEntry = all[monsterId] || { mastered: [], caught: false };
+  if (prevEntry.mastered.includes(wordSlug)) return { state: all, event: null };
+  // Clone `prevEntry` before mutating. The shallow spread on line above
+  // only copies the outer map — without this, later assignments to
+  // `entry.caught` would leak into `prevEntry`, which callers (notably
+  // `submitSession`) alias as their "before" snapshot for aggregate
+  // transition detection.
+  const prevMastered = prevEntry.mastered.length;
   const prevStage = stageFor(prevMastered);
   const prevLevel = levelFor(prevMastered);
-  entry.mastered = [...entry.mastered, wordSlug];
+  const entry = { ...prevEntry, mastered: [...prevEntry.mastered, wordSlug] };
   const newMastered = entry.mastered.length;
   const newStage = stageFor(newMastered);
   const newLevel = levelFor(newMastered);

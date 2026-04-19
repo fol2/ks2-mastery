@@ -36,7 +36,17 @@ const KS2Spelling = (() => {
     // array so a single submit can surface both a direct monster event
     // (e.g. Glimmerbug caught) and any aggregate events triggered by
     // the same write (e.g. Phaeton hatch). Empty array is normal.
-    const events = Array.isArray(payload.monsterEvents) ? payload.monsterEvents : [];
+    //
+    // Rollback-window compatibility: if this bundle talks to an older
+    // Worker that still returns the singular `monsterEvent` shape, fold
+    // it into the new array contract so downstream readers
+    // (`spelling-game.jsx` `applyResult` chiefly) see one shape. Overwrite
+    // `payload.monsterEvents` so those readers do not need to duplicate
+    // the same legacy check.
+    const events = Array.isArray(payload.monsterEvents)
+      ? payload.monsterEvents
+      : payload.monsterEvent ? [payload.monsterEvent] : [];
+    payload.monsterEvents = events;
     if (events.length === 0) {
       // Always fire once with null detail so legacy subscribers that pulse
       // chips on any submit continue to update. Matches the previous
