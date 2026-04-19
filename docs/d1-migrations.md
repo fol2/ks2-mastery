@@ -33,9 +33,10 @@ Apply schema changes remotely before deploying code that depends on them:
 2. `npm run db:migrate:remote`
 3. `npm run db:backfill:remote`
 
-Until a dedicated staging D1 database exists, treat local D1 as the rehearsal
-environment and production D1 as the only remote target. Once staging is added,
-run the same sequence against staging first and only then against production.
+Until a dedicated staging or preview D1 database exists, treat local D1 as the
+rehearsal environment and the configured remote D1 binding as the shared target.
+Once staging is added, run the same sequence against staging first and only then
+against production.
 
 ## Deployment
 
@@ -50,12 +51,17 @@ Behaviour by context:
   `wrangler d1 migrations apply … --remote`. Requires `wrangler login` or
   `CLOUDFLARE_API_TOKEN` to be set.
 - **Cloudflare Workers Builds**: the hook reads `WORKERS_CI_BRANCH`. It
-  migrates on `main` and skips on every other branch so a feature-branch
-  preview never rewrites production schema.
-- **GitHub Actions**: the hook reads `GITHUB_REF_NAME` with the same rule
-  (migrate on `main`, skip elsewhere). Works out of the box in any workflow
-  that runs `npm run deploy` with `CLOUDFLARE_API_TOKEN` +
-  `CLOUDFLARE_ACCOUNT_ID` secrets.
+  migrates the shared remote DB on `main`. On every other branch it migrates
+  the preview DB when `preview_database_id` is configured; otherwise it
+  migrates the shared remote DB instead of skipping, so branch previews do not
+  boot against an unapplied schema.
+- **GitHub Actions**: the hook reads `GITHUB_REF_NAME` with the same rule.
+  Works out of the box in any workflow that runs `npm run deploy` with
+  `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` secrets.
+
+If non-main previews still share the main remote DB, keep schema migrations
+backwards-compatible. A preview deploy may prepare the shared database before
+the branch merges, and `main` must keep working while that branch is still open.
 
 ### Cloudflare Workers Builds — one-time dashboard setup
 
@@ -67,6 +73,9 @@ To wire the automation end-to-end:
    which bypasses the hook).
 3. Ensure the build environment exposes `CLOUDFLARE_API_TOKEN` with D1 write
    scope for the `ks2-mastery-db` binding.
+4. Optional but recommended: set `preview_database_id` on the `DB` binding in
+   `wrangler.jsonc` so non-main previews can migrate and run against a dedicated
+   preview D1 database instead of the shared remote one.
 
 If the deploy command stays at the default, migrations do **not** auto-apply
 and every schema-changing merge to `main` must be preceded by a manual
