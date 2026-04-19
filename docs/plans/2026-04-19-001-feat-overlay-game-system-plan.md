@@ -349,7 +349,9 @@ sequenceDiagram
 
 ## Implementation Units
 
-- [ ] **Unit 1: Subject-engine contract — `answer:graded` + aggregate events**
+- [x] **Unit 1: Subject-engine contract — `answer:graded` + aggregate events**
+
+_Landed in commit `b63be48` — feat(overlay): Unit 1._
 
 **Goal:** Establish the two new signals the overlay subscribes to:
 the `answer:graded` DOM event per submit, and a multi-event
