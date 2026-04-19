@@ -1,1 +1,125 @@
-KS2 Unified.html
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KS2 Mastery</title>
+
+<link href="/vendor/fonts.css" rel="stylesheet">
+
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+    background: #F6F5F1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  button { font-family: inherit; }
+  input, select, textarea { font-family: inherit; }
+  input:focus, textarea:focus, select:focus, button:focus-visible {
+    outline: 2px solid #1D2B3A;
+    outline-offset: 2px;
+  }
+  ::selection { background: #1D2B3A; color: #fff; }
+
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-thumb { background: #E5E1D6; border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+  *::-webkit-scrollbar-thumb:hover { background: #7A8697; border: 2px solid transparent; background-clip: padding-box; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <div id="__ks2_boot_beacon" style="position:fixed;top:0;left:0;right:0;padding:10px 14px;background:#FEF3C7;color:#78350F;font:12px/1.35 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;z-index:2147483647;white-space:pre-wrap;box-shadow:0 1px 4px rgba(0,0,0,0.12);max-height:60vh;overflow:auto;">[0.0s] Booting — awaiting first stage</div>
+  <script>
+  (function () {
+    var beacon = document.getElementById("__ks2_boot_beacon");
+    var startedAt = Date.now();
+    var errors = [];
+    var warnings = [];
+    var stages = [];
+    function elapsed() { return ((Date.now() - startedAt) / 1000).toFixed(1) + "s"; }
+    function fmtStages() {
+      if (!stages.length) return "(no stage marker fired yet — waiting for the frontend bundle)";
+      return stages.map(function (s) { return "[" + s.t + "] " + s.label; }).join("\n");
+    }
+    function render() {
+      if (!beacon) return;
+      if (errors.length) {
+        beacon.style.background = "#FEE2E2";
+        beacon.style.color = "#991B1B";
+        var tail = warnings.length ? "\n\nWarnings:\n" + warnings.join("\n") : "";
+        beacon.textContent = "Boot ERROR at " + elapsed() + "\n\nStages reached:\n" + fmtStages() + "\n\nErrors:\n" + errors.join("\n") + tail;
+        return;
+      }
+      beacon.style.background = "#FEF3C7";
+      beacon.style.color = "#78350F";
+      beacon.textContent = "Booting (" + elapsed() + ")\n" + fmtStages();
+    }
+    window.__ks2_mark = function (label) { stages.push({ t: elapsed(), label: label }); render(); };
+    window.addEventListener("error", function (ev) {
+      if (ev && ev.target && ev.target !== window) {
+        var url = ev.target.src || ev.target.href || "(unknown URL)";
+        warnings.push("resource load failed: " + url);
+        render();
+        return;
+      }
+      var m = (ev && ev.error && ev.error.message) || (ev && ev.message) || "Unknown error";
+      var src = ev && ev.filename ? String(ev.filename).replace(location.origin, "") : "";
+      var loc = src ? " (" + src + (ev.lineno ? ":" + ev.lineno : "") + ")" : "";
+      errors.push("error" + loc + ": " + m);
+      render();
+    }, true);
+    window.addEventListener("unhandledrejection", function (ev) {
+      var r = ev && ev.reason;
+      var m = (r && (r.message || r.toString())) || "Unknown rejection";
+      errors.push("unhandledrejection: " + m);
+      render();
+    });
+    var mo = new MutationObserver(function () {
+      var root = document.getElementById("root");
+      if (root && root.children.length > 0 && errors.length === 0) {
+        beacon.parentNode && beacon.parentNode.removeChild(beacon);
+        mo.disconnect();
+      }
+    });
+    document.addEventListener("DOMContentLoaded", function () {
+      window.__ks2_mark && window.__ks2_mark("DOMContentLoaded");
+      var root = document.getElementById("root");
+      if (root) mo.observe(root, { childList: true });
+    });
+    window.addEventListener("load", function () { window.__ks2_mark && window.__ks2_mark("window.load"); });
+    setInterval(function () {
+      var root = document.getElementById("root");
+      if (beacon && beacon.parentNode && errors.length === 0 && (!root || root.children.length === 0)) render();
+    }, 1000);
+    setTimeout(function () {
+      var root = document.getElementById("root");
+      if (beacon && beacon.parentNode && errors.length === 0 && (!root || root.children.length === 0)) {
+        stages.push({ t: elapsed(), label: "still no React mount after 20s — frontend bundle likely stalled" });
+        render();
+      }
+    }, 20000);
+  })();
+  </script>
+
+  <script src="/vendor/sentence-bank-01.js"></script>
+  <script src="/vendor/sentence-bank-02.js"></script>
+  <script src="/vendor/sentence-bank-03.js"></script>
+  <script src="/vendor/sentence-bank-04.js"></script>
+  <script src="/vendor/sentence-bank-05.js"></script>
+  <script src="/vendor/sentence-bank-06.js"></script>
+  <script src="/vendor/word-list.js"></script>
+  <script src="/vendor/word-meta.js"></script>
+  <script>window.__ks2_mark && window.__ks2_mark("content loaded (words=" + ((window.KS2_WORDS || []).length) + ")");</script>
+  <script>window.__ks2_mark && window.__ks2_mark("frontend bundle requested");</script>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
