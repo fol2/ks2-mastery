@@ -1,6 +1,16 @@
 const VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 const VERIFY_TIMEOUT_MS = 8000;
 
+async function tokenIdempotencyKey(token) {
+  // Derive the idempotency key from the Turnstile token so Cloudflare can
+  // safely retry verifications that failed mid-flight. A random UUID would
+  // trigger `timeout-or-duplicate` on any retry of the same token.
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(token)));
+  const bytes = new Uint8Array(digest).slice(0, 16);
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+}
+
 function turnstileSiteKey(env) {
   return String(env.TURNSTILE_SITE_KEY || env.TURNSTILE_SITEKEY || "").trim();
 }
@@ -65,7 +75,7 @@ export async function verifyTurnstileToken(env, options = {}) {
         secret: turnstileSecret(env),
         response: token,
         remoteip: options.remoteIp || undefined,
-        idempotency_key: crypto.randomUUID(),
+        idempotency_key: await tokenIdempotencyKey(token),
       }),
       signal: controller.signal,
     });
