@@ -10,8 +10,8 @@
     "build": "npm run build:data && npm run build:runtime && npm run build:public",
     "check": "npm run build && npx wrangler deploy --dry-run",
     "deploy": "npm run build && npx wrangler deploy",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "npm run build:public && vitest run",
+    "test:watch": "npm run build:public && vitest",
     "test:e2e": "node ./scripts/run-e2e.mjs",
     "verify": "npm test && npm run check && npm run test:e2e"
   },
