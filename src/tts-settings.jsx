@@ -1,8 +1,7 @@
-// Audio settings panel rendered inside the spelling dashboard. Reads and
-// writes through window.KS2_TTS, so the game and dashboard see changes live.
+// Audio settings panel rendered inside the spelling dashboard.
 //
-// Visual hygiene uses the unified shell's tokens + primitives — this is a
-// QoL layer on top of the legacy preview, not a new engine.
+// Browser speech stays local to the device. Remote providers are configured
+// and authenticated server-side.
 
 function TTSSettings({ accent }) {
   const TTS = window.KS2_TTS;
@@ -11,44 +10,42 @@ function TTSSettings({ accent }) {
   const [elevenLabsError, setElevenLabsError] = React.useState('');
   const [testing, setTesting] = React.useState(false);
   const [testError, setTestError] = React.useState('');
-  const [quota, setQuota] = React.useState(() => TTS.geminiQuotaSummary());
 
-  // Subscribe to TTS config changes so the panel reflects external updates.
   React.useEffect(() => {
     const unsubscribe = TTS.subscribe(() => {
       setConfig(TTS.getConfig());
-      setQuota(TTS.geminiQuotaSummary());
     });
     return unsubscribe;
   }, []);
 
-  // Kick off ElevenLabs voice fetch whenever an ElevenLabs key is present.
   React.useEffect(() => {
-    if (config.provider !== 'elevenlabs' || !config.apiKey) return;
+    if (config.provider !== 'elevenlabs' || !TTS.providerAvailable('elevenlabs')) return;
     setElevenLabsLoading(true);
     setElevenLabsError('');
     TTS.ensureElevenLabsVoices()
       .then(() => { setConfig(TTS.getConfig()); })
       .catch((err) => { setElevenLabsError(TTS.providerErrorText('elevenlabs', err)); })
       .finally(() => setElevenLabsLoading(false));
-  }, [config.provider, config.apiKey]);
+  }, [config.provider]);
 
   const providers = TTS.providers();
+  const providerAvailable = TTS.providerAvailable(config.provider);
   const voiceOptions = TTS.voiceOptions(config.provider);
   const modelOptions = TTS.modelOptions(config.provider);
-  const needsKey = TTS.providerNeedsApiKey(config.provider);
-  const showBackup = config.provider === 'gemini';
-  const showModel = config.provider === 'elevenlabs'; // other providers have a single model
+  const showModel = config.provider === 'elevenlabs';
+  const statusLabel = TTS.readyLabel();
 
-  function handleEngine(provider) { TTS.setEngine(provider); }
+  function handleEngine(provider) {
+    if (!TTS.providerAvailable(provider) && provider !== 'browser') return;
+    TTS.setEngine(provider);
+  }
+
   function handleVoice(value) { TTS.setVoice(config.provider, value); }
   function handleModel(value) { TTS.setModel(config.provider, value); }
-  function handleKey(value) { TTS.setApiKey(config.provider, value); }
-  function handleBackup(value) { TTS.setGeminiBackupApiKey(value); }
   function handleRate(value) { TTS.setRate(Number(value)); }
 
   async function handleTest() {
-    if (testing) return;
+    if (testing || !providerAvailable) return;
     setTesting(true);
     setTestError('');
     try {
@@ -60,16 +57,11 @@ function TTSSettings({ accent }) {
       setTestError(TTS.providerErrorText(config.provider, err));
     } finally {
       setTesting(false);
-      setQuota(TTS.geminiQuotaSummary());
     }
   }
 
-  const ready = TTS.isReady();
-  const statusLabel = ready ? TTS.readyLabel() : (TTS.readyLabel() + ' Voice will still be generated offline if your browser supports it.');
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Engine selector — chip row */}
       <div>
         <div style={{
           fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
@@ -78,17 +70,21 @@ function TTSSettings({ accent }) {
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {providers.map((id) => {
             const active = id === config.provider;
+            const available = TTS.providerAvailable(id);
             return (
               <button
                 key={id}
                 onClick={() => handleEngine(id)}
+                disabled={!available && id !== 'browser'}
                 style={{
                   padding: '8px 14px', fontSize: 13, fontWeight: 700,
                   fontFamily: TOKENS.fontSans,
-                  borderRadius: 999, cursor: 'pointer',
+                  borderRadius: 999,
+                  cursor: available || id === 'browser' ? 'pointer' : 'not-allowed',
                   background: active ? (accent || TOKENS.ink) : TOKENS.panel,
                   color: active ? '#fff' : TOKENS.ink2,
                   border: `1px solid ${active ? (accent || TOKENS.ink) : TOKENS.line}`,
+                  opacity: available || id === 'browser' ? 1 : 0.55,
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -99,35 +95,6 @@ function TTSSettings({ accent }) {
         </div>
       </div>
 
-      {/* API key + backup (non-browser) */}
-      {needsKey && (
-        <div style={{ display: 'grid', gap: 10, gridTemplateColumns: showBackup ? '1fr 1fr' : '1fr' }}>
-          <Field label={`${TTS.providerLabel(config.provider)} API key`}>
-            <input
-              type="password"
-              value={config.apiKey || ''}
-              onChange={(e) => handleKey(e.target.value)}
-              placeholder={`${TTS.providerLabel(config.provider)} key (saved only in this browser)`}
-              autoComplete="off" autoCorrect="off" spellCheck={false}
-              style={inputStyle}
-            />
-          </Field>
-          {showBackup && (
-            <Field label="Gemini backup key">
-              <input
-                type="password"
-                value={config.geminiBackupApiKey || ''}
-                onChange={(e) => handleBackup(e.target.value)}
-                placeholder="Backup Gemini key (used after 429 or local cap)"
-                autoComplete="off" autoCorrect="off" spellCheck={false}
-                style={inputStyle}
-              />
-            </Field>
-          )}
-        </div>
-      )}
-
-      {/* Voice + model row */}
       <div style={{ display: 'grid', gap: 10, gridTemplateColumns: showModel ? '2fr 1fr' : '1fr' }}>
         <Field label="Voice">
           {voiceOptions.length ? (
@@ -135,8 +102,10 @@ function TTSSettings({ accent }) {
           ) : (
             <div style={mutedBox}>
               {config.provider === 'elevenlabs'
-                ? (elevenLabsLoading ? 'Loading voices…' : (elevenLabsError || 'Add ElevenLabs key.'))
-                : (config.provider === 'browser' ? 'No en-GB voice on this device.' : 'Add API key.')}
+                ? (elevenLabsLoading ? 'Loading voices…' : (elevenLabsError || (providerAvailable ? 'No voices available yet.' : 'ElevenLabs is not configured on the server.')))
+                : (config.provider === 'browser'
+                  ? 'No en-GB voice on this device.'
+                  : `${TTS.providerLabel(config.provider)} is not configured on the server.`)}
             </div>
           )}
         </Field>
@@ -152,7 +121,6 @@ function TTSSettings({ accent }) {
         )}
       </div>
 
-      {/* Rate slider + test button */}
       <div style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr auto', alignItems: 'end' }}>
         <Field label={`Playback rate · ${config.rate.toFixed(2)}×`}>
           <input
@@ -167,43 +135,26 @@ function TTSSettings({ accent }) {
           variant="accent"
           icon="volume"
           onClick={handleTest}
-          disabled={testing || !ready}
+          disabled={testing || !TTS.isReady()}
           accent={accent}
         >
           {testing ? 'Testing…' : 'Test voice'}
         </Btn>
       </div>
 
-      {/* Status + quota chips */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-        <Chip tone={ready ? 'good' : 'warn'}>{statusLabel}</Chip>
-        {quota && (
-          <Chip tone={quota.backoffActive ? 'bad' : 'neutral'}>
-            Gemini · {quota.minuteCount}/{quota.minuteLimit} min · {quota.dayCount}/{quota.dayLimit} day
-          </Chip>
-        )}
+        <Chip tone={TTS.isReady() ? 'good' : 'warn'}>{statusLabel}</Chip>
         {testError && <Chip tone="bad">{testError}</Chip>}
       </div>
 
-      {needsKey && (
-        <div style={{ fontSize: 12, color: TOKENS.muted, lineHeight: 1.5 }}>
-          Keys are stored on this device only. Do not paste production keys on a shared computer.
-        </div>
-      )}
+      <div style={{ fontSize: 12, color: TOKENS.muted, lineHeight: 1.5 }}>
+        {config.provider === 'browser'
+          ? 'Browser speech uses voices already available on this device.'
+          : 'Remote speech is generated inside the web app. Provider secrets stay on the server and are never stored in this browser.'}
+      </div>
     </div>
   );
 }
-
-const inputStyle = {
-  padding: '10px 12px',
-  border: `1px solid ${TOKENS.line}`,
-  borderRadius: 12,
-  fontFamily: TOKENS.fontMono, fontSize: 13,
-  color: TOKENS.ink,
-  background: TOKENS.panel,
-  minHeight: 40,
-  outline: 'none',
-};
 
 const mutedBox = {
   padding: '10px 12px',
