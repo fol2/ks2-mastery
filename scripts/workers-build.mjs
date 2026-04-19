@@ -23,15 +23,17 @@ function run(command, args, extraEnv = {}) {
   });
 }
 
-await run("npm", ["run", "build"]);
+const workersCiBranch = process.env.WORKERS_CI_BRANCH;
 
-if (process.env.WORKERS_CI_BRANCH) {
+if (!workersCiBranch) {
   console.log(
-    `[wrangler-build] Workers Builds detected for branch "${process.env.WORKERS_CI_BRANCH}"; preparing D1 schema before deploy.`,
+    "[wrangler-build] No Workers Builds branch env detected; skipping the custom Wrangler build hook.",
   );
-  await run("node", ["./scripts/ci-migrate-on-main.mjs"]);
-} else {
-  console.log(
-    "[wrangler-build] No Workers Builds branch env detected; skipping CI-only schema prep in the custom Wrangler build hook.",
-  );
+  process.exit(0);
 }
+
+console.log(
+  `[wrangler-build] Workers Builds detected for branch "${workersCiBranch}"; running the production build and preparing D1 schema before deploy.`,
+);
+await run("npm", ["run", "build"]);
+await run("node", ["./scripts/ci-migrate-on-main.mjs"]);

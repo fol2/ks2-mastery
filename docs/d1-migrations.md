@@ -46,10 +46,10 @@ calls the npm script directly.
 
 Cloudflare Workers Builds often invokes `wrangler deploy` directly. To keep
 that path safe too, `wrangler.jsonc` defines `build.command =
-node ./scripts/workers-build.mjs`. The wrapper runs `npm run build`, then
-invokes `scripts/ci-migrate-on-main.mjs` whenever `WORKERS_CI_BRANCH` is
-present. This keeps preview builds schema-ready even if the dashboard still uses
-the default deploy command.
+node ./scripts/workers-build.mjs`. The wrapper is intentionally a no-op unless
+`WORKERS_CI_BRANCH` is present; in Workers Builds it runs `npm run build` and
+then invokes `scripts/ci-migrate-on-main.mjs`. This keeps preview builds
+schema-ready without trapping local `wrangler dev` in a rebuild loop.
 
 Behaviour by context:
 
