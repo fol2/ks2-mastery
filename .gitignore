@@ -1,37 +1,20 @@
-# macOS
 .DS_Store
-
-# Editor / IDE
-.vscode/
-.idea/
-*.swp
-
-# Claude Code local overrides
 .claude/
+.codex/
 .gstack/
-
-# Browser-verification artefacts
 .playwright-mcp/
-state-*.png
-page-*.yml
-
-# Node / build output
+.spelling-audio/
+.worktrees/
 node_modules/
-public/
 dist/
-.dist-worker/
-.wrangler/
-.frontend-static/
-src/generated/
-
-# Playwright E2E
+public/
 playwright-report/
+screenshots/
 test-results/
-
-# Operations artefacts
+src/generated/
 backups/
-.worktrees
-# Local environment secrets
+.wrangler/
 .env
 .env.*
-!.env.example
+*.log
+*.zip

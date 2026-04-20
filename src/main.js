@@ -1,0 +1,539 @@
+import { createStore } from './platform/core/store.js';
+import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
+import { renderApp } from './platform/ui/render.js';
+import { safeParseInt } from './platform/core/utils.js';
+import {
+  createApiPlatformRepositories,
+  createLocalPlatformRepositories,
+} from './platform/core/repositories/index.js';
+import { createSubjectRuntimeBoundary } from './platform/core/subject-runtime.js';
+import { createEventRuntime, createPracticeStreakSubscriber } from './platform/events/index.js';
+import { createBrowserTts } from './subjects/spelling/tts.js';
+import { createSpellingService } from './subjects/spelling/service.js';
+import { createSpellingPersistence } from './subjects/spelling/repository.js';
+import { createSpellingRewardSubscriber } from './subjects/spelling/event-hooks.js';
+import {
+  exportLearnerSnapshot,
+  exportPlatformSnapshot,
+  importPlatformSnapshot,
+  PLATFORM_EXPORT_KIND_LEARNER,
+} from './platform/core/data-transfer.js';
+
+const root = document.getElementById('app');
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function isLocalMode() {
+  const params = new URLSearchParams(globalThis.location.search);
+  return globalThis.location.protocol === 'file:' || params.get('local') === '1';
+}
+
+function credentialFetch(input, init = {}) {
+  return fetch(input, {
+    ...init,
+    credentials: 'same-origin',
+  });
+}
+
+function renderAuthScreen({ mode = 'login', error = '' } = {}) {
+  const isRegister = mode === 'register';
+  root.innerHTML = `
+    <main class="auth-shell">
+      <section class="auth-panel card">
+        <div class="eyebrow">KS2 Mastery</div>
+        <h1 class="title">${isRegister ? 'Create your parent account' : 'Sign in to continue'}</h1>
+        <p class="subtitle">Your learner profiles and spelling progress sync through the KS2 Mastery cloud backend.</p>
+        ${error ? `<div class="feedback bad" style="margin-top:16px;">${escapeHtml(error)}</div>` : ''}
+        <form class="auth-form" data-auth-action="${isRegister ? 'register' : 'login'}">
+          <label class="field">
+            <span>Email</span>
+            <input class="input" type="email" name="email" autocomplete="email" required />
+          </label>
+          <label class="field">
+            <span>Password</span>
+            <input class="input" type="password" name="password" autocomplete="${isRegister ? 'new-password' : 'current-password'}" minlength="8" required />
+          </label>
+          <button class="btn primary lg" style="background:#3E6FA8;" type="submit">${isRegister ? 'Create account' : 'Sign in'}</button>
+        </form>
+        <div class="auth-switch">
+          <button class="btn ghost" data-auth-mode="${isRegister ? 'login' : 'register'}">${isRegister ? 'Use an existing account' : 'Create a new account'}</button>
+        </div>
+        <div class="auth-divider"><span>Social sign-in</span></div>
+        <div class="auth-social">
+          ${['google', 'facebook', 'x', 'apple'].map((provider) => `
+            <button class="btn secondary" data-auth-provider="${provider}">${provider === 'x' ? 'X' : provider[0].toUpperCase() + provider.slice(1)}</button>
+          `).join('')}
+        </div>
+      </section>
+    </main>
+  `;
+}
+
+async function submitAuthForm(form) {
+  const action = form.dataset.authAction === 'register' ? 'register' : 'login';
+  const formData = new FormData(form);
+  const response = await credentialFetch(`/api/auth/${action}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      email: formData.get('email'),
+      password: formData.get('password'),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    renderAuthScreen({ mode: action, error: payload.message || 'Sign-in failed.' });
+    return;
+  }
+  globalThis.location.href = '/';
+}
+
+async function startSocialAuth(provider) {
+  const response = await credentialFetch(`/api/auth/${provider}/start`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.redirectUrl) {
+    renderAuthScreen({ error: payload.message || 'That sign-in provider is not configured yet.' });
+    return;
+  }
+  globalThis.location.href = payload.redirectUrl;
+}
+
+let authScreenBound = false;
+
+function bindAuthScreen() {
+  if (authScreenBound) return;
+  authScreenBound = true;
+  root.addEventListener('click', (event) => {
+    const modeButton = event.target.closest('[data-auth-mode]');
+    if (modeButton) {
+      event.preventDefault();
+      renderAuthScreen({ mode: modeButton.dataset.authMode });
+      bindAuthScreen();
+      return;
+    }
+
+    const providerButton = event.target.closest('[data-auth-provider]');
+    if (providerButton) {
+      event.preventDefault();
+      startSocialAuth(providerButton.dataset.authProvider).catch((error) => {
+        renderAuthScreen({ error: error?.message || 'Could not start social sign-in.' });
+      });
+    }
+  });
+
+  root.addEventListener('submit', (event) => {
+    const form = event.target.closest('form[data-auth-action]');
+    if (!form) return;
+    event.preventDefault();
+    submitAuthForm(form).catch((error) => {
+      renderAuthScreen({ mode: form.dataset.authAction, error: error?.message || 'Sign-in failed.' });
+    });
+  });
+}
+
+async function createRepositoriesForCurrentRuntime() {
+  if (isLocalMode()) {
+    const localRepositories = createLocalPlatformRepositories({ storage: globalThis.localStorage });
+    return {
+      repositories: localRepositories,
+      session: { signedIn: false, mode: 'local-only' },
+    };
+  }
+
+  const sessionResponse = await credentialFetch('/api/session', {
+    headers: { accept: 'application/json' },
+  });
+
+  if (!sessionResponse.ok) {
+    const params = new URLSearchParams(globalThis.location.search);
+    renderAuthScreen({ error: params.get('auth_error') || '' });
+    bindAuthScreen();
+    await new Promise(() => {});
+  }
+
+  const sessionPayload = await sessionResponse.json();
+  const accountId = sessionPayload?.session?.accountId || 'unknown';
+  const apiRepositories = createApiPlatformRepositories({
+    baseUrl: '',
+    fetch: credentialFetch,
+    cacheScopeKey: `account:${accountId}`,
+  });
+
+  return {
+    repositories: apiRepositories,
+    session: {
+      signedIn: true,
+      mode: 'remote-sync',
+      accountId,
+      email: sessionPayload?.session?.email || '',
+      provider: sessionPayload?.session?.provider || 'session',
+    },
+  };
+}
+
+const boot = await createRepositoriesForCurrentRuntime();
+const repositories = boot.repositories;
+globalThis.KS2_AUTH_SESSION = boot.session;
+await repositories.hydrate();
+
+const tts = createBrowserTts();
+const services = {
+  spelling: createSpellingService({
+    repository: createSpellingPersistence({ repositories }),
+    tts,
+  }),
+};
+
+const runtimeBoundary = createSubjectRuntimeBoundary({
+  onError(entry, error) {
+    globalThis.console?.error?.(`Subject runtime containment hit ${entry.subjectId}:${entry.tab}:${entry.phase}.`, error);
+  },
+});
+
+const eventRuntime = createEventRuntime({
+  repositories,
+  subscribers: [
+    createPracticeStreakSubscriber(),
+    createSpellingRewardSubscriber({ gameStateRepository: repositories.gameState }),
+  ],
+  onError(error) {
+    globalThis.console?.error?.('Reward/event subscriber failed.', error);
+  },
+});
+
+function resetLearnerData(learnerId) {
+  Object.values(services).forEach((service) => {
+    service?.resetLearner?.(learnerId);
+  });
+  repositories.subjectStates.clearLearner(learnerId);
+  repositories.practiceSessions.clearLearner(learnerId);
+  repositories.gameState.clearLearner(learnerId);
+  repositories.eventLog.clearLearner(learnerId);
+}
+
+function sanitiseFilenamePart(value, fallback = 'learner') {
+  const clean = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return clean || fallback;
+}
+
+function downloadJson(filename, payload) {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function handleImportFileChange(input) {
+  const file = input?.files?.[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const isLearnerImport = parsed?.kind === PLATFORM_EXPORT_KIND_LEARNER;
+    if (!isLearnerImport) {
+      const confirmed = globalThis.confirm('Importing full app data will replace the current browser dataset. Continue?');
+      if (!confirmed) return;
+    }
+    const result = importPlatformSnapshot(repositories, parsed);
+    runtimeBoundary.clearAll();
+    store.reloadFromRepositories();
+    tts.stop();
+    if (result.kind === 'learner') {
+      const message = result.renamed
+        ? 'Learner imported as a copy because that learner id already existed.'
+        : 'Learner imported successfully.';
+      globalThis.alert(message);
+    } else {
+      globalThis.alert('App data imported successfully.');
+    }
+  } catch (error) {
+    globalThis.alert(`Import failed: ${error?.message || 'Unknown error.'}`);
+  } finally {
+    input.value = '';
+  }
+}
+
+const store = createStore(SUBJECTS, { repositories });
+
+function applySubjectTransition(subjectId, transition) {
+  if (!transition) return false;
+  store.updateSubjectUi(subjectId, transition.state);
+
+  const published = eventRuntime.publish(transition.events);
+  if (published.toastEvents.length) {
+    store.pushToasts(published.toastEvents);
+  } else if (published.reactionEvents.length) {
+    store.patch(() => ({}));
+  }
+
+  runtimeBoundary.clear({
+    learnerId: store.getState().learners.selectedId,
+    subjectId,
+    tab: store.getState().route.tab || 'practice',
+  });
+
+  if (transition.audio?.word) tts.speak(transition.audio);
+  return true;
+}
+
+function contextFor(subjectId = null) {
+  const appState = store.getState();
+  const resolvedSubject = subjectId ? getSubject(subjectId) : getSubject(appState.route.subjectId || 'spelling');
+  return {
+    appState,
+    store,
+    services,
+    repositories,
+    subject: resolvedSubject,
+    service: services[resolvedSubject.id] || null,
+    tts,
+    applySubjectTransition,
+    runtimeBoundary,
+  };
+}
+
+function render() {
+  const appState = store.getState();
+  root.innerHTML = renderApp(appState, contextFor(appState.route.subjectId || 'spelling'));
+  queueMicrotask(() => {
+    const input = root.querySelector('[data-autofocus="true"]:not([disabled])');
+    if (input) input.focus();
+  });
+}
+
+store.subscribe(render);
+render();
+
+function handleGlobalAction(action, data) {
+  const appState = store.getState();
+  const learnerId = appState.learners.selectedId;
+  const learner = appState.learners.byId[learnerId];
+
+  if (action === 'navigate-home') {
+    tts.stop();
+    store.goHome();
+    return true;
+  }
+
+  if (action === 'open-subject') {
+    tts.stop();
+    store.openSubject(data.subjectId || 'spelling');
+    return true;
+  }
+
+  if (action === 'subject-set-tab') {
+    store.setTab(data.tab || 'practice');
+    return true;
+  }
+
+  if (action === 'learner-select') {
+    tts.stop();
+    runtimeBoundary.clearAll();
+    store.selectLearner(data.value);
+    return true;
+  }
+
+  if (action === 'learner-create') {
+    const current = appState.learners.byId[learnerId];
+    store.createLearner({
+      name: `Learner ${appState.learners.allIds.length + 1}`,
+      yearGroup: current?.yearGroup || 'Y5',
+      goal: current?.goal || 'sats',
+      dailyMinutes: current?.dailyMinutes || 15,
+      avatarColor: current?.avatarColor || '#3E6FA8',
+    });
+    return true;
+  }
+
+  if (action === 'learner-save-form') {
+    const formData = data.formData;
+    store.updateLearner(learnerId, {
+      name: String(formData.get('name') || 'Learner').trim() || 'Learner',
+      yearGroup: String(formData.get('yearGroup') || 'Y5'),
+      goal: String(formData.get('goal') || 'sats'),
+      dailyMinutes: safeParseInt(formData.get('dailyMinutes'), 15),
+      avatarColor: String(formData.get('avatarColor') || '#3E6FA8'),
+    });
+    return true;
+  }
+
+  if (action === 'learner-delete') {
+    if (!globalThis.confirm('Delete the current learner and all their subject progress and codex state?')) return true;
+    runtimeBoundary.clearLearner(learnerId);
+    resetLearnerData(learnerId);
+    store.deleteLearner(learnerId);
+    return true;
+  }
+
+  if (action === 'learner-reset-progress') {
+    if (!globalThis.confirm('Reset subject progress and codex rewards for the current learner?')) return true;
+    tts.stop();
+    runtimeBoundary.clearLearner(learnerId);
+    resetLearnerData(learnerId);
+    store.resetSubjectUi();
+    return true;
+  }
+
+  if (action === 'platform-reset-all') {
+    if (!globalThis.confirm('Reset all app data for every learner on this browser?')) return true;
+    tts.stop();
+    runtimeBoundary.clearAll();
+    store.clearAllProgress();
+    globalThis.location.reload();
+    return true;
+  }
+
+  if (action === 'platform-export-learner') {
+    const payload = exportLearnerSnapshot(repositories, learnerId);
+    downloadJson(`${sanitiseFilenamePart(learner?.name)}-ks2-platform-learner.json`, payload);
+    return true;
+  }
+
+  if (action === 'platform-export-app') {
+    const payload = exportPlatformSnapshot(repositories);
+    downloadJson('ks2-platform-data.json', payload);
+    return true;
+  }
+
+  if (action === 'platform-import') {
+    const input = root.querySelector('#platform-import-file');
+    input?.click();
+    return true;
+  }
+
+  if (action === 'toast-dismiss') {
+    store.dismissToast(Number(data.index));
+    return true;
+  }
+
+  if (action === 'persistence-retry') {
+    repositories.persistence.retry().catch((error) => {
+      globalThis.console?.warn?.('Persistence retry failed.', error);
+    });
+    return true;
+  }
+
+  if (action === 'platform-logout') {
+    credentialFetch('/api/auth/logout', { method: 'POST' })
+      .finally(() => {
+        globalThis.location.href = '/';
+      });
+    return true;
+  }
+
+  if (action === 'subject-runtime-retry') {
+    runtimeBoundary.clear({
+      learnerId,
+      subjectId: appState.route.subjectId || 'spelling',
+      tab: appState.route.tab || 'practice',
+    });
+    store.patch(() => ({}));
+    return true;
+  }
+
+  return false;
+}
+
+function handleSubjectAction(action, data) {
+  const appState = store.getState();
+  const learnerId = appState.learners.selectedId;
+  const tab = appState.route.tab || 'practice';
+  const subject = getSubject(appState.route.subjectId || 'spelling');
+
+  try {
+    const handled = subject.handleAction?.(action, {
+      ...contextFor(subject.id),
+      data,
+    });
+    if (handled) {
+      runtimeBoundary.clear({ learnerId, subjectId: subject.id, tab });
+    }
+    return Boolean(handled);
+  } catch (error) {
+    tts.stop();
+    runtimeBoundary.capture({
+      learnerId,
+      subject,
+      tab,
+      phase: 'action',
+      methodName: 'handleAction',
+      action,
+      error,
+    });
+    store.patch(() => ({}));
+    return true;
+  }
+}
+
+function dispatchAction(action, data = {}) {
+  if (handleGlobalAction(action, data)) return;
+  handleSubjectAction(action, data);
+}
+
+function extractActionData(target) {
+  return {
+    action: target.dataset.action,
+    subjectId: target.dataset.subjectId,
+    tab: target.dataset.tab,
+    pref: target.dataset.pref,
+    slug: target.dataset.slug,
+    index: target.dataset.index,
+    value: target.value,
+    checked: target.checked,
+  };
+}
+
+root.addEventListener('click', (event) => {
+  const target = event.target.closest('[data-action]');
+  if (!target) return;
+  const action = target.dataset.action;
+  if (!action) return;
+  if (target.tagName === 'FORM') return;
+  event.preventDefault();
+  dispatchAction(action, extractActionData(target));
+});
+
+root.addEventListener('change', (event) => {
+  const fileInput = event.target.closest('#platform-import-file');
+  if (fileInput) {
+    handleImportFileChange(fileInput);
+    return;
+  }
+
+  const target = event.target.closest('[data-action]');
+  if (!target) return;
+  const action = target.dataset.action;
+  if (!action) return;
+  if (!['SELECT', 'INPUT', 'TEXTAREA'].includes(target.tagName)) return;
+  dispatchAction(action, extractActionData(target));
+});
+
+root.addEventListener('submit', (event) => {
+  const form = event.target.closest('form[data-action]');
+  if (!form) return;
+  event.preventDefault();
+  dispatchAction(form.dataset.action, {
+    formData: new FormData(form),
+  });
+});

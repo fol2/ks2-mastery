@@ -1,44 +1,12 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "ks2-mastery",
-  "main": "./worker/index.js",
-  "compatibility_date": "2026-04-18",
-  "build": {
-    "command": "node ./scripts/workers-build.mjs"
-  },
+  "main": "./worker/src/index.js",
+  "compatibility_date": "2026-04-20",
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1
   },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "ks2-mastery-db",
-      "database_id": "6c63ae44-358d-43b8-8d24-9bd7ebacc0cb",
-      "migrations_dir": "./migrations"
-    }
-  ],
-  "r2_buckets": [
-    {
-      "binding": "SPELLING_AUDIO_BUCKET",
-      "bucket_name": "ks2-spelling-buffers"
-    }
-  ],
-  "durable_objects": {
-    "bindings": [
-      {
-        "name": "SPELLING_LOCK",
-        "class_name": "SpellingLockDO"
-      }
-    ]
-  },
-  "migrations": [
-    {
-      // Free-plan Durable Objects must be created as SQLite-backed classes.
-      "tag": "v2-spelling-lock-sqlite",
-      "new_sqlite_classes": ["SpellingLockDO"]
-    }
-  ],
   "assets": {
     "directory": "./dist/public",
     "binding": "ASSETS",
@@ -50,7 +18,30 @@
   "vars": {
     "APP_NAME": "KS2 Mastery",
     "APP_HOSTNAME": "ks2.eugnel.uk",
-    "FREE_TIER_ENABLED": "true",
+    "AUTH_MODE": "production",
+    "ENVIRONMENT": "production",
     "SOCIAL_LOGIN_WIRE_ENABLED": "true"
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ks2-mastery-db",
+      "database_id": "6c63ae44-358d-43b8-8d24-9bd7ebacc0cb",
+      "migrations_dir": "./worker/migrations"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "LEARNER_LOCK",
+        "class_name": "LearnerLock"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1-learner-lock",
+      "new_sqlite_classes": ["LearnerLock"]
+    }
+  ]
 }

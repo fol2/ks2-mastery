@@ -4,44 +4,22 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:data": "node ./scripts/build-spelling-data.mjs",
-    "build:runtime": "node ./scripts/build-spelling-runtime.mjs",
-    "build:public": "node ./scripts/build-public.mjs",
-    "assets:optimise:monsters": "node ./scripts/optimise-monster-assets.mjs",
+    "build": "node ./scripts/build-public.mjs",
     "assert:build-public": "node ./scripts/assert-build-public.mjs",
-    "build": "npm run build:data && npm run build:runtime && npm run build:public",
+    "check": "npm run build && npm run assert:build-public && npx wrangler deploy --dry-run",
     "db:migration:create": "npx wrangler d1 migrations create ks2-mastery-db",
     "db:migrate:local": "npx wrangler d1 migrations apply ks2-mastery-db --local",
     "db:migrate:remote": "npx wrangler d1 migrations apply ks2-mastery-db --remote",
     "db:migrations:list:local": "npx wrangler d1 migrations list ks2-mastery-db --local",
     "db:migrations:list:remote": "npx wrangler d1 migrations list ks2-mastery-db --remote",
-    "db:backfill:local": "npx wrangler d1 execute ks2-mastery-db --local --file ./scripts/d1-backfill.sql",
-    "db:backfill:remote": "npx wrangler d1 execute ks2-mastery-db --remote --file ./scripts/d1-backfill.sql",
-    "db:prepare:local": "npm run db:migrate:local && npm run db:backfill:local",
-    "db:seed:local": "npx wrangler d1 execute ks2-mastery-db --local --file ./scripts/d1-seed.sql",
-    "dev": "node ./scripts/run-local-dev.mjs",
-    "check": "npm run build && npm run assert:build-public && npx wrangler deploy --dry-run",
-    "predeploy": "node ./scripts/ci-migrate-on-main.mjs",
+    "db:backup:remote": "node ./scripts/d1-backup.mjs --remote",
+    "db:reset:remote": "node ./scripts/d1-reset.mjs --remote",
     "deploy": "npm run build && npx wrangler deploy",
-    "ops:d1:backup": "node ./scripts/d1-backup.mjs",
-    "ops:d1:restore": "node ./scripts/d1-restore.mjs",
     "ops:tail": "npx wrangler tail ks2-mastery --format pretty",
-    "test": "npm run build:public && npm run assert:build-public && vitest run",
-    "test:watch": "npm run build:public && vitest",
-    "test:e2e": "node ./scripts/run-e2e.mjs",
-    "verify": "npm test && npm run check && npm run test:e2e"
-  },
-  "dependencies": {
-    "hono": "^4.8.5",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "test": "node --test",
+    "verify": "npm test && npm run check"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.14.7",
-    "@playwright/test": "^1.59.1",
-    "@vitejs/plugin-react": "^6.0.1",
-    "vite": "^8.0.8",
-    "vitest": "^4.1.4",
-    "wrangler": "^4.42.0"
+    "wrangler": "^4.83.0"
   }
 }
