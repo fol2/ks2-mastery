@@ -142,9 +142,15 @@ export function createAppHarness({
     }
 
     if (action === 'persistence-retry') {
-      repositories.persistence.retry().catch(() => {
-        // persistence state remains visible through the subscribed store snapshot.
-      });
+      repositories.persistence.retry()
+        .then(() => {
+          tts.stop();
+          runtimeBoundary.clearAll();
+          store.reloadFromRepositories();
+        })
+        .catch(() => {
+          // persistence state remains visible through the subscribed store snapshot.
+        });
       return true;
     }
 

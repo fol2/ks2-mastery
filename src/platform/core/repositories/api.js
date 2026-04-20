@@ -680,6 +680,24 @@ function firstQueueOperation(operations) {
   return normalisePendingOperations(operations)[0] || null;
 }
 
+function operationsShareConflictBranch(operation, blockedOperation) {
+  if (!operation || !blockedOperation) return false;
+  if (operation.scopeType === 'account' || blockedOperation.scopeType === 'account') return true;
+  return operation.scopeType === 'learner'
+    && blockedOperation.scopeType === 'learner'
+    && operation.scopeId === blockedOperation.scopeId;
+}
+
+function blockedBranchOperations(operations) {
+  return normalisePendingOperations(operations)
+    .filter((operation) => operation.status === OPERATION_STATUS_BLOCKED_STALE);
+}
+
+function operationInBlockedBranch(operation, operations) {
+  const blocked = blockedBranchOperations(operations);
+  return blocked.some((blockedOperation) => operationsShareConflictBranch(operation, blockedOperation));
+}
+
 function blockOperationsForConflict(operations, failedOperation) {
   let seenFailed = false;
   return normalisePendingOperations(operations).map((operation) => {
@@ -695,7 +713,7 @@ function blockOperationsForConflict(operations, failedOperation) {
       return { ...operation, status: OPERATION_STATUS_BLOCKED_STALE };
     }
 
-    if (operation.scopeType === 'learner' && operation.scopeId === failedOperation.scopeId) {
+    if (operationsShareConflictBranch(operation, failedOperation)) {
       return { ...operation, status: OPERATION_STATUS_BLOCKED_STALE };
     }
 
@@ -836,14 +854,15 @@ export function createApiPlatformRepositories({
   }
 
   function dropBlockedOperations() {
-    const blocked = pendingOperations.filter((operation) => operation.status === OPERATION_STATUS_BLOCKED_STALE);
+    const blocked = blockedBranchOperations(pendingOperations);
     if (!blocked.length) return 0;
-    pendingOperations = pendingOperations.filter((operation) => operation.status !== OPERATION_STATUS_BLOCKED_STALE);
+    const discarded = pendingOperations.filter((operation) => operationInBlockedBranch(operation, blocked));
+    pendingOperations = pendingOperations.filter((operation) => !operationInBlockedBranch(operation, blocked));
     logSync('warn', 'sync.conflicts_discarded', {
-      discardedCount: blocked.length,
+      discardedCount: discarded.length,
       scopes: [...new Set(blocked.map((operation) => `${operation.scopeType}:${operation.scopeId}`))],
     });
-    return blocked.length;
+    return discarded.length;
   }
 
   function applyHydratedState(remoteBundle, remoteSyncState) {
@@ -863,17 +882,21 @@ export function createApiPlatformRepositories({
 
   function queueOperation(operation) {
     syncScheduled = true;
-    pendingOperations = [...pendingOperations, operation];
-    applyOperationToBundle(cache, operation);
-    syncState = advanceSyncState(syncState, operation);
-    persistLocalCache(operation.key || operation.kind);
+    const queuedOperation = operationInBlockedBranch(operation, pendingOperations)
+      ? { ...operation, status: OPERATION_STATUS_BLOCKED_STALE }
+      : operation;
+    pendingOperations = [...pendingOperations, queuedOperation];
+    applyOperationToBundle(cache, queuedOperation);
+    syncState = advanceSyncState(syncState, queuedOperation);
+    persistLocalCache(queuedOperation.key || queuedOperation.kind);
     recomputePersistence();
     logSync('info', 'sync.operation_queued', {
-      id: operation.id,
-      kind: operation.kind,
-      scopeType: operation.scopeType,
-      scopeId: operation.scopeId,
-      expectedRevision: operation.expectedRevision,
+      id: queuedOperation.id,
+      kind: queuedOperation.kind,
+      scopeType: queuedOperation.scopeType,
+      scopeId: queuedOperation.scopeId,
+      status: queuedOperation.status,
+      expectedRevision: queuedOperation.expectedRevision,
       pendingWriteCount: countPending(pendingOperations),
     });
   }

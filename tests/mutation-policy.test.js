@@ -20,6 +20,15 @@ async function waitForPersistenceIdle(repositories, attempts = 60) {
   await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+async function waitForCondition(predicate, attempts = 60) {
+  await Promise.resolve();
+  for (let index = 0; index < attempts; index += 1) {
+    if (predicate()) return;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  assert.equal(predicate(), true);
+}
+
 function learnerSnapshot() {
   return {
     byId: {
@@ -288,6 +297,105 @@ test('stale learner writes are blocked explicitly and retry reloads the latest r
 
   await repoB.persistence.retry();
   assert.equal(repoB.persistence.read().mode, 'remote-sync');
+  assert.deepEqual(repoB.subjectStates.read('learner-a', 'spelling').data, { prefs: { mode: 'smart' } });
+
+  server.close();
+});
+
+test('retry discards all learner writes queued on a blocked local branch', async () => {
+  const server = createWorkerRepositoryServer();
+  const repoA = await seedLearner(server, 'adult-a');
+  const repoB = createRemoteRepositories(server, {
+    accountId: 'adult-a',
+    storage: installMemoryStorage(),
+  });
+  await repoB.hydrate();
+
+  repoA.subjectStates.writeData('learner-a', 'spelling', { prefs: { mode: 'smart' } });
+  await repoA.flush();
+
+  repoB.subjectStates.writeData('learner-a', 'spelling', { prefs: { mode: 'single' } });
+  await waitForPersistenceIdle(repoB);
+
+  assert.equal(repoB.persistence.read().mode, 'degraded');
+  assert.equal(repoB.persistence.read().pendingWriteCount, 1);
+
+  repoB.practiceSessions.write({
+    id: 'session-blocked-branch',
+    learnerId: 'learner-a',
+    subjectId: 'spelling',
+    sessionKind: 'learning',
+    status: 'active',
+    sessionState: { cursor: 1 },
+    summary: null,
+    createdAt: 20,
+    updatedAt: 20,
+  });
+  repoB.gameState.write('learner-a', 'monster-codex', { inklet: { caught: true } });
+  repoB.eventLog.append({
+    id: 'event-blocked-branch',
+    learnerId: 'learner-a',
+    type: 'spelling.word-secured',
+    createdAt: 21,
+  });
+  await waitForPersistenceIdle(repoB);
+
+  assert.equal(repoB.persistence.read().mode, 'degraded');
+  assert.equal(repoB.persistence.read().pendingWriteCount, 4);
+
+  await repoB.persistence.retry();
+
+  assert.equal(repoB.persistence.read().mode, 'remote-sync');
+  assert.equal(repoB.persistence.read().pendingWriteCount, 0);
+  assert.deepEqual(repoB.subjectStates.read('learner-a', 'spelling').data, { prefs: { mode: 'smart' } });
+  assert.equal(repoB.practiceSessions.latest('learner-a', 'spelling'), null);
+  assert.deepEqual(repoB.gameState.read('learner-a', 'monster-codex'), {});
+  assert.equal(repoB.eventLog.list('learner-a').some((event) => event.id === 'event-blocked-branch'), false);
+
+  const remoteAfterRetry = createRemoteRepositories(server, {
+    accountId: 'adult-a',
+    storage: installMemoryStorage(),
+  });
+  await remoteAfterRetry.hydrate();
+  assert.deepEqual(remoteAfterRetry.subjectStates.read('learner-a', 'spelling').data, { prefs: { mode: 'smart' } });
+  assert.equal(remoteAfterRetry.practiceSessions.latest('learner-a', 'spelling'), null);
+  assert.deepEqual(remoteAfterRetry.gameState.read('learner-a', 'monster-codex'), {});
+  assert.equal(remoteAfterRetry.eventLog.list('learner-a').some((event) => event.id === 'event-blocked-branch'), false);
+
+  server.close();
+});
+
+test('retry action reloads the visible store from the latest remote branch', async () => {
+  const server = createWorkerRepositoryServer();
+  const repoA = await seedLearner(server, 'adult-a');
+  const repoB = createRemoteRepositories(server, {
+    accountId: 'adult-a',
+    storage: installMemoryStorage(),
+  });
+  await repoB.hydrate();
+  const harness = createAppHarness({ repositories: repoB });
+
+  repoA.subjectStates.writeRecord('learner-a', 'spelling', {
+    ui: { phase: 'dashboard', error: 'remote marker' },
+    data: { prefs: { mode: 'smart' } },
+    updatedAt: 10,
+  });
+  await repoA.flush();
+
+  harness.store.updateSubjectUi('spelling', { phase: 'dashboard', error: 'local marker' });
+  await waitForPersistenceIdle(repoB);
+
+  assert.equal(repoB.persistence.read().mode, 'degraded');
+  assert.equal(harness.store.getState().subjectUi.spelling.error, 'local marker');
+
+  harness.dispatch('persistence-retry');
+  await waitForCondition(() => (
+    repoB.persistence.read().mode === 'remote-sync'
+    && harness.store.getState().subjectUi.spelling.error === 'remote marker'
+  ));
+
+  assert.equal(repoB.persistence.read().pendingWriteCount, 0);
+  assert.equal(harness.store.getState().subjectUi.spelling.error, 'remote marker');
   assert.deepEqual(repoB.subjectStates.read('learner-a', 'spelling').data, { prefs: { mode: 'smart' } });
 
   server.close();

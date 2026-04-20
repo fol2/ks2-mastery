@@ -436,9 +436,15 @@ function handleGlobalAction(action, data) {
   }
 
   if (action === 'persistence-retry') {
-    repositories.persistence.retry().catch((error) => {
-      globalThis.console?.warn?.('Persistence retry failed.', error);
-    });
+    repositories.persistence.retry()
+      .then(() => {
+        tts.stop();
+        runtimeBoundary.clearAll();
+        store.reloadFromRepositories();
+      })
+      .catch((error) => {
+        globalThis.console?.warn?.('Persistence retry failed.', error);
+      });
     return true;
   }
 
