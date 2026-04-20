@@ -30,6 +30,10 @@ export function canViewLearnerDiagnostics({ platformRole, membershipRole } = {})
     && READABLE_MEMBERSHIP_ROLES.has(normaliseLearnerMembershipRole(membershipRole));
 }
 
+export function canManageAccountRoles({ platformRole } = {}) {
+  return normalisePlatformRole(platformRole) === 'admin';
+}
+
 export function canMutateLearnerData({ membershipRole } = {}) {
   return WRITABLE_MEMBERSHIP_ROLES.has(normaliseLearnerMembershipRole(membershipRole));
 }

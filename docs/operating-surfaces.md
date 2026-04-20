@@ -102,6 +102,7 @@ It currently shows:
 - spelling content release status
 - draft import / validation status
 - mutation-receipt audit lookup
+- admin-only account role management
 - learner diagnostics entry points
 - selected learner support summary
 
@@ -112,6 +113,7 @@ Admin / Operations reuses:
 - `account_subject_content`
 - spelling content validation results
 - `mutation_receipts`
+- `adult_accounts.platform_role`
 - learner profiles + memberships
 - learner spelling read models for support diagnostics
 
@@ -122,6 +124,14 @@ Admin / Operations requires:
 - platform role `admin` or `ops`
 
 This surface is not available to `parent` accounts.
+
+Account role management inside Operations is narrower:
+
+- listing and changing adult account roles requires platform role `admin`
+- `ops` can open Operations, but cannot change account roles
+- the Worker blocks demoting the last remaining admin
+- role changes are written to `adult_accounts.platform_role`
+- role changes are recorded in `mutation_receipts`
 
 ## Local reference build versus Worker API
 
@@ -152,11 +162,14 @@ The Worker now exposes:
 
 - `GET /api/hubs/parent?learnerId=...`
 - `GET /api/hubs/admin?learnerId=...&requestId=...&auditLimit=...`
+- `GET /api/admin/accounts`
+- `PUT /api/admin/accounts/role`
 
 What is real there:
 
 - platform-role enforcement
 - learner membership checks
+- admin-only account role management
 - content release / validation summary from durable content
 - audit lookup from durable mutation receipts
 - learner diagnostics backed by durable learner data
@@ -181,6 +194,7 @@ The hub read models consume durable records after the fact.
 - Worker-backed hub endpoints
 - parent/admin permission tests
 - spelling-backed learner summary read model
+- admin-only account role assignment backed by D1
 - content release status read model
 - import / validation summary read model
 - audit lookup backed by mutation receipts on the Worker path
@@ -194,7 +208,7 @@ The hub read models consume durable records after the fact.
 - no heavy cross-subject analytics warehouse
 - no push-updating dashboards
 - no worker-backed audit search UI beyond basic lookup output
-- no invite flow, organisation model, or rich admin account management
+- no invite flow, organisation model, or rich admin account management beyond basic platform-role assignment
 - no browser-side viewer learner switch flow through bootstrap yet
 
 ## Why this pass stops here

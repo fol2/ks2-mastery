@@ -4,6 +4,28 @@ import assert from 'node:assert/strict';
 import { createApiPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
+function seedAdultAccount(server, {
+  id,
+  email,
+  displayName,
+  platformRole = 'parent',
+  provider = null,
+  providerSubject = null,
+  now = 1,
+} = {}) {
+  server.DB.db.prepare(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES (?, ?, ?, ?, NULL, ?, ?, 0)
+  `).run(id, email, displayName, platformRole, now, now);
+
+  if (provider) {
+    server.DB.db.prepare(`
+      INSERT INTO account_identities (id, account_id, provider, provider_subject, email, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(`identity-${id}-${provider}`, id, provider, providerSubject || id, email, now, now);
+  }
+}
+
 async function seedLearnerData(server, accountId, platformRole = 'parent') {
   const repositories = createApiPlatformRepositories({
     baseUrl: 'https://repo.test',
@@ -82,6 +104,160 @@ test('worker parent hub requires the parent platform role and readable learner m
   const deniedPayload = await deniedResponse.json();
   assert.equal(deniedResponse.status, 403);
   assert.equal(deniedPayload.code, 'parent_hub_forbidden');
+
+  server.close();
+});
+
+test('worker admin account roles are listed and assignable by admins only', async () => {
+  const server = createWorkerRepositoryServer();
+  seedAdultAccount(server, {
+    id: 'adult-admin',
+    email: 'fol2hk@gmail.com',
+    displayName: 'James',
+    platformRole: 'admin',
+    provider: 'google',
+    providerSubject: 'google-james',
+  });
+  seedAdultAccount(server, {
+    id: 'adult-parent',
+    email: 'parent@example.com',
+    displayName: 'Parent',
+    platformRole: 'parent',
+    provider: 'google',
+    providerSubject: 'google-parent',
+  });
+  seedAdultAccount(server, {
+    id: 'adult-ops',
+    email: 'ops@example.com',
+    displayName: 'Ops',
+    platformRole: 'ops',
+  });
+
+  const listResponse = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/accounts', {}, {
+    'x-ks2-dev-platform-role': 'admin',
+  });
+  const listPayload = await listResponse.json();
+  assert.equal(listResponse.status, 200);
+  assert.equal(listPayload.currentAccount.platformRole, 'admin');
+  assert.ok(listPayload.accounts.some((account) => (
+    account.id === 'adult-admin'
+    && account.email === 'fol2hk@gmail.com'
+    && account.platformRole === 'admin'
+    && account.providers.includes('google')
+  )));
+
+  const deniedList = await server.fetchAs('adult-ops', 'https://repo.test/api/admin/accounts', {}, {
+    'x-ks2-dev-platform-role': 'ops',
+  });
+  const deniedListPayload = await deniedList.json();
+  assert.equal(deniedList.status, 403);
+  assert.equal(deniedListPayload.code, 'account_roles_forbidden');
+
+  const updateResponse = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/accounts/role', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      accountId: 'adult-parent',
+      platformRole: 'ops',
+      requestId: 'role-change-1',
+    }),
+  }, {
+    'x-ks2-dev-platform-role': 'admin',
+  });
+  const updatePayload = await updateResponse.json();
+  assert.equal(updateResponse.status, 200);
+  assert.equal(updatePayload.updatedAccount.platformRole, 'ops');
+  assert.ok(updatePayload.accounts.some((account) => account.id === 'adult-parent' && account.platformRole === 'ops'));
+
+  const storedRole = server.DB.db.prepare('SELECT platform_role FROM adult_accounts WHERE id = ?').get('adult-parent')?.platform_role;
+  assert.equal(storedRole, 'ops');
+  const receipt = server.DB.db.prepare('SELECT mutation_kind, scope_id FROM mutation_receipts WHERE request_id = ?').get('role-change-1');
+  assert.equal(receipt?.mutation_kind, 'admin.account_role.update');
+  assert.equal(receipt?.scope_id, 'adult-parent');
+
+  const replayResponse = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/accounts/role', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      accountId: 'adult-parent',
+      platformRole: 'ops',
+      requestId: 'role-change-1',
+    }),
+  }, {
+    'x-ks2-dev-platform-role': 'admin',
+  });
+  const replayPayload = await replayResponse.json();
+  assert.equal(replayResponse.status, 200);
+  assert.equal(replayPayload.roleMutation.replayed, true);
+
+  const deniedUpdate = await server.fetchAs('adult-ops', 'https://repo.test/api/admin/accounts/role', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      accountId: 'adult-parent',
+      platformRole: 'admin',
+      requestId: 'role-change-denied',
+    }),
+  }, {
+    'x-ks2-dev-platform-role': 'ops',
+  });
+  const deniedUpdatePayload = await deniedUpdate.json();
+  assert.equal(deniedUpdate.status, 403);
+  assert.equal(deniedUpdatePayload.code, 'account_roles_forbidden');
+
+  server.close();
+});
+
+test('worker prevents demoting the last admin account', async () => {
+  const server = createWorkerRepositoryServer();
+  seedAdultAccount(server, {
+    id: 'adult-admin',
+    email: 'fol2hk@gmail.com',
+    displayName: 'James',
+    platformRole: 'admin',
+    provider: 'google',
+  });
+
+  const blockedResponse = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/accounts/role', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      accountId: 'adult-admin',
+      platformRole: 'parent',
+      requestId: 'role-demote-last-admin',
+    }),
+  }, {
+    'x-ks2-dev-platform-role': 'admin',
+  });
+  const blockedPayload = await blockedResponse.json();
+  assert.equal(blockedResponse.status, 409);
+  assert.equal(blockedPayload.code, 'last_admin_required');
+  assert.equal(
+    server.DB.db.prepare('SELECT platform_role FROM adult_accounts WHERE id = ?').get('adult-admin')?.platform_role,
+    'admin',
+  );
+
+  seedAdultAccount(server, {
+    id: 'adult-admin-2',
+    email: 'second-admin@example.com',
+    displayName: 'Second Admin',
+    platformRole: 'admin',
+  });
+
+  const allowedResponse = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/accounts/role', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      accountId: 'adult-admin',
+      platformRole: 'parent',
+      requestId: 'role-demote-with-backup-admin',
+    }),
+  }, {
+    'x-ks2-dev-platform-role': 'admin',
+  });
+  const allowedPayload = await allowedResponse.json();
+  assert.equal(allowedResponse.status, 200);
+  assert.equal(allowedPayload.updatedAccount.platformRole, 'parent');
 
   server.close();
 });

@@ -93,6 +93,31 @@ test('render app exposes parent and admin operating surfaces by route', () => {
       platformRole: 'admin',
       spellingContentBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
     }),
+    adminAccountDirectory: {
+      status: 'loaded',
+      accounts: [
+        {
+          id: 'adult-admin',
+          email: 'fol2hk@gmail.com',
+          displayName: 'James',
+          platformRole: 'admin',
+          providers: ['google'],
+          learnerCount: 3,
+        },
+        {
+          id: 'adult-parent',
+          email: 'parent@example.com',
+          displayName: 'Parent',
+          platformRole: 'parent',
+          providers: ['email'],
+          learnerCount: 1,
+        },
+      ],
+      error: '',
+    },
   });
   assert.match(adminHtml, /Admin \/ operations skeleton/);
+  assert.match(adminHtml, /Account roles/);
+  assert.match(adminHtml, /fol2hk@gmail.com/);
+  assert.match(adminHtml, /data-action="admin-account-role-set"/);
 });

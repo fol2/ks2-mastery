@@ -21,6 +21,8 @@ import {
 } from '../../src/subjects/spelling/content/model.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../../src/subjects/spelling/data/content-data.js';
 import {
+  PLATFORM_ROLES,
+  canManageAccountRoles,
   canViewAdminHub,
   canViewParentHub,
   normalisePlatformRole,
@@ -410,8 +412,95 @@ function requireAdminHubAccess(account) {
   }
 }
 
+function requireAccountRoleManager(account) {
+  if (!canManageAccountRoles({ platformRole: accountPlatformRole(account) })) {
+    throw new ForbiddenError('Account role management requires an admin account.', {
+      code: 'account_roles_forbidden',
+      required: 'platform-role-admin',
+    });
+  }
+}
+
+function normaliseRequestedPlatformRole(value) {
+  const role = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (!PLATFORM_ROLES.includes(role)) {
+    throw new BadRequestError('Unknown platform role.', {
+      code: 'unknown_platform_role',
+      allowed: PLATFORM_ROLES,
+    });
+  }
+  return role;
+}
+
 function runtimeSnapshotForBundle(bundle) {
   return resolvePublishedSnapshot(bundle) || resolvePublishedSnapshot(SEEDED_SPELLING_CONTENT_BUNDLE) || null;
+}
+
+function accountDirectoryRowToModel(row) {
+  const providers = new Set(
+    String(row?.identity_providers || '')
+      .split(',')
+      .map((provider) => provider.trim())
+      .filter(Boolean),
+  );
+  if (Number(row?.has_password) > 0) providers.add('email');
+  return {
+    id: row?.id || '',
+    email: row?.email || '',
+    displayName: row?.display_name || '',
+    platformRole: normalisePlatformRole(row?.platform_role),
+    providers: [...providers].sort(),
+    learnerCount: Number(row?.learner_count) || 0,
+    selectedLearnerId: row?.selected_learner_id || null,
+    repoRevision: Number(row?.repo_revision) || 0,
+    createdAt: asTs(row?.created_at, 0),
+    updatedAt: asTs(row?.updated_at, 0),
+  };
+}
+
+async function listAccountDirectoryRows(db) {
+  return all(db, `
+    SELECT
+      a.id,
+      a.email,
+      a.display_name,
+      a.platform_role,
+      a.selected_learner_id,
+      a.repo_revision,
+      a.created_at,
+      a.updated_at,
+      GROUP_CONCAT(DISTINCT ai.provider) AS identity_providers,
+      MAX(CASE WHEN ac.account_id IS NULL THEN 0 ELSE 1 END) AS has_password,
+      COUNT(DISTINCT m.learner_id) AS learner_count
+    FROM adult_accounts a
+    LEFT JOIN account_identities ai ON ai.account_id = a.id
+    LEFT JOIN account_credentials ac ON ac.account_id = a.id
+    LEFT JOIN account_learner_memberships m ON m.account_id = a.id
+    GROUP BY
+      a.id,
+      a.email,
+      a.display_name,
+      a.platform_role,
+      a.selected_learner_id,
+      a.repo_revision,
+      a.created_at,
+      a.updated_at
+    ORDER BY a.updated_at DESC, a.email ASC, a.id ASC
+  `);
+}
+
+async function accountDirectoryPayload(db, actorAccountId) {
+  const rows = await listAccountDirectoryRows(db);
+  return {
+    currentAccount: rows.map(accountDirectoryRowToModel).find((account) => account.id === actorAccountId) || null,
+    accounts: rows.map(accountDirectoryRowToModel),
+  };
+}
+
+async function listAccountDirectory(db, actorAccountId) {
+  const actor = await first(db, 'SELECT id, email, display_name, platform_role, repo_revision FROM adult_accounts WHERE id = ?', [actorAccountId]);
+  requireAccountRoleManager(actor);
+  return accountDirectoryPayload(db, actorAccountId);
 }
 
 async function loadLearnerReadBundle(db, learnerId) {
@@ -476,6 +565,124 @@ async function listMutationReceiptRows(db, accountId, { requestId = null, scopeI
     ORDER BY applied_at DESC, request_id DESC
     LIMIT ?
   `, params);
+}
+
+async function updateManagedAccountRole(db, {
+  actorAccountId,
+  targetAccountId,
+  platformRole,
+  requestId,
+  correlationId = requestId,
+  nowTs,
+} = {}) {
+  if (!(typeof targetAccountId === 'string' && targetAccountId)) {
+    throw new BadRequestError('Target account id is required.', {
+      code: 'target_account_required',
+    });
+  }
+  if (!(typeof requestId === 'string' && requestId)) {
+    throw new BadRequestError('Role mutation requestId is required.', {
+      code: 'mutation_request_id_required',
+      scopeType: 'account-role',
+    });
+  }
+
+  const nextRole = normaliseRequestedPlatformRole(platformRole);
+  const requestHash = mutationPayloadHash('admin.account_role.update', {
+    targetAccountId,
+    platformRole: nextRole,
+  });
+
+  return withTransaction(db, async () => {
+    const actor = await first(db, 'SELECT id, email, display_name, platform_role, repo_revision FROM adult_accounts WHERE id = ?', [actorAccountId]);
+    requireAccountRoleManager(actor);
+
+    const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
+    if (existingReceipt) {
+      if (existingReceipt.request_hash !== requestHash) {
+        throw idempotencyReuseError({
+          kind: 'admin.account_role.update',
+          scopeType: 'account',
+          scopeId: targetAccountId,
+          requestId,
+          correlationId,
+        });
+      }
+      const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+      return {
+        ...storedReplay,
+        roleMutation: {
+          ...(storedReplay.roleMutation || {}),
+          requestId,
+          correlationId,
+          replayed: true,
+        },
+      };
+    }
+
+    const target = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [targetAccountId]);
+    if (!target) {
+      throw new NotFoundError('Target account was not found.', {
+        code: 'target_account_not_found',
+        accountId: targetAccountId,
+      });
+    }
+
+    const currentRole = normalisePlatformRole(target.platform_role);
+    if (currentRole === 'admin' && nextRole !== 'admin') {
+      const adminCount = Number(await scalar(db, `
+        SELECT COUNT(*) AS count
+        FROM adult_accounts
+        WHERE platform_role = 'admin'
+      `, [], 'count')) || 0;
+      if (adminCount <= 1) {
+        throw new ConflictError('At least one admin account must remain.', {
+          code: 'last_admin_required',
+          accountId: targetAccountId,
+        });
+      }
+    }
+
+    await run(db, `
+      UPDATE adult_accounts
+      SET platform_role = ?,
+          updated_at = ?
+      WHERE id = ?
+    `, [nextRole, nowTs, targetAccountId]);
+
+    const directory = await accountDirectoryPayload(db, actorAccountId);
+    const updatedAccount = directory.accounts.find((account) => account.id === targetAccountId) || null;
+    const response = {
+      ...directory,
+      updatedAccount,
+      roleMutation: {
+        policyVersion: MUTATION_POLICY_VERSION,
+        kind: 'admin.account_role.update',
+        scopeType: 'account',
+        scopeId: targetAccountId,
+        requestId,
+        correlationId,
+        previousRole: currentRole,
+        platformRole: nextRole,
+        appliedAt: nowTs,
+        replayed: false,
+      },
+    };
+
+    await storeMutationReceipt(db, {
+      accountId: actorAccountId,
+      requestId,
+      scopeType: 'account',
+      scopeId: targetAccountId,
+      mutationKind: 'admin.account_role.update',
+      requestHash,
+      response,
+      correlationId,
+      appliedAt: nowTs,
+    });
+
+    return response;
+  });
 }
 
 async function ensureUniqueOrAccessibleLearnerId(db, accountId, learnerId) {
@@ -1351,6 +1558,19 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
       return {
         adminHub: model,
       };
+    },
+    async listAdminAccounts(accountId) {
+      return listAccountDirectory(db, accountId);
+    },
+    async updateAdminAccountRole(accountId, { targetAccountId, platformRole, requestId, correlationId = null } = {}) {
+      return updateManagedAccountRole(db, {
+        actorAccountId: accountId,
+        targetAccountId,
+        platformRole,
+        requestId,
+        correlationId: correlationId || requestId,
+        nowTs: nowFactory(),
+      });
     },
     async resetAccountScope(accountId, mutation = {}) {
       const nowTs = nowFactory();

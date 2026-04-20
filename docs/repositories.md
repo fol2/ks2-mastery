@@ -171,11 +171,14 @@ The Worker assembles those inputs behind permission-checked routes:
 ```txt
 GET /api/hubs/parent?learnerId=...
 GET /api/hubs/admin?learnerId=...&requestId=...&auditLimit=...
+GET /api/admin/accounts
+PUT /api/admin/accounts/role
 ```
 
 Those routes are intentionally read-only.
 Parent Hub requires the account-level `parent` platform role plus readable learner membership.
 Admin / Operations requires the account-level `admin` or `ops` platform role, and still respects learner membership when exposing learner diagnostics.
+Account role management is narrower than general Operations access: only `admin` can list accounts or write `adult_accounts.platform_role`, and the Worker rejects demoting the last remaining admin.
 
 ## Save and sync semantics
 

@@ -92,11 +92,12 @@ The shell now has two explicit adult-facing routes:
   - content release status
   - import / validation summary
   - audit lookup status
+  - admin-only account role management
   - learner diagnostics entry points
 
 These are intentionally thin.
 They reuse durable platform data and keep reporting logic out of the spelling engine.
-The local reference build includes visible role switching for inspection; the Worker path provides permission-checked hub endpoints.
+The local reference build includes visible role switching for inspection; the Worker path provides permission-checked hub endpoints and D1-backed account role changes.
 
 ## Important note
 

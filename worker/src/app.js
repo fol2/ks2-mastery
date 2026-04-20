@@ -224,6 +224,22 @@ export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(.
           return json({ ok: true, ...result });
         }
 
+        if (url.pathname === '/api/admin/accounts' && request.method === 'GET') {
+          const result = await repository.listAdminAccounts(session.accountId);
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/admin/accounts/role' && request.method === 'PUT') {
+          const body = await readJson(request);
+          const result = await repository.updateAdminAccountRole(session.accountId, {
+            targetAccountId: body.accountId,
+            platformRole: body.platformRole,
+            requestId: body.requestId || request.headers.get('x-ks2-request-id') || null,
+            correlationId: body.correlationId || request.headers.get('x-ks2-correlation-id') || null,
+          });
+          return json({ ok: true, ...result });
+        }
+
         if (url.pathname === '/api/content/spelling' && request.method === 'PUT') {
           const body = await readJson(request);
           const result = await repository.writeSubjectContent(

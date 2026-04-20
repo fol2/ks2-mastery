@@ -1,7 +1,7 @@
 import { createStore } from './platform/core/store.js';
 import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
 import { renderApp } from './platform/ui/render.js';
-import { safeParseInt } from './platform/core/utils.js';
+import { safeParseInt, uid } from './platform/core/utils.js';
 import { shouldDispatchClickAction } from './platform/core/dom-actions.js';
 import { normalisePlatformRole } from './platform/access/roles.js';
 import { buildAdminHubReadModel } from './platform/hubs/admin-read-model.js';
@@ -213,6 +213,13 @@ const services = {
   spelling: null,
 };
 let shellPlatformRole = normalisePlatformRole(boot.session.platformRole || 'parent');
+let adminAccountDirectory = {
+  status: 'idle',
+  accounts: [],
+  currentAccount: null,
+  error: '',
+  savingAccountId: '',
+};
 
 function rebuildSpellingService() {
   services.spelling = createSpellingService({
@@ -288,6 +295,7 @@ function buildHubModels(appState) {
     },
     parentHub,
     adminHub,
+    adminAccountDirectory,
   };
 }
 
@@ -423,6 +431,114 @@ async function handleSpellingContentImportFileChange(input) {
   }
 }
 
+function canLoadAdminAccounts() {
+  return boot.session.signedIn && shellPlatformRole === 'admin';
+}
+
+function patchAdminAccountDirectory(nextState) {
+  adminAccountDirectory = {
+    ...adminAccountDirectory,
+    ...nextState,
+  };
+  store.patch(() => ({}));
+}
+
+async function loadAdminAccounts({ force = false } = {}) {
+  if (!canLoadAdminAccounts()) {
+    patchAdminAccountDirectory({
+      status: 'unavailable',
+      accounts: [],
+      currentAccount: null,
+      error: 'Account role management requires an admin account.',
+      savingAccountId: '',
+    });
+    return;
+  }
+  if (!force && ['loading', 'loaded', 'saving'].includes(adminAccountDirectory.status)) return;
+
+  patchAdminAccountDirectory({
+    status: 'loading',
+    error: '',
+    savingAccountId: '',
+  });
+
+  try {
+    const response = await credentialFetch('/api/admin/accounts', {
+      headers: { accept: 'application/json' },
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload.ok) throw new Error(payload.message || 'Could not load account roles.');
+    patchAdminAccountDirectory({
+      status: 'loaded',
+      accounts: Array.isArray(payload.accounts) ? payload.accounts : [],
+      currentAccount: payload.currentAccount || null,
+      error: '',
+      savingAccountId: '',
+    });
+  } catch (error) {
+    patchAdminAccountDirectory({
+      status: 'error',
+      error: error?.message || 'Could not load account roles.',
+      savingAccountId: '',
+    });
+  }
+}
+
+async function updateAdminAccountRole(accountId, platformRole) {
+  if (!canLoadAdminAccounts()) {
+    patchAdminAccountDirectory({
+      status: 'unavailable',
+      error: 'Account role management requires an admin account.',
+      savingAccountId: '',
+    });
+    return;
+  }
+
+  patchAdminAccountDirectory({
+    status: 'saving',
+    error: '',
+    savingAccountId: accountId,
+  });
+
+  try {
+    const response = await credentialFetch('/api/admin/accounts/role', {
+      method: 'PUT',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        accountId,
+        platformRole,
+        requestId: uid('role-change'),
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload.ok) throw new Error(payload.message || 'Could not update account role.');
+
+    const currentRole = normalisePlatformRole(payload.currentAccount?.platformRole || shellPlatformRole);
+    shellPlatformRole = currentRole;
+    globalThis.KS2_AUTH_SESSION = {
+      ...(globalThis.KS2_AUTH_SESSION || {}),
+      platformRole: currentRole,
+    };
+
+    patchAdminAccountDirectory({
+      status: 'loaded',
+      accounts: Array.isArray(payload.accounts) ? payload.accounts : [],
+      currentAccount: payload.currentAccount || null,
+      error: '',
+      savingAccountId: '',
+    });
+  } catch (error) {
+    patchAdminAccountDirectory({
+      status: 'error',
+      error: error?.message || 'Could not update account role.',
+      savingAccountId: '',
+    });
+  }
+}
+
 const store = createStore(SUBJECTS, { repositories });
 
 const spellingAutoAdvance = createSpellingAutoAdvanceController({
@@ -482,6 +598,9 @@ function render() {
   const appState = store.getState();
   root.innerHTML = renderApp(appState, contextFor(appState.route.subjectId || 'spelling'));
   ensureSpellingAutoAdvanceFromCurrentState();
+  if (appState.route.screen === 'admin-hub') {
+    queueMicrotask(() => loadAdminAccounts());
+  }
   queueMicrotask(() => {
     const input = root.querySelector('[data-autofocus="true"]:not([disabled])');
     if (input) input.focus();
@@ -517,6 +636,17 @@ function handleGlobalAction(action, data) {
   if (action === 'open-admin-hub') {
     tts.stop();
     store.openAdminHub();
+    loadAdminAccounts();
+    return true;
+  }
+
+  if (action === 'admin-accounts-refresh') {
+    loadAdminAccounts({ force: true });
+    return true;
+  }
+
+  if (action === 'admin-account-role-set') {
+    updateAdminAccountRole(data.accountId, data.value);
     return true;
   }
 
@@ -723,6 +853,7 @@ function extractActionData(target) {
   return {
     action: target.dataset.action,
     subjectId: target.dataset.subjectId,
+    accountId: target.dataset.accountId,
     tab: target.dataset.tab,
     pref: target.dataset.pref,
     slug: target.dataset.slug,

@@ -613,6 +613,59 @@ function renderParentHub(context) {
   `;
 }
 
+function renderAdminAccountRoles(model, directory = {}) {
+  const isAdmin = model?.permissions?.platformRole === 'admin';
+  const accounts = Array.isArray(directory.accounts) ? directory.accounts : [];
+  const status = directory.status || 'idle';
+  const savingAccountId = directory.savingAccountId || '';
+
+  if (!isAdmin) {
+    return `
+      <section class="card" style="margin-bottom:20px;">
+        <div class="eyebrow">Account roles</div>
+        <h3 class="section-title" style="font-size:1.2rem;">Admin-only role management</h3>
+        <div class="feedback warn">Only admin accounts can list accounts or change platform roles.</div>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="card" style="margin-bottom:20px;">
+      <div class="card-header">
+        <div>
+          <div class="eyebrow">Account roles</div>
+          <h3 class="section-title" style="font-size:1.2rem;">Production platform access</h3>
+          <p class="subtitle">Roles are written to D1 adult accounts and audited through mutation receipts. The backend blocks demoting the last admin.</p>
+        </div>
+        <div class="actions">
+          <span class="chip">${escapeHtml(status === 'saving' ? 'Saving role' : status === 'loaded' ? 'Loaded' : status === 'loading' ? 'Loading' : 'Ready')}</span>
+          <button class="btn secondary" data-action="admin-accounts-refresh">Refresh accounts</button>
+        </div>
+      </div>
+      ${directory.error ? `<div class="feedback bad" style="margin-bottom:14px;">${escapeHtml(directory.error)}</div>` : ''}
+      ${status === 'loading' && !accounts.length ? '<p class="small muted">Loading production accounts...</p>' : ''}
+      ${accounts.length ? accounts.map((account) => `
+        <div class="skill-row">
+          <div>
+            <strong>${escapeHtml(account.email || account.id)}</strong>
+            <div class="small muted">${escapeHtml(account.displayName || 'No display name')} · ${escapeHtml((account.providers || []).join(', ') || 'unknown provider')}</div>
+          </div>
+          <div class="small muted">${escapeHtml(String(account.learnerCount || 0))} learner${Number(account.learnerCount) === 1 ? '' : 's'}</div>
+          <div class="small muted">Updated ${escapeHtml(formatTimestamp(account.updatedAt))}</div>
+          <div>
+            <label class="field" style="min-width:150px;">
+              <span>Role</span>
+              <select class="select" data-action="admin-account-role-set" data-account-id="${escapeHtml(account.id)}" name="platformRole" ${savingAccountId === account.id ? 'disabled' : ''}>
+                ${['parent', 'admin', 'ops'].map((role) => `<option value="${role}" ${role === account.platformRole ? 'selected' : ''}>${escapeHtml(platformRoleLabel(role))}</option>`).join('')}
+              </select>
+            </label>
+          </div>
+        </div>
+      `).join('') : (status === 'loaded' ? '<p class="small muted">No production accounts were returned.</p>' : '')}
+    </section>
+  `;
+}
+
 function renderAdminHub(context) {
   const model = context.adminHub;
   if (!model?.permissions?.canViewAdminHub) {
@@ -641,6 +694,7 @@ function renderAdminHub(context) {
         </div>
       </div>
     </section>
+    ${renderAdminAccountRoles(model, context.adminAccountDirectory)}
     <section class="two-col" style="margin-bottom:20px;">
       <article class="card">
         <div class="eyebrow">Content release status</div>

@@ -18,6 +18,7 @@ It is:
 - a provider-agnostic auth/session seam with production email and social login flows plus a safe development/test stub
 - a Worker-side TTS proxy that keeps the OpenAI API key out of the browser
 - a read-model boundary for role-aware Parent Hub and Admin / Operations surfaces
+- an admin-only account role management boundary for production platform roles
 - a deployment boundary that still keeps subject UI rules out of the backend
 
 ## What it still is not
@@ -133,6 +134,19 @@ Current behaviour:
 - content release status is backed by `account_subject_content`
 
 These routes are intentionally read-only operating surfaces, not a full back-office system.
+
+The Worker also exposes an admin-only role management slice.
+
+- `GET /api/admin/accounts`
+- `PUT /api/admin/accounts/role`
+
+Current behaviour:
+
+- only platform role `admin` can list accounts or change account platform roles
+- `ops` can open Operations, but cannot manage account roles
+- the Worker blocks demoting the last remaining admin
+- role changes write `adult_accounts.platform_role`
+- role changes are idempotent by request id and recorded in `mutation_receipts`
 
 ## Current access rules
 
