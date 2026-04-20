@@ -20,9 +20,9 @@ Provider-specific browser/API TTS traffic and exact browser playback timing were
 | Secure-word progression | New word needs two clean hits in one round; secure threshold remains stage >= 4; due-day scheduling stays legacy | Already matched by preserved engine | No engine change | Matched |
 | Summary output | Learning/test summaries preserve legacy cards, wording, mistake drill, and follow-up drills | Already matched through engine finalise + summary UI | No logic change | Matched |
 | Analytics | Aggregate secure/due/trouble/fresh/accuracy stats and year-band splits were present; legacy also exposed searchable word-bank progress and direct bank drill | Aggregate analytics matched, but searchable word bank was not rebuilt | Documented remaining delta only | Partial |
-| Preferences | Mode, year filter, session size, auto-play, cloze toggle, audio provider/model/key/rate controls | Core spelling prefs matched except richer audio/provider controls | No provider-rate rebuild in this pass | Partial |
+| Preferences | Mode, year filter, session size, auto-play, cloze toggle, audio provider/model/key/rate controls | Core spelling prefs matched except richer audio/provider controls | No provider-rate rebuild in this pass | Partial; OpenAI is now the production default, but provider controls are still not exposed in the UI |
 | Resume / abandon / continue | Legacy confirmed before discarding/switching, auto-advanced after marked cards, and did not preserve platform-level resume across learner switches | Manual Continue button and no end-session confirm were real mismatches; platform resume was intentionally broader | Restored end/switch confirmation and auto-advance; kept platform-level resume as an intentional delta | Partial, with key regressions fixed |
-| TTS / audio behaviour | Auto-play, replay, slow replay, audio reset on switch/home/profile change, browser/API provider options, warm-up behaviour | Browser dictation loop existed; provider-specific options and warm-up were not rebuilt | Restored shortcut replay flow and ensured new rounds stop prior audio before starting | Partial |
+| TTS / audio behaviour | Auto-play, replay, slow replay, audio reset on switch/home/profile change, browser/API provider options, warm-up behaviour | Browser dictation loop existed; provider-specific options and warm-up were not rebuilt | Restored shortcut replay flow and ensured new rounds stop prior audio before starting | Partial; production dictation now defaults to OpenAI TTS with browser fallback |
 | Keyboard / interaction flow | Enter submit, Esc replay, Shift+Esc slow replay, Alt+1/2/3 start modes, Alt+S skip, Alt+K focus, ignore Alt shortcuts while typing in unrelated inputs | Most subject shortcuts were missing | Restored Esc / Shift+Esc / Alt+1/2/3 / Alt+S / Alt+K with guarded typing behaviour | Mostly matched inside active Spelling practice |
 | Live-card hint leakage | Legacy explicitly hid the family during live recall and only surfaced family words after the engine allowed it | Pass 9 leaked family/family-count chips during the live card | Removed live family leakage and restored the hidden-family note | Matched |
 
@@ -71,7 +71,8 @@ These deltas remain on purpose.
 
 3. **Provider/API TTS controls are still not restored**
    - The older single-page app exposed browser/API provider choice, keys, model/voice controls, backup Gemini key handling, and warm-up behaviour.
-   - The rebuilt platform still uses the simpler browser speech path.
+   - The rebuilt production platform now uses a Worker-side OpenAI TTS default voice, with browser speech fallback.
+   - The UI still does not expose provider/model/voice/rate controls.
 
 4. **Searchable word-bank drill UI is still not restored**
    - Legacy exposed searchable word-bank progress and direct single-word drill launch from that bank.
@@ -80,7 +81,7 @@ These deltas remain on purpose.
 ## Still not directly verified in this pass
 
 1. Exact browser playback timing and warm-up behaviour for old provider-backed TTS paths.
-2. Provider-specific Gemini/OpenAI/ElevenLabs request handling from the old single-page file.
+2. Provider-specific Gemini/ElevenLabs request handling from the old single-page file.
 3. Exact visual timing/animation feel beyond what could be inferred from the code and reconstructed through deterministic tests.
 
 ## Regression tests added in this pass

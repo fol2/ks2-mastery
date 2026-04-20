@@ -8,7 +8,7 @@ import {
 } from './platform/core/repositories/index.js';
 import { createSubjectRuntimeBoundary } from './platform/core/subject-runtime.js';
 import { createEventRuntime, createPracticeStreakSubscriber } from './platform/events/index.js';
-import { createBrowserTts } from './subjects/spelling/tts.js';
+import { createPlatformTts } from './subjects/spelling/tts.js';
 import { createSpellingService } from './subjects/spelling/service.js';
 import { createSpellingPersistence } from './subjects/spelling/repository.js';
 import { createSpellingRewardSubscriber } from './subjects/spelling/event-hooks.js';
@@ -189,7 +189,7 @@ const repositories = boot.repositories;
 globalThis.KS2_AUTH_SESSION = boot.session;
 await repositories.hydrate();
 
-const tts = createBrowserTts();
+const tts = createPlatformTts({ fetchFn: credentialFetch });
 const services = {
   spelling: createSpellingService({
     repository: createSpellingPersistence({ repositories }),

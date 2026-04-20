@@ -11,6 +11,7 @@ import { requireDatabase } from './d1.js';
 import { errorResponse } from './errors.js';
 import { json, readForm, readJson } from './http.js';
 import { createWorkerRepository } from './repository.js';
+import { handleTextToSpeechRequest } from './tts.js';
 
 function withCookies(response, cookies = []) {
   cookies.filter(Boolean).forEach((cookie) => response.headers.append('set-cookie', cookie));
@@ -78,7 +79,7 @@ async function sessionPayload({ session, auth, env, now }) {
   };
 }
 
-export function createWorkerApp({ now = Date.now } = {}) {
+export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(...args) } = {}) {
   return {
     async fetch(request, env) {
       const url = new URL(request.url);
@@ -188,6 +189,16 @@ export function createWorkerApp({ now = Date.now } = {}) {
               merge: 'none',
             },
             ...bundle,
+          });
+        }
+
+        if (url.pathname === '/api/tts' && request.method === 'POST') {
+          return await handleTextToSpeechRequest({
+            env,
+            request,
+            session,
+            now: now(),
+            fetchFn,
           });
         }
 
