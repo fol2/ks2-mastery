@@ -14,7 +14,7 @@ const DEFAULT_ROUTE = {
   tab: 'practice',
 };
 
-const VALID_ROUTE_SCREENS = new Set(['dashboard', 'subject']);
+const VALID_ROUTE_SCREENS = new Set(['dashboard', 'subject', 'parent-hub', 'admin-hub']);
 const VALID_ROUTE_TABS = new Set(['practice', 'analytics', 'profiles', 'settings', 'method']);
 
 const DEFAULT_SUBJECT_UI = {
@@ -97,6 +97,10 @@ function normaliseRoute(rawRoute, subjects) {
 
   if (screen === 'subject' && subjectId) {
     return { screen, subjectId, tab };
+  }
+
+  if (screen === 'parent-hub' || screen === 'admin-hub') {
+    return { screen, subjectId: null, tab: DEFAULT_ROUTE.tab };
   }
 
   return { ...DEFAULT_ROUTE };
@@ -226,6 +230,18 @@ export function createStore(subjects, { repositories } = {}) {
       setState((current) => ({
         ...current,
         route: normaliseRoute({ screen: 'subject', subjectId, tab }, registry),
+      }));
+    },
+    openParentHub() {
+      setState((current) => ({
+        ...current,
+        route: normaliseRoute({ screen: 'parent-hub' }, registry),
+      }));
+    },
+    openAdminHub() {
+      setState((current) => ({
+        ...current,
+        route: normaliseRoute({ screen: 'admin-hub' }, registry),
       }));
     },
     setTab(tab) {

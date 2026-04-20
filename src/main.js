@@ -3,6 +3,9 @@ import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
 import { renderApp } from './platform/ui/render.js';
 import { safeParseInt } from './platform/core/utils.js';
 import { shouldDispatchClickAction } from './platform/core/dom-actions.js';
+import { normalisePlatformRole } from './platform/access/roles.js';
+import { buildAdminHubReadModel } from './platform/hubs/admin-read-model.js';
+import { buildParentHubReadModel } from './platform/hubs/parent-read-model.js';
 import {
   createApiPlatformRepositories,
   createLocalPlatformRepositories,
@@ -156,7 +159,7 @@ async function createRepositoriesForCurrentRuntime() {
     const localRepositories = createLocalPlatformRepositories({ storage: globalThis.localStorage });
     return {
       repositories: localRepositories,
-      session: { signedIn: false, mode: 'local-only' },
+      session: { signedIn: false, mode: 'local-only', platformRole: 'parent' },
     };
   }
 
@@ -187,6 +190,10 @@ async function createRepositoriesForCurrentRuntime() {
       accountId,
       email: sessionPayload?.session?.email || '',
       provider: sessionPayload?.session?.provider || 'session',
+      platformRole: normalisePlatformRole(
+        sessionPayload?.account?.platformRole || sessionPayload?.session?.platformRole,
+      ),
+      repoRevision: Number(sessionPayload?.account?.repoRevision) || 0,
     },
   };
 }
@@ -205,6 +212,7 @@ await spellingContent.hydrate();
 const services = {
   spelling: null,
 };
+let shellPlatformRole = normalisePlatformRole(boot.session.platformRole || 'parent');
 
 function rebuildSpellingService() {
   services.spelling = createSpellingService({
@@ -216,6 +224,72 @@ function rebuildSpellingService() {
 }
 
 rebuildSpellingService();
+
+function learnerReadBundle(learnerId) {
+  return {
+    subjectStates: repositories.subjectStates.readForLearner(learnerId),
+    practiceSessions: repositories.practiceSessions.list(learnerId),
+    gameState: repositories.gameState.readForLearner(learnerId),
+    eventLog: repositories.eventLog.list(learnerId),
+  };
+}
+
+function buildHubModels(appState) {
+  const runtimeSnapshot = spellingContent.getRuntimeSnapshot();
+  const selectedLearnerId = appState.learners.selectedId;
+  const selectedLearner = selectedLearnerId ? appState.learners.byId[selectedLearnerId] : null;
+  const learnerBundles = Object.fromEntries(appState.learners.allIds.map((learnerId) => [
+    learnerId,
+    learnerReadBundle(learnerId),
+  ]));
+
+  const parentHub = selectedLearner
+    ? buildParentHubReadModel({
+      learner: selectedLearner,
+      platformRole: shellPlatformRole,
+      membershipRole: 'owner',
+      subjectStates: learnerBundles[selectedLearnerId]?.subjectStates || {},
+      practiceSessions: learnerBundles[selectedLearnerId]?.practiceSessions || [],
+      eventLog: learnerBundles[selectedLearnerId]?.eventLog || [],
+      gameState: learnerBundles[selectedLearnerId]?.gameState || {},
+      runtimeSnapshots: { spelling: runtimeSnapshot },
+      now: Date.now,
+    })
+    : null;
+
+  const adminHub = buildAdminHubReadModel({
+    account: {
+      id: boot.session.accountId || 'local-browser',
+      selectedLearnerId,
+      repoRevision: Number(boot.session.repoRevision) || 0,
+      platformRole: shellPlatformRole,
+    },
+    platformRole: shellPlatformRole,
+    spellingContentBundle: spellingContent.readBundle(),
+    memberships: appState.learners.allIds.map((learnerId, index) => ({
+      learnerId,
+      role: 'owner',
+      sortIndex: index,
+      stateRevision: 0,
+      learner: appState.learners.byId[learnerId],
+    })),
+    learnerBundles,
+    runtimeSnapshots: { spelling: runtimeSnapshot },
+    auditEntries: [],
+    auditAvailable: false,
+    selectedLearnerId,
+    now: Date.now,
+  });
+
+  return {
+    shellAccess: {
+      platformRole: shellPlatformRole,
+      source: boot.session.signedIn ? 'worker-session' : 'local-reference',
+    },
+    parentHub,
+    adminHub,
+  };
+}
 
 const runtimeBoundary = createSubjectRuntimeBoundary({
   onError(entry, error) {
@@ -400,6 +474,7 @@ function contextFor(subjectId = null) {
     tts,
     applySubjectTransition,
     runtimeBoundary,
+    ...buildHubModels(appState),
   };
 }
 
@@ -429,7 +504,27 @@ function handleGlobalAction(action, data) {
 
   if (action === 'open-subject') {
     tts.stop();
-    store.openSubject(data.subjectId || 'spelling');
+    store.openSubject(data.subjectId || 'spelling', data.tab || 'practice');
+    return true;
+  }
+
+  if (action === 'open-parent-hub') {
+    tts.stop();
+    store.openParentHub();
+    return true;
+  }
+
+  if (action === 'open-admin-hub') {
+    tts.stop();
+    store.openAdminHub();
+    return true;
+  }
+
+  if (action === 'shell-set-role') {
+    if (!boot.session.signedIn) {
+      shellPlatformRole = normalisePlatformRole(data.value);
+      store.patch(() => ({}));
+    }
     return true;
   }
 

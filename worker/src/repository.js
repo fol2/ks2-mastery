@@ -16,9 +16,17 @@ import { uid } from '../../src/platform/core/utils.js';
 import {
   buildSpellingContentSummary,
   normaliseSpellingContentBundle,
+  resolvePublishedSnapshot,
   validateSpellingContentBundle,
 } from '../../src/subjects/spelling/content/model.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../../src/subjects/spelling/data/content-data.js';
+import {
+  canViewAdminHub,
+  canViewParentHub,
+  normalisePlatformRole,
+} from '../../src/platform/access/roles.js';
+import { buildAdminHubReadModel } from '../../src/platform/hubs/admin-read-model.js';
+import { buildParentHubReadModel } from '../../src/platform/hubs/parent-read-model.js';
 import {
   BadRequestError,
   ConflictError,
@@ -297,14 +305,16 @@ async function storeMutationReceipt(db, {
 }
 
 async function ensureAccount(db, session, nowTs) {
+  const platformRole = normalisePlatformRole(session?.platformRole);
   await run(db, `
-    INSERT INTO adult_accounts (id, email, display_name, selected_learner_id, created_at, updated_at)
-    VALUES (?, ?, ?, NULL, ?, ?)
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at)
+    VALUES (?, ?, ?, ?, NULL, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       email = COALESCE(excluded.email, adult_accounts.email),
       display_name = COALESCE(excluded.display_name, adult_accounts.display_name),
+      platform_role = COALESCE(excluded.platform_role, adult_accounts.platform_role),
       updated_at = excluded.updated_at
-  `, [session.accountId, session.email, session.displayName, nowTs, nowTs]);
+  `, [session.accountId, session.email, session.displayName, platformRole, nowTs, nowTs]);
 
   return first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [session.accountId]);
 }
@@ -354,6 +364,118 @@ async function requireLearnerWriteAccess(db, accountId, learnerId) {
     });
   }
   return membership;
+}
+
+async function requireLearnerReadAccess(db, accountId, learnerId) {
+  const membership = await getMembership(db, accountId, learnerId);
+  if (!membership || !MEMBERSHIP_ROLES.has(membership.role)) {
+    throw new ForbiddenError('Learner access denied.', {
+      learnerId,
+      required: 'owner-member-or-viewer',
+    });
+  }
+  return membership;
+}
+
+function membershipRowToModel(row) {
+  return {
+    learnerId: row?.learner_id || row?.id || '',
+    role: row?.role || 'viewer',
+    sortIndex: Number(row?.sort_index) || 0,
+    stateRevision: Number(row?.state_revision) || 0,
+    learner: learnerRowToRecord(row),
+  };
+}
+
+function accountPlatformRole(account) {
+  return normalisePlatformRole(account?.platform_role);
+}
+
+function requireParentHubAccess(account, membership) {
+  if (!canViewParentHub({ platformRole: accountPlatformRole(account), membershipRole: membership?.role })) {
+    throw new ForbiddenError('Parent Hub access denied.', {
+      code: 'parent_hub_forbidden',
+      required: 'platform-role-parent plus readable learner membership',
+      learnerId: membership?.learner_id || null,
+    });
+  }
+}
+
+function requireAdminHubAccess(account) {
+  if (!canViewAdminHub({ platformRole: accountPlatformRole(account) })) {
+    throw new ForbiddenError('Admin / operations access denied.', {
+      code: 'admin_hub_forbidden',
+      required: 'platform-role-admin-or-ops',
+    });
+  }
+}
+
+function runtimeSnapshotForBundle(bundle) {
+  return resolvePublishedSnapshot(bundle) || resolvePublishedSnapshot(SEEDED_SPELLING_CONTENT_BUNDLE) || null;
+}
+
+async function loadLearnerReadBundle(db, learnerId) {
+  const subjectRows = await all(db, `
+    SELECT learner_id, subject_id, ui_json, data_json, updated_at
+    FROM child_subject_state
+    WHERE learner_id = ?
+  `, [learnerId]);
+  const sessionRows = await all(db, `
+    SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+    FROM practice_sessions
+    WHERE learner_id = ?
+    ORDER BY updated_at DESC, id DESC
+  `, [learnerId]);
+  const gameRows = await all(db, `
+    SELECT learner_id, system_id, state_json, updated_at
+    FROM child_game_state
+    WHERE learner_id = ?
+  `, [learnerId]);
+  const eventRows = await all(db, `
+    SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+    FROM event_log
+    WHERE learner_id = ?
+    ORDER BY created_at ASC, id ASC
+  `, [learnerId]);
+
+  const subjectStates = {};
+  subjectRows.forEach((row) => {
+    subjectStates[row.subject_id] = subjectStateRowToRecord(row);
+  });
+
+  const gameState = {};
+  gameRows.forEach((row) => {
+    gameState[gameStateKey(row.learner_id, row.system_id)] = gameStateRowToRecord(row);
+  });
+
+  return {
+    subjectStates,
+    practiceSessions: filterSessions(sessionRows.map(practiceSessionRowToRecord), learnerId),
+    gameState,
+    eventLog: normaliseEventLog(eventRows.map(eventRowToRecord).filter(Boolean)),
+  };
+}
+
+async function listMutationReceiptRows(db, accountId, { requestId = null, scopeId = null, limit = 20 } = {}) {
+  const clauses = ['account_id = ?'];
+  const params = [accountId];
+  if (typeof requestId === 'string' && requestId) {
+    clauses.push('request_id = ?');
+    params.push(requestId);
+  }
+  if (typeof scopeId === 'string' && scopeId) {
+    clauses.push('scope_id = ?');
+    params.push(scopeId);
+  }
+  const safeLimit = Math.max(1, Math.min(50, Number(limit) || 20));
+  params.push(safeLimit);
+  return all(db, `
+    SELECT account_id, request_id, scope_type, scope_id, mutation_kind, status_code, correlation_id, applied_at
+    FROM mutation_receipts
+    WHERE ${clauses.join(' AND ')}
+    ORDER BY applied_at DESC, request_id DESC
+    LIMIT ?
+  `, params);
 }
 
 async function ensureUniqueOrAccessibleLearnerId(db, accountId, learnerId) {
@@ -1153,6 +1275,82 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
           };
         },
       });
+    },
+    async readParentHub(accountId, learnerId) {
+      const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role FROM adult_accounts WHERE id = ?', [accountId]);
+      const resolvedLearnerId = learnerId || account?.selected_learner_id || null;
+      if (!resolvedLearnerId) {
+        throw new NotFoundError('No learner is selected for this parent view.', {
+          code: 'parent_hub_missing_learner',
+        });
+      }
+      const membership = await requireLearnerReadAccess(db, accountId, resolvedLearnerId);
+      requireParentHubAccess(account, membership);
+      const learnerRow = await first(db, `
+        SELECT l.id, l.name, l.year_group, l.avatar_color, l.goal, l.daily_minutes, l.created_at, l.updated_at
+        FROM learner_profiles l
+        WHERE l.id = ?
+      `, [resolvedLearnerId]);
+      const contentBundle = await readSubjectContentBundle(db, accountId, 'spelling');
+      const learnerBundle = await loadLearnerReadBundle(db, resolvedLearnerId);
+      const model = buildParentHubReadModel({
+        learner: learnerRowToRecord(learnerRow),
+        platformRole: accountPlatformRole(account),
+        membershipRole: membership.role,
+        subjectStates: learnerBundle.subjectStates,
+        practiceSessions: learnerBundle.practiceSessions,
+        eventLog: learnerBundle.eventLog,
+        gameState: learnerBundle.gameState,
+        runtimeSnapshots: { spelling: runtimeSnapshotForBundle(contentBundle) },
+        now: nowFactory,
+      });
+      return {
+        learnerId: resolvedLearnerId,
+        parentHub: model,
+      };
+    },
+    async readAdminHub(accountId, { learnerId = null, requestId = null, auditLimit = 20 } = {}) {
+      const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role FROM adult_accounts WHERE id = ?', [accountId]);
+      requireAdminHubAccess(account);
+      const memberships = await listMembershipRows(db, accountId, { writableOnly: false });
+      const contentBundle = await readSubjectContentBundle(db, accountId, 'spelling');
+      const learnerBundles = {};
+      for (const row of memberships) {
+        learnerBundles[row.id] = await loadLearnerReadBundle(db, row.id);
+      }
+      const selectedLearnerId = learnerId || account?.selected_learner_id || memberships[0]?.id || null;
+      const auditEntries = await listMutationReceiptRows(db, accountId, {
+        requestId,
+        limit: auditLimit,
+      });
+      const model = buildAdminHubReadModel({
+        account: {
+          id: accountId,
+          selectedLearnerId,
+          repoRevision: Number(account?.repo_revision) || 0,
+          platformRole: accountPlatformRole(account),
+        },
+        platformRole: accountPlatformRole(account),
+        spellingContentBundle: contentBundle,
+        memberships: memberships.map(membershipRowToModel),
+        learnerBundles,
+        runtimeSnapshots: { spelling: runtimeSnapshotForBundle(contentBundle) },
+        auditEntries: auditEntries.map((row) => ({
+          requestId: row.request_id,
+          mutationKind: row.mutation_kind,
+          scopeType: row.scope_type,
+          scopeId: row.scope_id,
+          correlationId: row.correlation_id,
+          appliedAt: row.applied_at,
+          statusCode: row.status_code,
+        })),
+        auditAvailable: true,
+        selectedLearnerId,
+        now: nowFactory,
+      });
+      return {
+        adminHub: model,
+      };
     },
     async resetAccountScope(accountId, mutation = {}) {
       const nowTs = nowFactory();

@@ -9,6 +9,19 @@ The goal is to make the backend durable, account-scoped, and honest before any m
 
 ## Domain model
 
+### Platform role
+
+Adult accounts also carry a small platform role.
+
+Current values:
+
+- `parent`
+- `admin`
+- `ops`
+
+This role is separate from learner membership.
+It controls adult-facing hub permissions rather than learner-state write permissions.
+
 ### Adult account
 
 An adult account is the authenticated top-level owner context for repository access.
@@ -80,8 +93,17 @@ Cannot yet:
 
 ### `viewer`
 
-Reserved for future read-only sharing.
-The current browser shell does not expose read-only learner UX, so viewer learners are not surfaced through the current repository bootstrap path.
+Can:
+
+- read learner-scoped data for explicit adult-facing diagnostics surfaces
+
+Cannot yet:
+
+- write learner-scoped repository collections
+- participate in the current main learner bootstrap flow used by the browser shell
+
+The current browser bootstrap still surfaces writable learners only.
+Viewer access is currently used for permission-correct hub reads rather than full learner-switch UX.
 
 ## Repository access behaviour
 
@@ -90,6 +112,8 @@ The current browser shell does not expose read-only learner UX, so viewer learne
 - learner writes are checked against account membership
 - subject state, sessions, game state, and events are all learner-scoped and permission-checked at the API boundary
 - the current browser repository client only works with writable learners, so bootstrap returns the writable learner set for now
+- Parent Hub reads can use readable learner memberships (`owner`, `member`, `viewer`) when the platform role is `parent`
+- Admin / Operations reads require platform role `admin` or `ops` and still respect learner membership when surfacing learner diagnostics
 
 ## Ownership-safe removal rule
 

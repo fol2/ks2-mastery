@@ -20,17 +20,17 @@ The goal is not to polish the old prototype. The goal is to give the product a s
 - `src/subjects/placeholders/*`
   - Clean extension slots for Arithmetic, Reasoning, Grammar, Punctuation and Reading.
 - `worker/*`
-  - A Cloudflare-friendly backend with D1-backed repository routes, account-scoped spelling content, learner ownership checks, production sessions, and Worker-side OpenAI TTS proxying.
+  - A Cloudflare-friendly backend with D1-backed repository routes, account-scoped spelling content, learner ownership checks, production sessions, Worker-side OpenAI TTS proxying, and thin Parent/Admin hub routes.
 - `docs/*`
-  - Audit, architecture, refactor plan, migration map, repository notes, state-integrity notes, a dedicated spelling-service contract note, and a direct spelling parity audit.
+  - Audit, architecture, refactor plan, migration map, repository notes, ownership/access notes, state-integrity notes, spelling-service and spelling-content notes, a direct spelling parity audit, and operating-surface notes.
 - `tests/*`
-  - Node tests covering the spelling service, reward events, shared store, repository parity, state recovery, import/export round-trips including legacy spelling progress imports, subject runtime containment, and golden-path smoke flows.
+  - Node tests covering the spelling service, reward events, shared store, repository parity, state recovery, import/export round-trips including legacy spelling progress imports, subject runtime containment, hub read models, Worker access, TTS, auth, and golden-path smoke flows.
 
 ## Status
 
 English Spelling works in the new structure.
 
-Production on `ks2.eugnel.uk` uses the API adapter by default after sign-in. Direct file/local mode, or `?local=1`, still uses browser storage for development only. The API adapter reports explicit persistence modes (`local-only`, `remote-sync`, `degraded`) so failed remote writes are visible instead of being treated as silent success. The Worker is D1-backed with learner ownership enforcement, atomic account / learner revision checks, idempotent request replay, account-scoped spelling content routes, and OpenAI TTS as the production dictation default.
+Production on `ks2.eugnel.uk` uses the API adapter by default after sign-in. Direct file/local mode, or `?local=1`, still uses browser storage for development only. The API adapter reports explicit persistence modes (`local-only`, `remote-sync`, `degraded`) so failed remote writes are visible instead of being treated as silent success. The Worker is D1-backed with learner ownership enforcement, atomic account / learner revision checks, idempotent request replay, account-scoped spelling content routes, role-aware Parent/Admin hub read routes, and OpenAI TTS as the production dictation default.
 
 The other five subjects are intentionally placeholders. They already have:
 
@@ -76,6 +76,27 @@ The Cloudflare scripts run Wrangler through `scripts/wrangler-oauth.mjs`, which 
 5. The real persistence boundary is a repository contract, not raw browser storage.
 6. Persisted data is versioned and normalised at the repository boundary before the shell or subjects consume it.
 7. Cloudflare deployment is treated as an adapter boundary, not as the application architecture itself.
+
+## Current operating surfaces
+
+The shell now has two explicit adult-facing routes:
+
+- **Parent Hub**
+  - learner overview
+  - due work / current focus
+  - recent sessions
+  - broad strengths / weaknesses
+  - misconception patterns
+  - export entry points
+- **Operations**
+  - content release status
+  - import / validation summary
+  - audit lookup status
+  - learner diagnostics entry points
+
+These are intentionally thin.
+They reuse durable platform data and keep reporting logic out of the spelling engine.
+The local reference build includes visible role switching for inspection; the Worker path provides permission-checked hub endpoints.
 
 ## Important note
 

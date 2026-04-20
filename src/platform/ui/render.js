@@ -1,4 +1,5 @@
 import { escapeHtml } from '../core/utils.js';
+import { platformRoleLabel } from '../access/roles.js';
 import { SUBJECTS, getSubject } from '../core/subject-registry.js';
 import { subjectTabLabel } from '../core/subject-runtime.js';
 import { monsterAsset } from '../game/monsters.js';
@@ -50,6 +51,53 @@ function resolveSubject(subjectId, context) {
   return registeredSubjects(context).find((subject) => subject.id === subjectId) || getSubject(subjectId);
 }
 
+function formatTimestamp(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return '—';
+  try {
+    return new Date(numeric).toLocaleString('en-GB', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return '—';
+  }
+}
+
+function renderSurfaceRoleSelect(context) {
+  const currentRole = context?.shellAccess?.platformRole || 'parent';
+  return `
+    <label class="field" style="min-width:180px;">
+      <span>Reference surface role</span>
+      <select class="select" data-action="shell-set-role" name="platformRole">
+        ${['parent', 'admin', 'ops'].map((role) => `<option value="${role}" ${role === currentRole ? 'selected' : ''}>${escapeHtml(platformRoleLabel(role))}</option>`).join('')}
+      </select>
+    </label>
+  `;
+}
+
+function renderSurfaceRoleControl(context) {
+  if (context?.shellAccess?.source === 'local-reference') return renderSurfaceRoleSelect(context);
+  const role = context?.shellAccess?.platformRole || 'parent';
+  return `<span class="chip">${escapeHtml(platformRoleLabel(role))}</span>`;
+}
+
+function renderAccessDeniedCard(title, detail, backAction = 'navigate-home') {
+  return `
+    <section class="card">
+      <div class="feedback warn">
+        <strong>${escapeHtml(title)}</strong>
+        <div style="margin-top:8px;">${escapeHtml(detail)}</div>
+      </div>
+      <div class="actions" style="margin-top:16px;">
+        <button class="btn secondary" data-action="${escapeHtml(backAction)}">Back to dashboard</button>
+      </div>
+    </section>
+  `;
+}
 
 function persistenceTone(snapshot) {
   if (snapshot?.mode === 'remote-sync') return 'good';
@@ -236,11 +284,12 @@ function subjectTabContent(subject, activeTab, appState, contentContext, runtime
 }
 
 
-function renderHeader(appState) {
+function renderHeader(appState, context) {
   const auth = globalThis.KS2_AUTH_SESSION || {};
   const authChip = auth.signedIn
     ? `<span class="chip good">${escapeHtml(auth.email || 'Signed in')}</span><button class="btn ghost" data-action="platform-logout">Sign out</button>`
     : '';
+  const routeScreen = appState.route?.screen || 'dashboard';
   return `
     <header class="card" style="margin-bottom:20px;">
       <div class="card-header">
@@ -251,9 +300,12 @@ function renderHeader(appState) {
         </div>
         <div class="actions" style="align-items:flex-end; justify-content:flex-end;">
           ${learnerSelect(appState)}
+          ${renderSurfaceRoleControl(context)}
           ${renderPersistenceChip(appState.persistence)}
           ${authChip}
-          <button class="btn secondary" data-action="navigate-home">Dashboard</button>
+          <button class="btn ${routeScreen === 'dashboard' ? 'ghost' : 'secondary'}" data-action="navigate-home">Dashboard</button>
+          <button class="btn ${routeScreen === 'parent-hub' ? 'primary' : 'secondary'}" data-action="open-parent-hub">Parent Hub</button>
+          <button class="btn ${routeScreen === 'admin-hub' ? 'primary' : 'secondary'}" data-action="open-admin-hub">Operations</button>
         </div>
       </div>
     </header>
@@ -452,6 +504,219 @@ function renderDashboard(context) {
   return `${renderHero(context)}${renderSubjectCards(context)}<div class="two-col">${renderLearnerManager(context.appState)}<section class="card soft"><div class="eyebrow">Rebuild intent</div><h2 class="section-title">What changed under the surface</h2><div class="callout">The old proof-of-concept mixed UI, subject logic, persistence and reward behavior in the same flow. This rebuild separates those concerns so new subjects can drop in without destabilising the spelling slice.</div>${renderArchitectureStrip()}</section></div>`;
 }
 
+function renderHubStrengthList(title, items = [], emptyText = 'No signal yet.') {
+  return `
+    <section class="card">
+      <div class="eyebrow">${escapeHtml(title)}</div>
+      ${items.length ? items.map((item) => `
+        <div class="skill-row">
+          <div><strong>${escapeHtml(item.label || 'Untitled')}</strong></div>
+          <div class="small muted">${escapeHtml(item.detail || '')}</div>
+          <div>${escapeHtml(String(item.secureCount ?? item.count ?? '—'))}</div>
+          <div class="small muted">${escapeHtml(item.troubleCount != null ? `${item.troubleCount} trouble` : '')}</div>
+        </div>
+      `).join('') : `<p class="small muted">${escapeHtml(emptyText)}</p>`}
+    </section>
+  `;
+}
+
+function renderParentHub(context) {
+  const model = context.parentHub;
+  if (!model?.permissions?.canViewParentHub) {
+    return renderAccessDeniedCard(
+      'Parent Hub is not available for the current surface role',
+      'Parent Hub requires the parent platform role plus readable learner membership. Admin / Operations has a separate permission bucket.',
+    );
+  }
+
+  const overview = model.learnerOverview || {};
+  const dueWork = Array.isArray(model.dueWork) ? model.dueWork : [];
+  const recentSessions = Array.isArray(model.recentSessions) ? model.recentSessions : [];
+  const strengths = Array.isArray(model.strengths) ? model.strengths : [];
+  const weaknesses = Array.isArray(model.weaknesses) ? model.weaknesses : [];
+  const patterns = Array.isArray(model.misconceptionPatterns) ? model.misconceptionPatterns : [];
+  const snapshot = Array.isArray(model.progressSnapshots) ? model.progressSnapshots[0] : null;
+
+  return `
+    <section class="subject-header card border-top" style="border-top-color:#3E6FA8; margin-bottom:18px;">
+      <div class="subject-title-row">
+        <div>
+          <div class="eyebrow">Parent Hub thin slice</div>
+          <h2 class="title" style="font-size:clamp(1.6rem, 3vw, 2.2rem);">${escapeHtml(model.learner.name)}</h2>
+          <p class="subtitle">Read model built from durable learner state, practice sessions and event log. No hidden client-only analytics store is used.</p>
+        </div>
+        <div class="chip-row">
+          <span class="chip good">${escapeHtml(model.permissions.platformRoleLabel)}</span>
+          <span class="chip">${escapeHtml(model.permissions.membershipRoleLabel)}</span>
+          <span class="chip">Last activity: ${escapeHtml(formatTimestamp(model.learner.lastActivityAt))}</span>
+        </div>
+      </div>
+    </section>
+    <section class="two-col" style="margin-bottom:20px;">
+      <article class="card">
+        <div class="eyebrow">Learner overview</div>
+        <h3 class="section-title" style="font-size:1.2rem;">Current picture</h3>
+        <div class="stat-grid" style="margin-top:16px;">
+          <div class="stat"><div class="stat-label">Secure words</div><div class="stat-value">${escapeHtml(String(overview.secureWords ?? 0))}</div><div class="stat-sub">Spelling snapshot</div></div>
+          <div class="stat"><div class="stat-label">Due now</div><div class="stat-value">${escapeHtml(String(overview.dueWords ?? 0))}</div><div class="stat-sub">Needs spaced return</div></div>
+          <div class="stat"><div class="stat-label">Trouble load</div><div class="stat-value">${escapeHtml(String(overview.troubleWords ?? 0))}</div><div class="stat-sub">Recent difficulty</div></div>
+          <div class="stat"><div class="stat-label">Accuracy</div><div class="stat-value">${escapeHtml(overview.accuracyPercent == null ? '—' : `${overview.accuracyPercent}%`)}</div><div class="stat-sub">Across durable progress</div></div>
+        </div>
+        <div class="callout" style="margin-top:16px;">
+          <strong>Current focus</strong>
+          ${dueWork.length ? dueWork.map((entry) => `<div style="margin-top:8px;"><strong>${escapeHtml(entry.label)}</strong><div class="small muted">${escapeHtml(entry.detail || '')}</div></div>`).join('') : '<div class="small muted" style="margin-top:8px;">No due work is surfaced yet.</div>'}
+        </div>
+      </article>
+      <article class="card soft">
+        <div class="eyebrow">Progress snapshot / export</div>
+        <h3 class="section-title" style="font-size:1.2rem;">Portable recovery points</h3>
+        <p class="subtitle">Parent Hub only surfaces export entry points. It does not invent a separate reporting store.</p>
+        <div class="chip-row" style="margin-top:14px;">
+          <span class="chip">Tracked: ${escapeHtml(String(snapshot?.trackedWords ?? 0))}</span>
+          <span class="chip">Published pool: ${escapeHtml(String(snapshot?.totalPublishedWords ?? 0))}</span>
+          <span class="chip">Subject: spelling</span>
+        </div>
+        <div class="actions" style="margin-top:16px;">
+          ${model.exportEntryPoints.map((entry) => `<button class="btn secondary" data-action="${escapeHtml(entry.action)}">${escapeHtml(entry.label)}</button>`).join('')}
+        </div>
+      </article>
+    </section>
+    <section class="two-col" style="margin-bottom:20px;">
+      <article class="card">
+        <div class="eyebrow">Recent sessions</div>
+        <h3 class="section-title" style="font-size:1.2rem;">Latest durable session records</h3>
+        ${recentSessions.length ? recentSessions.map((entry) => `
+          <details style="margin-top:12px;">
+            <summary>${escapeHtml(entry.label)} · ${escapeHtml(formatTimestamp(entry.updatedAt))}</summary>
+            <div class="small muted" style="margin-top:10px;">${escapeHtml(entry.status)} · ${escapeHtml(entry.sessionKind)} · mistakes: ${escapeHtml(String(entry.mistakeCount || 0))}</div>
+            ${entry.headline ? `<div class="small muted" style="margin-top:6px;">Summary card: ${escapeHtml(entry.headline)}</div>` : ''}
+          </details>
+        `).join('') : '<p class="small muted">No completed or active sessions are stored yet.</p>'}
+      </article>
+      <article class="card">
+        <div class="eyebrow">Misconception patterns</div>
+        <h3 class="section-title" style="font-size:1.2rem;">Where correction is clustering</h3>
+        ${patterns.length ? patterns.map((entry) => `
+          <div class="skill-row">
+            <div><strong>${escapeHtml(entry.label)}</strong></div>
+            <div class="small muted">${escapeHtml(entry.source || 'pattern')}</div>
+            <div>${escapeHtml(String(entry.count || 0))}</div>
+            <div class="small muted">${escapeHtml(formatTimestamp(entry.lastSeenAt))}</div>
+          </div>
+        `).join('') : '<p class="small muted">No durable mistake patterns have been recorded yet.</p>'}
+      </article>
+    </section>
+    <section class="two-col">
+      ${renderHubStrengthList('Broad strengths', strengths, 'No broad strengths have emerged yet.')}
+      ${renderHubStrengthList('Broad weaknesses', weaknesses, 'No broad weaknesses have surfaced yet.')}
+    </section>
+  `;
+}
+
+function renderAdminHub(context) {
+  const model = context.adminHub;
+  if (!model?.permissions?.canViewAdminHub) {
+    return renderAccessDeniedCard(
+      'Admin / Operations is not available for the current surface role',
+      'Admin / Operations requires the admin or operations platform role. Parent Hub remains a separate surface.',
+    );
+  }
+
+  const selectedDiagnostics = model.learnerSupport?.selectedDiagnostics || null;
+  const accessibleLearners = Array.isArray(model.learnerSupport?.accessibleLearners) ? model.learnerSupport.accessibleLearners : [];
+  const auditEntries = Array.isArray(model.auditLogLookup?.entries) ? model.auditLogLookup.entries : [];
+
+  return `
+    <section class="subject-header card border-top" style="border-top-color:#8A4FFF; margin-bottom:18px;">
+      <div class="subject-title-row">
+        <div>
+          <div class="eyebrow">Admin / operations skeleton</div>
+          <h2 class="title" style="font-size:clamp(1.6rem, 3vw, 2.2rem);">First SaaS operating surfaces</h2>
+          <p class="subtitle">Thin and honest. Content release status and learner diagnostics are real. Audit lookup is live on the Worker path.</p>
+        </div>
+        <div class="chip-row">
+          <span class="chip good">${escapeHtml(model.permissions.platformRoleLabel)}</span>
+          <span class="chip">Repo revision: ${escapeHtml(String(model.account.repoRevision || 0))}</span>
+          <span class="chip">Selected learner: ${escapeHtml(model.account.selectedLearnerId || '—')}</span>
+        </div>
+      </div>
+    </section>
+    <section class="two-col" style="margin-bottom:20px;">
+      <article class="card">
+        <div class="eyebrow">Content release status</div>
+        <h3 class="section-title" style="font-size:1.2rem;">Published spelling snapshot</h3>
+        <div class="chip-row" style="margin-top:14px;">
+          <span class="chip good">Release ${escapeHtml(String(model.contentReleaseStatus.publishedVersion || 0))}</span>
+          <span class="chip">${escapeHtml(model.contentReleaseStatus.publishedReleaseId || 'unpublished')}</span>
+          <span class="chip">${escapeHtml(String(model.contentReleaseStatus.runtimeWordCount || 0))} words</span>
+          <span class="chip">${escapeHtml(String(model.contentReleaseStatus.runtimeSentenceCount || 0))} sentences</span>
+        </div>
+        <p class="small muted" style="margin-top:12px;">Draft ${escapeHtml(model.contentReleaseStatus.currentDraftId)} · version ${escapeHtml(String(model.contentReleaseStatus.currentDraftVersion || 1))} · updated ${escapeHtml(formatTimestamp(model.contentReleaseStatus.draftUpdatedAt))}</p>
+        <div class="actions" style="margin-top:16px;">
+          <button class="btn secondary" data-action="open-subject" data-subject-id="spelling">Open Spelling</button>
+          <button class="btn secondary" data-action="open-subject" data-subject-id="spelling" data-tab="settings">Open settings tab</button>
+          <button class="btn ghost" data-action="spelling-content-export">Export content</button>
+        </div>
+      </article>
+      <article class="card soft">
+        <div class="eyebrow">Import / validation status</div>
+        <h3 class="section-title" style="font-size:1.2rem;">Draft versus published safety</h3>
+        <div class="feedback ${model.importValidationStatus.ok ? 'good' : 'bad'}">
+          <strong>${escapeHtml(model.importValidationStatus.ok ? 'Validation clean' : 'Validation problems present')}</strong>
+          <div style="margin-top:8px;">Errors: ${escapeHtml(String(model.importValidationStatus.errorCount || 0))} · warnings: ${escapeHtml(String(model.importValidationStatus.warningCount || 0))}</div>
+        </div>
+        <p class="small muted" style="margin-top:12px;">Import provenance source: ${escapeHtml(model.importValidationStatus.source || 'bundled baseline')} · imported at ${escapeHtml(formatTimestamp(model.importValidationStatus.importedAt))}</p>
+        ${(model.importValidationStatus.errors || []).length ? `<details style="margin-top:12px;"><summary>Validation issues</summary><div class="small muted" style="margin-top:10px;">${model.importValidationStatus.errors.map((issue) => `${escapeHtml(issue.code)} - ${escapeHtml(issue.message)}`).join('<br>')}</div></details>` : ''}
+      </article>
+    </section>
+    <section class="two-col" style="margin-bottom:20px;">
+      <article class="card">
+        <div class="eyebrow">Audit-log lookup</div>
+        <h3 class="section-title" style="font-size:1.2rem;">Mutation receipt stream</h3>
+        <p class="small muted">${escapeHtml(model.auditLogLookup.note || '')}</p>
+        ${model.auditLogLookup.available ? (auditEntries.length ? auditEntries.map((entry) => `
+          <div class="skill-row">
+            <div><strong>${escapeHtml(entry.mutationKind || 'mutation')}</strong></div>
+            <div class="small muted">${escapeHtml(entry.scopeType || '')} · ${escapeHtml(entry.scopeId || 'account')}</div>
+            <div>${escapeHtml(entry.requestId || '')}</div>
+            <div class="small muted">${escapeHtml(formatTimestamp(entry.appliedAt))}</div>
+          </div>
+        `).join('') : '<p class="small muted">No audit entries matched the current lookup.</p>') : '<div class="callout warn" style="margin-top:12px;">The local reference build keeps this surface visible, but the live lookup itself is only wired on the Worker API path.</div>'}
+      </article>
+      <article class="card">
+        <div class="eyebrow">Learner support / diagnostics</div>
+        <h3 class="section-title" style="font-size:1.2rem;">Accessible learners</h3>
+        ${accessibleLearners.length ? accessibleLearners.map((entry) => `
+          <div class="skill-row">
+            <div>
+              <strong>${escapeHtml(entry.learnerName)}</strong>
+              <div class="small muted">${escapeHtml(entry.yearGroup)} · ${escapeHtml(entry.membershipRoleLabel)}</div>
+            </div>
+            <div class="small muted">Focus: ${escapeHtml(entry.currentFocus?.label || '—')}</div>
+            <div>${escapeHtml(String(entry.overview?.dueWords ?? 0))} due</div>
+            <div><button class="btn ghost" data-action="learner-select" value="${escapeHtml(entry.learnerId)}">Select</button></div>
+          </div>
+        `).join('') : '<p class="small muted">No learner diagnostics are accessible from this account scope yet.</p>'}
+        ${selectedDiagnostics ? `
+          <div class="callout" style="margin-top:16px;">
+            <strong>${escapeHtml(selectedDiagnostics.learnerName)}</strong>
+            <div style="margin-top:8px;">Secure: ${escapeHtml(String(selectedDiagnostics.overview?.secureWords ?? 0))} · Due: ${escapeHtml(String(selectedDiagnostics.overview?.dueWords ?? 0))} · Trouble: ${escapeHtml(String(selectedDiagnostics.overview?.troubleWords ?? 0))}</div>
+            <div class="small muted" style="margin-top:8px;">${escapeHtml(selectedDiagnostics.currentFocus?.detail || 'No current focus surfaced.')}</div>
+          </div>
+        ` : ''}
+        <div class="actions" style="margin-top:16px;">
+          ${model.learnerSupport.entryPoints.map((entry) => {
+            if (entry.subjectId || entry.tab) {
+              return `<button class="btn secondary" data-action="${escapeHtml(entry.action)}" ${entry.subjectId ? `data-subject-id="${escapeHtml(entry.subjectId)}"` : ''} ${entry.tab ? `data-tab="${escapeHtml(entry.tab)}"` : ''}>${escapeHtml(entry.label)}</button>`;
+            }
+            return `<button class="btn secondary" data-action="${escapeHtml(entry.action)}">${escapeHtml(entry.label)}</button>`;
+          }).join('')}
+        </div>
+      </article>
+    </section>
+  `;
+}
+
 function renderSubjectScreen(context) {
   const { appState } = context;
   const subject = resolveSubject(appState.route.subjectId, context);
@@ -547,10 +812,17 @@ function renderToasts(appState) {
 }
 
 export function renderApp(appState, context) {
-  const body = appState.route.screen === 'subject' ? renderSubjectScreen(context) : renderDashboard(context);
+  const screen = appState.route.screen || 'dashboard';
+  const body = screen === 'subject'
+    ? renderSubjectScreen(context)
+    : screen === 'parent-hub'
+      ? renderParentHub(context)
+      : screen === 'admin-hub'
+        ? renderAdminHub(context)
+        : renderDashboard(context);
   return `
     <div class="app-shell">
-      ${renderHeader(appState)}
+      ${renderHeader(appState, context)}
       ${renderPersistenceBanner(appState.persistence)}
       ${body}
       ${renderToasts(appState)}

@@ -50,11 +50,12 @@ export function createWorkerRepositoryServer({
         ...extraHeaders,
       }));
     },
-    authSessionFor(accountId = defaultAccountId) {
+    authSessionFor(accountId = defaultAccountId, { platformRole = null } = {}) {
       return createStaticHeaderRepositoryAuthSession({
-        cacheScopeKey: `account:${accountId}`,
+        cacheScopeKey: `account:${accountId}:${platformRole || 'parent'}`,
         headers: {
           'x-ks2-dev-account-id': accountId,
+          ...(platformRole ? { 'x-ks2-dev-platform-role': platformRole } : {}),
         },
       });
     },

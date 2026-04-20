@@ -5,7 +5,7 @@ This Worker is now a real minimum viable backend for the generic repository cont
 Production browser sessions use the API-backed repository after sign-in.
 Direct file/local mode, or `?local=1`, still uses browser storage for development.
 English Spelling still runs through the same subject/service boundary.
-The Worker now provides durable D1-backed storage for the generic platform collections, account-scoped spelling content, session/auth flows, OpenAI TTS proxying, and learner ownership at the API boundary.
+The Worker now provides durable D1-backed storage for the generic platform collections, account-scoped spelling content, session/auth flows, OpenAI TTS proxying, learner ownership at the API boundary, and thin hub read-model routes for Parent Hub / Admin.
 
 ## What this Worker is now
 
@@ -17,6 +17,7 @@ It is:
 - a place where learner-scoped permissions are enforced before repository writes happen
 - a provider-agnostic auth/session seam with production email and social login flows plus a safe development/test stub
 - a Worker-side TTS proxy that keeps the OpenAI API key out of the browser
+- a read-model boundary for role-aware Parent Hub and Admin / Operations surfaces
 - a deployment boundary that still keeps subject UI rules out of the backend
 
 ## What it still is not
@@ -25,13 +26,26 @@ It is not yet:
 
 - a billing system
 - an invite / acceptance flow
-- a parent/admin UI backend
+- a full parent/admin application suite
 - a messaging system
 - an automatic merge layer for concurrent edits
 - a background retry / replay scheduler
 - a finished Durable Object coordination layer
 
 ## Minimal SaaS domain model
+
+### `platform_role`
+
+Adult accounts carry a small platform role.
+
+Current values:
+
+- `parent`
+- `admin`
+- `ops`
+
+This role is separate from learner membership.
+It controls which adult-facing hub surfaces are available.
 
 ### `adult_accounts`
 
@@ -64,7 +78,7 @@ Roles are intentionally small:
 - `viewer`
 
 Current browser-backed repository flows only surface writable learners (`owner` / `member`) because the shell does not yet have read-only learner UX.
-`viewer` is reserved for future shared access flows.
+`viewer` can be used by explicit diagnostics/read surfaces, but it is not surfaced through the main learner bootstrap flow yet.
 
 ### Learner-scoped collections
 
@@ -103,6 +117,23 @@ The Worker now enforces a small mutation policy instead of last-write-wins.
 
 That keeps the backend honest for multiple tabs, devices, retries, and interrupted requests without pretending we have real-time merge machinery.
 
+## Hub read-model routes
+
+The Worker exposes two thin read-model routes.
+
+- `GET /api/hubs/parent?learnerId=...`
+- `GET /api/hubs/admin?learnerId=...&requestId=...&auditLimit=...`
+
+Current behaviour:
+
+- Parent Hub requires platform role `parent` plus readable learner membership
+- Admin / Operations requires platform role `admin` or `ops`
+- both routes reuse durable learner/content/event data instead of separate dashboard tables
+- audit lookup is backed by `mutation_receipts`
+- content release status is backed by `account_subject_content`
+
+These routes are intentionally read-only operating surfaces, not a full back-office system.
+
 ## Current access rules
 
 - every repository route except `/api/health` requires an authenticated adult session
@@ -121,11 +152,12 @@ In this pass there are only two concrete states:
 
 - `development-stub`
   - safe for local development and automated tests
-  - reads `x-ks2-dev-account-id` and optional development profile headers
-- production placeholders
-  - explicit non-implemented adapters for real production rollout later
+  - reads `x-ks2-dev-account-id`, optional development profile headers, and optional `x-ks2-dev-platform-role`
+- `production`
+  - reads the signed session cookie or bearer token
+  - resolves the adult account and platform role from D1-backed session tables
 
-This avoids inventing home-grown production auth while still letting the backend contract be tested end-to-end now.
+This keeps production auth explicit while still letting the backend contract be tested end-to-end with a safe development stub.
 
 ## Important architectural rule
 

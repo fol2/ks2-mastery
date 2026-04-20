@@ -36,6 +36,20 @@ test('shared store can switch subject tabs without losing route context', () => 
   assert.equal(state.route.tab, 'analytics');
 });
 
+test('shared store can route to adult operating surfaces', () => {
+  installMemoryStorage();
+  const store = createStore(SUBJECTS);
+
+  store.openParentHub();
+  assert.equal(store.getState().route.screen, 'parent-hub');
+
+  store.openAdminHub();
+  assert.equal(store.getState().route.screen, 'admin-hub');
+
+  store.goHome();
+  assert.equal(store.getState().route.screen, 'dashboard');
+});
+
 test('serialisable spelling state survives store persistence for resume', () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });

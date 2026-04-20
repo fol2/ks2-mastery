@@ -98,6 +98,16 @@ The Cloudflare version should swap in API-backed repositories without changing s
 That means the real boundary is not “browser versus Worker”.
 It is “local repository versus remote repository”.
 
+### 6. Operating read models
+
+Adult-facing surfaces read from durable platform state after the subject services have done their work.
+
+Parent Hub and Admin / Operations now sit in this layer.
+They consume learners, subject state, practice sessions, events, account-scoped spelling content and mutation receipts through explicit read-model builders.
+They do not own spelling pedagogy, content publication rules, or mutation safety.
+
+That keeps the SaaS operating surfaces useful without turning the subject engines into reporting systems.
+
 ## Data model
 
 ## Browser state
@@ -195,8 +205,10 @@ That keeps migration logic close to the actual boundary that can change: persist
 
 ```txt
 src/platform
+  access
   core
   game
+  hubs
   ui
 src/subjects
   spelling

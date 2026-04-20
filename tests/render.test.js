@@ -8,6 +8,9 @@ import { SUBJECTS } from '../src/platform/core/subject-registry.js';
 import { renderApp } from '../src/platform/ui/render.js';
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
+import { buildParentHubReadModel } from '../src/platform/hubs/parent-read-model.js';
+import { buildAdminHubReadModel } from '../src/platform/hubs/admin-read-model.js';
+import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
 
 test('dashboard render smoke test covers spelling subject dashboard stats without crashing', () => {
   const storage = installMemoryStorage();
@@ -44,4 +47,52 @@ test('dashboard render smoke test covers spelling subject dashboard stats withou
   assert.match(html, /Spelling/);
   assert.match(html, /Live \/ ready/);
   assert.doesNotMatch(html, /Temporarily unavailable/);
+});
+
+test('render app exposes parent and admin operating surfaces by route', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const store = createStore(SUBJECTS, { repositories });
+  const appState = store.getState();
+  const learner = appState.learners.byId[appState.learners.selectedId];
+  const baseContext = {
+    appState,
+    store,
+    repositories,
+    services: {},
+    subject: SUBJECTS[0],
+    service: null,
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+    applySubjectTransition() {
+      return true;
+    },
+    shellAccess: { platformRole: 'parent', source: 'local-reference' },
+  };
+
+  store.openParentHub();
+  const parentState = store.getState();
+  const parentHtml = renderApp(parentState, {
+    ...baseContext,
+    appState: parentState,
+    parentHub: buildParentHubReadModel({ learner, platformRole: 'parent', membershipRole: 'owner' }),
+  });
+  assert.match(parentHtml, /Parent Hub thin slice/);
+
+  store.openAdminHub();
+  const adminState = store.getState();
+  const adminHtml = renderApp(adminState, {
+    ...baseContext,
+    appState: adminState,
+    shellAccess: { platformRole: 'admin', source: 'local-reference' },
+    adminHub: buildAdminHubReadModel({
+      account: { id: 'local-browser', platformRole: 'admin' },
+      platformRole: 'admin',
+      spellingContentBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+    }),
+  });
+  assert.match(adminHtml, /Admin \/ operations skeleton/);
 });

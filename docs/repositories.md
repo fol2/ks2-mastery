@@ -151,6 +151,32 @@ clearLearner(learnerId)
 
 The current reference wiring appends both spelling mastery events and reward events.
 
+## Hub read models
+
+Parent Hub and Admin / Operations are read-model surfaces above the repository boundary.
+They do not add a separate reporting store.
+
+Current hub inputs are:
+
+- learner profiles
+- learner memberships
+- child subject state
+- practice sessions
+- event log
+- account-scoped spelling content bundles
+- mutation receipts
+
+The Worker assembles those inputs behind permission-checked routes:
+
+```txt
+GET /api/hubs/parent?learnerId=...
+GET /api/hubs/admin?learnerId=...&requestId=...&auditLimit=...
+```
+
+Those routes are intentionally read-only.
+Parent Hub requires the account-level `parent` platform role plus readable learner membership.
+Admin / Operations requires the account-level `admin` or `ops` platform role, and still respects learner membership when exposing learner diagnostics.
+
 ## Save and sync semantics
 
 ### Local adapter

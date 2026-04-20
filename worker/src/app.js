@@ -73,6 +73,7 @@ async function sessionPayload({ session, auth, env, now }) {
         displayName: account.display_name,
         selectedLearnerId: account.selected_learner_id || null,
         repoRevision: Number(account.repo_revision) || 0,
+        platformRole: account.platform_role || session.platformRole || 'parent',
       }
       : null,
     learnerCount: learnerIds.length,
@@ -169,7 +170,7 @@ export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(.
 
         const repository = createWorkerRepository({ env, now });
         const session = await auth.requireSession(request);
-        await repository.ensureAccount(session);
+        const account = await repository.ensureAccount(session);
 
         if (url.pathname === '/api/bootstrap' && request.method === 'GET') {
           const bundle = await repository.bootstrap(session.accountId);
@@ -181,6 +182,7 @@ export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(.
             session: {
               accountId: session.accountId,
               provider: session.provider,
+              platformRole: account?.platform_role || session.platformRole || 'parent',
             },
             mutationPolicy: {
               version: 1,
@@ -204,6 +206,21 @@ export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(.
 
         if (url.pathname === '/api/content/spelling' && request.method === 'GET') {
           const result = await repository.readSubjectContent(session.accountId, 'spelling');
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/hubs/parent' && request.method === 'GET') {
+          const learnerId = url.searchParams.get('learnerId') || null;
+          const result = await repository.readParentHub(session.accountId, learnerId);
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/hubs/admin' && request.method === 'GET') {
+          const result = await repository.readAdminHub(session.accountId, {
+            learnerId: url.searchParams.get('learnerId') || null,
+            requestId: url.searchParams.get('requestId') || null,
+            auditLimit: url.searchParams.get('auditLimit') || 20,
+          });
           return json({ ok: true, ...result });
         }
 

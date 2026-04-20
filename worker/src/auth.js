@@ -4,6 +4,7 @@ import {
   ConflictError,
   UnauthenticatedError,
 } from './errors.js';
+import { normalisePlatformRole } from '../../src/platform/access/roles.js';
 import {
   first,
   requireDatabase,
@@ -367,7 +368,8 @@ async function accountSessionFromToken(env, token, now = Date.now()) {
       s.expires_at,
       a.id AS account_id,
       a.email,
-      a.display_name
+      a.display_name,
+      a.platform_role
     FROM account_sessions s
     JOIN adult_accounts a ON a.id = s.account_id
     WHERE s.session_hash = ?
@@ -378,6 +380,7 @@ async function accountSessionFromToken(env, token, now = Date.now()) {
     accountId: row.account_id,
     email: row.email || null,
     displayName: row.display_name || null,
+    platformRole: normalisePlatformRole(row.platform_role),
     provider: row.provider || 'session',
     sessionId: row.session_id,
     sessionHash: row.session_hash,
@@ -783,6 +786,7 @@ export function createDevelopmentSessionProvider() {
         accountId,
         email: cleanText(request.headers.get('x-ks2-dev-email')),
         displayName: cleanText(request.headers.get('x-ks2-dev-name')),
+        platformRole: normalisePlatformRole(request.headers.get('x-ks2-dev-platform-role')),
         provider: 'development-stub',
         sessionId: `dev:${accountId}`,
       };
