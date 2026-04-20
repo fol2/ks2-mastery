@@ -13,6 +13,19 @@ function productionServer() {
   });
 }
 
+function rejectTransactionSql(db) {
+  return {
+    prepare: (...args) => db.prepare(...args),
+    batch: (...args) => db.batch(...args),
+    exec: async sql => {
+      if (/\b(SAVEPOINT|BEGIN|COMMIT|ROLLBACK|RELEASE)\b/i.test(String(sql || ''))) {
+        throw new Error('transaction control SQL is not supported by this D1 binding');
+      }
+      return db.exec(sql);
+    },
+  };
+}
+
 function cookieFrom(response) {
   const setCookie = response.headers.get('set-cookie') || '';
   const match = /ks2_session=([^;]+)/.exec(setCookie);
@@ -54,6 +67,23 @@ test('production email registration creates an authenticated D1-backed session',
   assert.equal(sessionPayload.auth.mode, 'production');
   assert.equal(sessionPayload.auth.productionReady, true);
   assert.equal(sessionPayload.session.email, 'parent@example.test');
+
+  server.close();
+});
+
+test('production email registration does not rely on transaction control SQL', async () => {
+  const server = productionServer();
+  server.env.DB = rejectTransactionSql(server.DB);
+
+  const register = await postJson(server, '/api/auth/register', {
+    email: 'cloudflare-d1@example.test',
+    password: 'password-1234',
+  });
+  const registerPayload = await register.json();
+
+  assert.equal(register.status, 201);
+  assert.equal(registerPayload.ok, true);
+  assert.ok(cookieFrom(register));
 
   server.close();
 });

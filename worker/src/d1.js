@@ -59,7 +59,7 @@ export async function exec(db, sql) {
 
 export async function withTransaction(db, handler) {
   if (typeof handler !== 'function') throw new TypeError('withTransaction requires a handler function.');
-  if (typeof db.exec !== 'function') {
+  if (db?.supportsSqlTransactions !== true || typeof db.exec !== 'function') {
     return handler();
   }
 

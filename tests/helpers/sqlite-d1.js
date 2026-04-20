@@ -45,6 +45,7 @@ class SqliteD1Statement {
 export class SqliteD1Database {
   constructor(filename = ':memory:') {
     this.db = new DatabaseSync(filename);
+    this.supportsSqlTransactions = true;
     this.db.exec('PRAGMA foreign_keys = ON;');
   }
 
