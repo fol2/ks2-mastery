@@ -6,6 +6,7 @@ const outputDir = path.join(rootDir, 'dist', 'public');
 const tmpDir = path.join(rootDir, 'dist', 'public.tmp');
 
 const entries = [
+  '_headers',
   'index.html',
   'styles',
   'src',

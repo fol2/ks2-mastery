@@ -33,6 +33,7 @@ async function walk(relativeDir = '') {
 }
 
 await mustExist('index.html');
+await mustExist('_headers');
 await mustExist('styles/app.css');
 await mustExist('src/main.js');
 await mustExist('worker/src/index.js').then(
@@ -48,7 +49,7 @@ for (const unsafePath of ['worker', 'tests', 'docs', 'legacy', 'migration-plan.m
 await mustNotExist('src/generated');
 
 const topLevel = await readdir(publicDir);
-const allowed = new Set(['index.html', 'styles', 'src', 'assets']);
+const allowed = new Set(['_headers', 'index.html', 'styles', 'src', 'assets']);
 const unexpected = topLevel.filter((entry) => !allowed.has(entry));
 if (unexpected.length) {
   throw new Error(`Unexpected top-level public entries: ${unexpected.join(', ')}`);
