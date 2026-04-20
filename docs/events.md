@@ -35,7 +35,7 @@ That can emit reward events such as:
 - `reward.monster` with `kind = mega`
 
 The visible Codex progress is not sourced from this event log. It is projected from the current spelling analytics secure rows so legacy imports, cache repairs and remote restores stay locked to the same secure-word counts shown in Spelling analytics.
-Direct spelling monsters evolve at 10, 30, 60 and 90 secure words. Phaeton evolves from combined secure words at 25, 95, 145 and 200, without requiring both spelling pools to cross a separate gate.
+Direct spelling monsters are caught into Stage 0 at 1 secure word, then evolve at 10, 30, 60 and 90 secure words. Phaeton is caught into Stage 0 at 3 combined secure words, then evolves from combined secure words at 25, 95, 145 and 200, without requiring both spelling pools to cross a separate gate.
 
 Reward events can carry toast metadata for the shared overlay UI, but they do not mutate subject learning state.
 

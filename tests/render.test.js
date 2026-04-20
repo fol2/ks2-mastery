@@ -49,6 +49,53 @@ test('dashboard render smoke test covers spelling subject dashboard stats withou
   assert.doesNotMatch(html, /Temporarily unavailable/);
 });
 
+test('uncaught monsters stay off the main dashboard but use codex placeholders', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const store = createStore(SUBJECTS, { repositories });
+  const service = createSpellingService({
+    repository: createSpellingPersistence({ repositories }),
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+  });
+
+  const baseContext = {
+    store,
+    repositories,
+    services: { spelling: service },
+    subject: SUBJECTS[0],
+    service,
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+    applySubjectTransition() {
+      return true;
+    },
+  };
+
+  const dashboardState = store.getState();
+  const dashboardHtml = renderApp(dashboardState, {
+    ...baseContext,
+    appState: dashboardState,
+  });
+  assert.doesNotMatch(dashboardHtml, /assets\/monsters\/inklet-0\.320\.webp/);
+  assert.doesNotMatch(dashboardHtml, /monster-placeholder/);
+
+  store.openSubject('spelling');
+  const spellingState = store.getState();
+  const spellingHtml = renderApp(spellingState, {
+    ...baseContext,
+    appState: spellingState,
+  });
+  assert.match(spellingHtml, /monster-placeholder/);
+  assert.match(spellingHtml, /Not caught/);
+});
+
 test('render app exposes parent and admin operating surfaces by route', () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });

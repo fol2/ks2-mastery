@@ -258,10 +258,16 @@ test('codex projection follows secure spelling progress even without reward game
   const phaeton = summary.find((entry) => entry.monster.id === 'phaeton');
 
   assert.equal(inklet.progress.mastered, 1);
+  assert.equal(inklet.progress.caught, true);
+  assert.equal(inklet.progress.stage, 0);
   assert.deepEqual(inklet.progress.masteredList, ['possess']);
   assert.equal(glimmerbug.progress.mastered, 1);
+  assert.equal(glimmerbug.progress.caught, true);
+  assert.equal(glimmerbug.progress.stage, 0);
   assert.deepEqual(glimmerbug.progress.masteredList, ['accommodate']);
   assert.equal(phaeton.progress.mastered, 2);
+  assert.equal(phaeton.progress.caught, false);
+  assert.equal(phaeton.progress.stage, 0);
 });
 
 test('analytics snapshot is explicit and normalised', () => {

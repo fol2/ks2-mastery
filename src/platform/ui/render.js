@@ -312,6 +312,13 @@ function renderHeader(appState, context) {
   `;
 }
 
+function renderHeroMonsterVisuals(monsters) {
+  return monsters
+    .filter(({ progress }) => progress.caught)
+    .map(({ monster, progress }) => `<img ${monster.id === 'phaeton' ? 'class="big"' : ''} alt="${escapeHtml(monster.name)}" src="${monsterAsset(monster.id, progress.stage)}" />`)
+    .join('');
+}
+
 function renderHero(context) {
   const learner = context.appState.learners.byId[context.appState.learners.selectedId];
   const spellingService = context.services?.spelling;
@@ -330,7 +337,7 @@ function renderHero(context) {
           <button class="btn secondary lg" data-action="open-subject" data-subject-id="reasoning">View subject placeholders</button>
         </div>
         <div class="hero-playground">
-          ${monsters.map(({ monster, progress }) => `<img ${monster.id === 'phaeton' ? 'class="big"' : ''} alt="${escapeHtml(monster.name)}" src="${monsterAsset(monster.id, progress.stage)}" />`).join('')}
+          ${renderHeroMonsterVisuals(monsters)}
         </div>
       </article>
       <article class="card soft">

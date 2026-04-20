@@ -32,6 +32,28 @@ test('direct spelling monsters evolve at 10, 30, 60 and 90 secure words', () => 
   }
 });
 
+test('direct spelling monsters unlock stage 0 from the first secure word', () => {
+  const cases = [
+    [0, false, 0],
+    [1, true, 0],
+    [9, true, 0],
+    [10, true, 1],
+  ];
+
+  for (const [secureWords, expectedCaught, expectedStage] of cases) {
+    const state = {
+      inklet: {
+        caught: false,
+        mastered: masteredWords(secureWords),
+      },
+    };
+    const progress = progressForMonster(state, 'inklet');
+
+    assert.equal(progress.caught, expectedCaught, `${secureWords} secure words caught state`);
+    assert.equal(progress.stage, expectedStage, `${secureWords} secure words stage`);
+  }
+});
+
 test('Phaeton evolves from combined secure spelling words without requiring both pools', () => {
   const cases = [
     [{ inklet: 24, glimmerbug: 0 }, 0],
@@ -52,5 +74,28 @@ test('Phaeton evolves from combined secure spelling words without requiring both
     const combined = inklet + glimmerbug;
 
     assert.equal(derivePhaeton(state).stage, expectedStage, `${combined} combined secure words`);
+  }
+});
+
+test('Phaeton unlocks stage 0 from three combined secure words', () => {
+  const cases = [
+    [{ inklet: 0, glimmerbug: 0 }, false, 0],
+    [{ inklet: 1, glimmerbug: 0 }, false, 0],
+    [{ inklet: 2, glimmerbug: 0 }, false, 0],
+    [{ inklet: 3, glimmerbug: 0 }, true, 0],
+    [{ inklet: 24, glimmerbug: 0 }, true, 0],
+    [{ inklet: 25, glimmerbug: 0 }, true, 1],
+  ];
+
+  for (const [{ inklet, glimmerbug }, expectedCaught, expectedStage] of cases) {
+    const state = {
+      inklet: { caught: false, mastered: masteredWords(inklet, 'inklet') },
+      glimmerbug: { caught: false, mastered: masteredWords(glimmerbug, 'glimmerbug') },
+    };
+    const progress = derivePhaeton(state);
+    const combined = inklet + glimmerbug;
+
+    assert.equal(progress.caught, expectedCaught, `${combined} combined secure words caught state`);
+    assert.equal(progress.stage, expectedStage, `${combined} combined secure words stage`);
   }
 });

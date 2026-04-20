@@ -61,7 +61,7 @@ export function progressForMonster(state, monsterId) {
     mastered,
     stage: stageFor(mastered),
     level: levelFor(mastered),
-    caught: Boolean(entry.caught) || mastered >= 10,
+    caught: mastered >= 1,
     masteredList: Array.isArray(entry.mastered) ? entry.mastered.slice() : [],
   };
 }
@@ -79,7 +79,7 @@ export function derivePhaeton(state) {
     mastered: combined,
     stage,
     level: Math.min(10, Math.floor(combined / 20)),
-    caught: stage >= 1,
+    caught: combined >= 3,
     masteredList: [],
   };
 }

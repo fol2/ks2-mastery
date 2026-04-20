@@ -93,8 +93,8 @@ Codex display counts are projected from current spelling progress (`stage >= 4`)
 
 Current spelling Codex stage thresholds are:
 
-- Inklet and Glimmerbug: Stage 1 at 10 secure words, Stage 2 at 30, Stage 3 at 60, Stage 4 at 90
-- Phaeton: Stage 1 at 25 combined secure words, Stage 2 at 95, Stage 3 at 145, Stage 4 at 200
+- Inklet and Glimmerbug: caught into Stage 0 at 1 secure word, Stage 1 at 10, Stage 2 at 30, Stage 3 at 60, Stage 4 at 90
+- Phaeton: caught into Stage 0 at 3 combined secure words, Stage 1 at 25, Stage 2 at 95, Stage 3 at 145, Stage 4 at 200
 
 Phaeton uses the combined secure-word count directly. It does not require both Year 3-4 and Year 5-6 pools to cross the same threshold first.
 

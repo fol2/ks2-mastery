@@ -37,19 +37,26 @@ function sessionStatusChip(service, session) {
   return `<span class="chip">${escapeHtml(service.stageLabel(session.currentStage || 0))}</span>`;
 }
 
+function renderMonsterCodexVisual(monster, progress) {
+  if (!progress?.caught) {
+    return `<div class="monster-placeholder" aria-label="${escapeHtml(`${monster.name} not caught`)}">?</div>`;
+  }
+  return `<img alt="${escapeHtml(monster.name)}" src="${monsterAsset(monster.id, progress.stage)}" />`;
+}
+
 function renderCodex(monsters) {
   const entries = Array.isArray(monsters) ? monsters : [];
   return `
     <div class="codex-grid">
       ${entries.map(({ monster, progress }) => `
-        <div class="monster-tile">
-          <img alt="${escapeHtml(monster.name)}" src="${monsterAsset(monster.id, progress.stage)}" />
+        <div class="monster-tile ${progress.caught ? '' : 'not-caught'}">
+          ${renderMonsterCodexVisual(monster, progress)}
           <div>
             <p class="monster-name">${escapeHtml(monster.name)}</p>
             <div class="monster-meta">${escapeHtml(monster.blurb)}</div>
           </div>
           <div class="chip-row" style="justify-content:center;">
-            <span class="chip">Stage ${progress.stage}</span>
+            <span class="chip">${progress.caught ? `Stage ${progress.stage}` : 'Not caught'}</span>
             <span class="chip">${progress.mastered} secure</span>
           </div>
         </div>

@@ -75,7 +75,7 @@ The game layer is reactive.
 It consumes published domain events through a platform event runtime rather than being called from subject modules directly.
 Current subscribers include the spelling-to-monster reward adapter and a derived practice-streak subscriber.
 The persisted reward state is reaction history for toasts and milestones. Visible monster/Codex mastery is projected from the current spelling progress state so it stays aligned with imported, synced or repaired secure words.
-Inklet and Glimmerbug evolve at 10, 30, 60 and 90 secure words in their own spelling pools. Phaeton evolves from the combined secure-word total at 25, 95, 145 and 200.
+Inklet and Glimmerbug are caught into Stage 0 at 1 secure word, then evolve at 10, 30, 60 and 90 secure words in their own spelling pools. Phaeton is caught into Stage 0 at 3 combined secure words, then evolves from the combined secure-word total at 25, 95, 145 and 200.
 
 Current domain events include:
 

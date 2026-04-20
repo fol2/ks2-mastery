@@ -322,6 +322,18 @@ input:focus, select:focus, textarea:focus, button:focus-visible {
 }
 .hero-playground img { width: 72px; height: 72px; }
 .hero-playground img.big { width: 92px; height: 92px; }
+.monster-placeholder {
+  width: 90px;
+  height: 90px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px dashed var(--line);
+  background: var(--panel-soft);
+  color: var(--muted);
+  font-size: 2.2rem;
+  font-weight: 900;
+}
 
 .practice-card {
   display: grid;
