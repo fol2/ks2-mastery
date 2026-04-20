@@ -40,7 +40,12 @@
   },
   "migrations": [
     {
-      "tag": "v1-learner-lock",
+      "tag": "v2-spelling-lock-sqlite",
+      "new_sqlite_classes": ["SpellingLockDO"]
+    },
+    {
+      "tag": "v3-replace-spelling-lock-with-learner-lock",
+      "deleted_classes": ["SpellingLockDO"],
       "new_sqlite_classes": ["LearnerLock"]
     }
   ]
