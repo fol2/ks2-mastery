@@ -1,7 +1,7 @@
 ---
 title: "feat: Integrate Pass 13 Subject Expansion Harness"
 type: feat
-status: active
+status: completed
 date: 2026-04-20
 origin: /Users/jamesto/Coding/ks2-mastery-legacy/pass13/ks2-platform-v2-pass13-subject-expansion-report.md
 ---
@@ -235,7 +235,7 @@ flowchart LR
 - `git diff --name-status` shows an additive/narrow patch.
 - `npm test` passes with the new subject-expansion tests included.
 
-- [ ] **Unit 5: Local Verification, Commit, Push, Deploy, Production Smoke**
+- [x] **Unit 5: Local Verification, Commit, Push, Deploy, Production Smoke**
 
 **Goal:** Ship Pass 13 to `fol2/ks2-mastery` and production safely.
 
