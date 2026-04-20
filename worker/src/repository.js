@@ -584,6 +584,8 @@ async function withAccountMutation(db, {
   mutation,
   nowTs,
   apply,
+  receiptResponse = (response) => response,
+  replayResponse = null,
 }) {
   const nextMutation = normaliseMutationInput(mutation, 'account');
   const requestHash = mutationPayloadHash(kind, payload);
@@ -600,7 +602,10 @@ async function withAccountMutation(db, {
           correlationId: nextMutation.correlationId,
         });
       }
-      const replayed = safeJsonParse(existingReceipt.response_json, {});
+      const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+      const replayed = typeof replayResponse === 'function'
+        ? await replayResponse({ storedReplay, existingReceipt, mutation: nextMutation })
+        : storedReplay;
       replayed.mutation = buildMutationMeta({
         ...replayed.mutation,
         kind,
@@ -665,7 +670,7 @@ async function withAccountMutation(db, {
       scopeId: accountId,
       mutationKind: kind,
       requestHash,
-      response,
+      response: receiptResponse(response),
       correlationId: nextMutation.correlationId,
       appliedAt: nowTs,
     });
@@ -1113,6 +1118,19 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         payload: { subjectId, content: validation.bundle },
         mutation,
         nowTs,
+        receiptResponse: (response) => {
+          const { content: _content, ...compactResponse } = response;
+          return compactResponse;
+        },
+        replayResponse: async ({ storedReplay }) => {
+          const currentContent = await readSubjectContentBundle(db, accountId, subjectId);
+          return {
+            ...storedReplay,
+            subjectId,
+            content: currentContent,
+            summary: buildSpellingContentSummary(currentContent),
+          };
+        },
         apply: async () => {
           await run(db, `
             INSERT INTO account_subject_content (account_id, subject_id, content_json, updated_at, updated_by_account_id)

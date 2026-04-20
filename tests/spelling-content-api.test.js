@@ -56,6 +56,12 @@ test('api spelling content repository hydrates the seeded published bundle and p
     assert.equal(saved.draft.notes, 'Operator note from API repository test.');
     assert.equal(repository.getAccountRevision(), 1);
 
+    const receipt = server.DB.db.prepare('SELECT request_hash, response_json FROM mutation_receipts WHERE mutation_kind = ?').get('subject_content.put');
+    assert.ok(receipt);
+    assert.ok(receipt.request_hash.length > 16);
+    assert.ok(receipt.response_json.length < 100_000);
+    assert.equal(JSON.parse(receipt.response_json).content, undefined);
+
     const fresh = createApiSpellingContentRepository({
       baseUrl: 'https://repo.test',
       fetch: server.fetch.bind(server),
@@ -112,6 +118,51 @@ test('content writes share the account revision without leaving later learner wr
     });
     await freshPlatform.hydrate();
     assert.equal(freshPlatform.learners.read().byId['learner-a'].name, 'Ava Rebased');
+  } finally {
+    server.close();
+  }
+});
+
+test('worker spelling content receipt replay returns full content without storing the large bundle in receipts', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const initialResponse = await server.fetch('https://repo.test/api/content/spelling');
+    const initial = await initialResponse.json();
+    const updated = cloneSerialisable(initial.content);
+    updated.draft.notes = 'Replay-safe content write test.';
+    const requestId = 'content-replay-safe-1';
+    const body = {
+      content: updated,
+      mutation: {
+        requestId,
+        correlationId: requestId,
+        expectedAccountRevision: initial.mutation.accountRevision,
+      },
+    };
+
+    const firstResponse = await server.fetch('https://repo.test/api/content/spelling', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const firstPayload = await firstResponse.json();
+    assert.equal(firstResponse.status, 200);
+    assert.equal(firstPayload.content.draft.notes, 'Replay-safe content write test.');
+
+    const receipt = server.DB.db.prepare('SELECT response_json FROM mutation_receipts WHERE request_id = ?').get(requestId);
+    assert.ok(receipt);
+    assert.ok(receipt.response_json.length < 100_000);
+    assert.equal(JSON.parse(receipt.response_json).content, undefined);
+
+    const replayResponse = await server.fetch('https://repo.test/api/content/spelling', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const replayPayload = await replayResponse.json();
+    assert.equal(replayResponse.status, 200);
+    assert.equal(replayPayload.content.draft.notes, 'Replay-safe content write test.');
+    assert.equal(replayPayload.mutation.replayed, true);
   } finally {
     server.close();
   }
