@@ -341,7 +341,7 @@ function renderLearnerManager(appState) {
         <div class="field-row">
           <label class="field">
             <span>Name</span>
-            <input class="input" name="name" value="${escapeHtml(learner.name)}" />
+            <input class="input" name="name" autocomplete="off" value="${escapeHtml(learner.name)}" />
           </label>
           <label class="field">
             <span>Year group</span>
@@ -361,11 +361,11 @@ function renderLearnerManager(appState) {
           </label>
           <label class="field">
             <span>Daily minutes</span>
-            <input class="input" type="number" min="5" max="60" name="dailyMinutes" value="${escapeHtml(String(learner.dailyMinutes || 15))}" />
+            <input class="input" type="number" min="5" max="60" name="dailyMinutes" autocomplete="off" value="${escapeHtml(String(learner.dailyMinutes || 15))}" />
           </label>
           <label class="field">
             <span>Accent colour</span>
-            <input class="input" type="color" name="avatarColor" value="${escapeHtml(learner.avatarColor || '#3E6FA8')}" />
+            <input class="input" type="color" name="avatarColor" autocomplete="off" value="${escapeHtml(learner.avatarColor || '#3E6FA8')}" />
           </label>
         </div>
         <div class="actions" style="margin-top:14px;">

@@ -47,6 +47,15 @@ test('golden-path smoke covers dashboard to spelling session to summary and back
   assert.match(harness.render(), /Practice setup/);
 });
 
+test('dashboard learner profile fields declare autofill behaviour explicitly', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const html = harness.render();
+
+  assert.match(html, /<input class="input" name="name"[^>]*autocomplete="off"/);
+  assert.match(html, /<input class="input" type="number"[^>]*name="dailyMinutes"[^>]*autocomplete="off"/);
+});
+
 test('golden-path smoke covers learner switch without losing the first learner session state', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
