@@ -4,6 +4,9 @@ import assert from 'node:assert/strict';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createAppHarness } from './helpers/app-harness.js';
 import { createManualScheduler } from './helpers/manual-scheduler.js';
+import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
+import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
+import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { resolveSpellingShortcut } from '../src/subjects/spelling/shortcuts.js';
 import { spellingAutoAdvanceDelay } from '../src/subjects/spelling/auto-advance.js';
 
@@ -52,6 +55,24 @@ test('SATs spelling card keeps audio-only context and save-and-next wording', ()
   assert.match(html, /Save and next/);
   assert.match(html, /SATs mode uses audio only\. Press Replay to hear the dictation again\./);
   assert.match(html, /placeholder="Type the spelling and move on"/);
+});
+
+test('rendered spelling prompt stays aligned with the dictated sentence', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const service = createSpellingService({
+    repository: createSpellingPersistence({ repositories }),
+  });
+
+  const transition = service.startSession('learner-a', {
+    mode: 'single',
+    words: ['imagine'],
+    length: 1,
+  });
+  const renderedState = service.initState(transition.state, 'learner-a');
+
+  assert.equal(renderedState.session.currentPrompt.sentence, transition.audio.sentence);
+  assert.equal(renderedState.session.currentCard.prompt.sentence, transition.audio.sentence);
 });
 
 test('ending a live spelling session asks before abandoning it', () => {

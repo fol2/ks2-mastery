@@ -173,6 +173,25 @@ function buildPrompt(engine, session, slug) {
   };
 }
 
+function normalisePromptForSlug(rawPrompt, slug) {
+  if (!isKnownSlug(slug)) return null;
+  if (!rawPrompt || typeof rawPrompt !== 'object' || Array.isArray(rawPrompt)) return null;
+  if (typeof rawPrompt.slug === 'string' && rawPrompt.slug !== slug) return null;
+  if (typeof rawPrompt.sentence !== 'string') return null;
+
+  const word = WORD_BY_SLUG[slug];
+  return {
+    slug,
+    sentence: rawPrompt.sentence,
+    cloze: buildCloze(rawPrompt.sentence, word.word),
+  };
+}
+
+function savedPromptForSlug(rawSession, slug) {
+  return normalisePromptForSlug(rawSession?.currentPrompt, slug)
+    || normalisePromptForSlug(rawSession?.currentCard?.prompt, slug);
+}
+
 function decorateSession(engine, learnerId, session) {
   if (!session) return null;
   const currentPrompt = session.currentSlug ? buildPrompt(engine, session, session.currentSlug) : null;
@@ -280,6 +299,7 @@ export function createSpellingService({ repository, storage, tts, now, random } 
     }
 
     const mode = normaliseMode(raw.mode, type === 'test' ? 'test' : 'smart');
+    const savedPrompt = savedPromptForSlug(raw, currentSlug);
     const session = {
       version: SPELLING_SERVICE_STATE_VERSION,
       id: normaliseString(raw.id, `sess-${clock()}-${randomFn().toString(16).slice(2)}`),
@@ -296,7 +316,7 @@ export function createSpellingService({ repository, storage, tts, now, random } 
         ? raw.sentenceHistory
         : {},
       currentSlug,
-      currentPrompt: null,
+      currentPrompt: savedPrompt,
       phase: type === 'test'
         ? 'question'
         : (SPELLING_SESSION_PHASES.includes(raw.phase) ? raw.phase : 'question'),
@@ -306,7 +326,7 @@ export function createSpellingService({ repository, storage, tts, now, random } 
       startedAt: normaliseTimestamp(raw.startedAt, clock()),
     };
 
-    if (currentSlug) {
+    if (currentSlug && !session.currentPrompt) {
       session.currentPrompt = buildPrompt(engine, session, currentSlug);
     }
 
