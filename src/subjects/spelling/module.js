@@ -507,14 +507,15 @@ export const spellingModule = {
   initState() {
     return createInitialSpellingState();
   },
-  getDashboardStats(appState, { service, repositories }) {
+  getDashboardStats(appState, { service }) {
     const learner = appState.learners.byId[appState.learners.selectedId];
     const prefs = service.getPrefs(learner.id);
     const stats = service.getStats(learner.id, prefs.yearFilter);
+    const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id));
     return {
       pct: stats.total ? Math.round((stats.secure / stats.total) * 100) : 0,
       due: stats.due,
-      streak: monsterSummary(learner.id, repositories?.gameState).reduce((max, entry) => Math.max(max, entry.progress.level), 0),
+      streak: codex.reduce((max, entry) => Math.max(max, entry.progress.level), 0),
       nextUp: stats.trouble ? 'Trouble drill' : stats.due ? 'Due review' : 'Fresh spellings',
     };
   },

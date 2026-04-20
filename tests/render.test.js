@@ -42,4 +42,6 @@ test('dashboard render smoke test covers spelling subject dashboard stats withou
 
   assert.match(html, /Subject registry/);
   assert.match(html, /Spelling/);
+  assert.match(html, /Live \/ ready/);
+  assert.doesNotMatch(html, /Temporarily unavailable/);
 });
