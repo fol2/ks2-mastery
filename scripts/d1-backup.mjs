@@ -20,8 +20,12 @@ const args = [
   outputFile,
 ];
 
+const env = { ...process.env };
+delete env.CLOUDFLARE_API_TOKEN;
+
 const result = spawnSync('npx', args, {
   stdio: 'inherit',
+  env,
   shell: process.platform === 'win32',
 });
 

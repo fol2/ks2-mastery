@@ -202,6 +202,8 @@ input:focus, select:focus, textarea:focus, button:focus-visible {
 .chip.good { background: var(--good-soft); color: var(--good); border-color: #b8dfca; }
 .chip.warn { background: var(--warn-soft); color: #9e6a19; border-color: #edd9ae; }
 .chip.bad { background: var(--bad-soft); color: var(--bad); border-color: #f0c8c5; }
+.chip.new { background: #f4f6f8; color: #546171; border-color: #d9e0e7; }
+.chip.learning { background: #e8f1fb; color: #2f6fae; border-color: #bdd5ef; }
 .chip.active { color: white; }
 
 .stat-grid {
@@ -424,6 +426,16 @@ input:focus, select:focus, textarea:focus, button:focus-visible {
 }
 .word-progress-pill:hover {
   filter: brightness(0.98);
+}
+.word-progress-pill.new {
+  background: #f4f6f8;
+  border-color: #d9e0e7;
+  color: #546171;
+}
+.word-progress-pill.learning {
+  background: #e8f1fb;
+  border-color: #bdd5ef;
+  color: #2f6fae;
 }
 .word-progress-pill.good {
   background: var(--good-soft);

@@ -39,6 +39,9 @@ PRAGMA foreign_keys = ON;
 const sqlPath = path.join(os.tmpdir(), `ks2-d1-reset-${Date.now()}.sql`);
 writeFileSync(sqlPath, resetSql, 'utf8');
 
+const env = { ...process.env };
+delete env.CLOUDFLARE_API_TOKEN;
+
 const result = spawnSync('npx', [
   'wrangler',
   'd1',
@@ -49,6 +52,7 @@ const result = spawnSync('npx', [
   sqlPath,
 ], {
   stdio: 'inherit',
+  env,
   shell: process.platform === 'win32',
 });
 

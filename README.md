@@ -60,12 +60,12 @@ npm test
 ### Build and deploy
 
 ```bash
-npm run check:oauth
-npm run db:migrate:remote:oauth
-npm run deploy:oauth
+npm run check
+npm run db:migrate:remote
+npm run deploy
 ```
 
-The `*:oauth` commands deliberately unset `CLOUDFLARE_API_TOKEN` for that process so Wrangler uses the logged-in OAuth session instead of an old token from the shell environment.
+The Cloudflare scripts run Wrangler through `scripts/wrangler-oauth.mjs`, which deliberately removes `CLOUDFLARE_API_TOKEN` for that child process. This keeps deploys and remote D1 commands on the logged-in OAuth session even when the parent shell still has an old API token exported. The legacy `*:oauth` aliases remain for muscle memory, but the default scripts are already OAuth-safe.
 
 ## Core rebuild decisions
 

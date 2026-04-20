@@ -110,7 +110,10 @@ test('spelling analytics exposes searchable word-bank progress and single-word d
   let html = harness.render();
   assert.match(html, /Word bank progress/);
   assert.match(html, /name="spellingAnalyticsSearch"[^>]*autocomplete="off"/);
+  assert.match(html, /class="chip new">New</);
+  assert.match(html, /class="chip learning">Learning</);
   assert.match(html, /data-action="spelling-drill-single" data-slug="possess"/);
+  assert.match(html, /class="word-progress-pill new"[^>]*data-action="spelling-drill-single"/);
   assert.match(html, />accident</);
 
   harness.dispatch('spelling-analytics-search', { value: 'possess' });

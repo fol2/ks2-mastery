@@ -63,6 +63,8 @@ function normaliseSearchText(value) {
 }
 
 function wordProgressTone(status) {
+  if (status === 'new') return 'new';
+  if (status === 'learning') return 'learning';
   if (status === 'secure') return 'good';
   if (status === 'due') return 'warn';
   if (status === 'trouble') return 'bad';
@@ -108,8 +110,8 @@ function renderWordBankProgress({ analytics, searchQuery = '' }) {
         </label>
       </div>
       <div class="chip-row" style="margin-bottom:14px;">
-        <span class="chip neutral">New</span>
-        <span class="chip neutral">Learning</span>
+        <span class="chip new">New</span>
+        <span class="chip learning">Learning</span>
         <span class="chip warn">Due</span>
         <span class="chip good">Secure</span>
         <span class="chip bad">Trouble</span>
