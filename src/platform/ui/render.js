@@ -59,7 +59,7 @@ function persistenceTone(snapshot) {
 
 function persistenceLabel(snapshot) {
   if (snapshot?.mode === 'remote-sync') {
-    const syncing = Number(snapshot?.inFlightWriteCount) || 0;
+    const syncing = Math.max(Number(snapshot?.inFlightWriteCount) || 0, Number(snapshot?.pendingWriteCount) || 0);
     return syncing > 0 ? `Remote sync · syncing ${syncing}` : 'Remote sync';
   }
   if (snapshot?.mode === 'degraded') return snapshot?.remoteAvailable ? 'Sync degraded' : 'Local storage degraded';
@@ -75,7 +75,8 @@ function persistenceTrustedLabel(snapshot) {
 
 function persistenceSummary(snapshot) {
   if (snapshot?.mode === 'remote-sync') {
-    if ((Number(snapshot?.inFlightWriteCount) || 0) > 0) {
+    const syncing = Math.max(Number(snapshot?.inFlightWriteCount) || 0, Number(snapshot?.pendingWriteCount) || 0);
+    if (syncing > 0) {
       return 'Remote sync is available. Changes are usable immediately and are being pushed to the server now.';
     }
     return 'Remote sync is available. The remote repository is the trusted durable copy.';

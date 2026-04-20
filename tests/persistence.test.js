@@ -150,6 +150,53 @@ test('successful sync logging is quiet by default and available behind the debug
   }
 });
 
+test('in-flight remote writes stay in remote-sync mode instead of showing degraded', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer();
+  let releaseWrite;
+  let writeStarted;
+  const writeStartedPromise = new Promise((resolve) => {
+    writeStarted = resolve;
+  });
+  const releaseWritePromise = new Promise((resolve) => {
+    releaseWrite = resolve;
+  });
+  const fetch = async (input, init = {}) => {
+    const url = new URL(typeof input === 'string' ? input : input.url, 'https://repo.test');
+    const method = String(init.method || 'GET').toUpperCase();
+    if (url.pathname === '/api/learners' && method === 'PUT') {
+      writeStarted();
+      await releaseWritePromise;
+    }
+    return server.fetch(input, init);
+  };
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch,
+    storage,
+  });
+
+  await repositories.hydrate();
+  repositories.learners.write(learnerSnapshot());
+  await writeStartedPromise;
+
+  const inFlight = repositories.persistence.read();
+  assert.equal(inFlight.mode, 'remote-sync');
+  assert.equal(inFlight.remoteAvailable, true);
+  assert.equal(inFlight.trustedState, 'local-cache');
+  assert.equal(inFlight.cacheState, 'ahead-of-remote');
+  assert.equal(inFlight.pendingWriteCount, 1);
+  assert.equal(inFlight.lastError, null);
+
+  releaseWrite();
+  await waitForPersistenceIdle(repositories);
+
+  const afterWrite = repositories.persistence.read();
+  assert.equal(afterWrite.mode, 'remote-sync');
+  assert.equal(afterWrite.trustedState, 'remote');
+  assert.equal(afterWrite.pendingWriteCount, 0);
+});
+
 test('reload after failed sync keeps the local cache ahead of stale remote data instead of losing the unsynced change', async () => {
   const sharedStorage = installMemoryStorage();
   const server = createMockRepositoryServer();

@@ -729,6 +729,7 @@ export function createApiPlatformRepositories({
   let lastCacheError = null;
   let processingLoop = Promise.resolve();
   let processing = false;
+  let syncScheduled = false;
 
   const persistenceChannel = createPersistenceChannel({
     ...defaultPersistenceSnapshot(PERSISTENCE_MODES.REMOTE_SYNC),
@@ -761,6 +762,9 @@ export function createApiPlatformRepositories({
     if (lastCacheError) return lastCacheError;
     if (countPending(pendingOperations) > 0) {
       const blocked = hasBlockedOperations(pendingOperations);
+      const activeSync = syncScheduled || processing || inFlightWriteCount > 0;
+      if (!blocked && activeSync) return null;
+
       return createPersistenceError({
         phase: blocked ? 'remote-conflict' : 'pending-sync',
         scope: 'remote-cache',
@@ -780,7 +784,7 @@ export function createApiPlatformRepositories({
     const lastError = currentLastError();
     const blocked = hasBlockedOperations(pendingOperations);
 
-    if (lastError || pendingWriteCount > 0) {
+    if (lastError || blocked) {
       const trustedState = lastCacheError
         ? PERSISTENCE_TRUSTED_STATES.MEMORY
         : (blocked ? PERSISTENCE_TRUSTED_STATES.LOCAL_CACHE : PERSISTENCE_TRUSTED_STATES.LOCAL_CACHE);
@@ -803,9 +807,9 @@ export function createApiPlatformRepositories({
     return persistenceChannel.set({
       mode: PERSISTENCE_MODES.REMOTE_SYNC,
       remoteAvailable: true,
-      trustedState: PERSISTENCE_TRUSTED_STATES.REMOTE,
-      cacheState: PERSISTENCE_CACHE_STATES.ALIGNED,
-      pendingWriteCount: 0,
+      trustedState: pendingWriteCount > 0 ? PERSISTENCE_TRUSTED_STATES.LOCAL_CACHE : PERSISTENCE_TRUSTED_STATES.REMOTE,
+      cacheState: pendingWriteCount > 0 ? PERSISTENCE_CACHE_STATES.AHEAD_OF_REMOTE : PERSISTENCE_CACHE_STATES.ALIGNED,
+      pendingWriteCount,
       inFlightWriteCount,
       lastSyncAt,
       lastError: null,
@@ -854,6 +858,7 @@ export function createApiPlatformRepositories({
   }
 
   function queueOperation(operation) {
+    syncScheduled = true;
     pendingOperations = [...pendingOperations, operation];
     applyOperationToBundle(cache, operation);
     syncState = advanceSyncState(syncState, operation);
@@ -1029,6 +1034,7 @@ export function createApiPlatformRepositories({
     }
 
     processing = true;
+    syncScheduled = true;
     processingLoop = (async () => {
       while (true) {
         const nextOperation = firstQueueOperation(pendingOperations);
@@ -1053,6 +1059,8 @@ export function createApiPlatformRepositories({
       }
     })().finally(() => {
       processing = false;
+      syncScheduled = false;
+      recomputePersistence();
     });
 
     return processingLoop;
