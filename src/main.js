@@ -2,6 +2,7 @@ import { createStore } from './platform/core/store.js';
 import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
 import { renderApp } from './platform/ui/render.js';
 import { safeParseInt } from './platform/core/utils.js';
+import { shouldDispatchClickAction } from './platform/core/dom-actions.js';
 import {
   createApiPlatformRepositories,
   createLocalPlatformRepositories,
@@ -641,7 +642,7 @@ root.addEventListener('click', (event) => {
   if (!target) return;
   const action = target.dataset.action;
   if (!action) return;
-  if (target.tagName === 'FORM') return;
+  if (!shouldDispatchClickAction(target)) return;
   event.preventDefault();
   dispatchAction(action, extractActionData(target));
 });
