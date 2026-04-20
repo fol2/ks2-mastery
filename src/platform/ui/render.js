@@ -397,7 +397,7 @@ function renderLearnerManager(appState) {
       <section class="card soft" style="margin-top:16px;">
         <div class="eyebrow">Data safety</div>
         <h3 class="section-title" style="font-size:1.15rem;">Import / export</h3>
-        <p class="subtitle">Exports use portable JSON snapshots. Full-app imports replace the current browser dataset. Learner imports keep existing learners and add an imported copy if the id already exists.</p>
+        <p class="subtitle">Exports use portable JSON snapshots. Full-app imports replace the current browser dataset. Learner and legacy spelling imports keep existing learners and add imported copies.</p>
         ${renderPersistenceInline(appState.persistence)}
         <div class="actions">
           <button class="btn secondary" data-action="platform-export-learner">Export current learner</button>

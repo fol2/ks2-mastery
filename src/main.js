@@ -23,6 +23,7 @@ import {
   exportLearnerSnapshot,
   exportPlatformSnapshot,
   importPlatformSnapshot,
+  LEGACY_SPELLING_EXPORT_KIND,
   PLATFORM_EXPORT_KIND_LEARNER,
 } from './platform/core/data-transfer.js';
 
@@ -270,8 +271,10 @@ async function handleImportFileChange(input) {
   try {
     const text = await file.text();
     const parsed = JSON.parse(text);
-    const isLearnerImport = parsed?.kind === PLATFORM_EXPORT_KIND_LEARNER;
-    if (!isLearnerImport) {
+    const isNonReplacingImport = parsed?.kind === PLATFORM_EXPORT_KIND_LEARNER
+      || parsed?.kind === LEGACY_SPELLING_EXPORT_KIND
+      || Array.isArray(parsed?.profiles);
+    if (!isNonReplacingImport) {
       const confirmed = globalThis.confirm('Importing full app data will replace the current browser dataset. Continue?');
       if (!confirmed) return;
     }
@@ -284,6 +287,9 @@ async function handleImportFileChange(input) {
         ? 'Learner imported as a copy because that learner id already existed.'
         : 'Learner imported successfully.';
       globalThis.alert(message);
+    } else if (result.kind === 'legacy-spelling') {
+      const count = Number(result.importedCount) || 0;
+      globalThis.alert(`Imported ${count} legacy spelling learner profile${count === 1 ? '' : 's'} as new learner copies.`);
     } else {
       globalThis.alert('App data imported successfully.');
     }

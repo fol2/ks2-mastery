@@ -251,6 +251,81 @@ test('legacy app-state imports normalise old subject-ui shape into generic subje
   assert.equal(repositories.subjectStates.read('learner-a', 'spelling').ui.phase, 'session');
 });
 
+test('legacy one-page spelling progress imports as learner copies without replacing current learners', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  repositories.learners.write({
+    byId: {
+      'legacy-a': { id: 'legacy-a', name: 'Existing production learner', yearGroup: 'Y6' },
+    },
+    allIds: ['legacy-a'],
+    selectedId: 'legacy-a',
+  });
+
+  const result = importPlatformSnapshot(repositories, {
+    kind: 'ks2-legacy-spelling-progress',
+    version: 1,
+    source: 'ks2-spelling-sprint-v1',
+    exportedAt: 1776700000000,
+    data: {
+      version: 2,
+      currentProfileId: 'legacy-b',
+      profiles: [
+        {
+          id: 'legacy-a',
+          name: 'Child A',
+          progress: {
+            possess: { stage: 4, attempts: 5, correct: 4, wrong: 1, dueDay: 20455, lastDay: 20450, lastResult: 'correct' },
+          },
+        },
+        {
+          id: 'legacy-b',
+          name: 'Child B',
+          progress: {
+            opposite: { stage: 2, attempts: 3, correct: 2, wrong: 1, dueDay: 20457, lastDay: 20454, lastResult: 'wrong' },
+          },
+        },
+      ],
+    },
+  });
+
+  const learners = repositories.learners.read();
+  assert.equal(result.kind, 'legacy-spelling');
+  assert.equal(result.importedCount, 2);
+  assert.deepEqual(result.learnerIds, ['legacy-a-import-1', 'legacy-b']);
+  assert.equal(result.selectedId, 'legacy-b');
+  assert.equal(learners.byId['legacy-a'].name, 'Existing production learner');
+  assert.equal(learners.byId['legacy-a-import-1'].name, 'Child A');
+  assert.equal(learners.byId['legacy-b'].name, 'Child B');
+  assert.equal(learners.selectedId, 'legacy-b');
+  assert.equal(repositories.subjectStates.read('legacy-a-import-1', 'spelling').data.progress.possess.stage, 4);
+  assert.equal(repositories.subjectStates.read('legacy-b', 'spelling').data.progress.opposite.lastResult, 'wrong');
+});
+
+test('raw legacy one-page spelling localStorage state can be imported directly', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+
+  const result = importPlatformSnapshot(repositories, {
+    version: 2,
+    currentProfileId: 'child-1',
+    profiles: [
+      {
+        id: 'child-1',
+        name: 'Legacy Child',
+        progress: {
+          accident: { stage: 1, attempts: 1, correct: 1, wrong: 0 },
+        },
+      },
+    ],
+  });
+
+  assert.equal(result.kind, 'legacy-spelling');
+  assert.equal(result.selectedId, 'child-1');
+  assert.equal(repositories.learners.read().byId['child-1'].name, 'Legacy Child');
+  assert.equal(repositories.subjectStates.read('child-1', 'spelling').data.progress.accident.stage, 1);
+});
+
 test('partial spelling session state restores safely after serialisation loss', () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });

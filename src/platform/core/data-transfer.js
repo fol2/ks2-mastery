@@ -17,6 +17,11 @@ import {
 export const PLATFORM_EXPORT_VERSION = 1;
 export const PLATFORM_EXPORT_KIND_APP = 'ks2-platform-data';
 export const PLATFORM_EXPORT_KIND_LEARNER = 'ks2-platform-learner';
+export const LEGACY_SPELLING_EXPORT_KIND = 'ks2-legacy-spelling-progress';
+
+const LEGACY_SPELLING_STAGE_MAX = 6;
+const LEGACY_SPELLING_DAY_MS = 24 * 60 * 60 * 1000;
+const LEGACY_SPELLING_RESULTS = new Set(['correct', 'wrong']);
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -83,6 +88,16 @@ function looksLikePortableLearnerSnapshot(payload) {
   return payload?.kind === PLATFORM_EXPORT_KIND_LEARNER && isPlainObject(payload.learner);
 }
 
+function unwrapLegacySpellingPayload(payload) {
+  if (payload?.kind === LEGACY_SPELLING_EXPORT_KIND && isPlainObject(payload.data)) return payload.data;
+  return payload;
+}
+
+function looksLikeLegacySpellingSnapshot(payload) {
+  const candidate = unwrapLegacySpellingPayload(payload);
+  return isPlainObject(candidate) && Array.isArray(candidate.profiles) && candidate.profiles.length > 0;
+}
+
 function looksLikeRepositoryBundle(payload) {
   return isPlainObject(payload) && (
     'learners' in payload
@@ -115,6 +130,53 @@ function allocateImportedLearnerId(existingLearners, desiredId, createLearnerId)
     counter += 1;
   }
   return createLearnerId('learner');
+}
+
+function clampInteger(value, fallback, min = 0, max = Number.MAX_SAFE_INTEGER) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(min, Math.min(max, Math.trunc(parsed)));
+}
+
+function todayDay() {
+  return Math.floor(Date.now() / LEGACY_SPELLING_DAY_MS);
+}
+
+function normaliseLegacyProgressRecord(rawValue) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  return {
+    stage: clampInteger(raw.stage, 0, 0, LEGACY_SPELLING_STAGE_MAX),
+    attempts: clampInteger(raw.attempts, 0),
+    correct: clampInteger(raw.correct, 0),
+    wrong: clampInteger(raw.wrong, 0),
+    dueDay: clampInteger(raw.dueDay, todayDay()),
+    lastDay: Number.isFinite(Number(raw.lastDay)) ? Math.trunc(Number(raw.lastDay)) : null,
+    lastResult: LEGACY_SPELLING_RESULTS.has(raw.lastResult) ? raw.lastResult : null,
+  };
+}
+
+function normaliseLegacyProgressMap(rawValue) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const output = {};
+  for (const [slug, progress] of Object.entries(raw)) {
+    const key = typeof slug === 'string' ? slug.trim().toLowerCase() : '';
+    if (!key) continue;
+    output[key] = normaliseLegacyProgressRecord(progress);
+  }
+  return output;
+}
+
+function normaliseLegacySpellingProfiles(payload) {
+  const state = unwrapLegacySpellingPayload(payload);
+  const profiles = Array.isArray(state?.profiles) ? state.profiles : [];
+  return profiles
+    .filter(isPlainObject)
+    .map((profile, index) => ({
+      id: typeof profile.id === 'string' && profile.id ? profile.id : `legacy-spelling-${index + 1}`,
+      name: typeof profile.name === 'string' && profile.name.trim() ? profile.name.trim() : `Legacy learner ${index + 1}`,
+      progress: normaliseLegacyProgressMap(profile.progress),
+    }))
+    .filter((profile) => Object.keys(profile.progress).length > 0 || profile.name);
 }
 
 function normaliseLearnerScopedSubjectStates(rawValue, learnerId) {
@@ -159,6 +221,67 @@ function normaliseLearnerScopedEvents(rawValue, learnerId) {
     ...event,
     learnerId,
   }));
+}
+
+function importLegacySpellingSnapshot(repositories, payload, { createLearnerId } = {}) {
+  const makeLearnerId = typeof createLearnerId === 'function'
+    ? createLearnerId
+    : (prefix = 'learner') => uid(prefix);
+  const state = unwrapLegacySpellingPayload(payload);
+  const profiles = normaliseLegacySpellingProfiles(payload);
+  if (!profiles.length) {
+    throw new TypeError('The legacy spelling export did not contain any learner profiles.');
+  }
+
+  const existingLearners = normaliseLearnersSnapshot(repositories.learners.read());
+  const byId = { ...existingLearners.byId };
+  const allIds = [...existingLearners.allIds];
+  const idMap = {};
+  const learnerIds = [];
+
+  for (const profile of profiles) {
+    const currentSnapshot = normaliseLearnersSnapshot({ byId, allIds, selectedId: existingLearners.selectedId });
+    const targetLearnerId = allocateImportedLearnerId(currentSnapshot, profile.id, makeLearnerId);
+    const learner = normaliseLearnerRecord({
+      id: targetLearnerId,
+      name: profile.name,
+      yearGroup: 'Y5',
+      goal: 'sats',
+      dailyMinutes: 15,
+      avatarColor: '#3E6FA8',
+      createdAt: Date.now(),
+    }, targetLearnerId);
+    byId[targetLearnerId] = learner;
+    if (!allIds.includes(targetLearnerId)) allIds.push(targetLearnerId);
+    idMap[profile.id] = targetLearnerId;
+    learnerIds.push(targetLearnerId);
+  }
+
+  const selectedId = idMap[state?.currentProfileId] || learnerIds[0] || existingLearners.selectedId;
+  repositories.learners.write(normaliseLearnersSnapshot({ byId, allIds, selectedId }));
+
+  const updatedAt = Date.now();
+  for (const profile of profiles) {
+    const learnerId = idMap[profile.id];
+    repositories.subjectStates.writeRecord(learnerId, 'spelling', {
+      ui: null,
+      data: {
+        progress: profile.progress,
+        prefs: {},
+      },
+      updatedAt,
+    });
+  }
+
+  return {
+    kind: 'legacy-spelling',
+    importedCount: learnerIds.length,
+    learnerIds,
+    selectedId,
+    renamedIds: Object.fromEntries(
+      Object.entries(idMap).filter(([sourceId, targetId]) => sourceId !== targetId),
+    ),
+  };
 }
 
 function writeBundleToRepositories(repositories, bundle) {
@@ -265,6 +388,10 @@ export function importPlatformSnapshot(repositories, payload, { createLearnerId 
       learnerId: targetLearnerId,
       renamed: targetLearnerId !== sourceLearner.id,
     };
+  }
+
+  if (looksLikeLegacySpellingSnapshot(payload)) {
+    return importLegacySpellingSnapshot(repositories, payload, { createLearnerId: makeLearnerId });
   }
 
   const bundle = extractFullBundle(payload);

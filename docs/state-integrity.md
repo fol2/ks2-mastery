@@ -44,12 +44,14 @@ Portable JSON snapshots now use explicit export kinds:
 ```txt
 ks2-platform-data
 ks2-platform-learner
+ks2-legacy-spelling-progress
 ```
 
 Hardening added in this pass:
 
 - full-app imports replace the current dataset deterministically
 - learner imports merge into the current dataset without clobbering an existing learner id
+- legacy one-page spelling exports import as new learner copies, preserving existing production learners
 - old rebuild-era app snapshots shaped like `{ learners, subjectUi }` are still accepted and normalised into generic subject-state records
 - malformed imports fail with a clear error instead of partially mutating the app
 

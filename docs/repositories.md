@@ -255,6 +255,7 @@ The rebuild supports portable JSON snapshots above the repository boundary.
 
 - full app export/import uses `ks2-platform-data`
 - learner-scoped export/import uses `ks2-platform-learner`
+- legacy one-page spelling progress export/import uses `ks2-legacy-spelling-progress` and always adds learner copies
 - legacy snapshots shaped like `{ learners, subjectUi }` are still accepted and normalised into generic subject-state records
 
 That keeps import/export logic aligned with the same generic repository shapes used by local and API-backed adapters.

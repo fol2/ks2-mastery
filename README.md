@@ -24,7 +24,7 @@ The goal is not to polish the old prototype. The goal is to give the product a s
 - `docs/*`
   - Audit, architecture, refactor plan, migration map, repository notes, state-integrity notes, a dedicated spelling-service contract note, and a direct spelling parity audit.
 - `tests/*`
-  - Node tests covering the spelling service, reward events, shared store, repository parity, state recovery, import/export round-trips, subject runtime containment, and golden-path smoke flows.
+  - Node tests covering the spelling service, reward events, shared store, repository parity, state recovery, import/export round-trips including legacy spelling progress imports, subject runtime containment, and golden-path smoke flows.
 
 ## Status
 
