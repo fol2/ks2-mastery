@@ -661,15 +661,24 @@ root.addEventListener('change', (event) => {
   dispatchAction(action, extractActionData(target));
 });
 
-root.addEventListener('input', (event) => {
+function dispatchTextInputAction(event) {
   const target = event.target.closest('[data-action]');
-  if (!target) return;
+  if (!target) return false;
   const action = target.dataset.action;
-  if (!action) return;
-  if (!['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
-  if (['checkbox', 'radio', 'file'].includes(String(target.type || '').toLowerCase())) return;
+  if (!action) return false;
+  if (!['INPUT', 'TEXTAREA'].includes(target.tagName)) return false;
+  if (['checkbox', 'radio', 'file'].includes(String(target.type || '').toLowerCase())) return false;
   dispatchAction(action, extractActionData(target));
+  return true;
+}
+
+root.addEventListener('input', (event) => {
+  dispatchTextInputAction(event);
 });
+
+root.addEventListener('search', (event) => {
+  dispatchTextInputAction(event);
+}, true);
 
 root.addEventListener('submit', (event) => {
   const form = event.target.closest('form[data-action]');

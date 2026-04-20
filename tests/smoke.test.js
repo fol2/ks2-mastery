@@ -123,6 +123,10 @@ test('spelling analytics exposes searchable word-bank progress and single-word d
   assert.match(html, />possess</);
   assert.doesNotMatch(html, />accident</);
 
+  harness.dispatch('spelling-analytics-search', { value: '' });
+  html = harness.render();
+  assert.match(html, />accident</);
+
   harness.dispatch('spelling-drill-single', { slug: 'possess' });
   assert.equal(harness.store.getState().subjectUi.spelling.phase, 'session');
   assert.equal(harness.store.getState().subjectUi.spelling.session.mode, 'single');
