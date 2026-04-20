@@ -117,7 +117,8 @@ test('spelling analytics exposes searchable word-bank progress and single-word d
   assert.match(html, />accident</);
 
   harness.dispatch('spelling-analytics-search', { value: 'possess' });
-  assert.equal(harness.store.getState().subjectUi.spelling.analyticsWordSearch, 'possess');
+  assert.equal(harness.store.getState().transientUi.spellingAnalyticsWordSearch, 'possess');
+  assert.equal(harness.store.getState().subjectUi.spelling.analyticsWordSearch, undefined);
   html = harness.render();
   assert.match(html, />possess</);
   assert.doesNotMatch(html, />accident</);

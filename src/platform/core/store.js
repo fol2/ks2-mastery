@@ -72,6 +72,7 @@ function emptyState(subjects, learner) {
     },
     subjectUi: buildSubjectUiTree(subjects),
     persistence: defaultPersistenceSnapshot(),
+    transientUi: normaliseTransientUi(),
     toasts: [],
   };
 }
@@ -107,6 +108,15 @@ function normaliseToasts(rawValue) {
     .slice(-25);
 }
 
+function normaliseTransientUi(rawValue) {
+  const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
+  return {
+    spellingAnalyticsWordSearch: typeof raw.spellingAnalyticsWordSearch === 'string'
+      ? raw.spellingAnalyticsWordSearch.slice(0, 80)
+      : '',
+  };
+}
+
 function stateFromRepositories(subjects, repositories) {
   const learners = ensureLearnersSnapshot(repositories, subjects);
   const selectedId = learners.selectedId;
@@ -118,6 +128,7 @@ function stateFromRepositories(subjects, repositories) {
     learners,
     subjectUi: buildSubjectUiTree(subjects, persistedUi),
     persistence: repositories.persistence.read(),
+    transientUi: normaliseTransientUi(),
     toasts: [],
   };
 }
@@ -129,6 +140,7 @@ function sanitiseState(rawState, subjects) {
     learners,
     subjectUi: buildSubjectUiTree(subjects, rawState?.subjectUi || {}),
     persistence: normalisePersistenceSnapshot(rawState?.persistence),
+    transientUi: normaliseTransientUi(rawState?.transientUi),
     toasts: normaliseToasts(rawState?.toasts),
   };
 }

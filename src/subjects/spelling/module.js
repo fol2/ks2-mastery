@@ -355,7 +355,7 @@ function renderSummary({ learner, ui, service, subject, repositories }) {
 
 function renderAnalytics({ appState, learner, service, repositories }) {
   const analytics = service.getAnalyticsSnapshot(learner.id);
-  const searchQuery = appState?.subjectUi?.spelling?.analyticsWordSearch || '';
+  const searchQuery = appState?.transientUi?.spellingAnalyticsWordSearch || '';
   const all = analytics.pools.all;
   const y34 = analytics.pools.y34;
   const y56 = analytics.pools.y56;
@@ -572,14 +572,11 @@ export const spellingModule = {
     }
 
     if (action === 'spelling-analytics-search') {
-      const analyticsWordSearch = String(data.value || '').slice(0, 80);
+      const spellingAnalyticsWordSearch = String(data.value || '').slice(0, 80);
       store.patch((current) => ({
-        subjectUi: {
-          ...current.subjectUi,
-          spelling: {
-            ...current.subjectUi.spelling,
-            analyticsWordSearch,
-          },
+        transientUi: {
+          ...current.transientUi,
+          spellingAnalyticsWordSearch,
         },
       }));
       return true;
