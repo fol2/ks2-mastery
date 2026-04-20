@@ -2,7 +2,7 @@ const TOP_LEVEL_METHODS = ['hydrate', 'flush', 'clearAll'];
 
 const SECTION_METHODS = {
   persistence: ['read', 'subscribe', 'retry'],
-  learners: ['read', 'write'],
+  learners: ['read', 'write', 'select'],
   subjectStates: ['read', 'readForLearner', 'writeUi', 'writeData', 'writeRecord', 'clear', 'clearLearner'],
   practiceSessions: ['latest', 'list', 'write', 'clear', 'clearLearner'],
   gameState: ['read', 'readForLearner', 'write', 'clear', 'clearLearner'],

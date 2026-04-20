@@ -298,6 +298,17 @@ export function createLocalPlatformRepositories({ storage } = {}) {
         persistAll('local-write', 'learners');
         return cloneSerialisable(collections.learners);
       },
+      select(learnerId) {
+        if (typeof learnerId !== 'string' || !collections.learners.byId[learnerId]) {
+          return cloneSerialisable(collections.learners);
+        }
+        collections.learners = normaliseLearnersSnapshot({
+          ...collections.learners,
+          selectedId: learnerId,
+        });
+        persistAll('local-write', 'learners:selected');
+        return cloneSerialisable(collections.learners);
+      },
     },
     subjectStates: {
       read(learnerId, subjectId) {

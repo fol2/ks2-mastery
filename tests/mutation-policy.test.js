@@ -5,6 +5,8 @@ import {
   createApiPlatformRepositories,
   createLocalPlatformRepositories,
 } from '../src/platform/core/repositories/index.js';
+import { createStore } from '../src/platform/core/store.js';
+import { SUBJECTS } from '../src/platform/core/subject-registry.js';
 import { createAppHarness } from './helpers/app-harness.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
@@ -33,6 +35,24 @@ function learnerSnapshot() {
     },
     allIds: ['learner-a'],
     selectedId: 'learner-a',
+  };
+}
+
+function twoLearnerSnapshot(selectedId = 'learner-a') {
+  const first = learnerSnapshot().byId['learner-a'];
+  return {
+    byId: {
+      'learner-a': first,
+      'learner-b': {
+        ...first,
+        id: 'learner-b',
+        name: 'Ben',
+        avatarColor: '#C86445',
+        createdAt: 2,
+      },
+    },
+    allIds: ['learner-a', 'learner-b'],
+    selectedId,
   };
 }
 
@@ -269,6 +289,43 @@ test('stale learner writes are blocked explicitly and retry reloads the latest r
   await repoB.persistence.retry();
   assert.equal(repoB.persistence.read().mode, 'remote-sync');
   assert.deepEqual(repoB.subjectStates.read('learner-a', 'spelling').data, { prefs: { mode: 'smart' } });
+
+  server.close();
+});
+
+test('selecting a learner from a stale tab is local and does not degrade remote sync', async () => {
+  const server = createWorkerRepositoryServer();
+  const repoA = createRemoteRepositories(server, { accountId: 'adult-a' });
+  await repoA.hydrate();
+  repoA.learners.write(twoLearnerSnapshot('learner-a'));
+  await repoA.flush();
+
+  const repoB = createRemoteRepositories(server, {
+    accountId: 'adult-a',
+    storage: installMemoryStorage(),
+  });
+  await repoB.hydrate();
+
+  const updatedLearners = twoLearnerSnapshot('learner-a');
+  repoA.learners.write({
+    ...updatedLearners,
+    byId: {
+      ...updatedLearners.byId,
+      'learner-a': {
+        ...updatedLearners.byId['learner-a'],
+        name: 'Ava Updated',
+      },
+    },
+  });
+  await repoA.flush();
+
+  const storeB = createStore(SUBJECTS, { repositories: repoB });
+  storeB.selectLearner('learner-b');
+  await waitForPersistenceIdle(repoB);
+
+  assert.equal(storeB.getState().learners.selectedId, 'learner-b');
+  assert.equal(repoB.persistence.read().mode, 'remote-sync');
+  assert.equal(repoB.persistence.read().pendingWriteCount, 0);
 
   server.close();
 });

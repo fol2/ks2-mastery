@@ -847,9 +847,13 @@ export function createApiPlatformRepositories({
   }
 
   function applyHydratedState(remoteBundle, remoteSyncState) {
+    const localSelectedId = cache.learners.selectedId;
     const effectiveBundle = applyPendingOperations(remoteBundle, pendingOperations);
     cache.meta = currentRepositoryMeta();
-    cache.learners = effectiveBundle.learners;
+    const selectedId = typeof localSelectedId === 'string' && effectiveBundle.learners.byId[localSelectedId]
+      ? localSelectedId
+      : effectiveBundle.learners.selectedId;
+    cache.learners = { ...effectiveBundle.learners, selectedId };
     cache.subjectStates = effectiveBundle.subjectStates;
     cache.practiceSessions = effectiveBundle.practiceSessions;
     cache.gameState = effectiveBundle.gameState;
@@ -1145,6 +1149,17 @@ export function createApiPlatformRepositories({
         }, syncState);
         queueOperation(operation);
         kickQueue();
+        return cloneSerialisable(cache.learners);
+      },
+      select(learnerId) {
+        if (typeof learnerId !== 'string' || !cache.learners.byId[learnerId]) {
+          return cloneSerialisable(cache.learners);
+        }
+        cache.learners = normaliseLearnersSnapshot({
+          ...cache.learners,
+          selectedId: learnerId,
+        });
+        persistLocalCache('learners:selected');
         return cloneSerialisable(cache.learners);
       },
     },

@@ -219,12 +219,12 @@ export function createStore(subjects, { repositories } = {}) {
     },
     selectLearner(learnerId) {
       if (!state.learners.byId[learnerId]) return;
+      const nextLearners = resolvedRepositories.learners.select(learnerId);
       setState((current) => ({
         ...current,
-        learners: { ...current.learners, selectedId: learnerId },
+        learners: nextLearners,
         subjectUi: subjectUiForLearner(registry, resolvedRepositories, learnerId),
       }));
-      persistLearners({ ...state.learners, selectedId: learnerId });
     },
     createLearner(payload = {}) {
       const learner = {
