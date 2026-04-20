@@ -35,6 +35,7 @@ import {
 const MUTATION_POLICY_VERSION = 1;
 const OPERATION_STATUS_PENDING = 'pending';
 const OPERATION_STATUS_BLOCKED_STALE = 'blocked-stale';
+const SUBJECT_STATE_MERGE_STRATEGIES = new Set(['merge', 'ui', 'data', 'replace']);
 
 function apiCacheStorageKey(scope = 'default') {
   return `ks2-platform-v2.api-cache-state:${scope}`;
@@ -282,6 +283,7 @@ function normalisePendingOperation(rawValue) {
         correlationId,
         learnerId: raw.learnerId || 'default',
         subjectId: raw.subjectId || 'unknown',
+        mergeStrategy: SUBJECT_STATE_MERGE_STRATEGIES.has(raw.mergeStrategy) ? raw.mergeStrategy : 'merge',
         record: normaliseSubjectStateRecord(raw.record),
       };
     case 'subjectStates.delete':
@@ -619,6 +621,132 @@ function replaySyncState(baseSyncState, operations) {
   return next;
 }
 
+function plainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function mergePlainObjects(baseValue, patchValue) {
+  const base = plainObject(baseValue) ? cloneSerialisable(baseValue) : {};
+  const patch = plainObject(patchValue) ? cloneSerialisable(patchValue) : {};
+  const output = { ...base };
+  for (const [key, value] of Object.entries(patch)) {
+    output[key] = plainObject(output[key]) && plainObject(value)
+      ? mergePlainObjects(output[key], value)
+      : cloneSerialisable(value);
+  }
+  return output;
+}
+
+function mergeSubjectStateForRebase(baseRecord, localRecord, strategy = 'merge') {
+  const base = normaliseSubjectStateRecord(baseRecord);
+  const local = normaliseSubjectStateRecord(localRecord);
+  if (strategy === 'replace') return local;
+  if (strategy === 'ui') {
+    return normaliseSubjectStateRecord({
+      ui: local.ui ? mergePlainObjects(base.ui, local.ui) : base.ui,
+      data: base.data,
+      updatedAt: Math.max(Number(base.updatedAt) || 0, Number(local.updatedAt) || 0),
+    });
+  }
+  if (strategy === 'data') {
+    return normaliseSubjectStateRecord({
+      ui: base.ui,
+      data: mergePlainObjects(base.data, local.data),
+      updatedAt: Math.max(Number(base.updatedAt) || 0, Number(local.updatedAt) || 0),
+    });
+  }
+
+  return normaliseSubjectStateRecord({
+    ui: local.ui ? mergePlainObjects(base.ui, local.ui) : base.ui,
+    data: mergePlainObjects(base.data, local.data),
+    updatedAt: Math.max(Number(base.updatedAt) || 0, Number(local.updatedAt) || 0),
+  });
+}
+
+function mergeLearnersSnapshotForRebase(baseSnapshot, localSnapshot) {
+  const base = normaliseLearnersSnapshot(baseSnapshot);
+  const local = normaliseLearnersSnapshot(localSnapshot);
+  const byId = {
+    ...base.byId,
+    ...local.byId,
+  };
+  const allIds = [
+    ...local.allIds.filter((learnerId) => byId[learnerId]),
+    ...base.allIds.filter((learnerId) => byId[learnerId] && !local.allIds.includes(learnerId)),
+  ];
+  const selectedId = local.selectedId && byId[local.selectedId]
+    ? local.selectedId
+    : (base.selectedId && byId[base.selectedId] ? base.selectedId : (allIds[0] || null));
+  return normaliseLearnersSnapshot({ byId, allIds, selectedId });
+}
+
+function rebaseOperationPayload(operation, baseBundle) {
+  if (operation.kind === 'learners.write') {
+    return {
+      ...operation,
+      snapshot: mergeLearnersSnapshotForRebase(baseBundle.learners, operation.snapshot),
+    };
+  }
+
+  if (operation.kind === 'subjectStates.put') {
+    const key = subjectStateKey(operation.learnerId, operation.subjectId);
+    return {
+      ...operation,
+      record: mergeSubjectStateForRebase(baseBundle.subjectStates[key], operation.record, operation.mergeStrategy),
+    };
+  }
+
+  if (operation.kind === 'gameState.put') {
+    const key = gameStateKey(operation.learnerId, operation.systemId);
+    return {
+      ...operation,
+      state: mergePlainObjects(baseBundle.gameState[key], operation.state),
+    };
+  }
+
+  return operation;
+}
+
+function expectedRevisionForOperation(syncState, operation) {
+  const currentSyncState = cloneSyncState(syncState);
+  if (operation.scopeType === 'account') return currentSyncState.accountRevision;
+  return Math.max(0, Number(currentSyncState.learnerRevisions[operation.scopeId]) || 0);
+}
+
+function rebaseOperationsForSyncState(operations, baseSyncState, baseBundle = emptyApiBundle(), { rebasePayloads = false } = {}) {
+  let nextSyncState = cloneSyncState(baseSyncState);
+  const workingBundle = normaliseRepositoryBundle(cloneSerialisable(baseBundle));
+  let rebasedCount = 0;
+  let unblockedCount = 0;
+  const rebasedOperations = normalisePendingOperations(operations).map((operation) => {
+    const rebasedPayloadOperation = rebasePayloads ? rebaseOperationPayload(operation, workingBundle) : operation;
+    const expectedRevision = expectedRevisionForOperation(nextSyncState, rebasedPayloadOperation);
+    const wasBlocked = operation.status === OPERATION_STATUS_BLOCKED_STALE;
+    const nextOperation = {
+      ...rebasedPayloadOperation,
+      status: OPERATION_STATUS_PENDING,
+      expectedRevision,
+    };
+    if (wasBlocked) unblockedCount += 1;
+    if (
+      wasBlocked
+      || operation.expectedRevision !== expectedRevision
+      || JSON.stringify(operation.record || operation.state || null) !== JSON.stringify(nextOperation.record || nextOperation.state || null)
+    ) {
+      rebasedCount += 1;
+    }
+    nextSyncState = advanceSyncState(nextSyncState, nextOperation);
+    if (rebasePayloads) applyOperationToBundle(workingBundle, nextOperation);
+    return nextOperation;
+  });
+  return {
+    operations: rebasedOperations,
+    syncState: nextSyncState,
+    rebasedCount,
+    unblockedCount,
+  };
+}
+
 function createOperation(kind, payload = {}, syncState = emptySyncState(), now = Date.now) {
   const scope = operationScope({ kind, ...payload });
   const currentSyncState = cloneSyncState(syncState);
@@ -641,14 +769,15 @@ function createOperation(kind, payload = {}, syncState = emptySyncState(), now =
 function classifyError(error, fallbackScope = 'remote-sync') {
   if (error instanceof RepositoryHttpError) {
     const retryable = error.status >= 500 || error.status === 0;
+    const staleWrite = error.status === 409 && error.code === 'stale_write';
     return createPersistenceError({
       phase: error.status === 409 ? 'remote-conflict' : 'remote-write',
       scope: fallbackScope,
       code: error.code || (error.status === 409 ? 'conflict' : 'remote_error'),
       message: error.payload?.message || error.text || error.message,
-      retryable,
+      retryable: staleWrite ? true : retryable,
       correlationId: error.correlationId,
-      resolution: error.status === 409 ? 'retry-sync-reloads-latest' : 'retry-sync',
+      resolution: staleWrite ? 'retry-sync-rebase-latest' : (error.status === 409 ? 'retry-sync-reloads-latest' : 'retry-sync'),
       details: {
         status: error.status,
         payload: error.payload && typeof error.payload === 'object' ? error.payload : null,
@@ -788,10 +917,10 @@ export function createApiPlatformRepositories({
         scope: 'remote-cache',
         code: blocked ? 'stale_write' : 'pending_sync',
         message: blocked
-          ? 'A newer remote change blocked one or more local writes. Retry sync to reload the latest remote state and discard the blocked local change.'
+          ? 'A newer remote change blocked one or more local writes. Retry sync will reload the latest remote state and reapply this browser\'s pending changes.'
           : `${countPending(pendingOperations)} cached change${countPending(pendingOperations) === 1 ? '' : 's'} still need remote sync.`,
-        retryable: !blocked,
-        resolution: blocked ? 'retry-sync-reloads-latest' : 'retry-sync',
+        retryable: true,
+        resolution: blocked ? 'retry-sync-rebase-latest' : 'retry-sync',
       });
     }
     return null;
@@ -853,20 +982,17 @@ export function createApiPlatformRepositories({
     return removed;
   }
 
-  function dropBlockedOperations() {
-    const blocked = blockedBranchOperations(pendingOperations);
-    if (!blocked.length) return 0;
-    const discarded = pendingOperations.filter((operation) => operationInBlockedBranch(operation, blocked));
-    pendingOperations = pendingOperations.filter((operation) => !operationInBlockedBranch(operation, blocked));
-    logSync('warn', 'sync.conflicts_discarded', {
-      discardedCount: discarded.length,
-      scopes: [...new Set(blocked.map((operation) => `${operation.scopeType}:${operation.scopeId}`))],
-    });
-    return discarded.length;
-  }
-
-  function applyHydratedState(remoteBundle, remoteSyncState) {
+  function applyHydratedState(remoteBundle, remoteSyncState, { rebasePending = false, rebasePayloads = false } = {}) {
     const localSelectedId = cache.learners.selectedId;
+    const rebase = rebasePending
+      ? rebaseOperationsForSyncState(pendingOperations, remoteSyncState, remoteBundle, { rebasePayloads })
+      : {
+        operations: normalisePendingOperations(pendingOperations),
+        syncState: replaySyncState(remoteSyncState, pendingOperations),
+        rebasedCount: 0,
+        unblockedCount: 0,
+      };
+    pendingOperations = rebase.operations;
     const effectiveBundle = applyPendingOperations(remoteBundle, pendingOperations);
     cache.meta = currentRepositoryMeta();
     const selectedId = typeof localSelectedId === 'string' && effectiveBundle.learners.byId[localSelectedId]
@@ -877,7 +1003,8 @@ export function createApiPlatformRepositories({
     cache.practiceSessions = effectiveBundle.practiceSessions;
     cache.gameState = effectiveBundle.gameState;
     cache.eventLog = effectiveBundle.eventLog;
-    syncState = replaySyncState(remoteSyncState, pendingOperations);
+    syncState = rebase.syncState;
+    return rebase;
   }
 
   function queueOperation(operation) {
@@ -1011,7 +1138,7 @@ export function createApiPlatformRepositories({
   async function syncOperation(operation) {
     const payload = await sendRemoteOperation(operation);
     removeOperationById(operation.id);
-    syncState = syncStateFromMutationResponse(syncState, operation, payload);
+    syncState = replaySyncState(syncStateFromMutationResponse(syncState, operation, payload), pendingOperations);
     markRemoteSuccess();
     persistLocalCache(operation.key || operation.kind);
     logSync('info', 'sync.operation_applied', {
@@ -1054,6 +1181,57 @@ export function createApiPlatformRepositories({
     recomputePersistence();
   }
 
+  async function hydrateRemoteState({ rebasePending = false, rebasePayloads = false, cacheScope = 'bootstrap' } = {}) {
+    try {
+      const payload = await fetchJson(fetchFn, joinUrl(baseUrl, '/api/bootstrap'), {
+        method: 'GET',
+        headers: { accept: 'application/json' },
+      }, authSession);
+      const remoteBundle = normaliseRepositoryBundle(payload);
+      const remoteSyncState = normaliseSyncState(payload?.syncState);
+      const rebase = applyHydratedState(remoteBundle, remoteSyncState, { rebasePending, rebasePayloads });
+      markRemoteSuccess();
+      persistLocalCache(cacheScope);
+      return rebase;
+    } catch (error) {
+      const persistenceError = classifyError(error, '/api/bootstrap');
+      markRemoteFailure(persistenceError);
+      const hasCacheFallback = Boolean(
+        cache.learners.allIds.length
+        || Object.keys(cache.subjectStates).length
+        || filterSessions(cache.practiceSessions).length
+        || Object.keys(cache.gameState).length
+        || (Array.isArray(cache.eventLog) && cache.eventLog.length)
+        || countPending(pendingOperations),
+      );
+      if (hasCacheFallback) return null;
+      throw error;
+    }
+  }
+
+  async function rebasePendingFromRemote(operation, cause, attempt) {
+    const rebase = await hydrateRemoteState({
+      rebasePending: true,
+      rebasePayloads: true,
+      cacheScope: operation.key || operation.kind || 'rebase-pending',
+    });
+    if (!rebase) return false;
+
+    logSync('info', 'sync.operation_rebased', {
+      id: operation.id,
+      kind: operation.kind,
+      scopeType: operation.scopeType,
+      scopeId: operation.scopeId,
+      staleExpectedRevision: operation.expectedRevision,
+      remoteRevision: cause?.payload?.currentRevision ?? null,
+      attempt,
+      rebasedCount: rebase.rebasedCount,
+      unblockedCount: rebase.unblockedCount,
+      pendingWriteCount: countPending(pendingOperations),
+    });
+    return true;
+  }
+
   async function processPendingQueue() {
     if (processing) {
       await processingLoop;
@@ -1063,6 +1241,7 @@ export function createApiPlatformRepositories({
     processing = true;
     syncScheduled = true;
     processingLoop = (async () => {
+      let staleRebaseAttempts = 0;
       while (true) {
         const nextOperation = firstQueueOperation(pendingOperations);
         if (!nextOperation) break;
@@ -1073,7 +1252,12 @@ export function createApiPlatformRepositories({
         try {
           await syncOperation(nextOperation);
         } catch (error) {
-          if (error instanceof RepositoryHttpError && error.status === 409) {
+          if (error instanceof RepositoryHttpError && error.status === 409 && error.code === 'stale_write' && staleRebaseAttempts < 3) {
+            staleRebaseAttempts += 1;
+            const rebased = await rebasePendingFromRemote(nextOperation, error, staleRebaseAttempts);
+            if (rebased) continue;
+            handleTransportFailure(nextOperation, error);
+          } else if (error instanceof RepositoryHttpError && error.status === 409) {
             handleConflict(nextOperation, error);
           } else {
             handleTransportFailure(nextOperation, error);
@@ -1111,9 +1295,12 @@ export function createApiPlatformRepositories({
         return persistenceChannel.subscribe(listener);
       },
       async retry() {
-        const discardedCount = dropBlockedOperations();
-        await repositories.hydrate();
-        if (discardedCount) persistLocalCache('discard-blocked');
+        const blocked = hasBlockedOperations(pendingOperations);
+        await repositories.hydrate({
+          cacheScope: countPending(pendingOperations) ? 'retry-rebase' : 'retry-sync',
+          rebasePending: countPending(pendingOperations) > 0,
+          rebasePayloads: blocked,
+        });
         await repositories.flush();
         const snapshot = persistenceChannel.read();
         if (snapshot.mode === PERSISTENCE_MODES.DEGRADED) {
@@ -1122,32 +1309,9 @@ export function createApiPlatformRepositories({
         return snapshot;
       },
     },
-    async hydrate() {
-      try {
-        const payload = await fetchJson(fetchFn, joinUrl(baseUrl, '/api/bootstrap'), {
-          method: 'GET',
-          headers: { accept: 'application/json' },
-        }, authSession);
-        const remoteBundle = normaliseRepositoryBundle(payload);
-        const remoteSyncState = normaliseSyncState(payload?.syncState);
-        applyHydratedState(remoteBundle, remoteSyncState);
-        markRemoteSuccess();
-        persistLocalCache('bootstrap');
-        return undefined;
-      } catch (error) {
-        const persistenceError = classifyError(error, '/api/bootstrap');
-        markRemoteFailure(persistenceError);
-        const hasCacheFallback = Boolean(
-          cache.learners.allIds.length
-          || Object.keys(cache.subjectStates).length
-          || filterSessions(cache.practiceSessions).length
-          || Object.keys(cache.gameState).length
-          || (Array.isArray(cache.eventLog) && cache.eventLog.length)
-          || countPending(pendingOperations),
-        );
-        if (hasCacheFallback) return undefined;
-        throw error;
-      }
+    async hydrate(options = {}) {
+      await hydrateRemoteState(options);
+      return undefined;
     },
     async flush() {
       await processPendingQueue();
@@ -1200,15 +1364,16 @@ export function createApiPlatformRepositories({
         return output;
       },
       writeUi(learnerId, subjectId, ui) {
-        return this.writeRecord(learnerId, subjectId, mergeSubjectUi(this.read(learnerId, subjectId), ui, nowTs()));
+        return this.writeRecord(learnerId, subjectId, mergeSubjectUi(this.read(learnerId, subjectId), ui, nowTs()), 'ui');
       },
       writeData(learnerId, subjectId, data) {
-        return this.writeRecord(learnerId, subjectId, mergeSubjectData(this.read(learnerId, subjectId), data, nowTs()));
+        return this.writeRecord(learnerId, subjectId, mergeSubjectData(this.read(learnerId, subjectId), data, nowTs()), 'data');
       },
-      writeRecord(learnerId, subjectId, record) {
+      writeRecord(learnerId, subjectId, record, mergeStrategy = 'replace') {
         const operation = createOperation('subjectStates.put', {
           learnerId,
           subjectId,
+          mergeStrategy,
           record: normaliseSubjectStateRecord(record),
         }, syncState);
         queueOperation(operation);

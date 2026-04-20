@@ -157,7 +157,7 @@ export function createAppHarness({
           .then(() => {
             tts.stop();
             runtimeBoundary.clearAll();
-            store.reloadFromRepositories();
+            store.reloadFromRepositories({ preserveRoute: true });
           })
           .catch(() => {
             // persistence state remains visible through the subscribed store snapshot.

@@ -449,7 +449,7 @@ function handleGlobalAction(action, data) {
       .then(() => {
         tts.stop();
         runtimeBoundary.clearAll();
-        store.reloadFromRepositories();
+        store.reloadFromRepositories({ preserveRoute: true });
       })
       .catch((error) => {
         globalThis.console?.warn?.('Persistence retry failed.', error);

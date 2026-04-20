@@ -168,8 +168,13 @@ export function createStore(subjects, { repositories } = {}) {
     return resolvedRepositories.learners.write(nextLearners);
   }
 
-  function reloadFromRepositories() {
-    state = sanitiseState(stateFromRepositories(registry, resolvedRepositories), registry);
+  function reloadFromRepositories({ preserveRoute = false } = {}) {
+    const previousRoute = state.route;
+    const nextState = stateFromRepositories(registry, resolvedRepositories);
+    state = sanitiseState({
+      ...nextState,
+      route: preserveRoute ? previousRoute : nextState.route,
+    }, registry);
     notify();
     return state;
   }

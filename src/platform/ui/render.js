@@ -85,7 +85,7 @@ function persistenceSummary(snapshot) {
   if (snapshot?.mode === 'degraded') {
     if (snapshot?.remoteAvailable) {
       if (snapshot?.lastError?.code === 'stale_write') {
-        return 'Another tab or device changed this learner before this write reached the server. This browser is showing a local blocked branch. Retry sync will reload the latest remote state and discard the blocked local change.';
+        return 'Another tab or device changed this learner before this write reached the server. Retry sync will reload the latest remote state and reapply this browser\'s pending changes.';
       }
       if (snapshot?.lastError?.code === 'idempotency_reuse') {
         return 'A retry reused an old mutation request id for different data. Retry sync will reload the latest remote state before any new write is accepted.';
@@ -103,7 +103,29 @@ function persistenceSummary(snapshot) {
 }
 
 function persistenceDebug(snapshot) {
-  return snapshot?.lastError?.message || 'No persistence error recorded.';
+  const error = snapshot?.lastError;
+  if (!error) return 'No persistence error recorded.';
+
+  const payload = error.details?.payload || {};
+  const fields = [
+    error.message,
+    error.code ? `Code: ${error.code}` : null,
+    error.phase ? `Phase: ${error.phase}` : null,
+    error.scope ? `Scope: ${error.scope}` : null,
+    error.resolution ? `Resolution: ${error.resolution}` : null,
+    error.details?.status ? `HTTP: ${error.details.status}` : null,
+    error.details?.method && error.details?.url ? `Request: ${error.details.method} ${error.details.url}` : null,
+    payload.kind ? `Mutation: ${payload.kind}` : null,
+    payload.scopeType && payload.scopeId ? `Mutation scope: ${payload.scopeType}:${payload.scopeId}` : null,
+    payload.requestId ? `Request id: ${payload.requestId}` : null,
+    payload.correlationId || error.correlationId ? `Correlation id: ${payload.correlationId || error.correlationId}` : null,
+    Number.isFinite(Number(payload.expectedRevision)) ? `Expected revision: ${payload.expectedRevision}` : null,
+    Number.isFinite(Number(payload.currentRevision)) ? `Current revision: ${payload.currentRevision}` : null,
+    `Pending writes: ${Number(snapshot?.pendingWriteCount) || 0}`,
+    `In-flight writes: ${Number(snapshot?.inFlightWriteCount) || 0}`,
+  ].filter(Boolean);
+
+  return fields.join('\n');
 }
 
 function renderPersistenceChip(snapshot) {
