@@ -105,6 +105,51 @@ test('retryable remote failures can leave degraded mode and clear pending writes
   assert.equal(restored.learners.read().selectedId, 'learner-a');
 });
 
+test('successful sync logging is quiet by default and available behind the debug flag', async () => {
+  const originalInfo = globalThis.console.info;
+  const originalDebugFlag = globalThis.KS2_SYNC_DEBUG;
+  const messages = [];
+  globalThis.console.info = (...args) => messages.push(args);
+  delete globalThis.KS2_SYNC_DEBUG;
+
+  try {
+    const quietServer = createMockRepositoryServer();
+    const quietRepositories = createApiPlatformRepositories({
+      baseUrl: 'https://repo.test',
+      fetch: quietServer.fetch.bind(quietServer),
+      storage: installMemoryStorage(),
+    });
+
+    await quietRepositories.hydrate();
+    quietRepositories.learners.write(learnerSnapshot());
+    await waitForPersistenceIdle(quietRepositories);
+
+    assert.equal(messages.length, 0);
+
+    globalThis.KS2_SYNC_DEBUG = true;
+    const debugServer = createMockRepositoryServer();
+    const debugRepositories = createApiPlatformRepositories({
+      baseUrl: 'https://repo.test',
+      fetch: debugServer.fetch.bind(debugServer),
+      storage: installMemoryStorage(),
+    });
+
+    await debugRepositories.hydrate();
+    debugRepositories.learners.write(learnerSnapshot());
+    await waitForPersistenceIdle(debugRepositories);
+
+    assert.equal(messages.some((args) => String(args[0]).includes('[ks2-sync]')), true);
+    assert.equal(messages.some((args) => String(args[1]).includes('sync.operation_applied')), true);
+  } finally {
+    globalThis.console.info = originalInfo;
+    if (originalDebugFlag === undefined) {
+      delete globalThis.KS2_SYNC_DEBUG;
+    } else {
+      globalThis.KS2_SYNC_DEBUG = originalDebugFlag;
+    }
+  }
+});
+
 test('reload after failed sync keeps the local cache ahead of stale remote data instead of losing the unsynced change', async () => {
   const sharedStorage = installMemoryStorage();
   const server = createMockRepositoryServer();

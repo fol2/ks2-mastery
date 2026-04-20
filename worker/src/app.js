@@ -47,6 +47,37 @@ function mutationFromRequest(body, request) {
   };
 }
 
+async function sessionPayload({ session, auth, env, now }) {
+  if (!session) {
+    return {
+      ok: true,
+      auth: auth.describe(),
+      session: null,
+      account: null,
+      learnerCount: 0,
+    };
+  }
+
+  const repository = createWorkerRepository({ env, now });
+  const account = await repository.ensureAccount(session);
+  const learnerIds = await repository.accessibleLearnerIds(session.accountId);
+  return {
+    ok: true,
+    auth: auth.describe(),
+    session,
+    account: account
+      ? {
+        id: account.id,
+        email: account.email,
+        displayName: account.display_name,
+        selectedLearnerId: account.selected_learner_id || null,
+        repoRevision: Number(account.repo_revision) || 0,
+      }
+      : null,
+    learnerCount: learnerIds.length,
+  };
+}
+
 export function createWorkerApp({ now = Date.now } = {}) {
   return {
     async fetch(request, env) {
@@ -78,25 +109,21 @@ export function createWorkerApp({ now = Date.now } = {}) {
         }
 
         if (url.pathname === '/api/session' && request.method === 'GET') {
-          const session = await auth.requireSession(request);
-          const repository = createWorkerRepository({ env, now });
-          const account = await repository.ensureAccount(session);
-          const learnerIds = await repository.accessibleLearnerIds(session.accountId);
-          return json({
-            ok: true,
-            auth: auth.describe(),
-            session,
-            account: account
-              ? {
-                id: account.id,
-                email: account.email,
-                displayName: account.display_name,
-                selectedLearnerId: account.selected_learner_id || null,
-                repoRevision: Number(account.repo_revision) || 0,
-              }
-              : null,
-            learnerCount: learnerIds.length,
-          });
+          return json(await sessionPayload({
+            session: await auth.requireSession(request),
+            auth,
+            env,
+            now,
+          }));
+        }
+
+        if (url.pathname === '/api/auth/session' && request.method === 'GET') {
+          return json(await sessionPayload({
+            session: await auth.getSession(request),
+            auth,
+            env,
+            now,
+          }));
         }
 
         if (url.pathname === '/api/auth/register' && request.method === 'POST') {

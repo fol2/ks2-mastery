@@ -157,7 +157,29 @@ function normaliseSyncState(rawValue) {
   };
 }
 
+function syncDebugEnabled() {
+  const explicit = globalThis.KS2_SYNC_DEBUG;
+  if (explicit === true || explicit === 'true' || explicit === '1') return true;
+
+  try {
+    const stored = globalThis.localStorage?.getItem?.('ks2-sync-debug');
+    return stored === '1' || stored === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function shouldLogSync(level) {
+  const normalised = String(level || 'log').toLowerCase();
+  if (normalised === 'info' || normalised === 'debug' || normalised === 'log') {
+    return syncDebugEnabled();
+  }
+  return true;
+}
+
 function logSync(level, event, details = {}) {
+  if (!shouldLogSync(level)) return;
+
   const payload = {
     event,
     ...cloneSerialisable(details),

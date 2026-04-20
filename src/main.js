@@ -151,18 +151,18 @@ async function createRepositoriesForCurrentRuntime() {
     };
   }
 
-  const sessionResponse = await credentialFetch('/api/session', {
+  const sessionResponse = await credentialFetch('/api/auth/session', {
     headers: { accept: 'application/json' },
   });
+  const sessionPayload = await sessionResponse.json().catch(() => null);
 
-  if (!sessionResponse.ok) {
+  if (!sessionResponse.ok || !sessionPayload?.session?.accountId) {
     const params = new URLSearchParams(globalThis.location.search);
     renderAuthScreen({ error: params.get('auth_error') || '' });
     bindAuthScreen();
     await new Promise(() => {});
   }
 
-  const sessionPayload = await sessionResponse.json();
   const accountId = sessionPayload?.session?.accountId || 'unknown';
   const apiRepositories = createApiPlatformRepositories({
     baseUrl: '',

@@ -71,6 +71,25 @@ test('production email registration creates an authenticated D1-backed session',
   server.close();
 });
 
+test('production auth session probe returns an unauthenticated payload without changing the protected session route', async () => {
+  const server = productionServer();
+
+  const protectedSession = await server.fetchRaw('https://repo.test/api/session');
+  assert.equal(protectedSession.status, 401);
+
+  const authSession = await server.fetchRaw('https://repo.test/api/auth/session');
+  const payload = await authSession.json();
+
+  assert.equal(authSession.status, 200);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.auth.mode, 'production');
+  assert.equal(payload.session, null);
+  assert.equal(payload.account, null);
+  assert.equal(payload.learnerCount, 0);
+
+  server.close();
+});
+
 test('production email registration does not rely on transaction control SQL', async () => {
   const server = productionServer();
   server.env.DB = rejectTransactionSql(server.DB);
@@ -130,6 +149,13 @@ test('production logout clears the server session and cookie', async () => {
     headers: { cookie },
   });
   assert.equal(session.status, 401);
+
+  const authSession = await server.fetchRaw('https://repo.test/api/auth/session', {
+    headers: { cookie },
+  });
+  const authSessionPayload = await authSession.json();
+  assert.equal(authSession.status, 200);
+  assert.equal(authSessionPayload.session, null);
 
   server.close();
 });
