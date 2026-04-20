@@ -70,13 +70,11 @@ export function derivePhaeton(state) {
   const ink = countMastered(state, 'inklet');
   const glim = countMastered(state, 'glimmerbug');
   const combined = ink + glim;
-  const bothCaught = ink >= 10 && glim >= 10;
-  const bothMax = ink >= 100 && glim >= 100;
   let stage = 0;
-  if (bothMax) stage = 4;
-  else if (bothCaught && combined >= 120) stage = 3;
-  else if (bothCaught && combined >= 60) stage = 2;
-  else if (bothCaught && combined >= 20) stage = 1;
+  if (combined >= 200) stage = 4;
+  else if (combined >= 145) stage = 3;
+  else if (combined >= 95) stage = 2;
+  else if (combined >= 25) stage = 1;
   return {
     mastered: combined,
     stage,

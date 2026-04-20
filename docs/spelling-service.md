@@ -91,6 +91,13 @@ The platform runtime may then derive additional platform-wide events such as `pl
 The spelling reward subscriber translates `spelling.word-secured` into monster/codex reaction events and persisted reward history.
 Codex display counts are projected from current spelling progress (`stage >= 4`) rather than from reward history, so imported or repaired learner progress cannot drift from the analytics secure counts.
 
+Current spelling Codex stage thresholds are:
+
+- Inklet and Glimmerbug: Stage 1 at 10 secure words, Stage 2 at 30, Stage 3 at 60, Stage 4 at 90
+- Phaeton: Stage 1 at 25 combined secure words, Stage 2 at 95, Stage 3 at 145, Stage 4 at 200
+
+Phaeton uses the combined secure-word count directly. It does not require both Year 3-4 and Year 5-6 pools to cross the same threshold first.
+
 ## Legacy behaviors intentionally preserved
 
 These were kept on purpose:

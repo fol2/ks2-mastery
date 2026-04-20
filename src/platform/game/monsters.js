@@ -24,9 +24,9 @@ export const MONSTERS_BY_SUBJECT = {
 };
 
 export function stageFor(mastered) {
-  if (mastered >= 100) return 4;
-  if (mastered >= 80) return 3;
-  if (mastered >= 50) return 2;
+  if (mastered >= 90) return 4;
+  if (mastered >= 60) return 3;
+  if (mastered >= 30) return 2;
   if (mastered >= 10) return 1;
   return 0;
 }
