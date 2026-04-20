@@ -33,6 +33,7 @@ export function createAppHarness({
   subscribers = null,
   runtimeBoundary = createSubjectRuntimeBoundary(),
   scheduler = null,
+  extraServices = {},
 } = {}) {
   const tts = makeTts();
   const services = {
@@ -41,6 +42,7 @@ export function createAppHarness({
       now,
       tts,
     }),
+    ...extraServices,
   };
 
   const eventRuntime = createEventRuntime({

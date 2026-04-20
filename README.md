@@ -22,15 +22,17 @@ The goal is not to polish the old prototype. The goal is to give the product a s
 - `worker/*`
   - A Cloudflare-friendly backend with D1-backed repository routes, account-scoped spelling content, learner ownership checks, production sessions, Worker-side OpenAI TTS proxying, and thin Parent/Admin hub routes.
 - `docs/*`
-  - Audit, architecture, refactor plan, migration map, repository notes, ownership/access notes, state-integrity notes, spelling-service and spelling-content notes, a direct spelling parity audit, and operating-surface notes.
+  - Audit, architecture, refactor plan, migration map, repository notes, ownership/access notes, state-integrity notes, spelling-service and spelling-content notes, a direct spelling parity audit, operating-surface notes, and the subject-expansion readiness gate.
 - `tests/*`
-  - Node tests covering the spelling service, reward events, shared store, repository parity, state recovery, import/export round-trips including legacy spelling progress imports, subject runtime containment, hub read models, Worker access, TTS, auth, and golden-path smoke flows.
+  - Node tests covering the spelling service, reward events, shared store, repository parity, state recovery, import/export round-trips including legacy spelling progress imports, subject runtime containment, hub read models, Worker access, TTS, auth, golden-path smoke flows, and reusable subject-expansion conformance.
 
 ## Status
 
 English Spelling works in the new structure.
 
 Production on `ks2.eugnel.uk` uses the API adapter by default after sign-in. Direct file/local mode, or `?local=1`, still uses browser storage for development only. The API adapter reports explicit persistence modes (`local-only`, `remote-sync`, `degraded`) so failed remote writes are visible instead of being treated as silent success. The Worker is D1-backed with learner ownership enforcement, atomic account / learner revision checks, idempotent request replay, account-scoped spelling content routes, role-aware Parent/Admin hub read routes, and OpenAI TTS as the production dictation default.
+
+The repo now has a reusable subject-expansion harness and an explicit expansion-readiness gate. The gate is a narrow **GO** for the first Arithmetic thin slice only; it is not a claim that the full multi-subject SaaS is finished.
 
 The other five subjects are intentionally placeholders. They already have:
 
@@ -98,6 +100,18 @@ The shell now has two explicit adult-facing routes:
 These are intentionally thin.
 They reuse durable platform data and keep reporting logic out of the spelling engine.
 The local reference build includes visible role switching for inspection; the Worker path provides permission-checked hub endpoints and D1-backed account role changes.
+
+## Subject expansion gate
+
+Pass 13 turns "add a second subject" into a controlled engineering change.
+
+- `tests/helpers/subject-expansion-harness.js` provides reusable conformance and golden-path smoke suites.
+- `tests/helpers/expansion-fixture-subject.js` is a non-production fixture proving the shell can carry a second deterministic thin slice.
+- `tests/subject-expansion.test.js` runs the same acceptance path against English Spelling and the fixture.
+- `docs/subject-expansion.md` defines the add-a-subject checklist.
+- `docs/expansion-readiness.md` records the narrow GO decision for the future Arithmetic thin slice.
+
+The fixture is not a shipped product subject, and Arithmetic is still intentionally not implemented in this pass.
 
 ## Important note
 
