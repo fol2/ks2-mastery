@@ -661,6 +661,16 @@ root.addEventListener('change', (event) => {
   dispatchAction(action, extractActionData(target));
 });
 
+root.addEventListener('input', (event) => {
+  const target = event.target.closest('[data-action]');
+  if (!target) return;
+  const action = target.dataset.action;
+  if (!action) return;
+  if (!['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
+  if (['checkbox', 'radio', 'file'].includes(String(target.type || '').toLowerCase())) return;
+  dispatchAction(action, extractActionData(target));
+});
+
 root.addEventListener('submit', (event) => {
   const form = event.target.closest('form[data-action]');
   if (!form) return;

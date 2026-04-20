@@ -249,6 +249,15 @@ test('analytics snapshot is explicit and normalised', () => {
   assert.deepEqual(Object.keys(snapshot.pools), ['all', 'y34', 'y56']);
   assert.equal(snapshot.pools.all.total > 0, true);
   assert.equal(snapshot.pools.all.accuracy, null);
+  assert.deepEqual(snapshot.wordGroups.map((group) => group.key), ['y3-4', 'y5-6']);
+  assert.equal(snapshot.wordGroups[0].title, 'Years 3-4');
+  const possess = snapshot.wordGroups.flatMap((group) => group.words).find((word) => word.slug === 'possess');
+  assert.ok(possess);
+  assert.equal(possess.word, 'possess');
+  assert.equal(possess.family, 'possess(ion)');
+  assert.equal(possess.status, 'new');
+  assert.equal(possess.progress.stage, 0);
+  assert.equal(possess.stageLabel, 'New / due today');
 });
 
 test('malformed persisted session state falls back safely instead of crashing', () => {

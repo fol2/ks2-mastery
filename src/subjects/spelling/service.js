@@ -275,6 +275,43 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return normaliseStats(engine.lifetimeStats(learnerId, normaliseYearFilter(yearFilter, 'all')));
   }
 
+  function analyticsWordRow(learnerId, word) {
+    const progress = engine.getProgress(learnerId, word.slug);
+    return {
+      slug: word.slug,
+      word: word.word,
+      family: word.family,
+      year: word.year,
+      yearLabel: word.yearLabel,
+      familyWords: Array.isArray(word.familyWords) ? [...word.familyWords] : [],
+      status: engine.statusForWord(learnerId, word),
+      stageLabel: engine.stageLabel(progress.stage),
+      progress: {
+        stage: progress.stage,
+        attempts: progress.attempts,
+        correct: progress.correct,
+        wrong: progress.wrong,
+        dueDay: progress.dueDay,
+        lastDay: progress.lastDay,
+        lastResult: progress.lastResult,
+      },
+    };
+  }
+
+  function analyticsWordGroups(learnerId) {
+    const groups = [
+      { key: 'y3-4', title: 'Years 3-4', year: '3-4' },
+      { key: 'y5-6', title: 'Years 5-6', year: '5-6' },
+    ];
+    return groups.map((group) => ({
+      key: group.key,
+      title: group.title,
+      words: runtimeWords
+        .filter((word) => word.year === group.year)
+        .map((word) => analyticsWordRow(learnerId, word)),
+    }));
+  }
+
   function getAnalyticsSnapshot(learnerId) {
     return {
       version: SPELLING_SERVICE_STATE_VERSION,
@@ -284,6 +321,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
         y34: getStats(learnerId, 'y3-4'),
         y56: getStats(learnerId, 'y5-6'),
       },
+      wordGroups: analyticsWordGroups(learnerId),
     };
   }
 

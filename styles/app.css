@@ -382,6 +382,65 @@ input:focus, select:focus, textarea:focus, button:focus-visible {
   cursor: pointer;
 }
 
+.analytics-search-field {
+  min-width: min(100%, 260px);
+  max-width: 320px;
+}
+.word-bank-card .card-header {
+  flex-wrap: wrap;
+}
+.word-bank-groups {
+  display: grid;
+  gap: 14px;
+}
+.word-bank-group {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+  background: #fbfaf6;
+}
+.word-bank-group h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.word-bank-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.word-progress-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel-soft);
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.word-progress-pill:hover {
+  filter: brightness(0.98);
+}
+.word-progress-pill.good {
+  background: var(--good-soft);
+  border-color: #b8dfca;
+  color: var(--good);
+}
+.word-progress-pill.warn {
+  background: var(--warn-soft);
+  border-color: #edd9ae;
+  color: #9e6a19;
+}
+.word-progress-pill.bad {
+  background: var(--bad-soft);
+  border-color: #f0c8c5;
+  color: var(--bad);
+}
+
 .codex-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));

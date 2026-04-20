@@ -58,6 +58,91 @@ function renderCodex(learnerId, gameStateRepository) {
   `;
 }
 
+function normaliseSearchText(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function wordProgressTone(status) {
+  if (status === 'secure') return 'good';
+  if (status === 'due') return 'warn';
+  if (status === 'trouble') return 'bad';
+  return 'neutral';
+}
+
+function wordStatusLabel(status) {
+  const labels = {
+    new: 'New',
+    learning: 'Learning',
+    due: 'Due',
+    secure: 'Secure',
+    trouble: 'Trouble',
+  };
+  return labels[status] || 'Learning';
+}
+
+function wordMatchesSearch(word, query) {
+  if (!query) return true;
+  const fields = [
+    word.slug,
+    word.word,
+    word.family,
+    word.yearLabel,
+    ...(Array.isArray(word.familyWords) ? word.familyWords : []),
+  ].map(normaliseSearchText);
+  return fields.some((field) => field.includes(query));
+}
+
+function renderWordBankProgress({ analytics, searchQuery = '' }) {
+  const query = normaliseSearchText(searchQuery);
+  const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
+  return `
+    <section class="card word-bank-card" style="grid-column:1/-1;">
+      <div class="card-header">
+        <div>
+          <div class="eyebrow">Word bank</div>
+          <h2 class="section-title">Word bank progress</h2>
+        </div>
+        <label class="field analytics-search-field">
+          <span>Search</span>
+          <input class="input" type="search" name="spellingAnalyticsSearch" autocomplete="off" value="${escapeHtml(searchQuery)}" data-action="spelling-analytics-search" placeholder="Word or family" />
+        </label>
+      </div>
+      <div class="chip-row" style="margin-bottom:14px;">
+        <span class="chip neutral">New</span>
+        <span class="chip neutral">Learning</span>
+        <span class="chip warn">Due</span>
+        <span class="chip good">Secure</span>
+        <span class="chip bad">Trouble</span>
+      </div>
+      <div class="word-bank-groups">
+        ${groups.map((group) => {
+          const visibleWords = (Array.isArray(group.words) ? group.words : []).filter((word) => wordMatchesSearch(word, query));
+          const secureCount = visibleWords.filter((word) => word.status === 'secure').length;
+          const summary = visibleWords.length
+            ? `${secureCount} secure out of ${visibleWords.length} visible spellings`
+            : 'No spellings match this search.';
+          return `
+            <section class="word-bank-group">
+              <div class="inline-row spread">
+                <h3>${escapeHtml(group.title)}</h3>
+                <span class="muted small">${escapeHtml(summary)}</span>
+              </div>
+              <div class="word-bank-pills">
+                ${visibleWords.length ? visibleWords.map((word) => {
+                  const tone = wordProgressTone(word.status);
+                  const label = wordStatusLabel(word.status);
+                  const title = `${word.word} · ${word.family} · ${word.stageLabel} · correct ${word.progress.correct}, wrong ${word.progress.wrong}`;
+                  return `<button type="button" class="word-progress-pill ${tone}" data-action="spelling-drill-single" data-slug="${escapeHtml(word.slug)}" title="${escapeHtml(title)}" aria-label="${escapeHtml(`${word.word}, ${label}, ${word.stageLabel}`)}">${escapeHtml(word.word)}</button>`;
+                }).join('') : '<div class="muted small">Try another search.</div>'}
+              </div>
+            </section>
+          `;
+        }).join('')}
+      </div>
+    </section>
+  `;
+}
+
 function renderPracticeDashboard({ learner, service, subject, repositories }) {
   const accent = accentFor(subject);
   const prefs = service.getPrefs(learner.id);
@@ -266,8 +351,9 @@ function renderSummary({ learner, ui, service, subject, repositories }) {
   `;
 }
 
-function renderAnalytics({ learner, service, repositories }) {
+function renderAnalytics({ appState, learner, service, repositories }) {
   const analytics = service.getAnalyticsSnapshot(learner.id);
+  const searchQuery = appState?.subjectUi?.spelling?.analyticsWordSearch || '';
   const all = analytics.pools.all;
   const y34 = analytics.pools.y34;
   const y56 = analytics.pools.y56;
@@ -309,6 +395,7 @@ function renderAnalytics({ learner, service, repositories }) {
         <p class="subtitle">This remains separate from the learning loop. The engine decides mastery; the game system reacts to secure words after the fact.</p>
         ${renderCodex(learner.id, repositories?.gameState)}
       </section>
+      ${renderWordBankProgress({ analytics, searchQuery })}
     </div>
   `;
 }
@@ -479,6 +566,20 @@ export const spellingModule = {
     if (action === 'spelling-toggle-pref') {
       service.savePrefs(learnerId, { [data.pref]: data.checked === true });
       store.updateSubjectUi('spelling', { phase: 'dashboard', error: '' });
+      return true;
+    }
+
+    if (action === 'spelling-analytics-search') {
+      const analyticsWordSearch = String(data.value || '').slice(0, 80);
+      store.patch((current) => ({
+        subjectUi: {
+          ...current.subjectUi,
+          spelling: {
+            ...current.subjectUi.spelling,
+            analyticsWordSearch,
+          },
+        },
+      }));
       return true;
     }
 
