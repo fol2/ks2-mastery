@@ -5,6 +5,8 @@ import { createSubjectRuntimeBoundary } from '../../src/platform/core/subject-ru
 import { createSpellingService } from '../../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../../src/subjects/spelling/repository.js';
 import { createSpellingRewardSubscriber } from '../../src/subjects/spelling/event-hooks.js';
+import { createSpellingAutoAdvanceController } from '../../src/subjects/spelling/auto-advance.js';
+import { resolveSpellingShortcut } from '../../src/subjects/spelling/shortcuts.js';
 import { renderApp } from '../../src/platform/ui/render.js';
 import { SUBJECTS } from '../../src/platform/core/subject-registry.js';
 
@@ -30,6 +32,7 @@ export function createAppHarness({
   now = () => Date.now(),
   subscribers = null,
   runtimeBoundary = createSubjectRuntimeBoundary(),
+  scheduler = null,
 } = {}) {
   const tts = makeTts();
   const services = {
@@ -49,6 +52,12 @@ export function createAppHarness({
   });
 
   const store = createStore(subjects, { repositories });
+  const autoAdvance = createSpellingAutoAdvanceController({
+    getState: () => store.getState(),
+    dispatchContinue: () => dispatch('spelling-continue'),
+    setTimeoutFn: scheduler?.setTimeout?.bind(scheduler),
+    clearTimeoutFn: scheduler?.clearTimeout?.bind(scheduler),
+  });
 
   function applySubjectTransition(subjectId, transition) {
     if (!transition) return false;
@@ -65,6 +74,7 @@ export function createAppHarness({
       tab: store.getState().route.tab || 'practice',
     });
     if (transition.audio?.word) tts.speak(transition.audio);
+    if (subjectId === 'spelling') autoAdvance.scheduleFromTransition(transition);
     return true;
   }
 
@@ -91,6 +101,7 @@ export function createAppHarness({
   }
 
   function dispatch(action, data = {}) {
+    autoAdvance.clear();
     const appState = store.getState();
     const learnerId = appState.learners.selectedId;
 
@@ -174,6 +185,16 @@ export function createAppHarness({
     }
   }
 
+  function keydown(eventLike = {}) {
+    const shortcut = resolveSpellingShortcut(eventLike, store.getState());
+    if (!shortcut) return false;
+    if (shortcut.action) {
+      dispatch(shortcut.action, shortcut.data || {});
+      return true;
+    }
+    return Boolean(shortcut.focusSelector);
+  }
+
   return {
     store,
     repositories,
@@ -185,5 +206,8 @@ export function createAppHarness({
     contextFor,
     render,
     dispatch,
+    keydown,
+    autoAdvance,
+    scheduler,
   };
 }

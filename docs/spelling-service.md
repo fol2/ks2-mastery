@@ -91,13 +91,36 @@ The spelling reward subscriber translates `spelling.word-secured` into monster/c
 These were kept on purpose:
 
 - smart-review weighted selection and trouble-drill fallback behavior
+- live spelling cards hide family cues during recall; family words only surface once the flow allows them
 - new words in learning mode need two clean hits in the same round before the round is done
 - wrong first attempt enters retry without revealing the answer
 - wrong retry enters correction and then schedules one clean blind return later in the round
 - corrected words still count as due again for future review
 - SATs test mode is single-attempt per word
 - skipping only works in learning question phase and pushes the word later in the round
+- marked cards auto-advance after the preserved short delay instead of needing an extra manual confirmation step
+- the preserved shortcut loop remains available inside active Spelling practice (`Esc`, `Shift+Esc`, `Alt+1/2/3`, `Alt+S`, `Alt+K`) while still avoiding cross-subject collisions in the wider shell
 - stage progression and due-day scheduling still come from the preserved legacy engine
+
+## Pass 10 parity notes
+
+Pass 10 was a parity-hardening pass rather than a new-feature pass.
+
+What was brought back into line with the direct legacy baseline:
+
+- live cards no longer leak family cues during recall
+- retry / correction controls use the preserved phase-specific wording again
+- live sessions confirm before they are abandoned explicitly
+- the rebuilt slice now auto-advances after marked cards with the same broad timing intent as the older single-page flow
+- the practical keyboard loop was restored inside the active Spelling practice surface
+
+What remains intentionally different:
+
+- platform-level resume across learner switches/navigation/reload still stays broader than legacy
+- the full searchable word-bank drill surface is still not rebuilt
+- provider-specific API TTS controls and warm-up behaviour are still deferred
+
+See `docs/spelling-parity.md` for the full matrix and the explicit remaining deltas.
 
 ## Bug fixes made in this hardening pass
 

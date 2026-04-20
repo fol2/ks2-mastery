@@ -12,6 +12,8 @@ import { createBrowserTts } from './subjects/spelling/tts.js';
 import { createSpellingService } from './subjects/spelling/service.js';
 import { createSpellingPersistence } from './subjects/spelling/repository.js';
 import { createSpellingRewardSubscriber } from './subjects/spelling/event-hooks.js';
+import { createSpellingAutoAdvanceController } from './subjects/spelling/auto-advance.js';
+import { resolveSpellingShortcut } from './subjects/spelling/shortcuts.js';
 import {
   exportLearnerSnapshot,
   exportPlatformSnapshot,
@@ -276,6 +278,11 @@ async function handleImportFileChange(input) {
 
 const store = createStore(SUBJECTS, { repositories });
 
+const spellingAutoAdvance = createSpellingAutoAdvanceController({
+  getState: () => store.getState(),
+  dispatchContinue: () => dispatchAction('spelling-continue'),
+});
+
 function applySubjectTransition(subjectId, transition) {
   if (!transition) return false;
   store.updateSubjectUi(subjectId, transition.state);
@@ -294,6 +301,7 @@ function applySubjectTransition(subjectId, transition) {
   });
 
   if (transition.audio?.word) tts.speak(transition.audio);
+  if (subjectId === 'spelling') spellingAutoAdvance.scheduleFromTransition(transition);
   return true;
 }
 
@@ -487,6 +495,7 @@ function handleSubjectAction(action, data) {
 }
 
 function dispatchAction(action, data = {}) {
+  spellingAutoAdvance.clear();
   if (handleGlobalAction(action, data)) return;
   handleSubjectAction(action, data);
 }
@@ -536,4 +545,20 @@ root.addEventListener('submit', (event) => {
   dispatchAction(form.dataset.action, {
     formData: new FormData(form),
   });
+});
+
+globalThis.addEventListener?.('keydown', (event) => {
+  const shortcut = resolveSpellingShortcut(event, store.getState());
+  if (!shortcut) return;
+  if (shortcut.preventDefault) event.preventDefault();
+  if (shortcut.focusSelector) {
+    const input = root.querySelector(shortcut.focusSelector);
+    if (input) {
+      input.focus();
+      input.select?.();
+    }
+    return;
+  }
+  if (!shortcut.action) return;
+  dispatchAction(shortcut.action, shortcut.data || {});
 });

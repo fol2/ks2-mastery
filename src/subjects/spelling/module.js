@@ -1,7 +1,15 @@
 import { monsterSummary } from '../../platform/game/monster-system.js';
 import { monsterAsset } from '../../platform/game/monsters.js';
-import { escapeHtml, formatElapsed, wordsLabel } from '../../platform/core/utils.js';
+import { escapeHtml, formatElapsed } from '../../platform/core/utils.js';
 import { createInitialSpellingState } from './service-contract.js';
+import {
+  spellingSessionContextNote,
+  spellingSessionFooterNote,
+  spellingSessionInfoChips,
+  spellingSessionInputPlaceholder,
+  spellingSessionProgressLabel,
+  spellingSessionSubmitLabel,
+} from './session-ui.js';
 
 const SPELLING_ACCENT = '#3E6FA8';
 
@@ -146,6 +154,11 @@ function renderSession({ learner, service, ui, subject }) {
   const card = session?.currentCard;
   const showCloze = prefs.showCloze && session?.type !== 'test';
   const awaitingAdvance = Boolean(ui.awaitingAdvance);
+  const submitLabel = spellingSessionSubmitLabel(session, awaitingAdvance);
+  const inputPlaceholder = spellingSessionInputPlaceholder(session);
+  const contextNote = spellingSessionContextNote(session);
+  const footerNote = spellingSessionFooterNote(session);
+  const infoChips = spellingSessionInfoChips(session);
   if (!session || !card || !card.word) {
     return `
       <section class="card">
@@ -166,7 +179,7 @@ function renderSession({ learner, service, ui, subject }) {
           </div>
           <div class="chip-row">
             <span class="chip">Checked ${session.progress.checked}/${session.progress.total}</span>
-            <span class="chip">${session.type === 'test' ? 'SATs one-shot' : `Phase: ${escapeHtml(session.phase)}`}</span>
+            <span class="chip">${escapeHtml(spellingSessionProgressLabel(session))}</span>
             ${sessionStatusChip(service, session)}
           </div>
         </div>
@@ -175,20 +188,18 @@ function renderSession({ learner, service, ui, subject }) {
 
       <section class="prompt-card">
         <div class="chip-row">
-          <span class="chip">${escapeHtml(card.word.yearLabel)}</span>
-          <span class="chip">Family: ${escapeHtml(card.word.family)}</span>
-          ${session.type !== 'test' ? `<span class="chip">${escapeHtml(wordsLabel(card.word.familyWords.length, 'family word'))}</span>` : ''}
+          ${infoChips.map((value) => `<span class="chip">${escapeHtml(value)}</span>`).join('')}
         </div>
         <h3 class="prompt-word">${session.type === 'test' ? 'Spell the dictated word' : 'Spell the word you hear'}</h3>
         <p class="subtitle">Use replay as often as you need. The answer only appears after the engine says so.</p>
-        ${showCloze ? `<p class="prompt-sentence">${escapeHtml(card.prompt.cloze)}</p>` : `<p class="prompt-sentence muted">Sentence hidden in this mode.</p>`}
+        ${showCloze ? `<p class="prompt-sentence">${escapeHtml(card.prompt.cloze)}</p>` : `<p class="prompt-sentence muted">${escapeHtml(contextNote)}</p>`}
         <form data-action="spelling-submit-form" style="margin-top:16px; display:grid; gap:12px;">
           <label class="field">
             <span>Your answer</span>
-            <input class="input" name="typed" data-autofocus="true" autocomplete="off" autocapitalize="none" spellcheck="false" ${awaitingAdvance ? 'disabled' : ''} />
+            <input class="input" name="typed" data-autofocus="true" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="${escapeHtml(inputPlaceholder)}" ${awaitingAdvance ? 'disabled' : ''} />
           </label>
           <div class="btn-row">
-            <button class="btn primary" style="background:${accent};" type="submit" ${awaitingAdvance ? 'disabled' : ''}>${awaitingAdvance ? 'Saved' : 'Submit answer'}</button>
+            <button class="btn primary" style="background:${accent};" type="submit" ${awaitingAdvance ? 'disabled' : ''}>${escapeHtml(submitLabel)}</button>
             <button class="btn secondary" type="button" data-action="spelling-replay">Replay</button>
             <button class="btn ghost" type="button" data-action="spelling-replay-slow">Slow replay</button>
             ${session.type !== 'test' && session.phase === 'question' ? '<button class="btn ghost" type="button" data-action="spelling-skip">Skip for now</button>' : ''}
@@ -196,6 +207,7 @@ function renderSession({ learner, service, ui, subject }) {
             <button class="btn bad" type="button" data-action="spelling-end-early">End session</button>
           </div>
         </form>
+        <p class="small muted" style="margin-top:12px;">${escapeHtml(footerNote)}</p>
         ${renderFeedback(ui.feedback)}
       </section>
     </div>
@@ -442,6 +454,24 @@ export const spellingModule = {
 
     if (action === 'spelling-start' || action === 'spelling-start-again') {
       const prefs = service.getPrefs(learnerId);
+      tts.stop();
+      return applyTransition(service.startSession(learnerId, {
+        mode: prefs.mode,
+        yearFilter: prefs.yearFilter,
+        length: prefs.roundLength,
+      }));
+    }
+
+    if (action === 'spelling-shortcut-start') {
+      const mode = data.mode;
+      if (!mode) return true;
+      if (ui.phase === 'session') {
+        const confirmed = globalThis.confirm?.('End the current spelling session and switch?');
+        if (confirmed === false) return true;
+      }
+      service.savePrefs(learnerId, { mode });
+      const prefs = service.getPrefs(learnerId);
+      tts.stop();
       return applyTransition(service.startSession(learnerId, {
         mode: prefs.mode,
         yearFilter: prefs.yearFilter,
@@ -476,13 +506,21 @@ export const spellingModule = {
       return true;
     }
 
-    if (action === 'spelling-end-early' || action === 'spelling-back') {
+    if (action === 'spelling-end-early') {
+      const confirmed = globalThis.confirm?.('End this session now?');
+      if (confirmed === false) return true;
+      tts.stop();
+      return applyTransition(service.endSession(learnerId, ui));
+    }
+
+    if (action === 'spelling-back') {
       tts.stop();
       return applyTransition(service.endSession(learnerId, ui));
     }
 
     if (action === 'spelling-drill-all') {
       if (!ui.summary?.mistakes?.length) return true;
+      tts.stop();
       return applyTransition(service.startSession(learnerId, {
         mode: 'trouble',
         words: ui.summary.mistakes.map((word) => word.slug),
@@ -494,6 +532,7 @@ export const spellingModule = {
     if (action === 'spelling-drill-single') {
       const slug = data.slug;
       if (!slug) return true;
+      tts.stop();
       return applyTransition(service.startSession(learnerId, {
         mode: 'single',
         words: [slug],
