@@ -16,7 +16,7 @@
     "db:migration:create": "npx wrangler d1 migrations create ks2-mastery-db",
     "db:migrate:local": "npx wrangler d1 migrations apply ks2-mastery-db --local",
     "db:migrate:remote": "npx wrangler d1 migrations apply ks2-mastery-db --remote",
-    "db:migrate:remote:oauth": "env -u CLOUDFLARE_API_TOKEN npm run db:migrate:remote -- --yes",
+    "db:migrate:remote:oauth": "env -u CLOUDFLARE_API_TOKEN CI=true npm run db:migrate:remote",
     "db:migrations:list:local": "npx wrangler d1 migrations list ks2-mastery-db --local",
     "db:migrations:list:remote": "npx wrangler d1 migrations list ks2-mastery-db --remote",
     "db:migrations:list:remote:oauth": "env -u CLOUDFLARE_API_TOKEN npm run db:migrations:list:remote",
