@@ -78,6 +78,16 @@ These deltas remain on purpose.
    - Legacy exposed searchable word-bank progress and direct single-word drill launch from that bank.
    - The rebuilt slice still exposes mistake drills and summary follow-ups, but not the full bank UI.
 
+## Pass 11 content parity update
+
+Pass 11 changes where spelling content lives, not the learner-facing pedagogy.
+
+- statutory word lists, word metadata, accepted answers, and sentence banks now live in a versioned draft/published content bundle
+- learner runtime reads are pinned to the published release snapshot
+- draft edits, imports, and resets stay operator-side until the draft is published
+- prompt text and spoken TTS text still come from the same saved prompt, preserving the Pass 10 fix for display/audio mismatch
+- explicit one-word sessions now fail cleanly if the requested slug is not in the published snapshot instead of silently starting a different round
+
 ## Still not directly verified in this pass
 
 1. Exact browser playback timing and warm-up behaviour for old provider-backed TTS paths.

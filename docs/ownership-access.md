@@ -105,10 +105,9 @@ That keeps shared learners from becoming ownerless without requiring a full invi
 
 Still deferred after this pass:
 
-- production auth rollout
 - provider account linking / merging
 - invites and acceptance flows
 - billing
 - messaging
 - read-only viewer UX in the browser shell
-- conflict resolution and multi-client merge policy
+- semantic conflict resolution beyond the current stale-write rebase policy

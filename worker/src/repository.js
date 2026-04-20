@@ -14,6 +14,12 @@ import {
 } from '../../src/platform/core/repositories/helpers.js';
 import { uid } from '../../src/platform/core/utils.js';
 import {
+  buildSpellingContentSummary,
+  normaliseSpellingContentBundle,
+  validateSpellingContentBundle,
+} from '../../src/subjects/spelling/content/model.js';
+import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../../src/subjects/spelling/data/content-data.js';
+import {
   BadRequestError,
   ConflictError,
   ForbiddenError,
@@ -128,6 +134,15 @@ function eventRowToRecord(row) {
     event.type = row.event_type || event.kind || 'event';
   }
   return event;
+}
+
+function contentRowToBundle(row) {
+  return normaliseSpellingContentBundle(safeJsonParse(row.content_json, SEEDED_SPELLING_CONTENT_BUNDLE));
+}
+
+async function readSubjectContentBundle(db, accountId, subjectId = 'spelling') {
+  const row = await first(db, 'SELECT * FROM account_subject_content WHERE account_id = ? AND subject_id = ?', [accountId, subjectId]);
+  return row ? contentRowToBundle(row) : cloneSerialisable(SEEDED_SPELLING_CONTENT_BUNDLE);
 }
 
 function writableRole(role) {
@@ -1064,6 +1079,63 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         },
       });
     },
+    async readSubjectContent(accountId, subjectId = 'spelling') {
+      const account = await first(db, 'SELECT id, repo_revision FROM adult_accounts WHERE id = ?', [accountId]);
+      const content = await readSubjectContentBundle(db, accountId, subjectId);
+      return {
+        subjectId,
+        content,
+        summary: buildSpellingContentSummary(content),
+        mutation: {
+          policyVersion: MUTATION_POLICY_VERSION,
+          scopeType: 'account',
+          scopeId: accountId,
+          accountRevision: Number(account?.repo_revision) || 0,
+        },
+      };
+    },
+    async writeSubjectContent(accountId, subjectId = 'spelling', rawContent, mutation = {}) {
+      const nowTs = nowFactory();
+      const content = normaliseSpellingContentBundle(rawContent);
+      const validation = validateSpellingContentBundle(content);
+      if (!validation.ok) {
+        throw new BadRequestError('Spelling content validation failed.', {
+          code: 'content_validation_failed',
+          validation: {
+            errors: validation.errors,
+            warnings: validation.warnings,
+          },
+        });
+      }
+      return withAccountMutation(db, {
+        accountId,
+        kind: 'subject_content.put',
+        payload: { subjectId, content: validation.bundle },
+        mutation,
+        nowTs,
+        apply: async () => {
+          await run(db, `
+            INSERT INTO account_subject_content (account_id, subject_id, content_json, updated_at, updated_by_account_id)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(account_id, subject_id) DO UPDATE SET
+              content_json = excluded.content_json,
+              updated_at = excluded.updated_at,
+              updated_by_account_id = excluded.updated_by_account_id
+          `, [
+            accountId,
+            subjectId,
+            JSON.stringify(validation.bundle),
+            nowTs,
+            accountId,
+          ]);
+          return {
+            subjectId,
+            content: validation.bundle,
+            summary: buildSpellingContentSummary(validation.bundle),
+          };
+        },
+      });
+    },
     async resetAccountScope(accountId, mutation = {}) {
       const nowTs = nowFactory();
       return withAccountMutation(db, {
@@ -1078,6 +1150,7 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
             await releaseMembershipOrDeleteLearner(db, accountId, row.id, row.role, nowTs);
           }
           await run(db, 'UPDATE adult_accounts SET selected_learner_id = NULL, updated_at = ? WHERE id = ?', [nowTs, accountId]);
+          await run(db, 'DELETE FROM account_subject_content WHERE account_id = ?', [accountId]);
           const bundle = await bootstrapBundle(db, accountId);
           return {
             reset: true,

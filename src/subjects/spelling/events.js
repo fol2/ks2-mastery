@@ -1,4 +1,4 @@
-import { WORD_BY_SLUG } from './data/word-data.js';
+import { WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from './data/word-data.js';
 
 export const SPELLING_EVENT_TYPES = Object.freeze({
   RETRY_CLEARED: 'spelling.retry-cleared',
@@ -14,8 +14,8 @@ function safeTimestamp(value) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : Date.now();
 }
 
-function wordFields(slug) {
-  const word = WORD_BY_SLUG[slug];
+function wordFields(slug, wordMeta = DEFAULT_WORD_BY_SLUG) {
+  const word = wordMeta[slug];
   if (!word) return null;
   return {
     wordSlug: word.slug,
@@ -42,8 +42,8 @@ function baseSpellingEvent(type, payload = {}, idParts = []) {
   };
 }
 
-export function createSpellingRetryClearedEvent({ learnerId, session, slug, fromPhase, attemptCount = null, createdAt } = {}) {
-  const word = wordFields(slug);
+export function createSpellingRetryClearedEvent({ learnerId, session, slug, fromPhase, attemptCount = null, createdAt, wordMeta } = {}) {
+  const word = wordFields(slug, wordMeta);
   if (!word) return null;
   if (!['retry', 'correction'].includes(fromPhase)) return null;
 
@@ -59,8 +59,8 @@ export function createSpellingRetryClearedEvent({ learnerId, session, slug, from
   };
 }
 
-export function createSpellingWordSecuredEvent({ learnerId, session, slug, stage = null, createdAt } = {}) {
-  const word = wordFields(slug);
+export function createSpellingWordSecuredEvent({ learnerId, session, slug, stage = null, createdAt, wordMeta } = {}) {
+  const word = wordFields(slug, wordMeta);
   if (!word) return null;
 
   return {

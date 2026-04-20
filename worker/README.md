@@ -2,25 +2,27 @@
 
 This Worker is now a real minimum viable backend for the generic repository contract.
 
-The browser reference build still boots local-first.
+Production browser sessions use the API-backed repository after sign-in.
+Direct file/local mode, or `?local=1`, still uses browser storage for development.
 English Spelling still runs through the same subject/service boundary.
-The Worker now provides durable D1-backed storage for the generic platform collections and enforces learner ownership at the API boundary.
+The Worker now provides durable D1-backed storage for the generic platform collections, account-scoped spelling content, session/auth flows, OpenAI TTS proxying, and learner ownership at the API boundary.
 
 ## What this Worker is now
 
 It is:
 
 - a D1-backed repository backend for the shared platform contract
+- account-scoped spelling content storage for draft and published release bundles
 - an adult-account to learner ownership boundary
 - a place where learner-scoped permissions are enforced before repository writes happen
-- a provider-agnostic auth/session seam with a safe development/test stub
+- a provider-agnostic auth/session seam with production email and social login flows plus a safe development/test stub
+- a Worker-side TTS proxy that keeps the OpenAI API key out of the browser
 - a deployment boundary that still keeps subject UI rules out of the backend
 
 ## What it still is not
 
 It is not yet:
 
-- a production auth rollout
 - a billing system
 - an invite / acceptance flow
 - a parent/admin UI backend
@@ -49,7 +51,7 @@ Used for:
 
 - learner identity
 - year group / goal / avatar metadata
-- the learner rows already consumed by the local-first browser shell
+- the learner rows consumed by the shared browser shell
 
 ### `account_learner_memberships`
 
@@ -75,6 +77,17 @@ These remain generic and subject-agnostic:
 
 Nothing in the schema is Spelling-shaped.
 
+### Account-scoped subject content
+
+`account_subject_content` stores versioned subject content bundles by account and subject.
+
+Current use:
+
+- `subject_id = "spelling"`
+- operators edit the draft bundle through the thin settings UI or import/export scripts
+- learner runtime reads only the current published release snapshot
+- writes use the same account revision and request-receipt policy as learner-profile writes
+
 ## Current mutation safety rules
 
 The Worker now enforces a small mutation policy instead of last-write-wins.
@@ -85,6 +98,7 @@ The Worker now enforces a small mutation policy instead of last-write-wins.
 - retries with the same request id and the same payload replay the stored response
 - reusing the same request id for different payloads is rejected with `409 idempotency_reuse`
 - stale writes are rejected with `409 stale_write`
+- the browser API adapter rebases queued local operations over the latest remote revision before retrying stale writes
 - there is no hidden server-side merge
 
 That keeps the backend honest for multiple tabs, devices, retries, and interrupted requests without pretending we have real-time merge machinery.

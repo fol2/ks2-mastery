@@ -31,6 +31,10 @@ This is the reference subject-service implementation for the rebuilt KS2 platfor
 - `resetLearner(learnerId)`
   - Clears spelling progress and spelling preferences for one learner.
 
+The service also accepts an injected `contentSnapshot`.
+When omitted it uses the bundled spelling word data.
+When provided it consumes only the published spelling-content runtime snapshot.
+
 Every state transition returns the same shape:
 
 ```txt
@@ -122,6 +126,21 @@ What remains intentionally different:
 - provider/model/voice/rate TTS controls and warm-up behaviour are still deferred
 
 See `docs/spelling-parity.md` for the full matrix and the explicit remaining deltas.
+
+## Pass 11 content model notes
+
+Pass 11 moves spelling word lists, words, and sentence banks into a versioned content boundary.
+
+What changed:
+
+- operators edit a draft bundle through import/export, reset, and publish controls
+- learner sessions read the current published release snapshot only
+- the runtime service is rebuilt after content mutations so new published content is picked up without leaking unpublished draft rows
+- explicit word starts fail cleanly if the slug is absent from the published snapshot
+- event metadata now follows the injected content snapshot, so secured-word and retry-cleared events stay aligned with edited content
+
+The service remains content-consumer only.
+Draft validation, portable import/export, publishing, and D1 persistence live in `src/subjects/spelling/content/*` and the Worker content routes.
 
 ## Bug fixes made in this hardening pass
 

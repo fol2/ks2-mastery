@@ -1,4 +1,4 @@
-import { WORDS, WORD_BY_SLUG } from './data/word-data.js';
+import { WORDS as DEFAULT_WORDS, WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from './data/word-data.js';
 import { createLegacySpellingEngine } from './engine/legacy-engine.js';
 import {
   SPELLING_MASTERY_MILESTONES,
@@ -70,8 +70,8 @@ function buildCloze(sentence, word) {
   return String(sentence || '').replace(pattern, blanks);
 }
 
-function isKnownSlug(slug) {
-  return typeof slug === 'string' && Boolean(WORD_BY_SLUG[slug]);
+function isKnownSlug(slug, wordBySlug = DEFAULT_WORD_BY_SLUG) {
+  return typeof slug === 'string' && Boolean(wordBySlug[slug]);
 }
 
 function uniqueStrings(values) {
@@ -159,9 +159,9 @@ function buildProgressMeta(session) {
   };
 }
 
-function buildPrompt(engine, session, slug) {
-  if (!isKnownSlug(slug)) return null;
-  const word = WORD_BY_SLUG[slug];
+function buildPrompt(engine, session, slug, wordBySlug = DEFAULT_WORD_BY_SLUG) {
+  if (!isKnownSlug(slug, wordBySlug)) return null;
+  const word = wordBySlug[slug];
   const current = session?.currentPrompt;
   const sentence = current?.slug === slug && typeof current.sentence === 'string'
     ? current.sentence
@@ -173,13 +173,13 @@ function buildPrompt(engine, session, slug) {
   };
 }
 
-function normalisePromptForSlug(rawPrompt, slug) {
-  if (!isKnownSlug(slug)) return null;
+function normalisePromptForSlug(rawPrompt, slug, wordBySlug = DEFAULT_WORD_BY_SLUG) {
+  if (!isKnownSlug(slug, wordBySlug)) return null;
   if (!rawPrompt || typeof rawPrompt !== 'object' || Array.isArray(rawPrompt)) return null;
   if (typeof rawPrompt.slug === 'string' && rawPrompt.slug !== slug) return null;
   if (typeof rawPrompt.sentence !== 'string') return null;
 
-  const word = WORD_BY_SLUG[slug];
+  const word = wordBySlug[slug];
   return {
     slug,
     sentence: rawPrompt.sentence,
@@ -187,18 +187,18 @@ function normalisePromptForSlug(rawPrompt, slug) {
   };
 }
 
-function savedPromptForSlug(rawSession, slug) {
-  return normalisePromptForSlug(rawSession?.currentPrompt, slug)
-    || normalisePromptForSlug(rawSession?.currentCard?.prompt, slug);
+function savedPromptForSlug(rawSession, slug, wordBySlug = DEFAULT_WORD_BY_SLUG) {
+  return normalisePromptForSlug(rawSession?.currentPrompt, slug, wordBySlug)
+    || normalisePromptForSlug(rawSession?.currentCard?.prompt, slug, wordBySlug);
 }
 
-function decorateSession(engine, learnerId, session) {
+function decorateSession(engine, learnerId, session, wordBySlug = DEFAULT_WORD_BY_SLUG) {
   if (!session) return null;
-  const currentPrompt = session.currentSlug ? buildPrompt(engine, session, session.currentSlug) : null;
+  const currentPrompt = session.currentSlug ? buildPrompt(engine, session, session.currentSlug, wordBySlug) : null;
   const currentCard = session.currentSlug && currentPrompt
     ? {
         slug: session.currentSlug,
-        word: WORD_BY_SLUG[session.currentSlug] || null,
+        word: wordBySlug[session.currentSlug] || null,
         prompt: currentPrompt,
       }
     : null;
@@ -235,7 +235,7 @@ export function defaultSpellingPrefs() {
   return normalisePrefs();
 }
 
-export function createSpellingService({ repository, storage, tts, now, random } = {}) {
+export function createSpellingService({ repository, storage, tts, now, random, contentSnapshot } = {}) {
   const clock = clockFrom(now);
   const persistence = repository || {
     storage: storage || globalThis.localStorage || createNoopStorage(),
@@ -245,9 +245,16 @@ export function createSpellingService({ repository, storage, tts, now, random } 
   };
   const resolvedStorage = persistence.storage || storage || globalThis.localStorage || createNoopStorage();
   const randomFn = typeof random === 'function' ? random : Math.random;
+  const runtimeWords = Array.isArray(contentSnapshot?.words)
+    ? cloneSerialisable(contentSnapshot.words)
+    : cloneSerialisable(DEFAULT_WORDS);
+  const runtimeWordBySlug = contentSnapshot?.wordBySlug && typeof contentSnapshot.wordBySlug === 'object' && !Array.isArray(contentSnapshot.wordBySlug)
+    ? cloneSerialisable(contentSnapshot.wordBySlug)
+    : Object.fromEntries(runtimeWords.map((word) => [word.slug, cloneSerialisable(word)]));
+  const isRuntimeKnownSlug = (slug) => isKnownSlug(slug, runtimeWordBySlug);
   const engine = createLegacySpellingEngine({
-    words: WORDS,
-    wordMeta: WORD_BY_SLUG,
+    words: runtimeWords,
+    wordMeta: runtimeWordBySlug,
     storage: resolvedStorage,
     tts,
     now: clock,
@@ -291,15 +298,15 @@ export function createSpellingService({ repository, storage, tts, now, random } 
       return { session: null, summary: null, error: 'This spelling session has an unknown type.' };
     }
 
-    let currentSlug = isKnownSlug(raw.currentSlug) ? raw.currentSlug : null;
-    let uniqueWords = uniqueStrings(normaliseStringArray(raw.uniqueWords, isKnownSlug));
+    let currentSlug = isRuntimeKnownSlug(raw.currentSlug) ? raw.currentSlug : null;
+    let uniqueWords = uniqueStrings(normaliseStringArray(raw.uniqueWords, isRuntimeKnownSlug));
     if (currentSlug && !uniqueWords.includes(currentSlug)) uniqueWords = [...uniqueWords, currentSlug];
     if (!uniqueWords.length) {
       return { session: null, summary: null, error: 'This spelling session no longer points at valid words.' };
     }
 
     const mode = normaliseMode(raw.mode, type === 'test' ? 'test' : 'smart');
-    const savedPrompt = savedPromptForSlug(raw, currentSlug);
+    const savedPrompt = savedPromptForSlug(raw, currentSlug, runtimeWordBySlug);
     const session = {
       version: SPELLING_SERVICE_STATE_VERSION,
       id: normaliseString(raw.id, `sess-${clock()}-${randomFn().toString(16).slice(2)}`),
@@ -327,7 +334,7 @@ export function createSpellingService({ repository, storage, tts, now, random } 
     };
 
     if (currentSlug && !session.currentPrompt) {
-      session.currentPrompt = buildPrompt(engine, session, currentSlug);
+      session.currentPrompt = buildPrompt(engine, session, currentSlug, runtimeWordBySlug);
     }
 
     if (type === 'learning') {
@@ -344,7 +351,7 @@ export function createSpellingService({ repository, storage, tts, now, random } 
       session.results = normaliseTestResults(raw.results, uniqueWords);
     }
 
-    const queued = uniqueStrings(normaliseStringArray(raw.queue, isKnownSlug));
+    const queued = uniqueStrings(normaliseStringArray(raw.queue, isRuntimeKnownSlug));
     if (queued.length) {
       session.queue = queued;
     } else if (type === 'learning') {
@@ -354,7 +361,7 @@ export function createSpellingService({ repository, storage, tts, now, random } 
       session.queue = uniqueWords.filter((slug) => slug !== currentSlug && !answered.has(slug));
     }
 
-    if (session.currentSlug && !WORD_BY_SLUG[session.currentSlug]) {
+    if (session.currentSlug && !runtimeWordBySlug[session.currentSlug]) {
       session.currentSlug = null;
       session.currentPrompt = null;
     }
@@ -364,14 +371,14 @@ export function createSpellingService({ repository, storage, tts, now, random } 
       if (next.done) {
         return {
           session: null,
-          summary: normaliseSummary(engine.finalise(session), isKnownSlug),
+          summary: normaliseSummary(engine.finalise(session), isRuntimeKnownSlug),
           error: '',
         };
       }
     }
 
     return {
-      session: decorateSession(engine, learnerId, session),
+      session: decorateSession(engine, learnerId, session, runtimeWordBySlug),
       summary: null,
       error: '',
     };
@@ -384,7 +391,7 @@ export function createSpellingService({ repository, storage, tts, now, random } 
 
     let phase = SPELLING_ROOT_PHASES.includes(source.phase) ? source.phase : 'dashboard';
     let feedback = normaliseFeedback(source.feedback);
-    let summary = normaliseSummary(source.summary, isKnownSlug);
+    let summary = normaliseSummary(source.summary, isRuntimeKnownSlug);
     let error = normaliseString(source.error);
     let session = null;
     let awaitingAdvance = normaliseBoolean(source.awaitingAdvance, false);
@@ -470,14 +477,24 @@ export function createSpellingService({ repository, storage, tts, now, random } 
   function startSession(learnerId, options = {}) {
     const mode = normaliseMode(options.mode, 'smart');
     const yearFilter = normaliseYearFilter(options.yearFilter, 'all');
+    const requestedWords = Array.isArray(options.words)
+      ? uniqueStrings(options.words.map((slug) => normaliseString(slug).toLowerCase()).filter(Boolean))
+      : null;
     const selectedWords = Array.isArray(options.words)
-      ? uniqueStrings(options.words.map((slug) => (isKnownSlug(slug) ? WORD_BY_SLUG[slug] : null)).filter(Boolean).map((word) => word.slug)).map((slug) => WORD_BY_SLUG[slug])
+      ? uniqueStrings(options.words.map((slug) => (isRuntimeKnownSlug(slug) ? runtimeWordBySlug[slug] : null)).filter(Boolean).map((word) => word.slug)).map((slug) => runtimeWordBySlug[slug])
       : null;
     const length = mode === 'test'
       ? 20
       : options.length === 'all'
         ? Number.MAX_SAFE_INTEGER
         : Number(options.length) || 20;
+
+    if (requestedWords?.length && !selectedWords?.length) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        error: 'Could not start a spelling session.',
+      }, { ok: false });
+    }
 
     const created = engine.createSession({
       profileId: learnerId,
@@ -495,7 +512,7 @@ export function createSpellingService({ repository, storage, tts, now, random } 
     }
 
     const firstCard = engine.advanceCard(created.session, learnerId);
-    const session = firstCard.done ? null : decorateSession(engine, learnerId, created.session);
+    const session = firstCard.done ? null : decorateSession(engine, learnerId, created.session, runtimeWordBySlug);
     if (!session) {
       return buildTransition({
         ...createInitialSpellingState(),
@@ -588,6 +605,7 @@ export function createSpellingService({ repository, storage, tts, now, random } 
         fromPhase: entryPhase,
         attemptCount: session.status?.[currentSlug]?.attempts ?? null,
         createdAt: eventTime,
+        wordMeta: runtimeWordBySlug,
       }));
     }
     if (result.outcome?.justMastered && currentSlug) {
@@ -597,6 +615,7 @@ export function createSpellingService({ repository, storage, tts, now, random } 
         slug: currentSlug,
         stage: result.outcome.newStage,
         createdAt: eventTime,
+        wordMeta: runtimeWordBySlug,
       }));
 
       const secureCount = getStats(learnerId, 'all').secure;
@@ -615,7 +634,7 @@ export function createSpellingService({ repository, storage, tts, now, random } 
     const nextState = {
       version: SPELLING_SERVICE_STATE_VERSION,
       phase: 'session',
-      session: decorateSession(engine, learnerId, session),
+      session: decorateSession(engine, learnerId, session, runtimeWordBySlug),
       feedback: normaliseFeedback(result.feedback),
       summary: null,
       error: '',
@@ -644,7 +663,7 @@ export function createSpellingService({ repository, storage, tts, now, random } 
     const advanced = engine.advanceCard(session, learnerId);
 
     if (advanced.done) {
-      const summary = normaliseSummary(engine.finalise(session), isKnownSlug);
+      const summary = normaliseSummary(engine.finalise(session), isRuntimeKnownSlug);
       const nextState = {
         version: SPELLING_SERVICE_STATE_VERSION,
         phase: 'summary',
@@ -663,7 +682,7 @@ export function createSpellingService({ repository, storage, tts, now, random } 
     const nextState = {
       version: SPELLING_SERVICE_STATE_VERSION,
       phase: 'session',
-      session: decorateSession(engine, learnerId, session),
+      session: decorateSession(engine, learnerId, session, runtimeWordBySlug),
       feedback: null,
       summary: null,
       error: '',
@@ -700,7 +719,7 @@ export function createSpellingService({ repository, storage, tts, now, random } 
 
     const advanced = engine.advanceCard(session, learnerId);
     if (advanced.done) {
-      const summary = normaliseSummary(engine.finalise(session), isKnownSlug);
+      const summary = normaliseSummary(engine.finalise(session), isRuntimeKnownSlug);
       const nextState = {
         version: SPELLING_SERVICE_STATE_VERSION,
         phase: 'summary',
@@ -719,7 +738,7 @@ export function createSpellingService({ repository, storage, tts, now, random } 
     const nextState = {
       version: SPELLING_SERVICE_STATE_VERSION,
       phase: 'session',
-      session: decorateSession(engine, learnerId, session),
+      session: decorateSession(engine, learnerId, session, runtimeWordBySlug),
       feedback: {
         kind: 'info',
         headline: 'Skipped for now.',

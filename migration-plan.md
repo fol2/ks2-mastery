@@ -23,6 +23,7 @@
   - Add a build step that stages only browser-safe files into `dist/public`: `index.html`, `styles/`, `src/`, and `assets/`. Do not serve repo root, tests, docs, worker source, migrations, or legacy source directly.
   - Add scripts equivalent to `test`, `build`, `check`, `deploy`, `db:migrate:*`, `ops:tail`, and guarded D1 backup/reset commands.
   - Keep Cloudflare auto-build on `main`; update dashboard build settings only if the current Workers Build command cannot run the new `npm run deploy` or Wrangler path.
+  - Use `npm run check:oauth`, `npm run db:migrate:remote:oauth`, and `npm run deploy:oauth` when the shell contains an old `CLOUDFLARE_API_TOKEN`; these commands unset that token for Wrangler so the logged-in OAuth session is used.
 
 - Production auth:
   - Replace `production-placeholder` with real session auth.
@@ -53,6 +54,7 @@
   - `GET /api/bootstrap`
   - Auth routes listed above.
   - Existing generic repository routes for learners, subject state, practice sessions, game state, and event log remain the persistence contract.
+  - Spelling content routes: `GET /api/content/spelling` and `PUT /api/content/spelling`.
 
 - Cloudflare bindings:
   - `DB`: existing D1 database id, reset to v2 schema.
@@ -66,7 +68,18 @@
   - `APP_HOSTNAME=ks2.eugnel.uk`
   - OAuth secrets per provider as needed.
   - Turnstile secrets optional but supported.
-  - Cloudflare API token only for deploy/migration automation, never committed.
+  - Cloudflare API token only for deploy/migration automation, never committed. Prefer the `*:oauth` npm scripts on James's machine because Wrangler is already logged in through OAuth there.
+
+## Pass 11 Integration Addendum
+
+- Add `account_subject_content` through migration `0005_spelling_content_model.sql`, not the pass folder's `0004`, because this production repo already has `0004_production_auth.sql`.
+- Keep the existing production auth, OpenAI TTS proxy, autocomplete fixes, session auto-advance recovery, and stale-write rebase behaviour.
+- Integrate pass 11 as a content-model layer only:
+  - versioned spelling draft and published release bundles
+  - generated runtime snapshot consumed by `createSpellingService({ contentSnapshot })`
+  - thin settings UI for content summary, export, import, publish, and reset
+  - Worker/D1 content routes protected by the same account revision and request-receipt mutation policy
+- Do not replace the current repo wholesale with the pass 11 folder, because that pass baseline predates production hardening and would regress auth, TTS, and sync.
 
 ## Test Plan
 

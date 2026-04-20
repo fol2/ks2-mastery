@@ -336,8 +336,11 @@ function renderProfiles({ learner }) {
   `;
 }
 
-function renderSettings({ learner, service }) {
+function renderSettings({ learner, service, spellingContent }) {
   const prefs = service.getPrefs(learner.id);
+  const contentSummary = spellingContent?.getSummary?.() || null;
+  const validationTone = contentSummary?.ok ? 'good' : 'bad';
+  const publishDisabled = contentSummary && !contentSummary.ok ? 'disabled' : '';
   return `
     <div class="two-col">
       <section class="card">
@@ -353,8 +356,31 @@ function renderSettings({ learner, service }) {
       </section>
       <section class="card soft">
         <div class="eyebrow">Deployment mode</div>
-        <h2 class="section-title">Local-first adapter</h2>
-        <p class="subtitle">The reference rebuild runs Spelling in the browser with deterministic local persistence. The worker folder defines the Cloudflare API shape that can replace this adapter later without changing the subject UI.</p>
+        <h2 class="section-title">Remote sync adapter</h2>
+        <p class="subtitle">Production syncs learner state and spelling content through the Cloudflare Worker/D1 repository. Local mode still uses deterministic browser storage for development.</p>
+      </section>
+      <section class="card" style="grid-column:1/-1;">
+        <div class="eyebrow">Content model</div>
+        <h2 class="section-title">Draft, published release, and runtime snapshot</h2>
+        <p class="subtitle">Spelling content lives in a versioned draft/publish model. Runtime reads stay pinned to the current published release snapshot, so importing draft content does not silently change live practice.</p>
+        <div class="chip-row">
+          <span class="chip ${validationTone}">Validation: ${contentSummary?.ok ? 'ready to publish' : 'needs fixes'}</span>
+          <span class="chip">Word lists: ${contentSummary?.wordListCount || 0}</span>
+          <span class="chip">Words: ${contentSummary?.wordCount || 0}</span>
+          <span class="chip">Sentence variants: ${contentSummary?.sentenceCount || 0}</span>
+          <span class="chip">Published release: ${contentSummary?.publishedVersion ? `v${contentSummary.publishedVersion}` : 'none'}</span>
+          <span class="chip">Release id: ${escapeHtml(contentSummary?.publishedReleaseId || 'none')}</span>
+          <span class="chip ${contentSummary?.errorCount ? 'bad' : 'good'}">Errors: ${contentSummary?.errorCount || 0}</span>
+          <span class="chip ${contentSummary?.warningCount ? 'warn' : 'good'}">Warnings: ${contentSummary?.warningCount || 0}</span>
+        </div>
+        <div class="actions" style="margin-top:16px;">
+          <button class="btn secondary" data-action="spelling-content-export">Export content JSON</button>
+          <button class="btn secondary" data-action="spelling-content-import">Import content JSON</button>
+          <button class="btn primary" style="background:${SPELLING_ACCENT};" data-action="spelling-content-publish" ${publishDisabled}>Publish current draft</button>
+          <button class="btn ghost" data-action="spelling-content-reset">Reset to bundled baseline</button>
+        </div>
+        <input id="spelling-content-import-file" type="file" accept="application/json,.json" hidden />
+        <div class="callout" style="margin-top:16px;">This is a thin operator hook only. Import/export handles content packages, publish creates an immutable release, and the learner-facing spelling engine stays isolated from editorial state.</div>
       </section>
     </div>
   `;

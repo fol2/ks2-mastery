@@ -11,6 +11,11 @@ import { createEventRuntime, createPracticeStreakSubscriber } from './platform/e
 import { createPlatformTts } from './subjects/spelling/tts.js';
 import { createSpellingService } from './subjects/spelling/service.js';
 import { createSpellingPersistence } from './subjects/spelling/repository.js';
+import {
+  createApiSpellingContentRepository,
+  createLocalSpellingContentRepository,
+} from './subjects/spelling/content/repository.js';
+import { createSpellingContentService } from './subjects/spelling/content/service.js';
 import { createSpellingRewardSubscriber } from './subjects/spelling/event-hooks.js';
 import { createSpellingAutoAdvanceController } from './subjects/spelling/auto-advance.js';
 import { resolveSpellingShortcut } from './subjects/spelling/shortcuts.js';
@@ -190,12 +195,25 @@ globalThis.KS2_AUTH_SESSION = boot.session;
 await repositories.hydrate();
 
 const tts = createPlatformTts({ fetchFn: credentialFetch });
+const spellingContentRepository = boot.session.signedIn
+  ? createApiSpellingContentRepository({ baseUrl: '', fetch: credentialFetch })
+  : createLocalSpellingContentRepository({ storage: globalThis.localStorage });
+const spellingContent = createSpellingContentService({ repository: spellingContentRepository });
+await spellingContent.hydrate();
 const services = {
-  spelling: createSpellingService({
+  spelling: null,
+};
+
+function rebuildSpellingService() {
+  services.spelling = createSpellingService({
     repository: createSpellingPersistence({ repositories }),
     tts,
-  }),
-};
+    contentSnapshot: spellingContent.getRuntimeSnapshot(),
+  });
+  return services.spelling;
+}
+
+rebuildSpellingService();
 
 const runtimeBoundary = createSubjectRuntimeBoundary({
   onError(entry, error) {
@@ -276,6 +294,54 @@ async function handleImportFileChange(input) {
   }
 }
 
+async function prepareForSpellingContentMutation() {
+  await repositories.persistence.retry();
+  await spellingContent.hydrate();
+}
+
+async function refreshAfterSpellingContentMutation() {
+  tts.stop();
+  await repositories.hydrate({
+    cacheScope: 'spelling-content-mutation',
+    rebasePending: true,
+    rebasePayloads: true,
+  });
+  rebuildSpellingService();
+  runtimeBoundary.clearAll();
+  store.reloadFromRepositories({ preserveRoute: true });
+}
+
+async function handleSpellingContentMutation(operation, successMessage) {
+  try {
+    await prepareForSpellingContentMutation();
+    await operation();
+    await refreshAfterSpellingContentMutation();
+    if (successMessage) globalThis.alert(successMessage);
+  } catch (error) {
+    const validationCount = Number(error?.validation?.errors?.length || error?.payload?.validation?.errors?.length) || 0;
+    const suffix = validationCount ? ` (${validationCount} validation errors)` : '';
+    globalThis.alert(`Spelling content update failed${suffix}: ${error?.message || 'Unknown error.'}`);
+  }
+}
+
+async function handleSpellingContentImportFileChange(input) {
+  const file = input?.files?.[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    await handleSpellingContentMutation(
+      () => spellingContent.importPortable(parsed),
+      'Spelling content imported successfully.',
+    );
+  } catch (error) {
+    globalThis.alert(`Spelling content import failed: ${error?.message || 'Unknown error.'}`);
+  } finally {
+    input.value = '';
+  }
+}
+
 const store = createStore(SUBJECTS, { repositories });
 
 const spellingAutoAdvance = createSpellingAutoAdvanceController({
@@ -323,6 +389,7 @@ function contextFor(subjectId = null) {
     repositories,
     subject: resolvedSubject,
     service: services[resolvedSubject.id] || null,
+    spellingContent,
     tts,
     applySubjectTransition,
     runtimeBoundary,
@@ -439,6 +506,39 @@ function handleGlobalAction(action, data) {
     return true;
   }
 
+  if (action === 'spelling-content-export') {
+    downloadJson('ks2-spelling-content.json', spellingContent.exportPortable());
+    return true;
+  }
+
+  if (action === 'spelling-content-import') {
+    const input = root.querySelector('#spelling-content-import-file');
+    input?.click();
+    return true;
+  }
+
+  if (action === 'spelling-content-publish') {
+    const validation = spellingContent.validate();
+    if (!validation.ok) {
+      globalThis.alert(`Cannot publish spelling content while ${validation.errors.length} validation error(s) remain.`);
+      return true;
+    }
+    handleSpellingContentMutation(
+      () => spellingContent.publishDraft({ notes: 'Published from the in-app operator hook.' }),
+      'Spelling content published as a new release.',
+    );
+    return true;
+  }
+
+  if (action === 'spelling-content-reset') {
+    if (!globalThis.confirm('Reset spelling content to the bundled published baseline?')) return true;
+    handleSpellingContentMutation(
+      () => spellingContent.resetToSeeded(),
+      'Spelling content reset to the bundled baseline.',
+    );
+    return true;
+  }
+
   if (action === 'toast-dismiss') {
     store.dismissToast(Number(data.index));
     return true;
@@ -544,6 +644,12 @@ root.addEventListener('change', (event) => {
   const fileInput = event.target.closest('#platform-import-file');
   if (fileInput) {
     handleImportFileChange(fileInput);
+    return;
+  }
+
+  const spellingContentInput = event.target.closest('#spelling-content-import-file');
+  if (spellingContentInput) {
+    handleSpellingContentImportFileChange(spellingContentInput);
     return;
   }
 

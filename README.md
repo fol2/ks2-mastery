@@ -16,10 +16,11 @@ The goal is not to polish the old prototype. The goal is to give the product a s
   - The rebuilt English Spelling slice.
   - The legacy spelling engine is preserved and wrapped behind a clean service.
   - The spelling service now owns an explicit serialisable state contract, deterministic transitions, resume-safe restoration, and domain-event emission.
+  - Spelling content now has a versioned draft/published content model. Learner runtime reads are pinned to the published release snapshot, not live draft rows.
 - `src/subjects/placeholders/*`
   - Clean extension slots for Arithmetic, Reasoning, Grammar, Punctuation and Reading.
 - `worker/*`
-  - A Cloudflare-friendly minimum viable backend with D1-backed repository routes, learner ownership checks, and a provider-agnostic auth/session seam.
+  - A Cloudflare-friendly backend with D1-backed repository routes, account-scoped spelling content, learner ownership checks, production sessions, and Worker-side OpenAI TTS proxying.
 - `docs/*`
   - Audit, architecture, refactor plan, migration map, repository notes, state-integrity notes, a dedicated spelling-service contract note, and a direct spelling parity audit.
 - `tests/*`
@@ -29,7 +30,7 @@ The goal is not to polish the old prototype. The goal is to give the product a s
 
 English Spelling works in the new structure.
 
-The browser reference build still boots local-first. The API adapter reports explicit persistence modes (`local-only`, `remote-sync`, `degraded`) so failed remote writes are visible instead of being treated as silent success. The Worker is now a real D1-backed minimum backend with learner ownership enforcement, atomic account / learner revision checks, and idempotent request replay for interrupted writes, but production auth rollout, automatic merge, and broader SaaS operations are still deferred.
+Production on `ks2.eugnel.uk` uses the API adapter by default after sign-in. Direct file/local mode, or `?local=1`, still uses browser storage for development only. The API adapter reports explicit persistence modes (`local-only`, `remote-sync`, `degraded`) so failed remote writes are visible instead of being treated as silent success. The Worker is D1-backed with learner ownership enforcement, atomic account / learner revision checks, idempotent request replay, account-scoped spelling content routes, and OpenAI TTS as the production dictation default.
 
 The other five subjects are intentionally placeholders. They already have:
 
@@ -40,7 +41,7 @@ The other five subjects are intentionally placeholders. They already have:
 - settings slots
 - learner hooks
 - reward-layer hooks
-- Cloudflare API placeholders
+- Cloudflare deployment and API boundaries
 
 What they do not have yet is their own deterministic learning engine. That is deliberate.
 
@@ -55,6 +56,16 @@ You can open `index.html` directly, or serve the folder statically.
 ```bash
 npm test
 ```
+
+### Build and deploy
+
+```bash
+npm run check:oauth
+npm run db:migrate:remote:oauth
+npm run deploy:oauth
+```
+
+The `*:oauth` commands deliberately unset `CLOUDFLARE_API_TOKEN` for that process so Wrangler uses the logged-in OAuth session instead of an old token from the shell environment.
 
 ## Core rebuild decisions
 

@@ -202,6 +202,22 @@ export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(.
           });
         }
 
+        if (url.pathname === '/api/content/spelling' && request.method === 'GET') {
+          const result = await repository.readSubjectContent(session.accountId, 'spelling');
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/content/spelling' && request.method === 'PUT') {
+          const body = await readJson(request);
+          const result = await repository.writeSubjectContent(
+            session.accountId,
+            'spelling',
+            body.content,
+            mutationFromRequest(body, request),
+          );
+          return json({ ok: true, ...result });
+        }
+
         if (url.pathname === '/api/learners' && request.method === 'PUT') {
           const body = await readJson(request);
           const result = await repository.writeLearners(session.accountId, body.learners, mutationFromRequest(body, request));

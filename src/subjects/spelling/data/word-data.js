@@ -1,5 +1,9 @@
-// Generated from legacy/vendor/*.js via scripts/generate-spelling-data.mjs
-// Source of truth remains the preserved vendor files.
+// Generated from content/spelling.seed.json via scripts/generate-spelling-content.mjs
+// This file stays as a small compatibility shim for the existing spelling runtime.
+
+export {
+  SEEDED_SPELLING_PUBLISHED_SNAPSHOT,
+} from './content-data.js';
 
 export const WORDS = [
   {
@@ -27,7 +31,23 @@ export const WORDS = [
     ],
     "accepted": [
       "accident"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 0
   },
   {
     "year": "3-4",
@@ -54,7 +74,23 @@ export const WORDS = [
     ],
     "accepted": [
       "accidentally"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 1
   },
   {
     "year": "3-4",
@@ -81,7 +117,23 @@ export const WORDS = [
     ],
     "accepted": [
       "actual"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 2
   },
   {
     "year": "3-4",
@@ -108,7 +160,23 @@ export const WORDS = [
     ],
     "accepted": [
       "actually"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 3
   },
   {
     "year": "3-4",
@@ -134,7 +202,23 @@ export const WORDS = [
     ],
     "accepted": [
       "address"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 4
   },
   {
     "year": "3-4",
@@ -160,7 +244,23 @@ export const WORDS = [
     ],
     "accepted": [
       "answer"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 5
   },
   {
     "year": "3-4",
@@ -186,7 +286,23 @@ export const WORDS = [
     ],
     "accepted": [
       "appear"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 6
   },
   {
     "year": "3-4",
@@ -212,7 +328,23 @@ export const WORDS = [
     ],
     "accepted": [
       "arrive"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 7
   },
   {
     "year": "3-4",
@@ -238,7 +370,23 @@ export const WORDS = [
     ],
     "accepted": [
       "believe"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 8
   },
   {
     "year": "3-4",
@@ -264,7 +412,23 @@ export const WORDS = [
     ],
     "accepted": [
       "bicycle"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 9
   },
   {
     "year": "3-4",
@@ -290,7 +454,23 @@ export const WORDS = [
     ],
     "accepted": [
       "breath"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 10
   },
   {
     "year": "3-4",
@@ -316,7 +496,23 @@ export const WORDS = [
     ],
     "accepted": [
       "breathe"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 11
   },
   {
     "year": "3-4",
@@ -342,7 +538,23 @@ export const WORDS = [
     ],
     "accepted": [
       "build"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 12
   },
   {
     "year": "3-4",
@@ -369,7 +581,23 @@ export const WORDS = [
     ],
     "accepted": [
       "busy"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 13
   },
   {
     "year": "3-4",
@@ -396,7 +624,23 @@ export const WORDS = [
     ],
     "accepted": [
       "business"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 14
   },
   {
     "year": "3-4",
@@ -422,7 +666,23 @@ export const WORDS = [
     ],
     "accepted": [
       "calendar"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 15
   },
   {
     "year": "3-4",
@@ -448,7 +708,23 @@ export const WORDS = [
     ],
     "accepted": [
       "caught"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 16
   },
   {
     "year": "3-4",
@@ -474,7 +750,23 @@ export const WORDS = [
     ],
     "accepted": [
       "centre"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 17
   },
   {
     "year": "3-4",
@@ -500,7 +792,23 @@ export const WORDS = [
     ],
     "accepted": [
       "century"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 18
   },
   {
     "year": "3-4",
@@ -526,7 +834,23 @@ export const WORDS = [
     ],
     "accepted": [
       "certain"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 19
   },
   {
     "year": "3-4",
@@ -552,7 +876,23 @@ export const WORDS = [
     ],
     "accepted": [
       "circle"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 20
   },
   {
     "year": "3-4",
@@ -578,7 +918,23 @@ export const WORDS = [
     ],
     "accepted": [
       "complete"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 21
   },
   {
     "year": "3-4",
@@ -604,7 +960,23 @@ export const WORDS = [
     ],
     "accepted": [
       "consider"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 22
   },
   {
     "year": "3-4",
@@ -630,7 +1002,23 @@ export const WORDS = [
     ],
     "accepted": [
       "continue"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 23
   },
   {
     "year": "3-4",
@@ -656,7 +1044,23 @@ export const WORDS = [
     ],
     "accepted": [
       "decide"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 24
   },
   {
     "year": "3-4",
@@ -682,7 +1086,23 @@ export const WORDS = [
     ],
     "accepted": [
       "describe"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 25
   },
   {
     "year": "3-4",
@@ -708,7 +1128,23 @@ export const WORDS = [
     ],
     "accepted": [
       "different"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 26
   },
   {
     "year": "3-4",
@@ -734,7 +1170,23 @@ export const WORDS = [
     ],
     "accepted": [
       "difficult"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 27
   },
   {
     "year": "3-4",
@@ -760,7 +1212,23 @@ export const WORDS = [
     ],
     "accepted": [
       "disappear"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 28
   },
   {
     "year": "3-4",
@@ -786,7 +1254,23 @@ export const WORDS = [
     ],
     "accepted": [
       "early"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 29
   },
   {
     "year": "3-4",
@@ -812,7 +1296,23 @@ export const WORDS = [
     ],
     "accepted": [
       "earth"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 30
   },
   {
     "year": "3-4",
@@ -839,7 +1339,23 @@ export const WORDS = [
     ],
     "accepted": [
       "eight"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 31
   },
   {
     "year": "3-4",
@@ -866,7 +1382,23 @@ export const WORDS = [
     ],
     "accepted": [
       "eighth"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 32
   },
   {
     "year": "3-4",
@@ -892,7 +1424,23 @@ export const WORDS = [
     ],
     "accepted": [
       "enough"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 33
   },
   {
     "year": "3-4",
@@ -918,7 +1466,23 @@ export const WORDS = [
     ],
     "accepted": [
       "exercise"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 34
   },
   {
     "year": "3-4",
@@ -944,7 +1508,23 @@ export const WORDS = [
     ],
     "accepted": [
       "experience"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 35
   },
   {
     "year": "3-4",
@@ -970,7 +1550,23 @@ export const WORDS = [
     ],
     "accepted": [
       "experiment"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 36
   },
   {
     "year": "3-4",
@@ -996,7 +1592,23 @@ export const WORDS = [
     ],
     "accepted": [
       "extreme"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 37
   },
   {
     "year": "3-4",
@@ -1022,7 +1634,23 @@ export const WORDS = [
     ],
     "accepted": [
       "famous"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 38
   },
   {
     "year": "3-4",
@@ -1048,7 +1676,23 @@ export const WORDS = [
     ],
     "accepted": [
       "favourite"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 39
   },
   {
     "year": "3-4",
@@ -1074,7 +1718,23 @@ export const WORDS = [
     ],
     "accepted": [
       "february"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 40
   },
   {
     "year": "3-4",
@@ -1101,7 +1761,23 @@ export const WORDS = [
     ],
     "accepted": [
       "forward"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 41
   },
   {
     "year": "3-4",
@@ -1128,7 +1804,23 @@ export const WORDS = [
     ],
     "accepted": [
       "forwards"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 42
   },
   {
     "year": "3-4",
@@ -1154,7 +1846,23 @@ export const WORDS = [
     ],
     "accepted": [
       "fruit"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 43
   },
   {
     "year": "3-4",
@@ -1180,7 +1888,23 @@ export const WORDS = [
     ],
     "accepted": [
       "grammar"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 44
   },
   {
     "year": "3-4",
@@ -1206,7 +1930,23 @@ export const WORDS = [
     ],
     "accepted": [
       "group"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 45
   },
   {
     "year": "3-4",
@@ -1232,7 +1972,23 @@ export const WORDS = [
     ],
     "accepted": [
       "guard"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 46
   },
   {
     "year": "3-4",
@@ -1258,7 +2014,23 @@ export const WORDS = [
     ],
     "accepted": [
       "guide"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 47
   },
   {
     "year": "3-4",
@@ -1284,7 +2056,23 @@ export const WORDS = [
     ],
     "accepted": [
       "heard"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 48
   },
   {
     "year": "3-4",
@@ -1310,7 +2098,23 @@ export const WORDS = [
     ],
     "accepted": [
       "heart"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 49
   },
   {
     "year": "3-4",
@@ -1336,7 +2140,23 @@ export const WORDS = [
     ],
     "accepted": [
       "height"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 50
   },
   {
     "year": "3-4",
@@ -1362,7 +2182,23 @@ export const WORDS = [
     ],
     "accepted": [
       "history"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 51
   },
   {
     "year": "3-4",
@@ -1388,7 +2224,23 @@ export const WORDS = [
     ],
     "accepted": [
       "imagine"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 52
   },
   {
     "year": "3-4",
@@ -1414,7 +2266,23 @@ export const WORDS = [
     ],
     "accepted": [
       "increase"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 53
   },
   {
     "year": "3-4",
@@ -1440,7 +2308,23 @@ export const WORDS = [
     ],
     "accepted": [
       "important"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 54
   },
   {
     "year": "3-4",
@@ -1466,7 +2350,23 @@ export const WORDS = [
     ],
     "accepted": [
       "interest"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 55
   },
   {
     "year": "3-4",
@@ -1492,7 +2392,23 @@ export const WORDS = [
     ],
     "accepted": [
       "island"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 56
   },
   {
     "year": "3-4",
@@ -1518,7 +2434,23 @@ export const WORDS = [
     ],
     "accepted": [
       "knowledge"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 57
   },
   {
     "year": "3-4",
@@ -1544,7 +2476,23 @@ export const WORDS = [
     ],
     "accepted": [
       "learn"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 58
   },
   {
     "year": "3-4",
@@ -1570,7 +2518,23 @@ export const WORDS = [
     ],
     "accepted": [
       "length"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 59
   },
   {
     "year": "3-4",
@@ -1596,7 +2560,23 @@ export const WORDS = [
     ],
     "accepted": [
       "library"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 60
   },
   {
     "year": "3-4",
@@ -1622,7 +2602,23 @@ export const WORDS = [
     ],
     "accepted": [
       "material"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 61
   },
   {
     "year": "3-4",
@@ -1648,7 +2644,23 @@ export const WORDS = [
     ],
     "accepted": [
       "medicine"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 62
   },
   {
     "year": "3-4",
@@ -1674,7 +2686,23 @@ export const WORDS = [
     ],
     "accepted": [
       "mention"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 63
   },
   {
     "year": "3-4",
@@ -1700,7 +2728,23 @@ export const WORDS = [
     ],
     "accepted": [
       "minute"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 64
   },
   {
     "year": "3-4",
@@ -1726,7 +2770,23 @@ export const WORDS = [
     ],
     "accepted": [
       "natural"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 65
   },
   {
     "year": "3-4",
@@ -1752,7 +2812,23 @@ export const WORDS = [
     ],
     "accepted": [
       "naughty"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 66
   },
   {
     "year": "3-4",
@@ -1778,7 +2854,23 @@ export const WORDS = [
     ],
     "accepted": [
       "notice"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 67
   },
   {
     "year": "3-4",
@@ -1805,7 +2897,23 @@ export const WORDS = [
     ],
     "accepted": [
       "occasion"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 68
   },
   {
     "year": "3-4",
@@ -1832,7 +2940,23 @@ export const WORDS = [
     ],
     "accepted": [
       "occasionally"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 69
   },
   {
     "year": "3-4",
@@ -1858,7 +2982,23 @@ export const WORDS = [
     ],
     "accepted": [
       "often"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 70
   },
   {
     "year": "3-4",
@@ -1884,7 +3024,23 @@ export const WORDS = [
     ],
     "accepted": [
       "opposite"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 71
   },
   {
     "year": "3-4",
@@ -1910,7 +3066,23 @@ export const WORDS = [
     ],
     "accepted": [
       "ordinary"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 72
   },
   {
     "year": "3-4",
@@ -1936,7 +3108,23 @@ export const WORDS = [
     ],
     "accepted": [
       "particular"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 73
   },
   {
     "year": "3-4",
@@ -1962,7 +3150,23 @@ export const WORDS = [
     ],
     "accepted": [
       "peculiar"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 74
   },
   {
     "year": "3-4",
@@ -1988,7 +3192,23 @@ export const WORDS = [
     ],
     "accepted": [
       "perhaps"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 75
   },
   {
     "year": "3-4",
@@ -2014,7 +3234,23 @@ export const WORDS = [
     ],
     "accepted": [
       "popular"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 76
   },
   {
     "year": "3-4",
@@ -2040,7 +3276,23 @@ export const WORDS = [
     ],
     "accepted": [
       "position"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 77
   },
   {
     "year": "3-4",
@@ -2067,7 +3319,23 @@ export const WORDS = [
     ],
     "accepted": [
       "possess"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 78
   },
   {
     "year": "3-4",
@@ -2094,7 +3362,23 @@ export const WORDS = [
     ],
     "accepted": [
       "possession"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 79
   },
   {
     "year": "3-4",
@@ -2120,7 +3404,23 @@ export const WORDS = [
     ],
     "accepted": [
       "possible"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 80
   },
   {
     "year": "3-4",
@@ -2146,7 +3446,23 @@ export const WORDS = [
     ],
     "accepted": [
       "potatoes"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 81
   },
   {
     "year": "3-4",
@@ -2172,7 +3488,23 @@ export const WORDS = [
     ],
     "accepted": [
       "pressure"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 82
   },
   {
     "year": "3-4",
@@ -2198,7 +3530,23 @@ export const WORDS = [
     ],
     "accepted": [
       "probably"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 83
   },
   {
     "year": "3-4",
@@ -2224,7 +3572,23 @@ export const WORDS = [
     ],
     "accepted": [
       "promise"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 84
   },
   {
     "year": "3-4",
@@ -2250,7 +3614,23 @@ export const WORDS = [
     ],
     "accepted": [
       "purpose"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 85
   },
   {
     "year": "3-4",
@@ -2276,7 +3656,23 @@ export const WORDS = [
     ],
     "accepted": [
       "quarter"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 86
   },
   {
     "year": "3-4",
@@ -2302,7 +3698,23 @@ export const WORDS = [
     ],
     "accepted": [
       "question"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 87
   },
   {
     "year": "3-4",
@@ -2328,7 +3740,23 @@ export const WORDS = [
     ],
     "accepted": [
       "recent"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 88
   },
   {
     "year": "3-4",
@@ -2354,7 +3782,23 @@ export const WORDS = [
     ],
     "accepted": [
       "regular"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 89
   },
   {
     "year": "3-4",
@@ -2380,7 +3824,23 @@ export const WORDS = [
     ],
     "accepted": [
       "reign"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 90
   },
   {
     "year": "3-4",
@@ -2406,7 +3866,23 @@ export const WORDS = [
     ],
     "accepted": [
       "remember"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 91
   },
   {
     "year": "3-4",
@@ -2432,7 +3908,23 @@ export const WORDS = [
     ],
     "accepted": [
       "sentence"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 92
   },
   {
     "year": "3-4",
@@ -2458,7 +3950,23 @@ export const WORDS = [
     ],
     "accepted": [
       "separate"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 93
   },
   {
     "year": "3-4",
@@ -2484,7 +3992,23 @@ export const WORDS = [
     ],
     "accepted": [
       "special"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 94
   },
   {
     "year": "3-4",
@@ -2510,7 +4034,23 @@ export const WORDS = [
     ],
     "accepted": [
       "straight"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 95
   },
   {
     "year": "3-4",
@@ -2536,7 +4076,23 @@ export const WORDS = [
     ],
     "accepted": [
       "strange"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 96
   },
   {
     "year": "3-4",
@@ -2562,7 +4118,23 @@ export const WORDS = [
     ],
     "accepted": [
       "strength"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 97
   },
   {
     "year": "3-4",
@@ -2588,7 +4160,23 @@ export const WORDS = [
     ],
     "accepted": [
       "suppose"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 98
   },
   {
     "year": "3-4",
@@ -2614,7 +4202,23 @@ export const WORDS = [
     ],
     "accepted": [
       "surprise"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 99
   },
   {
     "year": "3-4",
@@ -2640,7 +4244,23 @@ export const WORDS = [
     ],
     "accepted": [
       "therefore"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 100
   },
   {
     "year": "3-4",
@@ -2667,7 +4287,23 @@ export const WORDS = [
     ],
     "accepted": [
       "though"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 101
   },
   {
     "year": "3-4",
@@ -2694,7 +4330,23 @@ export const WORDS = [
     ],
     "accepted": [
       "although"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 102
   },
   {
     "year": "3-4",
@@ -2720,7 +4372,23 @@ export const WORDS = [
     ],
     "accepted": [
       "thought"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 103
   },
   {
     "year": "3-4",
@@ -2746,7 +4414,23 @@ export const WORDS = [
     ],
     "accepted": [
       "through"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 104
   },
   {
     "year": "3-4",
@@ -2772,7 +4456,23 @@ export const WORDS = [
     ],
     "accepted": [
       "various"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 105
   },
   {
     "year": "3-4",
@@ -2798,7 +4498,23 @@ export const WORDS = [
     ],
     "accepted": [
       "weight"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 106
   },
   {
     "year": "3-4",
@@ -2825,7 +4541,23 @@ export const WORDS = [
     ],
     "accepted": [
       "woman"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 107
   },
   {
     "year": "3-4",
@@ -2852,7 +4584,23 @@ export const WORDS = [
     ],
     "accepted": [
       "women"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 108
   },
   {
     "year": "5-6",
@@ -2878,7 +4626,23 @@ export const WORDS = [
     ],
     "accepted": [
       "accommodate"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 109
   },
   {
     "year": "5-6",
@@ -2904,7 +4668,23 @@ export const WORDS = [
     ],
     "accepted": [
       "accompany"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 110
   },
   {
     "year": "5-6",
@@ -2930,7 +4710,23 @@ export const WORDS = [
     ],
     "accepted": [
       "according"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 111
   },
   {
     "year": "5-6",
@@ -2956,7 +4752,23 @@ export const WORDS = [
     ],
     "accepted": [
       "achieve"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 112
   },
   {
     "year": "5-6",
@@ -2982,7 +4794,23 @@ export const WORDS = [
     ],
     "accepted": [
       "aggressive"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 113
   },
   {
     "year": "5-6",
@@ -3008,7 +4836,23 @@ export const WORDS = [
     ],
     "accepted": [
       "amateur"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 114
   },
   {
     "year": "5-6",
@@ -3034,7 +4878,23 @@ export const WORDS = [
     ],
     "accepted": [
       "ancient"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 115
   },
   {
     "year": "5-6",
@@ -3060,7 +4920,23 @@ export const WORDS = [
     ],
     "accepted": [
       "apparent"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 116
   },
   {
     "year": "5-6",
@@ -3086,7 +4962,23 @@ export const WORDS = [
     ],
     "accepted": [
       "appreciate"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 117
   },
   {
     "year": "5-6",
@@ -3112,7 +5004,23 @@ export const WORDS = [
     ],
     "accepted": [
       "attached"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 118
   },
   {
     "year": "5-6",
@@ -3138,7 +5046,23 @@ export const WORDS = [
     ],
     "accepted": [
       "available"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 119
   },
   {
     "year": "5-6",
@@ -3164,7 +5088,23 @@ export const WORDS = [
     ],
     "accepted": [
       "average"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 120
   },
   {
     "year": "5-6",
@@ -3190,7 +5130,23 @@ export const WORDS = [
     ],
     "accepted": [
       "awkward"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 121
   },
   {
     "year": "5-6",
@@ -3216,7 +5172,23 @@ export const WORDS = [
     ],
     "accepted": [
       "bargain"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 122
   },
   {
     "year": "5-6",
@@ -3242,7 +5214,23 @@ export const WORDS = [
     ],
     "accepted": [
       "bruise"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 123
   },
   {
     "year": "5-6",
@@ -3268,7 +5256,23 @@ export const WORDS = [
     ],
     "accepted": [
       "category"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 124
   },
   {
     "year": "5-6",
@@ -3294,7 +5298,23 @@ export const WORDS = [
     ],
     "accepted": [
       "cemetery"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 125
   },
   {
     "year": "5-6",
@@ -3320,7 +5340,23 @@ export const WORDS = [
     ],
     "accepted": [
       "committee"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 126
   },
   {
     "year": "5-6",
@@ -3346,7 +5382,23 @@ export const WORDS = [
     ],
     "accepted": [
       "communicate"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 127
   },
   {
     "year": "5-6",
@@ -3372,7 +5424,23 @@ export const WORDS = [
     ],
     "accepted": [
       "community"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 128
   },
   {
     "year": "5-6",
@@ -3398,7 +5466,23 @@ export const WORDS = [
     ],
     "accepted": [
       "competition"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 129
   },
   {
     "year": "5-6",
@@ -3424,7 +5508,23 @@ export const WORDS = [
     ],
     "accepted": [
       "conscience"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 130
   },
   {
     "year": "5-6",
@@ -3450,7 +5550,23 @@ export const WORDS = [
     ],
     "accepted": [
       "conscious"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 131
   },
   {
     "year": "5-6",
@@ -3476,7 +5592,23 @@ export const WORDS = [
     ],
     "accepted": [
       "controversy"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 132
   },
   {
     "year": "5-6",
@@ -3502,7 +5634,23 @@ export const WORDS = [
     ],
     "accepted": [
       "convenience"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 133
   },
   {
     "year": "5-6",
@@ -3528,7 +5676,23 @@ export const WORDS = [
     ],
     "accepted": [
       "correspond"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 134
   },
   {
     "year": "5-6",
@@ -3555,7 +5719,23 @@ export const WORDS = [
     "accepted": [
       "criticise",
       "criticize"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 135
   },
   {
     "year": "5-6",
@@ -3581,7 +5761,23 @@ export const WORDS = [
     ],
     "accepted": [
       "curiosity"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 136
   },
   {
     "year": "5-6",
@@ -3607,7 +5803,23 @@ export const WORDS = [
     ],
     "accepted": [
       "definite"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 137
   },
   {
     "year": "5-6",
@@ -3633,7 +5845,23 @@ export const WORDS = [
     ],
     "accepted": [
       "desperate"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 138
   },
   {
     "year": "5-6",
@@ -3659,7 +5887,23 @@ export const WORDS = [
     ],
     "accepted": [
       "determined"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 139
   },
   {
     "year": "5-6",
@@ -3685,7 +5929,23 @@ export const WORDS = [
     ],
     "accepted": [
       "develop"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 140
   },
   {
     "year": "5-6",
@@ -3711,7 +5971,23 @@ export const WORDS = [
     ],
     "accepted": [
       "dictionary"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 141
   },
   {
     "year": "5-6",
@@ -3737,7 +6013,23 @@ export const WORDS = [
     ],
     "accepted": [
       "disastrous"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 142
   },
   {
     "year": "5-6",
@@ -3763,7 +6055,23 @@ export const WORDS = [
     ],
     "accepted": [
       "embarrass"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 143
   },
   {
     "year": "5-6",
@@ -3789,7 +6097,23 @@ export const WORDS = [
     ],
     "accepted": [
       "environment"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 144
   },
   {
     "year": "5-6",
@@ -3817,7 +6141,23 @@ export const WORDS = [
     ],
     "accepted": [
       "equip"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 145
   },
   {
     "year": "5-6",
@@ -3845,7 +6185,23 @@ export const WORDS = [
     ],
     "accepted": [
       "equipped"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 146
   },
   {
     "year": "5-6",
@@ -3873,7 +6229,23 @@ export const WORDS = [
     ],
     "accepted": [
       "equipment"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 147
   },
   {
     "year": "5-6",
@@ -3899,7 +6271,23 @@ export const WORDS = [
     ],
     "accepted": [
       "especially"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 148
   },
   {
     "year": "5-6",
@@ -3925,7 +6313,23 @@ export const WORDS = [
     ],
     "accepted": [
       "exaggerate"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 149
   },
   {
     "year": "5-6",
@@ -3951,7 +6355,23 @@ export const WORDS = [
     ],
     "accepted": [
       "excellent"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 150
   },
   {
     "year": "5-6",
@@ -3977,7 +6397,23 @@ export const WORDS = [
     ],
     "accepted": [
       "existence"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 151
   },
   {
     "year": "5-6",
@@ -4003,7 +6439,23 @@ export const WORDS = [
     ],
     "accepted": [
       "explanation"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 152
   },
   {
     "year": "5-6",
@@ -4029,7 +6481,23 @@ export const WORDS = [
     ],
     "accepted": [
       "familiar"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 153
   },
   {
     "year": "5-6",
@@ -4055,7 +6523,23 @@ export const WORDS = [
     ],
     "accepted": [
       "foreign"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 154
   },
   {
     "year": "5-6",
@@ -4081,7 +6565,23 @@ export const WORDS = [
     ],
     "accepted": [
       "forty"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 155
   },
   {
     "year": "5-6",
@@ -4107,7 +6607,23 @@ export const WORDS = [
     ],
     "accepted": [
       "frequently"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 156
   },
   {
     "year": "5-6",
@@ -4133,7 +6649,23 @@ export const WORDS = [
     ],
     "accepted": [
       "government"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 157
   },
   {
     "year": "5-6",
@@ -4159,7 +6691,23 @@ export const WORDS = [
     ],
     "accepted": [
       "guarantee"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 158
   },
   {
     "year": "5-6",
@@ -4185,7 +6733,23 @@ export const WORDS = [
     ],
     "accepted": [
       "harass"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 159
   },
   {
     "year": "5-6",
@@ -4211,7 +6775,23 @@ export const WORDS = [
     ],
     "accepted": [
       "hindrance"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 160
   },
   {
     "year": "5-6",
@@ -4237,7 +6817,23 @@ export const WORDS = [
     ],
     "accepted": [
       "identity"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 161
   },
   {
     "year": "5-6",
@@ -4264,7 +6860,23 @@ export const WORDS = [
     ],
     "accepted": [
       "immediate"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 162
   },
   {
     "year": "5-6",
@@ -4291,7 +6903,23 @@ export const WORDS = [
     ],
     "accepted": [
       "immediately"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 163
   },
   {
     "year": "5-6",
@@ -4317,7 +6945,23 @@ export const WORDS = [
     ],
     "accepted": [
       "individual"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 164
   },
   {
     "year": "5-6",
@@ -4343,7 +6987,23 @@ export const WORDS = [
     ],
     "accepted": [
       "interfere"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 165
   },
   {
     "year": "5-6",
@@ -4369,7 +7029,23 @@ export const WORDS = [
     ],
     "accepted": [
       "interrupt"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 166
   },
   {
     "year": "5-6",
@@ -4395,7 +7071,23 @@ export const WORDS = [
     ],
     "accepted": [
       "language"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 167
   },
   {
     "year": "5-6",
@@ -4421,7 +7113,23 @@ export const WORDS = [
     ],
     "accepted": [
       "leisure"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 168
   },
   {
     "year": "5-6",
@@ -4447,7 +7155,23 @@ export const WORDS = [
     ],
     "accepted": [
       "lightning"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 169
   },
   {
     "year": "5-6",
@@ -4473,7 +7197,23 @@ export const WORDS = [
     ],
     "accepted": [
       "marvellous"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 170
   },
   {
     "year": "5-6",
@@ -4499,7 +7239,23 @@ export const WORDS = [
     ],
     "accepted": [
       "mischievous"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 171
   },
   {
     "year": "5-6",
@@ -4525,7 +7281,23 @@ export const WORDS = [
     ],
     "accepted": [
       "muscle"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 172
   },
   {
     "year": "5-6",
@@ -4551,7 +7323,23 @@ export const WORDS = [
     ],
     "accepted": [
       "necessary"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 173
   },
   {
     "year": "5-6",
@@ -4577,7 +7365,23 @@ export const WORDS = [
     ],
     "accepted": [
       "neighbour"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 174
   },
   {
     "year": "5-6",
@@ -4603,7 +7407,23 @@ export const WORDS = [
     ],
     "accepted": [
       "nuisance"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 175
   },
   {
     "year": "5-6",
@@ -4629,7 +7449,23 @@ export const WORDS = [
     ],
     "accepted": [
       "occupy"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 176
   },
   {
     "year": "5-6",
@@ -4655,7 +7491,23 @@ export const WORDS = [
     ],
     "accepted": [
       "occur"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 177
   },
   {
     "year": "5-6",
@@ -4681,7 +7533,23 @@ export const WORDS = [
     ],
     "accepted": [
       "opportunity"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 178
   },
   {
     "year": "5-6",
@@ -4707,7 +7575,23 @@ export const WORDS = [
     ],
     "accepted": [
       "parliament"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 179
   },
   {
     "year": "5-6",
@@ -4733,7 +7617,23 @@ export const WORDS = [
     ],
     "accepted": [
       "persuade"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 180
   },
   {
     "year": "5-6",
@@ -4759,7 +7659,23 @@ export const WORDS = [
     ],
     "accepted": [
       "physical"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 181
   },
   {
     "year": "5-6",
@@ -4785,7 +7701,23 @@ export const WORDS = [
     ],
     "accepted": [
       "prejudice"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 182
   },
   {
     "year": "5-6",
@@ -4811,7 +7743,23 @@ export const WORDS = [
     ],
     "accepted": [
       "privilege"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 183
   },
   {
     "year": "5-6",
@@ -4837,7 +7785,23 @@ export const WORDS = [
     ],
     "accepted": [
       "profession"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 184
   },
   {
     "year": "5-6",
@@ -4863,7 +7827,23 @@ export const WORDS = [
     ],
     "accepted": [
       "programme"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 185
   },
   {
     "year": "5-6",
@@ -4889,7 +7869,23 @@ export const WORDS = [
     ],
     "accepted": [
       "pronunciation"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 186
   },
   {
     "year": "5-6",
@@ -4915,7 +7911,23 @@ export const WORDS = [
     ],
     "accepted": [
       "queue"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 187
   },
   {
     "year": "5-6",
@@ -4942,7 +7954,23 @@ export const WORDS = [
     "accepted": [
       "recognise",
       "recognize"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 188
   },
   {
     "year": "5-6",
@@ -4968,7 +7996,23 @@ export const WORDS = [
     ],
     "accepted": [
       "recommend"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 189
   },
   {
     "year": "5-6",
@@ -4994,7 +8038,23 @@ export const WORDS = [
     ],
     "accepted": [
       "relevant"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 190
   },
   {
     "year": "5-6",
@@ -5020,7 +8080,23 @@ export const WORDS = [
     ],
     "accepted": [
       "restaurant"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 191
   },
   {
     "year": "5-6",
@@ -5046,7 +8122,23 @@ export const WORDS = [
     ],
     "accepted": [
       "rhyme"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 192
   },
   {
     "year": "5-6",
@@ -5072,7 +8164,23 @@ export const WORDS = [
     ],
     "accepted": [
       "rhythm"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 193
   },
   {
     "year": "5-6",
@@ -5098,7 +8206,23 @@ export const WORDS = [
     ],
     "accepted": [
       "sacrifice"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 194
   },
   {
     "year": "5-6",
@@ -5124,7 +8248,23 @@ export const WORDS = [
     ],
     "accepted": [
       "secretary"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 195
   },
   {
     "year": "5-6",
@@ -5150,7 +8290,23 @@ export const WORDS = [
     ],
     "accepted": [
       "shoulder"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 196
   },
   {
     "year": "5-6",
@@ -5176,7 +8332,23 @@ export const WORDS = [
     ],
     "accepted": [
       "signature"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 197
   },
   {
     "year": "5-6",
@@ -5203,7 +8375,23 @@ export const WORDS = [
     ],
     "accepted": [
       "sincere"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 198
   },
   {
     "year": "5-6",
@@ -5230,7 +8418,23 @@ export const WORDS = [
     ],
     "accepted": [
       "sincerely"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 199
   },
   {
     "year": "5-6",
@@ -5256,7 +8460,23 @@ export const WORDS = [
     ],
     "accepted": [
       "soldier"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 200
   },
   {
     "year": "5-6",
@@ -5282,7 +8502,23 @@ export const WORDS = [
     ],
     "accepted": [
       "stomach"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 201
   },
   {
     "year": "5-6",
@@ -5308,7 +8544,23 @@ export const WORDS = [
     ],
     "accepted": [
       "sufficient"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 202
   },
   {
     "year": "5-6",
@@ -5334,7 +8586,23 @@ export const WORDS = [
     ],
     "accepted": [
       "suggest"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 203
   },
   {
     "year": "5-6",
@@ -5360,7 +8628,23 @@ export const WORDS = [
     ],
     "accepted": [
       "symbol"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 204
   },
   {
     "year": "5-6",
@@ -5386,7 +8670,23 @@ export const WORDS = [
     ],
     "accepted": [
       "system"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 205
   },
   {
     "year": "5-6",
@@ -5412,7 +8712,23 @@ export const WORDS = [
     ],
     "accepted": [
       "temperature"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 206
   },
   {
     "year": "5-6",
@@ -5438,7 +8754,23 @@ export const WORDS = [
     ],
     "accepted": [
       "thorough"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 207
   },
   {
     "year": "5-6",
@@ -5464,7 +8796,23 @@ export const WORDS = [
     ],
     "accepted": [
       "twelfth"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 208
   },
   {
     "year": "5-6",
@@ -5490,7 +8838,23 @@ export const WORDS = [
     ],
     "accepted": [
       "variety"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 209
   },
   {
     "year": "5-6",
@@ -5516,7 +8880,23 @@ export const WORDS = [
     ],
     "accepted": [
       "vegetable"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 210
   },
   {
     "year": "5-6",
@@ -5542,7 +8922,23 @@ export const WORDS = [
     ],
     "accepted": [
       "vehicle"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 211
   },
   {
     "year": "5-6",
@@ -5568,7 +8964,23 @@ export const WORDS = [
     ],
     "accepted": [
       "yacht"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 212
   }
 ];
 
@@ -5598,7 +9010,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "accident"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 0
   },
   "accidentally": {
     "year": "3-4",
@@ -5625,7 +9053,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "accidentally"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 1
   },
   "actual": {
     "year": "3-4",
@@ -5652,7 +9096,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "actual"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 2
   },
   "actually": {
     "year": "3-4",
@@ -5679,7 +9139,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "actually"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 3
   },
   "address": {
     "year": "3-4",
@@ -5705,7 +9181,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "address"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 4
   },
   "answer": {
     "year": "3-4",
@@ -5731,7 +9223,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "answer"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 5
   },
   "appear": {
     "year": "3-4",
@@ -5757,7 +9265,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "appear"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 6
   },
   "arrive": {
     "year": "3-4",
@@ -5783,7 +9307,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "arrive"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 7
   },
   "believe": {
     "year": "3-4",
@@ -5809,7 +9349,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "believe"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 8
   },
   "bicycle": {
     "year": "3-4",
@@ -5835,7 +9391,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "bicycle"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 9
   },
   "breath": {
     "year": "3-4",
@@ -5861,7 +9433,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "breath"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 10
   },
   "breathe": {
     "year": "3-4",
@@ -5887,7 +9475,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "breathe"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 11
   },
   "build": {
     "year": "3-4",
@@ -5913,7 +9517,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "build"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 12
   },
   "busy": {
     "year": "3-4",
@@ -5940,7 +9560,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "busy"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 13
   },
   "business": {
     "year": "3-4",
@@ -5967,7 +9603,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "business"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 14
   },
   "calendar": {
     "year": "3-4",
@@ -5993,7 +9645,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "calendar"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 15
   },
   "caught": {
     "year": "3-4",
@@ -6019,7 +9687,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "caught"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 16
   },
   "centre": {
     "year": "3-4",
@@ -6045,7 +9729,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "centre"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 17
   },
   "century": {
     "year": "3-4",
@@ -6071,7 +9771,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "century"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 18
   },
   "certain": {
     "year": "3-4",
@@ -6097,7 +9813,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "certain"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 19
   },
   "circle": {
     "year": "3-4",
@@ -6123,7 +9855,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "circle"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 20
   },
   "complete": {
     "year": "3-4",
@@ -6149,7 +9897,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "complete"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 21
   },
   "consider": {
     "year": "3-4",
@@ -6175,7 +9939,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "consider"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 22
   },
   "continue": {
     "year": "3-4",
@@ -6201,7 +9981,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "continue"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 23
   },
   "decide": {
     "year": "3-4",
@@ -6227,7 +10023,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "decide"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 24
   },
   "describe": {
     "year": "3-4",
@@ -6253,7 +10065,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "describe"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 25
   },
   "different": {
     "year": "3-4",
@@ -6279,7 +10107,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "different"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 26
   },
   "difficult": {
     "year": "3-4",
@@ -6305,7 +10149,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "difficult"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 27
   },
   "disappear": {
     "year": "3-4",
@@ -6331,7 +10191,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "disappear"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 28
   },
   "early": {
     "year": "3-4",
@@ -6357,7 +10233,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "early"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 29
   },
   "earth": {
     "year": "3-4",
@@ -6383,7 +10275,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "earth"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 30
   },
   "eight": {
     "year": "3-4",
@@ -6410,7 +10318,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "eight"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 31
   },
   "eighth": {
     "year": "3-4",
@@ -6437,7 +10361,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "eighth"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 32
   },
   "enough": {
     "year": "3-4",
@@ -6463,7 +10403,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "enough"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 33
   },
   "exercise": {
     "year": "3-4",
@@ -6489,7 +10445,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "exercise"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 34
   },
   "experience": {
     "year": "3-4",
@@ -6515,7 +10487,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "experience"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 35
   },
   "experiment": {
     "year": "3-4",
@@ -6541,7 +10529,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "experiment"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 36
   },
   "extreme": {
     "year": "3-4",
@@ -6567,7 +10571,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "extreme"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 37
   },
   "famous": {
     "year": "3-4",
@@ -6593,7 +10613,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "famous"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 38
   },
   "favourite": {
     "year": "3-4",
@@ -6619,7 +10655,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "favourite"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 39
   },
   "february": {
     "year": "3-4",
@@ -6645,7 +10697,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "february"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 40
   },
   "forward": {
     "year": "3-4",
@@ -6672,7 +10740,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "forward"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 41
   },
   "forwards": {
     "year": "3-4",
@@ -6699,7 +10783,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "forwards"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 42
   },
   "fruit": {
     "year": "3-4",
@@ -6725,7 +10825,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "fruit"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 43
   },
   "grammar": {
     "year": "3-4",
@@ -6751,7 +10867,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "grammar"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 44
   },
   "group": {
     "year": "3-4",
@@ -6777,7 +10909,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "group"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 45
   },
   "guard": {
     "year": "3-4",
@@ -6803,7 +10951,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "guard"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 46
   },
   "guide": {
     "year": "3-4",
@@ -6829,7 +10993,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "guide"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 47
   },
   "heard": {
     "year": "3-4",
@@ -6855,7 +11035,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "heard"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 48
   },
   "heart": {
     "year": "3-4",
@@ -6881,7 +11077,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "heart"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 49
   },
   "height": {
     "year": "3-4",
@@ -6907,7 +11119,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "height"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 50
   },
   "history": {
     "year": "3-4",
@@ -6933,7 +11161,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "history"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 51
   },
   "imagine": {
     "year": "3-4",
@@ -6959,7 +11203,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "imagine"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 52
   },
   "increase": {
     "year": "3-4",
@@ -6985,7 +11245,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "increase"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 53
   },
   "important": {
     "year": "3-4",
@@ -7011,7 +11287,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "important"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 54
   },
   "interest": {
     "year": "3-4",
@@ -7037,7 +11329,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "interest"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 55
   },
   "island": {
     "year": "3-4",
@@ -7063,7 +11371,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "island"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 56
   },
   "knowledge": {
     "year": "3-4",
@@ -7089,7 +11413,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "knowledge"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 57
   },
   "learn": {
     "year": "3-4",
@@ -7115,7 +11455,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "learn"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 58
   },
   "length": {
     "year": "3-4",
@@ -7141,7 +11497,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "length"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 59
   },
   "library": {
     "year": "3-4",
@@ -7167,7 +11539,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "library"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 60
   },
   "material": {
     "year": "3-4",
@@ -7193,7 +11581,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "material"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 61
   },
   "medicine": {
     "year": "3-4",
@@ -7219,7 +11623,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "medicine"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 62
   },
   "mention": {
     "year": "3-4",
@@ -7245,7 +11665,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "mention"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 63
   },
   "minute": {
     "year": "3-4",
@@ -7271,7 +11707,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "minute"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 64
   },
   "natural": {
     "year": "3-4",
@@ -7297,7 +11749,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "natural"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 65
   },
   "naughty": {
     "year": "3-4",
@@ -7323,7 +11791,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "naughty"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 66
   },
   "notice": {
     "year": "3-4",
@@ -7349,7 +11833,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "notice"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 67
   },
   "occasion": {
     "year": "3-4",
@@ -7376,7 +11876,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "occasion"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 68
   },
   "occasionally": {
     "year": "3-4",
@@ -7403,7 +11919,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "occasionally"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 69
   },
   "often": {
     "year": "3-4",
@@ -7429,7 +11961,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "often"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 70
   },
   "opposite": {
     "year": "3-4",
@@ -7455,7 +12003,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "opposite"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 71
   },
   "ordinary": {
     "year": "3-4",
@@ -7481,7 +12045,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "ordinary"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 72
   },
   "particular": {
     "year": "3-4",
@@ -7507,7 +12087,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "particular"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 73
   },
   "peculiar": {
     "year": "3-4",
@@ -7533,7 +12129,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "peculiar"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 74
   },
   "perhaps": {
     "year": "3-4",
@@ -7559,7 +12171,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "perhaps"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 75
   },
   "popular": {
     "year": "3-4",
@@ -7585,7 +12213,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "popular"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 76
   },
   "position": {
     "year": "3-4",
@@ -7611,7 +12255,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "position"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 77
   },
   "possess": {
     "year": "3-4",
@@ -7638,7 +12298,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "possess"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 78
   },
   "possession": {
     "year": "3-4",
@@ -7665,7 +12341,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "possession"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 79
   },
   "possible": {
     "year": "3-4",
@@ -7691,7 +12383,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "possible"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 80
   },
   "potatoes": {
     "year": "3-4",
@@ -7717,7 +12425,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "potatoes"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 81
   },
   "pressure": {
     "year": "3-4",
@@ -7743,7 +12467,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "pressure"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 82
   },
   "probably": {
     "year": "3-4",
@@ -7769,7 +12509,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "probably"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 83
   },
   "promise": {
     "year": "3-4",
@@ -7795,7 +12551,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "promise"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 84
   },
   "purpose": {
     "year": "3-4",
@@ -7821,7 +12593,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "purpose"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 85
   },
   "quarter": {
     "year": "3-4",
@@ -7847,7 +12635,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "quarter"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 86
   },
   "question": {
     "year": "3-4",
@@ -7873,7 +12677,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "question"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 87
   },
   "recent": {
     "year": "3-4",
@@ -7899,7 +12719,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "recent"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 88
   },
   "regular": {
     "year": "3-4",
@@ -7925,7 +12761,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "regular"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 89
   },
   "reign": {
     "year": "3-4",
@@ -7951,7 +12803,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "reign"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 90
   },
   "remember": {
     "year": "3-4",
@@ -7977,7 +12845,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "remember"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 91
   },
   "sentence": {
     "year": "3-4",
@@ -8003,7 +12887,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "sentence"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 92
   },
   "separate": {
     "year": "3-4",
@@ -8029,7 +12929,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "separate"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 93
   },
   "special": {
     "year": "3-4",
@@ -8055,7 +12971,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "special"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 94
   },
   "straight": {
     "year": "3-4",
@@ -8081,7 +13013,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "straight"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 95
   },
   "strange": {
     "year": "3-4",
@@ -8107,7 +13055,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "strange"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 96
   },
   "strength": {
     "year": "3-4",
@@ -8133,7 +13097,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "strength"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 97
   },
   "suppose": {
     "year": "3-4",
@@ -8159,7 +13139,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "suppose"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 98
   },
   "surprise": {
     "year": "3-4",
@@ -8185,7 +13181,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "surprise"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 99
   },
   "therefore": {
     "year": "3-4",
@@ -8211,7 +13223,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "therefore"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 100
   },
   "though": {
     "year": "3-4",
@@ -8238,7 +13266,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "though"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 101
   },
   "although": {
     "year": "3-4",
@@ -8265,7 +13309,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "although"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 102
   },
   "thought": {
     "year": "3-4",
@@ -8291,7 +13351,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "thought"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 103
   },
   "through": {
     "year": "3-4",
@@ -8317,7 +13393,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "through"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 104
   },
   "various": {
     "year": "3-4",
@@ -8343,7 +13435,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "various"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 105
   },
   "weight": {
     "year": "3-4",
@@ -8369,7 +13477,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "weight"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 106
   },
   "woman": {
     "year": "3-4",
@@ -8396,7 +13520,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "woman"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 107
   },
   "women": {
     "year": "3-4",
@@ -8423,7 +13563,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "women"
-    ]
+    ],
+    "listId": "statutory-y3-4",
+    "yearGroups": [
+      "Y3",
+      "Y4"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 108
   },
   "accommodate": {
     "year": "5-6",
@@ -8449,7 +13605,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "accommodate"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 109
   },
   "accompany": {
     "year": "5-6",
@@ -8475,7 +13647,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "accompany"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 110
   },
   "according": {
     "year": "5-6",
@@ -8501,7 +13689,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "according"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 111
   },
   "achieve": {
     "year": "5-6",
@@ -8527,7 +13731,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "achieve"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 112
   },
   "aggressive": {
     "year": "5-6",
@@ -8553,7 +13773,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "aggressive"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 113
   },
   "amateur": {
     "year": "5-6",
@@ -8579,7 +13815,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "amateur"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 114
   },
   "ancient": {
     "year": "5-6",
@@ -8605,7 +13857,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "ancient"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 115
   },
   "apparent": {
     "year": "5-6",
@@ -8631,7 +13899,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "apparent"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 116
   },
   "appreciate": {
     "year": "5-6",
@@ -8657,7 +13941,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "appreciate"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 117
   },
   "attached": {
     "year": "5-6",
@@ -8683,7 +13983,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "attached"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 118
   },
   "available": {
     "year": "5-6",
@@ -8709,7 +14025,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "available"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 119
   },
   "average": {
     "year": "5-6",
@@ -8735,7 +14067,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "average"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 120
   },
   "awkward": {
     "year": "5-6",
@@ -8761,7 +14109,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "awkward"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 121
   },
   "bargain": {
     "year": "5-6",
@@ -8787,7 +14151,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "bargain"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 122
   },
   "bruise": {
     "year": "5-6",
@@ -8813,7 +14193,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "bruise"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 123
   },
   "category": {
     "year": "5-6",
@@ -8839,7 +14235,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "category"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 124
   },
   "cemetery": {
     "year": "5-6",
@@ -8865,7 +14277,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "cemetery"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 125
   },
   "committee": {
     "year": "5-6",
@@ -8891,7 +14319,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "committee"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 126
   },
   "communicate": {
     "year": "5-6",
@@ -8917,7 +14361,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "communicate"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 127
   },
   "community": {
     "year": "5-6",
@@ -8943,7 +14403,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "community"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 128
   },
   "competition": {
     "year": "5-6",
@@ -8969,7 +14445,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "competition"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 129
   },
   "conscience": {
     "year": "5-6",
@@ -8995,7 +14487,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "conscience"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 130
   },
   "conscious": {
     "year": "5-6",
@@ -9021,7 +14529,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "conscious"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 131
   },
   "controversy": {
     "year": "5-6",
@@ -9047,7 +14571,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "controversy"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 132
   },
   "convenience": {
     "year": "5-6",
@@ -9073,7 +14613,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "convenience"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 133
   },
   "correspond": {
     "year": "5-6",
@@ -9099,7 +14655,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "correspond"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 134
   },
   "criticise": {
     "year": "5-6",
@@ -9126,7 +14698,23 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "criticise",
       "criticize"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 135
   },
   "curiosity": {
     "year": "5-6",
@@ -9152,7 +14740,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "curiosity"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 136
   },
   "definite": {
     "year": "5-6",
@@ -9178,7 +14782,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "definite"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 137
   },
   "desperate": {
     "year": "5-6",
@@ -9204,7 +14824,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "desperate"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 138
   },
   "determined": {
     "year": "5-6",
@@ -9230,7 +14866,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "determined"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 139
   },
   "develop": {
     "year": "5-6",
@@ -9256,7 +14908,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "develop"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 140
   },
   "dictionary": {
     "year": "5-6",
@@ -9282,7 +14950,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "dictionary"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 141
   },
   "disastrous": {
     "year": "5-6",
@@ -9308,7 +14992,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "disastrous"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 142
   },
   "embarrass": {
     "year": "5-6",
@@ -9334,7 +15034,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "embarrass"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 143
   },
   "environment": {
     "year": "5-6",
@@ -9360,7 +15076,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "environment"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 144
   },
   "equip": {
     "year": "5-6",
@@ -9388,7 +15120,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "equip"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 145
   },
   "equipped": {
     "year": "5-6",
@@ -9416,7 +15164,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "equipped"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 146
   },
   "equipment": {
     "year": "5-6",
@@ -9444,7 +15208,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "equipment"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 147
   },
   "especially": {
     "year": "5-6",
@@ -9470,7 +15250,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "especially"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 148
   },
   "exaggerate": {
     "year": "5-6",
@@ -9496,7 +15292,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "exaggerate"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 149
   },
   "excellent": {
     "year": "5-6",
@@ -9522,7 +15334,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "excellent"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 150
   },
   "existence": {
     "year": "5-6",
@@ -9548,7 +15376,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "existence"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 151
   },
   "explanation": {
     "year": "5-6",
@@ -9574,7 +15418,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "explanation"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 152
   },
   "familiar": {
     "year": "5-6",
@@ -9600,7 +15460,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "familiar"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 153
   },
   "foreign": {
     "year": "5-6",
@@ -9626,7 +15502,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "foreign"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 154
   },
   "forty": {
     "year": "5-6",
@@ -9652,7 +15544,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "forty"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 155
   },
   "frequently": {
     "year": "5-6",
@@ -9678,7 +15586,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "frequently"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 156
   },
   "government": {
     "year": "5-6",
@@ -9704,7 +15628,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "government"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 157
   },
   "guarantee": {
     "year": "5-6",
@@ -9730,7 +15670,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "guarantee"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 158
   },
   "harass": {
     "year": "5-6",
@@ -9756,7 +15712,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "harass"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 159
   },
   "hindrance": {
     "year": "5-6",
@@ -9782,7 +15754,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "hindrance"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 160
   },
   "identity": {
     "year": "5-6",
@@ -9808,7 +15796,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "identity"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 161
   },
   "immediate": {
     "year": "5-6",
@@ -9835,7 +15839,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "immediate"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 162
   },
   "immediately": {
     "year": "5-6",
@@ -9862,7 +15882,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "immediately"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 163
   },
   "individual": {
     "year": "5-6",
@@ -9888,7 +15924,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "individual"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 164
   },
   "interfere": {
     "year": "5-6",
@@ -9914,7 +15966,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "interfere"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 165
   },
   "interrupt": {
     "year": "5-6",
@@ -9940,7 +16008,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "interrupt"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 166
   },
   "language": {
     "year": "5-6",
@@ -9966,7 +16050,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "language"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 167
   },
   "leisure": {
     "year": "5-6",
@@ -9992,7 +16092,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "leisure"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 168
   },
   "lightning": {
     "year": "5-6",
@@ -10018,7 +16134,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "lightning"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 169
   },
   "marvellous": {
     "year": "5-6",
@@ -10044,7 +16176,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "marvellous"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 170
   },
   "mischievous": {
     "year": "5-6",
@@ -10070,7 +16218,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "mischievous"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 171
   },
   "muscle": {
     "year": "5-6",
@@ -10096,7 +16260,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "muscle"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 172
   },
   "necessary": {
     "year": "5-6",
@@ -10122,7 +16302,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "necessary"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 173
   },
   "neighbour": {
     "year": "5-6",
@@ -10148,7 +16344,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "neighbour"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 174
   },
   "nuisance": {
     "year": "5-6",
@@ -10174,7 +16386,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "nuisance"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 175
   },
   "occupy": {
     "year": "5-6",
@@ -10200,7 +16428,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "occupy"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 176
   },
   "occur": {
     "year": "5-6",
@@ -10226,7 +16470,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "occur"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 177
   },
   "opportunity": {
     "year": "5-6",
@@ -10252,7 +16512,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "opportunity"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 178
   },
   "parliament": {
     "year": "5-6",
@@ -10278,7 +16554,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "parliament"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 179
   },
   "persuade": {
     "year": "5-6",
@@ -10304,7 +16596,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "persuade"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 180
   },
   "physical": {
     "year": "5-6",
@@ -10330,7 +16638,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "physical"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 181
   },
   "prejudice": {
     "year": "5-6",
@@ -10356,7 +16680,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "prejudice"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 182
   },
   "privilege": {
     "year": "5-6",
@@ -10382,7 +16722,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "privilege"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 183
   },
   "profession": {
     "year": "5-6",
@@ -10408,7 +16764,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "profession"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 184
   },
   "programme": {
     "year": "5-6",
@@ -10434,7 +16806,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "programme"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 185
   },
   "pronunciation": {
     "year": "5-6",
@@ -10460,7 +16848,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "pronunciation"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 186
   },
   "queue": {
     "year": "5-6",
@@ -10486,7 +16890,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "queue"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 187
   },
   "recognise": {
     "year": "5-6",
@@ -10513,7 +16933,23 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "recognise",
       "recognize"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 188
   },
   "recommend": {
     "year": "5-6",
@@ -10539,7 +16975,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "recommend"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 189
   },
   "relevant": {
     "year": "5-6",
@@ -10565,7 +17017,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "relevant"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 190
   },
   "restaurant": {
     "year": "5-6",
@@ -10591,7 +17059,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "restaurant"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 191
   },
   "rhyme": {
     "year": "5-6",
@@ -10617,7 +17101,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "rhyme"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 192
   },
   "rhythm": {
     "year": "5-6",
@@ -10643,7 +17143,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "rhythm"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 193
   },
   "sacrifice": {
     "year": "5-6",
@@ -10669,7 +17185,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "sacrifice"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 194
   },
   "secretary": {
     "year": "5-6",
@@ -10695,7 +17227,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "secretary"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 195
   },
   "shoulder": {
     "year": "5-6",
@@ -10721,7 +17269,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "shoulder"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 196
   },
   "signature": {
     "year": "5-6",
@@ -10747,7 +17311,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "signature"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 197
   },
   "sincere": {
     "year": "5-6",
@@ -10774,7 +17354,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "sincere"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 198
   },
   "sincerely": {
     "year": "5-6",
@@ -10801,7 +17397,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "sincerely"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 199
   },
   "soldier": {
     "year": "5-6",
@@ -10827,7 +17439,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "soldier"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 200
   },
   "stomach": {
     "year": "5-6",
@@ -10853,7 +17481,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "stomach"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 201
   },
   "sufficient": {
     "year": "5-6",
@@ -10879,7 +17523,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "sufficient"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 202
   },
   "suggest": {
     "year": "5-6",
@@ -10905,7 +17565,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "suggest"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 203
   },
   "symbol": {
     "year": "5-6",
@@ -10931,7 +17607,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "symbol"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 204
   },
   "system": {
     "year": "5-6",
@@ -10957,7 +17649,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "system"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 205
   },
   "temperature": {
     "year": "5-6",
@@ -10983,7 +17691,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "temperature"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 206
   },
   "thorough": {
     "year": "5-6",
@@ -11009,7 +17733,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "thorough"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 207
   },
   "twelfth": {
     "year": "5-6",
@@ -11035,7 +17775,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "twelfth"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 208
   },
   "variety": {
     "year": "5-6",
@@ -11061,7 +17817,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "variety"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 209
   },
   "vegetable": {
     "year": "5-6",
@@ -11087,7 +17859,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "vegetable"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 210
   },
   "vehicle": {
     "year": "5-6",
@@ -11113,7 +17901,23 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "vehicle"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 211
   },
   "yacht": {
     "year": "5-6",
@@ -11139,6 +17943,22 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "yacht"
-    ]
+    ],
+    "listId": "statutory-y5-6",
+    "yearGroups": [
+      "Y5",
+      "Y6"
+    ],
+    "tags": [
+      "statutory",
+      "legacy-seed"
+    ],
+    "sourceNote": "Seeded from preserved legacy spelling word list.",
+    "provenance": {
+      "source": "legacy/vendor/word-list.js",
+      "note": "Legacy vendor seed for Pass 11 content model.",
+      "importedAt": 0
+    },
+    "sortIndex": 212
   }
 };

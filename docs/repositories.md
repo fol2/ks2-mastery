@@ -181,7 +181,8 @@ Write semantics are explicit:
 - if the remote write succeeds, the pending operation is cleared
 - if the remote write had actually already committed and the client is only retrying, the stored response is replayed and the pending operation still clears safely
 - if the remote write fails transiently, the pending operation stays queued and the adapter enters `degraded`
-- if the remote write is stale, the failed operation and later same-scope operations become blocked until retry / resync reloads the latest remote state
+- if the remote write is stale, the adapter reloads the latest remote state, rebases queued local operations over the new revision, and retries the queue
+- if rebase cannot complete, the failed operation and later same-scope operations become blocked with explicit `degraded` feedback
 - while degraded after a remote failure, the trusted state is the local cache, not the server
 - `flush()` and `persistence.retry()` throw until the pending operations are actually cleared
 
@@ -198,15 +199,14 @@ If the remote bootstrap fails but a local cache exists, the adapter continues fr
 
 ## What is intentionally still deferred
 
-- production auth rollout beyond the development/test session stub
 - billing, invites, and messaging
-- automatic merge for concurrent edits
+- semantic merge for concurrent edits beyond the current client-side stale-write rebase
 - offline retry scheduling beyond manual retry / flush behaviour
 - push-based real-time invalidation across tabs / devices
 - read-only viewer UX in the browser shell
 - Durable Object coordination beyond the current compare-and-swap backend
 
-The Worker now has D1-backed persistence, account-scoped ownership, repository-level authorisation for learner-scoped writes, atomic revision checks, and request-receipt replay. The remaining items are the next SaaS-hardening layer, not this pass.
+The Worker now has production sessions, D1-backed persistence, account-scoped ownership, repository-level authorisation for learner-scoped writes, atomic revision checks, and request-receipt replay. The remaining items are the next SaaS-hardening layer, not this pass.
 
 
 ## Mutation safety layer
@@ -218,8 +218,34 @@ The API-backed path now has an explicit mutation policy.
 - every write route requires a `requestId`
 - repeated retries with the same payload replay the stored response instead of applying twice
 - stale writes return `409 stale_write`
-- the client does not auto-merge or hide stale conflicts
-- retry / resync reloads the latest remote state and discards blocked stale local writes
+- the client does not hide stale conflicts
+- queued local operations are rebased over the latest remote state before retry
+- retry / resync preserves the current route and replays pending local progress where the operation payload can be safely rebased
+
+## Spelling content repository
+
+Spelling content deliberately lives beside the generic platform repository instead of inside the learner subject-state payload.
+
+The content repository exposes:
+
+```txt
+hydrate()
+read()
+write(bundle)
+clear()
+```
+
+Current adapters:
+
+- `createLocalSpellingContentRepository()`
+  - stores the spelling content bundle in localStorage
+  - used only for direct file/local mode
+- `createApiSpellingContentRepository()`
+  - hydrates from `GET /api/content/spelling`
+  - writes through `PUT /api/content/spelling`
+  - tracks account revision because content writes and learner-profile writes share `adult_accounts.repo_revision`
+
+The runtime spelling service receives `spellingContent.getRuntimeSnapshot()` and reads only the published release snapshot. Draft edits do not leak into live learner sessions until the operator publishes the draft.
 
 The detailed policy lives in `docs/mutation-policy.md`.
 
