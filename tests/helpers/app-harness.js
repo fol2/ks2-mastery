@@ -59,6 +59,14 @@ export function createAppHarness({
     clearTimeoutFn: scheduler?.clearTimeout?.bind(scheduler),
   });
 
+  function ensureSpellingAutoAdvanceFromCurrentState() {
+    const appState = store.getState();
+    if (appState.route.screen !== 'subject' || appState.route.subjectId !== 'spelling' || (appState.route.tab || 'practice') !== 'practice') {
+      return false;
+    }
+    return autoAdvance.ensureScheduledFromState(appState.subjectUi.spelling);
+  }
+
   function applySubjectTransition(subjectId, transition) {
     if (!transition) return false;
     store.updateSubjectUi(subjectId, transition.state);
@@ -97,97 +105,103 @@ export function createAppHarness({
 
   function render() {
     const appState = store.getState();
-    return renderApp(appState, contextFor(appState.route.subjectId || 'spelling'));
+    const html = renderApp(appState, contextFor(appState.route.subjectId || 'spelling'));
+    ensureSpellingAutoAdvanceFromCurrentState();
+    return html;
   }
 
   function dispatch(action, data = {}) {
     autoAdvance.clear();
-    const appState = store.getState();
-    const learnerId = appState.learners.selectedId;
-
-    if (action === 'navigate-home') {
-      tts.stop();
-      store.goHome();
-      return true;
-    }
-
-    if (action === 'open-subject') {
-      tts.stop();
-      store.openSubject(data.subjectId || 'spelling');
-      return true;
-    }
-
-    if (action === 'subject-set-tab') {
-      store.setTab(data.tab || 'practice');
-      return true;
-    }
-
-    if (action === 'learner-select') {
-      tts.stop();
-      runtimeBoundary.clearAll();
-      store.selectLearner(data.value);
-      return true;
-    }
-
-    if (action === 'learner-create') {
-      const current = appState.learners.byId[learnerId];
-      store.createLearner({
-        name: data.name || `Learner ${appState.learners.allIds.length + 1}`,
-        yearGroup: data.yearGroup || current?.yearGroup || 'Y5',
-        goal: data.goal || current?.goal || 'sats',
-        dailyMinutes: data.dailyMinutes || current?.dailyMinutes || 15,
-        avatarColor: data.avatarColor || current?.avatarColor || '#3E6FA8',
-      });
-      return true;
-    }
-
-    if (action === 'persistence-retry') {
-      repositories.persistence.retry()
-        .then(() => {
-          tts.stop();
-          runtimeBoundary.clearAll();
-          store.reloadFromRepositories();
-        })
-        .catch(() => {
-          // persistence state remains visible through the subscribed store snapshot.
-        });
-      return true;
-    }
-
-    if (action === 'subject-runtime-retry') {
-      runtimeBoundary.clear({
-        learnerId,
-        subjectId: appState.route.subjectId || 'spelling',
-        tab: appState.route.tab || 'practice',
-      });
-      store.patch(() => ({}));
-      return true;
-    }
-
-    const subject = resolveSubject(subjects, appState.route.subjectId || 'spelling');
-    const tab = appState.route.tab || 'practice';
     try {
-      const handled = subject.handleAction?.(action, {
-        ...contextFor(subject.id),
-        data,
-      });
-      if (handled) {
-        runtimeBoundary.clear({ learnerId, subjectId: subject.id, tab });
+      const appState = store.getState();
+      const learnerId = appState.learners.selectedId;
+
+      if (action === 'navigate-home') {
+        tts.stop();
+        store.goHome();
+        return true;
       }
-      return Boolean(handled);
-    } catch (error) {
-      tts.stop();
-      runtimeBoundary.capture({
-        learnerId,
-        subject,
-        tab,
-        phase: 'action',
-        methodName: 'handleAction',
-        action,
-        error,
-      });
-      store.patch(() => ({}));
-      return true;
+
+      if (action === 'open-subject') {
+        tts.stop();
+        store.openSubject(data.subjectId || 'spelling');
+        return true;
+      }
+
+      if (action === 'subject-set-tab') {
+        store.setTab(data.tab || 'practice');
+        return true;
+      }
+
+      if (action === 'learner-select') {
+        tts.stop();
+        runtimeBoundary.clearAll();
+        store.selectLearner(data.value);
+        return true;
+      }
+
+      if (action === 'learner-create') {
+        const current = appState.learners.byId[learnerId];
+        store.createLearner({
+          name: data.name || `Learner ${appState.learners.allIds.length + 1}`,
+          yearGroup: data.yearGroup || current?.yearGroup || 'Y5',
+          goal: data.goal || current?.goal || 'sats',
+          dailyMinutes: data.dailyMinutes || current?.dailyMinutes || 15,
+          avatarColor: data.avatarColor || current?.avatarColor || '#3E6FA8',
+        });
+        return true;
+      }
+
+      if (action === 'persistence-retry') {
+        repositories.persistence.retry()
+          .then(() => {
+            tts.stop();
+            runtimeBoundary.clearAll();
+            store.reloadFromRepositories();
+          })
+          .catch(() => {
+            // persistence state remains visible through the subscribed store snapshot.
+          });
+        return true;
+      }
+
+      if (action === 'subject-runtime-retry') {
+        runtimeBoundary.clear({
+          learnerId,
+          subjectId: appState.route.subjectId || 'spelling',
+          tab: appState.route.tab || 'practice',
+        });
+        store.patch(() => ({}));
+        return true;
+      }
+
+      const subject = resolveSubject(subjects, appState.route.subjectId || 'spelling');
+      const tab = appState.route.tab || 'practice';
+      try {
+        const handled = subject.handleAction?.(action, {
+          ...contextFor(subject.id),
+          data,
+        });
+        if (handled) {
+          runtimeBoundary.clear({ learnerId, subjectId: subject.id, tab });
+        }
+        return Boolean(handled);
+      } catch (error) {
+        tts.stop();
+        runtimeBoundary.capture({
+          learnerId,
+          subject,
+          tab,
+          phase: 'action',
+          methodName: 'handleAction',
+          action,
+          error,
+        });
+        store.patch(() => ({}));
+        return true;
+      }
+    } finally {
+      ensureSpellingAutoAdvanceFromCurrentState();
     }
   }
 

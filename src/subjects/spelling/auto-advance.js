@@ -11,6 +11,16 @@ function snapshotFromState(state, appState) {
   };
 }
 
+function snapshotsMatch(left, right) {
+  return Boolean(
+    left
+      && right
+      && left.learnerId === right.learnerId
+      && left.sessionId === right.sessionId
+      && left.subjectId === right.subjectId,
+  );
+}
+
 function stillMatches(snapshot, appState) {
   if (!snapshot || !appState) return false;
   if ((appState.route?.subjectId || null) !== snapshot.subjectId) return false;
@@ -60,8 +70,24 @@ export function createSpellingAutoAdvanceController({
     return true;
   }
 
+  function ensureScheduledFromState(state) {
+    const delay = spellingAutoAdvanceDelay(state);
+    if (delay == null || typeof setTimeoutFn !== 'function' || typeof getState !== 'function' || typeof dispatchContinue !== 'function') {
+      return false;
+    }
+
+    const appState = getState();
+    const nextSnapshot = snapshotFromState(state, appState);
+    if (pendingHandle != null && snapshotsMatch(pendingSnapshot, nextSnapshot) && stillMatches(pendingSnapshot, appState)) {
+      return false;
+    }
+
+    return scheduleFromTransition(state);
+  }
+
   return {
     clear,
     scheduleFromTransition,
+    ensureScheduledFromState,
   };
 }

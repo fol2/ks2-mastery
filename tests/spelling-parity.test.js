@@ -244,3 +244,35 @@ test('legacy auto-advance can move a one-word learning round on without a manual
   assert.equal(harness.store.getState().subjectUi.spelling.awaitingAdvance, false);
   assert.equal(harness.store.getState().subjectUi.spelling.session.currentCard.slug, firstSlug);
 });
+
+test('restored completed spelling card caps progress and resumes auto-advance', () => {
+  const storage = installMemoryStorage();
+  const scheduler = createManualScheduler();
+  const harness = createAppHarness({ storage, scheduler });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-start');
+
+  const answer = harness.store.getState().subjectUi.spelling.session.currentCard.word.word;
+  harness.dispatch('spelling-submit-form', { formData: typedFormData(answer) });
+  scheduler.flushAll();
+  harness.dispatch('spelling-submit-form', { formData: typedFormData(answer) });
+
+  assert.equal(harness.store.getState().subjectUi.spelling.phase, 'session');
+  assert.equal(harness.store.getState().subjectUi.spelling.awaitingAdvance, true);
+
+  const restoredScheduler = createManualScheduler();
+  const restoredHarness = createAppHarness({ storage, scheduler: restoredScheduler });
+  restoredHarness.dispatch('open-subject', { subjectId: 'spelling' });
+
+  const html = restoredHarness.render();
+  assert.match(html, /1 of 1/);
+  assert.doesNotMatch(html, /2 of 1/);
+  assert.equal(restoredScheduler.count(), 1);
+
+  restoredScheduler.flushAll();
+
+  assert.equal(restoredHarness.store.getState().subjectUi.spelling.phase, 'summary');
+});

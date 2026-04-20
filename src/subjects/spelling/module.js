@@ -168,6 +168,10 @@ function renderSession({ learner, service, ui, subject }) {
       </section>
     `;
   }
+  const progressTotal = session.progress.total;
+  const progressCurrent = progressTotal <= 0
+    ? 0
+    : Math.min(progressTotal, session.progress.done + 1);
 
   return `
     <div class="practice-card">
@@ -175,7 +179,7 @@ function renderSession({ learner, service, ui, subject }) {
         <div class="card-header">
           <div>
             <div class="eyebrow">${escapeHtml(session.label)}</div>
-            <h2 class="section-title">${escapeHtml(learner.name)} · ${session.progress.done + 1} of ${session.progress.total}</h2>
+            <h2 class="section-title">${escapeHtml(learner.name)} · ${progressCurrent} of ${progressTotal}</h2>
           </div>
           <div class="chip-row">
             <span class="chip">Checked ${session.progress.checked}/${session.progress.total}</span>

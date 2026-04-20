@@ -283,6 +283,14 @@ const spellingAutoAdvance = createSpellingAutoAdvanceController({
   dispatchContinue: () => dispatchAction('spelling-continue'),
 });
 
+function ensureSpellingAutoAdvanceFromCurrentState() {
+  const appState = store.getState();
+  if (appState.route.screen !== 'subject' || appState.route.subjectId !== 'spelling' || (appState.route.tab || 'practice') !== 'practice') {
+    return false;
+  }
+  return spellingAutoAdvance.ensureScheduledFromState(appState.subjectUi.spelling);
+}
+
 function applySubjectTransition(subjectId, transition) {
   if (!transition) return false;
   store.updateSubjectUi(subjectId, transition.state);
@@ -324,6 +332,7 @@ function contextFor(subjectId = null) {
 function render() {
   const appState = store.getState();
   root.innerHTML = renderApp(appState, contextFor(appState.route.subjectId || 'spelling'));
+  ensureSpellingAutoAdvanceFromCurrentState();
   queueMicrotask(() => {
     const input = root.querySelector('[data-autofocus="true"]:not([disabled])');
     if (input) input.focus();
@@ -502,8 +511,10 @@ function handleSubjectAction(action, data) {
 
 function dispatchAction(action, data = {}) {
   spellingAutoAdvance.clear();
-  if (handleGlobalAction(action, data)) return;
-  handleSubjectAction(action, data);
+  if (!handleGlobalAction(action, data)) {
+    handleSubjectAction(action, data);
+  }
+  ensureSpellingAutoAdvanceFromCurrentState();
 }
 
 function extractActionData(target) {
