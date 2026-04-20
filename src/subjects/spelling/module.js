@@ -1,4 +1,4 @@
-import { monsterSummary } from '../../platform/game/monster-system.js';
+import { monsterSummaryFromSpellingAnalytics } from '../../platform/game/monster-system.js';
 import { monsterAsset } from '../../platform/game/monsters.js';
 import { escapeHtml, formatElapsed } from '../../platform/core/utils.js';
 import { createInitialSpellingState } from './service-contract.js';
@@ -37,11 +37,11 @@ function sessionStatusChip(service, session) {
   return `<span class="chip">${escapeHtml(service.stageLabel(session.currentStage || 0))}</span>`;
 }
 
-function renderCodex(learnerId, gameStateRepository) {
-  const monsters = monsterSummary(learnerId, gameStateRepository);
+function renderCodex(monsters) {
+  const entries = Array.isArray(monsters) ? monsters : [];
   return `
     <div class="codex-grid">
-      ${monsters.map(({ monster, progress }) => `
+      ${entries.map(({ monster, progress }) => `
         <div class="monster-tile">
           <img alt="${escapeHtml(monster.name)}" src="${monsterAsset(monster.id, progress.stage)}" />
           <div>
@@ -149,6 +149,7 @@ function renderPracticeDashboard({ learner, service, subject, repositories }) {
   const accent = accentFor(subject);
   const prefs = service.getPrefs(learner.id);
   const stats = service.getStats(learner.id, prefs.yearFilter);
+  const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id));
   const modeOptions = [
     ['smart', 'Smart Review', 'Weighted mix of due, weak and new words.'],
     ['trouble', 'Trouble Drill', 'Keeps pressure on weak spellings.'],
@@ -213,7 +214,7 @@ function renderPracticeDashboard({ learner, service, subject, repositories }) {
         <div class="card soft" style="margin-top:16px;">
           <div class="eyebrow">Game layer placeholder</div>
           <h3 class="section-title" style="font-size:1.15rem;">Codex progress</h3>
-          ${renderCodex(learner.id, repositories?.gameState)}
+          ${renderCodex(codex)}
         </div>
       </section>
     </div>
@@ -308,6 +309,7 @@ function renderSession({ learner, service, ui, subject }) {
 function renderSummary({ learner, ui, service, subject, repositories }) {
   const accent = accentFor(subject);
   const summary = ui.summary;
+  const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id));
   if (!summary) return '';
   return `
     <div class="summary-grid">
@@ -343,7 +345,7 @@ function renderSummary({ learner, ui, service, subject, repositories }) {
       <section class="card soft">
         <div class="eyebrow">Codex after this round</div>
         <h2 class="section-title">Reward layer</h2>
-        ${renderCodex(learner.id, repositories?.gameState)}
+        ${renderCodex(codex)}
       </section>
       <div class="actions">
         <button class="btn secondary" data-action="spelling-back">Back to spelling dashboard</button>
@@ -359,6 +361,7 @@ function renderAnalytics({ appState, learner, service, repositories }) {
   const all = analytics.pools.all;
   const y34 = analytics.pools.y34;
   const y56 = analytics.pools.y56;
+  const codex = monsterSummaryFromSpellingAnalytics(analytics);
   return `
     <div class="three-col">
       <section class="card">
@@ -394,8 +397,8 @@ function renderAnalytics({ appState, learner, service, repositories }) {
       <section class="card" style="grid-column:1/-1;">
         <div class="eyebrow">Game layer</div>
         <h2 class="section-title">Codex progress</h2>
-        <p class="subtitle">This remains separate from the learning loop. The engine decides mastery; the game system reacts to secure words after the fact.</p>
-        ${renderCodex(learner.id, repositories?.gameState)}
+        <p class="subtitle">The engine decides mastery; Codex progress reflects the current secure words directly.</p>
+        ${renderCodex(codex)}
       </section>
       ${renderWordBankProgress({ analytics, searchQuery })}
     </div>

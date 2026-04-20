@@ -1,9 +1,5 @@
-import { recordMonsterMastery } from '../../platform/game/monster-system.js';
+import { monsterIdForSpellingYearBand, recordMonsterMastery } from '../../platform/game/monster-system.js';
 import { SPELLING_EVENT_TYPES } from './events.js';
-
-function monsterIdForYearBand(yearBand) {
-  return yearBand === '5-6' ? 'glimmerbug' : 'inklet';
-}
 
 export function createSpellingRewardSubscriber({ gameStateRepository } = {}) {
   return function spellingRewardSubscriber(events = []) {
@@ -14,7 +10,7 @@ export function createSpellingRewardSubscriber({ gameStateRepository } = {}) {
       rewardEvents.push(
         ...recordMonsterMastery(
           event.learnerId,
-          monsterIdForYearBand(event.yearBand),
+          monsterIdForSpellingYearBand(event.yearBand),
           event.wordSlug,
           gameStateRepository,
         ),

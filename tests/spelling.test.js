@@ -7,6 +7,7 @@ import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
 import { SPELLING_EVENT_TYPES } from '../src/subjects/spelling/events.js';
 import { rewardEventsFromSpellingEvents } from '../src/subjects/spelling/event-hooks.js';
+import { monsterSummaryFromSpellingAnalytics } from '../src/platform/game/monster-system.js';
 
 function makeSeededRandom(seed = 1) {
   let value = seed >>> 0;
@@ -238,6 +239,29 @@ test('reward hook converts spelling secure-word events into platform monster eve
 
   const rewardEvents = rewardEventsFromSpellingEvents(domainEvents, { gameStateRepository: repositories.gameState });
   assert.ok(rewardEvents.some((event) => event.kind === 'caught' && event.monsterId === 'inklet'));
+});
+
+test('codex projection follows secure spelling progress even without reward game state', () => {
+  const { service, repositories } = makeService();
+  repositories.subjectStates.writeData('learner-a', 'spelling', {
+    progress: {
+      possess: { stage: 4, attempts: 4, correct: 4, wrong: 0 },
+      accommodate: { stage: 4, attempts: 4, correct: 4, wrong: 0 },
+    },
+  });
+
+  assert.deepEqual(repositories.gameState.read('learner-a', 'monster-codex'), {});
+
+  const summary = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot('learner-a'));
+  const inklet = summary.find((entry) => entry.monster.id === 'inklet');
+  const glimmerbug = summary.find((entry) => entry.monster.id === 'glimmerbug');
+  const phaeton = summary.find((entry) => entry.monster.id === 'phaeton');
+
+  assert.equal(inklet.progress.mastered, 1);
+  assert.deepEqual(inklet.progress.masteredList, ['possess']);
+  assert.equal(glimmerbug.progress.mastered, 1);
+  assert.deepEqual(glimmerbug.progress.masteredList, ['accommodate']);
+  assert.equal(phaeton.progress.mastered, 2);
 });
 
 test('analytics snapshot is explicit and normalised', () => {

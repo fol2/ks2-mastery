@@ -34,6 +34,8 @@ That can emit reward events such as:
 - `reward.monster` with `kind = levelup`
 - `reward.monster` with `kind = mega`
 
+The visible Codex progress is not sourced from this event log. It is projected from the current spelling analytics secure rows so legacy imports, cache repairs and remote restores stay locked to the same secure-word counts shown in Spelling analytics.
+
 Reward events can carry toast metadata for the shared overlay UI, but they do not mutate subject learning state.
 
 ## Runtime guarantees

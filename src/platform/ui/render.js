@@ -2,7 +2,7 @@ import { escapeHtml } from '../core/utils.js';
 import { SUBJECTS, getSubject } from '../core/subject-registry.js';
 import { subjectTabLabel } from '../core/subject-runtime.js';
 import { monsterAsset } from '../game/monsters.js';
-import { monsterSummary } from '../game/monster-system.js';
+import { monsterSummary, monsterSummaryFromSpellingAnalytics } from '../game/monster-system.js';
 
 const TAB_META = [
   ['practice', 'Practice'],
@@ -262,7 +262,10 @@ function renderHeader(appState) {
 
 function renderHero(context) {
   const learner = context.appState.learners.byId[context.appState.learners.selectedId];
-  const monsters = monsterSummary(learner.id, context.repositories?.gameState);
+  const spellingService = context.services?.spelling;
+  const monsters = spellingService?.getAnalyticsSnapshot
+    ? monsterSummaryFromSpellingAnalytics(spellingService.getAnalyticsSnapshot(learner.id))
+    : monsterSummary(learner.id, context.repositories?.gameState);
   const secureTotal = monsters.reduce((sum, entry) => sum + entry.progress.mastered, 0);
   return `
     <section class="hero-grid" style="margin-bottom:20px;">

@@ -88,7 +88,8 @@ The service now emits:
   - Fired when a round finalises to a summary
 
 The platform runtime may then derive additional platform-wide events such as `platform.practice-streak-hit` from those subject events.
-The spelling reward subscriber translates `spelling.word-secured` into monster/codex updates.
+The spelling reward subscriber translates `spelling.word-secured` into monster/codex reaction events and persisted reward history.
+Codex display counts are projected from current spelling progress (`stage >= 4`) rather than from reward history, so imported or repaired learner progress cannot drift from the analytics secure counts.
 
 ## Legacy behaviors intentionally preserved
 
