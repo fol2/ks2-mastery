@@ -1,7 +1,7 @@
 ---
 title: "feat: Integrate Pass 14 SaaS Adult Access Honesty"
 type: feat
-status: active
+status: completed
 date: 2026-04-21
 origin: /Users/jamesto/Coding/ks2-mastery-legacy/pass14/ks2-platform-v2-saas-first-pass-14-report.md
 source: /Users/jamesto/Coding/ks2-mastery-legacy/pass14/ks2-platform-v2-saas-first-pass-14
@@ -303,7 +303,7 @@ No external research is needed. This pass uses existing local Worker/session/rea
 **Verification:**
 - Manual doc review plus `rg` checks for stale wording.
 
-- [ ] **Unit 8: Full Verification, GitHub Push, Deploy, Production Smoke**
+- [x] **Unit 8: Full Verification, GitHub Push, Deploy, Production Smoke**
 
 **Goal:** Prove the integration is complete and live on `ks2.eugnel.uk`.
 
@@ -329,6 +329,18 @@ No external research is needed. This pass uses existing local Worker/session/rea
 - `npm run deploy:oauth`
 - Production HTTP checks for `/`, `/styles/app.css`, `/src/main.js`, `/worker` routes where applicable
 - Browser smoke for dashboard, Parent Hub, Admin / Operations, and Spelling no-regression
+
+## Verification Results
+
+- `git diff --check`: passed.
+- `npm test`: passed, 143 tests.
+- `npm run check`: passed, including production build, public asset assertion, and Wrangler OAuth dry-run.
+- `git push origin main`: pushed commit `c09ff58`.
+- `npm run deploy:oauth`: deployed Cloudflare Worker version `e852375e-39f5-4315-93c1-fc9973d1ebee`.
+- Production HTTP smoke: `https://ks2.eugnel.uk/` returned 200.
+- Production asset smoke: `shell-access.js`, `main.js`, and `styles/app.css` include the expected Pass 14 access helpers, signed-in hub wiring, and monster roaming/celebration markers.
+- Production browser smoke: unauthenticated sign-in page loads, no console errors, and network requests for app assets return 200.
+- Production auth-boundary smoke: `/api/auth/session` returns no session when unauthenticated, and `/api/hubs/parent` plus `/api/hubs/admin` return 401 when unauthenticated.
 
 ## Regression Guard Checklist
 
