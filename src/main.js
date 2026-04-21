@@ -1158,6 +1158,17 @@ function handleGlobalAction(action, data) {
     return true;
   }
 
+  if (action === 'toggle-theme') {
+    const docEl = document.documentElement;
+    const current = docEl.getAttribute('data-theme');
+    const systemPrefersDark = globalThis.matchMedia?.('(prefers-color-scheme: dark)')?.matches;
+    const resolved = current || (systemPrefersDark ? 'dark' : 'light');
+    const next = resolved === 'dark' ? 'light' : 'dark';
+    docEl.setAttribute('data-theme', next);
+    try { globalThis.localStorage?.setItem('ks2.theme', next); } catch (error) { /* ignore */ }
+    return true;
+  }
+
   if (action === 'subject-runtime-retry') {
     runtimeBoundary.clear({
       learnerId,

@@ -3,6 +3,7 @@
   "name": "ks2-mastery",
   "main": "./worker/src/index.js",
   "compatibility_date": "2026-04-20",
+  "preview_urls": true,
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1

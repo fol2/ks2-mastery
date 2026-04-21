@@ -380,6 +380,12 @@ function renderHeader(appState, context) {
           <button class="btn ${routeScreen === 'dashboard' ? 'ghost' : 'secondary'}" data-action="navigate-home">Dashboard</button>
           <button class="btn ${routeScreen === 'parent-hub' ? 'primary' : 'secondary'}" data-action="open-parent-hub">Parent Hub</button>
           <button class="btn ${routeScreen === 'admin-hub' ? 'primary' : 'secondary'}" data-action="open-admin-hub">Operations</button>
+          <button class="theme-toggle" data-action="toggle-theme" title="Switch between light and dark" aria-label="Toggle theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+            </svg>
+          </button>
         </div>
       </div>
     </header>
