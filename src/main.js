@@ -949,6 +949,13 @@ function handleGlobalAction(action, data) {
     return true;
   }
 
+  if (action === 'open-profile-settings') {
+    clearAdultSurfaceNotice();
+    tts.stop();
+    store.openProfileSettings();
+    return true;
+  }
+
   if (action === 'open-admin-hub') {
     clearAdultSurfaceNotice();
     tts.stop();

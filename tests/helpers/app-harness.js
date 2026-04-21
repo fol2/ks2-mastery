@@ -148,7 +148,13 @@ export function createAppHarness({
 
       if (action === 'open-subject') {
         tts.stop();
-        store.openSubject(data.subjectId || 'spelling');
+        store.openSubject(data.subjectId || 'spelling', data.tab || 'practice');
+        return true;
+      }
+
+      if (action === 'open-profile-settings') {
+        tts.stop();
+        store.openProfileSettings();
         return true;
       }
 

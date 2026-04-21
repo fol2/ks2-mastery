@@ -339,14 +339,12 @@ function subjectRenderFallback(subject, runtimeEntry, activeTab) {
 function subjectTabContent(subject, activeTab, appState, contentContext, runtimeEntry) {
   if (runtimeEntry) {
     const fallback = subjectRenderFallback(subject, runtimeEntry, activeTab);
-    return activeTab === 'profiles'
-      ? `${renderLearnerManager(appState, contentContext)}<div style="height:20px"></div>${fallback}`
-      : fallback;
+    return fallback;
   }
 
   if (activeTab === 'practice') return subject.renderPractice(contentContext);
   if (activeTab === 'analytics') return subject.renderAnalytics(contentContext);
-  if (activeTab === 'profiles') return `${renderLearnerManager(appState, contentContext)}<div style="height:20px"></div>${subject.renderProfiles(contentContext)}`;
+  if (activeTab === 'profiles') return subject.renderProfiles(contentContext);
   if (activeTab === 'settings') return subject.renderSettings(contentContext);
   if (activeTab === 'method') return subject.renderMethod(contentContext);
   return '';
@@ -382,6 +380,7 @@ function renderHeader(appState, context) {
           ${renderPersistenceChip(appState.persistence)}
           ${authChip}
           <button class="btn ${routeScreen === 'dashboard' ? 'ghost' : 'secondary'}" data-action="navigate-home">Dashboard</button>
+          <button class="btn ${routeScreen === 'profile-settings' ? 'primary' : 'secondary'}" ${routeScreen === 'profile-settings' ? 'style="background:#3E6FA8;"' : ''} data-action="open-profile-settings">Profile settings</button>
           <button class="btn ${routeScreen === 'parent-hub' ? 'primary' : 'secondary'}" data-action="open-parent-hub">Parent Hub</button>
           <button class="btn ${routeScreen === 'admin-hub' ? 'primary' : 'secondary'}" data-action="open-admin-hub">Operations</button>
           <button class="theme-toggle" data-action="toggle-theme" title="Switch between light and dark" aria-label="Toggle theme">
@@ -480,6 +479,9 @@ function renderHero(context) {
         <div class="eyebrow">Selected learner</div>
         <h2 class="section-title">${escapeHtml(learner.name)}</h2>
         <p class="subtitle">${escapeHtml(learner.yearGroup)} · goal: ${escapeHtml(learner.goal)} · ${learner.dailyMinutes} minutes daily</p>
+        <div class="actions" style="margin-top:14px;">
+          <button class="btn secondary" data-action="open-profile-settings">Edit learner profile</button>
+        </div>
         <div class="stat-grid" style="margin-top:16px;">
           <div class="stat"><div class="stat-label">Secure words</div><div class="stat-value">${secureTotal}</div><div class="stat-sub">Across unlocked codex creatures</div></div>
           <div class="stat"><div class="stat-label">Subjects live</div><div class="stat-value">1</div><div class="stat-sub">Spelling preserved and rebuilt</div></div>
@@ -630,6 +632,27 @@ function renderLearnerManager(appState, context) {
   `;
 }
 
+function renderProfileSettings(context) {
+  return `
+    <section class="subject-header card border-top" style="border-top-color:#3E6FA8; margin-bottom:18px;">
+      <div class="subject-title-row">
+        <div>
+          <div class="eyebrow">Profile settings</div>
+          <h2 class="title" style="font-size:clamp(1.6rem, 3vw, 2.3rem);">Learner profile and data</h2>
+          <p class="subtitle">Manage the selected learner, switch writable profiles from the shell, and keep import/export actions in one platform-owned place.</p>
+        </div>
+        <div class="actions">
+          ${learnerSelect(context.appState, context)}
+          <button class="btn secondary" data-action="navigate-home">All subjects</button>
+        </div>
+      </div>
+    </section>
+    <section class="shell-grid">
+      ${renderLearnerManager(context.appState, context)}
+    </section>
+  `;
+}
+
 function renderArchitectureStrip() {
   return `
     <section class="three-col" style="margin-top:20px;">
@@ -669,7 +692,7 @@ function renderDashboard(context) {
   if (!hasWritableLearner(context.appState)) {
     return `${renderHero(context)}${renderNoWritableLearnerShellCard(context, 'No writable learner is available in the main shell')}<section class="card soft" style="margin-top:20px;"><div class="eyebrow">Rebuild intent</div><h2 class="section-title">Adult access stays separate from learner write access</h2><div class="callout">This account can still use Parent Hub or Admin / Operations for readable learner diagnostics. The main subject shell remains tied to writable owner/member learner bootstrap.</div></section>`;
   }
-  return `${renderHero(context)}${renderSubjectCards(context)}<div class="two-col">${renderLearnerManager(context.appState, context)}<section class="card soft"><div class="eyebrow">Rebuild intent</div><h2 class="section-title">What changed under the surface</h2><div class="callout">The old proof-of-concept mixed UI, subject logic, persistence and reward behavior in the same flow. This rebuild separates those concerns so new subjects can drop in without destabilising the spelling slice.</div>${renderArchitectureStrip()}</section></div>`;
+  return `${renderHero(context)}${renderSubjectCards(context)}<section class="card soft"><div class="eyebrow">Rebuild intent</div><h2 class="section-title">What changed under the surface</h2><div class="callout">The old proof-of-concept mixed UI, subject logic, persistence and reward behavior in the same flow. This rebuild separates those concerns so new subjects can drop in without destabilising the spelling slice.</div>${renderArchitectureStrip()}</section>`;
 }
 
 function renderHubStrengthList(title, items = [], emptyText = 'No signal yet.') {
@@ -1209,6 +1232,8 @@ export function renderApp(appState, context) {
   const screen = appState.route.screen || 'dashboard';
   const body = screen === 'subject'
     ? renderSubjectScreen(context)
+    : screen === 'profile-settings'
+      ? renderProfileSettings(context)
     : screen === 'parent-hub'
       ? renderParentHub(context)
       : screen === 'admin-hub'

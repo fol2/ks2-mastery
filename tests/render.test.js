@@ -207,7 +207,7 @@ test('monster celebration overlay uses high-resolution stage artwork', () => {
   assert.match(html, /assets\/monsters\/inklet\/b1\/inklet-b1-0\.1280\.webp/);
 });
 
-test('render app exposes parent and admin operating surfaces by route', () => {
+test('render app exposes profile, parent, and admin operating surfaces by route', () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });
   const store = createStore(SUBJECTS, { repositories });
@@ -230,6 +230,15 @@ test('render app exposes parent and admin operating surfaces by route', () => {
     },
     shellAccess: { platformRole: 'parent', source: 'local-reference' },
   };
+
+  store.openProfileSettings();
+  const profileState = store.getState();
+  const profileHtml = renderApp(profileState, {
+    ...baseContext,
+    appState: profileState,
+  });
+  assert.match(profileHtml, /Profile settings/);
+  assert.match(profileHtml, /Save learner profile/);
 
   store.openParentHub();
   const parentState = store.getState();

@@ -47,11 +47,17 @@ test('golden-path smoke covers dashboard to spelling session to summary and back
   assert.match(harness.render(), /Practice setup/);
 });
 
-test('dashboard learner profile fields declare autofill behaviour explicitly', () => {
+test('profile settings learner profile fields declare autofill behaviour explicitly', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
+  assert.doesNotMatch(harness.render(), /data-action="learner-save-form"/);
+
+  harness.dispatch('open-profile-settings');
   const html = harness.render();
 
+  assert.match(html, /Profile settings/);
+  assert.match(html, /data-action="learner-select"/);
+  assert.match(html, /data-action="learner-save-form"/);
   assert.match(html, /<input class="input" name="name"[^>]*autocomplete="off"/);
   assert.match(html, /<input class="input" type="number"[^>]*name="dailyMinutes"[^>]*autocomplete="off"/);
 });
@@ -144,8 +150,9 @@ test('golden-path smoke covers placeholder-subject navigation across all shared 
   assert.match(harness.render(), /Reasoning analytics slot/);
 
   harness.dispatch('subject-set-tab', { tab: 'profiles' });
-  assert.match(harness.render(), /Profiles belong to the platform/);
-  assert.match(harness.render(), /Reasoning learner profile hooks/);
+  const profilesHtml = harness.render();
+  assert.match(profilesHtml, /Reasoning learner profile hooks/);
+  assert.doesNotMatch(profilesHtml, /data-action="learner-save-form"/);
 
   harness.dispatch('subject-set-tab', { tab: 'settings' });
   assert.match(harness.render(), /Reasoning settings stub/);

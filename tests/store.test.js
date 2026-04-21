@@ -40,6 +40,9 @@ test('shared store can route to adult operating surfaces', () => {
   installMemoryStorage();
   const store = createStore(SUBJECTS);
 
+  store.openProfileSettings();
+  assert.equal(store.getState().route.screen, 'profile-settings');
+
   store.openParentHub();
   assert.equal(store.getState().route.screen, 'parent-hub');
 
