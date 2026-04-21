@@ -327,7 +327,7 @@ function renderHeroMonsterVisuals(monsters) {
       ${caughtMonsters.map(({ monster, progress }) => {
         const slot = HERO_MONSTER_SLOTS[monster.id];
         const stage = Math.max(0, Math.min(4, Number(progress.stage) || 0));
-        const motionClass = stage >= 1 ? 'is-animated' : 'is-static';
+        const motionClass = stage >= 1 ? 'is-animated is-roaming' : 'is-static';
         const stageName = monster.nameByStage?.[stage] || monster.name;
         return `
           <span class="hero-monster-actor ${escapeHtml(monster.id)} motion-${slot.motion} ${motionClass} stage-${stage}">

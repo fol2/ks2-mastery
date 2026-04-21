@@ -128,9 +128,10 @@ test('dashboard monster playground hides uncaught monsters and animates only sta
   });
 
   assert.match(html, /hero-monster-playground/);
-  assert.match(html, /hero-monster-actor inklet motion-walk is-static/);
-  assert.match(html, /hero-monster-actor glimmerbug motion-float is-animated/);
-  assert.match(html, /hero-monster-actor phaeton motion-hover is-animated/);
+  assert.match(html, /hero-monster-actor inklet motion-walk is-static stage-0/);
+  assert.match(html, /hero-monster-actor glimmerbug motion-float is-animated is-roaming stage-1/);
+  assert.match(html, /hero-monster-actor phaeton motion-hover is-animated is-roaming stage-1/);
+  assert.doesNotMatch(html, /hero-monster-actor inklet[^>]*is-roaming/);
   assert.doesNotMatch(html, /hero-monster-actor[^>]*is-uncaught/);
 });
 
