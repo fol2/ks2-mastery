@@ -96,6 +96,44 @@ test('uncaught monsters stay off the main dashboard but use codex placeholders',
   assert.match(spellingHtml, /Not caught/);
 });
 
+test('dashboard monster playground hides uncaught monsters and animates only stage one or above', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const store = createStore(SUBJECTS, { repositories });
+  const learnerId = store.getState().learners.selectedId;
+  repositories.gameState.write(learnerId, 'monster-codex', {
+    inklet: { caught: true, mastered: ['inklet-secure-1'] },
+    glimmerbug: {
+      caught: true,
+      mastered: Array.from({ length: 25 }, (_, index) => `glimmer-secure-${index + 1}`),
+    },
+  });
+
+  const appState = store.reloadFromRepositories({ preserveRoute: true });
+  const html = renderApp(appState, {
+    appState,
+    store,
+    repositories,
+    services: {},
+    subject: SUBJECTS[0],
+    service: null,
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+    applySubjectTransition() {
+      return true;
+    },
+  });
+
+  assert.match(html, /hero-monster-playground/);
+  assert.match(html, /hero-monster-actor inklet motion-walk is-static/);
+  assert.match(html, /hero-monster-actor glimmerbug motion-float is-animated/);
+  assert.match(html, /hero-monster-actor phaeton motion-hover is-animated/);
+  assert.doesNotMatch(html, /hero-monster-actor[^>]*is-uncaught/);
+});
+
 test('monster celebration overlay uses high-resolution stage artwork', () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });

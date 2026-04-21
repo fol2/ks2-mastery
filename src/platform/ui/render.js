@@ -312,11 +312,35 @@ function renderHeader(appState, context) {
   `;
 }
 
+const HERO_MONSTER_SLOTS = {
+  inklet: { motion: 'walk' },
+  glimmerbug: { motion: 'float' },
+  phaeton: { motion: 'hover' },
+};
+
 function renderHeroMonsterVisuals(monsters) {
-  return monsters
-    .filter(({ progress }) => progress.caught)
-    .map(({ monster, progress }) => `<img ${monster.id === 'phaeton' ? 'class="big"' : ''} alt="${escapeHtml(monster.name)}" src="${monsterAsset(monster.id, progress.stage)}" />`)
-    .join('');
+  const caughtMonsters = monsters.filter(({ monster, progress }) => progress.caught && HERO_MONSTER_SLOTS[monster.id]);
+  if (!caughtMonsters.length) return '';
+
+  return `
+    <div class="hero-monster-playground" aria-label="Spelling codex creatures">
+      ${caughtMonsters.map(({ monster, progress }) => {
+        const slot = HERO_MONSTER_SLOTS[monster.id];
+        const stage = Math.max(0, Math.min(4, Number(progress.stage) || 0));
+        const motionClass = stage >= 1 ? 'is-animated' : 'is-static';
+        const stageName = monster.nameByStage?.[stage] || monster.name;
+        return `
+          <span class="hero-monster-actor ${escapeHtml(monster.id)} motion-${slot.motion} ${motionClass} stage-${stage}">
+            <span class="hero-monster-shadow"></span>
+            <span class="hero-monster-motion">
+              <img alt="${escapeHtml(stageName)}" src="${monsterAsset(monster.id, stage)}" />
+            </span>
+            ${stage >= 1 ? '<span class="hero-monster-sparkle sparkle-a"></span><span class="hero-monster-sparkle sparkle-b"></span>' : ''}
+          </span>
+        `;
+      }).join('')}
+    </div>
+  `;
 }
 
 function renderHero(context) {
