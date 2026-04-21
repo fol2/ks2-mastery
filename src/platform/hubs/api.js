@@ -9,6 +9,27 @@ function joinUrl(baseUrl, path) {
   return `${base}${suffix}`;
 }
 
+function buildRequestUrl(baseUrl, path, params = {}) {
+  const target = joinUrl(baseUrl, path);
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== null && value !== undefined && value !== '') {
+      searchParams.set(key, String(value));
+    }
+  }
+
+  if (String(baseUrl || '').trim()) {
+    const url = new URL(target);
+    for (const [key, value] of searchParams.entries()) {
+      url.searchParams.set(key, value);
+    }
+    return url.toString();
+  }
+
+  const query = searchParams.toString();
+  return query ? `${target}?${query}` : target;
+}
+
 async function parseResponse(response) {
   const contentType = response.headers.get('content-type') || '';
   if (contentType.includes('application/json')) {
@@ -43,16 +64,16 @@ export function createHubApi({
 
   return {
     async readParentHub(learnerId = null) {
-      const url = new URL(joinUrl(baseUrl, '/api/hubs/parent'));
-      if (learnerId) url.searchParams.set('learnerId', learnerId);
-      return fetchHubJson(fetch, url.toString(), { method: 'GET' }, authSession);
+      const url = buildRequestUrl(baseUrl, '/api/hubs/parent', { learnerId });
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
     async readAdminHub({ learnerId = null, requestId = null, auditLimit = 20 } = {}) {
-      const url = new URL(joinUrl(baseUrl, '/api/hubs/admin'));
-      if (learnerId) url.searchParams.set('learnerId', learnerId);
-      if (requestId) url.searchParams.set('requestId', requestId);
-      url.searchParams.set('auditLimit', String(auditLimit));
-      return fetchHubJson(fetch, url.toString(), { method: 'GET' }, authSession);
+      const url = buildRequestUrl(baseUrl, '/api/hubs/admin', {
+        learnerId,
+        requestId,
+        auditLimit,
+      });
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
   };
 }

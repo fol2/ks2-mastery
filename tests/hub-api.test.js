@@ -65,3 +65,23 @@ test('hub api client calls admin hub with learner, request id, audit limit, and 
   assert.equal(calls[0].init.method, 'GET');
   assert.equal(calls[0].init.headers['x-test-auth'], 'adult-ops');
 });
+
+test('hub api client supports same-origin relative URLs when no base URL is configured', async () => {
+  const calls = [];
+  const api = createHubApi({
+    baseUrl: '',
+    fetch: async (url, init = {}) => {
+      calls.push({ url: String(url), init });
+      return jsonResponse({ ok: true, learnerId: 'learner-a', parentHub: { permissions: {} } });
+    },
+  });
+
+  await api.readParentHub('learner-a');
+  await api.readAdminHub({ learnerId: 'learner-a', requestId: 'audit-1', auditLimit: 7 });
+
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].url, '/api/hubs/parent?learnerId=learner-a');
+  assert.equal(calls[0].init.method, 'GET');
+  assert.equal(calls[1].url, '/api/hubs/admin?learnerId=learner-a&requestId=audit-1&auditLimit=7');
+  assert.equal(calls[1].init.method, 'GET');
+});
