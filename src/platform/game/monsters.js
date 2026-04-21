@@ -35,6 +35,8 @@ export const MONSTERS_BY_SUBJECT = {
   spelling: ['inklet', 'glimmerbug', 'phaeton'],
 };
 
+const MONSTER_ASSET_VERSION = '20260421-celebrations';
+
 export function stageFor(mastered) {
   if (mastered >= 90) return 4;
   if (mastered >= 60) return 3;
@@ -50,5 +52,5 @@ export function levelFor(mastered) {
 export function monsterAsset(monsterId, stage, size = 320) {
   const safeStage = Math.max(0, Math.min(4, Number(stage) || 0));
   const safeSize = Number(size) >= 640 ? 640 : 320;
-  return `./assets/monsters/${monsterId}-${safeStage}.${safeSize}.webp`;
+  return `./assets/monsters/${monsterId}-${safeStage}.${safeSize}.webp?v=${MONSTER_ASSET_VERSION}`;
 }

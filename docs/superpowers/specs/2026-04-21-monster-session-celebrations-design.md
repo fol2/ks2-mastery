@@ -19,6 +19,7 @@ Restore the previous monster caught / evolve / mega celebration layer without in
 - Multiple queued events play one at a time in event order.
 - The learner dismisses each celebration with a single Continue button.
 - Runtime artwork uses the restored 640px WebP monster assets for crisp retina display without reintroducing the older 2048px PNG payloads. The PNGs remain available in git history as source-quality art.
+- Monster artwork URLs carry an explicit asset-version query so the custom Cloudflare domain does not reuse a cached SPA fallback for newly introduced artwork paths.
 
 ## Implementation Notes
 
