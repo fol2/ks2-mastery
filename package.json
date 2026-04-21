@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node ./scripts/build-public.mjs",
+    "build": "node ./scripts/build-bundles.mjs && node ./scripts/build-public.mjs",
+    "build:bundles": "node ./scripts/build-bundles.mjs",
     "assert:build-public": "node ./scripts/assert-build-public.mjs",
     "assets:monsters": "node ./scripts/generate-monster-assets.mjs",
     "check": "npm run build && npm run assert:build-public && node ./scripts/wrangler-oauth.mjs deploy --dry-run",
@@ -31,6 +32,9 @@
     "verify": "npm test && npm run check"
   },
   "devDependencies": {
+    "esbuild": "^0.28.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "wrangler": "^4.83.0"
   }
 }

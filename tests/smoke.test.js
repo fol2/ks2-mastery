@@ -29,7 +29,7 @@ test('golden-path smoke covers dashboard to spelling session to summary and back
 
   harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
 
-  assert.match(harness.render(), /Subject registry/);
+  assert.match(harness.render(), /data-home-mount="true"/);
 
   harness.dispatch('open-subject', { subjectId: 'spelling' });
   assert.match(harness.render(), /Practice setup/);

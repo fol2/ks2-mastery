@@ -60,9 +60,7 @@ test('dashboard render smoke test covers spelling subject dashboard stats withou
     },
   });
 
-  assert.match(html, /Subject registry/);
-  assert.match(html, /Spelling/);
-  assert.match(html, /Live \/ ready/);
+  assert.match(html, /data-home-mount="true"/);
   assert.doesNotMatch(html, /Temporarily unavailable/);
 });
 
@@ -113,43 +111,25 @@ test('uncaught monsters stay off the main dashboard but use codex placeholders',
   assert.match(spellingHtml, /Not caught/);
 });
 
-test('dashboard monster playground hides uncaught monsters and animates only stage one or above', () => {
-  const storage = installMemoryStorage();
-  const repositories = createLocalPlatformRepositories({ storage });
-  const store = createStore(SUBJECTS, { repositories });
-  const learnerId = store.getState().learners.selectedId;
-  repositories.gameState.write(learnerId, 'monster-codex', {
-    inklet: { caught: true, mastered: ['inklet-secure-1'] },
-    glimmerbug: {
-      caught: true,
-      mastered: Array.from({ length: 25 }, (_, index) => `glimmer-secure-${index + 1}`),
-    },
-  });
+test('home meadow keeps caught stage-zero inklet pinned as an egg and only animates caught stage-one monsters', async () => {
+  const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
+  const summary = [
+    { monster: { id: 'inklet', name: 'Inklet' }, progress: { caught: true, stage: 0, branch: 'b1' } },
+    { monster: { id: 'glimmerbug', name: 'Glimmerbug' }, progress: { caught: true, stage: 1, branch: 'b1' } },
+    { monster: { id: 'phaeton', name: 'Phaeton' }, progress: { caught: false, stage: 0, branch: 'b1' } },
+  ];
+  const meadow = buildMeadowMonsters(summary);
 
-  const appState = store.reloadFromRepositories({ preserveRoute: true });
-  const html = renderApp(appState, {
-    appState,
-    store,
-    repositories,
-    services: {},
-    subject: SUBJECTS[0],
-    service: null,
-    tts: {
-      speak() {},
-      stop() {},
-      warmup() {},
-    },
-    applySubjectTransition() {
-      return true;
-    },
-  });
+  const inklet = meadow.find((entry) => entry.species === 'inklet');
+  const glimmerbug = meadow.find((entry) => entry.species === 'glimmerbug');
+  const phaeton = meadow.find((entry) => entry.species === 'phaeton');
 
-  assert.match(html, /hero-monster-playground/);
-  assert.match(html, /hero-monster-actor inklet motion-walk is-static stage-0/);
-  assert.match(html, /hero-monster-actor glimmerbug motion-float is-animated is-roaming stage-1/);
-  assert.match(html, /hero-monster-actor phaeton motion-hover is-animated is-roaming stage-1/);
-  assert.doesNotMatch(html, /hero-monster-actor inklet[^>]*is-roaming/);
-  assert.doesNotMatch(html, /hero-monster-actor[^>]*is-uncaught/);
+  assert.equal(inklet.stage, 0);
+  assert.equal(inklet.path, 'none');
+  assert.equal(glimmerbug.stage, 1);
+  assert.notEqual(glimmerbug.path, 'none');
+  assert.equal(phaeton.stage, 0);
+  assert.equal(phaeton.path, 'none');
 });
 
 test('monster celebration overlay uses high-resolution stage artwork', () => {

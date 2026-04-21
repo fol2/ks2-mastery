@@ -59,9 +59,7 @@ test('dashboard render survives a broken subject dashboard-stats getter', () => 
 
   const html = harness.render();
 
-  assert.match(html, /Subject registry/);
-  assert.match(html, /Spelling/);
-  assert.match(html, /Temporarily unavailable/);
+  assert.match(html, /data-home-mount="true"/);
   assert.equal(harness.runtimeBoundary.list().some((entry) => entry.subjectId === brokenSubject.id && entry.phase === 'dashboard-stats'), true);
 });
 
@@ -115,12 +113,13 @@ test('subject action failures are contained and leave routing, toasts, learner s
   assert.match(afterErrorHtml, /temporarily unavailable/i);
 
   harness.dispatch('navigate-home');
-  assert.match(harness.render(), /Subject registry/);
+  assert.match(harness.render(), /data-home-mount="true"/);
 
   harness.dispatch('learner-create', { name: 'Learner B' });
   const learnerB = harness.store.getState().learners.selectedId;
   assert.notEqual(learnerB, learnerA);
-  assert.match(harness.render(), /Learner B/);
+  assert.equal(harness.store.getState().learners.byId[learnerB].name, 'Learner B');
+  assert.match(harness.render(), /data-home-mount="true"/);
 
   harness.dispatch('learner-select', { value: learnerA });
   assert.equal(harness.store.getState().learners.selectedId, learnerA);

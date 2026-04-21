@@ -1230,6 +1230,24 @@ function renderMonsterCelebrationOverlay(appState) {
 
 export function renderApp(appState, context) {
   const screen = appState.route.screen || 'dashboard';
+
+  if (screen === 'dashboard') {
+    // Side-effect: populate runtime-boundary captures so the shell can observe
+    // broken getDashboardStats implementations without actually rendering the
+    // subject cards server-side (React owns that layer now).
+    for (const subject of registeredSubjects(context)) {
+      safeDashboardStats(subject, appState, context);
+    }
+    return `
+      ${renderPersistenceBanner(appState.persistence)}
+      <div id="home-root" data-home-mount="true"></div>
+      <div class="home-overlays">
+        ${renderToasts(appState)}
+        ${renderMonsterCelebrationOverlay(appState)}
+      </div>
+    `;
+  }
+
   const body = screen === 'subject'
     ? renderSubjectScreen(context)
     : screen === 'profile-settings'

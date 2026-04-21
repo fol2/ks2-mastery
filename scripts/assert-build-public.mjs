@@ -36,6 +36,7 @@ await mustExist('index.html');
 await mustExist('_headers');
 await mustExist('styles/app.css');
 await mustExist('src/main.js');
+await mustExist('src/bundles/home.bundle.js');
 await mustExist('assets/monsters/inklet/b1/inklet-b1-0.320.webp');
 await mustExist('assets/monsters/inklet/b1/inklet-b1-0.1280.webp');
 await mustExist('worker/src/index.js').then(

@@ -12,6 +12,7 @@ playwright-report/
 screenshots/
 test-results/
 src/generated/
+src/bundles/
 backups/
 .wrangler/
 .env

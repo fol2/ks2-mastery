@@ -35,6 +35,10 @@ import {
   spellingSessionEnded,
 } from './platform/game/monster-celebrations.js';
 import {
+  monsterSummary,
+  monsterSummaryFromSpellingAnalytics,
+} from './platform/game/monster-system.js';
+import {
   exportLearnerSnapshot,
   exportPlatformSnapshot,
   importPlatformSnapshot,
@@ -891,10 +895,129 @@ function contextFor(subjectId = null) {
   };
 }
 
+function homePersistenceLabel(snapshot) {
+  if (snapshot?.mode === 'remote-sync') return 'Remote sync';
+  if (snapshot?.mode === 'degraded') return snapshot?.remoteAvailable ? 'Sync degraded' : 'Local storage degraded';
+  return 'Local-only';
+}
+
+function homeSubjectContext(subject, context) {
+  return { ...context, subject, service: context.services?.[subject.id] || null };
+}
+
+function buildHomeDashboardStats(appState, context) {
+  const out = {};
+  if (!appState.learners.selectedId) return out;
+  for (const subject of SUBJECTS) {
+    if (!subject.getDashboardStats) continue;
+    try {
+      out[subject.id] = subject.getDashboardStats(appState, homeSubjectContext(subject, context));
+    } catch (error) {
+      runtimeBoundary?.capture?.({
+        learnerId: appState.learners.selectedId,
+        subject,
+        tab: 'dashboard',
+        phase: 'dashboard-stats',
+        methodName: 'getDashboardStats',
+        error,
+      });
+      out[subject.id] = { pct: 0, due: '—', streak: '—', nextUp: 'Temporarily unavailable', unavailable: true };
+    }
+  }
+  return out;
+}
+
+function buildHomeMonsterSummary(learnerId, context) {
+  if (!learnerId) return [];
+  const spelling = context.services?.spelling;
+  if (spelling?.getAnalyticsSnapshot) {
+    return monsterSummaryFromSpellingAnalytics(spelling.getAnalyticsSnapshot(learnerId), {
+      learnerId,
+      gameStateRepository: context.repositories?.gameState,
+    });
+  }
+  return monsterSummary(learnerId, context.repositories?.gameState);
+}
+
+function buildHomeDueTotal(learnerId, context) {
+  const spelling = context.services?.spelling;
+  if (!learnerId || !spelling?.getStats || !spelling?.getPrefs) return 0;
+  try {
+    const prefs = spelling.getPrefs(learnerId);
+    const stats = spelling.getStats(learnerId, prefs?.yearFilter || 'all');
+    return Number(stats?.due) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function buildHomeModel(appState, context) {
+  const learnerId = appState.learners.selectedId;
+  const learner = learnerId ? appState.learners.byId[learnerId] : null;
+  const learnerOptions = appState.learners.allIds
+    .map((id) => appState.learners.byId[id])
+    .filter(Boolean)
+    .map((entry) => ({ id: entry.id, name: entry.name, yearGroup: entry.yearGroup }));
+  const theme = document.documentElement.getAttribute('data-theme') || 'light';
+  const persistenceSnapshot = appState.persistence || null;
+  const canOpenParentHub = Boolean(context.parentHub?.permissions?.canViewParentHub) || !boot.session.signedIn;
+
+  return {
+    theme,
+    learner: learner
+      ? { id: learner.id, name: learner.name, yearGroup: learner.yearGroup }
+      : null,
+    learnerLabel: learner ? `${learner.name} · ${learner.yearGroup}` : 'No learner selected',
+    learnerOptions,
+    signedInAs: boot.session.signedIn ? (boot.session.email || '') : null,
+    persistence: {
+      mode: persistenceSnapshot?.mode || 'local-only',
+      label: homePersistenceLabel(persistenceSnapshot),
+      snapshot: persistenceSnapshot,
+    },
+    monsterSummary: buildHomeMonsterSummary(learnerId, context),
+    subjects: SUBJECTS,
+    dashboardStats: buildHomeDashboardStats(appState, context),
+    dueTotal: buildHomeDueTotal(learnerId, context),
+    roundNumber: 1,
+    now: new Date(),
+    permissions: { canOpenParentHub },
+  };
+}
+
+function buildHomeActions() {
+  return {
+    toggleTheme: () => dispatchAction('toggle-theme'),
+    selectLearner: (value) => dispatchAction('learner-select', { value }),
+    openProfileSettings: () => dispatchAction('open-profile-settings'),
+    openSubject: (subjectId) => dispatchAction('open-subject', { subjectId }),
+    openParentHub: () => dispatchAction('open-parent-hub'),
+    logout: () => dispatchAction('platform-logout'),
+    retryPersistence: () => dispatchAction('persistence-retry'),
+  };
+}
+
+function mountHomeSurface(appState, context) {
+  const homeSurface = globalThis.__ks2HomeSurface;
+  if (appState.route.screen === 'dashboard') {
+    const mount = root.querySelector('[data-home-mount="true"]');
+    if (mount && homeSurface) {
+      homeSurface.render(mount, {
+        model: buildHomeModel(appState, context),
+        actions: buildHomeActions(),
+      });
+    }
+  } else if (homeSurface) {
+    homeSurface.unmount();
+  }
+}
+
 function render() {
   const appState = store.getState();
-  root.innerHTML = renderApp(appState, contextFor(appState.route.subjectId || 'spelling'));
+  const context = contextFor(appState.route.subjectId || 'spelling');
+  root.innerHTML = renderApp(appState, context);
   ensureSpellingAutoAdvanceFromCurrentState();
+  mountHomeSurface(appState, context);
 
   if (boot.session.signedIn) {
     if (appState.route.screen === 'parent-hub') {

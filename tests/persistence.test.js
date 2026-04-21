@@ -259,7 +259,7 @@ test('degraded persistence is rendered as explicit shell feedback and clears onc
   await repositories.persistence.retry();
   const healthyHtml = harness.render();
   assert.doesNotMatch(healthyHtml, /Sync degraded/);
-  assert.match(healthyHtml, /Remote sync/);
+  assert.equal(repositories.persistence.read().mode, 'remote-sync');
 });
 
 test('api cache is scoped by auth session so degraded fallback does not leak between accounts', async () => {
