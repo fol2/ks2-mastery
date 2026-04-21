@@ -872,6 +872,106 @@ function renderToasts(appState) {
   `;
 }
 
+function hashString(value) {
+  let hash = 0;
+  const text = String(value || '');
+  for (let index = 0; index < text.length; index += 1) {
+    hash = (hash * 31 + text.charCodeAt(index)) >>> 0;
+  }
+  return hash || 17;
+}
+
+function pseudoRandom(seed, index, modulo) {
+  const value = (seed + index * 1103515245 + 12345) >>> 0;
+  return modulo ? value % modulo : value;
+}
+
+function stageName(monster, stage) {
+  return Array.isArray(monster?.nameByStage) && monster.nameByStage[stage]
+    ? monster.nameByStage[stage]
+    : `${monster?.name || 'Monster'} stage ${stage}`;
+}
+
+function monsterCelebrationTitle(event) {
+  if (event.kind === 'caught') return 'You caught a new friend!';
+  if (event.kind === 'mega') return 'MEGA EVOLUTION!';
+  if (event.kind === 'evolve') return 'Your friend is evolving!';
+  return 'Reward update';
+}
+
+function monsterCelebrationBody(event, toStage) {
+  const monster = event.monster || {};
+  if (event.kind === 'caught') return `${monster.name || 'A monster'} joined your collection.`;
+  if (event.kind === 'mega') return `${monster.name || 'A monster'} reached its mega form: ${stageName(monster, toStage)}.`;
+  if (event.kind === 'evolve') return `${monster.name || 'A monster'} evolved into ${stageName(monster, toStage)}.`;
+  return `${monster.name || 'A monster'} grew stronger.`;
+}
+
+function renderCelebrationParticles(event, count, className) {
+  const seed = hashString(`${event.id}:${event.kind}:${event.monsterId}`);
+  return Array.from({ length: count }).map((_, index) => {
+    const left = pseudoRandom(seed, index + 1, 96) + 2;
+    const top = pseudoRandom(seed, index + 11, 88) + 4;
+    const size = pseudoRandom(seed, index + 23, 9) + 6;
+    const delay = (pseudoRandom(seed, index + 37, 180) / 100).toFixed(2);
+    const duration = (pseudoRandom(seed, index + 53, 140) / 100 + 2).toFixed(2);
+    return `<span class="${className}" style="left:${left}%; top:${top}%; width:${size}px; height:${size}px; --delay:${delay}s; --duration:${duration}s;"></span>`;
+  }).join('');
+}
+
+function renderMonsterCelebrationOverlay(appState) {
+  const event = appState.monsterCelebrations?.queue?.[0];
+  if (!event) return '';
+  const monster = event.monster || {};
+  const fromStage = Math.max(0, Math.min(4, Number(event.previous?.stage) || 0));
+  const toStage = Math.max(0, Math.min(4, Number(event.next?.stage) || 0));
+  const mastered = Math.max(0, Number(event.next?.mastered) || 0);
+  const level = Math.max(0, Number(event.next?.level) || 0);
+  const max = Math.max(1, Number(monster.masteredMax) || (monster.id === 'phaeton' ? 200 : 100));
+  const primary = monster.accent || '#3E6FA8';
+  const secondary = monster.secondary || '#FFE9A8';
+  const pale = monster.pale || '#F8F4EA';
+  const title = monsterCelebrationTitle(event);
+  const body = monsterCelebrationBody(event, toStage);
+  const kicker = event.kind === 'caught'
+    ? 'new discovery'
+    : event.kind === 'mega'
+      ? 'mega form'
+      : 'evolving';
+  const confetti = event.kind === 'mega'
+    ? renderCelebrationParticles(event, 28, 'monster-celebration-confetti')
+    : '';
+
+  return `
+    <section
+      class="monster-celebration-overlay ${escapeHtml(event.kind)}"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="monster-celebration-title"
+      style="--monster-primary:${escapeHtml(primary)}; --monster-secondary:${escapeHtml(secondary)}; --monster-pale:${escapeHtml(pale)};"
+    >
+      <div class="monster-celebration-particles" aria-hidden="true">
+        ${renderCelebrationParticles(event, event.kind === 'mega' ? 38 : 24, 'monster-celebration-sparkle')}
+        ${confetti}
+      </div>
+      <div class="monster-celebration-kicker">${escapeHtml(kicker)}</div>
+      <div class="monster-celebration-stage" aria-hidden="true">
+        <span class="monster-celebration-aura"></span>
+        <span class="monster-celebration-ring one"></span>
+        <span class="monster-celebration-ring two"></span>
+        <span class="monster-celebration-ring three"></span>
+        <img class="monster-celebration-art before" alt="" src="${escapeHtml(monsterAsset(monster.id, fromStage, 640))}" />
+        <img class="monster-celebration-art after" alt="" src="${escapeHtml(monsterAsset(monster.id, toStage, 640))}" />
+        <span class="monster-celebration-flash"></span>
+      </div>
+      <h2 id="monster-celebration-title">${escapeHtml(title)}</h2>
+      <p>${escapeHtml(body)}</p>
+      <div class="monster-celebration-meta">${escapeHtml(`${mastered} / ${max} secure words · Level ${level}`)}</div>
+      <button class="btn primary monster-celebration-continue" type="button" data-action="monster-celebration-dismiss" data-autofocus="true">Continue</button>
+    </section>
+  `;
+}
+
 export function renderApp(appState, context) {
   const screen = appState.route.screen || 'dashboard';
   const body = screen === 'subject'
@@ -887,6 +987,7 @@ export function renderApp(appState, context) {
       ${renderPersistenceBanner(appState.persistence)}
       ${body}
       ${renderToasts(appState)}
+      ${renderMonsterCelebrationOverlay(appState)}
     </div>
   `;
 }

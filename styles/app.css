@@ -514,6 +514,230 @@ input:focus, select:focus, textarea:focus, button:focus-visible {
   padding: 0;
 }
 
+.monster-celebration-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  padding: 28px;
+  color: #fff;
+  text-align: center;
+  background: #1d2b3a;
+  background:
+    radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--monster-primary) 82%, white 18%) 0%, rgba(29, 43, 58, 0.96) 72%),
+    #1d2b3a;
+  animation: monster-celebration-fade-in 0.28s ease-out both;
+}
+
+.monster-celebration-overlay.mega {
+  background: #16132a;
+  background:
+    radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--monster-primary) 70%, #f6d36a 30%) 0%, rgba(22, 19, 42, 0.98) 74%),
+    #16132a;
+}
+
+.monster-celebration-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.monster-celebration-sparkle,
+.monster-celebration-confetti {
+  position: absolute;
+  display: block;
+  background: var(--monster-secondary);
+  box-shadow: 0 0 16px var(--monster-secondary);
+  animation-delay: var(--delay);
+  animation-duration: var(--duration);
+  animation-iteration-count: infinite;
+}
+
+.monster-celebration-sparkle {
+  border-radius: 50%;
+  animation-name: monster-celebration-sparkle;
+  animation-timing-function: ease-out;
+}
+
+.monster-celebration-confetti {
+  top: -12px !important;
+  border-radius: 2px;
+  transform: rotate(18deg);
+  background: var(--monster-secondary);
+  background: color-mix(in srgb, var(--monster-secondary) 70%, #fff 30%);
+  animation-name: monster-celebration-confetti;
+  animation-timing-function: linear;
+}
+
+.monster-celebration-kicker {
+  position: relative;
+  z-index: 1;
+  min-height: 20px;
+  color: var(--monster-secondary);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.monster-celebration-stage {
+  position: relative;
+  z-index: 1;
+  width: min(58vw, 320px);
+  height: min(58vw, 320px);
+  display: grid;
+  place-items: center;
+}
+
+.monster-celebration-aura {
+  position: absolute;
+  inset: -28px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--monster-secondary) 0%, transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--monster-secondary) 50%, transparent) 0%, transparent 70%);
+  animation: monster-celebration-aura 1.8s ease-in-out infinite;
+}
+
+.monster-celebration-ring {
+  position: absolute;
+  inset: 24px;
+  border: 3px solid var(--monster-secondary);
+  border-radius: 50%;
+  opacity: 0;
+  animation: monster-celebration-ring 0.95s ease-out both;
+}
+
+.monster-celebration-ring.one { animation-delay: 0.9s; }
+.monster-celebration-ring.two { animation-delay: 1.05s; }
+.monster-celebration-ring.three { animation-delay: 1.2s; }
+
+.monster-celebration-art {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.monster-celebration-art.before {
+  animation: monster-celebration-before 0.92s ease-in-out both;
+}
+
+.monster-celebration-overlay.caught .monster-celebration-art.before {
+  filter: brightness(0) opacity(0.35);
+}
+
+.monster-celebration-art.after {
+  opacity: 0;
+  animation: monster-celebration-after 0.82s 0.86s cubic-bezier(.3, 1.4, .5, 1) both;
+}
+
+.monster-celebration-flash {
+  position: absolute;
+  inset: -34px;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(circle, #fff 0%, rgba(255, 255, 255, 0.85) 42%, rgba(255, 255, 255, 0) 72%);
+  animation: monster-celebration-flash 0.3s 0.62s ease-out both;
+}
+
+.monster-celebration-overlay h2 {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  max-width: 720px;
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 7vw, 3.4rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+  animation: monster-celebration-copy-in 0.42s 1.02s ease-out both;
+}
+
+.monster-celebration-overlay p {
+  position: relative;
+  z-index: 1;
+  max-width: 620px;
+  margin: 0;
+  font-size: clamp(1rem, 2vw, 1.18rem);
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.9);
+  animation: monster-celebration-copy-in 0.42s 1.12s ease-out both;
+}
+
+.monster-celebration-meta {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.92rem;
+  font-weight: 800;
+  animation: monster-celebration-copy-in 0.42s 1.2s ease-out both;
+}
+
+.monster-celebration-continue {
+  position: relative;
+  z-index: 1;
+  margin-top: 8px;
+  background: var(--monster-secondary) !important;
+  color: var(--monster-primary) !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+  animation: monster-celebration-copy-in 0.42s 1.28s ease-out both;
+}
+
+@keyframes monster-celebration-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes monster-celebration-before {
+  0%, 68% { transform: translateY(0) rotate(-3deg); opacity: 1; }
+  34% { transform: translateY(-5px) rotate(3deg); opacity: 1; }
+  100% { transform: scale(0.82) rotate(0); opacity: 0; }
+}
+
+@keyframes monster-celebration-after {
+  0% { transform: scale(0.18) rotate(-18deg); opacity: 0; filter: blur(5px); }
+  55% { transform: scale(1.12) rotate(2deg); opacity: 1; filter: blur(0); }
+  100% { transform: scale(1) rotate(0); opacity: 1; filter: blur(0); }
+}
+
+@keyframes monster-celebration-flash {
+  0% { opacity: 0; }
+  42% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes monster-celebration-aura {
+  0%, 100% { transform: scale(1); opacity: 0.35; }
+  50% { transform: scale(1.16); opacity: 0.68; }
+}
+
+@keyframes monster-celebration-ring {
+  0% { transform: scale(0.38); opacity: 0.78; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+@keyframes monster-celebration-sparkle {
+  0% { transform: translateY(0) scale(0.3); opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: translateY(-74px) scale(1.2); opacity: 0; }
+}
+
+@keyframes monster-celebration-confetti {
+  0% { transform: translateY(-12vh) rotate(0deg); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translateY(116vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes monster-celebration-copy-in {
+  from { transform: translateY(14px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
 .callout {
   border: 1px solid var(--line);
   border-radius: 16px;

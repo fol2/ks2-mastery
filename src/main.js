@@ -24,6 +24,11 @@ import { createSpellingRewardSubscriber } from './subjects/spelling/event-hooks.
 import { createSpellingAutoAdvanceController } from './subjects/spelling/auto-advance.js';
 import { resolveSpellingShortcut } from './subjects/spelling/shortcuts.js';
 import {
+  isMonsterCelebrationEvent,
+  shouldDelayMonsterCelebrations,
+  spellingSessionEnded,
+} from './platform/game/monster-celebrations.js';
+import {
   exportLearnerSnapshot,
   exportPlatformSnapshot,
   importPlatformSnapshot,
@@ -556,12 +561,32 @@ function ensureSpellingAutoAdvanceFromCurrentState() {
 
 function applySubjectTransition(subjectId, transition) {
   if (!transition) return false;
+  const previousSubjectUi = store.getState().subjectUi[subjectId] || null;
   store.updateSubjectUi(subjectId, transition.state);
+  const nextSubjectUi = transition.state || null;
 
   const published = eventRuntime.publish(transition.events);
+  let renderedSideEffect = false;
   if (published.toastEvents.length) {
     store.pushToasts(published.toastEvents);
-  } else if (published.reactionEvents.length) {
+    renderedSideEffect = true;
+  }
+
+  const monsterCelebrations = published.reactionEvents.filter(isMonsterCelebrationEvent);
+  if (monsterCelebrations.length) {
+    if (shouldDelayMonsterCelebrations(subjectId, previousSubjectUi, nextSubjectUi)) {
+      store.deferMonsterCelebrations(monsterCelebrations);
+    } else {
+      store.pushMonsterCelebrations(monsterCelebrations);
+    }
+    renderedSideEffect = true;
+  }
+
+  if (spellingSessionEnded(previousSubjectUi, nextSubjectUi)) {
+    renderedSideEffect = store.releaseMonsterCelebrations() || renderedSideEffect;
+  }
+
+  if (!renderedSideEffect && published.reactionEvents.length) {
     store.patch(() => ({}));
   }
 
@@ -776,11 +801,17 @@ function handleGlobalAction(action, data) {
     return true;
   }
 
+  if (action === 'monster-celebration-dismiss') {
+    store.dismissMonsterCelebration();
+    return true;
+  }
+
   if (action === 'persistence-retry') {
     repositories.persistence.retry()
       .then(() => {
         tts.stop();
         runtimeBoundary.clearAll();
+        store.clearMonsterCelebrations();
         store.reloadFromRepositories({ preserveRoute: true });
       })
       .catch((error) => {

@@ -96,6 +96,60 @@ test('uncaught monsters stay off the main dashboard but use codex placeholders',
   assert.match(spellingHtml, /Not caught/);
 });
 
+test('monster celebration overlay uses high-resolution stage artwork', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const store = createStore(SUBJECTS, { repositories });
+  const appState = {
+    ...store.getState(),
+    monsterCelebrations: {
+      pending: [],
+      queue: [
+        {
+          id: 'reward.monster:learner-a:inklet:caught:0:0',
+          type: 'reward.monster',
+          kind: 'caught',
+          learnerId: 'learner-a',
+          monsterId: 'inklet',
+          monster: {
+            id: 'inklet',
+            name: 'Inklet',
+            blurb: 'Grows as Year 3-4 spellings become secure.',
+            accent: '#3E6FA8',
+            secondary: '#9FC1E8',
+            pale: '#E8F0FA',
+            nameByStage: ['Inklet Egg', 'Inklet'],
+            masteredMax: 100,
+          },
+          previous: { mastered: 0, stage: 0, level: 0, caught: false },
+          next: { mastered: 1, stage: 0, level: 0, caught: true },
+          createdAt: Date.UTC(2026, 0, 1),
+        },
+      ],
+    },
+  };
+
+  const html = renderApp(appState, {
+    appState,
+    store,
+    repositories,
+    services: {},
+    subject: SUBJECTS[0],
+    service: null,
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+    applySubjectTransition() {
+      return true;
+    },
+  });
+
+  assert.match(html, /monster-celebration-overlay/);
+  assert.match(html, /assets\/monsters\/inklet-0\.640\.webp/);
+});
+
 test('render app exposes parent and admin operating surfaces by route', () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });

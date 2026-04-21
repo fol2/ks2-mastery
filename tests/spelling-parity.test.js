@@ -16,6 +16,19 @@ function typedFormData(value) {
   return formData;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function completeSingleWordRound(harness, answer = 'possess') {
+  harness.dispatch('spelling-drill-single', { slug: 'possess' });
+  while (harness.store.getState().subjectUi.spelling.phase === 'session') {
+    harness.dispatch('spelling-submit-form', { formData: typedFormData(answer) });
+    const ui = harness.store.getState().subjectUi.spelling;
+    if (ui.phase === 'session' && ui.awaitingAdvance) {
+      harness.dispatch('spelling-continue');
+    }
+  }
+}
+
 test('live spelling card keeps family hidden and restores legacy phase-specific labels', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
@@ -94,6 +107,44 @@ test('ending a live spelling session asks before abandoning it', () => {
     globalThis.confirm = () => true;
     harness.dispatch('spelling-end-early');
     assert.equal(harness.store.getState().subjectUi.spelling.phase, 'dashboard');
+  } finally {
+    globalThis.confirm = originalConfirm;
+  }
+});
+
+test('monster caught celebrations wait until the live spelling session ends', () => {
+  const storage = installMemoryStorage();
+  const nowRef = { value: Date.UTC(2026, 0, 1) };
+  const harness = createAppHarness({ storage, now: () => nowRef.value });
+  const originalConfirm = globalThis.confirm;
+
+  try {
+    harness.dispatch('open-subject', { subjectId: 'spelling' });
+
+    for (let round = 0; round < 3; round += 1) {
+      completeSingleWordRound(harness);
+      nowRef.value += DAY_MS * 2;
+    }
+
+    harness.dispatch('spelling-drill-single', { slug: 'possess' });
+    harness.dispatch('spelling-submit-form', { formData: typedFormData('possess') });
+
+    const liveState = harness.store.getState();
+    assert.equal(liveState.subjectUi.spelling.phase, 'session');
+    assert.equal(liveState.subjectUi.spelling.awaitingAdvance, true);
+    assert.ok(liveState.toasts.some((event) => event.type === 'reward.monster' && event.kind === 'caught'));
+    assert.doesNotMatch(harness.render(), /monster-celebration-overlay/);
+
+    globalThis.confirm = () => true;
+    harness.dispatch('spelling-end-early');
+
+    const endedHtml = harness.render();
+    assert.match(endedHtml, /monster-celebration-overlay/);
+    assert.match(endedHtml, /You caught a new friend!/);
+    assert.match(endedHtml, /Inklet/);
+
+    harness.dispatch('monster-celebration-dismiss');
+    assert.doesNotMatch(harness.render(), /monster-celebration-overlay/);
   } finally {
     globalThis.confirm = originalConfirm;
   }

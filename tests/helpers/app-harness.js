@@ -9,6 +9,11 @@ import { createSpellingAutoAdvanceController } from '../../src/subjects/spelling
 import { resolveSpellingShortcut } from '../../src/subjects/spelling/shortcuts.js';
 import { renderApp } from '../../src/platform/ui/render.js';
 import { SUBJECTS } from '../../src/platform/core/subject-registry.js';
+import {
+  isMonsterCelebrationEvent,
+  shouldDelayMonsterCelebrations,
+  spellingSessionEnded,
+} from '../../src/platform/game/monster-celebrations.js';
 
 export function makeTts() {
   return {
@@ -71,11 +76,28 @@ export function createAppHarness({
 
   function applySubjectTransition(subjectId, transition) {
     if (!transition) return false;
+    const previousSubjectUi = store.getState().subjectUi[subjectId] || null;
     store.updateSubjectUi(subjectId, transition.state);
+    const nextSubjectUi = transition.state || null;
     const published = eventRuntime.publish(transition.events);
+    let renderedSideEffect = false;
     if (published.toastEvents.length) {
       store.pushToasts(published.toastEvents);
-    } else if (published.reactionEvents.length) {
+      renderedSideEffect = true;
+    }
+    const monsterCelebrations = published.reactionEvents.filter(isMonsterCelebrationEvent);
+    if (monsterCelebrations.length) {
+      if (shouldDelayMonsterCelebrations(subjectId, previousSubjectUi, nextSubjectUi)) {
+        store.deferMonsterCelebrations(monsterCelebrations);
+      } else {
+        store.pushMonsterCelebrations(monsterCelebrations);
+      }
+      renderedSideEffect = true;
+    }
+    if (spellingSessionEnded(previousSubjectUi, nextSubjectUi)) {
+      renderedSideEffect = store.releaseMonsterCelebrations() || renderedSideEffect;
+    }
+    if (!renderedSideEffect && published.reactionEvents.length) {
       store.patch(() => ({}));
     }
     runtimeBoundary.clear({
@@ -174,6 +196,11 @@ export function createAppHarness({
           tab: appState.route.tab || 'practice',
         });
         store.patch(() => ({}));
+        return true;
+      }
+
+      if (action === 'monster-celebration-dismiss') {
+        store.dismissMonsterCelebration();
         return true;
       }
 

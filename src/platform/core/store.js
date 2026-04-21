@@ -7,6 +7,11 @@ import {
   normalisePersistenceSnapshot,
   validatePlatformRepositories,
 } from './repositories/index.js';
+import {
+  emptyMonsterCelebrations,
+  normaliseMonsterCelebrationEvents,
+  normaliseMonsterCelebrations,
+} from '../game/monster-celebrations.js';
 
 const DEFAULT_ROUTE = {
   screen: 'dashboard',
@@ -74,6 +79,7 @@ function emptyState(subjects, learner) {
     persistence: defaultPersistenceSnapshot(),
     transientUi: normaliseTransientUi(),
     toasts: [],
+    monsterCelebrations: emptyMonsterCelebrations(),
   };
 }
 
@@ -134,6 +140,7 @@ function stateFromRepositories(subjects, repositories) {
     persistence: repositories.persistence.read(),
     transientUi: normaliseTransientUi(),
     toasts: [],
+    monsterCelebrations: emptyMonsterCelebrations(),
   };
 }
 
@@ -146,6 +153,7 @@ function sanitiseState(rawState, subjects) {
     persistence: normalisePersistenceSnapshot(rawState?.persistence),
     transientUi: normaliseTransientUi(rawState?.transientUi),
     toasts: normaliseToasts(rawState?.toasts),
+    monsterCelebrations: normaliseMonsterCelebrations(rawState?.monsterCelebrations),
   };
 }
 
@@ -206,6 +214,7 @@ export function createStore(subjects, { repositories } = {}) {
     setState((current) => ({
       ...current,
       subjectUi: nextTree,
+      monsterCelebrations: emptyMonsterCelebrations(),
     }));
   }
 
@@ -257,6 +266,7 @@ export function createStore(subjects, { repositories } = {}) {
         ...current,
         learners: nextLearners,
         subjectUi: subjectUiForLearner(registry, resolvedRepositories, learnerId),
+        monsterCelebrations: emptyMonsterCelebrations(),
       }));
     },
     createLearner(payload = {}) {
@@ -274,6 +284,7 @@ export function createStore(subjects, { repositories } = {}) {
         ...current,
         learners: nextLearners,
         subjectUi: subjectUiForLearner(registry, resolvedRepositories, learner.id),
+        monsterCelebrations: emptyMonsterCelebrations(),
       }));
       return learner;
     },
@@ -313,6 +324,7 @@ export function createStore(subjects, { repositories } = {}) {
         ...current,
         learners: nextLearners,
         subjectUi: subjectUiForLearner(registry, resolvedRepositories, nextSelectedId),
+        monsterCelebrations: emptyMonsterCelebrations(),
       }));
       return true;
     },
@@ -354,6 +366,61 @@ export function createStore(subjects, { repositories } = {}) {
     },
     clearToasts() {
       setState((current) => ({ ...current, toasts: [] }));
+    },
+    deferMonsterCelebrations(events) {
+      const validEvents = normaliseMonsterCelebrationEvents(events);
+      if (!validEvents.length) return false;
+      setState((current) => ({
+        ...current,
+        monsterCelebrations: {
+          ...current.monsterCelebrations,
+          pending: [...current.monsterCelebrations.pending, ...validEvents].slice(-25),
+        },
+      }));
+      return true;
+    },
+    pushMonsterCelebrations(events) {
+      const validEvents = normaliseMonsterCelebrationEvents(events);
+      if (!validEvents.length) return false;
+      setState((current) => ({
+        ...current,
+        monsterCelebrations: {
+          ...current.monsterCelebrations,
+          queue: [...current.monsterCelebrations.queue, ...validEvents].slice(-25),
+        },
+      }));
+      return true;
+    },
+    releaseMonsterCelebrations() {
+      if (!state.monsterCelebrations.pending.length) return false;
+      setState((current) => ({
+        ...current,
+        monsterCelebrations: {
+          pending: [],
+          queue: [
+            ...current.monsterCelebrations.queue,
+            ...current.monsterCelebrations.pending,
+          ].slice(-25),
+        },
+      }));
+      return true;
+    },
+    dismissMonsterCelebration() {
+      if (!state.monsterCelebrations.queue.length) return false;
+      setState((current) => ({
+        ...current,
+        monsterCelebrations: {
+          ...current.monsterCelebrations,
+          queue: current.monsterCelebrations.queue.slice(1),
+        },
+      }));
+      return true;
+    },
+    clearMonsterCelebrations() {
+      setState((current) => ({
+        ...current,
+        monsterCelebrations: emptyMonsterCelebrations(),
+      }));
     },
     clearAllProgress() {
       resolvedRepositories.clearAll();
