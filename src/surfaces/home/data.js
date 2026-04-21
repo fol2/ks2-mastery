@@ -1,4 +1,6 @@
 const MONSTER_VARIANTS = ['b1', 'b2'];
+const DIRECT_STAGE_THRESHOLDS = Object.freeze([1, 10, 30, 60, 90]);
+const PHAETON_STAGE_THRESHOLDS = Object.freeze([3, 25, 95, 145, 200]);
 
 const REGION_BACKGROUND_URLS = Object.freeze([
   '/assets/regions/the-scribe-downs/the-scribe-downs-bg-a1.1280.webp',
@@ -20,6 +22,7 @@ const MEADOW_SLOTS = Object.freeze([
 const EGG_SLOTS = Object.freeze([
   { slot: 'egg-a', size: 68, left: '44%', top: '58%' },
   { slot: 'egg-b', size: 60, left: '62%', top: '64%' },
+  { slot: 'egg-c', size: 58, left: '30%', top: '66%' },
 ]);
 
 const MONSTER_FACE = Object.freeze({
@@ -87,10 +90,10 @@ function variantForMonster(monsterId, stage, catalogueBranch) {
 }
 
 /**
- * Build the meadow monster list from the real monsterSummary payload. Each
- * caught monster claims the next meadow slot in priority order (walker,
- * flyer-a, flyer-b, walker satellite, flyer satellite). Stage-0 eggs for
- * uncaught species fall into the bottom egg slots.
+ * Build the meadow monster list from the real monsterSummary payload. Only
+ * caught species appear — stage-1+ monsters roam via MEADOW_SLOTS while
+ * caught-but-unhatched (stage 0) species claim an EGG_SLOT. Uncaught
+ * species are hidden until the learner secures their first qualifying word.
  */
 export function buildMeadowMonsters(summary = []) {
   const walkSlots = MEADOW_SLOTS.filter((slot) => slot.path === 'walk');
@@ -99,7 +102,7 @@ export function buildMeadowMonsters(summary = []) {
   const buckets = { walk: [...walkSlots], 'fly-a': [...flyASlots], 'fly-b': [...flyBSlots] };
 
   const caughtEntries = summary.filter((entry) => entry.progress?.caught && entry.progress.stage >= 1);
-  const eggEntries = summary.filter((entry) => !entry.progress?.caught || entry.progress.stage === 0);
+  const eggEntries = summary.filter((entry) => entry.progress?.caught && entry.progress.stage === 0);
 
   const monsters = [];
 
@@ -176,6 +179,58 @@ export function buildSubjectCards(subjects = [], dashboardStats = {}) {
       progressLabel: buildProgressLabel(status, stats),
     };
   });
+}
+
+export function buildCodexEntries(summary = []) {
+  return summary.map(({ monster, progress }) => {
+    const mastered = Math.max(0, Number(progress?.mastered) || 0);
+    const max = Math.max(1, Number(monster?.masteredMax) || (monster?.id === 'phaeton' ? 200 : 100));
+    const stage = Math.max(0, Math.min(4, Number(progress?.stage) || 0));
+    const caught = Boolean(progress?.caught);
+    const variant = variantForMonster(monster.id, stage, progress?.branch);
+    const displayName = caught
+      ? monster.nameByStage?.[stage] || monster.name
+      : monster.nameByStage?.[0] || monster.name;
+    const pct = Math.max(0, Math.min(1, mastered / max));
+    const nextMilestone = nextCodexMilestone(monster.id, mastered);
+
+    return {
+      id: monster.id,
+      name: displayName,
+      speciesName: monster.name,
+      blurb: monster.blurb,
+      caught,
+      stage,
+      level: Math.max(0, Number(progress?.level) || 0),
+      mastered,
+      max,
+      progress: pct,
+      progressPct: Math.round(pct * 100),
+      colour: monster.accent,
+      soft: monster.pale,
+      branch: variant,
+      img: monsterAssetPath(monster.id, variant, stage, 640),
+      srcSet: monsterAssetSrcset(monster.id, variant, stage),
+      stageLabel: caught ? `Stage ${stage}` : 'Not caught',
+      secureLabel: `${mastered} / ${max} secure`,
+      nextGoal: nextMilestone
+        ? `${Math.max(0, nextMilestone - mastered)} more for the next change`
+        : 'Fully evolved',
+      wordBand: codexWordBand(monster.id),
+    };
+  });
+}
+
+function nextCodexMilestone(monsterId, mastered) {
+  const thresholds = monsterId === 'phaeton' ? PHAETON_STAGE_THRESHOLDS : DIRECT_STAGE_THRESHOLDS;
+  return thresholds.find((threshold) => mastered < threshold) || null;
+}
+
+function codexWordBand(monsterId) {
+  if (monsterId === 'inklet') return 'Years 3-4 spellings';
+  if (monsterId === 'glimmerbug') return 'Years 5-6 spellings';
+  if (monsterId === 'phaeton') return 'Whole spelling codex';
+  return 'Spelling codex';
 }
 
 function buildProgressLabel(status, stats) {

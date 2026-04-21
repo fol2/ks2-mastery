@@ -111,7 +111,7 @@ test('uncaught monsters stay off the main dashboard but use codex placeholders',
   assert.match(spellingHtml, /Not caught/);
 });
 
-test('home meadow keeps caught stage-zero inklet pinned as an egg and only animates caught stage-one monsters', async () => {
+test('home meadow shows an egg only once a species has been caught and hides uncaught species entirely', async () => {
   const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
   const summary = [
     { monster: { id: 'inklet', name: 'Inklet' }, progress: { caught: true, stage: 0, branch: 'b1' } },
@@ -128,8 +128,33 @@ test('home meadow keeps caught stage-zero inklet pinned as an egg and only anima
   assert.equal(inklet.path, 'none');
   assert.equal(glimmerbug.stage, 1);
   assert.notEqual(glimmerbug.path, 'none');
-  assert.equal(phaeton.stage, 0);
-  assert.equal(phaeton.path, 'none');
+  assert.equal(phaeton, undefined);
+});
+
+test('home meadow shows all three eggs once every species has been caught but stays in stage zero', async () => {
+  const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
+  const summary = [
+    { monster: { id: 'inklet', name: 'Inklet' }, progress: { caught: true, stage: 0, branch: 'b1' } },
+    { monster: { id: 'glimmerbug', name: 'Glimmerbug' }, progress: { caught: true, stage: 0, branch: 'b1' } },
+    { monster: { id: 'phaeton', name: 'Phaeton' }, progress: { caught: true, stage: 0, branch: 'b1' } },
+  ];
+  const meadow = buildMeadowMonsters(summary);
+
+  assert.equal(meadow.length, 3);
+  for (const entry of meadow) {
+    assert.equal(entry.stage, 0);
+    assert.equal(entry.path, 'none');
+  }
+});
+
+test('home meadow hides every species for a fresh learner with nothing caught yet', async () => {
+  const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
+  const summary = [
+    { monster: { id: 'inklet', name: 'Inklet' }, progress: { caught: false, stage: 0, branch: 'b1' } },
+    { monster: { id: 'glimmerbug', name: 'Glimmerbug' }, progress: { caught: false, stage: 0, branch: 'b1' } },
+    { monster: { id: 'phaeton', name: 'Phaeton' }, progress: { caught: false, stage: 0, branch: 'b1' } },
+  ];
+  assert.equal(buildMeadowMonsters(summary).length, 0);
 });
 
 test('monster celebration overlay uses high-resolution stage artwork', () => {

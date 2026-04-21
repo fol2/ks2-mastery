@@ -5,13 +5,7 @@ const MEADOW_HEIGHT_ESTIMATE = 420;
 
 export function MonsterMeadow({ monsters = [], maxSlots = 10 }) {
   const shown = monsters.slice(0, maxSlots);
-  if (!shown.length) {
-    return (
-      <div className="monster-meadow empty" aria-hidden="true">
-        <span className="meadow-empty-note">Catch your first monster to populate the meadow.</span>
-      </div>
-    );
-  }
+  if (!shown.length) return null;
   return (
     <div className="monster-meadow" aria-label={`${shown.length} caught monsters roaming`}>
       {shown.map((m) => {
