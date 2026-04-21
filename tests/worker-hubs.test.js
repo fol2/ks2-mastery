@@ -287,3 +287,59 @@ test('worker admin hub requires admin or operations role and exposes content plu
 
   server.close();
 });
+
+test('worker parent hub lists readable learners while preserving read-only access mode', async () => {
+  const server = createWorkerRepositoryServer();
+  await seedLearnerData(server, 'adult-owner', 'parent');
+
+  const nowTs = Date.now();
+  server.DB.db.exec(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES ('adult-viewer', 'viewer@example.test', 'Viewer', 'parent', NULL, ${nowTs}, ${nowTs}, 0);
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES ('adult-viewer', 'learner-a', 'viewer', 0, ${nowTs}, ${nowTs});
+  `);
+
+  const response = await server.fetchAs('adult-viewer', 'https://repo.test/api/hubs/parent', {}, {
+    'x-ks2-dev-platform-role': 'parent',
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.learnerId, 'learner-a');
+  assert.equal(payload.parentHub.permissions.membershipRole, 'viewer');
+  assert.equal(payload.parentHub.permissions.canMutateLearnerData, false);
+  assert.equal(payload.parentHub.permissions.accessModeLabel, 'Read-only learner');
+  assert.equal(payload.parentHub.accessibleLearners.length, 1);
+  assert.equal(payload.parentHub.accessibleLearners[0].learnerId, 'learner-a');
+  assert.equal(payload.parentHub.accessibleLearners[0].writable, false);
+
+  server.close();
+});
+
+test('worker admin hub marks viewer diagnostics as read-only', async () => {
+  const server = createWorkerRepositoryServer();
+  await seedLearnerData(server, 'adult-owner', 'parent');
+
+  const nowTs = Date.now();
+  server.DB.db.exec(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES ('adult-ops', 'ops@example.test', 'Ops', 'ops', NULL, ${nowTs}, ${nowTs}, 0);
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES ('adult-ops', 'learner-a', 'viewer', 0, ${nowTs}, ${nowTs});
+  `);
+
+  const response = await server.fetchAs('adult-ops', 'https://repo.test/api/hubs/admin', {}, {
+    'x-ks2-dev-platform-role': 'ops',
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.adminHub.permissions.canViewAdminHub, true);
+  assert.equal(payload.adminHub.permissions.canManageAccountRoles, false);
+  assert.equal(payload.adminHub.learnerSupport.accessibleLearners[0].membershipRole, 'viewer');
+  assert.equal(payload.adminHub.learnerSupport.accessibleLearners[0].writable, false);
+  assert.equal(payload.adminHub.learnerSupport.accessibleLearners[0].accessModeLabel, 'Read-only learner');
+
+  server.close();
+});

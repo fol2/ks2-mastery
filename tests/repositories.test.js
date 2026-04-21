@@ -22,6 +22,31 @@ function makeTts() {
   };
 }
 
+function ensureHarnessLearner(repositories) {
+  const snapshot = repositories.learners.read();
+  if (Array.isArray(snapshot?.allIds) && snapshot.allIds.length) {
+    return snapshot.selectedId || snapshot.allIds[0];
+  }
+
+  repositories.learners.write({
+    byId: {
+      'learner-a': {
+        id: 'learner-a',
+        name: 'Ava',
+        yearGroup: 'Y5',
+        goal: 'sats',
+        dailyMinutes: 15,
+        avatarColor: '#3E6FA8',
+        createdAt: 1,
+      },
+    },
+    allIds: ['learner-a'],
+    selectedId: 'learner-a',
+  });
+
+  return 'learner-a';
+}
+
 function makeHarness(repositories, nowRef) {
   const service = createSpellingService({
     repository: createSpellingPersistence({ repositories, now: () => nowRef.value }),
@@ -35,8 +60,9 @@ function makeHarness(repositories, nowRef) {
       createSpellingRewardSubscriber({ gameStateRepository: repositories.gameState }),
     ],
   });
+  const expectedLearnerId = ensureHarnessLearner(repositories);
   const store = createStore(SUBJECTS, { repositories });
-  const learnerId = store.getState().learners.selectedId;
+  const learnerId = store.getState().learners.selectedId || expectedLearnerId;
 
   function applyTransition(transition) {
     store.updateSubjectUi('spelling', transition.state);

@@ -87,6 +87,9 @@ function ensureLearnersSnapshot(repositories, subjects) {
   const snapshot = normaliseLearnersSnapshot(repositories.learners.read());
   if (snapshot.allIds.length) return snapshot;
 
+  const persistenceMode = repositories.persistence.read()?.mode || 'local-only';
+  if (persistenceMode !== 'local-only') return snapshot;
+
   const learner = makeLearner();
   const initial = emptyState(subjects, learner);
   repositories.learners.write(initial.learners);

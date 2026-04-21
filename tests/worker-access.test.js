@@ -243,3 +243,55 @@ test('removing the last owner promotes an existing member instead of orphaning t
 
   server.close();
 });
+
+test('worker bootstrap stays writable-only while parent hub can show read-only memberships', async () => {
+  const server = createWorkerRepositoryServer();
+  const ownerRepositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    authSession: server.authSessionFor('adult-owner'),
+  });
+
+  await ownerRepositories.hydrate();
+  ownerRepositories.learners.write({
+    byId: {
+      'learner-a': {
+        id: 'learner-a',
+        name: 'Ava',
+        yearGroup: 'Y5',
+        goal: 'sats',
+        dailyMinutes: 15,
+        avatarColor: '#3E6FA8',
+        createdAt: 1,
+      },
+    },
+    allIds: ['learner-a'],
+    selectedId: 'learner-a',
+  });
+  await ownerRepositories.flush();
+
+  const nowTs = Date.now();
+  server.DB.db.exec(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES ('adult-viewer', 'viewer@example.test', 'Viewer', 'parent', NULL, ${nowTs}, ${nowTs}, 0);
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES ('adult-viewer', 'learner-a', 'viewer', 0, ${nowTs}, ${nowTs});
+  `);
+
+  const viewerRepositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    authSession: server.authSessionFor('adult-viewer'),
+  });
+  await viewerRepositories.hydrate();
+
+  assert.deepEqual(viewerRepositories.learners.read().allIds, []);
+
+  const hubResponse = await server.fetchAs('adult-viewer', 'https://repo.test/api/hubs/parent');
+  const hubPayload = await hubResponse.json();
+  assert.equal(hubResponse.status, 200);
+  assert.equal(hubPayload.parentHub.accessibleLearners[0].learnerId, 'learner-a');
+  assert.equal(hubPayload.parentHub.accessibleLearners[0].writable, false);
+
+  server.close();
+});

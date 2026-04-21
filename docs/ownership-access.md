@@ -96,6 +96,7 @@ Cannot yet:
 Can:
 
 - read learner-scoped data for explicit adult-facing diagnostics surfaces
+- select that learner inside Parent Hub or Admin / Operations when the Worker hub route returns it
 
 Cannot yet:
 
@@ -103,7 +104,7 @@ Cannot yet:
 - participate in the current main learner bootstrap flow used by the browser shell
 
 The current browser bootstrap still surfaces writable learners only.
-Viewer access is currently used for permission-correct hub reads rather than full learner-switch UX.
+Viewer access is currently used for permission-correct hub reads and adult-surface learner selection, not full writable subject-shell UX.
 
 ## Repository access behaviour
 
@@ -114,6 +115,8 @@ Viewer access is currently used for permission-correct hub reads rather than ful
 - the current browser repository client only works with writable learners, so bootstrap returns the writable learner set for now
 - Parent Hub reads can use readable learner memberships (`owner`, `member`, `viewer`) when the platform role is `parent`
 - Admin / Operations reads require platform role `admin` or `ops` and still respect learner membership when surfacing learner diagnostics
+- signed-in Parent Hub and Admin / Operations consume Worker hub payloads rather than synthesising owner memberships from writable bootstrap state
+- signed-in empty writable bootstrap stays empty; the store does not fabricate a default learner outside local-reference mode
 
 ## Ownership-safe removal rule
 
@@ -133,5 +136,5 @@ Still deferred after this pass:
 - invites and acceptance flows
 - billing
 - messaging
-- read-only viewer UX in the browser shell
+- read-only viewer participation inside the writable subject shell
 - semantic conflict resolution beyond the current stale-write rebase policy

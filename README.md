@@ -20,7 +20,7 @@ The goal is not to polish the old prototype. The goal is to give the product a s
 - `src/subjects/placeholders/*`
   - Clean extension slots for Arithmetic, Reasoning, Grammar, Punctuation and Reading.
 - `worker/*`
-  - A Cloudflare-friendly backend with D1-backed repository routes, account-scoped spelling content, learner ownership checks, production sessions, Worker-side OpenAI TTS proxying, and thin Parent/Admin hub routes.
+  - A Cloudflare-friendly backend with D1-backed repository routes, account-scoped spelling content, learner ownership checks, production sessions, Worker-side OpenAI TTS proxying, and thin role-aware Parent/Admin hub routes.
 - `docs/*`
   - Audit, architecture, refactor plan, migration map, repository notes, ownership/access notes, state-integrity notes, spelling-service and spelling-content notes, a direct spelling parity audit, operating-surface notes, and the subject-expansion readiness gate.
 - `tests/*`
@@ -31,6 +31,8 @@ The goal is not to polish the old prototype. The goal is to give the product a s
 English Spelling works in the new structure.
 
 Production on `ks2.eugnel.uk` uses the API adapter by default after sign-in. Direct file/local mode, or `?local=1`, still uses browser storage for development only. The API adapter reports explicit persistence modes (`local-only`, `remote-sync`, `degraded`) so failed remote writes are visible instead of being treated as silent success. The Worker is D1-backed with learner ownership enforcement, atomic account / learner revision checks, idempotent request replay, account-scoped spelling content routes, role-aware Parent/Admin hub read routes, and OpenAI TTS as the production dictation default.
+
+Signed-in Parent Hub and Admin / Operations use live Worker hub payloads. Those adult surfaces keep platform role, learner membership role, and writable/read-only access separate. `/api/bootstrap` remains writable-only for the main subject shell, while readable viewer learners are available inside hub surfaces with explicit read-only labels and blocked write affordances.
 
 The repo now has a reusable subject-expansion harness and an explicit expansion-readiness gate. The gate is a narrow **GO** for the first Arithmetic thin slice only; it is not a claim that the full multi-subject SaaS is finished.
 
@@ -99,7 +101,7 @@ The shell now has two explicit adult-facing routes:
 
 These are intentionally thin.
 They reuse durable platform data and keep reporting logic out of the spelling engine.
-The local reference build includes visible role switching for inspection; the Worker path provides permission-checked hub endpoints and D1-backed account role changes.
+The local reference build includes visible role switching for inspection; the Worker path provides permission-checked hub endpoints, D1-backed account role changes, readable viewer diagnostics, and explicit read-only learner labels.
 
 ## Subject expansion gate
 

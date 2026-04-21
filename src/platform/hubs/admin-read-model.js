@@ -1,4 +1,6 @@
 import {
+  canManageAccountRoles,
+  canMutateLearnerData,
   canViewAdminHub,
   canViewLearnerDiagnostics,
   canViewParentHub,
@@ -48,6 +50,7 @@ export function buildAdminHubReadModel({
     const resolvedMembershipRole = normaliseLearnerMembershipRole(membership?.role);
     const learner = membership?.learner || null;
     const learnerId = learner?.id || membership?.learnerId || '';
+    const writable = canMutateLearnerData({ membershipRole: resolvedMembershipRole });
     const parentHub = buildParentHubReadModel({
       learner,
       platformRole: 'parent',
@@ -67,6 +70,8 @@ export function buildAdminHubReadModel({
       membershipRoleLabel: learnerMembershipRoleLabel(resolvedMembershipRole),
       stateRevision: Number(membership?.stateRevision) || 0,
       canViewDiagnostics: canViewLearnerDiagnostics({ platformRole: resolvedPlatformRole, membershipRole: resolvedMembershipRole }),
+      writable,
+      accessModeLabel: writable ? 'Writable learner' : 'Read-only learner',
       overview: parentHub.learnerOverview,
       currentFocus: parentHub.dueWork[0] || null,
     };
@@ -75,6 +80,10 @@ export function buildAdminHubReadModel({
   const selectedDiagnostics = diagnosticsEntries.find((entry) => entry.learnerId === selectedLearnerId)
     || diagnosticsEntries[0]
     || null;
+  const canOpenParentHub = canViewParentHub({
+    platformRole: resolvedPlatformRole,
+    membershipRole: selectedDiagnostics?.membershipRole || 'viewer',
+  });
 
   return {
     generatedAt,
@@ -82,7 +91,8 @@ export function buildAdminHubReadModel({
       platformRole: resolvedPlatformRole,
       platformRoleLabel: platformRoleLabel(resolvedPlatformRole),
       canViewAdminHub: canViewAdminHub({ platformRole: resolvedPlatformRole }),
-      canViewParentHub: canViewParentHub({ platformRole: resolvedPlatformRole, membershipRole: 'owner' }),
+      canViewParentHub: canOpenParentHub,
+      canManageAccountRoles: canManageAccountRoles({ platformRole: resolvedPlatformRole }),
     },
     account: {
       id: account?.id || 'local-browser',
@@ -124,10 +134,10 @@ export function buildAdminHubReadModel({
       accessibleLearners: diagnosticsEntries,
       selectedDiagnostics,
       entryPoints: [
-        {
+        ...(canOpenParentHub ? [{
           label: 'Open Parent Hub',
           action: 'open-parent-hub',
-        },
+        }] : []),
         {
           label: 'Open Spelling analytics',
           action: 'open-subject',

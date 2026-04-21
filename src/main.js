@@ -5,7 +5,13 @@ import { safeParseInt, uid } from './platform/core/utils.js';
 import { shouldDispatchClickAction } from './platform/core/dom-actions.js';
 import { normalisePlatformRole } from './platform/access/roles.js';
 import { buildAdminHubReadModel } from './platform/hubs/admin-read-model.js';
+import { createHubApi } from './platform/hubs/api.js';
 import { buildParentHubReadModel } from './platform/hubs/parent-read-model.js';
+import {
+  buildAdminHubAccessContext,
+  buildParentHubAccessContext,
+  readOnlyLearnerActionBlockReason,
+} from './platform/hubs/shell-access.js';
 import {
   createApiPlatformRepositories,
   createLocalPlatformRepositories,
@@ -225,6 +231,227 @@ let adminAccountDirectory = {
   error: '',
   savingAccountId: '',
 };
+const hubApi = boot.session.signedIn
+  ? createHubApi({ baseUrl: '', fetch: credentialFetch })
+  : null;
+
+function createHubLoadState() {
+  return {
+    status: 'idle',
+    learnerId: '',
+    payload: null,
+    error: '',
+    requestToken: 0,
+  };
+}
+
+let adultSurfaceState = {
+  selectedLearnerId: '',
+  notice: '',
+  parentHub: createHubLoadState(),
+  adminHub: createHubLoadState(),
+};
+
+function patchAdultSurfaceState(updater, { rerender = true } = {}) {
+  adultSurfaceState = typeof updater === 'function'
+    ? updater(adultSurfaceState)
+    : { ...adultSurfaceState, ...(updater || {}) };
+  if (rerender) store.patch(() => ({}));
+  return adultSurfaceState;
+}
+
+function patchAdultHubEntry(entryKey, patch, { rerender = true } = {}) {
+  return patchAdultSurfaceState((current) => ({
+    ...current,
+    [entryKey]: {
+      ...current[entryKey],
+      ...(patch || {}),
+    },
+  }), { rerender });
+}
+
+function setAdultSurfaceNotice(message, { rerender = true } = {}) {
+  patchAdultSurfaceState({ notice: message || '' }, { rerender });
+}
+
+function clearAdultSurfaceNotice({ rerender = false } = {}) {
+  if (!adultSurfaceState.notice) return;
+  patchAdultSurfaceState({ notice: '' }, { rerender });
+}
+
+function invalidateAdultHubState(entryKey = null, { rerender = false } = {}) {
+  if (!entryKey) {
+    patchAdultSurfaceState((current) => ({
+      ...current,
+      parentHub: createHubLoadState(),
+      adminHub: createHubLoadState(),
+    }), { rerender });
+    return;
+  }
+  patchAdultHubEntry(entryKey, createHubLoadState(), { rerender });
+}
+
+function preferredAdultLearnerId(explicitLearnerId = null) {
+  const explicit = typeof explicitLearnerId === 'string' && explicitLearnerId ? explicitLearnerId : '';
+  if (explicit) return explicit;
+  if (adultSurfaceState.selectedLearnerId) return adultSurfaceState.selectedLearnerId;
+  const appState = store.getState();
+  return appState.learners.selectedId || null;
+}
+
+function resolveAdultPayloadLearnerId(entryKey, payload) {
+  if (entryKey === 'parentHub') {
+    return payload?.learnerId || payload?.parentHub?.selectedLearnerId || payload?.parentHub?.learner?.id || '';
+  }
+  return payload?.adminHub?.learnerSupport?.selectedLearnerId || payload?.adminHub?.account?.selectedLearnerId || '';
+}
+
+function syncWritableLearnerSelection(learnerId) {
+  if (!learnerId) return false;
+  const appState = store.getState();
+  if (!appState.learners.byId[learnerId]) return false;
+  if (appState.learners.selectedId === learnerId) return false;
+  tts.stop();
+  runtimeBoundary.clearAll();
+  store.selectLearner(learnerId);
+  return true;
+}
+
+function resolveActiveAdultAccessContext(appState) {
+  if (!boot.session.signedIn) return null;
+  if (appState.route.screen === 'parent-hub') {
+    return buildParentHubAccessContext(adultSurfaceState.parentHub.payload, appState.learners.selectedId);
+  }
+  if (appState.route.screen === 'admin-hub') {
+    return buildAdminHubAccessContext(adultSurfaceState.adminHub.payload, appState.learners.selectedId);
+  }
+  return null;
+}
+
+function blockedReadOnlyAdultActionReason(action) {
+  return readOnlyLearnerActionBlockReason(action, resolveActiveAdultAccessContext(store.getState()));
+}
+
+function blockReadOnlyAdultAction(action) {
+  const reason = blockedReadOnlyAdultActionReason(action);
+  if (!reason) return false;
+  setAdultSurfaceNotice(reason);
+  return true;
+}
+
+async function loadParentHub({ learnerId = null, force = false } = {}) {
+  if (!hubApi) return null;
+  const requestedLearnerId = preferredAdultLearnerId(learnerId);
+  const cacheKey = requestedLearnerId || '';
+  const current = adultSurfaceState.parentHub;
+  if (!force && current.status === 'loading' && current.learnerId === cacheKey) return current.payload;
+  if (!force && current.status === 'loaded' && current.payload && current.learnerId === cacheKey) return current.payload;
+  if (!force && current.status === 'error' && current.learnerId === cacheKey) return null;
+
+  const requestToken = (Number(current.requestToken) || 0) + 1;
+  patchAdultSurfaceState((state) => ({
+    ...state,
+    notice: '',
+    parentHub: {
+      status: 'loading',
+      learnerId: cacheKey,
+      payload: null,
+      error: '',
+      requestToken,
+    },
+  }));
+
+  try {
+    const payload = await hubApi.readParentHub(requestedLearnerId);
+    if (adultSurfaceState.parentHub.requestToken !== requestToken) return payload;
+    const resolvedLearnerId = resolveAdultPayloadLearnerId('parentHub', payload) || cacheKey;
+    adultSurfaceState = {
+      ...adultSurfaceState,
+      selectedLearnerId: resolvedLearnerId || adultSurfaceState.selectedLearnerId,
+      notice: '',
+      parentHub: {
+        status: 'loaded',
+        learnerId: resolvedLearnerId,
+        payload,
+        error: '',
+        requestToken,
+      },
+    };
+    const syncedWritableShell = syncWritableLearnerSelection(resolvedLearnerId);
+    if (!syncedWritableShell) store.patch(() => ({}));
+    return payload;
+  } catch (error) {
+    if (adultSurfaceState.parentHub.requestToken !== requestToken) return null;
+    patchAdultSurfaceState((state) => ({
+      ...state,
+      parentHub: {
+        status: 'error',
+        learnerId: cacheKey,
+        payload: null,
+        error: error?.message || 'Could not load Parent Hub.',
+        requestToken,
+      },
+    }));
+    return null;
+  }
+}
+
+async function loadAdminHub({ learnerId = null, force = false, auditLimit = 20 } = {}) {
+  if (!hubApi) return null;
+  const requestedLearnerId = preferredAdultLearnerId(learnerId);
+  const cacheKey = requestedLearnerId || '';
+  const current = adultSurfaceState.adminHub;
+  if (!force && current.status === 'loading' && current.learnerId === cacheKey) return current.payload;
+  if (!force && current.status === 'loaded' && current.payload && current.learnerId === cacheKey) return current.payload;
+  if (!force && current.status === 'error' && current.learnerId === cacheKey) return null;
+
+  const requestToken = (Number(current.requestToken) || 0) + 1;
+  patchAdultSurfaceState((state) => ({
+    ...state,
+    notice: '',
+    adminHub: {
+      status: 'loading',
+      learnerId: cacheKey,
+      payload: null,
+      error: '',
+      requestToken,
+    },
+  }));
+
+  try {
+    const payload = await hubApi.readAdminHub({ learnerId: requestedLearnerId, auditLimit });
+    if (adultSurfaceState.adminHub.requestToken !== requestToken) return payload;
+    const resolvedLearnerId = resolveAdultPayloadLearnerId('adminHub', payload) || cacheKey;
+    adultSurfaceState = {
+      ...adultSurfaceState,
+      selectedLearnerId: resolvedLearnerId || adultSurfaceState.selectedLearnerId,
+      notice: '',
+      adminHub: {
+        status: 'loaded',
+        learnerId: resolvedLearnerId,
+        payload,
+        error: '',
+        requestToken,
+      },
+    };
+    const syncedWritableShell = syncWritableLearnerSelection(resolvedLearnerId);
+    if (!syncedWritableShell) store.patch(() => ({}));
+    return payload;
+  } catch (error) {
+    if (adultSurfaceState.adminHub.requestToken !== requestToken) return null;
+    patchAdultSurfaceState((state) => ({
+      ...state,
+      adminHub: {
+        status: 'error',
+        learnerId: cacheKey,
+        payload: null,
+        error: error?.message || 'Could not load Admin / Operations.',
+        requestToken,
+      },
+    }));
+    return null;
+  }
+}
 
 function rebuildSpellingService() {
   services.spelling = createSpellingService({
@@ -246,7 +473,7 @@ function learnerReadBundle(learnerId) {
   };
 }
 
-function buildHubModels(appState) {
+function buildLocalHubModels(appState) {
   const runtimeSnapshot = spellingContent.getRuntimeSnapshot();
   const selectedLearnerId = appState.learners.selectedId;
   const selectedLearner = selectedLearnerId ? appState.learners.byId[selectedLearnerId] : null;
@@ -296,12 +523,49 @@ function buildHubModels(appState) {
   return {
     shellAccess: {
       platformRole: shellPlatformRole,
-      source: boot.session.signedIn ? 'worker-session' : 'local-reference',
+      source: 'local-reference',
     },
     parentHub,
+    parentHubState: { status: 'loaded', learnerId: selectedLearnerId || '', error: '', notice: '' },
     adminHub,
+    adminHubState: { status: 'loaded', learnerId: selectedLearnerId || '', error: '', notice: '' },
+    activeAdultLearnerContext: null,
+    adultSurfaceNotice: '',
     adminAccountDirectory,
   };
+}
+
+function buildSignedInHubModels(appState) {
+  const parentHubState = {
+    status: adultSurfaceState.parentHub.status,
+    learnerId: adultSurfaceState.parentHub.learnerId || '',
+    error: adultSurfaceState.parentHub.error || '',
+    notice: adultSurfaceState.notice || '',
+  };
+  const adminHubState = {
+    status: adultSurfaceState.adminHub.status,
+    learnerId: adultSurfaceState.adminHub.learnerId || '',
+    error: adultSurfaceState.adminHub.error || '',
+    notice: adultSurfaceState.notice || '',
+  };
+
+  return {
+    shellAccess: {
+      platformRole: shellPlatformRole,
+      source: 'worker-session',
+    },
+    parentHub: adultSurfaceState.parentHub.payload?.parentHub || null,
+    parentHubState,
+    adminHub: adultSurfaceState.adminHub.payload?.adminHub || null,
+    adminHubState,
+    activeAdultLearnerContext: resolveActiveAdultAccessContext(appState),
+    adultSurfaceNotice: adultSurfaceState.notice || '',
+    adminAccountDirectory,
+  };
+}
+
+function buildHubModels(appState) {
+  return boot.session.signedIn ? buildSignedInHubModels(appState) : buildLocalHubModels(appState);
 }
 
 const runtimeBoundary = createSubjectRuntimeBoundary({
@@ -480,6 +744,10 @@ async function loadAdminAccounts({ force = false } = {}) {
       error: '',
       savingAccountId: '',
     });
+    invalidateAdultHubState(null, { rerender: false });
+    const currentScreen = store.getState().route.screen;
+    if (currentScreen === 'admin-hub') loadAdminHub({ force: true });
+    if (currentScreen === 'parent-hub') loadParentHub({ force: true });
   } catch (error) {
     patchAdminAccountDirectory({
       status: 'error',
@@ -535,6 +803,10 @@ async function updateAdminAccountRole(accountId, platformRole) {
       error: '',
       savingAccountId: '',
     });
+    invalidateAdultHubState(null, { rerender: false });
+    const currentScreen = store.getState().route.screen;
+    if (currentScreen === 'admin-hub') loadAdminHub({ force: true });
+    if (currentScreen === 'parent-hub') loadParentHub({ force: true });
   } catch (error) {
     patchAdminAccountDirectory({
       status: 'error',
@@ -623,9 +895,23 @@ function render() {
   const appState = store.getState();
   root.innerHTML = renderApp(appState, contextFor(appState.route.subjectId || 'spelling'));
   ensureSpellingAutoAdvanceFromCurrentState();
-  if (appState.route.screen === 'admin-hub') {
+
+  if (boot.session.signedIn) {
+    if (appState.route.screen === 'parent-hub') {
+      queueMicrotask(() => {
+        loadParentHub();
+      });
+    }
+    if (appState.route.screen === 'admin-hub') {
+      queueMicrotask(() => {
+        loadAdminHub();
+        loadAdminAccounts();
+      });
+    }
+  } else if (appState.route.screen === 'admin-hub') {
     queueMicrotask(() => loadAdminAccounts());
   }
+
   queueMicrotask(() => {
     const input = root.querySelector('[data-autofocus="true"]:not([disabled])');
     if (input) input.focus();
@@ -641,26 +927,33 @@ function handleGlobalAction(action, data) {
   const learner = appState.learners.byId[learnerId];
 
   if (action === 'navigate-home') {
+    clearAdultSurfaceNotice();
     tts.stop();
     store.goHome();
     return true;
   }
 
   if (action === 'open-subject') {
+    if (blockReadOnlyAdultAction(action)) return true;
+    clearAdultSurfaceNotice();
     tts.stop();
     store.openSubject(data.subjectId || 'spelling', data.tab || 'practice');
     return true;
   }
 
   if (action === 'open-parent-hub') {
+    clearAdultSurfaceNotice();
     tts.stop();
     store.openParentHub();
+    if (boot.session.signedIn) loadParentHub({ force: true });
     return true;
   }
 
   if (action === 'open-admin-hub') {
+    clearAdultSurfaceNotice();
     tts.stop();
     store.openAdminHub();
+    if (boot.session.signedIn) loadAdminHub({ force: true });
     loadAdminAccounts();
     return true;
   }
@@ -688,14 +981,44 @@ function handleGlobalAction(action, data) {
     return true;
   }
 
+  if (action === 'adult-surface-learner-select') {
+    const nextLearnerId = String(data.value || '').trim();
+    if (!nextLearnerId) return true;
+    adultSurfaceState = {
+      ...adultSurfaceState,
+      selectedLearnerId: nextLearnerId,
+      notice: '',
+    };
+    if (appState.learners.byId[nextLearnerId] && appState.learners.selectedId !== nextLearnerId) {
+      tts.stop();
+      runtimeBoundary.clearAll();
+      store.selectLearner(nextLearnerId);
+    }
+    if (appState.route.screen === 'admin-hub') loadAdminHub({ learnerId: nextLearnerId, force: true });
+    else loadParentHub({ learnerId: nextLearnerId, force: true });
+    return true;
+  }
+
   if (action === 'learner-select') {
+    const nextLearnerId = String(data.value || '').trim();
+    if (!nextLearnerId) return true;
+    clearAdultSurfaceNotice();
+    adultSurfaceState = {
+      ...adultSurfaceState,
+      selectedLearnerId: nextLearnerId,
+    };
     tts.stop();
     runtimeBoundary.clearAll();
-    store.selectLearner(data.value);
+    store.selectLearner(nextLearnerId);
+    if (boot.session.signedIn) {
+      if (appState.route.screen === 'parent-hub') loadParentHub({ learnerId: nextLearnerId, force: true });
+      if (appState.route.screen === 'admin-hub') loadAdminHub({ learnerId: nextLearnerId, force: true });
+    }
     return true;
   }
 
   if (action === 'learner-create') {
+    if (blockReadOnlyAdultAction(action)) return true;
     const current = appState.learners.byId[learnerId];
     store.createLearner({
       name: `Learner ${appState.learners.allIds.length + 1}`,
@@ -708,6 +1031,7 @@ function handleGlobalAction(action, data) {
   }
 
   if (action === 'learner-save-form') {
+    if (blockReadOnlyAdultAction(action)) return true;
     const formData = data.formData;
     store.updateLearner(learnerId, {
       name: String(formData.get('name') || 'Learner').trim() || 'Learner',
@@ -720,6 +1044,7 @@ function handleGlobalAction(action, data) {
   }
 
   if (action === 'learner-delete') {
+    if (blockReadOnlyAdultAction(action)) return true;
     if (!globalThis.confirm('Delete the current learner and all their subject progress and codex state?')) return true;
     runtimeBoundary.clearLearner(learnerId);
     resetLearnerData(learnerId);
@@ -728,6 +1053,7 @@ function handleGlobalAction(action, data) {
   }
 
   if (action === 'learner-reset-progress') {
+    if (blockReadOnlyAdultAction(action)) return true;
     if (!globalThis.confirm('Reset subject progress and codex rewards for the current learner?')) return true;
     tts.stop();
     runtimeBoundary.clearLearner(learnerId);
@@ -737,6 +1063,7 @@ function handleGlobalAction(action, data) {
   }
 
   if (action === 'platform-reset-all') {
+    if (blockReadOnlyAdultAction(action)) return true;
     if (!globalThis.confirm('Reset all app data for every learner on this browser?')) return true;
     tts.stop();
     runtimeBoundary.clearAll();
@@ -746,18 +1073,21 @@ function handleGlobalAction(action, data) {
   }
 
   if (action === 'platform-export-learner') {
+    if (blockReadOnlyAdultAction(action)) return true;
     const payload = exportLearnerSnapshot(repositories, learnerId);
     downloadJson(`${sanitiseFilenamePart(learner?.name)}-ks2-platform-learner.json`, payload);
     return true;
   }
 
   if (action === 'platform-export-app') {
+    if (blockReadOnlyAdultAction(action)) return true;
     const payload = exportPlatformSnapshot(repositories);
     downloadJson('ks2-platform-data.json', payload);
     return true;
   }
 
   if (action === 'platform-import') {
+    if (blockReadOnlyAdultAction(action)) return true;
     const input = root.querySelector('#platform-import-file');
     input?.click();
     return true;

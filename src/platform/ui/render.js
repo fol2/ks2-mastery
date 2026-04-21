@@ -4,6 +4,7 @@ import { SUBJECTS, getSubject } from '../core/subject-registry.js';
 import { subjectTabLabel } from '../core/subject-runtime.js';
 import { monsterAsset } from '../game/monsters.js';
 import { monsterSummary, monsterSummaryFromSpellingAnalytics } from '../game/monster-system.js';
+import { readOnlyLearnerActionBlockReason } from '../hubs/shell-access.js';
 
 const TAB_META = [
   ['practice', 'Practice'],
@@ -32,15 +33,79 @@ function subjectContext(subject, context) {
   };
 }
 
-function learnerSelect(appState) {
+function selectedWritableLearner(appState) {
+  const selectedId = appState?.learners?.selectedId;
+  return selectedId ? appState.learners.byId[selectedId] || null : null;
+}
+
+function hasWritableLearner(appState) {
+  return Boolean(selectedWritableLearner(appState));
+}
+
+function learnerSelect(appState, context) {
   const learners = appState.learners.allIds.map((id) => appState.learners.byId[id]).filter(Boolean);
+  const label = context?.shellAccess?.source === 'worker-session' ? 'Writable learner' : 'Current learner';
+  if (!learners.length) {
+    return `
+      <label class="field" style="min-width:220px;">
+        <span>${escapeHtml(label)}</span>
+        <select class="select" name="learnerId" disabled>
+          <option>No writable learner in shell</option>
+        </select>
+      </label>
+    `;
+  }
   return `
     <label class="field" style="min-width:220px;">
-      <span>Current learner</span>
+      <span>${escapeHtml(label)}</span>
       <select class="select" data-action="learner-select" name="learnerId">
         ${learners.map((learner) => `<option value="${escapeHtml(learner.id)}" ${learner.id === appState.learners.selectedId ? 'selected' : ''}>${escapeHtml(learner.name)} · ${escapeHtml(learner.yearGroup)}</option>`).join('')}
       </select>
     </label>
+  `;
+}
+
+function adultSurfaceOptionLabel(entry) {
+  return [
+    entry?.learnerName || 'Learner',
+    entry?.yearGroup || 'Y5',
+    entry?.membershipRoleLabel || 'Viewer',
+    entry?.writable ? 'writable' : 'read-only',
+  ].join(' · ');
+}
+
+function renderAdultSurfaceLearnerSelect({ learners = [], selectedLearnerId = '', label = 'Adult surface learner', disabled = false } = {}) {
+  if (!Array.isArray(learners) || !learners.length) return '';
+  return `
+    <label class="field" style="min-width:280px;">
+      <span>${escapeHtml(label)}</span>
+      <select class="select" data-action="adult-surface-learner-select" name="adultLearnerId" ${disabled ? 'disabled' : ''}>
+        ${learners.map((entry) => `<option value="${escapeHtml(entry.learnerId)}" ${entry.learnerId === selectedLearnerId ? 'selected' : ''}>${escapeHtml(adultSurfaceOptionLabel(entry))}</option>`).join('')}
+      </select>
+    </label>
+  `;
+}
+
+function readOnlyActionReason(action, context) {
+  return readOnlyLearnerActionBlockReason(action, context?.activeAdultLearnerContext || null);
+}
+
+function blockedActionAttributes(action, context) {
+  return readOnlyActionReason(action, context) ? 'disabled aria-disabled="true"' : '';
+}
+
+function renderReadOnlyLearnerNotice(context) {
+  const access = context?.activeAdultLearnerContext;
+  if (!access || access.writable !== false) return '';
+  const writableLearner = selectedWritableLearner(context?.appState);
+  const writableNote = writableLearner
+    ? `${writableLearner.name} remains the writable shell learner.`
+    : 'This account has no writable learner in the main shell right now.';
+  return `
+    <div class="callout warn" style="margin-top:16px;">
+      <strong>${escapeHtml(access.learnerName || 'This learner')} is read-only in this adult surface.</strong>
+      <div style="margin-top:8px;">Practice, learner profile changes, reset/import flows, and current-learner export stay blocked for viewer memberships. ${escapeHtml(writableNote)}</div>
+    </div>
   `;
 }
 function registeredSubjects(context) {
@@ -271,13 +336,13 @@ function subjectTabContent(subject, activeTab, appState, contentContext, runtime
   if (runtimeEntry) {
     const fallback = subjectRenderFallback(subject, runtimeEntry, activeTab);
     return activeTab === 'profiles'
-      ? `${renderLearnerManager(appState)}<div style="height:20px"></div>${fallback}`
+      ? `${renderLearnerManager(appState, contentContext)}<div style="height:20px"></div>${fallback}`
       : fallback;
   }
 
   if (activeTab === 'practice') return subject.renderPractice(contentContext);
   if (activeTab === 'analytics') return subject.renderAnalytics(contentContext);
-  if (activeTab === 'profiles') return `${renderLearnerManager(appState)}<div style="height:20px"></div>${subject.renderProfiles(contentContext)}`;
+  if (activeTab === 'profiles') return `${renderLearnerManager(appState, contentContext)}<div style="height:20px"></div>${subject.renderProfiles(contentContext)}`;
   if (activeTab === 'settings') return subject.renderSettings(contentContext);
   if (activeTab === 'method') return subject.renderMethod(contentContext);
   return '';
@@ -290,6 +355,14 @@ function renderHeader(appState, context) {
     ? `<span class="chip good">${escapeHtml(auth.email || 'Signed in')}</span><button class="btn ghost" data-action="platform-logout">Sign out</button>`
     : '';
   const routeScreen = appState.route?.screen || 'dashboard';
+  const activeAdultContext = context?.activeAdultLearnerContext || null;
+  const adultAccessChips = activeAdultContext
+    ? `
+      <span class="chip">Adult learner: ${escapeHtml(activeAdultContext.learnerName)}</span>
+      <span class="chip">${escapeHtml(activeAdultContext.membershipRoleLabel)}</span>
+      <span class="chip ${activeAdultContext.writable ? 'good' : 'warn'}">${escapeHtml(activeAdultContext.writableLabel)}</span>
+    `
+    : '';
   return `
     <header class="card" style="margin-bottom:20px;">
       <div class="card-header">
@@ -299,7 +372,8 @@ function renderHeader(appState, context) {
           <p class="subtitle">The platform shell, learner model, reward layer and deployment boundary are now shared. Subject engines plug in through a clear contract instead of through window globals and special cases.</p>
         </div>
         <div class="actions" style="align-items:flex-end; justify-content:flex-end;">
-          ${learnerSelect(appState)}
+          ${learnerSelect(appState, context)}
+          ${adultAccessChips}
           ${renderSurfaceRoleControl(context)}
           ${renderPersistenceChip(appState.persistence)}
           ${authChip}
@@ -344,7 +418,32 @@ function renderHeroMonsterVisuals(monsters) {
 }
 
 function renderHero(context) {
-  const learner = context.appState.learners.byId[context.appState.learners.selectedId];
+  const learner = selectedWritableLearner(context.appState);
+  if (!learner) {
+    return `
+      <section class="hero-grid" style="margin-bottom:20px;">
+        <article class="card" style="position:relative; overflow:hidden;">
+          <div class="eyebrow">Product direction kept intact</div>
+          <h2 class="title" style="font-size:clamp(1.7rem, 3vw, 2.4rem);">Learning engine first. Game layer second. Both compound each other.</h2>
+          <p class="subtitle">English Spelling is working in the rebuilt structure now. The other subjects already have a reserved place in the shell, API, analytics surfaces and reward system, so future work expands sideways instead of rewriting the whole app again.</p>
+          <div class="actions" style="margin-top:18px;">
+            <button class="btn secondary lg" data-action="open-parent-hub">Open Parent Hub</button>
+            <button class="btn secondary lg" data-action="open-admin-hub">Open Operations</button>
+          </div>
+        </article>
+        <article class="card soft">
+          <div class="eyebrow">Signed-in shell honesty</div>
+          <h2 class="section-title">No writable learner in this shell</h2>
+          <p class="subtitle">This signed-in shell still bootstraps owner/member learners only. Read-only viewer learners stay available through the live Worker hub surfaces.</p>
+          <div class="chip-row" style="margin-top:16px;">
+            <span class="chip">Adult surface access stays separate from learner write access</span>
+            <span class="chip">Read-only viewer support is hub-only in this pass</span>
+          </div>
+          ${renderPersistenceInline(context.appState.persistence)}
+        </article>
+      </section>
+    `;
+  }
   const spellingService = context.services?.spelling;
   const monsters = spellingService?.getAnalyticsSnapshot
     ? monsterSummaryFromSpellingAnalytics(spellingService.getAnalyticsSnapshot(learner.id))
@@ -429,8 +528,30 @@ function renderSubjectCards(context) {
   `;
 }
 
-function renderLearnerManager(appState) {
-  const learner = appState.learners.byId[appState.learners.selectedId];
+function renderNoWritableLearnerShellCard(context, title = 'No writable learner is selected in the main shell') {
+  const detail = context?.shellAccess?.source === 'worker-session'
+    ? 'This signed-in shell still bootstraps writable learners only. Read-only viewer learners stay available through Parent Hub or Admin / Operations.'
+    : 'Create or select a learner to continue.';
+  return `
+    <section class="card">
+      <div class="feedback warn">
+        <strong>${escapeHtml(title)}</strong>
+        <div style="margin-top:8px;">${escapeHtml(detail)}</div>
+      </div>
+      <div class="actions" style="margin-top:16px;">
+        <button class="btn secondary" data-action="open-parent-hub">Parent Hub</button>
+        <button class="btn secondary" data-action="open-admin-hub">Operations</button>
+        <button class="btn ghost" data-action="navigate-home">Dashboard</button>
+      </div>
+    </section>
+  `;
+}
+
+function renderLearnerManager(appState, context) {
+  const learner = selectedWritableLearner(appState);
+  if (!learner) {
+    return renderNoWritableLearnerShellCard(context, 'No writable learner is available in the main shell');
+  }
   return `
     <section class="card">
       <div class="card-header">
@@ -532,7 +653,10 @@ seasonal systems</div>
 }
 
 function renderDashboard(context) {
-  return `${renderHero(context)}${renderSubjectCards(context)}<div class="two-col">${renderLearnerManager(context.appState)}<section class="card soft"><div class="eyebrow">Rebuild intent</div><h2 class="section-title">What changed under the surface</h2><div class="callout">The old proof-of-concept mixed UI, subject logic, persistence and reward behavior in the same flow. This rebuild separates those concerns so new subjects can drop in without destabilising the spelling slice.</div>${renderArchitectureStrip()}</section></div>`;
+  if (!hasWritableLearner(context.appState)) {
+    return `${renderHero(context)}${renderNoWritableLearnerShellCard(context, 'No writable learner is available in the main shell')}<section class="card soft" style="margin-top:20px;"><div class="eyebrow">Rebuild intent</div><h2 class="section-title">Adult access stays separate from learner write access</h2><div class="callout">This account can still use Parent Hub or Admin / Operations for readable learner diagnostics. The main subject shell remains tied to writable owner/member learner bootstrap.</div></section>`;
+  }
+  return `${renderHero(context)}${renderSubjectCards(context)}<div class="two-col">${renderLearnerManager(context.appState, context)}<section class="card soft"><div class="eyebrow">Rebuild intent</div><h2 class="section-title">What changed under the surface</h2><div class="callout">The old proof-of-concept mixed UI, subject logic, persistence and reward behavior in the same flow. This rebuild separates those concerns so new subjects can drop in without destabilising the spelling slice.</div>${renderArchitectureStrip()}</section></div>`;
 }
 
 function renderHubStrengthList(title, items = [], emptyText = 'No signal yet.') {
@@ -553,6 +677,27 @@ function renderHubStrengthList(title, items = [], emptyText = 'No signal yet.') 
 
 function renderParentHub(context) {
   const model = context.parentHub;
+  const hubState = context.parentHubState || {};
+  const loadingRemote = context?.shellAccess?.source === 'worker-session' && hubState.status === 'loading' && !model;
+  if (loadingRemote) {
+    return `
+      <section class="card">
+        <div class="feedback warn">
+          <strong>Loading Parent Hub</strong>
+          <div style="margin-top:8px;">Loading live learner access and summary from the Worker hub route.</div>
+        </div>
+      </section>
+    `;
+  }
+
+  if (!model && hubState.status === 'error') {
+    return renderAccessDeniedCard(
+      'Parent Hub could not be loaded right now',
+      hubState.error || 'The live Worker parent hub payload could not be loaded.',
+      'open-parent-hub',
+    );
+  }
+
   if (!model?.permissions?.canViewParentHub) {
     return renderAccessDeniedCard(
       'Parent Hub is not available for the current surface role',
@@ -567,6 +712,9 @@ function renderParentHub(context) {
   const weaknesses = Array.isArray(model.weaknesses) ? model.weaknesses : [];
   const patterns = Array.isArray(model.misconceptionPatterns) ? model.misconceptionPatterns : [];
   const snapshot = Array.isArray(model.progressSnapshots) ? model.progressSnapshots[0] : null;
+  const accessibleLearners = Array.isArray(model.accessibleLearners) ? model.accessibleLearners : [];
+  const selectedLearnerId = model.selectedLearnerId || model.learner?.id || '';
+  const notice = hubState.notice || context.adultSurfaceNotice || '';
 
   return `
     <section class="subject-header card border-top" style="border-top-color:#3E6FA8; margin-bottom:18px;">
@@ -574,14 +722,25 @@ function renderParentHub(context) {
         <div>
           <div class="eyebrow">Parent Hub thin slice</div>
           <h2 class="title" style="font-size:clamp(1.6rem, 3vw, 2.2rem);">${escapeHtml(model.learner.name)}</h2>
-          <p class="subtitle">Read model built from durable learner state, practice sessions and event log. No hidden client-only analytics store is used.</p>
+          <p class="subtitle">Signed-in parent surfaces now use the live Worker hub payload instead of locally assembled synthetic memberships.</p>
         </div>
-        <div class="chip-row">
-          <span class="chip good">${escapeHtml(model.permissions.platformRoleLabel)}</span>
-          <span class="chip">${escapeHtml(model.permissions.membershipRoleLabel)}</span>
-          <span class="chip">Last activity: ${escapeHtml(formatTimestamp(model.learner.lastActivityAt))}</span>
+        <div class="actions" style="align-items:flex-end; justify-content:flex-end;">
+          ${renderAdultSurfaceLearnerSelect({
+            learners: accessibleLearners,
+            selectedLearnerId,
+            label: 'Adult surface learner',
+            disabled: hubState.status === 'loading',
+          })}
+          <div class="chip-row">
+            <span class="chip good">${escapeHtml(model.permissions.platformRoleLabel)}</span>
+            <span class="chip">${escapeHtml(model.permissions.membershipRoleLabel)}</span>
+            <span class="chip ${model.permissions.canMutateLearnerData ? 'good' : 'warn'}">${escapeHtml(model.permissions.accessModeLabel || 'Learner access')}</span>
+            <span class="chip">Last activity: ${escapeHtml(formatTimestamp(model.learner.lastActivityAt))}</span>
+          </div>
         </div>
       </div>
+      ${notice ? `<div class="feedback warn" style="margin-top:16px;">${escapeHtml(notice)}</div>` : ''}
+      ${renderReadOnlyLearnerNotice(context)}
     </section>
     <section class="two-col" style="margin-bottom:20px;">
       <article class="card">
@@ -608,7 +767,7 @@ function renderParentHub(context) {
           <span class="chip">Subject: spelling</span>
         </div>
         <div class="actions" style="margin-top:16px;">
-          ${model.exportEntryPoints.map((entry) => `<button class="btn secondary" data-action="${escapeHtml(entry.action)}">${escapeHtml(entry.label)}</button>`).join('')}
+          ${model.exportEntryPoints.map((entry) => `<button class="btn secondary" data-action="${escapeHtml(entry.action)}" ${blockedActionAttributes(entry.action, context)}>${escapeHtml(entry.label)}</button>`).join('')}
         </div>
       </article>
     </section>
@@ -699,6 +858,27 @@ function renderAdminAccountRoles(model, directory = {}) {
 
 function renderAdminHub(context) {
   const model = context.adminHub;
+  const hubState = context.adminHubState || {};
+  const loadingRemote = context?.shellAccess?.source === 'worker-session' && hubState.status === 'loading' && !model;
+  if (loadingRemote) {
+    return `
+      <section class="card">
+        <div class="feedback warn">
+          <strong>Loading Admin / Operations</strong>
+          <div style="margin-top:8px;">Loading live Worker diagnostics, readable learner access, and audit summaries.</div>
+        </div>
+      </section>
+    `;
+  }
+
+  if (!model && hubState.status === 'error') {
+    return renderAccessDeniedCard(
+      'Admin / Operations could not be loaded right now',
+      hubState.error || 'The live Worker admin hub payload could not be loaded.',
+      'open-admin-hub',
+    );
+  }
+
   if (!model?.permissions?.canViewAdminHub) {
     return renderAccessDeniedCard(
       'Admin / Operations is not available for the current surface role',
@@ -709,6 +889,8 @@ function renderAdminHub(context) {
   const selectedDiagnostics = model.learnerSupport?.selectedDiagnostics || null;
   const accessibleLearners = Array.isArray(model.learnerSupport?.accessibleLearners) ? model.learnerSupport.accessibleLearners : [];
   const auditEntries = Array.isArray(model.auditLogLookup?.entries) ? model.auditLogLookup.entries : [];
+  const selectedLearnerId = model.learnerSupport?.selectedLearnerId || selectedDiagnostics?.learnerId || '';
+  const notice = hubState.notice || context.adultSurfaceNotice || '';
 
   return `
     <section class="subject-header card border-top" style="border-top-color:#8A4FFF; margin-bottom:18px;">
@@ -716,14 +898,24 @@ function renderAdminHub(context) {
         <div>
           <div class="eyebrow">Admin / operations skeleton</div>
           <h2 class="title" style="font-size:clamp(1.6rem, 3vw, 2.2rem);">First SaaS operating surfaces</h2>
-          <p class="subtitle">Thin and honest. Content release status and learner diagnostics are real. Audit lookup is live on the Worker path.</p>
+          <p class="subtitle">Thin and honest. Signed-in Operations now uses the live Worker admin hub payload for readable learner diagnostics and role-aware learner access labels.</p>
         </div>
-        <div class="chip-row">
-          <span class="chip good">${escapeHtml(model.permissions.platformRoleLabel)}</span>
-          <span class="chip">Repo revision: ${escapeHtml(String(model.account.repoRevision || 0))}</span>
-          <span class="chip">Selected learner: ${escapeHtml(model.account.selectedLearnerId || '—')}</span>
+        <div class="actions" style="align-items:flex-end; justify-content:flex-end;">
+          ${renderAdultSurfaceLearnerSelect({
+            learners: accessibleLearners,
+            selectedLearnerId,
+            label: 'Diagnostics learner',
+            disabled: hubState.status === 'loading',
+          })}
+          <div class="chip-row">
+            <span class="chip good">${escapeHtml(model.permissions.platformRoleLabel)}</span>
+            <span class="chip">Repo revision: ${escapeHtml(String(model.account.repoRevision || 0))}</span>
+            <span class="chip">Selected learner: ${escapeHtml(model.account.selectedLearnerId || selectedLearnerId || '—')}</span>
+          </div>
         </div>
       </div>
+      ${notice ? `<div class="feedback warn" style="margin-top:16px;">${escapeHtml(notice)}</div>` : ''}
+      ${renderReadOnlyLearnerNotice(context)}
     </section>
     ${renderAdminAccountRoles(model, context.adminAccountDirectory)}
     <section class="two-col" style="margin-bottom:20px;">
@@ -738,8 +930,8 @@ function renderAdminHub(context) {
         </div>
         <p class="small muted" style="margin-top:12px;">Draft ${escapeHtml(model.contentReleaseStatus.currentDraftId)} · version ${escapeHtml(String(model.contentReleaseStatus.currentDraftVersion || 1))} · updated ${escapeHtml(formatTimestamp(model.contentReleaseStatus.draftUpdatedAt))}</p>
         <div class="actions" style="margin-top:16px;">
-          <button class="btn secondary" data-action="open-subject" data-subject-id="spelling">Open Spelling</button>
-          <button class="btn secondary" data-action="open-subject" data-subject-id="spelling" data-tab="settings">Open settings tab</button>
+          <button class="btn secondary" data-action="open-subject" data-subject-id="spelling" ${blockedActionAttributes('open-subject', context)}>Open Spelling</button>
+          <button class="btn secondary" data-action="open-subject" data-subject-id="spelling" data-tab="settings" ${blockedActionAttributes('open-subject', context)}>Open settings tab</button>
           <button class="btn ghost" data-action="spelling-content-export">Export content</button>
         </div>
       </article>
@@ -770,16 +962,16 @@ function renderAdminHub(context) {
       </article>
       <article class="card">
         <div class="eyebrow">Learner support / diagnostics</div>
-        <h3 class="section-title" style="font-size:1.2rem;">Accessible learners</h3>
+        <h3 class="section-title" style="font-size:1.2rem;">Readable learners</h3>
         ${accessibleLearners.length ? accessibleLearners.map((entry) => `
           <div class="skill-row">
             <div>
               <strong>${escapeHtml(entry.learnerName)}</strong>
-              <div class="small muted">${escapeHtml(entry.yearGroup)} · ${escapeHtml(entry.membershipRoleLabel)}</div>
+              <div class="small muted">${escapeHtml(entry.yearGroup)} · ${escapeHtml(entry.membershipRoleLabel)} · ${escapeHtml(entry.accessModeLabel || (entry.writable ? 'Writable learner' : 'Read-only learner'))}</div>
             </div>
             <div class="small muted">Focus: ${escapeHtml(entry.currentFocus?.label || '—')}</div>
             <div>${escapeHtml(String(entry.overview?.dueWords ?? 0))} due</div>
-            <div><button class="btn ghost" data-action="learner-select" value="${escapeHtml(entry.learnerId)}">Select</button></div>
+            <div><button class="btn ghost" data-action="adult-surface-learner-select" value="${escapeHtml(entry.learnerId)}">Select</button></div>
           </div>
         `).join('') : '<p class="small muted">No learner diagnostics are accessible from this account scope yet.</p>'}
         ${selectedDiagnostics ? `
@@ -791,10 +983,11 @@ function renderAdminHub(context) {
         ` : ''}
         <div class="actions" style="margin-top:16px;">
           ${model.learnerSupport.entryPoints.map((entry) => {
+            const disabled = blockedActionAttributes(entry.action, context);
             if (entry.subjectId || entry.tab) {
-              return `<button class="btn secondary" data-action="${escapeHtml(entry.action)}" ${entry.subjectId ? `data-subject-id="${escapeHtml(entry.subjectId)}"` : ''} ${entry.tab ? `data-tab="${escapeHtml(entry.tab)}"` : ''}>${escapeHtml(entry.label)}</button>`;
+              return `<button class="btn secondary" data-action="${escapeHtml(entry.action)}" ${entry.subjectId ? `data-subject-id="${escapeHtml(entry.subjectId)}"` : ''} ${entry.tab ? `data-tab="${escapeHtml(entry.tab)}"` : ''} ${disabled}>${escapeHtml(entry.label)}</button>`;
             }
-            return `<button class="btn secondary" data-action="${escapeHtml(entry.action)}">${escapeHtml(entry.label)}</button>`;
+            return `<button class="btn secondary" data-action="${escapeHtml(entry.action)}" ${disabled}>${escapeHtml(entry.label)}</button>`;
           }).join('')}
         </div>
       </article>
@@ -808,6 +1001,9 @@ function renderSubjectScreen(context) {
   const ui = appState.subjectUi[subject.id] || {};
   const activeTab = appState.route.tab || 'practice';
   const accent = subject.accent || '#3E6FA8';
+  if (!hasWritableLearner(appState)) {
+    return renderNoWritableLearnerShellCard(context, `${subject.name} stays unavailable without a writable learner in the main shell`);
+  }
   const contentContext = subjectContext(subject, context);
   const runtimeEntry = context.runtimeBoundary?.read?.({
     learnerId: appState.learners.selectedId,

@@ -146,3 +146,77 @@ test('admin hub read model reports published release status, validation state, a
   assert.equal(model.learnerSupport.accessibleLearners[0].learnerName, 'Ava');
   assert.equal(model.learnerSupport.selectedDiagnostics.overview.secureWords, 1);
 });
+
+test('parent hub read model exposes readable learner choices and access mode labels', () => {
+  const learner = makeLearner('learner-viewer', 'Vera');
+  const model = buildParentHubReadModel({
+    learner,
+    platformRole: 'parent',
+    membershipRole: 'viewer',
+    accessibleLearners: [
+      {
+        learnerId: 'learner-owner',
+        role: 'owner',
+        learner: makeLearner('learner-owner', 'Owner'),
+        stateRevision: 4,
+      },
+      {
+        learnerId: learner.id,
+        role: 'viewer',
+        learner,
+        stateRevision: 9,
+      },
+    ],
+    selectedLearnerId: learner.id,
+    subjectStates: {},
+    now: () => 1000,
+  });
+
+  assert.equal(model.permissions.canMutateLearnerData, false);
+  assert.equal(model.permissions.accessModeLabel, 'Read-only learner');
+  assert.equal(model.selectedLearnerId, 'learner-viewer');
+  assert.equal(model.accessibleLearners.length, 2);
+  assert.deepEqual(model.accessibleLearners.map((entry) => [entry.learnerId, entry.writable, entry.accessModeLabel]), [
+    ['learner-owner', true, 'Writable learner'],
+    ['learner-viewer', false, 'Read-only learner'],
+  ]);
+});
+
+test('admin hub marks selected readable learners without widening parent-hub access', () => {
+  const learner = makeLearner('learner-viewer', 'Vera');
+  const model = buildAdminHubReadModel({
+    account: {
+      id: 'adult-ops',
+      selectedLearnerId: learner.id,
+      repoRevision: 3,
+      platformRole: 'ops',
+    },
+    platformRole: 'ops',
+    spellingContentBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+    memberships: [
+      {
+        learnerId: learner.id,
+        role: 'viewer',
+        stateRevision: 2,
+        learner,
+      },
+    ],
+    learnerBundles: {
+      [learner.id]: {
+        subjectStates: {},
+        practiceSessions: [],
+        eventLog: [],
+        gameState: {},
+      },
+    },
+    selectedLearnerId: learner.id,
+    now: () => 2000,
+  });
+
+  assert.equal(model.permissions.canViewAdminHub, true);
+  assert.equal(model.permissions.canViewParentHub, false);
+  assert.equal(model.permissions.canManageAccountRoles, false);
+  assert.equal(model.learnerSupport.accessibleLearners[0].writable, false);
+  assert.equal(model.learnerSupport.accessibleLearners[0].accessModeLabel, 'Read-only learner');
+  assert.equal(model.learnerSupport.entryPoints.some((entry) => entry.action === 'open-parent-hub'), false);
+});

@@ -180,6 +180,10 @@ Parent Hub requires the account-level `parent` platform role plus readable learn
 Admin / Operations requires the account-level `admin` or `ops` platform role, and still respects learner membership when exposing learner diagnostics.
 Account role management is narrower than general Operations access: only `admin` can list accounts or write `adult_accounts.platform_role`, and the Worker rejects demoting the last remaining admin.
 
+Signed-in shell rendering now consumes those Worker hub payloads through the shared hub API client.
+The main repository bootstrap remains writable-only, so readable viewer learners stay in adult hub context instead of being merged into the subject runtime learner snapshot.
+Remote empty bootstrap is also treated honestly: local-reference mode may seed a convenience learner, but signed-in remote mode does not fabricate a default learner when the account has no writable membership.
+
 ## Save and sync semantics
 
 ### Local adapter
@@ -232,7 +236,7 @@ If the remote bootstrap fails but a local cache exists, the adapter continues fr
 - semantic merge for concurrent edits beyond the current client-side stale-write rebase
 - offline retry scheduling beyond manual retry / flush behaviour
 - push-based real-time invalidation across tabs / devices
-- read-only viewer UX in the browser shell
+- read-only viewer participation inside the writable subject shell
 - Durable Object coordination beyond the current compare-and-swap backend
 
 The Worker now has production sessions, D1-backed persistence, account-scoped ownership, repository-level authorisation for learner-scoped writes, atomic revision checks, and request-receipt replay. The remaining items are the next SaaS-hardening layer, not this pass.

@@ -1483,9 +1483,13 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         },
       });
     },
-    async readParentHub(accountId, learnerId) {
+    async readParentHub(accountId, learnerId = null) {
       const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role FROM adult_accounts WHERE id = ?', [accountId]);
-      const resolvedLearnerId = learnerId || account?.selected_learner_id || null;
+      const readableMemberships = await listMembershipRows(db, accountId, { writableOnly: false });
+      const defaultLearnerId = account?.selected_learner_id && readableMemberships.some((membership) => membership.id === account.selected_learner_id)
+        ? account.selected_learner_id
+        : (readableMemberships[0]?.id || null);
+      const resolvedLearnerId = learnerId || defaultLearnerId;
       if (!resolvedLearnerId) {
         throw new NotFoundError('No learner is selected for this parent view.', {
           code: 'parent_hub_missing_learner',
@@ -1504,6 +1508,8 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         learner: learnerRowToRecord(learnerRow),
         platformRole: accountPlatformRole(account),
         membershipRole: membership.role,
+        accessibleLearners: readableMemberships.map(membershipRowToModel),
+        selectedLearnerId: resolvedLearnerId,
         subjectStates: learnerBundle.subjectStates,
         practiceSessions: learnerBundle.practiceSessions,
         eventLog: learnerBundle.eventLog,
@@ -1525,7 +1531,10 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
       for (const row of memberships) {
         learnerBundles[row.id] = await loadLearnerReadBundle(db, row.id);
       }
-      const selectedLearnerId = learnerId || account?.selected_learner_id || memberships[0]?.id || null;
+      const defaultLearnerId = account?.selected_learner_id && memberships.some((membership) => membership.id === account.selected_learner_id)
+        ? account.selected_learner_id
+        : (memberships[0]?.id || null);
+      const selectedLearnerId = learnerId || defaultLearnerId;
       const auditEntries = await listMutationReceiptRows(db, accountId, {
         requestId,
         limit: auditLimit,

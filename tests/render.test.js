@@ -10,7 +10,24 @@ import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
 import { buildParentHubReadModel } from '../src/platform/hubs/parent-read-model.js';
 import { buildAdminHubReadModel } from '../src/platform/hubs/admin-read-model.js';
+import {
+  buildAdminHubAccessContext,
+  buildParentHubAccessContext,
+} from '../src/platform/hubs/shell-access.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
+
+function noWritableLearnerState(store, routeScreen) {
+  const appState = store.getState();
+  return {
+    ...appState,
+    route: { screen: routeScreen, subjectId: null, tab: 'practice' },
+    learners: {
+      byId: {},
+      allIds: [],
+      selectedId: null,
+    },
+  };
+}
 
 test('dashboard render smoke test covers spelling subject dashboard stats without crashing', () => {
   const storage = installMemoryStorage();
@@ -260,4 +277,99 @@ test('render app exposes parent and admin operating surfaces by route', () => {
   assert.match(adminHtml, /Account roles/);
   assert.match(adminHtml, /fol2hk@gmail.com/);
   assert.match(adminHtml, /data-action="admin-account-role-set"/);
+});
+
+test('signed-in parent hub renders viewer learners as read-only without a writable shell learner', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const store = createStore(SUBJECTS, { repositories });
+  const learner = {
+    id: 'learner-viewer',
+    name: 'Vera',
+    yearGroup: 'Y5',
+    goal: 'sats',
+    dailyMinutes: 15,
+    avatarColor: '#3E6FA8',
+    createdAt: 1,
+  };
+  const parentHub = buildParentHubReadModel({
+    learner,
+    platformRole: 'parent',
+    membershipRole: 'viewer',
+    accessibleLearners: [{ learnerId: learner.id, role: 'viewer', learner }],
+    selectedLearnerId: learner.id,
+  });
+  const appState = noWritableLearnerState(store, 'parent-hub');
+  const html = renderApp(appState, {
+    appState,
+    store,
+    repositories,
+    services: {},
+    subject: SUBJECTS[0],
+    service: null,
+    tts: { speak() {}, stop() {}, warmup() {} },
+    applySubjectTransition() { return true; },
+    shellAccess: { platformRole: 'parent', source: 'worker-session' },
+    parentHub,
+    parentHubState: { status: 'loaded', learnerId: learner.id, error: '', notice: '' },
+    activeAdultLearnerContext: buildParentHubAccessContext({ learnerId: learner.id, parentHub }, null),
+  });
+
+  assert.match(html, /Adult surface learner/);
+  assert.match(html, /Vera · Y5 · Viewer · read-only/);
+  assert.match(html, /Read-only learner/);
+  assert.match(html, /No writable learner in shell/);
+  assert.match(html, /data-action="platform-export-learner" disabled aria-disabled="true"/);
+});
+
+test('signed-in admin hub labels viewer diagnostics and blocks subject entry points', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const store = createStore(SUBJECTS, { repositories });
+  const learner = {
+    id: 'learner-viewer',
+    name: 'Vera',
+    yearGroup: 'Y5',
+    goal: 'sats',
+    dailyMinutes: 15,
+    avatarColor: '#3E6FA8',
+    createdAt: 1,
+  };
+  const adminHub = buildAdminHubReadModel({
+    account: { id: 'adult-ops', platformRole: 'ops', selectedLearnerId: learner.id, repoRevision: 4 },
+    platformRole: 'ops',
+    spellingContentBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+    memberships: [{ learnerId: learner.id, role: 'viewer', stateRevision: 3, learner }],
+    learnerBundles: {
+      [learner.id]: {
+        subjectStates: {},
+        practiceSessions: [],
+        eventLog: [],
+        gameState: {},
+      },
+    },
+    selectedLearnerId: learner.id,
+  });
+  const appState = noWritableLearnerState(store, 'admin-hub');
+  const html = renderApp(appState, {
+    appState,
+    store,
+    repositories,
+    services: {},
+    subject: SUBJECTS[0],
+    service: null,
+    tts: { speak() {}, stop() {}, warmup() {} },
+    applySubjectTransition() { return true; },
+    shellAccess: { platformRole: 'ops', source: 'worker-session' },
+    adminHub,
+    adminHubState: { status: 'loaded', learnerId: learner.id, error: '', notice: '' },
+    activeAdultLearnerContext: buildAdminHubAccessContext({ adminHub }, null),
+    adminAccountDirectory: { status: 'unavailable', accounts: [], error: '' },
+  });
+
+  assert.match(html, /Diagnostics learner/);
+  assert.match(html, /Vera · Y5 · Viewer · read-only/);
+  assert.match(html, /Readable learners/);
+  assert.match(html, /Read-only learner/);
+  assert.match(html, /data-action="open-subject" data-subject-id="spelling" disabled aria-disabled="true"/);
 });

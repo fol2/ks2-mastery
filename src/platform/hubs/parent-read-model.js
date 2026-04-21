@@ -1,4 +1,5 @@
 import {
+  canMutateLearnerData,
   canViewAdminHub,
   canViewParentHub,
   learnerMembershipRoleLabel,
@@ -17,10 +18,29 @@ function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
+function normaliseAccessibleLearnerEntry(rawValue) {
+  const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
+  const learner = raw.learner && typeof raw.learner === 'object' && !Array.isArray(raw.learner) ? raw.learner : {};
+  const membershipRole = normaliseLearnerMembershipRole(raw.membershipRole || raw.role);
+  const writable = canMutateLearnerData({ membershipRole });
+  return {
+    learnerId: raw.learnerId || learner.id || '',
+    learnerName: learner.name || raw.learnerName || 'Learner',
+    yearGroup: learner.yearGroup || raw.yearGroup || 'Y5',
+    membershipRole,
+    membershipRoleLabel: learnerMembershipRoleLabel(membershipRole),
+    stateRevision: Number(raw.stateRevision) || 0,
+    writable,
+    accessModeLabel: writable ? 'Writable learner' : 'Read-only learner',
+  };
+}
+
 export function buildParentHubReadModel({
   learner,
   platformRole = 'parent',
   membershipRole = 'owner',
+  accessibleLearners = [],
+  selectedLearnerId = null,
   subjectStates = {},
   practiceSessions = [],
   eventLog = [],
@@ -30,6 +50,7 @@ export function buildParentHubReadModel({
 } = {}) {
   const resolvedPlatformRole = normalisePlatformRole(platformRole);
   const resolvedMembershipRole = normaliseLearnerMembershipRole(membershipRole);
+  const canMutate = canMutateLearnerData({ membershipRole: resolvedMembershipRole });
   const spelling = buildSpellingLearnerReadModel({
     subjectStateRecord: isPlainObject(subjectStates.spelling) ? subjectStates.spelling : null,
     practiceSessions,
@@ -45,6 +66,19 @@ export function buildParentHubReadModel({
     0,
   );
 
+  const resolvedLearnerId = learner?.id || selectedLearnerId || '';
+  const learnerOptions = (Array.isArray(accessibleLearners) ? accessibleLearners : [])
+    .map(normaliseAccessibleLearnerEntry)
+    .filter((entry) => entry.learnerId);
+  const hasSelectedLearnerOption = learnerOptions.some((entry) => entry.learnerId === resolvedLearnerId);
+  if (resolvedLearnerId && !hasSelectedLearnerOption) {
+    learnerOptions.unshift(normaliseAccessibleLearnerEntry({
+      learnerId: resolvedLearnerId,
+      membershipRole: resolvedMembershipRole,
+      learner,
+    }));
+  }
+
   return {
     generatedAt: typeof now === 'function' ? asTs(now(), Date.now()) : asTs(now, Date.now()),
     permissions: {
@@ -54,6 +88,8 @@ export function buildParentHubReadModel({
       membershipRoleLabel: learnerMembershipRoleLabel(resolvedMembershipRole),
       canViewParentHub: canViewParentHub({ platformRole: resolvedPlatformRole, membershipRole: resolvedMembershipRole }),
       canViewAdminHub: canViewAdminHub({ platformRole: resolvedPlatformRole }),
+      canMutateLearnerData: canMutate,
+      accessModeLabel: canMutate ? 'Writable learner' : 'Read-only learner',
     },
     learner: {
       id: learner?.id || '',
@@ -71,6 +107,8 @@ export function buildParentHubReadModel({
       accuracyPercent: spelling.progressSnapshot.accuracyPercent,
       recentSessions: spelling.recentSessions.length,
     },
+    selectedLearnerId: resolvedLearnerId,
+    accessibleLearners: learnerOptions,
     dueWork: [spelling.currentFocus],
     recentSessions: spelling.recentSessions,
     strengths: spelling.strengths,

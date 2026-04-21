@@ -173,6 +173,14 @@ What is real there:
 - content release / validation summary from durable content
 - audit lookup from durable mutation receipts
 - learner diagnostics backed by durable learner data
+- readable learner selection for adult surfaces, including viewer memberships
+- explicit writable versus read-only learner labels
+
+Signed-in Parent Hub and Admin / Operations consume these Worker hub payloads directly.
+They no longer rebuild signed-in hub state locally from the writable learner bootstrap.
+
+`/api/bootstrap` remains writable-only by design.
+Readable viewer learners are therefore surfaced inside adult hubs, not promoted into the main subject shell.
 
 ## Read-model boundaries
 
@@ -199,6 +207,9 @@ The hub read models consume durable records after the fact.
 - import / validation summary read model
 - audit lookup backed by mutation receipts on the Worker path
 - learner support / diagnostics summary
+- signed-in hub reads through the shared hub API client
+- viewer membership diagnostics with read-only write affordance blocking
+- zero-writable signed-in shell state that does not fabricate a learner
 
 ### Still intentionally thin or placeholder
 
@@ -209,7 +220,7 @@ The hub read models consume durable records after the fact.
 - no push-updating dashboards
 - no worker-backed audit search UI beyond basic lookup output
 - no invite flow, organisation model, or rich admin account management beyond basic platform-role assignment
-- no browser-side viewer learner switch flow through bootstrap yet
+- no viewer learner promotion into the writable subject shell yet
 
 ## Why this pass stops here
 
