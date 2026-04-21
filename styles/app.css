@@ -422,6 +422,7 @@ textarea:focus-visible {
   border: 1px solid var(--line);
   padding: 10px 14px;
   font-weight: 800;
+  color: var(--ink);
 }
 .subject-tabs .tab.active {
   color: white;
