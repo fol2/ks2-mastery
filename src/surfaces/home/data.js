@@ -2,13 +2,19 @@ const MONSTER_VARIANTS = ['b1', 'b2'];
 const DIRECT_STAGE_THRESHOLDS = Object.freeze([1, 10, 30, 60, 90]);
 const PHAETON_STAGE_THRESHOLDS = Object.freeze([3, 25, 95, 145, 200]);
 
-const REGION_BACKGROUND_URLS = Object.freeze([
+export const REGION_BACKGROUND_URLS = Object.freeze([
   '/assets/regions/the-scribe-downs/the-scribe-downs-bg-a1.1280.webp',
   '/assets/regions/the-scribe-downs/the-scribe-downs-bg-a2.1280.webp',
   '/assets/regions/the-scribe-downs/the-scribe-downs-bg-a3.1280.webp',
   '/assets/regions/the-scribe-downs/the-scribe-downs-bg-b1.1280.webp',
   '/assets/regions/the-scribe-downs/the-scribe-downs-bg-b2.1280.webp',
   '/assets/regions/the-scribe-downs/the-scribe-downs-bg-b3.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c1.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c2.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c3.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c4.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c5.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c6.1280.webp',
 ]);
 
 const MEADOW_SLOTS = Object.freeze([
@@ -54,8 +60,12 @@ const SUBJECT_DECOR = Object.freeze({
   reading:     { glyph: 'Rd', accent: 'linear-gradient(135deg, #4B7A4A, #9CC59A)' },
 });
 
-export function randomHeroBackground() {
-  const index = Math.floor(Math.random() * REGION_BACKGROUND_URLS.length);
+export function randomHeroBackground(random = Math.random) {
+  const roll = typeof random === 'function' ? Number(random()) : Math.random();
+  const index = Math.max(
+    0,
+    Math.min(REGION_BACKGROUND_URLS.length - 1, Math.floor(roll * REGION_BACKGROUND_URLS.length)),
+  );
   return REGION_BACKGROUND_URLS[index];
 }
 

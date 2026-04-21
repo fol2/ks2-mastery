@@ -63,7 +63,7 @@ if (unsafeFiles.length) {
   throw new Error(`Unexpected macOS metadata in public output: ${unsafeFiles.join(', ')}`);
 }
 
-const rawMonsterPngs = (await walk()).filter((file) => file.startsWith('assets/monsters/') && file.endsWith('.png'));
-if (rawMonsterPngs.length) {
-  throw new Error(`Raw monster PNG files must not be copied into public output: ${rawMonsterPngs.join(', ')}`);
+const rawAssetPngs = (await walk()).filter((file) => file.startsWith('assets/') && file.endsWith('.png'));
+if (rawAssetPngs.length) {
+  throw new Error(`Raw asset PNG files must not be copied into public output: ${rawAssetPngs.join(', ')}`);
 }

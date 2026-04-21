@@ -157,6 +157,16 @@ test('home meadow hides every species for a fresh learner with nothing caught ye
   assert.equal(buildMeadowMonsters(summary).length, 0);
 });
 
+test('hero background rotation includes the new Scribe Downs c landscapes', async () => {
+  const { REGION_BACKGROUND_URLS } = await import('../src/surfaces/home/data.js');
+
+  for (const index of [1, 2, 3, 4, 5, 6]) {
+    assert.ok(
+      REGION_BACKGROUND_URLS.includes(`/assets/regions/the-scribe-downs/the-scribe-downs-bg-c${index}.1280.webp`),
+    );
+  }
+});
+
 test('monster celebration overlay uses high-resolution stage artwork', () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });
