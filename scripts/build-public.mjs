@@ -25,6 +25,10 @@ const filterPublicFiles = source => {
     return false;
   }
 
+  if (relative.startsWith('assets/monsters/') && relative.endsWith('.png')) {
+    return false;
+  }
+
   return true;
 };
 

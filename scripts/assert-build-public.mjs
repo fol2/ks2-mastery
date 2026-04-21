@@ -36,6 +36,8 @@ await mustExist('index.html');
 await mustExist('_headers');
 await mustExist('styles/app.css');
 await mustExist('src/main.js');
+await mustExist('assets/monsters/inklet/b1/inklet-b1-0.320.webp');
+await mustExist('assets/monsters/inklet/b1/inklet-b1-0.1280.webp');
 await mustExist('worker/src/index.js').then(
   () => {
     throw new Error('Worker source must not be copied into public output.');
@@ -58,4 +60,9 @@ if (unexpected.length) {
 const unsafeFiles = (await walk()).filter((file) => path.basename(file) === '.DS_Store');
 if (unsafeFiles.length) {
   throw new Error(`Unexpected macOS metadata in public output: ${unsafeFiles.join(', ')}`);
+}
+
+const rawMonsterPngs = (await walk()).filter((file) => file.startsWith('assets/monsters/') && file.endsWith('.png'));
+if (rawMonsterPngs.length) {
+  throw new Error(`Raw monster PNG files must not be copied into public output: ${rawMonsterPngs.join(', ')}`);
 }

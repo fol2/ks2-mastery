@@ -35,7 +35,15 @@ export const MONSTERS_BY_SUBJECT = {
   spelling: ['inklet', 'glimmerbug', 'phaeton'],
 };
 
-const MONSTER_ASSET_VERSION = '20260421-celebrations';
+export const MONSTER_BRANCHES = Object.freeze(['b1', 'b2']);
+
+const DEFAULT_MONSTER_BRANCH = 'b1';
+const MONSTER_ASSET_SIZES = Object.freeze([320, 640, 1280]);
+const MONSTER_ASSET_VERSION = '20260421-branches';
+
+export function normaliseMonsterBranch(value, fallback = DEFAULT_MONSTER_BRANCH) {
+  return MONSTER_BRANCHES.includes(value) ? value : fallback;
+}
 
 export function stageFor(mastered) {
   if (mastered >= 90) return 4;
@@ -49,8 +57,22 @@ export function levelFor(mastered) {
   return Math.min(10, Math.floor(mastered / 10));
 }
 
-export function monsterAsset(monsterId, stage, size = 320) {
+function normaliseMonsterAssetSize(size) {
+  const numeric = Number(size) || 320;
+  if (numeric >= 1280) return 1280;
+  if (numeric >= 640) return 640;
+  return 320;
+}
+
+export function monsterAsset(monsterId, stage, size = 320, branch = DEFAULT_MONSTER_BRANCH) {
   const safeStage = Math.max(0, Math.min(4, Number(stage) || 0));
-  const safeSize = Number(size) >= 640 ? 640 : 320;
-  return `./assets/monsters/${monsterId}-${safeStage}.${safeSize}.webp?v=${MONSTER_ASSET_VERSION}`;
+  const safeSize = normaliseMonsterAssetSize(size);
+  const safeBranch = normaliseMonsterBranch(branch);
+  return `./assets/monsters/${monsterId}/${safeBranch}/${monsterId}-${safeBranch}-${safeStage}.${safeSize}.webp?v=${MONSTER_ASSET_VERSION}`;
+}
+
+export function monsterAssetSrcSet(monsterId, stage, branch = DEFAULT_MONSTER_BRANCH) {
+  return MONSTER_ASSET_SIZES
+    .map((size) => `${monsterAsset(monsterId, stage, size, branch)} ${size}w`)
+    .join(', ');
 }

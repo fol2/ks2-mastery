@@ -2,7 +2,7 @@ import { escapeHtml } from '../core/utils.js';
 import { platformRoleLabel } from '../access/roles.js';
 import { SUBJECTS, getSubject } from '../core/subject-registry.js';
 import { subjectTabLabel } from '../core/subject-runtime.js';
-import { monsterAsset } from '../game/monsters.js';
+import { monsterAsset, monsterAssetSrcSet } from '../game/monsters.js';
 import { monsterSummary, monsterSummaryFromSpellingAnalytics } from '../game/monster-system.js';
 import { readOnlyLearnerActionBlockReason } from '../hubs/shell-access.js';
 
@@ -40,6 +40,10 @@ function selectedWritableLearner(appState) {
 
 function hasWritableLearner(appState) {
   return Boolean(selectedWritableLearner(appState));
+}
+
+function monsterImageSources(monsterId, stage, branch, fallbackSize = 320, sizes = '320px') {
+  return `src="${escapeHtml(monsterAsset(monsterId, stage, fallbackSize, branch))}" srcset="${escapeHtml(monsterAssetSrcSet(monsterId, stage, branch))}" sizes="${escapeHtml(sizes)}"`;
 }
 
 function learnerSelect(appState, context) {
@@ -413,7 +417,7 @@ function renderHeroMonsterVisuals(monsters) {
           <span class="hero-monster-actor ${escapeHtml(monster.id)} motion-${slot.motion} ${motionClass} stage-${stage}">
             <span class="hero-monster-shadow"></span>
             <span class="hero-monster-motion">
-              <img alt="${escapeHtml(stageName)}" src="${monsterAsset(monster.id, stage)}" />
+              <img alt="${escapeHtml(stageName)}" ${monsterImageSources(monster.id, stage, progress.branch, 320, 'min(40vw, 320px)')} />
             </span>
             ${stage >= 1 ? '<span class="hero-monster-sparkle sparkle-a"></span><span class="hero-monster-sparkle sparkle-b"></span>' : ''}
           </span>
@@ -452,7 +456,10 @@ function renderHero(context) {
   }
   const spellingService = context.services?.spelling;
   const monsters = spellingService?.getAnalyticsSnapshot
-    ? monsterSummaryFromSpellingAnalytics(spellingService.getAnalyticsSnapshot(learner.id))
+    ? monsterSummaryFromSpellingAnalytics(spellingService.getAnalyticsSnapshot(learner.id), {
+        learnerId: learner.id,
+        gameStateRepository: context.repositories?.gameState,
+      })
     : monsterSummary(learner.id, context.repositories?.gameState);
   const secureTotal = monsters.reduce((sum, entry) => sum + entry.progress.mastered, 0);
   return `
@@ -1186,8 +1193,8 @@ function renderMonsterCelebrationOverlay(appState) {
         <span class="monster-celebration-ring one"></span>
         <span class="monster-celebration-ring two"></span>
         <span class="monster-celebration-ring three"></span>
-        <img class="monster-celebration-art before" alt="" src="${escapeHtml(monsterAsset(monster.id, fromStage, 640))}" />
-        <img class="monster-celebration-art after" alt="" src="${escapeHtml(monsterAsset(monster.id, toStage, 640))}" />
+        <img class="monster-celebration-art before" alt="" ${monsterImageSources(monster.id, fromStage, event.previous?.branch || event.next?.branch, 640, 'min(90vw, 640px)')} />
+        <img class="monster-celebration-art after" alt="" ${monsterImageSources(monster.id, toStage, event.next?.branch || event.previous?.branch, 640, 'min(90vw, 640px)')} />
         <span class="monster-celebration-flash"></span>
       </div>
       <h2 id="monster-celebration-title">${escapeHtml(title)}</h2>

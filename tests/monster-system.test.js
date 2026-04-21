@@ -1,10 +1,33 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { derivePhaeton, progressForMonster } from '../src/platform/game/monster-system.js';
+import {
+  derivePhaeton,
+  ensureMonsterBranches,
+  monsterSummaryFromSpellingAnalytics,
+  progressForMonster,
+  recordMonsterMastery,
+} from '../src/platform/game/monster-system.js';
 
 function masteredWords(count, prefix = 'word') {
   return Array.from({ length: count }, (_, index) => `${prefix}-${index + 1}`);
+}
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function makeGameStateRepository(initialState = {}) {
+  let state = clone(initialState);
+  return {
+    read() {
+      return clone(state);
+    },
+    write(_learnerId, _systemId, nextState) {
+      state = clone(nextState);
+      return clone(state);
+    },
+  };
 }
 
 test('direct spelling monsters evolve at 10, 30, 60 and 90 secure words', () => {
@@ -98,4 +121,61 @@ test('Phaeton unlocks stage 0 from three combined secure words', () => {
     assert.equal(progress.caught, expectedCaught, `${combined} combined secure words caught state`);
     assert.equal(progress.stage, expectedStage, `${combined} combined secure words stage`);
   }
+});
+
+test('monster branches are assigned once and preserved for existing learner state', () => {
+  const repository = makeGameStateRepository({
+    inklet: {
+      branch: 'b1',
+      caught: true,
+      mastered: masteredWords(12),
+    },
+  });
+
+  const state = ensureMonsterBranches('learner-a', repository, { random: () => 0.75 });
+
+  assert.equal(state.inklet.branch, 'b1');
+  assert.equal(state.glimmerbug.branch, 'b2');
+  assert.equal(state.phaeton.branch, 'b2');
+  assert.equal(progressForMonster(state, 'inklet').branch, 'b1');
+  assert.equal(derivePhaeton(state).branch, 'b2');
+});
+
+test('recording mastery stores the selected branch on reward events', () => {
+  const repository = makeGameStateRepository();
+  const events = recordMonsterMastery('learner-a', 'inklet', 'possess', repository, { random: () => 0.75 });
+  const state = repository.read('learner-a', 'monster-codex');
+
+  assert.equal(state.inklet.branch, 'b2');
+  assert.equal(state.glimmerbug.branch, 'b2');
+  assert.equal(events[0].previous.branch, 'b2');
+  assert.equal(events[0].next.branch, 'b2');
+});
+
+test('analytics summaries use persisted monster branches while deriving current progress', () => {
+  const repository = makeGameStateRepository({
+    inklet: { branch: 'b2' },
+    glimmerbug: { branch: 'b1' },
+    phaeton: { branch: 'b2' },
+  });
+  const analytics = {
+    wordGroups: [
+      {
+        words: [
+          { slug: 'possess', status: 'secure', year: '3-4' },
+          { slug: 'necessary', status: 'secure', year: '5-6' },
+        ],
+      },
+    ],
+  };
+
+  const summary = monsterSummaryFromSpellingAnalytics(analytics, {
+    learnerId: 'learner-a',
+    gameStateRepository: repository,
+  });
+
+  assert.equal(summary.find((entry) => entry.monster.id === 'inklet').progress.branch, 'b2');
+  assert.equal(summary.find((entry) => entry.monster.id === 'glimmerbug').progress.branch, 'b1');
+  assert.equal(summary.find((entry) => entry.monster.id === 'phaeton').progress.branch, 'b2');
+  assert.equal(summary.find((entry) => entry.monster.id === 'inklet').progress.mastered, 1);
 });

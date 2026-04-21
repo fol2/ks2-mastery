@@ -1,6 +1,13 @@
-import { levelFor, MONSTERS, stageFor } from './monsters.js';
+import {
+  levelFor,
+  MONSTER_BRANCHES,
+  MONSTERS,
+  normaliseMonsterBranch,
+  stageFor,
+} from './monsters.js';
 
 const DEFAULT_SYSTEM_ID = 'monster-codex';
+const MONSTER_IDS = Object.freeze(Object.keys(MONSTERS));
 
 function readGameState(gameStateRepository, learnerId, systemId = DEFAULT_SYSTEM_ID) {
   if (!gameStateRepository) return {};
@@ -13,18 +20,55 @@ function writeGameState(gameStateRepository, learnerId, state, systemId = DEFAUL
 }
 
 function countMastered(state, monsterId) {
-  return (state?.[monsterId]?.mastered || []).length;
+  return masteredList(state?.[monsterId]).length;
+}
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function masteredList(entry) {
+  return Array.isArray(entry?.mastered) ? entry.mastered.filter((slug) => typeof slug === 'string' && slug) : [];
+}
+
+function pickMonsterBranch(random = Math.random) {
+  const raw = typeof random === 'function' ? Number(random()) : Math.random();
+  const index = Math.max(0, Math.min(MONSTER_BRANCHES.length - 1, Math.floor((Number.isFinite(raw) ? raw : 0) * MONSTER_BRANCHES.length)));
+  return MONSTER_BRANCHES[index] || MONSTER_BRANCHES[0];
+}
+
+function branchForMonster(state, monsterId) {
+  return normaliseMonsterBranch(state?.[monsterId]?.branch);
+}
+
+function withMonsterBranches(rawState, { random = Math.random } = {}) {
+  const state = isPlainObject(rawState) ? { ...rawState } : {};
+  let changed = false;
+
+  for (const monsterId of MONSTER_IDS) {
+    const current = isPlainObject(state[monsterId]) ? state[monsterId] : {};
+    const branch = normaliseMonsterBranch(current.branch, null);
+    if (branch) continue;
+    state[monsterId] = {
+      ...current,
+      branch: pickMonsterBranch(random),
+    };
+    changed = true;
+  }
+
+  return { state, changed };
 }
 
 export function monsterIdForSpellingYearBand(yearBand) {
   return yearBand === '5-6' ? 'glimmerbug' : 'inklet';
 }
 
-function secureWordsFromAnalytics(analytics) {
+function secureWordsFromAnalytics(analytics, branchState = {}) {
   const groups = Array.isArray(analytics?.wordGroups) ? analytics.wordGroups : [];
   const state = {
-    inklet: { mastered: [], caught: false },
-    glimmerbug: { mastered: [], caught: false },
+    inklet: { mastered: [], caught: false, branch: branchForMonster(branchState, 'inklet') },
+    glimmerbug: { mastered: [], caught: false, branch: branchForMonster(branchState, 'glimmerbug') },
+    phaeton: { branch: branchForMonster(branchState, 'phaeton') },
   };
 
   for (const group of groups) {
@@ -53,16 +97,24 @@ export function saveMonsterState(learnerId, state, gameStateRepository) {
   return writeGameState(gameStateRepository, learnerId, state, DEFAULT_SYSTEM_ID);
 }
 
+export function ensureMonsterBranches(learnerId, gameStateRepository, options = {}) {
+  const before = loadMonsterState(learnerId, gameStateRepository);
+  if (!gameStateRepository) return withMonsterBranches(before, { random: () => 0 }).state;
+  const { state, changed } = withMonsterBranches(before, options);
+  return changed ? saveMonsterState(learnerId, state, gameStateRepository) : state;
+}
+
 export function progressForMonster(state, monsterId) {
   if (monsterId === 'phaeton') return derivePhaeton(state);
-  const entry = state?.[monsterId] || { mastered: [], caught: false };
-  const mastered = Array.isArray(entry.mastered) ? entry.mastered.length : 0;
+  const entry = isPlainObject(state?.[monsterId]) ? state[monsterId] : { mastered: [], caught: false };
+  const mastered = masteredList(entry).length;
   return {
     mastered,
     stage: stageFor(mastered),
     level: levelFor(mastered),
     caught: mastered >= 1,
-    masteredList: Array.isArray(entry.mastered) ? entry.mastered.slice() : [],
+    branch: branchForMonster(state, monsterId),
+    masteredList: masteredList(entry),
   };
 }
 
@@ -80,6 +132,7 @@ export function derivePhaeton(state) {
     stage,
     level: Math.min(10, Math.floor(combined / 20)),
     caught: combined >= 3,
+    branch: branchForMonster(state, 'phaeton'),
     masteredList: [],
   };
 }
@@ -119,11 +172,12 @@ function buildEvent(learnerId, kind, monsterId, previous, next) {
   };
 }
 
-export function recordMonsterMastery(learnerId, monsterId, wordSlug, gameStateRepository) {
+export function recordMonsterMastery(learnerId, monsterId, wordSlug, gameStateRepository, options = {}) {
   if (monsterId === 'phaeton') return [];
-  const before = loadMonsterState(learnerId, gameStateRepository);
-  const directEntry = before[monsterId] || { mastered: [], caught: false };
-  if (directEntry.mastered.includes(wordSlug)) return [];
+  const before = ensureMonsterBranches(learnerId, gameStateRepository, options);
+  const directEntry = isPlainObject(before[monsterId]) ? before[monsterId] : { mastered: [], caught: false };
+  const directMastered = masteredList(directEntry);
+  if (directMastered.includes(wordSlug)) return [];
 
   const beforeDirect = progressForMonster(before, monsterId);
   const beforePhaeton = derivePhaeton(before);
@@ -133,7 +187,7 @@ export function recordMonsterMastery(learnerId, monsterId, wordSlug, gameStateRe
     [monsterId]: {
       ...directEntry,
       caught: true,
-      mastered: [...directEntry.mastered, wordSlug],
+      mastered: [...directMastered, wordSlug],
     },
   };
 
@@ -150,15 +204,18 @@ export function recordMonsterMastery(learnerId, monsterId, wordSlug, gameStateRe
 }
 
 export function monsterSummary(learnerId, gameStateRepository) {
-  const state = loadMonsterState(learnerId, gameStateRepository);
+  const state = ensureMonsterBranches(learnerId, gameStateRepository);
   return ['inklet', 'glimmerbug', 'phaeton'].map((monsterId) => ({
     monster: MONSTERS[monsterId],
     progress: progressForMonster(state, monsterId),
   }));
 }
 
-export function monsterSummaryFromSpellingAnalytics(analytics) {
-  const state = secureWordsFromAnalytics(analytics);
+export function monsterSummaryFromSpellingAnalytics(analytics, { learnerId = null, gameStateRepository = null, random = Math.random } = {}) {
+  const branchState = learnerId && gameStateRepository
+    ? ensureMonsterBranches(learnerId, gameStateRepository, { random })
+    : {};
+  const state = secureWordsFromAnalytics(analytics, branchState);
   return ['inklet', 'glimmerbug', 'phaeton'].map((monsterId) => ({
     monster: MONSTERS[monsterId],
     progress: progressForMonster(state, monsterId),

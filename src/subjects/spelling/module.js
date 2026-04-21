@@ -1,5 +1,5 @@
 import { monsterSummaryFromSpellingAnalytics } from '../../platform/game/monster-system.js';
-import { monsterAsset } from '../../platform/game/monsters.js';
+import { monsterAsset, monsterAssetSrcSet } from '../../platform/game/monsters.js';
 import { escapeHtml, formatElapsed } from '../../platform/core/utils.js';
 import { createInitialSpellingState } from './service-contract.js';
 import {
@@ -41,7 +41,7 @@ function renderMonsterCodexVisual(monster, progress) {
   if (!progress?.caught) {
     return `<div class="monster-placeholder" aria-label="${escapeHtml(`${monster.name} not caught`)}">?</div>`;
   }
-  return `<img alt="${escapeHtml(monster.name)}" src="${monsterAsset(monster.id, progress.stage)}" />`;
+  return `<img alt="${escapeHtml(monster.name)}" src="${escapeHtml(monsterAsset(monster.id, progress.stage, 320, progress.branch))}" srcset="${escapeHtml(monsterAssetSrcSet(monster.id, progress.stage, progress.branch))}" sizes="min(50vw, 220px)" />`;
 }
 
 function renderCodex(monsters) {
@@ -156,7 +156,10 @@ function renderPracticeDashboard({ learner, service, subject, repositories }) {
   const accent = accentFor(subject);
   const prefs = service.getPrefs(learner.id);
   const stats = service.getStats(learner.id, prefs.yearFilter);
-  const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id));
+  const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id), {
+    learnerId: learner.id,
+    gameStateRepository: repositories?.gameState,
+  });
   const modeOptions = [
     ['smart', 'Smart Review', 'Weighted mix of due, weak and new words.'],
     ['trouble', 'Trouble Drill', 'Keeps pressure on weak spellings.'],
@@ -316,7 +319,10 @@ function renderSession({ learner, service, ui, subject }) {
 function renderSummary({ learner, ui, service, subject, repositories }) {
   const accent = accentFor(subject);
   const summary = ui.summary;
-  const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id));
+  const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id), {
+    learnerId: learner.id,
+    gameStateRepository: repositories?.gameState,
+  });
   if (!summary) return '';
   return `
     <div class="summary-grid">

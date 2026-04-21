@@ -100,7 +100,7 @@ test('uncaught monsters stay off the main dashboard but use codex placeholders',
     ...baseContext,
     appState: dashboardState,
   });
-  assert.doesNotMatch(dashboardHtml, /assets\/monsters\/inklet-0\.320\.webp/);
+  assert.doesNotMatch(dashboardHtml, /assets\/monsters\/inklet\/b[12]\/inklet-b[12]-0\.320\.webp/);
   assert.doesNotMatch(dashboardHtml, /monster-placeholder/);
 
   store.openSubject('spelling');
@@ -203,7 +203,8 @@ test('monster celebration overlay uses high-resolution stage artwork', () => {
   });
 
   assert.match(html, /monster-celebration-overlay/);
-  assert.match(html, /assets\/monsters\/inklet-0\.640\.webp/);
+  assert.match(html, /assets\/monsters\/inklet\/b1\/inklet-b1-0\.640\.webp/);
+  assert.match(html, /assets\/monsters\/inklet\/b1\/inklet-b1-0\.1280\.webp/);
 });
 
 test('render app exposes parent and admin operating surfaces by route', () => {

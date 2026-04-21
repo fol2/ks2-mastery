@@ -1,3 +1,5 @@
+import { normaliseMonsterBranch } from './monsters.js';
+
 const OVERLAY_KINDS = new Set(['caught', 'evolve', 'mega']);
 
 export function isMonsterCelebrationEvent(event) {
@@ -16,6 +18,7 @@ function normaliseProgressSnapshot(value) {
     stage: Math.max(0, Math.min(4, Number(raw.stage) || 0)),
     level: Math.max(0, Math.min(10, Number(raw.level) || 0)),
     caught: raw.caught === true,
+    branch: normaliseMonsterBranch(raw.branch),
   };
 }
 

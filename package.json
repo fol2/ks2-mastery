@@ -6,6 +6,7 @@
   "scripts": {
     "build": "node ./scripts/build-public.mjs",
     "assert:build-public": "node ./scripts/assert-build-public.mjs",
+    "assets:monsters": "node ./scripts/generate-monster-assets.mjs",
     "check": "npm run build && npm run assert:build-public && node ./scripts/wrangler-oauth.mjs deploy --dry-run",
     "check:oauth": "npm run check",
     "content:seed": "node scripts/seed-spelling-content-from-legacy.mjs",

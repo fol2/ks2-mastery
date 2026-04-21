@@ -18,3 +18,5 @@ backups/
 .env.*
 *.log
 *.zip
+assets/*.png
+assets/**/*.png
