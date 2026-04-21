@@ -89,10 +89,10 @@ Parent Hub is built from the durable spelling learner state:
 
 Parent Hub requires:
 
-- platform role `parent`
+- platform role `parent` or `admin`
 - readable learner membership (`owner`, `member`, or `viewer`)
 
-That keeps the surface explicitly separate from Admin / Operations.
+That keeps the surface explicitly separate from Operations-only accounts while letting admins inspect parent-facing learner views for learners they can read.
 
 ## Admin / Operations
 

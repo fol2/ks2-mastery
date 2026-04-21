@@ -113,7 +113,7 @@ Viewer access is currently used for permission-correct hub reads and adult-surfa
 - learner writes are checked against account membership
 - subject state, sessions, game state, and events are all learner-scoped and permission-checked at the API boundary
 - the current browser repository client only works with writable learners, so bootstrap returns the writable learner set for now
-- Parent Hub reads can use readable learner memberships (`owner`, `member`, `viewer`) when the platform role is `parent`
+- Parent Hub reads can use readable learner memberships (`owner`, `member`, `viewer`) when the platform role is `parent` or `admin`
 - Admin / Operations reads require platform role `admin` or `ops` and still respect learner membership when surfacing learner diagnostics
 - signed-in Parent Hub and Admin / Operations consume Worker hub payloads rather than synthesising owner memberships from writable bootstrap state
 - signed-in empty writable bootstrap stays empty; the store does not fabricate a default learner outside local-reference mode

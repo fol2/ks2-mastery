@@ -127,7 +127,7 @@ The Worker exposes two thin read-model routes.
 
 Current behaviour:
 
-- Parent Hub requires platform role `parent` plus readable learner membership
+- Parent Hub requires platform role `parent` or `admin` plus readable learner membership
 - Admin / Operations requires platform role `admin` or `ops`
 - both routes reuse durable learner/content/event data instead of separate dashboard tables
 - audit lookup is backed by `mutation_receipts`

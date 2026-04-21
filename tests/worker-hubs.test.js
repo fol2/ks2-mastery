@@ -84,7 +84,7 @@ async function seedLearnerData(server, accountId, platformRole = 'parent') {
   await repositories.flush();
 }
 
-test('worker parent hub requires the parent platform role and readable learner membership', async () => {
+test('worker parent hub allows parent or admin platform roles with readable learner membership', async () => {
   const server = createWorkerRepositoryServer();
   await seedLearnerData(server, 'adult-parent', 'parent');
 
@@ -98,12 +98,13 @@ test('worker parent hub requires the parent platform role and readable learner m
   assert.equal(allowedPayload.parentHub.learnerOverview.dueWords, 1);
   assert.ok(allowedPayload.parentHub.misconceptionPatterns.some((entry) => /cycle/i.test(entry.label)));
 
-  const deniedResponse = await server.fetchAs('adult-parent', 'https://repo.test/api/hubs/parent?learnerId=learner-a', {}, {
+  const adminResponse = await server.fetchAs('adult-parent', 'https://repo.test/api/hubs/parent?learnerId=learner-a', {}, {
     'x-ks2-dev-platform-role': 'admin',
   });
-  const deniedPayload = await deniedResponse.json();
-  assert.equal(deniedResponse.status, 403);
-  assert.equal(deniedPayload.code, 'parent_hub_forbidden');
+  const adminPayload = await adminResponse.json();
+  assert.equal(adminResponse.status, 200);
+  assert.equal(adminPayload.parentHub.permissions.canViewParentHub, true);
+  assert.equal(adminPayload.parentHub.permissions.platformRole, 'admin');
 
   server.close();
 });

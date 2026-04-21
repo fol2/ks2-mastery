@@ -220,3 +220,40 @@ test('admin hub marks selected readable learners without widening parent-hub acc
   assert.equal(model.learnerSupport.accessibleLearners[0].accessModeLabel, 'Read-only learner');
   assert.equal(model.learnerSupport.entryPoints.some((entry) => entry.action === 'open-parent-hub'), false);
 });
+
+test('admin hub can link to parent hub when the selected learner is readable', () => {
+  const learner = makeLearner('learner-owner', 'Ava');
+  const model = buildAdminHubReadModel({
+    account: {
+      id: 'adult-admin',
+      selectedLearnerId: learner.id,
+      repoRevision: 4,
+      platformRole: 'admin',
+    },
+    platformRole: 'admin',
+    spellingContentBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+    memberships: [
+      {
+        learnerId: learner.id,
+        role: 'owner',
+        stateRevision: 5,
+        learner,
+      },
+    ],
+    learnerBundles: {
+      [learner.id]: {
+        subjectStates: {},
+        practiceSessions: [],
+        eventLog: [],
+        gameState: {},
+      },
+    },
+    selectedLearnerId: learner.id,
+    now: () => 3000,
+  });
+
+  assert.equal(model.permissions.canViewAdminHub, true);
+  assert.equal(model.permissions.canViewParentHub, true);
+  assert.equal(model.permissions.canManageAccountRoles, true);
+  assert.equal(model.learnerSupport.entryPoints.some((entry) => entry.action === 'open-parent-hub'), true);
+});

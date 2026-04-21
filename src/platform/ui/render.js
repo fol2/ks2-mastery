@@ -701,7 +701,7 @@ function renderParentHub(context) {
   if (!model?.permissions?.canViewParentHub) {
     return renderAccessDeniedCard(
       'Parent Hub is not available for the current surface role',
-      'Parent Hub requires the parent platform role plus readable learner membership. Admin / Operations has a separate permission bucket.',
+      'Parent Hub requires a parent or admin platform role plus readable learner membership. Operations has a separate permission bucket.',
     );
   }
 

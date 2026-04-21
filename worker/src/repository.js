@@ -397,7 +397,7 @@ function requireParentHubAccess(account, membership) {
   if (!canViewParentHub({ platformRole: accountPlatformRole(account), membershipRole: membership?.role })) {
     throw new ForbiddenError('Parent Hub access denied.', {
       code: 'parent_hub_forbidden',
-      required: 'platform-role-parent plus readable learner membership',
+      required: 'platform-role-parent-or-admin plus readable learner membership',
       learnerId: membership?.learner_id || null,
     });
   }

@@ -1,7 +1,7 @@
 export const PLATFORM_ROLES = Object.freeze(['parent', 'admin', 'ops']);
 export const LEARNER_MEMBERSHIP_ROLES = Object.freeze(['owner', 'member', 'viewer']);
 
-const PARENT_HUB_PLATFORM_ROLES = new Set(['parent']);
+const PARENT_HUB_PLATFORM_ROLES = new Set(['parent', 'admin']);
 const ADMIN_HUB_PLATFORM_ROLES = new Set(['admin', 'ops']);
 const READABLE_MEMBERSHIP_ROLES = new Set(['owner', 'member', 'viewer']);
 const WRITABLE_MEMBERSHIP_ROLES = new Set(['owner', 'member']);
