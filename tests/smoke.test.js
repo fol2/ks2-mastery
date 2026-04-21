@@ -62,6 +62,16 @@ test('profile settings learner profile fields declare autofill behaviour explici
   assert.match(html, /<input class="input" type="number"[^>]*name="dailyMinutes"[^>]*autocomplete="off"/);
 });
 
+test('codex route mounts the React codex surface', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+
+  harness.dispatch('open-codex');
+
+  assert.equal(harness.store.getState().route.screen, 'codex');
+  assert.match(harness.render(), /data-codex-mount="true"/);
+});
+
 test('golden-path smoke covers learner switch without losing the first learner session state', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });

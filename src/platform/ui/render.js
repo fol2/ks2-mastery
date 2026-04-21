@@ -458,6 +458,7 @@ function renderHero(context) {
     ? monsterSummaryFromSpellingAnalytics(spellingService.getAnalyticsSnapshot(learner.id), {
         learnerId: learner.id,
         gameStateRepository: context.repositories?.gameState,
+        persistBranches: false,
       })
     : monsterSummary(learner.id, context.repositories?.gameState);
   const secureTotal = monsters.reduce((sum, entry) => sum + entry.progress.mastered, 0);
@@ -1360,6 +1361,17 @@ export function renderApp(appState, context) {
     return `
       ${renderPersistenceBanner(appState.persistence)}
       <div id="home-root" data-home-mount="true"></div>
+      <div class="home-overlays">
+        ${renderToasts(appState)}
+        ${renderMonsterCelebrationOverlay(appState)}
+      </div>
+    `;
+  }
+
+  if (screen === 'codex') {
+    return `
+      ${renderPersistenceBanner(appState.persistence)}
+      <div id="codex-root" data-codex-mount="true"></div>
       <div class="home-overlays">
         ${renderToasts(appState)}
         ${renderMonsterCelebrationOverlay(appState)}

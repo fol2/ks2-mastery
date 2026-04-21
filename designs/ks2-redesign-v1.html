@@ -345,6 +345,78 @@
     }
     .app-shell.mobile { padding: 16px; }
 
+    /* Session variant: lays a borderless hero-region background behind the
+       whole shell so the question card can float over its current region
+       scenery, echoing the hero treatment on Home / Setup. */
+    .app-shell.in-session {
+      position: relative;
+      isolation: isolate;
+      /* Clip the bleeding ::before so the hero art can extend past the shell
+         padding without leaking into surrounding chrome. */
+      overflow: hidden;
+    }
+    .app-shell.in-session::before {
+      content: "";
+      position: absolute;
+      /* Negative inset cancels the 24px app-shell padding (16px on mobile) —
+         hero art bleeds edge-to-edge with no cream gutter. */
+      inset: -24px;
+      background:
+        linear-gradient(180deg,
+          color-mix(in oklab, var(--panel) 48%, transparent) 0%,
+          color-mix(in oklab, var(--panel) 24%, transparent) 42%,
+          color-mix(in oklab, var(--panel) 52%, transparent) 100%),
+        var(--hero-bg, none) center 42% / cover no-repeat;
+      z-index: -1;
+      pointer-events: none;
+    }
+    .app-shell.in-session.mobile::before { inset: -16px; }
+    /* Tighter, higher-contrast ink on the session scene so the prompt reads
+       clearly over the variable region backgrounds. */
+    .app-shell.in-session .prompt-instr { color: color-mix(in oklab, var(--ink) 85%, black); }
+    .app-shell.in-session .cloze,
+    .app-shell.in-session .word-input {
+      color: color-mix(in oklab, var(--ink) 92%, black);
+    }
+    .app-shell.in-session .word-input::placeholder {
+      color: color-mix(in oklab, var(--ink) 55%, transparent);
+    }
+    /* --on-hero* tokens drive any chrome that sits directly on the region
+       art. Default = dark ink for light/mid-light regions; flipped to warm
+       paper when the runtime luminance probe adds `.hero-dark`. */
+    .app-shell.in-session {
+      --on-hero: color-mix(in oklab, var(--ink) 88%, black);
+      --on-hero-muted: color-mix(in oklab, var(--ink) 70%, black);
+      --on-hero-chip-bg: color-mix(in oklab, var(--panel) 90%, transparent);
+      --on-hero-chip-border: color-mix(in oklab, var(--line-strong) 80%, var(--ink));
+      --on-hero-chip-ink: color-mix(in oklab, var(--ink) 92%, black);
+    }
+    .app-shell.in-session.hero-dark {
+      --on-hero: #f4ecd8;
+      --on-hero-muted: color-mix(in oklab, #f4ecd8 75%, transparent);
+      --on-hero-chip-bg: color-mix(in oklab, black 55%, transparent);
+      --on-hero-chip-border: color-mix(in oklab, white 28%, transparent);
+      --on-hero-chip-ink: #fdfaf1;
+    }
+    .app-shell.in-session .keys-hint { color: var(--on-hero-muted); }
+    .app-shell.in-session .keys-hint kbd {
+      background: var(--on-hero-chip-bg);
+      border-color: var(--on-hero-chip-border);
+      color: var(--on-hero-chip-ink);
+    }
+    .app-shell.in-session .btn.sm.bad {
+      background: color-mix(in oklab, var(--bad-soft) 85%, var(--panel));
+      color: var(--bad-strong);
+      border-color: color-mix(in oklab, var(--bad) 45%, var(--ink));
+    }
+    .app-shell.in-session.hero-dark .btn.sm.bad {
+      /* Darker region needs a more opaque chip so the pink button can still
+         visually sit on top — pick up the bad hue against a near-black base. */
+      background: color-mix(in oklab, var(--bad-soft) 30%, rgba(0,0,0,0.55));
+      color: #ffdcd7;
+      border-color: color-mix(in oklab, var(--bad) 55%, white);
+    }
+
     .btn {
       appearance: none;
       border: 1px solid transparent;
@@ -373,6 +445,29 @@
       background: var(--panel-soft); border-color: var(--line); color: var(--ink);
     }
     .btn.icon.lg { width: 52px; height: 52px; }
+    /* Audio buttons glow while their clip is playing so the learner can see at
+       a glance which rate (normal / slow) is in flight. */
+    .btn.icon.playing {
+      background: color-mix(in oklab, var(--brand) 14%, var(--panel));
+      border-color: color-mix(in oklab, var(--brand) 45%, var(--line));
+      color: var(--brand-ink);
+      animation: audio-glow 1.4s var(--ease-in-out) infinite;
+    }
+    @keyframes audio-glow {
+      0%, 100% {
+        box-shadow:
+          0 0 0 3px color-mix(in oklab, var(--brand) 20%, transparent),
+          0 6px 18px color-mix(in oklab, var(--brand) 22%, transparent);
+      }
+      50% {
+        box-shadow:
+          0 0 0 8px color-mix(in oklab, var(--brand) 8%, transparent),
+          0 10px 26px color-mix(in oklab, var(--brand) 30%, transparent);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .btn.icon.playing { animation: none; }
+    }
 
     .chip {
       display: inline-flex;
@@ -980,6 +1075,7 @@
       background: var(--panel);
       box-shadow: var(--shadow-warm);
       position: relative;
+      overflow: hidden;
     }
     .setup-main::before {
       content: "";
@@ -987,7 +1083,11 @@
       left: 24px; right: 24px; top: 14px;
       height: 1px;
       background: color-mix(in oklab, var(--line-strong) 60%, transparent);
+      z-index: 2;
     }
+    /* Region art sits at the back; content sits above. */
+    .setup-main > .hero-art { z-index: 0; }
+    .setup-content { position: relative; z-index: 1; }
     .mode-row {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1048,6 +1148,14 @@
       border-top: 1px dashed var(--line);
       margin-top: 20px;
     }
+    /* Adjacent rows share a single divider: the second row drops
+       the border and tightens spacing so Options reads as a
+       continuation of the same control cluster. */
+    .tweak-row + .tweak-row {
+      border-top: 0;
+      padding-top: 4px;
+      margin-top: 6px;
+    }
     .toggle-chip {
       appearance: none; border: 1px solid var(--line); background: var(--panel-soft);
       padding: 7px 12px; border-radius: 999px; font-weight: 700; font-size: 0.84rem;
@@ -1081,12 +1189,122 @@
     }
     .stepper .val em { font-style: normal; color: var(--muted); font-weight: 600; font-size: 0.8rem; margin-left: 2px; }
 
+    /* LengthPicker — fixed set of round sizes (10 / 20 / 40). */
+    .length-picker {
+      display: inline-flex; align-items: center;
+      gap: 2px;
+      border: 1px solid var(--line); border-radius: 999px; background: var(--panel-soft);
+      padding: 3px;
+    }
+    .length-option {
+      appearance: none; background: transparent; border: 0;
+      min-width: 42px; height: 30px;
+      padding: 0 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      color: var(--ink-2);
+      font-weight: 700; font-size: 0.9rem;
+      transition: background var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+    }
+    .length-option:hover { background: var(--panel); color: var(--ink); }
+    .length-option.selected {
+      background: var(--brand);
+      color: #fff;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+    }
+    .length-unit {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.82rem;
+      margin: 0 10px 0 6px;
+    }
+
+    /* Hero-art horizontal pan.
+       background-position percentages are relative to (image-size − container-size)
+       under `cover`, so 0% → 100% uses exactly the available slack — no hard-coded
+       range, no blank edges. Works for any image aspect wider than the container. */
+    .hero-art.pan {
+      animation: hero-pan 72s ease-in-out infinite alternate;
+      will-change: background-position;
+    }
+    @keyframes hero-pan {
+      from { background-position: 0% 42%; }
+      to   { background-position: 100% 42%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hero-art.pan { animation: none; }
+    }
+
     .setup-side .ss-card {
       padding: 22px;
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow-xs);
+    }
+    /* Where-you-stand header row: eyebrow on the left, codex jump
+       on the right. Baseline-aligned so they read as one row. */
+    .ss-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+    .ss-head .eyebrow { margin: 0; }
+    .ss-codex-link {
+      appearance: none; background: transparent; border: 0;
+      padding: 2px 0; cursor: pointer;
+      color: var(--brand-ink);
+      font-weight: 700; font-size: 0.82rem;
+      letter-spacing: 0.01em;
+    }
+    .ss-codex-link:hover { text-decoration: underline; }
+
+    /* Mini meadow — compact caught-monsters strip, same asset
+       vocabulary as the hero meadow but static and evenly spaced.
+       Up to three cells: missing slots simply collapse. Species
+       tint drives the cell wash; `--cell-tint` falls back to the
+       brand hue for any unknown species. */
+    .ss-meadow {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .ss-meadow-cell {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      display: grid; place-items: center;
+      /* Soft elliptical ground shadow at the bottom — anchors the monster
+         visually while the img itself breathes. */
+      background:
+        radial-gradient(ellipse 52% 8% at 50% 82%, rgba(29,43,58,0.22) 0%, transparent 72%);
+    }
+    .ss-meadow-cell img {
+      width: 72%; height: auto;
+      filter: drop-shadow(0 4px 6px rgba(29,43,58,0.22));
+      animation: ss-breathe 4.8s ease-in-out infinite;
+      will-change: transform;
+    }
+    /* Staggered delays so the three cells don't breathe in lockstep. */
+    .ss-meadow-cell:nth-child(2) img { animation-delay: 0.7s; }
+    .ss-meadow-cell:nth-child(3) img { animation-delay: 1.4s; }
+    .ss-meadow-cell.egg img { transform: scale(0.86); }
+
+    @keyframes ss-breathe {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50%      { transform: translateY(-4px) scale(1.03); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ss-meadow-cell img { animation: none; }
+    }
+
+    .ss-meadow-empty {
+      margin-top: 10px;
+      padding: 14px;
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      text-align: center;
     }
     .ss-stat-grid {
       display: grid;
@@ -1102,6 +1320,284 @@
     }
     .ss-stat-label { font-size: 0.78rem; font-weight: 700; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
     .ss-stat-value { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 500; margin-top: 2px; letter-spacing: -0.015em; }
+
+    /* Word bank jump — the only action-shaped tile inside the "where you
+       stand" card, sitting directly under the stat grid. Same corner radius
+       and soft-panel base as .ss-stat so it reads as part of the card, but
+       hover tints toward brand-soft to signal it's clickable. */
+    .ss-bank-link {
+      appearance: none; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px;
+      width: 100%;
+      margin-top: 14px;
+      padding: 14px 16px;
+      background: var(--panel-soft);
+      border: 1px solid var(--line-soft);
+      border-radius: 14px;
+      text-align: left;
+      color: var(--ink);
+      transition: background var(--dur) var(--ease-out),
+                  border-color var(--dur) var(--ease-out),
+                  transform var(--dur) var(--ease-out);
+    }
+    .ss-bank-link:hover {
+      background: color-mix(in oklab, var(--brand-soft) 40%, var(--panel));
+      border-color: color-mix(in oklab, var(--brand) 28%, var(--line));
+    }
+    .ss-bank-link:active { transform: translateY(1px); }
+    .ss-bank-link-body {
+      display: flex; flex-direction: column; gap: 2px; min-width: 0;
+    }
+    .ss-bank-link-head {
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: -0.01em;
+    }
+    .ss-bank-link-sub {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+    .ss-bank-link-arrow {
+      color: var(--brand-ink);
+      font-weight: 700; font-size: 1.1rem;
+      transition: transform var(--dur) var(--ease-out);
+    }
+    .ss-bank-link:hover .ss-bank-link-arrow { transform: translateX(3px); }
+    @media (prefers-reduced-motion: reduce) {
+      .ss-bank-link:hover .ss-bank-link-arrow { transform: none; }
+    }
+
+    /* ==========================================================
+       Word bank — full word list slice with search + filter chips
+       ========================================================== */
+    .wb-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 28px 32px 24px;
+      box-shadow: var(--shadow);
+      max-width: 920px;
+      margin: 0 auto;
+    }
+    .wb-head .title {
+      font-family: var(--font-display);
+      font-size: 1.85rem;
+      letter-spacing: -0.015em;
+      margin: 2px 0 6px;
+    }
+    .wb-head .lede {
+      color: var(--ink-2);
+      max-width: 60ch;
+      font-size: 0.98rem;
+      line-height: 1.55;
+    }
+
+    .wb-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin: 20px 0 14px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .wb-search {
+      position: relative;
+      flex: 1;
+      min-width: 220px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      transition: border-color var(--dur) var(--ease-out),
+                  box-shadow var(--dur) var(--ease-out);
+    }
+    .wb-search:focus-within {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand) 24%, transparent);
+    }
+    .wb-search input {
+      appearance: none; border: 0; outline: 0; background: transparent;
+      flex: 1;
+      font: inherit;
+      color: var(--ink);
+    }
+    .wb-search input::placeholder { color: var(--subtle); }
+    .wb-search-icon { color: var(--muted); font-size: 1.05rem; }
+
+    .wb-chips {
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .wb-chip {
+      appearance: none; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 10px 6px 12px;
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink-2);
+      font: inherit; font-size: 0.86rem; font-weight: 600;
+      transition: background var(--dur) var(--ease-out),
+                  border-color var(--dur) var(--ease-out),
+                  color var(--dur) var(--ease-out);
+    }
+    .wb-chip:hover {
+      background: color-mix(in oklab, var(--brand-soft) 50%, var(--panel));
+      border-color: color-mix(in oklab, var(--brand) 22%, var(--line));
+    }
+    .wb-chip.on {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--panel);
+    }
+    .wb-chip-count {
+      display: inline-flex; justify-content: center; align-items: center;
+      min-width: 22px; height: 20px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--muted) 22%, transparent);
+      color: var(--ink-2);
+      font-size: 0.72rem; font-weight: 700;
+      transition: background var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+    }
+    .wb-chip.on .wb-chip-count {
+      background: color-mix(in oklab, var(--panel) 22%, transparent);
+      color: var(--panel);
+    }
+
+    .wb-list {
+      list-style: none;
+      margin: 0; padding: 0;
+      display: flex; flex-direction: column;
+      gap: 8px;
+    }
+    .wb-row {
+      display: grid;
+      grid-template-columns: minmax(200px, 1.1fr) minmax(260px, 1.2fr) auto;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 14px 12px 18px;
+      background: var(--panel-soft);
+      border: 1px solid var(--line-soft);
+      border-left: 4px solid var(--line-strong);
+      border-radius: var(--radius-sm);
+      transition: background var(--dur) var(--ease-out),
+                  border-color var(--dur) var(--ease-out);
+    }
+    .wb-row:hover {
+      background: color-mix(in oklab, var(--panel) 60%, var(--panel-soft));
+      border-color: color-mix(in oklab, var(--brand) 16%, var(--line));
+    }
+    .wb-row[data-status="due"]      { border-left-color: var(--warn); }
+    .wb-row[data-status="weak"]     { border-left-color: var(--bad); }
+    .wb-row[data-status="learning"] { border-left-color: var(--brand); }
+    .wb-row[data-status="secure"]   { border-left-color: var(--good); }
+    .wb-row[data-status="unseen"]   { border-left-color: var(--subtle); }
+
+    .wb-cell-word {
+      display: flex; align-items: center; gap: 10px;
+      min-width: 0;
+    }
+    .wb-word {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.005em;
+      color: var(--ink);
+    }
+
+    .wb-pill {
+      display: inline-flex; align-items: center;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .wb-pill.due      { background: var(--warn-soft);    color: var(--warn-strong); }
+    .wb-pill.weak     { background: var(--bad-soft);     color: var(--bad-strong); }
+    .wb-pill.learning { background: var(--brand-soft);   color: var(--brand-ink); }
+    .wb-pill.secure   { background: var(--good-soft);    color: var(--good-strong); }
+    .wb-pill.unseen   { background: var(--panel-sunken); color: var(--muted); }
+
+    .wb-cell-meta {
+      display: flex; gap: 18px;
+      flex-wrap: wrap;
+    }
+    .wb-meta {
+      display: flex; flex-direction: column; gap: 2px;
+      min-width: 64px;
+    }
+    .wb-meta-label {
+      font-size: 0.72rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.04em;
+      font-weight: 600;
+    }
+    .wb-meta-value {
+      color: var(--ink);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .wb-action {
+      appearance: none; cursor: pointer;
+      display: inline-flex; justify-content: center; align-items: center;
+      width: 38px; height: 38px;
+      border-radius: 999px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--brand-ink);
+      transition: background var(--dur) var(--ease-out),
+                  border-color var(--dur) var(--ease-out),
+                  transform var(--dur-fast) var(--ease-out);
+    }
+    .wb-action:hover {
+      background: var(--brand-soft);
+      border-color: color-mix(in oklab, var(--brand) 30%, var(--line));
+      transform: translateX(2px);
+    }
+
+    .wb-empty {
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      background: var(--panel-soft);
+      border: 1px dashed var(--line);
+      border-radius: var(--radius-sm);
+      list-style: none;
+    }
+
+    .wb-foot {
+      margin-top: 14px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .wb-row, .wb-chip, .wb-action, .wb-search { transition: none; }
+      .wb-action:hover { transform: none; }
+    }
+
+    @media (max-width: 720px) {
+      .wb-card { padding: 22px 20px 20px; border-radius: var(--radius); }
+      .wb-row {
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+      }
+      .wb-cell-meta {
+        grid-column: 1 / -1;
+        gap: 14px;
+      }
+    }
 
     /* ==========================================================
        NEW: Session (question)
@@ -1127,21 +1623,37 @@
     .path-step {
       width: 10px; height: 10px;
       border-radius: 999px;
-      background: var(--line-soft);
-      border: 1.5px solid var(--line);
+      background: color-mix(in oklab, var(--panel) 85%, transparent);
+      /* Pending dots sit over variable hero art — a stronger ink border keeps
+         them visible whether the bg is sky, field, or stonework. */
+      border: 1.5px solid color-mix(in oklab, var(--ink) 55%, transparent);
+      box-shadow: 0 0 0 1px color-mix(in oklab, var(--panel) 70%, transparent);
       flex-shrink: 0;
     }
-    .path-step.done { background: var(--good); border-color: var(--good); }
+    .path-step.done {
+      background: var(--good);
+      border-color: color-mix(in oklab, var(--good) 80%, var(--ink));
+    }
     .path-step.current {
       width: 16px; height: 16px;
       background: var(--brand);
-      border-color: var(--brand);
-      box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand) 22%, transparent);
+      border-color: color-mix(in oklab, var(--brand) 75%, var(--ink));
+      box-shadow:
+        0 0 0 1px color-mix(in oklab, var(--panel) 80%, transparent),
+        0 0 0 5px color-mix(in oklab, var(--brand) 22%, transparent);
       animation: pulse-ring 2s var(--ease-in-out) infinite;
     }
     @keyframes pulse-ring {
-      0%, 100% { box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand) 22%, transparent); }
-      50% { box-shadow: 0 0 0 7px color-mix(in oklab, var(--brand) 10%, transparent); }
+      0%, 100% {
+        box-shadow:
+          0 0 0 1px color-mix(in oklab, var(--panel) 80%, transparent),
+          0 0 0 5px color-mix(in oklab, var(--brand) 22%, transparent);
+      }
+      50% {
+        box-shadow:
+          0 0 0 1px color-mix(in oklab, var(--panel) 80%, transparent),
+          0 0 0 8px color-mix(in oklab, var(--brand) 10%, transparent);
+      }
     }
     .path-count {
       font-size: 0.82rem; font-weight: 800; color: var(--muted);
@@ -1150,9 +1662,10 @@
     }
 
     .prompt-card {
-      background:
-        linear-gradient(180deg, var(--panel) 0%, color-mix(in oklab, var(--panel-soft) 80%, var(--panel)) 100%);
-      border: 1px solid var(--line);
+      background: color-mix(in oklab, var(--panel) 80%, transparent);
+      backdrop-filter: blur(8px) saturate(1.05);
+      -webkit-backdrop-filter: blur(8px) saturate(1.05);
+      border: 1px solid color-mix(in oklab, var(--line) 80%, transparent);
       border-radius: var(--radius-lg);
       padding: 40px 36px 32px;
       box-shadow: var(--shadow-warm);
@@ -1212,14 +1725,6 @@
     }
     .word-input::placeholder { color: var(--subtle); font-style: italic; }
     .word-input:focus { border-bottom-color: var(--brand); }
-    .session .word-input-wrap:focus-within::after {
-      content: "";
-      position: absolute; left: 0; right: 0; bottom: -2.5px;
-      height: 3px; background: var(--brand);
-      transform-origin: left;
-      animation: underline-in var(--dur-slow) var(--ease-out);
-    }
-    @keyframes underline-in { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
     .audio-row {
       display: flex; justify-content: center; gap: 10px;
@@ -1278,6 +1783,12 @@
     /* ==========================================================
        NEW: Feedback ribbons (inline, non-destructive)
        ========================================================== */
+    /* Feedback slot — renders ribbon + family chips for correct/wrong variants
+       and acts as an invisible height placeholder on the question variant so
+       the prompt-card keeps the same total height across all three states. */
+    .feedback-slot.is-placeholder { visibility: hidden; }
+    .feedback-slot.is-placeholder * { animation: none !important; }
+
     .ribbon {
       margin-top: 18px;
       padding: 14px 18px;
@@ -1287,6 +1798,11 @@
       grid-template-columns: auto 1fr auto;
       gap: 14px;
       align-items: center;
+      /* Fixed min-height so correct (with word chip) and wrong (sub-only) come
+         out identical — prevents a 3px drift between the two feedback states.
+         box-sizing is border-box, so 84 == full rendered height of the tallest
+         natural layout (the correct ribbon with its word chip). */
+      min-height: 84px;
       animation: ribbon-in var(--dur-slow) var(--ease-out);
     }
     @keyframes ribbon-in {
@@ -1641,11 +2157,22 @@
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
-  <!-- Components (shared primitives); exports to window -->
-  <script type="text/babel" src="./v1/components.jsx"></script>
-  <!-- Scenes; exports to window -->
-  <script type="text/babel" src="./v1/scenes.jsx"></script>
-  <!-- App; renders -->
-  <script type="text/babel" src="./v1/app.jsx"></script>
+  <!-- JSX modules: injected with a per-request cache-buster so design tweaks
+       pick up on a plain reload without needing a hard-refresh. The scripts
+       are appended to <head> synchronously during body parsing, so Babel
+       standalone (which scans for type="text/babel" on DOMContentLoaded)
+       still fetches and compiles them in source-order. -->
+  <script>
+    (function () {
+      var t = Date.now();
+      var srcs = ['./v1/components.jsx', './v1/scenes.jsx', './v1/app.jsx'];
+      srcs.forEach(function (src) {
+        var s = document.createElement('script');
+        s.type = 'text/babel';
+        s.src = src + '?t=' + t;
+        document.head.appendChild(s);
+      });
+    })();
+  </script>
 </body>
 </html>

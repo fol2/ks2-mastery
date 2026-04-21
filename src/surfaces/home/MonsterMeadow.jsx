@@ -1,5 +1,5 @@
 import React from 'react';
-import { monsterAssetPath, monsterAssetSrcset, monsterFaceSign } from './data.js';
+import { eggBreatheStyle, monsterAssetPath, monsterAssetSrcset, monsterFaceSign } from './data.js';
 
 const MEADOW_HEIGHT_ESTIMATE = 420;
 
@@ -32,6 +32,7 @@ export function MonsterMeadow({ monsters = [], maxSlots = 10 }) {
               '--delay': `${m.delay || 0}s`,
               '--bob-delay': `${m.bobDelay || 0}s`,
               '--face': faceSign,
+              ...(isEgg ? eggBreatheStyle(m, 'meadow') : {}),
               zIndex,
             }}
           >

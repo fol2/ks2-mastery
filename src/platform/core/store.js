@@ -19,7 +19,7 @@ const DEFAULT_ROUTE = {
   tab: 'practice',
 };
 
-const VALID_ROUTE_SCREENS = new Set(['dashboard', 'subject', 'profile-settings', 'parent-hub', 'admin-hub']);
+const VALID_ROUTE_SCREENS = new Set(['dashboard', 'subject', 'codex', 'profile-settings', 'parent-hub', 'admin-hub']);
 const VALID_ROUTE_TABS = new Set(['practice', 'analytics', 'profiles', 'settings', 'method']);
 
 const DEFAULT_SUBJECT_UI = {
@@ -108,7 +108,7 @@ function normaliseRoute(rawRoute, subjects) {
     return { screen, subjectId, tab };
   }
 
-  if (screen === 'profile-settings' || screen === 'parent-hub' || screen === 'admin-hub') {
+  if (screen === 'codex' || screen === 'profile-settings' || screen === 'parent-hub' || screen === 'admin-hub') {
     return { screen, subjectId: null, tab: DEFAULT_ROUTE.tab };
   }
 
@@ -242,6 +242,12 @@ export function createStore(subjects, { repositories } = {}) {
       setState((current) => ({
         ...current,
         route: normaliseRoute({ screen: 'subject', subjectId, tab }, registry),
+      }));
+    },
+    openCodex() {
+      setState((current) => ({
+        ...current,
+        route: normaliseRoute({ screen: 'codex' }, registry),
       }));
     },
     openParentHub() {

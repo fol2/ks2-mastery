@@ -159,6 +159,7 @@ function renderPracticeDashboard({ learner, service, subject, repositories }) {
   const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id), {
     learnerId: learner.id,
     gameStateRepository: repositories?.gameState,
+    persistBranches: false,
   });
   const modeOptions = [
     ['smart', 'Smart Review', 'Weighted mix of due, weak and new words.'],
@@ -322,6 +323,7 @@ function renderSummary({ learner, ui, service, subject, repositories }) {
   const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id), {
     learnerId: learner.id,
     gameStateRepository: repositories?.gameState,
+    persistBranches: false,
   });
   if (!summary) return '';
   return `

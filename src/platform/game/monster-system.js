@@ -211,10 +211,18 @@ export function monsterSummary(learnerId, gameStateRepository) {
   }));
 }
 
-export function monsterSummaryFromSpellingAnalytics(analytics, { learnerId = null, gameStateRepository = null, random = Math.random } = {}) {
-  const branchState = learnerId && gameStateRepository
-    ? ensureMonsterBranches(learnerId, gameStateRepository, { random })
-    : {};
+export function monsterSummaryFromSpellingAnalytics(analytics, {
+  learnerId = null,
+  gameStateRepository = null,
+  random = Math.random,
+  persistBranches = true,
+} = {}) {
+  let branchState = {};
+  if (learnerId && gameStateRepository) {
+    branchState = persistBranches
+      ? ensureMonsterBranches(learnerId, gameStateRepository, { random })
+      : loadMonsterState(learnerId, gameStateRepository);
+  }
   const state = secureWordsFromAnalytics(analytics, branchState);
   return ['inklet', 'glimmerbug', 'phaeton'].map((monsterId) => ({
     monster: MONSTERS[monsterId],

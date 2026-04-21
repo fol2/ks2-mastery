@@ -19,13 +19,18 @@ function clone(value) {
 
 function makeGameStateRepository(initialState = {}) {
   let state = clone(initialState);
+  let writes = 0;
   return {
     read() {
       return clone(state);
     },
     write(_learnerId, _systemId, nextState) {
+      writes += 1;
       state = clone(nextState);
       return clone(state);
+    },
+    writes() {
+      return writes;
     },
   };
 }
@@ -177,5 +182,23 @@ test('analytics summaries use persisted monster branches while deriving current 
   assert.equal(summary.find((entry) => entry.monster.id === 'inklet').progress.branch, 'b2');
   assert.equal(summary.find((entry) => entry.monster.id === 'glimmerbug').progress.branch, 'b1');
   assert.equal(summary.find((entry) => entry.monster.id === 'phaeton').progress.branch, 'b2');
+  assert.equal(summary.find((entry) => entry.monster.id === 'inklet').progress.mastered, 1);
+});
+
+test('analytics summaries can project branches without writing during render', () => {
+  const repository = makeGameStateRepository();
+  const analytics = {
+    wordGroups: [
+      { words: [{ slug: 'possess', status: 'secure', year: '3-4' }] },
+    ],
+  };
+
+  const summary = monsterSummaryFromSpellingAnalytics(analytics, {
+    learnerId: 'learner-a',
+    gameStateRepository: repository,
+    persistBranches: false,
+  });
+
+  assert.equal(repository.writes(), 0);
   assert.equal(summary.find((entry) => entry.monster.id === 'inklet').progress.mastered, 1);
 });

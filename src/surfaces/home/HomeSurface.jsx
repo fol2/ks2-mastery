@@ -63,6 +63,13 @@ export function HomeSurface({ model, actions }) {
             >
               Begin today's round <IconArrowRight />
             </button>
+            <button
+              type="button"
+              className="btn ghost xl"
+              onClick={actions.openCodex}
+            >
+              Open codex
+            </button>
           </div>
         </div>
       </div>

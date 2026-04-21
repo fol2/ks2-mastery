@@ -152,6 +152,12 @@ export function createAppHarness({
         return true;
       }
 
+      if (action === 'open-codex') {
+        tts.stop();
+        store.openCodex();
+        return true;
+      }
+
       if (action === 'open-profile-settings') {
         tts.stop();
         store.openProfileSettings();

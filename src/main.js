@@ -1,4 +1,10 @@
 import { createStore } from './platform/core/store.js';
+import {
+  ensureLocalCodexReviewProfile,
+  LOCAL_CODEX_REVIEW_LEARNER_ID,
+  LOCAL_CODEX_REVIEW_LEARNER_IDS,
+  LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS,
+} from './platform/core/local-review-profile.js';
 import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
 import { renderApp } from './platform/ui/render.js';
 import { safeParseInt, uid } from './platform/core/utils.js';
@@ -60,6 +66,29 @@ function escapeHtml(value) {
 function isLocalMode() {
   const params = new URLSearchParams(globalThis.location.search);
   return globalThis.location.protocol === 'file:' || params.get('local') === '1';
+}
+
+function reviewLearnerIdFromMode(value) {
+  const mode = String(value || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
+  if (!mode) return '';
+  if (LOCAL_CODEX_REVIEW_LEARNER_IDS.includes(mode)) return mode;
+  if (['egg', 'eggs', 'all-egg', 'all-eggs', 'codex-eggs'].includes(mode)) {
+    return LOCAL_CODEX_REVIEW_LEARNER_ID;
+  }
+  const stageMatch = mode.match(/^(?:all-)?stage-?([1-4])$/) || mode.match(/^([1-4])$/);
+  return stageMatch ? LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS[stageMatch[1]] : '';
+}
+
+function localCodexReviewLearnerIdFromUrl() {
+  if (!isLocalMode()) return '';
+  const params = new URLSearchParams(globalThis.location.search);
+  const learnerId = String(params.get('learner') || '').trim();
+  if (LOCAL_CODEX_REVIEW_LEARNER_IDS.includes(learnerId)) return learnerId;
+  return reviewLearnerIdFromMode(params.get('codexReview'));
+}
+
+function shouldOpenLocalCodexReview() {
+  return Boolean(localCodexReviewLearnerIdFromUrl());
 }
 
 function credentialFetch(input, init = {}) {
@@ -172,6 +201,9 @@ function bindAuthScreen() {
 async function createRepositoriesForCurrentRuntime() {
   if (isLocalMode()) {
     const localRepositories = createLocalPlatformRepositories({ storage: globalThis.localStorage });
+    ensureLocalCodexReviewProfile(localRepositories, {
+      selectLearnerId: localCodexReviewLearnerIdFromUrl(),
+    });
     return {
       repositories: localRepositories,
       session: { signedIn: false, mode: 'local-only', platformRole: 'parent' },
@@ -821,6 +853,9 @@ async function updateAdminAccountRole(accountId, platformRole) {
 }
 
 const store = createStore(SUBJECTS, { repositories });
+if (shouldOpenLocalCodexReview()) {
+  store.openCodex();
+}
 
 const spellingAutoAdvance = createSpellingAutoAdvanceController({
   getState: () => store.getState(),
@@ -934,6 +969,7 @@ function buildHomeMonsterSummary(learnerId, context) {
     return monsterSummaryFromSpellingAnalytics(spelling.getAnalyticsSnapshot(learnerId), {
       learnerId,
       gameStateRepository: context.repositories?.gameState,
+      persistBranches: false,
     });
   }
   return monsterSummary(learnerId, context.repositories?.gameState);
@@ -951,7 +987,7 @@ function buildHomeDueTotal(learnerId, context) {
   }
 }
 
-function buildHomeModel(appState, context) {
+function buildSurfaceChromeModel(appState) {
   const learnerId = appState.learners.selectedId;
   const learner = learnerId ? appState.learners.byId[learnerId] : null;
   const learnerOptions = appState.learners.allIds
@@ -960,7 +996,6 @@ function buildHomeModel(appState, context) {
     .map((entry) => ({ id: entry.id, name: entry.name, yearGroup: entry.yearGroup }));
   const theme = document.documentElement.getAttribute('data-theme') || 'light';
   const persistenceSnapshot = appState.persistence || null;
-  const canOpenParentHub = Boolean(context.parentHub?.permissions?.canViewParentHub) || !boot.session.signedIn;
 
   return {
     theme,
@@ -975,6 +1010,15 @@ function buildHomeModel(appState, context) {
       label: homePersistenceLabel(persistenceSnapshot),
       snapshot: persistenceSnapshot,
     },
+  };
+}
+
+function buildHomeModel(appState, context) {
+  const learnerId = appState.learners.selectedId;
+  const canOpenParentHub = Boolean(context.parentHub?.permissions?.canViewParentHub) || !boot.session.signedIn;
+
+  return {
+    ...buildSurfaceChromeModel(appState),
     monsterSummary: buildHomeMonsterSummary(learnerId, context),
     subjects: SUBJECTS,
     dashboardStats: buildHomeDashboardStats(appState, context),
@@ -985,30 +1029,57 @@ function buildHomeModel(appState, context) {
   };
 }
 
-function buildHomeActions() {
+function buildCodexModel(appState, context) {
+  const learnerId = appState.learners.selectedId;
+
+  return {
+    ...buildSurfaceChromeModel(appState),
+    monsterSummary: buildHomeMonsterSummary(learnerId, context),
+    now: new Date(),
+  };
+}
+
+function buildSurfaceActions() {
   return {
     toggleTheme: () => dispatchAction('toggle-theme'),
     selectLearner: (value) => dispatchAction('learner-select', { value }),
+    navigateHome: () => dispatchAction('navigate-home'),
     openProfileSettings: () => dispatchAction('open-profile-settings'),
     openSubject: (subjectId) => dispatchAction('open-subject', { subjectId }),
+    openCodex: () => dispatchAction('open-codex'),
     openParentHub: () => dispatchAction('open-parent-hub'),
     logout: () => dispatchAction('platform-logout'),
     retryPersistence: () => dispatchAction('persistence-retry'),
   };
 }
 
-function mountHomeSurface(appState, context) {
+function mountReactSurfaces(appState, context) {
   const homeSurface = globalThis.__ks2HomeSurface;
+  const codexSurface = globalThis.__ks2CodexSurface;
+  const actions = buildSurfaceActions();
+
   if (appState.route.screen === 'dashboard') {
     const mount = root.querySelector('[data-home-mount="true"]');
     if (mount && homeSurface) {
       homeSurface.render(mount, {
         model: buildHomeModel(appState, context),
-        actions: buildHomeActions(),
+        actions,
       });
     }
   } else if (homeSurface) {
     homeSurface.unmount();
+  }
+
+  if (appState.route.screen === 'codex') {
+    const mount = root.querySelector('[data-codex-mount="true"]');
+    if (mount && codexSurface) {
+      codexSurface.render(mount, {
+        model: buildCodexModel(appState, context),
+        actions,
+      });
+    }
+  } else if (codexSurface) {
+    codexSurface.unmount();
   }
 }
 
@@ -1017,7 +1088,7 @@ function render() {
   const context = contextFor(appState.route.subjectId || 'spelling');
   root.innerHTML = renderApp(appState, context);
   ensureSpellingAutoAdvanceFromCurrentState();
-  mountHomeSurface(appState, context);
+  mountReactSurfaces(appState, context);
 
   if (boot.session.signedIn) {
     if (appState.route.screen === 'parent-hub') {
@@ -1061,6 +1132,13 @@ function handleGlobalAction(action, data) {
     clearAdultSurfaceNotice();
     tts.stop();
     store.openSubject(data.subjectId || 'spelling', data.tab || 'practice');
+    return true;
+  }
+
+  if (action === 'open-codex') {
+    clearAdultSurfaceNotice();
+    tts.stop();
+    store.openCodex();
     return true;
   }
 

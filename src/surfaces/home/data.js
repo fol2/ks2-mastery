@@ -1,6 +1,11 @@
 const MONSTER_VARIANTS = ['b1', 'b2'];
 const DIRECT_STAGE_THRESHOLDS = Object.freeze([1, 10, 30, 60, 90]);
 const PHAETON_STAGE_THRESHOLDS = Object.freeze([3, 25, 95, 145, 200]);
+const CODEX_POWER_RANK = Object.freeze({
+  inklet: 1,
+  glimmerbug: 2,
+  phaeton: 3,
+});
 
 export const REGION_BACKGROUND_URLS = Object.freeze([
   '/assets/regions/the-scribe-downs/the-scribe-downs-bg-a1.1280.webp',
@@ -86,6 +91,95 @@ export function monsterAssetSrcset(species, variant, stage) {
   return [320, 640, 1280]
     .map((size) => `${monsterAssetPath(species, variant, stage, size)} ${size}w`)
     .join(', ');
+}
+
+function hashString(value) {
+  let hash = 2166136261;
+  const text = String(value || '');
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function valueBetween(hash, min, max) {
+  return min + (hash / 0xffffffff) * (max - min);
+}
+
+export function eggBreatheStyle(seed, context = 'card') {
+  const rawSeed = typeof seed === 'string'
+    ? seed
+    : [
+      seed?.id,
+      seed?.species,
+      seed?.branch || seed?.variant,
+      seed?.stage,
+      context,
+    ].filter((part) => part != null && part !== '').join(':');
+  const durationMin = context === 'feature' ? 6.6 : 5.8;
+  const durationMax = context === 'feature' ? 8.3 : 7.4;
+  const liftMin = context === 'feature' ? 3 : 2.4;
+  const liftMax = context === 'feature' ? 5 : 4.2;
+  const duration = valueBetween(hashString(`${rawSeed}:duration`), durationMin, durationMax);
+  const delay = -valueBetween(hashString(`${rawSeed}:phase`), 0.25, duration - 0.2);
+  const lift = -valueBetween(hashString(`${rawSeed}:lift`), liftMin, liftMax);
+  const scale = valueBetween(hashString(`${rawSeed}:scale`), 1.007, 1.014);
+
+  return {
+    '--egg-breathe-duration': `${duration.toFixed(2)}s`,
+    '--egg-breathe-delay': `${delay.toFixed(2)}s`,
+    '--egg-breathe-lift': `${lift.toFixed(2)}px`,
+    '--egg-breathe-scale': scale.toFixed(3),
+  };
+}
+
+export function monsterMotionStyle(seed, context = 'card') {
+  const stage = Math.max(1, Math.min(4, Number(seed?.stage) || 1));
+  const profiles = {
+    1: { duration: [2.2, 4.1], lift: [8, 15], pan: [6, 13], scale: [1.006, 1.016], tilt: [1.2, 2.8] },
+    2: { duration: [3.5, 6.1], lift: [6, 11], pan: [3.5, 8], scale: [1.006, 1.014], tilt: [0.7, 1.7] },
+    3: { duration: [5.2, 8.4], lift: [3.5, 6.4], pan: [1.5, 4.6], scale: [1.003, 1.01], tilt: [0.3, 1] },
+    4: { duration: [7.6, 11.8], lift: [5, 8.6], pan: [0.8, 3], scale: [1.022, 1.046], tilt: [0.1, 0.5] },
+  };
+  const profile = profiles[stage];
+  const rawSeed = [
+    seed?.id,
+    seed?.species,
+    seed?.branch || seed?.variant,
+    stage,
+    context,
+  ].filter((part) => part != null && part !== '').join(':');
+  const sizeFactor = context === 'feature' ? 1.18 : context === 'preview' ? 1.08 : 1;
+  const durationFactor = context === 'feature' ? 1.06 : 1;
+  const duration = valueBetween(
+    hashString(`${rawSeed}:monster-duration`),
+    profile.duration[0],
+    profile.duration[1],
+  ) * durationFactor;
+  const delay = -valueBetween(hashString(`${rawSeed}:monster-phase`), 0.1, duration - 0.12);
+  const direction = hashString(`${rawSeed}:monster-direction`) % 2 === 0 ? 1 : -1;
+  const liftA = valueBetween(hashString(`${rawSeed}:monster-lift-a`), profile.lift[0], profile.lift[1]) * sizeFactor;
+  const liftB = valueBetween(hashString(`${rawSeed}:monster-lift-b`), profile.lift[0] * 0.18, profile.lift[1] * 0.58) * sizeFactor;
+  const panA = valueBetween(hashString(`${rawSeed}:monster-pan-a`), profile.pan[0], profile.pan[1]) * sizeFactor * direction;
+  const panB = valueBetween(hashString(`${rawSeed}:monster-pan-b`), profile.pan[0] * 0.3, profile.pan[1] * 0.92) * sizeFactor * -direction;
+  const scaleA = valueBetween(hashString(`${rawSeed}:monster-scale-a`), profile.scale[0], profile.scale[1]);
+  const scaleB = valueBetween(hashString(`${rawSeed}:monster-scale-b`), 1.001, Math.max(1.002, profile.scale[0] - 0.002));
+  const tiltA = valueBetween(hashString(`${rawSeed}:monster-tilt-a`), profile.tilt[0], profile.tilt[1]) * direction;
+  const tiltB = valueBetween(hashString(`${rawSeed}:monster-tilt-b`), profile.tilt[0] * 0.2, profile.tilt[1] * 0.72) * -direction;
+
+  return {
+    '--monster-float-duration': `${duration.toFixed(2)}s`,
+    '--monster-float-delay': `${delay.toFixed(2)}s`,
+    '--monster-float-lift-a': `${liftA.toFixed(2)}px`,
+    '--monster-float-lift-b': `${liftB.toFixed(2)}px`,
+    '--monster-float-pan-a': `${panA.toFixed(2)}px`,
+    '--monster-float-pan-b': `${panB.toFixed(2)}px`,
+    '--monster-float-scale-a': scaleA.toFixed(3),
+    '--monster-float-scale-b': scaleB.toFixed(3),
+    '--monster-float-tilt-a': `${tiltA.toFixed(2)}deg`,
+    '--monster-float-tilt-b': `${tiltB.toFixed(2)}deg`,
+  };
 }
 
 function pickVariant(seed) {
@@ -197,12 +291,16 @@ export function buildCodexEntries(summary = []) {
     const max = Math.max(1, Number(monster?.masteredMax) || (monster?.id === 'phaeton' ? 200 : 100));
     const stage = Math.max(0, Math.min(4, Number(progress?.stage) || 0));
     const caught = Boolean(progress?.caught);
+    const displayState = !caught ? 'fresh' : stage === 0 ? 'egg' : 'monster';
     const variant = variantForMonster(monster.id, stage, progress?.branch);
-    const displayName = caught
+    const displayName = caught && !(monster.id === 'phaeton' && stage === 0)
       ? monster.nameByStage?.[stage] || monster.name
-      : monster.nameByStage?.[0] || monster.name;
+      : caught
+        ? monster.name
+      : 'Unknown creature';
     const pct = Math.max(0, Math.min(1, mastered / max));
     const nextMilestone = nextCodexMilestone(monster.id, mastered);
+    const imageAlt = caught ? displayName : `${monster.name} not caught`;
 
     return {
       id: monster.id,
@@ -219,16 +317,53 @@ export function buildCodexEntries(summary = []) {
       colour: monster.accent,
       soft: monster.pale,
       branch: variant,
-      img: monsterAssetPath(monster.id, variant, stage, 640),
-      srcSet: monsterAssetSrcset(monster.id, variant, stage),
-      stageLabel: caught ? `Stage ${stage}` : 'Not caught',
-      secureLabel: `${mastered} / ${max} secure`,
-      nextGoal: nextMilestone
-        ? `${Math.max(0, nextMilestone - mastered)} more for the next change`
-        : 'Fully evolved',
+      displayState,
+      img: caught ? monsterAssetPath(monster.id, variant, stage, 640) : null,
+      srcSet: caught ? monsterAssetSrcset(monster.id, variant, stage) : '',
+      imageAlt,
+      placeholder: caught ? '' : '?',
+      stageLabel: caught ? (stage === 0 ? 'Egg' : `Stage ${stage}`) : 'Not caught',
+      secureLabel: secureWordLabel(mastered),
+      nextGoal: codexNextGoal({ caught, nextMilestone }),
       wordBand: codexWordBand(monster.id),
     };
   });
+}
+
+export function pickFeaturedCodexEntry(entries = []) {
+  return entries
+    .slice()
+    .sort((left, right) => {
+      if (left.caught !== right.caught) return left.caught ? -1 : 1;
+      if (left.level !== right.level) return right.level - left.level;
+
+      const powerDifference = codexPowerRank(right.id) - codexPowerRank(left.id);
+      if (powerDifference) return powerDifference;
+
+      if (left.stage !== right.stage) return right.stage - left.stage;
+      return right.mastered - left.mastered;
+    })[0] || null;
+}
+
+function codexPowerRank(monsterId) {
+  return CODEX_POWER_RANK[monsterId] || 0;
+}
+
+function secureWordLabel(mastered) {
+  const count = Math.max(0, Number(mastered) || 0);
+  if (count === 1) return '1 secure word';
+  if (count > 1) return `${count} secure words`;
+  return 'No secure words yet';
+}
+
+function codexNextGoal({ caught, nextMilestone }) {
+  if (!caught && nextMilestone) {
+    return 'Secure words to catch this creature';
+  }
+  if (nextMilestone) {
+    return 'Keep securing words for the next change';
+  }
+  return 'Fully evolved';
 }
 
 function nextCodexMilestone(monsterId, mastered) {

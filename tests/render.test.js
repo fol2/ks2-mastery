@@ -10,6 +10,7 @@ import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
 import { buildParentHubReadModel } from '../src/platform/hubs/parent-read-model.js';
 import { buildAdminHubReadModel } from '../src/platform/hubs/admin-read-model.js';
+import { MONSTERS } from '../src/platform/game/monsters.js';
 import {
   buildAdminHubAccessContext,
   buildParentHubAccessContext,
@@ -165,6 +166,90 @@ test('hero background rotation includes the new Scribe Downs c landscapes', asyn
       REGION_BACKGROUND_URLS.includes(`/assets/regions/the-scribe-downs/the-scribe-downs-bg-c${index}.1280.webp`),
     );
   }
+});
+
+test('codex entries show fresh creatures as unknown and caught stage-zero creatures as eggs', async () => {
+  const { buildCodexEntries } = await import('../src/surfaces/home/data.js');
+  const [fresh, egg] = buildCodexEntries([
+    { monster: MONSTERS.inklet, progress: { caught: false, mastered: 0, stage: 0, level: 0, branch: 'b1' } },
+    { monster: MONSTERS.glimmerbug, progress: { caught: true, mastered: 1, stage: 0, level: 0, branch: 'b2' } },
+  ]);
+
+  assert.equal(fresh.displayState, 'fresh');
+  assert.equal(fresh.placeholder, '?');
+  assert.equal(fresh.img, null);
+  assert.equal(fresh.name, 'Unknown creature');
+
+  assert.equal(egg.displayState, 'egg');
+  assert.equal(egg.stageLabel, 'Egg');
+  assert.equal(egg.secureLabel, '1 secure word');
+  assert.equal(egg.nextGoal, 'Keep securing words for the next change');
+  assert.match(egg.img, /glimmerbug-b2-0\.640\.webp/);
+});
+
+test('codex progress copy omits total and remaining counts', async () => {
+  const { buildCodexEntries } = await import('../src/surfaces/home/data.js');
+  const [fresh, egg] = buildCodexEntries([
+    { monster: MONSTERS.inklet, progress: { caught: false, mastered: 0, stage: 0, level: 0, branch: 'b1' } },
+    { monster: MONSTERS.phaeton, progress: { caught: true, mastered: 3, stage: 0, level: 0, branch: 'b1' } },
+  ]);
+
+  assert.equal(fresh.secureLabel, 'No secure words yet');
+  assert.equal(fresh.nextGoal, 'Secure words to catch this creature');
+  assert.equal(egg.name, 'Phaeton');
+  assert.equal(egg.stageLabel, 'Egg');
+  assert.equal(egg.secureLabel, '3 secure words');
+  assert.equal(egg.nextGoal, 'Keep securing words for the next change');
+  assert.doesNotMatch(egg.secureLabel, /\//);
+  assert.doesNotMatch(egg.nextGoal, /^\d/);
+});
+
+test('egg breath styles are stable while offsetting different creatures', async () => {
+  const { eggBreatheStyle } = await import('../src/surfaces/home/data.js');
+  const inklet = { id: 'inklet', branch: 'b1', stage: 0 };
+  const glimmerbug = { id: 'glimmerbug', branch: 'b2', stage: 0 };
+
+  assert.deepEqual(eggBreatheStyle(inklet), eggBreatheStyle(inklet));
+  assert.notDeepEqual(eggBreatheStyle(inklet), eggBreatheStyle(glimmerbug));
+  assert.match(eggBreatheStyle(inklet)['--egg-breathe-duration'], /^\d+\.\d{2}s$/);
+  assert.match(eggBreatheStyle(inklet)['--egg-breathe-delay'], /^-\d+\.\d{2}s$/);
+});
+
+test('monster motion styles slow down as codex stages mature', async () => {
+  const { monsterMotionStyle } = await import('../src/surfaces/home/data.js');
+  const kid = { id: 'inklet', branch: 'b1', stage: 1 };
+  const mega = { id: 'phaeton', branch: 'b1', stage: 4 };
+
+  assert.deepEqual(monsterMotionStyle(kid), monsterMotionStyle(kid));
+  assert.ok(parseFloat(monsterMotionStyle(kid)['--monster-float-duration']) < 4.2);
+  assert.ok(parseFloat(monsterMotionStyle(mega)['--monster-float-duration']) >= 7.6);
+  assert.ok(parseFloat(monsterMotionStyle(mega)['--monster-float-scale-a']) > 1.02);
+  assert.notEqual(monsterMotionStyle(kid)['--monster-float-pan-a'], monsterMotionStyle(mega)['--monster-float-pan-a']);
+});
+
+test('codex hero favours the most powerful caught creature and uses species priority at equal level', async () => {
+  const { buildCodexEntries, pickFeaturedCodexEntry } = await import('../src/surfaces/home/data.js');
+  const entries = buildCodexEntries([
+    { monster: MONSTERS.inklet, progress: { caught: true, mastered: 4, stage: 0, level: 0, branch: 'b1' } },
+    { monster: MONSTERS.glimmerbug, progress: { caught: true, mastered: 4, stage: 0, level: 0, branch: 'b1' } },
+    { monster: MONSTERS.phaeton, progress: { caught: true, mastered: 4, stage: 0, level: 0, branch: 'b1' } },
+  ]);
+
+  assert.equal(pickFeaturedCodexEntry(entries).id, 'phaeton');
+});
+
+test('codex hero uses the highest-priority unknown creature for a fresh profile', async () => {
+  const { buildCodexEntries, pickFeaturedCodexEntry } = await import('../src/surfaces/home/data.js');
+  const entries = buildCodexEntries([
+    { monster: MONSTERS.inklet, progress: { caught: false, mastered: 0, stage: 0, level: 0, branch: 'b1' } },
+    { monster: MONSTERS.glimmerbug, progress: { caught: false, mastered: 0, stage: 0, level: 0, branch: 'b1' } },
+    { monster: MONSTERS.phaeton, progress: { caught: false, mastered: 0, stage: 0, level: 0, branch: 'b1' } },
+  ]);
+  const featured = pickFeaturedCodexEntry(entries);
+
+  assert.equal(featured.id, 'phaeton');
+  assert.equal(featured.displayState, 'fresh');
+  assert.equal(featured.placeholder, '?');
 });
 
 test('monster celebration overlay uses high-resolution stage artwork', () => {

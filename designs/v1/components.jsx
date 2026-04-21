@@ -17,8 +17,10 @@ const LEARNER = {
   dailyMinutes: 12,
   streakDays: 3,
   secureWords: 42,
-  totalWords: 134,
-  dueCount: 6,
+  totalWords: 213,
+  dueCount: 18,
+  weakCount: 12,
+  unseenWords: 140,
   accuracy: 0.82,
 };
 
@@ -516,7 +518,8 @@ function ToggleChip({ on, label, onClick }) {
 }
 
 /* ==========================================================
-   Stepper (round length)
+   Stepper (round length) — generic +/- picker; kept for any future
+   continuous numeric field but not used by spelling setup any more.
    ========================================================== */
 function Stepper({ value, onChange, min = 5, max = 25, step = 5, unit = 'words' }) {
   return (
@@ -529,14 +532,77 @@ function Stepper({ value, onChange, min = 5, max = 25, step = 5, unit = 'words' 
 }
 
 /* ==========================================================
+   SSMeadow — compact caught-monsters strip for the "Where you
+   stand" side card. Renders up to `limit` static portraits
+   (same asset vocabulary as the hero meadow, no animation).
+   Caught stage-0 entries render as eggs, stage >= 1 as monsters.
+   ========================================================== */
+function SSMeadow({ monsters = [], limit = 3 }) {
+  const shown = monsters.slice(0, limit);
+  if (!shown.length) {
+    return (
+      <div className="ss-meadow-empty small muted">
+        Catch your first monster to populate this meadow.
+      </div>
+    );
+  }
+  return (
+    <div className="ss-meadow" aria-label={`${shown.length} caught monsters`}>
+      {shown.map((m) => (
+        <div
+          key={m.id}
+          className={`ss-meadow-cell${m.stage === 0 ? ' egg' : ''}`}
+        >
+          <img src={m.img} alt="" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ==========================================================
+   LengthPicker — discrete segmented control for the three
+   supported round sizes (10 / 20 / 40). Keeps the hit targets
+   large and the values obvious; no hidden interpolation.
+   ========================================================== */
+function LengthPicker({ value, onChange, options = [10, 20, 40], unit = 'words' }) {
+  return (
+    <div className="length-picker" role="radiogroup" aria-label="Round length">
+      {options.map((n) => {
+        const selected = value === n;
+        return (
+          <button
+            key={n}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            className={'length-option' + (selected ? ' selected' : '')}
+            onClick={() => onChange(n)}
+          >
+            {n}
+          </button>
+        );
+      })}
+      <span className="length-unit">{unit}</span>
+    </div>
+  );
+}
+
+/* ==========================================================
    Path progress (session header)
    ========================================================== */
 function PathProgress({ done, current, total }) {
+  // Cap the visible dots at 20. When `total` exceeds 20 each dot stands in for
+  // multiple questions (e.g. 40q → 20 dots at 2q per dot).
+  const displayDots = Math.min(total, 20);
+  const perDot = total / displayDots;
   const dots = [];
-  for (let i = 0; i < total; i++) {
+  for (let i = 0; i < displayDots; i++) {
+    const start = i * perDot;
+    const end = (i + 1) * perDot;
     let cls = 'path-step';
-    if (i < done) cls += ' done';
-    else if (i === current) cls += ' current';
+    if (end <= done) cls += ' done';
+    else if (current >= start && current < end) cls += ' current';
     dots.push(<span key={i} className={cls} />);
   }
   return (
@@ -605,8 +671,11 @@ function CatchToast({ monster, headline, body }) {
 /* ==========================================================
    Utility: device-aware shell padding
    ========================================================== */
-function ShellPadding({ device, children }) {
-  return <div className={'app-shell' + (device === 'mobile' ? ' mobile' : '')}>{children}</div>;
+function ShellPadding({ device, children, extra, style }) {
+  const cls = 'app-shell'
+    + (device === 'mobile' ? ' mobile' : '')
+    + (extra ? ' ' + extra : '');
+  return <div className={cls} style={style}>{children}</div>;
 }
 
 /* ==========================================================
@@ -618,7 +687,7 @@ Object.assign(window, {
   // icons
   IconSun, IconMoon, IconSpeaker, IconSpeakerSlow, IconArrowRight, IconCheck, IconSparkle,
   // primitives
-  TopNav, CompanionStage, MonsterMeadow, Ring, CodexTile, SubjectCard, ModeCard,
-  ToggleChip, Stepper, PathProgress, PhaseBadge, Ribbon, FamilyChips,
+  TopNav, CompanionStage, MonsterMeadow, SSMeadow, Ring, CodexTile, SubjectCard, ModeCard,
+  ToggleChip, Stepper, LengthPicker, PathProgress, PhaseBadge, Ribbon, FamilyChips,
   CatchToast, ShellPadding,
 });

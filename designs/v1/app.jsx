@@ -13,6 +13,7 @@ const {
   SpellingCorrectScene,
   SpellingWrongScene,
   SpellingSummaryScene,
+  WordBankScene,
   MonsterCatchScene,
   MonsterEvolveScene,
 } = window;
@@ -30,6 +31,7 @@ const SCENES = [
       { id: 'spelling-correct',  label: 'Session — correct feedback', Component: SpellingCorrectScene },
       { id: 'spelling-wrong',    label: 'Session — wrong feedback',   Component: SpellingWrongScene },
       { id: 'spelling-summary',  label: 'Summary — page complete',    Component: SpellingSummaryScene },
+      { id: 'word-bank',         label: 'Word bank',                   Component: WordBankScene },
     ]
   },
   { group: 'Game layer',
@@ -69,6 +71,14 @@ function App() {
   const flatScenes  = SCENES.flatMap(g => g.items);
   const current     = flatScenes.find(s => s.id === sceneId) || flatScenes[0];
   const Component   = current.Component;
+
+  /* Per-scene navigation callbacks. Kept out of the render so new scene
+     wirings can be added without touching the JSX. */
+  const sceneExtras = {
+    'spelling-setup': { onOpenWordBank: () => setSceneId('word-bank') },
+    'word-bank':      { onBack:         () => setSceneId('spelling-setup') },
+  };
+  const extras = sceneExtras[current.id] || {};
 
   return (
     <div className="design-shell">
@@ -127,6 +137,7 @@ function App() {
               theme={theme}
               onToggleTheme={toggleTheme}
               device={device}
+              {...extras}
             />
           </div>
         </div>
