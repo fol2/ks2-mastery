@@ -1,12 +1,12 @@
 const MONSTER_VARIANTS = ['b1', 'b2'];
 
 const REGION_BACKGROUND_URLS = Object.freeze([
-  './assets/regions/the-scribe-downs/the-scribe-downs-bg-a1.1280.webp',
-  './assets/regions/the-scribe-downs/the-scribe-downs-bg-a2.1280.webp',
-  './assets/regions/the-scribe-downs/the-scribe-downs-bg-a3.1280.webp',
-  './assets/regions/the-scribe-downs/the-scribe-downs-bg-b1.1280.webp',
-  './assets/regions/the-scribe-downs/the-scribe-downs-bg-b2.1280.webp',
-  './assets/regions/the-scribe-downs/the-scribe-downs-bg-b3.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-a1.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-a2.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-a3.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-b1.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-b2.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-b3.1280.webp',
 ]);
 
 const MEADOW_SLOTS = Object.freeze([
@@ -42,7 +42,7 @@ const SUBJECT_DECOR = Object.freeze({
     eyebrow: 'The Scribe Downs',
     glyph: 'Sp',
     accent: 'linear-gradient(135deg, #3E6FA8, #B43CD9)',
-    regionBase: './assets/regions/the-scribe-downs/the-scribe-downs-bg-a1',
+    regionBase: '/assets/regions/the-scribe-downs/the-scribe-downs-bg-a1',
   },
   arithmetic:  { glyph: '×÷', accent: 'linear-gradient(135deg, #C06B3E, #F2B756)' },
   reasoning:   { glyph: '∴',  accent: 'linear-gradient(135deg, #8A5A9D, #C4A5D4)' },
