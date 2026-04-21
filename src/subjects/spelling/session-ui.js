@@ -30,12 +30,16 @@ export function spellingSessionFooterNote(session) {
   if (session.type === 'test') {
     return 'The audio follows the KS2 pattern: the word, then the sentence, then the word again. Wrong answers are marked due again for this learner after the test. Esc replays, and Shift+Esc replays slowly.';
   }
+  if (session.practiceOnly) {
+    return 'Practice-only drill: answers here do not change correct counts, stages, due dates, or secure-word progress. Esc replays, Shift+Esc replays slowly, Alt+S skips, and Alt+K focuses the answer box.';
+  }
   return 'New words need two clean recalls in one round. A missed word gets one blind retry; if it is still wrong, the answer appears, then the word returns once later for a clean check. Esc replays, Shift+Esc replays slowly, Alt+S skips, and Alt+K focuses the answer box.';
 }
 
 export function spellingSessionProgressLabel(session) {
   if (!session) return '';
   if (session.type === 'test') return 'SATs one-shot';
+  if (session.practiceOnly) return 'Practice only';
   return `Phase: ${session.phase}`;
 }
 
@@ -44,6 +48,7 @@ export function spellingSessionInfoChips(session) {
   const chips = [];
   if (session.currentCard?.word?.yearLabel) chips.push(session.currentCard.word.yearLabel);
   chips.push('AI-generated dictation voice');
+  if (session.practiceOnly) chips.push('Practice only');
   if (isLearningSession(session)) chips.push('Family hidden during live recall');
   return chips;
 }

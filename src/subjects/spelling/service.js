@@ -231,6 +231,11 @@ function masteryMilestoneForCount(secureCount) {
   return SPELLING_MASTERY_MILESTONES.includes(secureCount) ? secureCount : null;
 }
 
+function sessionCompletedEvents({ learnerId, session, summary, createdAt }) {
+  if (session?.practiceOnly) return [];
+  return [createSpellingSessionCompletedEvent({ learnerId, session, summary, createdAt })];
+}
+
 export function defaultSpellingPrefs() {
   return normalisePrefs();
 }
@@ -351,6 +356,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       type,
       mode,
       label: normaliseString(raw.label, defaultLabelForMode(mode)),
+      practiceOnly: normaliseBoolean(raw.practiceOnly, false) && type !== 'test',
       fallbackToSmart: normaliseBoolean(raw.fallbackToSmart, false),
       profileId: normaliseString(raw.profileId, learnerId || 'default'),
       uniqueWords,
@@ -526,6 +532,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       : options.length === 'all'
         ? Number.MAX_SAFE_INTEGER
         : Number(options.length) || 20;
+    const practiceOnly = normaliseBoolean(options.practiceOnly, false) && mode !== 'test';
 
     if (requestedWords?.length && !selectedWords?.length) {
       return buildTransition({
@@ -540,6 +547,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       yearFilter,
       length,
       words: selectedWords,
+      practiceOnly,
     });
 
     if (!created.ok) {
@@ -713,7 +721,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       };
       persistence.syncPracticeSession(learnerId, nextState);
       return buildTransition(nextState, {
-        events: [createSpellingSessionCompletedEvent({ learnerId, session, summary, createdAt: clock() })],
+        events: sessionCompletedEvents({ learnerId, session, summary, createdAt: clock() }),
       });
     }
 
@@ -769,7 +777,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       };
       persistence.syncPracticeSession(learnerId, nextState);
       return buildTransition(nextState, {
-        events: [createSpellingSessionCompletedEvent({ learnerId, session, summary, createdAt: clock() })],
+        events: sessionCompletedEvents({ learnerId, session, summary, createdAt: clock() }),
       });
     }
 

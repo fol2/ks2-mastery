@@ -390,14 +390,18 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           }
         }
 
+        var practiceOnly = Boolean(options.practiceOnly && actualMode !== MODES.TEST);
+
         var session = {
           id: makeSessionId(),
           type: actualMode === MODES.TEST ? "test" : "learning",
           mode: actualMode,
-          label: actualMode === MODES.TROUBLE ? "Trouble drill"
+          label: practiceOnly ? "Word bank practice"
+              : actualMode === MODES.TROUBLE ? "Trouble drill"
               : actualMode === MODES.SINGLE ? "Single-word drill"
               : actualMode === MODES.TEST ? "SATs 20 test"
               : "Smart review",
+          practiceOnly: practiceOnly,
           fallbackToSmart: fallback,
           profileId: profileId,
           uniqueWords: selected.map(function (w) { return w.slug; }),
@@ -657,7 +661,12 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           info.successes += 1;
           if (info.successes >= info.needed) {
             info.done = true;
-            var outcome = applyLearningOutcome(profileId, word.slug, info);
+            var outcome = null;
+            if (session.practiceOnly) {
+              info.applied = true;
+            } else {
+              outcome = applyLearningOutcome(profileId, word.slug, info);
+            }
             return {
               correct: true,
               phase: "question",
@@ -665,7 +674,9 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
                 kind: info.hadWrong ? "info" : "success",
                 headline: info.hadWrong ? "Correct now." : "Correct.",
                 answer: word.word,
-                body: info.hadWrong
+                body: session.practiceOnly
+                  ? "Practice complete. Learner progress was not changed."
+                  : info.hadWrong
                   ? "This word is fixed for this round and will stay due for future review."
                   : "This word is secure for today.",
               },
@@ -749,12 +760,14 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           mode: session.mode,
           label: session.label,
           cards: [
-            { label: "Words in round", value: total, sub: "Unique words selected" },
-            { label: "Correct without a miss", value: firstTime, sub: "Strong on the first go" },
+            { label: session.practiceOnly ? "Practice words" : "Words in round", value: total, sub: "Unique words selected" },
+            { label: "Clean first attempts", value: firstTime, sub: session.practiceOnly ? "Practice result only" : "Strong on the first go" },
             { label: "Needed correction", value: mistakes.length, sub: "These words came back again" },
             { label: "Prompts heard", value: session.promptCount, sub: "Includes repeats of weak words" },
           ],
-          message: mistakes.length
+          message: session.practiceOnly
+            ? "Practice complete. Learner progress was not changed."
+            : mistakes.length
             ? "Good. The weak words were caught quickly and are now marked due again for this learner."
             : "Excellent. Every selected word was correct without needing a correction step.",
           mistakes: mistakes,

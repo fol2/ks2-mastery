@@ -153,6 +153,38 @@ test('first-time correct spellings still require one clean return in the same ro
   assert.equal(stats.accuracy, 100);
 });
 
+test('practice-only single-word drill does not mutate durable progress', () => {
+  const { service } = makeService();
+  let state = service.startSession('learner-a', {
+    mode: 'single',
+    words: ['possess'],
+    yearFilter: 'all',
+    length: 1,
+    practiceOnly: true,
+  }).state;
+
+  assert.equal(state.session.practiceOnly, true);
+  assert.equal(service.getStats('learner-a', 'all').attempts, 0);
+
+  const completed = continueUntilSummary(service, 'learner-a', state, 'possess');
+  state = completed.state;
+
+  assert.equal(state.phase, 'summary');
+  assert.equal(state.summary.message, 'Practice complete. Learner progress was not changed.');
+  assert.deepEqual(completed.events, []);
+
+  const stats = service.getStats('learner-a', 'all');
+  assert.equal(stats.attempts, 0);
+  assert.equal(stats.correct, 0);
+  assert.equal(stats.secure, 0);
+
+  const possess = service.getAnalyticsSnapshot('learner-a').wordGroups
+    .flatMap((group) => group.words)
+    .find((word) => word.slug === 'possess');
+  assert.equal(possess.progress.stage, 0);
+  assert.equal(possess.progress.correct, 0);
+});
+
 test('empty submission is rejected without mutating learner progress', () => {
   const { service } = makeService();
   let state = service.startSession('learner-a', {

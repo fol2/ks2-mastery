@@ -106,7 +106,7 @@ test('golden-path smoke covers import/export restore for a live spelling session
   assert.match(harness.render(), /Spell the word you hear|Spell the dictated word/);
 });
 
-test('spelling analytics exposes searchable word-bank progress and single-word drill launch', () => {
+test('spelling analytics exposes searchable word-bank progress and practice-only launch', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
 
@@ -118,8 +118,8 @@ test('spelling analytics exposes searchable word-bank progress and single-word d
   assert.match(html, /name="spellingAnalyticsSearch"[^>]*autocomplete="off"/);
   assert.match(html, /class="chip new">New</);
   assert.match(html, /class="chip learning">Learning</);
-  assert.match(html, /data-action="spelling-drill-single" data-slug="possess"/);
-  assert.match(html, /class="word-progress-pill new"[^>]*data-action="spelling-drill-single"/);
+  assert.match(html, /data-action="spelling-practice-single" data-slug="possess"/);
+  assert.match(html, /class="word-progress-pill new"[^>]*data-action="spelling-practice-single"/);
   assert.match(html, />accident</);
 
   harness.dispatch('spelling-analytics-search', { value: 'possess' });
@@ -133,9 +133,10 @@ test('spelling analytics exposes searchable word-bank progress and single-word d
   html = harness.render();
   assert.match(html, />accident</);
 
-  harness.dispatch('spelling-drill-single', { slug: 'possess' });
+  harness.dispatch('spelling-practice-single', { slug: 'possess' });
   assert.equal(harness.store.getState().subjectUi.spelling.phase, 'session');
   assert.equal(harness.store.getState().subjectUi.spelling.session.mode, 'single');
+  assert.equal(harness.store.getState().subjectUi.spelling.session.practiceOnly, true);
   assert.equal(harness.store.getState().subjectUi.spelling.session.currentCard.word.slug, 'possess');
 });
 

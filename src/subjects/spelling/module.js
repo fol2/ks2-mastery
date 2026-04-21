@@ -140,8 +140,8 @@ function renderWordBankProgress({ analytics, searchQuery = '' }) {
                 ${visibleWords.length ? visibleWords.map((word) => {
                   const tone = wordProgressTone(word.status);
                   const label = wordStatusLabel(word.status);
-                  const title = `${word.word} · ${word.family} · ${word.stageLabel} · correct ${word.progress.correct}, wrong ${word.progress.wrong}`;
-                  return `<button type="button" class="word-progress-pill ${tone}" data-action="spelling-drill-single" data-slug="${escapeHtml(word.slug)}" title="${escapeHtml(title)}" aria-label="${escapeHtml(`${word.word}, ${label}, ${word.stageLabel}`)}">${escapeHtml(word.word)}</button>`;
+                  const title = `${word.word} · ${word.family} · ${word.stageLabel} · correct ${word.progress.correct}, wrong ${word.progress.wrong} · practice only`;
+                  return `<button type="button" class="word-progress-pill ${tone}" data-action="spelling-practice-single" data-slug="${escapeHtml(word.slug)}" title="${escapeHtml(title)}" aria-label="${escapeHtml(`${word.word}, ${label}, ${word.stageLabel}, practice only`)}">${escapeHtml(word.word)}</button>`;
                 }).join('') : '<div class="muted small">Try another search.</div>'}
               </div>
             </section>
@@ -685,6 +685,19 @@ export const spellingModule = {
         words: [slug],
         yearFilter: 'all',
         length: 1,
+      }));
+    }
+
+    if (action === 'spelling-practice-single') {
+      const slug = data.slug;
+      if (!slug) return true;
+      tts.stop();
+      return applyTransition(service.startSession(learnerId, {
+        mode: 'single',
+        words: [slug],
+        yearFilter: 'all',
+        length: 1,
+        practiceOnly: true,
       }));
     }
 
