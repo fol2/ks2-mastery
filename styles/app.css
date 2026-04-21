@@ -1,42 +1,186 @@
 :root {
+  color-scheme: light dark;
+
+  /* Surfaces */
   --bg: #F6F5F1;
+  --bg-tint: #EFEADD;
   --panel: #FFFFFF;
   --panel-soft: #FAF9F4;
+  --panel-sunken: #F1ECDE;
+
+  /* Ink */
   --ink: #1D2B3A;
   --ink-2: #3B4A5C;
   --muted: #7A8697;
+  --subtle: #A9B1BD;
+
+  /* Lines */
   --line: #E5E1D6;
   --line-soft: #EFEBE0;
+  --line-strong: #CFC8B6;
+
+  /* Semantic tones */
   --good: #2F9E6A;
+  --good-strong: #1F7A4F;
   --good-soft: #E4F5EC;
   --warn: #D08A2C;
+  --warn-strong: #9E6A19;
   --warn-soft: #FBEFD9;
   --bad: #D25757;
+  --bad-strong: #B03838;
   --bad-soft: #FCE5E3;
-  --radius: 20px;
+
+  /* Brand */
+  --brand: #3E6FA8;
+  --brand-ink: #274D79;
+  --brand-soft: #DCE6F3;
+
+  /* Shape */
+  --radius-xs: 8px;
   --radius-sm: 12px;
+  --radius: 20px;
   --radius-lg: 28px;
+  --radius-xl: 32px;
+
+  /* Elevation */
+  --shadow-xs: 0 1px 2px rgba(29,43,58,0.06);
   --shadow: 0 1px 2px rgba(29,43,58,0.04), 0 8px 24px rgba(29,43,58,0.06);
   --shadow-lg: 0 2px 4px rgba(29,43,58,0.05), 0 16px 40px rgba(29,43,58,0.10);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-serif: Georgia, serif;
+  --shadow-glow: 0 0 0 4px rgba(62,111,168,0.18);
+
+  /* Typography */
+  --font-display: "Fraunces", Georgia, "Iowan Old Style", serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-serif: "Fraunces", Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 320ms;
+  --dur-slower: 520ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1620;
+    --bg-tint: #131C29;
+    --panel: #18212F;
+    --panel-soft: #1E2837;
+    --panel-sunken: #14202F;
+
+    --ink: #F3EEE0;
+    --ink-2: #D4D9E3;
+    --muted: #8B95A6;
+    --subtle: #5F6A7C;
+
+    --line: #2A3444;
+    --line-soft: #212A39;
+    --line-strong: #3D4A60;
+
+    --good: #57C48B;
+    --good-strong: #8AD7AE;
+    --good-soft: color-mix(in oklab, #2F9E6A 22%, #0F1620);
+    --warn: #E2A756;
+    --warn-strong: #F1C081;
+    --warn-soft: color-mix(in oklab, #D08A2C 22%, #0F1620);
+    --bad: #E87E7E;
+    --bad-strong: #F6A7A7;
+    --bad-soft: color-mix(in oklab, #D25757 22%, #0F1620);
+
+    --brand: #6E9ED6;
+    --brand-ink: #A7C2E4;
+    --brand-soft: color-mix(in oklab, #3E6FA8 26%, #0F1620);
+
+    --shadow-xs: 0 1px 2px rgba(0,0,0,0.35);
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 12px 28px rgba(0,0,0,0.35);
+    --shadow-lg: 0 2px 4px rgba(0,0,0,0.4), 0 24px 48px rgba(0,0,0,0.5);
+    --shadow-glow: 0 0 0 4px rgba(110,158,214,0.26);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0F1620;
+  --bg-tint: #131C29;
+  --panel: #18212F;
+  --panel-soft: #1E2837;
+  --panel-sunken: #14202F;
+
+  --ink: #F3EEE0;
+  --ink-2: #D4D9E3;
+  --muted: #8B95A6;
+  --subtle: #5F6A7C;
+
+  --line: #2A3444;
+  --line-soft: #212A39;
+  --line-strong: #3D4A60;
+
+  --good: #57C48B;
+  --good-strong: #8AD7AE;
+  --good-soft: color-mix(in oklab, #2F9E6A 22%, #0F1620);
+  --warn: #E2A756;
+  --warn-strong: #F1C081;
+  --warn-soft: color-mix(in oklab, #D08A2C 22%, #0F1620);
+  --bad: #E87E7E;
+  --bad-strong: #F6A7A7;
+  --bad-soft: color-mix(in oklab, #D25757 22%, #0F1620);
+
+  --brand: #6E9ED6;
+  --brand-ink: #A7C2E4;
+  --brand-soft: color-mix(in oklab, #3E6FA8 26%, #0F1620);
+
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.35);
+  --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 12px 28px rgba(0,0,0,0.35);
+  --shadow-lg: 0 2px 4px rgba(0,0,0,0.4), 0 24px 48px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 0 4px rgba(110,158,214,0.26);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
   min-height: 100vh;
-  background: var(--bg);
+  background:
+    radial-gradient(1000px 600px at 80% -10%, var(--bg-tint), transparent 60%),
+    radial-gradient(900px 500px at -10% 90%, var(--bg-tint), transparent 55%),
+    var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  line-height: 1.5;
+  text-wrap: pretty;
+  transition: background-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
 }
 button, input, select, textarea { font: inherit; }
 a { color: inherit; }
 input:focus, select:focus, textarea:focus, button:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-glow);
+  border-radius: var(--radius-sm);
+}
+::selection {
+  background: color-mix(in oklab, var(--brand) 28%, transparent);
+  color: inherit;
 }
 
 .app-shell {
@@ -278,6 +422,7 @@ input:focus, select:focus, textarea:focus, button:focus-visible {
   border: 1px solid var(--line);
   padding: 10px 14px;
   font-weight: 800;
+  color: var(--ink);
 }
 .subject-tabs .tab.active {
   color: white;
@@ -553,8 +698,10 @@ input:focus, select:focus, textarea:focus, button:focus-visible {
   border-radius: 16px;
   border: 1px solid var(--line);
   padding: 14px 16px;
+  margin-top: 16px;
   display: grid;
   gap: 6px;
+  background: var(--panel-soft);
 }
 .feedback.good { background: var(--good-soft); border-color: #b8dfca; }
 .feedback.warn { background: var(--warn-soft); border-color: #edd9ae; }
@@ -978,4 +1125,79 @@ input:focus, select:focus, textarea:focus, button:focus-visible {
     --left: 68%;
     --size: 86px;
   }
+}
+
+/* ---------- v2 additions: theme toggle, cloze slot, motion helpers ---------- */
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel-soft);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background var(--dur) var(--ease-out), color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+}
+.theme-toggle:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+  transform: rotate(-12deg);
+}
+.theme-toggle svg { width: 18px; height: 18px; }
+
+.prompt-slot {
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 5ch;
+  min-height: 1em;
+  margin: 0 0.2em;
+  padding: 0 0.25em 0.08em;
+  border-bottom: 2px dashed color-mix(in oklab, var(--brand) 60%, transparent);
+  color: transparent;
+  user-select: none;
+  vertical-align: baseline;
+}
+
+.stagger > * {
+  opacity: 0;
+  animation: v2-appear var(--dur-slow) var(--ease-out) forwards;
+}
+.stagger > *:nth-child(1) { animation-delay: 40ms; }
+.stagger > *:nth-child(2) { animation-delay: 90ms; }
+.stagger > *:nth-child(3) { animation-delay: 140ms; }
+.stagger > *:nth-child(4) { animation-delay: 190ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 290ms; }
+
+@keyframes v2-appear {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* gentle elevation lift on hover for cards the user can click */
+.subject-card {
+  transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
+}
+.subject-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* buttons slightly smoother under v2 motion tokens */
+.btn {
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    filter var(--dur) var(--ease-out),
+    background var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out);
+}
+
+/* v2 tweak: chip checkbox affordance */
+.chip input[type="checkbox"] {
+  accent-color: var(--brand);
 }
