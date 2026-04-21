@@ -562,38 +562,157 @@ function renderNoWritableLearnerShellCard(context, title = 'No writable learner 
   `;
 }
 
+function safeInlineColor(value, fallback = '#3E6FA8') {
+  const colour = String(value || '').trim();
+  return /^#[0-9a-fA-F]{6}$/.test(colour) ? colour : fallback;
+}
+
+function goalLabel(value) {
+  return {
+    confidence: 'Confidence and habit',
+    sats: 'KS2 SATs prep',
+    'catch-up': 'Catch-up and recovery',
+  }[value] || 'KS2 SATs prep';
+}
+
+function learnerInitials(name) {
+  const parts = String(name || 'Learner')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const initials = parts.slice(0, 2).map((part) => part[0]).join('');
+  return initials.toUpperCase() || 'L';
+}
+
+function learnerOrdinal(appState) {
+  const index = appState.learners.allIds.indexOf(appState.learners.selectedId);
+  return index >= 0 ? index + 1 : 1;
+}
+
+function renderProfileLearnerSelect(appState) {
+  const learners = appState.learners.allIds.map((id) => appState.learners.byId[id]).filter(Boolean);
+  if (!learners.length) {
+    return `
+      <label class="profile-learner-switch">
+        <span class="sr-only">Current learner</span>
+        <select class="profile-learner-select" name="learnerId" disabled>
+          <option>No writable learner</option>
+        </select>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="m6 9 6 6 6-6"></path>
+        </svg>
+      </label>
+    `;
+  }
+  return `
+    <label class="profile-learner-switch">
+      <span class="sr-only">Current learner</span>
+      <select class="profile-learner-select" data-action="learner-select" name="learnerId">
+        ${learners.map((learner) => `<option value="${escapeHtml(learner.id)}" ${learner.id === appState.learners.selectedId ? 'selected' : ''}>${escapeHtml(learner.name)} · ${escapeHtml(learner.yearGroup)}</option>`).join('')}
+      </select>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="m6 9 6 6 6-6"></path>
+      </svg>
+    </label>
+  `;
+}
+
+function renderSurfaceTopNav(appState) {
+  const auth = globalThis.KS2_AUTH_SESSION || {};
+  return `
+    <header class="topnav profile-topnav">
+      <button type="button" class="brand profile-brand-button" data-action="navigate-home">
+        <span class="brand-mark">K</span>
+        <span class="lockup">
+          <span>KS2 Mastery</span>
+          <small>Codex journal</small>
+        </span>
+      </button>
+      <div class="nav-right">
+        <span class="persistence-dot persistence-dot-${persistenceTone(appState.persistence) === 'good' ? 'good' : persistenceTone(appState.persistence) === 'warn' ? 'bad' : 'neutral'}" role="status" title="${escapeHtml(persistenceLabel(appState.persistence))}" aria-label="${escapeHtml(persistenceLabel(appState.persistence))}">
+          <span class="persistence-dot-blip" aria-hidden="true"></span>
+        </span>
+        ${renderProfileLearnerSelect(appState)}
+        ${auth.signedIn ? `<span class="profile-signed-in">${escapeHtml(auth.email || 'Signed in')}</span>` : ''}
+        <button class="profile-nav-link" type="button" data-action="navigate-home">Dashboard</button>
+        <button class="theme-btn" data-action="toggle-theme" title="Switch between light and dark" aria-label="Toggle theme">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+  `;
+}
+
 function renderLearnerManager(appState, context) {
   const learner = selectedWritableLearner(appState);
   if (!learner) {
-    return renderNoWritableLearnerShellCard(context, 'No writable learner is available in the main shell');
-  }
-  return `
-    <section class="card">
-      <div class="card-header">
+    return `
+      <section class="profile-empty-state hero-paper">
         <div>
-          <div class="eyebrow">Shared learner model</div>
-          <h2 class="section-title">Profiles belong to the platform, not to one subject</h2>
+          <div class="eyebrow">Profile settings</div>
+          <h1 class="profile-title">No writable learner is available</h1>
+          <p class="profile-lede">Create or select a learner before changing study rhythm, profile colour, or portable data.</p>
+          <div class="profile-hero-actions">
+            <button class="btn primary xl" data-action="learner-create">Add learner</button>
+            <button class="btn ghost xl" data-action="navigate-home">Back to dashboard</button>
+          </div>
         </div>
-        <div class="actions">
-          <button class="btn secondary" data-action="learner-create">Add learner</button>
-          <button class="btn bad" data-action="learner-delete">Delete current learner</button>
-          <button class="btn warn" data-action="learner-reset-progress">Reset learner progress</button>
-          <button class="btn ghost" data-action="platform-reset-all">Reset all app data</button>
+      </section>
+    `;
+  }
+  const accent = safeInlineColor(learner.avatarColor);
+  const learnerCount = appState.learners.allIds.length;
+  const subjectCount = registeredSubjects(context).length;
+  const liveSubjectCount = registeredSubjects(context).filter((subject) => subject.available !== false).length;
+  return `
+    <section class="profile-hero hero-paper" style="--profile-accent:${escapeHtml(accent)};">
+      <div class="profile-hero-copy">
+        <div class="profile-kicker">Profile settings</div>
+        <h1 class="profile-title">Learning profile for ${escapeHtml(learner.name)}</h1>
+        <p class="profile-lede">Year group, goal and daily rhythm stay shared across every subject in the dashboard.</p>
+        <div class="profile-hero-actions">
+          <button class="btn primary xl" type="button" data-action="learner-create" style="background:${escapeHtml(accent)};">Add learner</button>
+          <button class="btn ghost xl" type="button" data-action="navigate-home">Back to dashboard</button>
         </div>
       </div>
-      <form data-action="learner-save-form">
-        <div class="field-row">
-          <label class="field">
+      <div class="profile-identity">
+        <div class="profile-avatar" aria-hidden="true">${escapeHtml(learnerInitials(learner.name))}</div>
+        <div class="profile-identity-copy">
+          <strong>${escapeHtml(learner.name)}</strong>
+          <span>${escapeHtml(learner.yearGroup)} / ${escapeHtml(goalLabel(learner.goal))}</span>
+        </div>
+        <div class="profile-mini-stats" aria-label="Learner profile summary">
+          <span><strong>${escapeHtml(String(learner.dailyMinutes || 15))}</strong><small>daily minutes</small></span>
+          <span><strong>${escapeHtml(String(learnerOrdinal(appState)))}/${escapeHtml(String(learnerCount))}</strong><small>learner</small></span>
+          <span><strong>${escapeHtml(String(liveSubjectCount))}/${escapeHtml(String(subjectCount))}</strong><small>subjects live</small></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="profile-layout">
+      <form id="learner-profile-form" class="profile-panel profile-editor-panel" data-action="learner-save-form">
+        <div class="profile-panel-head">
+          <div>
+            <div class="eyebrow">Learner details</div>
+            <h2 class="section-title">Study rhythm</h2>
+          </div>
+          <span class="chip" style="border-color:${escapeHtml(accent)}; color:${escapeHtml(accent)};">Shared profile</span>
+        </div>
+        <div class="profile-form-grid">
+          <label class="profile-form-field profile-form-field-wide">
             <span>Name</span>
             <input class="input" name="name" autocomplete="off" value="${escapeHtml(learner.name)}" />
           </label>
-          <label class="field">
+          <label class="profile-form-field">
             <span>Year group</span>
             <select class="select" name="yearGroup">
               ${['Y3','Y4','Y5','Y6'].map((value) => `<option value="${value}" ${learner.yearGroup === value ? 'selected' : ''}>${value}</option>`).join('')}
             </select>
           </label>
-          <label class="field">
+          <label class="profile-form-field">
             <span>Primary goal</span>
             <select class="select" name="goal">
               ${[
@@ -603,53 +722,53 @@ function renderLearnerManager(appState, context) {
               ].map(([value, label]) => `<option value="${value}" ${learner.goal === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
             </select>
           </label>
-          <label class="field">
+          <label class="profile-form-field">
             <span>Daily minutes</span>
             <input class="input" type="number" min="5" max="60" name="dailyMinutes" autocomplete="off" value="${escapeHtml(String(learner.dailyMinutes || 15))}" />
           </label>
-          <label class="field">
+          <label class="profile-form-field profile-colour-field">
             <span>Accent colour</span>
-            <input class="input" type="color" name="avatarColor" autocomplete="off" value="${escapeHtml(learner.avatarColor || '#3E6FA8')}" />
+            <input class="input" type="color" name="avatarColor" autocomplete="off" value="${escapeHtml(accent)}" />
           </label>
         </div>
-        <div class="actions" style="margin-top:14px;">
-          <button class="btn primary" style="background:${escapeHtml(learner.avatarColor || '#3E6FA8')};" type="submit">Save learner profile</button>
+        <div class="profile-form-footer">
+          <div class="profile-form-danger-actions">
+            <button class="btn warn lg" type="button" data-action="learner-reset-progress">Reset learner progress</button>
+            <button class="btn bad lg" type="button" data-action="learner-delete">Delete learner</button>
+          </div>
+          <button class="btn primary lg" style="background:${escapeHtml(accent)};" type="submit">Save learner profile</button>
         </div>
       </form>
-      <section class="card soft" style="margin-top:16px;">
-        <div class="eyebrow">Data safety</div>
-        <h3 class="section-title" style="font-size:1.15rem;">Import / export</h3>
-        <p class="subtitle">Exports use portable JSON snapshots. Full-app imports replace the current browser dataset. Learner and legacy spelling imports keep existing learners and add imported copies.</p>
-        ${renderPersistenceInline(appState.persistence)}
-        <div class="actions">
-          <button class="btn secondary" data-action="platform-export-learner">Export current learner</button>
-          <button class="btn secondary" data-action="platform-export-app">Export full app</button>
-          <button class="btn ghost" data-action="platform-import">Import JSON</button>
-        </div>
-        <input id="platform-import-file" style="display:none;" type="file" accept=".json,application/json" />
-      </section>
+
+      <aside class="profile-side-panels">
+        <section class="profile-panel profile-data-panel">
+          <div class="profile-panel-head">
+            <div>
+              <div class="eyebrow">Data safety</div>
+              <h2 class="section-title">Portable snapshots</h2>
+            </div>
+          </div>
+          <p class="subtitle">Exports use JSON recovery points. Imports keep existing learners unless a full-app snapshot replaces this browser dataset.</p>
+          ${renderPersistenceInline(appState.persistence)}
+          <div class="actions profile-data-actions">
+            <button class="btn secondary" data-action="platform-export-learner">Export current learner</button>
+            <button class="btn secondary" data-action="platform-export-app">Export full app</button>
+            <button class="btn ghost" data-action="platform-import">Import JSON</button>
+          </div>
+          <input id="platform-import-file" style="display:none;" type="file" accept=".json,application/json" />
+        </section>
+      </aside>
     </section>
   `;
 }
 
 function renderProfileSettings(context) {
   return `
-    <section class="subject-header card border-top" style="border-top-color:#3E6FA8; margin-bottom:18px;">
-      <div class="subject-title-row">
-        <div>
-          <div class="eyebrow">Profile settings</div>
-          <h2 class="title" style="font-size:clamp(1.6rem, 3vw, 2.3rem);">Learner profile and data</h2>
-          <p class="subtitle">Manage the selected learner, switch writable profiles from the shell, and keep import/export actions in one platform-owned place.</p>
-        </div>
-        <div class="actions">
-          ${learnerSelect(context.appState, context)}
-          <button class="btn secondary" data-action="navigate-home">All subjects</button>
-        </div>
-      </div>
-    </section>
-    <section class="shell-grid">
+    ${renderSurfaceTopNav(context.appState)}
+    ${renderPersistenceBanner(context.appState.persistence)}
+    <main class="profile-page">
       ${renderLearnerManager(context.appState, context)}
-    </section>
+    </main>
   `;
 }
 
@@ -1248,10 +1367,18 @@ export function renderApp(appState, context) {
     `;
   }
 
+  if (screen === 'profile-settings') {
+    return `
+      <div class="app-shell profile-settings-shell">
+        ${renderProfileSettings(context)}
+        ${renderToasts(appState)}
+        ${renderMonsterCelebrationOverlay(appState)}
+      </div>
+    `;
+  }
+
   const body = screen === 'subject'
     ? renderSubjectScreen(context)
-    : screen === 'profile-settings'
-      ? renderProfileSettings(context)
     : screen === 'parent-hub'
       ? renderParentHub(context)
       : screen === 'admin-hub'

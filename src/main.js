@@ -1150,12 +1150,20 @@ function handleGlobalAction(action, data) {
   if (action === 'learner-create') {
     if (blockReadOnlyAdultAction(action)) return true;
     const current = appState.learners.byId[learnerId];
+    const fallbackName = `Learner ${appState.learners.allIds.length + 1}`;
+    let name = typeof data.name === 'string' ? data.name.trim() : '';
+    if (!name) {
+      const promptedName = globalThis.prompt?.('Name for the new learner', fallbackName);
+      if (promptedName == null) return true;
+      name = String(promptedName).trim();
+      if (!name) return true;
+    }
     store.createLearner({
-      name: `Learner ${appState.learners.allIds.length + 1}`,
-      yearGroup: current?.yearGroup || 'Y5',
-      goal: current?.goal || 'sats',
-      dailyMinutes: current?.dailyMinutes || 15,
-      avatarColor: current?.avatarColor || '#3E6FA8',
+      name,
+      yearGroup: data.yearGroup || current?.yearGroup || 'Y5',
+      goal: data.goal || current?.goal || 'sats',
+      dailyMinutes: data.dailyMinutes || current?.dailyMinutes || 15,
+      avatarColor: data.avatarColor || current?.avatarColor || '#3E6FA8',
     });
     return true;
   }
@@ -1175,7 +1183,7 @@ function handleGlobalAction(action, data) {
 
   if (action === 'learner-delete') {
     if (blockReadOnlyAdultAction(action)) return true;
-    if (!globalThis.confirm('Delete the current learner and all their subject progress and codex state?')) return true;
+    if (!globalThis.confirm('Warning: delete the current learner and all their subject progress and codex state?')) return true;
     runtimeBoundary.clearLearner(learnerId);
     resetLearnerData(learnerId);
     store.deleteLearner(learnerId);
@@ -1184,7 +1192,7 @@ function handleGlobalAction(action, data) {
 
   if (action === 'learner-reset-progress') {
     if (blockReadOnlyAdultAction(action)) return true;
-    if (!globalThis.confirm('Reset subject progress and codex rewards for the current learner?')) return true;
+    if (!globalThis.confirm('Warning: reset subject progress and codex rewards for the current learner?')) return true;
     tts.stop();
     runtimeBoundary.clearLearner(learnerId);
     resetLearnerData(learnerId);
