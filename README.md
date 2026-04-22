@@ -69,7 +69,7 @@ npm run db:migrate:remote
 npm run deploy
 ```
 
-The Cloudflare scripts run Wrangler through `scripts/wrangler-oauth.mjs`, which deliberately removes `CLOUDFLARE_API_TOKEN` for that child process. This keeps deploys and remote D1 commands on the logged-in OAuth session even when the parent shell still has an old API token exported. The legacy `*:oauth` aliases remain for muscle memory, but the default scripts are already OAuth-safe.
+The Cloudflare scripts run Wrangler through `scripts/wrangler-oauth.mjs`, which deliberately removes `CLOUDFLARE_API_TOKEN` for local child processes. This keeps deploys and remote D1 commands on the logged-in OAuth session even when the parent shell still has an old API token exported. Cloudflare Workers Builds sets `WORKERS_CI=1`, so the wrapper preserves the build-provided token in hosted CI. The legacy `*:oauth` aliases remain for muscle memory, but the default scripts are already OAuth-safe.
 
 ## Core rebuild decisions
 

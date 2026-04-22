@@ -8,7 +8,11 @@ if (!wranglerArgs.length) {
 }
 
 const env = { ...process.env };
-delete env.CLOUDFLARE_API_TOKEN;
+const isWorkersBuild = env.WORKERS_CI === '1';
+
+if (!isWorkersBuild) {
+  delete env.CLOUDFLARE_API_TOKEN;
+}
 
 const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 const result = spawnSync(npxBin, ['wrangler', ...wranglerArgs], {
