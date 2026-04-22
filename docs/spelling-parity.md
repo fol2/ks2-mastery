@@ -88,6 +88,17 @@ Pass 11 changes where spelling content lives, not the learner-facing pedagogy.
 - prompt text and spoken TTS text still come from the same saved prompt, preserving the Pass 10 fix for display/audio mismatch
 - explicit one-word sessions now fail cleanly if the requested slug is not in the published snapshot instead of silently starting a different round
 
+## Extra expansion parity update
+
+The Extra spelling expansion is outside the original statutory baseline.
+
+- `core` is now the explicit statutory pool; the old `all` filter remains accepted as a compatibility alias for `core`
+- Extra words are excluded from SATs Test mode and from core statutory completion
+- Phaeton remains the Years 3-6 statutory bonus monster, derived only from Inklet and Glimmerbug
+- Vellhorn is the Extra reward path and does not contribute to Phaeton
+- the searchable Word Bank now includes Core, Years 3-4, Years 5-6, and Extra views, with direct drill validation using the published accepted-answer list
+- the first 22-word Extra release cannot naturally reach every Vellhorn stage under the existing direct-monster thresholds; mature Vellhorn rendering is covered by synthetic render fixtures only
+
 ## Still not directly verified in this pass
 
 1. Exact browser playback timing and warm-up behaviour for old provider-backed TTS paths.

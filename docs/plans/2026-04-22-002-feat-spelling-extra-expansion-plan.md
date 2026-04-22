@@ -363,7 +363,7 @@ The important invariant is that `spellingPool` becomes the authority for core-vs
 - Vellhorn appears as the Extra reward path.
 - Phaeton remains a statutory core bonus monster only.
 
-- [ ] **Unit 6: Preserve Compatibility, Rollout Safety, And Documentation**
+- [x] **Unit 6: Preserve Compatibility, Rollout Safety, And Documentation**
 
 **Goal:** Protect existing learners, import/export paths, account-scoped content, and docs while shipping the expansion.
 

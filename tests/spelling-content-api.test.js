@@ -95,6 +95,33 @@ function addExtraWordList(bundle) {
   return next;
 }
 
+function coreOnlyVersionOneContent(bundle) {
+  const next = cloneSerialisable(bundle);
+  const coreWords = next.draft.words.filter((word) => word.spellingPool !== 'extra');
+  const coreSlugs = new Set(coreWords.map((word) => word.slug));
+  const coreListIds = new Set(coreWords.map((word) => word.listId));
+  next.modelVersion = 1;
+  next.draft.wordLists = next.draft.wordLists
+    .filter((list) => coreListIds.has(list.id))
+    .map(({ spellingPool: _spellingPool, ...list }) => list);
+  next.draft.words = coreWords.map(({ spellingPool: _spellingPool, ...word }) => word);
+  next.draft.sentences = next.draft.sentences.filter((sentence) => coreSlugs.has(sentence.wordSlug));
+
+  const release = cloneSerialisable(next.releases.find((entry) => entry.version === 1) || next.releases[0]);
+  const releaseWords = release.snapshot.words
+    .filter((word) => word.spellingPool !== 'extra')
+    .map(({ spellingPool: _spellingPool, ...word }) => word);
+  release.snapshot.words = releaseWords;
+  release.snapshot.wordBySlug = Object.fromEntries(releaseWords.map((word) => [word.slug, word]));
+  next.releases = [release];
+  next.publication = {
+    currentReleaseId: release.id,
+    publishedVersion: release.version,
+    updatedAt: release.publishedAt,
+  };
+  return next;
+}
+
 test('api spelling content repository hydrates the seeded published bundle and persists valid content changes', async () => {
   const server = createWorkerRepositoryServer();
   try {
@@ -106,6 +133,7 @@ test('api spelling content repository hydrates the seeded published bundle and p
 
     const bundle = await repository.hydrate();
     assert.equal(bundle.publication.publishedVersion, SEEDED_SPELLING_CONTENT_BUNDLE.publication.publishedVersion);
+    assert.ok(bundle.draft.words.some((word) => word.slug === 'mollusc' && word.spellingPool === 'extra'));
     assert.equal(repository.getAccountRevision(), 0);
 
     const updated = cloneSerialisable(bundle);
@@ -127,6 +155,7 @@ test('api spelling content repository hydrates the seeded published bundle and p
     });
     const reloaded = await fresh.hydrate();
     assert.equal(reloaded.draft.notes, 'Operator note from API repository test.');
+    assert.ok(reloaded.draft.words.some((word) => word.slug === 'mollusc' && word.spellingPool === 'extra'));
   } finally {
     server.close();
   }
@@ -161,6 +190,37 @@ test('worker spelling content route accepts valid Extra pool content without sta
     const reloadedResponse = await server.fetch('https://repo.test/api/content/spelling');
     const reloaded = await reloadedResponse.json();
     assert.equal(reloaded.content.draft.words.find((word) => word.slug === 'cephalopod').spellingPool, 'extra');
+  } finally {
+    server.close();
+  }
+});
+
+test('worker spelling content route backfills version-one core bundles without pool metadata', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const initialResponse = await server.fetch('https://repo.test/api/content/spelling');
+    const initial = await initialResponse.json();
+    const legacy = coreOnlyVersionOneContent(initial.content);
+
+    const response = await server.fetch('https://repo.test/api/content/spelling', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        content: legacy,
+        mutation: {
+          requestId: 'content-version-one-core-1',
+          correlationId: 'content-version-one-core-1',
+          expectedAccountRevision: initial.mutation.accountRevision,
+        },
+      }),
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.content.modelVersion, 2);
+    assert.equal(payload.content.draft.wordLists.every((list) => list.spellingPool === 'core'), true);
+    assert.equal(payload.content.draft.words.every((word) => word.spellingPool === 'core'), true);
+    assert.equal(payload.content.releases[0].snapshot.words.every((word) => word.spellingPool === 'core'), true);
   } finally {
     server.close();
   }

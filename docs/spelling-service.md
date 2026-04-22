@@ -14,7 +14,7 @@ This is the reference subject-service implementation for the rebuilt KS2 platfor
 - `getStats(learnerId, yearFilter)`
   - Normalised dashboard stats for one pool.
 - `getAnalyticsSnapshot(learnerId)`
-  - Explicit analytics payload with `all`, `y34`, and `y56` pools.
+  - Explicit analytics payload with `all`, `core`, `y34`, `y56`, and `extra` pools.
 - `startSession(learnerId, options)`
   - Creates a fresh deterministic session state.
 - `submitAnswer(learnerId, state, typed)`
@@ -93,10 +93,11 @@ Codex display counts are projected from current spelling progress (`stage >= 4`)
 
 Current spelling Codex stage thresholds are:
 
-- Inklet and Glimmerbug: caught into Stage 0 at 1 secure word, Stage 1 at 10, Stage 2 at 30, Stage 3 at 60, Stage 4 at 90
+- Inklet, Glimmerbug, and Vellhorn: caught into Stage 0 at 1 secure word, Stage 1 at 10, Stage 2 at 30, Stage 3 at 60, Stage 4 at 90
 - Phaeton: caught into Stage 0 at 3 combined secure words, Stage 1 at 25, Stage 2 at 95, Stage 3 at 145, Stage 4 at 200
 
-Phaeton uses the combined secure-word count directly. It does not require both Year 3-4 and Year 5-6 pools to cross the same threshold first.
+Inklet maps to core Years 3-4, Glimmerbug maps to core Years 5-6, and Vellhorn maps to Extra.
+Phaeton uses the combined core secure-word count from Inklet and Glimmerbug directly. It does not require both Year 3-4 and Year 5-6 pools to cross the same threshold first, and Extra/Vellhorn progress does not contribute to Phaeton.
 
 ## Legacy behaviors intentionally preserved
 
@@ -109,6 +110,7 @@ These were kept on purpose:
 - wrong retry enters correction and then schedules one clean blind return later in the round
 - corrected words still count as due again for future review
 - SATs test mode is single-attempt per word
+- SATs test mode stays statutory core-only, even if the learner has selected Extra elsewhere
 - skipping only works in learning question phase and pushes the word later in the round
 - marked cards auto-advance after the preserved short delay instead of needing an extra manual confirmation step
 - the preserved shortcut loop remains available inside active Spelling practice (`Esc`, `Shift+Esc`, `Alt+1/2/3`, `Alt+S`, `Alt+K`) while still avoiding cross-subject collisions in the wider shell
@@ -130,7 +132,6 @@ What was brought back into line with the direct legacy baseline:
 What remains intentionally different:
 
 - platform-level resume across learner switches/navigation/reload still stays broader than legacy
-- the full searchable word-bank drill surface is still not rebuilt
 - provider/model/voice/rate TTS controls and warm-up behaviour are still deferred
 
 See `docs/spelling-parity.md` for the full matrix and the explicit remaining deltas.
@@ -146,6 +147,7 @@ What changed:
 - the runtime service is rebuilt after content mutations so new published content is picked up without leaking unpublished draft rows
 - explicit word starts fail cleanly if the slug is absent from the published snapshot
 - event metadata now follows the injected content snapshot, so secured-word and retry-cleared events stay aligned with edited content
+- `spellingPool` now travels through analytics and secure-word events, allowing Extra spellings to route to Vellhorn while legacy `all` remains a core-only alias
 
 The service remains content-consumer only.
 Draft validation, portable import/export, publishing, and D1 persistence live in `src/subjects/spelling/content/*` and the Worker content routes.
@@ -167,5 +169,5 @@ These are still intentionally preserved rather than reinterpreted in this pass:
 - the exact smart-review weighting constants and repeat penalties are legacy values, not yet re-derived from first principles
 - “secure” still means stage `>= 4` in the preserved schedule, not a newly designed mastery threshold
 - correction-flow prompt counting follows the legacy implementation, including how retry and correction attempts contribute to session prompt totals
-- monster assignment still tracks the historical year-band split, not a future cross-subject reward taxonomy
+- spelling monster assignment is still deliberately spelling-specific: Years 3-4 route to Inklet, Years 5-6 route to Glimmerbug, Extra routes to Vellhorn, and Phaeton derives only from the two core monsters
 - session summaries still describe “secure for today” and “due again” using legacy wording rather than a newly redesigned pedagogy vocabulary
