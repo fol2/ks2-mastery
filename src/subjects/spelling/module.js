@@ -54,6 +54,21 @@ function heroBgStyle(url) {
   return url ? `--hero-bg: url('${escapeHtml(url)}');` : '';
 }
 
+/* Every store update re-runs `root.innerHTML = …`, which destroys the
+   `.hero-art.pan` element and its CSS animation clock — tweaking a
+   preference would visibly snap the 72 s hero pan back to frame 0.
+   A negative `animation-delay` rebased on `performance.now()` tells
+   the new element to behave as if it had been running since page
+   load, so the swap is visually continuous. Modulo the full 144 s
+   alternate cycle (2 × 72 s) keeps the number small and preserves
+   the correct direction across the reverse segment. */
+const HERO_PAN_CYCLE_SECONDS = 144;
+function heroPanDelayStyle() {
+  if (typeof performance === 'undefined') return '';
+  const elapsed = (performance.now() / 1000) % HERO_PAN_CYCLE_SECONDS;
+  return `animation-delay: -${elapsed.toFixed(3)}s;`;
+}
+
 /* --------------------------------------------------------------
    Shared helpers retained from the previous port (codex + utils)
    -------------------------------------------------------------- */
@@ -395,7 +410,7 @@ function renderPracticeDashboard({ learner, service, subject, repositories }) {
   return `
     <div class="setup-grid" style="grid-column:1/-1;">
       <section class="setup-main" style="${heroBgStyle(heroBg)}">
-        <div class="hero-art pan" aria-hidden="true"></div>
+        <div class="hero-art pan" aria-hidden="true" style="${heroPanDelayStyle()}"></div>
         <div class="setup-content">
           <p class="eyebrow">Round setup</p>
           <h1 class="title">Choose today’s journey.</h1>
