@@ -6,6 +6,8 @@ import { PersistenceBanner } from '../surfaces/shell/PersistenceBanner.jsx';
 import { ToastShelf } from '../surfaces/shell/ToastShelf.jsx';
 import { MonsterCelebrationOverlay } from '../surfaces/shell/MonsterCelebrationOverlay.jsx';
 import { ProfileSettingsSurface } from '../surfaces/profile/ProfileSettingsSurface.jsx';
+import { ParentHubSurface } from '../surfaces/hubs/ParentHubSurface.jsx';
+import { AdminHubSurface } from '../surfaces/hubs/AdminHubSurface.jsx';
 import { ErrorBoundary } from '../platform/react/ErrorBoundary.jsx';
 import { usePlatformStore } from '../platform/react/use-platform-store.js';
 import {
@@ -100,7 +102,38 @@ export function App({ controller, runtime }) {
         </>
       )}
 
-      {!['dashboard', 'codex', 'subject', 'profile-settings'].includes(screen) && (
+      {screen === 'parent-hub' && (
+        <div className="app-shell">
+          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
+          <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
+          <ParentHubSurface
+            appState={appState}
+            model={context.parentHub}
+            hubState={context.parentHubState}
+            accessContext={context}
+            actions={actions}
+          />
+          <SharedOverlays appState={appState} actions={actions} />
+        </div>
+      )}
+
+      {screen === 'admin-hub' && (
+        <div className="app-shell">
+          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
+          <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
+          <AdminHubSurface
+            appState={appState}
+            model={context.adminHub}
+            hubState={context.adminHubState}
+            accountDirectory={context.adminAccountDirectory}
+            accessContext={context}
+            actions={actions}
+          />
+          <SharedOverlays appState={appState} actions={actions} />
+        </div>
+      )}
+
+      {!['dashboard', 'codex', 'subject', 'profile-settings', 'parent-hub', 'admin-hub'].includes(screen) && (
         <Html html={renderApp(appState, context)} />
       )}
     </ErrorBoundary>

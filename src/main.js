@@ -951,6 +951,7 @@ function buildSurfaceActions() {
     openSubject: (subjectId) => dispatchAction('open-subject', { subjectId }),
     openCodex: () => dispatchAction('open-codex'),
     openParentHub: () => dispatchAction('open-parent-hub'),
+    openAdminHub: () => dispatchAction('open-admin-hub'),
     logout: () => dispatchAction('platform-logout'),
     retryPersistence: () => dispatchAction('persistence-retry'),
   };

@@ -362,7 +362,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 - Existing render and smoke assertions that pin visible copy still pass after being pointed at React-rendered surfaces.
 - Browser smoke covers the UI contract viewports for dashboard, profile, auth, Codex, persistence banner, toasts, and overlays.
 
-- [ ] **Unit 4: Convert Parent Hub and Admin / Operations to React**
+- [x] **Unit 4: Convert Parent Hub and Admin / Operations to React**
 
 **Goal:** Move adult operating surfaces to React while preserving signed-in Worker payload loading, readable viewer selection, and read-only write blocking.
 
