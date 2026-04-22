@@ -291,6 +291,44 @@ test('hero background rotation includes the new Scribe Downs c landscapes', asyn
   }
 });
 
+test('home subject cards use the region cover banners', async () => {
+  const { buildSubjectCards } = await import('../src/surfaces/home/data.js');
+  const cardsById = Object.fromEntries(buildSubjectCards(SUBJECTS).map((card) => [card.id, card]));
+
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(cardsById).map(([id, card]) => [id, {
+      eyebrow: card.eyebrow,
+      regionBase: card.regionBase,
+    }])),
+    {
+      spelling: {
+        eyebrow: 'The Scribe Downs',
+        regionBase: '/assets/regions/the-scribe-downs/the-scribe-downs-cover',
+      },
+      arithmetic: {
+        eyebrow: 'The Prism Steps',
+        regionBase: '/assets/regions/prism-steps/prism-steps-cover',
+      },
+      reasoning: {
+        eyebrow: 'Paradox Spires',
+        regionBase: '/assets/regions/paradox-spires/paradox-spires-cover',
+      },
+      grammar: {
+        eyebrow: 'The Clause Conservatory',
+        regionBase: '/assets/regions/the-clause-conservatory/the-clause-conservatory-cover',
+      },
+      punctuation: {
+        eyebrow: 'Bellstorm Coast',
+        regionBase: '/assets/regions/bellstorm-coast/bellstorm-coast-cover',
+      },
+      reading: {
+        eyebrow: 'The Moonleaf Archive',
+        regionBase: '/assets/regions/the-moonleaf-archive/the-moonleaf-archive-cover',
+      },
+    },
+  );
+});
+
 test('codex entries show fresh creatures as unknown and caught stage-zero creatures as eggs', async () => {
   const { buildCodexEntries } = await import('../src/surfaces/home/data.js');
   const [fresh, egg] = buildCodexEntries([

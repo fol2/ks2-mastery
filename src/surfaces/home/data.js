@@ -127,13 +127,38 @@ const SUBJECT_DECOR = Object.freeze({
     eyebrow: 'The Scribe Downs',
     glyph: 'Sp',
     accent: 'linear-gradient(135deg, #3E6FA8, #B43CD9)',
-    regionBase: '/assets/regions/the-scribe-downs/the-scribe-downs-bg-a1',
+    regionBase: '/assets/regions/the-scribe-downs/the-scribe-downs-cover',
   },
-  arithmetic:  { glyph: '×÷', accent: 'linear-gradient(135deg, #C06B3E, #F2B756)' },
-  reasoning:   { glyph: '∴',  accent: 'linear-gradient(135deg, #8A5A9D, #C4A5D4)' },
-  grammar:     { glyph: '¶',  accent: 'linear-gradient(135deg, #2E8479, #78C2B4)' },
-  punctuation: { glyph: ';',  accent: 'linear-gradient(135deg, #B8873F, #E8C88E)' },
-  reading:     { glyph: 'Rd', accent: 'linear-gradient(135deg, #4B7A4A, #9CC59A)' },
+  arithmetic: {
+    eyebrow: 'The Prism Steps',
+    glyph: '×÷',
+    accent: 'linear-gradient(135deg, #C06B3E, #F2B756)',
+    regionBase: '/assets/regions/prism-steps/prism-steps-cover',
+  },
+  reasoning: {
+    eyebrow: 'Paradox Spires',
+    glyph: '∴',
+    accent: 'linear-gradient(135deg, #8A5A9D, #C4A5D4)',
+    regionBase: '/assets/regions/paradox-spires/paradox-spires-cover',
+  },
+  grammar: {
+    eyebrow: 'The Clause Conservatory',
+    glyph: '¶',
+    accent: 'linear-gradient(135deg, #2E8479, #78C2B4)',
+    regionBase: '/assets/regions/the-clause-conservatory/the-clause-conservatory-cover',
+  },
+  punctuation: {
+    eyebrow: 'Bellstorm Coast',
+    glyph: ';',
+    accent: 'linear-gradient(135deg, #B8873F, #E8C88E)',
+    regionBase: '/assets/regions/bellstorm-coast/bellstorm-coast-cover',
+  },
+  reading: {
+    eyebrow: 'The Moonleaf Archive',
+    glyph: 'Rd',
+    accent: 'linear-gradient(135deg, #4B7A4A, #9CC59A)',
+    regionBase: '/assets/regions/the-moonleaf-archive/the-moonleaf-archive-cover',
+  },
 });
 
 export function randomHeroBackground(random = Math.random) {
@@ -566,8 +591,8 @@ function percentageNumber(value) {
 }
 
 /**
- * Lay out subject cards for the home grid. Spelling gets the region
- * artwork banner; placeholders get a solid accent banner.
+ * Lay out subject cards for the home grid. Subjects with region artwork use
+ * responsive cover banners; fallback subjects keep a solid accent banner.
  */
 export function buildSubjectCards(subjects = [], dashboardStats = {}) {
   return subjects.map((subject) => {

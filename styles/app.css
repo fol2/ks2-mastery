@@ -2674,7 +2674,9 @@ textarea:focus-visible {
   pointer-events: none;
 }
 .subject-grid .sc-status {
-  position: relative;
+  position: absolute;
+  top: 14px;
+  right: 16px;
   font-size: 10px; font-weight: 800; letter-spacing: 0.1em;
   text-transform: uppercase;
   background: rgba(255,255,255,0.94);
@@ -2740,7 +2742,7 @@ textarea:focus-visible {
   display: block; height: 100%; border-radius: 999px;
   transition: width var(--dur-slow) var(--ease-out);
 }
-.subject-grid .subject-card.placeholder .sc-banner { filter: saturate(0.35) brightness(0.99); }
+.subject-grid .subject-card.placeholder .sc-banner:not(.sc-banner--art) { filter: saturate(0.35) brightness(0.99); }
 .subject-grid .subject-card.placeholder .sc-glyph  { color: rgba(255,255,255,0.62); }
 .subject-grid .subject-card.placeholder .sc-pct    { color: var(--ink-2); }
 

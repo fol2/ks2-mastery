@@ -26,6 +26,7 @@ export function SubjectCard({ subject, onOpen }) {
             alt=""
             aria-hidden="true"
           />
+          {isPlaceholder && <span className="sc-status">{statusLabel}</span>}
           <span className="sc-banner-fade" aria-hidden="true" />
         </div>
       ) : (
