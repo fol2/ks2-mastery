@@ -36,7 +36,10 @@ test('golden-path smoke covers dashboard to spelling session to summary and back
 
   harness.dispatch('spelling-start');
   assert.equal(harness.store.getState().subjectUi.spelling.phase, 'session');
-  assert.match(harness.render(), /Spell the word you hear|Spell the dictated word/);
+  const sessionHtml = harness.render();
+  assert.match(sessionHtml, /Spell the word you hear|Spell the dictated word/);
+  assert.match(sessionHtml, /name="typed"[^>]*data-autofocus="true"/);
+  assert.match(sessionHtml, /aria-label="Replay the dictated word"/);
 
   completeCurrentSpellingRound(harness);
   assert.equal(harness.store.getState().subjectUi.spelling.phase, 'summary');
@@ -303,6 +306,8 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   html = harness.render();
   assert.match(html, /class="wb-modal"/);
   assert.match(html, /data-action="spelling-word-bank-drill-submit"/);
+  assert.match(html, /role="dialog"/);
+  assert.match(html, /aria-modal="true"/);
 
   const drillForm = new FormData();
   drillForm.set('typed', 'possess');

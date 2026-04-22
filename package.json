@@ -30,6 +30,7 @@
     "deploy:ci": "npm run deploy",
     "ops:tail": "node ./scripts/wrangler-oauth.mjs tail ks2-mastery --format pretty",
     "test": "node --test",
+    "test:migration:browser": "KS2_BROWSER_SMOKE=1 node --test tests/browser-react-migration-smoke.test.js",
     "verify": "npm test && npm run check"
   },
   "devDependencies": {

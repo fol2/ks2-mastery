@@ -17,3 +17,8 @@ test('native form controls do not dispatch data-action click handlers', () => {
   assert.equal(shouldDispatchClickAction(target('FORM')), false);
   assert.equal(shouldDispatchClickAction(target('BUTTON')), true);
 });
+
+test('React-owned buttons keep the transitional data-action click bridge', () => {
+  assert.equal(shouldDispatchClickAction(target('BUTTON', { dataset: { action: 'open-subject' } })), true);
+  assert.equal(shouldDispatchClickAction(target('A', { dataset: { action: 'navigate-home' } })), true);
+});

@@ -150,7 +150,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 
 ## Implementation Units
 
-- [ ] **Unit 1: Extract App Controller and Side-Effect Ports**
+- [x] **Unit 1: Extract App Controller and Side-Effect Ports**
 
 **Goal:** Move `src/main.js` orchestration into a testable controller that React and the Node harness can share.
 
@@ -201,7 +201,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 **Verification:**
 - Existing smoke, persistence, runtime-boundary, hub, and spelling tests can run through the controller-backed harness with no product copy or state-contract regression.
 
-- [ ] **Unit 2: Add Single React Root and Store Bridge**
+- [x] **Unit 2: Add Single React Root and Store Bridge**
 
 **Goal:** Introduce one React application root that subscribes to the existing store and renders routes without global island renderers.
 
@@ -259,7 +259,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 - The app can be built and served from `dist/public` with the Worker API config unchanged.
 - No global React island symbols are required for dashboard, Codex, or subject top navigation.
 
-- [ ] **Unit 2.5: Prove UI/UX Migration Contract Before Broad Surface Porting**
+- [x] **Unit 2.5: Prove UI/UX Migration Contract Before Broad Surface Porting**
 
 **Goal:** Turn the current UI behaviour into an explicit migration contract so React ports preserve learner, parent, and operator experience instead of only matching component output.
 

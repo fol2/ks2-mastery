@@ -47,7 +47,7 @@ export function AuthSurface({ initialMode = 'login', initialError = '', onSubmit
         <h1 className="title">{isRegister ? 'Create your parent account' : 'Sign in to continue'}</h1>
         <p className="subtitle">Your learner profiles and spelling progress sync through the KS2 Mastery cloud backend.</p>
         {error && (
-          <div className="feedback bad" style={{ marginTop: 16 }}>
+          <div className="feedback bad" role="alert" aria-live="polite" style={{ marginTop: 16 }}>
             {error}
           </div>
         )}

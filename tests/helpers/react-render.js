@@ -59,6 +59,7 @@ export function renderAppFixture({ route = 'dashboard' } = {}) {
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
     import { App } from ${JSON.stringify(absoluteSpecifier('src/app/App.jsx'))};
+    import { DefaultErrorFallback } from ${JSON.stringify(absoluteSpecifier('src/platform/react/ErrorBoundary.jsx'))};
     import { createAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-app-controller.js'))};
     import { SUBJECTS } from ${JSON.stringify(absoluteSpecifier('src/platform/core/subject-registry.js'))};
     import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
@@ -128,7 +129,9 @@ export function renderAppFixture({ route = 'dashboard' } = {}) {
       afterRender() {},
     };
 
-    const html = renderToStaticMarkup(<App controller={controller} runtime={runtime} />);
+    const html = ${JSON.stringify(route === 'throw')}
+      ? renderToStaticMarkup(<DefaultErrorFallback error={new Error('fixture boom')} />)
+      : renderToStaticMarkup(<App controller={controller} runtime={runtime} />);
     console.log(html);
   `);
 }
