@@ -364,9 +364,10 @@ textarea:focus-visible {
   gap: 12px;
 }
 .stat {
-  background: #fbfaf6;
+  background: var(--panel-soft);
   border: 1px solid var(--line);
   border-radius: 16px;
+  color: var(--ink);
   padding: 14px;
 }
 .stat-label { color: var(--muted); font-size: 0.85rem; margin-bottom: 6px; }
@@ -4762,36 +4763,39 @@ textarea:focus-visible {
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 10%, transparent);
 }
 .wb-status-swatch {
-  width: 0.78rem;
-  height: 0.78rem;
+  width: 0.54rem;
+  height: 0.54rem;
   border-radius: 999px;
-  border: 1px solid transparent;
-  background: var(--panel-sunken);
+  border: 1px solid color-mix(in oklab, currentColor 12%, transparent);
+  background: currentColor;
+  box-shadow: 0 0 0 2px color-mix(in oklab, currentColor 14%, transparent);
   flex: 0 0 auto;
 }
 .wb-status-swatch.all {
-  background: linear-gradient(135deg, var(--panel-sunken) 0 18%, var(--brand-soft) 18% 38%, var(--warn-soft) 38% 58%, var(--good-soft) 58% 78%, var(--bad-soft) 78% 100%);
-  border-color: var(--line);
+  color: var(--brand);
+  background: conic-gradient(
+    from 0deg,
+    var(--brand) 0 25%,
+    var(--warn) 25% 50%,
+    var(--good) 50% 75%,
+    var(--bad) 75% 100%
+  );
+  border-color: color-mix(in oklab, var(--ink) 18%, transparent);
 }
 .wb-status-swatch.new {
-  background: var(--panel-sunken);
-  border-color: var(--line);
+  color: var(--muted);
 }
 .wb-status-swatch.learning {
-  background: var(--brand-soft);
-  border-color: color-mix(in oklab, var(--brand) 24%, var(--line));
+  color: var(--brand);
 }
 .wb-status-swatch.due {
-  background: var(--warn-soft);
-  border-color: color-mix(in oklab, var(--warn) 34%, var(--line));
+  color: var(--warn);
 }
 .wb-status-swatch.secure {
-  background: var(--good-soft);
-  border-color: color-mix(in oklab, var(--good) 34%, var(--line));
+  color: var(--good);
 }
 .wb-status-swatch.trouble {
-  background: var(--bad-soft);
-  border-color: color-mix(in oklab, var(--bad) 34%, var(--line));
+  color: var(--bad);
 }
 
 /* ---------- Subject-screen breadcrumb ---------- */
