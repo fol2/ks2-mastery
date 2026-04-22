@@ -1,16 +1,15 @@
 const REQUIRED_STRING_FIELDS = ['id', 'name', 'blurb'];
-/* The subject module exposes a single renderer (renderPractice) — the
-   retired Analytics / Profiles / Settings / Method tabs all routed through
-   separate renderers before the Codex Journal redesign, but the new subject
-   surface handles every phase (setup, session, summary, word bank) inside
-   renderPractice via `ui.phase`. Placeholders and real modules both align
-   to the single-renderer shape. */
 const REQUIRED_FUNCTION_FIELDS = [
   'initState',
   'getDashboardStats',
-  'renderPractice',
   'handleAction',
 ];
+const REACT_PRACTICE_FIELDS = ['PracticeComponent', 'renderPracticeComponent'];
+
+function hasPracticeRenderer(candidate) {
+  return REACT_PRACTICE_FIELDS.some((field) => typeof candidate[field] === 'function')
+    || typeof candidate.renderPractice === 'function';
+}
 
 function describeCandidate(candidate) {
   if (candidate?.id) return `subject "${candidate.id}"`;
@@ -35,6 +34,10 @@ export function validateSubjectModule(candidate) {
     if (typeof candidate[field] !== 'function') {
       throw new TypeError(`${label} is missing required function "${field}()".`);
     }
+  }
+
+  if (!hasPracticeRenderer(candidate)) {
+    throw new TypeError(`${label} is missing required React practice component or legacy "renderPractice()" renderer.`);
   }
 
   if ('available' in candidate && typeof candidate.available !== 'boolean') {

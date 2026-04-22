@@ -1,3 +1,4 @@
+import React from 'react';
 import { createLocalPlatformRepositories, cloneSerialisable, normalisePracticeSessionRecord } from '../../src/platform/core/repositories/index.js';
 import { escapeHtml } from '../../src/platform/core/utils.js';
 import { SUBJECTS } from '../../src/platform/core/subject-registry.js';
@@ -336,6 +337,106 @@ function renderSummary(ui) {
   `;
 }
 
+function ExpansionFixturePracticeComponent({ appState, service, actions }) {
+  const learnerId = appState.learners.selectedId;
+  const learner = appState.learners.byId[learnerId];
+  const ui = service.initState(appState.subjectUi[EXPANSION_FIXTURE_SUBJECT_ID], learnerId);
+
+  if (ui.phase === 'session') {
+    const question = ui.session?.currentQuestion || {};
+    return React.createElement(
+      'section',
+      { className: 'card' },
+      React.createElement('div', { className: 'eyebrow' }, 'Candidate subject fixture'),
+      React.createElement('h2', { className: 'section-title' }, 'Expansion fixture live round'),
+      React.createElement('p', { className: 'subtitle' }, `${learner.name} · deterministic prompt`),
+      React.createElement(
+        'div',
+        { className: 'callout', style: { marginTop: 14 } },
+        'Solve: ',
+        React.createElement('strong', null, question.prompt),
+      ),
+      React.createElement(
+        'form',
+        {
+          style: { marginTop: 16, display: 'grid', gap: 12 },
+          onSubmit(event) {
+            event.preventDefault();
+            actions.dispatch('fixture-submit-form', { formData: new FormData(event.currentTarget) });
+          },
+        },
+        React.createElement(
+          'label',
+          { className: 'field' },
+          React.createElement('span', null, 'Your answer'),
+          React.createElement('input', { className: 'input', name: 'typed', 'data-autofocus': 'true', autoComplete: 'off' }),
+        ),
+        React.createElement(
+          'div',
+          { className: 'actions' },
+          React.createElement('button', { className: 'btn primary', type: 'submit' }, 'Submit answer'),
+          React.createElement('button', { className: 'btn secondary', type: 'button', onClick: () => actions.dispatch('fixture-back') }, 'End round'),
+        ),
+      ),
+    );
+  }
+
+  if (ui.phase === 'summary') {
+    const summary = ui.summary || {};
+    const feedback = ui.feedback || {};
+    return React.createElement(
+      'section',
+      { className: 'card' },
+      React.createElement('div', { className: 'eyebrow' }, 'Candidate subject fixture'),
+      React.createElement('h2', { className: 'section-title' }, 'Expansion fixture summary'),
+      React.createElement('p', { className: 'subtitle' }, summary.message || ''),
+      React.createElement(
+        'div',
+        { className: `feedback ${feedback.kind === 'success' ? 'good' : 'warn'}`, style: { marginTop: 14 } },
+        React.createElement('strong', null, feedback.headline || ''),
+        React.createElement('div', { style: { marginTop: 8 } }, feedback.body || ''),
+      ),
+      React.createElement(
+        'div',
+        { className: 'stat-grid', style: { marginTop: 16 } },
+        ...(summary.cards || []).map((card) => React.createElement(
+          'div',
+          { className: 'stat', key: card.label },
+          React.createElement('div', { className: 'stat-label' }, card.label),
+          React.createElement('div', { className: 'stat-value' }, String(card.value)),
+          React.createElement('div', { className: 'stat-sub' }, card.sub),
+        )),
+      ),
+      React.createElement(
+        'div',
+        { className: 'actions', style: { marginTop: 16 } },
+        React.createElement('button', { className: 'btn secondary', type: 'button', onClick: () => actions.dispatch('fixture-back') }, 'Back to fixture dashboard'),
+      ),
+    );
+  }
+
+  const stats = service.getStats(learnerId);
+  return React.createElement(
+    'section',
+    { className: 'card' },
+    React.createElement('div', { className: 'eyebrow' }, 'Candidate subject fixture'),
+    React.createElement('h2', { className: 'section-title' }, 'Expansion fixture practice'),
+    React.createElement('p', { className: 'subtitle' }, 'This is a non-production thin slice used only to prove the subject expansion harness. It deliberately uses the same shell, repository, session, and event boundaries as a real future subject.'),
+    React.createElement(
+      'div',
+      { className: 'chip-row', style: { marginTop: 14 } },
+      React.createElement('span', { className: 'chip' }, `Answered ${stats.attempts}`),
+      React.createElement('span', { className: 'chip' }, `Accuracy ${stats.accuracy}%`),
+      React.createElement('span', { className: 'chip' }, `Due ${stats.due}`),
+    ),
+    React.createElement(
+      'div',
+      { className: 'actions', style: { marginTop: 16 } },
+      React.createElement('button', { className: 'btn primary', type: 'button', onClick: () => actions.dispatch('fixture-start') }, 'Start deterministic round'),
+    ),
+  );
+}
+
 export const expansionFixtureModule = {
   id: EXPANSION_FIXTURE_SUBJECT_ID,
   name: 'Expansion Fixture',
@@ -358,6 +459,7 @@ export const expansionFixtureModule = {
       nextUp: stats.nextUp,
     };
   },
+  PracticeComponent: ExpansionFixturePracticeComponent,
   renderPractice(context) {
     const learnerId = context.appState.learners.selectedId;
     const ui = context.service.initState(context.appState.subjectUi[EXPANSION_FIXTURE_SUBJECT_ID], learnerId);

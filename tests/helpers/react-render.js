@@ -161,6 +161,54 @@ export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
   `);
 }
 
+export function renderSubjectRouteFixture({ subject = 'placeholder' } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { SubjectRoute } from ${JSON.stringify(absoluteSpecifier('src/surfaces/subject/SubjectRoute.jsx'))};
+    import { createAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-app-controller.js'))};
+    import { SUBJECTS } from ${JSON.stringify(absoluteSpecifier('src/platform/core/subject-registry.js'))};
+    import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
+    import { createExpansionFixtureHarness } from ${JSON.stringify(absoluteSpecifier('tests/helpers/expansion-fixture-subject.js'))};
+
+    installMemoryStorage();
+    const brokenSubject = {
+      id: 'broken-react',
+      name: 'Broken React',
+      blurb: 'Broken React subject fixture.',
+      accent: '#7C3AED',
+      available: true,
+      initState() { return { phase: 'dashboard' }; },
+      getDashboardStats() { return { pct: 0, due: 0, streak: 0, nextUp: 'Broken' }; },
+      renderPracticeComponent() { throw new Error('react practice exploded'); },
+      handleAction() { return false; },
+    };
+    const selected = ${JSON.stringify(subject)};
+    const harness = selected === 'expansion'
+      ? createExpansionFixtureHarness({ storage: globalThis.localStorage })
+      : null;
+    const controller = harness || createAppController({
+      subjects: selected === 'broken' ? [...SUBJECTS, brokenSubject] : SUBJECTS,
+    });
+    const subjectId = selected === 'expansion'
+      ? 'expansion-fixture'
+      : selected === 'broken'
+        ? 'broken-react'
+        : 'reasoning';
+    controller.dispatch('open-subject', { subjectId });
+    const appState = controller.store.getState();
+    const context = controller.contextFor(subjectId);
+    const actions = {
+      dispatch(action, data) { controller.dispatch(action, data); },
+      navigateHome() { controller.dispatch('navigate-home'); },
+      openParentHub() { controller.store.openParentHub(); },
+      openAdminHub() { controller.store.openAdminHub(); },
+    };
+    const html = renderToStaticMarkup(<SubjectRoute appState={appState} context={context} actions={actions} />);
+    console.log(html);
+  `);
+}
+
 export function renderAppFixture({ route = 'dashboard' } = {}) {
   return renderFixture(`
     import React from 'react';

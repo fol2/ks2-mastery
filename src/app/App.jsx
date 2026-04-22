@@ -8,12 +8,10 @@ import { MonsterCelebrationOverlay } from '../surfaces/shell/MonsterCelebrationO
 import { ProfileSettingsSurface } from '../surfaces/profile/ProfileSettingsSurface.jsx';
 import { ParentHubSurface } from '../surfaces/hubs/ParentHubSurface.jsx';
 import { AdminHubSurface } from '../surfaces/hubs/AdminHubSurface.jsx';
+import { SubjectRoute } from '../surfaces/subject/SubjectRoute.jsx';
 import { ErrorBoundary } from '../platform/react/ErrorBoundary.jsx';
 import { usePlatformStore } from '../platform/react/use-platform-store.js';
-import {
-  renderApp,
-  renderSubjectScreen,
-} from '../platform/ui/render.js';
+import { renderApp } from '../platform/ui/render.js';
 
 function Html({ html }) {
   if (!html) return null;
@@ -84,7 +82,7 @@ export function App({ controller, runtime }) {
         <div className="app-shell">
           <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
-          <Html html={renderSubjectScreen(context)} />
+          <SubjectRoute appState={appState} context={context} actions={actions} />
           <SharedOverlays appState={appState} actions={actions} />
         </div>
       )}

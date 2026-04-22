@@ -213,6 +213,18 @@ export function createAppController({
       return true;
     }
 
+    if (action === 'open-parent-hub') {
+      tts.stop();
+      store.openParentHub();
+      return true;
+    }
+
+    if (action === 'open-admin-hub') {
+      tts.stop();
+      store.openAdminHub();
+      return true;
+    }
+
     if (action === 'open-profile-settings') {
       tts.stop();
       store.openProfileSettings();

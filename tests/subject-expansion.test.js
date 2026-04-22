@@ -79,6 +79,7 @@ const expansionFixtureSpec = {
   label: 'Expansion fixture candidate subject',
   subjectId: EXPANSION_FIXTURE_SUBJECT_ID,
   createHarness: createExpansionFixtureHarness,
+  expectReactPractice: true,
   practiceMatcher: /Expansion fixture practice/,
   sessionMatcher: /Expansion fixture live round/,
   summaryMatcher: /Expansion fixture summary/,

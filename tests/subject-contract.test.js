@@ -30,11 +30,34 @@ function completeSubjectModule(overrides = {}) {
 
 test('subject registry rejects modules missing required contract functions', () => {
   const broken = completeSubjectModule();
-  delete broken.renderPractice;
+  delete broken.handleAction;
 
   assert.throws(
     () => buildSubjectRegistry([broken]),
-    /missing required function "renderPractice\(\)"/i,
+    /missing required function "handleAction\(\)"/i,
+  );
+});
+
+test('subject registry accepts a React practice component during subject migration', () => {
+  const subject = completeSubjectModule({
+    renderPractice: undefined,
+    PracticeComponent() {
+      return null;
+    },
+  });
+
+  const registry = buildSubjectRegistry([subject]);
+
+  assert.equal(registry[0].id, 'demo');
+  assert.equal(typeof registry[0].PracticeComponent, 'function');
+});
+
+test('subject registry rejects modules without React or legacy practice rendering', () => {
+  const broken = completeSubjectModule({ renderPractice: undefined });
+
+  assert.throws(
+    () => buildSubjectRegistry([broken]),
+    /missing required React practice component or legacy "renderPractice\(\)" renderer/i,
   );
 });
 

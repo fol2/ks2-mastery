@@ -413,7 +413,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 **Verification:**
 - Worker hub tests remain green, and React hub tests prove the same payload shape is rendered without synthetic local membership drift.
 
-- [ ] **Unit 5: Introduce React Subject Contract and Route**
+- [x] **Unit 5: Introduce React Subject Contract and Route**
 
 **Goal:** Replace subject string rendering with a React-capable subject surface while preserving runtime containment and the expansion harness.
 
