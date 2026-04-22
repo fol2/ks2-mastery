@@ -215,7 +215,13 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
                 <button className="btn secondary" type="button" onClick={() => actions.dispatch('platform-export-app')}>Export full app</button>
                 <button className="btn ghost" type="button" onClick={() => actions.dispatch('platform-import')}>Import JSON</button>
               </div>
-              <input id="platform-import-file" style={{ display: 'none' }} type="file" accept=".json,application/json" />
+              <input
+                id="platform-import-file"
+                style={{ display: 'none' }}
+                type="file"
+                accept=".json,application/json"
+                onChange={(event) => actions.dispatch('platform-import-file-selected', { input: event.currentTarget })}
+              />
             </section>
           </aside>
         </section>

@@ -49,6 +49,10 @@ for (const unsafePath of ['worker', 'tests', 'docs', 'legacy', 'migration-plan.m
   await mustNotExist(unsafePath);
 }
 await mustNotExist('src/generated');
+await mustNotExist('src/bundles/home.bundle.js');
+await mustNotExist('src/platform/ui/render.js');
+await mustNotExist('src/surfaces/home/index.jsx');
+await mustNotExist('src/surfaces/home/TopNav.jsx');
 
 const topLevel = await readdir(publicDir);
 const allowed = new Set(['_headers', 'index.html', 'styles', 'src', 'assets']);
@@ -73,4 +77,18 @@ if (!indexHtml.includes('./src/bundles/app.bundle.js')) {
 }
 if (indexHtml.includes('home.bundle.js') || indexHtml.includes('src/main.js')) {
   throw new Error('Public index.html must not load legacy home islands or the raw source entry.');
+}
+
+const appBundle = await readFile(path.join(publicDir, 'src/bundles/app.bundle.js'), 'utf8');
+for (const token of [
+  '__ks2HomeSurface',
+  '__ks2CodexSurface',
+  '__ks2SubjectTopNavSurface',
+  'data-home-mount',
+  'data-subject-topnav-mount',
+  'home.bundle.js',
+]) {
+  if (appBundle.includes(token)) {
+    throw new Error(`React app bundle must not include retired legacy client token: ${token}`);
+  }
 }

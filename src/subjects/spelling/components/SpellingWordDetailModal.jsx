@@ -138,9 +138,13 @@ function DrillBody({ word, typed, result, accent, actions }) {
 export function SpellingWordDetailModal({ word, mode = 'explain', typed = '', result = null, accent, actions }) {
   if (!word) return null;
   const safeMode = mode === 'drill' ? 'drill' : 'explain';
+  const closeFromScrim = (event) => {
+    if (event.target?.closest?.('.wb-modal')) return;
+    renderAction(actions, event, 'spelling-word-detail-close');
+  };
 
   return (
-    <div className="wb-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="wb-modal-word">
+    <div className="wb-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="wb-modal-word" onClick={closeFromScrim}>
       <div className="wb-modal-backdrop" tabIndex="-1" aria-hidden="true" />
       <div className="wb-modal" data-slug={word.slug}>
         <header className="wb-modal-head">

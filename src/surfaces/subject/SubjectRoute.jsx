@@ -47,15 +47,6 @@ function NoWritableLearnerCard({ subject, context, actions }) {
   );
 }
 
-function LegacySubjectPractice({ subject, routeContext, captureRenderError }) {
-  try {
-    const html = subject.renderPractice(routeContext);
-    return <div dangerouslySetInnerHTML={{ __html: html }} />;
-  } catch (error) {
-    return captureRenderError(error, 'renderPractice');
-  }
-}
-
 class SubjectRenderBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -117,12 +108,9 @@ function renderPracticeNode({ subject, routeContext, actions, activeTab, runtime
     );
   }
 
-  return (
-    <LegacySubjectPractice
-      subject={subject}
-      routeContext={routeContext}
-      captureRenderError={(error, methodName) => captureRenderError(error, methodName)}
-    />
+  return captureRenderError(
+    new Error(`${subject.id} does not expose a React practice component.`),
+    'PracticeComponent',
   );
 }
 

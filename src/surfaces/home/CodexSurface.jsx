@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { TopNav } from './TopNav.jsx';
+import { TopNav } from '../shell/TopNav.jsx';
 import { CodexCard } from './CodexCard.jsx';
 import { CodexCreatureLightbox } from './CodexCreatureLightbox.jsx';
 import { CodexHero } from './CodexHero.jsx';

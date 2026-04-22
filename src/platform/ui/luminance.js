@@ -2,11 +2,10 @@
  *
  * Surfaces that paint a region artwork as their `--hero-bg` need to know
  * whether the art itself is dark (so ink tokens can flip to light). The
- * design reference runs the same probe inside a React effect on the
- * `ShellPadding` element; the production shell paints its DOM via
- * `root.innerHTML = renderApp(...)` and has no React tree to hang the
- * effect off, so we expose a plain async function that callers can kick
- * off from `queueMicrotask` after every render.
+ * React owns the production shell, while the controller still centralises
+ * post-render side effects such as focus restoration and audio glow sync.
+ * This helper stays framework-neutral so that side-effect layer can kick
+ * off a cheap `queueMicrotask` probe after React commits.
  *
  * Contract — `probeRelLuminance(url)`:
  *   - Resolves to a number in `[0, 1]` representing the WCAG relative

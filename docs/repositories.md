@@ -6,7 +6,7 @@ The important deployment boundary is not browser versus Worker.
 
 It is local repository versus remote repository.
 
-The platform shell, the shared store, the Spelling service, and the reward layer all talk to one repository-shaped interface.
+The React browser shell, the shared store, the Spelling service, and the reward layer all talk to one repository-shaped interface.
 That keeps the browser reference build inspectable now while making the future backend boundary explicit instead of implied.
 
 ## Platform repository contract
@@ -180,7 +180,7 @@ Parent Hub requires the account-level `parent` or `admin` platform role plus rea
 Admin / Operations requires the account-level `admin` or `ops` platform role, and still respects learner membership when exposing learner diagnostics.
 Account role management is narrower than general Operations access: only `admin` can list accounts or write `adult_accounts.platform_role`, and the Worker rejects demoting the last remaining admin.
 
-Signed-in shell rendering now consumes those Worker hub payloads through the shared hub API client.
+Signed-in React shell rendering now consumes those Worker hub payloads through the shared hub API client.
 The main repository bootstrap remains writable-only, so readable viewer learners stay in adult hub context instead of being merged into the subject runtime learner snapshot.
 Remote empty bootstrap is also treated honestly: local-reference mode may seed a convenience learner, but signed-in remote mode does not fabricate a default learner when the account has no writable membership.
 

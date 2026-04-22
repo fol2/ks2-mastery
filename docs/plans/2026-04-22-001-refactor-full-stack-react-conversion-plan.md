@@ -520,7 +520,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 **Verification:**
 - English Spelling parity tests remain green, including legacy progress import/export, content snapshot behaviour, word-bank modal behaviour, and monster celebration timing.
 
-- [ ] **Unit 7: Retire Legacy Renderers, Globals, and Build Artefacts**
+- [x] **Unit 7: Retire Legacy Renderers, Globals, and Build Artefacts**
 
 **Goal:** Remove the transitional string-rendering and global island paths once all routes are React-owned.
 

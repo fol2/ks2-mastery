@@ -164,14 +164,15 @@ export function buildDrillCloze(sentence, word) {
 export function renderAction(actions, event, action, data = {}) {
   event?.preventDefault?.();
   event?.stopPropagation?.();
-  if (event?.nativeEvent) event.nativeEvent.__ks2ReactHandled = true;
-  actions.dispatch(action, data);
+  const payload = action === 'spelling-word-detail-open' && data && typeof data === 'object'
+    ? { ...data, triggerElement: event?.currentTarget || data.triggerElement || null }
+    : data;
+  actions.dispatch(action, payload);
 }
 
 export function renderFormAction(actions, event, action, extra = {}) {
   event.preventDefault();
   event.stopPropagation();
-  if (event.nativeEvent) event.nativeEvent.__ks2ReactHandled = true;
   actions.dispatch(action, { ...extra, formData: new FormData(event.currentTarget) });
 }
 

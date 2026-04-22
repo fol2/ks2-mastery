@@ -11,7 +11,6 @@ import { AuthSurface } from './surfaces/auth/AuthSurface.jsx';
 import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
 import { probeRelLuminance } from './platform/ui/luminance.js';
 import { safeParseInt, uid } from './platform/core/utils.js';
-import { shouldDispatchClickAction } from './platform/core/dom-actions.js';
 import { normalisePlatformRole } from './platform/access/roles.js';
 import { buildAdminHubReadModel } from './platform/hubs/admin-read-model.js';
 import { createHubApi } from './platform/hubs/api.js';
@@ -50,11 +49,9 @@ const credentialFetch = createCredentialFetch();
 
 /* --------------------------------------------------------------
    Word-detail modal accessibility: focus trap + restore-on-close.
-   The word-detail modal renders via innerHTML replacement on every
-   store tick, so trigger elements go stale between renders. We key
-   the restore target by slug and re-query after close. `lastModalTrigger`
-   also keeps a direct element reference as a first-choice fallback
-   for restore in cases where the list wasn't re-rendered.
+   React now owns the modal DOM, but route and filter transitions can
+   still remount word-bank rows. Keep the triggering element when React
+   gives us one, and fall back to the stable slug after close.
    -------------------------------------------------------------- */
 const WORD_DETAIL_MODAL_SELECTOR = '.wb-modal-scrim';
 const WORD_DETAIL_FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -98,6 +95,19 @@ function focusInitialModalElement() {
   if (root?.querySelector('.wb-modal [data-autofocus="true"]:not([disabled])')) return;
   const focusables = getModalFocusables();
   if (focusables.length) focusables[0].focus();
+}
+
+function captureWordDetailTrigger(action, data = {}) {
+  if (action !== 'spelling-word-detail-open') return;
+  const triggerElement = data.triggerElement && typeof data.triggerElement.focus === 'function'
+    ? data.triggerElement
+    : document.activeElement && document.activeElement !== document.body
+      ? document.activeElement
+      : null;
+  lastModalTrigger = {
+    slug: data.slug || '',
+    element: triggerElement,
+  };
 }
 
 async function submitAuthCredentials({ mode = 'login', email, password } = {}) {
@@ -1350,6 +1360,12 @@ function handleGlobalAction(action, data) {
     return true;
   }
 
+  if (action === 'platform-import-file-selected') {
+    if (blockReadOnlyAdultAction('platform-import')) return true;
+    handleImportFileChange(data.input);
+    return true;
+  }
+
   if (action === 'spelling-content-export') {
     downloadJson('ks2-spelling-content.json', spellingContent.exportPortable());
     return true;
@@ -1472,124 +1488,17 @@ function handleSubjectAction(action, data) {
 
 function dispatchAction(action, data = {}) {
   controller.autoAdvance.clear();
+  captureWordDetailTrigger(action, data);
   if (!handleGlobalAction(action, data)) {
     handleSubjectAction(action, data);
   }
   ensureSpellingAutoAdvanceFromCurrentState();
 }
 
-function extractActionData(target) {
-  /* `data-value` overrides `target.value` so non-input elements (buttons, list
-     items, links) can carry a payload. Native inputs still expose `.value`,
-     so leaving dataset first preserves legacy emitters that relied on the
-     value attribute. */
-  const datasetValue = target.dataset.value;
-  return {
-    action: target.dataset.action,
-    subjectId: target.dataset.subjectId,
-    accountId: target.dataset.accountId,
-    tab: target.dataset.tab,
-    pref: target.dataset.pref,
-    slug: target.dataset.slug,
-    mode: target.dataset.mode,
-    index: target.dataset.index,
-    value: datasetValue != null ? datasetValue : target.value,
-    checked: target.checked,
-  };
-}
-
-root.addEventListener('click', (event) => {
-  if (event.__ks2ReactHandled) return;
-  /* Scrim-click closes the modal. The backdrop is a passive <div> (so
-     screen readers don't enumerate a spurious button inside the dialog),
-     which means the raw click doesn't carry a data-action. We synthesise
-     the close here: a click on the scrim itself (not the inner .wb-modal
-     content) routes to spelling-word-detail-close. */
-  const scrimTarget = event.target.closest('.wb-modal-scrim');
-  if (scrimTarget && !event.target.closest('.wb-modal')) {
-    event.preventDefault();
-    dispatchAction('spelling-word-detail-close', {});
-    return;
-  }
-
-  const target = event.target.closest('[data-action]');
-  if (!target) return;
-  const action = target.dataset.action;
-  if (!action) return;
-  if (!shouldDispatchClickAction(target)) return;
-  if (action === 'spelling-word-detail-open') {
-    /* Capture the triggering element so focus can return here on close.
-       Keep the slug as a stable fallback key — the row DOM gets wiped by
-       the next innerHTML render, so a raw element reference alone is
-       unreliable. */
-    const slug = target.dataset.slug || '';
-    lastModalTrigger = {
-      slug,
-      element: document.activeElement && document.activeElement !== document.body
-        ? document.activeElement
-        : target,
-    };
-  }
-  event.preventDefault();
-  dispatchAction(action, extractActionData(target));
-});
-
-root.addEventListener('change', (event) => {
-  if (event.__ks2ReactHandled) return;
-  const fileInput = event.target.closest('#platform-import-file');
-  if (fileInput) {
-    handleImportFileChange(fileInput);
-    return;
-  }
-
-  const spellingContentInput = event.target.closest('#spelling-content-import-file');
-  if (spellingContentInput) {
-    handleSpellingContentImportFileChange(spellingContentInput);
-    return;
-  }
-
-  const target = event.target.closest('[data-action]');
-  if (!target) return;
-  const action = target.dataset.action;
-  if (!action) return;
-  if (!['SELECT', 'INPUT', 'TEXTAREA'].includes(target.tagName)) return;
-  dispatchAction(action, extractActionData(target));
-});
-
-function dispatchTextInputAction(event) {
-  if (event.__ks2ReactHandled) return false;
-  const target = event.target.closest('[data-action]');
-  if (!target) return false;
-  const action = target.dataset.action;
-  if (!action) return false;
-  if (!['INPUT', 'TEXTAREA'].includes(target.tagName)) return false;
-  if (['checkbox', 'radio', 'file'].includes(String(target.type || '').toLowerCase())) return false;
-  dispatchAction(action, extractActionData(target));
-  return true;
-}
-
-root.addEventListener('input', (event) => {
-  dispatchTextInputAction(event);
-});
-
-root.addEventListener('search', (event) => {
-  dispatchTextInputAction(event);
-}, true);
-
-root.addEventListener('submit', (event) => {
-  if (event.__ks2ReactHandled) return;
-  const form = event.target.closest('form[data-action]');
-  if (!form) return;
-  event.preventDefault();
-  dispatchAction(form.dataset.action, {
-    formData: new FormData(form),
-  });
-});
-
 /* Generic keyboard support for WAI-ARIA radiogroups. Buttons carrying
    `role="radio"` inside a `role="radiogroup"` container respond to arrow
    keys by moving focus to the previous/next sibling radio and clicking it
-   (which triggers the existing data-action dispatch path). Disabled radios
+   (which triggers the button's React handler). Disabled radios
    are skipped and focus wraps at the ends so the group behaves like a
    native radio fieldset. Home/End jump to the first/last enabled option. */
 const RADIOGROUP_KEYS_NEXT = new Set(['ArrowRight', 'ArrowDown']);
