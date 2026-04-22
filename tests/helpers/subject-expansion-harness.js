@@ -54,6 +54,13 @@ export function registerSubjectConformanceSuite(spec) {
     const subject = findSubject(harness, spec.subjectId);
     assert.ok(subject, `Expected subject "${spec.subjectId}" to be present.`);
     validateSubjectModule(subject);
+    if (spec.expectReactPractice) {
+      assert.equal(
+        typeof subject.PracticeComponent === 'function' || typeof subject.renderPracticeComponent === 'function',
+        true,
+        `Expected ${spec.subjectId} to expose a React practice surface.`,
+      );
+    }
 
     const service = harness.services[spec.subjectId];
     assert.ok(service, `Expected service for subject "${spec.subjectId}".`);

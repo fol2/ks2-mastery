@@ -1,0 +1,408 @@
+import { createStore } from '../core/store.js';
+import { createLocalPlatformRepositories } from '../core/repositories/index.js';
+import { createSubjectRuntimeBoundary } from '../core/subject-runtime.js';
+import { createEventRuntime, createPracticeStreakSubscriber } from '../events/index.js';
+import { createSpellingRewardSubscriber } from '../../subjects/spelling/event-hooks.js';
+import { createSpellingAutoAdvanceController } from '../../subjects/spelling/auto-advance.js';
+import { resolveSpellingShortcut } from '../../subjects/spelling/shortcuts.js';
+import { createSpellingService } from '../../subjects/spelling/service.js';
+import { createSpellingPersistence } from '../../subjects/spelling/repository.js';
+import {
+  isMonsterCelebrationEvent,
+  shouldDelayMonsterCelebrations,
+  spellingSessionEnded,
+} from '../game/monster-celebrations.js';
+import { SUBJECTS } from '../core/subject-registry.js';
+import { safeParseInt } from '../core/utils.js';
+import { buildControllerSnapshot, createDefaultControllerUiState } from './controller-snapshot.js';
+import { createAppSideEffectPorts, createNoopTtsPort } from './side-effect-ports.js';
+
+function resolveSubject(subjects, subjectId) {
+  return subjects.find((subject) => subject.id === subjectId) || subjects[0];
+}
+
+function defaultSession() {
+  return { signedIn: false, mode: 'local-only', platformRole: 'parent' };
+}
+
+export function createAppController({
+  repositories = createLocalPlatformRepositories(),
+  subjects = SUBJECTS,
+  session = defaultSession(),
+  now = () => Date.now(),
+  subscribers = null,
+  runtimeBoundary = createSubjectRuntimeBoundary(),
+  scheduler = null,
+  tts = createNoopTtsPort(),
+  services: extraServices = {},
+  ports: portOverrides = {},
+  uiState = createDefaultControllerUiState(),
+  onEventError = null,
+  extraContext = null,
+} = {}) {
+  const ports = createAppSideEffectPorts(portOverrides);
+  const services = extraServices;
+  if (!services.spelling) {
+    services.spelling = createSpellingService({
+      repository: createSpellingPersistence({ repositories, now }),
+      now,
+      tts,
+    });
+  }
+
+  const eventRuntime = createEventRuntime({
+    repositories,
+    subscribers: subscribers || [
+      createPracticeStreakSubscriber(),
+      createSpellingRewardSubscriber({ gameStateRepository: repositories.gameState }),
+    ],
+    onError: onEventError,
+  });
+
+  const store = createStore(subjects, { repositories });
+  const controllerListeners = new Set();
+  const autoAdvance = createSpellingAutoAdvanceController({
+    getState: () => store.getState(),
+    dispatchContinue: () => dispatch('spelling-continue'),
+    setTimeoutFn: scheduler?.setTimeout?.bind(scheduler),
+    clearTimeoutFn: scheduler?.clearTimeout?.bind(scheduler),
+  });
+
+  store.subscribe(() => {
+    notify();
+  });
+
+  let currentSnapshot = null;
+
+  function readSnapshot() {
+    return buildControllerSnapshot({
+      store,
+      repositories,
+      services,
+      subjects,
+      session,
+      runtimeBoundary,
+      uiState,
+    });
+  }
+
+  function getSnapshot() {
+    if (!currentSnapshot) currentSnapshot = readSnapshot();
+    return currentSnapshot;
+  }
+
+  function notify() {
+    currentSnapshot = readSnapshot();
+    const snapshot = currentSnapshot;
+    for (const listener of controllerListeners) {
+      try { listener(snapshot); } catch {
+        // Controller subscribers must not break app state updates.
+      }
+    }
+  }
+
+  function subscribe(listener) {
+    controllerListeners.add(listener);
+    return () => controllerListeners.delete(listener);
+  }
+
+  function ensureSpellingAutoAdvanceFromCurrentState() {
+    const appState = store.getState();
+    if (appState.route.screen !== 'subject' || appState.route.subjectId !== 'spelling' || (appState.route.tab || 'practice') !== 'practice') {
+      return false;
+    }
+    return autoAdvance.ensureScheduledFromState(appState.subjectUi.spelling);
+  }
+
+  function applySubjectTransition(subjectId, transition) {
+    if (!transition) return false;
+    const previousSubjectUi = store.getState().subjectUi[subjectId] || null;
+    store.updateSubjectUi(subjectId, transition.state);
+    const nextSubjectUi = transition.state || null;
+    const published = eventRuntime.publish(transition.events);
+    let renderedSideEffect = false;
+
+    if (published.toastEvents.length) {
+      store.pushToasts(published.toastEvents);
+      renderedSideEffect = true;
+    }
+
+    const monsterCelebrations = published.reactionEvents.filter(isMonsterCelebrationEvent);
+    if (monsterCelebrations.length) {
+      if (shouldDelayMonsterCelebrations(subjectId, previousSubjectUi, nextSubjectUi)) {
+        store.deferMonsterCelebrations(monsterCelebrations);
+      } else {
+        store.pushMonsterCelebrations(monsterCelebrations);
+      }
+      renderedSideEffect = true;
+    }
+
+    if (spellingSessionEnded(previousSubjectUi, nextSubjectUi)) {
+      renderedSideEffect = store.releaseMonsterCelebrations() || renderedSideEffect;
+    }
+
+    if (!renderedSideEffect && published.reactionEvents.length) {
+      store.patch(() => ({}));
+    }
+
+    runtimeBoundary.clear({
+      learnerId: store.getState().learners.selectedId,
+      subjectId,
+      tab: store.getState().route.tab || 'practice',
+    });
+
+    if (transition.audio?.word) tts.speak(transition.audio);
+    if (subjectId === 'spelling') autoAdvance.scheduleFromTransition(transition);
+    return true;
+  }
+
+  function contextFor(subjectId = null) {
+    const appState = store.getState();
+    const subject = resolveSubject(subjects, subjectId || appState.route.subjectId || 'spelling');
+    const baseContext = {
+      appState,
+      store,
+      services,
+      repositories,
+      subject,
+      service: services[subject.id] || null,
+      tts,
+      applySubjectTransition,
+      runtimeBoundary,
+      subjects,
+      snapshot: getSnapshot(),
+    };
+    const additionalContext = typeof extraContext === 'function'
+      ? extraContext({ appState, subject, baseContext })
+      : extraContext;
+    return {
+      ...baseContext,
+      ...(additionalContext || {}),
+    };
+  }
+
+  function resetLearnerData(learnerId) {
+    Object.values(services).forEach((service) => {
+      service?.resetLearner?.(learnerId);
+    });
+    repositories.subjectStates.clearLearner(learnerId);
+    repositories.practiceSessions.clearLearner(learnerId);
+    repositories.gameState.clearLearner(learnerId);
+    repositories.eventLog.clearLearner(learnerId);
+  }
+
+  function handleGlobalAction(action, data) {
+    const appState = store.getState();
+    const learnerId = appState.learners.selectedId;
+
+    if (action === 'navigate-home') {
+      tts.stop();
+      store.goHome();
+      return true;
+    }
+
+    if (action === 'open-subject') {
+      tts.stop();
+      store.openSubject(data.subjectId || 'spelling', data.tab || 'practice');
+      return true;
+    }
+
+    if (action === 'open-codex') {
+      tts.stop();
+      store.openCodex();
+      return true;
+    }
+
+    if (action === 'open-parent-hub') {
+      tts.stop();
+      store.openParentHub();
+      return true;
+    }
+
+    if (action === 'open-admin-hub') {
+      tts.stop();
+      store.openAdminHub();
+      return true;
+    }
+
+    if (action === 'open-profile-settings') {
+      tts.stop();
+      store.openProfileSettings();
+      return true;
+    }
+
+    if (action === 'subject-set-tab') {
+      store.setTab(data.tab || 'practice');
+      return true;
+    }
+
+    if (action === 'learner-select') {
+      tts.stop();
+      runtimeBoundary.clearAll();
+      store.selectLearner(data.value);
+      return true;
+    }
+
+    if (action === 'learner-create') {
+      const current = appState.learners.byId[learnerId];
+      const fallbackName = `Learner ${appState.learners.allIds.length + 1}`;
+      const rawName = typeof data.name === 'string'
+        ? data.name
+        : ports.prompt('Name for the new learner', fallbackName);
+      if (rawName == null) return true;
+      const name = String(rawName).trim();
+      if (!name) return true;
+      store.createLearner({
+        name,
+        yearGroup: data.yearGroup || current?.yearGroup || 'Y5',
+        goal: data.goal || current?.goal || 'sats',
+        dailyMinutes: data.dailyMinutes || current?.dailyMinutes || 15,
+        avatarColor: data.avatarColor || current?.avatarColor || '#3E6FA8',
+      });
+      return true;
+    }
+
+    if (action === 'learner-save-form') {
+      const formData = data.formData;
+      store.updateLearner(learnerId, {
+        name: String(formData.get('name') || 'Learner').trim() || 'Learner',
+        yearGroup: String(formData.get('yearGroup') || 'Y5'),
+        goal: String(formData.get('goal') || 'sats'),
+        dailyMinutes: safeParseInt(formData.get('dailyMinutes'), 15),
+        avatarColor: String(formData.get('avatarColor') || '#3E6FA8'),
+      });
+      return true;
+    }
+
+    if (action === 'learner-delete') {
+      if (!ports.confirm('Warning: delete the current learner and all their subject progress and codex state?')) return true;
+      runtimeBoundary.clearLearner(learnerId);
+      resetLearnerData(learnerId);
+      store.deleteLearner(learnerId);
+      return true;
+    }
+
+    if (action === 'learner-reset-progress') {
+      if (!ports.confirm('Warning: reset subject progress and codex rewards for the current learner?')) return true;
+      tts.stop();
+      runtimeBoundary.clearLearner(learnerId);
+      resetLearnerData(learnerId);
+      store.resetSubjectUi();
+      return true;
+    }
+
+    if (action === 'platform-reset-all') {
+      if (!ports.confirm('Reset all app data for every learner on this browser?')) return true;
+      tts.stop();
+      runtimeBoundary.clearAll();
+      store.clearAllProgress();
+      ports.reload();
+      return true;
+    }
+
+    if (action === 'persistence-retry') {
+      repositories.persistence.retry()
+        .then(() => {
+          tts.stop();
+          runtimeBoundary.clearAll();
+          store.clearMonsterCelebrations();
+          store.reloadFromRepositories({ preserveRoute: true });
+        })
+        .catch((error) => {
+          ports.onPersistenceRetryFailure(error);
+        });
+      return true;
+    }
+
+    if (action === 'subject-runtime-retry') {
+      runtimeBoundary.clear({
+        learnerId,
+        subjectId: appState.route.subjectId || 'spelling',
+        tab: appState.route.tab || 'practice',
+      });
+      store.patch(() => ({}));
+      return true;
+    }
+
+    if (action === 'monster-celebration-dismiss') {
+      store.dismissMonsterCelebration();
+      return true;
+    }
+
+    return false;
+  }
+
+  function handleSubjectAction(action, data) {
+    const appState = store.getState();
+    const learnerId = appState.learners.selectedId;
+    const tab = appState.route.tab || 'practice';
+    const subject = resolveSubject(subjects, appState.route.subjectId || 'spelling');
+
+    try {
+      const handled = subject.handleAction?.(action, {
+        ...contextFor(subject.id),
+        data,
+      });
+      if (handled) {
+        runtimeBoundary.clear({ learnerId, subjectId: subject.id, tab });
+      }
+      return Boolean(handled);
+    } catch (error) {
+      tts.stop();
+      runtimeBoundary.capture({
+        learnerId,
+        subject,
+        tab,
+        phase: 'action',
+        methodName: 'handleAction',
+        action,
+        error,
+      });
+      store.patch(() => ({}));
+      return true;
+    }
+  }
+
+  function dispatch(action, data = {}) {
+    autoAdvance.clear();
+    try {
+      if (!handleGlobalAction(action, data)) {
+        handleSubjectAction(action, data);
+      }
+      return true;
+    } finally {
+      ensureSpellingAutoAdvanceFromCurrentState();
+    }
+  }
+
+  function keydown(eventLike = {}) {
+    const shortcut = resolveSpellingShortcut(eventLike, store.getState());
+    if (!shortcut) return false;
+    if (shortcut.action) {
+      dispatch(shortcut.action, shortcut.data || {});
+      return true;
+    }
+    return Boolean(shortcut.focusSelector);
+  }
+
+  return {
+    store,
+    repositories,
+    services,
+    tts,
+    eventRuntime,
+    runtimeBoundary,
+    subjects,
+    session,
+    ports,
+    contextFor,
+    getSnapshot,
+    subscribe,
+    dispatch,
+    keydown,
+    autoAdvance,
+    scheduler,
+    ensureSpellingAutoAdvanceFromCurrentState,
+    applySubjectTransition,
+  };
+}

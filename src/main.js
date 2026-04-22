@@ -1,12 +1,14 @@
-import { createStore } from './platform/core/store.js';
 import {
-  ensureLocalCodexReviewProfile,
-  LOCAL_CODEX_REVIEW_LEARNER_ID,
-  LOCAL_CODEX_REVIEW_LEARNER_IDS,
-  LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS,
-} from './platform/core/local-review-profile.js';
+  createCredentialFetch,
+  createRepositoriesForBrowserRuntime,
+  shouldOpenLocalCodexReview,
+} from './platform/app/bootstrap.js';
+import { createAppController } from './platform/app/create-app-controller.js';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { App } from './app/App.jsx';
+import { AuthSurface } from './surfaces/auth/AuthSurface.jsx';
 import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
-import { renderApp } from './platform/ui/render.js';
 import { probeRelLuminance } from './platform/ui/luminance.js';
 import { safeParseInt, uid } from './platform/core/utils.js';
 import { shouldDispatchClickAction } from './platform/core/dom-actions.js';
@@ -19,12 +21,8 @@ import {
   buildParentHubAccessContext,
   readOnlyLearnerActionBlockReason,
 } from './platform/hubs/shell-access.js';
-import {
-  createApiPlatformRepositories,
-  createLocalPlatformRepositories,
-} from './platform/core/repositories/index.js';
 import { createSubjectRuntimeBoundary } from './platform/core/subject-runtime.js';
-import { createEventRuntime, createPracticeStreakSubscriber } from './platform/events/index.js';
+import { createPracticeStreakSubscriber } from './platform/events/index.js';
 import { createPlatformTts } from './subjects/spelling/tts.js';
 import { createSpellingService } from './subjects/spelling/service.js';
 import { createSpellingPersistence } from './subjects/spelling/repository.js';
@@ -34,13 +32,7 @@ import {
 } from './subjects/spelling/content/repository.js';
 import { createSpellingContentService } from './subjects/spelling/content/service.js';
 import { createSpellingRewardSubscriber } from './subjects/spelling/event-hooks.js';
-import { createSpellingAutoAdvanceController } from './subjects/spelling/auto-advance.js';
 import { resolveSpellingShortcut } from './subjects/spelling/shortcuts.js';
-import {
-  isMonsterCelebrationEvent,
-  shouldDelayMonsterCelebrations,
-  spellingSessionEnded,
-} from './platform/game/monster-celebrations.js';
 import {
   monsterSummary,
   monsterSummaryFromSpellingAnalytics,
@@ -54,6 +46,7 @@ import {
 } from './platform/core/data-transfer.js';
 
 const root = document.getElementById('app');
+const credentialFetch = createCredentialFetch();
 
 /* --------------------------------------------------------------
    Word-detail modal accessibility: focus trap + restore-on-close.
@@ -107,99 +100,19 @@ function focusInitialModalElement() {
   if (focusables.length) focusables[0].focus();
 }
 
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function isLocalMode() {
-  const params = new URLSearchParams(globalThis.location.search);
-  return globalThis.location.protocol === 'file:' || params.get('local') === '1';
-}
-
-function reviewLearnerIdFromMode(value) {
-  const mode = String(value || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
-  if (!mode) return '';
-  if (LOCAL_CODEX_REVIEW_LEARNER_IDS.includes(mode)) return mode;
-  if (['egg', 'eggs', 'all-egg', 'all-eggs', 'codex-eggs'].includes(mode)) {
-    return LOCAL_CODEX_REVIEW_LEARNER_ID;
-  }
-  const stageMatch = mode.match(/^(?:all-)?stage-?([1-4])$/) || mode.match(/^([1-4])$/);
-  return stageMatch ? LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS[stageMatch[1]] : '';
-}
-
-function localCodexReviewLearnerIdFromUrl() {
-  if (!isLocalMode()) return '';
-  const params = new URLSearchParams(globalThis.location.search);
-  const learnerId = String(params.get('learner') || '').trim();
-  if (LOCAL_CODEX_REVIEW_LEARNER_IDS.includes(learnerId)) return learnerId;
-  return reviewLearnerIdFromMode(params.get('codexReview'));
-}
-
-function shouldOpenLocalCodexReview() {
-  return Boolean(localCodexReviewLearnerIdFromUrl());
-}
-
-function credentialFetch(input, init = {}) {
-  return fetch(input, {
-    ...init,
-    credentials: 'same-origin',
-  });
-}
-
-function renderAuthScreen({ mode = 'login', error = '' } = {}) {
-  const isRegister = mode === 'register';
-  root.innerHTML = `
-    <main class="auth-shell">
-      <section class="auth-panel card">
-        <div class="eyebrow">KS2 Mastery</div>
-        <h1 class="title">${isRegister ? 'Create your parent account' : 'Sign in to continue'}</h1>
-        <p class="subtitle">Your learner profiles and spelling progress sync through the KS2 Mastery cloud backend.</p>
-        ${error ? `<div class="feedback bad" style="margin-top:16px;">${escapeHtml(error)}</div>` : ''}
-        <form class="auth-form" data-auth-action="${isRegister ? 'register' : 'login'}">
-          <label class="field">
-            <span>Email</span>
-            <input class="input" type="email" name="email" autocomplete="email" required />
-          </label>
-          <label class="field">
-            <span>Password</span>
-            <input class="input" type="password" name="password" autocomplete="${isRegister ? 'new-password' : 'current-password'}" minlength="8" required />
-          </label>
-          <button class="btn primary lg" style="background:#3E6FA8;" type="submit">${isRegister ? 'Create account' : 'Sign in'}</button>
-        </form>
-        <div class="auth-switch">
-          <button class="btn ghost" data-auth-mode="${isRegister ? 'login' : 'register'}">${isRegister ? 'Use an existing account' : 'Create a new account'}</button>
-        </div>
-        <div class="auth-divider"><span>Social sign-in</span></div>
-        <div class="auth-social">
-          ${['google', 'facebook', 'x', 'apple'].map((provider) => `
-            <button class="btn secondary" data-auth-provider="${provider}">${provider === 'x' ? 'X' : provider[0].toUpperCase() + provider.slice(1)}</button>
-          `).join('')}
-        </div>
-      </section>
-    </main>
-  `;
-}
-
-async function submitAuthForm(form) {
-  const action = form.dataset.authAction === 'register' ? 'register' : 'login';
-  const formData = new FormData(form);
+async function submitAuthCredentials({ mode = 'login', email, password } = {}) {
+  const action = mode === 'register' ? 'register' : 'login';
   const response = await credentialFetch(`/api/auth/${action}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      email: formData.get('email'),
-      password: formData.get('password'),
+      email,
+      password,
     }),
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    renderAuthScreen({ mode: action, error: payload.message || 'Sign-in failed.' });
-    return;
+    throw new Error(payload.message || 'Sign-in failed.');
   }
   globalThis.location.href = '/';
 }
@@ -212,93 +125,35 @@ async function startSocialAuth(provider) {
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || !payload.redirectUrl) {
-    renderAuthScreen({ error: payload.message || 'That sign-in provider is not configured yet.' });
-    return;
+    throw new Error(payload.message || 'That sign-in provider is not configured yet.');
   }
   globalThis.location.href = payload.redirectUrl;
 }
 
-let authScreenBound = false;
-
-function bindAuthScreen() {
-  if (authScreenBound) return;
-  authScreenBound = true;
-  root.addEventListener('click', (event) => {
-    const modeButton = event.target.closest('[data-auth-mode]');
-    if (modeButton) {
-      event.preventDefault();
-      renderAuthScreen({ mode: modeButton.dataset.authMode });
-      bindAuthScreen();
-      return;
-    }
-
-    const providerButton = event.target.closest('[data-auth-provider]');
-    if (providerButton) {
-      event.preventDefault();
-      startSocialAuth(providerButton.dataset.authProvider).catch((error) => {
-        renderAuthScreen({ error: error?.message || 'Could not start social sign-in.' });
-      });
-    }
-  });
-
-  root.addEventListener('submit', (event) => {
-    const form = event.target.closest('form[data-auth-action]');
-    if (!form) return;
-    event.preventDefault();
-    submitAuthForm(form).catch((error) => {
-      renderAuthScreen({ mode: form.dataset.authAction, error: error?.message || 'Sign-in failed.' });
-    });
-  });
+function renderAuthRoot({ error = '' } = {}) {
+  createRoot(root).render(
+    <AuthSurface
+      initialError={error}
+      onSubmit={submitAuthCredentials}
+      onSocialStart={startSocialAuth}
+    />,
+  );
 }
 
 async function createRepositoriesForCurrentRuntime() {
-  if (isLocalMode()) {
-    const localRepositories = createLocalPlatformRepositories({ storage: globalThis.localStorage });
-    ensureLocalCodexReviewProfile(localRepositories, {
-      selectLearnerId: localCodexReviewLearnerIdFromUrl(),
-    });
-    return {
-      repositories: localRepositories,
-      session: { signedIn: false, mode: 'local-only', platformRole: 'parent' },
-    };
-  }
-
-  const sessionResponse = await credentialFetch('/api/auth/session', {
-    headers: { accept: 'application/json' },
+  return createRepositoriesForBrowserRuntime({
+    location: globalThis.location,
+    storage: globalThis.localStorage,
+    credentialFetch,
+    waitForAuthRequired: false,
   });
-  const sessionPayload = await sessionResponse.json().catch(() => null);
-
-  if (!sessionResponse.ok || !sessionPayload?.session?.accountId) {
-    const params = new URLSearchParams(globalThis.location.search);
-    renderAuthScreen({ error: params.get('auth_error') || '' });
-    bindAuthScreen();
-    await new Promise(() => {});
-  }
-
-  const accountId = sessionPayload?.session?.accountId || 'unknown';
-  const apiRepositories = createApiPlatformRepositories({
-    baseUrl: '',
-    fetch: credentialFetch,
-    cacheScopeKey: `account:${accountId}`,
-  });
-
-  return {
-    repositories: apiRepositories,
-    session: {
-      signedIn: true,
-      mode: 'remote-sync',
-      accountId,
-      email: sessionPayload?.session?.email || '',
-      provider: sessionPayload?.session?.provider || 'session',
-      platformRole: normalisePlatformRole(
-        sessionPayload?.account?.platformRole || sessionPayload?.session?.platformRole,
-      ),
-      repoRevision: Number(sessionPayload?.account?.repoRevision) || 0,
-    },
-  };
 }
 
 const boot = await createRepositoriesForCurrentRuntime();
+if (!boot.repositories) {
+  renderAuthRoot({ error: boot.session?.error || '' });
+  await new Promise(() => {});
+}
 const repositories = boot.repositories;
 globalThis.KS2_AUTH_SESSION = boot.session;
 await repositories.hydrate();
@@ -699,16 +554,22 @@ const runtimeBoundary = createSubjectRuntimeBoundary({
   },
 });
 
-const eventRuntime = createEventRuntime({
+const controller = createAppController({
   repositories,
+  subjects: SUBJECTS,
+  session: boot.session,
+  runtimeBoundary,
+  tts,
+  services,
   subscribers: [
     createPracticeStreakSubscriber(),
     createSpellingRewardSubscriber({ gameStateRepository: repositories.gameState }),
   ],
-  onError(error) {
+  onEventError(error) {
     globalThis.console?.error?.('Reward/event subscriber failed.', error);
   },
 });
+const store = controller.store;
 
 function resetLearnerData(learnerId) {
   Object.values(services).forEach((service) => {
@@ -941,64 +802,16 @@ async function updateAdminAccountRole(accountId, platformRole) {
   }
 }
 
-const store = createStore(SUBJECTS, { repositories });
-if (shouldOpenLocalCodexReview()) {
+if (shouldOpenLocalCodexReview({ location: globalThis.location })) {
   store.openCodex();
 }
 
-const spellingAutoAdvance = createSpellingAutoAdvanceController({
-  getState: () => store.getState(),
-  dispatchContinue: () => dispatchAction('spelling-continue'),
-});
-
 function ensureSpellingAutoAdvanceFromCurrentState() {
-  const appState = store.getState();
-  if (appState.route.screen !== 'subject' || appState.route.subjectId !== 'spelling' || (appState.route.tab || 'practice') !== 'practice') {
-    return false;
-  }
-  return spellingAutoAdvance.ensureScheduledFromState(appState.subjectUi.spelling);
+  return controller.ensureSpellingAutoAdvanceFromCurrentState();
 }
 
 function applySubjectTransition(subjectId, transition) {
-  if (!transition) return false;
-  const previousSubjectUi = store.getState().subjectUi[subjectId] || null;
-  store.updateSubjectUi(subjectId, transition.state);
-  const nextSubjectUi = transition.state || null;
-
-  const published = eventRuntime.publish(transition.events);
-  let renderedSideEffect = false;
-  if (published.toastEvents.length) {
-    store.pushToasts(published.toastEvents);
-    renderedSideEffect = true;
-  }
-
-  const monsterCelebrations = published.reactionEvents.filter(isMonsterCelebrationEvent);
-  if (monsterCelebrations.length) {
-    if (shouldDelayMonsterCelebrations(subjectId, previousSubjectUi, nextSubjectUi)) {
-      store.deferMonsterCelebrations(monsterCelebrations);
-    } else {
-      store.pushMonsterCelebrations(monsterCelebrations);
-    }
-    renderedSideEffect = true;
-  }
-
-  if (spellingSessionEnded(previousSubjectUi, nextSubjectUi)) {
-    renderedSideEffect = store.releaseMonsterCelebrations() || renderedSideEffect;
-  }
-
-  if (!renderedSideEffect && published.reactionEvents.length) {
-    store.patch(() => ({}));
-  }
-
-  runtimeBoundary.clear({
-    learnerId: store.getState().learners.selectedId,
-    subjectId,
-    tab: store.getState().route.tab || 'practice',
-  });
-
-  if (transition.audio?.word) tts.speak(transition.audio);
-  if (subjectId === 'spelling') spellingAutoAdvance.scheduleFromTransition(transition);
-  return true;
+  return controller.applySubjectTransition(subjectId, transition);
 }
 
 function contextFor(subjectId = null) {
@@ -1130,6 +943,7 @@ function buildCodexModel(appState, context) {
 
 function buildSurfaceActions() {
   return {
+    dispatch: dispatchAction,
     toggleTheme: () => dispatchAction('toggle-theme'),
     selectLearner: (value) => dispatchAction('learner-select', { value }),
     navigateHome: () => dispatchAction('navigate-home'),
@@ -1137,72 +951,16 @@ function buildSurfaceActions() {
     openSubject: (subjectId) => dispatchAction('open-subject', { subjectId }),
     openCodex: () => dispatchAction('open-codex'),
     openParentHub: () => dispatchAction('open-parent-hub'),
+    openAdminHub: () => dispatchAction('open-admin-hub'),
     logout: () => dispatchAction('platform-logout'),
     retryPersistence: () => dispatchAction('persistence-retry'),
   };
 }
 
-function mountReactSurfaces(appState, context) {
-  const homeSurface = globalThis.__ks2HomeSurface;
-  const codexSurface = globalThis.__ks2CodexSurface;
-  const subjectTopNavSurface = globalThis.__ks2SubjectTopNavSurface;
-  const actions = buildSurfaceActions();
-
-  if (appState.route.screen === 'dashboard') {
-    const mount = root.querySelector('[data-home-mount="true"]');
-    if (mount && homeSurface) {
-      homeSurface.render(mount, {
-        model: buildHomeModel(appState, context),
-        actions,
-      });
-    }
-  } else if (homeSurface) {
-    homeSurface.unmount();
-  }
-
-  if (appState.route.screen === 'codex') {
-    const mount = root.querySelector('[data-codex-mount="true"]');
-    if (mount && codexSurface) {
-      codexSurface.render(mount, {
-        model: buildCodexModel(appState, context),
-        actions,
-      });
-    }
-  } else if (codexSurface) {
-    codexSurface.unmount();
-  }
-
-  /* Subject route reuses the home TopNav verbatim — same UserPill dropdown,
-     persistence dot, theme toggle. The subject route adds its own breadcrumb
-     and tabs below, so we only mount the chrome strip here. */
-  if (appState.route.screen === 'subject') {
-    const mount = root.querySelector('[data-subject-topnav-mount="true"]');
-    if (mount && subjectTopNavSurface) {
-      const chrome = buildSurfaceChromeModel(appState);
-      subjectTopNavSurface.render(mount, {
-        theme: chrome.theme,
-        onToggleTheme: actions.toggleTheme,
-        learners: chrome.learnerOptions,
-        selectedLearnerId: chrome.learner?.id || '',
-        learnerLabel: chrome.learnerLabel,
-        signedInAs: chrome.signedInAs,
-        onSelectLearner: actions.selectLearner,
-        onOpenProfileSettings: actions.openProfileSettings,
-        onLogout: actions.logout,
-        persistenceMode: chrome.persistence?.mode || 'local-only',
-        persistenceLabel: chrome.persistence?.label || '',
-      });
-    }
-  } else if (subjectTopNavSurface) {
-    subjectTopNavSurface.unmount();
-  }
-}
-
 /* Capture the identity + caret state of the currently-focused input
-   inside `root` so we can restore it after `root.innerHTML = …` wipes
-   the DOM. Our render path rebuilds the entire tree on every store
-   update, which nukes focus and caret position on any text input that
-   the user is currently typing into (search box, drill answer, etc.).
+   inside `root` so we can restore it after React replaces legacy HTML
+   adapters on a store update. Without this, the search box or drill answer
+   can lose its caret while the learner is typing.
    We prefer `name` over `id` over `data-action` for the selector: most
    of our inputs are unnamed/idless but carry a stable `name` like
    "typed" or "spellingAnalyticsSearch". Selection queries are wrapped
@@ -1242,16 +1000,18 @@ function capturePreservedFocus() {
   return { selector, selectionStart, selectionEnd, selectionDirection };
 }
 
-function render() {
-  const appState = store.getState();
-  const context = contextFor(appState.route.subjectId || 'spelling');
-  const preserved = capturePreservedFocus();
+let pendingPreservedFocus = null;
+controller.subscribe(() => {
+  pendingPreservedFocus = capturePreservedFocus();
+});
+
+function afterReactRender(appState, context) {
+  const preserved = pendingPreservedFocus;
+  pendingPreservedFocus = null;
   const modalWasVisible = previousModalVisible;
-  root.innerHTML = renderApp(appState, context);
   const modalIsVisibleNow = modalIsOpen();
   previousModalVisible = modalIsVisibleNow;
   ensureSpellingAutoAdvanceFromCurrentState();
-  mountReactSurfaces(appState, context);
 
   if (boot.session.signedIn) {
     if (appState.route.screen === 'parent-hub') {
@@ -1343,8 +1103,21 @@ function extractHeroBgUrl(styleAttr) {
   return match ? match[2] : '';
 }
 
-store.subscribe(render);
-render();
+const appRuntime = {
+  contextFor,
+  buildHomeModel,
+  buildCodexModel,
+  buildSurfaceChromeModel,
+  buildSurfaceActions,
+  afterRender: afterReactRender,
+};
+
+createRoot(root).render(
+  <App
+    controller={controller}
+    runtime={appRuntime}
+  />,
+);
 
 /* Ambient toast auto-dismiss — toasts are designed to live in the
    learner's periphery, not interrupt typing. Ten seconds after a toast
@@ -1698,7 +1471,7 @@ function handleSubjectAction(action, data) {
 }
 
 function dispatchAction(action, data = {}) {
-  spellingAutoAdvance.clear();
+  controller.autoAdvance.clear();
   if (!handleGlobalAction(action, data)) {
     handleSubjectAction(action, data);
   }

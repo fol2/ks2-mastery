@@ -241,7 +241,7 @@ function renderPersistenceChip(snapshot) {
   return `<span class="chip ${persistenceTone(snapshot)}">${escapeHtml(persistenceLabel(snapshot))}</span>`;
 }
 
-function renderPersistenceBanner(snapshot) {
+export function renderPersistenceBanner(snapshot) {
   if (snapshot?.mode !== 'degraded') return '';
   const pendingCount = Number(snapshot?.pendingWriteCount) || 0;
   return `
@@ -768,7 +768,7 @@ function renderLearnerManager(appState, context) {
   `;
 }
 
-function renderProfileSettings(context) {
+export function renderProfileSettings(context) {
   return `
     ${renderSurfaceTopNav(context.appState)}
     ${renderPersistenceBanner(context.appState.persistence)}
@@ -836,7 +836,7 @@ function renderHubStrengthList(title, items = [], emptyText = 'No signal yet.') 
   `;
 }
 
-function renderParentHub(context) {
+export function renderParentHub(context) {
   const model = context.parentHub;
   const hubState = context.parentHubState || {};
   const loadingRemote = context?.shellAccess?.source === 'worker-session' && hubState.status === 'loading' && !model;
@@ -1017,7 +1017,7 @@ function renderAdminAccountRoles(model, directory = {}) {
   `;
 }
 
-function renderAdminHub(context) {
+export function renderAdminHub(context) {
   const model = context.adminHub;
   const hubState = context.adminHubState || {};
   const loadingRemote = context?.shellAccess?.source === 'worker-session' && hubState.status === 'loading' && !model;
@@ -1156,7 +1156,7 @@ function renderAdminHub(context) {
   `;
 }
 
-function renderSubjectScreen(context) {
+export function renderSubjectScreen(context) {
   const { appState } = context;
   const subject = resolveSubject(appState.route.subjectId, context);
   const ui = appState.subjectUi[subject.id] || {};
@@ -1266,7 +1266,7 @@ function renderToastBody(toast) {
    belt-and-braces escape hatch (and so the existing
    `data-action="toast-dismiss"` wiring keeps working for keyboards
    and assistive tech). */
-function renderToasts(appState) {
+export function renderToasts(appState) {
   if (!appState.toasts.length) return '';
   return `
     <div class="toast-shelf" aria-live="polite" aria-label="Notifications">
@@ -1322,7 +1322,7 @@ function renderCelebrationParticleSlots() {
   return Array.from({ length: 10 }, () => '<span class="monster-celebration-part"></span>').join('');
 }
 
-function renderMonsterCelebrationOverlay(appState) {
+export function renderMonsterCelebrationOverlay(appState) {
   const event = appState.monsterCelebrations?.queue?.[0];
   if (!event) return '';
   const monster = event.monster || {};

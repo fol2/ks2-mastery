@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { TopNav } from './TopNav.jsx';
+import { TopNav } from '../shell/TopNav.jsx';
 import { MonsterMeadow } from './MonsterMeadow.jsx';
 import { SubjectCard } from './SubjectCard.jsx';
 import { IconArrowRight } from './icons.jsx';
@@ -38,6 +38,7 @@ export function HomeSurface({ model, actions }) {
       <TopNav
         theme={model.theme}
         onToggleTheme={actions.toggleTheme}
+        onNavigateHome={actions.navigateHome}
         learners={model.learnerOptions || []}
         selectedLearnerId={model.learner?.id || ''}
         learnerLabel={model.learnerLabel || ''}

@@ -1,4 +1,4 @@
-import { access, readdir } from 'node:fs/promises';
+import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 
 const rootDir = process.cwd();
@@ -35,8 +35,7 @@ async function walk(relativeDir = '') {
 await mustExist('index.html');
 await mustExist('_headers');
 await mustExist('styles/app.css');
-await mustExist('src/main.js');
-await mustExist('src/bundles/home.bundle.js');
+await mustExist('src/bundles/app.bundle.js');
 await mustExist('assets/monsters/inklet/b1/inklet-b1-0.320.webp');
 await mustExist('assets/monsters/inklet/b1/inklet-b1-0.1280.webp');
 await mustExist('worker/src/index.js').then(
@@ -66,4 +65,12 @@ if (unsafeFiles.length) {
 const rawAssetPngs = (await walk()).filter((file) => file.startsWith('assets/') && file.endsWith('.png'));
 if (rawAssetPngs.length) {
   throw new Error(`Raw asset PNG files must not be copied into public output: ${rawAssetPngs.join(', ')}`);
+}
+
+const indexHtml = await readFile(path.join(publicDir, 'index.html'), 'utf8');
+if (!indexHtml.includes('./src/bundles/app.bundle.js')) {
+  throw new Error('Public index.html must load the React app bundle.');
+}
+if (indexHtml.includes('home.bundle.js') || indexHtml.includes('src/main.js')) {
+  throw new Error('Public index.html must not load legacy home islands or the raw source entry.');
 }

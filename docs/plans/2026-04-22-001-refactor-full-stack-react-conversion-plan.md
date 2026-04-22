@@ -150,7 +150,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 
 ## Implementation Units
 
-- [ ] **Unit 1: Extract App Controller and Side-Effect Ports**
+- [x] **Unit 1: Extract App Controller and Side-Effect Ports**
 
 **Goal:** Move `src/main.js` orchestration into a testable controller that React and the Node harness can share.
 
@@ -201,7 +201,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 **Verification:**
 - Existing smoke, persistence, runtime-boundary, hub, and spelling tests can run through the controller-backed harness with no product copy or state-contract regression.
 
-- [ ] **Unit 2: Add Single React Root and Store Bridge**
+- [x] **Unit 2: Add Single React Root and Store Bridge**
 
 **Goal:** Introduce one React application root that subscribes to the existing store and renders routes without global island renderers.
 
@@ -259,7 +259,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 - The app can be built and served from `dist/public` with the Worker API config unchanged.
 - No global React island symbols are required for dashboard, Codex, or subject top navigation.
 
-- [ ] **Unit 2.5: Prove UI/UX Migration Contract Before Broad Surface Porting**
+- [x] **Unit 2.5: Prove UI/UX Migration Contract Before Broad Surface Porting**
 
 **Goal:** Turn the current UI behaviour into an explicit migration contract so React ports preserve learner, parent, and operator experience instead of only matching component output.
 
@@ -309,7 +309,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 - The Spelling spike, accessibility contract, and responsive smoke checks pass before Unit 3 starts.
 - The Unit 2.5 strategic gate records whether the migration continues to Units 3-7, narrows to a smaller React tranche, or pauses for the first Arithmetic thin-slice estimate.
 
-- [ ] **Unit 3: Port Shared Shell, Profile, Dashboard, Codex, and Overlays**
+- [x] **Unit 3: Port Shared Shell, Profile, Dashboard, Codex, and Overlays**
 
 **Goal:** Convert shared UI surfaces from string templates or global islands into normal React components after auth is already React-owned.
 
@@ -362,7 +362,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 - Existing render and smoke assertions that pin visible copy still pass after being pointed at React-rendered surfaces.
 - Browser smoke covers the UI contract viewports for dashboard, profile, auth, Codex, persistence banner, toasts, and overlays.
 
-- [ ] **Unit 4: Convert Parent Hub and Admin / Operations to React**
+- [x] **Unit 4: Convert Parent Hub and Admin / Operations to React**
 
 **Goal:** Move adult operating surfaces to React while preserving signed-in Worker payload loading, readable viewer selection, and read-only write blocking.
 
@@ -413,7 +413,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 **Verification:**
 - Worker hub tests remain green, and React hub tests prove the same payload shape is rendered without synthetic local membership drift.
 
-- [ ] **Unit 5: Introduce React Subject Contract and Route**
+- [x] **Unit 5: Introduce React Subject Contract and Route**
 
 **Goal:** Replace subject string rendering with a React-capable subject surface while preserving runtime containment and the expansion harness.
 
