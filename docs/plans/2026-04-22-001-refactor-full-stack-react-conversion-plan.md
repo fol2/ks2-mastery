@@ -2,9 +2,10 @@
 ---
 title: "refactor: Convert KS2 Mastery to Full-Stack React"
 type: refactor
-status: active
+status: approved
 date: 2026-04-22
 deepened: 2026-04-22
+approved: 2026-04-22
 ---
 
 # refactor: Convert KS2 Mastery to Full-Stack React
@@ -33,7 +34,7 @@ No matching `docs/brainstorms/*-requirements.md` file exists for this request, s
 - The spelling learning engine remains preserved behind its service boundary.
 - Cloudflare D1/R2/Worker deployment paths remain production-sensitive.
 - Existing dirty asset changes in the worktree are unrelated to this planning task and must not be reverted by the implementer.
-- The React SPA assumption should be rechecked after Unit 2, when the team has real evidence about build feedback, asset handling, and Cloudflare deployment friction.
+- The React SPA assumption should be rechecked after Units 2 and 2.5, when the team has real evidence about build feedback, asset handling, Cloudflare deployment friction, and the Spelling interaction spike.
 
 ## Requirements Trace
 
@@ -73,6 +74,8 @@ No matching `docs/brainstorms/*-requirements.md` file exists for this request, s
 - `tests/subject-expansion.test.js` and `tests/helpers/subject-expansion-harness.js` are the acceptance gate for future real subjects.
 - `worker/src/app.js` already exposes the full backend API needed by the React client: auth/session, bootstrap, learner writes, subject state, practice sessions, game state, event log, spelling content, TTS, parent/admin hubs, and account role management.
 - `wrangler.jsonc` already serves `dist/public` as Worker static assets, uses `not_found_handling: "single-page-application"`, and routes `/api/*` Worker-first.
+- `package.json` currently has an OAuth-safe `check` path but its default `deploy` script still uses raw `npx wrangler deploy`; Unit 2 must correct this if it modifies package scripts.
+- `scripts/assert-build-public.mjs` currently requires `src/main.js` and `src/bundles/home.bundle.js`, and explicitly rejects Worker source in `dist/public`. The React bundle migration must update these public-output assertions rather than copying Worker code into static assets.
 
 ### Institutional Learnings
 
@@ -96,10 +99,11 @@ No matching `docs/brainstorms/*-requirements.md` file exists for this request, s
 - **Keep the store and repositories first, then move UI ownership:** Replacing state management during a UI migration would raise sync and learner-state risk. React should subscribe to the current store first, then later refactors can decide whether a React-native state layer is worth it.
 - **Extract an app controller before converting screens:** `src/main.js` currently mixes boot, side effects, dispatch, and DOM concerns. A controller seam lets the harness, React root, and tests share the same behaviour before markup changes begin.
 - **Keep the controller small and non-frameworky:** The controller should expose a minimal surface such as `boot`, `getSnapshot`, `subscribe`, `dispatch`, `loadHub`, and ports. It should not become a new event bus, state manager, or parallel routing framework.
+- **Make the controller snapshot the single client view model:** React must subscribe to a controller snapshot that combines the platform store with current non-store UI state: auth requirement, persistence labels, TTS playback state, adult hub load state, admin account directory, spelling content mutation state, toast timers, global session metadata, and runtime-boundary status.
 - **Transition the subject contract with an adapter:** Subjects should gain a React component surface while retaining enough compatibility to keep Spelling and the expansion fixture green during migration.
 - **Port Spelling rendering last among core surfaces:** Spelling has the largest template surface and highest parity risk. Shared shell, controller, hubs, and subject route infrastructure should land first.
 - **Keep esbuild initially, but add a post-Unit-2 tooling gate:** The repo already uses esbuild with React automatic JSX and Wrangler static assets. After the single React root proves the migration path, explicitly decide whether esbuild remains sufficient or whether Vite plus the Cloudflare plugin is justified for dev-server, HMR, asset-import, or code-splitting needs.
-- **Use callback props instead of `data-action` as the React default:** `data-action` can remain temporarily inside legacy adapters, but React components should call controller actions directly.
+- **Use safe controller callbacks instead of raw `data-action` as the React default:** `data-action` can remain temporarily inside legacy adapters, but React components should call typed controller action wrappers that still flow through central dispatch, read-only policy, and error containment.
 - **Preserve Worker route contracts:** React client wrappers can be created for ergonomics, but `/api/bootstrap`, mutation routes, hub routes, TTS, and content routes should keep their current semantics.
 
 ## Open Questions
@@ -110,12 +114,12 @@ No matching `docs/brainstorms/*-requirements.md` file exists for this request, s
 - **Should state management be replaced while migrating UI?** No. Use `useSyncExternalStore` to bridge the existing store and keep repository semantics stable.
 - **Should the Worker/D1 schema change?** No planned schema change. The current API already exposes the required backend contracts.
 - **Should Vite be adopted immediately?** No. Keep esbuild initially and defer Vite/Cloudflare plugin adoption until the UI migration no longer depends on it.
-- **Should the SPA assumption be revisited?** Yes, but only at the Unit 2 decision gate or if implementation uncovers a hard requirement for SSR/framework-level routing. Do not combine that decision with the initial controller extraction.
+- **Should the SPA assumption be revisited?** Yes. Record build/tooling evidence after Unit 2, then make the continue-or-narrow decision after Unit 2.5 when the UI contract and Spelling spike are also available. Do not combine that decision with the initial controller extraction.
 
 ### Deferred to Implementation
 
 - **Exact component file split inside Spelling:** The plan names the expected component areas, but implementation should adjust file granularity based on real duplication and readability.
-- **Whether to add `jsdom` or Testing Library:** Start with controller tests, React server-render tests, and existing Node suites. Add browser-style component test tooling only if static markup plus gstack smoke cannot cover an interaction risk.
+- **Whether to add DOM/browser tooling outside Spelling:** Use Playwright Test as the migration's browser proof tool for Unit 2.5 and later responsive smoke. Keep non-interactive React coverage in Node/server-render helpers where possible, and add any further DOM library only if Playwright plus Node coverage leaves a specific gap.
 - **Final focus-management implementation details:** Modal focus trap, restored focus, replay glow, and hero luminance probing must be preserved, but React may implement them through effects, refs, and portals rather than one-to-one copies of current helpers.
 - **Whether to adopt Vite after conversion:** Revisit after the single React root exists and build/deploy friction is visible.
 
@@ -157,6 +161,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 **Files:**
 - Create: `src/platform/app/bootstrap.js`
 - Create: `src/platform/app/create-app-controller.js`
+- Create: `src/platform/app/controller-snapshot.js`
 - Create: `src/platform/app/surface-models.js`
 - Create: `src/platform/app/side-effect-ports.js`
 - Modify: `src/main.js`
@@ -168,6 +173,8 @@ The important shape is that React becomes the only DOM owner. The app controller
 **Approach:**
 - Move repository selection, service creation, hub loading state, dispatch handling, persistence retry, content mutation refresh, event runtime publication, and route actions behind `createAppController()`.
 - Pass browser-only behaviours through ports: `fetch`, `storage`, `document`, `location`, `confirm`, `alert`, file picking, JSON download, TTS, and timer functions.
+- Define `controller-snapshot.js` as the only React-facing read model. It must combine `store.getState()` with non-store UI state currently held in module variables: auth requirement, session metadata, adult hub state, admin account directory, TTS playback, spelling content mutation status, toast scheduling, and runtime-boundary metadata.
+- Define safe action wrappers for React components. Wrappers may be exposed as callbacks, but they must still route through central dispatch/read-only policy/error containment rather than letting components mutate stores, repositories, or global state directly.
 - Keep `createStore()`, repositories, subject services, event runtime, and runtime boundary unchanged at this stage.
 - Keep the controller API deliberately narrow: subscribe/read snapshot, dispatch actions, boot/load route data, and access ports. Avoid adding a second event bus or React-specific state container here.
 - Keep `src/main.js` as a thin bootstrapper until the React entry replaces it.
@@ -185,6 +192,8 @@ The important shape is that React becomes the only DOM owner. The app controller
 - Happy path: remote bootstrap uses API repositories and does not seed a writable learner when the Worker bootstrap is empty.
 - Integration: `dispatch("spelling-start")` updates subject UI, writes subject state, publishes events, and schedules TTS through the port.
 - Integration: `dispatch("persistence-retry")` preserves the current route and clears runtime boundary state on success.
+- Integration: hub loading, admin account saving, content mutation, TTS playback, auth-required, and toast timer state all appear in the controller snapshot and notify subscribers exactly once per logical state change.
+- Policy: React-safe callbacks still pass through read-only adult access checks and subject/global error containment.
 - Error path: subject action throw is captured in `runtimeBoundary` and does not mutate unrelated learner or spelling state.
 - Error path: signed-in parent/admin hub load failure produces a readable hub state without crashing controller dispatch.
 - Regression: monster celebration delay/release behaviour still matches the current spelling session lifecycle.
@@ -196,7 +205,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 
 **Goal:** Introduce one React application root that subscribes to the existing store and renders routes without global island renderers.
 
-**Requirements:** R1, R2, R6, R7, R8
+**Requirements:** R1, R2, R3, R6, R7, R8
 
 **Dependencies:** Unit 1
 
@@ -204,6 +213,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 - Create: `src/app/entry.jsx`
 - Create: `src/app/App.jsx`
 - Create: `src/app/AppProviders.jsx`
+- Create: `src/surfaces/auth/AuthSurface.jsx`
 - Create: `src/platform/react/use-platform-store.js`
 - Create: `src/platform/react/ErrorBoundary.jsx`
 - Create: `tests/helpers/react-render.js`
@@ -214,17 +224,19 @@ The important shape is that React becomes the only DOM owner. The app controller
 - Modify: `scripts/build-public.mjs`
 - Modify: `scripts/assert-build-public.mjs`
 - Test: `tests/react-app-shell.test.js`
+- Test: `tests/react-auth-boot.test.js`
 - Test: `tests/build-public.test.js`
 
 **Approach:**
 - Use `createRoot()` once for `#app`.
-- Bridge `store.subscribe()` and `store.getState()` with a custom `usePlatformStore()` hook based on `useSyncExternalStore`.
+- Bridge `controller.subscribe()` and `controller.getSnapshot()` with a custom `usePlatformStore()` hook based on `useSyncExternalStore`. The hook should not read `store.getState()` directly, because the UI also depends on non-store controller state.
 - Render a route-level `<App />` that receives the controller through context and delegates route bodies to surface components.
+- Move the unauthenticated remote boot path into the controller snapshot and React root in this unit. `AuthSurface` should replace `renderAuthScreen()` before Unit 2 claims a single React root, including credential sign-in, register, social-provider start, error display, and session-required states.
 - Keep esbuild as the initial bundler, but change it from a home-island bundle to a single app bundle.
 - Add an explicit post-Unit-2 build-tool decision record. Keep esbuild if the bundle, tests, and Cloudflare asset flow stay simple; adopt Vite before broad surface migration if HMR, asset imports, or code splitting become material migration drag.
 - Keep `wrangler.jsonc` static asset semantics: built client assets in `dist/public`, `/api/*` Worker-first, SPA fallback to `index.html`.
-- Ensure build/deploy script edits preserve the OAuth-safe deployment strategy required by `AGENTS.md`.
-- Start React coverage with server-render or lightweight helper tests. If real interactions cannot be covered without a DOM, add `jsdom` or Testing Library as a scoped dev dependency rather than hiding interaction risk behind snapshots.
+- Because Unit 2 modifies `package.json`, fix the default deploy path to be OAuth-safe through `scripts/wrangler-oauth.mjs` and keep `deploy:ci` aligned with that default unless the authentication strategy is deliberately changed and documented.
+- Start non-interactive React coverage with server-render or lightweight helper tests. Real interaction, focus, keyboard, modal, and responsive proof belongs to the Playwright-backed Unit 2.5 gate.
 
 **Patterns to follow:**
 - `src/surfaces/home/index.jsx`
@@ -235,10 +247,13 @@ The important shape is that React becomes the only DOM owner. The app controller
 **Test scenarios:**
 - Happy path: rendering `<App />` for dashboard includes the home surface without requiring `window.__ks2HomeSurface`.
 - Happy path: rendering `<App />` for subject route includes the subject top navigation through imports, not a global mount.
+- Happy path: unauthenticated remote boot renders `AuthSurface` through the React root and does not use `root.innerHTML` or a permanent unresolved boot promise.
+- Error path: failed credential and social sign-in attempts update auth state through the controller snapshot without leaving stale form state or duplicate listeners.
 - Edge case: store subscription update re-renders the active route exactly once for a learner selection change.
 - Error path: a React render throw is caught by `ErrorBoundary` and surfaced as a contained app-level or subject-level fallback.
 - Build: production build emits a single app bundle and no longer requires `src/bundles/home.bundle.js` to boot.
 - Deployment: built `dist/public/index.html` references bundled assets and still leaves Worker API paths under `/api/*`.
+- Deployment: `scripts/assert-build-public.mjs` no longer requires legacy source entry points or the home island bundle, still rejects Worker source in public output, and verifies the new app bundle instead.
 
 **Verification:**
 - The app can be built and served from `dist/public` with the Worker API config unchanged.
@@ -254,9 +269,12 @@ The important shape is that React becomes the only DOM owner. The app controller
 
 **Files:**
 - Create: `docs/plans/2026-04-22-001-react-migration-ui-contract.md`
+- Create: `playwright.config.mjs`
+- Create: `tests/helpers/browser-app-server.js`
 - Create or modify: `tests/react-spelling-scene-spike.test.js`
 - Create or modify: `tests/react-accessibility-contract.test.js`
 - Create or modify: `tests/browser-react-migration-smoke.test.js`
+- Modify: `package.json`
 - Modify: `tests/smoke.test.js`
 - Modify: `tests/dom-actions.test.js`
 
@@ -264,9 +282,10 @@ The important shape is that React becomes the only DOM owner. The app controller
 - Write a persona route hierarchy for the migrated app before Unit 3: each route needs a primary user, primary question, primary action, secondary diagnostics, and route-level rescue path.
 - Write state matrices for boot/auth, persistence, dashboard, profile, Parent Hub, Admin / Operations, subject route, Spelling setup, Spelling session, Spelling summary, word bank, and word detail modal. Include loading, empty, error, disabled, partial, degraded, retrying, and success where relevant.
 - Make the narrow Spelling session scene spike a hard prerequisite for broad migration. It should prove controlled input, answer submission, replay, TTS failure, shortcuts, modal open/close, focus restoration, no answer leak, and no visible flicker under React ownership.
+- Add Playwright Test as the explicit browser proof tool for the migration, with a local app server/helper that can run against the built public output or a minimal test build. Keep the dependency scoped to migration smoke and interaction tests.
 - Convert accessibility from "preserve" to testable acceptance: route focus targets, modal first focus, modal return focus, Escape semantics, `aria-live` feedback, reduced motion, replay in-flight/failure states, and keyboard shortcut ownership.
 - Record a responsive matrix for `360x740`, `390x844`, `768x1024`, `1024` wide, and `1440` wide viewports, covering Spelling session, word bank modal, dashboard navigation, Parent Hub, Admin / Operations, and profile settings.
-- Treat Spelling DOM interaction coverage as required, not optional. If server-render tests cannot prove focus, keyboard, form, and modal behaviour, add scoped DOM/browser tooling before Unit 3.
+- Treat Spelling DOM interaction coverage as required, not optional. Server-render tests may support model checks, but Playwright or equivalent browser assertions must prove focus, keyboard, form, modal, TTS-failure, and responsive behaviour before Unit 3.
 - Preserve CSS classes and visible behaviour first, but do not blindly preserve developer-facing Parent/Admin copy if the route hierarchy identifies a clearer parent/operator label that can be changed without product scope creep.
 
 **Patterns to follow:**
@@ -280,6 +299,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 - Spelling scene spike: one-word round preserves input focus, submit semantics, replay state, answer feedback, auto-advance timing, and keyboard shortcuts.
 - Word-bank modal: opening a row traps focus, Escape closes the modal, and focus returns to the originating row.
 - TTS: replay failure shows contained feedback and does not break the route.
+- Callback containment: a React callback throw is reported through the controller's safe dispatch path, and adult read-only write blocking still applies.
 - Reduced motion: celebration, replay, and modal transitions remain usable when motion is reduced.
 - Responsive: each required viewport can render the primary migrated route state without clipped controls, overlapping text, or unreachable actions.
 - Adult hubs: readable learner state and writable learner state remain visually distinct in loading, partial, read-only, and error states.
@@ -287,15 +307,15 @@ The important shape is that React becomes the only DOM owner. The app controller
 **Verification:**
 - The UI contract document exists and is referenced by Units 3-6.
 - The Spelling spike, accessibility contract, and responsive smoke checks pass before Unit 3 starts.
-- The Unit 2 strategic gate records whether the migration continues to Units 3-7, narrows to a smaller React tranche, or pauses for the first Arithmetic thin-slice estimate.
+- The Unit 2.5 strategic gate records whether the migration continues to Units 3-7, narrows to a smaller React tranche, or pauses for the first Arithmetic thin-slice estimate.
 
-- [ ] **Unit 3: Port Shared Shell, Auth, Profile, Dashboard, Codex, and Overlays**
+- [ ] **Unit 3: Port Shared Shell, Profile, Dashboard, Codex, and Overlays**
 
-**Goal:** Convert shared UI surfaces from string templates or global islands into normal React components.
+**Goal:** Convert shared UI surfaces from string templates or global islands into normal React components after auth is already React-owned.
 
 **Requirements:** R1, R3, R4, R6, R8
 
-**Dependencies:** Unit 2
+**Dependencies:** Units 2 and 2.5
 
 **Files:**
 - Move/Modify: `src/surfaces/home/TopNav.jsx` -> `src/surfaces/shell/TopNav.jsx`
@@ -305,7 +325,6 @@ The important shape is that React becomes the only DOM owner. The app controller
 - Create: `src/surfaces/shell/ToastShelf.jsx`
 - Create: `src/surfaces/shell/MonsterCelebrationOverlay.jsx`
 - Create: `src/surfaces/shell/SubjectBreadcrumb.jsx`
-- Create: `src/surfaces/auth/AuthSurface.jsx`
 - Create: `src/surfaces/profile/ProfileSettingsSurface.jsx`
 - Modify: `src/platform/ui/render.js`
 - Modify: `src/platform/ui/luminance.js`
@@ -317,10 +336,11 @@ The important shape is that React becomes the only DOM owner. The app controller
 **Approach:**
 - Reuse existing home/Codex React components by importing them into `<App />`.
 - Move shared chrome out of `src/surfaces/home` so subject, hub, profile, and dashboard routes do not depend on a home-specific namespace.
-- Convert persistence banner, toast shelf, monster celebration overlay, auth screen, and profile settings from string templates to components.
+- Convert persistence banner, toast shelf, monster celebration overlay, and profile settings from string templates to components.
 - Preserve current UI copy, CSS class names, action semantics, and accessibility affordances.
 - Replace root-level `data-action` handling with callback props where the component is fully React-owned.
 - Keep a temporary legacy fallback only for surfaces not yet migrated by later units.
+- Implement the route states defined in the UI contract rather than relying on a single happy-path render for each migrated surface.
 
 **Patterns to follow:**
 - `src/surfaces/home/HomeSurface.jsx`
@@ -333,12 +353,14 @@ The important shape is that React becomes the only DOM owner. The app controller
 - Happy path: Codex route renders the existing monster roster model and preview lightbox.
 - Happy path: profile settings can add, edit, delete, reset, export, and import learners through controller actions.
 - Edge case: signed-in remote shell with zero writable learners renders honest empty states rather than fabricating a learner.
+- Edge case: route-level loading, empty, partial, degraded, retrying, and failed states use the state matrix copy, affordances, focus target, and `aria-live` behaviour from the UI contract.
 - Error path: degraded persistence banner shows retry affordance and debug information equivalent to the current template.
 - Integration: monster celebration overlay still delays until session end, displays the correct kind, and dismisses through the store queue.
 - Accessibility: word-detail modal focus behaviour is not regressed by moving global focus choreography into React effects.
 
 **Verification:**
 - Existing render and smoke assertions that pin visible copy still pass after being pointed at React-rendered surfaces.
+- Browser smoke covers the UI contract viewports for dashboard, profile, auth, Codex, persistence banner, toasts, and overlays.
 
 - [ ] **Unit 4: Convert Parent Hub and Admin / Operations to React**
 
@@ -371,6 +393,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 - Keep `buildParentHubAccessContext()`, `buildAdminHubAccessContext()`, and `readOnlyLearnerActionBlockReason()` as the central read-only rule helpers.
 - Trigger signed-in hub loads through controller actions/effects instead of `queueMicrotask()` calls inside `render()`.
 - Preserve the separation between adult-surface selected readable learner and writable subject-shell learner.
+- Apply the UI contract hierarchy so Parent Hub answers parent questions first, Admin / Operations answers operator diagnostics first, and developer-only labels are kept only where they are genuinely diagnostic.
 
 **Patterns to follow:**
 - `src/platform/ui/render.js#renderParentHub`
@@ -382,6 +405,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 - Happy path: signed-in Parent Hub renders live Worker payload with accessible learners and selected learner labels.
 - Happy path: signed-in Admin / Operations renders content status, account roles, audit entries, and learner diagnostics.
 - Edge case: viewer membership renders read-only labels and disabled write affordances while still allowing hub diagnostics.
+- Edge case: loading with stale data, partial Worker payloads, no readable learners, read-only learner selection, role save pending, role save failed, and content validation failed all render distinct states from the UI contract.
 - Error path: failed parent/admin hub fetch renders a route-level error card without changing the writable shell learner.
 - Integration: changing adult learner selection reloads the correct hub payload and syncs writable learner selection only when that learner exists in bootstrap state.
 - Security/permission: parent role cannot open Admin / Operations; ops role does not get Parent Hub access without the right role and readable membership.
@@ -472,6 +496,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 - Preserve spelling transient UI state in the store: word-bank search, status filter, modal slug/mode, drill typed value, and drill result.
 - Preserve accessibility details: modal focus trap, restore focus to originating word row, replay controls, input autofocus, and keyboard shortcuts.
 - Preserve hero background and luminance behaviour through React effects and refs.
+- Implement the Spelling interaction contract from Unit 2.5 before broad scene cleanup, especially controlled input ownership, TTS replay/failure, shortcut routing, modal focus, no answer leak, SATs hidden-layout parity, and no route flicker.
 
 **Patterns to follow:**
 - `src/subjects/spelling/module.js`
@@ -487,6 +512,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 - Happy path: word bank search/filter renders the same visible rows and opens explainer/drill modal.
 - Edge case: drill modal never writes scheduler progress and never leaks the answer before the learner checks.
 - Edge case: SATs mode hides irrelevant tweaks while preserving layout height.
+- Edge case: setup empty content, no trouble words, TTS unavailable, TTS in-flight, awaiting advance, incorrect answer, empty summary, word-bank no match, and modal entries with missing explanation or sentence all render explicit states from the UI contract.
 - Error path: TTS replay failure is contained by the existing TTS port and does not break the React route.
 - Integration: spelling events still append to event log and trigger monster reward subscribers exactly once.
 - Accessibility: Escape/Shift+Escape replay shortcuts, Alt+S skip, Alt+K focus, modal Tab trap, and focus restoration still work.
@@ -525,9 +551,9 @@ The important shape is that React becomes the only DOM owner. The app controller
 - Remove root-level `data-action` delegation once React components own their events.
 - Remove or formally retire the temporary `renderPractice()` compatibility path so production subjects use the React subject contract.
 - Keep any generic helpers that remain useful by moving them out of `render.js` before deleting or shrinking it.
-- Ensure `dist/public` ships the built app bundle, styles, assets, Worker source needed by Wrangler, and no accidental generated or raw source-only artefacts.
+- Ensure `dist/public` ships the built app bundle, `index.html`, styles, required assets, and no accidental Worker source, tests, generated files, or raw source-only artefacts.
 - Update docs to describe React as the browser shell while keeping repository and subject boundaries unchanged.
-- Preserve package script names expected by deployment guidance. If deploy scripts are touched, keep the default path OAuth-safe through `scripts/wrangler-oauth.mjs`.
+- Preserve package script names expected by deployment guidance and keep the default deploy path OAuth-safe through `scripts/wrangler-oauth.mjs`.
 
 **Patterns to follow:**
 - `scripts/assert-build-public.mjs`
@@ -548,12 +574,13 @@ The important shape is that React becomes the only DOM owner. The app controller
 
 ## System-Wide Impact
 
-- **Interaction graph:** React components call controller actions; controller actions update store/services/repositories; store notifications re-render React through `useSyncExternalStore`; subject services emit transitions; event runtime publishes reward/toast events; repository persistence snapshots flow back into shell banners.
+- **Interaction graph:** React components call controller actions; controller actions update store/services/repositories and non-store controller state; controller notifications re-render React through `useSyncExternalStore`; subject services emit transitions; event runtime publishes reward/toast events; repository persistence snapshots flow back into shell banners.
 - **Error propagation:** Subject action/render errors remain subject-local through `runtimeBoundary`; React subject component errors map to `SubjectRuntimeFallback`; route or shell component errors map to an app-level fallback. Boundaries should report and contain failures, not silently swallow them. Repository errors remain visible through persistence snapshots; Worker route errors remain route-local for hubs/content/auth.
 - **State lifecycle risks:** The migration removes destructive `root.innerHTML` replacement, so focus/caret behaviour should improve, but current hand-written focus restoration must be deliberately replaced with React refs/effects. Optimistic remote writes, pending operations, stale-write rebasing, and local cache trust labels must be unchanged.
 - **API surface parity:** `/api/bootstrap`, learner writes, subject state writes, practice session writes, game state writes, event log, TTS, spelling content, parent/admin hubs, and account-role routes keep their current request/response semantics.
 - **Integration coverage:** Unit tests alone are not enough. The implementation needs controller tests, React rendering tests, subject expansion tests, Worker tests, and browser smoke coverage for signed-in routes.
 - **Unchanged invariants:** Spelling service transitions, repository record shapes, event types, monster thresholds, spelling content publication rules, adult access roles, and Cloudflare D1 schema remain stable unless explicitly changed in a later plan.
+- **UI contract:** React ports should implement the Unit 2.5 persona hierarchy, route state matrices, accessibility acceptance, and responsive viewport matrix before deleting the legacy renderer for that surface.
 
 ## Risks & Dependencies
 
@@ -563,13 +590,14 @@ The important shape is that React becomes the only DOM owner. The app controller
 | Remote sync semantics break because React bypasses repository snapshots | Low | High | React must only read/write through controller, store, and repository contracts; no component should write persistence directly. |
 | Adult viewer/read-only access regresses | Medium | High | Keep `shell-access.js` as the single source of read-only block reasons and add React hub surface tests for viewer memberships. |
 | Runtime containment weakens when subject render moves into React | Medium | High | Build a React subject boundary before migrating Spelling and prove broken fixture subjects are contained. |
-| Build/deploy scripts drift away from OAuth-safe Wrangler usage | Medium | High | Treat package script edits as production-sensitive and route deployment through `scripts/wrangler-oauth.mjs` if touched. |
+| Build/deploy scripts drift away from OAuth-safe Wrangler usage | Medium | High | Treat package script edits as production-sensitive and keep default deployment routed through `scripts/wrangler-oauth.mjs`. |
 | React migration becomes a broad redesign | Medium | Medium | Preserve CSS class names and visible copy first; defer visual redesign and component-system cleanup until parity is proven. |
 | Tests become brittle if they inspect React implementation details | Medium | Medium | Prefer controller behaviour, visible copy, accessibility roles, and durable state outcomes over component internals. |
 | Current dirty asset worktree changes get accidentally reverted | Medium | Medium | Implementation should inspect `git status` before edits and ignore unrelated monster asset changes. |
 | Controller extraction becomes a new mini-framework | Medium | Medium | Keep the public controller API narrow, reuse existing store/repository/runtime primitives, and reject abstractions that do not remove immediate migration complexity. |
 | React interaction coverage misses focus, modal, and keyboard regressions | Medium | High | Add DOM-oriented test tooling when server-render tests are insufficient, and use gstack/browser smoke for migrated interactive routes. |
 | Temporary legacy subject compatibility lingers permanently | Medium | Medium | Add a sunset check in Unit 5 and remove or explicitly document the adapter in Unit 7. |
+| Migration preserves confusing developer-facing adult-surface copy | Medium | Medium | Use the Unit 2.5 route hierarchy to separate parent/operator primary questions from diagnostics before porting Parent Hub and Admin / Operations. |
 
 ## Alternative Approaches Considered
 
@@ -584,13 +612,15 @@ The important shape is that React becomes the only DOM owner. The app controller
 
 - Unit 1 extracts the controller and ports.
 - Unit 2 creates the single React root and store bridge.
+- Unit 2.5 proves the UI/UX migration contract and the narrow Spelling scene spike.
 
 ### Strategic Gate: Continue or Narrow
 
-Before committing to Units 3-7 as one uninterrupted migration, pause after Units 1-2 and review the evidence:
+Before committing to Units 3-7 as one uninterrupted migration, pause after Units 1, 2, and 2.5 and review the evidence:
 
 - Does the single React root remove the current dual-runtime boot path without weakening local or signed-in mode?
 - Does a narrow Spelling session scene spike prove that focus, TTS, modal, and keyboard parity can survive React ownership?
+- Does the UI contract cover persona route hierarchy, route state matrices, accessibility acceptance, and responsive smoke for the migrated surfaces?
 - Does the updated build/test loop make migration faster rather than adding a second tooling problem?
 - Does the team still believe full React migration accelerates the first Arithmetic thin slice more than starting that slice now?
 - Are there business-facing signals, such as reduced visible flicker, shorter subject implementation lead time, fewer shell bugs, or clearer contributor onboarding?
@@ -599,7 +629,7 @@ This gate does not reduce the plan by itself. It stops the team from treating ar
 
 ### Phase 2: Shared Surfaces
 
-- Unit 3 ports shell, auth, profile, dashboard, Codex, and overlays.
+- Unit 3 ports shell, profile, dashboard, Codex, and overlays.
 - Unit 4 ports Parent Hub and Admin / Operations.
 
 ### Phase 3: Subject Runtime
@@ -618,6 +648,7 @@ This gate does not reduce the plan by itself. It stops the team from treating ar
 - Update `docs/subject-expansion.md` to document the React subject component contract once the compatibility window closes.
 - Keep deployment guidance aligned with `AGENTS.md`: normal deploys should use package scripts, and package scripts should remain OAuth-safe.
 - After implementation, use gstack/browser smoke on local and production routes that changed visually or interactively.
+- Keep `docs/plans/2026-04-22-001-react-migration-ui-contract.md` current while Units 3-6 migrate route states and interactions.
 
 ## Success Metrics
 
@@ -629,8 +660,9 @@ This gate does not reduce the plan by itself. It stops the team from treating ar
 - React-rendered dashboard, Codex, spelling, profile, Parent Hub, and Admin / Operations routes match current visible behaviour.
 - `npm test` and the repo's build/check path pass before deployment.
 - Production smoke on `https://ks2.eugnel.uk` confirms signed-in browser flows after deployment.
-- After Units 1-2, the strategic gate has recorded whether full migration still beats starting the first Arithmetic thin slice.
+- After Units 1, 2, and 2.5, the strategic gate has recorded whether full migration still beats starting the first Arithmetic thin slice.
 - The migration can explain its product payoff in concrete terms: visible flicker reduction, lower subject implementation effort, fewer shell/runtime bugs, or faster contributor onboarding.
+- The UI contract proves route state, accessibility, focus, keyboard, TTS, modal, and responsive behaviour for the migrated surfaces before broad legacy renderer deletion.
 
 ## Sources & References
 
@@ -658,6 +690,16 @@ This gate does not reduce the plan by itself. It stops the team from treating ar
 
 Generated by `/autoplan` on 2026-04-22.
 
+### Approval Record
+
+| Item | Result |
+|------|--------|
+| Approval choice | Approve full revised plan |
+| Approved by | James |
+| Approved at | 2026-04-22T18:53:49Z |
+| Implementation scope | Full revised Units 1-7, with the Unit 2.5 strategic gate required before broad surface migration |
+| Next suggested step | `/ship` when ready to create the PR or implementation branch |
+
 ### Intake
 
 | Item | Result |
@@ -667,6 +709,7 @@ Generated by `/autoplan` on 2026-04-22.
 | Platform | GitHub, `fol2/ks2-mastery` |
 | Restore point | `/Users/jamesto/.gstack/projects/fol2-ks2-mastery/main-autoplan-restore-20260422-190409.md` |
 | Office-hours design doc | `/Users/jamesto/.gstack/projects/fol2-ks2-mastery/jamesto-main-design-20260422-191214.md` |
+| Test plan artifact | `/Users/jamesto/.gstack/projects/fol2-ks2-mastery/jamesto-main-test-plan-20260422-192400.md` |
 | UI scope | Yes, the plan changes the browser runtime, components, routes, modals, keyboard flows, and user-facing states. |
 | `CLAUDE.md` / `TODOS.md` | Not present in repo root during intake. Project instructions are in `AGENTS.md`. |
 
@@ -867,13 +910,127 @@ This plan moves the app from "React islands around a string-rendered product" to
 | 3 | CEO | Add product-facing success metrics | Mechanical | P1 completeness | Tests must prove value, not just absence of breakage | Pure implementation-output metrics |
 | 4 | CEO | Surface "constrained tranche versus full migration" at final gate | User challenge | User sovereignty | Codex recommends not approving full Unit 1-7 as-is; James's original direction remains default until he decides | Silent scope reduction |
 
+### Phase 2: Design Review
+
+#### Design Verdict
+
+Conditional pass. The technical direction is viable, but the plan was still too implementation-centred to approve a full learner, parent, and operator UI migration without an explicit interaction contract. Unit 2.5 was added as a hard gate before Units 3-7.
+
+#### Pass Results
+
+| Pass | Result |
+|------|--------|
+| Information architecture | Needs strengthening. Implementation units are clear for engineers, but each route also needs the user's primary question, primary action, diagnostics, and rescue path. |
+| Interaction state coverage | Needs strengthening. Loading, empty, partial, degraded, disabled, retrying, and failed states must be specified route by route, not only named in tests. |
+| Learner journey | Highest risk is English Spelling. Focus, replay, TTS failure, shortcut routing, answer feedback, auto-advance, and modal recovery need proof before broad migration. |
+| Parent/operator journey | Parent Hub and Admin / Operations should separate parent-facing questions from operator diagnostics; the React port should not preserve confusing developer-facing labels by accident. |
+| Accessibility | Direction is good, but acceptance needs to name route focus targets, modal first focus, focus return, Escape semantics, `aria-live`, replay states, and reduced-motion behaviour. |
+| Responsive behaviour | Current CSS has strong breakpoint and safe-area work. The plan now requires explicit viewport smoke for `360x740`, `390x844`, `768x1024`, `1024`, and `1440`. |
+| Visual design | No new visual design system or mockups are required for this refactor. Preserve the current CSS/classes first; record any copy or hierarchy changes as migration fixes, not redesign. |
+
+#### Required Plan Changes Applied
+
+- Added R9 for route-level UI state matrices, accessibility contracts, responsive coverage, and Spelling interaction proof.
+- Added Unit 2.5 to write `docs/plans/2026-04-22-001-react-migration-ui-contract.md`.
+- Made the narrow Spelling session scene spike a prerequisite before broad route migration.
+- Made DOM/browser coverage required for Spelling interactions if server-render tests cannot prove focus, keyboard, form, and modal behaviour.
+- Added route state, responsive, and accessibility requirements to Units 3, 4, and 6.
+- Added a risk for preserving confusing developer-facing adult-surface copy.
+
+#### Design Error & Rescue Registry
+
+| Failure | User impact | Rescue path |
+|---------|-------------|-------------|
+| React port preserves implementation hierarchy instead of user hierarchy | Learners, parents, or operators see technically correct screens that do not answer their next question | Unit 2.5 persona route hierarchy before Unit 3 |
+| Spelling focus/TTS/keyboard behaviour regresses late | The main learner flow becomes frustrating or inaccessible | Narrow Spelling scene spike with DOM/browser proof |
+| State matrices remain implicit | Error and degraded states become inconsistent across routes | Route-by-route state matrix in the UI contract |
+| Responsive regressions slip through | Mobile controls clip, overlap, or become unreachable | Required viewport smoke matrix |
+| Accessibility remains "best effort" | Modal, shortcut, replay, and feedback semantics drift | Role/name/focus assertions and `aria-live` acceptance |
+
+#### Phase 2 Decision Audit
+
+| # | Phase | Decision | Classification | Principle | Rationale | Rejected |
+|---|-------|----------|----------------|-----------|-----------|----------|
+| 5 | Design | Add Unit 2.5 as a hard UI/UX gate | Mechanical | P1 completeness | UI parity needs an explicit contract before broad route migration | Treating design concerns as comments only |
+| 6 | Design | Require a narrow Spelling scene spike before Units 3-7 | Mechanical | P4 multi-step reasoning | Spelling is the highest-risk real learner surface, so late discovery would be expensive | Waiting until Unit 6 to prove focus/TTS/modal parity |
+| 7 | Design | Require route state matrices and viewport smoke | Mechanical | P3 consistency | React ports must preserve loading, empty, degraded, responsive, and accessibility behaviour consistently | Snapshot-only or happy-path-only UI tests |
+| 8 | Design | Allow parent/operator copy hierarchy fixes when the UI contract identifies them | Taste choice | P5 explicit over clever | "Preserve copy" should not freeze developer-facing labels into adult surfaces | Blindly preserving all current diagnostic copy |
+
+### Phase 3: Engineering Review
+
+#### Engineering Verdict
+
+Conditional pass, not ready for implementation handoff until the plan resolves boot/auth sequencing, controller snapshot ownership, public asset/deploy reality, browser interaction tooling, and safe React callback dispatch. The plan has been tightened in those areas.
+
+#### Findings
+
+| Finding | Severity | Resolution |
+|---------|----------|------------|
+| Unit 2 claimed a single React root while unauthenticated remote boot still used `renderAuthScreen()` and a permanently unresolved boot promise | High | Moved `AuthSurface` into Unit 2 and required unauthenticated boot through the React root before claiming R1 |
+| `useSyncExternalStore` was described against `store.getState()` only, but current UI depends on non-store module state | High | Added a controller snapshot contract covering store plus auth, session, TTS, adult hubs, admin directory, spelling content mutation, toast timers, and runtime-boundary metadata |
+| Build/deploy wording conflicted with repo assertions and deployment guidance | High | Clarified that Worker source must stay outside `dist/public`; Unit 2 must make default `npm run deploy` OAuth-safe through `scripts/wrangler-oauth.mjs`; public-output assertions must target the new app bundle |
+| DOM/browser interaction tooling was still optional in practice | Medium/High | Selected Playwright Test as the migration browser proof tool for Unit 2.5 and later responsive smoke |
+| Strategic gate happened before the UI evidence it required | Medium | Moved the continue-or-narrow gate to after Units 1, 2, and 2.5 |
+| React callback props could bypass central policy and error containment | Medium | Reframed callbacks as safe controller wrappers that still route through central dispatch, read-only policy, and error reporting |
+
+#### Required Plan Changes Applied
+
+- Added `src/platform/app/controller-snapshot.js` to Unit 1.
+- Added safe controller action wrappers to Unit 1.
+- Added `AuthSurface` and `tests/react-auth-boot.test.js` to Unit 2.
+- Changed `usePlatformStore()` to subscribe to the controller snapshot rather than the raw platform store.
+- Added explicit package-script remediation for the default OAuth-safe deploy path.
+- Added Playwright Test, `playwright.config.mjs`, and `tests/helpers/browser-app-server.js` to Unit 2.5.
+- Moved the strategic continue-or-narrow decision to after Unit 2.5.
+- Corrected public-output wording so Worker source remains outside `dist/public`.
+
+#### Engineering Error & Rescue Registry
+
+| Failure | User impact | Rescue path |
+|---------|-------------|-------------|
+| Auth remains outside React root | Signed-out production users keep a legacy DOM path and R1 is false | Unit 2 auth boot tests require React-owned auth before broad migration |
+| Non-store controller state is missed | Hubs, TTS, admin roles, content status, or toasts go stale | Controller snapshot contract and subscriber tests |
+| Callback bypasses read-only policy | Adult viewer can reach write actions or error containment weakens | Safe controller callbacks plus read-only/action throw tests |
+| Public build copies the wrong files | Deploy ships raw source or misses the app bundle | Updated `assert-build-public` expectations |
+| Browser interaction proof is deferred | Focus, modal, shortcut, and responsive regressions are found too late | Playwright-based Unit 2.5 proof before Unit 3 |
+
+#### Phase 3 Decision Audit
+
+| # | Phase | Decision | Classification | Principle | Rationale | Rejected |
+|---|-------|----------|----------------|-----------|-----------|----------|
+| 9 | Engineering | Move auth boot into Unit 2 | Mechanical | P1 completeness | A single React root cannot exclude unauthenticated production boot | Leaving auth as a Unit 3 legacy DOM path |
+| 10 | Engineering | Add controller snapshot as the React subscription source | Mechanical | P3 consistency | Store state alone does not cover current UI state or side-effect status | Direct React subscription to `store.getState()` only |
+| 11 | Engineering | Make default deploy OAuth-safe during package script migration | Mechanical | P1 completeness | Unit 2 touches package scripts and AGENTS says default scripts must be OAuth-safe | Keeping raw `npx wrangler deploy` |
+| 12 | Engineering | Choose Playwright Test for migration browser proof | Mechanical | P4 multi-step reasoning | Current tests cannot prove focus, keyboard, modal, TTS failure, or responsive behaviour | Leaving DOM/browser tooling to implementation judgement |
+| 13 | Engineering | Move continue-or-narrow gate after Unit 2.5 | Mechanical | P4 multi-step reasoning | The gate requires evidence produced by Unit 2.5 | Deciding after Unit 2 only |
+| 14 | Engineering | Route React callbacks through safe controller wrappers | Mechanical | P5 explicit over clever | React event errors and direct callbacks are not caught by ErrorBoundary and can bypass policy | Raw component callbacks that mutate state directly |
+
+## Decision Audit Trail
+
+| # | Phase | Decision | Classification | Principle | Rationale | Rejected |
+|---|-------|----------|----------------|-----------|-----------|----------|
+| 1 | CEO | Keep React SPA over existing Worker API as the target | Mechanical | P5 explicit over clever | Existing Worker, D1, and repository contracts already provide the full-stack boundary | Framework-first rewrite |
+| 2 | CEO | Add strategic gate after Units 1, 2, and 2.5 | Mechanical | P1 completeness | Prevents architecture work from outrunning product and UX evidence | Unconditional Unit 1-7 execution |
+| 3 | CEO | Add product-facing success metrics | Mechanical | P1 completeness | The migration must prove product value, not only implementation completion | Pure implementation-output metrics |
+| 4 | CEO | Surface constrained tranche versus full migration at final gate | User challenge | User sovereignty | Review recommended a smaller first tranche, but James approved the full revised plan | Silent scope reduction |
+| 5 | Design | Add Unit 2.5 as a hard UI/UX gate | Mechanical | P1 completeness | UI parity needs an explicit contract before broad route migration | Treating design concerns as comments only |
+| 6 | Design | Require a narrow Spelling scene spike before Units 3-7 | Mechanical | P4 multi-step reasoning | Spelling is the highest-risk real learner surface, so late discovery would be expensive | Waiting until Unit 6 to prove focus/TTS/modal parity |
+| 7 | Design | Require route state matrices and viewport smoke | Mechanical | P3 consistency | React ports must preserve loading, empty, degraded, responsive, and accessibility behaviour consistently | Snapshot-only or happy-path-only UI tests |
+| 8 | Design | Allow parent/operator copy hierarchy fixes when the UI contract identifies them | Taste choice | P5 explicit over clever | "Preserve copy" should not freeze developer-facing labels into adult surfaces | Blindly preserving all current diagnostic copy |
+| 9 | Engineering | Move auth boot into Unit 2 | Mechanical | P1 completeness | A single React root cannot exclude unauthenticated production boot | Leaving auth as a Unit 3 legacy DOM path |
+| 10 | Engineering | Add controller snapshot as the React subscription source | Mechanical | P3 consistency | Store state alone does not cover current UI state or side-effect status | Direct React subscription to `store.getState()` only |
+| 11 | Engineering | Make default deploy OAuth-safe during package script migration | Mechanical | P1 completeness | Unit 2 touches package scripts and AGENTS says default scripts must be OAuth-safe | Keeping raw `npx wrangler deploy` |
+| 12 | Engineering | Choose Playwright Test for migration browser proof | Mechanical | P4 multi-step reasoning | Current tests cannot prove focus, keyboard, modal, TTS failure, or responsive behaviour | Leaving DOM/browser tooling to implementation judgement |
+| 13 | Engineering | Move continue-or-narrow gate after Unit 2.5 | Mechanical | P4 multi-step reasoning | The gate requires evidence produced by Unit 2.5 | Deciding after Unit 2 only |
+| 14 | Engineering | Route React callbacks through safe controller wrappers | Mechanical | P5 explicit over clever | React event errors and direct callbacks are not caught by ErrorBoundary and can bypass policy | Raw component callbacks that mutate state directly |
+
 ## GSTACK REVIEW REPORT
 
 | Review | Trigger | Why | Runs | Status | Findings |
 |--------|---------|-----|------|--------|----------|
-| CEO Review | `/plan-ceo-review` | Scope and strategy | 0 | Not run for this plan | - |
-| Codex Review | `/codex review` | Independent second opinion | 0 | Not run for this plan | - |
-| Eng Review | `/plan-eng-review` | Architecture and tests | 0 | Not run for this plan | - |
-| Design Review | `/plan-design-review` | UI/UX gaps | 0 | Not run for this plan | - |
+| CEO Review | `/plan-ceo-review` | Scope and strategy | 1 | Approved after revisions | Added strategic product gate, business-facing success metrics, and final user challenge around constrained tranche versus full migration. |
+| Codex Review | `/codex review` | Independent second opinion | 3 | Approved after revisions | Codex-only outside voices covered CEO, design, and engineering review because Claude subagents are unavailable in this environment. |
+| Eng Review | `/plan-eng-review` | Architecture and tests | 1 | Approved after revisions | Tightened auth boot sequencing, controller snapshot ownership, deploy script safety, browser tooling, strategic gate timing, and callback containment. |
+| Design Review | `/plan-design-review` | UI/UX gaps | 1 | Approved after revisions | Added Unit 2.5 UI contract, Spelling scene spike, state matrices, responsive matrix, accessibility acceptance, and adult-surface copy hierarchy guardrails. |
 
-**VERDICT:** NO PLAN-SPECIFIC GSTACK REVIEWS YET. Run `/autoplan` for the full review pipeline, or run the individual reviews above before implementation if another approval gate is needed.
+**VERDICT:** APPROVED. James chose to approve the full revised plan. Implementation may proceed with Units 1-7, and the Unit 2.5 strategic gate remains mandatory before broad surface migration.

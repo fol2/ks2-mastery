@@ -37,6 +37,10 @@ James wants an "Extra" spelling expansion: a separate, non-statutory pool of wor
 - R15. Each Extra word must have the same learner-facing support expected for core words: accepted answer data, sentence entries, explanation, grouping metadata, and provenance/source notes.
 - R16. Unpublished Extra draft edits must not affect active learner sessions.
 
+**Migration and Compatibility**
+- R17. Existing learner progress for Years 3-4, Years 5-6, Inklet, Glimmerbug, and Phaeton must remain unchanged when Extra launches.
+- R18. Imported or restored legacy spelling progress must continue to project only known core statutory words into the existing core monsters unless Extra data is explicitly present.
+
 ## Success Criteria
 
 - Learners can intentionally choose between core statutory spelling practice and Extra practice.
@@ -44,6 +48,7 @@ James wants an "Extra" spelling expansion: a separate, non-statutory pool of wor
 - Extra has visible progress in the Word Bank or equivalent progress surface.
 - Securing Extra words progresses the Extra monster only.
 - SATs Test remains tied to core statutory spelling and does not include Extra words.
+- Existing learners keep their current core spelling and monster progress after the feature ships.
 
 ## Scope Boundaries
 
@@ -66,6 +71,7 @@ James wants an "Extra" spelling expansion: a separate, non-statutory pool of wor
 - The National Curriculum frames the Years 3-4 and Years 5-6 word lists as statutory and allows additional teacher-selected words alongside them.
 - The first Extra word set will be supplied by James before implementation planning is finalised.
 - Vellhorn remains acceptable as the Extra monster unless James chooses a different name or creature before planning.
+- Complete Vellhorn assets are present locally, but planning must confirm they are intended to be tracked and shipped.
 
 ## Alternatives Considered
 
@@ -74,16 +80,47 @@ James wants an "Extra" spelling expansion: a separate, non-statutory pool of wor
 - Extra with SATs Test support: Rejected because it implies Extra is statutory SATs preparation.
 - Extra with no monster: Rejected because the expansion should carry a clear reward loop.
 
+## Initial Extra Content
+
+Source note for all entries: James supplied the canonical Extra spelling list on 2026-04-22. Explanations, sentences, grouping notes, and accepted-answer suggestions are AI-drafted in UK English for KS2 learners.
+
+| Word | Accepted Answers | Group | Learner Explanation | Sentence Prompt |
+| --- | --- | --- | --- | --- |
+| Divide | divide | Word-building verbs | To divide is to split something into parts or groups. | We divide the class into teams before the investigation. |
+| Collide | collide | Word-building verbs | To collide is to crash into something or hit it while moving. | The two balls collide in the middle of the table. |
+| Explode | explode | Word-building verbs | To explode is to burst apart suddenly with force. | The volcano model did not explode until the final step. |
+| Corrode | corrode | Word-building verbs | To corrode is to be slowly damaged by a chemical reaction, often rust. | Salt water can corrode metal over time. |
+| Conclude | conclude | Word-building verbs | To conclude is to finish, or to decide after thinking about evidence. | We conclude that shade slows the melting ice. |
+| Extend | extend | Word-building verbs | To extend is to make something longer or reach further. | The bridge can extend across the stream. |
+| Comprehend | comprehend | Word-building verbs | To comprehend is to understand something fully. | She could comprehend the instructions after reading them twice. |
+| Evade | evade | Word-building verbs | To evade is to avoid or escape from someone or something. | The beetle tried to evade the torchlight under a leaf. |
+| Intrude | intrude | Word-building verbs | To intrude is to enter or join in where you are not wanted. | Please do not intrude while the group is recording. |
+| Interlude | interlude | Word-building verbs | An interlude is a short pause or break between parts of something. | A quiet interlude gave the performers time to reset. |
+| Classification | classification | Science: classification | Classification is sorting living things or objects into groups by shared features. | Classification helps scientists compare animals with similar features. |
+| Backbone | backbone | Science: body structure | A backbone is the row of bones that supports the back. | A fish has a backbone inside its body. |
+| Skeleton | skeleton | Science: body structure | A skeleton is the frame of bones that supports a body. | The skeleton protects important organs. |
+| Cold-blooded | cold-blooded; cold blooded | Science: animal groups | Cold-blooded animals depend on their surroundings to control body temperature. | A cold-blooded reptile warms itself on a rock. |
+| Amphibians | amphibians | Science: animal groups | Amphibians are animals such as frogs that can live in water and on land. | Many amphibians begin life in water as tadpoles. |
+| Metamorphosis | metamorphosis | Science: life cycles | Metamorphosis is a major change in body form as an animal grows. | A butterfly goes through metamorphosis before it can fly. |
+| Reptiles | reptiles | Science: animal groups | Reptiles are cold-blooded animals with dry scales, such as lizards and snakes. | Reptiles often lay eggs on land. |
+| Mammals | mammals | Science: animal groups | Mammals are warm-blooded animals that usually have hair or fur and feed their young milk. | Dolphins and bats are both mammals. |
+| Arachnid | arachnid | Science: animal groups | An arachnid is an animal with eight legs, such as a spider or scorpion. | A spider is an arachnid, not an insect. |
+| Mollusc | mollusc | Science: animal groups | A mollusc is a soft-bodied animal, often with a shell. | A snail is a mollusc with a coiled shell. |
+| Botanist | botanist | Science: plants | A botanist is a scientist who studies plants. | The botanist examined the leaves carefully. |
+| Flowering | flowering | Science: plants | Flowering means producing flowers. | The flowering plant attracted several bees. |
+
 ## Outstanding Questions
 
 ### Resolve Before Planning
-- [Affects R14, R15][User decision] What is the initial Extra word set, including accepted spellings, sentence prompts, explanations, and any grouping/source notes?
+- None.
 
 ### Deferred to Planning
 - [Affects R1, R4][Technical] Identify every current "All" spelling label and decide whether each instance should become "Core", "Statutory", or another short product label.
-- [Affects R9, R13][Technical] Confirm the Vellhorn asset paths, Codex ordering, home meadow behaviour, and celebration rendering work across desktop and mobile.
+- [Affects R9, R13][Technical] Confirm the Vellhorn asset paths, tracked asset status, Codex ordering, home meadow behaviour, and celebration rendering work across desktop and mobile.
 - [Affects R14, R16][Technical] Determine the smallest content-model extension that preserves draft/publish safety without turning spelling content into a general CMS.
+- [Affects R17, R18][Technical] Confirm the migration and import/export behaviour for existing learners, local review profiles, and restored legacy progress.
+- [Affects R15][Needs review] Validate the AI-drafted Extra explanations and sentence prompts before publishing them as learner-facing content.
 
 ## Next Steps
 
-→ Resume `ce:brainstorm` to capture the initial Extra word content before structured implementation planning.
+→ `/prompts:ce-plan` for structured implementation planning.
