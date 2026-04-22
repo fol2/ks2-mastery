@@ -141,8 +141,8 @@ const VALID_WORD_DRILL_RESULTS = new Set(['correct', 'incorrect']);
 
 function normaliseTransientUi(rawValue) {
   const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
-  /* Legacy word-bank status filter — retained only to normalise older persisted
-     snapshots. The current word bank filters by category and search only. */
+  /* Word-bank status filter — chips use v1 labels (unseen/weak) while the
+     renderer maps them to production word status values. */
   const rawFilter = typeof raw.spellingAnalyticsStatusFilter === 'string'
     ? raw.spellingAnalyticsStatusFilter
     : 'all';
