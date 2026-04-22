@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, rm, copyFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -18,9 +18,12 @@ const webpQuality = '88';
 //   color:        sample the top-left pixel and make every similar-coloured
 //                 pixel transparent. Also clears hollow/enclosed bg regions,
 //                 but may eat into the character if its palette overlaps the bg.
+//   passthrough:  source PNG already has an alpha channel. Skip transparency
+//                 processing, just resize + encode webp.
 const MODES = {
   connectivity: { fuzz: '8%' },
-  color: { fuzz: '10%' },
+  color: { fuzz: '32%' },
+  passthrough: { fuzz: null },
 };
 const DEFAULT_MODE = 'connectivity';
 
@@ -93,8 +96,8 @@ async function imageDimensions(filePath) {
   return { width, height };
 }
 
-async function sampleCornerColor(filePath) {
-  const { stdout } = await run('magick', [filePath, '-format', '%[pixel:p{10,10}]', 'info:']);
+async function samplePixel(filePath, x, y) {
+  const { stdout } = await run('magick', [filePath, '-format', `%[pixel:p{${x},${y}}]`, 'info:']);
   return stdout.trim();
 }
 
@@ -117,17 +120,42 @@ async function makeTransparentConnectivity(sourcePath, targetPath) {
 }
 
 async function makeTransparentColor(sourcePath, targetPath) {
-  const bg = await sampleCornerColor(sourcePath);
+  // Multi-pass: sample interior (clean bg) + all four corners (edge/compression
+  // drift can differ per corner). Dedupe identical colors so each unique shade
+  // gets one -transparent pass with moderate fuzz — safer than one wide fuzz
+  // that could eat the character.
+  const { width, height } = await imageDimensions(sourcePath);
+  const maxX = width - 1;
+  const maxY = height - 1;
+  const samplePoints = [
+    [10, 10],        // interior
+    [0, 0],          // top-left
+    [maxX, 0],       // top-right
+    [0, maxY],       // bottom-left
+    [maxX, maxY],    // bottom-right
+  ];
+  const colors = [];
+  for (const [x, y] of samplePoints) {
+    const color = await samplePixel(sourcePath, x, y);
+    if (!colors.includes(color)) colors.push(color);
+  }
+  const passArgs = colors.flatMap((c) => ['-fuzz', fuzz, '-transparent', c]);
   await run('magick', [
     sourcePath,
     '-alpha', 'set',
-    '-fuzz', fuzz,
-    '-transparent', bg,
+    ...passArgs,
     'PNG32:' + targetPath,
   ]);
 }
 
-const makeTransparentPng = mode === 'color' ? makeTransparentColor : makeTransparentConnectivity;
+async function makeTransparentPassthrough(sourcePath, targetPath) {
+  await copyFile(sourcePath, targetPath);
+}
+
+const makeTransparentPng =
+  mode === 'color' ? makeTransparentColor
+  : mode === 'passthrough' ? makeTransparentPassthrough
+  : makeTransparentConnectivity;
 
 async function writeWebp(sourcePath, targetPath, size, scratchDir) {
   const resizedPath = path.join(scratchDir, `${path.basename(targetPath, '.webp')}.${size}.png`);
