@@ -4472,11 +4472,13 @@ textarea:focus-visible {
 
 /* ---------- Word bank (analytics tab) ---------- */
 .wb-card {
-  background: var(--panel);
-  border: 1px solid var(--line);
+  background: color-mix(in oklab, var(--panel) 80%, transparent);
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
+  border: 1px solid color-mix(in oklab, var(--line) 80%, transparent);
   border-radius: var(--radius-lg);
   padding: 28px 32px 24px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-warm);
   max-width: 920px;
   margin: 0 auto;
 }
@@ -4917,6 +4919,12 @@ textarea:focus-visible {
 .wb-card-compact .stat-grid {
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   gap: 8px;
+}
+.wb-card .stat {
+  background: color-mix(in oklab, var(--panel-soft) 72%, transparent);
+  backdrop-filter: blur(6px) saturate(1.04);
+  -webkit-backdrop-filter: blur(6px) saturate(1.04);
+  border-color: color-mix(in oklab, var(--line) 72%, transparent);
 }
 
 /* ---------- WordDetailModal ---------- */
