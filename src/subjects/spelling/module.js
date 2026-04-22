@@ -1019,7 +1019,7 @@ function renderWordDetailModal({ word, mode = 'explain', typed = '', result = nu
      a fully interactive replay affordance tied to the same replay handler. */
   const speaker = safeMode === 'drill'
     ? `<span class="wb-modal-speaker muted" aria-hidden="true">${ICON_SPEAKER}</span>`
-    : `<button type="button" class="wb-modal-speaker" data-action="spelling-word-bank-drill-replay" data-slug="${escapeHtml(slug)}" aria-label="Replay the word">${ICON_SPEAKER}</button>`;
+    : `<button type="button" class="wb-modal-speaker" data-action="spelling-word-bank-word-replay" data-slug="${escapeHtml(slug)}" aria-label="Replay the word">${ICON_SPEAKER}</button>`;
   const heading = safeMode === 'drill'
     ? `<h2 id="wb-modal-word" class="wb-modal-word wb-modal-word-prompt">Listen, then spell the missing word.</h2>`
     : `<h2 id="wb-modal-word" class="wb-modal-word">${escapeHtml(word.word)}</h2>`;
@@ -1462,6 +1462,18 @@ export const spellingModule = {
           spellingWordBankDrillResult: null,
         },
       }));
+      return true;
+    }
+
+    if (action === 'spelling-word-bank-word-replay') {
+      const slug = data.slug || appState?.transientUi?.spellingWordDetailSlug || '';
+      if (!slug) return true;
+      const word = findWordBankEntry(service.getAnalyticsSnapshot(learnerId), slug);
+      if (!word) return true;
+      tts.speak({
+        word: word.word,
+        wordOnly: true,
+      });
       return true;
     }
 

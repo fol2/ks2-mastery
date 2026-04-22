@@ -7,6 +7,16 @@ export function buildDictationTranscript({ word, sentence } = {}) {
     : `The word is ${spokenWord}. The word is ${spokenWord}.`;
 }
 
+export function buildWordOnlyTranscript({ word } = {}) {
+  return String(typeof word === 'string' ? word : word?.word || '').trim();
+}
+
+function buildSpeechTranscript({ word, sentence, wordOnly = false } = {}) {
+  return wordOnly
+    ? buildWordOnlyTranscript({ word })
+    : buildDictationTranscript({ word, sentence });
+}
+
 function shouldUseRemoteTts() {
   if (typeof window === 'undefined') return false;
   try {
@@ -79,10 +89,10 @@ export function createPlatformTts({
     emit({ type: 'end' });
   }
 
-  function speakWithBrowser({ word, sentence, slow = false } = {}) {
+  function speakWithBrowser({ word, sentence, slow = false, wordOnly = false } = {}) {
     if (!available()) return Promise.resolve(false);
     stopBrowserSpeech();
-    const transcript = buildDictationTranscript({ word, sentence });
+    const transcript = buildSpeechTranscript({ word, sentence, wordOnly });
     const utterance = new SpeechSynthesisUtterance(transcript);
     utterance.lang = 'en-GB';
     utterance.rate = clamp(slow ? 0.9 : 1.02, 0.8, 1.2);

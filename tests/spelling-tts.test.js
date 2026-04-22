@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildDictationTranscript, createPlatformTts } from '../src/subjects/spelling/tts.js';
+import {
+  buildDictationTranscript,
+  buildWordOnlyTranscript,
+  createPlatformTts,
+} from '../src/subjects/spelling/tts.js';
 
 test('dictation transcript matches the spelling audio contract', () => {
   assert.equal(
@@ -10,6 +14,13 @@ test('dictation transcript matches the spelling audio contract', () => {
       sentence: 'The birds sang early in the day.',
     }),
     'The word is early. The birds sang early in the day. The word is early.',
+  );
+});
+
+test('word-only transcript reads vocabulary without the dictation script', () => {
+  assert.equal(
+    buildWordOnlyTranscript({ word: { word: 'possess' } }),
+    'possess',
   );
 });
 

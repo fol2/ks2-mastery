@@ -82,6 +82,7 @@ async function protectTts(env, request, session, now) {
 function normaliseTtsPayload(body) {
   const word = cleanText(typeof body?.word === 'string' ? body.word : body?.word?.word);
   const sentence = cleanText(body?.sentence);
+  const wordOnly = body?.wordOnly === true;
 
   if (!word) {
     throw new BadRequestError('A spelling word is required for dictation audio.', { code: 'tts_word_required' });
@@ -90,17 +91,22 @@ function normaliseTtsPayload(body) {
     throw new BadRequestError('Dictation audio request is too long.', { code: 'tts_input_too_long' });
   }
 
-  const transcript = sentence
+  let transcript = sentence
     ? `The word is ${word}. ${sentence} The word is ${word}.`
     : `The word is ${word}. The word is ${word}.`;
+  if (wordOnly) transcript = word;
 
   return {
     transcript,
     slow: Boolean(body?.slow),
+    wordOnly,
   };
 }
 
-function ttsInstructions(slow = false) {
+function ttsInstructions(slow = false, wordOnly = false) {
+  if (wordOnly) {
+    return 'Use natural British English pronunciation for a KS2 vocabulary preview. Read exactly the supplied word once and do not add extra words.';
+  }
   const pace = slow
     ? 'Speak slightly slower than normal, with clear pauses between the word and sentence.'
     : 'Speak at a calm classroom pace, with clear pauses between the word and sentence.';
@@ -142,7 +148,7 @@ export async function handleTextToSpeechRequest({
       model: config.model,
       voice: config.voice,
       input: payload.transcript,
-      instructions: ttsInstructions(payload.slow),
+      instructions: ttsInstructions(payload.slow, payload.wordOnly),
       response_format: config.responseFormat,
     }),
   });

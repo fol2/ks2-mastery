@@ -177,7 +177,13 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   assert.match(html, /What it means/);
   assert.match(html, /To possess something means to own it or have it/);
   assert.match(html, /Example sentence/);
+  assert.match(html, /data-action="spelling-word-bank-word-replay" data-slug="possess"/);
   assert.doesNotMatch(html, /wb-modal-section-label">Family/);
+  harness.dispatch('spelling-word-bank-word-replay', { slug: 'possess' });
+  assert.deepEqual(harness.tts.spoken.at(-1), {
+    word: 'possess',
+    wordOnly: true,
+  });
   harness.dispatch('spelling-word-detail-close');
 
   harness.dispatch('spelling-analytics-search', { value: '' });
