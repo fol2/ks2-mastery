@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
@@ -281,12 +282,24 @@ function assertMeadowSpacing(entries) {
   }
 }
 
-test('hero background rotation includes the new Scribe Downs c landscapes', async () => {
+test('hero background rotation includes the new Scribe Downs landscapes', async () => {
   const { REGION_BACKGROUND_URLS } = await import('../src/surfaces/home/data.js');
 
-  for (const index of [1, 2, 3, 4, 5, 6]) {
+  for (const prefix of ['c', 'd']) {
+    for (const index of [1, 2, 3]) {
+      const expectedUrl = `/assets/regions/the-scribe-downs/the-scribe-downs-bg-${prefix}${index}.1280.webp`;
+      assert.ok(REGION_BACKGROUND_URLS.includes(expectedUrl));
+    }
+  }
+});
+
+test('hero background rotation only references existing image assets', async () => {
+  const { REGION_BACKGROUND_URLS } = await import('../src/surfaces/home/data.js');
+
+  for (const url of REGION_BACKGROUND_URLS) {
     assert.ok(
-      REGION_BACKGROUND_URLS.includes(`/assets/regions/the-scribe-downs/the-scribe-downs-bg-c${index}.1280.webp`),
+      existsSync(new URL(`../${url.replace(/^\//, '')}`, import.meta.url)),
+      `${url} should exist`,
     );
   }
 });

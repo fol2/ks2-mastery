@@ -25,9 +25,9 @@ export const REGION_BACKGROUND_URLS = Object.freeze([
   '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c1.1280.webp',
   '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c2.1280.webp',
   '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c3.1280.webp',
-  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c4.1280.webp',
-  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c5.1280.webp',
-  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c6.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-d1.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-d2.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-d3.1280.webp',
 ]);
 
 const MEADOW_PERSPECTIVE = Object.freeze({
