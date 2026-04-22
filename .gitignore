@@ -16,3 +16,4 @@ backups/
 .env.*
 assets/*.png
 assets/**/*.png
+.gstack/

@@ -168,6 +168,9 @@ test('home meadow uses seeded random foot positions for eggs', async () => {
 
 test('home meadow scales mature monsters while preserving path-specific lanes', async () => {
   const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
+  const stageSamples = [0, 1, 2, 3, 4].map((stage) => buildMeadowMonsters([
+    { monster: { id: 'inklet', name: 'Inklet' }, progress: { caught: true, stage, branch: 'b1' } },
+  ], { seed: `codex-stage-${stage}` })[0]);
   const lowStage = buildMeadowMonsters([
     { monster: { id: 'inklet', name: 'Inklet' }, progress: { caught: true, stage: 1, branch: 'b1' } },
     { monster: { id: 'glimmerbug', name: 'Glimmerbug' }, progress: { caught: true, stage: 1, branch: 'b1' } },
@@ -179,6 +182,8 @@ test('home meadow scales mature monsters while preserving path-specific lanes', 
     { monster: { id: 'phaeton', name: 'Phaeton' }, progress: { caught: true, stage: 4, branch: 'b1' } },
   ]);
 
+  assert.deepEqual(stageSamples.map((entry) => entry.codexSize), [252, 364, 476, 588, 700]);
+  assert.deepEqual(stageSamples.map((entry) => entry.stageScale), [0.36, 0.52, 0.68, 0.84, 1]);
   for (const species of ['inklet', 'glimmerbug', 'phaeton']) {
     assert.ok(highStage.find((entry) => entry.species === species).size > lowStage.find((entry) => entry.species === species).size);
   }

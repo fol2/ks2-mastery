@@ -2709,13 +2709,13 @@ textarea:focus-visible {
   gap: 30px;
 }
 .codex-hero {
+  --codex-hero-height: 800px;
   --codex-feature-cap: 860px;
-  --codex-feature-foot-overflow: 104px;
-  --codex-feature-foot-pad: 30px;
+  --codex-feature-foot-bottom: 650px;
   --codex-feature-meta-inset: 52px;
   position: relative;
-  height: 800px;
-  min-height: 800px;
+  height: var(--codex-hero-height);
+  min-height: var(--codex-hero-height);
   overflow: visible;
   isolation: isolate;
   display: grid;
@@ -2863,12 +2863,12 @@ textarea:focus-visible {
   }
   .codex-feature {
     position: absolute;
-    inset: 0 0 calc(var(--codex-feature-foot-overflow) * -1);
+    inset: 0;
     width: 100%;
     height: auto;
     justify-self: auto;
     place-items: end center;
-    padding-bottom: var(--codex-feature-foot-pad);
+    padding-bottom: calc(var(--codex-hero-height) - var(--codex-feature-foot-bottom));
   }
   .codex-hero.stage-4 .codex-feature {
     width: auto;
@@ -2881,8 +2881,16 @@ textarea:focus-visible {
   .codex-feature .codex-creature-button.is-feature .codex-unknown {
     width: min(var(--codex-feature-size, 340px), calc(100vw - 96px), var(--codex-feature-cap, 860px));
   }
+  .codex-feature .codex-feature-orbit {
+    top: calc(
+      var(--codex-feature-foot-bottom)
+      - var(--codex-feature-size, 340px)
+      + var(--codex-feature-foot-shift, 0px)
+      + var(--codex-feature-halo-y, 113px)
+    );
+  }
   .codex-feature .codex-feature-meta {
-    bottom: calc(var(--codex-feature-foot-overflow) + var(--codex-feature-meta-inset));
+    bottom: var(--codex-feature-meta-inset);
   }
 }
 .codex-feature.locked img {

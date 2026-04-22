@@ -29,7 +29,8 @@ const MEADOW_PERSPECTIVE = Object.freeze({
   nearScale: 1.18,
 });
 
-const MEADOW_STAGE_SCALE = Object.freeze([1, 1.04, 1.16, 1.3, 1.48]);
+const MEADOW_CODEX_STAGE_SIZES = Object.freeze([252, 364, 476, 588, 700]);
+const MEADOW_CODEX_REFERENCE_SIZE = MEADOW_CODEX_STAGE_SIZES[4];
 const MEADOW_SPECIES_SCALE = Object.freeze({
   inklet: 1.02,
   glimmerbug: 0.94,
@@ -40,19 +41,19 @@ const MEADOW_RANDOM_ZONES = Object.freeze({
   eggOnly: Object.freeze({
     x: [25, 82],
     footY: [60, 82],
-    size: [58, 86],
+    size: [160, 220],
     lane: 'ground',
   }),
   eggMixed: Object.freeze({
     x: [24, 78],
     footY: [68, 84],
-    size: [52, 66],
+    size: [145, 184],
     lane: 'ground',
   }),
   walk: Object.freeze({
     x: [28, 78],
     footY: [72, 86],
-    size: [116, 142],
+    size: [172, 210],
     lane: 'ground',
     path: 'walk',
     dur: [22, 28],
@@ -62,7 +63,7 @@ const MEADOW_RANDOM_ZONES = Object.freeze({
   'fly-a': Object.freeze({
     x: [36, 86],
     footY: [50, 74],
-    size: [84, 112],
+    size: [124, 166],
     lane: 'air',
     path: 'fly-a',
     dur: [14, 19],
@@ -74,7 +75,7 @@ const MEADOW_RANDOM_ZONES = Object.freeze({
   'fly-b': Object.freeze({
     x: [30, 82],
     footY: [56, 80],
-    size: [88, 116],
+    size: [130, 172],
     lane: 'air',
     path: 'fly-b',
     dur: [17, 22],
@@ -471,6 +472,8 @@ function buildMeadowEntry({ id, monsterId, stage, variant, slot, path, size, ren
   const footY = slot.footY || slot.top || '70%';
   const footPct = percentageNumber(footY);
   const perspectiveScale = meadowPerspectiveScale(footPct);
+  const stageScale = meadowStageScale(stage);
+  const codexSize = meadowCodexSize(stage);
   const renderedSize = Math.round(size * perspectiveScale);
 
   return {
@@ -480,6 +483,8 @@ function buildMeadowEntry({ id, monsterId, stage, variant, slot, path, size, ren
     variant,
     size: renderedSize,
     baseSize: size,
+    codexSize,
+    stageScale,
     x,
     footY,
     footPct,
@@ -502,14 +507,22 @@ function buildMeadowEntry({ id, monsterId, stage, variant, slot, path, size, ren
 }
 
 function meadowMonsterSize(monsterId, stage, baseSize) {
-  const stageScale = MEADOW_STAGE_SCALE[stage] || MEADOW_STAGE_SCALE[1];
+  const stageScale = meadowStageScale(stage);
   const speciesScale = MEADOW_SPECIES_SCALE[monsterId] || 1;
   return Math.round(baseSize * stageScale * speciesScale);
 }
 
 function meadowEggSize(monsterId, baseSize) {
-  const speciesScale = MEADOW_SPECIES_SCALE[monsterId] || 1;
-  return Math.round(baseSize * speciesScale);
+  return meadowMonsterSize(monsterId, 0, baseSize);
+}
+
+function meadowCodexSize(stage) {
+  return MEADOW_CODEX_STAGE_SIZES[Math.max(0, Math.min(4, Number(stage) || 0))]
+    || MEADOW_CODEX_STAGE_SIZES[0];
+}
+
+function meadowStageScale(stage) {
+  return Number((meadowCodexSize(stage) / MEADOW_CODEX_REFERENCE_SIZE).toFixed(3));
 }
 
 function meadowPerspectiveScale(footPct) {

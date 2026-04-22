@@ -1,8 +1,8 @@
 {
-  "pid": 95288,
-  "port": 30178,
-  "token": "825403cf-86ef-4af9-b4df-9ea6299df6bd",
-  "startedAt": "2026-04-22T10:25:22.456Z",
+  "pid": 40765,
+  "port": 57225,
+  "token": "39ab2ea6-c427-434d-9516-ce91d3deb1ce",
+  "startedAt": "2026-04-22T10:31:32.621Z",
   "serverPath": "/Users/jamesto/.claude/skills/gstack/browse/src/server.ts",
   "mode": "launched"
 }
