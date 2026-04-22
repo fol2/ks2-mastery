@@ -90,7 +90,8 @@ function restoreModalTrigger() {
     }
     if (!root) return;
     const escaped = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(slug) : slug.replace(/"/g, '\\"');
-    const row = root.querySelector(`.wb-row[data-slug="${escaped}"]`)
+    const row = root.querySelector(`.wb-word-pill[data-slug="${escaped}"]`)
+      || root.querySelector(`.wb-row[data-slug="${escaped}"]`)
       || root.querySelector(`[data-action="spelling-word-detail-open"][data-slug="${escaped}"]`);
     if (row && typeof row.focus === 'function') row.focus();
   });

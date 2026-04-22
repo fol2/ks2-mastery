@@ -156,15 +156,76 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   assert.match(html, /data-action="spelling-analytics-status-filter"\s+data-value="learning"/);
   assert.match(html, /class="wb-chip-label">Unseen</);
   assert.match(html, /class="wb-chip-label">Learning</);
-  // The word row opens the detail modal in explain mode; the inner arrow chip
-  // jumps to drill mode. Both buttons share the same data-action.
-  assert.match(html, /data-action="spelling-word-detail-open" data-slug="possess" data-value="explain"/);
-  assert.match(html, /data-action="spelling-word-detail-open" data-slug="possess" data-value="drill"/);
+  // Category filters sit beside the status filters and use the same transient
+  // UI store path, so combining year band + status + search never mutates the
+  // scheduled spelling session.
+  assert.match(html, /data-action="spelling-analytics-year-filter"\s+data-value="y3-4"/);
+  assert.match(html, /data-action="spelling-analytics-year-filter"\s+data-value="y5-6"/);
+  assert.match(html, /class="wb-chip-label">Years 3-4</);
+  assert.match(html, /class="wb-chip-label">Years 5-6</);
+  // Word-bank entries render as legacy-style colour pills. The tooltip carries
+  // the progress details, while clicking the pill opens the new drill modal.
+  assert.match(html, /class="wb-word-pill new"/);
+  assert.match(html, /data-action="spelling-word-detail-open"\s+data-slug="possess"\s+data-value="drill"/);
+  assert.match(html, /title="possess[^"]*Family: possess\(ion\)[^"]*Next due: Unseen[^"]*Click to drill"/);
+  assert.match(html, /Word status colour legend/);
   assert.match(html, />accident</);
-  assert.match(html, /wb-meta-label">Next due<\/span><span class="wb-meta-value">Unseen/);
   assert.doesNotMatch(html, /wb-meta-label">Family/);
 
   const todayDay = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+  harness.repositories.subjectStates.writeData(learnerId, 'spelling', {
+    progress: {
+      accommodate: {
+        stage: 1,
+        attempts: 1,
+        correct: 1,
+        wrong: 0,
+        dueDay: todayDay - 1,
+        lastDay: todayDay - 2,
+        lastResult: true,
+      },
+      accident: {
+        stage: 4,
+        attempts: 4,
+        correct: 4,
+        wrong: 0,
+        dueDay: todayDay + 14,
+        lastDay: todayDay,
+        lastResult: true,
+      },
+    },
+  });
+
+  harness.dispatch('spelling-analytics-year-filter', { value: 'y5-6' });
+  assert.equal(harness.store.getState().transientUi.spellingAnalyticsYearFilter, 'y5-6');
+  html = harness.render();
+  assert.match(html, />accommodate</);
+  assert.doesNotMatch(html, />accident</);
+  assert.match(html, /Years 5-6 selected — 104 of 235 words, 0 secure, 1 due today, 0 weak spots/);
+  assert.match(html, /Showing 104 of 104 Years 5-6 spellings/);
+
+  harness.dispatch('spelling-analytics-status-filter', { value: 'due' });
+  assert.equal(harness.store.getState().transientUi.spellingAnalyticsStatusFilter, 'due');
+  html = harness.render();
+  assert.match(html, />accommodate</);
+  assert.doesNotMatch(html, />accident</);
+  assert.match(html, /Showing 1 of 104 Years 5-6 spellings/);
+
+  harness.dispatch('spelling-analytics-year-filter', { value: 'y3-4' });
+  html = harness.render();
+  assert.match(html, /No words match your filters/);
+  assert.doesNotMatch(html, />accommodate</);
+  assert.doesNotMatch(html, />accident</);
+
+  harness.dispatch('spelling-analytics-status-filter', { value: 'secure' });
+  html = harness.render();
+  assert.match(html, />accident</);
+  assert.doesNotMatch(html, />accommodate</);
+  assert.match(html, /Showing 1 of 109 Years 3-4 spellings/);
+
+  harness.dispatch('spelling-analytics-year-filter', { value: 'all' });
+  harness.dispatch('spelling-analytics-status-filter', { value: 'all' });
+
   harness.repositories.subjectStates.writeData(learnerId, 'spelling', {
     progress: {
       possess: {
@@ -184,7 +245,7 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   assert.equal(harness.store.getState().subjectUi.spelling.analyticsWordSearch, undefined);
   html = harness.render();
   assert.match(html, />possess</);
-  assert.match(html, /wb-meta-label">Next due<\/span><span class="wb-meta-value">In 3 days/);
+  assert.match(html, /title="possess[^"]*Next due: In 3 days[^"]*Click to drill"/);
   assert.doesNotMatch(html, />accident</);
 
   harness.dispatch('spelling-word-detail-open', { slug: 'possess', value: 'explain' });
@@ -208,7 +269,8 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   harness.dispatch('spelling-analytics-search', { value: 'mollusc' });
   html = harness.render();
   assert.match(html, />mollusc</);
-  assert.match(html, /class="wb-pool extra">Extra<\/span>/);
+  assert.match(html, /title="mollusc[^"]*Extra[^"]*Click to drill"/);
+  assert.match(html, /Showing 1 of 235 tracked spellings/);
   assert.doesNotMatch(html, />accident</);
 
   harness.dispatch('spelling-word-detail-open', { slug: 'mollusc', value: 'explain' });

@@ -129,6 +129,11 @@ const VALID_SPELLING_WORD_BANK_FILTERS = new Set([
   'secure',
   'unseen',
 ]);
+const VALID_SPELLING_WORD_BANK_YEAR_FILTERS = new Set([
+  'all',
+  'y3-4',
+  'y5-6',
+]);
 
 const VALID_WORD_DETAIL_MODES = new Set(['explain', 'drill']);
 const VALID_WORD_DRILL_RESULTS = new Set(['correct', 'incorrect']);
@@ -141,6 +146,9 @@ function normaliseTransientUi(rawValue) {
      snapshot never traps the learner on an empty view. */
   const rawFilter = typeof raw.spellingAnalyticsStatusFilter === 'string'
     ? raw.spellingAnalyticsStatusFilter
+    : 'all';
+  const rawYearFilter = typeof raw.spellingAnalyticsYearFilter === 'string'
+    ? raw.spellingAnalyticsYearFilter
     : 'all';
   /* Word detail modal state — `slug` is the single source of truth for whether
      the modal is open; `mode` toggles between explain/drill inside the modal;
@@ -157,6 +165,7 @@ function normaliseTransientUi(rawValue) {
       ? raw.spellingAnalyticsWordSearch.slice(0, 80)
       : '',
     spellingAnalyticsStatusFilter: VALID_SPELLING_WORD_BANK_FILTERS.has(rawFilter) ? rawFilter : 'all',
+    spellingAnalyticsYearFilter: VALID_SPELLING_WORD_BANK_YEAR_FILTERS.has(rawYearFilter) ? rawYearFilter : 'all',
     spellingWordDetailSlug: typeof raw.spellingWordDetailSlug === 'string'
       ? raw.spellingWordDetailSlug.slice(0, 120)
       : '',
