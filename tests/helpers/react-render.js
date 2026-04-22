@@ -209,6 +209,56 @@ export function renderSubjectRouteFixture({ subject = 'placeholder' } = {}) {
   `);
 }
 
+export function renderSpellingSurfaceFixture({ phase = 'setup' } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { SubjectRoute } from ${JSON.stringify(absoluteSpecifier('src/surfaces/subject/SubjectRoute.jsx'))};
+    import { createAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-app-controller.js'))};
+    import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
+
+    installMemoryStorage();
+    const controller = createAppController();
+    const selectedPhase = ${JSON.stringify(phase)};
+    const learnerId = controller.store.getState().learners.selectedId;
+    controller.dispatch('open-subject', { subjectId: 'spelling' });
+    if (selectedPhase === 'session' || selectedPhase === 'summary') {
+      controller.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+      controller.dispatch('spelling-start');
+    }
+    if (selectedPhase === 'summary') {
+      while (controller.store.getState().subjectUi.spelling.phase === 'session') {
+        const ui = controller.store.getState().subjectUi.spelling;
+        const formData = new FormData();
+        formData.set('typed', ui.session.currentCard.word.word);
+        controller.dispatch('spelling-submit-form', { formData });
+        if (
+          controller.store.getState().subjectUi.spelling.phase === 'session'
+          && controller.store.getState().subjectUi.spelling.awaitingAdvance
+        ) {
+          controller.dispatch('spelling-continue');
+        }
+      }
+    }
+    if (selectedPhase === 'word-bank' || selectedPhase === 'modal') {
+      controller.dispatch('spelling-open-word-bank');
+    }
+    if (selectedPhase === 'modal') {
+      controller.dispatch('spelling-word-detail-open', { slug: 'possess', value: 'drill' });
+    }
+    const appState = controller.store.getState();
+    const context = controller.contextFor('spelling');
+    const actions = {
+      dispatch(action, data) { controller.dispatch(action, data); },
+      navigateHome() { controller.dispatch('navigate-home'); },
+      openParentHub() { controller.dispatch('open-parent-hub'); },
+      openAdminHub() { controller.dispatch('open-admin-hub'); },
+    };
+    const html = renderToStaticMarkup(<SubjectRoute appState={appState} context={context} actions={actions} />);
+    console.log(html);
+  `);
+}
+
 export function renderAppFixture({ route = 'dashboard' } = {}) {
   return renderFixture(`
     import React from 'react';

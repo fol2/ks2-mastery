@@ -2,6 +2,11 @@ import React from 'react';
 import { SubjectBreadcrumb } from '../shell/SubjectBreadcrumb.jsx';
 import { SubjectRouteContext } from './SubjectRouteContext.js';
 import { SubjectRuntimeFallback } from './SubjectRuntimeFallback.jsx';
+import { SpellingPracticeSurface } from '../../subjects/spelling/components/SpellingPracticeSurface.jsx';
+
+const REACT_SUBJECT_COMPONENTS = Object.freeze({
+  spelling: SpellingPracticeSurface,
+});
 
 function selectedLearner(appState) {
   const learnerId = appState?.learners?.selectedId || '';
@@ -97,8 +102,8 @@ function renderPracticeNode({ subject, routeContext, actions, activeTab, runtime
     }
   }
 
-  if (typeof subject.PracticeComponent === 'function') {
-    const PracticeComponent = subject.PracticeComponent;
+  const PracticeComponent = subject.PracticeComponent || REACT_SUBJECT_COMPONENTS[subject.id];
+  if (typeof PracticeComponent === 'function') {
     return (
       <SubjectRenderBoundary
         subject={subject}

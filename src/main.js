@@ -1499,6 +1499,7 @@ function extractActionData(target) {
 }
 
 root.addEventListener('click', (event) => {
+  if (event.__ks2ReactHandled) return;
   /* Scrim-click closes the modal. The backdrop is a passive <div> (so
      screen readers don't enumerate a spurious button inside the dialog),
      which means the raw click doesn't carry a data-action. We synthesise
@@ -1534,6 +1535,7 @@ root.addEventListener('click', (event) => {
 });
 
 root.addEventListener('change', (event) => {
+  if (event.__ks2ReactHandled) return;
   const fileInput = event.target.closest('#platform-import-file');
   if (fileInput) {
     handleImportFileChange(fileInput);
@@ -1555,6 +1557,7 @@ root.addEventListener('change', (event) => {
 });
 
 function dispatchTextInputAction(event) {
+  if (event.__ks2ReactHandled) return false;
   const target = event.target.closest('[data-action]');
   if (!target) return false;
   const action = target.dataset.action;
@@ -1574,6 +1577,7 @@ root.addEventListener('search', (event) => {
 }, true);
 
 root.addEventListener('submit', (event) => {
+  if (event.__ks2ReactHandled) return;
   const form = event.target.closest('form[data-action]');
   if (!form) return;
   event.preventDefault();
