@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process';
 
 const rootDir = process.cwd();
 const sourceDir = path.join(rootDir, 'assets', 'monsters');
-const monsters = ['inklet', 'glimmerbug', 'phaeton'];
+const monsters = ['inklet', 'glimmerbug', 'phaeton', 'vellhorn'];
 const branches = ['b1', 'b2'];
 const stages = [0, 1, 2, 3, 4];
 const sizes = [320, 640, 1280];
