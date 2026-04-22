@@ -6,6 +6,7 @@ import { createLocalPlatformRepositories } from '../src/platform/core/repositori
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
 import { SPELLING_EVENT_TYPES } from '../src/subjects/spelling/events.js';
+import { WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
 import { rewardEventsFromSpellingEvents } from '../src/subjects/spelling/event-hooks.js';
 import { monsterSummaryFromSpellingAnalytics } from '../src/platform/game/monster-system.js';
 
@@ -55,6 +56,20 @@ function continueUntilSummary(service, learnerId, state, answer = 'possess') {
   return { state: current, events };
 }
 
+function sessionWords(session) {
+  return (session?.uniqueWords || []).map((slug) => WORD_BY_SLUG[slug]).filter(Boolean);
+}
+
+function completeSingleWordRoundWithAnswer(service, learnerId, slug, answer = slug) {
+  const started = service.startSession(learnerId, {
+    mode: 'single',
+    words: [slug],
+    yearFilter: 'all',
+    length: 1,
+  }).state;
+  return continueUntilSummary(service, learnerId, started, answer);
+}
+
 test('starts a spelling session with an explicit subject-state contract', () => {
   const { service } = makeService();
   const transition = service.startSession('learner-a', { mode: 'smart', yearFilter: 'all', length: 5 });
@@ -78,6 +93,114 @@ test('injected randomness makes smart-review session selection reproducible', ()
   assert.deepEqual(a.uniqueWords, b.uniqueWords);
   assert.equal(a.currentCard.slug, b.currentCard.slug);
   assert.equal(a.id, b.id);
+});
+
+test('Smart Review can be scoped to the Extra spelling pool', () => {
+  const { service } = makeService({ random: makeSeededRandom(7) });
+  const transition = service.startSession('learner-a', {
+    mode: 'smart',
+    yearFilter: 'extra',
+    length: 6,
+  });
+
+  assert.equal(transition.ok, true);
+  const words = sessionWords(transition.state.session);
+  assert.equal(words.length, 6);
+  assert.ok(words.every((word) => word.spellingPool === 'extra'));
+  assert.ok(words.every((word) => word.year === 'extra'));
+});
+
+test('Trouble Drill stays inside Extra and falls back to Extra Smart Review when no Extra trouble exists', () => {
+  const { service } = makeService({ random: makeSeededRandom(9) });
+
+  let state = service.startSession('learner-a', {
+    mode: 'single',
+    words: ['mollusc'],
+    yearFilter: 'extra',
+    length: 1,
+  }).state;
+  state = service.submitAnswer('learner-a', state, 'mollusk').state;
+  assert.equal(state.session.phase, 'retry');
+  state = service.submitAnswer('learner-a', state, 'mollusk').state;
+  assert.equal(state.session.phase, 'correction');
+  state = service.submitAnswer('learner-a', state, 'mollusc').state;
+  assert.equal(state.awaitingAdvance, true);
+  state = service.continueSession('learner-a', state).state;
+  state = service.submitAnswer('learner-a', state, 'mollusc').state;
+  state = service.continueSession('learner-a', state).state;
+  assert.equal(state.phase, 'summary');
+
+  const trouble = service.startSession('learner-a', {
+    mode: 'trouble',
+    yearFilter: 'extra',
+    length: 5,
+  });
+  assert.equal(trouble.ok, true);
+  assert.deepEqual(trouble.state.session.uniqueWords, ['mollusc']);
+  assert.ok(sessionWords(trouble.state.session).every((word) => word.spellingPool === 'extra'));
+
+  const fallback = service.startSession('learner-b', {
+    mode: 'trouble',
+    yearFilter: 'extra',
+    length: 5,
+  });
+  assert.equal(fallback.ok, true);
+  assert.equal(fallback.state.feedback?.headline, 'Trouble drill fell back to Smart Review.');
+  assert.ok(sessionWords(fallback.state.session).every((word) => word.spellingPool === 'extra'));
+});
+
+test('SATs Test ignores Extra filters and stays on core statutory spellings', () => {
+  const { service } = makeService({ random: makeSeededRandom(13) });
+  const transition = service.startSession('learner-a', {
+    mode: 'test',
+    yearFilter: 'extra',
+    length: 20,
+  });
+
+  assert.equal(transition.ok, true);
+  assert.equal(transition.state.session.type, 'test');
+  assert.equal(transition.state.session.uniqueWords.length, 20);
+  assert.ok(sessionWords(transition.state.session).every((word) => word.spellingPool === 'core'));
+  assert.equal(sessionWords(transition.state.session).some((word) => word.year === 'extra'), false);
+});
+
+test('legacy all filter normalises to core stats and excludes Extra progress', () => {
+  const { service } = makeService();
+  service.savePrefs('learner-a', { yearFilter: 'all' });
+
+  assert.equal(service.getPrefs('learner-a').yearFilter, 'core');
+
+  completeSingleWordRoundWithAnswer(service, 'learner-a', 'mollusc', 'mollusc');
+
+  assert.deepEqual(service.getStats('learner-a', 'all'), service.getStats('learner-a', 'core'));
+  assert.equal(service.getStats('learner-a', 'all').attempts, 0);
+  assert.equal(service.getStats('learner-a', 'extra').attempts, 1);
+});
+
+test('Extra spelling accepts UK mollusc only', () => {
+  const { service } = makeService();
+  const accepted = service.startSession('learner-uk', {
+    mode: 'single',
+    words: ['mollusc'],
+    yearFilter: 'extra',
+    length: 1,
+  });
+  const acceptedSubmission = service.submitAnswer('learner-uk', accepted.state, 'mollusc');
+
+  assert.equal(acceptedSubmission.state.awaitingAdvance, true);
+  assert.notEqual(acceptedSubmission.state.session.phase, 'retry');
+
+  const rejected = service.startSession('learner-us', {
+    mode: 'single',
+    words: ['mollusc'],
+    yearFilter: 'extra',
+    length: 1,
+  });
+  const rejectedSubmission = service.submitAnswer('learner-us', rejected.state, 'mollusk');
+
+  assert.equal(rejectedSubmission.state.awaitingAdvance, false);
+  assert.equal(rejectedSubmission.state.session.phase, 'retry');
+  assert.equal(rejectedSubmission.state.feedback.kind, 'error');
 });
 
 test('service state survives JSON round-trips and resumes retry/correction flow', () => {
@@ -308,18 +431,29 @@ test('analytics snapshot is explicit and normalised', () => {
 
   assert.equal(snapshot.version, 1);
   assert.ok(Number.isFinite(snapshot.generatedAt));
-  assert.deepEqual(Object.keys(snapshot.pools), ['all', 'y34', 'y56']);
+  assert.deepEqual(Object.keys(snapshot.pools), ['all', 'core', 'y34', 'y56', 'extra']);
   assert.equal(snapshot.pools.all.total > 0, true);
+  assert.deepEqual(snapshot.pools.all, snapshot.pools.core);
   assert.equal(snapshot.pools.all.accuracy, null);
-  assert.deepEqual(snapshot.wordGroups.map((group) => group.key), ['y3-4', 'y5-6']);
+  assert.equal(snapshot.pools.extra.total, 22);
+  assert.deepEqual(snapshot.wordGroups.map((group) => group.key), ['y3-4', 'y5-6', 'extra']);
   assert.equal(snapshot.wordGroups[0].title, 'Years 3-4');
   const possess = snapshot.wordGroups.flatMap((group) => group.words).find((word) => word.slug === 'possess');
   assert.ok(possess);
   assert.equal(possess.word, 'possess');
   assert.equal(possess.family, 'possess(ion)');
+  assert.equal(possess.spellingPool, 'core');
   assert.equal(possess.status, 'new');
   assert.equal(possess.progress.stage, 0);
   assert.equal(possess.stageLabel, 'New / due today');
+
+  const extraGroup = snapshot.wordGroups.find((group) => group.key === 'extra');
+  const mollusc = extraGroup.words.find((word) => word.slug === 'mollusc');
+  assert.equal(extraGroup.spellingPool, 'extra');
+  assert.ok(mollusc);
+  assert.equal(mollusc.word, 'mollusc');
+  assert.equal(mollusc.spellingPool, 'extra');
+  assert.equal(mollusc.year, 'extra');
 });
 
 test('malformed persisted session state falls back safely instead of crashing', () => {

@@ -213,7 +213,7 @@ The important invariant is that `spellingPool` becomes the authority for core-vs
 - The generated runtime word count increases by exactly 22 compared with the statutory-only baseline.
 - The published release snapshot, not the draft alone, is what the spelling service consumes.
 
-- [ ] **Unit 3: Extend Spelling Filters, Sessions, And Analytics**
+- [x] **Unit 3: Extend Spelling Filters, Sessions, And Analytics**
 
 **Goal:** Make Smart Review, Trouble Drill, stats, and analytics understand `core`, `y3-4`, `y5-6`, and `extra`.
 

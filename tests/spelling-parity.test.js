@@ -9,6 +9,7 @@ import { createSpellingPersistence } from '../src/subjects/spelling/repository.j
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { resolveSpellingShortcut } from '../src/subjects/spelling/shortcuts.js';
 import { spellingAutoAdvanceDelay } from '../src/subjects/spelling/auto-advance.js';
+import { WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
 
 function typedFormData(value) {
   const formData = new FormData();
@@ -67,6 +68,22 @@ test('SATs spelling card keeps audio-only context and save-and-next wording', ()
   assert.match(html, /Save and next/);
   assert.match(html, /SATs mode uses audio only\. Press Replay to hear the dictation again\./);
   assert.match(html, /placeholder="Type the spelling and move on"/);
+});
+
+test('SATs setup ignores a persisted Extra filter and stays core-only', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.services.spelling.savePrefs(learnerId, { mode: 'test', yearFilter: 'extra' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-start');
+
+  const session = harness.store.getState().subjectUi.spelling.session;
+  assert.equal(session.type, 'test');
+  assert.equal(session.uniqueWords.length, 20);
+  assert.ok(session.uniqueWords.every((slug) => WORD_BY_SLUG[slug].spellingPool === 'core'));
+  assert.equal(session.uniqueWords.includes('mollusc'), false);
 });
 
 test('rendered spelling prompt stays aligned with the dictated sentence', () => {

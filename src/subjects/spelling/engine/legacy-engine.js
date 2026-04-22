@@ -38,31 +38,44 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
     //
     // Depends on window.KS2_WORDS, window.KS2_WORD_META, window.KS2_WORDS_ENRICHED,
     // window.KS2_ACCEPTED_ALTERNATIVES, window.KS2_SENTENCE_BANK, window.KS2_TTS.
-
+    
     (function () {
       // ----- constants (verbatim, legacy 788-791) -------------------------------
-
+    
       var DAY_MS = 24 * 60 * 60 * 1000;
       var STAGE_INTERVALS = [0, 1, 3, 7, 14, 30, 60];
       var SECURE_STAGE = 4;
       var MODES = Object.freeze({ SMART: "smart", TROUBLE: "trouble", TEST: "test", SINGLE: "single" });
-
+    
       // ----- word list (enriched) -----------------------------------------------
-
+    
       var WORDS = Array.isArray(window.KS2_WORDS_ENRICHED) ? window.KS2_WORDS_ENRICHED.slice() : [];
       var WORD_BY_SLUG = Object.create(null);
       for (var i = 0; i < WORDS.length; i++) WORD_BY_SLUG[WORDS[i].slug] = WORDS[i];
-
-      // Y3-4 vs Y5-6 pools for monster assignment (legacy tied monsters to year bands).
+    
+      function spellingPoolForWord(word) {
+        return word && word.spellingPool === "extra" ? "extra" : "core";
+      }
+    
+      function normaliseFilter(yearFilter) {
+        if (yearFilter === "extra") return "extra";
+        if (yearFilter === "y3-4") return "y3-4";
+        if (yearFilter === "y5-6") return "y5-6";
+        return "core";
+      }
+    
+      // Runtime pools drive filtering. The y3-4/y5-6 pools stay core-only.
       var POOLS = {
-        "y3-4": WORDS.filter(function (w) { return w.year === "3-4"; }),
-        "y5-6": WORDS.filter(function (w) { return w.year === "5-6"; }),
+        core: WORDS.filter(function (w) { return spellingPoolForWord(w) === "core"; }),
+        "y3-4": WORDS.filter(function (w) { return spellingPoolForWord(w) === "core" && w.year === "3-4"; }),
+        "y5-6": WORDS.filter(function (w) { return spellingPoolForWord(w) === "core" && w.year === "5-6"; }),
+        extra: WORDS.filter(function (w) { return spellingPoolForWord(w) === "extra"; }),
       };
-
+    
       // ----- helpers ------------------------------------------------------------
-
+    
       function todayDay() { return Math.floor(Date.now() / DAY_MS); }
-
+    
       function defaultProgress() {
         // Legacy 941-951.
         return {
@@ -75,17 +88,17 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           lastResult: null,
         };
       }
-
+    
       function normalize(value) { return String(value || "").trim().toLowerCase(); }
-
+    
       function escapeRegExp(value) { return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
-
+    
       function buildCloze(sentence, word) {
         var blanks = "_".repeat(Math.max(word.length, 5));
         var pattern = new RegExp("\\b" + escapeRegExp(word) + "\\b", "i");
         return String(sentence || "").replace(pattern, blanks);
       }
-
+    
       function shuffleInPlace(array) {
         for (var i = array.length - 1; i > 0; i--) {
           var j = Math.floor(Math.random() * (i + 1));
@@ -93,20 +106,20 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         }
         return array;
       }
-
+    
       function stageLabel(stage) {
         if (stage >= SECURE_STAGE) return "Secure";
         if (stage <= 0) return "New / due today";
         var interval = STAGE_INTERVALS[Math.min(stage, STAGE_INTERVALS.length - 1)];
         return "Next review in " + interval + " day" + (interval === 1 ? "" : "s");
       }
-
+    
       // ----- progress persistence (profile-scoped per plan) ---------------------
-
+    
       var PROGRESS_KEY_PREFIX = "ks2-spell-progress-";
-
+    
       function progressKey(profileId) { return PROGRESS_KEY_PREFIX + (profileId || "default"); }
-
+    
       function loadProgress(profileId) {
         try {
           var raw = localStorage.getItem(progressKey(profileId));
@@ -130,33 +143,36 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           return parsed;
         } catch (err) { return {}; }
       }
-
+    
       function saveProgress(profileId, store) {
         try { localStorage.setItem(progressKey(profileId), JSON.stringify(store)); }
         catch (err) { /* quota/private-mode; ignore */ }
       }
-
+    
       function getProgress(profileId, slug) {
         var store = loadProgress(profileId);
         var existing = store[slug];
         return Object.assign({}, defaultProgress(), existing || {});
       }
-
+    
       function setProgress(profileId, slug, record) {
         var store = loadProgress(profileId);
         store[slug] = Object.assign({}, defaultProgress(), record);
         saveProgress(profileId, store);
       }
-
+    
       function progressFor(profileId) { return loadProgress(profileId); }
-
+    
       // ----- selection (verbatim legacy 2119-2279) ------------------------------
-
+    
       function filteredWords(yearFilter) {
-        var value = yearFilter === "y3-4" ? "3-4" : yearFilter === "y5-6" ? "5-6" : "all";
-        return WORDS.filter(function (word) { return value === "all" ? true : word.year === value; });
+        var value = normaliseFilter(yearFilter);
+        if (value === "y3-4") return POOLS["y3-4"].slice();
+        if (value === "y5-6") return POOLS["y5-6"].slice();
+        if (value === "extra") return POOLS.extra.slice();
+        return POOLS.core.slice();
       }
-
+    
       function scoreForSmart(profileId, word) {
         var p = getProgress(profileId, word.slug);
         var today = todayDay();
@@ -170,7 +186,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         score += Math.random();
         return score;
       }
-
+    
       function scoreForTrouble(profileId, word) {
         var p = getProgress(profileId, word.slug);
         var total = p.correct + p.wrong;
@@ -182,7 +198,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         score += Math.random();
         return score;
       }
-
+    
       function smartBucket(profileId, word) {
         var p = getProgress(profileId, word.slug);
         var today = todayDay();
@@ -193,7 +209,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         if (p.stage < SECURE_STAGE) return "growing";
         return "secure";
       }
-
+    
       function weightedPick(items, weightFn) {
         if (!items.length) return null;
         var weights = items.map(function (item) { return Math.max(0, Number(weightFn(item)) || 0); });
@@ -206,7 +222,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         }
         return items[items.length - 1];
       }
-
+    
       function selectionWeight(word, selected, baseScore) {
         var weight = Math.max(0.4, baseScore);
         var last = selected[selected.length - 1];
@@ -219,7 +235,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         if (selected.length >= 4 && (yearCount / selected.length) > 0.75) weight *= 0.78;
         return weight;
       }
-
+    
       function chooseSmartWords(profileId, opts) {
         opts = opts || {};
         var available = filteredWords(opts.yearFilter).slice();
@@ -227,7 +243,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         var target = Math.min(length, available.length);
         var bucketWeights = { urgent: 7, fragile: 5, due: 4, new: 3, growing: 2, secure: 0.7 };
         var selected = [];
-
+    
         while (selected.length < target && available.length) {
           var bucketChoices = Object.keys(bucketWeights).map(function (name) {
             var baseWeight = bucketWeights[name];
@@ -237,7 +253,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
             var repeatPenalty = recentBuckets.filter(function (bucket) { return bucket === name; }).length >= 2 ? 0.5 : 1;
             return { name: name, words: words, weight: baseWeight * repeatPenalty };
           }).filter(Boolean);
-
+    
           var chosenBucket = weightedPick(bucketChoices, function (bucket) { return bucket.weight; });
           if (!chosenBucket) break;
           var chosenWord = weightedPick(chosenBucket.words, function (word) { return selectionWeight(word, selected, scoreForSmart(profileId, word)); });
@@ -248,7 +264,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         }
         return selected;
       }
-
+    
       function chooseTroubleWords(profileId, opts) {
         opts = opts || {};
         var today = todayDay();
@@ -256,11 +272,11 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           var p = getProgress(profileId, word.slug);
           return p.wrong > 0 || (p.attempts > 0 && p.dueDay <= today && p.stage < SECURE_STAGE);
         });
-
+    
         if (!candidates.length) {
           return { words: chooseSmartWords(profileId, opts), fallback: true };
         }
-
+    
         var length = typeof opts.length === "number" ? opts.length : Infinity;
         var target = Math.min(length, candidates.length);
         var available = candidates.slice();
@@ -274,16 +290,16 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         }
         return { words: selected, fallback: false };
       }
-
+    
       function chooseTestWords(profileId, opts) {
         opts = opts || {};
         var pool = shuffleInPlace(filteredWords(opts.yearFilter).slice());
         var length = typeof opts.length === "number" ? opts.length : 20;
         return pool.slice(0, Math.min(length, pool.length));
       }
-
+    
       // ----- sentence shuffling (verbatim legacy 2004-2068) ---------------------
-
+    
       function shuffledSentenceOrder(length, lastIndex) {
         var order = Array.from({ length: length }, function (_, idx) { return idx; });
         shuffleInPlace(order);
@@ -293,11 +309,11 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         }
         return order;
       }
-
+    
       function getOrCreateSentenceHistory(session, word) {
         var sentences = (word.sentences && word.sentences.length) ? word.sentences : [word.sentence].filter(Boolean);
         if (!session || !session.sentenceHistory || !sentences.length) return null;
-
+    
         var history = session.sentenceHistory[word.slug];
         if (!history || !Array.isArray(history.remaining) || !history.remaining.length) {
           var lastIndex = (history && Number.isInteger(history.lastIndex)) ? history.lastIndex : null;
@@ -309,7 +325,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         }
         return history;
       }
-
+    
       function choosePromptSentence(session, word) {
         var sentences = (word.sentences && word.sentences.length) ? word.sentences : [word.sentence].filter(Boolean);
         if (!sentences.length) return "";
@@ -324,7 +340,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         session.sentenceHistory[word.slug] = history;
         return sentences[nextIndex];
       }
-
+    
       function peekPromptSentenceForSlug(session, slug) {
         var word = WORD_BY_SLUG[slug];
         if (!word) return "";
@@ -336,25 +352,25 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         var nextIndex = history.remaining[0];
         return sentences[nextIndex] || sentences[0];
       }
-
+    
       // ----- session creation + queue management --------------------------------
-
+    
       function makeSessionId() {
         try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (err) {}
         return "sess-" + Date.now() + "-" + Math.random().toString(16).slice(2);
       }
-
+    
       function createSession(options) {
         options = options || {};
         var profileId = options.profileId || "default";
         var mode = options.mode || MODES.SMART;
-        var yearFilter = options.yearFilter || "all";
+        var yearFilter = mode === MODES.TEST ? "core" : normaliseFilter(options.yearFilter);
         var length = typeof options.length === "number" ? options.length : 20;
-
+    
         var selected = [];
         var actualMode = mode;
         var fallback = false;
-
+    
         if (Array.isArray(options.words) && options.words.length) {
           selected = options.words.slice();
           actualMode = options.mode || MODES.SINGLE;
@@ -368,11 +384,11 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         } else {
           selected = chooseSmartWords(profileId, { yearFilter: yearFilter, length: length });
         }
-
+    
         if (!selected.length) {
           return { ok: false, reason: "No words were available for that session.", session: null, fallback: fallback };
         }
-
+    
         var status = Object.create(null);
         if (actualMode !== MODES.TEST) {
           for (var k = 0; k < selected.length; k++) {
@@ -389,9 +405,9 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
             };
           }
         }
-
+    
         var practiceOnly = Boolean(options.practiceOnly && actualMode !== MODES.TEST);
-
+    
         var session = {
           id: makeSessionId(),
           type: actualMode === MODES.TEST ? "test" : "learning",
@@ -417,10 +433,10 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           lastYear: null,
           startedAt: Date.now(),
         };
-
+    
         return { ok: true, session: session, fallback: fallback };
       }
-
+    
       function candidateWeightForQueueSlug(session, profileId, slug, index) {
         var word = WORD_BY_SLUG[slug];
         var progress = getProgress(profileId, slug);
@@ -434,7 +450,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         if (session.lastYear && session.lastYear === word.year) weight *= 0.76;
         return Math.max(0.2, weight);
       }
-
+    
       function chooseNextQueueSlug(session, profileId) {
         if (!session || !session.queue.length) return null;
         var windowSize = Math.min(8, session.queue.length);
@@ -446,7 +462,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         session.queue.splice(picked.index, 1);
         return picked.slug;
       }
-
+    
       function enqueueLater(session, slug, gap) {
         if (!session) return;
         gap = typeof gap === "number" ? gap : 2;
@@ -462,7 +478,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         }
         session.queue.splice(Math.min(position, session.queue.length), 0, slug);
       }
-
+    
       function setCurrentPrompt(session, slug) {
         if (!session) return null;
         var word = WORD_BY_SLUG[slug];
@@ -478,7 +494,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         session.lastYear = word.year;
         return session.currentPrompt;
       }
-
+    
       // Mutates session: picks next queue slug, sets current prompt. Returns
       // { done: false, word, prompt } if a card is ready; or { done: true } if
       // the queue is exhausted. Only valid while phase === 'question' (the caller
@@ -491,7 +507,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           setCurrentPrompt(session, slug);
           return { done: false, slug: slug, word: WORD_BY_SLUG[slug], prompt: session.currentPrompt };
         }
-
+    
         while (session.queue.length) {
           var nextSlug = chooseNextQueueSlug(session, profileId);
           if (!nextSlug) break;
@@ -507,26 +523,26 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         }
         return { done: true };
       }
-
+    
       // ----- grading ------------------------------------------------------------
-
+    
       function gradeWord(word, typed) {
         var normalized = normalize(typed);
         var accepted = Array.isArray(word.accepted) ? word.accepted : [word.slug];
         var correct = accepted.indexOf(normalized) >= 0;
         return { correct: correct, typed: String(typed || ""), normalized: normalized };
       }
-
+    
       // Apply stage/dueDay shift when a learning-mode word concludes (done=true).
       // Returns { prevStage, newStage, justMastered, dueDay }.
       function applyLearningOutcome(profileId, slug, info) {
         if (info && info.applied) return null;
         var progress = getProgress(profileId, slug);
         var prevStage = progress.stage;
-
+    
         progress.attempts += 1;
         progress.lastDay = todayDay();
-
+    
         if (info && info.hadWrong) {
           progress.wrong += 1;
           progress.stage = Math.max(0, progress.stage - 1);
@@ -538,10 +554,10 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           progress.dueDay = todayDay() + STAGE_INTERVALS[progress.stage];
           progress.lastResult = "correct";
         }
-
+    
         setProgress(profileId, slug, progress);
         if (info) info.applied = true;
-
+    
         return {
           prevStage: prevStage,
           newStage: progress.stage,
@@ -549,7 +565,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           dueDay: progress.dueDay,
         };
       }
-
+    
       function applyTestOutcome(profileId, slug, correct) {
         var progress = getProgress(profileId, slug);
         var prevStage = progress.stage;
@@ -574,7 +590,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           dueDay: progress.dueDay,
         };
       }
-
+    
       // Resolve a submission in learning mode. Mutates session.phase, queue,
       // status, promptCount. Returns a structured feedback payload for the UI.
       //
@@ -586,10 +602,10 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         var info = session.status[word.slug];
         var typedRaw = String(typed == null ? "" : typed).trim();
         if (!typedRaw) return { empty: true };
-
+    
         var grade = gradeWord(word, typedRaw);
         var correct = grade.correct;
-
+    
         // ---- Correction phase -------------------------------------------------
         if (session.phase === "correction") {
           if (correct) {
@@ -619,10 +635,10 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
             nextAction: "retype",
           };
         }
-
+    
         session.promptCount += 1;
         info.attempts += 1;
-
+    
         // ---- Retry phase ------------------------------------------------------
         if (session.phase === "retry") {
           if (correct) {
@@ -655,7 +671,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
             nextAction: "retype",
           };
         }
-
+    
         // ---- Question phase ---------------------------------------------------
         if (correct) {
           info.successes += 1;
@@ -697,7 +713,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
             nextAction: "advance",
           };
         }
-
+    
         // Wrong in the question phase → transition into retry.
         info.hadWrong = true;
         info.successes = 0;
@@ -716,7 +732,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           nextAction: "retype",
         };
       }
-
+    
       // Legacy handleTestSubmit (2893-2909). Test mode is single-attempt,
       // no phases, results recorded straight into session.results.
       function submitTest(session, profileId, typed) {
@@ -734,7 +750,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           nextAction: "advance",
         };
       }
-
+    
       function skipCurrent(session) {
         // Legacy "Skip for now" pushes the word 5 positions ahead; no outcome
         // application because the user hasn't attempted it yet (preview.html 3177-3180).
@@ -745,9 +761,9 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         enqueueLater(session, slug, 5);
         return { nextAction: "advance" };
       }
-
+    
       // ----- summaries ----------------------------------------------------------
-
+    
       function learningSummary(session) {
         var entries = Object.keys(session.status).map(function (slug) { return [slug, session.status[slug]]; });
         var total = entries.length;
@@ -774,7 +790,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           elapsedMs: Date.now() - session.startedAt,
         };
       }
-
+    
       function testSummary(session) {
         var total = session.results.length;
         var correct = session.results.filter(function (r) { return r.correct; }).length;
@@ -798,14 +814,14 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           elapsedMs: Date.now() - session.startedAt,
         };
       }
-
+    
       function finalise(session) {
         if (!session) return null;
         return session.type === "test" ? testSummary(session) : learningSummary(session);
       }
-
+    
       // ----- aggregate stats ----------------------------------------------------
-
+    
       function lifetimeStats(profileId, yearFilter) {
         var words = filteredWords(yearFilter);
         var today = todayDay();
@@ -831,7 +847,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           accuracy: attempts ? Math.round((correct / attempts) * 100) : null,
         };
       }
-
+    
       function statusForWord(profileId, word) {
         var p = getProgress(profileId, word.slug);
         var total = p.correct + p.wrong;
@@ -841,7 +857,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         if (p.stage >= SECURE_STAGE) return "secure";
         return "learning";
       }
-
+    
       function countMastered(profileId, wordList) {
         var list = Array.isArray(wordList) ? wordList : WORDS;
         var count = 0;
@@ -852,9 +868,9 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         }
         return count;
       }
-
+    
       // ----- monster assignment (kept from mock, matches unified shell) ---------
-
+    
       function monsterForWord(wordOrSlug) {
         var slug = typeof wordOrSlug === "string" ? wordOrSlug : (wordOrSlug && wordOrSlug.slug);
         var meta = window.KS2_WORD_META || {};
@@ -862,24 +878,24 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         if (year === "5-6") return "glimmerbug";
         return "inklet";
       }
-
+    
       // ----- TTS passthrough ----------------------------------------------------
-
+    
       function speak(opts) {
         if (window.KS2_TTS && typeof window.KS2_TTS.speak === "function") {
           return window.KS2_TTS.speak(opts);
         }
         return Promise.resolve();
       }
-
+    
       function warmup(opts) {
         if (window.KS2_TTS && typeof window.KS2_TTS.warmup === "function") {
           window.KS2_TTS.warmup(opts);
         }
       }
-
+    
       // ----- public surface -----------------------------------------------------
-
+    
       window.SpellingEngine = {
         // constants
         STAGE_INTERVALS: STAGE_INTERVALS.slice(),
@@ -887,7 +903,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         MODES: MODES,
         POOLS: POOLS,
         DEFAULT_SET: WORDS.slice(),
-
+    
         // lookups
         wordBySlug: function (slug) { return WORD_BY_SLUG[slug] || null; },
         allWords: function () { return WORDS.slice(); },
@@ -895,7 +911,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         monsterForWord: monsterForWord,
         stageLabel: stageLabel,
         statusForWord: statusForWord,
-
+    
         // session lifecycle
         createSession: createSession,
         advanceCard: advanceCard,
@@ -904,10 +920,10 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         skipCurrent: skipCurrent,
         finalise: finalise,
         enqueueLater: enqueueLater,
-
+    
         // sentence helpers (for warmup peeking)
         peekPromptSentence: peekPromptSentenceForSlug,
-
+    
         // grading / progress
         grade: gradeWord,
         normalize: normalize,
@@ -916,16 +932,16 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         resetProgress: function (profileId) { saveProgress(profileId, {}); },
         lifetimeStats: lifetimeStats,
         countMastered: countMastered,
-
+    
         // TTS passthrough
         speak: speak,
         warmup: warmup,
-
+    
         // diagnostics (helpful in the browser console during dev)
         todayDay: todayDay,
       };
     })();
-
+    
     return window.SpellingEngine;
   } finally {
     // runtime randomness stays local to the injected Math facade above
