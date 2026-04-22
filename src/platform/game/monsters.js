@@ -27,7 +27,7 @@ export const MONSTERS = {
     secondary: '#E8C45A',
     pale: '#F6EED7',
     nameByStage: ['Stardrop Egg', 'Aetherwisp', 'Cometwing', 'Starquill Owl', 'Phaeton'],
-    masteredMax: 200,
+    masteredMax: 213,
   },
   vellhorn: {
     id: 'vellhorn',
@@ -46,6 +46,8 @@ export const MONSTERS_BY_SUBJECT = {
 };
 
 export const MONSTER_BRANCHES = Object.freeze(['b1', 'b2']);
+export const DIRECT_STAGE_THRESHOLDS = Object.freeze([1, 10, 30, 60, 100]);
+export const PHAETON_STAGE_THRESHOLDS = Object.freeze([3, 25, 95, 145, 213]);
 
 const DEFAULT_MONSTER_BRANCH = 'b1';
 const MONSTER_ASSET_SIZES = Object.freeze([320, 640, 1280]);
@@ -55,11 +57,12 @@ export function normaliseMonsterBranch(value, fallback = DEFAULT_MONSTER_BRANCH)
   return MONSTER_BRANCHES.includes(value) ? value : fallback;
 }
 
-export function stageFor(mastered) {
-  if (mastered >= 90) return 4;
-  if (mastered >= 60) return 3;
-  if (mastered >= 30) return 2;
-  if (mastered >= 10) return 1;
+export function stageFor(mastered, thresholds = DIRECT_STAGE_THRESHOLDS) {
+  const count = Number(mastered) || 0;
+  const stageThresholds = Array.isArray(thresholds) ? thresholds : DIRECT_STAGE_THRESHOLDS;
+  for (let stage = Math.min(4, stageThresholds.length - 1); stage >= 1; stage -= 1) {
+    if (count >= stageThresholds[stage]) return stage;
+  }
   return 0;
 }
 

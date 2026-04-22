@@ -2,10 +2,12 @@ import {
   CODEX_REFERENCE_STAGE_SIZES,
   CODEX_STAGE_SCALE,
 } from './codex-visual-scale.js';
+import {
+  DIRECT_STAGE_THRESHOLDS,
+  PHAETON_STAGE_THRESHOLDS,
+} from '../../platform/game/monsters.js';
 
 const MONSTER_VARIANTS = ['b1', 'b2'];
-const DIRECT_STAGE_THRESHOLDS = Object.freeze([1, 10, 30, 60, 90]);
-const PHAETON_STAGE_THRESHOLDS = Object.freeze([3, 25, 95, 145, 200]);
 const CODEX_POWER_RANK = Object.freeze({
   inklet: 1,
   glimmerbug: 2,
@@ -593,7 +595,7 @@ export function buildSubjectCards(subjects = [], dashboardStats = {}) {
 export function buildCodexEntries(summary = []) {
   return summary.map(({ monster, progress }) => {
     const mastered = Math.max(0, Number(progress?.mastered) || 0);
-    const max = Math.max(1, Number(monster?.masteredMax) || (monster?.id === 'phaeton' ? 200 : 100));
+    const max = Math.max(1, Number(monster?.masteredMax) || (monster?.id === 'phaeton' ? 213 : 100));
     const stage = Math.max(0, Math.min(4, Number(progress?.stage) || 0));
     const caught = Boolean(progress?.caught);
     const displayState = !caught ? 'fresh' : stage === 0 ? 'egg' : 'monster';

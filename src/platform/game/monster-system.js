@@ -4,6 +4,7 @@ import {
   MONSTERS,
   MONSTERS_BY_SUBJECT,
   normaliseMonsterBranch,
+  PHAETON_STAGE_THRESHOLDS,
   stageFor,
 } from './monsters.js';
 
@@ -142,14 +143,9 @@ export function progressForMonster(state, monsterId) {
 export function derivePhaeton(state) {
   const combined = PHAETON_SOURCE_MONSTER_IDS
     .reduce((sum, monsterId) => sum + countMastered(state, monsterId), 0);
-  let stage = 0;
-  if (combined >= 200) stage = 4;
-  else if (combined >= 145) stage = 3;
-  else if (combined >= 95) stage = 2;
-  else if (combined >= 25) stage = 1;
   return {
     mastered: combined,
-    stage,
+    stage: stageFor(combined, PHAETON_STAGE_THRESHOLDS),
     level: Math.min(10, Math.floor(combined / 20)),
     caught: combined >= 3,
     branch: branchForMonster(state, 'phaeton'),

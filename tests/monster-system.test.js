@@ -36,7 +36,7 @@ function makeGameStateRepository(initialState = {}) {
   };
 }
 
-test('direct spelling monsters evolve at 10, 30, 60 and 90 secure words', () => {
+test('direct spelling monsters evolve at 10, 30, 60 and 100 secure words', () => {
   const cases = [
     [0, 0],
     [9, 0],
@@ -45,8 +45,9 @@ test('direct spelling monsters evolve at 10, 30, 60 and 90 secure words', () => 
     [30, 2],
     [59, 2],
     [60, 3],
-    [89, 3],
-    [90, 4],
+    [90, 3],
+    [99, 3],
+    [100, 4],
   ];
 
   for (const [secureWords, expectedStage] of cases) {
@@ -59,6 +60,17 @@ test('direct spelling monsters evolve at 10, 30, 60 and 90 secure words', () => 
 
     assert.equal(progressForMonster(state, 'inklet').stage, expectedStage, `${secureWords} secure words`);
   }
+});
+
+test('Vellhorn follows the direct spelling monster stage thresholds', () => {
+  const state = {
+    vellhorn: {
+      caught: true,
+      mastered: masteredWords(100, 'extra'),
+    },
+  };
+
+  assert.equal(progressForMonster(state, 'vellhorn').stage, 4);
 });
 
 test('direct spelling monsters unlock stage 0 from the first secure word', () => {
@@ -91,8 +103,9 @@ test('Phaeton evolves from combined secure spelling words without requiring both
     [{ inklet: 95, glimmerbug: 0 }, 2],
     [{ inklet: 144, glimmerbug: 0 }, 2],
     [{ inklet: 145, glimmerbug: 0 }, 3],
-    [{ inklet: 199, glimmerbug: 0 }, 3],
-    [{ inklet: 200, glimmerbug: 0 }, 4],
+    [{ inklet: 200, glimmerbug: 0 }, 3],
+    [{ inklet: 212, glimmerbug: 0 }, 3],
+    [{ inklet: 213, glimmerbug: 0 }, 4],
   ];
 
   for (const [{ inklet, glimmerbug }, expectedStage] of cases) {

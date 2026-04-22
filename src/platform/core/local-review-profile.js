@@ -13,7 +13,7 @@ const REVIEW_PROFILE_COUNTS = Object.freeze({
   1: { inklet: 13, glimmerbug: 13 },
   2: { inklet: 48, glimmerbug: 48 },
   3: { inklet: 73, glimmerbug: 73 },
-  4: { inklet: 100, glimmerbug: 100 },
+  4: { inklet: 109, glimmerbug: 104 },
 });
 
 const REVIEW_PROFILES = Object.freeze([

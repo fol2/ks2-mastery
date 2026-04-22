@@ -68,6 +68,9 @@ test('local codex staged review learners seed matching creature stages', () => {
         ['vellhorn', false, 0],
       ],
     );
+    if (Number(stage) === 4) {
+      assert.equal(summary.find((entry) => entry.monster.id === 'phaeton').progress.mastered, 213);
+    }
   }
 });
 
