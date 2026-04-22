@@ -28,6 +28,35 @@ const FEATURE_FOOT_PAD_BY_ASSET = Object.freeze({
 
 const FEATURE_FOOT_PAD_SOURCE_SIZE = 320;
 
+function codexVisualMetrics(entry) {
+  const maxSize = CODEX_FEATURE_MAX_SIZE_BY_SPECIES[entry.id] || 760;
+  const stage = entry.caught ? Math.max(0, Math.min(4, Number(entry.stage) || 0)) : 0;
+  const visualSize = Math.round(maxSize * (CODEX_STAGE_SCALE[stage] || CODEX_STAGE_SCALE[0]));
+  const footPad = entry.displayState === 'fresh'
+    ? 0
+    : FEATURE_FOOT_PAD_BY_ASSET[entry.id]?.[entry.branch]?.[stage] ?? 0;
+  const footShift = Math.round(visualSize * (footPad / FEATURE_FOOT_PAD_SOURCE_SIZE));
+  const rise = entry.displayState === 'monster'
+    ? Math.min(155, 52 + (entry.stage * 24) + (entry.id === 'phaeton' ? 20 : 0))
+    : 0;
+
+  return {
+    visualSize,
+    footShift,
+    rise,
+  };
+}
+
+function codexFeatureStyleFromMetrics({ visualSize, footShift, rise }) {
+  return {
+    '--codex-feature-size': `${visualSize}px`,
+    '--codex-feature-shadow-width': `${Math.min(640, Math.round(visualSize * 0.86))}px`,
+    '--codex-feature-shadow-y': `${Math.round(Math.max(120, visualSize * 0.34))}px`,
+    '--codex-feature-rise': `${rise}px`,
+    '--codex-feature-foot-shift': `${footShift}px`,
+  };
+}
+
 export function codexTotals(entries = []) {
   const directSecure = entries
     .filter((entry) => entry.id !== 'phaeton')
@@ -42,23 +71,22 @@ export function codexTotals(entries = []) {
 }
 
 export function codexFeatureStyle(entry) {
-  const maxSize = CODEX_FEATURE_MAX_SIZE_BY_SPECIES[entry.id] || 760;
-  const stage = entry.caught ? Math.max(0, Math.min(4, Number(entry.stage) || 0)) : 0;
-  const visualSize = Math.round(maxSize * (CODEX_STAGE_SCALE[stage] || CODEX_STAGE_SCALE[0]));
-  const footPad = entry.displayState === 'fresh'
-    ? 0
-    : FEATURE_FOOT_PAD_BY_ASSET[entry.id]?.[entry.branch]?.[stage] ?? 0;
-  const footShift = Math.round(visualSize * (footPad / FEATURE_FOOT_PAD_SOURCE_SIZE));
-  const rise = entry.displayState === 'monster'
-    ? Math.min(155, 52 + (entry.stage * 24) + (entry.id === 'phaeton' ? 20 : 0))
-    : 0;
+  return codexFeatureStyleFromMetrics(codexVisualMetrics(entry));
+}
+
+export function codexLightboxStyle(entry) {
+  const metrics = codexVisualMetrics(entry);
+  const { visualSize, footShift, rise } = metrics;
+  const isEgg = entry.displayState === 'egg';
 
   return {
-    '--codex-feature-size': `${visualSize}px`,
-    '--codex-feature-shadow-width': `${Math.min(640, Math.round(visualSize * 0.86))}px`,
-    '--codex-feature-shadow-y': `${Math.round(Math.max(120, visualSize * 0.34))}px`,
-    '--codex-feature-rise': `${rise}px`,
-    '--codex-feature-foot-shift': `${footShift}px`,
+    ...codexFeatureStyleFromMetrics(metrics),
+    '--codex-lightbox-visual-size': `${visualSize}px`,
+    '--codex-lightbox-orbit-size': `${Math.round(visualSize * (isEgg ? 1.34 : 1.24))}px`,
+    '--codex-lightbox-shadow-width': `${Math.min(520, Math.round(visualSize * (isEgg ? 0.82 : 0.78)))}px`,
+    '--codex-lightbox-shadow-height': `${Math.max(20, Math.min(52, Math.round(visualSize * 0.09)))}px`,
+    '--codex-lightbox-shadow-y': `${Math.round(Math.max(82, visualSize * 0.39) - footShift)}px`,
+    '--codex-lightbox-lift': `${Math.round(rise * 0.32)}px`,
   };
 }
 

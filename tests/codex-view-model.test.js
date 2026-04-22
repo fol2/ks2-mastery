@@ -5,6 +5,7 @@ import {
   CODEX_STAGES,
   codexEntryStateClassName,
   codexFeatureStyle,
+  codexLightboxStyle,
   codexStageDotClassName,
   codexTotals,
 } from '../src/surfaces/home/codex-view-model.js';
@@ -71,6 +72,32 @@ test('codex feature style grows with caught stage', () => {
     stage: 4,
     displayState: 'fresh',
   })['--codex-feature-rise'], '0px');
+});
+
+test('codex lightbox style binds the preview halo to the creature scale', () => {
+  const eggStyle = codexLightboxStyle({
+    id: 'phaeton',
+    branch: 'b1',
+    caught: true,
+    stage: 0,
+    displayState: 'egg',
+  });
+
+  assert.equal(eggStyle['--codex-lightbox-visual-size'], '252px');
+  assert.equal(eggStyle['--codex-lightbox-orbit-size'], '338px');
+  assert.equal(eggStyle['--codex-lightbox-shadow-width'], '207px');
+
+  const megaStyle = codexLightboxStyle({
+    id: 'phaeton',
+    branch: 'b1',
+    caught: true,
+    stage: 4,
+    displayState: 'monster',
+  });
+
+  assert.equal(megaStyle['--codex-lightbox-visual-size'], '700px');
+  assert.equal(megaStyle['--codex-lightbox-orbit-size'], '868px');
+  assert.ok(parseInt(megaStyle['--codex-lightbox-lift'], 10) > 0);
 });
 
 test('codex class helpers preserve stage and locked state semantics', () => {
