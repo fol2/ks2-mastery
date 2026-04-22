@@ -2,6 +2,7 @@ import { cloneSerialisable } from '../../../platform/core/repositories/helpers.j
 import { uid } from '../../../platform/core/utils.js';
 import { applyRepositoryAuthSession, createNoopRepositoryAuthSession } from '../../../platform/core/repositories/auth-session.js';
 import {
+  backfillSpellingWordExplanations,
   normaliseSpellingContentBundle,
 } from './model.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../data/content-data.js';
@@ -32,14 +33,14 @@ export function createLocalSpellingContentRepository({ storage } = {}) {
     try {
       const raw = resolvedStorage.getItem(STORAGE_KEY);
       if (!raw) return cloneSerialisable(SEEDED_SPELLING_CONTENT_BUNDLE);
-      return normaliseSpellingContentBundle(JSON.parse(raw));
+      return backfillSpellingWordExplanations(JSON.parse(raw), SEEDED_SPELLING_CONTENT_BUNDLE);
     } catch {
       return cloneSerialisable(SEEDED_SPELLING_CONTENT_BUNDLE);
     }
   }
 
   function write(rawBundle) {
-    const bundle = normaliseSpellingContentBundle(rawBundle);
+    const bundle = backfillSpellingWordExplanations(rawBundle, SEEDED_SPELLING_CONTENT_BUNDLE);
     resolvedStorage.setItem(STORAGE_KEY, JSON.stringify(bundle));
     return cloneSerialisable(bundle);
   }
@@ -85,7 +86,7 @@ export function createApiSpellingContentRepository({
 
   async function hydrate() {
     const payload = await request('/api/content/spelling', { method: 'GET' });
-    cachedBundle = normaliseSpellingContentBundle(payload?.content || SEEDED_SPELLING_CONTENT_BUNDLE);
+    cachedBundle = backfillSpellingWordExplanations(payload?.content || SEEDED_SPELLING_CONTENT_BUNDLE, SEEDED_SPELLING_CONTENT_BUNDLE);
     accountRevision = Math.max(0, Number(payload?.mutation?.accountRevision) || 0);
     return cloneSerialisable(cachedBundle);
   }
@@ -95,7 +96,7 @@ export function createApiSpellingContentRepository({
   }
 
   async function write(rawBundle) {
-    const bundle = normaliseSpellingContentBundle(rawBundle);
+    const bundle = backfillSpellingWordExplanations(rawBundle, SEEDED_SPELLING_CONTENT_BUNDLE);
     const requestId = uid('content');
     const payload = await request('/api/content/spelling', {
       method: 'PUT',
@@ -109,7 +110,7 @@ export function createApiSpellingContentRepository({
         },
       }),
     });
-    cachedBundle = normaliseSpellingContentBundle(payload?.content || bundle);
+    cachedBundle = backfillSpellingWordExplanations(payload?.content || bundle, SEEDED_SPELLING_CONTENT_BUNDLE);
     accountRevision = Math.max(
       accountRevision,
       Number(payload?.mutation?.accountRevision) || Number(payload?.mutation?.appliedRevision) || accountRevision,

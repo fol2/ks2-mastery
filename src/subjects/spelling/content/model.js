@@ -255,6 +255,53 @@ export function normaliseSpellingContentBundle(rawValue) {
   };
 }
 
+function collectWordExplanations(rawBundle) {
+  const bundle = normaliseSpellingContentBundle(rawBundle);
+  const bySlug = new Map();
+  const remember = (word) => {
+    if (!word?.slug || !hasUsableWordExplanation(word.explanation) || bySlug.has(word.slug)) return;
+    bySlug.set(word.slug, word.explanation);
+  };
+  bundle.draft.words.forEach(remember);
+  bundle.releases.forEach((release) => release.snapshot.words.forEach(remember));
+  return bySlug;
+}
+
+function backfillRuntimeSnapshotWordExplanations(snapshot, explanationsBySlug) {
+  const words = snapshot.words.map((word) => {
+    if (hasUsableWordExplanation(word.explanation)) return word;
+    const explanation = explanationsBySlug.get(word.slug) || '';
+    return explanation ? { ...word, explanation } : word;
+  });
+  return {
+    ...snapshot,
+    words,
+    wordBySlug: Object.fromEntries(words.map((word) => [word.slug, word])),
+  };
+}
+
+export function backfillSpellingWordExplanations(rawBundle, rawReferenceBundle) {
+  const bundle = normaliseSpellingContentBundle(rawBundle);
+  const explanationsBySlug = collectWordExplanations(rawReferenceBundle);
+  if (!explanationsBySlug.size) return bundle;
+
+  return normaliseSpellingContentBundle({
+    ...bundle,
+    draft: {
+      ...bundle.draft,
+      words: bundle.draft.words.map((word) => {
+        if (hasUsableWordExplanation(word.explanation)) return word;
+        const explanation = explanationsBySlug.get(word.slug) || '';
+        return explanation ? { ...word, explanation } : word;
+      }),
+    },
+    releases: bundle.releases.map((release) => ({
+      ...release,
+      snapshot: backfillRuntimeSnapshotWordExplanations(release.snapshot, explanationsBySlug),
+    })),
+  });
+}
+
 function issue(severity, code, path, message) {
   return { severity, code, path, message };
 }

@@ -79,6 +79,23 @@ function ensureLearner(repositories) {
   return learnerId;
 }
 
+function stripWordExplanations(bundle) {
+  const next = cloneSerialisable(bundle);
+  next.draft.words = next.draft.words.map(({ explanation: _explanation, ...word }) => word);
+  next.releases = next.releases.map((release) => {
+    const words = release.snapshot.words.map(({ explanation: _explanation, ...word }) => word);
+    return {
+      ...release,
+      snapshot: {
+        ...release.snapshot,
+        words,
+        wordBySlug: Object.fromEntries(words.map((word) => [word.slug, word])),
+      },
+    };
+  });
+  return next;
+}
+
 test('seeded spelling content validates and round-trips through the portable export format', () => {
   const storage = installMemoryStorage();
   const repository = createLocalSpellingContentRepository({ storage });
@@ -129,6 +146,31 @@ test('validation requires learner-facing word explanations in draft and publishe
   assert.equal(validation.errors.filter((issue) => issue.code === 'missing_word_explanation').length, 2);
   assert.ok(validation.errors.some((issue) => issue.path === 'draft.words[0].explanation'));
   assert.ok(validation.errors.some((issue) => issue.path === 'releases[0].snapshot.words[0].explanation'));
+});
+
+test('content service backfills seeded explanations for legacy stored bundles', () => {
+  let stored = stripWordExplanations(SEEDED_SPELLING_CONTENT_BUNDLE);
+  const repository = {
+    read() {
+      return cloneSerialisable(stored);
+    },
+    write(bundle) {
+      stored = cloneSerialisable(bundle);
+      return cloneSerialisable(stored);
+    },
+    clear() {
+      stored = cloneSerialisable(SEEDED_SPELLING_CONTENT_BUNDLE);
+      return cloneSerialisable(stored);
+    },
+  };
+  const content = createSpellingContentService({ repository });
+  const bundle = content.readBundle();
+  const draftWord = bundle.draft.words.find((word) => word.slug === 'possess');
+  const runtimeWord = content.getRuntimeSnapshot().wordBySlug.possess;
+
+  assert.equal(draftWord.explanation, 'To possess something means to own it or have it.');
+  assert.equal(runtimeWord.explanation, 'To possess something means to own it or have it.');
+  assert.equal(content.validate().ok, true);
 });
 
 test('runtime stays pinned to the published spelling release until a new draft is published', async () => {

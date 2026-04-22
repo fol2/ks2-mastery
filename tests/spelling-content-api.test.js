@@ -37,6 +37,23 @@ function learnerSnapshot(name = 'Ava') {
   };
 }
 
+function stripWordExplanations(bundle) {
+  const next = cloneSerialisable(bundle);
+  next.draft.words = next.draft.words.map(({ explanation: _explanation, ...word }) => word);
+  next.releases = next.releases.map((release) => {
+    const words = release.snapshot.words.map(({ explanation: _explanation, ...word }) => word);
+    return {
+      ...release,
+      snapshot: {
+        ...release.snapshot,
+        words,
+        wordBySlug: Object.fromEntries(words.map((word) => [word.slug, word])),
+      },
+    };
+  });
+  return next;
+}
+
 test('api spelling content repository hydrates the seeded published bundle and persists valid content changes', async () => {
   const server = createWorkerRepositoryServer();
   try {
@@ -163,6 +180,40 @@ test('worker spelling content receipt replay returns full content without storin
     assert.equal(replayResponse.status, 200);
     assert.equal(replayPayload.content.draft.notes, 'Replay-safe content write test.');
     assert.equal(replayPayload.mutation.replayed, true);
+  } finally {
+    server.close();
+  }
+});
+
+test('worker spelling content route backfills legacy bundles before validation and persistence', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const initialResponse = await server.fetch('https://repo.test/api/content/spelling');
+    const initial = await initialResponse.json();
+    const legacy = stripWordExplanations(initial.content);
+    legacy.draft.notes = 'Legacy spelling bundle without word explanations.';
+
+    const response = await server.fetch('https://repo.test/api/content/spelling', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        content: legacy,
+        mutation: {
+          requestId: 'content-backfill-explanations-1',
+          correlationId: 'content-backfill-explanations-1',
+          expectedAccountRevision: initial.mutation.accountRevision,
+        },
+      }),
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(payload.content.draft.words.find((word) => word.slug === 'possess').explanation, 'To possess something means to own it or have it.');
+    assert.equal(payload.content.releases[0].snapshot.wordBySlug.possess.explanation, 'To possess something means to own it or have it.');
+
+    const reloadedResponse = await server.fetch('https://repo.test/api/content/spelling');
+    const reloaded = await reloadedResponse.json();
+    assert.equal(reloaded.content.draft.notes, 'Legacy spelling bundle without word explanations.');
+    assert.equal(reloaded.content.releases[0].snapshot.wordBySlug.possess.explanation, 'To possess something means to own it or have it.');
   } finally {
     server.close();
   }

@@ -1,5 +1,6 @@
 import { cloneSerialisable } from '../../../platform/core/repositories/helpers.js';
 import {
+  backfillSpellingWordExplanations,
   buildSpellingContentSummary,
   createPortableSpellingContentExport,
   extractPortableSpellingContent,
@@ -18,7 +19,7 @@ export function createSpellingContentService({ repository, seededBundle = SEEDED
   const seeded = normaliseSpellingContentBundle(seededBundle);
 
   function readBundle() {
-    return normaliseSpellingContentBundle(repository.read() || seeded);
+    return backfillSpellingWordExplanations(repository.read() || seeded, seeded);
   }
 
   async function hydrate() {
@@ -29,9 +30,9 @@ export function createSpellingContentService({ repository, seededBundle = SEEDED
   }
 
   async function writeBundle(rawBundle) {
-    const bundle = normaliseSpellingContentBundle(rawBundle);
+    const bundle = backfillSpellingWordExplanations(rawBundle, seeded);
     const saved = await repository.write(bundle);
-    return normaliseSpellingContentBundle(saved || bundle);
+    return backfillSpellingWordExplanations(saved || bundle, seeded);
   }
 
   function validation() {
@@ -61,7 +62,7 @@ export function createSpellingContentService({ repository, seededBundle = SEEDED
       return createPortableSpellingContentExport(readBundle());
     },
     async importPortable(rawPayload) {
-      const bundle = extractPortableSpellingContent(rawPayload);
+      const bundle = backfillSpellingWordExplanations(extractPortableSpellingContent(rawPayload), seeded);
       const checked = validateSpellingContentBundle(bundle);
       if (!checked.ok) {
         const error = new Error(`Imported spelling content has ${checked.errors.length} validation error(s).`);

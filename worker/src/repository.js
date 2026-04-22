@@ -14,6 +14,7 @@ import {
 } from '../../src/platform/core/repositories/helpers.js';
 import { uid } from '../../src/platform/core/utils.js';
 import {
+  backfillSpellingWordExplanations,
   buildSpellingContentSummary,
   normaliseSpellingContentBundle,
   resolvePublishedSnapshot,
@@ -147,7 +148,10 @@ function eventRowToRecord(row) {
 }
 
 function contentRowToBundle(row) {
-  return normaliseSpellingContentBundle(safeJsonParse(row.content_json, SEEDED_SPELLING_CONTENT_BUNDLE));
+  return backfillSpellingWordExplanations(
+    safeJsonParse(row.content_json, SEEDED_SPELLING_CONTENT_BUNDLE),
+    SEEDED_SPELLING_CONTENT_BUNDLE,
+  );
 }
 
 async function readSubjectContentBundle(db, accountId, subjectId = 'spelling') {
@@ -433,7 +437,8 @@ function normaliseRequestedPlatformRole(value) {
 }
 
 function runtimeSnapshotForBundle(bundle) {
-  return resolvePublishedSnapshot(bundle) || resolvePublishedSnapshot(SEEDED_SPELLING_CONTENT_BUNDLE) || null;
+  const backfilled = backfillSpellingWordExplanations(bundle, SEEDED_SPELLING_CONTENT_BUNDLE);
+  return resolvePublishedSnapshot(backfilled) || resolvePublishedSnapshot(SEEDED_SPELLING_CONTENT_BUNDLE) || null;
 }
 
 function accountDirectoryRowToModel(row) {
@@ -1430,7 +1435,7 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
     },
     async writeSubjectContent(accountId, subjectId = 'spelling', rawContent, mutation = {}) {
       const nowTs = nowFactory();
-      const content = normaliseSpellingContentBundle(rawContent);
+      const content = backfillSpellingWordExplanations(rawContent, SEEDED_SPELLING_CONTENT_BUNDLE);
       const validation = validateSpellingContentBundle(content);
       if (!validation.ok) {
         throw new BadRequestError('Spelling content validation failed.', {
