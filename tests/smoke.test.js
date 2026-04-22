@@ -169,7 +169,12 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   assert.match(html, /class="wb-chip-label">Years 3-4</);
   assert.match(html, /class="wb-chip-label">Years 5-6</);
   assert.match(html, /class="wb-chip-label">Extra</);
-  assert.doesNotMatch(html, /data-action="spelling-analytics-status-filter"/);
+  assert.match(html, /data-action="spelling-analytics-status-filter"\s+data-value="due"/);
+  assert.match(html, /data-action="spelling-analytics-status-filter"\s+data-value="weak"/);
+  assert.match(html, /data-action="spelling-analytics-status-filter"\s+data-value="learning"/);
+  assert.match(html, /data-action="spelling-analytics-status-filter"\s+data-value="secure"/);
+  assert.match(html, /data-action="spelling-analytics-status-filter"\s+data-value="unseen"/);
+  assert.match(html, /class="wb-status-swatch trouble"/);
   assert.doesNotMatch(html, /Word status colour legend/);
   assert.deepEqual(extractWordBankAggregateStats(html, 'Core statutory progress'), {
     Total: '213',
@@ -260,6 +265,14 @@ test('spelling word bank opens from setup and exposes searchable progress with d
     Unseen: '103',
   });
 
+  harness.dispatch('spelling-analytics-status-filter', { value: 'due' });
+  assert.equal(harness.store.getState().transientUi.spellingAnalyticsStatusFilter, 'due');
+  html = harness.render();
+  assert.match(html, />accommodate</);
+  assert.doesNotMatch(html, />accident</);
+  assert.match(html, /Showing 1 of 104 Years 5-6 spellings/);
+
+  harness.dispatch('spelling-analytics-status-filter', { value: 'all' });
   harness.dispatch('spelling-analytics-year-filter', { value: 'y3-4' });
   html = harness.render();
   assert.match(html, />accident</);
@@ -275,6 +288,13 @@ test('spelling word bank opens from setup and exposes searchable progress with d
     Unseen: '107',
   });
 
+  harness.dispatch('spelling-analytics-status-filter', { value: 'secure' });
+  html = harness.render();
+  assert.match(html, />accident</);
+  assert.doesNotMatch(html, />actual</);
+  assert.match(html, /Showing 1 of 109 Years 3-4 spellings/);
+
+  harness.dispatch('spelling-analytics-status-filter', { value: 'all' });
   harness.dispatch('spelling-analytics-year-filter', { value: 'extra' });
   html = harness.render();
   assert.match(html, />mollusc</);

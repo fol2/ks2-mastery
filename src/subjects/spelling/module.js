@@ -95,9 +95,17 @@ function normaliseSearchText(value) {
   return String(value || '').trim().toLowerCase();
 }
 
-/* Category filters stay intentionally broad: the word colours already describe
-   status, while the toolbar narrows the statutory/extra spelling pools. */
+/* Category filters stay intentionally broad; status chips double as the colour
+   legend and the status filter so the toolbar has one clear source of truth. */
+const WORD_BANK_FILTER_IDS = new Set(['all', 'due', 'weak', 'learning', 'secure', 'unseen']);
 const WORD_BANK_YEAR_FILTER_IDS = new Set(['all', 'y3-4', 'y5-6', 'extra']);
+
+function wordBankFilterMatchesStatus(filter, status) {
+  if (filter === 'all') return true;
+  if (filter === 'weak') return status === 'trouble';
+  if (filter === 'unseen') return status === 'new';
+  return filter === status;
+}
 
 function wordBankYearFilterMatches(filter, word) {
   if (filter === 'all') return true;
@@ -791,9 +799,41 @@ function renderSummary({ learner, ui, subject }) {
 /* --------------------------------------------------------------
    Word bank (standalone browser)
    Category chips narrow the statutory Years 3-4 / Years 5-6 pools
-   and the Extra expansion pool. Word colours keep status visible
-   without adding a second duplicate status toolbar.
+   and the Extra expansion pool. Status chips are also the colour legend,
+   so there is no separate duplicate legend row.
    -------------------------------------------------------------- */
+function renderWordBankStatusChips({ counts, activeFilter }) {
+  const chips = [
+    { id: 'all', label: 'All', swatch: 'all' },
+    { id: 'due', label: 'Due', swatch: 'due' },
+    { id: 'weak', label: 'Trouble', swatch: 'trouble' },
+    { id: 'learning', label: 'Learning', swatch: 'learning' },
+    { id: 'secure', label: 'Secure', swatch: 'secure' },
+    { id: 'unseen', label: 'Unseen', swatch: 'new' },
+  ];
+  return `
+    <div class="wb-chips wb-status-chips" role="group" aria-label="Filter word bank by status">
+      ${chips.map((chip) => {
+        const active = chip.id === activeFilter;
+        const count = counts[chip.id] ?? 0;
+        return `
+          <button
+            type="button"
+            aria-pressed="${active ? 'true' : 'false'}"
+            class="wb-chip wb-chip-status${active ? ' on' : ''}"
+            data-action="spelling-analytics-status-filter"
+            data-value="${escapeHtml(chip.id)}"
+          >
+            <span class="wb-status-swatch ${escapeHtml(chip.swatch)}" aria-hidden="true"></span>
+            <span class="wb-chip-label">${escapeHtml(chip.label)}</span>
+            <span class="wb-chip-count">${count}</span>
+          </button>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
 function renderWordBankYearChips({ counts, activeYearFilter }) {
   const chips = [
     { id: 'all', label: 'All' },
@@ -901,7 +941,7 @@ function renderWordBankGroup({ group, words, query }) {
   const summaryText = words.length
     ? `${secureCount} secure out of ${words.length} visible spellings`
     : 'No words match your filters.';
-  const emptyText = query ? 'Try another word or family search.' : 'Try another category filter.';
+  const emptyText = query ? 'Try another word or family search.' : 'Try another category or status filter.';
   return `
     <section class="wb-word-group" aria-label="${escapeHtml(group.title)} spellings">
       <div class="wb-word-group-head">
@@ -917,30 +957,34 @@ function renderWordBankGroup({ group, words, query }) {
   `;
 }
 
-function renderWordBank({ learner, analytics, searchQuery = '', yearFilter = 'all' }) {
+function renderWordBank({ learner, analytics, searchQuery = '', statusFilter = 'all', yearFilter = 'all' }) {
   const query = normaliseSearchText(searchQuery);
+  const activeFilter = WORD_BANK_FILTER_IDS.has(statusFilter) ? statusFilter : 'all';
   const activeYearFilter = WORD_BANK_YEAR_FILTER_IDS.has(yearFilter) ? yearFilter : 'all';
   const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
   const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
   const categoryWords = allWords.filter((word) => wordBankYearFilterMatches(activeYearFilter, word));
 
-  /* Apply the category first, then search. Status remains visible through the
-     word-pill colour and tooltip so stale hidden status filters never change
-     what the learner sees. */
+  /* Apply category, then status, then search. Status chips are the visible
+     legend, so the filtered result and the colour key stay in sync. */
   const visibleGroups = groups
     .filter((group) => activeYearFilter === 'all' ? true : group.key === activeYearFilter)
     .map((group) => {
       const words = (Array.isArray(group.words) ? group.words : [])
+        .filter((word) => wordBankFilterMatchesStatus(activeFilter, word.status))
         .filter((word) => wordMatchesSearch(word, query));
       return { group, words };
     })
-    .filter((entry) => query ? entry.words.length > 0 : true);
+    .filter((entry) => activeFilter === 'all' && !query ? true : entry.words.length > 0);
   const visibleWords = visibleGroups.flatMap((entry) => entry.words);
 
   const counts = {
+    all: categoryWords.length,
     due: countWordBankStatus(categoryWords, 'due'),
     weak: countWordBankStatus(categoryWords, 'trouble'),
+    learning: countWordBankStatus(categoryWords, 'learning'),
     secure: countWordBankStatus(categoryWords, 'secure'),
+    unseen: countWordBankStatus(categoryWords, 'new'),
   };
   const yearCounts = {
     all: allWords.length,
@@ -987,6 +1031,7 @@ function renderWordBank({ learner, analytics, searchQuery = '', yearFilter = 'al
           </label>
           <div class="wb-filter-stack">
             ${renderWordBankYearChips({ counts: yearCounts, activeYearFilter })}
+            ${renderWordBankStatusChips({ counts, activeFilter })}
           </div>
         </div>
 
@@ -1200,6 +1245,7 @@ function renderWordBankScene({ appState, learner, service, subject }) {
   const analytics = service.getAnalyticsSnapshot(learner.id);
   const accent = accentFor(subject);
   const searchQuery = appState?.transientUi?.spellingAnalyticsWordSearch || '';
+  const statusFilter = appState?.transientUi?.spellingAnalyticsStatusFilter || 'all';
   const yearFilter = appState?.transientUi?.spellingAnalyticsYearFilter || 'all';
   const detailSlug = appState?.transientUi?.spellingWordDetailSlug || '';
   const detailMode = appState?.transientUi?.spellingWordDetailMode || 'explain';
@@ -1215,7 +1261,7 @@ function renderWordBankScene({ appState, learner, service, subject }) {
           <h1 class="word-bank-title">${escapeHtml(learner.name)}’s spellings</h1>
         </header>
         ${renderWordBankAggregates(analytics)}
-        ${renderWordBank({ learner, analytics, searchQuery, yearFilter })}
+        ${renderWordBank({ learner, analytics, searchQuery, statusFilter, yearFilter })}
       </div>
       ${detailWord ? renderWordDetailModal({ word: detailWord, mode: detailMode, typed: drillTyped, result: drillResult, accent }) : ''}
     </div>
@@ -1310,6 +1356,18 @@ export const spellingModule = {
         transientUi: {
           ...current.transientUi,
           spellingAnalyticsYearFilter: next,
+        },
+      }));
+      return true;
+    }
+
+    if (action === 'spelling-analytics-status-filter') {
+      const raw = String(data.value || 'all');
+      const next = WORD_BANK_FILTER_IDS.has(raw) ? raw : 'all';
+      store.patch((current) => ({
+        transientUi: {
+          ...current.transientUi,
+          spellingAnalyticsStatusFilter: next,
         },
       }));
       return true;
