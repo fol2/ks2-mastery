@@ -264,7 +264,7 @@ The important invariant is that `spellingPool` becomes the authority for core-vs
 - Existing core spelling session behaviour remains stable.
 - Extra can be practised deliberately through Smart Review and Trouble Drill, and cannot enter SATs Test.
 
-- [ ] **Unit 4: Update Spelling UI Labels And Word Bank Surfaces**
+- [x] **Unit 4: Update Spelling UI Labels And Word Bank Surfaces**
 
 **Goal:** Expose Extra intentionally in the spelling UI while removing misleading "All" wording from statutory aggregate surfaces.
 

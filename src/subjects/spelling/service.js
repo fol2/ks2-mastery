@@ -292,6 +292,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       familyWords: Array.isArray(word.familyWords) ? [...word.familyWords] : [],
       sentence: word.sentence || '',
       explanation: word.explanation || '',
+      accepted: Array.isArray(word.accepted) ? [...word.accepted] : [word.slug],
       status: engine.statusForWord(learnerId, word),
       stageLabel: engine.stageLabel(progress.stage),
       progress: {

@@ -119,8 +119,21 @@ test('golden-path smoke covers import/export restore for a live spelling session
 test('spelling word bank opens from setup and exposes searchable progress with drill modal', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
 
   harness.dispatch('open-subject', { subjectId: 'spelling' });
+  let html = harness.render();
+  assert.match(html, /aria-label="Spelling pool"/);
+  assert.match(html, /value="core"[^>]*>\s*<span>Core<\/span>/);
+  assert.match(html, /value="extra"[^>]*>\s*<span>Extra<\/span>/);
+  assert.doesNotMatch(html, />All<\/span>/);
+
+  harness.dispatch('spelling-set-pref', { pref: 'yearFilter', value: 'extra' });
+  html = harness.render();
+  assert.match(html, /value="extra"[^>]*>\s*<span>Extra<\/span>/);
+  assert.match(html, /ss-stat-label">Total spellings<\/div>\s*<div class="ss-stat-value"[^>]*>22<\/div>/);
+  assert.match(html, /value="trouble"[^>]*disabled[^>]*>[\s\S]*Trouble Drill/);
+
   /* The Codex Journal redesign folds the old Analytics tab into a standalone
      word-bank scene reached via the "Browse the word bank" card on the setup
      dashboard. subject-set-tab no longer switches views — the setup scene
@@ -128,8 +141,11 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   harness.dispatch('spelling-open-word-bank');
   assert.equal(harness.store.getState().subjectUi.spelling.phase, 'word-bank');
 
-  let html = harness.render();
+  html = harness.render();
   assert.match(html, /Word bank progress/);
+  assert.match(html, /Core spellings/);
+  assert.match(html, /Expansion spelling pool/);
+  assert.doesNotMatch(html, /All spellings/);
   assert.match(html, /name="spellingAnalyticsSearch"[^>]*autocomplete="off"/);
   // Filter tabs — the legend chips have been replaced by interactive
   // spelling-analytics-status-filter tabs. The status value stays on the wire
@@ -148,7 +164,6 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   assert.match(html, /wb-meta-label">Next due<\/span><span class="wb-meta-value">Unseen/);
   assert.doesNotMatch(html, /wb-meta-label">Family/);
 
-  const learnerId = harness.store.getState().learners.selectedId;
   const todayDay = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
   harness.repositories.subjectStates.writeData(learnerId, 'spelling', {
     progress: {
@@ -189,6 +204,32 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   harness.dispatch('spelling-analytics-search', { value: '' });
   html = harness.render();
   assert.match(html, />accident</);
+
+  harness.dispatch('spelling-analytics-search', { value: 'mollusc' });
+  html = harness.render();
+  assert.match(html, />mollusc</);
+  assert.match(html, /class="wb-pool extra">Extra<\/span>/);
+  assert.doesNotMatch(html, />accident</);
+
+  harness.dispatch('spelling-word-detail-open', { slug: 'mollusc', value: 'explain' });
+  html = harness.render();
+  assert.match(html, /Extra spelling/);
+  assert.match(html, /A mollusc is a soft-bodied animal/);
+  harness.dispatch('spelling-word-detail-close');
+
+  harness.dispatch('spelling-word-detail-open', { slug: 'mollusc', value: 'drill' });
+  const rejectedExtraDrill = new FormData();
+  rejectedExtraDrill.set('typed', 'mollusk');
+  harness.dispatch('spelling-word-bank-drill-submit', { slug: 'mollusc', formData: rejectedExtraDrill });
+  assert.equal(harness.store.getState().transientUi.spellingWordBankDrillResult, 'incorrect');
+
+  harness.dispatch('spelling-word-bank-drill-try-again', { slug: 'mollusc' });
+  const acceptedExtraDrill = new FormData();
+  acceptedExtraDrill.set('typed', 'mollusc');
+  harness.dispatch('spelling-word-bank-drill-submit', { slug: 'mollusc', formData: acceptedExtraDrill });
+  assert.equal(harness.store.getState().transientUi.spellingWordBankDrillResult, 'correct');
+  harness.dispatch('spelling-word-detail-close');
+  harness.dispatch('spelling-analytics-search', { value: '' });
 
   /* Opening a word in drill mode stays in the word-bank phase, sets the modal
      state on transientUi, and never mutates the session scheduler. The drill

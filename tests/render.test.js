@@ -117,6 +117,47 @@ test('main dashboard hides uncaught monster art and the spelling setup shows onl
   assert.match(spellingHtml, /Catch your first monster to populate this meadow\./);
 });
 
+test('spelling setup renders pool choices without the legacy All label', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const store = createStore(SUBJECTS, { repositories });
+  const service = createSpellingService({
+    repository: createSpellingPersistence({ repositories }),
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+  });
+  store.openSubject('spelling');
+
+  const appState = store.getState();
+  const html = renderApp(appState, {
+    appState,
+    store,
+    repositories,
+    services: { spelling: service },
+    subject: SUBJECTS[0],
+    service,
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+    applySubjectTransition() {
+      return true;
+    },
+  });
+
+  assert.match(html, /aria-label="Spelling pool"/);
+  assert.match(html, /data-pref="yearFilter" value="core"/);
+  assert.match(html, /data-pref="yearFilter" value="extra"/);
+  assert.match(html, />Core<\/span>/);
+  assert.match(html, />Extra<\/span>/);
+  assert.doesNotMatch(html, />All<\/span>/);
+  assert.doesNotMatch(html, /Year group/);
+});
+
 test('home meadow shows an egg only once a species has been caught and hides uncaught species entirely', async () => {
   const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
   const summary = [

@@ -3820,7 +3820,7 @@ textarea:focus-visible {
 /* Mini meadow — caught monsters strip. */
 .ss-meadow {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(52px, 1fr));
   gap: 8px;
   margin-top: 10px;
 }
@@ -3839,6 +3839,7 @@ textarea:focus-visible {
 }
 .ss-meadow-cell:nth-child(2) img { animation-delay: 0.7s; }
 .ss-meadow-cell:nth-child(3) img { animation-delay: 1.4s; }
+.ss-meadow-cell:nth-child(4) img { animation-delay: 2.1s; }
 .ss-meadow-cell.egg img { transform: scale(0.86); }
 
 @keyframes ss-breathe {
@@ -4598,6 +4599,24 @@ textarea:focus-visible {
   text-transform: uppercase;
   white-space: nowrap;
 }
+
+.wb-pool {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink-2);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.wb-pool.extra {
+  border-color: color-mix(in oklab, var(--brand) 26%, var(--line));
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
 .wb-pill.due      { background: var(--warn-soft);    color: var(--warn-strong); }
 .wb-pill.weak     { background: var(--bad-soft);     color: var(--bad-strong); }
 .wb-pill.learning { background: var(--brand-soft);   color: var(--brand-ink); }
@@ -4830,6 +4849,8 @@ textarea:focus-visible {
   margin: 0;
 }
 .wb-aggregates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 14px;
 }
 .wb-card-compact {
