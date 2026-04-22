@@ -63,29 +63,29 @@ function addExtraWordList(bundle) {
     spellingPool: 'extra',
     yearGroups: [],
     tags: ['extra', 'science'],
-    wordSlugs: ['mollusc'],
+    wordSlugs: ['cephalopod'],
     sourceNote: 'Extra API test list',
     provenance: { source: 'tests', note: 'Added inside tests.' },
     sortIndex: 9999,
   });
   next.draft.words.push({
-    slug: 'mollusc',
-    word: 'Mollusc',
-    family: 'Science: animal groups',
+    slug: 'cephalopod',
+    word: 'cephalopod',
+    family: 'Science: cephalopods',
     listId,
     yearGroups: [],
     tags: ['extra', 'science'],
-    accepted: ['mollusc'],
-    explanation: 'A mollusc is a soft-bodied animal, often with a shell.',
-    sentenceEntryIds: ['mollusc__01'],
+    accepted: ['cephalopod'],
+    explanation: 'A cephalopod is a sea animal such as an octopus or squid.',
+    sentenceEntryIds: ['cephalopod__01'],
     sourceNote: 'Extra API test word',
     provenance: { source: 'tests', note: 'Added inside tests.' },
     sortIndex: 9999,
   });
   next.draft.sentences.push({
-    id: 'mollusc__01',
-    wordSlug: 'mollusc',
-    text: 'A snail is a mollusc with a coiled shell.',
+    id: 'cephalopod__01',
+    wordSlug: 'cephalopod',
+    text: 'An octopus is a cephalopod with eight arms.',
     variantLabel: 'baseline',
     tags: ['extra', 'science'],
     sourceNote: 'Extra API test sentence',
@@ -105,7 +105,7 @@ test('api spelling content repository hydrates the seeded published bundle and p
     });
 
     const bundle = await repository.hydrate();
-    assert.equal(bundle.publication.publishedVersion, 1);
+    assert.equal(bundle.publication.publishedVersion, SEEDED_SPELLING_CONTENT_BUNDLE.publication.publishedVersion);
     assert.equal(repository.getAccountRevision(), 0);
 
     const updated = cloneSerialisable(bundle);
@@ -155,12 +155,12 @@ test('worker spelling content route accepts valid Extra pool content without sta
 
     assert.equal(response.status, 200);
     assert.equal(payload.content.draft.wordLists.find((list) => list.id === 'extra-api-science').spellingPool, 'extra');
-    assert.equal(payload.content.draft.words.find((word) => word.slug === 'mollusc').spellingPool, 'extra');
-    assert.deepEqual(payload.content.draft.words.find((word) => word.slug === 'mollusc').yearGroups, []);
+    assert.equal(payload.content.draft.words.find((word) => word.slug === 'cephalopod').spellingPool, 'extra');
+    assert.deepEqual(payload.content.draft.words.find((word) => word.slug === 'cephalopod').yearGroups, []);
 
     const reloadedResponse = await server.fetch('https://repo.test/api/content/spelling');
     const reloaded = await reloadedResponse.json();
-    assert.equal(reloaded.content.draft.words.find((word) => word.slug === 'mollusc').spellingPool, 'extra');
+    assert.equal(reloaded.content.draft.words.find((word) => word.slug === 'cephalopod').spellingPool, 'extra');
   } finally {
     server.close();
   }

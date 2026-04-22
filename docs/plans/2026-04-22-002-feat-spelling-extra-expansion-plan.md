@@ -175,7 +175,7 @@ The important invariant is that `spellingPool` becomes the authority for core-vs
 - Existing content bundles remain readable.
 - The content service can expose a runtime snapshot containing both core and Extra words while draft-only changes stay out of runtime.
 
-- [ ] **Unit 2: Seed And Publish The Initial Extra Word Set**
+- [x] **Unit 2: Seed And Publish The Initial Extra Word Set**
 
 **Goal:** Add James's first Extra word list to the spelling content seed and generated runtime data.
 
