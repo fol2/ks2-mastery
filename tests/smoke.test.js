@@ -11,6 +11,20 @@ function typedFormData(value) {
   return formData;
 }
 
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function extractWordBankAggregateStats(html, title) {
+  const match = String(html || '').match(new RegExp(
+    `<section class="wb-card wb-card-compact">[\\s\\S]*?<h2 class="section-title">${escapeRegExp(title)}</h2>([\\s\\S]*?)</section>`,
+  ));
+  assert.ok(match, `Missing word-bank aggregate card: ${title}`);
+  return Object.fromEntries([...match[1].matchAll(
+    /<div class="stat-label">([^<]+)<\/div>\s*<div class="stat-value"[^>]*>([^<]+)<\/div>/g,
+  )].map((entry) => [entry[1], entry[2]]));
+}
+
 function completeCurrentSpellingRound(harness) {
   while (harness.store.getState().subjectUi.spelling.phase === 'session') {
     const state = harness.store.getState().subjectUi.spelling;
@@ -147,28 +161,53 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   assert.match(html, /Expansion spelling pool/);
   assert.doesNotMatch(html, /All spellings/);
   assert.match(html, /name="spellingAnalyticsSearch"[^>]*autocomplete="off"/);
-  // Filter tabs — the legend chips have been replaced by interactive
-  // spelling-analytics-status-filter tabs. The status value stays on the wire
-  // in v1 vocabulary ("unseen" / "learning" / "weak"), and each tab carries a
-  // .wb-chip-label span with the visible label. Attribute regexes use `\s+`
-  // because the template emits attrs on separate indented lines for legibility.
-  assert.match(html, /data-action="spelling-analytics-status-filter"\s+data-value="unseen"/);
-  assert.match(html, /data-action="spelling-analytics-status-filter"\s+data-value="learning"/);
-  assert.match(html, /class="wb-chip-label">Unseen</);
-  assert.match(html, /class="wb-chip-label">Learning</);
-  // Category filters sit beside the status filters and use the same transient
-  // UI store path, so combining year band + status + search never mutates the
-  // scheduled spelling session.
+  // Category filters sit beside search and use transient UI only, so browsing
+  // the bank never mutates the scheduled spelling session.
   assert.match(html, /data-action="spelling-analytics-year-filter"\s+data-value="y3-4"/);
   assert.match(html, /data-action="spelling-analytics-year-filter"\s+data-value="y5-6"/);
+  assert.match(html, /data-action="spelling-analytics-year-filter"\s+data-value="extra"/);
   assert.match(html, /class="wb-chip-label">Years 3-4</);
   assert.match(html, /class="wb-chip-label">Years 5-6</);
+  assert.match(html, /class="wb-chip-label">Extra</);
+  assert.doesNotMatch(html, /data-action="spelling-analytics-status-filter"/);
+  assert.doesNotMatch(html, /Word status colour legend/);
+  assert.deepEqual(extractWordBankAggregateStats(html, 'Core statutory progress'), {
+    Total: '213',
+    Secure: '0',
+    'Due now': '0',
+    Trouble: '0',
+    Learning: '0',
+    Unseen: '213',
+  });
+  assert.deepEqual(extractWordBankAggregateStats(html, 'Lower KS2 spelling pool'), {
+    Total: '109',
+    Secure: '0',
+    'Due now': '0',
+    Trouble: '0',
+    Learning: '0',
+    Unseen: '109',
+  });
+  assert.deepEqual(extractWordBankAggregateStats(html, 'Upper KS2 spelling pool'), {
+    Total: '104',
+    Secure: '0',
+    'Due now': '0',
+    Trouble: '0',
+    Learning: '0',
+    Unseen: '104',
+  });
+  assert.deepEqual(extractWordBankAggregateStats(html, 'Expansion spelling pool'), {
+    Total: '22',
+    Secure: '0',
+    'Due now': '0',
+    Trouble: '0',
+    Learning: '0',
+    Unseen: '22',
+  });
   // Word-bank entries render as legacy-style colour pills. The tooltip carries
   // the progress details, while clicking the pill opens the new drill modal.
   assert.match(html, /class="wb-word-pill new"/);
   assert.match(html, /data-action="spelling-word-detail-open"\s+data-slug="possess"\s+data-value="drill"/);
   assert.match(html, /title="possess[^"]*Family: possess\(ion\)[^"]*Next due: Unseen[^"]*Click to drill"/);
-  assert.match(html, /Word status colour legend/);
   assert.match(html, />accident</);
   assert.doesNotMatch(html, /wb-meta-label">Family/);
 
@@ -193,6 +232,15 @@ test('spelling word bank opens from setup and exposes searchable progress with d
         lastDay: todayDay,
         lastResult: true,
       },
+      actual: {
+        stage: 1,
+        attempts: 3,
+        correct: 2,
+        wrong: 1,
+        dueDay: todayDay + 3,
+        lastDay: todayDay,
+        lastResult: true,
+      },
     },
   });
 
@@ -203,28 +251,38 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   assert.doesNotMatch(html, />accident</);
   assert.match(html, /Years 5-6 selected — 104 of 235 words, 0 secure, 1 due today, 0 weak spots/);
   assert.match(html, /Showing 104 of 104 Years 5-6 spellings/);
-
-  harness.dispatch('spelling-analytics-status-filter', { value: 'due' });
-  assert.equal(harness.store.getState().transientUi.spellingAnalyticsStatusFilter, 'due');
-  html = harness.render();
-  assert.match(html, />accommodate</);
-  assert.doesNotMatch(html, />accident</);
-  assert.match(html, /Showing 1 of 104 Years 5-6 spellings/);
+  assert.deepEqual(extractWordBankAggregateStats(html, 'Upper KS2 spelling pool'), {
+    Total: '104',
+    Secure: '0',
+    'Due now': '1',
+    Trouble: '0',
+    Learning: '0',
+    Unseen: '103',
+  });
 
   harness.dispatch('spelling-analytics-year-filter', { value: 'y3-4' });
   html = harness.render();
-  assert.match(html, /No words match your filters/);
-  assert.doesNotMatch(html, />accommodate</);
-  assert.doesNotMatch(html, />accident</);
-
-  harness.dispatch('spelling-analytics-status-filter', { value: 'secure' });
-  html = harness.render();
   assert.match(html, />accident</);
   assert.doesNotMatch(html, />accommodate</);
-  assert.match(html, /Showing 1 of 109 Years 3-4 spellings/);
+  assert.match(html, /Years 3-4 selected — 109 of 235 words, 1 secure, 0 due today, 0 weak spots/);
+  assert.match(html, /Showing 109 of 109 Years 3-4 spellings/);
+  assert.deepEqual(extractWordBankAggregateStats(html, 'Lower KS2 spelling pool'), {
+    Total: '109',
+    Secure: '1',
+    'Due now': '0',
+    Trouble: '0',
+    Learning: '1',
+    Unseen: '107',
+  });
+
+  harness.dispatch('spelling-analytics-year-filter', { value: 'extra' });
+  html = harness.render();
+  assert.match(html, />mollusc</);
+  assert.doesNotMatch(html, />accident</);
+  assert.match(html, /Extra selected — 22 of 235 words, 0 secure, 0 due today, 0 weak spots/);
+  assert.match(html, /Showing 22 of 22 Extra spellings/);
 
   harness.dispatch('spelling-analytics-year-filter', { value: 'all' });
-  harness.dispatch('spelling-analytics-status-filter', { value: 'all' });
 
   harness.repositories.subjectStates.writeData(learnerId, 'spelling', {
     progress: {
