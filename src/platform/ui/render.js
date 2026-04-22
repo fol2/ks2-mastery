@@ -1352,13 +1352,18 @@ function renderMonsterCelebrationOverlay(appState) {
   const body      = monsterCelebrationBody(event, toStage);
   /* Caught starts with nothing, so there's no outgoing monster; mega and
      evolve both have one. Particle shower plays on caught (inflow) and
-     mega (outflow); plain evolve stays on the whiten → emerge shape. */
-  const hasFrom   = event.kind !== 'caught';
-  const hasParts  = event.kind === 'caught' || event.kind === 'mega';
+     mega (outflow); plain evolve stays on the whiten → emerge shape.
+     Egg-crack is the special stage 0→1 evolve that swaps the smooth fade
+     for a wobble-then-pop beat. The diagonal shine only suits mega's
+     final-form reveal; everywhere else it competes with the monster art. */
+  const hasFrom    = event.kind !== 'caught';
+  const hasParts   = event.kind === 'caught' || event.kind === 'mega';
+  const isEggCrack = event.kind === 'evolve' && fromStage === 0 && toStage === 1;
+  const variantClass = isEggCrack ? ' egg-crack' : '';
 
   return `
     <section
-      class="monster-celebration-overlay ${escapeHtml(event.kind)}"
+      class="monster-celebration-overlay ${escapeHtml(event.kind)}${variantClass}"
       role="dialog"
       aria-modal="true"
       aria-labelledby="monster-celebration-title"
@@ -1367,7 +1372,7 @@ function renderMonsterCelebrationOverlay(appState) {
       <div class="monster-celebration-stage" aria-hidden="true">
         ${hasParts ? `<div class="monster-celebration-parts">${renderCelebrationParticleSlots()}</div>` : ''}
         <div class="monster-celebration-halo"></div>
-        <div class="monster-celebration-shine"></div>
+        ${event.kind === 'mega' ? '<div class="monster-celebration-shine"></div>' : ''}
         ${hasFrom ? `<img class="monster-celebration-art before" alt="" data-stage="${fromStage}" ${monsterImageSources(monster.id, fromStage, branch, 640, 'min(90vw, 540px)')} />` : ''}
         <div class="monster-celebration-white"></div>
         <img class="monster-celebration-art after" alt="" data-stage="${toStage}" ${monsterImageSources(monster.id, toStage, branch, 640, 'min(90vw, 540px)')} />

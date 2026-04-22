@@ -886,7 +886,6 @@ function SharedTimeline({ pair }) {
     <div className="celeb-modal ev-modal">
       <div className="ev-stage">
         <div className="ev-halo"  aria-hidden="true" />
-        <div className="ev-shine" aria-hidden="true" />
         <img className="ev-mon ev-mon-from" src={fromSrc} alt="" data-stage={pair.from} />
         {/* Pure-opacity white flash — replaces the old `filter: brightness/saturate`
             whiten on the monster. Dedicated element = GPU-only opacity, no CPU
@@ -903,9 +902,9 @@ function SharedTimeline({ pair }) {
 
 /* First-catch celebration. No previous form exists, so the drama comes
    from summoning: ten sparkle particles fly in from the edges, collide
-   at centre, burst into the same halo + shine beat as the shared pattern,
-   and the egg emerges from the white. The second half of the animation
-   is intentionally identical to the shared timeline — the payoff feels
+   at centre, burst into the same halo beat as the shared pattern, and
+   the egg emerges from the white. The second half of the animation is
+   intentionally identical to the shared timeline — the payoff feels
    consistent with future evolutions, only the entry differs. */
 function CaughtTimeline({ pair }) {
   const toSrc = monsterStageSrc(pair.species, pair.variant, pair.to);
@@ -921,7 +920,6 @@ function CaughtTimeline({ pair }) {
           {parts.map(i => <span key={i} className="ev-part" />)}
         </div>
         <div className="ev-halo"  aria-hidden="true" />
-        <div className="ev-shine" aria-hidden="true" />
         <div className="ev-white" aria-hidden="true" />
         <img className="ev-mon ev-mon-to" src={toSrc} alt="" data-stage={pair.to} />
       </div>
@@ -978,7 +976,6 @@ function EggCrackTimeline({ pair }) {
       <div className="ev-stage">
         <img className="ev-mon ev-mon-from" src={fromSrc} alt="" data-stage={pair.from} />
         <div className="ev-halo"  aria-hidden="true" />
-        <div className="ev-shine" aria-hidden="true" />
         <div className="ev-white" aria-hidden="true" />
         <img className="ev-mon ev-mon-to"   src={toSrc}   alt="" data-stage={pair.to} />
       </div>
