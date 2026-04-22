@@ -31,18 +31,6 @@ function makeBrokenSubject({
       if (throwInPractice) throw new Error('renderPractice exploded');
       return '<section class="card"><button class="btn" data-action="broken-action-trigger">Trigger broken action</button></section>';
     },
-    renderAnalytics() {
-      return '<section class="card">Broken analytics</section>';
-    },
-    renderProfiles() {
-      return '<section class="card">Broken profiles</section>';
-    },
-    renderSettings() {
-      return '<section class="card">Broken settings</section>';
-    },
-    renderMethod() {
-      return '<section class="card">Broken method</section>';
-    },
     handleAction(action) {
       if (throwInAction && action === 'broken-action-trigger') {
         throw new Error('handleAction exploded');
@@ -74,7 +62,10 @@ test('subject render failures are contained to the active tab instead of breakin
   assert.equal(harness.store.getState().route.subjectId, brokenSubject.id);
   assert.match(html, /Practice temporarily unavailable/);
   assert.match(html, /Try this tab again/);
-  assert.match(html, /Current learner/);
+  /* Shell chrome proxy: the v1 Codex Journal redesign replaced the inline
+     "Current learner" header with a React TopNav mount + breadcrumb. The
+     mount node being present proves the shell survived the practice throw. */
+  assert.match(html, /data-subject-topnav-mount="true"/);
   assert.equal(harness.runtimeBoundary.read({
     learnerId: harness.store.getState().learners.selectedId,
     subjectId: brokenSubject.id,

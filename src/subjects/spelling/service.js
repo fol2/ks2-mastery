@@ -289,6 +289,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       year: word.year,
       yearLabel: word.yearLabel,
       familyWords: Array.isArray(word.familyWords) ? [...word.familyWords] : [],
+      sentence: word.sentence || '',
       status: engine.statusForWord(learnerId, word),
       stageLabel: engine.stageLabel(progress.stage),
       progress: {
@@ -492,6 +493,18 @@ export function createSpellingService({ repository, storage, tts, now, random, c
         summary: null,
         error,
         awaitingAdvance,
+      };
+    }
+
+    if (phase === 'word-bank') {
+      return {
+        version: SPELLING_SERVICE_STATE_VERSION,
+        phase: 'word-bank',
+        session: null,
+        feedback: null,
+        summary: null,
+        error,
+        awaitingAdvance: false,
       };
     }
 

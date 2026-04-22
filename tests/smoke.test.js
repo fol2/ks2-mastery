@@ -32,7 +32,7 @@ test('golden-path smoke covers dashboard to spelling session to summary and back
   assert.match(harness.render(), /data-home-mount="true"/);
 
   harness.dispatch('open-subject', { subjectId: 'spelling' });
-  assert.match(harness.render(), /Practice setup/);
+  assert.match(harness.render(), /Round setup/);
 
   harness.dispatch('spelling-start');
   assert.equal(harness.store.getState().subjectUi.spelling.phase, 'session');
@@ -44,7 +44,7 @@ test('golden-path smoke covers dashboard to spelling session to summary and back
 
   harness.dispatch('spelling-back');
   assert.equal(harness.store.getState().subjectUi.spelling.phase, 'dashboard');
-  assert.match(harness.render(), /Practice setup/);
+  assert.match(harness.render(), /Round setup/);
 });
 
 test('profile settings learner profile fields declare autofill behaviour explicitly', () => {
@@ -116,12 +116,17 @@ test('golden-path smoke covers import/export restore for a live spelling session
   assert.match(harness.render(), /Spell the word you hear|Spell the dictated word/);
 });
 
-test('spelling analytics exposes searchable word-bank progress and practice-only launch', () => {
+test('spelling word bank opens from setup and exposes searchable progress with drill modal', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
 
   harness.dispatch('open-subject', { subjectId: 'spelling' });
-  harness.dispatch('subject-set-tab', { tab: 'analytics' });
+  /* The Codex Journal redesign folds the old Analytics tab into a standalone
+     word-bank scene reached via the "Browse the word bank" card on the setup
+     dashboard. subject-set-tab no longer switches views — the setup scene
+     itself owns this navigation. */
+  harness.dispatch('spelling-open-word-bank');
+  assert.equal(harness.store.getState().subjectUi.spelling.phase, 'word-bank');
 
   let html = harness.render();
   assert.match(html, /Word bank progress/);
@@ -135,8 +140,10 @@ test('spelling analytics exposes searchable word-bank progress and practice-only
   assert.match(html, /data-action="spelling-analytics-status-filter"\s+data-value="learning"/);
   assert.match(html, /class="wb-chip-label">Unseen</);
   assert.match(html, /class="wb-chip-label">Learning</);
-  assert.match(html, /data-action="spelling-practice-single" data-slug="possess"/);
-  assert.match(html, /class="word-progress-pill new"[^>]*data-action="spelling-practice-single"/);
+  // The word row opens the detail modal in explain mode; the inner arrow chip
+  // jumps to drill mode. Both buttons share the same data-action.
+  assert.match(html, /data-action="spelling-word-detail-open" data-slug="possess" data-value="explain"/);
+  assert.match(html, /data-action="spelling-word-detail-open" data-slug="possess" data-value="drill"/);
   assert.match(html, />accident</);
 
   harness.dispatch('spelling-analytics-search', { value: 'possess' });
@@ -150,31 +157,34 @@ test('spelling analytics exposes searchable word-bank progress and practice-only
   html = harness.render();
   assert.match(html, />accident</);
 
-  harness.dispatch('spelling-practice-single', { slug: 'possess' });
-  assert.equal(harness.store.getState().subjectUi.spelling.phase, 'session');
-  assert.equal(harness.store.getState().subjectUi.spelling.session.mode, 'single');
-  assert.equal(harness.store.getState().subjectUi.spelling.session.practiceOnly, true);
-  assert.equal(harness.store.getState().subjectUi.spelling.session.currentCard.word.slug, 'possess');
+  /* Opening a word in drill mode stays in the word-bank phase, sets the modal
+     state on transientUi, and never mutates the session scheduler. The drill
+     is fully self-contained: a local string check against the target word. */
+  harness.dispatch('spelling-word-detail-open', { slug: 'possess', value: 'drill' });
+  assert.equal(harness.store.getState().subjectUi.spelling.phase, 'word-bank');
+  assert.equal(harness.store.getState().transientUi.spellingWordDetailSlug, 'possess');
+  assert.equal(harness.store.getState().transientUi.spellingWordDetailMode, 'drill');
+  html = harness.render();
+  assert.match(html, /class="wb-modal"/);
+  assert.match(html, /data-action="spelling-word-bank-drill-submit"/);
+
+  const drillForm = new FormData();
+  drillForm.set('typed', 'possess');
+  harness.dispatch('spelling-word-bank-drill-submit', { slug: 'possess', formData: drillForm });
+  assert.equal(harness.store.getState().transientUi.spellingWordBankDrillResult, 'correct');
+  assert.equal(harness.store.getState().subjectUi.spelling.phase, 'word-bank');
+  assert.equal(harness.store.getState().subjectUi.spelling.session, null);
 });
 
-test('golden-path smoke covers placeholder-subject navigation across all shared tabs', () => {
+test('golden-path smoke covers placeholder-subject navigation through the setup scene', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
 
   harness.dispatch('open-subject', { subjectId: 'reasoning' });
-  assert.match(harness.render(), /Reasoning foundation/);
-
-  harness.dispatch('subject-set-tab', { tab: 'analytics' });
-  assert.match(harness.render(), /Reasoning analytics slot/);
-
-  harness.dispatch('subject-set-tab', { tab: 'profiles' });
-  const profilesHtml = harness.render();
-  assert.match(profilesHtml, /Reasoning learner profile hooks/);
-  assert.doesNotMatch(profilesHtml, /data-action="learner-save-form"/);
-
-  harness.dispatch('subject-set-tab', { tab: 'settings' });
-  assert.match(harness.render(), /Reasoning settings stub/);
-
-  harness.dispatch('subject-set-tab', { tab: 'method' });
-  assert.match(harness.render(), /How Reasoning should plug in/);
+  /* Placeholders render the same "future subject foundation" card for every
+     phase because they have no engine yet — the subject shell is exercised
+     by the fact that opening succeeds without a runtime error. */
+  const html = harness.render();
+  assert.match(html, /Reasoning foundation/);
+  assert.match(html, /Extension points already reserved/);
 });

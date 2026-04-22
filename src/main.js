@@ -1056,6 +1056,7 @@ function buildSurfaceActions() {
 function mountReactSurfaces(appState, context) {
   const homeSurface = globalThis.__ks2HomeSurface;
   const codexSurface = globalThis.__ks2CodexSurface;
+  const subjectTopNavSurface = globalThis.__ks2SubjectTopNavSurface;
   const actions = buildSurfaceActions();
 
   if (appState.route.screen === 'dashboard') {
@@ -1080,6 +1081,31 @@ function mountReactSurfaces(appState, context) {
     }
   } else if (codexSurface) {
     codexSurface.unmount();
+  }
+
+  /* Subject route reuses the home TopNav verbatim — same UserPill dropdown,
+     persistence dot, theme toggle. The subject route adds its own breadcrumb
+     and tabs below, so we only mount the chrome strip here. */
+  if (appState.route.screen === 'subject') {
+    const mount = root.querySelector('[data-subject-topnav-mount="true"]');
+    if (mount && subjectTopNavSurface) {
+      const chrome = buildSurfaceChromeModel(appState);
+      subjectTopNavSurface.render(mount, {
+        theme: chrome.theme,
+        onToggleTheme: actions.toggleTheme,
+        learners: chrome.learnerOptions,
+        selectedLearnerId: chrome.learner?.id || '',
+        learnerLabel: chrome.learnerLabel,
+        signedInAs: chrome.signedInAs,
+        onSelectLearner: actions.selectLearner,
+        onOpenProfileSettings: actions.openProfileSettings,
+        onLogout: actions.logout,
+        persistenceMode: chrome.persistence?.mode || 'local-only',
+        persistenceLabel: chrome.persistence?.label || '',
+      });
+    }
+  } else if (subjectTopNavSurface) {
+    subjectTopNavSurface.unmount();
   }
 }
 

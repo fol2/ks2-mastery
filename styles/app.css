@@ -299,7 +299,6 @@ textarea:focus-visible {
 .tab-row,
 .actions,
 .field-row,
-.subject-tabs,
 .toasts {
   display: flex;
   flex-wrap: wrap;
@@ -424,18 +423,6 @@ textarea:focus-visible {
   gap: 12px;
   flex-wrap: wrap;
 }
-.subject-tabs .tab {
-  border-radius: 999px;
-  background: var(--panel-soft);
-  border: 1px solid var(--line);
-  padding: 10px 14px;
-  font-weight: 800;
-  color: var(--ink);
-}
-.subject-tabs .tab.active {
-  color: white;
-}
-
 .field {
   display: flex;
   flex-direction: column;
@@ -747,71 +734,6 @@ textarea:focus-visible {
   min-width: min(100%, 260px);
   max-width: 320px;
 }
-.word-bank-card .card-header {
-  flex-wrap: wrap;
-}
-.word-bank-groups {
-  display: grid;
-  gap: 14px;
-}
-.word-bank-group {
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 14px;
-  background: #fbfaf6;
-}
-.word-bank-group h3 {
-  margin: 0;
-  font-size: 1rem;
-}
-.word-bank-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-.word-progress-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 34px;
-  padding: 7px 11px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--panel-soft);
-  color: var(--ink-2);
-  font-size: 0.9rem;
-  font-weight: 800;
-  cursor: pointer;
-}
-.word-progress-pill:hover {
-  filter: brightness(0.98);
-}
-.word-progress-pill.new {
-  background: #f4f6f8;
-  border-color: #d9e0e7;
-  color: #546171;
-}
-.word-progress-pill.learning {
-  background: #e8f1fb;
-  border-color: #bdd5ef;
-  color: #2f6fae;
-}
-.word-progress-pill.good {
-  background: var(--good-soft);
-  border-color: #b8dfca;
-  color: var(--good);
-}
-.word-progress-pill.warn {
-  background: var(--warn-soft);
-  border-color: #edd9ae;
-  color: #9e6a19;
-}
-.word-progress-pill.bad {
-  background: var(--bad-soft);
-  border-color: #f0c8c5;
-  color: var(--bad);
-}
-
 .codex-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -1667,7 +1589,6 @@ textarea:focus-visible {
 @media (max-width: 640px) {
   .app-shell { padding: 16px; }
   .title { font-size: 2rem; }
-  .subject-tabs { overflow-x: auto; }
   .hero-playground {
     width: 100%;
     height: 142px;
@@ -3893,21 +3814,6 @@ textarea:focus-visible {
 .ss-meadow-cell:nth-child(2) img { animation-delay: 0.7s; }
 .ss-meadow-cell:nth-child(3) img { animation-delay: 1.4s; }
 .ss-meadow-cell.egg img { transform: scale(0.86); }
-.ss-meadow-label {
-  position: absolute;
-  bottom: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
-  background: color-mix(in oklab, var(--panel) 80%, transparent);
-  padding: 1px 6px;
-  border-radius: 999px;
-  pointer-events: none;
-}
 
 @keyframes ss-breathe {
   0%, 100% { transform: translateY(0) scale(1); }
@@ -4857,4 +4763,476 @@ textarea:focus-visible {
 .ss-codex-link:focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
+}
+
+/* ---------- Word-bank scene wrappers ---------- */
+/* Reached via "Browse the word bank" on the practice dashboard. The shell
+   keeps the spelling-in-session hero backdrop so the word-bank feels like
+   a sibling surface to the setup scene rather than a separate page. */
+.word-bank-shell.spelling-in-session {
+  padding: 24px 26px 28px;
+}
+.word-bank-scene {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.word-bank-topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.word-bank-title {
+  font-family: var(--font-serif);
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+.wb-aggregates {
+  gap: 14px;
+}
+.wb-card-compact {
+  padding: 18px 20px 16px;
+  border-radius: 18px;
+}
+.wb-card-compact .eyebrow {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.wb-card-compact .section-title {
+  margin: 4px 0 10px;
+  font-size: 1.05rem;
+}
+.wb-card-compact .stat-grid {
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+}
+
+/* Chevron button at the right of each .wb-row — jumps straight into
+   drill mode for that word. Inherits the row's click-area but stops
+   propagation inside the dispatcher so tapping the chevron routes to
+   `data-value="drill"` while tapping the row routes to `explain`. */
+.wb-action {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  transition: background var(--dur) var(--ease-out),
+              color var(--dur) var(--ease-out),
+              border-color var(--dur) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out);
+}
+.wb-action:hover {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  border-color: color-mix(in oklab, var(--brand) 28%, var(--line));
+}
+.wb-action:active { transform: translateX(1px); }
+.wb-action svg { width: 16px; height: 16px; }
+
+/* ---------- WordDetailModal ---------- */
+/* Opens above the word-bank scene when a row or its drill chevron is
+   tapped. Backdrop is its own absolutely-positioned button behind the
+   modal so click-outside closes cleanly; pressing Escape also routes to
+   `spelling-word-detail-close` via the shortcuts layer. */
+.wb-modal-scrim {
+  position: fixed; inset: 0;
+  display: flex; justify-content: center; align-items: center;
+  padding: 24px;
+  background: rgba(15, 22, 32, 0.48);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 100;
+  animation: wbScrimIn var(--dur) var(--ease-out);
+}
+@keyframes wbScrimIn { from { opacity: 0; } to { opacity: 1; } }
+
+.wb-modal-backdrop {
+  position: absolute; inset: 0;
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.wb-modal {
+  position: relative;
+  z-index: 2;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 600px;
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  padding: 28px 32px 22px;
+  animation: wbModalIn var(--dur-slow) var(--ease-out);
+}
+@keyframes wbModalIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.wb-modal-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.wb-modal-head-main {
+  display: flex; gap: 16px; align-items: center;
+  min-width: 0; flex: 1;
+}
+.wb-modal-eyebrow {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.wb-modal-speaker {
+  appearance: none; cursor: pointer;
+  display: inline-flex; justify-content: center; align-items: center;
+  width: 48px; height: 48px; flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  border: 1px solid color-mix(in oklab, var(--brand) 22%, var(--line));
+  color: var(--brand-ink);
+  transition: background var(--dur) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur) var(--ease-out);
+}
+.wb-modal-speaker:hover {
+  background: color-mix(in oklab, var(--brand-soft) 55%, var(--brand));
+  color: var(--panel);
+}
+.wb-modal-speaker:active { transform: scale(0.94); }
+.wb-modal-speaker.playing {
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand) 28%, transparent);
+  animation: wbPulse var(--dur-slow) var(--ease-out);
+}
+.wb-modal-speaker svg { width: 22px; height: 22px; }
+/* Drill mode — decorative "ear" glyph so the learner cannot simply click
+   the speaker to hear the answer. */
+.wb-modal-speaker.muted {
+  background: var(--panel-soft);
+  border-color: var(--line);
+  color: var(--muted);
+  cursor: default;
+}
+@keyframes wbPulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in oklab, var(--brand) 40%, transparent); }
+  60%  { box-shadow: 0 0 0 10px color-mix(in oklab, var(--brand) 0%, transparent); }
+  100% { box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand) 28%, transparent); }
+}
+
+.wb-modal-word {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 2px 0 0;
+}
+/* Drill-mode heading — the word itself would give the answer away. Render
+   a short, quiet instruction instead. */
+.wb-modal-word.wb-modal-word-prompt {
+  font-family: var(--font-sans);
+  font-size: 1.35rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--ink-2);
+}
+
+.wb-modal-close {
+  appearance: none; cursor: pointer;
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 1.3rem; line-height: 1; font-weight: 400;
+  transition: background var(--dur) var(--ease-out),
+              color var(--dur) var(--ease-out),
+              border-color var(--dur) var(--ease-out);
+}
+.wb-modal-close:hover {
+  background: var(--panel-soft);
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.wb-modal-tabs {
+  display: flex; gap: 4px;
+  padding-top: 14px;
+  margin-bottom: -1px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.wb-modal-tab {
+  appearance: none; cursor: pointer;
+  padding: 8px 14px;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font: inherit; font-weight: 600; font-size: 0.9rem;
+  letter-spacing: -0.005em;
+  transition: color var(--dur) var(--ease-out),
+              border-color var(--dur) var(--ease-out);
+  margin-bottom: -1px;
+}
+.wb-modal-tab:hover { color: var(--ink-2); }
+.wb-modal-tab.on {
+  color: var(--ink);
+  border-bottom-color: var(--brand);
+}
+
+.wb-modal-body {
+  padding: 18px 0 6px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+
+.wb-modal-section { display: flex; flex-direction: column; gap: 8px; }
+.wb-modal-section-family { margin-top: -2px; }
+/* FamilyChips has its own top margin — cancel it inside the modal. */
+.wb-modal-section-family .family-chips {
+  margin-top: 0;
+  padding-left: 0;
+}
+
+.wb-modal-section-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+
+.wb-modal-def {
+  color: var(--ink);
+  font-size: 1.02rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.wb-modal-sample {
+  border-left: 3px solid var(--brand);
+  padding: 4px 0 4px 14px;
+  margin: 0;
+  color: var(--ink-2);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+.wb-modal-sample b {
+  color: var(--brand-ink);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.wb-drill-sentence {
+  font-family: var(--font-serif);
+  font-size: 1.12rem;
+  line-height: 1.6;
+  color: var(--ink);
+  margin: 0;
+}
+.wb-drill-blank {
+  display: inline-block;
+  min-width: 96px;
+  padding: 0 10px;
+  border-bottom: 2px solid var(--brand);
+  color: var(--brand-ink);
+  font-weight: 700;
+  font-style: normal;
+  text-align: center;
+  transition: color var(--dur) var(--ease-out),
+              border-color var(--dur) var(--ease-out);
+}
+.wb-drill-blank.revealed {
+  border-bottom-color: var(--good);
+  color: var(--good-strong);
+}
+
+/* Replay controls mirror the session audio row so muscle memory is
+   identical. Two equal-sized buttons; the slow one is a sibling. */
+.wb-drill-audio {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.wb-drill-audio-btn {
+  appearance: none; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 16px 10px 14px;
+  background: var(--brand-soft);
+  border: 1px solid color-mix(in oklab, var(--brand) 22%, var(--line));
+  border-radius: 999px;
+  color: var(--brand-ink);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  transition: background var(--dur) var(--ease-out),
+              color var(--dur) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur) var(--ease-out);
+}
+.wb-drill-audio-btn:hover {
+  background: color-mix(in oklab, var(--brand-soft) 55%, var(--brand));
+  color: var(--panel);
+}
+.wb-drill-audio-btn:active { transform: scale(0.96); }
+.wb-drill-audio-btn:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand) 28%, transparent);
+}
+.wb-drill-audio-btn svg { width: 18px; height: 18px; }
+.wb-drill-audio-btn.playing {
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand) 26%, transparent);
+  animation: wbPulse var(--dur-slow) var(--ease-out);
+}
+.wb-drill-audio-btn.slow {
+  background: var(--panel-soft);
+  border-color: var(--line);
+  color: var(--ink-2);
+}
+.wb-drill-audio-btn.slow:hover {
+  background: color-mix(in oklab, var(--panel-soft) 60%, var(--brand));
+  color: var(--brand-ink);
+  border-color: color-mix(in oklab, var(--brand) 28%, var(--line));
+}
+.wb-drill-audio-btn.slow.playing {
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand) 22%, transparent);
+}
+.wb-drill-audio-label { letter-spacing: 0.005em; }
+
+.wb-drill-form {
+  display: flex; gap: 10px; align-items: center;
+}
+.wb-drill-input {
+  flex: 1;
+  appearance: none;
+  padding: 12px 16px;
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font: inherit;
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  letter-spacing: -0.005em;
+  transition: border-color var(--dur) var(--ease-out),
+              box-shadow var(--dur) var(--ease-out),
+              background var(--dur) var(--ease-out);
+}
+.wb-drill-input:focus {
+  outline: 0;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand) 24%, transparent);
+}
+.wb-drill-input:disabled { opacity: 0.75; }
+.wb-drill-input::placeholder { color: var(--subtle); }
+.wb-drill-input.is-correct {
+  border-color: var(--good);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--good) 22%, transparent);
+}
+.wb-drill-input.is-wrong {
+  border-color: var(--bad);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--bad) 22%, transparent);
+}
+
+.wb-drill-feedback {
+  display: flex; gap: 12px; align-items: center;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+.wb-drill-feedback.good {
+  background: var(--good-soft);
+  color: var(--good-strong);
+}
+.wb-drill-feedback.warn {
+  background: var(--warn-soft);
+  color: var(--warn-strong);
+}
+.wb-drill-feedback b { color: inherit; }
+.wb-drill-feedback-icon {
+  flex-shrink: 0;
+  width: 24px; height: 24px;
+  display: inline-flex; justify-content: center; align-items: center;
+  background: currentColor;
+  border-radius: 999px;
+  font-weight: 700; font-size: 0.9rem;
+}
+.wb-drill-feedback.good .wb-drill-feedback-icon,
+.wb-drill-feedback.warn .wb-drill-feedback-icon {
+  color: var(--panel);
+}
+.wb-drill-feedback-icon svg { width: 14px; height: 14px; }
+
+.wb-modal-actions {
+  display: flex; justify-content: flex-end; gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+  margin-top: 4px;
+}
+
+.wb-modal-note {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+  margin: 12px 0 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wb-modal-scrim, .wb-modal { animation: none; }
+  .wb-modal-speaker,
+  .wb-drill-input,
+  .wb-drill-blank,
+  .wb-drill-audio-btn,
+  .wb-modal-close,
+  .wb-modal-tab,
+  .wb-action { transition: none; }
+  .wb-modal-speaker:active,
+  .wb-drill-audio-btn:active,
+  .wb-action:active { transform: none; }
+  .wb-modal-speaker.playing,
+  .wb-drill-audio-btn.playing { animation: none; }
+}
+
+@media (max-width: 720px) {
+  .wb-modal {
+    padding: 22px 20px 18px;
+    max-height: calc(100vh - 24px);
+  }
+  .wb-modal-word { font-size: 1.9rem; }
+  .wb-modal-actions { flex-wrap: wrap; }
+  .wb-drill-form { flex-direction: column; align-items: stretch; }
 }

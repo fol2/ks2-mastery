@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { CodexSurface } from './CodexSurface.jsx';
 import { HomeSurface } from './HomeSurface.jsx';
+import { TopNav } from './TopNav.jsx';
 
 function createSurfaceRenderer(Component) {
   let currentRoot = null;
@@ -33,3 +34,4 @@ function createSurfaceRenderer(Component) {
 
 window.__ks2HomeSurface = createSurfaceRenderer(HomeSurface);
 window.__ks2CodexSurface = createSurfaceRenderer(CodexSurface);
+window.__ks2SubjectTopNavSurface = createSurfaceRenderer(TopNav);

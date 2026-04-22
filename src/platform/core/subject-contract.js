@@ -1,12 +1,14 @@
 const REQUIRED_STRING_FIELDS = ['id', 'name', 'blurb'];
+/* The subject module exposes a single renderer (renderPractice) — the
+   retired Analytics / Profiles / Settings / Method tabs all routed through
+   separate renderers before the Codex Journal redesign, but the new subject
+   surface handles every phase (setup, session, summary, word bank) inside
+   renderPractice via `ui.phase`. Placeholders and real modules both align
+   to the single-renderer shape. */
 const REQUIRED_FUNCTION_FIELDS = [
   'initState',
   'getDashboardStats',
   'renderPractice',
-  'renderAnalytics',
-  'renderProfiles',
-  'renderSettings',
-  'renderMethod',
   'handleAction',
 ];
 

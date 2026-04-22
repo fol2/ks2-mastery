@@ -45,42 +45,6 @@ export function createPlaceholderSubject(meta) {
         </div>
       `;
     },
-    renderAnalytics() {
-      return `
-        <section class="card">
-          <div class="eyebrow">Placeholder analytics</div>
-          <h2 class="section-title">${escapeHtml(meta.name)} analytics slot</h2>
-          <p class="subtitle">No learner data yet. The new platform keeps a dedicated analytics surface for each subject so reporting does not have to live inside the practice engine.</p>
-        </section>
-      `;
-    },
-    renderProfiles() {
-      return `
-        <section class="card">
-          <div class="eyebrow">Learner targeting</div>
-          <h2 class="section-title">${escapeHtml(meta.name)} learner profile hooks</h2>
-          <p class="subtitle">Year group, goal, difficulty routing and misconceptions can all be attached to this subject without changing the core shell.</p>
-        </section>
-      `;
-    },
-    renderSettings() {
-      return `
-        <section class="card">
-          <div class="eyebrow">Subject settings</div>
-          <h2 class="section-title">${escapeHtml(meta.name)} settings stub</h2>
-          <p class="subtitle">Future subject-specific controls belong here rather than inside a giant shared settings file.</p>
-        </section>
-      `;
-    },
-    renderMethod() {
-      return `
-        <section class="card">
-          <div class="eyebrow">Method</div>
-          <h2 class="section-title">How ${escapeHtml(meta.name)} should plug in</h2>
-          <div class="code-block">subject module → deterministic engine → local/API gateway → analytics → game events</div>
-        </section>
-      `;
-    },
     handleAction() {
       return false;
     },

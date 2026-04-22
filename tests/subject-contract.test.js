@@ -21,18 +21,6 @@ function completeSubjectModule(overrides = {}) {
     renderPractice() {
       return '<div>practice</div>';
     },
-    renderAnalytics() {
-      return '<div>analytics</div>';
-    },
-    renderProfiles() {
-      return '<div>profiles</div>';
-    },
-    renderSettings() {
-      return '<div>settings</div>';
-    },
-    renderMethod() {
-      return '<div>method</div>';
-    },
     handleAction() {
       return false;
     },
@@ -42,11 +30,11 @@ function completeSubjectModule(overrides = {}) {
 
 test('subject registry rejects modules missing required contract functions', () => {
   const broken = completeSubjectModule();
-  delete broken.renderSettings;
+  delete broken.renderPractice;
 
   assert.throws(
     () => buildSubjectRegistry([broken]),
-    /missing required function "renderSettings\(\)"/i,
+    /missing required function "renderPractice\(\)"/i,
   );
 });
 
@@ -108,6 +96,6 @@ test('spelling practice dashboard renders without service UI metadata', () => {
     service,
   });
 
-  assert.match(html, /Practice setup/);
+  assert.match(html, /Round setup/);
   assert.match(html, /#3E6FA8/i);
 });

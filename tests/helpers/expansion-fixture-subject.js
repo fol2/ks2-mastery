@@ -365,51 +365,6 @@ export const expansionFixtureModule = {
     if (ui.phase === 'summary') return renderSummary(ui);
     return renderDashboard(context, learnerId);
   },
-  renderAnalytics(context) {
-    const learnerId = context.appState.learners.selectedId;
-    const analytics = context.service.getAnalyticsSnapshot(learnerId);
-    return `
-      <section class="card">
-        <div class="eyebrow">Candidate subject fixture</div>
-        <h2 class="section-title">Expansion fixture analytics</h2>
-        <div class="chip-row">
-          <span class="chip">Answered ${analytics.attempts}</span>
-          <span class="chip">Correct ${analytics.correct}</span>
-          <span class="chip">Accuracy ${analytics.accuracy}%</span>
-          <span class="chip">Sessions ${analytics.sessionsCompleted}</span>
-        </div>
-      </section>
-    `;
-  },
-  renderProfiles() {
-    return `
-      <section class="card">
-        <div class="eyebrow">Candidate subject fixture</div>
-        <h2 class="section-title">Expansion fixture learner hooks</h2>
-        <p class="subtitle">Profiles still belong to the platform. The fixture only consumes the shared learner record.</p>
-      </section>
-    `;
-  },
-  renderSettings(context) {
-    const learnerId = context.appState.learners.selectedId;
-    const prefs = context.service.getPrefs(learnerId);
-    return `
-      <section class="card">
-        <div class="eyebrow">Candidate subject fixture</div>
-        <h2 class="section-title">Expansion fixture settings</h2>
-        <p class="subtitle">Current difficulty preference: <strong>${escapeHtml(prefs.difficulty)}</strong></p>
-      </section>
-    `;
-  },
-  renderMethod() {
-    return `
-      <section class="card">
-        <div class="eyebrow">Candidate subject fixture</div>
-        <h2 class="section-title">Expansion fixture method</h2>
-        <div class="code-block">subject module → deterministic service → generic repositories → event publication → analytics snapshot</div>
-      </section>
-    `;
-  },
   handleAction(action, context) {
     const learnerId = context.appState.learners.selectedId;
     const ui = context.service.initState(context.appState.subjectUi[EXPANSION_FIXTURE_SUBJECT_ID], learnerId);

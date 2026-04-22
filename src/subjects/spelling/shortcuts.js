@@ -20,6 +20,15 @@ export function resolveSpellingShortcut(event, appState) {
   const answerInput = isAnswerInput(target);
 
   if (event?.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+    /* Word bank > word detail modal: Escape closes the modal first. If no
+       modal is open, Escape returns from the word-bank scene to the setup
+       dashboard so the key always has a sensible "go back" meaning. */
+    if (spellingUi?.phase === 'word-bank') {
+      if (appState?.transientUi?.spellingWordDetailSlug) {
+        return { action: 'spelling-word-detail-close', preventDefault: true };
+      }
+      return { action: 'spelling-close-word-bank', preventDefault: true };
+    }
     if (spellingUi?.phase !== 'session') return null;
     if (typing && !answerInput) return null;
     return {

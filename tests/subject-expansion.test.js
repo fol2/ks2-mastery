@@ -42,13 +42,9 @@ const spellingSpec = {
   subjectId: 'spelling',
   createHarness: createSpellingHarness,
   prepareHarness: prepareSpellingHarness,
-  practiceMatcher: /Practice setup/,
+  practiceMatcher: /Round setup/,
   sessionMatcher: /Spell the word you hear|Spell the dictated word/,
   summaryMatcher: /Session summary/,
-  analyticsMatcher: /Whole-list progress/,
-  profilesMatcher: /Spelling profile hooks/,
-  settingsMatcher: /Current defaults/,
-  methodMatcher: /What Spelling owns/,
   getUiState(harness) {
     return harness.store.getState().subjectUi.spelling;
   },
@@ -86,10 +82,6 @@ const expansionFixtureSpec = {
   practiceMatcher: /Expansion fixture practice/,
   sessionMatcher: /Expansion fixture live round/,
   summaryMatcher: /Expansion fixture summary/,
-  analyticsMatcher: /Expansion fixture analytics/,
-  profilesMatcher: /Expansion fixture learner hooks/,
-  settingsMatcher: /Expansion fixture settings/,
-  methodMatcher: /Expansion fixture method/,
   getUiState(harness) {
     return harness.store.getState().subjectUi[EXPANSION_FIXTURE_SUBJECT_ID];
   },

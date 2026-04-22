@@ -130,6 +130,9 @@ const VALID_SPELLING_WORD_BANK_FILTERS = new Set([
   'unseen',
 ]);
 
+const VALID_WORD_DETAIL_MODES = new Set(['explain', 'drill']);
+const VALID_WORD_DRILL_RESULTS = new Set(['correct', 'incorrect']);
+
 function normaliseTransientUi(rawValue) {
   const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
   /* Word bank status filter — v1 filter tokens (unseen/weak); the word bank
@@ -139,11 +142,29 @@ function normaliseTransientUi(rawValue) {
   const rawFilter = typeof raw.spellingAnalyticsStatusFilter === 'string'
     ? raw.spellingAnalyticsStatusFilter
     : 'all';
+  /* Word detail modal state — `slug` is the single source of truth for whether
+     the modal is open; `mode` toggles between explain/drill inside the modal;
+     `drillTyped` + `drillResult` are scoped to a single drill attempt so
+     switching away and back resets the input. */
+  const rawDetailMode = typeof raw.spellingWordDetailMode === 'string'
+    ? raw.spellingWordDetailMode
+    : 'explain';
+  const rawDrillResult = typeof raw.spellingWordBankDrillResult === 'string'
+    ? raw.spellingWordBankDrillResult
+    : '';
   return {
     spellingAnalyticsWordSearch: typeof raw.spellingAnalyticsWordSearch === 'string'
       ? raw.spellingAnalyticsWordSearch.slice(0, 80)
       : '',
     spellingAnalyticsStatusFilter: VALID_SPELLING_WORD_BANK_FILTERS.has(rawFilter) ? rawFilter : 'all',
+    spellingWordDetailSlug: typeof raw.spellingWordDetailSlug === 'string'
+      ? raw.spellingWordDetailSlug.slice(0, 120)
+      : '',
+    spellingWordDetailMode: VALID_WORD_DETAIL_MODES.has(rawDetailMode) ? rawDetailMode : 'explain',
+    spellingWordBankDrillTyped: typeof raw.spellingWordBankDrillTyped === 'string'
+      ? raw.spellingWordBankDrillTyped.slice(0, 80)
+      : '',
+    spellingWordBankDrillResult: VALID_WORD_DRILL_RESULTS.has(rawDrillResult) ? rawDrillResult : null,
   };
 }
 

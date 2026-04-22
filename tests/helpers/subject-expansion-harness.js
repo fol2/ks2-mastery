@@ -67,18 +67,6 @@ export function registerSubjectConformanceSuite(spec) {
     const stats = subject.getDashboardStats(harness.store.getState(), harness.contextFor(spec.subjectId));
     assertDashboardStatsShape(stats);
     spec.assertDashboardStats?.(stats, harness);
-
-    harness.dispatch('subject-set-tab', { tab: 'analytics' });
-    assert.match(harness.render(), spec.analyticsMatcher);
-
-    harness.dispatch('subject-set-tab', { tab: 'profiles' });
-    assert.match(harness.render(), spec.profilesMatcher);
-
-    harness.dispatch('subject-set-tab', { tab: 'settings' });
-    assert.match(harness.render(), spec.settingsMatcher);
-
-    harness.dispatch('subject-set-tab', { tab: 'method' });
-    assert.match(harness.render(), spec.methodMatcher);
   });
 
   test(`${spec.label} writes state, session, analytics, and domain events through the standard boundaries`, () => {

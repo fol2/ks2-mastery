@@ -6,14 +6,6 @@ import { monsterAsset, monsterAssetSrcSet } from '../game/monsters.js';
 import { monsterSummary, monsterSummaryFromSpellingAnalytics } from '../game/monster-system.js';
 import { readOnlyLearnerActionBlockReason } from '../hubs/shell-access.js';
 
-const TAB_META = [
-  ['practice', 'Practice'],
-  ['analytics', 'Analytics'],
-  ['profiles', 'Profiles'],
-  ['settings', 'Settings'],
-  ['method', 'Method'],
-];
-
 function iconGlyph(icon) {
   return {
     pen: '✎',
@@ -341,22 +333,28 @@ function subjectTabContent(subject, activeTab, appState, contentContext, runtime
     const fallback = subjectRenderFallback(subject, runtimeEntry, activeTab);
     return fallback;
   }
-
-  if (activeTab === 'practice') return subject.renderPractice(contentContext);
-  if (activeTab === 'analytics') return subject.renderAnalytics(contentContext);
-  if (activeTab === 'profiles') return subject.renderProfiles(contentContext);
-  if (activeTab === 'settings') return subject.renderSettings(contentContext);
-  if (activeTab === 'method') return subject.renderMethod(contentContext);
-  return '';
+  /* renderSubjectScreen pins activeTab to 'practice' after the Codex Journal
+     redesign. The practice renderer internally routes between setup /
+     session / summary / word-bank phases, so every subject surface flows
+     through this single entry point. */
+  return subject.renderPractice(contentContext);
 }
 
 
 function renderHeader(appState, context) {
+  const routeScreen = appState.route?.screen || 'dashboard';
+  /* Subject route reuses the home TopNav React component. We emit an empty
+     mount node; main.js#mountReactSurfaces renders the component into it.
+     Adult hubs (parent-hub / admin-hub) stay on the legacy template header
+     for now — they still expose the Dashboard / Operations / Parent Hub pill
+     row which the learner-facing TopNav does not. */
+  if (routeScreen === 'subject') {
+    return `<div id="subject-topnav-root" data-subject-topnav-mount="true"></div>`;
+  }
   const auth = globalThis.KS2_AUTH_SESSION || {};
   const authChip = auth.signedIn
     ? `<span class="profile-signed-in" title="${escapeHtml(auth.email || 'Signed in')}">${escapeHtml(auth.email || 'Signed in')}</span><button type="button" class="topnav-link" data-action="platform-logout">Sign out</button>`
     : '';
-  const routeScreen = appState.route?.screen || 'dashboard';
   const activeAdultContext = context?.activeAdultLearnerContext || null;
   const adultAccessChips = activeAdultContext
     ? `
@@ -1161,11 +1159,14 @@ function renderSubjectScreen(context) {
   const { appState } = context;
   const subject = resolveSubject(appState.route.subjectId, context);
   const ui = appState.subjectUi[subject.id] || {};
-  const activeTab = appState.route.tab || 'practice';
-  const accent = subject.accent || '#3E6FA8';
   if (!hasWritableLearner(appState)) {
     return renderNoWritableLearnerShellCard(context, `${subject.name} stays unavailable without a writable learner in the main shell`);
   }
+  /* The redesigned Codex Journal surface routes all subject affordances
+     (setup, session, summary, word bank) through the practice renderer and
+     manages internal phases via `ui.phase`. Analytics / Profiles / Settings
+     / Method tabs have been retired so the top-level tab row is gone. */
+  const activeTab = 'practice';
   const contentContext = subjectContext(subject, context);
   const runtimeEntry = context.runtimeBoundary?.read?.({
     learnerId: appState.learners.selectedId,
@@ -1180,51 +1181,34 @@ function renderSubjectScreen(context) {
     try {
       mainContent = subjectTabContent(subject, activeTab, appState, contentContext, null);
     } catch (error) {
-      const methodName = activeTab === 'practice'
-        ? 'renderPractice'
-        : activeTab === 'analytics'
-          ? 'renderAnalytics'
-          : activeTab === 'profiles'
-            ? 'renderProfiles'
-            : activeTab === 'settings'
-              ? 'renderSettings'
-              : 'renderMethod';
       const captured = context.runtimeBoundary?.capture?.({
         learnerId: appState.learners.selectedId,
         subject,
         tab: activeTab,
         phase: 'render',
-        methodName,
+        methodName: 'renderPractice',
         error,
       }) || {
-        message: `${subject.name} could not render the ${subjectTabLabel(activeTab)} tab right now.`,
+        message: `${subject.name} could not render right now.`,
         debugMessage: error?.message || String(error),
         phase: 'render',
-        methodName,
+        methodName: 'renderPractice',
       };
       mainContent = subjectTabContent(subject, activeTab, appState, contentContext, captured);
     }
   }
 
-  /* Slim subject chrome — a single breadcrumb row + pill tabs, matching the
-     v1 Codex Journal pattern. The heavy card header that used to live here
-     duplicated the subject name that now lives inside each scene (setup hero,
-     word bank header, etc.), so it has been retired. "Subject module" is kept
-     in the breadcrumb as the ancestor so the chrome still reads as "platform
-     → subject module → {subject}" rather than a bare navigation bar. */
+  /* Slim chrome — one breadcrumb row that says "← Dashboard / {subject}".
+     No ancestor pill, no tab row, no outer `shell-grid` — each scene (setup,
+     session, summary, word bank) renders its own card shell. */
   return `
     <nav class="subject-breadcrumb" aria-label="Subject breadcrumb">
       <button type="button" class="subject-breadcrumb-link" data-action="navigate-home">← Dashboard</button>
       <span class="subject-breadcrumb-sep" aria-hidden="true">/</span>
-      <span class="subject-breadcrumb-ancestor">Subject module</span>
-      <span class="subject-breadcrumb-sep" aria-hidden="true">/</span>
-      <span class="subject-breadcrumb-current" style="color:${accent};">${escapeHtml(subject.name)}</span>
+      <span class="subject-breadcrumb-current">${escapeHtml(subject.name)}</span>
     </nav>
-    <div class="subject-tabs" role="tablist" aria-label="${escapeHtml(subject.name)} tabs">
-      ${TAB_META.map(([tabId, label]) => `<button type="button" role="tab" aria-selected="${tabId === activeTab ? 'true' : 'false'}" class="tab${tabId === activeTab ? ' active' : ''}" style="${tabId === activeTab ? `background:${accent}; border-color:${accent};` : ''}" data-action="subject-set-tab" data-tab="${tabId}">${escapeHtml(label)}</button>`).join('')}
-    </div>
     ${ui.error ? `<section class="card" style="margin-bottom:18px;"><div class="feedback bad"><strong>Subject message</strong><div>${escapeHtml(ui.error)}</div></div></section>` : ''}
-    <section class="shell-grid">${mainContent}</section>
+    ${mainContent}
   `;
 }
 

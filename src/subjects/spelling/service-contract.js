@@ -1,6 +1,6 @@
 export const SPELLING_SERVICE_STATE_VERSION = 1;
 
-export const SPELLING_ROOT_PHASES = Object.freeze(['dashboard', 'session', 'summary']);
+export const SPELLING_ROOT_PHASES = Object.freeze(['dashboard', 'session', 'summary', 'word-bank']);
 export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single']);
 export const SPELLING_YEAR_FILTERS = Object.freeze(['all', 'y3-4', 'y5-6']);
 export const SPELLING_SESSION_TYPES = Object.freeze(['learning', 'test']);

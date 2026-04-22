@@ -65,7 +65,7 @@ test('dashboard render smoke test covers spelling subject dashboard stats withou
   assert.doesNotMatch(html, /Temporarily unavailable/);
 });
 
-test('uncaught monsters stay off the main dashboard but use codex placeholders', () => {
+test('main dashboard hides uncaught monster art and the spelling setup shows only caught-meadow or empty state', () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });
   const store = createStore(SUBJECTS, { repositories });
@@ -108,8 +108,13 @@ test('uncaught monsters stay off the main dashboard but use codex placeholders',
     ...baseContext,
     appState: spellingState,
   });
-  assert.match(spellingHtml, /monster-placeholder/);
-  assert.match(spellingHtml, /Not caught/);
+  /* The Codex Journal redesign dropped the in-setup full codex grid in favour
+     of a compact caught-only meadow. A learner with no caught monsters sees
+     the empty-state hint; the setup view never exposes uncaught placeholders
+     or "Not caught" chips. */
+  assert.doesNotMatch(spellingHtml, /monster-placeholder/);
+  assert.doesNotMatch(spellingHtml, /Not caught/);
+  assert.match(spellingHtml, /Catch your first monster to populate this meadow\./);
 });
 
 test('home meadow shows an egg only once a species has been caught and hides uncaught species entirely', async () => {
