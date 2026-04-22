@@ -85,6 +85,20 @@ test('platform TTS calls the Worker audio proxy before browser fallback', async 
       sentence: 'The birds sang early in the day.',
       slow: true,
     });
+
+    const wordOnlyResult = await tts.speak({
+      word: 'possess',
+      wordOnly: true,
+    });
+
+    assert.equal(wordOnlyResult, true);
+    assert.deepEqual(played, ['blob:tts-audio', 'blob:tts-audio']);
+    assert.equal(calls.length, 2);
+    assert.deepEqual(calls[1].body, {
+      word: 'possess',
+      slow: false,
+      wordOnly: true,
+    });
   } finally {
     tts.stop();
     globalThis.Audio = originalAudio;

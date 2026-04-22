@@ -110,13 +110,15 @@ export function createPlatformTts({
     });
   }
 
-  async function speakWithRemote({ word, sentence, slow = false }, token) {
+  async function speakWithRemote({ word, sentence, slow = false, wordOnly = false }, token) {
     if (!remoteEnabled || typeof fetchFn !== 'function' || typeof Audio === 'undefined' || typeof URL === 'undefined') {
       return false;
     }
 
     currentAbort = new AbortController();
     try {
+      const requestBody = { word, sentence, slow };
+      if (wordOnly) requestBody.wordOnly = true;
       const response = await fetchFn(endpoint, {
         method: 'POST',
         credentials: 'include',
@@ -125,7 +127,7 @@ export function createPlatformTts({
           'content-type': 'application/json',
         },
         signal: currentAbort.signal,
-        body: JSON.stringify({ word, sentence, slow }),
+        body: JSON.stringify(requestBody),
       });
       if (!response.ok) return false;
       const blob = await response.blob();
