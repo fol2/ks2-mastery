@@ -130,7 +130,7 @@ The important invariant is that `spellingPool` becomes the authority for core-vs
 
 ## Implementation Units
 
-- [ ] **Unit 1: Add The Spelling Pool Contract**
+- [x] **Unit 1: Add The Spelling Pool Contract**
 
 **Goal:** Extend the content and runtime word model so spelling words can belong to either the core statutory pool or the Extra expansion pool.
 

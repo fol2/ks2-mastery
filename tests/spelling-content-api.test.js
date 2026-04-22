@@ -54,6 +54,47 @@ function stripWordExplanations(bundle) {
   return next;
 }
 
+function addExtraWordList(bundle) {
+  const next = cloneSerialisable(bundle);
+  const listId = 'extra-api-science';
+  next.draft.wordLists.push({
+    id: listId,
+    title: 'Extra API science',
+    spellingPool: 'extra',
+    yearGroups: [],
+    tags: ['extra', 'science'],
+    wordSlugs: ['mollusc'],
+    sourceNote: 'Extra API test list',
+    provenance: { source: 'tests', note: 'Added inside tests.' },
+    sortIndex: 9999,
+  });
+  next.draft.words.push({
+    slug: 'mollusc',
+    word: 'Mollusc',
+    family: 'Science: animal groups',
+    listId,
+    yearGroups: [],
+    tags: ['extra', 'science'],
+    accepted: ['mollusc'],
+    explanation: 'A mollusc is a soft-bodied animal, often with a shell.',
+    sentenceEntryIds: ['mollusc__01'],
+    sourceNote: 'Extra API test word',
+    provenance: { source: 'tests', note: 'Added inside tests.' },
+    sortIndex: 9999,
+  });
+  next.draft.sentences.push({
+    id: 'mollusc__01',
+    wordSlug: 'mollusc',
+    text: 'A snail is a mollusc with a coiled shell.',
+    variantLabel: 'baseline',
+    tags: ['extra', 'science'],
+    sourceNote: 'Extra API test sentence',
+    provenance: { source: 'tests', note: 'Added inside tests.' },
+    sortIndex: 9999,
+  });
+  return next;
+}
+
 test('api spelling content repository hydrates the seeded published bundle and persists valid content changes', async () => {
   const server = createWorkerRepositoryServer();
   try {
@@ -86,6 +127,40 @@ test('api spelling content repository hydrates the seeded published bundle and p
     });
     const reloaded = await fresh.hydrate();
     assert.equal(reloaded.draft.notes, 'Operator note from API repository test.');
+  } finally {
+    server.close();
+  }
+});
+
+test('worker spelling content route accepts valid Extra pool content without statutory year groups', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const initialResponse = await server.fetch('https://repo.test/api/content/spelling');
+    const initial = await initialResponse.json();
+    const updated = addExtraWordList(initial.content);
+
+    const response = await server.fetch('https://repo.test/api/content/spelling', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        content: updated,
+        mutation: {
+          requestId: 'content-extra-pool-1',
+          correlationId: 'content-extra-pool-1',
+          expectedAccountRevision: initial.mutation.accountRevision,
+        },
+      }),
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.content.draft.wordLists.find((list) => list.id === 'extra-api-science').spellingPool, 'extra');
+    assert.equal(payload.content.draft.words.find((word) => word.slug === 'mollusc').spellingPool, 'extra');
+    assert.deepEqual(payload.content.draft.words.find((word) => word.slug === 'mollusc').yearGroups, []);
+
+    const reloadedResponse = await server.fetch('https://repo.test/api/content/spelling');
+    const reloaded = await reloadedResponse.json();
+    assert.equal(reloaded.content.draft.words.find((word) => word.slug === 'mollusc').spellingPool, 'extra');
   } finally {
     server.close();
   }

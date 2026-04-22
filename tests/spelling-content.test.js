@@ -9,6 +9,7 @@ import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createLocalSpellingContentRepository } from '../src/subjects/spelling/content/repository.js';
 import { createSpellingContentService } from '../src/subjects/spelling/content/service.js';
 import {
+  SPELLING_CONTENT_MODEL_VERSION,
   extractPortableSpellingContent,
   publishSpellingContentBundle,
   validateSpellingContentBundle,
@@ -51,6 +52,48 @@ function addDraftOnlyWord(bundle) {
     sortIndex: 9999,
   });
   next.draft.wordLists[0].wordSlugs.push('draftonly');
+  return next;
+}
+
+function addExtraWordList(bundle, { wordSpellingPool } = {}) {
+  const next = cloneSerialisable(bundle);
+  const listId = 'extra-test-science';
+  next.draft.wordLists.push({
+    id: listId,
+    title: 'Extra test science',
+    spellingPool: 'extra',
+    yearGroups: [],
+    tags: ['extra', 'science'],
+    wordSlugs: ['mollusc'],
+    sourceNote: 'Extra pool test list',
+    provenance: { source: 'tests', note: 'Added inside tests.' },
+    sortIndex: 9999,
+  });
+  next.draft.words.push({
+    slug: 'mollusc',
+    word: 'Mollusc',
+    family: 'Science: animal groups',
+    listId,
+    ...(wordSpellingPool ? { spellingPool: wordSpellingPool } : {}),
+    yearGroups: wordSpellingPool === 'core' ? ['Y3', 'Y4'] : [],
+    tags: ['extra', 'science'],
+    accepted: ['mollusc'],
+    explanation: 'A mollusc is a soft-bodied animal, often with a shell.',
+    sentenceEntryIds: ['mollusc__01'],
+    sourceNote: 'Extra pool test word',
+    provenance: { source: 'tests', note: 'Added inside tests.' },
+    sortIndex: 9999,
+  });
+  next.draft.sentences.push({
+    id: 'mollusc__01',
+    wordSlug: 'mollusc',
+    text: 'A snail is a mollusc with a coiled shell.',
+    variantLabel: 'baseline',
+    tags: ['extra', 'science'],
+    sourceNote: 'Extra pool test sentence',
+    provenance: { source: 'tests', note: 'Added inside tests.' },
+    sortIndex: 9999,
+  });
   return next;
 }
 
@@ -103,9 +146,13 @@ test('seeded spelling content validates and round-trips through the portable exp
 
   const validation = content.validate();
   assert.equal(validation.ok, true);
+  assert.equal(validation.bundle.modelVersion, SPELLING_CONTENT_MODEL_VERSION);
   assert.equal(validation.errors.length, 0);
   assert.equal(validation.bundle.releases.length, 1);
   assert.equal(validation.bundle.publication.publishedVersion, 1);
+  assert.ok(validation.bundle.draft.wordLists.every((list) => list.spellingPool === 'core'));
+  assert.ok(validation.bundle.draft.words.every((word) => word.spellingPool === 'core'));
+  assert.ok(validation.bundle.releases[0].snapshot.words.every((word) => word.spellingPool === 'core'));
   assert.ok(validation.bundle.draft.words.every((word) => word.explanation));
   assert.ok(validation.bundle.releases[0].snapshot.words.every((word) => word.explanation));
 
@@ -113,6 +160,40 @@ test('seeded spelling content validates and round-trips through the portable exp
   const roundTripped = extractPortableSpellingContent(exported);
   assert.equal(roundTripped.draft.words.length, validation.bundle.draft.words.length);
   assert.equal(roundTripped.releases[0].version, 1);
+});
+
+test('extra spelling pool validates without statutory year groups and publishes as Extra runtime words', () => {
+  const bundle = addExtraWordList(SEEDED_SPELLING_CONTENT_BUNDLE);
+  const validation = validateSpellingContentBundle(bundle);
+
+  assert.equal(validation.ok, true);
+  const extraList = validation.bundle.draft.wordLists.find((list) => list.id === 'extra-test-science');
+  const extraWord = validation.bundle.draft.words.find((word) => word.slug === 'mollusc');
+  assert.equal(extraList.spellingPool, 'extra');
+  assert.deepEqual(extraList.yearGroups, []);
+  assert.equal(extraWord.spellingPool, 'extra');
+  assert.deepEqual(extraWord.yearGroups, []);
+
+  const published = publishSpellingContentBundle(bundle, {
+    notes: 'Publish Extra pool test word.',
+    publishedAt: 23456,
+  });
+  const runtimeWord = published.releases.at(-1).snapshot.wordBySlug.mollusc;
+
+  assert.equal(runtimeWord.spellingPool, 'extra');
+  assert.equal(runtimeWord.year, 'extra');
+  assert.equal(runtimeWord.yearLabel, 'Extra');
+  assert.deepEqual(runtimeWord.yearGroups, []);
+  assert.deepEqual(runtimeWord.accepted, ['mollusc']);
+  assert.deepEqual(runtimeWord.familyWords, ['Mollusc']);
+});
+
+test('validation catches spelling-pool mismatches between word lists and words', () => {
+  const broken = addExtraWordList(SEEDED_SPELLING_CONTENT_BUNDLE, { wordSpellingPool: 'core' });
+
+  const validation = validateSpellingContentBundle(broken);
+  assert.equal(validation.ok, false);
+  assert.ok(validation.errors.some((issue) => issue.code === 'pool_mismatch'));
 });
 
 test('validation catches duplicate words and broken sentence references', () => {
