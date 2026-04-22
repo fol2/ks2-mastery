@@ -105,6 +105,50 @@ export function normaliseSummaryCard(card) {
   return { label, value, sub };
 }
 
+/* Derive the round-level totals the UI needs for the summary scene from the
+   engine's card list. The legacy engine emits different card shapes for the
+   learning and test flows — learning cards expose the total on the first
+   card ("Words in round" / "Practice words") while test cards encode it as
+   "correct/total" on the "Score" card. Keeping the derivation here means
+   every UI that reads a summary gets the same normalised shape without the
+   legacy engine changing. */
+function deriveSummaryTotals(mode, cards, mistakes) {
+  const firstValue = cards.length ? cards[0].value : '';
+  let totalWords = 0;
+  let correct = 0;
+
+  if (mode === 'test') {
+    const scoreCard = cards.find((card) => card.label === 'Score');
+    if (scoreCard && typeof scoreCard.value === 'string') {
+      const match = /^(\d+)\s*\/\s*(\d+)$/.exec(scoreCard.value);
+      if (match) {
+        correct = Number(match[1]);
+        totalWords = Number(match[2]);
+      }
+    }
+    if (!totalWords) {
+      const correctCard = cards.find((card) => card.label === 'Correct');
+      if (correctCard && typeof correctCard.value === 'number') {
+        correct = correctCard.value;
+      }
+      totalWords = correct + mistakes.length;
+    }
+  } else {
+    if (typeof firstValue === 'number') {
+      totalWords = firstValue;
+    } else {
+      const parsed = Number.parseInt(String(firstValue ?? ''), 10);
+      totalWords = Number.isFinite(parsed) ? parsed : 0;
+    }
+    correct = Math.max(0, totalWords - mistakes.length);
+  }
+
+  totalWords = Math.max(0, totalWords);
+  correct = Math.max(0, Math.min(totalWords, correct));
+  const accuracy = totalWords > 0 ? Math.round((correct / totalWords) * 100) : null;
+  return { totalWords, correct, accuracy };
+}
+
 export function normaliseSummary(value, isKnownSlug) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const cards = Array.isArray(value.cards)
@@ -126,13 +170,30 @@ export function normaliseSummary(value, isKnownSlug) {
         })
         .filter(Boolean)
     : [];
+  const mode = normaliseMode(value.mode, 'smart');
+  const derived = deriveSummaryTotals(mode, cards, mistakes);
+  const providedTotal = Number(value.totalWords);
+  const providedCorrect = Number(value.correct);
+  const providedAccuracy = value.accuracy;
+  const totalWords = Number.isInteger(providedTotal) && providedTotal >= 0
+    ? providedTotal
+    : derived.totalWords;
+  const correct = Number.isInteger(providedCorrect) && providedCorrect >= 0
+    ? Math.min(totalWords, providedCorrect)
+    : derived.correct;
+  const accuracy = typeof providedAccuracy === 'number' && Number.isFinite(providedAccuracy)
+    ? providedAccuracy
+    : derived.accuracy;
   return {
-    mode: normaliseMode(value.mode, 'smart'),
+    mode,
     label: normaliseString(value.label, 'Spelling round'),
     message: normaliseString(value.message, 'Round complete.'),
     cards,
     mistakes,
     elapsedMs: normaliseNonNegativeInteger(value.elapsedMs, 0),
+    totalWords,
+    correct,
+    accuracy,
   };
 }
 

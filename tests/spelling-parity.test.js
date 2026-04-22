@@ -40,7 +40,6 @@ test('live spelling card keeps family hidden and restores legacy phase-specific 
 
   const startHtml = harness.render();
   assert.doesNotMatch(startHtml, /Family:/);
-  assert.match(startHtml, /Family hidden during live recall/);
   assert.match(startHtml, /Submit/);
   assert.match(startHtml, /placeholder="Type the spelling here"/);
 

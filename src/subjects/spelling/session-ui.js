@@ -47,8 +47,10 @@ export function spellingSessionInfoChips(session) {
   if (!session) return [];
   const chips = [];
   if (session.currentCard?.word?.yearLabel) chips.push(session.currentCard.word.yearLabel);
-  chips.push('AI-generated dictation voice');
   if (session.practiceOnly) chips.push('Practice only');
-  if (isLearningSession(session)) chips.push('Family hidden during live recall');
   return chips;
+}
+
+export function spellingSessionVoiceNote() {
+  return 'AI-generated dictation voice';
 }

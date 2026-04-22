@@ -1,15 +1,14 @@
 import { monsterSummaryFromSpellingAnalytics } from '../../platform/game/monster-system.js';
 import { monsterAsset, monsterAssetSrcSet } from '../../platform/game/monsters.js';
-import { escapeHtml, formatElapsed } from '../../platform/core/utils.js';
+import { escapeHtml, formatElapsedMinutes } from '../../platform/core/utils.js';
 import { REGION_BACKGROUND_URLS } from '../../surfaces/home/data.js';
 import { createInitialSpellingState } from './service-contract.js';
 import {
   spellingSessionContextNote,
-  spellingSessionFooterNote,
   spellingSessionInfoChips,
   spellingSessionInputPlaceholder,
-  spellingSessionProgressLabel,
   spellingSessionSubmitLabel,
+  spellingSessionVoiceNote,
 } from './session-ui.js';
 
 const SPELLING_ACCENT = '#3E6FA8';
@@ -201,6 +200,35 @@ function renderCloze(sentence, { answer = '', revealAnswer = false } = {}) {
 }
 
 /* --------------------------------------------------------------
+   Drill cloze builder — word-bank sentences are stored as natural
+   prose (no ________ sentinel), so for the drill we must synthesise
+   a blanked variant by replacing the target word with the sentinel
+   before handing off to renderCloze. Uses a word-boundary, case-
+   insensitive regex so "flight" in "flight." matches without
+   clipping punctuation. If the target word does not appear in the
+   sentence (e.g. the word-bank entry uses a close inflection), fall
+   back to a synthetic cloze that renders just the blank — better a
+   missing context than a leaked answer.
+   -------------------------------------------------------------- */
+function escapeRegExp(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildDrillCloze(sentence, word) {
+  const raw = String(sentence || '');
+  const target = String(word?.word || '').trim();
+  if (!target) return raw;
+  if (raw.includes('________')) return raw;
+  const pattern = new RegExp(`\\b${escapeRegExp(target)}\\b`, 'i');
+  if (pattern.test(raw)) {
+    return raw.replace(pattern, '________');
+  }
+  /* No occurrence — give the learner just the blank so the answer
+     never leaks into the prompt. */
+  return '________';
+}
+
+/* --------------------------------------------------------------
    Setup scene (practice tab dashboard)
    Translates v1 scenes.jsx:144 into server-rendered markup while
    preserving every production data-action binding and the
@@ -222,7 +250,6 @@ const YEAR_FILTER_OPTIONS = [
 function beginLabel(prefs) {
   if (prefs.mode === 'test') return 'Begin SATs test';
   if (prefs.mode === 'trouble') return 'Begin trouble drill';
-  if (prefs.roundLength === 'all') return 'Begin all words';
   const length = prefs.roundLength || '10';
   return `Begin ${length} words`;
 }
@@ -231,13 +258,25 @@ function beginLabel(prefs) {
    The `value` attribute is read by the generic click dispatcher in main.js as
    `data.value`, which `spelling-set-mode` consumes verbatim. `aria-pressed`
    doubles up with the `.selected` class so assistive tech hears the selection
-   without needing a radiogroup wrapper. */
-function renderModeCard(mode, selected) {
+   without needing a radiogroup wrapper.
+
+   When `disabled` is true the card is taken out of the tab order and the
+   engine never sees a click (native button `disabled` suppresses the event),
+   which stops Trouble Drill from silently swapping to Smart Review when
+   there are no trouble words yet. `description` overrides the default card
+   copy; `badge` renders the existing `.mc-badge` pill in the top-right. */
+function renderModeCard(mode, selected, { disabled = false, description, badge } = {}) {
+  const desc = description != null ? description : mode.desc;
+  const classes = ['mode-card'];
+  if (selected && !disabled) classes.push('selected');
+  if (disabled) classes.push('is-disabled');
+  const disabledAttrs = disabled ? ' disabled aria-disabled="true"' : '';
   return `
-    <button type="button" class="mode-card${selected ? ' selected' : ''}" data-action="spelling-set-mode" value="${escapeHtml(mode.id)}" aria-pressed="${selected ? 'true' : 'false'}">
+    <button type="button" class="${classes.join(' ')}" data-action="spelling-set-mode" value="${escapeHtml(mode.id)}" aria-pressed="${selected && !disabled ? 'true' : 'false'}"${disabledAttrs}>
+      ${badge ? `<span class="mc-badge">${escapeHtml(badge)}</span>` : ''}
       <div class="mc-icon">${escapeHtml(mode.icon)}</div>
       <h4>${escapeHtml(mode.title)}</h4>
-      <p>${escapeHtml(mode.desc)}</p>
+      <p>${escapeHtml(desc)}</p>
     </button>
   `;
 }
@@ -354,7 +393,16 @@ function renderPracticeDashboard({ learner, service, subject, repositories }) {
           <h1 class="title">Choose today’s journey.</h1>
           <p class="lede">Smart Review mixes what’s due, what wobbled last time, and one or two new words. You can go straight to trouble drills or SATs rehearsal if you’d rather.</p>
           <div class="mode-row">
-            ${MODE_CARDS.map((mode) => renderModeCard(mode, prefs.mode === mode.id)).join('')}
+            ${MODE_CARDS.map((mode) => {
+              if (mode.id === 'trouble' && !stats.trouble) {
+                return renderModeCard(mode, prefs.mode === mode.id, {
+                  disabled: true,
+                  description: 'No trouble words yet — come back after a round.',
+                  badge: 'NONE YET',
+                });
+              }
+              return renderModeCard(mode, prefs.mode === mode.id);
+            }).join('')}
           </div>
           ${hideTweaks ? '' : `
           <div class="tweak-row">
@@ -372,7 +420,7 @@ function renderPracticeDashboard({ learner, service, subject, repositories }) {
             ${renderToggleChip('autoSpeak', Boolean(prefs.autoSpeak), 'Auto-play audio')}
           </div>
           <div class="setup-begin-row">
-            <button type="button" class="btn primary xl" style="background:${accent};" data-action="spelling-start">
+            <button type="button" class="btn primary xl" style="--btn-accent:${accent};" data-action="spelling-start">
               ${escapeHtml(begin)} ${ICON_ARROW_RIGHT}
             </button>
           </div>
@@ -421,21 +469,33 @@ function renderRibbon({ tone, icon, headline, word, sub }) {
   `;
 }
 
-function renderFamilyChips(words) {
+/* Single family-chip renderer shared by the in-session feedback slot and the
+   word-detail modal. The default `label` ("Word family") renders an inline
+   `<span class="flabel">` and hides when the list has one or fewer entries
+   (no family to show). Callers that supply a custom `label` get a chip row
+   that renders even for single-entry lists — the modal wraps this in its own
+   `wb-modal-section` so the label is rendered by the surrounding markup. */
+function renderFamilyChips(words, { label = 'Word family', requireMultiple = true } = {}) {
   const list = Array.isArray(words) ? words.filter(Boolean) : [];
-  if (list.length <= 1) return '';
+  if (requireMultiple && list.length <= 1) return '';
+  if (!list.length) return '';
   return `
     <div class="family-chips">
-      <span class="flabel">Word family</span>
+      ${label ? `<span class="flabel">${escapeHtml(label)}</span>` : ''}
       ${list.map((word) => `<span class="fchip">${escapeHtml(word)}</span>`).join('')}
     </div>
   `;
 }
 
 function feedbackTone(kind) {
-  if (kind === 'success') return 'good';
+  /* Engine emits 'info' for most mid-round correct outcomes ("Locked in.",
+     "Good recovery.", "Correct now.") — those are positive signals, so they
+     must render as the green 'good' ribbon. Only 'error' flips to the red
+     'bad' tone, and 'warn' is reserved for genuine advisory states (e.g.
+     retry prompts). */
   if (kind === 'error') return 'bad';
-  return 'warn';
+  if (kind === 'warn') return 'warn';
+  return 'good';
 }
 
 function feedbackIconFor(tone) {
@@ -447,11 +507,16 @@ function feedbackIconFor(tone) {
 function renderFeedbackSlot(feedback) {
   if (!feedback) {
     /* Placeholder keeps the prompt-card total height stable between the
-       question variant and the post-submit variants. aria-hidden + display:
-       visibility:hidden in CSS mean the copy never reaches assistive tech. */
+       question variant and the post-submit variants. The slot reuses the
+       real ribbon shape (non-breaking space body) so the reserved pixels
+       match the live ribbon exactly, but CSS (`visibility: hidden`) and
+       aria-hidden keep it out of sight and out of assistive tech. */
     return `
       <div class="feedback-slot is-placeholder" aria-hidden="true">
-        ${renderRibbon({ tone: 'good', icon: ICON_CHECK, headline: 'Placeholder', sub: 'Reserved height.' })}
+        <div class="ribbon good" role="presentation">
+          <div class="ribbon-ic">&nbsp;</div>
+          <div class="ribbon-body"><b>&nbsp;</b><div class="sub">&nbsp;</div></div>
+        </div>
       </div>
     `;
   }
@@ -471,24 +536,6 @@ function renderFeedbackSlot(feedback) {
   `;
 }
 
-function renderSessionActionRow({ session, awaitingAdvance, accent, submitLabel }) {
-  const isTest = session.type === 'test';
-  const isQuestion = !awaitingAdvance && session.phase === 'question';
-  const showSkip = !isTest && (session.phase === 'question' || session.phase === 'retry');
-  const showEnd = true;
-  return `
-    <div class="action-row">
-      <button class="btn primary lg" style="background:${accent};" type="submit" ${awaitingAdvance ? 'disabled' : ''}>
-        ${escapeHtml(submitLabel)} ${awaitingAdvance ? '' : ICON_ARROW_RIGHT}
-      </button>
-      ${awaitingAdvance ? `<button class="btn good lg" type="button" data-action="spelling-continue">Continue ${ICON_ARROW_RIGHT}</button>` : ''}
-      ${showSkip ? '<button class="btn ghost" type="button" data-action="spelling-skip">Skip</button>' : ''}
-      ${isQuestion ? '' : ''}
-      ${showEnd ? '' : ''}
-    </div>
-  `;
-}
-
 function renderSession({ learner, service, ui, subject }) {
   const accent = accentFor(subject);
   const prefs = service.getPrefs(learner.id);
@@ -499,14 +546,14 @@ function renderSession({ learner, service, ui, subject }) {
   const submitLabel = spellingSessionSubmitLabel(session, awaitingAdvance);
   const inputPlaceholder = spellingSessionInputPlaceholder(session);
   const contextNote = spellingSessionContextNote(session);
-  const footerNote = spellingSessionFooterNote(session);
+  const voiceNote = spellingSessionVoiceNote();
   const infoChips = spellingSessionInfoChips(session);
   if (!session || !card || !card.word) {
     return `
       <section class="card" style="grid-column:1/-1;">
         <div class="eyebrow">No active session</div>
         <h2 class="section-title">Start a spelling round</h2>
-        <button class="btn primary" style="background:${accent};" data-action="spelling-back">Back to spelling dashboard</button>
+        <button class="btn primary" style="--btn-accent:${accent};" data-action="spelling-back">Back to spelling dashboard</button>
       </section>
     `;
   }
@@ -571,7 +618,7 @@ function renderSession({ learner, service, ui, subject }) {
             </div>
             ${audioRow}
             <div class="action-row">
-              <button class="btn primary lg" style="background:${accent};" type="submit" ${awaitingAdvance ? 'disabled' : ''}>
+              <button class="btn primary lg" style="--btn-accent:${accent};" type="submit" ${awaitingAdvance ? 'disabled' : ''}>
                 ${escapeHtml(submitLabel)}${awaitingAdvance ? '' : ` ${ICON_ARROW_RIGHT}`}
               </button>
               ${continueBtn}
@@ -580,15 +627,16 @@ function renderSession({ learner, service, ui, subject }) {
           </form>
 
           ${renderFeedbackSlot(ui.feedback)}
-          <p class="session-foot-note small muted">${escapeHtml(footerNote)}</p>
         </div>
 
         <footer class="session-footer">
-          <div class="keys-hint">
-            <kbd>Esc</kbd> replay · <kbd>⇧</kbd>+<kbd>Esc</kbd> slow · <kbd>Alt</kbd>+<kbd>S</kbd> skip · <kbd>Enter</kbd> submit
+          <div class="session-footer-left">
+            <div class="keys-hint">
+              <kbd>Esc</kbd> replay · <kbd>⇧</kbd>+<kbd>Esc</kbd> slow · <kbd>Alt</kbd>+<kbd>S</kbd> skip · <kbd>Enter</kbd> submit
+            </div>
+            <div class="voice-note small muted">${escapeHtml(voiceNote)}</div>
           </div>
           <div class="session-footer-right">
-            <span class="session-progress-chip">${escapeHtml(spellingSessionProgressLabel(session))}</span>
             <button class="btn sm bad" type="button" data-action="spelling-end-early">End round early</button>
           </div>
         </footer>
@@ -601,6 +649,8 @@ function renderSession({ learner, service, ui, subject }) {
    Summary scene (round complete)
    Builds the 4-up stat strip directly from the engine's
    summary.cards (deterministic; don't re-compute anything here).
+   The design renders only the headline value + label per cell —
+   no sub-copy — so the grid stays compact under the ribbon.
    -------------------------------------------------------------- */
 function renderSummaryStatGrid(cards = []) {
   return `
@@ -609,26 +659,61 @@ function renderSummaryStatGrid(cards = []) {
         <div class="summary-stat">
           <div class="v">${escapeHtml(card.value)}</div>
           <div class="l">${escapeHtml(card.label)}</div>
-          ${card.sub ? `<div class="s">${escapeHtml(card.sub)}</div>` : ''}
         </div>
       `).join('')}
     </div>
   `;
 }
 
+/* Human-readable label for the round's mode token. Mirrors the chooser
+   labels in the dashboard and the design comp ("Smart Review" / "Trouble
+   Drill" / "SATs Test"). */
+function summaryModeLabel(mode) {
+  if (mode === 'trouble') return 'Trouble Drill';
+  if (mode === 'test') return 'SATs Test';
+  if (mode === 'single') return 'Single-word Drill';
+  return 'Smart Review';
+}
+
+/* Pick the punchy "X of N words landed." headline when we have usable
+   totals; otherwise fall back to the engine's prose message so nothing
+   regresses for edge cases (e.g. zero-word rounds, legacy summaries). */
+function summaryHeadline(summary) {
+  if (summary.totalWords > 0 && typeof summary.correct === 'number') {
+    return `${summary.correct} of ${summary.totalWords} words landed.`;
+  }
+  return summary.message;
+}
+
 function renderSummary({ learner, ui, subject }) {
   const accent = accentFor(subject);
   const summary = ui.summary;
   if (!summary) return '';
-  const heroBg = heroBgForLearner(learner.id);
+  /* Hero continuity: advance the backdrop as if the learner finished every
+     word in the round, so the summary matches the last question's scene
+     rather than resetting to the learner's default. Falls back to a
+     single-word virtual progress when the round was empty so the helper
+     never divides by zero. Contract exposes totalWords / correct /
+     accuracy on the normalised summary so the renderer just reads them. */
+  const progressTotal = Math.max(1, summary.totalWords || 1);
+  const heroBg = heroBgForSession(learner.id, {
+    progress: { done: progressTotal, total: progressTotal },
+  });
   const toneGood = !summary.mistakes.length;
-  const headline = summary.message;
-  const eyebrow = summary.label || 'Round complete';
+  const headline = summaryHeadline(summary);
+  const modeLabel = summaryModeLabel(summary.mode);
+  const durationLabel = formatElapsedMinutes(summary.elapsedMs);
+  const accuracyLabel = typeof summary.accuracy === 'number'
+    ? `${summary.accuracy}% accuracy`
+    : '';
+  const subParts = [modeLabel, durationLabel];
+  if (accuracyLabel) subParts.push(accuracyLabel);
+  const ribbonSub = subParts.join(' · ');
   return `
     <div class="spelling-in-session summary-shell" style="grid-column:1/-1; ${heroBgStyle(heroBg)}">
       <div class="session summary">
         <header class="session-head">
-          ${renderPathProgress({ done: 1, current: 0, total: 1 })}
+          ${renderPathProgress({ done: progressTotal, current: progressTotal, total: progressTotal })}
           <span class="path-count">Round complete</span>
         </header>
 
@@ -638,7 +723,7 @@ function renderSummary({ learner, ui, subject }) {
             tone: toneGood ? 'good' : 'warn',
             icon: toneGood ? ICON_CHECK : '!',
             headline,
-            sub: `${escapeHtml(eyebrow)} · ${escapeHtml(formatElapsed(summary.elapsedMs))}`,
+            sub: ribbonSub,
           })}
 
           ${renderSummaryStatGrid(summary.cards)}
@@ -653,14 +738,14 @@ function renderSummary({ learner, ui, subject }) {
                 ${summary.mistakes.map((word) => `
                   <button type="button" class="fchip" data-action="spelling-drill-single" data-slug="${escapeHtml(word.slug)}">${escapeHtml(word.word)}</button>
                 `).join('')}
-                <button type="button" class="btn primary sm" style="background:${accent};" data-action="spelling-drill-all">Drill all ${summary.mistakes.length} ${ICON_ARROW_RIGHT}</button>
+                <button type="button" class="btn primary sm" data-action="spelling-drill-all">Drill all ${summary.mistakes.length} ${ICON_ARROW_RIGHT}</button>
               </div>
             </div>
           ` : ''}
 
           <div class="summary-actions">
             <button type="button" class="btn ghost lg" data-action="spelling-back">Back to dashboard</button>
-            <button type="button" class="btn primary lg" style="background:${accent};" data-action="spelling-start-again">Start another round ${ICON_ARROW_RIGHT}</button>
+            <button type="button" class="btn primary lg" style="--btn-accent:${accent};" data-action="spelling-start-again">Start another round ${ICON_ARROW_RIGHT}</button>
             <button type="button" class="summary-bank-link" data-action="spelling-open-word-bank">
               Open word bank ${ICON_ARROW_RIGHT}
             </button>
@@ -691,16 +776,19 @@ function renderWordBankFilterChips({ counts, activeFilter }) {
     { id: 'secure', label: 'Secure' },
     { id: 'unseen', label: 'Unseen' },
   ];
+  /* Chips are button-role filters, not WAI-ARIA tabs — there's no companion
+     tabpanel, and the design (designs/ks2-redesign-v1.html) treats them as
+     pressable segmented controls. `aria-pressed` communicates the active
+     state to assistive tech without the broken tab contract. */
   return `
-    <div class="wb-chips" role="tablist" aria-label="Filter word bank by status">
+    <div class="wb-chips" role="group" aria-label="Filter word bank by status">
       ${chips.map((chip) => {
         const active = chip.id === activeFilter;
         const count = counts[chip.id] ?? 0;
         return `
           <button
             type="button"
-            role="tab"
-            aria-selected="${active ? 'true' : 'false'}"
+            aria-pressed="${active ? 'true' : 'false'}"
             class="wb-chip${active ? ' on' : ''}"
             data-action="spelling-analytics-status-filter"
             data-value="${escapeHtml(chip.id)}"
@@ -833,21 +921,16 @@ function renderWordBank({ learner, analytics, searchQuery = '', statusFilter = '
    target word. This keeps "browse" and "practise" conceptually
    separate from the scheduled-session flow.
    -------------------------------------------------------------- */
-function renderModalFamilyChips(words) {
-  const list = Array.isArray(words) ? words.filter(Boolean) : [];
-  if (!list.length) return '';
-  return `
-    <div class="wb-modal-section wb-modal-section-family">
-      <p class="wb-modal-section-label">Family</p>
-      <div class="family-chips">
-        ${list.map((item) => `<span class="fchip">${escapeHtml(item)}</span>`).join('')}
-      </div>
-    </div>
-  `;
-}
-
 function renderWordDetailExplain(word) {
   const sentence = (word.sentence || '').replace(/________/g, word.word);
+  /* The modal renders its own section wrapper + label, so the shared chip
+     helper is called with `label: null` (wrapper supplies the heading) and
+     `requireMultiple: false` (single-entry families are still worth showing
+     in the explainer because the learner explicitly asked to inspect one). */
+  const familyChips = renderFamilyChips(word.familyWords, {
+    label: null,
+    requireMultiple: false,
+  });
   return `
     <div class="wb-modal-body">
       <div class="wb-modal-section">
@@ -856,13 +939,23 @@ function renderWordDetailExplain(word) {
           ? `<blockquote class="wb-modal-sample">${escapeHtml(sentence)}</blockquote>`
           : '<p class="wb-modal-def">No example sentence on file for this word yet.</p>'}
       </div>
-      ${renderModalFamilyChips(word.familyWords)}
+      ${familyChips ? `
+        <div class="wb-modal-section wb-modal-section-family">
+          <p class="wb-modal-section-label">Family</p>
+          ${familyChips}
+        </div>
+      ` : ''}
     </div>
   `;
 }
 
-function renderWordDetailDrill(word, { typed = '', result = null }) {
+function renderWordDetailDrill(word, { typed = '', result = null, accent = SPELLING_ACCENT }) {
   const sentence = word.sentence || '';
+  /* Word-bank sentences arrive in natural form (no ________ sentinel),
+     so synthesise a drill-friendly cloze that hides the target word.
+     This replaces the previous call chain that let the raw sentence
+     reach renderCloze's no-blank branch and leak the answer verbatim. */
+  const drillCloze = sentence ? buildDrillCloze(sentence, word) : '';
   const showFeedback = result === 'correct' || result === 'incorrect';
   const feedbackTone = result === 'correct' ? 'good' : 'warn';
   const inputState = result === 'correct' ? 'is-correct' : result === 'incorrect' ? 'is-wrong' : '';
@@ -873,7 +966,7 @@ function renderWordDetailDrill(word, { typed = '', result = null }) {
     <div class="wb-modal-body">
       <div class="wb-modal-section">
         <p class="wb-modal-section-label">${sentence ? 'Listen to the sentence, then type the missing word' : 'Listen to the word, then type it'}</p>
-        ${sentence ? `<p class="wb-drill-sentence">${renderCloze(sentence, { answer: word.word, revealAnswer: result === 'correct' })}</p>` : ''}
+        ${sentence ? `<p class="wb-drill-sentence">${renderCloze(drillCloze, { answer: word.word, revealAnswer: result === 'correct' })}</p>` : ''}
       </div>
       <div class="wb-drill-audio">
         <button type="button" class="wb-drill-audio-btn" data-action="spelling-word-bank-drill-replay" data-slug="${escapeHtml(word.slug)}" aria-label="Replay the word">
@@ -900,15 +993,16 @@ function renderWordDetailDrill(word, { typed = '', result = null }) {
           aria-label="Type the drill word"
           ${result === 'correct' ? 'disabled' : ''}
         />
-        <button type="submit" class="btn primary" style="background:${SPELLING_ACCENT};" ${result === 'correct' ? 'disabled' : ''}>Check ${ICON_ARROW_RIGHT}</button>
+        <button type="submit" class="btn primary" style="--btn-accent:${accent};" ${result === 'correct' ? 'disabled' : ''}>Check ${ICON_ARROW_RIGHT}</button>
       </form>
       ${showFeedback ? `<div class="wb-drill-feedback ${feedbackTone}" role="status">${feedbackBody}</div>` : ''}
       <div class="wb-modal-actions">
         ${result === 'correct'
           ? `<button type="button" class="btn ghost" data-action="spelling-word-detail-mode" data-value="explain" data-slug="${escapeHtml(word.slug)}">Back to explainer</button>
-             <button type="button" class="btn primary" style="background:${SPELLING_ACCENT};" data-action="spelling-word-bank-drill-try-again" data-slug="${escapeHtml(word.slug)}">Try again ${ICON_ARROW_RIGHT}</button>`
+             <button type="button" class="btn primary" style="--btn-accent:${accent};" data-action="spelling-word-bank-drill-try-again" data-slug="${escapeHtml(word.slug)}">Try again ${ICON_ARROW_RIGHT}</button>`
           : result === 'incorrect'
-            ? `<button type="button" class="btn ghost" data-action="spelling-word-bank-drill-try-again" data-slug="${escapeHtml(word.slug)}">Try again</button>`
+            ? `<button type="button" class="btn ghost" data-action="spelling-word-detail-mode" data-value="explain" data-slug="${escapeHtml(word.slug)}">Back to explainer</button>
+               <button type="button" class="btn ghost" data-action="spelling-word-bank-drill-try-again" data-slug="${escapeHtml(word.slug)}">Try again</button>`
             : ''}
       </div>
       <p class="wb-modal-note">Drilling here never writes to the scheduler — it's a free practice tool.</p>
@@ -916,12 +1010,12 @@ function renderWordDetailDrill(word, { typed = '', result = null }) {
   `;
 }
 
-function renderWordDetailModal({ word, mode = 'explain', typed = '', result = null }) {
+function renderWordDetailModal({ word, mode = 'explain', typed = '', result = null, accent = SPELLING_ACCENT }) {
   if (!word) return '';
   const slug = word.slug;
   const safeMode = mode === 'drill' ? 'drill' : 'explain';
   const body = safeMode === 'drill'
-    ? renderWordDetailDrill(word, { typed, result })
+    ? renderWordDetailDrill(word, { typed, result, accent })
     : renderWordDetailExplain(word);
   /* In drill mode the speaker is decorative — the learner must not be able
      to click it and hear the answer before trying. In explain mode it stays
@@ -934,7 +1028,7 @@ function renderWordDetailModal({ word, mode = 'explain', typed = '', result = nu
     : `<h2 id="wb-modal-word" class="wb-modal-word">${escapeHtml(word.word)}</h2>`;
   return `
     <div class="wb-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="wb-modal-word">
-      <button type="button" class="wb-modal-backdrop" data-action="spelling-word-detail-close" aria-label="Close word detail"></button>
+      <div class="wb-modal-backdrop" tabindex="-1" aria-hidden="true"></div>
       <div class="wb-modal" data-slug="${escapeHtml(slug)}">
         <header class="wb-modal-head">
           <div class="wb-modal-head-main">
@@ -1017,8 +1111,9 @@ function findWordBankEntry(analytics, slug) {
   return null;
 }
 
-function renderWordBankScene({ appState, learner, service }) {
+function renderWordBankScene({ appState, learner, service, subject }) {
   const analytics = service.getAnalyticsSnapshot(learner.id);
+  const accent = accentFor(subject);
   const searchQuery = appState?.transientUi?.spellingAnalyticsWordSearch || '';
   const statusFilter = appState?.transientUi?.spellingAnalyticsStatusFilter || 'all';
   const detailSlug = appState?.transientUi?.spellingWordDetailSlug || '';
@@ -1037,7 +1132,7 @@ function renderWordBankScene({ appState, learner, service }) {
         ${renderWordBankAggregates(analytics)}
         ${renderWordBank({ learner, analytics, searchQuery, statusFilter })}
       </div>
-      ${detailWord ? renderWordDetailModal({ word: detailWord, mode: detailMode, typed: drillTyped, result: drillResult }) : ''}
+      ${detailWord ? renderWordDetailModal({ word: detailWord, mode: detailMode, typed: drillTyped, result: drillResult, accent }) : ''}
     </div>
   `;
 }
@@ -1301,16 +1396,23 @@ export const spellingModule = {
     if (action === 'spelling-word-detail-mode') {
       const rawMode = data.value === 'drill' ? 'drill' : 'explain';
       const slug = data.slug || appState?.transientUi?.spellingWordDetailSlug || '';
+      const currentMode = appState?.transientUi?.spellingWordDetailMode === 'drill' ? 'drill' : 'explain';
+      const modeChanged = rawMode !== currentMode;
       if (rawMode === 'drill' && slug) {
         const word = findWordBankEntry(service.getAnalyticsSnapshot(learnerId), slug);
         if (word) tts.speak({ word: word.word, sentence: word.sentence });
       }
+      /* Only wipe typed progress when the tab actually changes. Re-clicking the
+         current tab (a re-entry into the same mode) is a no-op for the input
+         state — apart from re-speaking above — so the learner never loses what
+         they were midway through typing. */
       store.patch((current) => ({
         transientUi: {
           ...current.transientUi,
           spellingWordDetailMode: rawMode,
-          spellingWordBankDrillTyped: '',
-          spellingWordBankDrillResult: null,
+          ...(modeChanged
+            ? { spellingWordBankDrillTyped: '', spellingWordBankDrillResult: null }
+            : {}),
         },
       }));
       return true;

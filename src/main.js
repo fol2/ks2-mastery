@@ -7,6 +7,7 @@ import {
 } from './platform/core/local-review-profile.js';
 import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
 import { renderApp } from './platform/ui/render.js';
+import { probeRelLuminance } from './platform/ui/luminance.js';
 import { safeParseInt, uid } from './platform/core/utils.js';
 import { shouldDispatchClickAction } from './platform/core/dom-actions.js';
 import { normalisePlatformRole } from './platform/access/roles.js';
@@ -53,6 +54,57 @@ import {
 } from './platform/core/data-transfer.js';
 
 const root = document.getElementById('app');
+
+/* --------------------------------------------------------------
+   Word-detail modal accessibility: focus trap + restore-on-close.
+   The word-detail modal renders via innerHTML replacement on every
+   store tick, so trigger elements go stale between renders. We key
+   the restore target by slug and re-query after close. `lastModalTrigger`
+   also keeps a direct element reference as a first-choice fallback
+   for restore in cases where the list wasn't re-rendered.
+   -------------------------------------------------------------- */
+const WORD_DETAIL_MODAL_SELECTOR = '.wb-modal-scrim';
+const WORD_DETAIL_FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+let lastModalTrigger = { slug: '', element: null };
+let previousModalVisible = false;
+
+function modalIsOpen() {
+  return Boolean(root?.querySelector(WORD_DETAIL_MODAL_SELECTOR));
+}
+
+function getModalFocusables() {
+  const modal = root?.querySelector('.wb-modal');
+  if (!modal) return [];
+  return Array.from(modal.querySelectorAll(WORD_DETAIL_FOCUSABLE_SELECTOR))
+    .filter((el) => el.offsetParent !== null || el === document.activeElement);
+}
+
+function restoreModalTrigger() {
+  const { slug, element } = lastModalTrigger;
+  lastModalTrigger = { slug: '', element: null };
+  if (!slug) return;
+  queueMicrotask(() => {
+    if (element && element.isConnected && typeof element.focus === 'function') {
+      element.focus();
+      return;
+    }
+    if (!root) return;
+    const escaped = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(slug) : slug.replace(/"/g, '\\"');
+    const row = root.querySelector(`.wb-row[data-slug="${escaped}"]`)
+      || root.querySelector(`[data-action="spelling-word-detail-open"][data-slug="${escaped}"]`);
+    if (row && typeof row.focus === 'function') row.focus();
+  });
+}
+
+function focusInitialModalElement() {
+  /* In drill mode the existing `[data-autofocus="true"]` handler grabs
+     the input — we defer to that. Otherwise we seed focus on the first
+     focusable control inside the modal so keyboard users aren't left
+     stranded on <body>. */
+  if (root?.querySelector('.wb-modal [data-autofocus="true"]:not([disabled])')) return;
+  const focusables = getModalFocusables();
+  if (focusables.length) focusables[0].focus();
+}
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -251,6 +303,42 @@ globalThis.KS2_AUTH_SESSION = boot.session;
 await repositories.hydrate();
 
 const tts = createPlatformTts({ fetchFn: credentialFetch });
+
+/* Audio replay glow state — maintained outside the store because it is a
+   transient DOM affordance, not persisted learner state. The render wipes
+   innerHTML on every store update, so we re-apply the `playing` class
+   both inside render() and inside the tts listener to cover both paths
+   (learner clicks mid-render vs audio ending between renders). */
+let currentPlayingKind = null;
+
+const NORMAL_REPLAY_SELECTORS = [
+  '[data-action="spelling-replay"]',
+  '[data-action="spelling-word-bank-drill-replay"]',
+  '.wb-modal-speaker',
+];
+const SLOW_REPLAY_SELECTORS = [
+  '[data-action="spelling-replay-slow"]',
+  '[data-action="spelling-word-bank-drill-replay-slow"]',
+];
+
+function syncAudioPlayingClass() {
+  const normalNodes = root.querySelectorAll(NORMAL_REPLAY_SELECTORS.join(','));
+  const slowNodes = root.querySelectorAll(SLOW_REPLAY_SELECTORS.join(','));
+  const normalOn = currentPlayingKind === 'normal';
+  const slowOn = currentPlayingKind === 'slow';
+  for (const node of normalNodes) node.classList.toggle('playing', normalOn);
+  for (const node of slowNodes) node.classList.toggle('playing', slowOn);
+}
+
+tts.subscribe((event) => {
+  if (event?.type === 'start') {
+    currentPlayingKind = event.kind === 'slow' ? 'slow' : 'normal';
+  } else if (event?.type === 'end') {
+    currentPlayingKind = null;
+  }
+  syncAudioPlayingClass();
+});
+
 const spellingContentRepository = boot.session.signedIn
   ? createApiSpellingContentRepository({ baseUrl: '', fetch: credentialFetch })
   : createLocalSpellingContentRepository({ storage: globalThis.localStorage });
@@ -1109,10 +1197,58 @@ function mountReactSurfaces(appState, context) {
   }
 }
 
+/* Capture the identity + caret state of the currently-focused input
+   inside `root` so we can restore it after `root.innerHTML = …` wipes
+   the DOM. Our render path rebuilds the entire tree on every store
+   update, which nukes focus and caret position on any text input that
+   the user is currently typing into (search box, drill answer, etc.).
+   We prefer `name` over `id` over `data-action` for the selector: most
+   of our inputs are unnamed/idless but carry a stable `name` like
+   "typed" or "spellingAnalyticsSearch". Selection queries are wrapped
+   in try/catch because some input types (e.g. `type="number"`,
+   `type="search"` in some browsers) throw on selectionStart access. */
+function capturePreservedFocus() {
+  const el = document.activeElement;
+  if (!el || !root.contains(el)) return null;
+  const tag = el.tagName;
+  if (tag !== 'INPUT' && tag !== 'TEXTAREA') return null;
+
+  let selector = null;
+  const nameAttr = el.getAttribute('name');
+  if (nameAttr) {
+    selector = `${tag.toLowerCase()}[name="${CSS.escape(nameAttr)}"]`;
+  } else if (el.id) {
+    selector = `#${CSS.escape(el.id)}`;
+  } else {
+    const actionAttr = el.getAttribute('data-action');
+    if (actionAttr) {
+      selector = `${tag.toLowerCase()}[data-action="${CSS.escape(actionAttr)}"]`;
+    }
+  }
+  if (!selector) return null;
+
+  let selectionStart = null;
+  let selectionEnd = null;
+  let selectionDirection = null;
+  try {
+    selectionStart = el.selectionStart;
+    selectionEnd = el.selectionEnd;
+    selectionDirection = el.selectionDirection;
+  } catch {
+    /* input types that don't support selection */
+  }
+
+  return { selector, selectionStart, selectionEnd, selectionDirection };
+}
+
 function render() {
   const appState = store.getState();
   const context = contextFor(appState.route.subjectId || 'spelling');
+  const preserved = capturePreservedFocus();
+  const modalWasVisible = previousModalVisible;
   root.innerHTML = renderApp(appState, context);
+  const modalIsVisibleNow = modalIsOpen();
+  previousModalVisible = modalIsVisibleNow;
   ensureSpellingAutoAdvanceFromCurrentState();
   mountReactSurfaces(appState, context);
 
@@ -1132,10 +1268,78 @@ function render() {
     queueMicrotask(() => loadAdminAccounts());
   }
 
+  /* Restore focus + caret. Preserved focus wins over the autofocus
+     query so caret restore isn't clobbered by a focus() on the same
+     element (which can reset the caret to the end in some browsers).
+     Only fall back to `data-autofocus="true"` when there was no
+     active input to preserve — e.g. first render, keyboard-driven
+     navigation, or after clicking a button. */
   queueMicrotask(() => {
+    if (preserved) {
+      const restored = root.querySelector(preserved.selector);
+      if (restored && (restored.tagName === 'INPUT' || restored.tagName === 'TEXTAREA') && !restored.disabled) {
+        restored.focus();
+        if (preserved.selectionStart !== null && preserved.selectionEnd !== null) {
+          try {
+            restored.setSelectionRange(
+              preserved.selectionStart,
+              preserved.selectionEnd,
+              preserved.selectionDirection || 'none',
+            );
+          } catch {
+            /* input types that don't support setSelectionRange */
+          }
+        }
+        return;
+      }
+    }
     const input = root.querySelector('[data-autofocus="true"]:not([disabled])');
     if (input) input.focus();
   });
+
+  /* Modal focus choreography. On the render that first shows the modal,
+     focus moves inside so keyboard users land on an actionable control.
+     On the render that closes it, focus returns to the originating word
+     row (re-queried by slug because innerHTML wipes the old DOM node). */
+  if (modalIsVisibleNow && !modalWasVisible) {
+    queueMicrotask(focusInitialModalElement);
+  } else if (!modalIsVisibleNow && modalWasVisible) {
+    restoreModalTrigger();
+  }
+
+  /* Hero-dark luminance flip — the spelling session + setup surfaces paint
+     a `--hero-bg` image on their outer wrapper. When the backdrop is darker
+     than mid-grey, the shell needs a `hero-dark` class so ink tokens flip
+     to the light palette (WCAG contrast on dusk / night regions). The
+     probe is fire-and-forget: we kick it after layout so the async decode
+     runs off the critical path, and only apply the class when the element
+     is still connected (another render may have replaced it). */
+  queueMicrotask(() => applyHeroDarkProbes());
+
+  syncAudioPlayingClass();
+}
+
+function applyHeroDarkProbes() {
+  const heroes = root.querySelectorAll(
+    '.spelling-in-session[style*="--hero-bg"], .setup-main[style*="--hero-bg"]',
+  );
+  heroes.forEach((element) => {
+    const url = extractHeroBgUrl(element.getAttribute('style') || '');
+    if (!url) return;
+    probeRelLuminance(url).then((luminance) => {
+      if (!element.isConnected) return;
+      element.classList.toggle('hero-dark', luminance < 0.5);
+    }).catch(() => {
+      /* probeRelLuminance never rejects, but guard defensively so a
+         future refactor can't turn a probe failure into an unhandled
+         rejection. */
+    });
+  });
+}
+
+function extractHeroBgUrl(styleAttr) {
+  const match = styleAttr.match(/--hero-bg:\s*url\((['"]?)([^'")]+)\1\)/);
+  return match ? match[2] : '';
 }
 
 store.subscribe(render);
@@ -1501,6 +1705,11 @@ function dispatchAction(action, data = {}) {
 }
 
 function extractActionData(target) {
+  /* `data-value` overrides `target.value` so non-input elements (buttons, list
+     items, links) can carry a payload. Native inputs still expose `.value`,
+     so leaving dataset first preserves legacy emitters that relied on the
+     value attribute. */
+  const datasetValue = target.dataset.value;
   return {
     action: target.dataset.action,
     subjectId: target.dataset.subjectId,
@@ -1508,18 +1717,44 @@ function extractActionData(target) {
     tab: target.dataset.tab,
     pref: target.dataset.pref,
     slug: target.dataset.slug,
+    mode: target.dataset.mode,
     index: target.dataset.index,
-    value: target.value,
+    value: datasetValue != null ? datasetValue : target.value,
     checked: target.checked,
   };
 }
 
 root.addEventListener('click', (event) => {
+  /* Scrim-click closes the modal. The backdrop is a passive <div> (so
+     screen readers don't enumerate a spurious button inside the dialog),
+     which means the raw click doesn't carry a data-action. We synthesise
+     the close here: a click on the scrim itself (not the inner .wb-modal
+     content) routes to spelling-word-detail-close. */
+  const scrimTarget = event.target.closest('.wb-modal-scrim');
+  if (scrimTarget && !event.target.closest('.wb-modal')) {
+    event.preventDefault();
+    dispatchAction('spelling-word-detail-close', {});
+    return;
+  }
+
   const target = event.target.closest('[data-action]');
   if (!target) return;
   const action = target.dataset.action;
   if (!action) return;
   if (!shouldDispatchClickAction(target)) return;
+  if (action === 'spelling-word-detail-open') {
+    /* Capture the triggering element so focus can return here on close.
+       Keep the slug as a stable fallback key — the row DOM gets wiped by
+       the next innerHTML render, so a raw element reference alone is
+       unreliable. */
+    const slug = target.dataset.slug || '';
+    lastModalTrigger = {
+      slug,
+      element: document.activeElement && document.activeElement !== document.body
+        ? document.activeElement
+        : target,
+    };
+  }
   event.preventDefault();
   dispatchAction(action, extractActionData(target));
 });
@@ -1571,6 +1806,73 @@ root.addEventListener('submit', (event) => {
   dispatchAction(form.dataset.action, {
     formData: new FormData(form),
   });
+});
+
+/* Generic keyboard support for WAI-ARIA radiogroups. Buttons carrying
+   `role="radio"` inside a `role="radiogroup"` container respond to arrow
+   keys by moving focus to the previous/next sibling radio and clicking it
+   (which triggers the existing data-action dispatch path). Disabled radios
+   are skipped and focus wraps at the ends so the group behaves like a
+   native radio fieldset. Home/End jump to the first/last enabled option. */
+const RADIOGROUP_KEYS_NEXT = new Set(['ArrowRight', 'ArrowDown']);
+const RADIOGROUP_KEYS_PREV = new Set(['ArrowLeft', 'ArrowUp']);
+root.addEventListener('keydown', (event) => {
+  if (event.defaultPrevented) return;
+  if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+  const radio = event.target?.closest?.('[role="radio"]');
+  if (!radio) return;
+  const group = radio.closest('[role="radiogroup"]');
+  if (!group) return;
+  const key = event.key;
+  const isNext = RADIOGROUP_KEYS_NEXT.has(key);
+  const isPrev = RADIOGROUP_KEYS_PREV.has(key);
+  const isHome = key === 'Home';
+  const isEnd = key === 'End';
+  if (!isNext && !isPrev && !isHome && !isEnd) return;
+  const radios = Array.from(group.querySelectorAll('[role="radio"]'))
+    .filter((el) => el.closest('[role="radiogroup"]') === group && !el.disabled);
+  if (!radios.length) return;
+  const currentIndex = radios.indexOf(radio);
+  let targetIndex;
+  if (isHome) {
+    targetIndex = 0;
+  } else if (isEnd) {
+    targetIndex = radios.length - 1;
+  } else if (isNext) {
+    targetIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % radios.length;
+  } else {
+    targetIndex = currentIndex < 0 ? radios.length - 1 : (currentIndex - 1 + radios.length) % radios.length;
+  }
+  const target = radios[targetIndex];
+  if (!target || target === radio) return;
+  event.preventDefault();
+  target.focus();
+  target.click();
+});
+
+/* WCAG 2.4.3 focus trap for the word-detail modal. Without this, Tab
+   escapes the dialog into the word-bank list behind the scrim, leaving
+   keyboard users stranded. Runs as a root-level listener so it sees
+   keystrokes before they bubble to the spelling shortcut layer (which
+   owns Escape). Only intercepts Tab when the modal is open. */
+root.addEventListener('keydown', (event) => {
+  if (event.key !== 'Tab') return;
+  if (!modalIsOpen()) return;
+  const focusables = getModalFocusables();
+  if (!focusables.length) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  const modal = root.querySelector('.wb-modal');
+  const active = document.activeElement;
+  if (event.shiftKey) {
+    if (active === first || !modal?.contains(active)) {
+      last.focus();
+      event.preventDefault();
+    }
+  } else if (active === last || !modal?.contains(active)) {
+    first.focus();
+    event.preventDefault();
+  }
 });
 
 globalThis.addEventListener?.('keydown', (event) => {

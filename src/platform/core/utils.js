@@ -37,6 +37,17 @@ export function formatElapsed(ms) {
   return `${mins}:${String(secs).padStart(2, '0')}`;
 }
 
+/* Round to the nearest minute for the summary ribbon sub-row. Durations
+   shorter than 30 seconds read as "<1 min" so the label stays honest for
+   micro-rounds. Anything at or above 30 seconds rounds up to at least
+   "1 min" (never zero) so a completed round always shows non-zero time. */
+export function formatElapsedMinutes(ms) {
+  const safe = Math.max(0, Number(ms) || 0);
+  if (safe < 30_000) return '<1 min';
+  const mins = Math.max(1, Math.round(safe / 60_000));
+  return `${mins} min`;
+}
+
 export function average(numbers) {
   if (!Array.isArray(numbers) || numbers.length === 0) return 0;
   return numbers.reduce((sum, value) => sum + value, 0) / numbers.length;

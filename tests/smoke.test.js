@@ -40,7 +40,7 @@ test('golden-path smoke covers dashboard to spelling session to summary and back
 
   completeCurrentSpellingRound(harness);
   assert.equal(harness.store.getState().subjectUi.spelling.phase, 'summary');
-  assert.match(harness.render(), /Session summary/);
+  assert.match(harness.render(), /summary-card/);
 
   harness.dispatch('spelling-back');
   assert.equal(harness.store.getState().subjectUi.spelling.phase, 'dashboard');

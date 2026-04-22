@@ -28,6 +28,17 @@ export function createPlatformTts({
   let currentObjectUrl = null;
   let pendingResolve = null;
 
+  const listeners = new Set();
+  function subscribe(fn) {
+    listeners.add(fn);
+    return () => listeners.delete(fn);
+  }
+  function emit(event) {
+    for (const l of listeners) {
+      try { l(event); } catch { /* ignore listener errors */ }
+    }
+  }
+
   function available() {
     return typeof window !== 'undefined'
       && 'speechSynthesis' in window
@@ -65,6 +76,7 @@ export function createPlatformTts({
     cleanupAudio();
     resolvePending(false);
     stopBrowserSpeech();
+    emit({ type: 'end' });
   }
 
   function speakWithBrowser({ word, sentence, slow = false } = {}) {
@@ -75,8 +87,15 @@ export function createPlatformTts({
     utterance.lang = 'en-GB';
     utterance.rate = clamp(slow ? 0.9 : 1.02, 0.8, 1.2);
     return new Promise((resolve) => {
-      utterance.onend = () => resolve(true);
-      utterance.onerror = () => resolve(false);
+      utterance.onend = () => {
+        emit({ type: 'end' });
+        resolve(true);
+      };
+      utterance.onerror = () => {
+        emit({ type: 'end' });
+        resolve(false);
+      };
+      emit({ type: 'start', kind: slow ? 'slow' : 'normal' });
       window.speechSynthesis.speak(utterance);
     });
   }
@@ -107,14 +126,23 @@ export function createPlatformTts({
       return await new Promise((resolve) => {
         pendingResolve = resolve;
         currentAudio.onended = () => {
+          emit({ type: 'end' });
           cleanupAudio();
           resolvePending(true);
         };
         currentAudio.onerror = () => {
+          emit({ type: 'end' });
           cleanupAudio();
           resolvePending(false);
         };
+        currentAudio.onabort = () => {
+          emit({ type: 'end' });
+          cleanupAudio();
+          resolvePending(false);
+        };
+        emit({ type: 'start', kind: slow ? 'slow' : 'normal' });
         currentAudio.play().catch(() => {
+          emit({ type: 'end' });
           cleanupAudio();
           resolvePending(false);
         });
@@ -138,6 +166,7 @@ export function createPlatformTts({
     isReady: available,
     speak,
     stop,
+    subscribe,
     warmup() {},
   };
 }

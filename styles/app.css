@@ -321,7 +321,8 @@ textarea:focus-visible {
 .btn:hover { filter: brightness(0.98); }
 .btn:active { transform: translateY(1px); }
 .btn[disabled] { opacity: 0.55; cursor: not-allowed; transform: none; }
-.btn.primary { background: var(--brand); color: white; }
+.btn.primary { background: var(--btn-accent, var(--brand)); color: white; }
+.btn.primary:hover { filter: brightness(0.92); }
 .btn.secondary { background: var(--panel-soft); border-color: var(--line); color: var(--ink); }
 .btn.ghost { background: transparent; border-color: var(--line); color: var(--ink); }
 .btn.good { background: var(--good-soft); border-color: #b8dfca; color: var(--good); }
@@ -4106,7 +4107,17 @@ textarea:focus-visible {
   color: color-mix(in oklab, var(--ink) 55%, transparent);
   font-style: italic;
 }
-.spelling-in-session .word-input:focus { border-bottom-color: var(--brand); }
+.spelling-in-session .word-input:focus,
+.spelling-in-session .word-input:focus-visible {
+  /* v1 design: only the bottom underline changes colour on focus — no full
+     border ring, no outline, no glow. The global input:focus-visible rule
+     (app.css:174) would otherwise paint a box-shadow "frame" around the
+     whole input, which breaks the minimal v1 treatment. */
+  outline: none;
+  box-shadow: none;
+  border-radius: 0;
+  border-bottom-color: var(--brand);
+}
 
 .spelling-in-session .audio-row {
   display: flex; justify-content: center; gap: 10px;
@@ -4118,11 +4129,6 @@ textarea:focus-visible {
   flex-wrap: wrap;
 }
 
-.spelling-in-session .session-foot-note {
-  margin-top: 14px;
-  text-align: center;
-}
-
 /* Round-end footer sitting below the prompt card. */
 .spelling-in-session .session-footer {
   margin-top: 28px;
@@ -4132,23 +4138,21 @@ textarea:focus-visible {
   gap: 14px;
   flex-wrap: wrap;
 }
+.spelling-in-session .session-footer-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 .spelling-in-session .session-footer-right {
   display: inline-flex;
   align-items: center;
   gap: 10px;
 }
-.spelling-in-session .session-progress-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--on-hero-chip-bg);
-  border: 1px solid var(--on-hero-chip-border);
-  color: var(--on-hero-chip-ink);
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
+.spelling-in-session .voice-note {
+  font-size: 0.72rem;
+  color: var(--on-hero-muted);
+  margin-top: 4px;
+  letter-spacing: 0.01em;
 }
 .spelling-in-session .keys-hint {
   color: var(--on-hero-muted);
@@ -4171,10 +4175,20 @@ textarea:focus-visible {
   color: var(--bad-strong);
   border-color: color-mix(in oklab, var(--bad) 45%, var(--ink));
 }
+.spelling-in-session .btn.sm.bad:hover {
+  /* Hover feedback: darken the chip slightly and lift the border toward the
+     saturated bad hue so the button reads as interactive on the hero art. */
+  background: color-mix(in oklab, var(--bad-soft) 65%, var(--panel));
+  border-color: color-mix(in oklab, var(--bad) 60%, var(--ink));
+}
 .spelling-in-session.hero-dark .btn.sm.bad {
   background: color-mix(in oklab, var(--bad-soft) 30%, rgba(0,0,0,0.55));
   color: #ffdcd7;
   border-color: color-mix(in oklab, var(--bad) 55%, white);
+}
+.spelling-in-session.hero-dark .btn.sm.bad:hover {
+  background: color-mix(in oklab, var(--bad-soft) 45%, rgba(0,0,0,0.45));
+  border-color: color-mix(in oklab, var(--bad) 70%, white);
 }
 
 /* Icon buttons (audio replay + slow replay). Hover/active inherit
@@ -5252,4 +5266,68 @@ textarea:focus-visible {
   .wb-modal-word { font-size: 1.9rem; }
   .wb-modal-actions { flex-wrap: wrap; }
   .wb-drill-form { flex-direction: column; align-items: stretch; }
+}
+
+/* ---------- Mobile tightening (port-fix) ---------- */
+
+/* 1. Word bank long list: cap scroll within card at phone sizes */
+@media (max-width: 720px) {
+  .wb-list {
+    max-height: 70vh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* 2. Prompt card padding tuned for phones */
+@media (max-width: 640px) {
+  .spelling-in-session { padding: 16px 12px; }
+  .spelling-in-session .prompt-card { padding: 28px 20px 22px; }
+  .spelling-in-session .prompt-card::before { left: 16px; right: 16px; }
+}
+
+/* 3. Setup main padding tuned for phones */
+@media (max-width: 640px) {
+  .setup-main { padding: 22px 20px; }
+  .setup-main::before { left: 16px; right: 16px; }
+}
+
+/* 4. Tap-target minimum 44px on touch breakpoints */
+@media (max-width: 720px) {
+  .length-option { padding: 0 16px; min-height: 44px; }
+  .toggle-chip { padding: 10px 14px; min-height: 44px; }
+  .wb-chip { padding: 10px 14px; min-height: 44px; }
+  .ss-codex-link { padding: 10px 8px; }
+  .subject-breadcrumb-link { padding: 10px 8px; }
+}
+
+/* 5. Hide keyboard-shortcut hint on touch-sized viewports */
+@media (max-width: 640px) {
+  .spelling-in-session .keys-hint { display: none; }
+}
+
+/* 7. Modal max-height: use dynamic viewport height to dodge iOS toolbar */
+@media (max-width: 720px) {
+  .wb-modal {
+    max-height: calc(100vh - 24px); /* fallback */
+    max-height: calc(100dvh - 24px);
+  }
+}
+
+/* 8. Safe area insets for viewport-fit=cover */
+@supports (padding: env(safe-area-inset-top)) {
+  .app-shell {
+    padding-top: max(24px, env(safe-area-inset-top));
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+    padding-left: max(24px, env(safe-area-inset-left));
+    padding-right: max(24px, env(safe-area-inset-right));
+  }
+  @media (max-width: 640px) {
+    .app-shell {
+      padding-top: max(16px, env(safe-area-inset-top));
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+    }
+  }
 }
