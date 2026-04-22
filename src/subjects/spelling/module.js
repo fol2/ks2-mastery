@@ -111,6 +111,19 @@ function normaliseSearchText(value) {
 
 const WORD_BANK_STATUS_ORDER = ['due', 'trouble', 'learning', 'new', 'secure'];
 
+/* Valid word bank filter IDs. Uses v1 tokens on the wire (unseen/weak) so the
+   persisted transientUi value reads naturally and matches the filter chip
+   label. wordBankFilterMatchesStatus() translates back to the production
+   status vocabulary at render time. */
+const WORD_BANK_FILTER_IDS = new Set(['all', 'due', 'weak', 'learning', 'secure', 'unseen']);
+
+function wordBankFilterMatchesStatus(filter, status) {
+  if (filter === 'all') return true;
+  if (filter === 'weak') return status === 'trouble';
+  if (filter === 'unseen') return status === 'new';
+  return filter === status;
+}
+
 function wordProgressTone(status) {
   if (status === 'new') return 'new';
   if (status === 'learning') return 'learning';
@@ -333,8 +346,8 @@ function renderPracticeDashboard({ learner, service, subject, repositories }) {
       <section class="setup-main" style="border-top:3px solid ${accent}; ${heroBgStyle(heroBg)}">
         <div class="hero-art pan" aria-hidden="true"></div>
         <div class="setup-content">
-          <p class="eyebrow">Round setup</p>
-          <h2 class="section-title">Practice setup</h2>
+          <p class="eyebrow">Practice setup</p>
+          <h1 class="title">Choose today’s journey.</h1>
           <p class="lede">Smart Review mixes what’s due, what wobbled last time, and one or two new words. You can go straight to trouble drills or SATs rehearsal if you’d rather.</p>
           <div class="mode-row">
             ${MODE_CARDS.map((mode) => renderModeCard(mode, prefs.mode === mode.id)).join('')}
@@ -368,7 +381,9 @@ function renderPracticeDashboard({ learner, service, subject, repositories }) {
         <div class="ss-card">
           <div class="ss-head">
             <p class="eyebrow">Where you stand</p>
-            <span class="small muted">${escapeHtml(learner.yearGroup)} · ${escapeHtml(learner.goal)}</span>
+            <button type="button" class="ss-codex-link" data-action="navigate-home" aria-label="Open the codex on the dashboard">
+              Open codex →
+            </button>
           </div>
           ${renderSSMeadow(codex)}
           ${renderSSStatGrid(stats)}
@@ -661,16 +676,38 @@ function renderSummary({ learner, ui, subject }) {
    pill element, while keeping production status names on the
    underlying data-action button so test pins stay valid.
    -------------------------------------------------------------- */
-function renderWordBankLegendChips() {
-  /* Kept as production-shaped chips because render/smoke tests pin
-     `class="chip new">New</` + `class="chip learning">Learning</`. */
+function renderWordBankFilterChips({ counts, activeFilter }) {
+  /* v1-style filter tabs. Each chip is a real button wired to the
+     spelling-analytics-status-filter dispatch so a click updates the
+     transientUi state and re-renders the list. The count pill next to
+     the label mirrors the approved design. */
+  const chips = [
+    { id: 'all', label: 'All' },
+    { id: 'due', label: 'Due' },
+    { id: 'weak', label: 'Weak' },
+    { id: 'learning', label: 'Learning' },
+    { id: 'secure', label: 'Secure' },
+    { id: 'unseen', label: 'Unseen' },
+  ];
   return `
-    <div class="chip-row wb-legend" aria-hidden="true">
-      <span class="chip new">New</span>
-      <span class="chip learning">Learning</span>
-      <span class="chip warn">Due</span>
-      <span class="chip good">Secure</span>
-      <span class="chip bad">Trouble</span>
+    <div class="wb-chips" role="tablist" aria-label="Filter word bank by status">
+      ${chips.map((chip) => {
+        const active = chip.id === activeFilter;
+        const count = counts[chip.id] ?? 0;
+        return `
+          <button
+            type="button"
+            role="tab"
+            aria-selected="${active ? 'true' : 'false'}"
+            class="wb-chip${active ? ' on' : ''}"
+            data-action="spelling-analytics-status-filter"
+            data-value="${escapeHtml(chip.id)}"
+          >
+            <span class="wb-chip-label">${escapeHtml(chip.label)}</span>
+            <span class="wb-chip-count">${count}</span>
+          </button>
+        `;
+      }).join('')}
     </div>
   `;
 }
@@ -724,36 +761,50 @@ function renderWordBankRow(word) {
   `;
 }
 
-function renderWordBank({ analytics, searchQuery = '' }) {
+function renderWordBank({ learner, analytics, searchQuery = '', statusFilter = 'all' }) {
   const query = normaliseSearchText(searchQuery);
+  const activeFilter = WORD_BANK_FILTER_IDS.has(statusFilter) ? statusFilter : 'all';
   const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
   const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
-  const visibleWords = sortWordBank(allWords.filter((word) => wordMatchesSearch(word, query)));
 
-  const chipDefs = [
-    { id: 'all', label: 'All', count: allWords.length },
-    { id: 'due', label: 'Due', count: countWordBankStatus(allWords, 'due') },
-    { id: 'weak', label: 'Weak', count: countWordBankStatus(allWords, 'trouble') },
-    { id: 'learning', label: 'Learning', count: countWordBankStatus(allWords, 'learning') },
-    { id: 'secure', label: 'Secure', count: countWordBankStatus(allWords, 'secure') },
-    { id: 'unseen', label: 'Unseen', count: countWordBankStatus(allWords, 'new') },
-  ];
+  /* Apply status filter first, then search. Order matters because the status
+     count pills on the filter tabs always reflect the unfiltered totals; only
+     the list rows respect the combined filter+search. */
+  const statusMatched = allWords.filter((word) => wordBankFilterMatchesStatus(activeFilter, word.status));
+  const visibleWords = sortWordBank(statusMatched.filter((word) => wordMatchesSearch(word, query)));
+
+  const counts = {
+    all: allWords.length,
+    due: countWordBankStatus(allWords, 'due'),
+    weak: countWordBankStatus(allWords, 'trouble'),
+    learning: countWordBankStatus(allWords, 'learning'),
+    secure: countWordBankStatus(allWords, 'secure'),
+    unseen: countWordBankStatus(allWords, 'new'),
+  };
 
   const rows = visibleWords.length
     ? visibleWords.map(renderWordBankRow).join('')
     : '<li class="wb-empty">No words match your search.</li>';
 
-  const summaryLine = visibleWords.length
-    ? `${countWordBankStatus(visibleWords, 'secure')} secure out of ${visibleWords.length} visible spellings`
-    : 'No spellings match this search.';
+  /* v1 lede format: "{total} words tracked — {secure} secure, {due} due today,
+     {weak} weak spots." Switches to the search-narrow variant when the
+     learner has typed a query so the line stays informative instead of
+     stale. */
+  const totalWords = allWords.length;
+  const ledeBase = `${totalWords} word${totalWords === 1 ? '' : 's'} tracked — ${counts.secure} secure, ${counts.due} due today, ${counts.weak} weak spots.`;
+  const ledeSearch = query
+    ? ` Showing ${visibleWords.length} match${visibleWords.length === 1 ? '' : 'es'} for "${escapeHtml(searchQuery)}".`
+    : '';
+  const footText = `Showing ${visibleWords.length} of ${totalWords} tracked spellings.`;
+  const learnerName = learner?.name ? `${learner.name}’s` : 'Learner';
 
   return `
-    <section class="card word-bank-card" style="grid-column:1/-1;">
+    <section class="word-bank-card" style="grid-column:1/-1;">
       <div class="wb-card">
         <header class="wb-head">
-          <p class="eyebrow">Word bank</p>
-          <h2 class="section-title">Word bank progress</h2>
-          <p class="lede">${escapeHtml(summaryLine)}. Pick any word to start a practice-only drill.</p>
+          <p class="eyebrow">Word bank progress</p>
+          <h1 class="title">${escapeHtml(learnerName)} word bank</h1>
+          <p class="lede">${escapeHtml(ledeBase)}${ledeSearch} Pick any word to start a practice-only drill.</p>
         </header>
 
         <div class="wb-toolbar">
@@ -761,16 +812,14 @@ function renderWordBank({ analytics, searchQuery = '' }) {
             <span class="wb-search-icon" aria-hidden="true">${ICON_SEARCH}</span>
             <input type="search" name="spellingAnalyticsSearch" autocomplete="off" placeholder="Search words…" value="${escapeHtml(searchQuery)}" data-action="spelling-analytics-search" aria-label="Search word bank" />
           </label>
-          ${renderWordBankLegendChips()}
+          ${renderWordBankFilterChips({ counts, activeFilter })}
         </div>
 
         <ul class="wb-list">
           ${rows}
         </ul>
 
-        <div class="wb-foot small muted">
-          ${chipDefs.map((chip) => `<span class="wb-foot-chip"><em>${escapeHtml(chip.label)}</em> ${chip.count}</span>`).join(' · ')}
-        </div>
+        <div class="wb-foot small muted">${escapeHtml(footText)}</div>
       </div>
     </section>
   `;
@@ -785,6 +834,10 @@ function renderWordBank({ analytics, searchQuery = '' }) {
 function renderAnalytics({ appState, learner, service }) {
   const analytics = service.getAnalyticsSnapshot(learner.id);
   const searchQuery = appState?.transientUi?.spellingAnalyticsWordSearch || '';
+  /* Word bank tab filter — persisted on transientUi so that switching tabs (or
+     refreshing after a transient reload) keeps the chip selection. Defaults to
+     'all' when the store has not yet normalised the field. */
+  const statusFilter = appState?.transientUi?.spellingAnalyticsStatusFilter || 'all';
   const all = analytics.pools.all;
   const y34 = analytics.pools.y34;
   const y56 = analytics.pools.y56;
@@ -820,7 +873,7 @@ function renderAnalytics({ appState, learner, service }) {
           { label: 'Unseen', value: y56.fresh, sub: 'Not yet introduced' },
         ])}
       </section>
-      ${renderWordBank({ analytics, searchQuery })}
+      ${renderWordBank({ learner, analytics, searchQuery, statusFilter })}
     </div>
   `;
 }
@@ -1001,6 +1054,22 @@ export const spellingModule = {
         transientUi: {
           ...current.transientUi,
           spellingAnalyticsWordSearch,
+        },
+      }));
+      return true;
+    }
+
+    if (action === 'spelling-analytics-status-filter') {
+      /* Word bank filter tab — v1 tokens (unseen/weak) are accepted verbatim;
+         normalisation into the validator set happens inside the store on patch.
+         Unknown values collapse to 'all' so the learner always sees the full
+         list rather than a confusing empty state. */
+      const raw = String(data.value || 'all');
+      const next = WORD_BANK_FILTER_IDS.has(raw) ? raw : 'all';
+      store.patch((current) => ({
+        transientUi: {
+          ...current.transientUi,
+          spellingAnalyticsStatusFilter: next,
         },
       }));
       return true;

@@ -121,12 +121,29 @@ function normaliseToasts(rawValue) {
     .slice(-25);
 }
 
+const VALID_SPELLING_WORD_BANK_FILTERS = new Set([
+  'all',
+  'due',
+  'weak',
+  'learning',
+  'secure',
+  'unseen',
+]);
+
 function normaliseTransientUi(rawValue) {
   const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
+  /* Word bank status filter — v1 filter tokens (unseen/weak); the word bank
+     renderer translates them to production status values (new/trouble) when
+     filtering. Unknown values collapse to 'all' so a malformed persisted
+     snapshot never traps the learner on an empty view. */
+  const rawFilter = typeof raw.spellingAnalyticsStatusFilter === 'string'
+    ? raw.spellingAnalyticsStatusFilter
+    : 'all';
   return {
     spellingAnalyticsWordSearch: typeof raw.spellingAnalyticsWordSearch === 'string'
       ? raw.spellingAnalyticsWordSearch.slice(0, 80)
       : '',
+    spellingAnalyticsStatusFilter: VALID_SPELLING_WORD_BANK_FILTERS.has(rawFilter) ? rawFilter : 'all',
   };
 }
 

@@ -3262,47 +3262,6 @@
       100%    { opacity: 0; }
     }
 
-    /* Shell shards — eggshell-cream colour with irregular silhouette
-       (border-radius asymmetry creates an organic shape without per-
-       shard SVG). 3D-ish gradient + inner shadow gives them volume. */
-    .ev-modal.egg-crack .ev-part {
-      width: 24px; height: 18px;
-      margin: -9px 0 0 -12px;
-      border-radius: 60% 40% 50% 50% / 60% 60% 40% 40%;
-      background: linear-gradient(160deg, #faedd1 0%, #d8c19a 100%);
-      box-shadow:
-        inset -2px -3px 5px rgba(108, 80, 40, 0.4),
-        0 2px 3px rgba(0,0,0,0.45);
-    }
-    /* Per-shard trajectory — `--tx` is horizontal drift, `--ty` is the
-       arc peak height (negative = up first), `--rot` is total tumble.
-       All eight start at the egg centre, burst out at 38%, arc up,
-       then fall with gravity to the floor below. */
-    .ev-modal.egg-crack .ev-part:nth-child(1) { --tx:  140px; --ty: -120px; --rot:  220deg; }
-    .ev-modal.egg-crack .ev-part:nth-child(2) { --tx: -150px; --ty: -110px; --rot: -260deg; }
-    .ev-modal.egg-crack .ev-part:nth-child(3) { --tx:   80px; --ty: -160px; --rot:  300deg; }
-    .ev-modal.egg-crack .ev-part:nth-child(4) { --tx:  -80px; --ty: -150px; --rot: -180deg; }
-    .ev-modal.egg-crack .ev-part:nth-child(5) { --tx:  185px; --ty:  -50px; --rot:  340deg; }
-    .ev-modal.egg-crack .ev-part:nth-child(6) { --tx: -190px; --ty:  -40px; --rot: -300deg; }
-    .ev-modal.egg-crack .ev-part:nth-child(7) { --tx:   30px; --ty: -180px; --rot:  240deg; }
-    .ev-modal.egg-crack .ev-part:nth-child(8) { --tx:  -30px; --ty: -170px; --rot: -220deg; }
-    .ev-modal.egg-crack .ev-part {
-      animation: ev-shard-fly var(--ev-duration) linear forwards;
-    }
-    @keyframes ev-shard-fly {
-      0%, 36%  { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.6); }
-      /* CRACK — appear at egg centre, full size. */
-      38%      { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
-      /* Arc peak — out and up. */
-      48%      { opacity: 1; transform: translate(calc(var(--tx) * 0.85), var(--ty)) rotate(calc(var(--rot) * 0.5)) scale(1); }
-      /* Falling toward floor (positive y is downward). */
-      62%      { opacity: 0.9; transform: translate(calc(var(--tx) * 1.1), 80px) rotate(calc(var(--rot) * 0.8)) scale(0.92); }
-      /* Hits floor + fade. */
-      74%      { opacity: 0.4; transform: translate(calc(var(--tx) * 1.25), 200px) rotate(var(--rot)) scale(0.85); }
-      82%      { opacity: 0; transform: translate(calc(var(--tx) * 1.3), 220px) rotate(var(--rot)) scale(0.85); }
-      100%     { opacity: 0; }
-    }
-
     /* Reduced motion — freeze the animation in the final state so the
        scene remains intelligible (new monster visible, reveal shown). */
     @media (prefers-reduced-motion: reduce) {

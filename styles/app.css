@@ -4629,3 +4629,127 @@ textarea:focus-visible {
 @media (max-width: 720px) {
   .wb-card { padding: 22px 20px 20px; border-radius: var(--radius); }
 }
+
+/* ---------- Word bank filter chips ---------- */
+/* Interactive tabs on the word-bank toolbar. Each chip is a real button that
+   dispatches spelling-analytics-status-filter with a v1 token (all / due /
+   weak / learning / secure / unseen). The palette mirrors .wb-pill so a
+   "weak" chip reads the same colour as a weak row pill, making the filter
+   selection feel tangibly connected to the rows it produces. */
+.wb-chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease-out),
+              border-color var(--dur) var(--ease-out),
+              color var(--dur) var(--ease-out);
+}
+.wb-chip:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+.wb-chip:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.wb-chip.on {
+  background: var(--brand-soft);
+  border-color: color-mix(in oklab, var(--brand) 55%, transparent);
+  color: var(--brand-ink);
+}
+.wb-chip-label { line-height: 1; }
+.wb-chip-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 1px 6px;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.wb-chip.on .wb-chip-count {
+  background: color-mix(in oklab, var(--brand) 18%, var(--panel));
+  border-color: color-mix(in oklab, var(--brand) 40%, transparent);
+  color: var(--brand-ink);
+}
+
+/* ---------- Subject-screen breadcrumb ---------- */
+/* Sits below the topnav and above the subject tabs; replaces the old card
+   chrome (hero block + back button) with a single slim wayfinding row.
+   Mirrors the v1 breadcrumb pattern (Dashboard / Subject module / <Subject>)
+   used across the Codex Journal design. */
+.subject-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 14px;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+.subject-breadcrumb-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 4px 2px;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: color var(--dur) var(--ease-out);
+}
+.subject-breadcrumb-link:hover { color: var(--brand); }
+.subject-breadcrumb-link:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.subject-breadcrumb-sep { color: var(--subtle); }
+.subject-breadcrumb-ancestor { color: var(--muted); }
+.subject-breadcrumb-current {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* ---------- Setup-scene codex link ---------- */
+/* Right-aligned button in the practice setup "Where you stand" head. Lets the
+   learner jump back to the codex surface without leaving the subject context.
+   Ghost-button styling so it reads as a navigational accent, not a primary CTA. */
+.ss-codex-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 4px 2px;
+  color: var(--brand-ink);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: color var(--dur) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out);
+}
+.ss-codex-link:hover {
+  color: var(--brand);
+  transform: translateX(2px);
+}
+.ss-codex-link:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}

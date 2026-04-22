@@ -1206,22 +1206,23 @@ function renderSubjectScreen(context) {
     }
   }
 
+  /* Slim subject chrome — a single breadcrumb row + pill tabs, matching the
+     v1 Codex Journal pattern. The heavy card header that used to live here
+     duplicated the subject name that now lives inside each scene (setup hero,
+     word bank header, etc.), so it has been retired. "Subject module" is kept
+     in the breadcrumb as the ancestor so the chrome still reads as "platform
+     → subject module → {subject}" rather than a bare navigation bar. */
   return `
-    <section class="subject-header card border-top" style="border-top-color:${accent}; margin-bottom:18px;">
-      <div class="subject-title-row">
-        <div>
-          <div class="eyebrow">Subject module</div>
-          <h2 class="title" style="font-size:clamp(1.6rem, 3vw, 2.3rem);">${escapeHtml(subject.name)}</h2>
-          <p class="subtitle">${escapeHtml(subject.blurb)}</p>
-        </div>
-        <div class="actions">
-          <button class="btn secondary" data-action="navigate-home">All subjects</button>
-        </div>
-      </div>
-      <div class="subject-tabs" style="margin-top:16px;">
-        ${TAB_META.map(([tabId, label]) => `<button class="tab ${tabId === activeTab ? 'active' : ''}" style="${tabId === activeTab ? `background:${accent}; border-color:${accent};` : ''}" data-action="subject-set-tab" data-tab="${tabId}">${escapeHtml(label)}</button>`).join('')}
-      </div>
-    </section>
+    <nav class="subject-breadcrumb" aria-label="Subject breadcrumb">
+      <button type="button" class="subject-breadcrumb-link" data-action="navigate-home">← Dashboard</button>
+      <span class="subject-breadcrumb-sep" aria-hidden="true">/</span>
+      <span class="subject-breadcrumb-ancestor">Subject module</span>
+      <span class="subject-breadcrumb-sep" aria-hidden="true">/</span>
+      <span class="subject-breadcrumb-current" style="color:${accent};">${escapeHtml(subject.name)}</span>
+    </nav>
+    <div class="subject-tabs" role="tablist" aria-label="${escapeHtml(subject.name)} tabs">
+      ${TAB_META.map(([tabId, label]) => `<button type="button" role="tab" aria-selected="${tabId === activeTab ? 'true' : 'false'}" class="tab${tabId === activeTab ? ' active' : ''}" style="${tabId === activeTab ? `background:${accent}; border-color:${accent};` : ''}" data-action="subject-set-tab" data-tab="${tabId}">${escapeHtml(label)}</button>`).join('')}
+    </div>
     ${ui.error ? `<section class="card" style="margin-bottom:18px;"><div class="feedback bad"><strong>Subject message</strong><div>${escapeHtml(ui.error)}</div></div></section>` : ''}
     <section class="shell-grid">${mainContent}</section>
   `;

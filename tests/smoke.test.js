@@ -126,8 +126,15 @@ test('spelling analytics exposes searchable word-bank progress and practice-only
   let html = harness.render();
   assert.match(html, /Word bank progress/);
   assert.match(html, /name="spellingAnalyticsSearch"[^>]*autocomplete="off"/);
-  assert.match(html, /class="chip new">New</);
-  assert.match(html, /class="chip learning">Learning</);
+  // Filter tabs — the legend chips have been replaced by interactive
+  // spelling-analytics-status-filter tabs. The status value stays on the wire
+  // in v1 vocabulary ("unseen" / "learning" / "weak"), and each tab carries a
+  // .wb-chip-label span with the visible label. Attribute regexes use `\s+`
+  // because the template emits attrs on separate indented lines for legibility.
+  assert.match(html, /data-action="spelling-analytics-status-filter"\s+data-value="unseen"/);
+  assert.match(html, /data-action="spelling-analytics-status-filter"\s+data-value="learning"/);
+  assert.match(html, /class="wb-chip-label">Unseen</);
+  assert.match(html, /class="wb-chip-label">Learning</);
   assert.match(html, /data-action="spelling-practice-single" data-slug="possess"/);
   assert.match(html, /class="word-progress-pill new"[^>]*data-action="spelling-practice-single"/);
   assert.match(html, />accident</);

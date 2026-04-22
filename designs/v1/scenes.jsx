@@ -972,17 +972,11 @@ function MegaTimeline({ pair }) {
 function EggCrackTimeline({ pair }) {
   const fromSrc = monsterStageSrc(pair.species, pair.variant, pair.from);
   const toSrc   = monsterStageSrc(pair.species, pair.variant, pair.to);
-  /* Eight shell shards — enough to read as a full break, sparse enough
-     each shard's arc is legible. Trajectories live in CSS (nth-child). */
-  const shards = Array.from({ length: 8 }, (_, i) => i);
 
   return (
     <div className="celeb-modal ev-modal egg-crack">
       <div className="ev-stage">
         <img className="ev-mon ev-mon-from" src={fromSrc} alt="" data-stage={pair.from} />
-        <div className="ev-parts" aria-hidden="true">
-          {shards.map(i => <span key={i} className="ev-part" />)}
-        </div>
         <div className="ev-halo"  aria-hidden="true" />
         <div className="ev-shine" aria-hidden="true" />
         <div className="ev-white" aria-hidden="true" />
