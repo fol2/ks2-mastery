@@ -145,12 +145,31 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   assert.match(html, /data-action="spelling-word-detail-open" data-slug="possess" data-value="explain"/);
   assert.match(html, /data-action="spelling-word-detail-open" data-slug="possess" data-value="drill"/);
   assert.match(html, />accident</);
+  assert.match(html, /wb-meta-label">Next due<\/span><span class="wb-meta-value">Unseen/);
+  assert.doesNotMatch(html, /wb-meta-label">Family/);
+
+  const learnerId = harness.store.getState().learners.selectedId;
+  const todayDay = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+  harness.repositories.subjectStates.writeData(learnerId, 'spelling', {
+    progress: {
+      possess: {
+        stage: 1,
+        attempts: 1,
+        correct: 1,
+        wrong: 0,
+        dueDay: todayDay + 3,
+        lastDay: todayDay,
+        lastResult: true,
+      },
+    },
+  });
 
   harness.dispatch('spelling-analytics-search', { value: 'possess' });
   assert.equal(harness.store.getState().transientUi.spellingAnalyticsWordSearch, 'possess');
   assert.equal(harness.store.getState().subjectUi.spelling.analyticsWordSearch, undefined);
   html = harness.render();
   assert.match(html, />possess</);
+  assert.match(html, /wb-meta-label">Next due<\/span><span class="wb-meta-value">In 3 days/);
   assert.doesNotMatch(html, />accident</);
 
   harness.dispatch('spelling-word-detail-open', { slug: 'possess', value: 'explain' });
@@ -158,6 +177,7 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   assert.match(html, /What it means/);
   assert.match(html, /To possess something means to own it or have it/);
   assert.match(html, /Example sentence/);
+  assert.doesNotMatch(html, /wb-modal-section-label">Family/);
   harness.dispatch('spelling-word-detail-close');
 
   harness.dispatch('spelling-analytics-search', { value: '' });

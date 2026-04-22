@@ -12,6 +12,7 @@ import {
 } from './session-ui.js';
 
 const SPELLING_ACCENT = '#3E6FA8';
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function accentFor(subject) {
   return subject?.accent || SPELLING_ACCENT;
@@ -144,11 +145,14 @@ function accuracyPercent(progress) {
 
 function dueLabel(progress) {
   if (!progress) return 'Unseen';
+  const attempts = Math.max(0, Number(progress.attempts) || 0);
+  if (!attempts) return 'Unseen';
   const dueDay = Number(progress.dueDay);
   if (!Number.isFinite(dueDay)) return 'Unseen';
-  if (dueDay <= 0) return 'Today';
-  if (dueDay === 1) return 'In 1 day';
-  return `In ${dueDay} days`;
+  const daysUntilDue = Math.floor(dueDay - Math.floor(Date.now() / DAY_MS));
+  if (daysUntilDue <= 0) return 'Today';
+  if (daysUntilDue === 1) return 'In 1 day';
+  return `In ${daysUntilDue} days`;
 }
 
 /* --------------------------------------------------------------
@@ -824,7 +828,7 @@ function renderWordBankRow(word) {
   const accuracy = accuracyPercent(word.progress);
   const due = dueLabel(word.progress);
   const attempts = Math.max(0, Number(word.progress?.attempts) || 0);
-  const openExplainLabel = `Open ${word.word} · ${word.family} · ${statusLabel}`;
+  const openExplainLabel = `Open ${word.word} · ${statusLabel}`;
   const openDrillLabel = `Drill ${word.word} — practice only`;
   /* The whole row is a button that opens the modal in explain mode. The inner
      arrow button (the "wb-action" chip on the right) jumps straight to drill
@@ -840,7 +844,6 @@ function renderWordBankRow(word) {
         <span class="wb-meta"><span class="wb-meta-label">Accuracy</span><span class="wb-meta-value">${accuracy == null ? '—' : `${accuracy}%`}</span></span>
         <span class="wb-meta"><span class="wb-meta-label">Next due</span><span class="wb-meta-value">${escapeHtml(due)}</span></span>
         <span class="wb-meta"><span class="wb-meta-label">Attempts</span><span class="wb-meta-value">${attempts}</span></span>
-        <span class="wb-meta"><span class="wb-meta-label">Family</span><span class="wb-meta-value">${escapeHtml(word.family || '—')}</span></span>
       </div>
       <button type="button" class="wb-action" data-action="spelling-word-detail-open" data-slug="${escapeHtml(word.slug)}" data-value="drill" aria-label="${escapeHtml(openDrillLabel)}">
         <span class="wb-action-label">Drill</span>
@@ -925,14 +928,6 @@ function renderWordBank({ learner, analytics, searchQuery = '', statusFilter = '
 function renderWordDetailExplain(word) {
   const sentence = (word.sentence || '').replace(/________/g, word.word);
   const explanation = word.explanation || '';
-  /* The modal renders its own section wrapper + label, so the shared chip
-     helper is called with `label: null` (wrapper supplies the heading) and
-     `requireMultiple: false` (single-entry families are still worth showing
-     in the explainer because the learner explicitly asked to inspect one). */
-  const familyChips = renderFamilyChips(word.familyWords, {
-    label: null,
-    requireMultiple: false,
-  });
   return `
     <div class="wb-modal-body">
       <div class="wb-modal-section">
@@ -947,12 +942,6 @@ function renderWordDetailExplain(word) {
           ? `<blockquote class="wb-modal-sample">${escapeHtml(sentence)}</blockquote>`
           : '<p class="wb-modal-def">No example sentence on file for this word yet.</p>'}
       </div>
-      ${familyChips ? `
-        <div class="wb-modal-section wb-modal-section-family">
-          <p class="wb-modal-section-label">Family</p>
-          ${familyChips}
-        </div>
-      ` : ''}
     </div>
   `;
 }
@@ -1042,7 +1031,7 @@ function renderWordDetailModal({ word, mode = 'explain', typed = '', result = nu
           <div class="wb-modal-head-main">
             ${speaker}
             <div>
-              <p class="wb-modal-eyebrow">${escapeHtml(word.family || 'Word')}${word.yearLabel ? ` · ${escapeHtml(word.yearLabel)}` : ''}</p>
+              <p class="wb-modal-eyebrow">${escapeHtml(word.yearLabel || 'Word')}</p>
               ${heading}
             </div>
           </div>
