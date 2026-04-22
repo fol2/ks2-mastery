@@ -2856,10 +2856,12 @@ textarea:focus-visible {
   }
   .codex-feature {
     position: absolute;
-    inset: 0;
+    inset: 0 0 -104px;
     width: 100%;
-    height: 100%;
+    height: auto;
     justify-self: auto;
+    place-items: end center;
+    padding-bottom: 30px;
   }
   .codex-hero.stage-4 .codex-feature {
     width: auto;
@@ -2867,6 +2869,7 @@ textarea:focus-visible {
   }
   .codex-feature .codex-creature-button.is-feature {
     width: min(var(--codex-feature-size, 340px), calc(100vw - 96px), var(--codex-feature-cap, 860px));
+    margin-top: 0;
   }
   .codex-feature .codex-creature-button.is-feature .codex-unknown {
     width: min(var(--codex-feature-size, 340px), calc(100vw - 96px), var(--codex-feature-cap, 860px));
