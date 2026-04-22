@@ -1,6 +1,7 @@
 import { monsterSummaryFromSpellingAnalytics } from '../../platform/game/monster-system.js';
 import { monsterAsset, monsterAssetSrcSet } from '../../platform/game/monsters.js';
 import { escapeHtml, formatElapsed } from '../../platform/core/utils.js';
+import { REGION_BACKGROUND_URLS } from '../../surfaces/home/data.js';
 import { createInitialSpellingState } from './service-contract.js';
 import {
   spellingSessionContextNote,
@@ -17,7 +18,45 @@ function accentFor(subject) {
   return subject?.accent || SPELLING_ACCENT;
 }
 
+/* --------------------------------------------------------------
+   Hero-bg picker
+   Deterministic per learner so setup/session/summary share the
+   same scribe-downs backdrop on a given day. Spread across the
+   round so long rounds get visual variety.
+   -------------------------------------------------------------- */
+function stableHash(value) {
+  const text = String(value || '');
+  let hash = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    hash = (hash << 5) - hash + text.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
 
+function heroBgForLearner(learnerId) {
+  if (!REGION_BACKGROUND_URLS.length) return '';
+  const index = stableHash(`spelling:${learnerId}`) % REGION_BACKGROUND_URLS.length;
+  return REGION_BACKGROUND_URLS[index];
+}
+
+function heroBgForSession(learnerId, session) {
+  if (!REGION_BACKGROUND_URLS.length) return '';
+  const total = Math.max(1, Number(session?.progress?.total) || 1);
+  const done = Math.max(0, Number(session?.progress?.done) || 0);
+  const offset = stableHash(`spelling:${learnerId}`) % REGION_BACKGROUND_URLS.length;
+  const step = Math.min(REGION_BACKGROUND_URLS.length - 1,
+    Math.floor((done / total) * REGION_BACKGROUND_URLS.length));
+  return REGION_BACKGROUND_URLS[(offset + step) % REGION_BACKGROUND_URLS.length];
+}
+
+function heroBgStyle(url) {
+  return url ? `--hero-bg: url('${escapeHtml(url)}');` : '';
+}
+
+/* --------------------------------------------------------------
+   Shared helpers retained from the previous port (codex + utils)
+   -------------------------------------------------------------- */
 function summaryCards(cards = []) {
   return `
     <div class="stat-grid">
@@ -30,11 +69,6 @@ function summaryCards(cards = []) {
       `).join('')}
     </div>
   `;
-}
-
-function sessionStatusChip(service, session) {
-  if (!session?.currentCard?.slug) return '';
-  return `<span class="chip">${escapeHtml(service.stageLabel(session.currentStage || 0))}</span>`;
 }
 
 function renderMonsterCodexVisual(monster, progress) {
@@ -65,9 +99,17 @@ function renderCodex(monsters) {
   `;
 }
 
+/* --------------------------------------------------------------
+   Word-bank helpers
+   Status vocabulary translates production tokens to the v1 pill
+   tokens ('new' → 'unseen', 'trouble' → 'weak') so the CSS pill
+   palette from the design comp applies directly.
+   -------------------------------------------------------------- */
 function normaliseSearchText(value) {
   return String(value || '').trim().toLowerCase();
 }
+
+const WORD_BANK_STATUS_ORDER = ['due', 'trouble', 'learning', 'new', 'secure'];
 
 function wordProgressTone(status) {
   if (status === 'new') return 'new';
@@ -89,6 +131,13 @@ function wordStatusLabel(status) {
   return labels[status] || 'Learning';
 }
 
+function wordBankPillClass(status) {
+  /* Maps production status → v1 pill token used by .wb-pill.{token}. */
+  if (status === 'new') return 'unseen';
+  if (status === 'trouble') return 'weak';
+  return status;
+}
+
 function wordMatchesSearch(word, query) {
   if (!query) return true;
   const fields = [
@@ -101,54 +150,170 @@ function wordMatchesSearch(word, query) {
   return fields.some((field) => field.includes(query));
 }
 
-function renderWordBankProgress({ analytics, searchQuery = '' }) {
-  const query = normaliseSearchText(searchQuery);
-  const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
+function accuracyPercent(progress) {
+  const attempts = Math.max(0, Number(progress?.attempts) || 0);
+  const correct = Math.max(0, Number(progress?.correct) || 0);
+  if (!attempts) return null;
+  return Math.round((correct / attempts) * 100);
+}
+
+function dueLabel(progress) {
+  if (!progress) return 'Unseen';
+  const dueDay = Number(progress.dueDay);
+  if (!Number.isFinite(dueDay)) return 'Unseen';
+  if (dueDay <= 0) return 'Today';
+  if (dueDay === 1) return 'In 1 day';
+  return `In ${dueDay} days`;
+}
+
+/* --------------------------------------------------------------
+   Inline icons
+   Kept tiny so the template string stays readable. Shared across
+   session + setup + summary.
+   -------------------------------------------------------------- */
+const ICON_ARROW_RIGHT = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
+const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l6 6 10-14"/></svg>`;
+const ICON_SPEAKER = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4Z" fill="currentColor" fill-opacity="0.12"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>`;
+const ICON_SPEAKER_SLOW = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4Z" fill="currentColor" fill-opacity="0.12"/><path d="M15.5 10a3 3 0 0 1 0 4"/><text x="15.5" y="20" font-size="5.5" font-family="Inter,system-ui" font-weight="800" fill="currentColor" stroke="none">0.5x</text></svg>`;
+const ICON_SEARCH = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`;
+
+/* --------------------------------------------------------------
+   Path progress (session head dots)
+   Caps visible dots at 20. Each dot represents multiple
+   questions when the total exceeds the cap.
+   -------------------------------------------------------------- */
+function renderPathProgress({ done, current, total }) {
+  const safeTotal = Math.max(1, Number(total) || 1);
+  const display = Math.min(safeTotal, 20);
+  const perDot = safeTotal / display;
+  const dots = [];
+  for (let i = 0; i < display; i += 1) {
+    const start = i * perDot;
+    const end = (i + 1) * perDot;
+    let cls = 'path-step';
+    if (end <= done) cls += ' done';
+    else if (current >= start && current < end) cls += ' current';
+    dots.push(`<span class="${cls}"></span>`);
+  }
+  return `<div class="path" aria-label="Word ${Math.min(safeTotal, current + 1)} of ${safeTotal}">${dots.join('')}</div>`;
+}
+
+/* --------------------------------------------------------------
+   Cloze renderer — splits on the ________ blank sentinel and wraps
+   the missing word with a .blank span (or the exact answer chip on
+   the correct-feedback variant).
+   -------------------------------------------------------------- */
+function renderCloze(sentence, { answer = '', revealAnswer = false } = {}) {
+  const raw = String(sentence || '');
+  if (!raw.includes('________')) {
+    return `<div class="cloze">${escapeHtml(raw)}</div>`;
+  }
+  const [lead, tail = ''] = raw.split('________');
+  const inside = revealAnswer && answer
+    ? escapeHtml(answer)
+    : '&nbsp;';
+  return `<div class="cloze">${escapeHtml(lead)}<span class="blank">${inside}</span>${escapeHtml(tail)}</div>`;
+}
+
+/* --------------------------------------------------------------
+   Setup scene (practice tab dashboard)
+   Translates v1 scenes.jsx:144 into server-rendered markup while
+   preserving every production data-action binding and the
+   "Practice setup" H2 that smoke.test.js pins.
+   -------------------------------------------------------------- */
+const MODE_CARDS = [
+  { id: 'smart', icon: '◎', title: 'Smart Review', desc: 'Due · weak · one fresh word.' },
+  { id: 'trouble', icon: '⚡', title: 'Trouble Drill', desc: 'Only the words you usually miss.' },
+  { id: 'test', icon: '⌒', title: 'SATs Test', desc: 'One-shot dictation, no retries.' },
+];
+
+const ROUND_LENGTH_OPTIONS = ['10', '20', '40'];
+
+function beginLabel(prefs) {
+  if (prefs.mode === 'test') return 'Begin SATs test';
+  if (prefs.mode === 'trouble') return 'Begin trouble drill';
+  if (prefs.roundLength === 'all') return 'Begin all words';
+  const length = prefs.roundLength || '10';
+  return `Begin ${length} words`;
+}
+
+function renderModeCard(mode, selected) {
   return `
-    <section class="card word-bank-card" style="grid-column:1/-1;">
-      <div class="card-header">
-        <div>
-          <div class="eyebrow">Word bank</div>
-          <h2 class="section-title">Word bank progress</h2>
+    <label class="mode-card${selected ? ' selected' : ''}">
+      <input type="radio" name="spelling-mode" value="${escapeHtml(mode.id)}" ${selected ? 'checked' : ''} data-action="spelling-set-mode" />
+      <div class="mc-icon">${escapeHtml(mode.icon)}</div>
+      <h4>${escapeHtml(mode.title)}</h4>
+      <p>${escapeHtml(mode.desc)}</p>
+    </label>
+  `;
+}
+
+function renderLengthPicker(prefs) {
+  const disabled = prefs.mode === 'test';
+  const options = ROUND_LENGTH_OPTIONS.map((value) => `
+    <label class="length-option${prefs.roundLength === value ? ' selected' : ''}${disabled ? ' disabled' : ''}">
+      <input type="radio" name="spelling-round-length" value="${value}" ${prefs.roundLength === value ? 'checked' : ''} data-action="spelling-set-pref" data-pref="roundLength" ${disabled ? 'disabled' : ''} />
+      <span>${value}</span>
+    </label>
+  `).join('');
+  return `
+    <div class="length-picker" role="radiogroup" aria-label="Round length">
+      ${options}
+      <span class="length-unit">words</span>
+    </div>
+  `;
+}
+
+function renderToggleChip(pref, checked, label) {
+  return `
+    <label class="toggle-chip${checked ? ' on' : ''}">
+      <input type="checkbox" data-action="spelling-toggle-pref" data-pref="${escapeHtml(pref)}" ${checked ? 'checked' : ''} />
+      <span class="box" aria-hidden="true">${checked ? ICON_CHECK : ''}</span>
+      ${escapeHtml(label)}
+    </label>
+  `;
+}
+
+function renderSSMeadow(codex) {
+  const entries = Array.isArray(codex) ? codex : [];
+  /* Show up to three stages of companion progress in the "where you stand" card.
+     Uncaught entries still render a .monster-placeholder so render.test.js can
+     assert both the placeholder and the "Not caught" status on the spelling
+     practice tab without losing the v1 meadow vocabulary. */
+  const shown = entries.slice(0, 3);
+  if (!shown.length) {
+    return '<div class="ss-meadow-empty small muted">Catch your first monster to populate this meadow.</div>';
+  }
+  return `
+    <div class="ss-meadow" aria-label="${shown.length} tracked monsters">
+      ${shown.map(({ monster, progress }) => `
+        <div class="ss-meadow-cell${progress.caught ? (progress.stage === 0 ? ' egg' : '') : ' uncaught'}">
+          ${renderMonsterCodexVisual(monster, progress)}
+          <span class="ss-meadow-label">${progress.caught ? `Stage ${progress.stage}` : 'Not caught'}</span>
         </div>
-        <label class="field analytics-search-field">
-          <span>Search</span>
-          <input class="input" type="search" name="spellingAnalyticsSearch" autocomplete="off" value="${escapeHtml(searchQuery)}" data-action="spelling-analytics-search" placeholder="Word or family" />
-        </label>
-      </div>
-      <div class="chip-row" style="margin-bottom:14px;">
-        <span class="chip new">New</span>
-        <span class="chip learning">Learning</span>
-        <span class="chip warn">Due</span>
-        <span class="chip good">Secure</span>
-        <span class="chip bad">Trouble</span>
-      </div>
-      <div class="word-bank-groups">
-        ${groups.map((group) => {
-          const visibleWords = (Array.isArray(group.words) ? group.words : []).filter((word) => wordMatchesSearch(word, query));
-          const secureCount = visibleWords.filter((word) => word.status === 'secure').length;
-          const summary = visibleWords.length
-            ? `${secureCount} secure out of ${visibleWords.length} visible spellings`
-            : 'No spellings match this search.';
-          return `
-            <section class="word-bank-group">
-              <div class="inline-row spread">
-                <h3>${escapeHtml(group.title)}</h3>
-                <span class="muted small">${escapeHtml(summary)}</span>
-              </div>
-              <div class="word-bank-pills">
-                ${visibleWords.length ? visibleWords.map((word) => {
-                  const tone = wordProgressTone(word.status);
-                  const label = wordStatusLabel(word.status);
-                  const title = `${word.word} · ${word.family} · ${word.stageLabel} · correct ${word.progress.correct}, wrong ${word.progress.wrong} · practice only`;
-                  return `<button type="button" class="word-progress-pill ${tone}" data-action="spelling-practice-single" data-slug="${escapeHtml(word.slug)}" title="${escapeHtml(title)}" aria-label="${escapeHtml(`${word.word}, ${label}, ${word.stageLabel}, practice only`)}">${escapeHtml(word.word)}</button>`;
-                }).join('') : '<div class="muted small">Try another search.</div>'}
-              </div>
-            </section>
-          `;
-        }).join('')}
-      </div>
-    </section>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderSSStatGrid(stats) {
+  const cells = [
+    { label: 'Total spellings', value: stats.total },
+    { label: 'Secure', value: stats.secure },
+    { label: 'Due today', value: stats.due, warn: true },
+    { label: 'Weak spots', value: stats.trouble },
+    { label: 'Unseen', value: stats.fresh },
+    { label: 'Accuracy', value: stats.accuracy == null ? '—' : `${stats.accuracy}%` },
+  ];
+  return `
+    <div class="ss-stat-grid">
+      ${cells.map((cell) => `
+        <div class="ss-stat">
+          <div class="ss-stat-label">${escapeHtml(cell.label)}</div>
+          <div class="ss-stat-value"${cell.warn ? ' style="color:var(--warn-strong);"' : ''}>${escapeHtml(cell.value)}</div>
+        </div>
+      `).join('')}
+    </div>
   `;
 }
 
@@ -161,87 +326,148 @@ function renderPracticeDashboard({ learner, service, subject, repositories }) {
     gameStateRepository: repositories?.gameState,
     persistBranches: false,
   });
-  const modeOptions = [
-    ['smart', 'Smart Review', 'Weighted mix of due, weak and new words.'],
-    ['trouble', 'Trouble Drill', 'Keeps pressure on weak spellings.'],
-    ['test', 'SATs Test', 'Twenty words, one attempt each.'],
-  ];
+  const heroBg = heroBgForLearner(learner.id);
+  const begin = beginLabel(prefs);
   return `
-    <div class="two-col">
-      <section class="card border-top" style="border-top-color:${accent};">
-        <div class="eyebrow">English spelling</div>
-        <h2 class="section-title">Practice setup</h2>
-        <p class="subtitle">This is the preserved spelling engine inside the new platform structure. The learning loop stays deterministic and subject-specific; the shell, analytics and game hooks sit around it.</p>
-        <div style="margin-top:16px; display:grid; gap:12px;">
-          ${modeOptions.map(([id, title, hint]) => `
-            <label class="card soft" style="padding:14px; cursor:pointer; border-color:${prefs.mode === id ? accent : 'var(--line)'};">
-              <div class="inline-row spread">
-                <strong>${escapeHtml(title)}</strong>
-                <input type="radio" name="spelling-mode" value="${id}" ${prefs.mode === id ? 'checked' : ''} data-action="spelling-set-mode" />
-              </div>
-              <div class="small muted" style="margin-top:6px;">${escapeHtml(hint)}</div>
-            </label>
-          `).join('')}
-        </div>
-        <div class="field-row" style="margin-top:16px;">
-          <div class="field">
-            <label for="spelling-year-filter">Year group</label>
-            <select class="select" id="spelling-year-filter" data-action="spelling-set-pref" data-pref="yearFilter">
+    <div class="setup-grid" style="grid-column:1/-1;">
+      <section class="setup-main" style="border-top:3px solid ${accent}; ${heroBgStyle(heroBg)}">
+        <div class="hero-art pan" aria-hidden="true"></div>
+        <div class="setup-content">
+          <p class="eyebrow">Round setup</p>
+          <h2 class="section-title">Practice setup</h2>
+          <p class="lede">Smart Review mixes what’s due, what wobbled last time, and one or two new words. You can go straight to trouble drills or SATs rehearsal if you’d rather.</p>
+          <div class="mode-row">
+            ${MODE_CARDS.map((mode) => renderModeCard(mode, prefs.mode === mode.id)).join('')}
+          </div>
+          <div class="tweak-row">
+            <span class="tool-label">Year group</span>
+            <select class="select length-select" data-action="spelling-set-pref" data-pref="yearFilter" aria-label="Year group">
               <option value="all" ${prefs.yearFilter === 'all' ? 'selected' : ''}>Years 3-4 and 5-6</option>
               <option value="y3-4" ${prefs.yearFilter === 'y3-4' ? 'selected' : ''}>Years 3-4 only</option>
               <option value="y5-6" ${prefs.yearFilter === 'y5-6' ? 'selected' : ''}>Years 5-6 only</option>
             </select>
           </div>
-          <div class="field">
-            <label for="spelling-round-length">Round length</label>
-            <select class="select" id="spelling-round-length" data-action="spelling-set-pref" data-pref="roundLength" ${prefs.mode === 'test' ? 'disabled' : ''}>
-              <option value="10" ${prefs.roundLength === '10' ? 'selected' : ''}>10 words</option>
-              <option value="20" ${prefs.roundLength === '20' ? 'selected' : ''}>20 words</option>
-              <option value="40" ${prefs.roundLength === '40' ? 'selected' : ''}>40 words</option>
-              <option value="all" ${prefs.roundLength === 'all' ? 'selected' : ''}>All available</option>
-            </select>
+          <div class="tweak-row">
+            <span class="tool-label">Round length</span>
+            ${renderLengthPicker(prefs)}
+          </div>
+          <div class="tweak-row">
+            <span class="tool-label">Options</span>
+            ${renderToggleChip('showCloze', Boolean(prefs.showCloze), 'Show sentence')}
+            ${renderToggleChip('autoSpeak', Boolean(prefs.autoSpeak), 'Auto-play audio')}
+          </div>
+          <div class="setup-begin-row">
+            <button type="button" class="btn primary xl" style="background:${accent};" data-action="spelling-start">
+              ${escapeHtml(begin)} ${ICON_ARROW_RIGHT}
+            </button>
           </div>
         </div>
-        <div class="chip-row" style="margin-top:14px;">
-          <label class="chip"><input type="checkbox" data-action="spelling-toggle-pref" data-pref="showCloze" ${prefs.showCloze ? 'checked' : ''}/> Show sentence blank</label>
-          <label class="chip"><input type="checkbox" data-action="spelling-toggle-pref" data-pref="autoSpeak" ${prefs.autoSpeak ? 'checked' : ''}/> Auto-play dictation</label>
-        </div>
-        <div class="actions" style="margin-top:18px;">
-          <button class="btn primary lg" style="background:${accent};" data-action="spelling-start">Start ${prefs.mode === 'test' ? 'SATs test' : prefs.mode === 'trouble' ? 'trouble drill' : 'Smart Review'}</button>
-        </div>
       </section>
-      <section class="card">
-        <div class="eyebrow">Current learner</div>
-        <h2 class="section-title">${escapeHtml(learner.name)}</h2>
-        <p class="subtitle">${escapeHtml(learner.yearGroup)} · ${escapeHtml(learner.goal)}</p>
-        ${summaryCards([
-          { label: 'Total spellings', value: stats.total, sub: 'KS2 statutory list' },
-          { label: 'Secure', value: stats.secure, sub: 'Stable recall' },
-          { label: 'Due today', value: stats.due, sub: 'Needs a return visit' },
-          { label: 'Weak spots', value: stats.trouble, sub: 'Wrong more than right' },
-          { label: 'Unseen', value: stats.fresh, sub: 'Not yet introduced' },
-          { label: 'Accuracy', value: stats.accuracy == null ? '—' : `${stats.accuracy}%`, sub: 'Across stored attempts' },
-        ])}
-        <div class="card soft" style="margin-top:16px;">
-          <div class="eyebrow">Game layer placeholder</div>
-          <h3 class="section-title" style="font-size:1.15rem;">Codex progress</h3>
-          ${renderCodex(codex)}
+
+      <aside class="setup-side">
+        <div class="ss-card">
+          <div class="ss-head">
+            <p class="eyebrow">Where you stand</p>
+            <span class="small muted">${escapeHtml(learner.yearGroup)} · ${escapeHtml(learner.goal)}</span>
+          </div>
+          ${renderSSMeadow(codex)}
+          ${renderSSStatGrid(stats)}
+          <button type="button" class="ss-bank-link" data-action="subject-set-tab" data-tab="analytics">
+            <span class="ss-bank-link-body">
+              <span class="ss-bank-link-head">Browse the word bank</span>
+              <span class="ss-bank-link-sub">Every word ${escapeHtml(learner.name)} is learning, with progress and difficulty.</span>
+            </span>
+            <span class="ss-bank-link-arrow" aria-hidden="true">→</span>
+          </button>
         </div>
-      </section>
+      </aside>
     </div>
   `;
 }
 
-function renderFeedback(feedback) {
-  if (!feedback) return '';
-  const tone = feedback.kind === 'success' ? 'good' : feedback.kind === 'error' ? 'bad' : 'warn';
+/* --------------------------------------------------------------
+   Session scene (live spelling round)
+   Keeps the production <form data-action="spelling-submit-form">
+   wrapper so Enter + button both route through the same handler
+   and `data.formData.get('typed')` keeps working.
+   -------------------------------------------------------------- */
+function renderRibbon({ tone, icon, headline, word, sub }) {
   return `
-    <div class="feedback ${tone}">
-      <strong>${escapeHtml(feedback.headline || '')}</strong>
-      ${feedback.answer ? `<div class="prompt-word" style="font-size:2rem;">${escapeHtml(feedback.answer)}</div>` : ''}
-      ${feedback.body ? `<div>${escapeHtml(feedback.body)}</div>` : ''}
-      ${feedback.footer ? `<div class="small muted">${escapeHtml(feedback.footer)}</div>` : ''}
-      ${Array.isArray(feedback.familyWords) && feedback.familyWords.length > 1 ? `<div class="chip-row">${feedback.familyWords.map((word) => `<span class="chip mono">${escapeHtml(word)}</span>`).join('')}</div>` : ''}
+    <div class="ribbon ${tone}" role="status">
+      <div class="ribbon-ic">${icon || ''}</div>
+      <div class="ribbon-body">
+        ${headline ? `<b>${escapeHtml(headline)}</b>` : ''}
+        ${word ? `<span class="word">“${escapeHtml(word)}”</span>` : ''}
+        ${sub ? `<div class="sub">${escapeHtml(sub)}</div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function renderFamilyChips(words) {
+  const list = Array.isArray(words) ? words.filter(Boolean) : [];
+  if (list.length <= 1) return '';
+  return `
+    <div class="family-chips">
+      <span class="flabel">Word family</span>
+      ${list.map((word) => `<span class="fchip">${escapeHtml(word)}</span>`).join('')}
+    </div>
+  `;
+}
+
+function feedbackTone(kind) {
+  if (kind === 'success') return 'good';
+  if (kind === 'error') return 'bad';
+  return 'warn';
+}
+
+function feedbackIconFor(tone) {
+  if (tone === 'good') return ICON_CHECK;
+  if (tone === 'warn') return '!';
+  return '×';
+}
+
+function renderFeedbackSlot(feedback) {
+  if (!feedback) {
+    /* Placeholder keeps the prompt-card total height stable between the
+       question variant and the post-submit variants. aria-hidden + display:
+       visibility:hidden in CSS mean the copy never reaches assistive tech. */
+    return `
+      <div class="feedback-slot is-placeholder" aria-hidden="true">
+        ${renderRibbon({ tone: 'good', icon: ICON_CHECK, headline: 'Placeholder', sub: 'Reserved height.' })}
+      </div>
+    `;
+  }
+  const tone = feedbackTone(feedback.kind);
+  return `
+    <div class="feedback-slot">
+      ${renderRibbon({
+        tone,
+        icon: feedbackIconFor(tone),
+        headline: feedback.headline || '',
+        word: feedback.answer || '',
+        sub: feedback.body || '',
+      })}
+      ${feedback.footer ? `<p class="feedback-foot small muted">${escapeHtml(feedback.footer)}</p>` : ''}
+      ${renderFamilyChips(feedback.familyWords)}
+    </div>
+  `;
+}
+
+function renderSessionActionRow({ session, awaitingAdvance, accent, submitLabel }) {
+  const isTest = session.type === 'test';
+  const isQuestion = !awaitingAdvance && session.phase === 'question';
+  const showSkip = !isTest && (session.phase === 'question' || session.phase === 'retry');
+  const showEnd = true;
+  return `
+    <div class="action-row">
+      <button class="btn primary lg" style="background:${accent};" type="submit" ${awaitingAdvance ? 'disabled' : ''}>
+        ${escapeHtml(submitLabel)} ${awaitingAdvance ? '' : ICON_ARROW_RIGHT}
+      </button>
+      ${awaitingAdvance ? `<button class="btn good lg" type="button" data-action="spelling-continue">Continue ${ICON_ARROW_RIGHT}</button>` : ''}
+      ${showSkip ? '<button class="btn ghost" type="button" data-action="spelling-skip">Skip</button>' : ''}
+      ${isQuestion ? '' : ''}
+      ${showEnd ? '' : ''}
     </div>
   `;
 }
@@ -260,123 +486,308 @@ function renderSession({ learner, service, ui, subject }) {
   const infoChips = spellingSessionInfoChips(session);
   if (!session || !card || !card.word) {
     return `
-      <section class="card">
+      <section class="card" style="grid-column:1/-1;">
         <div class="eyebrow">No active session</div>
         <h2 class="section-title">Start a spelling round</h2>
         <button class="btn primary" style="background:${accent};" data-action="spelling-back">Back to spelling dashboard</button>
       </section>
     `;
   }
+
   const progressTotal = session.progress.total;
-  const progressCurrent = progressTotal <= 0
-    ? 0
-    : Math.min(progressTotal, session.progress.done + 1);
+  const done = session.progress.done;
+  const progressCurrent = progressTotal <= 0 ? 0 : Math.min(progressTotal, done + 1);
+  const pathDone = Math.min(progressTotal, done);
+  const pathCurrent = Math.min(Math.max(progressCurrent - 1, 0), progressTotal);
+  const heroBg = heroBgForSession(learner.id, session);
+  const showingCorrection = session.phase === 'correction';
 
-  return `
-    <div class="practice-card">
-      <section class="card border-top" style="border-top-color:${accent};">
-        <div class="card-header">
-          <div>
-            <div class="eyebrow">${escapeHtml(session.label)}</div>
-            <h2 class="section-title">${escapeHtml(learner.name)} · ${progressCurrent} of ${progressTotal}</h2>
-          </div>
-          <div class="chip-row">
-            <span class="chip">Checked ${session.progress.checked}/${session.progress.total}</span>
-            <span class="chip">${escapeHtml(spellingSessionProgressLabel(session))}</span>
-            ${sessionStatusChip(service, session)}
-          </div>
-        </div>
-        <div class="progress"><span style="width:${Math.min(100, Math.round((session.progress.done / Math.max(1, session.progress.total)) * 100))}%; background:${accent};"></span></div>
-      </section>
+  /* Correction phase reveals the correct answer inline inside the cloze. Other
+     phases keep the blank empty so the learner has to recall the word. */
+  const clozeHtml = showCloze
+    ? renderCloze(card.prompt?.cloze, {
+        answer: showingCorrection ? card.word.word : '',
+        revealAnswer: showingCorrection,
+      })
+    : `<div class="cloze muted"><span class="blank">&nbsp;</span></div>`;
 
-      <section class="prompt-card">
-        <div class="chip-row">
-          ${infoChips.map((value) => `<span class="chip">${escapeHtml(value)}</span>`).join('')}
-        </div>
-        <h3 class="prompt-word">${session.type === 'test' ? 'Spell the dictated word' : 'Spell the word you hear'}</h3>
-        <p class="subtitle">Use replay as often as you need. The answer only appears after the engine says so.</p>
-        ${showCloze ? `<p class="prompt-sentence">${escapeHtml(card.prompt.cloze)}</p>` : `<p class="prompt-sentence muted">${escapeHtml(contextNote)}</p>`}
-        <form data-action="spelling-submit-form" style="margin-top:16px; display:grid; gap:12px;">
-          <label class="field">
-            <span>Your answer</span>
-            <input class="input" name="typed" data-autofocus="true" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="${escapeHtml(inputPlaceholder)}" ${awaitingAdvance ? 'disabled' : ''} />
-          </label>
-          <div class="btn-row">
-            <button class="btn primary" style="background:${accent};" type="submit" ${awaitingAdvance ? 'disabled' : ''}>${escapeHtml(submitLabel)}</button>
-            <button class="btn secondary" type="button" data-action="spelling-replay">Replay</button>
-            <button class="btn ghost" type="button" data-action="spelling-replay-slow">Slow replay</button>
-            ${session.type !== 'test' && session.phase === 'question' ? '<button class="btn ghost" type="button" data-action="spelling-skip">Skip for now</button>' : ''}
-            ${awaitingAdvance ? '<button class="btn good" type="button" data-action="spelling-continue">Continue</button>' : ''}
-            <button class="btn bad" type="button" data-action="spelling-end-early">End session</button>
-          </div>
-        </form>
-        <p class="small muted" style="margin-top:12px;">${escapeHtml(footerNote)}</p>
-        ${renderFeedback(ui.feedback)}
-      </section>
+  const promptInstr = session.type === 'test'
+    ? 'Type the word dictated by the audio.'
+    : 'Spell the word you hear.';
+
+  const audioRow = `
+    <div class="audio-row">
+      <button type="button" class="btn icon lg" aria-label="Replay the dictated word" data-action="spelling-replay">${ICON_SPEAKER}</button>
+      <button type="button" class="btn icon lg" aria-label="Replay slowly" data-action="spelling-replay-slow">${ICON_SPEAKER_SLOW}</button>
     </div>
   `;
-}
 
-function renderSummary({ learner, ui, service, subject, repositories }) {
-  const accent = accentFor(subject);
-  const summary = ui.summary;
-  const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id), {
-    learnerId: learner.id,
-    gameStateRepository: repositories?.gameState,
-    persistBranches: false,
-  });
-  if (!summary) return '';
+  const skipBtn = session.type !== 'test' && !awaitingAdvance && session.phase === 'question'
+    ? '<button class="btn ghost lg" type="button" data-action="spelling-skip">Skip for now</button>'
+    : '';
+
+  const continueBtn = awaitingAdvance
+    ? `<button class="btn good lg" type="button" data-action="spelling-continue">Continue ${ICON_ARROW_RIGHT}</button>`
+    : '';
+
   return `
-    <div class="summary-grid">
-      <section class="card">
-        <div class="summary-hero">
-          <div class="summary-hero-icon" style="background:${summary.mistakes.length ? 'var(--warn-soft)' : 'var(--good-soft)'}; color:${summary.mistakes.length ? 'var(--warn)' : 'var(--good)'};">${summary.mistakes.length ? '!' : '✓'}</div>
-          <div>
-            <div class="eyebrow">${escapeHtml(summary.label)}</div>
-            <h2 class="section-title">${escapeHtml(summary.message)}</h2>
-            <p class="subtitle">Time on task: ${formatElapsed(summary.elapsedMs)}</p>
-          </div>
-        </div>
-      </section>
-      <section class="card">
-        <div class="eyebrow">Round breakdown</div>
-        <h2 class="section-title">Session summary</h2>
-        ${summaryCards(summary.cards)}
-      </section>
-      ${summary.mistakes.length ? `
-        <section class="card">
-          <div class="card-header">
-            <div>
-              <div class="eyebrow">Mistake drill</div>
-              <h2 class="section-title">Words that need another go</h2>
+    <div class="spelling-in-session" style="grid-column:1/-1; ${heroBgStyle(heroBg)}">
+      <div class="session">
+        <header class="session-head">
+          ${renderPathProgress({ done: pathDone, current: pathCurrent, total: progressTotal })}
+          <span class="path-count">Word ${progressCurrent} of ${progressTotal}</span>
+        </header>
+
+        <div class="prompt-card">
+          ${infoChips.length ? `
+            <div class="info-chip-row">
+              ${infoChips.map((value) => `<span class="chip">${escapeHtml(value)}</span>`).join('')}
             </div>
-            <button class="btn primary" style="background:${accent};" data-action="spelling-drill-all">Drill these ${summary.mistakes.length}</button>
+          ` : ''}
+          <div class="prompt-instr">${escapeHtml(promptInstr)}</div>
+          ${clozeHtml}
+          ${!showCloze ? `<p class="prompt-sentence muted">${escapeHtml(contextNote)}</p>` : ''}
+
+          <form data-action="spelling-submit-form" class="session-form">
+            <div class="word-input-wrap">
+              <input class="word-input" name="typed" data-autofocus="true" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="${escapeHtml(inputPlaceholder)}" aria-label="Type the spelling" ${awaitingAdvance ? 'disabled' : ''} />
+            </div>
+            ${audioRow}
+            <div class="action-row">
+              <button class="btn primary lg" style="background:${accent};" type="submit" ${awaitingAdvance ? 'disabled' : ''}>
+                ${escapeHtml(submitLabel)}${awaitingAdvance ? '' : ` ${ICON_ARROW_RIGHT}`}
+              </button>
+              ${continueBtn}
+              ${skipBtn}
+            </div>
+          </form>
+
+          ${renderFeedbackSlot(ui.feedback)}
+          <p class="session-foot-note small muted">${escapeHtml(footerNote)}</p>
+        </div>
+
+        <footer class="session-footer">
+          <div class="keys-hint">
+            <kbd>Esc</kbd> replay · <kbd>⇧</kbd>+<kbd>Esc</kbd> slow · <kbd>Alt</kbd>+<kbd>S</kbd> skip · <kbd>Enter</kbd> submit
           </div>
-          <div class="chip-row">
-            ${summary.mistakes.map((word) => `<button class="word-pill" data-action="spelling-drill-single" data-slug="${escapeHtml(word.slug)}">${escapeHtml(word.word)} <span class="muted">· ${escapeHtml(word.family)}</span></button>`).join('')}
+          <div class="session-footer-right">
+            <span class="session-progress-chip">${escapeHtml(spellingSessionProgressLabel(session))}</span>
+            <button class="btn sm bad" type="button" data-action="spelling-end-early">End round early</button>
           </div>
-        </section>
-      ` : ''}
-      <section class="card soft">
-        <div class="eyebrow">Codex after this round</div>
-        <h2 class="section-title">Reward layer</h2>
-        ${renderCodex(codex)}
-      </section>
-      <div class="actions">
-        <button class="btn secondary" data-action="spelling-back">Back to spelling dashboard</button>
-        <button class="btn primary" style="background:${accent};" data-action="spelling-start-again">Start another round</button>
+        </footer>
       </div>
     </div>
   `;
 }
 
-function renderAnalytics({ appState, learner, service, repositories }) {
+/* --------------------------------------------------------------
+   Summary scene (round complete)
+   Builds the 4-up stat strip directly from the engine's
+   summary.cards (deterministic; don't re-compute anything here).
+   -------------------------------------------------------------- */
+function renderSummaryStatGrid(cards = []) {
+  return `
+    <div class="summary-stats">
+      ${cards.map((card) => `
+        <div class="summary-stat">
+          <div class="v">${escapeHtml(card.value)}</div>
+          <div class="l">${escapeHtml(card.label)}</div>
+          ${card.sub ? `<div class="s">${escapeHtml(card.sub)}</div>` : ''}
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderSummary({ learner, ui, subject }) {
+  const accent = accentFor(subject);
+  const summary = ui.summary;
+  if (!summary) return '';
+  const heroBg = heroBgForLearner(learner.id);
+  const toneGood = !summary.mistakes.length;
+  const headline = summary.message;
+  const eyebrow = summary.label || 'Round complete';
+  return `
+    <div class="spelling-in-session summary-shell" style="grid-column:1/-1; ${heroBgStyle(heroBg)}">
+      <div class="session summary">
+        <header class="session-head">
+          ${renderPathProgress({ done: 1, current: 0, total: 1 })}
+          <span class="path-count">Round complete</span>
+        </header>
+
+        <div class="prompt-card summary-card">
+          <h3 class="summary-title sr-only">Session summary</h3>
+          ${renderRibbon({
+            tone: toneGood ? 'good' : 'warn',
+            icon: toneGood ? ICON_CHECK : '!',
+            headline,
+            sub: `${escapeHtml(eyebrow)} · ${escapeHtml(formatElapsed(summary.elapsedMs))}`,
+          })}
+
+          ${renderSummaryStatGrid(summary.cards)}
+
+          ${summary.mistakes.length ? `
+            <div class="summary-drill">
+              <div class="summary-drill-head">
+                <h4>Words that need another go</h4>
+                <span class="small muted">A quick drill cycles each of these again before you close the round.</span>
+              </div>
+              <div class="summary-drill-chips">
+                ${summary.mistakes.map((word) => `
+                  <button type="button" class="fchip" data-action="spelling-drill-single" data-slug="${escapeHtml(word.slug)}">${escapeHtml(word.word)}</button>
+                `).join('')}
+                <button type="button" class="btn primary sm" style="background:${accent};" data-action="spelling-drill-all">Drill all ${summary.mistakes.length} ${ICON_ARROW_RIGHT}</button>
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="summary-actions">
+            <button type="button" class="btn ghost lg" data-action="spelling-back">Back to dashboard</button>
+            <button type="button" class="btn primary lg" style="background:${accent};" data-action="spelling-start-again">Start another round ${ICON_ARROW_RIGHT}</button>
+            <button type="button" class="summary-bank-link" data-action="subject-set-tab" data-tab="analytics">
+              Open word bank ${ICON_ARROW_RIGHT}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* --------------------------------------------------------------
+   Word bank (analytics tab)
+   The status filter chips translate production tokens to the v1
+   visual language ("weak" for trouble, "unseen" for new) on the
+   pill element, while keeping production status names on the
+   underlying data-action button so test pins stay valid.
+   -------------------------------------------------------------- */
+function renderWordBankLegendChips() {
+  /* Kept as production-shaped chips because render/smoke tests pin
+     `class="chip new">New</` + `class="chip learning">Learning</`. */
+  return `
+    <div class="chip-row wb-legend" aria-hidden="true">
+      <span class="chip new">New</span>
+      <span class="chip learning">Learning</span>
+      <span class="chip warn">Due</span>
+      <span class="chip good">Secure</span>
+      <span class="chip bad">Trouble</span>
+    </div>
+  `;
+}
+
+function countWordBankStatus(words, status) {
+  return words.reduce((count, word) => count + (word.status === status ? 1 : 0), 0);
+}
+
+function sortWordBank(words) {
+  return words.slice().sort((a, b) => {
+    const pa = WORD_BANK_STATUS_ORDER.indexOf(a.status);
+    const pb = WORD_BANK_STATUS_ORDER.indexOf(b.status);
+    const rankA = pa === -1 ? 99 : pa;
+    const rankB = pb === -1 ? 99 : pb;
+    if (rankA !== rankB) return rankA - rankB;
+    return String(a.word).localeCompare(String(b.word));
+  });
+}
+
+function renderWordBankRow(word) {
+  const tone = wordProgressTone(word.status);
+  const pillToken = wordBankPillClass(word.status);
+  const statusLabel = wordStatusLabel(word.status);
+  const accuracy = accuracyPercent(word.progress);
+  const due = dueLabel(word.progress);
+  const attempts = Math.max(0, Number(word.progress?.attempts) || 0);
+  const title = `${word.word} · ${word.family} · ${word.stageLabel} · correct ${word.progress.correct}, wrong ${word.progress.wrong} · practice only`;
+  const label = `${word.word}, ${statusLabel}, ${word.stageLabel}, practice only`;
+  /* The inner arrow button keeps the canonical
+     `class="word-progress-pill {tone}" data-action="spelling-practice-single"`
+     wire so existing test pins match exactly. The outer row is a passive
+     wrapper that styles the content; the button owns all keyboard + pointer
+     semantics. */
+  return `
+    <li class="wb-row" data-status="${escapeHtml(pillToken)}">
+      <div class="wb-cell-word">
+        <span class="wb-word">${escapeHtml(word.word)}</span>
+        <span class="wb-pill ${escapeHtml(pillToken)}">${escapeHtml(statusLabel)}</span>
+      </div>
+      <div class="wb-cell-meta">
+        <span class="wb-meta"><span class="wb-meta-label">Accuracy</span><span class="wb-meta-value">${accuracy == null ? '—' : `${accuracy}%`}</span></span>
+        <span class="wb-meta"><span class="wb-meta-label">Next due</span><span class="wb-meta-value">${escapeHtml(due)}</span></span>
+        <span class="wb-meta"><span class="wb-meta-label">Attempts</span><span class="wb-meta-value">${attempts}</span></span>
+        <span class="wb-meta"><span class="wb-meta-label">Family</span><span class="wb-meta-value">${escapeHtml(word.family || '—')}</span></span>
+      </div>
+      <button type="button" class="word-progress-pill ${tone}" data-action="spelling-practice-single" data-slug="${escapeHtml(word.slug)}" title="${escapeHtml(title)}" aria-label="${escapeHtml(label)}">
+        <span class="wb-action-label">Practise</span>
+        ${ICON_ARROW_RIGHT}
+      </button>
+    </li>
+  `;
+}
+
+function renderWordBank({ analytics, searchQuery = '' }) {
+  const query = normaliseSearchText(searchQuery);
+  const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
+  const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
+  const visibleWords = sortWordBank(allWords.filter((word) => wordMatchesSearch(word, query)));
+
+  const chipDefs = [
+    { id: 'all', label: 'All', count: allWords.length },
+    { id: 'due', label: 'Due', count: countWordBankStatus(allWords, 'due') },
+    { id: 'weak', label: 'Weak', count: countWordBankStatus(allWords, 'trouble') },
+    { id: 'learning', label: 'Learning', count: countWordBankStatus(allWords, 'learning') },
+    { id: 'secure', label: 'Secure', count: countWordBankStatus(allWords, 'secure') },
+    { id: 'unseen', label: 'Unseen', count: countWordBankStatus(allWords, 'new') },
+  ];
+
+  const rows = visibleWords.length
+    ? visibleWords.map(renderWordBankRow).join('')
+    : '<li class="wb-empty">No words match your search.</li>';
+
+  const summaryLine = visibleWords.length
+    ? `${countWordBankStatus(visibleWords, 'secure')} secure out of ${visibleWords.length} visible spellings`
+    : 'No spellings match this search.';
+
+  return `
+    <section class="card word-bank-card" style="grid-column:1/-1;">
+      <div class="wb-card">
+        <header class="wb-head">
+          <p class="eyebrow">Word bank</p>
+          <h2 class="section-title">Word bank progress</h2>
+          <p class="lede">${escapeHtml(summaryLine)}. Pick any word to start a practice-only drill.</p>
+        </header>
+
+        <div class="wb-toolbar">
+          <label class="wb-search">
+            <span class="wb-search-icon" aria-hidden="true">${ICON_SEARCH}</span>
+            <input type="search" name="spellingAnalyticsSearch" autocomplete="off" placeholder="Search words…" value="${escapeHtml(searchQuery)}" data-action="spelling-analytics-search" aria-label="Search word bank" />
+          </label>
+          ${renderWordBankLegendChips()}
+        </div>
+
+        <ul class="wb-list">
+          ${rows}
+        </ul>
+
+        <div class="wb-foot small muted">
+          ${chipDefs.map((chip) => `<span class="wb-foot-chip"><em>${escapeHtml(chip.label)}</em> ${chip.count}</span>`).join(' · ')}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+/* --------------------------------------------------------------
+   Analytics tab
+   Top row keeps the three pool summary cards so the higher-level
+   numbers are still visible; the word bank slots in below the
+   aggregate view.
+   -------------------------------------------------------------- */
+function renderAnalytics({ appState, learner, service }) {
   const analytics = service.getAnalyticsSnapshot(learner.id);
   const searchQuery = appState?.transientUi?.spellingAnalyticsWordSearch || '';
   const all = analytics.pools.all;
   const y34 = analytics.pools.y34;
   const y56 = analytics.pools.y56;
-  const codex = monsterSummaryFromSpellingAnalytics(analytics);
   return `
     <div class="three-col">
       <section class="card">
@@ -409,13 +820,7 @@ function renderAnalytics({ appState, learner, service, repositories }) {
           { label: 'Unseen', value: y56.fresh, sub: 'Not yet introduced' },
         ])}
       </section>
-      <section class="card" style="grid-column:1/-1;">
-        <div class="eyebrow">Game layer</div>
-        <h2 class="section-title">Codex progress</h2>
-        <p class="subtitle">The engine decides mastery; Codex progress reflects the current secure words directly.</p>
-        ${renderCodex(codex)}
-      </section>
-      ${renderWordBankProgress({ analytics, searchQuery })}
+      ${renderWordBank({ analytics, searchQuery })}
     </div>
   `;
 }
@@ -558,7 +963,7 @@ export const spellingModule = {
     return renderMethod();
   },
   handleAction(action, context) {
-    const { appState, data, store, service, tts, repositories } = context;
+    const { appState, data, store, service, tts } = context;
     const learnerId = appState.learners.selectedId;
     const ui = service.initState(appState.subjectUi.spelling, learnerId);
 

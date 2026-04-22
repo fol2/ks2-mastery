@@ -164,11 +164,25 @@ const SUMMARY = {
   accuracy: 0.9,
   secured: 4,
   mistakes: ['seize', 'mischief'],
-  monsterUpdate: {
-    name: 'Scribbla gained 4 words',
-    body: 'Two more rounds until Quillorn.',
-    img: '/assets/monsters/inklet-2.640.webp',
-  },
+  /* Small crowd of happy monsters that wander the summary canvas when a
+     round ends without a *bigger* celebration (catch / evolve). Cap is 3
+     — any more would crowd the page and the user said monsters must never
+     get in the way of the actions. Each carries its own wander slot so
+     positions don't overlap. Placements stay around the page edges and
+     below the card so they never cover the stat grid or CTAs. */
+  happyMonsters: [
+    { id: 'hm-scribbla',  species: 'inklet',     stage: 2, variant: 'b1',
+      img: '/assets/monsters/inklet/b1/inklet-b1-2.640.webp',        size: 120, slot: 0 },
+    { id: 'hm-glimmer',   species: 'glimmerbug', stage: 2, variant: 'b1',
+      img: '/assets/monsters/glimmerbug/b1/glimmerbug-b1-2.640.webp', size:  92, slot: 1 },
+    { id: 'hm-phaeton',   species: 'phaeton',    stage: 1, variant: 'b1',
+      img: '/assets/monsters/phaeton/b1/phaeton-b1-1.640.webp',      size:  98, slot: 2 },
+  ],
+  /* bigEvent is set when the round triggers a real catch / evolve — in
+     that case the fireworks are suppressed because the catch toast or
+     evolve modal is a bigger celebration on its own. Prototype default
+     keeps it null so the design preview shows fireworks.            */
+  bigEvent: null, /* 'catch' | 'evolve' | null */
 };
 
 /* ----------------------------------------------------------
@@ -657,6 +671,17 @@ function FamilyChips({ words }) {
    Monster catch toast
    ========================================================== */
 function CatchToast({ monster, headline, body }) {
+  /* Auto-dismiss after 10s. The toast lands mid-work (often mid-typing),
+     so it should behave like an ambient status rather than a modal — it
+     slides in, waits a beat, then tidies itself away. Cleanup on unmount
+     keeps hot-reload safe. */
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(false), 10_000);
+    return () => clearTimeout(t);
+  }, []);
+  if (!visible) return null;
+
   return (
     <div className="toast-catch" role="status">
       <span className="cm-port"><img src={monster.imgSmall || monster.img} alt={monster.name} /></span>

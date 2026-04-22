@@ -148,6 +148,51 @@ test('home meadow shows all three eggs once every species has been caught but st
   }
 });
 
+test('home meadow centres the aggregate egg and spreads the flanking eggs', async () => {
+  const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
+  const summary = [
+    { monster: { id: 'inklet', name: 'Inklet' }, progress: { caught: true, stage: 0, branch: 'b1' } },
+    { monster: { id: 'glimmerbug', name: 'Glimmerbug' }, progress: { caught: true, stage: 0, branch: 'b1' } },
+    { monster: { id: 'phaeton', name: 'Phaeton' }, progress: { caught: true, stage: 0, branch: 'b1' } },
+  ];
+  const meadow = buildMeadowMonsters(summary);
+  const phaeton = meadow.find((entry) => entry.species === 'phaeton');
+  const directEggs = meadow.filter((entry) => entry.species !== 'phaeton');
+
+  assert.equal(phaeton.x, '52%');
+  assert.equal(phaeton.footY, '70%');
+  assert.ok(directEggs.every((entry) => entry.x !== phaeton.x));
+});
+
+test('home meadow scales mature monsters while preserving path-specific lanes', async () => {
+  const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
+  const lowStage = buildMeadowMonsters([
+    { monster: { id: 'inklet', name: 'Inklet' }, progress: { caught: true, stage: 1, branch: 'b1' } },
+    { monster: { id: 'glimmerbug', name: 'Glimmerbug' }, progress: { caught: true, stage: 1, branch: 'b1' } },
+    { monster: { id: 'phaeton', name: 'Phaeton' }, progress: { caught: true, stage: 1, branch: 'b1' } },
+  ]);
+  const highStage = buildMeadowMonsters([
+    { monster: { id: 'inklet', name: 'Inklet' }, progress: { caught: true, stage: 4, branch: 'b1' } },
+    { monster: { id: 'glimmerbug', name: 'Glimmerbug' }, progress: { caught: true, stage: 4, branch: 'b1' } },
+    { monster: { id: 'phaeton', name: 'Phaeton' }, progress: { caught: true, stage: 4, branch: 'b1' } },
+  ]);
+
+  for (const species of ['inklet', 'glimmerbug', 'phaeton']) {
+    assert.ok(highStage.find((entry) => entry.species === species).size > lowStage.find((entry) => entry.species === species).size);
+  }
+  const inklet = highStage.find((entry) => entry.species === 'inklet');
+  const glimmerbug = highStage.find((entry) => entry.species === 'glimmerbug');
+  const phaeton = highStage.find((entry) => entry.species === 'phaeton');
+
+  assert.equal(inklet.lane, 'ground');
+  assert.equal(glimmerbug.lane, 'air');
+  assert.equal(phaeton.lane, 'air');
+  assert.ok(inklet.footPct > phaeton.footPct);
+  assert.ok(phaeton.footPct > glimmerbug.footPct);
+  assert.ok(inklet.size > phaeton.size);
+  assert.ok(phaeton.size > glimmerbug.size);
+});
+
 test('home meadow hides every species for a fresh learner with nothing caught yet', async () => {
   const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
   const summary = [

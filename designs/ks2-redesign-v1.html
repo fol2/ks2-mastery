@@ -1471,28 +1471,44 @@
       color: var(--panel);
     }
 
+    /* Responsive grid — packs 2–4 compact cards per row depending on the
+       available canvas width. `auto-fill` + minmax keeps each card at least
+       240px wide, which works out to: 4 cols at ~desktop, 3 at mid, 2 at
+       narrow, and 1 on phone-sized widths. The per-card layout is a tiny
+       two-row grid so the meta strip always sits under the word + action. */
     .wb-list {
       list-style: none;
       margin: 0; padding: 0;
-      display: flex; flex-direction: column;
-      gap: 8px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
     }
     .wb-row {
       display: grid;
-      grid-template-columns: minmax(200px, 1.1fr) minmax(260px, 1.2fr) auto;
-      align-items: center;
-      gap: 16px;
-      padding: 12px 14px 12px 18px;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        "word   action"
+        "meta   meta";
+      align-items: start;
+      column-gap: 10px;
+      row-gap: 8px;
+      padding: 12px 12px 10px 16px;
       background: var(--panel-soft);
       border: 1px solid var(--line-soft);
       border-left: 4px solid var(--line-strong);
       border-radius: var(--radius-sm);
+      cursor: pointer;
       transition: background var(--dur) var(--ease-out),
                   border-color var(--dur) var(--ease-out);
     }
     .wb-row:hover {
       background: color-mix(in oklab, var(--panel) 60%, var(--panel-soft));
       border-color: color-mix(in oklab, var(--brand) 16%, var(--line));
+    }
+    .wb-row:focus-visible {
+      outline: 0;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand) 24%, transparent);
     }
     .wb-row[data-status="due"]      { border-left-color: var(--warn); }
     .wb-row[data-status="weak"]     { border-left-color: var(--bad); }
@@ -1501,22 +1517,29 @@
     .wb-row[data-status="unseen"]   { border-left-color: var(--subtle); }
 
     .wb-cell-word {
-      display: flex; align-items: center; gap: 10px;
+      grid-area: word;
+      display: flex; align-items: center; gap: 8px;
+      flex-wrap: wrap;
+      row-gap: 4px;
       min-width: 0;
+      align-self: center;
     }
     .wb-word {
       font-family: var(--font-display);
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 600;
       letter-spacing: -0.005em;
       color: var(--ink);
+      /* Long words (parliament, correspond, literature) will break softly
+         rather than overflow the 240px minimum card width. */
+      overflow-wrap: anywhere;
     }
 
     .wb-pill {
       display: inline-flex; align-items: center;
-      padding: 2px 10px;
+      padding: 2px 8px;
       border-radius: 999px;
-      font-size: 0.72rem;
+      font-size: 0.66rem;
       font-weight: 700;
       letter-spacing: 0.02em;
       text-transform: uppercase;
@@ -1528,16 +1551,22 @@
     .wb-pill.secure   { background: var(--good-soft);    color: var(--good-strong); }
     .wb-pill.unseen   { background: var(--panel-sunken); color: var(--muted); }
 
+    /* Compact meta strip — inline label · value pairs that wrap. Labels are
+       de-emphasised so the numbers read first; the whole strip stays under
+       the word heading and never blocks the action button. */
     .wb-cell-meta {
-      display: flex; gap: 18px;
+      grid-area: meta;
+      display: flex; gap: 4px 12px;
       flex-wrap: wrap;
+      font-size: 0.78rem;
+      line-height: 1.3;
     }
     .wb-meta {
-      display: flex; flex-direction: column; gap: 2px;
-      min-width: 64px;
+      display: inline-flex; align-items: baseline; gap: 4px;
+      min-width: 0;
     }
     .wb-meta-label {
-      font-size: 0.72rem; color: var(--muted);
+      font-size: 0.68rem; color: var(--muted);
       text-transform: uppercase; letter-spacing: 0.04em;
       font-weight: 600;
     }
@@ -1548,9 +1577,11 @@
     }
 
     .wb-action {
+      grid-area: action;
+      align-self: center;
       appearance: none; cursor: pointer;
       display: inline-flex; justify-content: center; align-items: center;
-      width: 38px; height: 38px;
+      width: 34px; height: 34px;
       border-radius: 999px;
       background: var(--panel);
       border: 1px solid var(--line);
@@ -1589,14 +1620,381 @@
 
     @media (max-width: 720px) {
       .wb-card { padding: 22px 20px 20px; border-radius: var(--radius); }
-      .wb-row {
-        grid-template-columns: 1fr auto;
-        gap: 10px;
+      /* The `auto-fill, minmax(240px, 1fr)` grid naturally collapses to a
+         single column when the card canvas is narrower than ~480px, so no
+         explicit row override is needed any more. */
+    }
+
+    /* ==========================================================
+       Word bank — detail modal (explanation + drill)
+       ========================================================== */
+    .wb-modal-scrim {
+      position: fixed; inset: 0;
+      display: flex; justify-content: center; align-items: center;
+      padding: 24px;
+      background: rgba(15, 22, 32, 0.48);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 100;
+      animation: wbScrimIn var(--dur) var(--ease-out);
+    }
+    @keyframes wbScrimIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .wb-modal {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 600px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 28px 32px 22px;
+      animation: wbModalIn var(--dur-slow) var(--ease-out);
+    }
+    @keyframes wbModalIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .wb-modal-head {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .wb-modal-head-main {
+      display: flex; gap: 16px; align-items: center;
+      min-width: 0; flex: 1;
+    }
+
+    .wb-modal-speaker {
+      appearance: none; cursor: pointer;
+      display: inline-flex; justify-content: center; align-items: center;
+      width: 48px; height: 48px; flex-shrink: 0;
+      border-radius: 999px;
+      background: var(--brand-soft);
+      border: 1px solid color-mix(in oklab, var(--brand) 22%, var(--line));
+      color: var(--brand-ink);
+      transition: background var(--dur) var(--ease-out),
+                  transform var(--dur-fast) var(--ease-out),
+                  box-shadow var(--dur) var(--ease-out);
+    }
+    .wb-modal-speaker:hover {
+      background: color-mix(in oklab, var(--brand-soft) 55%, var(--brand));
+      color: var(--panel);
+    }
+    .wb-modal-speaker:active { transform: scale(0.94); }
+    .wb-modal-speaker.playing {
+      box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand) 28%, transparent);
+      animation: wbPulse var(--dur-slow) var(--ease-out);
+    }
+    .wb-modal-speaker svg { width: 22px; height: 22px; }
+    /* Drill mode — the header speaker becomes a decorative "ear" glyph so
+       the learner cannot simply click it to hear the word. It reads as part
+       of the heading rather than an action, so it loses its button affordance. */
+    .wb-modal-speaker.muted {
+      background: var(--panel-soft);
+      border-color: var(--line);
+      color: var(--muted);
+      cursor: default;
+    }
+    @keyframes wbPulse {
+      0%   { box-shadow: 0 0 0 0 color-mix(in oklab, var(--brand) 40%, transparent); }
+      60%  { box-shadow: 0 0 0 10px color-mix(in oklab, var(--brand) 0%, transparent); }
+      100% { box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand) 28%, transparent); }
+    }
+
+    .wb-modal-word {
+      font-family: var(--font-display);
+      font-size: 2.4rem;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin: 2px 0 0;
+    }
+    /* Drill-mode heading — the word itself would give the answer away, so
+       we render a short, quiet instruction instead. Smaller and lighter
+       than the full word heading so the eye keeps travelling down to the
+       sentence where the actual task lives. */
+    .wb-modal-word.wb-modal-word-prompt {
+      font-family: var(--font-sans);
+      font-size: 1.35rem;
+      font-weight: 500;
+      letter-spacing: -0.005em;
+      color: var(--ink-2);
+    }
+
+    .wb-modal-close {
+      appearance: none; cursor: pointer;
+      flex-shrink: 0;
+      width: 36px; height: 36px;
+      border-radius: 999px;
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 1.3rem; line-height: 1; font-weight: 400;
+      transition: background var(--dur) var(--ease-out),
+                  color var(--dur) var(--ease-out),
+                  border-color var(--dur) var(--ease-out);
+    }
+    .wb-modal-close:hover {
+      background: var(--panel-soft);
+      color: var(--ink);
+      border-color: var(--line-strong);
+    }
+
+    .wb-modal-tabs {
+      display: flex; gap: 4px;
+      padding-top: 14px;
+      margin-bottom: -1px; /* let the tab border meet the section border cleanly */
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .wb-modal-tab {
+      appearance: none; cursor: pointer;
+      padding: 8px 14px;
+      background: transparent;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font: inherit; font-weight: 600; font-size: 0.9rem;
+      letter-spacing: -0.005em;
+      transition: color var(--dur) var(--ease-out),
+                  border-color var(--dur) var(--ease-out);
+      margin-bottom: -1px;
+    }
+    .wb-modal-tab:hover { color: var(--ink-2); }
+    .wb-modal-tab.on {
+      color: var(--ink);
+      border-bottom-color: var(--brand);
+    }
+
+    .wb-modal-body {
+      padding: 18px 0 6px;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+
+    .wb-modal-section { display: flex; flex-direction: column; gap: 8px; }
+    .wb-modal-section-family { margin-top: -2px; }
+    /* FamilyChips component has its own top margin — cancel it inside the
+       modal so the family block lines up with the other modal sections. */
+    .wb-modal-section-family .family-chips {
+      margin-top: 0;
+      padding-left: 0;
+    }
+
+    .wb-modal-section-label {
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .wb-modal-def {
+      color: var(--ink);
+      font-size: 1.02rem;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .wb-modal-sample {
+      border-left: 3px solid var(--brand);
+      padding: 4px 0 4px 14px;
+      margin: 0;
+      color: var(--ink-2);
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 1.05rem;
+      line-height: 1.55;
+    }
+    .wb-modal-sample b {
+      color: var(--brand-ink);
+      font-style: normal;
+      font-weight: 700;
+    }
+
+    .wb-drill-sentence {
+      font-family: var(--font-serif);
+      font-size: 1.12rem;
+      line-height: 1.6;
+      color: var(--ink);
+      margin: 0;
+    }
+    .wb-drill-blank {
+      display: inline-block;
+      min-width: 96px;
+      padding: 0 10px;
+      border-bottom: 2px solid var(--brand);
+      color: var(--brand-ink);
+      font-weight: 700;
+      font-style: normal;
+      text-align: center;
+      transition: color var(--dur) var(--ease-out),
+                  border-color var(--dur) var(--ease-out);
+    }
+    .wb-drill-blank.revealed {
+      border-bottom-color: var(--good);
+      color: var(--good-strong);
+    }
+
+    /* Replay controls — sit directly under the sentence, mirror the session
+       scene's audio row so the muscle-memory (icon shape, "playing" glow)
+       is identical. Two buttons, same size; the slow one is a sibling rather
+       than a secondary affordance — the learner might need it first. */
+    .wb-drill-audio {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .wb-drill-audio-btn {
+      appearance: none; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 16px 10px 14px;
+      background: var(--brand-soft);
+      border: 1px solid color-mix(in oklab, var(--brand) 22%, var(--line));
+      border-radius: 999px;
+      color: var(--brand-ink);
+      font: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: -0.005em;
+      transition: background var(--dur) var(--ease-out),
+                  color var(--dur) var(--ease-out),
+                  transform var(--dur-fast) var(--ease-out),
+                  box-shadow var(--dur) var(--ease-out);
+    }
+    .wb-drill-audio-btn:hover {
+      background: color-mix(in oklab, var(--brand-soft) 55%, var(--brand));
+      color: var(--panel);
+    }
+    .wb-drill-audio-btn:active { transform: scale(0.96); }
+    .wb-drill-audio-btn:focus-visible {
+      outline: 0;
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand) 28%, transparent);
+    }
+    .wb-drill-audio-btn svg { width: 18px; height: 18px; }
+    .wb-drill-audio-btn.playing {
+      box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand) 26%, transparent);
+      animation: wbPulse var(--dur-slow) var(--ease-out);
+    }
+    /* The slow replay button is quieter by default so "Replay" reads as the
+       primary action — they share the same size so the learner can tap
+       whichever one they want without re-targeting. */
+    .wb-drill-audio-btn.slow {
+      background: var(--panel-soft);
+      border-color: var(--line);
+      color: var(--ink-2);
+    }
+    .wb-drill-audio-btn.slow:hover {
+      background: color-mix(in oklab, var(--panel-soft) 60%, var(--brand));
+      color: var(--brand-ink);
+      border-color: color-mix(in oklab, var(--brand) 28%, var(--line));
+    }
+    .wb-drill-audio-btn.slow.playing {
+      box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand) 22%, transparent);
+    }
+    .wb-drill-audio-label { letter-spacing: 0.005em; }
+
+    .wb-drill-form {
+      display: flex; gap: 10px; align-items: center;
+    }
+    .wb-drill-input {
+      flex: 1;
+      appearance: none;
+      padding: 12px 16px;
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      color: var(--ink);
+      font: inherit;
+      font-family: var(--font-serif);
+      font-size: 1.1rem;
+      letter-spacing: -0.005em;
+      transition: border-color var(--dur) var(--ease-out),
+                  box-shadow var(--dur) var(--ease-out),
+                  background var(--dur) var(--ease-out);
+    }
+    .wb-drill-input:focus {
+      outline: 0;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand) 24%, transparent);
+    }
+    .wb-drill-input:disabled { opacity: 0.75; }
+    .wb-drill-input::placeholder { color: var(--subtle); }
+
+    .wb-drill-feedback {
+      display: flex; gap: 12px; align-items: center;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+    .wb-drill-feedback.good {
+      background: var(--good-soft);
+      color: var(--good-strong);
+    }
+    .wb-drill-feedback.warn {
+      background: var(--warn-soft);
+      color: var(--warn-strong);
+    }
+    .wb-drill-feedback b { color: inherit; }
+    .wb-drill-feedback-icon {
+      flex-shrink: 0;
+      width: 24px; height: 24px;
+      display: inline-flex; justify-content: center; align-items: center;
+      background: currentColor;
+      border-radius: 999px;
+      font-weight: 700; font-size: 0.9rem;
+    }
+    /* Knock the inner glyph back to the panel colour so it reads against
+       the tinted circular background. */
+    .wb-drill-feedback.good .wb-drill-feedback-icon,
+    .wb-drill-feedback.warn .wb-drill-feedback-icon {
+      color: var(--panel);
+    }
+    .wb-drill-feedback-icon svg { width: 14px; height: 14px; }
+
+    .wb-modal-actions {
+      display: flex; justify-content: flex-end; gap: 10px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line-soft);
+      margin-top: 4px;
+    }
+
+    .wb-modal-note {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
+      margin: 12px 0 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .wb-modal-scrim, .wb-modal { animation: none; }
+      .wb-modal-speaker,
+      .wb-drill-input,
+      .wb-drill-blank,
+      .wb-drill-audio-btn,
+      .wb-modal-close,
+      .wb-modal-tab { transition: none; }
+      .wb-modal-speaker:active,
+      .wb-drill-audio-btn:active { transform: none; }
+      .wb-modal-speaker.playing,
+      .wb-drill-audio-btn.playing { animation: none; }
+    }
+
+    @media (max-width: 720px) {
+      .wb-modal {
+        padding: 22px 20px 18px;
+        max-height: calc(100vh - 24px);
       }
-      .wb-cell-meta {
-        grid-column: 1 / -1;
-        gap: 14px;
-      }
+      .wb-modal-word { font-size: 1.9rem; }
+      .wb-modal-actions { flex-wrap: wrap; }
+      .wb-drill-form { flex-direction: column; align-items: stretch; }
     }
 
     /* ==========================================================
@@ -1857,98 +2255,270 @@
 
     /* ==========================================================
        NEW: Summary (page complete)
+       Shares the session shell's typography, hero bg and prompt-card
+       surface so the round-end reads as one more beat of the same
+       flow rather than a separate view. Extras layered on top:
+         - summary-stats: compact 4-up grid (was pc-stats)
+         - summary-drill: tinted "another go" block (was pc-drill)
+         - summary-wander: non-interactive happy-monster overlay
+         - summary-fireworks: full-screen particle celebration
        ========================================================== */
-    .page-complete {
-      max-width: 820px; margin: 0 auto;
-      padding: 44px 42px 36px;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-warm);
+
+    /* .session + .prompt-card already provide the base look; this
+       hook exists for any summary-specific nudges (padding, etc.).
+       z-index pushes the card above the wandering-monsters overlay
+       (which is absolute inside the shell at z-index: 2) so the
+       stats + CTAs always read on top. */
+    .session.summary {
+      margin-top: 0;
       position: relative;
+      z-index: 3;
     }
-    .page-complete::before,
-    .page-complete::after {
-      content: "";
-      position: absolute;
-      left: 32px; right: 32px;
-      height: 1px;
-      background: color-mix(in oklab, var(--line-strong) 55%, transparent);
-    }
-    .page-complete::before { top: 18px; }
-    .page-complete::after { bottom: 28px; }
-    .pc-head {
-      display: flex; gap: 18px; align-items: center;
-    }
-    .pc-head .pc-seal {
-      width: 76px; height: 76px; border-radius: 50%;
-      background: var(--good-soft);
-      display: grid; place-items: center;
-      font-family: var(--font-serif); font-weight: 500; font-size: 2.4rem;
-      color: var(--good-strong);
-    }
-    .pc-headline {
-      font-family: var(--font-serif);
-      font-size: clamp(2rem, 3.6vw, 2.6rem);
-      line-height: 1.0;
-      letter-spacing: -0.025em;
-      font-weight: 500;
-      margin: 0;
-    }
-    .pc-meta { color: var(--muted); font-size: 0.92rem; margin-top: 4px; }
-    .pc-stats {
+    .prompt-card.summary-card { padding-top: 34px; }
+
+    /* The ribbon is the scene's headline now, so the prompt-card's
+       ::before rule (a thin divider) would read as redundant decor.
+       Hide it only inside the summary variant — session question
+       scene still shows it. */
+    .prompt-card.summary-card::before { display: none; }
+
+    /* Ribbon normally carries a margin-top so it can sit under a line
+       of content. In the summary it *is* the first element, so the
+       card's own top padding is enough — zero the extra margin. */
+    .prompt-card.summary-card > .ribbon:first-child { margin-top: 0; }
+
+    .summary-stats {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 26px;
+      gap: 12px;
+      margin-top: 22px;
     }
-    .pc-stat {
-      padding: 16px;
-      background: var(--panel-soft);
-      border: 1px solid var(--line-soft);
-      border-radius: 16px;
+    .summary-stat {
+      padding: 14px 14px 12px;
+      background: color-mix(in oklab, var(--panel) 70%, transparent);
+      border: 1px solid color-mix(in oklab, var(--line) 80%, transparent);
+      border-radius: 14px;
+      backdrop-filter: blur(6px) saturate(1.05);
+      -webkit-backdrop-filter: blur(6px) saturate(1.05);
     }
-    .pc-stat .v {
+    .summary-stat .v {
       font-family: var(--font-serif);
       font-size: 2rem; font-weight: 500; letter-spacing: -0.015em;
-      line-height: 1;
+      line-height: 1; color: var(--ink);
     }
-    .pc-stat .l {
-      font-size: 0.8rem; font-weight: 700; color: var(--muted);
-      letter-spacing: 0.04em; text-transform: uppercase; margin-top: 4px;
+    .summary-stat .v .u {
+      font-size: 0.58em; font-weight: 600; color: var(--muted);
+      margin-left: 2px;
     }
-    .pc-drill {
-      margin-top: 24px;
-      padding: 18px 20px;
+    .summary-stat .l {
+      font-size: 0.74rem; font-weight: 700; color: var(--muted);
+      letter-spacing: 0.05em; text-transform: uppercase; margin-top: 6px;
+    }
+
+    .summary-drill {
+      margin-top: 20px;
+      padding: 14px 18px 16px;
       background: color-mix(in oklab, var(--warn-soft) 70%, var(--panel));
       border: 1px solid color-mix(in oklab, var(--warn) 26%, transparent);
       border-radius: var(--radius);
     }
-    .pc-drill h4 {
-      font-family: var(--font-serif); font-size: 1.15rem; font-weight: 500; margin: 0 0 8px; letter-spacing: -0.01em;
+    .summary-drill-head {
+      display: flex; flex-wrap: wrap; align-items: baseline;
+      gap: 4px 12px;
     }
-    .pc-drill-chips {
-      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+    .summary-drill h4 {
+      font-family: var(--font-serif); font-size: 1.1rem; font-weight: 500;
+      margin: 0; letter-spacing: -0.01em;
     }
-
-    .pc-companion {
-      margin-top: 24px;
-      padding: 18px 20px;
-      background: linear-gradient(135deg, var(--inklet-soft), var(--panel));
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      display: grid;
-      grid-template-columns: 80px 1fr;
-      gap: 16px;
+    .summary-drill-chips {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
       align-items: center;
     }
-    .pc-companion img { width: 80px; height: auto; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.15)); }
-    .pc-companion-body b { font-family: var(--font-serif); font-weight: 500; font-size: 1.1rem; letter-spacing: -0.005em; }
 
-    .pc-actions {
-      display: flex; gap: 10px; flex-wrap: wrap;
-      justify-content: center;
+    .summary-actions {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      justify-content: center; align-items: center;
       margin-top: 28px;
+    }
+
+    /* Quiet tertiary — sits next to the two primary CTAs but doesn't
+       compete visually. No background, pill-style underline on hover. */
+    .summary-bank-link {
+      appearance: none; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 4px;
+      background: transparent;
+      border: 0;
+      color: var(--brand-ink);
+      font: inherit; font-weight: 600; font-size: 0.92rem;
+      letter-spacing: -0.005em;
+      transition: color var(--dur) var(--ease-out),
+                  transform var(--dur-fast) var(--ease-out);
+    }
+    .summary-bank-link:hover {
+      color: var(--brand);
+      transform: translateX(2px);
+    }
+    .summary-bank-link svg { width: 14px; height: 14px; }
+
+    /* ==========================================================
+       Summary — happy monsters wandering behind the card
+       Positioned with pointer-events:none on the container so the
+       sprites never intercept clicks on the CTAs, per brief.
+       ========================================================== */
+    .summary-wander {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      /* Behind the prompt-card but above the hero-art pseudo-element
+         which sits in the shell's ::before layer. */
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    .happy-monster {
+      position: absolute;
+      width: var(--size); height: var(--size);
+      /* Two independent animations so the bounce (fast, excited) and
+         the drift (slow, lazy) don't lock phase — the monster reads
+         as alive rather than robotic. */
+      animation:
+        happy-bounce 0.9s var(--ease-in-out) infinite,
+        happy-drift  5.5s var(--ease-in-out) infinite;
+      animation-delay: var(--bounce-delay), calc(var(--bounce-delay) * 0.6);
+      transform-origin: 50% 85%;
+      filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.22));
+    }
+    .happy-monster img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      /* Asset-native facing — same contract as meadow monsters.     */
+      transform: scaleX(var(--face));
+    }
+
+    /* Tiny decorative sparkles around each happy monster — express
+       the "excited / happy" note from the brief without extra art. */
+    .happy-spark {
+      position: absolute;
+      width: 10px; height: 10px;
+      border-radius: 999px;
+      background: radial-gradient(closest-side,
+        color-mix(in oklab, var(--warn) 80%, white) 0%,
+        color-mix(in oklab, var(--warn) 60%, transparent) 40%,
+        transparent 70%);
+      animation: happy-spark 1.8s var(--ease-out) infinite;
+      opacity: 0;
+    }
+    .happy-spark.s1 { top:  4%; left:  0%; animation-delay: 0.0s; }
+    .happy-spark.s2 { top: 20%; right: -6%; animation-delay: 0.6s; }
+    .happy-spark.s3 { bottom: 18%; left: 8%; animation-delay: 1.1s; }
+
+    @keyframes happy-bounce {
+      0%, 100% {
+        transform: translateY(0)   scale(1);
+      }
+      45% {
+        transform: translateY(-14px) scale(1.04);
+      }
+      60% {
+        transform: translateY(-10px) rotate(-3deg) scale(1.02);
+      }
+      80% {
+        transform: translateY(0) rotate(2deg) scale(1);
+      }
+    }
+    @keyframes happy-drift {
+      0%, 100% { margin-left: 0; }
+      50%      { margin-left: var(--drift-x); }
+    }
+    @keyframes happy-spark {
+      0%   { opacity: 0; transform: translate(0, 0) scale(0.4); }
+      30%  { opacity: 1; }
+      100% { opacity: 0; transform: translate(6px, -10px) scale(1); }
+    }
+
+    /* ==========================================================
+       Summary — fireworks overlay
+       Radial bursts from a handful of emitters, each emitting 12
+       particles along evenly-spaced angles. z-index pushes it above
+       the card so particles can fly over the ribbon; pointer-events
+       is none so the CTAs beneath still work.
+       ========================================================== */
+    .summary-fireworks {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 60;
+      overflow: hidden;
+    }
+
+    .fw-burst {
+      position: absolute;
+      width: 0; height: 0;
+      transform: translate(-50%, -50%);
+      animation-delay: var(--fw-delay);
+    }
+    .fw-particle {
+      position: absolute;
+      left: 0; top: 0;
+      width: 7px; height: 7px;
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+      animation: fw-fire 1.8s var(--ease-out) forwards;
+      animation-delay: calc(var(--fw-delay) + var(--p-delay));
+      opacity: 0;
+    }
+    /* Per-burst hue so the shower reads multicoloured. Each hue mixes
+       the brand / good / warn token with a highlight so particles read
+       crisply against both light and dark hero art. */
+    .fw-burst.hue-brand .fw-particle {
+      background: radial-gradient(closest-side,
+        color-mix(in oklab, var(--brand) 92%, white) 0%,
+        var(--brand) 60%,
+        transparent 95%);
+      box-shadow: 0 0 6px color-mix(in oklab, var(--brand) 60%, transparent);
+    }
+    .fw-burst.hue-good .fw-particle {
+      background: radial-gradient(closest-side,
+        color-mix(in oklab, var(--good) 92%, white) 0%,
+        var(--good) 60%,
+        transparent 95%);
+      box-shadow: 0 0 6px color-mix(in oklab, var(--good) 60%, transparent);
+    }
+    .fw-burst.hue-warn .fw-particle {
+      background: radial-gradient(closest-side,
+        color-mix(in oklab, var(--warn) 92%, white) 0%,
+        var(--warn) 60%,
+        transparent 95%);
+      box-shadow: 0 0 6px color-mix(in oklab, var(--warn) 60%, transparent);
+    }
+
+    @keyframes fw-fire {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%)
+                   rotate(var(--angle))
+                   translateX(0);
+      }
+      40% { opacity: 1; }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%)
+                   rotate(var(--angle))
+                   translateX(var(--distance))
+                   translateY(10px);
+      }
+    }
+
+    /* Reduced-motion — keep the happy mood but kill the looping
+       animations. Monsters stand still (no bounce / drift / spark)
+       and fireworks fade in + fade out once instead of shooting. */
+    @media (prefers-reduced-motion: reduce) {
+      .happy-monster,
+      .happy-spark,
+      .fw-particle { animation: none !important; }
+      .happy-spark  { opacity: 0.7; }
+      .fw-particle  { opacity: 0; }
     }
 
     /* ==========================================================
@@ -1963,30 +2533,47 @@
     }
     .toast-catch {
       pointer-events: auto;
-      background: var(--panel);
-      border: 1px solid var(--line);
+      /* Ambient / greyed surface — the toast appears mid-session (often
+         mid-typing) and should feel like a quiet status note, not a card
+         that demands attention. Softer panel, dimmer line, lighter shadow,
+         gentle desaturation on the art. Coupled with the 10s JS auto-hide
+         in CatchToast, it lives in the user's periphery. */
+      background: var(--panel-soft);
+      border: 1px solid var(--line-soft);
       border-radius: var(--radius);
-      box-shadow: var(--shadow-lg);
+      box-shadow: var(--shadow-xs);
       padding: 12px 16px 12px 12px;
       display: grid;
       grid-template-columns: 56px 1fr;
       gap: 12px;
       align-items: center;
       max-width: 320px;
-      animation: catch-slide-in var(--dur-slower) var(--ease-out);
+      opacity: 0.88;
+      filter: grayscale(0.55);
+      animation:
+        catch-slide-in var(--dur-slower) var(--ease-out),
+        catch-fade-out var(--dur-slower) var(--ease-out) 9.5s forwards;
     }
     @keyframes catch-slide-in {
       from { opacity: 0; transform: translateY(16px) scale(0.96); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+      to   { opacity: 0.88; transform: translateY(0) scale(1); }
+    }
+    /* Visual fade that shadows the 10s JS auto-hide. The CSS fade runs at
+       9.5s so the pixels fade gracefully; the JS then unmounts the node
+       shortly after (10s), which both avoids pointer-events ghosting and
+       matches the slide-in / slide-out symmetry. */
+    @keyframes catch-fade-out {
+      from { opacity: 0.88; transform: translateY(0) scale(1); }
+      to   { opacity: 0;    transform: translateY(8px) scale(0.98); }
     }
     .toast-catch .cm-port {
       width: 56px; height: 56px; border-radius: 14px;
-      background: radial-gradient(closest-side, var(--inklet-soft), var(--panel-soft));
+      background: var(--panel-sunken);
       display: grid; place-items: center; overflow: hidden;
     }
     .toast-catch .cm-port img { width: 52px; }
-    .toast-catch .cm-title { font-family: var(--font-serif); font-size: 1.02rem; letter-spacing: -0.005em; font-weight: 500; }
-    .toast-catch .cm-body { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+    .toast-catch .cm-title { font-family: var(--font-serif); font-size: 1.02rem; letter-spacing: -0.005em; font-weight: 500; color: var(--muted); }
+    .toast-catch .cm-body { color: var(--subtle); font-size: 0.82rem; margin-top: 2px; }
 
     .celeb-modal {
       position: absolute;
@@ -2035,6 +2622,696 @@
     @keyframes celeb-ring {
       0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0.8; }
       100% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
+    }
+
+    /* ==========================================================
+       Monster evolve — shared whiten→emerge timeline
+       ----------------------------------------------------------
+       Timings expressed as percentages of the total `--ev-duration`
+       (default 3.8s) so a single `--ev-duration` override can slow
+       or speed the whole sequence — helpful for the mega variant,
+       which will share the same keyframe percentages but run longer.
+       Layout:
+         0.00 – 0.15  previous monster rises / fades in
+         0.15 – 0.32  previous monster at baseline
+         0.32 – 0.52  previous monster whitens (saturate→0, brightness↑)
+                      halo expands outward, shine streak sweeps
+         0.48 – 0.62  new monster appears at shiny-white scale 1.1
+         0.62 – 0.78  new monster settles: saturation + scale return
+         2.60s fixed  reveal block (eyebrow / name / congrats) slides up
+         3.20s fixed  CTA button fades in
+       ----------------------------------------------------------
+       Timing function — every multi-keyframe animation below uses
+       `linear` segment timing, NOT the design system's `--ease-out`.
+       Reason: ease-out is applied per segment, so velocity drops to
+       ~0 at every keyframe boundary then springs back up — perceived
+       as "stop and play" stutter even though paint runs at full fps.
+       The artistic curve already lives in the keyframe values; linear
+       interpolation between them keeps motion continuous. Single-
+       segment animations (celeb-in, ev-reveal) keep `--ease-out`.
+       ========================================================== */
+    .ev-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      pointer-events: auto;
+    }
+    .ev-modal {
+      /* Extended duration gives room for a longer "behold" hold before
+         the whiten — the beat where learners register that something is
+         about to happen. Every animation is percentage-based off this, so
+         the whole timeline stretches together. */
+      --ev-duration: 4.6s;
+      /* Reveal delays live on the modal so variants (.mega) can override
+         without re-declaring the animation shorthand. */
+      --ev-reveal-delay: 3.4s;
+      --ev-cta-delay:    3.9s;
+      position: absolute;
+      inset: 0;
+      /* Solid underlay covers edges; the radial paints a warmer pool at
+         centre so the monster art sits in a spotlight instead of pure black. */
+      background-color: rgba(0, 0, 0, 0.88);
+      background-image: radial-gradient(closest-side, color-mix(in oklab, var(--inklet) 32%, #000) 0%, rgba(0,0,0,0) 75%);
+      display: grid;
+      grid-template-rows: 1fr auto 1fr;
+      place-items: center;
+      padding: 40px 24px 64px;
+      animation: celeb-in 520ms var(--ease-out);
+    }
+    .ev-stage {
+      position: relative;
+      width: 560px; height: 560px;
+      display: grid;
+      place-items: center;
+      grid-row: 2;
+      /* will-change is added only on the mega stage (which shakes) — regular
+         shared/caught stages don't move, so promoting them wastes a layer. */
+    }
+    /* Stage-tiered sizes so the growth reads at a glance. Egg is small,
+       mega fills most of the frame. Each tier sized to the container so
+       the silhouette visibly grows with each evolution. */
+    .ev-mon {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 260px; height: 260px;
+      transform: translate(-50%, -50%);
+      /* Filters dropped from animations (CPU-bound). Only transform/opacity
+         animate now, so the GPU compositor can do the whole job. */
+      will-change: transform, opacity;
+    }
+    .ev-mon[data-stage="0"] { width: 180px; height: 180px; } /* egg */
+    .ev-mon[data-stage="1"] { width: 240px; height: 240px; }
+    .ev-mon[data-stage="2"] { width: 300px; height: 300px; }
+    .ev-mon[data-stage="3"] { width: 380px; height: 380px; }
+    .ev-mon[data-stage="4"] { width: 540px; height: 540px; } /* mega */
+
+    /* Outgoing form — longer "behold" hold before the break, then opacity
+       crossfade into the white flash. A subtle breathing pulse during hold
+       (scale 1.00 ↔ 1.02) carries the sense that power is building. */
+    .ev-mon-from {
+      opacity: 0;
+      animation: ev-from var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-from {
+      0%   { opacity: 0; transform: translate(-50%, calc(-50% + 24px)) scale(0.9); }
+      14%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      /* Hold-with-breathing from 14% to 55% — anticipation beat. */
+      28%  { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
+      42%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      50%  { opacity: 1; transform: translate(-50%, -50%) scale(1.03); }
+      56%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+      62%  { opacity: 0; transform: translate(-50%, -50%) scale(1.14); }
+      100% { opacity: 0; }
+    }
+    /* Incoming form — emerges from the white flash after the whiten peak. */
+    .ev-mon-to {
+      opacity: 0;
+      animation: ev-to var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-to {
+      0%,  58% { opacity: 0; transform: translate(-50%, -50%) scale(1.14); }
+      64%      { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+      74%      { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
+      86%      { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100%     { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    /* Halo — soft white bloom. Begins charging quietly during the "behold"
+       hold phase so the flash feels earned, peaks with the whiten beat,
+       then trails off while the new monster settles. Separate element so
+       the glow doesn't fight with the monster image. */
+    .ev-halo {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(closest-side, rgba(255,255,255,0.92), rgba(255,255,255,0) 74%);
+      transform: translate(-50%, -50%) scale(0.4);
+      opacity: 0;
+      will-change: transform, opacity;
+      animation: ev-halo var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-halo {
+      0%, 18%  { opacity: 0;    transform: translate(-50%, -50%) scale(0.4); }
+      /* Charging — low, subtle, ramping up during the hold beat. */
+      30%      { opacity: 0.12; transform: translate(-50%, -50%) scale(0.7); }
+      45%      { opacity: 0.32; transform: translate(-50%, -50%) scale(1.0); }
+      55%      { opacity: 0.8;  transform: translate(-50%, -50%) scale(1.5); }
+      /* Peak — matches the white-flash peak at 58%. */
+      60%      { opacity: 1;    transform: translate(-50%, -50%) scale(1.9); }
+      74%      { opacity: 0.45; transform: translate(-50%, -50%) scale(2.3); }
+      88%      { opacity: 0.08; transform: translate(-50%, -50%) scale(2.6); }
+      100%     { opacity: 0;    transform: translate(-50%, -50%) scale(2.8); }
+    }
+
+    /* White flash core — dedicated element so the whiten peak can be fully
+       opaque without the image below affecting it. Pure opacity animation
+       (GPU-only) replaces the old per-frame filter chain. */
+    .ev-white {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 320px; height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(closest-side,
+        #ffffff 0%,
+        #ffffff 48%,
+        rgba(255,255,255,0.4) 80%,
+        rgba(255,255,255,0) 100%);
+      transform: translate(-50%, -50%) scale(0.5);
+      opacity: 0;
+      will-change: transform, opacity;
+      pointer-events: none;
+      animation: ev-white var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-white {
+      0%, 44% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+      52%     { opacity: 0.6; transform: translate(-50%, -50%) scale(0.9); }
+      58%     { opacity: 1;   transform: translate(-50%, -50%) scale(1.15); }
+      62%     { opacity: 1;   transform: translate(-50%, -50%) scale(1.2); }
+      70%     { opacity: 0.35; transform: translate(-50%, -50%) scale(1.3); }
+      82%     { opacity: 0;   transform: translate(-50%, -50%) scale(1.4); }
+      100%    { opacity: 0; }
+    }
+
+    /* Shine streak — a single diagonal light sweep that peaks with the
+       whiten moment, selling the "camera flash" reveal beat. */
+    .ev-shine {
+      position: absolute;
+      inset: -40px;
+      background: linear-gradient(115deg,
+        transparent 38%,
+        rgba(255,255,255,0.9) 50%,
+        transparent 62%);
+      mix-blend-mode: screen;
+      opacity: 0;
+      will-change: transform, opacity;
+      animation: ev-shine var(--ev-duration) linear forwards;
+      pointer-events: none;
+    }
+    @keyframes ev-shine {
+      0%, 48% { opacity: 0;    transform: translateX(-20%); }
+      58%     { opacity: 0.95; transform: translateX(0); }
+      68%     { opacity: 0.3;  transform: translateX(12%); }
+      80%     { opacity: 0;    transform: translateX(20%); }
+      100%    { opacity: 0;    transform: translateX(20%); }
+    }
+
+    /* Reveal block — eyebrow / name / congrats / CTA.
+       Enters after the new monster has fully settled (~2.6s). */
+    .ev-reveal {
+      grid-row: 3;
+      text-align: center;
+      max-width: 420px;
+      opacity: 0;
+      transform: translateY(18px);
+      animation: ev-reveal 600ms var(--ease-out) var(--ev-reveal-delay) forwards;
+    }
+    @keyframes ev-reveal {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .ev-eyebrow {
+      font-size: 0.78rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+      margin: 0 0 8px;
+    }
+    .ev-name {
+      font-family: var(--font-serif);
+      font-weight: 500;
+      font-size: clamp(2.2rem, 5vw, 3rem);
+      letter-spacing: -0.01em;
+      color: white;
+      margin: 0 0 10px;
+    }
+    .ev-congrats {
+      color: rgba(255,255,255,0.85);
+      font-size: 1.02rem;
+      margin: 0 0 22px;
+    }
+    .ev-cta {
+      opacity: 0;
+      transform: translateY(12px);
+      animation: ev-reveal 600ms var(--ease-out) var(--ev-cta-delay) forwards;
+    }
+
+    /* Picker chips — sit above the modal so designers can swap transitions
+       without leaving the scene. Pill tray with a subtle glass surface. */
+    .ev-picker {
+      position: absolute;
+      top: 24px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; gap: 4px; align-items: center;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 6px;
+      border-radius: 100px;
+      z-index: 60;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .ev-chip {
+      padding: 8px 14px;
+      border-radius: 100px;
+      background: transparent;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.82rem;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+    }
+    .ev-chip:hover { color: white; background: rgba(255,255,255,0.08); }
+    .ev-chip.on {
+      background: rgba(255,255,255,0.18);
+      color: white;
+    }
+    .ev-chip.placeholder { color: rgba(255,255,255,0.4); font-style: italic; }
+    .ev-chip.placeholder.on { color: rgba(255,255,255,0.75); font-style: normal; }
+    .ev-chip-todo {
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 100px;
+      background: rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.7);
+      font-style: normal;
+    }
+    .ev-replay {
+      margin-left: 4px;
+      padding: 8px 14px;
+      border-radius: 100px;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      font-size: 0.82rem;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: background var(--dur-fast) var(--ease-out);
+    }
+    .ev-replay:hover { background: rgba(255,255,255,0.3); }
+
+    /* Placeholder card for caught / mega while we design them separately. */
+    .ev-modal.placeholder {
+      background-color: rgba(0, 0, 0, 0.92);
+      background-image: radial-gradient(closest-side, rgba(30,40,55,0.92) 0%, rgba(0,0,0,0) 78%);
+    }
+    .ev-placeholder-card {
+      text-align: center;
+      padding: 36px 40px;
+      max-width: 440px;
+    }
+    .ev-modal.placeholder .ev-name { font-size: clamp(1.6rem, 3.2vw, 2.2rem); }
+
+    /* ---------- Caught (non → stage 0) — particle gather ----------
+       No previous form to whiten, so the drama is summoning: sparks fly
+       from the edges, collide, and the egg emerges from the burst. The
+       halo + shine + ev-mon-to beats are shared with the evolution
+       timeline, so only the particle intro and the background tint live
+       here — the payoff stays consistent across transitions. */
+    .ev-modal.caught {
+      /* Cooler centre than shared — no monster to tint against, so a
+         slate blue pool reads as "night sky catching a spark". */
+      background-color: rgba(0, 0, 0, 0.9);
+      background-image: radial-gradient(closest-side, rgba(28,36,56,0.88) 0%, rgba(0,0,0,0) 78%);
+    }
+
+    /* Particle layer sits inside the stage so particles converge on the
+       same centre point as the halo / egg. */
+    .ev-parts {
+      position: absolute; inset: 0;
+      pointer-events: none;
+    }
+    .ev-part {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 8px; height: 8px;
+      margin: -4px 0 0 -4px;
+      border-radius: 50%;
+      background: white;
+      box-shadow:
+        0 0 14px rgba(255,255,255,0.95),
+        0 0 4px  rgba(255,255,255,1);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .ev-modal.caught .ev-part {
+      animation: ev-part 1.8s linear forwards;
+    }
+    /* Fixed scatter — hand-placed so the shower feels organic rather than
+       evenly spaced. Staggered delays break the lock-step feel. */
+    .ev-modal.caught .ev-part:nth-child(1)  { --tx:  220px; --ty: -120px; animation-delay: 0.00s; }
+    .ev-modal.caught .ev-part:nth-child(2)  { --tx: -190px; --ty: -160px; animation-delay: 0.08s; }
+    .ev-modal.caught .ev-part:nth-child(3)  { --tx:  -80px; --ty: -220px; animation-delay: 0.04s; }
+    .ev-modal.caught .ev-part:nth-child(4)  { --tx:  140px; --ty:  180px; animation-delay: 0.18s; }
+    .ev-modal.caught .ev-part:nth-child(5)  { --tx: -220px; --ty:   60px; animation-delay: 0.10s; }
+    .ev-modal.caught .ev-part:nth-child(6)  { --tx:  230px; --ty:   40px; animation-delay: 0.22s; }
+    .ev-modal.caught .ev-part:nth-child(7)  { --tx:  -60px; --ty:  220px; animation-delay: 0.14s; }
+    .ev-modal.caught .ev-part:nth-child(8)  { --tx:  100px; --ty: -220px; animation-delay: 0.30s; }
+    .ev-modal.caught .ev-part:nth-child(9)  { --tx: -160px; --ty:  190px; animation-delay: 0.26s; }
+    .ev-modal.caught .ev-part:nth-child(10) { --tx:  180px; --ty:  -60px; animation-delay: 0.36s; }
+    @keyframes ev-part {
+      0%   { opacity: 0;   transform: translate(var(--tx), var(--ty)) scale(0); }
+      10%  { opacity: 1;   transform: translate(var(--tx), var(--ty)) scale(1); }
+      70%  { opacity: 1;   transform: translate(0, 0)                  scale(1.8); }
+      85%  { opacity: 0.6; transform: translate(0, 0)                  scale(0.6); }
+      100% { opacity: 0;   transform: translate(0, 0)                  scale(0); }
+    }
+
+    /* ---------- Mega (3 → 4) — amplified finale ----------
+       Same shape as shared (behold hold → whiten flash → halo → shine →
+       emerge → reveal) but bigger on every axis: longer duration, longer
+       "behold" hold, gold-tinted halo+particles, screen shake on impact,
+       gold/white/blue gradient name. Reveal lands later so the spectacle
+       isn't cut short. Shake lives on .ev-stage (not the modal) so the
+       large background gradient isn't re-composited every shake frame. */
+    .ev-modal.mega {
+      --ev-duration: 7.5s;
+      --ev-reveal-delay: 5.8s;
+      --ev-cta-delay:    6.3s;
+      background-color: rgba(0, 0, 0, 0.94);
+      background-image: radial-gradient(closest-side, color-mix(in oklab, #ffd27a 18%, #000) 0%, rgba(0,0,0,0) 80%);
+      animation: celeb-in 520ms var(--ease-out);
+    }
+    /* Shake on the stage only — the modal's large radial-gradient
+       background stays still, so we only repaint the small centre region. */
+    .ev-modal.mega .ev-stage {
+      will-change: transform;
+      animation: ev-mega-shake var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-mega-shake {
+      0%, 50%, 62%, 100% { transform: translate(0, 0); }
+      52% { transform: translate(-6px, 3px); }
+      54% { transform: translate(7px, -4px); }
+      56% { transform: translate(-4px, 6px); }
+      58% { transform: translate(4px, -3px); }
+      60% { transform: translate(-3px, 2px); }
+    }
+
+    /* Outgoing stage-3 — long hold with breathing + slight rise as power
+       builds, then break into the white. No filters (GPU-friendly). */
+    .ev-modal.mega .ev-mon-from {
+      animation: ev-mega-from var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-mega-from {
+      0%   { opacity: 0; transform: translate(-50%, calc(-50% + 32px)) scale(0.86); }
+      10%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      /* Behold hold 10-52% — long, breathing, gathering power. */
+      24%  { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
+      36%  { opacity: 1; transform: translate(-50%, -50%) scale(1.005); }
+      46%  { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
+      52%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+      58%  { opacity: 1; transform: translate(-50%, -50%) scale(1.14); }
+      64%  { opacity: 0; transform: translate(-50%, -50%) scale(1.2); }
+      100% { opacity: 0; }
+    }
+
+    /* Incoming stage-4 — emerges from the white flash. Scale gradient is
+       intentionally gentle (1.1 → 1) since the stage-4 image is already
+       large via data-stage, so we want it to settle rather than grow. */
+    .ev-modal.mega .ev-mon-to {
+      animation: ev-mega-to var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-mega-to {
+      0%, 60%  { opacity: 0; transform: translate(-50%, -50%) scale(1.08); }
+      66%      { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
+      78%      { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
+      90%      { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100%     { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    /* Bigger, gold-tinted white flash core for the mega whiten. The final
+       form deserves an overwhelming wash — this is the visual apex. */
+    .ev-modal.mega .ev-white {
+      width: 560px; height: 560px;
+      /* Very slight gold at the ring keeps the flash warm without diluting
+         the pure-white core. */
+      background: radial-gradient(closest-side,
+        #ffffff 0%,
+        #ffffff 54%,
+        rgba(255, 244, 214, 0.55) 82%,
+        rgba(255, 220, 140, 0)    100%);
+      animation: ev-mega-white var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-mega-white {
+      0%, 48% { opacity: 0;   transform: translate(-50%, -50%) scale(0.5); }
+      54%     { opacity: 0.7; transform: translate(-50%, -50%) scale(0.95); }
+      60%     { opacity: 1;   transform: translate(-50%, -50%) scale(1.15); }
+      66%     { opacity: 1;   transform: translate(-50%, -50%) scale(1.25); }
+      74%     { opacity: 0.35; transform: translate(-50%, -50%) scale(1.35); }
+      86%     { opacity: 0;   transform: translate(-50%, -50%) scale(1.45); }
+      100%    { opacity: 0; }
+    }
+
+    /* Enhanced halo — warmer gold tint, bigger burst. Long charge while
+       the form holds, single continuous rise-and-fade (no dip). */
+    .ev-modal.mega .ev-halo {
+      width: 260px; height: 260px;
+      background: radial-gradient(closest-side, rgba(255, 220, 140, 0.95), rgba(255, 220, 140, 0) 72%);
+      animation: ev-mega-halo var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-mega-halo {
+      0%, 18%  { opacity: 0;    transform: translate(-50%, -50%) scale(0.4); }
+      /* Gold charging glow during the hold. */
+      34%      { opacity: 0.15; transform: translate(-50%, -50%) scale(0.9); }
+      48%      { opacity: 0.4;  transform: translate(-50%, -50%) scale(1.4); }
+      56%      { opacity: 0.85; transform: translate(-50%, -50%) scale(2); }
+      62%      { opacity: 1;    transform: translate(-50%, -50%) scale(2.6); }
+      74%      { opacity: 0.55; transform: translate(-50%, -50%) scale(3.3); }
+      86%      { opacity: 0.15; transform: translate(-50%, -50%) scale(3.8); }
+      100%     { opacity: 0;    transform: translate(-50%, -50%) scale(4.2); }
+    }
+
+    /* Single shine sweep on impact — one smooth pass, no secondary dip. */
+    .ev-modal.mega .ev-shine {
+      animation: ev-mega-shine var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-mega-shine {
+      0%, 52% { opacity: 0;    transform: translateX(-25%); }
+      60%     { opacity: 0.95; transform: translateX(-2%); }
+      68%     { opacity: 0.55; transform: translateX(12%); }
+      78%     { opacity: 0.15; transform: translateX(22%); }
+      86%     { opacity: 0;    transform: translateX(30%); }
+      100%    { opacity: 0;    transform: translateX(30%); }
+    }
+
+    /* Gold-tinted particles — burst outward on impact. Delay keyed to the
+       whiten peak (60% of 7.5s ≈ 4.5s) so the shower rides the flash and
+       trails through the emerge phase. Absolute delays stay in seconds so
+       the staggered feel survives the longer duration. */
+    .ev-modal.mega .ev-part {
+      background: #fff3d5;
+      box-shadow:
+        0 0 18px rgba(255, 210, 122, 0.95),
+        0 0 6px  rgba(255, 245, 220, 1);
+      animation: ev-mega-part 2.8s linear 4.4s forwards;
+    }
+    /* Scatter targets — particles fly OUT to these offsets. */
+    .ev-modal.mega .ev-part:nth-child(1)  { --tx:  300px; --ty: -180px; animation-delay: 4.40s; }
+    .ev-modal.mega .ev-part:nth-child(2)  { --tx: -260px; --ty: -220px; animation-delay: 4.52s; }
+    .ev-modal.mega .ev-part:nth-child(3)  { --tx: -110px; --ty: -300px; animation-delay: 4.46s; }
+    .ev-modal.mega .ev-part:nth-child(4)  { --tx:  200px; --ty:  260px; animation-delay: 4.62s; }
+    .ev-modal.mega .ev-part:nth-child(5)  { --tx: -300px; --ty:   90px; animation-delay: 4.54s; }
+    .ev-modal.mega .ev-part:nth-child(6)  { --tx:  320px; --ty:   70px; animation-delay: 4.66s; }
+    .ev-modal.mega .ev-part:nth-child(7)  { --tx:  -90px; --ty:  310px; animation-delay: 4.58s; }
+    .ev-modal.mega .ev-part:nth-child(8)  { --tx:  160px; --ty: -310px; animation-delay: 4.76s; }
+    .ev-modal.mega .ev-part:nth-child(9)  { --tx: -220px; --ty:  270px; animation-delay: 4.72s; }
+    .ev-modal.mega .ev-part:nth-child(10) { --tx:  250px; --ty:  -90px; animation-delay: 4.82s; }
+    @keyframes ev-mega-part {
+      0%   { opacity: 0;    transform: translate(0, 0)                  scale(0); }
+      6%   { opacity: 1;    transform: translate(0, 0)                  scale(2.2); }
+      40%  { opacity: 1;    transform: translate(calc(var(--tx) * 0.6), calc(var(--ty) * 0.6)) scale(1.1); }
+      70%  { opacity: 0.75; transform: translate(var(--tx), var(--ty)) scale(0.7); }
+      100% { opacity: 0;    transform: translate(var(--tx), var(--ty)) scale(0.3); }
+    }
+
+    /* Reveal copy — "FINAL FORM" supertext reads bold and golden; the
+       name uses a gold-white-blue gradient to signal rarity. */
+    .ev-modal.mega .ev-eyebrow {
+      font-size: 0.92rem;
+      letter-spacing: 0.3em;
+      font-weight: 600;
+      color: #ffd27a;
+      text-shadow: 0 0 22px rgba(255, 210, 122, 0.55);
+    }
+    .ev-modal.mega .ev-name {
+      background: linear-gradient(135deg, #ffd27a 0%, #ffffff 45%, #7fb8ff 100%);
+      -webkit-background-clip: text;
+              background-clip: text;
+      color: transparent;
+      text-shadow: 0 2px 30px rgba(255, 210, 122, 0.35);
+      font-size: clamp(2.6rem, 5.8vw, 3.4rem);
+    }
+    .ev-modal.mega .ev-cta {
+      box-shadow: 0 0 32px rgba(255, 210, 122, 0.38);
+    }
+
+    /* ---------- Egg → stage 1 — crack open ----------
+       The egg appears, builds tension with a growing wobble (linear-tempo
+       rocking, NOT eased — eggs rattle in beats), cracks with a flash and
+       outward shell shards, and the new monster pops out with squash-and-
+       stretch. Distinct from the shared whiten-emerge because eggs *break*:
+       there's a discrete event, not a smooth dissolve.
+       Beat map (`--ev-duration: 3.6s`):
+         0–8%   egg fades in & rises
+         8–18%  settled hold
+         18–37% wobble — tilt amplitude grows from ±3° to ±10°
+         38%    CRACK — flash + halo burst + 8 shell shards out
+         38–60% shards arc out then fall with gravity
+         42–62% monster pops in with squash-and-stretch
+         62–82% monster settles
+       Timing function — every multi-keyframe animation below uses
+       `linear` segment timing for the same reason as the shared block. */
+    .ev-modal.egg-crack {
+      --ev-duration: 3.6s;
+      --ev-reveal-delay: 2.5s;
+      --ev-cta-delay:    3.0s;
+      /* Slightly warmer pool — eggs evoke nest warmth. */
+      background-image: radial-gradient(closest-side, rgba(82,52,28,0.55) 0%, rgba(0,0,0,0) 75%);
+    }
+
+    /* Egg — wobble building tension, then break apart at 38%.
+       Pivot at base so the rocking reads as "trying to escape", and
+       a brief expand at the crack moment sells the burst. */
+    .ev-modal.egg-crack .ev-mon-from {
+      transform-origin: 50% 80%;
+      animation: ev-egg-wobble var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-egg-wobble {
+      0%   { opacity: 0; transform: translate(-50%, calc(-50% + 18px)) rotate(0deg) scale(0.9); }
+      8%   { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+      18%  { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+      /* Micro-wobble — barely there, attention-grabbing without alarm. */
+      22%  { transform: translate(-50%, -50%) rotate(-3deg) scale(1.02); }
+      26%  { transform: translate(-50%, -50%) rotate(3deg)  scale(1.02); }
+      /* Growing — the egg really wants out now. */
+      29%  { transform: translate(-50%, -50%) rotate(-6deg) scale(1.04); }
+      32%  { transform: translate(-50%, -50%) rotate(6deg)  scale(1.04); }
+      /* Tension peak — biggest tilt, slight stretch up. */
+      35%  { transform: translate(-50%, -50%) rotate(-10deg) scale(1.06); }
+      37%  { transform: translate(-50%, -50%) rotate(10deg)  scale(1.10); }
+      /* CRACK — brief expand to sell the burst, then dissolves. */
+      38%  { opacity: 1;   transform: translate(-50%, -50%) rotate(0deg) scale(1.20); }
+      44%  { opacity: 0.4; transform: translate(-50%, -50%) rotate(0deg) scale(1.05); }
+      48%  { opacity: 0;   transform: translate(-50%, calc(-50% + 8px)) rotate(0deg) scale(0.9); }
+      100% { opacity: 0; }
+    }
+
+    /* New monster — squash-and-stretch pop emerging from the cracked
+       shell. Pivot at base so it lands like a tiny creature plopping
+       onto solid ground. The bounce-then-settle sequence borrows
+       directly from classic 12 principles of animation. */
+    .ev-modal.egg-crack .ev-mon-to {
+      transform-origin: 50% 80%;
+      animation: ev-monster-pop var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-monster-pop {
+      0%, 40% { opacity: 0; transform: translate(-50%, calc(-50% + 30px)) scale(0.3, 0.3); }
+      /* Pop emerges — small and squashed, like compressed by the shell. */
+      44%  { opacity: 1; transform: translate(-50%, calc(-50% + 10px)) scale(0.7, 0.55); }
+      /* Stretch tall — anticipation rebound from the squash. */
+      50%  { opacity: 1; transform: translate(-50%, calc(-50% - 12px)) scale(0.95, 1.18); }
+      /* Squash on landing — wider than tall. */
+      56%  { opacity: 1; transform: translate(-50%, -50%) scale(1.14, 0.90); }
+      /* Stretch back — smaller bounce. */
+      64%  { opacity: 1; transform: translate(-50%, -50%) scale(0.96, 1.06); }
+      /* Tiny squash — final settle. */
+      72%  { opacity: 1; transform: translate(-50%, -50%) scale(1.03, 0.98); }
+      82%  { opacity: 1; transform: translate(-50%, -50%) scale(1, 1); }
+      100% { opacity: 1; transform: translate(-50%, -50%) scale(1, 1); }
+    }
+
+    /* Halo — short and sharp, peaks at CRACK (38%). */
+    .ev-modal.egg-crack .ev-halo {
+      animation: ev-egg-halo var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-egg-halo {
+      0%, 30%  { opacity: 0;    transform: translate(-50%, -50%) scale(0.4); }
+      34%      { opacity: 0.3;  transform: translate(-50%, -50%) scale(0.8); }
+      38%      { opacity: 1;    transform: translate(-50%, -50%) scale(1.7); }
+      44%      { opacity: 0.55; transform: translate(-50%, -50%) scale(2.1); }
+      54%      { opacity: 0.15; transform: translate(-50%, -50%) scale(2.4); }
+      68%      { opacity: 0;    transform: translate(-50%, -50%) scale(2.6); }
+      100%     { opacity: 0; }
+    }
+
+    /* White flash core — bright pulse at CRACK moment only. */
+    .ev-modal.egg-crack .ev-white {
+      animation: ev-egg-white var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-egg-white {
+      0%, 33% { opacity: 0;   transform: translate(-50%, -50%) scale(0.5); }
+      37%     { opacity: 0.7; transform: translate(-50%, -50%) scale(0.95); }
+      39%     { opacity: 1;   transform: translate(-50%, -50%) scale(1.15); }
+      44%     { opacity: 0.5; transform: translate(-50%, -50%) scale(1.3); }
+      52%     { opacity: 0;   transform: translate(-50%, -50%) scale(1.4); }
+      100%    { opacity: 0; }
+    }
+
+    /* Shine streak — quick sweep at the crack instant. */
+    .ev-modal.egg-crack .ev-shine {
+      animation: ev-egg-shine var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-egg-shine {
+      0%, 33% { opacity: 0;    transform: translateX(-20%); }
+      39%     { opacity: 0.95; transform: translateX(0); }
+      46%     { opacity: 0.3;  transform: translateX(10%); }
+      56%     { opacity: 0;    transform: translateX(20%); }
+      100%    { opacity: 0; }
+    }
+
+    /* Shell shards — eggshell-cream colour with irregular silhouette
+       (border-radius asymmetry creates an organic shape without per-
+       shard SVG). 3D-ish gradient + inner shadow gives them volume. */
+    .ev-modal.egg-crack .ev-part {
+      width: 24px; height: 18px;
+      margin: -9px 0 0 -12px;
+      border-radius: 60% 40% 50% 50% / 60% 60% 40% 40%;
+      background: linear-gradient(160deg, #faedd1 0%, #d8c19a 100%);
+      box-shadow:
+        inset -2px -3px 5px rgba(108, 80, 40, 0.4),
+        0 2px 3px rgba(0,0,0,0.45);
+    }
+    /* Per-shard trajectory — `--tx` is horizontal drift, `--ty` is the
+       arc peak height (negative = up first), `--rot` is total tumble.
+       All eight start at the egg centre, burst out at 38%, arc up,
+       then fall with gravity to the floor below. */
+    .ev-modal.egg-crack .ev-part:nth-child(1) { --tx:  140px; --ty: -120px; --rot:  220deg; }
+    .ev-modal.egg-crack .ev-part:nth-child(2) { --tx: -150px; --ty: -110px; --rot: -260deg; }
+    .ev-modal.egg-crack .ev-part:nth-child(3) { --tx:   80px; --ty: -160px; --rot:  300deg; }
+    .ev-modal.egg-crack .ev-part:nth-child(4) { --tx:  -80px; --ty: -150px; --rot: -180deg; }
+    .ev-modal.egg-crack .ev-part:nth-child(5) { --tx:  185px; --ty:  -50px; --rot:  340deg; }
+    .ev-modal.egg-crack .ev-part:nth-child(6) { --tx: -190px; --ty:  -40px; --rot: -300deg; }
+    .ev-modal.egg-crack .ev-part:nth-child(7) { --tx:   30px; --ty: -180px; --rot:  240deg; }
+    .ev-modal.egg-crack .ev-part:nth-child(8) { --tx:  -30px; --ty: -170px; --rot: -220deg; }
+    .ev-modal.egg-crack .ev-part {
+      animation: ev-shard-fly var(--ev-duration) linear forwards;
+    }
+    @keyframes ev-shard-fly {
+      0%, 36%  { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.6); }
+      /* CRACK — appear at egg centre, full size. */
+      38%      { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+      /* Arc peak — out and up. */
+      48%      { opacity: 1; transform: translate(calc(var(--tx) * 0.85), var(--ty)) rotate(calc(var(--rot) * 0.5)) scale(1); }
+      /* Falling toward floor (positive y is downward). */
+      62%      { opacity: 0.9; transform: translate(calc(var(--tx) * 1.1), 80px) rotate(calc(var(--rot) * 0.8)) scale(0.92); }
+      /* Hits floor + fade. */
+      74%      { opacity: 0.4; transform: translate(calc(var(--tx) * 1.25), 200px) rotate(var(--rot)) scale(0.85); }
+      82%      { opacity: 0; transform: translate(calc(var(--tx) * 1.3), 220px) rotate(var(--rot)) scale(0.85); }
+      100%     { opacity: 0; }
+    }
+
+    /* Reduced motion — freeze the animation in the final state so the
+       scene remains intelligible (new monster visible, reveal shown). */
+    @media (prefers-reduced-motion: reduce) {
+      .ev-mon-from, .ev-halo, .ev-shine, .ev-parts, .ev-white { display: none; }
+      .ev-mon-to  { animation: none !important; opacity: 1; }
+      .ev-reveal, .ev-cta { animation: none !important; opacity: 1; transform: none; }
+      .ev-modal.mega { animation: celeb-in 520ms var(--ease-out) !important; transform: none; }
+      .ev-modal.mega .ev-stage { animation: none !important; transform: none; }
+      .ev-modal.egg-crack .ev-mon-to { transform: translate(-50%, -50%) scale(1, 1) !important; }
     }
 
     /* ==========================================================
@@ -2093,11 +3370,12 @@
     .device-frame.mobile .subject-grid,
     .device-frame.mobile .codex-rail,
     .device-frame.mobile .setup-grid,
-    .device-frame.mobile .mode-row,
-    .device-frame.mobile .pc-stats {
+    .device-frame.mobile .mode-row {
       grid-template-columns: 1fr !important;
     }
-    .device-frame.mobile .pc-stats { grid-template-columns: repeat(2, 1fr) !important; }
+    /* Summary stat grid — two-up on mobile keeps the numbers readable
+       without forcing every card into its own row. */
+    .device-frame.mobile .summary-stats { grid-template-columns: repeat(2, 1fr) !important; }
     .device-frame.mobile .hero-paper { padding: 28px 22px 22px; min-height: 460px; }
     .device-frame.mobile .hero-mission { max-width: 100%; }
     .device-frame.mobile .companion-stage { height: 200px; }
@@ -2105,7 +3383,9 @@
     .device-frame.mobile .prompt-card { padding: 28px 20px 22px; }
     .device-frame.mobile .topnav { padding: 10px 0 16px; }
     .device-frame.mobile .setup-main { padding: 22px 20px; }
-    .device-frame.mobile .page-complete { padding: 30px 22px 26px; }
+    /* Tighter summary-card padding on mobile; wandering monsters are
+       rendered smaller via --size already so no extra rule needed. */
+    .device-frame.mobile .prompt-card.summary-card { padding: 26px 18px 22px; }
 
     @media (max-width: 820px) {
       .design-shell { grid-template-columns: 1fr; }

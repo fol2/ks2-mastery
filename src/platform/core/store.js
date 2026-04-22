@@ -379,6 +379,20 @@ export function createStore(subjects, { repositories } = {}) {
         toasts: current.toasts.filter((_, currentIndex) => currentIndex !== index),
       }));
     },
+    /* Id-keyed dismissal. Index-based dismissal breaks the auto-dismiss
+       timer because indexes shift as earlier toasts leave; keying by the
+       event's own id keeps timers stable across reorder. No-op when the
+       id is falsy or already gone, so callers can fire-and-forget. */
+    dismissToastById(id) {
+      if (!id) return;
+      setState((current) => {
+        if (!current.toasts.some((toast) => toast && toast.id === id)) return current;
+        return {
+          ...current,
+          toasts: current.toasts.filter((toast) => !toast || toast.id !== id),
+        };
+      });
+    },
     clearToasts() {
       setState((current) => ({ ...current, toasts: [] }));
     },

@@ -1115,6 +1115,43 @@ function render() {
 store.subscribe(render);
 render();
 
+/* Ambient toast auto-dismiss — toasts are designed to live in the
+   learner's periphery, not interrupt typing. Ten seconds after a toast
+   enters the queue we silently drop it. Timers are keyed on `toast.id`
+   so they survive queue reorder (index-based dismissal would race
+   when an earlier toast leaves first). Toasts without an id (e.g. the
+   generic `{ toast: { title, body } }` shape used by tests) are left
+   alone, so the test harness keeps its deterministic state snapshot.
+   The CSS starts a fade at 9.5s so the pixels dim before the node
+   unmounts — the two timings are intentionally paired. */
+const TOAST_AUTO_DISMISS_MS = 10_000;
+const scheduledToastDismissals = new Map();
+
+function scheduleToastAutoDismissals() {
+  const activeIds = new Set(
+    store.getState().toasts
+      .map((toast) => toast?.id)
+      .filter(Boolean),
+  );
+  for (const [id, handle] of scheduledToastDismissals) {
+    if (!activeIds.has(id)) {
+      clearTimeout(handle);
+      scheduledToastDismissals.delete(id);
+    }
+  }
+  for (const id of activeIds) {
+    if (scheduledToastDismissals.has(id)) continue;
+    const handle = setTimeout(() => {
+      scheduledToastDismissals.delete(id);
+      store.dismissToastById(id);
+    }, TOAST_AUTO_DISMISS_MS);
+    scheduledToastDismissals.set(id, handle);
+  }
+}
+
+store.subscribe(scheduleToastAutoDismissals);
+scheduleToastAutoDismissals();
+
 function handleGlobalAction(action, data) {
   const appState = store.getState();
   const learnerId = appState.learners.selectedId;

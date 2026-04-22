@@ -354,7 +354,7 @@ function subjectTabContent(subject, activeTab, appState, contentContext, runtime
 function renderHeader(appState, context) {
   const auth = globalThis.KS2_AUTH_SESSION || {};
   const authChip = auth.signedIn
-    ? `<span class="chip good">${escapeHtml(auth.email || 'Signed in')}</span><button class="btn ghost" data-action="platform-logout">Sign out</button>`
+    ? `<span class="profile-signed-in" title="${escapeHtml(auth.email || 'Signed in')}">${escapeHtml(auth.email || 'Signed in')}</span><button type="button" class="topnav-link" data-action="platform-logout">Sign out</button>`
     : '';
   const routeScreen = appState.route?.screen || 'dashboard';
   const activeAdultContext = context?.activeAdultLearnerContext || null;
@@ -365,31 +365,37 @@ function renderHeader(appState, context) {
       <span class="chip ${activeAdultContext.writable ? 'good' : 'warn'}">${escapeHtml(activeAdultContext.writableLabel)}</span>
     `
     : '';
+  const toneRaw = persistenceTone(appState.persistence);
+  const dotTone = toneRaw === 'good' ? 'good' : toneRaw === 'warn' ? 'bad' : 'neutral';
+  const persistenceText = persistenceLabel(appState.persistence);
+  const activeClass = (isActive) => isActive ? ' is-active' : '';
   return `
-    <header class="card" style="margin-bottom:20px;">
-      <div class="card-header">
-        <div>
-          <div class="eyebrow">KS2 Mastery platform rebuild</div>
-          <h1 class="title">Stable foundation for all 6 KS2 exam subjects</h1>
-          <p class="subtitle">The platform shell, learner model, reward layer and deployment boundary are now shared. Subject engines plug in through a clear contract instead of through window globals and special cases.</p>
-        </div>
-        <div class="actions" style="align-items:flex-end; justify-content:flex-end;">
-          ${learnerSelect(appState, context)}
-          ${adultAccessChips}
-          ${renderSurfaceRoleControl(context)}
-          ${renderPersistenceChip(appState.persistence)}
-          ${authChip}
-          <button class="btn ${routeScreen === 'dashboard' ? 'ghost' : 'secondary'}" data-action="navigate-home">Dashboard</button>
-          <button class="btn ${routeScreen === 'profile-settings' ? 'primary' : 'secondary'}" ${routeScreen === 'profile-settings' ? 'style="background:#3E6FA8;"' : ''} data-action="open-profile-settings">Profile settings</button>
-          <button class="btn ${routeScreen === 'parent-hub' ? 'primary' : 'secondary'}" data-action="open-parent-hub">Parent Hub</button>
-          <button class="btn ${routeScreen === 'admin-hub' ? 'primary' : 'secondary'}" data-action="open-admin-hub">Operations</button>
-          <button class="theme-toggle" data-action="toggle-theme" title="Switch between light and dark" aria-label="Toggle theme">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="4"></circle>
-              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
-            </svg>
-          </button>
-        </div>
+    <header class="topnav subject-topnav">
+      <button type="button" class="brand subject-brand-button" data-action="navigate-home" aria-label="Back to dashboard">
+        <span class="brand-mark">K</span>
+        <span class="lockup">
+          <span>KS2 Mastery</span>
+          <small>Codex journal</small>
+        </span>
+      </button>
+      <div class="nav-right">
+        <span class="persistence-dot persistence-dot-${dotTone}" role="status" title="${escapeHtml(persistenceText)}" aria-label="${escapeHtml(persistenceText)}">
+          <span class="persistence-dot-blip" aria-hidden="true"></span>
+        </span>
+        ${learnerSelect(appState, context)}
+        ${adultAccessChips}
+        ${renderSurfaceRoleControl(context)}
+        ${authChip}
+        <button type="button" class="topnav-link${activeClass(routeScreen === 'dashboard')}" data-action="navigate-home">Dashboard</button>
+        <button type="button" class="topnav-link${activeClass(routeScreen === 'profile-settings')}" data-action="open-profile-settings">Profile settings</button>
+        <button type="button" class="topnav-link${activeClass(routeScreen === 'parent-hub')}" data-action="open-parent-hub">Parent Hub</button>
+        <button type="button" class="topnav-link${activeClass(routeScreen === 'admin-hub')}" data-action="open-admin-hub">Operations</button>
+        <button type="button" class="theme-btn" data-action="toggle-theme" title="Switch between light and dark" aria-label="Toggle theme">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+          </svg>
+        </button>
       </div>
     </header>
   `;
@@ -1227,39 +1233,69 @@ function toastTitle(toast) {
 
 function toastText(toast) {
   if (toast?.toast?.body) return toast.toast.body;
-  if (toast?.kind === 'caught') return 'New creature unlocked.';
+  if (toast?.kind === 'caught') return 'You caught a new friend!';
   if (toast?.kind === 'mega') return 'Maximum evolution reached.';
   if (toast?.kind === 'evolve') return 'Creature evolved.';
   return 'Level increased.';
 }
 
-function renderToasts(appState) {
-  if (!appState.toasts.length) return '';
+/* Rich toast body for caught rewards — 56px monster portrait plus a
+   serif name + warm status line. Generic toasts fall back to a plain
+   copy block so arbitrary `{ toast: { title, body } }` events still
+   render (used by runtime-boundary tests and non-monster notices). */
+function renderToastBody(toast) {
+  const title = escapeHtml(toastTitle(toast));
+  const body  = escapeHtml(toastText(toast));
+  const isCaughtMonster =
+    toast?.type === 'reward.monster'
+    && toast?.kind === 'caught'
+    && toast?.monster?.id;
+  if (isCaughtMonster) {
+    const monster = toast.monster;
+    const stage   = Math.max(0, Math.min(4, Number(toast.next?.stage) || 0));
+    const branch  = toast.next?.branch || toast.previous?.branch;
+    const portAlt = escapeHtml(`${monster.name || 'Monster'} portrait`);
+    return `
+      <div class="cm-port" aria-hidden="true">
+        <img alt="${portAlt}" ${monsterImageSources(monster.id, stage, branch, 320, '56px')} />
+      </div>
+      <div class="cm-copy">
+        <div class="cm-title">${title}</div>
+        <div class="cm-body">${body}</div>
+      </div>
+    `;
+  }
   return `
-    <div class="toast-host">
-      ${appState.toasts.map((toast, index) => `
-        <aside class="toast">
-          <div class="toast-title">${escapeHtml(toastTitle(toast))}</div>
-          <div class="toast-text">${escapeHtml(toastText(toast))}</div>
-          <button class="dismiss" data-action="toast-dismiss" data-index="${index}">Dismiss</button>
-        </aside>
-      `).join('')}
+    <div class="cm-copy">
+      <div class="cm-title">${title}</div>
+      <div class="cm-body">${body}</div>
     </div>
   `;
 }
 
-function hashString(value) {
-  let hash = 0;
-  const text = String(value || '');
-  for (let index = 0; index < text.length; index += 1) {
-    hash = (hash * 31 + text.charCodeAt(index)) >>> 0;
-  }
-  return hash || 17;
-}
-
-function pseudoRandom(seed, index, modulo) {
-  const value = (seed + index * 1103515245 + 12345) >>> 0;
-  return modulo ? value % modulo : value;
+/* Design-v1 toast shelf — bottom-right, auto-dismiss is scheduled in
+   main.js by watching state changes keyed on `data-toast-id`. The
+   shelf stays ambient: desaturated surface, softer shadow, never
+   interrupts typing. The inline Dismiss button is kept as a
+   belt-and-braces escape hatch (and so the existing
+   `data-action="toast-dismiss"` wiring keeps working for keyboards
+   and assistive tech). */
+function renderToasts(appState) {
+  if (!appState.toasts.length) return '';
+  return `
+    <div class="toast-shelf" aria-live="polite" aria-label="Notifications">
+      ${appState.toasts.map((toast, index) => {
+        const kind = toast?.type === 'reward.monster' && toast?.kind === 'caught' ? 'catch' : 'info';
+        const toastId = toast?.id ? ` data-toast-id="${escapeHtml(toast.id)}"` : '';
+        return `
+        <aside class="toast ${kind}" role="status"${toastId}>
+          ${renderToastBody(toast)}
+          <button class="cm-close" type="button" aria-label="Dismiss notification" data-action="toast-dismiss" data-index="${index}">×</button>
+        </aside>
+      `;
+      }).join('')}
+    </div>
+  `;
 }
 
 function stageName(monster, stage) {
@@ -1268,31 +1304,36 @@ function stageName(monster, stage) {
     : `${monster?.name || 'Monster'} stage ${stage}`;
 }
 
-function monsterCelebrationTitle(event) {
-  if (event.kind === 'caught') return 'You caught a new friend!';
-  if (event.kind === 'mega') return 'MEGA EVOLUTION!';
-  if (event.kind === 'evolve') return 'Your friend is evolving!';
-  return 'Reward update';
-}
-
+/* Body copy sits under the monster name. "You caught a new friend!" is
+   pinned by spelling-parity test — keep the exclamation + wording exact
+   so the caught flow stays recognisably the same even with the new
+   visual shell. Evolve + mega read as a short factual sentence below
+   the celebration name. */
 function monsterCelebrationBody(event, toStage) {
   const monster = event.monster || {};
-  if (event.kind === 'caught') return `${monster.name || 'A monster'} joined your collection.`;
+  if (event.kind === 'caught') return 'You caught a new friend!';
   if (event.kind === 'mega') return `${monster.name || 'A monster'} reached its mega form: ${stageName(monster, toStage)}.`;
   if (event.kind === 'evolve') return `${monster.name || 'A monster'} evolved into ${stageName(monster, toStage)}.`;
   return `${monster.name || 'A monster'} grew stronger.`;
 }
 
-function renderCelebrationParticles(event, count, className) {
-  const seed = hashString(`${event.id}:${event.kind}:${event.monsterId}`);
-  return Array.from({ length: count }).map((_, index) => {
-    const left = pseudoRandom(seed, index + 1, 96) + 2;
-    const top = pseudoRandom(seed, index + 11, 88) + 4;
-    const size = pseudoRandom(seed, index + 23, 9) + 6;
-    const delay = (pseudoRandom(seed, index + 37, 180) / 100).toFixed(2);
-    const duration = (pseudoRandom(seed, index + 53, 140) / 100 + 2).toFixed(2);
-    return `<span class="${className}" style="left:${left}%; top:${top}%; width:${size}px; height:${size}px; --delay:${delay}s; --duration:${duration}s;"></span>`;
-  }).join('');
+/* Short kicker printed above the monster name. Caught + mega are fixed;
+   the evolve kinds get a stage-appropriate verb so the narrative beat
+   (hatch / grow / evolve) reads even though the event kind is the same. */
+function celebrationEyebrow(event, fromStage, toStage) {
+  if (event.kind === 'caught') return 'New friend';
+  if (event.kind === 'mega')   return 'Final form';
+  if (fromStage === 0 && toStage === 1) return 'Hatched';
+  if (fromStage === 1 && toStage === 2) return 'Grown';
+  if (fromStage === 2 && toStage === 3) return 'Evolved';
+  return 'Evolved';
+}
+
+/* Ten empty particle slots; positions + delays + colours live in CSS
+   (nth-child), which keeps the render function free of per-kind layout
+   logic and lets us tune the shower without redeploying code. */
+function renderCelebrationParticleSlots() {
+  return Array.from({ length: 10 }, () => '<span class="monster-celebration-part"></span>').join('');
 }
 
 function renderMonsterCelebrationOverlay(appState) {
@@ -1300,23 +1341,19 @@ function renderMonsterCelebrationOverlay(appState) {
   if (!event) return '';
   const monster = event.monster || {};
   const fromStage = Math.max(0, Math.min(4, Number(event.previous?.stage) || 0));
-  const toStage = Math.max(0, Math.min(4, Number(event.next?.stage) || 0));
-  const mastered = Math.max(0, Number(event.next?.mastered) || 0);
-  const level = Math.max(0, Number(event.next?.level) || 0);
-  const max = Math.max(1, Number(monster.masteredMax) || (monster.id === 'phaeton' ? 200 : 100));
-  const primary = monster.accent || '#3E6FA8';
+  const toStage   = Math.max(0, Math.min(4, Number(event.next?.stage)     || 0));
+  const branch    = event.previous?.branch || event.next?.branch;
+  const primary   = monster.accent    || '#3E6FA8';
   const secondary = monster.secondary || '#FFE9A8';
-  const pale = monster.pale || '#F8F4EA';
-  const title = monsterCelebrationTitle(event);
-  const body = monsterCelebrationBody(event, toStage);
-  const kicker = event.kind === 'caught'
-    ? 'new discovery'
-    : event.kind === 'mega'
-      ? 'mega form'
-      : 'evolving';
-  const confetti = event.kind === 'mega'
-    ? renderCelebrationParticles(event, 28, 'monster-celebration-confetti')
-    : '';
+  const pale      = monster.pale      || '#F8F4EA';
+  const eyebrow   = celebrationEyebrow(event, fromStage, toStage);
+  const name      = stageName(monster, toStage);
+  const body      = monsterCelebrationBody(event, toStage);
+  /* Caught starts with nothing, so there's no outgoing monster; mega and
+     evolve both have one. Particle shower plays on caught (inflow) and
+     mega (outflow); plain evolve stays on the whiten → emerge shape. */
+  const hasFrom   = event.kind !== 'caught';
+  const hasParts  = event.kind === 'caught' || event.kind === 'mega';
 
   return `
     <section
@@ -1326,24 +1363,21 @@ function renderMonsterCelebrationOverlay(appState) {
       aria-labelledby="monster-celebration-title"
       style="--monster-primary:${escapeHtml(primary)}; --monster-secondary:${escapeHtml(secondary)}; --monster-pale:${escapeHtml(pale)};"
     >
-      <div class="monster-celebration-particles" aria-hidden="true">
-        ${renderCelebrationParticles(event, event.kind === 'mega' ? 38 : 24, 'monster-celebration-sparkle')}
-        ${confetti}
-      </div>
-      <div class="monster-celebration-kicker">${escapeHtml(kicker)}</div>
       <div class="monster-celebration-stage" aria-hidden="true">
-        <span class="monster-celebration-aura"></span>
-        <span class="monster-celebration-ring one"></span>
-        <span class="monster-celebration-ring two"></span>
-        <span class="monster-celebration-ring three"></span>
-        <img class="monster-celebration-art before" alt="" ${monsterImageSources(monster.id, fromStage, event.previous?.branch || event.next?.branch, 640, 'min(90vw, 640px)')} />
-        <img class="monster-celebration-art after" alt="" ${monsterImageSources(monster.id, toStage, event.next?.branch || event.previous?.branch, 640, 'min(90vw, 640px)')} />
-        <span class="monster-celebration-flash"></span>
+        ${hasParts ? `<div class="monster-celebration-parts">${renderCelebrationParticleSlots()}</div>` : ''}
+        <div class="monster-celebration-halo"></div>
+        <div class="monster-celebration-shine"></div>
+        ${hasFrom ? `<img class="monster-celebration-art before" alt="" data-stage="${fromStage}" ${monsterImageSources(monster.id, fromStage, branch, 640, 'min(90vw, 540px)')} />` : ''}
+        <div class="monster-celebration-white"></div>
+        <img class="monster-celebration-art after" alt="" data-stage="${toStage}" ${monsterImageSources(monster.id, toStage, branch, 640, 'min(90vw, 540px)')} />
       </div>
-      <h2 id="monster-celebration-title">${escapeHtml(title)}</h2>
-      <p>${escapeHtml(body)}</p>
-      <div class="monster-celebration-meta">${escapeHtml(`${mastered} / ${max} secure words · Level ${level}`)}</div>
-      <button class="btn primary monster-celebration-continue" type="button" data-action="monster-celebration-dismiss" data-autofocus="true">Continue</button>
+
+      <div class="monster-celebration-reveal">
+        <p class="monster-celebration-eyebrow">${escapeHtml(eyebrow)}</p>
+        <h2 id="monster-celebration-title" class="monster-celebration-name">${escapeHtml(name)}</h2>
+        <p class="monster-celebration-body">${escapeHtml(body)}</p>
+        <button class="btn primary monster-celebration-continue" type="button" data-action="monster-celebration-dismiss" data-autofocus="true">Continue</button>
+      </div>
     </section>
   `;
 }

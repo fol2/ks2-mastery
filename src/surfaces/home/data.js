@@ -22,19 +22,169 @@ export const REGION_BACKGROUND_URLS = Object.freeze([
   '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c6.1280.webp',
 ]);
 
-const MEADOW_SLOTS = Object.freeze([
-  { slot: 'anchor-walker',  size: 148, left: '56%', top: '52%', path: 'walk',  dur: 26, delay: 0,   bobDelay: 0   },
-  { slot: 'anchor-flyer-a', size: 112, left: '76%', top: '10%', path: 'fly-a', dur: 16, delay: 1.2, bobDelay: 0.6 },
-  { slot: 'anchor-flyer-b', size: 108, left: '38%', top: '24%', path: 'fly-b', dur: 19, delay: 2.4, bobDelay: 1.2 },
-  { slot: 'satellite-a',    size:  82, left: '86%', top: '48%', path: 'walk',  dur: 22, delay: 3.6, bobDelay: 0.3 },
-  { slot: 'satellite-b',    size:  72, left: '64%', top:  '2%', path: 'fly-a', dur: 14, delay: 4.8, bobDelay: 0.9 },
-]);
+const MEADOW_PERSPECTIVE = Object.freeze({
+  farFoot: 40,
+  nearFoot: 86,
+  farScale: 0.78,
+  nearScale: 1.18,
+});
 
-const EGG_SLOTS = Object.freeze([
-  { slot: 'egg-a', size: 68, left: '44%', top: '58%' },
-  { slot: 'egg-b', size: 60, left: '62%', top: '64%' },
-  { slot: 'egg-c', size: 58, left: '30%', top: '66%' },
-]);
+const MEADOW_STAGE_SCALE = Object.freeze([1, 1.04, 1.16, 1.3, 1.48]);
+const MEADOW_SPECIES_SCALE = Object.freeze({
+  inklet: 1.02,
+  glimmerbug: 0.94,
+  phaeton: 1.08,
+});
+
+const MEADOW_SLOT_POOLS = Object.freeze({
+  eggOnly: Object.freeze([
+    { slot: 'egg-centre', size: 86, x: '52%', footY: '70%', lane: 'ground' },
+    { slot: 'egg-left',   size: 76, x: '33%', footY: '76%', lane: 'ground' },
+    { slot: 'egg-right',  size: 72, x: '70%', footY: '73%', lane: 'ground' },
+    { slot: 'egg-back',   size: 58, x: '82%', footY: '61%', lane: 'ground' },
+    { slot: 'egg-front',  size: 62, x: '43%', footY: '80%', lane: 'ground' },
+  ]),
+  eggMixed: Object.freeze([
+    { slot: 'egg-mixed-left',  size: 58, x: '28%', footY: '78%', lane: 'ground' },
+    { slot: 'egg-mixed-mid',   size: 62, x: '48%', footY: '80%', lane: 'ground' },
+    { slot: 'egg-mixed-right', size: 56, x: '70%', footY: '76%', lane: 'ground' },
+  ]),
+  walk: Object.freeze([
+    {
+      slot: 'walk-front',
+      size: 136,
+      x: '58%',
+      footY: '82%',
+      lane: 'ground',
+      path: 'walk',
+      dur: 25,
+      delay: 0,
+      bobDelay: 0,
+      roamForward: 46,
+      roamBack: 34,
+    },
+    {
+      slot: 'walk-left',
+      size: 112,
+      x: '31%',
+      footY: '78%',
+      lane: 'ground',
+      path: 'walk',
+      dur: 22,
+      delay: 2.8,
+      bobDelay: 0.4,
+      roamForward: 38,
+      roamBack: 28,
+    },
+    {
+      slot: 'walk-right',
+      size: 96,
+      x: '78%',
+      footY: '75%',
+      lane: 'ground',
+      path: 'walk',
+      dur: 23,
+      delay: 4.2,
+      bobDelay: 0.9,
+      roamForward: 30,
+      roamBack: 24,
+    },
+  ]),
+  'fly-a': Object.freeze([
+    {
+      slot: 'fly-a-right',
+      size: 104,
+      x: '78%',
+      footY: '58%',
+      lane: 'air',
+      path: 'fly-a',
+      dur: 16,
+      delay: 1.2,
+      bobDelay: 0.6,
+      roamForward: 48,
+      roamBack: 30,
+      roamForwardY: 0,
+      roamBackY: 12,
+    },
+    {
+      slot: 'fly-a-centre',
+      size: 86,
+      x: '57%',
+      footY: '48%',
+      lane: 'air',
+      path: 'fly-a',
+      dur: 14,
+      delay: 4.8,
+      bobDelay: 0.9,
+      roamForward: 34,
+      roamBack: 24,
+      roamForwardY: -4,
+      roamBackY: 14,
+    },
+    {
+      slot: 'fly-a-far',
+      size: 76,
+      x: '84%',
+      footY: '62%',
+      lane: 'air',
+      path: 'fly-a',
+      dur: 18,
+      delay: 6,
+      bobDelay: 1.1,
+      roamForward: 24,
+      roamBack: 20,
+      roamForwardY: 2,
+      roamBackY: 10,
+    },
+  ]),
+  'fly-b': Object.freeze([
+    {
+      slot: 'fly-b-left',
+      size: 106,
+      x: '46%',
+      footY: '73%',
+      lane: 'air',
+      path: 'fly-b',
+      dur: 19,
+      delay: 2.4,
+      bobDelay: 1.2,
+      roamForward: 42,
+      roamBack: 50,
+      roamForwardY: -8,
+      roamBackY: 18,
+    },
+    {
+      slot: 'fly-b-right',
+      size: 90,
+      x: '82%',
+      footY: '54%',
+      lane: 'air',
+      path: 'fly-b',
+      dur: 17,
+      delay: 3.6,
+      bobDelay: 0.5,
+      roamForward: 28,
+      roamBack: 34,
+      roamForwardY: -6,
+      roamBackY: 14,
+    },
+    {
+      slot: 'fly-b-centre',
+      size: 80,
+      x: '61%',
+      footY: '63%',
+      lane: 'air',
+      path: 'fly-b',
+      dur: 20,
+      delay: 5.4,
+      bobDelay: 1,
+      roamForward: 26,
+      roamBack: 28,
+      roamForwardY: -4,
+      roamBackY: 12,
+    },
+  ]),
+});
 
 const MONSTER_FACE = Object.freeze({
   'inklet-b1-0': 'left',     'inklet-b1-1': 'left',     'inklet-b1-2': 'left',
@@ -195,60 +345,34 @@ function variantForMonster(monsterId, stage, catalogueBranch) {
 
 /**
  * Build the meadow monster list from the real monsterSummary payload. Only
- * caught species appear — stage-1+ monsters roam via MEADOW_SLOTS while
- * caught-but-unhatched (stage 0) species claim an EGG_SLOT. Uncaught
- * species are hidden until the learner secures their first qualifying word.
+ * caught species appear. Stage-1+ monsters claim path-specific slots while
+ * caught-but-unhatched species use the egg layout. Uncaught species are
+ * hidden until the learner secures their first qualifying word.
  */
 export function buildMeadowMonsters(summary = []) {
-  const walkSlots = MEADOW_SLOTS.filter((slot) => slot.path === 'walk');
-  const flyASlots = MEADOW_SLOTS.filter((slot) => slot.path === 'fly-a');
-  const flyBSlots = MEADOW_SLOTS.filter((slot) => slot.path === 'fly-b');
-  const buckets = { walk: [...walkSlots], 'fly-a': [...flyASlots], 'fly-b': [...flyBSlots] };
+  const caughtEntries = meadowEntriesByPower(
+    summary.filter((entry) => entry.progress?.caught && entry.progress.stage >= 1),
+  );
+  const eggEntries = meadowEntriesByPower(
+    summary.filter((entry) => entry.progress?.caught && entry.progress.stage === 0),
+  );
+  const slotPools = {
+    walk: [...MEADOW_SLOT_POOLS.walk],
+    'fly-a': [...MEADOW_SLOT_POOLS['fly-a']],
+    'fly-b': [...MEADOW_SLOT_POOLS['fly-b']],
+  };
+  const monsters = caughtEntries
+    .map((entry, index) => buildRoamingMeadowEntry(entry, slotPools, index))
+    .filter(Boolean);
+  const eggSlots = caughtEntries.length ? MEADOW_SLOT_POOLS.eggMixed : MEADOW_SLOT_POOLS.eggOnly;
+  const eggs = eggEntries
+    .slice(0, eggSlots.length)
+    .map((entry, index) => buildEggMeadowEntry(entry, eggSlots[index], index))
+    .filter(Boolean);
 
-  const caughtEntries = summary.filter((entry) => entry.progress?.caught && entry.progress.stage >= 1);
-  const eggEntries = summary.filter((entry) => entry.progress?.caught && entry.progress.stage === 0);
-
-  const monsters = [];
-
-  for (const entry of caughtEntries) {
-    const { monster, progress } = entry;
-    const path = defaultPathForMonster(monster.id);
-    const slot = buckets[path]?.shift() || buckets.walk.shift() || MEADOW_SLOTS[0];
-    const variant = variantForMonster(monster.id, progress.stage, progress.branch);
-    monsters.push({
-      id: `${monster.id}-caught`,
-      species: monster.id,
-      stage: progress.stage,
-      variant,
-      size: slot.size,
-      left: slot.left,
-      top: slot.top,
-      path: slot.path,
-      dur: slot.dur,
-      delay: slot.delay,
-      bobDelay: slot.bobDelay,
-    });
-  }
-
-  const eggPool = [...EGG_SLOTS];
-  for (const entry of eggEntries.slice(0, EGG_SLOTS.length)) {
-    const { monster, progress } = entry;
-    const slot = eggPool.shift();
-    if (!slot) break;
-    const variant = variantForMonster(monster.id, 0, progress.branch);
-    monsters.push({
-      id: `${monster.id}-egg`,
-      species: monster.id,
-      stage: 0,
-      variant,
-      size: slot.size,
-      left: slot.left,
-      top: slot.top,
-      path: 'none',
-    });
-  }
-
-  return monsters;
+  return [...monsters, ...eggs].sort((left, right) => {
+    return (left.footPct - right.footPct) || (left.renderOrder - right.renderOrder);
+  });
 }
 
 function defaultPathForMonster(monsterId) {
@@ -256,6 +380,120 @@ function defaultPathForMonster(monsterId) {
   if (monsterId === 'glimmerbug') return 'fly-a';
   if (monsterId === 'phaeton') return 'fly-b';
   return 'walk';
+}
+
+function meadowEntriesByPower(entries) {
+  return entries.slice().sort((left, right) => {
+    const leftStage = Number(left.progress?.stage) || 0;
+    const rightStage = Number(right.progress?.stage) || 0;
+    if (leftStage !== rightStage) return rightStage - leftStage;
+    return codexPowerRank(right.monster?.id) - codexPowerRank(left.monster?.id);
+  });
+}
+
+function nextMeadowSlot(slotPools, path) {
+  return slotPools[path]?.shift()
+    || slotPools.walk.shift()
+    || slotPools['fly-a'].shift()
+    || slotPools['fly-b'].shift()
+    || null;
+}
+
+function buildRoamingMeadowEntry(entry, slotPools, index) {
+  const { monster, progress } = entry;
+  const stage = Math.max(1, Math.min(4, Number(progress?.stage) || 1));
+  const path = defaultPathForMonster(monster.id);
+  const slot = nextMeadowSlot(slotPools, path);
+  if (!slot) return null;
+  const variant = variantForMonster(monster.id, stage, progress.branch);
+
+  return buildMeadowEntry({
+    id: `${monster.id}-caught`,
+    monsterId: monster.id,
+    stage,
+    variant,
+    slot,
+    path: slot.path || path,
+    size: meadowMonsterSize(monster.id, stage, slot.size),
+    renderOrder: 20 + index,
+  });
+}
+
+function buildEggMeadowEntry(entry, slot, index) {
+  if (!slot) return null;
+  const { monster, progress } = entry;
+  const variant = variantForMonster(monster.id, 0, progress.branch);
+
+  return buildMeadowEntry({
+    id: `${monster.id}-egg`,
+    monsterId: monster.id,
+    stage: 0,
+    variant,
+    slot,
+    path: 'none',
+    size: meadowEggSize(monster.id, slot.size),
+    renderOrder: 60 + index,
+  });
+}
+
+function buildMeadowEntry({ id, monsterId, stage, variant, slot, path, size, renderOrder }) {
+  const x = slot.x || slot.left || '50%';
+  const footY = slot.footY || slot.top || '70%';
+  const footPct = percentageNumber(footY);
+  const perspectiveScale = meadowPerspectiveScale(footPct);
+  const renderedSize = Math.round(size * perspectiveScale);
+
+  return {
+    id,
+    species: monsterId,
+    stage,
+    variant,
+    size: renderedSize,
+    baseSize: size,
+    x,
+    footY,
+    footPct,
+    left: x,
+    top: footY,
+    leftPct: percentageNumber(x),
+    topPct: footPct,
+    perspectiveScale,
+    lane: slot.lane || 'ground',
+    path,
+    dur: slot.dur,
+    delay: slot.delay,
+    bobDelay: slot.bobDelay,
+    roamForward: slot.roamForward,
+    roamBack: slot.roamBack,
+    roamForwardY: slot.roamForwardY,
+    roamBackY: slot.roamBackY,
+    renderOrder,
+  };
+}
+
+function meadowMonsterSize(monsterId, stage, baseSize) {
+  const stageScale = MEADOW_STAGE_SCALE[stage] || MEADOW_STAGE_SCALE[1];
+  const speciesScale = MEADOW_SPECIES_SCALE[monsterId] || 1;
+  return Math.round(baseSize * stageScale * speciesScale);
+}
+
+function meadowEggSize(monsterId, baseSize) {
+  const speciesScale = MEADOW_SPECIES_SCALE[monsterId] || 1;
+  return Math.round(baseSize * speciesScale);
+}
+
+function meadowPerspectiveScale(footPct) {
+  const rawDepth = (footPct - MEADOW_PERSPECTIVE.farFoot)
+    / (MEADOW_PERSPECTIVE.nearFoot - MEADOW_PERSPECTIVE.farFoot);
+  const depth = Math.max(0, Math.min(1, rawDepth));
+  const scale = MEADOW_PERSPECTIVE.farScale
+    + depth * (MEADOW_PERSPECTIVE.nearScale - MEADOW_PERSPECTIVE.farScale);
+  return Number(scale.toFixed(3));
+}
+
+function percentageNumber(value) {
+  const numeric = parseFloat(value);
+  return Number.isFinite(numeric) ? numeric : 0;
 }
 
 /**

@@ -62,9 +62,6 @@ function CodexFeature({ entry, onPreviewCreature }) {
         onPreview={onPreviewCreature}
       />
       <div className="codex-feature-meta">
-        <span className={'chip ' + (entry.caught ? 'good' : 'warn')}>
-          {entry.caught ? 'Unlocked' : 'Waiting'}
-        </span>
         <strong>{entry.name}</strong>
         <span>{entry.secureLabel}</span>
       </div>

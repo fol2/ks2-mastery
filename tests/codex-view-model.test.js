@@ -37,20 +37,30 @@ test('codex totals fall back to direct secure counts when aggregate is behind', 
   });
 });
 
-test('codex feature style scales by species and caught stage', () => {
+test('codex feature style grows with caught stage', () => {
   assert.deepEqual(codexFeatureStyle({
     id: 'phaeton',
     caught: true,
     stage: 4,
     displayState: 'monster',
   }), {
-    '--codex-feature-size': '810px',
-    '--codex-feature-orbit-size': '920px',
+    '--codex-feature-size': '700px',
+    '--codex-feature-orbit-size': '798px',
     '--codex-feature-halo-lift': '78px',
-    '--codex-feature-shadow-width': '640px',
-    '--codex-feature-shadow-y': '275px',
+    '--codex-feature-shadow-width': '602px',
+    '--codex-feature-shadow-y': '238px',
     '--codex-feature-rise': '155px',
   });
+
+  const eggSize = codexFeatureStyle({
+    id: 'phaeton',
+    caught: true,
+    stage: 0,
+    displayState: 'egg',
+  })['--codex-feature-size'];
+
+  assert.equal(eggSize, '252px');
+  assert.ok(parseInt(eggSize, 10) < 700);
 
   assert.equal(codexFeatureStyle({
     id: 'glimmerbug',

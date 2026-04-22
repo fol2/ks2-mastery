@@ -6,11 +6,13 @@ export const CODEX_STAGES = Object.freeze([
   { value: 4, label: 'M', name: 'Mega' },
 ]);
 
-const FEATURE_POWER_BONUS = Object.freeze({
-  inklet: 0,
-  glimmerbug: 44,
-  phaeton: 100,
+const FEATURE_MAX_SIZE_BY_SPECIES = Object.freeze({
+  inklet: 640,
+  glimmerbug: 670,
+  phaeton: 700,
 });
+
+const FEATURE_STAGE_SCALE = Object.freeze([0.36, 0.52, 0.68, 0.84, 1]);
 
 export function codexTotals(entries = []) {
   const directSecure = entries
@@ -26,9 +28,9 @@ export function codexTotals(entries = []) {
 }
 
 export function codexFeatureStyle(entry) {
-  const powerBonus = FEATURE_POWER_BONUS[entry.id] || 0;
-  const stageBonus = (entry.caught ? entry.stage : 0) * 95;
-  const visualSize = Math.min(860, 330 + powerBonus + stageBonus);
+  const maxSize = FEATURE_MAX_SIZE_BY_SPECIES[entry.id] || 760;
+  const stage = entry.caught ? Math.max(0, Math.min(4, Number(entry.stage) || 0)) : 0;
+  const visualSize = Math.round(maxSize * (FEATURE_STAGE_SCALE[stage] || FEATURE_STAGE_SCALE[0]));
   const rise = entry.displayState === 'monster'
     ? Math.min(155, 52 + (entry.stage * 24) + (entry.id === 'phaeton' ? 20 : 0))
     : 0;

@@ -832,257 +832,703 @@ textarea:focus-visible {
 .monster-name { font-family: var(--font-serif); font-size: 1.2rem; margin: 0; }
 .monster-meta { font-size: 0.86rem; color: var(--muted); }
 
-.toast-host {
+/* ==========================================================
+   Toast shelf — Codex Journal v1 design.
+   Toasts appear mid-session (often mid-typing) and should read
+   as a quiet status note in the corner, not a card that demands
+   attention. Softer panel, dimmer line, lighter shadow, gentle
+   desaturation on the art. The 10s auto-dismiss is scheduled in
+   main.js (by `toast.id`); the CSS fade runs at 9.5s so pixels
+   dim gracefully just before the node unmounts.
+   ========================================================== */
+.toast-shelf {
   position: fixed;
-  right: 18px;
-  bottom: 18px;
-  display: grid;
-  gap: 10px;
-  z-index: 30;
-}
-.toast {
-  min-width: 240px;
-  max-width: 320px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-lg);
-}
-.toast-title { font-weight: 900; margin-bottom: 4px; }
-.toast-text { font-size: 0.92rem; color: var(--ink-2); line-height: 1.45; }
-.toast .dismiss {
-  margin-top: 8px;
-  background: transparent;
-  border: none;
-  color: var(--muted);
-  cursor: pointer;
-  font-weight: 700;
-  padding: 0;
-}
-
-.monster-celebration-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  align-content: center;
+  right: 24px;
+  bottom: 24px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  padding: 28px;
-  color: #fff;
-  text-align: center;
-  background: #1d2b3a;
-  background:
-    radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--monster-primary) 82%, white 18%) 0%, rgba(29, 43, 58, 0.96) 72%),
-    #1d2b3a;
-  animation: monster-celebration-fade-in 0.28s ease-out both;
-}
-
-.monster-celebration-overlay.mega {
-  background: #16132a;
-  background:
-    radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--monster-primary) 70%, #f6d36a 30%) 0%, rgba(22, 19, 42, 0.98) 74%),
-    #16132a;
-}
-
-.monster-celebration-particles {
-  position: absolute;
-  inset: 0;
   pointer-events: none;
+  max-width: min(92vw, 360px);
 }
 
-.monster-celebration-sparkle,
-.monster-celebration-confetti {
-  position: absolute;
-  display: block;
-  background: var(--monster-secondary);
-  box-shadow: 0 0 16px var(--monster-secondary);
-  animation-delay: var(--delay);
-  animation-duration: var(--duration);
-  animation-iteration-count: infinite;
-}
-
-.monster-celebration-sparkle {
-  border-radius: 50%;
-  animation-name: monster-celebration-sparkle;
-  animation-timing-function: ease-out;
-}
-
-.monster-celebration-confetti {
-  top: -12px !important;
-  border-radius: 2px;
-  transform: rotate(18deg);
-  background: var(--monster-secondary);
-  background: color-mix(in srgb, var(--monster-secondary) 70%, #fff 30%);
-  animation-name: monster-celebration-confetti;
-  animation-timing-function: linear;
-}
-
-.monster-celebration-kicker {
+.toast {
+  pointer-events: auto;
   position: relative;
-  z-index: 1;
-  min-height: 20px;
-  color: var(--monster-secondary);
-  font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0;
-  text-transform: uppercase;
+  background: var(--panel-soft);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-xs);
+  padding: 12px 40px 12px 12px;
+  display: grid;
+  gap: 12px;
+  align-items: center;
+  max-width: 320px;
+  opacity: 0.88;
+  animation:
+    toast-slide-in var(--dur-slower) var(--ease-out),
+    toast-fade-out var(--dur-slower) var(--ease-out) 9.5s forwards;
 }
 
-.monster-celebration-stage {
-  position: relative;
-  z-index: 1;
-  width: min(58vw, 320px);
-  height: min(58vw, 320px);
+/* Catch toast — adds a 56px monster portrait column in front of
+   the copy. Slight desaturation so the toast reads "status" not
+   "reward card". */
+.toast.catch {
+  grid-template-columns: 56px 1fr;
+  filter: grayscale(0.55);
+}
+
+/* Generic info toast (runtime notices, boundary messages) — copy
+   only, so we drop the portrait column. */
+.toast.info {
+  grid-template-columns: 1fr;
+}
+
+.toast .cm-port {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--panel-sunken);
   display: grid;
   place-items: center;
+  overflow: hidden;
 }
 
-.monster-celebration-aura {
-  position: absolute;
-  inset: -28px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--monster-secondary) 0%, transparent 70%);
-  background: radial-gradient(circle, color-mix(in srgb, var(--monster-secondary) 50%, transparent) 0%, transparent 70%);
-  animation: monster-celebration-aura 1.8s ease-in-out infinite;
-}
-
-.monster-celebration-ring {
-  position: absolute;
-  inset: 24px;
-  border: 3px solid var(--monster-secondary);
-  border-radius: 50%;
-  opacity: 0;
-  animation: monster-celebration-ring 0.95s ease-out both;
-}
-
-.monster-celebration-ring.one { animation-delay: 0.9s; }
-.monster-celebration-ring.two { animation-delay: 1.05s; }
-.monster-celebration-ring.three { animation-delay: 1.2s; }
-
-.monster-celebration-art {
-  position: absolute;
-  width: 100%;
-  height: 100%;
+.toast .cm-port img {
+  width: 52px;
+  height: 52px;
   object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;
 }
 
+.toast .cm-copy { min-width: 0; }
+
+.toast .cm-title {
+  font-family: var(--font-serif);
+  font-size: 1.02rem;
+  letter-spacing: -0.005em;
+  font-weight: 500;
+  color: var(--muted);
+  /* Long monster / event names truncate rather than push the toast
+     out of its lane. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toast .cm-body {
+  color: var(--subtle);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+/* Close button sits flush against the top-right corner so it does
+   not eat into the copy column. Icon-only; label is via aria-label. */
+.toast .cm-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--subtle);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.toast .cm-close:hover {
+  color: var(--muted);
+  background: var(--panel-sunken);
+}
+
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to   { opacity: 0.88; transform: translateY(0) scale(1); }
+}
+
+/* Visual fade that shadows the 10s JS auto-dismiss. The CSS fade
+   kicks off at 9.5s so pixels fade gracefully; the JS then removes
+   the node shortly after (10s), which both avoids pointer-events
+   ghosting and matches the slide-in / slide-out symmetry. */
+@keyframes toast-fade-out {
+  from { opacity: 0.88; transform: translateY(0) scale(1); }
+  to   { opacity: 0;    transform: translateY(8px) scale(0.98); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+    opacity: 0.88;
+  }
+}
+
+/* ==========================================================
+   Monster celebration overlay — Codex Journal v1 design.
+   Shared timeline for evolve (1→2 / 2→3), caught (non→0), and
+   mega (3→4). Every animation is percentage-based off the
+   overlay's --mc-duration, so the whole flow stretches together
+   when a variant (`.mega`) overrides the duration.
+
+   Beat map (shared timeline at --mc-duration = 4.6s):
+     0.00 – 0.62  old form holds with breathing pulse (behold)
+     0.62 – 0.68  whiten peak (halo + white disc + shine sweep)
+     0.68 – 0.86  new form settles
+     3.40 fixed   reveal block (eyebrow / name / body) slides up
+     3.90 fixed   Continue CTA fades in
+
+   Timing function — every multi-keyframe animation below uses
+   `linear` segment timing, NOT the design system's `--ease-out`.
+   Reason: ease-out is applied per segment, so velocity drops to ~0
+   at every keyframe boundary then springs back up — perceived as
+   "stop and play" stutter even though paint runs at full fps. The
+   artistic curve already lives in the keyframe values; linear
+   interpolation between them keeps motion continuous. Single-
+   segment animations (overlay-fade-in, reveal/CTA) keep --ease-out.
+   ========================================================== */
+
+.monster-celebration-overlay {
+  /* Timing vars — percentage-based keyframes read these, so
+     variants can override just the duration/delays without
+     re-declaring every animation shorthand. */
+  --mc-duration: 4.6s;
+  --mc-reveal-delay: 3.4s;
+  --mc-cta-delay: 3.9s;
+
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 1fr auto 1fr;
+  place-items: center;
+  padding: 40px 24px 64px;
+  color: #fff;
+  text-align: center;
+  /* Solid underlay covers edges; the radial paints a warmer
+     pool at centre so the monster art sits in a spotlight
+     rather than pure black. Tints with the monster's primary
+     accent so each species gets its own mood. */
+  background-color: rgba(0, 0, 0, 0.88);
+  background-image: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--monster-primary, #3E6FA8) 32%, #000) 0%,
+    rgba(0, 0, 0, 0) 75%
+  );
+  animation: monster-celebration-fade-in 520ms var(--ease-out) both;
+}
+
+/* ---------- Stage — holds art, halo, white flash, shine ----------
+   Grid-row 2 so the reveal copy sits on row 3 via flow order. */
+.monster-celebration-stage {
+  position: relative;
+  grid-row: 2;
+  width: 560px;
+  height: 560px;
+  display: grid;
+  place-items: center;
+}
+
+/* Particle layer sits inside the stage so particles converge
+   on (or burst from) the same centre point as the halo/art. */
+.monster-celebration-parts {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.monster-celebration-part {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 14px rgba(255, 255, 255, 0.95),
+    0 0 4px rgba(255, 255, 255, 1);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* ---------- Monster art ----------
+   Stage-tiered sizes so growth reads at a glance: egg small,
+   mega nearly fills the frame. Each tier sized absolute so
+   the silhouette visibly grows with each evolution. Only
+   transform/opacity animate (filter dropped) — keeps the
+   GPU compositor doing the whole job. */
+.monster-celebration-art {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 260px;
+  height: 260px;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  will-change: transform, opacity;
+}
+
+.monster-celebration-art[data-stage="0"] { width: 180px; height: 180px; } /* egg  */
+.monster-celebration-art[data-stage="1"] { width: 240px; height: 240px; }
+.monster-celebration-art[data-stage="2"] { width: 300px; height: 300px; }
+.monster-celebration-art[data-stage="3"] { width: 380px; height: 380px; }
+.monster-celebration-art[data-stage="4"] { width: 540px; height: 540px; } /* mega */
+
+/* Outgoing form — longer "behold" hold before the break, then
+   opacity crossfade into the white flash. A subtle breathing
+   pulse (scale 1.00 ↔ 1.03) during the hold carries the sense
+   that power is building. */
 .monster-celebration-art.before {
-  animation: monster-celebration-before 0.92s ease-in-out both;
+  opacity: 0;
+  animation: monster-celebration-before var(--mc-duration) linear forwards;
 }
 
-.monster-celebration-overlay.caught .monster-celebration-art.before {
-  filter: brightness(0) opacity(0.35);
+@keyframes monster-celebration-before {
+  0%   { opacity: 0; transform: translate(-50%, calc(-50% + 24px)) scale(0.9); }
+  14%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  /* Hold-with-breathing from 14% to 55% — the anticipation beat. */
+  28%  { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
+  42%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  50%  { opacity: 1; transform: translate(-50%, -50%) scale(1.03); }
+  56%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  62%  { opacity: 0; transform: translate(-50%, -50%) scale(1.14); }
+  100% { opacity: 0; }
 }
 
+/* Incoming form — emerges from the white flash. */
 .monster-celebration-art.after {
   opacity: 0;
-  animation: monster-celebration-after 0.82s 0.86s cubic-bezier(.3, 1.4, .5, 1) both;
+  animation: monster-celebration-after var(--mc-duration) linear forwards;
 }
 
-.monster-celebration-flash {
+@keyframes monster-celebration-after {
+  0%, 58% { opacity: 0; transform: translate(-50%, -50%) scale(1.14); }
+  64%     { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  74%     { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
+  86%     { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100%    { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Halo — soft white bloom. Begins charging quietly during the
+   "behold" hold so the flash feels earned; peaks with the
+   whiten beat; trails off while the new monster settles. */
+.monster-celebration-halo {
   position: absolute;
-  inset: -34px;
+  top: 50%;
+  left: 50%;
+  width: 220px;
+  height: 220px;
   border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgba(255, 255, 255, 0.92),
+    rgba(255, 255, 255, 0) 74%
+  );
+  transform: translate(-50%, -50%) scale(0.4);
   opacity: 0;
-  background: radial-gradient(circle, #fff 0%, rgba(255, 255, 255, 0.85) 42%, rgba(255, 255, 255, 0) 72%);
-  animation: monster-celebration-flash 0.3s 0.62s ease-out both;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: monster-celebration-halo-anim var(--mc-duration) linear forwards;
 }
 
-.monster-celebration-overlay h2 {
-  position: relative;
-  z-index: 1;
-  margin: 0;
-  max-width: 720px;
+@keyframes monster-celebration-halo-anim {
+  0%, 18%  { opacity: 0;    transform: translate(-50%, -50%) scale(0.4); }
+  /* Charging — low, subtle, ramping up during the hold beat. */
+  30%      { opacity: 0.12; transform: translate(-50%, -50%) scale(0.7); }
+  45%      { opacity: 0.32; transform: translate(-50%, -50%) scale(1.0); }
+  55%      { opacity: 0.8;  transform: translate(-50%, -50%) scale(1.5); }
+  /* Peak — matches the white-flash peak at 58%. */
+  60%      { opacity: 1;    transform: translate(-50%, -50%) scale(1.9); }
+  74%      { opacity: 0.45; transform: translate(-50%, -50%) scale(2.3); }
+  88%      { opacity: 0.08; transform: translate(-50%, -50%) scale(2.6); }
+  100%     { opacity: 0;    transform: translate(-50%, -50%) scale(2.8); }
+}
+
+/* White flash core — dedicated element so the whiten peak can
+   be fully opaque without the image below affecting it. Pure
+   opacity animation (GPU-only) replaces the old filter chain. */
+.monster-celebration-white {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    #ffffff 0%,
+    #ffffff 48%,
+    rgba(255, 255, 255, 0.4) 80%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: translate(-50%, -50%) scale(0.5);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: monster-celebration-white-anim var(--mc-duration) linear forwards;
+}
+
+@keyframes monster-celebration-white-anim {
+  0%, 44% { opacity: 0;   transform: translate(-50%, -50%) scale(0.5); }
+  52%     { opacity: 0.6; transform: translate(-50%, -50%) scale(0.9); }
+  58%     { opacity: 1;   transform: translate(-50%, -50%) scale(1.15); }
+  62%     { opacity: 1;   transform: translate(-50%, -50%) scale(1.2); }
+  70%     { opacity: 0.35; transform: translate(-50%, -50%) scale(1.3); }
+  82%     { opacity: 0;   transform: translate(-50%, -50%) scale(1.4); }
+  100%    { opacity: 0; }
+}
+
+/* Shine streak — single diagonal light sweep that peaks with
+   the whiten moment, selling the "camera flash" reveal beat. */
+.monster-celebration-shine {
+  position: absolute;
+  inset: -40px;
+  background: linear-gradient(
+    115deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.9) 50%,
+    transparent 62%
+  );
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: monster-celebration-shine-anim var(--mc-duration) linear forwards;
+}
+
+@keyframes monster-celebration-shine-anim {
+  0%, 48% { opacity: 0;    transform: translateX(-20%); }
+  58%     { opacity: 0.95; transform: translateX(0); }
+  68%     { opacity: 0.3;  transform: translateX(12%); }
+  80%     { opacity: 0;    transform: translateX(20%); }
+  100%    { opacity: 0;    transform: translateX(20%); }
+}
+
+/* ---------- Reveal block — eyebrow / name / body / CTA ----------
+   Enters after the new monster has settled (~3.4s into shared,
+   ~5.8s into mega). */
+.monster-celebration-reveal {
+  grid-row: 3;
+  text-align: center;
+  max-width: 420px;
+  opacity: 0;
+  transform: translateY(18px);
+  animation: monster-celebration-reveal-anim 600ms var(--ease-out) var(--mc-reveal-delay) forwards;
+}
+
+@keyframes monster-celebration-reveal-anim {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.monster-celebration-eyebrow {
+  font-size: 0.78rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 8px;
+}
+
+.monster-celebration-name {
   font-family: var(--font-serif);
-  font-size: clamp(2rem, 7vw, 3.4rem);
-  line-height: 0.98;
-  letter-spacing: 0;
-  animation: monster-celebration-copy-in 0.42s 1.02s ease-out both;
+  font-weight: 500;
+  font-size: clamp(2.2rem, 5vw, 3rem);
+  letter-spacing: -0.01em;
+  color: #fff;
+  margin: 0 0 10px;
 }
 
-.monster-celebration-overlay p {
-  position: relative;
-  z-index: 1;
-  max-width: 620px;
-  margin: 0;
-  font-size: clamp(1rem, 2vw, 1.18rem);
+.monster-celebration-body {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.02rem;
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.9);
-  animation: monster-celebration-copy-in 0.42s 1.12s ease-out both;
+  margin: 0 0 22px;
 }
 
-.monster-celebration-meta {
-  position: relative;
-  z-index: 1;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 0.92rem;
-  font-weight: 800;
-  animation: monster-celebration-copy-in 0.42s 1.2s ease-out both;
-}
-
+/* Continue CTA lives inside the reveal block but runs its own
+   delayed fade so it lands after the copy settles. Base
+   `.btn.primary` supplies shape/colour; we only layer on the
+   entrance animation here. */
 .monster-celebration-continue {
-  position: relative;
-  z-index: 1;
-  margin-top: 8px;
-  background: var(--monster-secondary) !important;
-  color: var(--monster-primary) !important;
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
-  animation: monster-celebration-copy-in 0.42s 1.28s ease-out both;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: monster-celebration-reveal-anim 600ms var(--ease-out) var(--mc-cta-delay) forwards;
 }
 
 @keyframes monster-celebration-fade-in {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
 }
 
-@keyframes monster-celebration-before {
-  0%, 68% { transform: translateY(0) rotate(-3deg); opacity: 1; }
-  34% { transform: translateY(-5px) rotate(3deg); opacity: 1; }
-  100% { transform: scale(0.82) rotate(0); opacity: 0; }
+/* ==========================================================
+   Caught variant (non → stage 0) — particle gather.
+   No previous form to whiten, so the drama is summoning:
+   sparks fly in from the edges, collide, and the egg emerges
+   from the burst. Halo + shine + incoming art beats are
+   shared with the evolve timeline; only the particle intro
+   and the cooler background tint live here so the payoff
+   feel stays consistent across transitions.
+   ========================================================== */
+.monster-celebration-overlay.caught {
+  background-color: rgba(0, 0, 0, 0.9);
+  background-image: radial-gradient(
+    closest-side,
+    rgba(28, 36, 56, 0.88) 0%,
+    rgba(0, 0, 0, 0) 78%
+  );
 }
 
-@keyframes monster-celebration-after {
-  0% { transform: scale(0.18) rotate(-18deg); opacity: 0; filter: blur(5px); }
-  55% { transform: scale(1.12) rotate(2deg); opacity: 1; filter: blur(0); }
-  100% { transform: scale(1) rotate(0); opacity: 1; filter: blur(0); }
+.monster-celebration-overlay.caught .monster-celebration-part {
+  animation: monster-celebration-part-anim 1.8s linear forwards;
 }
 
-@keyframes monster-celebration-flash {
-  0% { opacity: 0; }
-  42% { opacity: 1; }
+/* Fixed scatter — hand-placed so the shower feels organic
+   rather than evenly spaced. Staggered delays break lock-step. */
+.monster-celebration-overlay.caught .monster-celebration-part:nth-child(1)  { --tx:  220px; --ty: -120px; animation-delay: 0.00s; }
+.monster-celebration-overlay.caught .monster-celebration-part:nth-child(2)  { --tx: -190px; --ty: -160px; animation-delay: 0.08s; }
+.monster-celebration-overlay.caught .monster-celebration-part:nth-child(3)  { --tx:  -80px; --ty: -220px; animation-delay: 0.04s; }
+.monster-celebration-overlay.caught .monster-celebration-part:nth-child(4)  { --tx:  140px; --ty:  180px; animation-delay: 0.18s; }
+.monster-celebration-overlay.caught .monster-celebration-part:nth-child(5)  { --tx: -220px; --ty:   60px; animation-delay: 0.10s; }
+.monster-celebration-overlay.caught .monster-celebration-part:nth-child(6)  { --tx:  230px; --ty:   40px; animation-delay: 0.22s; }
+.monster-celebration-overlay.caught .monster-celebration-part:nth-child(7)  { --tx:  -60px; --ty:  220px; animation-delay: 0.14s; }
+.monster-celebration-overlay.caught .monster-celebration-part:nth-child(8)  { --tx:  100px; --ty: -220px; animation-delay: 0.30s; }
+.monster-celebration-overlay.caught .monster-celebration-part:nth-child(9)  { --tx: -160px; --ty:  190px; animation-delay: 0.26s; }
+.monster-celebration-overlay.caught .monster-celebration-part:nth-child(10) { --tx:  180px; --ty:  -60px; animation-delay: 0.36s; }
+
+@keyframes monster-celebration-part-anim {
+  0%   { opacity: 0;   transform: translate(var(--tx), var(--ty)) scale(0); }
+  10%  { opacity: 1;   transform: translate(var(--tx), var(--ty)) scale(1); }
+  70%  { opacity: 1;   transform: translate(0, 0) scale(1.8); }
+  85%  { opacity: 0.6; transform: translate(0, 0) scale(0.6); }
+  100% { opacity: 0;   transform: translate(0, 0) scale(0); }
+}
+
+/* ==========================================================
+   Mega variant (3 → 4) — amplified finale.
+   Same shape as shared (behold → whiten → emerge → reveal)
+   but bigger on every axis: longer duration, longer hold,
+   gold-tinted halo + particles, stage-level shake on impact,
+   gold/white/blue gradient name. Reveal lands later so the
+   spectacle isn't cut short. Shake lives on the stage (not
+   the overlay) so the modal's large radial gradient is not
+   re-composited every shake frame.
+   ========================================================== */
+.monster-celebration-overlay.mega {
+  --mc-duration: 7.5s;
+  --mc-reveal-delay: 5.8s;
+  --mc-cta-delay: 6.3s;
+  background-color: rgba(0, 0, 0, 0.94);
+  background-image: radial-gradient(
+    closest-side,
+    color-mix(in oklab, #ffd27a 18%, #000) 0%,
+    rgba(0, 0, 0, 0) 80%
+  );
+}
+
+.monster-celebration-overlay.mega .monster-celebration-stage {
+  will-change: transform;
+  animation: monster-celebration-mega-shake var(--mc-duration) linear forwards;
+}
+
+@keyframes monster-celebration-mega-shake {
+  0%, 50%, 62%, 100% { transform: translate(0, 0); }
+  52% { transform: translate(-6px, 3px); }
+  54% { transform: translate(7px, -4px); }
+  56% { transform: translate(-4px, 6px); }
+  58% { transform: translate(4px, -3px); }
+  60% { transform: translate(-3px, 2px); }
+}
+
+/* Outgoing stage-3 — long hold with breathing + slight rise
+   as power builds, then break into the white. */
+.monster-celebration-overlay.mega .monster-celebration-art.before {
+  animation: monster-celebration-mega-before var(--mc-duration) linear forwards;
+}
+
+@keyframes monster-celebration-mega-before {
+  0%   { opacity: 0; transform: translate(-50%, calc(-50% + 32px)) scale(0.86); }
+  10%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  /* Behold hold 10-52% — long, breathing, gathering power. */
+  24%  { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
+  36%  { opacity: 1; transform: translate(-50%, -50%) scale(1.005); }
+  46%  { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
+  52%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  58%  { opacity: 1; transform: translate(-50%, -50%) scale(1.14); }
+  64%  { opacity: 0; transform: translate(-50%, -50%) scale(1.2); }
   100% { opacity: 0; }
 }
 
-@keyframes monster-celebration-aura {
-  0%, 100% { transform: scale(1); opacity: 0.35; }
-  50% { transform: scale(1.16); opacity: 0.68; }
+/* Incoming stage-4 — emerges from the white flash. Scale
+   gradient intentionally gentle (1.1 → 1); the stage-4 image
+   is already large via data-stage, so it settles rather than
+   grows. */
+.monster-celebration-overlay.mega .monster-celebration-art.after {
+  animation: monster-celebration-mega-after var(--mc-duration) linear forwards;
 }
 
-@keyframes monster-celebration-ring {
-  0% { transform: scale(0.38); opacity: 0.78; }
-  100% { transform: scale(2.2); opacity: 0; }
+@keyframes monster-celebration-mega-after {
+  0%, 60%  { opacity: 0; transform: translate(-50%, -50%) scale(1.08); }
+  66%      { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
+  78%      { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
+  90%      { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100%     { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
-@keyframes monster-celebration-sparkle {
-  0% { transform: translateY(0) scale(0.3); opacity: 0; }
-  25% { opacity: 1; }
-  100% { transform: translateY(-74px) scale(1.2); opacity: 0; }
+/* Bigger, subtle-gold-ringed white flash for mega. The final
+   form deserves an overwhelming wash — this is the visual apex. */
+.monster-celebration-overlay.mega .monster-celebration-white {
+  width: 560px;
+  height: 560px;
+  background: radial-gradient(
+    closest-side,
+    #ffffff 0%,
+    #ffffff 54%,
+    rgba(255, 244, 214, 0.55) 82%,
+    rgba(255, 220, 140, 0) 100%
+  );
+  animation: monster-celebration-mega-white var(--mc-duration) linear forwards;
 }
 
-@keyframes monster-celebration-confetti {
-  0% { transform: translateY(-12vh) rotate(0deg); opacity: 0; }
-  15% { opacity: 1; }
-  100% { transform: translateY(116vh) rotate(720deg); opacity: 0; }
+@keyframes monster-celebration-mega-white {
+  0%, 48% { opacity: 0;   transform: translate(-50%, -50%) scale(0.5); }
+  54%     { opacity: 0.7; transform: translate(-50%, -50%) scale(0.95); }
+  60%     { opacity: 1;   transform: translate(-50%, -50%) scale(1.15); }
+  66%     { opacity: 1;   transform: translate(-50%, -50%) scale(1.25); }
+  74%     { opacity: 0.35; transform: translate(-50%, -50%) scale(1.35); }
+  86%     { opacity: 0;   transform: translate(-50%, -50%) scale(1.45); }
+  100%    { opacity: 0; }
 }
 
-@keyframes monster-celebration-copy-in {
-  from { transform: translateY(14px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+/* Enhanced halo — warmer gold tint, bigger burst. Long charge
+   while the form holds, single continuous rise-and-fade. */
+.monster-celebration-overlay.mega .monster-celebration-halo {
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(
+    closest-side,
+    rgba(255, 220, 140, 0.95),
+    rgba(255, 220, 140, 0) 72%
+  );
+  animation: monster-celebration-mega-halo var(--mc-duration) linear forwards;
+}
+
+@keyframes monster-celebration-mega-halo {
+  0%, 18%  { opacity: 0;    transform: translate(-50%, -50%) scale(0.4); }
+  34%      { opacity: 0.15; transform: translate(-50%, -50%) scale(0.9); }
+  48%      { opacity: 0.4;  transform: translate(-50%, -50%) scale(1.4); }
+  56%      { opacity: 0.85; transform: translate(-50%, -50%) scale(2); }
+  62%      { opacity: 1;    transform: translate(-50%, -50%) scale(2.6); }
+  74%      { opacity: 0.55; transform: translate(-50%, -50%) scale(3.3); }
+  86%      { opacity: 0.15; transform: translate(-50%, -50%) scale(3.8); }
+  100%     { opacity: 0;    transform: translate(-50%, -50%) scale(4.2); }
+}
+
+/* Single shine sweep on impact — one smooth pass, no dip. */
+.monster-celebration-overlay.mega .monster-celebration-shine {
+  animation: monster-celebration-mega-shine var(--mc-duration) linear forwards;
+}
+
+@keyframes monster-celebration-mega-shine {
+  0%, 52% { opacity: 0;    transform: translateX(-25%); }
+  60%     { opacity: 0.95; transform: translateX(-2%); }
+  68%     { opacity: 0.55; transform: translateX(12%); }
+  78%     { opacity: 0.15; transform: translateX(22%); }
+  86%     { opacity: 0;    transform: translateX(30%); }
+  100%    { opacity: 0;    transform: translateX(30%); }
+}
+
+/* Gold-tinted particles — burst outward on whiten impact.
+   Absolute delays stay in seconds so the staggered feel
+   survives the longer duration. 60% of 7.5s ≈ 4.5s peak. */
+.monster-celebration-overlay.mega .monster-celebration-part {
+  background: #fff3d5;
+  box-shadow:
+    0 0 18px rgba(255, 210, 122, 0.95),
+    0 0 6px rgba(255, 245, 220, 1);
+  animation: monster-celebration-mega-part 2.8s linear 4.4s forwards;
+}
+
+.monster-celebration-overlay.mega .monster-celebration-part:nth-child(1)  { --tx:  300px; --ty: -180px; animation-delay: 4.40s; }
+.monster-celebration-overlay.mega .monster-celebration-part:nth-child(2)  { --tx: -260px; --ty: -220px; animation-delay: 4.52s; }
+.monster-celebration-overlay.mega .monster-celebration-part:nth-child(3)  { --tx: -110px; --ty: -300px; animation-delay: 4.46s; }
+.monster-celebration-overlay.mega .monster-celebration-part:nth-child(4)  { --tx:  200px; --ty:  260px; animation-delay: 4.62s; }
+.monster-celebration-overlay.mega .monster-celebration-part:nth-child(5)  { --tx: -300px; --ty:   90px; animation-delay: 4.54s; }
+.monster-celebration-overlay.mega .monster-celebration-part:nth-child(6)  { --tx:  320px; --ty:   70px; animation-delay: 4.66s; }
+.monster-celebration-overlay.mega .monster-celebration-part:nth-child(7)  { --tx:  -90px; --ty:  310px; animation-delay: 4.58s; }
+.monster-celebration-overlay.mega .monster-celebration-part:nth-child(8)  { --tx:  160px; --ty: -310px; animation-delay: 4.76s; }
+.monster-celebration-overlay.mega .monster-celebration-part:nth-child(9)  { --tx: -220px; --ty:  270px; animation-delay: 4.72s; }
+.monster-celebration-overlay.mega .monster-celebration-part:nth-child(10) { --tx:  250px; --ty:  -90px; animation-delay: 4.82s; }
+
+@keyframes monster-celebration-mega-part {
+  0%   { opacity: 0;    transform: translate(0, 0) scale(0); }
+  6%   { opacity: 1;    transform: translate(0, 0) scale(2.2); }
+  40%  { opacity: 1;    transform: translate(calc(var(--tx) * 0.6), calc(var(--ty) * 0.6)) scale(1.1); }
+  70%  { opacity: 0.75; transform: translate(var(--tx), var(--ty)) scale(0.7); }
+  100% { opacity: 0;    transform: translate(var(--tx), var(--ty)) scale(0.3); }
+}
+
+/* Reveal copy — "FINAL FORM" supertext reads bold and golden;
+   the name uses a gold-white-blue gradient to signal rarity. */
+.monster-celebration-overlay.mega .monster-celebration-eyebrow {
+  font-size: 0.92rem;
+  letter-spacing: 0.3em;
+  font-weight: 600;
+  color: #ffd27a;
+  text-shadow: 0 0 22px rgba(255, 210, 122, 0.55);
+}
+
+.monster-celebration-overlay.mega .monster-celebration-name {
+  background: linear-gradient(135deg, #ffd27a 0%, #ffffff 45%, #7fb8ff 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 30px rgba(255, 210, 122, 0.35);
+  font-size: clamp(2.6rem, 5.8vw, 3.4rem);
+}
+
+.monster-celebration-overlay.mega .monster-celebration-continue {
+  box-shadow: 0 0 32px rgba(255, 210, 122, 0.38);
+}
+
+/* Reduced motion — freeze in the final state so the scene
+   remains intelligible (new monster visible, reveal shown). */
+@media (prefers-reduced-motion: reduce) {
+  .monster-celebration-art.before,
+  .monster-celebration-halo,
+  .monster-celebration-shine,
+  .monster-celebration-white,
+  .monster-celebration-parts {
+    display: none;
+  }
+  .monster-celebration-art.after {
+    animation: none !important;
+    opacity: 1;
+  }
+  .monster-celebration-reveal,
+  .monster-celebration-continue {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+  .monster-celebration-overlay.mega {
+    animation: monster-celebration-fade-in 520ms var(--ease-out) !important;
+    transform: none;
+  }
+  .monster-celebration-overlay.mega .monster-celebration-stage {
+    animation: none !important;
+    transform: none;
+  }
 }
 
 .callout {
@@ -1515,6 +1961,7 @@ textarea:focus-visible {
   font-weight: 700;
 }
 
+.topnav-link,
 .profile-nav-link {
   appearance: none;
   min-height: 38px;
@@ -1529,8 +1976,84 @@ textarea:focus-visible {
   transition: border-color var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
 }
 
+.topnav-link:hover,
 .profile-nav-link:hover {
   border-color: var(--line-strong);
+}
+
+.topnav-link.is-active {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  border-color: color-mix(in oklab, var(--brand) 55%, transparent);
+}
+
+/* Subject / hub topnav — aligns the shell chrome used by subject, parent-hub
+   and admin-hub routes with the v1 Codex Journal dashboard topnav. */
+.subject-topnav {
+  padding-bottom: 8px;
+  margin-bottom: 20px;
+}
+
+.subject-brand-button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.subject-brand-button:hover .brand-mark {
+  box-shadow: var(--shadow);
+}
+
+/* The legacy learnerSelect() emits a .field > span + .select pair. When it
+   renders inside the new topnav, strip the card-form chrome so it reads as a
+   pill-shaped chip instead of a stacked form field. The span stays in the DOM
+   (sr-only) so the "Current learner" label remains for AT users. */
+.subject-topnav .field {
+  min-width: 0 !important;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.subject-topnav .field > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.subject-topnav .field .select {
+  appearance: none;
+  min-height: 38px;
+  max-width: min(52vw, 260px);
+  padding: 7px 34px 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-soft);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.subject-topnav .field .select:hover {
+  border-color: var(--line-strong);
+}
+
+/* Legacy shell-role chip + adult-access chips need slightly tighter spacing
+   inside the topnav so they line up with the pill buttons on the right. */
+.subject-topnav .chip {
+  font-size: 0.8rem;
+  padding: 6px 12px;
 }
 
 .profile-page {
@@ -1855,6 +2378,11 @@ textarea:focus-visible {
   position: relative;
   z-index: 9;
 }
+.hero-cta-row .btn.ghost {
+  background: color-mix(in oklab, var(--panel) 52%, transparent);
+  border-color: color-mix(in oklab, var(--line-strong) 72%, transparent);
+  backdrop-filter: blur(3px);
+}
 
 /* ---------- Monster meadow ---------- */
 .monster-meadow {
@@ -1876,11 +2404,22 @@ textarea:focus-visible {
   text-align: center;
 }
 .meadow-monster {
+  --meadow-render-size: var(--size, 64px);
   position: absolute;
-  left: var(--left, 50%);
-  top: var(--top, 50%);
-  width: var(--size, 64px);
-  height: var(--size, 64px);
+  left: clamp(
+    calc(var(--meadow-render-size) * 0.5 + 18px),
+    var(--x, 50%),
+    calc(100% - var(--meadow-render-size) * 0.5 - 18px)
+  );
+  top: clamp(
+    calc(178px + var(--meadow-render-size)),
+    var(--foot-y, 70%),
+    calc(100% - 22px)
+  );
+  width: var(--meadow-render-size);
+  height: var(--meadow-render-size);
+  margin-left: calc(var(--meadow-render-size) * -0.5);
+  margin-top: calc(var(--meadow-render-size) * -1);
   animation-duration: var(--dur, 18s);
   animation-delay: var(--delay, 0s);
   animation-iteration-count: infinite;
@@ -1915,7 +2454,9 @@ textarea:focus-visible {
   border-radius: 50%;
   background: radial-gradient(ellipse at center, rgba(29,43,58,0.32), rgba(29,43,58,0.10) 55%, transparent 75%);
   filter: blur(4px);
+  opacity: var(--shadow-opacity, 0.88);
   pointer-events: none;
+  transform: scaleX(var(--shadow-scale, 1));
   z-index: 0;
 }
 .meadow-monster[data-path="fly-a"] .meadow-shadow,
@@ -1937,26 +2478,26 @@ textarea:focus-visible {
 
 @keyframes meadow-walk {
   0%    { transform: translate(0, 0) scaleX(1); }
-  24%   { transform: translate(calc(var(--face, 1) *  58px), 0) scaleX(1); }
-  25%   { transform: translate(calc(var(--face, 1) *  58px), 0) scaleX(-1); }
-  74%   { transform: translate(calc(var(--face, 1) * -38px), 0) scaleX(-1); }
-  75%   { transform: translate(calc(var(--face, 1) * -38px), 0) scaleX(1); }
+  24%   { transform: translate(var(--roam-forward-x, calc(var(--face, 1) * 58px)), 0) scaleX(1); }
+  25%   { transform: translate(var(--roam-forward-x, calc(var(--face, 1) * 58px)), 0) scaleX(-1); }
+  74%   { transform: translate(var(--roam-back-x, calc(var(--face, 1) * -38px)), 0) scaleX(-1); }
+  75%   { transform: translate(var(--roam-back-x, calc(var(--face, 1) * -38px)), 0) scaleX(1); }
   100%  { transform: translate(0, 0) scaleX(1); }
 }
 @keyframes meadow-fly-a {
   0%    { transform: translate(0, 0) rotate(0deg) scaleX(1); }
-  29%   { transform: translate(calc(var(--face, 1) *  92px), 2px)  rotate(calc(var(--face, 1) * -2deg)) scaleX(1); }
-  30%   { transform: translate(calc(var(--face, 1) *  92px), 2px)  rotate(calc(var(--face, 1) * -2deg)) scaleX(-1); }
-  70%   { transform: translate(calc(var(--face, 1) * -40px), 16px) rotate(calc(var(--face, 1) *  3deg)) scaleX(-1); }
-  71%   { transform: translate(calc(var(--face, 1) * -40px), 16px) rotate(calc(var(--face, 1) *  3deg)) scaleX(1); }
+  29%   { transform: translate(var(--roam-forward-x, calc(var(--face, 1) * 92px)), var(--roam-forward-y, 2px))  rotate(calc(var(--face, 1) * -2deg)) scaleX(1); }
+  30%   { transform: translate(var(--roam-forward-x, calc(var(--face, 1) * 92px)), var(--roam-forward-y, 2px))  rotate(calc(var(--face, 1) * -2deg)) scaleX(-1); }
+  70%   { transform: translate(var(--roam-back-x, calc(var(--face, 1) * -40px)), var(--roam-back-y, 16px)) rotate(calc(var(--face, 1) *  3deg)) scaleX(-1); }
+  71%   { transform: translate(var(--roam-back-x, calc(var(--face, 1) * -40px)), var(--roam-back-y, 16px)) rotate(calc(var(--face, 1) *  3deg)) scaleX(1); }
   100%  { transform: translate(0, 0) rotate(0deg) scaleX(1); }
 }
 @keyframes meadow-fly-b {
   0%    { transform: translate(0, 0) rotate(0deg) scaleX(1); }
-  8%    { transform: translate(calc(var(--face, 1) * -20px), -6px) rotate(calc(var(--face, 1) * -1deg)) scaleX(1); }
-  9%    { transform: translate(calc(var(--face, 1) * -20px), -6px) rotate(calc(var(--face, 1) * -1deg)) scaleX(-1); }
-  60%   { transform: translate(calc(var(--face, 1) * -96px), 26px) rotate(calc(var(--face, 1) * -2deg)) scaleX(-1); }
-  61%   { transform: translate(calc(var(--face, 1) * -96px), 26px) rotate(calc(var(--face, 1) * -2deg)) scaleX(1); }
+  8%    { transform: translate(var(--roam-forward-x, calc(var(--face, 1) * -20px)), var(--roam-forward-y, -6px)) rotate(calc(var(--face, 1) * -1deg)) scaleX(1); }
+  9%    { transform: translate(var(--roam-forward-x, calc(var(--face, 1) * -20px)), var(--roam-forward-y, -6px)) rotate(calc(var(--face, 1) * -1deg)) scaleX(-1); }
+  60%   { transform: translate(var(--roam-back-x, calc(var(--face, 1) * -96px)), var(--roam-back-y, 26px)) rotate(calc(var(--face, 1) * -2deg)) scaleX(-1); }
+  61%   { transform: translate(var(--roam-back-x, calc(var(--face, 1) * -96px)), var(--roam-back-y, 26px)) rotate(calc(var(--face, 1) * -2deg)) scaleX(1); }
   100%  { transform: translate(0, 0) rotate(0deg) scaleX(1); }
 }
 @keyframes meadow-bob {
@@ -1966,6 +2507,29 @@ textarea:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .meadow-monster,
   .meadow-monster img { animation: none; }
+}
+
+@media (max-width: 520px) {
+  .meadow-monster {
+    --meadow-render-size: min(var(--size, 64px), 35vw);
+    left: clamp(
+      calc(var(--meadow-render-size) * 0.5 + 20px),
+      var(--x, 50%),
+      calc(100% - var(--meadow-render-size) * 0.5 - 20px)
+    );
+    top: clamp(
+      calc(288px + var(--meadow-render-size)),
+      calc(var(--foot-y, 70%) + 10%),
+      calc(100% - 14px)
+    );
+  }
+  .meadow-monster[data-lane="air"] {
+    top: clamp(
+      calc(276px + var(--meadow-render-size)),
+      calc(var(--foot-y, 70%) + 12%),
+      calc(100% - 14px)
+    );
+  }
 }
 
 /* ---------- Subject grid (home redesign, scoped to .subject-grid) ---------- */
@@ -2141,6 +2705,7 @@ textarea:focus-visible {
   gap: 30px;
 }
 .codex-hero {
+  --codex-feature-cap: 860px;
   position: relative;
   height: 800px;
   min-height: 800px;
@@ -2160,7 +2725,7 @@ textarea:focus-visible {
   box-shadow: var(--shadow-warm);
 }
 .codex-hero.stage-4 {
-  grid-template-columns: 1fr;
+  --codex-feature-cap: 860px;
 }
 .codex-hero::before,
 .codex-hero::after {
@@ -2205,8 +2770,8 @@ textarea:focus-visible {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  max-width: 700px;
-  padding-top: clamp(82px, 9vw, 128px);
+  max-width: 430px;
+  padding-top: clamp(58px, 7vw, 96px);
 }
 .codex-title {
   max-width: 12ch;
@@ -2218,7 +2783,7 @@ textarea:focus-visible {
   letter-spacing: 0;
 }
 .codex-lede {
-  max-width: 58ch;
+  max-width: 35ch;
   margin: 14px 0 0;
   color: var(--ink-2);
   font-size: 1.04rem;
@@ -2233,6 +2798,7 @@ textarea:focus-visible {
   gap: 14px;
   margin: 0;
   text-align: right;
+  text-shadow: 0 1px 18px color-mix(in oklab, var(--panel) 82%, transparent);
 }
 .codex-stat {
   display: grid;
@@ -2257,6 +2823,7 @@ textarea:focus-visible {
   text-transform: uppercase;
 }
 .codex-feature {
+  --codex-feature-art-lift: var(--codex-feature-rise, 0px);
   align-self: stretch;
   display: grid;
   place-items: center;
@@ -2268,6 +2835,10 @@ textarea:focus-visible {
   overflow: visible;
   pointer-events: none;
 }
+.codex-feature.stage-1 { --codex-feature-art-lift: 34px; }
+.codex-feature.stage-2 { --codex-feature-art-lift: 46px; }
+.codex-feature.stage-3 { --codex-feature-art-lift: 58px; }
+.codex-feature.stage-4 { --codex-feature-art-lift: 72px; }
 .codex-hero.stage-4 .codex-feature {
   width: 100%;
   justify-self: center;
@@ -2275,7 +2846,7 @@ textarea:focus-visible {
 
 @media (min-width: 981px) {
   .codex-hero {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
   }
   .codex-hero-copy {
     grid-column: 1;
@@ -2283,10 +2854,24 @@ textarea:focus-visible {
     justify-self: start;
   }
   .codex-feature {
-    grid-column: 1;
-    grid-row: 1;
-    width: 100%;
-    justify-self: center;
+    position: absolute;
+    top: clamp(58px, 7vw, 82px);
+    right: clamp(96px, 10vw, 132px);
+    bottom: clamp(46px, 6vw, 76px);
+    left: clamp(400px, 34vw, 430px);
+    width: auto;
+    height: auto;
+    justify-self: auto;
+  }
+  .codex-hero.stage-4 .codex-feature {
+    width: auto;
+    justify-self: auto;
+  }
+  .codex-feature .codex-creature-button.is-feature {
+    width: min(var(--codex-feature-size, 340px), calc(100vw - 96px), var(--codex-feature-cap, 860px));
+  }
+  .codex-feature .codex-creature-button.is-feature .codex-unknown {
+    width: min(var(--codex-feature-size, 340px), calc(100vw - 96px), var(--codex-feature-cap, 860px));
   }
 }
 .codex-feature.locked img {
@@ -2335,7 +2920,7 @@ textarea:focus-visible {
 .codex-feature .codex-unknown {
   position: relative;
   z-index: 1;
-  width: min(var(--codex-feature-size, 340px), 78vw);
+  width: min(var(--codex-feature-size, 340px), var(--codex-feature-cap, 78vw));
   aspect-ratio: 1;
   display: grid;
   place-items: center;
@@ -2354,7 +2939,7 @@ textarea:focus-visible {
 .codex-feature-meta {
   position: absolute;
   left: 50%;
-  bottom: 40px;
+  bottom: 26px;
   transform: translateX(-50%);
   z-index: 1;
   display: grid;
@@ -2362,7 +2947,9 @@ textarea:focus-visible {
   gap: 6px;
   width: max-content;
   max-width: min(460px, calc(100% - 56px));
+  padding: 0;
   text-align: center;
+  text-shadow: 0 2px 16px color-mix(in oklab, var(--panel) 82%, transparent);
   pointer-events: auto;
 }
 .codex-feature-meta strong {
@@ -2450,7 +3037,7 @@ textarea:focus-visible {
   position: relative;
   z-index: 1;
   width: min(var(--codex-feature-size, 340px), 94vw, calc(100% - 48px));
-  margin-top: calc(-1 * var(--codex-feature-rise, 0px));
+  margin-top: calc(-1 * var(--codex-feature-art-lift, 0px));
   pointer-events: auto;
 }
 .codex-portrait .codex-creature-button {
@@ -2820,9 +3407,23 @@ textarea:focus-visible {
     font-size: 2.5rem;
   }
   .codex-feature {
-    height: clamp(420px, 62vw, 560px);
+    height: clamp(440px, 64vw, 560px);
     min-height: 0;
     padding: 0;
+  }
+  .codex-stat-strip {
+    position: relative;
+    top: auto;
+    right: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-items: start;
+    gap: 14px 22px;
+    margin-top: 20px;
+    text-align: left;
+  }
+  .codex-stat {
+    justify-items: start;
   }
   .codex-feature-orbit {
     top: 50%;
@@ -2831,11 +3432,11 @@ textarea:focus-visible {
     top: 46%;
   }
   .codex-creature-button.is-feature {
-    width: min(var(--codex-feature-size, 340px), 88vw, calc(100% - 24px));
-    margin-top: 0;
+    width: min(var(--codex-feature-size, 340px), 80vw, calc(100% - 24px));
+    margin-top: calc(-1 * var(--codex-feature-art-lift, 0px));
   }
   .codex-feature-meta {
-    bottom: 20px;
+    bottom: 18px;
   }
   .codex-roster {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2894,22 +3495,8 @@ textarea:focus-visible {
   .codex-title {
     font-size: 2.18rem;
   }
-  .codex-stat-strip {
-    position: relative;
-    top: auto;
-    right: auto;
-    display: flex;
-    flex-wrap: wrap;
-    justify-items: start;
-    gap: 14px 22px;
-    margin-top: 20px;
-    text-align: left;
-  }
-  .codex-stat {
-    justify-items: start;
-  }
   .codex-feature {
-    height: clamp(360px, 82vw, 480px);
+    height: clamp(420px, 102vw, 500px);
     min-height: 0;
     padding: 0;
   }
@@ -2918,10 +3505,12 @@ textarea:focus-visible {
   }
   .codex-creature-button.is-feature,
   .codex-feature .codex-unknown {
-    width: min(var(--codex-feature-size, 340px), 84vw, calc(100% - 16px));
+    width: min(var(--codex-feature-size, 340px), 76vw, calc(100% - 16px));
   }
   .codex-feature-meta {
-    bottom: 16px;
+    bottom: 14px;
+    max-width: min(320px, calc(100% - 28px));
+    padding: 0;
   }
   .codex-roster {
     grid-template-columns: 1fr;
@@ -2932,4 +3521,1099 @@ textarea:focus-visible {
   .codex-card-top {
     min-height: 190px;
   }
+}
+
+/* ==========================================================
+   V1 Codex Journal — Spelling port (setup + session + summary
+   + feedback + word bank). Scoped to `.spelling-in-session`
+   where the session/summary wrappers live; setup + word bank
+   classes are unscoped because they sit inside their own
+   subject-tab chrome.
+   ========================================================== */
+
+/* ---------- Spelling setup scene ---------- */
+.setup-grid {
+  display: grid;
+  grid-template-columns: 1.65fr 1fr;
+  gap: 22px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .setup-grid { grid-template-columns: 1fr; }
+}
+.setup-main {
+  padding: 28px 30px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-warm);
+  position: relative;
+  overflow: hidden;
+}
+/* Thin horizontal divider line under the subject eyebrow,
+   matching the v1 hero-paper rule. */
+.setup-main::before {
+  content: "";
+  position: absolute;
+  left: 24px; right: 24px; top: 14px;
+  height: 1px;
+  background: color-mix(in oklab, var(--line-strong) 60%, transparent);
+  z-index: 2;
+}
+.setup-main > .hero-art { z-index: 0; }
+.setup-content { position: relative; z-index: 1; }
+.setup-begin-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+.mode-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 0 0;
+}
+@media (max-width: 640px) {
+  .mode-row { grid-template-columns: 1fr; }
+}
+.mode-card {
+  position: relative;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 18px 16px 18px;
+  cursor: pointer;
+  text-align: left;
+  transition: transform var(--dur) var(--ease-out),
+              border-color var(--dur) var(--ease-out),
+              box-shadow var(--dur) var(--ease-out);
+}
+.mode-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.mode-card.selected {
+  border-color: var(--brand);
+  background: linear-gradient(180deg,
+    color-mix(in oklab, var(--brand-soft) 55%, var(--panel)) 0%,
+    var(--panel) 70%);
+  box-shadow: var(--shadow);
+}
+.mode-card .mc-icon {
+  width: 42px; height: 42px;
+  border-radius: 14px;
+  background: var(--panel-sunken);
+  display: grid; place-items: center;
+  margin-bottom: 10px;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+.mode-card.selected .mc-icon { background: var(--brand); color: white; }
+.mode-card h4 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.08rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+}
+.mode-card.selected h4 { color: var(--brand-ink); font-weight: 600; }
+.mode-card.selected p  { color: var(--ink-2); }
+.mode-card p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.87rem;
+  line-height: 1.4;
+}
+.mode-card .mc-badge {
+  position: absolute; top: 10px; right: 10px;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px; border-radius: 999px;
+  background: var(--good-soft); color: var(--good-strong);
+}
+
+.tweak-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 18px 0 2px;
+  border-top: 1px dashed var(--line);
+  margin-top: 20px;
+}
+/* Adjacent rows share a single divider so Options reads as a
+   continuation of the previous control cluster. */
+.tweak-row + .tweak-row {
+  border-top: 0;
+  padding-top: 4px;
+  margin-top: 6px;
+}
+.tool-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-right: 4px;
+}
+
+.toggle-chip {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--panel-soft);
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.84rem;
+  color: var(--ink-2);
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.toggle-chip .box {
+  width: 14px; height: 14px;
+  border-radius: 4px;
+  border: 1.5px solid var(--line-strong);
+  background: var(--panel);
+  display: inline-grid; place-items: center;
+  color: white;
+}
+.toggle-chip.on {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  border-color: color-mix(in oklab, var(--brand) 30%, transparent);
+}
+.toggle-chip.on .box { background: var(--brand); border-color: var(--brand); }
+.toggle-chip .box svg { display: block; }
+
+/* LengthPicker — fixed set of round sizes (10 / 20 / 40). */
+.length-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-soft);
+  padding: 3px;
+}
+.length-option {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  min-width: 42px; height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--ink-2);
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: background var(--dur) var(--ease-out),
+              color var(--dur) var(--ease-out);
+}
+.length-option:hover { background: var(--panel); color: var(--ink); }
+.length-option.selected {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+}
+.length-unit {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.82rem;
+  margin: 0 10px 0 6px;
+}
+
+/* Hero-art horizontal pan.
+   Background-position percentages are relative to the available
+   slack under `cover`, so 0% → 100% uses exactly the natural
+   room for motion. Skipped on prefers-reduced-motion. */
+.hero-art.pan {
+  animation: hero-pan 72s ease-in-out infinite alternate;
+  will-change: background-position;
+}
+@keyframes hero-pan {
+  from { background-position: 0% 42%; }
+  to   { background-position: 100% 42%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-art.pan { animation: none; }
+}
+
+/* Setup-side ("where you stand") card. */
+.setup-side .ss-card {
+  padding: 22px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-xs);
+}
+.ss-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.ss-head .eyebrow { margin: 0; }
+
+/* Mini meadow — caught monsters strip. */
+.ss-meadow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.ss-meadow-cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  display: grid; place-items: center;
+  background:
+    radial-gradient(ellipse 52% 8% at 50% 82%, rgba(29,43,58,0.22) 0%, transparent 72%);
+}
+.ss-meadow-cell img {
+  width: 72%; height: auto;
+  filter: drop-shadow(0 4px 6px rgba(29,43,58,0.22));
+  animation: ss-breathe 4.8s ease-in-out infinite;
+  will-change: transform;
+}
+.ss-meadow-cell:nth-child(2) img { animation-delay: 0.7s; }
+.ss-meadow-cell:nth-child(3) img { animation-delay: 1.4s; }
+.ss-meadow-cell.egg img { transform: scale(0.86); }
+.ss-meadow-label {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: color-mix(in oklab, var(--panel) 80%, transparent);
+  padding: 1px 6px;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+@keyframes ss-breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-4px) scale(1.03); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ss-meadow-cell img { animation: none; }
+}
+
+.ss-meadow-empty {
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  text-align: center;
+}
+.ss-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.ss-stat {
+  padding: 12px 14px;
+  background: var(--panel-soft);
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+}
+.ss-stat-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ss-stat-value {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  font-weight: 500;
+  margin-top: 2px;
+  letter-spacing: -0.015em;
+}
+
+/* Word bank jump — action-shaped tile under the stat grid. */
+.ss-bank-link {
+  appearance: none; cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: var(--panel-soft);
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  text-align: left;
+  color: var(--ink);
+  transition: background var(--dur) var(--ease-out),
+              border-color var(--dur) var(--ease-out),
+              transform var(--dur) var(--ease-out);
+}
+.ss-bank-link:hover {
+  background: color-mix(in oklab, var(--brand-soft) 40%, var(--panel));
+  border-color: color-mix(in oklab, var(--brand) 28%, var(--line));
+}
+.ss-bank-link:active { transform: translateY(1px); }
+.ss-bank-link-body {
+  display: flex; flex-direction: column; gap: 2px; min-width: 0;
+}
+.ss-bank-link-head {
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+.ss-bank-link-sub {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+.ss-bank-link-arrow {
+  color: var(--brand-ink);
+  font-weight: 700;
+  font-size: 1.1rem;
+  transition: transform var(--dur) var(--ease-out);
+}
+.ss-bank-link:hover .ss-bank-link-arrow { transform: translateX(3px); }
+@media (prefers-reduced-motion: reduce) {
+  .ss-bank-link:hover .ss-bank-link-arrow { transform: none; }
+}
+
+/* ---------- Session scene wrapper + hero backdrop ---------- */
+.spelling-in-session {
+  position: relative;
+  isolation: isolate;
+  padding: 28px 24px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  /* Default on-hero tokens assume a light/mid-light backdrop.
+     Add `.hero-dark` at runtime if/when luminance detection
+     warrants the warm-paper flip. */
+  --on-hero: color-mix(in oklab, var(--ink) 88%, black);
+  --on-hero-muted: color-mix(in oklab, var(--ink) 70%, black);
+  --on-hero-chip-bg: color-mix(in oklab, var(--panel) 90%, transparent);
+  --on-hero-chip-border: color-mix(in oklab, var(--line-strong) 80%, var(--ink));
+  --on-hero-chip-ink: color-mix(in oklab, var(--ink) 92%, black);
+}
+.spelling-in-session::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--panel) 48%, transparent) 0%,
+      color-mix(in oklab, var(--panel) 24%, transparent) 42%,
+      color-mix(in oklab, var(--panel) 52%, transparent) 100%),
+    var(--hero-bg, none) center 42% / cover no-repeat;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+}
+.spelling-in-session.hero-dark {
+  --on-hero: #f4ecd8;
+  --on-hero-muted: color-mix(in oklab, #f4ecd8 75%, transparent);
+  --on-hero-chip-bg: color-mix(in oklab, black 55%, transparent);
+  --on-hero-chip-border: color-mix(in oklab, white 28%, transparent);
+  --on-hero-chip-ink: #fdfaf1;
+}
+
+/* ---------- Session scene ---------- */
+.spelling-in-session .session {
+  max-width: 780px;
+  margin: 0 auto;
+  position: relative;
+}
+.spelling-in-session .session-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 0 4px;
+  margin-bottom: 10px;
+}
+.spelling-in-session .path {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+.spelling-in-session .path-step {
+  width: 10px; height: 10px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--panel) 85%, transparent);
+  border: 1.5px solid color-mix(in oklab, var(--ink) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--panel) 70%, transparent);
+  flex-shrink: 0;
+}
+.spelling-in-session .path-step.done {
+  background: var(--good);
+  border-color: color-mix(in oklab, var(--good) 80%, var(--ink));
+}
+.spelling-in-session .path-step.current {
+  width: 16px; height: 16px;
+  background: var(--brand);
+  border-color: color-mix(in oklab, var(--brand) 75%, var(--ink));
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--panel) 80%, transparent),
+    0 0 0 5px color-mix(in oklab, var(--brand) 22%, transparent);
+  animation: pulse-ring 2s var(--ease-in-out) infinite;
+}
+@keyframes pulse-ring {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--panel) 80%, transparent),
+      0 0 0 5px color-mix(in oklab, var(--brand) 22%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--panel) 80%, transparent),
+      0 0 0 8px color-mix(in oklab, var(--brand) 10%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spelling-in-session .path-step.current { animation: none; }
+}
+.spelling-in-session .path-count {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--muted);
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-soft);
+  white-space: nowrap;
+}
+
+/* Session-variant prompt-card — glass panel look sits above the
+   region backdrop. The base .prompt-card rule is kept intact for
+   the legacy practice-card surface. */
+.spelling-in-session .prompt-card {
+  background: color-mix(in oklab, var(--panel) 80%, transparent);
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
+  border: 1px solid color-mix(in oklab, var(--line) 80%, transparent);
+  border-radius: var(--radius-lg);
+  padding: 40px 36px 32px;
+  box-shadow: var(--shadow-warm);
+  position: relative;
+}
+.spelling-in-session .prompt-card::before {
+  content: "";
+  position: absolute;
+  left: 28px; right: 28px; top: 16px;
+  height: 1px;
+  background: color-mix(in oklab, var(--line-strong) 55%, transparent);
+}
+.spelling-in-session .info-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.spelling-in-session .prompt-instr {
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: color-mix(in oklab, var(--ink) 85%, black);
+  letter-spacing: -0.005em;
+  margin-bottom: 18px;
+}
+.spelling-in-session .cloze {
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  margin-bottom: 24px;
+  color: color-mix(in oklab, var(--ink) 92%, black);
+}
+.spelling-in-session .cloze .blank {
+  display: inline-block;
+  min-width: 120px;
+  border-bottom: 3px solid var(--brand);
+  margin: 0 6px;
+  color: var(--brand);
+  font-style: italic;
+}
+.spelling-in-session .session-form {
+  display: block;
+}
+.spelling-in-session .word-input-wrap {
+  position: relative;
+  max-width: 560px;
+  margin: 0 auto;
+}
+.spelling-in-session .word-input {
+  width: 100%;
+  font-family: var(--font-serif);
+  font-size: clamp(1.7rem, 3.6vw, 2.4rem);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  text-align: center;
+  padding: 14px 20px 20px;
+  border: 0;
+  background: transparent;
+  color: color-mix(in oklab, var(--ink) 92%, black);
+  outline: none;
+  border-bottom: 2.5px solid var(--line-strong);
+  transition: border-color var(--dur) var(--ease-out);
+}
+.spelling-in-session .word-input::placeholder {
+  color: color-mix(in oklab, var(--ink) 55%, transparent);
+  font-style: italic;
+}
+.spelling-in-session .word-input:focus { border-bottom-color: var(--brand); }
+
+.spelling-in-session .audio-row {
+  display: flex; justify-content: center; gap: 10px;
+  margin-top: 20px;
+}
+.spelling-in-session .action-row {
+  display: flex; justify-content: center; gap: 10px;
+  margin-top: 26px;
+  flex-wrap: wrap;
+}
+
+.spelling-in-session .session-foot-note {
+  margin-top: 14px;
+  text-align: center;
+}
+
+/* Round-end footer sitting below the prompt card. */
+.spelling-in-session .session-footer {
+  margin-top: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.spelling-in-session .session-footer-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.spelling-in-session .session-progress-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--on-hero-chip-bg);
+  border: 1px solid var(--on-hero-chip-border);
+  color: var(--on-hero-chip-ink);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.spelling-in-session .keys-hint {
+  color: var(--on-hero-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.spelling-in-session .keys-hint kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--on-hero-chip-bg);
+  border: 1px solid var(--on-hero-chip-border);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  margin: 0 2px;
+  color: var(--on-hero-chip-ink);
+}
+.spelling-in-session .btn.sm.bad {
+  background: color-mix(in oklab, var(--bad-soft) 85%, var(--panel));
+  color: var(--bad-strong);
+  border-color: color-mix(in oklab, var(--bad) 45%, var(--ink));
+}
+.spelling-in-session.hero-dark .btn.sm.bad {
+  background: color-mix(in oklab, var(--bad-soft) 30%, rgba(0,0,0,0.55));
+  color: #ffdcd7;
+  border-color: color-mix(in oklab, var(--bad) 55%, white);
+}
+
+/* Icon buttons (audio replay + slow replay). Hover/active inherit
+   from the base .btn rule; the session variant just adds the
+   square shape + glow-when-playing. */
+.btn.icon {
+  width: 42px; height: 42px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-soft);
+  border-color: var(--line);
+  color: var(--ink);
+}
+.btn.icon.lg { width: 52px; height: 52px; }
+.btn.icon.playing {
+  background: color-mix(in oklab, var(--brand) 14%, var(--panel));
+  border-color: color-mix(in oklab, var(--brand) 45%, var(--line));
+  color: var(--brand-ink);
+  animation: audio-glow 1.4s var(--ease-in-out) infinite;
+}
+@keyframes audio-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 3px color-mix(in oklab, var(--brand) 20%, transparent),
+      0 6px 18px color-mix(in oklab, var(--brand) 22%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 8px color-mix(in oklab, var(--brand) 8%, transparent),
+      0 10px 26px color-mix(in oklab, var(--brand) 30%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn.icon.playing { animation: none; }
+}
+
+/* ---------- Feedback ribbon + family chips ---------- */
+/* .feedback-slot wraps either a live ribbon + chips or an
+   invisible placeholder of identical height so the prompt-card
+   doesn't shift between question / correct / wrong states. */
+.spelling-in-session .feedback-slot {
+  margin-top: 18px;
+}
+.spelling-in-session .feedback-slot.is-placeholder { visibility: hidden; }
+.spelling-in-session .feedback-slot.is-placeholder * { animation: none !important; }
+.spelling-in-session .feedback-foot {
+  margin-top: 8px;
+  font-size: 0.86rem;
+  color: color-mix(in oklab, var(--ink) 72%, transparent);
+  text-align: center;
+}
+
+.spelling-in-session .ribbon {
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+  /* Fixed min-height so "correct" (with word chip) and "wrong"
+     (sub-only) come out at identical pixel heights. */
+  min-height: 84px;
+  animation: ribbon-in var(--dur-slow) var(--ease-out);
+}
+@keyframes ribbon-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spelling-in-session .ribbon { animation: none; }
+}
+.spelling-in-session .ribbon.good {
+  background: var(--good-soft);
+  border-color: color-mix(in oklab, var(--good) 30%, transparent);
+  color: var(--good-strong);
+}
+.spelling-in-session .ribbon.warn {
+  background: var(--warn-soft);
+  border-color: color-mix(in oklab, var(--warn) 30%, transparent);
+  color: var(--warn-strong);
+}
+.spelling-in-session .ribbon.bad {
+  background: var(--bad-soft);
+  border-color: color-mix(in oklab, var(--bad) 30%, transparent);
+  color: var(--bad-strong);
+}
+.spelling-in-session .ribbon-ic {
+  width: 36px; height: 36px;
+  border-radius: 999px;
+  display: grid; place-items: center;
+  background: rgba(255,255,255,0.55);
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+.spelling-in-session .ribbon-body b {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+}
+.spelling-in-session .ribbon-body .word {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 1.3rem;
+  margin-left: 4px;
+  letter-spacing: -0.01em;
+}
+.spelling-in-session .ribbon-body .sub {
+  font-size: 0.88rem;
+  margin-top: 2px;
+  color: inherit;
+  opacity: 0.85;
+}
+
+.spelling-in-session .family-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-left: 4px;
+}
+.spelling-in-session .family-chips .flabel {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  align-self: center;
+}
+.spelling-in-session .fchip {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  font-family: var(--font-serif);
+  font-size: 1.02rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+}
+
+/* ---------- Summary scene ---------- */
+.spelling-in-session.summary-shell { }
+.spelling-in-session .session.summary {
+  margin-top: 0;
+  position: relative;
+  z-index: 3;
+}
+.spelling-in-session .prompt-card.summary-card { padding-top: 34px; }
+.spelling-in-session .prompt-card.summary-card::before { display: none; }
+.spelling-in-session .prompt-card.summary-card > .ribbon:first-child { margin-top: 0; }
+.spelling-in-session .prompt-card.summary-card > .summary-title + .ribbon { margin-top: 0; }
+
+.spelling-in-session .summary-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 22px;
+}
+@media (max-width: 720px) {
+  .spelling-in-session .summary-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.spelling-in-session .summary-stat {
+  padding: 14px 14px 12px;
+  background: color-mix(in oklab, var(--panel) 70%, transparent);
+  border: 1px solid color-mix(in oklab, var(--line) 80%, transparent);
+  border-radius: 14px;
+  backdrop-filter: blur(6px) saturate(1.05);
+  -webkit-backdrop-filter: blur(6px) saturate(1.05);
+}
+.spelling-in-session .summary-stat .v {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1;
+  color: var(--ink);
+}
+.spelling-in-session .summary-stat .v .u {
+  font-size: 0.58em;
+  font-weight: 600;
+  color: var(--muted);
+  margin-left: 2px;
+}
+.spelling-in-session .summary-stat .l {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+.spelling-in-session .summary-stat .s {
+  font-size: 0.76rem;
+  color: var(--ink-2);
+  margin-top: 4px;
+}
+
+.spelling-in-session .summary-drill {
+  margin-top: 20px;
+  padding: 14px 18px 16px;
+  background: color-mix(in oklab, var(--warn-soft) 70%, var(--panel));
+  border: 1px solid color-mix(in oklab, var(--warn) 26%, transparent);
+  border-radius: var(--radius);
+}
+.spelling-in-session .summary-drill-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+.spelling-in-session .summary-drill h4 {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.spelling-in-session .summary-drill-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  align-items: center;
+}
+
+.spelling-in-session .summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 28px;
+}
+.spelling-in-session .summary-bank-link {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+  background: transparent;
+  border: 0;
+  color: var(--brand-ink);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.92rem;
+  letter-spacing: -0.005em;
+  transition: color var(--dur) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out);
+}
+.spelling-in-session .summary-bank-link:hover {
+  color: var(--brand);
+  transform: translateX(2px);
+}
+.spelling-in-session .summary-bank-link svg { width: 14px; height: 14px; }
+
+/* ---------- Word bank (analytics tab) ---------- */
+.wb-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px 24px;
+  box-shadow: var(--shadow);
+  max-width: 920px;
+  margin: 0 auto;
+}
+.wb-head .title {
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  letter-spacing: -0.015em;
+  margin: 2px 0 6px;
+}
+.wb-head .lede {
+  color: var(--ink-2);
+  max-width: 60ch;
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.wb-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin: 20px 0 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.wb-search {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--dur) var(--ease-out),
+              box-shadow var(--dur) var(--ease-out);
+}
+.wb-search:focus-within {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand) 24%, transparent);
+}
+.wb-search input {
+  appearance: none;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  flex: 1;
+  font: inherit;
+  color: var(--ink);
+}
+.wb-search input::placeholder { color: var(--subtle); }
+.wb-search-icon {
+  color: var(--muted);
+  font-size: 1.05rem;
+  display: inline-flex;
+  align-items: center;
+}
+.wb-search-icon svg { display: block; }
+
+.wb-chips,
+.wb-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wb-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.wb-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "word   action"
+    "meta   meta";
+  align-items: start;
+  column-gap: 10px;
+  row-gap: 8px;
+  padding: 12px 12px 10px 16px;
+  background: var(--panel-soft);
+  border: 1px solid var(--line-soft);
+  border-left: 4px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  transition: background var(--dur) var(--ease-out),
+              border-color var(--dur) var(--ease-out);
+}
+.wb-row:hover {
+  background: color-mix(in oklab, var(--panel) 60%, var(--panel-soft));
+  border-color: color-mix(in oklab, var(--brand) 16%, var(--line));
+}
+.wb-row[data-status="due"]      { border-left-color: var(--warn); }
+.wb-row[data-status="weak"]     { border-left-color: var(--bad); }
+.wb-row[data-status="learning"] { border-left-color: var(--brand); }
+.wb-row[data-status="secure"]   { border-left-color: var(--good); }
+.wb-row[data-status="unseen"]   { border-left-color: var(--subtle); }
+
+.wb-cell-word {
+  grid-area: word;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  row-gap: 4px;
+  min-width: 0;
+  align-self: center;
+}
+.wb-word {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.wb-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.wb-pill.due      { background: var(--warn-soft);    color: var(--warn-strong); }
+.wb-pill.weak     { background: var(--bad-soft);     color: var(--bad-strong); }
+.wb-pill.learning { background: var(--brand-soft);   color: var(--brand-ink); }
+.wb-pill.secure   { background: var(--good-soft);    color: var(--good-strong); }
+.wb-pill.unseen   { background: var(--panel-sunken); color: var(--muted); }
+
+.wb-cell-meta {
+  grid-area: meta;
+  display: flex;
+  gap: 4px 12px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+.wb-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+}
+.wb-meta-label {
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+.wb-meta-value {
+  color: var(--ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The action button inside a .wb-row inherits its base styling
+   from the existing .word-progress-pill rule so test pins stay
+   valid; we only pin it into the action grid cell and add a
+   subtle label so the arrow has a readable affordance. */
+.wb-row .word-progress-pill {
+  grid-area: action;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.wb-action-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.wb-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+  background: var(--panel-soft);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  list-style: none;
+}
+
+.wb-foot {
+  margin-top: 14px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  text-align: right;
+}
+.wb-foot-chip { margin-left: 6px; }
+.wb-foot-chip em {
+  font-style: normal;
+  color: var(--ink-2);
+  font-weight: 700;
+  margin-right: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wb-row, .wb-search { transition: none; }
+}
+
+@media (max-width: 720px) {
+  .wb-card { padding: 22px 20px 20px; border-radius: var(--radius); }
 }
