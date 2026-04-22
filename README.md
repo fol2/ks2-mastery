@@ -16,7 +16,7 @@ The goal is not to polish the old prototype. The goal is to give the product a s
   - The rebuilt English Spelling slice.
   - The legacy spelling engine is preserved and wrapped behind a clean service.
   - The spelling service now owns an explicit serialisable state contract, deterministic transitions, resume-safe restoration, and domain-event emission.
-  - Spelling content now has a versioned draft/published content model. Learner runtime reads are pinned to the published release snapshot, not live draft rows.
+  - Spelling content now has a versioned draft/published content model. Learner runtime reads are pinned to published release snapshots, not live draft rows, with current seeded additions supplemented for older account-scoped seed releases.
 - `src/subjects/placeholders/*`
   - Clean extension slots for Arithmetic, Reasoning, Grammar, Punctuation and Reading.
 - `worker/*`

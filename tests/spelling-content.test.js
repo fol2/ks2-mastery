@@ -15,6 +15,7 @@ import {
   validateSpellingContentBundle,
 } from '../src/subjects/spelling/content/model.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
+import { coreOnlyVersionOneContent } from './helpers/spelling-content.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 
 function makeTts() {
@@ -282,6 +283,78 @@ test('content service backfills seeded explanations for legacy stored bundles', 
   assert.equal(draftWord.explanation, 'To possess something means to own it or have it.');
   assert.equal(runtimeWord.explanation, 'To possess something means to own it or have it.');
   assert.equal(content.validate().ok, true);
+});
+
+test('content service supplements legacy published runtime with seeded release additions', () => {
+  let stored = coreOnlyVersionOneContent(SEEDED_SPELLING_CONTENT_BUNDLE);
+  const repository = {
+    read() {
+      return cloneSerialisable(stored);
+    },
+    write(bundle) {
+      stored = cloneSerialisable(bundle);
+      return cloneSerialisable(stored);
+    },
+    clear() {
+      stored = cloneSerialisable(SEEDED_SPELLING_CONTENT_BUNDLE);
+      return cloneSerialisable(stored);
+    },
+  };
+  const content = createSpellingContentService({ repository });
+  const snapshot = content.getRuntimeSnapshot();
+
+  assert.equal(content.readBundle().publication.publishedVersion, 1);
+  assert.equal(snapshot.words.filter((word) => word.spellingPool === 'extra').length, 22);
+  assert.equal(snapshot.wordBySlug.mollusc.spellingPool, 'extra');
+
+  stored.releases[0].version = SEEDED_SPELLING_CONTENT_BUNDLE.publication.publishedVersion + 1;
+  stored.releases[0].publishedAt = 1;
+  stored.publication.publishedVersion = stored.releases[0].version;
+  stored.publication.updatedAt = 1;
+  const higherLocalVersionSnapshot = content.getRuntimeSnapshot();
+
+  assert.equal(content.readBundle().publication.publishedVersion, SEEDED_SPELLING_CONTENT_BUNDLE.publication.publishedVersion + 1);
+  assert.equal(higherLocalVersionSnapshot.words.filter((word) => word.spellingPool === 'extra').length, 22);
+
+  const service = createSpellingService({
+    tts: makeTts(),
+    contentSnapshot: higherLocalVersionSnapshot,
+  });
+  const transition = service.startSession('learner-a', {
+    mode: 'smart',
+    yearFilter: 'extra',
+    length: 10,
+  });
+
+  assert.equal(transition.ok, true);
+  assert.equal(transition.state.session.progress.total, 10);
+  assert.ok(transition.state.session.uniqueWords.every((slug) => higherLocalVersionSnapshot.wordBySlug[slug].spellingPool === 'extra'));
+});
+
+test('content service respects newer published account content that omits seeded additions', () => {
+  let stored = coreOnlyVersionOneContent(SEEDED_SPELLING_CONTENT_BUNDLE);
+  const currentSeedRelease = SEEDED_SPELLING_CONTENT_BUNDLE.releases.at(-1);
+  stored.releases[0].version = currentSeedRelease.version + 1;
+  stored.releases[0].publishedAt = currentSeedRelease.publishedAt + 1;
+  stored.publication.publishedVersion = stored.releases[0].version;
+  stored.publication.updatedAt = stored.releases[0].publishedAt;
+  const repository = {
+    read() {
+      return cloneSerialisable(stored);
+    },
+    write(bundle) {
+      stored = cloneSerialisable(bundle);
+      return cloneSerialisable(stored);
+    },
+    clear() {
+      stored = cloneSerialisable(SEEDED_SPELLING_CONTENT_BUNDLE);
+      return cloneSerialisable(stored);
+    },
+  };
+  const content = createSpellingContentService({ repository });
+  const snapshot = content.getRuntimeSnapshot();
+
+  assert.equal(snapshot.words.filter((word) => word.spellingPool === 'extra').length, 0);
 });
 
 test('runtime stays pinned to the published spelling release until a new draft is published', async () => {

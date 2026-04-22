@@ -278,7 +278,7 @@ Current adapters:
   - writes through `PUT /api/content/spelling`
   - tracks account revision because content writes and learner-profile writes share `adult_accounts.repo_revision`
 
-The runtime spelling service receives `spellingContent.getRuntimeSnapshot()` and reads only the published release snapshot. Draft edits do not leak into live learner sessions until the operator publishes the draft.
+The runtime spelling service receives `spellingContent.getRuntimeSnapshot()` and reads published content only. Draft edits do not leak into live learner sessions until the operator publishes the draft. Accounts still pinned to an older seeded published release are supplemented at runtime with missing words from the bundled current seed release, so seed content additions remain available without rewriting account content.
 
 The detailed policy lives in `docs/mutation-policy.md`.
 

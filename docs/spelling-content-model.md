@@ -190,7 +190,7 @@ It follows the current published release.
 
 - `createSpellingService()` can now receive a `contentSnapshot`.
 - The main shell rebuilds the spelling service from `spellingContent.getRuntimeSnapshot()`.
-- `getRuntimeSnapshot()` resolves the currently published release snapshot only.
+- `getRuntimeSnapshot()` resolves published content only. If an account is still on an older published seed release, the runtime supplements missing words from the bundled current seed release while preserving the account's own published words.
 - If an explicit word is requested and it does not exist in the published snapshot, session start now fails cleanly instead of silently falling back to a different round.
 
 That last rule matters for safety: content-pinning should not quietly drift into a different session than the caller asked for.

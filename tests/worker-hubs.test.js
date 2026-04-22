@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createApiPlatformRepositories } from '../src/platform/core/repositories/index.js';
+import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
+import { coreOnlyVersionOneContent } from './helpers/spelling-content.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 function seedAdultAccount(server, {
@@ -107,6 +109,45 @@ test('worker parent hub allows parent or admin platform roles with readable lear
   assert.equal(adminPayload.parentHub.permissions.platformRole, 'admin');
 
   server.close();
+});
+
+test('worker hubs supplement legacy core-only content with seeded runtime additions', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    await seedLearnerData(server, 'adult-parent', 'parent');
+
+    const initialResponse = await server.fetchAs('adult-parent', 'https://repo.test/api/content/spelling');
+    const initial = await initialResponse.json();
+    const legacy = coreOnlyVersionOneContent(initial.content);
+    const requestId = 'legacy-core-content-runtime-1';
+    const writeResponse = await server.fetchAs('adult-parent', 'https://repo.test/api/content/spelling', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        content: legacy,
+        mutation: {
+          requestId,
+          correlationId: requestId,
+          expectedAccountRevision: initial.mutation.accountRevision,
+        },
+      }),
+    });
+    const written = await writeResponse.json();
+    assert.equal(writeResponse.status, 200);
+    assert.equal(written.content.publication.publishedVersion, 1);
+    assert.equal(written.content.releases[0].snapshot.words.some((word) => word.spellingPool === 'extra'), false);
+
+    const hubResponse = await server.fetchAs('adult-parent', 'https://repo.test/api/hubs/parent?learnerId=learner-a');
+    const hubPayload = await hubResponse.json();
+
+    assert.equal(hubResponse.status, 200);
+    assert.equal(
+      hubPayload.parentHub.progressSnapshots[0].totalPublishedWords,
+      SEEDED_SPELLING_CONTENT_BUNDLE.releases.at(-1).snapshot.words.length,
+    );
+  } finally {
+    server.close();
+  }
 });
 
 test('worker admin account roles are listed and assignable by admins only', async () => {
