@@ -1,10 +1,9 @@
-import { createStore } from './platform/core/store.js';
 import {
-  ensureLocalCodexReviewProfile,
-  LOCAL_CODEX_REVIEW_LEARNER_ID,
-  LOCAL_CODEX_REVIEW_LEARNER_IDS,
-  LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS,
-} from './platform/core/local-review-profile.js';
+  createCredentialFetch,
+  createRepositoriesForBrowserRuntime,
+  shouldOpenLocalCodexReview,
+} from './platform/app/bootstrap.js';
+import { createAppController } from './platform/app/create-app-controller.js';
 import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
 import { renderApp } from './platform/ui/render.js';
 import { probeRelLuminance } from './platform/ui/luminance.js';
@@ -19,12 +18,8 @@ import {
   buildParentHubAccessContext,
   readOnlyLearnerActionBlockReason,
 } from './platform/hubs/shell-access.js';
-import {
-  createApiPlatformRepositories,
-  createLocalPlatformRepositories,
-} from './platform/core/repositories/index.js';
 import { createSubjectRuntimeBoundary } from './platform/core/subject-runtime.js';
-import { createEventRuntime, createPracticeStreakSubscriber } from './platform/events/index.js';
+import { createPracticeStreakSubscriber } from './platform/events/index.js';
 import { createPlatformTts } from './subjects/spelling/tts.js';
 import { createSpellingService } from './subjects/spelling/service.js';
 import { createSpellingPersistence } from './subjects/spelling/repository.js';
@@ -34,13 +29,7 @@ import {
 } from './subjects/spelling/content/repository.js';
 import { createSpellingContentService } from './subjects/spelling/content/service.js';
 import { createSpellingRewardSubscriber } from './subjects/spelling/event-hooks.js';
-import { createSpellingAutoAdvanceController } from './subjects/spelling/auto-advance.js';
 import { resolveSpellingShortcut } from './subjects/spelling/shortcuts.js';
-import {
-  isMonsterCelebrationEvent,
-  shouldDelayMonsterCelebrations,
-  spellingSessionEnded,
-} from './platform/game/monster-celebrations.js';
 import {
   monsterSummary,
   monsterSummaryFromSpellingAnalytics,
@@ -54,6 +43,7 @@ import {
 } from './platform/core/data-transfer.js';
 
 const root = document.getElementById('app');
+const credentialFetch = createCredentialFetch();
 
 /* --------------------------------------------------------------
    Word-detail modal accessibility: focus trap + restore-on-close.
@@ -114,41 +104,6 @@ function escapeHtml(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-}
-
-function isLocalMode() {
-  const params = new URLSearchParams(globalThis.location.search);
-  return globalThis.location.protocol === 'file:' || params.get('local') === '1';
-}
-
-function reviewLearnerIdFromMode(value) {
-  const mode = String(value || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
-  if (!mode) return '';
-  if (LOCAL_CODEX_REVIEW_LEARNER_IDS.includes(mode)) return mode;
-  if (['egg', 'eggs', 'all-egg', 'all-eggs', 'codex-eggs'].includes(mode)) {
-    return LOCAL_CODEX_REVIEW_LEARNER_ID;
-  }
-  const stageMatch = mode.match(/^(?:all-)?stage-?([1-4])$/) || mode.match(/^([1-4])$/);
-  return stageMatch ? LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS[stageMatch[1]] : '';
-}
-
-function localCodexReviewLearnerIdFromUrl() {
-  if (!isLocalMode()) return '';
-  const params = new URLSearchParams(globalThis.location.search);
-  const learnerId = String(params.get('learner') || '').trim();
-  if (LOCAL_CODEX_REVIEW_LEARNER_IDS.includes(learnerId)) return learnerId;
-  return reviewLearnerIdFromMode(params.get('codexReview'));
-}
-
-function shouldOpenLocalCodexReview() {
-  return Boolean(localCodexReviewLearnerIdFromUrl());
-}
-
-function credentialFetch(input, init = {}) {
-  return fetch(input, {
-    ...init,
-    credentials: 'same-origin',
-  });
 }
 
 function renderAuthScreen({ mode = 'login', error = '' } = {}) {
@@ -252,50 +207,15 @@ function bindAuthScreen() {
 }
 
 async function createRepositoriesForCurrentRuntime() {
-  if (isLocalMode()) {
-    const localRepositories = createLocalPlatformRepositories({ storage: globalThis.localStorage });
-    ensureLocalCodexReviewProfile(localRepositories, {
-      selectLearnerId: localCodexReviewLearnerIdFromUrl(),
-    });
-    return {
-      repositories: localRepositories,
-      session: { signedIn: false, mode: 'local-only', platformRole: 'parent' },
-    };
-  }
-
-  const sessionResponse = await credentialFetch('/api/auth/session', {
-    headers: { accept: 'application/json' },
-  });
-  const sessionPayload = await sessionResponse.json().catch(() => null);
-
-  if (!sessionResponse.ok || !sessionPayload?.session?.accountId) {
-    const params = new URLSearchParams(globalThis.location.search);
-    renderAuthScreen({ error: params.get('auth_error') || '' });
-    bindAuthScreen();
-    await new Promise(() => {});
-  }
-
-  const accountId = sessionPayload?.session?.accountId || 'unknown';
-  const apiRepositories = createApiPlatformRepositories({
-    baseUrl: '',
-    fetch: credentialFetch,
-    cacheScopeKey: `account:${accountId}`,
-  });
-
-  return {
-    repositories: apiRepositories,
-    session: {
-      signedIn: true,
-      mode: 'remote-sync',
-      accountId,
-      email: sessionPayload?.session?.email || '',
-      provider: sessionPayload?.session?.provider || 'session',
-      platformRole: normalisePlatformRole(
-        sessionPayload?.account?.platformRole || sessionPayload?.session?.platformRole,
-      ),
-      repoRevision: Number(sessionPayload?.account?.repoRevision) || 0,
+  return createRepositoriesForBrowserRuntime({
+    location: globalThis.location,
+    storage: globalThis.localStorage,
+    credentialFetch,
+    onAuthRequired({ error }) {
+      renderAuthScreen({ error });
+      bindAuthScreen();
     },
-  };
+  });
 }
 
 const boot = await createRepositoriesForCurrentRuntime();
@@ -699,16 +619,22 @@ const runtimeBoundary = createSubjectRuntimeBoundary({
   },
 });
 
-const eventRuntime = createEventRuntime({
+const controller = createAppController({
   repositories,
+  subjects: SUBJECTS,
+  session: boot.session,
+  runtimeBoundary,
+  tts,
+  services,
   subscribers: [
     createPracticeStreakSubscriber(),
     createSpellingRewardSubscriber({ gameStateRepository: repositories.gameState }),
   ],
-  onError(error) {
+  onEventError(error) {
     globalThis.console?.error?.('Reward/event subscriber failed.', error);
   },
 });
+const store = controller.store;
 
 function resetLearnerData(learnerId) {
   Object.values(services).forEach((service) => {
@@ -941,64 +867,16 @@ async function updateAdminAccountRole(accountId, platformRole) {
   }
 }
 
-const store = createStore(SUBJECTS, { repositories });
-if (shouldOpenLocalCodexReview()) {
+if (shouldOpenLocalCodexReview({ location: globalThis.location })) {
   store.openCodex();
 }
 
-const spellingAutoAdvance = createSpellingAutoAdvanceController({
-  getState: () => store.getState(),
-  dispatchContinue: () => dispatchAction('spelling-continue'),
-});
-
 function ensureSpellingAutoAdvanceFromCurrentState() {
-  const appState = store.getState();
-  if (appState.route.screen !== 'subject' || appState.route.subjectId !== 'spelling' || (appState.route.tab || 'practice') !== 'practice') {
-    return false;
-  }
-  return spellingAutoAdvance.ensureScheduledFromState(appState.subjectUi.spelling);
+  return controller.ensureSpellingAutoAdvanceFromCurrentState();
 }
 
 function applySubjectTransition(subjectId, transition) {
-  if (!transition) return false;
-  const previousSubjectUi = store.getState().subjectUi[subjectId] || null;
-  store.updateSubjectUi(subjectId, transition.state);
-  const nextSubjectUi = transition.state || null;
-
-  const published = eventRuntime.publish(transition.events);
-  let renderedSideEffect = false;
-  if (published.toastEvents.length) {
-    store.pushToasts(published.toastEvents);
-    renderedSideEffect = true;
-  }
-
-  const monsterCelebrations = published.reactionEvents.filter(isMonsterCelebrationEvent);
-  if (monsterCelebrations.length) {
-    if (shouldDelayMonsterCelebrations(subjectId, previousSubjectUi, nextSubjectUi)) {
-      store.deferMonsterCelebrations(monsterCelebrations);
-    } else {
-      store.pushMonsterCelebrations(monsterCelebrations);
-    }
-    renderedSideEffect = true;
-  }
-
-  if (spellingSessionEnded(previousSubjectUi, nextSubjectUi)) {
-    renderedSideEffect = store.releaseMonsterCelebrations() || renderedSideEffect;
-  }
-
-  if (!renderedSideEffect && published.reactionEvents.length) {
-    store.patch(() => ({}));
-  }
-
-  runtimeBoundary.clear({
-    learnerId: store.getState().learners.selectedId,
-    subjectId,
-    tab: store.getState().route.tab || 'practice',
-  });
-
-  if (transition.audio?.word) tts.speak(transition.audio);
-  if (subjectId === 'spelling') spellingAutoAdvance.scheduleFromTransition(transition);
-  return true;
+  return controller.applySubjectTransition(subjectId, transition);
 }
 
 function contextFor(subjectId = null) {
@@ -1698,7 +1576,7 @@ function handleSubjectAction(action, data) {
 }
 
 function dispatchAction(action, data = {}) {
-  spellingAutoAdvance.clear();
+  controller.autoAdvance.clear();
   if (!handleGlobalAction(action, data)) {
     handleSubjectAction(action, data);
   }
