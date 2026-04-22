@@ -2510,26 +2510,30 @@ textarea:focus-visible {
 }
 
 @media (max-width: 520px) {
+  .hero-paper { min-height: 540px; }
   .meadow-monster {
-    --meadow-render-size: min(var(--size, 64px), 35vw);
+    --meadow-render-size: min(var(--size, 64px), 24vw);
     left: clamp(
       calc(var(--meadow-render-size) * 0.5 + 20px),
       var(--x, 50%),
       calc(100% - var(--meadow-render-size) * 0.5 - 20px)
     );
     top: clamp(
-      calc(288px + var(--meadow-render-size)),
-      calc(var(--foot-y, 70%) + 10%),
-      calc(100% - 14px)
+      calc(360px + var(--meadow-render-size)),
+      calc(var(--foot-y, 70%) + 18%),
+      calc(100% - 16px)
     );
   }
   .meadow-monster[data-lane="air"] {
     top: clamp(
-      calc(276px + var(--meadow-render-size)),
-      calc(var(--foot-y, 70%) + 12%),
-      calc(100% - 14px)
+      calc(360px + var(--meadow-render-size)),
+      calc(var(--foot-y, 70%) + 16%),
+      calc(100% - 16px)
     );
   }
+  .meadow-monster[data-path="walk"]  { left: 28%; }
+  .meadow-monster[data-path="fly-b"] { left: 55%; }
+  .meadow-monster[data-path="fly-a"] { left: 82%; }
 }
 
 /* ---------- Subject grid (home redesign, scoped to .subject-grid) ---------- */
@@ -2706,6 +2710,9 @@ textarea:focus-visible {
 }
 .codex-hero {
   --codex-feature-cap: 860px;
+  --codex-feature-foot-overflow: 104px;
+  --codex-feature-foot-pad: 30px;
+  --codex-feature-meta-inset: 52px;
   position: relative;
   height: 800px;
   min-height: 800px;
@@ -2856,12 +2863,12 @@ textarea:focus-visible {
   }
   .codex-feature {
     position: absolute;
-    inset: 0 0 -104px;
+    inset: 0 0 calc(var(--codex-feature-foot-overflow) * -1);
     width: 100%;
     height: auto;
     justify-self: auto;
     place-items: end center;
-    padding-bottom: 30px;
+    padding-bottom: var(--codex-feature-foot-pad);
   }
   .codex-hero.stage-4 .codex-feature {
     width: auto;
@@ -2873,6 +2880,9 @@ textarea:focus-visible {
   }
   .codex-feature .codex-creature-button.is-feature .codex-unknown {
     width: min(var(--codex-feature-size, 340px), calc(100vw - 96px), var(--codex-feature-cap, 860px));
+  }
+  .codex-feature .codex-feature-meta {
+    bottom: calc(var(--codex-feature-foot-overflow) + var(--codex-feature-meta-inset));
   }
 }
 .codex-feature.locked img {
@@ -3037,6 +3047,7 @@ textarea:focus-visible {
 .codex-creature-button.is-feature {
   position: relative;
   z-index: 1;
+  top: var(--codex-feature-foot-shift, 0px);
   width: min(var(--codex-feature-size, 340px), 94vw, calc(100% - 48px));
   margin-top: calc(-1 * var(--codex-feature-art-lift, 0px));
   pointer-events: auto;
@@ -3088,6 +3099,10 @@ textarea:focus-visible {
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
   will-change: transform;
+}
+.codex-feature .codex-creature-image {
+  animation: none;
+  transform: none;
 }
 .codex-card.locked .codex-portrait img {
   filter: grayscale(0.55) saturate(0.7) drop-shadow(0 10px 14px rgba(29,43,58,0.10));

@@ -1,7 +1,4 @@
 .DS_Store
-.claude/
-.codex/
-.gstack/
 .playwright-mcp/
 .spelling-audio/
 .worktrees/
@@ -17,7 +14,5 @@ backups/
 .wrangler/
 .env
 .env.*
-*.log
-*.zip
 assets/*.png
 assets/**/*.png

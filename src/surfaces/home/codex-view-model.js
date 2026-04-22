@@ -14,6 +14,23 @@ const FEATURE_MAX_SIZE_BY_SPECIES = Object.freeze({
 
 const FEATURE_STAGE_SCALE = Object.freeze([0.36, 0.52, 0.68, 0.84, 1]);
 
+const FEATURE_FOOT_PAD_BY_ASSET = Object.freeze({
+  inklet: Object.freeze({
+    b1: Object.freeze([18, 16, 12, 14, 8]),
+    b2: Object.freeze([18, 29, 22, 8, 7]),
+  }),
+  glimmerbug: Object.freeze({
+    b1: Object.freeze([25, 34, 24, 17, 8]),
+    b2: Object.freeze([20, 27, 14, 12, 2]),
+  }),
+  phaeton: Object.freeze({
+    b1: Object.freeze([6, 16, 22, 10, 4]),
+    b2: Object.freeze([16, 18, 10, 2, 0]),
+  }),
+});
+
+const FEATURE_FOOT_PAD_SOURCE_SIZE = 320;
+
 export function codexTotals(entries = []) {
   const directSecure = entries
     .filter((entry) => entry.id !== 'phaeton')
@@ -31,6 +48,10 @@ export function codexFeatureStyle(entry) {
   const maxSize = FEATURE_MAX_SIZE_BY_SPECIES[entry.id] || 760;
   const stage = entry.caught ? Math.max(0, Math.min(4, Number(entry.stage) || 0)) : 0;
   const visualSize = Math.round(maxSize * (FEATURE_STAGE_SCALE[stage] || FEATURE_STAGE_SCALE[0]));
+  const footPad = entry.displayState === 'fresh'
+    ? 0
+    : FEATURE_FOOT_PAD_BY_ASSET[entry.id]?.[entry.branch]?.[stage] ?? 0;
+  const footShift = Math.round(visualSize * (footPad / FEATURE_FOOT_PAD_SOURCE_SIZE));
   const rise = entry.displayState === 'monster'
     ? Math.min(155, 52 + (entry.stage * 24) + (entry.id === 'phaeton' ? 20 : 0))
     : 0;
@@ -42,6 +63,7 @@ export function codexFeatureStyle(entry) {
     '--codex-feature-shadow-width': `${Math.min(640, Math.round(visualSize * 0.86))}px`,
     '--codex-feature-shadow-y': `${Math.round(Math.max(120, visualSize * 0.34))}px`,
     '--codex-feature-rise': `${rise}px`,
+    '--codex-feature-foot-shift': `${footShift}px`,
   };
 }
 

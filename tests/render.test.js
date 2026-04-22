@@ -148,20 +148,22 @@ test('home meadow shows all three eggs once every species has been caught but st
   }
 });
 
-test('home meadow centres the aggregate egg and spreads the flanking eggs', async () => {
+test('home meadow uses seeded random foot positions for eggs', async () => {
   const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
   const summary = [
     { monster: { id: 'inklet', name: 'Inklet' }, progress: { caught: true, stage: 0, branch: 'b1' } },
     { monster: { id: 'glimmerbug', name: 'Glimmerbug' }, progress: { caught: true, stage: 0, branch: 'b1' } },
     { monster: { id: 'phaeton', name: 'Phaeton' }, progress: { caught: true, stage: 0, branch: 'b1' } },
   ];
-  const meadow = buildMeadowMonsters(summary);
-  const phaeton = meadow.find((entry) => entry.species === 'phaeton');
-  const directEggs = meadow.filter((entry) => entry.species !== 'phaeton');
+  const meadow = buildMeadowMonsters(summary, { seed: 'eggs-a' });
+  const repeated = buildMeadowMonsters(summary, { seed: 'eggs-a' });
+  const alternate = buildMeadowMonsters(summary, { seed: 'eggs-b' });
 
-  assert.equal(phaeton.x, '52%');
-  assert.equal(phaeton.footY, '70%');
-  assert.ok(directEggs.every((entry) => entry.x !== phaeton.x));
+  assert.deepEqual(meadow.map((entry) => [entry.species, entry.x, entry.footY]), repeated.map((entry) => [entry.species, entry.x, entry.footY]));
+  assert.notDeepEqual(meadow.map((entry) => entry.x), alternate.map((entry) => entry.x));
+  assert.ok(meadow.every((entry) => entry.leftPct >= 25 && entry.leftPct <= 82));
+  assert.ok(meadow.every((entry) => entry.footPct >= 60 && entry.footPct <= 82));
+  assertMeadowSpacing(meadow);
 });
 
 test('home meadow scales mature monsters while preserving path-specific lanes', async () => {
@@ -187,10 +189,10 @@ test('home meadow scales mature monsters while preserving path-specific lanes', 
   assert.equal(inklet.lane, 'ground');
   assert.equal(glimmerbug.lane, 'air');
   assert.equal(phaeton.lane, 'air');
-  assert.ok(inklet.footPct > phaeton.footPct);
-  assert.ok(phaeton.footPct > glimmerbug.footPct);
   assert.ok(inklet.size > phaeton.size);
-  assert.ok(phaeton.size > glimmerbug.size);
+  assert.ok(phaeton.size > 0);
+  assert.ok(glimmerbug.size > 0);
+  assertMeadowSpacing(highStage);
 });
 
 test('home meadow hides every species for a fresh learner with nothing caught yet', async () => {
@@ -202,6 +204,20 @@ test('home meadow hides every species for a fresh learner with nothing caught ye
   ];
   assert.equal(buildMeadowMonsters(summary).length, 0);
 });
+
+function assertMeadowSpacing(entries) {
+  for (let leftIndex = 0; leftIndex < entries.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < entries.length; rightIndex += 1) {
+      const left = entries[leftIndex];
+      const right = entries[rightIndex];
+      const dx = left.leftPct - right.leftPct;
+      const dy = (left.footPct - right.footPct) * 1.45;
+      const hasMonster = left.path !== 'none' || right.path !== 'none';
+      const minimum = hasMonster ? 30 : 17;
+      assert.ok(Math.hypot(dx, dy) >= minimum);
+    }
+  }
+}
 
 test('hero background rotation includes the new Scribe Downs c landscapes', async () => {
   const { REGION_BACKGROUND_URLS } = await import('../src/surfaces/home/data.js');

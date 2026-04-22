@@ -13,8 +13,15 @@ import {
 
 export function HomeSurface({ model, actions }) {
   const heroBg = useMemo(() => randomHeroBackground(), [model.learner?.id]);
+  const meadowSeed = useMemo(
+    () => `${model.learner?.id || 'learner'}:${Math.random().toString(36).slice(2)}`,
+    [model.learner?.id],
+  );
 
-  const meadowMonsters = useMemo(() => buildMeadowMonsters(model.monsterSummary || []), [model.monsterSummary]);
+  const meadowMonsters = useMemo(
+    () => buildMeadowMonsters(model.monsterSummary || [], { seed: meadowSeed }),
+    [model.monsterSummary, meadowSeed],
+  );
   const subjectCards = useMemo(
     () => buildSubjectCards(model.subjects || [], model.dashboardStats || {}),
     [model.subjects, model.dashboardStats],
