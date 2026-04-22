@@ -387,8 +387,11 @@ function renderPracticeDashboard({ learner, service, subject, repositories }) {
   const begin = beginLabel(prefs);
   /* SATs Test is a one-shot dictation, so the round length and year filter both
      lose their meaning — the engine forces the full list at a fixed length. We
-     hide the tweak rows entirely rather than disable them so the UI stays calm. */
+     keep the rows in the DOM but hide them with `.is-placeholder` so the hero
+     keeps its exact height (visibility:hidden preserves layout). */
   const hideTweaks = prefs.mode === 'test';
+  const tweakMod = hideTweaks ? ' is-placeholder' : '';
+  const tweakAria = hideTweaks ? ' aria-hidden="true"' : '';
   return `
     <div class="setup-grid" style="grid-column:1/-1;">
       <section class="setup-main" style="${heroBgStyle(heroBg)}">
@@ -409,16 +412,14 @@ function renderPracticeDashboard({ learner, service, subject, repositories }) {
               return renderModeCard(mode, prefs.mode === mode.id);
             }).join('')}
           </div>
-          ${hideTweaks ? '' : `
-          <div class="tweak-row">
+          <div class="tweak-row${tweakMod}"${tweakAria}>
             <span class="tool-label">Round length</span>
             ${renderLengthPicker(prefs)}
           </div>
-          <div class="tweak-row">
+          <div class="tweak-row${tweakMod}"${tweakAria}>
             <span class="tool-label">Year group</span>
             ${renderYearPicker(prefs)}
           </div>
-          `}
           <div class="tweak-row">
             <span class="tool-label">Options</span>
             ${renderToggleChip('showCloze', Boolean(prefs.showCloze), 'Show sentence')}

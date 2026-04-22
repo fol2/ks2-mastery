@@ -3703,6 +3703,14 @@ textarea:focus-visible {
   padding-top: 4px;
   margin-top: 6px;
 }
+/* Placeholder rows reserve layout height in SATs mode but render nothing and
+   are skipped by assistive tech. `visibility:hidden` preserves the full box
+   (height, padding, margin, borders) so the hero cannot resize between modes.
+   The Options row that follows inherits the normal adjacent-sibling
+   continuation style — no divider reclamation needed. */
+.tweak-row.is-placeholder {
+  visibility: hidden;
+}
 .tool-label {
   font-size: 0.78rem;
   font-weight: 700;
