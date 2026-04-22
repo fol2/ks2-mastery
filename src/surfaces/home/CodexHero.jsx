@@ -53,7 +53,6 @@ function CodexFeature({ entry, onPreviewCreature }) {
       className={codexEntryStateClassName('codex-feature', entry)}
       style={codexFeatureStyle(entry)}
     >
-      <span className="codex-feature-orbit" aria-hidden="true" />
       {entry.displayState !== 'fresh' && <span className="codex-feature-shadow" aria-hidden="true" />}
       <CodexCreatureTrigger
         entry={entry}

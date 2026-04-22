@@ -46,9 +46,6 @@ test('codex feature style grows with caught stage', () => {
     displayState: 'monster',
   }), {
     '--codex-feature-size': '700px',
-    '--codex-feature-orbit-size': '399px',
-    '--codex-feature-halo-y': '233px',
-    '--codex-feature-halo-lift': '78px',
     '--codex-feature-shadow-width': '602px',
     '--codex-feature-shadow-y': '238px',
     '--codex-feature-rise': '155px',
@@ -66,7 +63,6 @@ test('codex feature style grows with caught stage', () => {
 
   assert.equal(eggSize, '252px');
   assert.ok(parseInt(eggSize, 10) < 700);
-  assert.equal(eggStyle['--codex-feature-halo-y'], '84px');
   assert.equal(eggStyle['--codex-feature-foot-shift'], '5px');
 
   assert.equal(codexFeatureStyle({
