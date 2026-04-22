@@ -36,6 +36,7 @@ export function codexFeatureStyle(entry) {
   return {
     '--codex-feature-size': `${visualSize}px`,
     '--codex-feature-orbit-size': `${Math.min(920, Math.round(visualSize * 1.14))}px`,
+    '--codex-feature-halo-lift': `${Math.round(rise / 2)}px`,
     '--codex-feature-shadow-width': `${Math.min(640, Math.round(visualSize * 0.86))}px`,
     '--codex-feature-shadow-y': `${Math.round(Math.max(120, visualSize * 0.34))}px`,
     '--codex-feature-rise': `${rise}px`,

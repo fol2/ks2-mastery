@@ -46,6 +46,7 @@ test('codex feature style scales by species and caught stage', () => {
   }), {
     '--codex-feature-size': '810px',
     '--codex-feature-orbit-size': '920px',
+    '--codex-feature-halo-lift': '78px',
     '--codex-feature-shadow-width': '640px',
     '--codex-feature-shadow-y': '275px',
     '--codex-feature-rise': '155px',

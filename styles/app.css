@@ -2293,11 +2293,11 @@ textarea:focus-visible {
   filter: grayscale(0.52) saturate(0.72);
 }
 .codex-feature-orbit {
-  --halo-translate-y: -70%;
+  --halo-translate-y: -50%;
   position: absolute;
   z-index: 0;
   left: 50%;
-  top: calc(46% - var(--codex-feature-rise, 0px));
+  top: calc(50% - var(--codex-feature-halo-lift, 0px));
   width: min(var(--codex-feature-orbit-size, 360px), 94vw);
   aspect-ratio: 1;
   transform: translate(-50%, var(--halo-translate-y));
@@ -2825,7 +2825,7 @@ textarea:focus-visible {
     padding: 0;
   }
   .codex-feature-orbit {
-    top: 42%;
+    top: 50%;
   }
   .codex-feature-shadow {
     top: 46%;
