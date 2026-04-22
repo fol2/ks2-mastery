@@ -2,14 +2,17 @@ import {
   CODEX_REFERENCE_STAGE_SIZES,
   CODEX_STAGE_SCALE,
 } from './codex-visual-scale.js';
+import {
+  DIRECT_STAGE_THRESHOLDS,
+  PHAETON_STAGE_THRESHOLDS,
+} from '../../platform/game/monsters.js';
 
 const MONSTER_VARIANTS = ['b1', 'b2'];
-const DIRECT_STAGE_THRESHOLDS = Object.freeze([1, 10, 30, 60, 90]);
-const PHAETON_STAGE_THRESHOLDS = Object.freeze([3, 25, 95, 145, 200]);
 const CODEX_POWER_RANK = Object.freeze({
   inklet: 1,
   glimmerbug: 2,
   phaeton: 3,
+  vellhorn: 4,
 });
 
 export const REGION_BACKGROUND_URLS = Object.freeze([
@@ -38,6 +41,7 @@ const MEADOW_SPECIES_SCALE = Object.freeze({
   inklet: 1.02,
   glimmerbug: 0.94,
   phaeton: 1.08,
+  vellhorn: 1,
 });
 
 const MEADOW_RANDOM_ZONES = Object.freeze({
@@ -62,6 +66,16 @@ const MEADOW_RANDOM_ZONES = Object.freeze({
     dur: [22, 28],
     roamForward: [28, 52],
     roamBack: [22, 40],
+  }),
+  'walk-b': Object.freeze({
+    x: [18, 46],
+    footY: [74, 86],
+    size: [168, 206],
+    lane: 'ground',
+    path: 'walk',
+    dur: [23, 30],
+    roamForward: [20, 38],
+    roamBack: [24, 42],
   }),
   'fly-a': Object.freeze({
     x: [36, 86],
@@ -102,6 +116,10 @@ const MONSTER_FACE = Object.freeze({
   'phaeton-b1-3': 'right',   'phaeton-b1-4': 'right',
   'phaeton-b2-0': 'left',    'phaeton-b2-1': 'left',    'phaeton-b2-2': 'right',
   'phaeton-b2-3': 'left',    'phaeton-b2-4': 'left',
+  'vellhorn-b1-0': 'right',  'vellhorn-b1-1': 'right',  'vellhorn-b1-2': 'right',
+  'vellhorn-b1-3': 'right',  'vellhorn-b1-4': 'right',
+  'vellhorn-b2-0': 'left',   'vellhorn-b2-1': 'left',   'vellhorn-b2-2': 'left',
+  'vellhorn-b2-3': 'left',   'vellhorn-b2-4': 'left',
 });
 
 const SUBJECT_DECOR = Object.freeze({
@@ -280,6 +298,7 @@ function defaultPathForMonster(monsterId) {
   if (monsterId === 'inklet') return 'walk';
   if (monsterId === 'glimmerbug') return 'fly-a';
   if (monsterId === 'phaeton') return 'fly-b';
+  if (monsterId === 'vellhorn') return 'walk-b';
   return 'walk';
 }
 
@@ -306,7 +325,7 @@ function buildRoamingMeadowEntry(entry, { index, placed, seed }) {
     stage,
     variant,
     slot,
-    path,
+    path: slot.path || path,
     size: meadowMonsterSize(monster.id, stage, slot.size),
     renderOrder: 20 + index,
   });
@@ -382,20 +401,23 @@ function randomMeadowSlot({ entry, zoneName, index, placed, seed, stage }) {
 function meadowZoneForStage(zoneName, stage) {
   const zone = MEADOW_RANDOM_ZONES[zoneName] || MEADOW_RANDOM_ZONES.walk;
   if (stage < 3 || zone.path === 'none') return zone;
+  const matureKey = MEADOW_RANDOM_ZONES[zoneName] ? zoneName : zone.path;
   const matureXByPath = {
     walk: [45, 70],
+    'walk-b': [22, 40],
     'fly-a': [64, 86],
     'fly-b': [44, 62],
   };
   const matureFootYByPath = {
     walk: [78, 86],
+    'walk-b': [82, 86],
     'fly-a': [58, 66],
     'fly-b': [66, 78],
   };
   return {
     ...zone,
-    x: matureXByPath[zone.path] || zone.x,
-    footY: matureFootYByPath[zone.path] || [Math.max(zone.footY[0], 58), zone.footY[1]],
+    x: matureXByPath[matureKey] || matureXByPath[zone.path] || zone.x,
+    footY: matureFootYByPath[matureKey] || matureFootYByPath[zone.path] || [Math.max(zone.footY[0], 58), zone.footY[1]],
   };
 }
 
@@ -573,7 +595,7 @@ export function buildSubjectCards(subjects = [], dashboardStats = {}) {
 export function buildCodexEntries(summary = []) {
   return summary.map(({ monster, progress }) => {
     const mastered = Math.max(0, Number(progress?.mastered) || 0);
-    const max = Math.max(1, Number(monster?.masteredMax) || (monster?.id === 'phaeton' ? 200 : 100));
+    const max = Math.max(1, Number(monster?.masteredMax) || (monster?.id === 'phaeton' ? 213 : 100));
     const stage = Math.max(0, Math.min(4, Number(progress?.stage) || 0));
     const caught = Boolean(progress?.caught);
     const displayState = !caught ? 'fresh' : stage === 0 ? 'egg' : 'monster';
@@ -660,6 +682,7 @@ function codexWordBand(monsterId) {
   if (monsterId === 'inklet') return 'Years 3-4 spellings';
   if (monsterId === 'glimmerbug') return 'Years 5-6 spellings';
   if (monsterId === 'phaeton') return 'Whole spelling codex';
+  if (monsterId === 'vellhorn') return 'Extra spellings';
   return 'Spelling codex';
 }
 

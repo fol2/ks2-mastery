@@ -1,4 +1,4 @@
-import { monsterIdForSpellingYearBand, recordMonsterMastery } from '../../platform/game/monster-system.js';
+import { monsterIdForSpellingWord, recordMonsterMastery } from '../../platform/game/monster-system.js';
 import { SPELLING_EVENT_TYPES } from './events.js';
 
 export function createSpellingRewardSubscriber({ gameStateRepository } = {}) {
@@ -10,7 +10,7 @@ export function createSpellingRewardSubscriber({ gameStateRepository } = {}) {
       rewardEvents.push(
         ...recordMonsterMastery(
           event.learnerId,
-          monsterIdForSpellingYearBand(event.yearBand),
+          monsterIdForSpellingWord(event),
           event.wordSlug,
           gameStateRepository,
         ),

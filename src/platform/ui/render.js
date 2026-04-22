@@ -403,6 +403,7 @@ const HERO_MONSTER_SLOTS = {
   inklet: { motion: 'walk' },
   glimmerbug: { motion: 'float' },
   phaeton: { motion: 'hover' },
+  vellhorn: { motion: 'walk' },
 };
 
 function renderHeroMonsterVisuals(monsters) {

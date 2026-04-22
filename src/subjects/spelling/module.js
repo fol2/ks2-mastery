@@ -138,6 +138,16 @@ function wordBankPillClass(status) {
   return status;
 }
 
+function spellingPoolLabel(word) {
+  if (word?.spellingPool === 'extra') return 'Extra';
+  return word?.yearLabel || 'Core';
+}
+
+function spellingPoolContextLabel(word) {
+  if (word?.spellingPool === 'extra') return 'Extra spelling';
+  return word?.yearLabel || 'Core spelling';
+}
+
 function wordMatchesSearch(word, query) {
   if (!query) return true;
   const fields = [
@@ -145,7 +155,9 @@ function wordMatchesSearch(word, query) {
     word.word,
     word.family,
     word.yearLabel,
+    spellingPoolLabel(word),
     word.explanation,
+    ...(Array.isArray(word.accepted) ? word.accepted : []),
     ...(Array.isArray(word.familyWords) ? word.familyWords : []),
   ].map(normaliseSearchText);
   return fields.some((field) => field.includes(query));
@@ -262,9 +274,10 @@ const MODE_CARDS = [
 
 const ROUND_LENGTH_OPTIONS = ['10', '20', '40'];
 const YEAR_FILTER_OPTIONS = [
+  { value: 'core', label: 'Core' },
   { value: 'y3-4', label: 'Y3-4' },
   { value: 'y5-6', label: 'Y5-6' },
-  { value: 'all', label: 'All' },
+  { value: 'extra', label: 'Extra' },
 ];
 
 function beginLabel(prefs) {
@@ -318,12 +331,12 @@ function renderLengthPicker(prefs) {
   `;
 }
 
-/* Segmented year picker — same visual vocabulary as the length picker so the
+/* Segmented pool picker — same visual vocabulary as the length picker so the
    setup scene reads as a single row of related choices. Reuses `.length-picker`
    / `.length-option` tokens; no new CSS needed. */
 function renderYearPicker(prefs) {
   const options = YEAR_FILTER_OPTIONS.map(({ value, label }) => {
-    const selected = (prefs.yearFilter || 'all') === value;
+    const selected = (prefs.yearFilter || 'core') === value;
     return `
       <button type="button" role="radio" aria-checked="${selected ? 'true' : 'false'}" class="length-option${selected ? ' selected' : ''}" data-action="spelling-set-pref" data-pref="yearFilter" value="${escapeHtml(value)}">
         <span>${escapeHtml(label)}</span>
@@ -331,7 +344,7 @@ function renderYearPicker(prefs) {
     `;
   }).join('');
   return `
-    <div class="length-picker" role="radiogroup" aria-label="Year group">
+    <div class="length-picker" role="radiogroup" aria-label="Spelling pool">
       ${options}
     </div>
   `;
@@ -353,7 +366,7 @@ function renderToggleChip(pref, checked, label) {
    meadow reads as a celebration of progress rather than a status list. */
 function renderSSMeadow(codex) {
   const caught = (Array.isArray(codex) ? codex : []).filter((entry) => entry?.progress?.caught);
-  const shown = caught.slice(0, 3);
+  const shown = caught.slice(0, 4);
   if (!shown.length) {
     return '<div class="ss-meadow-empty small muted">Catch your first monster to populate this meadow.</div>';
   }
@@ -392,7 +405,8 @@ function renderSSStatGrid(stats) {
 function renderPracticeDashboard({ learner, service, subject, repositories }) {
   const accent = accentFor(subject);
   const prefs = service.getPrefs(learner.id);
-  const stats = service.getStats(learner.id, prefs.yearFilter);
+  const statsFilter = prefs.mode === 'test' ? 'core' : prefs.yearFilter;
+  const stats = service.getStats(learner.id, statsFilter);
   const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id), {
     learnerId: learner.id,
     gameStateRepository: repositories?.gameState,
@@ -432,7 +446,7 @@ function renderPracticeDashboard({ learner, service, subject, repositories }) {
             ${renderLengthPicker(prefs)}
           </div>
           <div class="tweak-row${tweakMod}"${tweakAria}>
-            <span class="tool-label">Year group</span>
+            <span class="tool-label">Pool</span>
             ${renderYearPicker(prefs)}
           </div>
           <div class="tweak-row">
@@ -841,6 +855,7 @@ function sortWordBank(words) {
 function renderWordBankRow(word) {
   const pillToken = wordBankPillClass(word.status);
   const statusLabel = wordStatusLabel(word.status);
+  const poolLabel = spellingPoolLabel(word);
   const accuracy = accuracyPercent(word.progress);
   const due = dueLabel(word.progress);
   const attempts = Math.max(0, Number(word.progress?.attempts) || 0);
@@ -855,6 +870,7 @@ function renderWordBankRow(word) {
       <div class="wb-cell-word">
         <span class="wb-word">${escapeHtml(word.word)}</span>
         <span class="wb-pill ${escapeHtml(pillToken)}">${escapeHtml(statusLabel)}</span>
+        <span class="wb-pool ${word.spellingPool === 'extra' ? 'extra' : 'core'}">${escapeHtml(poolLabel)}</span>
       </div>
       <div class="wb-cell-meta">
         <span class="wb-meta"><span class="wb-meta-label">Accuracy</span><span class="wb-meta-value">${accuracy == null ? '—' : `${accuracy}%`}</span></span>
@@ -1047,7 +1063,7 @@ function renderWordDetailModal({ word, mode = 'explain', typed = '', result = nu
           <div class="wb-modal-head-main">
             ${speaker}
             <div>
-              <p class="wb-modal-eyebrow">${escapeHtml(word.yearLabel || 'Word')}</p>
+              <p class="wb-modal-eyebrow">${escapeHtml(spellingPoolContextLabel(word))}</p>
               ${heading}
             </div>
           </div>
@@ -1074,41 +1090,62 @@ function renderWordDetailModal({ word, mode = 'explain', typed = '', result = nu
    optional modal overlay when transientUi points at a word.
    -------------------------------------------------------------- */
 function renderWordBankAggregates(analytics) {
-  const all = analytics.pools.all;
-  const y34 = analytics.pools.y34;
-  const y56 = analytics.pools.y56;
+  const emptyStats = { total: 0, secure: 0, due: 0, trouble: 0, fresh: 0, accuracy: null };
+  const core = analytics.pools.core || analytics.pools.all || emptyStats;
+  const y34 = analytics.pools.y34 || emptyStats;
+  const y56 = analytics.pools.y56 || emptyStats;
+  const extra = analytics.pools.extra || emptyStats;
+  const cards = [
+    {
+      eyebrow: 'Core spellings',
+      title: 'Core statutory progress',
+      stats: [
+        { label: 'Total', value: core.total, sub: 'Words in core pool' },
+        { label: 'Secure', value: core.secure, sub: 'Stage 4+' },
+        { label: 'Due now', value: core.due, sub: 'Due today or overdue' },
+        { label: 'Accuracy', value: core.accuracy == null ? '—' : `${core.accuracy}%`, sub: 'Across stored attempts' },
+      ],
+    },
+    {
+      eyebrow: 'Years 3-4',
+      title: 'Lower KS2 spelling pool',
+      stats: [
+        { label: 'Total', value: y34.total, sub: 'Words in pool' },
+        { label: 'Secure', value: y34.secure, sub: 'Stable recall' },
+        { label: 'Trouble', value: y34.trouble, sub: 'Weak or fragile' },
+        { label: 'Unseen', value: y34.fresh, sub: 'Not yet introduced' },
+      ],
+    },
+    {
+      eyebrow: 'Years 5-6',
+      title: 'Upper KS2 spelling pool',
+      stats: [
+        { label: 'Total', value: y56.total, sub: 'Words in pool' },
+        { label: 'Secure', value: y56.secure, sub: 'Stable recall' },
+        { label: 'Trouble', value: y56.trouble, sub: 'Weak or fragile' },
+        { label: 'Unseen', value: y56.fresh, sub: 'Not yet introduced' },
+      ],
+    },
+    {
+      eyebrow: 'Extra',
+      title: 'Expansion spelling pool',
+      stats: [
+        { label: 'Total', value: extra.total, sub: 'Words in pool' },
+        { label: 'Secure', value: extra.secure, sub: 'Stable recall' },
+        { label: 'Trouble', value: extra.trouble, sub: 'Weak or fragile' },
+        { label: 'Unseen', value: extra.fresh, sub: 'Not yet introduced' },
+      ],
+    },
+  ];
   return `
-    <div class="three-col wb-aggregates">
-      <section class="wb-card wb-card-compact">
-        <div class="eyebrow">All spellings</div>
-        <h2 class="section-title">Whole-list progress</h2>
-        ${summaryCards([
-          { label: 'Total', value: all.total, sub: 'Words on the list' },
-          { label: 'Secure', value: all.secure, sub: 'Stage 4+' },
-          { label: 'Due now', value: all.due, sub: 'Due today or overdue' },
-          { label: 'Accuracy', value: all.accuracy == null ? '—' : `${all.accuracy}%`, sub: 'Across stored attempts' },
-        ])}
-      </section>
-      <section class="wb-card wb-card-compact">
-        <div class="eyebrow">Years 3-4</div>
-        <h2 class="section-title">Lower KS2 spelling pool</h2>
-        ${summaryCards([
-          { label: 'Total', value: y34.total, sub: 'Words in pool' },
-          { label: 'Secure', value: y34.secure, sub: 'Stable recall' },
-          { label: 'Trouble', value: y34.trouble, sub: 'Weak or fragile' },
-          { label: 'Unseen', value: y34.fresh, sub: 'Not yet introduced' },
-        ])}
-      </section>
-      <section class="wb-card wb-card-compact">
-        <div class="eyebrow">Years 5-6</div>
-        <h2 class="section-title">Upper KS2 spelling pool</h2>
-        ${summaryCards([
-          { label: 'Total', value: y56.total, sub: 'Words in pool' },
-          { label: 'Secure', value: y56.secure, sub: 'Stable recall' },
-          { label: 'Trouble', value: y56.trouble, sub: 'Weak or fragile' },
-          { label: 'Unseen', value: y56.fresh, sub: 'Not yet introduced' },
-        ])}
-      </section>
+    <div class="wb-aggregates">
+      ${cards.map((card) => `
+        <section class="wb-card wb-card-compact">
+          <div class="eyebrow">${escapeHtml(card.eyebrow)}</div>
+          <h2 class="section-title">${escapeHtml(card.title)}</h2>
+          ${summaryCards(card.stats)}
+        </section>
+      `).join('')}
     </div>
   `;
 }
@@ -1454,7 +1491,11 @@ export const spellingModule = {
       const word = findWordBankEntry(service.getAnalyticsSnapshot(learnerId), slug);
       if (!word) return true;
       const typed = String(data.formData?.get?.('typed') || '').trim();
-      const result = typed.toLowerCase() === String(word.word).toLowerCase() ? 'correct' : 'incorrect';
+      const accepted = Array.isArray(word.accepted) && word.accepted.length
+        ? word.accepted
+        : [word.word, word.slug];
+      const normalisedTyped = typed.toLowerCase();
+      const result = accepted.map((entry) => String(entry).toLowerCase()).includes(normalisedTyped) ? 'correct' : 'incorrect';
       store.patch((current) => ({
         transientUi: {
           ...current.transientUi,

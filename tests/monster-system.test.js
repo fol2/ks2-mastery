@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   derivePhaeton,
   ensureMonsterBranches,
+  monsterIdForSpellingWord,
   monsterSummaryFromSpellingAnalytics,
   progressForMonster,
   recordMonsterMastery,
@@ -35,7 +36,7 @@ function makeGameStateRepository(initialState = {}) {
   };
 }
 
-test('direct spelling monsters evolve at 10, 30, 60 and 90 secure words', () => {
+test('direct spelling monsters evolve at 10, 30, 60 and 100 secure words', () => {
   const cases = [
     [0, 0],
     [9, 0],
@@ -44,8 +45,9 @@ test('direct spelling monsters evolve at 10, 30, 60 and 90 secure words', () => 
     [30, 2],
     [59, 2],
     [60, 3],
-    [89, 3],
-    [90, 4],
+    [90, 3],
+    [99, 3],
+    [100, 4],
   ];
 
   for (const [secureWords, expectedStage] of cases) {
@@ -58,6 +60,17 @@ test('direct spelling monsters evolve at 10, 30, 60 and 90 secure words', () => 
 
     assert.equal(progressForMonster(state, 'inklet').stage, expectedStage, `${secureWords} secure words`);
   }
+});
+
+test('Vellhorn follows the direct spelling monster stage thresholds', () => {
+  const state = {
+    vellhorn: {
+      caught: true,
+      mastered: masteredWords(100, 'extra'),
+    },
+  };
+
+  assert.equal(progressForMonster(state, 'vellhorn').stage, 4);
 });
 
 test('direct spelling monsters unlock stage 0 from the first secure word', () => {
@@ -90,8 +103,9 @@ test('Phaeton evolves from combined secure spelling words without requiring both
     [{ inklet: 95, glimmerbug: 0 }, 2],
     [{ inklet: 144, glimmerbug: 0 }, 2],
     [{ inklet: 145, glimmerbug: 0 }, 3],
-    [{ inklet: 199, glimmerbug: 0 }, 3],
-    [{ inklet: 200, glimmerbug: 0 }, 4],
+    [{ inklet: 200, glimmerbug: 0 }, 3],
+    [{ inklet: 212, glimmerbug: 0 }, 3],
+    [{ inklet: 213, glimmerbug: 0 }, 4],
   ];
 
   for (const [{ inklet, glimmerbug }, expectedStage] of cases) {
@@ -103,6 +117,17 @@ test('Phaeton evolves from combined secure spelling words without requiring both
 
     assert.equal(derivePhaeton(state).stage, expectedStage, `${combined} combined secure words`);
   }
+});
+
+test('Phaeton ignores Extra spelling progress from Vellhorn', () => {
+  const state = {
+    inklet: { caught: true, mastered: masteredWords(24, 'inklet') },
+    glimmerbug: { caught: false, mastered: [] },
+    vellhorn: { caught: true, mastered: masteredWords(22, 'extra') },
+  };
+
+  assert.equal(derivePhaeton(state).mastered, 24);
+  assert.equal(derivePhaeton(state).stage, 0);
 });
 
 test('Phaeton unlocks stage 0 from three combined secure words', () => {
@@ -142,8 +167,16 @@ test('monster branches are assigned once and preserved for existing learner stat
   assert.equal(state.inklet.branch, 'b1');
   assert.equal(state.glimmerbug.branch, 'b2');
   assert.equal(state.phaeton.branch, 'b2');
+  assert.equal(state.vellhorn.branch, 'b2');
   assert.equal(progressForMonster(state, 'inklet').branch, 'b1');
   assert.equal(derivePhaeton(state).branch, 'b2');
+});
+
+test('spelling monster routing maps Extra words to Vellhorn while preserving core bands', () => {
+  assert.equal(monsterIdForSpellingWord({ spellingPool: 'core', yearBand: '3-4' }), 'inklet');
+  assert.equal(monsterIdForSpellingWord({ spellingPool: 'core', yearBand: '5-6' }), 'glimmerbug');
+  assert.equal(monsterIdForSpellingWord({ spellingPool: 'extra', yearBand: 'extra' }), 'vellhorn');
+  assert.equal(monsterIdForSpellingWord({ year: 'extra' }), 'vellhorn');
 });
 
 test('recording mastery stores the selected branch on reward events', () => {
@@ -153,8 +186,23 @@ test('recording mastery stores the selected branch on reward events', () => {
 
   assert.equal(state.inklet.branch, 'b2');
   assert.equal(state.glimmerbug.branch, 'b2');
+  assert.equal(state.vellhorn.branch, 'b2');
   assert.equal(events[0].previous.branch, 'b2');
   assert.equal(events[0].next.branch, 'b2');
+});
+
+test('Extra mastery updates Vellhorn without emitting aggregate Phaeton rewards or duplicate progress', () => {
+  const repository = makeGameStateRepository();
+  const firstEvents = recordMonsterMastery('learner-a', 'vellhorn', 'mollusc', repository, { random: () => 0.25 });
+  const duplicateEvents = recordMonsterMastery('learner-a', 'vellhorn', 'mollusc', repository, { random: () => 0.75 });
+  const state = repository.read('learner-a', 'monster-codex');
+
+  assert.equal(firstEvents.length, 1);
+  assert.equal(firstEvents[0].monsterId, 'vellhorn');
+  assert.equal(firstEvents.some((event) => event.monsterId === 'phaeton'), false);
+  assert.deepEqual(duplicateEvents, []);
+  assert.deepEqual(state.vellhorn.mastered, ['mollusc']);
+  assert.equal(derivePhaeton(state).mastered, 0);
 });
 
 test('analytics summaries use persisted monster branches while deriving current progress', () => {
@@ -162,6 +210,7 @@ test('analytics summaries use persisted monster branches while deriving current 
     inklet: { branch: 'b2' },
     glimmerbug: { branch: 'b1' },
     phaeton: { branch: 'b2' },
+    vellhorn: { branch: 'b1' },
   });
   const analytics = {
     wordGroups: [
@@ -169,6 +218,7 @@ test('analytics summaries use persisted monster branches while deriving current 
         words: [
           { slug: 'possess', status: 'secure', year: '3-4' },
           { slug: 'necessary', status: 'secure', year: '5-6' },
+          { slug: 'mollusc', status: 'secure', year: 'extra', spellingPool: 'extra' },
         ],
       },
     ],
@@ -182,7 +232,10 @@ test('analytics summaries use persisted monster branches while deriving current 
   assert.equal(summary.find((entry) => entry.monster.id === 'inklet').progress.branch, 'b2');
   assert.equal(summary.find((entry) => entry.monster.id === 'glimmerbug').progress.branch, 'b1');
   assert.equal(summary.find((entry) => entry.monster.id === 'phaeton').progress.branch, 'b2');
+  assert.equal(summary.find((entry) => entry.monster.id === 'vellhorn').progress.branch, 'b1');
   assert.equal(summary.find((entry) => entry.monster.id === 'inklet').progress.mastered, 1);
+  assert.equal(summary.find((entry) => entry.monster.id === 'vellhorn').progress.mastered, 1);
+  assert.equal(summary.find((entry) => entry.monster.id === 'phaeton').progress.mastered, 2);
 });
 
 test('analytics summaries can project branches without writing during render', () => {
@@ -201,4 +254,5 @@ test('analytics summaries can project branches without writing during render', (
 
   assert.equal(repository.writes(), 0);
   assert.equal(summary.find((entry) => entry.monster.id === 'inklet').progress.mastered, 1);
+  assert.equal(summary.find((entry) => entry.monster.id === 'vellhorn').progress.mastered, 0);
 });

@@ -28,10 +28,23 @@
   var WORD_BY_SLUG = Object.create(null);
   for (var i = 0; i < WORDS.length; i++) WORD_BY_SLUG[WORDS[i].slug] = WORDS[i];
 
-  // Y3-4 vs Y5-6 pools for monster assignment (legacy tied monsters to year bands).
+  function spellingPoolForWord(word) {
+    return word && word.spellingPool === "extra" ? "extra" : "core";
+  }
+
+  function normaliseFilter(yearFilter) {
+    if (yearFilter === "extra") return "extra";
+    if (yearFilter === "y3-4") return "y3-4";
+    if (yearFilter === "y5-6") return "y5-6";
+    return "core";
+  }
+
+  // Runtime pools drive filtering. The y3-4/y5-6 pools stay core-only.
   var POOLS = {
-    "y3-4": WORDS.filter(function (w) { return w.year === "3-4"; }),
-    "y5-6": WORDS.filter(function (w) { return w.year === "5-6"; }),
+    core: WORDS.filter(function (w) { return spellingPoolForWord(w) === "core"; }),
+    "y3-4": WORDS.filter(function (w) { return spellingPoolForWord(w) === "core" && w.year === "3-4"; }),
+    "y5-6": WORDS.filter(function (w) { return spellingPoolForWord(w) === "core" && w.year === "5-6"; }),
+    extra: WORDS.filter(function (w) { return spellingPoolForWord(w) === "extra"; }),
   };
 
   // ----- helpers ------------------------------------------------------------
@@ -128,8 +141,11 @@
   // ----- selection (verbatim legacy 2119-2279) ------------------------------
 
   function filteredWords(yearFilter) {
-    var value = yearFilter === "y3-4" ? "3-4" : yearFilter === "y5-6" ? "5-6" : "all";
-    return WORDS.filter(function (word) { return value === "all" ? true : word.year === value; });
+    var value = normaliseFilter(yearFilter);
+    if (value === "y3-4") return POOLS["y3-4"].slice();
+    if (value === "y5-6") return POOLS["y5-6"].slice();
+    if (value === "extra") return POOLS.extra.slice();
+    return POOLS.core.slice();
   }
 
   function scoreForSmart(profileId, word) {
@@ -323,7 +339,7 @@
     options = options || {};
     var profileId = options.profileId || "default";
     var mode = options.mode || MODES.SMART;
-    var yearFilter = options.yearFilter || "all";
+    var yearFilter = mode === MODES.TEST ? "core" : normaliseFilter(options.yearFilter);
     var length = typeof options.length === "number" ? options.length : 20;
 
     var selected = [];
@@ -365,14 +381,18 @@
       }
     }
 
+    var practiceOnly = Boolean(options.practiceOnly && actualMode !== MODES.TEST);
+
     var session = {
       id: makeSessionId(),
       type: actualMode === MODES.TEST ? "test" : "learning",
       mode: actualMode,
-      label: actualMode === MODES.TROUBLE ? "Trouble drill"
+      label: practiceOnly ? "Word bank practice"
+          : actualMode === MODES.TROUBLE ? "Trouble drill"
           : actualMode === MODES.SINGLE ? "Single-word drill"
           : actualMode === MODES.TEST ? "SATs 20 test"
           : "Smart review",
+      practiceOnly: practiceOnly,
       fallbackToSmart: fallback,
       profileId: profileId,
       uniqueWords: selected.map(function (w) { return w.slug; }),
@@ -632,7 +652,12 @@
       info.successes += 1;
       if (info.successes >= info.needed) {
         info.done = true;
-        var outcome = applyLearningOutcome(profileId, word.slug, info);
+        var outcome = null;
+        if (session.practiceOnly) {
+          info.applied = true;
+        } else {
+          outcome = applyLearningOutcome(profileId, word.slug, info);
+        }
         return {
           correct: true,
           phase: "question",
@@ -640,7 +665,9 @@
             kind: info.hadWrong ? "info" : "success",
             headline: info.hadWrong ? "Correct now." : "Correct.",
             answer: word.word,
-            body: info.hadWrong
+            body: session.practiceOnly
+              ? "Practice complete. Learner progress was not changed."
+              : info.hadWrong
               ? "This word is fixed for this round and will stay due for future review."
               : "This word is secure for today.",
           },
@@ -724,12 +751,14 @@
       mode: session.mode,
       label: session.label,
       cards: [
-        { label: "Words in round", value: total, sub: "Unique words selected" },
-        { label: "Correct without a miss", value: firstTime, sub: "Strong on the first go" },
+        { label: session.practiceOnly ? "Practice words" : "Words in round", value: total, sub: "Unique words selected" },
+        { label: "Clean first attempts", value: firstTime, sub: session.practiceOnly ? "Practice result only" : "Strong on the first go" },
         { label: "Needed correction", value: mistakes.length, sub: "These words came back again" },
         { label: "Prompts heard", value: session.promptCount, sub: "Includes repeats of weak words" },
       ],
-      message: mistakes.length
+      message: session.practiceOnly
+        ? "Practice complete. Learner progress was not changed."
+        : mistakes.length
         ? "Good. The weak words were caught quickly and are now marked due again for this learner."
         : "Excellent. Every selected word was correct without needing a correction step.",
       mistakes: mistakes,
@@ -820,7 +849,9 @@
   function monsterForWord(wordOrSlug) {
     var slug = typeof wordOrSlug === "string" ? wordOrSlug : (wordOrSlug && wordOrSlug.slug);
     var meta = window.KS2_WORD_META || {};
-    var year = meta[slug] && meta[slug].year;
+    var word = meta[slug] || {};
+    var year = word.year;
+    if (word.spellingPool === "extra" || year === "extra") return "vellhorn";
     if (year === "5-6") return "glimmerbug";
     return "inklet";
   }

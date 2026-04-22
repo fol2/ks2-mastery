@@ -102,6 +102,8 @@ Current use:
 - operators edit the draft bundle through the thin settings UI or import/export scripts
 - learner runtime reads only the current published release snapshot
 - writes use the same account revision and request-receipt policy as learner-profile writes
+- accounts with no stored spelling row receive the current seeded spelling bundle, including Extra, on read
+- accounts with an existing stored row keep that custom content until an operator imports/publishes the new bundle or intentionally resets to the seed
 
 ## Current mutation safety rules
 

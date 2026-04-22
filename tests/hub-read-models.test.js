@@ -139,7 +139,7 @@ test('admin hub read model reports published release status, validation state, a
 
   assert.equal(model.permissions.canViewAdminHub, true);
   assert.equal(model.contentReleaseStatus.subjectId, 'spelling');
-  assert.equal(model.contentReleaseStatus.publishedVersion, 1);
+  assert.equal(model.contentReleaseStatus.publishedVersion, SEEDED_SPELLING_CONTENT_BUNDLE.publication.publishedVersion);
   assert.equal(model.importValidationStatus.ok, true);
   assert.equal(model.auditLogLookup.available, true);
   assert.equal(model.auditLogLookup.entries[0].requestId, 'req-1');

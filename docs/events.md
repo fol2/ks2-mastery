@@ -27,6 +27,7 @@ subject service -> domain events -> platform event runtime -> subscribers -> rew
 ## Current reward reactions
 
 The spelling reward subscriber listens for `spelling.word-secured` and updates the monster codex.
+Secure-word events include `spellingPool`, so reward routing does not have to infer Extra content from a statutory year band.
 That can emit reward events such as:
 
 - `reward.monster` with `kind = caught`
@@ -35,7 +36,15 @@ That can emit reward events such as:
 - `reward.monster` with `kind = mega`
 
 The visible Codex progress is not sourced from this event log. It is projected from the current spelling analytics secure rows so legacy imports, cache repairs and remote restores stay locked to the same secure-word counts shown in Spelling analytics.
-Direct spelling monsters are caught into Stage 0 at 1 secure word, then evolve at 10, 30, 60 and 90 secure words. Phaeton is caught into Stage 0 at 3 combined secure words, then evolves from combined secure words at 25, 95, 145 and 200, without requiring both spelling pools to cross a separate gate.
+Direct spelling monsters are caught into Stage 0 at 1 secure word, then evolve at 10, 30, 60 and 100 secure words.
+Current routing is:
+
+- core Years 3-4 -> Inklet
+- core Years 5-6 -> Glimmerbug
+- Extra -> Vellhorn
+
+Phaeton is caught into Stage 0 at 3 combined core secure words, then evolves from combined Inklet and Glimmerbug secure words at 25, 95, 145 and 213, without requiring both core bands to cross a separate gate.
+Vellhorn and Extra progress do not emit Phaeton reward events.
 
 Reward events can carry toast metadata for the shared overlay UI, but they do not mutate subject learning state.
 

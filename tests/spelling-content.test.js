@@ -9,6 +9,7 @@ import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createLocalSpellingContentRepository } from '../src/subjects/spelling/content/repository.js';
 import { createSpellingContentService } from '../src/subjects/spelling/content/service.js';
 import {
+  SPELLING_CONTENT_MODEL_VERSION,
   extractPortableSpellingContent,
   publishSpellingContentBundle,
   validateSpellingContentBundle,
@@ -51,6 +52,48 @@ function addDraftOnlyWord(bundle) {
     sortIndex: 9999,
   });
   next.draft.wordLists[0].wordSlugs.push('draftonly');
+  return next;
+}
+
+function addExtraWordList(bundle, { wordSpellingPool } = {}) {
+  const next = cloneSerialisable(bundle);
+  const listId = 'extra-test-science';
+  next.draft.wordLists.push({
+    id: listId,
+    title: 'Extra test science',
+    spellingPool: 'extra',
+    yearGroups: [],
+    tags: ['extra', 'science'],
+    wordSlugs: ['cephalopod'],
+    sourceNote: 'Extra pool test list',
+    provenance: { source: 'tests', note: 'Added inside tests.' },
+    sortIndex: 9999,
+  });
+  next.draft.words.push({
+    slug: 'cephalopod',
+    word: 'cephalopod',
+    family: 'Science: cephalopods',
+    listId,
+    ...(wordSpellingPool ? { spellingPool: wordSpellingPool } : {}),
+    yearGroups: wordSpellingPool === 'core' ? ['Y3', 'Y4'] : [],
+    tags: ['extra', 'science'],
+    accepted: ['cephalopod'],
+    explanation: 'A cephalopod is a sea animal such as an octopus or squid.',
+    sentenceEntryIds: ['cephalopod__01'],
+    sourceNote: 'Extra pool test word',
+    provenance: { source: 'tests', note: 'Added inside tests.' },
+    sortIndex: 9999,
+  });
+  next.draft.sentences.push({
+    id: 'cephalopod__01',
+    wordSlug: 'cephalopod',
+    text: 'An octopus is a cephalopod with eight arms.',
+    variantLabel: 'baseline',
+    tags: ['extra', 'science'],
+    sourceNote: 'Extra pool test sentence',
+    provenance: { source: 'tests', note: 'Added inside tests.' },
+    sortIndex: 9999,
+  });
   return next;
 }
 
@@ -103,16 +146,84 @@ test('seeded spelling content validates and round-trips through the portable exp
 
   const validation = content.validate();
   assert.equal(validation.ok, true);
+  assert.equal(validation.bundle.modelVersion, SPELLING_CONTENT_MODEL_VERSION);
   assert.equal(validation.errors.length, 0);
-  assert.equal(validation.bundle.releases.length, 1);
-  assert.equal(validation.bundle.publication.publishedVersion, 1);
+  assert.equal(validation.bundle.releases.length, 2);
+  assert.equal(validation.bundle.publication.publishedVersion, 2);
+  assert.ok(validation.bundle.draft.wordLists
+    .filter((list) => list.id.startsWith('statutory-'))
+    .every((list) => list.spellingPool === 'core'));
+  assert.ok(validation.bundle.draft.words
+    .filter((word) => word.listId.startsWith('statutory-'))
+    .every((word) => word.spellingPool === 'core'));
+  assert.ok(validation.bundle.releases[0].snapshot.words.every((word) => word.spellingPool === 'core'));
   assert.ok(validation.bundle.draft.words.every((word) => word.explanation));
-  assert.ok(validation.bundle.releases[0].snapshot.words.every((word) => word.explanation));
+  assert.ok(validation.bundle.releases.at(-1).snapshot.words.every((word) => word.explanation));
 
   const exported = content.exportPortable();
   const roundTripped = extractPortableSpellingContent(exported);
   assert.equal(roundTripped.draft.words.length, validation.bundle.draft.words.length);
-  assert.equal(roundTripped.releases[0].version, 1);
+  assert.equal(roundTripped.releases.at(-1).version, 2);
+});
+
+test('seeded spelling content includes the initial Extra expansion in the current release only', () => {
+  const validation = validateSpellingContentBundle(SEEDED_SPELLING_CONTENT_BUNDLE);
+  assert.equal(validation.ok, true);
+
+  const extraList = validation.bundle.draft.wordLists.find((list) => list.id === 'extra-science-word-building');
+  assert.ok(extraList);
+  assert.equal(extraList.spellingPool, 'extra');
+  assert.deepEqual(extraList.yearGroups, []);
+  assert.equal(extraList.wordSlugs.length, 22);
+
+  const extraWords = validation.bundle.draft.words.filter((word) => word.spellingPool === 'extra');
+  assert.equal(extraWords.length, 22);
+
+  const baselineRelease = validation.bundle.releases[0];
+  const currentRelease = validation.bundle.releases.at(-1);
+  assert.equal(validation.bundle.publication.currentReleaseId, currentRelease.id);
+  assert.equal(baselineRelease.snapshot.wordBySlug.mollusc, undefined);
+
+  const runtimeWord = currentRelease.snapshot.wordBySlug.mollusc;
+  assert.equal(runtimeWord.word, 'mollusc');
+  assert.equal(runtimeWord.spellingPool, 'extra');
+  assert.equal(runtimeWord.year, 'extra');
+  assert.deepEqual(runtimeWord.accepted, ['mollusc']);
+  assert.equal(runtimeWord.accepted.includes('mollusk'), false);
+});
+
+test('extra spelling pool validates without statutory year groups and publishes as Extra runtime words', () => {
+  const bundle = addExtraWordList(SEEDED_SPELLING_CONTENT_BUNDLE);
+  const validation = validateSpellingContentBundle(bundle);
+
+  assert.equal(validation.ok, true);
+  const extraList = validation.bundle.draft.wordLists.find((list) => list.id === 'extra-test-science');
+  const extraWord = validation.bundle.draft.words.find((word) => word.slug === 'cephalopod');
+  assert.equal(extraList.spellingPool, 'extra');
+  assert.deepEqual(extraList.yearGroups, []);
+  assert.equal(extraWord.spellingPool, 'extra');
+  assert.deepEqual(extraWord.yearGroups, []);
+
+  const published = publishSpellingContentBundle(bundle, {
+    notes: 'Publish Extra pool test word.',
+    publishedAt: 23456,
+  });
+  const runtimeWord = published.releases.at(-1).snapshot.wordBySlug.cephalopod;
+
+  assert.equal(runtimeWord.spellingPool, 'extra');
+  assert.equal(runtimeWord.year, 'extra');
+  assert.equal(runtimeWord.yearLabel, 'Extra');
+  assert.deepEqual(runtimeWord.yearGroups, []);
+  assert.deepEqual(runtimeWord.accepted, ['cephalopod']);
+  assert.deepEqual(runtimeWord.familyWords, ['cephalopod']);
+});
+
+test('validation catches spelling-pool mismatches between word lists and words', () => {
+  const broken = addExtraWordList(SEEDED_SPELLING_CONTENT_BUNDLE, { wordSpellingPool: 'core' });
+
+  const validation = validateSpellingContentBundle(broken);
+  assert.equal(validation.ok, false);
+  assert.ok(validation.errors.some((issue) => issue.code === 'pool_mismatch'));
 });
 
 test('validation catches duplicate words and broken sentence references', () => {
@@ -224,17 +335,19 @@ test('runtime stays pinned to the published spelling release until a new draft i
   });
   assert.equal(transition.ok, true);
   assert.equal(transition.state.session.currentCard.word.slug, 'draftonly');
-  assert.equal(content.getSummary().publishedVersion, 2);
+  assert.equal(content.getSummary().publishedVersion, SEEDED_SPELLING_CONTENT_BUNDLE.publication.publishedVersion + 1);
 });
 
 test('publishing a valid spelling draft increments release versions and updates the publication pointer', () => {
+  const currentReleaseCount = SEEDED_SPELLING_CONTENT_BUNDLE.releases.length;
+  const currentVersion = SEEDED_SPELLING_CONTENT_BUNDLE.publication.publishedVersion;
   const published = publishSpellingContentBundle(SEEDED_SPELLING_CONTENT_BUNDLE, {
     notes: 'Regression publish test.',
     publishedAt: 12345,
   });
 
-  assert.equal(published.releases.length, 2);
-  assert.equal(published.publication.currentReleaseId, 'spelling-r2');
-  assert.equal(published.publication.publishedVersion, 2);
-  assert.equal(published.releases.at(-1).snapshot.words.length, SEEDED_SPELLING_CONTENT_BUNDLE.releases[0].snapshot.words.length);
+  assert.equal(published.releases.length, currentReleaseCount + 1);
+  assert.equal(published.publication.currentReleaseId, `spelling-r${currentVersion + 1}`);
+  assert.equal(published.publication.publishedVersion, currentVersion + 1);
+  assert.equal(published.releases.at(-1).snapshot.words.length, SEEDED_SPELLING_CONTENT_BUNDLE.releases.at(-1).snapshot.words.length);
 });

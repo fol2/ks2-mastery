@@ -58,6 +58,34 @@ function completeSingleWordRound(service, learnerId, answer = 'possess', publish
   return { state, domainEvents };
 }
 
+function completeChosenWordRound(service, learnerId, { slug, answer = slug, yearFilter = 'core', publish = null }) {
+  const domainEvents = [];
+  let transition = service.startSession(learnerId, {
+    mode: 'single',
+    words: [slug],
+    yearFilter,
+    length: 1,
+  });
+  if (typeof publish === 'function') publish(transition.events);
+  domainEvents.push(...transition.events);
+
+  let state = transition.state;
+  while (state.phase === 'session') {
+    transition = service.submitAnswer(learnerId, state, answer);
+    if (typeof publish === 'function') publish(transition.events);
+    domainEvents.push(...transition.events);
+    state = transition.state;
+    if (state.phase === 'session' && state.awaitingAdvance) {
+      transition = service.continueSession(learnerId, state);
+      if (typeof publish === 'function') publish(transition.events);
+      domainEvents.push(...transition.events);
+      state = transition.state;
+    }
+  }
+
+  return { state, domainEvents };
+}
+
 function runSecureWordRounds(harness, rounds = 4, publish = null) {
   const learnerId = 'learner-a';
   let last = null;
@@ -89,6 +117,40 @@ test('reward state updates only when domain events are published through the run
   assert.ok(published.reactionEvents.some((event) => event.kind === 'caught' && event.monsterId === 'inklet'));
   assert.ok(harness.repositories.gameState.read(learnerId, 'monster-codex').inklet.mastered.includes('possess'));
   assert.ok(harness.repositories.eventLog.list(learnerId).some((event) => event.type === 'reward.monster'));
+});
+
+test('Extra secure-word rewards catch Vellhorn without deriving Phaeton progress', () => {
+  const harness = makeHarness();
+  const learnerId = 'learner-extra';
+  const domainEvents = [];
+
+  for (let round = 0; round < 4; round += 1) {
+    const completed = completeChosenWordRound(harness.service, learnerId, {
+      slug: 'mollusc',
+      answer: 'mollusc',
+      yearFilter: 'extra',
+    });
+    domainEvents.push(...completed.domainEvents);
+    harness.nowRef.value += DAY_MS * 2;
+  }
+
+  assert.ok(domainEvents.some((event) => (
+    event.type === 'spelling.word-secured'
+    && event.wordSlug === 'mollusc'
+    && event.spellingPool === 'extra'
+  )));
+
+  const runtime = createEventRuntime({
+    repositories: harness.repositories,
+    subscribers: [createSpellingRewardSubscriber({ gameStateRepository: harness.repositories.gameState })],
+  });
+  const published = runtime.publish(domainEvents);
+  const state = harness.repositories.gameState.read(learnerId, 'monster-codex');
+
+  assert.ok(published.reactionEvents.some((event) => event.kind === 'caught' && event.monsterId === 'vellhorn'));
+  assert.equal(published.reactionEvents.some((event) => event.monsterId === 'phaeton'), false);
+  assert.deepEqual(state.vellhorn.mastered, ['mollusc']);
+  assert.deepEqual(state.phaeton.mastered, undefined);
 });
 
 test('learning outcomes stay the same with the reward runtime enabled or disabled', () => {

@@ -11,6 +11,7 @@ export const WORDS = [
     "family": "accident(ally)",
     "word": "accident",
     "slug": "accident",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "accident",
@@ -55,6 +56,7 @@ export const WORDS = [
     "family": "accident(ally)",
     "word": "accidentally",
     "slug": "accidentally",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "accident",
@@ -99,6 +101,7 @@ export const WORDS = [
     "family": "actual(ly)",
     "word": "actual",
     "slug": "actual",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "actual",
@@ -143,6 +146,7 @@ export const WORDS = [
     "family": "actual(ly)",
     "word": "actually",
     "slug": "actually",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "actual",
@@ -187,6 +191,7 @@ export const WORDS = [
     "family": "address",
     "word": "address",
     "slug": "address",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "address"
@@ -230,6 +235,7 @@ export const WORDS = [
     "family": "answer",
     "word": "answer",
     "slug": "answer",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "answer"
@@ -273,6 +279,7 @@ export const WORDS = [
     "family": "appear",
     "word": "appear",
     "slug": "appear",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "appear"
@@ -316,6 +323,7 @@ export const WORDS = [
     "family": "arrive",
     "word": "arrive",
     "slug": "arrive",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "arrive"
@@ -359,6 +367,7 @@ export const WORDS = [
     "family": "believe",
     "word": "believe",
     "slug": "believe",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "believe"
@@ -402,6 +411,7 @@ export const WORDS = [
     "family": "bicycle",
     "word": "bicycle",
     "slug": "bicycle",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "bicycle"
@@ -445,6 +455,7 @@ export const WORDS = [
     "family": "breath",
     "word": "breath",
     "slug": "breath",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "breath"
@@ -488,6 +499,7 @@ export const WORDS = [
     "family": "breathe",
     "word": "breathe",
     "slug": "breathe",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "breathe"
@@ -531,6 +543,7 @@ export const WORDS = [
     "family": "build",
     "word": "build",
     "slug": "build",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "build"
@@ -574,6 +587,7 @@ export const WORDS = [
     "family": "busy/business",
     "word": "busy",
     "slug": "busy",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "busy",
@@ -618,6 +632,7 @@ export const WORDS = [
     "family": "busy/business",
     "word": "business",
     "slug": "business",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "busy",
@@ -662,6 +677,7 @@ export const WORDS = [
     "family": "calendar",
     "word": "calendar",
     "slug": "calendar",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "calendar"
@@ -705,6 +721,7 @@ export const WORDS = [
     "family": "caught",
     "word": "caught",
     "slug": "caught",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "caught"
@@ -748,6 +765,7 @@ export const WORDS = [
     "family": "centre",
     "word": "centre",
     "slug": "centre",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "centre"
@@ -791,6 +809,7 @@ export const WORDS = [
     "family": "century",
     "word": "century",
     "slug": "century",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "century"
@@ -834,6 +853,7 @@ export const WORDS = [
     "family": "certain",
     "word": "certain",
     "slug": "certain",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "certain"
@@ -877,6 +897,7 @@ export const WORDS = [
     "family": "circle",
     "word": "circle",
     "slug": "circle",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "circle"
@@ -920,6 +941,7 @@ export const WORDS = [
     "family": "complete",
     "word": "complete",
     "slug": "complete",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "complete"
@@ -963,6 +985,7 @@ export const WORDS = [
     "family": "consider",
     "word": "consider",
     "slug": "consider",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "consider"
@@ -1006,6 +1029,7 @@ export const WORDS = [
     "family": "continue",
     "word": "continue",
     "slug": "continue",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "continue"
@@ -1049,6 +1073,7 @@ export const WORDS = [
     "family": "decide",
     "word": "decide",
     "slug": "decide",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "decide"
@@ -1092,6 +1117,7 @@ export const WORDS = [
     "family": "describe",
     "word": "describe",
     "slug": "describe",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "describe"
@@ -1135,6 +1161,7 @@ export const WORDS = [
     "family": "different",
     "word": "different",
     "slug": "different",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "different"
@@ -1178,6 +1205,7 @@ export const WORDS = [
     "family": "difficult",
     "word": "difficult",
     "slug": "difficult",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "difficult"
@@ -1221,6 +1249,7 @@ export const WORDS = [
     "family": "disappear",
     "word": "disappear",
     "slug": "disappear",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "disappear"
@@ -1264,6 +1293,7 @@ export const WORDS = [
     "family": "early",
     "word": "early",
     "slug": "early",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "early"
@@ -1307,6 +1337,7 @@ export const WORDS = [
     "family": "earth",
     "word": "earth",
     "slug": "earth",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "earth"
@@ -1350,6 +1381,7 @@ export const WORDS = [
     "family": "eight/eighth",
     "word": "eight",
     "slug": "eight",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "eight",
@@ -1394,6 +1426,7 @@ export const WORDS = [
     "family": "eight/eighth",
     "word": "eighth",
     "slug": "eighth",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "eight",
@@ -1438,6 +1471,7 @@ export const WORDS = [
     "family": "enough",
     "word": "enough",
     "slug": "enough",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "enough"
@@ -1481,6 +1515,7 @@ export const WORDS = [
     "family": "exercise",
     "word": "exercise",
     "slug": "exercise",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "exercise"
@@ -1524,6 +1559,7 @@ export const WORDS = [
     "family": "experience",
     "word": "experience",
     "slug": "experience",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "experience"
@@ -1567,6 +1603,7 @@ export const WORDS = [
     "family": "experiment",
     "word": "experiment",
     "slug": "experiment",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "experiment"
@@ -1610,6 +1647,7 @@ export const WORDS = [
     "family": "extreme",
     "word": "extreme",
     "slug": "extreme",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "extreme"
@@ -1653,6 +1691,7 @@ export const WORDS = [
     "family": "famous",
     "word": "famous",
     "slug": "famous",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "famous"
@@ -1696,6 +1735,7 @@ export const WORDS = [
     "family": "favourite",
     "word": "favourite",
     "slug": "favourite",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "favourite"
@@ -1739,6 +1779,7 @@ export const WORDS = [
     "family": "February",
     "word": "February",
     "slug": "february",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "February"
@@ -1782,6 +1823,7 @@ export const WORDS = [
     "family": "forward(s)",
     "word": "forward",
     "slug": "forward",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "forward",
@@ -1826,6 +1868,7 @@ export const WORDS = [
     "family": "forward(s)",
     "word": "forwards",
     "slug": "forwards",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "forward",
@@ -1870,6 +1913,7 @@ export const WORDS = [
     "family": "fruit",
     "word": "fruit",
     "slug": "fruit",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "fruit"
@@ -1913,6 +1957,7 @@ export const WORDS = [
     "family": "grammar",
     "word": "grammar",
     "slug": "grammar",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "grammar"
@@ -1956,6 +2001,7 @@ export const WORDS = [
     "family": "group",
     "word": "group",
     "slug": "group",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "group"
@@ -1999,6 +2045,7 @@ export const WORDS = [
     "family": "guard",
     "word": "guard",
     "slug": "guard",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "guard"
@@ -2042,6 +2089,7 @@ export const WORDS = [
     "family": "guide",
     "word": "guide",
     "slug": "guide",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "guide"
@@ -2085,6 +2133,7 @@ export const WORDS = [
     "family": "heard",
     "word": "heard",
     "slug": "heard",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "heard"
@@ -2128,6 +2177,7 @@ export const WORDS = [
     "family": "heart",
     "word": "heart",
     "slug": "heart",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "heart"
@@ -2171,6 +2221,7 @@ export const WORDS = [
     "family": "height",
     "word": "height",
     "slug": "height",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "height"
@@ -2214,6 +2265,7 @@ export const WORDS = [
     "family": "history",
     "word": "history",
     "slug": "history",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "history"
@@ -2257,6 +2309,7 @@ export const WORDS = [
     "family": "imagine",
     "word": "imagine",
     "slug": "imagine",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "imagine"
@@ -2300,6 +2353,7 @@ export const WORDS = [
     "family": "increase",
     "word": "increase",
     "slug": "increase",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "increase"
@@ -2343,6 +2397,7 @@ export const WORDS = [
     "family": "important",
     "word": "important",
     "slug": "important",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "important"
@@ -2386,6 +2441,7 @@ export const WORDS = [
     "family": "interest",
     "word": "interest",
     "slug": "interest",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "interest"
@@ -2429,6 +2485,7 @@ export const WORDS = [
     "family": "island",
     "word": "island",
     "slug": "island",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "island"
@@ -2472,6 +2529,7 @@ export const WORDS = [
     "family": "knowledge",
     "word": "knowledge",
     "slug": "knowledge",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "knowledge"
@@ -2515,6 +2573,7 @@ export const WORDS = [
     "family": "learn",
     "word": "learn",
     "slug": "learn",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "learn"
@@ -2558,6 +2617,7 @@ export const WORDS = [
     "family": "length",
     "word": "length",
     "slug": "length",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "length"
@@ -2601,6 +2661,7 @@ export const WORDS = [
     "family": "library",
     "word": "library",
     "slug": "library",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "library"
@@ -2644,6 +2705,7 @@ export const WORDS = [
     "family": "material",
     "word": "material",
     "slug": "material",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "material"
@@ -2687,6 +2749,7 @@ export const WORDS = [
     "family": "medicine",
     "word": "medicine",
     "slug": "medicine",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "medicine"
@@ -2730,6 +2793,7 @@ export const WORDS = [
     "family": "mention",
     "word": "mention",
     "slug": "mention",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "mention"
@@ -2773,6 +2837,7 @@ export const WORDS = [
     "family": "minute",
     "word": "minute",
     "slug": "minute",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "minute"
@@ -2816,6 +2881,7 @@ export const WORDS = [
     "family": "natural",
     "word": "natural",
     "slug": "natural",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "natural"
@@ -2859,6 +2925,7 @@ export const WORDS = [
     "family": "naughty",
     "word": "naughty",
     "slug": "naughty",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "naughty"
@@ -2902,6 +2969,7 @@ export const WORDS = [
     "family": "notice",
     "word": "notice",
     "slug": "notice",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "notice"
@@ -2945,6 +3013,7 @@ export const WORDS = [
     "family": "occasion(ally)",
     "word": "occasion",
     "slug": "occasion",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "occasion",
@@ -2989,6 +3058,7 @@ export const WORDS = [
     "family": "occasion(ally)",
     "word": "occasionally",
     "slug": "occasionally",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "occasion",
@@ -3033,6 +3103,7 @@ export const WORDS = [
     "family": "often",
     "word": "often",
     "slug": "often",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "often"
@@ -3076,6 +3147,7 @@ export const WORDS = [
     "family": "opposite",
     "word": "opposite",
     "slug": "opposite",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "opposite"
@@ -3119,6 +3191,7 @@ export const WORDS = [
     "family": "ordinary",
     "word": "ordinary",
     "slug": "ordinary",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "ordinary"
@@ -3162,6 +3235,7 @@ export const WORDS = [
     "family": "particular",
     "word": "particular",
     "slug": "particular",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "particular"
@@ -3205,6 +3279,7 @@ export const WORDS = [
     "family": "peculiar",
     "word": "peculiar",
     "slug": "peculiar",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "peculiar"
@@ -3248,6 +3323,7 @@ export const WORDS = [
     "family": "perhaps",
     "word": "perhaps",
     "slug": "perhaps",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "perhaps"
@@ -3291,6 +3367,7 @@ export const WORDS = [
     "family": "popular",
     "word": "popular",
     "slug": "popular",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "popular"
@@ -3334,6 +3411,7 @@ export const WORDS = [
     "family": "position",
     "word": "position",
     "slug": "position",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "position"
@@ -3377,6 +3455,7 @@ export const WORDS = [
     "family": "possess(ion)",
     "word": "possess",
     "slug": "possess",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "possess",
@@ -3421,6 +3500,7 @@ export const WORDS = [
     "family": "possess(ion)",
     "word": "possession",
     "slug": "possession",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "possess",
@@ -3465,6 +3545,7 @@ export const WORDS = [
     "family": "possible",
     "word": "possible",
     "slug": "possible",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "possible"
@@ -3508,6 +3589,7 @@ export const WORDS = [
     "family": "potatoes",
     "word": "potatoes",
     "slug": "potatoes",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "potatoes"
@@ -3551,6 +3633,7 @@ export const WORDS = [
     "family": "pressure",
     "word": "pressure",
     "slug": "pressure",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "pressure"
@@ -3594,6 +3677,7 @@ export const WORDS = [
     "family": "probably",
     "word": "probably",
     "slug": "probably",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "probably"
@@ -3637,6 +3721,7 @@ export const WORDS = [
     "family": "promise",
     "word": "promise",
     "slug": "promise",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "promise"
@@ -3680,6 +3765,7 @@ export const WORDS = [
     "family": "purpose",
     "word": "purpose",
     "slug": "purpose",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "purpose"
@@ -3723,6 +3809,7 @@ export const WORDS = [
     "family": "quarter",
     "word": "quarter",
     "slug": "quarter",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "quarter"
@@ -3766,6 +3853,7 @@ export const WORDS = [
     "family": "question",
     "word": "question",
     "slug": "question",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "question"
@@ -3809,6 +3897,7 @@ export const WORDS = [
     "family": "recent",
     "word": "recent",
     "slug": "recent",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "recent"
@@ -3852,6 +3941,7 @@ export const WORDS = [
     "family": "regular",
     "word": "regular",
     "slug": "regular",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "regular"
@@ -3895,6 +3985,7 @@ export const WORDS = [
     "family": "reign",
     "word": "reign",
     "slug": "reign",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "reign"
@@ -3938,6 +4029,7 @@ export const WORDS = [
     "family": "remember",
     "word": "remember",
     "slug": "remember",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "remember"
@@ -3981,6 +4073,7 @@ export const WORDS = [
     "family": "sentence",
     "word": "sentence",
     "slug": "sentence",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "sentence"
@@ -4024,6 +4117,7 @@ export const WORDS = [
     "family": "separate",
     "word": "separate",
     "slug": "separate",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "separate"
@@ -4067,6 +4161,7 @@ export const WORDS = [
     "family": "special",
     "word": "special",
     "slug": "special",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "special"
@@ -4110,6 +4205,7 @@ export const WORDS = [
     "family": "straight",
     "word": "straight",
     "slug": "straight",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "straight"
@@ -4153,6 +4249,7 @@ export const WORDS = [
     "family": "strange",
     "word": "strange",
     "slug": "strange",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "strange"
@@ -4196,6 +4293,7 @@ export const WORDS = [
     "family": "strength",
     "word": "strength",
     "slug": "strength",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "strength"
@@ -4239,6 +4337,7 @@ export const WORDS = [
     "family": "suppose",
     "word": "suppose",
     "slug": "suppose",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "suppose"
@@ -4282,6 +4381,7 @@ export const WORDS = [
     "family": "surprise",
     "word": "surprise",
     "slug": "surprise",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "surprise"
@@ -4325,6 +4425,7 @@ export const WORDS = [
     "family": "therefore",
     "word": "therefore",
     "slug": "therefore",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "therefore"
@@ -4368,6 +4469,7 @@ export const WORDS = [
     "family": "though/although",
     "word": "though",
     "slug": "though",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "though",
@@ -4412,6 +4514,7 @@ export const WORDS = [
     "family": "though/although",
     "word": "although",
     "slug": "although",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "though",
@@ -4456,6 +4559,7 @@ export const WORDS = [
     "family": "thought",
     "word": "thought",
     "slug": "thought",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "thought"
@@ -4499,6 +4603,7 @@ export const WORDS = [
     "family": "through",
     "word": "through",
     "slug": "through",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "through"
@@ -4542,6 +4647,7 @@ export const WORDS = [
     "family": "various",
     "word": "various",
     "slug": "various",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "various"
@@ -4585,6 +4691,7 @@ export const WORDS = [
     "family": "weight",
     "word": "weight",
     "slug": "weight",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "weight"
@@ -4628,6 +4735,7 @@ export const WORDS = [
     "family": "woman/women",
     "word": "woman",
     "slug": "woman",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "woman",
@@ -4672,6 +4780,7 @@ export const WORDS = [
     "family": "woman/women",
     "word": "women",
     "slug": "women",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "woman",
@@ -4716,6 +4825,7 @@ export const WORDS = [
     "family": "accommodate",
     "word": "accommodate",
     "slug": "accommodate",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "accommodate"
@@ -4759,6 +4869,7 @@ export const WORDS = [
     "family": "accompany",
     "word": "accompany",
     "slug": "accompany",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "accompany"
@@ -4802,6 +4913,7 @@ export const WORDS = [
     "family": "according",
     "word": "according",
     "slug": "according",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "according"
@@ -4845,6 +4957,7 @@ export const WORDS = [
     "family": "achieve",
     "word": "achieve",
     "slug": "achieve",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "achieve"
@@ -4888,6 +5001,7 @@ export const WORDS = [
     "family": "aggressive",
     "word": "aggressive",
     "slug": "aggressive",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "aggressive"
@@ -4931,6 +5045,7 @@ export const WORDS = [
     "family": "amateur",
     "word": "amateur",
     "slug": "amateur",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "amateur"
@@ -4974,6 +5089,7 @@ export const WORDS = [
     "family": "ancient",
     "word": "ancient",
     "slug": "ancient",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "ancient"
@@ -5017,6 +5133,7 @@ export const WORDS = [
     "family": "apparent",
     "word": "apparent",
     "slug": "apparent",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "apparent"
@@ -5060,6 +5177,7 @@ export const WORDS = [
     "family": "appreciate",
     "word": "appreciate",
     "slug": "appreciate",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "appreciate"
@@ -5103,6 +5221,7 @@ export const WORDS = [
     "family": "attached",
     "word": "attached",
     "slug": "attached",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "attached"
@@ -5146,6 +5265,7 @@ export const WORDS = [
     "family": "available",
     "word": "available",
     "slug": "available",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "available"
@@ -5189,6 +5309,7 @@ export const WORDS = [
     "family": "average",
     "word": "average",
     "slug": "average",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "average"
@@ -5232,6 +5353,7 @@ export const WORDS = [
     "family": "awkward",
     "word": "awkward",
     "slug": "awkward",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "awkward"
@@ -5275,6 +5397,7 @@ export const WORDS = [
     "family": "bargain",
     "word": "bargain",
     "slug": "bargain",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "bargain"
@@ -5318,6 +5441,7 @@ export const WORDS = [
     "family": "bruise",
     "word": "bruise",
     "slug": "bruise",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "bruise"
@@ -5361,6 +5485,7 @@ export const WORDS = [
     "family": "category",
     "word": "category",
     "slug": "category",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "category"
@@ -5404,6 +5529,7 @@ export const WORDS = [
     "family": "cemetery",
     "word": "cemetery",
     "slug": "cemetery",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "cemetery"
@@ -5447,6 +5573,7 @@ export const WORDS = [
     "family": "committee",
     "word": "committee",
     "slug": "committee",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "committee"
@@ -5490,6 +5617,7 @@ export const WORDS = [
     "family": "communicate",
     "word": "communicate",
     "slug": "communicate",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "communicate"
@@ -5533,6 +5661,7 @@ export const WORDS = [
     "family": "community",
     "word": "community",
     "slug": "community",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "community"
@@ -5576,6 +5705,7 @@ export const WORDS = [
     "family": "competition",
     "word": "competition",
     "slug": "competition",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "competition"
@@ -5619,6 +5749,7 @@ export const WORDS = [
     "family": "conscience",
     "word": "conscience",
     "slug": "conscience",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "conscience"
@@ -5662,6 +5793,7 @@ export const WORDS = [
     "family": "conscious",
     "word": "conscious",
     "slug": "conscious",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "conscious"
@@ -5705,6 +5837,7 @@ export const WORDS = [
     "family": "controversy",
     "word": "controversy",
     "slug": "controversy",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "controversy"
@@ -5748,6 +5881,7 @@ export const WORDS = [
     "family": "convenience",
     "word": "convenience",
     "slug": "convenience",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "convenience"
@@ -5791,6 +5925,7 @@ export const WORDS = [
     "family": "correspond",
     "word": "correspond",
     "slug": "correspond",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "correspond"
@@ -5834,6 +5969,7 @@ export const WORDS = [
     "family": "criticise (critic + ise)",
     "word": "criticise",
     "slug": "criticise",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "criticise"
@@ -5878,6 +6014,7 @@ export const WORDS = [
     "family": "curiosity",
     "word": "curiosity",
     "slug": "curiosity",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "curiosity"
@@ -5921,6 +6058,7 @@ export const WORDS = [
     "family": "definite",
     "word": "definite",
     "slug": "definite",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "definite"
@@ -5964,6 +6102,7 @@ export const WORDS = [
     "family": "desperate",
     "word": "desperate",
     "slug": "desperate",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "desperate"
@@ -6007,6 +6146,7 @@ export const WORDS = [
     "family": "determined",
     "word": "determined",
     "slug": "determined",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "determined"
@@ -6050,6 +6190,7 @@ export const WORDS = [
     "family": "develop",
     "word": "develop",
     "slug": "develop",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "develop"
@@ -6093,6 +6234,7 @@ export const WORDS = [
     "family": "dictionary",
     "word": "dictionary",
     "slug": "dictionary",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "dictionary"
@@ -6136,6 +6278,7 @@ export const WORDS = [
     "family": "disastrous",
     "word": "disastrous",
     "slug": "disastrous",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "disastrous"
@@ -6179,6 +6322,7 @@ export const WORDS = [
     "family": "embarrass",
     "word": "embarrass",
     "slug": "embarrass",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "embarrass"
@@ -6222,6 +6366,7 @@ export const WORDS = [
     "family": "environment",
     "word": "environment",
     "slug": "environment",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "environment"
@@ -6265,6 +6410,7 @@ export const WORDS = [
     "family": "equip (-ped, -ment)",
     "word": "equip",
     "slug": "equip",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "equip",
@@ -6310,6 +6456,7 @@ export const WORDS = [
     "family": "equip (-ped, -ment)",
     "word": "equipped",
     "slug": "equipped",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "equip",
@@ -6355,6 +6502,7 @@ export const WORDS = [
     "family": "equip (-ped, -ment)",
     "word": "equipment",
     "slug": "equipment",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "equip",
@@ -6400,6 +6548,7 @@ export const WORDS = [
     "family": "especially",
     "word": "especially",
     "slug": "especially",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "especially"
@@ -6443,6 +6592,7 @@ export const WORDS = [
     "family": "exaggerate",
     "word": "exaggerate",
     "slug": "exaggerate",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "exaggerate"
@@ -6486,6 +6636,7 @@ export const WORDS = [
     "family": "excellent",
     "word": "excellent",
     "slug": "excellent",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "excellent"
@@ -6529,6 +6680,7 @@ export const WORDS = [
     "family": "existence",
     "word": "existence",
     "slug": "existence",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "existence"
@@ -6572,6 +6724,7 @@ export const WORDS = [
     "family": "explanation",
     "word": "explanation",
     "slug": "explanation",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "explanation"
@@ -6615,6 +6768,7 @@ export const WORDS = [
     "family": "familiar",
     "word": "familiar",
     "slug": "familiar",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "familiar"
@@ -6658,6 +6812,7 @@ export const WORDS = [
     "family": "foreign",
     "word": "foreign",
     "slug": "foreign",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "foreign"
@@ -6701,6 +6856,7 @@ export const WORDS = [
     "family": "forty",
     "word": "forty",
     "slug": "forty",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "forty"
@@ -6744,6 +6900,7 @@ export const WORDS = [
     "family": "frequently",
     "word": "frequently",
     "slug": "frequently",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "frequently"
@@ -6787,6 +6944,7 @@ export const WORDS = [
     "family": "government",
     "word": "government",
     "slug": "government",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "government"
@@ -6830,6 +6988,7 @@ export const WORDS = [
     "family": "guarantee",
     "word": "guarantee",
     "slug": "guarantee",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "guarantee"
@@ -6873,6 +7032,7 @@ export const WORDS = [
     "family": "harass",
     "word": "harass",
     "slug": "harass",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "harass"
@@ -6916,6 +7076,7 @@ export const WORDS = [
     "family": "hindrance",
     "word": "hindrance",
     "slug": "hindrance",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "hindrance"
@@ -6959,6 +7120,7 @@ export const WORDS = [
     "family": "identity",
     "word": "identity",
     "slug": "identity",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "identity"
@@ -7002,6 +7164,7 @@ export const WORDS = [
     "family": "immediate(ly)",
     "word": "immediate",
     "slug": "immediate",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "immediate",
@@ -7046,6 +7209,7 @@ export const WORDS = [
     "family": "immediate(ly)",
     "word": "immediately",
     "slug": "immediately",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "immediate",
@@ -7090,6 +7254,7 @@ export const WORDS = [
     "family": "individual",
     "word": "individual",
     "slug": "individual",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "individual"
@@ -7133,6 +7298,7 @@ export const WORDS = [
     "family": "interfere",
     "word": "interfere",
     "slug": "interfere",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "interfere"
@@ -7176,6 +7342,7 @@ export const WORDS = [
     "family": "interrupt",
     "word": "interrupt",
     "slug": "interrupt",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "interrupt"
@@ -7219,6 +7386,7 @@ export const WORDS = [
     "family": "language",
     "word": "language",
     "slug": "language",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "language"
@@ -7262,6 +7430,7 @@ export const WORDS = [
     "family": "leisure",
     "word": "leisure",
     "slug": "leisure",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "leisure"
@@ -7305,6 +7474,7 @@ export const WORDS = [
     "family": "lightning",
     "word": "lightning",
     "slug": "lightning",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "lightning"
@@ -7348,6 +7518,7 @@ export const WORDS = [
     "family": "marvellous",
     "word": "marvellous",
     "slug": "marvellous",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "marvellous"
@@ -7391,6 +7562,7 @@ export const WORDS = [
     "family": "mischievous",
     "word": "mischievous",
     "slug": "mischievous",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "mischievous"
@@ -7434,6 +7606,7 @@ export const WORDS = [
     "family": "muscle",
     "word": "muscle",
     "slug": "muscle",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "muscle"
@@ -7477,6 +7650,7 @@ export const WORDS = [
     "family": "necessary",
     "word": "necessary",
     "slug": "necessary",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "necessary"
@@ -7520,6 +7694,7 @@ export const WORDS = [
     "family": "neighbour",
     "word": "neighbour",
     "slug": "neighbour",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "neighbour"
@@ -7563,6 +7738,7 @@ export const WORDS = [
     "family": "nuisance",
     "word": "nuisance",
     "slug": "nuisance",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "nuisance"
@@ -7606,6 +7782,7 @@ export const WORDS = [
     "family": "occupy",
     "word": "occupy",
     "slug": "occupy",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "occupy"
@@ -7649,6 +7826,7 @@ export const WORDS = [
     "family": "occur",
     "word": "occur",
     "slug": "occur",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "occur"
@@ -7692,6 +7870,7 @@ export const WORDS = [
     "family": "opportunity",
     "word": "opportunity",
     "slug": "opportunity",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "opportunity"
@@ -7735,6 +7914,7 @@ export const WORDS = [
     "family": "parliament",
     "word": "parliament",
     "slug": "parliament",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "parliament"
@@ -7778,6 +7958,7 @@ export const WORDS = [
     "family": "persuade",
     "word": "persuade",
     "slug": "persuade",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "persuade"
@@ -7821,6 +8002,7 @@ export const WORDS = [
     "family": "physical",
     "word": "physical",
     "slug": "physical",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "physical"
@@ -7864,6 +8046,7 @@ export const WORDS = [
     "family": "prejudice",
     "word": "prejudice",
     "slug": "prejudice",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "prejudice"
@@ -7907,6 +8090,7 @@ export const WORDS = [
     "family": "privilege",
     "word": "privilege",
     "slug": "privilege",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "privilege"
@@ -7950,6 +8134,7 @@ export const WORDS = [
     "family": "profession",
     "word": "profession",
     "slug": "profession",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "profession"
@@ -7993,6 +8178,7 @@ export const WORDS = [
     "family": "programme",
     "word": "programme",
     "slug": "programme",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "programme"
@@ -8036,6 +8222,7 @@ export const WORDS = [
     "family": "pronunciation",
     "word": "pronunciation",
     "slug": "pronunciation",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "pronunciation"
@@ -8079,6 +8266,7 @@ export const WORDS = [
     "family": "queue",
     "word": "queue",
     "slug": "queue",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "queue"
@@ -8122,6 +8310,7 @@ export const WORDS = [
     "family": "recognise",
     "word": "recognise",
     "slug": "recognise",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "recognise"
@@ -8166,6 +8355,7 @@ export const WORDS = [
     "family": "recommend",
     "word": "recommend",
     "slug": "recommend",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "recommend"
@@ -8209,6 +8399,7 @@ export const WORDS = [
     "family": "relevant",
     "word": "relevant",
     "slug": "relevant",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "relevant"
@@ -8252,6 +8443,7 @@ export const WORDS = [
     "family": "restaurant",
     "word": "restaurant",
     "slug": "restaurant",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "restaurant"
@@ -8295,6 +8487,7 @@ export const WORDS = [
     "family": "rhyme",
     "word": "rhyme",
     "slug": "rhyme",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "rhyme"
@@ -8338,6 +8531,7 @@ export const WORDS = [
     "family": "rhythm",
     "word": "rhythm",
     "slug": "rhythm",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "rhythm"
@@ -8381,6 +8575,7 @@ export const WORDS = [
     "family": "sacrifice",
     "word": "sacrifice",
     "slug": "sacrifice",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sacrifice"
@@ -8424,6 +8619,7 @@ export const WORDS = [
     "family": "secretary",
     "word": "secretary",
     "slug": "secretary",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "secretary"
@@ -8467,6 +8663,7 @@ export const WORDS = [
     "family": "shoulder",
     "word": "shoulder",
     "slug": "shoulder",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "shoulder"
@@ -8510,6 +8707,7 @@ export const WORDS = [
     "family": "signature",
     "word": "signature",
     "slug": "signature",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "signature"
@@ -8553,6 +8751,7 @@ export const WORDS = [
     "family": "sincere(ly)",
     "word": "sincere",
     "slug": "sincere",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sincere",
@@ -8597,6 +8796,7 @@ export const WORDS = [
     "family": "sincere(ly)",
     "word": "sincerely",
     "slug": "sincerely",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sincere",
@@ -8641,6 +8841,7 @@ export const WORDS = [
     "family": "soldier",
     "word": "soldier",
     "slug": "soldier",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "soldier"
@@ -8684,6 +8885,7 @@ export const WORDS = [
     "family": "stomach",
     "word": "stomach",
     "slug": "stomach",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "stomach"
@@ -8727,6 +8929,7 @@ export const WORDS = [
     "family": "sufficient",
     "word": "sufficient",
     "slug": "sufficient",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sufficient"
@@ -8770,6 +8973,7 @@ export const WORDS = [
     "family": "suggest",
     "word": "suggest",
     "slug": "suggest",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "suggest"
@@ -8813,6 +9017,7 @@ export const WORDS = [
     "family": "symbol",
     "word": "symbol",
     "slug": "symbol",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "symbol"
@@ -8856,6 +9061,7 @@ export const WORDS = [
     "family": "system",
     "word": "system",
     "slug": "system",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "system"
@@ -8899,6 +9105,7 @@ export const WORDS = [
     "family": "temperature",
     "word": "temperature",
     "slug": "temperature",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "temperature"
@@ -8942,6 +9149,7 @@ export const WORDS = [
     "family": "thorough",
     "word": "thorough",
     "slug": "thorough",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "thorough"
@@ -8985,6 +9193,7 @@ export const WORDS = [
     "family": "twelfth",
     "word": "twelfth",
     "slug": "twelfth",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "twelfth"
@@ -9028,6 +9237,7 @@ export const WORDS = [
     "family": "variety",
     "word": "variety",
     "slug": "variety",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "variety"
@@ -9071,6 +9281,7 @@ export const WORDS = [
     "family": "vegetable",
     "word": "vegetable",
     "slug": "vegetable",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "vegetable"
@@ -9114,6 +9325,7 @@ export const WORDS = [
     "family": "vehicle",
     "word": "vehicle",
     "slug": "vehicle",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "vehicle"
@@ -9157,6 +9369,7 @@ export const WORDS = [
     "family": "yacht",
     "word": "yacht",
     "slug": "yacht",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "yacht"
@@ -9194,6 +9407,876 @@ export const WORDS = [
       "importedAt": 0
     },
     "sortIndex": 212
+  },
+  {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "divide",
+    "slug": "divide",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "We divide the class into teams before the investigation.",
+    "sentences": [
+      "We divide the class into teams before the investigation."
+    ],
+    "accepted": [
+      "divide"
+    ],
+    "explanation": "To divide is to split something into parts or groups.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 213
+  },
+  {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "collide",
+    "slug": "collide",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "The two balls collide in the middle of the table.",
+    "sentences": [
+      "The two balls collide in the middle of the table."
+    ],
+    "accepted": [
+      "collide"
+    ],
+    "explanation": "To collide is to crash into something or hit it while moving.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 214
+  },
+  {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "explode",
+    "slug": "explode",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "The volcano model did not explode until the final step.",
+    "sentences": [
+      "The volcano model did not explode until the final step."
+    ],
+    "accepted": [
+      "explode"
+    ],
+    "explanation": "To explode is to burst apart suddenly with force.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 215
+  },
+  {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "corrode",
+    "slug": "corrode",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "Salt water can corrode metal over time.",
+    "sentences": [
+      "Salt water can corrode metal over time."
+    ],
+    "accepted": [
+      "corrode"
+    ],
+    "explanation": "To corrode is to be slowly damaged by a chemical reaction, often rust.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 216
+  },
+  {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "conclude",
+    "slug": "conclude",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "We conclude that shade slows the melting ice.",
+    "sentences": [
+      "We conclude that shade slows the melting ice."
+    ],
+    "accepted": [
+      "conclude"
+    ],
+    "explanation": "To conclude is to finish, or to decide after thinking about evidence.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 217
+  },
+  {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "extend",
+    "slug": "extend",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "The bridge can extend across the stream.",
+    "sentences": [
+      "The bridge can extend across the stream."
+    ],
+    "accepted": [
+      "extend"
+    ],
+    "explanation": "To extend is to make something longer or reach further.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 218
+  },
+  {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "comprehend",
+    "slug": "comprehend",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "She could comprehend the instructions after reading them twice.",
+    "sentences": [
+      "She could comprehend the instructions after reading them twice."
+    ],
+    "accepted": [
+      "comprehend"
+    ],
+    "explanation": "To comprehend is to understand something fully.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 219
+  },
+  {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "evade",
+    "slug": "evade",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "The beetle tried to evade the torchlight under a leaf.",
+    "sentences": [
+      "The beetle tried to evade the torchlight under a leaf."
+    ],
+    "accepted": [
+      "evade"
+    ],
+    "explanation": "To evade is to avoid or escape from someone or something.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 220
+  },
+  {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "intrude",
+    "slug": "intrude",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "Please do not intrude while the group is recording.",
+    "sentences": [
+      "Please do not intrude while the group is recording."
+    ],
+    "accepted": [
+      "intrude"
+    ],
+    "explanation": "To intrude is to enter or join in where you are not wanted.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 221
+  },
+  {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "interlude",
+    "slug": "interlude",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "A quiet interlude gave the performers time to reset.",
+    "sentences": [
+      "A quiet interlude gave the performers time to reset."
+    ],
+    "accepted": [
+      "interlude"
+    ],
+    "explanation": "An interlude is a short pause or break between parts of something.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 222
+  },
+  {
+    "year": "extra",
+    "family": "Science: classification",
+    "word": "classification",
+    "slug": "classification",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "classification"
+    ],
+    "sentence": "Classification helps scientists compare animals with similar features.",
+    "sentences": [
+      "Classification helps scientists compare animals with similar features."
+    ],
+    "accepted": [
+      "classification"
+    ],
+    "explanation": "Classification is sorting living things or objects into groups by shared features.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "classification"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 223
+  },
+  {
+    "year": "extra",
+    "family": "Science: body structure",
+    "word": "backbone",
+    "slug": "backbone",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "backbone",
+      "skeleton"
+    ],
+    "sentence": "A fish has a backbone inside its body.",
+    "sentences": [
+      "A fish has a backbone inside its body."
+    ],
+    "accepted": [
+      "backbone"
+    ],
+    "explanation": "A backbone is the row of bones that supports the back.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "body",
+      "structure"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 224
+  },
+  {
+    "year": "extra",
+    "family": "Science: body structure",
+    "word": "skeleton",
+    "slug": "skeleton",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "backbone",
+      "skeleton"
+    ],
+    "sentence": "The skeleton protects important organs.",
+    "sentences": [
+      "The skeleton protects important organs."
+    ],
+    "accepted": [
+      "skeleton"
+    ],
+    "explanation": "A skeleton is the frame of bones that supports a body.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "body",
+      "structure"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 225
+  },
+  {
+    "year": "extra",
+    "family": "Science: animal groups",
+    "word": "cold-blooded",
+    "slug": "cold-blooded",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "cold-blooded",
+      "amphibians",
+      "reptiles",
+      "mammals",
+      "arachnid",
+      "mollusc"
+    ],
+    "sentence": "A cold-blooded reptile warms itself on a rock.",
+    "sentences": [
+      "A cold-blooded reptile warms itself on a rock."
+    ],
+    "accepted": [
+      "cold-blooded",
+      "cold blooded"
+    ],
+    "explanation": "Cold-blooded animals depend on their surroundings to control body temperature.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "animal",
+      "groups"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 226
+  },
+  {
+    "year": "extra",
+    "family": "Science: animal groups",
+    "word": "amphibians",
+    "slug": "amphibians",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "cold-blooded",
+      "amphibians",
+      "reptiles",
+      "mammals",
+      "arachnid",
+      "mollusc"
+    ],
+    "sentence": "Many amphibians begin life in water as tadpoles.",
+    "sentences": [
+      "Many amphibians begin life in water as tadpoles."
+    ],
+    "accepted": [
+      "amphibians"
+    ],
+    "explanation": "Amphibians are animals such as frogs that can live in water and on land.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "animal",
+      "groups"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 227
+  },
+  {
+    "year": "extra",
+    "family": "Science: life cycles",
+    "word": "metamorphosis",
+    "slug": "metamorphosis",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "metamorphosis"
+    ],
+    "sentence": "A butterfly goes through metamorphosis before it can fly.",
+    "sentences": [
+      "A butterfly goes through metamorphosis before it can fly."
+    ],
+    "accepted": [
+      "metamorphosis"
+    ],
+    "explanation": "Metamorphosis is a major change in body form as an animal grows.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "life",
+      "cycles"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 228
+  },
+  {
+    "year": "extra",
+    "family": "Science: animal groups",
+    "word": "reptiles",
+    "slug": "reptiles",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "cold-blooded",
+      "amphibians",
+      "reptiles",
+      "mammals",
+      "arachnid",
+      "mollusc"
+    ],
+    "sentence": "Reptiles often lay eggs on land.",
+    "sentences": [
+      "Reptiles often lay eggs on land."
+    ],
+    "accepted": [
+      "reptiles"
+    ],
+    "explanation": "Reptiles are cold-blooded animals with dry scales, such as lizards and snakes.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "animal",
+      "groups"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 229
+  },
+  {
+    "year": "extra",
+    "family": "Science: animal groups",
+    "word": "mammals",
+    "slug": "mammals",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "cold-blooded",
+      "amphibians",
+      "reptiles",
+      "mammals",
+      "arachnid",
+      "mollusc"
+    ],
+    "sentence": "Dolphins and bats are both mammals.",
+    "sentences": [
+      "Dolphins and bats are both mammals."
+    ],
+    "accepted": [
+      "mammals"
+    ],
+    "explanation": "Mammals are warm-blooded animals that usually have hair or fur and feed their young milk.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "animal",
+      "groups"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 230
+  },
+  {
+    "year": "extra",
+    "family": "Science: animal groups",
+    "word": "arachnid",
+    "slug": "arachnid",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "cold-blooded",
+      "amphibians",
+      "reptiles",
+      "mammals",
+      "arachnid",
+      "mollusc"
+    ],
+    "sentence": "A spider is an arachnid, not an insect.",
+    "sentences": [
+      "A spider is an arachnid, not an insect."
+    ],
+    "accepted": [
+      "arachnid"
+    ],
+    "explanation": "An arachnid is an animal with eight legs, such as a spider or scorpion.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "animal",
+      "groups"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 231
+  },
+  {
+    "year": "extra",
+    "family": "Science: animal groups",
+    "word": "mollusc",
+    "slug": "mollusc",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "cold-blooded",
+      "amphibians",
+      "reptiles",
+      "mammals",
+      "arachnid",
+      "mollusc"
+    ],
+    "sentence": "A snail is a mollusc with a coiled shell.",
+    "sentences": [
+      "A snail is a mollusc with a coiled shell."
+    ],
+    "accepted": [
+      "mollusc"
+    ],
+    "explanation": "A mollusc is a soft-bodied animal, often with a shell.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "animal",
+      "groups"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 232
+  },
+  {
+    "year": "extra",
+    "family": "Science: plants",
+    "word": "botanist",
+    "slug": "botanist",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "botanist",
+      "flowering"
+    ],
+    "sentence": "The botanist examined the leaves carefully.",
+    "sentences": [
+      "The botanist examined the leaves carefully."
+    ],
+    "accepted": [
+      "botanist"
+    ],
+    "explanation": "A botanist is a scientist who studies plants.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "plants"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 233
+  },
+  {
+    "year": "extra",
+    "family": "Science: plants",
+    "word": "flowering",
+    "slug": "flowering",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "botanist",
+      "flowering"
+    ],
+    "sentence": "The flowering plant attracted several bees.",
+    "sentences": [
+      "The flowering plant attracted several bees."
+    ],
+    "accepted": [
+      "flowering"
+    ],
+    "explanation": "Flowering means producing flowers.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "plants"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 234
   }
 ];
 
@@ -9203,6 +10286,7 @@ export const WORD_BY_SLUG = {
     "family": "accident(ally)",
     "word": "accident",
     "slug": "accident",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "accident",
@@ -9247,6 +10331,7 @@ export const WORD_BY_SLUG = {
     "family": "accident(ally)",
     "word": "accidentally",
     "slug": "accidentally",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "accident",
@@ -9291,6 +10376,7 @@ export const WORD_BY_SLUG = {
     "family": "actual(ly)",
     "word": "actual",
     "slug": "actual",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "actual",
@@ -9335,6 +10421,7 @@ export const WORD_BY_SLUG = {
     "family": "actual(ly)",
     "word": "actually",
     "slug": "actually",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "actual",
@@ -9379,6 +10466,7 @@ export const WORD_BY_SLUG = {
     "family": "address",
     "word": "address",
     "slug": "address",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "address"
@@ -9422,6 +10510,7 @@ export const WORD_BY_SLUG = {
     "family": "answer",
     "word": "answer",
     "slug": "answer",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "answer"
@@ -9465,6 +10554,7 @@ export const WORD_BY_SLUG = {
     "family": "appear",
     "word": "appear",
     "slug": "appear",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "appear"
@@ -9508,6 +10598,7 @@ export const WORD_BY_SLUG = {
     "family": "arrive",
     "word": "arrive",
     "slug": "arrive",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "arrive"
@@ -9551,6 +10642,7 @@ export const WORD_BY_SLUG = {
     "family": "believe",
     "word": "believe",
     "slug": "believe",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "believe"
@@ -9594,6 +10686,7 @@ export const WORD_BY_SLUG = {
     "family": "bicycle",
     "word": "bicycle",
     "slug": "bicycle",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "bicycle"
@@ -9637,6 +10730,7 @@ export const WORD_BY_SLUG = {
     "family": "breath",
     "word": "breath",
     "slug": "breath",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "breath"
@@ -9680,6 +10774,7 @@ export const WORD_BY_SLUG = {
     "family": "breathe",
     "word": "breathe",
     "slug": "breathe",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "breathe"
@@ -9723,6 +10818,7 @@ export const WORD_BY_SLUG = {
     "family": "build",
     "word": "build",
     "slug": "build",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "build"
@@ -9766,6 +10862,7 @@ export const WORD_BY_SLUG = {
     "family": "busy/business",
     "word": "busy",
     "slug": "busy",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "busy",
@@ -9810,6 +10907,7 @@ export const WORD_BY_SLUG = {
     "family": "busy/business",
     "word": "business",
     "slug": "business",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "busy",
@@ -9854,6 +10952,7 @@ export const WORD_BY_SLUG = {
     "family": "calendar",
     "word": "calendar",
     "slug": "calendar",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "calendar"
@@ -9897,6 +10996,7 @@ export const WORD_BY_SLUG = {
     "family": "caught",
     "word": "caught",
     "slug": "caught",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "caught"
@@ -9940,6 +11040,7 @@ export const WORD_BY_SLUG = {
     "family": "centre",
     "word": "centre",
     "slug": "centre",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "centre"
@@ -9983,6 +11084,7 @@ export const WORD_BY_SLUG = {
     "family": "century",
     "word": "century",
     "slug": "century",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "century"
@@ -10026,6 +11128,7 @@ export const WORD_BY_SLUG = {
     "family": "certain",
     "word": "certain",
     "slug": "certain",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "certain"
@@ -10069,6 +11172,7 @@ export const WORD_BY_SLUG = {
     "family": "circle",
     "word": "circle",
     "slug": "circle",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "circle"
@@ -10112,6 +11216,7 @@ export const WORD_BY_SLUG = {
     "family": "complete",
     "word": "complete",
     "slug": "complete",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "complete"
@@ -10155,6 +11260,7 @@ export const WORD_BY_SLUG = {
     "family": "consider",
     "word": "consider",
     "slug": "consider",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "consider"
@@ -10198,6 +11304,7 @@ export const WORD_BY_SLUG = {
     "family": "continue",
     "word": "continue",
     "slug": "continue",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "continue"
@@ -10241,6 +11348,7 @@ export const WORD_BY_SLUG = {
     "family": "decide",
     "word": "decide",
     "slug": "decide",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "decide"
@@ -10284,6 +11392,7 @@ export const WORD_BY_SLUG = {
     "family": "describe",
     "word": "describe",
     "slug": "describe",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "describe"
@@ -10327,6 +11436,7 @@ export const WORD_BY_SLUG = {
     "family": "different",
     "word": "different",
     "slug": "different",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "different"
@@ -10370,6 +11480,7 @@ export const WORD_BY_SLUG = {
     "family": "difficult",
     "word": "difficult",
     "slug": "difficult",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "difficult"
@@ -10413,6 +11524,7 @@ export const WORD_BY_SLUG = {
     "family": "disappear",
     "word": "disappear",
     "slug": "disappear",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "disappear"
@@ -10456,6 +11568,7 @@ export const WORD_BY_SLUG = {
     "family": "early",
     "word": "early",
     "slug": "early",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "early"
@@ -10499,6 +11612,7 @@ export const WORD_BY_SLUG = {
     "family": "earth",
     "word": "earth",
     "slug": "earth",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "earth"
@@ -10542,6 +11656,7 @@ export const WORD_BY_SLUG = {
     "family": "eight/eighth",
     "word": "eight",
     "slug": "eight",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "eight",
@@ -10586,6 +11701,7 @@ export const WORD_BY_SLUG = {
     "family": "eight/eighth",
     "word": "eighth",
     "slug": "eighth",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "eight",
@@ -10630,6 +11746,7 @@ export const WORD_BY_SLUG = {
     "family": "enough",
     "word": "enough",
     "slug": "enough",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "enough"
@@ -10673,6 +11790,7 @@ export const WORD_BY_SLUG = {
     "family": "exercise",
     "word": "exercise",
     "slug": "exercise",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "exercise"
@@ -10716,6 +11834,7 @@ export const WORD_BY_SLUG = {
     "family": "experience",
     "word": "experience",
     "slug": "experience",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "experience"
@@ -10759,6 +11878,7 @@ export const WORD_BY_SLUG = {
     "family": "experiment",
     "word": "experiment",
     "slug": "experiment",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "experiment"
@@ -10802,6 +11922,7 @@ export const WORD_BY_SLUG = {
     "family": "extreme",
     "word": "extreme",
     "slug": "extreme",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "extreme"
@@ -10845,6 +11966,7 @@ export const WORD_BY_SLUG = {
     "family": "famous",
     "word": "famous",
     "slug": "famous",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "famous"
@@ -10888,6 +12010,7 @@ export const WORD_BY_SLUG = {
     "family": "favourite",
     "word": "favourite",
     "slug": "favourite",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "favourite"
@@ -10931,6 +12054,7 @@ export const WORD_BY_SLUG = {
     "family": "February",
     "word": "February",
     "slug": "february",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "February"
@@ -10974,6 +12098,7 @@ export const WORD_BY_SLUG = {
     "family": "forward(s)",
     "word": "forward",
     "slug": "forward",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "forward",
@@ -11018,6 +12143,7 @@ export const WORD_BY_SLUG = {
     "family": "forward(s)",
     "word": "forwards",
     "slug": "forwards",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "forward",
@@ -11062,6 +12188,7 @@ export const WORD_BY_SLUG = {
     "family": "fruit",
     "word": "fruit",
     "slug": "fruit",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "fruit"
@@ -11105,6 +12232,7 @@ export const WORD_BY_SLUG = {
     "family": "grammar",
     "word": "grammar",
     "slug": "grammar",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "grammar"
@@ -11148,6 +12276,7 @@ export const WORD_BY_SLUG = {
     "family": "group",
     "word": "group",
     "slug": "group",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "group"
@@ -11191,6 +12320,7 @@ export const WORD_BY_SLUG = {
     "family": "guard",
     "word": "guard",
     "slug": "guard",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "guard"
@@ -11234,6 +12364,7 @@ export const WORD_BY_SLUG = {
     "family": "guide",
     "word": "guide",
     "slug": "guide",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "guide"
@@ -11277,6 +12408,7 @@ export const WORD_BY_SLUG = {
     "family": "heard",
     "word": "heard",
     "slug": "heard",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "heard"
@@ -11320,6 +12452,7 @@ export const WORD_BY_SLUG = {
     "family": "heart",
     "word": "heart",
     "slug": "heart",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "heart"
@@ -11363,6 +12496,7 @@ export const WORD_BY_SLUG = {
     "family": "height",
     "word": "height",
     "slug": "height",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "height"
@@ -11406,6 +12540,7 @@ export const WORD_BY_SLUG = {
     "family": "history",
     "word": "history",
     "slug": "history",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "history"
@@ -11449,6 +12584,7 @@ export const WORD_BY_SLUG = {
     "family": "imagine",
     "word": "imagine",
     "slug": "imagine",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "imagine"
@@ -11492,6 +12628,7 @@ export const WORD_BY_SLUG = {
     "family": "increase",
     "word": "increase",
     "slug": "increase",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "increase"
@@ -11535,6 +12672,7 @@ export const WORD_BY_SLUG = {
     "family": "important",
     "word": "important",
     "slug": "important",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "important"
@@ -11578,6 +12716,7 @@ export const WORD_BY_SLUG = {
     "family": "interest",
     "word": "interest",
     "slug": "interest",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "interest"
@@ -11621,6 +12760,7 @@ export const WORD_BY_SLUG = {
     "family": "island",
     "word": "island",
     "slug": "island",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "island"
@@ -11664,6 +12804,7 @@ export const WORD_BY_SLUG = {
     "family": "knowledge",
     "word": "knowledge",
     "slug": "knowledge",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "knowledge"
@@ -11707,6 +12848,7 @@ export const WORD_BY_SLUG = {
     "family": "learn",
     "word": "learn",
     "slug": "learn",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "learn"
@@ -11750,6 +12892,7 @@ export const WORD_BY_SLUG = {
     "family": "length",
     "word": "length",
     "slug": "length",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "length"
@@ -11793,6 +12936,7 @@ export const WORD_BY_SLUG = {
     "family": "library",
     "word": "library",
     "slug": "library",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "library"
@@ -11836,6 +12980,7 @@ export const WORD_BY_SLUG = {
     "family": "material",
     "word": "material",
     "slug": "material",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "material"
@@ -11879,6 +13024,7 @@ export const WORD_BY_SLUG = {
     "family": "medicine",
     "word": "medicine",
     "slug": "medicine",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "medicine"
@@ -11922,6 +13068,7 @@ export const WORD_BY_SLUG = {
     "family": "mention",
     "word": "mention",
     "slug": "mention",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "mention"
@@ -11965,6 +13112,7 @@ export const WORD_BY_SLUG = {
     "family": "minute",
     "word": "minute",
     "slug": "minute",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "minute"
@@ -12008,6 +13156,7 @@ export const WORD_BY_SLUG = {
     "family": "natural",
     "word": "natural",
     "slug": "natural",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "natural"
@@ -12051,6 +13200,7 @@ export const WORD_BY_SLUG = {
     "family": "naughty",
     "word": "naughty",
     "slug": "naughty",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "naughty"
@@ -12094,6 +13244,7 @@ export const WORD_BY_SLUG = {
     "family": "notice",
     "word": "notice",
     "slug": "notice",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "notice"
@@ -12137,6 +13288,7 @@ export const WORD_BY_SLUG = {
     "family": "occasion(ally)",
     "word": "occasion",
     "slug": "occasion",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "occasion",
@@ -12181,6 +13333,7 @@ export const WORD_BY_SLUG = {
     "family": "occasion(ally)",
     "word": "occasionally",
     "slug": "occasionally",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "occasion",
@@ -12225,6 +13378,7 @@ export const WORD_BY_SLUG = {
     "family": "often",
     "word": "often",
     "slug": "often",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "often"
@@ -12268,6 +13422,7 @@ export const WORD_BY_SLUG = {
     "family": "opposite",
     "word": "opposite",
     "slug": "opposite",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "opposite"
@@ -12311,6 +13466,7 @@ export const WORD_BY_SLUG = {
     "family": "ordinary",
     "word": "ordinary",
     "slug": "ordinary",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "ordinary"
@@ -12354,6 +13510,7 @@ export const WORD_BY_SLUG = {
     "family": "particular",
     "word": "particular",
     "slug": "particular",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "particular"
@@ -12397,6 +13554,7 @@ export const WORD_BY_SLUG = {
     "family": "peculiar",
     "word": "peculiar",
     "slug": "peculiar",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "peculiar"
@@ -12440,6 +13598,7 @@ export const WORD_BY_SLUG = {
     "family": "perhaps",
     "word": "perhaps",
     "slug": "perhaps",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "perhaps"
@@ -12483,6 +13642,7 @@ export const WORD_BY_SLUG = {
     "family": "popular",
     "word": "popular",
     "slug": "popular",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "popular"
@@ -12526,6 +13686,7 @@ export const WORD_BY_SLUG = {
     "family": "position",
     "word": "position",
     "slug": "position",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "position"
@@ -12569,6 +13730,7 @@ export const WORD_BY_SLUG = {
     "family": "possess(ion)",
     "word": "possess",
     "slug": "possess",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "possess",
@@ -12613,6 +13775,7 @@ export const WORD_BY_SLUG = {
     "family": "possess(ion)",
     "word": "possession",
     "slug": "possession",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "possess",
@@ -12657,6 +13820,7 @@ export const WORD_BY_SLUG = {
     "family": "possible",
     "word": "possible",
     "slug": "possible",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "possible"
@@ -12700,6 +13864,7 @@ export const WORD_BY_SLUG = {
     "family": "potatoes",
     "word": "potatoes",
     "slug": "potatoes",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "potatoes"
@@ -12743,6 +13908,7 @@ export const WORD_BY_SLUG = {
     "family": "pressure",
     "word": "pressure",
     "slug": "pressure",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "pressure"
@@ -12786,6 +13952,7 @@ export const WORD_BY_SLUG = {
     "family": "probably",
     "word": "probably",
     "slug": "probably",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "probably"
@@ -12829,6 +13996,7 @@ export const WORD_BY_SLUG = {
     "family": "promise",
     "word": "promise",
     "slug": "promise",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "promise"
@@ -12872,6 +14040,7 @@ export const WORD_BY_SLUG = {
     "family": "purpose",
     "word": "purpose",
     "slug": "purpose",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "purpose"
@@ -12915,6 +14084,7 @@ export const WORD_BY_SLUG = {
     "family": "quarter",
     "word": "quarter",
     "slug": "quarter",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "quarter"
@@ -12958,6 +14128,7 @@ export const WORD_BY_SLUG = {
     "family": "question",
     "word": "question",
     "slug": "question",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "question"
@@ -13001,6 +14172,7 @@ export const WORD_BY_SLUG = {
     "family": "recent",
     "word": "recent",
     "slug": "recent",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "recent"
@@ -13044,6 +14216,7 @@ export const WORD_BY_SLUG = {
     "family": "regular",
     "word": "regular",
     "slug": "regular",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "regular"
@@ -13087,6 +14260,7 @@ export const WORD_BY_SLUG = {
     "family": "reign",
     "word": "reign",
     "slug": "reign",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "reign"
@@ -13130,6 +14304,7 @@ export const WORD_BY_SLUG = {
     "family": "remember",
     "word": "remember",
     "slug": "remember",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "remember"
@@ -13173,6 +14348,7 @@ export const WORD_BY_SLUG = {
     "family": "sentence",
     "word": "sentence",
     "slug": "sentence",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "sentence"
@@ -13216,6 +14392,7 @@ export const WORD_BY_SLUG = {
     "family": "separate",
     "word": "separate",
     "slug": "separate",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "separate"
@@ -13259,6 +14436,7 @@ export const WORD_BY_SLUG = {
     "family": "special",
     "word": "special",
     "slug": "special",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "special"
@@ -13302,6 +14480,7 @@ export const WORD_BY_SLUG = {
     "family": "straight",
     "word": "straight",
     "slug": "straight",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "straight"
@@ -13345,6 +14524,7 @@ export const WORD_BY_SLUG = {
     "family": "strange",
     "word": "strange",
     "slug": "strange",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "strange"
@@ -13388,6 +14568,7 @@ export const WORD_BY_SLUG = {
     "family": "strength",
     "word": "strength",
     "slug": "strength",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "strength"
@@ -13431,6 +14612,7 @@ export const WORD_BY_SLUG = {
     "family": "suppose",
     "word": "suppose",
     "slug": "suppose",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "suppose"
@@ -13474,6 +14656,7 @@ export const WORD_BY_SLUG = {
     "family": "surprise",
     "word": "surprise",
     "slug": "surprise",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "surprise"
@@ -13517,6 +14700,7 @@ export const WORD_BY_SLUG = {
     "family": "therefore",
     "word": "therefore",
     "slug": "therefore",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "therefore"
@@ -13560,6 +14744,7 @@ export const WORD_BY_SLUG = {
     "family": "though/although",
     "word": "though",
     "slug": "though",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "though",
@@ -13604,6 +14789,7 @@ export const WORD_BY_SLUG = {
     "family": "though/although",
     "word": "although",
     "slug": "although",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "though",
@@ -13648,6 +14834,7 @@ export const WORD_BY_SLUG = {
     "family": "thought",
     "word": "thought",
     "slug": "thought",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "thought"
@@ -13691,6 +14878,7 @@ export const WORD_BY_SLUG = {
     "family": "through",
     "word": "through",
     "slug": "through",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "through"
@@ -13734,6 +14922,7 @@ export const WORD_BY_SLUG = {
     "family": "various",
     "word": "various",
     "slug": "various",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "various"
@@ -13777,6 +14966,7 @@ export const WORD_BY_SLUG = {
     "family": "weight",
     "word": "weight",
     "slug": "weight",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "weight"
@@ -13820,6 +15010,7 @@ export const WORD_BY_SLUG = {
     "family": "woman/women",
     "word": "woman",
     "slug": "woman",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "woman",
@@ -13864,6 +15055,7 @@ export const WORD_BY_SLUG = {
     "family": "woman/women",
     "word": "women",
     "slug": "women",
+    "spellingPool": "core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "woman",
@@ -13908,6 +15100,7 @@ export const WORD_BY_SLUG = {
     "family": "accommodate",
     "word": "accommodate",
     "slug": "accommodate",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "accommodate"
@@ -13951,6 +15144,7 @@ export const WORD_BY_SLUG = {
     "family": "accompany",
     "word": "accompany",
     "slug": "accompany",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "accompany"
@@ -13994,6 +15188,7 @@ export const WORD_BY_SLUG = {
     "family": "according",
     "word": "according",
     "slug": "according",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "according"
@@ -14037,6 +15232,7 @@ export const WORD_BY_SLUG = {
     "family": "achieve",
     "word": "achieve",
     "slug": "achieve",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "achieve"
@@ -14080,6 +15276,7 @@ export const WORD_BY_SLUG = {
     "family": "aggressive",
     "word": "aggressive",
     "slug": "aggressive",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "aggressive"
@@ -14123,6 +15320,7 @@ export const WORD_BY_SLUG = {
     "family": "amateur",
     "word": "amateur",
     "slug": "amateur",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "amateur"
@@ -14166,6 +15364,7 @@ export const WORD_BY_SLUG = {
     "family": "ancient",
     "word": "ancient",
     "slug": "ancient",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "ancient"
@@ -14209,6 +15408,7 @@ export const WORD_BY_SLUG = {
     "family": "apparent",
     "word": "apparent",
     "slug": "apparent",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "apparent"
@@ -14252,6 +15452,7 @@ export const WORD_BY_SLUG = {
     "family": "appreciate",
     "word": "appreciate",
     "slug": "appreciate",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "appreciate"
@@ -14295,6 +15496,7 @@ export const WORD_BY_SLUG = {
     "family": "attached",
     "word": "attached",
     "slug": "attached",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "attached"
@@ -14338,6 +15540,7 @@ export const WORD_BY_SLUG = {
     "family": "available",
     "word": "available",
     "slug": "available",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "available"
@@ -14381,6 +15584,7 @@ export const WORD_BY_SLUG = {
     "family": "average",
     "word": "average",
     "slug": "average",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "average"
@@ -14424,6 +15628,7 @@ export const WORD_BY_SLUG = {
     "family": "awkward",
     "word": "awkward",
     "slug": "awkward",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "awkward"
@@ -14467,6 +15672,7 @@ export const WORD_BY_SLUG = {
     "family": "bargain",
     "word": "bargain",
     "slug": "bargain",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "bargain"
@@ -14510,6 +15716,7 @@ export const WORD_BY_SLUG = {
     "family": "bruise",
     "word": "bruise",
     "slug": "bruise",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "bruise"
@@ -14553,6 +15760,7 @@ export const WORD_BY_SLUG = {
     "family": "category",
     "word": "category",
     "slug": "category",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "category"
@@ -14596,6 +15804,7 @@ export const WORD_BY_SLUG = {
     "family": "cemetery",
     "word": "cemetery",
     "slug": "cemetery",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "cemetery"
@@ -14639,6 +15848,7 @@ export const WORD_BY_SLUG = {
     "family": "committee",
     "word": "committee",
     "slug": "committee",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "committee"
@@ -14682,6 +15892,7 @@ export const WORD_BY_SLUG = {
     "family": "communicate",
     "word": "communicate",
     "slug": "communicate",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "communicate"
@@ -14725,6 +15936,7 @@ export const WORD_BY_SLUG = {
     "family": "community",
     "word": "community",
     "slug": "community",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "community"
@@ -14768,6 +15980,7 @@ export const WORD_BY_SLUG = {
     "family": "competition",
     "word": "competition",
     "slug": "competition",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "competition"
@@ -14811,6 +16024,7 @@ export const WORD_BY_SLUG = {
     "family": "conscience",
     "word": "conscience",
     "slug": "conscience",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "conscience"
@@ -14854,6 +16068,7 @@ export const WORD_BY_SLUG = {
     "family": "conscious",
     "word": "conscious",
     "slug": "conscious",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "conscious"
@@ -14897,6 +16112,7 @@ export const WORD_BY_SLUG = {
     "family": "controversy",
     "word": "controversy",
     "slug": "controversy",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "controversy"
@@ -14940,6 +16156,7 @@ export const WORD_BY_SLUG = {
     "family": "convenience",
     "word": "convenience",
     "slug": "convenience",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "convenience"
@@ -14983,6 +16200,7 @@ export const WORD_BY_SLUG = {
     "family": "correspond",
     "word": "correspond",
     "slug": "correspond",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "correspond"
@@ -15026,6 +16244,7 @@ export const WORD_BY_SLUG = {
     "family": "criticise (critic + ise)",
     "word": "criticise",
     "slug": "criticise",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "criticise"
@@ -15070,6 +16289,7 @@ export const WORD_BY_SLUG = {
     "family": "curiosity",
     "word": "curiosity",
     "slug": "curiosity",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "curiosity"
@@ -15113,6 +16333,7 @@ export const WORD_BY_SLUG = {
     "family": "definite",
     "word": "definite",
     "slug": "definite",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "definite"
@@ -15156,6 +16377,7 @@ export const WORD_BY_SLUG = {
     "family": "desperate",
     "word": "desperate",
     "slug": "desperate",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "desperate"
@@ -15199,6 +16421,7 @@ export const WORD_BY_SLUG = {
     "family": "determined",
     "word": "determined",
     "slug": "determined",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "determined"
@@ -15242,6 +16465,7 @@ export const WORD_BY_SLUG = {
     "family": "develop",
     "word": "develop",
     "slug": "develop",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "develop"
@@ -15285,6 +16509,7 @@ export const WORD_BY_SLUG = {
     "family": "dictionary",
     "word": "dictionary",
     "slug": "dictionary",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "dictionary"
@@ -15328,6 +16553,7 @@ export const WORD_BY_SLUG = {
     "family": "disastrous",
     "word": "disastrous",
     "slug": "disastrous",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "disastrous"
@@ -15371,6 +16597,7 @@ export const WORD_BY_SLUG = {
     "family": "embarrass",
     "word": "embarrass",
     "slug": "embarrass",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "embarrass"
@@ -15414,6 +16641,7 @@ export const WORD_BY_SLUG = {
     "family": "environment",
     "word": "environment",
     "slug": "environment",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "environment"
@@ -15457,6 +16685,7 @@ export const WORD_BY_SLUG = {
     "family": "equip (-ped, -ment)",
     "word": "equip",
     "slug": "equip",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "equip",
@@ -15502,6 +16731,7 @@ export const WORD_BY_SLUG = {
     "family": "equip (-ped, -ment)",
     "word": "equipped",
     "slug": "equipped",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "equip",
@@ -15547,6 +16777,7 @@ export const WORD_BY_SLUG = {
     "family": "equip (-ped, -ment)",
     "word": "equipment",
     "slug": "equipment",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "equip",
@@ -15592,6 +16823,7 @@ export const WORD_BY_SLUG = {
     "family": "especially",
     "word": "especially",
     "slug": "especially",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "especially"
@@ -15635,6 +16867,7 @@ export const WORD_BY_SLUG = {
     "family": "exaggerate",
     "word": "exaggerate",
     "slug": "exaggerate",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "exaggerate"
@@ -15678,6 +16911,7 @@ export const WORD_BY_SLUG = {
     "family": "excellent",
     "word": "excellent",
     "slug": "excellent",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "excellent"
@@ -15721,6 +16955,7 @@ export const WORD_BY_SLUG = {
     "family": "existence",
     "word": "existence",
     "slug": "existence",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "existence"
@@ -15764,6 +16999,7 @@ export const WORD_BY_SLUG = {
     "family": "explanation",
     "word": "explanation",
     "slug": "explanation",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "explanation"
@@ -15807,6 +17043,7 @@ export const WORD_BY_SLUG = {
     "family": "familiar",
     "word": "familiar",
     "slug": "familiar",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "familiar"
@@ -15850,6 +17087,7 @@ export const WORD_BY_SLUG = {
     "family": "foreign",
     "word": "foreign",
     "slug": "foreign",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "foreign"
@@ -15893,6 +17131,7 @@ export const WORD_BY_SLUG = {
     "family": "forty",
     "word": "forty",
     "slug": "forty",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "forty"
@@ -15936,6 +17175,7 @@ export const WORD_BY_SLUG = {
     "family": "frequently",
     "word": "frequently",
     "slug": "frequently",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "frequently"
@@ -15979,6 +17219,7 @@ export const WORD_BY_SLUG = {
     "family": "government",
     "word": "government",
     "slug": "government",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "government"
@@ -16022,6 +17263,7 @@ export const WORD_BY_SLUG = {
     "family": "guarantee",
     "word": "guarantee",
     "slug": "guarantee",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "guarantee"
@@ -16065,6 +17307,7 @@ export const WORD_BY_SLUG = {
     "family": "harass",
     "word": "harass",
     "slug": "harass",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "harass"
@@ -16108,6 +17351,7 @@ export const WORD_BY_SLUG = {
     "family": "hindrance",
     "word": "hindrance",
     "slug": "hindrance",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "hindrance"
@@ -16151,6 +17395,7 @@ export const WORD_BY_SLUG = {
     "family": "identity",
     "word": "identity",
     "slug": "identity",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "identity"
@@ -16194,6 +17439,7 @@ export const WORD_BY_SLUG = {
     "family": "immediate(ly)",
     "word": "immediate",
     "slug": "immediate",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "immediate",
@@ -16238,6 +17484,7 @@ export const WORD_BY_SLUG = {
     "family": "immediate(ly)",
     "word": "immediately",
     "slug": "immediately",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "immediate",
@@ -16282,6 +17529,7 @@ export const WORD_BY_SLUG = {
     "family": "individual",
     "word": "individual",
     "slug": "individual",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "individual"
@@ -16325,6 +17573,7 @@ export const WORD_BY_SLUG = {
     "family": "interfere",
     "word": "interfere",
     "slug": "interfere",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "interfere"
@@ -16368,6 +17617,7 @@ export const WORD_BY_SLUG = {
     "family": "interrupt",
     "word": "interrupt",
     "slug": "interrupt",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "interrupt"
@@ -16411,6 +17661,7 @@ export const WORD_BY_SLUG = {
     "family": "language",
     "word": "language",
     "slug": "language",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "language"
@@ -16454,6 +17705,7 @@ export const WORD_BY_SLUG = {
     "family": "leisure",
     "word": "leisure",
     "slug": "leisure",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "leisure"
@@ -16497,6 +17749,7 @@ export const WORD_BY_SLUG = {
     "family": "lightning",
     "word": "lightning",
     "slug": "lightning",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "lightning"
@@ -16540,6 +17793,7 @@ export const WORD_BY_SLUG = {
     "family": "marvellous",
     "word": "marvellous",
     "slug": "marvellous",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "marvellous"
@@ -16583,6 +17837,7 @@ export const WORD_BY_SLUG = {
     "family": "mischievous",
     "word": "mischievous",
     "slug": "mischievous",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "mischievous"
@@ -16626,6 +17881,7 @@ export const WORD_BY_SLUG = {
     "family": "muscle",
     "word": "muscle",
     "slug": "muscle",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "muscle"
@@ -16669,6 +17925,7 @@ export const WORD_BY_SLUG = {
     "family": "necessary",
     "word": "necessary",
     "slug": "necessary",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "necessary"
@@ -16712,6 +17969,7 @@ export const WORD_BY_SLUG = {
     "family": "neighbour",
     "word": "neighbour",
     "slug": "neighbour",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "neighbour"
@@ -16755,6 +18013,7 @@ export const WORD_BY_SLUG = {
     "family": "nuisance",
     "word": "nuisance",
     "slug": "nuisance",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "nuisance"
@@ -16798,6 +18057,7 @@ export const WORD_BY_SLUG = {
     "family": "occupy",
     "word": "occupy",
     "slug": "occupy",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "occupy"
@@ -16841,6 +18101,7 @@ export const WORD_BY_SLUG = {
     "family": "occur",
     "word": "occur",
     "slug": "occur",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "occur"
@@ -16884,6 +18145,7 @@ export const WORD_BY_SLUG = {
     "family": "opportunity",
     "word": "opportunity",
     "slug": "opportunity",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "opportunity"
@@ -16927,6 +18189,7 @@ export const WORD_BY_SLUG = {
     "family": "parliament",
     "word": "parliament",
     "slug": "parliament",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "parliament"
@@ -16970,6 +18233,7 @@ export const WORD_BY_SLUG = {
     "family": "persuade",
     "word": "persuade",
     "slug": "persuade",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "persuade"
@@ -17013,6 +18277,7 @@ export const WORD_BY_SLUG = {
     "family": "physical",
     "word": "physical",
     "slug": "physical",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "physical"
@@ -17056,6 +18321,7 @@ export const WORD_BY_SLUG = {
     "family": "prejudice",
     "word": "prejudice",
     "slug": "prejudice",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "prejudice"
@@ -17099,6 +18365,7 @@ export const WORD_BY_SLUG = {
     "family": "privilege",
     "word": "privilege",
     "slug": "privilege",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "privilege"
@@ -17142,6 +18409,7 @@ export const WORD_BY_SLUG = {
     "family": "profession",
     "word": "profession",
     "slug": "profession",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "profession"
@@ -17185,6 +18453,7 @@ export const WORD_BY_SLUG = {
     "family": "programme",
     "word": "programme",
     "slug": "programme",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "programme"
@@ -17228,6 +18497,7 @@ export const WORD_BY_SLUG = {
     "family": "pronunciation",
     "word": "pronunciation",
     "slug": "pronunciation",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "pronunciation"
@@ -17271,6 +18541,7 @@ export const WORD_BY_SLUG = {
     "family": "queue",
     "word": "queue",
     "slug": "queue",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "queue"
@@ -17314,6 +18585,7 @@ export const WORD_BY_SLUG = {
     "family": "recognise",
     "word": "recognise",
     "slug": "recognise",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "recognise"
@@ -17358,6 +18630,7 @@ export const WORD_BY_SLUG = {
     "family": "recommend",
     "word": "recommend",
     "slug": "recommend",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "recommend"
@@ -17401,6 +18674,7 @@ export const WORD_BY_SLUG = {
     "family": "relevant",
     "word": "relevant",
     "slug": "relevant",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "relevant"
@@ -17444,6 +18718,7 @@ export const WORD_BY_SLUG = {
     "family": "restaurant",
     "word": "restaurant",
     "slug": "restaurant",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "restaurant"
@@ -17487,6 +18762,7 @@ export const WORD_BY_SLUG = {
     "family": "rhyme",
     "word": "rhyme",
     "slug": "rhyme",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "rhyme"
@@ -17530,6 +18806,7 @@ export const WORD_BY_SLUG = {
     "family": "rhythm",
     "word": "rhythm",
     "slug": "rhythm",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "rhythm"
@@ -17573,6 +18850,7 @@ export const WORD_BY_SLUG = {
     "family": "sacrifice",
     "word": "sacrifice",
     "slug": "sacrifice",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sacrifice"
@@ -17616,6 +18894,7 @@ export const WORD_BY_SLUG = {
     "family": "secretary",
     "word": "secretary",
     "slug": "secretary",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "secretary"
@@ -17659,6 +18938,7 @@ export const WORD_BY_SLUG = {
     "family": "shoulder",
     "word": "shoulder",
     "slug": "shoulder",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "shoulder"
@@ -17702,6 +18982,7 @@ export const WORD_BY_SLUG = {
     "family": "signature",
     "word": "signature",
     "slug": "signature",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "signature"
@@ -17745,6 +19026,7 @@ export const WORD_BY_SLUG = {
     "family": "sincere(ly)",
     "word": "sincere",
     "slug": "sincere",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sincere",
@@ -17789,6 +19071,7 @@ export const WORD_BY_SLUG = {
     "family": "sincere(ly)",
     "word": "sincerely",
     "slug": "sincerely",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sincere",
@@ -17833,6 +19116,7 @@ export const WORD_BY_SLUG = {
     "family": "soldier",
     "word": "soldier",
     "slug": "soldier",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "soldier"
@@ -17876,6 +19160,7 @@ export const WORD_BY_SLUG = {
     "family": "stomach",
     "word": "stomach",
     "slug": "stomach",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "stomach"
@@ -17919,6 +19204,7 @@ export const WORD_BY_SLUG = {
     "family": "sufficient",
     "word": "sufficient",
     "slug": "sufficient",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sufficient"
@@ -17962,6 +19248,7 @@ export const WORD_BY_SLUG = {
     "family": "suggest",
     "word": "suggest",
     "slug": "suggest",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "suggest"
@@ -18005,6 +19292,7 @@ export const WORD_BY_SLUG = {
     "family": "symbol",
     "word": "symbol",
     "slug": "symbol",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "symbol"
@@ -18048,6 +19336,7 @@ export const WORD_BY_SLUG = {
     "family": "system",
     "word": "system",
     "slug": "system",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "system"
@@ -18091,6 +19380,7 @@ export const WORD_BY_SLUG = {
     "family": "temperature",
     "word": "temperature",
     "slug": "temperature",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "temperature"
@@ -18134,6 +19424,7 @@ export const WORD_BY_SLUG = {
     "family": "thorough",
     "word": "thorough",
     "slug": "thorough",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "thorough"
@@ -18177,6 +19468,7 @@ export const WORD_BY_SLUG = {
     "family": "twelfth",
     "word": "twelfth",
     "slug": "twelfth",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "twelfth"
@@ -18220,6 +19512,7 @@ export const WORD_BY_SLUG = {
     "family": "variety",
     "word": "variety",
     "slug": "variety",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "variety"
@@ -18263,6 +19556,7 @@ export const WORD_BY_SLUG = {
     "family": "vegetable",
     "word": "vegetable",
     "slug": "vegetable",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "vegetable"
@@ -18306,6 +19600,7 @@ export const WORD_BY_SLUG = {
     "family": "vehicle",
     "word": "vehicle",
     "slug": "vehicle",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "vehicle"
@@ -18349,6 +19644,7 @@ export const WORD_BY_SLUG = {
     "family": "yacht",
     "word": "yacht",
     "slug": "yacht",
+    "spellingPool": "core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "yacht"
@@ -18386,5 +19682,875 @@ export const WORD_BY_SLUG = {
       "importedAt": 0
     },
     "sortIndex": 212
+  },
+  "divide": {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "divide",
+    "slug": "divide",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "We divide the class into teams before the investigation.",
+    "sentences": [
+      "We divide the class into teams before the investigation."
+    ],
+    "accepted": [
+      "divide"
+    ],
+    "explanation": "To divide is to split something into parts or groups.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 213
+  },
+  "collide": {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "collide",
+    "slug": "collide",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "The two balls collide in the middle of the table.",
+    "sentences": [
+      "The two balls collide in the middle of the table."
+    ],
+    "accepted": [
+      "collide"
+    ],
+    "explanation": "To collide is to crash into something or hit it while moving.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 214
+  },
+  "explode": {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "explode",
+    "slug": "explode",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "The volcano model did not explode until the final step.",
+    "sentences": [
+      "The volcano model did not explode until the final step."
+    ],
+    "accepted": [
+      "explode"
+    ],
+    "explanation": "To explode is to burst apart suddenly with force.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 215
+  },
+  "corrode": {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "corrode",
+    "slug": "corrode",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "Salt water can corrode metal over time.",
+    "sentences": [
+      "Salt water can corrode metal over time."
+    ],
+    "accepted": [
+      "corrode"
+    ],
+    "explanation": "To corrode is to be slowly damaged by a chemical reaction, often rust.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 216
+  },
+  "conclude": {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "conclude",
+    "slug": "conclude",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "We conclude that shade slows the melting ice.",
+    "sentences": [
+      "We conclude that shade slows the melting ice."
+    ],
+    "accepted": [
+      "conclude"
+    ],
+    "explanation": "To conclude is to finish, or to decide after thinking about evidence.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 217
+  },
+  "extend": {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "extend",
+    "slug": "extend",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "The bridge can extend across the stream.",
+    "sentences": [
+      "The bridge can extend across the stream."
+    ],
+    "accepted": [
+      "extend"
+    ],
+    "explanation": "To extend is to make something longer or reach further.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 218
+  },
+  "comprehend": {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "comprehend",
+    "slug": "comprehend",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "She could comprehend the instructions after reading them twice.",
+    "sentences": [
+      "She could comprehend the instructions after reading them twice."
+    ],
+    "accepted": [
+      "comprehend"
+    ],
+    "explanation": "To comprehend is to understand something fully.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 219
+  },
+  "evade": {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "evade",
+    "slug": "evade",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "The beetle tried to evade the torchlight under a leaf.",
+    "sentences": [
+      "The beetle tried to evade the torchlight under a leaf."
+    ],
+    "accepted": [
+      "evade"
+    ],
+    "explanation": "To evade is to avoid or escape from someone or something.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 220
+  },
+  "intrude": {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "intrude",
+    "slug": "intrude",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "Please do not intrude while the group is recording.",
+    "sentences": [
+      "Please do not intrude while the group is recording."
+    ],
+    "accepted": [
+      "intrude"
+    ],
+    "explanation": "To intrude is to enter or join in where you are not wanted.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 221
+  },
+  "interlude": {
+    "year": "extra",
+    "family": "Word-building verbs",
+    "word": "interlude",
+    "slug": "interlude",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "divide",
+      "collide",
+      "explode",
+      "corrode",
+      "conclude",
+      "extend",
+      "comprehend",
+      "evade",
+      "intrude",
+      "interlude"
+    ],
+    "sentence": "A quiet interlude gave the performers time to reset.",
+    "sentences": [
+      "A quiet interlude gave the performers time to reset."
+    ],
+    "accepted": [
+      "interlude"
+    ],
+    "explanation": "An interlude is a short pause or break between parts of something.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "word",
+      "building",
+      "verbs"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 222
+  },
+  "classification": {
+    "year": "extra",
+    "family": "Science: classification",
+    "word": "classification",
+    "slug": "classification",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "classification"
+    ],
+    "sentence": "Classification helps scientists compare animals with similar features.",
+    "sentences": [
+      "Classification helps scientists compare animals with similar features."
+    ],
+    "accepted": [
+      "classification"
+    ],
+    "explanation": "Classification is sorting living things or objects into groups by shared features.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "classification"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 223
+  },
+  "backbone": {
+    "year": "extra",
+    "family": "Science: body structure",
+    "word": "backbone",
+    "slug": "backbone",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "backbone",
+      "skeleton"
+    ],
+    "sentence": "A fish has a backbone inside its body.",
+    "sentences": [
+      "A fish has a backbone inside its body."
+    ],
+    "accepted": [
+      "backbone"
+    ],
+    "explanation": "A backbone is the row of bones that supports the back.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "body",
+      "structure"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 224
+  },
+  "skeleton": {
+    "year": "extra",
+    "family": "Science: body structure",
+    "word": "skeleton",
+    "slug": "skeleton",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "backbone",
+      "skeleton"
+    ],
+    "sentence": "The skeleton protects important organs.",
+    "sentences": [
+      "The skeleton protects important organs."
+    ],
+    "accepted": [
+      "skeleton"
+    ],
+    "explanation": "A skeleton is the frame of bones that supports a body.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "body",
+      "structure"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 225
+  },
+  "cold-blooded": {
+    "year": "extra",
+    "family": "Science: animal groups",
+    "word": "cold-blooded",
+    "slug": "cold-blooded",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "cold-blooded",
+      "amphibians",
+      "reptiles",
+      "mammals",
+      "arachnid",
+      "mollusc"
+    ],
+    "sentence": "A cold-blooded reptile warms itself on a rock.",
+    "sentences": [
+      "A cold-blooded reptile warms itself on a rock."
+    ],
+    "accepted": [
+      "cold-blooded",
+      "cold blooded"
+    ],
+    "explanation": "Cold-blooded animals depend on their surroundings to control body temperature.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "animal",
+      "groups"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 226
+  },
+  "amphibians": {
+    "year": "extra",
+    "family": "Science: animal groups",
+    "word": "amphibians",
+    "slug": "amphibians",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "cold-blooded",
+      "amphibians",
+      "reptiles",
+      "mammals",
+      "arachnid",
+      "mollusc"
+    ],
+    "sentence": "Many amphibians begin life in water as tadpoles.",
+    "sentences": [
+      "Many amphibians begin life in water as tadpoles."
+    ],
+    "accepted": [
+      "amphibians"
+    ],
+    "explanation": "Amphibians are animals such as frogs that can live in water and on land.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "animal",
+      "groups"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 227
+  },
+  "metamorphosis": {
+    "year": "extra",
+    "family": "Science: life cycles",
+    "word": "metamorphosis",
+    "slug": "metamorphosis",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "metamorphosis"
+    ],
+    "sentence": "A butterfly goes through metamorphosis before it can fly.",
+    "sentences": [
+      "A butterfly goes through metamorphosis before it can fly."
+    ],
+    "accepted": [
+      "metamorphosis"
+    ],
+    "explanation": "Metamorphosis is a major change in body form as an animal grows.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "life",
+      "cycles"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 228
+  },
+  "reptiles": {
+    "year": "extra",
+    "family": "Science: animal groups",
+    "word": "reptiles",
+    "slug": "reptiles",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "cold-blooded",
+      "amphibians",
+      "reptiles",
+      "mammals",
+      "arachnid",
+      "mollusc"
+    ],
+    "sentence": "Reptiles often lay eggs on land.",
+    "sentences": [
+      "Reptiles often lay eggs on land."
+    ],
+    "accepted": [
+      "reptiles"
+    ],
+    "explanation": "Reptiles are cold-blooded animals with dry scales, such as lizards and snakes.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "animal",
+      "groups"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 229
+  },
+  "mammals": {
+    "year": "extra",
+    "family": "Science: animal groups",
+    "word": "mammals",
+    "slug": "mammals",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "cold-blooded",
+      "amphibians",
+      "reptiles",
+      "mammals",
+      "arachnid",
+      "mollusc"
+    ],
+    "sentence": "Dolphins and bats are both mammals.",
+    "sentences": [
+      "Dolphins and bats are both mammals."
+    ],
+    "accepted": [
+      "mammals"
+    ],
+    "explanation": "Mammals are warm-blooded animals that usually have hair or fur and feed their young milk.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "animal",
+      "groups"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 230
+  },
+  "arachnid": {
+    "year": "extra",
+    "family": "Science: animal groups",
+    "word": "arachnid",
+    "slug": "arachnid",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "cold-blooded",
+      "amphibians",
+      "reptiles",
+      "mammals",
+      "arachnid",
+      "mollusc"
+    ],
+    "sentence": "A spider is an arachnid, not an insect.",
+    "sentences": [
+      "A spider is an arachnid, not an insect."
+    ],
+    "accepted": [
+      "arachnid"
+    ],
+    "explanation": "An arachnid is an animal with eight legs, such as a spider or scorpion.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "animal",
+      "groups"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 231
+  },
+  "mollusc": {
+    "year": "extra",
+    "family": "Science: animal groups",
+    "word": "mollusc",
+    "slug": "mollusc",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "cold-blooded",
+      "amphibians",
+      "reptiles",
+      "mammals",
+      "arachnid",
+      "mollusc"
+    ],
+    "sentence": "A snail is a mollusc with a coiled shell.",
+    "sentences": [
+      "A snail is a mollusc with a coiled shell."
+    ],
+    "accepted": [
+      "mollusc"
+    ],
+    "explanation": "A mollusc is a soft-bodied animal, often with a shell.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "animal",
+      "groups"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 232
+  },
+  "botanist": {
+    "year": "extra",
+    "family": "Science: plants",
+    "word": "botanist",
+    "slug": "botanist",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "botanist",
+      "flowering"
+    ],
+    "sentence": "The botanist examined the leaves carefully.",
+    "sentences": [
+      "The botanist examined the leaves carefully."
+    ],
+    "accepted": [
+      "botanist"
+    ],
+    "explanation": "A botanist is a scientist who studies plants.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "plants"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 233
+  },
+  "flowering": {
+    "year": "extra",
+    "family": "Science: plants",
+    "word": "flowering",
+    "slug": "flowering",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "botanist",
+      "flowering"
+    ],
+    "sentence": "The flowering plant attracted several bees.",
+    "sentences": [
+      "The flowering plant attracted several bees."
+    ],
+    "accepted": [
+      "flowering"
+    ],
+    "explanation": "Flowering means producing flowers.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "plants"
+    ],
+    "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling list",
+      "note": "Initial Extra expansion for spelling practice.",
+      "importedAt": 1776816000000
+    },
+    "sortIndex": 234
   }
 };

@@ -96,7 +96,7 @@ function normalisePrefs(rawPrefs = {}) {
   const mode = normaliseMode(rawPrefs.mode, 'smart');
   return {
     mode,
-    yearFilter: normaliseYearFilter(rawPrefs.yearFilter, 'all'),
+    yearFilter: normaliseYearFilter(rawPrefs.yearFilter, 'core'),
     roundLength: normaliseRoundLength(rawPrefs.roundLength, mode),
     showCloze: normaliseBoolean(rawPrefs.showCloze, true),
     autoSpeak: normaliseBoolean(rawPrefs.autoSpeak, true),
@@ -276,8 +276,8 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return next;
   }
 
-  function getStats(learnerId, yearFilter = 'all') {
-    return normaliseStats(engine.lifetimeStats(learnerId, normaliseYearFilter(yearFilter, 'all')));
+  function getStats(learnerId, yearFilter = 'core') {
+    return normaliseStats(engine.lifetimeStats(learnerId, normaliseYearFilter(yearFilter, 'core')));
   }
 
   function analyticsWordRow(learnerId, word) {
@@ -288,9 +288,11 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       family: word.family,
       year: word.year,
       yearLabel: word.yearLabel,
+      spellingPool: word.spellingPool === 'extra' ? 'extra' : 'core',
       familyWords: Array.isArray(word.familyWords) ? [...word.familyWords] : [],
       sentence: word.sentence || '',
       explanation: word.explanation || '',
+      accepted: Array.isArray(word.accepted) ? [...word.accepted] : [word.slug],
       status: engine.statusForWord(learnerId, word),
       stageLabel: engine.stageLabel(progress.stage),
       progress: {
@@ -307,14 +309,17 @@ export function createSpellingService({ repository, storage, tts, now, random, c
 
   function analyticsWordGroups(learnerId) {
     const groups = [
-      { key: 'y3-4', title: 'Years 3-4', year: '3-4' },
-      { key: 'y5-6', title: 'Years 5-6', year: '5-6' },
+      { key: 'y3-4', title: 'Years 3-4', spellingPool: 'core', year: '3-4' },
+      { key: 'y5-6', title: 'Years 5-6', spellingPool: 'core', year: '5-6' },
+      { key: 'extra', title: 'Extra', spellingPool: 'extra', year: 'extra' },
     ];
     return groups.map((group) => ({
       key: group.key,
       title: group.title,
+      spellingPool: group.spellingPool,
+      year: group.year,
       words: runtimeWords
-        .filter((word) => word.year === group.year)
+        .filter((word) => (word.spellingPool === 'extra' ? 'extra' : 'core') === group.spellingPool && word.year === group.year)
         .map((word) => analyticsWordRow(learnerId, word)),
     }));
   }
@@ -324,9 +329,11 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       version: SPELLING_SERVICE_STATE_VERSION,
       generatedAt: clock(),
       pools: {
-        all: getStats(learnerId, 'all'),
+        all: getStats(learnerId, 'core'),
+        core: getStats(learnerId, 'core'),
         y34: getStats(learnerId, 'y3-4'),
         y56: getStats(learnerId, 'y5-6'),
+        extra: getStats(learnerId, 'extra'),
       },
       wordGroups: analyticsWordGroups(learnerId),
     };
@@ -534,7 +541,9 @@ export function createSpellingService({ repository, storage, tts, now, random, c
 
   function startSession(learnerId, options = {}) {
     const mode = normaliseMode(options.mode, 'smart');
-    const yearFilter = normaliseYearFilter(options.yearFilter, 'all');
+    const yearFilter = mode === 'test'
+      ? 'core'
+      : normaliseYearFilter(options.yearFilter, 'core');
     const requestedWords = Array.isArray(options.words)
       ? uniqueStrings(options.words.map((slug) => normaliseString(slug).toLowerCase()).filter(Boolean))
       : null;

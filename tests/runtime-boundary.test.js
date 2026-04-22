@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createAppHarness } from './helpers/app-harness.js';
 import { SUBJECTS } from '../src/platform/core/subject-registry.js';
+import { WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
 
 function makeBrokenSubject({
   id = 'broken-subject',
@@ -87,6 +88,7 @@ test('subject action failures are contained and leave routing, toasts, learner s
   });
   harness.store.updateSubjectUi('spelling', started.state);
   const spellingBefore = structuredClone(harness.store.getState().subjectUi.spelling);
+  assert.ok(spellingBefore.session.uniqueWords.every((slug) => WORD_BY_SLUG[slug].spellingPool === 'core'));
   const spellingBeforeJson = JSON.stringify(spellingBefore);
   harness.store.pushToasts({ toast: { title: 'Existing toast', body: 'Still here' } });
 

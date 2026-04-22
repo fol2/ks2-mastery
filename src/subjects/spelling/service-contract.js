@@ -2,7 +2,10 @@ export const SPELLING_SERVICE_STATE_VERSION = 1;
 
 export const SPELLING_ROOT_PHASES = Object.freeze(['dashboard', 'session', 'summary', 'word-bank']);
 export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single']);
-export const SPELLING_YEAR_FILTERS = Object.freeze(['all', 'y3-4', 'y5-6']);
+export const SPELLING_YEAR_FILTERS = Object.freeze(['core', 'y3-4', 'y5-6', 'extra']);
+export const LEGACY_SPELLING_YEAR_FILTER_ALIASES = Object.freeze({
+  all: 'core',
+});
 export const SPELLING_SESSION_TYPES = Object.freeze(['learning', 'test']);
 export const SPELLING_SESSION_PHASES = Object.freeze(['question', 'retry', 'correction']);
 export const SPELLING_FEEDBACK_KINDS = Object.freeze(['success', 'error', 'info', 'warn']);
@@ -35,8 +38,13 @@ export function normaliseMode(value, fallback = 'smart') {
   return SPELLING_MODES.includes(value) ? value : fallback;
 }
 
-export function normaliseYearFilter(value, fallback = 'all') {
-  return SPELLING_YEAR_FILTERS.includes(value) ? value : fallback;
+export function normaliseYearFilter(value, fallback = 'core') {
+  const candidate = typeof value === 'string' ? value : '';
+  const aliased = LEGACY_SPELLING_YEAR_FILTER_ALIASES[candidate] || candidate;
+  const normalisedFallback = SPELLING_YEAR_FILTERS.includes(fallback)
+    ? fallback
+    : LEGACY_SPELLING_YEAR_FILTER_ALIASES[fallback] || 'core';
+  return SPELLING_YEAR_FILTERS.includes(aliased) ? aliased : normalisedFallback;
 }
 
 export function normaliseRoundLength(value, mode = 'smart') {

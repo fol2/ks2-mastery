@@ -1,11 +1,13 @@
 import { cloneSerialisable } from '../../../platform/core/repositories/helpers.js';
 
 export const SPELLING_CONTENT_SUBJECT_ID = 'spelling';
-export const SPELLING_CONTENT_MODEL_VERSION = 1;
+export const SPELLING_CONTENT_MODEL_VERSION = 2;
 export const SPELLING_CONTENT_EXPORT_KIND = 'ks2-spelling-content';
 export const SPELLING_CONTENT_EXPORT_VERSION = 1;
+export const SPELLING_CONTENT_POOLS = Object.freeze(['core', 'extra']);
 
 const VALID_YEAR_GROUPS = new Set(['Y3', 'Y4', 'Y5', 'Y6']);
+const VALID_SPELLING_POOLS = new Set(SPELLING_CONTENT_POOLS);
 const VALID_DRAFT_STATES = new Set(['draft']);
 const VALID_RELEASE_STATES = new Set(['published']);
 const MIN_WORD_EXPLANATION_LENGTH = 12;
@@ -16,6 +18,12 @@ function isPlainObject(value) {
 
 function normaliseString(value, fallback = '') {
   return typeof value === 'string' ? value.trim() || fallback : fallback;
+}
+
+function normaliseSpellingPool(value, fallback = 'core') {
+  const safeFallback = VALID_SPELLING_POOLS.has(fallback) ? fallback : 'core';
+  const candidate = normaliseString(value).toLowerCase();
+  return VALID_SPELLING_POOLS.has(candidate) ? candidate : safeFallback;
 }
 
 function normaliseTimestamp(value, fallback = 0) {
@@ -85,11 +93,12 @@ function yearBandFromGroups(yearGroups) {
 }
 
 function yearLabelFromBand(yearBand) {
+  if (yearBand === 'extra') return 'Extra';
   return yearBand === '5-6' ? 'Years 5-6' : 'Years 3-4';
 }
 
 function familyKeyForRuntime(word) {
-  return `${word.year}::${word.family}`;
+  return `${word.spellingPool || 'core'}::${word.year}::${word.family}`;
 }
 
 function normaliseWordList(rawValue, index = 0) {
@@ -97,6 +106,7 @@ function normaliseWordList(rawValue, index = 0) {
   return {
     id: normaliseString(raw.id, `list-${index + 1}`),
     title: normaliseString(raw.title, `Word list ${index + 1}`),
+    spellingPool: normaliseSpellingPool(raw.spellingPool),
     yearGroups: normaliseYearGroups(raw.yearGroups),
     tags: normaliseTags(raw.tags),
     wordSlugs: uniqueStrings(raw.wordSlugs, { lowerCase: true }),
@@ -106,10 +116,12 @@ function normaliseWordList(rawValue, index = 0) {
   };
 }
 
-function normaliseWordEntry(rawValue, index = 0) {
+function normaliseWordEntry(rawValue, index = 0, wordListsById = new Map()) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const word = normaliseString(raw.word);
   const slug = normaliseString(raw.slug, slugifyWord(word));
+  const listId = normaliseString(raw.listId);
+  const listPool = normaliseSpellingPool(wordListsById.get(listId)?.spellingPool);
   const accepted = uniqueStrings(raw.accepted, { lowerCase: true });
   if (slug && !accepted.includes(slug)) accepted.unshift(slug);
 
@@ -117,7 +129,8 @@ function normaliseWordEntry(rawValue, index = 0) {
     slug,
     word,
     family: normaliseString(raw.family),
-    listId: normaliseString(raw.listId),
+    listId,
+    spellingPool: normaliseSpellingPool(raw.spellingPool, listPool),
     yearGroups: normaliseYearGroups(raw.yearGroups),
     tags: normaliseTags(raw.tags),
     accepted,
@@ -147,7 +160,8 @@ function normaliseRuntimeWord(rawValue, index = 0) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const word = normaliseString(raw.word);
   const slug = normaliseString(raw.slug, slugifyWord(word));
-  const year = raw.year === '5-6' ? '5-6' : '3-4';
+  const spellingPool = normaliseSpellingPool(raw.spellingPool, raw.year === 'extra' ? 'extra' : 'core');
+  const year = spellingPool === 'extra' ? 'extra' : raw.year === '5-6' ? '5-6' : '3-4';
   const accepted = uniqueStrings(raw.accepted, { lowerCase: true });
   if (slug && !accepted.includes(slug)) accepted.unshift(slug);
   const sentences = uniqueStrings(raw.sentences);
@@ -159,6 +173,7 @@ function normaliseRuntimeWord(rawValue, index = 0) {
     family: normaliseString(raw.family),
     word,
     slug,
+    spellingPool,
     yearLabel: normaliseString(raw.yearLabel, yearLabelFromBand(year)),
     familyWords: uniqueStrings(raw.familyWords),
     sentence,
@@ -166,7 +181,7 @@ function normaliseRuntimeWord(rawValue, index = 0) {
     accepted,
     explanation: normaliseString(raw.explanation),
     listId: normaliseString(raw.listId),
-    yearGroups: normaliseYearGroups(raw.yearGroups, year === '5-6' ? ['Y5', 'Y6'] : ['Y3', 'Y4']),
+    yearGroups: normaliseYearGroups(raw.yearGroups, spellingPool === 'extra' ? [] : year === '5-6' ? ['Y5', 'Y6'] : ['Y3', 'Y4']),
     tags: normaliseTags(raw.tags),
     sourceNote: normaliseString(raw.sourceNote),
     provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'published spelling word'),
@@ -200,6 +215,8 @@ function normalisePublishedSnapshot(rawValue) {
 function normaliseDraft(rawValue) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const updatedAt = normaliseTimestamp(raw.updatedAt, 0);
+  const wordLists = (Array.isArray(raw.wordLists) ? raw.wordLists : []).map((entry, index) => normaliseWordList(entry, index));
+  const wordListsById = new Map(wordLists.map((list) => [list.id, list]));
   return {
     id: normaliseString(raw.id, 'main'),
     state: VALID_DRAFT_STATES.has(raw.state) ? raw.state : normaliseString(raw.state, 'draft'),
@@ -210,8 +227,8 @@ function normaliseDraft(rawValue) {
     provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'spelling draft'),
     createdAt: normaliseTimestamp(raw.createdAt, updatedAt),
     updatedAt,
-    wordLists: (Array.isArray(raw.wordLists) ? raw.wordLists : []).map((entry, index) => normaliseWordList(entry, index)),
-    words: (Array.isArray(raw.words) ? raw.words : []).map((entry, index) => normaliseWordEntry(entry, index)),
+    wordLists,
+    words: (Array.isArray(raw.words) ? raw.words : []).map((entry, index) => normaliseWordEntry(entry, index, wordListsById)),
     sentences: (Array.isArray(raw.sentences) ? raw.sentences : []).map((entry, index) => normaliseSentenceEntry(entry, index)),
   };
 }
@@ -247,7 +264,7 @@ export function normaliseSpellingContentBundle(rawValue) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const releases = (Array.isArray(raw.releases) ? raw.releases : []).map((entry, index) => normaliseRelease(entry, index));
   return {
-    modelVersion: normalisePositiveInteger(raw.modelVersion, SPELLING_CONTENT_MODEL_VERSION),
+    modelVersion: Math.max(normalisePositiveInteger(raw.modelVersion, SPELLING_CONTENT_MODEL_VERSION), SPELLING_CONTENT_MODEL_VERSION),
     subjectId: normaliseString(raw.subjectId, SPELLING_CONTENT_SUBJECT_ID),
     draft: normaliseDraft(raw.draft),
     releases,
@@ -335,7 +352,7 @@ export function validateSpellingContentBundle(rawBundle) {
       return;
     }
     wordListsById.set(list.id, list);
-    if (!list.yearGroups.length) {
+    if (list.spellingPool === 'core' && !list.yearGroups.length) {
       errors.push(issue('error', 'missing_year_group_metadata', `draft.wordLists[${index}].yearGroups`, `Word list "${list.id}" is missing year-group metadata.`));
     }
   });
@@ -353,14 +370,17 @@ export function validateSpellingContentBundle(rawBundle) {
       errors.push(issue('error', 'duplicate_word', `draft.words[${index}].word`, `Duplicate canonical word "${word.word}" in list "${word.listId || 'unlisted'}".`));
     }
     wordTextKeys.add(duplicateTextKey);
-    if (!word.yearGroups.length) {
+    if (word.spellingPool === 'core' && !word.yearGroups.length) {
       errors.push(issue('error', 'missing_year_group_metadata', `draft.words[${index}].yearGroups`, `Word "${word.slug}" is missing year-group metadata.`));
     }
     if (!hasUsableWordExplanation(word.explanation)) {
       errors.push(issue('error', 'missing_word_explanation', `draft.words[${index}].explanation`, `Word "${word.slug}" must include a learner-facing explanation.`));
     }
-    if (!word.listId || !wordListsById.has(word.listId)) {
+    const wordList = word.listId ? wordListsById.get(word.listId) : null;
+    if (!word.listId || !wordList) {
       errors.push(issue('error', 'malformed_entry', `draft.words[${index}].listId`, `Word "${word.slug}" must point at a valid word list.`));
+    } else if (word.spellingPool !== wordList.spellingPool) {
+      errors.push(issue('error', 'pool_mismatch', `draft.words[${index}].spellingPool`, `Word "${word.slug}" uses pool "${word.spellingPool}" but list "${word.listId}" uses pool "${wordList.spellingPool}".`));
     }
     if (!word.sentenceEntryIds.length) {
       errors.push(issue('error', 'broken_sentence_reference', `draft.words[${index}].sentenceEntryIds`, `Word "${word.slug}" must reference at least one sentence entry.`));
@@ -419,6 +439,12 @@ export function validateSpellingContentBundle(rawBundle) {
     release.snapshot.words.forEach((word, wordIndex) => {
       if (!hasUsableWordExplanation(word.explanation)) {
         errors.push(issue('error', 'missing_word_explanation', `releases[${index}].snapshot.words[${wordIndex}].explanation`, `Published word "${word.slug}" must include a learner-facing explanation.`));
+      }
+      if (word.spellingPool === 'extra' && word.year !== 'extra') {
+        errors.push(issue('error', 'pool_mismatch', `releases[${index}].snapshot.words[${wordIndex}].year`, `Published Extra word "${word.slug}" must use the Extra runtime year.`));
+      }
+      if (word.spellingPool === 'core' && word.year === 'extra') {
+        errors.push(issue('error', 'pool_mismatch', `releases[${index}].snapshot.words[${wordIndex}].spellingPool`, `Published core word "${word.slug}" cannot use the Extra runtime year.`));
       }
     });
   });
@@ -486,12 +512,13 @@ export function buildPublishedSnapshotFromDraft(rawDraft, { generatedAt = Date.n
       .filter(Boolean)
       .sort((a, b) => a.sortIndex - b.sortIndex)
       .map((sentence) => sentence.text);
-    const year = yearBandFromGroups(word.yearGroups);
-    const familyKey = `${year}::${word.family}`;
+    const year = word.spellingPool === 'extra' ? 'extra' : yearBandFromGroups(word.yearGroups);
+    const familyKey = `${word.spellingPool}::${year}::${word.family}`;
     if (!familyMap.has(familyKey)) familyMap.set(familyKey, []);
     familyMap.get(familyKey).push(word.word);
     return normaliseRuntimeWord({
       year,
+      spellingPool: word.spellingPool,
       family: word.family,
       word: word.word,
       slug: word.slug,

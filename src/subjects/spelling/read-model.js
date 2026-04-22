@@ -1,4 +1,5 @@
 import { WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from './data/word-data.js';
+import { normaliseYearFilter } from './service-contract.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SECURE_STAGE = 4;
@@ -109,6 +110,7 @@ export function buildSpellingLearnerReadModel({
       family: '',
       year: '3-4',
       yearLabel: 'Years 3-4',
+      spellingPool: 'core',
     };
     const secure = progress.stage >= SECURE_STAGE;
     const due = progress.attempts > 0 && progress.dueDay <= currentDay && !secure;
@@ -120,6 +122,7 @@ export function buildSpellingLearnerReadModel({
       familyLabel: familyLabel(word.family),
       year: word.year || '3-4',
       yearLabel: word.yearLabel || yearLabel(word.year),
+      spellingPool: word.spellingPool === 'extra' ? 'extra' : 'core',
       progress,
       secure,
       due,
@@ -305,7 +308,7 @@ export function buildSpellingLearnerReadModel({
     subjectId: 'spelling',
     prefs: {
       mode: typeof prefs.mode === 'string' ? prefs.mode : 'smart',
-      yearFilter: typeof prefs.yearFilter === 'string' ? prefs.yearFilter : 'all',
+      yearFilter: normaliseYearFilter(prefs.yearFilter, 'core'),
       roundLength: typeof prefs.roundLength === 'string' ? prefs.roundLength : '20',
     },
     currentFocus,

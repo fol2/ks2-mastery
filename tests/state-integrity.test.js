@@ -16,6 +16,7 @@ import {
 } from '../src/platform/core/data-transfer.js';
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
+import { monsterSummaryFromSpellingAnalytics } from '../src/platform/game/monster-system.js';
 
 function makeTts() {
   return {
@@ -163,7 +164,10 @@ test('full platform snapshots round-trip with generic subject-state storage inta
     createdAt: 10,
     updatedAt: 20,
   });
-  source.gameState.write('learner-a', 'monster-codex', { inklet: { mastered: ['possess'], caught: true } });
+  source.gameState.write('learner-a', 'monster-codex', {
+    inklet: { mastered: ['possess'], caught: true },
+    vellhorn: { mastered: ['mollusc'], caught: true, branch: 'b2' },
+  });
   source.eventLog.append({ id: 'event-1', learnerId: 'learner-a', type: 'spelling.word-secured', createdAt: 5 });
 
   const payload = exportPlatformSnapshot(source);
@@ -180,7 +184,52 @@ test('full platform snapshots round-trip with generic subject-state storage inta
   });
   assert.equal(target.practiceSessions.latest('learner-a', 'spelling').summary.label, 'Spelling round');
   assert.ok(target.gameState.read('learner-a', 'monster-codex').inklet.caught);
+  assert.deepEqual(target.gameState.read('learner-a', 'monster-codex').vellhorn, {
+    mastered: ['mollusc'],
+    caught: true,
+    branch: 'b2',
+  });
   assert.equal(target.eventLog.list('learner-a')[0].id, 'event-1');
+});
+
+test('old platform snapshots with legacy all prefs restore to core statutory stats', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+
+  importPlatformSnapshot(repositories, {
+    kind: 'ks2-platform-data',
+    version: 1,
+    data: {
+      learners: {
+        byId: { 'learner-a': { id: 'learner-a', name: 'Ava', yearGroup: 'Y5' } },
+        allIds: ['learner-a'],
+        selectedId: 'learner-a',
+      },
+      subjectStates: {
+        'learner-a::spelling': {
+          ui: null,
+          data: {
+            prefs: { yearFilter: 'all' },
+            progress: {
+              possess: { stage: 4, attempts: 4, correct: 4, wrong: 0 },
+              mollusc: { stage: 4, attempts: 4, correct: 4, wrong: 0 },
+            },
+          },
+          updatedAt: 1,
+        },
+      },
+    },
+  });
+
+  const service = createSpellingService({
+    repository: createSpellingPersistence({ repositories }),
+    tts: makeTts(),
+  });
+
+  assert.equal(service.getPrefs('learner-a').yearFilter, 'core');
+  assert.deepEqual(service.getStats('learner-a', 'all'), service.getStats('learner-a', 'core'));
+  assert.equal(service.getStats('learner-a', 'core').secure, 1);
+  assert.equal(service.getStats('learner-a', 'extra').secure, 1);
 });
 
 test('learner snapshot imports remap conflicting learner ids safely', () => {
@@ -207,7 +256,10 @@ test('learner snapshot imports remap conflicting learner ids safely', () => {
     createdAt: 1,
     updatedAt: 2,
   });
-  source.gameState.write('learner-a', 'monster-codex', { inklet: { mastered: ['possess'], caught: true } });
+  source.gameState.write('learner-a', 'monster-codex', {
+    inklet: { mastered: ['possess'], caught: true },
+    vellhorn: { mastered: ['mollusc'], caught: true, branch: 'b1' },
+  });
   source.eventLog.append({ learnerId: 'learner-a', type: 'spelling.word-secured', createdAt: 8 });
   const payload = exportLearnerSnapshot(source, 'learner-a');
 
@@ -228,6 +280,11 @@ test('learner snapshot imports remap conflicting learner ids safely', () => {
   assert.equal(target.learners.read().byId['learner-a-import-1'].name, 'Ava');
   assert.equal(target.subjectStates.read('learner-a-import-1', 'spelling').data.prefs.mode, 'trouble');
   assert.ok(target.gameState.read('learner-a-import-1', 'monster-codex').inklet.caught);
+  assert.deepEqual(target.gameState.read('learner-a-import-1', 'monster-codex').vellhorn, {
+    mastered: ['mollusc'],
+    caught: true,
+    branch: 'b1',
+  });
   assert.equal(target.eventLog.list('learner-a-import-1')[0].type, 'spelling.word-secured');
 });
 
@@ -300,6 +357,14 @@ test('legacy one-page spelling progress imports as learner copies without replac
   assert.equal(learners.selectedId, 'legacy-b');
   assert.equal(repositories.subjectStates.read('legacy-a-import-1', 'spelling').data.progress.possess.stage, 4);
   assert.equal(repositories.subjectStates.read('legacy-b', 'spelling').data.progress.opposite.lastResult, 'wrong');
+
+  const service = createSpellingService({
+    repository: createSpellingPersistence({ repositories }),
+    tts: makeTts(),
+  });
+  const summary = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot('legacy-a-import-1'));
+  assert.equal(summary.find((entry) => entry.monster.id === 'inklet').progress.mastered, 1);
+  assert.equal(summary.find((entry) => entry.monster.id === 'vellhorn').progress.mastered, 0);
 });
 
 test('raw legacy one-page spelling localStorage state can be imported directly', () => {

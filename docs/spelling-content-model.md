@@ -16,6 +16,7 @@ This model currently covers:
 - word lists
 - words
 - sentence entries and sentence variants
+- spelling pool metadata (`core` or `extra`)
 - year-group metadata
 - tags
 - source notes and provenance
@@ -70,6 +71,7 @@ It is validated before import and before publish.
 {
   id,
   title,
+  spellingPool,
   yearGroups,
   tags,
   wordSlugs,
@@ -80,7 +82,8 @@ It is validated before import and before publish.
 ```
 
 Word lists are the authoring/grouping boundary.
-They keep year-group metadata explicit and give future operator tooling a stable unit smaller than “all spelling content”.
+They keep pool and year-group metadata explicit and give future operator tooling a stable unit smaller than “all spelling content”.
+`spellingPool` defaults to `core` for legacy bundles. `core` lists must keep year-group metadata; `extra` lists may have an empty `yearGroups` array because they are expansion material rather than statutory Years 3-6 content.
 
 ### Words
 
@@ -90,6 +93,7 @@ They keep year-group metadata explicit and give future operator tooling a stable
   word,
   family,
   listId,
+  spellingPool,
   yearGroups,
   tags,
   accepted,
@@ -106,6 +110,9 @@ That keeps sentence banks versionable and easier to validate.
 
 `explanation` is a required, short, learner-facing meaning note shown in the word bank explainer.
 Legacy bundles that pre-date this field are backfilled from the canonical seeded word list when the slug already exists there.
+
+`spellingPool` is inherited from the word list if omitted. Existing version-one content without pool metadata therefore remains `core` by default.
+Extra words publish with runtime `year: 'extra'`, `yearLabel: 'Extra'`, and no statutory year groups.
 
 ### Sentence entries / variants
 
@@ -201,6 +208,12 @@ Published releases store a compact runtime snapshot compatible with the preserve
 ```
 
 Each runtime word includes the legacy engine fields the existing spelling PoC already expects, including sentence arrays and family-word groupings.
+Runtime words also include `spellingPool`. Current values are:
+
+- `core` for statutory Years 3-6 spelling content
+- `extra` for expansion spelling content outside the statutory pools
+
+The legacy `all` spelling filter is still accepted by the service, but it aliases to `core`. Extra content has to be requested explicitly through the `extra` filter and is excluded from SATs Test mode.
 
 This keeps the subject engine deterministic and unchanged in its core pedagogy while letting content-management logic live outside it.
 
@@ -249,6 +262,9 @@ The content layer is deliberately separate from the subject engine.
 - hydrates from `/api/content/spelling`
 - writes with account-scoped mutation metadata
 - tracks the current account revision for replay-safe writes
+
+Accounts with no stored spelling content receive the current seeded bundle, including the Extra expansion, on first read.
+Accounts that already have stored account-scoped content are not silently overwritten by newer seeds; operators should import/publish the updated bundle, or intentionally reset to seeded content after taking a backup.
 
 ### Content service
 
@@ -308,6 +324,7 @@ Validation currently catches:
 - malformed word entries
 - malformed sentence entries
 - missing year-group metadata on lists and words
+- core/extra pool mismatches between lists, draft words, and published runtime words
 - missing or cross-linked sentence references
 - invalid publish states
 - duplicate release ids or versions

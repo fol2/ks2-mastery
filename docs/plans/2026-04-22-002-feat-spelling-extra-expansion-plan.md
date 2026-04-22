@@ -130,7 +130,7 @@ The important invariant is that `spellingPool` becomes the authority for core-vs
 
 ## Implementation Units
 
-- [ ] **Unit 1: Add The Spelling Pool Contract**
+- [x] **Unit 1: Add The Spelling Pool Contract**
 
 **Goal:** Extend the content and runtime word model so spelling words can belong to either the core statutory pool or the Extra expansion pool.
 
@@ -175,7 +175,7 @@ The important invariant is that `spellingPool` becomes the authority for core-vs
 - Existing content bundles remain readable.
 - The content service can expose a runtime snapshot containing both core and Extra words while draft-only changes stay out of runtime.
 
-- [ ] **Unit 2: Seed And Publish The Initial Extra Word Set**
+- [x] **Unit 2: Seed And Publish The Initial Extra Word Set**
 
 **Goal:** Add James's first Extra word list to the spelling content seed and generated runtime data.
 
@@ -213,7 +213,7 @@ The important invariant is that `spellingPool` becomes the authority for core-vs
 - The generated runtime word count increases by exactly 22 compared with the statutory-only baseline.
 - The published release snapshot, not the draft alone, is what the spelling service consumes.
 
-- [ ] **Unit 3: Extend Spelling Filters, Sessions, And Analytics**
+- [x] **Unit 3: Extend Spelling Filters, Sessions, And Analytics**
 
 **Goal:** Make Smart Review, Trouble Drill, stats, and analytics understand `core`, `y3-4`, `y5-6`, and `extra`.
 
@@ -264,7 +264,7 @@ The important invariant is that `spellingPool` becomes the authority for core-vs
 - Existing core spelling session behaviour remains stable.
 - Extra can be practised deliberately through Smart Review and Trouble Drill, and cannot enter SATs Test.
 
-- [ ] **Unit 4: Update Spelling UI Labels And Word Bank Surfaces**
+- [x] **Unit 4: Update Spelling UI Labels And Word Bank Surfaces**
 
 **Goal:** Expose Extra intentionally in the spelling UI while removing misleading "All" wording from statutory aggregate surfaces.
 
@@ -311,7 +311,7 @@ The important invariant is that `spellingPool` becomes the authority for core-vs
 - The learner can choose Extra without confusing it with statutory practice.
 - No production UI still labels the statutory aggregate as "All".
 
-- [ ] **Unit 5: Add Vellhorn To Rewards, Codex, And Home Projections**
+- [x] **Unit 5: Add Vellhorn To Rewards, Codex, And Home Projections**
 
 **Goal:** Add Vellhorn as the Extra spelling monster without changing Inklet, Glimmerbug, or Phaeton semantics.
 
@@ -363,7 +363,7 @@ The important invariant is that `spellingPool` becomes the authority for core-vs
 - Vellhorn appears as the Extra reward path.
 - Phaeton remains a statutory core bonus monster only.
 
-- [ ] **Unit 6: Preserve Compatibility, Rollout Safety, And Documentation**
+- [x] **Unit 6: Preserve Compatibility, Rollout Safety, And Documentation**
 
 **Goal:** Protect existing learners, import/export paths, account-scoped content, and docs while shipping the expansion.
 
