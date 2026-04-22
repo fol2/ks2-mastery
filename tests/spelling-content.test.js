@@ -34,6 +34,7 @@ function addDraftOnlyWord(bundle) {
     yearGroups: ['Y3', 'Y4'],
     tags: ['draft-only'],
     accepted: ['draftonly'],
+    explanation: 'Draftonly is a test spelling word used only by content tests.',
     sentenceEntryIds: ['draftonly__01'],
     sourceNote: 'Draft-only test word',
     provenance: { source: 'tests', note: 'Added inside tests.' },
@@ -88,6 +89,8 @@ test('seeded spelling content validates and round-trips through the portable exp
   assert.equal(validation.errors.length, 0);
   assert.equal(validation.bundle.releases.length, 1);
   assert.equal(validation.bundle.publication.publishedVersion, 1);
+  assert.ok(validation.bundle.draft.words.every((word) => word.explanation));
+  assert.ok(validation.bundle.releases[0].snapshot.words.every((word) => word.explanation));
 
   const exported = content.exportPortable();
   const roundTripped = extractPortableSpellingContent(exported);
@@ -114,6 +117,18 @@ test('validation catches invalid publish state pointers', () => {
   const validation = validateSpellingContentBundle(broken);
   assert.equal(validation.ok, false);
   assert.ok(validation.errors.some((issue) => issue.code === 'invalid_publish_state'));
+});
+
+test('validation requires learner-facing word explanations in draft and published snapshots', () => {
+  const broken = cloneSerialisable(SEEDED_SPELLING_CONTENT_BUNDLE);
+  broken.draft.words[0].explanation = '';
+  broken.releases[0].snapshot.words[0].explanation = '';
+
+  const validation = validateSpellingContentBundle(broken);
+  assert.equal(validation.ok, false);
+  assert.equal(validation.errors.filter((issue) => issue.code === 'missing_word_explanation').length, 2);
+  assert.ok(validation.errors.some((issue) => issue.path === 'draft.words[0].explanation'));
+  assert.ok(validation.errors.some((issue) => issue.path === 'releases[0].snapshot.words[0].explanation'));
 });
 
 test('runtime stays pinned to the published spelling release until a new draft is published', async () => {

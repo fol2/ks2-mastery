@@ -129,6 +129,7 @@ function wordMatchesSearch(word, query) {
     word.word,
     word.family,
     word.yearLabel,
+    word.explanation,
     ...(Array.isArray(word.familyWords) ? word.familyWords : []),
   ].map(normaliseSearchText);
   return fields.some((field) => field.includes(query));
@@ -923,6 +924,7 @@ function renderWordBank({ learner, analytics, searchQuery = '', statusFilter = '
    -------------------------------------------------------------- */
 function renderWordDetailExplain(word) {
   const sentence = (word.sentence || '').replace(/________/g, word.word);
+  const explanation = word.explanation || '';
   /* The modal renders its own section wrapper + label, so the shared chip
      helper is called with `label: null` (wrapper supplies the heading) and
      `requireMultiple: false` (single-entry families are still worth showing
@@ -933,6 +935,12 @@ function renderWordDetailExplain(word) {
   });
   return `
     <div class="wb-modal-body">
+      <div class="wb-modal-section">
+        <p class="wb-modal-section-label">What it means</p>
+        ${explanation
+          ? `<p class="wb-modal-def">${escapeHtml(explanation)}</p>`
+          : '<p class="wb-modal-def">No meaning note on file for this word yet.</p>'}
+      </div>
       <div class="wb-modal-section">
         <p class="wb-modal-section-label">Example sentence</p>
         ${sentence

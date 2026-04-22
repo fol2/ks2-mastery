@@ -153,6 +153,13 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   assert.match(html, />possess</);
   assert.doesNotMatch(html, />accident</);
 
+  harness.dispatch('spelling-word-detail-open', { slug: 'possess', value: 'explain' });
+  html = harness.render();
+  assert.match(html, /What it means/);
+  assert.match(html, /To possess something means to own it or have it/);
+  assert.match(html, /Example sentence/);
+  harness.dispatch('spelling-word-detail-close');
+
   harness.dispatch('spelling-analytics-search', { value: '' });
   html = harness.render();
   assert.match(html, />accident</);

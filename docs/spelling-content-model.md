@@ -93,6 +93,7 @@ They keep year-group metadata explicit and give future operator tooling a stable
   yearGroups,
   tags,
   accepted,
+  explanation,
   sentenceEntryIds,
   sourceNote,
   provenance,
@@ -102,6 +103,8 @@ They keep year-group metadata explicit and give future operator tooling a stable
 
 `sentenceEntryIds` point at sentence rows rather than embedding long sentence arrays directly in the word row.
 That keeps sentence banks versionable and easier to validate.
+
+`explanation` is a required, short, learner-facing meaning note shown in the word bank explainer.
 
 ### Sentence entries / variants
 

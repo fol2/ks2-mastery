@@ -8,6 +8,7 @@ export const SPELLING_CONTENT_EXPORT_VERSION = 1;
 const VALID_YEAR_GROUPS = new Set(['Y3', 'Y4', 'Y5', 'Y6']);
 const VALID_DRAFT_STATES = new Set(['draft']);
 const VALID_RELEASE_STATES = new Set(['published']);
+const MIN_WORD_EXPLANATION_LENGTH = 12;
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -59,6 +60,10 @@ function normaliseYearGroups(value, fallback = []) {
 
 function normaliseTags(value) {
   return uniqueStrings(value, { lowerCase: true });
+}
+
+function hasUsableWordExplanation(value) {
+  return normaliseString(value).length >= MIN_WORD_EXPLANATION_LENGTH;
 }
 
 function normaliseProvenance(rawValue, fallbackSource = '') {
@@ -116,6 +121,7 @@ function normaliseWordEntry(rawValue, index = 0) {
     yearGroups: normaliseYearGroups(raw.yearGroups),
     tags: normaliseTags(raw.tags),
     accepted,
+    explanation: normaliseString(raw.explanation),
     sentenceEntryIds: uniqueStrings(raw.sentenceEntryIds),
     sourceNote: normaliseString(raw.sourceNote),
     provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'spelling word'),
@@ -158,6 +164,7 @@ function normaliseRuntimeWord(rawValue, index = 0) {
     sentence,
     sentences,
     accepted,
+    explanation: normaliseString(raw.explanation),
     listId: normaliseString(raw.listId),
     yearGroups: normaliseYearGroups(raw.yearGroups, year === '5-6' ? ['Y5', 'Y6'] : ['Y3', 'Y4']),
     tags: normaliseTags(raw.tags),
@@ -302,6 +309,9 @@ export function validateSpellingContentBundle(rawBundle) {
     if (!word.yearGroups.length) {
       errors.push(issue('error', 'missing_year_group_metadata', `draft.words[${index}].yearGroups`, `Word "${word.slug}" is missing year-group metadata.`));
     }
+    if (!hasUsableWordExplanation(word.explanation)) {
+      errors.push(issue('error', 'missing_word_explanation', `draft.words[${index}].explanation`, `Word "${word.slug}" must include a learner-facing explanation.`));
+    }
     if (!word.listId || !wordListsById.has(word.listId)) {
       errors.push(issue('error', 'malformed_entry', `draft.words[${index}].listId`, `Word "${word.slug}" must point at a valid word list.`));
     }
@@ -359,6 +369,11 @@ export function validateSpellingContentBundle(rawBundle) {
     if (!release.snapshot.words.length) {
       errors.push(issue('error', 'malformed_entry', `releases[${index}].snapshot`, `Release "${release.id}" does not contain a runtime snapshot.`));
     }
+    release.snapshot.words.forEach((word, wordIndex) => {
+      if (!hasUsableWordExplanation(word.explanation)) {
+        errors.push(issue('error', 'missing_word_explanation', `releases[${index}].snapshot.words[${wordIndex}].explanation`, `Published word "${word.slug}" must include a learner-facing explanation.`));
+      }
+    });
   });
 
   if (bundle.publication.currentReleaseId) {
@@ -438,6 +453,7 @@ export function buildPublishedSnapshotFromDraft(rawDraft, { generatedAt = Date.n
       sentence: sentences[0] || '',
       sentences,
       accepted: word.accepted,
+      explanation: word.explanation,
       listId: word.listId,
       yearGroups: word.yearGroups,
       tags: word.tags,

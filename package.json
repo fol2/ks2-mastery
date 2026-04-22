@@ -11,6 +11,7 @@
     "check": "npm run build && npm run assert:build-public && node ./scripts/wrangler-oauth.mjs deploy --dry-run",
     "check:oauth": "npm run check",
     "content:seed": "node scripts/seed-spelling-content-from-legacy.mjs",
+    "content:enrich": "node scripts/enrich-spelling-vocabulary.mjs",
     "content:validate": "node scripts/validate-spelling-content.mjs",
     "content:generate": "node scripts/generate-spelling-content.mjs",
     "content:export": "node scripts/export-spelling-content.mjs",

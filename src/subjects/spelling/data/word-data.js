@@ -32,6 +32,7 @@ export const WORDS = [
     "accepted": [
       "accident"
     ],
+    "explanation": "An accident is something that happens by chance, often causing damage or a problem.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -75,6 +76,7 @@ export const WORDS = [
     "accepted": [
       "accidentally"
     ],
+    "explanation": "If you do something accidentally, you do it by mistake and did not mean to.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -118,6 +120,7 @@ export const WORDS = [
     "accepted": [
       "actual"
     ],
+    "explanation": "Actual means real or true, not guessed or imagined.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -161,6 +164,7 @@ export const WORDS = [
     "accepted": [
       "actually"
     ],
+    "explanation": "Actually is used to say what is really true, especially when it is different from what someone expected.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -203,6 +207,7 @@ export const WORDS = [
     "accepted": [
       "address"
     ],
+    "explanation": "An address is the details of where a person or place can be found, such as a house number and street.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -245,6 +250,7 @@ export const WORDS = [
     "accepted": [
       "answer"
     ],
+    "explanation": "An answer is what you say or write in reply to a question.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -287,6 +293,7 @@ export const WORDS = [
     "accepted": [
       "appear"
     ],
+    "explanation": "To appear means to come into sight or seem to be a certain way.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -329,6 +336,7 @@ export const WORDS = [
     "accepted": [
       "arrive"
     ],
+    "explanation": "To arrive means to reach the place you were travelling to.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -371,6 +379,7 @@ export const WORDS = [
     "accepted": [
       "believe"
     ],
+    "explanation": "To believe means to think that something is true or to trust someone.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -413,6 +422,7 @@ export const WORDS = [
     "accepted": [
       "bicycle"
     ],
+    "explanation": "A bicycle is a vehicle with two wheels that you ride by pedalling.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -455,6 +465,7 @@ export const WORDS = [
     "accepted": [
       "breath"
     ],
+    "explanation": "A breath is the air you take into or let out of your lungs.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -497,6 +508,7 @@ export const WORDS = [
     "accepted": [
       "breathe"
     ],
+    "explanation": "To breathe means to take air into your lungs and let it out again.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -539,6 +551,7 @@ export const WORDS = [
     "accepted": [
       "build"
     ],
+    "explanation": "To build means to make something by putting parts together.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -582,6 +595,7 @@ export const WORDS = [
     "accepted": [
       "busy"
     ],
+    "explanation": "Busy means having a lot to do or full of activity.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -625,6 +639,7 @@ export const WORDS = [
     "accepted": [
       "business"
     ],
+    "explanation": "A business is work or an organisation that sells goods or services.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -667,6 +682,7 @@ export const WORDS = [
     "accepted": [
       "calendar"
     ],
+    "explanation": "A calendar shows days, weeks and months of the year.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -709,6 +725,7 @@ export const WORDS = [
     "accepted": [
       "caught"
     ],
+    "explanation": "Caught is the past tense of catch; it can mean grabbed, trapped or noticed doing something.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -751,6 +768,7 @@ export const WORDS = [
     "accepted": [
       "centre"
     ],
+    "explanation": "The centre is the middle point or main part of something.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -793,6 +811,7 @@ export const WORDS = [
     "accepted": [
       "century"
     ],
+    "explanation": "A century is a period of one hundred years.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -835,6 +854,7 @@ export const WORDS = [
     "accepted": [
       "certain"
     ],
+    "explanation": "Certain means sure, or known to be true.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -877,6 +897,7 @@ export const WORDS = [
     "accepted": [
       "circle"
     ],
+    "explanation": "A circle is a round shape where every point on the edge is the same distance from the centre.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -919,6 +940,7 @@ export const WORDS = [
     "accepted": [
       "complete"
     ],
+    "explanation": "Complete means finished or with nothing missing.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -961,6 +983,7 @@ export const WORDS = [
     "accepted": [
       "consider"
     ],
+    "explanation": "To consider means to think carefully about something before deciding.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1003,6 +1026,7 @@ export const WORDS = [
     "accepted": [
       "continue"
     ],
+    "explanation": "To continue means to keep going and not stop.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1045,6 +1069,7 @@ export const WORDS = [
     "accepted": [
       "decide"
     ],
+    "explanation": "To decide means to choose after thinking about the options.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1087,6 +1112,7 @@ export const WORDS = [
     "accepted": [
       "describe"
     ],
+    "explanation": "To describe means to say or write what someone or something is like.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1129,6 +1155,7 @@ export const WORDS = [
     "accepted": [
       "different"
     ],
+    "explanation": "Different means not the same.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1171,6 +1198,7 @@ export const WORDS = [
     "accepted": [
       "difficult"
     ],
+    "explanation": "Difficult means hard to do, understand or deal with.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1213,6 +1241,7 @@ export const WORDS = [
     "accepted": [
       "disappear"
     ],
+    "explanation": "To disappear means to stop being seen or to go away.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1255,6 +1284,7 @@ export const WORDS = [
     "accepted": [
       "early"
     ],
+    "explanation": "Early means before the usual or expected time.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1297,6 +1327,7 @@ export const WORDS = [
     "accepted": [
       "earth"
     ],
+    "explanation": "Earth can mean the planet we live on, or soil and ground.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1340,6 +1371,7 @@ export const WORDS = [
     "accepted": [
       "eight"
     ],
+    "explanation": "Eight is the number after seven and before nine.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1383,6 +1415,7 @@ export const WORDS = [
     "accepted": [
       "eighth"
     ],
+    "explanation": "Eighth means number eight in order.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1425,6 +1458,7 @@ export const WORDS = [
     "accepted": [
       "enough"
     ],
+    "explanation": "Enough means as much or as many as needed.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1467,6 +1501,7 @@ export const WORDS = [
     "accepted": [
       "exercise"
     ],
+    "explanation": "Exercise is physical activity that keeps your body healthy, or a task for practice.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1509,6 +1544,7 @@ export const WORDS = [
     "accepted": [
       "experience"
     ],
+    "explanation": "Experience is something that happens to you, or knowledge you gain by doing something.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1551,6 +1587,7 @@ export const WORDS = [
     "accepted": [
       "experiment"
     ],
+    "explanation": "An experiment is a careful test to find out what happens or whether an idea is true.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1593,6 +1630,7 @@ export const WORDS = [
     "accepted": [
       "extreme"
     ],
+    "explanation": "Extreme means very great, strong or far from the usual.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1635,6 +1673,7 @@ export const WORDS = [
     "accepted": [
       "famous"
     ],
+    "explanation": "Famous means known by many people.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1677,6 +1716,7 @@ export const WORDS = [
     "accepted": [
       "favourite"
     ],
+    "explanation": "Favourite means liked best.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1719,6 +1759,7 @@ export const WORDS = [
     "accepted": [
       "february"
     ],
+    "explanation": "February is the second month of the year.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1762,6 +1803,7 @@ export const WORDS = [
     "accepted": [
       "forward"
     ],
+    "explanation": "Forward means towards the front or ahead.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1805,6 +1847,7 @@ export const WORDS = [
     "accepted": [
       "forwards"
     ],
+    "explanation": "Forwards means towards the front or ahead.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1847,6 +1890,7 @@ export const WORDS = [
     "accepted": [
       "fruit"
     ],
+    "explanation": "Fruit is the part of a plant that often has seeds and can be eaten, such as an apple.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1889,6 +1933,7 @@ export const WORDS = [
     "accepted": [
       "grammar"
     ],
+    "explanation": "Grammar is the set of rules for how words fit together in a language.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1931,6 +1976,7 @@ export const WORDS = [
     "accepted": [
       "group"
     ],
+    "explanation": "A group is a number of people or things together.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -1973,6 +2019,7 @@ export const WORDS = [
     "accepted": [
       "guard"
     ],
+    "explanation": "To guard means to protect or watch over someone or something.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2015,6 +2062,7 @@ export const WORDS = [
     "accepted": [
       "guide"
     ],
+    "explanation": "A guide is someone or something that shows the way or gives helpful information.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2057,6 +2105,7 @@ export const WORDS = [
     "accepted": [
       "heard"
     ],
+    "explanation": "Heard is the past tense of hear; it means listened to or noticed a sound.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2099,6 +2148,7 @@ export const WORDS = [
     "accepted": [
       "heart"
     ],
+    "explanation": "The heart is the organ that pumps blood around the body; it can also mean feelings.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2141,6 +2191,7 @@ export const WORDS = [
     "accepted": [
       "height"
     ],
+    "explanation": "Height is how tall or high something is.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2183,6 +2234,7 @@ export const WORDS = [
     "accepted": [
       "history"
     ],
+    "explanation": "History is the study of things that happened in the past.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2225,6 +2277,7 @@ export const WORDS = [
     "accepted": [
       "imagine"
     ],
+    "explanation": "To imagine means to make a picture or idea in your mind.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2267,6 +2320,7 @@ export const WORDS = [
     "accepted": [
       "increase"
     ],
+    "explanation": "To increase means to become bigger in number, size or amount.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2309,6 +2363,7 @@ export const WORDS = [
     "accepted": [
       "important"
     ],
+    "explanation": "Important means having great value or needing attention.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2351,6 +2406,7 @@ export const WORDS = [
     "accepted": [
       "interest"
     ],
+    "explanation": "Interest is a feeling of wanting to know or learn more about something.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2393,6 +2449,7 @@ export const WORDS = [
     "accepted": [
       "island"
     ],
+    "explanation": "An island is land with water all around it.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2435,6 +2492,7 @@ export const WORDS = [
     "accepted": [
       "knowledge"
     ],
+    "explanation": "Knowledge is what you know and understand.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2477,6 +2535,7 @@ export const WORDS = [
     "accepted": [
       "learn"
     ],
+    "explanation": "To learn means to gain knowledge or a skill.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2519,6 +2578,7 @@ export const WORDS = [
     "accepted": [
       "length"
     ],
+    "explanation": "Length is how long something is from one end to the other.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2561,6 +2621,7 @@ export const WORDS = [
     "accepted": [
       "library"
     ],
+    "explanation": "A library is a place where books and information are kept for people to use.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2603,6 +2664,7 @@ export const WORDS = [
     "accepted": [
       "material"
     ],
+    "explanation": "Material is the substance something is made from, such as cotton, wood or metal.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2645,6 +2707,7 @@ export const WORDS = [
     "accepted": [
       "medicine"
     ],
+    "explanation": "Medicine is something used to help treat illness or pain.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2687,6 +2750,7 @@ export const WORDS = [
     "accepted": [
       "mention"
     ],
+    "explanation": "To mention means to say something briefly.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2729,6 +2793,7 @@ export const WORDS = [
     "accepted": [
       "minute"
     ],
+    "explanation": "A minute is a period of sixty seconds.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2771,6 +2836,7 @@ export const WORDS = [
     "accepted": [
       "natural"
     ],
+    "explanation": "Natural means found in nature or not made by people.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2813,6 +2879,7 @@ export const WORDS = [
     "accepted": [
       "naughty"
     ],
+    "explanation": "Naughty means behaving badly or not following rules.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2855,6 +2922,7 @@ export const WORDS = [
     "accepted": [
       "notice"
     ],
+    "explanation": "To notice means to see, hear or become aware of something.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2898,6 +2966,7 @@ export const WORDS = [
     "accepted": [
       "occasion"
     ],
+    "explanation": "An occasion is a particular time when something happens, often something special.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2941,6 +3010,7 @@ export const WORDS = [
     "accepted": [
       "occasionally"
     ],
+    "explanation": "Occasionally means sometimes, but not often.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -2983,6 +3053,7 @@ export const WORDS = [
     "accepted": [
       "often"
     ],
+    "explanation": "Often means many times or frequently.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3025,6 +3096,7 @@ export const WORDS = [
     "accepted": [
       "opposite"
     ],
+    "explanation": "Opposite means completely different or facing the other way.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3067,6 +3139,7 @@ export const WORDS = [
     "accepted": [
       "ordinary"
     ],
+    "explanation": "Ordinary means normal, usual or not special.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3109,6 +3182,7 @@ export const WORDS = [
     "accepted": [
       "particular"
     ],
+    "explanation": "Particular means a specific one, not just any one.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3151,6 +3225,7 @@ export const WORDS = [
     "accepted": [
       "peculiar"
     ],
+    "explanation": "Peculiar means strange or unusual.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3193,6 +3268,7 @@ export const WORDS = [
     "accepted": [
       "perhaps"
     ],
+    "explanation": "Perhaps means maybe or possibly.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3235,6 +3311,7 @@ export const WORDS = [
     "accepted": [
       "popular"
     ],
+    "explanation": "Popular means liked or enjoyed by many people.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3277,6 +3354,7 @@ export const WORDS = [
     "accepted": [
       "position"
     ],
+    "explanation": "Position is where something is, or the way it is placed.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3320,6 +3398,7 @@ export const WORDS = [
     "accepted": [
       "possess"
     ],
+    "explanation": "To possess something means to own it or have it.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3363,6 +3442,7 @@ export const WORDS = [
     "accepted": [
       "possession"
     ],
+    "explanation": "A possession is something that you own or have.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3405,6 +3485,7 @@ export const WORDS = [
     "accepted": [
       "possible"
     ],
+    "explanation": "Possible means able to happen or be done.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3447,6 +3528,7 @@ export const WORDS = [
     "accepted": [
       "potatoes"
     ],
+    "explanation": "Potatoes are round root vegetables that grow underground.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3489,6 +3571,7 @@ export const WORDS = [
     "accepted": [
       "pressure"
     ],
+    "explanation": "Pressure is force pushing on something, or stress caused by demands.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3531,6 +3614,7 @@ export const WORDS = [
     "accepted": [
       "probably"
     ],
+    "explanation": "Probably means very likely to happen or be true.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3573,6 +3657,7 @@ export const WORDS = [
     "accepted": [
       "promise"
     ],
+    "explanation": "A promise is a firm statement that you will do something.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3615,6 +3700,7 @@ export const WORDS = [
     "accepted": [
       "purpose"
     ],
+    "explanation": "Purpose is the reason something exists or is done.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3657,6 +3743,7 @@ export const WORDS = [
     "accepted": [
       "quarter"
     ],
+    "explanation": "A quarter is one of four equal parts.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3699,6 +3786,7 @@ export const WORDS = [
     "accepted": [
       "question"
     ],
+    "explanation": "A question is something you ask to find out information.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3741,6 +3829,7 @@ export const WORDS = [
     "accepted": [
       "recent"
     ],
+    "explanation": "Recent means having happened not long ago.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3783,6 +3872,7 @@ export const WORDS = [
     "accepted": [
       "regular"
     ],
+    "explanation": "Regular means happening again and again in the same pattern, or usual.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3825,6 +3915,7 @@ export const WORDS = [
     "accepted": [
       "reign"
     ],
+    "explanation": "A reign is the time when a king or queen rules.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3867,6 +3958,7 @@ export const WORDS = [
     "accepted": [
       "remember"
     ],
+    "explanation": "To remember means to keep something in your mind or bring it back to mind.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3909,6 +4001,7 @@ export const WORDS = [
     "accepted": [
       "sentence"
     ],
+    "explanation": "A sentence is a group of words that expresses a complete idea.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3951,6 +4044,7 @@ export const WORDS = [
     "accepted": [
       "separate"
     ],
+    "explanation": "Separate means apart, not joined together.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -3993,6 +4087,7 @@ export const WORDS = [
     "accepted": [
       "special"
     ],
+    "explanation": "Special means different from the usual in an important or valued way.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -4035,6 +4130,7 @@ export const WORDS = [
     "accepted": [
       "straight"
     ],
+    "explanation": "Straight means not curved, bent or crooked.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -4077,6 +4173,7 @@ export const WORDS = [
     "accepted": [
       "strange"
     ],
+    "explanation": "Strange means unusual or surprising.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -4119,6 +4216,7 @@ export const WORDS = [
     "accepted": [
       "strength"
     ],
+    "explanation": "Strength is the power to lift, push, resist or keep going.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -4161,6 +4259,7 @@ export const WORDS = [
     "accepted": [
       "suppose"
     ],
+    "explanation": "To suppose means to think something is true, often without being completely sure.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -4203,6 +4302,7 @@ export const WORDS = [
     "accepted": [
       "surprise"
     ],
+    "explanation": "A surprise is something unexpected.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -4245,6 +4345,7 @@ export const WORDS = [
     "accepted": [
       "therefore"
     ],
+    "explanation": "Therefore means for that reason or as a result.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -4288,6 +4389,7 @@ export const WORDS = [
     "accepted": [
       "though"
     ],
+    "explanation": "Though means although, or despite the fact that something is true.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -4331,6 +4433,7 @@ export const WORDS = [
     "accepted": [
       "although"
     ],
+    "explanation": "Although means even though or despite the fact that.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -4373,6 +4476,7 @@ export const WORDS = [
     "accepted": [
       "thought"
     ],
+    "explanation": "A thought is an idea in your mind; thought is also the past tense of think.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -4415,6 +4519,7 @@ export const WORDS = [
     "accepted": [
       "through"
     ],
+    "explanation": "Through means moving in one side and out of the other, or from start to finish.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -4457,6 +4562,7 @@ export const WORDS = [
     "accepted": [
       "various"
     ],
+    "explanation": "Various means several different kinds.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -4499,6 +4605,7 @@ export const WORDS = [
     "accepted": [
       "weight"
     ],
+    "explanation": "Weight is how heavy something is.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -4542,6 +4649,7 @@ export const WORDS = [
     "accepted": [
       "woman"
     ],
+    "explanation": "A woman is an adult female person.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -4585,6 +4693,7 @@ export const WORDS = [
     "accepted": [
       "women"
     ],
+    "explanation": "Women is the plural of woman.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -4627,6 +4736,7 @@ export const WORDS = [
     "accepted": [
       "accommodate"
     ],
+    "explanation": "To accommodate means to provide space for someone or something, or to fit in with needs.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -4669,6 +4779,7 @@ export const WORDS = [
     "accepted": [
       "accompany"
     ],
+    "explanation": "To accompany means to go somewhere with someone or to happen at the same time.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -4711,6 +4822,7 @@ export const WORDS = [
     "accepted": [
       "according"
     ],
+    "explanation": "According to something means as stated by it, or in a way that agrees with it.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -4753,6 +4865,7 @@ export const WORDS = [
     "accepted": [
       "achieve"
     ],
+    "explanation": "To achieve means to succeed in doing something through effort.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -4795,6 +4908,7 @@ export const WORDS = [
     "accepted": [
       "aggressive"
     ],
+    "explanation": "Aggressive means ready to attack, argue or behave forcefully.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -4837,6 +4951,7 @@ export const WORDS = [
     "accepted": [
       "amateur"
     ],
+    "explanation": "An amateur is someone who does an activity for interest, not as a paid job.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -4879,6 +4994,7 @@ export const WORDS = [
     "accepted": [
       "ancient"
     ],
+    "explanation": "Ancient means very old or from a long time ago.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -4921,6 +5037,7 @@ export const WORDS = [
     "accepted": [
       "apparent"
     ],
+    "explanation": "Apparent means easy to see or seeming to be true.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -4963,6 +5080,7 @@ export const WORDS = [
     "accepted": [
       "appreciate"
     ],
+    "explanation": "To appreciate means to understand the value of something or be thankful for it.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5005,6 +5123,7 @@ export const WORDS = [
     "accepted": [
       "attached"
     ],
+    "explanation": "Attached means joined, fastened or feeling emotionally close.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5047,6 +5166,7 @@ export const WORDS = [
     "accepted": [
       "available"
     ],
+    "explanation": "Available means ready to be used or free to do something.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5089,6 +5209,7 @@ export const WORDS = [
     "accepted": [
       "average"
     ],
+    "explanation": "Average means typical, ordinary, or the middle amount found by sharing equally.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5131,6 +5252,7 @@ export const WORDS = [
     "accepted": [
       "awkward"
     ],
+    "explanation": "Awkward means difficult to deal with, clumsy or uncomfortable.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5173,6 +5295,7 @@ export const WORDS = [
     "accepted": [
       "bargain"
     ],
+    "explanation": "A bargain is something bought for less than the usual price, or an agreement between people.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5215,6 +5338,7 @@ export const WORDS = [
     "accepted": [
       "bruise"
     ],
+    "explanation": "A bruise is a dark mark on skin caused by a bump or injury.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5257,6 +5381,7 @@ export const WORDS = [
     "accepted": [
       "category"
     ],
+    "explanation": "A category is a group of things that share the same type or feature.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5299,6 +5424,7 @@ export const WORDS = [
     "accepted": [
       "cemetery"
     ],
+    "explanation": "A cemetery is a place where people are buried.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5341,6 +5467,7 @@ export const WORDS = [
     "accepted": [
       "committee"
     ],
+    "explanation": "A committee is a group of people chosen to discuss or organise something.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5383,6 +5510,7 @@ export const WORDS = [
     "accepted": [
       "communicate"
     ],
+    "explanation": "To communicate means to share information, ideas or feelings.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5425,6 +5553,7 @@ export const WORDS = [
     "accepted": [
       "community"
     ],
+    "explanation": "A community is a group of people who live near each other or share something in common.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5467,6 +5596,7 @@ export const WORDS = [
     "accepted": [
       "competition"
     ],
+    "explanation": "A competition is an event where people try to win or do better than others.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5509,6 +5639,7 @@ export const WORDS = [
     "accepted": [
       "conscience"
     ],
+    "explanation": "Your conscience is the inner sense that helps you know right from wrong.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5551,6 +5682,7 @@ export const WORDS = [
     "accepted": [
       "conscious"
     ],
+    "explanation": "Conscious means awake, aware or able to notice what is happening.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5593,6 +5725,7 @@ export const WORDS = [
     "accepted": [
       "controversy"
     ],
+    "explanation": "A controversy is strong disagreement about an issue.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5635,6 +5768,7 @@ export const WORDS = [
     "accepted": [
       "convenience"
     ],
+    "explanation": "Convenience means ease, usefulness or something that saves time and effort.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5677,6 +5811,7 @@ export const WORDS = [
     "accepted": [
       "correspond"
     ],
+    "explanation": "To correspond means to match, agree or communicate by messages.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5720,6 +5855,7 @@ export const WORDS = [
       "criticise",
       "criticize"
     ],
+    "explanation": "To criticise means to say what is wrong with something or someone.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5762,6 +5898,7 @@ export const WORDS = [
     "accepted": [
       "curiosity"
     ],
+    "explanation": "Curiosity is the wish to know, learn or find out about something.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5804,6 +5941,7 @@ export const WORDS = [
     "accepted": [
       "definite"
     ],
+    "explanation": "Definite means clear, certain and not vague.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5846,6 +5984,7 @@ export const WORDS = [
     "accepted": [
       "desperate"
     ],
+    "explanation": "Desperate means feeling that you urgently need something or have little hope.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5888,6 +6027,7 @@ export const WORDS = [
     "accepted": [
       "determined"
     ],
+    "explanation": "Determined means firmly decided to do something and not give up.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5930,6 +6070,7 @@ export const WORDS = [
     "accepted": [
       "develop"
     ],
+    "explanation": "To develop means to grow, improve or become more advanced.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -5972,6 +6113,7 @@ export const WORDS = [
     "accepted": [
       "dictionary"
     ],
+    "explanation": "A dictionary is a book or resource that explains words, spellings and meanings.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6014,6 +6156,7 @@ export const WORDS = [
     "accepted": [
       "disastrous"
     ],
+    "explanation": "Disastrous means causing great harm, failure or trouble.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6056,6 +6199,7 @@ export const WORDS = [
     "accepted": [
       "embarrass"
     ],
+    "explanation": "To embarrass someone means to make them feel awkward, ashamed or self-conscious.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6098,6 +6242,7 @@ export const WORDS = [
     "accepted": [
       "environment"
     ],
+    "explanation": "The environment is the natural world around us, or the conditions in a place.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6142,6 +6287,7 @@ export const WORDS = [
     "accepted": [
       "equip"
     ],
+    "explanation": "To equip means to provide the things needed for a task.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6186,6 +6332,7 @@ export const WORDS = [
     "accepted": [
       "equipped"
     ],
+    "explanation": "Equipped means provided with what is needed.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6230,6 +6377,7 @@ export const WORDS = [
     "accepted": [
       "equipment"
     ],
+    "explanation": "Equipment is the things needed for a particular job or activity.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6272,6 +6420,7 @@ export const WORDS = [
     "accepted": [
       "especially"
     ],
+    "explanation": "Especially means particularly, or more than usual.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6314,6 +6463,7 @@ export const WORDS = [
     "accepted": [
       "exaggerate"
     ],
+    "explanation": "To exaggerate means to describe something as bigger, better or worse than it really is.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6356,6 +6506,7 @@ export const WORDS = [
     "accepted": [
       "excellent"
     ],
+    "explanation": "Excellent means extremely good.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6398,6 +6549,7 @@ export const WORDS = [
     "accepted": [
       "existence"
     ],
+    "explanation": "Existence is the state of being real or alive.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6440,6 +6592,7 @@ export const WORDS = [
     "accepted": [
       "explanation"
     ],
+    "explanation": "An explanation gives reasons or details that make something clear.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6482,6 +6635,7 @@ export const WORDS = [
     "accepted": [
       "familiar"
     ],
+    "explanation": "Familiar means known to you because you have seen or experienced it before.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6524,6 +6678,7 @@ export const WORDS = [
     "accepted": [
       "foreign"
     ],
+    "explanation": "Foreign means from another country or not familiar.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6566,6 +6721,7 @@ export const WORDS = [
     "accepted": [
       "forty"
     ],
+    "explanation": "Forty is the number after thirty-nine and before forty-one.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6608,6 +6764,7 @@ export const WORDS = [
     "accepted": [
       "frequently"
     ],
+    "explanation": "Frequently means often or many times.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6650,6 +6807,7 @@ export const WORDS = [
     "accepted": [
       "government"
     ],
+    "explanation": "A government is the group of people who run a country or area.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6692,6 +6850,7 @@ export const WORDS = [
     "accepted": [
       "guarantee"
     ],
+    "explanation": "A guarantee is a firm promise that something will happen or work as expected.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6734,6 +6893,7 @@ export const WORDS = [
     "accepted": [
       "harass"
     ],
+    "explanation": "To harass means to repeatedly trouble, bother or upset someone.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6776,6 +6936,7 @@ export const WORDS = [
     "accepted": [
       "hindrance"
     ],
+    "explanation": "A hindrance is something that gets in the way or makes progress harder.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6818,6 +6979,7 @@ export const WORDS = [
     "accepted": [
       "identity"
     ],
+    "explanation": "Identity is who a person is, including the qualities that make them unique.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6861,6 +7023,7 @@ export const WORDS = [
     "accepted": [
       "immediate"
     ],
+    "explanation": "Immediate means happening now or without delay.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6904,6 +7067,7 @@ export const WORDS = [
     "accepted": [
       "immediately"
     ],
+    "explanation": "Immediately means straight away or without delay.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6946,6 +7110,7 @@ export const WORDS = [
     "accepted": [
       "individual"
     ],
+    "explanation": "An individual is one person or thing, separate from a group.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -6988,6 +7153,7 @@ export const WORDS = [
     "accepted": [
       "interfere"
     ],
+    "explanation": "To interfere means to get involved in a way that causes problems or is not wanted.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7030,6 +7196,7 @@ export const WORDS = [
     "accepted": [
       "interrupt"
     ],
+    "explanation": "To interrupt means to stop someone while they are speaking or doing something.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7072,6 +7239,7 @@ export const WORDS = [
     "accepted": [
       "language"
     ],
+    "explanation": "Language is a system of words and signs that people use to communicate.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7114,6 +7282,7 @@ export const WORDS = [
     "accepted": [
       "leisure"
     ],
+    "explanation": "Leisure is free time when you can rest or enjoy activities.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7156,6 +7325,7 @@ export const WORDS = [
     "accepted": [
       "lightning"
     ],
+    "explanation": "Lightning is a bright flash of electricity in the sky during a storm.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7198,6 +7368,7 @@ export const WORDS = [
     "accepted": [
       "marvellous"
     ],
+    "explanation": "Marvellous means wonderful or very impressive.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7240,6 +7411,7 @@ export const WORDS = [
     "accepted": [
       "mischievous"
     ],
+    "explanation": "Mischievous means playful in a naughty or troublesome way.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7282,6 +7454,7 @@ export const WORDS = [
     "accepted": [
       "muscle"
     ],
+    "explanation": "A muscle is body tissue that tightens and relaxes to help you move.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7324,6 +7497,7 @@ export const WORDS = [
     "accepted": [
       "necessary"
     ],
+    "explanation": "Necessary means needed or required.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7366,6 +7540,7 @@ export const WORDS = [
     "accepted": [
       "neighbour"
     ],
+    "explanation": "A neighbour is someone who lives near you.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7408,6 +7583,7 @@ export const WORDS = [
     "accepted": [
       "nuisance"
     ],
+    "explanation": "A nuisance is a person or thing that annoys or causes trouble.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7450,6 +7626,7 @@ export const WORDS = [
     "accepted": [
       "occupy"
     ],
+    "explanation": "To occupy means to take up space, live in a place or keep someone busy.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7492,6 +7669,7 @@ export const WORDS = [
     "accepted": [
       "occur"
     ],
+    "explanation": "To occur means to happen or take place.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7534,6 +7712,7 @@ export const WORDS = [
     "accepted": [
       "opportunity"
     ],
+    "explanation": "An opportunity is a chance to do something.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7576,6 +7755,7 @@ export const WORDS = [
     "accepted": [
       "parliament"
     ],
+    "explanation": "Parliament is the group of elected people who make laws in the UK and some other countries.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7618,6 +7798,7 @@ export const WORDS = [
     "accepted": [
       "persuade"
     ],
+    "explanation": "To persuade means to convince someone to do or believe something.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7660,6 +7841,7 @@ export const WORDS = [
     "accepted": [
       "physical"
     ],
+    "explanation": "Physical means connected with the body or with things you can touch.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7702,6 +7884,7 @@ export const WORDS = [
     "accepted": [
       "prejudice"
     ],
+    "explanation": "Prejudice is an unfair opinion about a person or group formed without enough knowledge.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7744,6 +7927,7 @@ export const WORDS = [
     "accepted": [
       "privilege"
     ],
+    "explanation": "A privilege is a special right or advantage.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7786,6 +7970,7 @@ export const WORDS = [
     "accepted": [
       "profession"
     ],
+    "explanation": "A profession is a type of work that needs special training or skill.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7828,6 +8013,7 @@ export const WORDS = [
     "accepted": [
       "programme"
     ],
+    "explanation": "A programme is a planned set of activities, or a television or radio show.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7870,6 +8056,7 @@ export const WORDS = [
     "accepted": [
       "pronunciation"
     ],
+    "explanation": "Pronunciation is the way a word is spoken.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7912,6 +8099,7 @@ export const WORDS = [
     "accepted": [
       "queue"
     ],
+    "explanation": "A queue is a line of people or things waiting for their turn.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7955,6 +8143,7 @@ export const WORDS = [
       "recognise",
       "recognize"
     ],
+    "explanation": "To recognise means to know someone or something because you have seen it before.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -7997,6 +8186,7 @@ export const WORDS = [
     "accepted": [
       "recommend"
     ],
+    "explanation": "To recommend means to say that someone should choose or try something.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8039,6 +8229,7 @@ export const WORDS = [
     "accepted": [
       "relevant"
     ],
+    "explanation": "Relevant means connected to what is being discussed or needed.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8081,6 +8272,7 @@ export const WORDS = [
     "accepted": [
       "restaurant"
     ],
+    "explanation": "A restaurant is a place where people pay to sit and eat meals.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8123,6 +8315,7 @@ export const WORDS = [
     "accepted": [
       "rhyme"
     ],
+    "explanation": "A rhyme is a word or line that has the same ending sound as another.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8165,6 +8358,7 @@ export const WORDS = [
     "accepted": [
       "rhythm"
     ],
+    "explanation": "Rhythm is a regular pattern of sounds, beats or movements.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8207,6 +8401,7 @@ export const WORDS = [
     "accepted": [
       "sacrifice"
     ],
+    "explanation": "A sacrifice is giving up something important for a reason or for someone else.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8249,6 +8444,7 @@ export const WORDS = [
     "accepted": [
       "secretary"
     ],
+    "explanation": "A secretary is a person who organises information, messages and office work.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8291,6 +8487,7 @@ export const WORDS = [
     "accepted": [
       "shoulder"
     ],
+    "explanation": "A shoulder is the part of the body where the arm joins the upper body.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8333,6 +8530,7 @@ export const WORDS = [
     "accepted": [
       "signature"
     ],
+    "explanation": "A signature is your name written in your own way to show agreement or identity.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8376,6 +8574,7 @@ export const WORDS = [
     "accepted": [
       "sincere"
     ],
+    "explanation": "Sincere means honest and truly meant.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8419,6 +8618,7 @@ export const WORDS = [
     "accepted": [
       "sincerely"
     ],
+    "explanation": "Sincerely means honestly and truly.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8461,6 +8661,7 @@ export const WORDS = [
     "accepted": [
       "soldier"
     ],
+    "explanation": "A soldier is a person who serves in an army.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8503,6 +8704,7 @@ export const WORDS = [
     "accepted": [
       "stomach"
     ],
+    "explanation": "The stomach is the part inside your body where food begins to be digested.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8545,6 +8747,7 @@ export const WORDS = [
     "accepted": [
       "sufficient"
     ],
+    "explanation": "Sufficient means enough for what is needed.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8587,6 +8790,7 @@ export const WORDS = [
     "accepted": [
       "suggest"
     ],
+    "explanation": "To suggest means to put forward an idea or plan.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8629,6 +8833,7 @@ export const WORDS = [
     "accepted": [
       "symbol"
     ],
+    "explanation": "A symbol is a sign, shape or object that stands for an idea or meaning.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8671,6 +8876,7 @@ export const WORDS = [
     "accepted": [
       "system"
     ],
+    "explanation": "A system is a set of connected parts that work together.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8713,6 +8919,7 @@ export const WORDS = [
     "accepted": [
       "temperature"
     ],
+    "explanation": "Temperature tells how hot or cold something is.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8755,6 +8962,7 @@ export const WORDS = [
     "accepted": [
       "thorough"
     ],
+    "explanation": "Thorough means complete and careful, with nothing important missed.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8797,6 +9005,7 @@ export const WORDS = [
     "accepted": [
       "twelfth"
     ],
+    "explanation": "Twelfth means number twelve in order.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8839,6 +9048,7 @@ export const WORDS = [
     "accepted": [
       "variety"
     ],
+    "explanation": "Variety means a number of different kinds or a mixture.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8881,6 +9091,7 @@ export const WORDS = [
     "accepted": [
       "vegetable"
     ],
+    "explanation": "A vegetable is a plant or part of a plant eaten as food, such as a carrot.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8923,6 +9134,7 @@ export const WORDS = [
     "accepted": [
       "vehicle"
     ],
+    "explanation": "A vehicle is something used to carry people or goods, such as a car, bus or lorry.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -8965,6 +9177,7 @@ export const WORDS = [
     "accepted": [
       "yacht"
     ],
+    "explanation": "A yacht is a boat used for sailing or pleasure trips.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -9011,6 +9224,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "accident"
     ],
+    "explanation": "An accident is something that happens by chance, often causing damage or a problem.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9054,6 +9268,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "accidentally"
     ],
+    "explanation": "If you do something accidentally, you do it by mistake and did not mean to.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9097,6 +9312,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "actual"
     ],
+    "explanation": "Actual means real or true, not guessed or imagined.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9140,6 +9356,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "actually"
     ],
+    "explanation": "Actually is used to say what is really true, especially when it is different from what someone expected.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9182,6 +9399,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "address"
     ],
+    "explanation": "An address is the details of where a person or place can be found, such as a house number and street.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9224,6 +9442,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "answer"
     ],
+    "explanation": "An answer is what you say or write in reply to a question.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9266,6 +9485,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "appear"
     ],
+    "explanation": "To appear means to come into sight or seem to be a certain way.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9308,6 +9528,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "arrive"
     ],
+    "explanation": "To arrive means to reach the place you were travelling to.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9350,6 +9571,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "believe"
     ],
+    "explanation": "To believe means to think that something is true or to trust someone.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9392,6 +9614,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "bicycle"
     ],
+    "explanation": "A bicycle is a vehicle with two wheels that you ride by pedalling.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9434,6 +9657,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "breath"
     ],
+    "explanation": "A breath is the air you take into or let out of your lungs.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9476,6 +9700,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "breathe"
     ],
+    "explanation": "To breathe means to take air into your lungs and let it out again.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9518,6 +9743,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "build"
     ],
+    "explanation": "To build means to make something by putting parts together.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9561,6 +9787,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "busy"
     ],
+    "explanation": "Busy means having a lot to do or full of activity.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9604,6 +9831,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "business"
     ],
+    "explanation": "A business is work or an organisation that sells goods or services.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9646,6 +9874,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "calendar"
     ],
+    "explanation": "A calendar shows days, weeks and months of the year.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9688,6 +9917,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "caught"
     ],
+    "explanation": "Caught is the past tense of catch; it can mean grabbed, trapped or noticed doing something.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9730,6 +9960,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "centre"
     ],
+    "explanation": "The centre is the middle point or main part of something.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9772,6 +10003,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "century"
     ],
+    "explanation": "A century is a period of one hundred years.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9814,6 +10046,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "certain"
     ],
+    "explanation": "Certain means sure, or known to be true.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9856,6 +10089,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "circle"
     ],
+    "explanation": "A circle is a round shape where every point on the edge is the same distance from the centre.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9898,6 +10132,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "complete"
     ],
+    "explanation": "Complete means finished or with nothing missing.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9940,6 +10175,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "consider"
     ],
+    "explanation": "To consider means to think carefully about something before deciding.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -9982,6 +10218,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "continue"
     ],
+    "explanation": "To continue means to keep going and not stop.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10024,6 +10261,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "decide"
     ],
+    "explanation": "To decide means to choose after thinking about the options.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10066,6 +10304,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "describe"
     ],
+    "explanation": "To describe means to say or write what someone or something is like.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10108,6 +10347,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "different"
     ],
+    "explanation": "Different means not the same.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10150,6 +10390,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "difficult"
     ],
+    "explanation": "Difficult means hard to do, understand or deal with.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10192,6 +10433,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "disappear"
     ],
+    "explanation": "To disappear means to stop being seen or to go away.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10234,6 +10476,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "early"
     ],
+    "explanation": "Early means before the usual or expected time.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10276,6 +10519,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "earth"
     ],
+    "explanation": "Earth can mean the planet we live on, or soil and ground.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10319,6 +10563,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "eight"
     ],
+    "explanation": "Eight is the number after seven and before nine.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10362,6 +10607,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "eighth"
     ],
+    "explanation": "Eighth means number eight in order.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10404,6 +10650,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "enough"
     ],
+    "explanation": "Enough means as much or as many as needed.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10446,6 +10693,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "exercise"
     ],
+    "explanation": "Exercise is physical activity that keeps your body healthy, or a task for practice.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10488,6 +10736,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "experience"
     ],
+    "explanation": "Experience is something that happens to you, or knowledge you gain by doing something.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10530,6 +10779,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "experiment"
     ],
+    "explanation": "An experiment is a careful test to find out what happens or whether an idea is true.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10572,6 +10822,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "extreme"
     ],
+    "explanation": "Extreme means very great, strong or far from the usual.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10614,6 +10865,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "famous"
     ],
+    "explanation": "Famous means known by many people.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10656,6 +10908,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "favourite"
     ],
+    "explanation": "Favourite means liked best.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10698,6 +10951,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "february"
     ],
+    "explanation": "February is the second month of the year.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10741,6 +10995,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "forward"
     ],
+    "explanation": "Forward means towards the front or ahead.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10784,6 +11039,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "forwards"
     ],
+    "explanation": "Forwards means towards the front or ahead.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10826,6 +11082,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "fruit"
     ],
+    "explanation": "Fruit is the part of a plant that often has seeds and can be eaten, such as an apple.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10868,6 +11125,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "grammar"
     ],
+    "explanation": "Grammar is the set of rules for how words fit together in a language.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10910,6 +11168,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "group"
     ],
+    "explanation": "A group is a number of people or things together.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10952,6 +11211,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "guard"
     ],
+    "explanation": "To guard means to protect or watch over someone or something.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -10994,6 +11254,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "guide"
     ],
+    "explanation": "A guide is someone or something that shows the way or gives helpful information.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11036,6 +11297,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "heard"
     ],
+    "explanation": "Heard is the past tense of hear; it means listened to or noticed a sound.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11078,6 +11340,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "heart"
     ],
+    "explanation": "The heart is the organ that pumps blood around the body; it can also mean feelings.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11120,6 +11383,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "height"
     ],
+    "explanation": "Height is how tall or high something is.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11162,6 +11426,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "history"
     ],
+    "explanation": "History is the study of things that happened in the past.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11204,6 +11469,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "imagine"
     ],
+    "explanation": "To imagine means to make a picture or idea in your mind.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11246,6 +11512,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "increase"
     ],
+    "explanation": "To increase means to become bigger in number, size or amount.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11288,6 +11555,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "important"
     ],
+    "explanation": "Important means having great value or needing attention.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11330,6 +11598,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "interest"
     ],
+    "explanation": "Interest is a feeling of wanting to know or learn more about something.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11372,6 +11641,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "island"
     ],
+    "explanation": "An island is land with water all around it.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11414,6 +11684,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "knowledge"
     ],
+    "explanation": "Knowledge is what you know and understand.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11456,6 +11727,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "learn"
     ],
+    "explanation": "To learn means to gain knowledge or a skill.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11498,6 +11770,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "length"
     ],
+    "explanation": "Length is how long something is from one end to the other.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11540,6 +11813,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "library"
     ],
+    "explanation": "A library is a place where books and information are kept for people to use.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11582,6 +11856,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "material"
     ],
+    "explanation": "Material is the substance something is made from, such as cotton, wood or metal.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11624,6 +11899,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "medicine"
     ],
+    "explanation": "Medicine is something used to help treat illness or pain.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11666,6 +11942,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "mention"
     ],
+    "explanation": "To mention means to say something briefly.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11708,6 +11985,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "minute"
     ],
+    "explanation": "A minute is a period of sixty seconds.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11750,6 +12028,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "natural"
     ],
+    "explanation": "Natural means found in nature or not made by people.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11792,6 +12071,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "naughty"
     ],
+    "explanation": "Naughty means behaving badly or not following rules.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11834,6 +12114,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "notice"
     ],
+    "explanation": "To notice means to see, hear or become aware of something.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11877,6 +12158,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "occasion"
     ],
+    "explanation": "An occasion is a particular time when something happens, often something special.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11920,6 +12202,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "occasionally"
     ],
+    "explanation": "Occasionally means sometimes, but not often.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -11962,6 +12245,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "often"
     ],
+    "explanation": "Often means many times or frequently.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12004,6 +12288,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "opposite"
     ],
+    "explanation": "Opposite means completely different or facing the other way.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12046,6 +12331,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "ordinary"
     ],
+    "explanation": "Ordinary means normal, usual or not special.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12088,6 +12374,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "particular"
     ],
+    "explanation": "Particular means a specific one, not just any one.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12130,6 +12417,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "peculiar"
     ],
+    "explanation": "Peculiar means strange or unusual.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12172,6 +12460,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "perhaps"
     ],
+    "explanation": "Perhaps means maybe or possibly.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12214,6 +12503,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "popular"
     ],
+    "explanation": "Popular means liked or enjoyed by many people.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12256,6 +12546,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "position"
     ],
+    "explanation": "Position is where something is, or the way it is placed.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12299,6 +12590,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "possess"
     ],
+    "explanation": "To possess something means to own it or have it.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12342,6 +12634,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "possession"
     ],
+    "explanation": "A possession is something that you own or have.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12384,6 +12677,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "possible"
     ],
+    "explanation": "Possible means able to happen or be done.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12426,6 +12720,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "potatoes"
     ],
+    "explanation": "Potatoes are round root vegetables that grow underground.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12468,6 +12763,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "pressure"
     ],
+    "explanation": "Pressure is force pushing on something, or stress caused by demands.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12510,6 +12806,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "probably"
     ],
+    "explanation": "Probably means very likely to happen or be true.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12552,6 +12849,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "promise"
     ],
+    "explanation": "A promise is a firm statement that you will do something.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12594,6 +12892,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "purpose"
     ],
+    "explanation": "Purpose is the reason something exists or is done.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12636,6 +12935,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "quarter"
     ],
+    "explanation": "A quarter is one of four equal parts.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12678,6 +12978,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "question"
     ],
+    "explanation": "A question is something you ask to find out information.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12720,6 +13021,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "recent"
     ],
+    "explanation": "Recent means having happened not long ago.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12762,6 +13064,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "regular"
     ],
+    "explanation": "Regular means happening again and again in the same pattern, or usual.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12804,6 +13107,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "reign"
     ],
+    "explanation": "A reign is the time when a king or queen rules.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12846,6 +13150,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "remember"
     ],
+    "explanation": "To remember means to keep something in your mind or bring it back to mind.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12888,6 +13193,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "sentence"
     ],
+    "explanation": "A sentence is a group of words that expresses a complete idea.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12930,6 +13236,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "separate"
     ],
+    "explanation": "Separate means apart, not joined together.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -12972,6 +13279,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "special"
     ],
+    "explanation": "Special means different from the usual in an important or valued way.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -13014,6 +13322,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "straight"
     ],
+    "explanation": "Straight means not curved, bent or crooked.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -13056,6 +13365,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "strange"
     ],
+    "explanation": "Strange means unusual or surprising.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -13098,6 +13408,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "strength"
     ],
+    "explanation": "Strength is the power to lift, push, resist or keep going.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -13140,6 +13451,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "suppose"
     ],
+    "explanation": "To suppose means to think something is true, often without being completely sure.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -13182,6 +13494,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "surprise"
     ],
+    "explanation": "A surprise is something unexpected.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -13224,6 +13537,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "therefore"
     ],
+    "explanation": "Therefore means for that reason or as a result.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -13267,6 +13581,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "though"
     ],
+    "explanation": "Though means although, or despite the fact that something is true.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -13310,6 +13625,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "although"
     ],
+    "explanation": "Although means even though or despite the fact that.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -13352,6 +13668,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "thought"
     ],
+    "explanation": "A thought is an idea in your mind; thought is also the past tense of think.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -13394,6 +13711,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "through"
     ],
+    "explanation": "Through means moving in one side and out of the other, or from start to finish.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -13436,6 +13754,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "various"
     ],
+    "explanation": "Various means several different kinds.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -13478,6 +13797,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "weight"
     ],
+    "explanation": "Weight is how heavy something is.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -13521,6 +13841,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "woman"
     ],
+    "explanation": "A woman is an adult female person.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -13564,6 +13885,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "women"
     ],
+    "explanation": "Women is the plural of woman.",
     "listId": "statutory-y3-4",
     "yearGroups": [
       "Y3",
@@ -13606,6 +13928,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "accommodate"
     ],
+    "explanation": "To accommodate means to provide space for someone or something, or to fit in with needs.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -13648,6 +13971,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "accompany"
     ],
+    "explanation": "To accompany means to go somewhere with someone or to happen at the same time.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -13690,6 +14014,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "according"
     ],
+    "explanation": "According to something means as stated by it, or in a way that agrees with it.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -13732,6 +14057,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "achieve"
     ],
+    "explanation": "To achieve means to succeed in doing something through effort.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -13774,6 +14100,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "aggressive"
     ],
+    "explanation": "Aggressive means ready to attack, argue or behave forcefully.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -13816,6 +14143,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "amateur"
     ],
+    "explanation": "An amateur is someone who does an activity for interest, not as a paid job.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -13858,6 +14186,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "ancient"
     ],
+    "explanation": "Ancient means very old or from a long time ago.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -13900,6 +14229,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "apparent"
     ],
+    "explanation": "Apparent means easy to see or seeming to be true.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -13942,6 +14272,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "appreciate"
     ],
+    "explanation": "To appreciate means to understand the value of something or be thankful for it.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -13984,6 +14315,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "attached"
     ],
+    "explanation": "Attached means joined, fastened or feeling emotionally close.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14026,6 +14358,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "available"
     ],
+    "explanation": "Available means ready to be used or free to do something.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14068,6 +14401,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "average"
     ],
+    "explanation": "Average means typical, ordinary, or the middle amount found by sharing equally.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14110,6 +14444,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "awkward"
     ],
+    "explanation": "Awkward means difficult to deal with, clumsy or uncomfortable.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14152,6 +14487,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "bargain"
     ],
+    "explanation": "A bargain is something bought for less than the usual price, or an agreement between people.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14194,6 +14530,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "bruise"
     ],
+    "explanation": "A bruise is a dark mark on skin caused by a bump or injury.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14236,6 +14573,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "category"
     ],
+    "explanation": "A category is a group of things that share the same type or feature.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14278,6 +14616,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "cemetery"
     ],
+    "explanation": "A cemetery is a place where people are buried.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14320,6 +14659,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "committee"
     ],
+    "explanation": "A committee is a group of people chosen to discuss or organise something.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14362,6 +14702,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "communicate"
     ],
+    "explanation": "To communicate means to share information, ideas or feelings.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14404,6 +14745,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "community"
     ],
+    "explanation": "A community is a group of people who live near each other or share something in common.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14446,6 +14788,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "competition"
     ],
+    "explanation": "A competition is an event where people try to win or do better than others.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14488,6 +14831,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "conscience"
     ],
+    "explanation": "Your conscience is the inner sense that helps you know right from wrong.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14530,6 +14874,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "conscious"
     ],
+    "explanation": "Conscious means awake, aware or able to notice what is happening.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14572,6 +14917,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "controversy"
     ],
+    "explanation": "A controversy is strong disagreement about an issue.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14614,6 +14960,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "convenience"
     ],
+    "explanation": "Convenience means ease, usefulness or something that saves time and effort.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14656,6 +15003,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "correspond"
     ],
+    "explanation": "To correspond means to match, agree or communicate by messages.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14699,6 +15047,7 @@ export const WORD_BY_SLUG = {
       "criticise",
       "criticize"
     ],
+    "explanation": "To criticise means to say what is wrong with something or someone.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14741,6 +15090,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "curiosity"
     ],
+    "explanation": "Curiosity is the wish to know, learn or find out about something.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14783,6 +15133,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "definite"
     ],
+    "explanation": "Definite means clear, certain and not vague.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14825,6 +15176,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "desperate"
     ],
+    "explanation": "Desperate means feeling that you urgently need something or have little hope.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14867,6 +15219,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "determined"
     ],
+    "explanation": "Determined means firmly decided to do something and not give up.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14909,6 +15262,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "develop"
     ],
+    "explanation": "To develop means to grow, improve or become more advanced.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14951,6 +15305,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "dictionary"
     ],
+    "explanation": "A dictionary is a book or resource that explains words, spellings and meanings.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -14993,6 +15348,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "disastrous"
     ],
+    "explanation": "Disastrous means causing great harm, failure or trouble.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15035,6 +15391,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "embarrass"
     ],
+    "explanation": "To embarrass someone means to make them feel awkward, ashamed or self-conscious.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15077,6 +15434,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "environment"
     ],
+    "explanation": "The environment is the natural world around us, or the conditions in a place.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15121,6 +15479,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "equip"
     ],
+    "explanation": "To equip means to provide the things needed for a task.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15165,6 +15524,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "equipped"
     ],
+    "explanation": "Equipped means provided with what is needed.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15209,6 +15569,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "equipment"
     ],
+    "explanation": "Equipment is the things needed for a particular job or activity.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15251,6 +15612,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "especially"
     ],
+    "explanation": "Especially means particularly, or more than usual.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15293,6 +15655,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "exaggerate"
     ],
+    "explanation": "To exaggerate means to describe something as bigger, better or worse than it really is.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15335,6 +15698,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "excellent"
     ],
+    "explanation": "Excellent means extremely good.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15377,6 +15741,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "existence"
     ],
+    "explanation": "Existence is the state of being real or alive.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15419,6 +15784,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "explanation"
     ],
+    "explanation": "An explanation gives reasons or details that make something clear.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15461,6 +15827,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "familiar"
     ],
+    "explanation": "Familiar means known to you because you have seen or experienced it before.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15503,6 +15870,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "foreign"
     ],
+    "explanation": "Foreign means from another country or not familiar.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15545,6 +15913,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "forty"
     ],
+    "explanation": "Forty is the number after thirty-nine and before forty-one.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15587,6 +15956,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "frequently"
     ],
+    "explanation": "Frequently means often or many times.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15629,6 +15999,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "government"
     ],
+    "explanation": "A government is the group of people who run a country or area.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15671,6 +16042,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "guarantee"
     ],
+    "explanation": "A guarantee is a firm promise that something will happen or work as expected.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15713,6 +16085,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "harass"
     ],
+    "explanation": "To harass means to repeatedly trouble, bother or upset someone.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15755,6 +16128,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "hindrance"
     ],
+    "explanation": "A hindrance is something that gets in the way or makes progress harder.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15797,6 +16171,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "identity"
     ],
+    "explanation": "Identity is who a person is, including the qualities that make them unique.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15840,6 +16215,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "immediate"
     ],
+    "explanation": "Immediate means happening now or without delay.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15883,6 +16259,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "immediately"
     ],
+    "explanation": "Immediately means straight away or without delay.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15925,6 +16302,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "individual"
     ],
+    "explanation": "An individual is one person or thing, separate from a group.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -15967,6 +16345,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "interfere"
     ],
+    "explanation": "To interfere means to get involved in a way that causes problems or is not wanted.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16009,6 +16388,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "interrupt"
     ],
+    "explanation": "To interrupt means to stop someone while they are speaking or doing something.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16051,6 +16431,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "language"
     ],
+    "explanation": "Language is a system of words and signs that people use to communicate.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16093,6 +16474,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "leisure"
     ],
+    "explanation": "Leisure is free time when you can rest or enjoy activities.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16135,6 +16517,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "lightning"
     ],
+    "explanation": "Lightning is a bright flash of electricity in the sky during a storm.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16177,6 +16560,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "marvellous"
     ],
+    "explanation": "Marvellous means wonderful or very impressive.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16219,6 +16603,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "mischievous"
     ],
+    "explanation": "Mischievous means playful in a naughty or troublesome way.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16261,6 +16646,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "muscle"
     ],
+    "explanation": "A muscle is body tissue that tightens and relaxes to help you move.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16303,6 +16689,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "necessary"
     ],
+    "explanation": "Necessary means needed or required.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16345,6 +16732,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "neighbour"
     ],
+    "explanation": "A neighbour is someone who lives near you.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16387,6 +16775,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "nuisance"
     ],
+    "explanation": "A nuisance is a person or thing that annoys or causes trouble.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16429,6 +16818,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "occupy"
     ],
+    "explanation": "To occupy means to take up space, live in a place or keep someone busy.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16471,6 +16861,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "occur"
     ],
+    "explanation": "To occur means to happen or take place.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16513,6 +16904,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "opportunity"
     ],
+    "explanation": "An opportunity is a chance to do something.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16555,6 +16947,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "parliament"
     ],
+    "explanation": "Parliament is the group of elected people who make laws in the UK and some other countries.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16597,6 +16990,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "persuade"
     ],
+    "explanation": "To persuade means to convince someone to do or believe something.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16639,6 +17033,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "physical"
     ],
+    "explanation": "Physical means connected with the body or with things you can touch.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16681,6 +17076,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "prejudice"
     ],
+    "explanation": "Prejudice is an unfair opinion about a person or group formed without enough knowledge.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16723,6 +17119,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "privilege"
     ],
+    "explanation": "A privilege is a special right or advantage.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16765,6 +17162,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "profession"
     ],
+    "explanation": "A profession is a type of work that needs special training or skill.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16807,6 +17205,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "programme"
     ],
+    "explanation": "A programme is a planned set of activities, or a television or radio show.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16849,6 +17248,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "pronunciation"
     ],
+    "explanation": "Pronunciation is the way a word is spoken.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16891,6 +17291,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "queue"
     ],
+    "explanation": "A queue is a line of people or things waiting for their turn.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16934,6 +17335,7 @@ export const WORD_BY_SLUG = {
       "recognise",
       "recognize"
     ],
+    "explanation": "To recognise means to know someone or something because you have seen it before.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -16976,6 +17378,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "recommend"
     ],
+    "explanation": "To recommend means to say that someone should choose or try something.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17018,6 +17421,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "relevant"
     ],
+    "explanation": "Relevant means connected to what is being discussed or needed.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17060,6 +17464,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "restaurant"
     ],
+    "explanation": "A restaurant is a place where people pay to sit and eat meals.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17102,6 +17507,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "rhyme"
     ],
+    "explanation": "A rhyme is a word or line that has the same ending sound as another.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17144,6 +17550,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "rhythm"
     ],
+    "explanation": "Rhythm is a regular pattern of sounds, beats or movements.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17186,6 +17593,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "sacrifice"
     ],
+    "explanation": "A sacrifice is giving up something important for a reason or for someone else.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17228,6 +17636,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "secretary"
     ],
+    "explanation": "A secretary is a person who organises information, messages and office work.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17270,6 +17679,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "shoulder"
     ],
+    "explanation": "A shoulder is the part of the body where the arm joins the upper body.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17312,6 +17722,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "signature"
     ],
+    "explanation": "A signature is your name written in your own way to show agreement or identity.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17355,6 +17766,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "sincere"
     ],
+    "explanation": "Sincere means honest and truly meant.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17398,6 +17810,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "sincerely"
     ],
+    "explanation": "Sincerely means honestly and truly.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17440,6 +17853,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "soldier"
     ],
+    "explanation": "A soldier is a person who serves in an army.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17482,6 +17896,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "stomach"
     ],
+    "explanation": "The stomach is the part inside your body where food begins to be digested.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17524,6 +17939,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "sufficient"
     ],
+    "explanation": "Sufficient means enough for what is needed.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17566,6 +17982,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "suggest"
     ],
+    "explanation": "To suggest means to put forward an idea or plan.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17608,6 +18025,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "symbol"
     ],
+    "explanation": "A symbol is a sign, shape or object that stands for an idea or meaning.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17650,6 +18068,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "system"
     ],
+    "explanation": "A system is a set of connected parts that work together.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17692,6 +18111,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "temperature"
     ],
+    "explanation": "Temperature tells how hot or cold something is.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17734,6 +18154,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "thorough"
     ],
+    "explanation": "Thorough means complete and careful, with nothing important missed.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17776,6 +18197,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "twelfth"
     ],
+    "explanation": "Twelfth means number twelve in order.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17818,6 +18240,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "variety"
     ],
+    "explanation": "Variety means a number of different kinds or a mixture.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17860,6 +18283,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "vegetable"
     ],
+    "explanation": "A vegetable is a plant or part of a plant eaten as food, such as a carrot.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17902,6 +18326,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "vehicle"
     ],
+    "explanation": "A vehicle is something used to carry people or goods, such as a car, bus or lorry.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",
@@ -17944,6 +18369,7 @@ export const WORD_BY_SLUG = {
     "accepted": [
       "yacht"
     ],
+    "explanation": "A yacht is a boat used for sailing or pleasure trips.",
     "listId": "statutory-y5-6",
     "yearGroups": [
       "Y5",

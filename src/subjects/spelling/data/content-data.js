@@ -292,6 +292,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "accident"
         ],
+        "explanation": "An accident is something that happens by chance, often causing damage or a problem.",
         "sentenceEntryIds": [
           "accident__01",
           "accident__02",
@@ -328,6 +329,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "accidentally"
         ],
+        "explanation": "If you do something accidentally, you do it by mistake and did not mean to.",
         "sentenceEntryIds": [
           "accidentally__01",
           "accidentally__02",
@@ -364,6 +366,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "actual"
         ],
+        "explanation": "Actual means real or true, not guessed or imagined.",
         "sentenceEntryIds": [
           "actual__01",
           "actual__02",
@@ -400,6 +403,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "actually"
         ],
+        "explanation": "Actually is used to say what is really true, especially when it is different from what someone expected.",
         "sentenceEntryIds": [
           "actually__01",
           "actually__02",
@@ -436,6 +440,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "address"
         ],
+        "explanation": "An address is the details of where a person or place can be found, such as a house number and street.",
         "sentenceEntryIds": [
           "address__01",
           "address__02",
@@ -472,6 +477,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "answer"
         ],
+        "explanation": "An answer is what you say or write in reply to a question.",
         "sentenceEntryIds": [
           "answer__01",
           "answer__02",
@@ -508,6 +514,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "appear"
         ],
+        "explanation": "To appear means to come into sight or seem to be a certain way.",
         "sentenceEntryIds": [
           "appear__01",
           "appear__02",
@@ -544,6 +551,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "arrive"
         ],
+        "explanation": "To arrive means to reach the place you were travelling to.",
         "sentenceEntryIds": [
           "arrive__01",
           "arrive__02",
@@ -580,6 +588,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "believe"
         ],
+        "explanation": "To believe means to think that something is true or to trust someone.",
         "sentenceEntryIds": [
           "believe__01",
           "believe__02",
@@ -616,6 +625,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "bicycle"
         ],
+        "explanation": "A bicycle is a vehicle with two wheels that you ride by pedalling.",
         "sentenceEntryIds": [
           "bicycle__01",
           "bicycle__02",
@@ -652,6 +662,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "breath"
         ],
+        "explanation": "A breath is the air you take into or let out of your lungs.",
         "sentenceEntryIds": [
           "breath__01",
           "breath__02",
@@ -688,6 +699,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "breathe"
         ],
+        "explanation": "To breathe means to take air into your lungs and let it out again.",
         "sentenceEntryIds": [
           "breathe__01",
           "breathe__02",
@@ -724,6 +736,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "build"
         ],
+        "explanation": "To build means to make something by putting parts together.",
         "sentenceEntryIds": [
           "build__01",
           "build__02",
@@ -760,6 +773,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "busy"
         ],
+        "explanation": "Busy means having a lot to do or full of activity.",
         "sentenceEntryIds": [
           "busy__01",
           "busy__02",
@@ -796,6 +810,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "business"
         ],
+        "explanation": "A business is work or an organisation that sells goods or services.",
         "sentenceEntryIds": [
           "business__01",
           "business__02",
@@ -832,6 +847,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "calendar"
         ],
+        "explanation": "A calendar shows days, weeks and months of the year.",
         "sentenceEntryIds": [
           "calendar__01",
           "calendar__02",
@@ -868,6 +884,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "caught"
         ],
+        "explanation": "Caught is the past tense of catch; it can mean grabbed, trapped or noticed doing something.",
         "sentenceEntryIds": [
           "caught__01",
           "caught__02",
@@ -904,6 +921,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "centre"
         ],
+        "explanation": "The centre is the middle point or main part of something.",
         "sentenceEntryIds": [
           "centre__01",
           "centre__02",
@@ -940,6 +958,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "century"
         ],
+        "explanation": "A century is a period of one hundred years.",
         "sentenceEntryIds": [
           "century__01",
           "century__02",
@@ -976,6 +995,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "certain"
         ],
+        "explanation": "Certain means sure, or known to be true.",
         "sentenceEntryIds": [
           "certain__01",
           "certain__02",
@@ -1012,6 +1032,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "circle"
         ],
+        "explanation": "A circle is a round shape where every point on the edge is the same distance from the centre.",
         "sentenceEntryIds": [
           "circle__01",
           "circle__02",
@@ -1048,6 +1069,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "complete"
         ],
+        "explanation": "Complete means finished or with nothing missing.",
         "sentenceEntryIds": [
           "complete__01",
           "complete__02",
@@ -1084,6 +1106,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "consider"
         ],
+        "explanation": "To consider means to think carefully about something before deciding.",
         "sentenceEntryIds": [
           "consider__01",
           "consider__02",
@@ -1120,6 +1143,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "continue"
         ],
+        "explanation": "To continue means to keep going and not stop.",
         "sentenceEntryIds": [
           "continue__01",
           "continue__02",
@@ -1156,6 +1180,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "decide"
         ],
+        "explanation": "To decide means to choose after thinking about the options.",
         "sentenceEntryIds": [
           "decide__01",
           "decide__02",
@@ -1192,6 +1217,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "describe"
         ],
+        "explanation": "To describe means to say or write what someone or something is like.",
         "sentenceEntryIds": [
           "describe__01",
           "describe__02",
@@ -1228,6 +1254,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "different"
         ],
+        "explanation": "Different means not the same.",
         "sentenceEntryIds": [
           "different__01",
           "different__02",
@@ -1264,6 +1291,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "difficult"
         ],
+        "explanation": "Difficult means hard to do, understand or deal with.",
         "sentenceEntryIds": [
           "difficult__01",
           "difficult__02",
@@ -1300,6 +1328,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "disappear"
         ],
+        "explanation": "To disappear means to stop being seen or to go away.",
         "sentenceEntryIds": [
           "disappear__01",
           "disappear__02",
@@ -1336,6 +1365,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "early"
         ],
+        "explanation": "Early means before the usual or expected time.",
         "sentenceEntryIds": [
           "early__01",
           "early__02",
@@ -1372,6 +1402,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "earth"
         ],
+        "explanation": "Earth can mean the planet we live on, or soil and ground.",
         "sentenceEntryIds": [
           "earth__01",
           "earth__02",
@@ -1408,6 +1439,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "eight"
         ],
+        "explanation": "Eight is the number after seven and before nine.",
         "sentenceEntryIds": [
           "eight__01",
           "eight__02",
@@ -1444,6 +1476,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "eighth"
         ],
+        "explanation": "Eighth means number eight in order.",
         "sentenceEntryIds": [
           "eighth__01",
           "eighth__02",
@@ -1480,6 +1513,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "enough"
         ],
+        "explanation": "Enough means as much or as many as needed.",
         "sentenceEntryIds": [
           "enough__01",
           "enough__02",
@@ -1516,6 +1550,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "exercise"
         ],
+        "explanation": "Exercise is physical activity that keeps your body healthy, or a task for practice.",
         "sentenceEntryIds": [
           "exercise__01",
           "exercise__02",
@@ -1552,6 +1587,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "experience"
         ],
+        "explanation": "Experience is something that happens to you, or knowledge you gain by doing something.",
         "sentenceEntryIds": [
           "experience__01",
           "experience__02",
@@ -1588,6 +1624,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "experiment"
         ],
+        "explanation": "An experiment is a careful test to find out what happens or whether an idea is true.",
         "sentenceEntryIds": [
           "experiment__01",
           "experiment__02",
@@ -1624,6 +1661,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "extreme"
         ],
+        "explanation": "Extreme means very great, strong or far from the usual.",
         "sentenceEntryIds": [
           "extreme__01",
           "extreme__02",
@@ -1660,6 +1698,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "famous"
         ],
+        "explanation": "Famous means known by many people.",
         "sentenceEntryIds": [
           "famous__01",
           "famous__02",
@@ -1696,6 +1735,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "favourite"
         ],
+        "explanation": "Favourite means liked best.",
         "sentenceEntryIds": [
           "favourite__01",
           "favourite__02",
@@ -1732,6 +1772,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "february"
         ],
+        "explanation": "February is the second month of the year.",
         "sentenceEntryIds": [
           "february__01",
           "february__02",
@@ -1768,6 +1809,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "forward"
         ],
+        "explanation": "Forward means towards the front or ahead.",
         "sentenceEntryIds": [
           "forward__01",
           "forward__02",
@@ -1804,6 +1846,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "forwards"
         ],
+        "explanation": "Forwards means towards the front or ahead.",
         "sentenceEntryIds": [
           "forwards__01",
           "forwards__02",
@@ -1840,6 +1883,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "fruit"
         ],
+        "explanation": "Fruit is the part of a plant that often has seeds and can be eaten, such as an apple.",
         "sentenceEntryIds": [
           "fruit__01",
           "fruit__02",
@@ -1876,6 +1920,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "grammar"
         ],
+        "explanation": "Grammar is the set of rules for how words fit together in a language.",
         "sentenceEntryIds": [
           "grammar__01",
           "grammar__02",
@@ -1912,6 +1957,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "group"
         ],
+        "explanation": "A group is a number of people or things together.",
         "sentenceEntryIds": [
           "group__01",
           "group__02",
@@ -1948,6 +1994,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "guard"
         ],
+        "explanation": "To guard means to protect or watch over someone or something.",
         "sentenceEntryIds": [
           "guard__01",
           "guard__02",
@@ -1984,6 +2031,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "guide"
         ],
+        "explanation": "A guide is someone or something that shows the way or gives helpful information.",
         "sentenceEntryIds": [
           "guide__01",
           "guide__02",
@@ -2020,6 +2068,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "heard"
         ],
+        "explanation": "Heard is the past tense of hear; it means listened to or noticed a sound.",
         "sentenceEntryIds": [
           "heard__01",
           "heard__02",
@@ -2056,6 +2105,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "heart"
         ],
+        "explanation": "The heart is the organ that pumps blood around the body; it can also mean feelings.",
         "sentenceEntryIds": [
           "heart__01",
           "heart__02",
@@ -2092,6 +2142,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "height"
         ],
+        "explanation": "Height is how tall or high something is.",
         "sentenceEntryIds": [
           "height__01",
           "height__02",
@@ -2128,6 +2179,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "history"
         ],
+        "explanation": "History is the study of things that happened in the past.",
         "sentenceEntryIds": [
           "history__01",
           "history__02",
@@ -2164,6 +2216,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "imagine"
         ],
+        "explanation": "To imagine means to make a picture or idea in your mind.",
         "sentenceEntryIds": [
           "imagine__01",
           "imagine__02",
@@ -2200,6 +2253,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "increase"
         ],
+        "explanation": "To increase means to become bigger in number, size or amount.",
         "sentenceEntryIds": [
           "increase__01",
           "increase__02",
@@ -2236,6 +2290,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "important"
         ],
+        "explanation": "Important means having great value or needing attention.",
         "sentenceEntryIds": [
           "important__01",
           "important__02",
@@ -2272,6 +2327,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "interest"
         ],
+        "explanation": "Interest is a feeling of wanting to know or learn more about something.",
         "sentenceEntryIds": [
           "interest__01",
           "interest__02",
@@ -2308,6 +2364,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "island"
         ],
+        "explanation": "An island is land with water all around it.",
         "sentenceEntryIds": [
           "island__01",
           "island__02",
@@ -2344,6 +2401,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "knowledge"
         ],
+        "explanation": "Knowledge is what you know and understand.",
         "sentenceEntryIds": [
           "knowledge__01",
           "knowledge__02",
@@ -2380,6 +2438,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "learn"
         ],
+        "explanation": "To learn means to gain knowledge or a skill.",
         "sentenceEntryIds": [
           "learn__01",
           "learn__02",
@@ -2416,6 +2475,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "length"
         ],
+        "explanation": "Length is how long something is from one end to the other.",
         "sentenceEntryIds": [
           "length__01",
           "length__02",
@@ -2452,6 +2512,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "library"
         ],
+        "explanation": "A library is a place where books and information are kept for people to use.",
         "sentenceEntryIds": [
           "library__01",
           "library__02",
@@ -2488,6 +2549,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "material"
         ],
+        "explanation": "Material is the substance something is made from, such as cotton, wood or metal.",
         "sentenceEntryIds": [
           "material__01",
           "material__02",
@@ -2524,6 +2586,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "medicine"
         ],
+        "explanation": "Medicine is something used to help treat illness or pain.",
         "sentenceEntryIds": [
           "medicine__01",
           "medicine__02",
@@ -2560,6 +2623,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "mention"
         ],
+        "explanation": "To mention means to say something briefly.",
         "sentenceEntryIds": [
           "mention__01",
           "mention__02",
@@ -2596,6 +2660,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "minute"
         ],
+        "explanation": "A minute is a period of sixty seconds.",
         "sentenceEntryIds": [
           "minute__01",
           "minute__02",
@@ -2632,6 +2697,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "natural"
         ],
+        "explanation": "Natural means found in nature or not made by people.",
         "sentenceEntryIds": [
           "natural__01",
           "natural__02",
@@ -2668,6 +2734,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "naughty"
         ],
+        "explanation": "Naughty means behaving badly or not following rules.",
         "sentenceEntryIds": [
           "naughty__01",
           "naughty__02",
@@ -2704,6 +2771,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "notice"
         ],
+        "explanation": "To notice means to see, hear or become aware of something.",
         "sentenceEntryIds": [
           "notice__01",
           "notice__02",
@@ -2740,6 +2808,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "occasion"
         ],
+        "explanation": "An occasion is a particular time when something happens, often something special.",
         "sentenceEntryIds": [
           "occasion__01",
           "occasion__02",
@@ -2776,6 +2845,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "occasionally"
         ],
+        "explanation": "Occasionally means sometimes, but not often.",
         "sentenceEntryIds": [
           "occasionally__01",
           "occasionally__02",
@@ -2812,6 +2882,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "often"
         ],
+        "explanation": "Often means many times or frequently.",
         "sentenceEntryIds": [
           "often__01",
           "often__02",
@@ -2848,6 +2919,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "opposite"
         ],
+        "explanation": "Opposite means completely different or facing the other way.",
         "sentenceEntryIds": [
           "opposite__01",
           "opposite__02",
@@ -2884,6 +2956,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "ordinary"
         ],
+        "explanation": "Ordinary means normal, usual or not special.",
         "sentenceEntryIds": [
           "ordinary__01",
           "ordinary__02",
@@ -2920,6 +2993,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "particular"
         ],
+        "explanation": "Particular means a specific one, not just any one.",
         "sentenceEntryIds": [
           "particular__01",
           "particular__02",
@@ -2956,6 +3030,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "peculiar"
         ],
+        "explanation": "Peculiar means strange or unusual.",
         "sentenceEntryIds": [
           "peculiar__01",
           "peculiar__02",
@@ -2992,6 +3067,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "perhaps"
         ],
+        "explanation": "Perhaps means maybe or possibly.",
         "sentenceEntryIds": [
           "perhaps__01",
           "perhaps__02",
@@ -3028,6 +3104,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "popular"
         ],
+        "explanation": "Popular means liked or enjoyed by many people.",
         "sentenceEntryIds": [
           "popular__01",
           "popular__02",
@@ -3064,6 +3141,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "position"
         ],
+        "explanation": "Position is where something is, or the way it is placed.",
         "sentenceEntryIds": [
           "position__01",
           "position__02",
@@ -3100,6 +3178,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "possess"
         ],
+        "explanation": "To possess something means to own it or have it.",
         "sentenceEntryIds": [
           "possess__01",
           "possess__02",
@@ -3136,6 +3215,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "possession"
         ],
+        "explanation": "A possession is something that you own or have.",
         "sentenceEntryIds": [
           "possession__01",
           "possession__02",
@@ -3172,6 +3252,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "possible"
         ],
+        "explanation": "Possible means able to happen or be done.",
         "sentenceEntryIds": [
           "possible__01",
           "possible__02",
@@ -3208,6 +3289,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "potatoes"
         ],
+        "explanation": "Potatoes are round root vegetables that grow underground.",
         "sentenceEntryIds": [
           "potatoes__01",
           "potatoes__02",
@@ -3244,6 +3326,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "pressure"
         ],
+        "explanation": "Pressure is force pushing on something, or stress caused by demands.",
         "sentenceEntryIds": [
           "pressure__01",
           "pressure__02",
@@ -3280,6 +3363,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "probably"
         ],
+        "explanation": "Probably means very likely to happen or be true.",
         "sentenceEntryIds": [
           "probably__01",
           "probably__02",
@@ -3316,6 +3400,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "promise"
         ],
+        "explanation": "A promise is a firm statement that you will do something.",
         "sentenceEntryIds": [
           "promise__01",
           "promise__02",
@@ -3352,6 +3437,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "purpose"
         ],
+        "explanation": "Purpose is the reason something exists or is done.",
         "sentenceEntryIds": [
           "purpose__01",
           "purpose__02",
@@ -3388,6 +3474,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "quarter"
         ],
+        "explanation": "A quarter is one of four equal parts.",
         "sentenceEntryIds": [
           "quarter__01",
           "quarter__02",
@@ -3424,6 +3511,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "question"
         ],
+        "explanation": "A question is something you ask to find out information.",
         "sentenceEntryIds": [
           "question__01",
           "question__02",
@@ -3460,6 +3548,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "recent"
         ],
+        "explanation": "Recent means having happened not long ago.",
         "sentenceEntryIds": [
           "recent__01",
           "recent__02",
@@ -3496,6 +3585,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "regular"
         ],
+        "explanation": "Regular means happening again and again in the same pattern, or usual.",
         "sentenceEntryIds": [
           "regular__01",
           "regular__02",
@@ -3532,6 +3622,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "reign"
         ],
+        "explanation": "A reign is the time when a king or queen rules.",
         "sentenceEntryIds": [
           "reign__01",
           "reign__02",
@@ -3568,6 +3659,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "remember"
         ],
+        "explanation": "To remember means to keep something in your mind or bring it back to mind.",
         "sentenceEntryIds": [
           "remember__01",
           "remember__02",
@@ -3604,6 +3696,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "sentence"
         ],
+        "explanation": "A sentence is a group of words that expresses a complete idea.",
         "sentenceEntryIds": [
           "sentence__01",
           "sentence__02",
@@ -3640,6 +3733,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "separate"
         ],
+        "explanation": "Separate means apart, not joined together.",
         "sentenceEntryIds": [
           "separate__01",
           "separate__02",
@@ -3676,6 +3770,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "special"
         ],
+        "explanation": "Special means different from the usual in an important or valued way.",
         "sentenceEntryIds": [
           "special__01",
           "special__02",
@@ -3712,6 +3807,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "straight"
         ],
+        "explanation": "Straight means not curved, bent or crooked.",
         "sentenceEntryIds": [
           "straight__01",
           "straight__02",
@@ -3748,6 +3844,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "strange"
         ],
+        "explanation": "Strange means unusual or surprising.",
         "sentenceEntryIds": [
           "strange__01",
           "strange__02",
@@ -3784,6 +3881,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "strength"
         ],
+        "explanation": "Strength is the power to lift, push, resist or keep going.",
         "sentenceEntryIds": [
           "strength__01",
           "strength__02",
@@ -3820,6 +3918,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "suppose"
         ],
+        "explanation": "To suppose means to think something is true, often without being completely sure.",
         "sentenceEntryIds": [
           "suppose__01",
           "suppose__02",
@@ -3856,6 +3955,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "surprise"
         ],
+        "explanation": "A surprise is something unexpected.",
         "sentenceEntryIds": [
           "surprise__01",
           "surprise__02",
@@ -3892,6 +3992,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "therefore"
         ],
+        "explanation": "Therefore means for that reason or as a result.",
         "sentenceEntryIds": [
           "therefore__01",
           "therefore__02",
@@ -3928,6 +4029,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "though"
         ],
+        "explanation": "Though means although, or despite the fact that something is true.",
         "sentenceEntryIds": [
           "though__01",
           "though__02",
@@ -3964,6 +4066,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "although"
         ],
+        "explanation": "Although means even though or despite the fact that.",
         "sentenceEntryIds": [
           "although__01",
           "although__02",
@@ -4000,6 +4103,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "thought"
         ],
+        "explanation": "A thought is an idea in your mind; thought is also the past tense of think.",
         "sentenceEntryIds": [
           "thought__01",
           "thought__02",
@@ -4036,6 +4140,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "through"
         ],
+        "explanation": "Through means moving in one side and out of the other, or from start to finish.",
         "sentenceEntryIds": [
           "through__01",
           "through__02",
@@ -4072,6 +4177,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "various"
         ],
+        "explanation": "Various means several different kinds.",
         "sentenceEntryIds": [
           "various__01",
           "various__02",
@@ -4108,6 +4214,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "weight"
         ],
+        "explanation": "Weight is how heavy something is.",
         "sentenceEntryIds": [
           "weight__01",
           "weight__02",
@@ -4144,6 +4251,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "woman"
         ],
+        "explanation": "A woman is an adult female person.",
         "sentenceEntryIds": [
           "woman__01",
           "woman__02",
@@ -4180,6 +4288,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "women"
         ],
+        "explanation": "Women is the plural of woman.",
         "sentenceEntryIds": [
           "women__01",
           "women__02",
@@ -4216,6 +4325,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "accommodate"
         ],
+        "explanation": "To accommodate means to provide space for someone or something, or to fit in with needs.",
         "sentenceEntryIds": [
           "accommodate__01",
           "accommodate__02",
@@ -4252,6 +4362,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "accompany"
         ],
+        "explanation": "To accompany means to go somewhere with someone or to happen at the same time.",
         "sentenceEntryIds": [
           "accompany__01",
           "accompany__02",
@@ -4288,6 +4399,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "according"
         ],
+        "explanation": "According to something means as stated by it, or in a way that agrees with it.",
         "sentenceEntryIds": [
           "according__01",
           "according__02",
@@ -4324,6 +4436,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "achieve"
         ],
+        "explanation": "To achieve means to succeed in doing something through effort.",
         "sentenceEntryIds": [
           "achieve__01",
           "achieve__02",
@@ -4360,6 +4473,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "aggressive"
         ],
+        "explanation": "Aggressive means ready to attack, argue or behave forcefully.",
         "sentenceEntryIds": [
           "aggressive__01",
           "aggressive__02",
@@ -4396,6 +4510,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "amateur"
         ],
+        "explanation": "An amateur is someone who does an activity for interest, not as a paid job.",
         "sentenceEntryIds": [
           "amateur__01",
           "amateur__02",
@@ -4432,6 +4547,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "ancient"
         ],
+        "explanation": "Ancient means very old or from a long time ago.",
         "sentenceEntryIds": [
           "ancient__01",
           "ancient__02",
@@ -4468,6 +4584,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "apparent"
         ],
+        "explanation": "Apparent means easy to see or seeming to be true.",
         "sentenceEntryIds": [
           "apparent__01",
           "apparent__02",
@@ -4504,6 +4621,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "appreciate"
         ],
+        "explanation": "To appreciate means to understand the value of something or be thankful for it.",
         "sentenceEntryIds": [
           "appreciate__01",
           "appreciate__02",
@@ -4540,6 +4658,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "attached"
         ],
+        "explanation": "Attached means joined, fastened or feeling emotionally close.",
         "sentenceEntryIds": [
           "attached__01",
           "attached__02",
@@ -4576,6 +4695,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "available"
         ],
+        "explanation": "Available means ready to be used or free to do something.",
         "sentenceEntryIds": [
           "available__01",
           "available__02",
@@ -4612,6 +4732,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "average"
         ],
+        "explanation": "Average means typical, ordinary, or the middle amount found by sharing equally.",
         "sentenceEntryIds": [
           "average__01",
           "average__02",
@@ -4648,6 +4769,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "awkward"
         ],
+        "explanation": "Awkward means difficult to deal with, clumsy or uncomfortable.",
         "sentenceEntryIds": [
           "awkward__01",
           "awkward__02",
@@ -4684,6 +4806,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "bargain"
         ],
+        "explanation": "A bargain is something bought for less than the usual price, or an agreement between people.",
         "sentenceEntryIds": [
           "bargain__01",
           "bargain__02",
@@ -4720,6 +4843,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "bruise"
         ],
+        "explanation": "A bruise is a dark mark on skin caused by a bump or injury.",
         "sentenceEntryIds": [
           "bruise__01",
           "bruise__02",
@@ -4756,6 +4880,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "category"
         ],
+        "explanation": "A category is a group of things that share the same type or feature.",
         "sentenceEntryIds": [
           "category__01",
           "category__02",
@@ -4792,6 +4917,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "cemetery"
         ],
+        "explanation": "A cemetery is a place where people are buried.",
         "sentenceEntryIds": [
           "cemetery__01",
           "cemetery__02",
@@ -4828,6 +4954,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "committee"
         ],
+        "explanation": "A committee is a group of people chosen to discuss or organise something.",
         "sentenceEntryIds": [
           "committee__01",
           "committee__02",
@@ -4864,6 +4991,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "communicate"
         ],
+        "explanation": "To communicate means to share information, ideas or feelings.",
         "sentenceEntryIds": [
           "communicate__01",
           "communicate__02",
@@ -4900,6 +5028,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "community"
         ],
+        "explanation": "A community is a group of people who live near each other or share something in common.",
         "sentenceEntryIds": [
           "community__01",
           "community__02",
@@ -4936,6 +5065,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "competition"
         ],
+        "explanation": "A competition is an event where people try to win or do better than others.",
         "sentenceEntryIds": [
           "competition__01",
           "competition__02",
@@ -4972,6 +5102,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "conscience"
         ],
+        "explanation": "Your conscience is the inner sense that helps you know right from wrong.",
         "sentenceEntryIds": [
           "conscience__01",
           "conscience__02",
@@ -5008,6 +5139,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "conscious"
         ],
+        "explanation": "Conscious means awake, aware or able to notice what is happening.",
         "sentenceEntryIds": [
           "conscious__01",
           "conscious__02",
@@ -5044,6 +5176,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "controversy"
         ],
+        "explanation": "A controversy is strong disagreement about an issue.",
         "sentenceEntryIds": [
           "controversy__01",
           "controversy__02",
@@ -5080,6 +5213,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "convenience"
         ],
+        "explanation": "Convenience means ease, usefulness or something that saves time and effort.",
         "sentenceEntryIds": [
           "convenience__01",
           "convenience__02",
@@ -5116,6 +5250,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "correspond"
         ],
+        "explanation": "To correspond means to match, agree or communicate by messages.",
         "sentenceEntryIds": [
           "correspond__01",
           "correspond__02",
@@ -5153,6 +5288,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
           "criticise",
           "criticize"
         ],
+        "explanation": "To criticise means to say what is wrong with something or someone.",
         "sentenceEntryIds": [
           "criticise__01",
           "criticise__02",
@@ -5189,6 +5325,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "curiosity"
         ],
+        "explanation": "Curiosity is the wish to know, learn or find out about something.",
         "sentenceEntryIds": [
           "curiosity__01",
           "curiosity__02",
@@ -5225,6 +5362,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "definite"
         ],
+        "explanation": "Definite means clear, certain and not vague.",
         "sentenceEntryIds": [
           "definite__01",
           "definite__02",
@@ -5261,6 +5399,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "desperate"
         ],
+        "explanation": "Desperate means feeling that you urgently need something or have little hope.",
         "sentenceEntryIds": [
           "desperate__01",
           "desperate__02",
@@ -5297,6 +5436,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "determined"
         ],
+        "explanation": "Determined means firmly decided to do something and not give up.",
         "sentenceEntryIds": [
           "determined__01",
           "determined__02",
@@ -5333,6 +5473,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "develop"
         ],
+        "explanation": "To develop means to grow, improve or become more advanced.",
         "sentenceEntryIds": [
           "develop__01",
           "develop__02",
@@ -5369,6 +5510,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "dictionary"
         ],
+        "explanation": "A dictionary is a book or resource that explains words, spellings and meanings.",
         "sentenceEntryIds": [
           "dictionary__01",
           "dictionary__02",
@@ -5405,6 +5547,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "disastrous"
         ],
+        "explanation": "Disastrous means causing great harm, failure or trouble.",
         "sentenceEntryIds": [
           "disastrous__01",
           "disastrous__02",
@@ -5441,6 +5584,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "embarrass"
         ],
+        "explanation": "To embarrass someone means to make them feel awkward, ashamed or self-conscious.",
         "sentenceEntryIds": [
           "embarrass__01",
           "embarrass__02",
@@ -5477,6 +5621,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "environment"
         ],
+        "explanation": "The environment is the natural world around us, or the conditions in a place.",
         "sentenceEntryIds": [
           "environment__01",
           "environment__02",
@@ -5513,6 +5658,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "equip"
         ],
+        "explanation": "To equip means to provide the things needed for a task.",
         "sentenceEntryIds": [
           "equip__01",
           "equip__02",
@@ -5549,6 +5695,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "equipped"
         ],
+        "explanation": "Equipped means provided with what is needed.",
         "sentenceEntryIds": [
           "equipped__01",
           "equipped__02",
@@ -5585,6 +5732,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "equipment"
         ],
+        "explanation": "Equipment is the things needed for a particular job or activity.",
         "sentenceEntryIds": [
           "equipment__01",
           "equipment__02",
@@ -5621,6 +5769,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "especially"
         ],
+        "explanation": "Especially means particularly, or more than usual.",
         "sentenceEntryIds": [
           "especially__01",
           "especially__02",
@@ -5657,6 +5806,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "exaggerate"
         ],
+        "explanation": "To exaggerate means to describe something as bigger, better or worse than it really is.",
         "sentenceEntryIds": [
           "exaggerate__01",
           "exaggerate__02",
@@ -5693,6 +5843,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "excellent"
         ],
+        "explanation": "Excellent means extremely good.",
         "sentenceEntryIds": [
           "excellent__01",
           "excellent__02",
@@ -5729,6 +5880,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "existence"
         ],
+        "explanation": "Existence is the state of being real or alive.",
         "sentenceEntryIds": [
           "existence__01",
           "existence__02",
@@ -5765,6 +5917,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "explanation"
         ],
+        "explanation": "An explanation gives reasons or details that make something clear.",
         "sentenceEntryIds": [
           "explanation__01",
           "explanation__02",
@@ -5801,6 +5954,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "familiar"
         ],
+        "explanation": "Familiar means known to you because you have seen or experienced it before.",
         "sentenceEntryIds": [
           "familiar__01",
           "familiar__02",
@@ -5837,6 +5991,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "foreign"
         ],
+        "explanation": "Foreign means from another country or not familiar.",
         "sentenceEntryIds": [
           "foreign__01",
           "foreign__02",
@@ -5873,6 +6028,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "forty"
         ],
+        "explanation": "Forty is the number after thirty-nine and before forty-one.",
         "sentenceEntryIds": [
           "forty__01",
           "forty__02",
@@ -5909,6 +6065,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "frequently"
         ],
+        "explanation": "Frequently means often or many times.",
         "sentenceEntryIds": [
           "frequently__01",
           "frequently__02",
@@ -5945,6 +6102,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "government"
         ],
+        "explanation": "A government is the group of people who run a country or area.",
         "sentenceEntryIds": [
           "government__01",
           "government__02",
@@ -5981,6 +6139,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "guarantee"
         ],
+        "explanation": "A guarantee is a firm promise that something will happen or work as expected.",
         "sentenceEntryIds": [
           "guarantee__01",
           "guarantee__02",
@@ -6017,6 +6176,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "harass"
         ],
+        "explanation": "To harass means to repeatedly trouble, bother or upset someone.",
         "sentenceEntryIds": [
           "harass__01",
           "harass__02",
@@ -6053,6 +6213,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "hindrance"
         ],
+        "explanation": "A hindrance is something that gets in the way or makes progress harder.",
         "sentenceEntryIds": [
           "hindrance__01",
           "hindrance__02",
@@ -6089,6 +6250,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "identity"
         ],
+        "explanation": "Identity is who a person is, including the qualities that make them unique.",
         "sentenceEntryIds": [
           "identity__01",
           "identity__02",
@@ -6125,6 +6287,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "immediate"
         ],
+        "explanation": "Immediate means happening now or without delay.",
         "sentenceEntryIds": [
           "immediate__01",
           "immediate__02",
@@ -6161,6 +6324,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "immediately"
         ],
+        "explanation": "Immediately means straight away or without delay.",
         "sentenceEntryIds": [
           "immediately__01",
           "immediately__02",
@@ -6197,6 +6361,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "individual"
         ],
+        "explanation": "An individual is one person or thing, separate from a group.",
         "sentenceEntryIds": [
           "individual__01",
           "individual__02",
@@ -6233,6 +6398,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "interfere"
         ],
+        "explanation": "To interfere means to get involved in a way that causes problems or is not wanted.",
         "sentenceEntryIds": [
           "interfere__01",
           "interfere__02",
@@ -6269,6 +6435,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "interrupt"
         ],
+        "explanation": "To interrupt means to stop someone while they are speaking or doing something.",
         "sentenceEntryIds": [
           "interrupt__01",
           "interrupt__02",
@@ -6305,6 +6472,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "language"
         ],
+        "explanation": "Language is a system of words and signs that people use to communicate.",
         "sentenceEntryIds": [
           "language__01",
           "language__02",
@@ -6341,6 +6509,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "leisure"
         ],
+        "explanation": "Leisure is free time when you can rest or enjoy activities.",
         "sentenceEntryIds": [
           "leisure__01",
           "leisure__02",
@@ -6377,6 +6546,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "lightning"
         ],
+        "explanation": "Lightning is a bright flash of electricity in the sky during a storm.",
         "sentenceEntryIds": [
           "lightning__01",
           "lightning__02",
@@ -6413,6 +6583,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "marvellous"
         ],
+        "explanation": "Marvellous means wonderful or very impressive.",
         "sentenceEntryIds": [
           "marvellous__01",
           "marvellous__02",
@@ -6449,6 +6620,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "mischievous"
         ],
+        "explanation": "Mischievous means playful in a naughty or troublesome way.",
         "sentenceEntryIds": [
           "mischievous__01",
           "mischievous__02",
@@ -6485,6 +6657,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "muscle"
         ],
+        "explanation": "A muscle is body tissue that tightens and relaxes to help you move.",
         "sentenceEntryIds": [
           "muscle__01",
           "muscle__02",
@@ -6521,6 +6694,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "necessary"
         ],
+        "explanation": "Necessary means needed or required.",
         "sentenceEntryIds": [
           "necessary__01",
           "necessary__02",
@@ -6557,6 +6731,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "neighbour"
         ],
+        "explanation": "A neighbour is someone who lives near you.",
         "sentenceEntryIds": [
           "neighbour__01",
           "neighbour__02",
@@ -6593,6 +6768,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "nuisance"
         ],
+        "explanation": "A nuisance is a person or thing that annoys or causes trouble.",
         "sentenceEntryIds": [
           "nuisance__01",
           "nuisance__02",
@@ -6629,6 +6805,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "occupy"
         ],
+        "explanation": "To occupy means to take up space, live in a place or keep someone busy.",
         "sentenceEntryIds": [
           "occupy__01",
           "occupy__02",
@@ -6665,6 +6842,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "occur"
         ],
+        "explanation": "To occur means to happen or take place.",
         "sentenceEntryIds": [
           "occur__01",
           "occur__02",
@@ -6701,6 +6879,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "opportunity"
         ],
+        "explanation": "An opportunity is a chance to do something.",
         "sentenceEntryIds": [
           "opportunity__01",
           "opportunity__02",
@@ -6737,6 +6916,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "parliament"
         ],
+        "explanation": "Parliament is the group of elected people who make laws in the UK and some other countries.",
         "sentenceEntryIds": [
           "parliament__01",
           "parliament__02",
@@ -6773,6 +6953,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "persuade"
         ],
+        "explanation": "To persuade means to convince someone to do or believe something.",
         "sentenceEntryIds": [
           "persuade__01",
           "persuade__02",
@@ -6809,6 +6990,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "physical"
         ],
+        "explanation": "Physical means connected with the body or with things you can touch.",
         "sentenceEntryIds": [
           "physical__01",
           "physical__02",
@@ -6845,6 +7027,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "prejudice"
         ],
+        "explanation": "Prejudice is an unfair opinion about a person or group formed without enough knowledge.",
         "sentenceEntryIds": [
           "prejudice__01",
           "prejudice__02",
@@ -6881,6 +7064,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "privilege"
         ],
+        "explanation": "A privilege is a special right or advantage.",
         "sentenceEntryIds": [
           "privilege__01",
           "privilege__02",
@@ -6917,6 +7101,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "profession"
         ],
+        "explanation": "A profession is a type of work that needs special training or skill.",
         "sentenceEntryIds": [
           "profession__01",
           "profession__02",
@@ -6953,6 +7138,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "programme"
         ],
+        "explanation": "A programme is a planned set of activities, or a television or radio show.",
         "sentenceEntryIds": [
           "programme__01",
           "programme__02",
@@ -6989,6 +7175,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "pronunciation"
         ],
+        "explanation": "Pronunciation is the way a word is spoken.",
         "sentenceEntryIds": [
           "pronunciation__01",
           "pronunciation__02",
@@ -7025,6 +7212,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "queue"
         ],
+        "explanation": "A queue is a line of people or things waiting for their turn.",
         "sentenceEntryIds": [
           "queue__01",
           "queue__02",
@@ -7062,6 +7250,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
           "recognise",
           "recognize"
         ],
+        "explanation": "To recognise means to know someone or something because you have seen it before.",
         "sentenceEntryIds": [
           "recognise__01",
           "recognise__02",
@@ -7098,6 +7287,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "recommend"
         ],
+        "explanation": "To recommend means to say that someone should choose or try something.",
         "sentenceEntryIds": [
           "recommend__01",
           "recommend__02",
@@ -7134,6 +7324,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "relevant"
         ],
+        "explanation": "Relevant means connected to what is being discussed or needed.",
         "sentenceEntryIds": [
           "relevant__01",
           "relevant__02",
@@ -7170,6 +7361,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "restaurant"
         ],
+        "explanation": "A restaurant is a place where people pay to sit and eat meals.",
         "sentenceEntryIds": [
           "restaurant__01",
           "restaurant__02",
@@ -7206,6 +7398,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "rhyme"
         ],
+        "explanation": "A rhyme is a word or line that has the same ending sound as another.",
         "sentenceEntryIds": [
           "rhyme__01",
           "rhyme__02",
@@ -7242,6 +7435,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "rhythm"
         ],
+        "explanation": "Rhythm is a regular pattern of sounds, beats or movements.",
         "sentenceEntryIds": [
           "rhythm__01",
           "rhythm__02",
@@ -7278,6 +7472,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "sacrifice"
         ],
+        "explanation": "A sacrifice is giving up something important for a reason or for someone else.",
         "sentenceEntryIds": [
           "sacrifice__01",
           "sacrifice__02",
@@ -7314,6 +7509,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "secretary"
         ],
+        "explanation": "A secretary is a person who organises information, messages and office work.",
         "sentenceEntryIds": [
           "secretary__01",
           "secretary__02",
@@ -7350,6 +7546,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "shoulder"
         ],
+        "explanation": "A shoulder is the part of the body where the arm joins the upper body.",
         "sentenceEntryIds": [
           "shoulder__01",
           "shoulder__02",
@@ -7386,6 +7583,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "signature"
         ],
+        "explanation": "A signature is your name written in your own way to show agreement or identity.",
         "sentenceEntryIds": [
           "signature__01",
           "signature__02",
@@ -7422,6 +7620,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "sincere"
         ],
+        "explanation": "Sincere means honest and truly meant.",
         "sentenceEntryIds": [
           "sincere__01",
           "sincere__02",
@@ -7458,6 +7657,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "sincerely"
         ],
+        "explanation": "Sincerely means honestly and truly.",
         "sentenceEntryIds": [
           "sincerely__01",
           "sincerely__02",
@@ -7494,6 +7694,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "soldier"
         ],
+        "explanation": "A soldier is a person who serves in an army.",
         "sentenceEntryIds": [
           "soldier__01",
           "soldier__02",
@@ -7530,6 +7731,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "stomach"
         ],
+        "explanation": "The stomach is the part inside your body where food begins to be digested.",
         "sentenceEntryIds": [
           "stomach__01",
           "stomach__02",
@@ -7566,6 +7768,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "sufficient"
         ],
+        "explanation": "Sufficient means enough for what is needed.",
         "sentenceEntryIds": [
           "sufficient__01",
           "sufficient__02",
@@ -7602,6 +7805,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "suggest"
         ],
+        "explanation": "To suggest means to put forward an idea or plan.",
         "sentenceEntryIds": [
           "suggest__01",
           "suggest__02",
@@ -7638,6 +7842,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "symbol"
         ],
+        "explanation": "A symbol is a sign, shape or object that stands for an idea or meaning.",
         "sentenceEntryIds": [
           "symbol__01",
           "symbol__02",
@@ -7674,6 +7879,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "system"
         ],
+        "explanation": "A system is a set of connected parts that work together.",
         "sentenceEntryIds": [
           "system__01",
           "system__02",
@@ -7710,6 +7916,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "temperature"
         ],
+        "explanation": "Temperature tells how hot or cold something is.",
         "sentenceEntryIds": [
           "temperature__01",
           "temperature__02",
@@ -7746,6 +7953,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "thorough"
         ],
+        "explanation": "Thorough means complete and careful, with nothing important missed.",
         "sentenceEntryIds": [
           "thorough__01",
           "thorough__02",
@@ -7782,6 +7990,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "twelfth"
         ],
+        "explanation": "Twelfth means number twelve in order.",
         "sentenceEntryIds": [
           "twelfth__01",
           "twelfth__02",
@@ -7818,6 +8027,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "variety"
         ],
+        "explanation": "Variety means a number of different kinds or a mixture.",
         "sentenceEntryIds": [
           "variety__01",
           "variety__02",
@@ -7854,6 +8064,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "vegetable"
         ],
+        "explanation": "A vegetable is a plant or part of a plant eaten as food, such as a carrot.",
         "sentenceEntryIds": [
           "vegetable__01",
           "vegetable__02",
@@ -7890,6 +8101,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "vehicle"
         ],
+        "explanation": "A vehicle is something used to carry people or goods, such as a car, bus or lorry.",
         "sentenceEntryIds": [
           "vehicle__01",
           "vehicle__02",
@@ -7926,6 +8138,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
         "accepted": [
           "yacht"
         ],
+        "explanation": "A yacht is a boat used for sailing or pleasure trips.",
         "sentenceEntryIds": [
           "yacht__01",
           "yacht__02",
@@ -42074,6 +42287,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "accident"
             ],
+            "explanation": "An accident is something that happens by chance, often causing damage or a problem.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42117,6 +42331,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "accidentally"
             ],
+            "explanation": "If you do something accidentally, you do it by mistake and did not mean to.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42160,6 +42375,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "actual"
             ],
+            "explanation": "Actual means real or true, not guessed or imagined.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42203,6 +42419,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "actually"
             ],
+            "explanation": "Actually is used to say what is really true, especially when it is different from what someone expected.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42245,6 +42462,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "address"
             ],
+            "explanation": "An address is the details of where a person or place can be found, such as a house number and street.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42287,6 +42505,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "answer"
             ],
+            "explanation": "An answer is what you say or write in reply to a question.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42329,6 +42548,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "appear"
             ],
+            "explanation": "To appear means to come into sight or seem to be a certain way.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42371,6 +42591,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "arrive"
             ],
+            "explanation": "To arrive means to reach the place you were travelling to.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42413,6 +42634,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "believe"
             ],
+            "explanation": "To believe means to think that something is true or to trust someone.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42455,6 +42677,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "bicycle"
             ],
+            "explanation": "A bicycle is a vehicle with two wheels that you ride by pedalling.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42497,6 +42720,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "breath"
             ],
+            "explanation": "A breath is the air you take into or let out of your lungs.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42539,6 +42763,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "breathe"
             ],
+            "explanation": "To breathe means to take air into your lungs and let it out again.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42581,6 +42806,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "build"
             ],
+            "explanation": "To build means to make something by putting parts together.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42624,6 +42850,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "busy"
             ],
+            "explanation": "Busy means having a lot to do or full of activity.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42667,6 +42894,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "business"
             ],
+            "explanation": "A business is work or an organisation that sells goods or services.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42709,6 +42937,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "calendar"
             ],
+            "explanation": "A calendar shows days, weeks and months of the year.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42751,6 +42980,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "caught"
             ],
+            "explanation": "Caught is the past tense of catch; it can mean grabbed, trapped or noticed doing something.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42793,6 +43023,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "centre"
             ],
+            "explanation": "The centre is the middle point or main part of something.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42835,6 +43066,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "century"
             ],
+            "explanation": "A century is a period of one hundred years.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42877,6 +43109,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "certain"
             ],
+            "explanation": "Certain means sure, or known to be true.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42919,6 +43152,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "circle"
             ],
+            "explanation": "A circle is a round shape where every point on the edge is the same distance from the centre.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -42961,6 +43195,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "complete"
             ],
+            "explanation": "Complete means finished or with nothing missing.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43003,6 +43238,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "consider"
             ],
+            "explanation": "To consider means to think carefully about something before deciding.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43045,6 +43281,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "continue"
             ],
+            "explanation": "To continue means to keep going and not stop.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43087,6 +43324,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "decide"
             ],
+            "explanation": "To decide means to choose after thinking about the options.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43129,6 +43367,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "describe"
             ],
+            "explanation": "To describe means to say or write what someone or something is like.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43171,6 +43410,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "different"
             ],
+            "explanation": "Different means not the same.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43213,6 +43453,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "difficult"
             ],
+            "explanation": "Difficult means hard to do, understand or deal with.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43255,6 +43496,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "disappear"
             ],
+            "explanation": "To disappear means to stop being seen or to go away.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43297,6 +43539,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "early"
             ],
+            "explanation": "Early means before the usual or expected time.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43339,6 +43582,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "earth"
             ],
+            "explanation": "Earth can mean the planet we live on, or soil and ground.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43382,6 +43626,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "eight"
             ],
+            "explanation": "Eight is the number after seven and before nine.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43425,6 +43670,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "eighth"
             ],
+            "explanation": "Eighth means number eight in order.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43467,6 +43713,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "enough"
             ],
+            "explanation": "Enough means as much or as many as needed.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43509,6 +43756,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "exercise"
             ],
+            "explanation": "Exercise is physical activity that keeps your body healthy, or a task for practice.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43551,6 +43799,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "experience"
             ],
+            "explanation": "Experience is something that happens to you, or knowledge you gain by doing something.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43593,6 +43842,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "experiment"
             ],
+            "explanation": "An experiment is a careful test to find out what happens or whether an idea is true.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43635,6 +43885,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "extreme"
             ],
+            "explanation": "Extreme means very great, strong or far from the usual.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43677,6 +43928,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "famous"
             ],
+            "explanation": "Famous means known by many people.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43719,6 +43971,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "favourite"
             ],
+            "explanation": "Favourite means liked best.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43761,6 +44014,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "february"
             ],
+            "explanation": "February is the second month of the year.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43804,6 +44058,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "forward"
             ],
+            "explanation": "Forward means towards the front or ahead.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43847,6 +44102,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "forwards"
             ],
+            "explanation": "Forwards means towards the front or ahead.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43889,6 +44145,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "fruit"
             ],
+            "explanation": "Fruit is the part of a plant that often has seeds and can be eaten, such as an apple.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43931,6 +44188,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "grammar"
             ],
+            "explanation": "Grammar is the set of rules for how words fit together in a language.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -43973,6 +44231,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "group"
             ],
+            "explanation": "A group is a number of people or things together.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44015,6 +44274,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "guard"
             ],
+            "explanation": "To guard means to protect or watch over someone or something.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44057,6 +44317,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "guide"
             ],
+            "explanation": "A guide is someone or something that shows the way or gives helpful information.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44099,6 +44360,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "heard"
             ],
+            "explanation": "Heard is the past tense of hear; it means listened to or noticed a sound.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44141,6 +44403,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "heart"
             ],
+            "explanation": "The heart is the organ that pumps blood around the body; it can also mean feelings.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44183,6 +44446,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "height"
             ],
+            "explanation": "Height is how tall or high something is.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44225,6 +44489,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "history"
             ],
+            "explanation": "History is the study of things that happened in the past.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44267,6 +44532,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "imagine"
             ],
+            "explanation": "To imagine means to make a picture or idea in your mind.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44309,6 +44575,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "increase"
             ],
+            "explanation": "To increase means to become bigger in number, size or amount.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44351,6 +44618,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "important"
             ],
+            "explanation": "Important means having great value or needing attention.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44393,6 +44661,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "interest"
             ],
+            "explanation": "Interest is a feeling of wanting to know or learn more about something.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44435,6 +44704,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "island"
             ],
+            "explanation": "An island is land with water all around it.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44477,6 +44747,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "knowledge"
             ],
+            "explanation": "Knowledge is what you know and understand.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44519,6 +44790,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "learn"
             ],
+            "explanation": "To learn means to gain knowledge or a skill.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44561,6 +44833,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "length"
             ],
+            "explanation": "Length is how long something is from one end to the other.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44603,6 +44876,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "library"
             ],
+            "explanation": "A library is a place where books and information are kept for people to use.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44645,6 +44919,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "material"
             ],
+            "explanation": "Material is the substance something is made from, such as cotton, wood or metal.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44687,6 +44962,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "medicine"
             ],
+            "explanation": "Medicine is something used to help treat illness or pain.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44729,6 +45005,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "mention"
             ],
+            "explanation": "To mention means to say something briefly.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44771,6 +45048,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "minute"
             ],
+            "explanation": "A minute is a period of sixty seconds.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44813,6 +45091,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "natural"
             ],
+            "explanation": "Natural means found in nature or not made by people.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44855,6 +45134,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "naughty"
             ],
+            "explanation": "Naughty means behaving badly or not following rules.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44897,6 +45177,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "notice"
             ],
+            "explanation": "To notice means to see, hear or become aware of something.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44940,6 +45221,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "occasion"
             ],
+            "explanation": "An occasion is a particular time when something happens, often something special.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -44983,6 +45265,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "occasionally"
             ],
+            "explanation": "Occasionally means sometimes, but not often.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45025,6 +45308,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "often"
             ],
+            "explanation": "Often means many times or frequently.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45067,6 +45351,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "opposite"
             ],
+            "explanation": "Opposite means completely different or facing the other way.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45109,6 +45394,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "ordinary"
             ],
+            "explanation": "Ordinary means normal, usual or not special.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45151,6 +45437,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "particular"
             ],
+            "explanation": "Particular means a specific one, not just any one.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45193,6 +45480,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "peculiar"
             ],
+            "explanation": "Peculiar means strange or unusual.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45235,6 +45523,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "perhaps"
             ],
+            "explanation": "Perhaps means maybe or possibly.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45277,6 +45566,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "popular"
             ],
+            "explanation": "Popular means liked or enjoyed by many people.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45319,6 +45609,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "position"
             ],
+            "explanation": "Position is where something is, or the way it is placed.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45362,6 +45653,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "possess"
             ],
+            "explanation": "To possess something means to own it or have it.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45405,6 +45697,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "possession"
             ],
+            "explanation": "A possession is something that you own or have.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45447,6 +45740,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "possible"
             ],
+            "explanation": "Possible means able to happen or be done.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45489,6 +45783,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "potatoes"
             ],
+            "explanation": "Potatoes are round root vegetables that grow underground.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45531,6 +45826,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "pressure"
             ],
+            "explanation": "Pressure is force pushing on something, or stress caused by demands.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45573,6 +45869,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "probably"
             ],
+            "explanation": "Probably means very likely to happen or be true.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45615,6 +45912,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "promise"
             ],
+            "explanation": "A promise is a firm statement that you will do something.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45657,6 +45955,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "purpose"
             ],
+            "explanation": "Purpose is the reason something exists or is done.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45699,6 +45998,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "quarter"
             ],
+            "explanation": "A quarter is one of four equal parts.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45741,6 +46041,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "question"
             ],
+            "explanation": "A question is something you ask to find out information.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45783,6 +46084,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "recent"
             ],
+            "explanation": "Recent means having happened not long ago.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45825,6 +46127,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "regular"
             ],
+            "explanation": "Regular means happening again and again in the same pattern, or usual.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45867,6 +46170,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "reign"
             ],
+            "explanation": "A reign is the time when a king or queen rules.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45909,6 +46213,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "remember"
             ],
+            "explanation": "To remember means to keep something in your mind or bring it back to mind.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45951,6 +46256,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "sentence"
             ],
+            "explanation": "A sentence is a group of words that expresses a complete idea.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -45993,6 +46299,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "separate"
             ],
+            "explanation": "Separate means apart, not joined together.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46035,6 +46342,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "special"
             ],
+            "explanation": "Special means different from the usual in an important or valued way.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46077,6 +46385,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "straight"
             ],
+            "explanation": "Straight means not curved, bent or crooked.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46119,6 +46428,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "strange"
             ],
+            "explanation": "Strange means unusual or surprising.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46161,6 +46471,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "strength"
             ],
+            "explanation": "Strength is the power to lift, push, resist or keep going.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46203,6 +46514,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "suppose"
             ],
+            "explanation": "To suppose means to think something is true, often without being completely sure.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46245,6 +46557,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "surprise"
             ],
+            "explanation": "A surprise is something unexpected.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46287,6 +46600,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "therefore"
             ],
+            "explanation": "Therefore means for that reason or as a result.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46330,6 +46644,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "though"
             ],
+            "explanation": "Though means although, or despite the fact that something is true.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46373,6 +46688,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "although"
             ],
+            "explanation": "Although means even though or despite the fact that.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46415,6 +46731,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "thought"
             ],
+            "explanation": "A thought is an idea in your mind; thought is also the past tense of think.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46457,6 +46774,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "through"
             ],
+            "explanation": "Through means moving in one side and out of the other, or from start to finish.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46499,6 +46817,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "various"
             ],
+            "explanation": "Various means several different kinds.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46541,6 +46860,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "weight"
             ],
+            "explanation": "Weight is how heavy something is.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46584,6 +46904,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "woman"
             ],
+            "explanation": "A woman is an adult female person.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46627,6 +46948,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "women"
             ],
+            "explanation": "Women is the plural of woman.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -46669,6 +46991,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "accommodate"
             ],
+            "explanation": "To accommodate means to provide space for someone or something, or to fit in with needs.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -46711,6 +47034,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "accompany"
             ],
+            "explanation": "To accompany means to go somewhere with someone or to happen at the same time.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -46753,6 +47077,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "according"
             ],
+            "explanation": "According to something means as stated by it, or in a way that agrees with it.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -46795,6 +47120,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "achieve"
             ],
+            "explanation": "To achieve means to succeed in doing something through effort.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -46837,6 +47163,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "aggressive"
             ],
+            "explanation": "Aggressive means ready to attack, argue or behave forcefully.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -46879,6 +47206,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "amateur"
             ],
+            "explanation": "An amateur is someone who does an activity for interest, not as a paid job.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -46921,6 +47249,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "ancient"
             ],
+            "explanation": "Ancient means very old or from a long time ago.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -46963,6 +47292,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "apparent"
             ],
+            "explanation": "Apparent means easy to see or seeming to be true.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47005,6 +47335,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "appreciate"
             ],
+            "explanation": "To appreciate means to understand the value of something or be thankful for it.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47047,6 +47378,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "attached"
             ],
+            "explanation": "Attached means joined, fastened or feeling emotionally close.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47089,6 +47421,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "available"
             ],
+            "explanation": "Available means ready to be used or free to do something.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47131,6 +47464,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "average"
             ],
+            "explanation": "Average means typical, ordinary, or the middle amount found by sharing equally.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47173,6 +47507,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "awkward"
             ],
+            "explanation": "Awkward means difficult to deal with, clumsy or uncomfortable.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47215,6 +47550,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "bargain"
             ],
+            "explanation": "A bargain is something bought for less than the usual price, or an agreement between people.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47257,6 +47593,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "bruise"
             ],
+            "explanation": "A bruise is a dark mark on skin caused by a bump or injury.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47299,6 +47636,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "category"
             ],
+            "explanation": "A category is a group of things that share the same type or feature.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47341,6 +47679,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "cemetery"
             ],
+            "explanation": "A cemetery is a place where people are buried.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47383,6 +47722,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "committee"
             ],
+            "explanation": "A committee is a group of people chosen to discuss or organise something.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47425,6 +47765,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "communicate"
             ],
+            "explanation": "To communicate means to share information, ideas or feelings.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47467,6 +47808,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "community"
             ],
+            "explanation": "A community is a group of people who live near each other or share something in common.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47509,6 +47851,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "competition"
             ],
+            "explanation": "A competition is an event where people try to win or do better than others.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47551,6 +47894,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "conscience"
             ],
+            "explanation": "Your conscience is the inner sense that helps you know right from wrong.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47593,6 +47937,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "conscious"
             ],
+            "explanation": "Conscious means awake, aware or able to notice what is happening.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47635,6 +47980,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "controversy"
             ],
+            "explanation": "A controversy is strong disagreement about an issue.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47677,6 +48023,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "convenience"
             ],
+            "explanation": "Convenience means ease, usefulness or something that saves time and effort.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47719,6 +48066,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "correspond"
             ],
+            "explanation": "To correspond means to match, agree or communicate by messages.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47762,6 +48110,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
               "criticise",
               "criticize"
             ],
+            "explanation": "To criticise means to say what is wrong with something or someone.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47804,6 +48153,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "curiosity"
             ],
+            "explanation": "Curiosity is the wish to know, learn or find out about something.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47846,6 +48196,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "definite"
             ],
+            "explanation": "Definite means clear, certain and not vague.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47888,6 +48239,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "desperate"
             ],
+            "explanation": "Desperate means feeling that you urgently need something or have little hope.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47930,6 +48282,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "determined"
             ],
+            "explanation": "Determined means firmly decided to do something and not give up.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -47972,6 +48325,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "develop"
             ],
+            "explanation": "To develop means to grow, improve or become more advanced.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48014,6 +48368,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "dictionary"
             ],
+            "explanation": "A dictionary is a book or resource that explains words, spellings and meanings.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48056,6 +48411,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "disastrous"
             ],
+            "explanation": "Disastrous means causing great harm, failure or trouble.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48098,6 +48454,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "embarrass"
             ],
+            "explanation": "To embarrass someone means to make them feel awkward, ashamed or self-conscious.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48140,6 +48497,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "environment"
             ],
+            "explanation": "The environment is the natural world around us, or the conditions in a place.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48184,6 +48542,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "equip"
             ],
+            "explanation": "To equip means to provide the things needed for a task.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48228,6 +48587,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "equipped"
             ],
+            "explanation": "Equipped means provided with what is needed.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48272,6 +48632,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "equipment"
             ],
+            "explanation": "Equipment is the things needed for a particular job or activity.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48314,6 +48675,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "especially"
             ],
+            "explanation": "Especially means particularly, or more than usual.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48356,6 +48718,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "exaggerate"
             ],
+            "explanation": "To exaggerate means to describe something as bigger, better or worse than it really is.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48398,6 +48761,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "excellent"
             ],
+            "explanation": "Excellent means extremely good.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48440,6 +48804,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "existence"
             ],
+            "explanation": "Existence is the state of being real or alive.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48482,6 +48847,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "explanation"
             ],
+            "explanation": "An explanation gives reasons or details that make something clear.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48524,6 +48890,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "familiar"
             ],
+            "explanation": "Familiar means known to you because you have seen or experienced it before.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48566,6 +48933,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "foreign"
             ],
+            "explanation": "Foreign means from another country or not familiar.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48608,6 +48976,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "forty"
             ],
+            "explanation": "Forty is the number after thirty-nine and before forty-one.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48650,6 +49019,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "frequently"
             ],
+            "explanation": "Frequently means often or many times.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48692,6 +49062,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "government"
             ],
+            "explanation": "A government is the group of people who run a country or area.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48734,6 +49105,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "guarantee"
             ],
+            "explanation": "A guarantee is a firm promise that something will happen or work as expected.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48776,6 +49148,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "harass"
             ],
+            "explanation": "To harass means to repeatedly trouble, bother or upset someone.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48818,6 +49191,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "hindrance"
             ],
+            "explanation": "A hindrance is something that gets in the way or makes progress harder.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48860,6 +49234,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "identity"
             ],
+            "explanation": "Identity is who a person is, including the qualities that make them unique.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48903,6 +49278,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "immediate"
             ],
+            "explanation": "Immediate means happening now or without delay.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48946,6 +49322,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "immediately"
             ],
+            "explanation": "Immediately means straight away or without delay.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -48988,6 +49365,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "individual"
             ],
+            "explanation": "An individual is one person or thing, separate from a group.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49030,6 +49408,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "interfere"
             ],
+            "explanation": "To interfere means to get involved in a way that causes problems or is not wanted.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49072,6 +49451,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "interrupt"
             ],
+            "explanation": "To interrupt means to stop someone while they are speaking or doing something.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49114,6 +49494,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "language"
             ],
+            "explanation": "Language is a system of words and signs that people use to communicate.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49156,6 +49537,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "leisure"
             ],
+            "explanation": "Leisure is free time when you can rest or enjoy activities.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49198,6 +49580,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "lightning"
             ],
+            "explanation": "Lightning is a bright flash of electricity in the sky during a storm.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49240,6 +49623,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "marvellous"
             ],
+            "explanation": "Marvellous means wonderful or very impressive.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49282,6 +49666,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "mischievous"
             ],
+            "explanation": "Mischievous means playful in a naughty or troublesome way.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49324,6 +49709,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "muscle"
             ],
+            "explanation": "A muscle is body tissue that tightens and relaxes to help you move.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49366,6 +49752,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "necessary"
             ],
+            "explanation": "Necessary means needed or required.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49408,6 +49795,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "neighbour"
             ],
+            "explanation": "A neighbour is someone who lives near you.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49450,6 +49838,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "nuisance"
             ],
+            "explanation": "A nuisance is a person or thing that annoys or causes trouble.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49492,6 +49881,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "occupy"
             ],
+            "explanation": "To occupy means to take up space, live in a place or keep someone busy.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49534,6 +49924,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "occur"
             ],
+            "explanation": "To occur means to happen or take place.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49576,6 +49967,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "opportunity"
             ],
+            "explanation": "An opportunity is a chance to do something.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49618,6 +50010,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "parliament"
             ],
+            "explanation": "Parliament is the group of elected people who make laws in the UK and some other countries.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49660,6 +50053,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "persuade"
             ],
+            "explanation": "To persuade means to convince someone to do or believe something.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49702,6 +50096,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "physical"
             ],
+            "explanation": "Physical means connected with the body or with things you can touch.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49744,6 +50139,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "prejudice"
             ],
+            "explanation": "Prejudice is an unfair opinion about a person or group formed without enough knowledge.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49786,6 +50182,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "privilege"
             ],
+            "explanation": "A privilege is a special right or advantage.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49828,6 +50225,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "profession"
             ],
+            "explanation": "A profession is a type of work that needs special training or skill.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49870,6 +50268,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "programme"
             ],
+            "explanation": "A programme is a planned set of activities, or a television or radio show.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49912,6 +50311,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "pronunciation"
             ],
+            "explanation": "Pronunciation is the way a word is spoken.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49954,6 +50354,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "queue"
             ],
+            "explanation": "A queue is a line of people or things waiting for their turn.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -49997,6 +50398,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
               "recognise",
               "recognize"
             ],
+            "explanation": "To recognise means to know someone or something because you have seen it before.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50039,6 +50441,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "recommend"
             ],
+            "explanation": "To recommend means to say that someone should choose or try something.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50081,6 +50484,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "relevant"
             ],
+            "explanation": "Relevant means connected to what is being discussed or needed.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50123,6 +50527,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "restaurant"
             ],
+            "explanation": "A restaurant is a place where people pay to sit and eat meals.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50165,6 +50570,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "rhyme"
             ],
+            "explanation": "A rhyme is a word or line that has the same ending sound as another.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50207,6 +50613,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "rhythm"
             ],
+            "explanation": "Rhythm is a regular pattern of sounds, beats or movements.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50249,6 +50656,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "sacrifice"
             ],
+            "explanation": "A sacrifice is giving up something important for a reason or for someone else.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50291,6 +50699,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "secretary"
             ],
+            "explanation": "A secretary is a person who organises information, messages and office work.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50333,6 +50742,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "shoulder"
             ],
+            "explanation": "A shoulder is the part of the body where the arm joins the upper body.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50375,6 +50785,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "signature"
             ],
+            "explanation": "A signature is your name written in your own way to show agreement or identity.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50418,6 +50829,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "sincere"
             ],
+            "explanation": "Sincere means honest and truly meant.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50461,6 +50873,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "sincerely"
             ],
+            "explanation": "Sincerely means honestly and truly.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50503,6 +50916,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "soldier"
             ],
+            "explanation": "A soldier is a person who serves in an army.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50545,6 +50959,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "stomach"
             ],
+            "explanation": "The stomach is the part inside your body where food begins to be digested.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50587,6 +51002,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "sufficient"
             ],
+            "explanation": "Sufficient means enough for what is needed.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50629,6 +51045,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "suggest"
             ],
+            "explanation": "To suggest means to put forward an idea or plan.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50671,6 +51088,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "symbol"
             ],
+            "explanation": "A symbol is a sign, shape or object that stands for an idea or meaning.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50713,6 +51131,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "system"
             ],
+            "explanation": "A system is a set of connected parts that work together.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50755,6 +51174,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "temperature"
             ],
+            "explanation": "Temperature tells how hot or cold something is.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50797,6 +51217,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "thorough"
             ],
+            "explanation": "Thorough means complete and careful, with nothing important missed.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50839,6 +51260,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "twelfth"
             ],
+            "explanation": "Twelfth means number twelve in order.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50881,6 +51303,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "variety"
             ],
+            "explanation": "Variety means a number of different kinds or a mixture.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50923,6 +51346,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "vegetable"
             ],
+            "explanation": "A vegetable is a plant or part of a plant eaten as food, such as a carrot.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -50965,6 +51389,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "vehicle"
             ],
+            "explanation": "A vehicle is something used to carry people or goods, such as a car, bus or lorry.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -51007,6 +51432,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "yacht"
             ],
+            "explanation": "A yacht is a boat used for sailing or pleasure trips.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -51052,6 +51478,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "accident"
             ],
+            "explanation": "An accident is something that happens by chance, often causing damage or a problem.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51095,6 +51522,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "accidentally"
             ],
+            "explanation": "If you do something accidentally, you do it by mistake and did not mean to.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51138,6 +51566,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "actual"
             ],
+            "explanation": "Actual means real or true, not guessed or imagined.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51181,6 +51610,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "actually"
             ],
+            "explanation": "Actually is used to say what is really true, especially when it is different from what someone expected.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51223,6 +51653,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "address"
             ],
+            "explanation": "An address is the details of where a person or place can be found, such as a house number and street.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51265,6 +51696,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "answer"
             ],
+            "explanation": "An answer is what you say or write in reply to a question.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51307,6 +51739,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "appear"
             ],
+            "explanation": "To appear means to come into sight or seem to be a certain way.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51349,6 +51782,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "arrive"
             ],
+            "explanation": "To arrive means to reach the place you were travelling to.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51391,6 +51825,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "believe"
             ],
+            "explanation": "To believe means to think that something is true or to trust someone.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51433,6 +51868,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "bicycle"
             ],
+            "explanation": "A bicycle is a vehicle with two wheels that you ride by pedalling.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51475,6 +51911,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "breath"
             ],
+            "explanation": "A breath is the air you take into or let out of your lungs.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51517,6 +51954,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "breathe"
             ],
+            "explanation": "To breathe means to take air into your lungs and let it out again.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51559,6 +51997,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "build"
             ],
+            "explanation": "To build means to make something by putting parts together.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51602,6 +52041,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "busy"
             ],
+            "explanation": "Busy means having a lot to do or full of activity.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51645,6 +52085,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "business"
             ],
+            "explanation": "A business is work or an organisation that sells goods or services.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51687,6 +52128,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "calendar"
             ],
+            "explanation": "A calendar shows days, weeks and months of the year.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51729,6 +52171,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "caught"
             ],
+            "explanation": "Caught is the past tense of catch; it can mean grabbed, trapped or noticed doing something.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51771,6 +52214,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "centre"
             ],
+            "explanation": "The centre is the middle point or main part of something.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51813,6 +52257,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "century"
             ],
+            "explanation": "A century is a period of one hundred years.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51855,6 +52300,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "certain"
             ],
+            "explanation": "Certain means sure, or known to be true.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51897,6 +52343,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "circle"
             ],
+            "explanation": "A circle is a round shape where every point on the edge is the same distance from the centre.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51939,6 +52386,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "complete"
             ],
+            "explanation": "Complete means finished or with nothing missing.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -51981,6 +52429,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "consider"
             ],
+            "explanation": "To consider means to think carefully about something before deciding.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52023,6 +52472,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "continue"
             ],
+            "explanation": "To continue means to keep going and not stop.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52065,6 +52515,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "decide"
             ],
+            "explanation": "To decide means to choose after thinking about the options.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52107,6 +52558,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "describe"
             ],
+            "explanation": "To describe means to say or write what someone or something is like.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52149,6 +52601,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "different"
             ],
+            "explanation": "Different means not the same.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52191,6 +52644,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "difficult"
             ],
+            "explanation": "Difficult means hard to do, understand or deal with.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52233,6 +52687,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "disappear"
             ],
+            "explanation": "To disappear means to stop being seen or to go away.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52275,6 +52730,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "early"
             ],
+            "explanation": "Early means before the usual or expected time.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52317,6 +52773,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "earth"
             ],
+            "explanation": "Earth can mean the planet we live on, or soil and ground.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52360,6 +52817,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "eight"
             ],
+            "explanation": "Eight is the number after seven and before nine.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52403,6 +52861,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "eighth"
             ],
+            "explanation": "Eighth means number eight in order.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52445,6 +52904,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "enough"
             ],
+            "explanation": "Enough means as much or as many as needed.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52487,6 +52947,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "exercise"
             ],
+            "explanation": "Exercise is physical activity that keeps your body healthy, or a task for practice.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52529,6 +52990,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "experience"
             ],
+            "explanation": "Experience is something that happens to you, or knowledge you gain by doing something.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52571,6 +53033,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "experiment"
             ],
+            "explanation": "An experiment is a careful test to find out what happens or whether an idea is true.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52613,6 +53076,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "extreme"
             ],
+            "explanation": "Extreme means very great, strong or far from the usual.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52655,6 +53119,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "famous"
             ],
+            "explanation": "Famous means known by many people.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52697,6 +53162,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "favourite"
             ],
+            "explanation": "Favourite means liked best.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52739,6 +53205,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "february"
             ],
+            "explanation": "February is the second month of the year.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52782,6 +53249,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "forward"
             ],
+            "explanation": "Forward means towards the front or ahead.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52825,6 +53293,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "forwards"
             ],
+            "explanation": "Forwards means towards the front or ahead.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52867,6 +53336,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "fruit"
             ],
+            "explanation": "Fruit is the part of a plant that often has seeds and can be eaten, such as an apple.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52909,6 +53379,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "grammar"
             ],
+            "explanation": "Grammar is the set of rules for how words fit together in a language.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52951,6 +53422,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "group"
             ],
+            "explanation": "A group is a number of people or things together.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -52993,6 +53465,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "guard"
             ],
+            "explanation": "To guard means to protect or watch over someone or something.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53035,6 +53508,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "guide"
             ],
+            "explanation": "A guide is someone or something that shows the way or gives helpful information.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53077,6 +53551,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "heard"
             ],
+            "explanation": "Heard is the past tense of hear; it means listened to or noticed a sound.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53119,6 +53594,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "heart"
             ],
+            "explanation": "The heart is the organ that pumps blood around the body; it can also mean feelings.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53161,6 +53637,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "height"
             ],
+            "explanation": "Height is how tall or high something is.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53203,6 +53680,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "history"
             ],
+            "explanation": "History is the study of things that happened in the past.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53245,6 +53723,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "imagine"
             ],
+            "explanation": "To imagine means to make a picture or idea in your mind.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53287,6 +53766,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "increase"
             ],
+            "explanation": "To increase means to become bigger in number, size or amount.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53329,6 +53809,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "important"
             ],
+            "explanation": "Important means having great value or needing attention.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53371,6 +53852,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "interest"
             ],
+            "explanation": "Interest is a feeling of wanting to know or learn more about something.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53413,6 +53895,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "island"
             ],
+            "explanation": "An island is land with water all around it.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53455,6 +53938,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "knowledge"
             ],
+            "explanation": "Knowledge is what you know and understand.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53497,6 +53981,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "learn"
             ],
+            "explanation": "To learn means to gain knowledge or a skill.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53539,6 +54024,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "length"
             ],
+            "explanation": "Length is how long something is from one end to the other.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53581,6 +54067,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "library"
             ],
+            "explanation": "A library is a place where books and information are kept for people to use.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53623,6 +54110,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "material"
             ],
+            "explanation": "Material is the substance something is made from, such as cotton, wood or metal.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53665,6 +54153,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "medicine"
             ],
+            "explanation": "Medicine is something used to help treat illness or pain.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53707,6 +54196,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "mention"
             ],
+            "explanation": "To mention means to say something briefly.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53749,6 +54239,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "minute"
             ],
+            "explanation": "A minute is a period of sixty seconds.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53791,6 +54282,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "natural"
             ],
+            "explanation": "Natural means found in nature or not made by people.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53833,6 +54325,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "naughty"
             ],
+            "explanation": "Naughty means behaving badly or not following rules.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53875,6 +54368,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "notice"
             ],
+            "explanation": "To notice means to see, hear or become aware of something.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53918,6 +54412,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "occasion"
             ],
+            "explanation": "An occasion is a particular time when something happens, often something special.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -53961,6 +54456,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "occasionally"
             ],
+            "explanation": "Occasionally means sometimes, but not often.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54003,6 +54499,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "often"
             ],
+            "explanation": "Often means many times or frequently.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54045,6 +54542,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "opposite"
             ],
+            "explanation": "Opposite means completely different or facing the other way.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54087,6 +54585,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "ordinary"
             ],
+            "explanation": "Ordinary means normal, usual or not special.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54129,6 +54628,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "particular"
             ],
+            "explanation": "Particular means a specific one, not just any one.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54171,6 +54671,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "peculiar"
             ],
+            "explanation": "Peculiar means strange or unusual.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54213,6 +54714,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "perhaps"
             ],
+            "explanation": "Perhaps means maybe or possibly.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54255,6 +54757,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "popular"
             ],
+            "explanation": "Popular means liked or enjoyed by many people.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54297,6 +54800,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "position"
             ],
+            "explanation": "Position is where something is, or the way it is placed.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54340,6 +54844,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "possess"
             ],
+            "explanation": "To possess something means to own it or have it.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54383,6 +54888,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "possession"
             ],
+            "explanation": "A possession is something that you own or have.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54425,6 +54931,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "possible"
             ],
+            "explanation": "Possible means able to happen or be done.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54467,6 +54974,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "potatoes"
             ],
+            "explanation": "Potatoes are round root vegetables that grow underground.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54509,6 +55017,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "pressure"
             ],
+            "explanation": "Pressure is force pushing on something, or stress caused by demands.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54551,6 +55060,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "probably"
             ],
+            "explanation": "Probably means very likely to happen or be true.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54593,6 +55103,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "promise"
             ],
+            "explanation": "A promise is a firm statement that you will do something.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54635,6 +55146,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "purpose"
             ],
+            "explanation": "Purpose is the reason something exists or is done.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54677,6 +55189,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "quarter"
             ],
+            "explanation": "A quarter is one of four equal parts.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54719,6 +55232,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "question"
             ],
+            "explanation": "A question is something you ask to find out information.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54761,6 +55275,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "recent"
             ],
+            "explanation": "Recent means having happened not long ago.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54803,6 +55318,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "regular"
             ],
+            "explanation": "Regular means happening again and again in the same pattern, or usual.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54845,6 +55361,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "reign"
             ],
+            "explanation": "A reign is the time when a king or queen rules.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54887,6 +55404,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "remember"
             ],
+            "explanation": "To remember means to keep something in your mind or bring it back to mind.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54929,6 +55447,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "sentence"
             ],
+            "explanation": "A sentence is a group of words that expresses a complete idea.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -54971,6 +55490,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "separate"
             ],
+            "explanation": "Separate means apart, not joined together.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55013,6 +55533,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "special"
             ],
+            "explanation": "Special means different from the usual in an important or valued way.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55055,6 +55576,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "straight"
             ],
+            "explanation": "Straight means not curved, bent or crooked.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55097,6 +55619,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "strange"
             ],
+            "explanation": "Strange means unusual or surprising.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55139,6 +55662,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "strength"
             ],
+            "explanation": "Strength is the power to lift, push, resist or keep going.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55181,6 +55705,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "suppose"
             ],
+            "explanation": "To suppose means to think something is true, often without being completely sure.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55223,6 +55748,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "surprise"
             ],
+            "explanation": "A surprise is something unexpected.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55265,6 +55791,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "therefore"
             ],
+            "explanation": "Therefore means for that reason or as a result.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55308,6 +55835,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "though"
             ],
+            "explanation": "Though means although, or despite the fact that something is true.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55351,6 +55879,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "although"
             ],
+            "explanation": "Although means even though or despite the fact that.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55393,6 +55922,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "thought"
             ],
+            "explanation": "A thought is an idea in your mind; thought is also the past tense of think.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55435,6 +55965,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "through"
             ],
+            "explanation": "Through means moving in one side and out of the other, or from start to finish.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55477,6 +56008,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "various"
             ],
+            "explanation": "Various means several different kinds.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55519,6 +56051,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "weight"
             ],
+            "explanation": "Weight is how heavy something is.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55562,6 +56095,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "woman"
             ],
+            "explanation": "A woman is an adult female person.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55605,6 +56139,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "women"
             ],
+            "explanation": "Women is the plural of woman.",
             "listId": "statutory-y3-4",
             "yearGroups": [
               "Y3",
@@ -55647,6 +56182,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "accommodate"
             ],
+            "explanation": "To accommodate means to provide space for someone or something, or to fit in with needs.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -55689,6 +56225,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "accompany"
             ],
+            "explanation": "To accompany means to go somewhere with someone or to happen at the same time.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -55731,6 +56268,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "according"
             ],
+            "explanation": "According to something means as stated by it, or in a way that agrees with it.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -55773,6 +56311,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "achieve"
             ],
+            "explanation": "To achieve means to succeed in doing something through effort.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -55815,6 +56354,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "aggressive"
             ],
+            "explanation": "Aggressive means ready to attack, argue or behave forcefully.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -55857,6 +56397,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "amateur"
             ],
+            "explanation": "An amateur is someone who does an activity for interest, not as a paid job.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -55899,6 +56440,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "ancient"
             ],
+            "explanation": "Ancient means very old or from a long time ago.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -55941,6 +56483,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "apparent"
             ],
+            "explanation": "Apparent means easy to see or seeming to be true.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -55983,6 +56526,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "appreciate"
             ],
+            "explanation": "To appreciate means to understand the value of something or be thankful for it.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56025,6 +56569,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "attached"
             ],
+            "explanation": "Attached means joined, fastened or feeling emotionally close.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56067,6 +56612,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "available"
             ],
+            "explanation": "Available means ready to be used or free to do something.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56109,6 +56655,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "average"
             ],
+            "explanation": "Average means typical, ordinary, or the middle amount found by sharing equally.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56151,6 +56698,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "awkward"
             ],
+            "explanation": "Awkward means difficult to deal with, clumsy or uncomfortable.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56193,6 +56741,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "bargain"
             ],
+            "explanation": "A bargain is something bought for less than the usual price, or an agreement between people.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56235,6 +56784,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "bruise"
             ],
+            "explanation": "A bruise is a dark mark on skin caused by a bump or injury.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56277,6 +56827,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "category"
             ],
+            "explanation": "A category is a group of things that share the same type or feature.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56319,6 +56870,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "cemetery"
             ],
+            "explanation": "A cemetery is a place where people are buried.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56361,6 +56913,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "committee"
             ],
+            "explanation": "A committee is a group of people chosen to discuss or organise something.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56403,6 +56956,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "communicate"
             ],
+            "explanation": "To communicate means to share information, ideas or feelings.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56445,6 +56999,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "community"
             ],
+            "explanation": "A community is a group of people who live near each other or share something in common.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56487,6 +57042,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "competition"
             ],
+            "explanation": "A competition is an event where people try to win or do better than others.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56529,6 +57085,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "conscience"
             ],
+            "explanation": "Your conscience is the inner sense that helps you know right from wrong.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56571,6 +57128,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "conscious"
             ],
+            "explanation": "Conscious means awake, aware or able to notice what is happening.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56613,6 +57171,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "controversy"
             ],
+            "explanation": "A controversy is strong disagreement about an issue.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56655,6 +57214,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "convenience"
             ],
+            "explanation": "Convenience means ease, usefulness or something that saves time and effort.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56697,6 +57257,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "correspond"
             ],
+            "explanation": "To correspond means to match, agree or communicate by messages.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56740,6 +57301,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
               "criticise",
               "criticize"
             ],
+            "explanation": "To criticise means to say what is wrong with something or someone.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56782,6 +57344,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "curiosity"
             ],
+            "explanation": "Curiosity is the wish to know, learn or find out about something.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56824,6 +57387,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "definite"
             ],
+            "explanation": "Definite means clear, certain and not vague.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56866,6 +57430,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "desperate"
             ],
+            "explanation": "Desperate means feeling that you urgently need something or have little hope.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56908,6 +57473,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "determined"
             ],
+            "explanation": "Determined means firmly decided to do something and not give up.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56950,6 +57516,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "develop"
             ],
+            "explanation": "To develop means to grow, improve or become more advanced.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -56992,6 +57559,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "dictionary"
             ],
+            "explanation": "A dictionary is a book or resource that explains words, spellings and meanings.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57034,6 +57602,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "disastrous"
             ],
+            "explanation": "Disastrous means causing great harm, failure or trouble.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57076,6 +57645,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "embarrass"
             ],
+            "explanation": "To embarrass someone means to make them feel awkward, ashamed or self-conscious.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57118,6 +57688,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "environment"
             ],
+            "explanation": "The environment is the natural world around us, or the conditions in a place.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57162,6 +57733,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "equip"
             ],
+            "explanation": "To equip means to provide the things needed for a task.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57206,6 +57778,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "equipped"
             ],
+            "explanation": "Equipped means provided with what is needed.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57250,6 +57823,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "equipment"
             ],
+            "explanation": "Equipment is the things needed for a particular job or activity.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57292,6 +57866,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "especially"
             ],
+            "explanation": "Especially means particularly, or more than usual.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57334,6 +57909,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "exaggerate"
             ],
+            "explanation": "To exaggerate means to describe something as bigger, better or worse than it really is.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57376,6 +57952,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "excellent"
             ],
+            "explanation": "Excellent means extremely good.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57418,6 +57995,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "existence"
             ],
+            "explanation": "Existence is the state of being real or alive.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57460,6 +58038,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "explanation"
             ],
+            "explanation": "An explanation gives reasons or details that make something clear.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57502,6 +58081,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "familiar"
             ],
+            "explanation": "Familiar means known to you because you have seen or experienced it before.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57544,6 +58124,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "foreign"
             ],
+            "explanation": "Foreign means from another country or not familiar.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57586,6 +58167,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "forty"
             ],
+            "explanation": "Forty is the number after thirty-nine and before forty-one.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57628,6 +58210,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "frequently"
             ],
+            "explanation": "Frequently means often or many times.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57670,6 +58253,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "government"
             ],
+            "explanation": "A government is the group of people who run a country or area.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57712,6 +58296,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "guarantee"
             ],
+            "explanation": "A guarantee is a firm promise that something will happen or work as expected.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57754,6 +58339,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "harass"
             ],
+            "explanation": "To harass means to repeatedly trouble, bother or upset someone.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57796,6 +58382,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "hindrance"
             ],
+            "explanation": "A hindrance is something that gets in the way or makes progress harder.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57838,6 +58425,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "identity"
             ],
+            "explanation": "Identity is who a person is, including the qualities that make them unique.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57881,6 +58469,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "immediate"
             ],
+            "explanation": "Immediate means happening now or without delay.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57924,6 +58513,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "immediately"
             ],
+            "explanation": "Immediately means straight away or without delay.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -57966,6 +58556,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "individual"
             ],
+            "explanation": "An individual is one person or thing, separate from a group.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58008,6 +58599,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "interfere"
             ],
+            "explanation": "To interfere means to get involved in a way that causes problems or is not wanted.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58050,6 +58642,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "interrupt"
             ],
+            "explanation": "To interrupt means to stop someone while they are speaking or doing something.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58092,6 +58685,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "language"
             ],
+            "explanation": "Language is a system of words and signs that people use to communicate.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58134,6 +58728,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "leisure"
             ],
+            "explanation": "Leisure is free time when you can rest or enjoy activities.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58176,6 +58771,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "lightning"
             ],
+            "explanation": "Lightning is a bright flash of electricity in the sky during a storm.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58218,6 +58814,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "marvellous"
             ],
+            "explanation": "Marvellous means wonderful or very impressive.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58260,6 +58857,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "mischievous"
             ],
+            "explanation": "Mischievous means playful in a naughty or troublesome way.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58302,6 +58900,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "muscle"
             ],
+            "explanation": "A muscle is body tissue that tightens and relaxes to help you move.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58344,6 +58943,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "necessary"
             ],
+            "explanation": "Necessary means needed or required.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58386,6 +58986,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "neighbour"
             ],
+            "explanation": "A neighbour is someone who lives near you.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58428,6 +59029,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "nuisance"
             ],
+            "explanation": "A nuisance is a person or thing that annoys or causes trouble.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58470,6 +59072,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "occupy"
             ],
+            "explanation": "To occupy means to take up space, live in a place or keep someone busy.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58512,6 +59115,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "occur"
             ],
+            "explanation": "To occur means to happen or take place.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58554,6 +59158,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "opportunity"
             ],
+            "explanation": "An opportunity is a chance to do something.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58596,6 +59201,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "parliament"
             ],
+            "explanation": "Parliament is the group of elected people who make laws in the UK and some other countries.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58638,6 +59244,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "persuade"
             ],
+            "explanation": "To persuade means to convince someone to do or believe something.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58680,6 +59287,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "physical"
             ],
+            "explanation": "Physical means connected with the body or with things you can touch.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58722,6 +59330,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "prejudice"
             ],
+            "explanation": "Prejudice is an unfair opinion about a person or group formed without enough knowledge.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58764,6 +59373,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "privilege"
             ],
+            "explanation": "A privilege is a special right or advantage.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58806,6 +59416,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "profession"
             ],
+            "explanation": "A profession is a type of work that needs special training or skill.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58848,6 +59459,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "programme"
             ],
+            "explanation": "A programme is a planned set of activities, or a television or radio show.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58890,6 +59502,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "pronunciation"
             ],
+            "explanation": "Pronunciation is the way a word is spoken.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58932,6 +59545,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "queue"
             ],
+            "explanation": "A queue is a line of people or things waiting for their turn.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -58975,6 +59589,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
               "recognise",
               "recognize"
             ],
+            "explanation": "To recognise means to know someone or something because you have seen it before.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59017,6 +59632,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "recommend"
             ],
+            "explanation": "To recommend means to say that someone should choose or try something.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59059,6 +59675,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "relevant"
             ],
+            "explanation": "Relevant means connected to what is being discussed or needed.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59101,6 +59718,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "restaurant"
             ],
+            "explanation": "A restaurant is a place where people pay to sit and eat meals.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59143,6 +59761,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "rhyme"
             ],
+            "explanation": "A rhyme is a word or line that has the same ending sound as another.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59185,6 +59804,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "rhythm"
             ],
+            "explanation": "Rhythm is a regular pattern of sounds, beats or movements.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59227,6 +59847,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "sacrifice"
             ],
+            "explanation": "A sacrifice is giving up something important for a reason or for someone else.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59269,6 +59890,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "secretary"
             ],
+            "explanation": "A secretary is a person who organises information, messages and office work.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59311,6 +59933,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "shoulder"
             ],
+            "explanation": "A shoulder is the part of the body where the arm joins the upper body.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59353,6 +59976,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "signature"
             ],
+            "explanation": "A signature is your name written in your own way to show agreement or identity.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59396,6 +60020,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "sincere"
             ],
+            "explanation": "Sincere means honest and truly meant.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59439,6 +60064,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "sincerely"
             ],
+            "explanation": "Sincerely means honestly and truly.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59481,6 +60107,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "soldier"
             ],
+            "explanation": "A soldier is a person who serves in an army.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59523,6 +60150,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "stomach"
             ],
+            "explanation": "The stomach is the part inside your body where food begins to be digested.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59565,6 +60193,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "sufficient"
             ],
+            "explanation": "Sufficient means enough for what is needed.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59607,6 +60236,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "suggest"
             ],
+            "explanation": "To suggest means to put forward an idea or plan.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59649,6 +60279,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "symbol"
             ],
+            "explanation": "A symbol is a sign, shape or object that stands for an idea or meaning.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59691,6 +60322,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "system"
             ],
+            "explanation": "A system is a set of connected parts that work together.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59733,6 +60365,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "temperature"
             ],
+            "explanation": "Temperature tells how hot or cold something is.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59775,6 +60408,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "thorough"
             ],
+            "explanation": "Thorough means complete and careful, with nothing important missed.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59817,6 +60451,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "twelfth"
             ],
+            "explanation": "Twelfth means number twelve in order.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59859,6 +60494,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "variety"
             ],
+            "explanation": "Variety means a number of different kinds or a mixture.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59901,6 +60537,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "vegetable"
             ],
+            "explanation": "A vegetable is a plant or part of a plant eaten as food, such as a carrot.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59943,6 +60580,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "vehicle"
             ],
+            "explanation": "A vehicle is something used to carry people or goods, such as a car, bus or lorry.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -59985,6 +60623,7 @@ export const SEEDED_SPELLING_CONTENT_BUNDLE = {
             "accepted": [
               "yacht"
             ],
+            "explanation": "A yacht is a boat used for sailing or pleasure trips.",
             "listId": "statutory-y5-6",
             "yearGroups": [
               "Y5",
@@ -60056,6 +60695,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "accident"
         ],
+        "explanation": "An accident is something that happens by chance, often causing damage or a problem.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60099,6 +60739,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "accidentally"
         ],
+        "explanation": "If you do something accidentally, you do it by mistake and did not mean to.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60142,6 +60783,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "actual"
         ],
+        "explanation": "Actual means real or true, not guessed or imagined.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60185,6 +60827,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "actually"
         ],
+        "explanation": "Actually is used to say what is really true, especially when it is different from what someone expected.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60227,6 +60870,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "address"
         ],
+        "explanation": "An address is the details of where a person or place can be found, such as a house number and street.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60269,6 +60913,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "answer"
         ],
+        "explanation": "An answer is what you say or write in reply to a question.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60311,6 +60956,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "appear"
         ],
+        "explanation": "To appear means to come into sight or seem to be a certain way.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60353,6 +60999,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "arrive"
         ],
+        "explanation": "To arrive means to reach the place you were travelling to.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60395,6 +61042,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "believe"
         ],
+        "explanation": "To believe means to think that something is true or to trust someone.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60437,6 +61085,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "bicycle"
         ],
+        "explanation": "A bicycle is a vehicle with two wheels that you ride by pedalling.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60479,6 +61128,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "breath"
         ],
+        "explanation": "A breath is the air you take into or let out of your lungs.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60521,6 +61171,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "breathe"
         ],
+        "explanation": "To breathe means to take air into your lungs and let it out again.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60563,6 +61214,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "build"
         ],
+        "explanation": "To build means to make something by putting parts together.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60606,6 +61258,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "busy"
         ],
+        "explanation": "Busy means having a lot to do or full of activity.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60649,6 +61302,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "business"
         ],
+        "explanation": "A business is work or an organisation that sells goods or services.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60691,6 +61345,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "calendar"
         ],
+        "explanation": "A calendar shows days, weeks and months of the year.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60733,6 +61388,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "caught"
         ],
+        "explanation": "Caught is the past tense of catch; it can mean grabbed, trapped or noticed doing something.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60775,6 +61431,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "centre"
         ],
+        "explanation": "The centre is the middle point or main part of something.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60817,6 +61474,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "century"
         ],
+        "explanation": "A century is a period of one hundred years.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60859,6 +61517,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "certain"
         ],
+        "explanation": "Certain means sure, or known to be true.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60901,6 +61560,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "circle"
         ],
+        "explanation": "A circle is a round shape where every point on the edge is the same distance from the centre.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60943,6 +61603,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "complete"
         ],
+        "explanation": "Complete means finished or with nothing missing.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -60985,6 +61646,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "consider"
         ],
+        "explanation": "To consider means to think carefully about something before deciding.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61027,6 +61689,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "continue"
         ],
+        "explanation": "To continue means to keep going and not stop.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61069,6 +61732,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "decide"
         ],
+        "explanation": "To decide means to choose after thinking about the options.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61111,6 +61775,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "describe"
         ],
+        "explanation": "To describe means to say or write what someone or something is like.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61153,6 +61818,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "different"
         ],
+        "explanation": "Different means not the same.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61195,6 +61861,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "difficult"
         ],
+        "explanation": "Difficult means hard to do, understand or deal with.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61237,6 +61904,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "disappear"
         ],
+        "explanation": "To disappear means to stop being seen or to go away.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61279,6 +61947,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "early"
         ],
+        "explanation": "Early means before the usual or expected time.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61321,6 +61990,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "earth"
         ],
+        "explanation": "Earth can mean the planet we live on, or soil and ground.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61364,6 +62034,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "eight"
         ],
+        "explanation": "Eight is the number after seven and before nine.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61407,6 +62078,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "eighth"
         ],
+        "explanation": "Eighth means number eight in order.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61449,6 +62121,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "enough"
         ],
+        "explanation": "Enough means as much or as many as needed.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61491,6 +62164,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "exercise"
         ],
+        "explanation": "Exercise is physical activity that keeps your body healthy, or a task for practice.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61533,6 +62207,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "experience"
         ],
+        "explanation": "Experience is something that happens to you, or knowledge you gain by doing something.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61575,6 +62250,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "experiment"
         ],
+        "explanation": "An experiment is a careful test to find out what happens or whether an idea is true.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61617,6 +62293,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "extreme"
         ],
+        "explanation": "Extreme means very great, strong or far from the usual.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61659,6 +62336,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "famous"
         ],
+        "explanation": "Famous means known by many people.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61701,6 +62379,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "favourite"
         ],
+        "explanation": "Favourite means liked best.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61743,6 +62422,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "february"
         ],
+        "explanation": "February is the second month of the year.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61786,6 +62466,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "forward"
         ],
+        "explanation": "Forward means towards the front or ahead.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61829,6 +62510,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "forwards"
         ],
+        "explanation": "Forwards means towards the front or ahead.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61871,6 +62553,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "fruit"
         ],
+        "explanation": "Fruit is the part of a plant that often has seeds and can be eaten, such as an apple.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61913,6 +62596,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "grammar"
         ],
+        "explanation": "Grammar is the set of rules for how words fit together in a language.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61955,6 +62639,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "group"
         ],
+        "explanation": "A group is a number of people or things together.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -61997,6 +62682,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "guard"
         ],
+        "explanation": "To guard means to protect or watch over someone or something.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62039,6 +62725,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "guide"
         ],
+        "explanation": "A guide is someone or something that shows the way or gives helpful information.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62081,6 +62768,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "heard"
         ],
+        "explanation": "Heard is the past tense of hear; it means listened to or noticed a sound.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62123,6 +62811,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "heart"
         ],
+        "explanation": "The heart is the organ that pumps blood around the body; it can also mean feelings.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62165,6 +62854,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "height"
         ],
+        "explanation": "Height is how tall or high something is.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62207,6 +62897,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "history"
         ],
+        "explanation": "History is the study of things that happened in the past.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62249,6 +62940,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "imagine"
         ],
+        "explanation": "To imagine means to make a picture or idea in your mind.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62291,6 +62983,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "increase"
         ],
+        "explanation": "To increase means to become bigger in number, size or amount.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62333,6 +63026,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "important"
         ],
+        "explanation": "Important means having great value or needing attention.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62375,6 +63069,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "interest"
         ],
+        "explanation": "Interest is a feeling of wanting to know or learn more about something.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62417,6 +63112,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "island"
         ],
+        "explanation": "An island is land with water all around it.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62459,6 +63155,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "knowledge"
         ],
+        "explanation": "Knowledge is what you know and understand.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62501,6 +63198,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "learn"
         ],
+        "explanation": "To learn means to gain knowledge or a skill.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62543,6 +63241,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "length"
         ],
+        "explanation": "Length is how long something is from one end to the other.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62585,6 +63284,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "library"
         ],
+        "explanation": "A library is a place where books and information are kept for people to use.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62627,6 +63327,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "material"
         ],
+        "explanation": "Material is the substance something is made from, such as cotton, wood or metal.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62669,6 +63370,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "medicine"
         ],
+        "explanation": "Medicine is something used to help treat illness or pain.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62711,6 +63413,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "mention"
         ],
+        "explanation": "To mention means to say something briefly.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62753,6 +63456,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "minute"
         ],
+        "explanation": "A minute is a period of sixty seconds.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62795,6 +63499,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "natural"
         ],
+        "explanation": "Natural means found in nature or not made by people.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62837,6 +63542,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "naughty"
         ],
+        "explanation": "Naughty means behaving badly or not following rules.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62879,6 +63585,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "notice"
         ],
+        "explanation": "To notice means to see, hear or become aware of something.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62922,6 +63629,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "occasion"
         ],
+        "explanation": "An occasion is a particular time when something happens, often something special.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -62965,6 +63673,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "occasionally"
         ],
+        "explanation": "Occasionally means sometimes, but not often.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63007,6 +63716,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "often"
         ],
+        "explanation": "Often means many times or frequently.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63049,6 +63759,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "opposite"
         ],
+        "explanation": "Opposite means completely different or facing the other way.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63091,6 +63802,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "ordinary"
         ],
+        "explanation": "Ordinary means normal, usual or not special.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63133,6 +63845,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "particular"
         ],
+        "explanation": "Particular means a specific one, not just any one.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63175,6 +63888,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "peculiar"
         ],
+        "explanation": "Peculiar means strange or unusual.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63217,6 +63931,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "perhaps"
         ],
+        "explanation": "Perhaps means maybe or possibly.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63259,6 +63974,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "popular"
         ],
+        "explanation": "Popular means liked or enjoyed by many people.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63301,6 +64017,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "position"
         ],
+        "explanation": "Position is where something is, or the way it is placed.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63344,6 +64061,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "possess"
         ],
+        "explanation": "To possess something means to own it or have it.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63387,6 +64105,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "possession"
         ],
+        "explanation": "A possession is something that you own or have.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63429,6 +64148,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "possible"
         ],
+        "explanation": "Possible means able to happen or be done.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63471,6 +64191,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "potatoes"
         ],
+        "explanation": "Potatoes are round root vegetables that grow underground.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63513,6 +64234,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "pressure"
         ],
+        "explanation": "Pressure is force pushing on something, or stress caused by demands.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63555,6 +64277,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "probably"
         ],
+        "explanation": "Probably means very likely to happen or be true.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63597,6 +64320,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "promise"
         ],
+        "explanation": "A promise is a firm statement that you will do something.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63639,6 +64363,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "purpose"
         ],
+        "explanation": "Purpose is the reason something exists or is done.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63681,6 +64406,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "quarter"
         ],
+        "explanation": "A quarter is one of four equal parts.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63723,6 +64449,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "question"
         ],
+        "explanation": "A question is something you ask to find out information.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63765,6 +64492,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "recent"
         ],
+        "explanation": "Recent means having happened not long ago.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63807,6 +64535,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "regular"
         ],
+        "explanation": "Regular means happening again and again in the same pattern, or usual.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63849,6 +64578,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "reign"
         ],
+        "explanation": "A reign is the time when a king or queen rules.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63891,6 +64621,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "remember"
         ],
+        "explanation": "To remember means to keep something in your mind or bring it back to mind.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63933,6 +64664,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "sentence"
         ],
+        "explanation": "A sentence is a group of words that expresses a complete idea.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -63975,6 +64707,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "separate"
         ],
+        "explanation": "Separate means apart, not joined together.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64017,6 +64750,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "special"
         ],
+        "explanation": "Special means different from the usual in an important or valued way.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64059,6 +64793,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "straight"
         ],
+        "explanation": "Straight means not curved, bent or crooked.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64101,6 +64836,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "strange"
         ],
+        "explanation": "Strange means unusual or surprising.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64143,6 +64879,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "strength"
         ],
+        "explanation": "Strength is the power to lift, push, resist or keep going.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64185,6 +64922,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "suppose"
         ],
+        "explanation": "To suppose means to think something is true, often without being completely sure.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64227,6 +64965,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "surprise"
         ],
+        "explanation": "A surprise is something unexpected.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64269,6 +65008,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "therefore"
         ],
+        "explanation": "Therefore means for that reason or as a result.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64312,6 +65052,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "though"
         ],
+        "explanation": "Though means although, or despite the fact that something is true.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64355,6 +65096,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "although"
         ],
+        "explanation": "Although means even though or despite the fact that.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64397,6 +65139,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "thought"
         ],
+        "explanation": "A thought is an idea in your mind; thought is also the past tense of think.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64439,6 +65182,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "through"
         ],
+        "explanation": "Through means moving in one side and out of the other, or from start to finish.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64481,6 +65225,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "various"
         ],
+        "explanation": "Various means several different kinds.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64523,6 +65268,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "weight"
         ],
+        "explanation": "Weight is how heavy something is.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64566,6 +65312,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "woman"
         ],
+        "explanation": "A woman is an adult female person.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64609,6 +65356,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "women"
         ],
+        "explanation": "Women is the plural of woman.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -64651,6 +65399,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "accommodate"
         ],
+        "explanation": "To accommodate means to provide space for someone or something, or to fit in with needs.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -64693,6 +65442,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "accompany"
         ],
+        "explanation": "To accompany means to go somewhere with someone or to happen at the same time.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -64735,6 +65485,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "according"
         ],
+        "explanation": "According to something means as stated by it, or in a way that agrees with it.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -64777,6 +65528,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "achieve"
         ],
+        "explanation": "To achieve means to succeed in doing something through effort.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -64819,6 +65571,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "aggressive"
         ],
+        "explanation": "Aggressive means ready to attack, argue or behave forcefully.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -64861,6 +65614,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "amateur"
         ],
+        "explanation": "An amateur is someone who does an activity for interest, not as a paid job.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -64903,6 +65657,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "ancient"
         ],
+        "explanation": "Ancient means very old or from a long time ago.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -64945,6 +65700,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "apparent"
         ],
+        "explanation": "Apparent means easy to see or seeming to be true.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -64987,6 +65743,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "appreciate"
         ],
+        "explanation": "To appreciate means to understand the value of something or be thankful for it.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65029,6 +65786,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "attached"
         ],
+        "explanation": "Attached means joined, fastened or feeling emotionally close.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65071,6 +65829,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "available"
         ],
+        "explanation": "Available means ready to be used or free to do something.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65113,6 +65872,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "average"
         ],
+        "explanation": "Average means typical, ordinary, or the middle amount found by sharing equally.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65155,6 +65915,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "awkward"
         ],
+        "explanation": "Awkward means difficult to deal with, clumsy or uncomfortable.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65197,6 +65958,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "bargain"
         ],
+        "explanation": "A bargain is something bought for less than the usual price, or an agreement between people.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65239,6 +66001,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "bruise"
         ],
+        "explanation": "A bruise is a dark mark on skin caused by a bump or injury.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65281,6 +66044,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "category"
         ],
+        "explanation": "A category is a group of things that share the same type or feature.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65323,6 +66087,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "cemetery"
         ],
+        "explanation": "A cemetery is a place where people are buried.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65365,6 +66130,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "committee"
         ],
+        "explanation": "A committee is a group of people chosen to discuss or organise something.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65407,6 +66173,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "communicate"
         ],
+        "explanation": "To communicate means to share information, ideas or feelings.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65449,6 +66216,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "community"
         ],
+        "explanation": "A community is a group of people who live near each other or share something in common.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65491,6 +66259,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "competition"
         ],
+        "explanation": "A competition is an event where people try to win or do better than others.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65533,6 +66302,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "conscience"
         ],
+        "explanation": "Your conscience is the inner sense that helps you know right from wrong.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65575,6 +66345,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "conscious"
         ],
+        "explanation": "Conscious means awake, aware or able to notice what is happening.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65617,6 +66388,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "controversy"
         ],
+        "explanation": "A controversy is strong disagreement about an issue.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65659,6 +66431,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "convenience"
         ],
+        "explanation": "Convenience means ease, usefulness or something that saves time and effort.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65701,6 +66474,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "correspond"
         ],
+        "explanation": "To correspond means to match, agree or communicate by messages.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65744,6 +66518,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
           "criticise",
           "criticize"
         ],
+        "explanation": "To criticise means to say what is wrong with something or someone.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65786,6 +66561,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "curiosity"
         ],
+        "explanation": "Curiosity is the wish to know, learn or find out about something.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65828,6 +66604,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "definite"
         ],
+        "explanation": "Definite means clear, certain and not vague.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65870,6 +66647,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "desperate"
         ],
+        "explanation": "Desperate means feeling that you urgently need something or have little hope.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65912,6 +66690,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "determined"
         ],
+        "explanation": "Determined means firmly decided to do something and not give up.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65954,6 +66733,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "develop"
         ],
+        "explanation": "To develop means to grow, improve or become more advanced.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -65996,6 +66776,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "dictionary"
         ],
+        "explanation": "A dictionary is a book or resource that explains words, spellings and meanings.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66038,6 +66819,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "disastrous"
         ],
+        "explanation": "Disastrous means causing great harm, failure or trouble.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66080,6 +66862,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "embarrass"
         ],
+        "explanation": "To embarrass someone means to make them feel awkward, ashamed or self-conscious.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66122,6 +66905,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "environment"
         ],
+        "explanation": "The environment is the natural world around us, or the conditions in a place.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66166,6 +66950,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "equip"
         ],
+        "explanation": "To equip means to provide the things needed for a task.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66210,6 +66995,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "equipped"
         ],
+        "explanation": "Equipped means provided with what is needed.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66254,6 +67040,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "equipment"
         ],
+        "explanation": "Equipment is the things needed for a particular job or activity.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66296,6 +67083,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "especially"
         ],
+        "explanation": "Especially means particularly, or more than usual.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66338,6 +67126,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "exaggerate"
         ],
+        "explanation": "To exaggerate means to describe something as bigger, better or worse than it really is.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66380,6 +67169,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "excellent"
         ],
+        "explanation": "Excellent means extremely good.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66422,6 +67212,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "existence"
         ],
+        "explanation": "Existence is the state of being real or alive.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66464,6 +67255,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "explanation"
         ],
+        "explanation": "An explanation gives reasons or details that make something clear.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66506,6 +67298,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "familiar"
         ],
+        "explanation": "Familiar means known to you because you have seen or experienced it before.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66548,6 +67341,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "foreign"
         ],
+        "explanation": "Foreign means from another country or not familiar.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66590,6 +67384,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "forty"
         ],
+        "explanation": "Forty is the number after thirty-nine and before forty-one.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66632,6 +67427,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "frequently"
         ],
+        "explanation": "Frequently means often or many times.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66674,6 +67470,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "government"
         ],
+        "explanation": "A government is the group of people who run a country or area.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66716,6 +67513,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "guarantee"
         ],
+        "explanation": "A guarantee is a firm promise that something will happen or work as expected.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66758,6 +67556,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "harass"
         ],
+        "explanation": "To harass means to repeatedly trouble, bother or upset someone.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66800,6 +67599,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "hindrance"
         ],
+        "explanation": "A hindrance is something that gets in the way or makes progress harder.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66842,6 +67642,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "identity"
         ],
+        "explanation": "Identity is who a person is, including the qualities that make them unique.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66885,6 +67686,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "immediate"
         ],
+        "explanation": "Immediate means happening now or without delay.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66928,6 +67730,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "immediately"
         ],
+        "explanation": "Immediately means straight away or without delay.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -66970,6 +67773,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "individual"
         ],
+        "explanation": "An individual is one person or thing, separate from a group.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67012,6 +67816,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "interfere"
         ],
+        "explanation": "To interfere means to get involved in a way that causes problems or is not wanted.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67054,6 +67859,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "interrupt"
         ],
+        "explanation": "To interrupt means to stop someone while they are speaking or doing something.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67096,6 +67902,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "language"
         ],
+        "explanation": "Language is a system of words and signs that people use to communicate.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67138,6 +67945,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "leisure"
         ],
+        "explanation": "Leisure is free time when you can rest or enjoy activities.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67180,6 +67988,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "lightning"
         ],
+        "explanation": "Lightning is a bright flash of electricity in the sky during a storm.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67222,6 +68031,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "marvellous"
         ],
+        "explanation": "Marvellous means wonderful or very impressive.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67264,6 +68074,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "mischievous"
         ],
+        "explanation": "Mischievous means playful in a naughty or troublesome way.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67306,6 +68117,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "muscle"
         ],
+        "explanation": "A muscle is body tissue that tightens and relaxes to help you move.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67348,6 +68160,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "necessary"
         ],
+        "explanation": "Necessary means needed or required.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67390,6 +68203,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "neighbour"
         ],
+        "explanation": "A neighbour is someone who lives near you.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67432,6 +68246,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "nuisance"
         ],
+        "explanation": "A nuisance is a person or thing that annoys or causes trouble.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67474,6 +68289,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "occupy"
         ],
+        "explanation": "To occupy means to take up space, live in a place or keep someone busy.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67516,6 +68332,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "occur"
         ],
+        "explanation": "To occur means to happen or take place.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67558,6 +68375,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "opportunity"
         ],
+        "explanation": "An opportunity is a chance to do something.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67600,6 +68418,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "parliament"
         ],
+        "explanation": "Parliament is the group of elected people who make laws in the UK and some other countries.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67642,6 +68461,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "persuade"
         ],
+        "explanation": "To persuade means to convince someone to do or believe something.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67684,6 +68504,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "physical"
         ],
+        "explanation": "Physical means connected with the body or with things you can touch.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67726,6 +68547,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "prejudice"
         ],
+        "explanation": "Prejudice is an unfair opinion about a person or group formed without enough knowledge.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67768,6 +68590,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "privilege"
         ],
+        "explanation": "A privilege is a special right or advantage.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67810,6 +68633,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "profession"
         ],
+        "explanation": "A profession is a type of work that needs special training or skill.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67852,6 +68676,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "programme"
         ],
+        "explanation": "A programme is a planned set of activities, or a television or radio show.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67894,6 +68719,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "pronunciation"
         ],
+        "explanation": "Pronunciation is the way a word is spoken.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67936,6 +68762,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "queue"
         ],
+        "explanation": "A queue is a line of people or things waiting for their turn.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -67979,6 +68806,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
           "recognise",
           "recognize"
         ],
+        "explanation": "To recognise means to know someone or something because you have seen it before.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68021,6 +68849,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "recommend"
         ],
+        "explanation": "To recommend means to say that someone should choose or try something.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68063,6 +68892,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "relevant"
         ],
+        "explanation": "Relevant means connected to what is being discussed or needed.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68105,6 +68935,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "restaurant"
         ],
+        "explanation": "A restaurant is a place where people pay to sit and eat meals.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68147,6 +68978,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "rhyme"
         ],
+        "explanation": "A rhyme is a word or line that has the same ending sound as another.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68189,6 +69021,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "rhythm"
         ],
+        "explanation": "Rhythm is a regular pattern of sounds, beats or movements.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68231,6 +69064,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "sacrifice"
         ],
+        "explanation": "A sacrifice is giving up something important for a reason or for someone else.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68273,6 +69107,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "secretary"
         ],
+        "explanation": "A secretary is a person who organises information, messages and office work.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68315,6 +69150,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "shoulder"
         ],
+        "explanation": "A shoulder is the part of the body where the arm joins the upper body.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68357,6 +69193,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "signature"
         ],
+        "explanation": "A signature is your name written in your own way to show agreement or identity.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68400,6 +69237,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "sincere"
         ],
+        "explanation": "Sincere means honest and truly meant.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68443,6 +69281,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "sincerely"
         ],
+        "explanation": "Sincerely means honestly and truly.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68485,6 +69324,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "soldier"
         ],
+        "explanation": "A soldier is a person who serves in an army.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68527,6 +69367,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "stomach"
         ],
+        "explanation": "The stomach is the part inside your body where food begins to be digested.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68569,6 +69410,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "sufficient"
         ],
+        "explanation": "Sufficient means enough for what is needed.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68611,6 +69453,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "suggest"
         ],
+        "explanation": "To suggest means to put forward an idea or plan.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68653,6 +69496,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "symbol"
         ],
+        "explanation": "A symbol is a sign, shape or object that stands for an idea or meaning.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68695,6 +69539,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "system"
         ],
+        "explanation": "A system is a set of connected parts that work together.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68737,6 +69582,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "temperature"
         ],
+        "explanation": "Temperature tells how hot or cold something is.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68779,6 +69625,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "thorough"
         ],
+        "explanation": "Thorough means complete and careful, with nothing important missed.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68821,6 +69668,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "twelfth"
         ],
+        "explanation": "Twelfth means number twelve in order.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68863,6 +69711,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "variety"
         ],
+        "explanation": "Variety means a number of different kinds or a mixture.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68905,6 +69754,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "vegetable"
         ],
+        "explanation": "A vegetable is a plant or part of a plant eaten as food, such as a carrot.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68947,6 +69797,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "vehicle"
         ],
+        "explanation": "A vehicle is something used to carry people or goods, such as a car, bus or lorry.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -68989,6 +69840,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "yacht"
         ],
+        "explanation": "A yacht is a boat used for sailing or pleasure trips.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -69034,6 +69886,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "accident"
         ],
+        "explanation": "An accident is something that happens by chance, often causing damage or a problem.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69077,6 +69930,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "accidentally"
         ],
+        "explanation": "If you do something accidentally, you do it by mistake and did not mean to.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69120,6 +69974,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "actual"
         ],
+        "explanation": "Actual means real or true, not guessed or imagined.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69163,6 +70018,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "actually"
         ],
+        "explanation": "Actually is used to say what is really true, especially when it is different from what someone expected.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69205,6 +70061,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "address"
         ],
+        "explanation": "An address is the details of where a person or place can be found, such as a house number and street.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69247,6 +70104,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "answer"
         ],
+        "explanation": "An answer is what you say or write in reply to a question.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69289,6 +70147,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "appear"
         ],
+        "explanation": "To appear means to come into sight or seem to be a certain way.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69331,6 +70190,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "arrive"
         ],
+        "explanation": "To arrive means to reach the place you were travelling to.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69373,6 +70233,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "believe"
         ],
+        "explanation": "To believe means to think that something is true or to trust someone.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69415,6 +70276,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "bicycle"
         ],
+        "explanation": "A bicycle is a vehicle with two wheels that you ride by pedalling.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69457,6 +70319,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "breath"
         ],
+        "explanation": "A breath is the air you take into or let out of your lungs.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69499,6 +70362,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "breathe"
         ],
+        "explanation": "To breathe means to take air into your lungs and let it out again.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69541,6 +70405,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "build"
         ],
+        "explanation": "To build means to make something by putting parts together.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69584,6 +70449,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "busy"
         ],
+        "explanation": "Busy means having a lot to do or full of activity.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69627,6 +70493,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "business"
         ],
+        "explanation": "A business is work or an organisation that sells goods or services.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69669,6 +70536,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "calendar"
         ],
+        "explanation": "A calendar shows days, weeks and months of the year.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69711,6 +70579,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "caught"
         ],
+        "explanation": "Caught is the past tense of catch; it can mean grabbed, trapped or noticed doing something.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69753,6 +70622,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "centre"
         ],
+        "explanation": "The centre is the middle point or main part of something.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69795,6 +70665,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "century"
         ],
+        "explanation": "A century is a period of one hundred years.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69837,6 +70708,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "certain"
         ],
+        "explanation": "Certain means sure, or known to be true.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69879,6 +70751,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "circle"
         ],
+        "explanation": "A circle is a round shape where every point on the edge is the same distance from the centre.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69921,6 +70794,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "complete"
         ],
+        "explanation": "Complete means finished or with nothing missing.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -69963,6 +70837,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "consider"
         ],
+        "explanation": "To consider means to think carefully about something before deciding.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70005,6 +70880,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "continue"
         ],
+        "explanation": "To continue means to keep going and not stop.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70047,6 +70923,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "decide"
         ],
+        "explanation": "To decide means to choose after thinking about the options.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70089,6 +70966,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "describe"
         ],
+        "explanation": "To describe means to say or write what someone or something is like.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70131,6 +71009,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "different"
         ],
+        "explanation": "Different means not the same.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70173,6 +71052,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "difficult"
         ],
+        "explanation": "Difficult means hard to do, understand or deal with.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70215,6 +71095,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "disappear"
         ],
+        "explanation": "To disappear means to stop being seen or to go away.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70257,6 +71138,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "early"
         ],
+        "explanation": "Early means before the usual or expected time.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70299,6 +71181,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "earth"
         ],
+        "explanation": "Earth can mean the planet we live on, or soil and ground.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70342,6 +71225,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "eight"
         ],
+        "explanation": "Eight is the number after seven and before nine.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70385,6 +71269,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "eighth"
         ],
+        "explanation": "Eighth means number eight in order.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70427,6 +71312,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "enough"
         ],
+        "explanation": "Enough means as much or as many as needed.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70469,6 +71355,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "exercise"
         ],
+        "explanation": "Exercise is physical activity that keeps your body healthy, or a task for practice.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70511,6 +71398,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "experience"
         ],
+        "explanation": "Experience is something that happens to you, or knowledge you gain by doing something.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70553,6 +71441,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "experiment"
         ],
+        "explanation": "An experiment is a careful test to find out what happens or whether an idea is true.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70595,6 +71484,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "extreme"
         ],
+        "explanation": "Extreme means very great, strong or far from the usual.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70637,6 +71527,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "famous"
         ],
+        "explanation": "Famous means known by many people.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70679,6 +71570,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "favourite"
         ],
+        "explanation": "Favourite means liked best.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70721,6 +71613,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "february"
         ],
+        "explanation": "February is the second month of the year.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70764,6 +71657,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "forward"
         ],
+        "explanation": "Forward means towards the front or ahead.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70807,6 +71701,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "forwards"
         ],
+        "explanation": "Forwards means towards the front or ahead.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70849,6 +71744,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "fruit"
         ],
+        "explanation": "Fruit is the part of a plant that often has seeds and can be eaten, such as an apple.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70891,6 +71787,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "grammar"
         ],
+        "explanation": "Grammar is the set of rules for how words fit together in a language.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70933,6 +71830,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "group"
         ],
+        "explanation": "A group is a number of people or things together.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -70975,6 +71873,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "guard"
         ],
+        "explanation": "To guard means to protect or watch over someone or something.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71017,6 +71916,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "guide"
         ],
+        "explanation": "A guide is someone or something that shows the way or gives helpful information.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71059,6 +71959,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "heard"
         ],
+        "explanation": "Heard is the past tense of hear; it means listened to or noticed a sound.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71101,6 +72002,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "heart"
         ],
+        "explanation": "The heart is the organ that pumps blood around the body; it can also mean feelings.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71143,6 +72045,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "height"
         ],
+        "explanation": "Height is how tall or high something is.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71185,6 +72088,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "history"
         ],
+        "explanation": "History is the study of things that happened in the past.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71227,6 +72131,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "imagine"
         ],
+        "explanation": "To imagine means to make a picture or idea in your mind.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71269,6 +72174,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "increase"
         ],
+        "explanation": "To increase means to become bigger in number, size or amount.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71311,6 +72217,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "important"
         ],
+        "explanation": "Important means having great value or needing attention.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71353,6 +72260,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "interest"
         ],
+        "explanation": "Interest is a feeling of wanting to know or learn more about something.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71395,6 +72303,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "island"
         ],
+        "explanation": "An island is land with water all around it.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71437,6 +72346,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "knowledge"
         ],
+        "explanation": "Knowledge is what you know and understand.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71479,6 +72389,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "learn"
         ],
+        "explanation": "To learn means to gain knowledge or a skill.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71521,6 +72432,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "length"
         ],
+        "explanation": "Length is how long something is from one end to the other.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71563,6 +72475,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "library"
         ],
+        "explanation": "A library is a place where books and information are kept for people to use.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71605,6 +72518,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "material"
         ],
+        "explanation": "Material is the substance something is made from, such as cotton, wood or metal.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71647,6 +72561,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "medicine"
         ],
+        "explanation": "Medicine is something used to help treat illness or pain.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71689,6 +72604,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "mention"
         ],
+        "explanation": "To mention means to say something briefly.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71731,6 +72647,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "minute"
         ],
+        "explanation": "A minute is a period of sixty seconds.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71773,6 +72690,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "natural"
         ],
+        "explanation": "Natural means found in nature or not made by people.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71815,6 +72733,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "naughty"
         ],
+        "explanation": "Naughty means behaving badly or not following rules.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71857,6 +72776,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "notice"
         ],
+        "explanation": "To notice means to see, hear or become aware of something.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71900,6 +72820,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "occasion"
         ],
+        "explanation": "An occasion is a particular time when something happens, often something special.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71943,6 +72864,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "occasionally"
         ],
+        "explanation": "Occasionally means sometimes, but not often.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -71985,6 +72907,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "often"
         ],
+        "explanation": "Often means many times or frequently.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72027,6 +72950,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "opposite"
         ],
+        "explanation": "Opposite means completely different or facing the other way.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72069,6 +72993,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "ordinary"
         ],
+        "explanation": "Ordinary means normal, usual or not special.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72111,6 +73036,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "particular"
         ],
+        "explanation": "Particular means a specific one, not just any one.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72153,6 +73079,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "peculiar"
         ],
+        "explanation": "Peculiar means strange or unusual.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72195,6 +73122,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "perhaps"
         ],
+        "explanation": "Perhaps means maybe or possibly.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72237,6 +73165,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "popular"
         ],
+        "explanation": "Popular means liked or enjoyed by many people.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72279,6 +73208,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "position"
         ],
+        "explanation": "Position is where something is, or the way it is placed.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72322,6 +73252,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "possess"
         ],
+        "explanation": "To possess something means to own it or have it.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72365,6 +73296,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "possession"
         ],
+        "explanation": "A possession is something that you own or have.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72407,6 +73339,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "possible"
         ],
+        "explanation": "Possible means able to happen or be done.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72449,6 +73382,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "potatoes"
         ],
+        "explanation": "Potatoes are round root vegetables that grow underground.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72491,6 +73425,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "pressure"
         ],
+        "explanation": "Pressure is force pushing on something, or stress caused by demands.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72533,6 +73468,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "probably"
         ],
+        "explanation": "Probably means very likely to happen or be true.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72575,6 +73511,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "promise"
         ],
+        "explanation": "A promise is a firm statement that you will do something.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72617,6 +73554,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "purpose"
         ],
+        "explanation": "Purpose is the reason something exists or is done.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72659,6 +73597,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "quarter"
         ],
+        "explanation": "A quarter is one of four equal parts.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72701,6 +73640,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "question"
         ],
+        "explanation": "A question is something you ask to find out information.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72743,6 +73683,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "recent"
         ],
+        "explanation": "Recent means having happened not long ago.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72785,6 +73726,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "regular"
         ],
+        "explanation": "Regular means happening again and again in the same pattern, or usual.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72827,6 +73769,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "reign"
         ],
+        "explanation": "A reign is the time when a king or queen rules.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72869,6 +73812,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "remember"
         ],
+        "explanation": "To remember means to keep something in your mind or bring it back to mind.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72911,6 +73855,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "sentence"
         ],
+        "explanation": "A sentence is a group of words that expresses a complete idea.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72953,6 +73898,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "separate"
         ],
+        "explanation": "Separate means apart, not joined together.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -72995,6 +73941,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "special"
         ],
+        "explanation": "Special means different from the usual in an important or valued way.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -73037,6 +73984,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "straight"
         ],
+        "explanation": "Straight means not curved, bent or crooked.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -73079,6 +74027,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "strange"
         ],
+        "explanation": "Strange means unusual or surprising.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -73121,6 +74070,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "strength"
         ],
+        "explanation": "Strength is the power to lift, push, resist or keep going.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -73163,6 +74113,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "suppose"
         ],
+        "explanation": "To suppose means to think something is true, often without being completely sure.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -73205,6 +74156,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "surprise"
         ],
+        "explanation": "A surprise is something unexpected.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -73247,6 +74199,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "therefore"
         ],
+        "explanation": "Therefore means for that reason or as a result.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -73290,6 +74243,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "though"
         ],
+        "explanation": "Though means although, or despite the fact that something is true.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -73333,6 +74287,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "although"
         ],
+        "explanation": "Although means even though or despite the fact that.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -73375,6 +74330,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "thought"
         ],
+        "explanation": "A thought is an idea in your mind; thought is also the past tense of think.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -73417,6 +74373,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "through"
         ],
+        "explanation": "Through means moving in one side and out of the other, or from start to finish.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -73459,6 +74416,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "various"
         ],
+        "explanation": "Various means several different kinds.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -73501,6 +74459,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "weight"
         ],
+        "explanation": "Weight is how heavy something is.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -73544,6 +74503,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "woman"
         ],
+        "explanation": "A woman is an adult female person.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -73587,6 +74547,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "women"
         ],
+        "explanation": "Women is the plural of woman.",
         "listId": "statutory-y3-4",
         "yearGroups": [
           "Y3",
@@ -73629,6 +74590,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "accommodate"
         ],
+        "explanation": "To accommodate means to provide space for someone or something, or to fit in with needs.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -73671,6 +74633,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "accompany"
         ],
+        "explanation": "To accompany means to go somewhere with someone or to happen at the same time.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -73713,6 +74676,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "according"
         ],
+        "explanation": "According to something means as stated by it, or in a way that agrees with it.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -73755,6 +74719,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "achieve"
         ],
+        "explanation": "To achieve means to succeed in doing something through effort.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -73797,6 +74762,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "aggressive"
         ],
+        "explanation": "Aggressive means ready to attack, argue or behave forcefully.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -73839,6 +74805,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "amateur"
         ],
+        "explanation": "An amateur is someone who does an activity for interest, not as a paid job.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -73881,6 +74848,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "ancient"
         ],
+        "explanation": "Ancient means very old or from a long time ago.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -73923,6 +74891,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "apparent"
         ],
+        "explanation": "Apparent means easy to see or seeming to be true.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -73965,6 +74934,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "appreciate"
         ],
+        "explanation": "To appreciate means to understand the value of something or be thankful for it.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74007,6 +74977,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "attached"
         ],
+        "explanation": "Attached means joined, fastened or feeling emotionally close.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74049,6 +75020,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "available"
         ],
+        "explanation": "Available means ready to be used or free to do something.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74091,6 +75063,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "average"
         ],
+        "explanation": "Average means typical, ordinary, or the middle amount found by sharing equally.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74133,6 +75106,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "awkward"
         ],
+        "explanation": "Awkward means difficult to deal with, clumsy or uncomfortable.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74175,6 +75149,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "bargain"
         ],
+        "explanation": "A bargain is something bought for less than the usual price, or an agreement between people.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74217,6 +75192,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "bruise"
         ],
+        "explanation": "A bruise is a dark mark on skin caused by a bump or injury.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74259,6 +75235,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "category"
         ],
+        "explanation": "A category is a group of things that share the same type or feature.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74301,6 +75278,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "cemetery"
         ],
+        "explanation": "A cemetery is a place where people are buried.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74343,6 +75321,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "committee"
         ],
+        "explanation": "A committee is a group of people chosen to discuss or organise something.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74385,6 +75364,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "communicate"
         ],
+        "explanation": "To communicate means to share information, ideas or feelings.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74427,6 +75407,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "community"
         ],
+        "explanation": "A community is a group of people who live near each other or share something in common.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74469,6 +75450,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "competition"
         ],
+        "explanation": "A competition is an event where people try to win or do better than others.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74511,6 +75493,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "conscience"
         ],
+        "explanation": "Your conscience is the inner sense that helps you know right from wrong.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74553,6 +75536,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "conscious"
         ],
+        "explanation": "Conscious means awake, aware or able to notice what is happening.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74595,6 +75579,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "controversy"
         ],
+        "explanation": "A controversy is strong disagreement about an issue.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74637,6 +75622,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "convenience"
         ],
+        "explanation": "Convenience means ease, usefulness or something that saves time and effort.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74679,6 +75665,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "correspond"
         ],
+        "explanation": "To correspond means to match, agree or communicate by messages.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74722,6 +75709,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
           "criticise",
           "criticize"
         ],
+        "explanation": "To criticise means to say what is wrong with something or someone.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74764,6 +75752,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "curiosity"
         ],
+        "explanation": "Curiosity is the wish to know, learn or find out about something.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74806,6 +75795,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "definite"
         ],
+        "explanation": "Definite means clear, certain and not vague.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74848,6 +75838,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "desperate"
         ],
+        "explanation": "Desperate means feeling that you urgently need something or have little hope.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74890,6 +75881,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "determined"
         ],
+        "explanation": "Determined means firmly decided to do something and not give up.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74932,6 +75924,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "develop"
         ],
+        "explanation": "To develop means to grow, improve or become more advanced.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -74974,6 +75967,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "dictionary"
         ],
+        "explanation": "A dictionary is a book or resource that explains words, spellings and meanings.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75016,6 +76010,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "disastrous"
         ],
+        "explanation": "Disastrous means causing great harm, failure or trouble.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75058,6 +76053,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "embarrass"
         ],
+        "explanation": "To embarrass someone means to make them feel awkward, ashamed or self-conscious.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75100,6 +76096,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "environment"
         ],
+        "explanation": "The environment is the natural world around us, or the conditions in a place.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75144,6 +76141,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "equip"
         ],
+        "explanation": "To equip means to provide the things needed for a task.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75188,6 +76186,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "equipped"
         ],
+        "explanation": "Equipped means provided with what is needed.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75232,6 +76231,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "equipment"
         ],
+        "explanation": "Equipment is the things needed for a particular job or activity.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75274,6 +76274,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "especially"
         ],
+        "explanation": "Especially means particularly, or more than usual.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75316,6 +76317,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "exaggerate"
         ],
+        "explanation": "To exaggerate means to describe something as bigger, better or worse than it really is.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75358,6 +76360,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "excellent"
         ],
+        "explanation": "Excellent means extremely good.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75400,6 +76403,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "existence"
         ],
+        "explanation": "Existence is the state of being real or alive.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75442,6 +76446,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "explanation"
         ],
+        "explanation": "An explanation gives reasons or details that make something clear.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75484,6 +76489,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "familiar"
         ],
+        "explanation": "Familiar means known to you because you have seen or experienced it before.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75526,6 +76532,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "foreign"
         ],
+        "explanation": "Foreign means from another country or not familiar.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75568,6 +76575,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "forty"
         ],
+        "explanation": "Forty is the number after thirty-nine and before forty-one.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75610,6 +76618,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "frequently"
         ],
+        "explanation": "Frequently means often or many times.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75652,6 +76661,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "government"
         ],
+        "explanation": "A government is the group of people who run a country or area.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75694,6 +76704,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "guarantee"
         ],
+        "explanation": "A guarantee is a firm promise that something will happen or work as expected.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75736,6 +76747,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "harass"
         ],
+        "explanation": "To harass means to repeatedly trouble, bother or upset someone.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75778,6 +76790,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "hindrance"
         ],
+        "explanation": "A hindrance is something that gets in the way or makes progress harder.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75820,6 +76833,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "identity"
         ],
+        "explanation": "Identity is who a person is, including the qualities that make them unique.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75863,6 +76877,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "immediate"
         ],
+        "explanation": "Immediate means happening now or without delay.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75906,6 +76921,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "immediately"
         ],
+        "explanation": "Immediately means straight away or without delay.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75948,6 +76964,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "individual"
         ],
+        "explanation": "An individual is one person or thing, separate from a group.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -75990,6 +77007,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "interfere"
         ],
+        "explanation": "To interfere means to get involved in a way that causes problems or is not wanted.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76032,6 +77050,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "interrupt"
         ],
+        "explanation": "To interrupt means to stop someone while they are speaking or doing something.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76074,6 +77093,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "language"
         ],
+        "explanation": "Language is a system of words and signs that people use to communicate.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76116,6 +77136,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "leisure"
         ],
+        "explanation": "Leisure is free time when you can rest or enjoy activities.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76158,6 +77179,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "lightning"
         ],
+        "explanation": "Lightning is a bright flash of electricity in the sky during a storm.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76200,6 +77222,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "marvellous"
         ],
+        "explanation": "Marvellous means wonderful or very impressive.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76242,6 +77265,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "mischievous"
         ],
+        "explanation": "Mischievous means playful in a naughty or troublesome way.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76284,6 +77308,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "muscle"
         ],
+        "explanation": "A muscle is body tissue that tightens and relaxes to help you move.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76326,6 +77351,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "necessary"
         ],
+        "explanation": "Necessary means needed or required.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76368,6 +77394,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "neighbour"
         ],
+        "explanation": "A neighbour is someone who lives near you.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76410,6 +77437,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "nuisance"
         ],
+        "explanation": "A nuisance is a person or thing that annoys or causes trouble.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76452,6 +77480,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "occupy"
         ],
+        "explanation": "To occupy means to take up space, live in a place or keep someone busy.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76494,6 +77523,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "occur"
         ],
+        "explanation": "To occur means to happen or take place.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76536,6 +77566,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "opportunity"
         ],
+        "explanation": "An opportunity is a chance to do something.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76578,6 +77609,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "parliament"
         ],
+        "explanation": "Parliament is the group of elected people who make laws in the UK and some other countries.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76620,6 +77652,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "persuade"
         ],
+        "explanation": "To persuade means to convince someone to do or believe something.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76662,6 +77695,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "physical"
         ],
+        "explanation": "Physical means connected with the body or with things you can touch.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76704,6 +77738,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "prejudice"
         ],
+        "explanation": "Prejudice is an unfair opinion about a person or group formed without enough knowledge.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76746,6 +77781,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "privilege"
         ],
+        "explanation": "A privilege is a special right or advantage.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76788,6 +77824,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "profession"
         ],
+        "explanation": "A profession is a type of work that needs special training or skill.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76830,6 +77867,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "programme"
         ],
+        "explanation": "A programme is a planned set of activities, or a television or radio show.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76872,6 +77910,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "pronunciation"
         ],
+        "explanation": "Pronunciation is the way a word is spoken.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76914,6 +77953,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "queue"
         ],
+        "explanation": "A queue is a line of people or things waiting for their turn.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76957,6 +77997,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
           "recognise",
           "recognize"
         ],
+        "explanation": "To recognise means to know someone or something because you have seen it before.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -76999,6 +78040,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "recommend"
         ],
+        "explanation": "To recommend means to say that someone should choose or try something.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77041,6 +78083,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "relevant"
         ],
+        "explanation": "Relevant means connected to what is being discussed or needed.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77083,6 +78126,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "restaurant"
         ],
+        "explanation": "A restaurant is a place where people pay to sit and eat meals.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77125,6 +78169,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "rhyme"
         ],
+        "explanation": "A rhyme is a word or line that has the same ending sound as another.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77167,6 +78212,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "rhythm"
         ],
+        "explanation": "Rhythm is a regular pattern of sounds, beats or movements.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77209,6 +78255,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "sacrifice"
         ],
+        "explanation": "A sacrifice is giving up something important for a reason or for someone else.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77251,6 +78298,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "secretary"
         ],
+        "explanation": "A secretary is a person who organises information, messages and office work.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77293,6 +78341,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "shoulder"
         ],
+        "explanation": "A shoulder is the part of the body where the arm joins the upper body.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77335,6 +78384,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "signature"
         ],
+        "explanation": "A signature is your name written in your own way to show agreement or identity.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77378,6 +78428,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "sincere"
         ],
+        "explanation": "Sincere means honest and truly meant.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77421,6 +78472,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "sincerely"
         ],
+        "explanation": "Sincerely means honestly and truly.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77463,6 +78515,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "soldier"
         ],
+        "explanation": "A soldier is a person who serves in an army.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77505,6 +78558,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "stomach"
         ],
+        "explanation": "The stomach is the part inside your body where food begins to be digested.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77547,6 +78601,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "sufficient"
         ],
+        "explanation": "Sufficient means enough for what is needed.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77589,6 +78644,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "suggest"
         ],
+        "explanation": "To suggest means to put forward an idea or plan.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77631,6 +78687,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "symbol"
         ],
+        "explanation": "A symbol is a sign, shape or object that stands for an idea or meaning.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77673,6 +78730,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "system"
         ],
+        "explanation": "A system is a set of connected parts that work together.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77715,6 +78773,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "temperature"
         ],
+        "explanation": "Temperature tells how hot or cold something is.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77757,6 +78816,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "thorough"
         ],
+        "explanation": "Thorough means complete and careful, with nothing important missed.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77799,6 +78859,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "twelfth"
         ],
+        "explanation": "Twelfth means number twelve in order.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77841,6 +78902,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "variety"
         ],
+        "explanation": "Variety means a number of different kinds or a mixture.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77883,6 +78945,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "vegetable"
         ],
+        "explanation": "A vegetable is a plant or part of a plant eaten as food, such as a carrot.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77925,6 +78988,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "vehicle"
         ],
+        "explanation": "A vehicle is something used to carry people or goods, such as a car, bus or lorry.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -77967,6 +79031,7 @@ export const SEEDED_SPELLING_PUBLISHED_RELEASE = {
         "accepted": [
           "yacht"
         ],
+        "explanation": "A yacht is a boat used for sailing or pleasure trips.",
         "listId": "statutory-y5-6",
         "yearGroups": [
           "Y5",
@@ -78017,6 +79082,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "accident"
       ],
+      "explanation": "An accident is something that happens by chance, often causing damage or a problem.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78060,6 +79126,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "accidentally"
       ],
+      "explanation": "If you do something accidentally, you do it by mistake and did not mean to.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78103,6 +79170,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "actual"
       ],
+      "explanation": "Actual means real or true, not guessed or imagined.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78146,6 +79214,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "actually"
       ],
+      "explanation": "Actually is used to say what is really true, especially when it is different from what someone expected.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78188,6 +79257,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "address"
       ],
+      "explanation": "An address is the details of where a person or place can be found, such as a house number and street.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78230,6 +79300,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "answer"
       ],
+      "explanation": "An answer is what you say or write in reply to a question.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78272,6 +79343,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "appear"
       ],
+      "explanation": "To appear means to come into sight or seem to be a certain way.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78314,6 +79386,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "arrive"
       ],
+      "explanation": "To arrive means to reach the place you were travelling to.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78356,6 +79429,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "believe"
       ],
+      "explanation": "To believe means to think that something is true or to trust someone.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78398,6 +79472,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "bicycle"
       ],
+      "explanation": "A bicycle is a vehicle with two wheels that you ride by pedalling.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78440,6 +79515,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "breath"
       ],
+      "explanation": "A breath is the air you take into or let out of your lungs.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78482,6 +79558,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "breathe"
       ],
+      "explanation": "To breathe means to take air into your lungs and let it out again.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78524,6 +79601,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "build"
       ],
+      "explanation": "To build means to make something by putting parts together.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78567,6 +79645,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "busy"
       ],
+      "explanation": "Busy means having a lot to do or full of activity.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78610,6 +79689,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "business"
       ],
+      "explanation": "A business is work or an organisation that sells goods or services.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78652,6 +79732,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "calendar"
       ],
+      "explanation": "A calendar shows days, weeks and months of the year.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78694,6 +79775,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "caught"
       ],
+      "explanation": "Caught is the past tense of catch; it can mean grabbed, trapped or noticed doing something.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78736,6 +79818,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "centre"
       ],
+      "explanation": "The centre is the middle point or main part of something.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78778,6 +79861,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "century"
       ],
+      "explanation": "A century is a period of one hundred years.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78820,6 +79904,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "certain"
       ],
+      "explanation": "Certain means sure, or known to be true.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78862,6 +79947,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "circle"
       ],
+      "explanation": "A circle is a round shape where every point on the edge is the same distance from the centre.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78904,6 +79990,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "complete"
       ],
+      "explanation": "Complete means finished or with nothing missing.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78946,6 +80033,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "consider"
       ],
+      "explanation": "To consider means to think carefully about something before deciding.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -78988,6 +80076,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "continue"
       ],
+      "explanation": "To continue means to keep going and not stop.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79030,6 +80119,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "decide"
       ],
+      "explanation": "To decide means to choose after thinking about the options.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79072,6 +80162,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "describe"
       ],
+      "explanation": "To describe means to say or write what someone or something is like.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79114,6 +80205,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "different"
       ],
+      "explanation": "Different means not the same.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79156,6 +80248,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "difficult"
       ],
+      "explanation": "Difficult means hard to do, understand or deal with.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79198,6 +80291,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "disappear"
       ],
+      "explanation": "To disappear means to stop being seen or to go away.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79240,6 +80334,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "early"
       ],
+      "explanation": "Early means before the usual or expected time.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79282,6 +80377,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "earth"
       ],
+      "explanation": "Earth can mean the planet we live on, or soil and ground.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79325,6 +80421,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "eight"
       ],
+      "explanation": "Eight is the number after seven and before nine.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79368,6 +80465,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "eighth"
       ],
+      "explanation": "Eighth means number eight in order.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79410,6 +80508,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "enough"
       ],
+      "explanation": "Enough means as much or as many as needed.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79452,6 +80551,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "exercise"
       ],
+      "explanation": "Exercise is physical activity that keeps your body healthy, or a task for practice.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79494,6 +80594,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "experience"
       ],
+      "explanation": "Experience is something that happens to you, or knowledge you gain by doing something.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79536,6 +80637,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "experiment"
       ],
+      "explanation": "An experiment is a careful test to find out what happens or whether an idea is true.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79578,6 +80680,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "extreme"
       ],
+      "explanation": "Extreme means very great, strong or far from the usual.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79620,6 +80723,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "famous"
       ],
+      "explanation": "Famous means known by many people.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79662,6 +80766,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "favourite"
       ],
+      "explanation": "Favourite means liked best.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79704,6 +80809,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "february"
       ],
+      "explanation": "February is the second month of the year.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79747,6 +80853,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "forward"
       ],
+      "explanation": "Forward means towards the front or ahead.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79790,6 +80897,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "forwards"
       ],
+      "explanation": "Forwards means towards the front or ahead.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79832,6 +80940,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "fruit"
       ],
+      "explanation": "Fruit is the part of a plant that often has seeds and can be eaten, such as an apple.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79874,6 +80983,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "grammar"
       ],
+      "explanation": "Grammar is the set of rules for how words fit together in a language.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79916,6 +81026,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "group"
       ],
+      "explanation": "A group is a number of people or things together.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -79958,6 +81069,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "guard"
       ],
+      "explanation": "To guard means to protect or watch over someone or something.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80000,6 +81112,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "guide"
       ],
+      "explanation": "A guide is someone or something that shows the way or gives helpful information.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80042,6 +81155,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "heard"
       ],
+      "explanation": "Heard is the past tense of hear; it means listened to or noticed a sound.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80084,6 +81198,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "heart"
       ],
+      "explanation": "The heart is the organ that pumps blood around the body; it can also mean feelings.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80126,6 +81241,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "height"
       ],
+      "explanation": "Height is how tall or high something is.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80168,6 +81284,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "history"
       ],
+      "explanation": "History is the study of things that happened in the past.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80210,6 +81327,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "imagine"
       ],
+      "explanation": "To imagine means to make a picture or idea in your mind.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80252,6 +81370,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "increase"
       ],
+      "explanation": "To increase means to become bigger in number, size or amount.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80294,6 +81413,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "important"
       ],
+      "explanation": "Important means having great value or needing attention.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80336,6 +81456,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "interest"
       ],
+      "explanation": "Interest is a feeling of wanting to know or learn more about something.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80378,6 +81499,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "island"
       ],
+      "explanation": "An island is land with water all around it.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80420,6 +81542,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "knowledge"
       ],
+      "explanation": "Knowledge is what you know and understand.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80462,6 +81585,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "learn"
       ],
+      "explanation": "To learn means to gain knowledge or a skill.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80504,6 +81628,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "length"
       ],
+      "explanation": "Length is how long something is from one end to the other.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80546,6 +81671,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "library"
       ],
+      "explanation": "A library is a place where books and information are kept for people to use.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80588,6 +81714,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "material"
       ],
+      "explanation": "Material is the substance something is made from, such as cotton, wood or metal.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80630,6 +81757,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "medicine"
       ],
+      "explanation": "Medicine is something used to help treat illness or pain.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80672,6 +81800,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "mention"
       ],
+      "explanation": "To mention means to say something briefly.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80714,6 +81843,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "minute"
       ],
+      "explanation": "A minute is a period of sixty seconds.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80756,6 +81886,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "natural"
       ],
+      "explanation": "Natural means found in nature or not made by people.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80798,6 +81929,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "naughty"
       ],
+      "explanation": "Naughty means behaving badly or not following rules.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80840,6 +81972,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "notice"
       ],
+      "explanation": "To notice means to see, hear or become aware of something.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80883,6 +82016,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "occasion"
       ],
+      "explanation": "An occasion is a particular time when something happens, often something special.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80926,6 +82060,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "occasionally"
       ],
+      "explanation": "Occasionally means sometimes, but not often.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -80968,6 +82103,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "often"
       ],
+      "explanation": "Often means many times or frequently.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81010,6 +82146,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "opposite"
       ],
+      "explanation": "Opposite means completely different or facing the other way.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81052,6 +82189,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "ordinary"
       ],
+      "explanation": "Ordinary means normal, usual or not special.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81094,6 +82232,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "particular"
       ],
+      "explanation": "Particular means a specific one, not just any one.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81136,6 +82275,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "peculiar"
       ],
+      "explanation": "Peculiar means strange or unusual.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81178,6 +82318,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "perhaps"
       ],
+      "explanation": "Perhaps means maybe or possibly.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81220,6 +82361,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "popular"
       ],
+      "explanation": "Popular means liked or enjoyed by many people.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81262,6 +82404,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "position"
       ],
+      "explanation": "Position is where something is, or the way it is placed.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81305,6 +82448,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "possess"
       ],
+      "explanation": "To possess something means to own it or have it.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81348,6 +82492,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "possession"
       ],
+      "explanation": "A possession is something that you own or have.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81390,6 +82535,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "possible"
       ],
+      "explanation": "Possible means able to happen or be done.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81432,6 +82578,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "potatoes"
       ],
+      "explanation": "Potatoes are round root vegetables that grow underground.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81474,6 +82621,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "pressure"
       ],
+      "explanation": "Pressure is force pushing on something, or stress caused by demands.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81516,6 +82664,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "probably"
       ],
+      "explanation": "Probably means very likely to happen or be true.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81558,6 +82707,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "promise"
       ],
+      "explanation": "A promise is a firm statement that you will do something.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81600,6 +82750,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "purpose"
       ],
+      "explanation": "Purpose is the reason something exists or is done.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81642,6 +82793,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "quarter"
       ],
+      "explanation": "A quarter is one of four equal parts.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81684,6 +82836,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "question"
       ],
+      "explanation": "A question is something you ask to find out information.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81726,6 +82879,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "recent"
       ],
+      "explanation": "Recent means having happened not long ago.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81768,6 +82922,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "regular"
       ],
+      "explanation": "Regular means happening again and again in the same pattern, or usual.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81810,6 +82965,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "reign"
       ],
+      "explanation": "A reign is the time when a king or queen rules.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81852,6 +83008,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "remember"
       ],
+      "explanation": "To remember means to keep something in your mind or bring it back to mind.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81894,6 +83051,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "sentence"
       ],
+      "explanation": "A sentence is a group of words that expresses a complete idea.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81936,6 +83094,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "separate"
       ],
+      "explanation": "Separate means apart, not joined together.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -81978,6 +83137,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "special"
       ],
+      "explanation": "Special means different from the usual in an important or valued way.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -82020,6 +83180,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "straight"
       ],
+      "explanation": "Straight means not curved, bent or crooked.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -82062,6 +83223,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "strange"
       ],
+      "explanation": "Strange means unusual or surprising.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -82104,6 +83266,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "strength"
       ],
+      "explanation": "Strength is the power to lift, push, resist or keep going.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -82146,6 +83309,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "suppose"
       ],
+      "explanation": "To suppose means to think something is true, often without being completely sure.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -82188,6 +83352,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "surprise"
       ],
+      "explanation": "A surprise is something unexpected.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -82230,6 +83395,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "therefore"
       ],
+      "explanation": "Therefore means for that reason or as a result.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -82273,6 +83439,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "though"
       ],
+      "explanation": "Though means although, or despite the fact that something is true.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -82316,6 +83483,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "although"
       ],
+      "explanation": "Although means even though or despite the fact that.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -82358,6 +83526,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "thought"
       ],
+      "explanation": "A thought is an idea in your mind; thought is also the past tense of think.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -82400,6 +83569,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "through"
       ],
+      "explanation": "Through means moving in one side and out of the other, or from start to finish.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -82442,6 +83612,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "various"
       ],
+      "explanation": "Various means several different kinds.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -82484,6 +83655,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "weight"
       ],
+      "explanation": "Weight is how heavy something is.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -82527,6 +83699,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "woman"
       ],
+      "explanation": "A woman is an adult female person.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -82570,6 +83743,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "women"
       ],
+      "explanation": "Women is the plural of woman.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -82612,6 +83786,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "accommodate"
       ],
+      "explanation": "To accommodate means to provide space for someone or something, or to fit in with needs.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -82654,6 +83829,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "accompany"
       ],
+      "explanation": "To accompany means to go somewhere with someone or to happen at the same time.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -82696,6 +83872,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "according"
       ],
+      "explanation": "According to something means as stated by it, or in a way that agrees with it.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -82738,6 +83915,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "achieve"
       ],
+      "explanation": "To achieve means to succeed in doing something through effort.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -82780,6 +83958,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "aggressive"
       ],
+      "explanation": "Aggressive means ready to attack, argue or behave forcefully.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -82822,6 +84001,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "amateur"
       ],
+      "explanation": "An amateur is someone who does an activity for interest, not as a paid job.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -82864,6 +84044,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "ancient"
       ],
+      "explanation": "Ancient means very old or from a long time ago.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -82906,6 +84087,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "apparent"
       ],
+      "explanation": "Apparent means easy to see or seeming to be true.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -82948,6 +84130,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "appreciate"
       ],
+      "explanation": "To appreciate means to understand the value of something or be thankful for it.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -82990,6 +84173,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "attached"
       ],
+      "explanation": "Attached means joined, fastened or feeling emotionally close.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83032,6 +84216,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "available"
       ],
+      "explanation": "Available means ready to be used or free to do something.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83074,6 +84259,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "average"
       ],
+      "explanation": "Average means typical, ordinary, or the middle amount found by sharing equally.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83116,6 +84302,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "awkward"
       ],
+      "explanation": "Awkward means difficult to deal with, clumsy or uncomfortable.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83158,6 +84345,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "bargain"
       ],
+      "explanation": "A bargain is something bought for less than the usual price, or an agreement between people.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83200,6 +84388,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "bruise"
       ],
+      "explanation": "A bruise is a dark mark on skin caused by a bump or injury.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83242,6 +84431,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "category"
       ],
+      "explanation": "A category is a group of things that share the same type or feature.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83284,6 +84474,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "cemetery"
       ],
+      "explanation": "A cemetery is a place where people are buried.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83326,6 +84517,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "committee"
       ],
+      "explanation": "A committee is a group of people chosen to discuss or organise something.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83368,6 +84560,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "communicate"
       ],
+      "explanation": "To communicate means to share information, ideas or feelings.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83410,6 +84603,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "community"
       ],
+      "explanation": "A community is a group of people who live near each other or share something in common.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83452,6 +84646,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "competition"
       ],
+      "explanation": "A competition is an event where people try to win or do better than others.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83494,6 +84689,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "conscience"
       ],
+      "explanation": "Your conscience is the inner sense that helps you know right from wrong.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83536,6 +84732,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "conscious"
       ],
+      "explanation": "Conscious means awake, aware or able to notice what is happening.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83578,6 +84775,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "controversy"
       ],
+      "explanation": "A controversy is strong disagreement about an issue.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83620,6 +84818,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "convenience"
       ],
+      "explanation": "Convenience means ease, usefulness or something that saves time and effort.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83662,6 +84861,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "correspond"
       ],
+      "explanation": "To correspond means to match, agree or communicate by messages.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83705,6 +84905,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
         "criticise",
         "criticize"
       ],
+      "explanation": "To criticise means to say what is wrong with something or someone.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83747,6 +84948,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "curiosity"
       ],
+      "explanation": "Curiosity is the wish to know, learn or find out about something.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83789,6 +84991,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "definite"
       ],
+      "explanation": "Definite means clear, certain and not vague.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83831,6 +85034,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "desperate"
       ],
+      "explanation": "Desperate means feeling that you urgently need something or have little hope.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83873,6 +85077,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "determined"
       ],
+      "explanation": "Determined means firmly decided to do something and not give up.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83915,6 +85120,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "develop"
       ],
+      "explanation": "To develop means to grow, improve or become more advanced.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83957,6 +85163,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "dictionary"
       ],
+      "explanation": "A dictionary is a book or resource that explains words, spellings and meanings.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -83999,6 +85206,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "disastrous"
       ],
+      "explanation": "Disastrous means causing great harm, failure or trouble.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84041,6 +85249,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "embarrass"
       ],
+      "explanation": "To embarrass someone means to make them feel awkward, ashamed or self-conscious.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84083,6 +85292,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "environment"
       ],
+      "explanation": "The environment is the natural world around us, or the conditions in a place.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84127,6 +85337,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "equip"
       ],
+      "explanation": "To equip means to provide the things needed for a task.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84171,6 +85382,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "equipped"
       ],
+      "explanation": "Equipped means provided with what is needed.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84215,6 +85427,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "equipment"
       ],
+      "explanation": "Equipment is the things needed for a particular job or activity.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84257,6 +85470,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "especially"
       ],
+      "explanation": "Especially means particularly, or more than usual.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84299,6 +85513,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "exaggerate"
       ],
+      "explanation": "To exaggerate means to describe something as bigger, better or worse than it really is.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84341,6 +85556,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "excellent"
       ],
+      "explanation": "Excellent means extremely good.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84383,6 +85599,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "existence"
       ],
+      "explanation": "Existence is the state of being real or alive.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84425,6 +85642,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "explanation"
       ],
+      "explanation": "An explanation gives reasons or details that make something clear.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84467,6 +85685,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "familiar"
       ],
+      "explanation": "Familiar means known to you because you have seen or experienced it before.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84509,6 +85728,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "foreign"
       ],
+      "explanation": "Foreign means from another country or not familiar.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84551,6 +85771,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "forty"
       ],
+      "explanation": "Forty is the number after thirty-nine and before forty-one.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84593,6 +85814,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "frequently"
       ],
+      "explanation": "Frequently means often or many times.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84635,6 +85857,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "government"
       ],
+      "explanation": "A government is the group of people who run a country or area.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84677,6 +85900,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "guarantee"
       ],
+      "explanation": "A guarantee is a firm promise that something will happen or work as expected.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84719,6 +85943,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "harass"
       ],
+      "explanation": "To harass means to repeatedly trouble, bother or upset someone.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84761,6 +85986,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "hindrance"
       ],
+      "explanation": "A hindrance is something that gets in the way or makes progress harder.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84803,6 +86029,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "identity"
       ],
+      "explanation": "Identity is who a person is, including the qualities that make them unique.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84846,6 +86073,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "immediate"
       ],
+      "explanation": "Immediate means happening now or without delay.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84889,6 +86117,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "immediately"
       ],
+      "explanation": "Immediately means straight away or without delay.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84931,6 +86160,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "individual"
       ],
+      "explanation": "An individual is one person or thing, separate from a group.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -84973,6 +86203,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "interfere"
       ],
+      "explanation": "To interfere means to get involved in a way that causes problems or is not wanted.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85015,6 +86246,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "interrupt"
       ],
+      "explanation": "To interrupt means to stop someone while they are speaking or doing something.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85057,6 +86289,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "language"
       ],
+      "explanation": "Language is a system of words and signs that people use to communicate.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85099,6 +86332,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "leisure"
       ],
+      "explanation": "Leisure is free time when you can rest or enjoy activities.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85141,6 +86375,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "lightning"
       ],
+      "explanation": "Lightning is a bright flash of electricity in the sky during a storm.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85183,6 +86418,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "marvellous"
       ],
+      "explanation": "Marvellous means wonderful or very impressive.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85225,6 +86461,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "mischievous"
       ],
+      "explanation": "Mischievous means playful in a naughty or troublesome way.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85267,6 +86504,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "muscle"
       ],
+      "explanation": "A muscle is body tissue that tightens and relaxes to help you move.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85309,6 +86547,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "necessary"
       ],
+      "explanation": "Necessary means needed or required.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85351,6 +86590,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "neighbour"
       ],
+      "explanation": "A neighbour is someone who lives near you.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85393,6 +86633,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "nuisance"
       ],
+      "explanation": "A nuisance is a person or thing that annoys or causes trouble.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85435,6 +86676,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "occupy"
       ],
+      "explanation": "To occupy means to take up space, live in a place or keep someone busy.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85477,6 +86719,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "occur"
       ],
+      "explanation": "To occur means to happen or take place.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85519,6 +86762,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "opportunity"
       ],
+      "explanation": "An opportunity is a chance to do something.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85561,6 +86805,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "parliament"
       ],
+      "explanation": "Parliament is the group of elected people who make laws in the UK and some other countries.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85603,6 +86848,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "persuade"
       ],
+      "explanation": "To persuade means to convince someone to do or believe something.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85645,6 +86891,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "physical"
       ],
+      "explanation": "Physical means connected with the body or with things you can touch.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85687,6 +86934,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "prejudice"
       ],
+      "explanation": "Prejudice is an unfair opinion about a person or group formed without enough knowledge.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85729,6 +86977,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "privilege"
       ],
+      "explanation": "A privilege is a special right or advantage.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85771,6 +87020,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "profession"
       ],
+      "explanation": "A profession is a type of work that needs special training or skill.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85813,6 +87063,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "programme"
       ],
+      "explanation": "A programme is a planned set of activities, or a television or radio show.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85855,6 +87106,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "pronunciation"
       ],
+      "explanation": "Pronunciation is the way a word is spoken.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85897,6 +87149,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "queue"
       ],
+      "explanation": "A queue is a line of people or things waiting for their turn.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85940,6 +87193,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
         "recognise",
         "recognize"
       ],
+      "explanation": "To recognise means to know someone or something because you have seen it before.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -85982,6 +87236,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "recommend"
       ],
+      "explanation": "To recommend means to say that someone should choose or try something.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86024,6 +87279,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "relevant"
       ],
+      "explanation": "Relevant means connected to what is being discussed or needed.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86066,6 +87322,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "restaurant"
       ],
+      "explanation": "A restaurant is a place where people pay to sit and eat meals.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86108,6 +87365,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "rhyme"
       ],
+      "explanation": "A rhyme is a word or line that has the same ending sound as another.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86150,6 +87408,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "rhythm"
       ],
+      "explanation": "Rhythm is a regular pattern of sounds, beats or movements.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86192,6 +87451,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "sacrifice"
       ],
+      "explanation": "A sacrifice is giving up something important for a reason or for someone else.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86234,6 +87494,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "secretary"
       ],
+      "explanation": "A secretary is a person who organises information, messages and office work.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86276,6 +87537,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "shoulder"
       ],
+      "explanation": "A shoulder is the part of the body where the arm joins the upper body.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86318,6 +87580,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "signature"
       ],
+      "explanation": "A signature is your name written in your own way to show agreement or identity.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86361,6 +87624,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "sincere"
       ],
+      "explanation": "Sincere means honest and truly meant.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86404,6 +87668,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "sincerely"
       ],
+      "explanation": "Sincerely means honestly and truly.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86446,6 +87711,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "soldier"
       ],
+      "explanation": "A soldier is a person who serves in an army.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86488,6 +87754,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "stomach"
       ],
+      "explanation": "The stomach is the part inside your body where food begins to be digested.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86530,6 +87797,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "sufficient"
       ],
+      "explanation": "Sufficient means enough for what is needed.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86572,6 +87840,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "suggest"
       ],
+      "explanation": "To suggest means to put forward an idea or plan.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86614,6 +87883,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "symbol"
       ],
+      "explanation": "A symbol is a sign, shape or object that stands for an idea or meaning.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86656,6 +87926,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "system"
       ],
+      "explanation": "A system is a set of connected parts that work together.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86698,6 +87969,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "temperature"
       ],
+      "explanation": "Temperature tells how hot or cold something is.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86740,6 +88012,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "thorough"
       ],
+      "explanation": "Thorough means complete and careful, with nothing important missed.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86782,6 +88055,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "twelfth"
       ],
+      "explanation": "Twelfth means number twelve in order.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86824,6 +88098,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "variety"
       ],
+      "explanation": "Variety means a number of different kinds or a mixture.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86866,6 +88141,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "vegetable"
       ],
+      "explanation": "A vegetable is a plant or part of a plant eaten as food, such as a carrot.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86908,6 +88184,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "vehicle"
       ],
+      "explanation": "A vehicle is something used to carry people or goods, such as a car, bus or lorry.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86950,6 +88227,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "yacht"
       ],
+      "explanation": "A yacht is a boat used for sailing or pleasure trips.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -86995,6 +88273,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "accident"
       ],
+      "explanation": "An accident is something that happens by chance, often causing damage or a problem.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87038,6 +88317,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "accidentally"
       ],
+      "explanation": "If you do something accidentally, you do it by mistake and did not mean to.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87081,6 +88361,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "actual"
       ],
+      "explanation": "Actual means real or true, not guessed or imagined.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87124,6 +88405,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "actually"
       ],
+      "explanation": "Actually is used to say what is really true, especially when it is different from what someone expected.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87166,6 +88448,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "address"
       ],
+      "explanation": "An address is the details of where a person or place can be found, such as a house number and street.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87208,6 +88491,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "answer"
       ],
+      "explanation": "An answer is what you say or write in reply to a question.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87250,6 +88534,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "appear"
       ],
+      "explanation": "To appear means to come into sight or seem to be a certain way.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87292,6 +88577,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "arrive"
       ],
+      "explanation": "To arrive means to reach the place you were travelling to.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87334,6 +88620,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "believe"
       ],
+      "explanation": "To believe means to think that something is true or to trust someone.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87376,6 +88663,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "bicycle"
       ],
+      "explanation": "A bicycle is a vehicle with two wheels that you ride by pedalling.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87418,6 +88706,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "breath"
       ],
+      "explanation": "A breath is the air you take into or let out of your lungs.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87460,6 +88749,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "breathe"
       ],
+      "explanation": "To breathe means to take air into your lungs and let it out again.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87502,6 +88792,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "build"
       ],
+      "explanation": "To build means to make something by putting parts together.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87545,6 +88836,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "busy"
       ],
+      "explanation": "Busy means having a lot to do or full of activity.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87588,6 +88880,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "business"
       ],
+      "explanation": "A business is work or an organisation that sells goods or services.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87630,6 +88923,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "calendar"
       ],
+      "explanation": "A calendar shows days, weeks and months of the year.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87672,6 +88966,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "caught"
       ],
+      "explanation": "Caught is the past tense of catch; it can mean grabbed, trapped or noticed doing something.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87714,6 +89009,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "centre"
       ],
+      "explanation": "The centre is the middle point or main part of something.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87756,6 +89052,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "century"
       ],
+      "explanation": "A century is a period of one hundred years.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87798,6 +89095,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "certain"
       ],
+      "explanation": "Certain means sure, or known to be true.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87840,6 +89138,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "circle"
       ],
+      "explanation": "A circle is a round shape where every point on the edge is the same distance from the centre.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87882,6 +89181,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "complete"
       ],
+      "explanation": "Complete means finished or with nothing missing.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87924,6 +89224,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "consider"
       ],
+      "explanation": "To consider means to think carefully about something before deciding.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -87966,6 +89267,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "continue"
       ],
+      "explanation": "To continue means to keep going and not stop.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88008,6 +89310,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "decide"
       ],
+      "explanation": "To decide means to choose after thinking about the options.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88050,6 +89353,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "describe"
       ],
+      "explanation": "To describe means to say or write what someone or something is like.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88092,6 +89396,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "different"
       ],
+      "explanation": "Different means not the same.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88134,6 +89439,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "difficult"
       ],
+      "explanation": "Difficult means hard to do, understand or deal with.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88176,6 +89482,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "disappear"
       ],
+      "explanation": "To disappear means to stop being seen or to go away.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88218,6 +89525,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "early"
       ],
+      "explanation": "Early means before the usual or expected time.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88260,6 +89568,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "earth"
       ],
+      "explanation": "Earth can mean the planet we live on, or soil and ground.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88303,6 +89612,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "eight"
       ],
+      "explanation": "Eight is the number after seven and before nine.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88346,6 +89656,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "eighth"
       ],
+      "explanation": "Eighth means number eight in order.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88388,6 +89699,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "enough"
       ],
+      "explanation": "Enough means as much or as many as needed.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88430,6 +89742,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "exercise"
       ],
+      "explanation": "Exercise is physical activity that keeps your body healthy, or a task for practice.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88472,6 +89785,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "experience"
       ],
+      "explanation": "Experience is something that happens to you, or knowledge you gain by doing something.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88514,6 +89828,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "experiment"
       ],
+      "explanation": "An experiment is a careful test to find out what happens or whether an idea is true.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88556,6 +89871,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "extreme"
       ],
+      "explanation": "Extreme means very great, strong or far from the usual.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88598,6 +89914,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "famous"
       ],
+      "explanation": "Famous means known by many people.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88640,6 +89957,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "favourite"
       ],
+      "explanation": "Favourite means liked best.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88682,6 +90000,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "february"
       ],
+      "explanation": "February is the second month of the year.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88725,6 +90044,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "forward"
       ],
+      "explanation": "Forward means towards the front or ahead.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88768,6 +90088,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "forwards"
       ],
+      "explanation": "Forwards means towards the front or ahead.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88810,6 +90131,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "fruit"
       ],
+      "explanation": "Fruit is the part of a plant that often has seeds and can be eaten, such as an apple.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88852,6 +90174,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "grammar"
       ],
+      "explanation": "Grammar is the set of rules for how words fit together in a language.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88894,6 +90217,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "group"
       ],
+      "explanation": "A group is a number of people or things together.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88936,6 +90260,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "guard"
       ],
+      "explanation": "To guard means to protect or watch over someone or something.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -88978,6 +90303,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "guide"
       ],
+      "explanation": "A guide is someone or something that shows the way or gives helpful information.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89020,6 +90346,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "heard"
       ],
+      "explanation": "Heard is the past tense of hear; it means listened to or noticed a sound.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89062,6 +90389,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "heart"
       ],
+      "explanation": "The heart is the organ that pumps blood around the body; it can also mean feelings.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89104,6 +90432,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "height"
       ],
+      "explanation": "Height is how tall or high something is.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89146,6 +90475,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "history"
       ],
+      "explanation": "History is the study of things that happened in the past.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89188,6 +90518,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "imagine"
       ],
+      "explanation": "To imagine means to make a picture or idea in your mind.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89230,6 +90561,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "increase"
       ],
+      "explanation": "To increase means to become bigger in number, size or amount.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89272,6 +90604,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "important"
       ],
+      "explanation": "Important means having great value or needing attention.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89314,6 +90647,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "interest"
       ],
+      "explanation": "Interest is a feeling of wanting to know or learn more about something.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89356,6 +90690,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "island"
       ],
+      "explanation": "An island is land with water all around it.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89398,6 +90733,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "knowledge"
       ],
+      "explanation": "Knowledge is what you know and understand.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89440,6 +90776,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "learn"
       ],
+      "explanation": "To learn means to gain knowledge or a skill.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89482,6 +90819,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "length"
       ],
+      "explanation": "Length is how long something is from one end to the other.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89524,6 +90862,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "library"
       ],
+      "explanation": "A library is a place where books and information are kept for people to use.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89566,6 +90905,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "material"
       ],
+      "explanation": "Material is the substance something is made from, such as cotton, wood or metal.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89608,6 +90948,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "medicine"
       ],
+      "explanation": "Medicine is something used to help treat illness or pain.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89650,6 +90991,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "mention"
       ],
+      "explanation": "To mention means to say something briefly.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89692,6 +91034,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "minute"
       ],
+      "explanation": "A minute is a period of sixty seconds.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89734,6 +91077,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "natural"
       ],
+      "explanation": "Natural means found in nature or not made by people.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89776,6 +91120,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "naughty"
       ],
+      "explanation": "Naughty means behaving badly or not following rules.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89818,6 +91163,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "notice"
       ],
+      "explanation": "To notice means to see, hear or become aware of something.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89861,6 +91207,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "occasion"
       ],
+      "explanation": "An occasion is a particular time when something happens, often something special.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89904,6 +91251,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "occasionally"
       ],
+      "explanation": "Occasionally means sometimes, but not often.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89946,6 +91294,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "often"
       ],
+      "explanation": "Often means many times or frequently.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -89988,6 +91337,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "opposite"
       ],
+      "explanation": "Opposite means completely different or facing the other way.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90030,6 +91380,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "ordinary"
       ],
+      "explanation": "Ordinary means normal, usual or not special.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90072,6 +91423,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "particular"
       ],
+      "explanation": "Particular means a specific one, not just any one.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90114,6 +91466,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "peculiar"
       ],
+      "explanation": "Peculiar means strange or unusual.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90156,6 +91509,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "perhaps"
       ],
+      "explanation": "Perhaps means maybe or possibly.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90198,6 +91552,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "popular"
       ],
+      "explanation": "Popular means liked or enjoyed by many people.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90240,6 +91595,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "position"
       ],
+      "explanation": "Position is where something is, or the way it is placed.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90283,6 +91639,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "possess"
       ],
+      "explanation": "To possess something means to own it or have it.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90326,6 +91683,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "possession"
       ],
+      "explanation": "A possession is something that you own or have.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90368,6 +91726,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "possible"
       ],
+      "explanation": "Possible means able to happen or be done.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90410,6 +91769,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "potatoes"
       ],
+      "explanation": "Potatoes are round root vegetables that grow underground.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90452,6 +91812,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "pressure"
       ],
+      "explanation": "Pressure is force pushing on something, or stress caused by demands.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90494,6 +91855,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "probably"
       ],
+      "explanation": "Probably means very likely to happen or be true.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90536,6 +91898,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "promise"
       ],
+      "explanation": "A promise is a firm statement that you will do something.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90578,6 +91941,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "purpose"
       ],
+      "explanation": "Purpose is the reason something exists or is done.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90620,6 +91984,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "quarter"
       ],
+      "explanation": "A quarter is one of four equal parts.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90662,6 +92027,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "question"
       ],
+      "explanation": "A question is something you ask to find out information.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90704,6 +92070,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "recent"
       ],
+      "explanation": "Recent means having happened not long ago.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90746,6 +92113,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "regular"
       ],
+      "explanation": "Regular means happening again and again in the same pattern, or usual.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90788,6 +92156,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "reign"
       ],
+      "explanation": "A reign is the time when a king or queen rules.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90830,6 +92199,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "remember"
       ],
+      "explanation": "To remember means to keep something in your mind or bring it back to mind.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90872,6 +92242,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "sentence"
       ],
+      "explanation": "A sentence is a group of words that expresses a complete idea.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90914,6 +92285,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "separate"
       ],
+      "explanation": "Separate means apart, not joined together.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90956,6 +92328,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "special"
       ],
+      "explanation": "Special means different from the usual in an important or valued way.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -90998,6 +92371,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "straight"
       ],
+      "explanation": "Straight means not curved, bent or crooked.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -91040,6 +92414,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "strange"
       ],
+      "explanation": "Strange means unusual or surprising.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -91082,6 +92457,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "strength"
       ],
+      "explanation": "Strength is the power to lift, push, resist or keep going.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -91124,6 +92500,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "suppose"
       ],
+      "explanation": "To suppose means to think something is true, often without being completely sure.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -91166,6 +92543,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "surprise"
       ],
+      "explanation": "A surprise is something unexpected.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -91208,6 +92586,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "therefore"
       ],
+      "explanation": "Therefore means for that reason or as a result.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -91251,6 +92630,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "though"
       ],
+      "explanation": "Though means although, or despite the fact that something is true.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -91294,6 +92674,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "although"
       ],
+      "explanation": "Although means even though or despite the fact that.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -91336,6 +92717,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "thought"
       ],
+      "explanation": "A thought is an idea in your mind; thought is also the past tense of think.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -91378,6 +92760,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "through"
       ],
+      "explanation": "Through means moving in one side and out of the other, or from start to finish.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -91420,6 +92803,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "various"
       ],
+      "explanation": "Various means several different kinds.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -91462,6 +92846,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "weight"
       ],
+      "explanation": "Weight is how heavy something is.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -91505,6 +92890,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "woman"
       ],
+      "explanation": "A woman is an adult female person.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -91548,6 +92934,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "women"
       ],
+      "explanation": "Women is the plural of woman.",
       "listId": "statutory-y3-4",
       "yearGroups": [
         "Y3",
@@ -91590,6 +92977,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "accommodate"
       ],
+      "explanation": "To accommodate means to provide space for someone or something, or to fit in with needs.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -91632,6 +93020,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "accompany"
       ],
+      "explanation": "To accompany means to go somewhere with someone or to happen at the same time.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -91674,6 +93063,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "according"
       ],
+      "explanation": "According to something means as stated by it, or in a way that agrees with it.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -91716,6 +93106,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "achieve"
       ],
+      "explanation": "To achieve means to succeed in doing something through effort.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -91758,6 +93149,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "aggressive"
       ],
+      "explanation": "Aggressive means ready to attack, argue or behave forcefully.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -91800,6 +93192,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "amateur"
       ],
+      "explanation": "An amateur is someone who does an activity for interest, not as a paid job.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -91842,6 +93235,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "ancient"
       ],
+      "explanation": "Ancient means very old or from a long time ago.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -91884,6 +93278,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "apparent"
       ],
+      "explanation": "Apparent means easy to see or seeming to be true.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -91926,6 +93321,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "appreciate"
       ],
+      "explanation": "To appreciate means to understand the value of something or be thankful for it.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -91968,6 +93364,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "attached"
       ],
+      "explanation": "Attached means joined, fastened or feeling emotionally close.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92010,6 +93407,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "available"
       ],
+      "explanation": "Available means ready to be used or free to do something.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92052,6 +93450,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "average"
       ],
+      "explanation": "Average means typical, ordinary, or the middle amount found by sharing equally.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92094,6 +93493,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "awkward"
       ],
+      "explanation": "Awkward means difficult to deal with, clumsy or uncomfortable.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92136,6 +93536,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "bargain"
       ],
+      "explanation": "A bargain is something bought for less than the usual price, or an agreement between people.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92178,6 +93579,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "bruise"
       ],
+      "explanation": "A bruise is a dark mark on skin caused by a bump or injury.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92220,6 +93622,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "category"
       ],
+      "explanation": "A category is a group of things that share the same type or feature.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92262,6 +93665,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "cemetery"
       ],
+      "explanation": "A cemetery is a place where people are buried.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92304,6 +93708,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "committee"
       ],
+      "explanation": "A committee is a group of people chosen to discuss or organise something.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92346,6 +93751,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "communicate"
       ],
+      "explanation": "To communicate means to share information, ideas or feelings.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92388,6 +93794,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "community"
       ],
+      "explanation": "A community is a group of people who live near each other or share something in common.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92430,6 +93837,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "competition"
       ],
+      "explanation": "A competition is an event where people try to win or do better than others.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92472,6 +93880,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "conscience"
       ],
+      "explanation": "Your conscience is the inner sense that helps you know right from wrong.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92514,6 +93923,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "conscious"
       ],
+      "explanation": "Conscious means awake, aware or able to notice what is happening.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92556,6 +93966,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "controversy"
       ],
+      "explanation": "A controversy is strong disagreement about an issue.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92598,6 +94009,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "convenience"
       ],
+      "explanation": "Convenience means ease, usefulness or something that saves time and effort.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92640,6 +94052,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "correspond"
       ],
+      "explanation": "To correspond means to match, agree or communicate by messages.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92683,6 +94096,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
         "criticise",
         "criticize"
       ],
+      "explanation": "To criticise means to say what is wrong with something or someone.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92725,6 +94139,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "curiosity"
       ],
+      "explanation": "Curiosity is the wish to know, learn or find out about something.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92767,6 +94182,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "definite"
       ],
+      "explanation": "Definite means clear, certain and not vague.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92809,6 +94225,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "desperate"
       ],
+      "explanation": "Desperate means feeling that you urgently need something or have little hope.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92851,6 +94268,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "determined"
       ],
+      "explanation": "Determined means firmly decided to do something and not give up.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92893,6 +94311,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "develop"
       ],
+      "explanation": "To develop means to grow, improve or become more advanced.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92935,6 +94354,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "dictionary"
       ],
+      "explanation": "A dictionary is a book or resource that explains words, spellings and meanings.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -92977,6 +94397,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "disastrous"
       ],
+      "explanation": "Disastrous means causing great harm, failure or trouble.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93019,6 +94440,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "embarrass"
       ],
+      "explanation": "To embarrass someone means to make them feel awkward, ashamed or self-conscious.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93061,6 +94483,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "environment"
       ],
+      "explanation": "The environment is the natural world around us, or the conditions in a place.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93105,6 +94528,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "equip"
       ],
+      "explanation": "To equip means to provide the things needed for a task.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93149,6 +94573,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "equipped"
       ],
+      "explanation": "Equipped means provided with what is needed.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93193,6 +94618,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "equipment"
       ],
+      "explanation": "Equipment is the things needed for a particular job or activity.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93235,6 +94661,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "especially"
       ],
+      "explanation": "Especially means particularly, or more than usual.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93277,6 +94704,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "exaggerate"
       ],
+      "explanation": "To exaggerate means to describe something as bigger, better or worse than it really is.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93319,6 +94747,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "excellent"
       ],
+      "explanation": "Excellent means extremely good.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93361,6 +94790,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "existence"
       ],
+      "explanation": "Existence is the state of being real or alive.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93403,6 +94833,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "explanation"
       ],
+      "explanation": "An explanation gives reasons or details that make something clear.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93445,6 +94876,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "familiar"
       ],
+      "explanation": "Familiar means known to you because you have seen or experienced it before.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93487,6 +94919,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "foreign"
       ],
+      "explanation": "Foreign means from another country or not familiar.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93529,6 +94962,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "forty"
       ],
+      "explanation": "Forty is the number after thirty-nine and before forty-one.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93571,6 +95005,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "frequently"
       ],
+      "explanation": "Frequently means often or many times.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93613,6 +95048,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "government"
       ],
+      "explanation": "A government is the group of people who run a country or area.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93655,6 +95091,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "guarantee"
       ],
+      "explanation": "A guarantee is a firm promise that something will happen or work as expected.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93697,6 +95134,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "harass"
       ],
+      "explanation": "To harass means to repeatedly trouble, bother or upset someone.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93739,6 +95177,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "hindrance"
       ],
+      "explanation": "A hindrance is something that gets in the way or makes progress harder.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93781,6 +95220,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "identity"
       ],
+      "explanation": "Identity is who a person is, including the qualities that make them unique.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93824,6 +95264,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "immediate"
       ],
+      "explanation": "Immediate means happening now or without delay.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93867,6 +95308,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "immediately"
       ],
+      "explanation": "Immediately means straight away or without delay.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93909,6 +95351,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "individual"
       ],
+      "explanation": "An individual is one person or thing, separate from a group.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93951,6 +95394,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "interfere"
       ],
+      "explanation": "To interfere means to get involved in a way that causes problems or is not wanted.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -93993,6 +95437,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "interrupt"
       ],
+      "explanation": "To interrupt means to stop someone while they are speaking or doing something.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94035,6 +95480,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "language"
       ],
+      "explanation": "Language is a system of words and signs that people use to communicate.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94077,6 +95523,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "leisure"
       ],
+      "explanation": "Leisure is free time when you can rest or enjoy activities.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94119,6 +95566,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "lightning"
       ],
+      "explanation": "Lightning is a bright flash of electricity in the sky during a storm.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94161,6 +95609,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "marvellous"
       ],
+      "explanation": "Marvellous means wonderful or very impressive.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94203,6 +95652,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "mischievous"
       ],
+      "explanation": "Mischievous means playful in a naughty or troublesome way.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94245,6 +95695,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "muscle"
       ],
+      "explanation": "A muscle is body tissue that tightens and relaxes to help you move.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94287,6 +95738,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "necessary"
       ],
+      "explanation": "Necessary means needed or required.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94329,6 +95781,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "neighbour"
       ],
+      "explanation": "A neighbour is someone who lives near you.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94371,6 +95824,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "nuisance"
       ],
+      "explanation": "A nuisance is a person or thing that annoys or causes trouble.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94413,6 +95867,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "occupy"
       ],
+      "explanation": "To occupy means to take up space, live in a place or keep someone busy.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94455,6 +95910,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "occur"
       ],
+      "explanation": "To occur means to happen or take place.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94497,6 +95953,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "opportunity"
       ],
+      "explanation": "An opportunity is a chance to do something.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94539,6 +95996,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "parliament"
       ],
+      "explanation": "Parliament is the group of elected people who make laws in the UK and some other countries.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94581,6 +96039,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "persuade"
       ],
+      "explanation": "To persuade means to convince someone to do or believe something.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94623,6 +96082,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "physical"
       ],
+      "explanation": "Physical means connected with the body or with things you can touch.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94665,6 +96125,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "prejudice"
       ],
+      "explanation": "Prejudice is an unfair opinion about a person or group formed without enough knowledge.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94707,6 +96168,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "privilege"
       ],
+      "explanation": "A privilege is a special right or advantage.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94749,6 +96211,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "profession"
       ],
+      "explanation": "A profession is a type of work that needs special training or skill.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94791,6 +96254,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "programme"
       ],
+      "explanation": "A programme is a planned set of activities, or a television or radio show.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94833,6 +96297,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "pronunciation"
       ],
+      "explanation": "Pronunciation is the way a word is spoken.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94875,6 +96340,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "queue"
       ],
+      "explanation": "A queue is a line of people or things waiting for their turn.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94918,6 +96384,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
         "recognise",
         "recognize"
       ],
+      "explanation": "To recognise means to know someone or something because you have seen it before.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -94960,6 +96427,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "recommend"
       ],
+      "explanation": "To recommend means to say that someone should choose or try something.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95002,6 +96470,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "relevant"
       ],
+      "explanation": "Relevant means connected to what is being discussed or needed.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95044,6 +96513,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "restaurant"
       ],
+      "explanation": "A restaurant is a place where people pay to sit and eat meals.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95086,6 +96556,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "rhyme"
       ],
+      "explanation": "A rhyme is a word or line that has the same ending sound as another.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95128,6 +96599,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "rhythm"
       ],
+      "explanation": "Rhythm is a regular pattern of sounds, beats or movements.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95170,6 +96642,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "sacrifice"
       ],
+      "explanation": "A sacrifice is giving up something important for a reason or for someone else.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95212,6 +96685,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "secretary"
       ],
+      "explanation": "A secretary is a person who organises information, messages and office work.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95254,6 +96728,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "shoulder"
       ],
+      "explanation": "A shoulder is the part of the body where the arm joins the upper body.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95296,6 +96771,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "signature"
       ],
+      "explanation": "A signature is your name written in your own way to show agreement or identity.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95339,6 +96815,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "sincere"
       ],
+      "explanation": "Sincere means honest and truly meant.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95382,6 +96859,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "sincerely"
       ],
+      "explanation": "Sincerely means honestly and truly.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95424,6 +96902,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "soldier"
       ],
+      "explanation": "A soldier is a person who serves in an army.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95466,6 +96945,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "stomach"
       ],
+      "explanation": "The stomach is the part inside your body where food begins to be digested.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95508,6 +96988,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "sufficient"
       ],
+      "explanation": "Sufficient means enough for what is needed.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95550,6 +97031,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "suggest"
       ],
+      "explanation": "To suggest means to put forward an idea or plan.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95592,6 +97074,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "symbol"
       ],
+      "explanation": "A symbol is a sign, shape or object that stands for an idea or meaning.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95634,6 +97117,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "system"
       ],
+      "explanation": "A system is a set of connected parts that work together.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95676,6 +97160,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "temperature"
       ],
+      "explanation": "Temperature tells how hot or cold something is.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95718,6 +97203,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "thorough"
       ],
+      "explanation": "Thorough means complete and careful, with nothing important missed.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95760,6 +97246,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "twelfth"
       ],
+      "explanation": "Twelfth means number twelve in order.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95802,6 +97289,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "variety"
       ],
+      "explanation": "Variety means a number of different kinds or a mixture.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95844,6 +97332,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "vegetable"
       ],
+      "explanation": "A vegetable is a plant or part of a plant eaten as food, such as a carrot.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95886,6 +97375,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "vehicle"
       ],
+      "explanation": "A vehicle is something used to carry people or goods, such as a car, bus or lorry.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",
@@ -95928,6 +97418,7 @@ export const SEEDED_SPELLING_PUBLISHED_SNAPSHOT = {
       "accepted": [
         "yacht"
       ],
+      "explanation": "A yacht is a boat used for sailing or pleasure trips.",
       "listId": "statutory-y5-6",
       "yearGroups": [
         "Y5",

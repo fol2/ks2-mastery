@@ -290,6 +290,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       yearLabel: word.yearLabel,
       familyWords: Array.isArray(word.familyWords) ? [...word.familyWords] : [],
       sentence: word.sentence || '',
+      explanation: word.explanation || '',
       status: engine.statusForWord(learnerId, word),
       stageLabel: engine.stageLabel(progress.stage),
       progress: {
