@@ -4538,8 +4538,7 @@ textarea:focus-visible {
 }
 .wb-search-icon svg { display: block; }
 
-.wb-chips,
-.wb-legend {
+.wb-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -4552,45 +4551,15 @@ textarea:focus-visible {
   min-width: min(100%, 520px);
 }
 
-.wb-status-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 10px;
-  margin: 0 0 14px;
-  padding: 10px 0 0;
-  border-top: 1px solid var(--line-soft);
-}
-.wb-legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--ink-2);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-.wb-legend-swatch {
-  width: 0.85rem;
-  height: 0.85rem;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  background: var(--panel-sunken);
-}
-.wb-legend-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: var(--panel-soft);
-  color: var(--muted);
-  font-size: 0.7rem;
-  font-variant-numeric: tabular-nums;
-}
-
 .wb-word-groups {
   display: grid;
   gap: 16px;
+  height: clamp(420px, 54vh, 640px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+  scrollbar-gutter: stable;
+  align-content: start;
 }
 .wb-word-group {
   padding-top: 14px;
@@ -4657,32 +4626,27 @@ textarea:focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
-.wb-word-pill.new,
-.wb-legend-swatch.new {
+.wb-word-pill.new {
   background: var(--panel-sunken);
   color: var(--muted);
   border-color: var(--line);
 }
-.wb-word-pill.learning,
-.wb-legend-swatch.learning {
+.wb-word-pill.learning {
   background: var(--brand-soft);
   color: var(--brand-ink);
   border-color: color-mix(in oklab, var(--brand) 24%, var(--line));
 }
-.wb-word-pill.due,
-.wb-legend-swatch.due {
+.wb-word-pill.due {
   background: var(--warn-soft);
   color: var(--warn-strong);
   border-color: color-mix(in oklab, var(--warn) 34%, var(--line));
 }
-.wb-word-pill.secure,
-.wb-legend-swatch.secure {
+.wb-word-pill.secure {
   background: var(--good-soft);
   color: var(--good-strong);
   border-color: color-mix(in oklab, var(--good) 34%, var(--line));
 }
-.wb-word-pill.trouble,
-.wb-legend-swatch.trouble {
+.wb-word-pill.trouble {
   background: var(--bad-soft);
   color: var(--bad-strong);
   border-color: color-mix(in oklab, var(--bad) 34%, var(--line));
@@ -4720,14 +4684,12 @@ textarea:focus-visible {
 
 @media (max-width: 720px) {
   .wb-card { padding: 22px 20px 20px; border-radius: var(--radius); }
+  .wb-word-groups { height: clamp(360px, 52vh, 560px); }
 }
 
 /* ---------- Word bank filter chips ---------- */
-/* Interactive tabs on the word-bank toolbar. Each chip is a real button that
-   dispatches spelling-analytics-status-filter with a v1 token (all / due /
-   weak / learning / secure / unseen). The palette mirrors the word-pill
-   legend so the filter selection stays visually connected to the spellings
-   it produces. */
+/* Interactive category filters on the word-bank toolbar. Status now lives in
+   the word-pill colour itself, avoiding a duplicate second filter row. */
 .wb-chip {
   appearance: none;
   display: inline-flex;

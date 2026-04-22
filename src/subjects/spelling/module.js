@@ -88,39 +88,30 @@ function summaryCards(cards = []) {
 
 /* --------------------------------------------------------------
    Word-bank helpers
-   Status vocabulary translates production tokens to the v1 pill
-   tokens ('new' → 'unseen', 'trouble' → 'weak') so the CSS pill
-   palette from the design comp applies directly.
+   Category filters narrow pools; the pill colour itself carries each
+   word's learning status.
    -------------------------------------------------------------- */
 function normaliseSearchText(value) {
   return String(value || '').trim().toLowerCase();
 }
 
-/* Valid word bank filter IDs. Uses v1 tokens on the wire (unseen/weak) so the
-   persisted transientUi value reads naturally and matches the filter chip
-   label. wordBankFilterMatchesStatus() translates back to the production
-   status vocabulary at render time. */
-const WORD_BANK_FILTER_IDS = new Set(['all', 'due', 'weak', 'learning', 'secure', 'unseen']);
-const WORD_BANK_YEAR_FILTER_IDS = new Set(['all', 'y3-4', 'y5-6']);
-
-function wordBankFilterMatchesStatus(filter, status) {
-  if (filter === 'all') return true;
-  if (filter === 'weak') return status === 'trouble';
-  if (filter === 'unseen') return status === 'new';
-  return filter === status;
-}
+/* Category filters stay intentionally broad: the word colours already describe
+   status, while the toolbar narrows the statutory/extra spelling pools. */
+const WORD_BANK_YEAR_FILTER_IDS = new Set(['all', 'y3-4', 'y5-6', 'extra']);
 
 function wordBankYearFilterMatches(filter, word) {
   if (filter === 'all') return true;
   if (filter === 'y3-4') return word.year === '3-4';
   if (filter === 'y5-6') return word.year === '5-6';
+  if (filter === 'extra') return word.spellingPool === 'extra';
   return true;
 }
 
 function wordBankYearFilterLabel(filter) {
   if (filter === 'y3-4') return 'Years 3-4';
   if (filter === 'y5-6') return 'Years 5-6';
-  return 'All years';
+  if (filter === 'extra') return 'Extra';
+  return 'All';
 }
 
 function wordProgressTone(status) {
@@ -798,59 +789,20 @@ function renderSummary({ learner, ui, subject }) {
 }
 
 /* --------------------------------------------------------------
-   Word bank (analytics tab)
-   The status filter chips translate production tokens to the v1
-   visual language ("weak" for trouble, "unseen" for new) on the
-   pill element, while keeping production status names on the
-   underlying data-action button so test pins stay valid.
+   Word bank (standalone browser)
+   Category chips narrow the statutory Years 3-4 / Years 5-6 pools
+   and the Extra expansion pool. Word colours keep status visible
+   without adding a second duplicate status toolbar.
    -------------------------------------------------------------- */
-function renderWordBankFilterChips({ counts, activeFilter }) {
-  /* v1-style filter tabs. Each chip is a real button wired to the
-     spelling-analytics-status-filter dispatch so a click updates the
-     transientUi state and re-renders the list. The count pill next to
-     the label mirrors the approved design. */
-  const chips = [
-    { id: 'all', label: 'All' },
-    { id: 'due', label: 'Due' },
-    { id: 'weak', label: 'Trouble' },
-    { id: 'learning', label: 'Learning' },
-    { id: 'secure', label: 'Secure' },
-    { id: 'unseen', label: 'Unseen' },
-  ];
-  /* Chips are button-role filters, not WAI-ARIA tabs — there's no companion
-     tabpanel, and the design (designs/ks2-redesign-v1.html) treats them as
-     pressable segmented controls. `aria-pressed` communicates the active
-     state to assistive tech without the broken tab contract. */
-  return `
-    <div class="wb-chips" role="group" aria-label="Filter word bank by status">
-      ${chips.map((chip) => {
-        const active = chip.id === activeFilter;
-        const count = counts[chip.id] ?? 0;
-        return `
-          <button
-            type="button"
-            aria-pressed="${active ? 'true' : 'false'}"
-            class="wb-chip${active ? ' on' : ''}"
-            data-action="spelling-analytics-status-filter"
-            data-value="${escapeHtml(chip.id)}"
-          >
-            <span class="wb-chip-label">${escapeHtml(chip.label)}</span>
-            <span class="wb-chip-count">${count}</span>
-          </button>
-        `;
-      }).join('')}
-    </div>
-  `;
-}
-
 function renderWordBankYearChips({ counts, activeYearFilter }) {
   const chips = [
-    { id: 'all', label: 'All years' },
+    { id: 'all', label: 'All' },
     { id: 'y3-4', label: 'Years 3-4' },
     { id: 'y5-6', label: 'Years 5-6' },
+    { id: 'extra', label: 'Extra' },
   ];
   return `
-    <div class="wb-chips wb-year-chips" role="group" aria-label="Filter word bank by year band">
+    <div class="wb-chips wb-year-chips" role="group" aria-label="Filter word bank by category">
       ${chips.map((chip) => {
         const active = chip.id === activeYearFilter;
         const count = counts[chip.id] ?? 0;
@@ -879,25 +831,39 @@ function countWordBankYear(words, year) {
   return words.reduce((count, word) => count + (word.year === year ? 1 : 0), 0);
 }
 
-function renderWordBankLegend({ counts }) {
-  const items = [
-    { token: 'new', label: 'New', count: counts.unseen ?? 0 },
-    { token: 'learning', label: 'Learning', count: counts.learning ?? 0 },
-    { token: 'due', label: 'Due', count: counts.due ?? 0 },
-    { token: 'secure', label: 'Secure', count: counts.secure ?? 0 },
-    { token: 'trouble', label: 'Trouble', count: counts.weak ?? 0 },
+function countWordBankExtra(words) {
+  return words.reduce((count, word) => count + (word.spellingPool === 'extra' ? 1 : 0), 0);
+}
+
+function wordBankAggregateStats(words) {
+  const stats = {
+    total: 0,
+    secure: 0,
+    due: 0,
+    trouble: 0,
+    learning: 0,
+    unseen: 0,
+  };
+  for (const word of Array.isArray(words) ? words : []) {
+    stats.total += 1;
+    if (word.status === 'secure') stats.secure += 1;
+    else if (word.status === 'due') stats.due += 1;
+    else if (word.status === 'trouble') stats.trouble += 1;
+    else if (word.status === 'learning') stats.learning += 1;
+    else if (word.status === 'new') stats.unseen += 1;
+  }
+  return stats;
+}
+
+function wordBankAggregateCards(stats, totalSub) {
+  return [
+    { label: 'Total', value: stats.total, sub: totalSub },
+    { label: 'Secure', value: stats.secure, sub: 'Stable recall' },
+    { label: 'Due now', value: stats.due, sub: 'Due today or overdue' },
+    { label: 'Trouble', value: stats.trouble, sub: 'Weak or fragile' },
+    { label: 'Learning', value: stats.learning, sub: 'Introduced, not secure' },
+    { label: 'Unseen', value: stats.unseen, sub: 'Not yet introduced' },
   ];
-  return `
-    <div class="wb-status-legend" aria-label="Word status colour legend">
-      ${items.map((item) => `
-        <span class="wb-legend-item">
-          <span class="wb-legend-swatch ${escapeHtml(item.token)}" aria-hidden="true"></span>
-          <span class="wb-legend-label">${escapeHtml(item.label)}</span>
-          <span class="wb-legend-count">${item.count}</span>
-        </span>
-      `).join('')}
-    </div>
-  `;
 }
 
 function renderWordBankWordPill(word) {
@@ -909,7 +875,6 @@ function renderWordBankWordPill(word) {
   const title = [
     word.word,
     word.family ? `Family: ${word.family}` : '',
-    word.yearLabel || '',
     poolLabel,
     word.stageLabel || '',
     `Correct ${Math.max(0, Number(progress.correct) || 0)}`,
@@ -936,7 +901,7 @@ function renderWordBankGroup({ group, words, query }) {
   const summaryText = words.length
     ? `${secureCount} secure out of ${words.length} visible spellings`
     : 'No words match your filters.';
-  const emptyText = query ? 'Try another word or family search.' : 'Try another status or year filter.';
+  const emptyText = query ? 'Try another word or family search.' : 'Try another category filter.';
   return `
     <section class="wb-word-group" aria-label="${escapeHtml(group.title)} spellings">
       <div class="wb-word-group-head">
@@ -952,40 +917,36 @@ function renderWordBankGroup({ group, words, query }) {
   `;
 }
 
-function renderWordBank({ learner, analytics, searchQuery = '', statusFilter = 'all', yearFilter = 'all' }) {
+function renderWordBank({ learner, analytics, searchQuery = '', yearFilter = 'all' }) {
   const query = normaliseSearchText(searchQuery);
-  const activeFilter = WORD_BANK_FILTER_IDS.has(statusFilter) ? statusFilter : 'all';
   const activeYearFilter = WORD_BANK_YEAR_FILTER_IDS.has(yearFilter) ? yearFilter : 'all';
   const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
   const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
   const categoryWords = allWords.filter((word) => wordBankYearFilterMatches(activeYearFilter, word));
 
-  /* Apply year band, then status, then search. Status counts are scoped to the
-     active year band so a learner can see what is due or secure inside the
-     selected KS2 pool, while the year-band chips keep whole-list totals. */
+  /* Apply the category first, then search. Status remains visible through the
+     word-pill colour and tooltip so stale hidden status filters never change
+     what the learner sees. */
   const visibleGroups = groups
     .filter((group) => activeYearFilter === 'all' ? true : group.key === activeYearFilter)
     .map((group) => {
       const words = (Array.isArray(group.words) ? group.words : [])
-        .filter((word) => wordBankFilterMatchesStatus(activeFilter, word.status))
         .filter((word) => wordMatchesSearch(word, query));
       return { group, words };
     })
-    .filter((entry) => activeFilter === 'all' && !query ? true : entry.words.length > 0);
+    .filter((entry) => query ? entry.words.length > 0 : true);
   const visibleWords = visibleGroups.flatMap((entry) => entry.words);
 
   const counts = {
-    all: categoryWords.length,
     due: countWordBankStatus(categoryWords, 'due'),
     weak: countWordBankStatus(categoryWords, 'trouble'),
-    learning: countWordBankStatus(categoryWords, 'learning'),
     secure: countWordBankStatus(categoryWords, 'secure'),
-    unseen: countWordBankStatus(categoryWords, 'new'),
   };
   const yearCounts = {
     all: allWords.length,
     'y3-4': countWordBankYear(allWords, '3-4'),
     'y5-6': countWordBankYear(allWords, '5-6'),
+    extra: countWordBankExtra(allWords),
   };
 
   const rows = visibleGroups.length
@@ -1026,11 +987,8 @@ function renderWordBank({ learner, analytics, searchQuery = '', statusFilter = '
           </label>
           <div class="wb-filter-stack">
             ${renderWordBankYearChips({ counts: yearCounts, activeYearFilter })}
-            ${renderWordBankFilterChips({ counts, activeFilter })}
           </div>
         </div>
-
-        ${renderWordBankLegend({ counts })}
 
         <div class="wb-word-groups">
           ${rows}
@@ -1183,51 +1141,35 @@ function renderWordDetailModal({ word, mode = 'explain', typed = '', result = nu
    optional modal overlay when transientUi points at a word.
    -------------------------------------------------------------- */
 function renderWordBankAggregates(analytics) {
-  const emptyStats = { total: 0, secure: 0, due: 0, trouble: 0, fresh: 0, accuracy: null };
-  const core = analytics.pools.core || analytics.pools.all || emptyStats;
-  const y34 = analytics.pools.y34 || emptyStats;
-  const y56 = analytics.pools.y56 || emptyStats;
-  const extra = analytics.pools.extra || emptyStats;
+  const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
+  const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
+  /* The scheduler stats use broader "trouble" semantics for picking review
+     words. These cards must mirror the visible word-bank pill status instead,
+     so a recovered word does not appear as Trouble in the column summary. */
+  const core = wordBankAggregateStats(allWords.filter((word) => word.spellingPool !== 'extra'));
+  const y34 = wordBankAggregateStats(allWords.filter((word) => word.year === '3-4'));
+  const y56 = wordBankAggregateStats(allWords.filter((word) => word.year === '5-6'));
+  const extra = wordBankAggregateStats(allWords.filter((word) => word.spellingPool === 'extra'));
   const cards = [
     {
       eyebrow: 'Core spellings',
       title: 'Core statutory progress',
-      stats: [
-        { label: 'Total', value: core.total, sub: 'Words in core pool' },
-        { label: 'Secure', value: core.secure, sub: 'Stage 4+' },
-        { label: 'Due now', value: core.due, sub: 'Due today or overdue' },
-        { label: 'Accuracy', value: core.accuracy == null ? '—' : `${core.accuracy}%`, sub: 'Across stored attempts' },
-      ],
+      stats: wordBankAggregateCards(core, 'Words in core pool'),
     },
     {
       eyebrow: 'Years 3-4',
       title: 'Lower KS2 spelling pool',
-      stats: [
-        { label: 'Total', value: y34.total, sub: 'Words in pool' },
-        { label: 'Secure', value: y34.secure, sub: 'Stable recall' },
-        { label: 'Trouble', value: y34.trouble, sub: 'Weak or fragile' },
-        { label: 'Unseen', value: y34.fresh, sub: 'Not yet introduced' },
-      ],
+      stats: wordBankAggregateCards(y34, 'Words in pool'),
     },
     {
       eyebrow: 'Years 5-6',
       title: 'Upper KS2 spelling pool',
-      stats: [
-        { label: 'Total', value: y56.total, sub: 'Words in pool' },
-        { label: 'Secure', value: y56.secure, sub: 'Stable recall' },
-        { label: 'Trouble', value: y56.trouble, sub: 'Weak or fragile' },
-        { label: 'Unseen', value: y56.fresh, sub: 'Not yet introduced' },
-      ],
+      stats: wordBankAggregateCards(y56, 'Words in pool'),
     },
     {
       eyebrow: 'Extra',
       title: 'Expansion spelling pool',
-      stats: [
-        { label: 'Total', value: extra.total, sub: 'Words in pool' },
-        { label: 'Secure', value: extra.secure, sub: 'Stable recall' },
-        { label: 'Trouble', value: extra.trouble, sub: 'Weak or fragile' },
-        { label: 'Unseen', value: extra.fresh, sub: 'Not yet introduced' },
-      ],
+      stats: wordBankAggregateCards(extra, 'Words in pool'),
     },
   ];
   return `
@@ -1258,7 +1200,6 @@ function renderWordBankScene({ appState, learner, service, subject }) {
   const analytics = service.getAnalyticsSnapshot(learner.id);
   const accent = accentFor(subject);
   const searchQuery = appState?.transientUi?.spellingAnalyticsWordSearch || '';
-  const statusFilter = appState?.transientUi?.spellingAnalyticsStatusFilter || 'all';
   const yearFilter = appState?.transientUi?.spellingAnalyticsYearFilter || 'all';
   const detailSlug = appState?.transientUi?.spellingWordDetailSlug || '';
   const detailMode = appState?.transientUi?.spellingWordDetailMode || 'explain';
@@ -1274,7 +1215,7 @@ function renderWordBankScene({ appState, learner, service, subject }) {
           <h1 class="word-bank-title">${escapeHtml(learner.name)}’s spellings</h1>
         </header>
         ${renderWordBankAggregates(analytics)}
-        ${renderWordBank({ learner, analytics, searchQuery, statusFilter, yearFilter })}
+        ${renderWordBank({ learner, analytics, searchQuery, yearFilter })}
       </div>
       ${detailWord ? renderWordDetailModal({ word: detailWord, mode: detailMode, typed: drillTyped, result: drillResult, accent }) : ''}
     </div>
@@ -1357,22 +1298,6 @@ export const spellingModule = {
         transientUi: {
           ...current.transientUi,
           spellingAnalyticsWordSearch,
-        },
-      }));
-      return true;
-    }
-
-    if (action === 'spelling-analytics-status-filter') {
-      /* Word bank filter tab — v1 tokens (unseen/weak) are accepted verbatim;
-         normalisation into the validator set happens inside the store on patch.
-         Unknown values collapse to 'all' so the learner always sees the full
-         list rather than a confusing empty state. */
-      const raw = String(data.value || 'all');
-      const next = WORD_BANK_FILTER_IDS.has(raw) ? raw : 'all';
-      store.patch((current) => ({
-        transientUi: {
-          ...current.transientUi,
-          spellingAnalyticsStatusFilter: next,
         },
       }));
       return true;

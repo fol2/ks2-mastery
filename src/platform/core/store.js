@@ -133,6 +133,7 @@ const VALID_SPELLING_WORD_BANK_YEAR_FILTERS = new Set([
   'all',
   'y3-4',
   'y5-6',
+  'extra',
 ]);
 
 const VALID_WORD_DETAIL_MODES = new Set(['explain', 'drill']);
@@ -140,10 +141,8 @@ const VALID_WORD_DRILL_RESULTS = new Set(['correct', 'incorrect']);
 
 function normaliseTransientUi(rawValue) {
   const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
-  /* Word bank status filter — v1 filter tokens (unseen/weak); the word bank
-     renderer translates them to production status values (new/trouble) when
-     filtering. Unknown values collapse to 'all' so a malformed persisted
-     snapshot never traps the learner on an empty view. */
+  /* Legacy word-bank status filter — retained only to normalise older persisted
+     snapshots. The current word bank filters by category and search only. */
   const rawFilter = typeof raw.spellingAnalyticsStatusFilter === 'string'
     ? raw.spellingAnalyticsStatusFilter
     : 'all';
