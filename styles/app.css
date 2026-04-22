@@ -487,6 +487,11 @@ textarea:focus-visible {
   --bottom: 32px;
   --size: 96px;
 }
+.hero-monster-actor.vellhorn {
+  --left: 64%;
+  --bottom: 8px;
+  --size: 86px;
+}
 .hero-monster-motion {
   position: relative;
   z-index: 2;
@@ -1605,6 +1610,10 @@ textarea:focus-visible {
   .hero-monster-actor.phaeton {
     --left: 68%;
     --size: 86px;
+  }
+  .hero-monster-actor.vellhorn {
+    --left: 62%;
+    --size: 76px;
   }
 }
 

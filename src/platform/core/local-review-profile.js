@@ -94,6 +94,11 @@ function buildMonsterCodexState(profile) {
       mastered: slugsForMonster('glimmerbug', profile.stage),
     },
     phaeton: { branch: 'b1' },
+    vellhorn: {
+      caught: false,
+      branch: 'b2',
+      mastered: [],
+    },
   };
 }
 

@@ -874,7 +874,9 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
       function monsterForWord(wordOrSlug) {
         var slug = typeof wordOrSlug === "string" ? wordOrSlug : (wordOrSlug && wordOrSlug.slug);
         var meta = window.KS2_WORD_META || {};
-        var year = meta[slug] && meta[slug].year;
+        var word = meta[slug] || {};
+        var year = word.year;
+        if (word.spellingPool === "extra" || year === "extra") return "vellhorn";
         if (year === "5-6") return "glimmerbug";
         return "inklet";
       }

@@ -24,6 +24,10 @@ const FEATURE_FOOT_PAD_BY_ASSET = Object.freeze({
     b1: Object.freeze([6, 16, 22, 10, 4]),
     b2: Object.freeze([16, 18, 10, 2, 0]),
   }),
+  vellhorn: Object.freeze({
+    b1: Object.freeze([12, 10, 8, 6, 4]),
+    b2: Object.freeze([12, 10, 8, 6, 4]),
+  }),
 });
 
 const FEATURE_FOOT_PAD_SOURCE_SIZE = 320;

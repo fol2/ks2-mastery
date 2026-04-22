@@ -22,6 +22,7 @@ function wordFields(slug, wordMeta = DEFAULT_WORD_BY_SLUG) {
     word: word.word,
     family: word.family,
     yearBand: word.year,
+    spellingPool: word.spellingPool === 'extra' ? 'extra' : 'core',
   };
 }
 

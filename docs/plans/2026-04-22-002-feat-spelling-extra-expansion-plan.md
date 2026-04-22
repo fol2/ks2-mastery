@@ -311,7 +311,7 @@ The important invariant is that `spellingPool` becomes the authority for core-vs
 - The learner can choose Extra without confusing it with statutory practice.
 - No production UI still labels the statutory aggregate as "All".
 
-- [ ] **Unit 5: Add Vellhorn To Rewards, Codex, And Home Projections**
+- [x] **Unit 5: Add Vellhorn To Rewards, Codex, And Home Projections**
 
 **Goal:** Add Vellhorn as the Extra spelling monster without changing Inklet, Glimmerbug, or Phaeton semantics.
 

@@ -47,6 +47,7 @@ test('local codex review profile seeds all review learners', () => {
     ['inklet', true, 0],
     ['glimmerbug', true, 0],
     ['phaeton', true, 0],
+    ['vellhorn', false, 0],
   ]);
 });
 
@@ -64,6 +65,7 @@ test('local codex staged review learners seed matching creature stages', () => {
         ['inklet', true, Number(stage)],
         ['glimmerbug', true, Number(stage)],
         ['phaeton', true, Number(stage)],
+        ['vellhorn', false, 0],
       ],
     );
   }

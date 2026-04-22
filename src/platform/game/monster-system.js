@@ -2,12 +2,20 @@ import {
   levelFor,
   MONSTER_BRANCHES,
   MONSTERS,
+  MONSTERS_BY_SUBJECT,
   normaliseMonsterBranch,
   stageFor,
 } from './monsters.js';
 
 const DEFAULT_SYSTEM_ID = 'monster-codex';
 const MONSTER_IDS = Object.freeze(Object.keys(MONSTERS));
+const SPELLING_MONSTER_IDS = Object.freeze(
+  (MONSTERS_BY_SUBJECT.spelling || []).filter((monsterId) => MONSTERS[monsterId]),
+);
+const DIRECT_SPELLING_MONSTER_IDS = Object.freeze(
+  SPELLING_MONSTER_IDS.filter((monsterId) => monsterId !== 'phaeton'),
+);
+const PHAETON_SOURCE_MONSTER_IDS = Object.freeze(['inklet', 'glimmerbug']);
 
 function readGameState(gameStateRepository, learnerId, systemId = DEFAULT_SYSTEM_ID) {
   if (!gameStateRepository) return {};
@@ -63,13 +71,20 @@ export function monsterIdForSpellingYearBand(yearBand) {
   return yearBand === '5-6' ? 'glimmerbug' : 'inklet';
 }
 
+export function monsterIdForSpellingWord(word = {}) {
+  const spellingPool = word?.spellingPool === 'extra' ? 'extra' : 'core';
+  if (spellingPool === 'extra' || word?.yearBand === 'extra' || word?.year === 'extra') return 'vellhorn';
+  return monsterIdForSpellingYearBand(word?.yearBand || word?.year);
+}
+
 function secureWordsFromAnalytics(analytics, branchState = {}) {
   const groups = Array.isArray(analytics?.wordGroups) ? analytics.wordGroups : [];
-  const state = {
-    inklet: { mastered: [], caught: false, branch: branchForMonster(branchState, 'inklet') },
-    glimmerbug: { mastered: [], caught: false, branch: branchForMonster(branchState, 'glimmerbug') },
-    phaeton: { branch: branchForMonster(branchState, 'phaeton') },
-  };
+  const state = Object.fromEntries(SPELLING_MONSTER_IDS.map((monsterId) => [
+    monsterId,
+    monsterId === 'phaeton'
+      ? { branch: branchForMonster(branchState, monsterId) }
+      : { mastered: [], caught: false, branch: branchForMonster(branchState, monsterId) },
+  ]));
 
   for (const group of groups) {
     const words = Array.isArray(group?.words) ? group.words : [];
@@ -77,15 +92,21 @@ function secureWordsFromAnalytics(analytics, branchState = {}) {
       if (!word?.slug) continue;
       const isSecure = word.status === 'secure' || Number(word.progress?.stage) >= 4;
       if (!isSecure) continue;
-      const monsterId = monsterIdForSpellingYearBand(word.year);
+      const monsterId = monsterIdForSpellingWord({
+        spellingPool: word.spellingPool,
+        year: word.year,
+        yearBand: word.year,
+      });
+      if (!state[monsterId]) continue;
       if (!state[monsterId].mastered.includes(word.slug)) {
         state[monsterId].mastered.push(word.slug);
       }
     }
   }
 
-  state.inklet.caught = state.inklet.mastered.length > 0;
-  state.glimmerbug.caught = state.glimmerbug.mastered.length > 0;
+  for (const monsterId of DIRECT_SPELLING_MONSTER_IDS) {
+    state[monsterId].caught = state[monsterId].mastered.length > 0;
+  }
   return state;
 }
 
@@ -119,9 +140,8 @@ export function progressForMonster(state, monsterId) {
 }
 
 export function derivePhaeton(state) {
-  const ink = countMastered(state, 'inklet');
-  const glim = countMastered(state, 'glimmerbug');
-  const combined = ink + glim;
+  const combined = PHAETON_SOURCE_MONSTER_IDS
+    .reduce((sum, monsterId) => sum + countMastered(state, monsterId), 0);
   let stage = 0;
   if (combined >= 200) stage = 4;
   else if (combined >= 145) stage = 3;
@@ -173,14 +193,15 @@ function buildEvent(learnerId, kind, monsterId, previous, next) {
 }
 
 export function recordMonsterMastery(learnerId, monsterId, wordSlug, gameStateRepository, options = {}) {
-  if (monsterId === 'phaeton') return [];
+  if (monsterId === 'phaeton' || !MONSTERS[monsterId]) return [];
   const before = ensureMonsterBranches(learnerId, gameStateRepository, options);
   const directEntry = isPlainObject(before[monsterId]) ? before[monsterId] : { mastered: [], caught: false };
   const directMastered = masteredList(directEntry);
   if (directMastered.includes(wordSlug)) return [];
 
   const beforeDirect = progressForMonster(before, monsterId);
-  const beforePhaeton = derivePhaeton(before);
+  const shouldUpdatePhaeton = PHAETON_SOURCE_MONSTER_IDS.includes(monsterId);
+  const beforePhaeton = shouldUpdatePhaeton ? derivePhaeton(before) : null;
 
   const after = {
     ...before,
@@ -192,20 +213,22 @@ export function recordMonsterMastery(learnerId, monsterId, wordSlug, gameStateRe
   };
 
   const afterDirect = progressForMonster(after, monsterId);
-  const afterPhaeton = derivePhaeton(after);
+  const afterPhaeton = shouldUpdatePhaeton ? derivePhaeton(after) : null;
   saveMonsterState(learnerId, after, gameStateRepository);
 
   const events = [];
   const directEvent = eventFromTransition(learnerId, monsterId, beforeDirect, afterDirect);
   if (directEvent) events.push(directEvent);
-  const aggregateEvent = eventFromTransition(learnerId, 'phaeton', beforePhaeton, afterPhaeton);
-  if (aggregateEvent) events.push(aggregateEvent);
+  if (shouldUpdatePhaeton) {
+    const aggregateEvent = eventFromTransition(learnerId, 'phaeton', beforePhaeton, afterPhaeton);
+    if (aggregateEvent) events.push(aggregateEvent);
+  }
   return events;
 }
 
 export function monsterSummary(learnerId, gameStateRepository) {
   const state = ensureMonsterBranches(learnerId, gameStateRepository);
-  return ['inklet', 'glimmerbug', 'phaeton'].map((monsterId) => ({
+  return SPELLING_MONSTER_IDS.map((monsterId) => ({
     monster: MONSTERS[monsterId],
     progress: progressForMonster(state, monsterId),
   }));
@@ -224,7 +247,7 @@ export function monsterSummaryFromSpellingAnalytics(analytics, {
       : loadMonsterState(learnerId, gameStateRepository);
   }
   const state = secureWordsFromAnalytics(analytics, branchState);
-  return ['inklet', 'glimmerbug', 'phaeton'].map((monsterId) => ({
+  return SPELLING_MONSTER_IDS.map((monsterId) => ({
     monster: MONSTERS[monsterId],
     progress: progressForMonster(state, monsterId),
   }));

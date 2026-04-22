@@ -29,10 +29,20 @@ export const MONSTERS = {
     nameByStage: ['Stardrop Egg', 'Aetherwisp', 'Cometwing', 'Starquill Owl', 'Phaeton'],
     masteredMax: 200,
   },
+  vellhorn: {
+    id: 'vellhorn',
+    name: 'Vellhorn',
+    blurb: 'Appears as Extra spellings stretch beyond the statutory pools.',
+    accent: '#2E8479',
+    secondary: '#8FD6C7',
+    pale: '#E5F3EF',
+    nameByStage: ['Vellhorn Egg', 'Vellhorn', 'Mossvell', 'Cresthorn', 'Mega Cresthorn'],
+    masteredMax: 100,
+  },
 };
 
 export const MONSTERS_BY_SUBJECT = {
-  spelling: ['inklet', 'glimmerbug', 'phaeton'],
+  spelling: ['inklet', 'glimmerbug', 'phaeton', 'vellhorn'],
 };
 
 export const MONSTER_BRANCHES = Object.freeze(['b1', 'b2']);

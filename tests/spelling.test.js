@@ -402,6 +402,7 @@ test('codex projection follows secure spelling progress even without reward game
     progress: {
       possess: { stage: 4, attempts: 4, correct: 4, wrong: 0 },
       accommodate: { stage: 4, attempts: 4, correct: 4, wrong: 0 },
+      mollusc: { stage: 4, attempts: 4, correct: 4, wrong: 0 },
     },
   });
 
@@ -411,6 +412,7 @@ test('codex projection follows secure spelling progress even without reward game
   const inklet = summary.find((entry) => entry.monster.id === 'inklet');
   const glimmerbug = summary.find((entry) => entry.monster.id === 'glimmerbug');
   const phaeton = summary.find((entry) => entry.monster.id === 'phaeton');
+  const vellhorn = summary.find((entry) => entry.monster.id === 'vellhorn');
 
   assert.equal(inklet.progress.mastered, 1);
   assert.equal(inklet.progress.caught, true);
@@ -423,6 +425,10 @@ test('codex projection follows secure spelling progress even without reward game
   assert.equal(phaeton.progress.mastered, 2);
   assert.equal(phaeton.progress.caught, false);
   assert.equal(phaeton.progress.stage, 0);
+  assert.equal(vellhorn.progress.mastered, 1);
+  assert.equal(vellhorn.progress.caught, true);
+  assert.equal(vellhorn.progress.stage, 0);
+  assert.deepEqual(vellhorn.progress.masteredList, ['mollusc']);
 });
 
 test('analytics snapshot is explicit and normalised', () => {
