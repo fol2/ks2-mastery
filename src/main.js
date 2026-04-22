@@ -943,6 +943,7 @@ function buildCodexModel(appState, context) {
 
 function buildSurfaceActions() {
   return {
+    dispatch: dispatchAction,
     toggleTheme: () => dispatchAction('toggle-theme'),
     selectLearner: (value) => dispatchAction('learner-select', { value }),
     navigateHome: () => dispatchAction('navigate-home'),

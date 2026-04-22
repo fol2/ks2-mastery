@@ -1,15 +1,16 @@
 import React, { useLayoutEffect } from 'react';
 import { HomeSurface } from '../surfaces/home/HomeSurface.jsx';
 import { CodexSurface } from '../surfaces/home/CodexSurface.jsx';
-import { TopNav } from '../surfaces/home/TopNav.jsx';
+import { TopNav } from '../surfaces/shell/TopNav.jsx';
+import { PersistenceBanner } from '../surfaces/shell/PersistenceBanner.jsx';
+import { ToastShelf } from '../surfaces/shell/ToastShelf.jsx';
+import { MonsterCelebrationOverlay } from '../surfaces/shell/MonsterCelebrationOverlay.jsx';
+import { ProfileSettingsSurface } from '../surfaces/profile/ProfileSettingsSurface.jsx';
 import { ErrorBoundary } from '../platform/react/ErrorBoundary.jsx';
 import { usePlatformStore } from '../platform/react/use-platform-store.js';
 import {
   renderApp,
-  renderMonsterCelebrationOverlay,
-  renderPersistenceBanner,
   renderSubjectScreen,
-  renderToasts,
 } from '../platform/ui/render.js';
 
 function Html({ html }) {
@@ -17,12 +18,16 @@ function Html({ html }) {
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-function OverlayHtml({ appState }) {
-  const html = `
-    ${renderToasts(appState)}
-    ${renderMonsterCelebrationOverlay(appState)}
-  `;
-  return <div className="home-overlays" dangerouslySetInnerHTML={{ __html: html }} />;
+function SharedOverlays({ appState, actions }) {
+  return (
+    <div className="home-overlays">
+      <ToastShelf toasts={appState.toasts || []} onDismiss={(index) => actions.dispatch('toast-dismiss', { index })} />
+      <MonsterCelebrationOverlay
+        queue={appState.monsterCelebrations?.queue || []}
+        onDismiss={() => actions.dispatch('monster-celebration-dismiss')}
+      />
+    </div>
+  );
 }
 
 function SubjectTopNav({ chrome, actions }) {
@@ -30,6 +35,7 @@ function SubjectTopNav({ chrome, actions }) {
     <TopNav
       theme={chrome.theme}
       onToggleTheme={actions.toggleTheme}
+      onNavigateHome={actions.navigateHome}
       learners={chrome.learnerOptions || []}
       selectedLearnerId={chrome.learner?.id || ''}
       learnerLabel={chrome.learnerLabel || ''}
@@ -58,31 +64,43 @@ export function App({ controller, runtime }) {
     <ErrorBoundary>
       {screen === 'dashboard' && (
         <>
-          <Html html={renderPersistenceBanner(appState.persistence)} />
+          <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
           <HomeSurface model={runtime.buildHomeModel(appState, context)} actions={actions} />
-          <OverlayHtml appState={appState} />
+          <SharedOverlays appState={appState} actions={actions} />
         </>
       )}
 
       {screen === 'codex' && (
         <>
-          <Html html={renderPersistenceBanner(appState.persistence)} />
+          <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
           <CodexSurface model={runtime.buildCodexModel(appState, context)} actions={actions} />
-          <OverlayHtml appState={appState} />
+          <SharedOverlays appState={appState} actions={actions} />
         </>
       )}
 
       {screen === 'subject' && (
         <div className="app-shell">
           <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
-          <Html html={renderPersistenceBanner(appState.persistence)} />
+          <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
           <Html html={renderSubjectScreen(context)} />
-          <Html html={renderToasts(appState)} />
-          <Html html={renderMonsterCelebrationOverlay(appState)} />
+          <SharedOverlays appState={appState} actions={actions} />
         </div>
       )}
 
-      {!['dashboard', 'codex', 'subject'].includes(screen) && (
+      {screen === 'profile-settings' && (
+        <>
+          <ProfileSettingsSurface
+            appState={appState}
+            chrome={runtime.buildSurfaceChromeModel(appState)}
+            actions={actions}
+            subjectCount={context.subjects?.length || 0}
+            liveSubjectCount={(context.subjects || []).filter((subject) => subject.available !== false).length}
+          />
+          <SharedOverlays appState={appState} actions={actions} />
+        </>
+      )}
+
+      {!['dashboard', 'codex', 'subject', 'profile-settings'].includes(screen) && (
         <Html html={renderApp(appState, context)} />
       )}
     </ErrorBoundary>

@@ -54,6 +54,44 @@ export function renderAuthSurfaceFixture() {
   `);
 }
 
+export function renderSharedSurfaceFixture() {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { PersistenceBanner } from ${JSON.stringify(absoluteSpecifier('src/surfaces/shell/PersistenceBanner.jsx'))};
+    import { ToastShelf } from ${JSON.stringify(absoluteSpecifier('src/surfaces/shell/ToastShelf.jsx'))};
+    import { MonsterCelebrationOverlay } from ${JSON.stringify(absoluteSpecifier('src/surfaces/shell/MonsterCelebrationOverlay.jsx'))};
+
+    const monster = {
+      id: 'inklet',
+      name: 'Inklet',
+      accent: '#3E6FA8',
+      secondary: '#FFE9A8',
+      pale: '#F8F4EA',
+      nameByStage: ['Inklet egg', 'Inklet'],
+    };
+    const persistence = {
+      mode: 'degraded',
+      remoteAvailable: true,
+      trustedState: 'local-cache',
+      cacheState: 'ahead-of-remote',
+      pendingWriteCount: 2,
+      inFlightWriteCount: 0,
+      lastError: { message: 'remote unavailable', code: 'remote_error', phase: 'remote-write' },
+    };
+    const toast = { id: 'toast-1', type: 'reward.monster', kind: 'caught', monster, next: { stage: 0, branch: 'b1' } };
+    const celebration = { kind: 'caught', monster, previous: null, next: { stage: 0, branch: 'b1' } };
+    const html = renderToStaticMarkup(
+      <>
+        <PersistenceBanner snapshot={persistence} onRetry={() => {}} />
+        <ToastShelf toasts={[toast]} onDismiss={() => {}} />
+        <MonsterCelebrationOverlay queue={[celebration]} onDismiss={() => {}} />
+      </>
+    );
+    console.log(html);
+  `);
+}
+
 export function renderAppFixture({ route = 'dashboard' } = {}) {
   return renderFixture(`
     import React from 'react';
@@ -68,6 +106,7 @@ export function renderAppFixture({ route = 'dashboard' } = {}) {
     const controller = createAppController();
     if (${JSON.stringify(route)} === 'codex') controller.dispatch('open-codex');
     if (${JSON.stringify(route)} === 'subject') controller.dispatch('open-subject', { subjectId: 'spelling' });
+    if (${JSON.stringify(route)} === 'profile') controller.dispatch('open-profile-settings');
 
     function learnerModel(appState) {
       const id = appState.learners.selectedId;
@@ -92,6 +131,7 @@ export function renderAppFixture({ route = 'dashboard' } = {}) {
     }
 
     const actions = {
+      dispatch(action, data) { controller.dispatch(action, data); },
       toggleTheme() {},
       selectLearner(value) { controller.dispatch('learner-select', { value }); },
       navigateHome() { controller.dispatch('navigate-home'); },

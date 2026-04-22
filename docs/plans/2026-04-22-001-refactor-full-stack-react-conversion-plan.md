@@ -309,7 +309,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 - The Spelling spike, accessibility contract, and responsive smoke checks pass before Unit 3 starts.
 - The Unit 2.5 strategic gate records whether the migration continues to Units 3-7, narrows to a smaller React tranche, or pauses for the first Arithmetic thin-slice estimate.
 
-- [ ] **Unit 3: Port Shared Shell, Profile, Dashboard, Codex, and Overlays**
+- [x] **Unit 3: Port Shared Shell, Profile, Dashboard, Codex, and Overlays**
 
 **Goal:** Convert shared UI surfaces from string templates or global islands into normal React components after auth is already React-owned.
 
