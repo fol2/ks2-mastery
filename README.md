@@ -7,9 +7,9 @@ The goal is not to polish the old prototype. The goal is to give the product a s
 ## What is inside
 
 - `index.html` and `styles/app.css`
-  - A dependency-light shell that preserves the current visual direction.
+  - A React-owned browser shell that preserves the current visual direction.
 - `src/platform/*`
-  - Shared platform concerns: route state, learner profiles, subject registry, repository boundary, reward layer, shared rendering.
+  - Shared platform concerns: route state, learner profiles, subject registry, repository boundary, reward layer, controller orchestration, and React shell support.
   - The subject registry now validates the module contract at startup so boundary mistakes fail early instead of surfacing as mid-render crashes.
   - The shared store now persists learners and subject UI through explicit repository contracts instead of writing directly to browser storage.
 - `src/subjects/spelling/*`
@@ -29,6 +29,8 @@ The goal is not to polish the old prototype. The goal is to give the product a s
 ## Status
 
 English Spelling works in the new structure.
+
+The browser app is now a single React shell. `index.html` loads the built React app bundle, React owns dashboard, Codex, subject, profile, Parent Hub, Admin / Operations, toast and modal surfaces, and the existing controller/store/repository boundary still owns state transitions and side effects. Legacy string renderers remain only as local characterisation helpers while production routes compose React components.
 
 Production on `ks2.eugnel.uk` uses the API adapter by default after sign-in. Direct file/local mode, or `?local=1`, still uses browser storage for development only. The API adapter reports explicit persistence modes (`local-only`, `remote-sync`, `degraded`) so failed remote writes are visible instead of being treated as silent success. The Worker is D1-backed with learner ownership enforcement, atomic account / learner revision checks, idempotent request replay, account-scoped spelling content routes, role-aware Parent/Admin hub read routes, and OpenAI TTS as the production dictation default.
 
@@ -117,6 +119,4 @@ The fixture is not a shipped product subject, and Arithmetic is still intentiona
 
 ## Important note
 
-This reference rebuild is deliberately light on framework machinery. It is easier to inspect, easier to continue, and clearer as an architectural handoff.
-
-If the next team wants to move the shell back onto React, the boundaries are now clean enough to do that without rewriting the spelling engine again.
+This reference rebuild is deliberately light on framework machinery. React owns the browser shell, while the Worker API, D1-backed repositories, deterministic services, and subject expansion harness remain the stable application boundaries.

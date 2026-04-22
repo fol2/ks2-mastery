@@ -463,7 +463,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 **Verification:**
 - The subject expansion harness proves the React subject route still supports Spelling and the fixture before the Spelling UI is ported.
 
-- [ ] **Unit 6: Port English Spelling UI to React Components**
+- [x] **Unit 6: Port English Spelling UI to React Components**
 
 **Goal:** Convert `src/subjects/spelling/module.js` rendering into React components without changing the spelling service, persistence, parity, or action semantics.
 
@@ -520,7 +520,7 @@ The important shape is that React becomes the only DOM owner. The app controller
 **Verification:**
 - English Spelling parity tests remain green, including legacy progress import/export, content snapshot behaviour, word-bank modal behaviour, and monster celebration timing.
 
-- [ ] **Unit 7: Retire Legacy Renderers, Globals, and Build Artefacts**
+- [x] **Unit 7: Retire Legacy Renderers, Globals, and Build Artefacts**
 
 **Goal:** Remove the transitional string-rendering and global island paths once all routes are React-owned.
 

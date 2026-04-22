@@ -11,12 +11,15 @@ import { AdminHubSurface } from '../surfaces/hubs/AdminHubSurface.jsx';
 import { SubjectRoute } from '../surfaces/subject/SubjectRoute.jsx';
 import { ErrorBoundary } from '../platform/react/ErrorBoundary.jsx';
 import { usePlatformStore } from '../platform/react/use-platform-store.js';
-import { renderApp } from '../platform/ui/render.js';
 
-function Html({ html }) {
-  if (!html) return null;
-  return <div dangerouslySetInnerHTML={{ __html: html }} />;
-}
+const REACT_ROUTES = new Set([
+  'dashboard',
+  'codex',
+  'subject',
+  'profile-settings',
+  'parent-hub',
+  'admin-hub',
+]);
 
 function SharedOverlays({ appState, actions }) {
   return (
@@ -46,6 +49,23 @@ function SubjectTopNav({ chrome, actions }) {
       persistenceMode={chrome.persistence?.mode || 'local-only'}
       persistenceLabel={chrome.persistence?.label || ''}
     />
+  );
+}
+
+function UnknownRouteSurface({ screen, actions }) {
+  return (
+    <main className="subject-main" style={{ maxWidth: 960, margin: '0 auto', width: '100%' }}>
+      <section className="card" role="alert" aria-live="polite">
+        <div className="eyebrow">Route unavailable</div>
+        <h1 className="section-title">This screen is not available</h1>
+        <p className="subtitle">
+          The React shell could not match the route "{screen || 'unknown'}". Return to the dashboard to continue.
+        </p>
+        <div className="actions" style={{ marginTop: 16 }}>
+          <button className="btn primary" type="button" onClick={actions.navigateHome}>Back to dashboard</button>
+        </div>
+      </section>
+    </main>
   );
 }
 
@@ -131,8 +151,13 @@ export function App({ controller, runtime }) {
         </div>
       )}
 
-      {!['dashboard', 'codex', 'subject', 'profile-settings', 'parent-hub', 'admin-hub'].includes(screen) && (
-        <Html html={renderApp(appState, context)} />
+      {!REACT_ROUTES.has(screen) && (
+        <div className="app-shell">
+          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
+          <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
+          <UnknownRouteSurface screen={screen} actions={actions} />
+          <SharedOverlays appState={appState} actions={actions} />
+        </div>
       )}
     </ErrorBoundary>
   );

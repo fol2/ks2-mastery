@@ -18,6 +18,7 @@ Owns:
 - shared tabs
 - toasts and notifications
 - dashboard subject registry
+- React component composition for browser routes and overlays
 
 Does not own:
 
@@ -25,7 +26,7 @@ Does not own:
 - subject marking rules
 - subject-specific progress scheduling
 
-The shell now does own one explicit safety concern: subject-local runtime containment. If a subject render or action path throws, the shell converts that failure into a bounded fallback surface for the active subject tab instead of letting the whole screen or route collapse.
+The shell is React-owned in the browser. `index.html` loads the built app bundle, React composes dashboard, Codex, subject, profile, Parent Hub, Admin / Operations and overlay surfaces, and the controller remains the bridge to stores, repositories, services, imports, downloads, TTS and hub loading. The shell also owns one explicit safety concern: subject-local runtime containment. If a subject render or action path throws, the shell converts that failure into a bounded fallback surface for the active subject tab instead of letting the whole screen or route collapse.
 
 ### 2. Subject module
 
@@ -37,17 +38,13 @@ name
 blurb
 initState()
 getDashboardStats()
-renderPractice()
-renderAnalytics()
-renderProfiles()
-renderSettings()
-renderMethod()
+PracticeComponent or renderPracticeComponent()
 handleAction()
 ```
 
 This is the main change that turns the product from “Spelling plus placeholders” into an actual platform.
 
-The registry should validate this contract at startup. Fail early on missing methods or duplicate ids rather than discovering boundary drift at render time.
+The registry validates this contract at startup. Fail early on missing methods or duplicate ids rather than discovering boundary drift at render time. Legacy `renderPractice()` support is retained only for local characterisation tests and transitional fixtures; production subject routes use React practice components.
 
 Subject presentation metadata such as accent colours belongs on the subject module. Services stay deterministic and presentation-free.
 
@@ -91,9 +88,9 @@ That keeps the product vision honest: game and learning compound each other with
 
 ### 5. Deployment boundary
 
-The browser version uses local persistence and deterministic services for speed and clarity.
+The browser version uses a React SPA with local persistence and deterministic services for speed and clarity.
 
-The Cloudflare version should swap in API-backed repositories without changing subject renderers.
+The Cloudflare version swaps in API-backed repositories without changing subject components.
 
 That means the real boundary is not “browser versus Worker”.
 It is “local repository versus remote repository”.

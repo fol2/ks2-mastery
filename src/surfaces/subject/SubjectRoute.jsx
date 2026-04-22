@@ -2,6 +2,11 @@ import React from 'react';
 import { SubjectBreadcrumb } from '../shell/SubjectBreadcrumb.jsx';
 import { SubjectRouteContext } from './SubjectRouteContext.js';
 import { SubjectRuntimeFallback } from './SubjectRuntimeFallback.jsx';
+import { SpellingPracticeSurface } from '../../subjects/spelling/components/SpellingPracticeSurface.jsx';
+
+const REACT_SUBJECT_COMPONENTS = Object.freeze({
+  spelling: SpellingPracticeSurface,
+});
 
 function selectedLearner(appState) {
   const learnerId = appState?.learners?.selectedId || '';
@@ -40,15 +45,6 @@ function NoWritableLearnerCard({ subject, context, actions }) {
       </div>
     </section>
   );
-}
-
-function LegacySubjectPractice({ subject, routeContext, captureRenderError }) {
-  try {
-    const html = subject.renderPractice(routeContext);
-    return <div dangerouslySetInnerHTML={{ __html: html }} />;
-  } catch (error) {
-    return captureRenderError(error, 'renderPractice');
-  }
 }
 
 class SubjectRenderBoundary extends React.Component {
@@ -97,8 +93,8 @@ function renderPracticeNode({ subject, routeContext, actions, activeTab, runtime
     }
   }
 
-  if (typeof subject.PracticeComponent === 'function') {
-    const PracticeComponent = subject.PracticeComponent;
+  const PracticeComponent = subject.PracticeComponent || REACT_SUBJECT_COMPONENTS[subject.id];
+  if (typeof PracticeComponent === 'function') {
     return (
       <SubjectRenderBoundary
         subject={subject}
@@ -112,12 +108,9 @@ function renderPracticeNode({ subject, routeContext, actions, activeTab, runtime
     );
   }
 
-  return (
-    <LegacySubjectPractice
-      subject={subject}
-      routeContext={routeContext}
-      captureRenderError={(error, methodName) => captureRenderError(error, methodName)}
-    />
+  return captureRenderError(
+    new Error(`${subject.id} does not expose a React practice component.`),
+    'PracticeComponent',
   );
 }
 
