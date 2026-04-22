@@ -566,6 +566,51 @@ export function resolvePublishedSnapshot(rawBundle) {
   return release ? cloneSerialisable(release.snapshot) : null;
 }
 
+function mergeRuntimeSnapshots(primarySnapshot, supplementalSnapshot) {
+  const primary = normalisePublishedSnapshot(primarySnapshot);
+  const supplemental = normalisePublishedSnapshot(supplementalSnapshot);
+  const wordsBySlug = new Map(primary.words.map((word) => [word.slug, word]));
+
+  for (const word of supplemental.words) {
+    if (!wordsBySlug.has(word.slug)) {
+      wordsBySlug.set(word.slug, word);
+    }
+  }
+
+  const words = [...wordsBySlug.values()].sort((a, b) => a.sortIndex - b.sortIndex);
+  return {
+    generatedAt: Math.max(primary.generatedAt, supplemental.generatedAt),
+    words,
+    wordBySlug: Object.fromEntries(words.map((word) => [word.slug, word])),
+  };
+}
+
+export function resolveRuntimeSnapshot(rawBundle, { referenceBundle = null } = {}) {
+  const bundle = normaliseSpellingContentBundle(rawBundle);
+  const publishedRelease = resolvePublishedRelease(bundle, { fallbackToLatest: true });
+  const published = publishedRelease ? cloneSerialisable(publishedRelease.snapshot) : null;
+  const reference = referenceBundle ? normaliseSpellingContentBundle(referenceBundle) : null;
+  const referenceRelease = reference ? resolvePublishedRelease(reference, { fallbackToLatest: true }) : null;
+  const referencePublished = referenceRelease ? cloneSerialisable(referenceRelease.snapshot) : null;
+
+  if (!published) return referencePublished ? cloneSerialisable(referencePublished) : null;
+  if (!referencePublished) return cloneSerialisable(published);
+
+  const publishedVersion = bundle.publication.publishedVersion
+    || publishedRelease?.version
+    || 0;
+  const referenceVersion = reference.publication.publishedVersion
+    || referenceRelease?.version
+    || 0;
+  const publishedAt = publishedRelease?.publishedAt || bundle.publication.updatedAt || 0;
+  const referencePublishedAt = referenceRelease?.publishedAt || reference.publication.updatedAt || 0;
+
+  if (publishedVersion >= referenceVersion && publishedAt >= referencePublishedAt) {
+    return cloneSerialisable(published);
+  }
+  return mergeRuntimeSnapshots(published, referencePublished);
+}
+
 function nextReleaseId(bundle, version) {
   return `spelling-r${version}`;
 }

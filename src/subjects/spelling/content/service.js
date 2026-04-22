@@ -6,7 +6,7 @@ import {
   extractPortableSpellingContent,
   normaliseSpellingContentBundle,
   publishSpellingContentBundle,
-  resolvePublishedSnapshot,
+  resolveRuntimeSnapshot,
   validateSpellingContentBundle,
 } from './model.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE, SEEDED_SPELLING_PUBLISHED_SNAPSHOT } from '../data/content-data.js';
@@ -41,7 +41,7 @@ export function createSpellingContentService({ repository, seededBundle = SEEDED
 
   function getRuntimeSnapshot() {
     const current = readBundle();
-    const published = resolvePublishedSnapshot(current);
+    const published = resolveRuntimeSnapshot(current, { referenceBundle: seeded });
     if (published?.words?.length) return cloneSerialisable(published);
     return cloneSerialisable(SEEDED_SPELLING_PUBLISHED_SNAPSHOT);
   }

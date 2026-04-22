@@ -143,7 +143,7 @@ Pass 11 moves spelling word lists, words, and sentence banks into a versioned co
 What changed:
 
 - operators edit a draft bundle through import/export, reset, and publish controls
-- learner sessions read the current published release snapshot only
+- learner sessions read published content only; legacy accounts on older seeded releases are supplemented at runtime with missing words from the bundled current seed release
 - the runtime service is rebuilt after content mutations so new published content is picked up without leaking unpublished draft rows
 - explicit word starts fail cleanly if the slug is absent from the published snapshot
 - event metadata now follows the injected content snapshot, so secured-word and retry-cleared events stay aligned with edited content

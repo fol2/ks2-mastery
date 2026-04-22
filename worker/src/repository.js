@@ -17,7 +17,7 @@ import {
   backfillSpellingWordExplanations,
   buildSpellingContentSummary,
   normaliseSpellingContentBundle,
-  resolvePublishedSnapshot,
+  resolveRuntimeSnapshot,
   validateSpellingContentBundle,
 } from '../../src/subjects/spelling/content/model.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../../src/subjects/spelling/data/content-data.js';
@@ -438,7 +438,7 @@ function normaliseRequestedPlatformRole(value) {
 
 function runtimeSnapshotForBundle(bundle) {
   const backfilled = backfillSpellingWordExplanations(bundle, SEEDED_SPELLING_CONTENT_BUNDLE);
-  return resolvePublishedSnapshot(backfilled) || resolvePublishedSnapshot(SEEDED_SPELLING_CONTENT_BUNDLE) || null;
+  return resolveRuntimeSnapshot(backfilled, { referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE });
 }
 
 function accountDirectoryRowToModel(row) {
