@@ -25,7 +25,7 @@
     "db:migrations:list:remote:oauth": "npm run db:migrations:list:remote",
     "db:backup:remote": "node ./scripts/d1-backup.mjs --remote",
     "db:reset:remote": "node ./scripts/d1-reset.mjs --remote",
-    "deploy": "npm run build && npx wrangler deploy",
+    "deploy": "npm run build && node ./scripts/wrangler-oauth.mjs deploy",
     "deploy:oauth": "npm run build && node ./scripts/wrangler-oauth.mjs deploy",
     "deploy:ci": "npm run deploy",
     "ops:tail": "node ./scripts/wrangler-oauth.mjs tail ks2-mastery --format pretty",

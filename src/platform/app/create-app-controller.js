@@ -72,7 +72,9 @@ export function createAppController({
     notify();
   });
 
-  function getSnapshot() {
+  let currentSnapshot = null;
+
+  function readSnapshot() {
     return buildControllerSnapshot({
       store,
       repositories,
@@ -84,8 +86,14 @@ export function createAppController({
     });
   }
 
+  function getSnapshot() {
+    if (!currentSnapshot) currentSnapshot = readSnapshot();
+    return currentSnapshot;
+  }
+
   function notify() {
-    const snapshot = getSnapshot();
+    currentSnapshot = readSnapshot();
+    const snapshot = currentSnapshot;
     for (const listener of controllerListeners) {
       try { listener(snapshot); } catch {
         // Controller subscribers must not break app state updates.
