@@ -2534,6 +2534,11 @@ textarea:focus-visible {
   .meadow-monster[data-path="walk"]  { left: 28%; }
   .meadow-monster[data-path="fly-b"] { left: 55%; }
   .meadow-monster[data-path="fly-a"] { left: 82%; }
+  .meadow-monster[data-path="walk"],
+  .meadow-monster[data-path="fly-b"],
+  .meadow-monster[data-path="fly-a"] {
+    animation-name: none;
+  }
 }
 
 /* ---------- Subject grid (home redesign, scoped to .subject-grid) ---------- */
@@ -2711,7 +2716,7 @@ textarea:focus-visible {
 .codex-hero {
   --codex-hero-height: 800px;
   --codex-feature-cap: 860px;
-  --codex-feature-foot-bottom: 650px;
+  --codex-feature-foot-bottom: 680px;
   --codex-feature-meta-inset: 52px;
   position: relative;
   height: var(--codex-hero-height);
@@ -2867,18 +2872,35 @@ textarea:focus-visible {
     width: 100%;
     height: auto;
     justify-self: auto;
-    place-items: end center;
-    padding-bottom: calc(var(--codex-hero-height) - var(--codex-feature-foot-bottom));
+    place-items: center;
+    padding-bottom: 0;
   }
   .codex-hero.stage-4 .codex-feature {
     width: auto;
     justify-self: auto;
   }
   .codex-feature .codex-creature-button.is-feature {
+    position: absolute;
+    left: 50%;
+    top: calc(
+      var(--codex-feature-foot-bottom)
+      - var(--codex-feature-size, 340px)
+      + var(--codex-feature-foot-shift, 0px)
+    );
+    translate: -50% 0;
     width: min(var(--codex-feature-size, 340px), calc(100vw - 96px), var(--codex-feature-cap, 860px));
     margin-top: 0;
   }
-  .codex-feature .codex-creature-button.is-feature .codex-unknown {
+  .codex-feature .codex-creature-button.is-feature .codex-unknown,
+  .codex-feature > .codex-unknown {
+    position: absolute;
+    left: 50%;
+    top: calc(
+      var(--codex-feature-foot-bottom)
+      - var(--codex-feature-size, 340px)
+      + var(--codex-feature-foot-shift, 0px)
+    );
+    translate: -50% 0;
     width: min(var(--codex-feature-size, 340px), calc(100vw - 96px), var(--codex-feature-cap, 860px));
   }
   .codex-feature .codex-feature-orbit {
@@ -3055,7 +3077,6 @@ textarea:focus-visible {
 .codex-creature-button.is-feature {
   position: relative;
   z-index: 1;
-  top: var(--codex-feature-foot-shift, 0px);
   width: min(var(--codex-feature-size, 340px), 94vw, calc(100% - 48px));
   margin-top: calc(-1 * var(--codex-feature-art-lift, 0px));
   pointer-events: auto;

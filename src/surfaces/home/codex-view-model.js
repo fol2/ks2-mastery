@@ -1,3 +1,8 @@
+import {
+  CODEX_FEATURE_MAX_SIZE_BY_SPECIES,
+  CODEX_STAGE_SCALE,
+} from './codex-visual-scale.js';
+
 export const CODEX_STAGES = Object.freeze([
   { value: 0, label: 'E', name: 'Egg' },
   { value: 1, label: 'K', name: 'Kid' },
@@ -5,14 +10,6 @@ export const CODEX_STAGES = Object.freeze([
   { value: 3, label: 'A', name: 'Adult' },
   { value: 4, label: 'M', name: 'Mega' },
 ]);
-
-const FEATURE_MAX_SIZE_BY_SPECIES = Object.freeze({
-  inklet: 640,
-  glimmerbug: 670,
-  phaeton: 700,
-});
-
-const FEATURE_STAGE_SCALE = Object.freeze([0.36, 0.52, 0.68, 0.84, 1]);
 
 const FEATURE_FOOT_PAD_BY_ASSET = Object.freeze({
   inklet: Object.freeze({
@@ -45,9 +42,9 @@ export function codexTotals(entries = []) {
 }
 
 export function codexFeatureStyle(entry) {
-  const maxSize = FEATURE_MAX_SIZE_BY_SPECIES[entry.id] || 760;
+  const maxSize = CODEX_FEATURE_MAX_SIZE_BY_SPECIES[entry.id] || 760;
   const stage = entry.caught ? Math.max(0, Math.min(4, Number(entry.stage) || 0)) : 0;
-  const visualSize = Math.round(maxSize * (FEATURE_STAGE_SCALE[stage] || FEATURE_STAGE_SCALE[0]));
+  const visualSize = Math.round(maxSize * (CODEX_STAGE_SCALE[stage] || CODEX_STAGE_SCALE[0]));
   const footPad = entry.displayState === 'fresh'
     ? 0
     : FEATURE_FOOT_PAD_BY_ASSET[entry.id]?.[entry.branch]?.[stage] ?? 0;
@@ -58,7 +55,7 @@ export function codexFeatureStyle(entry) {
 
   return {
     '--codex-feature-size': `${visualSize}px`,
-    '--codex-feature-orbit-size': `${Math.min(920, Math.round(visualSize * 1.14))}px`,
+    '--codex-feature-orbit-size': `${Math.min(460, Math.round(visualSize * 0.57))}px`,
     '--codex-feature-halo-y': `${Math.round(visualSize / 3)}px`,
     '--codex-feature-halo-lift': `${Math.round(rise / 2)}px`,
     '--codex-feature-shadow-width': `${Math.min(640, Math.round(visualSize * 0.86))}px`,

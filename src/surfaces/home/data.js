@@ -1,3 +1,8 @@
+import {
+  CODEX_REFERENCE_STAGE_SIZES,
+  CODEX_STAGE_SCALE,
+} from './codex-visual-scale.js';
+
 const MONSTER_VARIANTS = ['b1', 'b2'];
 const DIRECT_STAGE_THRESHOLDS = Object.freeze([1, 10, 30, 60, 90]);
 const PHAETON_STAGE_THRESHOLDS = Object.freeze([3, 25, 95, 145, 200]);
@@ -29,8 +34,6 @@ const MEADOW_PERSPECTIVE = Object.freeze({
   nearScale: 1.18,
 });
 
-const MEADOW_CODEX_STAGE_SIZES = Object.freeze([252, 364, 476, 588, 700]);
-const MEADOW_CODEX_REFERENCE_SIZE = MEADOW_CODEX_STAGE_SIZES[4];
 const MEADOW_SPECIES_SCALE = Object.freeze({
   inklet: 1.02,
   glimmerbug: 0.94,
@@ -517,12 +520,13 @@ function meadowEggSize(monsterId, baseSize) {
 }
 
 function meadowCodexSize(stage) {
-  return MEADOW_CODEX_STAGE_SIZES[Math.max(0, Math.min(4, Number(stage) || 0))]
-    || MEADOW_CODEX_STAGE_SIZES[0];
+  return CODEX_REFERENCE_STAGE_SIZES[Math.max(0, Math.min(4, Number(stage) || 0))]
+    || CODEX_REFERENCE_STAGE_SIZES[0];
 }
 
 function meadowStageScale(stage) {
-  return Number((meadowCodexSize(stage) / MEADOW_CODEX_REFERENCE_SIZE).toFixed(3));
+  return CODEX_STAGE_SCALE[Math.max(0, Math.min(4, Number(stage) || 0))]
+    || CODEX_STAGE_SCALE[0];
 }
 
 function meadowPerspectiveScale(footPct) {
