@@ -27,7 +27,11 @@ export function PathProgress({ done, current, total }) {
   return (
     <div className="path" aria-label={`Word ${Math.min(safeTotal, current + 1)} of ${safeTotal}`}>
       {dots.map((state, index) => (
-        <span className={`path-step${state ? ` ${state}` : ''}`} key={`${state}-${index}`} />
+        <span
+          className={`path-step${state ? ` ${state}` : ''}`}
+          key={`${state || 'pending'}-${index}`}
+          style={{ '--path-step-index': index }}
+        />
       ))}
     </div>
   );
