@@ -15,6 +15,8 @@ import {
   heroBgStyle,
   normaliseSearchText,
   renderAction,
+  reviewAccuracyLabel,
+  reviewCount,
   spellingPoolLabel,
   wordBankFilterMatchesStatus,
   wordBankAggregateCards,
@@ -91,14 +93,14 @@ function YearChips({ counts, activeYearFilter, actions }) {
 
 function WordPill({ word, actions }) {
   const progress = word.progress || {};
+  const categoryLabel = word.yearLabel || spellingPoolLabel(word);
   const title = [
     word.word,
     word.family ? `Family: ${word.family}` : '',
-    word.yearLabel || '',
-    spellingPoolLabel(word),
+    categoryLabel,
     word.stageLabel || '',
-    `Correct ${Math.max(0, Number(progress.correct) || 0)}`,
-    `Wrong ${Math.max(0, Number(progress.wrong) || 0)}`,
+    `Accuracy: ${reviewAccuracyLabel(progress)}`,
+    `Reviews: ${reviewCount(progress)}`,
     `Next due: ${dueLabel(progress)}`,
     'Click to explain',
   ].filter(Boolean).join(' • ');
@@ -110,7 +112,7 @@ function WordPill({ word, actions }) {
       data-slug={word.slug}
       data-value="explain"
       title={title}
-      aria-label={`Explain ${word.word}. ${wordStatusLabel(word.status)}. ${spellingPoolLabel(word)}.`}
+      aria-label={`Explain ${word.word}. ${wordStatusLabel(word.status)}. ${categoryLabel}.`}
       onClick={(event) => renderAction(actions, event, 'spelling-word-detail-open', { slug: word.slug, value: 'explain' })}
     >
       {word.word}
