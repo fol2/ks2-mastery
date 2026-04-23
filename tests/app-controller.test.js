@@ -15,6 +15,7 @@ import {
   LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS,
 } from '../src/platform/core/local-review-profile.js';
 import { SUBJECTS } from '../src/platform/core/subject-registry.js';
+import { SPELLING_SESSION_ENTRY_AUDIO_DELAY_MS } from '../src/subjects/spelling/session-timing.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 
 function typedFormData(value) {
@@ -55,6 +56,14 @@ function jsonResponse(ok, payload) {
       return payload;
     },
   };
+}
+
+function restoreGlobal(name, previousValue) {
+  if (typeof previousValue === 'undefined') {
+    delete globalThis[name];
+    return;
+  }
+  globalThis[name] = previousValue;
 }
 
 test('browser bootstrap creates local repositories and recognises codex review URL modes', async () => {
@@ -179,6 +188,62 @@ test('controller dispatches spelling transitions through store, repositories, ev
   controller.dispatch('spelling-submit-form', { formData: typedFormData(answer) });
 
   assert.ok(controller.repositories.practiceSessions.list(learnerId).length >= 1);
+});
+
+test('controller waits for the spelling question reveal before entry auto TTS', () => {
+  const storage = installMemoryStorage();
+  const scheduled = [];
+  const scheduler = {
+    setTimeout(fn, delay) {
+      const id = scheduled.length + 1;
+      scheduled.push({ id, fn, delay, cleared: false });
+      return id;
+    },
+    clearTimeout(id) {
+      const entry = scheduled.find((item) => item.id === id);
+      if (entry) entry.cleared = true;
+    },
+  };
+  const previousDocument = globalThis.document;
+  const previousWindow = globalThis.window;
+
+  globalThis.document = {
+    documentElement: {
+      classList: {
+        contains(className) {
+          return className === 'spelling-flow-transition';
+        },
+      },
+    },
+  };
+  globalThis.window = {
+    matchMedia() {
+      return { matches: false };
+    },
+  };
+
+  try {
+    const controller = createAppController({
+      repositories: createLocalPlatformRepositories({ storage }),
+      scheduler,
+    });
+    const learnerId = controller.store.getState().learners.selectedId;
+    controller.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+
+    controller.dispatch('open-subject', { subjectId: 'spelling' });
+    controller.dispatch('spelling-start');
+
+    assert.equal(controller.store.getState().subjectUi.spelling.phase, 'session');
+    assert.equal(controller.tts.spoken.length, 0);
+    assert.equal(scheduled.length, 1);
+    assert.equal(scheduled[0].delay, SPELLING_SESSION_ENTRY_AUDIO_DELAY_MS);
+
+    scheduled[0].fn();
+    assert.equal(controller.tts.spoken.length, 1);
+  } finally {
+    restoreGlobal('document', previousDocument);
+    restoreGlobal('window', previousWindow);
+  }
 });
 
 test('controller retry preserves the current route and clears runtime boundaries', async () => {

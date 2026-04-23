@@ -8,6 +8,10 @@ import { resolveSpellingShortcut } from '../../subjects/spelling/shortcuts.js';
 import { createSpellingService } from '../../subjects/spelling/service.js';
 import { createSpellingPersistence } from '../../subjects/spelling/repository.js';
 import {
+  SPELLING_SESSION_ENTRY_AUDIO_DELAY_MS,
+  shouldDelaySpellingSessionQuestionReveal,
+} from '../../subjects/spelling/session-timing.js';
+import {
   isMonsterCelebrationEvent,
   shouldDelayMonsterCelebrations,
   spellingSessionEnded,
@@ -61,11 +65,15 @@ export function createAppController({
 
   const store = createStore(subjects, { repositories });
   const controllerListeners = new Set();
+  const setTimeoutFn = scheduler?.setTimeout?.bind(scheduler)
+    || (typeof globalThis.setTimeout === 'function' ? globalThis.setTimeout.bind(globalThis) : null);
+  const clearTimeoutFn = scheduler?.clearTimeout?.bind(scheduler)
+    || (typeof globalThis.clearTimeout === 'function' ? globalThis.clearTimeout.bind(globalThis) : null);
   const autoAdvance = createSpellingAutoAdvanceController({
     getState: () => store.getState(),
     dispatchContinue: () => dispatch('spelling-continue'),
-    setTimeoutFn: scheduler?.setTimeout?.bind(scheduler),
-    clearTimeoutFn: scheduler?.clearTimeout?.bind(scheduler),
+    setTimeoutFn,
+    clearTimeoutFn,
   });
 
   store.subscribe(() => {
@@ -114,6 +122,54 @@ export function createAppController({
     return autoAdvance.ensureScheduledFromState(appState.subjectUi.spelling);
   }
 
+  let pendingTransitionAudioTimer = null;
+
+  function clearPendingTransitionAudio() {
+    if (pendingTransitionAudioTimer && clearTimeoutFn) {
+      clearTimeoutFn(pendingTransitionAudioTimer);
+    }
+    pendingTransitionAudioTimer = null;
+  }
+
+  function shouldDelayTransitionAudio(subjectId, previousSubjectUi, nextSubjectUi) {
+    return subjectId === 'spelling'
+      && previousSubjectUi?.phase !== 'session'
+      && nextSubjectUi?.phase === 'session'
+      && shouldDelaySpellingSessionQuestionReveal();
+  }
+
+  function speakDelayedTransitionAudio(subjectId, audio) {
+    try {
+      tts.speak(audio);
+    } catch (error) {
+      const appState = store.getState();
+      runtimeBoundary.capture({
+        learnerId: appState.learners.selectedId,
+        subject: resolveSubject(subjects, subjectId),
+        tab: appState.route.tab || 'practice',
+        phase: 'side-effect',
+        methodName: 'tts.speak',
+        action: 'transition-audio',
+        error,
+      });
+      store.patch(() => ({}));
+    }
+  }
+
+  function speakTransitionAudio(subjectId, transition, previousSubjectUi, nextSubjectUi) {
+    const audio = transition.audio;
+    if (!audio?.word) return;
+    if (!shouldDelayTransitionAudio(subjectId, previousSubjectUi, nextSubjectUi) || !setTimeoutFn) {
+      tts.speak(audio);
+      return;
+    }
+    clearPendingTransitionAudio();
+    pendingTransitionAudioTimer = setTimeoutFn(() => {
+      pendingTransitionAudioTimer = null;
+      speakDelayedTransitionAudio(subjectId, audio);
+    }, SPELLING_SESSION_ENTRY_AUDIO_DELAY_MS);
+  }
+
   function applySubjectTransition(subjectId, transition) {
     if (!transition) return false;
     const previousSubjectUi = store.getState().subjectUi[subjectId] || null;
@@ -151,7 +207,7 @@ export function createAppController({
       tab: store.getState().route.tab || 'practice',
     });
 
-    if (transition.audio?.word) tts.speak(transition.audio);
+    speakTransitionAudio(subjectId, transition, previousSubjectUi, nextSubjectUi);
     if (subjectId === 'spelling') autoAdvance.scheduleFromTransition(transition);
     return true;
   }
@@ -364,6 +420,7 @@ export function createAppController({
   }
 
   function dispatch(action, data = {}) {
+    clearPendingTransitionAudio();
     autoAdvance.clear();
     try {
       if (!handleGlobalAction(action, data)) {
