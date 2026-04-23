@@ -1,1267 +1,39 @@
 import { monsterSummaryFromSpellingAnalytics } from '../../platform/game/monster-system.js';
-import { monsterAsset, monsterAssetSrcSet } from '../../platform/game/monsters.js';
-import { escapeHtml, formatElapsedMinutes } from '../../platform/core/utils.js';
-import { REGION_BACKGROUND_URLS } from '../../surfaces/home/data.js';
 import { createInitialSpellingState } from './service-contract.js';
 import {
-  spellingSessionContextNote,
-  spellingSessionInfoChips,
-  spellingSessionInputPlaceholder,
-  spellingSessionSubmitLabel,
-  spellingSessionVoiceNote,
-} from './session-ui.js';
+  WORD_BANK_FILTER_IDS,
+  WORD_BANK_YEAR_FILTER_IDS,
+  findWordBankEntry,
+} from './components/spelling-view-model.js';
 
-const SPELLING_ACCENT = '#3E6FA8';
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-function accentFor(subject) {
-  return subject?.accent || SPELLING_ACCENT;
-}
-
-/* --------------------------------------------------------------
-   Hero-bg picker
-   Deterministic per learner so setup/session/summary share the
-   same scribe-downs backdrop on a given day. Spread across the
-   round so long rounds get visual variety.
-   -------------------------------------------------------------- */
-function stableHash(value) {
-  const text = String(value || '');
-  let hash = 0;
-  for (let i = 0; i < text.length; i += 1) {
-    hash = (hash << 5) - hash + text.charCodeAt(i);
-    hash |= 0;
+function applySpellingTransition(context, transition) {
+  if (!transition) return true;
+  if (typeof context.applySubjectTransition === 'function') {
+    return context.applySubjectTransition('spelling', transition);
   }
-  return Math.abs(hash);
-}
-
-function heroBgForLearner(learnerId) {
-  if (!REGION_BACKGROUND_URLS.length) return '';
-  const index = stableHash(`spelling:${learnerId}`) % REGION_BACKGROUND_URLS.length;
-  return REGION_BACKGROUND_URLS[index];
-}
-
-function heroBgForSession(learnerId, session) {
-  if (!REGION_BACKGROUND_URLS.length) return '';
-  const total = Math.max(1, Number(session?.progress?.total) || 1);
-  const done = Math.max(0, Number(session?.progress?.done) || 0);
-  const offset = stableHash(`spelling:${learnerId}`) % REGION_BACKGROUND_URLS.length;
-  const step = Math.min(REGION_BACKGROUND_URLS.length - 1,
-    Math.floor((done / total) * REGION_BACKGROUND_URLS.length));
-  return REGION_BACKGROUND_URLS[(offset + step) % REGION_BACKGROUND_URLS.length];
-}
-
-function heroBgStyle(url) {
-  return url ? `--hero-bg: url('${escapeHtml(url)}');` : '';
-}
-
-/* The legacy string renderer is retained for characterisation tests while
-   production routes use the React spelling surface. Rebase the hero pan on
-   `performance.now()` so snapshots from either renderer stay visually
-   continuous after preference or route-state changes. */
-const HERO_PAN_CYCLE_SECONDS = 144;
-function heroPanDelayStyle() {
-  if (typeof performance === 'undefined') return '';
-  const elapsed = (performance.now() / 1000) % HERO_PAN_CYCLE_SECONDS;
-  return `animation-delay: -${elapsed.toFixed(3)}s;`;
-}
-
-/* --------------------------------------------------------------
-   Shared helpers retained from the previous port (codex + utils)
-   -------------------------------------------------------------- */
-function summaryCards(cards = []) {
-  return `
-    <div class="stat-grid">
-      ${cards.map((card) => `
-        <div class="stat">
-          <div class="stat-label">${escapeHtml(card.label)}</div>
-          <div class="stat-value">${escapeHtml(card.value)}</div>
-          <div class="stat-sub">${escapeHtml(card.sub || '')}</div>
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
-/* --------------------------------------------------------------
-   Word-bank helpers
-   Category filters narrow pools; the pill colour itself carries each
-   word's learning status.
-   -------------------------------------------------------------- */
-function normaliseSearchText(value) {
-  return String(value || '').trim().toLowerCase();
-}
-
-/* Category filters stay intentionally broad; status chips double as the colour
-   legend and the status filter so the toolbar has one clear source of truth. */
-const WORD_BANK_FILTER_IDS = new Set(['all', 'due', 'weak', 'learning', 'secure', 'unseen']);
-const WORD_BANK_YEAR_FILTER_IDS = new Set(['all', 'y3-4', 'y5-6', 'extra']);
-
-function wordBankFilterMatchesStatus(filter, status) {
-  if (filter === 'all') return true;
-  if (filter === 'weak') return status === 'trouble';
-  if (filter === 'unseen') return status === 'new';
-  return filter === status;
-}
-
-function wordBankYearFilterMatches(filter, word) {
-  if (filter === 'all') return true;
-  if (filter === 'y3-4') return word.year === '3-4';
-  if (filter === 'y5-6') return word.year === '5-6';
-  if (filter === 'extra') return word.spellingPool === 'extra';
+  context.store.updateSubjectUi('spelling', transition.state);
+  if (transition.audio?.word) context.tts?.speak?.(transition.audio);
   return true;
 }
 
-function wordBankYearFilterLabel(filter) {
-  if (filter === 'y3-4') return 'Years 3-4';
-  if (filter === 'y5-6') return 'Years 5-6';
-  if (filter === 'extra') return 'Extra';
-  return 'All';
-}
-
-function wordProgressTone(status) {
-  if (status === 'new') return 'new';
-  if (status === 'learning') return 'learning';
-  if (status === 'secure') return 'good';
-  if (status === 'due') return 'warn';
-  if (status === 'trouble') return 'bad';
-  return 'neutral';
-}
-
-function wordStatusLabel(status) {
-  const labels = {
-    new: 'New',
-    learning: 'Learning',
-    due: 'Due',
-    secure: 'Secure',
-    trouble: 'Trouble',
+function resetWordBankTransientUi(current) {
+  return {
+    ...current.transientUi,
+    spellingWordDetailSlug: '',
+    spellingWordDetailMode: 'explain',
+    spellingWordBankDrillTyped: '',
+    spellingWordBankDrillResult: null,
   };
-  return labels[status] || 'Learning';
 }
 
-function wordBankPillClass(status) {
-  /* Maps production status to the legacy word-bank colour tokens. */
-  if (status === 'new') return 'new';
-  if (status === 'trouble') return 'trouble';
-  return status;
-}
-
-function spellingPoolLabel(word) {
-  if (word?.spellingPool === 'extra') return 'Extra';
-  return word?.yearLabel || 'Core';
-}
-
-function spellingPoolContextLabel(word) {
-  if (word?.spellingPool === 'extra') return 'Extra spelling';
-  return word?.yearLabel || 'Core spelling';
-}
-
-function wordMatchesSearch(word, query) {
-  if (!query) return true;
-  const fields = [
-    word.slug,
-    word.word,
-    word.family,
-    word.yearLabel,
-    spellingPoolLabel(word),
-    word.explanation,
-    ...(Array.isArray(word.accepted) ? word.accepted : []),
-  ].map(normaliseSearchText);
-  return fields.some((field) => field.includes(query));
-}
-
-function dueLabel(progress) {
-  if (!progress) return 'Unseen';
-  const attempts = Math.max(0, Number(progress.attempts) || 0);
-  if (!attempts) return 'Unseen';
-  const dueDay = Number(progress.dueDay);
-  if (!Number.isFinite(dueDay)) return 'Unseen';
-  const today = Math.floor(Date.now() / DAY_MS);
-  if (dueDay - today > 3650) return 'Long-term review';
-  const daysUntilDue = Math.floor(dueDay - today);
-  if (daysUntilDue <= 0) return 'Today';
-  if (daysUntilDue === 1) return 'In 1 day';
-  return `In ${daysUntilDue} days`;
-}
-
-/* --------------------------------------------------------------
-   Inline icons
-   Kept tiny so the template string stays readable. Shared across
-   session + setup + summary.
-   -------------------------------------------------------------- */
-const ICON_ARROW_RIGHT = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
-const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l6 6 10-14"/></svg>`;
-const ICON_SPEAKER = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4Z" fill="currentColor" fill-opacity="0.12"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>`;
-const ICON_SPEAKER_SLOW = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4Z" fill="currentColor" fill-opacity="0.12"/><path d="M15.5 10a3 3 0 0 1 0 4"/><text x="15.5" y="20" font-size="5.5" font-family="Inter,system-ui" font-weight="800" fill="currentColor" stroke="none">0.5x</text></svg>`;
-const ICON_SEARCH = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`;
-
-/* --------------------------------------------------------------
-   Path progress (session head dots)
-   Caps visible dots at 20. Each dot represents multiple
-   questions when the total exceeds the cap.
-   -------------------------------------------------------------- */
-function renderPathProgress({ done, current, total }) {
-  const safeTotal = Math.max(1, Number(total) || 1);
-  const display = Math.min(safeTotal, 20);
-  const perDot = safeTotal / display;
-  const dots = [];
-  for (let i = 0; i < display; i += 1) {
-    const start = i * perDot;
-    const end = (i + 1) * perDot;
-    let cls = 'path-step';
-    if (end <= done) cls += ' done';
-    else if (current >= start && current < end) cls += ' current';
-    dots.push(`<span class="${cls}"></span>`);
-  }
-  return `<div class="path" aria-label="Word ${Math.min(safeTotal, current + 1)} of ${safeTotal}">${dots.join('')}</div>`;
-}
-
-/* --------------------------------------------------------------
-   Cloze renderer — splits on the ________ blank sentinel and wraps
-   the missing word with a .blank span (or the exact answer chip on
-   the correct-feedback variant).
-   -------------------------------------------------------------- */
-function renderCloze(sentence, { answer = '', revealAnswer = false } = {}) {
-  const raw = String(sentence || '');
-  if (!raw.includes('________')) {
-    return `<div class="cloze">${escapeHtml(raw)}</div>`;
-  }
-  const [lead, tail = ''] = raw.split('________');
-  const inside = revealAnswer && answer
-    ? escapeHtml(answer)
-    : '&nbsp;';
-  return `<div class="cloze">${escapeHtml(lead)}<span class="blank">${inside}</span>${escapeHtml(tail)}</div>`;
-}
-
-/* --------------------------------------------------------------
-   Drill cloze builder — word-bank sentences are stored as natural
-   prose (no ________ sentinel), so for the drill we must synthesise
-   a blanked variant by replacing the target word with the sentinel
-   before handing off to renderCloze. Uses a word-boundary, case-
-   insensitive regex so "flight" in "flight." matches without
-   clipping punctuation. If the target word does not appear in the
-   sentence (e.g. the word-bank entry uses a close inflection), fall
-   back to a synthetic cloze that renders just the blank — better a
-   missing context than a leaked answer.
-   -------------------------------------------------------------- */
-function escapeRegExp(value) {
-  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function buildDrillCloze(sentence, word) {
-  const raw = String(sentence || '');
-  const target = String(word?.word || '').trim();
-  if (!target) return raw;
-  if (raw.includes('________')) return raw;
-  const pattern = new RegExp(`\\b${escapeRegExp(target)}\\b`, 'i');
-  if (pattern.test(raw)) {
-    return raw.replace(pattern, '________');
-  }
-  /* No occurrence — give the learner just the blank so the answer
-     never leaks into the prompt. */
-  return '________';
-}
-
-/* --------------------------------------------------------------
-   Setup scene (practice tab dashboard)
-   Translates v1 scenes.jsx:144 into server-rendered markup while
-   preserving every production data-action binding and the
-   "Round setup" H2 that smoke.test.js pins.
-   -------------------------------------------------------------- */
-const MODE_CARDS = [
-  { id: 'smart', icon: '◎', title: 'Smart Review', desc: 'Due · weak · one fresh word.' },
-  { id: 'trouble', icon: '⚡', title: 'Trouble Drill', desc: 'Only the words you usually miss.' },
-  { id: 'test', icon: '⌒', title: 'SATs Test', desc: 'One-shot dictation, no retries.' },
-];
-
-const ROUND_LENGTH_OPTIONS = ['10', '20', '40'];
-const YEAR_FILTER_OPTIONS = [
-  { value: 'core', label: 'Core' },
-  { value: 'y3-4', label: 'Y3-4' },
-  { value: 'y5-6', label: 'Y5-6' },
-  { value: 'extra', label: 'Extra' },
-];
-
-function beginLabel(prefs) {
-  if (prefs.mode === 'test') return 'Begin SATs test';
-  if (prefs.mode === 'trouble') return 'Begin trouble drill';
-  const length = prefs.roundLength || '10';
-  return `Begin ${length} words`;
-}
-
-/* Mode card — plain button so the visual card chrome is the only affordance.
-   The `value` attribute is read by the generic click dispatcher in main.js as
-   `data.value`, which `spelling-set-mode` consumes verbatim. `aria-pressed`
-   doubles up with the `.selected` class so assistive tech hears the selection
-   without needing a radiogroup wrapper.
-
-   When `disabled` is true the card is taken out of the tab order and the
-   engine never sees a click (native button `disabled` suppresses the event),
-   which stops Trouble Drill from silently swapping to Smart Review when
-   there are no trouble words yet. `description` overrides the default card
-   copy; `badge` renders the existing `.mc-badge` pill in the top-right. */
-function renderModeCard(mode, selected, { disabled = false, description, badge } = {}) {
-  const desc = description != null ? description : mode.desc;
-  const classes = ['mode-card'];
-  if (selected && !disabled) classes.push('selected');
-  if (disabled) classes.push('is-disabled');
-  const disabledAttrs = disabled ? ' disabled aria-disabled="true"' : '';
-  return `
-    <button type="button" class="${classes.join(' ')}" data-action="spelling-set-mode" value="${escapeHtml(mode.id)}" aria-pressed="${selected && !disabled ? 'true' : 'false'}"${disabledAttrs}>
-      ${badge ? `<span class="mc-badge">${escapeHtml(badge)}</span>` : ''}
-      <div class="mc-icon">${escapeHtml(mode.icon)}</div>
-      <h4>${escapeHtml(mode.title)}</h4>
-      <p>${escapeHtml(desc)}</p>
-    </button>
-  `;
-}
-
-function renderLengthPicker(prefs) {
-  const options = ROUND_LENGTH_OPTIONS.map((value) => {
-    const selected = prefs.roundLength === value;
-    return `
-      <button type="button" role="radio" aria-checked="${selected ? 'true' : 'false'}" class="length-option${selected ? ' selected' : ''}" data-action="spelling-set-pref" data-pref="roundLength" value="${escapeHtml(value)}">
-        <span>${escapeHtml(value)}</span>
-      </button>
-    `;
-  }).join('');
-  return `
-    <div class="length-picker" role="radiogroup" aria-label="Round length">
-      ${options}
-      <span class="length-unit">words</span>
-    </div>
-  `;
-}
-
-/* Segmented pool picker — same visual vocabulary as the length picker so the
-   setup scene reads as a single row of related choices. Reuses `.length-picker`
-   / `.length-option` tokens; no new CSS needed. */
-function renderYearPicker(prefs) {
-  const options = YEAR_FILTER_OPTIONS.map(({ value, label }) => {
-    const selected = (prefs.yearFilter || 'core') === value;
-    return `
-      <button type="button" role="radio" aria-checked="${selected ? 'true' : 'false'}" class="length-option${selected ? ' selected' : ''}" data-action="spelling-set-pref" data-pref="yearFilter" value="${escapeHtml(value)}">
-        <span>${escapeHtml(label)}</span>
-      </button>
-    `;
-  }).join('');
-  return `
-    <div class="length-picker" role="radiogroup" aria-label="Spelling pool">
-      ${options}
-    </div>
-  `;
-}
-
-function renderToggleChip(pref, checked, label) {
-  return `
-    <button type="button" class="toggle-chip${checked ? ' on' : ''}" aria-pressed="${checked ? 'true' : 'false'}" data-action="spelling-toggle-pref" data-pref="${escapeHtml(pref)}">
-      <span class="box" aria-hidden="true">${checked ? ICON_CHECK : ''}</span>
-      ${escapeHtml(label)}
-    </button>
-  `;
-}
-
-/* Compact caught-only strip for the "Where you stand" side card. Mirrors the
-   v1 design exactly: up to three static portraits with the shared ss-breathe
-   floating animation (driven by styles/app.css). Stage-0 entries show as eggs
-   via the `.egg` modifier. Uncaught companions are omitted entirely so the
-   meadow reads as a celebration of progress rather than a status list. */
-function renderSSMeadow(codex) {
-  const caught = (Array.isArray(codex) ? codex : []).filter((entry) => entry?.progress?.caught);
-  const shown = caught.slice(0, 4);
-  if (!shown.length) {
-    return '<div class="ss-meadow-empty small muted">Catch your first monster to populate this meadow.</div>';
-  }
-  return `
-    <div class="ss-meadow" aria-label="${shown.length} caught monster${shown.length === 1 ? '' : 's'}">
-      ${shown.map(({ monster, progress }) => `
-        <div class="ss-meadow-cell${progress.stage === 0 ? ' egg' : ''}">
-          <img alt="" src="${escapeHtml(monsterAsset(monster.id, progress.stage, 320, progress.branch))}" srcset="${escapeHtml(monsterAssetSrcSet(monster.id, progress.stage, progress.branch))}" sizes="min(30vw, 120px)" />
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
-function renderSSStatGrid(stats) {
-  const cells = [
-    { label: 'Total spellings', value: stats.total },
-    { label: 'Secure', value: stats.secure },
-    { label: 'Due today', value: stats.due, warn: true },
-    { label: 'Weak spots', value: stats.trouble },
-    { label: 'Unseen', value: stats.fresh },
-    { label: 'Accuracy', value: stats.accuracy == null ? '—' : `${stats.accuracy}%` },
-  ];
-  return `
-    <div class="ss-stat-grid">
-      ${cells.map((cell) => `
-        <div class="ss-stat">
-          <div class="ss-stat-label">${escapeHtml(cell.label)}</div>
-          <div class="ss-stat-value"${cell.warn ? ' style="color:var(--warn-strong);"' : ''}>${escapeHtml(cell.value)}</div>
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
-function renderPracticeDashboard({ learner, service, subject, repositories }) {
-  const accent = accentFor(subject);
-  const prefs = service.getPrefs(learner.id);
-  const statsFilter = prefs.mode === 'test' ? 'core' : prefs.yearFilter;
-  const stats = service.getStats(learner.id, statsFilter);
-  const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id), {
-    learnerId: learner.id,
-    gameStateRepository: repositories?.gameState,
-    persistBranches: false,
-  });
-  const heroBg = heroBgForLearner(learner.id);
-  const begin = beginLabel(prefs);
-  /* SATs Test is a one-shot dictation, so the round length and year filter both
-     lose their meaning — the engine forces the full list at a fixed length. We
-     keep the rows in the DOM but hide them with `.is-placeholder` so the hero
-     keeps its exact height (visibility:hidden preserves layout). */
-  const hideTweaks = prefs.mode === 'test';
-  const tweakMod = hideTweaks ? ' is-placeholder' : '';
-  const tweakAria = hideTweaks ? ' aria-hidden="true"' : '';
-  return `
-    <div class="setup-grid" style="grid-column:1/-1;">
-      <section class="setup-main" style="${heroBgStyle(heroBg)}">
-        <div class="hero-art pan" aria-hidden="true" style="${heroPanDelayStyle()}"></div>
-        <div class="setup-content">
-          <p class="eyebrow">Round setup</p>
-          <h1 class="title">Choose today’s journey.</h1>
-          <p class="lede">Smart Review mixes what’s due, what wobbled last time, and one or two new words. You can go straight to trouble drills or SATs rehearsal if you’d rather.</p>
-          <div class="mode-row">
-            ${MODE_CARDS.map((mode) => {
-              if (mode.id === 'trouble' && !stats.trouble) {
-                return renderModeCard(mode, prefs.mode === mode.id, {
-                  disabled: true,
-                  description: 'No trouble words yet — come back after a round.',
-                  badge: 'NONE YET',
-                });
-              }
-              return renderModeCard(mode, prefs.mode === mode.id);
-            }).join('')}
-          </div>
-          <div class="tweak-row${tweakMod}"${tweakAria}>
-            <span class="tool-label">Round length</span>
-            ${renderLengthPicker(prefs)}
-          </div>
-          <div class="tweak-row${tweakMod}"${tweakAria}>
-            <span class="tool-label">Pool</span>
-            ${renderYearPicker(prefs)}
-          </div>
-          <div class="tweak-row">
-            <span class="tool-label">Options</span>
-            ${renderToggleChip('showCloze', Boolean(prefs.showCloze), 'Show sentence')}
-            ${renderToggleChip('autoSpeak', Boolean(prefs.autoSpeak), 'Auto-play audio')}
-          </div>
-          <div class="setup-begin-row">
-            <button type="button" class="btn primary xl" style="--btn-accent:${accent};" data-action="spelling-start">
-              ${escapeHtml(begin)} ${ICON_ARROW_RIGHT}
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <aside class="setup-side">
-        <div class="ss-card">
-          <div class="ss-head">
-            <p class="eyebrow">Where you stand</p>
-            <button type="button" class="ss-codex-link" data-action="open-codex" aria-label="Open the full codex">
-              Open codex →
-            </button>
-          </div>
-          ${renderSSMeadow(codex)}
-          ${renderSSStatGrid(stats)}
-          <button type="button" class="ss-bank-link" data-action="spelling-open-word-bank">
-            <span class="ss-bank-link-body">
-              <span class="ss-bank-link-head">Browse the word bank</span>
-              <span class="ss-bank-link-sub">Every word ${escapeHtml(learner.name)} is learning, with progress and difficulty.</span>
-            </span>
-            <span class="ss-bank-link-arrow" aria-hidden="true">→</span>
-          </button>
-        </div>
-      </aside>
-    </div>
-  `;
-}
-
-/* --------------------------------------------------------------
-   Session scene (live spelling round)
-   Keeps the production <form data-action="spelling-submit-form">
-   wrapper so Enter + button both route through the same handler
-   and `data.formData.get('typed')` keeps working.
-   -------------------------------------------------------------- */
-function renderRibbon({ tone, icon, headline, word, sub }) {
-  return `
-    <div class="ribbon ${tone}" role="status">
-      <div class="ribbon-ic">${icon || ''}</div>
-      <div class="ribbon-body">
-        ${headline ? `<b>${escapeHtml(headline)}</b>` : ''}
-        ${word ? `<span class="word">“${escapeHtml(word)}”</span>` : ''}
-        ${sub ? `<div class="sub">${escapeHtml(sub)}</div>` : ''}
-      </div>
-    </div>
-  `;
-}
-
-/* Single family-chip renderer shared by the in-session feedback slot and the
-   word-detail modal. The default `label` ("Word family") renders an inline
-   `<span class="flabel">` and hides when the list has one or fewer entries
-   (no family to show). Callers that supply a custom `label` get a chip row
-   that renders even for single-entry lists — the modal wraps this in its own
-   `wb-modal-section` so the label is rendered by the surrounding markup. */
-function renderFamilyChips(words, { label = 'Word family', requireMultiple = true } = {}) {
-  const list = Array.isArray(words) ? words.filter(Boolean) : [];
-  if (requireMultiple && list.length <= 1) return '';
-  if (!list.length) return '';
-  return `
-    <div class="family-chips">
-      ${label ? `<span class="flabel">${escapeHtml(label)}</span>` : ''}
-      ${list.map((word) => `<span class="fchip">${escapeHtml(word)}</span>`).join('')}
-    </div>
-  `;
-}
-
-function feedbackTone(kind) {
-  /* Engine emits 'info' for most mid-round correct outcomes ("Locked in.",
-     "Good recovery.", "Correct now.") — those are positive signals, so they
-     must render as the green 'good' ribbon. Only 'error' flips to the red
-     'bad' tone, and 'warn' is reserved for genuine advisory states (e.g.
-     retry prompts). */
-  if (kind === 'error') return 'bad';
-  if (kind === 'warn') return 'warn';
-  return 'good';
-}
-
-function feedbackIconFor(tone) {
-  if (tone === 'good') return ICON_CHECK;
-  if (tone === 'warn') return '!';
-  return '×';
-}
-
-function renderFeedbackSlot(feedback) {
-  if (!feedback) {
-    /* Placeholder keeps the prompt-card total height stable between the
-       question variant and the post-submit variants. The slot reuses the
-       real ribbon shape (non-breaking space body) so the reserved pixels
-       match the live ribbon exactly, but CSS (`visibility: hidden`) and
-       aria-hidden keep it out of sight and out of assistive tech. */
-    return `
-      <div class="feedback-slot is-placeholder" aria-hidden="true">
-        <div class="ribbon good" role="presentation">
-          <div class="ribbon-ic">&nbsp;</div>
-          <div class="ribbon-body"><b>&nbsp;</b><div class="sub">&nbsp;</div></div>
-        </div>
-      </div>
-    `;
-  }
-  const tone = feedbackTone(feedback.kind);
-  return `
-    <div class="feedback-slot">
-      ${renderRibbon({
-        tone,
-        icon: feedbackIconFor(tone),
-        headline: feedback.headline || '',
-        word: feedback.answer || '',
-        sub: feedback.body || '',
-      })}
-      ${feedback.footer ? `<p class="feedback-foot small muted">${escapeHtml(feedback.footer)}</p>` : ''}
-      ${renderFamilyChips(feedback.familyWords)}
-    </div>
-  `;
-}
-
-function renderSession({ learner, service, ui, subject }) {
-  const accent = accentFor(subject);
-  const prefs = service.getPrefs(learner.id);
-  const session = ui.session;
-  const card = session?.currentCard;
-  const showCloze = prefs.showCloze && session?.type !== 'test';
-  const awaitingAdvance = Boolean(ui.awaitingAdvance);
-  const submitLabel = spellingSessionSubmitLabel(session, awaitingAdvance);
-  const inputPlaceholder = spellingSessionInputPlaceholder(session);
-  const contextNote = spellingSessionContextNote(session);
-  const voiceNote = spellingSessionVoiceNote();
-  const infoChips = spellingSessionInfoChips(session);
-  if (!session || !card || !card.word) {
-    return `
-      <section class="card" style="grid-column:1/-1;">
-        <div class="eyebrow">No active session</div>
-        <h2 class="section-title">Start a spelling round</h2>
-        <button class="btn primary" style="--btn-accent:${accent};" data-action="spelling-back">Back to spelling dashboard</button>
-      </section>
-    `;
-  }
-
-  const progressTotal = session.progress.total;
-  const done = session.progress.done;
-  const progressCurrent = progressTotal <= 0 ? 0 : Math.min(progressTotal, done + 1);
-  const pathDone = Math.min(progressTotal, done);
-  const pathCurrent = Math.min(Math.max(progressCurrent - 1, 0), progressTotal);
-  const heroBg = heroBgForSession(learner.id, session);
-  const showingCorrection = session.phase === 'correction';
-
-  /* Correction phase reveals the correct answer inline inside the cloze. Other
-     phases keep the blank empty so the learner has to recall the word. */
-  const clozeHtml = showCloze
-    ? renderCloze(card.prompt?.cloze, {
-        answer: showingCorrection ? card.word.word : '',
-        revealAnswer: showingCorrection,
-      })
-    : `<div class="cloze muted"><span class="blank">&nbsp;</span></div>`;
-
-  const promptInstr = session.type === 'test'
-    ? 'Type the word dictated by the audio.'
-    : 'Spell the word you hear.';
-
-  const audioRow = `
-    <div class="audio-row">
-      <button type="button" class="btn icon lg" aria-label="Replay the dictated word" data-action="spelling-replay">${ICON_SPEAKER}</button>
-      <button type="button" class="btn icon lg" aria-label="Replay slowly" data-action="spelling-replay-slow">${ICON_SPEAKER_SLOW}</button>
-    </div>
-  `;
-
-  const skipBtn = session.type !== 'test' && !awaitingAdvance && session.phase === 'question'
-    ? '<button class="btn ghost lg" type="button" data-action="spelling-skip">Skip for now</button>'
-    : '';
-
-  const continueBtn = awaitingAdvance
-    ? `<button class="btn good lg" type="button" data-action="spelling-continue">Continue ${ICON_ARROW_RIGHT}</button>`
-    : '';
-
-  return `
-    <div class="spelling-in-session" style="grid-column:1/-1; ${heroBgStyle(heroBg)}">
-      <div class="session">
-        <header class="session-head">
-          ${renderPathProgress({ done: pathDone, current: pathCurrent, total: progressTotal })}
-          <span class="path-count">Word ${progressCurrent} of ${progressTotal}</span>
-        </header>
-
-        <div class="prompt-card">
-          ${infoChips.length ? `
-            <div class="info-chip-row">
-              ${infoChips.map((value) => `<span class="chip">${escapeHtml(value)}</span>`).join('')}
-            </div>
-          ` : ''}
-          <div class="prompt-instr">${escapeHtml(promptInstr)}</div>
-          ${clozeHtml}
-          ${!showCloze ? `<p class="prompt-sentence muted">${escapeHtml(contextNote)}</p>` : ''}
-
-          <form data-action="spelling-submit-form" class="session-form">
-            <div class="word-input-wrap">
-              <input class="word-input" name="typed" data-autofocus="true" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="${escapeHtml(inputPlaceholder)}" aria-label="Type the spelling" ${awaitingAdvance ? 'disabled' : ''} />
-            </div>
-            ${audioRow}
-            <div class="action-row">
-              <button class="btn primary lg" style="--btn-accent:${accent};" type="submit" ${awaitingAdvance ? 'disabled' : ''}>
-                ${escapeHtml(submitLabel)}${awaitingAdvance ? '' : ` ${ICON_ARROW_RIGHT}`}
-              </button>
-              ${continueBtn}
-              ${skipBtn}
-            </div>
-          </form>
-
-          ${renderFeedbackSlot(ui.feedback)}
-        </div>
-
-        <footer class="session-footer">
-          <div class="session-footer-left">
-            <div class="keys-hint">
-              <kbd>Esc</kbd> replay · <kbd>⇧</kbd>+<kbd>Esc</kbd> slow · <kbd>Alt</kbd>+<kbd>S</kbd> skip · <kbd>Enter</kbd> submit
-            </div>
-            <div class="voice-note small muted">${escapeHtml(voiceNote)}</div>
-          </div>
-          <div class="session-footer-right">
-            <button class="btn sm bad" type="button" data-action="spelling-end-early">End round early</button>
-          </div>
-        </footer>
-      </div>
-    </div>
-  `;
-}
-
-/* --------------------------------------------------------------
-   Summary scene (round complete)
-   Builds the 4-up stat strip directly from the engine's
-   summary.cards (deterministic; don't re-compute anything here).
-   The design renders only the headline value + label per cell —
-   no sub-copy — so the grid stays compact under the ribbon.
-   -------------------------------------------------------------- */
-function renderSummaryStatGrid(cards = []) {
-  return `
-    <div class="summary-stats">
-      ${cards.map((card) => `
-        <div class="summary-stat">
-          <div class="v">${escapeHtml(card.value)}</div>
-          <div class="l">${escapeHtml(card.label)}</div>
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
-/* Human-readable label for the round's mode token. Mirrors the chooser
-   labels in the dashboard and the design comp ("Smart Review" / "Trouble
-   Drill" / "SATs Test"). */
-function summaryModeLabel(mode) {
-  if (mode === 'trouble') return 'Trouble Drill';
-  if (mode === 'test') return 'SATs Test';
-  if (mode === 'single') return 'Single-word Drill';
-  return 'Smart Review';
-}
-
-/* Pick the punchy "X of N words landed." headline when we have usable
-   totals; otherwise fall back to the engine's prose message so nothing
-   regresses for edge cases (e.g. zero-word rounds, legacy summaries). */
-function summaryHeadline(summary) {
-  if (summary.totalWords > 0 && typeof summary.correct === 'number') {
-    return `${summary.correct} of ${summary.totalWords} words landed.`;
-  }
-  return summary.message;
-}
-
-function renderSummary({ learner, ui, subject }) {
-  const accent = accentFor(subject);
-  const summary = ui.summary;
-  if (!summary) return '';
-  /* Hero continuity: advance the backdrop as if the learner finished every
-     word in the round, so the summary matches the last question's scene
-     rather than resetting to the learner's default. Falls back to a
-     single-word virtual progress when the round was empty so the helper
-     never divides by zero. Contract exposes totalWords / correct /
-     accuracy on the normalised summary so the renderer just reads them. */
-  const progressTotal = Math.max(1, summary.totalWords || 1);
-  const heroBg = heroBgForSession(learner.id, {
-    progress: { done: progressTotal, total: progressTotal },
-  });
-  const toneGood = !summary.mistakes.length;
-  const headline = summaryHeadline(summary);
-  const modeLabel = summaryModeLabel(summary.mode);
-  const durationLabel = formatElapsedMinutes(summary.elapsedMs);
-  const accuracyLabel = typeof summary.accuracy === 'number'
-    ? `${summary.accuracy}% accuracy`
-    : '';
-  const subParts = [modeLabel, durationLabel];
-  if (accuracyLabel) subParts.push(accuracyLabel);
-  const ribbonSub = subParts.join(' · ');
-  return `
-    <div class="spelling-in-session summary-shell" style="grid-column:1/-1; ${heroBgStyle(heroBg)}">
-      <div class="session summary">
-        <header class="session-head">
-          ${renderPathProgress({ done: progressTotal, current: progressTotal, total: progressTotal })}
-          <span class="path-count">Round complete</span>
-        </header>
-
-        <div class="prompt-card summary-card">
-          <h3 class="summary-title sr-only">Session summary</h3>
-          ${renderRibbon({
-            tone: toneGood ? 'good' : 'warn',
-            icon: toneGood ? ICON_CHECK : '!',
-            headline,
-            sub: ribbonSub,
-          })}
-
-          ${renderSummaryStatGrid(summary.cards)}
-
-          ${summary.mistakes.length ? `
-            <div class="summary-drill">
-              <div class="summary-drill-head">
-                <h4>Words that need another go</h4>
-                <span class="small muted">A quick drill cycles each of these again before you close the round.</span>
-              </div>
-              <div class="summary-drill-chips">
-                ${summary.mistakes.map((word) => `
-                  <button type="button" class="fchip" data-action="spelling-drill-single" data-slug="${escapeHtml(word.slug)}">${escapeHtml(word.word)}</button>
-                `).join('')}
-                <button type="button" class="btn primary sm" data-action="spelling-drill-all">Drill all ${summary.mistakes.length} ${ICON_ARROW_RIGHT}</button>
-              </div>
-            </div>
-          ` : ''}
-
-          <div class="summary-actions">
-            <button type="button" class="btn ghost lg" data-action="spelling-back">Back to dashboard</button>
-            <button type="button" class="btn primary lg" style="--btn-accent:${accent};" data-action="spelling-start-again">Start another round ${ICON_ARROW_RIGHT}</button>
-            <button type="button" class="summary-bank-link" data-action="spelling-open-word-bank">
-              Open word bank ${ICON_ARROW_RIGHT}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-/* --------------------------------------------------------------
-   Word bank (standalone browser)
-   Category chips narrow the statutory Years 3-4 / Years 5-6 pools
-   and the Extra expansion pool. Status chips are also the colour legend,
-   so there is no separate duplicate legend row.
-   -------------------------------------------------------------- */
-function renderWordBankStatusChips({ counts, activeFilter }) {
-  const chips = [
-    { id: 'all', label: 'All', swatch: 'all' },
-    { id: 'due', label: 'Due', swatch: 'due' },
-    { id: 'weak', label: 'Trouble', swatch: 'trouble' },
-    { id: 'learning', label: 'Learning', swatch: 'learning' },
-    { id: 'secure', label: 'Secure', swatch: 'secure' },
-    { id: 'unseen', label: 'Unseen', swatch: 'new' },
-  ];
-  return `
-    <div class="wb-chips wb-status-chips" role="group" aria-label="Filter word bank by status">
-      ${chips.map((chip) => {
-        const active = chip.id === activeFilter;
-        const count = counts[chip.id] ?? 0;
-        return `
-          <button
-            type="button"
-            aria-pressed="${active ? 'true' : 'false'}"
-            class="wb-chip wb-chip-status${active ? ' on' : ''}"
-            data-action="spelling-analytics-status-filter"
-            data-value="${escapeHtml(chip.id)}"
-          >
-            <span class="wb-status-swatch ${escapeHtml(chip.swatch)}" aria-hidden="true"></span>
-            <span class="wb-chip-label">${escapeHtml(chip.label)}</span>
-            <span class="wb-chip-count">${count}</span>
-          </button>
-        `;
-      }).join('')}
-    </div>
-  `;
-}
-
-function renderWordBankYearChips({ counts, activeYearFilter }) {
-  const chips = [
-    { id: 'all', label: 'All' },
-    { id: 'y3-4', label: 'Years 3-4' },
-    { id: 'y5-6', label: 'Years 5-6' },
-    { id: 'extra', label: 'Extra' },
-  ];
-  return `
-    <div class="wb-chips wb-year-chips" role="group" aria-label="Filter word bank by category">
-      ${chips.map((chip) => {
-        const active = chip.id === activeYearFilter;
-        const count = counts[chip.id] ?? 0;
-        return `
-          <button
-            type="button"
-            aria-pressed="${active ? 'true' : 'false'}"
-            class="wb-chip wb-chip-category${active ? ' on' : ''}"
-            data-action="spelling-analytics-year-filter"
-            data-value="${escapeHtml(chip.id)}"
-          >
-            <span class="wb-chip-label">${escapeHtml(chip.label)}</span>
-            <span class="wb-chip-count">${count}</span>
-          </button>
-        `;
-      }).join('')}
-    </div>
-  `;
-}
-
-function countWordBankStatus(words, status) {
-  return words.reduce((count, word) => count + (word.status === status ? 1 : 0), 0);
-}
-
-function countWordBankYear(words, year) {
-  return words.reduce((count, word) => count + (word.year === year ? 1 : 0), 0);
-}
-
-function countWordBankExtra(words) {
-  return words.reduce((count, word) => count + (word.spellingPool === 'extra' ? 1 : 0), 0);
-}
-
-function wordBankAggregateStats(words) {
-  const stats = {
-    total: 0,
-    secure: 0,
-    due: 0,
-    trouble: 0,
-    learning: 0,
-    unseen: 0,
-  };
-  for (const word of Array.isArray(words) ? words : []) {
-    stats.total += 1;
-    if (word.status === 'secure') stats.secure += 1;
-    else if (word.status === 'due') stats.due += 1;
-    else if (word.status === 'trouble') stats.trouble += 1;
-    else if (word.status === 'learning') stats.learning += 1;
-    else if (word.status === 'new') stats.unseen += 1;
-  }
-  return stats;
-}
-
-function wordBankAggregateCards(stats, totalSub) {
-  return [
-    { label: 'Total', value: stats.total, sub: totalSub },
-    { label: 'Secure', value: stats.secure, sub: 'Stable recall' },
-    { label: 'Due now', value: stats.due, sub: 'Due today or overdue' },
-    { label: 'Trouble', value: stats.trouble, sub: 'Weak or fragile' },
-    { label: 'Learning', value: stats.learning, sub: 'Introduced, not secure' },
-    { label: 'Unseen', value: stats.unseen, sub: 'Not yet introduced' },
-  ];
-}
-
-function renderWordBankWordPill(word) {
-  const pillToken = wordBankPillClass(word.status);
-  const statusLabel = wordStatusLabel(word.status);
-  const poolLabel = spellingPoolLabel(word);
-  const due = dueLabel(word.progress);
-  const progress = word.progress || {};
-  const title = [
-    word.word,
-    word.family ? `Family: ${word.family}` : '',
-    poolLabel,
-    word.stageLabel || '',
-    `Correct ${Math.max(0, Number(progress.correct) || 0)}`,
-    `Wrong ${Math.max(0, Number(progress.wrong) || 0)}`,
-    `Next due: ${due}`,
-    'Click to drill',
-  ].filter(Boolean).join(' • ');
-  const ariaLabel = `Drill ${word.word}. ${statusLabel}. ${poolLabel}.`;
-  return `
-    <button
-      type="button"
-      class="wb-word-pill ${escapeHtml(pillToken)}"
-      data-action="spelling-word-detail-open"
-      data-slug="${escapeHtml(word.slug)}"
-      data-value="drill"
-      title="${escapeHtml(title)}"
-      aria-label="${escapeHtml(ariaLabel)}"
-    >${escapeHtml(word.word)}</button>
-  `;
-}
-
-function renderWordBankGroup({ group, words, query }) {
-  const secureCount = words.filter((word) => Math.max(0, Number(word.progress?.stage) || 0) >= 4).length;
-  const summaryText = words.length
-    ? `${secureCount} secure out of ${words.length} visible spellings`
-    : 'No words match your filters.';
-  const emptyText = query ? 'Try another word or family search.' : 'Try another category or status filter.';
-  return `
-    <section class="wb-word-group" aria-label="${escapeHtml(group.title)} spellings">
-      <div class="wb-word-group-head">
-        <h2>${escapeHtml(group.title)}</h2>
-        <p>${escapeHtml(summaryText)}</p>
-      </div>
-      <div class="wb-word-bank">
-        ${words.length
-          ? words.map(renderWordBankWordPill).join('')
-          : `<div class="wb-empty">${escapeHtml(emptyText)}</div>`}
-      </div>
-    </section>
-  `;
-}
-
-function renderWordBank({ learner, analytics, searchQuery = '', statusFilter = 'all', yearFilter = 'all' }) {
-  const query = normaliseSearchText(searchQuery);
-  const activeFilter = WORD_BANK_FILTER_IDS.has(statusFilter) ? statusFilter : 'all';
-  const activeYearFilter = WORD_BANK_YEAR_FILTER_IDS.has(yearFilter) ? yearFilter : 'all';
-  const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
-  const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
-  const categoryWords = allWords.filter((word) => wordBankYearFilterMatches(activeYearFilter, word));
-
-  /* Apply category, then status, then search. Status chips are the visible
-     legend, so the filtered result and the colour key stay in sync. */
-  const visibleGroups = groups
-    .filter((group) => activeYearFilter === 'all' ? true : group.key === activeYearFilter)
-    .map((group) => {
-      const words = (Array.isArray(group.words) ? group.words : [])
-        .filter((word) => wordBankFilterMatchesStatus(activeFilter, word.status))
-        .filter((word) => wordMatchesSearch(word, query));
-      return { group, words };
-    })
-    .filter((entry) => activeFilter === 'all' && !query ? true : entry.words.length > 0);
-  const visibleWords = visibleGroups.flatMap((entry) => entry.words);
-
-  const counts = {
-    all: categoryWords.length,
-    due: countWordBankStatus(categoryWords, 'due'),
-    weak: countWordBankStatus(categoryWords, 'trouble'),
-    learning: countWordBankStatus(categoryWords, 'learning'),
-    secure: countWordBankStatus(categoryWords, 'secure'),
-    unseen: countWordBankStatus(categoryWords, 'new'),
-  };
-  const yearCounts = {
-    all: allWords.length,
-    'y3-4': countWordBankYear(allWords, '3-4'),
-    'y5-6': countWordBankYear(allWords, '5-6'),
-    extra: countWordBankExtra(allWords),
-  };
-
-  const rows = visibleGroups.length
-    ? visibleGroups.map((entry) => renderWordBankGroup({ ...entry, query })).join('')
-    : `<div class="wb-empty">${escapeHtml(query ? 'No words match your search and filters.' : 'No words match your filters.')}</div>`;
-
-  /* v1 lede format: "{total} words tracked — {secure} secure, {due} due today,
-     {weak} weak spots." Switches to the search-narrow variant when the
-     learner has typed a query so the line stays informative instead of
-     stale. */
-  const totalWords = allWords.length;
-  const categoryTotal = categoryWords.length;
-  const categoryLabel = wordBankYearFilterLabel(activeYearFilter);
-  const ledeBase = activeYearFilter === 'all'
-    ? `${totalWords} word${totalWords === 1 ? '' : 's'} tracked — ${counts.secure} secure, ${counts.due} due today, ${counts.weak} weak spots.`
-    : `${categoryLabel} selected — ${categoryTotal} of ${totalWords} words, ${counts.secure} secure, ${counts.due} due today, ${counts.weak} weak spots.`;
-  const ledeSearch = query
-    ? ` Showing ${visibleWords.length} match${visibleWords.length === 1 ? '' : 'es'} for "${escapeHtml(searchQuery)}".`
-    : '';
-  const footText = activeYearFilter === 'all'
-    ? `Showing ${visibleWords.length} of ${totalWords} tracked spellings.`
-    : `Showing ${visibleWords.length} of ${categoryTotal} ${categoryLabel} spellings.`;
-  const learnerName = learner?.name ? `${learner.name}’s` : 'Learner';
-
-  return `
-    <section class="word-bank-card">
-      <div class="wb-card">
-        <header class="wb-head">
-          <p class="eyebrow">Word bank progress</p>
-          <h1 class="title">${escapeHtml(learnerName)} word bank</h1>
-          <p class="lede">${escapeHtml(ledeBase)}${ledeSearch} Tap any word to drill it, then switch to the explainer if you need help.</p>
-        </header>
-
-        <div class="wb-toolbar">
-          <label class="wb-search">
-            <span class="wb-search-icon" aria-hidden="true">${ICON_SEARCH}</span>
-            <input type="search" name="spellingAnalyticsSearch" autocomplete="off" placeholder="Search words…" value="${escapeHtml(searchQuery)}" data-action="spelling-analytics-search" aria-label="Search word bank" />
-          </label>
-          <div class="wb-filter-stack">
-            ${renderWordBankYearChips({ counts: yearCounts, activeYearFilter })}
-            ${renderWordBankStatusChips({ counts, activeFilter })}
-          </div>
-        </div>
-
-        <div class="wb-word-groups">
-          ${rows}
-        </div>
-
-        <div class="wb-foot small muted">${escapeHtml(footText)}</div>
-      </div>
-    </section>
-  `;
-}
-
-/* --------------------------------------------------------------
-   Word-detail modal
-   Opened from the word bank pills, which now launch straight into
-   drill mode. The drill is entirely self-contained: no engine
-   mutation, just a local string comparison against the target word.
-   This keeps "browse" and "practise" conceptually separate from the
-   scheduled-session flow.
-   -------------------------------------------------------------- */
-function renderWordDetailExplain(word) {
-  const sentence = (word.sentence || '').replace(/________/g, word.word);
-  const explanation = word.explanation || '';
-  return `
-    <div class="wb-modal-body">
-      <div class="wb-modal-section">
-        <p class="wb-modal-section-label">What it means</p>
-        ${explanation
-          ? `<p class="wb-modal-def">${escapeHtml(explanation)}</p>`
-          : '<p class="wb-modal-def">No meaning note on file for this word yet.</p>'}
-      </div>
-      <div class="wb-modal-section">
-        <p class="wb-modal-section-label">Example sentence</p>
-        ${sentence
-          ? `<blockquote class="wb-modal-sample">${escapeHtml(sentence)}</blockquote>`
-          : '<p class="wb-modal-def">No example sentence on file for this word yet.</p>'}
-      </div>
-    </div>
-  `;
-}
-
-function renderWordDetailDrill(word, { typed = '', result = null, accent = SPELLING_ACCENT }) {
-  const sentence = word.sentence || '';
-  /* Word-bank sentences arrive in natural form (no ________ sentinel),
-     so synthesise a drill-friendly cloze that hides the target word.
-     This replaces the previous call chain that let the raw sentence
-     reach renderCloze's no-blank branch and leak the answer verbatim. */
-  const drillCloze = sentence ? buildDrillCloze(sentence, word) : '';
-  const showFeedback = result === 'correct' || result === 'incorrect';
-  const feedbackTone = result === 'correct' ? 'good' : 'warn';
-  const inputState = result === 'correct' ? 'is-correct' : result === 'incorrect' ? 'is-wrong' : '';
-  const feedbackBody = result === 'correct'
-    ? `<span class="wb-drill-feedback-icon" aria-hidden="true">✓</span><div><b>Nice — "${escapeHtml(word.word)}" is spot on.</b> Browse on, or try another word.</div>`
-    : `<span class="wb-drill-feedback-icon" aria-hidden="true">!</span><div><b>Close — the word is "${escapeHtml(word.word)}".</b> Listen again and have another go.</div>`;
-  return `
-    <div class="wb-modal-body">
-      <div class="wb-modal-section">
-        <p class="wb-modal-section-label">${sentence ? 'Listen to the sentence, then type the missing word' : 'Listen to the word, then type it'}</p>
-        ${sentence ? `<p class="wb-drill-sentence">${renderCloze(drillCloze, { answer: word.word, revealAnswer: result === 'correct' })}</p>` : ''}
-      </div>
-      <div class="wb-drill-audio">
-        <button type="button" class="wb-drill-audio-btn" data-action="spelling-word-bank-drill-replay" data-slug="${escapeHtml(word.slug)}" aria-label="Replay the word">
-          ${ICON_SPEAKER}
-          <span class="wb-drill-audio-label">Replay</span>
-        </button>
-        <button type="button" class="wb-drill-audio-btn slow" data-action="spelling-word-bank-drill-replay-slow" data-slug="${escapeHtml(word.slug)}" aria-label="Replay slowly">
-          ${ICON_SPEAKER_SLOW}
-          <span class="wb-drill-audio-label">Slowly</span>
-        </button>
-      </div>
-      <form class="wb-drill-form" data-action="spelling-word-bank-drill-submit" data-slug="${escapeHtml(word.slug)}">
-        <input
-          type="text"
-          name="typed"
-          class="wb-drill-input ${inputState}"
-          autocomplete="off"
-          autocapitalize="none"
-          spellcheck="false"
-          placeholder="Type the word…"
-          value="${escapeHtml(typed)}"
-          data-autofocus="true"
-          data-action="spelling-word-bank-drill-input"
-          aria-label="Type the drill word"
-          ${result === 'correct' ? 'disabled' : ''}
-        />
-        <button type="submit" class="btn primary" style="--btn-accent:${accent};" ${result === 'correct' ? 'disabled' : ''}>Check ${ICON_ARROW_RIGHT}</button>
-      </form>
-      ${showFeedback ? `<div class="wb-drill-feedback ${feedbackTone}" role="status">${feedbackBody}</div>` : ''}
-      <div class="wb-modal-actions">
-        ${result === 'correct'
-          ? `<button type="button" class="btn ghost" data-action="spelling-word-detail-mode" data-value="explain" data-slug="${escapeHtml(word.slug)}">Back to explainer</button>
-             <button type="button" class="btn primary" style="--btn-accent:${accent};" data-action="spelling-word-bank-drill-try-again" data-slug="${escapeHtml(word.slug)}">Try again ${ICON_ARROW_RIGHT}</button>`
-          : result === 'incorrect'
-            ? `<button type="button" class="btn ghost" data-action="spelling-word-detail-mode" data-value="explain" data-slug="${escapeHtml(word.slug)}">Back to explainer</button>
-               <button type="button" class="btn ghost" data-action="spelling-word-bank-drill-try-again" data-slug="${escapeHtml(word.slug)}">Try again</button>`
-            : ''}
-      </div>
-      <p class="wb-modal-note">Drilling here never writes to the scheduler — it's a free practice tool.</p>
-    </div>
-  `;
-}
-
-function renderWordDetailModal({ word, mode = 'explain', typed = '', result = null, accent = SPELLING_ACCENT }) {
-  if (!word) return '';
-  const slug = word.slug;
-  const safeMode = mode === 'drill' ? 'drill' : 'explain';
-  const body = safeMode === 'drill'
-    ? renderWordDetailDrill(word, { typed, result, accent })
-    : renderWordDetailExplain(word);
-  /* In drill mode the speaker is decorative — the learner must not be able
-     to click it and hear the answer before trying. In explain mode it stays
-     a fully interactive replay affordance tied to the same replay handler. */
-  const speaker = safeMode === 'drill'
-    ? `<span class="wb-modal-speaker muted" aria-hidden="true">${ICON_SPEAKER}</span>`
-    : `<button type="button" class="wb-modal-speaker" data-action="spelling-word-bank-word-replay" data-slug="${escapeHtml(slug)}" aria-label="Replay the word">${ICON_SPEAKER}</button>`;
-  const heading = safeMode === 'drill'
-    ? `<h2 id="wb-modal-word" class="wb-modal-word wb-modal-word-prompt">Listen, then spell the missing word.</h2>`
-    : `<h2 id="wb-modal-word" class="wb-modal-word">${escapeHtml(word.word)}</h2>`;
-  return `
-    <div class="wb-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="wb-modal-word">
-      <div class="wb-modal-backdrop" tabindex="-1" aria-hidden="true"></div>
-      <div class="wb-modal" data-slug="${escapeHtml(slug)}">
-        <header class="wb-modal-head">
-          <div class="wb-modal-head-main">
-            ${speaker}
-            <div>
-              <p class="wb-modal-eyebrow">${escapeHtml(spellingPoolContextLabel(word))}</p>
-              ${heading}
-            </div>
-          </div>
-          <button type="button" class="wb-modal-close" data-action="spelling-word-detail-close" aria-label="Close">×</button>
-        </header>
-        <div class="wb-modal-tabs" role="tablist">
-          <button type="button" role="tab" class="wb-modal-tab${safeMode === 'explain' ? ' on' : ''}" aria-selected="${safeMode === 'explain' ? 'true' : 'false'}" data-action="spelling-word-detail-mode" data-value="explain" data-slug="${escapeHtml(slug)}">
-            Explain
-          </button>
-          <button type="button" role="tab" class="wb-modal-tab${safeMode === 'drill' ? ' on' : ''}" aria-selected="${safeMode === 'drill' ? 'true' : 'false'}" data-action="spelling-word-detail-mode" data-value="drill" data-slug="${escapeHtml(slug)}">
-            Drill
-          </button>
-        </div>
-        ${body}
-      </div>
-    </div>
-  `;
-}
-
-/* --------------------------------------------------------------
-   Word-bank scene (ui.phase === 'word-bank')
-   Owns the three-col aggregate cards that used to live on the
-   retired Analytics tab, plus the word bank card itself, plus the
-   optional modal overlay when transientUi points at a word.
-   -------------------------------------------------------------- */
-function renderWordBankAggregates(analytics) {
-  const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
-  const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
-  /* The scheduler stats use broader "trouble" semantics for picking review
-     words. These cards must mirror the visible word-bank pill status instead,
-     so a recovered word does not appear as Trouble in the column summary. */
-  const core = wordBankAggregateStats(allWords.filter((word) => word.spellingPool !== 'extra'));
-  const y34 = wordBankAggregateStats(allWords.filter((word) => word.year === '3-4'));
-  const y56 = wordBankAggregateStats(allWords.filter((word) => word.year === '5-6'));
-  const extra = wordBankAggregateStats(allWords.filter((word) => word.spellingPool === 'extra'));
-  const cards = [
-    {
-      eyebrow: 'Core spellings',
-      title: 'Core statutory progress',
-      stats: wordBankAggregateCards(core, 'Words in core pool'),
-    },
-    {
-      eyebrow: 'Years 3-4',
-      title: 'Lower KS2 spelling pool',
-      stats: wordBankAggregateCards(y34, 'Words in pool'),
-    },
-    {
-      eyebrow: 'Years 5-6',
-      title: 'Upper KS2 spelling pool',
-      stats: wordBankAggregateCards(y56, 'Words in pool'),
-    },
-    {
-      eyebrow: 'Extra',
-      title: 'Expansion spelling pool',
-      stats: wordBankAggregateCards(extra, 'Words in pool'),
-    },
-  ];
-  return `
-    <div class="wb-aggregates">
-      ${cards.map((card) => `
-        <section class="wb-card wb-card-compact">
-          <div class="eyebrow">${escapeHtml(card.eyebrow)}</div>
-          <h2 class="section-title">${escapeHtml(card.title)}</h2>
-          ${summaryCards(card.stats)}
-        </section>
-      `).join('')}
-    </div>
-  `;
-}
-
-function findWordBankEntry(analytics, slug) {
-  if (!slug) return null;
-  const groups = Array.isArray(analytics?.wordGroups) ? analytics.wordGroups : [];
-  for (const group of groups) {
-    const words = Array.isArray(group.words) ? group.words : [];
-    const match = words.find((entry) => entry.slug === slug);
-    if (match) return match;
-  }
-  return null;
-}
-
-function renderWordBankScene({ appState, learner, service, subject }) {
-  const analytics = service.getAnalyticsSnapshot(learner.id);
-  const accent = accentFor(subject);
-  const searchQuery = appState?.transientUi?.spellingAnalyticsWordSearch || '';
-  const statusFilter = appState?.transientUi?.spellingAnalyticsStatusFilter || 'all';
-  const yearFilter = appState?.transientUi?.spellingAnalyticsYearFilter || 'all';
-  const detailSlug = appState?.transientUi?.spellingWordDetailSlug || '';
-  const detailMode = appState?.transientUi?.spellingWordDetailMode || 'explain';
-  const drillTyped = appState?.transientUi?.spellingWordBankDrillTyped || '';
-  const drillResult = appState?.transientUi?.spellingWordBankDrillResult || null;
-  const heroBg = heroBgForLearner(learner.id);
-  const detailWord = findWordBankEntry(analytics, detailSlug);
-  return `
-    <div class="spelling-in-session word-bank-shell" style="grid-column:1/-1; ${heroBgStyle(heroBg)}">
-      <div class="word-bank-scene">
-        <header class="word-bank-topbar">
-          <button type="button" class="btn ghost sm" data-action="spelling-close-word-bank">← Back to setup</button>
-          <h1 class="word-bank-title">${escapeHtml(learner.name)}’s spellings</h1>
-        </header>
-        ${renderWordBankAggregates(analytics)}
-        ${renderWordBank({ learner, analytics, searchQuery, statusFilter, yearFilter })}
-      </div>
-      ${detailWord ? renderWordDetailModal({ word: detailWord, mode: detailMode, typed: drillTyped, result: drillResult, accent }) : ''}
-    </div>
-  `;
+function wordBankDrillResult(word, typed) {
+  const accepted = Array.isArray(word.accepted) && word.accepted.length
+    ? word.accepted
+    : [word.word, word.slug];
+  const normalisedTyped = String(typed || '').trim().toLowerCase();
+  return accepted.map((entry) => String(entry).toLowerCase()).includes(normalisedTyped)
+    ? 'correct'
+    : 'incorrect';
 }
 
 export const spellingModule = {
@@ -1273,6 +45,7 @@ export const spellingModule = {
   accentTint: '#EEF3FA',
   icon: 'pen',
   available: true,
+  reactPractice: true,
   initState() {
     return createInitialSpellingState();
   },
@@ -1288,29 +61,10 @@ export const spellingModule = {
       nextUp: stats.trouble ? 'Trouble drill' : stats.due ? 'Due review' : 'Fresh spellings',
     };
   },
-  renderPractice(context) {
-    const { appState } = context;
-    const learner = appState.learners.byId[appState.learners.selectedId];
-    const ui = context.service.initState(appState.subjectUi.spelling, learner.id);
-    if (ui.phase === 'summary') return renderSummary({ ...context, learner, ui });
-    if (ui.phase === 'session') return renderSession({ ...context, learner, ui });
-    if (ui.phase === 'word-bank') return renderWordBankScene({ ...context, learner });
-    return renderPracticeDashboard({ ...context, learner });
-  },
   handleAction(action, context) {
     const { appState, data, store, service, tts } = context;
     const learnerId = appState.learners.selectedId;
     const ui = service.initState(appState.subjectUi.spelling, learnerId);
-
-    function applyTransition(transition) {
-      if (!transition) return true;
-      if (typeof context.applySubjectTransition === 'function') {
-        return context.applySubjectTransition('spelling', transition);
-      }
-      store.updateSubjectUi('spelling', transition.state);
-      if (transition.audio?.word) tts.speak(transition.audio);
-      return true;
-    }
 
     if (action === 'spelling-set-mode') {
       service.savePrefs(learnerId, { mode: data.value });
@@ -1325,9 +79,6 @@ export const spellingModule = {
     }
 
     if (action === 'spelling-toggle-pref') {
-      /* The toggle chip is a `<button aria-pressed="…">`, not a checkbox, so
-         `data.checked` is always undefined. Read the current value from prefs
-         and flip it so the chip acts as a true toggle. */
       const current = service.getPrefs(learnerId);
       service.savePrefs(learnerId, { [data.pref]: !current[data.pref] });
       store.updateSubjectUi('spelling', { phase: 'dashboard', error: '' });
@@ -1372,7 +123,7 @@ export const spellingModule = {
     if (action === 'spelling-start' || action === 'spelling-start-again') {
       const prefs = service.getPrefs(learnerId);
       tts.stop();
-      return applyTransition(service.startSession(learnerId, {
+      return applySpellingTransition(context, service.startSession(learnerId, {
         mode: prefs.mode,
         yearFilter: prefs.yearFilter,
         length: prefs.roundLength,
@@ -1389,7 +140,7 @@ export const spellingModule = {
       service.savePrefs(learnerId, { mode });
       const prefs = service.getPrefs(learnerId);
       tts.stop();
-      return applyTransition(service.startSession(learnerId, {
+      return applySpellingTransition(context, service.startSession(learnerId, {
         mode: prefs.mode,
         yearFilter: prefs.yearFilter,
         length: prefs.roundLength,
@@ -1398,15 +149,15 @@ export const spellingModule = {
 
     if (action === 'spelling-submit-form') {
       const typed = data.formData.get('typed');
-      return applyTransition(service.submitAnswer(learnerId, ui, typed));
+      return applySpellingTransition(context, service.submitAnswer(learnerId, ui, typed));
     }
 
     if (action === 'spelling-continue') {
-      return applyTransition(service.continueSession(learnerId, ui));
+      return applySpellingTransition(context, service.continueSession(learnerId, ui));
     }
 
     if (action === 'spelling-skip') {
-      return applyTransition(service.skipWord(learnerId, ui));
+      return applySpellingTransition(context, service.skipWord(learnerId, ui));
     }
 
     if (action === 'spelling-replay') {
@@ -1427,18 +178,18 @@ export const spellingModule = {
       const confirmed = globalThis.confirm?.('End this session now?');
       if (confirmed === false) return true;
       tts.stop();
-      return applyTransition(service.endSession(learnerId, ui));
+      return applySpellingTransition(context, service.endSession(learnerId, ui));
     }
 
     if (action === 'spelling-back') {
       tts.stop();
-      return applyTransition(service.endSession(learnerId, ui));
+      return applySpellingTransition(context, service.endSession(learnerId, ui));
     }
 
     if (action === 'spelling-drill-all') {
       if (!ui.summary?.mistakes?.length) return true;
       tts.stop();
-      return applyTransition(service.startSession(learnerId, {
+      return applySpellingTransition(context, service.startSession(learnerId, {
         mode: 'trouble',
         words: ui.summary.mistakes.map((word) => word.slug),
         yearFilter: 'all',
@@ -1450,7 +201,7 @@ export const spellingModule = {
       const slug = data.slug;
       if (!slug) return true;
       tts.stop();
-      return applyTransition(service.startSession(learnerId, {
+      return applySpellingTransition(context, service.startSession(learnerId, {
         mode: 'single',
         words: [slug],
         yearFilter: 'all',
@@ -1458,38 +209,16 @@ export const spellingModule = {
       }));
     }
 
-    /* ------------------------------------------------------------
-       Word-bank scene actions
-       The word bank is its own phase ('word-bank'); opening and
-       closing it simply switches the spelling ui.phase. The detail
-       modal lives on transientUi so it survives session churn and
-       the drill stays isolated from the scheduler entirely. */
     if (action === 'spelling-open-word-bank') {
       tts.stop();
-      store.patch((current) => ({
-        transientUi: {
-          ...current.transientUi,
-          spellingWordDetailSlug: '',
-          spellingWordDetailMode: 'explain',
-          spellingWordBankDrillTyped: '',
-          spellingWordBankDrillResult: null,
-        },
-      }));
+      store.patch((current) => ({ transientUi: resetWordBankTransientUi(current) }));
       store.updateSubjectUi('spelling', { phase: 'word-bank', error: '' });
       return true;
     }
 
     if (action === 'spelling-close-word-bank') {
       tts.stop();
-      store.patch((current) => ({
-        transientUi: {
-          ...current.transientUi,
-          spellingWordDetailSlug: '',
-          spellingWordDetailMode: 'explain',
-          spellingWordBankDrillTyped: '',
-          spellingWordBankDrillResult: null,
-        },
-      }));
+      store.patch((current) => ({ transientUi: resetWordBankTransientUi(current) }));
       store.updateSubjectUi('spelling', { phase: 'dashboard', error: '' });
       return true;
     }
@@ -1516,15 +245,7 @@ export const spellingModule = {
 
     if (action === 'spelling-word-detail-close') {
       tts.stop();
-      store.patch((current) => ({
-        transientUi: {
-          ...current.transientUi,
-          spellingWordDetailSlug: '',
-          spellingWordDetailMode: 'explain',
-          spellingWordBankDrillTyped: '',
-          spellingWordBankDrillResult: null,
-        },
-      }));
+      store.patch((current) => ({ transientUi: resetWordBankTransientUi(current) }));
       return true;
     }
 
@@ -1537,10 +258,6 @@ export const spellingModule = {
         const word = findWordBankEntry(service.getAnalyticsSnapshot(learnerId), slug);
         if (word) tts.speak({ word: word.word, sentence: word.sentence });
       }
-      /* Only wipe typed progress when the tab actually changes. Re-clicking the
-         current tab (a re-entry into the same mode) is a no-op for the input
-         state — apart from re-speaking above — so the learner never loses what
-         they were midway through typing. */
       store.patch((current) => ({
         transientUi: {
           ...current.transientUi,
@@ -1559,9 +276,6 @@ export const spellingModule = {
         transientUi: {
           ...current.transientUi,
           spellingWordBankDrillTyped: typed,
-          /* A keystroke after a previous incorrect result clears the feedback
-             slot so the learner isn't dragging a red ribbon through their
-             retry. Correct is sticky — it drives the try-again button. */
           spellingWordBankDrillResult: current.transientUi?.spellingWordBankDrillResult === 'correct'
             ? 'correct'
             : null,
@@ -1576,16 +290,11 @@ export const spellingModule = {
       const word = findWordBankEntry(service.getAnalyticsSnapshot(learnerId), slug);
       if (!word) return true;
       const typed = String(data.formData?.get?.('typed') || '').trim();
-      const accepted = Array.isArray(word.accepted) && word.accepted.length
-        ? word.accepted
-        : [word.word, word.slug];
-      const normalisedTyped = typed.toLowerCase();
-      const result = accepted.map((entry) => String(entry).toLowerCase()).includes(normalisedTyped) ? 'correct' : 'incorrect';
       store.patch((current) => ({
         transientUi: {
           ...current.transientUi,
           spellingWordBankDrillTyped: typed,
-          spellingWordBankDrillResult: result,
+          spellingWordBankDrillResult: wordBankDrillResult(word, typed),
         },
       }));
       return true;

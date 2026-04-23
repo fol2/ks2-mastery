@@ -54,6 +54,13 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions }) 
   const promptInstr = session.type === 'test'
     ? 'Type the word dictated by the audio.'
     : 'Spell the word you hear.';
+  const inputKey = [
+    session.id,
+    session.currentSlug,
+    session.phase,
+    session.promptCount,
+    awaitingAdvance ? 'locked' : 'active',
+  ].join(':');
 
   return (
     <div className="spelling-in-session" style={{ gridColumn: '1/-1', ...heroBgStyle(heroBg) }}>
@@ -84,6 +91,7 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions }) 
           >
             <div className="word-input-wrap">
               <input
+                key={inputKey}
                 className="word-input"
                 name="typed"
                 data-autofocus="true"

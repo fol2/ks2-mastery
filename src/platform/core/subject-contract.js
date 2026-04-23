@@ -7,6 +7,7 @@ const REQUIRED_FUNCTION_FIELDS = [
 const REACT_PRACTICE_FIELDS = ['PracticeComponent', 'renderPracticeComponent'];
 
 function hasPracticeRenderer(candidate) {
+  if (candidate.reactPractice === true) return true;
   return REACT_PRACTICE_FIELDS.some((field) => typeof candidate[field] === 'function')
     || typeof candidate.renderPractice === 'function';
 }

@@ -14,6 +14,13 @@ export function SpellingPracticeSurface(props) {
     actions,
   } = props;
   const spelling = buildSpellingContext({ appState, service, repositories, subject });
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [spelling.ui.phase]);
 
   if (spelling.ui.phase === 'summary') {
     return <SpellingSummaryScene {...spelling} actions={actions} />;

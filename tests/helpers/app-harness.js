@@ -4,6 +4,7 @@ import { renderApp } from '../../src/platform/ui/render.js';
 import { SUBJECTS } from '../../src/platform/core/subject-registry.js';
 import { createAppController } from '../../src/platform/app/create-app-controller.js';
 import { createNoopTtsPort } from '../../src/platform/app/side-effect-ports.js';
+import { renderReactControllerApp } from './react-app-ssr.js';
 
 export function makeTts() {
   return createNoopTtsPort();
@@ -33,6 +34,11 @@ export function createAppHarness({
 
   function render() {
     const appState = controller.store.getState();
+    if (appState.route.screen === 'subject' && appState.route.subjectId === 'spelling') {
+      const html = renderReactControllerApp(controller);
+      controller.ensureSpellingAutoAdvanceFromCurrentState();
+      return html;
+    }
     const html = renderApp(appState, controller.contextFor(appState.route.subjectId || 'spelling'));
     controller.ensureSpellingAutoAdvanceFromCurrentState();
     return html;

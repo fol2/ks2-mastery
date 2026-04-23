@@ -18,7 +18,7 @@ export const YEAR_FILTER_OPTIONS = Object.freeze([
   { value: 'extra', label: 'Extra' },
 ]);
 export const WORD_BANK_FILTER_IDS = new Set(['all', 'due', 'weak', 'learning', 'secure', 'unseen']);
-export const WORD_BANK_YEAR_FILTER_IDS = new Set(['all', 'y3-4', 'y5-6']);
+export const WORD_BANK_YEAR_FILTER_IDS = new Set(['all', 'y3-4', 'y5-6', 'extra']);
 
 export function accentFor(subject) {
   return subject?.accent || SPELLING_ACCENT;
@@ -83,13 +83,15 @@ export function wordBankYearFilterMatches(filter, word) {
   if (filter === 'all') return true;
   if (filter === 'y3-4') return word.year === '3-4';
   if (filter === 'y5-6') return word.year === '5-6';
+  if (filter === 'extra') return word.spellingPool === 'extra';
   return true;
 }
 
 export function wordBankYearFilterLabel(filter) {
   if (filter === 'y3-4') return 'Years 3-4';
   if (filter === 'y5-6') return 'Years 5-6';
-  return 'All years';
+  if (filter === 'extra') return 'Extra';
+  return 'All';
 }
 
 export function wordStatusLabel(status) {
@@ -223,6 +225,41 @@ export function countWordBankYear(words, year) {
   return words.reduce((count, word) => count + (word.year === year ? 1 : 0), 0);
 }
 
+export function countWordBankExtra(words) {
+  return words.reduce((count, word) => count + (word.spellingPool === 'extra' ? 1 : 0), 0);
+}
+
+export function wordBankAggregateStats(words) {
+  const stats = {
+    total: 0,
+    secure: 0,
+    due: 0,
+    trouble: 0,
+    learning: 0,
+    unseen: 0,
+  };
+  for (const word of Array.isArray(words) ? words : []) {
+    stats.total += 1;
+    if (word.status === 'secure') stats.secure += 1;
+    else if (word.status === 'due') stats.due += 1;
+    else if (word.status === 'trouble') stats.trouble += 1;
+    else if (word.status === 'learning') stats.learning += 1;
+    else if (word.status === 'new') stats.unseen += 1;
+  }
+  return stats;
+}
+
+export function wordBankAggregateCards(stats, totalSub) {
+  return [
+    { label: 'Total', value: stats.total, sub: totalSub },
+    { label: 'Secure', value: stats.secure, sub: 'Stable recall' },
+    { label: 'Due now', value: stats.due, sub: 'Due today or overdue' },
+    { label: 'Trouble', value: stats.trouble, sub: 'Weak or fragile' },
+    { label: 'Learning', value: stats.learning, sub: 'Introduced, not secure' },
+    { label: 'Unseen', value: stats.unseen, sub: 'Not yet introduced' },
+  ];
+}
+
 export function findWordBankEntry(analytics, slug) {
   if (!slug) return null;
   const groups = Array.isArray(analytics?.wordGroups) ? analytics.wordGroups : [];
@@ -237,17 +274,21 @@ export function findWordBankEntry(analytics, slug) {
 export function buildSpellingContext({ appState, service, repositories, subject }) {
   const learner = appState.learners.byId[appState.learners.selectedId];
   const ui = service.initState(appState.subjectUi.spelling, learner.id);
+  const needsAnalytics = ui.phase === 'dashboard' || ui.phase === 'word-bank';
+  const analytics = needsAnalytics ? service.getAnalyticsSnapshot(learner.id) : null;
   return {
     learner,
     ui,
     accent: accentFor(subject),
     prefs: service.getPrefs(learner.id),
-    analytics: service.getAnalyticsSnapshot(learner.id),
-    codex: monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id), {
-      learnerId: learner.id,
-      gameStateRepository: repositories?.gameState,
-      persistBranches: false,
-    }),
+    analytics,
+    codex: ui.phase === 'dashboard' && analytics
+      ? monsterSummaryFromSpellingAnalytics(analytics, {
+          learnerId: learner.id,
+          gameStateRepository: repositories?.gameState,
+          persistBranches: false,
+        })
+      : [],
   };
 }
 

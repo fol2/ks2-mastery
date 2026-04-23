@@ -74,6 +74,12 @@ test('browser migration smoke covers the React app root and spelling interaction
       ['html'],
       ['js', "document.querySelector('[data-action=\"open-subject\"][data-subject-id=\"spelling\"]')?.click(); 'opened spelling';"],
       ['text'],
+      ['click', '[data-action="spelling-open-word-bank"]'],
+      ['wait', '.word-bank-topbar'],
+      ['js', '`wordBankScrollY:${Math.round(window.scrollY)}`'],
+      ['text'],
+      ['click', '[data-action="spelling-close-word-bank"]'],
+      ['wait', '[data-action="spelling-start"]'],
       ['js', "document.querySelector('[data-action=\"spelling-start\"]')?.click(); 'started spelling';"],
       ['text'],
       ['is', 'focused', 'input[name="typed"]'],
@@ -88,6 +94,8 @@ test('browser migration smoke covers the React app root and spelling interaction
     assert.match(output, /Your subjects/);
     assert.doesNotMatch(output, /data-home-mount/);
     assert.match(output, /Round setup/);
+    assert.match(output, /wordBankScrollY:0/);
+    assert.match(output, /Word bank progress/);
     assert.match(output, /Spell the word you hear|Spell the dictated word/);
     assert.match(output, /true|focused/i);
     assert.match(output, /Try once more|Not quite|Saved/);

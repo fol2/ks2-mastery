@@ -123,11 +123,13 @@ export function registerSubjectConformanceSuite(spec) {
     const baseSubject = findSubject(baseHarness, spec.subjectId);
     assert.ok(baseSubject, `Expected subject "${spec.subjectId}" to be present.`);
 
+    const throwRenderError = () => {
+      throw new Error(`${spec.subjectId} render exploded`);
+    };
     const brokenRenderSubject = {
       ...baseSubject,
-      renderPractice() {
-        throw new Error(`${spec.subjectId} render exploded`);
-      },
+      renderPractice: throwRenderError,
+      renderPracticeComponent: throwRenderError,
     };
 
     const renderHarness = spec.createHarness({
