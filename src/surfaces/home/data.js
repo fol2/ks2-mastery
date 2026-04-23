@@ -16,18 +16,18 @@ const CODEX_POWER_RANK = Object.freeze({
 });
 
 export const REGION_BACKGROUND_URLS = Object.freeze([
-  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-a1.1280.webp',
-  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-a2.1280.webp',
-  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-a3.1280.webp',
-  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-b1.1280.webp',
-  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-b2.1280.webp',
-  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-b3.1280.webp',
-  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c1.1280.webp',
-  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c2.1280.webp',
-  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-c3.1280.webp',
-  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-d1.1280.webp',
-  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-d2.1280.webp',
-  '/assets/regions/the-scribe-downs/the-scribe-downs-bg-d3.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-a1.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-a2.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-a3.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-b1.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-b2.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-b3.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-c1.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-c2.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-c3.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-d1.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-d2.1280.webp',
+  '/assets/regions/the-scribe-downs/the-scribe-downs-d3.1280.webp',
 ]);
 
 const MEADOW_PERSPECTIVE = Object.freeze({
