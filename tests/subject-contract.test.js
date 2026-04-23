@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import { buildSubjectRegistry } from '../src/platform/core/subject-registry.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createStore } from '../src/platform/core/store.js';
-import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { spellingModule } from '../src/subjects/spelling/module.js';
+import { renderSpellingSurfaceFixture } from './helpers/react-render.js';
 
 function completeSubjectModule(overrides = {}) {
   return {
@@ -52,6 +52,18 @@ test('subject registry accepts a React practice component during subject migrati
   assert.equal(typeof registry[0].PracticeComponent, 'function');
 });
 
+test('subject registry accepts a mapped React practice surface without importing JSX in the module', () => {
+  const subject = completeSubjectModule({
+    renderPractice: undefined,
+    reactPractice: true,
+  });
+
+  const registry = buildSubjectRegistry([subject]);
+
+  assert.equal(registry[0].id, 'demo');
+  assert.equal(registry[0].reactPractice, true);
+});
+
 test('subject registry rejects modules without React or legacy practice rendering', () => {
   const broken = completeSubjectModule({ renderPractice: undefined });
 
@@ -86,38 +98,11 @@ test('store rejects subject modules whose initState does not return an object', 
   );
 });
 
-test('spelling practice dashboard renders without service UI metadata', () => {
-  const storage = installMemoryStorage();
-  const service = createSpellingService({
-    storage,
-    tts: {
-      speak() {},
-      stop() {},
-      warmup() {},
-    },
-  });
-  const learner = {
-    id: 'learner-a',
-    name: 'Ava',
-    yearGroup: 'Y5',
-    goal: 'sats',
-  };
-  const appState = {
-    learners: {
-      selectedId: learner.id,
-      byId: { [learner.id]: learner },
-    },
-    subjectUi: {
-      spelling: spellingModule.initState(),
-    },
-  };
+test('spelling practice dashboard renders without service UI metadata', async () => {
+  assert.equal(spellingModule.reactPractice, true);
+  assert.equal(spellingModule.renderPractice, undefined);
 
-  const html = spellingModule.renderPractice({
-    appState,
-    learner,
-    subject: spellingModule,
-    service,
-  });
+  const html = await renderSpellingSurfaceFixture({ phase: 'setup' });
 
   assert.match(html, /Round setup/);
   assert.match(html, /#3E6FA8/i);

@@ -17,6 +17,7 @@ import {
   buildParentHubAccessContext,
 } from '../src/platform/hubs/shell-access.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
+import { createAppHarness } from './helpers/app-harness.js';
 
 function noWritableLearnerState(store, routeScreen) {
   const appState = store.getState();
@@ -103,12 +104,9 @@ test('main dashboard hides uncaught monster art and the spelling setup shows onl
   assert.doesNotMatch(dashboardHtml, /assets\/monsters\/inklet\/b[12]\/inklet-b[12]-0\.320\.webp/);
   assert.doesNotMatch(dashboardHtml, /monster-placeholder/);
 
-  store.openSubject('spelling');
-  const spellingState = store.getState();
-  const spellingHtml = renderApp(spellingState, {
-    ...baseContext,
-    appState: spellingState,
-  });
+  const spellingHarness = createAppHarness({ storage: installMemoryStorage() });
+  spellingHarness.dispatch('open-subject', { subjectId: 'spelling' });
+  const spellingHtml = spellingHarness.render();
   /* The Codex Journal redesign dropped the in-setup full codex grid in favour
      of a compact caught-only meadow. A learner with no caught monsters sees
      the empty-state hint; the setup view never exposes uncaught placeholders
@@ -120,35 +118,9 @@ test('main dashboard hides uncaught monster art and the spelling setup shows onl
 
 test('spelling setup renders pool choices without the legacy All label', () => {
   const storage = installMemoryStorage();
-  const repositories = createLocalPlatformRepositories({ storage });
-  const store = createStore(SUBJECTS, { repositories });
-  const service = createSpellingService({
-    repository: createSpellingPersistence({ repositories }),
-    tts: {
-      speak() {},
-      stop() {},
-      warmup() {},
-    },
-  });
-  store.openSubject('spelling');
-
-  const appState = store.getState();
-  const html = renderApp(appState, {
-    appState,
-    store,
-    repositories,
-    services: { spelling: service },
-    subject: SUBJECTS[0],
-    service,
-    tts: {
-      speak() {},
-      stop() {},
-      warmup() {},
-    },
-    applySubjectTransition() {
-      return true;
-    },
-  });
+  const harness = createAppHarness({ storage });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  const html = harness.render();
 
   assert.match(html, /aria-label="Spelling pool"/);
   assert.match(html, /data-pref="yearFilter" value="core"/);

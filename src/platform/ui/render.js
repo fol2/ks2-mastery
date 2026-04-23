@@ -340,6 +340,13 @@ function subjectTabContent(subject, activeTab, appState, contentContext, runtime
   return subject.renderPractice(contentContext);
 }
 
+function subjectPracticeRenderMethodName(subject) {
+  if (typeof subject.renderPractice === 'function') return 'renderPractice';
+  if (typeof subject.renderPracticeComponent === 'function') return 'renderPracticeComponent';
+  if (typeof subject.PracticeComponent === 'function' || subject.reactPractice === true) return 'PracticeComponent';
+  return 'renderPractice';
+}
+
 
 function renderHeader(appState, context) {
   const routeScreen = appState.route?.screen || 'dashboard';
@@ -1187,13 +1194,13 @@ export function renderSubjectScreen(context) {
         subject,
         tab: activeTab,
         phase: 'render',
-        methodName: 'renderPractice',
+        methodName: subjectPracticeRenderMethodName(subject),
         error,
       }) || {
         message: `${subject.name} could not render right now.`,
         debugMessage: error?.message || String(error),
         phase: 'render',
-        methodName: 'renderPractice',
+        methodName: subjectPracticeRenderMethodName(subject),
       };
       mainContent = subjectTabContent(subject, activeTab, appState, contentContext, captured);
     }

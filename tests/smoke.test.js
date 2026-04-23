@@ -163,7 +163,7 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   assert.match(html, /Core spellings/);
   assert.match(html, /Expansion spelling pool/);
   assert.doesNotMatch(html, /All spellings/);
-  assert.match(html, /name="spellingAnalyticsSearch"[^>]*autocomplete="off"/);
+  assert.match(html, /name="spellingAnalyticsSearch"[^>]*(?:autoComplete|autocomplete)="off"/);
   // Category filters sit beside search and use transient UI only, so browsing
   // the bank never mutates the scheduled spelling session.
   assert.match(html, /data-action="spelling-analytics-year-filter"\s+data-value="y3-4"/);

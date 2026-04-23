@@ -5,6 +5,7 @@ import { SpellingWordDetailModal } from './SpellingWordDetailModal.jsx';
 import {
   WORD_BANK_FILTER_IDS,
   WORD_BANK_YEAR_FILTER_IDS,
+  countWordBankExtra,
   countWordBankStatus,
   countWordBankYear,
   dueLabel,
@@ -15,6 +16,8 @@ import {
   renderAction,
   spellingPoolLabel,
   wordBankFilterMatchesStatus,
+  wordBankAggregateCards,
+  wordBankAggregateStats,
   wordBankPillClass,
   wordBankYearFilterLabel,
   wordBankYearFilterMatches,
@@ -24,27 +27,28 @@ import {
 
 function FilterChips({ counts, activeFilter, actions }) {
   const chips = [
-    { id: 'all', label: 'All' },
-    { id: 'due', label: 'Due' },
-    { id: 'weak', label: 'Trouble' },
-    { id: 'learning', label: 'Learning' },
-    { id: 'secure', label: 'Secure' },
-    { id: 'unseen', label: 'Unseen' },
+    { id: 'all', label: 'All', swatch: 'all' },
+    { id: 'due', label: 'Due', swatch: 'due' },
+    { id: 'weak', label: 'Trouble', swatch: 'trouble' },
+    { id: 'learning', label: 'Learning', swatch: 'learning' },
+    { id: 'secure', label: 'Secure', swatch: 'secure' },
+    { id: 'unseen', label: 'Unseen', swatch: 'new' },
   ];
   return (
-    <div className="wb-chips" role="group" aria-label="Filter word bank by status">
+    <div className="wb-chips wb-status-chips" role="group" aria-label="Filter word bank by status">
       {chips.map((chip) => {
         const active = chip.id === activeFilter;
         return (
           <button
             type="button"
             aria-pressed={active ? 'true' : 'false'}
-            className={`wb-chip${active ? ' on' : ''}`}
+            className={`wb-chip wb-chip-status${active ? ' on' : ''}`}
             data-action="spelling-analytics-status-filter"
             data-value={chip.id}
             key={chip.id}
             onClick={(event) => renderAction(actions, event, 'spelling-analytics-status-filter', { value: chip.id })}
           >
+            <span className={`wb-status-swatch ${chip.swatch}`} aria-hidden="true" />
             <span className="wb-chip-label">{chip.label}</span>
             <span className="wb-chip-count">{counts[chip.id] ?? 0}</span>
           </button>
@@ -56,12 +60,13 @@ function FilterChips({ counts, activeFilter, actions }) {
 
 function YearChips({ counts, activeYearFilter, actions }) {
   const chips = [
-    { id: 'all', label: 'All years' },
+    { id: 'all', label: 'All' },
     { id: 'y3-4', label: 'Years 3-4' },
     { id: 'y5-6', label: 'Years 5-6' },
+    { id: 'extra', label: 'Extra' },
   ];
   return (
-    <div className="wb-chips wb-year-chips" role="group" aria-label="Filter word bank by year band">
+    <div className="wb-chips wb-year-chips" role="group" aria-label="Filter word bank by category">
       {chips.map((chip) => {
         const active = chip.id === activeYearFilter;
         return (
@@ -79,27 +84,6 @@ function YearChips({ counts, activeYearFilter, actions }) {
           </button>
         );
       })}
-    </div>
-  );
-}
-
-function WordBankLegend({ counts }) {
-  const items = [
-    { token: 'new', label: 'New', count: counts.unseen ?? 0 },
-    { token: 'learning', label: 'Learning', count: counts.learning ?? 0 },
-    { token: 'due', label: 'Due', count: counts.due ?? 0 },
-    { token: 'secure', label: 'Secure', count: counts.secure ?? 0 },
-    { token: 'trouble', label: 'Trouble', count: counts.weak ?? 0 },
-  ];
-  return (
-    <div className="wb-status-legend" aria-label="Word status colour legend">
-      {items.map((item) => (
-        <span className="wb-legend-item" key={item.token}>
-          <span className={`wb-legend-swatch ${item.token}`} aria-hidden="true" />
-          <span className="wb-legend-label">{item.label}</span>
-          <span className="wb-legend-count">{item.count}</span>
-        </span>
-      ))}
     </div>
   );
 }
@@ -186,6 +170,7 @@ function WordBankCard({ learner, analytics, appState, actions }) {
     all: allWords.length,
     'y3-4': countWordBankYear(allWords, '3-4'),
     'y5-6': countWordBankYear(allWords, '5-6'),
+    extra: countWordBankExtra(allWords),
   };
   const totalWords = allWords.length;
   const categoryTotal = categoryWords.length;
@@ -230,8 +215,6 @@ function WordBankCard({ learner, analytics, appState, actions }) {
           </div>
         </div>
 
-        <WordBankLegend counts={counts} />
-
         <div className="wb-word-groups">
           {visibleGroups.length
             ? visibleGroups.map((entry) => <WordGroup {...entry} query={query} actions={actions} key={entry.group.key} />)
@@ -245,51 +228,32 @@ function WordBankCard({ learner, analytics, appState, actions }) {
 }
 
 function WordBankAggregates({ analytics }) {
-  const emptyStats = { total: 0, secure: 0, due: 0, trouble: 0, fresh: 0, accuracy: null };
-  const core = analytics.pools.core || analytics.pools.all || emptyStats;
-  const y34 = analytics.pools.y34 || emptyStats;
-  const y56 = analytics.pools.y56 || emptyStats;
-  const extra = analytics.pools.extra || emptyStats;
+  const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
+  const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
+  const core = wordBankAggregateStats(allWords.filter((word) => word.spellingPool !== 'extra'));
+  const y34 = wordBankAggregateStats(allWords.filter((word) => word.year === '3-4'));
+  const y56 = wordBankAggregateStats(allWords.filter((word) => word.year === '5-6'));
+  const extra = wordBankAggregateStats(allWords.filter((word) => word.spellingPool === 'extra'));
   const cards = [
     {
       eyebrow: 'Core spellings',
       title: 'Core statutory progress',
-      stats: [
-        { label: 'Total', value: core.total, sub: 'Words in core pool' },
-        { label: 'Secure', value: core.secure, sub: 'Stage 4+' },
-        { label: 'Due now', value: core.due, sub: 'Due today or overdue' },
-        { label: 'Accuracy', value: core.accuracy == null ? '—' : `${core.accuracy}%`, sub: 'Across stored attempts' },
-      ],
+      stats: wordBankAggregateCards(core, 'Words in core pool'),
     },
     {
       eyebrow: 'Years 3-4',
       title: 'Lower KS2 spelling pool',
-      stats: [
-        { label: 'Total', value: y34.total, sub: 'Words in pool' },
-        { label: 'Secure', value: y34.secure, sub: 'Stable recall' },
-        { label: 'Trouble', value: y34.trouble, sub: 'Weak or fragile' },
-        { label: 'Unseen', value: y34.fresh, sub: 'Not yet introduced' },
-      ],
+      stats: wordBankAggregateCards(y34, 'Words in pool'),
     },
     {
       eyebrow: 'Years 5-6',
       title: 'Upper KS2 spelling pool',
-      stats: [
-        { label: 'Total', value: y56.total, sub: 'Words in pool' },
-        { label: 'Secure', value: y56.secure, sub: 'Stable recall' },
-        { label: 'Trouble', value: y56.trouble, sub: 'Weak or fragile' },
-        { label: 'Unseen', value: y56.fresh, sub: 'Not yet introduced' },
-      ],
+      stats: wordBankAggregateCards(y56, 'Words in pool'),
     },
     {
       eyebrow: 'Extra',
       title: 'Expansion spelling pool',
-      stats: [
-        { label: 'Total', value: extra.total, sub: 'Words in pool' },
-        { label: 'Secure', value: extra.secure, sub: 'Stable recall' },
-        { label: 'Trouble', value: extra.trouble, sub: 'Weak or fragile' },
-        { label: 'Unseen', value: extra.fresh, sub: 'Not yet introduced' },
-      ],
+      stats: wordBankAggregateCards(extra, 'Words in pool'),
     },
   ];
   return (

@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 
 import { createAppController } from '../src/platform/app/create-app-controller.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
-import { renderSubjectScreen } from '../src/platform/ui/render.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createAppHarness } from './helpers/app-harness.js';
+import { renderReactControllerApp } from './helpers/react-app-ssr.js';
 
 function typedFormData(value) {
   const formData = new FormData();
@@ -123,7 +123,7 @@ test('TTS replay failures are contained by the subject runtime boundary', () => 
   controller.dispatch('spelling-replay');
 
   const entry = controller.runtimeBoundary.read({ learnerId, subjectId: 'spelling', tab: 'practice' });
-  const html = renderSubjectScreen(controller.contextFor('spelling'));
+  const html = renderReactControllerApp(controller);
 
   assert.equal(entry.phase, 'action');
   assert.equal(entry.action, 'spelling-replay');

@@ -42,7 +42,7 @@ test('word-bank modal declares dialog semantics, tabs, replay, and drill control
   assert.match(html, /aria-label="Close"/);
   assert.match(html, /data-action="spelling-word-bank-drill-replay"/);
   assert.match(html, /name="typed"[^>]*data-autofocus="true"/);
-  assert.match(html, /autocomplete="off"/);
+  assert.match(html, /(?:autoComplete|autocomplete)="off"/);
   assert.match(html, /spellcheck="false"/);
   assert.doesNotMatch(html, />possess<\/h2>/);
 });
