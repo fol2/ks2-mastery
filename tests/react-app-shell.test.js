@@ -17,5 +17,6 @@ test('React app shell renders subject chrome without global subject top-nav moun
 
   assert.match(html, /Round setup/);
   assert.match(html, /KS2 Mastery/);
+  assert.match(html, /class="subject-breadcrumb-current"[^>]*>\s*Spelling\s*<\/button>/);
   assert.doesNotMatch(html, /data-subject-topnav-mount/);
 });

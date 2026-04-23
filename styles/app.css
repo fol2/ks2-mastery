@@ -5224,8 +5224,22 @@ textarea:focus-visible {
 .subject-breadcrumb-sep { color: var(--subtle); }
 .subject-breadcrumb-ancestor { color: var(--muted); }
 .subject-breadcrumb-current {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 4px 2px;
   color: var(--ink);
+  font: inherit;
+  font-size: 0.86rem;
   font-weight: 700;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: color var(--dur) var(--ease-out);
+}
+.subject-breadcrumb-current:hover { color: var(--brand); }
+.subject-breadcrumb-current:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
 }
 
 /* ---------- Setup-scene codex link ---------- */
