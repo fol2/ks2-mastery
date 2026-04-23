@@ -13,6 +13,14 @@ export const spellingAnswerInputProps = {
   spellCheck: false,
 };
 
+function measurePromptCardHeight(cardNode, contentNode) {
+  if (!cardNode || !contentNode || typeof window === 'undefined') return null;
+  const styles = window.getComputedStyle(cardNode);
+  const chromeHeight = ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth']
+    .reduce((sum, key) => sum + (Number.parseFloat(styles[key] || '0') || 0), 0);
+  return Math.ceil(contentNode.getBoundingClientRect().height + chromeHeight);
+}
+
 export function PathProgress({ done, current, total }) {
   const safeTotal = Math.max(1, Number(total) || 1);
   const dots = pathProgressDots({ done, current, total });
@@ -63,46 +71,69 @@ export function Ribbon({ tone, icon, headline, word, sub }) {
   );
 }
 
-export function AnimatedPromptCard({ className = '', innerClassName = '', children }) {
+export function AnimatedPromptCard({
+  className = '',
+  innerClassName = '',
+  children,
+  heightKey = '',
+  lockHeightToKey = false,
+}) {
+  const cardRef = React.useRef(null);
   const contentRef = React.useRef(null);
   const [height, setHeight] = React.useState(null);
 
   useMeasuredLayoutEffect(() => {
+    const cardNode = cardRef.current;
     const node = contentRef.current;
-    if (!node || typeof window === 'undefined') return undefined;
+    if (!cardNode || !node || typeof window === 'undefined') return undefined;
 
     let frameId = 0;
+    let settleTimerId = 0;
+    let cancelled = false;
     const measure = () => {
       frameId = 0;
-      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+      const nextHeight = measurePromptCardHeight(cardNode, node);
+      if (!nextHeight) return;
       setHeight((current) => (current === nextHeight ? current : nextHeight));
     };
     const scheduleMeasure = () => {
       if (frameId) return;
       frameId = window.requestAnimationFrame(measure);
     };
+    const scheduleSettle = () => {
+      scheduleMeasure();
+      if (settleTimerId) window.clearTimeout(settleTimerId);
+      settleTimerId = window.setTimeout(scheduleMeasure, 80);
+    };
 
-    scheduleMeasure();
-    window.addEventListener('resize', scheduleMeasure);
+    scheduleSettle();
+    window.addEventListener('resize', scheduleSettle);
 
-    const observer = typeof ResizeObserver === 'function'
+    const observer = !lockHeightToKey && typeof ResizeObserver === 'function'
       ? new ResizeObserver(() => scheduleMeasure())
       : null;
     observer?.observe(node);
+    if (typeof document !== 'undefined' && document.fonts?.ready && typeof document.fonts.ready.then === 'function') {
+      document.fonts.ready.then(() => {
+        if (!cancelled) scheduleMeasure();
+      }).catch(() => {});
+    }
 
     return () => {
+      cancelled = true;
       if (frameId) window.cancelAnimationFrame(frameId);
+      if (settleTimerId) window.clearTimeout(settleTimerId);
       observer?.disconnect();
-      window.removeEventListener('resize', scheduleMeasure);
+      window.removeEventListener('resize', scheduleSettle);
     };
-  }, []);
+  }, [heightKey, lockHeightToKey]);
 
   const classes = ['prompt-card', 'animated-prompt-card', className].filter(Boolean).join(' ');
   const innerClasses = ['prompt-card-inner', innerClassName].filter(Boolean).join(' ');
   const style = height ? { '--prompt-card-height': `${height}px` } : undefined;
 
   return (
-    <div className={classes} style={style}>
+    <div className={classes} style={style} ref={cardRef}>
       <div className={innerClasses} ref={contentRef}>
         {children}
       </div>
@@ -118,8 +149,11 @@ function feedbackSub(feedback) {
   return body ? `${attemptLead} ${body}` : attemptLead;
 }
 
-export function FeedbackSlot({ feedback }) {
-  if (!feedback) return null;
+export function FeedbackSlot({ feedback, reserveSpace = false }) {
+  if (!feedback) {
+    if (!reserveSpace) return null;
+    return <div className="feedback-slot is-placeholder" aria-hidden="true" />;
+  }
   const tone = feedbackTone(feedback.kind);
   const icon = tone === 'good' ? <CheckIcon /> : tone === 'warn' ? '!' : '×';
   return (
