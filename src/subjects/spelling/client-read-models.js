@@ -7,6 +7,7 @@ import {
   normaliseStats,
   normaliseYearFilter,
 } from './service-contract.js';
+import { DEFAULT_TTS_PROVIDER, normaliseTtsProvider } from './tts-providers.js';
 
 function defaultPrefs() {
   const mode = 'smart';
@@ -16,6 +17,7 @@ function defaultPrefs() {
     roundLength: normaliseRoundLength('20', mode),
     showCloze: true,
     autoSpeak: true,
+    ttsProvider: DEFAULT_TTS_PROVIDER,
   };
 }
 
@@ -27,6 +29,7 @@ function normalisePrefs(rawPrefs = {}) {
     roundLength: normaliseRoundLength(rawPrefs.roundLength, mode),
     showCloze: normaliseBoolean(rawPrefs.showCloze, true),
     autoSpeak: normaliseBoolean(rawPrefs.autoSpeak, true),
+    ttsProvider: normaliseTtsProvider(rawPrefs.ttsProvider),
   };
 }
 

@@ -169,7 +169,7 @@ test('controller bootstraps local repositories, store, services, and snapshot wi
 
 test('controller persists profile TTS provider in spelling prefs', () => {
   installMemoryStorage();
-  const controller = createAppController();
+  const controller = createLocalAppController();
   const learnerId = controller.store.getState().learners.selectedId;
   const formData = new FormData();
   formData.set('name', 'Ava');
