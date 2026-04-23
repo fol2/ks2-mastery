@@ -4233,7 +4233,7 @@ textarea:focus-visible {
   border-radius: var(--radius-lg);
   background: var(--panel);
   box-shadow: var(--shadow-warm);
-  min-height: 610px;
+  min-height: var(--spelling-shell-min-height);
   view-transition-name: spelling-hero-card;
   /* Default on-hero tokens assume a light/mid-light backdrop.
      Add `.hero-dark` at runtime if/when luminance detection
@@ -4243,12 +4243,10 @@ textarea:focus-visible {
   --on-hero-chip-bg: color-mix(in oklab, var(--panel) 90%, transparent);
   --on-hero-chip-border: color-mix(in oklab, var(--line-strong) 80%, var(--ink));
   --on-hero-chip-ink: color-mix(in oklab, var(--ink) 92%, black);
-  --spelling-prompt-card-height: 680px;
-  --spelling-prompt-card-padding-y: 72px;
+  --spelling-shell-min-height: 860px;
   --spelling-cloze-font-size: 2rem;
   --spelling-cloze-line-height: 1.2;
   --spelling-cloze-lines: 2;
-  --spelling-feedback-slot-height: 164px;
 }
 .spelling-in-session::before {
   content: "";
@@ -4275,6 +4273,7 @@ textarea:focus-visible {
 .spelling-in-session .session {
   max-width: 780px;
   margin: 0 auto;
+  min-height: calc(var(--spelling-shell-min-height) - 96px);
   position: relative;
   z-index: 2;
 }
@@ -4362,16 +4361,21 @@ textarea:focus-visible {
   border: 1px solid color-mix(in oklab, var(--line) 80%, transparent);
   border-radius: var(--radius-lg);
   padding: 40px 36px 32px;
-  height: var(--spelling-prompt-card-height);
-  overflow: hidden;
+  overflow: clip;
   box-shadow: var(--shadow-warm);
   position: relative;
   view-transition-name: spelling-session-prompt;
 }
+.spelling-in-session .prompt-card.animated-prompt-card {
+  height: var(--prompt-card-height, auto);
+  transition: height 320ms var(--ease-out),
+              filter 320ms var(--ease-out),
+              transform 320ms var(--ease-out);
+  will-change: height;
+}
 .spelling-in-session .prompt-card-inner {
   display: flex;
   flex-direction: column;
-  height: calc(var(--spelling-prompt-card-height) - var(--spelling-prompt-card-padding-y));
   min-height: 0;
 }
 .spelling-in-session .prompt-card::before {
@@ -4653,25 +4657,16 @@ textarea:focus-visible {
 }
 
 /* ---------- Feedback ribbon + family chips ---------- */
-/* .feedback-slot wraps either a live ribbon + chips or an
-   invisible placeholder of identical height so the prompt-card
-   doesn't shift between question / correct / wrong states. */
+/* Feedback now contributes its real measured height; the
+   AnimatedPromptCard wrapper interpolates the surrounding card
+   height between question, feedback, and summary states. */
 .spelling-in-session .feedback-slot {
-  margin-top: auto;
-  flex: 0 0 var(--spelling-feedback-slot-height);
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-top: 18px;
-  scrollbar-width: thin;
+  margin-top: 18px;
 }
-.spelling-in-session .feedback-slot.is-placeholder { visibility: hidden; }
-.spelling-in-session .feedback-slot.is-placeholder * { animation: none !important; }
 .spelling-in-session .feedback-foot {
   margin-top: 8px;
   font-size: 0.86rem;
   line-height: 1.35;
-  min-height: calc(0.86rem * 1.35 * 2);
   color: color-mix(in oklab, var(--ink) 72%, transparent);
   text-align: center;
 }
@@ -4742,13 +4737,9 @@ textarea:focus-visible {
 .spelling-in-session .family-chips {
   display: flex;
   gap: 8px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   margin-top: 14px;
-  min-height: 32px;
-  overflow-x: auto;
-  overflow-y: hidden;
   padding-left: 4px;
-  scrollbar-width: thin;
 }
 .spelling-in-session .family-chips .flabel {
   font-size: 0.76rem;
@@ -4777,10 +4768,10 @@ textarea:focus-visible {
   position: relative;
   z-index: 3;
 }
-.spelling-in-session .prompt-card.summary-card {
+.spelling-in-session .prompt-card.summary-card { padding-top: 34px; }
+.spelling-in-session .summary-card-inner {
   display: flex;
   flex-direction: column;
-  padding-top: 34px;
 }
 .spelling-in-session .prompt-card.summary-card::before { display: none; }
 .spelling-in-session .prompt-card.summary-card > .ribbon:first-child { margin-top: 0; }
@@ -4837,10 +4828,6 @@ textarea:focus-visible {
   background: color-mix(in oklab, var(--warn-soft) 70%, var(--panel));
   border: 1px solid color-mix(in oklab, var(--warn) 26%, transparent);
   border-radius: var(--radius);
-  max-height: 154px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
 }
 .spelling-in-session .summary-drill-head {
   display: flex;
@@ -4869,8 +4856,7 @@ textarea:focus-visible {
   gap: 10px;
   justify-content: center;
   align-items: center;
-  margin-top: auto;
-  padding-top: 28px;
+  margin-top: 28px;
 }
 .spelling-in-session .summary-bank-link {
   appearance: none;
@@ -5792,11 +5778,9 @@ textarea:focus-visible {
 @media (max-width: 640px) {
   .spelling-in-session {
     padding: 16px 12px;
-    --spelling-prompt-card-height: 768px;
-    --spelling-prompt-card-padding-y: 50px;
+    --spelling-shell-min-height: 920px;
     --spelling-cloze-font-size: 1.55rem;
     --spelling-cloze-lines: 3;
-    --spelling-feedback-slot-height: 188px;
   }
   .spelling-in-session .prompt-card { padding: 28px 20px 22px; }
   .spelling-in-session .prompt-card::before { left: 16px; right: 16px; }

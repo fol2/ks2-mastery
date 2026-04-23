@@ -7,7 +7,12 @@ import {
   spellingSessionVoiceNote,
 } from '../session-ui.js';
 import { ArrowRightIcon, SpeakerIcon, SpeakerSlowIcon } from './spelling-icons.jsx';
-import { Cloze, FeedbackSlot, PathProgress } from './SpellingCommon.jsx';
+import {
+  AnimatedPromptCard,
+  Cloze,
+  FeedbackSlot,
+  PathProgress,
+} from './SpellingCommon.jsx';
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import {
   heroBgForSession,
@@ -101,8 +106,7 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
           <span className="path-count">Word {progressCurrent} of {progressTotal}</span>
         </header>
 
-        <div className="prompt-card">
-          <div className="prompt-card-inner">
+        <AnimatedPromptCard>
             {infoChips.length ? (
               <div className="info-chip-row">
                 {infoChips.map((value) => <span className="chip" key={value}>{value}</span>)}
@@ -185,8 +189,7 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
             </form>
 
             <FeedbackSlot feedback={ui.feedback} />
-          </div>
-        </div>
+        </AnimatedPromptCard>
 
         <footer className="session-footer">
           <div className="session-footer-left">
