@@ -210,6 +210,7 @@ test('Extra spelling accepts UK mollusc only', () => {
   assert.equal(rejectedSubmission.state.awaitingAdvance, false);
   assert.equal(rejectedSubmission.state.session.phase, 'retry');
   assert.equal(rejectedSubmission.state.feedback.kind, 'error');
+  assert.equal(rejectedSubmission.state.feedback.attemptedAnswer, 'mollusk');
 });
 
 test('service state survives JSON round-trips and resumes retry/correction flow', () => {
@@ -223,9 +224,11 @@ test('service state survives JSON round-trips and resumes retry/correction flow'
 
   state = JSON.parse(JSON.stringify(service.submitAnswer('learner-a', state, 'wrong').state));
   assert.equal(state.session.phase, 'retry');
+  assert.equal(state.feedback.attemptedAnswer, 'wrong');
 
-  state = JSON.parse(JSON.stringify(service.submitAnswer('learner-a', state, 'wrong').state));
+  state = JSON.parse(JSON.stringify(service.submitAnswer('learner-a', state, 'still wrong').state));
   assert.equal(state.session.phase, 'correction');
+  assert.equal(state.feedback.attemptedAnswer, 'still wrong');
 
   state = JSON.parse(JSON.stringify(service.submitAnswer('learner-a', state, 'possess').state));
   assert.equal(state.awaitingAdvance, true);

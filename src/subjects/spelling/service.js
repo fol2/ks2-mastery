@@ -722,7 +722,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       version: SPELLING_SERVICE_STATE_VERSION,
       phase: 'session',
       session: decorateSession(engine, learnerId, session, runtimeWordBySlug),
-      feedback: normaliseFeedback(result.feedback),
+      feedback: normaliseFeedback({
+        ...result.feedback,
+        ...(session.type !== 'test' && result.correct === false ? { attemptedAnswer: rawTyped } : {}),
+      }),
       summary: null,
       error: '',
       awaitingAdvance: result.nextAction === 'advance',
