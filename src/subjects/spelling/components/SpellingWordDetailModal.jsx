@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowRightIcon, SpeakerIcon, SpeakerSlowIcon } from './spelling-icons.jsx';
-import { Cloze } from './SpellingCommon.jsx';
+import { Cloze, spellingAnswerInputProps } from './SpellingCommon.jsx';
 import {
   buildDrillCloze,
   renderAction,
@@ -104,9 +104,7 @@ function DrillBody({ word, typed, result, accent, actions }) {
           type="text"
           name="typed"
           className={`wb-drill-input ${inputState}`.trim()}
-          autoComplete="off"
-          autoCapitalize="none"
-          spellCheck={false}
+          {...spellingAnswerInputProps}
           placeholder="Type the word…"
           value={draftTyped}
           data-autofocus="true"
