@@ -36,6 +36,10 @@ function accuracyPercent(correct, wrong) {
   return Math.round((Math.max(0, Number(correct) || 0) / attempts) * 100);
 }
 
+function isTroubleProgress(progress, currentDay) {
+  return progress.wrong > 0 && (progress.wrong >= progress.correct || progress.dueDay <= currentDay);
+}
+
 function yearLabel(value) {
   return value === '5-6' ? 'Years 5-6' : 'Years 3-4';
 }
@@ -114,7 +118,7 @@ export function buildSpellingLearnerReadModel({
     };
     const secure = progress.stage >= SECURE_STAGE;
     const due = progress.attempts > 0 && progress.dueDay <= currentDay && !secure;
-    const trouble = progress.wrong > progress.correct || (progress.wrong > 0 && !secure) || progress.lastResult === false;
+    const trouble = isTroubleProgress(progress, currentDay);
     return {
       slug,
       word: word.word,

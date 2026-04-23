@@ -93,6 +93,35 @@ test('parent hub read model summarises due work, recent sessions, strengths, and
   assert.ok(model.misconceptionPatterns.some((entry) => /cycle/i.test(entry.label)));
 });
 
+test('parent hub read model keeps recently missed secure words in the trouble count', () => {
+  const learner = makeLearner();
+  const model = buildParentHubReadModel({
+    learner,
+    platformRole: 'parent',
+    membershipRole: 'owner',
+    subjectStates: {
+      spelling: {
+        ui: { phase: 'dashboard' },
+        data: {
+          prefs: { mode: 'smart', yearFilter: 'all', roundLength: '20' },
+          progress: {
+            accommodate: { stage: 5, attempts: 5, correct: 4, wrong: 1, dueDay: 0, lastDay: 201, lastResult: 'wrong' },
+          },
+        },
+        updatedAt: 2000,
+      },
+    },
+    practiceSessions: [],
+    eventLog: [],
+    runtimeSnapshots: {},
+    now: () => 10 * 24 * 60 * 60 * 1000,
+  });
+
+  assert.equal(model.learnerOverview.troubleWords, 1);
+  assert.equal(model.learnerOverview.dueWords, 0);
+  assert.equal(model.dueWork[0].recommendedMode, 'trouble');
+});
+
 test('admin hub read model reports published release status, validation state, audit stream, and learner diagnostics', () => {
   const learner = makeLearner();
   const model = buildAdminHubReadModel({

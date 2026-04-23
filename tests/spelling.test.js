@@ -188,6 +188,52 @@ test('Trouble Drill stays inside Extra and falls back to Extra Smart Review when
   assert.ok(sessionWords(fallback.state.session).every((word) => word.spellingPool === 'extra'));
 });
 
+test('Trouble Drill follows recent mistakes instead of every due word in the selected pool', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / (24 * 60 * 60 * 1000));
+  const { service, repositories } = makeService({ now, random: makeSeededRandom(11) });
+
+  repositories.subjectStates.writeData('learner-a', 'spelling', {
+    progress: {
+      possess: {
+        stage: 1,
+        attempts: 1,
+        correct: 1,
+        wrong: 0,
+        dueDay: today - 1,
+        lastDay: today - 2,
+        lastResult: 'correct',
+      },
+      accommodate: {
+        stage: 5,
+        attempts: 5,
+        correct: 4,
+        wrong: 1,
+        dueDay: today,
+        lastDay: today - 1,
+        lastResult: 'wrong',
+      },
+    },
+  });
+
+  const stats = service.getStats('learner-a', 'core');
+  assert.equal(stats.trouble, 1);
+
+  const snapshot = service.getAnalyticsSnapshot('learner-a');
+  const rows = new Map(snapshot.wordGroups.flatMap((group) => group.words).map((word) => [word.slug, word]));
+  assert.equal(rows.get('possess')?.status, 'due');
+  assert.equal(rows.get('accommodate')?.status, 'trouble');
+
+  const trouble = service.startSession('learner-a', {
+    mode: 'trouble',
+    yearFilter: 'core',
+    length: 5,
+  });
+  assert.equal(trouble.ok, true);
+  assert.equal(trouble.state.feedback, null);
+  assert.deepEqual(trouble.state.session.uniqueWords, ['accommodate']);
+});
+
 test('SATs Test ignores Extra filters and stays on core statutory spellings', () => {
   const { service } = makeService({ random: makeSeededRandom(13) });
   const transition = service.startSession('learner-a', {
