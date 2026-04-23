@@ -307,28 +307,53 @@ export function buildDrillCloze(sentence, word) {
   return '________';
 }
 
+let activeSpellingFlowTransition = null;
+
 export function renderAction(actions, event, action, data = {}) {
   event?.preventDefault?.();
   event?.stopPropagation?.();
-  const payload = action === 'spelling-word-detail-open' && data && typeof data === 'object'
+  const basePayload = action === 'spelling-word-detail-open' && data && typeof data === 'object'
     ? { ...data, triggerElement: event?.currentTarget || data.triggerElement || null }
     : data;
+  const shouldDeferAutoSpeak = action === 'spelling-start' || action === 'spelling-start-again';
   const shouldStartFlowTransition = action === 'spelling-start'
     || action === 'spelling-start-again'
     || (action === 'spelling-continue' && Boolean(data?.flowTransition));
+  const supportsFlowTransition = typeof document !== 'undefined'
+    && typeof document.startViewTransition === 'function';
+  const deferAutoSpeakUntilTransitionEnd = shouldDeferAutoSpeak
+    && shouldStartFlowTransition
+    && supportsFlowTransition;
+  const payload = deferAutoSpeakUntilTransitionEnd
+    ? {
+        ...(basePayload && typeof basePayload === 'object' && !Array.isArray(basePayload) ? basePayload : {}),
+        deferAudioUntilFlowTransitionEnd: true,
+      }
+    : basePayload;
   if (
     shouldStartFlowTransition
-    && typeof document !== 'undefined'
-    && typeof document.startViewTransition === 'function'
+    && supportsFlowTransition
   ) {
+    if (activeSpellingFlowTransition) return;
+    const token = {};
+    activeSpellingFlowTransition = token;
     document.documentElement.classList.add('spelling-flow-transition');
-    const transition = document.startViewTransition(() => {
-      actions.dispatch(action, payload);
-    });
-    transition.finished
+    let transition = null;
+    try {
+      transition = document.startViewTransition(() => {
+        actions.dispatch(action, payload);
+      });
+    } catch (error) {
+      if (activeSpellingFlowTransition === token) activeSpellingFlowTransition = null;
+      document.documentElement.classList.remove('spelling-flow-transition');
+      throw error;
+    }
+    Promise.resolve(transition?.finished)
       .catch(() => {})
       .finally(() => {
+        if (activeSpellingFlowTransition === token) activeSpellingFlowTransition = null;
         document.documentElement.classList.remove('spelling-flow-transition');
+        if (deferAutoSpeakUntilTransitionEnd) actions.flushSpellingDeferredAudio?.();
       });
     return;
   }

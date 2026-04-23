@@ -4387,6 +4387,11 @@ textarea:focus-visible {
 }
 
 @supports (view-transition-name: spelling-hero-card) {
+  html.spelling-flow-transition [data-action="spelling-start"],
+  html.spelling-flow-transition [data-action="spelling-start-again"],
+  html.spelling-flow-transition [data-action="spelling-continue"] {
+    pointer-events: none;
+  }
   html.spelling-flow-transition::view-transition-group(spelling-hero-card) {
     animation-duration: 720ms;
     animation-timing-function: var(--ease-in-out);

@@ -181,6 +181,24 @@ test('controller dispatches spelling transitions through store, repositories, ev
   assert.ok(controller.repositories.practiceSessions.list(learnerId).length >= 1);
 });
 
+test('controller can defer spelling start audio until the flow transition flushes', () => {
+  installMemoryStorage();
+  const controller = createAppController();
+  const learnerId = controller.store.getState().learners.selectedId;
+  controller.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1', autoSpeak: true });
+
+  controller.dispatch('open-subject', { subjectId: 'spelling' });
+  controller.dispatch('spelling-start', { deferAudioUntilFlowTransitionEnd: true });
+
+  const state = controller.store.getState();
+  assert.equal(state.subjectUi.spelling.phase, 'session');
+  assert.equal(controller.tts.spoken.length, 0);
+
+  assert.equal(controller.flushDeferredAudio(), true);
+  assert.equal(controller.tts.spoken.length, 1);
+  assert.equal(controller.tts.spoken[0].word.word, state.subjectUi.spelling.session.currentCard.word.word);
+});
+
 test('controller retry preserves the current route and clears runtime boundaries', async () => {
   installMemoryStorage();
   const controller = createAppController();

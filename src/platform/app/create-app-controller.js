@@ -73,6 +73,7 @@ export function createAppController({
   });
 
   let currentSnapshot = null;
+  let deferredAudio = null;
 
   function readSnapshot() {
     return buildControllerSnapshot({
@@ -114,6 +115,23 @@ export function createAppController({
     return autoAdvance.ensureScheduledFromState(appState.subjectUi.spelling);
   }
 
+  function clearDeferredAudio() {
+    deferredAudio = null;
+  }
+
+  function queueDeferredAudio(payload) {
+    deferredAudio = payload?.word ? payload : null;
+    return Boolean(deferredAudio);
+  }
+
+  function flushDeferredAudio() {
+    const payload = deferredAudio;
+    deferredAudio = null;
+    if (!payload?.word) return false;
+    tts.speak(payload);
+    return true;
+  }
+
   function applySubjectTransition(subjectId, transition) {
     if (!transition) return false;
     const previousSubjectUi = store.getState().subjectUi[subjectId] || null;
@@ -151,7 +169,14 @@ export function createAppController({
       tab: store.getState().route.tab || 'practice',
     });
 
-    if (transition.audio?.word) tts.speak(transition.audio);
+    if (transition.audio?.word) {
+      if (transition.deferAudioUntilFlowTransitionEnd) {
+        queueDeferredAudio(transition.audio);
+      } else {
+        clearDeferredAudio();
+        tts.speak(transition.audio);
+      }
+    }
     if (subjectId === 'spelling') autoAdvance.scheduleFromTransition(transition);
     return true;
   }
@@ -364,6 +389,7 @@ export function createAppController({
   }
 
   function dispatch(action, data = {}) {
+    clearDeferredAudio();
     autoAdvance.clear();
     try {
       if (!handleGlobalAction(action, data)) {
@@ -404,5 +430,6 @@ export function createAppController({
     scheduler,
     ensureSpellingAutoAdvanceFromCurrentState,
     applySubjectTransition,
+    flushDeferredAudio,
   };
 }
