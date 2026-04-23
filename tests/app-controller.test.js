@@ -186,7 +186,7 @@ test('controller persists profile TTS provider in spelling prefs', () => {
 
 test('controller dispatches profile TTS test through the selected provider', () => {
   installMemoryStorage();
-  const controller = createAppController();
+  const controller = createLocalAppController();
 
   controller.dispatch('tts-test', { provider: 'browser' });
 
