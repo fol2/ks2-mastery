@@ -259,6 +259,23 @@ export function renderSpellingSurfaceFixture({ phase = 'setup' } = {}) {
   `);
 }
 
+export function renderSpellingClozeFixture({ sentence, answer = '', revealAnswer = false } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { Cloze } from ${JSON.stringify(absoluteSpecifier('src/subjects/spelling/components/SpellingCommon.jsx'))};
+
+    const html = renderToStaticMarkup(
+      <Cloze
+        sentence=${JSON.stringify(sentence || '')}
+        answer=${JSON.stringify(answer)}
+        revealAnswer={${revealAnswer ? 'true' : 'false'}}
+      />
+    );
+    console.log(html);
+  `);
+}
+
 export function renderAppFixture({ route = 'dashboard' } = {}) {
   return renderFixture(`
     import React from 'react';

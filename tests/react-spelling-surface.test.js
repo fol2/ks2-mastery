@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { renderSpellingSurfaceFixture } from './helpers/react-render.js';
+import {
+  renderSpellingClozeFixture,
+  renderSpellingSurfaceFixture,
+} from './helpers/react-render.js';
 
 test('React spelling setup scene renders primary practice controls', async () => {
   const html = await renderSpellingSurfaceFixture({ phase: 'setup' });
@@ -18,6 +21,16 @@ test('React spelling session scene preserves input, replay, and submit affordanc
   assert.match(html, /name="typed"/);
   assert.match(html, /data-action="spelling-replay"/);
   assert.match(html, /data-action="spelling-submit-form"/);
+});
+
+test('React cloze renders one blank for variable-length underscore placeholders', async () => {
+  const html = await renderSpellingClozeFixture({
+    sentence: 'Each group wrote a prediction for the __________.',
+    answer: 'experiment',
+  });
+
+  assert.match(html, /<span class="blank">/);
+  assert.doesNotMatch(html, /__\./);
 });
 
 test('React spelling summary and word bank scenes render migration-critical states', async () => {

@@ -6,6 +6,8 @@ import {
 } from './spelling-view-model.js';
 
 const useMeasuredLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect;
+const CLOZE_BLANK_PATTERN = /_{5,}/;
+
 export const spellingAnswerInputProps = {
   autoComplete: 'off',
   autoCapitalize: 'none',
@@ -27,7 +29,11 @@ export function PathProgress({ done, current, total }) {
   return (
     <div className="path" aria-label={`Word ${Math.min(safeTotal, current + 1)} of ${safeTotal}`}>
       {dots.map((state, index) => (
-        <span className={`path-step${state ? ` ${state}` : ''}`} key={`${state}-${index}`} />
+        <span
+          className={`path-step${state ? ` ${state}` : ''}`}
+          key={`${state || 'pending'}-${index}`}
+          style={{ '--path-step-index': index }}
+        />
       ))}
     </div>
   );
@@ -35,8 +41,10 @@ export function PathProgress({ done, current, total }) {
 
 export function Cloze({ sentence, answer = '', revealAnswer = false }) {
   const raw = String(sentence || '');
-  if (!raw.includes('________')) return <div className="cloze">{raw}</div>;
-  const [lead, tail = ''] = raw.split('________');
+  const blankMatch = raw.match(CLOZE_BLANK_PATTERN);
+  if (!blankMatch || typeof blankMatch.index !== 'number') return <div className="cloze">{raw}</div>;
+  const lead = raw.slice(0, blankMatch.index);
+  const tail = raw.slice(blankMatch.index + blankMatch[0].length);
   return (
     <div className="cloze">
       {lead}
