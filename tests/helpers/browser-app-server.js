@@ -59,12 +59,12 @@ async function readRequestBody(request) {
 }
 
 function fetchHeadersFromNode(headers = {}) {
-  const result = new Headers();
+  const result = {};
   for (const [key, value] of Object.entries(headers)) {
     if (Array.isArray(value)) {
-      for (const entry of value) result.append(key, entry);
+      result[key] = value.join(', ');
     } else if (typeof value === 'string') {
-      result.set(key, value);
+      result[key] = value;
     }
   }
   return result;
