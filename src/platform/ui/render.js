@@ -752,8 +752,13 @@ function renderLearnerManager(appState, context) {
           </label>
           <div class="profile-form-field profile-form-field-wide">
             <span>Dictation voice</span>
-            <div class="profile-tts-options" role="radiogroup" aria-label="Dictation voice">
-              ${renderTtsProviderOptions(ttsProvider)}
+            <div class="profile-tts-control">
+              <div class="profile-tts-options" role="radiogroup" aria-label="Dictation voice">
+                ${renderTtsProviderOptions(ttsProvider)}
+              </div>
+              <button class="btn secondary profile-tts-test-btn" type="button" data-action="tts-test">
+                <span class="profile-tts-test-label">Test</span>
+              </button>
             </div>
           </div>
         </div>

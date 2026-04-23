@@ -109,6 +109,13 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
     event.preventDefault();
     actions.dispatch('learner-save-form', { formData: new FormData(event.currentTarget) });
   };
+  const testVoice = (event) => {
+    const form = event.currentTarget.form;
+    const formData = form ? new FormData(form) : null;
+    actions.dispatch('tts-test', {
+      provider: normaliseTtsProvider(formData?.get('ttsProvider'), ttsProvider),
+    });
+  };
 
   return (
     <div className="app-shell profile-settings-shell">
@@ -200,18 +207,28 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
               </label>
               <div className="profile-form-field profile-form-field-wide">
                 <span>Dictation voice</span>
-                <div className="profile-tts-options" role="radiogroup" aria-label="Dictation voice">
-                  {TTS_PROVIDER_OPTIONS.map((option) => (
-                    <label className="profile-tts-option" key={option.value} title={option.title || option.label}>
-                      <input
-                        type="radio"
-                        name="ttsProvider"
-                        value={option.value}
-                        defaultChecked={ttsProvider === option.value}
-                      />
-                      <span>{option.label}</span>
-                    </label>
-                  ))}
+                <div className="profile-tts-control">
+                  <div className="profile-tts-options" role="radiogroup" aria-label="Dictation voice">
+                    {TTS_PROVIDER_OPTIONS.map((option) => (
+                      <label className="profile-tts-option" key={option.value} title={option.title || option.label}>
+                        <input
+                          type="radio"
+                          name="ttsProvider"
+                          value={option.value}
+                          defaultChecked={ttsProvider === option.value}
+                        />
+                        <span>{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <button
+                    className="btn secondary profile-tts-test-btn"
+                    type="button"
+                    data-action="tts-test"
+                    onClick={testVoice}
+                  >
+                    <span className="profile-tts-test-label">Test</span>
+                  </button>
                 </div>
               </div>
             </div>

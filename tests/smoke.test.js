@@ -79,6 +79,7 @@ test('profile settings learner profile fields declare autofill behaviour explici
   assert.match(html, /<input class="input" type="number"[^>]*name="dailyMinutes"[^>]*autocomplete="off"/);
   assert.match(html, /name="ttsProvider" value="openai"/);
   assert.match(html, /name="ttsProvider" value="browser"/);
+  assert.match(html, /data-action="tts-test"/);
 });
 
 test('codex route mounts the React codex surface', () => {

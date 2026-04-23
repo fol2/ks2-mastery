@@ -61,6 +61,11 @@ function chooseBrowserVoice(speechSynthesis) {
     .sort((a, b) => browserVoiceScore(b) - browserVoiceScore(a))[0] || null;
 }
 
+function playbackKind({ kind = '', slow = false } = {}) {
+  const explicit = String(kind || '').trim();
+  return explicit || (slow ? 'slow' : 'normal');
+}
+
 export function createPlatformTts({
   fetchFn = globalThis.fetch?.bind(globalThis),
   endpoint = '/api/tts',
@@ -124,7 +129,7 @@ export function createPlatformTts({
     emit({ type: 'end' });
   }
 
-  function speakWithBrowser({ word, sentence, slow = false, wordOnly = false } = {}) {
+  function speakWithBrowser({ word, sentence, slow = false, wordOnly = false, kind = '' } = {}) {
     if (!available()) return Promise.resolve(false);
     stopBrowserSpeech();
     const transcript = buildSpeechTranscript({ word, sentence, wordOnly });
@@ -143,18 +148,19 @@ export function createPlatformTts({
         emit({ type: 'end' });
         resolve(false);
       };
-      emit({ type: 'start', kind: slow ? 'slow' : 'normal' });
+      emit({ type: 'start', kind: playbackKind({ kind, slow }) });
       window.speechSynthesis.speak(utterance);
     });
   }
 
-  async function speakWithRemote({ word, sentence, slow = false, wordOnly = false }, providerId, token) {
+  async function speakWithRemote({ word, sentence, slow = false, wordOnly = false, kind = '' }, providerId, token) {
     if (!remoteEnabled || typeof fetchFn !== 'function' || typeof Audio === 'undefined' || typeof URL === 'undefined') {
       return false;
     }
 
     currentAbort = new AbortController();
-    emit({ type: 'loading', kind: slow ? 'slow' : 'normal', provider: providerId });
+    const kindId = playbackKind({ kind, slow });
+    emit({ type: 'loading', kind: kindId, provider: providerId });
     try {
       const requestBody = { word, sentence, slow, provider: providerId };
       if (wordOnly) requestBody.wordOnly = true;
@@ -194,7 +200,7 @@ export function createPlatformTts({
           cleanupAudio();
           resolvePending(false);
         };
-        emit({ type: 'start', kind: slow ? 'slow' : 'normal' });
+        emit({ type: 'start', kind: kindId });
         currentAudio.play().catch(() => {
           emit({ type: 'end' });
           cleanupAudio();
@@ -212,7 +218,7 @@ export function createPlatformTts({
   async function speak(payload = {}) {
     stop();
     const token = playbackId;
-    const providerId = resolveProvider(provider);
+    const providerId = resolveProvider(payload.provider || provider);
     if (providerId === 'browser') return speakWithBrowser(payload);
     return await speakWithRemote(payload, providerId, token);
   }

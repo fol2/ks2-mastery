@@ -9,6 +9,7 @@ test('React profile settings surface owns learner profile and data actions', asy
   assert.match(html, /Profile settings/);
   assert.match(html, /Learning profile for/);
   assert.match(html, /Dictation voice/);
+  assert.match(html, /profile-tts-test-btn/);
   assert.match(html, /Portable snapshots/);
   assert.match(html, /Save learner profile/);
   assert.doesNotMatch(html, /data-action="learner-save-form"/);

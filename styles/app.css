@@ -2289,6 +2289,13 @@ textarea:focus-visible {
   padding: 7px;
 }
 
+.profile-tts-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
 .profile-tts-options {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2336,6 +2343,38 @@ textarea:focus-visible {
   box-shadow:
     0 0 0 3px color-mix(in oklab, var(--profile-accent, var(--brand)) 18%, transparent),
     inset 0 0 0 1px color-mix(in oklab, var(--profile-accent, var(--brand)) 34%, transparent);
+}
+
+.profile-tts-test-btn {
+  min-width: 78px;
+  min-height: 44px;
+  align-self: stretch;
+  position: relative;
+  transition:
+    border-color var(--dur) var(--ease-out),
+    color 4s var(--ease-in-out),
+    background var(--dur) var(--ease-out);
+}
+
+.profile-tts-test-btn.loading {
+  color: var(--brand);
+  border-color: color-mix(in oklab, var(--brand) 42%, var(--line));
+}
+
+.profile-tts-test-btn.loading.waiting-long {
+  color: var(--bad);
+  border-color: color-mix(in oklab, var(--bad) 58%, var(--line));
+}
+
+.profile-tts-test-btn.playing,
+.profile-tts-test-btn.done {
+  color: var(--good-strong);
+  border-color: color-mix(in oklab, var(--good) 45%, var(--line));
+}
+
+.profile-tts-test-btn.failed {
+  color: var(--bad-strong);
+  border-color: color-mix(in oklab, var(--bad) 58%, var(--line));
 }
 
 .profile-form-footer {
@@ -3507,6 +3546,9 @@ textarea:focus-visible {
 @media (max-width: 980px) {
   .profile-hero,
   .profile-layout {
+    grid-template-columns: 1fr;
+  }
+  .profile-tts-control {
     grid-template-columns: 1fr;
   }
   .profile-identity {
