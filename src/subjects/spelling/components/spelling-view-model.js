@@ -4,6 +4,7 @@ import { formatElapsedMinutes } from '../../../platform/core/utils.js';
 
 export const SPELLING_ACCENT = '#3E6FA8';
 export const DAY_MS = 24 * 60 * 60 * 1000;
+const HERO_PAN_SECONDS = 96;
 export const MODE_CARDS = Object.freeze([
   {
     id: 'smart',
@@ -100,7 +101,7 @@ export function heroBgStyle(url) {
 
 export function heroPanDelayStyle() {
   if (typeof performance === 'undefined') return {};
-  const elapsed = (performance.now() / 1000) % 144;
+  const elapsed = (performance.now() / 1000) % (HERO_PAN_SECONDS * 2);
   return { '--hero-pan-delay': `-${elapsed.toFixed(3)}s` };
 }
 
