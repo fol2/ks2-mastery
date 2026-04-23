@@ -3,7 +3,23 @@ import { SpellingSetupScene } from './SpellingSetupScene.jsx';
 import { SpellingSessionScene } from './SpellingSessionScene.jsx';
 import { SpellingSummaryScene } from './SpellingSummaryScene.jsx';
 import { SpellingWordBankScene } from './SpellingWordBankScene.jsx';
-import { buildSpellingContext } from './spelling-view-model.js';
+import {
+  buildSpellingContext,
+  heroBgForLearner,
+  heroBgForSession,
+  heroBgForSetup,
+} from './spelling-view-model.js';
+
+function heroBgForPhase(spelling) {
+  const learnerId = spelling.learner?.id;
+  if (!learnerId) return '';
+  if (spelling.ui.phase === 'session') return heroBgForSession(learnerId, spelling.ui.session);
+  if (spelling.ui.phase === 'summary') {
+    return heroBgForSession(learnerId, { mode: spelling.ui.summary?.mode });
+  }
+  if (spelling.ui.phase === 'word-bank') return heroBgForLearner(learnerId);
+  return heroBgForSetup(learnerId, spelling.prefs);
+}
 
 export function SpellingPracticeSurface(props) {
   const {
@@ -14,6 +30,14 @@ export function SpellingPracticeSurface(props) {
     actions,
   } = props;
   const spelling = buildSpellingContext({ appState, service, repositories, subject });
+  const heroBg = heroBgForPhase(spelling);
+  const previousHeroBgRef = React.useRef('');
+  const previousHeroBg = previousHeroBgRef.current && previousHeroBgRef.current !== heroBg
+    ? previousHeroBgRef.current
+    : '';
+  React.useEffect(() => {
+    if (heroBg) previousHeroBgRef.current = heroBg;
+  }, [heroBg]);
   React.useEffect(() => {
     if (typeof window === 'undefined') return undefined;
     const frame = window.requestAnimationFrame(() => {
@@ -23,11 +47,11 @@ export function SpellingPracticeSurface(props) {
   }, [spelling.ui.phase]);
 
   if (spelling.ui.phase === 'summary') {
-    return <SpellingSummaryScene {...spelling} actions={actions} />;
+    return <SpellingSummaryScene {...spelling} previousHeroBg={previousHeroBg} actions={actions} />;
   }
 
   if (spelling.ui.phase === 'session') {
-    return <SpellingSessionScene {...spelling} service={service} actions={actions} />;
+    return <SpellingSessionScene {...spelling} previousHeroBg={previousHeroBg} service={service} actions={actions} />;
   }
 
   if (spelling.ui.phase === 'word-bank') {
@@ -37,6 +61,7 @@ export function SpellingPracticeSurface(props) {
         learner={spelling.learner}
         analytics={spelling.analytics}
         accent={spelling.accent}
+        previousHeroBg={previousHeroBg}
         actions={actions}
       />
     );
@@ -48,6 +73,7 @@ export function SpellingPracticeSurface(props) {
       service={service}
       repositories={repositories}
       subject={subject}
+      previousHeroBg={previousHeroBg}
       actions={actions}
     />
   );

@@ -36,10 +36,16 @@ export const WORD_BANK_YEAR_FILTER_IDS = new Set(['all', 'y3-4', 'y5-6', 'extra'
 
 const SCRIBE_DOWNS_BASE = '/assets/regions/the-scribe-downs';
 const spellingHeroUrl = (variant) => `${SCRIBE_DOWNS_BASE}/the-scribe-downs-${variant}.1280.webp`;
+const SPELLING_HERO_REGIONS = Object.freeze({
+  smart: Object.freeze(['a', 'b', 'c']),
+  trouble: Object.freeze(['d']),
+  test: Object.freeze(['e']),
+});
+const SPELLING_HERO_TONES = Object.freeze(['1', '2', '3']);
 export const SPELLING_HERO_BACKGROUNDS = Object.freeze({
-  smart: Object.freeze(['a1', 'b1', 'c1'].map(spellingHeroUrl)),
-  trouble: Object.freeze([spellingHeroUrl('d1')]),
-  test: Object.freeze([spellingHeroUrl('e1')]),
+  smart: Object.freeze(SPELLING_HERO_REGIONS.smart.flatMap((region) => SPELLING_HERO_TONES.map((tone) => spellingHeroUrl(`${region}${tone}`)))),
+  trouble: Object.freeze(SPELLING_HERO_REGIONS.trouble.flatMap((region) => SPELLING_HERO_TONES.map((tone) => spellingHeroUrl(`${region}${tone}`)))),
+  test: Object.freeze(SPELLING_HERO_REGIONS.test.flatMap((region) => SPELLING_HERO_TONES.map((tone) => spellingHeroUrl(`${region}${tone}`)))),
 });
 
 export function accentFor(subject) {
@@ -62,12 +68,18 @@ export function spellingHeroMode(mode) {
   return 'smart';
 }
 
-export function heroBgForMode(mode, learnerId) {
+export function spellingHeroTone(learnerId) {
+  const index = stableHash(`spelling:tone:${learnerId}`) % SPELLING_HERO_TONES.length;
+  return SPELLING_HERO_TONES[index];
+}
+
+export function heroBgForMode(mode, learnerId, options = {}) {
   const heroMode = spellingHeroMode(mode);
-  const backgrounds = SPELLING_HERO_BACKGROUNDS[heroMode] || SPELLING_HERO_BACKGROUNDS.smart;
-  if (!backgrounds.length) return '';
-  const index = stableHash(`spelling:${heroMode}:${learnerId}`) % backgrounds.length;
-  return backgrounds[index];
+  const regions = SPELLING_HERO_REGIONS[heroMode] || SPELLING_HERO_REGIONS.smart;
+  if (!regions.length) return '';
+  const regionIndex = stableHash(`spelling:region:${heroMode}:${learnerId}`) % regions.length;
+  const tone = SPELLING_HERO_TONES.includes(String(options.tone)) ? String(options.tone) : spellingHeroTone(learnerId);
+  return spellingHeroUrl(`${regions[regionIndex]}${tone}`);
 }
 
 export function heroBgForLearner(learnerId, mode = 'smart') {
@@ -79,7 +91,7 @@ export function heroBgForSetup(learnerId, prefs) {
 }
 
 export function heroBgForSession(learnerId, session) {
-  return heroBgForMode(session?.mode || (session?.type === 'test' ? 'test' : 'smart'), learnerId);
+  return heroBgForMode(session?.mode || (session?.type === 'test' ? 'test' : 'smart'), learnerId, { tone: '1' });
 }
 
 export function heroBgStyle(url) {
@@ -89,7 +101,7 @@ export function heroBgStyle(url) {
 export function heroPanDelayStyle() {
   if (typeof performance === 'undefined') return {};
   const elapsed = (performance.now() / 1000) % 144;
-  return { animationDelay: `-${elapsed.toFixed(3)}s` };
+  return { '--hero-pan-delay': `-${elapsed.toFixed(3)}s` };
 }
 
 export function beginLabel(prefs) {

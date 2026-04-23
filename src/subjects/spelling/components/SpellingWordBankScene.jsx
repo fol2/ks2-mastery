@@ -286,7 +286,7 @@ function WordBankAggregates({ analytics }) {
   );
 }
 
-export function SpellingWordBankScene({ appState, learner, analytics, accent, actions }) {
+export function SpellingWordBankScene({ appState, learner, analytics, accent, actions, previousHeroBg = '' }) {
   const detailSlug = appState?.transientUi?.spellingWordDetailSlug || '';
   const detailMode = appState?.transientUi?.spellingWordDetailMode || 'explain';
   const drillTyped = appState?.transientUi?.spellingWordBankDrillTyped || '';
@@ -296,7 +296,7 @@ export function SpellingWordBankScene({ appState, learner, analytics, accent, ac
 
   return (
     <div className="spelling-in-session word-bank-shell" style={{ gridColumn: '1/-1', ...heroBgStyle(heroBg) }}>
-      <SpellingHeroBackdrop url={heroBg} />
+      <SpellingHeroBackdrop url={heroBg} previousUrl={previousHeroBg} />
       <div className="word-bank-scene">
         <header className="word-bank-topbar">
           <button

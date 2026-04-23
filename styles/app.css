@@ -3612,6 +3612,10 @@ textarea:focus-visible {
   .setup-grid { grid-template-columns: 1fr; }
 }
 .setup-main {
+  --setup-label-ink: color-mix(in oklab, var(--ink) 72%, black);
+  --setup-label-bg: color-mix(in oklab, var(--panel) 26%, transparent);
+  --setup-label-border: color-mix(in oklab, white 28%, transparent);
+  --setup-label-shadow: color-mix(in oklab, var(--panel) 82%, transparent);
   padding: 28px 30px;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -3621,6 +3625,12 @@ textarea:focus-visible {
   overflow: hidden;
   min-height: 610px;
   view-transition-name: spelling-practice-card;
+}
+.setup-main.hero-dark {
+  --setup-label-ink: #fff8e9;
+  --setup-label-bg: color-mix(in oklab, black 28%, transparent);
+  --setup-label-border: color-mix(in oklab, white 20%, transparent);
+  --setup-label-shadow: rgba(0, 0, 0, 0.38);
 }
 /* Thin horizontal divider line under the subject eyebrow,
    matching the v1 hero-paper rule. */
@@ -3666,6 +3676,8 @@ textarea:focus-visible {
   cursor: pointer;
   text-align: left;
   color: var(--ink);
+  display: flex;
+  flex-direction: column;
   transition: transform var(--dur) var(--ease-out),
               border-color var(--dur) var(--ease-out),
               box-shadow var(--dur) var(--ease-out),
@@ -3691,6 +3703,14 @@ textarea:focus-visible {
   transform: none;
   box-shadow: none;
 }
+.mode-card .mc-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 50px;
+  margin-bottom: 10px;
+}
 .mode-card .mc-icon {
   width: 50px; height: 50px;
   border-radius: 16px;
@@ -3699,9 +3719,9 @@ textarea:focus-visible {
   backdrop-filter: blur(14px) saturate(1.08);
   -webkit-backdrop-filter: blur(14px) saturate(1.08);
   display: grid; place-items: center;
-  margin-bottom: 10px;
   color: color-mix(in oklab, var(--brand) 72%, var(--ink));
   box-shadow: inset 0 1px 0 color-mix(in oklab, white 24%, transparent);
+  flex: 0 0 auto;
 }
 .mode-card .mc-icon img {
   width: 46px;
@@ -3730,13 +3750,19 @@ textarea:focus-visible {
   color: var(--muted);
   font-size: 0.87rem;
   line-height: 1.4;
+  min-height: calc(0.87rem * 1.4 * 2);
 }
 .mode-card .mc-badge {
-  position: absolute; top: 10px; right: 10px;
   font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 3px 8px; border-radius: 999px;
   background: var(--good-soft); color: var(--good-strong);
+  white-space: nowrap;
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+.mode-card .mc-badge.is-placeholder {
+  visibility: hidden;
 }
 
 .setup-control-stack {
@@ -3751,6 +3777,13 @@ textarea:focus-visible {
   padding: 18px 0 2px;
   border-top: 1px dashed var(--line);
   margin-top: 0;
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0);
+  transition: opacity 320ms var(--ease-out),
+              filter 320ms var(--ease-out),
+              transform 320ms var(--ease-out),
+              border-color 320ms var(--ease-out);
 }
 /* Adjacent rows share a single divider so Options reads as a
    continuation of the previous control cluster. */
@@ -3759,20 +3792,31 @@ textarea:focus-visible {
   padding-top: 4px;
   margin-top: 6px;
 }
-/* Placeholder rows reserve layout height in SATs mode but render nothing and
-   are skipped by assistive tech. `visibility:hidden` preserves the full box
-   (height, padding, margin, borders) so the hero cannot resize between modes.
-   The Options row that follows inherits the normal adjacent-sibling
-   continuation style — no divider reclamation needed. */
+/* Placeholder rows reserve layout height in SATs mode while fading controls
+   out of the visual stack. Buttons inside are disabled by React. */
 .tweak-row.is-placeholder {
-  visibility: hidden;
+  opacity: 0;
+  filter: blur(6px);
+  transform: translateY(-8px);
+  pointer-events: none;
+  border-color: transparent;
 }
 .tool-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 7px;
+  border: 1px solid var(--setup-label-border);
+  border-radius: 999px;
+  background: var(--setup-label-bg);
+  backdrop-filter: blur(10px) saturate(1.06);
+  -webkit-backdrop-filter: blur(10px) saturate(1.06);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--setup-label-ink);
+  text-shadow: 0 1px 12px var(--setup-label-shadow);
   margin-right: 4px;
 }
 
@@ -3876,10 +3920,11 @@ textarea:focus-visible {
   text-shadow: 0 1px 2px rgba(0,0,0,0.18);
 }
 .length-unit {
-  color: var(--muted);
+  color: var(--setup-label-ink);
   font-weight: 600;
   font-size: 0.82rem;
   margin: 0 8px 0 0;
+  text-shadow: 0 1px 12px var(--setup-label-shadow);
 }
 
 /* Hero-art horizontal pan.
@@ -3887,7 +3932,7 @@ textarea:focus-visible {
    slack under `cover`, so 0% → 100% uses exactly the natural
    room for motion. Skipped on prefers-reduced-motion. */
 .hero-art.pan {
-  animation: hero-pan 72s ease-in-out infinite alternate;
+  animation: hero-pan 72s ease-in-out var(--hero-pan-delay, 0s) infinite alternate;
   will-change: background-position;
 }
 .spelling-hero-backdrop {
@@ -3899,15 +3944,31 @@ textarea:focus-visible {
 }
 .spelling-hero-backdrop .spelling-hero-layer {
   opacity: 0;
-  transition: opacity 720ms var(--ease-in-out), filter 720ms var(--ease-in-out);
+  transform: scale(1.012);
+  transition: opacity 880ms var(--ease-in-out),
+              filter 880ms var(--ease-in-out),
+              transform 880ms var(--ease-in-out);
+}
+.spelling-hero-backdrop .spelling-hero-layer.is-entering {
+  opacity: 1;
+  filter: blur(0) saturate(1.02);
+  transform: scale(1);
+  animation:
+    hero-pan 72s ease-in-out var(--hero-pan-delay, 0s) infinite alternate,
+    spelling-hero-fade-in 880ms var(--ease-in-out) 0s both;
 }
 .spelling-hero-backdrop .spelling-hero-layer.is-active {
   opacity: 1;
-  filter: saturate(1.02);
+  filter: blur(0) saturate(1.02);
+  transform: scale(1);
 }
 .spelling-hero-backdrop .spelling-hero-layer.is-exiting {
   opacity: 0;
-  filter: saturate(0.92);
+  filter: blur(14px) saturate(0.9);
+  transform: scale(1.014);
+  animation:
+    hero-pan 72s ease-in-out var(--hero-pan-delay, 0s) infinite alternate,
+    spelling-hero-fade-out 880ms var(--ease-in-out) 0s both;
 }
 .spelling-in-session > .spelling-hero-backdrop {
   z-index: 0;
@@ -3927,9 +3988,36 @@ textarea:focus-visible {
   from { background-position: 0% 42%; }
   to   { background-position: 100% 42%; }
 }
+@keyframes spelling-hero-fade-in {
+  from {
+    opacity: 0;
+    filter: blur(12px) saturate(0.92);
+    transform: scale(1.018);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0) saturate(1.02);
+    transform: scale(1);
+  }
+}
+@keyframes spelling-hero-fade-out {
+  from {
+    opacity: 1;
+    filter: blur(0) saturate(1.02);
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    filter: blur(14px) saturate(0.9);
+    transform: scale(1.014);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .hero-art.pan { animation: none; }
-  .spelling-hero-backdrop .spelling-hero-layer { transition: none; }
+  .spelling-hero-backdrop .spelling-hero-layer {
+    animation: none;
+    transition: none;
+  }
 }
 
 /* Setup-side ("where you stand") card. */

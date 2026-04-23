@@ -16,7 +16,7 @@ import {
   renderFormAction,
 } from './spelling-view-model.js';
 
-export function SpellingSessionScene({ learner, service, ui, accent, actions }) {
+export function SpellingSessionScene({ learner, service, ui, accent, actions, previousHeroBg = '' }) {
   const prefs = service.getPrefs(learner.id);
   const session = ui.session;
   const card = session?.currentCard;
@@ -65,7 +65,7 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions }) 
 
   return (
     <div className="spelling-in-session" style={{ gridColumn: '1/-1', ...heroBgStyle(heroBg) }}>
-      <SpellingHeroBackdrop url={heroBg} />
+      <SpellingHeroBackdrop url={heroBg} previousUrl={previousHeroBg} />
       <div className="session">
         <header className="session-head">
           <PathProgress done={pathDone} current={pathCurrent} total={progressTotal} />

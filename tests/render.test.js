@@ -285,11 +285,20 @@ test('spelling setup and session hero backgrounds use mode-specific Scribe Downs
     SPELLING_HERO_BACKGROUNDS,
     heroBgForMode,
     heroBgForSession,
+    spellingHeroTone,
   } = await import('../src/subjects/spelling/components/spelling-view-model.js');
 
-  assert.ok(SPELLING_HERO_BACKGROUNDS.smart.includes(heroBgForMode('smart', 'learner-1')));
-  assert.equal(heroBgForMode('trouble', 'learner-1'), '/assets/regions/the-scribe-downs/the-scribe-downs-d1.1280.webp');
+  const learnerId = 'learner-1';
+  const tone = spellingHeroTone(learnerId);
+  assert.ok(SPELLING_HERO_BACKGROUNDS.smart.includes(heroBgForMode('smart', learnerId)));
+  assert.match(heroBgForMode('smart', learnerId), new RegExp(`/the-scribe-downs-[abc]${tone}\\.1280\\.webp$`));
+  assert.equal(heroBgForMode('trouble', learnerId), `/assets/regions/the-scribe-downs/the-scribe-downs-d${tone}.1280.webp`);
+  assert.equal(heroBgForMode('test', learnerId), `/assets/regions/the-scribe-downs/the-scribe-downs-e${tone}.1280.webp`);
+  assert.equal(heroBgForSession(learnerId, { mode: 'trouble' }), '/assets/regions/the-scribe-downs/the-scribe-downs-d1.1280.webp');
   assert.equal(heroBgForSession('learner-1', { mode: 'test' }), '/assets/regions/the-scribe-downs/the-scribe-downs-e1.1280.webp');
+  assert.equal(spellingHeroTone('learner-0'), '2');
+  assert.match(heroBgForMode('smart', 'learner-0'), /the-scribe-downs-[abc]2\.1280\.webp$/);
+  assert.match(heroBgForSession('learner-0', { mode: 'smart' }), /the-scribe-downs-[abc]1\.1280\.webp$/);
 
   for (const urls of Object.values(SPELLING_HERO_BACKGROUNDS)) {
     for (const url of urls) {

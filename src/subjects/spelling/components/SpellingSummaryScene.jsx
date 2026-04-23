@@ -23,7 +23,7 @@ function SummaryStatGrid({ cards = [] }) {
   );
 }
 
-export function SpellingSummaryScene({ learner, ui, accent, actions }) {
+export function SpellingSummaryScene({ learner, ui, accent, actions, previousHeroBg = '' }) {
   const summary = ui.summary;
   if (!summary) return null;
   const progressTotal = Math.max(1, summary.totalWords || 1);
@@ -35,7 +35,7 @@ export function SpellingSummaryScene({ learner, ui, accent, actions }) {
 
   return (
     <div className="spelling-in-session summary-shell" style={{ gridColumn: '1/-1', ...heroBgStyle(heroBg) }}>
-      <SpellingHeroBackdrop url={heroBg} />
+      <SpellingHeroBackdrop url={heroBg} previousUrl={previousHeroBg} />
       <div className="session summary">
         <header className="session-head">
           <PathProgress done={progressTotal} current={progressTotal} total={progressTotal} />
