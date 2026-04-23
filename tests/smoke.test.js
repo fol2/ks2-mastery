@@ -445,6 +445,9 @@ test('golden-path smoke covers placeholder-subject navigation through the setup 
      phase because they have no engine yet — the subject shell is exercised
      by the fact that opening succeeds without a runtime error. */
   const html = harness.render();
+  assert.match(html, /class="app-shell subject-entry-shell"/);
+  assert.match(html, /class="subject-entry-content"/);
+  assert.match(html, /class="subject-breadcrumb-current" data-action="navigate-home">Reasoning<\/button>/);
   assert.match(html, /Reasoning foundation/);
   assert.match(html, /Extension points already reserved/);
 });

@@ -73,7 +73,8 @@ export function App({ controller, runtime }) {
   const snapshot = usePlatformStore(controller);
   const appState = snapshot.appState;
   const screen = appState.route?.screen || 'dashboard';
-  const context = runtime.contextFor(appState.route?.subjectId || 'spelling');
+  const routedSubjectId = appState.route?.subjectId || 'spelling';
+  const context = runtime.contextFor(routedSubjectId);
   const actions = useMemo(() => runtime.buildSurfaceActions(), [runtime]);
 
   useLayoutEffect(() => {
@@ -99,10 +100,10 @@ export function App({ controller, runtime }) {
       )}
 
       {screen === 'subject' && (
-        <div className="app-shell">
+        <div className="app-shell subject-entry-shell">
           <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
-          <SubjectRoute appState={appState} context={context} actions={actions} />
+          <SubjectRoute key={routedSubjectId} appState={appState} context={context} actions={actions} />
           <SharedOverlays appState={appState} actions={actions} />
         </div>
       )}

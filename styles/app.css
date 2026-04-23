@@ -5194,6 +5194,37 @@ textarea:focus-visible {
    chrome (hero block + back button) with a single slim wayfinding row.
    Mirrors the v1 breadcrumb pattern (Dashboard / Subject module / <Subject>)
    used across the Codex Journal design. */
+.subject-entry-shell {
+  --subject-entry-distance: 18px;
+}
+.subject-entry-content {
+  animation: subject-entry-content-in 420ms var(--ease-out) both;
+  transform-origin: 50% 24px;
+  will-change: opacity, transform;
+}
+.subject-entry-content > .subject-breadcrumb {
+  animation: subject-entry-breadcrumb-in 320ms var(--ease-out) 80ms both;
+}
+@keyframes subject-entry-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--subject-entry-distance)) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes subject-entry-breadcrumb-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 .subject-breadcrumb {
   display: flex;
   flex-wrap: wrap;
@@ -5240,6 +5271,12 @@ textarea:focus-visible {
 .subject-breadcrumb-current:focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .subject-entry-content,
+  .subject-entry-content > .subject-breadcrumb {
+    animation: none !important;
+  }
 }
 
 /* ---------- Setup-scene codex link ---------- */
