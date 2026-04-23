@@ -4,20 +4,35 @@ import assert from 'node:assert/strict';
 import { sha256 } from '../worker/src/auth.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
-function productionServer() {
+function productionServer(env = {}) {
   return createWorkerRepositoryServer({
     env: {
       AUTH_MODE: 'production',
       ENVIRONMENT: 'production',
       APP_HOSTNAME: 'repo.test',
+      ...env,
     },
   });
 }
 
+function setCookieValues(response) {
+  const raw = response.headers.getSetCookie?.() || String(response.headers.get('set-cookie') || '')
+    .split(/,\s*(?=ks2_)/)
+    .filter(Boolean);
+  return raw
+    .map((cookie) => String(cookie || '').split(';')[0])
+    .filter(Boolean);
+}
+
 function cookieFrom(response) {
-  const setCookie = response.headers.get('set-cookie') || '';
-  const match = /ks2_session=([^;]+)/.exec(setCookie);
-  return match ? `ks2_session=${match[1]}` : '';
+  return setCookieValues(response).find((cookie) => cookie.startsWith('ks2_session=')) || '';
+}
+
+function cookieHeader(...values) {
+  return values
+    .flatMap((value) => Array.isArray(value) ? value : [value])
+    .filter(Boolean)
+    .join('; ');
 }
 
 async function postJson(server, path, body = {}, headers = {}) {
@@ -347,6 +362,50 @@ test('demo registration rolls back account promotion when credential insert race
   assert.ok(Number(demoAccount.demo_expires_at) > Date.now());
   assert.equal(demoAccount.converted_from_demo_at, null);
   assert.equal(demoCredential, undefined);
+
+  server.close();
+});
+
+test('social demo conversion rejects callbacks for a different active demo session', async () => {
+  const server = productionServer({
+    GOOGLE_CLIENT_ID: 'google-client',
+    GOOGLE_CLIENT_SECRET: 'google-secret',
+  });
+
+  const demoA = await postJson(server, '/api/demo/session');
+  const demoAPayload = await demoA.json();
+  const demoACookie = cookieFrom(demoA);
+
+  const start = await postJson(server, '/api/auth/google/start', {}, {
+    cookie: demoACookie,
+  });
+  const startPayload = await start.json();
+  const oauthCookies = setCookieValues(start);
+  const state = new URL(startPayload.redirectUrl).searchParams.get('state');
+
+  const demoB = await postJson(server, '/api/demo/session');
+  const demoBPayload = await demoB.json();
+  const demoBCookie = cookieFrom(demoB);
+
+  const callback = await server.fetchRaw(`https://repo.test/api/auth/google/callback?state=${state}&code=provider-code`, {
+    headers: {
+      cookie: cookieHeader(demoBCookie, oauthCookies),
+    },
+  });
+
+  const accountA = server.DB.db.prepare('SELECT account_type, email FROM adult_accounts WHERE id = ?')
+    .get(demoAPayload.session.accountId);
+  const accountB = server.DB.db.prepare('SELECT account_type, email FROM adult_accounts WHERE id = ?')
+    .get(demoBPayload.session.accountId);
+  const identities = server.DB.db.prepare('SELECT COUNT(*) AS count FROM account_identities').get();
+
+  assert.equal(callback.status, 302);
+  assert.match(callback.headers.get('location') || '', /auth_error=/);
+  assert.equal(accountA.account_type, 'demo');
+  assert.equal(accountA.email, null);
+  assert.equal(accountB.account_type, 'demo');
+  assert.equal(accountB.email, null);
+  assert.equal(identities.count, 0);
 
   server.close();
 });

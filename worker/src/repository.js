@@ -1601,13 +1601,15 @@ async function runSubjectCommandMutation(db, {
   }
 
   await requireLearnerWriteAccess(db, accountId, command.learnerId);
-  const learner = await first(db, 'SELECT id FROM learner_profiles WHERE id = ?', [command.learnerId]);
+  const learner = await first(db, 'SELECT id, state_revision FROM learner_profiles WHERE id = ?', [command.learnerId]);
   if (!learner) throw new NotFoundError('Learner was not found.', { learnerId: command.learnerId });
 
   const appliedRaw = await applyCommand();
   const appliedPayload = isPlainObject(appliedRaw) ? appliedRaw : {};
   const { runtimeWrite = null, ...applied } = appliedPayload;
-  const appliedRevision = nextMutation.expectedRevision + 1;
+  const currentRevision = Number(learner.state_revision) || 0;
+  const mutatesLearnerState = Boolean(runtimeWrite) || applied.changed !== false;
+  const appliedRevision = mutatesLearnerState ? nextMutation.expectedRevision + 1 : currentRevision;
   const response = {
     ...applied,
     mutation: buildMutationMeta({
@@ -1620,6 +1622,18 @@ async function runSubjectCommandMutation(db, {
       appliedRevision,
     }),
   };
+  if (!mutatesLearnerState) {
+    logMutation('info', 'mutation.observed', {
+      kind,
+      scopeType: 'learner',
+      scopeId: command.learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+      expectedRevision: nextMutation.expectedRevision,
+      appliedRevision,
+    });
+    return response;
+  }
   const guard = {
     learnerId: command.learnerId,
     expectedRevision: nextMutation.expectedRevision,

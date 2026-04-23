@@ -256,16 +256,25 @@ function oauthCookie(request, part, value, maxAge = OAUTH_TTL_SECONDS) {
 }
 
 function oauthAttemptCookies(request, provider, attempt) {
-  return [
+  const cookies = [
     oauthCookie(request, 'provider', provider),
     oauthCookie(request, 'state', attempt.state),
     oauthCookie(request, 'verifier', attempt.codeVerifier || ''),
     oauthCookie(request, 'nonce', attempt.nonce || ''),
   ];
+  if (attempt.demoAccountId && attempt.demoSessionId && attempt.demoBinding) {
+    cookies.push(
+      oauthCookie(request, 'demo_account', attempt.demoAccountId),
+      oauthCookie(request, 'demo_session', attempt.demoSessionId),
+      oauthCookie(request, 'demo_binding', attempt.demoBinding),
+    );
+  }
+  return cookies;
 }
 
 function clearOauthCookies(request) {
-  return ['provider', 'state', 'verifier', 'nonce'].map((part) => oauthCookie(request, part, '', 0));
+  return ['provider', 'state', 'verifier', 'nonce', 'demo_account', 'demo_session', 'demo_binding']
+    .map((part) => oauthCookie(request, part, '', 0));
 }
 
 function readOauthAttempt(request) {
@@ -275,6 +284,9 @@ function readOauthAttempt(request) {
     state: cleanText(cookies[oauthCookieName('state')]),
     codeVerifier: cleanText(cookies[oauthCookieName('verifier')]),
     nonce: cleanText(cookies[oauthCookieName('nonce')]),
+    demoAccountId: cleanText(cookies[oauthCookieName('demo_account')]),
+    demoSessionId: cleanText(cookies[oauthCookieName('demo_session')]),
+    demoBinding: cleanText(cookies[oauthCookieName('demo_binding')]),
   };
 }
 
@@ -807,6 +819,54 @@ async function exchangeCode(provider, env, code, redirectUri, codeVerifier) {
   return readJsonResponse(response, 'The provider did not return an access token.');
 }
 
+function oauthAttemptHasDemoBinding(attempt = {}) {
+  return Boolean(attempt.demoAccountId || attempt.demoSessionId || attempt.demoBinding);
+}
+
+async function oauthDemoBindingDigest(state, session) {
+  return sha256([
+    'oauth-demo-binding-v1',
+    state,
+    session?.accountId,
+    session?.sessionId,
+    session?.sessionHash,
+  ].join('|'));
+}
+
+async function oauthDemoBindingForSession(state, session) {
+  if (!session?.demo) return {};
+  return {
+    demoAccountId: session.accountId,
+    demoSessionId: session.sessionId,
+    demoBinding: await oauthDemoBindingDigest(state, session),
+  };
+}
+
+async function boundDemoSessionForAttempt(attempt, activeSession) {
+  if (!oauthAttemptHasDemoBinding(attempt)) return null;
+  if (!attempt.demoAccountId || !attempt.demoSessionId || !attempt.demoBinding) {
+    throw new BadRequestError('Demo sign-in session expired. Start the social sign-in again from this demo.', {
+      code: 'demo_oauth_binding_invalid',
+    });
+  }
+  if (
+    !activeSession?.demo
+    || activeSession.accountId !== attempt.demoAccountId
+    || activeSession.sessionId !== attempt.demoSessionId
+  ) {
+    throw new BadRequestError('Demo sign-in session changed. Start the social sign-in again from this demo.', {
+      code: 'demo_oauth_binding_mismatch',
+    });
+  }
+  const expectedBinding = await oauthDemoBindingDigest(attempt.state, activeSession);
+  if (attempt.demoBinding !== expectedBinding) {
+    throw new BadRequestError('Demo sign-in session could not be verified. Start the social sign-in again from this demo.', {
+      code: 'demo_oauth_binding_mismatch',
+    });
+  }
+  return activeSession;
+}
+
 export async function startSocialLogin(env, request, providerKey, payload = {}) {
   const providerName = normaliseProvider(providerKey);
   await protectOAuthStart(env, request, {
@@ -831,9 +891,16 @@ export async function startSocialLogin(env, request, providerKey, payload = {}) 
     params.set('code_challenge', await sha256(codeVerifier));
   }
   if (nonce) params.set('nonce', nonce);
+  const activeSession = await accountSessionFromToken(env, readSessionToken(request));
+  const demoBinding = await oauthDemoBindingForSession(state, activeSession);
   return {
     status: 200,
-    cookies: oauthAttemptCookies(request, providerName, { state, codeVerifier, nonce }),
+    cookies: oauthAttemptCookies(request, providerName, {
+      state,
+      codeVerifier,
+      nonce,
+      ...demoBinding,
+    }),
     payload: {
       ok: true,
       redirectUrl: `${provider.authoriseUrl}?${params.toString()}`,
@@ -970,6 +1037,8 @@ export async function completeSocialLogin(env, request, providerKey, callbackPay
     throw new BadRequestError('The provider did not return an authorisation code.', { code: 'oauth_code_missing' });
   }
 
+  const activeSession = await accountSessionFromToken(env, readSessionToken(request));
+  const boundDemoSession = await boundDemoSessionForAttempt(attempt, activeSession);
   const origin = appOrigin(env, request);
   const provider = configuredProvider(env, providerName, origin);
   const tokenPayload = await exchangeCode(provider, env, callbackPayload.code, provider.redirectUri, attempt.codeVerifier);
@@ -978,10 +1047,9 @@ export async function completeSocialLogin(env, request, providerKey, callbackPay
     throw new BadRequestError('The provider did not return a valid account identifier.', { code: 'oauth_subject_missing' });
   }
   const verifiedEmail = profile.emailVerified === false ? '' : profile.email;
-  const activeSession = await accountSessionFromToken(env, readSessionToken(request));
-  const accountId = activeSession?.demo
+  const accountId = boundDemoSession
     ? await convertDemoAccountFromIdentity(env, {
-        demoSession: activeSession,
+        demoSession: boundDemoSession,
         provider: providerName,
         providerSubject: profile.subject,
         email: verifiedEmail,

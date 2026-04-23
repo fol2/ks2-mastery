@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { sha256 } from '../worker/src/auth.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a' } = {}) {
@@ -49,6 +50,79 @@ function ttsRequest(body = {}) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   };
+}
+
+function cookieFrom(response) {
+  const raw = response.headers.getSetCookie?.() || String(response.headers.get('set-cookie') || '')
+    .split(/,\s*(?=ks2_)/)
+    .filter(Boolean);
+  const cookie = raw
+    .map((value) => String(value || '').split(';')[0])
+    .find((value) => value.startsWith('ks2_session='));
+  return cookie || '';
+}
+
+async function postJsonRaw(server, path, body = {}, headers = {}) {
+  return server.fetchRaw(`https://repo.test${path}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      ...headers,
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+async function startDemoSpellingPrompt(server) {
+  const demo = await postJsonRaw(server, '/api/demo/session');
+  const demoPayload = await demo.json();
+  const cookie = cookieFrom(demo);
+  const bootstrap = await server.fetchRaw('https://repo.test/api/bootstrap', {
+    headers: { cookie },
+  });
+  const bootstrapPayload = await bootstrap.json();
+  const learnerId = bootstrapPayload.learners.selectedId;
+  const command = await postJsonRaw(server, '/api/subjects/spelling/command', {
+    command: 'start-session',
+    learnerId,
+    requestId: 'demo-tts-start-1',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'single',
+      slug: 'early',
+      length: 1,
+    },
+  }, {
+    cookie,
+    origin: 'https://repo.test',
+  });
+  const commandPayload = await command.json();
+  assert.equal(command.status, 200, JSON.stringify(commandPayload));
+  assert.ok(commandPayload.audio?.promptToken);
+  const sessionRow = server.DB.db.prepare('SELECT id FROM account_sessions WHERE account_id = ?')
+    .get(demoPayload.session.accountId);
+  assert.ok(sessionRow?.id);
+  return {
+    accountId: demoPayload.session.accountId,
+    learnerId,
+    cookie,
+    sessionId: sessionRow?.id,
+    audio: commandPayload.audio,
+  };
+}
+
+async function seedRateLimit(server, bucket, identifier, count) {
+  const now = Date.now();
+  const windowMs = 10 * 60 * 1000;
+  const windowStartedAt = Math.floor(now / windowMs) * windowMs;
+  server.DB.db.prepare(`
+    INSERT INTO request_limits (limiter_key, window_started_at, request_count, updated_at)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(limiter_key) DO UPDATE SET
+      window_started_at = excluded.window_started_at,
+      request_count = excluded.request_count,
+      updated_at = excluded.updated_at
+  `).run(`${bucket}:${await sha256(identifier)}`, windowStartedAt, count, now);
 }
 
 function geminiAudioResponse(bytes = [1, 0, 2, 0]) {
@@ -329,6 +403,122 @@ test('TTS route rejects arbitrary client-supplied transcript text', async () => 
     assert.equal(response.status, 400);
     assert.equal(payload.code, 'tts_prompt_token_required');
   } finally {
+    server.close();
+  }
+});
+
+test('demo TTS records fallback usage and demo-scoped limiter buckets', async () => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    return new Response(new Uint8Array([4, 5, 6]), {
+      status: 200,
+      headers: { 'content-type': 'audio/mpeg' },
+    });
+  };
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      AUTH_MODE: 'production',
+      ENVIRONMENT: 'production',
+      APP_HOSTNAME: 'repo.test',
+      OPENAI_API_KEY: 'test-openai-key',
+    },
+  });
+  try {
+    const prompt = await startDemoSpellingPrompt(server);
+    const response = await server.fetchRaw('https://repo.test/api/tts', {
+      ...ttsRequest({
+        learnerId: prompt.audio.learnerId,
+        promptToken: prompt.audio.promptToken,
+      }),
+      headers: {
+        'content-type': 'application/json',
+        cookie: prompt.cookie,
+      },
+    });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const fallbackMetric = server.DB.db.prepare(`
+      SELECT metric_count
+      FROM demo_operation_metrics
+      WHERE metric_key = 'tts_fallbacks'
+    `).get();
+    const limiterRows = server.DB.db.prepare(`
+      SELECT limiter_key
+      FROM request_limits
+      WHERE limiter_key LIKE 'demo-tts-%'
+    `).all();
+    const limiterPrefixes = limiterRows.map((row) => row.limiter_key.split(':')[0]).sort();
+
+    assert.equal(response.status, 200);
+    assert.deepEqual([...bytes], [4, 5, 6]);
+    assert.equal(providerCalls, 1);
+    assert.equal(Number(fallbackMetric?.metric_count), 1);
+    assert.deepEqual(limiterPrefixes, [
+      'demo-tts-account',
+      'demo-tts-fallback-type',
+      'demo-tts-ip',
+      'demo-tts-session',
+    ]);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
+test('demo TTS is blocked by the demo session limiter before provider fetch', async () => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    return new Response(new Uint8Array([4, 5, 6]), {
+      status: 200,
+      headers: { 'content-type': 'audio/mpeg' },
+    });
+  };
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      AUTH_MODE: 'production',
+      ENVIRONMENT: 'production',
+      APP_HOSTNAME: 'repo.test',
+      OPENAI_API_KEY: 'test-openai-key',
+    },
+  });
+  try {
+    const prompt = await startDemoSpellingPrompt(server);
+    await seedRateLimit(server, 'demo-tts-session', prompt.sessionId, 60);
+
+    const response = await server.fetchRaw('https://repo.test/api/tts', {
+      ...ttsRequest({
+        learnerId: prompt.audio.learnerId,
+        promptToken: prompt.audio.promptToken,
+      }),
+      headers: {
+        'content-type': 'application/json',
+        cookie: prompt.cookie,
+      },
+    });
+    const payload = await response.json();
+    const rateLimitMetric = server.DB.db.prepare(`
+      SELECT metric_count
+      FROM demo_operation_metrics
+      WHERE metric_key = 'rate_limit_blocks'
+    `).get();
+    const fallbackMetric = server.DB.db.prepare(`
+      SELECT metric_count
+      FROM demo_operation_metrics
+      WHERE metric_key = 'tts_fallbacks'
+    `).get();
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.code, 'demo_rate_limited');
+    assert.equal(providerCalls, 0);
+    assert.equal(Number(rateLimitMetric?.metric_count), 1);
+    assert.equal(Number(fallbackMetric?.metric_count) || 0, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
     server.close();
   }
 });

@@ -377,7 +377,7 @@ test('word-bank drill checks go through the subject command boundary without wri
   const now = Date.now();
   DB.db.prepare(`
     INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
-    VALUES ('learner-a', 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+    VALUES ('learner-a', 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 3)
   `).run(now, now);
   DB.db.prepare(`
     INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
@@ -399,7 +399,7 @@ test('word-bank drill checks go through the subject command boundary without wri
       command: 'check-word-bank-drill',
       learnerId: 'learner-a',
       requestId: 'drill-check-1',
-      expectedLearnerRevision: 0,
+      expectedLearnerRevision: 1,
       payload: { slug: 'early', typed: 'early' },
     }),
   }), env, {});
@@ -407,10 +407,13 @@ test('word-bank drill checks go through the subject command boundary without wri
 
   assert.equal(response.status, 200);
   assert.equal(payload.mutation.kind, 'subject_command.spelling.check-word-bank-drill');
+  assert.equal(payload.mutation.expectedRevision, 1);
+  assert.equal(payload.mutation.appliedRevision, 3);
   assert.equal(payload.wordBankDrill.result, 'correct');
   assert.equal(payload.subjectReadModel, undefined);
+  assert.equal(DB.db.prepare('SELECT COUNT(*) AS count FROM mutation_receipts').get().count, 0);
   assert.equal(DB.db.prepare('SELECT COUNT(*) AS count FROM child_subject_state').get().count, 0);
-  assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 1);
+  assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 3);
 
   DB.close();
 });

@@ -16,6 +16,10 @@ const DEMO_LIMITS = {
   parentHubIp: 180,
   parentHubAccount: 120,
   parentHubSession: 90,
+  ttsIp: 160,
+  ttsAccount: 80,
+  ttsSession: 60,
+  ttsFallbackType: 40,
 };
 
 function cleanText(value) {
@@ -195,6 +199,38 @@ export async function protectDemoParentHubRead({ env, request, session, now = Da
       limit: DEMO_LIMITS.parentHubSession,
     },
   ], now, 'Too many demo Parent Hub requests. Please wait a few minutes and try again.');
+}
+
+export async function protectDemoTtsFallback({ env, request, session, payload = {}, now = Date.now() } = {}) {
+  if (!session?.demo) return;
+  const db = requireDatabase(env);
+  await requireActiveDemoAccount(db, session.accountId, now);
+  const scope = cleanText(payload.scope) || 'session';
+  const provider = cleanText(payload.provider) || 'remote';
+  const mode = payload.wordOnly ? 'word' : 'dictation';
+  const fallbackType = `${scope}:${provider}:${mode}`;
+  await enforceDemoRateLimit(db, [
+    {
+      bucket: 'demo-tts-ip',
+      identifier: clientIp(request),
+      limit: DEMO_LIMITS.ttsIp,
+    },
+    {
+      bucket: 'demo-tts-account',
+      identifier: session.accountId,
+      limit: DEMO_LIMITS.ttsAccount,
+    },
+    {
+      bucket: 'demo-tts-session',
+      identifier: demoSessionIdentifier(session),
+      limit: DEMO_LIMITS.ttsSession,
+    },
+    {
+      bucket: 'demo-tts-fallback-type',
+      identifier: `${session.accountId}:${fallbackType}`,
+      limit: DEMO_LIMITS.ttsFallbackType,
+    },
+  ], now, 'Too many demo dictation audio requests. Please wait a few minutes and try again.');
 }
 
 export async function cleanupExpiredDemoAccounts(db, now = Date.now(), { accountId = null, limit = 25 } = {}) {

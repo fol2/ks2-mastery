@@ -2,6 +2,7 @@ import { sha256 } from './auth.js';
 import { first, requireDatabase } from './d1.js';
 import { BadRequestError, BackendUnavailableError } from './errors.js';
 import { readJson } from './http.js';
+import { protectDemoTtsFallback, recordDemoMetric } from './demo/sessions.js';
 import { resolveSpellingAudioRequest } from './subjects/spelling/audio.js';
 
 const OPENAI_SPEECH_URL = 'https://api.openai.com/v1/audio/speech';
@@ -93,6 +94,13 @@ async function protectTts(env, request, session, now) {
       retryAfterSeconds: Math.max(accountLimit.retryAfterSeconds, ipLimit.retryAfterSeconds),
     });
   }
+}
+
+async function recordDemoTtsFallback(env, session, now, response) {
+  if (session?.demo) {
+    await recordDemoMetric(requireDatabase(env), 'tts_fallbacks', now);
+  }
+  return response;
 }
 
 function normaliseRemoteTtsProvider(value) {
@@ -403,11 +411,13 @@ export async function handleTextToSpeechRequest({
   const gemini = geminiConfig(env);
 
   await protectTts(env, request, session, now);
+  await protectDemoTtsFallback({ env, request, session, payload, now });
 
   if (payload.provider === 'gemini') {
     if (!gemini.apiKey) throw missingProviderConfig('gemini');
     try {
-      return await requestGeminiSpeech({ config: gemini, payload, fetchFn });
+      const response = await requestGeminiSpeech({ config: gemini, payload, fetchFn });
+      return await recordDemoTtsFallback(env, session, now, response);
     } catch (error) {
       throw backendUnavailableFromFailure(error, [error]);
     }
@@ -415,7 +425,8 @@ export async function handleTextToSpeechRequest({
 
   if (!openAi.apiKey) throw missingProviderConfig('openai');
   try {
-    return await requestOpenAiSpeech({ config: openAi, payload, fetchFn });
+    const response = await requestOpenAiSpeech({ config: openAi, payload, fetchFn });
+    return await recordDemoTtsFallback(env, session, now, response);
   } catch (error) {
     throw backendUnavailableFromFailure(error, [error]);
   }
