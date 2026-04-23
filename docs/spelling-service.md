@@ -74,6 +74,20 @@ Each command still goes through the generic learner mutation policy, so request 
 
 Active sessions from the browser-owned path are treated as stale for submit/continue commands and are replaced by new Worker-owned sessions on the next `start-session`. Durable progress and completed session history are kept.
 
+## Worker projections
+
+Spelling command responses now apply Worker-owned reward projection before returning.
+
+When a Spelling domain event secures a word, the Worker derives the monster/codex reward update, persists `child_game_state`, appends both the domain event and reward event, and returns:
+
+- `events`: all domain and reaction events applied by the command
+- `domainEvents`: Spelling-owned events
+- `reactionEvents`: reward/projection events
+- `toastEvents`: user-visible celebration events
+- `projections.rewards`: the latest server reward state and emitted reward events
+
+The projection is tied to the same learner mutation/idempotency receipt as the Spelling command. Replaying the same command returns the stored response and does not duplicate rewards or event log rows.
+
 ## Persisted subject-state invariants
 
 The spelling subject state is JSON-serialisable and versioned.

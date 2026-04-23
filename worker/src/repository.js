@@ -862,6 +862,26 @@ async function readSubjectRuntimeBundle(db, accountId, learnerId, subjectId = 's
   };
 }
 
+async function readLearnerProjectionBundle(db, accountId, learnerId) {
+  await requireLearnerWriteAccess(db, accountId, learnerId);
+  const gameRows = await all(db, `
+    SELECT learner_id, system_id, state_json, updated_at
+    FROM child_game_state
+    WHERE learner_id = ?
+  `, [learnerId]);
+  const eventRows = await all(db, `
+    SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+    FROM event_log
+    WHERE learner_id = ?
+    ORDER BY created_at ASC, id ASC
+  `, [learnerId]);
+
+  return {
+    gameState: Object.fromEntries(gameRows.map((row) => [row.system_id, gameStateRowToRecord(row)])),
+    events: normaliseEventLog(eventRows.map(eventRowToRecord).filter(Boolean)),
+  };
+}
+
 async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, runtime, nowTs) {
   const nextState = normaliseSubjectStateRecord({
     ui: runtime?.state || null,
@@ -943,6 +963,22 @@ async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, 
     ]);
   }
 
+  const gameState = runtime?.gameState && typeof runtime.gameState === 'object' && !Array.isArray(runtime.gameState)
+    ? runtime.gameState
+    : {};
+  for (const [systemId, rawState] of Object.entries(gameState)) {
+    if (!(typeof systemId === 'string' && systemId)) continue;
+    const nextGameState = cloneSerialisable(rawState) || {};
+    await run(db, `
+      INSERT INTO child_game_state (learner_id, system_id, state_json, updated_at, updated_by_account_id)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(learner_id, system_id) DO UPDATE SET
+        state_json = excluded.state_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, [learnerId, systemId, JSON.stringify(nextGameState), nowTs, accountId]);
+  }
+
   const events = Array.isArray(runtime?.events) ? runtime.events : [];
   for (const rawEvent of events) {
     const event = cloneSerialisable(rawEvent) || null;
@@ -984,6 +1020,7 @@ async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, 
     record: nextState,
     practiceSession: session,
     eventCount: events.length,
+    gameStateCount: Object.keys(gameState).length,
   };
 }
 
@@ -1295,6 +1332,9 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
     },
     async readSubjectRuntime(accountId, learnerId, subjectId = 'spelling') {
       return readSubjectRuntimeBundle(db, accountId, learnerId, subjectId);
+    },
+    async readLearnerProjectionState(accountId, learnerId) {
+      return readLearnerProjectionBundle(db, accountId, learnerId);
     },
     async persistSubjectRuntime(accountId, learnerId, subjectId = 'spelling', runtime = {}) {
       return persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, runtime, nowFactory());

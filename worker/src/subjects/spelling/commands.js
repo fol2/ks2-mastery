@@ -1,6 +1,9 @@
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../../../../src/subjects/spelling/data/content-data.js';
 import { resolveRuntimeSnapshot } from '../../../../src/subjects/spelling/content/model.js';
 import { NotFoundError } from '../../errors.js';
+import { combineCommandEvents } from '../../projections/events.js';
+import { buildCommandProjectionReadModel } from '../../projections/read-models.js';
+import { projectSpellingRewards } from '../../projections/rewards.js';
 import { createServerSpellingEngine } from './engine.js';
 import { buildSpellingReadModel } from './read-models.js';
 
@@ -63,6 +66,20 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       command: command.command,
       payload: command.payload,
     });
+    const projectionState = await context.repository.readLearnerProjectionState(
+      context.session.accountId,
+      command.learnerId,
+    );
+    const projectedRewards = projectSpellingRewards({
+      learnerId: command.learnerId,
+      domainEvents: result.events,
+      gameState: projectionState.gameState,
+    });
+    const projectedEvents = combineCommandEvents({
+      domainEvents: result.events,
+      reactionEvents: projectedRewards.rewardEvents,
+      existingEvents: projectionState.events,
+    });
 
     await context.repository.persistSubjectRuntime(
       context.session.accountId,
@@ -72,9 +89,16 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         state: result.state,
         data: result.data,
         practiceSession: result.practiceSession,
-        events: result.events,
+        gameState: projectedRewards.changedGameState,
+        events: projectedEvents.events,
       },
     );
+    const projections = buildCommandProjectionReadModel({
+      gameState: projectedRewards.gameState,
+      domainEvents: projectedEvents.domainEvents,
+      reactionEvents: projectedEvents.reactionEvents,
+      toastEvents: projectedEvents.toastEvents,
+    });
 
     return {
       learnerId: command.learnerId,
@@ -89,7 +113,11 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         audio: result.audio,
         content: contentMeta(contentResult, snapshot),
       }),
-      events: result.events,
+      projections,
+      events: projectedEvents.events,
+      domainEvents: projectedEvents.domainEvents,
+      reactionEvents: projectedEvents.reactionEvents,
+      toastEvents: projectedEvents.toastEvents,
       audio: result.audio,
     };
   }

@@ -445,7 +445,7 @@ flowchart TB
 
 ---
 
-- [ ] U4. **Server Projections, Hubs, and Read Models**
+- [x] U4. **Server Projections, Hubs, and Read Models**
 
 **Goal:** Move reward/game projection, dashboard aggregation, Parent Hub, Admin/Operations, and subject read-model aggregation behind Worker-owned projection/read-model modules.
 
