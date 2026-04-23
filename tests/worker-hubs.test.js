@@ -311,6 +311,23 @@ test('worker prevents demoting the last admin account', async () => {
 test('worker admin hub requires admin or operations role and exposes content plus audit summaries', async () => {
   const server = createWorkerRepositoryServer();
   await seedLearnerData(server, 'adult-admin', 'admin');
+  const now = Date.now();
+  server.DB.db.exec(`
+    INSERT INTO demo_operation_metrics (metric_key, metric_count, updated_at)
+    VALUES
+      ('sessions_created', 6, ${now - 50}),
+      ('active_sessions', 99, ${now - 40}),
+      ('conversions', 2, ${now - 30}),
+      ('cleanup_count', 1, ${now - 20}),
+      ('rate_limit_blocks', 4, ${now - 10}),
+      ('tts_fallbacks', 3, ${now});
+
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, account_type, demo_expires_at)
+    VALUES
+      ('demo-active-a', NULL, 'Demo Active A', 'parent', NULL, 1, 1, 'demo', ${now + 60000}),
+      ('demo-active-b', NULL, 'Demo Active B', 'parent', NULL, 1, 1, 'demo', ${now + 120000}),
+      ('demo-expired', NULL, 'Demo Expired', 'parent', NULL, 1, 1, 'demo', ${now - 60000});
+  `);
 
   const adminResponse = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?learnerId=learner-a&auditLimit=10', {}, {
     'x-ks2-dev-platform-role': 'admin',
@@ -322,6 +339,12 @@ test('worker admin hub requires admin or operations role and exposes content plu
   assert.equal(adminPayload.adminHub.contentReleaseStatus.subjectId, 'spelling');
   assert.ok(adminPayload.adminHub.contentReleaseStatus.runtimeWordCount > 0);
   assert.ok(adminPayload.adminHub.auditLogLookup.entries.some((entry) => entry.mutationKind === 'learners.write'));
+  assert.equal(adminPayload.adminHub.demoOperations.sessionsCreated, 6);
+  assert.equal(adminPayload.adminHub.demoOperations.activeSessions, 2);
+  assert.equal(adminPayload.adminHub.demoOperations.conversions, 2);
+  assert.equal(adminPayload.adminHub.demoOperations.cleanupCount, 1);
+  assert.equal(adminPayload.adminHub.demoOperations.rateLimitBlocks, 4);
+  assert.equal(adminPayload.adminHub.demoOperations.ttsFallbacks, 3);
   assert.equal(adminPayload.adminHub.learnerSupport.accessibleLearners[0].learnerName, 'Ava');
 
   const parentDenied = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin', {}, {

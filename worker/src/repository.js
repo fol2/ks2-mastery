@@ -704,6 +704,31 @@ async function listMutationReceiptRows(db, accountId, { requestId = null, scopeI
   `, params);
 }
 
+async function readDemoOperationSummary(db, nowTs) {
+  const rows = await all(db, `
+    SELECT metric_key, metric_count, updated_at
+    FROM demo_operation_metrics
+  `);
+  const activeRow = await first(db, `
+    SELECT COUNT(*) AS count
+    FROM adult_accounts
+    WHERE account_type = 'demo'
+      AND demo_expires_at > ?
+  `, [nowTs]);
+  const metrics = new Map(rows.map((row) => [row.metric_key, row]));
+  const count = (key) => Math.max(0, Number(metrics.get(key)?.metric_count) || 0);
+  const updatedAt = rows.reduce((latest, row) => Math.max(latest, Number(row.updated_at) || 0), 0);
+  return {
+    sessionsCreated: count('sessions_created'),
+    activeSessions: Math.max(0, Number(activeRow?.count) || 0),
+    conversions: count('conversions'),
+    cleanupCount: count('cleanup_count'),
+    rateLimitBlocks: count('rate_limit_blocks'),
+    ttsFallbacks: count('tts_fallbacks'),
+    updatedAt,
+  };
+}
+
 async function updateManagedAccountRole(db, {
   actorAccountId,
   targetAccountId,
@@ -2104,6 +2129,7 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         requestId,
         limit: auditLimit,
       });
+      const demoOperations = await readDemoOperationSummary(db, nowFactory());
       const model = buildAdminHubReadModel({
         account: {
           id: accountId,
@@ -2116,6 +2142,7 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         memberships: memberships.map(membershipRowToModel),
         learnerBundles,
         runtimeSnapshots: { spelling: runtimeSnapshotForBundle(contentBundle) },
+        demoOperations,
         auditEntries: auditEntries.map((row) => ({
           requestId: row.request_id,
           mutationKind: row.mutation_kind,
