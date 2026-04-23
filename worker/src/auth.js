@@ -80,6 +80,42 @@ function deleteDemoSessionsStatement(db, accountId) {
   `, [accountId]);
 }
 
+async function findRegisteredEmailAccountId(db, email, { excludeAccountId = null } = {}) {
+  const normalisedEmail = safeEmail(email);
+  if (!normalisedEmail) return null;
+  const excluded = cleanText(excludeAccountId);
+  return scalar(db, `
+    SELECT account_id FROM (
+      SELECT id AS account_id
+      FROM adult_accounts
+      WHERE lower(email) = lower(?)
+        AND (? IS NULL OR id <> ?)
+        AND COALESCE(account_type, 'real') <> 'demo'
+      UNION
+      SELECT account_id
+      FROM account_credentials
+      WHERE lower(email) = lower(?)
+        AND (? IS NULL OR account_id <> ?)
+      UNION
+      SELECT account_id
+      FROM account_identities
+      WHERE lower(email) = lower(?)
+        AND (? IS NULL OR account_id <> ?)
+    )
+    LIMIT 1
+  `, [
+    normalisedEmail,
+    excluded,
+    excluded,
+    normalisedEmail,
+    excluded,
+    excluded,
+    normalisedEmail,
+    excluded,
+    excluded,
+  ], 'account_id');
+}
+
 async function runDemoConversionBatch(db, statements) {
   const filtered = statements.filter(Boolean);
   if (!filtered.length) return [];
@@ -531,26 +567,7 @@ export async function registerWithEmail(env, request, payload = {}) {
 
   try {
     if (demoSession?.demo) {
-      const existingEmailAccount = await scalar(db, `
-        SELECT account_id FROM (
-          SELECT id AS account_id
-          FROM adult_accounts
-          WHERE lower(email) = lower(?)
-            AND id <> ?
-            AND COALESCE(account_type, 'real') <> 'demo'
-          UNION
-          SELECT account_id
-          FROM account_credentials
-          WHERE lower(email) = lower(?)
-            AND account_id <> ?
-          UNION
-          SELECT account_id
-          FROM account_identities
-          WHERE lower(email) = lower(?)
-            AND account_id <> ?
-        )
-        LIMIT 1
-      `, [email, accountId, email, accountId, email, accountId], 'account_id');
+      const existingEmailAccount = await findRegisteredEmailAccountId(db, email, { excludeAccountId: accountId });
       if (existingEmailAccount) {
         throw new ConflictError('That email address is already registered.', { code: 'email_already_registered' });
       }
@@ -944,7 +961,7 @@ async function findOrCreateAccountFromIdentity(env, {
   if (existing?.account_id) return existing.account_id;
 
   const emailAccountId = email
-    ? await scalar(db, 'SELECT id FROM adult_accounts WHERE lower(email) = lower(?) LIMIT 1', [email], 'id')
+    ? await findRegisteredEmailAccountId(db, email)
     : null;
   const accountId = emailAccountId || `adult-${randomToken(12)}`;
   await withTransaction(db, async () => {
@@ -985,14 +1002,7 @@ async function convertDemoAccountFromIdentity(env, {
   }
 
   if (email) {
-    const emailAccountId = await scalar(db, `
-      SELECT id
-      FROM adult_accounts
-      WHERE lower(email) = lower(?)
-        AND id <> ?
-        AND COALESCE(account_type, 'real') <> 'demo'
-      LIMIT 1
-    `, [email, accountId], 'id');
+    const emailAccountId = await findRegisteredEmailAccountId(db, email, { excludeAccountId: accountId });
     if (emailAccountId) {
       throw new ConflictError('That email address is already registered.', { code: 'email_already_registered' });
     }

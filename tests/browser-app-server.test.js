@@ -8,7 +8,10 @@ test('browser app smoke server proxies Worker demo session cookies', async () =>
   try {
     const demo = await fetch(`${server.origin}/api/demo/session`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        origin: server.origin,
+      },
       body: '{}',
     });
     const cookie = (demo.headers.get('set-cookie') || '').split(';')[0];

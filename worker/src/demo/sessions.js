@@ -49,9 +49,16 @@ function appOrigin(env = {}, request) {
   return `${url.protocol}//${url.host}`;
 }
 
-export function requireSameOrigin(request, env = {}) {
+export function requireSameOrigin(request, env = {}, { allowMissingOrigin = false } = {}) {
   const origin = cleanText(request.headers.get('origin'));
-  if (!origin) return;
+  if (!origin) {
+    if (!allowMissingOrigin && String(env.ENVIRONMENT || '').toLowerCase() === 'production') {
+      throw new ForbiddenError('This request must come from the KS2 Mastery app origin.', {
+        code: 'same_origin_required',
+      });
+    }
+    return;
+  }
   const expected = appOrigin(env, request);
   if (origin !== expected) {
     throw new ForbiddenError('This request must come from the KS2 Mastery app origin.', {
@@ -321,9 +328,9 @@ async function insertDemoLearner(db, accountId, learnerId, now) {
   return learner;
 }
 
-export async function createDemoSession({ env, request, now = Date.now() } = {}) {
+export async function createDemoSession({ env, request, now = Date.now(), allowMissingOrigin = false } = {}) {
   const db = requireDatabase(env);
-  requireSameOrigin(request, env);
+  requireSameOrigin(request, env, { allowMissingOrigin });
   await protectDemoCreate(db, request, now);
   await cleanupExpiredDemoAccounts(db, now);
 

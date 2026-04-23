@@ -37,6 +37,7 @@ async function postJson(server, path, body, headers = {}) {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
+      origin: 'https://repo.test',
       ...headers,
     },
     body: JSON.stringify(body),
@@ -156,6 +157,109 @@ test('production logout clears the server session and cookie', async () => {
   const authSessionPayload = await authSession.json();
   assert.equal(authSession.status, 200);
   assert.equal(authSessionPayload.session, null);
+
+  server.close();
+});
+
+test('production cookie-auth write routes require same-origin headers', async () => {
+  const server = productionServer();
+  const register = await postJson(server, '/api/auth/register', {
+    email: 'same-origin-writes@example.test',
+    password: 'password-1234',
+  });
+  const registerPayload = await register.json();
+  const cookie = cookieFrom(register);
+  const accountId = registerPayload.session.accountId;
+  server.DB.db.prepare("UPDATE adult_accounts SET platform_role = 'admin' WHERE id = ?").run(accountId);
+
+  const learnerWriteBody = {
+    learners: {
+      byId: {
+        'learner-origin': {
+          id: 'learner-origin',
+          name: 'Origin Learner',
+          yearGroup: 'Y5',
+          goal: 'sats',
+          dailyMinutes: 15,
+          avatarColor: '#3E6FA8',
+          createdAt: 1,
+        },
+      },
+      allIds: ['learner-origin'],
+      selectedId: 'learner-origin',
+    },
+    mutation: {
+      requestId: 'origin-learner-write-1',
+      expectedAccountRevision: 0,
+    },
+  };
+
+  const missingLearnerOrigin = await server.fetchRaw('https://repo.test/api/learners', {
+    method: 'PUT',
+    headers: {
+      'content-type': 'application/json',
+      cookie,
+    },
+    body: JSON.stringify(learnerWriteBody),
+  });
+  const missingLearnerPayload = await missingLearnerOrigin.json();
+  assert.equal(missingLearnerOrigin.status, 403);
+  assert.equal(missingLearnerPayload.code, 'same_origin_required');
+
+  const crossLearnerOrigin = await server.fetchRaw('https://repo.test/api/learners', {
+    method: 'PUT',
+    headers: {
+      'content-type': 'application/json',
+      cookie,
+      origin: 'https://evil.example',
+    },
+    body: JSON.stringify(learnerWriteBody),
+  });
+  const crossLearnerPayload = await crossLearnerOrigin.json();
+  assert.equal(crossLearnerOrigin.status, 403);
+  assert.equal(crossLearnerPayload.code, 'same_origin_required');
+
+  const sameOriginLearnerWrite = await server.fetchRaw('https://repo.test/api/learners', {
+    method: 'PUT',
+    headers: {
+      'content-type': 'application/json',
+      cookie,
+      origin: 'https://repo.test',
+    },
+    body: JSON.stringify(learnerWriteBody),
+  });
+  const sameOriginLearnerPayload = await sameOriginLearnerWrite.json();
+  assert.equal(sameOriginLearnerWrite.status, 200, JSON.stringify(sameOriginLearnerPayload));
+
+  for (const route of [
+    {
+      path: '/api/content/spelling',
+      method: 'PUT',
+      body: { content: {}, mutation: { requestId: 'origin-content-write-1', expectedAccountRevision: 1 } },
+    },
+    {
+      path: '/api/admin/accounts/role',
+      method: 'PUT',
+      body: { accountId, platformRole: 'admin', requestId: 'origin-role-write-1' },
+    },
+    {
+      path: '/api/auth/logout',
+      method: 'POST',
+      body: {},
+    },
+  ]) {
+    const response = await server.fetchRaw(`https://repo.test${route.path}`, {
+      method: route.method,
+      headers: {
+        'content-type': 'application/json',
+        cookie,
+      },
+      body: JSON.stringify(route.body),
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 403, route.path);
+    assert.equal(payload.code, 'same_origin_required', route.path);
+  }
 
   server.close();
 });

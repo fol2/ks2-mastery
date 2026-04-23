@@ -40,6 +40,7 @@ async function postJson(server, path, body = {}, headers = {}) {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
+      origin: 'https://repo.test',
       ...headers,
     },
     body: JSON.stringify(body),
@@ -58,6 +59,53 @@ async function seedRateLimit(server, bucket, identifier, count) {
       request_count = excluded.request_count,
       updated_at = excluded.updated_at
   `).run(`${bucket}:${await sha256(identifier)}`, windowStartedAt, count, now);
+}
+
+async function withGoogleProfile(profile, callback) {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    const url = typeof input === 'string' ? input : input.url;
+    if (url === 'https://oauth2.googleapis.com/token') {
+      return new Response(JSON.stringify({ access_token: 'google-token' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    if (url === 'https://openidconnect.googleapis.com/v1/userinfo') {
+      return new Response(JSON.stringify({
+        sub: profile.subject || 'google-subject',
+        email: profile.email || '',
+        email_verified: profile.emailVerified !== false,
+      }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    return originalFetch(input);
+  };
+  try {
+    return await callback();
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
+async function startGoogleLogin(server, cookie = '') {
+  const start = await postJson(server, '/api/auth/google/start', {}, cookie ? { cookie } : {});
+  const startPayload = await start.json();
+  const oauthCookies = setCookieValues(start);
+  return {
+    state: new URL(startPayload.redirectUrl).searchParams.get('state'),
+    oauthCookies,
+  };
+}
+
+function googleCallback(server, { state, cookie = '', oauthCookies = [] }) {
+  return server.fetchRaw(`https://repo.test/api/auth/google/callback?state=${state}&code=provider-code`, {
+    headers: {
+      cookie: cookieHeader(cookie, oauthCookies),
+    },
+  });
 }
 
 test('demo session creates an isolated 24-hour server-owned account and learner', async () => {
@@ -125,6 +173,15 @@ test('/demo creates the same server-owned session and redirects to the app', asy
 
 test('state-changing demo creation rejects cross-origin requests', async () => {
   const server = productionServer();
+
+  const missingOrigin = await server.fetchRaw('https://repo.test/api/demo/session', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+  const missingPayload = await missingOrigin.json();
+  assert.equal(missingOrigin.status, 403);
+  assert.equal(missingPayload.code, 'same_origin_required');
 
   const response = await postJson(server, '/api/demo/session', {}, {
     origin: 'https://evil.example',
@@ -274,6 +331,22 @@ test('non-expired demo registration promotes the demo account and preserves lear
   assert.equal(oldDemoSession.status, 200);
   assert.equal(oldDemoPayload.session, null);
 
+  const oldDemoBootstrap = await server.fetchRaw('https://repo.test/api/bootstrap', {
+    headers: { cookie: demoCookie },
+  });
+  assert.equal(oldDemoBootstrap.status, 401);
+
+  const oldDemoCommand = await postJson(server, '/api/subjects/spelling/command', {
+    command: 'check-word-bank-drill',
+    learnerId,
+    requestId: 'old-demo-command-after-conversion',
+    expectedLearnerRevision: 0,
+    payload: { slug: 'early', typed: 'early' },
+  }, {
+    cookie: demoCookie,
+  });
+  assert.equal(oldDemoCommand.status, 401);
+
   const realBootstrap = await server.fetchRaw('https://repo.test/api/bootstrap', {
     headers: { cookie: realCookie },
   });
@@ -282,6 +355,175 @@ test('non-expired demo registration promotes the demo account and preserves lear
   assert.equal(realBootstrapPayload.learners.byId[learnerId].name, 'Demo Learner');
 
   server.close();
+});
+
+test('social demo conversion invalidates the original demo cookie', async () => {
+  const server = productionServer({
+    GOOGLE_CLIENT_ID: 'google-client',
+    GOOGLE_CLIENT_SECRET: 'google-secret',
+  });
+
+  try {
+    const demo = await postJson(server, '/api/demo/session');
+    const demoPayload = await demo.json();
+    const demoCookie = cookieFrom(demo);
+    const demoBootstrap = await server.fetchRaw('https://repo.test/api/bootstrap', {
+      headers: { cookie: demoCookie },
+    });
+    const demoBootstrapPayload = await demoBootstrap.json();
+    const learnerId = demoBootstrapPayload.learners.selectedId;
+    const login = await startGoogleLogin(server, demoCookie);
+
+    const callback = await withGoogleProfile({
+      subject: 'google-convert-demo',
+      email: 'social-converted@example.test',
+    }, () => googleCallback(server, {
+      state: login.state,
+      cookie: demoCookie,
+      oauthCookies: login.oauthCookies,
+    }));
+    const realCookie = cookieFrom(callback);
+
+    assert.equal(callback.status, 302);
+    assert.equal(callback.headers.get('location'), 'https://repo.test/?auth=success');
+    assert.ok(realCookie);
+
+    const account = server.DB.db.prepare('SELECT account_type, email FROM adult_accounts WHERE id = ?')
+      .get(demoPayload.session.accountId);
+    assert.equal(account.account_type, 'real');
+    assert.equal(account.email, 'social-converted@example.test');
+
+    const oldDemoSession = await server.fetchRaw('https://repo.test/api/auth/session', {
+      headers: { cookie: demoCookie },
+    });
+    const oldDemoPayload = await oldDemoSession.json();
+    assert.equal(oldDemoSession.status, 200);
+    assert.equal(oldDemoPayload.session, null);
+
+    const oldDemoBootstrap = await server.fetchRaw('https://repo.test/api/bootstrap', {
+      headers: { cookie: demoCookie },
+    });
+    assert.equal(oldDemoBootstrap.status, 401);
+
+    const oldDemoCommand = await postJson(server, '/api/subjects/spelling/command', {
+      command: 'check-word-bank-drill',
+      learnerId,
+      requestId: 'old-social-demo-command-after-conversion',
+      expectedLearnerRevision: 0,
+      payload: { slug: 'early', typed: 'early' },
+    }, {
+      cookie: demoCookie,
+    });
+    assert.equal(oldDemoCommand.status, 401);
+  } finally {
+    server.close();
+  }
+});
+
+test('social demo conversion rejects emails owned only by credentials or identities', async () => {
+  for (const source of ['credential', 'identity', 'adult']) {
+    const server = productionServer({
+      GOOGLE_CLIENT_ID: 'google-client',
+      GOOGLE_CLIENT_SECRET: 'google-secret',
+    });
+    try {
+      const now = Date.now();
+      server.DB.db.prepare(`
+        INSERT INTO adult_accounts (id, email, display_name, account_type, created_at, updated_at)
+        VALUES (?, ?, 'Existing Parent', 'real', ?, ?)
+      `).run(`adult-${source}`, source === 'adult' ? 'shared-social@example.test' : null, now, now);
+      if (source === 'credential') {
+        server.DB.db.prepare(`
+          INSERT INTO account_credentials (account_id, email, password_hash, password_salt, created_at, updated_at)
+          VALUES ('adult-credential', 'shared-social@example.test', 'hash', 'salt', ?, ?)
+        `).run(now, now);
+      }
+      if (source === 'identity') {
+        server.DB.db.prepare(`
+          INSERT INTO account_identities (id, account_id, provider, provider_subject, email, created_at, updated_at)
+          VALUES ('identity-existing', 'adult-identity', 'facebook', 'facebook-existing', 'shared-social@example.test', ?, ?)
+        `).run(now, now);
+      }
+
+      const demo = await postJson(server, '/api/demo/session');
+      const demoPayload = await demo.json();
+      const demoCookie = cookieFrom(demo);
+      const login = await startGoogleLogin(server, demoCookie);
+      const callback = await withGoogleProfile({
+        subject: `google-conflict-${source}`,
+        email: 'shared-social@example.test',
+      }, () => googleCallback(server, {
+        state: login.state,
+        cookie: demoCookie,
+        oauthCookies: login.oauthCookies,
+      }));
+
+      const account = server.DB.db.prepare('SELECT account_type, email FROM adult_accounts WHERE id = ?')
+        .get(demoPayload.session.accountId);
+      const demoIdentity = server.DB.db.prepare('SELECT id FROM account_identities WHERE account_id = ?')
+        .get(demoPayload.session.accountId);
+
+      assert.equal(callback.status, 302);
+      assert.match(callback.headers.get('location') || '', /auth_error=/);
+      assert.equal(account.account_type, 'demo', source);
+      assert.equal(account.email, null, source);
+      assert.equal(demoIdentity, undefined, source);
+    } finally {
+      server.close();
+    }
+  }
+});
+
+test('ordinary social sign-in reuses emails owned by credentials or identities', async () => {
+  for (const source of ['credential', 'identity']) {
+    const server = productionServer({
+      GOOGLE_CLIENT_ID: 'google-client',
+      GOOGLE_CLIENT_SECRET: 'google-secret',
+    });
+    try {
+      const now = Date.now();
+      server.DB.db.prepare(`
+        INSERT INTO adult_accounts (id, email, display_name, account_type, created_at, updated_at)
+        VALUES (?, NULL, 'Existing Parent', 'real', ?, ?)
+      `).run(`adult-${source}`, now, now);
+      if (source === 'credential') {
+        server.DB.db.prepare(`
+          INSERT INTO account_credentials (account_id, email, password_hash, password_salt, created_at, updated_at)
+          VALUES ('adult-credential', 'ordinary-social@example.test', 'hash', 'salt', ?, ?)
+        `).run(now, now);
+      } else {
+        server.DB.db.prepare(`
+          INSERT INTO account_identities (id, account_id, provider, provider_subject, email, created_at, updated_at)
+          VALUES ('identity-existing', 'adult-identity', 'facebook', 'facebook-existing', 'ordinary-social@example.test', ?, ?)
+        `).run(now, now);
+      }
+
+      const login = await startGoogleLogin(server);
+      const callback = await withGoogleProfile({
+        subject: `google-ordinary-${source}`,
+        email: 'ordinary-social@example.test',
+      }, () => googleCallback(server, {
+        state: login.state,
+        oauthCookies: login.oauthCookies,
+      }));
+      const accountCount = server.DB.db.prepare('SELECT COUNT(*) AS count FROM adult_accounts').get().count;
+      const identity = server.DB.db.prepare(`
+        SELECT account_id
+        FROM account_identities
+        WHERE provider = 'google' AND provider_subject = ?
+      `).get(`google-ordinary-${source}`);
+      const account = server.DB.db.prepare('SELECT email FROM adult_accounts WHERE id = ?')
+        .get(`adult-${source}`);
+
+      assert.equal(callback.status, 302);
+      assert.equal(callback.headers.get('location'), 'https://repo.test/?auth=success');
+      assert.equal(accountCount, 1, source);
+      assert.equal(identity.account_id, `adult-${source}`, source);
+      assert.equal(account.email, 'ordinary-social@example.test', source);
+    } finally {
+      server.close();
+    }
+  }
 });
 
 test('demo registration rejects an email already owned by a social-only account', async () => {

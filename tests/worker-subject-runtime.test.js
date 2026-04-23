@@ -18,6 +18,7 @@ async function postJson(server, path, body = {}, headers = {}) {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
+      origin: 'https://repo.test',
       ...headers,
     },
     body: JSON.stringify(body),
@@ -433,6 +434,69 @@ test('production real sessions cannot use legacy broad learner runtime write rou
     assert.equal(response.status, 403, `${route.method} ${route.path}`);
     assert.equal(payload.code, 'subject_command_required');
   }
+
+  server.close();
+});
+
+test('production subject commands require same-origin headers', async () => {
+  const server = createWorkerRepositoryServer({
+    env: {
+      AUTH_MODE: 'production',
+      ENVIRONMENT: 'production',
+      APP_HOSTNAME: 'repo.test',
+    },
+  });
+  const register = await postJson(server, '/api/auth/register', {
+    email: 'subject-origin@example.test',
+    password: 'password-1234',
+  });
+  const registerPayload = await register.json();
+  const cookie = cookieFrom(register);
+  const accountId = registerPayload.session.accountId;
+  const now = Date.now();
+  server.DB.db.prepare(`
+    INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+    VALUES ('learner-origin', 'Origin Learner', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run(now, now);
+  server.DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES (?, 'learner-origin', 'owner', 0, ?, ?)
+  `).run(accountId, now, now);
+
+  const body = {
+    command: 'start-session',
+    learnerId: 'learner-origin',
+    requestId: 'subject-origin-1',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'single',
+      slug: 'early',
+      length: 1,
+    },
+  };
+  const missingOrigin = await server.fetchRaw('https://repo.test/api/subjects/spelling/command', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      cookie,
+    },
+    body: JSON.stringify(body),
+  });
+  const missingPayload = await missingOrigin.json();
+  assert.equal(missingOrigin.status, 403);
+  assert.equal(missingPayload.code, 'same_origin_required');
+
+  const sameOrigin = await server.fetchRaw('https://repo.test/api/subjects/spelling/command', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      cookie,
+      origin: 'https://repo.test',
+    },
+    body: JSON.stringify(body),
+  });
+  const sameOriginPayload = await sameOrigin.json();
+  assert.equal(sameOrigin.status, 200, JSON.stringify(sameOriginPayload));
 
   server.close();
 });

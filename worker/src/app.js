@@ -197,6 +197,7 @@ export function createWorkerApp({
             env,
             request,
             now: now(),
+            allowMissingOrigin: true,
           });
           return redirect(`${url.origin}/?demo=1`, 302, result.cookies);
         }
@@ -416,6 +417,7 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/admin/accounts/role' && request.method === 'PUT') {
+          requireSameOrigin(request, env);
           const body = await readJson(request);
           const result = await repository.updateAdminAccountRole(session.accountId, {
             targetAccountId: body.accountId,
@@ -427,6 +429,7 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/content/spelling' && request.method === 'PUT') {
+          requireSameOrigin(request, env);
           const body = await readJson(request);
           const result = await repository.writeSubjectContent(
             session.accountId,
@@ -438,6 +441,7 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/learners' && request.method === 'PUT') {
+          requireSameOrigin(request, env);
           requireDemoWriteAllowed(session);
           const body = await readJson(request);
           const result = await repository.writeLearners(session.accountId, body.learners, mutationFromRequest(body, request));
