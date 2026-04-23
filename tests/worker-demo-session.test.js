@@ -295,3 +295,58 @@ test('demo registration rejects an email already owned by a social-only account'
 
   server.close();
 });
+
+test('demo registration rolls back account promotion when credential insert races', async () => {
+  const server = productionServer();
+
+  const demo = await postJson(server, '/api/demo/session');
+  const demoPayload = await demo.json();
+  const demoCookie = cookieFrom(demo);
+
+  server.DB.db.exec(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, account_type)
+    VALUES ('race-account', NULL, 'Race Account', 'parent', NULL, 1, 1, 'real');
+
+    CREATE TRIGGER simulate_demo_credential_race
+    AFTER UPDATE OF email ON adult_accounts
+    WHEN NEW.id = '${demoPayload.session.accountId}' AND NEW.email = 'race@example.test'
+    BEGIN
+      INSERT INTO account_credentials (account_id, email, password_hash, password_salt, created_at, updated_at)
+      VALUES ('race-account', 'race@example.test', 'hash', 'salt', 2, 2);
+    END;
+  `);
+
+  server.env.DB = {
+    prepare: (...args) => server.DB.prepare(...args),
+    batch: (...args) => server.DB.batch(...args),
+  };
+
+  const register = await postJson(server, '/api/auth/register', {
+    email: 'race@example.test',
+    password: 'LongEnoughPassword123!',
+    convertDemo: true,
+  }, { cookie: demoCookie });
+  const payload = await register.json();
+
+  assert.equal(register.status, 409);
+  assert.equal(payload.code, 'email_already_registered');
+
+  const demoAccount = server.DB.db.prepare(`
+    SELECT account_type, email, demo_expires_at, converted_from_demo_at
+    FROM adult_accounts
+    WHERE id = ?
+  `).get(demoPayload.session.accountId);
+  const demoCredential = server.DB.db.prepare(`
+    SELECT account_id
+    FROM account_credentials
+    WHERE account_id = ?
+  `).get(demoPayload.session.accountId);
+
+  assert.equal(demoAccount.account_type, 'demo');
+  assert.equal(demoAccount.email, null);
+  assert.ok(Number(demoAccount.demo_expires_at) > Date.now());
+  assert.equal(demoAccount.converted_from_demo_at, null);
+  assert.equal(demoCredential, undefined);
+
+  server.close();
+});

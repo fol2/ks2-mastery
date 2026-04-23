@@ -1,11 +1,13 @@
 import {
   AuthConfigurationError,
   BadRequestError,
+  BackendUnavailableError,
   ConflictError,
   UnauthenticatedError,
 } from './errors.js';
 import { normalisePlatformRole } from '../../src/platform/access/roles.js';
 import {
+  bindStatement,
   first,
   requireDatabase,
   run,
@@ -42,6 +44,62 @@ function safeJsonParse(value, fallback) {
     return JSON.parse(value);
   } catch {
     return fallback;
+  }
+}
+
+function mutationChanges(result) {
+  return Number(result?.meta?.changes) || 0;
+}
+
+function demoConversionMetricStatement(db, accountId, now) {
+  return bindStatement(db, `
+    INSERT INTO demo_operation_metrics (metric_key, metric_count, updated_at)
+    SELECT 'conversions', 1, ?
+    WHERE EXISTS (
+      SELECT 1
+      FROM adult_accounts
+      WHERE id = ?
+        AND account_type = 'real'
+        AND demo_expires_at IS NULL
+        AND converted_from_demo_at = ?
+    )
+    ON CONFLICT(metric_key) DO UPDATE SET
+      metric_count = demo_operation_metrics.metric_count + 1,
+      updated_at = excluded.updated_at
+  `, [now, accountId, now]);
+}
+
+async function runDemoConversionBatch(db, statements) {
+  const filtered = statements.filter(Boolean);
+  if (!filtered.length) return [];
+  if (typeof db?.batch === 'function') return db.batch(filtered);
+  if (db?.supportsSqlTransactions === true && typeof db.exec === 'function') {
+    return withTransaction(db, async () => {
+      const results = [];
+      for (const statement of filtered) results.push(await statement.run());
+      return results;
+    });
+  }
+  throw new BackendUnavailableError('Demo account conversion requires transactional batch support.', {
+    code: 'demo_conversion_transaction_unavailable',
+  });
+}
+
+function requireDemoConversionApplied(results, { credentialIndex = null, identityIndex = null } = {}) {
+  if (mutationChanges(results?.[0]) !== 1) {
+    throw new BadRequestError('Demo session expired. Start a new demo before creating an account.', {
+      code: 'demo_session_required',
+    });
+  }
+  if (credentialIndex !== null && mutationChanges(results?.[credentialIndex]) !== 1) {
+    throw new BadRequestError('Demo session expired. Start a new demo before creating an account.', {
+      code: 'demo_session_required',
+    });
+  }
+  if (identityIndex !== null && mutationChanges(results?.[identityIndex]) !== 1) {
+    throw new BadRequestError('Demo session expired. Start a new demo before creating an account.', {
+      code: 'demo_session_required',
+    });
   }
 }
 
@@ -438,32 +496,32 @@ export async function registerWithEmail(env, request, payload = {}) {
   const credential = await hashPassword(password);
 
   try {
-    await withTransaction(db, async () => {
-      if (demoSession?.demo) {
-        const existingEmailAccount = await scalar(db, `
-          SELECT account_id FROM (
-            SELECT id AS account_id
-            FROM adult_accounts
-            WHERE lower(email) = lower(?)
-              AND id <> ?
-              AND COALESCE(account_type, 'real') <> 'demo'
-            UNION
-            SELECT account_id
-            FROM account_credentials
-            WHERE lower(email) = lower(?)
-              AND account_id <> ?
-            UNION
-            SELECT account_id
-            FROM account_identities
-            WHERE lower(email) = lower(?)
-              AND account_id <> ?
-          )
-          LIMIT 1
-        `, [email, accountId, email, accountId, email, accountId], 'account_id');
-        if (existingEmailAccount) {
-          throw new ConflictError('That email address is already registered.', { code: 'email_already_registered' });
-        }
-        await run(db, `
+    if (demoSession?.demo) {
+      const existingEmailAccount = await scalar(db, `
+        SELECT account_id FROM (
+          SELECT id AS account_id
+          FROM adult_accounts
+          WHERE lower(email) = lower(?)
+            AND id <> ?
+            AND COALESCE(account_type, 'real') <> 'demo'
+          UNION
+          SELECT account_id
+          FROM account_credentials
+          WHERE lower(email) = lower(?)
+            AND account_id <> ?
+          UNION
+          SELECT account_id
+          FROM account_identities
+          WHERE lower(email) = lower(?)
+            AND account_id <> ?
+        )
+        LIMIT 1
+      `, [email, accountId, email, accountId, email, accountId], 'account_id');
+      if (existingEmailAccount) {
+        throw new ConflictError('That email address is already registered.', { code: 'email_already_registered' });
+      }
+      const results = await runDemoConversionBatch(db, [
+        bindStatement(db, `
           UPDATE adult_accounts
           SET email = ?,
               display_name = COALESCE(?, display_name, ?),
@@ -482,29 +540,36 @@ export async function registerWithEmail(env, request, payload = {}) {
           now,
           accountId,
           now,
-        ]);
-      } else {
+        ]),
+        bindStatement(db, `
+          INSERT INTO account_credentials (account_id, email, password_hash, password_salt, created_at, updated_at)
+          SELECT ?, ?, ?, ?, ?, ?
+          WHERE EXISTS (
+            SELECT 1
+            FROM adult_accounts
+            WHERE id = ?
+              AND account_type = 'real'
+              AND demo_expires_at IS NULL
+              AND converted_from_demo_at = ?
+          )
+        `, [accountId, email, credential.hash, credential.salt, now, now, accountId, now]),
+        demoConversionMetricStatement(db, accountId, now),
+      ]);
+      requireDemoConversionApplied(results, { credentialIndex: 1 });
+    } else {
+      await withTransaction(db, async () => {
         await ensureAccountRow(db, {
           accountId,
           email,
           displayName: cleanText(payload.displayName) || email,
           now,
         });
-      }
-      await run(db, `
-        INSERT INTO account_credentials (account_id, email, password_hash, password_salt, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `, [accountId, email, credential.hash, credential.salt, now, now]);
-      if (demoSession?.demo) {
         await run(db, `
-          INSERT INTO demo_operation_metrics (metric_key, metric_count, updated_at)
-          VALUES ('conversions', 1, ?)
-          ON CONFLICT(metric_key) DO UPDATE SET
-            metric_count = demo_operation_metrics.metric_count + 1,
-            updated_at = excluded.updated_at
-        `, [now]);
-      }
-    });
+          INSERT INTO account_credentials (account_id, email, password_hash, password_salt, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `, [accountId, email, credential.hash, credential.salt, now, now]);
+      });
+    }
   } catch (error) {
     if (error instanceof ConflictError) throw error;
     if (String(error?.message || '').toLowerCase().includes('unique')) {
@@ -843,8 +908,8 @@ async function convertDemoAccountFromIdentity(env, {
     }
   }
 
-  await withTransaction(db, async () => {
-    await run(db, `
+  const statements = [
+    bindStatement(db, `
       UPDATE adult_accounts
       SET email = COALESCE(?, email),
           display_name = COALESCE(?, display_name, ?),
@@ -855,21 +920,36 @@ async function convertDemoAccountFromIdentity(env, {
       WHERE id = ?
         AND account_type = 'demo'
         AND demo_expires_at > ?
-    `, [email || null, email || provider, provider, now, now, accountId, now]);
-    if (!existingIdentity?.account_id) {
-      await run(db, `
-        INSERT INTO account_identities (id, account_id, provider, provider_subject, email, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `, [`identity-${randomToken(12)}`, accountId, provider, providerSubject, email || null, now, now]);
+    `, [email || null, email || provider, provider, now, now, accountId, now]),
+  ];
+  let identityIndex = null;
+  if (!existingIdentity?.account_id) {
+    identityIndex = statements.length;
+    statements.push(bindStatement(db, `
+      INSERT INTO account_identities (id, account_id, provider, provider_subject, email, created_at, updated_at)
+      SELECT ?, ?, ?, ?, ?, ?, ?
+      WHERE EXISTS (
+        SELECT 1
+        FROM adult_accounts
+        WHERE id = ?
+          AND account_type = 'real'
+          AND demo_expires_at IS NULL
+          AND converted_from_demo_at = ?
+      )
+    `, [`identity-${randomToken(12)}`, accountId, provider, providerSubject, email || null, now, now, accountId, now]));
+  }
+  statements.push(demoConversionMetricStatement(db, accountId, now));
+
+  try {
+    const results = await runDemoConversionBatch(db, statements);
+    requireDemoConversionApplied(results, { identityIndex });
+  } catch (error) {
+    if (error instanceof BadRequestError) throw error;
+    if (String(error?.message || '').toLowerCase().includes('unique')) {
+      throw new ConflictError('That social account is already registered.', { code: 'identity_already_registered' });
     }
-    await run(db, `
-      INSERT INTO demo_operation_metrics (metric_key, metric_count, updated_at)
-      VALUES ('conversions', 1, ?)
-      ON CONFLICT(metric_key) DO UPDATE SET
-        metric_count = demo_operation_metrics.metric_count + 1,
-        updated_at = excluded.updated_at
-    `, [now]);
-  });
+    throw error;
+  }
 
   return accountId;
 }
