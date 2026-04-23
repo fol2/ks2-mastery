@@ -299,6 +299,7 @@ export function createWorkerApp({
             env,
             request,
             session,
+            repository,
             now: now(),
             fetchFn,
           });

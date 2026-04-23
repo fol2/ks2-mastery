@@ -70,6 +70,8 @@ test('platform TTS sends the selected Worker provider', async () => {
 
   try {
     const result = await tts.speak({
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-a',
       word: { word: 'early' },
       sentence: 'The birds sang early in the day.',
       slow: true,
@@ -82,13 +84,15 @@ test('platform TTS sends the selected Worker provider', async () => {
     assert.equal(calls[0].credentials, 'include');
     assert.equal(calls[0].headers.accept, 'audio/mpeg');
     assert.deepEqual(calls[0].body, {
-      word: { word: 'early' },
-      sentence: 'The birds sang early in the day.',
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-a',
       slow: true,
       provider: 'gemini',
     });
 
     const wordOnlyResult = await tts.speak({
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-b',
       word: 'possess',
       wordOnly: true,
     });
@@ -97,7 +101,8 @@ test('platform TTS sends the selected Worker provider', async () => {
     assert.deepEqual(played, ['blob:tts-audio', 'blob:tts-audio']);
     assert.equal(calls.length, 2);
     assert.deepEqual(calls[1].body, {
-      word: 'possess',
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-b',
       slow: false,
       provider: 'gemini',
       wordOnly: true,
@@ -154,6 +159,8 @@ test('platform TTS allows a one-off provider override for profile tests', async 
 
   try {
     const result = await tts.speak({
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-test',
       word: 'early',
       sentence: 'The birds sang early in the day.',
       provider: 'openai',
@@ -162,7 +169,12 @@ test('platform TTS allows a one-off provider override for profile tests', async 
 
     assert.equal(result, true);
     assert.equal(calls.length, 1);
-    assert.equal(calls[0].body.provider, 'openai');
+    assert.deepEqual(calls[0].body, {
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-test',
+      slow: false,
+      provider: 'openai',
+    });
     assert.deepEqual(
       events.filter((event) => event.kind === 'test').map((event) => event.type),
       ['loading', 'start'],
@@ -202,6 +214,8 @@ test('platform TTS does not fall back when the selected remote provider fails', 
 
   try {
     const result = await tts.speak({
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-a',
       word: 'early',
       sentence: 'The birds sang early in the day.',
     });
@@ -209,7 +223,12 @@ test('platform TTS does not fall back when the selected remote provider fails', 
     assert.equal(result, false);
     assert.equal(spoke, false);
     assert.equal(calls.length, 1);
-    assert.equal(calls[0].body.provider, 'openai');
+    assert.deepEqual(calls[0].body, {
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-a',
+      slow: false,
+      provider: 'openai',
+    });
   } finally {
     tts.stop();
     globalThis.window = originalWindow;

@@ -507,7 +507,7 @@ flowchart TB
 
 ---
 
-- [ ] U5. **Prompt-Token Audio and Hybrid TTS Boundary**
+- [x] U5. **Prompt-Token Audio and Hybrid TTS Boundary**
 
 **Goal:** Replace client-supplied TTS text with prompt-token validation and a static/pre-generated-first audio path with protected OpenAI fallback.
 

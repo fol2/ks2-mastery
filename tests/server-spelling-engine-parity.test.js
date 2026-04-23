@@ -158,7 +158,10 @@ test('worker spelling command route starts, submits, continues, and completes se
     assert.equal(step.body.subjectReadModel.phase, 'session');
     assert.equal(step.body.subjectReadModel.session.serverAuthority, SPELLING_SERVER_AUTHORITY);
     assert.equal(step.body.mutation.appliedRevision, 1);
-    const answer = step.body.subjectReadModel.session.currentCard.word.word;
+    const answer = 'possess';
+    assert.equal(step.body.subjectReadModel.session.currentCard.word, undefined);
+    assert.equal(step.body.subjectReadModel.session.currentCard.prompt.sentence, undefined);
+    assert.ok(step.body.audio.promptToken);
 
     const legacy = server.DB.db.prepare('SELECT status FROM practice_sessions WHERE id = ?').get('legacy-active');
     assert.equal(legacy.status, 'abandoned');

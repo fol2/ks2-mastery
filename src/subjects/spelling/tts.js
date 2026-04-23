@@ -66,6 +66,20 @@ function playbackKind({ kind = '', slow = false } = {}) {
   return explicit || (slow ? 'slow' : 'normal');
 }
 
+function remotePromptRequest(payload = {}, providerId = DEFAULT_TTS_PROVIDER) {
+  const learnerId = typeof payload.learnerId === 'string' ? payload.learnerId : '';
+  const promptToken = typeof payload.promptToken === 'string' ? payload.promptToken : '';
+  if (!learnerId || !promptToken) return null;
+  const body = {
+    learnerId,
+    promptToken,
+    slow: Boolean(payload.slow),
+    provider: providerId,
+  };
+  if (payload.wordOnly) body.wordOnly = true;
+  return body;
+}
+
 export function createPlatformTts({
   fetchFn = globalThis.fetch?.bind(globalThis),
   endpoint = '/api/tts',
@@ -153,17 +167,17 @@ export function createPlatformTts({
     });
   }
 
-  async function speakWithRemote({ word, sentence, slow = false, wordOnly = false, kind = '' }, providerId, token) {
+  async function speakWithRemote(payload = {}, providerId, token) {
     if (!remoteEnabled || typeof fetchFn !== 'function' || typeof Audio === 'undefined' || typeof URL === 'undefined') {
       return false;
     }
+    const requestBody = remotePromptRequest(payload, providerId);
+    if (!requestBody) return false;
 
     currentAbort = new AbortController();
-    const kindId = playbackKind({ kind, slow });
+    const kindId = playbackKind(payload);
     emit({ type: 'loading', kind: kindId, provider: providerId });
     try {
-      const requestBody = { word, sentence, slow, provider: providerId };
-      if (wordOnly) requestBody.wordOnly = true;
       const response = await fetchFn(endpoint, {
         method: 'POST',
         credentials: 'include',

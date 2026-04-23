@@ -109,6 +109,7 @@ The first Worker-owned Spelling runtime is now available behind the generic subj
 - Active sessions created by the old browser-owned path are abandoned when a new Worker-owned Spelling session starts, while durable progress and completed-session history remain readable.
 - Command responses carry an authoritative Spelling read model, including live session state, feedback, summary, stats, analytics, content release metadata, and any audio cue metadata needed by later TTS lockdown work.
 - Secure-word command responses now also carry Worker-owned reward projections. The Worker persists monster/codex state and appends reward events in the command path; replayed command requests do not double-award.
+- Live command read models redact answer-bearing prompt fields and return prompt-token audio metadata. `/api/tts` derives the transcript from the current server session and rejects arbitrary client-supplied word/sentence text.
 
 This does not yet mean the production React bundle is locked down. The browser still uses the existing Spelling service until the U6 React command-client migration removes that production import path, and the U8 bundle audit is still required before making the strongest public claim.
 

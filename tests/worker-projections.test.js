@@ -88,8 +88,7 @@ async function completePossessRound(harness) {
   let secureSubmit = null;
 
   while (latest.body.subjectReadModel.phase === 'session') {
-    const answer = latest.body.subjectReadModel.session.currentCard.word.word;
-    latest = await harness.command('submit-answer', { answer });
+    latest = await harness.command('submit-answer', { answer: 'possess' });
     if (latest.body.domainEvents.some((event) => event.type === 'spelling.word-secured')) {
       secureSubmit = latest;
     }

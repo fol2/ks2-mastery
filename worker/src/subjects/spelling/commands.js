@@ -4,6 +4,7 @@ import { NotFoundError } from '../../errors.js';
 import { combineCommandEvents } from '../../projections/events.js';
 import { buildCommandProjectionReadModel } from '../../projections/read-models.js';
 import { projectSpellingRewards } from '../../projections/rewards.js';
+import { buildSpellingAudioCue } from './audio.js';
 import { createServerSpellingEngine } from './engine.js';
 import { buildSpellingReadModel } from './read-models.js';
 
@@ -80,6 +81,11 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       reactionEvents: projectedRewards.rewardEvents,
       existingEvents: projectionState.events,
     });
+    const audioCue = await buildSpellingAudioCue({
+      learnerId: command.learnerId,
+      state: result.state,
+      audio: result.audio,
+    });
 
     await context.repository.persistSubjectRuntime(
       context.session.accountId,
@@ -103,14 +109,13 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
     return {
       learnerId: command.learnerId,
       changed: result.changed,
-      subjectState: result.state,
       subjectReadModel: buildSpellingReadModel({
         learnerId: command.learnerId,
         state: result.state,
         prefs: result.prefs,
         stats: result.stats,
         analytics: result.analytics,
-        audio: result.audio,
+        audio: audioCue,
         content: contentMeta(contentResult, snapshot),
       }),
       projections,
@@ -118,7 +123,7 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       domainEvents: projectedEvents.domainEvents,
       reactionEvents: projectedEvents.reactionEvents,
       toastEvents: projectedEvents.toastEvents,
-      audio: result.audio,
+      audio: audioCue,
     };
   }
 

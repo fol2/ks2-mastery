@@ -88,6 +88,24 @@ When a Spelling domain event secures a word, the Worker derives the monster/code
 
 The projection is tied to the same learner mutation/idempotency receipt as the Spelling command. Replaying the same command returns the stored response and does not duplicate rewards or event log rows.
 
+## Prompt-token audio
+
+Live Spelling command read models no longer expose the current answer, word slug, raw sentence, queue, or answer-bearing session internals. The Worker returns a prompt token instead:
+
+```txt
+{
+  learnerId,
+  sessionId,
+  promptToken,
+  slow,
+  wordOnly
+}
+```
+
+The browser sends only `learnerId`, `promptToken`, and playback options to `/api/tts`. The Worker then reloads the current server-owned Spelling session, validates that the token still matches the active prompt, derives the transcript server-side, and only then calls the protected OpenAI TTS fallback. Arbitrary browser-supplied `word` and `sentence` payloads are rejected.
+
+This prepares the hybrid audio path: pre-generated/static audio can be checked first for the same prompt identity, with protected OpenAI fallback retained for prompts that are not ready yet.
+
 ## Persisted subject-state invariants
 
 The spelling subject state is JSON-serialisable and versioned.
