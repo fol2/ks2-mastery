@@ -11,7 +11,7 @@ import {
   randomHeroBackground,
 } from './data.js';
 
-export function HomeSurface({ model, actions }) {
+export function HomeSurface({ model, actions, shellClassName = 'app-shell' }) {
   const heroBg = useMemo(() => randomHeroBackground(), [model.learner?.id]);
   const meadowSeed = useMemo(
     () => `${model.learner?.id || 'learner'}:${Math.random().toString(36).slice(2)}`,
@@ -34,7 +34,7 @@ export function HomeSurface({ model, actions }) {
   const companionName = pickCompanionName(model.monsterSummary || []);
 
   return (
-    <div className="app-shell">
+    <div className={shellClassName}>
       <TopNav
         theme={model.theme}
         onToggleTheme={actions.toggleTheme}

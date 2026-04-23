@@ -8,6 +8,7 @@ test('React app shell renders dashboard without legacy island mount globals', as
 
   assert.match(html, /Your subjects/);
   assert.match(html, /KS2 Mastery/);
+  assert.match(html, /class="app-shell home-entry-shell"/);
   assert.doesNotMatch(html, /data-home-mount/);
   assert.doesNotMatch(html, /__ks2HomeSurface/);
 });
