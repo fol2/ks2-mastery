@@ -3725,6 +3725,42 @@ textarea:focus-visible {
   --mode-card-heading-shadow: 0 1px 18px rgba(0, 0, 0, 0.56);
   --mode-card-copy-shadow: 0 1px 16px rgba(0, 0, 0, 0.58);
 }
+:root[data-theme="dark"] .setup-main,
+:root[data-theme="dark"] .setup-main[data-controls-tone="dark"],
+:root[data-theme="dark"] .setup-main[data-controls-tone="light"] {
+  --setup-label-ink: #fff8e9;
+  --setup-label-shadow: rgba(0, 0, 0, 0.72);
+  --length-option-ink: rgba(255, 248, 233, 0.8);
+  --length-option-hover: #fffdf6;
+}
+:root[data-theme="dark"] .mode-card[data-text-tone="dark"],
+:root[data-theme="dark"] .mode-card[data-text-tone="light"] {
+  --mode-card-title: #fff9ec;
+  --mode-card-copy: rgba(255, 248, 233, 0.88);
+  --mode-card-selected-title: #fffdf6;
+  --mode-card-selected-copy: rgba(255, 248, 233, 0.92);
+  --mode-card-heading-shadow: 0 1px 18px rgba(0, 0, 0, 0.62);
+  --mode-card-copy-shadow: 0 1px 16px rgba(0, 0, 0, 0.62);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .setup-main,
+  :root:not([data-theme="light"]) .setup-main[data-controls-tone="dark"],
+  :root:not([data-theme="light"]) .setup-main[data-controls-tone="light"] {
+    --setup-label-ink: #fff8e9;
+    --setup-label-shadow: rgba(0, 0, 0, 0.72);
+    --length-option-ink: rgba(255, 248, 233, 0.8);
+    --length-option-hover: #fffdf6;
+  }
+  :root:not([data-theme="light"]) .mode-card[data-text-tone="dark"],
+  :root:not([data-theme="light"]) .mode-card[data-text-tone="light"] {
+    --mode-card-title: #fff9ec;
+    --mode-card-copy: rgba(255, 248, 233, 0.88);
+    --mode-card-selected-title: #fffdf6;
+    --mode-card-selected-copy: rgba(255, 248, 233, 0.92);
+    --mode-card-heading-shadow: 0 1px 18px rgba(0, 0, 0, 0.62);
+    --mode-card-copy-shadow: 0 1px 16px rgba(0, 0, 0, 0.62);
+  }
+}
 .mode-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
 .mode-card.selected {
   border-color: var(--brand);
