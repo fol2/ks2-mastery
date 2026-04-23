@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { sha256 } from '../worker/src/auth.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 function productionServer() {
@@ -28,6 +29,20 @@ async function postJson(server, path, body = {}, headers = {}) {
     },
     body: JSON.stringify(body),
   });
+}
+
+async function seedRateLimit(server, bucket, identifier, count) {
+  const now = Date.now();
+  const windowMs = 10 * 60 * 1000;
+  const windowStartedAt = Math.floor(now / windowMs) * windowMs;
+  server.DB.db.prepare(`
+    INSERT INTO request_limits (limiter_key, window_started_at, request_count, updated_at)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(limiter_key) DO UPDATE SET
+      window_started_at = excluded.window_started_at,
+      request_count = excluded.request_count,
+      updated_at = excluded.updated_at
+  `).run(`${bucket}:${await sha256(identifier)}`, windowStartedAt, count, now);
 }
 
 test('demo session creates an isolated 24-hour server-owned account and learner', async () => {
@@ -128,6 +143,12 @@ test('expired demo sessions fail closed on protected routes', async () => {
   assert.equal(authSession.status, 200);
   assert.equal(authPayload.session, null);
 
+  await postJson(server, '/api/demo/session');
+  const expiredAccount = server.DB.db.prepare('SELECT id FROM adult_accounts WHERE id = ?').get(payload.session.accountId);
+  const cleanupMetric = server.DB.db.prepare("SELECT metric_count FROM demo_operation_metrics WHERE metric_key = 'cleanup_count'").get();
+  assert.equal(expiredAccount, undefined);
+  assert.ok(Number(cleanupMetric?.metric_count) >= 1);
+
   server.close();
 });
 
@@ -153,6 +174,45 @@ test('demo reset restores the template learner without changing the demo account
   assert.equal(resetPayload.ok, true);
   assert.equal(resetPayload.session.accountId, accountId);
   assert.equal(resetPayload.learners.byId[resetPayload.learners.selectedId].name, 'Demo Learner');
+
+  server.close();
+});
+
+test('demo commands and Parent Hub reads are rate limited by session', async () => {
+  const server = productionServer();
+  const response = await postJson(server, '/api/demo/session');
+  const cookie = cookieFrom(response);
+  const bootstrap = await server.fetchRaw('https://repo.test/api/bootstrap', {
+    headers: { cookie },
+  });
+  const bootstrapPayload = await bootstrap.json();
+  const learnerId = bootstrapPayload.learners.selectedId;
+  const accountId = bootstrapPayload.session.accountId;
+  const sessionId = server.DB.db.prepare('SELECT id FROM account_sessions WHERE account_id = ?').get(accountId)?.id;
+  assert.ok(sessionId);
+
+  await seedRateLimit(server, 'demo-command-session', sessionId, 120);
+  const commandResponse = await postJson(server, '/api/subjects/spelling/command', {
+    command: 'check-word-bank-drill',
+    learnerId,
+    requestId: 'demo-command-limit',
+    expectedLearnerRevision: 0,
+    payload: { slug: 'early', typed: 'early' },
+  }, {
+    cookie,
+    origin: 'https://repo.test',
+  });
+  const commandPayload = await commandResponse.json();
+  assert.equal(commandResponse.status, 400);
+  assert.equal(commandPayload.code, 'demo_rate_limited');
+
+  await seedRateLimit(server, 'demo-parent-hub-session', sessionId, 90);
+  const hubResponse = await server.fetchRaw(`https://repo.test/api/hubs/parent?learnerId=${learnerId}`, {
+    headers: { cookie },
+  });
+  const hubPayload = await hubResponse.json();
+  assert.equal(hubResponse.status, 400);
+  assert.equal(hubPayload.code, 'demo_rate_limited');
 
   server.close();
 });

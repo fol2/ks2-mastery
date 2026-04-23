@@ -111,12 +111,14 @@ test('worker parent hub allows parent or admin platform roles with readable lear
   server.close();
 });
 
-test('worker hubs supplement legacy core-only content with seeded runtime additions', async () => {
+test('worker hubs supplement operator legacy core-only content with seeded runtime additions', async () => {
   const server = createWorkerRepositoryServer();
   try {
-    await seedLearnerData(server, 'adult-parent', 'parent');
+    await seedLearnerData(server, 'adult-parent', 'admin');
 
-    const initialResponse = await server.fetchAs('adult-parent', 'https://repo.test/api/content/spelling');
+    const initialResponse = await server.fetchAs('adult-parent', 'https://repo.test/api/content/spelling', {}, {
+      'x-ks2-dev-platform-role': 'admin',
+    });
     const initial = await initialResponse.json();
     const legacy = coreOnlyVersionOneContent(initial.content);
     const requestId = 'legacy-core-content-runtime-1';
@@ -131,6 +133,8 @@ test('worker hubs supplement legacy core-only content with seeded runtime additi
           expectedAccountRevision: initial.mutation.accountRevision,
         },
       }),
+    }, {
+      'x-ks2-dev-platform-role': 'admin',
     });
     const written = await writeResponse.json();
     assert.equal(writeResponse.status, 200);

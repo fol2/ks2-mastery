@@ -209,6 +209,70 @@ test('worker subject command route validates auth, same-origin, and handler avai
   DB.close();
 });
 
+test('subject command writes roll back as one D1 batch without a transaction feature flag', async () => {
+  const DB = createMigratedSqliteD1Database();
+  delete DB.supportsSqlTransactions;
+  const runtime = createSubjectRuntime({
+    handlers: {
+      spelling: {
+        'start-session': async command => ({
+          learnerId: command.learnerId,
+          changed: true,
+          subjectReadModel: { phase: 'started' },
+          runtimeWrite: {
+            state: { phase: 'session' },
+            data: { prefs: { mode: 'smart' } },
+            events: [
+              { id: 'bad-event', learnerId: 'missing-learner', type: 'spelling.word-secured', createdAt: 1 },
+            ],
+          },
+        }),
+      },
+    },
+  });
+  const app = createWorkerApp({ subjectRuntime: runtime });
+  const env = {
+    DB,
+    AUTH_MODE: 'development-stub',
+    ENVIRONMENT: 'test',
+  };
+  const now = Date.now();
+  DB.db.prepare(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES ('adult-a', 'adult-a@example.test', 'Adult A', 'parent', NULL, ?, ?, 0)
+  `).run(now, now);
+  DB.db.prepare(`
+    INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+    VALUES ('learner-a', 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run(now, now);
+  DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES ('adult-a', 'learner-a', 'owner', 0, ?, ?)
+  `).run(now, now);
+
+  const response = await app.fetch(new Request('https://repo.test/api/subjects/spelling/command', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      origin: 'https://repo.test',
+      'x-ks2-dev-account-id': 'adult-a',
+    },
+    body: JSON.stringify({
+      command: 'start-session',
+      learnerId: 'learner-a',
+      requestId: 'cmd-atomic-failure',
+      expectedLearnerRevision: 0,
+    }),
+  }), env, {});
+
+  assert.equal(response.status, 500);
+  assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 0);
+  assert.equal(DB.db.prepare('SELECT COUNT(*) AS count FROM child_subject_state WHERE learner_id = ?').get('learner-a').count, 0);
+  assert.equal(DB.db.prepare('SELECT COUNT(*) AS count FROM mutation_receipts WHERE request_id = ?').get('cmd-atomic-failure').count, 0);
+
+  DB.close();
+});
+
 test('demo sessions cannot use legacy broad learner runtime write routes', async () => {
   const server = createWorkerRepositoryServer({
     env: {
@@ -240,6 +304,64 @@ test('demo sessions cannot use legacy broad learner runtime write routes', async
 
   assert.equal(response.status, 403);
   assert.equal(payload.code, 'subject_command_required');
+
+  server.close();
+});
+
+test('production real sessions cannot use legacy broad learner runtime write routes', async () => {
+  const server = createWorkerRepositoryServer({
+    env: {
+      AUTH_MODE: 'production',
+      ENVIRONMENT: 'production',
+      APP_HOSTNAME: 'repo.test',
+    },
+  });
+  const register = await postJson(server, '/api/auth/register', {
+    email: 'legacy-runtime@example.test',
+    password: 'password-1234',
+  });
+  const cookie = cookieFrom(register);
+  const routes = [
+    {
+      path: '/api/child-subject-state',
+      method: 'PUT',
+      body: { learnerId: 'learner-a', subjectId: 'spelling', record: { ui: null, data: {} }, mutation: { requestId: 'legacy-subject-put', expectedLearnerRevision: 0 } },
+    },
+    {
+      path: '/api/practice-sessions',
+      method: 'PUT',
+      body: { record: { id: 'sess-a', learnerId: 'learner-a', subjectId: 'spelling' }, mutation: { requestId: 'legacy-session-put', expectedLearnerRevision: 0 } },
+    },
+    {
+      path: '/api/child-game-state',
+      method: 'PUT',
+      body: { learnerId: 'learner-a', systemId: 'monster-codex', state: {}, mutation: { requestId: 'legacy-game-put', expectedLearnerRevision: 0 } },
+    },
+    {
+      path: '/api/event-log',
+      method: 'POST',
+      body: { event: { learnerId: 'learner-a', type: 'spelling.word-secured' }, mutation: { requestId: 'legacy-event-post', expectedLearnerRevision: 0 } },
+    },
+    {
+      path: '/api/debug/reset',
+      method: 'POST',
+      body: { mutation: { requestId: 'legacy-debug-reset', expectedAccountRevision: 0 } },
+    },
+  ];
+
+  for (const route of routes) {
+    const response = await server.fetchRaw(`https://repo.test${route.path}`, {
+      method: route.method,
+      headers: {
+        'content-type': 'application/json',
+        cookie,
+      },
+      body: JSON.stringify(route.body),
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 403, `${route.method} ${route.path}`);
+    assert.equal(payload.code, 'subject_command_required');
+  }
 
   server.close();
 });

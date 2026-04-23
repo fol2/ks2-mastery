@@ -1,6 +1,6 @@
 import { randomToken, sessionCookie, sha256, createSession } from '../auth.js';
 import { BadRequestError, ForbiddenError, UnauthenticatedError } from '../errors.js';
-import { batch, bindStatement, first, requireDatabase, run } from '../d1.js';
+import { all, batch, bindStatement, first, requireDatabase, run, sqlPlaceholders } from '../d1.js';
 import { DEMO_TEMPLATE_ID, demoLearnerTemplate } from './template.js';
 
 export const DEMO_TTL_MS = 24 * 60 * 60 * 1000;
@@ -9,6 +9,13 @@ const DEMO_WINDOW_MS = 10 * 60 * 1000;
 const DEMO_LIMITS = {
   createIp: 30,
   resetAccount: 12,
+  commandIp: 240,
+  commandAccount: 180,
+  commandSession: 120,
+  commandType: 80,
+  parentHubIp: 180,
+  parentHubAccount: 120,
+  parentHubSession: 90,
 };
 
 function cleanText(value) {
@@ -118,6 +125,127 @@ async function protectDemoReset(db, accountId, now) {
   }
 }
 
+async function enforceDemoRateLimit(db, checks, now, message) {
+  for (const check of checks) {
+    const result = await consumeRateLimit(db, {
+      ...check,
+      now,
+      windowMs: check.windowMs || DEMO_WINDOW_MS,
+    });
+    if (result.allowed) continue;
+    await recordDemoMetric(db, 'rate_limit_blocks', now);
+    throw new BadRequestError(message, {
+      code: 'demo_rate_limited',
+      retryAfterSeconds: result.retryAfterSeconds,
+    });
+  }
+}
+
+function demoSessionIdentifier(session = {}) {
+  return cleanText(session.sessionId || session.sessionHash || session.accountId) || 'unknown-demo-session';
+}
+
+export async function protectDemoSubjectCommand({ env, request, session, command, now = Date.now() } = {}) {
+  if (!session?.demo) return;
+  const db = requireDatabase(env);
+  await requireActiveDemoAccount(db, session.accountId, now);
+  const commandType = cleanText(`${command?.subjectId || 'subject'}:${command?.command || 'unknown'}`);
+  await enforceDemoRateLimit(db, [
+    {
+      bucket: 'demo-command-ip',
+      identifier: clientIp(request),
+      limit: DEMO_LIMITS.commandIp,
+    },
+    {
+      bucket: 'demo-command-account',
+      identifier: session.accountId,
+      limit: DEMO_LIMITS.commandAccount,
+    },
+    {
+      bucket: 'demo-command-session',
+      identifier: demoSessionIdentifier(session),
+      limit: DEMO_LIMITS.commandSession,
+    },
+    {
+      bucket: 'demo-command-type',
+      identifier: `${session.accountId}:${commandType}`,
+      limit: DEMO_LIMITS.commandType,
+    },
+  ], now, 'Too many demo practice requests. Please wait a few minutes and try again.');
+}
+
+export async function protectDemoParentHubRead({ env, request, session, now = Date.now() } = {}) {
+  if (!session?.demo) return;
+  const db = requireDatabase(env);
+  await requireActiveDemoAccount(db, session.accountId, now);
+  await enforceDemoRateLimit(db, [
+    {
+      bucket: 'demo-parent-hub-ip',
+      identifier: clientIp(request),
+      limit: DEMO_LIMITS.parentHubIp,
+    },
+    {
+      bucket: 'demo-parent-hub-account',
+      identifier: session.accountId,
+      limit: DEMO_LIMITS.parentHubAccount,
+    },
+    {
+      bucket: 'demo-parent-hub-session',
+      identifier: demoSessionIdentifier(session),
+      limit: DEMO_LIMITS.parentHubSession,
+    },
+  ], now, 'Too many demo Parent Hub requests. Please wait a few minutes and try again.');
+}
+
+export async function cleanupExpiredDemoAccounts(db, now = Date.now(), { accountId = null, limit = 25 } = {}) {
+  const cappedLimit = Math.max(1, Math.min(100, Number(limit) || 25));
+  const rows = accountId
+    ? await all(db, `
+      SELECT id
+      FROM adult_accounts
+      WHERE id = ?
+        AND account_type = 'demo'
+        AND demo_expires_at <= ?
+      LIMIT 1
+    `, [accountId, now])
+    : await all(db, `
+      SELECT id
+      FROM adult_accounts
+      WHERE account_type = 'demo'
+        AND demo_expires_at <= ?
+      ORDER BY demo_expires_at ASC
+      LIMIT ?
+    `, [now, cappedLimit]);
+  const accountIds = rows.map((row) => row.id).filter(Boolean);
+  if (!accountIds.length) return { cleaned: 0 };
+
+  for (const id of accountIds) {
+    const learnerRows = await all(db, `
+      SELECT learner_id
+      FROM account_learner_memberships
+      WHERE account_id = ?
+    `, [id]);
+    const learnerIds = learnerRows.map((row) => row.learner_id).filter(Boolean);
+    if (learnerIds.length) {
+      await run(db, `
+        DELETE FROM learner_profiles
+        WHERE id IN (${sqlPlaceholders(learnerIds.length)})
+      `, learnerIds);
+    }
+    await run(db, 'DELETE FROM adult_accounts WHERE id = ? AND account_type = ?', [id, 'demo']);
+  }
+
+  await run(db, `
+    INSERT INTO demo_operation_metrics (metric_key, metric_count, updated_at)
+    VALUES ('cleanup_count', ?, ?)
+    ON CONFLICT(metric_key) DO UPDATE SET
+      metric_count = demo_operation_metrics.metric_count + excluded.metric_count,
+      updated_at = excluded.updated_at
+  `, [accountIds.length, now]);
+
+  return { cleaned: accountIds.length };
+}
+
 function demoSessionPayload({ accountId, learnerId, expiresAt }) {
   return {
     accountId,
@@ -161,6 +289,7 @@ export async function createDemoSession({ env, request, now = Date.now() } = {})
   const db = requireDatabase(env);
   requireSameOrigin(request, env);
   await protectDemoCreate(db, request, now);
+  await cleanupExpiredDemoAccounts(db, now);
 
   const accountId = `demo-${randomToken(10)}`;
   const learnerId = `learner-demo-${randomToken(10)}`;
@@ -202,6 +331,7 @@ export async function requireActiveDemoAccount(db, accountId, now = Date.now()) 
     });
   }
   if (!(Number(account.demo_expires_at) > now)) {
+    await cleanupExpiredDemoAccounts(db, now, { accountId, limit: 1 });
     throw new UnauthenticatedError('Demo session expired.', {
       code: 'demo_session_expired',
     });

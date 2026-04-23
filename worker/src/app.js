@@ -14,6 +14,8 @@ import { createWorkerRepository } from './repository.js';
 import { handleTextToSpeechRequest } from './tts.js';
 import {
   createDemoSession,
+  protectDemoParentHubRead,
+  protectDemoSubjectCommand,
   requireSameOrigin,
   resetDemoAccount,
 } from './demo/sessions.js';
@@ -98,9 +100,31 @@ async function sessionPayload({ session, auth, env, now }) {
   };
 }
 
-function requireLegacyWriteAllowed(session) {
+function isProductionRuntime(env = {}) {
+  const authMode = String(env.AUTH_MODE || '').trim().toLowerCase();
+  const stage = String(env.ENVIRONMENT || env.NODE_ENV || '').trim().toLowerCase();
+  if (authMode === 'development-stub') return false;
+  if (authMode === 'production') return true;
+  if (stage === 'test' || stage === 'development' || stage === 'dev') return false;
+  return stage === 'production' || Boolean(authMode);
+}
+
+function shouldUsePublicReadModels(request, env = {}) {
+  if (request.headers.get('x-ks2-public-read-models') === '1') return true;
+  return isProductionRuntime(env);
+}
+
+function requireDemoWriteAllowed(session) {
   if (session?.demo) {
-    throw new ForbiddenError('Demo runtime writes must use the subject command boundary.', {
+    throw new ForbiddenError('Demo writes must use server-owned routes.', {
+      code: 'subject_command_required',
+    });
+  }
+}
+
+function requireLegacyRuntimeWriteAllowed(session, env = {}) {
+  if (session?.demo || isProductionRuntime(env)) {
+    throw new ForbiddenError('Runtime writes must use the subject command boundary.', {
       code: 'subject_command_required',
     });
   }
@@ -230,6 +254,13 @@ export function createWorkerApp({
             body,
             request,
           });
+          await protectDemoSubjectCommand({
+            env,
+            request,
+            session,
+            command,
+            now: now(),
+          });
           const result = await repository.runSubjectCommand(
             session.accountId,
             command,
@@ -250,7 +281,7 @@ export function createWorkerApp({
 
         if (url.pathname === '/api/bootstrap' && request.method === 'GET') {
           const bundle = await repository.bootstrap(session.accountId, {
-            publicReadModels: request.headers.get('x-ks2-public-read-models') === '1',
+            publicReadModels: shouldUsePublicReadModels(request, env),
           });
           return json({
             ok: true,
@@ -283,7 +314,7 @@ export function createWorkerApp({
             now: now(),
           });
           const bundle = await repository.bootstrap(session.accountId, {
-            publicReadModels: request.headers.get('x-ks2-public-read-models') === '1',
+            publicReadModels: shouldUsePublicReadModels(request, env),
           });
           return json({
             ok: true,
@@ -310,7 +341,7 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/content/spelling' && request.method === 'GET') {
-          const result = await repository.readSubjectContent(session.accountId, 'spelling');
+          const result = await repository.exportSubjectContent(session.accountId, 'spelling');
           return json({ ok: true, ...result });
         }
 
@@ -328,6 +359,12 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/hubs/parent' && request.method === 'GET') {
+          await protectDemoParentHubRead({
+            env,
+            request,
+            session,
+            now: now(),
+          });
           const learnerId = url.searchParams.get('learnerId') || null;
           const result = await repository.readParentHub(session.accountId, learnerId);
           return json({ ok: true, ...result });
@@ -370,14 +407,14 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/learners' && request.method === 'PUT') {
-          requireLegacyWriteAllowed(session);
+          requireDemoWriteAllowed(session);
           const body = await readJson(request);
           const result = await repository.writeLearners(session.accountId, body.learners, mutationFromRequest(body, request));
           return json({ ok: true, ...result });
         }
 
         if (url.pathname === '/api/child-subject-state' && request.method === 'PUT') {
-          requireLegacyWriteAllowed(session);
+          requireLegacyRuntimeWriteAllowed(session, env);
           const body = await readJson(request);
           const result = await repository.writeSubjectState(
             session.accountId,
@@ -390,7 +427,7 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/child-subject-state' && request.method === 'DELETE') {
-          requireLegacyWriteAllowed(session);
+          requireLegacyRuntimeWriteAllowed(session, env);
           const body = await readJson(request);
           const result = await repository.clearSubjectState(
             session.accountId,
@@ -402,14 +439,14 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/practice-sessions' && request.method === 'PUT') {
-          requireLegacyWriteAllowed(session);
+          requireLegacyRuntimeWriteAllowed(session, env);
           const body = await readJson(request);
           const result = await repository.writePracticeSession(session.accountId, body.record || {}, mutationFromRequest(body, request));
           return json({ ok: true, ...result });
         }
 
         if (url.pathname === '/api/practice-sessions' && request.method === 'DELETE') {
-          requireLegacyWriteAllowed(session);
+          requireLegacyRuntimeWriteAllowed(session, env);
           const body = await readJson(request);
           const result = await repository.clearPracticeSessions(
             session.accountId,
@@ -421,7 +458,7 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/child-game-state' && request.method === 'PUT') {
-          requireLegacyWriteAllowed(session);
+          requireLegacyRuntimeWriteAllowed(session, env);
           const body = await readJson(request);
           const result = await repository.writeGameState(
             session.accountId,
@@ -434,7 +471,7 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/child-game-state' && request.method === 'DELETE') {
-          requireLegacyWriteAllowed(session);
+          requireLegacyRuntimeWriteAllowed(session, env);
           const body = await readJson(request);
           const result = await repository.clearGameState(
             session.accountId,
@@ -446,21 +483,21 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/event-log' && request.method === 'POST') {
-          requireLegacyWriteAllowed(session);
+          requireLegacyRuntimeWriteAllowed(session, env);
           const body = await readJson(request);
           const result = await repository.appendEvent(session.accountId, body.event, mutationFromRequest(body, request));
           return json({ ok: true, ...result });
         }
 
         if (url.pathname === '/api/event-log' && request.method === 'DELETE') {
-          requireLegacyWriteAllowed(session);
+          requireLegacyRuntimeWriteAllowed(session, env);
           const body = await readJson(request);
           const result = await repository.clearEventLog(session.accountId, body.learnerId, mutationFromRequest(body, request));
           return json({ ok: true, ...result });
         }
 
         if (url.pathname === '/api/debug/reset' && request.method === 'POST') {
-          requireLegacyWriteAllowed(session);
+          requireLegacyRuntimeWriteAllowed(session, env);
           const body = await readJson(request);
           const result = await repository.resetAccountScope(session.accountId, mutationFromRequest(body, request));
           return json({ ok: true, ...result });

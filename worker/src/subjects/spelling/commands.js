@@ -125,18 +125,6 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       audio: result.audio,
     });
 
-    await context.repository.persistSubjectRuntime(
-      context.session.accountId,
-      command.learnerId,
-      'spelling',
-      {
-        state: result.state,
-        data: result.data,
-        practiceSession: result.practiceSession,
-        gameState: projectedRewards.changedGameState,
-        events: projectedEvents.events,
-      },
-    );
     const projections = buildCommandProjectionReadModel({
       gameState: projectedRewards.gameState,
       domainEvents: projectedEvents.domainEvents,
@@ -162,6 +150,13 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       reactionEvents: projectedEvents.reactionEvents,
       toastEvents: projectedEvents.toastEvents,
       audio: audioCue,
+      runtimeWrite: {
+        state: result.state,
+        data: result.data,
+        practiceSession: result.practiceSession,
+        gameState: projectedRewards.changedGameState,
+        events: projectedEvents.events,
+      },
     };
   }
 

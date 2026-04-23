@@ -43,6 +43,23 @@ function ensureHarnessLearner(repositories) {
   return 'learner-a';
 }
 
+function cookieFrom(response) {
+  const setCookie = response.headers.get('set-cookie') || '';
+  const match = /ks2_session=([^;]+)/.exec(setCookie);
+  return match ? `ks2_session=${match[1]}` : '';
+}
+
+async function postJson(server, path, body = {}, headers = {}) {
+  return server.fetchRaw(`https://repo.test${path}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      ...headers,
+    },
+    body: JSON.stringify(body),
+  });
+}
+
 function makeHarness(repositories, nowRef) {
   const service = createSpellingService({
     repository: createSpellingPersistence({ repositories, now: () => nowRef.value }),
@@ -241,6 +258,70 @@ test('public bootstrap redacts spelling runtime state while preserving generic s
   assert.equal(publicSpelling.ui.session.currentCard.prompt.sentence, undefined);
   assert.equal(publicSpelling.ui.session.currentCard.prompt.cloze, 'Do not expose ________.');
   assert.equal(publicPayload.practiceSessions[0].sessionState, null);
+
+  server.close();
+});
+
+test('production bootstrap redacts spelling runtime state by default', async () => {
+  const server = createWorkerRepositoryServer({
+    env: {
+      AUTH_MODE: 'production',
+      ENVIRONMENT: 'production',
+      APP_HOSTNAME: 'repo.test',
+    },
+  });
+  const register = await postJson(server, '/api/auth/register', {
+    email: 'bootstrap-redaction@example.test',
+    password: 'password-1234',
+  });
+  const registerPayload = await register.json();
+  const cookie = cookieFrom(register);
+  const accountId = registerPayload.session.accountId;
+  const now = Date.UTC(2026, 0, 1);
+
+  server.DB.db.prepare(`
+    INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+    VALUES ('learner-prod', 'Ava', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run(now, now);
+  server.DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES (?, 'learner-prod', 'owner', 0, ?, ?)
+  `).run(accountId, now, now);
+  server.DB.db.prepare('UPDATE adult_accounts SET selected_learner_id = ? WHERE id = ?')
+    .run('learner-prod', accountId);
+  server.DB.db.prepare(`
+    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+    VALUES ('learner-prod', 'spelling', ?, ?, ?, ?)
+  `).run(JSON.stringify({
+    phase: 'session',
+    session: {
+      id: 'active-session',
+      type: 'learning',
+      mode: 'smart',
+      phase: 'question',
+      currentCard: {
+        word: { word: 'possess', slug: 'possess' },
+        prompt: { sentence: 'Do not expose possess.', cloze: 'Do not expose ________.' },
+      },
+    },
+  }), JSON.stringify({ progress: { possess: { stage: 2 } } }), now, accountId);
+  server.DB.db.prepare(`
+    INSERT INTO practice_sessions (id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at, updated_by_account_id)
+    VALUES ('active-session', 'learner-prod', 'spelling', 'learning', 'active', ?, NULL, ?, ?, ?)
+  `).run(JSON.stringify({ currentCard: { word: { word: 'possess' } } }), now, now, accountId);
+
+  const response = await server.fetchRaw('https://repo.test/api/bootstrap', {
+    headers: { cookie },
+  });
+  const payload = await response.json();
+  const publicSpelling = payload.subjectStates['learner-prod::spelling'];
+
+  assert.equal(response.status, 200);
+  assert.equal(publicSpelling.data.progress, undefined);
+  assert.equal(publicSpelling.ui.session.currentCard.word, undefined);
+  assert.equal(publicSpelling.ui.session.currentCard.prompt.sentence, undefined);
+  assert.equal(publicSpelling.ui.session.currentCard.prompt.cloze, 'Do not expose ________.');
+  assert.equal(payload.practiceSessions[0].sessionState, null);
 
   server.close();
 });

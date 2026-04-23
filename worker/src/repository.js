@@ -383,6 +383,47 @@ async function storeMutationReceipt(db, {
   ]);
 }
 
+function storeMutationReceiptStatement(db, {
+  accountId,
+  requestId,
+  scopeType,
+  scopeId,
+  mutationKind,
+  requestHash,
+  response,
+  statusCode = 200,
+  correlationId = null,
+  appliedAt,
+}, { guard = null } = {}) {
+  const params = [
+    accountId,
+    requestId,
+    scopeType,
+    scopeId,
+    mutationKind,
+    requestHash,
+    JSON.stringify(response),
+    statusCode,
+    correlationId,
+    appliedAt,
+  ];
+  return bindStatement(db, `
+    INSERT INTO mutation_receipts (
+      account_id,
+      request_id,
+      scope_type,
+      scope_id,
+      mutation_kind,
+      request_hash,
+      response_json,
+      status_code,
+      correlation_id,
+      applied_at
+    )
+    ${guardedValueSource(params.length, guard)}
+  `, guardedParams(params, guard));
+}
+
 async function ensureAccount(db, session, nowTs) {
   const platformRole = normalisePlatformRole(session?.platformRole);
   await run(db, `
@@ -493,6 +534,24 @@ function requireAccountRoleManager(account) {
   if (!canManageAccountRoles({ platformRole: accountPlatformRole(account) })) {
     throw new ForbiddenError('Account role management requires an admin account.', {
       code: 'account_roles_forbidden',
+      required: 'platform-role-admin',
+    });
+  }
+}
+
+function requireSubjectContentExportAccess(account) {
+  if (!canViewAdminHub({ platformRole: accountPlatformRole(account) })) {
+    throw new ForbiddenError('Spelling content export requires an admin or operations account.', {
+      code: 'subject_content_export_forbidden',
+      required: 'platform-role-admin-or-ops',
+    });
+  }
+}
+
+function requireSubjectContentWriteAccess(account) {
+  if (accountPlatformRole(account) !== 'admin') {
+    throw new ForbiddenError('Spelling content import requires an admin account.', {
+      code: 'subject_content_write_forbidden',
       required: 'platform-role-admin',
     });
   }
@@ -979,36 +1038,66 @@ async function readLearnerProjectionBundle(db, accountId, learnerId) {
   };
 }
 
-async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, runtime, nowTs) {
+function guardedValueSource(valueCount, guard) {
+  const placeholders = sqlPlaceholders(valueCount);
+  if (!guard) return `VALUES (${placeholders})`;
+  return `SELECT ${placeholders}
+    WHERE EXISTS (
+      SELECT 1
+      FROM learner_profiles
+      WHERE id = ?
+        AND state_revision = ?
+    )`;
+}
+
+function guardedParams(params, guard) {
+  if (!guard) return params;
+  return [...params, guard.learnerId, guard.expectedRevision];
+}
+
+function guardedWhere(guard) {
+  if (!guard) return '';
+  return `
+          AND EXISTS (
+            SELECT 1
+            FROM learner_profiles
+            WHERE id = ?
+              AND state_revision = ?
+          )`;
+}
+
+function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs, { guard = null } = {}) {
   const nextState = normaliseSubjectStateRecord({
     ui: runtime?.state || null,
     data: runtime?.data || {},
     updatedAt: nowTs,
   });
+  const statements = [];
 
-  await run(db, `
-    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
-    VALUES (?, ?, ?, ?, ?, ?)
-    ON CONFLICT(learner_id, subject_id) DO UPDATE SET
-      ui_json = excluded.ui_json,
-      data_json = excluded.data_json,
-      updated_at = excluded.updated_at,
-      updated_by_account_id = excluded.updated_by_account_id
-  `, [
+  const subjectParams = [
     learnerId,
     subjectId,
     JSON.stringify(nextState.ui),
     JSON.stringify(nextState.data),
     nowTs,
     accountId,
-  ]);
+  ];
+  statements.push(bindStatement(db, `
+    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+    ${guardedValueSource(subjectParams.length, guard)}
+    ON CONFLICT(learner_id, subject_id) DO UPDATE SET
+      ui_json = excluded.ui_json,
+      data_json = excluded.data_json,
+      updated_at = excluded.updated_at,
+      updated_by_account_id = excluded.updated_by_account_id
+  `, guardedParams(subjectParams, guard)));
 
   const session = runtime?.practiceSession
     ? normalisePracticeSessionRecord(runtime.practiceSession)
     : null;
   if (session?.id && session.learnerId === learnerId && session.subjectId === subjectId) {
     if (session.status === 'active') {
-      await run(db, `
+      statements.push(bindStatement(db, `
         UPDATE practice_sessions
         SET status = 'abandoned',
             updated_at = ?,
@@ -1017,12 +1106,25 @@ async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, 
           AND subject_id = ?
           AND status = 'active'
           AND id <> ?
-      `, [nowTs, accountId, learnerId, subjectId, session.id]);
+          ${guardedWhere(guard)}
+      `, guardedParams([nowTs, accountId, learnerId, subjectId, session.id], guard)));
     }
 
     const createdAt = asTs(session.createdAt, nowTs);
     const updatedAt = asTs(session.updatedAt, nowTs);
-    await run(db, `
+    const sessionParams = [
+      session.id,
+      learnerId,
+      subjectId,
+      session.sessionKind,
+      session.status,
+      session.sessionState == null ? null : JSON.stringify(session.sessionState),
+      session.summary == null ? null : JSON.stringify(session.summary),
+      createdAt,
+      updatedAt,
+      accountId,
+    ];
+    statements.push(bindStatement(db, `
       INSERT INTO practice_sessions (
         id,
         learner_id,
@@ -1035,7 +1137,7 @@ async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, 
         updated_at,
         updated_by_account_id
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ${guardedValueSource(sessionParams.length, guard)}
       ON CONFLICT(id) DO UPDATE SET
         learner_id = excluded.learner_id,
         subject_id = excluded.subject_id,
@@ -1046,18 +1148,7 @@ async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, 
         created_at = excluded.created_at,
         updated_at = excluded.updated_at,
         updated_by_account_id = excluded.updated_by_account_id
-    `, [
-      session.id,
-      learnerId,
-      subjectId,
-      session.sessionKind,
-      session.status,
-      session.sessionState == null ? null : JSON.stringify(session.sessionState),
-      session.summary == null ? null : JSON.stringify(session.summary),
-      createdAt,
-      updatedAt,
-      accountId,
-    ]);
+    `, guardedParams(sessionParams, guard)));
   }
 
   const gameState = runtime?.gameState && typeof runtime.gameState === 'object' && !Array.isArray(runtime.gameState)
@@ -1066,17 +1157,19 @@ async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, 
   for (const [systemId, rawState] of Object.entries(gameState)) {
     if (!(typeof systemId === 'string' && systemId)) continue;
     const nextGameState = cloneSerialisable(rawState) || {};
-    await run(db, `
+    const gameParams = [learnerId, systemId, JSON.stringify(nextGameState), nowTs, accountId];
+    statements.push(bindStatement(db, `
       INSERT INTO child_game_state (learner_id, system_id, state_json, updated_at, updated_by_account_id)
-      VALUES (?, ?, ?, ?, ?)
+      ${guardedValueSource(gameParams.length, guard)}
       ON CONFLICT(learner_id, system_id) DO UPDATE SET
         state_json = excluded.state_json,
         updated_at = excluded.updated_at,
         updated_by_account_id = excluded.updated_by_account_id
-    `, [learnerId, systemId, JSON.stringify(nextGameState), nowTs, accountId]);
+    `, guardedParams(gameParams, guard)));
   }
 
   const events = Array.isArray(runtime?.events) ? runtime.events : [];
+  const persistedEvents = [];
   for (const rawEvent of events) {
     const event = cloneSerialisable(rawEvent) || null;
     if (!event || typeof event !== 'object' || Array.isArray(event)) continue;
@@ -1089,18 +1182,8 @@ async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, 
     event.learnerId = event.learnerId || learnerId;
     event.subjectId = event.subjectId || subjectId;
     event.createdAt = createdAt;
-    await run(db, `
-      INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET
-        learner_id = excluded.learner_id,
-        subject_id = excluded.subject_id,
-        system_id = excluded.system_id,
-        event_type = excluded.event_type,
-        event_json = excluded.event_json,
-        created_at = excluded.created_at,
-        actor_account_id = excluded.actor_account_id
-    `, [
+    persistedEvents.push(event);
+    const eventParams = [
       id,
       event.learnerId,
       event.subjectId || null,
@@ -1109,16 +1192,36 @@ async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, 
       JSON.stringify(event),
       createdAt,
       accountId,
-    ]);
+    ];
+    statements.push(bindStatement(db, `
+      INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
+      ${guardedValueSource(eventParams.length, guard)}
+      ON CONFLICT(id) DO UPDATE SET
+        learner_id = excluded.learner_id,
+        subject_id = excluded.subject_id,
+        system_id = excluded.system_id,
+        event_type = excluded.event_type,
+        event_json = excluded.event_json,
+        created_at = excluded.created_at,
+        actor_account_id = excluded.actor_account_id
+    `, guardedParams(eventParams, guard)));
   }
 
-  return {
+  const summary = {
     key: `${learnerId || 'default'}::${subjectId || 'unknown'}`,
     record: nextState,
     practiceSession: session,
-    eventCount: events.length,
+    eventCount: persistedEvents.length,
     gameStateCount: Object.keys(gameState).length,
   };
+
+  return { statements, summary };
+}
+
+async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, runtime, nowTs) {
+  const plan = buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs);
+  await batch(db, plan.statements);
+  return plan.summary;
 }
 
 async function writeLearnersSnapshot(db, accountId, snapshot, nowTs) {
@@ -1411,6 +1514,145 @@ async function withLearnerMutation(db, {
   });
 }
 
+async function runSubjectCommandMutation(db, {
+  accountId,
+  command,
+  applyCommand,
+  nowTs,
+}) {
+  if (!(typeof command?.learnerId === 'string' && command.learnerId)) {
+    throw new BadRequestError('Learner id is required for this mutation.', {
+      code: 'learner_id_required',
+      kind: 'subject_command',
+    });
+  }
+  if (typeof applyCommand !== 'function') {
+    throw new TypeError('runSubjectCommand requires an applyCommand function.');
+  }
+
+  const kind = `subject_command.${command.subjectId}.${command.command}`;
+  const payload = {
+    subjectId: command.subjectId,
+    command: command.command,
+    learnerId: command.learnerId,
+    payload: command.payload,
+  };
+  const nextMutation = normaliseMutationInput({
+    requestId: command.requestId,
+    correlationId: command.correlationId,
+    expectedLearnerRevision: command.expectedLearnerRevision,
+  }, 'learner');
+  const requestHash = mutationPayloadHash(kind, payload);
+
+  const existingReceipt = await loadMutationReceipt(db, accountId, nextMutation.requestId);
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
+        kind,
+        scopeType: 'learner',
+        scopeId: command.learnerId,
+        requestId: nextMutation.requestId,
+        correlationId: nextMutation.correlationId,
+      });
+    }
+    const replayed = safeJsonParse(existingReceipt.response_json, {});
+    replayed.mutation = buildMutationMeta({
+      ...replayed.mutation,
+      kind,
+      scopeType: 'learner',
+      scopeId: command.learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+      replayed: true,
+    });
+    logMutation('info', 'mutation.replayed', {
+      kind,
+      scopeType: 'learner',
+      scopeId: command.learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+    });
+    return replayed;
+  }
+
+  await requireLearnerWriteAccess(db, accountId, command.learnerId);
+  const learner = await first(db, 'SELECT id FROM learner_profiles WHERE id = ?', [command.learnerId]);
+  if (!learner) throw new NotFoundError('Learner was not found.', { learnerId: command.learnerId });
+
+  const appliedRaw = await applyCommand();
+  const appliedPayload = isPlainObject(appliedRaw) ? appliedRaw : {};
+  const { runtimeWrite = null, ...applied } = appliedPayload;
+  const appliedRevision = nextMutation.expectedRevision + 1;
+  const response = {
+    ...applied,
+    mutation: buildMutationMeta({
+      kind,
+      scopeType: 'learner',
+      scopeId: command.learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+      expectedRevision: nextMutation.expectedRevision,
+      appliedRevision,
+    }),
+  };
+  const guard = {
+    learnerId: command.learnerId,
+    expectedRevision: nextMutation.expectedRevision,
+  };
+  const statements = [];
+  if (runtimeWrite) {
+    const plan = buildSubjectRuntimePersistencePlan(db, accountId, command.learnerId, command.subjectId, runtimeWrite, nowTs, {
+      guard,
+    });
+    statements.push(...plan.statements);
+  }
+  statements.push(storeMutationReceiptStatement(db, {
+    accountId,
+    requestId: nextMutation.requestId,
+    scopeType: 'learner',
+    scopeId: command.learnerId,
+    mutationKind: kind,
+    requestHash,
+    response,
+    correlationId: nextMutation.correlationId,
+    appliedAt: nowTs,
+  }, { guard }));
+  statements.push(bindStatement(db, `
+    UPDATE learner_profiles
+    SET state_revision = state_revision + 1,
+        updated_at = ?
+    WHERE id = ?
+      AND state_revision = ?
+  `, [nowTs, command.learnerId, nextMutation.expectedRevision]));
+
+  const results = await batch(db, statements);
+  const casResult = results[results.length - 1] || null;
+  const casChanges = Number(casResult?.meta?.changes) || 0;
+  if (casChanges !== 1) {
+    const currentRevision = Number(await scalar(db, 'SELECT state_revision FROM learner_profiles WHERE id = ?', [command.learnerId], 'state_revision')) || 0;
+    throw staleWriteError({
+      kind,
+      scopeType: 'learner',
+      scopeId: command.learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+      expectedRevision: nextMutation.expectedRevision,
+      currentRevision,
+    });
+  }
+
+  logMutation('info', 'mutation.applied', {
+    kind,
+    scopeType: 'learner',
+    scopeId: command.learnerId,
+    requestId: nextMutation.requestId,
+    correlationId: nextMutation.correlationId,
+    expectedRevision: nextMutation.expectedRevision,
+    appliedRevision,
+  });
+  return response;
+}
+
 export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
   const db = requireDatabase(env);
   const nowFactory = () => asTs(now(), Date.now());
@@ -1494,23 +1736,11 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
     },
     async runSubjectCommand(accountId, command, applyCommand) {
       const nowTs = nowFactory();
-      return withLearnerMutation(db, {
+      return runSubjectCommandMutation(db, {
         accountId,
-        learnerId: command.learnerId,
-        kind: `subject_command.${command.subjectId}.${command.command}`,
-        payload: {
-          subjectId: command.subjectId,
-          command: command.command,
-          learnerId: command.learnerId,
-          payload: command.payload,
-        },
-        mutation: {
-          requestId: command.requestId,
-          correlationId: command.correlationId,
-          expectedLearnerRevision: command.expectedLearnerRevision,
-        },
+        command,
         nowTs,
-        apply: async () => applyCommand(),
+        applyCommand,
       });
     },
     async clearSubjectState(accountId, learnerId, subjectId = null, mutation = {}) {
@@ -1727,6 +1957,22 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         },
       });
     },
+    async exportSubjectContent(accountId, subjectId = 'spelling') {
+      const account = await first(db, 'SELECT id, repo_revision, platform_role FROM adult_accounts WHERE id = ?', [accountId]);
+      requireSubjectContentExportAccess(account);
+      const content = await readSubjectContentBundle(db, accountId, subjectId);
+      return {
+        subjectId,
+        content,
+        summary: buildSpellingContentSummary(content),
+        mutation: {
+          policyVersion: MUTATION_POLICY_VERSION,
+          scopeType: 'account',
+          scopeId: accountId,
+          accountRevision: Number(account?.repo_revision) || 0,
+        },
+      };
+    },
     async readSubjectContent(accountId, subjectId = 'spelling') {
       const account = await first(db, 'SELECT id, repo_revision FROM adult_accounts WHERE id = ?', [accountId]);
       const content = await readSubjectContentBundle(db, accountId, subjectId);
@@ -1747,6 +1993,8 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
     },
     async writeSubjectContent(accountId, subjectId = 'spelling', rawContent, mutation = {}) {
       const nowTs = nowFactory();
+      const account = await first(db, 'SELECT id, platform_role FROM adult_accounts WHERE id = ?', [accountId]);
+      requireSubjectContentWriteAccess(account);
       const content = backfillSpellingWordExplanations(rawContent, SEEDED_SPELLING_CONTENT_BUNDLE);
       const validation = validateSpellingContentBundle(content);
       if (!validation.ok) {
