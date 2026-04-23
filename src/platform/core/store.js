@@ -176,6 +176,61 @@ function normaliseTransientUi(rawValue) {
   };
 }
 
+function closeSpellingWordDetailTransientUi(transientUi) {
+  return {
+    ...transientUi,
+    spellingWordDetailSlug: '',
+    spellingWordDetailMode: 'explain',
+    spellingWordBankDrillTyped: '',
+    spellingWordBankDrillResult: null,
+  };
+}
+
+function isCleanSpellingSetupEntry(spellingUi, transientUi) {
+  return spellingUi.phase === 'dashboard'
+    && !spellingUi.session
+    && !spellingUi.feedback
+    && !spellingUi.summary
+    && !spellingUi.error
+    && !spellingUi.awaitingAdvance
+    && !transientUi?.spellingWordDetailSlug
+    && !transientUi?.spellingWordBankDrillTyped
+    && !transientUi?.spellingWordBankDrillResult;
+}
+
+function normaliseSubjectEntryForOpen(current, route, repositories) {
+  if (route.screen !== 'subject' || route.subjectId !== 'spelling' || route.tab !== 'practice') {
+    return current;
+  }
+
+  const previous = current.subjectUi?.spelling || DEFAULT_SUBJECT_UI;
+  if (previous.phase === 'session' && previous.session) return current;
+  if (isCleanSpellingSetupEntry(previous, current.transientUi)) return current;
+
+  const nextSpellingUi = {
+    ...previous,
+    phase: 'dashboard',
+    session: null,
+    feedback: null,
+    summary: null,
+    error: '',
+    awaitingAdvance: false,
+  };
+
+  if (current.learners.selectedId) {
+    repositories.subjectStates.writeUi(current.learners.selectedId, 'spelling', nextSpellingUi);
+  }
+
+  return {
+    ...current,
+    subjectUi: {
+      ...current.subjectUi,
+      spelling: nextSpellingUi,
+    },
+    transientUi: closeSpellingWordDetailTransientUi(current.transientUi),
+  };
+}
+
 function stateFromRepositories(subjects, repositories) {
   const learners = ensureLearnersSnapshot(repositories, subjects);
   const selectedId = learners.selectedId;
@@ -285,10 +340,13 @@ export function createStore(subjects, { repositories } = {}) {
       setState((current) => ({ ...current, route: { ...DEFAULT_ROUTE } }));
     },
     openSubject(subjectId, tab = 'practice') {
-      setState((current) => ({
-        ...current,
-        route: normaliseRoute({ screen: 'subject', subjectId, tab }, registry),
-      }));
+      setState((current) => {
+        const route = normaliseRoute({ screen: 'subject', subjectId, tab }, registry);
+        return {
+          ...normaliseSubjectEntryForOpen(current, route, resolvedRepositories),
+          route,
+        };
+      });
     },
     openCodex() {
       setState((current) => ({

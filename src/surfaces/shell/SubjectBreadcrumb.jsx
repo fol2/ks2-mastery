@@ -5,7 +5,9 @@ export function SubjectBreadcrumb({ subjectName = 'Subject', onDashboard }) {
     <nav className="subject-breadcrumb" aria-label="Subject breadcrumb">
       <button type="button" className="subject-breadcrumb-link" onClick={onDashboard}>← Dashboard</button>
       <span className="subject-breadcrumb-sep" aria-hidden="true">/</span>
-      <span className="subject-breadcrumb-current">{subjectName}</span>
+      <button type="button" className="subject-breadcrumb-current" onClick={onDashboard}>
+        {subjectName}
+      </button>
     </nav>
   );
 }

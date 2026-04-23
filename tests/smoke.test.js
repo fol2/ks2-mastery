@@ -133,6 +133,33 @@ test('golden-path smoke covers import/export restore for a live spelling session
   assert.match(harness.render(), /Spell the word you hear|Spell the dictated word/);
 });
 
+test('opening spelling from home resets inactive word-bank state but preserves active sessions', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-open-word-bank');
+  assert.equal(harness.store.getState().subjectUi.spelling.phase, 'word-bank');
+
+  harness.dispatch('navigate-home');
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  assert.equal(harness.store.getState().subjectUi.spelling.phase, 'dashboard');
+  assert.equal(harness.repositories.subjectStates.read(learnerId, 'spelling').ui.phase, 'dashboard');
+  assert.match(harness.render(), /Round setup/);
+
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('spelling-start');
+  const activeSession = structuredClone(harness.store.getState().subjectUi.spelling.session);
+
+  harness.dispatch('navigate-home');
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  assert.equal(harness.store.getState().subjectUi.spelling.phase, 'session');
+  assert.equal(harness.store.getState().subjectUi.spelling.session.id, activeSession.id);
+  assert.equal(harness.store.getState().subjectUi.spelling.session.currentSlug, activeSession.currentSlug);
+  assert.match(harness.render(), /Spell the word you hear|Spell the dictated word/);
+});
+
 test('spelling word bank opens from setup and exposes searchable progress with explainer modal', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
