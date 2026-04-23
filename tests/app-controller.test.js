@@ -222,7 +222,7 @@ test('controller dispatches spelling transitions through store, repositories, ev
 
 test('controller can defer spelling start audio until the flow transition flushes', () => {
   installMemoryStorage();
-  const controller = createAppController();
+  const controller = createLocalAppController();
   const learnerId = controller.store.getState().learners.selectedId;
   controller.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1', autoSpeak: true });
 
