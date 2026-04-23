@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowRightIcon, SpeakerIcon, SpeakerSlowIcon } from './spelling-icons.jsx';
 import { Cloze } from './SpellingCommon.jsx';
 import {
@@ -170,7 +171,7 @@ export function SpellingWordDetailModal({ word, mode = 'explain', typed = '', re
     renderAction(actions, event, 'spelling-word-detail-close');
   };
 
-  return (
+  const modal = (
     <div className="wb-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="wb-modal-word" onClick={closeFromScrim}>
       <div className="wb-modal-backdrop" tabIndex="-1" aria-hidden="true" />
       <div className="wb-modal" data-slug={word.slug}>
@@ -239,4 +240,7 @@ export function SpellingWordDetailModal({ word, mode = 'explain', typed = '', re
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined' || !document.body) return modal;
+  return createPortal(modal, document.body);
 }
