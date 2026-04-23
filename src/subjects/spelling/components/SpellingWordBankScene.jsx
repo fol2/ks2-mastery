@@ -139,9 +139,19 @@ function WordGroup({ group, words, query, actions }) {
 }
 
 function WordBankCard({ learner, analytics, appState, actions }) {
-  const searchQuery = appState?.transientUi?.spellingAnalyticsWordSearch || '';
+  const persistedSearchQuery = appState?.transientUi?.spellingAnalyticsWordSearch || '';
+  const [draftSearch, setDraftSearch] = React.useState(persistedSearchQuery);
   const statusFilter = appState?.transientUi?.spellingAnalyticsStatusFilter || 'all';
   const yearFilter = appState?.transientUi?.spellingAnalyticsYearFilter || 'all';
+  React.useEffect(() => {
+    setDraftSearch(persistedSearchQuery);
+  }, [persistedSearchQuery]);
+  const commitSearch = React.useCallback((value) => {
+    const nextValue = String(value || '').slice(0, 80);
+    if (nextValue === persistedSearchQuery) return;
+    actions.dispatch('spelling-analytics-search', { value: nextValue });
+  }, [actions, persistedSearchQuery]);
+  const searchQuery = draftSearch;
   const query = normaliseSearchText(searchQuery);
   const activeFilter = WORD_BANK_FILTER_IDS.has(statusFilter) ? statusFilter : 'all';
   const activeYearFilter = WORD_BANK_YEAR_FILTER_IDS.has(yearFilter) ? yearFilter : 'all';
@@ -206,7 +216,13 @@ function WordBankCard({ learner, analytics, appState, actions }) {
               value={searchQuery}
               data-action="spelling-analytics-search"
               aria-label="Search word bank"
-              onChange={(event) => renderAction(actions, event, 'spelling-analytics-search', { value: event.currentTarget.value })}
+              onChange={(event) => setDraftSearch(event.currentTarget.value.slice(0, 80))}
+              onBlur={(event) => commitSearch(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+                commitSearch(event.currentTarget.value);
+              }}
             />
           </label>
           <div className="wb-filter-stack">

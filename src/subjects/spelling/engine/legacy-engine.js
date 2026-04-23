@@ -149,12 +149,15 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         catch (err) { /* quota/private-mode; ignore */ }
       }
     
-      function getProgress(profileId, slug) {
-        var store = loadProgress(profileId);
-        var existing = store[slug];
+      function progressForSlug(store, slug) {
+        var existing = store && store[slug];
         return Object.assign({}, defaultProgress(), existing || {});
       }
     
+      function getProgress(profileId, slug) {
+        return progressForSlug(loadProgress(profileId), slug);
+      }
+
       function setProgress(profileId, slug, record) {
         var store = loadProgress(profileId);
         store[slug] = Object.assign({}, defaultProgress(), record);
@@ -822,13 +825,14 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
     
       // ----- aggregate stats ----------------------------------------------------
     
-      function lifetimeStats(profileId, yearFilter) {
+      function lifetimeStats(profileId, yearFilter, progressStore) {
         var words = filteredWords(yearFilter);
         var today = todayDay();
+        var store = progressStore || loadProgress(profileId);
         var secure = 0, due = 0, fresh = 0, trouble = 0, attempts = 0, correct = 0;
         for (var i = 0; i < words.length; i++) {
           var word = words[i];
-          var p = getProgress(profileId, word.slug);
+          var p = progressForSlug(store, word.slug);
           attempts += p.attempts;
           correct += p.correct;
           if (p.attempts === 0) fresh += 1;
@@ -848,22 +852,24 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         };
       }
     
-      function statusForWord(profileId, word) {
-        var p = getProgress(profileId, word.slug);
+      function statusForWord(profileId, word, progressStore) {
+        var p = progressStore ? progressForSlug(progressStore, word.slug) : getProgress(profileId, word.slug);
         var total = p.correct + p.wrong;
+        var today = todayDay();
         if (p.attempts === 0) return "new";
-        if (p.wrong > 0 && (p.wrong >= p.correct || (p.dueDay <= todayDay() && total > 0))) return "trouble";
-        if (p.dueDay <= todayDay()) return "due";
+        if (p.wrong > 0 && (p.wrong >= p.correct || (p.dueDay <= today && total > 0))) return "trouble";
+        if (p.dueDay <= today) return "due";
         if (p.stage >= SECURE_STAGE) return "secure";
         return "learning";
       }
     
-      function countMastered(profileId, wordList) {
+      function countMastered(profileId, wordList, progressStore) {
         var list = Array.isArray(wordList) ? wordList : WORDS;
+        var store = progressStore || loadProgress(profileId);
         var count = 0;
         for (var i = 0; i < list.length; i++) {
           var word = list[i];
-          var p = getProgress(profileId, word.slug);
+          var p = progressForSlug(store, word.slug);
           if (p.stage >= SECURE_STAGE) count += 1;
         }
         return count;
@@ -930,6 +936,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         grade: gradeWord,
         normalize: normalize,
         progressFor: progressFor,
+        progressForSlug: progressForSlug,
         getProgress: function (profileId, slug) { return getProgress(profileId, slug); },
         resetProgress: function (profileId) { saveProgress(profileId, {}); },
         lifetimeStats: lifetimeStats,

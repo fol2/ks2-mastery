@@ -29,11 +29,17 @@ function ExplainBody({ word }) {
 }
 
 function DrillBody({ word, typed, result, accent, actions }) {
+  const [draftTyped, setDraftTyped] = React.useState(typed || '');
+  const [draftResult, setDraftResult] = React.useState(result);
   const sentence = word.sentence || '';
   const drillCloze = sentence ? buildDrillCloze(sentence, word) : '';
-  const showFeedback = result === 'correct' || result === 'incorrect';
-  const feedbackTone = result === 'correct' ? 'good' : 'warn';
-  const inputState = result === 'correct' ? 'is-correct' : result === 'incorrect' ? 'is-wrong' : '';
+  React.useEffect(() => {
+    setDraftTyped(typed || '');
+    setDraftResult(result);
+  }, [result, typed, word.slug]);
+  const showFeedback = draftResult === 'correct' || draftResult === 'incorrect';
+  const feedbackTone = draftResult === 'correct' ? 'good' : 'warn';
+  const inputState = draftResult === 'correct' ? 'is-correct' : draftResult === 'incorrect' ? 'is-wrong' : '';
 
   return (
     <div className="wb-modal-body">
@@ -41,7 +47,7 @@ function DrillBody({ word, typed, result, accent, actions }) {
         <p className="wb-modal-section-label">{sentence ? 'Listen to the sentence, then type the missing word' : 'Listen to the word, then type it'}</p>
         {sentence ? (
           <p className="wb-drill-sentence">
-            <Cloze sentence={drillCloze} answer={word.word} revealAnswer={result === 'correct'} />
+            <Cloze sentence={drillCloze} answer={word.word} revealAnswer={draftResult === 'correct'} />
           </p>
         ) : null}
       </div>
@@ -83,29 +89,32 @@ function DrillBody({ word, typed, result, accent, actions }) {
           autoCapitalize="none"
           spellCheck={false}
           placeholder="Type the word…"
-          value={typed}
+          value={draftTyped}
           data-autofocus="true"
           data-action="spelling-word-bank-drill-input"
           aria-label="Type the drill word"
-          disabled={result === 'correct'}
-          onChange={(event) => renderAction(actions, event, 'spelling-word-bank-drill-input', { value: event.currentTarget.value, slug: word.slug })}
+          disabled={draftResult === 'correct'}
+          onChange={(event) => {
+            setDraftTyped(event.currentTarget.value.slice(0, 80));
+            if (draftResult !== 'correct') setDraftResult(null);
+          }}
         />
-        <button type="submit" className="btn primary" style={{ '--btn-accent': accent }} disabled={result === 'correct'}>
+        <button type="submit" className="btn primary" style={{ '--btn-accent': accent }} disabled={draftResult === 'correct'}>
           Check <ArrowRightIcon />
         </button>
       </form>
       {showFeedback ? (
         <div className={`wb-drill-feedback ${feedbackTone}`} role="status">
-          <span className="wb-drill-feedback-icon" aria-hidden="true">{result === 'correct' ? '✓' : '!'}</span>
+          <span className="wb-drill-feedback-icon" aria-hidden="true">{draftResult === 'correct' ? '✓' : '!'}</span>
           <div>
-            {result === 'correct'
+            {draftResult === 'correct'
               ? <><b>Nice — "{word.word}" is spot on.</b> Browse on, or try another word.</>
               : <><b>Close — the word is "{word.word}".</b> Listen again and have another go.</>}
           </div>
         </div>
       ) : null}
       <div className="wb-modal-actions">
-        {result ? (
+        {draftResult ? (
           <>
             <button
               type="button"
@@ -119,13 +128,13 @@ function DrillBody({ word, typed, result, accent, actions }) {
             </button>
             <button
               type="button"
-              className={result === 'correct' ? 'btn primary' : 'btn ghost'}
-              style={result === 'correct' ? { '--btn-accent': accent } : undefined}
+              className={draftResult === 'correct' ? 'btn primary' : 'btn ghost'}
+              style={draftResult === 'correct' ? { '--btn-accent': accent } : undefined}
               data-action="spelling-word-bank-drill-try-again"
               data-slug={word.slug}
               onClick={(event) => renderAction(actions, event, 'spelling-word-bank-drill-try-again', { slug: word.slug })}
             >
-              Try again {result === 'correct' ? <ArrowRightIcon /> : null}
+              Try again {draftResult === 'correct' ? <ArrowRightIcon /> : null}
             </button>
           </>
         ) : null}
