@@ -25,6 +25,7 @@ import { createPracticeStreakSubscriber } from './platform/events/index.js';
 import { createPlatformTts } from './subjects/spelling/tts.js';
 import { createSpellingService } from './subjects/spelling/service.js';
 import { createSpellingPersistence } from './subjects/spelling/repository.js';
+import { DEFAULT_TTS_PROVIDER, normaliseTtsProvider } from './subjects/spelling/tts-providers.js';
 import {
   createApiSpellingContentRepository,
   createLocalSpellingContentRepository,
@@ -168,14 +169,34 @@ const repositories = boot.repositories;
 globalThis.KS2_AUTH_SESSION = boot.session;
 await repositories.hydrate();
 
-const tts = createPlatformTts({ fetchFn: credentialFetch });
+const services = {
+  spelling: null,
+};
+let store = null;
 
-/* Audio replay glow state — maintained outside the store because it is a
+function selectedTtsProvider() {
+  const learnerId = store?.getState?.()?.learners?.selectedId;
+  if (!learnerId) return DEFAULT_TTS_PROVIDER;
+  try {
+    return normaliseTtsProvider(services.spelling?.getPrefs?.(learnerId)?.ttsProvider);
+  } catch {
+    return DEFAULT_TTS_PROVIDER;
+  }
+}
+
+const tts = createPlatformTts({
+  fetchFn: credentialFetch,
+  provider: selectedTtsProvider,
+});
+
+/* Audio replay affordance state — maintained outside the store because it is a
    transient DOM affordance, not persisted learner state. The render wipes
-   innerHTML on every store update, so we re-apply the `playing` class
-   both inside render() and inside the tts listener to cover both paths
-   (learner clicks mid-render vs audio ending between renders). */
+   innerHTML on every store update, so we re-apply the classes both inside
+   render() and inside the TTS listener to cover both paths. */
 let currentPlayingKind = null;
+let currentLoadingKind = null;
+let audioLoadingStartedAt = 0;
+let audioLoadingTimer = null;
 
 const NORMAL_REPLAY_SELECTORS = [
   '[data-action="spelling-replay"]',
@@ -192,14 +213,52 @@ function syncAudioPlayingClass() {
   const slowNodes = root.querySelectorAll(SLOW_REPLAY_SELECTORS.join(','));
   const normalOn = currentPlayingKind === 'normal';
   const slowOn = currentPlayingKind === 'slow';
-  for (const node of normalNodes) node.classList.toggle('playing', normalOn);
-  for (const node of slowNodes) node.classList.toggle('playing', slowOn);
+  const normalLoading = currentLoadingKind === 'normal';
+  const slowLoading = currentLoadingKind === 'slow';
+  const waitingLong = audioLoadingStartedAt > 0 && (Date.now() - audioLoadingStartedAt) >= 10000;
+  for (const node of normalNodes) {
+    node.classList.toggle('playing', normalOn);
+    node.classList.toggle('loading', normalLoading);
+    node.classList.toggle('waiting-long', normalLoading && waitingLong);
+    node.toggleAttribute('aria-busy', normalLoading);
+  }
+  for (const node of slowNodes) {
+    node.classList.toggle('playing', slowOn);
+    node.classList.toggle('loading', slowLoading);
+    node.classList.toggle('waiting-long', slowLoading && waitingLong);
+    node.toggleAttribute('aria-busy', slowLoading);
+  }
+}
+
+function clearAudioLoadingTimer() {
+  if (!audioLoadingTimer) return;
+  clearTimeout(audioLoadingTimer);
+  audioLoadingTimer = null;
+}
+
+function armAudioLoadingTimer() {
+  clearAudioLoadingTimer();
+  audioLoadingTimer = setTimeout(() => {
+    audioLoadingTimer = null;
+    syncAudioPlayingClass();
+  }, 10000);
 }
 
 tts.subscribe((event) => {
-  if (event?.type === 'start') {
+  if (event?.type === 'loading') {
+    currentLoadingKind = event.kind === 'slow' ? 'slow' : 'normal';
+    currentPlayingKind = null;
+    audioLoadingStartedAt = Date.now();
+    armAudioLoadingTimer();
+  } else if (event?.type === 'start') {
+    clearAudioLoadingTimer();
+    currentLoadingKind = null;
+    audioLoadingStartedAt = 0;
     currentPlayingKind = event.kind === 'slow' ? 'slow' : 'normal';
   } else if (event?.type === 'end') {
+    clearAudioLoadingTimer();
+    currentLoadingKind = null;
+    audioLoadingStartedAt = 0;
     currentPlayingKind = null;
   }
   syncAudioPlayingClass();
@@ -210,9 +269,6 @@ const spellingContentRepository = boot.session.signedIn
   : createLocalSpellingContentRepository({ storage: globalThis.localStorage });
 const spellingContent = createSpellingContentService({ repository: spellingContentRepository });
 await spellingContent.hydrate();
-const services = {
-  spelling: null,
-};
 let shellPlatformRole = normalisePlatformRole(boot.session.platformRole || 'parent');
 let adminAccountDirectory = {
   status: 'idle',
@@ -602,7 +658,7 @@ const controller = createAppController({
     globalThis.console?.error?.('Reward/event subscriber failed.', error);
   },
 });
-const store = controller.store;
+store = controller.store;
 
 function resetLearnerData(learnerId) {
   Object.values(services).forEach((service) => {
@@ -940,6 +996,7 @@ function buildSurfaceChromeModel(appState) {
       : null,
     learnerLabel: learner ? `${learner.name} · ${learner.yearGroup}` : 'No learner selected',
     learnerOptions,
+    ttsProvider: learnerId ? selectedTtsProvider() : DEFAULT_TTS_PROVIDER,
     signedInAs: boot.session.signedIn ? (boot.session.email || '') : null,
     persistence: {
       mode: persistenceSnapshot?.mode || 'local-only',
@@ -1328,6 +1385,10 @@ function handleGlobalAction(action, data) {
   if (action === 'learner-save-form') {
     if (blockReadOnlyAdultAction(action)) return true;
     const formData = data.formData;
+    services.spelling?.savePrefs?.(learnerId, {
+      ttsProvider: normaliseTtsProvider(formData.get('ttsProvider')),
+    });
+    tts.stop();
     store.updateLearner(learnerId, {
       name: String(formData.get('name') || 'Learner').trim() || 'Learner',
       yearGroup: String(formData.get('yearGroup') || 'Y5'),

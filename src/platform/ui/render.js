@@ -5,6 +5,13 @@ import { subjectTabLabel } from '../core/subject-runtime.js';
 import { monsterAsset, monsterAssetSrcSet } from '../game/monsters.js';
 import { monsterSummary, monsterSummaryFromSpellingAnalytics } from '../game/monster-system.js';
 import { readOnlyLearnerActionBlockReason } from '../hubs/shell-access.js';
+import { normaliseTtsProvider } from '../../subjects/spelling/tts-providers.js';
+
+const TTS_PROVIDER_OPTIONS = [
+  { value: 'openai', label: 'OpenAI' },
+  { value: 'gemini', label: 'Gemini' },
+  { value: 'browser', label: 'Browser', title: 'Local browser voice, preferring Google UK English female where available' },
+];
 
 function iconGlyph(icon) {
   return {
@@ -591,6 +598,16 @@ function learnerOrdinal(appState) {
   return index >= 0 ? index + 1 : 1;
 }
 
+function renderTtsProviderOptions(provider) {
+  const selected = normaliseTtsProvider(provider);
+  return TTS_PROVIDER_OPTIONS.map((option) => `
+    <label class="profile-tts-option" title="${escapeHtml(option.title || option.label)}">
+      <input type="radio" name="ttsProvider" value="${escapeHtml(option.value)}" ${selected === option.value ? 'checked' : ''} />
+      <span>${escapeHtml(option.label)}</span>
+    </label>
+  `).join('');
+}
+
 function renderProfileLearnerSelect(appState) {
   const learners = appState.learners.allIds.map((id) => appState.learners.byId[id]).filter(Boolean);
   if (!learners.length) {
@@ -666,6 +683,7 @@ function renderLearnerManager(appState, context) {
     `;
   }
   const accent = safeInlineColor(learner.avatarColor);
+  const ttsProvider = normaliseTtsProvider(context.services?.spelling?.getPrefs?.(learner.id)?.ttsProvider);
   const learnerCount = appState.learners.allIds.length;
   const subjectCount = registeredSubjects(context).length;
   const liveSubjectCount = registeredSubjects(context).filter((subject) => subject.available !== false).length;
@@ -732,6 +750,12 @@ function renderLearnerManager(appState, context) {
             <span>Accent colour</span>
             <input class="input" type="color" name="avatarColor" autocomplete="off" value="${escapeHtml(accent)}" />
           </label>
+          <div class="profile-form-field profile-form-field-wide">
+            <span>Dictation voice</span>
+            <div class="profile-tts-options" role="radiogroup" aria-label="Dictation voice">
+              ${renderTtsProviderOptions(ttsProvider)}
+            </div>
+          </div>
         </div>
         <div class="profile-form-footer">
           <div class="profile-form-danger-actions">

@@ -16,6 +16,7 @@ const DEFAULT_GEMINI_MODEL = 'gemini-3.1-flash-tts-preview';
 const DEFAULT_GEMINI_VOICE = 'Kore';
 const DEFAULT_GEMINI_TIMEOUT_MS = 12000;
 const DEFAULT_GEMINI_SAMPLE_RATE = 24000;
+const REMOTE_TTS_PROVIDERS = new Set(['openai', 'gemini']);
 const MAX_WORD_LENGTH = 80;
 const MAX_SENTENCE_LENGTH = 320;
 
@@ -95,6 +96,15 @@ async function protectTts(env, request, session, now) {
   }
 }
 
+function normaliseRemoteTtsProvider(value) {
+  const provider = cleanText(value).toLowerCase() || 'openai';
+  if (REMOTE_TTS_PROVIDERS.has(provider)) return provider;
+  throw new BadRequestError('Unsupported dictation audio provider.', {
+    code: 'tts_provider_unsupported',
+    provider,
+  });
+}
+
 function normaliseTtsPayload(body) {
   const word = cleanText(typeof body?.word === 'string' ? body.word : body?.word?.word);
   const sentence = cleanText(body?.sentence);
@@ -114,6 +124,7 @@ function normaliseTtsPayload(body) {
 
   return {
     transcript,
+    provider: normaliseRemoteTtsProvider(body?.provider),
     slow: Boolean(body?.slow),
     wordOnly,
   };
@@ -210,6 +221,14 @@ function backendUnavailableFromFailure(error, failures = []) {
   if (error?.timedOut) extra.providerTimedOut = true;
   if (attempts.length > 1) extra.providerAttempts = attempts;
   return new BackendUnavailableError(error?.message || 'TTS provider request failed.', extra);
+}
+
+function missingProviderConfig(provider) {
+  const name = provider === 'gemini' ? 'Gemini' : 'OpenAI';
+  return new BackendUnavailableError(`${name} TTS is not configured.`, {
+    code: 'tts_not_configured',
+    provider,
+  });
 }
 
 function geminiPrompt({ transcript, slow = false, wordOnly = false }) {
@@ -398,31 +417,23 @@ export async function handleTextToSpeechRequest({
 } = {}) {
   const openAi = openAiConfig(env);
   const gemini = geminiConfig(env);
-  if (!openAi.apiKey && !gemini.apiKey) {
-    throw new BackendUnavailableError('OpenAI TTS is not configured.', { code: 'tts_not_configured' });
-  }
 
   await protectTts(env, request, session, now);
   const payload = normaliseTtsPayload(await readJson(request));
 
-  let openAiFailure = null;
-  if (openAi.apiKey) {
+  if (payload.provider === 'gemini') {
+    if (!gemini.apiKey) throw missingProviderConfig('gemini');
     try {
-      return await requestOpenAiSpeech({ config: openAi, payload, fetchFn });
+      return await requestGeminiSpeech({ config: gemini, payload, fetchFn });
     } catch (error) {
-      openAiFailure = error;
+      throw backendUnavailableFromFailure(error, [error]);
     }
   }
 
-  if (gemini.apiKey) {
-    try {
-      const response = await requestGeminiSpeech({ config: gemini, payload, fetchFn });
-      if (openAiFailure) response.headers.set('x-ks2-tts-fallback-from', 'openai');
-      return response;
-    } catch (geminiFailure) {
-      throw backendUnavailableFromFailure(geminiFailure, [openAiFailure, geminiFailure]);
-    }
+  if (!openAi.apiKey) throw missingProviderConfig('openai');
+  try {
+    return await requestOpenAiSpeech({ config: openAi, payload, fetchFn });
+  } catch (error) {
+    throw backendUnavailableFromFailure(error, [error]);
   }
-
-  throw backendUnavailableFromFailure(openAiFailure, [openAiFailure]);
 }

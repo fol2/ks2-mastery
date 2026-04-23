@@ -114,7 +114,7 @@ These were kept on purpose:
 - skipping only works in learning question phase and pushes the word later in the round
 - marked cards auto-advance after the preserved short delay instead of needing an extra manual confirmation step
 - the preserved shortcut loop remains available inside active Spelling practice (`Esc`, `Shift+Esc`, `Alt+1/2/3`, `Alt+S`, `Alt+K`) while still avoiding cross-subject collisions in the wider shell
-- production dictation audio is generated through the Worker-side OpenAI TTS proxy by default, with browser speech synthesis kept as the client fallback
+- dictation audio honours the learner's selected profile provider: OpenAI, Gemini, or local browser speech
 - stage progression and due-day scheduling still come from the preserved legacy engine
 
 ## Pass 10 parity notes
@@ -132,7 +132,7 @@ What was brought back into line with the direct legacy baseline:
 What remains intentionally different:
 
 - platform-level resume across learner switches/navigation/reload still stays broader than legacy
-- provider/model/voice/rate TTS controls and warm-up behaviour are still deferred
+- model/voice/rate TTS controls and warm-up behaviour are still deferred
 
 See `docs/spelling-parity.md` for the full matrix and the explicit remaining deltas.
 

@@ -5,7 +5,7 @@ This Worker is now a real minimum viable backend for the generic repository cont
 Production browser sessions use the API-backed repository after sign-in.
 Direct file/local mode, or `?local=1`, still uses browser storage for development.
 English Spelling still runs through the same subject/service boundary.
-The Worker now provides durable D1-backed storage for the generic platform collections, account-scoped spelling content, session/auth flows, TTS proxying with OpenAI primary audio and Gemini fallback audio, learner ownership at the API boundary, and thin hub read-model routes for Parent Hub / Admin.
+The Worker now provides durable D1-backed storage for the generic platform collections, account-scoped spelling content, session/auth flows, selected-provider TTS proxying, learner ownership at the API boundary, and thin hub read-model routes for Parent Hub / Admin.
 
 ## What this Worker is now
 
@@ -16,7 +16,7 @@ It is:
 - an adult-account to learner ownership boundary
 - a place where learner-scoped permissions are enforced before repository writes happen
 - a provider-agnostic auth/session seam with production email and social login flows plus a safe development/test stub
-- a Worker-side TTS proxy that keeps provider API keys out of the browser and falls back to Gemini when OpenAI is slow or unavailable
+- a Worker-side TTS proxy that keeps provider API keys out of the browser and honours the selected OpenAI or Gemini provider without automatic fallback
 - a read-model boundary for role-aware Parent Hub and Admin / Operations surfaces
 - an admin-only account role management boundary for production platform roles
 - a deployment boundary that still keeps subject UI rules out of the backend

@@ -7,6 +7,7 @@ import { createSpellingAutoAdvanceController } from '../../subjects/spelling/aut
 import { resolveSpellingShortcut } from '../../subjects/spelling/shortcuts.js';
 import { createSpellingService } from '../../subjects/spelling/service.js';
 import { createSpellingPersistence } from '../../subjects/spelling/repository.js';
+import { normaliseTtsProvider } from '../../subjects/spelling/tts-providers.js';
 import {
   isMonsterCelebrationEvent,
   shouldDelayMonsterCelebrations,
@@ -293,6 +294,9 @@ export function createAppController({
 
     if (action === 'learner-save-form') {
       const formData = data.formData;
+      services.spelling?.savePrefs?.(learnerId, {
+        ttsProvider: normaliseTtsProvider(formData.get('ttsProvider')),
+      });
       store.updateLearner(learnerId, {
         name: String(formData.get('name') || 'Learner').trim() || 'Learner',
         yearGroup: String(formData.get('yearGroup') || 'Y5'),

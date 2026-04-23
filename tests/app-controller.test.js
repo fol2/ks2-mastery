@@ -160,6 +160,23 @@ test('controller bootstraps local repositories, store, services, and snapshot wi
   assert.equal(snapshot.ui.adultSurface.parentHub.status, 'idle');
 });
 
+test('controller persists profile TTS provider in spelling prefs', () => {
+  installMemoryStorage();
+  const controller = createAppController();
+  const learnerId = controller.store.getState().learners.selectedId;
+  const formData = new FormData();
+  formData.set('name', 'Ava');
+  formData.set('yearGroup', 'Y5');
+  formData.set('goal', 'sats');
+  formData.set('dailyMinutes', '15');
+  formData.set('avatarColor', '#3E6FA8');
+  formData.set('ttsProvider', 'gemini');
+
+  controller.dispatch('learner-save-form', { formData });
+
+  assert.equal(controller.services.spelling.getPrefs(learnerId).ttsProvider, 'gemini');
+});
+
 test('controller dispatches spelling transitions through store, repositories, events, and TTS', () => {
   installMemoryStorage();
   const controller = createAppController();
