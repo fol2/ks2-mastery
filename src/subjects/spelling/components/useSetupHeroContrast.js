@@ -1,5 +1,6 @@
 import React from 'react';
 import { probeHeroTextTones } from '../../../platform/ui/luminance.js';
+import { heroContrastProfileForBg } from './spelling-view-model.js';
 
 const DEFAULT_CONTRAST = Object.freeze({
   shell: 'dark',
@@ -13,12 +14,18 @@ const CONTROL_REFRESH_MS = 6000;
 
 export function useSetupHeroContrast(heroBg, mode) {
   const ref = React.useRef(null);
-  const [contrast, setContrast] = React.useState(DEFAULT_CONTRAST);
+  const staticContrast = React.useMemo(() => heroContrastProfileForBg(heroBg, mode), [heroBg, mode]);
+  const [probedContrast, setProbedContrast] = React.useState(staticContrast || DEFAULT_CONTRAST);
 
   React.useEffect(() => {
+    if (staticContrast) {
+      setProbedContrast(staticContrast);
+      return undefined;
+    }
+
     const shell = ref.current;
     if (!shell || !heroBg || typeof window === 'undefined') {
-      setContrast(DEFAULT_CONTRAST);
+      setProbedContrast(DEFAULT_CONTRAST);
       return undefined;
     }
 
@@ -32,7 +39,7 @@ export function useSetupHeroContrast(heroBg, mode) {
         frame = 0;
         runProbe(shell, heroBg).then((nextContrast) => {
           if (cancelled) return;
-          setContrast((current) => (
+          setProbedContrast((current) => (
             sameContrast(current, nextContrast) ? current : nextContrast
           ));
         });
@@ -55,9 +62,9 @@ export function useSetupHeroContrast(heroBg, mode) {
       window.clearInterval(interval);
       observer?.disconnect();
     };
-  }, [heroBg, mode]);
+  }, [heroBg, mode, staticContrast]);
 
-  return { ref, contrast };
+  return { ref, contrast: staticContrast || probedContrast };
 }
 
 async function runProbe(shell, heroBg) {
