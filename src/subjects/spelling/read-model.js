@@ -310,6 +310,7 @@ export function buildSpellingLearnerReadModel({
       mode: typeof prefs.mode === 'string' ? prefs.mode : 'smart',
       yearFilter: normaliseYearFilter(prefs.yearFilter, 'core'),
       roundLength: typeof prefs.roundLength === 'string' ? prefs.roundLength : '20',
+      extraWordFamilies: Boolean(prefs.extraWordFamilies),
     },
     currentFocus,
     progressSnapshot: {

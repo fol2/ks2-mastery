@@ -10,6 +10,7 @@ import {
 
 function ExplainBody({ word }) {
   const sentence = (word.sentence || '').replace(/________/g, word.word);
+  const variants = Array.isArray(word.variants) ? word.variants.filter((variant) => variant?.word) : [];
   return (
     <div className="wb-modal-body">
       <div className="wb-modal-section">
@@ -24,6 +25,23 @@ function ExplainBody({ word }) {
           ? <blockquote className="wb-modal-sample">{sentence}</blockquote>
           : <p className="wb-modal-def">No example sentence on file for this word yet.</p>}
       </div>
+      {variants.length ? (
+        <div className="wb-modal-section">
+          <p className="wb-modal-section-label">Word-family variants</p>
+          <div className="wb-variant-list">
+            {variants.map((variant) => {
+              const variantSentence = (variant.sentence || '').replace(/________/g, variant.word);
+              return (
+                <div className="wb-variant-row" key={variant.word}>
+                  <strong className="wb-variant-word">{variant.word}</strong>
+                  {variant.explanation ? <p className="wb-modal-def">{variant.explanation}</p> : null}
+                  {variantSentence ? <blockquote className="wb-modal-sample">{variantSentence}</blockquote> : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -173,6 +173,7 @@ export function SpellingSetupScene({ learner, service, repositories, subject, pr
   const hideTweaks = prefs.mode === 'test';
   const tweakClass = `tweak-row${hideTweaks ? ' is-placeholder' : ''}`;
   const tweakAria = hideTweaks ? { 'aria-hidden': 'true' } : {};
+  const showExtraFamilyOption = !hideTweaks && prefs.yearFilter === 'extra';
   const mergedHeroStyle = { ...heroBgStyle(heroBg) };
   const heroContrast = useSetupHeroContrast(heroBg, prefs.mode);
   const setupClasses = ['setup-main'];
@@ -231,6 +232,9 @@ export function SpellingSetupScene({ learner, service, repositories, subject, pr
               <span className="tool-label">Options</span>
               <ToggleChip pref="showCloze" checked={Boolean(prefs.showCloze)} label="Show sentence" actions={actions} />
               <ToggleChip pref="autoSpeak" checked={Boolean(prefs.autoSpeak)} label="Auto-play audio" actions={actions} />
+              {showExtraFamilyOption ? (
+                <ToggleChip pref="extraWordFamilies" checked={Boolean(prefs.extraWordFamilies)} label="Word-family variants" actions={actions} />
+              ) : null}
             </div>
           </div>
           <div className="setup-begin-row">

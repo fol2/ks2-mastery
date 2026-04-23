@@ -135,6 +135,7 @@ export const spellingModule = {
         mode: prefs.mode,
         yearFilter: prefs.yearFilter,
         length: prefs.roundLength,
+        extraWordFamilies: prefs.extraWordFamilies,
       }));
     }
 
@@ -152,6 +153,7 @@ export const spellingModule = {
         mode: prefs.mode,
         yearFilter: prefs.yearFilter,
         length: prefs.roundLength,
+        extraWordFamilies: prefs.extraWordFamilies,
       }));
     }
 

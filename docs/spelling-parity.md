@@ -97,6 +97,7 @@ The Extra spelling expansion is outside the original statutory baseline.
 - Phaeton remains the Years 3-6 statutory bonus monster, derived only from Inklet and Glimmerbug
 - Vellhorn is the Extra reward path and does not contribute to Phaeton
 - the searchable Word Bank now includes Core, Years 3-4, Years 5-6, and Extra views, with direct drill validation using the published accepted-answer list
+- Extra can opt into word-family variant prompts from the setup screen; variants carry their own explanations and sentences, but share the base Extra word's progress and secure state, so the Extra pool still counts the 22 base words
 - the first 22-word Extra release cannot naturally reach every Vellhorn stage under the 100-word direct-monster thresholds; mature Vellhorn rendering is covered by synthetic render fixtures only
 
 ## Still not directly verified in this pass

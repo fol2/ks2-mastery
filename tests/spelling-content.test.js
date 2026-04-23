@@ -149,8 +149,8 @@ test('seeded spelling content validates and round-trips through the portable exp
   assert.equal(validation.ok, true);
   assert.equal(validation.bundle.modelVersion, SPELLING_CONTENT_MODEL_VERSION);
   assert.equal(validation.errors.length, 0);
-  assert.equal(validation.bundle.releases.length, 2);
-  assert.equal(validation.bundle.publication.publishedVersion, 2);
+  assert.equal(validation.bundle.releases.length, 3);
+  assert.equal(validation.bundle.publication.publishedVersion, 3);
   assert.ok(validation.bundle.draft.wordLists
     .filter((list) => list.id.startsWith('statutory-'))
     .every((list) => list.spellingPool === 'core'));
@@ -164,10 +164,10 @@ test('seeded spelling content validates and round-trips through the portable exp
   const exported = content.exportPortable();
   const roundTripped = extractPortableSpellingContent(exported);
   assert.equal(roundTripped.draft.words.length, validation.bundle.draft.words.length);
-  assert.equal(roundTripped.releases.at(-1).version, 2);
+  assert.equal(roundTripped.releases.at(-1).version, 3);
 });
 
-test('seeded spelling content includes the initial Extra expansion in the current release only', () => {
+test('seeded spelling content includes the Extra expansion and current word-family variants', () => {
   const validation = validateSpellingContentBundle(SEEDED_SPELLING_CONTENT_BUNDLE);
   assert.equal(validation.ok, true);
 
@@ -191,6 +191,20 @@ test('seeded spelling content includes the initial Extra expansion in the curren
   assert.equal(runtimeWord.year, 'extra');
   assert.deepEqual(runtimeWord.accepted, ['mollusc']);
   assert.equal(runtimeWord.accepted.includes('mollusk'), false);
+
+  const divide = currentRelease.snapshot.wordBySlug.divide;
+  assert.deepEqual(divide.familyWords, ['divide', 'division', 'divisible']);
+  assert.equal(divide.variants[0].word, 'division');
+  assert.deepEqual(divide.variants[0].accepted, ['division']);
+  assert.equal(divide.variants[0].explanation, 'Division is the act of splitting something into parts or groups.');
+  assert.equal(divide.variants[0].sentence, 'The division of the class into teams was fair.');
+  assert.equal(divide.variants[1].word, 'divisible');
+  assert.equal(divide.variants[1].explanation, 'Divisible means able to be divided exactly by a number.');
+  const currentExtraWords = currentRelease.snapshot.words.filter((word) => word.spellingPool === 'extra');
+  const variantCount = currentExtraWords.reduce((total, word) => total + (word.variants?.length || 0), 0);
+  assert.equal(currentRelease.snapshot.words.filter((word) => word.spellingPool === 'extra').length, 22);
+  assert.equal(variantCount, 30);
+  assert.ok(currentExtraWords.every((word) => (word.variants || []).every((variant) => variant.explanation && variant.sentence)));
 });
 
 test('extra spelling pool validates without statutory year groups and publishes as Extra runtime words', () => {
@@ -227,6 +241,21 @@ test('validation catches spelling-pool mismatches between word lists and words',
   assert.ok(validation.errors.some((issue) => issue.code === 'pool_mismatch'));
 });
 
+test('validation keeps word-family variants out of the core pool', () => {
+  const broken = cloneSerialisable(SEEDED_SPELLING_CONTENT_BUNDLE);
+  const coreWord = broken.draft.words.find((word) => word.slug === 'possess');
+  coreWord.variants = [{
+    word: 'possession',
+    accepted: ['possession'],
+    explanation: 'A possession is something that belongs to someone.',
+    sentenceEntryIds: coreWord.sentenceEntryIds.slice(0, 1),
+  }];
+
+  const validation = validateSpellingContentBundle(broken);
+  assert.equal(validation.ok, false);
+  assert.ok(validation.errors.some((issue) => issue.code === 'core_variants_not_supported'));
+});
+
 test('validation catches duplicate words and broken sentence references', () => {
   const broken = cloneSerialisable(SEEDED_SPELLING_CONTENT_BUNDLE);
   broken.draft.words.push(cloneSerialisable(broken.draft.words[0]));
@@ -252,12 +281,16 @@ test('validation requires learner-facing word explanations in draft and publishe
   const broken = cloneSerialisable(SEEDED_SPELLING_CONTENT_BUNDLE);
   broken.draft.words[0].explanation = '';
   broken.releases[0].snapshot.words[0].explanation = '';
+  broken.draft.words.find((word) => word.slug === 'divide').variants[0].explanation = '';
+  broken.releases.at(-1).snapshot.wordBySlug.divide.variants[0].explanation = '';
+  broken.releases.at(-1).snapshot.words.find((word) => word.slug === 'divide').variants[0].explanation = '';
 
   const validation = validateSpellingContentBundle(broken);
   assert.equal(validation.ok, false);
-  assert.equal(validation.errors.filter((issue) => issue.code === 'missing_word_explanation').length, 2);
+  assert.equal(validation.errors.filter((issue) => issue.code === 'missing_word_explanation').length, 4);
   assert.ok(validation.errors.some((issue) => issue.path === 'draft.words[0].explanation'));
   assert.ok(validation.errors.some((issue) => issue.path === 'releases[0].snapshot.words[0].explanation'));
+  assert.ok(validation.errors.some((issue) => issue.path.includes('variants[0].explanation')));
 });
 
 test('content service backfills seeded explanations for legacy stored bundles', () => {

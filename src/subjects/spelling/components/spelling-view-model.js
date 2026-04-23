@@ -198,6 +198,7 @@ export function spellingPoolContextLabel(word) {
 
 export function wordMatchesSearch(word, query) {
   if (!query) return true;
+  const variants = Array.isArray(word.variants) ? word.variants : [];
   const fields = [
     word.slug,
     word.word,
@@ -206,6 +207,14 @@ export function wordMatchesSearch(word, query) {
     spellingPoolLabel(word),
     word.explanation,
     ...(Array.isArray(word.accepted) ? word.accepted : []),
+    ...(Array.isArray(word.familyWords) ? word.familyWords : []),
+    ...variants.flatMap((variant) => [
+      variant?.word,
+      variant?.explanation,
+      variant?.sentence,
+      ...(Array.isArray(variant?.accepted) ? variant.accepted : []),
+      ...(Array.isArray(variant?.sentences) ? variant.sentences : []),
+    ]),
   ].map(normaliseSearchText);
   return fields.some((field) => field.includes(query));
 }
