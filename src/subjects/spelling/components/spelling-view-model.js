@@ -43,6 +43,14 @@ const SPELLING_HERO_REGIONS = Object.freeze({
   test: Object.freeze(['e']),
 });
 const SPELLING_HERO_TONES = Object.freeze(['1', '2', '3']);
+const CONTRAST_DARK = 'dark';
+const CONTRAST_LIGHT = 'light';
+const SPELLING_HERO_CONTRAST_BY_TONE = Object.freeze({
+  1: Object.freeze({ shell: CONTRAST_DARK, controls: CONTRAST_DARK, cards: Object.freeze([CONTRAST_DARK, CONTRAST_DARK, CONTRAST_DARK]) }),
+  2: Object.freeze({ shell: CONTRAST_DARK, controls: CONTRAST_DARK, cards: Object.freeze([CONTRAST_DARK, CONTRAST_DARK, CONTRAST_LIGHT]) }),
+  3: Object.freeze({ shell: CONTRAST_DARK, controls: CONTRAST_DARK, cards: Object.freeze([CONTRAST_DARK, CONTRAST_LIGHT, CONTRAST_LIGHT]) }),
+});
+const SPELLING_HERO_MODE_INDEX = Object.freeze({ smart: 0, trouble: 1, test: 2 });
 export const SPELLING_HERO_BACKGROUNDS = Object.freeze({
   smart: Object.freeze(SPELLING_HERO_REGIONS.smart.flatMap((region) => SPELLING_HERO_TONES.map((tone) => spellingHeroUrl(`${region}${tone}`)))),
   trouble: Object.freeze(SPELLING_HERO_REGIONS.trouble.flatMap((region) => SPELLING_HERO_TONES.map((tone) => spellingHeroUrl(`${region}${tone}`)))),
@@ -101,6 +109,22 @@ export function heroBgPreloadUrls(learnerId, prefs = {}) {
   const setupUrls = modes.map((mode) => heroBgForMode(mode, learnerId));
   const sessionUrl = heroBgForMode(prefs?.mode || 'smart', learnerId, { tone: '1' });
   return [...new Set([...setupUrls, sessionUrl].filter(Boolean))];
+}
+
+export function heroContrastProfileForBg(url, mode = 'smart') {
+  const variant = String(url || '').match(/the-scribe-downs-([a-e])([1-3])\.1280\.webp(?:$|[?#])/);
+  if (!variant) return null;
+  const base = SPELLING_HERO_CONTRAST_BY_TONE[variant[2]];
+  if (!base) return null;
+  const selectedIndex = SPELLING_HERO_MODE_INDEX[spellingHeroMode(mode)];
+  const cards = base.cards.map((tone, index) => (
+    index === selectedIndex ? CONTRAST_DARK : tone
+  ));
+  return {
+    shell: base.shell,
+    controls: base.controls,
+    cards,
+  };
 }
 
 export function heroBgStyle(url) {
