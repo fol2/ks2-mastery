@@ -5196,6 +5196,7 @@ textarea:focus-visible {
    used across the Codex Journal design. */
 .subject-entry-shell {
   --subject-entry-distance: 18px;
+  --subject-exit-distance: 16px;
 }
 .subject-entry-content {
   animation: subject-entry-content-in 420ms var(--ease-out) both;
@@ -5204,6 +5205,17 @@ textarea:focus-visible {
 }
 .subject-entry-content > .subject-breadcrumb {
   animation: subject-entry-breadcrumb-in 320ms var(--ease-out) 80ms both;
+}
+.subject-exit-shell .subject-entry-content {
+  animation: subject-exit-content-out 220ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+.subject-exit-shell .subject-entry-content > .subject-breadcrumb {
+  animation: subject-exit-breadcrumb-out 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+.home-entry-shell {
+  animation: home-dashboard-enter 420ms var(--ease-out) both;
+  transform-origin: 50% 24px;
+  will-change: opacity, transform;
 }
 @keyframes subject-entry-content-in {
   from {
@@ -5223,6 +5235,36 @@ textarea:focus-visible {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+@keyframes subject-exit-content-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(var(--subject-exit-distance)) scale(0.985);
+  }
+}
+@keyframes subject-exit-breadcrumb-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes home-dashboard-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 .subject-breadcrumb {
@@ -5273,8 +5315,11 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 @media (prefers-reduced-motion: reduce) {
+  .home-entry-shell,
   .subject-entry-content,
-  .subject-entry-content > .subject-breadcrumb {
+  .subject-entry-content > .subject-breadcrumb,
+  .subject-exit-shell .subject-entry-content,
+  .subject-exit-shell .subject-entry-content > .subject-breadcrumb {
     animation: none !important;
   }
 }

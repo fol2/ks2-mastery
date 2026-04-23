@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { HomeSurface } from '../surfaces/home/HomeSurface.jsx';
 import { CodexSurface } from '../surfaces/home/CodexSurface.jsx';
 import { TopNav } from '../surfaces/shell/TopNav.jsx';
@@ -20,6 +20,14 @@ const REACT_ROUTES = new Set([
   'parent-hub',
   'admin-hub',
 ]);
+
+const SUBJECT_HOME_EXIT_MS = 220;
+
+function prefersReducedMotion() {
+  return typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 function SharedOverlays({ appState, actions }) {
   return (
@@ -75,18 +83,68 @@ export function App({ controller, runtime }) {
   const screen = appState.route?.screen || 'dashboard';
   const routedSubjectId = appState.route?.subjectId || 'spelling';
   const context = runtime.contextFor(routedSubjectId);
-  const actions = useMemo(() => runtime.buildSurfaceActions(), [runtime]);
+  const baseActions = useMemo(() => runtime.buildSurfaceActions(), [runtime]);
+  const [subjectExitPhase, setSubjectExitPhase] = useState('idle');
+  const subjectExitTimer = useRef(null);
+
+  const clearSubjectExitTimer = useCallback(() => {
+    if (subjectExitTimer.current) {
+      clearTimeout(subjectExitTimer.current);
+      subjectExitTimer.current = null;
+    }
+  }, []);
+
+  const navigateHome = useCallback(() => {
+    if (screen === 'subject' && subjectExitPhase === 'idle' && !prefersReducedMotion()) {
+      setSubjectExitPhase('leaving');
+      clearSubjectExitTimer();
+      subjectExitTimer.current = setTimeout(() => {
+        subjectExitTimer.current = null;
+        baseActions.navigateHome();
+        setSubjectExitPhase('idle');
+      }, SUBJECT_HOME_EXIT_MS);
+      return;
+    }
+
+    clearSubjectExitTimer();
+    setSubjectExitPhase('idle');
+    baseActions.navigateHome();
+  }, [baseActions, clearSubjectExitTimer, screen, subjectExitPhase]);
+
+  const actions = useMemo(() => ({
+    ...baseActions,
+    navigateHome,
+  }), [baseActions, navigateHome]);
+
+  useEffect(() => clearSubjectExitTimer, [clearSubjectExitTimer]);
+
+  useLayoutEffect(() => {
+    if (screen !== 'subject' && subjectExitPhase !== 'idle') {
+      clearSubjectExitTimer();
+      setSubjectExitPhase('idle');
+    }
+  }, [clearSubjectExitTimer, screen, subjectExitPhase]);
 
   useLayoutEffect(() => {
     runtime.afterRender?.(appState);
   }, [appState, runtime]);
+
+  const subjectShellClassName = [
+    'app-shell',
+    'subject-entry-shell',
+    subjectExitPhase === 'leaving' ? 'subject-exit-shell' : '',
+  ].filter(Boolean).join(' ');
 
   return (
     <ErrorBoundary>
       {screen === 'dashboard' && (
         <>
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
-          <HomeSurface model={runtime.buildHomeModel(appState, context)} actions={actions} />
+          <HomeSurface
+            model={runtime.buildHomeModel(appState, context)}
+            actions={actions}
+            shellClassName="app-shell home-entry-shell"
+          />
           <SharedOverlays appState={appState} actions={actions} />
         </>
       )}
@@ -100,7 +158,7 @@ export function App({ controller, runtime }) {
       )}
 
       {screen === 'subject' && (
-        <div className="app-shell subject-entry-shell">
+        <div className={subjectShellClassName}>
           <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
           <SubjectRoute key={routedSubjectId} appState={appState} context={context} actions={actions} />
