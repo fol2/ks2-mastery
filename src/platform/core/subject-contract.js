@@ -6,10 +6,9 @@ const REQUIRED_FUNCTION_FIELDS = [
 ];
 const REACT_PRACTICE_FIELDS = ['PracticeComponent', 'renderPracticeComponent'];
 
-function hasPracticeRenderer(candidate) {
+function hasReactPracticeRenderer(candidate) {
   if (candidate.reactPractice === true) return true;
-  return REACT_PRACTICE_FIELDS.some((field) => typeof candidate[field] === 'function')
-    || typeof candidate.renderPractice === 'function';
+  return REACT_PRACTICE_FIELDS.some((field) => typeof candidate[field] === 'function');
 }
 
 function describeCandidate(candidate) {
@@ -37,8 +36,12 @@ export function validateSubjectModule(candidate) {
     }
   }
 
-  if (!hasPracticeRenderer(candidate)) {
-    throw new TypeError(`${label} is missing required React practice component or legacy "renderPractice()" renderer.`);
+  if (typeof candidate.renderPractice === 'function') {
+    throw new TypeError(`${label} uses retired legacy "renderPractice()" rendering. Use "PracticeComponent", "renderPracticeComponent()", or an explicit React practice mapping.`);
+  }
+
+  if (!hasReactPracticeRenderer(candidate)) {
+    throw new TypeError(`${label} is missing required React practice component or explicit React practice mapping.`);
   }
 
   if ('available' in candidate && typeof candidate.available !== 'boolean') {

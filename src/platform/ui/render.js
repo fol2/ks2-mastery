@@ -328,36 +328,25 @@ function subjectRenderFallback(subject, runtimeEntry, activeTab) {
   `;
 }
 
-function subjectTabContent(subject, activeTab, appState, contentContext, runtimeEntry) {
+function subjectTabContent(subject, activeTab, runtimeEntry) {
   if (runtimeEntry) {
     const fallback = subjectRenderFallback(subject, runtimeEntry, activeTab);
     return fallback;
   }
-  /* renderSubjectScreen pins activeTab to 'practice' after the Codex Journal
-     redesign. The practice renderer internally routes between setup /
-     session / summary / word-bank phases, so every subject surface flows
-     through this single entry point. */
-  return subject.renderPractice(contentContext);
-}
-
-function subjectPracticeRenderMethodName(subject) {
-  if (typeof subject.renderPractice === 'function') return 'renderPractice';
-  if (typeof subject.renderPracticeComponent === 'function') return 'renderPracticeComponent';
-  if (typeof subject.PracticeComponent === 'function' || subject.reactPractice === true) return 'PracticeComponent';
-  return 'renderPractice';
+  return `
+    <section class="card border-top" style="border-top-color:${escapeHtml(subject.accent || '#3E6FA8')};">
+      <div class="eyebrow">React subject route</div>
+      <h2 class="section-title">${escapeHtml(subject.name)} is rendered by React</h2>
+      <p class="subtitle">The static compatibility renderer no longer builds subject practice markup. The browser shell mounts the React App route for this subject.</p>
+      <div id="subject-route-root" data-subject-react-route="true" data-subject-id="${escapeHtml(subject.id)}"></div>
+    </section>
+  `;
 }
 
 
 function renderHeader(appState, context) {
   const routeScreen = appState.route?.screen || 'dashboard';
-  /* Subject route reuses the home TopNav React component. We emit an empty
-     mount node; main.js#mountReactSurfaces renders the component into it.
-     Adult hubs (parent-hub / admin-hub) stay on the legacy template header
-     for now — they still expose the Dashboard / Operations / Parent Hub pill
-     row which the learner-facing TopNav does not. */
-  if (routeScreen === 'subject') {
-    return `<div id="subject-topnav-root" data-subject-topnav-mount="true"></div>`;
-  }
+  if (routeScreen === 'subject') return '';
   const auth = globalThis.KS2_AUTH_SESSION || {};
   const authChip = auth.signedIn
     ? `<span class="profile-signed-in" title="${escapeHtml(auth.email || 'Signed in')}">${escapeHtml(auth.email || 'Signed in')}</span><button type="button" class="topnav-link" data-action="platform-logout">Sign out</button>`
@@ -791,12 +780,9 @@ function renderArchitectureStrip() {
       <article class="card">
         <div class="eyebrow">Subject contract</div>
         <h2 class="section-title">Module per subject</h2>
-        <div class="code-block">renderPractice()
-renderAnalytics()
-renderProfiles()
-renderSettings()
-renderMethod()
-handleAction()</div>
+        <div class="code-block">PracticeComponent
+	renderPracticeComponent()
+	handleAction()</div>
       </article>
       <article class="card">
         <div class="eyebrow">Learning engine boundary</div>
@@ -1179,7 +1165,6 @@ export function renderSubjectScreen(context) {
      manages internal phases via `ui.phase`. Analytics / Profiles / Settings
      / Method tabs have been retired so the top-level tab row is gone. */
   const activeTab = 'practice';
-  const contentContext = subjectContext(subject, context);
   const runtimeEntry = context.runtimeBoundary?.read?.({
     learnerId: appState.learners.selectedId,
     subjectId: subject.id,
@@ -1188,26 +1173,9 @@ export function renderSubjectScreen(context) {
 
   let mainContent = '';
   if (runtimeEntry) {
-    mainContent = subjectTabContent(subject, activeTab, appState, contentContext, runtimeEntry);
+    mainContent = subjectTabContent(subject, activeTab, runtimeEntry);
   } else {
-    try {
-      mainContent = subjectTabContent(subject, activeTab, appState, contentContext, null);
-    } catch (error) {
-      const captured = context.runtimeBoundary?.capture?.({
-        learnerId: appState.learners.selectedId,
-        subject,
-        tab: activeTab,
-        phase: 'render',
-        methodName: subjectPracticeRenderMethodName(subject),
-        error,
-      }) || {
-        message: `${subject.name} could not render right now.`,
-        debugMessage: error?.message || String(error),
-        phase: 'render',
-        methodName: subjectPracticeRenderMethodName(subject),
-      };
-      mainContent = subjectTabContent(subject, activeTab, appState, contentContext, captured);
-    }
+    mainContent = subjectTabContent(subject, activeTab, null);
   }
 
   /* Slim chrome — one breadcrumb row that says "← Dashboard / {subject}".
