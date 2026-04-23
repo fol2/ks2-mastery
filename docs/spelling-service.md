@@ -49,6 +49,31 @@ Every state transition returns the same shape:
 
 `events` are domain events from the spelling service. The service does not mutate the reward layer directly.
 
+## Worker command runtime
+
+The full-lockdown runtime adds a server-owned Spelling command path through `POST /api/subjects/spelling/command`.
+
+Supported commands are:
+
+- `start-session`
+- `submit-answer`
+- `continue-session`
+- `skip-word`
+- `end-session`
+- `save-prefs`
+- `reset-learner`
+
+The Worker command handler owns the durable mutation. It reads the current learner Spelling subject record, resolves the published content snapshot, applies the Spelling transition, and persists:
+
+- normalised subject UI state
+- Spelling subject data (`prefs` and durable `progress`)
+- active, completed, or abandoned practice-session records
+- emitted Spelling domain events
+
+Each command still goes through the generic learner mutation policy, so request idempotency, stale revision checks, same-origin validation, demo expiry, and learner write access are enforced before the runtime writes. Command responses include an authoritative read model for React to render; React should not recompute scoring, word selection, retry/correction state, or progress mutation once it is migrated to this path.
+
+Active sessions from the browser-owned path are treated as stale for submit/continue commands and are replaced by new Worker-owned sessions on the next `start-session`. Durable progress and completed session history are kept.
+
 ## Persisted subject-state invariants
 
 The spelling subject state is JSON-serialisable and versioned.

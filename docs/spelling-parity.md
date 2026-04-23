@@ -100,6 +100,17 @@ The Extra spelling expansion is outside the original statutory baseline.
 - Extra can opt into word-family variant prompts from the setup screen; variants carry their own explanations and sentences, but share the base Extra word's progress and secure state, so the Extra pool still counts the 22 base words
 - the first 22-word Extra release cannot naturally reach every Vellhorn stage under the 100-word direct-monster thresholds; mature Vellhorn rendering is covered by synthetic render fixtures only
 
+## Full lockdown U3 server-runtime update
+
+The first Worker-owned Spelling runtime is now available behind the generic subject command boundary.
+
+- `POST /api/subjects/spelling/command` can start, submit, continue, skip, end, save preferences, and reset Spelling state for an authorised learner.
+- The Worker command path reads published Spelling content, applies the same deterministic selection/scoring/progression contract as the current reference service, persists subject UI/data, active/completed practice sessions, and domain events inside the learner mutation boundary.
+- Active sessions created by the old browser-owned path are abandoned when a new Worker-owned Spelling session starts, while durable progress and completed-session history remain readable.
+- Command responses carry an authoritative Spelling read model, including live session state, feedback, summary, stats, analytics, content release metadata, and any audio cue metadata needed by later TTS lockdown work.
+
+This does not yet mean the production React bundle is locked down. The browser still uses the existing Spelling service until the U6 React command-client migration removes that production import path, and the U8 bundle audit is still required before making the strongest public claim.
+
 ## Still not directly verified in this pass
 
 1. Exact browser playback timing and warm-up behaviour for old provider-backed TTS paths.

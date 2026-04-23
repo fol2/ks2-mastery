@@ -1,4 +1,5 @@
 import { NotFoundError } from '../errors.js';
+import { createSpellingCommandHandlers } from './spelling/commands.js';
 
 function handlerFor(handlers, subjectId, command) {
   const subjectHandlers = handlers?.[subjectId];
@@ -28,6 +29,11 @@ export function createSubjectRuntime({ handlers = {} } = {}) {
   };
 }
 
-export function createWorkerSubjectRuntime() {
-  return createSubjectRuntime();
+export function createWorkerSubjectRuntime(options = {}) {
+  return createSubjectRuntime({
+    handlers: {
+      spelling: createSpellingCommandHandlers(options.spelling || {}),
+      ...(options.handlers || {}),
+    },
+  });
 }

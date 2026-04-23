@@ -842,6 +842,151 @@ async function bootstrapBundle(db, accountId) {
   };
 }
 
+async function readSubjectRuntimeBundle(db, accountId, learnerId, subjectId = 'spelling') {
+  await requireLearnerWriteAccess(db, accountId, learnerId);
+  const row = await first(db, `
+    SELECT learner_id, subject_id, ui_json, data_json, updated_at
+    FROM child_subject_state
+    WHERE learner_id = ? AND subject_id = ?
+  `, [learnerId, subjectId]);
+  const latestSession = await first(db, `
+    SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+    FROM practice_sessions
+    WHERE learner_id = ? AND subject_id = ?
+    ORDER BY updated_at DESC, id DESC
+    LIMIT 1
+  `, [learnerId, subjectId]);
+  return {
+    subjectRecord: row ? subjectStateRowToRecord(row) : normaliseSubjectStateRecord({}),
+    latestSession: latestSession ? practiceSessionRowToRecord(latestSession) : null,
+  };
+}
+
+async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, runtime, nowTs) {
+  const nextState = normaliseSubjectStateRecord({
+    ui: runtime?.state || null,
+    data: runtime?.data || {},
+    updatedAt: nowTs,
+  });
+
+  await run(db, `
+    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(learner_id, subject_id) DO UPDATE SET
+      ui_json = excluded.ui_json,
+      data_json = excluded.data_json,
+      updated_at = excluded.updated_at,
+      updated_by_account_id = excluded.updated_by_account_id
+  `, [
+    learnerId,
+    subjectId,
+    JSON.stringify(nextState.ui),
+    JSON.stringify(nextState.data),
+    nowTs,
+    accountId,
+  ]);
+
+  const session = runtime?.practiceSession
+    ? normalisePracticeSessionRecord(runtime.practiceSession)
+    : null;
+  if (session?.id && session.learnerId === learnerId && session.subjectId === subjectId) {
+    if (session.status === 'active') {
+      await run(db, `
+        UPDATE practice_sessions
+        SET status = 'abandoned',
+            updated_at = ?,
+            updated_by_account_id = ?
+        WHERE learner_id = ?
+          AND subject_id = ?
+          AND status = 'active'
+          AND id <> ?
+      `, [nowTs, accountId, learnerId, subjectId, session.id]);
+    }
+
+    const createdAt = asTs(session.createdAt, nowTs);
+    const updatedAt = asTs(session.updatedAt, nowTs);
+    await run(db, `
+      INSERT INTO practice_sessions (
+        id,
+        learner_id,
+        subject_id,
+        session_kind,
+        status,
+        session_state_json,
+        summary_json,
+        created_at,
+        updated_at,
+        updated_by_account_id
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        learner_id = excluded.learner_id,
+        subject_id = excluded.subject_id,
+        session_kind = excluded.session_kind,
+        status = excluded.status,
+        session_state_json = excluded.session_state_json,
+        summary_json = excluded.summary_json,
+        created_at = excluded.created_at,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, [
+      session.id,
+      learnerId,
+      subjectId,
+      session.sessionKind,
+      session.status,
+      session.sessionState == null ? null : JSON.stringify(session.sessionState),
+      session.summary == null ? null : JSON.stringify(session.summary),
+      createdAt,
+      updatedAt,
+      accountId,
+    ]);
+  }
+
+  const events = Array.isArray(runtime?.events) ? runtime.events : [];
+  for (const rawEvent of events) {
+    const event = cloneSerialisable(rawEvent) || null;
+    if (!event || typeof event !== 'object' || Array.isArray(event)) continue;
+    const id = typeof event.id === 'string' && event.id ? event.id : uid('event');
+    const createdAt = asTs(event.createdAt, nowTs);
+    const eventType = typeof event.type === 'string' && event.type
+      ? event.type
+      : (typeof event.kind === 'string' && event.kind ? event.kind : 'event');
+    event.id = id;
+    event.learnerId = event.learnerId || learnerId;
+    event.subjectId = event.subjectId || subjectId;
+    event.createdAt = createdAt;
+    await run(db, `
+      INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        learner_id = excluded.learner_id,
+        subject_id = excluded.subject_id,
+        system_id = excluded.system_id,
+        event_type = excluded.event_type,
+        event_json = excluded.event_json,
+        created_at = excluded.created_at,
+        actor_account_id = excluded.actor_account_id
+    `, [
+      id,
+      event.learnerId,
+      event.subjectId || null,
+      event.systemId || null,
+      eventType,
+      JSON.stringify(event),
+      createdAt,
+      accountId,
+    ]);
+  }
+
+  return {
+    key: `${learnerId || 'default'}::${subjectId || 'unknown'}`,
+    record: nextState,
+    practiceSession: session,
+    eventCount: events.length,
+  };
+}
+
 async function writeLearnersSnapshot(db, accountId, snapshot, nowTs) {
   const next = normaliseLearnersSnapshot(snapshot);
   const currentRows = await listMembershipRows(db, accountId, { writableOnly: true });
@@ -1147,6 +1292,12 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
     },
     async bootstrap(accountId) {
       return bootstrapBundle(db, accountId);
+    },
+    async readSubjectRuntime(accountId, learnerId, subjectId = 'spelling') {
+      return readSubjectRuntimeBundle(db, accountId, learnerId, subjectId);
+    },
+    async persistSubjectRuntime(accountId, learnerId, subjectId = 'spelling', runtime = {}) {
+      return persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, runtime, nowFactory());
     },
     async writeLearners(accountId, snapshot, mutation = {}) {
       const nowTs = nowFactory();

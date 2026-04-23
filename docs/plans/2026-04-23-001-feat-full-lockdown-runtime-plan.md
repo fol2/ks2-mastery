@@ -387,7 +387,7 @@ flowchart TB
 
 ---
 
-- [ ] U3. **Server-Native Spelling Engine With Parity Harness**
+- [x] U3. **Server-Native Spelling Engine With Parity Harness**
 
 **Goal:** Implement English Spelling as the first Worker-owned subject engine while proving behavioural parity with current Spelling logic under deterministic fixtures.
 
