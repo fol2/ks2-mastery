@@ -678,7 +678,7 @@ flowchart TB
 
 ---
 
-- [ ] U8. **Bundle Audit, Documentation, and Rollout Evidence**
+- [x] U8. **Bundle Audit, Documentation, and Rollout Evidence**
 
 **Goal:** Add enforceable local and production evidence that the production app no longer ships forbidden runtime logic, then update docs/runbooks for the new claim.
 

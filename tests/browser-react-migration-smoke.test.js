@@ -17,7 +17,7 @@ function resolveBrowseBinary() {
 }
 
 async function startServerProcess() {
-  const child = spawn(process.execPath, ['./tests/helpers/browser-app-server.js', '--serve-only', '--port', '0'], {
+  const child = spawn(process.execPath, ['./tests/helpers/browser-app-server.js', '--serve-only', '--port', '0', '--with-worker-api'], {
     cwd: rootDir,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -69,7 +69,7 @@ test('browser migration smoke covers the React app root and spelling interaction
   try {
     const output = browseChain(binary, [
       ['viewport', '390x844'],
-      ['goto', `${server.origin}/?local=1`],
+      ['goto', `${server.origin}/demo`],
       ['text'],
       ['html'],
       ['js', "document.querySelector('[data-action=\"open-subject\"][data-subject-id=\"spelling\"]')?.click(); 'opened spelling';"],

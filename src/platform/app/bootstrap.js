@@ -1,4 +1,4 @@
-import { createApiPlatformRepositories } from '../core/repositories/index.js';
+import { createApiPlatformRepositories } from '../core/repositories/api.js';
 import { normalisePlatformRole } from '../access/roles.js';
 
 const LOCAL_CODEX_REVIEW_LEARNER_ID = 'local-codex-egg-review';

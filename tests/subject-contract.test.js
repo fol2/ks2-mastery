@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { buildSubjectRegistry } from '../src/platform/core/subject-registry.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createStore } from '../src/platform/core/store.js';
+import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import { spellingModule } from '../src/subjects/spelling/module.js';
 import { renderSpellingSurfaceFixture } from './helpers/react-render.js';
 
@@ -97,7 +98,8 @@ test('subject registry rejects duplicate subject ids', () => {
 });
 
 test('store rejects subject modules whose initState does not return an object', () => {
-  installMemoryStorage();
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
   const broken = completeSubjectModule({
     id: 'broken',
     initState() {
@@ -106,7 +108,7 @@ test('store rejects subject modules whose initState does not return an object', 
   });
 
   assert.throws(
-    () => createStore([broken]),
+    () => createStore([broken], { repositories }),
     /initState\(\) must return an object/i,
   );
 });

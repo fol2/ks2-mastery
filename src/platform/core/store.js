@@ -1,12 +1,11 @@
 import { uid } from './utils.js';
 import { buildSubjectRegistry } from './subject-contract.js';
+import { validatePlatformRepositories } from './repositories/contract.js';
+import { normaliseLearnersSnapshot } from './repositories/helpers.js';
 import {
-  createLocalPlatformRepositories,
   defaultPersistenceSnapshot,
-  normaliseLearnersSnapshot,
   normalisePersistenceSnapshot,
-  validatePlatformRepositories,
-} from './repositories/index.js';
+} from './repositories/persistence.js';
 import {
   emptyMonsterCelebrations,
   normaliseMonsterCelebrationEvents,
@@ -269,7 +268,7 @@ function subjectUiForLearner(registry, repositories, learnerId) {
 
 export function createStore(subjects, { repositories, cacheSubjectUiWrites = false } = {}) {
   const registry = buildSubjectRegistry(subjects);
-  const resolvedRepositories = validatePlatformRepositories(repositories || createLocalPlatformRepositories());
+  const resolvedRepositories = validatePlatformRepositories(repositories);
   let state = sanitiseState(stateFromRepositories(registry, resolvedRepositories), registry);
   const listeners = new Set();
 

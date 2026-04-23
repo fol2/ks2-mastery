@@ -19,13 +19,7 @@ function buildSpeechTranscript({ word, sentence, wordOnly = false } = {}) {
 }
 
 function shouldUseRemoteTts() {
-  if (typeof window === 'undefined') return false;
-  try {
-    const url = new URL(window.location.href);
-    return url.searchParams.get('local') !== '1';
-  } catch {
-    return true;
-  }
+  return typeof window !== 'undefined';
 }
 
 function resolveProvider(provider) {

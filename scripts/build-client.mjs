@@ -1,13 +1,13 @@
 import { build } from 'esbuild';
 import path from 'node:path';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 
 const rootDir = process.cwd();
 const outputDir = path.join(rootDir, 'src', 'bundles');
 
 await mkdir(outputDir, { recursive: true });
 
-await build({
+const result = await build({
   entryPoints: [path.join(rootDir, 'src/app/entry.jsx')],
   outfile: path.join(outputDir, 'app.bundle.js'),
   bundle: true,
@@ -18,8 +18,14 @@ await build({
   loader: { '.js': 'jsx' },
   minify: true,
   sourcemap: false,
+  metafile: true,
   define: {
     'process.env.NODE_ENV': '"production"',
   },
   logLevel: 'info',
 });
+
+await writeFile(
+  path.join(outputDir, 'app.bundle.meta.json'),
+  `${JSON.stringify(result.metafile, null, 2)}\n`,
+);

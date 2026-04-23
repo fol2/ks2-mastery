@@ -45,6 +45,18 @@ The platform does **not** try to merge separate learner records independently ye
 If two clients touch different learner-scoped collections for the same learner at the same time, they still compete on the same learner revision.
 That is simpler, explicit, and safe for the current MVP.
 
+### Subject command scope
+
+Production subject practice uses learner scope through the Worker command boundary:
+
+```txt
+POST /api/subjects/:subjectId/command
+```
+
+The command payload carries `learnerId`, `requestId`, `correlationId`, and `expectedLearnerRevision`. The Worker validates the active session, learner membership, demo expiry, subject id, command type, stale revision, and idempotency receipt before running the subject command.
+
+For Spelling, one command response can include updated subject UI/data, active or completed practice-session state, appended events, reward projections, and a read model for React. The browser should treat that returned read model as authoritative rather than recomputing scoring, queue selection, progress mutation, or reward state.
+
 ## Mutation envelope
 
 Every write route now requires mutation metadata.
@@ -177,13 +189,33 @@ Conflict rule:
 - learner-scoped compare-and-swap
 - duplicate append retries rely on request-receipt replay instead of re-appending
 
+### Subject commands
+
+Mutation style:
+
+- explicit subject command with a typed command name and payload
+- Worker-owned validation, transition, persistence, and read-model response
+- no browser-local engine fallback in production
+
+Conflict rule:
+
+- learner-scoped compare-and-swap
+- request-receipt replay for identical retries
+- stale command requests return `409 stale_write`
+
+Demo rule:
+
+- demo commands are allowed only while the demo account is non-expired
+- expired demo sessions fail closed before the command reaches subject runtime code
+
 ### Resets, imports, and destructive actions
 
 Current rule set:
 
 - learner list replacement / learner removal / selected learner changes are **account-scoped** mutations
 - learner-scoped clears (`subject state`, `practice sessions`, `game state`, `event log`) are **learner-scoped** mutations
-- import currently behaves like ordinary repository writes from the browser side
+- subject practice mutations are **learner-scoped subject commands**
+- retained import, content, profile, and reset routes must stay explicit operator/platform flows rather than subject runtime escape hatches
 - the backend does **not** have a special import merge mode
 
 That means destructive actions still obey the same explicit revision rules instead of bypassing the safety layer.

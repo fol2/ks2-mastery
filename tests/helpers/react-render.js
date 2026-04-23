@@ -166,7 +166,7 @@ export function renderSubjectRouteFixture({ subject = 'placeholder' } = {}) {
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
     import { SubjectRoute } from ${JSON.stringify(absoluteSpecifier('src/surfaces/subject/SubjectRoute.jsx'))};
-    import { createAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-app-controller.js'))};
+    import { createLocalAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-local-app-controller.js'))};
     import { SUBJECTS } from ${JSON.stringify(absoluteSpecifier('src/platform/core/subject-registry.js'))};
     import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
     import { createExpansionFixtureHarness } from ${JSON.stringify(absoluteSpecifier('tests/helpers/expansion-fixture-subject.js'))};
@@ -187,7 +187,7 @@ export function renderSubjectRouteFixture({ subject = 'placeholder' } = {}) {
     const harness = selected === 'expansion'
       ? createExpansionFixtureHarness({ storage: globalThis.localStorage })
       : null;
-    const controller = harness || createAppController({
+    const controller = harness || createLocalAppController({
       subjects: selected === 'broken' ? [...SUBJECTS, brokenSubject] : SUBJECTS,
     });
     const subjectId = selected === 'expansion'

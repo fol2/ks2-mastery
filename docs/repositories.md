@@ -2,12 +2,9 @@
 
 ## Why this exists
 
-The important deployment boundary is not browser versus Worker.
+The original rebuild used the repository contract to make the backend boundary explicit instead of implied.
 
-It is local repository versus remote repository.
-
-The React browser shell, the shared store, the Spelling service, and the reward layer all talk to one repository-shaped interface.
-That keeps the browser reference build inspectable now while making the future backend boundary explicit instead of implied.
+For production full lockdown, the important boundary is now narrower: React may keep interaction state and cached read models, but production runtime authority sits behind Worker APIs. Local repositories remain available for Node tests, fixtures, and characterisation harnesses; they are not a product browser mode.
 
 ## Platform repository contract
 
@@ -184,11 +181,36 @@ Signed-in React shell rendering now consumes those Worker hub payloads through t
 The main repository bootstrap remains writable-only, so readable viewer learners stay in adult hub context instead of being merged into the subject runtime learner snapshot.
 Remote empty bootstrap is also treated honestly: local-reference mode may seed a convenience learner, but signed-in remote mode does not fabricate a default learner when the account has no writable membership.
 
+## Production runtime boundary
+
+Production subject practice no longer writes learner runtime state through broad browser-owned repository calls.
+
+Runtime practice goes through:
+
+```txt
+POST /api/subjects/:subjectId/command
+```
+
+The Worker validates auth, learner access, demo expiry, idempotency, and expected learner revision, then runs the subject command and returns an authoritative read model. For Spelling, this covers start, answer submission, continue, end, dashboard refresh, and Word Bank drill checks.
+
+Authorised read-only surfaces use Worker read models:
+
+```txt
+GET /api/hubs/parent?learnerId=...
+GET /api/hubs/admin?learnerId=...&requestId=...&auditLimit=...
+GET /api/subjects/spelling/word-bank
+GET /api/subjects/spelling/word-bank?slug=...
+```
+
+The API repository adapter may still support explicit platform, operator, import, content, and reset flows, but those retained routes must not become hidden subject-engine escape hatches for learner or demo practice.
+
 ## Save and sync semantics
 
 ### Local adapter
 
 `createLocalPlatformRepositories()` stores the generic collections in localStorage and migrates legacy PoC keys into the new generic repository shape on first load.
+
+The local adapter is a harness for Node tests, fixtures, and local characterisation work. It is not exposed through `?local=1` and should not be used as a production browser fallback.
 
 Write semantics are explicit:
 
