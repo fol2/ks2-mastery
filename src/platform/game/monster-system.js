@@ -29,7 +29,7 @@ function writeGameState(gameStateRepository, learnerId, state, systemId = DEFAUL
 }
 
 function countMastered(state, monsterId) {
-  return masteredList(state?.[monsterId]).length;
+  return masteredCount(state?.[monsterId]);
 }
 
 function isPlainObject(value) {
@@ -38,6 +38,13 @@ function isPlainObject(value) {
 
 function masteredList(entry) {
   return Array.isArray(entry?.mastered) ? entry.mastered.filter((slug) => typeof slug === 'string' && slug) : [];
+}
+
+function masteredCount(entry) {
+  const mastered = masteredList(entry);
+  if (mastered.length) return mastered.length;
+  const count = Number(entry?.masteredCount);
+  return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
 }
 
 function pickMonsterBranch(random = Math.random) {
@@ -129,7 +136,7 @@ export function ensureMonsterBranches(learnerId, gameStateRepository, options = 
 export function progressForMonster(state, monsterId) {
   if (monsterId === 'phaeton') return derivePhaeton(state);
   const entry = isPlainObject(state?.[monsterId]) ? state[monsterId] : { mastered: [], caught: false };
-  const mastered = masteredList(entry).length;
+  const mastered = masteredCount(entry);
   return {
     mastered,
     stage: stageFor(mastered),

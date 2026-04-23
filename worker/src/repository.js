@@ -69,6 +69,9 @@ const PUBLIC_EVENT_TYPES = new Set([
   'reward.monster',
   'platform.practice-streak-hit',
 ]);
+const PUBLIC_MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
+const PUBLIC_MONSTER_IDS = new Set(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']);
+const PUBLIC_MONSTER_BRANCHES = new Set(['b1', 'b2']);
 const PUBLIC_EVENT_TEXT_ENUMS = {
   mode: new Set(['smart', 'trouble', 'single', 'test']),
   sessionType: new Set(['learning', 'test']),
@@ -204,6 +207,37 @@ function learnerRowToRecord(row) {
 
 function gameStateRowToRecord(row) {
   return cloneSerialisable(safeJsonParse(row.state_json, {})) || {};
+}
+
+function publicMonsterCodexEntry(entry) {
+  if (!isPlainObject(entry)) return null;
+  const masteredCount = Number(entry.masteredCount);
+  const mastered = Array.isArray(entry.mastered)
+    ? entry.mastered.filter((slug) => typeof slug === 'string' && slug).length
+    : Number.isFinite(masteredCount) && masteredCount > 0
+      ? Math.floor(masteredCount)
+      : 0;
+  const output = {
+    masteredCount: mastered,
+    caught: Boolean(entry.caught) || mastered > 0,
+  };
+  if (PUBLIC_MONSTER_BRANCHES.has(entry.branch)) output.branch = entry.branch;
+  return output;
+}
+
+function publicMonsterCodexState(rawState) {
+  const state = isPlainObject(rawState) ? rawState : {};
+  const output = {};
+  for (const monsterId of PUBLIC_MONSTER_IDS) {
+    const entry = publicMonsterCodexEntry(state[monsterId]);
+    if (entry) output[monsterId] = entry;
+  }
+  return output;
+}
+
+function publicGameStateRowToRecord(row) {
+  if (row.system_id !== PUBLIC_MONSTER_CODEX_SYSTEM_ID) return null;
+  return publicMonsterCodexState(gameStateRowToRecord(row));
 }
 
 function practiceSessionRowToRecord(row) {
@@ -1111,7 +1145,10 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
 
   const gameState = {};
   gameRows.forEach((row) => {
-    gameState[gameStateKey(row.learner_id, row.system_id)] = gameStateRowToRecord(row);
+    const record = publicReadModels
+      ? publicGameStateRowToRecord(row)
+      : gameStateRowToRecord(row);
+    if (record) gameState[gameStateKey(row.learner_id, row.system_id)] = record;
   });
 
   return {

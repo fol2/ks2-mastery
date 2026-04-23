@@ -7,7 +7,7 @@
     "command": "npm run build && npm run assert:build-public && npm run audit:client"
   },
   "assets": {
-    "directory": ".",
+    "directory": "./dist/public",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
     "run_worker_first": [

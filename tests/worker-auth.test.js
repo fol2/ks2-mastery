@@ -403,6 +403,30 @@ test('production public bootstrap redacts spelling sentinels from subject state,
     now,
     accountId,
   );
+  server.DB.db.prepare(`
+    INSERT INTO child_game_state (learner_id, system_id, state_json, updated_at, updated_by_account_id)
+    VALUES (?, 'monster-codex', ?, ?, ?)
+  `).run(
+    learnerId,
+    JSON.stringify({
+      inklet: { mastered: [sentinel.toLowerCase()], caught: true, branch: 'b1', wordSlug: sentinel.toLowerCase() },
+      glimmerbug: { mastered: [sentinel], caught: true, branch: 'b2' },
+      phaeton: { branch: 'b1' },
+      unsafe: sentinel,
+    }),
+    now,
+    accountId,
+  );
+  server.DB.db.prepare(`
+    INSERT INTO child_game_state (learner_id, system_id, state_json, updated_at, updated_by_account_id)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(
+    learnerId,
+    sentinel,
+    JSON.stringify({ unsafe: sentinel }),
+    now,
+    accountId,
+  );
 
   const bootstrap = await server.fetchRaw('https://repo.test/api/bootstrap', {
     headers: { cookie },
@@ -426,6 +450,15 @@ test('production public bootstrap redacts spelling sentinels from subject state,
   assert.equal(payload.eventLog[0].answer, undefined);
   assert.equal(payload.eventLog[0].monsterId, undefined);
   assert.equal(payload.eventLog[0].kind, undefined);
+  const publicGameState = payload.gameState[`${learnerId}::monster-codex`];
+  assert.equal(publicGameState.inklet.mastered, undefined);
+  assert.equal(publicGameState.inklet.wordSlug, undefined);
+  assert.equal(publicGameState.inklet.masteredCount, 1);
+  assert.equal(publicGameState.inklet.branch, 'b1');
+  assert.equal(publicGameState.glimmerbug.mastered, undefined);
+  assert.equal(publicGameState.glimmerbug.masteredCount, 1);
+  assert.equal(publicGameState.glimmerbug.branch, 'b2');
+  assert.equal(publicGameState.unsafe, undefined);
 
   server.close();
 });

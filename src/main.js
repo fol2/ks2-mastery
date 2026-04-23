@@ -1593,8 +1593,10 @@ function handleGlobalAction(action, data) {
   if (action === 'learner-save-form') {
     if (blockReadOnlyAdultAction(action)) return true;
     const formData = data.formData;
-    services.spelling?.savePrefs?.(learnerId, {
-      ttsProvider: normaliseTtsProvider(formData.get('ttsProvider')),
+    runSpellingCommand('save-prefs', {
+      prefs: {
+        ttsProvider: normaliseTtsProvider(formData.get('ttsProvider')),
+      },
     });
     tts.stop();
     store.updateLearner(learnerId, {
