@@ -18,8 +18,8 @@ function completeSubjectModule(overrides = {}) {
     getDashboardStats() {
       return { pct: 0, due: 0, streak: 0, nextUp: 'Planned' };
     },
-    renderPractice() {
-      return '<div>practice</div>';
+    PracticeComponent() {
+      return null;
     },
     handleAction() {
       return false;
@@ -40,7 +40,6 @@ test('subject registry rejects modules missing required contract functions', () 
 
 test('subject registry accepts a React practice component during subject migration', () => {
   const subject = completeSubjectModule({
-    renderPractice: undefined,
     PracticeComponent() {
       return null;
     },
@@ -54,7 +53,7 @@ test('subject registry accepts a React practice component during subject migrati
 
 test('subject registry accepts a mapped React practice surface without importing JSX in the module', () => {
   const subject = completeSubjectModule({
-    renderPractice: undefined,
+    PracticeComponent: undefined,
     reactPractice: true,
   });
 
@@ -64,12 +63,26 @@ test('subject registry accepts a mapped React practice surface without importing
   assert.equal(registry[0].reactPractice, true);
 });
 
-test('subject registry rejects modules without React or legacy practice rendering', () => {
-  const broken = completeSubjectModule({ renderPractice: undefined });
+test('subject registry rejects modules without React practice rendering', () => {
+  const broken = completeSubjectModule({ PracticeComponent: undefined });
 
   assert.throws(
     () => buildSubjectRegistry([broken]),
-    /missing required React practice component or legacy "renderPractice\(\)" renderer/i,
+    /missing required React practice component/i,
+  );
+});
+
+test('subject registry rejects retired legacy practice rendering', () => {
+  const broken = completeSubjectModule({
+    PracticeComponent: undefined,
+    renderPractice() {
+      return '<div>practice</div>';
+    },
+  });
+
+  assert.throws(
+    () => buildSubjectRegistry([broken]),
+    /retired legacy "renderPractice\(\)" rendering/i,
   );
 });
 

@@ -128,7 +128,6 @@ export function registerSubjectConformanceSuite(spec) {
     };
     const brokenRenderSubject = {
       ...baseSubject,
-      renderPractice: throwRenderError,
       renderPracticeComponent: throwRenderError,
     };
 
