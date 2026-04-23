@@ -189,7 +189,7 @@ export function SpellingSetupScene({ learner, service, repositories, subject, pr
                     mode={mode}
                     selected={prefs.mode === mode.id}
                     disabled
-                    description="No trouble words yet — come back after a round."
+                    description="No trouble words yet. Try a round first."
                     badge="NONE YET"
                     actions={actions}
                     key={mode.id}

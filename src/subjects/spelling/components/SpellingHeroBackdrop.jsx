@@ -7,12 +7,14 @@ export function SpellingHeroBackdrop({ url, previousUrl = '' }) {
   const currentUrl = React.useRef(url || '');
   const initialTransitionId = React.useRef(handoffUrl ? 1 : null);
   const [layers, setLayers] = React.useState(() => (
-    url
-      ? [
-        ...(handoffUrl ? [{ id: 0, url: handoffUrl, phase: 'exiting' }] : []),
-        { id: handoffUrl ? 1 : 0, url, phase: handoffUrl ? 'entering' : 'active' },
-      ]
-      : []
+    (() => {
+      if (!url) return [];
+      const panStyle = heroPanDelayStyle();
+      return [
+        ...(handoffUrl ? [{ id: 0, url: handoffUrl, phase: 'exiting', panStyle }] : []),
+        { id: handoffUrl ? 1 : 0, url, phase: handoffUrl ? 'entering' : 'active', panStyle },
+      ];
+    })()
   ));
 
   React.useEffect(() => {
@@ -41,10 +43,11 @@ export function SpellingHeroBackdrop({ url, previousUrl = '' }) {
     currentUrl.current = url;
     layerId.current += 1;
     const nextId = layerId.current;
+    const panStyle = heroPanDelayStyle();
     setLayers((current) => {
       return [
         ...current.slice(-2).map((layer) => ({ ...layer, phase: 'exiting' })),
-        { id: nextId, url, phase: 'entering' },
+        { id: nextId, url, phase: 'entering', panStyle },
       ];
     });
 
@@ -61,14 +64,12 @@ export function SpellingHeroBackdrop({ url, previousUrl = '' }) {
 
   if (!layers.length) return null;
 
-  const panStyle = heroPanDelayStyle();
-
   return (
     <div className="spelling-hero-backdrop" aria-hidden="true">
       {layers.map((layer) => (
         <div
           className={`hero-art pan spelling-hero-layer is-${layer.phase}`}
-          style={{ ...heroBgStyle(layer.url), ...panStyle }}
+          style={{ ...heroBgStyle(layer.url), ...(layer.panStyle || {}) }}
           key={layer.id}
         />
       ))}
