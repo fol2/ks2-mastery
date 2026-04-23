@@ -24,7 +24,7 @@ test('word-only transcript reads vocabulary without the dictation script', () =>
   );
 });
 
-test('platform TTS calls the Worker audio proxy before browser fallback', async () => {
+test('platform TTS sends the selected Worker provider', async () => {
   const originalAudio = globalThis.Audio;
   const originalCreateObjectUrl = URL.createObjectURL;
   const originalRevokeObjectUrl = URL.revokeObjectURL;
@@ -53,6 +53,7 @@ test('platform TTS calls the Worker audio proxy before browser fallback', async 
   const calls = [];
   const tts = createPlatformTts({
     remoteEnabled: true,
+    provider: () => 'gemini',
     fetchFn: async (url, init = {}) => {
       calls.push({
         url,
@@ -84,6 +85,7 @@ test('platform TTS calls the Worker audio proxy before browser fallback', async 
       word: { word: 'early' },
       sentence: 'The birds sang early in the day.',
       slow: true,
+      provider: 'gemini',
     });
 
     const wordOnlyResult = await tts.speak({
@@ -97,6 +99,7 @@ test('platform TTS calls the Worker audio proxy before browser fallback', async 
     assert.deepEqual(calls[1].body, {
       word: 'possess',
       slow: false,
+      provider: 'gemini',
       wordOnly: true,
     });
   } finally {
@@ -104,5 +107,105 @@ test('platform TTS calls the Worker audio proxy before browser fallback', async 
     globalThis.Audio = originalAudio;
     URL.createObjectURL = originalCreateObjectUrl;
     URL.revokeObjectURL = originalRevokeObjectUrl;
+  }
+});
+
+test('platform TTS does not fall back when the selected remote provider fails', async () => {
+  const originalWindow = globalThis.window;
+  const originalAudio = globalThis.Audio;
+  const calls = [];
+  let spoke = false;
+
+  globalThis.Audio = class MockAudio {};
+  globalThis.window = {
+    speechSynthesis: {
+      cancel() {},
+      speak() { spoke = true; },
+    },
+    SpeechSynthesisUtterance: class MockUtterance {},
+  };
+
+  const tts = createPlatformTts({
+    remoteEnabled: true,
+    provider: 'openai',
+    fetchFn: async (url, init = {}) => {
+      calls.push({ url, body: JSON.parse(init.body) });
+      return new Response(JSON.stringify({ error: 'busy' }), { status: 503 });
+    },
+  });
+
+  try {
+    const result = await tts.speak({
+      word: 'early',
+      sentence: 'The birds sang early in the day.',
+    });
+
+    assert.equal(result, false);
+    assert.equal(spoke, false);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].body.provider, 'openai');
+  } finally {
+    tts.stop();
+    globalThis.window = originalWindow;
+    globalThis.Audio = originalAudio;
+  }
+});
+
+test('platform TTS can use the local browser voice provider', async () => {
+  const originalWindow = globalThis.window;
+  const originalAudio = globalThis.Audio;
+  const spoken = [];
+  const voices = [
+    { name: 'Google US English', lang: 'en-US', voiceURI: 'Google US English' },
+    { name: 'Google UK English Female', lang: 'en-GB', voiceURI: 'Google UK English Female' },
+  ];
+
+  globalThis.Audio = class MockAudio {};
+  globalThis.window = {
+    speechSynthesis: {
+      cancel() {},
+      getVoices() { return voices; },
+      speak(utterance) {
+        spoken.push(utterance);
+        setTimeout(() => utterance.onend?.(), 0);
+      },
+    },
+    SpeechSynthesisUtterance: class MockUtterance {
+      constructor(text) {
+        this.text = text;
+        this.lang = '';
+        this.rate = 1;
+        this.voice = null;
+      }
+    },
+  };
+
+  const calls = [];
+  const tts = createPlatformTts({
+    remoteEnabled: true,
+    provider: 'browser',
+    fetchFn: async () => {
+      calls.push(true);
+      return new Response(null, { status: 500 });
+    },
+  });
+
+  try {
+    const result = await tts.speak({
+      word: 'early',
+      sentence: 'The birds sang early in the day.',
+      slow: true,
+    });
+
+    assert.equal(result, true);
+    assert.equal(calls.length, 0);
+    assert.equal(spoken.length, 1);
+    assert.equal(spoken[0].lang, 'en-GB');
+    assert.equal(spoken[0].voice.name, 'Google UK English Female');
+    assert.match(spoken[0].text, /The word is early/);
+  } finally {
+    tts.stop();
+    globalThis.window = originalWindow;
+    globalThis.Audio = originalAudio;
   }
 });

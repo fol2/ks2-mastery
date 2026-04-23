@@ -73,6 +73,7 @@ test('TTS route proxies dictation audio through OpenAI without exposing the key'
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('content-type'), 'audio/mpeg');
     assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.equal(response.headers.get('x-ks2-tts-provider'), 'openai');
     assert.deepEqual([...bytes], [1, 2, 3]);
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, 'https://api.openai.com/v1/audio/speech');
@@ -88,7 +89,7 @@ test('TTS route proxies dictation audio through OpenAI without exposing the key'
   }
 });
 
-test('TTS route falls back to Gemini when OpenAI returns a provider error', async () => {
+test('TTS route proxies dictation audio through selected Gemini provider', async () => {
   const originalFetch = globalThis.fetch;
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
@@ -97,9 +98,6 @@ test('TTS route falls back to Gemini when OpenAI returns a provider error', asyn
       headers: init.headers,
       body: JSON.parse(init.body),
     });
-    if (url === 'https://api.openai.com/v1/audio/speech') {
-      return new Response(JSON.stringify({ error: 'busy' }), { status: 503 });
-    }
     return geminiAudioResponse();
   };
 
@@ -110,29 +108,29 @@ test('TTS route falls back to Gemini when OpenAI returns a provider error', asyn
     },
   });
   try {
-    const response = await server.fetch('https://repo.test/api/tts', ttsRequest());
+    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({ provider: 'gemini' }));
     const bytes = new Uint8Array(await response.arrayBuffer());
 
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('content-type'), 'audio/wav');
     assert.equal(response.headers.get('x-ks2-tts-provider'), 'gemini');
-    assert.equal(response.headers.get('x-ks2-tts-fallback-from'), 'openai');
+    assert.equal(response.headers.get('x-ks2-tts-fallback-from'), null);
     assert.equal(response.headers.get('x-ks2-tts-model'), 'gemini-3.1-flash-tts-preview');
     assert.equal(String.fromCharCode(...bytes.slice(0, 4)), 'RIFF');
-    assert.equal(calls.length, 2);
-    assert.equal(calls[1].url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent');
-    assert.equal(calls[1].headers['x-goog-api-key'], 'test-gemini-key');
-    assert.equal(calls[1].body.generationConfig.responseModalities[0], 'AUDIO');
-    assert.equal(calls[1].body.generationConfig.speechConfig.languageCode, 'en-GB');
-    assert.equal(calls[1].body.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName, 'Kore');
-    assert.match(calls[1].body.contents[0].parts[0].text, /The word is early/);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent');
+    assert.equal(calls[0].headers['x-goog-api-key'], 'test-gemini-key');
+    assert.equal(calls[0].body.generationConfig.responseModalities[0], 'AUDIO');
+    assert.equal(calls[0].body.generationConfig.speechConfig.languageCode, 'en-GB');
+    assert.equal(calls[0].body.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName, 'Kore');
+    assert.match(calls[0].body.contents[0].parts[0].text, /The word is early/);
   } finally {
     globalThis.fetch = originalFetch;
     server.close();
   }
 });
 
-test('TTS route falls back to Gemini when OpenAI exceeds the primary timeout', async () => {
+test('TTS route does not fall back when selected OpenAI exceeds the primary timeout', async () => {
   const originalFetch = globalThis.fetch;
   let openAiAborted = false;
   globalThis.fetch = async (url, init = {}) => {
@@ -146,7 +144,7 @@ test('TTS route falls back to Gemini when OpenAI exceeds the primary timeout', a
         }, { once: true });
       });
     }
-    return geminiAudioResponse([3, 0, 4, 0]);
+    throw new Error(`Unexpected provider call: ${url}`);
   };
 
   const server = createWorkerRepositoryServer({
@@ -157,11 +155,13 @@ test('TTS route falls back to Gemini when OpenAI exceeds the primary timeout', a
     },
   });
   try {
-    const response = await server.fetch('https://repo.test/api/tts', ttsRequest());
+    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({ provider: 'openai' }));
+    const payload = await response.json();
 
-    assert.equal(response.status, 200);
-    assert.equal(response.headers.get('x-ks2-tts-provider'), 'gemini');
-    assert.equal(response.headers.get('x-ks2-tts-fallback-from'), 'openai');
+    assert.equal(response.status, 503);
+    assert.equal(payload.code, 'tts_provider_error');
+    assert.equal(payload.provider, 'openai');
+    assert.equal(payload.providerTimedOut, true);
     assert.equal(openAiAborted, true);
   } finally {
     globalThis.fetch = originalFetch;
@@ -200,7 +200,7 @@ test('TTS route supports word-only vocabulary audio', async () => {
   }
 });
 
-test('TTS route reports missing OpenAI configuration clearly', async () => {
+test('TTS route reports missing selected provider configuration clearly', async () => {
   const server = createWorkerRepositoryServer();
   try {
     const response = await server.fetch('https://repo.test/api/tts', ttsRequest());
@@ -208,6 +208,7 @@ test('TTS route reports missing OpenAI configuration clearly', async () => {
 
     assert.equal(response.status, 503);
     assert.equal(payload.code, 'tts_not_configured');
+    assert.equal(payload.provider, 'openai');
   } finally {
     server.close();
   }

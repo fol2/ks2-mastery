@@ -1,4 +1,5 @@
 import { clamp } from '../../platform/core/utils.js';
+import { DEFAULT_TTS_PROVIDER, normaliseTtsProvider } from './tts-providers.js';
 
 export function buildDictationTranscript({ word, sentence } = {}) {
   const spokenWord = typeof word === 'string' ? word : word?.word;
@@ -27,10 +28,44 @@ function shouldUseRemoteTts() {
   }
 }
 
+function resolveProvider(provider) {
+  try {
+    return normaliseTtsProvider(typeof provider === 'function' ? provider() : provider);
+  } catch {
+    return DEFAULT_TTS_PROVIDER;
+  }
+}
+
+function browserVoiceScore(voice) {
+  if (!voice) return -1;
+  const name = `${voice.name || ''} ${voice.voiceURI || ''}`.toLowerCase();
+  const lang = String(voice.lang || '').toLowerCase();
+  let score = 0;
+  if (lang === 'en-gb') score += 80;
+  else if (lang.startsWith('en-gb')) score += 70;
+  else if (lang.startsWith('en')) score += 35;
+  if (name.includes('google')) score += 30;
+  if (name.includes('uk') || name.includes('british') || name.includes('united kingdom')) score += 20;
+  if (name.includes('female')) score += 15;
+  if (name.includes('english')) score += 5;
+  if (voice.default) score += 1;
+  return score;
+}
+
+function chooseBrowserVoice(speechSynthesis) {
+  const voices = typeof speechSynthesis?.getVoices === 'function'
+    ? speechSynthesis.getVoices()
+    : [];
+  return voices
+    .filter((voice) => browserVoiceScore(voice) > 0)
+    .sort((a, b) => browserVoiceScore(b) - browserVoiceScore(a))[0] || null;
+}
+
 export function createPlatformTts({
   fetchFn = globalThis.fetch?.bind(globalThis),
   endpoint = '/api/tts',
   remoteEnabled = shouldUseRemoteTts(),
+  provider = DEFAULT_TTS_PROVIDER,
 } = {}) {
   let playbackId = 0;
   let currentAbort = null;
@@ -93,8 +128,11 @@ export function createPlatformTts({
     if (!available()) return Promise.resolve(false);
     stopBrowserSpeech();
     const transcript = buildSpeechTranscript({ word, sentence, wordOnly });
-    const utterance = new SpeechSynthesisUtterance(transcript);
+    const Utterance = window.SpeechSynthesisUtterance;
+    const utterance = new Utterance(transcript);
     utterance.lang = 'en-GB';
+    const voice = chooseBrowserVoice(window.speechSynthesis);
+    if (voice) utterance.voice = voice;
     utterance.rate = clamp(slow ? 0.9 : 1.02, 0.8, 1.2);
     return new Promise((resolve) => {
       utterance.onend = () => {
@@ -110,14 +148,15 @@ export function createPlatformTts({
     });
   }
 
-  async function speakWithRemote({ word, sentence, slow = false, wordOnly = false }, token) {
+  async function speakWithRemote({ word, sentence, slow = false, wordOnly = false }, providerId, token) {
     if (!remoteEnabled || typeof fetchFn !== 'function' || typeof Audio === 'undefined' || typeof URL === 'undefined') {
       return false;
     }
 
     currentAbort = new AbortController();
+    emit({ type: 'loading', kind: slow ? 'slow' : 'normal', provider: providerId });
     try {
-      const requestBody = { word, sentence, slow };
+      const requestBody = { word, sentence, slow, provider: providerId };
       if (wordOnly) requestBody.wordOnly = true;
       const response = await fetchFn(endpoint, {
         method: 'POST',
@@ -129,7 +168,10 @@ export function createPlatformTts({
         signal: currentAbort.signal,
         body: JSON.stringify(requestBody),
       });
-      if (!response.ok) return false;
+      if (!response.ok) {
+        if (token === playbackId) emit({ type: 'end' });
+        return false;
+      }
       const blob = await response.blob();
       if (token !== playbackId) return false;
 
@@ -160,6 +202,7 @@ export function createPlatformTts({
         });
       });
     } catch {
+      if (token === playbackId) emit({ type: 'end' });
       return false;
     } finally {
       if (token === playbackId) currentAbort = null;
@@ -169,9 +212,9 @@ export function createPlatformTts({
   async function speak(payload = {}) {
     stop();
     const token = playbackId;
-    const playedRemote = await speakWithRemote(payload, token);
-    if (playedRemote || token !== playbackId) return playedRemote;
-    return speakWithBrowser(payload);
+    const providerId = resolveProvider(provider);
+    if (providerId === 'browser') return speakWithBrowser(payload);
+    return await speakWithRemote(payload, providerId, token);
   }
 
   return {

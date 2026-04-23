@@ -7,6 +7,7 @@ import {
   createSpellingSessionCompletedEvent,
   createSpellingWordSecuredEvent,
 } from './events.js';
+import { normaliseTtsProvider } from './tts-providers.js';
 import {
   cloneSerialisable,
   createInitialSpellingState,
@@ -152,6 +153,7 @@ function normalisePrefs(rawPrefs = {}) {
     showCloze: normaliseBoolean(rawPrefs.showCloze, true),
     autoSpeak: normaliseBoolean(rawPrefs.autoSpeak, true),
     extraWordFamilies: normaliseBoolean(rawPrefs.extraWordFamilies, false),
+    ttsProvider: normaliseTtsProvider(rawPrefs.ttsProvider),
   };
 }
 
@@ -922,9 +924,13 @@ export function createSpellingService({ repository, storage, tts, now, random, c
   }
 
   function resetLearner(learnerId) {
+    const currentPrefs = getPrefs(learnerId);
     engine.resetProgress(learnerId);
     persistence.resetLearner?.(learnerId);
-    saveJson(resolvedStorage, prefsKey(learnerId), defaultSpellingPrefs());
+    saveJson(resolvedStorage, prefsKey(learnerId), {
+      ...defaultSpellingPrefs(),
+      ttsProvider: currentPrefs.ttsProvider,
+    });
   }
 
   return {

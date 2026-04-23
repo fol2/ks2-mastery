@@ -1,6 +1,13 @@
 import React from 'react';
 import { TopNav } from '../shell/TopNav.jsx';
 import { PersistenceBanner } from '../shell/PersistenceBanner.jsx';
+import { normaliseTtsProvider } from '../../subjects/spelling/tts-providers.js';
+
+const TTS_PROVIDER_OPTIONS = [
+  { value: 'openai', label: 'OpenAI' },
+  { value: 'gemini', label: 'Gemini' },
+  { value: 'browser', label: 'Browser', title: 'Local browser voice, preferring Google UK English female where available' },
+];
 
 function safeColour(value, fallback = '#3E6FA8') {
   const colour = String(value || '').trim();
@@ -97,6 +104,7 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
   }
 
   const accent = safeColour(learner.avatarColor);
+  const ttsProvider = normaliseTtsProvider(chrome.ttsProvider);
   const submit = (event) => {
     event.preventDefault();
     actions.dispatch('learner-save-form', { formData: new FormData(event.currentTarget) });
@@ -190,6 +198,22 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
                 <span>Accent colour</span>
                 <input className="input" type="color" name="avatarColor" autoComplete="off" defaultValue={accent} />
               </label>
+              <div className="profile-form-field profile-form-field-wide">
+                <span>Dictation voice</span>
+                <div className="profile-tts-options" role="radiogroup" aria-label="Dictation voice">
+                  {TTS_PROVIDER_OPTIONS.map((option) => (
+                    <label className="profile-tts-option" key={option.value} title={option.title || option.label}>
+                      <input
+                        type="radio"
+                        name="ttsProvider"
+                        value={option.value}
+                        defaultChecked={ttsProvider === option.value}
+                      />
+                      <span>{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="profile-form-footer">
               <div className="profile-form-danger-actions">
