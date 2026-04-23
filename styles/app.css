@@ -3630,7 +3630,7 @@ textarea:focus-visible {
   position: relative;
   overflow: hidden;
   min-height: 610px;
-  view-transition-name: spelling-practice-card;
+  view-transition-name: spelling-hero-card;
 }
 .setup-main.hero-dark {
   --setup-label-ink: #fff8e9;
@@ -3691,9 +3691,9 @@ textarea:focus-visible {
 }
 .mode-card {
   position: relative;
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--mode-card-border, var(--line));
   border-radius: var(--radius);
-  background: color-mix(in oklab, var(--panel) 20%, transparent);
+  background: var(--mode-card-surface, color-mix(in oklab, var(--panel) 20%, transparent));
   backdrop-filter: blur(18px) saturate(1.12);
   -webkit-backdrop-filter: blur(18px) saturate(1.12);
   padding: 18px 16px 18px;
@@ -3708,6 +3708,15 @@ textarea:focus-visible {
               box-shadow var(--dur) var(--ease-out),
               background-color var(--dur) var(--ease-out),
               filter var(--dur) var(--ease-out);
+}
+.setup-main[data-hero-tone="2"],
+.setup-main[data-hero-tone="3"] {
+  --mode-card-border: color-mix(in oklab, white 30%, transparent);
+  --mode-card-surface: color-mix(in oklab, black 26%, transparent);
+  --mode-card-selected-surface: color-mix(in oklab, black 18%, transparent);
+  --mode-card-selected-wash: color-mix(in oklab, black 18%, transparent);
+  --mode-card-heading-shadow: 0 1px 18px rgba(0, 0, 0, 0.68);
+  --mode-card-copy-shadow: 0 1px 16px rgba(0, 0, 0, 0.72);
 }
 .mode-card[data-text-tone="dark"] {
   --mode-card-title: #1d2b3a;
@@ -3767,8 +3776,8 @@ textarea:focus-visible {
   background:
     linear-gradient(180deg,
       color-mix(in oklab, var(--brand-soft) 48%, transparent) 0%,
-      color-mix(in oklab, var(--panel) 20%, transparent) 76%),
-    color-mix(in oklab, var(--panel) 20%, transparent);
+      var(--mode-card-selected-wash, color-mix(in oklab, var(--panel) 20%, transparent)) 76%),
+    var(--mode-card-selected-surface, color-mix(in oklab, var(--panel) 20%, transparent));
   box-shadow: var(--shadow);
 }
 .mode-card.is-disabled {
@@ -4033,31 +4042,22 @@ textarea:focus-visible {
 }
 .spelling-hero-backdrop .spelling-hero-layer {
   opacity: 0;
-  transform: scale(1.012);
-  transition: opacity 880ms var(--ease-in-out),
-              filter 880ms var(--ease-in-out),
-              transform 880ms var(--ease-in-out);
+  transition: opacity 880ms var(--ease-in-out);
 }
 .spelling-hero-backdrop .spelling-hero-layer.is-entering {
   opacity: 1;
-  filter: blur(0) saturate(1.02);
-  transform: scale(1);
   animation:
     hero-pan 96s ease-in-out var(--hero-pan-delay, 0s) infinite alternate,
-    spelling-hero-fade-in 880ms var(--ease-in-out) 0s both;
+    spelling-hero-dissolve-in 880ms var(--ease-in-out) 0s both;
 }
 .spelling-hero-backdrop .spelling-hero-layer.is-active {
   opacity: 1;
-  filter: blur(0) saturate(1.02);
-  transform: scale(1);
 }
 .spelling-hero-backdrop .spelling-hero-layer.is-exiting {
   opacity: 0;
-  filter: blur(14px) saturate(0.9);
-  transform: scale(1.014);
   animation:
     hero-pan 96s ease-in-out var(--hero-pan-delay, 0s) infinite alternate,
-    spelling-hero-fade-out 880ms var(--ease-in-out) 0s both;
+    spelling-hero-dissolve-out 880ms var(--ease-in-out) 0s both;
 }
 .spelling-in-session > .spelling-hero-backdrop {
   z-index: 0;
@@ -4077,29 +4077,13 @@ textarea:focus-visible {
   from { background-position: 0% 42%; }
   to   { background-position: 100% 42%; }
 }
-@keyframes spelling-hero-fade-in {
-  from {
-    opacity: 0;
-    filter: blur(12px) saturate(0.92);
-    transform: scale(1.018);
-  }
-  to {
-    opacity: 1;
-    filter: blur(0) saturate(1.02);
-    transform: scale(1);
-  }
+@keyframes spelling-hero-dissolve-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-@keyframes spelling-hero-fade-out {
-  from {
-    opacity: 1;
-    filter: blur(0) saturate(1.02);
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    filter: blur(14px) saturate(0.9);
-    transform: scale(1.014);
-  }
+@keyframes spelling-hero-dissolve-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero-art.pan { animation: none; }
@@ -4245,7 +4229,12 @@ textarea:focus-visible {
   isolation: isolate;
   padding: 28px 24px;
   overflow: hidden;
+  border: 1px solid var(--line);
   border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-warm);
+  min-height: 610px;
+  view-transition-name: spelling-hero-card;
   /* Default on-hero tokens assume a light/mid-light backdrop.
      Add `.hero-dark` at runtime if/when luminance detection
      warrants the warm-paper flip. */
@@ -4290,6 +4279,18 @@ textarea:focus-visible {
   gap: 14px;
   padding: 0 4px;
   margin-bottom: 10px;
+}
+.spelling-in-session.is-entering-session .session-head,
+.spelling-in-session.is-entering-session .session-footer,
+.spelling-in-session.is-entering-session .prompt-card-inner {
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+}
+.spelling-in-session.is-question-revealed .session-head,
+.spelling-in-session.is-question-revealed .session-footer,
+.spelling-in-session.is-question-revealed .prompt-card-inner {
+  animation: spelling-session-question-reveal 320ms var(--ease-out) both;
 }
 .spelling-in-session .path {
   flex: 1;
@@ -4357,7 +4358,7 @@ textarea:focus-visible {
   padding: 40px 36px 32px;
   box-shadow: var(--shadow-warm);
   position: relative;
-  view-transition-name: spelling-practice-card;
+  view-transition-name: spelling-session-prompt;
 }
 .spelling-in-session .prompt-card::before {
   content: "";
@@ -4367,16 +4368,36 @@ textarea:focus-visible {
   background: color-mix(in oklab, var(--line-strong) 55%, transparent);
 }
 
-@supports (view-transition-name: spelling-practice-card) {
-  html.spelling-flow-transition::view-transition-group(spelling-practice-card) {
-    animation-duration: 540ms;
+@supports (view-transition-name: spelling-hero-card) {
+  html.spelling-flow-transition::view-transition-group(spelling-hero-card) {
+    animation-duration: 720ms;
     animation-timing-function: var(--ease-in-out);
+    border-radius: var(--radius-lg);
+    overflow: clip;
+    box-shadow: var(--shadow-warm);
   }
-  html.spelling-flow-transition::view-transition-old(spelling-practice-card) {
-    animation: spelling-practice-card-old 540ms var(--ease-in-out) both;
+  html.spelling-flow-transition::view-transition-image-pair(spelling-hero-card) {
+    border-radius: inherit;
+    overflow: clip;
   }
-  html.spelling-flow-transition::view-transition-new(spelling-practice-card) {
-    animation: spelling-practice-card-new 540ms var(--ease-in-out) both;
+  html.spelling-flow-transition::view-transition-old(spelling-hero-card) {
+    animation: spelling-hero-card-old 720ms var(--ease-in-out) both;
+    border-radius: inherit;
+  }
+  html.spelling-flow-transition::view-transition-new(spelling-hero-card) {
+    animation: spelling-hero-card-new 720ms var(--ease-in-out) both;
+    border-radius: inherit;
+  }
+  html.spelling-flow-transition::view-transition-group(spelling-session-prompt) {
+    animation-duration: 520ms;
+    animation-timing-function: var(--ease-out);
+  }
+  html.spelling-flow-transition::view-transition-old(spelling-session-prompt) {
+    animation: none;
+    opacity: 0;
+  }
+  html.spelling-flow-transition::view-transition-new(spelling-session-prompt) {
+    animation: spelling-session-prompt-new 520ms var(--ease-out) 720ms both;
   }
   html.spelling-flow-transition::view-transition-old(spelling-metrics-card) {
     animation: spelling-metrics-card-exit 420ms var(--ease-out) both;
@@ -4385,20 +4406,34 @@ textarea:focus-visible {
     animation: none;
   }
 }
-@keyframes spelling-practice-card-old {
-  from { opacity: 1; filter: blur(0); }
-  to { opacity: 0.45; filter: blur(6px); }
+@keyframes spelling-hero-card-old {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
-@keyframes spelling-practice-card-new {
+@keyframes spelling-hero-card-new {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes spelling-session-prompt-new {
   from {
-    opacity: 0.72;
-    transform: scale(0.96);
-    clip-path: inset(8% 8% round 26px);
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(32px) scale(0.985);
   }
   to {
     opacity: 1;
-    transform: scale(1);
-    clip-path: inset(0 round 22px);
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes spelling-session-question-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 @keyframes spelling-metrics-card-exit {
@@ -4414,8 +4449,10 @@ textarea:focus-visible {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  html.spelling-flow-transition::view-transition-old(spelling-practice-card),
-  html.spelling-flow-transition::view-transition-new(spelling-practice-card),
+  html.spelling-flow-transition::view-transition-old(spelling-hero-card),
+  html.spelling-flow-transition::view-transition-new(spelling-hero-card),
+  html.spelling-flow-transition::view-transition-old(spelling-session-prompt),
+  html.spelling-flow-transition::view-transition-new(spelling-session-prompt),
   html.spelling-flow-transition::view-transition-old(spelling-metrics-card) {
     animation-duration: 1ms;
   }

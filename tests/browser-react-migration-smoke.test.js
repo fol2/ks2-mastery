@@ -81,6 +81,7 @@ test('browser migration smoke covers the React app root and spelling interaction
       ['click', '[data-action="spelling-close-word-bank"]'],
       ['wait', '[data-action="spelling-start"]'],
       ['js', "document.querySelector('[data-action=\"spelling-start\"]')?.click(); 'started spelling';"],
+      ['wait', '.spelling-in-session.is-question-revealed input[name="typed"]'],
       ['text'],
       ['is', 'focused', 'input[name="typed"]'],
       ['fill', 'input[name="typed"]', 'zzzz'],
