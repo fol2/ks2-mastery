@@ -243,3 +243,52 @@ test('demo sessions cannot use legacy broad learner runtime write routes', async
 
   server.close();
 });
+
+test('word-bank drill checks go through the subject command boundary without writing scheduler state', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp();
+  const env = {
+    DB,
+    AUTH_MODE: 'development-stub',
+    ENVIRONMENT: 'test',
+  };
+  const now = Date.now();
+  DB.db.prepare(`
+    INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+    VALUES ('learner-a', 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run(now, now);
+  DB.db.prepare(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES ('adult-a', 'adult-a@example.test', 'Adult A', 'parent', 'learner-a', ?, ?, 0)
+  `).run(now, now);
+  DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES ('adult-a', 'learner-a', 'owner', 0, ?, ?)
+  `).run(now, now);
+
+  const response = await app.fetch(new Request('https://repo.test/api/subjects/spelling/command', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      origin: 'https://repo.test',
+      'x-ks2-dev-account-id': 'adult-a',
+    },
+    body: JSON.stringify({
+      command: 'check-word-bank-drill',
+      learnerId: 'learner-a',
+      requestId: 'drill-check-1',
+      expectedLearnerRevision: 0,
+      payload: { slug: 'early', typed: 'early' },
+    }),
+  }), env, {});
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.mutation.kind, 'subject_command.spelling.check-word-bank-drill');
+  assert.equal(payload.wordBankDrill.result, 'correct');
+  assert.equal(payload.subjectReadModel, undefined);
+  assert.equal(DB.db.prepare('SELECT COUNT(*) AS count FROM child_subject_state').get().count, 0);
+  assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 1);
+
+  DB.close();
+});

@@ -30,6 +30,7 @@ import {
 } from '../../src/platform/access/roles.js';
 import { buildAdminHubReadModel } from '../../src/platform/hubs/admin-read-model.js';
 import { buildParentHubReadModel } from '../../src/platform/hubs/parent-read-model.js';
+import { buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
 import {
   BadRequestError,
   ConflictError,
@@ -938,6 +939,26 @@ async function readSubjectRuntimeBundle(db, accountId, learnerId, subjectId = 's
   };
 }
 
+async function readSpellingWordBankBundle(db, accountId, learnerId, filters, nowTs) {
+  if (!(typeof learnerId === 'string' && learnerId)) {
+    throw new BadRequestError('Learner id is required for the spelling word bank.', {
+      code: 'learner_id_required',
+    });
+  }
+  const runtimeRecord = await readSubjectRuntimeBundle(db, accountId, learnerId, 'spelling');
+  const content = await readSubjectContentBundle(db, accountId, 'spelling');
+  const snapshot = resolveRuntimeSnapshot(content, {
+    referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+  });
+  return buildSpellingWordBankReadModel({
+    learnerId,
+    contentSnapshot: snapshot,
+    data: runtimeRecord.subjectRecord?.data || {},
+    filters,
+    now: nowTs,
+  });
+}
+
 async function readLearnerProjectionBundle(db, accountId, learnerId) {
   await requireLearnerWriteAccess(db, accountId, learnerId);
   const gameRows = await all(db, `
@@ -1720,6 +1741,9 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
           accountRevision: Number(account?.repo_revision) || 0,
         },
       };
+    },
+    async readSpellingWordBank(accountId, learnerId, filters = {}) {
+      return readSpellingWordBankBundle(db, accountId, learnerId, filters, nowFactory());
     },
     async writeSubjectContent(accountId, subjectId = 'spelling', rawContent, mutation = {}) {
       const nowTs = nowFactory();

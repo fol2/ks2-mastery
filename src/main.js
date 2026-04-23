@@ -24,8 +24,6 @@ import { createReadModelClient } from './platform/runtime/read-model-client.js';
 import { createPlatformTts } from './subjects/spelling/tts.js';
 import { DEFAULT_TTS_PROVIDER, normaliseTtsProvider } from './subjects/spelling/tts-providers.js';
 import { createSpellingReadModelService } from './subjects/spelling/client-read-models.js';
-import { createApiSpellingContentRepository } from './subjects/spelling/content/repository.js';
-import { createSpellingContentService } from './subjects/spelling/content/service.js';
 import { resolveSpellingShortcut } from './subjects/spelling/shortcuts.js';
 import {
   monsterSummary,
@@ -366,10 +364,8 @@ tts.subscribe((event) => {
   syncAudioPlayingClass();
 });
 
-const spellingContentRepository = createApiSpellingContentRepository({ baseUrl: '', fetch: credentialFetch });
-const spellingContent = createSpellingContentService({ repository: spellingContentRepository });
-await spellingContent.hydrate();
 const readModels = createReadModelClient({ baseUrl: '', fetch: credentialFetch });
+const spellingContent = createSpellingContentApi({ fetch: credentialFetch });
 const subjectCommands = createSubjectCommandClient({
   baseUrl: '',
   fetch: credentialFetch,
@@ -702,6 +698,85 @@ function downloadJson(filename, payload) {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+async function parseApiJson(response) {
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.ok === false) {
+    const error = new Error(payload?.message || `Request failed (${response.status}).`);
+    error.status = response.status;
+    error.payload = payload;
+    throw error;
+  }
+  return payload;
+}
+
+function createSpellingContentApi({ fetch: fetchFn }) {
+  let cachedContent = null;
+  let accountRevision = 0;
+
+  async function hydrate() {
+    const response = await fetchFn('/api/content/spelling', {
+      method: 'GET',
+      headers: { accept: 'application/json' },
+    });
+    const payload = await parseApiJson(response);
+    cachedContent = payload.content || null;
+    accountRevision = Math.max(0, Number(payload.mutation?.accountRevision) || accountRevision);
+    return cachedContent;
+  }
+
+  async function write(rawContent) {
+    const content = rawContent?.content && typeof rawContent.content === 'object'
+      ? rawContent.content
+      : rawContent;
+    if (!content || typeof content !== 'object' || Array.isArray(content)) {
+      throw new Error('Spelling content import did not include a content bundle.');
+    }
+    if (!cachedContent) await hydrate();
+    const requestId = uid('content');
+    const response = await fetchFn('/api/content/spelling', {
+      method: 'PUT',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        content,
+        mutation: {
+          requestId,
+          correlationId: requestId,
+          expectedAccountRevision: accountRevision,
+        },
+      }),
+    });
+    const payload = await parseApiJson(response);
+    cachedContent = payload.content || content;
+    accountRevision = Math.max(
+      accountRevision,
+      Number(payload.mutation?.accountRevision) || Number(payload.mutation?.appliedRevision) || accountRevision,
+    );
+    return cachedContent;
+  }
+
+  return {
+    hydrate,
+    async exportPortable() {
+      return hydrate();
+    },
+    importPortable(payload) {
+      return write(payload);
+    },
+    validate() {
+      return { ok: false, errors: [{ message: 'Publishing is now validated by the Worker content API.' }], warnings: [] };
+    },
+    publishDraft() {
+      throw new Error('Publishing is server-owned in this build. Use the Worker content API.');
+    },
+    resetToSeeded() {
+      throw new Error('Seed reset is server-owned in this build. Use the Worker content API.');
+    },
+  };
 }
 
 async function handleImportFileChange(input) {
@@ -1482,7 +1557,11 @@ function handleGlobalAction(action, data) {
   }
 
   if (action === 'spelling-content-export') {
-    downloadJson('ks2-spelling-content.json', spellingContent.exportPortable());
+    spellingContent.exportPortable()
+      .then((content) => downloadJson('ks2-spelling-content.json', content))
+      .catch((error) => {
+        globalThis.alert(`Spelling content export failed: ${error?.message || 'Unknown error.'}`);
+      });
     return true;
   }
 
@@ -1591,6 +1670,24 @@ const SPELLING_UI_LOCAL_ACTIONS = new Set([
   'spelling-replay-slow',
 ]);
 
+const SPELLING_WORD_BANK_ACTIONS = new Set([
+  'spelling-open-word-bank',
+  'spelling-close-word-bank',
+  'spelling-analytics-search',
+  'spelling-analytics-year-filter',
+  'spelling-analytics-status-filter',
+  'spelling-word-detail-open',
+  'spelling-word-detail-close',
+  'spelling-word-detail-mode',
+  'spelling-word-bank-drill-input',
+  'spelling-word-bank-drill-submit',
+  'spelling-word-bank-drill-try-again',
+  'spelling-word-bank-word-replay',
+  'spelling-word-bank-drill-replay',
+  'spelling-word-bank-drill-replay-slow',
+  'spelling-word-bank-load-more',
+]);
+
 function runtimeIsReadOnly() {
   return store.getState().persistence?.mode === 'degraded';
 }
@@ -1609,6 +1706,94 @@ function applySpellingCommandResponse(response) {
   store.reloadFromRepositories({ preserveRoute: true });
   if (response?.audio?.promptToken) {
     tts.speak(response.audio);
+  }
+}
+
+function wordBankAnalyticsFromState(appState = store.getState()) {
+  return appState.subjectUi?.spelling?.analytics || null;
+}
+
+function findLoadedWordBankEntry(analytics, slug) {
+  if (!slug) return null;
+  const groups = Array.isArray(analytics?.wordGroups) ? analytics.wordGroups : [];
+  for (const group of groups) {
+    const words = Array.isArray(group.words) ? group.words : [];
+    const found = words.find((word) => word.slug === slug);
+    if (found) return found;
+  }
+  return null;
+}
+
+function mergeWordBankAnalytics(current, incoming, { append = false } = {}) {
+  if (!append || !current?.wordGroups?.length) return incoming;
+  const currentGroups = new Map(current.wordGroups.map((group) => [group.key, group]));
+  const nextGroups = (Array.isArray(incoming?.wordGroups) ? incoming.wordGroups : []).map((group) => {
+    const existing = currentGroups.get(group.key);
+    const seen = new Set((existing?.words || []).map((word) => word.slug));
+    const additions = (Array.isArray(group.words) ? group.words : []).filter((word) => {
+      if (!word?.slug || seen.has(word.slug)) return false;
+      seen.add(word.slug);
+      return true;
+    });
+    return {
+      ...group,
+      words: [...(existing?.words || []), ...additions],
+    };
+  });
+  return {
+    ...incoming,
+    wordGroups: nextGroups,
+    wordBank: {
+      ...(incoming.wordBank || {}),
+      returnedRows: nextGroups.reduce((count, group) => count + (Array.isArray(group.words) ? group.words.length : 0), 0),
+    },
+  };
+}
+
+async function loadSpellingWordBank({ detailSlug = '', page = 1, append = false } = {}) {
+  const appState = store.getState();
+  const learnerId = appState.learners.selectedId;
+  if (!learnerId) return null;
+  const params = new URLSearchParams({
+    learnerId,
+    page: String(page),
+    pageSize: '250',
+  });
+  if (detailSlug) params.set('detailSlug', detailSlug);
+  const payload = await readModels.readJson(`/api/subjects/spelling/word-bank?${params.toString()}`);
+  const wordBank = payload.wordBank || null;
+  if (!wordBank?.analytics) return null;
+  const current = wordBankAnalyticsFromState();
+  const analytics = mergeWordBankAnalytics(current, wordBank.analytics, { append });
+  store.updateSubjectUi('spelling', {
+    analytics,
+    error: '',
+  });
+  if (wordBank.detail) {
+    store.patch((currentState) => ({
+      transientUi: {
+        ...currentState.transientUi,
+        spellingWordDetail: wordBank.detail,
+      },
+    }));
+  }
+  return wordBank;
+}
+
+function loadedWordBankDetail(appState = store.getState()) {
+  const detail = appState.transientUi?.spellingWordDetail;
+  const slug = appState.transientUi?.spellingWordDetailSlug || '';
+  if (detail?.slug && (!slug || detail.slug === slug)) return detail;
+  return findLoadedWordBankEntry(wordBankAnalyticsFromState(appState), slug);
+}
+
+function speakWordBankCue(kind, { slow = false } = {}) {
+  const detail = loadedWordBankDetail();
+  const cue = kind === 'word'
+    ? detail?.audio?.word
+    : detail?.audio?.dictation;
+  if (cue?.promptToken) {
+    tts.speak({ ...cue, slow });
   }
 }
 
@@ -1635,7 +1820,7 @@ function runSpellingCommand(command, payload = {}) {
 }
 
 function handleRemoteSpellingAction(action, data = {}) {
-  if (!SPELLING_COMMAND_ACTIONS.has(action) && !SPELLING_UI_LOCAL_ACTIONS.has(action)) return false;
+  if (!SPELLING_COMMAND_ACTIONS.has(action) && !SPELLING_UI_LOCAL_ACTIONS.has(action) && !SPELLING_WORD_BANK_ACTIONS.has(action)) return false;
 
   const appState = store.getState();
   const learnerId = appState.learners.selectedId;
@@ -1653,6 +1838,227 @@ function handleRemoteSpellingAction(action, data = {}) {
   if (action === 'spelling-back') {
     tts.stop();
     store.updateSubjectUi('spelling', { phase: 'dashboard', error: '' });
+    return true;
+  }
+
+  if (action === 'spelling-open-word-bank') {
+    tts.stop();
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingWordDetailSlug: '',
+        spellingWordDetailMode: 'explain',
+        spellingWordDetail: null,
+        spellingWordBankDrillTyped: '',
+        spellingWordBankDrillResult: null,
+        spellingWordBankStatus: runtimeIsReadOnly() ? 'cached' : 'loading',
+      },
+    }));
+    store.updateSubjectUi('spelling', { phase: 'word-bank', error: '' });
+    if (!runtimeIsReadOnly()) {
+      loadSpellingWordBank().then(() => {
+        store.patch((current) => ({
+          transientUi: {
+            ...current.transientUi,
+            spellingWordBankStatus: 'loaded',
+          },
+        }));
+      }).catch((error) => {
+        globalThis.console?.warn?.('Word bank load failed.', error);
+        setSpellingRuntimeError(error?.payload?.message || error?.message || 'The word bank could not be loaded.');
+        store.patch((current) => ({
+          transientUi: {
+            ...current.transientUi,
+            spellingWordBankStatus: 'error',
+          },
+        }));
+      });
+    }
+    return true;
+  }
+
+  if (action === 'spelling-close-word-bank') {
+    tts.stop();
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingWordDetailSlug: '',
+        spellingWordDetailMode: 'explain',
+        spellingWordDetail: null,
+        spellingWordBankDrillTyped: '',
+        spellingWordBankDrillResult: null,
+      },
+    }));
+    store.updateSubjectUi('spelling', { phase: 'dashboard', error: '' });
+    return true;
+  }
+
+  if (action === 'spelling-analytics-search') {
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingAnalyticsWordSearch: String(data.value || '').slice(0, 80),
+      },
+    }));
+    return true;
+  }
+
+  if (action === 'spelling-analytics-year-filter') {
+    const raw = String(data.value || 'all');
+    const allowed = new Set(['all', 'y3-4', 'y5-6', 'extra']);
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingAnalyticsYearFilter: allowed.has(raw) ? raw : 'all',
+      },
+    }));
+    return true;
+  }
+
+  if (action === 'spelling-analytics-status-filter') {
+    const raw = String(data.value || 'all');
+    const allowed = new Set(['all', 'due', 'weak', 'learning', 'secure', 'unseen']);
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingAnalyticsStatusFilter: allowed.has(raw) ? raw : 'all',
+      },
+    }));
+    return true;
+  }
+
+  if (action === 'spelling-word-detail-open') {
+    const slug = String(data.slug || '').trim();
+    if (!slug) return true;
+    const mode = data.value === 'drill' ? 'drill' : 'explain';
+    const existing = findLoadedWordBankEntry(wordBankAnalyticsFromState(appState), slug);
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingWordDetailSlug: slug,
+        spellingWordDetailMode: mode,
+        spellingWordDetail: existing || null,
+        spellingWordBankDrillTyped: '',
+        spellingWordBankDrillResult: null,
+      },
+    }));
+    if (!runtimeIsReadOnly()) {
+      loadSpellingWordBank({ detailSlug: slug }).then(() => {
+        if (mode === 'drill') speakWordBankCue('dictation');
+      }).catch((error) => {
+        globalThis.console?.warn?.('Word detail load failed.', error);
+        setSpellingRuntimeError(error?.payload?.message || error?.message || 'The spelling word could not be loaded.');
+      });
+    }
+    return true;
+  }
+
+  if (action === 'spelling-word-detail-close') {
+    tts.stop();
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingWordDetailSlug: '',
+        spellingWordDetailMode: 'explain',
+        spellingWordDetail: null,
+        spellingWordBankDrillTyped: '',
+        spellingWordBankDrillResult: null,
+      },
+    }));
+    return true;
+  }
+
+  if (action === 'spelling-word-detail-mode') {
+    const mode = data.value === 'drill' ? 'drill' : 'explain';
+    const previousMode = appState.transientUi?.spellingWordDetailMode === 'drill' ? 'drill' : 'explain';
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingWordDetailMode: mode,
+        ...(mode !== previousMode ? {
+          spellingWordBankDrillTyped: '',
+          spellingWordBankDrillResult: null,
+        } : {}),
+      },
+    }));
+    if (mode === 'drill') speakWordBankCue('dictation');
+    return true;
+  }
+
+  if (action === 'spelling-word-bank-drill-input') {
+    const typed = String(data.value || '').slice(0, 80);
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingWordBankDrillTyped: typed,
+        spellingWordBankDrillResult: current.transientUi?.spellingWordBankDrillResult === 'correct'
+          ? 'correct'
+          : null,
+      },
+    }));
+    return true;
+  }
+
+  if (action === 'spelling-word-bank-drill-submit') {
+    if (runtimeIsReadOnly()) {
+      setSpellingRuntimeError('Practice is read-only while sync is degraded. Retry sync before continuing.');
+      return true;
+    }
+    const slug = String(data.slug || appState.transientUi?.spellingWordDetailSlug || '').trim();
+    const typed = String(data.formData?.get?.('typed') || appState.transientUi?.spellingWordBankDrillTyped || '').trim();
+    if (!slug) return true;
+    subjectCommands.send({
+      subjectId: 'spelling',
+      learnerId,
+      command: 'check-word-bank-drill',
+      payload: { slug, typed },
+    }).then((response) => {
+      store.patch((current) => ({
+        transientUi: {
+          ...current.transientUi,
+          spellingWordBankDrillTyped: typed,
+          spellingWordBankDrillResult: response.wordBankDrill?.result || 'incorrect',
+        },
+      }));
+    }).catch((error) => {
+      globalThis.console?.warn?.('Word-bank drill check failed.', error);
+      setSpellingRuntimeError(error?.payload?.message || error?.message || 'The drill answer could not be checked.');
+    });
+    return true;
+  }
+
+  if (action === 'spelling-word-bank-drill-try-again') {
+    speakWordBankCue('dictation');
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingWordBankDrillTyped: '',
+        spellingWordBankDrillResult: null,
+      },
+    }));
+    return true;
+  }
+
+  if (action === 'spelling-word-bank-word-replay') {
+    speakWordBankCue('word');
+    return true;
+  }
+
+  if (action === 'spelling-word-bank-drill-replay' || action === 'spelling-word-bank-drill-replay-slow') {
+    speakWordBankCue('dictation', { slow: action === 'spelling-word-bank-drill-replay-slow' });
+    return true;
+  }
+
+  if (action === 'spelling-word-bank-load-more') {
+    const meta = wordBankAnalyticsFromState(appState)?.wordBank || {};
+    if (!meta.hasNextPage || runtimeIsReadOnly()) return true;
+    loadSpellingWordBank({
+      page: (Number(meta.page) || 1) + 1,
+      append: true,
+    }).catch((error) => {
+      globalThis.console?.warn?.('Word bank pagination failed.', error);
+      setSpellingRuntimeError(error?.payload?.message || error?.message || 'More words could not be loaded.');
+    });
     return true;
   }
 

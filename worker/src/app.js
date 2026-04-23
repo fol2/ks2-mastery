@@ -314,6 +314,19 @@ export function createWorkerApp({
           return json({ ok: true, ...result });
         }
 
+        if (url.pathname === '/api/subjects/spelling/word-bank' && request.method === 'GET') {
+          const learnerId = url.searchParams.get('learnerId') || account?.selected_learner_id || '';
+          const result = await repository.readSpellingWordBank(session.accountId, learnerId, {
+            query: url.searchParams.get('q') || url.searchParams.get('query') || '',
+            status: url.searchParams.get('status') || 'all',
+            year: url.searchParams.get('year') || 'all',
+            page: url.searchParams.get('page') || 1,
+            pageSize: url.searchParams.get('pageSize') || 250,
+            detailSlug: url.searchParams.get('detailSlug') || '',
+          });
+          return json({ ok: true, wordBank: result });
+        }
+
         if (url.pathname === '/api/hubs/parent' && request.method === 'GET') {
           const learnerId = url.searchParams.get('learnerId') || null;
           const result = await repository.readParentHub(session.accountId, learnerId);

@@ -255,6 +255,46 @@ test('TTS route supports word-only vocabulary audio', async () => {
   }
 });
 
+test('TTS route supports server-tokened word bank vocabulary audio', async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, init = {}) => {
+    calls.push({
+      url,
+      body: JSON.parse(init.body),
+    });
+    return new Response(new Uint8Array([1, 2, 3]), {
+      status: 200,
+      headers: { 'content-type': 'audio/mpeg' },
+    });
+  };
+
+  const server = createWorkerRepositoryServer({
+    env: { OPENAI_API_KEY: 'test-openai-key' },
+  });
+  try {
+    seedAccountLearner(server.DB);
+    const detailResponse = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&detailSlug=early');
+    const detail = await detailResponse.json();
+    const cue = detail.wordBank.detail.audio.word;
+    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({
+      learnerId: cue.learnerId,
+      promptToken: cue.promptToken,
+      slug: cue.slug,
+      wordOnly: true,
+    }));
+
+    assert.equal(response.status, 200);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, 'https://api.openai.com/v1/audio/speech');
+    assert.equal(calls[0].body.input, 'early');
+    assert.match(calls[0].body.instructions, /Read exactly the supplied word once/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
 test('TTS route reports missing selected provider configuration clearly', async () => {
   const server = createWorkerRepositoryServer();
   try {

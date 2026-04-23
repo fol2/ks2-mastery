@@ -38,6 +38,24 @@ function learnerSnapshot(name = 'Ava') {
   };
 }
 
+function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a' } = {}) {
+  const now = Date.UTC(2026, 0, 1);
+  DB.db.prepare(`
+    INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+    VALUES (?, 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run(learnerId, now, now);
+  DB.db.prepare(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES (?, ?, 'Adult A', 'parent', ?, ?, ?, 0)
+    ON CONFLICT(id) DO UPDATE SET selected_learner_id = excluded.selected_learner_id
+  `).run(accountId, `${accountId}@example.test`, learnerId, now, now);
+  DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES (?, ?, 'owner', 0, ?, ?)
+    ON CONFLICT(account_id, learner_id) DO UPDATE SET role = excluded.role
+  `).run(accountId, learnerId, now, now);
+}
+
 function stripWordExplanations(bundle) {
   const next = cloneSerialisable(bundle);
   next.draft.words = next.draft.words.map(({ explanation: _explanation, ...word }) => word);
@@ -164,6 +182,64 @@ test('worker spelling content route accepts valid Extra pool content without sta
     const reloadedResponse = await server.fetch('https://repo.test/api/content/spelling');
     const reloaded = await reloadedResponse.json();
     assert.equal(reloaded.content.draft.words.find((word) => word.slug === 'cephalopod').spellingPool, 'extra');
+  } finally {
+    server.close();
+  }
+});
+
+test('worker spelling word bank route returns paginated public rows and detail audio tokens', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAccountLearner(server.DB);
+
+    const response = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&pageSize=5&year=y3-4');
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.wordBank.learnerId, 'learner-a');
+    assert.equal(payload.wordBank.analytics.wordBank.returnedRows, 5);
+    assert.equal(payload.wordBank.analytics.wordBank.hasNextPage, true);
+    assert.ok(payload.wordBank.analytics.pools.core.total > 0);
+    const rows = payload.wordBank.analytics.wordGroups.flatMap((group) => group.words);
+    assert.equal(rows.length, 5);
+    assert.equal(rows[0].accepted, undefined);
+    assert.equal(rows[0].sentence, undefined);
+    assert.equal(rows[0].explanation, undefined);
+
+    const detailResponse = await server.fetch(`https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&detailSlug=${rows[0].slug}`);
+    const detailPayload = await detailResponse.json();
+
+    assert.equal(detailResponse.status, 200);
+    assert.equal(detailPayload.wordBank.detail.slug, rows[0].slug);
+    assert.equal(typeof detailPayload.wordBank.detail.sentence, 'string');
+    assert.ok(detailPayload.wordBank.detail.sentence.length > 0);
+    assert.equal(detailPayload.wordBank.detail.accepted, undefined);
+    assert.ok(detailPayload.wordBank.detail.audio.dictation.promptToken);
+    assert.ok(detailPayload.wordBank.detail.audio.word.promptToken);
+  } finally {
+    server.close();
+  }
+});
+
+test('worker spelling word bank route controls empty, high-page, and invalid-detail cases', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAccountLearner(server.DB);
+
+    const empty = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&q=zzzz-no-match');
+    const emptyPayload = await empty.json();
+    assert.equal(empty.status, 200);
+    assert.equal(emptyPayload.wordBank.analytics.wordBank.filteredRows, 0);
+
+    const highPage = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&page=999');
+    const highPagePayload = await highPage.json();
+    assert.equal(highPage.status, 200);
+    assert.equal(highPagePayload.wordBank.analytics.wordBank.returnedRows, 0);
+
+    const missing = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&detailSlug=not-a-word');
+    const missingPayload = await missing.json();
+    assert.equal(missing.status, 404);
+    assert.equal(missingPayload.code, 'spelling_word_not_found');
   } finally {
     server.close();
   }

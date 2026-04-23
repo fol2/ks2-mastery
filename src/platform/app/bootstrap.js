@@ -1,10 +1,17 @@
-import {
-  LOCAL_CODEX_REVIEW_LEARNER_ID,
-  LOCAL_CODEX_REVIEW_LEARNER_IDS,
-  LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS,
-} from '../core/local-review-profile.js';
 import { createApiPlatformRepositories } from '../core/repositories/index.js';
 import { normalisePlatformRole } from '../access/roles.js';
+
+const LOCAL_CODEX_REVIEW_LEARNER_ID = 'local-codex-egg-review';
+const LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS = Object.freeze({
+  1: 'local-codex-stage-1-review',
+  2: 'local-codex-stage-2-review',
+  3: 'local-codex-stage-3-review',
+  4: 'local-codex-stage-4-review',
+});
+const LOCAL_CODEX_REVIEW_LEARNER_IDS = Object.freeze([
+  LOCAL_CODEX_REVIEW_LEARNER_ID,
+  ...Object.values(LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS),
+]);
 
 function locationSearchParams(location) {
   return new URLSearchParams(location?.search || '');

@@ -7,6 +7,7 @@ import { projectSpellingRewards } from '../../projections/rewards.js';
 import { buildSpellingAudioCue } from './audio.js';
 import { createServerSpellingEngine } from './engine.js';
 import { buildSpellingReadModel } from './read-models.js';
+import { checkSpellingWordBankAnswer } from '../../content/spelling-read-models.js';
 
 const SPELLING_COMMANDS = Object.freeze([
   'start-session',
@@ -16,6 +17,7 @@ const SPELLING_COMMANDS = Object.freeze([
   'end-session',
   'save-prefs',
   'reset-learner',
+  'check-word-bank-drill',
 ]);
 
 function contentMeta(contentResult, snapshot) {
@@ -25,6 +27,20 @@ function contentMeta(contentResult, snapshot) {
     publishedVersion: Number(summary.publishedVersion) || 0,
     publishedAt: Number(summary.publishedAt) || 0,
     runtimeWordCount: Array.isArray(snapshot?.words) ? snapshot.words.length : 0,
+  };
+}
+
+function clientAnalytics(analytics) {
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) return null;
+  return {
+    ...analytics,
+    wordGroups: [],
+    wordBank: {
+      ...(analytics.wordBank && typeof analytics.wordBank === 'object' && !Array.isArray(analytics.wordBank)
+        ? analytics.wordBank
+        : {}),
+      source: 'server-read-model-api',
+    },
   };
 }
 
@@ -53,6 +69,28 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         code: 'spelling_content_unavailable',
         subjectId: 'spelling',
       });
+    }
+
+    if (command.command === 'check-word-bank-drill') {
+      return {
+        learnerId: command.learnerId,
+        changed: false,
+        wordBankDrill: checkSpellingWordBankAnswer({
+          contentSnapshot: snapshot,
+          slug: command.payload?.slug,
+          typed: command.payload?.typed,
+        }),
+        projections: buildCommandProjectionReadModel({
+          gameState: {},
+          domainEvents: [],
+          reactionEvents: [],
+          toastEvents: [],
+        }),
+        events: [],
+        domainEvents: [],
+        reactionEvents: [],
+        toastEvents: [],
+      };
     }
 
     const engine = createServerSpellingEngine({
@@ -114,7 +152,7 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         state: result.state,
         prefs: result.prefs,
         stats: result.stats,
-        analytics: result.analytics,
+        analytics: clientAnalytics(result.analytics),
         audio: audioCue,
         content: contentMeta(contentResult, snapshot),
       }),

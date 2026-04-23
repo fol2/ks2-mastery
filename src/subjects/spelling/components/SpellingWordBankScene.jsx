@@ -159,6 +159,7 @@ function WordBankCard({ learner, analytics, appState, actions, runtimeReadOnly =
   const activeFilter = WORD_BANK_FILTER_IDS.has(statusFilter) ? statusFilter : 'all';
   const activeYearFilter = WORD_BANK_YEAR_FILTER_IDS.has(yearFilter) ? yearFilter : 'all';
   const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
+  const wordBankMeta = analytics.wordBank || {};
   const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
   const categoryWords = allWords.filter((word) => wordBankYearFilterMatches(activeYearFilter, word));
   const visibleGroups = groups
@@ -194,9 +195,13 @@ function WordBankCard({ learner, analytics, appState, actions, runtimeReadOnly =
   const ledeSearch = query
     ? ` Showing ${visibleWords.length} match${visibleWords.length === 1 ? '' : 'es'} for "${searchQuery}".`
     : '';
-  const footText = activeYearFilter === 'all'
-    ? `Showing ${visibleWords.length} of ${totalWords} tracked spellings.`
-    : `Showing ${visibleWords.length} of ${categoryTotal} ${categoryLabel} spellings.`;
+  const loadedRows = Number(wordBankMeta.returnedRows) || totalWords;
+  const filteredRows = Number(wordBankMeta.filteredRows) || categoryTotal || totalWords;
+  const footText = wordBankMeta.hasNextPage
+    ? `Showing ${visibleWords.length} visible spellings from ${loadedRows} loaded rows.`
+    : activeYearFilter === 'all'
+      ? `Showing ${visibleWords.length} of ${totalWords} tracked spellings.`
+      : `Showing ${visibleWords.length} of ${categoryTotal} ${categoryLabel} spellings.`;
   const learnerName = learner?.name ? `${learner.name}’s` : 'Learner';
 
   return (
@@ -240,7 +245,20 @@ function WordBankCard({ learner, analytics, appState, actions, runtimeReadOnly =
             : <div className="wb-empty">{query ? 'No words match your search and filters.' : 'No words match your filters.'}</div>}
         </div>
 
-        <div className="wb-foot small muted">{footText}</div>
+        <div className="wb-foot small muted">
+          {footText}
+          {wordBankMeta.hasNextPage ? (
+            <button
+              type="button"
+              className="btn ghost sm"
+              data-action="spelling-word-bank-load-more"
+              onClick={(event) => renderAction(actions, event, 'spelling-word-bank-load-more')}
+            >
+              Load more
+            </button>
+          ) : null}
+          {wordBankMeta.hasNextPage ? <span> {filteredRows} authorised matches available.</span> : null}
+        </div>
       </div>
     </section>
   );
@@ -301,7 +319,10 @@ export function SpellingWordBankScene({
   const detailMode = appState?.transientUi?.spellingWordDetailMode || 'explain';
   const drillTyped = appState?.transientUi?.spellingWordBankDrillTyped || '';
   const drillResult = appState?.transientUi?.spellingWordBankDrillResult || null;
-  const detailWord = findWordBankEntry(analytics, detailSlug);
+  const transientDetail = appState?.transientUi?.spellingWordDetail || null;
+  const detailWord = transientDetail?.slug === detailSlug
+    ? transientDetail
+    : findWordBankEntry(analytics, detailSlug);
   const heroBg = heroBgForLearner(learner.id);
 
   return (
