@@ -47,11 +47,13 @@ test('live spelling card keeps family hidden and restores legacy phase-specific 
   harness.dispatch('spelling-submit-form', { formData: typedFormData('wrong') });
   const retryHtml = harness.render();
   assert.match(retryHtml, /Try again/);
+  assert.match(retryHtml, /You wrote &quot;wrong&quot;\./);
   assert.match(retryHtml, /placeholder="Try once more from memory"/);
 
   harness.dispatch('spelling-submit-form', { formData: typedFormData('still wrong') });
   const correctionHtml = harness.render();
   assert.match(correctionHtml, /Lock it in/);
+  assert.match(correctionHtml, /You wrote &quot;still wrong&quot;\./);
   assert.match(correctionHtml, /placeholder="Type the correct spelling once"/);
 });
 

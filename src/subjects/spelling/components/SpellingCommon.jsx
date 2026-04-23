@@ -55,6 +55,14 @@ export function Ribbon({ tone, icon, headline, word, sub }) {
   );
 }
 
+function feedbackSub(feedback) {
+  const attempt = String(feedback?.attemptedAnswer || '').trim();
+  const body = feedback?.body || '';
+  if (!attempt) return body;
+  const attemptLead = `You wrote "${attempt}".`;
+  return body ? `${attemptLead} ${body}` : attemptLead;
+}
+
 export function FeedbackSlot({ feedback }) {
   if (!feedback) {
     return (
@@ -75,7 +83,7 @@ export function FeedbackSlot({ feedback }) {
         icon={icon}
         headline={feedback.headline || ''}
         word={feedback.answer || ''}
-        sub={feedback.body || ''}
+        sub={feedbackSub(feedback)}
       />
       {feedback.footer ? <p className="feedback-foot small muted">{feedback.footer}</p> : null}
       <FamilyChips words={feedback.familyWords} />

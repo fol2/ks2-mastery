@@ -90,12 +90,13 @@ export function normaliseFeedback(value) {
     kind: SPELLING_FEEDBACK_KINDS.includes(value.kind) ? value.kind : 'info',
     headline: normaliseString(value.headline),
     answer: normaliseString(value.answer),
+    attemptedAnswer: normaliseString(value.attemptedAnswer).trim().slice(0, 80),
     body: normaliseString(value.body),
     footer: normaliseString(value.footer),
     familyWords: normaliseStringArray(value.familyWords),
   };
 
-  if (!feedback.headline && !feedback.answer && !feedback.body && !feedback.footer && !feedback.familyWords.length) {
+  if (!feedback.headline && !feedback.answer && !feedback.attemptedAnswer && !feedback.body && !feedback.footer && !feedback.familyWords.length) {
     return null;
   }
 
