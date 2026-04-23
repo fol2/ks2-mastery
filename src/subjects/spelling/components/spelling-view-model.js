@@ -293,6 +293,18 @@ export function dueLabel(progress) {
   return `In ${daysUntilDue} days`;
 }
 
+export function reviewCount(progress) {
+  return Math.max(0, Number(progress?.attempts) || 0);
+}
+
+export function reviewAccuracyLabel(progress) {
+  const attempts = reviewCount(progress);
+  if (!attempts) return '—';
+  const correct = Math.max(0, Number(progress?.correct) || 0);
+  const boundedCorrect = Math.min(correct, attempts);
+  return `${Math.round((boundedCorrect / attempts) * 100)}%`;
+}
+
 export function escapeRegExp(value) {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

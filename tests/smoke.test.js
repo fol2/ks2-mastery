@@ -244,7 +244,10 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   // the progress details, while clicking the pill opens the explainer modal.
   assert.match(html, /class="wb-word-pill new"/);
   assert.match(html, /data-action="spelling-word-detail-open"\s+data-slug="possess"\s+data-value="explain"/);
-  assert.match(html, /title="possess[^"]*Family: possess\(ion\)[^"]*Next due: Unseen[^"]*Click to explain"/);
+  assert.match(html, /title="possess[^"]*Family: possess\(ion\)[^"]*Accuracy: —[^"]*Reviews: 0[^"]*Next due: Unseen[^"]*Click to explain"/);
+  assert.doesNotMatch(html, /title="possess[^"]*Years 3-4 • Years 3-4/);
+  assert.doesNotMatch(html, /title="possess[^"]*Correct /);
+  assert.doesNotMatch(html, /title="possess[^"]*Wrong /);
   assert.match(html, />accident</);
   assert.doesNotMatch(html, /wb-meta-label">Family/);
 
@@ -355,7 +358,7 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   assert.equal(harness.store.getState().subjectUi.spelling.analyticsWordSearch, undefined);
   html = harness.render();
   assert.match(html, />possess</);
-  assert.match(html, /title="possess[^"]*Next due: In 3 days[^"]*Click to explain"/);
+  assert.match(html, /title="possess[^"]*Accuracy: 100%[^"]*Reviews: 1[^"]*Next due: In 3 days[^"]*Click to explain"/);
   assert.doesNotMatch(html, />accident</);
 
   harness.dispatch('spelling-word-detail-open', { slug: 'possess', value: 'explain' });
@@ -391,7 +394,8 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   harness.dispatch('spelling-analytics-search', { value: 'mollusc' });
   html = harness.render();
   assert.match(html, />mollusc</);
-  assert.match(html, /title="mollusc[^"]*Extra[^"]*Click to explain"/);
+  assert.match(html, /title="mollusc[^"]*Extra[^"]*Accuracy: —[^"]*Reviews: 0[^"]*Click to explain"/);
+  assert.doesNotMatch(html, /title="mollusc[^"]*Extra • Extra/);
   assert.match(html, /Showing 1 of 236 tracked spellings/);
   assert.doesNotMatch(html, />accident</);
 
@@ -434,6 +438,35 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   assert.equal(harness.store.getState().transientUi.spellingWordBankDrillResult, 'correct');
   assert.equal(harness.store.getState().subjectUi.spelling.phase, 'word-bank');
   assert.equal(harness.store.getState().subjectUi.spelling.session, null);
+});
+
+test('word-bank tooltip uses review metrics instead of raw correct and wrong counts', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-start');
+
+  const answer = harness.store.getState().subjectUi.spelling.session.currentCard.word.word;
+
+  harness.dispatch('spelling-submit-form', { formData: typedFormData('wrong') });
+  harness.dispatch('spelling-submit-form', { formData: typedFormData('still wrong') });
+  harness.dispatch('spelling-submit-form', { formData: typedFormData(answer) });
+  harness.dispatch('spelling-continue');
+  harness.dispatch('spelling-submit-form', { formData: typedFormData(answer) });
+  harness.dispatch('spelling-continue');
+
+  assert.equal(harness.store.getState().subjectUi.spelling.phase, 'summary');
+
+  harness.dispatch('spelling-open-word-bank');
+  const html = harness.render();
+  const escapedAnswer = escapeRegExp(answer);
+
+  assert.match(html, new RegExp(`title="${escapedAnswer}[^"]*Accuracy: 0%[^"]*Reviews: 1[^"]*Next due: Today[^"]*Click to explain"`));
+  assert.doesNotMatch(html, new RegExp(`title="${escapedAnswer}[^"]*Correct `));
+  assert.doesNotMatch(html, new RegExp(`title="${escapedAnswer}[^"]*Wrong `));
 });
 
 test('golden-path smoke covers placeholder-subject navigation through the setup scene', () => {
