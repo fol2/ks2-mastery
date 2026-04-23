@@ -3915,6 +3915,17 @@ textarea:focus-visible {
               color var(--dur) var(--ease-out),
               transform var(--dur) var(--ease-out);
 }
+.toggle-chip[data-pref="extraWordFamilies"],
+.toggle-chip.option-placeholder {
+  flex: 0 0 184px;
+  min-height: 34px;
+  max-width: 100%;
+  white-space: nowrap;
+}
+.toggle-chip.option-placeholder {
+  visibility: hidden;
+  pointer-events: none;
+}
 .toggle-chip:hover { transform: translateY(-1px); color: var(--ink); }
 .toggle-chip .box {
   width: 14px; height: 14px;

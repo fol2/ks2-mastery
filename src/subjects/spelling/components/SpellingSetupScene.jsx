@@ -234,7 +234,7 @@ export function SpellingSetupScene({ learner, service, repositories, subject, pr
               <ToggleChip pref="autoSpeak" checked={Boolean(prefs.autoSpeak)} label="Auto-play audio" actions={actions} />
               {showExtraFamilyOption ? (
                 <ToggleChip pref="extraWordFamilies" checked={Boolean(prefs.extraWordFamilies)} label="Word-family variants" actions={actions} />
-              ) : null}
+              ) : <span className="toggle-chip option-placeholder" aria-hidden="true" />}
             </div>
           </div>
           <div className="setup-begin-row">
