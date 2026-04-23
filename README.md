@@ -32,7 +32,7 @@ English Spelling works in the new structure.
 
 The browser app is now a single React shell. `index.html` loads the built React app bundle, React owns dashboard, Codex, subject, profile, Parent Hub, Admin / Operations, toast and modal surfaces, and the existing controller/store/repository boundary still owns state transitions and side effects. Legacy string renderers remain only as local characterisation helpers while production routes compose React components.
 
-Production on `ks2.eugnel.uk` uses Worker-backed auth, ephemeral demo sessions, API repositories, subject commands, server read models, and prompt-token TTS. `?local=1` no longer creates a browser-local product runtime; browser QA should use a signed-in Worker session or `/demo`. The API adapter reports explicit persistence modes (`local-only`, `remote-sync`, `degraded`) so failed remote writes are visible instead of being treated as silent success, but production practice authority stays behind Worker APIs. The Worker is D1-backed with learner ownership enforcement, atomic account / learner revision checks, idempotent request replay, account-scoped spelling content routes, server Spelling runtime, role-aware Parent/Admin hub read routes, Word Bank read models, and protected dictation audio across OpenAI or Gemini, with local browser speech reserved for explicit browser-provider use.
+Production on `ks2.eugnel.uk` uses Worker-backed auth, ephemeral demo sessions, API repositories, subject commands, server read models, and prompt-token TTS. `?local=1` no longer creates a browser-local product runtime; browser QA should use a signed-in Worker session or `/demo`. The API adapter reports explicit persistence modes (`local-only`, `remote-sync`, `degraded`) so failed remote writes are visible instead of being treated as silent success, but production practice authority stays behind Worker APIs. The Worker is D1-backed with learner ownership enforcement, atomic account / learner revision checks, idempotent request replay, account-scoped spelling content routes, a shared-domain Spelling runtime imported from `shared/spelling/`, role-aware Parent/Admin hub read routes, Word Bank read models, and protected dictation audio across OpenAI or Gemini, with local browser speech reserved for explicit browser-provider use.
 
 Signed-in Parent Hub and Admin / Operations use live Worker hub payloads. Those adult surfaces keep platform role, learner membership role, and writable/read-only access separate. `/api/bootstrap` remains writable-only for the main subject shell, while readable viewer learners are available inside hub surfaces with explicit read-only labels and blocked write affordances.
 
@@ -80,7 +80,7 @@ npm run audit:client
 npm run audit:production
 ```
 
-Run the production audit after deploying the current build; it checks the live HTML, referenced bundles, and representative source paths before making the strongest public claim.
+`npm run deploy` runs the live production audit after upload. Run `npm run audit:production` manually only when rechecking an already deployed build; it checks the live HTML, referenced bundles, and representative source paths before making the strongest public claim.
 
 ## Core rebuild decisions
 

@@ -30,6 +30,15 @@ function argValue(name, fallback) {
   return process.argv[index + 1];
 }
 
+function argInteger(name, fallback) {
+  const value = Number(argValue(name, fallback));
+  return Number.isFinite(value) && value >= 0 ? Math.floor(value) : fallback;
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function scriptSources(html) {
   const sources = [];
   const pattern = /<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi;
@@ -107,6 +116,8 @@ async function auditProduction(origin) {
 
 const origin = argValue('--url', DEFAULT_ORIGIN);
 const skipLocal = process.argv.includes('--skip-local');
+const retries = argInteger('--retries', 0);
+const retryDelayMs = argInteger('--retry-delay-ms', 1000);
 if (!skipLocal) {
   const local = await runClientBundleAudit();
   if (!local.ok) {
@@ -115,9 +126,18 @@ if (!skipLocal) {
   }
 }
 
-const result = await auditProduction(origin);
-if (!result.ok) {
-  console.error(result.failures.join('\n'));
+let result = null;
+for (let attempt = 0; attempt <= retries; attempt += 1) {
+  result = await auditProduction(origin);
+  if (result.ok) break;
+  if (attempt < retries) {
+    console.warn(`Production bundle audit failed; retrying in ${retryDelayMs} ms (${attempt + 1}/${retries}).`);
+    await wait(retryDelayMs);
+  }
+}
+
+if (!result?.ok) {
+  console.error(result?.failures?.join('\n') || 'Production bundle audit failed.');
   process.exit(1);
 }
 console.log(`Production bundle audit passed for ${result.checked.origin} (${result.checked.scriptCount} bundle(s), ${result.checked.directPathCount} direct paths).`);

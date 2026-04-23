@@ -103,7 +103,7 @@ function captureWordDetailTrigger(action, data = {}) {
   };
 }
 
-async function submitAuthCredentials({ mode = 'login', email, password } = {}) {
+async function submitAuthCredentials({ mode = 'login', email, password, convertDemo = false } = {}) {
   const action = mode === 'register' ? 'register' : 'login';
   const response = await credentialFetch(`/api/auth/${action}`, {
     method: 'POST',
@@ -111,6 +111,7 @@ async function submitAuthCredentials({ mode = 'login', email, password } = {}) {
     body: JSON.stringify({
       email,
       password,
+      ...(convertDemo && action === 'register' ? { convertDemo: true } : {}),
     }),
   });
   const payload = await response.json().catch(() => ({}));
@@ -221,6 +222,15 @@ const SLOW_REPLAY_SELECTORS = [
   '[data-action="spelling-replay-slow"]',
   '[data-action="spelling-word-bank-drill-replay-slow"]',
 ];
+const PROFILE_WRITE_ACTIONS = new Set([
+  'learner-create',
+  'learner-save-form',
+  'learner-delete',
+  'learner-reset-progress',
+  'platform-import',
+  'platform-import-file-selected',
+  'platform-reset-all',
+]);
 
 function syncAudioPlayingClass() {
   const normalNodes = root.querySelectorAll(NORMAL_REPLAY_SELECTORS.join(','));
@@ -480,7 +490,17 @@ function resolveActiveAdultAccessContext(appState) {
 }
 
 function blockedReadOnlyAdultActionReason(action) {
-  return readOnlyLearnerActionBlockReason(action, resolveActiveAdultAccessContext(store.getState()));
+  const appState = store.getState();
+  const adultReason = readOnlyLearnerActionBlockReason(action, resolveActiveAdultAccessContext(appState));
+  if (adultReason) return adultReason;
+  if (!PROFILE_WRITE_ACTIONS.has(String(action || ''))) return '';
+  if (boot.session.demo) {
+    return 'Demo profile writes are read-only. Create an account from the profile screen to keep this learner permanently.';
+  }
+  if (appState.persistence?.mode === 'degraded') {
+    return 'Sync is degraded, so profile write actions are blocked until persistence recovers.';
+  }
+  return '';
 }
 
 function blockReadOnlyAdultAction(action) {
@@ -1084,6 +1104,7 @@ function buildSurfaceChromeModel(appState) {
     learnerOptions,
     ttsProvider: learnerId ? selectedTtsProvider() : DEFAULT_TTS_PROVIDER,
     signedInAs: boot.session.signedIn ? (boot.session.email || '') : null,
+    session: boot.session,
     persistence: {
       mode: persistenceSnapshot?.mode || 'local-only',
       label: homePersistenceLabel(persistenceSnapshot),
@@ -1553,6 +1574,26 @@ function handleGlobalAction(action, data) {
   if (action === 'platform-import-file-selected') {
     if (blockReadOnlyAdultAction('platform-import')) return true;
     handleImportFileChange(data.input);
+    return true;
+  }
+
+  if (action === 'demo-convert-email') {
+    const formData = data.formData;
+    submitAuthCredentials({
+      mode: 'register',
+      email: formData?.get('email'),
+      password: formData?.get('password'),
+      convertDemo: true,
+    }).catch((error) => {
+      globalThis.alert?.(error?.message || 'Could not create an account from this demo.');
+    });
+    return true;
+  }
+
+  if (action === 'demo-social-convert') {
+    startSocialAuth(data.provider).catch((error) => {
+      globalThis.alert?.(error?.message || 'Could not start social sign-in for this demo.');
+    });
     return true;
   }
 

@@ -145,6 +145,33 @@ test('worker session route exposes the development session stub and account scop
   server.close();
 });
 
+test('worker denies raw source assets while allowing the built app bundle', async () => {
+  const requests = [];
+  const server = createWorkerRepositoryServer({
+    env: {
+      ASSETS: {
+        fetch(request) {
+          requests.push(new URL(request.url).pathname);
+          return new Response('console.log("app bundle");', {
+            headers: { 'content-type': 'text/javascript' },
+          });
+        },
+      },
+    },
+  });
+
+  const denied = await server.fetchRaw('https://repo.test/src/subjects/spelling/data/content-data.js');
+  const bundle = await server.fetchRaw('https://repo.test/src/bundles/app.bundle.js');
+
+  assert.equal(denied.status, 404);
+  assert.equal(await denied.text(), 'Not found.');
+  assert.equal(bundle.status, 200);
+  assert.equal(await bundle.text(), 'console.log("app bundle");');
+  assert.deepEqual(requests, ['/src/bundles/app.bundle.js']);
+
+  server.close();
+});
+
 test('api repositories match the generic contract against the real D1-backed worker', async () => {
   const server = createWorkerRepositoryServer();
   const repositories = createApiPlatformRepositories({

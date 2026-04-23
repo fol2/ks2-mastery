@@ -441,12 +441,25 @@ export async function registerWithEmail(env, request, payload = {}) {
     await withTransaction(db, async () => {
       if (demoSession?.demo) {
         const existingEmailAccount = await scalar(db, `
-          SELECT account_id
-          FROM account_credentials
-          WHERE email = ?
-            AND account_id <> ?
+          SELECT account_id FROM (
+            SELECT id AS account_id
+            FROM adult_accounts
+            WHERE lower(email) = lower(?)
+              AND id <> ?
+              AND COALESCE(account_type, 'real') <> 'demo'
+            UNION
+            SELECT account_id
+            FROM account_credentials
+            WHERE lower(email) = lower(?)
+              AND account_id <> ?
+            UNION
+            SELECT account_id
+            FROM account_identities
+            WHERE lower(email) = lower(?)
+              AND account_id <> ?
+          )
           LIMIT 1
-        `, [email, accountId], 'account_id');
+        `, [email, accountId, email, accountId, email, accountId], 'account_id');
         if (existingEmailAccount) {
           throw new ConflictError('That email address is already registered.', { code: 'email_already_registered' });
         }

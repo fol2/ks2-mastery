@@ -261,3 +261,37 @@ test('non-expired demo registration promotes the demo account and preserves lear
 
   server.close();
 });
+
+test('demo registration rejects an email already owned by a social-only account', async () => {
+  const server = productionServer();
+  const now = Date.now();
+  server.DB.db.prepare(`
+    INSERT INTO adult_accounts (id, email, display_name, account_type, created_at, updated_at)
+    VALUES ('adult-social', 'social-only@example.test', 'Social Parent', 'real', ?, ?)
+  `).run(now, now);
+  server.DB.db.prepare(`
+    INSERT INTO account_identities (id, account_id, provider, provider_subject, email, created_at, updated_at)
+    VALUES ('identity-social', 'adult-social', 'google', 'google-social', 'social-only@example.test', ?, ?)
+  `).run(now, now);
+
+  const demo = await postJson(server, '/api/demo/session');
+  const demoPayload = await demo.json();
+  const demoCookie = cookieFrom(demo);
+  const register = await postJson(server, '/api/auth/register', {
+    email: 'social-only@example.test',
+    password: 'password-1234',
+    convertDemo: true,
+  }, {
+    cookie: demoCookie,
+  });
+  const registerPayload = await register.json();
+  const demoAccount = server.DB.db.prepare('SELECT account_type, email FROM adult_accounts WHERE id = ?')
+    .get(demoPayload.session.accountId);
+
+  assert.equal(register.status, 409);
+  assert.equal(registerPayload.code, 'email_already_registered');
+  assert.equal(demoAccount.account_type, 'demo');
+  assert.notEqual(demoAccount.email, 'social-only@example.test');
+
+  server.close();
+});

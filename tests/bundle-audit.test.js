@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -62,4 +62,13 @@ test('client bundle audit permits reviewed endpoint strings without content modu
       stdio: 'pipe',
     });
   });
+});
+
+test('worker spelling runtime imports the shared domain service instead of the browser service entrypoint', async () => {
+  const workerEngine = await readFile('worker/src/subjects/spelling/engine.js', 'utf8');
+  const browserService = await readFile('src/subjects/spelling/service.js', 'utf8');
+
+  assert.doesNotMatch(workerEngine, /src\/subjects\/spelling\/service\.js/);
+  assert.match(workerEngine, /shared\/spelling\/service\.js/);
+  assert.match(browserService, /shared\/spelling\/service\.js/);
 });

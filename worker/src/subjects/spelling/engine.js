@@ -3,7 +3,7 @@ import {
   normalisePracticeSessionRecord,
 } from '../../../../src/platform/core/repositories/helpers.js';
 import { createInitialSpellingState } from '../../../../src/subjects/spelling/service-contract.js';
-import { createSpellingService } from '../../../../src/subjects/spelling/service.js';
+import { createSpellingService } from '../../../../shared/spelling/service.js';
 import { BadRequestError } from '../../errors.js';
 
 const SUBJECT_ID = 'spelling';

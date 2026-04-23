@@ -92,6 +92,67 @@ export function renderSharedSurfaceFixture() {
   `);
 }
 
+export function renderProfileSurfaceFixture({ demo = false, persistenceMode = 'remote-sync' } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { ProfileSettingsSurface } from ${JSON.stringify(absoluteSpecifier('src/surfaces/profile/ProfileSettingsSurface.jsx'))};
+
+    const appState = {
+      learners: {
+        selectedId: 'learner-a',
+        byId: {
+          'learner-a': {
+            id: 'learner-a',
+            name: 'Ava',
+            yearGroup: 'Y5',
+            goal: 'sats',
+            dailyMinutes: 15,
+            avatarColor: '#3E6FA8',
+          },
+        },
+        allIds: ['learner-a'],
+      },
+      persistence: {
+        mode: ${JSON.stringify(persistenceMode)},
+        trustedState: ${JSON.stringify(persistenceMode === 'degraded' ? 'local-cache' : 'remote')},
+        pendingWriteCount: ${JSON.stringify(persistenceMode === 'degraded' ? 1 : 0)},
+        remoteAvailable: true,
+      },
+    };
+    const chrome = {
+      theme: 'light',
+      learner: { id: 'learner-a', name: 'Ava', yearGroup: 'Y5' },
+      learnerLabel: 'Ava · Y5',
+      learnerOptions: [{ id: 'learner-a', name: 'Ava', yearGroup: 'Y5' }],
+      signedInAs: ${JSON.stringify(demo ? '' : 'parent@example.test')},
+      session: {
+        signedIn: true,
+        demo: ${demo ? 'true' : 'false'},
+        mode: ${JSON.stringify(demo ? 'demo-sync' : 'remote-sync')},
+      },
+      persistence: {
+        mode: appState.persistence.mode,
+        label: appState.persistence.mode,
+        snapshot: appState.persistence,
+      },
+    };
+    const actions = {
+      dispatch() {},
+      toggleTheme() {},
+      navigateHome() {},
+      selectLearner() {},
+      openProfileSettings() {},
+      logout() {},
+      retryPersistence() {},
+    };
+    const html = renderToStaticMarkup(
+      <ProfileSettingsSurface appState={appState} chrome={chrome} actions={actions} subjectCount={3} liveSubjectCount={1} />
+    );
+    console.log(html);
+  `);
+}
+
 export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
   return renderFixture(`
     import React from 'react';

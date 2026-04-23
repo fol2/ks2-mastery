@@ -130,6 +130,21 @@ function requireLegacyRuntimeWriteAllowed(session, env = {}) {
   }
 }
 
+async function publicSourceAssetResponse(request, env = {}) {
+  const url = new URL(request.url);
+  const headers = {
+    'cache-control': 'no-store',
+    'content-type': 'text/plain; charset=utf-8',
+  };
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response('Not found.', { status: 404, headers });
+  }
+  if (url.pathname === '/src/bundles/app.bundle.js' && env.ASSETS) {
+    return env.ASSETS.fetch(request);
+  }
+  return new Response('Not found.', { status: 404, headers });
+}
+
 export function createWorkerApp({
   now = Date.now,
   fetchFn = (...args) => fetch(...args),
@@ -141,6 +156,10 @@ export function createWorkerApp({
       const auth = createSessionAuthBoundary({ env });
 
       try {
+        if (url.pathname.startsWith('/src/')) {
+          return publicSourceAssetResponse(request, env);
+        }
+
         if (url.pathname === '/api/health') {
           let databaseStatus = 'missing';
           try {

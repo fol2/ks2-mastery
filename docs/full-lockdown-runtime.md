@@ -64,7 +64,7 @@ npm run audit:client
 
 `npm run check` includes the build-public assertion and client bundle audit before the Worker dry-run deploy.
 
-After deploying the current build, run:
+`npm run deploy` now runs the production audit after upload. To recheck an already deployed build, run:
 
 ```bash
 npm run audit:production
