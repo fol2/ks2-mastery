@@ -4312,10 +4312,19 @@ textarea:focus-visible {
   border: 1.5px solid color-mix(in oklab, var(--ink) 55%, transparent);
   box-shadow: 0 0 0 1px color-mix(in oklab, var(--panel) 70%, transparent);
   flex-shrink: 0;
+  transform-origin: center;
+  animation: spelling-path-step-idle-in 220ms var(--ease-out) both;
+  animation-delay: calc(var(--path-step-index, 0) * 18ms);
+  transition:
+    background-color 220ms var(--ease-out),
+    border-color 220ms var(--ease-out),
+    box-shadow 220ms var(--ease-out),
+    transform 220ms var(--ease-out);
 }
 .spelling-in-session .path-step.done {
   background: var(--good);
   border-color: color-mix(in oklab, var(--good) 80%, var(--ink));
+  animation: spelling-path-step-secured 320ms cubic-bezier(0.18, 0.88, 0.3, 1.2) both;
 }
 .spelling-in-session .path-step.current {
   width: 16px; height: 16px;
@@ -4324,7 +4333,58 @@ textarea:focus-visible {
   box-shadow:
     0 0 0 1px color-mix(in oklab, var(--panel) 80%, transparent),
     0 0 0 5px color-mix(in oklab, var(--brand) 22%, transparent);
-  animation: pulse-ring 2s var(--ease-in-out) infinite;
+  animation:
+    spelling-path-step-current-in 520ms cubic-bezier(0.2, 0.9, 0.2, 1) both,
+    pulse-ring 2s var(--ease-in-out) 560ms infinite;
+}
+@keyframes spelling-path-step-idle-in {
+  from {
+    opacity: 0.42;
+    transform: translateY(4px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes spelling-path-step-secured {
+  0% {
+    transform: scale(0.78);
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--panel) 70%, transparent);
+  }
+  58% {
+    transform: scale(1.16);
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--panel) 70%, transparent),
+      0 0 0 6px color-mix(in oklab, var(--good) 18%, transparent);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--panel) 70%, transparent);
+  }
+}
+@keyframes spelling-path-step-current-in {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.72);
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--panel) 80%, transparent),
+      0 0 0 0 color-mix(in oklab, var(--brand) 0%, transparent);
+  }
+  62% {
+    opacity: 1;
+    transform: scale(1.08);
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--panel) 80%, transparent),
+      0 0 0 9px color-mix(in oklab, var(--brand) 16%, transparent);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--panel) 80%, transparent),
+      0 0 0 5px color-mix(in oklab, var(--brand) 22%, transparent);
+  }
 }
 @keyframes pulse-ring {
   0%, 100% {
@@ -4339,7 +4399,11 @@ textarea:focus-visible {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .spelling-in-session .path-step.current { animation: none; }
+  .spelling-in-session .path-step,
+  .spelling-in-session .path-step.done,
+  .spelling-in-session .path-step.current {
+    animation: none;
+  }
 }
 .spelling-in-session .path-count {
   font-size: 0.82rem;
