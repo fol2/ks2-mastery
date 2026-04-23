@@ -10,6 +10,7 @@ import {
   shouldOpenLocalCodexReview,
 } from '../src/platform/app/bootstrap.js';
 import { createAppController } from '../src/platform/app/create-app-controller.js';
+import { createLocalAppController } from '../src/platform/app/create-local-app-controller.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import {
   LOCAL_CODEX_REVIEW_LEARNER_ID,
@@ -58,20 +59,26 @@ function jsonResponse(ok, payload) {
   };
 }
 
-test('browser bootstrap creates local repositories and recognises codex review URL modes', async () => {
+test('browser bootstrap does not create local repositories for file or local query modes', async () => {
   const storage = installMemoryStorage();
-  const location = new URL('file:///tmp/index.html?codexReview=stage-3');
+  const location = new URL('file:///tmp/index.html?local=1&codexReview=stage-3');
 
-  const boot = await createRepositoriesForBrowserRuntime({ location, storage });
+  const boot = await createRepositoriesForBrowserRuntime({
+    location,
+    storage,
+    credentialFetch: async () => jsonResponse(false, { ok: false }),
+    waitForAuthRequired: false,
+  });
 
-  assert.equal(boot.session.mode, 'local-only');
+  assert.equal(boot.session.mode, 'auth-required');
+  assert.equal(boot.repositories, null);
   assert.equal(reviewLearnerIdFromMode('eggs'), LOCAL_CODEX_REVIEW_LEARNER_ID);
   assert.equal(
     localCodexReviewLearnerIdFromUrl({ location }),
-    LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS[3],
+    '',
   );
-  assert.equal(shouldOpenLocalCodexReview({ location }), true);
-  assert.equal(boot.repositories.learners.read().selectedId, LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS[3]);
+  assert.equal(shouldOpenLocalCodexReview({ location }), false);
+  assert.equal(Boolean(LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS[3]), true);
 });
 
 test('browser bootstrap builds remote repositories from an authenticated session payload', async () => {
@@ -148,7 +155,7 @@ test('credential fetch preserves caller options and adds same-origin credentials
 test('controller bootstraps local repositories, store, services, and snapshot without rendering DOM', () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });
-  const controller = createAppController({ repositories });
+  const controller = createLocalAppController({ repositories });
   const snapshot = controller.getSnapshot();
 
   assert.equal(snapshot.appState.route.screen, 'dashboard');
@@ -193,7 +200,7 @@ test('controller dispatches profile TTS test through the selected provider', () 
 
 test('controller dispatches spelling transitions through store, repositories, events, and TTS', () => {
   installMemoryStorage();
-  const controller = createAppController();
+  const controller = createLocalAppController();
   const learnerId = controller.store.getState().learners.selectedId;
   controller.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
 
@@ -233,7 +240,7 @@ test('controller can defer spelling start audio until the flow transition flushe
 
 test('controller retry preserves the current route and clears runtime boundaries', async () => {
   installMemoryStorage();
-  const controller = createAppController();
+  const controller = createLocalAppController();
   const learnerId = controller.store.getState().learners.selectedId;
 
   controller.dispatch('open-subject', { subjectId: 'spelling' });
@@ -257,7 +264,7 @@ test('controller retry preserves the current route and clears runtime boundaries
 test('controller contains subject action errors without mutating unrelated learner state', () => {
   installMemoryStorage();
   const brokenSubject = makeBrokenSubject();
-  const controller = createAppController({ subjects: [...SUBJECTS, brokenSubject] });
+  const controller = createLocalAppController({ subjects: [...SUBJECTS, brokenSubject] });
   const learnerId = controller.store.getState().learners.selectedId;
   const spellingBefore = JSON.stringify(controller.store.getState().subjectUi.spelling);
 
@@ -276,7 +283,7 @@ test('controller contains subject action errors without mutating unrelated learn
 
 test('controller subscribers receive a controller snapshot per logical state change', () => {
   installMemoryStorage();
-  const controller = createAppController();
+  const controller = createLocalAppController();
   const snapshots = [];
   const unsubscribe = controller.subscribe((snapshot) => snapshots.push(snapshot));
 

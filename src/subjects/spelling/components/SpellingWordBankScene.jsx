@@ -120,7 +120,7 @@ function WordPill({ word, actions }) {
   );
 }
 
-function WordGroup({ group, words, query, actions }) {
+function WordGroup({ group, words, query, actions, runtimeReadOnly = false }) {
   const secureCount = words.filter((word) => Math.max(0, Number(word.progress?.stage) || 0) >= 4).length;
   const summaryText = words.length
     ? `${secureCount} secure out of ${words.length} visible spellings`
@@ -134,14 +134,14 @@ function WordGroup({ group, words, query, actions }) {
       </div>
       <div className="wb-word-bank">
         {words.length
-          ? words.map((word) => <WordPill word={word} actions={actions} key={word.slug} />)
+          ? words.map((word) => <WordPill word={word} actions={actions} runtimeReadOnly={runtimeReadOnly} key={word.slug} />)
           : <div className="wb-empty">{emptyText}</div>}
       </div>
     </section>
   );
 }
 
-function WordBankCard({ learner, analytics, appState, actions }) {
+function WordBankCard({ learner, analytics, appState, actions, runtimeReadOnly = false }) {
   const persistedSearchQuery = appState?.transientUi?.spellingAnalyticsWordSearch || '';
   const [draftSearch, setDraftSearch] = React.useState(persistedSearchQuery);
   const statusFilter = appState?.transientUi?.spellingAnalyticsStatusFilter || 'all';
@@ -236,7 +236,7 @@ function WordBankCard({ learner, analytics, appState, actions }) {
 
         <div className="wb-word-groups">
           {visibleGroups.length
-            ? visibleGroups.map((entry) => <WordGroup {...entry} query={query} actions={actions} key={entry.group.key} />)
+            ? visibleGroups.map((entry) => <WordGroup {...entry} query={query} actions={actions} runtimeReadOnly={runtimeReadOnly} key={entry.group.key} />)
             : <div className="wb-empty">{query ? 'No words match your search and filters.' : 'No words match your filters.'}</div>}
         </div>
 
@@ -288,7 +288,15 @@ function WordBankAggregates({ analytics }) {
   );
 }
 
-export function SpellingWordBankScene({ appState, learner, analytics, accent, actions, previousHeroBg = '' }) {
+export function SpellingWordBankScene({
+  appState,
+  learner,
+  analytics,
+  accent,
+  actions,
+  previousHeroBg = '',
+  runtimeReadOnly = false,
+}) {
   const detailSlug = appState?.transientUi?.spellingWordDetailSlug || '';
   const detailMode = appState?.transientUi?.spellingWordDetailMode || 'explain';
   const drillTyped = appState?.transientUi?.spellingWordBankDrillTyped || '';
@@ -312,7 +320,7 @@ export function SpellingWordBankScene({ appState, learner, analytics, accent, ac
           <h1 className="word-bank-title">{learner.name}’s spellings</h1>
         </header>
         <WordBankAggregates analytics={analytics} />
-        <WordBankCard learner={learner} analytics={analytics} appState={appState} actions={actions} />
+        <WordBankCard learner={learner} analytics={analytics} appState={appState} actions={actions} runtimeReadOnly={runtimeReadOnly} />
       </div>
       {detailWord ? (
         <SpellingWordDetailModal

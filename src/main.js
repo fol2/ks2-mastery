@@ -1,7 +1,6 @@
 import {
   createCredentialFetch,
   createRepositoriesForBrowserRuntime,
-  shouldOpenLocalCodexReview,
 } from './platform/app/bootstrap.js';
 import { createAppController } from './platform/app/create-app-controller.js';
 import React from 'react';
@@ -12,9 +11,7 @@ import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
 import { probeRelLuminance } from './platform/ui/luminance.js';
 import { safeParseInt, uid } from './platform/core/utils.js';
 import { normalisePlatformRole } from './platform/access/roles.js';
-import { buildAdminHubReadModel } from './platform/hubs/admin-read-model.js';
 import { createHubApi } from './platform/hubs/api.js';
-import { buildParentHubReadModel } from './platform/hubs/parent-read-model.js';
 import {
   buildAdminHubAccessContext,
   buildParentHubAccessContext,
@@ -22,16 +19,13 @@ import {
 } from './platform/hubs/shell-access.js';
 import { createSubjectRuntimeBoundary } from './platform/core/subject-runtime.js';
 import { createPracticeStreakSubscriber } from './platform/events/index.js';
+import { createSubjectCommandClient } from './platform/runtime/subject-command-client.js';
+import { createReadModelClient } from './platform/runtime/read-model-client.js';
 import { createPlatformTts } from './subjects/spelling/tts.js';
-import { createSpellingService } from './subjects/spelling/service.js';
-import { createSpellingPersistence } from './subjects/spelling/repository.js';
 import { DEFAULT_TTS_PROVIDER, normaliseTtsProvider } from './subjects/spelling/tts-providers.js';
-import {
-  createApiSpellingContentRepository,
-  createLocalSpellingContentRepository,
-} from './subjects/spelling/content/repository.js';
+import { createSpellingReadModelService } from './subjects/spelling/client-read-models.js';
+import { createApiSpellingContentRepository } from './subjects/spelling/content/repository.js';
 import { createSpellingContentService } from './subjects/spelling/content/service.js';
-import { createSpellingRewardSubscriber } from './subjects/spelling/event-hooks.js';
 import { resolveSpellingShortcut } from './subjects/spelling/shortcuts.js';
 import {
   monsterSummary,
@@ -372,11 +366,18 @@ tts.subscribe((event) => {
   syncAudioPlayingClass();
 });
 
-const spellingContentRepository = boot.session.signedIn
-  ? createApiSpellingContentRepository({ baseUrl: '', fetch: credentialFetch })
-  : createLocalSpellingContentRepository({ storage: globalThis.localStorage });
+const spellingContentRepository = createApiSpellingContentRepository({ baseUrl: '', fetch: credentialFetch });
 const spellingContent = createSpellingContentService({ repository: spellingContentRepository });
 await spellingContent.hydrate();
+const readModels = createReadModelClient({ baseUrl: '', fetch: credentialFetch });
+const subjectCommands = createSubjectCommandClient({
+  baseUrl: '',
+  fetch: credentialFetch,
+  getLearnerRevision: (learnerId) => repositories.runtime?.readLearnerRevision?.(learnerId) || 0,
+  onCommandApplied: ({ learnerId, subjectId, response }) => {
+    repositories.runtime?.applySubjectCommandResult?.({ learnerId, subjectId, response });
+  },
+});
 let shellPlatformRole = normalisePlatformRole(boot.session.platformRole || 'parent');
 let adminAccountDirectory = {
   status: 'idle',
@@ -608,86 +609,13 @@ async function loadAdminHub({ learnerId = null, force = false, auditLimit = 20 }
 }
 
 function rebuildSpellingService() {
-  services.spelling = createSpellingService({
-    repository: createSpellingPersistence({ repositories }),
-    tts,
-    contentSnapshot: spellingContent.getRuntimeSnapshot(),
+  services.spelling = createSpellingReadModelService({
+    getState: () => store?.getState?.() || null,
   });
   return services.spelling;
 }
 
 rebuildSpellingService();
-
-function learnerReadBundle(learnerId) {
-  return {
-    subjectStates: repositories.subjectStates.readForLearner(learnerId),
-    practiceSessions: repositories.practiceSessions.list(learnerId),
-    gameState: repositories.gameState.readForLearner(learnerId),
-    eventLog: repositories.eventLog.list(learnerId),
-  };
-}
-
-function buildLocalHubModels(appState) {
-  const runtimeSnapshot = spellingContent.getRuntimeSnapshot();
-  const selectedLearnerId = appState.learners.selectedId;
-  const selectedLearner = selectedLearnerId ? appState.learners.byId[selectedLearnerId] : null;
-  const learnerBundles = Object.fromEntries(appState.learners.allIds.map((learnerId) => [
-    learnerId,
-    learnerReadBundle(learnerId),
-  ]));
-
-  const parentHub = selectedLearner
-    ? buildParentHubReadModel({
-      learner: selectedLearner,
-      platformRole: shellPlatformRole,
-      membershipRole: 'owner',
-      subjectStates: learnerBundles[selectedLearnerId]?.subjectStates || {},
-      practiceSessions: learnerBundles[selectedLearnerId]?.practiceSessions || [],
-      eventLog: learnerBundles[selectedLearnerId]?.eventLog || [],
-      gameState: learnerBundles[selectedLearnerId]?.gameState || {},
-      runtimeSnapshots: { spelling: runtimeSnapshot },
-      now: Date.now,
-    })
-    : null;
-
-  const adminHub = buildAdminHubReadModel({
-    account: {
-      id: boot.session.accountId || 'local-browser',
-      selectedLearnerId,
-      repoRevision: Number(boot.session.repoRevision) || 0,
-      platformRole: shellPlatformRole,
-    },
-    platformRole: shellPlatformRole,
-    spellingContentBundle: spellingContent.readBundle(),
-    memberships: appState.learners.allIds.map((learnerId, index) => ({
-      learnerId,
-      role: 'owner',
-      sortIndex: index,
-      stateRevision: 0,
-      learner: appState.learners.byId[learnerId],
-    })),
-    learnerBundles,
-    runtimeSnapshots: { spelling: runtimeSnapshot },
-    auditEntries: [],
-    auditAvailable: false,
-    selectedLearnerId,
-    now: Date.now,
-  });
-
-  return {
-    shellAccess: {
-      platformRole: shellPlatformRole,
-      source: 'local-reference',
-    },
-    parentHub,
-    parentHubState: { status: 'loaded', learnerId: selectedLearnerId || '', error: '', notice: '' },
-    adminHub,
-    adminHubState: { status: 'loaded', learnerId: selectedLearnerId || '', error: '', notice: '' },
-    activeAdultLearnerContext: null,
-    adultSurfaceNotice: '',
-    adminAccountDirectory,
-  };
-}
 
 function buildSignedInHubModels(appState) {
   const parentHubState = {
@@ -718,31 +646,8 @@ function buildSignedInHubModels(appState) {
   };
 }
 
-function buildLocalShellHubModels(appState) {
-  const selectedLearnerId = appState.learners.selectedId;
-  return {
-    shellAccess: {
-      platformRole: shellPlatformRole,
-      source: 'local-reference',
-    },
-    parentHub: null,
-    parentHubState: { status: 'idle', learnerId: selectedLearnerId || '', error: '', notice: '' },
-    adminHub: null,
-    adminHubState: { status: 'idle', learnerId: selectedLearnerId || '', error: '', notice: '' },
-    activeAdultLearnerContext: null,
-    adultSurfaceNotice: '',
-    adminAccountDirectory,
-  };
-}
-
-function needsFullLocalHubModels(appState) {
-  return appState.route.screen === 'parent-hub' || appState.route.screen === 'admin-hub';
-}
-
-function buildRouteHubModels(appState) {
-  if (boot.session.signedIn) return buildSignedInHubModels(appState);
-  if (needsFullLocalHubModels(appState)) return buildLocalHubModels(appState);
-  return buildLocalShellHubModels(appState);
+function buildHubModels(appState) {
+  return buildSignedInHubModels(appState);
 }
 
 const runtimeBoundary = createSubjectRuntimeBoundary({
@@ -758,9 +663,9 @@ const controller = createAppController({
   runtimeBoundary,
   tts,
   services,
+  cacheSubjectUiWrites: true,
   subscribers: [
     createPracticeStreakSubscriber(),
-    createSpellingRewardSubscriber({ gameStateRepository: repositories.gameState }),
   ],
   onEventError(error) {
     globalThis.console?.error?.('Reward/event subscriber failed.', error);
@@ -999,10 +904,6 @@ async function updateAdminAccountRole(accountId, platformRole) {
   }
 }
 
-if (shouldOpenLocalCodexReview({ location: globalThis.location })) {
-  store.openCodex();
-}
-
 function ensureSpellingAutoAdvanceFromCurrentState() {
   return controller.ensureSpellingAutoAdvanceFromCurrentState();
 }
@@ -1022,11 +923,13 @@ function contextFor(subjectId = null) {
     subject: resolvedSubject,
     service: services[resolvedSubject.id] || null,
     spellingContent,
+    readModels,
     tts,
     applySubjectTransition,
     runtimeBoundary,
     subjects: SUBJECTS,
-    ...buildRouteHubModels(appState),
+    runtimeReadOnly: appState.persistence?.mode === 'degraded',
+    ...buildHubModels(appState),
   };
 }
 
@@ -1667,6 +1570,199 @@ function handleGlobalAction(action, data) {
   return false;
 }
 
+const SPELLING_COMMAND_ACTIONS = new Set([
+  'spelling-set-mode',
+  'spelling-set-pref',
+  'spelling-toggle-pref',
+  'spelling-start',
+  'spelling-start-again',
+  'spelling-shortcut-start',
+  'spelling-submit-form',
+  'spelling-continue',
+  'spelling-skip',
+  'spelling-end-early',
+  'spelling-drill-all',
+  'spelling-drill-single',
+]);
+
+const SPELLING_UI_LOCAL_ACTIONS = new Set([
+  'spelling-back',
+  'spelling-replay',
+  'spelling-replay-slow',
+]);
+
+function runtimeIsReadOnly() {
+  return store.getState().persistence?.mode === 'degraded';
+}
+
+function setSpellingRuntimeError(message) {
+  store.updateSubjectUi('spelling', { error: message || 'Practice is temporarily unavailable.' });
+}
+
+function applySpellingCommandResponse(response) {
+  if (response?.projections?.rewards?.toastEvents?.length) {
+    store.pushToasts(response.projections.rewards.toastEvents);
+  }
+  if (response?.projections?.rewards?.events?.length) {
+    store.pushMonsterCelebrations(response.projections.rewards.events);
+  }
+  store.reloadFromRepositories({ preserveRoute: true });
+  if (response?.audio?.promptToken) {
+    tts.speak(response.audio);
+  }
+}
+
+async function sendSpellingCommand(command, payload = {}) {
+  const appState = store.getState();
+  const learnerId = appState.learners.selectedId;
+  if (!learnerId) return null;
+  const response = await subjectCommands.send({
+    subjectId: 'spelling',
+    learnerId,
+    command,
+    payload,
+  });
+  applySpellingCommandResponse(response);
+  return response;
+}
+
+function runSpellingCommand(command, payload = {}) {
+  sendSpellingCommand(command, payload).catch((error) => {
+    globalThis.console?.warn?.('Spelling command failed.', error);
+    const message = error?.payload?.message || error?.message || 'The spelling command could not be completed.';
+    setSpellingRuntimeError(message);
+  });
+}
+
+function handleRemoteSpellingAction(action, data = {}) {
+  if (!SPELLING_COMMAND_ACTIONS.has(action) && !SPELLING_UI_LOCAL_ACTIONS.has(action)) return false;
+
+  const appState = store.getState();
+  const learnerId = appState.learners.selectedId;
+  const ui = appState.subjectUi?.spelling || {};
+  const spelling = services.spelling;
+
+  if (action === 'spelling-replay' || action === 'spelling-replay-slow') {
+    const audio = spelling?.getAudioCue?.(learnerId) || ui.audio || null;
+    if (audio?.promptToken) {
+      tts.speak({ ...audio, slow: action === 'spelling-replay-slow' });
+    }
+    return true;
+  }
+
+  if (action === 'spelling-back') {
+    tts.stop();
+    store.updateSubjectUi('spelling', { phase: 'dashboard', error: '' });
+    return true;
+  }
+
+  if (runtimeIsReadOnly()) {
+    setSpellingRuntimeError('Practice is read-only while sync is degraded. Retry sync before continuing.');
+    return true;
+  }
+
+  if (action === 'spelling-set-pref') {
+    runSpellingCommand('save-prefs', { prefs: { [data.pref]: data.value } });
+    return true;
+  }
+
+  if (action === 'spelling-set-mode') {
+    runSpellingCommand('save-prefs', { prefs: { mode: data.value } });
+    return true;
+  }
+
+  if (action === 'spelling-toggle-pref') {
+    const current = spelling?.getPrefs?.(learnerId) || {};
+    runSpellingCommand('save-prefs', { prefs: { [data.pref]: !current[data.pref] } });
+    return true;
+  }
+
+  if (action === 'spelling-start' || action === 'spelling-start-again') {
+    const prefs = spelling?.getPrefs?.(learnerId) || {};
+    tts.stop();
+    runSpellingCommand('start-session', {
+      mode: prefs.mode,
+      yearFilter: prefs.yearFilter,
+      length: prefs.roundLength,
+    });
+    return true;
+  }
+
+  if (action === 'spelling-shortcut-start') {
+    const mode = data.mode;
+    if (!mode) return true;
+    if (ui.phase === 'session') {
+      const confirmed = globalThis.confirm?.('End the current spelling session and switch?');
+      if (confirmed === false) return true;
+    }
+    tts.stop();
+    (async () => {
+      await sendSpellingCommand('save-prefs', { prefs: { mode } });
+      const prefs = spelling?.getPrefs?.(learnerId) || { mode };
+      await sendSpellingCommand('start-session', {
+        mode: prefs.mode || mode,
+        yearFilter: prefs.yearFilter,
+        length: prefs.roundLength,
+      });
+    })().catch((error) => {
+      globalThis.console?.warn?.('Spelling shortcut command failed.', error);
+      setSpellingRuntimeError(error?.payload?.message || error?.message || 'The spelling shortcut could not be completed.');
+    });
+    return true;
+  }
+
+  if (action === 'spelling-submit-form') {
+    runSpellingCommand('submit-answer', { typed: data.formData?.get?.('typed') || '' });
+    return true;
+  }
+
+  if (action === 'spelling-continue') {
+    runSpellingCommand('continue-session');
+    return true;
+  }
+
+  if (action === 'spelling-skip') {
+    runSpellingCommand('skip-word');
+    return true;
+  }
+
+  if (action === 'spelling-end-early') {
+    const confirmed = globalThis.confirm?.('End this session now?');
+    if (confirmed === false) return true;
+    tts.stop();
+    runSpellingCommand('end-session');
+    return true;
+  }
+
+  if (action === 'spelling-drill-all') {
+    const mistakes = Array.isArray(ui.summary?.mistakes) ? ui.summary.mistakes : [];
+    if (!mistakes.length) return true;
+    tts.stop();
+    runSpellingCommand('start-session', {
+      mode: 'trouble',
+      words: mistakes.map((word) => word.slug).filter(Boolean),
+      yearFilter: 'all',
+      length: mistakes.length,
+    });
+    return true;
+  }
+
+  if (action === 'spelling-drill-single') {
+    const slug = String(data.slug || '').trim();
+    if (!slug) return true;
+    tts.stop();
+    runSpellingCommand('start-session', {
+      mode: 'single',
+      words: [slug],
+      yearFilter: 'all',
+      length: 1,
+    });
+    return true;
+  }
+
+  return false;
+}
+
 function handleSubjectAction(action, data) {
   const appState = store.getState();
   const learnerId = appState.learners.selectedId;
@@ -1701,7 +1797,7 @@ function handleSubjectAction(action, data) {
 function dispatchAction(action, data = {}) {
   controller.autoAdvance.clear();
   captureWordDetailTrigger(action, data);
-  if (!handleGlobalAction(action, data)) {
+  if (!handleGlobalAction(action, data) && !handleRemoteSpellingAction(action, data)) {
     handleSubjectAction(action, data);
   }
   ensureSpellingAutoAdvanceFromCurrentState();

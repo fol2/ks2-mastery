@@ -856,6 +856,7 @@ export function createApiPlatformRepositories({
   storage,
   authSession = createNoopRepositoryAuthSession(),
   cacheScopeKey = null,
+  publicReadModels = false,
 } = {}) {
   if (typeof fetchFn !== 'function') {
     throw new TypeError('API repositories require a fetch implementation.');
@@ -1005,6 +1006,55 @@ export function createApiPlatformRepositories({
     cache.eventLog = effectiveBundle.eventLog;
     syncState = rebase.syncState;
     return rebase;
+  }
+
+  function cacheSubjectUi(learnerId, subjectId, ui, { scope = 'subject-state-cache' } = {}) {
+    const key = subjectStateKey(learnerId, subjectId);
+    const current = normaliseSubjectStateRecord(cache.subjectStates[key]);
+    const next = normaliseSubjectStateRecord(mergeSubjectUi(current, ui, nowTs()));
+    cache.subjectStates[key] = next;
+    persistLocalCache(scope);
+    return next;
+  }
+
+  function appendCommandEvents(events = []) {
+    const current = Array.isArray(cache.eventLog) ? cache.eventLog : [];
+    const seen = new Set(current.map(eventToken).filter(Boolean));
+    const additions = [];
+    for (const event of Array.isArray(events) ? events : []) {
+      const next = cloneSerialisable(event) || null;
+      if (!next || typeof next !== 'object' || Array.isArray(next)) continue;
+      const token = eventToken(next);
+      if (token && seen.has(token)) continue;
+      if (token) seen.add(token);
+      additions.push(next);
+    }
+    if (additions.length) {
+      cache.eventLog = [...current, ...additions];
+    }
+  }
+
+  function applyCommandResultToCache({ learnerId, subjectId, response } = {}) {
+    if (!response || typeof response !== 'object' || Array.isArray(response)) return null;
+    const readModel = response.subjectReadModel || null;
+    if (readModel) {
+      cacheSubjectUi(learnerId, subjectId, readModel, { scope: 'subject-command:read-model' });
+    }
+
+    const rewardState = response.projections?.rewards?.state;
+    const rewardSystemId = response.projections?.rewards?.systemId;
+    if (rewardSystemId && rewardState && typeof rewardState === 'object' && !Array.isArray(rewardState)) {
+      cache.gameState[gameStateKey(learnerId, rewardSystemId)] = cloneSerialisable(rewardState) || {};
+    }
+
+    appendCommandEvents(response.events || response.domainEvents || []);
+
+    if (Number.isFinite(Number(response.mutation?.appliedRevision))) {
+      syncState = setScopeRevision(syncState, 'learner', learnerId, Number(response.mutation.appliedRevision));
+    }
+    markRemoteSuccess();
+    persistLocalCache('subject-command');
+    return normaliseSubjectStateRecord(cache.subjectStates[subjectStateKey(learnerId, subjectId)]);
   }
 
   function queueOperation(operation) {
@@ -1185,7 +1235,10 @@ export function createApiPlatformRepositories({
     try {
       const payload = await fetchJson(fetchFn, joinUrl(baseUrl, '/api/bootstrap'), {
         method: 'GET',
-        headers: { accept: 'application/json' },
+        headers: {
+          accept: 'application/json',
+          ...(publicReadModels ? { 'x-ks2-public-read-models': '1' } : {}),
+        },
       }, authSession);
       const remoteBundle = normaliseRepositoryBundle(payload);
       const remoteSyncState = normaliseSyncState(payload?.syncState);
@@ -1366,6 +1419,9 @@ export function createApiPlatformRepositories({
       writeUi(learnerId, subjectId, ui) {
         return this.writeRecord(learnerId, subjectId, mergeSubjectUi(this.read(learnerId, subjectId), ui, nowTs()), 'ui');
       },
+      cacheUi(learnerId, subjectId, ui) {
+        return cacheSubjectUi(learnerId, subjectId, ui, { scope: 'subject-state-cache' });
+      },
       writeData(learnerId, subjectId, data) {
         return this.writeRecord(learnerId, subjectId, mergeSubjectData(this.read(learnerId, subjectId), data, nowTs()), 'data');
       },
@@ -1480,6 +1536,15 @@ export function createApiPlatformRepositories({
         const operation = createOperation('eventLog.clearLearner', { learnerId }, syncState);
         queueOperation(operation);
         kickQueue();
+      },
+    },
+    runtime: {
+      readLearnerRevision(learnerId) {
+        const current = normaliseSyncState(syncState);
+        return Math.max(0, Number(current.learnerRevisions?.[learnerId]) || 0);
+      },
+      applySubjectCommandResult({ learnerId, subjectId, response } = {}) {
+        return applyCommandResultToCache({ learnerId, subjectId, response });
       },
     },
   };

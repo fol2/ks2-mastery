@@ -1,13 +1,9 @@
 import {
-  ensureLocalCodexReviewProfile,
   LOCAL_CODEX_REVIEW_LEARNER_ID,
   LOCAL_CODEX_REVIEW_LEARNER_IDS,
   LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS,
 } from '../core/local-review-profile.js';
-import {
-  createApiPlatformRepositories,
-  createLocalPlatformRepositories,
-} from '../core/repositories/index.js';
+import { createApiPlatformRepositories } from '../core/repositories/index.js';
 import { normalisePlatformRole } from '../access/roles.js';
 
 function locationSearchParams(location) {
@@ -15,8 +11,8 @@ function locationSearchParams(location) {
 }
 
 export function isLocalMode({ location = globalThis.location } = {}) {
-  const params = locationSearchParams(location);
-  return location?.protocol === 'file:' || params.get('local') === '1';
+  void location;
+  return false;
 }
 
 export function reviewLearnerIdFromMode(value) {
@@ -31,11 +27,8 @@ export function reviewLearnerIdFromMode(value) {
 }
 
 export function localCodexReviewLearnerIdFromUrl({ location = globalThis.location } = {}) {
-  if (!isLocalMode({ location })) return '';
-  const params = locationSearchParams(location);
-  const learnerId = String(params.get('learner') || '').trim();
-  if (LOCAL_CODEX_REVIEW_LEARNER_IDS.includes(learnerId)) return learnerId;
-  return reviewLearnerIdFromMode(params.get('codexReview'));
+  void location;
+  return '';
 }
 
 export function shouldOpenLocalCodexReview(options = {}) {
@@ -52,7 +45,7 @@ export function createCredentialFetch(fetchFn = (input, init) => globalThis.fetc
 }
 
 export function createLocalOnlySession() {
-  return { signedIn: false, mode: 'local-only', platformRole: 'parent' };
+  return createAuthRequiredSession({ error: 'auth-required' });
 }
 
 export function createAuthRequiredSession({ error = '' } = {}) {
@@ -90,21 +83,16 @@ export async function createRepositoriesForBrowserRuntime({
   onAuthRequired = () => {},
   waitForAuthRequired = true,
 } = {}) {
-  if (isLocalMode({ location })) {
-    const localRepositories = createLocalPlatformRepositories({ storage });
-    ensureLocalCodexReviewProfile(localRepositories, {
-      selectLearnerId: localCodexReviewLearnerIdFromUrl({ location }),
+  let sessionResponse = null;
+  let sessionPayload = null;
+  try {
+    sessionResponse = await credentialFetch('/api/auth/session', {
+      headers: { accept: 'application/json' },
     });
-    return {
-      repositories: localRepositories,
-      session: createLocalOnlySession(),
-    };
+    sessionPayload = await sessionResponse.json().catch(() => null);
+  } catch (error) {
+    sessionResponse = { ok: false, error };
   }
-
-  const sessionResponse = await credentialFetch('/api/auth/session', {
-    headers: { accept: 'application/json' },
-  });
-  const sessionPayload = await sessionResponse.json().catch(() => null);
 
   if (!sessionResponse.ok || !sessionPayload?.session?.accountId) {
     const error = locationSearchParams(location).get('auth_error') || '';
@@ -127,6 +115,7 @@ export async function createRepositoriesForBrowserRuntime({
     baseUrl: '',
     fetch: credentialFetch,
     cacheScopeKey: `account:${session.accountId}`,
+    publicReadModels: true,
   });
 
   return {

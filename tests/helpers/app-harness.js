@@ -2,7 +2,7 @@ import { createLocalPlatformRepositories } from '../../src/platform/core/reposit
 import { createSubjectRuntimeBoundary } from '../../src/platform/core/subject-runtime.js';
 import { renderApp } from '../../src/platform/ui/render.js';
 import { SUBJECTS } from '../../src/platform/core/subject-registry.js';
-import { createAppController } from '../../src/platform/app/create-app-controller.js';
+import { createLocalAppController } from '../../src/platform/app/create-local-app-controller.js';
 import { createNoopTtsPort } from '../../src/platform/app/side-effect-ports.js';
 import { renderReactControllerApp } from './react-app-ssr.js';
 
@@ -21,7 +21,7 @@ export function createAppHarness({
   extraServices = {},
 } = {}) {
   const tts = makeTts();
-  const controller = createAppController({
+  const controller = createLocalAppController({
     repositories,
     subjects,
     now,

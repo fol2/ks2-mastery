@@ -249,7 +249,9 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/bootstrap' && request.method === 'GET') {
-          const bundle = await repository.bootstrap(session.accountId);
+          const bundle = await repository.bootstrap(session.accountId, {
+            publicReadModels: request.headers.get('x-ks2-public-read-models') === '1',
+          });
           return json({
             ok: true,
             version: '0.9.0',
@@ -280,7 +282,9 @@ export function createWorkerApp({
             session,
             now: now(),
           });
-          const bundle = await repository.bootstrap(session.accountId);
+          const bundle = await repository.bootstrap(session.accountId, {
+            publicReadModels: request.headers.get('x-ks2-public-read-models') === '1',
+          });
           return json({
             ok: true,
             session: {

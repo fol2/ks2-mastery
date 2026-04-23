@@ -214,11 +214,11 @@ export function renderSpellingSurfaceFixture({ phase = 'setup' } = {}) {
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
     import { SubjectRoute } from ${JSON.stringify(absoluteSpecifier('src/surfaces/subject/SubjectRoute.jsx'))};
-    import { createAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-app-controller.js'))};
+    import { createLocalAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-local-app-controller.js'))};
     import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
 
     installMemoryStorage();
-    const controller = createAppController();
+    const controller = createLocalAppController();
     const selectedPhase = ${JSON.stringify(phase)};
     const learnerId = controller.store.getState().learners.selectedId;
     controller.dispatch('open-subject', { subjectId: 'spelling' });
@@ -282,12 +282,12 @@ export function renderAppFixture({ route = 'dashboard' } = {}) {
     import { renderToStaticMarkup } from 'react-dom/server';
     import { App } from ${JSON.stringify(absoluteSpecifier('src/app/App.jsx'))};
     import { DefaultErrorFallback } from ${JSON.stringify(absoluteSpecifier('src/platform/react/ErrorBoundary.jsx'))};
-    import { createAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-app-controller.js'))};
+    import { createLocalAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-local-app-controller.js'))};
     import { SUBJECTS } from ${JSON.stringify(absoluteSpecifier('src/platform/core/subject-registry.js'))};
     import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
 
     installMemoryStorage();
-    const controller = createAppController();
+    const controller = createLocalAppController();
     if (${JSON.stringify(route)} === 'codex') controller.dispatch('open-codex');
     if (${JSON.stringify(route)} === 'subject') controller.dispatch('open-subject', { subjectId: 'spelling' });
     if (${JSON.stringify(route)} === 'profile') controller.dispatch('open-profile-settings');

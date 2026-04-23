@@ -121,7 +121,7 @@ test('TTS route proxies dictation audio through OpenAI without exposing the key'
     assert.equal(calls[0].body.model, 'gpt-4o-mini-tts');
     assert.equal(calls[0].body.voice, 'marin');
     assert.equal(calls[0].body.response_format, 'mp3');
-    assert.match(calls[0].body.input, /^The word is early\. .+ early .+ The word is early\.$/);
+    assert.match(calls[0].body.input, /^The word is early\. .*\bearly\b.*\. The word is early\.$/);
     assert.match(calls[0].body.instructions, /British English pronunciation/);
   } finally {
     globalThis.fetch = originalFetch;

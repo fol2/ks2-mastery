@@ -27,11 +27,19 @@ import {
   spellingSessionProgressIndex,
 } from './spelling-view-model.js';
 
-export function SpellingSessionScene({ learner, service, ui, accent, actions, previousHeroBg = '' }) {
+export function SpellingSessionScene({
+  learner,
+  service,
+  ui,
+  accent,
+  actions,
+  previousHeroBg = '',
+  runtimeReadOnly = false,
+}) {
   const prefs = service.getPrefs(learner.id);
   const session = ui.session;
   const card = session?.currentCard;
-  if (!session || !card || !card.word) {
+  if (!session || !card) {
     return (
       <section className="card" style={{ gridColumn: '1/-1' }}>
         <div className="eyebrow">No active session</div>
@@ -106,86 +114,90 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
         </header>
 
         <AnimatedPromptCard heightKey={questionLayoutKey} lockHeightToKey>
-            {infoChips.length ? (
-              <div className="info-chip-row">
-                {infoChips.map((value) => <span className="chip" key={value}>{value}</span>)}
-              </div>
-            ) : null}
-            <div className="prompt-instr">{promptInstr}</div>
-            {showCloze ? (
-              <Cloze sentence={card.prompt?.cloze} answer={card.word.word} revealAnswer={showingCorrection} />
-            ) : (
-              <div className="cloze muted"><span className="blank">{'\u00a0'}</span></div>
-            )}
-            {!showCloze ? <p className="prompt-sentence muted">{contextNote}</p> : null}
+          {infoChips.length ? (
+            <div className="info-chip-row">
+              {infoChips.map((value) => <span className="chip" key={value}>{value}</span>)}
+            </div>
+          ) : null}
+          <div className="prompt-instr">{promptInstr}</div>
+          {showCloze ? (
+            <Cloze sentence={card.prompt?.cloze} answer={ui.feedback?.answer || ''} revealAnswer={showingCorrection} />
+          ) : (
+            <div className="cloze muted"><span className="blank">{'\u00a0'}</span></div>
+          )}
+          {!showCloze ? <p className="prompt-sentence muted">{contextNote}</p> : null}
 
-            <form
-              data-action="spelling-submit-form"
-              className="session-form"
-              onSubmit={(event) => renderFormAction(actions, event, 'spelling-submit-form')}
-            >
-              <div className="word-input-wrap">
-                <input
-                  key={inputKey}
-                  className="word-input"
-                  name="typed"
-                  data-autofocus="true"
-                  {...spellingAnswerInputProps}
-                  placeholder={inputPlaceholder}
-                  aria-label="Type the spelling"
-                  disabled={awaitingAdvance}
-                />
-              </div>
-              <div className="audio-row">
+          <form
+            data-action="spelling-submit-form"
+            className="session-form"
+            onSubmit={(event) => renderFormAction(actions, event, 'spelling-submit-form')}
+          >
+            <div className="word-input-wrap">
+              <input
+                key={inputKey}
+                className="word-input"
+                name="typed"
+                data-autofocus="true"
+                {...spellingAnswerInputProps}
+                placeholder={inputPlaceholder}
+                aria-label="Type the spelling"
+                disabled={awaitingAdvance || runtimeReadOnly}
+              />
+            </div>
+            <div className="audio-row">
+              <button
+                type="button"
+                className="btn icon lg"
+                aria-label="Replay the dictated word"
+                data-action="spelling-replay"
+                disabled={runtimeReadOnly}
+                onClick={(event) => renderAction(actions, event, 'spelling-replay')}
+              >
+                <SpeakerIcon />
+              </button>
+              <button
+                type="button"
+                className="btn icon lg"
+                aria-label="Replay slowly"
+                data-action="spelling-replay-slow"
+                disabled={runtimeReadOnly}
+                onClick={(event) => renderAction(actions, event, 'spelling-replay-slow')}
+              >
+                <SpeakerSlowIcon />
+              </button>
+            </div>
+            <div className="action-row">
+              <button className="btn primary lg" style={{ '--btn-accent': accent }} type="submit" disabled={awaitingAdvance || runtimeReadOnly}>
+                {submitLabel}{awaitingAdvance ? null : <> <ArrowRightIcon /></>}
+              </button>
+              {awaitingAdvance ? (
                 <button
+                  className="btn good lg"
                   type="button"
-                  className="btn icon lg"
-                  aria-label="Replay the dictated word"
-                  data-action="spelling-replay"
-                  onClick={(event) => renderAction(actions, event, 'spelling-replay')}
+                  data-action="spelling-continue"
+                  disabled={runtimeReadOnly}
+                  onClick={(event) => renderAction(actions, event, 'spelling-continue', {
+                    flowTransition: isCompletingRound,
+                  })}
                 >
-                  <SpeakerIcon />
+                  Continue <ArrowRightIcon />
                 </button>
+              ) : null}
+              {session.type !== 'test' && !awaitingAdvance && session.phase === 'question' ? (
                 <button
+                  className="btn ghost lg"
                   type="button"
-                  className="btn icon lg"
-                  aria-label="Replay slowly"
-                  data-action="spelling-replay-slow"
-                  onClick={(event) => renderAction(actions, event, 'spelling-replay-slow')}
+                  data-action="spelling-skip"
+                  disabled={runtimeReadOnly}
+                  onClick={(event) => renderAction(actions, event, 'spelling-skip')}
                 >
-                  <SpeakerSlowIcon />
+                  Skip for now
                 </button>
-              </div>
-              <div className="action-row">
-                <button className="btn primary lg" style={{ '--btn-accent': accent }} type="submit" disabled={awaitingAdvance}>
-                  {submitLabel}{awaitingAdvance ? null : <> <ArrowRightIcon /></>}
-                </button>
-                {awaitingAdvance ? (
-                  <button
-                    className="btn good lg"
-                    type="button"
-                    data-action="spelling-continue"
-                    onClick={(event) => renderAction(actions, event, 'spelling-continue', {
-                      flowTransition: isCompletingRound,
-                    })}
-                  >
-                    Continue <ArrowRightIcon />
-                  </button>
-                ) : null}
-                {session.type !== 'test' && !awaitingAdvance && session.phase === 'question' ? (
-                  <button
-                    className="btn ghost lg"
-                    type="button"
-                    data-action="spelling-skip"
-                    onClick={(event) => renderAction(actions, event, 'spelling-skip')}
-                  >
-                    Skip for now
-                  </button>
-                ) : null}
-              </div>
-            </form>
+              ) : null}
+            </div>
+          </form>
 
-            <FeedbackSlot feedback={ui.feedback} reserveSpace />
+          <FeedbackSlot feedback={ui.feedback} reserveSpace />
         </AnimatedPromptCard>
 
         <footer className="session-footer">
@@ -200,6 +212,7 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
               className="btn sm bad"
               type="button"
               data-action="spelling-end-early"
+              disabled={runtimeReadOnly}
               onClick={(event) => renderAction(actions, event, 'spelling-end-early')}
             >
               End round early

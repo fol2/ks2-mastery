@@ -185,6 +185,66 @@ test('api repositories match the generic contract against the real D1-backed wor
   server.close();
 });
 
+test('public bootstrap redacts spelling runtime state while preserving generic sync bootstrap', async () => {
+  const server = createWorkerRepositoryServer();
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    authSession: server.authSessionFor('adult-a'),
+  });
+
+  await repositories.hydrate();
+  const learnerId = ensureHarnessLearner(repositories);
+  repositories.subjectStates.writeRecord(learnerId, 'spelling', {
+    ui: {
+      phase: 'session',
+      session: {
+        id: 'active-session',
+        type: 'learning',
+        mode: 'smart',
+        phase: 'question',
+        progress: { done: 0, total: 1 },
+        currentCard: {
+          word: { word: 'possess', slug: 'possess' },
+          prompt: { sentence: 'Do not expose possess.', cloze: 'Do not expose ________.' },
+        },
+      },
+    },
+    data: { prefs: { mode: 'smart' }, progress: { possess: { stage: 2 } } },
+    updatedAt: 10,
+  });
+  repositories.practiceSessions.write({
+    id: 'active-session',
+    learnerId,
+    subjectId: 'spelling',
+    sessionKind: 'learning',
+    status: 'active',
+    sessionState: { currentCard: { word: { word: 'possess' } } },
+    summary: null,
+    createdAt: 10,
+    updatedAt: 10,
+  });
+  await repositories.flush();
+
+  const raw = await server.fetchAs('adult-a', 'https://repo.test/api/bootstrap');
+  const rawPayload = await raw.json();
+  assert.equal(rawPayload.subjectStates[`${learnerId}::spelling`].data.progress.possess.stage, 2);
+  assert.equal(rawPayload.practiceSessions[0].sessionState.currentCard.word.word, 'possess');
+
+  const publicResponse = await server.fetchAs('adult-a', 'https://repo.test/api/bootstrap', {
+    headers: { 'x-ks2-public-read-models': '1' },
+  });
+  const publicPayload = await publicResponse.json();
+  const publicSpelling = publicPayload.subjectStates[`${learnerId}::spelling`];
+  assert.equal(publicSpelling.data.progress, undefined);
+  assert.equal(publicSpelling.ui.session.currentCard.word, undefined);
+  assert.equal(publicSpelling.ui.session.currentCard.prompt.sentence, undefined);
+  assert.equal(publicSpelling.ui.session.currentCard.prompt.cloze, 'Do not expose ________.');
+  assert.equal(publicPayload.practiceSessions[0].sessionState, null);
+
+  server.close();
+});
+
 test('the reference spelling flow works unchanged against the real worker backend', async () => {
   const day = 24 * 60 * 60 * 1000;
   const nowRef = { value: Date.UTC(2026, 0, 1) };

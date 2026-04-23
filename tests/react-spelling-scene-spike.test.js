@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createAppController } from '../src/platform/app/create-app-controller.js';
+import { createLocalAppController } from '../src/platform/app/create-local-app-controller.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createAppHarness } from './helpers/app-harness.js';
@@ -114,7 +114,7 @@ test('TTS replay failures are contained by the subject runtime boundary', () => 
     getSnapshot() { return { playingKind: null, error: failReplay ? 'TTS unavailable' : '' }; },
   };
 
-  const controller = createAppController({ repositories, tts });
+  const controller = createLocalAppController({ repositories, tts });
   const learnerId = controller.store.getState().learners.selectedId;
 
   controller.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });

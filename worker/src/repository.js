@@ -100,6 +100,69 @@ function subjectStateRowToRecord(row) {
   });
 }
 
+function safeSpellingPrompt(prompt) {
+  if (!prompt || typeof prompt !== 'object' || Array.isArray(prompt)) return null;
+  return {
+    cloze: typeof prompt.cloze === 'string' ? prompt.cloze : '',
+  };
+}
+
+function safeSpellingCurrentCard(card) {
+  if (!card || typeof card !== 'object' || Array.isArray(card)) return null;
+  return {
+    prompt: safeSpellingPrompt(card.prompt),
+  };
+}
+
+function redactSpellingUiForClient(ui, data = {}, learnerId = '') {
+  const raw = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {};
+  const session = raw.session && typeof raw.session === 'object' && !Array.isArray(raw.session)
+    ? raw.session
+    : null;
+  return {
+    subjectId: 'spelling',
+    learnerId,
+    version: 1,
+    phase: typeof raw.phase === 'string' ? raw.phase : 'dashboard',
+    awaitingAdvance: Boolean(raw.awaitingAdvance),
+    session: session
+      ? {
+        id: typeof session.id === 'string' ? session.id : '',
+        type: typeof session.type === 'string' ? session.type : 'learning',
+        mode: typeof session.mode === 'string' ? session.mode : 'smart',
+        label: typeof session.label === 'string' ? session.label : 'Spelling round',
+        practiceOnly: Boolean(session.practiceOnly),
+        fallbackToSmart: Boolean(session.fallbackToSmart),
+        phase: typeof session.phase === 'string' ? session.phase : 'question',
+        promptCount: Number.isFinite(Number(session.promptCount)) ? Number(session.promptCount) : 0,
+        startedAt: Number.isFinite(Number(session.startedAt)) ? Number(session.startedAt) : 0,
+        progress: cloneSerialisable(session.progress) || null,
+        currentStage: Number.isFinite(Number(session.currentStage)) ? Number(session.currentStage) : 0,
+        currentCard: safeSpellingCurrentCard(session.currentCard),
+        serverAuthority: 'worker',
+      }
+      : null,
+    feedback: cloneSerialisable(raw.feedback) || null,
+    summary: cloneSerialisable(raw.summary) || null,
+    error: typeof raw.error === 'string' ? raw.error : '',
+    prefs: cloneSerialisable(data?.prefs) || {},
+    stats: {},
+    analytics: null,
+    audio: null,
+    content: null,
+  };
+}
+
+function publicSubjectStateRowToRecord(row) {
+  const record = subjectStateRowToRecord(row);
+  if (row.subject_id !== 'spelling') return record;
+  return normaliseSubjectStateRecord({
+    ui: redactSpellingUiForClient(record.ui, record.data, row.learner_id),
+    data: {},
+    updatedAt: record.updatedAt,
+  });
+}
+
 function learnerRowToRecord(row) {
   return normaliseLearnerRecord({
     id: row.id,
@@ -127,6 +190,15 @@ function practiceSessionRowToRecord(row) {
     summary: safeJsonParse(row.summary_json, null),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  });
+}
+
+function publicPracticeSessionRowToRecord(row) {
+  const record = practiceSessionRowToRecord(row);
+  if (record.subjectId !== 'spelling') return record;
+  return normalisePracticeSessionRecord({
+    ...record,
+    sessionState: null,
   });
 }
 
@@ -746,7 +818,7 @@ async function releaseMembershipOrDeleteLearner(db, accountId, learnerId, role, 
   return 'membership_removed';
 }
 
-async function bootstrapBundle(db, accountId) {
+async function bootstrapBundle(db, accountId, { publicReadModels = false } = {}) {
   const account = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
   const membershipRows = await listMembershipRows(db, accountId, { writableOnly: true });
   const learnersById = {};
@@ -813,7 +885,9 @@ async function bootstrapBundle(db, accountId) {
 
   const subjectStates = {};
   subjectRows.forEach((row) => {
-    subjectStates[subjectStateKey(row.learner_id, row.subject_id)] = subjectStateRowToRecord(row);
+    subjectStates[subjectStateKey(row.learner_id, row.subject_id)] = publicReadModels
+      ? publicSubjectStateRowToRecord(row)
+      : subjectStateRowToRecord(row);
   });
 
   const gameState = {};
@@ -830,7 +904,9 @@ async function bootstrapBundle(db, accountId) {
         selectedId,
       },
       subjectStates,
-      practiceSessions: filterSessions(sessionRows.map(practiceSessionRowToRecord)),
+      practiceSessions: filterSessions(sessionRows.map(publicReadModels
+        ? publicPracticeSessionRowToRecord
+        : practiceSessionRowToRecord)),
       gameState,
       eventLog: normaliseEventLog(eventRows.map(eventRowToRecord).filter(Boolean)),
     }),
@@ -1327,8 +1403,8 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
     async readSession(accountId) {
       return first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
     },
-    async bootstrap(accountId) {
-      return bootstrapBundle(db, accountId);
+    async bootstrap(accountId, options = {}) {
+      return bootstrapBundle(db, accountId, options);
     },
     async readSubjectRuntime(accountId, learnerId, subjectId = 'spelling') {
       return readSubjectRuntimeBundle(db, accountId, learnerId, subjectId);
