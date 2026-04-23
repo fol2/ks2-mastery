@@ -259,9 +259,12 @@ test('hero background rotation includes the new Scribe Downs landscapes', async 
 
   for (const prefix of ['c', 'd']) {
     for (const index of [1, 2, 3]) {
-      const expectedUrl = `/assets/regions/the-scribe-downs/the-scribe-downs-bg-${prefix}${index}.1280.webp`;
+      const expectedUrl = `/assets/regions/the-scribe-downs/the-scribe-downs-${prefix}${index}.1280.webp`;
       assert.ok(REGION_BACKGROUND_URLS.includes(expectedUrl));
     }
+  }
+  for (const url of REGION_BACKGROUND_URLS) {
+    assert.doesNotMatch(url, /the-scribe-downs-bg-/);
   }
 });
 
@@ -272,6 +275,36 @@ test('hero background rotation only references existing image assets', async () 
     assert.ok(
       existsSync(new URL(`../${url.replace(/^\//, '')}`, import.meta.url)),
       `${url} should exist`,
+    );
+  }
+});
+
+test('spelling setup and session hero backgrounds use mode-specific Scribe Downs assets', async () => {
+  const {
+    MODE_CARDS,
+    SPELLING_HERO_BACKGROUNDS,
+    heroBgForMode,
+    heroBgForSession,
+  } = await import('../src/subjects/spelling/components/spelling-view-model.js');
+
+  assert.ok(SPELLING_HERO_BACKGROUNDS.smart.includes(heroBgForMode('smart', 'learner-1')));
+  assert.equal(heroBgForMode('trouble', 'learner-1'), '/assets/regions/the-scribe-downs/the-scribe-downs-d1.1280.webp');
+  assert.equal(heroBgForSession('learner-1', { mode: 'test' }), '/assets/regions/the-scribe-downs/the-scribe-downs-e1.1280.webp');
+
+  for (const urls of Object.values(SPELLING_HERO_BACKGROUNDS)) {
+    for (const url of urls) {
+      assert.doesNotMatch(url, /the-scribe-downs-bg-/);
+      assert.ok(
+        existsSync(new URL(`../${url.replace(/^\//, '')}`, import.meta.url)),
+        `${url} should exist`,
+      );
+    }
+  }
+
+  for (const card of MODE_CARDS) {
+    assert.ok(
+      existsSync(new URL(`../${card.iconSrc.replace(/^\//, '')}`, import.meta.url)),
+      `${card.iconSrc} should exist`,
     );
   }
 });

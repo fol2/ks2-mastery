@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { PathProgress, Ribbon } from './SpellingCommon.jsx';
+import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import {
   heroBgForSession,
   heroBgStyle,
@@ -27,12 +28,14 @@ export function SpellingSummaryScene({ learner, ui, accent, actions }) {
   if (!summary) return null;
   const progressTotal = Math.max(1, summary.totalWords || 1);
   const heroBg = heroBgForSession(learner.id, {
+    mode: summary.mode,
     progress: { done: progressTotal, total: progressTotal },
   });
   const toneGood = !summary.mistakes.length;
 
   return (
     <div className="spelling-in-session summary-shell" style={{ gridColumn: '1/-1', ...heroBgStyle(heroBg) }}>
+      <SpellingHeroBackdrop url={heroBg} />
       <div className="session summary">
         <header className="session-head">
           <PathProgress done={progressTotal} current={progressTotal} total={progressTotal} />

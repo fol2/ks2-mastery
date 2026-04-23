@@ -8,6 +8,7 @@ import {
 } from '../session-ui.js';
 import { ArrowRightIcon, SpeakerIcon, SpeakerSlowIcon } from './spelling-icons.jsx';
 import { Cloze, FeedbackSlot, PathProgress } from './SpellingCommon.jsx';
+import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import {
   heroBgForSession,
   heroBgStyle,
@@ -64,6 +65,7 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions }) 
 
   return (
     <div className="spelling-in-session" style={{ gridColumn: '1/-1', ...heroBgStyle(heroBg) }}>
+      <SpellingHeroBackdrop url={heroBg} />
       <div className="session">
         <header className="session-head">
           <PathProgress done={pathDone} current={pathCurrent} total={progressTotal} />

@@ -1,13 +1,13 @@
 import React from 'react';
+import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import {
   MODE_CARDS,
   ROUND_LENGTH_OPTIONS,
   YEAR_FILTER_OPTIONS,
   beginLabel,
-  heroBgForLearner,
+  heroBgForSetup,
   heroBgStyle,
-  heroPanDelayStyle,
   monsterImageProps,
   renderAction,
 } from './spelling-view-model.js';
@@ -29,7 +29,7 @@ function ModeCard({ mode, selected, disabled = false, description, badge, action
       onClick={(event) => renderAction(actions, event, 'spelling-set-mode', { value: mode.id })}
     >
       {badge ? <span className="mc-badge">{badge}</span> : null}
-      <div className="mc-icon">{mode.icon}</div>
+      <div className="mc-icon"><img src={mode.iconSrc} alt="" loading="eager" decoding="async" /></div>
       <h4>{mode.title}</h4>
       <p>{desc}</p>
     </button>
@@ -37,36 +37,54 @@ function ModeCard({ mode, selected, disabled = false, description, badge, action
 }
 
 function LengthPicker({ prefs, actions }) {
+  const selectedValue = String(prefs.roundLength || '10');
+  const selectedIndex = Math.max(0, ROUND_LENGTH_OPTIONS.indexOf(selectedValue));
   return (
-    <div className="length-picker" role="radiogroup" aria-label="Round length">
-      {ROUND_LENGTH_OPTIONS.map((value) => {
-        const selected = prefs.roundLength === value;
-        return (
-          <button
-            type="button"
-            role="radio"
-            aria-checked={selected ? 'true' : 'false'}
-            className={`length-option${selected ? ' selected' : ''}`}
-            data-action="spelling-set-pref"
-            data-pref="roundLength"
-            value={value}
-            key={value}
-            onClick={(event) => renderAction(actions, event, 'spelling-set-pref', { pref: 'roundLength', value })}
-          >
-            <span>{value}</span>
-          </button>
-        );
-      })}
+    <div className="length-control">
+      <div
+        className="length-picker"
+        role="radiogroup"
+        aria-label="Round length"
+        style={{ '--option-count': String(ROUND_LENGTH_OPTIONS.length), '--selected-index': String(selectedIndex) }}
+      >
+        <span className="length-slider" aria-hidden="true" />
+        {ROUND_LENGTH_OPTIONS.map((value) => {
+          const selected = selectedValue === value;
+          return (
+            <button
+              type="button"
+              role="radio"
+              aria-checked={selected ? 'true' : 'false'}
+              className={`length-option${selected ? ' selected' : ''}`}
+              data-action="spelling-set-pref"
+              data-pref="roundLength"
+              value={value}
+              key={value}
+              onClick={(event) => renderAction(actions, event, 'spelling-set-pref', { pref: 'roundLength', value })}
+            >
+              <span>{value}</span>
+            </button>
+          );
+        })}
+      </div>
       <span className="length-unit">words</span>
     </div>
   );
 }
 
 function YearPicker({ prefs, actions }) {
+  const selectedValue = prefs.yearFilter || 'core';
+  const selectedIndex = Math.max(0, YEAR_FILTER_OPTIONS.findIndex((option) => option.value === selectedValue));
   return (
-    <div className="length-picker" role="radiogroup" aria-label="Spelling pool">
+    <div
+      className="length-picker"
+      role="radiogroup"
+      aria-label="Spelling pool"
+      style={{ '--option-count': String(YEAR_FILTER_OPTIONS.length), '--selected-index': String(selectedIndex) }}
+    >
+      <span className="length-slider" aria-hidden="true" />
       {YEAR_FILTER_OPTIONS.map(({ value, label }) => {
-        const selected = (prefs.yearFilter || 'core') === value;
+        const selected = selectedValue === value;
         return (
           <button
             type="button"
@@ -145,7 +163,7 @@ export function SpellingSetupScene({ learner, service, repositories, subject, pr
   const statsFilter = prefs.mode === 'test' ? 'core' : prefs.yearFilter;
   const stats = service.getStats(learner.id, statsFilter);
   const begin = beginLabel(prefs);
-  const heroBg = heroBgForLearner(learner.id);
+  const heroBg = heroBgForSetup(learner.id, prefs);
   const hideTweaks = prefs.mode === 'test';
   const tweakClass = `tweak-row${hideTweaks ? ' is-placeholder' : ''}`;
   const tweakAria = hideTweaks ? { 'aria-hidden': 'true' } : {};
@@ -154,7 +172,7 @@ export function SpellingSetupScene({ learner, service, repositories, subject, pr
   return (
     <div className="setup-grid" style={{ gridColumn: '1/-1' }}>
       <section className="setup-main" style={mergedHeroStyle}>
-        <div className="hero-art pan" aria-hidden="true" style={heroPanDelayStyle()} />
+        <SpellingHeroBackdrop url={heroBg} />
         <div className="setup-content">
           <p className="eyebrow">Round setup</p>
           <h1 className="title">Choose today’s journey.</h1>
@@ -176,18 +194,20 @@ export function SpellingSetupScene({ learner, service, repositories, subject, pr
                 : <ModeCard mode={mode} selected={prefs.mode === mode.id} actions={actions} key={mode.id} />
             ))}
           </div>
-          <div className={tweakClass} {...tweakAria}>
-            <span className="tool-label">Round length</span>
-            <LengthPicker prefs={prefs} actions={actions} />
-          </div>
-          <div className={tweakClass} {...tweakAria}>
-            <span className="tool-label">Pool</span>
-            <YearPicker prefs={prefs} actions={actions} />
-          </div>
-          <div className="tweak-row">
-            <span className="tool-label">Options</span>
-            <ToggleChip pref="showCloze" checked={Boolean(prefs.showCloze)} label="Show sentence" actions={actions} />
-            <ToggleChip pref="autoSpeak" checked={Boolean(prefs.autoSpeak)} label="Auto-play audio" actions={actions} />
+          <div className="setup-control-stack">
+            <div className={tweakClass} {...tweakAria}>
+              <span className="tool-label">Round length</span>
+              <LengthPicker prefs={prefs} actions={actions} />
+            </div>
+            <div className={tweakClass} {...tweakAria}>
+              <span className="tool-label">Pool</span>
+              <YearPicker prefs={prefs} actions={actions} />
+            </div>
+            <div className="tweak-row">
+              <span className="tool-label">Options</span>
+              <ToggleChip pref="showCloze" checked={Boolean(prefs.showCloze)} label="Show sentence" actions={actions} />
+              <ToggleChip pref="autoSpeak" checked={Boolean(prefs.autoSpeak)} label="Auto-play audio" actions={actions} />
+            </div>
           </div>
           <div className="setup-begin-row">
             <button

@@ -1,14 +1,28 @@
 import { monsterSummaryFromSpellingAnalytics } from '../../../platform/game/monster-system.js';
 import { monsterAsset, monsterAssetSrcSet } from '../../../platform/game/monsters.js';
 import { formatElapsedMinutes } from '../../../platform/core/utils.js';
-import { REGION_BACKGROUND_URLS } from '../../../surfaces/home/data.js';
 
 export const SPELLING_ACCENT = '#3E6FA8';
 export const DAY_MS = 24 * 60 * 60 * 1000;
 export const MODE_CARDS = Object.freeze([
-  { id: 'smart', icon: '◎', title: 'Smart Review', desc: 'Due · weak · one fresh word.' },
-  { id: 'trouble', icon: '⚡', title: 'Trouble Drill', desc: 'Only the words you usually miss.' },
-  { id: 'test', icon: '⌒', title: 'SATs Test', desc: 'One-shot dictation, no retries.' },
+  {
+    id: 'smart',
+    iconSrc: '/assets/icons/spelling-modes/smart-review.webp',
+    title: 'Smart Review',
+    desc: 'Due · weak · one fresh word.',
+  },
+  {
+    id: 'trouble',
+    iconSrc: '/assets/icons/spelling-modes/trouble-drill.webp',
+    title: 'Trouble Drill',
+    desc: 'Only the words you usually miss.',
+  },
+  {
+    id: 'test',
+    iconSrc: '/assets/icons/spelling-modes/sats-test.webp',
+    title: 'SATs Test',
+    desc: 'One-shot dictation, no retries.',
+  },
 ]);
 export const ROUND_LENGTH_OPTIONS = Object.freeze(['10', '20', '40']);
 export const YEAR_FILTER_OPTIONS = Object.freeze([
@@ -19,6 +33,14 @@ export const YEAR_FILTER_OPTIONS = Object.freeze([
 ]);
 export const WORD_BANK_FILTER_IDS = new Set(['all', 'due', 'weak', 'learning', 'secure', 'unseen']);
 export const WORD_BANK_YEAR_FILTER_IDS = new Set(['all', 'y3-4', 'y5-6', 'extra']);
+
+const SCRIBE_DOWNS_BASE = '/assets/regions/the-scribe-downs';
+const spellingHeroUrl = (variant) => `${SCRIBE_DOWNS_BASE}/the-scribe-downs-${variant}.1280.webp`;
+export const SPELLING_HERO_BACKGROUNDS = Object.freeze({
+  smart: Object.freeze(['a1', 'b1', 'c1'].map(spellingHeroUrl)),
+  trouble: Object.freeze([spellingHeroUrl('d1')]),
+  test: Object.freeze([spellingHeroUrl('e1')]),
+});
 
 export function accentFor(subject) {
   return subject?.accent || SPELLING_ACCENT;
@@ -34,22 +56,30 @@ export function stableHash(value) {
   return Math.abs(hash);
 }
 
-export function heroBgForLearner(learnerId) {
-  if (!REGION_BACKGROUND_URLS.length) return '';
-  const index = stableHash(`spelling:${learnerId}`) % REGION_BACKGROUND_URLS.length;
-  return REGION_BACKGROUND_URLS[index];
+export function spellingHeroMode(mode) {
+  if (mode === 'trouble') return 'trouble';
+  if (mode === 'test') return 'test';
+  return 'smart';
+}
+
+export function heroBgForMode(mode, learnerId) {
+  const heroMode = spellingHeroMode(mode);
+  const backgrounds = SPELLING_HERO_BACKGROUNDS[heroMode] || SPELLING_HERO_BACKGROUNDS.smart;
+  if (!backgrounds.length) return '';
+  const index = stableHash(`spelling:${heroMode}:${learnerId}`) % backgrounds.length;
+  return backgrounds[index];
+}
+
+export function heroBgForLearner(learnerId, mode = 'smart') {
+  return heroBgForMode(mode, learnerId);
+}
+
+export function heroBgForSetup(learnerId, prefs) {
+  return heroBgForMode(prefs?.mode, learnerId);
 }
 
 export function heroBgForSession(learnerId, session) {
-  if (!REGION_BACKGROUND_URLS.length) return '';
-  const total = Math.max(1, Number(session?.progress?.total) || 1);
-  const done = Math.max(0, Number(session?.progress?.done) || 0);
-  const offset = stableHash(`spelling:${learnerId}`) % REGION_BACKGROUND_URLS.length;
-  const step = Math.min(
-    REGION_BACKGROUND_URLS.length - 1,
-    Math.floor((done / total) * REGION_BACKGROUND_URLS.length),
-  );
-  return REGION_BACKGROUND_URLS[(offset + step) % REGION_BACKGROUND_URLS.length];
+  return heroBgForMode(session?.mode || (session?.type === 'test' ? 'test' : 'smart'), learnerId);
 }
 
 export function heroBgStyle(url) {
@@ -169,6 +199,22 @@ export function renderAction(actions, event, action, data = {}) {
   const payload = action === 'spelling-word-detail-open' && data && typeof data === 'object'
     ? { ...data, triggerElement: event?.currentTarget || data.triggerElement || null }
     : data;
+  if (
+    (action === 'spelling-start' || action === 'spelling-start-again')
+    && typeof document !== 'undefined'
+    && typeof document.startViewTransition === 'function'
+  ) {
+    document.documentElement.classList.add('spelling-flow-transition');
+    const transition = document.startViewTransition(() => {
+      actions.dispatch(action, payload);
+    });
+    transition.finished
+      .catch(() => {})
+      .finally(() => {
+        document.documentElement.classList.remove('spelling-flow-transition');
+      });
+    return;
+  }
   actions.dispatch(action, payload);
 }
 

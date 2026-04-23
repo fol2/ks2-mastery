@@ -1,6 +1,7 @@
 import React from 'react';
 import { SearchIcon } from './spelling-icons.jsx';
 import { SummaryCards } from './SpellingCommon.jsx';
+import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { SpellingWordDetailModal } from './SpellingWordDetailModal.jsx';
 import {
   WORD_BANK_FILTER_IDS,
@@ -295,6 +296,7 @@ export function SpellingWordBankScene({ appState, learner, analytics, accent, ac
 
   return (
     <div className="spelling-in-session word-bank-shell" style={{ gridColumn: '1/-1', ...heroBgStyle(heroBg) }}>
+      <SpellingHeroBackdrop url={heroBg} />
       <div className="word-bank-scene">
         <header className="word-bank-topbar">
           <button
