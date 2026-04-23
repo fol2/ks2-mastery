@@ -3,9 +3,11 @@ import { SpellingSetupScene } from './SpellingSetupScene.jsx';
 import { SpellingSessionScene } from './SpellingSessionScene.jsx';
 import { SpellingSummaryScene } from './SpellingSummaryScene.jsx';
 import { SpellingWordBankScene } from './SpellingWordBankScene.jsx';
+import { preloadImages } from '../../../platform/ui/luminance.js';
 import {
   buildSpellingContext,
   heroBgForLearner,
+  heroBgPreloadUrls,
   heroBgForSession,
   heroBgForSetup,
 } from './spelling-view-model.js';
@@ -31,6 +33,8 @@ export function SpellingPracticeSurface(props) {
   } = props;
   const spelling = buildSpellingContext({ appState, service, repositories, subject });
   const heroBg = heroBgForPhase(spelling);
+  const preloadedHeroUrls = heroBgPreloadUrls(spelling.learner?.id, spelling.prefs);
+  const preloadKey = preloadedHeroUrls.join('|');
   const previousHeroBgRef = React.useRef('');
   const previousHeroBg = previousHeroBgRef.current && previousHeroBgRef.current !== heroBg
     ? previousHeroBgRef.current
@@ -38,6 +42,9 @@ export function SpellingPracticeSurface(props) {
   React.useEffect(() => {
     if (heroBg) previousHeroBgRef.current = heroBg;
   }, [heroBg]);
+  React.useEffect(() => {
+    preloadImages(preloadedHeroUrls);
+  }, [preloadKey]);
   React.useEffect(() => {
     if (typeof window === 'undefined') return undefined;
     const frame = window.requestAnimationFrame(() => {

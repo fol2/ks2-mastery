@@ -3612,12 +3612,16 @@ textarea:focus-visible {
   .setup-grid { grid-template-columns: 1fr; }
 }
 .setup-main {
-  --setup-label-ink: color-mix(in oklab, var(--ink) 72%, black);
-  --setup-label-shadow: color-mix(in oklab, var(--panel) 72%, transparent);
-  --mode-card-title: var(--ink);
-  --mode-card-copy: color-mix(in oklab, var(--ink) 68%, white);
-  --mode-card-selected-title: var(--brand-ink);
-  --mode-card-selected-copy: color-mix(in oklab, var(--ink) 78%, white);
+  --setup-label-ink: #213247;
+  --setup-label-shadow: rgba(255, 255, 255, 0.78);
+  --length-option-ink: rgba(29, 43, 58, 0.76);
+  --length-option-hover: #182638;
+  --mode-card-title: #1d2b3a;
+  --mode-card-copy: #35475a;
+  --mode-card-selected-title: #254a75;
+  --mode-card-selected-copy: #2b3e52;
+  --mode-card-heading-shadow: 0 1px 14px rgba(255, 255, 255, 0.72), 0 0 1px rgba(255, 255, 255, 0.86);
+  --mode-card-copy-shadow: 0 1px 12px rgba(255, 255, 255, 0.58);
   padding: 28px 30px;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -3631,10 +3635,26 @@ textarea:focus-visible {
 .setup-main.hero-dark {
   --setup-label-ink: #fff8e9;
   --setup-label-shadow: rgba(0, 0, 0, 0.62);
+  --length-option-ink: rgba(255, 248, 233, 0.78);
+  --length-option-hover: #fffdf6;
   --mode-card-title: #fff9ec;
   --mode-card-copy: rgba(255, 248, 233, 0.84);
   --mode-card-selected-title: #fffdf6;
   --mode-card-selected-copy: rgba(255, 248, 233, 0.9);
+  --mode-card-heading-shadow: 0 1px 18px rgba(0, 0, 0, 0.56);
+  --mode-card-copy-shadow: 0 1px 16px rgba(0, 0, 0, 0.58);
+}
+.setup-main[data-controls-tone="dark"] {
+  --setup-label-ink: #213247;
+  --setup-label-shadow: rgba(255, 255, 255, 0.78);
+  --length-option-ink: rgba(29, 43, 58, 0.76);
+  --length-option-hover: #182638;
+}
+.setup-main[data-controls-tone="light"] {
+  --setup-label-ink: #fff8e9;
+  --setup-label-shadow: rgba(0, 0, 0, 0.62);
+  --length-option-ink: rgba(255, 248, 233, 0.78);
+  --length-option-hover: #fffdf6;
 }
 /* Thin horizontal divider line under the subject eyebrow,
    matching the v1 hero-paper rule. */
@@ -3688,6 +3708,22 @@ textarea:focus-visible {
               box-shadow var(--dur) var(--ease-out),
               background-color var(--dur) var(--ease-out),
               filter var(--dur) var(--ease-out);
+}
+.mode-card[data-text-tone="dark"] {
+  --mode-card-title: #1d2b3a;
+  --mode-card-copy: #35475a;
+  --mode-card-selected-title: #254a75;
+  --mode-card-selected-copy: #2b3e52;
+  --mode-card-heading-shadow: 0 1px 14px rgba(255, 255, 255, 0.72), 0 0 1px rgba(255, 255, 255, 0.86);
+  --mode-card-copy-shadow: 0 1px 12px rgba(255, 255, 255, 0.58);
+}
+.mode-card[data-text-tone="light"] {
+  --mode-card-title: #fff9ec;
+  --mode-card-copy: rgba(255, 248, 233, 0.88);
+  --mode-card-selected-title: #fffdf6;
+  --mode-card-selected-copy: rgba(255, 248, 233, 0.92);
+  --mode-card-heading-shadow: 0 1px 18px rgba(0, 0, 0, 0.56);
+  --mode-card-copy-shadow: 0 1px 16px rgba(0, 0, 0, 0.58);
 }
 .mode-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
 .mode-card.selected {
@@ -3749,10 +3785,8 @@ textarea:focus-visible {
   font-weight: 500;
   letter-spacing: -0.005em;
   color: var(--mode-card-title);
-  text-shadow: 0 1px 12px rgba(255, 255, 255, 0.2);
-}
-.setup-main.hero-dark .mode-card h4 {
-  text-shadow: 0 1px 18px rgba(0, 0, 0, 0.52);
+  text-shadow: var(--mode-card-heading-shadow);
+  transition: color var(--dur) var(--ease-out), text-shadow var(--dur) var(--ease-out);
 }
 .mode-card.selected h4 { color: var(--mode-card-selected-title); font-weight: 600; }
 .mode-card.selected p  { color: var(--mode-card-selected-copy); }
@@ -3762,10 +3796,8 @@ textarea:focus-visible {
   font-size: 0.87rem;
   line-height: 1.4;
   min-height: calc(0.87rem * 1.4 * 3);
-  text-shadow: 0 1px 12px rgba(255, 255, 255, 0.18);
-}
-.setup-main.hero-dark .mode-card p {
-  text-shadow: 0 1px 16px rgba(0, 0, 0, 0.56);
+  text-shadow: var(--mode-card-copy-shadow);
+  transition: color var(--dur) var(--ease-out), text-shadow var(--dur) var(--ease-out);
 }
 .mode-card .mc-badge {
   font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
@@ -3826,6 +3858,7 @@ textarea:focus-visible {
   color: var(--setup-label-ink);
   text-shadow: 0 1px 12px var(--setup-label-shadow);
   margin-right: 4px;
+  transition: color var(--dur) var(--ease-out), text-shadow var(--dur) var(--ease-out);
 }
 
 .toggle-chip {
@@ -3914,7 +3947,7 @@ textarea:focus-visible {
   padding: 0 12px;
   border-radius: 999px;
   cursor: pointer;
-  color: color-mix(in oklab, var(--ink) 74%, white);
+  color: var(--length-option-ink);
   font-weight: 700;
   font-size: 0.9rem;
   position: relative;
@@ -3922,7 +3955,7 @@ textarea:focus-visible {
   transition: color var(--dur) var(--ease-out),
               text-shadow var(--dur) var(--ease-out);
 }
-.length-option:hover { color: var(--ink); }
+.length-option:hover { color: var(--length-option-hover); }
 .length-option.selected {
   color: #fff;
   text-shadow: 0 1px 2px rgba(0,0,0,0.18);
@@ -3933,6 +3966,7 @@ textarea:focus-visible {
   font-size: 0.82rem;
   margin: 0 8px 0 0;
   text-shadow: 0 1px 12px var(--setup-label-shadow);
+  transition: color var(--dur) var(--ease-out), text-shadow var(--dur) var(--ease-out);
 }
 
 /* Hero-art horizontal pan.

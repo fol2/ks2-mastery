@@ -1,6 +1,7 @@
 import React from 'react';
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
+import { useSetupHeroContrast } from './useSetupHeroContrast.js';
 import {
   MODE_CARDS,
   ROUND_LENGTH_OPTIONS,
@@ -12,7 +13,7 @@ import {
   renderAction,
 } from './spelling-view-model.js';
 
-function ModeCard({ mode, selected, disabled = false, description, badge, actions }) {
+function ModeCard({ mode, selected, disabled = false, description, badge, actions, textTone = 'dark' }) {
   const desc = description != null ? description : mode.desc;
   const classes = ['mode-card'];
   if (selected && !disabled) classes.push('selected');
@@ -21,6 +22,7 @@ function ModeCard({ mode, selected, disabled = false, description, badge, action
     <button
       type="button"
       className={classes.join(' ')}
+      data-text-tone={textTone}
       data-action="spelling-set-mode"
       value={mode.id}
       aria-pressed={selected && !disabled ? 'true' : 'false'}
@@ -172,17 +174,26 @@ export function SpellingSetupScene({ learner, service, repositories, subject, pr
   const tweakClass = `tweak-row${hideTweaks ? ' is-placeholder' : ''}`;
   const tweakAria = hideTweaks ? { 'aria-hidden': 'true' } : {};
   const mergedHeroStyle = { ...heroBgStyle(heroBg) };
+  const heroContrast = useSetupHeroContrast(heroBg, prefs.mode);
+  const setupClasses = ['setup-main'];
+  if (heroContrast.contrast.shell === 'light') setupClasses.push('hero-dark');
 
   return (
     <div className="setup-grid" style={{ gridColumn: '1/-1' }}>
-      <section className="setup-main" style={mergedHeroStyle}>
+      <section
+        className={setupClasses.join(' ')}
+        data-react-hero-contrast="true"
+        data-controls-tone={heroContrast.contrast.controls}
+        ref={heroContrast.ref}
+        style={mergedHeroStyle}
+      >
         <SpellingHeroBackdrop url={heroBg} previousUrl={previousHeroBg} />
         <div className="setup-content">
           <p className="eyebrow">Round setup</p>
           <h1 className="title">Choose today’s journey.</h1>
           <p className="lede">Smart Review mixes what’s due, what wobbled last time, and one or two new words. You can go straight to trouble drills or SATs rehearsal if you’d rather.</p>
           <div className="mode-row">
-            {MODE_CARDS.map((mode) => (
+            {MODE_CARDS.map((mode, index) => (
               mode.id === 'trouble' && !stats.trouble
                 ? (
                   <ModeCard
@@ -192,10 +203,19 @@ export function SpellingSetupScene({ learner, service, repositories, subject, pr
                     description="No trouble words yet. Try a round first."
                     badge="NONE YET"
                     actions={actions}
+                    textTone={heroContrast.contrast.cards[index] || heroContrast.contrast.shell}
                     key={mode.id}
                   />
                 )
-                : <ModeCard mode={mode} selected={prefs.mode === mode.id} actions={actions} key={mode.id} />
+                : (
+                  <ModeCard
+                    mode={mode}
+                    selected={prefs.mode === mode.id}
+                    actions={actions}
+                    textTone={heroContrast.contrast.cards[index] || heroContrast.contrast.shell}
+                    key={mode.id}
+                  />
+                )
             ))}
           </div>
           <div className="setup-control-stack">

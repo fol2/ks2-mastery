@@ -284,6 +284,7 @@ test('spelling setup and session hero backgrounds use mode-specific Scribe Downs
     MODE_CARDS,
     SPELLING_HERO_BACKGROUNDS,
     heroBgForMode,
+    heroBgPreloadUrls,
     heroBgForSession,
     spellingHeroTone,
   } = await import('../src/subjects/spelling/components/spelling-view-model.js');
@@ -299,6 +300,20 @@ test('spelling setup and session hero backgrounds use mode-specific Scribe Downs
   assert.equal(spellingHeroTone('learner-0'), '2');
   assert.match(heroBgForMode('smart', 'learner-0'), /the-scribe-downs-[abc]2\.1280\.webp$/);
   assert.match(heroBgForSession('learner-0', { mode: 'smart' }), /the-scribe-downs-[abc]1\.1280\.webp$/);
+  const learnerOnePreloads = [
+    heroBgForMode('smart', 'learner-1'),
+    heroBgForMode('trouble', 'learner-1'),
+    heroBgForMode('test', 'learner-1'),
+  ];
+  const learnerOneSession = heroBgForSession('learner-1', { mode: 'test' });
+  if (!learnerOnePreloads.includes(learnerOneSession)) learnerOnePreloads.push(learnerOneSession);
+  assert.deepEqual(heroBgPreloadUrls('learner-1', { mode: 'test' }), learnerOnePreloads);
+  assert.deepEqual(heroBgPreloadUrls('learner-0', { mode: 'test' }), [
+    heroBgForMode('smart', 'learner-0'),
+    heroBgForMode('trouble', 'learner-0'),
+    heroBgForMode('test', 'learner-0'),
+    heroBgForSession('learner-0', { mode: 'test' }),
+  ]);
 
   for (const urls of Object.values(SPELLING_HERO_BACKGROUNDS)) {
     for (const url of urls) {

@@ -1102,22 +1102,22 @@ function afterReactRender(appState) {
     restoreModalTrigger();
   }
 
-  /* Hero-dark luminance flip — the spelling session + setup surfaces paint
-     a `--hero-bg` image on their outer wrapper. When the backdrop is darker
+  /* Hero-dark luminance flip — the spelling session surface paints
+     a `--hero-bg` image on its outer wrapper. When the backdrop is darker
      than mid-grey, the shell needs a `hero-dark` class so ink tokens flip
      to the light palette (WCAG contrast on dusk / night regions). The
      probe is fire-and-forget: we kick it after layout so the async decode
      runs off the critical path, and only apply the class when the element
-     is still connected (another render may have replaced it). */
+     is still connected (another render may have replaced it). The setup
+     surface owns a more granular React-scoped contrast probe because its
+     text sits over several different parts of the panning artwork. */
   queueMicrotask(() => applyHeroDarkProbes());
 
   syncAudioPlayingClass();
 }
 
 function applyHeroDarkProbes() {
-  const heroes = root.querySelectorAll(
-    '.spelling-in-session[style*="--hero-bg"], .setup-main[style*="--hero-bg"]',
-  );
+  const heroes = root.querySelectorAll('.spelling-in-session[style*="--hero-bg"]');
   heroes.forEach((element) => {
     const url = extractHeroBgUrl(element.getAttribute('style') || '');
     if (!url) return;
