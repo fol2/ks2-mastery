@@ -270,6 +270,12 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         if (p.stage < SECURE_STAGE) return "growing";
         return "secure";
       }
+
+      function isTroubleProgress(progress, today) {
+        var current = progress || defaultProgress();
+        var currentDay = typeof today === "number" ? today : todayDay();
+        return current.wrong > 0 && (current.wrong >= current.correct || current.dueDay <= currentDay);
+      }
     
       function weightedPick(items, weightFn) {
         if (!items.length) return null;
@@ -331,7 +337,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         var today = todayDay();
         var candidates = filteredWords(opts.yearFilter).filter(function (word) {
           var p = getProgress(profileId, word.slug);
-          return p.wrong > 0 || (p.attempts > 0 && p.dueDay <= today && p.stage < SECURE_STAGE);
+          return isTroubleProgress(p, today);
         });
     
         if (!candidates.length) {
@@ -903,7 +909,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           if (p.attempts === 0) fresh += 1;
           if (p.stage >= SECURE_STAGE) secure += 1;
           if (p.attempts > 0 && p.dueDay <= today) due += 1;
-          if (p.wrong > 0 && (p.wrong >= p.correct || p.stage < SECURE_STAGE)) trouble += 1;
+          if (isTroubleProgress(p, today)) trouble += 1;
         }
         return {
           total: words.length,
@@ -919,10 +925,9 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
     
       function statusForWord(profileId, word, progressStore) {
         var p = progressStore ? progressForSlug(progressStore, word.slug) : getProgress(profileId, word.slug);
-        var total = p.correct + p.wrong;
         var today = todayDay();
         if (p.attempts === 0) return "new";
-        if (p.wrong > 0 && (p.wrong >= p.correct || (p.dueDay <= today && total > 0))) return "trouble";
+        if (isTroubleProgress(p, today)) return "trouble";
         if (p.dueDay <= today) return "due";
         if (p.stage >= SECURE_STAGE) return "secure";
         return "learning";

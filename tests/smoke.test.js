@@ -436,6 +436,43 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   assert.equal(harness.store.getState().subjectUi.spelling.session, null);
 });
 
+test('Extra Trouble Drill unlocks from setup once a recent mistake is marked as trouble', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const todayDay = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+
+  harness.repositories.subjectStates.writeData(learnerId, 'spelling', {
+    progress: {
+      mollusc: {
+        stage: 5,
+        attempts: 5,
+        correct: 4,
+        wrong: 1,
+        dueDay: todayDay,
+        lastDay: todayDay - 1,
+        lastResult: 'wrong',
+      },
+    },
+  });
+
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-set-pref', { pref: 'yearFilter', value: 'extra' });
+
+  let html = harness.render();
+  assert.doesNotMatch(html, /value="trouble"[^>]*disabled[^>]*>[\s\S]*Trouble Drill/);
+  assert.match(html, /ss-stat-label">Weak spots<\/div>\s*<div class="ss-stat-value"[^>]*>1<\/div>/);
+
+  harness.dispatch('spelling-set-mode', { value: 'trouble' });
+  harness.dispatch('spelling-start');
+
+  const state = harness.store.getState().subjectUi.spelling;
+  assert.equal(state.phase, 'session');
+  assert.equal(state.feedback, null);
+  assert.deepEqual(state.session?.uniqueWords, ['mollusc']);
+  assert.equal(state.session?.currentCard?.word?.spellingPool, 'extra');
+});
+
 test('golden-path smoke covers placeholder-subject navigation through the setup scene', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });

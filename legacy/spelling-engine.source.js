@@ -243,6 +243,12 @@
     return "secure";
   }
 
+  function isTroubleProgress(progress, today) {
+    var current = progress || defaultProgress();
+    var currentDay = typeof today === "number" ? today : todayDay();
+    return current.wrong > 0 && (current.wrong >= current.correct || current.dueDay <= currentDay);
+  }
+
   function weightedPick(items, weightFn) {
     if (!items.length) return null;
     var weights = items.map(function (item) { return Math.max(0, Number(weightFn(item)) || 0); });
@@ -303,7 +309,7 @@
     var today = todayDay();
     var candidates = filteredWords(opts.yearFilter).filter(function (word) {
       var p = getProgress(profileId, word.slug);
-      return p.wrong > 0 || (p.attempts > 0 && p.dueDay <= today && p.stage < SECURE_STAGE);
+      return isTroubleProgress(p, today);
     });
 
     if (!candidates.length) {
@@ -874,7 +880,7 @@
       if (p.attempts === 0) fresh += 1;
       if (p.stage >= SECURE_STAGE) secure += 1;
       if (p.attempts > 0 && p.dueDay <= today) due += 1;
-      if (p.wrong > 0 && (p.wrong >= p.correct || p.stage < SECURE_STAGE)) trouble += 1;
+      if (isTroubleProgress(p, today)) trouble += 1;
     }
     return {
       total: words.length,
@@ -890,9 +896,8 @@
 
   function statusForWord(profileId, word) {
     var p = getProgress(profileId, word.slug);
-    var total = p.correct + p.wrong;
     if (p.attempts === 0) return "new";
-    if (p.wrong > 0 && (p.wrong >= p.correct || (p.dueDay <= todayDay() && total > 0))) return "trouble";
+    if (isTroubleProgress(p, todayDay())) return "trouble";
     if (p.dueDay <= todayDay()) return "due";
     if (p.stage >= SECURE_STAGE) return "secure";
     return "learning";
