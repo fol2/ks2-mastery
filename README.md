@@ -20,7 +20,7 @@ The goal is not to polish the old prototype. The goal is to give the product a s
 - `src/subjects/placeholders/*`
   - Clean extension slots for Arithmetic, Reasoning, Grammar, Punctuation and Reading.
 - `worker/*`
-  - A Cloudflare-friendly backend with D1-backed repository routes, account-scoped spelling content, learner ownership checks, production sessions, Worker-side OpenAI TTS proxying, and thin role-aware Parent/Admin hub routes.
+  - A Cloudflare-friendly backend with D1-backed repository routes, account-scoped spelling content, learner ownership checks, production sessions, Worker-side TTS proxying with Gemini fallback, and thin role-aware Parent/Admin hub routes.
 - `docs/*`
   - Audit, architecture, refactor plan, migration map, repository notes, ownership/access notes, state-integrity notes, spelling-service and spelling-content notes, a direct spelling parity audit, operating-surface notes, and the subject-expansion readiness gate.
 - `tests/*`
@@ -32,7 +32,7 @@ English Spelling works in the new structure.
 
 The browser app is now a single React shell. `index.html` loads the built React app bundle, React owns dashboard, Codex, subject, profile, Parent Hub, Admin / Operations, toast and modal surfaces, and the existing controller/store/repository boundary still owns state transitions and side effects. Legacy string renderers remain only as local characterisation helpers while production routes compose React components.
 
-Production on `ks2.eugnel.uk` uses the API adapter by default after sign-in. Direct file/local mode, or `?local=1`, still uses browser storage for development only. The API adapter reports explicit persistence modes (`local-only`, `remote-sync`, `degraded`) so failed remote writes are visible instead of being treated as silent success. The Worker is D1-backed with learner ownership enforcement, atomic account / learner revision checks, idempotent request replay, account-scoped spelling content routes, role-aware Parent/Admin hub read routes, and OpenAI TTS as the production dictation default.
+Production on `ks2.eugnel.uk` uses the API adapter by default after sign-in. Direct file/local mode, or `?local=1`, still uses browser storage for development only. The API adapter reports explicit persistence modes (`local-only`, `remote-sync`, `degraded`) so failed remote writes are visible instead of being treated as silent success. The Worker is D1-backed with learner ownership enforcement, atomic account / learner revision checks, idempotent request replay, account-scoped spelling content routes, role-aware Parent/Admin hub read routes, and OpenAI TTS as the production dictation default with Gemini TTS fallback when the primary provider is slow or unavailable.
 
 Signed-in Parent Hub and Admin / Operations use live Worker hub payloads. Those adult surfaces keep platform role, learner membership role, and writable/read-only access separate. `/api/bootstrap` remains writable-only for the main subject shell, while readable viewer learners are available inside hub surfaces with explicit read-only labels and blocked write affordances.
 
