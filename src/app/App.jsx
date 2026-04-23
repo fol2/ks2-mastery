@@ -1,4 +1,4 @@
-import React, { useLayoutEffect } from 'react';
+import React, { useLayoutEffect, useMemo } from 'react';
 import { HomeSurface } from '../surfaces/home/HomeSurface.jsx';
 import { CodexSurface } from '../surfaces/home/CodexSurface.jsx';
 import { TopNav } from '../surfaces/shell/TopNav.jsx';
@@ -74,11 +74,11 @@ export function App({ controller, runtime }) {
   const appState = snapshot.appState;
   const screen = appState.route?.screen || 'dashboard';
   const context = runtime.contextFor(appState.route?.subjectId || 'spelling');
-  const actions = runtime.buildSurfaceActions();
+  const actions = useMemo(() => runtime.buildSurfaceActions(), [runtime]);
 
   useLayoutEffect(() => {
-    runtime.afterRender?.(appState, context);
-  }, [appState, context, runtime]);
+    runtime.afterRender?.(appState);
+  }, [appState, runtime]);
 
   return (
     <ErrorBoundary>

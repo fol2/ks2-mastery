@@ -554,8 +554,31 @@ function buildSignedInHubModels(appState) {
   };
 }
 
-function buildHubModels(appState) {
-  return boot.session.signedIn ? buildSignedInHubModels(appState) : buildLocalHubModels(appState);
+function buildLocalShellHubModels(appState) {
+  const selectedLearnerId = appState.learners.selectedId;
+  return {
+    shellAccess: {
+      platformRole: shellPlatformRole,
+      source: 'local-reference',
+    },
+    parentHub: null,
+    parentHubState: { status: 'idle', learnerId: selectedLearnerId || '', error: '', notice: '' },
+    adminHub: null,
+    adminHubState: { status: 'idle', learnerId: selectedLearnerId || '', error: '', notice: '' },
+    activeAdultLearnerContext: null,
+    adultSurfaceNotice: '',
+    adminAccountDirectory,
+  };
+}
+
+function needsFullLocalHubModels(appState) {
+  return appState.route.screen === 'parent-hub' || appState.route.screen === 'admin-hub';
+}
+
+function buildRouteHubModels(appState) {
+  if (boot.session.signedIn) return buildSignedInHubModels(appState);
+  if (needsFullLocalHubModels(appState)) return buildLocalHubModels(appState);
+  return buildLocalShellHubModels(appState);
 }
 
 const runtimeBoundary = createSubjectRuntimeBoundary({
@@ -838,7 +861,8 @@ function contextFor(subjectId = null) {
     tts,
     applySubjectTransition,
     runtimeBoundary,
-    ...buildHubModels(appState),
+    subjects: SUBJECTS,
+    ...buildRouteHubModels(appState),
   };
 }
 
@@ -1015,7 +1039,7 @@ controller.subscribe(() => {
   pendingPreservedFocus = capturePreservedFocus();
 });
 
-function afterReactRender(appState, context) {
+function afterReactRender(appState) {
   const preserved = pendingPreservedFocus;
   pendingPreservedFocus = null;
   const modalWasVisible = previousModalVisible;
@@ -1097,8 +1121,11 @@ function applyHeroDarkProbes() {
   heroes.forEach((element) => {
     const url = extractHeroBgUrl(element.getAttribute('style') || '');
     if (!url) return;
+    if (element.dataset.heroLuminanceUrl === url) return;
+    element.dataset.heroLuminanceUrl = url;
     probeRelLuminance(url).then((luminance) => {
       if (!element.isConnected) return;
+      if (element.dataset.heroLuminanceUrl !== url) return;
       element.classList.toggle('hero-dark', luminance < 0.5);
     }).catch(() => {
       /* probeRelLuminance never rejects, but guard defensively so a

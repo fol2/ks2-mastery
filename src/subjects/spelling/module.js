@@ -36,6 +36,14 @@ function wordBankDrillResult(word, typed) {
     : 'incorrect';
 }
 
+function wordBankEntryFor(service, learnerId, slug) {
+  if (!slug) return null;
+  if (typeof service.getWordBankEntry === 'function') {
+    return service.getWordBankEntry(learnerId, slug);
+  }
+  return findWordBankEntry(service.getAnalyticsSnapshot(learnerId), slug);
+}
+
 export const spellingModule = {
   id: 'spelling',
   name: 'Spelling',
@@ -227,7 +235,7 @@ export const spellingModule = {
       const slug = data.slug;
       if (!slug) return true;
       const rawMode = data.value === 'drill' ? 'drill' : 'explain';
-      const word = findWordBankEntry(service.getAnalyticsSnapshot(learnerId), slug);
+      const word = wordBankEntryFor(service, learnerId, slug);
       if (word && rawMode === 'drill') {
         tts.speak({ word: word.word, sentence: word.sentence });
       }
@@ -255,7 +263,7 @@ export const spellingModule = {
       const currentMode = appState?.transientUi?.spellingWordDetailMode === 'drill' ? 'drill' : 'explain';
       const modeChanged = rawMode !== currentMode;
       if (rawMode === 'drill' && slug) {
-        const word = findWordBankEntry(service.getAnalyticsSnapshot(learnerId), slug);
+        const word = wordBankEntryFor(service, learnerId, slug);
         if (word) tts.speak({ word: word.word, sentence: word.sentence });
       }
       store.patch((current) => ({
@@ -287,7 +295,7 @@ export const spellingModule = {
     if (action === 'spelling-word-bank-drill-submit') {
       const slug = data.slug || appState?.transientUi?.spellingWordDetailSlug || '';
       if (!slug) return true;
-      const word = findWordBankEntry(service.getAnalyticsSnapshot(learnerId), slug);
+      const word = wordBankEntryFor(service, learnerId, slug);
       if (!word) return true;
       const typed = String(data.formData?.get?.('typed') || '').trim();
       store.patch((current) => ({
@@ -303,7 +311,7 @@ export const spellingModule = {
     if (action === 'spelling-word-bank-drill-try-again') {
       const slug = data.slug || appState?.transientUi?.spellingWordDetailSlug || '';
       if (slug) {
-        const word = findWordBankEntry(service.getAnalyticsSnapshot(learnerId), slug);
+        const word = wordBankEntryFor(service, learnerId, slug);
         if (word) tts.speak({ word: word.word, sentence: word.sentence });
       }
       store.patch((current) => ({
@@ -319,7 +327,7 @@ export const spellingModule = {
     if (action === 'spelling-word-bank-word-replay') {
       const slug = data.slug || appState?.transientUi?.spellingWordDetailSlug || '';
       if (!slug) return true;
-      const word = findWordBankEntry(service.getAnalyticsSnapshot(learnerId), slug);
+      const word = wordBankEntryFor(service, learnerId, slug);
       if (!word) return true;
       tts.speak({
         word: word.word,
@@ -331,7 +339,7 @@ export const spellingModule = {
     if (action === 'spelling-word-bank-drill-replay' || action === 'spelling-word-bank-drill-replay-slow') {
       const slug = data.slug || appState?.transientUi?.spellingWordDetailSlug || '';
       if (!slug) return true;
-      const word = findWordBankEntry(service.getAnalyticsSnapshot(learnerId), slug);
+      const word = wordBankEntryFor(service, learnerId, slug);
       if (!word) return true;
       tts.speak({
         word: word.word,

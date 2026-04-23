@@ -20,8 +20,7 @@ function makeSeededRandom(seed = 1) {
   };
 }
 
-function makeService({ now, random } = {}) {
-  const storage = installMemoryStorage();
+function makeService({ now, random, storage = installMemoryStorage() } = {}) {
   const repositories = createLocalPlatformRepositories({ storage });
   const spoken = [];
   const service = createSpellingService({
@@ -37,6 +36,16 @@ function makeService({ now, random } = {}) {
     },
   });
   return { storage, repositories, service, spoken };
+}
+
+function countStorageReads(storage) {
+  const reads = new Map();
+  const originalGetItem = storage.getItem.bind(storage);
+  storage.getItem = (key) => {
+    reads.set(key, (reads.get(key) || 0) + 1);
+    return originalGetItem(key);
+  };
+  return reads;
 }
 
 function continueUntilSummary(service, learnerId, state, answer = 'possess') {
@@ -460,6 +469,33 @@ test('analytics snapshot is explicit and normalised', () => {
   assert.equal(mollusc.word, 'mollusc');
   assert.equal(mollusc.spellingPool, 'extra');
   assert.equal(mollusc.year, 'extra');
+});
+
+test('analytics snapshot reuses one learner progress read', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const persistence = createSpellingPersistence({ repositories });
+  const reads = countStorageReads(persistence.storage);
+  const service = createSpellingService({
+    repository: persistence,
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+  });
+
+  completeSingleWordRoundWithAnswer(service, 'learner-a', 'possess');
+  reads.clear();
+
+  const snapshot = service.getAnalyticsSnapshot('learner-a');
+  assert.equal(snapshot.wordGroups.flatMap((group) => group.words).length > 200, true);
+  assert.equal(reads.get('ks2-spell-progress-learner-a'), 1);
+
+  reads.clear();
+  const entry = service.getWordBankEntry('learner-a', 'possess');
+  assert.equal(entry.word, 'possess');
+  assert.equal(reads.get('ks2-spell-progress-learner-a'), 1);
 });
 
 test('malformed persisted session state falls back safely instead of crashing', () => {
