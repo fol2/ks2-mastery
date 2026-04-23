@@ -133,7 +133,7 @@ test('golden-path smoke covers import/export restore for a live spelling session
   assert.match(harness.render(), /Spell the word you hear|Spell the dictated word/);
 });
 
-test('spelling word bank opens from setup and exposes searchable progress with drill modal', () => {
+test('spelling word bank opens from setup and exposes searchable progress with explainer modal', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
   const learnerId = harness.store.getState().learners.selectedId;
@@ -214,10 +214,10 @@ test('spelling word bank opens from setup and exposes searchable progress with d
     Unseen: '22',
   });
   // Word-bank entries render as legacy-style colour pills. The tooltip carries
-  // the progress details, while clicking the pill opens the new drill modal.
+  // the progress details, while clicking the pill opens the explainer modal.
   assert.match(html, /class="wb-word-pill new"/);
-  assert.match(html, /data-action="spelling-word-detail-open"\s+data-slug="possess"\s+data-value="drill"/);
-  assert.match(html, /title="possess[^"]*Family: possess\(ion\)[^"]*Next due: Unseen[^"]*Click to drill"/);
+  assert.match(html, /data-action="spelling-word-detail-open"\s+data-slug="possess"\s+data-value="explain"/);
+  assert.match(html, /title="possess[^"]*Family: possess\(ion\)[^"]*Next due: Unseen[^"]*Click to explain"/);
   assert.match(html, />accident</);
   assert.doesNotMatch(html, /wb-meta-label">Family/);
 
@@ -328,7 +328,7 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   assert.equal(harness.store.getState().subjectUi.spelling.analyticsWordSearch, undefined);
   html = harness.render();
   assert.match(html, />possess</);
-  assert.match(html, /title="possess[^"]*Next due: In 3 days[^"]*Click to drill"/);
+  assert.match(html, /title="possess[^"]*Next due: In 3 days[^"]*Click to explain"/);
   assert.doesNotMatch(html, />accident</);
 
   harness.dispatch('spelling-word-detail-open', { slug: 'possess', value: 'explain' });
@@ -364,7 +364,7 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   harness.dispatch('spelling-analytics-search', { value: 'mollusc' });
   html = harness.render();
   assert.match(html, />mollusc</);
-  assert.match(html, /title="mollusc[^"]*Extra[^"]*Click to drill"/);
+  assert.match(html, /title="mollusc[^"]*Extra[^"]*Click to explain"/);
   assert.match(html, /Showing 1 of 235 tracked spellings/);
   assert.doesNotMatch(html, />accident</);
 
