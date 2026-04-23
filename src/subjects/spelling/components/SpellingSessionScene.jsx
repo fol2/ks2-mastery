@@ -76,6 +76,13 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
     session.promptCount,
     awaitingAdvance ? 'locked' : 'active',
   ].join(':');
+  const questionLayoutKey = [
+    session.id,
+    session.currentSlug,
+    session.promptCount,
+    session.type,
+    showCloze ? 'cloze' : 'context',
+  ].join(':');
   const [questionRevealed, setQuestionRevealed] = React.useState(() => !shouldDelaySpellingSessionQuestionReveal());
   React.useEffect(() => {
     if (!shouldDelaySpellingSessionQuestionReveal()) {
@@ -98,7 +105,7 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
           <span className="path-count">Word {progressCurrent} of {progressTotal}</span>
         </header>
 
-        <AnimatedPromptCard>
+        <AnimatedPromptCard heightKey={questionLayoutKey} lockHeightToKey>
             {infoChips.length ? (
               <div className="info-chip-row">
                 {infoChips.map((value) => <span className="chip" key={value}>{value}</span>)}
@@ -178,7 +185,7 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
               </div>
             </form>
 
-            <FeedbackSlot feedback={ui.feedback} />
+            <FeedbackSlot feedback={ui.feedback} reserveSpace />
         </AnimatedPromptCard>
 
         <footer className="session-footer">

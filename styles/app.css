@@ -4247,6 +4247,7 @@ textarea:focus-visible {
   --spelling-cloze-font-size: 2rem;
   --spelling-cloze-line-height: 1.2;
   --spelling-cloze-lines: 2;
+  --spelling-feedback-slot-min-height: 156px;
 }
 .spelling-in-session::before {
   content: "";
@@ -4561,6 +4562,8 @@ textarea:focus-visible {
   display: flex; justify-content: center; gap: 10px;
   margin-top: 26px;
   flex-wrap: wrap;
+  min-height: 52px;
+  align-items: center;
 }
 
 /* Round-end footer sitting below the prompt card. */
@@ -4662,11 +4665,16 @@ textarea:focus-visible {
 }
 
 /* ---------- Feedback ribbon + family chips ---------- */
-/* Feedback now contributes its real measured height; the
-   AnimatedPromptCard wrapper interpolates the surrounding card
-   height between question, feedback, and summary states. */
 .spelling-in-session .feedback-slot {
   margin-top: 18px;
+  min-height: var(--spelling-feedback-slot-min-height);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.spelling-in-session .feedback-slot.is-placeholder {
+  visibility: hidden;
+  pointer-events: none;
 }
 .spelling-in-session .feedback-foot {
   margin-top: 8px;
@@ -4674,6 +4682,10 @@ textarea:focus-visible {
   line-height: 1.35;
   color: color-mix(in oklab, var(--ink) 72%, transparent);
   text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .spelling-in-session .ribbon {
@@ -4737,6 +4749,10 @@ textarea:focus-visible {
   margin-top: 2px;
   color: inherit;
   opacity: 0.85;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .spelling-in-session .family-chips {
@@ -4745,6 +4761,9 @@ textarea:focus-visible {
   flex-wrap: wrap;
   margin-top: 14px;
   padding-left: 4px;
+  min-height: 34px;
+  max-height: 34px;
+  overflow: hidden;
 }
 .spelling-in-session .family-chips .flabel {
   font-size: 0.76rem;

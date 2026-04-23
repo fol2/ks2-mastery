@@ -48,6 +48,7 @@ test('spelling session spike preserves hidden answer, replay, submit, and contin
   assert.match(questionHtml, /name="typed"[^>]*data-autofocus="true"/);
   assert.match(questionHtml, /aria-label="Replay the dictated word"/);
   assert.match(questionHtml, /aria-label="Replay slowly"/);
+  assert.match(questionHtml, /feedback-slot is-placeholder/);
   assert.match(questionHtml, /<kbd>Esc<\/kbd> replay/);
   assert.doesNotMatch(questionHtml, new RegExp(`>${escapingRegExp(answer)}<`, 'i'));
 
@@ -61,6 +62,7 @@ test('spelling session spike preserves hidden answer, replay, submit, and contin
   assert.equal(submitted.awaitingAdvance, true);
   assert.match(submittedHtml, /Saved/);
   assert.match(submittedHtml, /data-action="spelling-continue"/);
+  assert.doesNotMatch(submittedHtml, /feedback-slot is-placeholder/);
 
   finishCurrentRound(harness);
   assert.equal(harness.store.getState().subjectUi.spelling.phase, 'summary');
