@@ -1204,6 +1204,27 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         },
       });
     },
+    async runSubjectCommand(accountId, command, applyCommand) {
+      const nowTs = nowFactory();
+      return withLearnerMutation(db, {
+        accountId,
+        learnerId: command.learnerId,
+        kind: `subject_command.${command.subjectId}.${command.command}`,
+        payload: {
+          subjectId: command.subjectId,
+          command: command.command,
+          learnerId: command.learnerId,
+          payload: command.payload,
+        },
+        mutation: {
+          requestId: command.requestId,
+          correlationId: command.correlationId,
+          expectedLearnerRevision: command.expectedLearnerRevision,
+        },
+        nowTs,
+        apply: async () => applyCommand(),
+      });
+    },
     async clearSubjectState(accountId, learnerId, subjectId = null, mutation = {}) {
       const nowTs = nowFactory();
       return withLearnerMutation(db, {

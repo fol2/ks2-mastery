@@ -323,7 +323,7 @@ flowchart TB
 
 ---
 
-- [ ] U2. **Generic Subject Command Boundary**
+- [x] U2. **Generic Subject Command Boundary**
 
 **Goal:** Replace browser-owned subject/runtime writes with a generic Worker command route that validates access, idempotency, revisions, demo expiry, and subject ownership before mutating learner state.
 

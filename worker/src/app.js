@@ -17,6 +17,9 @@ import {
   requireSameOrigin,
   resetDemoAccount,
 } from './demo/sessions.js';
+import { normaliseSubjectCommandRequest } from './subjects/command-contract.js';
+import { createWorkerSubjectRuntime } from './subjects/runtime.js';
+import { ForbiddenError } from './errors.js';
 
 function withCookies(response, cookies = []) {
   cookies.filter(Boolean).forEach((cookie) => response.headers.append('set-cookie', cookie));
@@ -95,7 +98,19 @@ async function sessionPayload({ session, auth, env, now }) {
   };
 }
 
-export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(...args) } = {}) {
+function requireLegacyWriteAllowed(session) {
+  if (session?.demo) {
+    throw new ForbiddenError('Demo runtime writes must use the subject command boundary.', {
+      code: 'subject_command_required',
+    });
+  }
+}
+
+export function createWorkerApp({
+  now = Date.now,
+  fetchFn = (...args) => fetch(...args),
+  subjectRuntime = createWorkerSubjectRuntime(),
+} = {}) {
   return {
     async fetch(request, env) {
       const url = new URL(request.url);
@@ -206,6 +221,33 @@ export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(.
         const session = await auth.requireSession(request);
         const account = await repository.ensureAccount(session);
 
+        const subjectCommandMatch = /^\/api\/subjects\/([^/]+)\/command$/.exec(url.pathname);
+        if (subjectCommandMatch && request.method === 'POST') {
+          requireSameOrigin(request, env);
+          const body = await readJson(request);
+          const command = normaliseSubjectCommandRequest({
+            routeSubjectId: subjectCommandMatch[1],
+            body,
+            request,
+          });
+          const result = await repository.runSubjectCommand(
+            session.accountId,
+            command,
+            () => subjectRuntime.dispatch(command, {
+              env,
+              request,
+              session,
+              account,
+              repository,
+              now: now(),
+            }),
+          );
+          return json({
+            ok: true,
+            ...result,
+          });
+        }
+
         if (url.pathname === '/api/bootstrap' && request.method === 'GET') {
           const bundle = await repository.bootstrap(session.accountId);
           return json({
@@ -310,12 +352,14 @@ export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(.
         }
 
         if (url.pathname === '/api/learners' && request.method === 'PUT') {
+          requireLegacyWriteAllowed(session);
           const body = await readJson(request);
           const result = await repository.writeLearners(session.accountId, body.learners, mutationFromRequest(body, request));
           return json({ ok: true, ...result });
         }
 
         if (url.pathname === '/api/child-subject-state' && request.method === 'PUT') {
+          requireLegacyWriteAllowed(session);
           const body = await readJson(request);
           const result = await repository.writeSubjectState(
             session.accountId,
@@ -328,6 +372,7 @@ export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(.
         }
 
         if (url.pathname === '/api/child-subject-state' && request.method === 'DELETE') {
+          requireLegacyWriteAllowed(session);
           const body = await readJson(request);
           const result = await repository.clearSubjectState(
             session.accountId,
@@ -339,12 +384,14 @@ export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(.
         }
 
         if (url.pathname === '/api/practice-sessions' && request.method === 'PUT') {
+          requireLegacyWriteAllowed(session);
           const body = await readJson(request);
           const result = await repository.writePracticeSession(session.accountId, body.record || {}, mutationFromRequest(body, request));
           return json({ ok: true, ...result });
         }
 
         if (url.pathname === '/api/practice-sessions' && request.method === 'DELETE') {
+          requireLegacyWriteAllowed(session);
           const body = await readJson(request);
           const result = await repository.clearPracticeSessions(
             session.accountId,
@@ -356,6 +403,7 @@ export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(.
         }
 
         if (url.pathname === '/api/child-game-state' && request.method === 'PUT') {
+          requireLegacyWriteAllowed(session);
           const body = await readJson(request);
           const result = await repository.writeGameState(
             session.accountId,
@@ -368,6 +416,7 @@ export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(.
         }
 
         if (url.pathname === '/api/child-game-state' && request.method === 'DELETE') {
+          requireLegacyWriteAllowed(session);
           const body = await readJson(request);
           const result = await repository.clearGameState(
             session.accountId,
@@ -379,18 +428,21 @@ export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(.
         }
 
         if (url.pathname === '/api/event-log' && request.method === 'POST') {
+          requireLegacyWriteAllowed(session);
           const body = await readJson(request);
           const result = await repository.appendEvent(session.accountId, body.event, mutationFromRequest(body, request));
           return json({ ok: true, ...result });
         }
 
         if (url.pathname === '/api/event-log' && request.method === 'DELETE') {
+          requireLegacyWriteAllowed(session);
           const body = await readJson(request);
           const result = await repository.clearEventLog(session.accountId, body.learnerId, mutationFromRequest(body, request));
           return json({ ok: true, ...result });
         }
 
         if (url.pathname === '/api/debug/reset' && request.method === 'POST') {
+          requireLegacyWriteAllowed(session);
           const body = await readJson(request);
           const result = await repository.resetAccountScope(session.accountId, mutationFromRequest(body, request));
           return json({ ok: true, ...result });
