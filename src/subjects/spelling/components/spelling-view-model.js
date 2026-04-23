@@ -95,6 +95,14 @@ export function heroBgForSession(learnerId, session) {
   return heroBgForMode(session?.mode || (session?.type === 'test' ? 'test' : 'smart'), learnerId, { tone: '1' });
 }
 
+export function heroBgPreloadUrls(learnerId, prefs = {}) {
+  if (!learnerId) return [];
+  const modes = ['smart', 'trouble', 'test'];
+  const setupUrls = modes.map((mode) => heroBgForMode(mode, learnerId));
+  const sessionUrl = heroBgForMode(prefs?.mode || 'smart', learnerId, { tone: '1' });
+  return [...new Set([...setupUrls, sessionUrl].filter(Boolean))];
+}
+
 export function heroBgStyle(url) {
   return url ? { '--hero-bg': `url('${url}')` } : {};
 }
