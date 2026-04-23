@@ -115,8 +115,41 @@ export function heroBgForSetup(learnerId, prefs, options = {}) {
   return heroBgForMode(prefs?.mode, learnerId, options);
 }
 
-export function heroBgForSession(learnerId, session) {
-  return heroBgForMode(session?.mode || (session?.type === 'test' ? 'test' : 'smart'), learnerId, { tone: '1' });
+function sessionProgressTotal(session) {
+  const rawTotal = Number(session?.progress?.total ?? session?.totalWords ?? 0);
+  return Number.isFinite(rawTotal) && rawTotal > 0 ? Math.floor(rawTotal) : 1;
+}
+
+export function spellingSessionProgressIndex(session, options = {}) {
+  const total = sessionProgressTotal(session);
+  const explicitIndex = Number(options.questionIndex);
+  if (Number.isFinite(explicitIndex) && explicitIndex > 0) {
+    return Math.min(total, Math.max(1, Math.floor(explicitIndex)));
+  }
+
+  const rawDone = Number(session?.progress?.done ?? session?.progress?.checked ?? 0);
+  const done = Number.isFinite(rawDone) && rawDone > 0 ? Math.floor(rawDone) : 0;
+  const current = done + (options.awaitingAdvance ? 0 : 1);
+  return Math.min(total, Math.max(1, current));
+}
+
+export function spellingHeroToneForSessionProgress(session, options = {}) {
+  if (options.complete) return '3';
+  const total = sessionProgressTotal(session);
+  const current = spellingSessionProgressIndex(session, options);
+  const firstLimit = Math.max(1, Math.floor(total / SPELLING_HERO_TONES.length));
+  const secondLimit = Math.max(firstLimit + 1, Math.floor((total * 2) / SPELLING_HERO_TONES.length));
+  if (current <= firstLimit) return '1';
+  if (current <= secondLimit) return '2';
+  return '3';
+}
+
+export function heroBgForSession(learnerId, session, options = {}) {
+  const requestedTone = String(options.tone || '');
+  const tone = SPELLING_HERO_TONES.includes(requestedTone)
+    ? requestedTone
+    : spellingHeroToneForSessionProgress(session, options);
+  return heroBgForMode(session?.mode || (session?.type === 'test' ? 'test' : 'smart'), learnerId, { tone });
 }
 
 export function heroBgPreloadUrls(learnerId, prefs = {}, options = {}) {
@@ -126,8 +159,9 @@ export function heroBgPreloadUrls(learnerId, prefs = {}, options = {}) {
     ? String(options.setupTone)
     : spellingHeroTone(learnerId);
   const setupUrls = modes.map((mode) => heroBgForMode(mode, learnerId, { tone: setupTone }));
-  const sessionUrl = heroBgForMode(prefs?.mode || 'smart', learnerId, { tone: '1' });
-  return [...new Set([...setupUrls, sessionUrl].filter(Boolean))];
+  const sessionMode = prefs?.mode || 'smart';
+  const sessionUrls = SPELLING_HERO_TONES.map((tone) => heroBgForMode(sessionMode, learnerId, { tone }));
+  return [...new Set([...setupUrls, ...sessionUrls].filter(Boolean))];
 }
 
 export function heroToneForBg(url) {
@@ -279,8 +313,11 @@ export function renderAction(actions, event, action, data = {}) {
   const payload = action === 'spelling-word-detail-open' && data && typeof data === 'object'
     ? { ...data, triggerElement: event?.currentTarget || data.triggerElement || null }
     : data;
+  const shouldStartFlowTransition = action === 'spelling-start'
+    || action === 'spelling-start-again'
+    || (action === 'spelling-continue' && Boolean(data?.flowTransition));
   if (
-    (action === 'spelling-start' || action === 'spelling-start-again')
+    shouldStartFlowTransition
     && typeof document !== 'undefined'
     && typeof document.startViewTransition === 'function'
   ) {

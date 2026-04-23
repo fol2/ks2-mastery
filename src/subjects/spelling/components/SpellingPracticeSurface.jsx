@@ -40,9 +40,17 @@ function rememberSetupTone(learnerId, tone) {
 function heroBgForPhase(spelling, setupHeroTone) {
   const learnerId = spelling.learner?.id;
   if (!learnerId) return '';
-  if (spelling.ui.phase === 'session') return heroBgForSession(learnerId, spelling.ui.session);
+  if (spelling.ui.phase === 'session') {
+    return heroBgForSession(learnerId, spelling.ui.session, {
+      awaitingAdvance: Boolean(spelling.ui.awaitingAdvance),
+    });
+  }
   if (spelling.ui.phase === 'summary') {
-    return heroBgForSession(learnerId, { mode: spelling.ui.summary?.mode });
+    const progressTotal = Math.max(1, spelling.ui.summary?.totalWords || 1);
+    return heroBgForSession(learnerId, {
+      mode: spelling.ui.summary?.mode,
+      progress: { done: progressTotal, total: progressTotal },
+    }, { complete: true });
   }
   if (spelling.ui.phase === 'word-bank') return heroBgForLearner(learnerId);
   return heroBgForSetup(learnerId, spelling.prefs, { tone: setupHeroTone });

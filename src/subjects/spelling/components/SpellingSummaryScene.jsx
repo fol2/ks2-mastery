@@ -30,7 +30,7 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, previousHer
   const heroBg = heroBgForSession(learner.id, {
     mode: summary.mode,
     progress: { done: progressTotal, total: progressTotal },
-  });
+  }, { complete: true });
   const toneGood = !summary.mistakes.length;
 
   return (

@@ -14,6 +14,7 @@ import {
   heroBgStyle,
   renderAction,
   renderFormAction,
+  spellingSessionProgressIndex,
 } from './spelling-view-model.js';
 
 const SESSION_HERO_MORPH_MS = 720;
@@ -60,10 +61,13 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
   const infoChips = spellingSessionInfoChips(session);
   const progressTotal = session.progress.total;
   const done = session.progress.done;
-  const progressCurrent = progressTotal <= 0 ? 0 : Math.min(progressTotal, done + 1);
+  const progressCurrent = progressTotal <= 0
+    ? 0
+    : spellingSessionProgressIndex(session, { awaitingAdvance });
   const pathDone = Math.min(progressTotal, done);
   const pathCurrent = Math.min(Math.max(progressCurrent - 1, 0), progressTotal);
-  const heroBg = heroBgForSession(learner.id, session);
+  const heroBg = heroBgForSession(learner.id, session, { awaitingAdvance });
+  const isCompletingRound = awaitingAdvance && progressTotal > 0 && done >= progressTotal;
   const showingCorrection = session.phase === 'correction';
   const promptInstr = session.type === 'test'
     ? 'Type the word dictated by the audio.'
@@ -160,7 +164,9 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
                     className="btn good lg"
                     type="button"
                     data-action="spelling-continue"
-                    onClick={(event) => renderAction(actions, event, 'spelling-continue')}
+                    onClick={(event) => renderAction(actions, event, 'spelling-continue', {
+                      flowTransition: isCompletingRound,
+                    })}
                   >
                     Continue <ArrowRightIcon />
                   </button>

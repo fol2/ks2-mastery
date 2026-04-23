@@ -288,6 +288,7 @@ test('spelling setup and session hero backgrounds use mode-specific Scribe Downs
     heroBgPreloadUrls,
     heroBgForSession,
     spellingHeroTone,
+    spellingHeroToneForSessionProgress,
   } = await import('../src/subjects/spelling/components/spelling-view-model.js');
 
   const learnerId = 'learner-1';
@@ -298,6 +299,12 @@ test('spelling setup and session hero backgrounds use mode-specific Scribe Downs
   assert.equal(heroBgForMode('test', learnerId), `/assets/regions/the-scribe-downs/the-scribe-downs-e${tone}.1280.webp`);
   assert.equal(heroBgForSession(learnerId, { mode: 'trouble' }), '/assets/regions/the-scribe-downs/the-scribe-downs-d1.1280.webp');
   assert.equal(heroBgForSession('learner-1', { mode: 'test' }), '/assets/regions/the-scribe-downs/the-scribe-downs-e1.1280.webp');
+  assert.equal(heroBgForSession('learner-1', { mode: 'test', progress: { done: 6, total: 20 } }), '/assets/regions/the-scribe-downs/the-scribe-downs-e2.1280.webp');
+  assert.equal(heroBgForSession('learner-1', { mode: 'test', progress: { done: 13, total: 20 } }), '/assets/regions/the-scribe-downs/the-scribe-downs-e3.1280.webp');
+  assert.equal(heroBgForSession('learner-1', { mode: 'test', progress: { done: 20, total: 20 } }, { complete: true }), '/assets/regions/the-scribe-downs/the-scribe-downs-e3.1280.webp');
+  assert.equal(spellingHeroToneForSessionProgress({ progress: { done: 5, total: 20 } }), '1');
+  assert.equal(spellingHeroToneForSessionProgress({ progress: { done: 6, total: 20 } }), '2');
+  assert.equal(spellingHeroToneForSessionProgress({ progress: { done: 13, total: 20 } }), '3');
   assert.equal(spellingHeroTone('learner-0'), '2');
   assert.match(heroBgForMode('smart', 'learner-0'), /the-scribe-downs-[abc]2\.1280\.webp$/);
   assert.match(heroBgForSession('learner-0', { mode: 'smart' }), /the-scribe-downs-[abc]1\.1280\.webp$/);
@@ -305,15 +312,16 @@ test('spelling setup and session hero backgrounds use mode-specific Scribe Downs
     heroBgForMode('smart', 'learner-1'),
     heroBgForMode('trouble', 'learner-1'),
     heroBgForMode('test', 'learner-1'),
+    heroBgForMode('test', 'learner-1', { tone: '2' }),
+    heroBgForMode('test', 'learner-1', { tone: '3' }),
   ];
-  const learnerOneSession = heroBgForSession('learner-1', { mode: 'test' });
-  if (!learnerOnePreloads.includes(learnerOneSession)) learnerOnePreloads.push(learnerOneSession);
   assert.deepEqual(heroBgPreloadUrls('learner-1', { mode: 'test' }), learnerOnePreloads);
   assert.deepEqual(heroBgPreloadUrls('learner-0', { mode: 'test' }), [
     heroBgForMode('smart', 'learner-0'),
     heroBgForMode('trouble', 'learner-0'),
     heroBgForMode('test', 'learner-0'),
     heroBgForSession('learner-0', { mode: 'test' }),
+    heroBgForMode('test', 'learner-0', { tone: '3' }),
   ]);
   assert.deepEqual(heroContrastProfileForBg('/assets/regions/the-scribe-downs/the-scribe-downs-a1.1280.webp', 'smart'), {
     tone: '1',
