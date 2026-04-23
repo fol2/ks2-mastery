@@ -172,10 +172,10 @@ function readSessionToken(request) {
   return auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '';
 }
 
-export function sessionCookie(request, token) {
+export function sessionCookie(request, token, options = {}) {
   return serialiseCookie(SESSION_COOKIE_NAME, token, {
     secure: secureCookieForRequest(request),
-    maxAge: SESSION_TTL_MS / 1000,
+    maxAge: options.maxAge || SESSION_TTL_MS / 1000,
   });
 }
 
@@ -344,16 +344,20 @@ async function ensureAccountRow(db, {
   return first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
 }
 
-async function createSession(env, accountId, provider, now = Date.now()) {
+export async function createSession(env, accountId, provider, now = Date.now(), options = {}) {
   const db = requireDatabase(env);
   const token = randomToken(32);
   const hash = await sha256(token);
   const sessionId = `session-${randomToken(12)}`;
+  const expiresAt = Number.isFinite(Number(options.expiresAt))
+    ? Number(options.expiresAt)
+    : now + SESSION_TTL_MS;
+  const sessionKind = cleanText(options.sessionKind) || (provider === 'demo' ? 'demo' : 'real');
   await run(db, `
-    INSERT INTO account_sessions (id, account_id, session_hash, provider, created_at, expires_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `, [sessionId, accountId, hash, provider, now, now + SESSION_TTL_MS]);
-  return { token, hash, sessionId };
+    INSERT INTO account_sessions (id, account_id, session_hash, provider, created_at, expires_at, session_kind)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `, [sessionId, accountId, hash, provider, now, expiresAt, sessionKind]);
+  return { token, hash, sessionId, expiresAt, sessionKind };
 }
 
 async function accountSessionFromToken(env, token, now = Date.now()) {
@@ -369,13 +373,21 @@ async function accountSessionFromToken(env, token, now = Date.now()) {
       a.id AS account_id,
       a.email,
       a.display_name,
-      a.platform_role
+      a.platform_role,
+      a.account_type,
+      a.demo_expires_at
     FROM account_sessions s
     JOIN adult_accounts a ON a.id = s.account_id
     WHERE s.session_hash = ?
       AND s.expires_at > ?
-  `, [hash, now]);
+      AND (
+        COALESCE(a.account_type, 'real') <> 'demo'
+        OR a.demo_expires_at > ?
+      )
+  `, [hash, now, now]);
   if (!row) return null;
+  const accountType = row.account_type || 'real';
+  const demoExpiresAt = Number(row.demo_expires_at) || null;
   return {
     accountId: row.account_id,
     email: row.email || null,
@@ -384,6 +396,9 @@ async function accountSessionFromToken(env, token, now = Date.now()) {
     provider: row.provider || 'session',
     sessionId: row.session_id,
     sessionHash: row.session_hash,
+    accountType,
+    demo: accountType === 'demo',
+    demoExpiresAt,
   };
 }
 
@@ -411,23 +426,74 @@ export async function registerWithEmail(env, request, payload = {}) {
 
   const db = requireDatabase(env);
   const now = Date.now();
-  const accountId = `adult-${randomToken(12)}`;
+  const demoSession = payload.convertDemo === true
+    ? await accountSessionFromToken(env, readSessionToken(request), now)
+    : null;
+  if (payload.convertDemo === true && !demoSession?.demo) {
+    throw new BadRequestError('Demo session expired. Start a new demo before creating an account.', {
+      code: 'demo_session_required',
+    });
+  }
+  const accountId = demoSession?.accountId || `adult-${randomToken(12)}`;
   const credential = await hashPassword(password);
 
   try {
     await withTransaction(db, async () => {
-      await ensureAccountRow(db, {
-        accountId,
-        email,
-        displayName: cleanText(payload.displayName) || email,
-        now,
-      });
+      if (demoSession?.demo) {
+        const existingEmailAccount = await scalar(db, `
+          SELECT account_id
+          FROM account_credentials
+          WHERE email = ?
+            AND account_id <> ?
+          LIMIT 1
+        `, [email, accountId], 'account_id');
+        if (existingEmailAccount) {
+          throw new ConflictError('That email address is already registered.', { code: 'email_already_registered' });
+        }
+        await run(db, `
+          UPDATE adult_accounts
+          SET email = ?,
+              display_name = COALESCE(?, display_name, ?),
+              account_type = 'real',
+              demo_expires_at = NULL,
+              converted_from_demo_at = ?,
+              updated_at = ?
+          WHERE id = ?
+            AND account_type = 'demo'
+            AND demo_expires_at > ?
+        `, [
+          email,
+          cleanText(payload.displayName),
+          email,
+          now,
+          now,
+          accountId,
+          now,
+        ]);
+      } else {
+        await ensureAccountRow(db, {
+          accountId,
+          email,
+          displayName: cleanText(payload.displayName) || email,
+          now,
+        });
+      }
       await run(db, `
         INSERT INTO account_credentials (account_id, email, password_hash, password_salt, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?)
       `, [accountId, email, credential.hash, credential.salt, now, now]);
+      if (demoSession?.demo) {
+        await run(db, `
+          INSERT INTO demo_operation_metrics (metric_key, metric_count, updated_at)
+          VALUES ('conversions', 1, ?)
+          ON CONFLICT(metric_key) DO UPDATE SET
+            metric_count = demo_operation_metrics.metric_count + 1,
+            updated_at = excluded.updated_at
+        `, [now]);
+      }
     });
   } catch (error) {
+    if (error instanceof ConflictError) throw error;
     if (String(error?.message || '').toLowerCase().includes('unique')) {
       throw new ConflictError('That email address is already registered.', { code: 'email_already_registered' });
     }
@@ -440,7 +506,7 @@ export async function registerWithEmail(env, request, payload = {}) {
     cookies: [sessionCookie(request, session.token)],
     payload: {
       ok: true,
-      session: { accountId, provider: 'email' },
+      session: { accountId, provider: 'email', demo: false },
     },
   };
 }
@@ -728,6 +794,73 @@ async function findOrCreateAccountFromIdentity(env, {
   return accountId;
 }
 
+async function convertDemoAccountFromIdentity(env, {
+  demoSession,
+  provider,
+  providerSubject,
+  email,
+}) {
+  const db = requireDatabase(env);
+  const now = Date.now();
+  const accountId = demoSession?.accountId;
+  if (!accountId || !demoSession?.demo) {
+    throw new BadRequestError('Demo session expired. Start a new demo before creating an account.', {
+      code: 'demo_session_required',
+    });
+  }
+
+  const existingIdentity = await first(db, `
+    SELECT account_id FROM account_identities WHERE provider = ? AND provider_subject = ?
+  `, [provider, providerSubject]);
+  if (existingIdentity?.account_id && existingIdentity.account_id !== accountId) {
+    throw new ConflictError('That social account is already registered.', { code: 'identity_already_registered' });
+  }
+
+  if (email) {
+    const emailAccountId = await scalar(db, `
+      SELECT id
+      FROM adult_accounts
+      WHERE lower(email) = lower(?)
+        AND id <> ?
+        AND COALESCE(account_type, 'real') <> 'demo'
+      LIMIT 1
+    `, [email, accountId], 'id');
+    if (emailAccountId) {
+      throw new ConflictError('That email address is already registered.', { code: 'email_already_registered' });
+    }
+  }
+
+  await withTransaction(db, async () => {
+    await run(db, `
+      UPDATE adult_accounts
+      SET email = COALESCE(?, email),
+          display_name = COALESCE(?, display_name, ?),
+          account_type = 'real',
+          demo_expires_at = NULL,
+          converted_from_demo_at = ?,
+          updated_at = ?
+      WHERE id = ?
+        AND account_type = 'demo'
+        AND demo_expires_at > ?
+    `, [email || null, email || provider, provider, now, now, accountId, now]);
+    if (!existingIdentity?.account_id) {
+      await run(db, `
+        INSERT INTO account_identities (id, account_id, provider, provider_subject, email, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [`identity-${randomToken(12)}`, accountId, provider, providerSubject, email || null, now, now]);
+    }
+    await run(db, `
+      INSERT INTO demo_operation_metrics (metric_key, metric_count, updated_at)
+      VALUES ('conversions', 1, ?)
+      ON CONFLICT(metric_key) DO UPDATE SET
+        metric_count = demo_operation_metrics.metric_count + 1,
+        updated_at = excluded.updated_at
+    `, [now]);
+  });
+
+  return accountId;
+}
+
 export async function completeSocialLogin(env, request, providerKey, callbackPayload = {}) {
   const providerName = normaliseProvider(providerKey);
   const attempt = readOauthAttempt(request);
@@ -751,11 +884,20 @@ export async function completeSocialLogin(env, request, providerKey, callbackPay
   if (!profile?.subject) {
     throw new BadRequestError('The provider did not return a valid account identifier.', { code: 'oauth_subject_missing' });
   }
-  const accountId = await findOrCreateAccountFromIdentity(env, {
-    provider: providerName,
-    providerSubject: profile.subject,
-    email: profile.emailVerified === false ? '' : profile.email,
-  });
+  const verifiedEmail = profile.emailVerified === false ? '' : profile.email;
+  const activeSession = await accountSessionFromToken(env, readSessionToken(request));
+  const accountId = activeSession?.demo
+    ? await convertDemoAccountFromIdentity(env, {
+        demoSession: activeSession,
+        provider: providerName,
+        providerSubject: profile.subject,
+        email: verifiedEmail,
+      })
+    : await findOrCreateAccountFromIdentity(env, {
+        provider: providerName,
+        providerSubject: profile.subject,
+        email: verifiedEmail,
+      });
   const session = await createSession(env, accountId, providerName);
   return {
     cookies: [...clearOauthCookies(request), sessionCookie(request, session.token)],

@@ -69,10 +69,13 @@ export function createRemoteSyncSession(sessionPayload = {}) {
   const accountId = sessionPayload?.session?.accountId || 'unknown';
   return {
     signedIn: true,
-    mode: 'remote-sync',
+    mode: sessionPayload?.session?.demo ? 'demo-sync' : 'remote-sync',
     accountId,
     email: sessionPayload?.session?.email || '',
     provider: sessionPayload?.session?.provider || 'session',
+    demo: Boolean(sessionPayload?.session?.demo),
+    accountType: sessionPayload?.session?.accountType || 'real',
+    demoExpiresAt: sessionPayload?.session?.demoExpiresAt || null,
     platformRole: normalisePlatformRole(
       sessionPayload?.account?.platformRole || sessionPayload?.session?.platformRole,
     ),

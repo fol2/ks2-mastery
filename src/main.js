@@ -141,12 +141,26 @@ async function startSocialAuth(provider) {
   globalThis.location.href = payload.redirectUrl;
 }
 
+async function startDemoSession() {
+  const response = await credentialFetch('/api/demo/session', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.session?.accountId) {
+    throw new Error(payload.message || 'Could not start the demo.');
+  }
+  globalThis.location.href = '/';
+}
+
 function renderAuthRoot({ error = '' } = {}) {
   createRoot(root).render(
     <AuthSurface
       initialError={error}
       onSubmit={submitAuthCredentials}
       onSocialStart={startSocialAuth}
+      onDemoStart={startDemoSession}
     />,
   );
 }

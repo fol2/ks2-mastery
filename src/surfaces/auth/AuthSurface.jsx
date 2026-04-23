@@ -6,7 +6,7 @@ function providerLabel(provider) {
   return provider === 'x' ? 'X' : provider[0].toUpperCase() + provider.slice(1);
 }
 
-export function AuthSurface({ initialMode = 'login', initialError = '', onSubmit, onSocialStart }) {
+export function AuthSurface({ initialMode = 'login', initialError = '', onSubmit, onSocialStart, onDemoStart }) {
   const [mode, setMode] = useState(initialMode === 'register' ? 'register' : 'login');
   const [error, setError] = useState(initialError || '');
   const [busy, setBusy] = useState(false);
@@ -36,6 +36,17 @@ export function AuthSurface({ initialMode = 'login', initialError = '', onSubmit
       await onSocialStart?.(provider);
     } catch (providerError) {
       setError(providerError?.message || 'Could not start social sign-in.');
+      setBusy(false);
+    }
+  }
+
+  async function startDemo() {
+    setBusy(true);
+    setError('');
+    try {
+      await onDemoStart?.();
+    } catch (demoError) {
+      setError(demoError?.message || 'Could not start the demo.');
       setBusy(false);
     }
   }
@@ -85,6 +96,9 @@ export function AuthSurface({ initialMode = 'login', initialError = '', onSubmit
             {isRegister ? 'Use an existing account' : 'Create a new account'}
           </button>
         </div>
+        <button className="btn secondary lg" type="button" disabled={busy} onClick={startDemo}>
+          Try demo
+        </button>
         <div className="auth-divider"><span>Social sign-in</span></div>
         <div className="auth-social">
           {SOCIAL_PROVIDERS.map((provider) => (

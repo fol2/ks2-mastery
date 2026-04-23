@@ -12,6 +12,11 @@ import { errorResponse } from './errors.js';
 import { json, readForm, readJson } from './http.js';
 import { createWorkerRepository } from './repository.js';
 import { handleTextToSpeechRequest } from './tts.js';
+import {
+  createDemoSession,
+  requireSameOrigin,
+  resetDemoAccount,
+} from './demo/sessions.js';
 
 function withCookies(response, cookies = []) {
   cookies.filter(Boolean).forEach((cookie) => response.headers.append('set-cookie', cookie));
@@ -65,7 +70,6 @@ async function sessionPayload({ session, auth, env, now }) {
   return {
     ok: true,
     auth: auth.describe(),
-    session,
     account: account
       ? {
         id: account.id,
@@ -74,6 +78,17 @@ async function sessionPayload({ session, auth, env, now }) {
         selectedLearnerId: account.selected_learner_id || null,
         repoRevision: Number(account.repo_revision) || 0,
         platformRole: account.platform_role || session.platformRole || 'parent',
+        accountType: account.account_type || session.accountType || 'real',
+        demo: (account.account_type || session.accountType) === 'demo',
+        demoExpiresAt: Number(account.demo_expires_at) || session.demoExpiresAt || null,
+      }
+      : null,
+    session: session
+      ? {
+        ...session,
+        demo: Boolean(session.demo),
+        accountType: session.accountType || 'real',
+        demoExpiresAt: session.demoExpiresAt || null,
       }
       : null,
     learnerCount: learnerIds.length,
@@ -110,6 +125,24 @@ export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(.
           });
         }
 
+        if (url.pathname === '/api/demo/session' && request.method === 'POST') {
+          const result = await createDemoSession({
+            env,
+            request,
+            now: now(),
+          });
+          return withCookies(json(result.payload, result.status), result.cookies);
+        }
+
+        if (url.pathname === '/demo' && request.method === 'GET') {
+          const result = await createDemoSession({
+            env,
+            request,
+            now: now(),
+          });
+          return redirect(`${url.origin}/?demo=1`, 302, result.cookies);
+        }
+
         if (url.pathname === '/api/session' && request.method === 'GET') {
           return json(await sessionPayload({
             session: await auth.requireSession(request),
@@ -141,6 +174,7 @@ export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(.
         }
 
         if (url.pathname === '/api/auth/logout' && request.method === 'POST') {
+          requireSameOrigin(request, env);
           try {
             await deleteCurrentSession(env, request);
           } finally {
@@ -183,12 +217,36 @@ export function createWorkerApp({ now = Date.now, fetchFn = (...args) => fetch(.
               accountId: session.accountId,
               provider: session.provider,
               platformRole: account?.platform_role || session.platformRole || 'parent',
+              accountType: account?.account_type || session.accountType || 'real',
+              demo: (account?.account_type || session.accountType) === 'demo',
+              demoExpiresAt: Number(account?.demo_expires_at) || session.demoExpiresAt || null,
             },
             mutationPolicy: {
               version: 1,
               strategy: 'account-and-learner-revision-cas',
               idempotency: 'request-receipts',
               merge: 'none',
+            },
+            ...bundle,
+          });
+        }
+
+        if (url.pathname === '/api/demo/reset' && request.method === 'POST') {
+          await resetDemoAccount({
+            env,
+            request,
+            session,
+            now: now(),
+          });
+          const bundle = await repository.bootstrap(session.accountId);
+          return json({
+            ok: true,
+            session: {
+              accountId: session.accountId,
+              provider: session.provider,
+              accountType: 'demo',
+              demo: true,
+              demoExpiresAt: session.demoExpiresAt || null,
             },
             ...bundle,
           });
