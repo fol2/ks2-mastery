@@ -10513,6 +10513,61 @@ export const WORDS = [
   {
     "year": "extra",
     "family": "Science: animal groups",
+    "word": "vertebrates",
+    "slug": "vertebrates",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "vertebrates",
+      "invertebrates"
+    ],
+    "sentence": "Fish, birds and mammals are vertebrates.",
+    "sentences": [
+      "Fish, birds and mammals are vertebrates."
+    ],
+    "accepted": [
+      "vertebrates"
+    ],
+    "variants": [
+      {
+        "word": "invertebrates",
+        "sentence": "Worms and insects are invertebrates without a backbone.",
+        "sentences": [
+          "Worms and insects are invertebrates without a backbone."
+        ],
+        "accepted": [
+          "invertebrates"
+        ],
+        "explanation": "Invertebrates are animals without a backbone or spine.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the vertebrates base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
+    ],
+    "explanation": "Vertebrates are animals with a backbone or spine.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "animal",
+      "groups"
+    ],
+    "sourceNote": "Added as an Extra spelling word family on 23 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling family extension",
+      "note": "Added vertebrates with invertebrates as a paired word family.",
+      "importedAt": 1776902400000
+    },
+    "sortIndex": 231
+  },
+  {
+    "year": "extra",
+    "family": "Science: animal groups",
     "word": "arachnid",
     "slug": "arachnid",
     "spellingPool": "extra",
@@ -10563,7 +10618,7 @@ export const WORDS = [
       "note": "Initial Extra expansion for spelling practice.",
       "importedAt": 1776816000000
     },
-    "sortIndex": 231
+    "sortIndex": 232
   },
   {
     "year": "extra",
@@ -10618,7 +10673,7 @@ export const WORDS = [
       "note": "Initial Extra expansion for spelling practice.",
       "importedAt": 1776816000000
     },
-    "sortIndex": 232
+    "sortIndex": 233
   },
   {
     "year": "extra",
@@ -10691,7 +10746,7 @@ export const WORDS = [
       "note": "Initial Extra expansion for spelling practice.",
       "importedAt": 1776816000000
     },
-    "sortIndex": 233
+    "sortIndex": 234
   },
   {
     "year": "extra",
@@ -10764,7 +10819,7 @@ export const WORDS = [
       "note": "Initial Extra expansion for spelling practice.",
       "importedAt": 1776816000000
     },
-    "sortIndex": 234
+    "sortIndex": 235
   }
 ];
 
@@ -21273,6 +21328,61 @@ export const WORD_BY_SLUG = {
     },
     "sortIndex": 230
   },
+  "vertebrates": {
+    "year": "extra",
+    "family": "Science: animal groups",
+    "word": "vertebrates",
+    "slug": "vertebrates",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "vertebrates",
+      "invertebrates"
+    ],
+    "sentence": "Fish, birds and mammals are vertebrates.",
+    "sentences": [
+      "Fish, birds and mammals are vertebrates."
+    ],
+    "accepted": [
+      "vertebrates"
+    ],
+    "variants": [
+      {
+        "word": "invertebrates",
+        "sentence": "Worms and insects are invertebrates without a backbone.",
+        "sentences": [
+          "Worms and insects are invertebrates without a backbone."
+        ],
+        "accepted": [
+          "invertebrates"
+        ],
+        "explanation": "Invertebrates are animals without a backbone or spine.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the vertebrates base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
+    ],
+    "explanation": "Vertebrates are animals with a backbone or spine.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "science",
+      "animal",
+      "groups"
+    ],
+    "sourceNote": "Added as an Extra spelling word family on 23 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling family extension",
+      "note": "Added vertebrates with invertebrates as a paired word family.",
+      "importedAt": 1776902400000
+    },
+    "sortIndex": 231
+  },
   "arachnid": {
     "year": "extra",
     "family": "Science: animal groups",
@@ -21326,7 +21436,7 @@ export const WORD_BY_SLUG = {
       "note": "Initial Extra expansion for spelling practice.",
       "importedAt": 1776816000000
     },
-    "sortIndex": 231
+    "sortIndex": 232
   },
   "mollusc": {
     "year": "extra",
@@ -21381,7 +21491,7 @@ export const WORD_BY_SLUG = {
       "note": "Initial Extra expansion for spelling practice.",
       "importedAt": 1776816000000
     },
-    "sortIndex": 232
+    "sortIndex": 233
   },
   "botanist": {
     "year": "extra",
@@ -21454,7 +21564,7 @@ export const WORD_BY_SLUG = {
       "note": "Initial Extra expansion for spelling practice.",
       "importedAt": 1776816000000
     },
-    "sortIndex": 233
+    "sortIndex": 234
   },
   "flowering": {
     "year": "extra",
@@ -21527,6 +21637,6 @@ export const WORD_BY_SLUG = {
       "note": "Initial Extra expansion for spelling practice.",
       "importedAt": 1776816000000
     },
-    "sortIndex": 234
+    "sortIndex": 235
   }
 };
