@@ -7,7 +7,7 @@ import {
   spellingSessionVoiceNote,
 } from '../session-ui.js';
 import { ArrowRightIcon, SpeakerIcon, SpeakerSlowIcon } from './spelling-icons.jsx';
-import { Cloze, FeedbackSlot, PathProgress } from './SpellingCommon.jsx';
+import { Cloze, FeedbackSlot, PathProgress, spellingAnswerInputProps } from './SpellingCommon.jsx';
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import {
   SPELLING_SESSION_QUESTION_REVEAL_MS,
@@ -114,9 +114,7 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
                   className="word-input"
                   name="typed"
                   data-autofocus="true"
-                  autoComplete="off"
-                  autoCapitalize="none"
-                  spellCheck={false}
+                  {...spellingAnswerInputProps}
                   placeholder={inputPlaceholder}
                   aria-label="Type the spelling"
                   disabled={awaitingAdvance}
