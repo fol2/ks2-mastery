@@ -72,3 +72,10 @@ test('worker spelling runtime imports the shared domain service instead of the b
   assert.match(workerEngine, /shared\/spelling\/service\.js/);
   assert.match(browserService, /shared\/spelling\/service\.js/);
 });
+
+test('worker-first asset routing keeps demo and source lockdown routes out of SPA fallback', async () => {
+  for (const configPath of ['wrangler.jsonc', 'worker/wrangler.example.jsonc']) {
+    const config = await readFile(configPath, 'utf8');
+    assert.match(config, /"run_worker_first"\s*:\s*\[[\s\S]*"\/api\/\*"[\s\S]*"\/demo"[\s\S]*"\/src\/\*"[\s\S]*\]/, configPath);
+  }
+});
