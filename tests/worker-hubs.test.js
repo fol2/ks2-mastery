@@ -178,6 +178,13 @@ test('worker admin account roles are listed and assignable by admins only', asyn
     displayName: 'Ops',
     platformRole: 'ops',
   });
+  server.DB.db.prepare(`
+    INSERT INTO adult_accounts (
+      id, email, display_name, platform_role, selected_learner_id,
+      created_at, updated_at, account_type, demo_expires_at
+    )
+    VALUES ('demo-role-target', NULL, 'Demo Visitor', 'parent', NULL, 1, 1, 'demo', ?)
+  `).run(Date.now() + 60_000);
 
   const listResponse = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/accounts', {}, {
     'x-ks2-dev-platform-role': 'admin',
@@ -191,6 +198,7 @@ test('worker admin account roles are listed and assignable by admins only', asyn
     && account.platformRole === 'admin'
     && account.providers.includes('google')
   )));
+  assert.equal(listPayload.accounts.some((account) => account.id === 'demo-role-target'), false);
 
   const deniedList = await server.fetchAs('adult-ops', 'https://repo.test/api/admin/accounts', {}, {
     'x-ks2-dev-platform-role': 'ops',
@@ -235,6 +243,33 @@ test('worker admin account roles are listed and assignable by admins only', asyn
   const replayPayload = await replayResponse.json();
   assert.equal(replayResponse.status, 200);
   assert.equal(replayPayload.roleMutation.replayed, true);
+
+  const demoUpdate = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/accounts/role', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      accountId: 'demo-role-target',
+      platformRole: 'admin',
+      requestId: 'role-demo-blocked',
+    }),
+  }, {
+    'x-ks2-dev-platform-role': 'admin',
+  });
+  const demoUpdatePayload = await demoUpdate.json();
+  assert.equal(demoUpdate.status, 403);
+  assert.equal(demoUpdatePayload.code, 'demo_account_role_forbidden');
+  assert.equal(
+    server.DB.db.prepare('SELECT platform_role FROM adult_accounts WHERE id = ?').get('demo-role-target')?.platform_role,
+    'parent',
+  );
+
+  server.DB.db.prepare("UPDATE adult_accounts SET platform_role = 'admin' WHERE id = 'demo-role-target'").run();
+  const demoAdminHub = await server.fetchAs('demo-role-target', 'https://repo.test/api/hubs/admin', {}, {
+    'x-ks2-dev-platform-role': 'admin',
+  });
+  const demoAdminHubPayload = await demoAdminHub.json();
+  assert.equal(demoAdminHub.status, 403);
+  assert.equal(demoAdminHubPayload.code, 'admin_hub_forbidden');
 
   const deniedUpdate = await server.fetchAs('adult-ops', 'https://repo.test/api/admin/accounts/role', {
     method: 'PUT',

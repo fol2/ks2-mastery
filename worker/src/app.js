@@ -14,6 +14,7 @@ import { createWorkerRepository } from './repository.js';
 import { handleTextToSpeechRequest } from './tts.js';
 import {
   createDemoSession,
+  isProductionRuntime,
   protectDemoParentHubRead,
   protectDemoSubjectCommand,
   requireSameOrigin,
@@ -98,15 +99,6 @@ async function sessionPayload({ session, auth, env, now }) {
       : null,
     learnerCount: learnerIds.length,
   };
-}
-
-function isProductionRuntime(env = {}) {
-  const authMode = String(env.AUTH_MODE || '').trim().toLowerCase();
-  const stage = String(env.ENVIRONMENT || env.NODE_ENV || '').trim().toLowerCase();
-  if (authMode === 'development-stub') return false;
-  if (authMode === 'production') return true;
-  if (stage === 'test' || stage === 'development' || stage === 'dev') return false;
-  return stage === 'production' || Boolean(authMode);
 }
 
 function shouldUsePublicReadModels(request, env = {}) {

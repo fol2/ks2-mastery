@@ -52,6 +52,32 @@ import {
 const WRITABLE_MEMBERSHIP_ROLES = new Set(['owner', 'member']);
 const MEMBERSHIP_ROLES = new Set(['owner', 'member', 'viewer']);
 const MUTATION_POLICY_VERSION = 1;
+const PUBLIC_SPELLING_YEAR_LABELS = new Map([
+  ['3-4', 'Years 3-4'],
+  ['5-6', 'Years 5-6'],
+  ['extra', 'Extra spellings'],
+]);
+const PUBLIC_PRACTICE_CARD_LABELS = new Map([
+  ['correct', 'Correct'],
+  ['accuracy', 'Accuracy'],
+]);
+const PUBLIC_EVENT_TYPES = new Set([
+  'spelling.retry-cleared',
+  'spelling.word-secured',
+  'spelling.mastery-milestone',
+  'spelling.session-completed',
+  'reward.monster',
+  'platform.practice-streak-hit',
+]);
+const PUBLIC_EVENT_TEXT_ENUMS = {
+  mode: new Set(['smart', 'trouble', 'single', 'test']),
+  sessionType: new Set(['learning', 'test']),
+  kind: new Set(['caught', 'evolve', 'mega', 'levelup']),
+  monsterId: new Set(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']),
+  spellingPool: new Set(['core', 'extra']),
+  yearBand: new Set(['3-4', '5-6', 'extra']),
+  fromPhase: new Set(['retry', 'correction']),
+};
 
 function safeJsonParse(text, fallback) {
   if (text == null || text === '') return cloneSerialisable(fallback);
@@ -143,8 +169,8 @@ function redactSpellingUiForClient(ui, data = {}, learnerId = '') {
         serverAuthority: 'worker',
       }
       : null,
-    feedback: cloneSerialisable(raw.feedback) || null,
-    summary: cloneSerialisable(raw.summary) || null,
+    feedback: null,
+    summary: null,
     error: typeof raw.error === 'string' ? raw.error : '',
     prefs: cloneSerialisable(data?.prefs) || {},
     stats: {},
@@ -200,6 +226,7 @@ function publicPracticeSessionRowToRecord(row) {
   return normalisePracticeSessionRecord({
     ...record,
     sessionState: null,
+    summary: publicPracticeSessionSummary(record.summary, record.sessionKind),
   });
 }
 
@@ -218,6 +245,101 @@ function eventRowToRecord(row) {
     event.type = row.event_type || event.kind || 'event';
   }
   return event;
+}
+
+function publicPracticeLabel(sessionKind) {
+  if (sessionKind === 'test') return 'SATs 20 test';
+  return 'Smart Review';
+}
+
+function publicSummaryCards(cards) {
+  if (!Array.isArray(cards)) return [];
+  return cards
+    .map((card) => {
+      const key = String(card?.label || '').trim().toLowerCase();
+      const label = PUBLIC_PRACTICE_CARD_LABELS.get(key);
+      const value = String(card?.value || '').trim();
+      if (!label || !/^\d+(?:\/\d+)?%?$/.test(value)) return null;
+      return { label, value };
+    })
+    .filter(Boolean);
+}
+
+function publicMistakeSummary(mistake) {
+  const year = PUBLIC_SPELLING_YEAR_LABELS.has(mistake?.year) ? mistake.year : null;
+  return {
+    year,
+    yearLabel: year ? PUBLIC_SPELLING_YEAR_LABELS.get(year) : null,
+  };
+}
+
+function publicPracticeSessionSummary(summary, sessionKind) {
+  const raw = isPlainObject(summary) ? summary : {};
+  return {
+    label: publicPracticeLabel(sessionKind),
+    cards: publicSummaryCards(raw.cards),
+    mistakes: Array.isArray(raw.mistakes)
+      ? raw.mistakes.map(publicMistakeSummary)
+      : [],
+  };
+}
+
+function safePublicEventText(value) {
+  return typeof value === 'string' && value ? value : null;
+}
+
+function safePublicEventNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function safePublicEventType(value) {
+  return PUBLIC_EVENT_TYPES.has(value) ? value : 'event';
+}
+
+function safePublicEventEnum(key, value) {
+  const text = safePublicEventText(value);
+  const allowed = PUBLIC_EVENT_TEXT_ENUMS[key];
+  return text && allowed?.has(text) ? text : null;
+}
+
+function publicEventRowToRecord(row) {
+  const event = eventRowToRecord(row);
+  if (!event) return null;
+  const output = {
+    type: safePublicEventType(safePublicEventText(event.type) || safePublicEventText(row.event_type)),
+    learnerId: safePublicEventText(event.learnerId),
+    subjectId: event.subjectId === 'spelling' ? 'spelling' : null,
+    createdAt: safePublicEventNumber(event.createdAt) ?? asTs(row.created_at, 0),
+  };
+
+  [
+    'mode',
+    'sessionType',
+    'kind',
+    'monsterId',
+    'spellingPool',
+    'yearBand',
+    'fromPhase',
+  ].forEach((key) => {
+    const value = safePublicEventEnum(key, event[key]);
+    if (value) output[key] = value;
+  });
+
+  [
+    'totalWords',
+    'mistakeCount',
+    'milestone',
+    'secureCount',
+    'stage',
+    'attemptCount',
+    'streakDays',
+  ].forEach((key) => {
+    const value = safePublicEventNumber(event[key]);
+    if (value != null) output[key] = value;
+  });
+
+  return output;
 }
 
 function contentRowToBundle(row) {
@@ -511,6 +633,10 @@ function accountPlatformRole(account) {
   return normalisePlatformRole(account?.platform_role);
 }
 
+function accountType(account) {
+  return account?.account_type === 'demo' ? 'demo' : 'real';
+}
+
 function requireParentHubAccess(account, membership) {
   if (!canViewParentHub({ platformRole: accountPlatformRole(account), membershipRole: membership?.role })) {
     throw new ForbiddenError('Parent Hub access denied.', {
@@ -522,7 +648,7 @@ function requireParentHubAccess(account, membership) {
 }
 
 function requireAdminHubAccess(account) {
-  if (!canViewAdminHub({ platformRole: accountPlatformRole(account) })) {
+  if (accountType(account) === 'demo' || !canViewAdminHub({ platformRole: accountPlatformRole(account) })) {
     throw new ForbiddenError('Admin / operations access denied.', {
       code: 'admin_hub_forbidden',
       required: 'platform-role-admin-or-ops',
@@ -531,7 +657,7 @@ function requireAdminHubAccess(account) {
 }
 
 function requireAccountRoleManager(account) {
-  if (!canManageAccountRoles({ platformRole: accountPlatformRole(account) })) {
+  if (accountType(account) === 'demo' || !canManageAccountRoles({ platformRole: accountPlatformRole(account) })) {
     throw new ForbiddenError('Account role management requires an admin account.', {
       code: 'account_roles_forbidden',
       required: 'platform-role-admin',
@@ -613,6 +739,7 @@ async function listAccountDirectoryRows(db) {
     LEFT JOIN account_identities ai ON ai.account_id = a.id
     LEFT JOIN account_credentials ac ON ac.account_id = a.id
     LEFT JOIN account_learner_memberships m ON m.account_id = a.id
+    WHERE COALESCE(a.account_type, 'real') <> 'demo'
     GROUP BY
       a.id,
       a.email,
@@ -635,7 +762,7 @@ async function accountDirectoryPayload(db, actorAccountId) {
 }
 
 async function listAccountDirectory(db, actorAccountId) {
-  const actor = await first(db, 'SELECT id, email, display_name, platform_role, repo_revision FROM adult_accounts WHERE id = ?', [actorAccountId]);
+  const actor = await first(db, 'SELECT id, email, display_name, platform_role, repo_revision, account_type FROM adult_accounts WHERE id = ?', [actorAccountId]);
   requireAccountRoleManager(actor);
   return accountDirectoryPayload(db, actorAccountId);
 }
@@ -756,7 +883,7 @@ async function updateManagedAccountRole(db, {
   });
 
   return withTransaction(db, async () => {
-    const actor = await first(db, 'SELECT id, email, display_name, platform_role, repo_revision FROM adult_accounts WHERE id = ?', [actorAccountId]);
+    const actor = await first(db, 'SELECT id, email, display_name, platform_role, repo_revision, account_type FROM adult_accounts WHERE id = ?', [actorAccountId]);
     requireAccountRoleManager(actor);
 
     const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
@@ -789,6 +916,12 @@ async function updateManagedAccountRole(db, {
         accountId: targetAccountId,
       });
     }
+    if (accountType(target) === 'demo') {
+      throw new ForbiddenError('Demo accounts cannot be managed from account role controls.', {
+        code: 'demo_account_role_forbidden',
+        accountId: targetAccountId,
+      });
+    }
 
     const currentRole = normalisePlatformRole(target.platform_role);
     if (currentRole === 'admin' && nextRole !== 'admin') {
@@ -796,6 +929,7 @@ async function updateManagedAccountRole(db, {
         SELECT COUNT(*) AS count
         FROM adult_accounts
         WHERE platform_role = 'admin'
+          AND COALESCE(account_type, 'real') <> 'demo'
       `, [], 'count')) || 0;
       if (adminCount <= 1) {
         throw new ConflictError('At least one admin account must remain.', {
@@ -993,7 +1127,9 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
         ? publicPracticeSessionRowToRecord
         : practiceSessionRowToRecord)),
       gameState,
-      eventLog: normaliseEventLog(eventRows.map(eventRowToRecord).filter(Boolean)),
+      eventLog: normaliseEventLog(eventRows.map(publicReadModels
+        ? publicEventRowToRecord
+        : eventRowToRecord).filter(Boolean)),
     }),
     syncState: {
       policyVersion: MUTATION_POLICY_VERSION,
@@ -2111,7 +2247,7 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
       });
     },
     async readParentHub(accountId, learnerId = null) {
-      const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role FROM adult_accounts WHERE id = ?', [accountId]);
+      const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role, account_type FROM adult_accounts WHERE id = ?', [accountId]);
       const readableMemberships = await listMembershipRows(db, accountId, { writableOnly: false });
       const defaultLearnerId = account?.selected_learner_id && readableMemberships.some((membership) => membership.id === account.selected_learner_id)
         ? account.selected_learner_id
@@ -2150,7 +2286,7 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
       };
     },
     async readAdminHub(accountId, { learnerId = null, requestId = null, auditLimit = 20 } = {}) {
-      const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role FROM adult_accounts WHERE id = ?', [accountId]);
+      const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role, account_type FROM adult_accounts WHERE id = ?', [accountId]);
       requireAdminHubAccess(account);
       const memberships = await listMembershipRows(db, accountId, { writableOnly: false });
       const contentBundle = await readSubjectContentBundle(db, accountId, 'spelling');

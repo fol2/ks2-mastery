@@ -38,29 +38,47 @@ function currentWindowStart(timestamp, windowMs) {
   return Math.floor(timestamp / windowMs) * windowMs;
 }
 
-function appOrigin(env = {}, request) {
-  const configured = cleanText(env.APP_ORIGIN);
-  if (configured) return configured.replace(/\/$/, '');
+export function isProductionRuntime(env = {}) {
+  const authMode = cleanText(env.AUTH_MODE).toLowerCase();
+  const stage = cleanText(env.ENVIRONMENT || env.NODE_ENV).toLowerCase();
+  if (authMode === 'development-stub') return false;
+  if (authMode === 'production') return true;
+  if (stage === 'test' || stage === 'development' || stage === 'dev') return false;
+  return stage === 'production' || Boolean(authMode);
+}
+
+function requestOrigin(request) {
   const url = new URL(request.url);
-  const hostname = cleanText(env.APP_HOSTNAME);
-  if (hostname && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
-    return `https://${hostname}`;
-  }
   return `${url.protocol}//${url.host}`;
+}
+
+function explicitAppOrigin(env = {}) {
+  const configured = cleanText(env.APP_ORIGIN);
+  return configured ? configured.replace(/\/$/, '') : '';
+}
+
+function appOrigins(env = {}, request) {
+  const explicit = explicitAppOrigin(env);
+  if (explicit) return new Set([explicit]);
+  const origin = requestOrigin(request);
+  const hostname = cleanText(env.APP_HOSTNAME);
+  return new Set([
+    hostname ? `https://${hostname}` : '',
+    origin,
+  ].filter(Boolean));
 }
 
 export function requireSameOrigin(request, env = {}, { allowMissingOrigin = false } = {}) {
   const origin = cleanText(request.headers.get('origin'));
   if (!origin) {
-    if (!allowMissingOrigin && String(env.ENVIRONMENT || '').toLowerCase() === 'production') {
+    if (!allowMissingOrigin && isProductionRuntime(env)) {
       throw new ForbiddenError('This request must come from the KS2 Mastery app origin.', {
         code: 'same_origin_required',
       });
     }
     return;
   }
-  const expected = appOrigin(env, request);
-  if (origin !== expected) {
+  if (!appOrigins(env, request).has(origin)) {
     throw new ForbiddenError('This request must come from the KS2 Mastery app origin.', {
       code: 'same_origin_required',
     });
