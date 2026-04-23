@@ -1168,7 +1168,11 @@ export function renderSubjectScreen(context) {
   const subject = resolveSubject(appState.route.subjectId, context);
   const ui = appState.subjectUi[subject.id] || {};
   if (!hasWritableLearner(appState)) {
-    return renderNoWritableLearnerShellCard(context, `${subject.name} stays unavailable without a writable learner in the main shell`);
+    return `
+      <main class="subject-entry-content">
+        ${renderNoWritableLearnerShellCard(context, `${subject.name} stays unavailable without a writable learner in the main shell`)}
+      </main>
+    `;
   }
   /* The redesigned Codex Journal surface routes all subject affordances
      (setup, session, summary, word bank) through the practice renderer and
@@ -1210,13 +1214,15 @@ export function renderSubjectScreen(context) {
      No ancestor pill, no tab row, no outer `shell-grid` — each scene (setup,
      session, summary, word bank) renders its own card shell. */
   return `
-    <nav class="subject-breadcrumb" aria-label="Subject breadcrumb">
-      <button type="button" class="subject-breadcrumb-link" data-action="navigate-home">← Dashboard</button>
-      <span class="subject-breadcrumb-sep" aria-hidden="true">/</span>
-      <span class="subject-breadcrumb-current">${escapeHtml(subject.name)}</span>
-    </nav>
-    ${ui.error ? `<section class="card" style="margin-bottom:18px;"><div class="feedback bad"><strong>Subject message</strong><div>${escapeHtml(ui.error)}</div></div></section>` : ''}
-    ${mainContent}
+    <main class="subject-entry-content">
+      <nav class="subject-breadcrumb" aria-label="Subject breadcrumb">
+        <button type="button" class="subject-breadcrumb-link" data-action="navigate-home">← Dashboard</button>
+        <span class="subject-breadcrumb-sep" aria-hidden="true">/</span>
+        <button type="button" class="subject-breadcrumb-current" data-action="navigate-home">${escapeHtml(subject.name)}</button>
+      </nav>
+      ${ui.error ? `<section class="card" style="margin-bottom:18px;"><div class="feedback bad"><strong>Subject message</strong><div>${escapeHtml(ui.error)}</div></div></section>` : ''}
+      ${mainContent}
+    </main>
   `;
 }
 
@@ -1428,8 +1434,9 @@ export function renderApp(appState, context) {
       : screen === 'admin-hub'
         ? renderAdminHub(context)
         : renderDashboard(context);
+  const shellClassName = screen === 'subject' ? 'app-shell subject-entry-shell' : 'app-shell';
   return `
-    <div class="app-shell">
+    <div class="${shellClassName}">
       ${renderHeader(appState, context)}
       ${renderPersistenceBanner(appState.persistence)}
       ${body}
