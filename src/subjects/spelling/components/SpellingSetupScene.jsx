@@ -28,15 +28,17 @@ function ModeCard({ mode, selected, disabled = false, description, badge, action
       aria-disabled={disabled ? 'true' : undefined}
       onClick={(event) => renderAction(actions, event, 'spelling-set-mode', { value: mode.id })}
     >
-      {badge ? <span className="mc-badge">{badge}</span> : null}
-      <div className="mc-icon"><img src={mode.iconSrc} alt="" loading="eager" decoding="async" /></div>
+      <div className="mc-top">
+        <div className="mc-icon"><img src={mode.iconSrc} alt="" loading="eager" decoding="async" /></div>
+        <span className={`mc-badge${badge ? '' : ' is-placeholder'}`}>{badge || 'NONE YET'}</span>
+      </div>
       <h4>{mode.title}</h4>
       <p>{desc}</p>
     </button>
   );
 }
 
-function LengthPicker({ prefs, actions }) {
+function LengthPicker({ prefs, actions, disabled = false }) {
   const selectedValue = String(prefs.roundLength || '10');
   const selectedIndex = Math.max(0, ROUND_LENGTH_OPTIONS.indexOf(selectedValue));
   return (
@@ -59,6 +61,7 @@ function LengthPicker({ prefs, actions }) {
               data-action="spelling-set-pref"
               data-pref="roundLength"
               value={value}
+              disabled={disabled}
               key={value}
               onClick={(event) => renderAction(actions, event, 'spelling-set-pref', { pref: 'roundLength', value })}
             >
@@ -72,7 +75,7 @@ function LengthPicker({ prefs, actions }) {
   );
 }
 
-function YearPicker({ prefs, actions }) {
+function YearPicker({ prefs, actions, disabled = false }) {
   const selectedValue = prefs.yearFilter || 'core';
   const selectedIndex = Math.max(0, YEAR_FILTER_OPTIONS.findIndex((option) => option.value === selectedValue));
   return (
@@ -94,6 +97,7 @@ function YearPicker({ prefs, actions }) {
             data-action="spelling-set-pref"
             data-pref="yearFilter"
             value={value}
+            disabled={disabled}
             key={value}
             onClick={(event) => renderAction(actions, event, 'spelling-set-pref', { pref: 'yearFilter', value })}
           >
@@ -159,7 +163,7 @@ function SetupStatGrid({ stats }) {
   );
 }
 
-export function SpellingSetupScene({ learner, service, repositories, subject, prefs, codex, accent, actions }) {
+export function SpellingSetupScene({ learner, service, repositories, subject, prefs, codex, accent, actions, previousHeroBg = '' }) {
   const statsFilter = prefs.mode === 'test' ? 'core' : prefs.yearFilter;
   const stats = service.getStats(learner.id, statsFilter);
   const begin = beginLabel(prefs);
@@ -172,7 +176,7 @@ export function SpellingSetupScene({ learner, service, repositories, subject, pr
   return (
     <div className="setup-grid" style={{ gridColumn: '1/-1' }}>
       <section className="setup-main" style={mergedHeroStyle}>
-        <SpellingHeroBackdrop url={heroBg} />
+        <SpellingHeroBackdrop url={heroBg} previousUrl={previousHeroBg} />
         <div className="setup-content">
           <p className="eyebrow">Round setup</p>
           <h1 className="title">Choose today’s journey.</h1>
@@ -197,11 +201,11 @@ export function SpellingSetupScene({ learner, service, repositories, subject, pr
           <div className="setup-control-stack">
             <div className={tweakClass} {...tweakAria}>
               <span className="tool-label">Round length</span>
-              <LengthPicker prefs={prefs} actions={actions} />
+              <LengthPicker prefs={prefs} actions={actions} disabled={hideTweaks} />
             </div>
             <div className={tweakClass} {...tweakAria}>
               <span className="tool-label">Pool</span>
-              <YearPicker prefs={prefs} actions={actions} />
+              <YearPicker prefs={prefs} actions={actions} disabled={hideTweaks} />
             </div>
             <div className="tweak-row">
               <span className="tool-label">Options</span>
