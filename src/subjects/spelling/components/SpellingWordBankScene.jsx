@@ -100,7 +100,7 @@ function WordPill({ word, actions }) {
     `Correct ${Math.max(0, Number(progress.correct) || 0)}`,
     `Wrong ${Math.max(0, Number(progress.wrong) || 0)}`,
     `Next due: ${dueLabel(progress)}`,
-    'Click to drill',
+    'Click to explain',
   ].filter(Boolean).join(' • ');
   return (
     <button
@@ -108,10 +108,10 @@ function WordPill({ word, actions }) {
       className={`wb-word-pill ${wordBankPillClass(word.status)}`}
       data-action="spelling-word-detail-open"
       data-slug={word.slug}
-      data-value="drill"
+      data-value="explain"
       title={title}
-      aria-label={`Drill ${word.word}. ${wordStatusLabel(word.status)}. ${spellingPoolLabel(word)}.`}
-      onClick={(event) => renderAction(actions, event, 'spelling-word-detail-open', { slug: word.slug, value: 'drill' })}
+      aria-label={`Explain ${word.word}. ${wordStatusLabel(word.status)}. ${spellingPoolLabel(word)}.`}
+      onClick={(event) => renderAction(actions, event, 'spelling-word-detail-open', { slug: word.slug, value: 'explain' })}
     >
       {word.word}
     </button>
@@ -203,7 +203,7 @@ function WordBankCard({ learner, analytics, appState, actions }) {
         <header className="wb-head">
           <p className="eyebrow">Word bank progress</p>
           <h1 className="title">{learnerName} word bank</h1>
-          <p className="lede">{ledeBase}{ledeSearch} Tap any word to drill it, then switch to the explainer if you need help.</p>
+          <p className="lede">{ledeBase}{ledeSearch} Tap any word to see its explainer, then switch to drill when you want to practise.</p>
         </header>
 
         <div className="wb-toolbar">
