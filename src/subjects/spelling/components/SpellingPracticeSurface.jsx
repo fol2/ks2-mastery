@@ -10,9 +10,34 @@ import {
   heroBgPreloadUrls,
   heroBgForSession,
   heroBgForSetup,
+  selectSpellingSetupTone,
+  spellingHeroTone,
 } from './spelling-view-model.js';
 
-function heroBgForPhase(spelling) {
+function setupToneMemoryKey(learnerId) {
+  return `ks2.spelling.setupTone.${learnerId || 'anonymous'}`;
+}
+
+function readPreviousSetupTone(learnerId) {
+  if (typeof window === 'undefined') return spellingHeroTone(learnerId);
+  try {
+    const storage = window.sessionStorage;
+    return storage?.getItem(setupToneMemoryKey(learnerId)) || spellingHeroTone(learnerId);
+  } catch (_error) {
+    return spellingHeroTone(learnerId);
+  }
+}
+
+function rememberSetupTone(learnerId, tone) {
+  if (!learnerId || !tone || typeof window === 'undefined') return;
+  try {
+    window.sessionStorage?.setItem(setupToneMemoryKey(learnerId), tone);
+  } catch (_error) {
+    /* Ignore unavailable browser storage. */
+  }
+}
+
+function heroBgForPhase(spelling, setupHeroTone) {
   const learnerId = spelling.learner?.id;
   if (!learnerId) return '';
   if (spelling.ui.phase === 'session') return heroBgForSession(learnerId, spelling.ui.session);
@@ -20,7 +45,7 @@ function heroBgForPhase(spelling) {
     return heroBgForSession(learnerId, { mode: spelling.ui.summary?.mode });
   }
   if (spelling.ui.phase === 'word-bank') return heroBgForLearner(learnerId);
-  return heroBgForSetup(learnerId, spelling.prefs);
+  return heroBgForSetup(learnerId, spelling.prefs, { tone: setupHeroTone });
 }
 
 export function SpellingPracticeSurface(props) {
@@ -32,8 +57,29 @@ export function SpellingPracticeSurface(props) {
     actions,
   } = props;
   const spelling = buildSpellingContext({ appState, service, repositories, subject });
-  const heroBg = heroBgForPhase(spelling);
-  const preloadedHeroUrls = heroBgPreloadUrls(spelling.learner?.id, spelling.prefs);
+  const learnerId = spelling.learner?.id || '';
+  const [setupHeroTone, setSetupHeroTone] = React.useState(() => (
+    selectSpellingSetupTone(learnerId, readPreviousSetupTone(learnerId))
+  ));
+  const previousLearnerRef = React.useRef(learnerId);
+  const previousPhaseRef = React.useRef(spelling.ui.phase);
+  React.useEffect(() => {
+    if (previousLearnerRef.current === learnerId) return;
+    previousLearnerRef.current = learnerId;
+    setSetupHeroTone(selectSpellingSetupTone(learnerId, readPreviousSetupTone(learnerId)));
+  }, [learnerId]);
+  React.useEffect(() => {
+    const previousPhase = previousPhaseRef.current;
+    previousPhaseRef.current = spelling.ui.phase;
+    if (learnerId && previousPhase !== 'dashboard' && spelling.ui.phase === 'dashboard') {
+      setSetupHeroTone((current) => selectSpellingSetupTone(learnerId, current));
+    }
+  }, [learnerId, spelling.ui.phase]);
+  React.useEffect(() => {
+    rememberSetupTone(learnerId, setupHeroTone);
+  }, [learnerId, setupHeroTone]);
+  const heroBg = heroBgForPhase(spelling, setupHeroTone);
+  const preloadedHeroUrls = heroBgPreloadUrls(spelling.learner?.id, spelling.prefs, { setupTone: setupHeroTone });
   const preloadKey = preloadedHeroUrls.join('|');
   const previousHeroBgRef = React.useRef('');
   const previousHeroBg = previousHeroBgRef.current && previousHeroBgRef.current !== heroBg
@@ -80,6 +126,7 @@ export function SpellingPracticeSurface(props) {
       service={service}
       repositories={repositories}
       subject={subject}
+      setupHeroTone={setupHeroTone}
       previousHeroBg={previousHeroBg}
       actions={actions}
     />

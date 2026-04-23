@@ -9,6 +9,7 @@ import {
   beginLabel,
   heroBgForSetup,
   heroBgStyle,
+  heroToneForBg,
   monsterImageProps,
   renderAction,
 } from './spelling-view-model.js';
@@ -165,17 +166,29 @@ function SetupStatGrid({ stats }) {
   );
 }
 
-export function SpellingSetupScene({ learner, service, repositories, subject, prefs, codex, accent, actions, previousHeroBg = '' }) {
+export function SpellingSetupScene({
+  learner,
+  service,
+  repositories,
+  subject,
+  prefs,
+  codex,
+  accent,
+  actions,
+  setupHeroTone = '',
+  previousHeroBg = '',
+}) {
   const statsFilter = prefs.mode === 'test' ? 'core' : prefs.yearFilter;
   const stats = service.getStats(learner.id, statsFilter);
   const begin = beginLabel(prefs);
-  const heroBg = heroBgForSetup(learner.id, prefs);
+  const heroBg = heroBgForSetup(learner.id, prefs, { tone: setupHeroTone });
   const hideTweaks = prefs.mode === 'test';
   const tweakClass = `tweak-row${hideTweaks ? ' is-placeholder' : ''}`;
   const tweakAria = hideTweaks ? { 'aria-hidden': 'true' } : {};
   const showExtraFamilyOption = !hideTweaks && prefs.yearFilter === 'extra';
   const mergedHeroStyle = { ...heroBgStyle(heroBg) };
   const heroContrast = useSetupHeroContrast(heroBg, prefs.mode);
+  const heroTone = heroContrast.contrast.tone || heroToneForBg(heroBg);
   const setupClasses = ['setup-main'];
   if (heroContrast.contrast.shell === 'light') setupClasses.push('hero-dark');
 
@@ -184,6 +197,7 @@ export function SpellingSetupScene({ learner, service, repositories, subject, pr
       <section
         className={setupClasses.join(' ')}
         data-react-hero-contrast="true"
+        data-hero-tone={heroTone || undefined}
         data-controls-tone={heroContrast.contrast.controls}
         ref={heroContrast.ref}
         style={mergedHeroStyle}

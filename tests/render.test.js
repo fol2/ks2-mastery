@@ -316,19 +316,22 @@ test('spelling setup and session hero backgrounds use mode-specific Scribe Downs
     heroBgForSession('learner-0', { mode: 'test' }),
   ]);
   assert.deepEqual(heroContrastProfileForBg('/assets/regions/the-scribe-downs/the-scribe-downs-a1.1280.webp', 'smart'), {
+    tone: '1',
     shell: 'dark',
     controls: 'dark',
     cards: ['dark', 'dark', 'dark'],
   });
   assert.deepEqual(heroContrastProfileForBg('/assets/regions/the-scribe-downs/the-scribe-downs-c2.1280.webp', 'smart'), {
-    shell: 'dark',
-    controls: 'dark',
-    cards: ['dark', 'dark', 'light'],
+    tone: '2',
+    shell: 'light',
+    controls: 'light',
+    cards: ['light', 'light', 'light'],
   });
   assert.deepEqual(heroContrastProfileForBg('/assets/regions/the-scribe-downs/the-scribe-downs-d3.1280.webp', 'trouble'), {
-    shell: 'dark',
-    controls: 'dark',
-    cards: ['dark', 'dark', 'light'],
+    tone: '3',
+    shell: 'light',
+    controls: 'light',
+    cards: ['light', 'light', 'light'],
   });
   assert.equal(heroContrastProfileForBg('/assets/regions/the-scribe-downs/the-scribe-downs-bg-a1.1280.webp', 'smart'), null);
 

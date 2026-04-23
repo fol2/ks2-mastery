@@ -47,8 +47,8 @@ const CONTRAST_DARK = 'dark';
 const CONTRAST_LIGHT = 'light';
 const SPELLING_HERO_CONTRAST_BY_TONE = Object.freeze({
   1: Object.freeze({ shell: CONTRAST_DARK, controls: CONTRAST_DARK, cards: Object.freeze([CONTRAST_DARK, CONTRAST_DARK, CONTRAST_DARK]) }),
-  2: Object.freeze({ shell: CONTRAST_DARK, controls: CONTRAST_DARK, cards: Object.freeze([CONTRAST_DARK, CONTRAST_DARK, CONTRAST_LIGHT]) }),
-  3: Object.freeze({ shell: CONTRAST_DARK, controls: CONTRAST_DARK, cards: Object.freeze([CONTRAST_DARK, CONTRAST_LIGHT, CONTRAST_LIGHT]) }),
+  2: Object.freeze({ shell: CONTRAST_LIGHT, controls: CONTRAST_LIGHT, cards: Object.freeze([CONTRAST_LIGHT, CONTRAST_LIGHT, CONTRAST_LIGHT]) }),
+  3: Object.freeze({ shell: CONTRAST_LIGHT, controls: CONTRAST_LIGHT, cards: Object.freeze([CONTRAST_LIGHT, CONTRAST_LIGHT, CONTRAST_LIGHT]) }),
 });
 const SPELLING_HERO_MODE_INDEX = Object.freeze({ smart: 0, trouble: 1, test: 2 });
 export const SPELLING_HERO_BACKGROUNDS = Object.freeze({
@@ -82,6 +82,22 @@ export function spellingHeroTone(learnerId) {
   return SPELLING_HERO_TONES[index];
 }
 
+export function selectSpellingSetupTone(learnerId, previousTone = '') {
+  if (!SPELLING_HERO_TONES.length) return '1';
+  let entropy = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const bucket = new Uint32Array(1);
+    crypto.getRandomValues(bucket);
+    entropy = bucket[0];
+  }
+  const index = stableHash(`spelling:setup-tone:${learnerId}:${Date.now()}:${entropy}`) % SPELLING_HERO_TONES.length;
+  const tone = SPELLING_HERO_TONES[index];
+  if (previousTone && tone === previousTone && SPELLING_HERO_TONES.length > 1) {
+    return SPELLING_HERO_TONES[(index + 1) % SPELLING_HERO_TONES.length];
+  }
+  return tone;
+}
+
 export function heroBgForMode(mode, learnerId, options = {}) {
   const heroMode = spellingHeroMode(mode);
   const regions = SPELLING_HERO_REGIONS[heroMode] || SPELLING_HERO_REGIONS.smart;
@@ -95,20 +111,28 @@ export function heroBgForLearner(learnerId, mode = 'smart') {
   return heroBgForMode(mode, learnerId);
 }
 
-export function heroBgForSetup(learnerId, prefs) {
-  return heroBgForMode(prefs?.mode, learnerId);
+export function heroBgForSetup(learnerId, prefs, options = {}) {
+  return heroBgForMode(prefs?.mode, learnerId, options);
 }
 
 export function heroBgForSession(learnerId, session) {
   return heroBgForMode(session?.mode || (session?.type === 'test' ? 'test' : 'smart'), learnerId, { tone: '1' });
 }
 
-export function heroBgPreloadUrls(learnerId, prefs = {}) {
+export function heroBgPreloadUrls(learnerId, prefs = {}, options = {}) {
   if (!learnerId) return [];
   const modes = ['smart', 'trouble', 'test'];
-  const setupUrls = modes.map((mode) => heroBgForMode(mode, learnerId));
+  const setupTone = SPELLING_HERO_TONES.includes(String(options.setupTone))
+    ? String(options.setupTone)
+    : spellingHeroTone(learnerId);
+  const setupUrls = modes.map((mode) => heroBgForMode(mode, learnerId, { tone: setupTone }));
   const sessionUrl = heroBgForMode(prefs?.mode || 'smart', learnerId, { tone: '1' });
   return [...new Set([...setupUrls, sessionUrl].filter(Boolean))];
+}
+
+export function heroToneForBg(url) {
+  const variant = String(url || '').match(/the-scribe-downs-[a-e]([1-3])\.1280\.webp(?:$|[?#])/);
+  return variant?.[1] || '';
 }
 
 export function heroContrastProfileForBg(url, mode = 'smart') {
@@ -117,10 +141,12 @@ export function heroContrastProfileForBg(url, mode = 'smart') {
   const base = SPELLING_HERO_CONTRAST_BY_TONE[variant[2]];
   if (!base) return null;
   const selectedIndex = SPELLING_HERO_MODE_INDEX[spellingHeroMode(mode)];
+  const preferSelectedDark = variant[2] === '1';
   const cards = base.cards.map((tone, index) => (
-    index === selectedIndex ? CONTRAST_DARK : tone
+    index === selectedIndex && preferSelectedDark ? CONTRAST_DARK : tone
   ));
   return {
+    tone: variant[2],
     shell: base.shell,
     controls: base.controls,
     cards,

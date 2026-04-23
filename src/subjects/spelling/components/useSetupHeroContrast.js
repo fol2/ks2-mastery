@@ -3,6 +3,7 @@ import { probeHeroTextTones } from '../../../platform/ui/luminance.js';
 import { heroContrastProfileForBg } from './spelling-view-model.js';
 
 const DEFAULT_CONTRAST = Object.freeze({
+  tone: '',
   shell: 'dark',
   controls: 'dark',
   cards: Object.freeze(['dark', 'dark', 'dark']),
@@ -86,6 +87,7 @@ async function runProbe(shell, heroBg) {
   const byKey = new Map(results.map((result) => [result.key, result]));
   const controlResults = results.filter((result) => String(result.key || '').startsWith('control:'));
   return {
+    tone: '',
     shell: byKey.get('shell')?.tone || DEFAULT_CONTRAST.shell,
     cards: cards.map((_, index) => byKey.get(`card:${index}`)?.tone || DEFAULT_CONTRAST.cards[index] || DEFAULT_CONTRAST.shell),
     controls: combinedTone(controlResults) || DEFAULT_CONTRAST.controls,
@@ -129,7 +131,8 @@ function combinedTone(results) {
 }
 
 function sameContrast(left, right) {
-  return left.shell === right.shell
+  return left.tone === right.tone
+    && left.shell === right.shell
     && left.controls === right.controls
     && left.cards.length === right.cards.length
     && left.cards.every((tone, index) => tone === right.cards[index]);
