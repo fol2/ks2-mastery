@@ -110,6 +110,72 @@ test('platform TTS sends the selected Worker provider', async () => {
   }
 });
 
+test('platform TTS allows a one-off provider override for profile tests', async () => {
+  const originalAudio = globalThis.Audio;
+  const originalCreateObjectUrl = URL.createObjectURL;
+  const originalRevokeObjectUrl = URL.revokeObjectURL;
+  const events = [];
+
+  globalThis.Audio = class MockAudio {
+    constructor(src) {
+      this.src = src;
+      this.onended = null;
+      this.onerror = null;
+    }
+
+    play() {
+      setTimeout(() => this.onended?.(), 0);
+      return Promise.resolve();
+    }
+
+    pause() {}
+    removeAttribute() {}
+    load() {}
+  };
+  URL.createObjectURL = () => 'blob:tts-test-audio';
+  URL.revokeObjectURL = () => {};
+
+  const calls = [];
+  const tts = createPlatformTts({
+    remoteEnabled: true,
+    provider: 'gemini',
+    fetchFn: async (url, init = {}) => {
+      calls.push({
+        url,
+        body: JSON.parse(init.body),
+      });
+      return new Response(new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/mpeg' }), {
+        status: 200,
+        headers: { 'content-type': 'audio/mpeg' },
+      });
+    },
+  });
+  tts.subscribe((event) => events.push(event));
+
+  try {
+    const result = await tts.speak({
+      word: 'early',
+      sentence: 'The birds sang early in the day.',
+      provider: 'openai',
+      kind: 'test',
+    });
+
+    assert.equal(result, true);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].body.provider, 'openai');
+    assert.deepEqual(
+      events.filter((event) => event.kind === 'test').map((event) => event.type),
+      ['loading', 'start'],
+    );
+    assert.equal(events.at(-1).type, 'end');
+  } finally {
+    tts.stop();
+    globalThis.Audio = originalAudio;
+    URL.createObjectURL = originalCreateObjectUrl;
+    URL.revokeObjectURL = originalRevokeObjectUrl;
+  }
+});
+
 test('platform TTS does not fall back when the selected remote provider fails', async () => {
   const originalWindow = globalThis.window;
   const originalAudio = globalThis.Audio;

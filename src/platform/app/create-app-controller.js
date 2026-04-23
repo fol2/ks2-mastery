@@ -292,6 +292,16 @@ export function createAppController({
       return true;
     }
 
+    if (action === 'tts-test') {
+      tts.speak({
+        word: 'early',
+        sentence: 'The birds sang early in the day.',
+        provider: normaliseTtsProvider(data.provider),
+        kind: 'test',
+      });
+      return true;
+    }
+
     if (action === 'learner-save-form') {
       const formData = data.formData;
       services.spelling?.savePrefs?.(learnerId, {

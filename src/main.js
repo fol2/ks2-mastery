@@ -197,6 +197,14 @@ let currentPlayingKind = null;
 let currentLoadingKind = null;
 let audioLoadingStartedAt = 0;
 let audioLoadingTimer = null;
+let profileTtsTestState = {
+  status: 'idle',
+  provider: DEFAULT_TTS_PROVIDER,
+  startedAt: 0,
+  token: 0,
+};
+let profileTtsTestTimer = null;
+let profileTtsTestResetTimer = null;
 
 const NORMAL_REPLAY_SELECTORS = [
   '[data-action="spelling-replay"]',
@@ -244,8 +252,94 @@ function armAudioLoadingTimer() {
   }, 10000);
 }
 
+function clearProfileTtsTestTimers() {
+  if (profileTtsTestTimer) {
+    clearInterval(profileTtsTestTimer);
+    profileTtsTestTimer = null;
+  }
+  if (profileTtsTestResetTimer) {
+    clearTimeout(profileTtsTestResetTimer);
+    profileTtsTestResetTimer = null;
+  }
+}
+
+function syncProfileTtsTestButton() {
+  const buttons = root.querySelectorAll('[data-action="tts-test"]');
+  const status = profileTtsTestState.status;
+  const active = status === 'loading' || status === 'playing';
+  const elapsedMs = profileTtsTestState.startedAt ? Date.now() - profileTtsTestState.startedAt : 0;
+  const waitingLong = status === 'loading' && elapsedMs >= 10000;
+  const label = status === 'loading'
+    ? `${Math.max(0, Math.floor(elapsedMs / 1000))}s`
+    : status === 'playing'
+      ? 'Playing'
+      : status === 'done'
+        ? 'Done'
+        : status === 'failed'
+          ? 'Failed'
+          : 'Test';
+
+  for (const button of buttons) {
+    button.classList.toggle('loading', status === 'loading');
+    button.classList.toggle('waiting-long', waitingLong);
+    button.classList.toggle('playing', status === 'playing');
+    button.classList.toggle('done', status === 'done');
+    button.classList.toggle('failed', status === 'failed');
+    button.toggleAttribute('aria-busy', active);
+    button.disabled = active;
+    const labelNode = button.querySelector('.profile-tts-test-label');
+    if (labelNode) labelNode.textContent = label;
+  }
+}
+
+function resetProfileTtsTestButton(token) {
+  if (token !== profileTtsTestState.token) return;
+  clearProfileTtsTestTimers();
+  profileTtsTestState = {
+    ...profileTtsTestState,
+    status: 'idle',
+    startedAt: 0,
+  };
+  syncProfileTtsTestButton();
+}
+
+function setProfileTtsTestStatus(status, token = profileTtsTestState.token) {
+  if (token !== profileTtsTestState.token) return;
+  if (status !== 'loading' && profileTtsTestTimer) {
+    clearInterval(profileTtsTestTimer);
+    profileTtsTestTimer = null;
+  }
+  profileTtsTestState = {
+    ...profileTtsTestState,
+    status,
+  };
+  syncProfileTtsTestButton();
+}
+
+function beginProfileTtsTest(provider) {
+  clearProfileTtsTestTimers();
+  const token = profileTtsTestState.token + 1;
+  profileTtsTestState = {
+    status: 'loading',
+    provider,
+    startedAt: Date.now(),
+    token,
+  };
+  profileTtsTestTimer = setInterval(syncProfileTtsTestButton, 250);
+  syncProfileTtsTestButton();
+  return token;
+}
+
+function finishProfileTtsTest(token, ok) {
+  if (token !== profileTtsTestState.token) return;
+  setProfileTtsTestStatus(ok ? 'done' : 'failed', token);
+  profileTtsTestResetTimer = setTimeout(() => resetProfileTtsTestButton(token), 1600);
+}
+
 tts.subscribe((event) => {
-  if (event?.type === 'loading') {
+  if (event?.kind === 'test') {
+    if (event?.type === 'start') setProfileTtsTestStatus('playing');
+  } else if (event?.type === 'loading') {
     currentLoadingKind = event.kind === 'slow' ? 'slow' : 'normal';
     currentPlayingKind = null;
     audioLoadingStartedAt = Date.now();
@@ -1172,6 +1266,7 @@ function afterReactRender(appState) {
   queueMicrotask(() => applyHeroDarkProbes());
 
   syncAudioPlayingClass();
+  syncProfileTtsTestButton();
 }
 
 function applyHeroDarkProbes() {
@@ -1379,6 +1474,20 @@ function handleGlobalAction(action, data) {
       dailyMinutes: data.dailyMinutes || current?.dailyMinutes || 15,
       avatarColor: data.avatarColor || current?.avatarColor || '#3E6FA8',
     });
+    return true;
+  }
+
+  if (action === 'tts-test') {
+    const provider = normaliseTtsProvider(data.provider, selectedTtsProvider());
+    const token = beginProfileTtsTest(provider);
+    Promise.resolve(tts.speak({
+      word: 'early',
+      sentence: 'The birds sang early in the day.',
+      provider,
+      kind: 'test',
+    }))
+      .then((ok) => finishProfileTtsTest(token, Boolean(ok)))
+      .catch(() => finishProfileTtsTest(token, false));
     return true;
   }
 

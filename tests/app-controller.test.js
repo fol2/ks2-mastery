@@ -177,6 +177,20 @@ test('controller persists profile TTS provider in spelling prefs', () => {
   assert.equal(controller.services.spelling.getPrefs(learnerId).ttsProvider, 'gemini');
 });
 
+test('controller dispatches profile TTS test through the selected provider', () => {
+  installMemoryStorage();
+  const controller = createAppController();
+
+  controller.dispatch('tts-test', { provider: 'browser' });
+
+  assert.deepEqual(controller.tts.spoken.at(-1), {
+    word: 'early',
+    sentence: 'The birds sang early in the day.',
+    provider: 'browser',
+    kind: 'test',
+  });
+});
+
 test('controller dispatches spelling transitions through store, repositories, events, and TTS', () => {
   installMemoryStorage();
   const controller = createAppController();
