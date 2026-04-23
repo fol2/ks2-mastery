@@ -978,6 +978,7 @@ function buildCodexModel(appState, context) {
 function buildSurfaceActions() {
   return {
     dispatch: dispatchAction,
+    flushSpellingDeferredAudio: () => controller.flushDeferredAudio(),
     toggleTheme: () => dispatchAction('toggle-theme'),
     selectLearner: (value) => dispatchAction('learner-select', { value }),
     navigateHome: () => dispatchAction('navigate-home'),

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
-import { PathProgress, Ribbon } from './SpellingCommon.jsx';
+import { AnimatedPromptCard, PathProgress, Ribbon } from './SpellingCommon.jsx';
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import {
   heroBgForSession,
@@ -30,7 +30,7 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, previousHer
   const heroBg = heroBgForSession(learner.id, {
     mode: summary.mode,
     progress: { done: progressTotal, total: progressTotal },
-  });
+  }, { complete: true });
   const toneGood = !summary.mistakes.length;
 
   return (
@@ -42,7 +42,7 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, previousHer
           <span className="path-count">Round complete</span>
         </header>
 
-        <div className="prompt-card summary-card">
+        <AnimatedPromptCard className="summary-card" innerClassName="summary-card-inner">
           <h3 className="summary-title sr-only">Session summary</h3>
           <Ribbon
             tone={toneGood ? 'good' : 'warn'}
@@ -111,7 +111,7 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, previousHer
               Open word bank <ArrowRightIcon />
             </button>
           </div>
-        </div>
+        </AnimatedPromptCard>
       </div>
     </div>
   );

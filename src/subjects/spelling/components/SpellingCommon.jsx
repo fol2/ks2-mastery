@@ -5,6 +5,7 @@ import {
   pathProgressDots,
 } from './spelling-view-model.js';
 
+const useMeasuredLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect;
 export const spellingAnswerInputProps = {
   autoComplete: 'off',
   autoCapitalize: 'none',
@@ -62,6 +63,53 @@ export function Ribbon({ tone, icon, headline, word, sub }) {
   );
 }
 
+export function AnimatedPromptCard({ className = '', innerClassName = '', children }) {
+  const contentRef = React.useRef(null);
+  const [height, setHeight] = React.useState(null);
+
+  useMeasuredLayoutEffect(() => {
+    const node = contentRef.current;
+    if (!node || typeof window === 'undefined') return undefined;
+
+    let frameId = 0;
+    const measure = () => {
+      frameId = 0;
+      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+      setHeight((current) => (current === nextHeight ? current : nextHeight));
+    };
+    const scheduleMeasure = () => {
+      if (frameId) return;
+      frameId = window.requestAnimationFrame(measure);
+    };
+
+    scheduleMeasure();
+    window.addEventListener('resize', scheduleMeasure);
+
+    const observer = typeof ResizeObserver === 'function'
+      ? new ResizeObserver(() => scheduleMeasure())
+      : null;
+    observer?.observe(node);
+
+    return () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      observer?.disconnect();
+      window.removeEventListener('resize', scheduleMeasure);
+    };
+  }, []);
+
+  const classes = ['prompt-card', 'animated-prompt-card', className].filter(Boolean).join(' ');
+  const innerClasses = ['prompt-card-inner', innerClassName].filter(Boolean).join(' ');
+  const style = height ? { '--prompt-card-height': `${height}px` } : undefined;
+
+  return (
+    <div className={classes} style={style}>
+      <div className={innerClasses} ref={contentRef}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function feedbackSub(feedback) {
   const attempt = String(feedback?.attemptedAnswer || '').trim();
   const body = feedback?.body || '';
@@ -71,16 +119,7 @@ function feedbackSub(feedback) {
 }
 
 export function FeedbackSlot({ feedback }) {
-  if (!feedback) {
-    return (
-      <div className="feedback-slot is-placeholder" aria-hidden="true">
-        <div className="ribbon good" role="presentation">
-          <div className="ribbon-ic">{'\u00a0'}</div>
-          <div className="ribbon-body"><b>{'\u00a0'}</b><div className="sub">{'\u00a0'}</div></div>
-        </div>
-      </div>
-    );
-  }
+  if (!feedback) return null;
   const tone = feedbackTone(feedback.kind);
   const icon = tone === 'good' ? <CheckIcon /> : tone === 'warn' ? '!' : '×';
   return (

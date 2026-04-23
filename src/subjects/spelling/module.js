@@ -8,11 +8,14 @@ import {
 
 function applySpellingTransition(context, transition) {
   if (!transition) return true;
+  const nextTransition = context.data?.deferAudioUntilFlowTransitionEnd && transition.audio?.word
+    ? { ...transition, deferAudioUntilFlowTransitionEnd: true }
+    : transition;
   if (typeof context.applySubjectTransition === 'function') {
-    return context.applySubjectTransition('spelling', transition);
+    return context.applySubjectTransition('spelling', nextTransition);
   }
-  context.store.updateSubjectUi('spelling', transition.state);
-  if (transition.audio?.word) context.tts?.speak?.(transition.audio);
+  context.store.updateSubjectUi('spelling', nextTransition.state);
+  if (nextTransition.audio?.word) context.tts?.speak?.(nextTransition.audio);
   return true;
 }
 

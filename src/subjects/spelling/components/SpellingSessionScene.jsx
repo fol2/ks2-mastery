@@ -7,7 +7,13 @@ import {
   spellingSessionVoiceNote,
 } from '../session-ui.js';
 import { ArrowRightIcon, SpeakerIcon, SpeakerSlowIcon } from './spelling-icons.jsx';
-import { Cloze, FeedbackSlot, PathProgress, spellingAnswerInputProps } from './SpellingCommon.jsx';
+import {
+  AnimatedPromptCard,
+  Cloze,
+  FeedbackSlot,
+  PathProgress,
+  spellingAnswerInputProps,
+} from './SpellingCommon.jsx';
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import {
   SPELLING_SESSION_QUESTION_REVEAL_MS,
@@ -18,6 +24,7 @@ import {
   heroBgStyle,
   renderAction,
   renderFormAction,
+  spellingSessionProgressIndex,
 } from './spelling-view-model.js';
 
 export function SpellingSessionScene({ learner, service, ui, accent, actions, previousHeroBg = '' }) {
@@ -51,10 +58,13 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
   const infoChips = spellingSessionInfoChips(session);
   const progressTotal = session.progress.total;
   const done = session.progress.done;
-  const progressCurrent = progressTotal <= 0 ? 0 : Math.min(progressTotal, done + 1);
+  const progressCurrent = progressTotal <= 0
+    ? 0
+    : spellingSessionProgressIndex(session, { awaitingAdvance });
   const pathDone = Math.min(progressTotal, done);
   const pathCurrent = Math.min(Math.max(progressCurrent - 1, 0), progressTotal);
-  const heroBg = heroBgForSession(learner.id, session);
+  const heroBg = heroBgForSession(learner.id, session, { awaitingAdvance });
+  const isCompletingRound = awaitingAdvance && progressTotal > 0 && done >= progressTotal;
   const showingCorrection = session.phase === 'correction';
   const promptInstr = session.type === 'test'
     ? 'Type the word dictated by the audio.'
@@ -88,8 +98,7 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
           <span className="path-count">Word {progressCurrent} of {progressTotal}</span>
         </header>
 
-        <div className="prompt-card">
-          <div className="prompt-card-inner">
+        <AnimatedPromptCard>
             {infoChips.length ? (
               <div className="info-chip-row">
                 {infoChips.map((value) => <span className="chip" key={value}>{value}</span>)}
@@ -149,7 +158,9 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
                     className="btn good lg"
                     type="button"
                     data-action="spelling-continue"
-                    onClick={(event) => renderAction(actions, event, 'spelling-continue')}
+                    onClick={(event) => renderAction(actions, event, 'spelling-continue', {
+                      flowTransition: isCompletingRound,
+                    })}
                   >
                     Continue <ArrowRightIcon />
                   </button>
@@ -168,8 +179,7 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
             </form>
 
             <FeedbackSlot feedback={ui.feedback} />
-          </div>
-        </div>
+        </AnimatedPromptCard>
 
         <footer className="session-footer">
           <div className="session-footer-left">
