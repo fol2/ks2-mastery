@@ -14,9 +14,11 @@ import {
   heroBgForLearner,
   heroBgStyle,
   normaliseSearchText,
+  progressAccuracyLabel,
+  progressAttemptCount,
+  progressCorrectCount,
+  progressWrongCount,
   renderAction,
-  reviewAccuracyLabel,
-  reviewCount,
   spellingPoolLabel,
   wordBankFilterMatchesStatus,
   wordBankAggregateCards,
@@ -96,13 +98,11 @@ function WordPill({ word, actions }) {
   const categoryLabel = word.yearLabel || spellingPoolLabel(word);
   const title = [
     word.word,
-    word.family ? `Family: ${word.family}` : '',
-    categoryLabel,
-    word.stageLabel || '',
-    `Accuracy: ${reviewAccuracyLabel(progress)}`,
-    `Reviews: ${reviewCount(progress)}`,
+    `Correct: ${progressCorrectCount(progress)}`,
+    `Wrong: ${progressWrongCount(progress)}`,
+    `Attempts: ${progressAttemptCount(progress)}`,
+    `Accuracy: ${progressAccuracyLabel(progress)}`,
     `Next due: ${dueLabel(progress)}`,
-    'Click to explain',
   ].filter(Boolean).join(' • ');
   return (
     <button

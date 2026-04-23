@@ -293,14 +293,22 @@ export function dueLabel(progress) {
   return `In ${daysUntilDue} days`;
 }
 
-export function reviewCount(progress) {
+export function progressAttemptCount(progress) {
   return Math.max(0, Number(progress?.attempts) || 0);
 }
 
-export function reviewAccuracyLabel(progress) {
-  const attempts = reviewCount(progress);
+export function progressCorrectCount(progress) {
+  return Math.max(0, Number(progress?.correct) || 0);
+}
+
+export function progressWrongCount(progress) {
+  return Math.max(0, Number(progress?.wrong) || 0);
+}
+
+export function progressAccuracyLabel(progress) {
+  const attempts = progressAttemptCount(progress);
   if (!attempts) return '—';
-  const correct = Math.max(0, Number(progress?.correct) || 0);
+  const correct = progressCorrectCount(progress);
   const boundedCorrect = Math.min(correct, attempts);
   return `${Math.round((boundedCorrect / attempts) * 100)}%`;
 }
