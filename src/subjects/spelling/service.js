@@ -70,6 +70,57 @@ function buildCloze(sentence, word) {
   return String(sentence || '').replace(pattern, blanks);
 }
 
+function acceptedForPrompt(rawAccepted, fallback) {
+  const accepted = normaliseStringArray(rawAccepted);
+  const fallbackText = normaliseString(fallback);
+  if (fallbackText && !accepted.map((entry) => entry.toLowerCase()).includes(fallbackText.toLowerCase())) {
+    return [fallbackText, ...accepted];
+  }
+  return accepted.length ? accepted : (fallbackText ? [fallbackText] : []);
+}
+
+function normaliseWordVariants(variants) {
+  if (!Array.isArray(variants)) return [];
+  return variants
+    .map((variant) => {
+      if (!variant || typeof variant !== 'object' || Array.isArray(variant)) return null;
+      const word = normaliseString(variant.word);
+      if (!word) return null;
+      return {
+        word,
+        accepted: acceptedForPrompt(variant.accepted, word),
+        sentence: normaliseString(variant.sentence),
+        sentences: normaliseStringArray(variant.sentences),
+        explanation: normaliseString(variant.explanation),
+      };
+    })
+    .filter(Boolean);
+}
+
+function explanationForPrompt(baseWord, promptedWord, prompt = null) {
+  const promptExplanation = normaliseString(prompt?.explanation);
+  if (promptExplanation) return promptExplanation;
+  const target = normaliseString(promptedWord, baseWord?.word).toLowerCase();
+  const variants = normaliseWordVariants(baseWord?.variants);
+  const variant = variants.find((entry) => entry.word.toLowerCase() === target);
+  return variant?.explanation || baseWord?.explanation || '';
+}
+
+function wordForPrompt(baseWord, prompt = null) {
+  if (!baseWord) return null;
+  const promptedWord = normaliseString(prompt?.word, baseWord.word);
+  const sentence = normaliseString(prompt?.sentence, baseWord.sentence || '');
+  if (promptedWord === baseWord.word && !prompt?.accepted) return baseWord;
+  return {
+    ...baseWord,
+    word: promptedWord,
+    accepted: acceptedForPrompt(prompt?.accepted, promptedWord),
+    sentence,
+    sentences: sentence ? [sentence] : (Array.isArray(baseWord.sentences) ? [...baseWord.sentences] : []),
+    explanation: explanationForPrompt(baseWord, promptedWord, prompt),
+  };
+}
+
 function isKnownSlug(slug, wordBySlug = DEFAULT_WORD_BY_SLUG) {
   return typeof slug === 'string' && Boolean(wordBySlug[slug]);
 }
@@ -100,6 +151,7 @@ function normalisePrefs(rawPrefs = {}) {
     roundLength: normaliseRoundLength(rawPrefs.roundLength, mode),
     showCloze: normaliseBoolean(rawPrefs.showCloze, true),
     autoSpeak: normaliseBoolean(rawPrefs.autoSpeak, true),
+    extraWordFamilies: normaliseBoolean(rawPrefs.extraWordFamilies, false),
   };
 }
 
@@ -166,10 +218,18 @@ function buildPrompt(engine, session, slug, wordBySlug = DEFAULT_WORD_BY_SLUG) {
   const sentence = current?.slug === slug && typeof current.sentence === 'string'
     ? current.sentence
     : engine.peekPromptSentence(session, slug) || word.sentence || '';
+  const promptedWord = current?.slug === slug && typeof current.word === 'string' && current.word
+    ? current.word
+    : word.word;
   return {
     slug,
+    word: promptedWord,
+    accepted: acceptedForPrompt(current?.slug === slug && current.accepted ? current.accepted : word.accepted, promptedWord),
+    explanation: current?.slug === slug
+      ? explanationForPrompt(word, promptedWord, current)
+      : explanationForPrompt(word, promptedWord),
     sentence,
-    cloze: buildCloze(sentence, word.word),
+    cloze: buildCloze(sentence, promptedWord),
   };
 }
 
@@ -180,10 +240,14 @@ function normalisePromptForSlug(rawPrompt, slug, wordBySlug = DEFAULT_WORD_BY_SL
   if (typeof rawPrompt.sentence !== 'string') return null;
 
   const word = wordBySlug[slug];
+  const promptedWord = normaliseString(rawPrompt.word, word.word);
   return {
     slug,
+    word: promptedWord,
+    accepted: acceptedForPrompt(rawPrompt.accepted || word.accepted, promptedWord),
+    explanation: explanationForPrompt(word, promptedWord, rawPrompt),
     sentence: rawPrompt.sentence,
-    cloze: buildCloze(rawPrompt.sentence, word.word),
+    cloze: buildCloze(rawPrompt.sentence, promptedWord),
   };
 }
 
@@ -198,7 +262,7 @@ function decorateSession(engine, learnerId, session, wordBySlug = DEFAULT_WORD_B
   const currentCard = session.currentSlug && currentPrompt
     ? {
         slug: session.currentSlug,
-        word: wordBySlug[session.currentSlug] || null,
+        word: wordForPrompt(wordBySlug[session.currentSlug], currentPrompt),
         prompt: currentPrompt,
       }
     : null;
@@ -305,6 +369,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       sentence: word.sentence || '',
       explanation: word.explanation || '',
       accepted: Array.isArray(word.accepted) ? [...word.accepted] : [word.slug],
+      variants: normaliseWordVariants(word.variants),
       status: engine.statusForWord(learnerId, word, statusProgressStore),
       stageLabel: engine.stageLabel(progress.stage),
       progress: {
@@ -385,6 +450,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       label: normaliseString(raw.label, defaultLabelForMode(mode)),
       practiceOnly: normaliseBoolean(raw.practiceOnly, false) && type !== 'test',
       fallbackToSmart: normaliseBoolean(raw.fallbackToSmart, false),
+      extraWordFamilies: normaliseBoolean(raw.extraWordFamilies, false) && type !== 'test',
       profileId: normaliseString(raw.profileId, learnerId || 'default'),
       uniqueWords,
       queue: [],
@@ -589,6 +655,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       length,
       words: selectedWords,
       practiceOnly,
+      extraWordFamilies: normaliseBoolean(options.extraWordFamilies, false) && yearFilter === 'extra',
     });
 
     if (!created.ok) {

@@ -143,11 +143,13 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   assert.match(html, /aria-label="Spelling pool"/);
   assert.match(html, /value="core"[^>]*>\s*<span>Core<\/span>/);
   assert.match(html, /value="extra"[^>]*>\s*<span>Extra<\/span>/);
+  assert.doesNotMatch(html, /Word-family variants/);
   assert.doesNotMatch(html, />All<\/span>/);
 
   harness.dispatch('spelling-set-pref', { pref: 'yearFilter', value: 'extra' });
   html = harness.render();
   assert.match(html, /value="extra"[^>]*>\s*<span>Extra<\/span>/);
+  assert.match(html, /data-pref="extraWordFamilies"[\s\S]*Word-family variants/);
   assert.match(html, /ss-stat-label">Total spellings<\/div>\s*<div class="ss-stat-value"[^>]*>22<\/div>/);
   assert.match(html, /value="trouble"[^>]*disabled[^>]*>[\s\S]*Trouble Drill/);
 
@@ -346,6 +348,18 @@ test('spelling word bank opens from setup and exposes searchable progress with d
   harness.dispatch('spelling-analytics-search', { value: '' });
   html = harness.render();
   assert.match(html, />accident</);
+
+  harness.dispatch('spelling-analytics-search', { value: 'division' });
+  html = harness.render();
+  assert.match(html, />divide</);
+  assert.match(html, /Showing 1 of 235 tracked spellings/);
+
+  harness.dispatch('spelling-word-detail-open', { slug: 'divide', value: 'explain' });
+  html = harness.render();
+  assert.match(html, /Word-family variants/);
+  assert.match(html, /Division is the act of splitting something into parts or groups/);
+  assert.match(html, /Divisible means able to be divided exactly by a number/);
+  harness.dispatch('spelling-word-detail-close');
 
   harness.dispatch('spelling-analytics-search', { value: 'mollusc' });
   html = harness.render();

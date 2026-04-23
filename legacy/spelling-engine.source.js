@@ -89,6 +89,64 @@
     return "Next review in " + interval + " day" + (interval === 1 ? "" : "s");
   }
 
+  function promptAccepted(value, fallback) {
+    var accepted = Array.isArray(value) && value.length ? value.slice() : [fallback];
+    return accepted.map(function (entry) { return normalize(entry); }).filter(Boolean);
+  }
+
+  function basePromptForm(word) {
+    return {
+      slug: word.slug,
+          promptKey: word.slug,
+          word: word.word,
+          accepted: promptAccepted(word.accepted, word.slug),
+          sentence: word.sentence,
+          sentences: Array.isArray(word.sentences) ? word.sentences.slice() : [],
+          explanation: word.explanation || "",
+        };
+      }
+
+  function promptFormsForWord(word) {
+    var forms = [basePromptForm(word)];
+    if (spellingPoolForWord(word) !== "extra") return forms;
+    if (!Array.isArray(word.variants)) return forms;
+    for (var i = 0; i < word.variants.length; i++) {
+      var variant = word.variants[i];
+      if (!variant || !variant.word) continue;
+      forms.push({
+        slug: word.slug,
+        promptKey: word.slug + "::" + normalize(variant.word),
+            word: variant.word,
+            accepted: promptAccepted(variant.accepted, variant.word),
+            sentence: variant.sentence,
+            sentences: Array.isArray(variant.sentences) ? variant.sentences.slice() : [],
+            explanation: variant.explanation || word.explanation || "",
+          });
+        }
+        return forms;
+  }
+
+  function choosePromptForm(session, word) {
+    if (!session || !session.extraWordFamilies) return basePromptForm(word);
+    var forms = promptFormsForWord(word);
+    if (forms.length <= 1) return forms[0];
+    return forms[Math.floor(Math.random() * forms.length)] || forms[0];
+  }
+
+  function wordForCurrentPrompt(session) {
+    var word = WORD_BY_SLUG[session && session.currentSlug];
+    if (!word) return null;
+    var prompt = session.currentPrompt || {};
+    if (!prompt.word) return word;
+    return Object.assign({}, word, {
+          word: prompt.word,
+          accepted: promptAccepted(prompt.accepted, prompt.word),
+          sentence: prompt.sentence || word.sentence,
+          sentences: prompt.sentence ? [prompt.sentence] : word.sentences,
+          explanation: prompt.explanation || word.explanation || "",
+        });
+      }
+
   // ----- progress persistence (profile-scoped per plan) ---------------------
 
   var PROGRESS_KEY_PREFIX = "ks2-spell-progress-";
@@ -289,14 +347,15 @@
     var sentences = (word.sentences && word.sentences.length) ? word.sentences : [word.sentence].filter(Boolean);
     if (!session || !session.sentenceHistory || !sentences.length) return null;
 
-    var history = session.sentenceHistory[word.slug];
+    var historyKey = word.promptKey || word.slug;
+    var history = session.sentenceHistory[historyKey];
     if (!history || !Array.isArray(history.remaining) || !history.remaining.length) {
       var lastIndex = (history && Number.isInteger(history.lastIndex)) ? history.lastIndex : null;
       history = {
         remaining: shuffledSentenceOrder(sentences.length, lastIndex),
         lastIndex: lastIndex,
       };
-      session.sentenceHistory[word.slug] = history;
+      session.sentenceHistory[historyKey] = history;
     }
     return history;
   }
@@ -312,7 +371,7 @@
     var history = getOrCreateSentenceHistory(session, word);
     var nextIndex = history.remaining.shift();
     history.lastIndex = nextIndex;
-    session.sentenceHistory[word.slug] = history;
+    session.sentenceHistory[word.promptKey || word.slug] = history;
     return sentences[nextIndex];
   }
 
@@ -382,6 +441,7 @@
     }
 
     var practiceOnly = Boolean(options.practiceOnly && actualMode !== MODES.TEST);
+    var extraWordFamilies = Boolean(options.extraWordFamilies && actualMode !== MODES.TEST && yearFilter === "extra");
 
     var session = {
       id: makeSessionId(),
@@ -394,6 +454,7 @@
           : "Smart review",
       practiceOnly: practiceOnly,
       fallbackToSmart: fallback,
+      extraWordFamilies: extraWordFamilies,
       profileId: profileId,
       uniqueWords: selected.map(function (w) { return w.slug; }),
       queue: selected.map(function (w) { return w.slug; }),
@@ -458,13 +519,17 @@
     if (!session) return null;
     var word = WORD_BY_SLUG[slug];
     if (!word) return null;
-    var sentence = choosePromptSentence(session, word);
+    var promptWord = choosePromptForm(session, word);
+    var sentence = choosePromptSentence(session, promptWord);
     session.currentSlug = slug;
     session.currentPrompt = {
       slug: slug,
-      sentence: sentence,
-      cloze: buildCloze(sentence, word.word),
-    };
+          word: promptWord.word,
+          accepted: promptWord.accepted.slice(),
+          explanation: promptWord.explanation || word.explanation || "",
+          sentence: sentence,
+          cloze: buildCloze(sentence, promptWord.word),
+        };
     session.lastFamily = word.family;
     session.lastYear = word.year;
     return session.currentPrompt;
@@ -480,7 +545,7 @@
       if (!session.queue.length) return { done: true };
       var slug = session.queue.shift();
       setCurrentPrompt(session, slug);
-      return { done: false, slug: slug, word: WORD_BY_SLUG[slug], prompt: session.currentPrompt };
+      return { done: false, slug: slug, word: wordForCurrentPrompt(session), prompt: session.currentPrompt };
     }
 
     while (session.queue.length) {
@@ -491,7 +556,7 @@
         return {
           done: false,
           slug: nextSlug,
-          word: WORD_BY_SLUG[nextSlug],
+          word: wordForCurrentPrompt(session),
           prompt: session.currentPrompt,
         };
       }
@@ -572,7 +637,7 @@
   // Legacy parity: preview.html handleLearningSubmit (2713-2827).
   function submitLearning(session, profileId, typed) {
     if (!session || session.type !== "learning") return null;
-    var word = WORD_BY_SLUG[session.currentSlug];
+    var word = wordForCurrentPrompt(session);
     if (!word) return null;
     var info = session.status[word.slug];
     var typedRaw = String(typed == null ? "" : typed).trim();
@@ -712,7 +777,7 @@
   // no phases, results recorded straight into session.results.
   function submitTest(session, profileId, typed) {
     if (!session || session.type !== "test") return null;
-    var word = WORD_BY_SLUG[session.currentSlug];
+    var word = wordForCurrentPrompt(session);
     if (!word) return null;
     var typedRaw = String(typed == null ? "" : typed).trim();
     var grade = gradeWord(word, typedRaw);

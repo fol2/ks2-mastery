@@ -5478,6 +5478,25 @@ textarea:focus-visible {
   font-weight: 700;
 }
 
+.wb-variant-list {
+  display: grid;
+  gap: 12px;
+}
+
+.wb-variant-row {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--brand) 22%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 86%, white 14%);
+}
+
+.wb-variant-word {
+  color: var(--brand-ink);
+  font-size: 1.08rem;
+}
+
 .wb-drill-sentence {
   font-family: var(--font-serif);
   font-size: 1.12rem;

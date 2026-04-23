@@ -20,6 +20,16 @@ function makeSeededRandom(seed = 1) {
   };
 }
 
+function makeSequenceRandom(values, fallback = 0.99) {
+  let index = 0;
+  return function sequenceRandom() {
+    if (index >= values.length) return fallback;
+    const value = Number(values[index]);
+    index += 1;
+    return Number.isFinite(value) ? value : fallback;
+  };
+}
+
 function makeService({ now, random, storage = installMemoryStorage() } = {}) {
   const repositories = createLocalPlatformRepositories({ storage });
   const spoken = [];
@@ -63,6 +73,26 @@ function continueUntilSummary(service, learnerId, state, answer = 'possess') {
   }
 
   return { state: current, events };
+}
+
+function continueUntilSummaryWithCurrentAnswers(service, learnerId, state) {
+  const events = [];
+  const seenWords = [];
+  let current = state;
+
+  while (current.phase === 'session') {
+    const answer = current.session.currentCard.word.word;
+    seenWords.push(answer);
+    const submitted = service.submitAnswer(learnerId, current, answer);
+    events.push(...submitted.events);
+    current = submitted.state;
+    assert.equal(current.awaitingAdvance, true);
+    const continued = service.continueSession(learnerId, current);
+    events.push(...continued.events);
+    current = continued.state;
+  }
+
+  return { state: current, events, seenWords };
 }
 
 function sessionWords(session) {
@@ -211,6 +241,55 @@ test('Extra spelling accepts UK mollusc only', () => {
   assert.equal(rejectedSubmission.state.session.phase, 'retry');
   assert.equal(rejectedSubmission.state.feedback.kind, 'error');
   assert.equal(rejectedSubmission.state.feedback.attemptedAnswer, 'mollusk');
+});
+
+test('Extra word-family variants are opt-in and share base-word progress', () => {
+  const day = 24 * 60 * 60 * 1000;
+  let nowValue = Date.UTC(2026, 0, 1);
+  const { service } = makeService({
+    now: () => nowValue,
+    random: makeSequenceRandom([0.5, 0.5, 0.5], 0.5),
+  });
+
+  const defaultRound = service.startSession('learner-base', {
+    mode: 'single',
+    words: ['divide'],
+    yearFilter: 'extra',
+    length: 1,
+  });
+  assert.equal(defaultRound.ok, true);
+  assert.equal(defaultRound.state.session.currentCard.slug, 'divide');
+  assert.equal(defaultRound.state.session.currentCard.word.word, 'divide');
+
+  const seenWords = new Set();
+  for (let round = 0; round < 4; round += 1) {
+    const started = service.startSession('learner-family', {
+      mode: 'single',
+      words: ['divide'],
+      yearFilter: 'extra',
+      length: 1,
+      extraWordFamilies: true,
+    }).state;
+    const completed = continueUntilSummaryWithCurrentAnswers(service, 'learner-family', started);
+    completed.seenWords.forEach((word) => seenWords.add(word));
+    nowValue += day * 2;
+  }
+
+  assert.ok(seenWords.has('division'));
+  const stats = service.getStats('learner-family', 'extra');
+  assert.equal(stats.total, 22);
+  assert.equal(stats.secure, 1);
+
+  const extraGroup = service.getAnalyticsSnapshot('learner-family').wordGroups.find((group) => group.key === 'extra');
+  assert.equal(extraGroup.words.length, 22);
+  assert.equal(extraGroup.words.some((word) => word.slug === 'division' || word.word === 'division'), false);
+  const divide = extraGroup.words.find((word) => word.slug === 'divide');
+  assert.equal(divide.word, 'divide');
+  assert.equal(divide.status, 'secure');
+  assert.equal(divide.progress.stage, 4);
+  assert.deepEqual(divide.familyWords, ['divide', 'division', 'divisible']);
+  assert.deepEqual(divide.variants.map((variant) => variant.word), ['division', 'divisible']);
+  assert.equal(divide.variants[0].explanation, 'Division is the act of splitting something into parts or groups.');
 });
 
 test('service state survives JSON round-trips and resumes retry/correction flow', () => {

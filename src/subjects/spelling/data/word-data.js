@@ -9417,15 +9417,8 @@ export const WORDS = [
     "yearLabel": "Extra",
     "familyWords": [
       "divide",
-      "collide",
-      "explode",
-      "corrode",
-      "conclude",
-      "extend",
-      "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "division",
+      "divisible"
     ],
     "sentence": "We divide the class into teams before the investigation.",
     "sentences": [
@@ -9433,6 +9426,44 @@ export const WORDS = [
     ],
     "accepted": [
       "divide"
+    ],
+    "variants": [
+      {
+        "word": "division",
+        "sentence": "The division of the class into teams was fair.",
+        "sentences": [
+          "The division of the class into teams was fair."
+        ],
+        "accepted": [
+          "division"
+        ],
+        "explanation": "Division is the act of splitting something into parts or groups.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the divide base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "divisible",
+        "sentence": "Twenty is divisible by five.",
+        "sentences": [
+          "Twenty is divisible by five."
+        ],
+        "accepted": [
+          "divisible"
+        ],
+        "explanation": "Divisible means able to be divided exactly by a number.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the divide base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "To divide is to split something into parts or groups.",
     "listId": "extra-science-word-building",
@@ -9459,16 +9490,8 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
       "collide",
-      "explode",
-      "corrode",
-      "conclude",
-      "extend",
-      "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "collision"
     ],
     "sentence": "The two balls collide in the middle of the table.",
     "sentences": [
@@ -9476,6 +9499,26 @@ export const WORDS = [
     ],
     "accepted": [
       "collide"
+    ],
+    "variants": [
+      {
+        "word": "collision",
+        "sentence": "The collision made both balls change direction.",
+        "sentences": [
+          "The collision made both balls change direction."
+        ],
+        "accepted": [
+          "collision"
+        ],
+        "explanation": "A collision is a crash or strong hit between moving things.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the collide base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "To collide is to crash into something or hit it while moving.",
     "listId": "extra-science-word-building",
@@ -9502,16 +9545,9 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
       "explode",
-      "corrode",
-      "conclude",
-      "extend",
-      "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "explosion",
+      "explosive"
     ],
     "sentence": "The volcano model did not explode until the final step.",
     "sentences": [
@@ -9519,6 +9555,44 @@ export const WORDS = [
     ],
     "accepted": [
       "explode"
+    ],
+    "variants": [
+      {
+        "word": "explosion",
+        "sentence": "The experiment caused a safe foam explosion.",
+        "sentences": [
+          "The experiment caused a safe foam explosion."
+        ],
+        "accepted": [
+          "explosion"
+        ],
+        "explanation": "An explosion is a sudden burst with force, noise or energy.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the explode base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "explosive",
+        "sentence": "The explosive reaction was controlled by the teacher.",
+        "sentences": [
+          "The explosive reaction was controlled by the teacher."
+        ],
+        "accepted": [
+          "explosive"
+        ],
+        "explanation": "Explosive means able to burst apart suddenly with force.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the explode base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "To explode is to burst apart suddenly with force.",
     "listId": "extra-science-word-building",
@@ -9545,16 +9619,9 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
-      "explode",
       "corrode",
-      "conclude",
-      "extend",
-      "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "corrosion",
+      "corrosive"
     ],
     "sentence": "Salt water can corrode metal over time.",
     "sentences": [
@@ -9562,6 +9629,44 @@ export const WORDS = [
     ],
     "accepted": [
       "corrode"
+    ],
+    "variants": [
+      {
+        "word": "corrosion",
+        "sentence": "Corrosion weakened the old metal gate.",
+        "sentences": [
+          "Corrosion weakened the old metal gate."
+        ],
+        "accepted": [
+          "corrosion"
+        ],
+        "explanation": "Corrosion is the slow damage caused by a chemical reaction, often rust.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the corrode base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "corrosive",
+        "sentence": "The corrosive liquid was handled with care.",
+        "sentences": [
+          "The corrosive liquid was handled with care."
+        ],
+        "accepted": [
+          "corrosive"
+        ],
+        "explanation": "Corrosive means able to slowly damage a material by chemical action.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the corrode base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "To corrode is to be slowly damaged by a chemical reaction, often rust.",
     "listId": "extra-science-word-building",
@@ -9588,16 +9693,8 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
-      "explode",
-      "corrode",
       "conclude",
-      "extend",
-      "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "conclusion"
     ],
     "sentence": "We conclude that shade slows the melting ice.",
     "sentences": [
@@ -9605,6 +9702,26 @@ export const WORDS = [
     ],
     "accepted": [
       "conclude"
+    ],
+    "variants": [
+      {
+        "word": "conclusion",
+        "sentence": "Her conclusion matched the evidence from the test.",
+        "sentences": [
+          "Her conclusion matched the evidence from the test."
+        ],
+        "accepted": [
+          "conclusion"
+        ],
+        "explanation": "A conclusion is the final decision or ending reached after thinking.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the conclude base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "To conclude is to finish, or to decide after thinking about evidence.",
     "listId": "extra-science-word-building",
@@ -9631,16 +9748,9 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
-      "explode",
-      "corrode",
-      "conclude",
       "extend",
-      "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "extension",
+      "extended"
     ],
     "sentence": "The bridge can extend across the stream.",
     "sentences": [
@@ -9648,6 +9758,44 @@ export const WORDS = [
     ],
     "accepted": [
       "extend"
+    ],
+    "variants": [
+      {
+        "word": "extension",
+        "sentence": "The bridge extension reached the other bank.",
+        "sentences": [
+          "The bridge extension reached the other bank."
+        ],
+        "accepted": [
+          "extension"
+        ],
+        "explanation": "An extension is an added part or an increase in length or time.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the extend base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "extended",
+        "sentence": "The extended table gave everyone space.",
+        "sentences": [
+          "The extended table gave everyone space."
+        ],
+        "accepted": [
+          "extended"
+        ],
+        "explanation": "Extended means made longer or lasting for more time.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the extend base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "To extend is to make something longer or reach further.",
     "listId": "extra-science-word-building",
@@ -9674,16 +9822,8 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
-      "explode",
-      "corrode",
-      "conclude",
-      "extend",
       "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "comprehension"
     ],
     "sentence": "She could comprehend the instructions after reading them twice.",
     "sentences": [
@@ -9691,6 +9831,26 @@ export const WORDS = [
     ],
     "accepted": [
       "comprehend"
+    ],
+    "variants": [
+      {
+        "word": "comprehension",
+        "sentence": "Good comprehension helped her answer the questions.",
+        "sentences": [
+          "Good comprehension helped her answer the questions."
+        ],
+        "accepted": [
+          "comprehension"
+        ],
+        "explanation": "Comprehension is the ability to understand something.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the comprehend base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "To comprehend is to understand something fully.",
     "listId": "extra-science-word-building",
@@ -9717,16 +9877,9 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
-      "explode",
-      "corrode",
-      "conclude",
-      "extend",
-      "comprehend",
       "evade",
-      "intrude",
-      "interlude"
+      "evasion",
+      "evasive"
     ],
     "sentence": "The beetle tried to evade the torchlight under a leaf.",
     "sentences": [
@@ -9734,6 +9887,44 @@ export const WORDS = [
     ],
     "accepted": [
       "evade"
+    ],
+    "variants": [
+      {
+        "word": "evasion",
+        "sentence": "The quick evasion helped the player dodge the tackle.",
+        "sentences": [
+          "The quick evasion helped the player dodge the tackle."
+        ],
+        "accepted": [
+          "evasion"
+        ],
+        "explanation": "Evasion is the act of avoiding or escaping something.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the evade base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "evasive",
+        "sentence": "His evasive answer did not explain the mistake.",
+        "sentences": [
+          "His evasive answer did not explain the mistake."
+        ],
+        "accepted": [
+          "evasive"
+        ],
+        "explanation": "Evasive means trying to avoid something or not answer directly.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the evade base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "To evade is to avoid or escape from someone or something.",
     "listId": "extra-science-word-building",
@@ -9760,16 +9951,9 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
-      "explode",
-      "corrode",
-      "conclude",
-      "extend",
-      "comprehend",
-      "evade",
       "intrude",
-      "interlude"
+      "intrusion",
+      "intrusive"
     ],
     "sentence": "Please do not intrude while the group is recording.",
     "sentences": [
@@ -9777,6 +9961,44 @@ export const WORDS = [
     ],
     "accepted": [
       "intrude"
+    ],
+    "variants": [
+      {
+        "word": "intrusion",
+        "sentence": "The loud noise was an intrusion during the recording.",
+        "sentences": [
+          "The loud noise was an intrusion during the recording."
+        ],
+        "accepted": [
+          "intrusion"
+        ],
+        "explanation": "An intrusion is an unwanted entry or interruption.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the intrude base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "intrusive",
+        "sentence": "The intrusive sound disturbed the quiet lesson.",
+        "sentences": [
+          "The intrusive sound disturbed the quiet lesson."
+        ],
+        "accepted": [
+          "intrusive"
+        ],
+        "explanation": "Intrusive means entering or interrupting where it is not wanted.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the intrude base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "To intrude is to enter or join in where you are not wanted.",
     "listId": "extra-science-word-building",
@@ -9803,16 +10025,8 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
-      "explode",
-      "corrode",
-      "conclude",
-      "extend",
-      "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "interlude",
+      "interludes"
     ],
     "sentence": "A quiet interlude gave the performers time to reset.",
     "sentences": [
@@ -9820,6 +10034,26 @@ export const WORDS = [
     ],
     "accepted": [
       "interlude"
+    ],
+    "variants": [
+      {
+        "word": "interludes",
+        "sentence": "The play had two short interludes.",
+        "sentences": [
+          "The play had two short interludes."
+        ],
+        "accepted": [
+          "interludes"
+        ],
+        "explanation": "Interludes are short pauses or breaks between parts of something.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the interlude base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "An interlude is a short pause or break between parts of something.",
     "listId": "extra-science-word-building",
@@ -9846,7 +10080,9 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "classification"
+      "classification",
+      "classify",
+      "classified"
     ],
     "sentence": "Classification helps scientists compare animals with similar features.",
     "sentences": [
@@ -9854,6 +10090,44 @@ export const WORDS = [
     ],
     "accepted": [
       "classification"
+    ],
+    "variants": [
+      {
+        "word": "classify",
+        "sentence": "Scientists classify living things by their features.",
+        "sentences": [
+          "Scientists classify living things by their features."
+        ],
+        "accepted": [
+          "classify"
+        ],
+        "explanation": "To classify is to sort things into groups by shared features.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the classification base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "classified",
+        "sentence": "The leaves were classified by shape and size.",
+        "sentences": [
+          "The leaves were classified by shape and size."
+        ],
+        "accepted": [
+          "classified"
+        ],
+        "explanation": "Classified means sorted into groups by type or feature.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the classification base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "Classification is sorting living things or objects into groups by shared features.",
     "listId": "extra-science-word-building",
@@ -9880,7 +10154,7 @@ export const WORDS = [
     "yearLabel": "Extra",
     "familyWords": [
       "backbone",
-      "skeleton"
+      "backbones"
     ],
     "sentence": "A fish has a backbone inside its body.",
     "sentences": [
@@ -9888,6 +10162,26 @@ export const WORDS = [
     ],
     "accepted": [
       "backbone"
+    ],
+    "variants": [
+      {
+        "word": "backbones",
+        "sentence": "The model showed how backbones protect the spinal cord.",
+        "sentences": [
+          "The model showed how backbones protect the spinal cord."
+        ],
+        "accepted": [
+          "backbones"
+        ],
+        "explanation": "Backbones are rows of bones that support the backs of some animals.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the backbone base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "A backbone is the row of bones that supports the back.",
     "listId": "extra-science-word-building",
@@ -9914,8 +10208,8 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "backbone",
-      "skeleton"
+      "skeleton",
+      "skeletal"
     ],
     "sentence": "The skeleton protects important organs.",
     "sentences": [
@@ -9923,6 +10217,26 @@ export const WORDS = [
     ],
     "accepted": [
       "skeleton"
+    ],
+    "variants": [
+      {
+        "word": "skeletal",
+        "sentence": "The diagram showed the skeletal system clearly.",
+        "sentences": [
+          "The diagram showed the skeletal system clearly."
+        ],
+        "accepted": [
+          "skeletal"
+        ],
+        "explanation": "Skeletal means connected with the skeleton or bones.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the skeleton base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "A skeleton is the frame of bones that supports a body.",
     "listId": "extra-science-word-building",
@@ -9949,12 +10263,7 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "cold-blooded",
-      "amphibians",
-      "reptiles",
-      "mammals",
-      "arachnid",
-      "mollusc"
+      "cold-blooded"
     ],
     "sentence": "A cold-blooded reptile warms itself on a rock.",
     "sentences": [
@@ -9989,12 +10298,8 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "cold-blooded",
       "amphibians",
-      "reptiles",
-      "mammals",
-      "arachnid",
-      "mollusc"
+      "amphibian"
     ],
     "sentence": "Many amphibians begin life in water as tadpoles.",
     "sentences": [
@@ -10002,6 +10307,26 @@ export const WORDS = [
     ],
     "accepted": [
       "amphibians"
+    ],
+    "variants": [
+      {
+        "word": "amphibian",
+        "sentence": "A frog is an amphibian with moist skin.",
+        "sentences": [
+          "A frog is an amphibian with moist skin."
+        ],
+        "accepted": [
+          "amphibian"
+        ],
+        "explanation": "An amphibian is an animal that can live in water and on land.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the amphibians base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "Amphibians are animals such as frogs that can live in water and on land.",
     "listId": "extra-science-word-building",
@@ -10028,7 +10353,8 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "metamorphosis"
+      "metamorphosis",
+      "metamorphose"
     ],
     "sentence": "A butterfly goes through metamorphosis before it can fly.",
     "sentences": [
@@ -10036,6 +10362,26 @@ export const WORDS = [
     ],
     "accepted": [
       "metamorphosis"
+    ],
+    "variants": [
+      {
+        "word": "metamorphose",
+        "sentence": "Some insects metamorphose before they can fly.",
+        "sentences": [
+          "Some insects metamorphose before they can fly."
+        ],
+        "accepted": [
+          "metamorphose"
+        ],
+        "explanation": "To metamorphose is to change into a very different adult form.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the metamorphosis base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "Metamorphosis is a major change in body form as an animal grows.",
     "listId": "extra-science-word-building",
@@ -10062,12 +10408,8 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "cold-blooded",
-      "amphibians",
       "reptiles",
-      "mammals",
-      "arachnid",
-      "mollusc"
+      "reptile"
     ],
     "sentence": "Reptiles often lay eggs on land.",
     "sentences": [
@@ -10075,6 +10417,26 @@ export const WORDS = [
     ],
     "accepted": [
       "reptiles"
+    ],
+    "variants": [
+      {
+        "word": "reptile",
+        "sentence": "A lizard is a reptile that warms itself in sunlight.",
+        "sentences": [
+          "A lizard is a reptile that warms itself in sunlight."
+        ],
+        "accepted": [
+          "reptile"
+        ],
+        "explanation": "A reptile is a cold-blooded animal with dry scales.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the reptiles base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "Reptiles are cold-blooded animals with dry scales, such as lizards and snakes.",
     "listId": "extra-science-word-building",
@@ -10101,12 +10463,8 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "cold-blooded",
-      "amphibians",
-      "reptiles",
       "mammals",
-      "arachnid",
-      "mollusc"
+      "mammal"
     ],
     "sentence": "Dolphins and bats are both mammals.",
     "sentences": [
@@ -10114,6 +10472,26 @@ export const WORDS = [
     ],
     "accepted": [
       "mammals"
+    ],
+    "variants": [
+      {
+        "word": "mammal",
+        "sentence": "A whale is a mammal even though it lives in the sea.",
+        "sentences": [
+          "A whale is a mammal even though it lives in the sea."
+        ],
+        "accepted": [
+          "mammal"
+        ],
+        "explanation": "A mammal is a warm-blooded animal that usually feeds its young milk.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the mammals base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "Mammals are warm-blooded animals that usually have hair or fur and feed their young milk.",
     "listId": "extra-science-word-building",
@@ -10140,12 +10518,8 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "cold-blooded",
-      "amphibians",
-      "reptiles",
-      "mammals",
       "arachnid",
-      "mollusc"
+      "arachnids"
     ],
     "sentence": "A spider is an arachnid, not an insect.",
     "sentences": [
@@ -10153,6 +10527,26 @@ export const WORDS = [
     ],
     "accepted": [
       "arachnid"
+    ],
+    "variants": [
+      {
+        "word": "arachnids",
+        "sentence": "Spiders and scorpions are arachnids.",
+        "sentences": [
+          "Spiders and scorpions are arachnids."
+        ],
+        "accepted": [
+          "arachnids"
+        ],
+        "explanation": "Arachnids are animals with eight legs, such as spiders and scorpions.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the arachnid base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "An arachnid is an animal with eight legs, such as a spider or scorpion.",
     "listId": "extra-science-word-building",
@@ -10179,12 +10573,8 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "cold-blooded",
-      "amphibians",
-      "reptiles",
-      "mammals",
-      "arachnid",
-      "mollusc"
+      "mollusc",
+      "molluscs"
     ],
     "sentence": "A snail is a mollusc with a coiled shell.",
     "sentences": [
@@ -10192,6 +10582,26 @@ export const WORDS = [
     ],
     "accepted": [
       "mollusc"
+    ],
+    "variants": [
+      {
+        "word": "molluscs",
+        "sentence": "Snails and clams are molluscs.",
+        "sentences": [
+          "Snails and clams are molluscs."
+        ],
+        "accepted": [
+          "molluscs"
+        ],
+        "explanation": "Molluscs are soft-bodied animals, often with shells.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the mollusc base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "A mollusc is a soft-bodied animal, often with a shell.",
     "listId": "extra-science-word-building",
@@ -10219,7 +10629,8 @@ export const WORDS = [
     "yearLabel": "Extra",
     "familyWords": [
       "botanist",
-      "flowering"
+      "botany",
+      "botanical"
     ],
     "sentence": "The botanist examined the leaves carefully.",
     "sentences": [
@@ -10227,6 +10638,44 @@ export const WORDS = [
     ],
     "accepted": [
       "botanist"
+    ],
+    "variants": [
+      {
+        "word": "botany",
+        "sentence": "Botany helped the class understand plant growth.",
+        "sentences": [
+          "Botany helped the class understand plant growth."
+        ],
+        "accepted": [
+          "botany"
+        ],
+        "explanation": "Botany is the scientific study of plants.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the botanist base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "botanical",
+        "sentence": "The botanical garden displayed unusual flowers.",
+        "sentences": [
+          "The botanical garden displayed unusual flowers."
+        ],
+        "accepted": [
+          "botanical"
+        ],
+        "explanation": "Botanical means connected with plants or the study of plants.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the botanist base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "A botanist is a scientist who studies plants.",
     "listId": "extra-science-word-building",
@@ -10252,8 +10701,9 @@ export const WORDS = [
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "botanist",
-      "flowering"
+      "flowering",
+      "flowered",
+      "flowers"
     ],
     "sentence": "The flowering plant attracted several bees.",
     "sentences": [
@@ -10261,6 +10711,44 @@ export const WORDS = [
     ],
     "accepted": [
       "flowering"
+    ],
+    "variants": [
+      {
+        "word": "flowered",
+        "sentence": "The plant flowered after several warm days.",
+        "sentences": [
+          "The plant flowered after several warm days."
+        ],
+        "accepted": [
+          "flowered"
+        ],
+        "explanation": "Flowered means produced flowers or decorated with flowers.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the flowering base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "flowers",
+        "sentence": "The flowers attracted several bees.",
+        "sentences": [
+          "The flowers attracted several bees."
+        ],
+        "accepted": [
+          "flowers"
+        ],
+        "explanation": "Flowers are the parts of plants that often make seeds.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the flowering base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "Flowering means producing flowers.",
     "listId": "extra-science-word-building",
@@ -19692,15 +20180,8 @@ export const WORD_BY_SLUG = {
     "yearLabel": "Extra",
     "familyWords": [
       "divide",
-      "collide",
-      "explode",
-      "corrode",
-      "conclude",
-      "extend",
-      "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "division",
+      "divisible"
     ],
     "sentence": "We divide the class into teams before the investigation.",
     "sentences": [
@@ -19708,6 +20189,44 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "divide"
+    ],
+    "variants": [
+      {
+        "word": "division",
+        "sentence": "The division of the class into teams was fair.",
+        "sentences": [
+          "The division of the class into teams was fair."
+        ],
+        "accepted": [
+          "division"
+        ],
+        "explanation": "Division is the act of splitting something into parts or groups.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the divide base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "divisible",
+        "sentence": "Twenty is divisible by five.",
+        "sentences": [
+          "Twenty is divisible by five."
+        ],
+        "accepted": [
+          "divisible"
+        ],
+        "explanation": "Divisible means able to be divided exactly by a number.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the divide base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "To divide is to split something into parts or groups.",
     "listId": "extra-science-word-building",
@@ -19734,16 +20253,8 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
       "collide",
-      "explode",
-      "corrode",
-      "conclude",
-      "extend",
-      "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "collision"
     ],
     "sentence": "The two balls collide in the middle of the table.",
     "sentences": [
@@ -19751,6 +20262,26 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "collide"
+    ],
+    "variants": [
+      {
+        "word": "collision",
+        "sentence": "The collision made both balls change direction.",
+        "sentences": [
+          "The collision made both balls change direction."
+        ],
+        "accepted": [
+          "collision"
+        ],
+        "explanation": "A collision is a crash or strong hit between moving things.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the collide base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "To collide is to crash into something or hit it while moving.",
     "listId": "extra-science-word-building",
@@ -19777,16 +20308,9 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
       "explode",
-      "corrode",
-      "conclude",
-      "extend",
-      "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "explosion",
+      "explosive"
     ],
     "sentence": "The volcano model did not explode until the final step.",
     "sentences": [
@@ -19794,6 +20318,44 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "explode"
+    ],
+    "variants": [
+      {
+        "word": "explosion",
+        "sentence": "The experiment caused a safe foam explosion.",
+        "sentences": [
+          "The experiment caused a safe foam explosion."
+        ],
+        "accepted": [
+          "explosion"
+        ],
+        "explanation": "An explosion is a sudden burst with force, noise or energy.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the explode base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "explosive",
+        "sentence": "The explosive reaction was controlled by the teacher.",
+        "sentences": [
+          "The explosive reaction was controlled by the teacher."
+        ],
+        "accepted": [
+          "explosive"
+        ],
+        "explanation": "Explosive means able to burst apart suddenly with force.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the explode base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "To explode is to burst apart suddenly with force.",
     "listId": "extra-science-word-building",
@@ -19820,16 +20382,9 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
-      "explode",
       "corrode",
-      "conclude",
-      "extend",
-      "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "corrosion",
+      "corrosive"
     ],
     "sentence": "Salt water can corrode metal over time.",
     "sentences": [
@@ -19837,6 +20392,44 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "corrode"
+    ],
+    "variants": [
+      {
+        "word": "corrosion",
+        "sentence": "Corrosion weakened the old metal gate.",
+        "sentences": [
+          "Corrosion weakened the old metal gate."
+        ],
+        "accepted": [
+          "corrosion"
+        ],
+        "explanation": "Corrosion is the slow damage caused by a chemical reaction, often rust.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the corrode base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "corrosive",
+        "sentence": "The corrosive liquid was handled with care.",
+        "sentences": [
+          "The corrosive liquid was handled with care."
+        ],
+        "accepted": [
+          "corrosive"
+        ],
+        "explanation": "Corrosive means able to slowly damage a material by chemical action.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the corrode base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "To corrode is to be slowly damaged by a chemical reaction, often rust.",
     "listId": "extra-science-word-building",
@@ -19863,16 +20456,8 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
-      "explode",
-      "corrode",
       "conclude",
-      "extend",
-      "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "conclusion"
     ],
     "sentence": "We conclude that shade slows the melting ice.",
     "sentences": [
@@ -19880,6 +20465,26 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "conclude"
+    ],
+    "variants": [
+      {
+        "word": "conclusion",
+        "sentence": "Her conclusion matched the evidence from the test.",
+        "sentences": [
+          "Her conclusion matched the evidence from the test."
+        ],
+        "accepted": [
+          "conclusion"
+        ],
+        "explanation": "A conclusion is the final decision or ending reached after thinking.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the conclude base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "To conclude is to finish, or to decide after thinking about evidence.",
     "listId": "extra-science-word-building",
@@ -19906,16 +20511,9 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
-      "explode",
-      "corrode",
-      "conclude",
       "extend",
-      "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "extension",
+      "extended"
     ],
     "sentence": "The bridge can extend across the stream.",
     "sentences": [
@@ -19923,6 +20521,44 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "extend"
+    ],
+    "variants": [
+      {
+        "word": "extension",
+        "sentence": "The bridge extension reached the other bank.",
+        "sentences": [
+          "The bridge extension reached the other bank."
+        ],
+        "accepted": [
+          "extension"
+        ],
+        "explanation": "An extension is an added part or an increase in length or time.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the extend base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "extended",
+        "sentence": "The extended table gave everyone space.",
+        "sentences": [
+          "The extended table gave everyone space."
+        ],
+        "accepted": [
+          "extended"
+        ],
+        "explanation": "Extended means made longer or lasting for more time.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the extend base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "To extend is to make something longer or reach further.",
     "listId": "extra-science-word-building",
@@ -19949,16 +20585,8 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
-      "explode",
-      "corrode",
-      "conclude",
-      "extend",
       "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "comprehension"
     ],
     "sentence": "She could comprehend the instructions after reading them twice.",
     "sentences": [
@@ -19966,6 +20594,26 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "comprehend"
+    ],
+    "variants": [
+      {
+        "word": "comprehension",
+        "sentence": "Good comprehension helped her answer the questions.",
+        "sentences": [
+          "Good comprehension helped her answer the questions."
+        ],
+        "accepted": [
+          "comprehension"
+        ],
+        "explanation": "Comprehension is the ability to understand something.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the comprehend base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "To comprehend is to understand something fully.",
     "listId": "extra-science-word-building",
@@ -19992,16 +20640,9 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
-      "explode",
-      "corrode",
-      "conclude",
-      "extend",
-      "comprehend",
       "evade",
-      "intrude",
-      "interlude"
+      "evasion",
+      "evasive"
     ],
     "sentence": "The beetle tried to evade the torchlight under a leaf.",
     "sentences": [
@@ -20009,6 +20650,44 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "evade"
+    ],
+    "variants": [
+      {
+        "word": "evasion",
+        "sentence": "The quick evasion helped the player dodge the tackle.",
+        "sentences": [
+          "The quick evasion helped the player dodge the tackle."
+        ],
+        "accepted": [
+          "evasion"
+        ],
+        "explanation": "Evasion is the act of avoiding or escaping something.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the evade base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "evasive",
+        "sentence": "His evasive answer did not explain the mistake.",
+        "sentences": [
+          "His evasive answer did not explain the mistake."
+        ],
+        "accepted": [
+          "evasive"
+        ],
+        "explanation": "Evasive means trying to avoid something or not answer directly.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the evade base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "To evade is to avoid or escape from someone or something.",
     "listId": "extra-science-word-building",
@@ -20035,16 +20714,9 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
-      "explode",
-      "corrode",
-      "conclude",
-      "extend",
-      "comprehend",
-      "evade",
       "intrude",
-      "interlude"
+      "intrusion",
+      "intrusive"
     ],
     "sentence": "Please do not intrude while the group is recording.",
     "sentences": [
@@ -20052,6 +20724,44 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "intrude"
+    ],
+    "variants": [
+      {
+        "word": "intrusion",
+        "sentence": "The loud noise was an intrusion during the recording.",
+        "sentences": [
+          "The loud noise was an intrusion during the recording."
+        ],
+        "accepted": [
+          "intrusion"
+        ],
+        "explanation": "An intrusion is an unwanted entry or interruption.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the intrude base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "intrusive",
+        "sentence": "The intrusive sound disturbed the quiet lesson.",
+        "sentences": [
+          "The intrusive sound disturbed the quiet lesson."
+        ],
+        "accepted": [
+          "intrusive"
+        ],
+        "explanation": "Intrusive means entering or interrupting where it is not wanted.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the intrude base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "To intrude is to enter or join in where you are not wanted.",
     "listId": "extra-science-word-building",
@@ -20078,16 +20788,8 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "divide",
-      "collide",
-      "explode",
-      "corrode",
-      "conclude",
-      "extend",
-      "comprehend",
-      "evade",
-      "intrude",
-      "interlude"
+      "interlude",
+      "interludes"
     ],
     "sentence": "A quiet interlude gave the performers time to reset.",
     "sentences": [
@@ -20095,6 +20797,26 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "interlude"
+    ],
+    "variants": [
+      {
+        "word": "interludes",
+        "sentence": "The play had two short interludes.",
+        "sentences": [
+          "The play had two short interludes."
+        ],
+        "accepted": [
+          "interludes"
+        ],
+        "explanation": "Interludes are short pauses or breaks between parts of something.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the interlude base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "An interlude is a short pause or break between parts of something.",
     "listId": "extra-science-word-building",
@@ -20121,7 +20843,9 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "classification"
+      "classification",
+      "classify",
+      "classified"
     ],
     "sentence": "Classification helps scientists compare animals with similar features.",
     "sentences": [
@@ -20129,6 +20853,44 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "classification"
+    ],
+    "variants": [
+      {
+        "word": "classify",
+        "sentence": "Scientists classify living things by their features.",
+        "sentences": [
+          "Scientists classify living things by their features."
+        ],
+        "accepted": [
+          "classify"
+        ],
+        "explanation": "To classify is to sort things into groups by shared features.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the classification base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "classified",
+        "sentence": "The leaves were classified by shape and size.",
+        "sentences": [
+          "The leaves were classified by shape and size."
+        ],
+        "accepted": [
+          "classified"
+        ],
+        "explanation": "Classified means sorted into groups by type or feature.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the classification base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "Classification is sorting living things or objects into groups by shared features.",
     "listId": "extra-science-word-building",
@@ -20155,7 +20917,7 @@ export const WORD_BY_SLUG = {
     "yearLabel": "Extra",
     "familyWords": [
       "backbone",
-      "skeleton"
+      "backbones"
     ],
     "sentence": "A fish has a backbone inside its body.",
     "sentences": [
@@ -20163,6 +20925,26 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "backbone"
+    ],
+    "variants": [
+      {
+        "word": "backbones",
+        "sentence": "The model showed how backbones protect the spinal cord.",
+        "sentences": [
+          "The model showed how backbones protect the spinal cord."
+        ],
+        "accepted": [
+          "backbones"
+        ],
+        "explanation": "Backbones are rows of bones that support the backs of some animals.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the backbone base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "A backbone is the row of bones that supports the back.",
     "listId": "extra-science-word-building",
@@ -20189,8 +20971,8 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "backbone",
-      "skeleton"
+      "skeleton",
+      "skeletal"
     ],
     "sentence": "The skeleton protects important organs.",
     "sentences": [
@@ -20198,6 +20980,26 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "skeleton"
+    ],
+    "variants": [
+      {
+        "word": "skeletal",
+        "sentence": "The diagram showed the skeletal system clearly.",
+        "sentences": [
+          "The diagram showed the skeletal system clearly."
+        ],
+        "accepted": [
+          "skeletal"
+        ],
+        "explanation": "Skeletal means connected with the skeleton or bones.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the skeleton base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "A skeleton is the frame of bones that supports a body.",
     "listId": "extra-science-word-building",
@@ -20224,12 +21026,7 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "cold-blooded",
-      "amphibians",
-      "reptiles",
-      "mammals",
-      "arachnid",
-      "mollusc"
+      "cold-blooded"
     ],
     "sentence": "A cold-blooded reptile warms itself on a rock.",
     "sentences": [
@@ -20264,12 +21061,8 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "cold-blooded",
       "amphibians",
-      "reptiles",
-      "mammals",
-      "arachnid",
-      "mollusc"
+      "amphibian"
     ],
     "sentence": "Many amphibians begin life in water as tadpoles.",
     "sentences": [
@@ -20277,6 +21070,26 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "amphibians"
+    ],
+    "variants": [
+      {
+        "word": "amphibian",
+        "sentence": "A frog is an amphibian with moist skin.",
+        "sentences": [
+          "A frog is an amphibian with moist skin."
+        ],
+        "accepted": [
+          "amphibian"
+        ],
+        "explanation": "An amphibian is an animal that can live in water and on land.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the amphibians base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "Amphibians are animals such as frogs that can live in water and on land.",
     "listId": "extra-science-word-building",
@@ -20303,7 +21116,8 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "metamorphosis"
+      "metamorphosis",
+      "metamorphose"
     ],
     "sentence": "A butterfly goes through metamorphosis before it can fly.",
     "sentences": [
@@ -20311,6 +21125,26 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "metamorphosis"
+    ],
+    "variants": [
+      {
+        "word": "metamorphose",
+        "sentence": "Some insects metamorphose before they can fly.",
+        "sentences": [
+          "Some insects metamorphose before they can fly."
+        ],
+        "accepted": [
+          "metamorphose"
+        ],
+        "explanation": "To metamorphose is to change into a very different adult form.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the metamorphosis base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "Metamorphosis is a major change in body form as an animal grows.",
     "listId": "extra-science-word-building",
@@ -20337,12 +21171,8 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "cold-blooded",
-      "amphibians",
       "reptiles",
-      "mammals",
-      "arachnid",
-      "mollusc"
+      "reptile"
     ],
     "sentence": "Reptiles often lay eggs on land.",
     "sentences": [
@@ -20350,6 +21180,26 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "reptiles"
+    ],
+    "variants": [
+      {
+        "word": "reptile",
+        "sentence": "A lizard is a reptile that warms itself in sunlight.",
+        "sentences": [
+          "A lizard is a reptile that warms itself in sunlight."
+        ],
+        "accepted": [
+          "reptile"
+        ],
+        "explanation": "A reptile is a cold-blooded animal with dry scales.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the reptiles base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "Reptiles are cold-blooded animals with dry scales, such as lizards and snakes.",
     "listId": "extra-science-word-building",
@@ -20376,12 +21226,8 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "cold-blooded",
-      "amphibians",
-      "reptiles",
       "mammals",
-      "arachnid",
-      "mollusc"
+      "mammal"
     ],
     "sentence": "Dolphins and bats are both mammals.",
     "sentences": [
@@ -20389,6 +21235,26 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "mammals"
+    ],
+    "variants": [
+      {
+        "word": "mammal",
+        "sentence": "A whale is a mammal even though it lives in the sea.",
+        "sentences": [
+          "A whale is a mammal even though it lives in the sea."
+        ],
+        "accepted": [
+          "mammal"
+        ],
+        "explanation": "A mammal is a warm-blooded animal that usually feeds its young milk.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the mammals base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "Mammals are warm-blooded animals that usually have hair or fur and feed their young milk.",
     "listId": "extra-science-word-building",
@@ -20415,12 +21281,8 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "cold-blooded",
-      "amphibians",
-      "reptiles",
-      "mammals",
       "arachnid",
-      "mollusc"
+      "arachnids"
     ],
     "sentence": "A spider is an arachnid, not an insect.",
     "sentences": [
@@ -20428,6 +21290,26 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "arachnid"
+    ],
+    "variants": [
+      {
+        "word": "arachnids",
+        "sentence": "Spiders and scorpions are arachnids.",
+        "sentences": [
+          "Spiders and scorpions are arachnids."
+        ],
+        "accepted": [
+          "arachnids"
+        ],
+        "explanation": "Arachnids are animals with eight legs, such as spiders and scorpions.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the arachnid base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "An arachnid is an animal with eight legs, such as a spider or scorpion.",
     "listId": "extra-science-word-building",
@@ -20454,12 +21336,8 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "cold-blooded",
-      "amphibians",
-      "reptiles",
-      "mammals",
-      "arachnid",
-      "mollusc"
+      "mollusc",
+      "molluscs"
     ],
     "sentence": "A snail is a mollusc with a coiled shell.",
     "sentences": [
@@ -20467,6 +21345,26 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "mollusc"
+    ],
+    "variants": [
+      {
+        "word": "molluscs",
+        "sentence": "Snails and clams are molluscs.",
+        "sentences": [
+          "Snails and clams are molluscs."
+        ],
+        "accepted": [
+          "molluscs"
+        ],
+        "explanation": "Molluscs are soft-bodied animals, often with shells.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the mollusc base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      }
     ],
     "explanation": "A mollusc is a soft-bodied animal, often with a shell.",
     "listId": "extra-science-word-building",
@@ -20494,7 +21392,8 @@ export const WORD_BY_SLUG = {
     "yearLabel": "Extra",
     "familyWords": [
       "botanist",
-      "flowering"
+      "botany",
+      "botanical"
     ],
     "sentence": "The botanist examined the leaves carefully.",
     "sentences": [
@@ -20502,6 +21401,44 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "botanist"
+    ],
+    "variants": [
+      {
+        "word": "botany",
+        "sentence": "Botany helped the class understand plant growth.",
+        "sentences": [
+          "Botany helped the class understand plant growth."
+        ],
+        "accepted": [
+          "botany"
+        ],
+        "explanation": "Botany is the scientific study of plants.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the botanist base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "botanical",
+        "sentence": "The botanical garden displayed unusual flowers.",
+        "sentences": [
+          "The botanical garden displayed unusual flowers."
+        ],
+        "accepted": [
+          "botanical"
+        ],
+        "explanation": "Botanical means connected with plants or the study of plants.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the botanist base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "A botanist is a scientist who studies plants.",
     "listId": "extra-science-word-building",
@@ -20527,8 +21464,9 @@ export const WORD_BY_SLUG = {
     "spellingPool": "extra",
     "yearLabel": "Extra",
     "familyWords": [
-      "botanist",
-      "flowering"
+      "flowering",
+      "flowered",
+      "flowers"
     ],
     "sentence": "The flowering plant attracted several bees.",
     "sentences": [
@@ -20536,6 +21474,44 @@ export const WORD_BY_SLUG = {
     ],
     "accepted": [
       "flowering"
+    ],
+    "variants": [
+      {
+        "word": "flowered",
+        "sentence": "The plant flowered after several warm days.",
+        "sentences": [
+          "The plant flowered after several warm days."
+        ],
+        "accepted": [
+          "flowered"
+        ],
+        "explanation": "Flowered means produced flowers or decorated with flowers.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the flowering base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "flowers",
+        "sentence": "The flowers attracted several bees.",
+        "sentences": [
+          "The flowers attracted several bees."
+        ],
+        "accepted": [
+          "flowers"
+        ],
+        "explanation": "Flowers are the parts of plants that often make seeds.",
+        "sourceNote": "Added as an Extra word-family variant on 23 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling family extension",
+          "note": "Variant prompt for the flowering base word family.",
+          "importedAt": 1776902400000
+        },
+        "sortIndex": 2
+      }
     ],
     "explanation": "Flowering means producing flowers.",
     "listId": "extra-science-word-building",

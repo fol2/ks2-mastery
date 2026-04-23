@@ -97,6 +97,7 @@ They keep pool and year-group metadata explicit and give future operator tooling
   yearGroups,
   tags,
   accepted,
+  variants,
   explanation,
   sentenceEntryIds,
   sourceNote,
@@ -113,6 +114,8 @@ Legacy bundles that pre-date this field are backfilled from the canonical seeded
 
 `spellingPool` is inherited from the word list if omitted. Existing version-one content without pool metadata therefore remains `core` by default.
 Extra words publish with runtime `year: 'extra'`, `yearLabel: 'Extra'`, and no statutory year groups.
+
+Extra words may define `variants` for opt-in word-family practice. A variant supplies its own dictated word, accepted spellings, learner-facing explanation, and sentence references, but it does not publish as a separate runtime word. The learner still secures the base Extra word slug. Core words must continue to model statutory variants as their existing separate word rows, preserving the original KS2 parity.
 
 ### Sentence entries / variants
 
@@ -214,6 +217,8 @@ Runtime words also include `spellingPool`. Current values are:
 - `extra` for expansion spelling content outside the statutory pools
 
 The legacy `all` spelling filter is still accepted by the service, but it aliases to `core`. Extra content has to be requested explicitly through the `extra` filter and is excluded from SATs Test mode.
+
+Extra word-family variants are runtime prompts only. They are used when an Extra session opts in to word-family variants, while aggregate totals, secure counts, reward progress, and word-bank rows stay keyed to the base Extra word.
 
 This keeps the subject engine deterministic and unchanged in its core pedagogy while letting content-management logic live outside it.
 

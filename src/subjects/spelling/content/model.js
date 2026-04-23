@@ -70,6 +70,13 @@ function normaliseTags(value) {
   return uniqueStrings(value, { lowerCase: true });
 }
 
+function normaliseAcceptedSpellings(value, defaultValue = '') {
+  const accepted = uniqueStrings(value, { lowerCase: true });
+  const normalisedDefault = normaliseString(defaultValue).toLowerCase();
+  if (normalisedDefault && !accepted.includes(normalisedDefault)) accepted.unshift(normalisedDefault);
+  return accepted;
+}
+
 function hasUsableWordExplanation(value) {
   return normaliseString(value).length >= MIN_WORD_EXPLANATION_LENGTH;
 }
@@ -122,8 +129,8 @@ function normaliseWordEntry(rawValue, index = 0, wordListsById = new Map()) {
   const slug = normaliseString(raw.slug, slugifyWord(word));
   const listId = normaliseString(raw.listId);
   const listPool = normaliseSpellingPool(wordListsById.get(listId)?.spellingPool);
-  const accepted = uniqueStrings(raw.accepted, { lowerCase: true });
-  if (slug && !accepted.includes(slug)) accepted.unshift(slug);
+  const variants = (Array.isArray(raw.variants) ? raw.variants : [])
+    .map((entry, variantIndex) => normaliseWordVariant(entry, variantIndex));
 
   return {
     slug,
@@ -133,11 +140,26 @@ function normaliseWordEntry(rawValue, index = 0, wordListsById = new Map()) {
     spellingPool: normaliseSpellingPool(raw.spellingPool, listPool),
     yearGroups: normaliseYearGroups(raw.yearGroups),
     tags: normaliseTags(raw.tags),
-    accepted,
+    accepted: normaliseAcceptedSpellings(raw.accepted, slug),
+    ...(variants.length ? { variants } : {}),
     explanation: normaliseString(raw.explanation),
     sentenceEntryIds: uniqueStrings(raw.sentenceEntryIds),
     sourceNote: normaliseString(raw.sourceNote),
     provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'spelling word'),
+    sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0 ? Number(raw.sortIndex) : index,
+  };
+}
+
+function normaliseWordVariant(rawValue, index = 0) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const word = normaliseString(raw.word);
+  return {
+    word,
+    accepted: normaliseAcceptedSpellings(raw.accepted, word),
+    explanation: normaliseString(raw.explanation),
+    sentenceEntryIds: uniqueStrings(raw.sentenceEntryIds),
+    sourceNote: normaliseString(raw.sourceNote),
+    provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'spelling word variant'),
     sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0 ? Number(raw.sortIndex) : index,
   };
 }
@@ -162,11 +184,11 @@ function normaliseRuntimeWord(rawValue, index = 0) {
   const slug = normaliseString(raw.slug, slugifyWord(word));
   const spellingPool = normaliseSpellingPool(raw.spellingPool, raw.year === 'extra' ? 'extra' : 'core');
   const year = spellingPool === 'extra' ? 'extra' : raw.year === '5-6' ? '5-6' : '3-4';
-  const accepted = uniqueStrings(raw.accepted, { lowerCase: true });
-  if (slug && !accepted.includes(slug)) accepted.unshift(slug);
   const sentences = uniqueStrings(raw.sentences);
   const sentence = normaliseString(raw.sentence, sentences[0] || '');
   if (sentence && !sentences.includes(sentence)) sentences.unshift(sentence);
+  const variants = (Array.isArray(raw.variants) ? raw.variants : [])
+    .map((entry, variantIndex) => normaliseRuntimeWordVariant(entry, variantIndex));
 
   return {
     year,
@@ -178,13 +200,32 @@ function normaliseRuntimeWord(rawValue, index = 0) {
     familyWords: uniqueStrings(raw.familyWords),
     sentence,
     sentences,
-    accepted,
+    accepted: normaliseAcceptedSpellings(raw.accepted, slug),
+    ...(variants.length ? { variants } : {}),
     explanation: normaliseString(raw.explanation),
     listId: normaliseString(raw.listId),
     yearGroups: normaliseYearGroups(raw.yearGroups, spellingPool === 'extra' ? [] : year === '5-6' ? ['Y5', 'Y6'] : ['Y3', 'Y4']),
     tags: normaliseTags(raw.tags),
     sourceNote: normaliseString(raw.sourceNote),
     provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'published spelling word'),
+    sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0 ? Number(raw.sortIndex) : index,
+  };
+}
+
+function normaliseRuntimeWordVariant(rawValue, index = 0) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const word = normaliseString(raw.word);
+  const sentences = uniqueStrings(raw.sentences);
+  const sentence = normaliseString(raw.sentence, sentences[0] || '');
+  if (sentence && !sentences.includes(sentence)) sentences.unshift(sentence);
+  return {
+    word,
+    sentence,
+    sentences,
+    accepted: normaliseAcceptedSpellings(raw.accepted, word),
+    explanation: normaliseString(raw.explanation),
+    sourceNote: normaliseString(raw.sourceNote),
+    provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'published spelling word variant'),
     sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0 ? Number(raw.sortIndex) : index,
   };
 }
@@ -385,6 +426,21 @@ export function validateSpellingContentBundle(rawBundle) {
     if (!word.sentenceEntryIds.length) {
       errors.push(issue('error', 'broken_sentence_reference', `draft.words[${index}].sentenceEntryIds`, `Word "${word.slug}" must reference at least one sentence entry.`));
     }
+    const variants = Array.isArray(word.variants) ? word.variants : [];
+    if (variants.length && word.spellingPool !== 'extra') {
+      errors.push(issue('error', 'core_variants_not_supported', `draft.words[${index}].variants`, `Word "${word.slug}" can only define variants in the Extra pool.`));
+    }
+    variants.forEach((variant, variantIndex) => {
+      if (!variant.word) {
+        errors.push(issue('error', 'malformed_entry', `draft.words[${index}].variants[${variantIndex}].word`, `Variant ${variantIndex + 1} for word "${word.slug}" must include a word.`));
+      }
+      if (!hasUsableWordExplanation(variant.explanation)) {
+        errors.push(issue('error', 'missing_word_explanation', `draft.words[${index}].variants[${variantIndex}].explanation`, `Variant "${variant.word || variantIndex + 1}" for word "${word.slug}" must include a learner-facing explanation.`));
+      }
+      if (!variant.sentenceEntryIds.length) {
+        errors.push(issue('error', 'broken_sentence_reference', `draft.words[${index}].variants[${variantIndex}].sentenceEntryIds`, `Variant "${variant.word || variantIndex + 1}" for word "${word.slug}" must reference at least one sentence entry.`));
+      }
+    });
   });
 
   bundle.draft.sentences.forEach((sentence, index) => {
@@ -419,6 +475,19 @@ export function validateSpellingContentBundle(rawBundle) {
         errors.push(issue('error', 'broken_sentence_reference', `draft.words[${index}].sentenceEntryIds[${position}]`, `Sentence "${sentenceId}" belongs to word "${sentence.wordSlug}", not "${word.slug}".`));
       }
     });
+    const variants = Array.isArray(word.variants) ? word.variants : [];
+    variants.forEach((variant, variantIndex) => {
+      variant.sentenceEntryIds.forEach((sentenceId, position) => {
+        const sentence = sentencesById.get(sentenceId);
+        if (!sentence) {
+          errors.push(issue('error', 'broken_sentence_reference', `draft.words[${index}].variants[${variantIndex}].sentenceEntryIds[${position}]`, `Variant "${variant.word || variantIndex + 1}" for word "${word.slug}" references missing sentence id "${sentenceId}".`));
+          return;
+        }
+        if (sentence.wordSlug !== word.slug) {
+          errors.push(issue('error', 'broken_sentence_reference', `draft.words[${index}].variants[${variantIndex}].sentenceEntryIds[${position}]`, `Sentence "${sentenceId}" belongs to word "${sentence.wordSlug}", not "${word.slug}".`));
+        }
+      });
+    });
   });
 
   bundle.releases.forEach((release, index) => {
@@ -446,6 +515,18 @@ export function validateSpellingContentBundle(rawBundle) {
       if (word.spellingPool === 'core' && word.year === 'extra') {
         errors.push(issue('error', 'pool_mismatch', `releases[${index}].snapshot.words[${wordIndex}].spellingPool`, `Published core word "${word.slug}" cannot use the Extra runtime year.`));
       }
+      const variants = Array.isArray(word.variants) ? word.variants : [];
+      if (variants.length && word.spellingPool !== 'extra') {
+        errors.push(issue('error', 'core_variants_not_supported', `releases[${index}].snapshot.words[${wordIndex}].variants`, `Published word "${word.slug}" can only define variants in the Extra pool.`));
+      }
+      variants.forEach((variant, variantIndex) => {
+        if (!variant.word || !variant.sentence || !variant.sentences.length) {
+          errors.push(issue('error', 'malformed_entry', `releases[${index}].snapshot.words[${wordIndex}].variants[${variantIndex}]`, `Published variant ${variantIndex + 1} for word "${word.slug}" is incomplete.`));
+        }
+        if (!hasUsableWordExplanation(variant.explanation)) {
+          errors.push(issue('error', 'missing_word_explanation', `releases[${index}].snapshot.words[${wordIndex}].variants[${variantIndex}].explanation`, `Published variant "${variant.word || variantIndex + 1}" for word "${word.slug}" must include a learner-facing explanation.`));
+        }
+      });
     });
   });
 
@@ -512,6 +593,25 @@ export function buildPublishedSnapshotFromDraft(rawDraft, { generatedAt = Date.n
       .filter(Boolean)
       .sort((a, b) => a.sortIndex - b.sortIndex)
       .map((sentence) => sentence.text);
+    const variants = word.spellingPool === 'extra'
+      ? (Array.isArray(word.variants) ? word.variants : []).map((variant) => {
+          const variantSentences = variant.sentenceEntryIds
+            .map((id) => sentenceById.get(id))
+            .filter(Boolean)
+            .sort((a, b) => a.sortIndex - b.sortIndex)
+            .map((sentence) => sentence.text);
+          return {
+            word: variant.word,
+            sentence: variantSentences[0] || '',
+            sentences: variantSentences,
+            accepted: variant.accepted,
+            explanation: variant.explanation,
+            sourceNote: variant.sourceNote,
+            provenance: variant.provenance,
+            sortIndex: variant.sortIndex,
+          };
+        })
+      : [];
     const year = word.spellingPool === 'extra' ? 'extra' : yearBandFromGroups(word.yearGroups);
     const familyKey = `${word.spellingPool}::${year}::${word.family}`;
     if (!familyMap.has(familyKey)) familyMap.set(familyKey, []);
@@ -527,6 +627,7 @@ export function buildPublishedSnapshotFromDraft(rawDraft, { generatedAt = Date.n
       sentence: sentences[0] || '',
       sentences,
       accepted: word.accepted,
+      variants,
       explanation: word.explanation,
       listId: word.listId,
       yearGroups: word.yearGroups,
@@ -539,7 +640,9 @@ export function buildPublishedSnapshotFromDraft(rawDraft, { generatedAt = Date.n
 
   const words = runtimeWords.map((word) => ({
     ...word,
-    familyWords: familyMap.get(familyKeyForRuntime(word)) || [word.word],
+    familyWords: word.spellingPool === 'extra'
+      ? uniqueStrings([word.word, ...(Array.isArray(word.variants) ? word.variants : []).map((variant) => variant.word)])
+      : familyMap.get(familyKeyForRuntime(word)) || [word.word],
   }));
 
   return {
@@ -659,7 +762,12 @@ export function buildSpellingContentSummary(rawBundle) {
     publishedVersion: published?.version || 0,
     publishedAt: published?.publishedAt || 0,
     runtimeWordCount: published?.snapshot?.words?.length || 0,
-    runtimeSentenceCount: published?.snapshot?.words?.reduce((total, word) => total + (Array.isArray(word.sentences) ? word.sentences.length : 0), 0) || 0,
+    runtimeSentenceCount: published?.snapshot?.words?.reduce((total, word) => {
+      const baseCount = Array.isArray(word.sentences) ? word.sentences.length : 0;
+      const variantCount = (Array.isArray(word.variants) ? word.variants : [])
+        .reduce((sum, variant) => sum + (Array.isArray(variant.sentences) ? variant.sentences.length : 0), 0);
+      return total + baseCount + variantCount;
+    }, 0) || 0,
     ok: validation.ok,
   };
 }
