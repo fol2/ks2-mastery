@@ -44,7 +44,7 @@ handleAction()
 
 This is the main change that turns the product from “Spelling plus placeholders” into an actual platform.
 
-The registry validates this contract at startup. Fail early on missing methods or duplicate ids rather than discovering boundary drift at render time. Legacy `renderPractice()` support is retained only for local characterisation tests and transitional fixtures; production subject routes use React practice components.
+The registry validates this contract at startup. Fail early on missing methods or duplicate ids rather than discovering boundary drift at render time. Legacy `renderPractice()` support has been retired; subject routes use React practice components or an explicit React practice mapping.
 
 Subject presentation metadata such as accent colours belongs on the subject module. Services stay deterministic and presentation-free.
 

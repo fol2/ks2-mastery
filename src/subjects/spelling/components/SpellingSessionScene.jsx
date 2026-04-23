@@ -12,8 +12,13 @@ import {
   Cloze,
   FeedbackSlot,
   PathProgress,
+  spellingAnswerInputProps,
 } from './SpellingCommon.jsx';
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
+import {
+  SPELLING_SESSION_QUESTION_REVEAL_MS,
+  shouldDelaySpellingSessionQuestionReveal,
+} from '../session-timing.js';
 import {
   heroBgForSession,
   heroBgStyle,
@@ -21,19 +26,6 @@ import {
   renderFormAction,
   spellingSessionProgressIndex,
 } from './spelling-view-model.js';
-
-const SESSION_HERO_MORPH_MS = 720;
-const SESSION_PROMPT_SLIDE_MS = 520;
-const SESSION_QUESTION_REVEAL_PAUSE_MS = 500;
-const SESSION_QUESTION_REVEAL_MS = SESSION_HERO_MORPH_MS + SESSION_PROMPT_SLIDE_MS + SESSION_QUESTION_REVEAL_PAUSE_MS;
-
-function shouldDelaySessionQuestionReveal() {
-  if (typeof document === 'undefined') return false;
-  const reducedMotion = typeof window !== 'undefined'
-    && typeof window.matchMedia === 'function'
-    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  return !reducedMotion && document.documentElement.classList.contains('spelling-flow-transition');
-}
 
 export function SpellingSessionScene({ learner, service, ui, accent, actions, previousHeroBg = '' }) {
   const prefs = service.getPrefs(learner.id);
@@ -84,14 +76,14 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
     session.promptCount,
     awaitingAdvance ? 'locked' : 'active',
   ].join(':');
-  const [questionRevealed, setQuestionRevealed] = React.useState(() => !shouldDelaySessionQuestionReveal());
+  const [questionRevealed, setQuestionRevealed] = React.useState(() => !shouldDelaySpellingSessionQuestionReveal());
   React.useEffect(() => {
-    if (!shouldDelaySessionQuestionReveal()) {
+    if (!shouldDelaySpellingSessionQuestionReveal()) {
       setQuestionRevealed(true);
       return undefined;
     }
     setQuestionRevealed(false);
-    const timer = window.setTimeout(() => setQuestionRevealed(true), SESSION_QUESTION_REVEAL_MS);
+    const timer = window.setTimeout(() => setQuestionRevealed(true), SPELLING_SESSION_QUESTION_REVEAL_MS);
     return () => window.clearTimeout(timer);
   }, [session.id]);
   const sessionClasses = ['spelling-in-session'];
@@ -131,9 +123,7 @@ export function SpellingSessionScene({ learner, service, ui, accent, actions, pr
                   className="word-input"
                   name="typed"
                   data-autofocus="true"
-                  autoComplete="off"
-                  autoCapitalize="none"
-                  spellCheck={false}
+                  {...spellingAnswerInputProps}
                   placeholder={inputPlaceholder}
                   aria-label="Type the spelling"
                   disabled={awaitingAdvance}

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import React from 'react';
 
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createAppHarness } from './helpers/app-harness.js';
@@ -28,9 +29,21 @@ function makeBrokenSubject({
       if (throwInDashboardStats) throw new Error('dashboard stats exploded');
       return { pct: 0, due: 0, streak: 0, nextUp: 'Broken fixture' };
     },
-    renderPractice() {
+    renderPracticeComponent() {
       if (throwInPractice) throw new Error('renderPractice exploded');
-      return '<section class="card"><button class="btn" data-action="broken-action-trigger">Trigger broken action</button></section>';
+      return React.createElement(
+        'section',
+        { className: 'card' },
+        React.createElement(
+          'button',
+          {
+            className: 'btn',
+            type: 'button',
+            onClick: () => {},
+          },
+          'Trigger broken action',
+        ),
+      );
     },
     handleAction(action) {
       if (throwInAction && action === 'broken-action-trigger') {
@@ -63,15 +76,12 @@ test('subject render failures are contained to the active tab instead of breakin
   assert.equal(harness.store.getState().route.subjectId, brokenSubject.id);
   assert.match(html, /Practice temporarily unavailable/);
   assert.match(html, /Try this tab again/);
-  /* Shell chrome proxy: the v1 Codex Journal redesign replaced the inline
-     "Current learner" header with a React TopNav mount + breadcrumb. The
-     mount node being present proves the shell survived the practice throw. */
-  assert.match(html, /data-subject-topnav-mount="true"/);
+  assert.match(html, /Subject breadcrumb/);
   assert.equal(harness.runtimeBoundary.read({
     learnerId: harness.store.getState().learners.selectedId,
     subjectId: brokenSubject.id,
     tab: 'practice',
-  }).methodName, 'renderPractice');
+  }).methodName, 'renderPracticeComponent');
 });
 
 test('subject action failures are contained and leave routing, toasts, learner switching and spelling state intact', () => {

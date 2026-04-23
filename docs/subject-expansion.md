@@ -34,7 +34,7 @@ Reusable test assets now live in:
 The fixture subject is **not** a shipped product subject.
 It exists only to prove the platform can carry a second deterministic thin slice without shell redesign.
 
-The browser shell has since moved to a single React root. The harness still keeps a small legacy-render characterisation path for regression coverage, but production subject presentation now flows through `SubjectRoute` and React practice components.
+The browser shell has since moved to a single React root. Subject presentation flows through `SubjectRoute` and React practice components.
 
 ## Thin-slice reference contract
 
@@ -53,7 +53,7 @@ The subject module must still satisfy the existing enforced registry contract:
 - `PracticeComponent` or `renderPracticeComponent()`
 - `handleAction()`
 
-`renderPractice()` is accepted only as a compatibility bridge for old characterisation tests and transitional fixtures. A production subject must expose a React practice component, or be wired through the explicit React subject component map before it can render in the browser shell.
+`renderPractice()` is no longer accepted. A subject must expose a React practice component, or be wired through the explicit React subject component map before it can render in the browser shell.
 
 ### Thin-slice service contract
 

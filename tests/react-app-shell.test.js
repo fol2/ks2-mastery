@@ -8,6 +8,7 @@ test('React app shell renders dashboard without legacy island mount globals', as
 
   assert.match(html, /Your subjects/);
   assert.match(html, /KS2 Mastery/);
+  assert.match(html, /class="app-shell home-entry-shell"/);
   assert.doesNotMatch(html, /data-home-mount/);
   assert.doesNotMatch(html, /__ks2HomeSurface/);
 });
@@ -17,6 +18,8 @@ test('React app shell renders subject chrome without global subject top-nav moun
 
   assert.match(html, /Round setup/);
   assert.match(html, /KS2 Mastery/);
+  assert.match(html, /class="app-shell subject-entry-shell"/);
+  assert.match(html, /class="subject-entry-content"/);
   assert.match(html, /class="subject-breadcrumb-current"[^>]*>\s*Spelling\s*<\/button>/);
   assert.doesNotMatch(html, /data-subject-topnav-mount/);
 });

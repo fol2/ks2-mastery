@@ -6,6 +6,12 @@ import {
 } from './spelling-view-model.js';
 
 const useMeasuredLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect;
+export const spellingAnswerInputProps = {
+  autoComplete: 'off',
+  autoCapitalize: 'none',
+  autoCorrect: 'off',
+  spellCheck: false,
+};
 
 export function PathProgress({ done, current, total }) {
   const safeTotal = Math.max(1, Number(total) || 1);

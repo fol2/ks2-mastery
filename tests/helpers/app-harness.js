@@ -34,7 +34,7 @@ export function createAppHarness({
 
   function render() {
     const appState = controller.store.getState();
-    if (appState.route.screen === 'subject' && appState.route.subjectId === 'spelling') {
+    if (appState.route.screen === 'subject') {
       const html = renderReactControllerApp(controller);
       controller.ensureSpellingAutoAdvanceFromCurrentState();
       return html;

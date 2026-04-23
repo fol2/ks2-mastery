@@ -61,11 +61,15 @@ export function createAppController({
 
   const store = createStore(subjects, { repositories });
   const controllerListeners = new Set();
+  const setTimeoutFn = scheduler?.setTimeout?.bind(scheduler)
+    || (typeof globalThis.setTimeout === 'function' ? globalThis.setTimeout.bind(globalThis) : null);
+  const clearTimeoutFn = scheduler?.clearTimeout?.bind(scheduler)
+    || (typeof globalThis.clearTimeout === 'function' ? globalThis.clearTimeout.bind(globalThis) : null);
   const autoAdvance = createSpellingAutoAdvanceController({
     getState: () => store.getState(),
     dispatchContinue: () => dispatch('spelling-continue'),
-    setTimeoutFn: scheduler?.setTimeout?.bind(scheduler),
-    clearTimeoutFn: scheduler?.clearTimeout?.bind(scheduler),
+    setTimeoutFn,
+    clearTimeoutFn,
   });
 
   store.subscribe(() => {

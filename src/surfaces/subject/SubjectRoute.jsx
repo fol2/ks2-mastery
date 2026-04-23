@@ -151,21 +151,27 @@ export function SubjectRoute({ appState, context, actions }) {
   }
 
   if (!learner) {
-    return <NoWritableLearnerCard subject={subject} context={context} actions={actions} />;
+    return (
+      <main className="subject-entry-content">
+        <NoWritableLearnerCard subject={subject} context={context} actions={actions} />
+      </main>
+    );
   }
 
   return (
     <SubjectRouteContext.Provider value={{ appState, context: routeContext, actions, subject, activeTab }}>
-      <SubjectBreadcrumb subjectName={subject.name} onDashboard={actions.navigateHome} />
-      {appState.subjectUi?.[subject.id]?.error ? (
-        <section className="card" style={{ marginBottom: 18 }} role="alert" aria-live="polite">
-          <div className="feedback bad">
-            <strong>Subject message</strong>
-            <div>{appState.subjectUi[subject.id].error}</div>
-          </div>
-        </section>
-      ) : null}
-      {renderPracticeNode({ subject, routeContext, actions, activeTab, runtimeEntry, captureRenderError })}
+      <main className="subject-entry-content">
+        <SubjectBreadcrumb subjectName={subject.name} onDashboard={actions.navigateHome} />
+        {appState.subjectUi?.[subject.id]?.error ? (
+          <section className="card" style={{ marginBottom: 18 }} role="alert" aria-live="polite">
+            <div className="feedback bad">
+              <strong>Subject message</strong>
+              <div>{appState.subjectUi[subject.id].error}</div>
+            </div>
+          </section>
+        ) : null}
+        {renderPracticeNode({ subject, routeContext, actions, activeTab, runtimeEntry, captureRenderError })}
+      </main>
     </SubjectRouteContext.Provider>
   );
 }

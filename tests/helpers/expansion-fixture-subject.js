@@ -1,6 +1,5 @@
 import React from 'react';
 import { createLocalPlatformRepositories, cloneSerialisable, normalisePracticeSessionRecord } from '../../src/platform/core/repositories/index.js';
-import { escapeHtml } from '../../src/platform/core/utils.js';
 import { SUBJECTS } from '../../src/platform/core/subject-registry.js';
 import { createAppHarness } from './app-harness.js';
 
@@ -268,75 +267,6 @@ export function createExpansionFixtureService({ repositories, now = Date.now } =
   };
 }
 
-function renderDashboard(context, learnerId) {
-  const stats = context.service.getStats(learnerId);
-  return `
-    <section class="card">
-      <div class="eyebrow">Candidate subject fixture</div>
-      <h2 class="section-title">Expansion fixture practice</h2>
-      <p class="subtitle">This is a non-production thin slice used only to prove the subject expansion harness. It deliberately uses the same shell, repository, session, and event boundaries as a real future subject.</p>
-      <div class="chip-row" style="margin-top:14px;">
-        <span class="chip">Answered ${stats.attempts}</span>
-        <span class="chip">Accuracy ${stats.accuracy}%</span>
-        <span class="chip">Due ${stats.due}</span>
-      </div>
-      <div class="actions" style="margin-top:16px;">
-        <button class="btn primary" data-action="fixture-start">Start deterministic round</button>
-      </div>
-    </section>
-  `;
-}
-
-function renderSession(context, learnerId, ui) {
-  const question = ui.session?.currentQuestion;
-  return `
-    <section class="card">
-      <div class="eyebrow">Candidate subject fixture</div>
-      <h2 class="section-title">Expansion fixture live round</h2>
-      <p class="subtitle">${escapeHtml(context.appState.learners.byId[learnerId].name)} · deterministic prompt</p>
-      <div class="callout" style="margin-top:14px;">Solve: <strong>${escapeHtml(question.prompt)}</strong></div>
-      <form data-action="fixture-submit-form" style="margin-top:16px; display:grid; gap:12px;">
-        <label class="field">
-          <span>Your answer</span>
-          <input class="input" name="typed" data-autofocus="true" autocomplete="off" />
-        </label>
-        <div class="actions">
-          <button class="btn primary" type="submit">Submit answer</button>
-          <button class="btn secondary" type="button" data-action="fixture-back">End round</button>
-        </div>
-      </form>
-    </section>
-  `;
-}
-
-function renderSummary(ui) {
-  const summary = ui.summary || {};
-  const feedback = ui.feedback || {};
-  return `
-    <section class="card">
-      <div class="eyebrow">Candidate subject fixture</div>
-      <h2 class="section-title">Expansion fixture summary</h2>
-      <p class="subtitle">${escapeHtml(summary.message || '')}</p>
-      <div class="feedback ${feedback.kind === 'success' ? 'good' : 'warn'}" style="margin-top:14px;">
-        <strong>${escapeHtml(feedback.headline || '')}</strong>
-        <div style="margin-top:8px;">${escapeHtml(feedback.body || '')}</div>
-      </div>
-      <div class="stat-grid" style="margin-top:16px;">
-        ${(summary.cards || []).map((card) => `
-          <div class="stat">
-            <div class="stat-label">${escapeHtml(card.label)}</div>
-            <div class="stat-value">${escapeHtml(String(card.value))}</div>
-            <div class="stat-sub">${escapeHtml(card.sub)}</div>
-          </div>
-        `).join('')}
-      </div>
-      <div class="actions" style="margin-top:16px;">
-        <button class="btn secondary" data-action="fixture-back">Back to fixture dashboard</button>
-      </div>
-    </section>
-  `;
-}
-
 function ExpansionFixturePracticeComponent({ appState, service, actions }) {
   const learnerId = appState.learners.selectedId;
   const learner = appState.learners.byId[learnerId];
@@ -460,13 +390,6 @@ export const expansionFixtureModule = {
     };
   },
   PracticeComponent: ExpansionFixturePracticeComponent,
-  renderPractice(context) {
-    const learnerId = context.appState.learners.selectedId;
-    const ui = context.service.initState(context.appState.subjectUi[EXPANSION_FIXTURE_SUBJECT_ID], learnerId);
-    if (ui.phase === 'session') return renderSession(context, learnerId, ui);
-    if (ui.phase === 'summary') return renderSummary(ui);
-    return renderDashboard(context, learnerId);
-  },
   handleAction(action, context) {
     const learnerId = context.appState.learners.selectedId;
     const ui = context.service.initState(context.appState.subjectUi[EXPANSION_FIXTURE_SUBJECT_ID], learnerId);

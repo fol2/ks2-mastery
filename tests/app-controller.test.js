@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import React from 'react';
 
 import {
   createCredentialFetch,
@@ -38,8 +39,8 @@ function makeBrokenSubject() {
     getDashboardStats() {
       return { pct: 0, due: 0, streak: 0, nextUp: 'Broken fixture' };
     },
-    renderPractice() {
-      return '<button data-action="broken-action-trigger">Break</button>';
+    PracticeComponent() {
+      return React.createElement('button', { type: 'button', onClick: () => {} }, 'Break');
     },
     handleAction(action) {
       if (action === 'broken-action-trigger') throw new Error('handleAction exploded');
