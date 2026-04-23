@@ -149,8 +149,8 @@ test('seeded spelling content validates and round-trips through the portable exp
   assert.equal(validation.ok, true);
   assert.equal(validation.bundle.modelVersion, SPELLING_CONTENT_MODEL_VERSION);
   assert.equal(validation.errors.length, 0);
-  assert.equal(validation.bundle.releases.length, 3);
-  assert.equal(validation.bundle.publication.publishedVersion, 3);
+  assert.equal(validation.bundle.releases.length, 4);
+  assert.equal(validation.bundle.publication.publishedVersion, 4);
   assert.ok(validation.bundle.draft.wordLists
     .filter((list) => list.id.startsWith('statutory-'))
     .every((list) => list.spellingPool === 'core'));
@@ -164,7 +164,7 @@ test('seeded spelling content validates and round-trips through the portable exp
   const exported = content.exportPortable();
   const roundTripped = extractPortableSpellingContent(exported);
   assert.equal(roundTripped.draft.words.length, validation.bundle.draft.words.length);
-  assert.equal(roundTripped.releases.at(-1).version, 3);
+  assert.equal(roundTripped.releases.at(-1).version, 4);
 });
 
 test('seeded spelling content includes the Extra expansion and current word-family variants', () => {
@@ -175,10 +175,10 @@ test('seeded spelling content includes the Extra expansion and current word-fami
   assert.ok(extraList);
   assert.equal(extraList.spellingPool, 'extra');
   assert.deepEqual(extraList.yearGroups, []);
-  assert.equal(extraList.wordSlugs.length, 22);
+  assert.equal(extraList.wordSlugs.length, 23);
 
   const extraWords = validation.bundle.draft.words.filter((word) => word.spellingPool === 'extra');
-  assert.equal(extraWords.length, 22);
+  assert.equal(extraWords.length, 23);
 
   const baselineRelease = validation.bundle.releases[0];
   const currentRelease = validation.bundle.releases.at(-1);
@@ -191,6 +191,11 @@ test('seeded spelling content includes the Extra expansion and current word-fami
   assert.equal(runtimeWord.year, 'extra');
   assert.deepEqual(runtimeWord.accepted, ['mollusc']);
   assert.equal(runtimeWord.accepted.includes('mollusk'), false);
+  const vertebrates = currentRelease.snapshot.wordBySlug.vertebrates;
+  assert.equal(vertebrates.word, 'vertebrates');
+  assert.deepEqual(vertebrates.familyWords, ['vertebrates', 'invertebrates']);
+  assert.equal(vertebrates.variants[0].word, 'invertebrates');
+  assert.equal(vertebrates.variants[0].sentence, 'Worms and insects are invertebrates without a backbone.');
 
   const divide = currentRelease.snapshot.wordBySlug.divide;
   assert.deepEqual(divide.familyWords, ['divide', 'division', 'divisible']);
@@ -202,8 +207,8 @@ test('seeded spelling content includes the Extra expansion and current word-fami
   assert.equal(divide.variants[1].explanation, 'Divisible means able to be divided exactly by a number.');
   const currentExtraWords = currentRelease.snapshot.words.filter((word) => word.spellingPool === 'extra');
   const variantCount = currentExtraWords.reduce((total, word) => total + (word.variants?.length || 0), 0);
-  assert.equal(currentRelease.snapshot.words.filter((word) => word.spellingPool === 'extra').length, 22);
-  assert.equal(variantCount, 30);
+  assert.equal(currentRelease.snapshot.words.filter((word) => word.spellingPool === 'extra').length, 23);
+  assert.equal(variantCount, 31);
   assert.ok(currentExtraWords.every((word) => (word.variants || []).every((variant) => variant.explanation && variant.sentence)));
 });
 
@@ -337,7 +342,7 @@ test('content service supplements legacy published runtime with seeded release a
   const snapshot = content.getRuntimeSnapshot();
 
   assert.equal(content.readBundle().publication.publishedVersion, 1);
-  assert.equal(snapshot.words.filter((word) => word.spellingPool === 'extra').length, 22);
+  assert.equal(snapshot.words.filter((word) => word.spellingPool === 'extra').length, 23);
   assert.equal(snapshot.wordBySlug.mollusc.spellingPool, 'extra');
 
   stored.releases[0].version = SEEDED_SPELLING_CONTENT_BUNDLE.publication.publishedVersion + 1;
@@ -347,7 +352,7 @@ test('content service supplements legacy published runtime with seeded release a
   const higherLocalVersionSnapshot = content.getRuntimeSnapshot();
 
   assert.equal(content.readBundle().publication.publishedVersion, SEEDED_SPELLING_CONTENT_BUNDLE.publication.publishedVersion + 1);
-  assert.equal(higherLocalVersionSnapshot.words.filter((word) => word.spellingPool === 'extra').length, 22);
+  assert.equal(higherLocalVersionSnapshot.words.filter((word) => word.spellingPool === 'extra').length, 23);
 
   const service = createSpellingService({
     tts: makeTts(),

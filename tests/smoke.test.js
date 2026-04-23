@@ -331,8 +331,8 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   html = harness.render();
   assert.match(html, />mollusc</);
   assert.doesNotMatch(html, />accident</);
-  assert.match(html, /Extra selected — 22 of 235 words, 0 secure, 0 due today, 0 weak spots/);
-  assert.match(html, /Showing 22 of 22 Extra spellings/);
+  assert.match(html, /Extra selected — 23 of 236 words, 0 secure, 0 due today, 0 weak spots/);
+  assert.match(html, /Showing 23 of 23 Extra spellings/);
 
   harness.dispatch('spelling-analytics-year-filter', { value: 'all' });
 
