@@ -57,6 +57,17 @@ function profileWriteLockReason(appState, chrome) {
   return '';
 }
 
+function dataImportLockReason(appState, chrome, profileLockReason = '') {
+  if (profileLockReason) return profileLockReason;
+  if (chrome.session?.signedIn) {
+    return 'JSON import is available only for local recovery. Server-synced accounts restore data from D1.';
+  }
+  if (appState.persistence?.mode === 'remote-sync') {
+    return 'JSON import is available only for local recovery. Server-synced accounts restore data from D1.';
+  }
+  return '';
+}
+
 function PersistenceInline({ snapshot }) {
   const mode = snapshot?.mode || 'local-only';
   const trust = snapshot?.trustedState === 'remote'
@@ -142,6 +153,8 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
   const learners = learnerList(appState);
   const writeLockReason = profileWriteLockReason(appState, chrome);
   const writeLocked = Boolean(writeLockReason);
+  const importLockReason = dataImportLockReason(appState, chrome, writeLockReason);
+  const importLocked = Boolean(importLockReason);
   if (!learner) {
     return (
       <div className="app-shell profile-settings-shell">
@@ -315,10 +328,11 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
               </div>
               <p className="subtitle">Exports use JSON recovery points. Imports keep existing learners unless a full-app snapshot replaces this browser dataset.</p>
               <PersistenceInline snapshot={appState.persistence} />
+              {importLocked && <div className="feedback warn" role="status">{importLockReason}</div>}
               <div className="actions profile-data-actions">
                 <button className="btn secondary" type="button" onClick={() => actions.dispatch('platform-export-learner')}>Export current learner</button>
                 <button className="btn secondary" type="button" onClick={() => actions.dispatch('platform-export-app')}>Export full app</button>
-                <button className="btn ghost" type="button" disabled={writeLocked} onClick={() => actions.dispatch('platform-import')}>Import JSON</button>
+                <button className="btn ghost" type="button" disabled={importLocked} onClick={() => actions.dispatch('platform-import')}>Import JSON</button>
               </div>
               <input
                 id="platform-import-file"

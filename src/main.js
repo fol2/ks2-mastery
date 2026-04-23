@@ -231,6 +231,11 @@ const PROFILE_WRITE_ACTIONS = new Set([
   'platform-import-file-selected',
   'platform-reset-all',
 ]);
+const SERVER_SYNC_LOCAL_DATASET_ACTIONS = new Set([
+  'platform-import',
+  'platform-import-file-selected',
+  'platform-reset-all',
+]);
 
 function syncAudioPlayingClass() {
   const normalNodes = root.querySelectorAll(NORMAL_REPLAY_SELECTORS.join(','));
@@ -500,6 +505,9 @@ function blockedReadOnlyAdultActionReason(action) {
   if (appState.persistence?.mode === 'degraded') {
     return 'Sync is degraded, so profile write actions are blocked until persistence recovers.';
   }
+  if (boot.session.signedIn && SERVER_SYNC_LOCAL_DATASET_ACTIONS.has(String(action || ''))) {
+    return 'JSON import and full browser reset are local recovery tools. Server-synced accounts are restored from D1.';
+  }
   return '';
 }
 
@@ -729,6 +737,88 @@ async function parseApiJson(response) {
     throw error;
   }
   return payload;
+}
+
+function isServerSyncedRuntime() {
+  return boot.session.mode === 'remote-sync' || boot.session.mode === 'demo-sync';
+}
+
+function learnerSnapshotWithout(learnerId) {
+  const snapshot = store.getState().learners;
+  if (!snapshot.byId[learnerId] || snapshot.allIds.length <= 1) return null;
+  const byId = { ...snapshot.byId };
+  delete byId[learnerId];
+  const allIds = snapshot.allIds.filter((id) => id !== learnerId);
+  return {
+    byId,
+    allIds,
+    selectedId: snapshot.selectedId === learnerId ? allIds[0] : snapshot.selectedId,
+  };
+}
+
+function deleteLearnerFromServerSyncedAccount(learnerId) {
+  const nextLearners = learnerSnapshotWithout(learnerId);
+  if (!nextLearners) return false;
+  runtimeBoundary.clearLearner(learnerId);
+  repositories.learners.write(nextLearners);
+  store.reloadFromRepositories({ preserveRoute: true });
+  return true;
+}
+
+async function resetServerSyncedLearnerProgress(learnerId) {
+  const requestId = uid('learner-reset');
+  const response = await credentialFetch('/api/learners/reset-progress', {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      learnerId,
+      mutation: {
+        requestId,
+        correlationId: requestId,
+        expectedLearnerRevision: repositories.runtime.readLearnerRevision(learnerId),
+      },
+    }),
+  });
+  await parseApiJson(response);
+  await repositories.hydrate({ cacheScope: 'learner-reset-progress' });
+  runtimeBoundary.clearLearner(learnerId);
+  store.clearMonsterCelebrations();
+  store.reloadFromRepositories({ preserveRoute: true });
+}
+
+async function profileTtsPayload(provider) {
+  const learnerId = store.getState().learners.selectedId;
+  if (provider === 'browser' || !learnerId) {
+    return {
+      learnerId,
+      word: 'early',
+      sentence: 'The birds sang early in the day.',
+      provider,
+      kind: 'test',
+    };
+  }
+
+  const params = new URLSearchParams({
+    learnerId,
+    detailSlug: 'early',
+    pageSize: '1',
+  });
+  const response = await credentialFetch(`/api/subjects/spelling/word-bank?${params.toString()}`, {
+    headers: { accept: 'application/json' },
+  });
+  const payload = await parseApiJson(response);
+  const cue = payload?.wordBank?.detail?.audio?.dictation || null;
+  if (!cue?.learnerId || !cue?.promptToken) {
+    throw new Error('Could not prepare a server-authorised dictation test.');
+  }
+  return {
+    ...cue,
+    provider,
+    kind: 'test',
+  };
 }
 
 function createSpellingContentApi({ fetch: fetchFn }) {
@@ -1493,12 +1583,8 @@ function handleGlobalAction(action, data) {
   if (action === 'tts-test') {
     const provider = normaliseTtsProvider(data.provider, selectedTtsProvider());
     const token = beginProfileTtsTest(provider);
-    Promise.resolve(tts.speak({
-      word: 'early',
-      sentence: 'The birds sang early in the day.',
-      provider,
-      kind: 'test',
-    }))
+    profileTtsPayload(provider)
+      .then((payload) => tts.speak(payload))
       .then((ok) => finishProfileTtsTest(token, Boolean(ok)))
       .catch(() => finishProfileTtsTest(token, false));
     return true;
@@ -1524,9 +1610,13 @@ function handleGlobalAction(action, data) {
   if (action === 'learner-delete') {
     if (blockReadOnlyAdultAction(action)) return true;
     if (!globalThis.confirm('Warning: delete the current learner and all their subject progress and codex state?')) return true;
-    runtimeBoundary.clearLearner(learnerId);
-    resetLearnerData(learnerId);
-    store.deleteLearner(learnerId);
+    if (isServerSyncedRuntime()) {
+      deleteLearnerFromServerSyncedAccount(learnerId);
+    } else {
+      runtimeBoundary.clearLearner(learnerId);
+      resetLearnerData(learnerId);
+      store.deleteLearner(learnerId);
+    }
     return true;
   }
 
@@ -1534,9 +1624,15 @@ function handleGlobalAction(action, data) {
     if (blockReadOnlyAdultAction(action)) return true;
     if (!globalThis.confirm('Warning: reset subject progress and codex rewards for the current learner?')) return true;
     tts.stop();
-    runtimeBoundary.clearLearner(learnerId);
-    resetLearnerData(learnerId);
-    store.resetSubjectUi();
+    if (isServerSyncedRuntime()) {
+      resetServerSyncedLearnerProgress(learnerId).catch((error) => {
+        globalThis.alert?.(error?.message || 'Could not reset learner progress.');
+      });
+    } else {
+      runtimeBoundary.clearLearner(learnerId);
+      resetLearnerData(learnerId);
+      store.resetSubjectUi();
+    }
     return true;
   }
 

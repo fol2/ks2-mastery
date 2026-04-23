@@ -1445,6 +1445,7 @@ async function withLearnerMutation(db, {
   const requestHash = mutationPayloadHash(kind, payload);
 
   return withTransaction(db, async () => {
+    await requireLearnerWriteAccess(db, accountId, learnerId);
     const existingReceipt = await loadMutationReceipt(db, accountId, nextMutation.requestId);
     if (existingReceipt) {
       if (existingReceipt.request_hash !== requestHash) {
@@ -1476,7 +1477,6 @@ async function withLearnerMutation(db, {
       return replayed;
     }
 
-    await requireLearnerWriteAccess(db, accountId, learnerId);
     const learner = await first(db, 'SELECT id FROM learner_profiles WHERE id = ?', [learnerId]);
     if (!learner) throw new NotFoundError('Learner was not found.', { learnerId });
 
@@ -1569,6 +1569,7 @@ async function runSubjectCommandMutation(db, {
   }, 'learner');
   const requestHash = mutationPayloadHash(kind, payload);
 
+  await requireLearnerWriteAccess(db, accountId, command.learnerId);
   const existingReceipt = await loadMutationReceipt(db, accountId, nextMutation.requestId);
   if (existingReceipt) {
     if (existingReceipt.request_hash !== requestHash) {
@@ -1600,7 +1601,6 @@ async function runSubjectCommandMutation(db, {
     return replayed;
   }
 
-  await requireLearnerWriteAccess(db, accountId, command.learnerId);
   const learner = await first(db, 'SELECT id, state_revision FROM learner_profiles WHERE id = ?', [command.learnerId]);
   if (!learner) throw new NotFoundError('Learner was not found.', { learnerId: command.learnerId });
 
@@ -1993,6 +1993,29 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         apply: async () => {
           await run(db, 'DELETE FROM event_log WHERE learner_id = ?', [learnerId]);
           return { learnerId, cleared: true };
+        },
+      });
+    },
+    async resetLearnerRuntime(accountId, learnerId, mutation = {}) {
+      const nowTs = nowFactory();
+      return withLearnerMutation(db, {
+        accountId,
+        learnerId,
+        kind: 'learner_runtime.reset',
+        payload: { learnerId },
+        mutation,
+        nowTs,
+        apply: async () => {
+          await batch(db, [
+            bindStatement(db, 'DELETE FROM child_subject_state WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM practice_sessions WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM child_game_state WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM event_log WHERE learner_id = ?', [learnerId]),
+          ]);
+          return {
+            learnerId,
+            reset: true,
+          };
         },
       });
     },

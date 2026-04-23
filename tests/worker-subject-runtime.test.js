@@ -209,6 +209,77 @@ test('worker subject command route validates auth, same-origin, and handler avai
   DB.close();
 });
 
+test('subject command replay requires current learner write access', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const runtime = createSubjectRuntime({
+    handlers: {
+      spelling: {
+        'start-session': async command => ({
+          learnerId: command.learnerId,
+          subjectReadModel: { phase: 'started' },
+        }),
+      },
+    },
+  });
+  const app = createWorkerApp({ subjectRuntime: runtime });
+  const env = {
+    DB,
+    AUTH_MODE: 'development-stub',
+    ENVIRONMENT: 'test',
+  };
+  const now = Date.now();
+  DB.db.prepare(`
+    INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+    VALUES ('learner-a', 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run(now, now);
+  DB.db.prepare(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES ('adult-a', 'adult-a@example.test', 'Adult A', 'parent', 'learner-a', ?, ?, 0)
+  `).run(now, now);
+  DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES ('adult-a', 'learner-a', 'owner', 0, ?, ?)
+  `).run(now, now);
+
+  const body = {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'cmd-replay-access',
+    expectedLearnerRevision: 0,
+  };
+  const first = await app.fetch(new Request('https://repo.test/api/subjects/spelling/command', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      origin: 'https://repo.test',
+      'x-ks2-dev-account-id': 'adult-a',
+    },
+    body: JSON.stringify(body),
+  }), env, {});
+  assert.equal(first.status, 200, await first.text());
+
+  DB.db.prepare(`
+    DELETE FROM account_learner_memberships
+    WHERE account_id = 'adult-a' AND learner_id = 'learner-a'
+  `).run();
+
+  const replay = await app.fetch(new Request('https://repo.test/api/subjects/spelling/command', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      origin: 'https://repo.test',
+      'x-ks2-dev-account-id': 'adult-a',
+    },
+    body: JSON.stringify(body),
+  }), env, {});
+  const replayPayload = await replay.json();
+
+  assert.equal(replay.status, 403);
+  assert.equal(replayPayload.code, 'forbidden');
+
+  DB.close();
+});
+
 test('subject command writes roll back as one D1 batch without a transaction feature flag', async () => {
   const DB = createMigratedSqliteD1Database();
   delete DB.supportsSqlTransactions;
@@ -362,6 +433,88 @@ test('production real sessions cannot use legacy broad learner runtime write rou
     assert.equal(response.status, 403, `${route.method} ${route.path}`);
     assert.equal(payload.code, 'subject_command_required');
   }
+
+  server.close();
+});
+
+test('server-owned learner progress reset clears runtime collections in production', async () => {
+  const server = createWorkerRepositoryServer({
+    env: {
+      AUTH_MODE: 'production',
+      ENVIRONMENT: 'production',
+      APP_HOSTNAME: 'repo.test',
+    },
+  });
+  const register = await postJson(server, '/api/auth/register', {
+    email: 'reset-progress@example.test',
+    password: 'password-1234',
+  });
+  const registerPayload = await register.json();
+  const cookie = cookieFrom(register);
+  const accountId = registerPayload.session.accountId;
+  const now = Date.now();
+  server.DB.db.prepare(`
+    INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+    VALUES ('learner-reset', 'Reset Learner', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run(now, now);
+  server.DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES (?, 'learner-reset', 'owner', 0, ?, ?)
+  `).run(accountId, now, now);
+  server.DB.db.prepare(`
+    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+    VALUES ('learner-reset', 'spelling', '{"phase":"dashboard"}', '{"progress":{"early":{"stage":2}}}', ?, ?)
+  `).run(now, accountId);
+  server.DB.db.prepare(`
+    INSERT INTO practice_sessions (id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at, updated_by_account_id)
+    VALUES ('session-reset', 'learner-reset', 'spelling', 'learning', 'active', '{}', NULL, ?, ?, ?)
+  `).run(now, now, accountId);
+  server.DB.db.prepare(`
+    INSERT INTO child_game_state (learner_id, system_id, state_json, updated_at, updated_by_account_id)
+    VALUES ('learner-reset', 'monster-codex', '{"caught":["inklet"]}', ?, ?)
+  `).run(now, accountId);
+  server.DB.db.prepare(`
+    INSERT INTO event_log (id, learner_id, subject_id, event_type, event_json, created_at, actor_account_id)
+    VALUES ('event-reset', 'learner-reset', 'spelling', 'spelling.word-secured', '{}', ?, ?)
+  `).run(now, accountId);
+
+  const reset = await postJson(server, '/api/learners/reset-progress', {
+    learnerId: 'learner-reset',
+    mutation: {
+      requestId: 'reset-progress-1',
+      expectedLearnerRevision: 0,
+    },
+  }, {
+    cookie,
+    origin: 'https://repo.test',
+  });
+  const payload = await reset.json();
+
+  assert.equal(reset.status, 200, JSON.stringify(payload));
+  assert.equal(payload.reset, true);
+  assert.equal(server.DB.db.prepare("SELECT COUNT(*) AS count FROM child_subject_state WHERE learner_id = 'learner-reset'").get().count, 0);
+  assert.equal(server.DB.db.prepare("SELECT COUNT(*) AS count FROM practice_sessions WHERE learner_id = 'learner-reset'").get().count, 0);
+  assert.equal(server.DB.db.prepare("SELECT COUNT(*) AS count FROM child_game_state WHERE learner_id = 'learner-reset'").get().count, 0);
+  assert.equal(server.DB.db.prepare("SELECT COUNT(*) AS count FROM event_log WHERE learner_id = 'learner-reset'").get().count, 0);
+  assert.equal(server.DB.db.prepare("SELECT state_revision FROM learner_profiles WHERE id = 'learner-reset'").get().state_revision, 1);
+
+  server.DB.db.prepare(`
+    DELETE FROM account_learner_memberships
+    WHERE account_id = ? AND learner_id = 'learner-reset'
+  `).run(accountId);
+  const replay = await postJson(server, '/api/learners/reset-progress', {
+    learnerId: 'learner-reset',
+    mutation: {
+      requestId: 'reset-progress-1',
+      expectedLearnerRevision: 0,
+    },
+  }, {
+    cookie,
+    origin: 'https://repo.test',
+  });
+  const replayPayload = await replay.json();
+  assert.equal(replay.status, 403);
+  assert.equal(replayPayload.code, 'forbidden');
 
   server.close();
 });

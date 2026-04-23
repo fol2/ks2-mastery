@@ -69,6 +69,17 @@ function demoConversionMetricStatement(db, accountId, now) {
   `, [now, accountId, now]);
 }
 
+function deleteDemoSessionsStatement(db, accountId) {
+  return bindStatement(db, `
+    DELETE FROM account_sessions
+    WHERE account_id = ?
+      AND (
+        session_kind = 'demo'
+        OR provider = 'demo'
+      )
+  `, [accountId]);
+}
+
 async function runDemoConversionBatch(db, statements) {
   const filtered = statements.filter(Boolean);
   if (!filtered.length) return [];
@@ -439,6 +450,7 @@ async function accountSessionFromToken(env, token, now = Date.now()) {
       s.id AS session_id,
       s.session_hash,
       s.provider,
+      s.session_kind,
       s.expires_at,
       a.id AS account_id,
       a.email,
@@ -451,12 +463,21 @@ async function accountSessionFromToken(env, token, now = Date.now()) {
     WHERE s.session_hash = ?
       AND s.expires_at > ?
       AND (
-        COALESCE(a.account_type, 'real') <> 'demo'
-        OR a.demo_expires_at > ?
+        (
+          COALESCE(s.session_kind, CASE WHEN s.provider = 'demo' THEN 'demo' ELSE 'real' END) <> 'demo'
+          AND s.provider <> 'demo'
+        )
+        OR (
+          COALESCE(a.account_type, 'real') = 'demo'
+          AND a.demo_expires_at > ?
+        )
       )
   `, [hash, now, now]);
   if (!row) return null;
   const accountType = row.account_type || 'real';
+  const sessionKind = row.provider === 'demo'
+    ? 'demo'
+    : (row.session_kind || 'real');
   const demoExpiresAt = Number(row.demo_expires_at) || null;
   return {
     accountId: row.account_id,
@@ -464,10 +485,11 @@ async function accountSessionFromToken(env, token, now = Date.now()) {
     displayName: row.display_name || null,
     platformRole: normalisePlatformRole(row.platform_role),
     provider: row.provider || 'session',
+    sessionKind,
     sessionId: row.session_id,
     sessionHash: row.session_hash,
     accountType,
-    demo: accountType === 'demo',
+    demo: sessionKind === 'demo' && accountType === 'demo',
     demoExpiresAt,
   };
 }
@@ -566,6 +588,7 @@ export async function registerWithEmail(env, request, payload = {}) {
           )
         `, [accountId, email, credential.hash, credential.salt, now, now, accountId, now]),
         demoConversionMetricStatement(db, accountId, now),
+        deleteDemoSessionsStatement(db, accountId),
       ]);
       requireDemoConversionApplied(results, { credentialIndex: 1 });
     } else {
@@ -1006,6 +1029,7 @@ async function convertDemoAccountFromIdentity(env, {
     `, [`identity-${randomToken(12)}`, accountId, provider, providerSubject, email || null, now, now, accountId, now]));
   }
   statements.push(demoConversionMetricStatement(db, accountId, now));
+  statements.push(deleteDemoSessionsStatement(db, accountId));
 
   try {
     const results = await runDemoConversionBatch(db, statements);

@@ -348,6 +348,18 @@ export function createWorkerApp({
           });
         }
 
+        if (url.pathname === '/api/learners/reset-progress' && request.method === 'POST') {
+          requireSameOrigin(request, env);
+          requireDemoWriteAllowed(session);
+          const body = await readJson(request);
+          const result = await repository.resetLearnerRuntime(
+            session.accountId,
+            body.learnerId,
+            mutationFromRequest(body, request),
+          );
+          return json({ ok: true, ...result });
+        }
+
         if (url.pathname === '/api/tts' && request.method === 'POST') {
           return await handleTextToSpeechRequest({
             env,

@@ -19,6 +19,12 @@ const FORBIDDEN_DEPLOYED_TEXT = [
   'Legacy vendor seed for Pass 11 content model',
   'createLegacySpellingEngine',
   'KS2_WORDS_ENRICHED',
+  'spelling-prompt-v1',
+  '/api/child-subject-state',
+  '/api/practice-sessions',
+  '/api/child-game-state',
+  '/api/event-log',
+  '/api/debug/reset',
   '?local=1',
   'data-home-mount',
   'home.bundle.js',
@@ -96,6 +102,7 @@ async function auditProduction(origin) {
     const target = new URL(path, base);
     const response = await fetchText(target.href);
     if (response.status >= 400) continue;
+    failures.push(`Direct URL should be denied with a 4xx response, got ${response.status}: ${path}`);
     assertNoForbiddenText(`Direct URL ${path}`, response.text, failures);
     const looksLikeRawJs = response.contentType.includes('javascript') || /^\s*(import|export)\s/m.test(response.text);
     if (looksLikeRawJs) {

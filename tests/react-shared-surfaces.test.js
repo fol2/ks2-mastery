@@ -28,6 +28,15 @@ test('profile settings disables write controls for demo while exposing conversio
   assert.match(html, /<button class="btn ghost" type="button" disabled="">Import JSON<\/button>/);
 });
 
+test('profile settings disables JSON import for server-synced accounts only', async () => {
+  const html = await renderProfileSurfaceFixture();
+
+  assert.match(html, /JSON import is available only for local recovery/);
+  assert.match(html, /<button class="btn ghost" type="button" disabled="">Import JSON<\/button>/);
+  assert.match(html, /Save learner profile<\/button>/);
+  assert.doesNotMatch(html, /type="submit" disabled="">Save learner profile/);
+});
+
 test('profile settings disables write controls when persistence is degraded', async () => {
   const html = await renderProfileSurfaceFixture({ persistenceMode: 'degraded' });
 

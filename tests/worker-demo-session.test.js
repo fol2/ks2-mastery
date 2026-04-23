@@ -267,6 +267,13 @@ test('non-expired demo registration promotes the demo account and preserves lear
   assert.equal(sessionPayload.account.accountType, 'real');
   assert.equal(sessionPayload.account.demo, false);
 
+  const oldDemoSession = await server.fetchRaw('https://repo.test/api/auth/session', {
+    headers: { cookie: demoCookie },
+  });
+  const oldDemoPayload = await oldDemoSession.json();
+  assert.equal(oldDemoSession.status, 200);
+  assert.equal(oldDemoPayload.session, null);
+
   const realBootstrap = await server.fetchRaw('https://repo.test/api/bootstrap', {
     headers: { cookie: realCookie },
   });
