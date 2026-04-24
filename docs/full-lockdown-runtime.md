@@ -104,6 +104,14 @@ The live smoke should prove the actual lockdown failure modes:
 - Subject commands require auth and same-origin headers.
 - TTS succeeds only through server-resolved prompt tokens.
 
+When Punctuation is the deployed change, run the reusable subject smoke after `npm run deploy`:
+
+```bash
+npm run smoke:production:punctuation
+```
+
+It verifies a production demo session, the Punctuation exposure gate, a Worker-owned Punctuation start-submit-summary path, and a Worker-owned English Spelling start path with redacted prompt-token audio.
+
 ## Operations
 
 Wrangler observability is enabled, but production should still alert on the signals that would indicate the lockdown boundary is under stress:

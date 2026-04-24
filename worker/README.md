@@ -152,7 +152,7 @@ For Grammar, the Worker owns session creation, deterministic question generation
 
 For Punctuation, the Worker owns session creation, item selection, deterministic marking, spaced scheduling, misconception events, release-scoped secure-unit progress, completed session writes, Bellstorm Coast reward projection, and the returned read model.
 
-Punctuation remains behind the `PUNCTUATION_SUBJECT_ENABLED` rollout env var. The production default is `false`, so the command route and browser exposure stay unavailable until release verification is accepted and the flag is intentionally changed.
+Punctuation remains behind the `PUNCTUATION_SUBJECT_ENABLED` rollout env var. The production deployment now sets it to `true` after the release-smoke gate passed, so the command route and browser exposure are intentionally available after deployment. Set it back to `false` for an immediate rollout rollback.
 
 The React client sends user intent and renders the response. It does not use browser-local Spelling, Grammar, or Punctuation engines as a production fallback.
 

@@ -13,6 +13,10 @@ import { createAppController } from '../src/platform/app/create-app-controller.j
 import { createLocalAppController } from '../src/platform/app/create-local-app-controller.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import {
+  acknowledgeMonsterCelebrationEvents,
+  acknowledgedMonsterCelebrationIds,
+} from '../src/platform/game/monster-celebration-acks.js';
+import {
   LOCAL_CODEX_REVIEW_LEARNER_ID,
   LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS,
 } from '../src/platform/core/local-review-profile.js';
@@ -202,6 +206,57 @@ test('controller dispatches profile TTS test through the selected provider', () 
   });
 });
 
+test('controller clears monster celebration acknowledgements on learner reset, delete, and full reset', () => {
+  installMemoryStorage();
+  const controller = createLocalAppController();
+  const learnerA = controller.store.getState().learners.selectedId;
+  const learnerAReward = {
+    id: 'reward.monster:learner-a:inklet:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: learnerA,
+    monsterId: 'inklet',
+    monster: { id: 'inklet', name: 'Inklet' },
+    previous: { stage: 0, level: 1, caught: true, branch: 'b1' },
+    next: { stage: 1, level: 2, caught: true, branch: 'b1' },
+    createdAt: Date.now(),
+  };
+
+  acknowledgeMonsterCelebrationEvents(learnerAReward, { learnerId: learnerA });
+  assert.equal(acknowledgedMonsterCelebrationIds(learnerA).has(learnerAReward.id), true);
+
+  controller.dispatch('learner-reset-progress');
+
+  assert.equal(acknowledgedMonsterCelebrationIds(learnerA).has(learnerAReward.id), false);
+
+  const learnerB = controller.store.createLearner({ name: 'Bryn', yearGroup: 'Y5' }).id;
+  const learnerBReward = {
+    id: 'reward.monster:learner-b:phaeton:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: learnerB,
+    monsterId: 'phaeton',
+    monster: { id: 'phaeton', name: 'Phaeton' },
+    previous: { stage: 0, level: 1, caught: true, branch: 'b1' },
+    next: { stage: 1, level: 2, caught: true, branch: 'b1' },
+    createdAt: Date.now(),
+  };
+
+  acknowledgeMonsterCelebrationEvents(learnerBReward, { learnerId: learnerB });
+  assert.equal(acknowledgedMonsterCelebrationIds(learnerB).has(learnerBReward.id), true);
+
+  controller.dispatch('learner-delete');
+
+  assert.equal(acknowledgedMonsterCelebrationIds(learnerB).has(learnerBReward.id), false);
+
+  acknowledgeMonsterCelebrationEvents(learnerAReward, { learnerId: learnerA });
+  assert.equal(acknowledgedMonsterCelebrationIds(learnerA).has(learnerAReward.id), true);
+
+  controller.dispatch('platform-reset-all');
+
+  assert.equal(acknowledgedMonsterCelebrationIds(learnerA).has(learnerAReward.id), false);
+});
+
 test('controller dispatches spelling transitions through store, repositories, events, and TTS', () => {
   installMemoryStorage();
   const controller = createLocalAppController();
@@ -222,6 +277,33 @@ test('controller dispatches spelling transitions through store, repositories, ev
   controller.dispatch('spelling-submit-form', { formData: typedFormData(answer) });
 
   assert.ok(controller.repositories.practiceSessions.list(learnerId).length >= 1);
+});
+
+test('controller delegates server-synced spelling actions to the remote command boundary', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const remoteCalls = [];
+  const session = { signedIn: true, mode: 'remote-sync', platformRole: 'parent' };
+  const controller = createAppController({
+    repositories,
+    session,
+    extraContext: {
+      session,
+      handleRemoteSpellingAction(action, data) {
+        remoteCalls.push({ action, data });
+        return true;
+      },
+    },
+  });
+  const learnerId = controller.store.getState().learners.selectedId;
+
+  controller.dispatch('open-subject', { subjectId: 'spelling' });
+  controller.dispatch('spelling-start', { source: 'test' });
+
+  assert.deepEqual(remoteCalls, [{ action: 'spelling-start', data: { source: 'test' } }]);
+  assert.equal(controller.store.getState().subjectUi.spelling.phase, 'dashboard');
+  assert.equal(controller.repositories.practiceSessions.list(learnerId).length, 0);
+  assert.equal(controller.runtimeBoundary.list().length, 0);
 });
 
 test('controller keeps late Grammar command responses scoped to their original learner', async () => {

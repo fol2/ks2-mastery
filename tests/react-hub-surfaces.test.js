@@ -10,6 +10,10 @@ test('React Parent Hub surface renders readable learner payload and read-only no
   assert.match(html, /Ava/);
   assert.match(html, /Read-only learner/);
   assert.match(html, /viewer memberships/);
+  assert.match(html, /Trouble words/);
+  assert.match(html, /Grammar secured/);
+  assert.match(html, /Grammar: 3\/18 concepts/);
+  assert.doesNotMatch(html, /Subject: spelling/);
   assert.match(html, /Export current learner/);
   assert.match(html, /disabled=""/);
 });

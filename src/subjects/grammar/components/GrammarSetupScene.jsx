@@ -36,7 +36,8 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
   const counts = grammar.stats?.concepts || {};
   const templates = grammar.stats?.templates || {};
   const selectedMode = grammar.prefs?.mode || 'smart';
-  const selectedFocus = grammar.prefs?.focusConceptId || '';
+  const troubleMode = selectedMode === 'trouble';
+  const selectedFocus = troubleMode ? '' : (grammar.prefs?.focusConceptId || '');
   const groupedConcepts = groupedGrammarConcepts(grammar.analytics?.concepts || []);
   const setupDisabled = runtimeReadOnly || Boolean(grammar.pendingCommand);
 
@@ -103,10 +104,10 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
               <select
                 className="input"
                 value={selectedFocus}
-                disabled={setupDisabled}
+                disabled={setupDisabled || troubleMode}
                 onChange={(event) => actions.dispatch('grammar-set-focus', { value: event.currentTarget.value })}
               >
-                <option value="">Smart mix</option>
+                <option value="">{troubleMode ? 'Weakest concept' : 'Smart mix'}</option>
                 {(grammar.analytics?.concepts || []).map((concept) => (
                   <option value={concept.id} key={concept.id}>{concept.name}</option>
                 ))}

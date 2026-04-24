@@ -38,6 +38,32 @@ test('shared store can switch subject tabs without losing route context', () => 
   assert.equal(state.route.tab, 'analytics');
 });
 
+test('shared store can preserve transient monster celebrations across command reloads', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const store = createStore(SUBJECTS, { repositories });
+  const event = {
+    id: 'reward.monster:learner-a:inklet:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: store.getState().learners.selectedId,
+    monsterId: 'inklet',
+    monster: { id: 'inklet', name: 'Inklet' },
+    previous: { stage: 0, level: 1, caught: true, branch: 'b1' },
+    next: { stage: 1, level: 2, caught: true, branch: 'b1' },
+    createdAt: 100,
+  };
+
+  store.pushMonsterCelebrations(event);
+  store.reloadFromRepositories({ preserveMonsterCelebrations: true });
+
+  assert.equal(store.getState().monsterCelebrations.queue.length, 1);
+  assert.equal(store.getState().monsterCelebrations.queue[0].id, event.id);
+
+  store.reloadFromRepositories();
+  assert.equal(store.getState().monsterCelebrations.queue.length, 0);
+});
+
 test('shared store caches subject setup reset when runtime UI writes are cached', () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });

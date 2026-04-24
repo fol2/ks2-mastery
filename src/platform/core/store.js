@@ -165,6 +165,9 @@ function normaliseTransientUi(rawValue) {
     ? cloneSerialisable(raw.spellingWordDetail)
     : null;
   return {
+    spellingPendingCommand: typeof raw.spellingPendingCommand === 'string'
+      ? raw.spellingPendingCommand.slice(0, 80)
+      : '',
     spellingAnalyticsWordSearch: typeof raw.spellingAnalyticsWordSearch === 'string'
       ? raw.spellingAnalyticsWordSearch.slice(0, 80)
       : '',
@@ -200,6 +203,7 @@ function isCleanSpellingSetupEntry(spellingUi, transientUi) {
     && !spellingUi.summary
     && !spellingUi.error
     && !spellingUi.awaitingAdvance
+    && !transientUi?.spellingPendingCommand
     && !transientUi?.spellingWordDetailSlug
     && !transientUi?.spellingWordDetail
     && !transientUi?.spellingWordBankDrillTyped
@@ -302,12 +306,16 @@ export function createStore(subjects, { repositories, cacheSubjectUiWrites = fal
     return resolvedRepositories.learners.write(nextLearners);
   }
 
-  function reloadFromRepositories({ preserveRoute = false } = {}) {
+  function reloadFromRepositories({ preserveRoute = false, preserveMonsterCelebrations = false } = {}) {
     const previousRoute = state.route;
+    const previousMonsterCelebrations = state.monsterCelebrations;
     const nextState = stateFromRepositories(registry, resolvedRepositories);
     state = sanitiseState({
       ...nextState,
       route: preserveRoute ? previousRoute : nextState.route,
+      monsterCelebrations: preserveMonsterCelebrations
+        ? previousMonsterCelebrations
+        : nextState.monsterCelebrations,
     }, registry);
     notify();
     return state;

@@ -5,6 +5,7 @@ import {
   derivePhaeton,
   ensureMonsterBranches,
   monsterIdForSpellingWord,
+  monsterSummary,
   monsterSummaryFromSpellingAnalytics,
   progressForMonster,
   recordMonsterMastery,
@@ -187,8 +188,26 @@ test('recording mastery stores the selected branch on reward events', () => {
   assert.equal(state.inklet.branch, 'b2');
   assert.equal(state.glimmerbug.branch, 'b2');
   assert.equal(state.vellhorn.branch, 'b2');
+  assert.equal(state.bracehart, undefined);
+  assert.equal(state.pealark, undefined);
   assert.equal(events[0].previous.branch, 'b2');
   assert.equal(events[0].next.branch, 'b2');
+});
+
+test('fallback monster summary initialises spelling branches only', () => {
+  const repository = makeGameStateRepository();
+
+  const summary = monsterSummary('learner-a', repository);
+  const state = repository.read('learner-a', 'monster-codex');
+
+  assert.equal(summary.some((entry) => entry.subjectId === 'grammar'), false);
+  assert.equal(summary.some((entry) => entry.subjectId === 'punctuation'), false);
+  assert.ok(state.inklet.branch);
+  assert.ok(state.glimmerbug.branch);
+  assert.ok(state.phaeton.branch);
+  assert.ok(state.vellhorn.branch);
+  assert.equal(state.bracehart, undefined);
+  assert.equal(state.pealark, undefined);
 });
 
 test('Extra mastery updates Vellhorn without emitting aggregate Phaeton rewards or duplicate progress', () => {

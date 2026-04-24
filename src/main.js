@@ -17,7 +17,6 @@ import { probeRelLuminance } from './platform/ui/luminance.js';
 import { safeParseInt, uid } from './platform/core/utils.js';
 import { normalisePlatformRole } from './platform/access/roles.js';
 import { createHubApi } from './platform/hubs/api.js';
-import { normaliseMonsterVisualConfigAdminModel } from './platform/hubs/admin-read-model.js';
 import {
   buildAdminHubAccessContext,
   buildParentHubAccessContext,
@@ -45,6 +44,11 @@ import {
   monsterSummary,
   monsterSummaryFromSpellingAnalytics,
 } from './platform/game/monster-system.js';
+import {
+  acknowledgeMonsterCelebrationEvents,
+  clearAllMonsterCelebrationAcknowledgements,
+  clearMonsterCelebrationAcknowledgements,
+} from './platform/game/monster-celebration-acks.js';
 import {
   exportLearnerSnapshot,
   exportPlatformSnapshot,
@@ -738,6 +742,10 @@ const controller = createAppController({
   subjectExposureGates,
   runtimeBoundary,
   autoAdvanceDispatchContinue: () => handleRemoteSpellingAction('spelling-continue'),
+  extraContext: () => ({
+    session: boot.session,
+    handleRemoteSpellingAction,
+  }),
   tts,
   services,
   cacheSubjectUiWrites: true,
@@ -822,6 +830,7 @@ function deleteLearnerFromServerSyncedAccount(learnerId) {
   const nextLearners = learnerSnapshotWithout(learnerId);
   if (!nextLearners) return false;
   runtimeBoundary.clearLearner(learnerId);
+  clearMonsterCelebrationAcknowledgements(learnerId);
   repositories.learners.write(nextLearners);
   store.reloadFromRepositories({ preserveRoute: true });
   return true;
@@ -847,6 +856,7 @@ async function resetServerSyncedLearnerProgress(learnerId) {
   await parseApiJson(response);
   await repositories.hydrate({ cacheScope: 'learner-reset-progress' });
   runtimeBoundary.clearLearner(learnerId);
+  clearMonsterCelebrationAcknowledgements(learnerId);
   store.clearMonsterCelebrations();
   store.reloadFromRepositories({ preserveRoute: true });
 }
@@ -1157,8 +1167,10 @@ function patchAdminHubMonsterVisualConfig(monsterVisualConfig, notice = '') {
   patchAdultSurfaceState((state) => {
     const payload = state.adminHub.payload || {};
     const adminHub = payload.adminHub || {};
-    const platformRole = adminHub.permissions?.platformRole || shellPlatformRole;
-    const nextMonsterVisualConfig = normaliseMonsterVisualConfigAdminModel(monsterVisualConfig, platformRole);
+    const nextMonsterVisualConfig = {
+      ...(monsterVisualConfig || {}),
+      permissions: monsterVisualConfigPermissions(adminHub),
+    };
     return {
       ...state,
       notice,
@@ -1176,6 +1188,22 @@ function patchAdminHubMonsterVisualConfig(monsterVisualConfig, notice = '') {
       },
     };
   });
+}
+
+function monsterVisualConfigPermissions(adminHub) {
+  const existing = adminHub.monsterVisualConfig?.permissions || {};
+  const hubPermissions = adminHub.permissions || {};
+  const canManage = typeof hubPermissions.canManageMonsterVisualConfig === 'boolean'
+    ? hubPermissions.canManageMonsterVisualConfig
+    : normalisePlatformRole(hubPermissions.platformRole || shellPlatformRole) === 'admin';
+  const canView = typeof existing.canViewMonsterVisualConfig === 'boolean'
+    ? existing.canViewMonsterVisualConfig
+    : Boolean(hubPermissions.canViewAdminHub || canManage);
+  return {
+    ...existing,
+    canManageMonsterVisualConfig: canManage,
+    canViewMonsterVisualConfig: canView,
+  };
 }
 
 function clearMonsterVisualAutosave(key) {
@@ -1271,6 +1299,8 @@ function contextFor(subjectId = null) {
     runtimeBoundary,
     subjects: exposedSubjects(SUBJECTS, subjectExposureGates),
     subjectExposureGates,
+    session: boot.session,
+    handleRemoteSpellingAction,
     runtimeReadOnly: appState.persistence?.mode === 'degraded',
     ...buildHubModels(appState),
   };
@@ -1715,6 +1745,7 @@ function handleGlobalAction(action, data) {
       tts.stop();
       runtimeBoundary.clearAll();
       store.selectLearner(nextLearnerId);
+      remoteSpellingActions?.reapplyPendingOptimisticPrefs?.();
     }
     if (appState.route.screen === 'admin-hub') loadAdminHub({ learnerId: nextLearnerId, force: true });
     else loadParentHub({ learnerId: nextLearnerId, force: true });
@@ -1732,6 +1763,7 @@ function handleGlobalAction(action, data) {
     tts.stop();
     runtimeBoundary.clearAll();
     store.selectLearner(nextLearnerId);
+    remoteSpellingActions?.reapplyPendingOptimisticPrefs?.();
     if (boot.session.signedIn) {
       if (appState.route.screen === 'parent-hub') loadParentHub({ learnerId: nextLearnerId, force: true });
       if (appState.route.screen === 'admin-hub') loadAdminHub({ learnerId: nextLearnerId, force: true });
@@ -1798,6 +1830,7 @@ function handleGlobalAction(action, data) {
       deleteLearnerFromServerSyncedAccount(learnerId);
     } else {
       runtimeBoundary.clearLearner(learnerId);
+      clearMonsterCelebrationAcknowledgements(learnerId);
       resetLearnerData(learnerId);
       store.deleteLearner(learnerId);
     }
@@ -1814,6 +1847,7 @@ function handleGlobalAction(action, data) {
       });
     } else {
       runtimeBoundary.clearLearner(learnerId);
+      clearMonsterCelebrationAcknowledgements(learnerId);
       resetLearnerData(learnerId);
       store.resetSubjectUi();
     }
@@ -1825,6 +1859,7 @@ function handleGlobalAction(action, data) {
     if (!globalThis.confirm('Reset all app data for every learner on this browser?')) return true;
     tts.stop();
     runtimeBoundary.clearAll();
+    clearAllMonsterCelebrationAcknowledgements();
     store.clearAllProgress();
     globalThis.location.reload();
     return true;
@@ -1920,6 +1955,7 @@ function handleGlobalAction(action, data) {
   }
 
   if (action === 'monster-celebration-dismiss') {
+    acknowledgeMonsterCelebrationEvents(store.getState().monsterCelebrations?.queue?.[0], { learnerId });
     store.dismissMonsterCelebration();
     return true;
   }
@@ -1975,7 +2011,15 @@ function runtimeIsReadOnly() {
 }
 
 function setSpellingRuntimeError(message) {
-  store.updateSubjectUi('spelling', { error: message || 'Practice is temporarily unavailable.' });
+  store.patch((current) => ({
+    subjectUi: {
+      ...current.subjectUi,
+      spelling: {
+        ...(current.subjectUi?.spelling || {}),
+        error: message || 'Practice is temporarily unavailable.',
+      },
+    },
+  }));
 }
 
 function setPunctuationRuntimeError(message) {
@@ -1983,13 +2027,15 @@ function setPunctuationRuntimeError(message) {
 }
 
 function applyPunctuationCommandResponse(response) {
+  const responseLearnerId = String(response?.learnerId || store.getState().learners?.selectedId || '');
+  store.reloadFromRepositories({ preserveRoute: true, preserveMonsterCelebrations: true });
+  if (responseLearnerId && store.getState().learners?.selectedId !== responseLearnerId) return;
   if (response?.projections?.rewards?.toastEvents?.length) {
     store.pushToasts(response.projections.rewards.toastEvents);
   }
   if (response?.projections?.rewards?.events?.length) {
     store.pushMonsterCelebrations(response.projections.rewards.events);
   }
-  store.reloadFromRepositories({ preserveRoute: true });
 }
 
 const pendingPunctuationCommandKeys = new Set();

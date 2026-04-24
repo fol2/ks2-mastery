@@ -6816,6 +6816,55 @@ textarea:focus-visible {
   align-items: start;
 }
 
+.grammar-evidence-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.grammar-method-list,
+.grammar-evidence-panels {
+  display: grid;
+  gap: 10px;
+}
+
+.grammar-method-list > div,
+.grammar-evidence-panels > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.grammar-method-list strong,
+.grammar-method-list span,
+.grammar-evidence-panels strong,
+.grammar-evidence-panels span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.grammar-method-list span,
+.grammar-evidence-panels span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.grammar-evidence-panels {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.grammar-evidence-panels ol {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding-left: 20px;
+}
+
 .grammar-route-panel {
   display: grid;
   gap: 10px;
@@ -6884,7 +6933,8 @@ textarea:focus-visible {
 
 @media (max-width: 980px) {
   .grammar-setup-grid,
-  .grammar-analytics-grid {
+  .grammar-analytics-grid,
+  .grammar-evidence-panels {
     grid-template-columns: 1fr;
   }
 }

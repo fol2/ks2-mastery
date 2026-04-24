@@ -56,6 +56,22 @@ test('punctuation service follows setup -> active-item -> feedback -> active-ite
   assert.equal(repository.snapshot().practiceSession.status, 'completed');
 });
 
+test('punctuation service uses injected randomness for stable session ids and generated practice', () => {
+  const firstRepository = makeRepository();
+  const firstService = createPunctuationService({ repository: firstRepository, now: () => 1_800_000_000_000, random: () => 0.99 });
+  const firstStart = firstService.startSession('learner-a', { mode: 'endmarks', roundLength: '2' }).state;
+  const choiceIndex = firstStart.session.currentItem.options.find((option) => option.text === firstStart.session.currentItem.model)?.index ?? 0;
+  const firstFeedback = firstService.submitAnswer('learner-a', firstStart, { choiceIndex }).state;
+  const firstGenerated = firstService.continueSession('learner-a', firstFeedback).state;
+
+  const secondRepository = makeRepository();
+  const secondService = createPunctuationService({ repository: secondRepository, now: () => 1_800_000_000_000, random: () => 0.99 });
+  const secondStart = secondService.startSession('learner-a', { mode: 'endmarks', roundLength: '2' }).state;
+
+  assert.equal(secondStart.session.id, firstStart.session.id);
+  assert.equal(firstGenerated.session.currentItem.source, 'generated');
+});
+
 test('punctuation service emits misconception events and serialisable feedback', () => {
   const repository = makeRepository();
   const service = createPunctuationService({ repository, now: () => 1_800_000_000_000, random: () => 0 });
@@ -90,15 +106,15 @@ test('punctuation service rejects illegal transitions with named errors and no m
 test('focus sessions keep their selected cluster after continue and skip', () => {
   const repository = makeRepository();
   const service = createPunctuationService({ repository, now: () => 0, random: () => 0 });
-  const start = service.startSession('learner-a', { mode: 'boundary', roundLength: '3' }).state;
-  assert.equal(start.session.currentItem.clusterId, 'boundary');
+  const start = service.startSession('learner-a', { mode: 'structure', roundLength: '3' }).state;
+  assert.equal(start.session.currentItem.clusterId, 'structure');
 
   const feedback = service.submitAnswer('learner-a', start, { choiceIndex: 1 }).state;
   const continued = service.continueSession('learner-a', feedback).state;
-  assert.equal(continued.session.currentItem.clusterId, 'boundary');
+  assert.equal(continued.session.currentItem.clusterId, 'structure');
 
   const skipped = service.skipItem('learner-a', continued).state;
-  assert.equal(skipped.session.currentItem.clusterId, 'boundary');
+  assert.equal(skipped.session.currentItem.clusterId, 'structure');
 });
 
 test('one correct answer does not unlock secure-unit progress', () => {
@@ -113,7 +129,7 @@ test('one correct answer does not unlock secure-unit progress', () => {
 });
 
 test('previous release reward units do not count towards the current release denominator', () => {
-  const oldReleaseId = 'punctuation-r2-endmarks-apostrophe-speech-comma-flow';
+  const oldReleaseId = 'punctuation-r3-endmarks-apostrophe-speech-comma-flow-boundary';
   assert.notEqual(oldReleaseId, PUNCTUATION_RELEASE_ID);
   const oldMasteryKey = createPunctuationMasteryKey({
     releaseId: oldReleaseId,

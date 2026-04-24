@@ -16,5 +16,7 @@ backups/
 .env.*
 assets/*.png
 assets/**/*.png
+!assets/app-icons/
+!assets/app-icons/*.png
 .gstack/
 .remember/

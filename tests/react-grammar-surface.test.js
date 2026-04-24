@@ -10,6 +10,7 @@ import { readGrammarLegacyOracle } from './helpers/grammar-legacy-oracle.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { grammarModule } from '../src/subjects/grammar/module.js';
 import { normaliseGrammarReadModel } from '../src/subjects/grammar/metadata.js';
+import { grammarMasteryKey } from '../src/platform/game/monster-system.js';
 
 function grammarOracleSample(templateId = 'question_mark_select') {
   return readGrammarLegacyOracle().templates.find((template) => template.id === templateId);
@@ -111,6 +112,117 @@ test('Grammar setup controls are disabled while a command is pending', () => {
   assert.match(html, /<button class="btn primary xl" type="button" disabled="">Starting\.\.\.<\/button>/);
 });
 
+test('Grammar monster progress rehydrates from persisted Codex state after reload normalisation', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const key = grammarMasteryKey('sentence_functions');
+
+  harness.repositories.gameState.write(learnerId, 'monster-codex', {
+    bracehart: {
+      branch: 'b1',
+      caught: true,
+      conceptTotal: 3,
+      mastered: [key],
+    },
+    concordium: {
+      branch: 'b1',
+      caught: true,
+      conceptTotal: 18,
+      mastered: [key],
+    },
+  });
+  harness.store.updateSubjectUi('grammar', normaliseGrammarReadModel({}, learnerId));
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+
+  const html = harness.render();
+
+  assert.match(html, /Bracehart/);
+  assert.match(html, /1\/3 Codex/);
+  assert.match(html, /Concordium/);
+  assert.match(html, /1\/18 Codex/);
+});
+
+test('Grammar analytics renders evidence before reward progress', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData({ answer: sample.sample.inputSpec.options[0].value }),
+  });
+  harness.dispatch('grammar-continue');
+
+  const html = harness.render();
+
+  assert.match(html, /Misconception repair/);
+  assert.match(html, /Fronted Adverbial pattern/);
+  assert.match(html, /Question-type evidence/);
+  assert.match(html, /Choose the correct sentence/);
+});
+
+test('Grammar analytics renders normalised recent activity before raw attempts', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.store.updateSubjectUi('grammar', normaliseGrammarReadModel({
+    phase: 'dashboard',
+    analytics: {
+      recentActivity: [{
+        templateId: 'question_mark_select',
+        questionTypeLabel: 'Choose punctuation',
+        correct: true,
+        score: 1,
+        maxScore: 1,
+      }],
+      recentAttempts: [{
+        templateId: 'legacy_wrong_attempt',
+        result: { correct: false, score: 0, maxScore: 1 },
+      }],
+    },
+  }, learnerId));
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+
+  const html = harness.render();
+
+  assert.match(html, /Choose punctuation/);
+  assert.match(html, /correct · score 1\/1/);
+  assert.doesNotMatch(html, /legacy_wrong_attempt/);
+  assert.doesNotMatch(html, /review · score 0\/1/);
+});
+
+test('Grammar analytics falls back to legacy recent attempt result payloads', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.store.updateSubjectUi('grammar', normaliseGrammarReadModel({
+    phase: 'dashboard',
+    analytics: {
+      recentAttempts: [{
+        templateId: 'legacy_correct_attempt',
+        result: { correct: true, score: 1, maxScore: 1 },
+      }],
+    },
+  }, learnerId));
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+
+  const html = harness.render();
+
+  assert.match(html, /legacy_correct_attempt/);
+  assert.match(html, /correct · score 1\/1/);
+  assert.doesNotMatch(html, /review · score 0\/1/);
+});
+
 test('Grammar command responses are pinned to the learner that sent them', async () => {
   let resolveCommand;
   const toasts = [];
@@ -208,6 +320,41 @@ test('Grammar normaliser preserves Worker concept copy over client placeholders'
   assert.equal(clauses.attempts, 3);
 });
 
+test('Grammar normaliser parses ISO misconception timestamps in fallback patterns', () => {
+  const isoTimestamp = '2026-04-24T10:00:00.000Z';
+  const grammar = normaliseGrammarReadModel({
+    analytics: {
+      misconceptionCounts: {
+        fronted_adverbial_confusion: {
+          count: 2,
+          lastSeenAt: isoTimestamp,
+        },
+      },
+    },
+  });
+
+  assert.equal(grammar.analytics.misconceptionPatterns[0].lastSeenAt, Date.parse(isoTimestamp));
+});
+
+test('Grammar normaliser upgrades stale persisted mode capabilities', () => {
+  const grammar = normaliseGrammarReadModel({
+    capabilities: {
+      enabledModes: [
+        { id: 'learn', label: 'Learn a concept' },
+        { id: 'smart', label: 'Smart mixed review' },
+        { id: 'satsset', label: 'KS2-style mini-set' },
+      ],
+      lockedModes: [
+        { id: 'trouble', label: 'Weak concepts drill', reason: 'coming-next' },
+        { id: 'surgery', label: 'Sentence surgery', reason: 'coming-next' },
+      ],
+    },
+  });
+
+  assert.equal(grammar.capabilities.enabledModes.some((mode) => mode.id === 'trouble'), true);
+  assert.equal(grammar.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
+});
+
 test('Grammar locked future modes render unavailable without dispatching commands', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
@@ -215,7 +362,37 @@ test('Grammar locked future modes render unavailable without dispatching command
   harness.dispatch('open-subject', { subjectId: 'grammar' });
   const html = harness.render();
 
-  assert.match(html, /Weak concepts drill[\s\S]*Coming next/);
+  assert.match(html, /<button class="grammar-mode" type="button">[\s\S]*Weak concepts drill/);
+  assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Weak concepts drill/);
   assert.match(html, /Sentence surgery[\s\S]*Coming next/);
   assert.match(html, /button class="grammar-mode locked" type="button" disabled=""/);
+});
+
+test('Grammar setup can start trouble drill mode', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-set-focus', { value: 'word_classes' });
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, 'word_classes');
+
+  harness.dispatch('grammar-set-mode', { value: 'trouble' });
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.mode, 'trouble');
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
+  assert.match(harness.render(), /<select class="input" disabled=""><option value="" selected="">Weakest concept<\/option>/);
+
+  harness.dispatch('grammar-set-focus', { value: 'word_classes' });
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
+
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      seed: 123,
+    },
+  });
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.mode, 'trouble');
+  assert.equal(grammar.session.type, 'trouble-drill');
 });

@@ -194,6 +194,8 @@ The Punctuation slice adds a concrete precedent for future real subjects:
 - engine/content source stays out of the production app bundle and public output
 - reward projection follows domain events, not UI clicks or game-layer state
 - monster progress uses subject-specific units while the Codex remains shared
+- public exposure needs deterministic demo evidence: the default gate hides the subject, and the enabled gate completes a Worker-backed learner action before rollout
+- flipping a subject exposure env var is a reviewable release step, not an incidental code cleanup
 
 ### 8. Scope discipline
 

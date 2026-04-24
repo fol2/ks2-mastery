@@ -15,6 +15,26 @@ test('React spelling setup scene renders primary practice controls', async () =>
   assert.match(html, /data-action="spelling-start"/);
 });
 
+test('React spelling setup scene disables start while a remote start is pending', async () => {
+  const html = await renderSpellingSurfaceFixture({
+    phase: 'setup',
+    pendingCommand: 'start-session',
+  });
+
+  assert.match(html, /Starting\.\.\./);
+  assert.match(html, /<button[^>]*data-action="spelling-start"[^>]*disabled=""/);
+});
+
+test('React spelling setup scene disables start while options are saving', async () => {
+  const html = await renderSpellingSurfaceFixture({
+    phase: 'setup',
+    pendingCommand: 'save-prefs',
+  });
+
+  assert.match(html, /Saving\.\.\./);
+  assert.match(html, /<button[^>]*data-action="spelling-start"[^>]*disabled=""/);
+});
+
 test('client spelling read model preserves word-family variant preference', () => {
   const service = createSpellingReadModelService({
     getState: () => ({

@@ -163,9 +163,10 @@ test('client bundle audit fails on punctuation engine and content imports', asyn
   const metafile = path.join(dir, 'app.bundle.meta.json');
   const publicDir = path.join(dir, 'public');
   await mkdir(publicDir, { recursive: true });
-  await writeFile(bundle, 'console.log("PUNCTUATION_CONTENT_MANIFEST", "createPunctuationService");\n');
+  await writeFile(bundle, 'console.log("PUNCTUATION_CONTENT_MANIFEST", "createPunctuationService", "createPunctuationRuntimeManifest");\n');
   await writeFile(metafile, JSON.stringify({
     inputs: {
+      'shared/punctuation/generators.js': { bytes: 1 },
       'shared/punctuation/service.js': { bytes: 1 },
       'worker/src/subjects/punctuation/commands.js': { bytes: 1 },
     },

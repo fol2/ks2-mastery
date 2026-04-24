@@ -8,6 +8,7 @@ import {
   platformRoleLabel,
 } from '../access/roles.js';
 import { buildSpellingLearnerReadModel } from '../../subjects/spelling/read-model.js';
+import { buildGrammarLearnerReadModel } from '../../subjects/grammar/read-model.js';
 
 function asTs(value, fallback = 0) {
   const numeric = Number(value);
@@ -16,6 +17,19 @@ function asTs(value, fallback = 0) {
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isActionableFocus(entry) {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return false;
+  return Boolean(entry.activeSessionId)
+    || (Number(entry.dueCount) || 0) > 0
+    || (Number(entry.troubleCount) || 0) > 0;
+}
+
+function orderDueWork(entries = []) {
+  return entries
+    .filter(Boolean)
+    .sort((a, b) => Number(isActionableFocus(b)) - Number(isActionableFocus(a)));
 }
 
 function normaliseAccessibleLearnerEntry(rawValue) {
@@ -58,10 +72,21 @@ export function buildParentHubReadModel({
     runtimeSnapshot: runtimeSnapshots.spelling || null,
     now,
   });
+  const grammar = buildGrammarLearnerReadModel({
+    subjectStateRecord: isPlainObject(subjectStates.grammar) ? subjectStates.grammar : null,
+    practiceSessions,
+    eventLog,
+    now,
+  });
+  const activeSubjectCount = [
+    spelling.progressSnapshot.trackedWords > 0,
+    grammar.hasEvidence,
+  ].filter(Boolean).length;
 
   const lastActivityAt = Math.max(
     asTs(learner?.createdAt, 0),
     asTs(spelling?.overview?.lastActivityAt, 0),
+    asTs(grammar?.overview?.lastActivityAt, 0),
     ...Object.values(isPlainObject(gameState) ? gameState : {}).map((entry) => asTs(entry?.updatedAt, 0)),
     0,
   );
@@ -98,23 +123,37 @@ export function buildParentHubReadModel({
       goal: learner?.goal || 'sats',
       dailyMinutes: Number(learner?.dailyMinutes) || 15,
       lastActivityAt,
-      activeSubjectCount: spelling.progressSnapshot.trackedWords > 0 ? 1 : 0,
+      activeSubjectCount,
     },
     learnerOverview: {
       secureWords: spelling.progressSnapshot.secureWords,
       dueWords: spelling.progressSnapshot.dueWords,
       troubleWords: spelling.progressSnapshot.troubleWords,
       accuracyPercent: spelling.progressSnapshot.accuracyPercent,
+      secureGrammarConcepts: grammar.progressSnapshot.securedConcepts,
+      dueGrammarConcepts: grammar.progressSnapshot.dueConcepts,
+      weakGrammarConcepts: grammar.progressSnapshot.weakConcepts,
+      grammarAccuracyPercent: grammar.progressSnapshot.accuracyPercent,
       recentSessions: spelling.recentSessions.length,
     },
     selectedLearnerId: resolvedLearnerId,
     accessibleLearners: learnerOptions,
-    dueWork: [spelling.currentFocus],
-    recentSessions: spelling.recentSessions,
-    strengths: spelling.strengths,
-    weaknesses: spelling.weaknesses,
-    misconceptionPatterns: spelling.misconceptionPatterns,
-    progressSnapshots: [spelling.progressSnapshot],
+    dueWork: orderDueWork([
+      spelling.currentFocus,
+      ...(grammar.hasEvidence ? [grammar.currentFocus] : []),
+    ]),
+    recentSessions: [...spelling.recentSessions, ...grammar.recentSessions]
+      .sort((a, b) => asTs(b.updatedAt, 0) - asTs(a.updatedAt, 0))
+      .slice(0, 6),
+    strengths: [...spelling.strengths, ...grammar.strengths].slice(0, 6),
+    weaknesses: [...spelling.weaknesses, ...grammar.weaknesses].slice(0, 6),
+    misconceptionPatterns: [...spelling.misconceptionPatterns, ...grammar.misconceptionPatterns]
+      .sort((a, b) => (Number(b.count) || 0) - (Number(a.count) || 0) || asTs(b.lastSeenAt, 0) - asTs(a.lastSeenAt, 0))
+      .slice(0, 8),
+    progressSnapshots: [
+      spelling.progressSnapshot,
+      ...(grammar.hasEvidence ? [grammar.progressSnapshot] : []),
+    ],
     exportEntryPoints: [
       {
         kind: 'learner',

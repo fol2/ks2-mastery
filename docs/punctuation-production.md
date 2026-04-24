@@ -9,7 +9,7 @@ The release deliberately keeps the learner engine first. Monsters and Codex rewa
 Release id:
 
 ```txt
-punctuation-r3-endmarks-apostrophe-speech-comma-flow-boundary
+punctuation-r4-full-14-skill-structure
 ```
 
 Published skills:
@@ -24,15 +24,12 @@ Published skills:
 - Semi-colons between clauses
 - Dashes between clauses
 - Hyphens to avoid ambiguity
-
-Planned but not yet public:
-
 - Parenthesis
 - Colons before lists
 - Semi-colons in lists
 - Bullet-point punctuation
 
-This preserves the legacy engine's 14-skill map while shipping only the content that has enough fixed items, transfer coverage, misconception tags, and negative tests for the current hidden production slice.
+This preserves the legacy engine's 14-skill map while shipping only content that has enough fixed items, transfer coverage, misconception tags, and negative tests for the current hidden production slice.
 
 ## Measurement Model
 
@@ -50,6 +47,10 @@ Current published reward units:
 - `semicolons-core`
 - `dash-clauses-core`
 - `hyphens-core`
+- `parenthesis-core`
+- `colons-core`
+- `semicolon-lists-core`
+- `bullet-points-core`
 
 Each unit has a stable mastery key:
 
@@ -74,6 +75,8 @@ Published practice modes include:
 - fix: proofread and repair a sentence
 - transfer: write or repair a constrained sentence against explicit facets
 
+Generated practice now runs through a deterministic compiler. Each published generator family can add extra practice items to the runtime manifest under a fixed release seed, so the Worker can broaden practice without using browser-owned random generation or changing the published reward denominator. Generated items carry `source: generated` internally, but the browser still receives only the redacted live-item read model.
+
 The first Speech rubric is deliberately strict:
 
 - accepts matched straight or curly single/double inverted commas
@@ -94,6 +97,13 @@ Boundary marking adds deterministic transfer validators for:
 - semi-colons between preserved related clauses
 - spaced dashes between preserved related clauses
 - exact hyphenated phrases that avoid ambiguity, such as `well-known author`
+
+Structure marking adds deterministic transfer validators for:
+
+- comma-marked parenthesis around preserved extra information
+- colons before preserved lists after complete opening clauses
+- semi-colons between complex list items
+- colon-led bullet lists with preserved bullet items
 
 ## Worker Runtime
 
@@ -130,7 +140,7 @@ Reward projection maps secure units to Bellstorm Coast creatures:
 - Apostrophe: Claspin
 - Speech: Quoral
 - Comma / Flow: Curlune
-- List / Structure: Colisk, planned
+- List / Structure: Colisk
 - Boundary: Hyphang
 - Published release aggregate: Carillon
 
@@ -145,6 +155,7 @@ It must not expose server-only fields such as accepted answer lists, `correctInd
 The production bundle audit now rejects:
 
 - `shared/punctuation/content.js`
+- `shared/punctuation/generators.js`
 - `shared/punctuation/marking.js`
 - `shared/punctuation/scheduler.js`
 - `shared/punctuation/service.js`
@@ -163,10 +174,11 @@ The Punctuation release gate includes:
 - Worker command tests for start, submit, continue, stale transitions, redaction, and idempotent reward projection
 - React scene tests for setup, active, feedback, summary, and hidden-field absence
 - subject expansion conformance and golden-path smoke coverage
+- deterministic demo release smoke proving default hidden exposure and gated Worker command execution
 - asset tests for Bellstorm Coast scenes and Punctuation monster artwork
 - bundle/public-output audits proving engine/content source is not shipped to the browser
 
-Production exposure is controlled by the `PUNCTUATION_SUBJECT_ENABLED` Worker env var, which feeds the browser `punctuationProduction` subject exposure gate. The default production value is `false`: the Worker command route, dashboard card, and direct subject route stay unavailable until the full gate has passed and the env var is intentionally flipped.
+Production exposure is controlled by the `PUNCTUATION_SUBJECT_ENABLED` Worker env var, which feeds the browser `punctuationProduction` subject exposure gate. The release-smoke gate now covers both sides of the rollout: `false` keeps the Worker command route, dashboard card, and direct subject route unavailable; `true` exposes the subject only after the Worker-backed demo path has been verified.
 
 Before deployment, run:
 
@@ -177,8 +189,16 @@ npm run check
 
 After deployment, verify the production UI on `https://ks2.eugnel.uk` with a logged-in or demo browser session.
 
+For repeatable HTTP evidence after a Punctuation deploy, run:
+
+```txt
+npm run smoke:production:punctuation
+```
+
+The smoke creates an isolated demo session on production, confirms `punctuationProduction` is enabled, completes one Worker-backed Punctuation item through summary, and starts a Worker-backed English Spelling session with a redacted prompt token. This keeps the Punctuation rollout gate tied to the live subject command boundary while also proving the reference Spelling subject still starts correctly.
+
 ## Expansion Path
 
-The next Punctuation release should still add one remaining cluster at a time. Each cluster needs enough fixed items, generated templates, negative tests, misconception tags, transfer facets, and reward-unit denominators before it becomes public.
+The next Punctuation release should deepen one learning cluster or validator family at a time. Each expansion needs enough fixed items, generated templates, negative tests, misconception tags, transfer facets, and reward-unit denominators before learner-facing mastery claims are widened.
 
 Do not expose planned clusters just because monster assets exist. Bellstorm Coast rewards should continue to follow secure learning evidence.

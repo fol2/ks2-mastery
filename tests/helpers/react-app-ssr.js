@@ -69,6 +69,28 @@ function loadRenderer() {
     }
 
     function runtimeFor(controller) {
+      function buildDashboardStats(appState, subjects) {
+        const out = {};
+        const learnerId = appState.learners.selectedId;
+        for (const subject of subjects) {
+          if (!subject.getDashboardStats) continue;
+          try {
+            out[subject.id] = subject.getDashboardStats(appState, controller.contextFor(subject.id));
+          } catch (error) {
+            controller.runtimeBoundary.capture({
+              learnerId,
+              subject,
+              tab: 'dashboard',
+              phase: 'dashboard-stats',
+              methodName: 'getDashboardStats',
+              error,
+            });
+            out[subject.id] = { pct: 0, due: 0, streak: 0, nextUp: 'Temporarily unavailable', unavailable: true };
+          }
+        }
+        return out;
+      }
+
       return {
         contextFor: controller.contextFor,
         buildSurfaceActions: () => actionsFor(controller),
@@ -79,7 +101,7 @@ function loadRenderer() {
             ...chrome(appState),
             monsterSummary: [],
             subjects,
-            dashboardStats: Object.fromEntries(subjects.map((subject) => [subject.id, { pct: 0, due: 0, streak: 0, nextUp: 'Ready' }])),
+            dashboardStats: buildDashboardStats(appState, subjects),
             dueTotal: 0,
             roundNumber: 1,
             now: new Date('2026-04-22T12:00:00Z'),

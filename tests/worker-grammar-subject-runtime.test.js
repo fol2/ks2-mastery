@@ -78,6 +78,66 @@ test('worker subject runtime registers Grammar command handlers', async () => {
   assert.equal(result.subjectReadModel.session.currentItem.templateId, 'fronted_adverbial_choose');
   assert.equal(result.subjectReadModel.session.currentItem.evaluate, undefined);
   assert.equal(result.subjectReadModel.session.currentItem.promptText.includes('<'), false);
+  assert.deepEqual(result.subjectReadModel.capabilities.enabledModes.map((mode) => mode.id), [
+    'learn',
+    'smart',
+    'satsset',
+    'trouble',
+  ]);
+  assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
+});
+
+test('worker subject runtime starts Grammar trouble drills against weak concepts', async () => {
+  const runtime = createWorkerSubjectRuntime({
+    grammar: { now: () => 1_777_000_000_000 },
+  });
+  const result = await runtime.dispatch({
+    subjectId: 'grammar',
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-trouble-start',
+    correlationId: 'grammar-trouble-start',
+    expectedLearnerRevision: 0,
+    payload: { mode: 'trouble', roundLength: 2, seed: 77 },
+  }, {
+    session: { accountId: 'adult-a' },
+    now: 1_777_000_000_000,
+    repository: {
+      async readSubjectRuntime(accountId, learnerId, subjectId) {
+        assert.equal(accountId, 'adult-a');
+        assert.equal(learnerId, 'learner-a');
+        assert.equal(subjectId, 'grammar');
+        return {
+          subjectRecord: {
+            ui: null,
+            data: {
+              mastery: {
+                concepts: {
+                  adverbials: {
+                    attempts: 3,
+                    correct: 0,
+                    wrong: 3,
+                    strength: 0.1,
+                    dueAt: 1,
+                  },
+                },
+              },
+            },
+          },
+          latestSession: null,
+        };
+      },
+      async readLearnerProjectionState() {
+        return { gameState: {}, events: [] };
+      },
+    },
+  });
+
+  assert.equal(result.subjectReadModel.phase, 'session');
+  assert.equal(result.subjectReadModel.session.mode, 'trouble');
+  assert.equal(result.subjectReadModel.session.type, 'trouble-drill');
+  assert.equal(result.subjectReadModel.session.focusConceptId, 'adverbials');
+  assert.ok(result.subjectReadModel.session.currentItem.skillIds.includes('adverbials'));
 });
 
 test('Grammar command route persists subject state, practice session, and events', async () => {
@@ -132,6 +192,158 @@ test('Grammar command route persists subject state, practice session, and events
   assert.equal(data.mastery.concepts.speech_punctuation.attempts, 1);
   assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM practice_sessions WHERE subject_id = 'grammar'").get().count, 1);
   assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM event_log WHERE subject_id = 'grammar' AND event_type = 'grammar.answer-submitted'").get().count, 1);
+
+  DB.close();
+});
+
+test('Grammar command route accepts trouble drill mode', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-trouble-route-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'trouble',
+      roundLength: 2,
+      seed: 120,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  assert.equal(start.body.subjectReadModel.phase, 'session');
+  assert.equal(start.body.subjectReadModel.session.mode, 'trouble');
+  assert.equal(start.body.subjectReadModel.session.type, 'trouble-drill');
+  assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
+
+  DB.close();
+});
+
+test('Grammar read model exposes evidence analytics for misconceptions and question types', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'fronted_adverbial_choose');
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-evidence-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+
+  const submit = await postCommand(app, DB, {
+    command: 'submit-answer',
+    learnerId: 'learner-a',
+    requestId: 'grammar-evidence-submit',
+    expectedLearnerRevision: 1,
+    payload: { response: { answer: sample.sample.inputSpec.options[0].value } },
+  });
+
+  assert.equal(submit.response.status, 200, JSON.stringify(submit.body));
+  assert.equal(submit.body.subjectReadModel.analytics.progressSnapshot.trackedConcepts, 1);
+  assert.equal(submit.body.subjectReadModel.analytics.misconceptionPatterns[0].id, 'fronted_adverbial_confusion');
+  assert.equal(submit.body.subjectReadModel.analytics.questionTypeSummary[0].id, 'choose');
+  assert.equal(submit.body.subjectReadModel.analytics.questionTypeSummary[0].wrong, 1);
+  assert.equal(submit.body.subjectReadModel.analytics.recentActivity[0].misconception, 'fronted_adverbial_confusion');
+
+  DB.close();
+});
+
+test('Grammar concept-secured events project monster rewards atomically', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const now = 1_777_000_000_000;
+  const app = createWorkerApp({ now: () => now });
+  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'question_mark_select');
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-reward-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+
+  const subject = DB.db.prepare(`
+    SELECT ui_json, data_json
+    FROM child_subject_state
+    WHERE learner_id = 'learner-a' AND subject_id = 'grammar'
+  `).get();
+  const ui = JSON.parse(subject.ui_json);
+  const data = JSON.parse(subject.data_json);
+  for (const conceptId of start.body.subjectReadModel.session.currentItem.skillIds) {
+    const nearlySecured = {
+      attempts: 2,
+      correct: 2,
+      wrong: 0,
+      strength: 0.81,
+      intervalDays: 7,
+      dueAt: now + 7 * 86400000,
+      lastSeenAt: new Date(now - 86400000).toISOString(),
+      lastWrongAt: null,
+      correctStreak: 2,
+    };
+    data.mastery.concepts[conceptId] = nearlySecured;
+    ui.mastery.concepts[conceptId] = nearlySecured;
+  }
+  DB.db.prepare(`
+    UPDATE child_subject_state
+    SET ui_json = ?, data_json = ?
+    WHERE learner_id = 'learner-a' AND subject_id = 'grammar'
+  `).run(JSON.stringify(ui), JSON.stringify(data));
+
+  const submit = await postCommand(app, DB, {
+    command: 'submit-answer',
+    learnerId: 'learner-a',
+    requestId: 'grammar-reward-submit',
+    expectedLearnerRevision: 1,
+    payload: { response: sample.correctResponse },
+  });
+  assert.equal(submit.response.status, 200, JSON.stringify(submit.body));
+  assert.equal(submit.body.domainEvents.some((event) => event.type === 'grammar.concept-secured'), true);
+  assert.equal(submit.body.reactionEvents.some((event) => (
+    event.type === 'reward.monster'
+    && event.subjectId === 'grammar'
+    && event.monsterId === 'bracehart'
+  )), true);
+  assert.equal(submit.body.reactionEvents.some((event) => (
+    event.type === 'reward.monster'
+    && event.subjectId === 'grammar'
+    && event.monsterId === 'concordium'
+  )), true);
+  assert.ok(submit.body.projections.rewards.state.bracehart.mastered.includes(
+    'grammar:grammar-legacy-reviewed-2026-04-24:sentence_functions',
+  ));
+  assert.ok(submit.body.projections.rewards.state.concordium.mastered.includes(
+    'grammar:grammar-legacy-reviewed-2026-04-24:speech_punctuation',
+  ));
+  assert.equal(submit.body.projections.rewards.state.quoral, undefined);
+
+  const gameRow = DB.db.prepare(`
+    SELECT state_json
+    FROM child_game_state
+    WHERE learner_id = 'learner-a' AND system_id = 'monster-codex'
+  `).get();
+  const gameState = JSON.parse(gameRow.state_json);
+  assert.ok(gameState.bracehart.mastered.includes('grammar:grammar-legacy-reviewed-2026-04-24:sentence_functions'));
+  assert.equal(gameState.quoral, undefined);
 
   DB.close();
 });

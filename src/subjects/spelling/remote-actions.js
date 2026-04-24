@@ -2,8 +2,22 @@ import {
   WORD_BANK_FILTER_IDS,
   WORD_BANK_YEAR_FILTER_IDS,
 } from './components/spelling-view-model.js';
+import {
+  applyOptimisticSpellingPrefs,
+  optimisticSpellingPrefsPatchForAction,
+} from './optimistic-prefs.js';
+import {
+  normaliseMonsterCelebrationEvents,
+  shouldDelayMonsterCelebrations,
+  spellingSessionEnded,
+} from '../../platform/game/monster-celebrations.js';
+import {
+  unacknowledgedMonsterCelebrationEvents,
+} from '../../platform/game/monster-celebration-acks.js';
 
 const READ_ONLY_MESSAGE = 'Practice is read-only while sync is degraded. Retry sync before continuing.';
+const SETUP_PREF_SAVE_DEBOUNCE_MS = 120;
+const SPELLING_COMPENSATION_EVENT_LIMIT = 25;
 
 const SPELLING_COMMAND_ACTIONS = new Set([
   'spelling-set-mode',
@@ -20,7 +34,14 @@ const SPELLING_COMMAND_ACTIONS = new Set([
   'spelling-drill-single',
 ]);
 
+const SPELLING_SETUP_PREF_ACTIONS = new Set([
+  'spelling-set-mode',
+  'spelling-set-pref',
+  'spelling-toggle-pref',
+]);
+
 const SPELLING_IN_FLIGHT_DEDUPE_COMMANDS = new Set([
+  'save-prefs',
   'start-session',
   'submit-answer',
   'continue-session',
@@ -56,6 +77,17 @@ function commandErrorMessage(error, fallback) {
   return error?.payload?.message || error?.message || fallback;
 }
 
+function spellingPendingCommand(appState = {}) {
+  return appState.transientUi?.spellingPendingCommand || '';
+}
+
+function pendingCommandBlocksAction(action, appState = {}) {
+  const pendingCommand = spellingPendingCommand(appState);
+  if (!pendingCommand || !SPELLING_COMMAND_ACTIONS.has(action)) return false;
+  if (pendingCommand === 'save-prefs' && SPELLING_SETUP_PREF_ACTIONS.has(action)) return false;
+  return true;
+}
+
 export function shouldHandleRemoteSpellingAction(action) {
   return SPELLING_COMMAND_ACTIONS.has(action)
     || SPELLING_UI_LOCAL_ACTIONS.has(action)
@@ -73,6 +105,7 @@ export function spellingCommandDedupeKey(command, appState = {}) {
   const learnerId = appState.learners?.selectedId || '';
   if (!learnerId) return '';
   if (command === 'start-session') return `${command}:${learnerId}:setup`;
+  if (command === 'save-prefs') return `${command}:${learnerId}:prefs`;
   const session = appState.subjectUi?.spelling?.session || {};
   const sessionId = session.id || '';
   if (!sessionId) return '';
@@ -119,6 +152,24 @@ export function mergeWordBankAnalytics(current, incoming, { append = false } = {
   };
 }
 
+function eventIds(events) {
+  return new Set((Array.isArray(events) ? events : [])
+    .map((event) => (typeof event?.id === 'string' ? event.id : ''))
+    .filter(Boolean));
+}
+
+function visibleMonsterCelebrationIds(state = {}) {
+  return eventIds([
+    ...(state.monsterCelebrations?.pending || []),
+    ...(state.monsterCelebrations?.queue || []),
+  ]);
+}
+
+function spellingRewardEvents(events) {
+  return (Array.isArray(events) ? events : [])
+    .filter((event) => !event?.subjectId || event.subjectId === 'spelling');
+}
+
 export function createRemoteSpellingActionHandler({
   store,
   services,
@@ -126,11 +177,18 @@ export function createRemoteSpellingActionHandler({
   readModels,
   tts,
   isReadOnly = () => false,
+  preferenceSaveDebounceMs = SETUP_PREF_SAVE_DEBOUNCE_MS,
   setRuntimeError = (message) => {
     store?.updateSubjectUi?.('spelling', { error: message || 'Practice is temporarily unavailable.' });
   },
   pendingCommandKeys = new Set(),
 } = {}) {
+  const pendingPreferenceSaves = new Map();
+  const preferenceSaveChains = new Map();
+  const preferenceIntentCounters = new Map();
+  const latestPreferenceIntents = new Map();
+  const scopedRuntimeErrors = new Map();
+
   function appState() {
     return store?.getState?.() || {};
   }
@@ -139,18 +197,153 @@ export function createRemoteSpellingActionHandler({
     return state.subjectUi?.spelling?.analytics || null;
   }
 
-  function applyCommandResponse(response, { command = '' } = {}) {
-    if (response?.projections?.rewards?.toastEvents?.length) {
-      store.pushToasts(response.projections.rewards.toastEvents);
+  function currentSpellingRewardEventIds(learnerId) {
+    const list = store.repositories?.eventLog?.list;
+    if (typeof list !== 'function') return null;
+    try {
+      return eventIds(spellingRewardEvents(list.call(store.repositories.eventLog, learnerId) || []));
+    } catch {
+      return null;
     }
-    if (response?.projections?.rewards?.events?.length) {
-      store.pushMonsterCelebrations(response.projections.rewards.events);
+  }
+
+  function selectedLearnerId() {
+    return appState().learners?.selectedId || '';
+  }
+
+  function safePrefsPatch(prefsPatch = {}) {
+    return prefsPatch && typeof prefsPatch === 'object' && !Array.isArray(prefsPatch) ? prefsPatch : {};
+  }
+
+  function patchSpellingSubjectUiLocally(updater) {
+    store.patch((current) => {
+      const previous = current.subjectUi?.spelling || {};
+      const next = typeof updater === 'function' ? updater(previous) : { ...previous, ...updater };
+      return {
+        subjectUi: {
+          ...current.subjectUi,
+          spelling: next,
+        },
+      };
+    });
+  }
+
+  function applyOptimisticPrefsPatch(patch) {
+    if (!patch || !Object.keys(patch).length) return false;
+    patchSpellingSubjectUiLocally((current) => applyOptimisticSpellingPrefs(current, patch));
+    return true;
+  }
+
+  function pendingOptimisticPrefsForLearner(learnerId) {
+    return latestPreferenceIntents.get(String(learnerId || ''))?.prefs || {};
+  }
+
+  function visiblePrefsForLearner(learnerId, state = appState()) {
+    const persistedPrefs = services?.spelling?.getPrefs?.(learnerId) || {};
+    const visiblePrefs = state.learners?.selectedId === learnerId
+      && state.subjectUi?.spelling?.prefs
+      && typeof state.subjectUi.spelling.prefs === 'object'
+      && !Array.isArray(state.subjectUi.spelling.prefs)
+      ? state.subjectUi.spelling.prefs
+      : {};
+    return {
+      ...persistedPrefs,
+      ...visiblePrefs,
+      ...pendingOptimisticPrefsForLearner(learnerId),
+    };
+  }
+
+  function reapplyPendingOptimisticPrefs() {
+    const learnerId = selectedLearnerId();
+    const appliedPrefs = applyOptimisticPrefsPatch(pendingOptimisticPrefsForLearner(learnerId));
+    const scopedError = scopedRuntimeErrors.get(learnerId);
+    if (scopedError) {
+      patchSpellingSubjectUiLocally({ error: scopedError });
     }
-    if (shouldStopSpellingTtsForCommandResponse(command, response)) {
+    return appliedPrefs || Boolean(scopedError);
+  }
+
+  function setRuntimeErrorForLearner(learnerId, message) {
+    const targetLearnerId = String(learnerId || '');
+    const safeMessage = message || 'Practice is temporarily unavailable.';
+    if (!targetLearnerId) {
+      setRuntimeError(safeMessage);
+      return;
+    }
+    scopedRuntimeErrors.set(targetLearnerId, safeMessage);
+    if (selectedLearnerId() === targetLearnerId) {
+      setRuntimeError(safeMessage);
+    }
+  }
+
+  function clearRuntimeErrorForLearner(learnerId) {
+    const targetLearnerId = String(learnerId || '');
+    if (targetLearnerId) scopedRuntimeErrors.delete(targetLearnerId);
+  }
+
+  function applyCommandResponse(response, {
+    command = '',
+    learnerId: requestedLearnerId = '',
+    preferenceVersion = 0,
+    compensationBaselineEventIds = null,
+  } = {}) {
+    const previousState = appState();
+    const previousSubjectUi = previousState.subjectUi?.spelling || null;
+    const learnerId = String(response?.learnerId || requestedLearnerId || previousState.learners?.selectedId || '');
+    const wasSelectedLearner = !learnerId || previousState.learners?.selectedId === learnerId;
+    const rewardProjection = response?.projections?.rewards || {};
+    const toastEvents = Array.isArray(rewardProjection.toastEvents) ? rewardProjection.toastEvents : [];
+    const responseMonsterEvents = normaliseMonsterCelebrationEvents(rewardProjection.events || []);
+
+    if (wasSelectedLearner && shouldStopSpellingTtsForCommandResponse(command, response)) {
       tts.stop();
     }
-    store.reloadFromRepositories({ preserveRoute: true });
-    if (response?.audio?.promptToken) {
+    store.reloadFromRepositories({ preserveRoute: true, preserveMonsterCelebrations: true });
+    clearRuntimeErrorForLearner(learnerId);
+    reconcilePreferenceSaveResponse({ command, learnerId, preferenceVersion });
+    reapplyPendingOptimisticPrefs();
+    const nextState = appState();
+    const nextSubjectUi = response?.subjectReadModel || response?.state || nextState.subjectUi?.spelling || null;
+    const isSelectedLearner = !learnerId || nextState.learners?.selectedId === learnerId;
+
+    if (isSelectedLearner && toastEvents.length) {
+      store.pushToasts(toastEvents);
+    }
+
+    const endedSession = spellingSessionEnded(previousSubjectUi, nextSubjectUi);
+    let monsterEvents = responseMonsterEvents;
+    if (isSelectedLearner && endedSession && !monsterEvents.length) {
+      const loggedRewardEvents = spellingRewardEvents(store.repositories?.eventLog?.list?.(learnerId) || []);
+      const ignoredIds = new Set([
+        ...eventIds(rewardProjection.events || []),
+        ...visibleMonsterCelebrationIds(nextState),
+      ]);
+      monsterEvents = unacknowledgedMonsterCelebrationEvents(
+        loggedRewardEvents,
+        {
+          learnerId,
+          ignoredIds,
+          excludeEventIds: compensationBaselineEventIds,
+          limit: SPELLING_COMPENSATION_EVENT_LIMIT,
+          baselineExisting: true,
+          baselineEventIds: compensationBaselineEventIds,
+        },
+      );
+    }
+
+    if (isSelectedLearner && monsterEvents.length) {
+      if (shouldDelayMonsterCelebrations('spelling', previousSubjectUi, nextSubjectUi)) {
+        store.deferMonsterCelebrations(monsterEvents);
+      } else {
+        store.pushMonsterCelebrations(monsterEvents);
+      }
+    }
+
+    if (isSelectedLearner && endedSession) {
+      store.releaseMonsterCelebrations();
+    }
+
+    if (isSelectedLearner && response?.audio?.promptToken) {
       tts.speak(response.audio);
     }
   }
@@ -202,29 +395,199 @@ export function createRemoteSpellingActionHandler({
     }
   }
 
-  async function sendCommand(command, payload = {}) {
+  function setPendingCommand(command, { preserveExisting = false } = {}) {
+    if (!SPELLING_IN_FLIGHT_DEDUPE_COMMANDS.has(command)) return false;
+    if (preserveExisting && spellingPendingCommand(appState())) return false;
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingPendingCommand: command,
+      },
+    }));
+    return true;
+  }
+
+  function clearPendingCommand(command) {
+    if (!SPELLING_IN_FLIGHT_DEDUPE_COMMANDS.has(command)) return;
+    store.patch((current) => {
+      if (current.transientUi?.spellingPendingCommand !== command) return {};
+      return {
+        transientUi: {
+          ...current.transientUi,
+          spellingPendingCommand: '',
+        },
+      };
+    });
+  }
+
+  function beginPendingCommand(command) {
     const state = appState();
-    const learnerId = state.learners?.selectedId;
+    const dedupeKey = spellingCommandDedupeKey(command, state);
+    if (dedupeKey && pendingCommandKeys.has(dedupeKey)) return { ok: false, dedupeKey: '' };
+    if (SPELLING_IN_FLIGHT_DEDUPE_COMMANDS.has(command) && spellingPendingCommand(state)) {
+      return { ok: false, dedupeKey: '' };
+    }
+    if (dedupeKey) pendingCommandKeys.add(dedupeKey);
+    setPendingCommand(command);
+    return { ok: true, dedupeKey };
+  }
+
+  function releasePendingCommand(command, dedupeKey) {
+    if (dedupeKey) pendingCommandKeys.delete(dedupeKey);
+    clearPendingCommand(command);
+  }
+
+  async function sendCommand(command, payload = {}, { learnerId: requestedLearnerId = '', preferenceVersion = 0 } = {}) {
+    const state = appState();
+    const learnerId = requestedLearnerId || state.learners?.selectedId;
     if (!learnerId) return null;
+    const compensationBaselineEventIds = currentSpellingRewardEventIds(learnerId);
     const response = await subjectCommands.send({
       subjectId: 'spelling',
       learnerId,
       command,
       payload,
     });
-    applyCommandResponse(response, { command });
+    applyCommandResponse(response, {
+      command,
+      learnerId,
+      preferenceVersion,
+      compensationBaselineEventIds,
+    });
     return response;
   }
 
-  function runCommand(command, payload = {}) {
-    const dedupeKey = spellingCommandDedupeKey(command, appState());
-    if (dedupeKey && pendingCommandKeys.has(dedupeKey)) return false;
-    if (dedupeKey) pendingCommandKeys.add(dedupeKey);
-    sendCommand(command, payload).catch((error) => {
+  function preferenceSaveDelayMs() {
+    return Math.max(0, Number(preferenceSaveDebounceMs) || 0);
+  }
+
+  function updateOptimisticPrefs(prefsPatch = {}) {
+    return applyOptimisticPrefsPatch(safePrefsPatch(prefsPatch));
+  }
+
+  function recordPreferenceIntent(learnerId, prefsPatch = {}) {
+    const patch = safePrefsPatch(prefsPatch);
+    if (!learnerId || !Object.keys(patch).length) return null;
+    clearRuntimeErrorForLearner(learnerId);
+    const version = (preferenceIntentCounters.get(learnerId) || 0) + 1;
+    const previous = latestPreferenceIntents.get(learnerId);
+    const intent = {
+      version,
+      prefs: {
+        ...(previous?.prefs || {}),
+        ...patch,
+      },
+    };
+    preferenceIntentCounters.set(learnerId, version);
+    latestPreferenceIntents.set(learnerId, intent);
+    return intent;
+  }
+
+  function reconcilePreferenceSaveResponse({ command = '', learnerId = '', preferenceVersion = 0 } = {}) {
+    if (command !== 'save-prefs' || !learnerId) return;
+    const latest = latestPreferenceIntents.get(learnerId);
+    if (!latest) return;
+    if (Number(latest.version) <= Number(preferenceVersion)) {
+      latestPreferenceIntents.delete(learnerId);
+    }
+  }
+
+  function takePendingPreferenceSave(learnerId) {
+    const entry = pendingPreferenceSaves.get(learnerId);
+    if (!entry) return null;
+    if (entry.timer) clearTimeout(entry.timer);
+    pendingPreferenceSaves.delete(learnerId);
+    return entry.prefs && typeof entry.prefs === 'object' && !Array.isArray(entry.prefs) ? entry : null;
+  }
+
+  function trackPreferenceSave(learnerId, prefs, preferenceVersion = 0) {
+    const previous = preferenceSaveChains.get(learnerId) || Promise.resolve();
+    let tracked;
+    const next = previous
+      .catch(() => {})
+      .then(() => {
+        setPendingCommand('save-prefs', { preserveExisting: true });
+        return sendCommand('save-prefs', { prefs }, { learnerId, preferenceVersion });
+      })
+      .catch((error) => {
+        handlePreferenceSaveError(error, { learnerId, preferenceVersion });
+        throw error;
+      });
+    tracked = next.finally(() => {
+      if (preferenceSaveChains.get(learnerId) === tracked) {
+        preferenceSaveChains.delete(learnerId);
+        if (spellingPendingCommand(appState()) === 'save-prefs') {
+          clearPendingCommand('save-prefs');
+        }
+      }
+    });
+    preferenceSaveChains.set(learnerId, tracked);
+    return tracked;
+  }
+
+  function flushPendingPreferenceSave(learnerId) {
+    if (!learnerId) return Promise.resolve(null);
+    const pending = takePendingPreferenceSave(learnerId);
+    if (pending?.prefs && Object.keys(pending.prefs).length) {
+      return trackPreferenceSave(learnerId, pending.prefs, pending.version);
+    }
+    return preferenceSaveChains.get(learnerId) || Promise.resolve(null);
+  }
+
+  function handlePreferenceSaveError(error, { learnerId = '', preferenceVersion = 0 } = {}) {
+    globalThis.console?.warn?.('Spelling preference save failed.', error);
+    const latest = latestPreferenceIntents.get(learnerId);
+    if (latest && Number(latest.version) <= Number(preferenceVersion)) {
+      latestPreferenceIntents.delete(learnerId);
+    }
+    store.reloadFromRepositories({ preserveRoute: true });
+    reapplyPendingOptimisticPrefs();
+    setRuntimeErrorForLearner(learnerId, commandErrorMessage(error, 'The spelling options could not be saved.'));
+  }
+
+  function schedulePreferenceSave(learnerId, prefsPatch = {}) {
+    if (!learnerId) return false;
+    const patch = safePrefsPatch(prefsPatch);
+    if (!Object.keys(patch).length) return true;
+    const intent = recordPreferenceIntent(learnerId, patch);
+    const current = pendingPreferenceSaves.get(learnerId);
+    if (current?.timer) clearTimeout(current.timer);
+    const timer = setTimeout(() => {
+      flushPendingPreferenceSave(learnerId).catch(() => {});
+    }, preferenceSaveDelayMs());
+    pendingPreferenceSaves.set(learnerId, { prefs: intent.prefs, version: intent.version, timer });
+    return true;
+  }
+
+  function runCommand(command, payload = {}, options = {}) {
+    const {
+      learnerId: requestedLearnerId = '',
+      errorLearnerId = '',
+      beforeSend = null,
+      onSuccess = null,
+      onError = null,
+      onSettled = null,
+    } = options;
+    const commandLearnerId = requestedLearnerId || appState().learners?.selectedId || '';
+    const pending = beginPendingCommand(command);
+    if (!pending.ok) return false;
+    const commandPromise = typeof beforeSend === 'function'
+      ? Promise.resolve()
+        .then(beforeSend)
+        .then((nextPayload) => sendCommand(command, nextPayload || payload, { learnerId: commandLearnerId }))
+      : sendCommand(command, payload, { learnerId: commandLearnerId });
+    commandPromise.then((response) => {
+      onSuccess?.(response);
+    }).catch((error) => {
+      onError?.(error);
       globalThis.console?.warn?.('Spelling command failed.', error);
-      setRuntimeError(commandErrorMessage(error, 'The spelling command could not be completed.'));
+      setRuntimeErrorForLearner(
+        errorLearnerId || commandLearnerId,
+        commandErrorMessage(error, 'The spelling command could not be completed.'),
+      );
     }).finally(() => {
-      if (dedupeKey) pendingCommandKeys.delete(dedupeKey);
+      releasePendingCommand(command, pending.dedupeKey);
+      onSettled?.();
     });
     return true;
   }
@@ -475,30 +838,33 @@ export function createRemoteSpellingActionHandler({
       return true;
     }
 
-    if (action === 'spelling-set-pref') {
-      runCommand('save-prefs', { prefs: { [data.pref]: data.value } });
+    if (pendingCommandBlocksAction(action, state)) {
       return true;
     }
 
-    if (action === 'spelling-set-mode') {
-      runCommand('save-prefs', { prefs: { mode: data.value } });
-      return true;
-    }
-
-    if (action === 'spelling-toggle-pref') {
-      const current = spelling?.getPrefs?.(learnerId) || {};
-      runCommand('save-prefs', { prefs: { [data.pref]: !current[data.pref] } });
+    if (action === 'spelling-set-pref' || action === 'spelling-set-mode' || action === 'spelling-toggle-pref') {
+      const current = visiblePrefsForLearner(learnerId, state);
+      const patch = optimisticSpellingPrefsPatchForAction(action, data, current);
+      if (!Object.keys(patch).length) return true;
+      updateOptimisticPrefs(patch);
+      schedulePreferenceSave(learnerId, patch);
       return true;
     }
 
     if (action === 'spelling-start' || action === 'spelling-start-again') {
-      const prefs = spelling?.getPrefs?.(learnerId) || {};
       tts.stop();
-      runCommand('start-session', {
-        mode: prefs.mode,
-        yearFilter: prefs.yearFilter,
-        length: prefs.roundLength,
-        extraWordFamilies: prefs.extraWordFamilies,
+      runCommand('start-session', {}, {
+        learnerId,
+        beforeSend: async () => {
+          await flushPendingPreferenceSave(learnerId);
+          const prefs = visiblePrefsForLearner(learnerId, appState());
+          return {
+            mode: prefs.mode,
+            yearFilter: prefs.yearFilter,
+            length: prefs.roundLength,
+            extraWordFamilies: prefs.extraWordFamilies,
+          };
+        },
       });
       return true;
     }
@@ -510,19 +876,33 @@ export function createRemoteSpellingActionHandler({
         const confirmed = globalThis.confirm?.('End the current spelling session and switch?');
         if (confirmed === false) return true;
       }
+      const pending = beginPendingCommand('start-session');
+      if (!pending.ok) return true;
       tts.stop();
       (async () => {
-        await sendCommand('save-prefs', { prefs: { mode } });
-        const prefs = spelling?.getPrefs?.(learnerId) || { mode };
+        await flushPendingPreferenceSave(learnerId);
+        const current = visiblePrefsForLearner(learnerId, appState());
+        const patch = optimisticSpellingPrefsPatchForAction('spelling-set-mode', { value: mode }, current);
+        const intent = recordPreferenceIntent(learnerId, patch);
+        updateOptimisticPrefs(patch);
+        try {
+          await sendCommand('save-prefs', { prefs: patch }, { learnerId, preferenceVersion: intent?.version || 0 });
+        } catch (error) {
+          handlePreferenceSaveError(error, { learnerId, preferenceVersion: intent?.version || 0 });
+          throw error;
+        }
+        const prefs = visiblePrefsForLearner(learnerId, appState());
         await sendCommand('start-session', {
           mode: prefs.mode || mode,
           yearFilter: prefs.yearFilter,
           length: prefs.roundLength,
           extraWordFamilies: prefs.extraWordFamilies,
-        });
+        }, { learnerId });
       })().catch((error) => {
         globalThis.console?.warn?.('Spelling shortcut command failed.', error);
-        setRuntimeError(commandErrorMessage(error, 'The spelling shortcut could not be completed.'));
+        setRuntimeErrorForLearner(learnerId, commandErrorMessage(error, 'The spelling shortcut could not be completed.'));
+      }).finally(() => {
+        releasePendingCommand('start-session', pending.dedupeKey);
       });
       return true;
     }
@@ -583,6 +963,7 @@ export function createRemoteSpellingActionHandler({
     applyCommandResponse,
     handle,
     loadWordBank,
+    reapplyPendingOptimisticPrefs,
     runCommand,
     sendCommand,
   };

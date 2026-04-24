@@ -55,9 +55,18 @@ async function currentMonsterAssetKeys() {
 }
 
 await mustExist('index.html');
+await mustExist('manifest.webmanifest');
+await mustExist('favicon.ico');
 await mustExist('_headers');
 await mustExist('styles/app.css');
 await mustExist('src/bundles/app.bundle.js');
+await mustExist('assets/app-icons/favicon-16.png');
+await mustExist('assets/app-icons/favicon-32.png');
+await mustExist('assets/app-icons/apple-touch-icon.png');
+await mustExist('assets/app-icons/app-icon-192.png');
+await mustExist('assets/app-icons/app-icon-512.png');
+await mustExist('assets/app-icons/app-icon-maskable-512.png');
+await mustNotExist('assets/app-icons/app-icon-source.png');
 await mustExist('assets/monsters/inklet/b1/inklet-b1-0.320.webp');
 await mustExist('assets/monsters/inklet/b1/inklet-b1-0.1280.webp');
 await mustExist('worker/src/index.js').then(
@@ -93,7 +102,7 @@ if (manifestKeys.size !== expectedMonsterAssets.size) {
 }
 
 const topLevel = await readdir(publicDir);
-const allowed = new Set(['_headers', 'index.html', 'styles', 'src', 'assets']);
+const allowed = new Set(['_headers', 'favicon.ico', 'index.html', 'manifest.webmanifest', 'styles', 'src', 'assets']);
 const unexpected = topLevel.filter((entry) => !allowed.has(entry));
 if (unexpected.length) {
   throw new Error(`Unexpected top-level public entries: ${unexpected.join(', ')}`);
@@ -112,12 +121,22 @@ if (rawSourceFiles.length) {
   throw new Error(`Public output must only expose the built app bundle under src/: ${rawSourceFiles.join(', ')}`);
 }
 
-const rawAssetPngs = (await walk()).filter((file) => file.startsWith('assets/') && file.endsWith('.png'));
+const rawAssetPngs = (await walk()).filter((file) => (
+  file.startsWith('assets/')
+  && file.endsWith('.png')
+  && !file.startsWith('assets/app-icons/')
+));
 if (rawAssetPngs.length) {
   throw new Error(`Raw asset PNG files must not be copied into public output: ${rawAssetPngs.join(', ')}`);
 }
 
 const indexHtml = await readFile(path.join(publicDir, 'index.html'), 'utf8');
+if (!indexHtml.includes('/manifest.webmanifest')) {
+  throw new Error('Public index.html must link the web app manifest.');
+}
+if (!indexHtml.includes('/assets/app-icons/apple-touch-icon.png')) {
+  throw new Error('Public index.html must link the Apple home-screen icon.');
+}
 if (!indexHtml.includes('./src/bundles/app.bundle.js')) {
   throw new Error('Public index.html must load the React app bundle.');
 }
@@ -137,6 +156,8 @@ for (const token of [
   'Legacy vendor seed for Pass 11 content model',
   'PUNCTUATION_CONTENT_MANIFEST',
   'createPunctuationContentIndexes',
+  'createPunctuationGeneratedItems',
+  'createPunctuationRuntimeManifest',
   'createPunctuationService',
   'PunctuationServiceError',
   'punctuation-r1-endmarks-apostrophe-speech',

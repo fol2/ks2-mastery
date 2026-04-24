@@ -160,6 +160,29 @@ export function renderMonsterVisualRendererFixture() {
   `);
 }
 
+export function renderMonsterCelebrationOverlayFixture() {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { MonsterCelebrationOverlay } from ${JSON.stringify(absoluteSpecifier('src/surfaces/shell/MonsterCelebrationOverlay.jsx'))};
+    import { MONSTERS } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monsters.js'))};
+
+    const event = {
+      id: 'reward.monster:learner-a:vellhorn:evolve:1:1',
+      type: 'reward.monster',
+      kind: 'evolve',
+      learnerId: 'learner-a',
+      monsterId: 'vellhorn',
+      monster: MONSTERS.vellhorn,
+      previous: { mastered: 9, stage: 0, level: 0, caught: true, branch: 'b2' },
+      next: { mastered: 10, stage: 1, level: 1, caught: true, branch: 'b2' },
+      createdAt: Date.UTC(2026, 0, 1),
+    };
+    const html = renderToStaticMarkup(<MonsterCelebrationOverlay queue={[event]} onDismiss={() => {}} />);
+    console.log(html);
+  `);
+}
+
 export function renderProfileSurfaceFixture({ demo = false, persistenceMode = 'remote-sync' } = {}) {
   return renderFixture(`
     import React from 'react';
@@ -255,13 +278,16 @@ export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
     };
     const parentModel = {
       learner: { id: 'learner-a', name: 'Ava', lastActivityAt: Date.UTC(2026, 3, 22, 12, 0) },
-      learnerOverview: { secureWords: 8, dueWords: 2, troubleWords: 1, accuracyPercent: 82 },
-      dueWork: [{ label: 'Review due spellings', detail: 'Two words are ready.' }],
+      learnerOverview: { secureWords: 8, dueWords: 2, troubleWords: 1, accuracyPercent: 82, secureGrammarConcepts: 2, dueGrammarConcepts: 1, weakGrammarConcepts: 1, grammarAccuracyPercent: 67 },
+      dueWork: [{ label: 'Review due spellings', detail: 'Two words are ready.' }, { subjectId: 'grammar', label: 'Repair Grammar misconceptions', detail: 'Adverbials need another pass.' }],
       recentSessions: [{ id: 'session-1', label: 'Smart Review', status: 'completed', sessionKind: 'spelling', mistakeCount: 1, updatedAt: Date.UTC(2026, 3, 22, 12, 0), headline: 'Good recall' }],
       strengths: [{ label: 'Suffixes', detail: 'Secure recall', secureCount: 4, troubleCount: 0 }],
       weaknesses: [{ label: 'Possession', detail: 'Needs another pass', secureCount: 1, troubleCount: 1 }],
       misconceptionPatterns: [{ label: 'Double consonant', source: 'event log', count: 2, lastSeenAt: Date.UTC(2026, 3, 22, 12, 0) }],
-      progressSnapshots: [{ trackedWords: 213, totalPublishedWords: 235 }],
+      progressSnapshots: [
+        { subjectId: 'spelling', trackedWords: 213, totalPublishedWords: 235 },
+        { subjectId: 'grammar', trackedConcepts: 3, totalConcepts: 18, securedConcepts: 2, dueConcepts: 1, weakConcepts: 1 },
+      ],
       exportEntryPoints: [{ action: 'platform-export-learner', label: 'Export current learner' }],
       accessibleLearners: [{ learnerId: 'learner-a', learnerName: 'Ava', yearGroup: 'Y5', membershipRoleLabel: 'Viewer', writable: false }],
       selectedLearnerId: 'learner-a',
@@ -354,7 +380,7 @@ export function renderSubjectRouteFixture({ subject = 'placeholder' } = {}) {
   `);
 }
 
-export function renderSpellingSurfaceFixture({ phase = 'setup' } = {}) {
+export function renderSpellingSurfaceFixture({ phase = 'setup', pendingCommand = '' } = {}) {
   return renderFixture(`
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
@@ -390,6 +416,15 @@ export function renderSpellingSurfaceFixture({ phase = 'setup' } = {}) {
     }
     if (selectedPhase === 'modal') {
       controller.dispatch('spelling-word-detail-open', { slug: 'possess', value: 'drill' });
+    }
+    const pendingCommand = ${JSON.stringify(pendingCommand)};
+    if (pendingCommand) {
+      controller.store.patch((current) => ({
+        transientUi: {
+          ...current.transientUi,
+          spellingPendingCommand: pendingCommand,
+        },
+      }));
     }
     const appState = controller.store.getState();
     const context = controller.contextFor('spelling');

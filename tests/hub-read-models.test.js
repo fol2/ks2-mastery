@@ -122,6 +122,132 @@ test('parent hub read model keeps recently missed secure words in the trouble co
   assert.equal(model.dueWork[0].recommendedMode, 'trouble');
 });
 
+test('parent hub read model includes Grammar evidence without replacing Spelling', () => {
+  const learner = makeLearner();
+  const model = buildParentHubReadModel({
+    learner,
+    platformRole: 'parent',
+    membershipRole: 'owner',
+    subjectStates: {
+      spelling: {
+        data: {
+          progress: {
+            possess: { stage: 4, attempts: 4, correct: 4, wrong: 0, dueDay: 999999 },
+          },
+        },
+      },
+      grammar: {
+        data: {
+          mastery: {
+            concepts: {
+              adverbials: {
+                attempts: 1,
+                correct: 0,
+                wrong: 1,
+                strength: 0.1,
+                dueAt: 1,
+                lastSeenAt: '2026-04-24T10:00:00.000Z',
+                lastWrongAt: '2026-04-24T10:00:00.000Z',
+                correctStreak: 0,
+              },
+            },
+            questionTypes: {
+              choose: {
+                attempts: 1,
+                correct: 0,
+                wrong: 1,
+                strength: 0.1,
+                dueAt: 1,
+              },
+            },
+          },
+          misconceptions: {
+            fronted_adverbial_confusion: {
+              count: 1,
+              lastSeenAt: '2026-04-24T10:00:00.000Z',
+            },
+          },
+        },
+        updatedAt: 5000,
+      },
+    },
+    practiceSessions: [
+      {
+        id: 'grammar-complete',
+        learnerId: learner.id,
+        subjectId: 'grammar',
+        sessionKind: 'practice',
+        status: 'completed',
+        summary: { mode: 'smart', answered: 1, correct: 0 },
+        createdAt: 6000,
+        updatedAt: 7000,
+      },
+    ],
+    eventLog: [],
+    now: () => 1_777_000_000_000,
+  });
+
+  assert.equal(model.progressSnapshots[0].subjectId, 'spelling');
+  assert.equal(model.progressSnapshots.some((snapshot) => snapshot.subjectId === 'grammar'), true);
+  assert.equal(model.learnerOverview.weakGrammarConcepts, 1);
+  assert.equal(model.dueWork[0].subjectId, 'grammar');
+  const grammarDueWork = model.dueWork.find((entry) => entry.subjectId === 'grammar');
+  assert.ok(grammarDueWork);
+  assert.match(grammarDueWork.label, /Grammar/);
+  assert.equal(grammarDueWork.recommendedMode, 'trouble');
+  assert.ok(model.misconceptionPatterns.some((entry) => entry.subjectId === 'grammar' && /Fronted Adverbial/.test(entry.label)));
+  assert.ok(model.recentSessions.some((entry) => entry.subjectId === 'grammar' && entry.headline === '0/1'));
+});
+
+test('admin hub diagnostics use actionable Grammar focus before empty Spelling fallback', () => {
+  const learner = makeLearner();
+  const model = buildAdminHubReadModel({
+    account: {
+      id: 'adult-admin',
+      selectedLearnerId: learner.id,
+      platformRole: 'admin',
+    },
+    platformRole: 'admin',
+    spellingContentBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+    memberships: [
+      {
+        learnerId: learner.id,
+        learner,
+        role: 'owner',
+      },
+    ],
+    learnerBundles: {
+      [learner.id]: {
+        subjectStates: {
+          grammar: {
+            data: {
+              mastery: {
+                concepts: {
+                  adverbials: {
+                    attempts: 1,
+                    correct: 0,
+                    wrong: 1,
+                    strength: 0.1,
+                    dueAt: 1,
+                    lastSeenAt: '2026-04-24T10:00:00.000Z',
+                    lastWrongAt: '2026-04-24T10:00:00.000Z',
+                    correctStreak: 0,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    selectedLearnerId: learner.id,
+    now: () => 1_777_000_000_000,
+  });
+
+  assert.equal(model.learnerSupport.selectedDiagnostics.currentFocus.subjectId, 'grammar');
+  assert.match(model.learnerSupport.selectedDiagnostics.currentFocus.label, /Grammar/);
+});
+
 test('admin hub read model reports published release status, validation state, audit stream, and learner diagnostics', () => {
   const learner = makeLearner();
   const model = buildAdminHubReadModel({
