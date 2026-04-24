@@ -611,6 +611,105 @@ test('remote spelling compensation baselines old logged celebrations when ack st
   assert.equal(getState().monsterCelebrations.queue.length, 0);
 });
 
+test('remote spelling compensation preserves older recent missed celebrations for later replay', () => {
+  installMemoryStorage();
+  const now = Date.now();
+  const directEvolution = {
+    id: 'reward.monster:learner-a:inklet:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: 'learner-a',
+    subjectId: 'spelling',
+    monsterId: 'inklet',
+    monster: {
+      id: 'inklet',
+      name: 'Inklet',
+      accent: '#3E6FA8',
+    },
+    previous: { mastered: 9, stage: 0, level: 1, caught: true, branch: 'b1' },
+    next: { mastered: 10, stage: 1, level: 2, caught: true, branch: 'b1' },
+    createdAt: now - 2000,
+  };
+  const phaetonEvolution = {
+    id: 'reward.monster:learner-a:phaeton:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: 'learner-a',
+    subjectId: 'spelling',
+    monsterId: 'phaeton',
+    monster: {
+      id: 'phaeton',
+      name: 'Phaeton',
+      accent: '#7D5CC6',
+    },
+    previous: { mastered: 29, stage: 1, level: 2, caught: true, branch: 'b2' },
+    next: { mastered: 30, stage: 2, level: 3, caught: true, branch: 'b2' },
+    createdAt: now - 1000,
+  };
+  const { calls, getState, store } = createStoreHarness({
+    repositories: {
+      eventLog: {
+        list() {
+          return [directEvolution, phaetonEvolution];
+        },
+      },
+    },
+  });
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: { send: async () => ({}) },
+  });
+
+  handler.applyCommandResponse({
+    learnerId: 'learner-a',
+    subjectReadModel: { phase: 'summary' },
+    projections: {
+      rewards: {
+        toastEvents: [],
+        events: [],
+      },
+    },
+  }, { command: 'end-session' });
+
+  assert.equal(getState().monsterCelebrations.queue.length, 1);
+  assert.equal(getState().monsterCelebrations.queue[0].id, phaetonEvolution.id);
+
+  acknowledgeMonsterCelebrationEvents(phaetonEvolution, { learnerId: 'learner-a' });
+  store.dismissMonsterCelebration();
+  store.updateSubjectUi('spelling', {
+    phase: 'session',
+    session: {
+      id: 'session-b',
+      currentSlug: 'necessary',
+      phase: 'answer',
+      promptCount: 1,
+    },
+  });
+  calls.length = 0;
+
+  handler.applyCommandResponse({
+    learnerId: 'learner-a',
+    subjectReadModel: { phase: 'summary' },
+    projections: {
+      rewards: {
+        toastEvents: [],
+        events: [],
+      },
+    },
+  }, { command: 'end-session' });
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'reloadFromRepositories',
+    'deferMonsterCelebrations',
+    'releaseMonsterCelebrations',
+  ]);
+  assert.equal(getState().monsterCelebrations.queue.length, 1);
+  assert.equal(getState().monsterCelebrations.queue[0].id, directEvolution.id);
+});
+
 test('remote spelling command response ignores stale learner TTS side effects', () => {
   const { store } = createStoreHarness({
     learners: { selectedId: 'learner-b' },

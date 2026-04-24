@@ -118,7 +118,6 @@ export function unacknowledgedMonsterCelebrationEvents(events, {
   learnerId = '',
   ignoredIds = new Set(),
   limit = 1,
-  acknowledgeSkipped = false,
   baselineExisting = false,
   baselineRecentWindowMs = DEFAULT_BASELINE_RECENT_WINDOW_MS,
   now = Date.now(),
@@ -145,9 +144,5 @@ export function unacknowledgedMonsterCelebrationEvents(events, {
     .sort((a, b) => (Number(a.createdAt) || 0) - (Number(b.createdAt) || 0));
 
   const count = Math.max(1, Number(limit) || 1);
-  const selected = normaliseMonsterCelebrationEvents(candidates.slice(-count));
-  if (acknowledgeSkipped && candidates.length > selected.length) {
-    acknowledgeMonsterCelebrationEvents(candidates.slice(0, -selected.length), { learnerId, store });
-  }
-  return selected;
+  return normaliseMonsterCelebrationEvents(candidates.slice(-count));
 }
