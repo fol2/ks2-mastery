@@ -38,9 +38,10 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
   const selectedMode = grammar.prefs?.mode || 'smart';
   const troubleMode = selectedMode === 'trouble';
   const surgeryMode = selectedMode === 'surgery';
-  const focusDisabled = troubleMode || surgeryMode;
+  const builderMode = selectedMode === 'builder';
+  const focusDisabled = troubleMode || surgeryMode || builderMode;
   const selectedFocus = focusDisabled ? '' : (grammar.prefs?.focusConceptId || '');
-  const focusPlaceholder = troubleMode ? 'Weakest concept' : (surgeryMode ? 'Surgery mix' : 'Smart mix');
+  const focusPlaceholder = troubleMode ? 'Weakest concept' : (surgeryMode ? 'Surgery mix' : (builderMode ? 'Builder mix' : 'Smart mix'));
   const groupedConcepts = groupedGrammarConcepts(grammar.analytics?.concepts || []);
   const setupDisabled = runtimeReadOnly || Boolean(grammar.pendingCommand);
 

@@ -254,7 +254,7 @@ function capabilityMetadata() {
     satsset: { label: 'KS2-style mini-set', detail: 'A short mixed set with SATs-friendly question shapes.' },
     trouble: { label: 'Weak concepts drill', detail: 'Targets the weakest Grammar concepts with retry pressure.' },
     surgery: { label: 'Sentence surgery', detail: 'Fix and rewrite sentence-level Grammar errors.' },
-    builder: { label: 'Sentence builder' },
+    builder: { label: 'Sentence builder', detail: 'Build and rewrite sentences from structured prompts.' },
     worked: { label: 'Worked examples' },
     faded: { label: 'Faded guidance' },
   };
