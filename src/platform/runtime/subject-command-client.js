@@ -38,6 +38,21 @@ export function createSubjectCommandClient({
     throw new TypeError('Subject command client requires a fetch implementation.');
   }
 
+  const learnerCommandQueues = new Map();
+
+  function enqueueLearnerCommand(learnerId, task) {
+    const queueKey = learnerId || 'default';
+    const previous = learnerCommandQueues.get(queueKey) || Promise.resolve();
+    let queued;
+    queued = previous.catch(() => {}).then(task).finally(() => {
+      if (learnerCommandQueues.get(queueKey) === queued) {
+        learnerCommandQueues.delete(queueKey);
+      }
+    });
+    learnerCommandQueues.set(queueKey, queued);
+    return queued;
+  }
+
   async function sendOnce({ cleanSubjectId, cleanLearnerId, cleanCommand, payload, requestId }) {
     const expectedLearnerRevision = Number(getLearnerRevision(cleanLearnerId)) || 0;
     let response;
@@ -79,18 +94,7 @@ export function createSubjectCommandClient({
     return responsePayload;
   }
 
-  async function send({ subjectId, learnerId, command, payload = {}, requestId = uid('subject-command') } = {}) {
-    const cleanSubjectId = String(subjectId || '').trim();
-    const cleanLearnerId = String(learnerId || '').trim();
-    const cleanCommand = String(command || '').trim();
-    if (!cleanSubjectId || !cleanLearnerId || !cleanCommand) {
-      throw new SubjectCommandClientError({
-        status: 400,
-        payload: { code: 'subject_command_client_invalid' },
-        message: 'Subject command requires subject, learner, and command identifiers.',
-      });
-    }
-
+  async function sendWithRetry({ cleanSubjectId, cleanLearnerId, cleanCommand, payload, requestId }) {
     let responsePayload;
     try {
       responsePayload = await sendOnce({
@@ -128,6 +132,27 @@ export function createSubjectCommandClient({
       response: responsePayload,
     });
     return responsePayload;
+  }
+
+  async function send({ subjectId, learnerId, command, payload = {}, requestId = uid('subject-command') } = {}) {
+    const cleanSubjectId = String(subjectId || '').trim();
+    const cleanLearnerId = String(learnerId || '').trim();
+    const cleanCommand = String(command || '').trim();
+    if (!cleanSubjectId || !cleanLearnerId || !cleanCommand) {
+      throw new SubjectCommandClientError({
+        status: 400,
+        payload: { code: 'subject_command_client_invalid' },
+        message: 'Subject command requires subject, learner, and command identifiers.',
+      });
+    }
+
+    return enqueueLearnerCommand(cleanLearnerId, () => sendWithRetry({
+      cleanSubjectId,
+      cleanLearnerId,
+      cleanCommand,
+      payload,
+      requestId,
+    }));
   }
 
   return { send };
