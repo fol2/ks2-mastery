@@ -1459,6 +1459,37 @@ async function readLearnerProjectionBundle(db, accountId, learnerId) {
   };
 }
 
+function uniqueStringList(value) {
+  return [...new Set((Array.isArray(value) ? value : [])
+    .filter((entry) => typeof entry === 'string' && entry))];
+}
+
+async function readLearnerEventLogEvents(db, accountId, learnerId, { ids = [], eventTypes = [] } = {}) {
+  await requireLearnerWriteAccess(db, accountId, learnerId);
+  const safeIds = uniqueStringList(ids);
+  const safeEventTypes = uniqueStringList(eventTypes);
+  if (!safeIds.length && !safeEventTypes.length) return [];
+
+  const clauses = ['learner_id = ?'];
+  const params = [learnerId];
+  if (safeIds.length) {
+    clauses.push(`id IN (${sqlPlaceholders(safeIds.length)})`);
+    params.push(...safeIds);
+  }
+  if (safeEventTypes.length) {
+    clauses.push(`event_type IN (${sqlPlaceholders(safeEventTypes.length)})`);
+    params.push(...safeEventTypes);
+  }
+
+  const rows = await all(db, `
+    SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+    FROM event_log
+    WHERE ${clauses.join(' AND ')}
+    ORDER BY created_at ASC, id ASC
+  `, params);
+  return rows.map(eventRowToRecord).filter(Boolean);
+}
+
 function guardedValueSource(valueCount, guard) {
   const placeholders = sqlPlaceholders(valueCount);
   if (!guard) return `VALUES (${placeholders})`;
@@ -2109,6 +2140,9 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
     },
     async readLearnerProjectionState(accountId, learnerId) {
       return readLearnerProjectionBundle(db, accountId, learnerId);
+    },
+    async readLearnerEventLogEvents(accountId, learnerId, filters = {}) {
+      return readLearnerEventLogEvents(db, accountId, learnerId, filters);
     },
     async persistSubjectRuntime(accountId, learnerId, subjectId = 'spelling', runtime = {}) {
       return persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, runtime, nowFactory());
