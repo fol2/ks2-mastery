@@ -2,6 +2,11 @@ import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../../../../src/subjects/spellin
 import { resolveRuntimeSnapshot } from '../../../../src/subjects/spelling/content/model.js';
 import { NotFoundError } from '../../errors.js';
 import { combineCommandEvents } from '../../projections/events.js';
+import {
+  MONSTER_CELEBRATION_REPLAY_REQUEST_TYPE,
+  monsterCelebrationReplayEvents,
+  monsterCelebrationReplayReferenceIds,
+} from '../../projections/monster-replays.js';
 import { buildCommandProjectionReadModel } from '../../projections/read-models.js';
 import { projectSpellingRewards } from '../../projections/rewards.js';
 import { buildSpellingAudioCue } from './audio.js';
@@ -42,6 +47,26 @@ function clientAnalytics(analytics) {
       source: 'server-read-model-api',
     },
   };
+}
+
+async function replayContextEvents(context, learnerId) {
+  const replayRequests = await context.repository.readLearnerEventLogEvents(
+    context.session.accountId,
+    learnerId,
+    { eventTypes: [MONSTER_CELEBRATION_REPLAY_REQUEST_TYPE] },
+  );
+  const { sourceIds, replayIds } = monsterCelebrationReplayReferenceIds(replayRequests, {
+    learnerId,
+    subjectId: 'spelling',
+  });
+  const referenceIds = [...new Set([...sourceIds, ...replayIds])];
+  if (!referenceIds.length) return replayRequests;
+  const referenceEvents = await context.repository.readLearnerEventLogEvents(
+    context.session.accountId,
+    learnerId,
+    { ids: referenceIds },
+  );
+  return [...replayRequests, ...referenceEvents];
 }
 
 async function readRuntimeContent(context) {
@@ -125,9 +150,21 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       domainEvents: result.events,
       gameState: projectionState.gameState,
     });
+    let replayEvents = [];
+    if (result.state?.phase === 'summary') {
+      const replayContext = await replayContextEvents(context, command.learnerId);
+      replayEvents = monsterCelebrationReplayEvents([
+        ...projectionState.events,
+        ...replayContext,
+      ], {
+        learnerId: command.learnerId,
+        subjectId: 'spelling',
+        now: nowValue,
+      });
+    }
     const projectedEvents = combineCommandEvents({
       domainEvents: result.events,
-      reactionEvents: projectedRewards.rewardEvents,
+      reactionEvents: [...projectedRewards.rewardEvents, ...replayEvents],
       existingEvents: projectionState.events,
     });
     const replayAudioCue = await buildSpellingAudioCue({
