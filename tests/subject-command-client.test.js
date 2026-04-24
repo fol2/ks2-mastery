@@ -64,3 +64,46 @@ test('subject command client serialises learner commands before reading revision
   assert.deepEqual(commandBodies.map((body) => body.expectedLearnerRevision), [0, 1]);
   assert.equal(revision, 2);
 });
+
+test('subject command client retries transient server failures with the same request id', async () => {
+  let revision = 7;
+  const commandBodies = [];
+  const fetch = async (input, init = {}) => {
+    const body = JSON.parse(init.body);
+    commandBodies.push(body);
+    if (commandBodies.length === 1) {
+      return new Response(JSON.stringify({
+        ok: false,
+        code: 'backend_unavailable',
+        message: 'D1 was temporarily unavailable.',
+      }), { status: 503, headers: { 'content-type': 'application/json' } });
+    }
+    return new Response(JSON.stringify({
+      ok: true,
+      mutation: {
+        appliedRevision: body.expectedLearnerRevision + 1,
+      },
+    }), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  const commands = createSubjectCommandClient({
+    fetch,
+    getLearnerRevision: () => revision,
+    retryDelayMs: 0,
+    onCommandApplied({ response }) {
+      revision = Number(response.mutation?.appliedRevision) || revision;
+    },
+  });
+
+  await commands.send({
+    subjectId: 'spelling',
+    learnerId: 'learner-a',
+    command: 'start-session',
+    payload: { mode: 'smart', length: 20 },
+    requestId: 'cmd-transient-503',
+  });
+
+  assert.equal(commandBodies.length, 2);
+  assert.deepEqual(commandBodies.map((body) => body.requestId), ['cmd-transient-503', 'cmd-transient-503']);
+  assert.deepEqual(commandBodies.map((body) => body.expectedLearnerRevision), [7, 7]);
+  assert.equal(revision, 8);
+});
