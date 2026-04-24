@@ -407,6 +407,70 @@ test('Grammar command route accepts faded guidance mode without current-answer l
   DB.close();
 });
 
+test('Grammar faded guidance omits contrast examples that match current options', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-faded-formality-leakage',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'faded',
+      roundLength: 1,
+      templateId: 'proc2_formality_choice',
+      seed: 1,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  const session = start.body.subjectReadModel.session;
+  const optionLabels = session.currentItem.inputSpec.options.map((option) => option.label);
+  assert.ok(optionLabels.includes('The club was established last year.'));
+  assert.ok(optionLabels.includes('The club got set up last year.'));
+  assert.equal(session.supportGuidance.kind, 'faded');
+  assert.equal(session.supportGuidance.contrast.secureExample, undefined);
+  assert.equal(session.supportGuidance.contrast.nearMiss, undefined);
+  assert.equal(session.supportGuidance.contrast.why, 'The first is more formal.');
+  assert.equal(JSON.stringify(session.supportGuidance).includes('The club was established last year.'), false);
+  assert.equal(JSON.stringify(session.supportGuidance).includes('The club got set up last year.'), false);
+
+  DB.close();
+});
+
+test('Grammar worked guidance omits model answers that match current table rows', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-worked-row-leakage',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'worked',
+      roundLength: 1,
+      templateId: 'sentence_type_table',
+      seed: 4,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  const session = start.body.subjectReadModel.session;
+  const rowLabels = session.currentItem.inputSpec.rows.map((row) => row.label);
+  assert.ok(rowLabels.includes('Close the gate before the dog escapes.'));
+  assert.equal(session.supportGuidance.kind, 'worked');
+  assert.equal(session.supportGuidance.workedExample.prompt, 'Which sentence is a command?');
+  assert.equal(session.supportGuidance.workedExample.exampleResponse, undefined);
+  assert.equal(session.supportGuidance.workedExample.why, 'It tells someone to do something.');
+  assert.equal(JSON.stringify(session.supportGuidance).includes('Close the gate before the dog escapes.'), false);
+
+  DB.close();
+});
+
 test('Grammar command route rejects non-builder template overrides in builder mode', async () => {
   const DB = createMigratedSqliteD1Database();
   const app = createWorkerApp({ now: () => 1_777_000_000_000 });

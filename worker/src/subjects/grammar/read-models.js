@@ -77,29 +77,125 @@ function conceptSupportSummary(concept) {
   };
 }
 
-function safeWorkedExample(concept) {
-  const worked = isPlainObject(concept?.worked) ? concept.worked : {};
-  if (!worked.prompt && !worked.answer && !worked.why) return null;
-  return {
-    prompt: typeof worked.prompt === 'string' ? worked.prompt : '',
-    exampleResponse: typeof worked.answer === 'string' ? worked.answer : '',
-    why: typeof worked.why === 'string' ? worked.why : '',
-  };
+function normaliseComparableText(value) {
+  if (typeof value !== 'string') return '';
+  return value
+    .normalize('NFKC')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
 }
 
-function safeContrast(concept) {
+function addCurrentSurfaceText(texts, value) {
+  const normalised = normaliseComparableText(value);
+  if (normalised.length >= 4) texts.add(normalised);
+}
+
+function addChoiceSurfaceTexts(texts, options) {
+  if (!Array.isArray(options)) return;
+  for (const option of options) {
+    if (Array.isArray(option)) {
+      addCurrentSurfaceText(texts, option[0]);
+      addCurrentSurfaceText(texts, option[1]);
+    } else if (isPlainObject(option)) {
+      addCurrentSurfaceText(texts, option.value);
+      addCurrentSurfaceText(texts, option.label);
+    } else {
+      addCurrentSurfaceText(texts, option);
+    }
+  }
+}
+
+function addInputSurfaceTexts(texts, inputSpec) {
+  if (!isPlainObject(inputSpec)) return;
+  addCurrentSurfaceText(texts, inputSpec.label);
+  addChoiceSurfaceTexts(texts, inputSpec.options);
+
+  if (Array.isArray(inputSpec.rows)) {
+    for (const row of inputSpec.rows) {
+      if (!isPlainObject(row)) continue;
+      addCurrentSurfaceText(texts, row.label);
+      addChoiceSurfaceTexts(texts, row.options);
+    }
+  }
+
+  if (Array.isArray(inputSpec.fields)) {
+    for (const field of inputSpec.fields) {
+      if (!isPlainObject(field)) continue;
+      addCurrentSurfaceText(texts, field.label);
+      addChoiceSurfaceTexts(texts, field.options);
+    }
+  }
+}
+
+function currentItemSurfaceTexts(item) {
+  const texts = new Set();
+  if (!isPlainObject(item)) return texts;
+  addCurrentSurfaceText(texts, item.promptText);
+  addCurrentSurfaceText(texts, item.reflectionPrompt);
+  addCurrentSurfaceText(texts, item.checkLine);
+  if (Array.isArray(item.solutionLines)) {
+    for (const line of item.solutionLines) addCurrentSurfaceText(texts, line);
+  }
+  addInputSurfaceTexts(texts, item.inputSpec);
+  return texts;
+}
+
+function overlapsCurrentItemSurface(value, currentTexts) {
+  const candidate = normaliseComparableText(value);
+  if (candidate.length < 4) return false;
+  for (const current of currentTexts) {
+    if (candidate === current) return true;
+    if (current.length >= 12 && candidate.includes(current)) return true;
+    if (current.includes(candidate)) return true;
+  }
+  return false;
+}
+
+function safeGuidanceText(value, currentTexts) {
+  if (typeof value !== 'string') return '';
+  return overlapsCurrentItemSurface(value, currentTexts) ? '' : value;
+}
+
+function safeWorkedExample(concept, currentTexts = new Set()) {
+  const worked = isPlainObject(concept?.worked) ? concept.worked : {};
+  if (!worked.prompt && !worked.answer && !worked.why) return null;
+  const prompt = safeGuidanceText(worked.prompt, currentTexts);
+  const exampleResponse = safeGuidanceText(worked.answer, currentTexts);
+  const why = safeGuidanceText(worked.why, currentTexts);
+  if (!prompt && !exampleResponse && !why) return null;
+  const model = {};
+  if (prompt) model.prompt = prompt;
+  if (exampleResponse) model.exampleResponse = exampleResponse;
+  if (why) model.why = why;
+  return model;
+}
+
+function safeContrast(concept, currentTexts = new Set()) {
   const contrast = isPlainObject(concept?.contrast) ? concept.contrast : {};
   if (!contrast.good && !contrast.nearMiss && !contrast.why) return null;
-  return {
-    secureExample: typeof contrast.good === 'string' ? contrast.good : '',
-    nearMiss: typeof contrast.nearMiss === 'string' ? contrast.nearMiss : '',
-    why: typeof contrast.why === 'string' ? contrast.why : '',
-  };
+  const secureExample = safeGuidanceText(contrast.good, currentTexts);
+  const nearMiss = safeGuidanceText(contrast.nearMiss, currentTexts);
+  const why = safeGuidanceText(contrast.why, currentTexts);
+  if (!secureExample && !nearMiss && !why) return null;
+  const model = {};
+  if (secureExample) model.secureExample = secureExample;
+  if (nearMiss) model.nearMiss = nearMiss;
+  if (why) model.why = why;
+  return model;
 }
 
 function supportGuidanceForSession(session) {
   const level = Math.max(0, Number(session?.supportLevel) || 0);
   if (!level) return null;
+  const currentTexts = currentItemSurfaceTexts(session?.currentItem);
   const conceptIds = Array.isArray(session?.currentItem?.skillIds)
     ? session.currentItem.skillIds.filter(Boolean).map(String)
     : [];
@@ -117,7 +213,7 @@ function supportGuidanceForSession(session) {
       level,
       title: 'Worked example',
       concepts: summaries,
-      workedExample: safeWorkedExample(primary),
+      workedExample: safeWorkedExample(primary, currentTexts),
       notices: Array.isArray(primary?.notices) ? primary.notices.slice(0, 2) : [],
     };
   }
@@ -129,7 +225,7 @@ function supportGuidanceForSession(session) {
     concepts: summaries,
     summary: typeof primary?.summary === 'string' ? primary.summary : '',
     notices: Array.isArray(primary?.notices) ? primary.notices.slice(0, 3) : [],
-    contrast: safeContrast(primary),
+    contrast: safeContrast(primary, currentTexts),
   };
 }
 
