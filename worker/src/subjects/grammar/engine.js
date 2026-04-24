@@ -20,8 +20,8 @@ const DEFAULT_MINI_SET_LENGTH = 8;
 const SHORT_RESPONSE_TEXT_LIMIT = 512;
 const LONG_RESPONSE_TEXT_LIMIT = 2000;
 const LIST_RESPONSE_LIMIT = 40;
-const ENABLED_MODES = new Set(['learn', 'smart', 'satsset']);
-const LOCKED_MODES = Object.freeze(['trouble', 'surgery', 'builder', 'worked', 'faded']);
+const ENABLED_MODES = new Set(['learn', 'smart', 'satsset', 'trouble']);
+const LOCKED_MODES = Object.freeze(['surgery', 'builder', 'worked', 'faded']);
 const GRAMMAR_CONCEPT_IDS = new Set(GRAMMAR_CONCEPTS.map((concept) => concept.id));
 
 function isPlainObject(value) {
@@ -466,6 +466,26 @@ function nextItem(state, { mode, focusConceptId, seed, templateId = '', nowTs = 
   return itemFromTemplate(weightedTemplatePick(state, { mode, focusConceptId, seed, nowTs }), seed);
 }
 
+function weakestConceptIdForTrouble(state, nowTs) {
+  return GRAMMAR_CONCEPTS
+    .map((concept) => {
+      const node = state.mastery.concepts[concept.id] || defaultMasteryNode();
+      return {
+        id: concept.id,
+        node,
+        status: grammarConceptStatus(node, nowTs),
+      };
+    })
+    .filter((entry) => entry.status === 'weak')
+    .sort((a, b) => {
+      const wrongDelta = (Number(b.node.wrong) || 0) - (Number(a.node.wrong) || 0);
+      if (wrongDelta) return wrongDelta;
+      const strengthDelta = (Number(a.node.strength) || 0.25) - (Number(b.node.strength) || 0.25);
+      if (strengthDelta) return strengthDelta;
+      return String(a.id).localeCompare(String(b.id));
+    })[0]?.id || '';
+}
+
 function normaliseMode(value) {
   const mode = String(value || 'smart').trim().toLowerCase().replace(/[\s_]+/g, '-');
   if (mode === 'mini-set' || mode === 'mini' || mode === 'test') return 'satsset';
@@ -559,20 +579,23 @@ function startSession(state, payload, nowTs, learnerId) {
       conceptId: focusConceptId,
     });
   }
+  const sessionFocusConceptId = mode === 'trouble' && !focusConceptId
+    ? weakestConceptIdForTrouble(state, nowTs)
+    : focusConceptId;
   const roundLength = roundLengthFor(mode, payload, state.prefs);
   const baseSeed = Number.isFinite(Number(payload.seed))
     ? Number(payload.seed)
-    : stableHash(`${payload.requestId || ''}:${nowTs}:${focusConceptId}:${mode}`);
+    : stableHash(`${payload.requestId || ''}:${nowTs}:${sessionFocusConceptId}:${mode}`);
   const sessionId = serverSessionId(learnerId, {
     requestId: payload.requestId,
     nowTs,
     baseSeed,
     mode,
-    focusConceptId,
+    focusConceptId: sessionFocusConceptId,
   });
   const firstItem = nextItem(state, {
     mode,
-    focusConceptId,
+    focusConceptId: sessionFocusConceptId,
     seed: baseSeed,
     nowTs,
     templateId: typeof payload.templateId === 'string' ? payload.templateId : '',
@@ -590,9 +613,9 @@ function startSession(state, payload, nowTs, learnerId) {
   };
   state.session = {
     id: sessionId,
-    type: mode === 'satsset' ? 'mini-set' : 'practice',
+    type: mode === 'satsset' ? 'mini-set' : (mode === 'trouble' ? 'trouble-drill' : 'practice'),
     mode,
-    focusConceptId,
+    focusConceptId: sessionFocusConceptId,
     startedAt: nowTs,
     targetCount: roundLength,
     answered: 0,

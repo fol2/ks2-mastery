@@ -254,6 +254,50 @@ test('Grammar server engine creates a session, marks an answer, and records summ
   assert.ok(done.events.some((event) => event.type === 'grammar.session-completed'));
 });
 
+test('Grammar trouble mode targets the weakest concept without pinning focus prefs', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {
+      data: {
+        mastery: {
+          concepts: {
+            adverbials: {
+              attempts: 4,
+              correct: 0,
+              wrong: 4,
+              strength: 0.12,
+              dueAt: 1,
+            },
+            word_classes: {
+              attempts: 2,
+              correct: 0,
+              wrong: 2,
+              strength: 0.08,
+              dueAt: 1,
+            },
+          },
+        },
+      },
+    },
+    command: 'start-session',
+    requestId: 'start-trouble',
+    payload: {
+      mode: 'trouble',
+      roundLength: 3,
+      seed: 42,
+    },
+  });
+
+  assert.equal(start.state.phase, 'session');
+  assert.equal(start.state.session.mode, 'trouble');
+  assert.equal(start.state.session.type, 'trouble-drill');
+  assert.equal(start.state.session.focusConceptId, 'adverbials');
+  assert.equal(start.state.prefs.focusConceptId, '');
+  assert.equal(start.practiceSession.sessionKind, 'trouble');
+  assert.ok(start.state.session.currentItem.skillIds.includes('adverbials'));
+});
+
 test('Grammar save-prefs clears completed summary state', () => {
   const oracle = readGrammarLegacyOracle();
   const sample = oracle.templates.find((template) => template.id === 'question_mark_select');

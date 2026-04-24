@@ -336,6 +336,25 @@ test('Grammar normaliser parses ISO misconception timestamps in fallback pattern
   assert.equal(grammar.analytics.misconceptionPatterns[0].lastSeenAt, Date.parse(isoTimestamp));
 });
 
+test('Grammar normaliser upgrades stale persisted mode capabilities', () => {
+  const grammar = normaliseGrammarReadModel({
+    capabilities: {
+      enabledModes: [
+        { id: 'learn', label: 'Learn a concept' },
+        { id: 'smart', label: 'Smart mixed review' },
+        { id: 'satsset', label: 'KS2-style mini-set' },
+      ],
+      lockedModes: [
+        { id: 'trouble', label: 'Weak concepts drill', reason: 'coming-next' },
+        { id: 'surgery', label: 'Sentence surgery', reason: 'coming-next' },
+      ],
+    },
+  });
+
+  assert.equal(grammar.capabilities.enabledModes.some((mode) => mode.id === 'trouble'), true);
+  assert.equal(grammar.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
+});
+
 test('Grammar locked future modes render unavailable without dispatching commands', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
@@ -343,7 +362,29 @@ test('Grammar locked future modes render unavailable without dispatching command
   harness.dispatch('open-subject', { subjectId: 'grammar' });
   const html = harness.render();
 
-  assert.match(html, /Weak concepts drill[\s\S]*Coming next/);
+  assert.match(html, /<button class="grammar-mode" type="button">[\s\S]*Weak concepts drill/);
+  assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Weak concepts drill/);
   assert.match(html, /Sentence surgery[\s\S]*Coming next/);
   assert.match(html, /button class="grammar-mode locked" type="button" disabled=""/);
+});
+
+test('Grammar setup can start trouble drill mode', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-set-mode', { value: 'trouble' });
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.mode, 'trouble');
+
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      seed: 123,
+    },
+  });
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.mode, 'trouble');
+  assert.equal(grammar.session.type, 'trouble-drill');
 });

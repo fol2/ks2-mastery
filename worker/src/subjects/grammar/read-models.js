@@ -248,19 +248,19 @@ function evidenceSummary({ concepts, patterns }) {
 }
 
 function capabilityMetadata() {
-  const labels = {
-    learn: 'Learn a concept',
-    smart: 'Smart mixed review',
-    satsset: 'KS2-style mini-set',
-    trouble: 'Weak concepts drill',
-    surgery: 'Sentence surgery',
-    builder: 'Sentence builder',
-    worked: 'Worked examples',
-    faded: 'Faded guidance',
+  const modes = {
+    learn: { label: 'Learn a concept', detail: 'Focused retrieval on one concept at a time.' },
+    smart: { label: 'Smart mixed review', detail: 'Worker-selected review across Grammar concepts.' },
+    satsset: { label: 'KS2-style mini-set', detail: 'A short mixed set with SATs-friendly question shapes.' },
+    trouble: { label: 'Weak concepts drill', detail: 'Targets the weakest Grammar concepts with retry pressure.' },
+    surgery: { label: 'Sentence surgery' },
+    builder: { label: 'Sentence builder' },
+    worked: { label: 'Worked examples' },
+    faded: { label: 'Faded guidance' },
   };
   return {
-    enabledModes: Array.from(GRAMMAR_ENABLED_MODES).map((id) => ({ id, label: labels[id] || id })),
-    lockedModes: Array.from(GRAMMAR_LOCKED_MODES).map((id) => ({ id, label: labels[id] || id, reason: 'coming-next' })),
+    enabledModes: Array.from(GRAMMAR_ENABLED_MODES).map((id) => ({ id, ...(modes[id] || { label: id }) })),
+    lockedModes: Array.from(GRAMMAR_LOCKED_MODES).map((id) => ({ id, label: modes[id]?.label || id, reason: 'coming-next' })),
   };
 }
 
