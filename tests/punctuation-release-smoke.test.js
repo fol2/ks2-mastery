@@ -2,7 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { SUBJECT_EXPOSURE_GATES } from '../src/platform/core/subject-availability.js';
+import { createPunctuationContentIndexes } from '../shared/punctuation/content.js';
+import { createPunctuationRuntimeManifest } from '../shared/punctuation/generators.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
+
+const RUNTIME_PUNCTUATION_ITEMS = createPunctuationContentIndexes(createPunctuationRuntimeManifest()).itemById;
 
 function productionServer({ punctuationEnabled = false } = {}) {
   return createWorkerRepositoryServer({
@@ -26,6 +30,40 @@ function setCookieValues(response) {
 
 function cookieFrom(response) {
   return setCookieValues(response).find((cookie) => cookie.startsWith('ks2_session=')) || '';
+}
+
+function countRows(server, sql, ...params) {
+  return Number(server.DB.db.prepare(sql).get(...params).count) || 0;
+}
+
+function punctuationMutationCounts(server, { accountId, learnerId }) {
+  return {
+    subjectState: countRows(server, `
+      SELECT COUNT(*) AS count
+      FROM child_subject_state
+      WHERE learner_id = ? AND subject_id = 'punctuation'
+    `, learnerId),
+    practiceSessions: countRows(server, `
+      SELECT COUNT(*) AS count
+      FROM practice_sessions
+      WHERE learner_id = ? AND subject_id = 'punctuation'
+    `, learnerId),
+    eventLog: countRows(server, `
+      SELECT COUNT(*) AS count
+      FROM event_log
+      WHERE learner_id = ? AND subject_id = 'punctuation'
+    `, learnerId),
+    gameState: countRows(server, `
+      SELECT COUNT(*) AS count
+      FROM child_game_state
+      WHERE learner_id = ?
+    `, learnerId),
+    mutationReceipts: countRows(server, `
+      SELECT COUNT(*) AS count
+      FROM mutation_receipts
+      WHERE account_id = ? AND scope_type = 'learner' AND scope_id = ?
+    `, accountId, learnerId),
+  };
 }
 
 async function postJson(server, path, body = {}, headers = {}) {
@@ -55,6 +93,7 @@ async function startDemo(server) {
 
   return {
     cookie,
+    accountId: bootstrapPayload.session.accountId,
     learnerId: bootstrapPayload.learners.selectedId,
     bootstrap: bootstrapPayload,
   };
@@ -78,10 +117,16 @@ async function postPunctuationCommand(server, { cookie, learnerId, revision, com
 }
 
 function learnerAnswerFor(item = {}) {
+  const sourceItem = RUNTIME_PUNCTUATION_ITEMS.get(item.id);
+  assert.ok(sourceItem, `Expected a runtime punctuation item for ${item.id || 'unknown item'}`);
   if (item.inputKind === 'choice') {
-    return { choiceIndex: item.options?.[0]?.index ?? 0 };
+    assert.ok(Number.isInteger(sourceItem.correctIndex), `Expected a correct choice index for ${item.id}`);
+    return { choiceIndex: sourceItem.correctIndex };
   }
-  return { typed: item.stem ? `${item.stem}.` : 'The bell rang clearly.' };
+  const acceptedAnswer = Array.isArray(sourceItem.accepted) ? sourceItem.accepted.find(Boolean) : '';
+  const typed = sourceItem.model || acceptedAnswer;
+  assert.ok(typed, `Expected a model answer for ${item.id}`);
+  return { typed };
 }
 
 test('Punctuation release smoke keeps demo exposure blocked by default', async () => {
@@ -105,11 +150,13 @@ test('Punctuation release smoke keeps demo exposure blocked by default', async (
 
     assert.equal(blocked.response.status, 404);
     assert.equal(blocked.body.code, 'subject_command_not_found');
-    assert.equal(server.DB.db.prepare(`
-      SELECT COUNT(*) AS count
-      FROM child_subject_state
-      WHERE learner_id = ? AND subject_id = 'punctuation'
-    `).get(demo.learnerId).count, 0);
+    assert.deepEqual(punctuationMutationCounts(server, demo), {
+      subjectState: 0,
+      practiceSessions: 0,
+      eventLog: 0,
+      gameState: 0,
+      mutationReceipts: 0,
+    });
   } finally {
     server.close();
   }
@@ -147,7 +194,10 @@ test('Punctuation release smoke completes a gated demo action through Worker com
     });
     assert.equal(submit.response.status, 200, JSON.stringify(submit.body));
     assert.equal(submit.body.subjectReadModel.phase, 'feedback');
-    assert.match(submit.body.subjectReadModel.feedback.headline, /Correct|Not quite|Check/);
+    assert.equal(submit.body.subjectReadModel.feedback.kind, 'success');
+    assert.equal(submit.body.domainEvents.some((event) => (
+      event.type === 'punctuation.item-attempted' && event.correct === true
+    )), true);
 
     const done = await postPunctuationCommand(server, {
       cookie: demo.cookie,
@@ -159,6 +209,8 @@ test('Punctuation release smoke completes a gated demo action through Worker com
     assert.equal(done.response.status, 200, JSON.stringify(done.body));
     assert.equal(done.body.subjectReadModel.phase, 'summary');
     assert.equal(done.body.subjectReadModel.summary.total, 1);
+    assert.equal(done.body.subjectReadModel.summary.correct, 1);
+    assert.equal(done.body.subjectReadModel.summary.accuracy, 100);
 
     assert.equal(server.DB.db.prepare(`
       SELECT COUNT(*) AS count
