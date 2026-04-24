@@ -40,6 +40,9 @@ test('word-bank modal declares dialog semantics, tabs, replay, and drill control
   assert.match(html, /role="tablist"/);
   assert.match(html, /role="tab"/);
   assert.match(html, /aria-label="Close"/);
+  const backdrop = html.match(/<div class="wb-modal-backdrop"[^>]*>/)?.[0] || '';
+  assert.match(backdrop, /aria-hidden="true"/);
+  assert.doesNotMatch(backdrop, /tabindex|tabIndex/);
   assert.match(html, /data-action="spelling-word-bank-drill-replay"/);
   assert.match(html, /name="typed"[^>]*data-autofocus="true"/);
   assert.match(html, /(?:autoComplete|autocomplete)="off"/);
