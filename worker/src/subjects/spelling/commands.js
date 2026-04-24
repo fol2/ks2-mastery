@@ -44,6 +44,19 @@ function clientAnalytics(analytics) {
   };
 }
 
+async function readRuntimeContent(context) {
+  if (typeof context.repository.readSpellingRuntimeContent === 'function') {
+    return context.repository.readSpellingRuntimeContent(context.session.accountId, 'spelling');
+  }
+  const contentResult = await context.repository.readSubjectContent(context.session.accountId, 'spelling');
+  return {
+    ...contentResult,
+    snapshot: resolveRuntimeSnapshot(contentResult.content, {
+      referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+    }),
+  };
+}
+
 export function createSpellingCommandHandlers({ now, random } = {}) {
   async function handleSpellingCommand(command, context) {
     if (!SPELLING_COMMANDS.includes(command.command)) {
@@ -60,10 +73,8 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       command.learnerId,
       'spelling',
     );
-    const contentResult = await context.repository.readSubjectContent(context.session.accountId, 'spelling');
-    const snapshot = resolveRuntimeSnapshot(contentResult.content, {
-      referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
-    });
+    const contentResult = await readRuntimeContent(context);
+    const snapshot = contentResult.snapshot;
     if (!snapshot?.words?.length) {
       throw new NotFoundError('No published spelling content is available.', {
         code: 'spelling_content_unavailable',
