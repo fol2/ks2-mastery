@@ -385,6 +385,9 @@ const subjectCommands = createSubjectCommandClient({
   baseUrl: '',
   fetch: credentialFetch,
   getLearnerRevision: (learnerId) => repositories.runtime?.readLearnerRevision?.(learnerId) || 0,
+  onStaleWrite: async () => {
+    await repositories.hydrate({ cacheScope: 'subject-command-stale-write' });
+  },
   onCommandApplied: ({ learnerId, subjectId, response }) => {
     repositories.runtime?.applySubjectCommandResult?.({ learnerId, subjectId, response });
   },
