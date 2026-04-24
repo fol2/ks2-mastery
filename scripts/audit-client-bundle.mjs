@@ -16,6 +16,7 @@ const FORBIDDEN_MODULES = [
   { pattern: /^shared\/punctuation\/(content|marking|scheduler|service)\.js$/, reason: 'server-side punctuation engine and content' },
   { pattern: /^worker\/src\/subjects\/punctuation\//, reason: 'server-side punctuation command runtime' },
   { pattern: /^src\/subjects\/punctuation\/(service|repository)\.js$/, reason: 'browser-side import of punctuation runtime service' },
+  { pattern: /^worker\/src\/subjects\/grammar\/(engine|content)\.js$/, reason: 'server-authoritative Grammar engine/content' },
   { pattern: /^src\/platform\/core\/local-review-profile\.js$/, reason: 'local review runtime profile' },
   { pattern: /^src\/platform\/core\/repositories\/local\.js$/, reason: 'browser-local production repository' },
   { pattern: /^src\/platform\/hubs\/(admin|parent)-read-model\.js$/, reason: 'client-side hub read-model aggregation' },

@@ -12,6 +12,12 @@ import {
   createExpansionFixtureHarness,
   EXPANSION_FIXTURE_SUBJECT_ID,
 } from './helpers/expansion-fixture-subject.js';
+import {
+  createGrammarHarness,
+  grammarOracleResponseForItem,
+  grammarResponseFormData,
+} from './helpers/grammar-subject-harness.js';
+import { readGrammarLegacyOracle } from './helpers/grammar-legacy-oracle.js';
 
 function createSpellingHarness({ storage, subjects } = {}) {
   return createAppHarness({ storage, subjects });
@@ -159,6 +165,68 @@ const expansionFixtureSpec = {
   },
 };
 
+const grammarSample = readGrammarLegacyOracle().templates.find((template) => template.id === 'question_mark_select');
+
+function answerGrammarCorrectly(harness) {
+  while (['session', 'feedback'].includes(harness.store.getState().subjectUi.grammar.phase)) {
+    const ui = harness.store.getState().subjectUi.grammar;
+    if (ui.phase === 'feedback') {
+      harness.dispatch('grammar-continue');
+      continue;
+    }
+    const response = grammarOracleResponseForItem(ui.session?.currentItem);
+    harness.dispatch('grammar-submit-form', {
+      formData: grammarResponseFormData(response),
+    });
+  }
+}
+
+const grammarSpec = {
+  label: 'Grammar Stage 1 subject',
+  subjectId: 'grammar',
+  createHarness: createGrammarHarness,
+  expectReactPractice: true,
+  practiceMatcher: /Grammar retrieval practice/,
+  sessionMatcher: /Grammar practice|question marks/i,
+  summaryMatcher: /Grammar session summary/,
+  getUiState(harness) {
+    return harness.store.getState().subjectUi.grammar;
+  },
+  isSessionState(ui) {
+    return ui.phase === 'session';
+  },
+  isSummaryState(ui) {
+    return ui.phase === 'summary';
+  },
+  startRound(harness) {
+    harness.dispatch('grammar-start', {
+      payload: {
+        roundLength: 1,
+        templateId: grammarSample.id,
+        seed: grammarSample.sample.seed,
+      },
+    });
+  },
+  answerCorrectly: answerGrammarCorrectly,
+  backToDashboard(harness) {
+    harness.dispatch('grammar-back');
+  },
+  triggerActionName: 'grammar-start',
+  triggerAction(harness) {
+    harness.dispatch('grammar-start');
+  },
+  expectedCompletionEventType: 'grammar.session-completed',
+  assertDashboardStats(stats) {
+    assert.ok(stats.pct >= 0 && stats.pct <= 100);
+    assert.equal(typeof stats.streak, 'number');
+  },
+  assertAnalytics(analytics) {
+    assert.equal(Array.isArray(analytics.concepts), true);
+    assert.equal(analytics.concepts.length, 18);
+    assert.ok(analytics.concepts.some((concept) => concept.attempts >= 1));
+  },
+};
+
 const punctuationSpec = {
   label: 'Punctuation production subject',
   subjectId: 'punctuation',
@@ -226,6 +294,8 @@ test('Punctuation stays off the dashboard and route path until its exposure gate
 
 registerSubjectConformanceSuite(spellingSpec);
 registerGoldenPathSmokeSuite(spellingSpec);
+registerSubjectConformanceSuite(grammarSpec);
+registerGoldenPathSmokeSuite(grammarSpec);
 registerSubjectConformanceSuite(expansionFixtureSpec);
 registerGoldenPathSmokeSuite(expansionFixtureSpec);
 registerSubjectConformanceSuite(punctuationSpec);

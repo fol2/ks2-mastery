@@ -1,0 +1,242 @@
+import {
+  DEFAULT_GRAMMAR_PREFS,
+  GRAMMAR_SUBJECT_ID,
+  normaliseGrammarReadModel,
+} from './metadata.js';
+
+function selectedLearnerId(context) {
+  return context?.appState?.learners?.selectedId || '';
+}
+
+function selectedGrammarUi(context) {
+  const learnerId = selectedLearnerId(context);
+  return normaliseGrammarReadModel(context?.appState?.subjectUi?.[GRAMMAR_SUBJECT_ID], learnerId);
+}
+
+function setGrammarError(context, message) {
+  context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => ({
+    ...normaliseGrammarReadModel(current, selectedLearnerId(context)),
+    pendingCommand: '',
+    error: message || 'Grammar practice is temporarily unavailable.',
+  }));
+}
+
+function applyRemoteReadModel(context, response) {
+  const learnerId = selectedLearnerId(context);
+  if (response?.projections?.rewards?.toastEvents?.length) {
+    context.store.pushToasts(response.projections.rewards.toastEvents);
+  }
+  if (response?.projections?.rewards?.events?.length) {
+    context.store.pushMonsterCelebrations(response.projections.rewards.events);
+  }
+  if (response?.subjectReadModel) {
+    context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, {
+      ...normaliseGrammarReadModel(response.subjectReadModel, learnerId),
+      pendingCommand: '',
+      error: '',
+    });
+    return;
+  }
+  context.store.reloadFromRepositories?.({ preserveRoute: true });
+}
+
+function sendGrammarCommand(context, command, payload = {}) {
+  const learnerId = selectedLearnerId(context);
+  if (!learnerId) return true;
+  if (context.runtimeReadOnly) {
+    setGrammarError(context, 'Practice is read-only while sync is degraded. Retry sync before continuing.');
+    return true;
+  }
+  const client = context.subjectCommands;
+  if (!client?.send) {
+    setGrammarError(context, 'Grammar practice needs the Worker command boundary.');
+    return true;
+  }
+
+  context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => ({
+    ...normaliseGrammarReadModel(current, learnerId),
+    pendingCommand: command,
+    error: '',
+  }));
+
+  client.send({
+    subjectId: GRAMMAR_SUBJECT_ID,
+    learnerId,
+    command,
+    payload,
+  }).then((response) => {
+    applyRemoteReadModel(context, response);
+  }).catch((error) => {
+    globalThis.console?.warn?.('Grammar command failed.', error);
+    setGrammarError(context, error?.payload?.message || error?.message || 'The Grammar command could not be completed.');
+  });
+
+  return true;
+}
+
+function applyLocalTransition(context, transition) {
+  if (!transition) return true;
+  return context.applySubjectTransition(GRAMMAR_SUBJECT_ID, transition);
+}
+
+function grammarStartPayload(ui, data = {}) {
+  const prefs = ui.prefs || DEFAULT_GRAMMAR_PREFS;
+  return {
+    mode: data.mode || prefs.mode || DEFAULT_GRAMMAR_PREFS.mode,
+    roundLength: data.roundLength || prefs.roundLength || DEFAULT_GRAMMAR_PREFS.roundLength,
+    focusConceptId: Object.prototype.hasOwnProperty.call(data, 'focusConceptId')
+      ? data.focusConceptId
+      : prefs.focusConceptId || '',
+    ...(data.payload && typeof data.payload === 'object' && !Array.isArray(data.payload) ? data.payload : {}),
+  };
+}
+
+function responseFromFormData(formData) {
+  if (!formData?.entries) return {};
+  const response = {};
+  for (const [key, value] of formData.entries()) {
+    if (!key || key === '_action') continue;
+    if (key === 'selected') {
+      response.selected = formData.getAll('selected').map((entry) => String(entry));
+      continue;
+    }
+    response[key] = String(value ?? '');
+  }
+  return response;
+}
+
+function resetToDashboard(context) {
+  const learnerId = selectedLearnerId(context);
+  context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => ({
+    ...normaliseGrammarReadModel(current, learnerId),
+    phase: 'dashboard',
+    session: null,
+    feedback: null,
+    summary: null,
+    awaitingAdvance: false,
+    pendingCommand: '',
+    error: '',
+  }));
+  return true;
+}
+
+function resetToDashboardWithPrefs(context, prefs) {
+  const learnerId = selectedLearnerId(context);
+  context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+    const ui = normaliseGrammarReadModel(current, learnerId);
+    return {
+      ...ui,
+      prefs: { ...ui.prefs, ...(prefs || {}) },
+      phase: 'dashboard',
+      session: null,
+      feedback: null,
+      summary: null,
+      awaitingAdvance: false,
+      pendingCommand: '',
+      error: '',
+    };
+  });
+  return true;
+}
+
+export const grammarModule = {
+  id: GRAMMAR_SUBJECT_ID,
+  name: 'Grammar',
+  blurb: 'Word classes, clauses, tenses and sentence shape.',
+  accent: '#2E8479',
+  accentSoft: '#CFE8E3',
+  accentTint: '#E3F1EE',
+  icon: 'speech',
+  available: true,
+  reactPractice: true,
+  initState() {
+    return normaliseGrammarReadModel();
+  },
+  getDashboardStats(appState) {
+    const learnerId = appState.learners?.selectedId || '';
+    const ui = normaliseGrammarReadModel(appState.subjectUi?.[GRAMMAR_SUBJECT_ID], learnerId);
+    const counts = ui.stats?.concepts || {};
+    const total = Math.max(1, Number(counts.total) || 0);
+    const secured = Number(counts.secured) || 0;
+    const due = (Number(counts.due) || 0) + (Number(counts.weak) || 0);
+    const nextUp = ui.phase === 'session' || ui.phase === 'feedback'
+      ? 'Continue Grammar round'
+      : due
+        ? 'Review due Grammar concepts'
+        : 'Start Grammar retrieval';
+    return {
+      pct: Math.round((secured / total) * 100),
+      due,
+      streak: secured,
+      nextUp,
+    };
+  },
+  handleAction(action, context) {
+    if (!String(action || '').startsWith('grammar-')) return false;
+
+    const learnerId = selectedLearnerId(context);
+    const ui = selectedGrammarUi(context);
+    const service = context.service;
+
+    if (action === 'grammar-back') {
+      if ((ui.phase === 'session' || ui.phase === 'feedback') && ui.session) {
+        if (context.data?.skipConfirm !== true && globalThis.confirm?.('End this Grammar session now?') === false) return true;
+        if (service?.endSession) return applyLocalTransition(context, service.endSession(learnerId, ui));
+        return sendGrammarCommand(context, 'end-session');
+      }
+      return resetToDashboard(context);
+    }
+
+    if (action === 'grammar-set-mode') {
+      const mode = context.data?.value || DEFAULT_GRAMMAR_PREFS.mode;
+      if (service?.savePrefs) {
+        const prefs = service.savePrefs(learnerId, { mode });
+        return resetToDashboardWithPrefs(context, prefs);
+      }
+      return sendGrammarCommand(context, 'save-prefs', { prefs: { mode } });
+    }
+
+    if (action === 'grammar-set-round-length') {
+      const roundLength = Number(context.data?.value) || DEFAULT_GRAMMAR_PREFS.roundLength;
+      if (service?.savePrefs) {
+        const prefs = service.savePrefs(learnerId, { roundLength });
+        return resetToDashboardWithPrefs(context, prefs);
+      }
+      return sendGrammarCommand(context, 'save-prefs', { prefs: { roundLength } });
+    }
+
+    if (action === 'grammar-set-focus') {
+      const focusConceptId = context.data?.value || '';
+      if (service?.savePrefs) {
+        const prefs = service.savePrefs(learnerId, { focusConceptId });
+        return resetToDashboardWithPrefs(context, prefs);
+      }
+      return sendGrammarCommand(context, 'save-prefs', { prefs: { focusConceptId } });
+    }
+
+    if (action === 'grammar-start' || action === 'grammar-start-again') {
+      const payload = grammarStartPayload(ui, context.data || {});
+      if (service?.startSession) return applyLocalTransition(context, service.startSession(learnerId, payload));
+      return sendGrammarCommand(context, 'start-session', payload);
+    }
+
+    if (action === 'grammar-submit-form') {
+      const response = responseFromFormData(context.data?.formData);
+      if (service?.submitAnswer) return applyLocalTransition(context, service.submitAnswer(learnerId, ui, response));
+      return sendGrammarCommand(context, 'submit-answer', { response });
+    }
+
+    if (action === 'grammar-continue') {
+      if (service?.continueSession) return applyLocalTransition(context, service.continueSession(learnerId, ui));
+      return sendGrammarCommand(context, 'continue-session');
+    }
+
+    if (action === 'grammar-end-early') {
+      if (context.data?.skipConfirm !== true && globalThis.confirm?.('End this Grammar session now?') === false) return true;
+      if (service?.endSession) return applyLocalTransition(context, service.endSession(learnerId, ui));
+      return sendGrammarCommand(context, 'end-session');
+    }
+
+    return false;
+  },
+};
