@@ -51,12 +51,22 @@ const WORD_DETAIL_FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:n
 let lastModalTrigger = { slug: '', element: null };
 let previousModalVisible = false;
 
+function getModalScrim() {
+  return document.querySelector(WORD_DETAIL_MODAL_SELECTOR)
+    || root?.querySelector(WORD_DETAIL_MODAL_SELECTOR);
+}
+
+function getModalElement() {
+  return getModalScrim()?.querySelector('.wb-modal')
+    || root?.querySelector('.wb-modal');
+}
+
 function modalIsOpen() {
-  return Boolean(root?.querySelector(WORD_DETAIL_MODAL_SELECTOR));
+  return Boolean(getModalScrim());
 }
 
 function getModalFocusables() {
-  const modal = root?.querySelector('.wb-modal');
+  const modal = getModalElement();
   if (!modal) return [];
   return Array.from(modal.querySelectorAll(WORD_DETAIL_FOCUSABLE_SELECTOR))
     .filter((el) => el.offsetParent !== null || el === document.activeElement);
@@ -2411,17 +2421,16 @@ root.addEventListener('keydown', (event) => {
 
 /* WCAG 2.4.3 focus trap for the word-detail modal. Without this, Tab
    escapes the dialog into the word-bank list behind the scrim, leaving
-   keyboard users stranded. Runs as a root-level listener so it sees
-   keystrokes before they bubble to the spelling shortcut layer (which
-   owns Escape). Only intercepts Tab when the modal is open. */
-root.addEventListener('keydown', (event) => {
+   keyboard users stranded. Runs at document level because the React modal
+   is portaled to body. Only intercepts Tab when the modal is open. */
+document.addEventListener('keydown', (event) => {
   if (event.key !== 'Tab') return;
   if (!modalIsOpen()) return;
   const focusables = getModalFocusables();
   if (!focusables.length) return;
   const first = focusables[0];
   const last = focusables[focusables.length - 1];
-  const modal = root.querySelector('.wb-modal');
+  const modal = getModalElement();
   const active = document.activeElement;
   if (event.shiftKey) {
     if (active === first || !modal?.contains(active)) {
@@ -2432,7 +2441,7 @@ root.addEventListener('keydown', (event) => {
     first.focus();
     event.preventDefault();
   }
-});
+}, true);
 
 globalThis.addEventListener?.('keydown', (event) => {
   const shortcut = resolveSpellingShortcut(event, store.getState());

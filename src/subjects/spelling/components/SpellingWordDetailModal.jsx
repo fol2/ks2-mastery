@@ -171,7 +171,7 @@ export function SpellingWordDetailModal({ word, mode = 'explain', typed = '', re
 
   const modal = (
     <div className="wb-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="wb-modal-word" onClick={closeFromScrim}>
-      <div className="wb-modal-backdrop" tabIndex="-1" aria-hidden="true" />
+      <div className="wb-modal-backdrop" aria-hidden="true" />
       <div className="wb-modal" data-slug={word.slug}>
         <header className="wb-modal-head">
           <div className="wb-modal-head-main">
