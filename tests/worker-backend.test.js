@@ -162,10 +162,16 @@ test('worker denies raw source assets while allowing the built app bundle', asyn
   });
 
   const denied = await server.fetchRaw('https://repo.test/src/subjects/spelling/data/content-data.js');
+  const deniedWorker = await server.fetchRaw('https://repo.test/worker/src/app.js');
+  const deniedTest = await server.fetchRaw('https://repo.test/tests/build-public.test.js');
   const bundle = await server.fetchRaw('https://repo.test/src/bundles/app.bundle.js');
 
   assert.equal(denied.status, 404);
   assert.equal(await denied.text(), 'Not found.');
+  assert.equal(deniedWorker.status, 404);
+  assert.equal(await deniedWorker.text(), 'Not found.');
+  assert.equal(deniedTest.status, 404);
+  assert.equal(await deniedTest.text(), 'Not found.');
   assert.equal(bundle.status, 200);
   assert.equal(await bundle.text(), 'console.log("app bundle");');
   assert.deepEqual(requests, ['/src/bundles/app.bundle.js']);

@@ -13,7 +13,9 @@
     "run_worker_first": [
       "/api/*",
       "/demo",
-      "/src/*"
+      "/src/*",
+      "/worker/*",
+      "/tests/*"
     ]
   },
   "vars": {

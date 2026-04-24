@@ -179,7 +179,11 @@ export function createWorkerApp({
       const auth = createSessionAuthBoundary({ env });
 
       try {
-        if (url.pathname.startsWith('/src/')) {
+        if (
+          url.pathname.startsWith('/src/')
+          || url.pathname.startsWith('/worker/')
+          || url.pathname.startsWith('/tests/')
+        ) {
           return publicSourceAssetResponse(request, env);
         }
 
