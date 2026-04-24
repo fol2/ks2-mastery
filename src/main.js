@@ -737,6 +737,10 @@ const controller = createAppController({
   subjectExposureGates,
   runtimeBoundary,
   autoAdvanceDispatchContinue: () => handleRemoteSpellingAction('spelling-continue'),
+  extraContext: () => ({
+    session: boot.session,
+    handleRemoteSpellingAction,
+  }),
   tts,
   services,
   cacheSubjectUiWrites: true,
@@ -1178,6 +1182,8 @@ function contextFor(subjectId = null) {
     runtimeBoundary,
     subjects: exposedSubjects(SUBJECTS, subjectExposureGates),
     subjectExposureGates,
+    session: boot.session,
+    handleRemoteSpellingAction,
     runtimeReadOnly: appState.persistence?.mode === 'degraded',
     ...buildHubModels(appState),
   };
