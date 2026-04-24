@@ -9,22 +9,22 @@ The release deliberately keeps the learner engine first. Monsters and Codex rewa
 Release id:
 
 ```txt
-punctuation-r1-endmarks-apostrophe-speech
+punctuation-r2-endmarks-apostrophe-speech-comma-flow
 ```
 
 Published skills:
 
 - Capital letters and sentence endings
+- Commas in lists
 - Apostrophes for contraction
 - Apostrophes for possession
 - Inverted commas and speech punctuation
+- Fronted adverbial commas
+- Commas for clarity
 
 Planned but not yet public:
 
-- Commas in lists
-- Fronted adverbial commas
 - Parenthesis
-- Commas for clarity
 - Colons before lists
 - Semi-colons between clauses
 - Dashes between clauses
@@ -32,7 +32,7 @@ Planned but not yet public:
 - Bullet-point punctuation
 - Hyphens to avoid ambiguity
 
-This preserves the legacy engine's 14-skill map while shipping only the content that has enough fixed items, transfer coverage, misconception tags, and negative tests for the first production slice.
+This preserves the legacy engine's 14-skill map while shipping only the content that has enough fixed items, transfer coverage, misconception tags, and negative tests for the current hidden production slice.
 
 ## Measurement Model
 
@@ -44,6 +44,9 @@ Current published reward units:
 - `apostrophe-contractions-core`
 - `apostrophe-possession-core`
 - `speech-core`
+- `list-commas-core`
+- `fronted-adverbials-core`
+- `comma-clarity-core`
 
 Each unit has a stable mastery key:
 
@@ -76,6 +79,12 @@ The first Speech rubric is deliberately strict:
 - checks reporting-clause comma patterns where required
 - checks capitalisation and unchanged target words
 - returns stable misconception tags such as `speech.quote_missing`, `speech.punctuation_outside_quote`, and `speech.words_changed`
+
+Comma / Flow marking adds deterministic transfer validators for:
+
+- ordered KS2 list-comma patterns without an unnecessary final comma before `and`
+- opening phrase commas after fronted adverbials such as `After lunch,`
+- opening phrase commas that make meaning clearer, such as `In the morning,`
 
 ## Worker Runtime
 
@@ -111,7 +120,7 @@ Reward projection maps secure units to Bellstorm Coast creatures:
 - Endmarks: Pealark
 - Apostrophe: Claspin
 - Speech: Quoral
-- Comma / Flow: Curlune, planned
+- Comma / Flow: Curlune
 - List / Structure: Colisk, planned
 - Boundary: Hyphang, planned
 - Published release aggregate: Carillon
@@ -161,6 +170,6 @@ After deployment, verify the production UI on `https://ks2.eugnel.uk` with a log
 
 ## Expansion Path
 
-The next Punctuation release should add one cluster at a time. Each cluster needs enough fixed items, generated templates, negative tests, misconception tags, transfer facets, and reward-unit denominators before it becomes public.
+The next Punctuation release should still add one remaining cluster at a time. Each cluster needs enough fixed items, generated templates, negative tests, misconception tags, transfer facets, and reward-unit denominators before it becomes public.
 
 Do not expose planned clusters just because monster assets exist. Bellstorm Coast rewards should continue to follow secure learning evidence.

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { createWorkerApp } from '../worker/src/app.js';
 import { createWorkerSubjectRuntime } from '../worker/src/subjects/runtime.js';
 import { buildPunctuationReadModel } from '../worker/src/subjects/punctuation/read-models.js';
+import { createPunctuationMasteryKey } from '../shared/punctuation/content.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -278,7 +279,7 @@ test('punctuation secure-unit events project idempotent Monster Codex rewards', 
       && event.monsterId === 'pealark'
     )));
     assert.ok(secureSubmit.body.projections.rewards.state.pealark.mastered.includes(
-      'punctuation:punctuation-r1-endmarks-apostrophe-speech:endmarks:sentence-endings-core',
+      createPunctuationMasteryKey({ clusterId: 'endmarks', rewardUnitId: 'sentence-endings-core' }),
     ));
 
     const rewardCount = harness.DB.db.prepare(`

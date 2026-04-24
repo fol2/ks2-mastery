@@ -14,7 +14,7 @@ export const punctuationSubjectCommandActions = Object.freeze({
       const prefs = state.subjectUi?.punctuation?.prefs || {};
       return {
         mode: data?.mode || prefs.mode || 'smart',
-        roundLength: prefs.roundLength || '4',
+        roundLength: data?.roundLength || prefs.roundLength || '4',
       };
     },
   },

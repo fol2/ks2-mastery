@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { createPunctuationMasteryKey } from '../shared/punctuation/content.js';
 import { PUNCTUATION_EVENT_TYPES } from '../shared/punctuation/events.js';
 import { createPunctuationService, PunctuationServiceError } from '../shared/punctuation/service.js';
 
@@ -106,6 +107,9 @@ test('spaced clean attempts emit a secure-unit event once', () => {
     unitEvents = unitEvents.concat(submit.events.filter((event) => event.type === PUNCTUATION_EVENT_TYPES.UNIT_SECURED));
   }
   assert.equal(unitEvents.length, 1);
-  assert.equal(unitEvents[0].masteryKey, 'punctuation:punctuation-r1-endmarks-apostrophe-speech:endmarks:sentence-endings-core');
+  assert.equal(unitEvents[0].masteryKey, createPunctuationMasteryKey({
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+  }));
   assert.equal(service.getStats('learner-a').securedRewardUnits, 1);
 });

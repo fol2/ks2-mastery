@@ -181,3 +181,12 @@ test('punctuation browser command action keeps choiceIndex parsing strict', asyn
     assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex }), { typed: '' });
   }
 });
+
+test('punctuation start command action preserves explicit focus mode and round length', () => {
+  const payload = punctuationSubjectCommandActions['punctuation-start'].payload({
+    data: { mode: 'comma_flow', roundLength: '1' },
+    state: baseState(),
+  });
+
+  assert.deepEqual(payload, { mode: 'comma_flow', roundLength: '1' });
+});
