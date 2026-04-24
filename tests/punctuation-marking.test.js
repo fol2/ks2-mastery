@@ -190,11 +190,17 @@ test('hyphen transfer validator requires the exact hyphenated phrase', () => {
 });
 
 test('structure transfer validators require explicit punctuation roles', () => {
-  const parenthesis = markPunctuationAnswer({
-    item: item('pa_transfer_library'),
-    answer: { typed: 'The library, which opened last year, is busy.' },
-  });
-  assert.equal(parenthesis.correct, true);
+  for (const typed of [
+    'The library, which opened last year, is busy.',
+    'The library (which opened last year) is busy.',
+    'The library - which opened last year - is busy.',
+  ]) {
+    const parenthesis = markPunctuationAnswer({
+      item: item('pa_transfer_library'),
+      answer: { typed },
+    });
+    assert.equal(parenthesis.correct, true, typed);
+  }
 
   const unbalancedParenthesis = markPunctuationAnswer({
     item: item('pa_transfer_library'),
@@ -241,6 +247,42 @@ test('structure transfer validators require explicit punctuation roles', () => {
   });
   assert.equal(missingBulletMarker.correct, false);
   assert.equal(missingBulletMarker.misconceptionTags.includes('structure.bullet_marker_missing'), true);
+
+  const inlineBullets = markPunctuationAnswer({
+    item: item('bp_transfer_class'),
+    answer: { typed: 'Bring: - a drink - a hat - a sketchbook' },
+  });
+  assert.equal(inlineBullets.correct, false);
+
+  const mixedBulletPunctuation = markPunctuationAnswer({
+    item: item('bp_transfer_class'),
+    answer: { typed: 'Bring:\n- a drink.\n- a hat\n- a sketchbook.' },
+  });
+  assert.equal(mixedBulletPunctuation.correct, false);
+  assert.equal(mixedBulletPunctuation.misconceptionTags.includes('structure.bullet_punctuation_inconsistent'), true);
+});
+
+test('structure exact marking honours parenthesis variants and line-based bullet lists', () => {
+  assert.equal(markPunctuationAnswer({
+    item: item('pa_insert_museum'),
+    answer: { typed: 'The museum (a former station) was busy.' },
+  }).correct, true);
+
+  assert.equal(markPunctuationAnswer({
+    item: item('pa_fix_author'),
+    answer: { typed: 'The author - who won the prize - smiled.' },
+  }).correct, true);
+
+  assert.equal(markPunctuationAnswer({
+    item: item('bp_insert_kit'),
+    answer: { typed: 'Bring:\n- a drink\n- a hat\n- a sketchbook' },
+  }).correct, true);
+
+  const inlineExactBullets = markPunctuationAnswer({
+    item: item('bp_insert_kit'),
+    answer: { typed: 'Bring: - a drink - a hat - a sketchbook' },
+  });
+  assert.equal(inlineExactBullets.correct, false);
 });
 
 test('choice marking accepts integer indexes only without coercing malformed values', () => {

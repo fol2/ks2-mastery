@@ -119,7 +119,7 @@ function ActiveItemView({ ui, actions }) {
       <div style={{ marginTop: 16 }}>
         {item.inputKind === 'choice'
           ? <ChoiceItem item={item} disabled={false} onSubmit={submit} />
-          : <TextItem item={item} disabled={false} onSubmit={submit} />}
+          : <TextItem key={item.id || item.prompt} item={item} disabled={false} onSubmit={submit} />}
       </div>
       <div className="actions" style={{ marginTop: 16 }}>
         <button className="btn ghost" type="button" onClick={() => actions.dispatch('punctuation-skip')}>Skip</button>

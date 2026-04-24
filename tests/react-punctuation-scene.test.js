@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
 import { createAppHarness } from './helpers/app-harness.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
@@ -71,4 +72,13 @@ test('punctuation React surface keeps server-only fields out of active HTML', ()
   assert.doesNotMatch(html, /speech\.punctuation_outside_quote/);
   assert.doesNotMatch(html, /sentence-endings-core/);
   assert.equal(html.includes(PUNCTUATION_RELEASE_ID), false);
+});
+
+test('punctuation text input remounts when the current text item changes', async () => {
+  const source = await readFile(
+    new URL('../src/subjects/punctuation/components/PunctuationPracticeSurface.jsx', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(source, /<TextItem key=\{item\.id \|\| item\.prompt\}/);
 });
