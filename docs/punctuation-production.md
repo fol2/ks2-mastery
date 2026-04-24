@@ -174,6 +174,7 @@ The Punctuation release gate includes:
 - Worker command tests for start, submit, continue, stale transitions, redaction, and idempotent reward projection
 - React scene tests for setup, active, feedback, summary, and hidden-field absence
 - subject expansion conformance and golden-path smoke coverage
+- deterministic demo release smoke proving default hidden exposure and gated Worker command execution
 - asset tests for Bellstorm Coast scenes and Punctuation monster artwork
 - bundle/public-output audits proving engine/content source is not shipped to the browser
 
@@ -190,6 +191,6 @@ After deployment, verify the production UI on `https://ks2.eugnel.uk` with a log
 
 ## Expansion Path
 
-The next Punctuation release should still add one remaining cluster at a time. Each cluster needs enough fixed items, generated templates, negative tests, misconception tags, transfer facets, and reward-unit denominators before it becomes public.
+The next Punctuation release should deepen one learning cluster or validator family at a time. Each expansion needs enough fixed items, generated templates, negative tests, misconception tags, transfer facets, and reward-unit denominators before the public exposure flag is changed.
 
 Do not expose planned clusters just because monster assets exist. Bellstorm Coast rewards should continue to follow secure learning evidence.
