@@ -875,9 +875,11 @@ function savePrefs(state, payload) {
   const prefs = isPlainObject(payload.prefs) ? payload.prefs : payload;
   const nextMode = prefs.mode ? normaliseMode(prefs.mode) : state.prefs.mode;
   const hasFocusConcept = Object.prototype.hasOwnProperty.call(prefs, 'focusConceptId');
-  const nextFocusConceptId = hasFocusConcept
-    ? normaliseStoredFocusConceptId(prefs.focusConceptId)
-    : (nextMode === 'trouble' ? '' : normaliseStoredFocusConceptId(state.prefs.focusConceptId));
+  const nextFocusConceptId = nextMode === 'trouble'
+    ? ''
+    : (hasFocusConcept
+      ? normaliseStoredFocusConceptId(prefs.focusConceptId)
+      : normaliseStoredFocusConceptId(state.prefs.focusConceptId));
   state.prefs = {
     ...state.prefs,
     mode: ENABLED_MODES.has(nextMode) ? nextMode : state.prefs.mode,

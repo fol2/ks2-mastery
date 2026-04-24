@@ -379,6 +379,10 @@ test('Grammar setup can start trouble drill mode', () => {
   harness.dispatch('grammar-set-mode', { value: 'trouble' });
   assert.equal(harness.store.getState().subjectUi.grammar.prefs.mode, 'trouble');
   assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
+  assert.match(harness.render(), /<select class="input" disabled=""><option value="" selected="">Weakest concept<\/option>/);
+
+  harness.dispatch('grammar-set-focus', { value: 'word_classes' });
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
 
   harness.dispatch('grammar-start', {
     payload: {

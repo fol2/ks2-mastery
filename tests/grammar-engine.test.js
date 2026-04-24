@@ -338,6 +338,31 @@ test('Grammar trouble mode honours explicit focus payloads separately from store
   assert.ok(start.state.session.currentItem.skillIds.includes('word_classes'));
 });
 
+test('Grammar save-prefs keeps trouble focus on automatic weakest selection', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const saved = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {
+      data: {
+        prefs: {
+          mode: 'trouble',
+          focusConceptId: '',
+        },
+      },
+    },
+    command: 'save-prefs',
+    requestId: 'prefs-trouble-focus',
+    payload: {
+      prefs: {
+        focusConceptId: 'word_classes',
+      },
+    },
+  });
+
+  assert.equal(saved.state.prefs.mode, 'trouble');
+  assert.equal(saved.state.prefs.focusConceptId, '');
+});
+
 test('Grammar save-prefs clears completed summary state', () => {
   const oracle = readGrammarLegacyOracle();
   const sample = oracle.templates.find((template) => template.id === 'question_mark_select');

@@ -246,6 +246,13 @@ export const grammarModule = {
 
     if (action === 'grammar-set-focus') {
       const focusConceptId = context.data?.value || '';
+      if (ui.prefs?.mode === 'trouble') {
+        if (service?.savePrefs) {
+          const prefs = service.savePrefs(learnerId, { focusConceptId: '' });
+          return resetToDashboardWithPrefs(context, prefs);
+        }
+        return sendGrammarCommand(context, 'save-prefs', { prefs: { focusConceptId: '' } });
+      }
       if (service?.savePrefs) {
         const prefs = service.savePrefs(learnerId, { focusConceptId });
         return resetToDashboardWithPrefs(context, prefs);
