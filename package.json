@@ -10,6 +10,7 @@
     "audit:production": "node ./scripts/production-bundle-audit.mjs",
     "assert:build-public": "node ./scripts/assert-build-public.mjs",
     "assets:monsters": "node ./scripts/generate-monster-assets.mjs",
+    "assets:app-icons": "node ./scripts/generate-app-icons.mjs",
     "check": "node ./scripts/wrangler-oauth.mjs deploy --dry-run",
     "check:oauth": "npm run check",
     "content:seed": "node scripts/seed-spelling-content-from-legacy.mjs",

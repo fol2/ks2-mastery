@@ -7,7 +7,9 @@ const tmpDir = path.join(rootDir, 'dist', 'public.tmp');
 
 const entries = [
   '_headers',
+  'favicon.ico',
   'index.html',
+  'manifest.webmanifest',
   'styles',
   'assets',
 ];
@@ -33,7 +35,10 @@ const filterPublicFiles = source => {
     return false;
   }
 
-  if (relative.startsWith('assets/') && relative.endsWith('.png')) {
+  const appIconPng = relative.startsWith('assets/app-icons/')
+    && relative.endsWith('.png')
+    && base !== 'app-icon-source.png';
+  if (relative.startsWith('assets/') && relative.endsWith('.png') && !appIconPng) {
     return false;
   }
 
