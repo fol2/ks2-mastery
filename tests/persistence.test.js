@@ -10,6 +10,8 @@ import { createAppHarness } from './helpers/app-harness.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createMockRepositoryServer } from './helpers/mock-api-server.js';
 
+const DEFAULT_API_CACHE_STORAGE_KEY = 'ks2-platform-v2.api-cache-state:default';
+
 async function waitForPersistenceIdle(repositories, attempts = 25) {
   await Promise.resolve();
   for (let index = 0; index < attempts; index += 1) {
@@ -36,6 +38,109 @@ function learnerSnapshot() {
     selectedId: 'learner-a',
   };
 }
+
+test('retired legacy runtime pending writes are discarded once remote bootstrap succeeds', async () => {
+  const storage = installMemoryStorage();
+  const remoteLearners = learnerSnapshot();
+  const localSubjectState = {
+    ui: { phase: 'dashboard', error: 'local-only marker' },
+    data: { prefs: { mode: 'single' } },
+    updatedAt: 20,
+  };
+  const localSession = {
+    id: 'local-session',
+    learnerId: 'learner-a',
+    subjectId: 'spelling',
+    sessionKind: 'learning',
+    status: 'active',
+    sessionState: { cursor: 3 },
+    summary: null,
+    createdAt: 20,
+    updatedAt: 20,
+  };
+
+  storage.setItem(DEFAULT_API_CACHE_STORAGE_KEY, JSON.stringify({
+    bundle: {
+      learners: remoteLearners,
+      subjectStates: {
+        'learner-a::spelling': localSubjectState,
+      },
+      practiceSessions: [localSession],
+      gameState: {
+        'learner-a::monster-codex': { localOnly: true },
+      },
+      eventLog: [{
+        id: 'local-event',
+        learnerId: 'learner-a',
+        type: 'spelling.word-secured',
+        createdAt: 21,
+      }],
+    },
+    pendingOperations: [
+      {
+        id: 'old-subject-state',
+        kind: 'subjectStates.put',
+        learnerId: 'learner-a',
+        subjectId: 'spelling',
+        record: localSubjectState,
+        expectedRevision: 0,
+        createdAt: 21,
+      },
+      {
+        id: 'old-practice-session',
+        kind: 'practiceSessions.put',
+        record: localSession,
+        expectedRevision: 0,
+        createdAt: 22,
+      },
+      {
+        id: 'old-game-state',
+        kind: 'gameState.put',
+        learnerId: 'learner-a',
+        systemId: 'monster-codex',
+        state: { localOnly: true },
+        expectedRevision: 0,
+        createdAt: 23,
+      },
+    ],
+    syncState: {
+      policyVersion: 1,
+      accountRevision: 0,
+      learnerRevisions: { 'learner-a': 0 },
+    },
+  }));
+
+  const server = createMockRepositoryServer({ learners: remoteLearners });
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    storage,
+    legacyRuntimeWritesEnabled: false,
+  });
+
+  await repositories.hydrate();
+
+  const snapshot = repositories.persistence.read();
+  assert.equal(snapshot.mode, 'remote-sync');
+  assert.equal(snapshot.trustedState, 'remote');
+  assert.equal(snapshot.cacheState, 'aligned');
+  assert.equal(snapshot.pendingWriteCount, 0);
+  assert.equal(snapshot.lastError, null);
+  assert.deepEqual(repositories.subjectStates.read('learner-a', 'spelling'), { ui: null, data: {}, updatedAt: 0 });
+  assert.equal(repositories.practiceSessions.latest('learner-a', 'spelling'), null);
+  assert.deepEqual(repositories.gameState.read('learner-a', 'monster-codex'), {});
+  assert.equal(server.requests.some(({ path }) => ['/api/child-subject-state', '/api/practice-sessions', '/api/child-game-state'].includes(path)), false);
+
+  const harness = createAppHarness({ repositories });
+  const html = harness.render();
+  assert.doesNotMatch(html, /Sync degraded/);
+  assert.doesNotMatch(html, /Retry sync/);
+  assert.doesNotMatch(html, /cached changes still need remote sync/i);
+
+  const persisted = JSON.parse(storage.getItem(DEFAULT_API_CACHE_STORAGE_KEY));
+  assert.deepEqual(persisted.pendingOperations, []);
+  assert.deepEqual(persisted.bundle.practiceSessions, []);
+});
 
 test('remote write failure is surfaced as degraded persistence instead of pretending the write succeeded', async () => {
   const storage = installMemoryStorage();
