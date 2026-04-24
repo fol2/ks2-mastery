@@ -32,6 +32,13 @@ const FORBIDDEN_GRAMMAR_KEYS = new Set([
 ]);
 
 function correctResponseFor(readItem) {
+  assert.equal(readItem?.inputSpec?.type, 'single_choice', 'Grammar production read model did not expose a single-choice input.');
+  assert.ok(Array.isArray(readItem?.inputSpec?.options) && readItem.inputSpec.options.length > 0, 'Grammar production read model did not expose answer options.');
+  for (const option of readItem.inputSpec.options) {
+    assert.equal(typeof option?.value, 'string', 'Grammar production read model exposed an option without a string value.');
+    assert.equal(typeof option?.label, 'string', 'Grammar production read model exposed an option without a string label.');
+  }
+
   const question = createGrammarQuestion({
     templateId: readItem?.templateId,
     seed: readItem?.seed,
@@ -124,8 +131,10 @@ async function smokeSpelling({ origin, cookie, learnerId, revision }) {
   assert.equal(model?.session?.serverAuthority, 'worker', 'Spelling session was not Worker-owned.');
   assert.equal(model?.session?.progress?.total, 1, 'Spelling smoke round did not use one target word.');
   assert.equal(model?.session?.currentCard?.word, undefined, 'Spelling read model exposed the raw word.');
+  assert.equal(model?.session?.currentCard?.prompt?.sentence, undefined, 'Spelling read model exposed the raw sentence.');
   assert.ok(model?.session?.currentCard?.prompt?.cloze, 'Spelling read model did not include the redacted cloze prompt.');
   assert.ok(step.payload?.audio?.promptToken, 'Spelling command did not return a prompt token.');
+  assert.ok(model?.audio?.promptToken, 'Spelling read model did not include a prompt token.');
 
   return {
     revision: step.revision,

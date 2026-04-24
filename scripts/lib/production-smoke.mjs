@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
 export const DEFAULT_PRODUCTION_ORIGIN = 'https://ks2.eugnel.uk';
+export const DEFAULT_SMOKE_TIMEOUT_MS = 15_000;
 
 export function argValue(...names) {
   for (const name of names) {
@@ -42,8 +43,32 @@ async function readJsonResponse(response) {
   }
 }
 
+function configuredTimeoutMs() {
+  const value = Number(argValue('--timeout-ms') || process.env.KS2_SMOKE_TIMEOUT_MS || DEFAULT_SMOKE_TIMEOUT_MS);
+  return Number.isFinite(value) && value > 0 ? value : DEFAULT_SMOKE_TIMEOUT_MS;
+}
+
+function timeoutSignal(timeoutMs) {
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+    return AbortSignal.timeout(timeoutMs);
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  timer.unref?.();
+  return controller.signal;
+}
+
 async function fetchJson(url, init = {}) {
-  const response = await fetch(url, init);
+  const timeoutMs = configuredTimeoutMs();
+  let response;
+  try {
+    response = await fetch(url, {
+      ...init,
+      signal: init.signal || timeoutSignal(timeoutMs),
+    });
+  } catch (error) {
+    throw new Error(`Request to ${url} failed or timed out after ${timeoutMs}ms: ${error?.message || error}`);
+  }
   const payload = await readJsonResponse(response);
   return { response, payload };
 }
