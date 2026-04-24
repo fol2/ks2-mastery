@@ -20,8 +20,11 @@ The goal is not to polish the old prototype. The goal is to give the product a s
 - `src/subjects/grammar/*`
   - The Stage 1 Grammar practice surface.
   - Grammar runs through the Worker subject command and read-model boundary, with React rendering setup, session, feedback, summary, and analytics states.
+- `src/subjects/punctuation/*`
+  - The first production Punctuation practice slice.
+  - Punctuation runs through the Worker subject command boundary with deterministic marking, spaced scheduling, release-scoped secure-unit progress, and a rollout-gated React surface.
 - `src/subjects/placeholders/*`
-  - Clean extension slots for Arithmetic, Reasoning, Punctuation and Reading.
+  - Clean extension slots for Arithmetic, Reasoning and Reading.
 - `worker/*`
   - A Cloudflare-friendly backend with D1-backed repository routes, ephemeral demo sessions, account-scoped spelling content, learner ownership checks, production sessions, Worker-owned subject commands, selected-provider Worker-side TTS proxying, and thin role-aware Parent/Admin hub routes.
 - `docs/*`
@@ -31,17 +34,17 @@ The goal is not to polish the old prototype. The goal is to give the product a s
 
 ## Status
 
-English Spelling works in the new structure. Grammar now has a Stage 1 Worker-command-backed practice surface, while the wider product/gameplay layer remains deliberately staged.
+English Spelling works in the new structure. Grammar now has a Stage 1 Worker-command-backed practice surface, and Punctuation has a rollout-gated production Worker-command-backed practice slice. The wider product/gameplay layer remains deliberately staged.
 
 The browser app is now a single React shell. `index.html` loads the built React app bundle, React owns dashboard, Codex, subject, profile, Parent Hub, Admin / Operations, toast and modal surfaces, and the existing controller/store/repository boundary still owns state transitions and side effects. Legacy string renderers remain only as local characterisation helpers while production routes compose React components.
 
-Production on `ks2.eugnel.uk` uses Worker-backed auth, ephemeral demo sessions, API repositories, subject commands, server read models, and prompt-token TTS. `?local=1` no longer creates a browser-local product runtime; browser QA should use a signed-in Worker session or `/demo`. The API adapter reports explicit persistence modes (`local-only`, `remote-sync`, `degraded`) so failed remote writes are visible instead of being treated as silent success, but production practice authority stays behind Worker APIs. The Worker is D1-backed with learner ownership enforcement, atomic account / learner revision checks, idempotent request replay, account-scoped spelling content routes, Worker-command-backed Spelling and Grammar practice, role-aware Parent/Admin hub read routes, Word Bank read models, and protected dictation audio across OpenAI or Gemini, with local browser speech reserved for explicit browser-provider use.
+Production on `ks2.eugnel.uk` uses Worker-backed auth, ephemeral demo sessions, API repositories, subject commands, server read models, and prompt-token TTS. `?local=1` no longer creates a browser-local product runtime; browser QA should use a signed-in Worker session or `/demo`. The API adapter reports explicit persistence modes (`local-only`, `remote-sync`, `degraded`) so failed remote writes are visible instead of being treated as silent success, but production practice authority stays behind Worker APIs. The Worker is D1-backed with learner ownership enforcement, atomic account / learner revision checks, idempotent request replay, account-scoped spelling content routes, Worker-command-backed Spelling, Grammar, and Punctuation practice, role-aware Parent/Admin hub read routes, Word Bank read models, and protected dictation audio across OpenAI or Gemini, with local browser speech reserved for explicit browser-provider use.
 
 Signed-in Parent Hub and Admin / Operations use live Worker hub payloads. Those adult surfaces keep platform role, learner membership role, and writable/read-only access separate. `/api/bootstrap` remains writable-only for the main subject shell, while readable viewer learners are available inside hub surfaces with explicit read-only labels and blocked write affordances.
 
 The repo now has a reusable subject-expansion harness and an explicit expansion-readiness gate. The gate is a narrow **GO** for the first Arithmetic thin slice only; it is not a claim that the full multi-subject SaaS is finished.
 
-The remaining four subjects are intentionally placeholders. They already have:
+The remaining three subjects are intentionally placeholders. They already have:
 
 - subject identities
 - dashboard cards
@@ -52,7 +55,7 @@ The remaining four subjects are intentionally placeholders. They already have:
 - reward-layer hooks
 - Cloudflare deployment and API boundaries
 
-What they do not have yet is their own deterministic learning engine. That is deliberate. Grammar has crossed that boundary for its Stage 1 practice surface, but it is not yet a finished full-subject product layer.
+What they do not have yet is their own deterministic learning engine. That is deliberate. Grammar has crossed that boundary for its Stage 1 practice surface, and Punctuation has crossed it for its rollout-gated production slice, but neither is yet a finished full-subject product layer.
 
 ## Quick start
 
