@@ -422,6 +422,64 @@ test('TTS route returns a lookup-only cache miss without generating audio', asyn
   }
 });
 
+test('TTS route charges cold-cache fallback playback quota only once', async () => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    return new Response(new Uint8Array([1, 2, 3]), {
+      status: 200,
+      headers: { 'content-type': 'audio/mpeg' },
+    });
+  };
+  const bucket = createMemoryR2Bucket();
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      OPENAI_API_KEY: 'test-openai-key',
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    const prompt = await startSpellingPrompt(server);
+    const lookupResponse = await server.fetch('https://repo.test/api/tts', ttsRequest({
+      learnerId: prompt.learnerId,
+      promptToken: prompt.promptToken,
+      provider: 'openai',
+      bufferedGeminiVoice: 'Sulafat',
+      cacheLookupOnly: true,
+    }));
+    const playbackResponse = await server.fetch('https://repo.test/api/tts', ttsRequest({
+      learnerId: prompt.learnerId,
+      promptToken: prompt.promptToken,
+      provider: 'openai',
+      bufferedGeminiVoice: 'Sulafat',
+    }));
+    const limiterRows = server.DB.db.prepare(`
+      SELECT limiter_key, request_count
+      FROM request_limits
+      WHERE limiter_key LIKE 'tts-%'
+    `).all();
+    const limiterCounts = new Map(limiterRows.map((row) => [
+      row.limiter_key.split(':')[0],
+      Number(row.request_count),
+    ]));
+
+    assert.equal(lookupResponse.status, 204);
+    assert.equal(lookupResponse.headers.get('x-ks2-tts-cache'), 'miss');
+    assert.equal(playbackResponse.status, 200);
+    assert.equal(providerCalls, 1);
+    assert.equal(bucket.gets.length, 2);
+    assert.equal(limiterCounts.get('tts-lookup-account'), 1);
+    assert.equal(limiterCounts.get('tts-lookup-ip'), 1);
+    assert.equal(limiterCounts.get('tts-account'), 1);
+    assert.equal(limiterCounts.get('tts-ip'), 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
 test('TTS route rate limits lookup-only cache misses before reading R2', async () => {
   const originalFetch = globalThis.fetch;
   let providerCalls = 0;
@@ -439,7 +497,7 @@ test('TTS route rate limits lookup-only cache misses before reading R2', async (
   });
   try {
     const prompt = await startSpellingPrompt(server);
-    await seedRateLimit(server, 'tts-account', 'adult-a', 120);
+    await seedRateLimit(server, 'tts-lookup-account', 'adult-a', 240);
 
     const response = await server.fetch('https://repo.test/api/tts', ttsRequest({
       learnerId: prompt.learnerId,
@@ -451,7 +509,7 @@ test('TTS route rate limits lookup-only cache misses before reading R2', async (
     const payload = await response.json();
 
     assert.equal(response.status, 400);
-    assert.equal(payload.code, 'tts_rate_limited');
+    assert.equal(payload.code, 'tts_lookup_rate_limited');
     assert.equal(providerCalls, 0);
     assert.equal(bucket.gets.length, 0);
     assert.equal(bucket.puts.length, 0);
@@ -1328,6 +1386,66 @@ test('demo TTS is blocked by the demo session limiter before provider fetch', as
     assert.equal(providerCalls, 0);
     assert.equal(Number(rateLimitMetric?.metric_count), 1);
     assert.equal(Number(fallbackMetric?.metric_count) || 0, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
+test('demo lookup-only cache misses use lookup guards instead of playback guards', async () => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    return geminiAudioResponse();
+  };
+  const bucket = createMemoryR2Bucket();
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      AUTH_MODE: 'production',
+      ENVIRONMENT: 'production',
+      APP_HOSTNAME: 'repo.test',
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    const prompt = await startDemoSpellingPrompt(server);
+    const response = await server.fetchRaw('https://repo.test/api/tts', {
+      ...ttsRequest({
+        learnerId: prompt.audio.learnerId,
+        promptToken: prompt.audio.promptToken,
+        provider: 'openai',
+        bufferedGeminiVoice: 'Iapetus',
+        cacheLookupOnly: true,
+      }),
+      headers: {
+        'content-type': 'application/json',
+        cookie: prompt.cookie,
+      },
+    });
+    const fallbackMetric = server.DB.db.prepare(`
+      SELECT metric_count
+      FROM demo_operation_metrics
+      WHERE metric_key = 'tts_fallbacks'
+    `).get();
+    const limiterRows = server.DB.db.prepare(`
+      SELECT limiter_key
+      FROM request_limits
+      WHERE limiter_key LIKE 'demo-tts%'
+    `).all();
+    const limiterPrefixes = limiterRows.map((row) => row.limiter_key.split(':')[0]).sort();
+
+    assert.equal(response.status, 204);
+    assert.equal(response.headers.get('x-ks2-tts-cache'), 'miss');
+    assert.equal(providerCalls, 0);
+    assert.equal(bucket.gets.length, 2);
+    assert.equal(fallbackMetric, undefined);
+    assert.deepEqual(limiterPrefixes, [
+      'demo-tts-lookup-account',
+      'demo-tts-lookup-ip',
+      'demo-tts-lookup-session',
+    ]);
   } finally {
     globalThis.fetch = originalFetch;
     server.close();

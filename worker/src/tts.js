@@ -2,7 +2,7 @@ import { sha256 } from './auth.js';
 import { first, requireDatabase } from './d1.js';
 import { BadRequestError, BackendUnavailableError } from './errors.js';
 import { readJson } from './http.js';
-import { protectDemoTtsFallback, recordDemoMetric } from './demo/sessions.js';
+import { protectDemoTtsFallback, protectDemoTtsLookup, recordDemoMetric } from './demo/sessions.js';
 import { resolveSpellingAudioRequest } from './subjects/spelling/audio.js';
 import {
   SPELLING_AUDIO_MODEL,
@@ -17,6 +17,8 @@ const GEMINI_GENERATE_CONTENT_URL = 'https://generativelanguage.googleapis.com/v
 const TTS_WINDOW_MS = 10 * 60 * 1000;
 const TTS_ACCOUNT_LIMIT = 120;
 const TTS_IP_LIMIT = 240;
+const TTS_LOOKUP_ACCOUNT_LIMIT = 240;
+const TTS_LOOKUP_IP_LIMIT = 480;
 const TTS_WARMUP_ACCOUNT_LIMIT = 60;
 const TTS_WARMUP_IP_LIMIT = 180;
 const DEFAULT_MODEL = 'gpt-4o-mini-tts';
@@ -101,6 +103,30 @@ async function protectTts(env, request, session, now) {
   if (!accountLimit.allowed || !ipLimit.allowed) {
     throw new BadRequestError('Too many dictation audio requests. Please wait a few minutes and try again.', {
       code: 'tts_rate_limited',
+      retryAfterSeconds: Math.max(accountLimit.retryAfterSeconds, ipLimit.retryAfterSeconds),
+    });
+  }
+}
+
+async function protectTtsLookup(env, request, session, now) {
+  const accountLimit = await consumeRateLimit(env, {
+    bucket: 'tts-lookup-account',
+    identifier: session.accountId,
+    limit: TTS_LOOKUP_ACCOUNT_LIMIT,
+    windowMs: TTS_WINDOW_MS,
+    now,
+  });
+  const ipLimit = await consumeRateLimit(env, {
+    bucket: 'tts-lookup-ip',
+    identifier: clientIp(request),
+    limit: TTS_LOOKUP_IP_LIMIT,
+    windowMs: TTS_WINDOW_MS,
+    now,
+  });
+
+  if (!accountLimit.allowed || !ipLimit.allowed) {
+    throw new BadRequestError('Too many dictation audio cache lookups. Please wait a few minutes and try again.', {
+      code: 'tts_lookup_rate_limited',
       retryAfterSeconds: Math.max(accountLimit.retryAfterSeconds, ipLimit.retryAfterSeconds),
     });
   }
@@ -683,11 +709,18 @@ export async function handleTextToSpeechRequest({
   };
   if ((cacheOnly || cacheLookupOnly) && payload.wordOnly) return cacheOnlyResponse('uncacheable');
   let protectedRequest = false;
+  let protectedLookup = false;
   async function protectAudioRequest() {
     if (protectedRequest) return;
     await protectTts(env, request, session, now);
     await protectDemoTtsFallback({ env, request, session, payload, now });
     protectedRequest = true;
+  }
+  async function protectLookupRequest() {
+    if (protectedLookup) return;
+    await protectTtsLookup(env, request, session, now);
+    await protectDemoTtsLookup({ env, request, session, now });
+    protectedLookup = true;
   }
 
   async function finish(response, fallbackFrom = '') {
@@ -696,7 +729,8 @@ export async function handleTextToSpeechRequest({
 
   async function tryGemini(fallbackFrom = '') {
     if (!payload.wordOnly) {
-      if (!cacheOnly) await protectAudioRequest();
+      if (cacheLookupOnly) await protectLookupRequest();
+      else if (!cacheOnly) await protectAudioRequest();
       const cacheHit = await readBufferedGeminiAudio(env, payload, { model: geminiForPayload.model });
       if (cacheHit?.object) {
         const output = cacheOnly ? cacheOnlyResponse('hit', cacheHit) : cachedGeminiAudioResponse(cacheHit);
