@@ -189,6 +189,14 @@ npm run check
 
 After deployment, verify the production UI on `https://ks2.eugnel.uk` with a logged-in or demo browser session.
 
+For repeatable HTTP evidence after a Punctuation deploy, run:
+
+```txt
+npm run smoke:production:punctuation
+```
+
+The smoke creates an isolated demo session on production, confirms `punctuationProduction` is enabled, completes one Worker-backed Punctuation item through summary, and starts a Worker-backed English Spelling session with a redacted prompt token. This keeps the Punctuation rollout gate tied to the live subject command boundary while also proving the reference Spelling subject still starts correctly.
+
 ## Expansion Path
 
 The next Punctuation release should deepen one learning cluster or validator family at a time. Each expansion needs enough fixed items, generated templates, negative tests, misconception tags, transfer facets, and reward-unit denominators before learner-facing mastery claims are widened.
