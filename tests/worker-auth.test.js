@@ -576,6 +576,12 @@ test('production public bootstrap keeps Codex mastery visible from redacted spel
 
   assert.equal(response.status, 200, JSON.stringify(payload));
   assert.equal(publicSpelling.data.progress, undefined);
+  assert.ok(publicSpelling.ui.stats.core.total > 0);
+  assert.equal(publicSpelling.ui.stats.all.secure, 3);
+  assert.equal(publicSpelling.ui.stats.core.secure, 3);
+  assert.equal(publicSpelling.ui.stats.extra.secure, 1);
+  assert.deepEqual(publicSpelling.ui.analytics.wordGroups, []);
+  assert.equal(publicSpelling.ui.analytics.pools.core.secure, 3);
   assert.equal(publicGameState.inklet.mastered, undefined);
   assert.equal(publicGameState.inklet.masteredCount, 1);
   assert.equal(publicGameState.glimmerbug.masteredCount, 2);

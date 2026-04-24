@@ -196,6 +196,16 @@ export function normaliseWordBankFilters(rawValue = {}) {
   };
 }
 
+export function buildSpellingProgressPools({
+  contentSnapshot,
+  data,
+  now = Date.now(),
+} = {}) {
+  const words = Array.isArray(contentSnapshot?.words) ? contentSnapshot.words : [];
+  const progressMap = normaliseServerSpellingData(data).progress;
+  return poolsFor(words, progressMap, now);
+}
+
 export async function buildSpellingWordBankReadModel({
   learnerId,
   contentSnapshot,
