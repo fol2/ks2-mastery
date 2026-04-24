@@ -19,6 +19,7 @@ const DEFAULT_ROUND_LENGTH = 5;
 const DEFAULT_MINI_SET_LENGTH = 8;
 const ENABLED_MODES = new Set(['learn', 'smart', 'satsset']);
 const LOCKED_MODES = Object.freeze(['trouble', 'surgery', 'builder', 'worked', 'faded']);
+const GRAMMAR_CONCEPT_IDS = new Set(GRAMMAR_CONCEPTS.map((concept) => concept.id));
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -31,6 +32,14 @@ function timestamp(now = Date.now) {
 
 function clamp(number, min, max) {
   return Math.min(max, Math.max(min, number));
+}
+
+function isGrammarConceptId(value) {
+  return typeof value === 'string' && GRAMMAR_CONCEPT_IDS.has(value);
+}
+
+function normaliseStoredFocusConceptId(value) {
+  return isGrammarConceptId(value) ? value : '';
 }
 
 function stableHash(value) {
@@ -95,11 +104,15 @@ function normaliseNodeMap(value) {
 
 export function normaliseServerGrammarData(rawValue) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
+  const prefs = isPlainObject(raw.prefs) ? cloneSerialisable(raw.prefs) : {};
   return {
     contentReleaseId: typeof raw.contentReleaseId === 'string' && raw.contentReleaseId
       ? raw.contentReleaseId
       : GRAMMAR_CONTENT_RELEASE_ID,
-    prefs: isPlainObject(raw.prefs) ? cloneSerialisable(raw.prefs) : {},
+    prefs: {
+      ...prefs,
+      focusConceptId: normaliseStoredFocusConceptId(prefs.focusConceptId),
+    },
     mastery: {
       concepts: normaliseNodeMap(raw.mastery?.concepts),
       templates: normaliseNodeMap(raw.mastery?.templates),
@@ -158,6 +171,7 @@ export function createInitialGrammarState(data = {}) {
 function normaliseGrammarState(rawState, data = {}) {
   const fallback = createInitialGrammarState(data);
   if (!isPlainObject(rawState)) return fallback;
+  const rawPrefs = isPlainObject(rawState.prefs) ? cloneSerialisable(rawState.prefs) : {};
   const normalisedData = normaliseServerGrammarData({
     ...data,
     prefs: rawState.prefs || data.prefs,
@@ -175,7 +189,10 @@ function normaliseGrammarState(rawState, data = {}) {
     awaitingAdvance: Boolean(rawState.awaitingAdvance),
     prefs: {
       ...fallback.prefs,
-      ...(isPlainObject(rawState.prefs) ? cloneSerialisable(rawState.prefs) : {}),
+      ...rawPrefs,
+      focusConceptId: Object.prototype.hasOwnProperty.call(rawPrefs, 'focusConceptId')
+        ? normaliseStoredFocusConceptId(rawPrefs.focusConceptId)
+        : fallback.prefs.focusConceptId,
     },
     mastery: normalisedData.mastery,
     retryQueue: normalisedData.retryQueue,
@@ -431,10 +448,14 @@ export function buildGrammarMiniSet({ size = DEFAULT_MINI_SET_LENGTH, focusConce
 
 function startSession(state, payload, nowTs, learnerId) {
   const mode = supportedModeOrThrow(normaliseMode(payload.mode || state.prefs.mode));
-  const focusConceptId = typeof payload.focusConceptId === 'string'
+  const hasPayloadFocusConcept = typeof payload.focusConceptId === 'string' || typeof payload.skillId === 'string';
+  const requestedFocusConceptId = typeof payload.focusConceptId === 'string'
     ? payload.focusConceptId
-    : (typeof payload.skillId === 'string' ? payload.skillId : state.prefs.focusConceptId || '');
-  if (focusConceptId && !GRAMMAR_CONCEPTS.some((concept) => concept.id === focusConceptId)) {
+    : (typeof payload.skillId === 'string' ? payload.skillId : '');
+  const focusConceptId = hasPayloadFocusConcept
+    ? requestedFocusConceptId
+    : normaliseStoredFocusConceptId(state.prefs.focusConceptId);
+  if (focusConceptId && !isGrammarConceptId(focusConceptId)) {
     throw new BadRequestError('Grammar concept is not available.', {
       code: 'grammar_concept_not_found',
       subjectId: SUBJECT_ID,
@@ -723,11 +744,15 @@ function submitAnswer(state, payload, command, nowTs) {
 function savePrefs(state, payload) {
   const prefs = isPlainObject(payload.prefs) ? payload.prefs : payload;
   const nextMode = prefs.mode ? normaliseMode(prefs.mode) : state.prefs.mode;
+  const hasFocusConcept = Object.prototype.hasOwnProperty.call(prefs, 'focusConceptId');
+  const nextFocusConceptId = hasFocusConcept
+    ? normaliseStoredFocusConceptId(prefs.focusConceptId)
+    : normaliseStoredFocusConceptId(state.prefs.focusConceptId);
   state.prefs = {
     ...state.prefs,
     mode: ENABLED_MODES.has(nextMode) ? nextMode : state.prefs.mode,
     roundLength: roundLengthFor(nextMode, prefs, state.prefs),
-    focusConceptId: typeof prefs.focusConceptId === 'string' ? prefs.focusConceptId : state.prefs.focusConceptId,
+    focusConceptId: nextFocusConceptId,
   };
   return [];
 }

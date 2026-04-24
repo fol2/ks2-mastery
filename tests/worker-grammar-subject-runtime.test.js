@@ -250,6 +250,49 @@ test('Grammar command route rejects end-session without an active session', asyn
   DB.close();
 });
 
+test('Grammar save-prefs drops invalid focus concepts so later sessions can start', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const saved = await postCommand(app, DB, {
+    command: 'save-prefs',
+    learnerId: 'learner-a',
+    requestId: 'grammar-invalid-focus-prefs',
+    expectedLearnerRevision: 0,
+    payload: {
+      prefs: {
+        mode: 'smart',
+        roundLength: 2,
+        focusConceptId: 'not-a-real-concept',
+      },
+    },
+  });
+  assert.equal(saved.response.status, 200, JSON.stringify(saved.body));
+  assert.equal(saved.body.subjectReadModel.prefs.focusConceptId, '');
+
+  const subject = DB.db.prepare(`
+    SELECT data_json
+    FROM child_subject_state
+    WHERE learner_id = 'learner-a' AND subject_id = 'grammar'
+  `).get();
+  const data = JSON.parse(subject.data_json);
+  assert.equal(data.prefs.focusConceptId, '');
+
+  const started = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-start-after-invalid-focus',
+    expectedLearnerRevision: 1,
+    payload: {},
+  });
+  assert.equal(started.response.status, 200, JSON.stringify(started.body));
+  assert.equal(started.body.subjectReadModel.phase, 'session');
+  assert.equal(started.body.subjectReadModel.session.focusConceptId, '');
+
+  DB.close();
+});
+
 test('Grammar command replay is idempotent and does not double-apply events', async () => {
   const DB = createMigratedSqliteD1Database();
   const app = createWorkerApp({ now: () => 1_777_000_000_000 });
