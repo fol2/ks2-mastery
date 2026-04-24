@@ -98,16 +98,37 @@ export function renderMonsterVisualRendererFixture() {
     import { renderToStaticMarkup } from 'react-dom/server';
     import { MonsterVisualConfigProvider } from ${JSON.stringify(absoluteSpecifier('src/platform/game/MonsterVisualConfigContext.jsx'))};
     import { BUNDLED_MONSTER_VISUAL_CONFIG } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monster-visual-config.js'))};
+    import { CodexCreatureVisual } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/CodexCreature.jsx'))};
     import { MonsterMeadow } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/MonsterMeadow.jsx'))};
     import { ToastShelf } from ${JSON.stringify(absoluteSpecifier('src/surfaces/shell/ToastShelf.jsx'))};
 
     const config = structuredClone(BUNDLED_MONSTER_VISUAL_CONFIG);
     config.assets['vellhorn-b1-3'].baseline.facing = 'right';
+    config.assets['vellhorn-b1-3'].baseline.opacity = 0.82;
+    config.assets['vellhorn-b1-3'].baseline.anchorX = 0.25;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.offsetX = 12;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.offsetY = -6;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.scale = 1.18;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.anchorX = 0.25;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.anchorY = 0.72;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.filter = 'brightness(1.1)';
     config.assets['inklet-b1-1'].contexts.toastPortrait.scale = 1.25;
 
     const html = renderToStaticMarkup(
       <MonsterVisualConfigProvider value={{ config }}>
         <>
+          <CodexCreatureVisual
+            entry={{
+              id: 'vellhorn',
+              branch: 'b1',
+              stage: 3,
+              displayState: 'monster',
+              imageAlt: 'Vellhorn',
+              img: '',
+              srcSet: '',
+            }}
+            sizes="160px"
+          />
           <MonsterMeadow
             monsters={[{
               id: 'vellhorn-caught',

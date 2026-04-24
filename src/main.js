@@ -17,6 +17,7 @@ import { probeRelLuminance } from './platform/ui/luminance.js';
 import { safeParseInt, uid } from './platform/core/utils.js';
 import { normalisePlatformRole } from './platform/access/roles.js';
 import { createHubApi } from './platform/hubs/api.js';
+import { normaliseMonsterVisualConfigAdminModel } from './platform/hubs/admin-read-model.js';
 import {
   buildAdminHubAccessContext,
   buildParentHubAccessContext,
@@ -1156,6 +1157,8 @@ function patchAdminHubMonsterVisualConfig(monsterVisualConfig, notice = '') {
   patchAdultSurfaceState((state) => {
     const payload = state.adminHub.payload || {};
     const adminHub = payload.adminHub || {};
+    const platformRole = adminHub.permissions?.platformRole || shellPlatformRole;
+    const nextMonsterVisualConfig = normaliseMonsterVisualConfigAdminModel(monsterVisualConfig, platformRole);
     return {
       ...state,
       notice,
@@ -1166,7 +1169,7 @@ function patchAdminHubMonsterVisualConfig(monsterVisualConfig, notice = '') {
           ...payload,
           adminHub: {
             ...adminHub,
-            monsterVisualConfig,
+            monsterVisualConfig: nextMonsterVisualConfig,
           },
         },
         error: '',
@@ -1216,6 +1219,7 @@ async function publishMonsterVisualConfig({ expectedDraftRevision } = {}) {
     });
     patchAdminHubMonsterVisualConfig(payload.monsterVisualConfig, 'Monster visual config published.');
     await repositories.hydrate({ cacheScope: 'monster-visual-config-publish' });
+    store.patch(() => ({}));
   } catch (error) {
     const validationCount = Number(error?.payload?.validation?.errors?.length) || 0;
     const suffix = validationCount ? ` (${validationCount} validation errors)` : '';

@@ -3454,6 +3454,21 @@ textarea:focus-visible {
   width: 100%;
   height: 100%;
 }
+.codex-creature-visual {
+  display: block;
+  width: 100%;
+  transform: translate(var(--visual-offset-x, 0px), var(--visual-offset-y, 0px)) scaleX(var(--visual-face, 1)) scale(var(--visual-scale, 1));
+  transform-origin: var(--visual-anchor-x, 50%) var(--visual-anchor-y, 100%);
+}
+.codex-portrait .codex-creature-visual,
+.codex-lightbox-stage .codex-creature-visual {
+  height: 100%;
+}
+.codex-creature-image {
+  display: block;
+  width: 100%;
+  object-fit: contain;
+}
 .codex-portrait img {
   width: 100%;
   height: 100%;

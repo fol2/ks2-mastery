@@ -23,3 +23,25 @@ CREATE TABLE IF NOT EXISTS platform_monster_visual_config_versions (
 
 CREATE INDEX IF NOT EXISTS idx_platform_monster_visual_versions_published
   ON platform_monster_visual_config_versions(published_at DESC, version DESC);
+
+CREATE TRIGGER IF NOT EXISTS trg_platform_monster_visual_config_publish_version
+AFTER UPDATE OF published_version ON platform_monster_visual_config
+WHEN NEW.published_version <> OLD.published_version
+BEGIN
+  INSERT INTO platform_monster_visual_config_versions (
+    version,
+    config_json,
+    manifest_hash,
+    schema_version,
+    published_at,
+    published_by_account_id
+  )
+  VALUES (
+    NEW.published_version,
+    NEW.published_json,
+    NEW.manifest_hash,
+    NEW.schema_version,
+    NEW.published_at,
+    COALESCE(NEW.published_by_account_id, 'system')
+  );
+END;

@@ -12,6 +12,108 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function raceBeforeStatementRun(db, predicate, onBeforeRun) {
+  let triggered = false;
+  return {
+    prepare(sql) {
+      const statement = db.prepare(sql);
+      if (!predicate(String(sql || ''))) return statement;
+      return {
+        bind(...params) {
+          const bound = statement.bind(...params);
+          return {
+            async run() {
+              if (!triggered) {
+                triggered = true;
+                await onBeforeRun({ sql, params });
+              }
+              return bound.run();
+            },
+            first: (...args) => bound.first(...args),
+            all: (...args) => bound.all(...args),
+          };
+        },
+      };
+    },
+    batch: (...args) => db.batch(...args),
+    exec: (...args) => db.exec(...args),
+  };
+}
+
+function insertMonsterVisualConfigRow(db, {
+  draft = BUNDLED_MONSTER_VISUAL_CONFIG,
+  published = BUNDLED_MONSTER_VISUAL_CONFIG,
+  draftRevision = 0,
+  publishedVersion = 1,
+  now = Date.UTC(2026, 3, 24, 12, 0),
+  actorAccountId = 'system',
+} = {}) {
+  db.db.prepare(`
+    INSERT INTO platform_monster_visual_config (
+      id,
+      draft_json,
+      draft_revision,
+      draft_updated_at,
+      draft_updated_by_account_id,
+      published_json,
+      published_version,
+      published_at,
+      published_by_account_id,
+      manifest_hash,
+      schema_version
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    'global',
+    JSON.stringify({ ...clone(draft), source: 'draft' }),
+    draftRevision,
+    now,
+    actorAccountId,
+    JSON.stringify({ ...clone(published), source: 'published', version: publishedVersion }),
+    publishedVersion,
+    now,
+    actorAccountId,
+    BUNDLED_MONSTER_VISUAL_CONFIG.manifestHash,
+    1,
+  );
+}
+
+function raceMonsterVisualConfigRow(db, {
+  draft = BUNDLED_MONSTER_VISUAL_CONFIG,
+  published = BUNDLED_MONSTER_VISUAL_CONFIG,
+  draftRevision = 1,
+  publishedVersion = 1,
+  now = Date.UTC(2026, 3, 24, 12, 0),
+  actorAccountId = 'adult-admin',
+} = {}) {
+  db.db.prepare(`
+    UPDATE platform_monster_visual_config
+    SET draft_json = ?,
+        draft_revision = ?,
+        draft_updated_at = ?,
+        draft_updated_by_account_id = ?,
+        published_json = ?,
+        published_version = ?,
+        published_at = ?,
+        published_by_account_id = ?,
+        manifest_hash = ?,
+        schema_version = ?
+    WHERE id = ?
+  `).run(
+    JSON.stringify({ ...clone(draft), source: 'draft' }),
+    draftRevision,
+    now,
+    actorAccountId,
+    JSON.stringify({ ...clone(published), source: 'published', version: publishedVersion }),
+    publishedVersion,
+    now,
+    actorAccountId,
+    BUNDLED_MONSTER_VISUAL_CONFIG.manifestHash,
+    1,
+    'global',
+  );
+}
+
 async function fetchAdmin(server, path, init = {}) {
   return server.fetchAs('adult-admin', `https://repo.test${path}`, init, {
     'x-ks2-dev-platform-role': 'admin',
@@ -39,6 +141,26 @@ test('admin hub exposes seeded global monster visual config state', async () => 
     assert.equal(visual.draft.assets['vellhorn-b1-3'].baseline.facing, 'left');
     assert.equal(visual.published.assets['vellhorn-b1-3'].baseline.facing, 'left');
     assert.equal(visual.versions.length, 1);
+  } finally {
+    server.close();
+  }
+});
+
+test('bootstrap tolerates a concurrent singleton row insert', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    server.env.DB = raceBeforeStatementRun(
+      server.DB,
+      sql => /INSERT(?:\s+OR\s+IGNORE)?\s+INTO\s+platform_monster_visual_config\s*\(/i.test(sql),
+      () => insertMonsterVisualConfigRow(server.DB),
+    );
+
+    const response = await fetchAdmin(server, '/api/bootstrap');
+    const payload = await json(response);
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.monsterVisualConfig.publishedVersion, 1);
+    assert.equal(payload.monsterVisualConfig.config.assets['vellhorn-b1-3'].baseline.facing, 'left');
   } finally {
     server.close();
   }
@@ -110,6 +232,8 @@ test('admin saves, publishes, and restores global monster visual config with rec
     assert.equal(publishPayload.monsterVisualConfig.status.publishedVersion, 2);
     assert.equal(publishPayload.monsterVisualConfig.status.draftRevision, 2);
     assert.equal(publishPayload.monsterVisualConfig.published.assets['vellhorn-b1-3'].baseline.facing, 'right');
+    const publishedVersion = server.DB.db.prepare('SELECT config_json FROM platform_monster_visual_config_versions WHERE version = ?').get(2);
+    assert.equal(JSON.parse(publishedVersion.config_json).assets['vellhorn-b1-3'].baseline.facing, 'right');
 
     const bootstrapResponse = await fetchAdmin(server, '/api/bootstrap');
     const bootstrapPayload = await json(bootstrapResponse);
@@ -232,6 +356,115 @@ test('concurrent monster visual draft saves reject stale draft revisions', async
     assert.equal(stalePayload.code, 'stale_write');
     assert.equal(stalePayload.expectedRevision, 0);
     assert.equal(stalePayload.currentRevision, 1);
+  } finally {
+    server.close();
+  }
+});
+
+test('draft save revision guard stays atomic without a transaction feature flag', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const initial = (await adminHub(server)).adminHub.monsterVisualConfig;
+    const requestedDraft = clone(initial.draft);
+    requestedDraft.assets['vellhorn-b1-3'].baseline.facing = 'right';
+    const racingDraft = clone(initial.draft);
+    racingDraft.assets['vellhorn-b1-2'].baseline.facing = 'right';
+
+    server.env.DB = raceBeforeStatementRun(
+      server.DB,
+      sql => /UPDATE\s+platform_monster_visual_config/i.test(sql) && !/published_json/i.test(sql),
+      () => raceMonsterVisualConfigRow(server.DB, {
+        draft: racingDraft,
+        published: initial.published,
+        draftRevision: 1,
+        publishedVersion: 1,
+      }),
+    );
+
+    const staleSave = await fetchAdmin(server, '/api/admin/monster-visual-config/draft', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        draft: requestedDraft,
+        mutation: {
+          requestId: 'visual-atomic-save-race',
+          expectedDraftRevision: initial.status.draftRevision,
+        },
+      }),
+    });
+    const stalePayload = await json(staleSave);
+
+    assert.equal(staleSave.status, 409);
+    assert.equal(stalePayload.code, 'stale_write');
+    assert.equal(stalePayload.expectedRevision, 0);
+    assert.equal(stalePayload.currentRevision, 1);
+
+    const after = (await adminHub(server)).adminHub.monsterVisualConfig;
+    assert.equal(after.status.draftRevision, 1);
+    assert.equal(after.draft.assets['vellhorn-b1-2'].baseline.facing, 'right');
+    assert.equal(after.draft.assets['vellhorn-b1-3'].baseline.facing, 'left');
+  } finally {
+    server.close();
+  }
+});
+
+test('publish keeps live state and version history atomic without a transaction feature flag', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const initial = (await adminHub(server)).adminHub.monsterVisualConfig;
+    const requestedDraft = clone(initial.draft);
+    requestedDraft.assets['vellhorn-b1-3'].baseline.facing = 'right';
+
+    const saveResponse = await fetchAdmin(server, '/api/admin/monster-visual-config/draft', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        draft: requestedDraft,
+        mutation: {
+          requestId: 'visual-atomic-publish-save',
+          expectedDraftRevision: initial.status.draftRevision,
+        },
+      }),
+    });
+    const savePayload = await json(saveResponse);
+    assert.equal(saveResponse.status, 200);
+
+    const racingPublished = clone(initial.published);
+    racingPublished.assets['vellhorn-b1-2'].baseline.facing = 'right';
+    server.env.DB = raceBeforeStatementRun(
+      server.DB,
+      sql => /UPDATE\s+platform_monster_visual_config/i.test(sql) && /published_json/i.test(sql),
+      () => raceMonsterVisualConfigRow(server.DB, {
+        draft: { ...clone(racingPublished), source: 'draft' },
+        published: racingPublished,
+        draftRevision: 2,
+        publishedVersion: 2,
+      }),
+    );
+
+    const stalePublish = await fetchAdmin(server, '/api/admin/monster-visual-config/publish', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        mutation: {
+          requestId: 'visual-atomic-publish-race',
+          expectedDraftRevision: savePayload.monsterVisualConfig.status.draftRevision,
+        },
+      }),
+    });
+    const stalePayload = await json(stalePublish);
+
+    assert.equal(stalePublish.status, 409);
+    assert.equal(stalePayload.code, 'stale_write');
+    assert.equal(stalePayload.expectedRevision, 1);
+    assert.equal(stalePayload.currentRevision, 2);
+
+    const after = (await adminHub(server)).adminHub.monsterVisualConfig;
+    assert.equal(after.status.draftRevision, 2);
+    assert.equal(after.status.publishedVersion, 2);
+    assert.equal(after.published.assets['vellhorn-b1-2'].baseline.facing, 'right');
+    assert.equal(after.published.assets['vellhorn-b1-3'].baseline.facing, 'left');
+    assert.equal(after.versions.filter(version => version.version === 2).length, 1);
   } finally {
     server.close();
   }
