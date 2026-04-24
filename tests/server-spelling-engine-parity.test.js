@@ -91,6 +91,7 @@ test('server spelling engine preserves deterministic selection and retry progres
     mode: 'smart',
     yearFilter: 'extra',
     length: 5,
+    extraWordFamilies: true,
   });
   const serverStarted = server.apply({
     learnerId,
@@ -101,10 +102,12 @@ test('server spelling engine preserves deterministic selection and retry progres
       mode: 'smart',
       yearFilter: 'extra',
       length: 5,
+      extraWordFamilies: true,
     },
   });
 
   assert.equal(serverStarted.state.session.serverAuthority, SPELLING_SERVER_AUTHORITY);
+  assert.equal(serverStarted.state.session.extraWordFamilies, true);
   assert.deepEqual(serverStarted.state.session.uniqueWords, referenceStarted.state.session.uniqueWords);
   assert.equal(serverStarted.state.session.currentCard.slug, referenceStarted.state.session.currentCard.slug);
 

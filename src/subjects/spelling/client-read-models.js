@@ -22,6 +22,7 @@ function defaultPrefs() {
     roundLength: normaliseRoundLength('20', mode),
     showCloze: true,
     autoSpeak: true,
+    extraWordFamilies: false,
     ttsProvider: DEFAULT_TTS_PROVIDER,
     bufferedGeminiVoice: DEFAULT_BUFFERED_GEMINI_VOICE,
   };
@@ -35,6 +36,7 @@ function normalisePrefs(rawPrefs = {}) {
     roundLength: normaliseRoundLength(rawPrefs.roundLength, mode),
     showCloze: normaliseBoolean(rawPrefs.showCloze, true),
     autoSpeak: normaliseBoolean(rawPrefs.autoSpeak, true),
+    extraWordFamilies: normaliseBoolean(rawPrefs.extraWordFamilies, false),
     ttsProvider: normaliseTtsProvider(rawPrefs.ttsProvider),
     bufferedGeminiVoice: normaliseBufferedGeminiVoice(rawPrefs.bufferedGeminiVoice),
   };
