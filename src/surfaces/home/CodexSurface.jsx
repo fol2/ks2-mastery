@@ -36,6 +36,7 @@ export function CodexSurface({ model, actions }) {
         selectedLearnerId={model.learner?.id || ''}
         learnerLabel={model.learnerLabel || ''}
         signedInAs={model.signedInAs}
+        onNavigateHome={actions.navigateHome}
         onSelectLearner={actions.selectLearner}
         onOpenProfileSettings={actions.openProfileSettings}
         onLogout={actions.logout}

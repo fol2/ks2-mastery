@@ -23,3 +23,11 @@ test('React app shell renders subject chrome without global subject top-nav moun
   assert.match(html, /class="subject-breadcrumb-current"[^>]*>\s*Spelling\s*<\/button>/);
   assert.doesNotMatch(html, /data-subject-topnav-mount/);
 });
+
+test('React codex top nav keeps the brand button wired to dashboard navigation', async () => {
+  const html = await renderAppFixture({ route: 'codex' });
+
+  assert.match(html, /Codex journal/);
+  assert.match(html, /<button type="button" class="brand profile-brand-button" data-action="navigate-home">/);
+  assert.doesNotMatch(html, /data-codex-mount/);
+});
