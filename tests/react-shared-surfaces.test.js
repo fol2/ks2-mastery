@@ -1,7 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { renderAppFixture, renderProfileSurfaceFixture, renderSharedSurfaceFixture } from './helpers/react-render.js';
+import {
+  renderAppFixture,
+  renderMonsterCelebrationOverlayFixture,
+  renderProfileSurfaceFixture,
+  renderSharedSurfaceFixture,
+} from './helpers/react-render.js';
 
 test('React profile settings surface owns learner profile and data actions', async () => {
   const html = await renderAppFixture({ route: 'profile' });
@@ -54,4 +59,13 @@ test('React shared shell components render persistence, toasts, and celebration 
   assert.match(html, /Inklet joined your Codex/);
   assert.match(html, /monster-celebration-overlay caught/);
   assert.match(html, /You caught a new friend!/);
+});
+
+test('React monster celebration overlay uses high-resolution stage artwork', async () => {
+  const html = await renderMonsterCelebrationOverlayFixture();
+
+  assert.match(html, /monster-celebration-overlay evolve egg-crack/);
+  assert.match(html, /assets\/monsters\/vellhorn\/b2\/vellhorn-b2-0\.640\.webp/);
+  assert.match(html, /assets\/monsters\/vellhorn\/b2\/vellhorn-b2-1\.640\.webp/);
+  assert.match(html, /assets\/monsters\/vellhorn\/b2\/vellhorn-b2-1\.1280\.webp/);
 });

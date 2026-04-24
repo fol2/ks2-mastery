@@ -92,6 +92,29 @@ export function renderSharedSurfaceFixture() {
   `);
 }
 
+export function renderMonsterCelebrationOverlayFixture() {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { MonsterCelebrationOverlay } from ${JSON.stringify(absoluteSpecifier('src/surfaces/shell/MonsterCelebrationOverlay.jsx'))};
+    import { MONSTERS } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monsters.js'))};
+
+    const event = {
+      id: 'reward.monster:learner-a:vellhorn:evolve:1:1',
+      type: 'reward.monster',
+      kind: 'evolve',
+      learnerId: 'learner-a',
+      monsterId: 'vellhorn',
+      monster: MONSTERS.vellhorn,
+      previous: { mastered: 9, stage: 0, level: 0, caught: true, branch: 'b2' },
+      next: { mastered: 10, stage: 1, level: 1, caught: true, branch: 'b2' },
+      createdAt: Date.UTC(2026, 0, 1),
+    };
+    const html = renderToStaticMarkup(<MonsterCelebrationOverlay queue={[event]} onDismiss={() => {}} />);
+    console.log(html);
+  `);
+}
+
 export function renderProfileSurfaceFixture({ demo = false, persistenceMode = 'remote-sync' } = {}) {
   return renderFixture(`
     import React from 'react';
