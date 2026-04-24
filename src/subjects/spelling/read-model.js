@@ -1,6 +1,6 @@
 import { WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from './data/word-data.js';
 import { normaliseYearFilter } from './service-contract.js';
-import { normaliseTtsProvider } from './tts-providers.js';
+import { normaliseBufferedGeminiVoice, normaliseTtsProvider } from './tts-providers.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SECURE_STAGE = 4;
@@ -317,6 +317,7 @@ export function buildSpellingLearnerReadModel({
       roundLength: typeof prefs.roundLength === 'string' ? prefs.roundLength : '20',
       extraWordFamilies: Boolean(prefs.extraWordFamilies),
       ttsProvider: normaliseTtsProvider(prefs.ttsProvider),
+      bufferedGeminiVoice: normaliseBufferedGeminiVoice(prefs.bufferedGeminiVoice),
     },
     currentFocus,
     progressSnapshot: {

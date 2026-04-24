@@ -3,7 +3,10 @@ import { createSubjectRuntimeBoundary } from '../core/subject-runtime.js';
 import { createEventRuntime, createPracticeStreakSubscriber } from '../events/index.js';
 import { createSpellingAutoAdvanceController } from '../../subjects/spelling/auto-advance.js';
 import { resolveSpellingShortcut } from '../../subjects/spelling/shortcuts.js';
-import { normaliseTtsProvider } from '../../subjects/spelling/tts-providers.js';
+import {
+  normaliseBufferedGeminiVoice,
+  normaliseTtsProvider,
+} from '../../subjects/spelling/tts-providers.js';
 import {
   isMonsterCelebrationEvent,
   shouldDelayMonsterCelebrations,
@@ -303,6 +306,7 @@ export function createAppController({
         word: 'early',
         sentence: 'The birds sang early in the day.',
         provider: normaliseTtsProvider(data.provider),
+        bufferedGeminiVoice: normaliseBufferedGeminiVoice(data.bufferedGeminiVoice),
         kind: 'test',
       });
       return true;
@@ -312,6 +316,7 @@ export function createAppController({
       const formData = data.formData;
       services.spelling?.savePrefs?.(learnerId, {
         ttsProvider: normaliseTtsProvider(formData.get('ttsProvider')),
+        bufferedGeminiVoice: normaliseBufferedGeminiVoice(formData.get('bufferedGeminiVoice')),
       });
       store.updateLearner(learnerId, {
         name: String(formData.get('name') || 'Learner').trim() || 'Learner',

@@ -54,6 +54,7 @@ test('platform TTS sends the selected Worker provider', async () => {
   const tts = createPlatformTts({
     remoteEnabled: true,
     provider: () => 'gemini',
+    bufferedVoice: () => 'Sulafat',
     fetchFn: async (url, init = {}) => {
       calls.push({
         url,
@@ -82,12 +83,13 @@ test('platform TTS sends the selected Worker provider', async () => {
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, '/api/tts');
     assert.equal(calls[0].credentials, 'include');
-    assert.equal(calls[0].headers.accept, 'audio/mpeg');
+    assert.equal(calls[0].headers.accept, 'audio/*');
     assert.deepEqual(calls[0].body, {
       learnerId: 'learner-a',
       promptToken: 'prompt-token-a',
       slow: true,
       provider: 'gemini',
+      bufferedGeminiVoice: 'Sulafat',
     });
 
     const wordOnlyResult = await tts.speak({
@@ -105,6 +107,7 @@ test('platform TTS sends the selected Worker provider', async () => {
       promptToken: 'prompt-token-b',
       slow: false,
       provider: 'gemini',
+      bufferedGeminiVoice: 'Sulafat',
       wordOnly: true,
     });
   } finally {
@@ -168,12 +171,21 @@ test('platform TTS allows a one-off provider override for profile tests', async 
     });
 
     assert.equal(result, true);
-    assert.equal(calls.length, 1);
+    assert.equal(calls.length, 2);
     assert.deepEqual(calls[0].body, {
       learnerId: 'learner-a',
       promptToken: 'prompt-token-test',
       slow: false,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Iapetus',
+      cacheOnly: true,
+    });
+    assert.deepEqual(calls[1].body, {
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-test',
+      slow: false,
       provider: 'openai',
+      bufferedGeminiVoice: 'Iapetus',
     });
     assert.deepEqual(
       events.filter((event) => event.kind === 'test').map((event) => event.type),
@@ -222,12 +234,21 @@ test('platform TTS does not fall back when the selected remote provider fails', 
 
     assert.equal(result, false);
     assert.equal(spoke, false);
-    assert.equal(calls.length, 1);
+    assert.equal(calls.length, 2);
     assert.deepEqual(calls[0].body, {
       learnerId: 'learner-a',
       promptToken: 'prompt-token-a',
       slow: false,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Iapetus',
+      cacheOnly: true,
+    });
+    assert.deepEqual(calls[1].body, {
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-a',
+      slow: false,
       provider: 'openai',
+      bufferedGeminiVoice: 'Iapetus',
     });
   } finally {
     tts.stop();
@@ -269,8 +290,8 @@ test('platform TTS can use the local browser voice provider', async () => {
   const tts = createPlatformTts({
     remoteEnabled: true,
     provider: 'browser',
-    fetchFn: async () => {
-      calls.push(true);
+    fetchFn: async (url, init = {}) => {
+      calls.push({ url, body: JSON.parse(init.body) });
       return new Response(null, { status: 500 });
     },
   });
@@ -288,6 +309,25 @@ test('platform TTS can use the local browser voice provider', async () => {
     assert.equal(spoken[0].lang, 'en-GB');
     assert.equal(spoken[0].voice.name, 'Google UK English Female');
     assert.match(spoken[0].text, /The word is early/);
+
+    const tokenResult = await tts.speak({
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-browser',
+      word: 'early',
+      sentence: 'The birds sang early in the day.',
+    });
+
+    assert.equal(tokenResult, true);
+    assert.equal(calls.length, 1);
+    assert.deepEqual(calls[0].body, {
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-browser',
+      slow: false,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Iapetus',
+      cacheOnly: true,
+    });
+    assert.equal(spoken.length, 2);
   } finally {
     tts.stop();
     globalThis.window = originalWindow;

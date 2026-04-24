@@ -32,6 +32,12 @@
       "database_id": "REPLACE_ME"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "SPELLING_AUDIO_BUCKET",
+      "bucket_name": "REPLACE_ME"
+    }
+  ],
   "durable_objects": {
     "bindings": [
       {

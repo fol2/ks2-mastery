@@ -1,5 +1,10 @@
 import { clamp } from '../../platform/core/utils.js';
-import { DEFAULT_TTS_PROVIDER, normaliseTtsProvider } from './tts-providers.js';
+import {
+  DEFAULT_BUFFERED_GEMINI_VOICE,
+  DEFAULT_TTS_PROVIDER,
+  normaliseBufferedGeminiVoice,
+  normaliseTtsProvider,
+} from './tts-providers.js';
 
 export function buildDictationTranscript({ word, sentence } = {}) {
   const spokenWord = typeof word === 'string' ? word : word?.word;
@@ -27,6 +32,14 @@ function resolveProvider(provider) {
     return normaliseTtsProvider(typeof provider === 'function' ? provider() : provider);
   } catch {
     return DEFAULT_TTS_PROVIDER;
+  }
+}
+
+function resolveBufferedVoice(bufferedVoice) {
+  try {
+    return normaliseBufferedGeminiVoice(typeof bufferedVoice === 'function' ? bufferedVoice() : bufferedVoice);
+  } catch {
+    return DEFAULT_BUFFERED_GEMINI_VOICE;
   }
 }
 
@@ -60,7 +73,7 @@ function playbackKind({ kind = '', slow = false } = {}) {
   return explicit || (slow ? 'slow' : 'normal');
 }
 
-function remotePromptRequest(payload = {}, providerId = DEFAULT_TTS_PROVIDER) {
+function remotePromptRequest(payload = {}, providerId = DEFAULT_TTS_PROVIDER, bufferedVoiceId = DEFAULT_BUFFERED_GEMINI_VOICE) {
   const learnerId = typeof payload.learnerId === 'string' ? payload.learnerId : '';
   const promptToken = typeof payload.promptToken === 'string' ? payload.promptToken : '';
   if (!learnerId || !promptToken) return null;
@@ -69,8 +82,10 @@ function remotePromptRequest(payload = {}, providerId = DEFAULT_TTS_PROVIDER) {
     promptToken,
     slow: Boolean(payload.slow),
     provider: providerId,
+    bufferedGeminiVoice: normaliseBufferedGeminiVoice(payload.bufferedGeminiVoice, bufferedVoiceId),
   };
   if (payload.wordOnly) body.wordOnly = true;
+  if (payload.cacheOnly) body.cacheOnly = true;
   if (typeof payload.slug === 'string' && payload.slug) body.slug = payload.slug;
   if (typeof payload.scope === 'string' && payload.scope) body.scope = payload.scope;
   return body;
@@ -81,6 +96,7 @@ export function createPlatformTts({
   endpoint = '/api/tts',
   remoteEnabled = shouldUseRemoteTts(),
   provider = DEFAULT_TTS_PROVIDER,
+  bufferedVoice = DEFAULT_BUFFERED_GEMINI_VOICE,
 } = {}) {
   let playbackId = 0;
   let currentAbort = null;
@@ -163,11 +179,38 @@ export function createPlatformTts({
     });
   }
 
-  async function speakWithRemote(payload = {}, providerId, token) {
+  function prefetchBufferedAudio(payload = {}, providerId, bufferedVoiceId) {
+    if (
+      providerId === 'gemini'
+      || payload.wordOnly
+      || !remoteEnabled
+      || typeof fetchFn !== 'function'
+      || !payload.promptToken
+    ) {
+      return;
+    }
+    const requestBody = remotePromptRequest(
+      { ...payload, cacheOnly: true },
+      'gemini',
+      bufferedVoiceId,
+    );
+    if (!requestBody) return;
+    fetchFn(endpoint, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    }).catch(() => {});
+  }
+
+  async function speakWithRemote(payload = {}, providerId, bufferedVoiceId, token) {
     if (!remoteEnabled || typeof fetchFn !== 'function' || typeof Audio === 'undefined' || typeof URL === 'undefined') {
       return false;
     }
-    const requestBody = remotePromptRequest(payload, providerId);
+    const requestBody = remotePromptRequest(payload, providerId, bufferedVoiceId);
     if (!requestBody) return false;
 
     currentAbort = new AbortController();
@@ -178,7 +221,7 @@ export function createPlatformTts({
         method: 'POST',
         credentials: 'include',
         headers: {
-          accept: 'audio/mpeg',
+          accept: 'audio/*',
           'content-type': 'application/json',
         },
         signal: currentAbort.signal,
@@ -229,8 +272,10 @@ export function createPlatformTts({
     stop();
     const token = playbackId;
     const providerId = resolveProvider(payload.provider || provider);
+    const bufferedVoiceId = resolveBufferedVoice(payload.bufferedGeminiVoice || bufferedVoice);
+    prefetchBufferedAudio(payload, providerId, bufferedVoiceId);
     if (providerId === 'browser') return speakWithBrowser(payload);
-    return await speakWithRemote(payload, providerId, token);
+    return await speakWithRemote(payload, providerId, bufferedVoiceId, token);
   }
 
   return {

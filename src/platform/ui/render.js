@@ -5,7 +5,11 @@ import { subjectTabLabel } from '../core/subject-runtime.js';
 import { monsterAsset, monsterAssetSrcSet } from '../game/monsters.js';
 import { monsterSummary, monsterSummaryFromSpellingAnalytics } from '../game/monster-system.js';
 import { readOnlyLearnerActionBlockReason } from '../hubs/shell-access.js';
-import { normaliseTtsProvider } from '../../subjects/spelling/tts-providers.js';
+import {
+  BUFFERED_GEMINI_VOICE_OPTIONS,
+  normaliseBufferedGeminiVoice,
+  normaliseTtsProvider,
+} from '../../subjects/spelling/tts-providers.js';
 
 const TTS_PROVIDER_OPTIONS = [
   { value: 'openai', label: 'OpenAI' },
@@ -608,6 +612,13 @@ function renderTtsProviderOptions(provider) {
   `).join('');
 }
 
+function renderBufferedGeminiVoiceOptions(voice) {
+  const selected = normaliseBufferedGeminiVoice(voice);
+  return BUFFERED_GEMINI_VOICE_OPTIONS.map((option) => `
+    <option value="${escapeHtml(option.id)}" ${selected === option.id ? 'selected' : ''}>${escapeHtml(option.label)}</option>
+  `).join('');
+}
+
 function renderProfileLearnerSelect(appState) {
   const learners = appState.learners.allIds.map((id) => appState.learners.byId[id]).filter(Boolean);
   if (!learners.length) {
@@ -683,7 +694,9 @@ function renderLearnerManager(appState, context) {
     `;
   }
   const accent = safeInlineColor(learner.avatarColor);
-  const ttsProvider = normaliseTtsProvider(context.services?.spelling?.getPrefs?.(learner.id)?.ttsProvider);
+  const spellingPrefs = context.services?.spelling?.getPrefs?.(learner.id) || {};
+  const ttsProvider = normaliseTtsProvider(spellingPrefs.ttsProvider);
+  const bufferedGeminiVoice = normaliseBufferedGeminiVoice(spellingPrefs.bufferedGeminiVoice);
   const learnerCount = appState.learners.allIds.length;
   const subjectCount = registeredSubjects(context).length;
   const liveSubjectCount = registeredSubjects(context).filter((subject) => subject.available !== false).length;
@@ -761,6 +774,12 @@ function renderLearnerManager(appState, context) {
               </button>
             </div>
           </div>
+          <label class="profile-form-field profile-form-field-wide">
+            <span>Pre-cached Gemini voice</span>
+            <select class="select" name="bufferedGeminiVoice">
+              ${renderBufferedGeminiVoiceOptions(bufferedGeminiVoice)}
+            </select>
+          </label>
         </div>
         <div class="profile-form-footer">
           <div class="profile-form-danger-actions">

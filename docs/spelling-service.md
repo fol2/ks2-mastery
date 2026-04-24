@@ -102,9 +102,9 @@ Live Spelling command read models no longer expose the current answer, word slug
 }
 ```
 
-The browser sends only `learnerId`, `promptToken`, and playback options to `/api/tts`. The Worker then reloads the current server-owned Spelling session, validates that the token still matches the active prompt, derives the transcript server-side, and only then calls the protected OpenAI TTS fallback. Arbitrary browser-supplied `word` and `sentence` payloads are rejected.
+The browser sends only `learnerId`, `promptToken`, and playback options to `/api/tts`. The Worker then reloads the current server-owned Spelling session, validates that the token still matches the active prompt, derives the transcript server-side, and resolves the selected provider without trusting browser-supplied transcript text. Arbitrary browser-supplied `word` and `sentence` payloads are rejected.
 
-This prepares the hybrid audio path: pre-generated/static audio can be checked first for the same prompt identity, with protected OpenAI fallback retained for prompts that are not ready yet.
+Gemini dictation audio now uses a cache-first buffered path. The Worker derives a deterministic R2 asset key from the active Gemini model, buffered voice, speed, published prompt content key, slug, and sentence index; it serves matching `SPELLING_AUDIO_BUCKET` objects before provider generation and stores newly generated Gemini audio back under the same key. Cache-only warm-up requests can prefill those assets without returning playback bytes, while normal OpenAI requests remain protected behind Worker-side credentials and rate limits.
 
 ## Persisted subject-state invariants
 
@@ -189,7 +189,7 @@ What was brought back into line with the direct legacy baseline:
 What remains intentionally different:
 
 - platform-level resume across learner switches/navigation/reload still stays broader than legacy
-- model/voice/rate TTS controls and warm-up behaviour are still deferred
+- detailed model/voice/rate UI controls remain deferred; buffered Gemini voice choice and cache-only warm-up are available through the Worker-owned audio path
 
 See `docs/spelling-parity.md` for the full matrix and the explicit remaining deltas.
 

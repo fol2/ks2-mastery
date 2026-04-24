@@ -7,7 +7,10 @@ import {
   createSpellingSessionCompletedEvent,
   createSpellingWordSecuredEvent,
 } from '../../src/subjects/spelling/events.js';
-import { normaliseTtsProvider } from '../../src/subjects/spelling/tts-providers.js';
+import {
+  normaliseBufferedGeminiVoice,
+  normaliseTtsProvider,
+} from '../../src/subjects/spelling/tts-providers.js';
 import {
   cloneSerialisable,
   createInitialSpellingState,
@@ -154,6 +157,7 @@ function normalisePrefs(rawPrefs = {}) {
     autoSpeak: normaliseBoolean(rawPrefs.autoSpeak, true),
     extraWordFamilies: normaliseBoolean(rawPrefs.extraWordFamilies, false),
     ttsProvider: normaliseTtsProvider(rawPrefs.ttsProvider),
+    bufferedGeminiVoice: normaliseBufferedGeminiVoice(rawPrefs.bufferedGeminiVoice),
   };
 }
 
@@ -930,6 +934,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     saveJson(resolvedStorage, prefsKey(learnerId), {
       ...defaultSpellingPrefs(),
       ttsProvider: currentPrefs.ttsProvider,
+      bufferedGeminiVoice: currentPrefs.bufferedGeminiVoice,
     });
   }
 

@@ -7,7 +7,12 @@ import {
   normaliseStats,
   normaliseYearFilter,
 } from './service-contract.js';
-import { DEFAULT_TTS_PROVIDER, normaliseTtsProvider } from './tts-providers.js';
+import {
+  DEFAULT_BUFFERED_GEMINI_VOICE,
+  DEFAULT_TTS_PROVIDER,
+  normaliseBufferedGeminiVoice,
+  normaliseTtsProvider,
+} from './tts-providers.js';
 
 function defaultPrefs() {
   const mode = 'smart';
@@ -18,6 +23,7 @@ function defaultPrefs() {
     showCloze: true,
     autoSpeak: true,
     ttsProvider: DEFAULT_TTS_PROVIDER,
+    bufferedGeminiVoice: DEFAULT_BUFFERED_GEMINI_VOICE,
   };
 }
 
@@ -30,6 +36,7 @@ function normalisePrefs(rawPrefs = {}) {
     showCloze: normaliseBoolean(rawPrefs.showCloze, true),
     autoSpeak: normaliseBoolean(rawPrefs.autoSpeak, true),
     ttsProvider: normaliseTtsProvider(rawPrefs.ttsProvider),
+    bufferedGeminiVoice: normaliseBufferedGeminiVoice(rawPrefs.bufferedGeminiVoice),
   };
 }
 
