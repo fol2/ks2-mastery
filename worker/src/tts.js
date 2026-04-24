@@ -291,7 +291,7 @@ function bufferedAudioKey(metadata, extension = 'mp3') {
   });
 }
 
-function bufferedAudioHeaders({ metadata, cacheState, contentType, key }) {
+function bufferedAudioHeaders({ metadata, cacheState, contentType }) {
   return {
     'content-type': contentType,
     'cache-control': 'private, max-age=86400',
@@ -299,7 +299,6 @@ function bufferedAudioHeaders({ metadata, cacheState, contentType, key }) {
     'x-ks2-tts-model': metadata.model || SPELLING_AUDIO_MODEL,
     'x-ks2-tts-voice': metadata.voice,
     'x-ks2-tts-cache': cacheState,
-    'x-ks2-tts-cache-key': key,
   };
 }
 
@@ -366,7 +365,6 @@ function cachedGeminiAudioResponse(cacheHit) {
       metadata: cacheHit.metadata,
       cacheState: 'hit',
       contentType: cacheHit.contentType,
-      key: cacheHit.key,
     }),
   });
 }
@@ -376,7 +374,6 @@ function cacheOnlyResponse(cacheState, cacheHit = null) {
     'cache-control': 'no-store',
     'x-ks2-tts-cache': cacheState,
   });
-  if (cacheHit?.key) headers.set('x-ks2-tts-cache-key', cacheHit.key);
   if (cacheHit?.metadata?.model) headers.set('x-ks2-tts-model', cacheHit.metadata.model);
   if (cacheHit?.metadata?.voice) headers.set('x-ks2-tts-voice', cacheHit.metadata.voice);
   return new Response(null, { status: 204, headers });
@@ -425,7 +422,6 @@ async function storeBufferedGeminiAudio(env, payload, response, options = {}) {
           metadata: cacheSlot.metadata,
           cacheState: 'stored',
           contentType,
-          key: cacheSlot.key,
         }),
       }),
       cacheState: 'stored',
@@ -435,7 +431,6 @@ async function storeBufferedGeminiAudio(env, payload, response, options = {}) {
   } catch {
     const headers = new Headers(response.headers);
     headers.set('x-ks2-tts-cache', 'store_failed');
-    headers.set('x-ks2-tts-cache-key', cacheSlot.key);
     return {
       response: new Response(bytes, { status: 200, headers }),
       cacheState: 'store_failed',
@@ -667,12 +662,7 @@ export async function handleTextToSpeechRequest({
   }
 
   if (payload.provider === 'gemini' && !payload.wordOnly) {
-    if (cacheOnly) {
-      const warmupAllowed = await allowTtsWarmup(env, request, session, now);
-      if (!warmupAllowed) return cacheOnlyResponse('skipped_rate_limited');
-    } else {
-      await protectAudioRequest();
-    }
+    if (!cacheOnly) await protectAudioRequest();
     const cacheHit = await readBufferedGeminiAudio(env, payload, { model: geminiForPayload.model });
     if (cacheHit?.object) {
       const output = cacheOnly ? cacheOnlyResponse('hit', cacheHit) : cachedGeminiAudioResponse(cacheHit);
@@ -680,6 +670,12 @@ export async function handleTextToSpeechRequest({
     }
     if (cacheOnly && cacheHit?.cacheUnavailable) return cacheOnlyResponse('unavailable', cacheHit);
     if (cacheOnly && !cacheHit?.metadata) return cacheOnlyResponse('uncacheable');
+    if (cacheOnly) {
+      if (!geminiForPayload.apiKey) return cacheOnlyResponse('unavailable');
+      const warmupAllowed = await allowTtsWarmup(env, request, session, now);
+      if (!warmupAllowed) return cacheOnlyResponse('skipped_rate_limited');
+      await protectDemoTtsFallback({ env, request, session, payload, now });
+    }
   }
 
   if (payload.provider === 'gemini') {
@@ -694,9 +690,9 @@ export async function handleTextToSpeechRequest({
         ? { response, cacheState: 'uncacheable' }
         : await storeBufferedGeminiAudio(env, payload, response, { model: geminiForPayload.model });
       const output = cacheOnly
-        ? cacheOnlyResponse(stored.cacheState, { key: stored.key, metadata: stored.metadata })
+        ? cacheOnlyResponse(stored.cacheState, { metadata: stored.metadata })
         : stored.response;
-      return cacheOnly ? output : await recordDemoTtsFallback(env, session, now, output);
+      return await recordDemoTtsFallback(env, session, now, output);
     } catch (error) {
       throw backendUnavailableFromFailure(error, [error]);
     }

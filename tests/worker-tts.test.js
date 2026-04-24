@@ -323,6 +323,7 @@ test('TTS route serves pre-cached Gemini audio before provider generation', asyn
     assert.equal(response.headers.get('content-type'), 'audio/mpeg');
     assert.equal(response.headers.get('x-ks2-tts-cache'), 'hit');
     assert.equal(response.headers.get('x-ks2-tts-voice'), 'Sulafat');
+    assert.equal(response.headers.get('x-ks2-tts-cache-key'), null);
     assert.deepEqual([...bytes], [9, 8, 7]);
     assert.equal(providerCalls, 0);
     assert.equal(bucket.gets.length, 1);
@@ -418,6 +419,7 @@ test('TTS route stores generated Gemini audio under the buffered batch key', asy
     assert.equal(response.headers.get('x-ks2-tts-cache'), 'stored');
     assert.equal(response.headers.get('x-ks2-tts-model'), 'gemini-custom-tts-preview');
     assert.equal(response.headers.get('x-ks2-tts-voice'), 'Sulafat');
+    assert.equal(response.headers.get('x-ks2-tts-cache-key'), null);
     assert.equal(String.fromCharCode(...bytes.slice(0, 4)), 'RIFF');
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-custom-tts-preview:generateContent');
@@ -552,6 +554,7 @@ test('TTS cache-only requests warm Gemini audio without returning playback bytes
 
     assert.equal(response.status, 204);
     assert.equal(response.headers.get('x-ks2-tts-cache'), 'stored');
+    assert.equal(response.headers.get('x-ks2-tts-cache-key'), null);
     assert.equal(bytes.length, 0);
     assert.equal(providerCalls, 1);
     assert.equal(bucket.puts.length, 1);
@@ -627,6 +630,56 @@ test('TTS cache-only warmups do not spend user playback quota', async () => {
   }
 });
 
+test('TTS cache-only cache hits do not spend warmup quota', async () => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    throw new Error('Provider should not be called for cache-only hits.');
+  };
+  const bucket = createMemoryR2Bucket({
+    hit: {
+      bytes: [9, 8, 7],
+      contentType: 'audio/mpeg',
+    },
+  });
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      GEMINI_API_KEY: 'test-gemini-key',
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    const prompt = await startSpellingPrompt(server);
+    await seedRateLimit(server, 'tts-warmup-account', 'adult-a', 60);
+
+    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({
+      learnerId: prompt.learnerId,
+      promptToken: prompt.promptToken,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Iapetus',
+      cacheOnly: true,
+    }));
+    const warmupAccount = server.DB.db.prepare(`
+      SELECT request_count
+      FROM request_limits
+      WHERE limiter_key LIKE 'tts-warmup-account:%'
+    `).get();
+
+    assert.equal(response.status, 204);
+    assert.equal(response.headers.get('x-ks2-tts-cache'), 'hit');
+    assert.equal(response.headers.get('x-ks2-tts-cache-key'), null);
+    assert.equal(providerCalls, 0);
+    assert.equal(bucket.gets.length, 1);
+    assert.equal(bucket.puts.length, 0);
+    assert.equal(Number(warmupAccount?.request_count), 60);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
 test('TTS cache-only warmups are skipped when the warmup quota is exhausted', async () => {
   const originalFetch = globalThis.fetch;
   let providerCalls = 0;
@@ -657,7 +710,7 @@ test('TTS cache-only warmups are skipped when the warmup quota is exhausted', as
     assert.equal(response.status, 204);
     assert.equal(response.headers.get('x-ks2-tts-cache'), 'skipped_rate_limited');
     assert.equal(providerCalls, 0);
-    assert.equal(bucket.gets.length, 0);
+    assert.equal(bucket.gets.length, 2);
     assert.equal(bucket.puts.length, 0);
   } finally {
     globalThis.fetch = originalFetch;
@@ -1097,6 +1150,127 @@ test('demo TTS is blocked by the demo session limiter before provider fetch', as
     assert.equal(response.status, 400);
     assert.equal(payload.code, 'demo_rate_limited');
     assert.equal(providerCalls, 0);
+    assert.equal(Number(rateLimitMetric?.metric_count), 1);
+    assert.equal(Number(fallbackMetric?.metric_count) || 0, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
+test('demo cache-only warmups use demo TTS guards and metrics', async () => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    return geminiAudioResponse();
+  };
+  const bucket = createMemoryR2Bucket();
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      AUTH_MODE: 'production',
+      ENVIRONMENT: 'production',
+      APP_HOSTNAME: 'repo.test',
+      GEMINI_API_KEY: 'test-gemini-key',
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    const prompt = await startDemoSpellingPrompt(server);
+    const response = await server.fetchRaw('https://repo.test/api/tts', {
+      ...ttsRequest({
+        learnerId: prompt.audio.learnerId,
+        promptToken: prompt.audio.promptToken,
+        provider: 'gemini',
+        bufferedGeminiVoice: 'Iapetus',
+        cacheOnly: true,
+      }),
+      headers: {
+        'content-type': 'application/json',
+        cookie: prompt.cookie,
+      },
+    });
+    const fallbackMetric = server.DB.db.prepare(`
+      SELECT metric_count
+      FROM demo_operation_metrics
+      WHERE metric_key = 'tts_fallbacks'
+    `).get();
+    const limiterRows = server.DB.db.prepare(`
+      SELECT limiter_key
+      FROM request_limits
+      WHERE limiter_key LIKE 'demo-tts-%'
+    `).all();
+    const limiterPrefixes = limiterRows.map((row) => row.limiter_key.split(':')[0]).sort();
+
+    assert.equal(response.status, 204);
+    assert.equal(response.headers.get('x-ks2-tts-cache'), 'stored');
+    assert.equal(providerCalls, 1);
+    assert.equal(bucket.puts.length, 1);
+    assert.equal(Number(fallbackMetric?.metric_count), 1);
+    assert.deepEqual(limiterPrefixes, [
+      'demo-tts-account',
+      'demo-tts-fallback-type',
+      'demo-tts-ip',
+      'demo-tts-session',
+    ]);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
+test('demo cache-only warmups are blocked by demo limiter before provider fetch', async () => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    return geminiAudioResponse();
+  };
+  const bucket = createMemoryR2Bucket();
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      AUTH_MODE: 'production',
+      ENVIRONMENT: 'production',
+      APP_HOSTNAME: 'repo.test',
+      GEMINI_API_KEY: 'test-gemini-key',
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    const prompt = await startDemoSpellingPrompt(server);
+    await seedRateLimit(server, 'demo-tts-session', prompt.sessionId, 60);
+
+    const response = await server.fetchRaw('https://repo.test/api/tts', {
+      ...ttsRequest({
+        learnerId: prompt.audio.learnerId,
+        promptToken: prompt.audio.promptToken,
+        provider: 'gemini',
+        bufferedGeminiVoice: 'Iapetus',
+        cacheOnly: true,
+      }),
+      headers: {
+        'content-type': 'application/json',
+        cookie: prompt.cookie,
+      },
+    });
+    const payload = await response.json();
+    const rateLimitMetric = server.DB.db.prepare(`
+      SELECT metric_count
+      FROM demo_operation_metrics
+      WHERE metric_key = 'rate_limit_blocks'
+    `).get();
+    const fallbackMetric = server.DB.db.prepare(`
+      SELECT metric_count
+      FROM demo_operation_metrics
+      WHERE metric_key = 'tts_fallbacks'
+    `).get();
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.code, 'demo_rate_limited');
+    assert.equal(providerCalls, 0);
+    assert.equal(bucket.puts.length, 0);
     assert.equal(Number(rateLimitMetric?.metric_count), 1);
     assert.equal(Number(fallbackMetric?.metric_count) || 0, 0);
   } finally {
