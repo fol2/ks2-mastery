@@ -17,8 +17,8 @@ function Stat({ label, value, detail }) {
   );
 }
 
-function ModeButton({ mode, selected, disabled, reason, actions }) {
-  const className = `grammar-mode${selected ? ' selected' : ''}${disabled ? ' locked' : ''}`;
+function ModeButton({ mode, selected, disabled, locked, reason, actions }) {
+  const className = `grammar-mode${selected ? ' selected' : ''}${locked ? ' locked' : ''}`;
   return (
     <button
       className={className}
@@ -38,7 +38,7 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
   const selectedMode = grammar.prefs?.mode || 'smart';
   const selectedFocus = grammar.prefs?.focusConceptId || '';
   const groupedConcepts = groupedGrammarConcepts(grammar.analytics?.concepts || []);
-  const startDisabled = runtimeReadOnly || Boolean(grammar.pendingCommand);
+  const setupDisabled = runtimeReadOnly || Boolean(grammar.pendingCommand);
 
   return (
     <section className="grammar-setup" aria-labelledby="grammar-setup-title">
@@ -81,6 +81,7 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
                 key={mode.id}
                 mode={mode}
                 selected={mode.id === selectedMode}
+                disabled={setupDisabled}
                 actions={actions}
               />
             ))}
@@ -89,6 +90,7 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
                 key={mode.id}
                 mode={mode}
                 disabled
+                locked
                 reason="Coming next"
                 actions={actions}
               />
@@ -101,6 +103,7 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
               <select
                 className="input"
                 value={selectedFocus}
+                disabled={setupDisabled}
                 onChange={(event) => actions.dispatch('grammar-set-focus', { value: event.currentTarget.value })}
               >
                 <option value="">Smart mix</option>
@@ -114,6 +117,7 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
               <select
                 className="input"
                 value={String(grammar.prefs?.roundLength || 5)}
+                disabled={setupDisabled}
                 onChange={(event) => actions.dispatch('grammar-set-round-length', { value: event.currentTarget.value })}
               >
                 {[3, 5, 8, 10, 15].map((length) => <option value={length} key={length}>{length}</option>)}
@@ -132,7 +136,7 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
             <button
               className="btn primary xl"
               type="button"
-              disabled={startDisabled}
+              disabled={setupDisabled}
               onClick={() => actions.dispatch('grammar-start')}
             >
               {grammar.pendingCommand === 'start-session' ? 'Starting...' : 'Start practice'}

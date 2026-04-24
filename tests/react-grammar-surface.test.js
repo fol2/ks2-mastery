@@ -93,6 +93,24 @@ test('Grammar submit requires an answer before recording an attempt', () => {
   assert.equal(grammar.analytics.concepts.some((concept) => concept.attempts > 0), false);
 });
 
+test('Grammar setup controls are disabled while a command is pending', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.store.updateSubjectUi('grammar', (current) => ({
+    ...normaliseGrammarReadModel(current, learnerId),
+    pendingCommand: 'start-session',
+  }));
+
+  const html = harness.render();
+  assert.match(html, /<button class="grammar-mode selected" type="button" disabled="">/);
+  assert.match(html, /<select class="input" disabled=""[^>]*><option value="" selected="">Smart mix<\/option>/);
+  assert.match(html, /<select class="input" disabled=""[^>]*><option value="3">3<\/option><option value="5" selected="">5<\/option>/);
+  assert.match(html, /<button class="btn primary xl" type="button" disabled="">Starting\.\.\.<\/button>/);
+});
+
 test('Grammar command responses are pinned to the learner that sent them', async () => {
   let resolveCommand;
   const toasts = [];

@@ -288,6 +288,54 @@ test('controller keeps late Grammar command responses scoped to their original l
   assert.equal(controller.repositories.subjectStates.read(learnerB, 'grammar').ui, null);
 });
 
+test('controller ignores setup preference commands while Grammar start is pending', async () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  let resolveStart;
+  const subjectCommands = {
+    requests: [],
+    send(request) {
+      this.requests.push(request);
+      return new Promise((resolve) => {
+        if (request.command === 'start-session') resolveStart = resolve;
+      });
+    },
+  };
+  const controller = createAppController({
+    repositories,
+    extraContext: {
+      runtimeReadOnly: false,
+      subjectCommands,
+    },
+  });
+  const learnerId = controller.store.getState().learners.selectedId;
+
+  controller.dispatch('open-subject', { subjectId: 'grammar' });
+  controller.dispatch('grammar-start');
+  controller.dispatch('grammar-set-mode', { value: 'learn' });
+  controller.dispatch('grammar-set-round-length', { value: '15' });
+
+  assert.equal(subjectCommands.requests.length, 1);
+  assert.equal(subjectCommands.requests[0].command, 'start-session');
+  assert.equal(controller.store.getState().subjectUi.grammar.pendingCommand, 'start-session');
+
+  resolveStart({
+    subjectReadModel: normaliseGrammarReadModel({
+      learnerId,
+      phase: 'session',
+      session: { id: 'grammar-session-a' },
+      analytics: { concepts: [] },
+    }, learnerId),
+  });
+  await Promise.resolve();
+
+  const grammar = controller.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.id, 'grammar-session-a');
+  assert.equal(grammar.prefs.mode, 'smart');
+  assert.equal(grammar.prefs.roundLength, 5);
+});
+
 test('controller stops spelling audio when feedback has no auto-speak cue', () => {
   installMemoryStorage();
   const tts = {

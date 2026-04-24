@@ -58,6 +58,8 @@ function applyRemoteReadModel(context, response, { learnerId } = {}) {
 function sendGrammarCommand(context, command, payload = {}) {
   const learnerId = selectedLearnerId(context);
   if (!learnerId) return true;
+  const ui = selectedGrammarUi(context);
+  if (ui.pendingCommand) return true;
   if (context.runtimeReadOnly) {
     setGrammarError(context, 'Practice is read-only while sync is degraded. Retry sync before continuing.');
     return true;
