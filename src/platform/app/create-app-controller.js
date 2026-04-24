@@ -14,6 +14,8 @@ import {
 } from '../game/monster-celebrations.js';
 import {
   acknowledgeMonsterCelebrationEvents,
+  clearAllMonsterCelebrationAcknowledgements,
+  clearMonsterCelebrationAcknowledgements,
 } from '../game/monster-celebration-acks.js';
 import { SUBJECTS } from '../core/subject-registry.js';
 import {
@@ -347,6 +349,7 @@ export function createAppController({
     if (action === 'learner-delete') {
       if (!ports.confirm('Warning: delete the current learner and all their subject progress and codex state?')) return true;
       runtimeBoundary.clearLearner(learnerId);
+      clearMonsterCelebrationAcknowledgements(learnerId);
       resetLearnerData(learnerId);
       store.deleteLearner(learnerId);
       return true;
@@ -356,6 +359,7 @@ export function createAppController({
       if (!ports.confirm('Warning: reset subject progress and codex rewards for the current learner?')) return true;
       tts.stop();
       runtimeBoundary.clearLearner(learnerId);
+      clearMonsterCelebrationAcknowledgements(learnerId);
       resetLearnerData(learnerId);
       store.resetSubjectUi();
       return true;
@@ -365,6 +369,7 @@ export function createAppController({
       if (!ports.confirm('Reset all app data for every learner on this browser?')) return true;
       tts.stop();
       runtimeBoundary.clearAll();
+      clearAllMonsterCelebrationAcknowledgements();
       store.clearAllProgress();
       ports.reload();
       return true;

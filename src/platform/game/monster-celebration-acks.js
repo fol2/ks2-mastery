@@ -70,6 +70,29 @@ function normaliseIdSet(value) {
   return new Set(values.filter((id) => typeof id === 'string' && id));
 }
 
+export function clearMonsterCelebrationAcknowledgements(learnerId, { store = storage() } = {}) {
+  if (!learnerId) return false;
+  const snapshot = readSnapshot(store);
+  const key = learnerKey(learnerId);
+  if (!Object.prototype.hasOwnProperty.call(snapshot, key)) return false;
+  delete snapshot[key];
+  writeSnapshot(snapshot, store);
+  return true;
+}
+
+export function clearAllMonsterCelebrationAcknowledgements({ store = storage() } = {}) {
+  try {
+    if (typeof store?.removeItem === 'function') {
+      store.removeItem(ACK_STORAGE_KEY);
+    } else {
+      writeSnapshot({}, store);
+    }
+  } catch {
+    writeSnapshot({}, store);
+  }
+  return true;
+}
+
 export function acknowledgedMonsterCelebrationIds(learnerId, { store = storage() } = {}) {
   const snapshot = readSnapshot(store);
   return new Set(learnerAckEntry(snapshot, learnerId).ids);

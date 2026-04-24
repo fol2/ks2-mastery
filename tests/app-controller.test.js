@@ -13,6 +13,10 @@ import { createAppController } from '../src/platform/app/create-app-controller.j
 import { createLocalAppController } from '../src/platform/app/create-local-app-controller.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import {
+  acknowledgeMonsterCelebrationEvents,
+  acknowledgedMonsterCelebrationIds,
+} from '../src/platform/game/monster-celebration-acks.js';
+import {
   LOCAL_CODEX_REVIEW_LEARNER_ID,
   LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS,
 } from '../src/platform/core/local-review-profile.js';
@@ -200,6 +204,57 @@ test('controller dispatches profile TTS test through the selected provider', () 
     bufferedGeminiVoice: 'Iapetus',
     kind: 'test',
   });
+});
+
+test('controller clears monster celebration acknowledgements on learner reset, delete, and full reset', () => {
+  installMemoryStorage();
+  const controller = createLocalAppController();
+  const learnerA = controller.store.getState().learners.selectedId;
+  const learnerAReward = {
+    id: 'reward.monster:learner-a:inklet:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: learnerA,
+    monsterId: 'inklet',
+    monster: { id: 'inklet', name: 'Inklet' },
+    previous: { stage: 0, level: 1, caught: true, branch: 'b1' },
+    next: { stage: 1, level: 2, caught: true, branch: 'b1' },
+    createdAt: Date.now(),
+  };
+
+  acknowledgeMonsterCelebrationEvents(learnerAReward, { learnerId: learnerA });
+  assert.equal(acknowledgedMonsterCelebrationIds(learnerA).has(learnerAReward.id), true);
+
+  controller.dispatch('learner-reset-progress');
+
+  assert.equal(acknowledgedMonsterCelebrationIds(learnerA).has(learnerAReward.id), false);
+
+  const learnerB = controller.store.createLearner({ name: 'Bryn', yearGroup: 'Y5' }).id;
+  const learnerBReward = {
+    id: 'reward.monster:learner-b:phaeton:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: learnerB,
+    monsterId: 'phaeton',
+    monster: { id: 'phaeton', name: 'Phaeton' },
+    previous: { stage: 0, level: 1, caught: true, branch: 'b1' },
+    next: { stage: 1, level: 2, caught: true, branch: 'b1' },
+    createdAt: Date.now(),
+  };
+
+  acknowledgeMonsterCelebrationEvents(learnerBReward, { learnerId: learnerB });
+  assert.equal(acknowledgedMonsterCelebrationIds(learnerB).has(learnerBReward.id), true);
+
+  controller.dispatch('learner-delete');
+
+  assert.equal(acknowledgedMonsterCelebrationIds(learnerB).has(learnerBReward.id), false);
+
+  acknowledgeMonsterCelebrationEvents(learnerAReward, { learnerId: learnerA });
+  assert.equal(acknowledgedMonsterCelebrationIds(learnerA).has(learnerAReward.id), true);
+
+  controller.dispatch('platform-reset-all');
+
+  assert.equal(acknowledgedMonsterCelebrationIds(learnerA).has(learnerAReward.id), false);
 });
 
 test('controller dispatches spelling transitions through store, repositories, events, and TTS', () => {

@@ -5,7 +5,10 @@ import {
   createRemoteSpellingActionHandler,
   spellingCommandDedupeKey,
 } from '../src/subjects/spelling/remote-actions.js';
-import { acknowledgeMonsterCelebrationEvents } from '../src/platform/game/monster-celebration-acks.js';
+import {
+  acknowledgeMonsterCelebrationEvents,
+  clearMonsterCelebrationAcknowledgements,
+} from '../src/platform/game/monster-celebration-acks.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 
 function flushPromises() {
@@ -618,6 +621,67 @@ test('remote spelling compensation baselines recent logged celebrations that exi
 
   assert.equal(calls.some(([name]) => name === 'deferMonsterCelebrations'), false);
   assert.equal(getState().monsterCelebrations.queue.length, 0);
+});
+
+test('remote spelling compensation can replay a deterministic reward id after reset clears acknowledgements', () => {
+  installMemoryStorage();
+  const reearnedEvolution = {
+    id: 'reward.monster:learner-a:inklet:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: 'learner-a',
+    subjectId: 'spelling',
+    monsterId: 'inklet',
+    monster: {
+      id: 'inklet',
+      name: 'Inklet',
+      accent: '#3E6FA8',
+    },
+    previous: { mastered: 9, stage: 0, level: 1, caught: true, branch: 'b1' },
+    next: { mastered: 10, stage: 1, level: 2, caught: true, branch: 'b1' },
+    createdAt: Date.now(),
+  };
+  acknowledgeMonsterCelebrationEvents(reearnedEvolution, { learnerId: 'learner-a' });
+  clearMonsterCelebrationAcknowledgements('learner-a');
+  const { calls, getState, store } = createStoreHarness({
+    repositories: {
+      eventLog: {
+        list(learnerId) {
+          assert.equal(learnerId, 'learner-a');
+          return [reearnedEvolution];
+        },
+      },
+    },
+  });
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: { send: async () => ({}) },
+  });
+
+  handler.applyCommandResponse({
+    learnerId: 'learner-a',
+    subjectReadModel: { phase: 'summary' },
+    projections: {
+      rewards: {
+        toastEvents: [],
+        events: [],
+      },
+    },
+  }, {
+    command: 'end-session',
+    compensationBaselineEventIds: new Set(),
+  });
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'reloadFromRepositories',
+    'deferMonsterCelebrations',
+    'releaseMonsterCelebrations',
+  ]);
+  assert.equal(getState().monsterCelebrations.queue.length, 1);
+  assert.equal(getState().monsterCelebrations.queue[0].id, reearnedEvolution.id);
 });
 
 test('remote spelling command compensates only rewards appended after the command starts', async () => {

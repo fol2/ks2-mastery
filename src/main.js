@@ -46,6 +46,8 @@ import {
 } from './platform/game/monster-system.js';
 import {
   acknowledgeMonsterCelebrationEvents,
+  clearAllMonsterCelebrationAcknowledgements,
+  clearMonsterCelebrationAcknowledgements,
 } from './platform/game/monster-celebration-acks.js';
 import {
   exportLearnerSnapshot,
@@ -828,6 +830,7 @@ function deleteLearnerFromServerSyncedAccount(learnerId) {
   const nextLearners = learnerSnapshotWithout(learnerId);
   if (!nextLearners) return false;
   runtimeBoundary.clearLearner(learnerId);
+  clearMonsterCelebrationAcknowledgements(learnerId);
   repositories.learners.write(nextLearners);
   store.reloadFromRepositories({ preserveRoute: true });
   return true;
@@ -853,6 +856,7 @@ async function resetServerSyncedLearnerProgress(learnerId) {
   await parseApiJson(response);
   await repositories.hydrate({ cacheScope: 'learner-reset-progress' });
   runtimeBoundary.clearLearner(learnerId);
+  clearMonsterCelebrationAcknowledgements(learnerId);
   store.clearMonsterCelebrations();
   store.reloadFromRepositories({ preserveRoute: true });
 }
@@ -1698,6 +1702,7 @@ function handleGlobalAction(action, data) {
       deleteLearnerFromServerSyncedAccount(learnerId);
     } else {
       runtimeBoundary.clearLearner(learnerId);
+      clearMonsterCelebrationAcknowledgements(learnerId);
       resetLearnerData(learnerId);
       store.deleteLearner(learnerId);
     }
@@ -1714,6 +1719,7 @@ function handleGlobalAction(action, data) {
       });
     } else {
       runtimeBoundary.clearLearner(learnerId);
+      clearMonsterCelebrationAcknowledgements(learnerId);
       resetLearnerData(learnerId);
       store.resetSubjectUi();
     }
@@ -1725,6 +1731,7 @@ function handleGlobalAction(action, data) {
     if (!globalThis.confirm('Reset all app data for every learner on this browser?')) return true;
     tts.stop();
     runtimeBoundary.clearAll();
+    clearAllMonsterCelebrationAcknowledgements();
     store.clearAllProgress();
     globalThis.location.reload();
     return true;
