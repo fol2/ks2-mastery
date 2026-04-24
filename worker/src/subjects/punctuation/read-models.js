@@ -43,6 +43,45 @@ function safeCurrentItem(item) {
   return safe;
 }
 
+function safeContentSkills() {
+  return PUNCTUATION_CONTENT_MANIFEST.skills
+    .filter((skill) => skill.published)
+    .map((skill) => ({
+      id: skill.id,
+      name: skill.name,
+      clusterId: skill.clusterId,
+    }));
+}
+
+function normaliseSupportLevel(value) {
+  const level = Number(value);
+  return Number.isInteger(level) && level > 0 ? level : 0;
+}
+
+function guidedTeachBox(skillId, supportLevel = 0) {
+  const skill = PUNCTUATION_CONTENT_MANIFEST.skills.find((entry) => entry.id === skillId && entry.published);
+  if (!skill) return null;
+  const level = normaliseSupportLevel(supportLevel);
+  if (level <= 0) return null;
+  const box = {
+    skillId: skill.id,
+    name: skill.name,
+    rule: skill.rule || '',
+    selfCheckPrompt: 'Check the rule, compare the examples, then try the item without looking for the answer pattern.',
+  };
+  if (level >= 2) {
+    box.workedExample = {
+      before: skill.workedBad || '',
+      after: skill.workedGood || '',
+    };
+    box.contrastExample = {
+      before: skill.contrastBad || '',
+      after: skill.contrastGood || '',
+    };
+  }
+  return box;
+}
+
 function safeSession(session, phase) {
   if (!isPlainObject(session)) return null;
   const safe = {
@@ -57,6 +96,11 @@ function safeSession(session, phase) {
     currentItem: phase === 'active-item' || phase === 'feedback' ? safeCurrentItem(session.currentItem) : null,
     securedUnits: Array.isArray(session.securedUnits) ? session.securedUnits.filter((entry) => typeof entry === 'string') : [],
     misconceptionTags: Array.isArray(session.misconceptionTags) ? session.misconceptionTags.filter((entry) => typeof entry === 'string') : [],
+    guided: session.mode === 'guided' ? {
+      skillId: typeof session.guidedSkillId === 'string' ? session.guidedSkillId : null,
+      supportLevel: normaliseSupportLevel(session.guidedSupportLevel),
+      teachBox: guidedTeachBox(session.guidedSkillId, session.guidedSupportLevel),
+    } : null,
     serverAuthority: session.serverAuthority === 'worker' ? 'worker' : null,
   };
   return safe;
@@ -128,6 +172,7 @@ export function buildPunctuationReadModel({
       releaseName: PUNCTUATION_CONTENT_MANIFEST.releaseName,
       fullSkillCount: PUNCTUATION_CONTENT_MANIFEST.fullSkillCount,
       publishedScopeCopy: PUNCTUATION_CONTENT_MANIFEST.publishedScopeCopy,
+      skills: safeContentSkills(),
     },
   };
 }

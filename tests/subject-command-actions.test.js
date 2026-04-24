@@ -190,3 +190,12 @@ test('punctuation start command action preserves explicit focus mode and round l
 
   assert.deepEqual(payload, { mode: 'structure', roundLength: '1' });
 });
+
+test('punctuation start command action passes guided skill only when present', () => {
+  const payload = punctuationSubjectCommandActions['punctuation-start'].payload({
+    data: { mode: 'guided', roundLength: '2', skillId: 'speech' },
+    state: baseState(),
+  });
+
+  assert.deepEqual(payload, { mode: 'guided', roundLength: '2', skillId: 'speech' });
+});

@@ -27,6 +27,13 @@ function contentMeta() {
     publishedSkillCount: PUNCTUATION_CONTENT_MANIFEST.skills.filter((skill) => skill.published).length,
     publishedRewardUnitCount: PUNCTUATION_CONTENT_MANIFEST.rewardUnits.filter((unit) => unit.published).length,
     publishedScopeCopy: PUNCTUATION_CONTENT_MANIFEST.publishedScopeCopy,
+    skills: PUNCTUATION_CONTENT_MANIFEST.skills
+      .filter((skill) => skill.published)
+      .map((skill) => ({
+        id: skill.id,
+        name: skill.name,
+        clusterId: skill.clusterId,
+      })),
   };
 }
 

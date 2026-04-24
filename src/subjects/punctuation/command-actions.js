@@ -12,10 +12,13 @@ export const punctuationSubjectCommandActions = Object.freeze({
     command: 'start-session',
     payload({ data, state }) {
       const prefs = state.subjectUi?.punctuation?.prefs || {};
-      return {
+      const payload = {
         mode: data?.mode || prefs.mode || 'smart',
         roundLength: data?.roundLength || prefs.roundLength || '4',
       };
+      const skillId = data?.skillId || data?.guidedSkillId;
+      if (skillId) payload.skillId = skillId;
+      return payload;
     },
   },
   'punctuation-start-again': {

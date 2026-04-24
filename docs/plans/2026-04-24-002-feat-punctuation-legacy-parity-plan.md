@@ -152,7 +152,7 @@ tests/
 
 ## Implementation Units
 
-- [ ] U1. **Create a Legacy Parity Baseline**
+- [x] U1. **Create a Legacy Parity Baseline**
 
 **Goal:** Convert the donor HTML expectations into a durable repo-local parity matrix before changing production behaviour.
 
@@ -174,13 +174,13 @@ tests/
 
 - `tests/punctuation-legacy-parity.test.js` confirms all 14 legacy skill ids remain present in `shared/punctuation/content.js`.
 - It confirms current production has the shipped `choose`, `insert`, `fix`, and `transfer` item modes.
-- It confirms `guided`, `weak`, `combine`, `paragraph`, and `gps` are tracked as open parity rows before their units land.
+- It confirms `weak`, `combine`, `paragraph`, and `gps` are tracked as open parity rows, while `guided` is marked ported after U2.
 - It confirms browser API-key AI and localStorage authority are marked `rejected`, not accidentally planned.
 - It fails if a parity row has no owner unit.
 
 ---
 
-- [ ] U2. **Add Guided Learn Mode**
+- [x] U2. **Add Guided Learn Mode**
 
 **Goal:** Port legacy guided learning as a first-class production session mode with teach material, focused skill selection, worked examples, faded help, and support-aware evidence.
 

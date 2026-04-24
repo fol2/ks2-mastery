@@ -16,6 +16,9 @@ function newlineTextStyle(value) {
 function SetupView({ learner, stats, ui, actions }) {
   const scene = bellstormSceneForPhase('setup');
   const content = ui.content || {};
+  const guidedSkills = Array.isArray(content.skills) ? content.skills : [];
+  const [guidedSkillId, setGuidedSkillId] = useState(guidedSkills[0]?.id || '');
+  const selectedGuidedSkillId = guidedSkillId || guidedSkills[0]?.id || '';
   return (
     <section className="card border-top punctuation-surface" style={{ borderTopColor: '#B8873F' }}>
       <div className="punctuation-hero">
@@ -33,12 +36,60 @@ function SetupView({ learner, stats, ui, actions }) {
       </div>
       <div className="actions" style={{ marginTop: 16 }}>
         <button className="btn primary" type="button" data-punctuation-start onClick={() => actions.dispatch('punctuation-start')}>Start practice</button>
+        {guidedSkills.length ? (
+          <label className="field" style={{ minWidth: 220 }}>
+            <span>Guided skill</span>
+            <select
+              className="input"
+              value={selectedGuidedSkillId}
+              onChange={(event) => setGuidedSkillId(event.target.value)}
+            >
+              {guidedSkills.map((skill) => (
+                <option key={skill.id} value={skill.id}>{skill.name}</option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        <button
+          className="btn secondary"
+          type="button"
+          data-punctuation-guided-start
+          onClick={() => actions.dispatch('punctuation-start', { mode: 'guided', skillId: selectedGuidedSkillId || undefined })}
+        >
+          Guided learn
+        </button>
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'speech' })}>Speech focus</button>
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'comma_flow' })}>Comma focus</button>
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'boundary' })}>Boundary focus</button>
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'structure' })}>Structure focus</button>
       </div>
     </section>
+  );
+}
+
+function GuidedTeachBox({ guided }) {
+  const box = guided?.teachBox;
+  if (!box) return null;
+  return (
+    <div className="callout punctuation-guided-teach" style={{ marginTop: 14 }}>
+      <strong>{box.name}</strong>
+      {box.rule ? <p style={{ marginTop: 8 }}>{box.rule}</p> : null}
+      {box.workedExample?.before || box.workedExample?.after ? (
+        <div className="small" style={{ marginTop: 8 }}>
+          <strong>Worked example</strong>
+          <div style={newlineTextStyle(box.workedExample.before)}>{box.workedExample.before}</div>
+          <div style={newlineTextStyle(box.workedExample.after)}>{box.workedExample.after}</div>
+        </div>
+      ) : null}
+      {box.contrastExample?.before || box.contrastExample?.after ? (
+        <div className="small" style={{ marginTop: 8 }}>
+          <strong>Common mistake</strong>
+          <div style={newlineTextStyle(box.contrastExample.before)}>{box.contrastExample.before}</div>
+          <div style={newlineTextStyle(box.contrastExample.after)}>{box.contrastExample.after}</div>
+        </div>
+      ) : null}
+      {box.selfCheckPrompt ? <div className="small muted" style={{ marginTop: 8 }}>{box.selfCheckPrompt}</div> : null}
+    </div>
   );
 }
 
@@ -118,6 +169,7 @@ function ActiveItemView({ ui, actions }) {
           <p className="subtitle">{currentItemInstruction(item)}</p>
         </div>
       </div>
+      <GuidedTeachBox guided={ui.session?.guided} />
       {item.stem ? <div className="callout" style={{ marginTop: 14, ...newlineTextStyle(item.stem) }}>{item.stem}</div> : null}
       <div className="progress" style={{ marginTop: 14 }}><span style={{ width: `${progress}%` }} /></div>
       <div style={{ marginTop: 16 }}>
