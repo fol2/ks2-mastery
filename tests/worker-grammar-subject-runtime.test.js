@@ -136,6 +136,120 @@ test('Grammar command route persists subject state, practice session, and events
   DB.close();
 });
 
+test('Grammar command route keeps practice sessions learner scoped when clients send session ids', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'question_mark_select');
+  seedAccountLearner(DB, { accountId: 'adult-a', learnerId: 'learner-a' });
+  seedAccountLearner(DB, { accountId: 'adult-b', learnerId: 'learner-b' });
+
+  const first = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-shared-session-a',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+      sessionId: 'shared-session-id',
+    },
+  });
+  assert.equal(first.response.status, 200, JSON.stringify(first.body));
+
+  const second = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-b',
+    requestId: 'grammar-shared-session-b',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+      sessionId: 'shared-session-id',
+    },
+  }, { 'x-ks2-dev-account-id': 'adult-b' });
+  assert.equal(second.response.status, 200, JSON.stringify(second.body));
+
+  const sessions = DB.db.prepare(`
+    SELECT id, learner_id
+    FROM practice_sessions
+    WHERE subject_id = 'grammar'
+    ORDER BY learner_id
+  `).all();
+  assert.deepEqual(sessions.map((session) => session.learner_id), ['learner-a', 'learner-b']);
+  assert.equal(new Set(sessions.map((session) => session.id)).size, 2);
+  assert.equal(sessions.some((session) => session.id === 'shared-session-id'), false);
+
+  DB.close();
+});
+
+test('Grammar command route rejects continue before an answer advances the item', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'fronted_adverbial_choose');
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-early-continue-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'smart',
+      roundLength: 2,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+
+  const early = await postCommand(app, DB, {
+    command: 'continue-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-early-continue',
+    expectedLearnerRevision: 1,
+    payload: {},
+  });
+  assert.equal(early.response.status, 400);
+  assert.equal(early.body.code, 'grammar_advance_not_ready');
+
+  const subject = DB.db.prepare(`
+    SELECT ui_json
+    FROM child_subject_state
+    WHERE learner_id = 'learner-a' AND subject_id = 'grammar'
+  `).get();
+  const ui = JSON.parse(subject.ui_json);
+  assert.equal(ui.session.currentIndex, 0);
+  assert.equal(ui.session.answered, 0);
+  assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 1);
+
+  DB.close();
+});
+
+test('Grammar command route rejects end-session without an active session', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const ended = await postCommand(app, DB, {
+    command: 'end-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-end-without-session',
+    expectedLearnerRevision: 0,
+    payload: {},
+  });
+  assert.equal(ended.response.status, 400);
+  assert.equal(ended.body.code, 'grammar_session_stale');
+  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM child_subject_state WHERE subject_id = 'grammar'").get().count, 0);
+  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM practice_sessions WHERE subject_id = 'grammar'").get().count, 0);
+  assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 0);
+
+  DB.close();
+});
+
 test('Grammar command replay is idempotent and does not double-apply events', async () => {
   const DB = createMigratedSqliteD1Database();
   const app = createWorkerApp({ now: () => 1_777_000_000_000 });

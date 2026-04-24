@@ -373,6 +373,11 @@ function roundLengthFor(mode, payload = {}, prefs = {}) {
   return clamp(Number.isFinite(raw) ? Math.floor(raw) : fallback, 1, mode === 'satsset' ? 20 : 15);
 }
 
+function serverSessionId(learnerId, { requestId = '', nowTs, baseSeed, mode, focusConceptId = '' }) {
+  const discriminator = stableHash(`${learnerId}:${requestId}:${nowTs}:${baseSeed}:${mode}:${focusConceptId}`);
+  return `grammar-${nowTs}-${discriminator}`;
+}
+
 function buildActiveRecord(learnerId, state, nowTs) {
   if (!state.session || !['session', 'feedback'].includes(state.phase)) return null;
   return normalisePracticeSessionRecord({
@@ -424,7 +429,7 @@ export function buildGrammarMiniSet({ size = DEFAULT_MINI_SET_LENGTH, focusConce
   });
 }
 
-function startSession(state, payload, nowTs) {
+function startSession(state, payload, nowTs, learnerId) {
   const mode = supportedModeOrThrow(normaliseMode(payload.mode || state.prefs.mode));
   const focusConceptId = typeof payload.focusConceptId === 'string'
     ? payload.focusConceptId
@@ -440,9 +445,13 @@ function startSession(state, payload, nowTs) {
   const baseSeed = Number.isFinite(Number(payload.seed))
     ? Number(payload.seed)
     : stableHash(`${payload.requestId || ''}:${nowTs}:${focusConceptId}:${mode}`);
-  const sessionId = typeof payload.sessionId === 'string' && payload.sessionId
-    ? payload.sessionId
-    : `grammar-${nowTs}-${baseSeed}`;
+  const sessionId = serverSessionId(learnerId, {
+    requestId: payload.requestId,
+    nowTs,
+    baseSeed,
+    mode,
+    focusConceptId,
+  });
   const firstItem = nextItem(state, {
     mode,
     focusConceptId,
@@ -498,6 +507,12 @@ function completionSummary(state, nowTs) {
 }
 
 function completeSession(state, nowTs, command) {
+  if (!state.session || !['session', 'feedback'].includes(state.phase)) {
+    throw new BadRequestError('This Grammar session is no longer active.', {
+      code: 'grammar_session_stale',
+      subjectId: SUBJECT_ID,
+    });
+  }
   const summary = completionSummary(state, nowTs);
   state.phase = 'summary';
   state.awaitingAdvance = false;
@@ -525,6 +540,12 @@ function continueSession(state, nowTs) {
   if (!session || !['session', 'feedback'].includes(state.phase)) {
     throw new BadRequestError('This Grammar session is no longer active.', {
       code: 'grammar_session_stale',
+      subjectId: SUBJECT_ID,
+    });
+  }
+  if (!state.awaitingAdvance) {
+    throw new BadRequestError('This Grammar item is not awaiting the next question.', {
+      code: 'grammar_advance_not_ready',
       subjectId: SUBJECT_ID,
     });
   }
@@ -748,7 +769,7 @@ export function createServerGrammarEngine({ now = Date.now } = {}) {
       let events = [];
 
       if (command === 'start-session') {
-        events = startSession(state, { ...payload, requestId }, nowTs);
+        events = startSession(state, { ...payload, requestId }, nowTs, learnerId);
       } else if (state.phase === 'session' && !rawUiWasServerOwned) {
         throw new BadRequestError('This Grammar session is no longer active on the server.', {
           code: 'grammar_session_stale',
