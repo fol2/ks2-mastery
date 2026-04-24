@@ -202,3 +202,28 @@ The smoke creates an isolated demo session on production, confirms `punctuationP
 The next Punctuation release should deepen one learning cluster or validator family at a time. Each expansion needs enough fixed items, generated templates, negative tests, misconception tags, transfer facets, and reward-unit denominators before learner-facing mastery claims are widened.
 
 Do not expose planned clusters just because monster assets exist. Bellstorm Coast rewards should continue to follow secure learning evidence.
+
+## Legacy Parity Baseline
+
+Full legacy HTML parity is tracked separately from the current production claim.
+
+The baseline fixture lives at:
+
+```txt
+tests/fixtures/punctuation-legacy-parity/legacy-baseline.json
+```
+
+The comparison helper lives at:
+
+```txt
+shared/punctuation/legacy-parity.js
+```
+
+The baseline currently classifies legacy behaviour as:
+
+- Ported: the 14-skill map, Worker command runtime, Smart review, `choose`, `insert`, `fix`, `transfer`, reward-unit analytics, skill rows, and recent mistakes.
+- Planned: guided learning, dedicated weak spots, sentence combining, paragraph repair, GPS test mode, richer transfer validators, safe context-pack compilation, and deeper Parent/Admin evidence.
+- Replaced: legacy standalone `choose`, `insert`, `fix`, and `transfer` session buttons are represented by production item modes inside Smart review and focused cluster sessions.
+- Rejected: the legacy single-file production route, localStorage source of truth, browser-owned marking, and browser-stored AI provider keys.
+
+This baseline is deliberately a guardrail, not a demand to copy the legacy architecture. New parity slices should update the fixture status only when the replacement Worker-owned implementation, redacted read model, tests, and release gate exist.

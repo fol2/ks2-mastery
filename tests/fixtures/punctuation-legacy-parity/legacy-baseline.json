@@ -1,0 +1,268 @@
+{
+  "version": 1,
+  "source": "ks2_punctuation_mastery_v6_1_engine_review",
+  "legacySkillIds": [
+    "sentence_endings",
+    "list_commas",
+    "apostrophe_contractions",
+    "apostrophe_possession",
+    "speech",
+    "fronted_adverbial",
+    "parenthesis",
+    "comma_clarity",
+    "colon_list",
+    "semicolon",
+    "dash_clause",
+    "semicolon_list",
+    "bullet_points",
+    "hyphen"
+  ],
+  "sessionModes": [
+    {
+      "id": "smart",
+      "legacyLabel": "Smart review",
+      "status": "ported",
+      "ownerUnit": "current-production",
+      "assertPresent": true,
+      "notes": "Current production keeps smart mixed review through the Worker command runtime."
+    },
+    {
+      "id": "guided",
+      "legacyLabel": "Guided learn",
+      "status": "planned",
+      "ownerUnit": "U2",
+      "notes": "Needs teach boxes, worked examples, self-check prompts, and support-aware evidence."
+    },
+    {
+      "id": "insert",
+      "legacyLabel": "Insert punctuation",
+      "status": "replaced",
+      "ownerUnit": "current-production",
+      "notes": "Current production exposes insertion as an item mode inside smart and cluster-focused sessions."
+    },
+    {
+      "id": "fix",
+      "legacyLabel": "Spot and fix",
+      "status": "replaced",
+      "ownerUnit": "current-production",
+      "notes": "Current production exposes proofreading repair as an item mode inside smart and cluster-focused sessions."
+    },
+    {
+      "id": "choose",
+      "legacyLabel": "Choose best version",
+      "status": "replaced",
+      "ownerUnit": "current-production",
+      "notes": "Current production exposes discrimination as an item mode inside smart and cluster-focused sessions."
+    },
+    {
+      "id": "combine",
+      "legacyLabel": "Sentence combining / rewrite",
+      "status": "planned",
+      "ownerUnit": "U4",
+      "notes": "Needs score-bearing combine items, generators, validators, and UI copy."
+    },
+    {
+      "id": "paragraph",
+      "legacyLabel": "Paragraph repair",
+      "status": "planned",
+      "ownerUnit": "U5",
+      "notes": "Needs mixed-passage proofreading items, multiline marking, scheduler weighting, and review UI."
+    },
+    {
+      "id": "weak",
+      "legacyLabel": "Weak spots drill",
+      "status": "planned",
+      "ownerUnit": "U3",
+      "notes": "Needs an explicit drill targeting weak skill-by-mode facets."
+    },
+    {
+      "id": "transfer",
+      "legacyLabel": "Writing transfer",
+      "status": "replaced",
+      "ownerUnit": "current-production",
+      "notes": "Current production exposes constrained transfer as an item mode; richer transfer breadth remains U7."
+    },
+    {
+      "id": "gps",
+      "legacyLabel": "True GPS test mode",
+      "status": "planned",
+      "ownerUnit": "U6",
+      "notes": "Needs fixed test length, delayed feedback, score summary, and review model."
+    }
+  ],
+  "itemModes": [
+    {
+      "id": "choose",
+      "status": "ported",
+      "ownerUnit": "current-production",
+      "assertPresent": true
+    },
+    {
+      "id": "insert",
+      "status": "ported",
+      "ownerUnit": "current-production",
+      "assertPresent": true
+    },
+    {
+      "id": "fix",
+      "status": "ported",
+      "ownerUnit": "current-production",
+      "assertPresent": true
+    },
+    {
+      "id": "transfer",
+      "status": "ported",
+      "ownerUnit": "current-production",
+      "assertPresent": true
+    },
+    {
+      "id": "combine",
+      "status": "planned",
+      "ownerUnit": "U4"
+    },
+    {
+      "id": "paragraph",
+      "status": "planned",
+      "ownerUnit": "U5"
+    }
+  ],
+  "settingsSurface": [
+    {
+      "id": "daily_goal",
+      "legacyKey": "dailyGoal",
+      "status": "planned",
+      "ownerUnit": "U9",
+      "notes": "Belongs with daily goal and streak analytics."
+    },
+    {
+      "id": "gps_test_length",
+      "legacyKey": "testLength",
+      "status": "planned",
+      "ownerUnit": "U6",
+      "notes": "Can map onto round length if the command contract stays unified."
+    },
+    {
+      "id": "self_check_prompt",
+      "legacyKey": "showSelfCheck",
+      "status": "planned",
+      "ownerUnit": "U2",
+      "notes": "Guided mode may expose safe self-check prompts; GPS must suppress them."
+    },
+    {
+      "id": "auto_generate_items",
+      "legacyKey": "autoGenerateItems",
+      "status": "replaced",
+      "ownerUnit": "current-production",
+      "notes": "Production already compiles generated practice deterministically without a browser setting."
+    },
+    {
+      "id": "browser_speech_support",
+      "legacyKey": "speechEnabled",
+      "status": "rejected",
+      "ownerUnit": "rejected:outside-punctuation-parity",
+      "notes": "Punctuation parity should not add a browser-owned speech layer; Spelling TTS remains the production audio reference."
+    },
+    {
+      "id": "browser_ai_settings",
+      "legacyKey": "AI_LOCAL_KEY",
+      "status": "rejected",
+      "ownerUnit": "rejected:security-boundary",
+      "notes": "Production must not store learner-provided AI provider keys in the browser."
+    }
+  ],
+  "analyticsConcepts": [
+    {
+      "id": "skill_rows",
+      "status": "ported",
+      "ownerUnit": "current-production"
+    },
+    {
+      "id": "reward_units",
+      "status": "ported",
+      "ownerUnit": "current-production"
+    },
+    {
+      "id": "recent_mistakes",
+      "status": "ported",
+      "ownerUnit": "current-production"
+    },
+    {
+      "id": "by_session_mode",
+      "status": "planned",
+      "ownerUnit": "U9"
+    },
+    {
+      "id": "by_item_mode",
+      "status": "planned",
+      "ownerUnit": "U9"
+    },
+    {
+      "id": "weakest_skill_by_mode_facets",
+      "status": "planned",
+      "ownerUnit": "U9"
+    },
+    {
+      "id": "daily_goal_and_streak",
+      "status": "planned",
+      "ownerUnit": "U9"
+    },
+    {
+      "id": "parent_admin_evidence",
+      "status": "planned",
+      "ownerUnit": "U9"
+    }
+  ],
+  "aiContextPackConstraints": [
+    {
+      "id": "no_browser_api_keys",
+      "status": "rejected",
+      "ownerUnit": "rejected:security-boundary",
+      "notes": "Server-side environment-backed provider configuration is the only acceptable direction."
+    },
+    {
+      "id": "safe_context_atoms",
+      "status": "planned",
+      "ownerUnit": "U8",
+      "notes": "AI may propose vocabulary/context atoms after deterministic sanitisation."
+    },
+    {
+      "id": "deterministic_compiler",
+      "status": "planned",
+      "ownerUnit": "U8",
+      "notes": "All score-bearing generated practice must still be compiled and marked deterministically."
+    },
+    {
+      "id": "no_ai_marking",
+      "status": "ported",
+      "ownerUnit": "current-production",
+      "notes": "Current production has no AI marking path; U8 must preserve that boundary."
+    }
+  ],
+  "authorityRows": [
+    {
+      "id": "worker_command_runtime",
+      "status": "ported",
+      "ownerUnit": "current-production",
+      "assertPresent": true,
+      "notes": "Production Punctuation runs through POST /api/subjects/punctuation/command."
+    },
+    {
+      "id": "legacy_html_route",
+      "status": "rejected",
+      "ownerUnit": "rejected:production-boundary",
+      "notes": "The legacy HTML remains donor material only."
+    },
+    {
+      "id": "legacy_localstorage_authority",
+      "status": "rejected",
+      "ownerUnit": "rejected:production-boundary",
+      "notes": "Production learner state must remain in Worker-owned platform stores."
+    },
+    {
+      "id": "client_owned_marking",
+      "status": "rejected",
+      "ownerUnit": "rejected:production-boundary",
+      "notes": "React must stay a thin read-model client."
+    }
+  ]
+}
