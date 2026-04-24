@@ -821,7 +821,23 @@ test('remote spelling command compensates only rewards appended after the comman
     next: { mastered: 10, stage: 1, level: 2, caught: true, branch: 'b1' },
     createdAt: now - 60_000,
   };
-  const commandMissedEvolution = {
+  const commandDirectEvolution = {
+    id: 'reward.monster:learner-a:glimmerbug:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: 'learner-a',
+    subjectId: 'spelling',
+    monsterId: 'glimmerbug',
+    monster: {
+      id: 'glimmerbug',
+      name: 'Glimmerbug',
+      accent: '#F2B84B',
+    },
+    previous: { mastered: 9, stage: 0, level: 1, caught: true, branch: 'b1' },
+    next: { mastered: 10, stage: 1, level: 2, caught: true, branch: 'b1' },
+    createdAt: now,
+  };
+  const commandPhaetonEvolution = {
     id: 'reward.monster:learner-a:phaeton:evolve:1:2',
     type: 'reward.monster',
     kind: 'evolve',
@@ -835,7 +851,7 @@ test('remote spelling command compensates only rewards appended after the comman
     },
     previous: { mastered: 29, stage: 1, level: 2, caught: true, branch: 'b2' },
     next: { mastered: 30, stage: 2, level: 3, caught: true, branch: 'b2' },
-    createdAt: now,
+    createdAt: now + 1,
   };
   const events = [priorEvolution];
   const { getState, store } = createStoreHarness({
@@ -855,7 +871,7 @@ test('remote spelling command compensates only rewards appended after the comman
     readModels: { readJson: async () => ({}) },
     subjectCommands: {
       async send() {
-        events.push(commandMissedEvolution);
+        events.push(commandDirectEvolution, commandPhaetonEvolution);
         return {
           learnerId: 'learner-a',
           subjectReadModel: { phase: 'summary' },
@@ -873,11 +889,13 @@ test('remote spelling command compensates only rewards appended after the comman
   assert.equal(handler.runCommand('end-session'), true);
   await flushPromises();
 
-  assert.equal(getState().monsterCelebrations.queue.length, 1);
-  assert.equal(getState().monsterCelebrations.queue[0].id, commandMissedEvolution.id);
+  assert.deepEqual(getState().monsterCelebrations.queue.map((event) => event.id), [
+    commandDirectEvolution.id,
+    commandPhaetonEvolution.id,
+  ]);
 });
 
-test('remote spelling compensation preserves older recent missed celebrations for later replay', () => {
+test('remote spelling compensation excludes pre-command rewards even with an existing ack baseline', () => {
   installMemoryStorage();
   const now = Date.now();
   const directEvolution = {
@@ -928,6 +946,9 @@ test('remote spelling compensation preserves older recent missed celebrations fo
     readModels: { readJson: async () => ({}) },
     subjectCommands: { send: async () => ({}) },
   });
+  globalThis.localStorage.setItem('ks2-platform-v2.monster-celebration-acks', JSON.stringify({
+    'learner-a': { ids: [], baselineAt: now - 5000 },
+  }));
 
   handler.applyCommandResponse({
     learnerId: 'learner-a',
@@ -940,46 +961,16 @@ test('remote spelling compensation preserves older recent missed celebrations fo
     },
   }, {
     command: 'end-session',
-    compensationBaselineEventIds: new Set(),
+    compensationBaselineEventIds: new Set([directEvolution.id]),
   });
 
   assert.equal(getState().monsterCelebrations.queue.length, 1);
   assert.equal(getState().monsterCelebrations.queue[0].id, phaetonEvolution.id);
-
-  acknowledgeMonsterCelebrationEvents(phaetonEvolution, { learnerId: 'learner-a' });
-  store.dismissMonsterCelebration();
-  store.updateSubjectUi('spelling', {
-    phase: 'session',
-    session: {
-      id: 'session-b',
-      currentSlug: 'necessary',
-      phase: 'answer',
-      promptCount: 1,
-    },
-  });
-  calls.length = 0;
-
-  handler.applyCommandResponse({
-    learnerId: 'learner-a',
-    subjectReadModel: { phase: 'summary' },
-    projections: {
-      rewards: {
-        toastEvents: [],
-        events: [],
-      },
-    },
-  }, {
-    command: 'end-session',
-    compensationBaselineEventIds: new Set([directEvolution.id, phaetonEvolution.id]),
-  });
-
   assert.deepEqual(calls.map(([name]) => name), [
     'reloadFromRepositories',
     'deferMonsterCelebrations',
     'releaseMonsterCelebrations',
   ]);
-  assert.equal(getState().monsterCelebrations.queue.length, 1);
-  assert.equal(getState().monsterCelebrations.queue[0].id, directEvolution.id);
 });
 
 test('remote spelling command response ignores stale learner TTS side effects', () => {
