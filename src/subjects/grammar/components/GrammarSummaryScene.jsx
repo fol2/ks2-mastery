@@ -11,7 +11,7 @@ function SummaryStat({ label, value, detail }) {
   );
 }
 
-export function GrammarSummaryScene({ grammar, actions, learner, runtimeReadOnly }) {
+export function GrammarSummaryScene({ grammar, rewardState, actions, learner, runtimeReadOnly }) {
   const summary = grammar.summary || {};
   const answered = Number(summary.answered) || 0;
   const correct = Number(summary.correct) || 0;
@@ -44,7 +44,13 @@ export function GrammarSummaryScene({ grammar, actions, learner, runtimeReadOnly
           </button>
         </div>
       </section>
-      <GrammarAnalyticsScene grammar={grammar} actions={actions} learner={learner} runtimeReadOnly={runtimeReadOnly} />
+      <GrammarAnalyticsScene
+        grammar={grammar}
+        rewardState={rewardState}
+        actions={actions}
+        learner={learner}
+        runtimeReadOnly={runtimeReadOnly}
+      />
     </div>
   );
 }

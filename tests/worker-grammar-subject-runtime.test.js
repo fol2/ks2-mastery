@@ -136,6 +136,94 @@ test('Grammar command route persists subject state, practice session, and events
   DB.close();
 });
 
+test('Grammar concept-secured events project monster rewards atomically', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const now = 1_777_000_000_000;
+  const app = createWorkerApp({ now: () => now });
+  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'question_mark_select');
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-reward-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+
+  const subject = DB.db.prepare(`
+    SELECT ui_json, data_json
+    FROM child_subject_state
+    WHERE learner_id = 'learner-a' AND subject_id = 'grammar'
+  `).get();
+  const ui = JSON.parse(subject.ui_json);
+  const data = JSON.parse(subject.data_json);
+  for (const conceptId of start.body.subjectReadModel.session.currentItem.skillIds) {
+    const nearlySecured = {
+      attempts: 2,
+      correct: 2,
+      wrong: 0,
+      strength: 0.81,
+      intervalDays: 7,
+      dueAt: now + 7 * 86400000,
+      lastSeenAt: new Date(now - 86400000).toISOString(),
+      lastWrongAt: null,
+      correctStreak: 2,
+    };
+    data.mastery.concepts[conceptId] = nearlySecured;
+    ui.mastery.concepts[conceptId] = nearlySecured;
+  }
+  DB.db.prepare(`
+    UPDATE child_subject_state
+    SET ui_json = ?, data_json = ?
+    WHERE learner_id = 'learner-a' AND subject_id = 'grammar'
+  `).run(JSON.stringify(ui), JSON.stringify(data));
+
+  const submit = await postCommand(app, DB, {
+    command: 'submit-answer',
+    learnerId: 'learner-a',
+    requestId: 'grammar-reward-submit',
+    expectedLearnerRevision: 1,
+    payload: { response: sample.correctResponse },
+  });
+  assert.equal(submit.response.status, 200, JSON.stringify(submit.body));
+  assert.equal(submit.body.domainEvents.some((event) => event.type === 'grammar.concept-secured'), true);
+  assert.equal(submit.body.reactionEvents.some((event) => (
+    event.type === 'reward.monster'
+    && event.subjectId === 'grammar'
+    && event.monsterId === 'bracehart'
+  )), true);
+  assert.equal(submit.body.reactionEvents.some((event) => (
+    event.type === 'reward.monster'
+    && event.subjectId === 'grammar'
+    && event.monsterId === 'concordium'
+  )), true);
+  assert.ok(submit.body.projections.rewards.state.bracehart.mastered.includes(
+    'grammar:grammar-legacy-reviewed-2026-04-24:sentence_functions',
+  ));
+  assert.ok(submit.body.projections.rewards.state.concordium.mastered.includes(
+    'grammar:grammar-legacy-reviewed-2026-04-24:speech_punctuation',
+  ));
+  assert.equal(submit.body.projections.rewards.state.quoral, undefined);
+
+  const gameRow = DB.db.prepare(`
+    SELECT state_json
+    FROM child_game_state
+    WHERE learner_id = 'learner-a' AND system_id = 'monster-codex'
+  `).get();
+  const gameState = JSON.parse(gameRow.state_json);
+  assert.ok(gameState.bracehart.mastered.includes('grammar:grammar-legacy-reviewed-2026-04-24:sentence_functions'));
+  assert.equal(gameState.quoral, undefined);
+
+  DB.close();
+});
+
 test('Grammar command route keeps practice sessions learner scoped when clients send session ids', async () => {
   const DB = createMigratedSqliteD1Database();
   const app = createWorkerApp({ now: () => 1_777_000_000_000 });
