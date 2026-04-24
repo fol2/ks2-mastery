@@ -222,6 +222,19 @@ test('structure transfer validators require explicit punctuation roles', () => {
   assert.equal(missingColon.correct, false);
   assert.equal(missingColon.misconceptionTags.includes('structure.colon_missing'), true);
 
+  for (const typed of [
+    'We needed three things: a torch, a map and a whistle, a rope.',
+    'We needed three things: a torch, a map and a whistle. We also packed a rope.',
+    'I packed a rope. We needed three things: a torch, a map and a whistle.',
+  ]) {
+    const malformedColonList = markPunctuationAnswer({
+      item: item('cl_transfer_trip'),
+      answer: { typed },
+    });
+    assert.equal(malformedColonList.correct, false, typed);
+    assert.equal(malformedColonList.misconceptionTags.length > 0, true, typed);
+  }
+
   const semicolonList = markPunctuationAnswer({
     item: item('sl_transfer_places'),
     answer: { typed: 'We visited York, England; Cardiff, Wales; and Belfast, Northern Ireland.' },

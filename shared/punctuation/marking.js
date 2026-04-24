@@ -229,6 +229,19 @@ function listCommaOk(text, words = []) {
   };
 }
 
+function listCommaShapePattern(words = []) {
+  const items = words.map((word) => canonicalPunctuationText(word).toLowerCase()).filter(Boolean);
+  if (items.length < 2) return null;
+  const escaped = items.map(escapeRegExp);
+  if (escaped.length === 2) return `${escaped[0]}\\s+and\\s+${escaped[1]}`;
+  let body = escaped[0];
+  for (let index = 1; index < escaped.length - 1; index += 1) {
+    body += `,\\s*${escaped[index]}`;
+  }
+  body += `\\s+and\\s+${escaped[escaped.length - 1]}`;
+  return body;
+}
+
 function itemTags(item) {
   return Array.isArray(item?.misconceptionTags) ? [...item.misconceptionTags] : [];
 }
@@ -288,13 +301,22 @@ function colonBeforeList(text, validator = {}) {
   const clean = canonicalPunctuationText(text);
   const lower = clean.toLowerCase();
   const opening = canonicalPunctuationText(validator.opening || '');
-  const items = Array.isArray(validator.items) ? validator.items : [];
-  const openingIndex = opening ? lower.indexOf(opening.toLowerCase()) : -1;
-  const wordsOk = openingIndex >= 0 && wordSequencePreserved(clean, [opening, ...items]);
-  const afterOpening = openingIndex >= 0 ? clean.slice(openingIndex + opening.length) : '';
+  const items = (Array.isArray(validator.items) ? validator.items : [])
+    .map((entry) => canonicalPunctuationText(entry))
+    .filter(Boolean);
+  const openingLower = opening.toLowerCase();
+  const wordsOk = Boolean(openingLower)
+    && lower.startsWith(openingLower)
+    && wordSequencePreserved(clean, [opening, ...items]);
+  const afterOpening = wordsOk ? clean.slice(opening.length) : '';
   const colonOk = /^\s*:\s*/.test(afterOpening);
-  const { commaPlacement, hasFinalComma } = listCommaOk(clean, items);
-  return { wordsOk, colonOk, listOk: commaPlacement, hasFinalComma };
+  const expectedList = listCommaShapePattern(items);
+  const listOk = Boolean(expectedList) && new RegExp(
+    `^\\s*${escapeRegExp(opening)}\\s*:\\s*${expectedList}\\s*[.?!]?["']?$`,
+    'i',
+  ).test(clean);
+  const { hasFinalComma } = listCommaOk(clean, items);
+  return { wordsOk, colonOk, listOk, hasFinalComma };
 }
 
 function semicolonList(text, validator = {}) {
