@@ -2,8 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createWorkerApp } from '../worker/src/app.js';
-import { createSubjectRuntime } from '../worker/src/subjects/runtime.js';
+import { createWorkerRepository } from '../worker/src/repository.js';
+import { createSubjectRuntime, createWorkerSubjectRuntime } from '../worker/src/subjects/runtime.js';
 import { normaliseSubjectCommandRequest } from '../worker/src/subjects/command-contract.js';
+import { resolveRuntimeSnapshot } from '../src/subjects/spelling/content/model.js';
+import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 
@@ -88,6 +91,70 @@ test('subject runtime dispatches to subject-owned handlers', async () => {
   assert.equal(result.command, 'start-session');
   assert.equal(result.learnerId, 'learner-a');
   assert.deepEqual(result.subjectReadModel, { phase: 'setup' });
+});
+
+test('repository reuses cached spelling runtime content for hot subject paths', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({ env: { DB }, now: () => 1_776_000_000_000 });
+  try {
+    const first = await repository.readSpellingRuntimeContent('adult-a', 'spelling');
+    const second = await repository.readSpellingRuntimeContent('adult-a', 'spelling');
+
+    assert.equal(second.snapshot, first.snapshot);
+    assert.equal(second.summary, first.summary);
+    assert.equal(second.content, first.content);
+    assert.equal(second.snapshot.words.length, SEEDED_SPELLING_CONTENT_BUNDLE.releases.at(-1).snapshot.words.length);
+  } finally {
+    DB.close();
+  }
+});
+
+test('spelling command runtime prefers repository runtime content over raw content reads', async () => {
+  const snapshot = resolveRuntimeSnapshot(SEEDED_SPELLING_CONTENT_BUNDLE, {
+    referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+  });
+  let runtimeContentReads = 0;
+  const runtime = createWorkerSubjectRuntime();
+
+  const result = await runtime.dispatch({
+    subjectId: 'spelling',
+    command: 'check-word-bank-drill',
+    learnerId: 'learner-a',
+    requestId: 'cmd-runtime-content',
+    correlationId: 'cmd-runtime-content',
+    expectedLearnerRevision: 0,
+    payload: {
+      slug: 'possess',
+      typed: 'possess',
+    },
+  }, {
+    session: { accountId: 'adult-a' },
+    repository: {
+      async readSubjectRuntime() {
+        return { subjectRecord: { ui: {}, data: {} }, latestSession: null };
+      },
+      async readSpellingRuntimeContent() {
+        runtimeContentReads += 1;
+        return {
+          subjectId: 'spelling',
+          snapshot,
+          summary: {
+            publishedReleaseId: 'spelling-r-test',
+            publishedVersion: 1,
+            publishedAt: 1,
+            runtimeWordCount: snapshot.words.length,
+          },
+        };
+      },
+      async readSubjectContent() {
+        throw new Error('raw content read should not be used by spelling commands');
+      },
+    },
+  });
+
+  assert.equal(runtimeContentReads, 1);
+  assert.equal(result.changed, false);
+  assert.equal(result.wordBankDrill.result, 'correct');
 });
 
 test('worker subject command route validates auth, same-origin, and handler availability', async () => {

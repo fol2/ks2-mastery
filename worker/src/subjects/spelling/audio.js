@@ -82,8 +82,10 @@ function transcriptFor(parts, { wordOnly = false } = {}) {
 async function wordBankPromptParts({ repository, accountId, learnerId, slug } = {}) {
   const safeSlug = cleanText(slug).toLowerCase();
   if (!safeSlug) return null;
-  const contentResult = await repository.readSubjectContent(accountId, 'spelling');
-  const snapshot = resolveRuntimeSnapshot(contentResult.content, {
+  const contentResult = typeof repository.readSpellingRuntimeContent === 'function'
+    ? await repository.readSpellingRuntimeContent(accountId, 'spelling')
+    : await repository.readSubjectContent(accountId, 'spelling');
+  const snapshot = contentResult.snapshot || resolveRuntimeSnapshot(contentResult.content, {
     referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
   });
   const word = snapshot?.wordBySlug?.[safeSlug];

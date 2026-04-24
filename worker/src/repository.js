@@ -72,6 +72,8 @@ const PUBLIC_EVENT_TYPES = new Set([
 const PUBLIC_MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
 const PUBLIC_MONSTER_IDS = new Set(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']);
 const PUBLIC_MONSTER_BRANCHES = new Set(['b1', 'b2']);
+const SPELLING_RUNTIME_CONTENT_CACHE_LIMIT = 8;
+const spellingRuntimeContentCache = new Map();
 const PUBLIC_EVENT_TEXT_ENUMS = {
   mode: new Set(['smart', 'trouble', 'single', 'test']),
   sessionType: new Set(['learning', 'test']),
@@ -398,6 +400,17 @@ function contentRowToBundle(row) {
 async function readSubjectContentBundle(db, accountId, subjectId = 'spelling') {
   const row = await first(db, 'SELECT * FROM account_subject_content WHERE account_id = ? AND subject_id = ?', [accountId, subjectId]);
   return row ? contentRowToBundle(row) : cloneSerialisable(SEEDED_SPELLING_CONTENT_BUNDLE);
+}
+
+async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spelling') {
+  const row = await first(db, `
+    SELECT account_id, subject_id, content_json, updated_at
+    FROM account_subject_content
+    WHERE account_id = ? AND subject_id = ?
+  `, [accountId, subjectId]);
+  const key = spellingRuntimeContentRowKey(row, subjectId);
+  return readCachedSpellingRuntimeContent(key)
+    || rememberSpellingRuntimeContent(key, buildSpellingRuntimeContent(row, subjectId));
 }
 
 function writableRole(role) {
@@ -743,6 +756,71 @@ function normaliseRequestedPlatformRole(value) {
 function runtimeSnapshotForBundle(bundle) {
   const backfilled = backfillSpellingWordExplanations(bundle, SEEDED_SPELLING_CONTENT_BUNDLE);
   return resolveRuntimeSnapshot(backfilled, { referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE });
+}
+
+function spellingRuntimeContentSeedKey(subjectId) {
+  const publication = SEEDED_SPELLING_CONTENT_BUNDLE.publication || {};
+  return [
+    'seed',
+    subjectId,
+    publication.currentReleaseId || '',
+    publication.publishedVersion || 0,
+    publication.updatedAt || 0,
+  ].join(':');
+}
+
+function spellingRuntimeContentRowKey(row, subjectId) {
+  if (!row) return spellingRuntimeContentSeedKey(subjectId);
+  return row.content_json || `row:${subjectId}:${row.updated_at || 0}:empty`;
+}
+
+function rememberSpellingRuntimeContent(key, value) {
+  if (spellingRuntimeContentCache.has(key)) spellingRuntimeContentCache.delete(key);
+  spellingRuntimeContentCache.set(key, value);
+  while (spellingRuntimeContentCache.size > SPELLING_RUNTIME_CONTENT_CACHE_LIMIT) {
+    const oldestKey = spellingRuntimeContentCache.keys().next().value;
+    spellingRuntimeContentCache.delete(oldestKey);
+  }
+  return value;
+}
+
+function readCachedSpellingRuntimeContent(key) {
+  const cached = spellingRuntimeContentCache.get(key);
+  if (!cached) return null;
+  spellingRuntimeContentCache.delete(key);
+  spellingRuntimeContentCache.set(key, cached);
+  return cached;
+}
+
+function runtimeSentenceCount(snapshot) {
+  return snapshot?.words?.reduce((total, word) => {
+    const baseCount = Array.isArray(word.sentences) ? word.sentences.length : 0;
+    const variantCount = (Array.isArray(word.variants) ? word.variants : [])
+      .reduce((sum, variant) => sum + (Array.isArray(variant.sentences) ? variant.sentences.length : 0), 0);
+    return total + baseCount + variantCount;
+  }, 0) || 0;
+}
+
+function runtimeContentSummary(content, snapshot) {
+  const summary = buildSpellingContentSummary(content);
+  return {
+    ...summary,
+    runtimeWordCount: snapshot?.words?.length || summary.runtimeWordCount || 0,
+    runtimeSentenceCount: runtimeSentenceCount(snapshot) || summary.runtimeSentenceCount || 0,
+  };
+}
+
+function buildSpellingRuntimeContent(row, subjectId) {
+  const content = row
+    ? contentRowToBundle(row)
+    : backfillSpellingWordExplanations(SEEDED_SPELLING_CONTENT_BUNDLE, SEEDED_SPELLING_CONTENT_BUNDLE);
+  const snapshot = runtimeSnapshotForBundle(content);
+  return {
+    subjectId,
+    content,
+    snapshot,
+    summary: runtimeContentSummary(content, snapshot),
+  };
 }
 
 function accountDirectoryRowToModel(row) {
@@ -1223,10 +1301,7 @@ async function readSpellingWordBankBundle(db, accountId, learnerId, filters, now
     });
   }
   const runtimeRecord = await readSubjectRuntimeBundle(db, accountId, learnerId, 'spelling');
-  const content = await readSubjectContentBundle(db, accountId, 'spelling');
-  const snapshot = resolveRuntimeSnapshot(content, {
-    referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
-  });
+  const { snapshot } = await readSpellingRuntimeContentBundle(db, accountId, 'spelling');
   return buildSpellingWordBankReadModel({
     learnerId,
     contentSnapshot: snapshot,
@@ -2242,6 +2317,9 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
           accountRevision: Number(account?.repo_revision) || 0,
         },
       };
+    },
+    async readSpellingRuntimeContent(accountId, subjectId = 'spelling') {
+      return readSpellingRuntimeContentBundle(db, accountId, subjectId);
     },
     async readSpellingWordBank(accountId, learnerId, filters = {}) {
       return readSpellingWordBankBundle(db, accountId, learnerId, filters, nowFactory());
