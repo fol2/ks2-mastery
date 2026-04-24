@@ -220,6 +220,35 @@ test('controller dispatches spelling transitions through store, repositories, ev
   assert.ok(controller.repositories.practiceSessions.list(learnerId).length >= 1);
 });
 
+test('controller stops spelling audio when feedback has no auto-speak cue', () => {
+  installMemoryStorage();
+  const tts = {
+    spoken: [],
+    stopCalls: 0,
+    speak(payload) {
+      this.spoken.push(payload);
+    },
+    stop() {
+      this.stopCalls += 1;
+    },
+    warmup() {},
+  };
+  const controller = createLocalAppController({ tts });
+  const learnerId = controller.store.getState().learners.selectedId;
+  controller.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+
+  controller.dispatch('open-subject', { subjectId: 'spelling' });
+  controller.dispatch('spelling-start');
+  const stopCallsBeforeAnswer = tts.stopCalls;
+  const answer = controller.store.getState().subjectUi.spelling.session.currentCard.word.word;
+
+  controller.dispatch('spelling-submit-form', { formData: typedFormData(answer) });
+
+  assert.equal(controller.store.getState().subjectUi.spelling.awaitingAdvance, true);
+  assert.equal(tts.spoken.length, 1);
+  assert.equal(tts.stopCalls, stopCallsBeforeAnswer + 1);
+});
+
 test('controller can defer spelling start audio until the flow transition flushes', () => {
   installMemoryStorage();
   const controller = createLocalAppController();

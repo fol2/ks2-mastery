@@ -162,6 +162,7 @@ test('worker spelling command route starts, submits, continues, and completes se
     assert.equal(step.body.subjectReadModel.session.currentCard.word, undefined);
     assert.equal(step.body.subjectReadModel.session.currentCard.prompt.sentence, undefined);
     assert.ok(step.body.audio.promptToken);
+    assert.ok(step.body.subjectReadModel.audio.promptToken);
 
     const legacy = server.DB.db.prepare('SELECT status FROM practice_sessions WHERE id = ?').get('legacy-active');
     assert.equal(legacy.status, 'abandoned');
@@ -176,6 +177,8 @@ test('worker spelling command route starts, submits, continues, and completes se
     assert.equal(step.body.subjectReadModel.phase, 'session');
     assert.equal(step.body.subjectReadModel.awaitingAdvance, true);
     assert.equal(step.body.subjectReadModel.feedback.headline, 'Good first hit.');
+    assert.equal(step.body.audio, null);
+    assert.ok(step.body.subjectReadModel.audio.promptToken);
 
     step = await postCommand(server, {
       command: 'continue-session',
@@ -185,6 +188,8 @@ test('worker spelling command route starts, submits, continues, and completes se
     assert.equal(step.response.status, 200);
     assert.equal(step.body.subjectReadModel.phase, 'session');
     assert.equal(step.body.subjectReadModel.awaitingAdvance, false);
+    assert.ok(step.body.audio.promptToken);
+    assert.ok(step.body.subjectReadModel.audio.promptToken);
 
     step = await postCommand(server, {
       command: 'submit-answer',
@@ -195,6 +200,8 @@ test('worker spelling command route starts, submits, continues, and completes se
     assert.equal(step.response.status, 200);
     assert.equal(step.body.subjectReadModel.awaitingAdvance, true);
     assert.equal(step.body.subjectReadModel.feedback.headline, 'Correct.');
+    assert.equal(step.body.audio, null);
+    assert.ok(step.body.subjectReadModel.audio.promptToken);
 
     step = await postCommand(server, {
       command: 'continue-session',
@@ -203,6 +210,8 @@ test('worker spelling command route starts, submits, continues, and completes se
     });
     assert.equal(step.response.status, 200);
     assert.equal(step.body.subjectReadModel.phase, 'summary');
+    assert.equal(step.body.audio, null);
+    assert.equal(step.body.subjectReadModel.audio, null);
     assert.ok(step.body.events.some((event) => event.type === 'spelling.session-completed'));
 
     const subject = server.DB.db.prepare(`
