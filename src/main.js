@@ -25,10 +25,7 @@ import { createPlatformTts } from './subjects/spelling/tts.js';
 import { DEFAULT_TTS_PROVIDER, normaliseTtsProvider } from './subjects/spelling/tts-providers.js';
 import { createSpellingReadModelService } from './subjects/spelling/client-read-models.js';
 import { resolveSpellingShortcut } from './subjects/spelling/shortcuts.js';
-import {
-  monsterSummary,
-  monsterSummaryFromSpellingAnalytics,
-} from './platform/game/monster-system.js';
+import { buildLearnerMonsterSummary } from './platform/app/surface-models.js';
 import {
   exportLearnerSnapshot,
   exportPlatformSnapshot,
@@ -1151,16 +1148,7 @@ function buildHomeDashboardStats(appState, context) {
 }
 
 function buildHomeMonsterSummary(learnerId, context) {
-  if (!learnerId) return [];
-  const spelling = context.services?.spelling;
-  if (spelling?.getAnalyticsSnapshot) {
-    return monsterSummaryFromSpellingAnalytics(spelling.getAnalyticsSnapshot(learnerId), {
-      learnerId,
-      gameStateRepository: context.repositories?.gameState,
-      persistBranches: false,
-    });
-  }
-  return monsterSummary(learnerId, context.repositories?.gameState);
+  return buildLearnerMonsterSummary(learnerId, context);
 }
 
 function buildHomeDueTotal(learnerId, context) {

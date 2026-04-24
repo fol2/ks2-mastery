@@ -6,6 +6,7 @@ import {
   ensureMonsterBranches,
   monsterIdForSpellingWord,
   monsterSummaryFromSpellingAnalytics,
+  monsterSummaryFromState,
   progressForMonster,
   recordMonsterMastery,
 } from '../src/platform/game/monster-system.js';
@@ -255,4 +256,18 @@ test('analytics summaries can project branches without writing during render', (
   assert.equal(repository.writes(), 0);
   assert.equal(summary.find((entry) => entry.monster.id === 'inklet').progress.mastered, 1);
   assert.equal(summary.find((entry) => entry.monster.id === 'vellhorn').progress.mastered, 0);
+});
+
+test('public monster-codex state projects mastered counts without repository writes', () => {
+  const summary = monsterSummaryFromState({
+    inklet: { masteredCount: 12, caught: true, branch: 'b2' },
+    glimmerbug: { masteredCount: 7, caught: true, branch: 'b1' },
+    vellhorn: { masteredCount: 3, caught: true, branch: 'b2' },
+    phaeton: { branch: 'b1' },
+  });
+
+  assert.equal(summary.find((entry) => entry.monster.id === 'inklet').progress.mastered, 12);
+  assert.equal(summary.find((entry) => entry.monster.id === 'inklet').progress.branch, 'b2');
+  assert.equal(summary.find((entry) => entry.monster.id === 'vellhorn').progress.caught, true);
+  assert.equal(summary.find((entry) => entry.monster.id === 'phaeton').progress.mastered, 19);
 });

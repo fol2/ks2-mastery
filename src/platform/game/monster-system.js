@@ -231,6 +231,11 @@ export function recordMonsterMastery(learnerId, monsterId, wordSlug, gameStateRe
 
 export function monsterSummary(learnerId, gameStateRepository) {
   const state = ensureMonsterBranches(learnerId, gameStateRepository);
+  return monsterSummaryFromState(state);
+}
+
+export function monsterSummaryFromState(rawState = {}) {
+  const state = isPlainObject(rawState) ? rawState : {};
   return SPELLING_MONSTER_IDS.map((monsterId) => ({
     monster: MONSTERS[monsterId],
     progress: progressForMonster(state, monsterId),
