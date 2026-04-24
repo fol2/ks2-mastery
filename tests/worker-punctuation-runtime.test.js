@@ -25,13 +25,13 @@ function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a'
   `).run(accountId, learnerId, now, now);
 }
 
-function createHarness({ punctuationEnabled = true } = {}) {
+function createHarness({ punctuationEnabled = true, random = () => 0 } = {}) {
   const nowRef = { value: Date.UTC(2026, 0, 1) };
   const DB = createMigratedSqliteD1Database();
   seedAccountLearner(DB);
   const app = createWorkerApp({
     now: () => nowRef.value,
-    subjectRuntime: createWorkerSubjectRuntime({ punctuation: { random: () => 0 } }),
+    subjectRuntime: createWorkerSubjectRuntime({ punctuation: { random } }),
   });
   const env = {
     DB,
@@ -187,6 +187,23 @@ test('punctuation submit returns redacted feedback and completed summary', async
       WHERE learner_id = 'learner-a' AND subject_id = 'punctuation' AND status = 'completed'
     `).get();
     assert.equal(completed.count, 1);
+  } finally {
+    harness.close();
+  }
+});
+
+test('punctuation command route redacts generated live items', async () => {
+  const harness = createHarness({ random: () => 0.99 });
+  try {
+    const start = await harness.command('start-session', { mode: 'endmarks', roundLength: '2' });
+    const choiceIndex = start.body.subjectReadModel.session.currentItem.options
+      .find((option) => option.text === start.body.subjectReadModel.session.currentItem.model)?.index ?? 0;
+    await harness.command('submit-answer', { choiceIndex });
+
+    const generated = await harness.command('continue-session');
+    assert.equal(generated.body.subjectReadModel.phase, 'active-item');
+    assert.equal(generated.body.subjectReadModel.session.currentItem.source, 'generated');
+    assert.doesNotMatch(payloadText(generated.body.subjectReadModel), /accepted|correctIndex|rubric|validator|hiddenQueue|generator/);
   } finally {
     harness.close();
   }

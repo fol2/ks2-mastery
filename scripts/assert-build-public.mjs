@@ -101,6 +101,8 @@ for (const token of [
   'Legacy vendor seed for Pass 11 content model',
   'PUNCTUATION_CONTENT_MANIFEST',
   'createPunctuationContentIndexes',
+  'createPunctuationGeneratedItems',
+  'createPunctuationRuntimeManifest',
   'createPunctuationService',
   'PunctuationServiceError',
   'punctuation-r1-endmarks-apostrophe-speech',

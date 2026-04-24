@@ -1,6 +1,5 @@
 import {
   createPunctuationContentIndexes,
-  PUNCTUATION_CONTENT_INDEXES,
   PUNCTUATION_CONTENT_MANIFEST,
   PUNCTUATION_RELEASE_ID,
 } from './content.js';
@@ -10,6 +9,7 @@ import {
   createPunctuationSessionCompletedEvent,
   createPunctuationUnitSecuredEvent,
 } from './events.js';
+import { createPunctuationRuntimeManifest } from './generators.js';
 import { markPunctuationAnswer, normaliseAnswerText } from './marking.js';
 import {
   memorySnapshot,
@@ -34,6 +34,7 @@ import {
 
 const SUBJECT_ID = 'punctuation';
 const SERVER_AUTHORITY = 'worker';
+const GENERATED_ITEMS_PER_FAMILY = 1;
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -44,8 +45,14 @@ function timestamp(now = Date.now) {
   return Number.isFinite(value) ? value : Date.now();
 }
 
-function uid(prefix, now = Date.now) {
-  return `${prefix}-${timestamp(now).toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+function randomSuffix(random = Math.random) {
+  const value = typeof random === 'function' ? Number(random()) : Math.random();
+  const bounded = Number.isFinite(value) ? Math.max(0, Math.min(0.999999, value)) : 0;
+  return Math.floor(bounded * 0xffffffff).toString(36).padStart(6, '0').slice(0, 8);
+}
+
+function uid(prefix, now = Date.now, random = Math.random) {
+  return `${prefix}-${timestamp(now).toString(36)}-${randomSuffix(random)}`;
 }
 
 export class PunctuationServiceError extends Error {
@@ -469,7 +476,10 @@ export function createPunctuationService({
   repository = createNoopRepository(),
   now = Date.now,
   random = Math.random,
-  manifest = PUNCTUATION_CONTENT_MANIFEST,
+  manifest = createPunctuationRuntimeManifest({
+    manifest: PUNCTUATION_CONTENT_MANIFEST,
+    generatedPerFamily: GENERATED_ITEMS_PER_FAMILY,
+  }),
   indexes = createPunctuationContentIndexes(manifest),
 } = {}) {
   const clock = () => timestamp(now);
@@ -524,7 +534,7 @@ export function createPunctuationService({
       const current = readData(repository, learnerId);
       const prefs = normalisePunctuationPrefs({ ...current.prefs, ...options });
       const session = {
-        id: uid('punctuation-session', clock),
+        id: uid('punctuation-session', clock, random),
         releaseId: manifest.releaseId || PUNCTUATION_RELEASE_ID,
         mode: prefs.mode,
         length: roundLengthFromPrefs(prefs),
