@@ -1,6 +1,6 @@
 import React from 'react';
 import { SearchIcon } from './spelling-icons.jsx';
-import { SummaryCards } from './SpellingCommon.jsx';
+import { CountUpValue, SummaryCards } from './SpellingCommon.jsx';
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { SpellingWordDetailModal } from './SpellingWordDetailModal.jsx';
 import {
@@ -55,7 +55,7 @@ function FilterChips({ counts, activeFilter, actions }) {
           >
             <span className={`wb-status-swatch ${chip.swatch}`} aria-hidden="true" />
             <span className="wb-chip-label">{chip.label}</span>
-            <span className="wb-chip-count">{counts[chip.id] ?? 0}</span>
+            <CountUpValue className="wb-chip-count" value={counts[chip.id] ?? 0} />
           </button>
         );
       })}
@@ -85,7 +85,7 @@ function YearChips({ counts, activeYearFilter, actions }) {
             onClick={(event) => renderAction(actions, event, 'spelling-analytics-year-filter', { value: chip.id })}
           >
             <span className="wb-chip-label">{chip.label}</span>
-            <span className="wb-chip-count">{counts[chip.id] ?? 0}</span>
+            <CountUpValue className="wb-chip-count" value={counts[chip.id] ?? 0} />
           </button>
         );
       })}
