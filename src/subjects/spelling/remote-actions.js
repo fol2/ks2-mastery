@@ -3,6 +3,10 @@ import {
   WORD_BANK_YEAR_FILTER_IDS,
 } from './components/spelling-view-model.js';
 import {
+  applyOptimisticSpellingPrefs,
+  optimisticSpellingPrefsPatchForAction,
+} from './optimistic-prefs.js';
+import {
   normaliseMonsterCelebrationEvents,
   shouldDelayMonsterCelebrations,
   spellingSessionEnded,
@@ -182,6 +186,7 @@ export function createRemoteSpellingActionHandler({
   const preferenceSaveChains = new Map();
   const preferenceIntentCounters = new Map();
   const latestPreferenceIntents = new Map();
+  const scopedRuntimeErrors = new Map();
 
   function appState() {
     return store?.getState?.() || {};
@@ -199,6 +204,80 @@ export function createRemoteSpellingActionHandler({
     } catch {
       return null;
     }
+  }
+
+  function selectedLearnerId() {
+    return appState().learners?.selectedId || '';
+  }
+
+  function safePrefsPatch(prefsPatch = {}) {
+    return prefsPatch && typeof prefsPatch === 'object' && !Array.isArray(prefsPatch) ? prefsPatch : {};
+  }
+
+  function patchSpellingSubjectUiLocally(updater) {
+    store.patch((current) => {
+      const previous = current.subjectUi?.spelling || {};
+      const next = typeof updater === 'function' ? updater(previous) : { ...previous, ...updater };
+      return {
+        subjectUi: {
+          ...current.subjectUi,
+          spelling: next,
+        },
+      };
+    });
+  }
+
+  function applyOptimisticPrefsPatch(patch) {
+    if (!patch || !Object.keys(patch).length) return false;
+    patchSpellingSubjectUiLocally((current) => applyOptimisticSpellingPrefs(current, patch));
+    return true;
+  }
+
+  function pendingOptimisticPrefsForLearner(learnerId) {
+    return latestPreferenceIntents.get(String(learnerId || ''))?.prefs || {};
+  }
+
+  function visiblePrefsForLearner(learnerId, state = appState()) {
+    const persistedPrefs = services?.spelling?.getPrefs?.(learnerId) || {};
+    const visiblePrefs = state.learners?.selectedId === learnerId
+      && state.subjectUi?.spelling?.prefs
+      && typeof state.subjectUi.spelling.prefs === 'object'
+      && !Array.isArray(state.subjectUi.spelling.prefs)
+      ? state.subjectUi.spelling.prefs
+      : {};
+    return {
+      ...persistedPrefs,
+      ...visiblePrefs,
+      ...pendingOptimisticPrefsForLearner(learnerId),
+    };
+  }
+
+  function reapplyPendingOptimisticPrefs() {
+    const learnerId = selectedLearnerId();
+    const appliedPrefs = applyOptimisticPrefsPatch(pendingOptimisticPrefsForLearner(learnerId));
+    const scopedError = scopedRuntimeErrors.get(learnerId);
+    if (scopedError) {
+      patchSpellingSubjectUiLocally({ error: scopedError });
+    }
+    return appliedPrefs || Boolean(scopedError);
+  }
+
+  function setRuntimeErrorForLearner(learnerId, message) {
+    const targetLearnerId = String(learnerId || '');
+    const safeMessage = message || 'Practice is temporarily unavailable.';
+    if (!targetLearnerId) {
+      setRuntimeError(safeMessage);
+      return;
+    }
+    scopedRuntimeErrors.set(targetLearnerId, safeMessage);
+    if (selectedLearnerId() === targetLearnerId) {
+      setRuntimeError(safeMessage);
+    }
+  }
+
+  function clearRuntimeErrorForLearner(learnerId) {
+    const targetLearnerId = String(learnerId || '');
+    if (targetLearnerId) scopedRuntimeErrors.delete(targetLearnerId);
   }
 
   function applyCommandResponse(response, {
@@ -219,7 +298,9 @@ export function createRemoteSpellingActionHandler({
       tts.stop();
     }
     store.reloadFromRepositories({ preserveRoute: true, preserveMonsterCelebrations: true });
+    clearRuntimeErrorForLearner(learnerId);
     reconcilePreferenceSaveResponse({ command, learnerId, preferenceVersion });
+    reapplyPendingOptimisticPrefs();
     const nextState = appState();
     const nextSubjectUi = response?.subjectReadModel || response?.state || nextState.subjectUi?.spelling || null;
     const isSelectedLearner = !learnerId || nextState.learners?.selectedId === learnerId;
@@ -378,21 +459,13 @@ export function createRemoteSpellingActionHandler({
   }
 
   function updateOptimisticPrefs(prefsPatch = {}) {
-    const patch = prefsPatch && typeof prefsPatch === 'object' && !Array.isArray(prefsPatch) ? prefsPatch : {};
-    if (!Object.keys(patch).length) return;
-    store.updateSubjectUi('spelling', (current = {}) => ({
-      ...current,
-      prefs: {
-        ...(current.prefs || {}),
-        ...patch,
-      },
-      error: '',
-    }));
+    return applyOptimisticPrefsPatch(safePrefsPatch(prefsPatch));
   }
 
   function recordPreferenceIntent(learnerId, prefsPatch = {}) {
-    const patch = prefsPatch && typeof prefsPatch === 'object' && !Array.isArray(prefsPatch) ? prefsPatch : {};
+    const patch = safePrefsPatch(prefsPatch);
     if (!learnerId || !Object.keys(patch).length) return null;
+    clearRuntimeErrorForLearner(learnerId);
     const version = (preferenceIntentCounters.get(learnerId) || 0) + 1;
     const previous = latestPreferenceIntents.get(learnerId);
     const intent = {
@@ -413,10 +486,6 @@ export function createRemoteSpellingActionHandler({
     if (!latest) return;
     if (Number(latest.version) <= Number(preferenceVersion)) {
       latestPreferenceIntents.delete(learnerId);
-      return;
-    }
-    if (appState().learners?.selectedId === learnerId) {
-      updateOptimisticPrefs(latest.prefs);
     }
   }
 
@@ -436,6 +505,10 @@ export function createRemoteSpellingActionHandler({
       .then(() => {
         setPendingCommand('save-prefs', { preserveExisting: true });
         return sendCommand('save-prefs', { prefs }, { learnerId, preferenceVersion });
+      })
+      .catch((error) => {
+        handlePreferenceSaveError(error, { learnerId, preferenceVersion });
+        throw error;
       });
     tracked = next.finally(() => {
       if (preferenceSaveChains.get(learnerId) === tracked) {
@@ -458,38 +531,60 @@ export function createRemoteSpellingActionHandler({
     return preferenceSaveChains.get(learnerId) || Promise.resolve(null);
   }
 
-  function handlePreferenceSaveError(error) {
+  function handlePreferenceSaveError(error, { learnerId = '', preferenceVersion = 0 } = {}) {
     globalThis.console?.warn?.('Spelling preference save failed.', error);
-    setRuntimeError(commandErrorMessage(error, 'The spelling options could not be saved.'));
+    const latest = latestPreferenceIntents.get(learnerId);
+    if (latest && Number(latest.version) <= Number(preferenceVersion)) {
+      latestPreferenceIntents.delete(learnerId);
+    }
+    store.reloadFromRepositories({ preserveRoute: true });
+    reapplyPendingOptimisticPrefs();
+    setRuntimeErrorForLearner(learnerId, commandErrorMessage(error, 'The spelling options could not be saved.'));
   }
 
   function schedulePreferenceSave(learnerId, prefsPatch = {}) {
     if (!learnerId) return false;
-    const patch = prefsPatch && typeof prefsPatch === 'object' && !Array.isArray(prefsPatch) ? prefsPatch : {};
+    const patch = safePrefsPatch(prefsPatch);
     if (!Object.keys(patch).length) return true;
     const intent = recordPreferenceIntent(learnerId, patch);
     const current = pendingPreferenceSaves.get(learnerId);
     if (current?.timer) clearTimeout(current.timer);
     const timer = setTimeout(() => {
-      flushPendingPreferenceSave(learnerId).catch(handlePreferenceSaveError);
+      flushPendingPreferenceSave(learnerId).catch(() => {});
     }, preferenceSaveDelayMs());
     pendingPreferenceSaves.set(learnerId, { prefs: intent.prefs, version: intent.version, timer });
     return true;
   }
 
-  function runCommand(command, payload = {}, { learnerId: requestedLearnerId = '', beforeSend = null } = {}) {
+  function runCommand(command, payload = {}, options = {}) {
+    const {
+      learnerId: requestedLearnerId = '',
+      errorLearnerId = '',
+      beforeSend = null,
+      onSuccess = null,
+      onError = null,
+      onSettled = null,
+    } = options;
+    const commandLearnerId = requestedLearnerId || appState().learners?.selectedId || '';
     const pending = beginPendingCommand(command);
     if (!pending.ok) return false;
     const commandPromise = typeof beforeSend === 'function'
       ? Promise.resolve()
         .then(beforeSend)
-        .then((nextPayload) => sendCommand(command, nextPayload || payload, { learnerId: requestedLearnerId }))
-      : sendCommand(command, payload, { learnerId: requestedLearnerId });
-    commandPromise.catch((error) => {
+        .then((nextPayload) => sendCommand(command, nextPayload || payload, { learnerId: commandLearnerId }))
+      : sendCommand(command, payload, { learnerId: commandLearnerId });
+    commandPromise.then((response) => {
+      onSuccess?.(response);
+    }).catch((error) => {
+      onError?.(error);
       globalThis.console?.warn?.('Spelling command failed.', error);
-      setRuntimeError(commandErrorMessage(error, 'The spelling command could not be completed.'));
+      setRuntimeErrorForLearner(
+        errorLearnerId || commandLearnerId,
+        commandErrorMessage(error, 'The spelling command could not be completed.'),
+      );
     }).finally(() => {
       releasePendingCommand(command, pending.dedupeKey);
+      onSettled?.();
     });
     return true;
   }
@@ -744,23 +839,10 @@ export function createRemoteSpellingActionHandler({
       return true;
     }
 
-    if (action === 'spelling-set-pref') {
-      const patch = { [data.pref]: data.value };
-      updateOptimisticPrefs(patch);
-      schedulePreferenceSave(learnerId, patch);
-      return true;
-    }
-
-    if (action === 'spelling-set-mode') {
-      const patch = { mode: data.value };
-      updateOptimisticPrefs(patch);
-      schedulePreferenceSave(learnerId, patch);
-      return true;
-    }
-
-    if (action === 'spelling-toggle-pref') {
-      const current = spelling?.getPrefs?.(learnerId) || {};
-      const patch = { [data.pref]: !current[data.pref] };
+    if (action === 'spelling-set-pref' || action === 'spelling-set-mode' || action === 'spelling-toggle-pref') {
+      const current = visiblePrefsForLearner(learnerId, state);
+      const patch = optimisticSpellingPrefsPatchForAction(action, data, current);
+      if (!Object.keys(patch).length) return true;
       updateOptimisticPrefs(patch);
       schedulePreferenceSave(learnerId, patch);
       return true;
@@ -772,7 +854,7 @@ export function createRemoteSpellingActionHandler({
         learnerId,
         beforeSend: async () => {
           await flushPendingPreferenceSave(learnerId);
-          const prefs = spelling?.getPrefs?.(learnerId) || {};
+          const prefs = visiblePrefsForLearner(learnerId, appState());
           return {
             mode: prefs.mode,
             yearFilter: prefs.yearFilter,
@@ -796,10 +878,17 @@ export function createRemoteSpellingActionHandler({
       tts.stop();
       (async () => {
         await flushPendingPreferenceSave(learnerId);
-        const intent = recordPreferenceIntent(learnerId, { mode });
-        updateOptimisticPrefs({ mode });
-        await sendCommand('save-prefs', { prefs: { mode } }, { learnerId, preferenceVersion: intent?.version || 0 });
-        const prefs = spelling?.getPrefs?.(learnerId) || { mode };
+        const current = visiblePrefsForLearner(learnerId, appState());
+        const patch = optimisticSpellingPrefsPatchForAction('spelling-set-mode', { value: mode }, current);
+        const intent = recordPreferenceIntent(learnerId, patch);
+        updateOptimisticPrefs(patch);
+        try {
+          await sendCommand('save-prefs', { prefs: patch }, { learnerId, preferenceVersion: intent?.version || 0 });
+        } catch (error) {
+          handlePreferenceSaveError(error, { learnerId, preferenceVersion: intent?.version || 0 });
+          throw error;
+        }
+        const prefs = visiblePrefsForLearner(learnerId, appState());
         await sendCommand('start-session', {
           mode: prefs.mode || mode,
           yearFilter: prefs.yearFilter,
@@ -808,7 +897,7 @@ export function createRemoteSpellingActionHandler({
         }, { learnerId });
       })().catch((error) => {
         globalThis.console?.warn?.('Spelling shortcut command failed.', error);
-        setRuntimeError(commandErrorMessage(error, 'The spelling shortcut could not be completed.'));
+        setRuntimeErrorForLearner(learnerId, commandErrorMessage(error, 'The spelling shortcut could not be completed.'));
       }).finally(() => {
         releasePendingCommand('start-session', pending.dedupeKey);
       });
@@ -871,6 +960,7 @@ export function createRemoteSpellingActionHandler({
     applyCommandResponse,
     handle,
     loadWordBank,
+    reapplyPendingOptimisticPrefs,
     runCommand,
     sendCommand,
   };

@@ -1883,7 +1883,15 @@ function runtimeIsReadOnly() {
 }
 
 function setSpellingRuntimeError(message) {
-  store.updateSubjectUi('spelling', { error: message || 'Practice is temporarily unavailable.' });
+  store.patch((current) => ({
+    subjectUi: {
+      ...current.subjectUi,
+      spelling: {
+        ...(current.subjectUi?.spelling || {}),
+        error: message || 'Practice is temporarily unavailable.',
+      },
+    },
+  }));
 }
 
 function setPunctuationRuntimeError(message) {
