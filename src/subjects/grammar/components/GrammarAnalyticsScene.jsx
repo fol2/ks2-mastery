@@ -21,15 +21,53 @@ function securedCountForRoute(route, conceptsById) {
   ), 0);
 }
 
+function EmptyEvidence({ children }) {
+  return <p className="small muted">{children}</p>;
+}
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function numericScore(value, fallback) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function normaliseRecentActivityEntry(entry = {}) {
+  const result = isPlainObject(entry.result) ? entry.result : {};
+  const correct = entry.correct ?? result.correct;
+  return {
+    itemId: entry.itemId || '',
+    templateId: entry.templateId || '',
+    label: entry.questionTypeLabel || entry.templateLabel || entry.label || entry.templateId || 'Grammar item',
+    correct: Boolean(correct),
+    score: numericScore(entry.score ?? result.score, 0),
+    maxScore: numericScore(entry.maxScore ?? result.maxScore, 1),
+  };
+}
+
+function recentActivityForAnalytics(analytics = {}) {
+  if (Array.isArray(analytics.recentActivity) && analytics.recentActivity.length) {
+    return analytics.recentActivity.slice(0, 5).map(normaliseRecentActivityEntry);
+  }
+  if (Array.isArray(analytics.recentAttempts)) {
+    return analytics.recentAttempts.slice(-5).reverse().map(normaliseRecentActivityEntry);
+  }
+  return [];
+}
+
 export function GrammarAnalyticsScene({ grammar, rewardState: providedRewardState = null }) {
   const concepts = grammar.analytics?.concepts || [];
   const counts = grammar.stats?.concepts || {};
+  const progressSnapshot = grammar.analytics?.progressSnapshot || {};
+  const evidenceSummary = Array.isArray(grammar.analytics?.evidenceSummary) ? grammar.analytics.evidenceSummary : [];
+  const misconceptionPatterns = Array.isArray(grammar.analytics?.misconceptionPatterns) ? grammar.analytics.misconceptionPatterns : [];
+  const questionTypeSummary = Array.isArray(grammar.analytics?.questionTypeSummary) ? grammar.analytics.questionTypeSummary : [];
   const conceptsById = new Map(concepts.map((concept) => [concept.id, concept]));
   const grouped = groupedGrammarConcepts(concepts);
   const rewardState = providedRewardState || grammar.projections?.rewards?.state || {};
-  const recentAttempts = Array.isArray(grammar.analytics?.recentAttempts)
-    ? grammar.analytics.recentAttempts.slice(-5).reverse()
-    : [];
+  const recentActivity = recentActivityForAnalytics(grammar.analytics || {});
 
   return (
     <section className="card grammar-analytics" aria-labelledby="grammar-analytics-title">
@@ -51,6 +89,28 @@ export function GrammarAnalyticsScene({ grammar, rewardState: providedRewardStat
 
       <div className="grammar-analytics-grid">
         <div className="grammar-evidence-list">
+          <div className="grammar-evidence-summary" aria-label="Grammar evidence summary">
+            <div className="grammar-stat">
+              <span>tracked</span>
+              <strong>{progressSnapshot.trackedConcepts ?? 0}/{progressSnapshot.totalConcepts ?? concepts.length}</strong>
+              <small>concepts</small>
+            </div>
+            <div className="grammar-stat">
+              <span>accuracy</span>
+              <strong>{progressSnapshot.accuracyPercent == null ? '-' : `${progressSnapshot.accuracyPercent}%`}</strong>
+              <small>answered evidence</small>
+            </div>
+          </div>
+          {evidenceSummary.length ? (
+            <div className="grammar-method-list">
+              {evidenceSummary.map((entry) => (
+                <div key={entry.id || entry.label}>
+                  <strong>{entry.label}</strong>
+                  <span>{entry.detail}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
           {grouped.map((group) => (
             <div className="grammar-evidence-domain" key={group.domain}>
               <strong>{group.domain}</strong>
@@ -94,13 +154,42 @@ export function GrammarAnalyticsScene({ grammar, rewardState: providedRewardStat
         </div>
       </div>
 
+      <div className="grammar-evidence-panels">
+        <div>
+          <div className="eyebrow">Misconception repair</div>
+          {misconceptionPatterns.length ? (
+            <ol>
+              {misconceptionPatterns.map((entry) => (
+                <li key={entry.id}>
+                  <strong>{entry.label}</strong>
+                  <span>{entry.count || 0} signal{Number(entry.count) === 1 ? '' : 's'}</span>
+                </li>
+              ))}
+            </ol>
+          ) : <EmptyEvidence>No recurring misconception pattern recorded yet.</EmptyEvidence>}
+        </div>
+        <div>
+          <div className="eyebrow">Question-type evidence</div>
+          {questionTypeSummary.length ? (
+            <ol>
+              {questionTypeSummary.map((entry) => (
+                <li key={entry.id}>
+                  <strong>{entry.label}</strong>
+                  <span>{entry.correct || 0}/{entry.attempts || 0} correct · {entry.status || 'learning'}</span>
+                </li>
+              ))}
+            </ol>
+          ) : <EmptyEvidence>No question-type evidence recorded yet.</EmptyEvidence>}
+        </div>
+      </div>
+
       <div className="grammar-recent">
         <div className="eyebrow">Recent attempts</div>
-        {recentAttempts.length ? (
+        {recentActivity.length ? (
           <ol>
-            {recentAttempts.map((attempt, index) => (
+            {recentActivity.map((attempt, index) => (
               <li key={`${attempt.itemId || attempt.templateId || 'attempt'}-${index}`}>
-                <strong>{attempt.templateLabel || attempt.templateId || 'Grammar item'}</strong>
+                <strong>{attempt.label}</strong>
                 <span>{attempt.correct ? 'correct' : 'review'} · score {attempt.score ?? 0}/{attempt.maxScore ?? 1}</span>
               </li>
             ))}

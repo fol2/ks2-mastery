@@ -19,6 +19,19 @@ function HubStrengthList({ title, items = [], emptyText = 'No signal yet.' }) {
   );
 }
 
+function snapshotSubjectId(snapshot = {}) {
+  if (snapshot.subjectId) return snapshot.subjectId;
+  return snapshot.totalConcepts != null || snapshot.trackedConcepts != null ? 'grammar' : 'spelling';
+}
+
+function snapshotChipLabel(snapshot = {}) {
+  const subjectId = snapshotSubjectId(snapshot);
+  if (subjectId === 'grammar') {
+    return `Grammar: ${snapshot.trackedConcepts ?? 0}/${snapshot.totalConcepts ?? 0} concepts`;
+  }
+  return `Spelling: ${snapshot.trackedWords ?? 0}/${snapshot.totalPublishedWords ?? 0} words`;
+}
+
 export function ParentHubSurface({ appState, model, hubState = {}, accessContext = {}, actions }) {
   const loadingRemote = accessContext?.shellAccess?.source === 'worker-session' && hubState.status === 'loading' && !model;
   if (loadingRemote) {
@@ -58,7 +71,10 @@ export function ParentHubSurface({ appState, model, hubState = {}, accessContext
   const strengths = Array.isArray(model.strengths) ? model.strengths : [];
   const weaknesses = Array.isArray(model.weaknesses) ? model.weaknesses : [];
   const patterns = Array.isArray(model.misconceptionPatterns) ? model.misconceptionPatterns : [];
-  const snapshot = Array.isArray(model.progressSnapshots) ? model.progressSnapshots[0] : null;
+  const progressSnapshots = Array.isArray(model.progressSnapshots) ? model.progressSnapshots : [];
+  const grammarDueConcepts = Number(overview.dueGrammarConcepts) || 0;
+  const grammarWeakConcepts = Number(overview.weakGrammarConcepts) || 0;
+  const grammarReviewConcepts = grammarDueConcepts + grammarWeakConcepts;
   const accessibleLearners = Array.isArray(model.accessibleLearners) ? model.accessibleLearners : [];
   const selectedLearnerId = model.selectedLearnerId || model.learner?.id || '';
   const notice = hubState.notice || accessContext.adultSurfaceNotice || '';
@@ -99,9 +115,12 @@ export function ParentHubSurface({ appState, model, hubState = {}, accessContext
           <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Current picture</h3>
           <div className="stat-grid" style={{ marginTop: 16 }}>
             <div className="stat"><div className="stat-label">Secure words</div><div className="stat-value">{overview.secureWords ?? 0}</div><div className="stat-sub">Spelling snapshot</div></div>
-            <div className="stat"><div className="stat-label">Due now</div><div className="stat-value">{overview.dueWords ?? 0}</div><div className="stat-sub">Needs spaced return</div></div>
-            <div className="stat"><div className="stat-label">Trouble load</div><div className="stat-value">{overview.troubleWords ?? 0}</div><div className="stat-sub">Recent difficulty</div></div>
-            <div className="stat"><div className="stat-label">Accuracy</div><div className="stat-value">{overview.accuracyPercent == null ? '—' : `${overview.accuracyPercent}%`}</div><div className="stat-sub">Across durable progress</div></div>
+            <div className="stat"><div className="stat-label">Due words</div><div className="stat-value">{overview.dueWords ?? 0}</div><div className="stat-sub">Spelling return</div></div>
+            <div className="stat"><div className="stat-label">Trouble words</div><div className="stat-value">{overview.troubleWords ?? 0}</div><div className="stat-sub">Recent spelling mistakes</div></div>
+            <div className="stat"><div className="stat-label">Spelling accuracy</div><div className="stat-value">{overview.accuracyPercent == null ? '—' : `${overview.accuracyPercent}%`}</div><div className="stat-sub">Durable word progress</div></div>
+            <div className="stat"><div className="stat-label">Grammar secured</div><div className="stat-value">{overview.secureGrammarConcepts ?? 0}</div><div className="stat-sub">Concepts secure</div></div>
+            <div className="stat"><div className="stat-label">Grammar review</div><div className="stat-value">{grammarReviewConcepts}</div><div className="stat-sub">{grammarDueConcepts} due · {grammarWeakConcepts} weak</div></div>
+            <div className="stat"><div className="stat-label">Grammar accuracy</div><div className="stat-value">{overview.grammarAccuracyPercent == null ? '—' : `${overview.grammarAccuracyPercent}%`}</div><div className="stat-sub">Concept evidence</div></div>
           </div>
           <div className="callout" style={{ marginTop: 16 }}>
             <strong>Current focus</strong>
@@ -118,9 +137,9 @@ export function ParentHubSurface({ appState, model, hubState = {}, accessContext
           <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Portable recovery points</h3>
           <p className="subtitle">Parent Hub only surfaces export entry points. It does not invent a separate reporting store.</p>
           <div className="chip-row" style={{ marginTop: 14 }}>
-            <span className="chip">Tracked: {snapshot?.trackedWords ?? 0}</span>
-            <span className="chip">Published pool: {snapshot?.totalPublishedWords ?? 0}</span>
-            <span className="chip">Subject: spelling</span>
+            {progressSnapshots.length ? progressSnapshots.map((snapshot, index) => (
+              <span className="chip" key={`${snapshotSubjectId(snapshot)}-${index}`}>{snapshotChipLabel(snapshot)}</span>
+            )) : <span className="chip">No subject snapshot</span>}
           </div>
           <div className="actions" style={{ marginTop: 16 }}>
             {(model.exportEntryPoints || []).map((entry) => (

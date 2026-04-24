@@ -118,6 +118,135 @@ function statsFromConcepts(concepts) {
   };
 }
 
+function asTs(value, fallback = 0) {
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+  }
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric >= 0 ? numeric : fallback;
+}
+
+function accuracyPercent(correct, wrong) {
+  const total = Math.max(0, Number(correct) || 0) + Math.max(0, Number(wrong) || 0);
+  if (!total) return null;
+  return Math.round((Math.max(0, Number(correct) || 0) / total) * 100);
+}
+
+function humanLabel(id) {
+  return String(id || '')
+    .replace(/_confusion$/, '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function progressSnapshotFromConcepts(concepts) {
+  const correct = concepts.reduce((sum, concept) => sum + (Number(concept.correct) || 0), 0);
+  const wrong = concepts.reduce((sum, concept) => sum + (Number(concept.wrong) || 0), 0);
+  return {
+    subjectId: 'grammar',
+    totalConcepts: concepts.length,
+    trackedConcepts: concepts.filter((concept) => (Number(concept.attempts) || 0) > 0).length,
+    securedConcepts: concepts.filter((concept) => concept.status === 'secured').length,
+    dueConcepts: concepts.filter((concept) => concept.status === 'due').length,
+    weakConcepts: concepts.filter((concept) => concept.status === 'weak').length,
+    untouchedConcepts: concepts.filter((concept) => concept.status === 'new').length,
+    accuracyPercent: accuracyPercent(correct, wrong),
+  };
+}
+
+function misconceptionPatternsFromState(state) {
+  const misconceptions = isPlainObject(state?.misconceptions) ? state.misconceptions : {};
+  return Object.entries(misconceptions)
+    .map(([id, rawEntry]) => {
+      const entry = isPlainObject(rawEntry) ? rawEntry : {};
+      return {
+        subjectId: 'grammar',
+        id,
+        label: `${humanLabel(id)} pattern`,
+        count: Math.max(0, Math.floor(Number(entry.count) || 0)),
+        lastSeenAt: asTs(entry.lastSeenAt, 0),
+        source: 'grammar-state',
+      };
+    })
+    .filter((entry) => entry.count > 0)
+    .sort((a, b) => (b.count - a.count) || (b.lastSeenAt - a.lastSeenAt))
+    .slice(0, 5);
+}
+
+function questionTypeSummaryFromState(state, now) {
+  const questionTypes = isPlainObject(state?.mastery?.questionTypes) ? state.mastery.questionTypes : {};
+  return Object.entries(questionTypes)
+    .map(([id, rawNode]) => {
+      const node = rawNode || {};
+      const correct = Number(node.correct) || 0;
+      const wrong = Number(node.wrong) || 0;
+      const attempts = Number(node.attempts) || 0;
+      return {
+        subjectId: 'grammar',
+        id,
+        label: GRAMMAR_QUESTION_TYPES[id] || humanLabel(id),
+        status: grammarConceptStatus(node, now),
+        attempts,
+        correct,
+        wrong,
+        accuracyPercent: accuracyPercent(correct, wrong),
+        strength: Number.isFinite(Number(node.strength)) ? Number(node.strength) : 0.25,
+        dueAt: asTs(node.dueAt, 0),
+      };
+    })
+    .filter((entry) => entry.attempts > 0)
+    .sort((a, b) => {
+      const troubleDelta = (b.wrong - a.wrong) || (Number(a.accuracyPercent ?? 101) - Number(b.accuracyPercent ?? 101));
+      if (troubleDelta) return troubleDelta;
+      return String(a.label).localeCompare(String(b.label));
+    })
+    .slice(0, 6);
+}
+
+function recentActivityFromAttempts(attempts = []) {
+  return (Array.isArray(attempts) ? attempts : [])
+    .slice(-8)
+    .reverse()
+    .map((attempt) => {
+      const result = isPlainObject(attempt?.result) ? attempt.result : {};
+      return {
+        subjectId: 'grammar',
+        templateId: typeof attempt?.templateId === 'string' ? attempt.templateId : '',
+        itemId: typeof attempt?.itemId === 'string' ? attempt.itemId : '',
+        questionType: typeof attempt?.questionType === 'string' ? attempt.questionType : '',
+        questionTypeLabel: GRAMMAR_QUESTION_TYPES[attempt?.questionType] || humanLabel(attempt?.questionType),
+        conceptIds: Array.isArray(attempt?.conceptIds) ? attempt.conceptIds.filter(Boolean).map(String) : [],
+        correct: Boolean(result.correct),
+        score: Number(result.score) || 0,
+        maxScore: Number(result.maxScore) || 1,
+        misconception: typeof result.misconception === 'string' ? result.misconception : '',
+        createdAt: asTs(attempt?.createdAt, 0),
+      };
+    });
+}
+
+function evidenceSummary({ concepts, patterns }) {
+  const snapshot = progressSnapshotFromConcepts(concepts);
+  return [
+    {
+      id: 'retrieval',
+      label: 'Retrieval evidence',
+      detail: `${snapshot.trackedConcepts}/${snapshot.totalConcepts} concepts have answer evidence.`,
+    },
+    {
+      id: 'spacing',
+      label: 'Spaced review',
+      detail: `${snapshot.dueConcepts} due · ${snapshot.weakConcepts} weak · ${snapshot.untouchedConcepts} untouched.`,
+    },
+    {
+      id: 'misconceptions',
+      label: 'Misconception repair',
+      detail: patterns.length ? `${patterns[0].label} is the strongest current signal.` : 'No recurring misconception pattern recorded yet.',
+    },
+  ];
+}
+
 function capabilityMetadata() {
   const labels = {
     learn: 'Learn a concept',
@@ -143,6 +272,8 @@ export function buildGrammarReadModel({
 } = {}) {
   const safeState = cloneSerialisable(state) || {};
   const concepts = conceptMap(safeState, now);
+  const misconceptionPatterns = misconceptionPatternsFromState(safeState);
+  const recentAttempts = Array.isArray(safeState.recentAttempts) ? safeState.recentAttempts.slice(-12).map(cloneSerialisable) : [];
   return {
     subjectId: 'grammar',
     learnerId,
@@ -166,7 +297,12 @@ export function buildGrammarReadModel({
     analytics: {
       concepts,
       misconceptionCounts: isPlainObject(safeState.misconceptions) ? cloneSerialisable(safeState.misconceptions) : {},
-      recentAttempts: Array.isArray(safeState.recentAttempts) ? safeState.recentAttempts.slice(-12).map(cloneSerialisable) : [],
+      misconceptionPatterns,
+      questionTypeSummary: questionTypeSummaryFromState(safeState, now),
+      progressSnapshot: progressSnapshotFromConcepts(concepts),
+      evidenceSummary: evidenceSummary({ concepts, patterns: misconceptionPatterns }),
+      recentAttempts,
+      recentActivity: recentActivityFromAttempts(recentAttempts),
     },
     capabilities: capabilityMetadata(),
     projections: projections ? cloneSerialisable(projections) : null,

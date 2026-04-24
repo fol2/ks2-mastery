@@ -136,6 +136,44 @@ test('Grammar command route persists subject state, practice session, and events
   DB.close();
 });
 
+test('Grammar read model exposes evidence analytics for misconceptions and question types', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'fronted_adverbial_choose');
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-evidence-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+
+  const submit = await postCommand(app, DB, {
+    command: 'submit-answer',
+    learnerId: 'learner-a',
+    requestId: 'grammar-evidence-submit',
+    expectedLearnerRevision: 1,
+    payload: { response: { answer: sample.sample.inputSpec.options[0].value } },
+  });
+
+  assert.equal(submit.response.status, 200, JSON.stringify(submit.body));
+  assert.equal(submit.body.subjectReadModel.analytics.progressSnapshot.trackedConcepts, 1);
+  assert.equal(submit.body.subjectReadModel.analytics.misconceptionPatterns[0].id, 'fronted_adverbial_confusion');
+  assert.equal(submit.body.subjectReadModel.analytics.questionTypeSummary[0].id, 'choose');
+  assert.equal(submit.body.subjectReadModel.analytics.questionTypeSummary[0].wrong, 1);
+  assert.equal(submit.body.subjectReadModel.analytics.recentActivity[0].misconception, 'fronted_adverbial_confusion');
+
+  DB.close();
+});
+
 test('Grammar concept-secured events project monster rewards atomically', async () => {
   const DB = createMigratedSqliteD1Database();
   const now = 1_777_000_000_000;

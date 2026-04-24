@@ -143,6 +143,86 @@ test('Grammar monster progress rehydrates from persisted Codex state after reloa
   assert.match(html, /1\/18 Codex/);
 });
 
+test('Grammar analytics renders evidence before reward progress', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData({ answer: sample.sample.inputSpec.options[0].value }),
+  });
+  harness.dispatch('grammar-continue');
+
+  const html = harness.render();
+
+  assert.match(html, /Misconception repair/);
+  assert.match(html, /Fronted Adverbial pattern/);
+  assert.match(html, /Question-type evidence/);
+  assert.match(html, /Choose the correct sentence/);
+});
+
+test('Grammar analytics renders normalised recent activity before raw attempts', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.store.updateSubjectUi('grammar', normaliseGrammarReadModel({
+    phase: 'dashboard',
+    analytics: {
+      recentActivity: [{
+        templateId: 'question_mark_select',
+        questionTypeLabel: 'Choose punctuation',
+        correct: true,
+        score: 1,
+        maxScore: 1,
+      }],
+      recentAttempts: [{
+        templateId: 'legacy_wrong_attempt',
+        result: { correct: false, score: 0, maxScore: 1 },
+      }],
+    },
+  }, learnerId));
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+
+  const html = harness.render();
+
+  assert.match(html, /Choose punctuation/);
+  assert.match(html, /correct · score 1\/1/);
+  assert.doesNotMatch(html, /legacy_wrong_attempt/);
+  assert.doesNotMatch(html, /review · score 0\/1/);
+});
+
+test('Grammar analytics falls back to legacy recent attempt result payloads', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.store.updateSubjectUi('grammar', normaliseGrammarReadModel({
+    phase: 'dashboard',
+    analytics: {
+      recentAttempts: [{
+        templateId: 'legacy_correct_attempt',
+        result: { correct: true, score: 1, maxScore: 1 },
+      }],
+    },
+  }, learnerId));
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+
+  const html = harness.render();
+
+  assert.match(html, /legacy_correct_attempt/);
+  assert.match(html, /correct · score 1\/1/);
+  assert.doesNotMatch(html, /review · score 0\/1/);
+});
+
 test('Grammar command responses are pinned to the learner that sent them', async () => {
   let resolveCommand;
   const toasts = [];
@@ -238,6 +318,22 @@ test('Grammar normaliser preserves Worker concept copy over client placeholders'
   assert.equal(clauses.summary, 'Worker-authored concept summary.');
   assert.equal(clauses.punctuationForGrammar, false);
   assert.equal(clauses.attempts, 3);
+});
+
+test('Grammar normaliser parses ISO misconception timestamps in fallback patterns', () => {
+  const isoTimestamp = '2026-04-24T10:00:00.000Z';
+  const grammar = normaliseGrammarReadModel({
+    analytics: {
+      misconceptionCounts: {
+        fronted_adverbial_confusion: {
+          count: 2,
+          lastSeenAt: isoTimestamp,
+        },
+      },
+    },
+  });
+
+  assert.equal(grammar.analytics.misconceptionPatterns[0].lastSeenAt, Date.parse(isoTimestamp));
 });
 
 test('Grammar locked future modes render unavailable without dispatching commands', () => {
