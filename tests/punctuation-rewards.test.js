@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import {
+  createPunctuationMasteryKey,
+  PUNCTUATION_RELEASE_ID,
+} from '../shared/punctuation/content.js';
 import { PUNCTUATION_EVENT_TYPES } from '../shared/punctuation/events.js';
 import { rewardEventsFromPunctuationEvents } from '../src/subjects/punctuation/event-hooks.js';
 import {
@@ -33,15 +37,19 @@ function makeRepository(initialState = {}) {
   };
 }
 
+function masteryKey(clusterId, rewardUnitId) {
+  return createPunctuationMasteryKey({ clusterId, rewardUnitId });
+}
+
 const endmarkEvent = Object.freeze({
   id: 'punctuation.unit-secured:learner-a:r1:endmarks',
   type: PUNCTUATION_EVENT_TYPES.UNIT_SECURED,
   subjectId: 'punctuation',
   learnerId: 'learner-a',
-  releaseId: 'punctuation-r1-endmarks-apostrophe-speech',
+  releaseId: PUNCTUATION_RELEASE_ID,
   clusterId: 'endmarks',
   rewardUnitId: 'sentence-endings-core',
-  masteryKey: 'punctuation:punctuation-r1-endmarks-apostrophe-speech:endmarks:sentence-endings-core',
+  masteryKey: masteryKey('endmarks', 'sentence-endings-core'),
   createdAt: 1,
 });
 
@@ -70,30 +78,50 @@ test('Apostrophe cluster reaches stage 4 when all published units are secure', (
   const repository = makeRepository();
   recordPunctuationRewardUnitMastery({
     learnerId: 'learner-a',
-    releaseId: 'punctuation-r1-endmarks-apostrophe-speech',
+    releaseId: PUNCTUATION_RELEASE_ID,
     clusterId: 'apostrophe',
     rewardUnitId: 'apostrophe-contractions-core',
-    masteryKey: 'punctuation:punctuation-r1-endmarks-apostrophe-speech:apostrophe:apostrophe-contractions-core',
+    masteryKey: masteryKey('apostrophe', 'apostrophe-contractions-core'),
     monsterId: 'claspin',
     publishedTotal: 2,
-    aggregatePublishedTotal: 4,
+    aggregatePublishedTotal: 7,
     gameStateRepository: repository,
     random: () => 0,
   });
   recordPunctuationRewardUnitMastery({
     learnerId: 'learner-a',
-    releaseId: 'punctuation-r1-endmarks-apostrophe-speech',
+    releaseId: PUNCTUATION_RELEASE_ID,
     clusterId: 'apostrophe',
     rewardUnitId: 'apostrophe-possession-core',
-    masteryKey: 'punctuation:punctuation-r1-endmarks-apostrophe-speech:apostrophe:apostrophe-possession-core',
+    masteryKey: masteryKey('apostrophe', 'apostrophe-possession-core'),
     monsterId: 'claspin',
     publishedTotal: 2,
-    aggregatePublishedTotal: 4,
+    aggregatePublishedTotal: 7,
     gameStateRepository: repository,
     random: () => 0,
   });
 
   assert.equal(progressForPunctuationMonster(repository.state(), 'claspin', { publishedTotal: 2 }).stage, 4);
+});
+
+test('Comma / Flow cluster reaches stage 4 when all published units are secure', () => {
+  const repository = makeRepository();
+  for (const rewardUnitId of ['list-commas-core', 'fronted-adverbials-core', 'comma-clarity-core']) {
+    recordPunctuationRewardUnitMastery({
+      learnerId: 'learner-a',
+      releaseId: PUNCTUATION_RELEASE_ID,
+      clusterId: 'comma_flow',
+      rewardUnitId,
+      masteryKey: masteryKey('comma_flow', rewardUnitId),
+      monsterId: 'curlune',
+      publishedTotal: 3,
+      aggregatePublishedTotal: 7,
+      gameStateRepository: repository,
+      random: () => 0,
+    });
+  }
+
+  assert.equal(progressForPunctuationMonster(repository.state(), 'curlune', { publishedTotal: 3 }).stage, 4);
 });
 
 test('published-release aggregate reaches stage 4 only for current published denominator', () => {
@@ -103,22 +131,25 @@ test('published-release aggregate reaches stage 4 only for current published den
     ['apostrophe', 'apostrophe-contractions-core', 'claspin', 2],
     ['apostrophe', 'apostrophe-possession-core', 'claspin', 2],
     ['speech', 'speech-core', 'quoral', 1],
+    ['comma_flow', 'list-commas-core', 'curlune', 3],
+    ['comma_flow', 'fronted-adverbials-core', 'curlune', 3],
+    ['comma_flow', 'comma-clarity-core', 'curlune', 3],
   ]) {
     recordPunctuationRewardUnitMastery({
       learnerId: 'learner-a',
-      releaseId: 'punctuation-r1-endmarks-apostrophe-speech',
+      releaseId: PUNCTUATION_RELEASE_ID,
       clusterId,
       rewardUnitId,
-      masteryKey: `punctuation:punctuation-r1-endmarks-apostrophe-speech:${clusterId}:${rewardUnitId}`,
+      masteryKey: masteryKey(clusterId, rewardUnitId),
       monsterId,
       publishedTotal,
-      aggregatePublishedTotal: 4,
+      aggregatePublishedTotal: 7,
       gameStateRepository: repository,
       random: () => 0,
     });
   }
-  const carillon = progressForPunctuationMonster(repository.state(), 'carillon', { publishedTotal: 4 });
-  assert.equal(carillon.mastered, 4);
+  const carillon = progressForPunctuationMonster(repository.state(), 'carillon', { publishedTotal: 7 });
+  assert.equal(carillon.mastered, 7);
   assert.equal(carillon.stage, 4);
 });
 

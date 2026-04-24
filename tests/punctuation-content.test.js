@@ -8,6 +8,7 @@ import {
   createPunctuationMasteryKey,
   PUNCTUATION_CLUSTERS,
   PUNCTUATION_CONTENT_MANIFEST,
+  PUNCTUATION_RELEASE_ID,
   punctuationSkillReadiness,
   validatePunctuationManifest,
 } from '../shared/punctuation/content.js';
@@ -26,23 +27,27 @@ test('punctuation manifest exposes 14 atomic skills and one cluster owner per sk
   }
 });
 
-test('first published punctuation release is Endmarks, Apostrophe, and Speech only', () => {
+test('published punctuation release includes the hidden Comma / Flow expansion slice', () => {
   const indexes = createPunctuationContentIndexes();
-  assert.deepEqual(indexes.publishedClusterIds, ['endmarks', 'apostrophe', 'speech']);
+  assert.deepEqual(indexes.publishedClusterIds, ['endmarks', 'apostrophe', 'speech', 'comma_flow']);
   assert.deepEqual(indexes.publishedSkillIds, [
     'sentence_endings',
+    'list_commas',
     'apostrophe_contractions',
     'apostrophe_possession',
     'speech',
+    'fronted_adverbial',
+    'comma_clarity',
   ]);
+  assert.equal(indexes.publishedRewardUnits.length, 7);
   assert.equal(PUNCTUATION_CONTENT_MANIFEST.fullSkillCount, 14);
-  assert.match(PUNCTUATION_CONTENT_MANIFEST.publishedScopeCopy, /More KS2 punctuation skills remain planned/);
+  assert.match(PUNCTUATION_CONTENT_MANIFEST.publishedScopeCopy, /Structure and boundary punctuation remain planned/);
 });
 
 test('published reward mastery keys are release-scoped and stable when generator families expand', () => {
   const indexes = createPunctuationContentIndexes();
   const keysBefore = indexes.publishedRewardUnits.map((unit) => unit.masteryKey);
-  assert.equal(keysBefore.every((key) => key.startsWith('punctuation:punctuation-r1-endmarks-apostrophe-speech:')), true);
+  assert.equal(keysBefore.every((key) => key.startsWith(`punctuation:${PUNCTUATION_RELEASE_ID}:`)), true);
 
   const expanded = {
     ...PUNCTUATION_CONTENT_MANIFEST,
@@ -94,8 +99,16 @@ test('manifest validation rejects duplicate reward mastery keys and missing read
   assert.match(validatePunctuationManifest(missingTransfer).errors.join('\n'), /Published skill speech is missing readiness row constrained_transfer/);
 });
 
-test('first-slice published skills meet the content-readiness matrix', () => {
-  for (const skillId of ['sentence_endings', 'apostrophe_contractions', 'apostrophe_possession', 'speech']) {
+test('published skills meet the content-readiness matrix', () => {
+  for (const skillId of [
+    'sentence_endings',
+    'list_commas',
+    'apostrophe_contractions',
+    'apostrophe_possession',
+    'speech',
+    'fronted_adverbial',
+    'comma_clarity',
+  ]) {
     const readiness = punctuationSkillReadiness(skillId);
     assert.equal(readiness.complete, true, `${skillId} readiness should be complete`);
     assert.deepEqual(readiness.rows, [

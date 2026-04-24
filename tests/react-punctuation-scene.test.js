@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import { createAppHarness } from './helpers/app-harness.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
+import { PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
 import { SUBJECT_EXPOSURE_GATES } from '../src/platform/core/subject-availability.js';
 
 function createPunctuationHarness() {
@@ -69,5 +70,5 @@ test('punctuation React surface keeps server-only fields out of active HTML', ()
   const html = harness.render();
   assert.doesNotMatch(html, /speech\.punctuation_outside_quote/);
   assert.doesNotMatch(html, /sentence-endings-core/);
-  assert.doesNotMatch(html, /punctuation-r1-endmarks-apostrophe-speech/);
+  assert.equal(html.includes(PUNCTUATION_RELEASE_ID), false);
 });

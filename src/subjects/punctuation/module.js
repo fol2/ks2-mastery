@@ -19,7 +19,7 @@ function currentUi(context, learnerId) {
 export const punctuationModule = {
   id: 'punctuation',
   name: 'Punctuation',
-  blurb: 'Practise sentence endings, apostrophes and speech marks.',
+  blurb: 'Practise sentence endings, apostrophes, speech marks and commas.',
   accent: '#B8873F',
   accentSoft: '#F0E1C4',
   accentTint: '#F7EEDC',
@@ -37,7 +37,7 @@ export const punctuationModule = {
       pct: stats.publishedRewardUnits ? Math.round(((stats.securedRewardUnits || 0) / stats.publishedRewardUnits) * 100) : 0,
       due: stats.due || 0,
       streak: stats.securedRewardUnits || 0,
-      nextUp: stats.weak ? 'Repair weak punctuation' : stats.due ? 'Due review' : 'Endmarks, Apostrophe and Speech',
+      nextUp: stats.weak ? 'Repair weak punctuation' : stats.due ? 'Due review' : 'Endmarks, Apostrophe, Speech and Comma / Flow',
     };
   },
   handleAction(action, context) {

@@ -14,6 +14,7 @@ export const PUNCTUATION_MODES = Object.freeze([
   'endmarks',
   'apostrophe',
   'speech',
+  'comma_flow',
 ]);
 
 export const PUNCTUATION_ROUND_LENGTHS = Object.freeze(['1', '2', '3', '4', '6', '8', '12']);

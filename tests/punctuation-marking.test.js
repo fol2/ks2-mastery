@@ -87,6 +87,57 @@ test('endmarks and apostrophe marking handles exact answers and constrained tran
   assert.equal(missingToken.misconceptionTags.includes('apostrophe.possession_missing'), true);
 });
 
+test('comma list transfer requires preserved items and KS2 list comma placement', () => {
+  const correct = markPunctuationAnswer({
+    item: item('lc_transfer_trip'),
+    answer: { typed: 'For the trip, we packed torches, maps and water.' },
+  });
+  assert.equal(correct.correct, true);
+  assert.deepEqual(correct.misconceptionTags, []);
+
+  const missingComma = markPunctuationAnswer({
+    item: item('lc_transfer_trip'),
+    answer: { typed: 'For the trip, we packed torches maps and water.' },
+  });
+  assert.equal(missingComma.correct, false);
+  assert.equal(missingComma.misconceptionTags.includes('comma.list_separator_missing'), true);
+
+  const finalComma = markPunctuationAnswer({
+    item: item('lc_transfer_trip'),
+    answer: { typed: 'For the trip, we packed torches, maps, and water.' },
+  });
+  assert.equal(finalComma.correct, false);
+  assert.equal(finalComma.misconceptionTags.includes('comma.unnecessary_final_comma'), true);
+});
+
+test('fronted adverbial and clarity transfers require the opening phrase comma', () => {
+  const fronted = markPunctuationAnswer({
+    item: item('fa_transfer_after_lunch'),
+    answer: { typed: 'After lunch, we practised our lines.' },
+  });
+  assert.equal(fronted.correct, true);
+
+  const missingFrontedComma = markPunctuationAnswer({
+    item: item('fa_transfer_after_lunch'),
+    answer: { typed: 'After lunch we practised our lines.' },
+  });
+  assert.equal(missingFrontedComma.correct, false);
+  assert.equal(missingFrontedComma.misconceptionTags.includes('comma.fronted_adverbial_missing'), true);
+
+  const clarity = markPunctuationAnswer({
+    item: item('cc_transfer_morning'),
+    answer: { typed: 'In the morning, the path was quiet.' },
+  });
+  assert.equal(clarity.correct, true);
+
+  const missingClarityComma = markPunctuationAnswer({
+    item: item('cc_transfer_morning'),
+    answer: { typed: 'In the morning the path was quiet.' },
+  });
+  assert.equal(missingClarityComma.correct, false);
+  assert.equal(missingClarityComma.misconceptionTags.includes('comma.clarity_missing'), true);
+});
+
 test('choice marking accepts integer indexes only without coercing malformed values', () => {
   const speechChoice = item('sp_choose_reporting_comma');
   assert.equal(markPunctuationAnswer({ item: speechChoice, answer: { choiceIndex: 0 } }).correct, true);

@@ -8,6 +8,8 @@ const FACET_LABELS = Object.freeze({
   reporting_clause: 'Reporting-clause comma',
   capitalisation: 'Capital letters',
   preservation: 'Target words preserved',
+  comma_placement: 'Comma placement',
+  terminal_punctuation: 'Terminal punctuation',
   unwanted_punctuation: 'No duplicated punctuation outside the quote',
 });
 
@@ -39,6 +41,10 @@ function stripPunctuation(value) {
     .replace(/[^a-z0-9]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function sentenceStartsWithCapital(text) {
@@ -156,6 +162,50 @@ function hasDuplicatedOutsidePunctuation(text, pair) {
   return /^[.?!]/.test(afterClosingQuote(text, pair));
 }
 
+function wordSequencePreserved(text, words = []) {
+  const clean = stripPunctuation(text);
+  let cursor = 0;
+  for (const word of words) {
+    const target = stripPunctuation(word);
+    if (!target) continue;
+    const index = clean.indexOf(target, cursor);
+    if (index < 0) return false;
+    cursor = index + target.length;
+  }
+  return true;
+}
+
+function listCommaPattern(words = [], { finalComma = false } = {}) {
+  const items = words.map((word) => normaliseAnswerText(word).toLowerCase()).filter(Boolean);
+  if (items.length < 2) return null;
+  const escaped = items.map(escapeRegExp);
+  let body = `\\b${escaped[0]}`;
+  for (let index = 1; index < escaped.length - 1; index += 1) {
+    body += `,\\s*${escaped[index]}`;
+  }
+  body += `${finalComma ? ',?' : ''}\\s+and\\s+${escaped[escaped.length - 1]}\\b`;
+  return new RegExp(body, 'i');
+}
+
+function listCommaOk(text, words = []) {
+  const clean = canonicalPunctuationText(text).toLowerCase();
+  const expected = listCommaPattern(words, { finalComma: false });
+  const withFinalComma = listCommaPattern(words, { finalComma: true });
+  const commaPlacement = expected ? expected.test(clean) : false;
+  return {
+    commaPlacement,
+    hasFinalComma: !commaPlacement && withFinalComma ? withFinalComma.test(clean) : false,
+  };
+}
+
+function itemTags(item) {
+  return Array.isArray(item?.misconceptionTags) ? [...item.misconceptionTags] : [];
+}
+
+function primaryCommaTag(item, fallback) {
+  return itemTags(item).find((tag) => tag.startsWith('comma.')) || fallback;
+}
+
 export function evaluateSpeechRubric(answer, rubric = {}) {
   const text = normaliseAnswerText(answer);
   const tags = [];
@@ -239,6 +289,59 @@ function markTransfer(item, answer) {
       facets: [
         facet('capitalisation', sentenceStartsWithCapital(text)),
         facet('speech_punctuation', sentenceEnds(text)),
+      ],
+    };
+  }
+
+  if (validator.type === 'requiresListCommas') {
+    const words = Array.isArray(validator.items) ? validator.items : [];
+    const wordsOk = words.length >= 2 && wordSequencePreserved(text, words);
+    const { commaPlacement, hasFinalComma } = listCommaOk(text, words);
+    const capitalOk = sentenceStartsWithCapital(text);
+    const terminalOk = sentenceEnds(text);
+    const correct = wordsOk && commaPlacement && capitalOk && terminalOk;
+    const tags = [];
+    if (!wordsOk) tags.push('comma.list_words_changed');
+    if (!commaPlacement) tags.push(hasFinalComma ? 'comma.unnecessary_final_comma' : 'comma.list_separator_missing');
+    if (!capitalOk) tags.push('comma.capitalisation_missing');
+    if (!terminalOk) tags.push('comma.terminal_missing');
+    return {
+      correct,
+      expected: item.model || '',
+      note: correct ? 'The list items are preserved and separated clearly.' : 'Keep the list items in order and add the list comma before the final and phrase.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('comma_placement', commaPlacement),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+      ],
+    };
+  }
+
+  if (validator.type === 'startsWithPhraseComma') {
+    const phrase = canonicalPunctuationText(validator.phrase || '');
+    const clean = canonicalPunctuationText(text);
+    const phraseOk = Boolean(phrase) && clean.toLowerCase().startsWith(phrase.toLowerCase());
+    const commaOk = Boolean(phrase) && clean.toLowerCase().startsWith(`${phrase.toLowerCase()},`);
+    const capitalOk = sentenceStartsWithCapital(text);
+    const terminalOk = sentenceEnds(text);
+    const correct = phraseOk && commaOk && capitalOk && terminalOk;
+    const tags = [];
+    if (!phraseOk) tags.push('comma.opening_phrase_changed');
+    if (phraseOk && !commaOk) tags.push(primaryCommaTag(item, 'comma.fronted_adverbial_missing'));
+    if (!capitalOk) tags.push('comma.capitalisation_missing');
+    if (!terminalOk) tags.push('comma.terminal_missing');
+    return {
+      correct,
+      expected: item.model || '',
+      note: correct ? 'The opening phrase is followed by a comma.' : `Begin with ${validator.phrase}, add the comma, and finish the sentence.`,
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', phraseOk),
+        facet('comma_placement', commaOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
       ],
     };
   }

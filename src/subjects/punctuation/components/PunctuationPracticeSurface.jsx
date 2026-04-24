@@ -19,17 +19,18 @@ function SetupView({ learner, stats, ui, actions }) {
         <div>
           <div className="eyebrow">Bellstorm Coast</div>
           <h2 className="section-title">Punctuation practice</h2>
-          <p className="subtitle">{content.publishedScopeCopy || 'This published Punctuation release covers Endmarks, Apostrophe and Speech.'}</p>
+          <p className="subtitle">{content.publishedScopeCopy || 'This published Punctuation release covers Endmarks, Apostrophe, Speech and Comma / Flow.'}</p>
         </div>
       </div>
       <div className="stat-grid" style={{ marginTop: 16 }}>
         <div className="stat"><div className="stat-label">Accuracy</div><div className="stat-value">{stats.accuracy || 0}%</div><div className="stat-sub">{learner}</div></div>
-        <div className="stat"><div className="stat-label">Secure units</div><div className="stat-value">{stats.securedRewardUnits || 0}</div><div className="stat-sub">{stats.publishedRewardUnits || 4} published</div></div>
+        <div className="stat"><div className="stat-label">Secure units</div><div className="stat-value">{stats.securedRewardUnits || 0}</div><div className="stat-sub">{stats.publishedRewardUnits || 7} published</div></div>
         <div className="stat"><div className="stat-label">Due</div><div className="stat-value">{stats.due || 0}</div><div className="stat-sub">Review items</div></div>
       </div>
       <div className="actions" style={{ marginTop: 16 }}>
         <button className="btn primary" type="button" data-punctuation-start onClick={() => actions.dispatch('punctuation-start')}>Start practice</button>
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'speech' })}>Speech focus</button>
+        <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'comma_flow' })}>Comma focus</button>
       </div>
     </section>
   );

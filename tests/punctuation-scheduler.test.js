@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  clusterModeForCluster,
   createMemoryState,
   memorySnapshot,
   selectPunctuationItem,
@@ -36,6 +37,21 @@ test('scheduler is deterministic under fixed state and random input', () => {
   const second = selectPunctuationItem(base);
   assert.deepEqual(first.item, second.item);
   assert.equal(first.item.mode, 'choose');
+});
+
+test('comma flow focus mode selects published comma cluster items only', () => {
+  const result = selectPunctuationItem({
+    progress: { items: {} },
+    session: { answeredCount: 0, recentItemIds: [] },
+    prefs: { mode: 'comma_flow' },
+    now: 0,
+    random: () => 0,
+  });
+
+  assert.equal(result.targetClusterId, 'comma_flow');
+  assert.equal(result.item.clusterId, 'comma_flow');
+  assert.equal(result.item.id, 'lc_choose_picnic');
+  assert.equal(clusterModeForCluster('comma_flow'), 'comma_flow');
 });
 
 test('scheduler keeps candidate windows bounded for expanded manifests', async () => {
