@@ -1864,6 +1864,14 @@ const SPELLING_COMMAND_ACTIONS = new Set([
   'spelling-drill-single',
 ]);
 
+const SPELLING_IN_FLIGHT_DEDUPE_COMMANDS = new Set([
+  'start-session',
+  'submit-answer',
+  'continue-session',
+  'skip-word',
+  'end-session',
+]);
+
 const SPELLING_UI_LOCAL_ACTIONS = new Set([
   'spelling-back',
   'spelling-replay',
@@ -1951,10 +1959,17 @@ const punctuationCommandActions = createSubjectCommandActionHandler({
 });
 
 function spellingCommandDedupeKey(command, appState = store.getState()) {
-  if (command !== 'continue-session') return '';
+  if (!SPELLING_IN_FLIGHT_DEDUPE_COMMANDS.has(command)) return '';
   const learnerId = appState.learners?.selectedId || '';
-  const sessionId = appState.subjectUi?.spelling?.session?.id || '';
-  return learnerId && sessionId ? `${command}:${learnerId}:${sessionId}` : '';
+  if (!learnerId) return '';
+  if (command === 'start-session') return `${command}:${learnerId}:setup`;
+  const session = appState.subjectUi?.spelling?.session || {};
+  const sessionId = session.id || '';
+  if (!sessionId) return '';
+  const currentSlug = session.currentSlug || 'unknown';
+  const phase = session.phase || 'unknown';
+  const promptCount = Number.isFinite(Number(session.promptCount)) ? Number(session.promptCount) : 0;
+  return `${command}:${learnerId}:${sessionId}:${currentSlug}:${phase}:${promptCount}`;
 }
 
 function wordBankAnalyticsFromState(appState = store.getState()) {
