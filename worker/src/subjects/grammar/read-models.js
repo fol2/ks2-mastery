@@ -253,7 +253,7 @@ function capabilityMetadata() {
     smart: { label: 'Smart mixed review', detail: 'Worker-selected review across Grammar concepts.' },
     satsset: { label: 'KS2-style mini-set', detail: 'A short mixed set with SATs-friendly question shapes.' },
     trouble: { label: 'Weak concepts drill', detail: 'Targets the weakest Grammar concepts with retry pressure.' },
-    surgery: { label: 'Sentence surgery' },
+    surgery: { label: 'Sentence surgery', detail: 'Fix and rewrite sentence-level Grammar errors.' },
     builder: { label: 'Sentence builder' },
     worked: { label: 'Worked examples' },
     faded: { label: 'Faded guidance' },

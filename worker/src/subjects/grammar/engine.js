@@ -20,8 +20,8 @@ const DEFAULT_MINI_SET_LENGTH = 8;
 const SHORT_RESPONSE_TEXT_LIMIT = 512;
 const LONG_RESPONSE_TEXT_LIMIT = 2000;
 const LIST_RESPONSE_LIMIT = 40;
-const ENABLED_MODES = new Set(['learn', 'smart', 'satsset', 'trouble']);
-const LOCKED_MODES = Object.freeze(['surgery', 'builder', 'worked', 'faded']);
+const ENABLED_MODES = new Set(['learn', 'smart', 'satsset', 'trouble', 'surgery']);
+const LOCKED_MODES = Object.freeze(['builder', 'worked', 'faded']);
 const GRAMMAR_CONCEPT_IDS = new Set(GRAMMAR_CONCEPTS.map((concept) => concept.id));
 
 function isPlainObject(value) {
@@ -396,17 +396,24 @@ function enqueueRetry(state, item, result, nowTs) {
     .slice(0, 120);
 }
 
-function templateFits(template, { mode, focusConceptId } = {}) {
+function templateFitsMode(template, mode) {
   if (!template) return false;
   if (mode === 'satsset' && !template.satsFriendly) return false;
+  if (mode === 'surgery' && !(template.tags || []).includes('surgery')) return false;
+  return true;
+}
+
+function templateFits(template, { mode, focusConceptId } = {}) {
+  if (!templateFitsMode(template, mode)) return false;
   if (focusConceptId && !(template.skillIds || []).includes(focusConceptId)) return false;
   return true;
 }
 
 function weightedTemplatePick(state, { mode, focusConceptId, seed, nowTs = Date.now() }) {
   const rng = seededRandom(seed);
-  const candidates = GRAMMAR_TEMPLATE_METADATA.filter((template) => templateFits(template, { mode, focusConceptId }));
-  const pool = candidates.length ? candidates : GRAMMAR_TEMPLATE_METADATA;
+  const modeCandidates = GRAMMAR_TEMPLATE_METADATA.filter((template) => templateFitsMode(template, mode));
+  const candidates = modeCandidates.filter((template) => templateFits(template, { mode, focusConceptId }));
+  const pool = candidates.length ? candidates : (modeCandidates.length ? modeCandidates : GRAMMAR_TEMPLATE_METADATA);
   const weighted = pool.map((template) => {
     const conceptNodes = template.skillIds.map((id) => state.mastery.concepts[id] || defaultMasteryNode());
     const averageStrength = conceptNodes.reduce((sum, node) => sum + (Number(node.strength) || 0.25), 0) / Math.max(1, conceptNodes.length);
@@ -459,6 +466,15 @@ function nextItem(state, { mode, focusConceptId, seed, templateId = '', nowTs = 
         templateId,
       });
     }
+    if (!templateFits(template, { mode, focusConceptId })) {
+      throw new BadRequestError('Grammar template is not available for this Grammar mode or focus concept.', {
+        code: 'grammar_template_unavailable_for_mode',
+        subjectId: SUBJECT_ID,
+        mode,
+        focusConceptId,
+        templateId,
+      });
+    }
     return itemFromTemplate(template, seed);
   }
   const retry = takeDueRetry(state, { mode, focusConceptId, nowTs });
@@ -489,6 +505,7 @@ function weakestConceptIdForTrouble(state, nowTs) {
 function normaliseMode(value) {
   const mode = String(value || 'smart').trim().toLowerCase().replace(/[\s_]+/g, '-');
   if (mode === 'mini-set' || mode === 'mini' || mode === 'test') return 'satsset';
+  if (mode === 'sentence-surgery') return 'surgery';
   return mode || 'smart';
 }
 
@@ -565,23 +582,30 @@ export function buildGrammarMiniSet({ size = DEFAULT_MINI_SET_LENGTH, focusConce
 
 function startSession(state, payload, nowTs, learnerId) {
   const mode = supportedModeOrThrow(normaliseMode(payload.mode || state.prefs.mode));
+  const templateId = typeof payload.templateId === 'string' ? payload.templateId : '';
   const hasPayloadFocusConcept = typeof payload.focusConceptId === 'string' || typeof payload.skillId === 'string';
   const requestedFocusConceptId = typeof payload.focusConceptId === 'string'
     ? payload.focusConceptId
     : (typeof payload.skillId === 'string' ? payload.skillId : '');
-  const focusConceptId = hasPayloadFocusConcept
-    ? requestedFocusConceptId
-    : (mode === 'trouble' ? '' : normaliseStoredFocusConceptId(state.prefs.focusConceptId));
-  if (focusConceptId && !isGrammarConceptId(focusConceptId)) {
+  const storedFocusConceptId = normaliseStoredFocusConceptId(state.prefs.focusConceptId);
+  const prefsFocusConceptId = mode === 'surgery'
+    ? ''
+    : (hasPayloadFocusConcept
+      ? requestedFocusConceptId
+      : (mode === 'trouble' ? '' : storedFocusConceptId));
+  const sessionRequestedFocusConceptId = templateId && !hasPayloadFocusConcept
+    ? ''
+    : prefsFocusConceptId;
+  if (prefsFocusConceptId && !isGrammarConceptId(prefsFocusConceptId)) {
     throw new BadRequestError('Grammar concept is not available.', {
       code: 'grammar_concept_not_found',
       subjectId: SUBJECT_ID,
-      conceptId: focusConceptId,
+      conceptId: prefsFocusConceptId,
     });
   }
-  const sessionFocusConceptId = mode === 'trouble' && !focusConceptId
+  const sessionFocusConceptId = mode === 'trouble' && !sessionRequestedFocusConceptId
     ? weakestConceptIdForTrouble(state, nowTs)
-    : focusConceptId;
+    : sessionRequestedFocusConceptId;
   const roundLength = roundLengthFor(mode, payload, state.prefs);
   const baseSeed = Number.isFinite(Number(payload.seed))
     ? Number(payload.seed)
@@ -598,7 +622,7 @@ function startSession(state, payload, nowTs, learnerId) {
     focusConceptId: sessionFocusConceptId,
     seed: baseSeed,
     nowTs,
-    templateId: typeof payload.templateId === 'string' ? payload.templateId : '',
+    templateId,
   });
   state.phase = 'session';
   state.awaitingAdvance = false;
@@ -609,11 +633,13 @@ function startSession(state, payload, nowTs, learnerId) {
     ...state.prefs,
     mode,
     roundLength,
-    focusConceptId,
+    focusConceptId: prefsFocusConceptId,
   };
   state.session = {
     id: sessionId,
-    type: mode === 'satsset' ? 'mini-set' : (mode === 'trouble' ? 'trouble-drill' : 'practice'),
+    type: mode === 'satsset'
+      ? 'mini-set'
+      : (mode === 'trouble' ? 'trouble-drill' : (mode === 'surgery' ? 'sentence-surgery' : 'practice')),
     mode,
     focusConceptId: sessionFocusConceptId,
     startedAt: nowTs,
@@ -875,7 +901,7 @@ function savePrefs(state, payload) {
   const prefs = isPlainObject(payload.prefs) ? payload.prefs : payload;
   const nextMode = prefs.mode ? normaliseMode(prefs.mode) : state.prefs.mode;
   const hasFocusConcept = Object.prototype.hasOwnProperty.call(prefs, 'focusConceptId');
-  const nextFocusConceptId = nextMode === 'trouble'
+  const nextFocusConceptId = nextMode === 'trouble' || nextMode === 'surgery'
     ? ''
     : (hasFocusConcept
       ? normaliseStoredFocusConceptId(prefs.focusConceptId)

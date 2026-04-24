@@ -136,10 +136,10 @@ export const GRAMMAR_ENABLED_MODES = Object.freeze([
   { id: 'smart', label: 'Smart mixed review', detail: 'Worker-selected review across Grammar concepts.' },
   { id: 'satsset', label: 'KS2-style mini-set', detail: 'A short mixed set with SATs-friendly question shapes.' },
   { id: 'trouble', label: 'Weak concepts drill', detail: 'Targets the weakest Grammar concepts with retry pressure.' },
+  { id: 'surgery', label: 'Sentence surgery', detail: 'Fix and rewrite sentence-level Grammar errors.' },
 ]);
 
 export const GRAMMAR_LOCKED_MODES = Object.freeze([
-  { id: 'surgery', label: 'Sentence surgery', reason: 'coming-next' },
   { id: 'builder', label: 'Sentence builder', reason: 'coming-next' },
   { id: 'worked', label: 'Worked examples', reason: 'coming-next' },
   { id: 'faded', label: 'Faded guidance', reason: 'coming-next' },

@@ -363,6 +363,100 @@ test('Grammar save-prefs keeps trouble focus on automatic weakest selection', ()
   assert.equal(saved.state.prefs.focusConceptId, '');
 });
 
+test('Grammar sentence surgery mode only picks surgery templates', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'start-surgery',
+    payload: {
+      mode: 'surgery',
+      roundLength: 3,
+      seed: 42,
+    },
+  });
+  const template = GRAMMAR_TEMPLATE_METADATA.find((entry) => entry.id === start.state.session.currentItem.templateId);
+
+  assert.equal(start.state.phase, 'session');
+  assert.equal(start.state.session.mode, 'surgery');
+  assert.equal(start.state.session.type, 'sentence-surgery');
+  assert.equal(start.practiceSession.sessionKind, 'surgery');
+  assert.equal(template.tags.includes('surgery'), true);
+  assert.match(start.state.session.currentItem.questionType, /^(fix|rewrite)$/);
+});
+
+test('Grammar sentence surgery rejects explicit non-surgery templates', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+
+  assert.throws(() => engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'start-surgery-bypass',
+    payload: {
+      mode: 'surgery',
+      roundLength: 3,
+      seed: 42,
+      templateId: 'sentence_type_table',
+    },
+  }), (error) => error?.extra?.code === 'grammar_template_unavailable_for_mode');
+});
+
+test('Grammar explicit template starts ignore inherited focus prefs', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {
+      data: {
+        prefs: {
+          focusConceptId: 'word_classes',
+        },
+      },
+    },
+    command: 'start-session',
+    requestId: 'start-explicit-template-with-stored-focus',
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      seed: 42,
+      templateId: 'question_mark_select',
+    },
+  });
+
+  assert.equal(start.state.phase, 'session');
+  assert.equal(start.state.session.currentItem.templateId, 'question_mark_select');
+  assert.equal(start.state.session.focusConceptId, '');
+  assert.equal(start.state.prefs.focusConceptId, 'word_classes');
+});
+
+test('Grammar sentence surgery clears stored focus and stays inside the surgery pool', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {
+      data: {
+        prefs: {
+          focusConceptId: 'word_classes',
+        },
+      },
+    },
+    command: 'start-session',
+    requestId: 'start-surgery-focused',
+    payload: {
+      mode: 'surgery',
+      roundLength: 3,
+      seed: 77,
+    },
+  });
+  const template = GRAMMAR_TEMPLATE_METADATA.find((entry) => entry.id === start.state.session.currentItem.templateId);
+
+  assert.equal(start.state.session.mode, 'surgery');
+  assert.equal(start.state.session.focusConceptId, '');
+  assert.equal(start.state.prefs.focusConceptId, '');
+  assert.equal(template.tags.includes('surgery'), true);
+});
+
 test('Grammar save-prefs clears completed summary state', () => {
   const oracle = readGrammarLegacyOracle();
   const sample = oracle.templates.find((template) => template.id === 'question_mark_select');

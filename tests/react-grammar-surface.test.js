@@ -353,6 +353,8 @@ test('Grammar normaliser upgrades stale persisted mode capabilities', () => {
 
   assert.equal(grammar.capabilities.enabledModes.some((mode) => mode.id === 'trouble'), true);
   assert.equal(grammar.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
+  assert.equal(grammar.capabilities.enabledModes.some((mode) => mode.id === 'surgery'), true);
+  assert.equal(grammar.capabilities.lockedModes.some((mode) => mode.id === 'surgery'), false);
 });
 
 test('Grammar locked future modes render unavailable without dispatching commands', () => {
@@ -364,7 +366,9 @@ test('Grammar locked future modes render unavailable without dispatching command
 
   assert.match(html, /<button class="grammar-mode" type="button">[\s\S]*Weak concepts drill/);
   assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Weak concepts drill/);
-  assert.match(html, /Sentence surgery[\s\S]*Coming next/);
+  assert.match(html, /<button class="grammar-mode" type="button">[\s\S]*Sentence surgery/);
+  assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Sentence surgery/);
+  assert.match(html, /Sentence builder[\s\S]*Coming next/);
   assert.match(html, /button class="grammar-mode locked" type="button" disabled=""/);
 });
 
@@ -395,4 +399,59 @@ test('Grammar setup can start trouble drill mode', () => {
   assert.equal(grammar.phase, 'session');
   assert.equal(grammar.session.mode, 'trouble');
   assert.equal(grammar.session.type, 'trouble-drill');
+});
+
+test('Grammar setup can start sentence surgery mode', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-set-focus', { value: 'word_classes' });
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, 'word_classes');
+
+  harness.dispatch('grammar-set-mode', { value: 'surgery' });
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.mode, 'surgery');
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
+  assert.match(harness.render(), /<select class="input" disabled=""><option value="" selected="">Surgery mix<\/option>/);
+
+  harness.dispatch('grammar-set-focus', { value: 'word_classes' });
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
+
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      seed: 123,
+    },
+  });
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.mode, 'surgery');
+  assert.equal(grammar.session.type, 'sentence-surgery');
+  assert.equal(grammar.session.focusConceptId, '');
+  assert.match(grammar.session.currentItem.questionType, /^(fix|rewrite)$/);
+});
+
+test('Grammar explicit template starts ignore stored focus through the client wrapper', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('question_mark_select');
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-set-focus', { value: 'word_classes' });
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, 'word_classes');
+
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      seed: sample.sample.seed,
+      templateId: sample.id,
+    },
+  });
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.currentItem.templateId, sample.id);
+  assert.equal(grammar.session.focusConceptId, '');
+  assert.equal(grammar.prefs.focusConceptId, 'word_classes');
 });
