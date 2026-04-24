@@ -47,6 +47,23 @@ function masteredCount(entry) {
   return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
 }
 
+function hasMasteryProgress(entry) {
+  return masteredCount(entry) > 0 || entry?.caught === true;
+}
+
+function hasMonsterMasteryProgress(state) {
+  if (!isPlainObject(state)) return false;
+  return SPELLING_MONSTER_IDS.some((monsterId) => hasMasteryProgress(state[monsterId]));
+}
+
+function analyticsHasWordRows(analytics) {
+  const groups = Array.isArray(analytics?.wordGroups) ? analytics.wordGroups : [];
+  return groups.some((group) => {
+    const words = Array.isArray(group?.words) ? group.words : [];
+    return words.some((word) => typeof word?.slug === 'string' && word.slug);
+  });
+}
+
 function pickMonsterBranch(random = Math.random) {
   const raw = typeof random === 'function' ? Number(random()) : Math.random();
   const index = Math.max(0, Math.min(MONSTER_BRANCHES.length - 1, Math.floor((Number.isFinite(raw) ? raw : 0) * MONSTER_BRANCHES.length)));
@@ -231,6 +248,10 @@ export function recordMonsterMastery(learnerId, monsterId, wordSlug, gameStateRe
 
 export function monsterSummary(learnerId, gameStateRepository) {
   const state = ensureMonsterBranches(learnerId, gameStateRepository);
+  return monsterSummaryFromState(state);
+}
+
+export function monsterSummaryFromState(state = {}) {
   return SPELLING_MONSTER_IDS.map((monsterId) => ({
     monster: MONSTERS[monsterId],
     progress: progressForMonster(state, monsterId),
@@ -249,9 +270,11 @@ export function monsterSummaryFromSpellingAnalytics(analytics, {
       ? ensureMonsterBranches(learnerId, gameStateRepository, { random })
       : loadMonsterState(learnerId, gameStateRepository);
   }
+
+  if (!analyticsHasWordRows(analytics) && hasMonsterMasteryProgress(branchState)) {
+    return monsterSummaryFromState(branchState);
+  }
+
   const state = secureWordsFromAnalytics(analytics, branchState);
-  return SPELLING_MONSTER_IDS.map((monsterId) => ({
-    monster: MONSTERS[monsterId],
-    progress: progressForMonster(state, monsterId),
-  }));
+  return monsterSummaryFromState(state);
 }
