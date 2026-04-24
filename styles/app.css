@@ -371,8 +371,22 @@ textarea:focus-visible {
   padding: 14px;
 }
 .stat-label { color: var(--muted); font-size: 0.85rem; margin-bottom: 6px; }
-.stat-value { font-size: 1.5rem; font-weight: 900; line-height: 1; }
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.stat-value.is-counting {
+  color: var(--brand-ink);
+  animation: stat-count-settle 360ms var(--ease-out) both;
+}
 .stat-sub { color: var(--muted); font-size: 0.82rem; margin-top: 6px; }
+
+@keyframes stat-count-settle {
+  from { opacity: 0.74; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .subject-card {
   padding: 0;
@@ -5392,6 +5406,10 @@ textarea:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .stat-value.is-counting,
+  .wb-chip-count.is-counting {
+    animation: none;
+  }
   .wb-search, .wb-word-pill { transition: none; }
   .wb-word-pill:hover,
   .wb-word-pill:active { transform: none; }
@@ -5450,7 +5468,11 @@ textarea:focus-visible {
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   color: var(--muted);
+}
+.wb-chip-count.is-counting {
+  animation: stat-count-settle 320ms var(--ease-out) both;
 }
 .wb-chip.on .wb-chip-count {
   background: color-mix(in oklab, var(--brand) 18%, var(--panel));
