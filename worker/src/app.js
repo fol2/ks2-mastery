@@ -168,6 +168,15 @@ async function publicSourceAssetResponse(request, env = {}) {
   return new Response('Not found.', { status: 404, headers });
 }
 
+function isPublicSourceLockdownPath(pathname) {
+  return pathname.startsWith('/src/')
+    || pathname.startsWith('/worker/')
+    || pathname.startsWith('/tests/')
+    || pathname.startsWith('/docs/')
+    || pathname.startsWith('/legacy/')
+    || pathname === '/migration-plan.md';
+}
+
 export function createWorkerApp({
   now = Date.now,
   fetchFn = (...args) => fetch(...args),
@@ -179,7 +188,7 @@ export function createWorkerApp({
       const auth = createSessionAuthBoundary({ env });
 
       try {
-        if (url.pathname.startsWith('/src/')) {
+        if (isPublicSourceLockdownPath(url.pathname)) {
           return publicSourceAssetResponse(request, env);
         }
 
