@@ -288,10 +288,19 @@ test('platform TTS allows a one-off provider override for profile tests', async 
         url,
         body,
       });
-      if (body.cacheLookupOnly || body.cacheOnly) {
+      if (body.cacheLookupOnly) {
+        return new Response(new Blob([new Uint8Array([9, 8, 7])], { type: 'audio/mpeg' }), {
+          status: 200,
+          headers: {
+            'content-type': 'audio/mpeg',
+            'x-ks2-tts-cache': 'hit',
+          },
+        });
+      }
+      if (body.cacheOnly) {
         return new Response(null, {
           status: 204,
-          headers: { 'x-ks2-tts-cache': body.cacheLookupOnly ? 'miss' : 'stored' },
+          headers: { 'x-ks2-tts-cache': 'stored' },
         });
       }
       return new Response(new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/mpeg' }), {
@@ -313,24 +322,8 @@ test('platform TTS allows a one-off provider override for profile tests', async 
     });
 
     assert.equal(result, true);
-    assert.equal(calls.length, 3);
+    assert.equal(calls.length, 1);
     assert.deepEqual(calls[0].body, {
-      learnerId: 'learner-a',
-      promptToken: 'prompt-token-test',
-      slow: false,
-      provider: 'gemini',
-      bufferedGeminiVoice: 'Iapetus',
-      cacheLookupOnly: true,
-    });
-    assert.deepEqual(calls[1].body, {
-      learnerId: 'learner-a',
-      promptToken: 'prompt-token-test',
-      slow: false,
-      provider: 'gemini',
-      bufferedGeminiVoice: 'Iapetus',
-      cacheOnly: true,
-    });
-    assert.deepEqual(calls[2].body, {
       learnerId: 'learner-a',
       promptToken: 'prompt-token-test',
       slow: false,
@@ -342,6 +335,76 @@ test('platform TTS allows a one-off provider override for profile tests', async 
       ['loading', 'start'],
     );
     assert.equal(events.at(-1).type, 'end');
+  } finally {
+    tts.stop();
+    globalThis.Audio = originalAudio;
+    URL.createObjectURL = originalCreateObjectUrl;
+    URL.revokeObjectURL = originalRevokeObjectUrl;
+  }
+});
+
+test('platform TTS profile tests do not report cached audio as selected provider success', async () => {
+  const originalAudio = globalThis.Audio;
+  const originalCreateObjectUrl = URL.createObjectURL;
+  const originalRevokeObjectUrl = URL.revokeObjectURL;
+
+  globalThis.Audio = class MockAudio {
+    constructor(src) {
+      this.src = src;
+      this.onended = null;
+      this.onerror = null;
+    }
+
+    play() {
+      setTimeout(() => this.onended?.(), 0);
+      return Promise.resolve();
+    }
+
+    pause() {}
+    removeAttribute() {}
+    load() {}
+  };
+  URL.createObjectURL = () => 'blob:cached-gemini-audio';
+  URL.revokeObjectURL = () => {};
+
+  const calls = [];
+  const tts = createPlatformTts({
+    remoteEnabled: true,
+    provider: 'openai',
+    fetchFn: async (url, init = {}) => {
+      const body = JSON.parse(init.body);
+      calls.push({ url, body });
+      if (body.cacheLookupOnly) {
+        return new Response(new Blob([new Uint8Array([9, 8, 7])], { type: 'audio/mpeg' }), {
+          status: 200,
+          headers: {
+            'content-type': 'audio/mpeg',
+            'x-ks2-tts-cache': 'hit',
+          },
+        });
+      }
+      return new Response(JSON.stringify({ error: 'selected provider unavailable' }), { status: 503 });
+    },
+  });
+
+  try {
+    const result = await tts.speak({
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-test-failure',
+      word: 'early',
+      sentence: 'The birds sang early in the day.',
+      kind: 'test',
+    });
+
+    assert.equal(result, false);
+    assert.equal(calls.length, 1);
+    assert.deepEqual(calls[0].body, {
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-test-failure',
+      slow: false,
+      provider: 'openai',
+      bufferedGeminiVoice: 'Iapetus',
+    });
   } finally {
     tts.stop();
     globalThis.Audio = originalAudio;

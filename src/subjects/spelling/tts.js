@@ -73,6 +73,10 @@ function playbackKind({ kind = '', slow = false } = {}) {
   return explicit || (slow ? 'slow' : 'normal');
 }
 
+function isProviderTestPayload(payload = {}) {
+  return playbackKind(payload) === 'test';
+}
+
 function remotePromptRequest(payload = {}, providerId = DEFAULT_TTS_PROVIDER, bufferedVoiceId = DEFAULT_BUFFERED_GEMINI_VOICE) {
   const learnerId = typeof payload.learnerId === 'string' ? payload.learnerId : '';
   const promptToken = typeof payload.promptToken === 'string' ? payload.promptToken : '';
@@ -183,6 +187,7 @@ export function createPlatformTts({
   function prefetchBufferedAudio(payload = {}, providerId, bufferedVoiceId) {
     if (
       providerId === 'gemini'
+      || isProviderTestPayload(payload)
       || payload.wordOnly
       || !remoteEnabled
       || typeof fetchFn !== 'function'
@@ -304,7 +309,8 @@ export function createPlatformTts({
     const token = playbackId;
     const providerId = resolveProvider(payload.provider || provider);
     const bufferedVoiceId = resolveBufferedVoice(payload.bufferedGeminiVoice || bufferedVoice);
-    if (providerId !== 'gemini' && providerId !== 'browser') {
+    const providerTest = isProviderTestPayload(payload);
+    if (!providerTest && providerId !== 'gemini' && providerId !== 'browser') {
       const cached = await speakWithCachedBufferedAudio(payload, bufferedVoiceId, token);
       if (cached) return true;
       if (token !== playbackId) return false;
