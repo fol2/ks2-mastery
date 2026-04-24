@@ -83,8 +83,10 @@ test('worker subject runtime registers Grammar command handlers', async () => {
     'smart',
     'satsset',
     'trouble',
+    'surgery',
   ]);
   assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
+  assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'surgery'), false);
 });
 
 test('worker subject runtime starts Grammar trouble drills against weak concepts', async () => {
@@ -218,6 +220,98 @@ test('Grammar command route accepts trouble drill mode', async () => {
   assert.equal(start.body.subjectReadModel.session.mode, 'trouble');
   assert.equal(start.body.subjectReadModel.session.type, 'trouble-drill');
   assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
+
+  DB.close();
+});
+
+test('Grammar command route accepts sentence surgery mode', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-surgery-route-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'surgery',
+      roundLength: 2,
+      seed: 120,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  assert.equal(start.body.subjectReadModel.phase, 'session');
+  assert.equal(start.body.subjectReadModel.session.mode, 'surgery');
+  assert.equal(start.body.subjectReadModel.session.type, 'sentence-surgery');
+  assert.match(start.body.subjectReadModel.session.currentItem.questionType, /^(fix|rewrite)$/);
+  assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'surgery'), false);
+
+  DB.close();
+});
+
+test('Grammar command route rejects non-surgery template overrides in surgery mode', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-surgery-route-template-bypass',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'surgery',
+      roundLength: 2,
+      seed: 120,
+      templateId: 'sentence_type_table',
+    },
+  });
+
+  assert.equal(start.response.status, 400, JSON.stringify(start.body));
+  assert.equal(start.body.code, 'grammar_template_unavailable_for_mode');
+
+  DB.close();
+});
+
+test('Grammar command route starts explicit templates without inheriting stored focus', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'question_mark_select');
+  seedAccountLearner(DB);
+
+  const prefs = await postCommand(app, DB, {
+    command: 'save-prefs',
+    learnerId: 'learner-a',
+    requestId: 'grammar-explicit-template-focus-prefs',
+    expectedLearnerRevision: 0,
+    payload: {
+      prefs: {
+        focusConceptId: 'word_classes',
+      },
+    },
+  });
+  assert.equal(prefs.response.status, 200, JSON.stringify(prefs.body));
+  assert.equal(prefs.body.subjectReadModel.prefs.focusConceptId, 'word_classes');
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-explicit-template-start',
+    expectedLearnerRevision: 1,
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      seed: sample.sample.seed,
+      templateId: sample.id,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  assert.equal(start.body.subjectReadModel.session.currentItem.templateId, sample.id);
+  assert.equal(start.body.subjectReadModel.session.focusConceptId, '');
+  assert.equal(start.body.subjectReadModel.prefs.focusConceptId, 'word_classes');
 
   DB.close();
 });

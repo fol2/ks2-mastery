@@ -14,6 +14,16 @@ function selectedGrammarUi(context) {
   return normaliseGrammarReadModel(appState?.subjectUi?.[GRAMMAR_SUBJECT_ID], learnerId);
 }
 
+function grammarModeKey(value) {
+  const mode = String(value || '').trim().toLowerCase().replace(/[\s_]+/g, '-');
+  return mode === 'sentence-surgery' ? 'surgery' : mode;
+}
+
+function grammarModeUsesFocus(value) {
+  const mode = grammarModeKey(value);
+  return mode !== 'trouble' && mode !== 'surgery';
+}
+
 function updateGrammarUiForLearner(context, learnerId, updater) {
   if (!learnerId) return false;
   if (typeof context?.store?.updateSubjectUiForLearner === 'function') {
@@ -107,9 +117,10 @@ function grammarStartPayload(ui, data = {}) {
   if (Object.prototype.hasOwnProperty.call(data, 'focusConceptId')) {
     request.focusConceptId = data.focusConceptId;
   } else if (
-    String(mode).trim().toLowerCase() !== 'trouble'
+    grammarModeUsesFocus(mode)
     && !Object.prototype.hasOwnProperty.call(payload, 'focusConceptId')
     && !Object.prototype.hasOwnProperty.call(payload, 'skillId')
+    && !Object.prototype.hasOwnProperty.call(payload, 'templateId')
   ) {
     request.focusConceptId = prefs.focusConceptId || '';
   }
@@ -227,7 +238,7 @@ export const grammarModule = {
 
     if (action === 'grammar-set-mode') {
       const mode = context.data?.value || DEFAULT_GRAMMAR_PREFS.mode;
-      const patch = mode === 'trouble' ? { mode, focusConceptId: '' } : { mode };
+      const patch = grammarModeUsesFocus(mode) ? { mode } : { mode, focusConceptId: '' };
       if (service?.savePrefs) {
         const prefs = service.savePrefs(learnerId, patch);
         return resetToDashboardWithPrefs(context, prefs);
@@ -246,7 +257,7 @@ export const grammarModule = {
 
     if (action === 'grammar-set-focus') {
       const focusConceptId = context.data?.value || '';
-      if (ui.prefs?.mode === 'trouble') {
+      if (!grammarModeUsesFocus(ui.prefs?.mode)) {
         if (service?.savePrefs) {
           const prefs = service.savePrefs(learnerId, { focusConceptId: '' });
           return resetToDashboardWithPrefs(context, prefs);
