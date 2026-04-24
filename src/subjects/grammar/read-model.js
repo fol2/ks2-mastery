@@ -244,7 +244,7 @@ function currentGrammarFocus({ concepts, sessions, snapshot }) {
   if (weakConcepts.length) {
     return {
       subjectId: 'grammar',
-      recommendedMode: 'smart',
+      recommendedMode: 'trouble',
       label: 'Repair Grammar misconceptions',
       detail: `${weakConcepts[0].name} is the highest current Grammar load.`,
       dueCount: dueConcepts.length,

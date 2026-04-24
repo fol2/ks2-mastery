@@ -78,6 +78,66 @@ test('worker subject runtime registers Grammar command handlers', async () => {
   assert.equal(result.subjectReadModel.session.currentItem.templateId, 'fronted_adverbial_choose');
   assert.equal(result.subjectReadModel.session.currentItem.evaluate, undefined);
   assert.equal(result.subjectReadModel.session.currentItem.promptText.includes('<'), false);
+  assert.deepEqual(result.subjectReadModel.capabilities.enabledModes.map((mode) => mode.id), [
+    'learn',
+    'smart',
+    'satsset',
+    'trouble',
+  ]);
+  assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
+});
+
+test('worker subject runtime starts Grammar trouble drills against weak concepts', async () => {
+  const runtime = createWorkerSubjectRuntime({
+    grammar: { now: () => 1_777_000_000_000 },
+  });
+  const result = await runtime.dispatch({
+    subjectId: 'grammar',
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-trouble-start',
+    correlationId: 'grammar-trouble-start',
+    expectedLearnerRevision: 0,
+    payload: { mode: 'trouble', roundLength: 2, seed: 77 },
+  }, {
+    session: { accountId: 'adult-a' },
+    now: 1_777_000_000_000,
+    repository: {
+      async readSubjectRuntime(accountId, learnerId, subjectId) {
+        assert.equal(accountId, 'adult-a');
+        assert.equal(learnerId, 'learner-a');
+        assert.equal(subjectId, 'grammar');
+        return {
+          subjectRecord: {
+            ui: null,
+            data: {
+              mastery: {
+                concepts: {
+                  adverbials: {
+                    attempts: 3,
+                    correct: 0,
+                    wrong: 3,
+                    strength: 0.1,
+                    dueAt: 1,
+                  },
+                },
+              },
+            },
+          },
+          latestSession: null,
+        };
+      },
+      async readLearnerProjectionState() {
+        return { gameState: {}, events: [] };
+      },
+    },
+  });
+
+  assert.equal(result.subjectReadModel.phase, 'session');
+  assert.equal(result.subjectReadModel.session.mode, 'trouble');
+  assert.equal(result.subjectReadModel.session.type, 'trouble-drill');
+  assert.equal(result.subjectReadModel.session.focusConceptId, 'adverbials');
+  assert.ok(result.subjectReadModel.session.currentItem.skillIds.includes('adverbials'));
 });
 
 test('Grammar command route persists subject state, practice session, and events', async () => {
@@ -132,6 +192,32 @@ test('Grammar command route persists subject state, practice session, and events
   assert.equal(data.mastery.concepts.speech_punctuation.attempts, 1);
   assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM practice_sessions WHERE subject_id = 'grammar'").get().count, 1);
   assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM event_log WHERE subject_id = 'grammar' AND event_type = 'grammar.answer-submitted'").get().count, 1);
+
+  DB.close();
+});
+
+test('Grammar command route accepts trouble drill mode', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-trouble-route-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'trouble',
+      roundLength: 2,
+      seed: 120,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  assert.equal(start.body.subjectReadModel.phase, 'session');
+  assert.equal(start.body.subjectReadModel.session.mode, 'trouble');
+  assert.equal(start.body.subjectReadModel.session.type, 'trouble-drill');
+  assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
 
   DB.close();
 });

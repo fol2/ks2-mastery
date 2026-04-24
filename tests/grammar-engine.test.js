@@ -254,6 +254,115 @@ test('Grammar server engine creates a session, marks an answer, and records summ
   assert.ok(done.events.some((event) => event.type === 'grammar.session-completed'));
 });
 
+test('Grammar trouble mode targets the weakest concept without pinning focus prefs', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {
+      data: {
+        prefs: {
+          focusConceptId: 'word_classes',
+        },
+        mastery: {
+          concepts: {
+            adverbials: {
+              attempts: 4,
+              correct: 0,
+              wrong: 4,
+              strength: 0.12,
+              dueAt: 1,
+            },
+            word_classes: {
+              attempts: 8,
+              correct: 8,
+              wrong: 0,
+              strength: 0.9,
+              intervalDays: 10,
+              dueAt: 1_777_000_000_000 + 10 * 86400000,
+              correctStreak: 5,
+            },
+          },
+        },
+      },
+    },
+    command: 'start-session',
+    requestId: 'start-trouble',
+    payload: {
+      mode: 'trouble',
+      roundLength: 3,
+      seed: 42,
+    },
+  });
+
+  assert.equal(start.state.phase, 'session');
+  assert.equal(start.state.session.mode, 'trouble');
+  assert.equal(start.state.session.type, 'trouble-drill');
+  assert.equal(start.state.session.focusConceptId, 'adverbials');
+  assert.equal(start.state.prefs.focusConceptId, '');
+  assert.equal(start.practiceSession.sessionKind, 'trouble');
+  assert.ok(start.state.session.currentItem.skillIds.includes('adverbials'));
+});
+
+test('Grammar trouble mode honours explicit focus payloads separately from stored prefs', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {
+      data: {
+        mastery: {
+          concepts: {
+            adverbials: {
+              attempts: 4,
+              correct: 0,
+              wrong: 4,
+              strength: 0.12,
+              dueAt: 1,
+            },
+          },
+        },
+      },
+    },
+    command: 'start-session',
+    requestId: 'start-trouble-focused',
+    payload: {
+      mode: 'trouble',
+      focusConceptId: 'word_classes',
+      roundLength: 3,
+      seed: 42,
+    },
+  });
+
+  assert.equal(start.state.session.mode, 'trouble');
+  assert.equal(start.state.session.focusConceptId, 'word_classes');
+  assert.equal(start.state.prefs.focusConceptId, 'word_classes');
+  assert.ok(start.state.session.currentItem.skillIds.includes('word_classes'));
+});
+
+test('Grammar save-prefs keeps trouble focus on automatic weakest selection', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const saved = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {
+      data: {
+        prefs: {
+          mode: 'trouble',
+          focusConceptId: '',
+        },
+      },
+    },
+    command: 'save-prefs',
+    requestId: 'prefs-trouble-focus',
+    payload: {
+      prefs: {
+        focusConceptId: 'word_classes',
+      },
+    },
+  });
+
+  assert.equal(saved.state.prefs.mode, 'trouble');
+  assert.equal(saved.state.prefs.focusConceptId, '');
+});
+
 test('Grammar save-prefs clears completed summary state', () => {
   const oracle = readGrammarLegacyOracle();
   const sample = oracle.templates.find((template) => template.id === 'question_mark_select');

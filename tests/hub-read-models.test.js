@@ -194,7 +194,7 @@ test('parent hub read model includes Grammar evidence without replacing Spelling
   const grammarDueWork = model.dueWork.find((entry) => entry.subjectId === 'grammar');
   assert.ok(grammarDueWork);
   assert.match(grammarDueWork.label, /Grammar/);
-  assert.equal(grammarDueWork.recommendedMode, 'smart');
+  assert.equal(grammarDueWork.recommendedMode, 'trouble');
   assert.ok(model.misconceptionPatterns.some((entry) => entry.subjectId === 'grammar' && /Fronted Adverbial/.test(entry.label)));
   assert.ok(model.recentSessions.some((entry) => entry.subjectId === 'grammar' && entry.headline === '0/1'));
 });

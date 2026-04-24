@@ -135,10 +135,10 @@ export const GRAMMAR_ENABLED_MODES = Object.freeze([
   { id: 'learn', label: 'Learn a concept', detail: 'Focused retrieval on one concept at a time.' },
   { id: 'smart', label: 'Smart mixed review', detail: 'Worker-selected review across Grammar concepts.' },
   { id: 'satsset', label: 'KS2-style mini-set', detail: 'A short mixed set with SATs-friendly question shapes.' },
+  { id: 'trouble', label: 'Weak concepts drill', detail: 'Targets the weakest Grammar concepts with retry pressure.' },
 ]);
 
 export const GRAMMAR_LOCKED_MODES = Object.freeze([
-  { id: 'trouble', label: 'Weak concepts drill', reason: 'coming-next' },
   { id: 'surgery', label: 'Sentence surgery', reason: 'coming-next' },
   { id: 'builder', label: 'Sentence builder', reason: 'coming-next' },
   { id: 'worked', label: 'Worked examples', reason: 'coming-next' },
@@ -308,6 +308,27 @@ function progressSnapshotFromConcepts(concepts) {
   };
 }
 
+function modeById(modes = []) {
+  return new Map((Array.isArray(modes) ? modes : [])
+    .filter((mode) => mode && typeof mode === 'object' && !Array.isArray(mode) && typeof mode.id === 'string')
+    .map((mode) => [mode.id, mode]));
+}
+
+function mergeModeList(currentModes, rawModes = []) {
+  const rawById = modeById(rawModes);
+  return currentModes.map((mode) => {
+    const rawMode = rawById.get(mode.id) || {};
+    return {
+      ...mode,
+      ...rawMode,
+      id: mode.id,
+      label: typeof rawMode.label === 'string' && rawMode.label ? rawMode.label : mode.label,
+      detail: typeof rawMode.detail === 'string' && rawMode.detail ? rawMode.detail : mode.detail,
+      reason: typeof rawMode.reason === 'string' && rawMode.reason ? rawMode.reason : mode.reason,
+    };
+  });
+}
+
 export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
   const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
   const concepts = mergeConcepts(raw.analytics?.concepts);
@@ -362,12 +383,8 @@ export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
       recentActivity: Array.isArray(rawAnalytics.recentActivity) ? rawAnalytics.recentActivity.slice(0, 8) : [],
     },
     capabilities: {
-      enabledModes: Array.isArray(raw.capabilities?.enabledModes) && raw.capabilities.enabledModes.length
-        ? raw.capabilities.enabledModes
-        : GRAMMAR_ENABLED_MODES,
-      lockedModes: Array.isArray(raw.capabilities?.lockedModes) && raw.capabilities.lockedModes.length
-        ? raw.capabilities.lockedModes
-        : GRAMMAR_LOCKED_MODES,
+      enabledModes: mergeModeList(GRAMMAR_ENABLED_MODES, raw.capabilities?.enabledModes),
+      lockedModes: mergeModeList(GRAMMAR_LOCKED_MODES, raw.capabilities?.lockedModes),
     },
     projections: raw.projections || null,
     pendingCommand: raw.pendingCommand || '',
