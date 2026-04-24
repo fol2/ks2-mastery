@@ -718,9 +718,10 @@ test('TTS cache-only warmups are skipped when the warmup quota is exhausted', as
   }
 });
 
-test('TTS route does not fall back when selected OpenAI exceeds the primary timeout', async () => {
+test('TTS route falls back to Gemini when selected OpenAI exceeds the primary timeout', async () => {
   const originalFetch = globalThis.fetch;
   let openAiAborted = false;
+  let geminiCalls = 0;
   globalThis.fetch = async (url, init = {}) => {
     if (url === 'https://api.openai.com/v1/audio/speech') {
       return await new Promise((resolve, reject) => {
@@ -731,6 +732,10 @@ test('TTS route does not fall back when selected OpenAI exceeds the primary time
           reject(error);
         }, { once: true });
       });
+    }
+    if (String(url).includes('generativelanguage.googleapis.com')) {
+      geminiCalls += 1;
+      return geminiAudioResponse();
     }
     throw new Error(`Unexpected provider call: ${url}`);
   };
@@ -749,13 +754,65 @@ test('TTS route does not fall back when selected OpenAI exceeds the primary time
       promptToken: prompt.promptToken,
       provider: 'openai',
     }));
-    const payload = await response.json();
+    const bytes = new Uint8Array(await response.arrayBuffer());
 
-    assert.equal(response.status, 503);
-    assert.equal(payload.code, 'tts_provider_error');
-    assert.equal(payload.provider, 'openai');
-    assert.equal(payload.providerTimedOut, true);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'audio/wav');
+    assert.equal(response.headers.get('x-ks2-tts-provider'), 'gemini');
+    assert.equal(response.headers.get('x-ks2-tts-fallback-from'), 'openai');
+    assert.equal(String.fromCharCode(...bytes.slice(0, 4)), 'RIFF');
     assert.equal(openAiAborted, true);
+    assert.equal(geminiCalls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
+test('TTS route falls back to OpenAI when selected Gemini provider fails', async () => {
+  const originalFetch = globalThis.fetch;
+  let geminiCalls = 0;
+  let openAiCalls = 0;
+  globalThis.fetch = async (url) => {
+    if (String(url).includes('generativelanguage.googleapis.com')) {
+      geminiCalls += 1;
+      return new Response(JSON.stringify({ error: 'temporarily unavailable' }), {
+        status: 503,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    if (url === 'https://api.openai.com/v1/audio/speech') {
+      openAiCalls += 1;
+      return new Response(new Uint8Array([1, 2, 3]), {
+        status: 200,
+        headers: { 'content-type': 'audio/mpeg' },
+      });
+    }
+    throw new Error(`Unexpected provider call: ${url}`);
+  };
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      OPENAI_API_KEY: 'test-openai-key',
+      GEMINI_API_KEY: 'test-gemini-key',
+    },
+  });
+  try {
+    const prompt = await startSpellingPrompt(server);
+    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({
+      learnerId: prompt.learnerId,
+      promptToken: prompt.promptToken,
+      provider: 'gemini',
+    }));
+    const bytes = new Uint8Array(await response.arrayBuffer());
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'audio/mpeg');
+    assert.equal(response.headers.get('x-ks2-tts-provider'), 'openai');
+    assert.equal(response.headers.get('x-ks2-tts-fallback-from'), 'gemini');
+    assert.deepEqual([...bytes], [1, 2, 3]);
+    assert.equal(geminiCalls, 1);
+    assert.equal(openAiCalls, 1);
   } finally {
     globalThis.fetch = originalFetch;
     server.close();

@@ -102,7 +102,7 @@ Live Spelling command read models no longer expose the current answer, word slug
 }
 ```
 
-The browser sends only `learnerId`, `promptToken`, and playback options to `/api/tts`. The Worker then reloads the current server-owned Spelling session, validates that the token still matches the active prompt, derives the transcript server-side, and resolves the selected provider without trusting browser-supplied transcript text. Arbitrary browser-supplied `word` and `sentence` payloads are rejected.
+The browser sends only `learnerId`, `promptToken`, and playback options to `/api/tts`. The Worker then reloads the current server-owned Spelling session, validates that the token still matches the active prompt, derives the transcript server-side, and tries the selected provider before falling back to the other configured remote provider when needed, without trusting browser-supplied transcript text. Arbitrary browser-supplied `word` and `sentence` payloads are rejected.
 
 Gemini dictation audio now uses a cache-first buffered path. The Worker derives a deterministic R2 asset key from the active Gemini model, buffered voice, speed, published prompt content key, slug, and sentence index; it serves matching `SPELLING_AUDIO_BUCKET` objects before provider generation and stores newly generated Gemini audio back under the same key. Cache-only warm-up requests can prefill those assets without returning playback bytes, while normal OpenAI requests remain protected behind Worker-side credentials and rate limits.
 
