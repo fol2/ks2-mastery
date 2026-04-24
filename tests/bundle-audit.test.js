@@ -107,9 +107,21 @@ test('worker spelling runtime imports the shared domain service instead of the b
 });
 
 test('worker-first asset routing keeps demo and source lockdown routes out of SPA fallback', async () => {
+  const expectedRoutes = [
+    '/api/*',
+    '/demo',
+    '/src/*',
+    '/worker/*',
+    '/tests/*',
+    '/docs/*',
+    '/legacy/*',
+    '/migration-plan.md',
+  ];
   for (const configPath of ['wrangler.jsonc', 'worker/wrangler.example.jsonc']) {
     const config = await readFile(configPath, 'utf8');
-    assert.match(config, /"run_worker_first"\s*:\s*\[[\s\S]*"\/api\/\*"[\s\S]*"\/demo"[\s\S]*"\/src\/\*"[\s\S]*\]/, configPath);
+    for (const route of expectedRoutes) {
+      assert.match(config, new RegExp(`"${route.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`), `${configPath} missing ${route}`);
+    }
   }
 });
 
