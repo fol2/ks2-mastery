@@ -30,9 +30,12 @@ Reusable test assets now live in:
   - runs the conformance suite and smoke suite against:
     - English Spelling as the reference subject
     - the candidate fixture subject as a stand-in for a future second real subject
+    - Punctuation as the first production non-Spelling subject
 
 The fixture subject is **not** a shipped product subject.
-It exists only to prove the platform can carry a second deterministic thin slice without shell redesign.
+It exists only to prove the platform can carry a deterministic thin slice without shell redesign.
+
+Punctuation is now the first production non-Spelling subject using this path. It keeps a local deterministic service for Node harnesses and characterisation, but production practice uses Worker subject commands and redacted read models.
 
 The browser shell has since moved to a single React root. Subject presentation flows through `SubjectRoute` and React practice components.
 
@@ -81,7 +84,9 @@ Transition-returning methods must stay explicit and serialisable:
 That is not a giant universal subject abstraction.
 It is the intentionally narrow contract for the first expansion slice.
 
-For production, this local service shape is a design and test harness, not the public authority boundary. The scalable path is to mirror the shape behind `POST /api/subjects/:subjectId/command` and subject-specific Worker read models, so future Arithmetic, Reasoning, Grammar, Punctuation and Reading slices can reuse auth, demo, idempotency, stale-write, degraded-mode, and bundle-audit guarantees.
+For production, this local service shape is a design and test harness, not the public authority boundary. The scalable path is to mirror the shape behind `POST /api/subjects/:subjectId/command` and subject-specific Worker read models, so future Arithmetic, Reasoning, Grammar and Reading slices can reuse auth, demo, idempotency, stale-write, degraded-mode, and bundle-audit guarantees.
+
+Punctuation proves that path with `POST /api/subjects/punctuation/command`, server-side marking/scheduling, read-model redaction, subject-expansion smoke tests, and bundle lockdown for `shared/punctuation/*`. It also adds the first explicit subject exposure gate: the module can be implementation-ready while `PUNCTUATION_SUBJECT_ENABLED=false` keeps the Worker route, dashboard card, and direct route unavailable until release verification is accepted.
 
 ## Repository and event rules for a new subject
 
@@ -177,6 +182,18 @@ Use this checklist before merging a new real subject.
 - learner switch preserves a live round
 - import/export restore preserves a live round
 - all tests pass without widening shell special-cases
+- if the subject uses a non-dashboard rest phase, the smoke spec documents that phase explicitly instead of forcing shell state to pretend every subject is Spelling-shaped
+
+## Punctuation production precedent
+
+The Punctuation slice adds a concrete precedent for future real subjects:
+
+- the subject module stays pure JS and does not import React `.jsx` directly
+- `SubjectRoute` owns the explicit React practice-component mapping
+- local harnesses may use a deterministic service, but production actions use the generic subject command client
+- engine/content source stays out of the production app bundle and public output
+- reward projection follows domain events, not UI clicks or game-layer state
+- monster progress uses subject-specific units while the Codex remains shared
 
 ### 8. Scope discipline
 

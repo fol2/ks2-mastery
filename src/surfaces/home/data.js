@@ -13,6 +13,13 @@ const CODEX_POWER_RANK = Object.freeze({
   glimmerbug: 2,
   phaeton: 3,
   vellhorn: 4,
+  pealark: 5,
+  claspin: 6,
+  quoral: 7,
+  curlune: 8,
+  colisk: 9,
+  hyphang: 10,
+  carillon: 11,
 });
 
 export const REGION_BACKGROUND_URLS = Object.freeze([
@@ -618,9 +625,12 @@ export function buildSubjectCards(subjects = [], dashboardStats = {}) {
 }
 
 export function buildCodexEntries(summary = []) {
-  return summary.map(({ monster, progress }) => {
+  return summary.map(({ monster, progress, subjectId = 'spelling' }) => {
+    const resolvedSubjectId = subjectId || progress?.subjectId || 'spelling';
     const mastered = Math.max(0, Number(progress?.mastered) || 0);
-    const max = Math.max(1, Number(monster?.masteredMax) || (monster?.id === 'phaeton' ? 213 : 100));
+    const max = resolvedSubjectId === 'punctuation'
+      ? Math.max(1, Number(progress?.publishedTotal) || Number(monster?.masteredMax) || 1)
+      : Math.max(1, Number(monster?.masteredMax) || (monster?.id === 'phaeton' ? 213 : 100));
     const stage = Math.max(0, Math.min(4, Number(progress?.stage) || 0));
     const caught = Boolean(progress?.caught);
     const displayState = !caught ? 'fresh' : stage === 0 ? 'egg' : 'monster';
@@ -631,11 +641,12 @@ export function buildCodexEntries(summary = []) {
         ? monster.name
       : 'Unknown creature';
     const pct = Math.max(0, Math.min(1, mastered / max));
-    const nextMilestone = nextCodexMilestone(monster.id, mastered);
+    const nextMilestone = nextCodexMilestone(monster.id, mastered, { subjectId: resolvedSubjectId, max });
     const imageAlt = caught ? displayName : `${monster.name} not caught`;
 
     return {
       id: monster.id,
+      subjectId: resolvedSubjectId,
       name: displayName,
       speciesName: monster.name,
       blurb: monster.blurb,
@@ -655,9 +666,9 @@ export function buildCodexEntries(summary = []) {
       imageAlt,
       placeholder: caught ? '' : '?',
       stageLabel: caught ? (stage === 0 ? 'Egg' : `Stage ${stage}`) : 'Not caught',
-      secureLabel: secureWordLabel(mastered),
-      nextGoal: codexNextGoal({ caught, nextMilestone }),
-      wordBand: codexWordBand(monster.id),
+      secureLabel: secureProgressLabel(resolvedSubjectId, mastered),
+      nextGoal: codexNextGoal({ subjectId: resolvedSubjectId, caught, nextMilestone }),
+      wordBand: codexWordBand(monster.id, resolvedSubjectId),
     };
   });
 }
@@ -681,29 +692,50 @@ function codexPowerRank(monsterId) {
   return CODEX_POWER_RANK[monsterId] || 0;
 }
 
-function secureWordLabel(mastered) {
+function secureProgressLabel(subjectId, mastered) {
   const count = Math.max(0, Number(mastered) || 0);
+  if (subjectId === 'punctuation') {
+    if (count === 1) return '1 secure unit';
+    if (count > 1) return `${count} secure units`;
+    return 'No secure units yet';
+  }
   if (count === 1) return '1 secure word';
   if (count > 1) return `${count} secure words`;
   return 'No secure words yet';
 }
 
-function codexNextGoal({ caught, nextMilestone }) {
+function codexNextGoal({ subjectId, caught, nextMilestone }) {
   if (!caught && nextMilestone) {
+    if (subjectId === 'punctuation') return 'Secure punctuation units to catch this creature';
     return 'Secure words to catch this creature';
   }
   if (nextMilestone) {
+    if (subjectId === 'punctuation') return 'Keep securing punctuation units for the next change';
     return 'Keep securing words for the next change';
   }
   return 'Fully evolved';
 }
 
-function nextCodexMilestone(monsterId, mastered) {
+function nextCodexMilestone(monsterId, mastered, { subjectId = 'spelling', max = null } = {}) {
+  if (subjectId === 'punctuation') {
+    const limit = Math.max(1, Number(max) || 1);
+    return mastered < limit ? mastered + 1 : null;
+  }
   const thresholds = monsterId === 'phaeton' ? PHAETON_STAGE_THRESHOLDS : DIRECT_STAGE_THRESHOLDS;
   return thresholds.find((threshold) => mastered < threshold) || null;
 }
 
-function codexWordBand(monsterId) {
+function codexWordBand(monsterId, subjectId = 'spelling') {
+  if (subjectId === 'punctuation') {
+    if (monsterId === 'pealark') return 'Endmarks';
+    if (monsterId === 'claspin') return 'Apostrophe';
+    if (monsterId === 'quoral') return 'Speech punctuation';
+    if (monsterId === 'curlune') return 'Comma and flow';
+    if (monsterId === 'colisk') return 'List and structure';
+    if (monsterId === 'hyphang') return 'Boundary punctuation';
+    if (monsterId === 'carillon') return 'Published punctuation release';
+    return 'Punctuation codex';
+  }
   if (monsterId === 'inklet') return 'Years 3-4 spellings';
   if (monsterId === 'glimmerbug') return 'Years 5-6 spellings';
   if (monsterId === 'phaeton') return 'Whole spelling codex';

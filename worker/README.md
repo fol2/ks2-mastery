@@ -2,7 +2,7 @@
 
 This Worker is now the production authority for sessions, learner access, subject commands, read models, and protected audio routes.
 
-Production browser sessions use API-backed repositories after sign-in or through an ephemeral demo session. `?local=1` is not a product runtime path. English Spelling production practice runs through the Worker subject command boundary, with React acting as the UI shell. The Worker provides durable D1-backed storage for the generic platform collections, account-scoped spelling content, session/auth flows, protected selected-provider TTS, learner ownership at the API boundary, server-side subject runtime, Word Bank read models, and thin hub read-model routes for Parent Hub / Admin.
+Production browser sessions use API-backed repositories after sign-in or through an ephemeral demo session. `?local=1` is not a product runtime path. English Spelling and the first Punctuation release run through the Worker subject command boundary, with React acting as the UI shell. The Worker provides durable D1-backed storage for the generic platform collections, account-scoped spelling content, session/auth flows, protected selected-provider TTS, learner ownership at the API boundary, server-side subject runtime, Word Bank read models, and thin hub read-model routes for Parent Hub / Admin.
 
 ## What this Worker is now
 
@@ -18,6 +18,7 @@ It is:
 - a prompt-token audio boundary so dictation text is resolved on the server
 - a read-model boundary for role-aware Parent Hub and Admin / Operations surfaces
 - a read-model boundary for authorised Spelling Word Bank rows and detail
+- a read-model boundary for Punctuation practice state that redacts answer-bearing engine fields
 - an admin-only account role management boundary for production platform roles
 - a deployment boundary that still keeps subject UI rules out of the backend
 
@@ -125,9 +126,23 @@ Production practice writes go through:
 POST /api/subjects/:subjectId/command
 ```
 
-The command boundary validates session ownership, learner access, demo expiry, request idempotency, expected learner revision, subject id, and command type before touching learner state. For Spelling, the Worker owns session creation, word queue selection, scoring, correction state, progress mutation, completed session writes, event publication, reward projection, and the returned read model.
+The command boundary validates session ownership, learner access, demo expiry, request idempotency, expected learner revision, subject id, and command type before touching learner state.
+
+For Spelling, the Worker owns session creation, word queue selection, scoring, correction state, progress mutation, completed session writes, event publication, reward projection, and the returned read model.
+
+For Punctuation, the Worker owns session creation, item selection, deterministic marking, spaced scheduling, misconception events, release-scoped secure-unit progress, completed session writes, Bellstorm Coast reward projection, and the returned read model.
+
+Punctuation remains behind the `PUNCTUATION_SUBJECT_ENABLED` rollout env var. The production default is `false`, so the command route and browser exposure stay unavailable until release verification is accepted and the flag is intentionally changed.
 
 The React client sends user intent and renders the response. It does not use a browser-local Spelling engine as a production fallback.
+
+The same rule applies to Punctuation: the browser must not ship or fall back to `shared/punctuation/*` as a production engine.
+
+## Public source lockdown
+
+The Worker runs before static assets for source-shaped paths and denies raw source fetches for `/src/*`, `/shared/*`, `/worker/*`, `/tests/*`, `/docs/*`, `/legacy/*`, and `/migration-plan.md`, while still allowing `/src/bundles/app.bundle.js`.
+
+This is part of the production boundary. A clean bundle is not enough if raw shared engine files can still be fetched directly.
 
 ## Current mutation safety rules
 

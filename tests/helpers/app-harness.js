@@ -19,6 +19,7 @@ export function createAppHarness({
   runtimeBoundary = createSubjectRuntimeBoundary(),
   scheduler = null,
   extraServices = {},
+  subjectExposureGates,
 } = {}) {
   const tts = makeTts();
   const controller = createLocalAppController({
@@ -30,6 +31,7 @@ export function createAppHarness({
     scheduler,
     tts,
     services: extraServices,
+    subjectExposureGates,
   });
 
   function render() {

@@ -48,11 +48,16 @@ export function validateSubjectModule(candidate) {
     throw new TypeError(`${label} has invalid "available" flag. Expected a boolean.`);
   }
 
+  if ('exposureGate' in candidate && (typeof candidate.exposureGate !== 'string' || candidate.exposureGate.trim() === '')) {
+    throw new TypeError(`${label} has invalid "exposureGate". Expected a non-empty string.`);
+  }
+
   return Object.freeze({
     ...candidate,
     id: candidate.id.trim(),
     name: candidate.name.trim(),
     blurb: candidate.blurb.trim(),
+    ...('exposureGate' in candidate ? { exposureGate: candidate.exposureGate.trim() } : {}),
   });
 }
 

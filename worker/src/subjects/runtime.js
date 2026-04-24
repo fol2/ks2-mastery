@@ -1,5 +1,6 @@
 import { NotFoundError } from '../errors.js';
 import { createGrammarCommandHandlers } from './grammar/commands.js';
+import { createPunctuationCommandHandlers } from './punctuation/commands.js';
 import { createSpellingCommandHandlers } from './spelling/commands.js';
 
 function handlerFor(handlers, subjectId, command) {
@@ -34,6 +35,7 @@ export function createWorkerSubjectRuntime(options = {}) {
   return createSubjectRuntime({
     handlers: {
       grammar: createGrammarCommandHandlers(options.grammar || {}),
+      punctuation: createPunctuationCommandHandlers(options.punctuation || {}),
       spelling: createSpellingCommandHandlers(options.spelling || {}),
       ...(options.handlers || {}),
     },

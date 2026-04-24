@@ -1,5 +1,6 @@
 import { createApiPlatformRepositories } from '../core/repositories/api.js';
 import { normalisePlatformRole } from '../access/roles.js';
+import { normaliseSubjectExposureGates } from '../core/subject-availability.js';
 
 const LOCAL_CODEX_REVIEW_LEARNER_ID = 'local-codex-egg-review';
 const LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS = Object.freeze({
@@ -80,6 +81,7 @@ export function createRemoteSyncSession(sessionPayload = {}) {
       sessionPayload?.account?.platformRole || sessionPayload?.session?.platformRole,
     ),
     repoRevision: Number(sessionPayload?.account?.repoRevision) || 0,
+    subjectExposureGates: normaliseSubjectExposureGates(sessionPayload?.subjectExposureGates),
   };
 }
 

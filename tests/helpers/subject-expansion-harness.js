@@ -56,7 +56,9 @@ export function registerSubjectConformanceSuite(spec) {
     validateSubjectModule(subject);
     if (spec.expectReactPractice) {
       assert.equal(
-        typeof subject.PracticeComponent === 'function' || typeof subject.renderPracticeComponent === 'function',
+        subject.reactPractice === true
+          || typeof subject.PracticeComponent === 'function'
+          || typeof subject.renderPracticeComponent === 'function',
         true,
         `Expected ${spec.subjectId} to expose a React practice surface.`,
       );
@@ -183,7 +185,7 @@ export function registerGoldenPathSmokeSuite(spec) {
     assert.match(harness.render(), spec.summaryMatcher);
 
     spec.backToDashboard(harness);
-    assert.equal(spec.getUiState(harness).phase, 'dashboard');
+    assert.equal(spec.getUiState(harness).phase, spec.expectedRestPhase || 'dashboard');
     assert.match(harness.render(), spec.practiceMatcher);
   });
 
@@ -200,7 +202,7 @@ export function registerGoldenPathSmokeSuite(spec) {
     harness.dispatch('learner-create', { name: 'Learner B', yearGroup: 'Y4' });
     const learnerB = harness.store.getState().learners.selectedId;
     assert.notEqual(learnerB, learnerA);
-    assert.equal(spec.getUiState(harness).phase, 'dashboard');
+    assert.equal(spec.getUiState(harness).phase, spec.expectedRestPhase || 'dashboard');
     assert.match(harness.render(), spec.practiceMatcher);
 
     harness.dispatch('learner-select', { value: learnerA });

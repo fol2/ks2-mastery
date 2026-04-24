@@ -8,6 +8,11 @@ import { createRoot } from 'react-dom/client';
 import { App } from './app/App.jsx';
 import { AuthSurface } from './surfaces/auth/AuthSurface.jsx';
 import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
+import {
+  exposedSubjects,
+  isSubjectExposed,
+  normaliseSubjectExposureGates,
+} from './platform/core/subject-availability.js';
 import { probeRelLuminance } from './platform/ui/luminance.js';
 import { safeParseInt, uid } from './platform/core/utils.js';
 import { normalisePlatformRole } from './platform/access/roles.js';
@@ -19,8 +24,11 @@ import {
 } from './platform/hubs/shell-access.js';
 import { createSubjectRuntimeBoundary } from './platform/core/subject-runtime.js';
 import { createPracticeStreakSubscriber } from './platform/events/index.js';
+import { createSubjectCommandActionHandler } from './platform/runtime/subject-command-actions.js';
 import { createSubjectCommandClient } from './platform/runtime/subject-command-client.js';
 import { createReadModelClient } from './platform/runtime/read-model-client.js';
+import { createPunctuationReadModelService } from './subjects/punctuation/client-read-models.js';
+import { punctuationSubjectCommandActions } from './subjects/punctuation/command-actions.js';
 import { createPlatformTts } from './subjects/spelling/tts.js';
 import {
   DEFAULT_BUFFERED_GEMINI_VOICE,
@@ -189,9 +197,11 @@ if (!boot.repositories) {
 }
 const repositories = boot.repositories;
 globalThis.KS2_AUTH_SESSION = boot.session;
+const subjectExposureGates = normaliseSubjectExposureGates(boot.session.subjectExposureGates);
 await repositories.hydrate();
 
 const services = {
+  punctuation: null,
   spelling: null,
 };
 let store = null;
@@ -668,6 +678,14 @@ function rebuildSpellingService() {
   return services.spelling;
 }
 
+function rebuildPunctuationService() {
+  services.punctuation = createPunctuationReadModelService({
+    getState: () => store?.getState?.() || null,
+  });
+  return services.punctuation;
+}
+
+rebuildPunctuationService();
 rebuildSpellingService();
 
 function buildSignedInHubModels(appState) {
@@ -713,6 +731,7 @@ const controller = createAppController({
   repositories,
   subjects: SUBJECTS,
   session: boot.session,
+  subjectExposureGates,
   runtimeBoundary,
   autoAdvanceDispatchContinue: () => handleRemoteSpellingAction('spelling-continue'),
   tts,
@@ -1144,7 +1163,8 @@ function contextFor(subjectId = null) {
     tts,
     applySubjectTransition,
     runtimeBoundary,
-    subjects: SUBJECTS,
+    subjects: exposedSubjects(SUBJECTS, subjectExposureGates),
+    subjectExposureGates,
     runtimeReadOnly: appState.persistence?.mode === 'degraded',
     ...buildHubModels(appState),
   };
@@ -1163,7 +1183,7 @@ function homeSubjectContext(subject, context) {
 function buildHomeDashboardStats(appState, context) {
   const out = {};
   if (!appState.learners.selectedId) return out;
-  for (const subject of SUBJECTS) {
+  for (const subject of context.subjects || exposedSubjects(SUBJECTS, subjectExposureGates)) {
     if (!subject.getDashboardStats) continue;
     try {
       out[subject.id] = subject.getDashboardStats(appState, homeSubjectContext(subject, context));
@@ -1239,11 +1259,12 @@ function buildSurfaceChromeModel(appState) {
 function buildHomeModel(appState, context) {
   const learnerId = appState.learners.selectedId;
   const canOpenParentHub = Boolean(context.parentHub?.permissions?.canViewParentHub) || !boot.session.signedIn;
+  const visibleSubjects = context.subjects || exposedSubjects(SUBJECTS, subjectExposureGates);
 
   return {
     ...buildSurfaceChromeModel(appState),
     monsterSummary: buildHomeMonsterSummary(learnerId, context),
-    subjects: SUBJECTS,
+    subjects: visibleSubjects,
     dashboardStats: buildHomeDashboardStats(appState, context),
     dueTotal: buildHomeDueTotal(learnerId, context),
     roundNumber: 1,
@@ -1497,8 +1518,13 @@ function handleGlobalAction(action, data) {
   if (action === 'open-subject') {
     if (blockReadOnlyAdultAction(action)) return true;
     clearAdultSurfaceNotice();
+    const subject = getSubject(data.subjectId || 'spelling');
+    if (!isSubjectExposed(subject, subjectExposureGates)) {
+      store.goHome();
+      return true;
+    }
     tts.stop();
-    store.openSubject(data.subjectId || 'spelling', data.tab || 'practice');
+    store.openSubject(subject.id, data.tab || 'practice');
     return true;
   }
 
@@ -1876,6 +1902,10 @@ function shouldStopSpellingTtsForCommandResponse(command, response) {
   return command === 'submit-answer' || (nextPhase && nextPhase !== 'session');
 }
 
+function setPunctuationRuntimeError(message) {
+  store.updateSubjectUi('punctuation', { error: message || 'Punctuation practice is temporarily unavailable.' });
+}
+
 function applySpellingCommandResponse(response, { command = '' } = {}) {
   if (response?.projections?.rewards?.toastEvents?.length) {
     store.pushToasts(response.projections.rewards.toastEvents);
@@ -1892,7 +1922,33 @@ function applySpellingCommandResponse(response, { command = '' } = {}) {
   }
 }
 
+function applyPunctuationCommandResponse(response) {
+  if (response?.projections?.rewards?.toastEvents?.length) {
+    store.pushToasts(response.projections.rewards.toastEvents);
+  }
+  if (response?.projections?.rewards?.events?.length) {
+    store.pushMonsterCelebrations(response.projections.rewards.events);
+  }
+  store.reloadFromRepositories({ preserveRoute: true });
+}
+
 const pendingSpellingCommandKeys = new Set();
+const pendingPunctuationCommandKeys = new Set();
+
+const punctuationCommandActions = createSubjectCommandActionHandler({
+  subjectId: 'punctuation',
+  subjectCommands,
+  getState: () => store.getState(),
+  isReadOnly: runtimeIsReadOnly,
+  setSubjectError: setPunctuationRuntimeError,
+  pendingKeys: pendingPunctuationCommandKeys,
+  onCommandResult: applyPunctuationCommandResponse,
+  onCommandError(error) {
+    globalThis.console?.warn?.('Punctuation command failed.', error);
+    setPunctuationRuntimeError(error?.payload?.message || error?.message || 'The punctuation command could not be completed.');
+  },
+  actions: punctuationSubjectCommandActions,
+});
 
 function spellingCommandDedupeKey(command, appState = store.getState()) {
   if (command !== 'continue-session') return '';
@@ -2367,6 +2423,18 @@ function handleRemoteSpellingAction(action, data = {}) {
   return false;
 }
 
+function handleRemotePunctuationAction(action, data = {}) {
+  if (!isSubjectExposed(getSubject('punctuation'), subjectExposureGates)) {
+    store.goHome();
+    return true;
+  }
+  if (action === 'punctuation-back') {
+    store.updateSubjectUi('punctuation', { phase: 'setup', error: '' });
+    return true;
+  }
+  return punctuationCommandActions.handle(action, data);
+}
+
 function handleSubjectAction(action, data) {
   const appState = store.getState();
   const learnerId = appState.learners.selectedId;
@@ -2374,6 +2442,10 @@ function handleSubjectAction(action, data) {
   const subject = getSubject(appState.route.subjectId || 'spelling');
 
   try {
+    if (!isSubjectExposed(subject, subjectExposureGates)) {
+      store.goHome();
+      return true;
+    }
     const handled = subject.handleAction?.(action, {
       ...contextFor(subject.id),
       data,
@@ -2401,7 +2473,7 @@ function handleSubjectAction(action, data) {
 function dispatchAction(action, data = {}) {
   controller.autoAdvance.clear();
   captureWordDetailTrigger(action, data);
-  if (!handleGlobalAction(action, data) && !handleRemoteSpellingAction(action, data)) {
+  if (!handleGlobalAction(action, data) && !handleRemoteSpellingAction(action, data) && !handleRemotePunctuationAction(action, data)) {
     handleSubjectAction(action, data);
   }
   ensureSpellingAutoAdvanceFromCurrentState();

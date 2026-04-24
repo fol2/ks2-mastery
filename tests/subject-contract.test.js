@@ -6,6 +6,11 @@ import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createStore } from '../src/platform/core/store.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import { spellingModule } from '../src/subjects/spelling/module.js';
+import {
+  SUBJECT_EXPOSURE_GATES,
+  isSubjectExposed,
+} from '../src/platform/core/subject-availability.js';
+import { punctuationModule } from '../src/subjects/punctuation/module.js';
 import { renderSpellingSurfaceFixture } from './helpers/react-render.js';
 
 function completeSubjectModule(overrides = {}) {
@@ -94,6 +99,22 @@ test('subject registry rejects duplicate subject ids', () => {
   assert.throws(
     () => buildSubjectRegistry([one, two]),
     /duplicate id "shared"/i,
+  );
+});
+
+test('subject registry preserves explicit rollout exposure gates', () => {
+  const registry = buildSubjectRegistry([punctuationModule]);
+
+  assert.equal(registry[0].available, true);
+  assert.equal(registry[0].exposureGate, SUBJECT_EXPOSURE_GATES.punctuation);
+  assert.equal(isSubjectExposed(registry[0], {}), false);
+  assert.equal(isSubjectExposed(registry[0], { [SUBJECT_EXPOSURE_GATES.punctuation]: true }), true);
+});
+
+test('subject registry rejects malformed rollout exposure gates', () => {
+  assert.throws(
+    () => buildSubjectRegistry([completeSubjectModule({ exposureGate: '' })]),
+    /invalid "exposureGate"/i,
   );
 });
 

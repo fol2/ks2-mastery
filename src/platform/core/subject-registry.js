@@ -1,10 +1,10 @@
 import { buildSubjectRegistry } from './subject-contract.js';
+import { punctuationModule } from '../../subjects/punctuation/module.js';
 import { spellingModule } from '../../subjects/spelling/module.js';
 import {
   arithmeticModule,
   reasoningModule,
   grammarModule,
-  punctuationModule,
   readingModule,
 } from '../../subjects/placeholders/index.js';
 

@@ -13,6 +13,9 @@ const FORBIDDEN_MODULES = [
   { pattern: /^src\/subjects\/spelling\/service\.js$/, reason: 'client-side spelling runtime service' },
   { pattern: /^src\/subjects\/spelling\/content\/(model|repository|service)\.js$/, reason: 'content-heavy client read/write builders' },
   { pattern: /^src\/subjects\/spelling\/data\/word-data\.js$/, reason: 'derived word dataset' },
+  { pattern: /^shared\/punctuation\/(content|marking|scheduler|service)\.js$/, reason: 'server-side punctuation engine and content' },
+  { pattern: /^worker\/src\/subjects\/punctuation\//, reason: 'server-side punctuation command runtime' },
+  { pattern: /^src\/subjects\/punctuation\/(service|repository)\.js$/, reason: 'browser-side import of punctuation runtime service' },
   { pattern: /^src\/platform\/core\/local-review-profile\.js$/, reason: 'local review runtime profile' },
   { pattern: /^src\/platform\/core\/repositories\/local\.js$/, reason: 'browser-local production repository' },
   { pattern: /^src\/platform\/hubs\/(admin|parent)-read-model\.js$/, reason: 'client-side hub read-model aggregation' },
@@ -25,6 +28,11 @@ const FORBIDDEN_TEXT = [
   { token: 'createLegacySpellingEngine', reason: 'legacy spelling engine factory' },
   { token: 'KS2_WORDS_ENRICHED', reason: 'legacy spelling word dataset' },
   { token: 'spelling-prompt-v1', reason: 'server prompt-token derivation' },
+  { token: 'PUNCTUATION_CONTENT_MANIFEST', reason: 'punctuation content manifest' },
+  { token: 'createPunctuationContentIndexes', reason: 'punctuation content index builder' },
+  { token: 'createPunctuationService', reason: 'punctuation runtime service factory' },
+  { token: 'PunctuationServiceError', reason: 'punctuation runtime service error' },
+  { token: 'punctuation-r1-endmarks-apostrophe-speech', reason: 'punctuation release content identifier' },
   { token: '/api/child-subject-state', reason: 'legacy broad subject-state write route' },
   { token: '/api/practice-sessions', reason: 'legacy broad practice-session write route' },
   { token: '/api/child-game-state', reason: 'legacy broad game-state write route' },
@@ -119,6 +127,9 @@ function auditAllowlist(text, notes) {
 
 function auditPublicFiles(files, failures) {
   for (const file of files) {
+    if (file.startsWith('shared/')) {
+      failures.push(`Public output exposes shared source: ${file}`);
+    }
     if (file.startsWith('src/') && file !== 'src/bundles/app.bundle.js') {
       failures.push(`Public output exposes raw source under src/: ${file}`);
     }
@@ -127,6 +138,9 @@ function auditPublicFiles(files, failures) {
     }
     if (/src\/subjects\/spelling\/(data|engine|content)\//.test(file)) {
       failures.push(`Public output exposes spelling runtime/content source: ${file}`);
+    }
+    if (/src\/subjects\/punctuation\/(service|repository)\.js/.test(file) || file.startsWith('worker/src/subjects/punctuation/')) {
+      failures.push(`Public output exposes punctuation runtime/content source: ${file}`);
     }
   }
 }

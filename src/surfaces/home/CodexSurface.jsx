@@ -16,7 +16,12 @@ export function CodexSurface({ model, actions }) {
   const entries = useMemo(() => buildCodexEntries(model.monsterSummary || []), [model.monsterSummary]);
   const totals = useMemo(() => codexTotals(entries), [entries]);
   const featured = useMemo(() => pickFeaturedCodexEntry(entries), [entries]);
-  const openSpellingPractice = () => actions.openSubject('spelling');
+  const hasPunctuation = entries.some((entry) => entry.subjectId === 'punctuation');
+  const primaryPracticeSubjectId = featured?.subjectId || 'spelling';
+  const openPractice = (subjectId = primaryPracticeSubjectId) => actions.openSubject(subjectId || 'spelling');
+  const primaryPracticeLabel = primaryPracticeSubjectId === 'punctuation'
+    ? 'Punctuation practice →'
+    : 'Spelling practice →';
 
   useEffect(() => {
     if (!previewEntry) return undefined;
@@ -48,6 +53,7 @@ export function CodexSurface({ model, actions }) {
         <CodexHero
           featured={featured}
           heroBg={heroBg}
+          hasPunctuation={hasPunctuation}
           learnerName={model.learner?.name || ''}
           onNavigateHome={actions.navigateHome}
           onPreviewCreature={setPreviewEntry}
@@ -57,10 +63,14 @@ export function CodexSurface({ model, actions }) {
         <div className="home-section-head codex-section-head">
           <div>
             <h2 className="section-title">Monster roster</h2>
-            <p className="codex-section-note">Each creature reflects a different part of English Spelling progress.</p>
+            <p className="codex-section-note">
+              {hasPunctuation
+                ? 'Each creature reflects a different part of English Spelling or Punctuation progress.'
+                : 'Each creature reflects a different part of English Spelling progress.'}
+            </p>
           </div>
-          <button type="button" className="home-section-link" onClick={openSpellingPractice}>
-            Spelling practice →
+          <button type="button" className="home-section-link" onClick={() => openPractice(primaryPracticeSubjectId)}>
+            {primaryPracticeLabel}
           </button>
         </div>
 
@@ -69,7 +79,7 @@ export function CodexSurface({ model, actions }) {
             <CodexCard
               key={entry.id}
               entry={entry}
-              onPractice={openSpellingPractice}
+              onPractice={openPractice}
               onPreview={setPreviewEntry}
             />
           ))}

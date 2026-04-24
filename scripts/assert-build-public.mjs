@@ -45,7 +45,7 @@ await mustExist('worker/src/index.js').then(
   () => undefined,
 );
 
-for (const unsafePath of ['worker', 'tests', 'docs', 'legacy', 'migration-plan.md']) {
+for (const unsafePath of ['worker', 'tests', 'docs', 'legacy', 'shared', 'migration-plan.md']) {
   await mustNotExist(unsafePath);
 }
 await mustNotExist('src/generated');
@@ -99,6 +99,11 @@ for (const token of [
   'home.bundle.js',
   'SEEDED_SPELLING_CONTENT_BUNDLE',
   'Legacy vendor seed for Pass 11 content model',
+  'PUNCTUATION_CONTENT_MANIFEST',
+  'createPunctuationContentIndexes',
+  'createPunctuationService',
+  'PunctuationServiceError',
+  'punctuation-r1-endmarks-apostrophe-speech',
 ]) {
   if (appBundle.includes(token)) {
     throw new Error(`React app bundle must not include retired legacy client token: ${token}`);

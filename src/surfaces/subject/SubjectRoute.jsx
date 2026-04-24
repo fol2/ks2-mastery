@@ -2,9 +2,12 @@ import React from 'react';
 import { SubjectBreadcrumb } from '../shell/SubjectBreadcrumb.jsx';
 import { SubjectRouteContext } from './SubjectRouteContext.js';
 import { SubjectRuntimeFallback } from './SubjectRuntimeFallback.jsx';
+import { PunctuationPracticeSurface } from '../../subjects/punctuation/components/PunctuationPracticeSurface.jsx';
 import { SpellingPracticeSurface } from '../../subjects/spelling/components/SpellingPracticeSurface.jsx';
+import { isSubjectExposed } from '../../platform/core/subject-availability.js';
 
 const REACT_SUBJECT_COMPONENTS = Object.freeze({
+  punctuation: PunctuationPracticeSurface,
   spelling: SpellingPracticeSurface,
 });
 
@@ -41,6 +44,20 @@ function NoWritableLearnerCard({ subject, context, actions }) {
       <div className="actions" style={{ marginTop: 16 }}>
         <button className="btn secondary" type="button" onClick={openParentHub}>Parent Hub</button>
         <button className="btn secondary" type="button" onClick={openAdminHub}>Operations</button>
+        <button className="btn ghost" type="button" onClick={actions.navigateHome}>Dashboard</button>
+      </div>
+    </section>
+  );
+}
+
+function SubjectUnavailableCard({ subject, actions }) {
+  return (
+    <section className="card">
+      <div className="feedback warn">
+        <strong>{subject.name} is not available in this deployment yet</strong>
+        <div style={{ marginTop: 8 }}>It will appear once the final release checks are complete.</div>
+      </div>
+      <div className="actions" style={{ marginTop: 16 }}>
         <button className="btn ghost" type="button" onClick={actions.navigateHome}>Dashboard</button>
       </div>
     </section>
@@ -147,6 +164,14 @@ export function SubjectRoute({ appState, context, actions }) {
         activeTab={activeTab}
         onRetry={() => actions.dispatch?.('subject-runtime-retry')}
       />
+    );
+  }
+
+  if (!isSubjectExposed(subject, context.subjectExposureGates)) {
+    return (
+      <main className="subject-entry-content">
+        <SubjectUnavailableCard subject={subject} actions={actions} />
+      </main>
     );
   }
 
