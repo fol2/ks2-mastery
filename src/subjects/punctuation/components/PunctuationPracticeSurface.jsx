@@ -9,6 +9,10 @@ function learnerName(appState, learnerId) {
   return appState?.learners?.byId?.[learnerId]?.name || 'Learner';
 }
 
+function newlineTextStyle(value) {
+  return String(value || '').includes('\n') ? { whiteSpace: 'pre-wrap' } : undefined;
+}
+
 function SetupView({ learner, stats, ui, actions }) {
   const scene = bellstormSceneForPhase('setup');
   const content = ui.content || {};
@@ -19,12 +23,12 @@ function SetupView({ learner, stats, ui, actions }) {
         <div>
           <div className="eyebrow">Bellstorm Coast</div>
           <h2 className="section-title">Punctuation practice</h2>
-          <p className="subtitle">{content.publishedScopeCopy || 'This published Punctuation release covers Endmarks, Apostrophe, Speech, Comma / Flow and Boundary.'}</p>
+          <p className="subtitle">{content.publishedScopeCopy || 'This Punctuation release covers all 14 KS2 punctuation skills.'}</p>
         </div>
       </div>
       <div className="stat-grid" style={{ marginTop: 16 }}>
         <div className="stat"><div className="stat-label">Accuracy</div><div className="stat-value">{stats.accuracy || 0}%</div><div className="stat-sub">{learner}</div></div>
-        <div className="stat"><div className="stat-label">Secure units</div><div className="stat-value">{stats.securedRewardUnits || 0}</div><div className="stat-sub">{stats.publishedRewardUnits || 10} published</div></div>
+        <div className="stat"><div className="stat-label">Secure units</div><div className="stat-value">{stats.securedRewardUnits || 0}</div><div className="stat-sub">{stats.publishedRewardUnits || 14} published</div></div>
         <div className="stat"><div className="stat-label">Due</div><div className="stat-value">{stats.due || 0}</div><div className="stat-sub">Review items</div></div>
       </div>
       <div className="actions" style={{ marginTop: 16 }}>
@@ -32,6 +36,7 @@ function SetupView({ learner, stats, ui, actions }) {
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'speech' })}>Speech focus</button>
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'comma_flow' })}>Comma focus</button>
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'boundary' })}>Boundary focus</button>
+        <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'structure' })}>Structure focus</button>
       </div>
     </section>
   );
@@ -57,7 +62,7 @@ function ChoiceItem({ item, disabled, onSubmit }) {
               checked={String(choiceIndex) === String(option.index)}
               onChange={() => setChoiceIndex(String(option.index))}
             />
-            <span>{option.text}</span>
+            <span style={newlineTextStyle(option.text)}>{option.text}</span>
           </label>
         ))}
       </div>
@@ -113,12 +118,12 @@ function ActiveItemView({ ui, actions }) {
           <p className="subtitle">{currentItemInstruction(item)}</p>
         </div>
       </div>
-      {item.stem ? <div className="callout" style={{ marginTop: 14 }}>{item.stem}</div> : null}
+      {item.stem ? <div className="callout" style={{ marginTop: 14, ...newlineTextStyle(item.stem) }}>{item.stem}</div> : null}
       <div className="progress" style={{ marginTop: 14 }}><span style={{ width: `${progress}%` }} /></div>
       <div style={{ marginTop: 16 }}>
         {item.inputKind === 'choice'
           ? <ChoiceItem item={item} disabled={false} onSubmit={submit} />
-          : <TextItem item={item} disabled={false} onSubmit={submit} />}
+          : <TextItem key={item.id || item.prompt} item={item} disabled={false} onSubmit={submit} />}
       </div>
       <div className="actions" style={{ marginTop: 16 }}>
         <button className="btn ghost" type="button" onClick={() => actions.dispatch('punctuation-skip')}>Skip</button>

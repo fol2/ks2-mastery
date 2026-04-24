@@ -9,7 +9,7 @@ The release deliberately keeps the learner engine first. Monsters and Codex rewa
 Release id:
 
 ```txt
-punctuation-r3-endmarks-apostrophe-speech-comma-flow-boundary
+punctuation-r4-full-14-skill-structure
 ```
 
 Published skills:
@@ -24,15 +24,12 @@ Published skills:
 - Semi-colons between clauses
 - Dashes between clauses
 - Hyphens to avoid ambiguity
-
-Planned but not yet public:
-
 - Parenthesis
 - Colons before lists
 - Semi-colons in lists
 - Bullet-point punctuation
 
-This preserves the legacy engine's 14-skill map while shipping only the content that has enough fixed items, transfer coverage, misconception tags, and negative tests for the current hidden production slice.
+This preserves the legacy engine's 14-skill map while shipping only content that has enough fixed items, transfer coverage, misconception tags, and negative tests for the current hidden production slice.
 
 ## Measurement Model
 
@@ -50,6 +47,10 @@ Current published reward units:
 - `semicolons-core`
 - `dash-clauses-core`
 - `hyphens-core`
+- `parenthesis-core`
+- `colons-core`
+- `semicolon-lists-core`
+- `bullet-points-core`
 
 Each unit has a stable mastery key:
 
@@ -95,6 +96,13 @@ Boundary marking adds deterministic transfer validators for:
 - spaced dashes between preserved related clauses
 - exact hyphenated phrases that avoid ambiguity, such as `well-known author`
 
+Structure marking adds deterministic transfer validators for:
+
+- comma-marked parenthesis around preserved extra information
+- colons before preserved lists after complete opening clauses
+- semi-colons between complex list items
+- colon-led bullet lists with preserved bullet items
+
 ## Worker Runtime
 
 Production practice runs through the generic command boundary:
@@ -130,7 +138,7 @@ Reward projection maps secure units to Bellstorm Coast creatures:
 - Apostrophe: Claspin
 - Speech: Quoral
 - Comma / Flow: Curlune
-- List / Structure: Colisk, planned
+- List / Structure: Colisk
 - Boundary: Hyphang
 - Published release aggregate: Carillon
 

@@ -11,6 +11,11 @@ const FACET_LABELS = Object.freeze({
   comma_placement: 'Comma placement',
   boundary_mark: 'Boundary mark',
   hyphenated_phrase: 'Hyphenated phrase',
+  parenthetical_phrase: 'Parenthetical phrase',
+  colon_boundary: 'Colon before the list',
+  list_separators: 'List separators',
+  bullet_markers: 'Bullet markers',
+  bullet_punctuation: 'Bullet punctuation',
   terminal_punctuation: 'Terminal punctuation',
   unwanted_punctuation: 'No duplicated punctuation outside the quote',
 });
@@ -27,6 +32,18 @@ export function normaliseAnswerText(value) {
     .slice(0, MAX_ANSWER_LENGTH);
 }
 
+function normaliseAnswerLines(value) {
+  return String(value ?? '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .map((line) => line.replace(/[ \t]+/g, ' ').trim())
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+    .slice(0, MAX_ANSWER_LENGTH);
+}
+
 export function canonicalPunctuationText(value) {
   return normaliseAnswerText(value)
     .replace(/[“”]/g, '"')
@@ -34,6 +51,18 @@ export function canonicalPunctuationText(value) {
     .replace(/\s+([,.;:?!])/g, '$1')
     .replace(/([“"‘'])\s+/g, '$1')
     .replace(/\s+([”"’'])/g, '$1');
+}
+
+function canonicalPunctuationLineText(value) {
+  return normaliseAnswerLines(value)
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .split('\n')
+    .map((line) => line
+      .replace(/\s+([,.;:?!])/g, '$1')
+      .replace(/([“"‘'])\s+/g, '$1')
+      .replace(/\s+([”"’'])/g, '$1'))
+    .join('\n');
 }
 
 function stripPunctuation(value) {
@@ -200,6 +229,19 @@ function listCommaOk(text, words = []) {
   };
 }
 
+function listCommaShapePattern(words = []) {
+  const items = words.map((word) => canonicalPunctuationText(word).toLowerCase()).filter(Boolean);
+  if (items.length < 2) return null;
+  const escaped = items.map(escapeRegExp);
+  if (escaped.length === 2) return `${escaped[0]}\\s+and\\s+${escaped[1]}`;
+  let body = escaped[0];
+  for (let index = 1; index < escaped.length - 1; index += 1) {
+    body += `,\\s*${escaped[index]}`;
+  }
+  body += `\\s+and\\s+${escaped[escaped.length - 1]}`;
+  return body;
+}
+
 function itemTags(item) {
   return Array.isArray(item?.misconceptionTags) ? [...item.misconceptionTags] : [];
 }
@@ -233,6 +275,107 @@ function hyphenatedPhrase(text, phrase) {
   const wordsOk = phraseWords.length > 0 && wordSequencePreserved(clean, phraseWords);
   const hyphenOk = Boolean(phraseText) && clean.toLowerCase().includes(phraseText);
   return { wordsOk, hyphenOk };
+}
+
+function parentheticalPhrase(text, validator = {}) {
+  const clean = canonicalPunctuationText(text);
+  const lower = clean.toLowerCase();
+  const before = canonicalPunctuationText(validator.before || '');
+  const phrase = canonicalPunctuationText(validator.phrase || '');
+  const after = canonicalPunctuationText(validator.after || '');
+  const beforeIndex = before ? lower.indexOf(before.toLowerCase()) : -1;
+  const phraseIndex = phrase ? lower.indexOf(phrase.toLowerCase(), Math.max(0, beforeIndex + before.length)) : -1;
+  const afterIndex = after ? lower.indexOf(after.toLowerCase(), Math.max(0, phraseIndex + phrase.length)) : -1;
+  const wordsOk = beforeIndex >= 0 && phraseIndex > beforeIndex && afterIndex > phraseIndex;
+  const beforeGap = wordsOk ? clean.slice(beforeIndex + before.length, phraseIndex) : '';
+  const afterGap = wordsOk ? clean.slice(phraseIndex + phrase.length, afterIndex) : '';
+  const openOk = /^\s*(?:,|\(|[-–—])\s*$/.test(beforeGap);
+  const closeOk = /^\s*(?:,|\)|[-–—])\s*$/.test(afterGap);
+  const punctuationOk = (/^\s*,\s*$/.test(beforeGap) && /^\s*,\s*$/.test(afterGap))
+    || (/^\s*\(\s*$/.test(beforeGap) && /^\s*\)\s*$/.test(afterGap))
+    || (/^\s*[-–—]\s*$/.test(beforeGap) && /^\s*[-–—]\s*$/.test(afterGap));
+  return { wordsOk, openOk, closeOk, punctuationOk };
+}
+
+function colonBeforeList(text, validator = {}) {
+  const clean = canonicalPunctuationText(text);
+  const lower = clean.toLowerCase();
+  const opening = canonicalPunctuationText(validator.opening || '');
+  const items = (Array.isArray(validator.items) ? validator.items : [])
+    .map((entry) => canonicalPunctuationText(entry))
+    .filter(Boolean);
+  const openingLower = opening.toLowerCase();
+  const wordsOk = Boolean(openingLower)
+    && lower.startsWith(openingLower)
+    && wordSequencePreserved(clean, [opening, ...items]);
+  const afterOpening = wordsOk ? clean.slice(opening.length) : '';
+  const colonOk = /^\s*:\s*/.test(afterOpening);
+  const expectedList = listCommaShapePattern(items);
+  const listOk = Boolean(expectedList) && new RegExp(
+    `^\\s*${escapeRegExp(opening)}\\s*:\\s*${expectedList}\\s*[.?!]?["']?$`,
+    'i',
+  ).test(clean);
+  const { hasFinalComma } = listCommaOk(clean, items);
+  return { wordsOk, colonOk, listOk, hasFinalComma };
+}
+
+function semicolonList(text, validator = {}) {
+  const clean = canonicalPunctuationText(text);
+  const lower = clean.toLowerCase();
+  const items = (Array.isArray(validator.items) ? validator.items : [])
+    .map((entry) => canonicalPunctuationText(entry))
+    .filter(Boolean);
+  if (items.length < 2) return { wordsOk: false, separatorsOk: false };
+  const indices = [];
+  let cursor = 0;
+  for (const item of items) {
+    const index = lower.indexOf(item.toLowerCase(), cursor);
+    if (index < 0) return { wordsOk: false, separatorsOk: false };
+    indices.push({ index, item });
+    cursor = index + item.length;
+  }
+  const prefixOk = !/;/.test(clean.slice(0, indices[0].index));
+  const separatorsOk = indices.slice(0, -1).every((entry, index) => {
+    const next = indices[index + 1];
+    const gap = clean.slice(entry.index + entry.item.length, next.index);
+    return index === indices.length - 2
+      ? /^\s*;\s*(?:and\s+)?$/i.test(gap)
+      : /^\s*;\s*$/.test(gap);
+  });
+  const last = indices[indices.length - 1];
+  const tailOk = /^[.?!]?["']?$/.test(clean.slice(last.index + last.item.length).trim());
+  return {
+    wordsOk: indices.length === items.length,
+    separatorsOk: prefixOk && separatorsOk && tailOk,
+  };
+}
+
+function bulletStemAndItems(text, validator = {}) {
+  const clean = canonicalPunctuationLineText(text);
+  const lines = clean.split('\n').filter(Boolean);
+  const stem = canonicalPunctuationLineText(validator.stem || '');
+  const items = (Array.isArray(validator.items) ? validator.items : [])
+    .map((entry) => canonicalPunctuationLineText(entry))
+    .filter(Boolean);
+  const firstLine = lines[0] || '';
+  const stemPattern = stem ? new RegExp(`^${escapeRegExp(stem)}\\s*:?$`, 'i') : null;
+  const colonPattern = stem ? new RegExp(`^${escapeRegExp(stem)}\\s*:$`, 'i') : null;
+  const stemOk = Boolean(stemPattern?.test(firstLine));
+  const colonOk = Boolean(colonPattern?.test(firstLine));
+  const bulletLines = lines.slice(1);
+  const parsedItems = bulletLines.map((line) => {
+    const match = line.match(/^-\s+(.+)$/);
+    return match ? canonicalPunctuationLineText(match[1]) : null;
+  });
+  const bulletMarkersOk = bulletLines.length === items.length && parsedItems.every(Boolean);
+  const itemBase = (value) => canonicalPunctuationLineText(value).replace(/[.!?]$/, '').trim().toLowerCase();
+  const itemsOk = items.length > 0
+    && parsedItems.length === items.length
+    && parsedItems.every((entry, index) => entry && itemBase(entry) === itemBase(items[index]));
+  const endings = parsedItems.filter(Boolean).map((entry) => entry.match(/[.!?]$/)?.[0] || '');
+  const allowedEndings = new Set(['', '.']);
+  const punctuationOk = bulletMarkersOk && endings.every((ending) => allowedEndings.has(ending)) && new Set(endings).size <= 1;
+  return { stemOk, colonOk, itemsOk, bulletMarkersOk, punctuationOk };
 }
 
 export function evaluateSpeechRubric(answer, rubric = {}) {
@@ -286,7 +429,8 @@ export function evaluateSpeechRubric(answer, rubric = {}) {
 }
 
 function markTransfer(item, answer) {
-  const text = normaliseAnswerText(isPlainObject(answer) ? answer.typed ?? answer.answer : answer);
+  const rawText = isPlainObject(answer) ? answer.typed ?? answer.answer : answer;
+  const text = normaliseAnswerText(rawText);
   const validator = item.validator || {};
 
   if (validator.type === 'startsWithWordQuestion') {
@@ -442,12 +586,113 @@ function markTransfer(item, answer) {
     };
   }
 
+  if (validator.type === 'requiresParentheticalPhrase') {
+    const { wordsOk, openOk, closeOk, punctuationOk } = parentheticalPhrase(text, validator);
+    const capitalOk = sentenceStartsWithCapital(text);
+    const terminalOk = sentenceEnds(text);
+    const correct = wordsOk && punctuationOk && capitalOk && terminalOk;
+    const tags = [];
+    if (!wordsOk) tags.push('structure.words_changed');
+    if (wordsOk && !punctuationOk) tags.push(openOk || closeOk ? 'structure.parenthesis_unbalanced' : 'structure.parenthesis_missing');
+    if (!capitalOk) tags.push('structure.capitalisation_missing');
+    if (!terminalOk) tags.push('structure.terminal_missing');
+    return {
+      correct,
+      expected: item.model || '',
+      note: correct ? 'The extra information is marked off clearly.' : 'Keep the sentence parts in order and mark the parenthesis with commas, brackets or dashes.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('parenthetical_phrase', punctuationOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+      ],
+    };
+  }
+
+  if (validator.type === 'requiresColonBeforeList') {
+    const { wordsOk, colonOk, listOk, hasFinalComma } = colonBeforeList(text, validator);
+    const capitalOk = sentenceStartsWithCapital(text);
+    const terminalOk = sentenceEnds(text);
+    const correct = wordsOk && colonOk && listOk && capitalOk && terminalOk;
+    const tags = [];
+    if (!wordsOk) tags.push('structure.list_words_changed');
+    if (wordsOk && !colonOk) tags.push('structure.colon_missing');
+    if (wordsOk && !listOk) tags.push(hasFinalComma ? 'comma.unnecessary_final_comma' : 'structure.list_separator_missing');
+    if (!capitalOk) tags.push('structure.capitalisation_missing');
+    if (!terminalOk) tags.push('structure.terminal_missing');
+    return {
+      correct,
+      expected: item.model || '',
+      note: correct ? 'The colon introduces the list after a complete opening clause.' : 'Use the colon after the opening clause and keep the list items in order.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('colon_boundary', colonOk),
+        facet('list_separators', listOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+      ],
+    };
+  }
+
+  if (validator.type === 'requiresSemicolonList') {
+    const { wordsOk, separatorsOk } = semicolonList(text, validator);
+    const capitalOk = sentenceStartsWithCapital(text);
+    const terminalOk = sentenceEnds(text);
+    const correct = wordsOk && separatorsOk && capitalOk && terminalOk;
+    const tags = [];
+    if (!wordsOk) tags.push('structure.list_words_changed');
+    if (wordsOk && !separatorsOk) tags.push('structure.semicolon_list_missing');
+    if (!capitalOk) tags.push('structure.capitalisation_missing');
+    if (!terminalOk) tags.push('structure.terminal_missing');
+    return {
+      correct,
+      expected: item.model || '',
+      note: correct ? 'The complex list items are separated with semi-colons.' : 'Keep each complex list item in order and separate the larger items with semi-colons.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('list_separators', separatorsOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+      ],
+    };
+  }
+
+  if (validator.type === 'requiresBulletStemAndItems') {
+    const { stemOk, colonOk, itemsOk, bulletMarkersOk, punctuationOk } = bulletStemAndItems(rawText, validator);
+    const correct = stemOk && colonOk && itemsOk && bulletMarkersOk && punctuationOk;
+    const tags = [];
+    if (!stemOk || !itemsOk) tags.push('structure.list_words_changed');
+    if (stemOk && !colonOk) tags.push('structure.bullet_colon_missing');
+    if (!bulletMarkersOk && (itemsOk || stemOk)) tags.push('structure.bullet_marker_missing');
+    if (bulletMarkersOk && !punctuationOk) tags.push('structure.bullet_punctuation_inconsistent');
+    return {
+      correct,
+      expected: item.model || '',
+      note: correct ? 'The stem introduces the bullet list and the items are marked consistently.' : 'Use the stem with a colon, put each bullet on its own line, and punctuate the items consistently.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', stemOk && itemsOk),
+        facet('colon_boundary', colonOk),
+        facet('bullet_markers', bulletMarkersOk),
+        facet('bullet_punctuation', punctuationOk),
+      ],
+    };
+  }
+
   return null;
 }
 
+function itemRequiresLineBullets(item) {
+  return Array.isArray(item?.skillIds) && item.skillIds.includes('bullet_points');
+}
+
 function markExact(item, answer) {
-  const text = canonicalPunctuationText(isPlainObject(answer) ? answer.typed ?? answer.answer : answer);
-  const accepted = acceptedAnswers(item).map(canonicalPunctuationText);
+  const normalise = itemRequiresLineBullets(item) ? canonicalPunctuationLineText : canonicalPunctuationText;
+  const text = normalise(isPlainObject(answer) ? answer.typed ?? answer.answer : answer);
+  const accepted = acceptedAnswers(item).map(normalise);
   let exact = accepted.includes(text);
   let rubricResult = null;
 
