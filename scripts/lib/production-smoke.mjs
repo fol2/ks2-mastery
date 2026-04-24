@@ -136,11 +136,26 @@ export async function createDemoSession(origin) {
   return { cookie, session: result.payload.session };
 }
 
-export async function loadBootstrap(origin, cookie) {
+export async function loadBootstrap(origin, cookie, { expectedSession = null } = {}) {
   const result = await getJson(origin, '/api/bootstrap', { cookie });
   assertOkResponse('Bootstrap', result);
+  if (expectedSession) {
+    assert.equal(result.payload?.session?.demo, true, 'Bootstrap session was not marked as demo.');
+    assert.equal(
+      result.payload?.session?.accountId,
+      expectedSession.accountId,
+      'Bootstrap account did not match the demo session account.',
+    );
+  }
   const learnerId = result.payload?.learners?.selectedId;
   assert.ok(learnerId, 'Bootstrap did not include a selected learner.');
+  if (expectedSession?.learnerId) {
+    assert.equal(
+      learnerId,
+      expectedSession.learnerId,
+      'Bootstrap selected learner did not match the demo session learner.',
+    );
+  }
   return {
     payload: result.payload,
     learnerId,

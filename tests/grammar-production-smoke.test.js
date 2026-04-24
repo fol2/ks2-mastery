@@ -62,6 +62,22 @@ test('Grammar production smoke rejects option sets that do not match the regener
   );
 });
 
+test('Grammar production smoke rejects extra production option fields', () => {
+  const question = smokeQuestion();
+  const readItem = readItemFromQuestion(question);
+  readItem.inputSpec = {
+    ...readItem.inputSpec,
+    options: readItem.inputSpec.options.map((option, index) => (
+      index === 0 ? { ...option, correct: true } : option
+    )),
+  };
+
+  assert.throws(
+    () => correctResponseFor(readItem),
+    /Grammar production read model exposed option 1 with unexpected fields: correct, label, value/,
+  );
+});
+
 test('Grammar production smoke scans feedback and summary models for forbidden keys', () => {
   assert.doesNotThrow(() => assertNoForbiddenGrammarReadModelKeys({
     stats: { templates: { total: 44, selectedResponse: 20 } },

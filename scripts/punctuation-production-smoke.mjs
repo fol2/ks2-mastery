@@ -131,7 +131,7 @@ async function smokeSpelling({ origin, cookie, learnerId, revision }) {
 async function main() {
   const origin = configuredOrigin();
   const demo = await createDemoSession(origin);
-  const bootstrap = await loadBootstrap(origin, demo.cookie);
+  const bootstrap = await loadBootstrap(origin, demo.cookie, { expectedSession: demo.session });
   assert.equal(
     bootstrap.payload?.subjectExposureGates?.punctuationProduction,
     true,

@@ -36,11 +36,15 @@ const FORBIDDEN_GRAMMAR_ITEM_KEYS = new Set([
   'templates',
 ]);
 
-function normaliseChoiceOptions(inputSpec, context) {
+function normaliseChoiceOptions(inputSpec, context, { allowExtraKeys = false } = {}) {
   assert.ok(Array.isArray(inputSpec?.options) && inputSpec.options.length > 0, `${context} did not expose answer options.`);
   return inputSpec.options.map((option, index) => {
     assert.equal(typeof option?.value, 'string', `${context} exposed option ${index + 1} without a string value.`);
     assert.equal(typeof option?.label, 'string', `${context} exposed option ${index + 1} without a string label.`);
+    if (!allowExtraKeys) {
+      const keys = Object.keys(option).sort();
+      assert.deepEqual(keys, ['label', 'value'], `${context} exposed option ${index + 1} with unexpected fields: ${keys.join(', ')}`);
+    }
     return {
       value: option.value,
       label: option.label,
@@ -63,7 +67,7 @@ export function correctResponseFor(readItem) {
   });
   assert.ok(question, `Could not rebuild Grammar smoke question for ${readItem?.templateId || 'unknown template'}.`);
   assert.equal(question.inputSpec?.type, 'single_choice', 'Grammar production smoke expects a single-choice template.');
-  const expectedOptions = normaliseChoiceOptions(question.inputSpec, 'Regenerated Grammar smoke question');
+  const expectedOptions = normaliseChoiceOptions(question.inputSpec, 'Regenerated Grammar smoke question', { allowExtraKeys: true });
   assert.deepEqual(readOptions, expectedOptions, 'Grammar production option set did not match the regenerated question.');
 
   for (const option of readOptions) {
@@ -167,7 +171,7 @@ async function smokeSpelling({ origin, cookie, learnerId, revision }) {
 async function main() {
   const origin = configuredOrigin();
   const demo = await createDemoSession(origin);
-  const bootstrap = await loadBootstrap(origin, demo.cookie);
+  const bootstrap = await loadBootstrap(origin, demo.cookie, { expectedSession: demo.session });
 
   const grammar = await smokeGrammar({
     origin,

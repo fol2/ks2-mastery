@@ -68,7 +68,7 @@ test('production smoke helpers create demo, bootstrap, and send subject command 
     if (calls.length === 1) {
       return jsonResponse({
         ok: true,
-        session: { demo: true, accountId: 'account-a' },
+        session: { demo: true, accountId: 'account-a', learnerId: 'learner-a' },
       }, {
         status: 201,
         headers: {
@@ -82,6 +82,7 @@ test('production smoke helpers create demo, bootstrap, and send subject command 
     if (calls.length === 2) {
       return jsonResponse({
         ok: true,
+        session: { demo: true, accountId: 'account-a' },
         learners: {
           selectedId: 'learner-a',
           byId: {
@@ -101,9 +102,9 @@ test('production smoke helpers create demo, bootstrap, and send subject command 
     const origin = 'https://preview.example.test';
     const demo = await createDemoSession(origin);
     assert.equal(demo.cookie, 'ks2_session=demo123');
-    assert.deepEqual(demo.session, { demo: true, accountId: 'account-a' });
+    assert.deepEqual(demo.session, { demo: true, accountId: 'account-a', learnerId: 'learner-a' });
 
-    const bootstrap = await loadBootstrap(origin, demo.cookie);
+    const bootstrap = await loadBootstrap(origin, demo.cookie, { expectedSession: demo.session });
     assert.equal(bootstrap.learnerId, 'learner-a');
     assert.equal(bootstrap.revision, 7);
 
