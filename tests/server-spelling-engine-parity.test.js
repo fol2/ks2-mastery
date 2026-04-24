@@ -234,6 +234,44 @@ test('worker spelling command route starts, submits, continues, and completes se
     `).get();
     assert.equal(latest.status, 'completed');
     assert.equal(JSON.parse(latest.summary_json).totalWords, 1);
+
+    step = await postCommand(server, {
+      command: 'save-prefs',
+      requestId: 'spell-save-prefs-after-summary',
+      expectedLearnerRevision: 5,
+      payload: {
+        prefs: {
+          roundLength: '5',
+          yearFilter: 'extra',
+          autoSpeak: false,
+        },
+      },
+    });
+    assert.equal(step.response.status, 200);
+    assert.equal(step.body.subjectReadModel.phase, 'dashboard');
+    assert.equal(step.body.subjectReadModel.summary, null);
+    assert.equal(step.body.subjectReadModel.prefs.roundLength, '5');
+    assert.equal(step.body.subjectReadModel.prefs.yearFilter, 'extra');
+    assert.equal(step.body.subjectReadModel.prefs.autoSpeak, false);
+
+    const subjectAfterPrefs = server.DB.db.prepare(`
+      SELECT ui_json, data_json
+      FROM child_subject_state
+      WHERE learner_id = 'learner-a' AND subject_id = 'spelling'
+    `).get();
+    const uiAfterPrefs = JSON.parse(subjectAfterPrefs.ui_json);
+    const dataAfterPrefs = JSON.parse(subjectAfterPrefs.data_json);
+    assert.equal(uiAfterPrefs.phase, 'dashboard');
+    assert.equal(uiAfterPrefs.summary, null);
+    assert.equal(dataAfterPrefs.prefs.roundLength, '5');
+    assert.equal(dataAfterPrefs.prefs.yearFilter, 'extra');
+
+    const completedCount = server.DB.db.prepare(`
+      SELECT COUNT(*) AS count
+      FROM practice_sessions
+      WHERE learner_id = 'learner-a' AND subject_id = 'spelling' AND status = 'completed'
+    `).get().count;
+    assert.equal(completedCount, 1);
   } finally {
     server.close();
   }

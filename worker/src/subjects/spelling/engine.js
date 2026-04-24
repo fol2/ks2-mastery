@@ -225,6 +225,11 @@ function staleSessionError(command) {
   });
 }
 
+function stateAfterPreferenceChange(currentState) {
+  if (currentState?.phase === 'session' && currentState.session) return currentState;
+  return createInitialSpellingState();
+}
+
 export function createServerSpellingEngine({
   now = Date.now,
   random = Math.random,
@@ -284,7 +289,7 @@ export function createServerSpellingEngine({
         transition = service.endSession(learnerId, currentState);
       } else if (command === 'save-prefs') {
         const prefs = service.savePrefs(learnerId, payload.prefs || payload);
-        transition = buildTransition(service.initState(currentState, learnerId), { events: [], audio: null });
+        transition = buildTransition(stateAfterPreferenceChange(currentState), { events: [], audio: null });
         transition.prefs = prefs;
       } else if (command === 'reset-learner') {
         service.resetLearner(learnerId);
