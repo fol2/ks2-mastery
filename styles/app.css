@@ -2218,14 +2218,6 @@ textarea:focus-visible {
   z-index: 2;
 }
 
-.profile-kicker {
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
 .profile-title {
   max-width: 13ch;
   margin: 6px 0 0;
@@ -7380,4 +7372,402 @@ textarea:focus-visible {
   .parent-hub-section-head { margin-top: 28px; }
   .parent-hub-pattern-count,
   .parent-hub-ledger-figure { font-size: 1.4rem; }
+}
+
+/* ==========================================================
+   Profile settings — alignment with the home / codex
+   journal aesthetic. Overrides earlier .profile-hero and
+   .hero-paper rules so the profile page reads as another
+   paper in the same codex. Keep this block last so source
+   order wins without needing compound selector specificity.
+   ========================================================== */
+
+.profile-hero {
+  grid-template-columns: minmax(0, 1.24fr) minmax(280px, 0.76fr);
+  gap: clamp(20px, 3.2vw, 36px);
+  align-items: center;
+  min-height: 360px;
+  padding: clamp(34px, 5vw, 48px) clamp(28px, 4vw, 44px) clamp(30px, 4vw, 40px);
+  background:
+    radial-gradient(120% 95% at 100% 0%,
+      color-mix(in oklab, var(--profile-accent, var(--brand)) 22%, transparent),
+      transparent 58%),
+    radial-gradient(130% 95% at 0% 100%,
+      color-mix(in oklab, var(--phaeton) 15%, transparent),
+      transparent 62%),
+    var(--panel);
+}
+
+.profile-hero-art.hero-art {
+  opacity: 0.48;
+}
+
+.profile-hero-art.hero-art::after {
+  background:
+    linear-gradient(100deg,
+      color-mix(in oklab, var(--panel) 94%, transparent) 0%,
+      color-mix(in oklab, var(--panel) 72%, transparent) 38%,
+      color-mix(in oklab, var(--panel) 36%, transparent) 72%,
+      color-mix(in oklab, var(--panel) 14%, transparent) 100%),
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--panel) 20%, transparent) 0%,
+      transparent 42%,
+      transparent 70%,
+      color-mix(in oklab, var(--panel) 24%, transparent) 100%);
+}
+
+.profile-hero-copy {
+  max-width: 640px;
+  padding-top: clamp(0px, 1.4vw, 12px);
+}
+
+.profile-hero-copy .eyebrow {
+  color: color-mix(in oklab, var(--profile-accent, var(--brand)) 68%, var(--muted));
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.profile-title {
+  max-width: 18ch;
+  margin: 10px 0 0;
+  font-family: var(--font-serif);
+  font-size: clamp(2.1rem, 4.2vw, 3.1rem);
+  line-height: 1.02;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.profile-title em {
+  font-style: italic;
+  color: color-mix(in oklab, var(--profile-accent, var(--brand)) 80%, var(--ink));
+  font-weight: 500;
+}
+
+.profile-lede {
+  max-width: 54ch;
+  margin: 16px 0 0;
+  color: var(--ink-2);
+  font-size: 1.02rem;
+  line-height: 1.5;
+}
+
+.profile-hero-actions {
+  margin-top: clamp(20px, 2.8vw, 28px);
+}
+
+/* Identity card — glass disc with accent halo */
+.profile-identity {
+  justify-self: end;
+  align-self: center;
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  gap: 14px;
+  width: min(100%, 320px);
+  padding: 22px 20px 18px;
+  text-align: center;
+  border: 1px solid color-mix(in oklab, var(--line) 66%, transparent);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--panel) 72%, transparent) 0%,
+      color-mix(in oklab, var(--panel) 42%, transparent) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 24px 44px -28px color-mix(in oklab, var(--profile-accent, var(--brand)) 45%, transparent),
+    inset 0 0 0 1px color-mix(in oklab, white 12%, transparent);
+}
+
+.profile-avatar {
+  width: clamp(96px, 14vw, 132px);
+  font-size: clamp(2rem, 4.4vw, 2.9rem);
+  box-shadow:
+    0 22px 38px -22px color-mix(in oklab, var(--profile-accent, var(--brand)) 55%, transparent),
+    inset 0 0 0 6px color-mix(in oklab, white 22%, transparent);
+}
+
+.profile-identity-copy strong {
+  font-size: 1.3rem;
+}
+
+.profile-mini-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin: 4px 0 0;
+}
+
+.profile-mini-stats > span {
+  display: grid;
+  gap: 4px;
+  padding: 10px 6px;
+  border: 1px solid color-mix(in oklab, var(--line-strong) 45%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--panel) 60%, transparent);
+}
+
+.profile-mini-stats strong {
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.profile-mini-stats small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Main layout — form column and side rail */
+.profile-layout {
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.profile-form-column {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.profile-side-panels {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+/* Panel base — soft codex-warm paper */
+.profile-panel {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg,
+      var(--panel) 0%,
+      color-mix(in oklab, var(--panel-soft) 55%, var(--panel)) 100%);
+  box-shadow: var(--shadow-xs);
+  padding: 22px 24px;
+}
+
+.profile-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.profile-panel-head .eyebrow {
+  margin-bottom: 4px;
+}
+
+.profile-panel-head .section-title {
+  font-size: 1.4rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.profile-panel .subtitle {
+  margin: -4px 0 14px;
+  color: var(--ink-2);
+  font-size: 0.96rem;
+  line-height: 1.5;
+}
+
+/* Study rhythm: accent top stripe hints the learner's colour */
+.profile-rhythm-panel {
+  overflow: hidden;
+  padding-top: 20px;
+}
+
+.profile-rhythm-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--profile-accent, var(--brand)) 85%, transparent) 0%,
+    color-mix(in oklab, var(--profile-accent, var(--brand)) 45%, transparent) 55%,
+    transparent 100%);
+}
+
+.profile-shared-chip {
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+.profile-learner-switcher {
+  margin-bottom: 14px;
+}
+
+.profile-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+/* Dictation panel — leans on the glimmer accent so it sits between
+   the warm rhythm panel and the bad-tone danger zone. */
+.profile-dictation-panel {
+  background:
+    linear-gradient(180deg,
+      var(--panel) 0%,
+      color-mix(in oklab, var(--glimmer-soft) 42%, var(--panel)) 100%);
+}
+
+.profile-dictation-panel .profile-panel-head .chip {
+  background: color-mix(in oklab, var(--glimmer) 12%, var(--panel));
+  border-color: color-mix(in oklab, var(--glimmer) 38%, var(--line));
+  color: color-mix(in oklab, var(--glimmer) 72%, var(--ink));
+}
+
+.profile-dictation-panel .profile-tts-control {
+  margin-bottom: 14px;
+}
+
+/* Danger zone — soft red so destructive actions feel deliberate */
+.profile-danger-panel {
+  background:
+    linear-gradient(180deg,
+      var(--panel) 0%,
+      color-mix(in oklab, var(--bad-soft) 48%, var(--panel)) 100%);
+  border-color: color-mix(in oklab, var(--bad) 22%, var(--line));
+}
+
+.profile-danger-panel .section-title {
+  color: var(--bad-strong);
+}
+
+.profile-danger-panel .profile-form-danger-actions {
+  margin: 12px 0 0;
+}
+
+/* Sticky-feeling footer with an accent glow that mirrors the hero */
+.profile-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 0;
+  padding: 16px 22px;
+  border: 1px solid color-mix(in oklab, var(--profile-accent, var(--brand)) 28%, var(--line));
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--panel) 92%, transparent) 0%,
+      color-mix(in oklab, var(--profile-accent, var(--brand)) 10%, var(--panel)) 100%);
+  box-shadow:
+    0 18px 32px -26px color-mix(in oklab, var(--profile-accent, var(--brand)) 60%, transparent);
+}
+
+.profile-form-footer-note {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.profile-form-footer .btn.primary.lg {
+  flex: 0 0 auto;
+  min-height: 46px;
+  padding: 12px 20px;
+  box-shadow: 0 12px 22px -14px color-mix(in oklab, var(--profile-accent, var(--brand)) 70%, transparent);
+}
+
+/* Data panel chrome */
+.profile-data-panel .profile-persistence-chips {
+  margin: 0 0 12px;
+}
+
+.profile-data-panel .feedback {
+  margin: 10px 0;
+}
+
+.profile-data-actions {
+  margin-top: 14px;
+}
+
+/* Demo conversion */
+.profile-demo-conversion-panel {
+  background:
+    linear-gradient(180deg,
+      var(--panel) 0%,
+      color-mix(in oklab, var(--good-soft) 40%, var(--panel)) 100%);
+  border-color: color-mix(in oklab, var(--good) 28%, var(--line));
+}
+
+.profile-demo-conversion-panel .section-title {
+  color: var(--good-strong);
+}
+
+.profile-demo-form {
+  margin-top: 8px;
+}
+
+.profile-demo-social {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 12px;
+}
+
+/* Empty state — reuses hero-paper, adds the same hero-art wash */
+.profile-hero-empty {
+  grid-template-columns: 1fr;
+  min-height: 320px;
+}
+
+.profile-hero-empty .profile-hero-copy {
+  max-width: 58ch;
+}
+
+/* Responsive tuning */
+@media (max-width: 980px) {
+  .profile-hero {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+  .profile-identity {
+    justify-self: start;
+    width: 100%;
+    max-width: 420px;
+  }
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .profile-hero {
+    padding: 28px 22px 26px;
+  }
+  .profile-panel {
+    padding: 20px 18px;
+  }
+  .profile-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-form-footer {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px 18px;
+  }
+  .profile-form-footer .btn.primary.lg {
+    width: 100%;
+  }
+  .profile-form-danger-actions {
+    flex-direction: column;
+  }
+  .profile-form-danger-actions .btn {
+    width: 100%;
+  }
+  .profile-mini-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .profile-demo-social {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

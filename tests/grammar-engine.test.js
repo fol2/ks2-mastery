@@ -457,6 +457,54 @@ test('Grammar sentence surgery clears stored focus and stays inside the surgery 
   assert.equal(template.tags.includes('surgery'), true);
 });
 
+test('Grammar sentence builder mode only picks builder templates and clears stored focus', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {
+      data: {
+        prefs: {
+          focusConceptId: 'word_classes',
+        },
+      },
+    },
+    command: 'start-session',
+    requestId: 'start-builder',
+    payload: {
+      mode: 'builder',
+      roundLength: 3,
+      seed: 42,
+    },
+  });
+  const template = GRAMMAR_TEMPLATE_METADATA.find((entry) => entry.id === start.state.session.currentItem.templateId);
+
+  assert.equal(start.state.phase, 'session');
+  assert.equal(start.state.session.mode, 'builder');
+  assert.equal(start.state.session.type, 'sentence-builder');
+  assert.equal(start.state.session.focusConceptId, '');
+  assert.equal(start.state.prefs.focusConceptId, '');
+  assert.equal(start.practiceSession.sessionKind, 'builder');
+  assert.equal(template.tags.includes('builder'), true);
+  assert.match(start.state.session.currentItem.questionType, /^(build|rewrite)$/);
+});
+
+test('Grammar sentence builder rejects explicit non-builder templates', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+
+  assert.throws(() => engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'start-builder-bypass',
+    payload: {
+      mode: 'builder',
+      roundLength: 3,
+      seed: 42,
+      templateId: 'sentence_type_table',
+    },
+  }), (error) => error?.extra?.code === 'grammar_template_unavailable_for_mode');
+});
+
 test('Grammar save-prefs clears completed summary state', () => {
   const oracle = readGrammarLegacyOracle();
   const sample = oracle.templates.find((template) => template.id === 'question_mark_select');
