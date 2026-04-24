@@ -1619,6 +1619,7 @@ function handleGlobalAction(action, data) {
       tts.stop();
       runtimeBoundary.clearAll();
       store.selectLearner(nextLearnerId);
+      remoteSpellingActions?.reapplyPendingOptimisticPrefs?.();
     }
     if (appState.route.screen === 'admin-hub') loadAdminHub({ learnerId: nextLearnerId, force: true });
     else loadParentHub({ learnerId: nextLearnerId, force: true });
@@ -1636,6 +1637,7 @@ function handleGlobalAction(action, data) {
     tts.stop();
     runtimeBoundary.clearAll();
     store.selectLearner(nextLearnerId);
+    remoteSpellingActions?.reapplyPendingOptimisticPrefs?.();
     if (boot.session.signedIn) {
       if (appState.route.screen === 'parent-hub') loadParentHub({ learnerId: nextLearnerId, force: true });
       if (appState.route.screen === 'admin-hub') loadAdminHub({ learnerId: nextLearnerId, force: true });
@@ -1883,7 +1885,15 @@ function runtimeIsReadOnly() {
 }
 
 function setSpellingRuntimeError(message) {
-  store.updateSubjectUi('spelling', { error: message || 'Practice is temporarily unavailable.' });
+  store.patch((current) => ({
+    subjectUi: {
+      ...current.subjectUi,
+      spelling: {
+        ...(current.subjectUi?.spelling || {}),
+        error: message || 'Practice is temporarily unavailable.',
+      },
+    },
+  }));
 }
 
 function setPunctuationRuntimeError(message) {

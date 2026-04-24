@@ -1082,3 +1082,259 @@ test('remote spelling word-bank drill submit is blocked while read-only', () => 
   assert.equal(sent.length, 0);
   assert.match(errors[0], /read-only/i);
 });
+
+test('remote spelling optimistic prefs reapply after learner switches', async () => {
+  const prefsByLearner = {
+    'learner-a': { mode: 'smart', yearFilter: 'core', roundLength: '10', extraWordFamilies: false },
+    'learner-b': { mode: 'smart', yearFilter: 'core', roundLength: '20', extraWordFamilies: false },
+  };
+  const { getState, store } = createStoreHarness({
+    learners: { selectedId: 'learner-a' },
+    subjectUi: {
+      spelling: {
+        phase: 'dashboard',
+        prefs: { ...prefsByLearner['learner-a'] },
+        error: '',
+      },
+    },
+  });
+  const sent = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: {
+      spelling: {
+        getPrefs(learnerId) {
+          return prefsByLearner[learnerId] || {};
+        },
+      },
+    },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        return Promise.resolve({ subjectReadModel: { phase: request.command === 'start-session' ? 'session' : 'dashboard' } });
+      },
+    },
+    preferenceSaveDebounceMs: 10_000,
+  });
+
+  assert.equal(handler.handle('spelling-set-pref', { pref: 'yearFilter', value: 'extra' }), true);
+  assert.equal(getState().subjectUi.spelling.prefs.yearFilter, 'extra');
+
+  store.patch((current) => ({
+    ...current,
+    learners: { selectedId: 'learner-b' },
+    subjectUi: {
+      ...current.subjectUi,
+      spelling: {
+        phase: 'dashboard',
+        prefs: { ...prefsByLearner['learner-b'] },
+        error: '',
+      },
+    },
+  }));
+  handler.reapplyPendingOptimisticPrefs();
+  assert.equal(getState().subjectUi.spelling.prefs.yearFilter, 'core');
+
+  store.patch((current) => ({
+    ...current,
+    learners: { selectedId: 'learner-a' },
+    subjectUi: {
+      ...current.subjectUi,
+      spelling: {
+        phase: 'dashboard',
+        prefs: { ...prefsByLearner['learner-a'] },
+        error: '',
+      },
+    },
+  }));
+  handler.reapplyPendingOptimisticPrefs();
+  assert.equal(getState().subjectUi.spelling.prefs.yearFilter, 'extra');
+
+  assert.equal(handler.handle('spelling-start'), true);
+  await flushPromises();
+  await flushPromises();
+  await flushPromises();
+  await flushPromises();
+  assert.equal(sent[0].command, 'save-prefs');
+  assert.deepEqual(sent[0].payload, { prefs: { yearFilter: 'extra' } });
+  assert.equal(sent[1].command, 'start-session');
+  assert.equal(sent[1].payload.yearFilter, 'extra');
+});
+
+test('remote spelling save failures stay scoped to the original learner', async () => {
+  const prefsByLearner = {
+    'learner-a': { mode: 'smart', yearFilter: 'core', roundLength: '10', extraWordFamilies: false },
+    'learner-b': { mode: 'smart', yearFilter: 'core', roundLength: '20', extraWordFamilies: false },
+  };
+  const { getState, store } = createStoreHarness({
+    learners: { selectedId: 'learner-a' },
+    subjectUi: {
+      spelling: {
+        phase: 'dashboard',
+        prefs: { ...prefsByLearner['learner-a'] },
+        error: '',
+      },
+    },
+  });
+  const pending = deferred();
+  const errors = [];
+  const originalWarn = globalThis.console?.warn;
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: {
+      spelling: {
+        getPrefs(learnerId) {
+          return prefsByLearner[learnerId] || {};
+        },
+      },
+    },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    setRuntimeError(message) {
+      errors.push({ learnerId: getState().learners.selectedId, message });
+      store.patch((current) => ({
+        subjectUi: {
+          ...current.subjectUi,
+          spelling: {
+            ...current.subjectUi.spelling,
+            error: message,
+          },
+        },
+      }));
+    },
+    subjectCommands: {
+      send() {
+        return pending.promise;
+      },
+    },
+    preferenceSaveDebounceMs: 0,
+  });
+
+  assert.equal(handler.handle('spelling-set-pref', { pref: 'yearFilter', value: 'extra' }), true);
+  assert.equal(getState().subjectUi.spelling.prefs.yearFilter, 'extra');
+
+  store.patch((current) => ({
+    ...current,
+    learners: { selectedId: 'learner-b' },
+    subjectUi: {
+      ...current.subjectUi,
+      spelling: {
+        phase: 'dashboard',
+        prefs: { ...prefsByLearner['learner-b'] },
+        error: '',
+      },
+    },
+  }));
+
+  try {
+    if (globalThis.console) globalThis.console.warn = () => {};
+    await flushTimers();
+    pending.reject(new Error('Save failed'));
+    await flushPromises();
+    await flushPromises();
+  } finally {
+    if (globalThis.console) globalThis.console.warn = originalWarn;
+  }
+
+  assert.deepEqual(errors, []);
+  assert.equal(getState().learners.selectedId, 'learner-b');
+  assert.equal(getState().subjectUi.spelling.error, '');
+
+  store.patch((current) => ({
+    ...current,
+    learners: { selectedId: 'learner-a' },
+    subjectUi: {
+      ...current.subjectUi,
+      spelling: {
+        phase: 'dashboard',
+        prefs: { ...prefsByLearner['learner-a'] },
+        error: '',
+      },
+    },
+  }));
+  handler.reapplyPendingOptimisticPrefs();
+
+  assert.equal(getState().subjectUi.spelling.prefs.yearFilter, 'core');
+  assert.equal(getState().subjectUi.spelling.error, 'Save failed');
+});
+
+test('remote spelling successful commands clear scoped save errors', async () => {
+  const persistedPrefs = { mode: 'smart', yearFilter: 'core', roundLength: '10', extraWordFamilies: false };
+  const { getState, store } = createStoreHarness({
+    learners: { selectedId: 'learner-a' },
+    subjectUi: {
+      spelling: {
+        phase: 'dashboard',
+        prefs: { ...persistedPrefs },
+        error: '',
+      },
+    },
+  });
+  const pendingSave = deferred();
+  const sent = [];
+  const originalWarn = globalThis.console?.warn;
+  const originalReload = store.reloadFromRepositories;
+  store.reloadFromRepositories = (options) => {
+    originalReload(options);
+    store.patch((current) => ({
+      subjectUi: {
+        ...current.subjectUi,
+        spelling: {
+          ...current.subjectUi.spelling,
+          phase: 'session',
+          prefs: { ...persistedPrefs },
+          error: '',
+        },
+      },
+    }));
+  };
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: {
+      spelling: {
+        getPrefs() {
+          return persistedPrefs;
+        },
+      },
+    },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        if (request.command === 'save-prefs') return pendingSave.promise;
+        return Promise.resolve({ subjectReadModel: { phase: 'session' } });
+      },
+    },
+    preferenceSaveDebounceMs: 0,
+  });
+
+  assert.equal(handler.handle('spelling-set-pref', { pref: 'yearFilter', value: 'extra' }), true);
+
+  try {
+    if (globalThis.console) globalThis.console.warn = () => {};
+    await flushTimers();
+    pendingSave.reject(new Error('Save failed'));
+    await flushPromises();
+    await flushPromises();
+  } finally {
+    if (globalThis.console) globalThis.console.warn = originalWarn;
+  }
+
+  assert.equal(getState().subjectUi.spelling.error, 'Save failed');
+
+  assert.equal(handler.handle('spelling-start'), true);
+  await flushPromises();
+  await flushPromises();
+  await flushPromises();
+  await flushPromises();
+
+  assert.deepEqual(sent.map((request) => request.command), ['save-prefs', 'start-session']);
+  assert.equal(getState().subjectUi.spelling.phase, 'session');
+  assert.equal(getState().subjectUi.spelling.error, '');
+
+  handler.reapplyPendingOptimisticPrefs();
+  assert.equal(getState().subjectUi.spelling.error, '');
+});
