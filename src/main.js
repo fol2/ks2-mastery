@@ -37,6 +37,7 @@ import {
   normaliseTtsProvider,
 } from './subjects/spelling/tts-providers.js';
 import { createSpellingReadModelService } from './subjects/spelling/client-read-models.js';
+import { getOverallSpellingStats } from './subjects/spelling/module.js';
 import { resolveSpellingShortcut } from './subjects/spelling/shortcuts.js';
 import {
   monsterSummary,
@@ -1218,10 +1219,9 @@ function buildHomeMonsterSummary(learnerId, context) {
 
 function buildHomeDueTotal(learnerId, context) {
   const spelling = context.services?.spelling;
-  if (!learnerId || !spelling?.getStats || !spelling?.getPrefs) return 0;
+  if (!learnerId || !spelling?.getStats) return 0;
   try {
-    const prefs = spelling.getPrefs(learnerId);
-    const stats = spelling.getStats(learnerId, prefs?.yearFilter || 'all');
+    const stats = getOverallSpellingStats(spelling, learnerId);
     return Number(stats?.due) || 0;
   } catch {
     return 0;
