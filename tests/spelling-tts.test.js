@@ -451,10 +451,7 @@ test('platform TTS can use the local browser voice provider', async () => {
     fetchFn: async (url, init = {}) => {
       const body = JSON.parse(init.body);
       calls.push({ url, body });
-      return new Response(null, {
-        status: body.cacheLookupOnly || body.cacheOnly ? 204 : 500,
-        headers: { 'x-ks2-tts-cache': body.cacheLookupOnly ? 'miss' : 'stored' },
-      });
+      await new Promise(() => {});
     },
   });
 
@@ -472,24 +469,23 @@ test('platform TTS can use the local browser voice provider', async () => {
     assert.equal(spoken[0].voice.name, 'Google UK English Female');
     assert.match(spoken[0].text, /The word is early/);
 
-    const tokenResult = await tts.speak({
-      learnerId: 'learner-a',
-      promptToken: 'prompt-token-browser',
-      word: 'early',
-      sentence: 'The birds sang early in the day.',
-    });
+    let timeoutId;
+    const tokenResult = await Promise.race([
+      tts.speak({
+        learnerId: 'learner-a',
+        promptToken: 'prompt-token-browser',
+        word: 'early',
+        sentence: 'The birds sang early in the day.',
+      }),
+      new Promise((resolve) => {
+        timeoutId = setTimeout(() => resolve('timeout'), 300);
+      }),
+    ]);
+    clearTimeout(timeoutId);
 
     assert.equal(tokenResult, true);
-    assert.equal(calls.length, 2);
+    assert.equal(calls.length, 1);
     assert.deepEqual(calls[0].body, {
-      learnerId: 'learner-a',
-      promptToken: 'prompt-token-browser',
-      slow: false,
-      provider: 'gemini',
-      bufferedGeminiVoice: 'Iapetus',
-      cacheLookupOnly: true,
-    });
-    assert.deepEqual(calls[1].body, {
       learnerId: 'learner-a',
       promptToken: 'prompt-token-browser',
       slow: false,

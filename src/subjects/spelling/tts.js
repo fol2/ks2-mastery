@@ -304,7 +304,7 @@ export function createPlatformTts({
     const token = playbackId;
     const providerId = resolveProvider(payload.provider || provider);
     const bufferedVoiceId = resolveBufferedVoice(payload.bufferedGeminiVoice || bufferedVoice);
-    if (providerId !== 'gemini') {
+    if (providerId !== 'gemini' && providerId !== 'browser') {
       const cached = await speakWithCachedBufferedAudio(payload, bufferedVoiceId, token);
       if (cached) return true;
       if (token !== playbackId) return false;
