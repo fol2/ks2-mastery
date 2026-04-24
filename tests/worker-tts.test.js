@@ -798,6 +798,47 @@ test('TTS cache-only requests warm Gemini audio without returning playback bytes
   }
 });
 
+test('TTS cache-only warmups report provider failures without surfacing service unavailable', async () => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async (url) => {
+    providerCalls += 1;
+    assert.match(String(url), /generativelanguage/);
+    return new Response(JSON.stringify({ error: 'temporarily unavailable' }), {
+      status: 503,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+  const bucket = createMemoryR2Bucket();
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      GEMINI_API_KEY: 'test-gemini-key',
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    const prompt = await startSpellingPrompt(server);
+    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({
+      learnerId: prompt.learnerId,
+      promptToken: prompt.promptToken,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Iapetus',
+      cacheOnly: true,
+    }));
+    const bytes = new Uint8Array(await response.arrayBuffer());
+
+    assert.equal(response.status, 204);
+    assert.equal(response.headers.get('x-ks2-tts-cache'), 'provider_failed');
+    assert.equal(bytes.length, 0);
+    assert.equal(providerCalls, 1);
+    assert.equal(bucket.puts.length, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
 test('TTS cache-only warmups do not spend user playback quota', async () => {
   const originalFetch = globalThis.fetch;
   const calls = [];

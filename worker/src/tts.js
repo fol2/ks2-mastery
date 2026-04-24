@@ -287,6 +287,10 @@ function canFallbackProviderError(error) {
   return !Number.isFinite(status) || status >= 500;
 }
 
+function isProviderFailure(error, provider) {
+  return error?.provider === provider;
+}
+
 function spellingAudioBucket(env = {}) {
   const bucket = env.SPELLING_AUDIO_BUCKET;
   return bucket && typeof bucket.get === 'function' && typeof bucket.put === 'function'
@@ -780,6 +784,9 @@ export async function handleTextToSpeechRequest({
     try {
       return await tryGemini();
     } catch (error) {
+      if (cacheOnly && isProviderFailure(error, 'gemini')) {
+        return await finish(cacheOnlyResponse('provider_failed'));
+      }
       if (!canFallbackProviderError(error)) throw error;
       if (cacheOnly || !openAi.apiKey) throw providerUnavailableError(error, [error]);
       try {
