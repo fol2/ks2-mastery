@@ -22,7 +22,7 @@ Provider-specific browser/API TTS traffic and exact browser playback timing were
 | Analytics | Aggregate secure/due/trouble/fresh/accuracy stats and year-band splits were present; legacy also exposed searchable word-bank progress and direct bank drill | Aggregate analytics matched, but searchable word bank was not rebuilt | Documented remaining delta only | Partial |
 | Preferences | Mode, year filter, session size, auto-play, cloze toggle, audio provider/model/key/rate controls | Core spelling prefs matched except richer model/key/rate controls | Added a profile-level provider switch for OpenAI, Gemini, and local browser speech | Partial; provider choice is exposed, while model/key/rate controls remain deferred |
 | Resume / abandon / continue | Legacy confirmed before discarding/switching, auto-advanced after marked cards, and did not preserve platform-level resume across learner switches | Manual Continue button and no end-session confirm were real mismatches; platform resume was intentionally broader | Restored end/switch confirmation and auto-advance; kept platform-level resume as an intentional delta | Partial, with key regressions fixed |
-| TTS / audio behaviour | Auto-play, replay, slow replay, audio reset on switch/home/profile change, browser/API provider options, warm-up behaviour | Browser dictation loop existed; provider-specific options and warm-up were not rebuilt | Restored shortcut replay flow, ensured new rounds stop prior audio before starting, and added selected-provider dictation without automatic fallback | Partial; provider choice is restored, while warm-up and detailed voice controls remain deferred |
+| TTS / audio behaviour | Auto-play, replay, slow replay, audio reset on switch/home/profile change, browser/API provider options, warm-up behaviour | Browser dictation loop existed; provider-specific options and warm-up were not rebuilt | Restored shortcut replay flow, ensured new rounds stop prior audio before starting, added selected-provider dictation without automatic fallback, and added cache-first buffered Gemini dictation audio with cache-only warm-up | Partial; provider choice, buffered Gemini voice choice, and cache-only Gemini warm-up are restored, while detailed model/key/rate controls remain deferred |
 | Keyboard / interaction flow | Enter submit, Esc replay, Shift+Esc slow replay, Alt+1/2/3 start modes, Alt+S skip, Alt+K focus, ignore Alt shortcuts while typing in unrelated inputs | Most subject shortcuts were missing | Restored Esc / Shift+Esc / Alt+1/2/3 / Alt+S / Alt+K with guarded typing behaviour | Mostly matched inside active Spelling practice |
 | Live-card hint leakage | Legacy explicitly hid the family during live recall and only surfaced family words after the engine allowed it | Pass 9 leaked family/family-count chips during the live card | Removed live family leakage and restored the hidden-family note | Matched |
 
@@ -71,8 +71,8 @@ These deltas remain on purpose.
 
 3. **Detailed TTS controls are still not restored**
    - The older single-page app exposed keys, model/voice controls, backup Gemini key handling, and warm-up behaviour.
-   - The rebuilt production platform exposes provider choice in Profile Settings and keeps provider keys on the Worker side.
-   - The UI still does not expose model/voice/rate controls.
+   - The rebuilt production platform exposes provider choice and buffered Gemini voice choice in Profile Settings, keeps provider keys on the Worker side, and supports cache-only warm-up for buffered Gemini dictation audio.
+   - The UI still does not expose raw model/key/rate controls.
 
 4. **Searchable word-bank drill UI is still not restored**
    - Legacy exposed searchable word-bank progress and direct single-word drill launch from that bank.

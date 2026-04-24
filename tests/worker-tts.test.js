@@ -398,6 +398,7 @@ test('TTS route stores generated Gemini audio under the buffered batch key', asy
   const server = createWorkerRepositoryServer({
     env: {
       GEMINI_API_KEY: 'test-gemini-key',
+      GEMINI_TTS_MODEL: 'gemini-custom-tts-preview',
       SPELLING_AUDIO_BUCKET: bucket,
     },
   });
@@ -415,15 +416,18 @@ test('TTS route stores generated Gemini audio under the buffered batch key', asy
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('content-type'), 'audio/wav');
     assert.equal(response.headers.get('x-ks2-tts-cache'), 'stored');
+    assert.equal(response.headers.get('x-ks2-tts-model'), 'gemini-custom-tts-preview');
     assert.equal(response.headers.get('x-ks2-tts-voice'), 'Sulafat');
     assert.equal(String.fromCharCode(...bytes.slice(0, 4)), 'RIFF');
     assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-custom-tts-preview:generateContent');
     assert.equal(calls[0].headers['x-goog-api-key'], 'test-gemini-key');
     assert.equal(calls[0].body.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName, 'Sulafat');
     assert.match(calls[0].body.contents[0].parts[0].text, /Generate speech only/);
     assert.equal(bucket.puts.length, 1);
-    assert.match(bucket.puts[0].key, /\/Sulafat\/slow\/[^/]+\/early\/\d+\.wav$/);
+    assert.match(bucket.puts[0].key, /spelling-audio\/v1\/gemini-custom-tts-preview\/Sulafat\/slow\/[^/]+\/early\/\d+\.wav$/);
     assert.equal(bucket.puts[0].options.httpMetadata.contentType, 'audio/wav');
+    assert.equal(bucket.puts[0].options.customMetadata.model, 'gemini-custom-tts-preview');
     assert.ok(bucket.puts[0].options.customMetadata.contentKey);
   } finally {
     globalThis.fetch = originalFetch;
