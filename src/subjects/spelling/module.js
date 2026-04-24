@@ -55,6 +55,39 @@ function wordBankEntryFor(service, learnerId, slug) {
   return findWordBankEntry(service.getAnalyticsSnapshot(learnerId), slug);
 }
 
+function combineStats(...entries) {
+  const totals = entries.reduce((next, raw) => {
+    const stats = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+    next.total += Number(stats.total) || 0;
+    next.secure += Number(stats.secure) || 0;
+    next.due += Number(stats.due) || 0;
+    next.fresh += Number(stats.fresh) || 0;
+    next.trouble += Number(stats.trouble) || 0;
+    next.attempts += Number(stats.attempts) || 0;
+    next.correct += Number(stats.correct) || 0;
+    return next;
+  }, {
+    total: 0,
+    secure: 0,
+    due: 0,
+    fresh: 0,
+    trouble: 0,
+    attempts: 0,
+    correct: 0,
+  });
+  return {
+    ...totals,
+    accuracy: totals.attempts ? Math.round((totals.correct / totals.attempts) * 100) : null,
+  };
+}
+
+export function getOverallSpellingStats(service, learnerId) {
+  return combineStats(
+    service?.getStats?.(learnerId, 'core'),
+    service?.getStats?.(learnerId, 'extra'),
+  );
+}
+
 export const spellingModule = {
   id: 'spelling',
   name: 'Spelling',
@@ -70,8 +103,7 @@ export const spellingModule = {
   },
   getDashboardStats(appState, { service }) {
     const learner = appState.learners.byId[appState.learners.selectedId];
-    const prefs = service.getPrefs(learner.id);
-    const stats = service.getStats(learner.id, prefs.yearFilter);
+    const stats = getOverallSpellingStats(service, learner.id);
     const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id));
     return {
       pct: stats.total ? Math.round((stats.secure / stats.total) * 100) : 0,

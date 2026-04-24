@@ -9,6 +9,7 @@ import { SPELLING_EVENT_TYPES } from '../src/subjects/spelling/events.js';
 import { WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
 import { rewardEventsFromSpellingEvents } from '../src/subjects/spelling/event-hooks.js';
 import { monsterSummaryFromSpellingAnalytics } from '../src/platform/game/monster-system.js';
+import { getOverallSpellingStats, spellingModule } from '../src/subjects/spelling/module.js';
 
 function makeSeededRandom(seed = 1) {
   let value = seed >>> 0;
@@ -260,6 +261,40 @@ test('legacy all filter normalises to core stats and excludes Extra progress', (
   assert.deepEqual(service.getStats('learner-a', 'all'), service.getStats('learner-a', 'core'));
   assert.equal(service.getStats('learner-a', 'all').attempts, 0);
   assert.equal(service.getStats('learner-a', 'extra').attempts, 1);
+});
+
+test('spelling dashboard card reports overall progress instead of the selected pool', () => {
+  const { service, repositories } = makeService();
+  const learnerId = 'learner-a';
+  service.savePrefs(learnerId, { yearFilter: 'extra' });
+  repositories.subjectStates.writeData(learnerId, 'spelling', {
+    progress: {
+      mollusc: {
+        stage: 4,
+        attempts: 4,
+        correct: 4,
+        wrong: 0,
+        dueDay: Number.MAX_SAFE_INTEGER,
+        lastDay: 10,
+        lastResult: true,
+      },
+    },
+  });
+
+  const appState = {
+    learners: {
+      selectedId: learnerId,
+      byId: { [learnerId]: { id: learnerId, name: 'Ava' } },
+    },
+  };
+  const dashboard = spellingModule.getDashboardStats(appState, { service });
+  const extraStats = service.getStats(learnerId, 'extra');
+  const overallStats = getOverallSpellingStats(service, learnerId);
+
+  assert.equal(extraStats.secure, 1);
+  assert.equal(dashboard.pct, Math.round((overallStats.secure / overallStats.total) * 100));
+  assert.notEqual(dashboard.pct, Math.round((extraStats.secure / extraStats.total) * 100));
+  assert.equal(dashboard.due, overallStats.due);
 });
 
 test('resetting spelling progress preserves the profile TTS provider', () => {
