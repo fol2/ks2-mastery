@@ -14,7 +14,7 @@ It is:
 - a place where learner-scoped permissions are enforced before repository writes happen
 - a provider-agnostic auth/session boundary with production email and social login flows, ephemeral demo sessions, and a safe development/test stub
 - a server-authoritative subject command runtime for signed-in and demo practice
-- a Worker-side TTS proxy that keeps provider API keys out of the browser and honours the selected OpenAI or Gemini provider without automatic fallback
+- a Worker-side TTS proxy that keeps provider API keys out of the browser, tries the selected OpenAI or Gemini provider first, and falls back to the other configured remote provider when the selected provider fails
 - a prompt-token audio boundary so dictation text is resolved on the server
 - a read-model boundary for role-aware Parent Hub and Admin / Operations surfaces
 - a read-model boundary for authorised Spelling Word Bank rows and detail

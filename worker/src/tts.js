@@ -239,10 +239,22 @@ function backendUnavailableFromFailure(error, failures = []) {
 
 function missingProviderConfig(provider) {
   const name = provider === 'gemini' ? 'Gemini' : 'OpenAI';
-  return new BackendUnavailableError(`${name} TTS is not configured.`, {
+  const error = new BackendUnavailableError(`${name} TTS is not configured.`, {
     code: 'tts_not_configured',
     provider,
   });
+  error.provider = provider;
+  return error;
+}
+
+function providerUnavailableError(error, failures = []) {
+  if (error instanceof BackendUnavailableError && failures.length <= 1) return error;
+  return backendUnavailableFromFailure(error, failures.length ? failures : [error]);
+}
+
+function canFallbackProviderError(error) {
+  const status = Number(error?.status);
+  return !Number.isFinite(status) || status >= 500;
 }
 
 function spellingAudioBucket(env = {}) {
@@ -377,6 +389,17 @@ function cacheOnlyResponse(cacheState, cacheHit = null) {
   if (cacheHit?.metadata?.model) headers.set('x-ks2-tts-model', cacheHit.metadata.model);
   if (cacheHit?.metadata?.voice) headers.set('x-ks2-tts-voice', cacheHit.metadata.voice);
   return new Response(null, { status: 204, headers });
+}
+
+function withFallbackHeader(response, fallbackFrom = '') {
+  if (!fallbackFrom) return response;
+  const headers = new Headers(response.headers);
+  headers.set('x-ks2-tts-fallback-from', fallbackFrom);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 async function storeBufferedGeminiAudio(env, payload, response, options = {}) {
@@ -661,49 +684,79 @@ export async function handleTextToSpeechRequest({
     protectedRequest = true;
   }
 
-  if (payload.provider === 'gemini' && !payload.wordOnly) {
-    if (!cacheOnly) await protectAudioRequest();
-    const cacheHit = await readBufferedGeminiAudio(env, payload, { model: geminiForPayload.model });
-    if (cacheHit?.object) {
-      const output = cacheOnly ? cacheOnlyResponse('hit', cacheHit) : cachedGeminiAudioResponse(cacheHit);
-      return cacheOnly ? output : await recordDemoTtsFallback(env, session, now, output);
-    }
-    if (cacheOnly && cacheHit?.cacheUnavailable) return cacheOnlyResponse('unavailable', cacheHit);
-    if (cacheOnly && !cacheHit?.metadata) return cacheOnlyResponse('uncacheable');
-    if (cacheOnly) {
-      if (!geminiForPayload.apiKey) return cacheOnlyResponse('unavailable');
-      const warmupAllowed = await allowTtsWarmup(env, request, session, now);
-      if (!warmupAllowed) return cacheOnlyResponse('skipped_rate_limited');
-      await protectDemoTtsFallback({ env, request, session, payload, now });
-    }
+  async function finish(response, fallbackFrom = '') {
+    return await recordDemoTtsFallback(env, session, now, withFallbackHeader(response, fallbackFrom));
   }
 
-  if (payload.provider === 'gemini') {
+  async function tryGemini(fallbackFrom = '') {
+    if (!payload.wordOnly) {
+      if (!cacheOnly) await protectAudioRequest();
+      const cacheHit = await readBufferedGeminiAudio(env, payload, { model: geminiForPayload.model });
+      if (cacheHit?.object) {
+        const output = cacheOnly ? cacheOnlyResponse('hit', cacheHit) : cachedGeminiAudioResponse(cacheHit);
+        return cacheOnly ? output : await finish(output, fallbackFrom);
+      }
+      if (cacheOnly && cacheHit?.cacheUnavailable) return cacheOnlyResponse('unavailable', cacheHit);
+      if (cacheOnly && !cacheHit?.metadata) return cacheOnlyResponse('uncacheable');
+      if (cacheOnly) {
+        if (!geminiForPayload.apiKey) return cacheOnlyResponse('unavailable');
+        const warmupAllowed = await allowTtsWarmup(env, request, session, now);
+        if (!warmupAllowed) return cacheOnlyResponse('skipped_rate_limited');
+        await protectDemoTtsFallback({ env, request, session, payload, now });
+      }
+    }
     if (!geminiForPayload.apiKey) {
       if (cacheOnly) return cacheOnlyResponse('unavailable');
       throw missingProviderConfig('gemini');
     }
     if (!cacheOnly) await protectAudioRequest();
+    const response = await requestGeminiSpeech({ config: geminiForPayload, payload, fetchFn });
+    const stored = payload.wordOnly
+      ? { response, cacheState: 'uncacheable' }
+      : await storeBufferedGeminiAudio(env, payload, response, { model: geminiForPayload.model });
+    const output = cacheOnly
+      ? cacheOnlyResponse(stored.cacheState, { metadata: stored.metadata })
+      : stored.response;
+    return await finish(output, fallbackFrom);
+  }
+
+  async function tryOpenAi(fallbackFrom = '') {
+    if (!openAi.apiKey) throw missingProviderConfig('openai');
+    await protectAudioRequest();
+    const response = await requestOpenAiSpeech({ config: openAi, payload, fetchFn });
+    return await finish(response, fallbackFrom);
+  }
+
+  function canTryGemini() {
+    if (payload.wordOnly) return Boolean(geminiForPayload.apiKey);
+    return Boolean(geminiForPayload.apiKey || spellingAudioBucket(env));
+  }
+
+  if (payload.provider === 'gemini') {
     try {
-      const response = await requestGeminiSpeech({ config: geminiForPayload, payload, fetchFn });
-      const stored = payload.wordOnly
-        ? { response, cacheState: 'uncacheable' }
-        : await storeBufferedGeminiAudio(env, payload, response, { model: geminiForPayload.model });
-      const output = cacheOnly
-        ? cacheOnlyResponse(stored.cacheState, { metadata: stored.metadata })
-        : stored.response;
-      return await recordDemoTtsFallback(env, session, now, output);
+      return await tryGemini();
     } catch (error) {
-      throw backendUnavailableFromFailure(error, [error]);
+      if (!canFallbackProviderError(error)) throw error;
+      if (cacheOnly || !openAi.apiKey) throw providerUnavailableError(error, [error]);
+      try {
+        return await tryOpenAi('gemini');
+      } catch (fallbackError) {
+        if (!canFallbackProviderError(fallbackError)) throw fallbackError;
+        throw backendUnavailableFromFailure(fallbackError, [error, fallbackError]);
+      }
     }
   }
 
-  if (!openAi.apiKey) throw missingProviderConfig('openai');
-  await protectAudioRequest();
   try {
-    const response = await requestOpenAiSpeech({ config: openAi, payload, fetchFn });
-    return await recordDemoTtsFallback(env, session, now, response);
+    return await tryOpenAi();
   } catch (error) {
-    throw backendUnavailableFromFailure(error, [error]);
+    if (!canFallbackProviderError(error)) throw error;
+    if (!canTryGemini()) throw providerUnavailableError(error, [error]);
+    try {
+      return await tryGemini('openai');
+    } catch (fallbackError) {
+      if (!canFallbackProviderError(fallbackError)) throw fallbackError;
+      throw backendUnavailableFromFailure(fallbackError, [error, fallbackError]);
+    }
   }
 }
