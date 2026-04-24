@@ -56,7 +56,7 @@ async function assertReferenceExists() {
 async function generateMaster(targetPath, { subjectSize = 1024, verticalOffset = 0 } = {}) {
   await run('magick', [
     '-size', '1024x1024',
-    'xc:#FFF8E7',
+    'xc:none',
     '(',
       sourceIcon,
       '-resize', `${subjectSize}x${subjectSize}`,
@@ -87,6 +87,15 @@ async function resizeIcon(sourcePath, targetPath, size) {
   const expected = `PNG ${size} ${size}`;
   if (!stdout.startsWith(expected)) {
     throw new Error(`Unexpected app icon metadata for ${targetPath}: ${stdout.trim()}`);
+  }
+
+  const { stdout: alpha } = await run('magick', [
+    targetPath,
+    '-format', '%[fx:p{0,0}.a]',
+    'info:',
+  ]);
+  if (Number.parseFloat(alpha.trim()) > 0.05) {
+    throw new Error(`Expected a transparent app icon background for ${targetPath}.`);
   }
 }
 
