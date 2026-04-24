@@ -12,6 +12,9 @@ import {
   shouldDelayMonsterCelebrations,
   spellingSessionEnded,
 } from '../game/monster-celebrations.js';
+import {
+  acknowledgeMonsterCelebrationEvents,
+} from '../game/monster-celebration-acks.js';
 import { SUBJECTS } from '../core/subject-registry.js';
 import {
   exposedSubjects,
@@ -392,6 +395,7 @@ export function createAppController({
     }
 
     if (action === 'monster-celebration-dismiss') {
+      acknowledgeMonsterCelebrationEvents(store.getState().monsterCelebrations?.queue?.[0], { learnerId });
       store.dismissMonsterCelebration();
       return true;
     }

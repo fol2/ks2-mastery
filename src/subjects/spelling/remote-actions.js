@@ -2,6 +2,14 @@ import {
   WORD_BANK_FILTER_IDS,
   WORD_BANK_YEAR_FILTER_IDS,
 } from './components/spelling-view-model.js';
+import {
+  normaliseMonsterCelebrationEvents,
+  shouldDelayMonsterCelebrations,
+  spellingSessionEnded,
+} from '../../platform/game/monster-celebrations.js';
+import {
+  unacknowledgedMonsterCelebrationEvents,
+} from '../../platform/game/monster-celebration-acks.js';
 
 const READ_ONLY_MESSAGE = 'Practice is read-only while sync is degraded. Retry sync before continuing.';
 const SETUP_PREF_SAVE_DEBOUNCE_MS = 120;
@@ -120,6 +128,24 @@ export function mergeWordBankAnalytics(current, incoming, { append = false } = {
   };
 }
 
+function eventIds(events) {
+  return new Set((Array.isArray(events) ? events : [])
+    .map((event) => (typeof event?.id === 'string' ? event.id : ''))
+    .filter(Boolean));
+}
+
+function visibleMonsterCelebrationIds(state = {}) {
+  return eventIds([
+    ...(state.monsterCelebrations?.pending || []),
+    ...(state.monsterCelebrations?.queue || []),
+  ]);
+}
+
+function spellingRewardEvents(events) {
+  return (Array.isArray(events) ? events : [])
+    .filter((event) => !event?.subjectId || event.subjectId === 'spelling');
+}
+
 export function createRemoteSpellingActionHandler({
   store,
   services,
@@ -146,19 +172,75 @@ export function createRemoteSpellingActionHandler({
     return state.subjectUi?.spelling?.analytics || null;
   }
 
-  function applyCommandResponse(response, { command = '', learnerId = '', preferenceVersion = 0 } = {}) {
-    if (response?.projections?.rewards?.toastEvents?.length) {
-      store.pushToasts(response.projections.rewards.toastEvents);
+  function currentSpellingRewardEventIds(learnerId) {
+    const list = store.repositories?.eventLog?.list;
+    if (typeof list !== 'function') return null;
+    try {
+      return eventIds(spellingRewardEvents(list.call(store.repositories.eventLog, learnerId) || []));
+    } catch {
+      return null;
     }
-    if (response?.projections?.rewards?.events?.length) {
-      store.pushMonsterCelebrations(response.projections.rewards.events);
-    }
-    if (shouldStopSpellingTtsForCommandResponse(command, response)) {
+  }
+
+  function applyCommandResponse(response, {
+    command = '',
+    learnerId: requestedLearnerId = '',
+    preferenceVersion = 0,
+    compensationBaselineEventIds = null,
+  } = {}) {
+    const previousState = appState();
+    const previousSubjectUi = previousState.subjectUi?.spelling || null;
+    const learnerId = String(response?.learnerId || requestedLearnerId || previousState.learners?.selectedId || '');
+    const wasSelectedLearner = !learnerId || previousState.learners?.selectedId === learnerId;
+    const rewardProjection = response?.projections?.rewards || {};
+    const toastEvents = Array.isArray(rewardProjection.toastEvents) ? rewardProjection.toastEvents : [];
+    const responseMonsterEvents = normaliseMonsterCelebrationEvents(rewardProjection.events || []);
+
+    if (wasSelectedLearner && shouldStopSpellingTtsForCommandResponse(command, response)) {
       tts.stop();
     }
-    store.reloadFromRepositories({ preserveRoute: true });
+    store.reloadFromRepositories({ preserveRoute: true, preserveMonsterCelebrations: true });
     reconcilePreferenceSaveResponse({ command, learnerId, preferenceVersion });
-    if (response?.audio?.promptToken) {
+    const nextState = appState();
+    const nextSubjectUi = response?.subjectReadModel || response?.state || nextState.subjectUi?.spelling || null;
+    const isSelectedLearner = !learnerId || nextState.learners?.selectedId === learnerId;
+
+    if (isSelectedLearner && toastEvents.length) {
+      store.pushToasts(toastEvents);
+    }
+
+    const endedSession = spellingSessionEnded(previousSubjectUi, nextSubjectUi);
+    let monsterEvents = responseMonsterEvents;
+    if (isSelectedLearner && endedSession && !monsterEvents.length) {
+      const ignoredIds = new Set([
+        ...eventIds(rewardProjection.events || []),
+        ...visibleMonsterCelebrationIds(nextState),
+      ]);
+      monsterEvents = unacknowledgedMonsterCelebrationEvents(
+        spellingRewardEvents(store.repositories?.eventLog?.list?.(learnerId) || []),
+        {
+          learnerId,
+          ignoredIds,
+          limit: 1,
+          baselineExisting: true,
+          baselineEventIds: compensationBaselineEventIds,
+        },
+      );
+    }
+
+    if (isSelectedLearner && monsterEvents.length) {
+      if (shouldDelayMonsterCelebrations('spelling', previousSubjectUi, nextSubjectUi)) {
+        store.deferMonsterCelebrations(monsterEvents);
+      } else {
+        store.pushMonsterCelebrations(monsterEvents);
+      }
+    }
+
+    if (isSelectedLearner && endedSession) {
+      store.releaseMonsterCelebrations();
+    }
+
+    if (isSelectedLearner && response?.audio?.promptToken) {
       tts.speak(response.audio);
     }
   }
@@ -214,13 +296,19 @@ export function createRemoteSpellingActionHandler({
     const state = appState();
     const learnerId = requestedLearnerId || state.learners?.selectedId;
     if (!learnerId) return null;
+    const compensationBaselineEventIds = currentSpellingRewardEventIds(learnerId);
     const response = await subjectCommands.send({
       subjectId: 'spelling',
       learnerId,
       command,
       payload,
     });
-    applyCommandResponse(response, { command, learnerId, preferenceVersion });
+    applyCommandResponse(response, {
+      command,
+      learnerId,
+      preferenceVersion,
+      compensationBaselineEventIds,
+    });
     return response;
   }
 

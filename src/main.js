@@ -45,6 +45,9 @@ import {
   monsterSummaryFromSpellingAnalytics,
 } from './platform/game/monster-system.js';
 import {
+  acknowledgeMonsterCelebrationEvents,
+} from './platform/game/monster-celebration-acks.js';
+import {
   exportLearnerSnapshot,
   exportPlatformSnapshot,
   importPlatformSnapshot,
@@ -1817,6 +1820,7 @@ function handleGlobalAction(action, data) {
   }
 
   if (action === 'monster-celebration-dismiss') {
+    acknowledgeMonsterCelebrationEvents(store.getState().monsterCelebrations?.queue?.[0], { learnerId });
     store.dismissMonsterCelebration();
     return true;
   }
@@ -1880,13 +1884,15 @@ function setPunctuationRuntimeError(message) {
 }
 
 function applyPunctuationCommandResponse(response) {
+  const responseLearnerId = String(response?.learnerId || store.getState().learners?.selectedId || '');
+  store.reloadFromRepositories({ preserveRoute: true, preserveMonsterCelebrations: true });
+  if (responseLearnerId && store.getState().learners?.selectedId !== responseLearnerId) return;
   if (response?.projections?.rewards?.toastEvents?.length) {
     store.pushToasts(response.projections.rewards.toastEvents);
   }
   if (response?.projections?.rewards?.events?.length) {
     store.pushMonsterCelebrations(response.projections.rewards.events);
   }
-  store.reloadFromRepositories({ preserveRoute: true });
 }
 
 const pendingPunctuationCommandKeys = new Set();
