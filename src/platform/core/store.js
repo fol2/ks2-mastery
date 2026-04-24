@@ -335,6 +335,49 @@ export function createStore(subjects, { repositories, cacheSubjectUiWrites = fal
     return writer.call(resolvedRepositories.subjectStates, learnerId, subjectId, ui);
   }
 
+  function nextSubjectUiEntry(subjectId, currentEntry, updater) {
+    const subject = registry.find((entry) => entry.id === subjectId);
+    if (!subject) return null;
+    const previous = buildSubjectUiState(subject, currentEntry || null);
+    return typeof updater === 'function'
+      ? updater(previous)
+      : { ...previous, ...updater };
+  }
+
+  function updateSubjectUi(subjectId, updater) {
+    const learnerId = state.learners.selectedId;
+    setState((current) => {
+      const nextEntry = nextSubjectUiEntry(subjectId, current.subjectUi[subjectId], updater);
+      if (!nextEntry) return current;
+
+      if (learnerId) {
+        writeSubjectUi(learnerId, subjectId, nextEntry);
+      }
+
+      return {
+        ...current,
+        subjectUi: {
+          ...current.subjectUi,
+          [subjectId]: nextEntry,
+        },
+      };
+    });
+  }
+
+  function updateSubjectUiForLearner(learnerId, subjectId, updater) {
+    if (!learnerId || !state.learners.byId[learnerId]) return false;
+    if (state.learners.selectedId === learnerId) {
+      updateSubjectUi(subjectId, updater);
+      return true;
+    }
+
+    const record = resolvedRepositories.subjectStates.read(learnerId, subjectId);
+    const nextEntry = nextSubjectUiEntry(subjectId, record?.ui, updater);
+    if (!nextEntry) return false;
+    writeSubjectUi(learnerId, subjectId, nextEntry);
+    return true;
+  }
+
   return {
     repositories: resolvedRepositories,
     getState() {
@@ -460,27 +503,8 @@ export function createStore(subjects, { repositories, cacheSubjectUiWrites = fal
       }));
       return true;
     },
-    updateSubjectUi(subjectId, updater) {
-      const learnerId = state.learners.selectedId;
-      setState((current) => {
-        const previous = current.subjectUi[subjectId] || {};
-        const nextEntry = typeof updater === 'function'
-          ? updater(previous)
-          : { ...previous, ...updater };
-
-        if (learnerId) {
-          writeSubjectUi(learnerId, subjectId, nextEntry);
-        }
-
-        return {
-          ...current,
-          subjectUi: {
-            ...current.subjectUi,
-            [subjectId]: nextEntry,
-          },
-        };
-      });
-    },
+    updateSubjectUi,
+    updateSubjectUiForLearner,
     pushToasts(events) {
       const entries = Array.isArray(events) ? events : [events];
       const validEvents = entries.filter((entry) => entry && typeof entry === 'object' && !Array.isArray(entry));

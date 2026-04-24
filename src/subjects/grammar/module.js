@@ -5,17 +5,27 @@ import {
 } from './metadata.js';
 
 function selectedLearnerId(context) {
-  return context?.appState?.learners?.selectedId || '';
+  return (context?.store?.getState?.() || context?.appState || {})?.learners?.selectedId || '';
 }
 
 function selectedGrammarUi(context) {
+  const appState = context?.store?.getState?.() || context?.appState || {};
   const learnerId = selectedLearnerId(context);
-  return normaliseGrammarReadModel(context?.appState?.subjectUi?.[GRAMMAR_SUBJECT_ID], learnerId);
+  return normaliseGrammarReadModel(appState?.subjectUi?.[GRAMMAR_SUBJECT_ID], learnerId);
+}
+
+function updateGrammarUiForLearner(context, learnerId, updater) {
+  if (!learnerId) return false;
+  if (typeof context?.store?.updateSubjectUiForLearner === 'function') {
+    return context.store.updateSubjectUiForLearner(learnerId, GRAMMAR_SUBJECT_ID, updater);
+  }
+  if (selectedLearnerId(context) !== learnerId) return false;
+  context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, updater);
+  return true;
 }
 
 function setGrammarError(context, message, { learnerId = selectedLearnerId(context) } = {}) {
-  if (learnerId && selectedLearnerId(context) !== learnerId) return;
-  context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => ({
+  updateGrammarUiForLearner(context, learnerId, (current) => ({
     ...normaliseGrammarReadModel(current, learnerId),
     pendingCommand: '',
     error: message || 'Grammar practice is temporarily unavailable.',
@@ -23,23 +33,25 @@ function setGrammarError(context, message, { learnerId = selectedLearnerId(conte
 }
 
 function applyRemoteReadModel(context, response, { learnerId } = {}) {
-  if (!learnerId || selectedLearnerId(context) !== learnerId) return;
+  if (!learnerId) return;
   const responseLearnerId = String(response?.subjectReadModel?.learnerId || learnerId);
   if (responseLearnerId && responseLearnerId !== learnerId) return;
-  if (response?.projections?.rewards?.toastEvents?.length) {
+  const isSelectedLearner = selectedLearnerId(context) === learnerId;
+  if (isSelectedLearner && response?.projections?.rewards?.toastEvents?.length) {
     context.store.pushToasts(response.projections.rewards.toastEvents);
   }
-  if (response?.projections?.rewards?.events?.length) {
+  if (isSelectedLearner && response?.projections?.rewards?.events?.length) {
     context.store.pushMonsterCelebrations(response.projections.rewards.events);
   }
   if (response?.subjectReadModel) {
-    context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, {
+    updateGrammarUiForLearner(context, learnerId, {
       ...normaliseGrammarReadModel(response.subjectReadModel, learnerId),
       pendingCommand: '',
       error: '',
     });
     return;
   }
+  if (!isSelectedLearner) return;
   context.store.reloadFromRepositories?.({ preserveRoute: true });
 }
 
