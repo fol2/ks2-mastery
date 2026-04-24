@@ -101,6 +101,39 @@ test('shared store can route to adult operating surfaces', () => {
   assert.equal(store.getState().route.screen, 'dashboard');
 });
 
+test('shared store preserves transient word-bank detail payloads for remote modal replay', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const store = createStore(SUBJECTS, { repositories });
+
+  store.patch((current) => ({
+    transientUi: {
+      ...current.transientUi,
+      spellingWordDetailSlug: 'century',
+      spellingWordDetail: {
+        slug: 'century',
+        word: 'century',
+        explanation: 'A century is a period of one hundred years.',
+        sentence: 'The castle was built a century ago.',
+        audio: {
+          word: {
+            learnerId: 'learner-a',
+            promptToken: 'word-token',
+            slug: 'century',
+            scope: 'word-bank',
+            wordOnly: true,
+          },
+        },
+      },
+    },
+  }));
+
+  const detail = store.getState().transientUi.spellingWordDetail;
+  assert.equal(detail.word, 'century');
+  assert.equal(detail.explanation, 'A century is a period of one hundred years.');
+  assert.equal(detail.audio.word.promptToken, 'word-token');
+});
+
 test('serialisable spelling state survives store persistence for resume', () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });

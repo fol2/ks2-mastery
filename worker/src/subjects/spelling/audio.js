@@ -63,7 +63,7 @@ export async function buildSpellingWordBankAudioCue({ learnerId, word, wordOnly 
     word: cleanText(word?.word),
     sentence: cleanText(word?.sentence),
   };
-  if (!parts.learnerId || !parts.slug || !parts.word || !parts.sentence) return null;
+  if (!parts.learnerId || !parts.slug || !parts.word) return null;
   return {
     subjectId: 'spelling',
     learnerId: parts.learnerId,
@@ -76,7 +76,10 @@ export async function buildSpellingWordBankAudioCue({ learnerId, word, wordOnly 
 
 function transcriptFor(parts, { wordOnly = false } = {}) {
   if (wordOnly) return parts.word;
-  return `The word is ${parts.word}. ${parts.sentence} The word is ${parts.word}.`;
+  const sentence = cleanText(parts.sentence);
+  return sentence
+    ? `The word is ${parts.word}. ${sentence} The word is ${parts.word}.`
+    : `The word is ${parts.word}. The word is ${parts.word}.`;
 }
 
 async function wordBankPromptParts({ repository, accountId, learnerId, slug } = {}) {
@@ -91,7 +94,7 @@ async function wordBankPromptParts({ repository, accountId, learnerId, slug } = 
   const word = snapshot?.wordBySlug?.[safeSlug];
   if (!word) return null;
   const sentence = cleanText(word.sentence);
-  if (!word.word || !sentence) return null;
+  if (!word.word) return null;
   return {
     learnerId,
     slug: word.slug,
