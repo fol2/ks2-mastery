@@ -138,12 +138,11 @@ export const GRAMMAR_ENABLED_MODES = Object.freeze([
   { id: 'trouble', label: 'Weak concepts drill', detail: 'Targets the weakest Grammar concepts with retry pressure.' },
   { id: 'surgery', label: 'Sentence surgery', detail: 'Fix and rewrite sentence-level Grammar errors.' },
   { id: 'builder', label: 'Sentence builder', detail: 'Build and rewrite sentences from structured prompts.' },
+  { id: 'worked', label: 'Worked examples', detail: 'Practise with a model example before answering.' },
+  { id: 'faded', label: 'Faded guidance', detail: 'Practise with prompts and contrasts, but no answer to the current item.' },
 ]);
 
-export const GRAMMAR_LOCKED_MODES = Object.freeze([
-  { id: 'worked', label: 'Worked examples', reason: 'coming-next' },
-  { id: 'faded', label: 'Faded guidance', reason: 'coming-next' },
-]);
+export const GRAMMAR_LOCKED_MODES = Object.freeze([]);
 
 export const GRAMMAR_MONSTER_ROUTES = Object.freeze([
   {

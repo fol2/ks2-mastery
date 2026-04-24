@@ -85,10 +85,14 @@ test('worker subject runtime registers Grammar command handlers', async () => {
     'trouble',
     'surgery',
     'builder',
+    'worked',
+    'faded',
   ]);
   assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
   assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'surgery'), false);
   assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'builder'), false);
+  assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'worked'), false);
+  assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'faded'), false);
 });
 
 test('worker subject runtime starts Grammar trouble drills against weak concepts', async () => {
@@ -342,6 +346,63 @@ test('Grammar command route accepts sentence builder mode', async () => {
   assert.equal(start.body.subjectReadModel.session.focusConceptId, '');
   assert.match(start.body.subjectReadModel.session.currentItem.questionType, /^(build|rewrite)$/);
   assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'builder'), false);
+
+  DB.close();
+});
+
+test('Grammar command route accepts worked example mode with concept guidance', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-worked-route-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'worked',
+      roundLength: 1,
+      seed: 120,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  assert.equal(start.body.subjectReadModel.session.mode, 'worked');
+  assert.equal(start.body.subjectReadModel.session.type, 'worked-example');
+  assert.equal(start.body.subjectReadModel.session.supportLevel, 2);
+  assert.equal(start.body.subjectReadModel.session.supportGuidance.kind, 'worked');
+  assert.ok(start.body.subjectReadModel.session.supportGuidance.workedExample.exampleResponse);
+  assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'worked'), false);
+
+  DB.close();
+});
+
+test('Grammar command route accepts faded guidance mode without current-answer leakage', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-faded-route-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'faded',
+      roundLength: 1,
+      seed: 120,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  assert.equal(start.body.subjectReadModel.session.mode, 'faded');
+  assert.equal(start.body.subjectReadModel.session.type, 'faded-guidance');
+  assert.equal(start.body.subjectReadModel.session.supportLevel, 1);
+  assert.equal(start.body.subjectReadModel.session.supportGuidance.kind, 'faded');
+  assert.equal(start.body.subjectReadModel.session.currentItem.solutionLines, undefined);
+  assert.equal(start.body.subjectReadModel.session.supportGuidance.workedExample, undefined);
+  assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'faded'), false);
 
   DB.close();
 });

@@ -63,6 +63,76 @@ function safeCurrentItem(item) {
   };
 }
 
+function conceptById(conceptId) {
+  return GRAMMAR_CONCEPTS.find((concept) => concept.id === conceptId) || null;
+}
+
+function conceptSupportSummary(concept) {
+  if (!concept) return null;
+  return {
+    id: concept.id,
+    name: concept.name,
+    domain: concept.domain,
+    summary: concept.summary,
+  };
+}
+
+function safeWorkedExample(concept) {
+  const worked = isPlainObject(concept?.worked) ? concept.worked : {};
+  if (!worked.prompt && !worked.answer && !worked.why) return null;
+  return {
+    prompt: typeof worked.prompt === 'string' ? worked.prompt : '',
+    exampleResponse: typeof worked.answer === 'string' ? worked.answer : '',
+    why: typeof worked.why === 'string' ? worked.why : '',
+  };
+}
+
+function safeContrast(concept) {
+  const contrast = isPlainObject(concept?.contrast) ? concept.contrast : {};
+  if (!contrast.good && !contrast.nearMiss && !contrast.why) return null;
+  return {
+    secureExample: typeof contrast.good === 'string' ? contrast.good : '',
+    nearMiss: typeof contrast.nearMiss === 'string' ? contrast.nearMiss : '',
+    why: typeof contrast.why === 'string' ? contrast.why : '',
+  };
+}
+
+function supportGuidanceForSession(session) {
+  const level = Math.max(0, Number(session?.supportLevel) || 0);
+  if (!level) return null;
+  const conceptIds = Array.isArray(session?.currentItem?.skillIds)
+    ? session.currentItem.skillIds.filter(Boolean).map(String)
+    : [];
+  const concepts = conceptIds
+    .map(conceptById)
+    .filter(Boolean);
+  const primary = concepts[0] || null;
+  const summaries = concepts
+    .map(conceptSupportSummary)
+    .filter(Boolean);
+
+  if (level >= 2) {
+    return {
+      kind: 'worked',
+      level,
+      title: 'Worked example',
+      concepts: summaries,
+      workedExample: safeWorkedExample(primary),
+      notices: Array.isArray(primary?.notices) ? primary.notices.slice(0, 2) : [],
+    };
+  }
+
+  return {
+    kind: 'faded',
+    level,
+    title: 'Faded guidance',
+    concepts: summaries,
+    summary: typeof primary?.summary === 'string' ? primary.summary : '',
+    notices: Array.isArray(primary?.notices) ? primary.notices.slice(0, 3) : [],
+    contrast: safeContrast(primary),
+  };
+}
+
 function safeSession(session) {
   if (!isPlainObject(session)) return null;
   return {
@@ -78,6 +148,8 @@ function safeSession(session) {
     totalMarks: Number.isFinite(Number(session.totalMarks)) ? Number(session.totalMarks) : 0,
     currentIndex: Number.isFinite(Number(session.currentIndex)) ? Number(session.currentIndex) : 0,
     currentItem: safeCurrentItem(session.currentItem),
+    supportLevel: Number.isFinite(Number(session.supportLevel)) ? Math.max(0, Number(session.supportLevel)) : 0,
+    supportGuidance: supportGuidanceForSession(session),
     serverAuthority: session.serverAuthority === GRAMMAR_SERVER_AUTHORITY ? GRAMMAR_SERVER_AUTHORITY : null,
   };
 }
@@ -255,8 +327,8 @@ function capabilityMetadata() {
     trouble: { label: 'Weak concepts drill', detail: 'Targets the weakest Grammar concepts with retry pressure.' },
     surgery: { label: 'Sentence surgery', detail: 'Fix and rewrite sentence-level Grammar errors.' },
     builder: { label: 'Sentence builder', detail: 'Build and rewrite sentences from structured prompts.' },
-    worked: { label: 'Worked examples' },
-    faded: { label: 'Faded guidance' },
+    worked: { label: 'Worked examples', detail: 'Practise with a model example before answering.' },
+    faded: { label: 'Faded guidance', detail: 'Practise with prompts and contrasts, but no answer to the current item.' },
   };
   return {
     enabledModes: Array.from(GRAMMAR_ENABLED_MODES).map((id) => ({ id, ...(modes[id] || { label: id }) })),

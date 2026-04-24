@@ -59,8 +59,8 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
           <div className="eyebrow">Clause Conservatory</div>
           <h2 id="grammar-setup-title">Grammar retrieval practice</h2>
           <p>
-            {learner?.name || 'This learner'} can start with the Stage 1 Worker-marked grammar engine,
-            while the full concept map stays visible for the larger product build.
+            {learner?.name || 'This learner'} can practise with Worker-marked grammar modes while the
+            full concept map stays visible for the larger product build.
           </p>
           <div className="grammar-hero-stats" aria-label="Grammar coverage">
             <Stat label="Concepts" value={counts.total || 18} detail="full map" />
@@ -74,7 +74,7 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
         <section className="card grammar-start-card" aria-labelledby="grammar-start-title">
           <div className="card-header">
             <div>
-              <div className="eyebrow">Stage 1 practice</div>
+              <div className="eyebrow">Worker-marked modes</div>
               <h3 className="section-title" id="grammar-start-title">Start a Grammar round</h3>
             </div>
             <span className="chip good">Worker marked</span>

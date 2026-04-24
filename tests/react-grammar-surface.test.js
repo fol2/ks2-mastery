@@ -348,19 +348,19 @@ test('Grammar normaliser upgrades stale persisted mode capabilities', () => {
         { id: 'trouble', label: 'Weak concepts drill', reason: 'coming-next' },
         { id: 'surgery', label: 'Sentence surgery', reason: 'coming-next' },
         { id: 'builder', label: 'Sentence builder', reason: 'coming-next' },
+        { id: 'worked', label: 'Worked examples', reason: 'coming-next' },
+        { id: 'faded', label: 'Faded guidance', reason: 'coming-next' },
       ],
     },
   });
 
-  assert.equal(grammar.capabilities.enabledModes.some((mode) => mode.id === 'trouble'), true);
-  assert.equal(grammar.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
-  assert.equal(grammar.capabilities.enabledModes.some((mode) => mode.id === 'surgery'), true);
-  assert.equal(grammar.capabilities.lockedModes.some((mode) => mode.id === 'surgery'), false);
-  assert.equal(grammar.capabilities.enabledModes.some((mode) => mode.id === 'builder'), true);
-  assert.equal(grammar.capabilities.lockedModes.some((mode) => mode.id === 'builder'), false);
+  for (const modeId of ['trouble', 'surgery', 'builder', 'worked', 'faded']) {
+    assert.equal(grammar.capabilities.enabledModes.some((mode) => mode.id === modeId), true, modeId);
+    assert.equal(grammar.capabilities.lockedModes.some((mode) => mode.id === modeId), false, modeId);
+  }
 });
 
-test('Grammar locked future modes render unavailable without dispatching commands', () => {
+test('Grammar legacy modes render available without locked placeholders', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
 
@@ -373,8 +373,11 @@ test('Grammar locked future modes render unavailable without dispatching command
   assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Sentence surgery/);
   assert.match(html, /<button class="grammar-mode" type="button">[\s\S]*Sentence builder/);
   assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Sentence builder/);
-  assert.match(html, /Worked examples[\s\S]*Coming next/);
-  assert.match(html, /button class="grammar-mode locked" type="button" disabled=""/);
+  assert.match(html, /<button class="grammar-mode" type="button">[\s\S]*Worked examples/);
+  assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Worked examples/);
+  assert.match(html, /<button class="grammar-mode" type="button">[\s\S]*Faded guidance/);
+  assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Faded guidance/);
+  assert.doesNotMatch(html, /Coming next/);
 });
 
 test('Grammar setup can start trouble drill mode', () => {
@@ -490,4 +493,56 @@ test('Grammar setup can start sentence builder mode', () => {
   assert.equal(grammar.session.type, 'sentence-builder');
   assert.equal(grammar.session.focusConceptId, '');
   assert.match(grammar.session.currentItem.questionType, /^(build|rewrite)$/);
+});
+
+test('Grammar setup can start worked example mode with guidance', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-set-focus', { value: 'word_classes' });
+  harness.dispatch('grammar-set-mode', { value: 'worked' });
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.mode, 'worked');
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, 'word_classes');
+
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      seed: 123,
+    },
+  });
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.mode, 'worked');
+  assert.equal(grammar.session.type, 'worked-example');
+  assert.equal(grammar.session.supportLevel, 2);
+  assert.equal(grammar.session.supportGuidance.kind, 'worked');
+  assert.match(harness.render(), /Worked example/);
+  assert.match(harness.render(), /Model/);
+});
+
+test('Grammar setup can start faded guidance mode with lower support', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-set-mode', { value: 'faded' });
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.mode, 'faded');
+
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      seed: 123,
+    },
+  });
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.mode, 'faded');
+  assert.equal(grammar.session.type, 'faded-guidance');
+  assert.equal(grammar.session.supportLevel, 1);
+  assert.equal(grammar.session.supportGuidance.kind, 'faded');
+  assert.match(harness.render(), /Faded guidance/);
+  assert.match(harness.render(), /Near miss/);
 });
