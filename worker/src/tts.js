@@ -17,6 +17,8 @@ const GEMINI_GENERATE_CONTENT_URL = 'https://generativelanguage.googleapis.com/v
 const TTS_WINDOW_MS = 10 * 60 * 1000;
 const TTS_ACCOUNT_LIMIT = 120;
 const TTS_IP_LIMIT = 240;
+const TTS_WARMUP_ACCOUNT_LIMIT = 60;
+const TTS_WARMUP_IP_LIMIT = 180;
 const DEFAULT_MODEL = 'gpt-4o-mini-tts';
 const DEFAULT_VOICE = 'marin';
 const DEFAULT_FORMAT = 'mp3';
@@ -102,6 +104,24 @@ async function protectTts(env, request, session, now) {
       retryAfterSeconds: Math.max(accountLimit.retryAfterSeconds, ipLimit.retryAfterSeconds),
     });
   }
+}
+
+async function allowTtsWarmup(env, request, session, now) {
+  const accountLimit = await consumeRateLimit(env, {
+    bucket: 'tts-warmup-account',
+    identifier: session.accountId,
+    limit: TTS_WARMUP_ACCOUNT_LIMIT,
+    windowMs: TTS_WINDOW_MS,
+    now,
+  });
+  const ipLimit = await consumeRateLimit(env, {
+    bucket: 'tts-warmup-ip',
+    identifier: clientIp(request),
+    limit: TTS_WARMUP_IP_LIMIT,
+    windowMs: TTS_WINDOW_MS,
+    now,
+  });
+  return accountLimit.allowed && ipLimit.allowed;
 }
 
 async function recordDemoTtsFallback(env, session, now, response) {
@@ -247,8 +267,7 @@ async function bufferedAudioMetadata(payload = {}) {
   const voice = normaliseBufferedGeminiVoice(payload.bufferedGeminiVoice);
   const speed = speedIdForSlow(payload.slow);
   const contentKey = await sha256([
-    'spelling-audio-content-v1',
-    accountId,
+    'spelling-audio-content-v2',
     slug,
     String(sentenceIndex),
     word,
@@ -635,6 +654,7 @@ export async function handleTextToSpeechRequest({
     ...gemini,
     voice: payload.bufferedGeminiVoice || gemini.voice,
   };
+  if (cacheOnly && payload.wordOnly) return cacheOnlyResponse('uncacheable');
   let protectedRequest = false;
   async function protectAudioRequest() {
     if (protectedRequest) return;
@@ -644,19 +664,27 @@ export async function handleTextToSpeechRequest({
   }
 
   if (payload.provider === 'gemini' && !payload.wordOnly) {
-    await protectAudioRequest();
+    if (cacheOnly) {
+      const warmupAllowed = await allowTtsWarmup(env, request, session, now);
+      if (!warmupAllowed) return cacheOnlyResponse('skipped_rate_limited');
+    } else {
+      await protectAudioRequest();
+    }
     const cacheHit = await readBufferedGeminiAudio(env, payload);
     if (cacheHit?.object) {
       const output = cacheOnly ? cacheOnlyResponse('hit', cacheHit) : cachedGeminiAudioResponse(cacheHit);
-      return await recordDemoTtsFallback(env, session, now, output);
+      return cacheOnly ? output : await recordDemoTtsFallback(env, session, now, output);
     }
     if (cacheOnly && cacheHit?.cacheUnavailable) return cacheOnlyResponse('unavailable', cacheHit);
     if (cacheOnly && !cacheHit?.metadata) return cacheOnlyResponse('uncacheable');
   }
 
   if (payload.provider === 'gemini') {
-    if (!geminiForPayload.apiKey) throw missingProviderConfig('gemini');
-    await protectAudioRequest();
+    if (!geminiForPayload.apiKey) {
+      if (cacheOnly) return cacheOnlyResponse('unavailable');
+      throw missingProviderConfig('gemini');
+    }
+    if (!cacheOnly) await protectAudioRequest();
     try {
       const response = await requestGeminiSpeech({ config: geminiForPayload, payload, fetchFn });
       const stored = payload.wordOnly
@@ -665,7 +693,7 @@ export async function handleTextToSpeechRequest({
       const output = cacheOnly
         ? cacheOnlyResponse(stored.cacheState, { key: stored.key, metadata: stored.metadata })
         : stored.response;
-      return await recordDemoTtsFallback(env, session, now, output);
+      return cacheOnly ? output : await recordDemoTtsFallback(env, session, now, output);
     } catch (error) {
       throw backendUnavailableFromFailure(error, [error]);
     }
