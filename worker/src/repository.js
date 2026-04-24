@@ -31,7 +31,7 @@ import {
 import { buildAdminHubReadModel } from '../../src/platform/hubs/admin-read-model.js';
 import { buildParentHubReadModel } from '../../src/platform/hubs/parent-read-model.js';
 import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system.js';
-import { buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
+import { buildSpellingProgressPools, buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
 import { buildSpellingAudioCue } from './subjects/spelling/audio.js';
 import {
   BadRequestError,
@@ -160,10 +160,41 @@ function safeSpellingSessionProgress(progress) {
   return Object.keys(output).length ? output : null;
 }
 
-function redactSpellingUiForClient(ui, data = {}, learnerId = '', { audio = null } = {}) {
+function publicSpellingStats(progressPools) {
+  if (!isPlainObject(progressPools)) return {};
+  return {
+    all: cloneSerialisable(progressPools.all || progressPools.core || {}),
+    core: cloneSerialisable(progressPools.core || progressPools.all || {}),
+    y34: cloneSerialisable(progressPools.y34 || {}),
+    y56: cloneSerialisable(progressPools.y56 || {}),
+    extra: cloneSerialisable(progressPools.extra || {}),
+  };
+}
+
+function publicSpellingAnalytics(progressPools, now) {
+  if (!isPlainObject(progressPools)) return null;
+  return {
+    version: 1,
+    generatedAt: Number(now) || Date.now(),
+    pools: cloneSerialisable(progressPools),
+    wordGroups: [],
+    wordBank: {
+      source: 'server-bootstrap',
+    },
+  };
+}
+
+function redactSpellingUiForClient(ui, data = {}, learnerId = '', {
+  audio = null,
+  contentSnapshot = null,
+  now = Date.now(),
+} = {}) {
   const raw = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {};
   const session = raw.session && typeof raw.session === 'object' && !Array.isArray(raw.session)
     ? raw.session
+    : null;
+  const progressPools = contentSnapshot
+    ? buildSpellingProgressPools({ contentSnapshot, data, now })
     : null;
   return {
     subjectId: 'spelling',
@@ -192,14 +223,14 @@ function redactSpellingUiForClient(ui, data = {}, learnerId = '', { audio = null
     summary: null,
     error: typeof raw.error === 'string' ? raw.error : '',
     prefs: cloneSerialisable(data?.prefs) || {},
-    stats: {},
-    analytics: null,
+    stats: publicSpellingStats(progressPools),
+    analytics: publicSpellingAnalytics(progressPools, now),
     audio: audio ? cloneSerialisable(audio) : null,
     content: null,
   };
 }
 
-async function publicSubjectStateRowToRecord(row) {
+async function publicSubjectStateRowToRecord(row, { spellingContentSnapshot = null, now = Date.now() } = {}) {
   const record = subjectStateRowToRecord(row);
   if (row.subject_id !== 'spelling') return record;
   const audio = await buildSpellingAudioCue({
@@ -207,7 +238,11 @@ async function publicSubjectStateRowToRecord(row) {
     state: record.ui,
   });
   return normaliseSubjectStateRecord({
-    ui: redactSpellingUiForClient(record.ui, record.data, row.learner_id, { audio }),
+    ui: redactSpellingUiForClient(record.ui, record.data, row.learner_id, {
+      audio,
+      contentSnapshot: spellingContentSnapshot,
+      now,
+    }),
     data: {},
     updatedAt: record.updatedAt,
   });
@@ -1319,10 +1354,17 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
     ORDER BY created_at ASC, id ASC
   `, learnerIds);
 
+  const publicSpellingContent = publicReadModels && subjectRows.some((row) => row.subject_id === 'spelling')
+    ? await readSpellingRuntimeContentBundle(db, accountId, 'spelling')
+    : null;
+  const publicReadModelNow = Date.now();
   const subjectStates = {};
   for (const row of subjectRows) {
     subjectStates[subjectStateKey(row.learner_id, row.subject_id)] = publicReadModels
-      ? await publicSubjectStateRowToRecord(row)
+      ? await publicSubjectStateRowToRecord(row, {
+        spellingContentSnapshot: publicSpellingContent?.snapshot || null,
+        now: publicReadModelNow,
+      })
       : subjectStateRowToRecord(row);
   }
 
