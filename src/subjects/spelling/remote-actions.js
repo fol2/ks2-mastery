@@ -135,6 +135,8 @@ export function createRemoteSpellingActionHandler({
 } = {}) {
   const pendingPreferenceSaves = new Map();
   const preferenceSaveChains = new Map();
+  const preferenceIntentCounters = new Map();
+  const latestPreferenceIntents = new Map();
 
   function appState() {
     return store?.getState?.() || {};
@@ -144,7 +146,7 @@ export function createRemoteSpellingActionHandler({
     return state.subjectUi?.spelling?.analytics || null;
   }
 
-  function applyCommandResponse(response, { command = '' } = {}) {
+  function applyCommandResponse(response, { command = '', learnerId = '', preferenceVersion = 0 } = {}) {
     if (response?.projections?.rewards?.toastEvents?.length) {
       store.pushToasts(response.projections.rewards.toastEvents);
     }
@@ -155,6 +157,7 @@ export function createRemoteSpellingActionHandler({
       tts.stop();
     }
     store.reloadFromRepositories({ preserveRoute: true });
+    reconcilePreferenceSaveResponse({ command, learnerId, preferenceVersion });
     if (response?.audio?.promptToken) {
       tts.speak(response.audio);
     }
@@ -207,7 +210,7 @@ export function createRemoteSpellingActionHandler({
     }
   }
 
-  async function sendCommand(command, payload = {}, { learnerId: requestedLearnerId = '' } = {}) {
+  async function sendCommand(command, payload = {}, { learnerId: requestedLearnerId = '', preferenceVersion = 0 } = {}) {
     const state = appState();
     const learnerId = requestedLearnerId || state.learners?.selectedId;
     if (!learnerId) return null;
@@ -217,7 +220,7 @@ export function createRemoteSpellingActionHandler({
       command,
       payload,
     });
-    applyCommandResponse(response, { command });
+    applyCommandResponse(response, { command, learnerId, preferenceVersion });
     return response;
   }
 
@@ -238,20 +241,50 @@ export function createRemoteSpellingActionHandler({
     }));
   }
 
+  function recordPreferenceIntent(learnerId, prefsPatch = {}) {
+    const patch = prefsPatch && typeof prefsPatch === 'object' && !Array.isArray(prefsPatch) ? prefsPatch : {};
+    if (!learnerId || !Object.keys(patch).length) return null;
+    const version = (preferenceIntentCounters.get(learnerId) || 0) + 1;
+    const previous = latestPreferenceIntents.get(learnerId);
+    const intent = {
+      version,
+      prefs: {
+        ...(previous?.prefs || {}),
+        ...patch,
+      },
+    };
+    preferenceIntentCounters.set(learnerId, version);
+    latestPreferenceIntents.set(learnerId, intent);
+    return intent;
+  }
+
+  function reconcilePreferenceSaveResponse({ command = '', learnerId = '', preferenceVersion = 0 } = {}) {
+    if (command !== 'save-prefs' || !learnerId) return;
+    const latest = latestPreferenceIntents.get(learnerId);
+    if (!latest) return;
+    if (Number(latest.version) <= Number(preferenceVersion)) {
+      latestPreferenceIntents.delete(learnerId);
+      return;
+    }
+    if (appState().learners?.selectedId === learnerId) {
+      updateOptimisticPrefs(latest.prefs);
+    }
+  }
+
   function takePendingPreferenceSave(learnerId) {
     const entry = pendingPreferenceSaves.get(learnerId);
     if (!entry) return null;
     if (entry.timer) clearTimeout(entry.timer);
     pendingPreferenceSaves.delete(learnerId);
-    return entry.prefs && typeof entry.prefs === 'object' && !Array.isArray(entry.prefs) ? entry.prefs : null;
+    return entry.prefs && typeof entry.prefs === 'object' && !Array.isArray(entry.prefs) ? entry : null;
   }
 
-  function trackPreferenceSave(learnerId, prefs) {
+  function trackPreferenceSave(learnerId, prefs, preferenceVersion = 0) {
     const previous = preferenceSaveChains.get(learnerId) || Promise.resolve();
     let tracked;
     const next = previous
       .catch(() => {})
-      .then(() => sendCommand('save-prefs', { prefs }, { learnerId }));
+      .then(() => sendCommand('save-prefs', { prefs }, { learnerId, preferenceVersion }));
     tracked = next.finally(() => {
       if (preferenceSaveChains.get(learnerId) === tracked) {
         preferenceSaveChains.delete(learnerId);
@@ -263,9 +296,9 @@ export function createRemoteSpellingActionHandler({
 
   function flushPendingPreferenceSave(learnerId) {
     if (!learnerId) return Promise.resolve(null);
-    const pendingPrefs = takePendingPreferenceSave(learnerId);
-    if (pendingPrefs && Object.keys(pendingPrefs).length) {
-      return trackPreferenceSave(learnerId, pendingPrefs);
+    const pending = takePendingPreferenceSave(learnerId);
+    if (pending?.prefs && Object.keys(pending.prefs).length) {
+      return trackPreferenceSave(learnerId, pending.prefs, pending.version);
     }
     return preferenceSaveChains.get(learnerId) || Promise.resolve(null);
   }
@@ -279,16 +312,13 @@ export function createRemoteSpellingActionHandler({
     if (!learnerId) return false;
     const patch = prefsPatch && typeof prefsPatch === 'object' && !Array.isArray(prefsPatch) ? prefsPatch : {};
     if (!Object.keys(patch).length) return true;
+    const intent = recordPreferenceIntent(learnerId, patch);
     const current = pendingPreferenceSaves.get(learnerId);
     if (current?.timer) clearTimeout(current.timer);
-    const prefs = {
-      ...(current?.prefs || {}),
-      ...patch,
-    };
     const timer = setTimeout(() => {
       flushPendingPreferenceSave(learnerId).catch(handlePreferenceSaveError);
     }, preferenceSaveDelayMs());
-    pendingPreferenceSaves.set(learnerId, { prefs, timer });
+    pendingPreferenceSaves.set(learnerId, { prefs: intent.prefs, version: intent.version, timer });
     return true;
   }
 
@@ -606,8 +636,9 @@ export function createRemoteSpellingActionHandler({
       tts.stop();
       (async () => {
         await flushPendingPreferenceSave(learnerId);
+        const intent = recordPreferenceIntent(learnerId, { mode });
         updateOptimisticPrefs({ mode });
-        await sendCommand('save-prefs', { prefs: { mode } }, { learnerId });
+        await sendCommand('save-prefs', { prefs: { mode } }, { learnerId, preferenceVersion: intent?.version || 0 });
         const prefs = spelling?.getPrefs?.(learnerId) || { mode };
         await sendCommand('start-session', {
           mode: prefs.mode || mode,

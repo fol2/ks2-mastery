@@ -260,6 +260,80 @@ test('remote spelling start flushes pending setup preferences first', async () =
   assert.equal(sent[1].payload.mode, 'smart');
 });
 
+test('remote spelling keeps newer pending preferences when an older save response reloads', async () => {
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'dashboard',
+        prefs: {
+          mode: 'smart',
+          roundLength: '10',
+          yearFilter: 'core',
+          autoSpeak: true,
+          showCloze: true,
+        },
+        analytics: null,
+        error: '',
+      },
+    },
+  });
+  const firstSave = deferred();
+  const sent = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: {
+      spelling: {
+        getPrefs() {
+          return getState().subjectUi.spelling.prefs;
+        },
+      },
+    },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        if (sent.length === 1) return firstSave.promise;
+        return Promise.resolve({ subjectReadModel: { phase: 'dashboard' } });
+      },
+    },
+    preferenceSaveDebounceMs: 0,
+  });
+
+  assert.equal(handler.handle('spelling-set-pref', { pref: 'roundLength', value: '5' }), true);
+  await flushTimers();
+  await flushPromises();
+  assert.equal(sent.length, 1);
+
+  assert.equal(handler.handle('spelling-set-pref', { pref: 'yearFilter', value: 'extra' }), true);
+  await flushTimers();
+  await flushPromises();
+  assert.equal(sent.length, 1);
+  assert.equal(getState().subjectUi.spelling.prefs.yearFilter, 'extra');
+
+  store.updateSubjectUi('spelling', (current = {}) => ({
+    ...current,
+    prefs: {
+      ...(current.prefs || {}),
+      roundLength: '5',
+      yearFilter: 'core',
+    },
+  }));
+  firstSave.resolve({ subjectReadModel: { phase: 'dashboard' } });
+  await flushPromises();
+  await flushPromises();
+
+  assert.equal(getState().subjectUi.spelling.prefs.roundLength, '5');
+  assert.equal(getState().subjectUi.spelling.prefs.yearFilter, 'extra');
+  assert.equal(sent.length, 2);
+  assert.deepEqual(sent[1].payload, {
+    prefs: {
+      roundLength: '5',
+      yearFilter: 'extra',
+    },
+  });
+});
+
 test('remote spelling command response preserves reward side effects and TTS stop rules', () => {
   const { calls, store } = createStoreHarness();
   const tts = createTtsHarness();
