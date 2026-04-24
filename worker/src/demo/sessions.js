@@ -20,6 +20,9 @@ const DEMO_LIMITS = {
   ttsAccount: 80,
   ttsSession: 60,
   ttsFallbackType: 40,
+  ttsLookupIp: 320,
+  ttsLookupAccount: 160,
+  ttsLookupSession: 120,
 };
 
 function cleanText(value) {
@@ -256,6 +259,29 @@ export async function protectDemoTtsFallback({ env, request, session, payload = 
       limit: DEMO_LIMITS.ttsFallbackType,
     },
   ], now, 'Too many demo dictation audio requests. Please wait a few minutes and try again.');
+}
+
+export async function protectDemoTtsLookup({ env, request, session, now = Date.now() } = {}) {
+  if (!session?.demo) return;
+  const db = requireDatabase(env);
+  await requireActiveDemoAccount(db, session.accountId, now);
+  await enforceDemoRateLimit(db, [
+    {
+      bucket: 'demo-tts-lookup-ip',
+      identifier: clientIp(request),
+      limit: DEMO_LIMITS.ttsLookupIp,
+    },
+    {
+      bucket: 'demo-tts-lookup-account',
+      identifier: session.accountId,
+      limit: DEMO_LIMITS.ttsLookupAccount,
+    },
+    {
+      bucket: 'demo-tts-lookup-session',
+      identifier: demoSessionIdentifier(session),
+      limit: DEMO_LIMITS.ttsLookupSession,
+    },
+  ], now, 'Too many demo dictation audio lookups. Please wait a few minutes and try again.');
 }
 
 export async function cleanupExpiredDemoAccounts(db, now = Date.now(), { accountId = null, limit = 25 } = {}) {
