@@ -123,7 +123,12 @@ export function TopNav({
 }) {
   return (
     <header className="topnav">
-      <button type="button" className="brand profile-brand-button" onClick={onNavigateHome}>
+      <button
+        type="button"
+        className="brand profile-brand-button"
+        data-action={onNavigateHome ? 'navigate-home' : undefined}
+        onClick={onNavigateHome}
+      >
         <span className="brand-mark">K</span>
         <span className="lockup">
           <span>KS2 Mastery</span>
