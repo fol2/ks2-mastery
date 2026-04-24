@@ -696,10 +696,9 @@ export async function handleTextToSpeechRequest({
 
   async function tryGemini(fallbackFrom = '') {
     if (!payload.wordOnly) {
-      if (!cacheOnly && !cacheLookupOnly) await protectAudioRequest();
+      if (!cacheOnly) await protectAudioRequest();
       const cacheHit = await readBufferedGeminiAudio(env, payload, { model: geminiForPayload.model });
       if (cacheHit?.object) {
-        if (cacheLookupOnly) await protectAudioRequest();
         const output = cacheOnly ? cacheOnlyResponse('hit', cacheHit) : cachedGeminiAudioResponse(cacheHit);
         return cacheOnly ? output : await finish(output, fallbackFrom);
       }

@@ -192,6 +192,67 @@ test('platform TTS plays cached Gemini audio before the selected provider', asyn
   }
 });
 
+test('platform TTS does not warm or fall back after cancelled cache lookup', async () => {
+  const originalAudio = globalThis.Audio;
+  globalThis.Audio = class MockAudio {};
+
+  let releaseLookup;
+  let lookupStarted;
+  const lookupStartedPromise = new Promise((resolve) => {
+    lookupStarted = resolve;
+  });
+  const calls = [];
+  const tts = createPlatformTts({
+    remoteEnabled: true,
+    provider: 'openai',
+    fetchFn: async (url, init = {}) => {
+      const body = JSON.parse(init.body);
+      calls.push({ url, body });
+      if (body.cacheLookupOnly) {
+        lookupStarted();
+        await new Promise((resolve) => {
+          releaseLookup = resolve;
+        });
+        return new Response(null, {
+          status: 204,
+          headers: { 'x-ks2-tts-cache': 'miss' },
+        });
+      }
+      return new Response(new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/mpeg' }), {
+        status: 200,
+        headers: { 'content-type': 'audio/mpeg' },
+      });
+    },
+  });
+
+  try {
+    const resultPromise = tts.speak({
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-cancelled',
+      word: 'early',
+      sentence: 'The birds sang early in the day.',
+    });
+    await lookupStartedPromise;
+    tts.stop();
+    releaseLookup();
+    const result = await resultPromise;
+
+    assert.equal(result, false);
+    assert.equal(calls.length, 1);
+    assert.deepEqual(calls[0].body, {
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-cancelled',
+      slow: false,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Iapetus',
+      cacheLookupOnly: true,
+    });
+  } finally {
+    tts.stop();
+    globalThis.Audio = originalAudio;
+  }
+});
+
 test('platform TTS allows a one-off provider override for profile tests', async () => {
   const originalAudio = globalThis.Audio;
   const originalCreateObjectUrl = URL.createObjectURL;

@@ -307,6 +307,7 @@ export function createPlatformTts({
     if (providerId !== 'gemini') {
       const cached = await speakWithCachedBufferedAudio(payload, bufferedVoiceId, token);
       if (cached) return true;
+      if (token !== playbackId) return false;
     }
     prefetchBufferedAudio(payload, providerId, bufferedVoiceId);
     if (providerId === 'browser') return speakWithBrowser(payload);

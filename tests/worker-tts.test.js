@@ -422,6 +422,45 @@ test('TTS route returns a lookup-only cache miss without generating audio', asyn
   }
 });
 
+test('TTS route rate limits lookup-only cache misses before reading R2', async () => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    return geminiAudioResponse();
+  };
+  const bucket = createMemoryR2Bucket();
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      GEMINI_API_KEY: 'test-gemini-key',
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    const prompt = await startSpellingPrompt(server);
+    await seedRateLimit(server, 'tts-account', 'adult-a', 120);
+
+    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({
+      learnerId: prompt.learnerId,
+      promptToken: prompt.promptToken,
+      provider: 'openai',
+      bufferedGeminiVoice: 'Sulafat',
+      cacheLookupOnly: true,
+    }));
+    const payload = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.code, 'tts_rate_limited');
+    assert.equal(providerCalls, 0);
+    assert.equal(bucket.gets.length, 0);
+    assert.equal(bucket.puts.length, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
 test('TTS route rate limits cached Gemini audio before reading R2', async () => {
   const originalFetch = globalThis.fetch;
   let providerCalls = 0;
