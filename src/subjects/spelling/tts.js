@@ -86,6 +86,7 @@ function remotePromptRequest(payload = {}, providerId = DEFAULT_TTS_PROVIDER, bu
   };
   if (payload.wordOnly) body.wordOnly = true;
   if (payload.cacheOnly) body.cacheOnly = true;
+  if (payload.cacheLookupOnly) body.cacheLookupOnly = true;
   if (typeof payload.slug === 'string' && payload.slug) body.slug = payload.slug;
   if (typeof payload.scope === 'string' && payload.scope) body.scope = payload.scope;
   return body;
@@ -206,7 +207,33 @@ export function createPlatformTts({
     }).catch(() => {});
   }
 
-  async function speakWithRemote(payload = {}, providerId, bufferedVoiceId, token) {
+  async function speakWithCachedBufferedAudio(payload = {}, bufferedVoiceId, token) {
+    if (
+      payload.wordOnly
+      || !remoteEnabled
+      || typeof fetchFn !== 'function'
+      || typeof Audio === 'undefined'
+      || typeof URL === 'undefined'
+      || !payload.promptToken
+    ) {
+      return false;
+    }
+    return await speakWithRemote(
+      { ...payload, cacheLookupOnly: true },
+      'gemini',
+      bufferedVoiceId,
+      token,
+      { emitLoading: false, emitMissEnd: false },
+    );
+  }
+
+  async function speakWithRemote(
+    payload = {},
+    providerId,
+    bufferedVoiceId,
+    token,
+    { emitLoading = true, emitMissEnd = true } = {},
+  ) {
     if (!remoteEnabled || typeof fetchFn !== 'function' || typeof Audio === 'undefined' || typeof URL === 'undefined') {
       return false;
     }
@@ -215,7 +242,7 @@ export function createPlatformTts({
 
     currentAbort = new AbortController();
     const kindId = playbackKind(payload);
-    emit({ type: 'loading', kind: kindId, provider: providerId });
+    if (emitLoading) emit({ type: 'loading', kind: kindId, provider: providerId });
     try {
       const response = await fetchFn(endpoint, {
         method: 'POST',
@@ -227,8 +254,12 @@ export function createPlatformTts({
         signal: currentAbort.signal,
         body: JSON.stringify(requestBody),
       });
+      if (response.status === 204) {
+        if (emitMissEnd && token === playbackId) emit({ type: 'end' });
+        return false;
+      }
       if (!response.ok) {
-        if (token === playbackId) emit({ type: 'end' });
+        if (emitMissEnd && token === playbackId) emit({ type: 'end' });
         return false;
       }
       const blob = await response.blob();
@@ -273,6 +304,10 @@ export function createPlatformTts({
     const token = playbackId;
     const providerId = resolveProvider(payload.provider || provider);
     const bufferedVoiceId = resolveBufferedVoice(payload.bufferedGeminiVoice || bufferedVoice);
+    if (providerId !== 'gemini') {
+      const cached = await speakWithCachedBufferedAudio(payload, bufferedVoiceId, token);
+      if (cached) return true;
+    }
     prefetchBufferedAudio(payload, providerId, bufferedVoiceId);
     if (providerId === 'browser') return speakWithBrowser(payload);
     return await speakWithRemote(payload, providerId, bufferedVoiceId, token);

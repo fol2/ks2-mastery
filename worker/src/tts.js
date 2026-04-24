@@ -144,6 +144,10 @@ function normaliseTtsCacheOnly(value) {
   return value === true || cleanText(value).toLowerCase() === 'true';
 }
 
+function normaliseTtsCacheLookupOnly(value) {
+  return value === true || cleanText(value).toLowerCase() === 'true';
+}
+
 function ttsInstructions(slow = false, wordOnly = false) {
   if (wordOnly) {
     return 'Use natural British English pronunciation for a KS2 vocabulary preview. Read exactly the supplied word once and do not add extra words.';
@@ -658,6 +662,7 @@ export async function handleTextToSpeechRequest({
 } = {}) {
   const body = await readJson(request);
   const cacheOnly = normaliseTtsCacheOnly(body?.cacheOnly);
+  const cacheLookupOnly = normaliseTtsCacheLookupOnly(body?.cacheLookupOnly);
   const payload = {
     ...(await resolveSpellingAudioRequest({
       repository,
@@ -665,9 +670,10 @@ export async function handleTextToSpeechRequest({
       body,
     })),
     accountId: session.accountId,
-    provider: cacheOnly ? 'gemini' : normaliseRemoteTtsProvider(body?.provider),
+    provider: cacheOnly || cacheLookupOnly ? 'gemini' : normaliseRemoteTtsProvider(body?.provider),
     bufferedGeminiVoice: normaliseBufferedGeminiVoice(body?.bufferedGeminiVoice || body?.cachedVoice),
     cacheOnly,
+    cacheLookupOnly,
   };
   const openAi = openAiConfig(env);
   const gemini = geminiConfig(env);
@@ -675,7 +681,7 @@ export async function handleTextToSpeechRequest({
     ...gemini,
     voice: payload.bufferedGeminiVoice || gemini.voice,
   };
-  if (cacheOnly && payload.wordOnly) return cacheOnlyResponse('uncacheable');
+  if ((cacheOnly || cacheLookupOnly) && payload.wordOnly) return cacheOnlyResponse('uncacheable');
   let protectedRequest = false;
   async function protectAudioRequest() {
     if (protectedRequest) return;
@@ -690,12 +696,16 @@ export async function handleTextToSpeechRequest({
 
   async function tryGemini(fallbackFrom = '') {
     if (!payload.wordOnly) {
-      if (!cacheOnly) await protectAudioRequest();
+      if (!cacheOnly && !cacheLookupOnly) await protectAudioRequest();
       const cacheHit = await readBufferedGeminiAudio(env, payload, { model: geminiForPayload.model });
       if (cacheHit?.object) {
+        if (cacheLookupOnly) await protectAudioRequest();
         const output = cacheOnly ? cacheOnlyResponse('hit', cacheHit) : cachedGeminiAudioResponse(cacheHit);
         return cacheOnly ? output : await finish(output, fallbackFrom);
       }
+      if (cacheLookupOnly && cacheHit?.cacheUnavailable) return cacheOnlyResponse('unavailable', cacheHit);
+      if (cacheLookupOnly && !cacheHit?.metadata) return cacheOnlyResponse('uncacheable');
+      if (cacheLookupOnly) return cacheOnlyResponse('miss', cacheHit);
       if (cacheOnly && cacheHit?.cacheUnavailable) return cacheOnlyResponse('unavailable', cacheHit);
       if (cacheOnly && !cacheHit?.metadata) return cacheOnlyResponse('uncacheable');
       if (cacheOnly) {
