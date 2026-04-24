@@ -27,9 +27,9 @@ test('punctuation manifest exposes 14 atomic skills and one cluster owner per sk
   }
 });
 
-test('published punctuation release includes the hidden Comma / Flow expansion slice', () => {
+test('published punctuation release includes the hidden Boundary expansion slice', () => {
   const indexes = createPunctuationContentIndexes();
-  assert.deepEqual(indexes.publishedClusterIds, ['endmarks', 'apostrophe', 'speech', 'comma_flow']);
+  assert.deepEqual(indexes.publishedClusterIds, ['endmarks', 'apostrophe', 'speech', 'comma_flow', 'boundary']);
   assert.deepEqual(indexes.publishedSkillIds, [
     'sentence_endings',
     'list_commas',
@@ -38,10 +38,13 @@ test('published punctuation release includes the hidden Comma / Flow expansion s
     'speech',
     'fronted_adverbial',
     'comma_clarity',
+    'semicolon',
+    'dash_clause',
+    'hyphen',
   ]);
-  assert.equal(indexes.publishedRewardUnits.length, 7);
+  assert.equal(indexes.publishedRewardUnits.length, 10);
   assert.equal(PUNCTUATION_CONTENT_MANIFEST.fullSkillCount, 14);
-  assert.match(PUNCTUATION_CONTENT_MANIFEST.publishedScopeCopy, /Structure and boundary punctuation remain planned/);
+  assert.match(PUNCTUATION_CONTENT_MANIFEST.publishedScopeCopy, /Structure punctuation remains planned/);
 });
 
 test('published reward mastery keys are release-scoped and stable when generator families expand', () => {
@@ -108,6 +111,9 @@ test('published skills meet the content-readiness matrix', () => {
     'speech',
     'fronted_adverbial',
     'comma_clarity',
+    'semicolon',
+    'dash_clause',
+    'hyphen',
   ]) {
     const readiness = punctuationSkillReadiness(skillId);
     assert.equal(readiness.complete, true, `${skillId} readiness should be complete`);

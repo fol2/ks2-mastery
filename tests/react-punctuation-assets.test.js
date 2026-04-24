@@ -8,6 +8,10 @@ import { MONSTERS } from '../src/platform/game/monsters.js';
 import { punctuationMonsterSummaryFromState } from '../src/platform/game/monster-system.js';
 import { buildCodexEntries } from '../src/surfaces/home/data.js';
 import {
+  createPunctuationMasteryKey,
+  PUNCTUATION_RELEASE_ID,
+} from '../shared/punctuation/content.js';
+import {
   bellstormSceneForPhase,
   punctuationMonsterAsset,
 } from '../src/subjects/punctuation/components/punctuation-view-model.js';
@@ -41,20 +45,25 @@ test('punctuation monster view model points at provided branch and stage assets'
 });
 
 test('Codex entries describe Punctuation as secure units rather than spelling words', () => {
+  const masteryKey = createPunctuationMasteryKey({
+    releaseId: PUNCTUATION_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+  });
   const summary = punctuationMonsterSummaryFromState({
     pealark: {
-      mastered: ['punctuation:release:endmarks:sentence-endings-core'],
+      mastered: [masteryKey],
       publishedTotal: 1,
       caught: true,
       branch: 'b1',
     },
     carillon: {
-      mastered: ['punctuation:release:endmarks:sentence-endings-core'],
-      publishedTotal: 7,
+      mastered: [masteryKey],
+      publishedTotal: 10,
       caught: true,
       branch: 'b2',
     },
-  }, { aggregateTotal: 7 });
+  }, { aggregateTotal: 10 });
   const entries = buildCodexEntries(summary);
   const pealark = entries.find((entry) => entry.id === 'pealark');
   const carillon = entries.find((entry) => entry.id === 'carillon');
@@ -68,7 +77,7 @@ test('Codex entries describe Punctuation as secure units rather than spelling wo
   assert.equal(carillon.subjectId, 'punctuation');
   assert.equal(carillon.secureLabel, '1 secure unit');
   assert.equal(carillon.wordBand, 'Published punctuation release');
-  assert.equal(carillon.progressPct, 14);
+  assert.equal(carillon.progressPct, 10);
 });
 
 test('Codex entry defaults remain spelling-compatible', () => {

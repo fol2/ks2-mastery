@@ -9,6 +9,7 @@ const CLUSTER_MODE = Object.freeze({
   apostrophe: 'apostrophe',
   speech: 'speech',
   comma_flow: 'comma_flow',
+  boundary: 'boundary',
 });
 
 function isPlainObject(value) {
@@ -133,7 +134,7 @@ function progressForItem(progress, itemId) {
 
 function targetMode(session, prefs = {}) {
   const mode = prefs.mode || 'smart';
-  if (mode === 'endmarks' || mode === 'apostrophe' || mode === 'speech' || mode === 'comma_flow') {
+  if (mode === 'endmarks' || mode === 'apostrophe' || mode === 'speech' || mode === 'comma_flow' || mode === 'boundary') {
     return SMART_MODE_CYCLE[(Number(session?.answeredCount) || 0) % SMART_MODE_CYCLE.length];
   }
   return SMART_MODE_CYCLE[(Number(session?.answeredCount) || 0) % SMART_MODE_CYCLE.length];
@@ -144,6 +145,7 @@ function targetCluster(prefs = {}) {
   if (prefs.mode === 'apostrophe') return 'apostrophe';
   if (prefs.mode === 'speech') return 'speech';
   if (prefs.mode === 'comma_flow') return 'comma_flow';
+  if (prefs.mode === 'boundary') return 'boundary';
   return null;
 }
 

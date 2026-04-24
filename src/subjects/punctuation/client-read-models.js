@@ -39,7 +39,7 @@ export function createPunctuationReadModelService({ getState } = {}) {
         attempts: Number(stats.attempts) || 0,
         correct: Number(stats.correct) || 0,
         accuracy: Number(stats.accuracy) || 0,
-        publishedRewardUnits: Number(stats.publishedRewardUnits) || 7,
+        publishedRewardUnits: Number(stats.publishedRewardUnits) || 10,
         securedRewardUnits: Number(stats.securedRewardUnits) || 0,
       };
     },

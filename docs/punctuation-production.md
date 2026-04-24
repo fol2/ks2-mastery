@@ -9,7 +9,7 @@ The release deliberately keeps the learner engine first. Monsters and Codex rewa
 Release id:
 
 ```txt
-punctuation-r2-endmarks-apostrophe-speech-comma-flow
+punctuation-r3-endmarks-apostrophe-speech-comma-flow-boundary
 ```
 
 Published skills:
@@ -21,16 +21,16 @@ Published skills:
 - Inverted commas and speech punctuation
 - Fronted adverbial commas
 - Commas for clarity
+- Semi-colons between clauses
+- Dashes between clauses
+- Hyphens to avoid ambiguity
 
 Planned but not yet public:
 
 - Parenthesis
 - Colons before lists
-- Semi-colons between clauses
-- Dashes between clauses
 - Semi-colons in lists
 - Bullet-point punctuation
-- Hyphens to avoid ambiguity
 
 This preserves the legacy engine's 14-skill map while shipping only the content that has enough fixed items, transfer coverage, misconception tags, and negative tests for the current hidden production slice.
 
@@ -47,6 +47,9 @@ Current published reward units:
 - `list-commas-core`
 - `fronted-adverbials-core`
 - `comma-clarity-core`
+- `semicolons-core`
+- `dash-clauses-core`
+- `hyphens-core`
 
 Each unit has a stable mastery key:
 
@@ -86,6 +89,12 @@ Comma / Flow marking adds deterministic transfer validators for:
 - opening phrase commas after fronted adverbials such as `After lunch,`
 - opening phrase commas that make meaning clearer, such as `In the morning,`
 
+Boundary marking adds deterministic transfer validators for:
+
+- semi-colons between preserved related clauses
+- spaced dashes between preserved related clauses
+- exact hyphenated phrases that avoid ambiguity, such as `well-known author`
+
 ## Worker Runtime
 
 Production practice runs through the generic command boundary:
@@ -122,7 +131,7 @@ Reward projection maps secure units to Bellstorm Coast creatures:
 - Speech: Quoral
 - Comma / Flow: Curlune
 - List / Structure: Colisk, planned
-- Boundary: Hyphang, planned
+- Boundary: Hyphang
 - Published release aggregate: Carillon
 
 The Punctuation service does not mutate game state directly. It emits domain events; the reward projection records deduplicated mastery keys in the Monster Codex state. Replayed commands or duplicate `unit-secured` events do not double-award the same mastery key.

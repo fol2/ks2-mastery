@@ -138,6 +138,57 @@ test('fronted adverbial and clarity transfers require the opening phrase comma',
   assert.equal(missingClarityComma.misconceptionTags.includes('comma.clarity_missing'), true);
 });
 
+test('boundary transfer validators require target marks between preserved clauses', () => {
+  const semicolon = markPunctuationAnswer({
+    item: item('sc_transfer_rain_pitch'),
+    answer: { typed: 'The rain had stopped; the pitch was still slippery.' },
+  });
+  assert.equal(semicolon.correct, true);
+  assert.deepEqual(semicolon.misconceptionTags, []);
+
+  const commaSplice = markPunctuationAnswer({
+    item: item('sc_transfer_rain_pitch'),
+    answer: { typed: 'The rain had stopped, the pitch was still slippery.' },
+  });
+  assert.equal(commaSplice.correct, false);
+  assert.equal(commaSplice.misconceptionTags.includes('boundary.comma_splice'), true);
+
+  const dash = markPunctuationAnswer({
+    item: item('dc_transfer_flooded_route'),
+    answer: { typed: 'The path was flooded - we took the longer route.' },
+  });
+  assert.equal(dash.correct, true);
+
+  const missingDash = markPunctuationAnswer({
+    item: item('dc_transfer_flooded_route'),
+    answer: { typed: 'The path was flooded we took the longer route.' },
+  });
+  assert.equal(missingDash.correct, false);
+  assert.equal(missingDash.misconceptionTags.includes('boundary.dash_missing'), true);
+});
+
+test('hyphen transfer validator requires the exact hyphenated phrase', () => {
+  const correct = markPunctuationAnswer({
+    item: item('hy_transfer_well_known'),
+    answer: { typed: 'The well-known author visited our class.' },
+  });
+  assert.equal(correct.correct, true);
+
+  const missingHyphen = markPunctuationAnswer({
+    item: item('hy_transfer_well_known'),
+    answer: { typed: 'The well known author visited our class.' },
+  });
+  assert.equal(missingHyphen.correct, false);
+  assert.equal(missingHyphen.misconceptionTags.includes('boundary.hyphen_missing'), true);
+
+  const changedPhrase = markPunctuationAnswer({
+    item: item('hy_transfer_well_known'),
+    answer: { typed: 'The famous author visited our class.' },
+  });
+  assert.equal(changedPhrase.correct, false);
+  assert.equal(changedPhrase.misconceptionTags.includes('boundary.words_changed'), true);
+});
+
 test('choice marking accepts integer indexes only without coercing malformed values', () => {
   const speechChoice = item('sp_choose_reporting_comma');
   assert.equal(markPunctuationAnswer({ item: speechChoice, answer: { choiceIndex: 0 } }).correct, true);

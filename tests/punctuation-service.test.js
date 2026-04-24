@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createPunctuationMasteryKey } from '../shared/punctuation/content.js';
+import {
+  createPunctuationMasteryKey,
+  PUNCTUATION_RELEASE_ID,
+} from '../shared/punctuation/content.js';
 import { PUNCTUATION_EVENT_TYPES } from '../shared/punctuation/events.js';
 import { createPunctuationService, PunctuationServiceError } from '../shared/punctuation/service.js';
 
@@ -84,6 +87,20 @@ test('punctuation service rejects illegal transitions with named errors and no m
   );
 });
 
+test('focus sessions keep their selected cluster after continue and skip', () => {
+  const repository = makeRepository();
+  const service = createPunctuationService({ repository, now: () => 0, random: () => 0 });
+  const start = service.startSession('learner-a', { mode: 'boundary', roundLength: '3' }).state;
+  assert.equal(start.session.currentItem.clusterId, 'boundary');
+
+  const feedback = service.submitAnswer('learner-a', start, { choiceIndex: 1 }).state;
+  const continued = service.continueSession('learner-a', feedback).state;
+  assert.equal(continued.session.currentItem.clusterId, 'boundary');
+
+  const skipped = service.skipItem('learner-a', continued).state;
+  assert.equal(skipped.session.currentItem.clusterId, 'boundary');
+});
+
 test('one correct answer does not unlock secure-unit progress', () => {
   const repository = makeRepository();
   const service = createPunctuationService({ repository, now: () => 0, random: () => 0 });
@@ -93,6 +110,43 @@ test('one correct answer does not unlock secure-unit progress', () => {
   assert.deepEqual(Object.keys(data.progress.rewardUnits), []);
   const stats = service.getStats('learner-a');
   assert.equal(stats.securedRewardUnits, 0);
+});
+
+test('previous release reward units do not count towards the current release denominator', () => {
+  const oldReleaseId = 'punctuation-r2-endmarks-apostrophe-speech-comma-flow';
+  assert.notEqual(oldReleaseId, PUNCTUATION_RELEASE_ID);
+  const oldMasteryKey = createPunctuationMasteryKey({
+    releaseId: oldReleaseId,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+  });
+  const repository = makeRepository();
+  repository.writeData('learner-a', {
+    prefs: { mode: 'smart', roundLength: '1' },
+    progress: {
+      items: {},
+      facets: {},
+      rewardUnits: {
+        [oldMasteryKey]: {
+          masteryKey: oldMasteryKey,
+          releaseId: oldReleaseId,
+          clusterId: 'endmarks',
+          rewardUnitId: 'sentence-endings-core',
+          securedAt: 1,
+        },
+      },
+      attempts: [],
+      sessionsCompleted: 0,
+    },
+  });
+  const service = createPunctuationService({ repository, now: () => 0, random: () => 0 });
+
+  assert.equal(service.getStats('learner-a').securedRewardUnits, 0);
+  assert.deepEqual(service.getAnalyticsSnapshot('learner-a').rewardUnits, []);
+
+  const active = service.startSession('learner-a', { roundLength: '1' }).state;
+  const summary = service.endSession('learner-a', active).state.summary;
+  assert.equal(summary.rewardProgress.secured, 0);
 });
 
 test('spaced clean attempts emit a secure-unit event once', () => {

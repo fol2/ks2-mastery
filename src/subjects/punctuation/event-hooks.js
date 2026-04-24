@@ -32,10 +32,13 @@ export function createPunctuationRewardSubscriber({
         || indexes.rewardUnitById.get(event.rewardUnitId);
       const cluster = indexes.clusterById.get(event.clusterId || unit?.clusterId);
       if (!unit?.published || !cluster?.monsterId) continue;
+      const eventReleaseId = typeof event.releaseId === 'string' && event.releaseId ? event.releaseId : unit.releaseId;
+      if (eventReleaseId !== unit.releaseId) continue;
+      if (typeof event.masteryKey === 'string' && event.masteryKey && event.masteryKey !== unit.masteryKey) continue;
       rewardEvents.push(
         ...recordPunctuationRewardUnitMastery({
           learnerId: event.learnerId,
-          releaseId: event.releaseId || unit.releaseId,
+          releaseId: unit.releaseId,
           clusterId: unit.clusterId,
           rewardUnitId: unit.rewardUnitId,
           masteryKey: unit.masteryKey,
