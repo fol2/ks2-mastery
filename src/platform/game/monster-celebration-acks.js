@@ -146,6 +146,7 @@ function baselineExistingEvents(events, {
 export function unacknowledgedMonsterCelebrationEvents(events, {
   learnerId = '',
   ignoredIds = new Set(),
+  excludeEventIds = null,
   limit = 1,
   baselineExisting = false,
   baselineEventIds = null,
@@ -165,10 +166,11 @@ export function unacknowledgedMonsterCelebrationEvents(events, {
   }
   const acknowledgedIds = acknowledgedMonsterCelebrationIds(learnerId, { store });
   const ignored = ignoredIds instanceof Set ? ignoredIds : new Set();
+  const excluded = normaliseIdSet(excludeEventIds);
   const candidates = scopedEvents
     .filter((event) => {
       const id = eventId(event);
-      return id && !acknowledgedIds.has(id) && !ignored.has(id);
+      return id && !acknowledgedIds.has(id) && !ignored.has(id) && (!excluded || !excluded.has(id));
     })
     .sort((a, b) => (Number(a.createdAt) || 0) - (Number(b.createdAt) || 0));
 

@@ -17,6 +17,7 @@ import {
 
 const READ_ONLY_MESSAGE = 'Practice is read-only while sync is degraded. Retry sync before continuing.';
 const SETUP_PREF_SAVE_DEBOUNCE_MS = 120;
+const SPELLING_COMPENSATION_EVENT_LIMIT = 25;
 
 const SPELLING_COMMAND_ACTIONS = new Set([
   'spelling-set-mode',
@@ -312,16 +313,18 @@ export function createRemoteSpellingActionHandler({
     const endedSession = spellingSessionEnded(previousSubjectUi, nextSubjectUi);
     let monsterEvents = responseMonsterEvents;
     if (isSelectedLearner && endedSession && !monsterEvents.length) {
+      const loggedRewardEvents = spellingRewardEvents(store.repositories?.eventLog?.list?.(learnerId) || []);
       const ignoredIds = new Set([
         ...eventIds(rewardProjection.events || []),
         ...visibleMonsterCelebrationIds(nextState),
       ]);
       monsterEvents = unacknowledgedMonsterCelebrationEvents(
-        spellingRewardEvents(store.repositories?.eventLog?.list?.(learnerId) || []),
+        loggedRewardEvents,
         {
           learnerId,
           ignoredIds,
-          limit: 1,
+          excludeEventIds: compensationBaselineEventIds,
+          limit: SPELLING_COMPENSATION_EVENT_LIMIT,
           baselineExisting: true,
           baselineEventIds: compensationBaselineEventIds,
         },
