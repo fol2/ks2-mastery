@@ -16,6 +16,18 @@ function isStaleWriteConflict(error) {
     && error.code === 'stale_write';
 }
 
+function isRetryableTransportFailure(error) {
+  return error instanceof SubjectCommandClientError
+    && error.retryable
+    && !isStaleWriteConflict(error);
+}
+
+function sleep(ms) {
+  const delay = Math.max(0, Number(ms) || 0);
+  if (!delay) return Promise.resolve();
+  return new Promise((resolve) => setTimeout(resolve, delay));
+}
+
 export class SubjectCommandClientError extends Error {
   constructor({ status = 0, payload = null, message = '' } = {}) {
     super(message || payload?.message || `Subject command failed (${status}).`);
@@ -33,6 +45,8 @@ export function createSubjectCommandClient({
   getLearnerRevision = () => 0,
   onCommandApplied = () => {},
   onStaleWrite = null,
+  retryAttempts = 2,
+  retryDelayMs = 250,
 } = {}) {
   if (typeof fetchFn !== 'function') {
     throw new TypeError('Subject command client requires a fetch implementation.');
@@ -95,35 +109,44 @@ export function createSubjectCommandClient({
   }
 
   async function sendWithRetry({ cleanSubjectId, cleanLearnerId, cleanCommand, payload, requestId }) {
+    const maxRetryAttempts = Math.max(0, Number(retryAttempts) || 0);
+    const baseRetryDelayMs = Math.max(0, Number(retryDelayMs) || 0);
+    let transportAttempts = 0;
+    let staleWriteRetried = false;
     let responsePayload;
-    try {
-      responsePayload = await sendOnce({
-        cleanSubjectId,
-        cleanLearnerId,
-        cleanCommand,
-        payload,
-        requestId,
-      });
-    } catch (error) {
-      if (!isStaleWriteConflict(error) || typeof onStaleWrite !== 'function') {
+
+    while (!responsePayload) {
+      try {
+        responsePayload = await sendOnce({
+          cleanSubjectId,
+          cleanLearnerId,
+          cleanCommand,
+          payload,
+          requestId,
+        });
+      } catch (error) {
+        if (isStaleWriteConflict(error) && !staleWriteRetried && typeof onStaleWrite === 'function') {
+          staleWriteRetried = true;
+          await onStaleWrite({
+            error,
+            learnerId: cleanLearnerId,
+            subjectId: cleanSubjectId,
+            command: cleanCommand,
+            payload,
+            requestId,
+          });
+          continue;
+        }
+
+        if (isRetryableTransportFailure(error) && transportAttempts < maxRetryAttempts) {
+          const delayMs = baseRetryDelayMs * (2 ** transportAttempts);
+          transportAttempts += 1;
+          await sleep(delayMs);
+          continue;
+        }
+
         throw error;
       }
-
-      await onStaleWrite({
-        error,
-        learnerId: cleanLearnerId,
-        subjectId: cleanSubjectId,
-        command: cleanCommand,
-        payload,
-        requestId,
-      });
-      responsePayload = await sendOnce({
-        cleanSubjectId,
-        cleanLearnerId,
-        cleanCommand,
-        payload,
-        requestId,
-      });
     }
 
     onCommandApplied({
