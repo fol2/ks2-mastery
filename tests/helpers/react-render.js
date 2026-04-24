@@ -296,7 +296,7 @@ export function renderSubjectRouteFixture({ subject = 'placeholder' } = {}) {
   `);
 }
 
-export function renderSpellingSurfaceFixture({ phase = 'setup' } = {}) {
+export function renderSpellingSurfaceFixture({ phase = 'setup', pendingCommand = '' } = {}) {
   return renderFixture(`
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
@@ -332,6 +332,15 @@ export function renderSpellingSurfaceFixture({ phase = 'setup' } = {}) {
     }
     if (selectedPhase === 'modal') {
       controller.dispatch('spelling-word-detail-open', { slug: 'possess', value: 'drill' });
+    }
+    const pendingCommand = ${JSON.stringify(pendingCommand)};
+    if (pendingCommand) {
+      controller.store.patch((current) => ({
+        transientUi: {
+          ...current.transientUi,
+          spellingPendingCommand: pendingCommand,
+        },
+      }));
     }
     const appState = controller.store.getState();
     const context = controller.contextFor('spelling');

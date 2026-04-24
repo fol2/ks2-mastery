@@ -26,6 +26,8 @@ function SummaryStatGrid({ cards = [] }) {
 export function SpellingSummaryScene({ learner, ui, accent, actions, previousHeroBg = '', runtimeReadOnly = false }) {
   const summary = ui.summary;
   if (!summary) return null;
+  const pendingCommand = ui.pendingCommand || '';
+  const pending = Boolean(pendingCommand);
   const progressTotal = Math.max(1, summary.totalWords || 1);
   const heroBg = heroBgForSession(learner.id, {
     mode: summary.mode,
@@ -67,7 +69,7 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, previousHer
                     data-action="spelling-drill-single"
                     data-slug={word.slug}
                     key={word.slug}
-                    disabled={runtimeReadOnly}
+                    disabled={runtimeReadOnly || pending}
                     onClick={(event) => renderAction(actions, event, 'spelling-drill-single', { slug: word.slug })}
                   >
                     {word.word}
@@ -77,7 +79,7 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, previousHer
                   type="button"
                   className="btn primary sm"
                   data-action="spelling-drill-all"
-                  disabled={runtimeReadOnly}
+                  disabled={runtimeReadOnly || pending}
                   onClick={(event) => renderAction(actions, event, 'spelling-drill-all')}
                 >
                   Drill all {summary.mistakes.length} <ArrowRightIcon />
@@ -100,10 +102,10 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, previousHer
               className="btn primary lg"
               style={{ '--btn-accent': accent }}
               data-action="spelling-start-again"
-              disabled={runtimeReadOnly}
+              disabled={runtimeReadOnly || pending}
               onClick={(event) => renderAction(actions, event, 'spelling-start-again')}
             >
-              Start another round <ArrowRightIcon />
+              {pendingCommand === 'start-session' ? 'Starting...' : 'Start another round'} <ArrowRightIcon />
             </button>
             <button
               type="button"

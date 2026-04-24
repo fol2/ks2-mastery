@@ -165,6 +165,9 @@ function normaliseTransientUi(rawValue) {
     ? cloneSerialisable(raw.spellingWordDetail)
     : null;
   return {
+    spellingPendingCommand: typeof raw.spellingPendingCommand === 'string'
+      ? raw.spellingPendingCommand.slice(0, 80)
+      : '',
     spellingAnalyticsWordSearch: typeof raw.spellingAnalyticsWordSearch === 'string'
       ? raw.spellingAnalyticsWordSearch.slice(0, 80)
       : '',
@@ -200,6 +203,7 @@ function isCleanSpellingSetupEntry(spellingUi, transientUi) {
     && !spellingUi.summary
     && !spellingUi.error
     && !spellingUi.awaitingAdvance
+    && !transientUi?.spellingPendingCommand
     && !transientUi?.spellingWordDetailSlug
     && !transientUi?.spellingWordDetail
     && !transientUi?.spellingWordBankDrillTyped
