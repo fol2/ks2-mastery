@@ -571,7 +571,7 @@ function startSession(state, payload, nowTs, learnerId) {
     : (typeof payload.skillId === 'string' ? payload.skillId : '');
   const focusConceptId = hasPayloadFocusConcept
     ? requestedFocusConceptId
-    : normaliseStoredFocusConceptId(state.prefs.focusConceptId);
+    : (mode === 'trouble' ? '' : normaliseStoredFocusConceptId(state.prefs.focusConceptId));
   if (focusConceptId && !isGrammarConceptId(focusConceptId)) {
     throw new BadRequestError('Grammar concept is not available.', {
       code: 'grammar_concept_not_found',
@@ -877,7 +877,7 @@ function savePrefs(state, payload) {
   const hasFocusConcept = Object.prototype.hasOwnProperty.call(prefs, 'focusConceptId');
   const nextFocusConceptId = hasFocusConcept
     ? normaliseStoredFocusConceptId(prefs.focusConceptId)
-    : normaliseStoredFocusConceptId(state.prefs.focusConceptId);
+    : (nextMode === 'trouble' ? '' : normaliseStoredFocusConceptId(state.prefs.focusConceptId));
   state.prefs = {
     ...state.prefs,
     mode: ENABLED_MODES.has(nextMode) ? nextMode : state.prefs.mode,

@@ -98,13 +98,24 @@ function applyLocalTransition(context, transition) {
 
 function grammarStartPayload(ui, data = {}) {
   const prefs = ui.prefs || DEFAULT_GRAMMAR_PREFS;
-  return {
-    mode: data.mode || prefs.mode || DEFAULT_GRAMMAR_PREFS.mode,
+  const payload = data.payload && typeof data.payload === 'object' && !Array.isArray(data.payload) ? data.payload : {};
+  const mode = payload.mode || data.mode || prefs.mode || DEFAULT_GRAMMAR_PREFS.mode;
+  const request = {
+    mode,
     roundLength: data.roundLength || prefs.roundLength || DEFAULT_GRAMMAR_PREFS.roundLength,
-    focusConceptId: Object.prototype.hasOwnProperty.call(data, 'focusConceptId')
-      ? data.focusConceptId
-      : prefs.focusConceptId || '',
-    ...(data.payload && typeof data.payload === 'object' && !Array.isArray(data.payload) ? data.payload : {}),
+  };
+  if (Object.prototype.hasOwnProperty.call(data, 'focusConceptId')) {
+    request.focusConceptId = data.focusConceptId;
+  } else if (
+    String(mode).trim().toLowerCase() !== 'trouble'
+    && !Object.prototype.hasOwnProperty.call(payload, 'focusConceptId')
+    && !Object.prototype.hasOwnProperty.call(payload, 'skillId')
+  ) {
+    request.focusConceptId = prefs.focusConceptId || '';
+  }
+  return {
+    ...request,
+    ...payload,
   };
 }
 
@@ -216,11 +227,12 @@ export const grammarModule = {
 
     if (action === 'grammar-set-mode') {
       const mode = context.data?.value || DEFAULT_GRAMMAR_PREFS.mode;
+      const patch = mode === 'trouble' ? { mode, focusConceptId: '' } : { mode };
       if (service?.savePrefs) {
-        const prefs = service.savePrefs(learnerId, { mode });
+        const prefs = service.savePrefs(learnerId, patch);
         return resetToDashboardWithPrefs(context, prefs);
       }
-      return sendGrammarCommand(context, 'save-prefs', { prefs: { mode } });
+      return sendGrammarCommand(context, 'save-prefs', { prefs: patch });
     }
 
     if (action === 'grammar-set-round-length') {

@@ -260,6 +260,9 @@ test('Grammar trouble mode targets the weakest concept without pinning focus pre
     learnerId: 'learner-a',
     subjectRecord: {
       data: {
+        prefs: {
+          focusConceptId: 'word_classes',
+        },
         mastery: {
           concepts: {
             adverbials: {
@@ -270,11 +273,13 @@ test('Grammar trouble mode targets the weakest concept without pinning focus pre
               dueAt: 1,
             },
             word_classes: {
-              attempts: 2,
-              correct: 0,
-              wrong: 2,
-              strength: 0.08,
-              dueAt: 1,
+              attempts: 8,
+              correct: 8,
+              wrong: 0,
+              strength: 0.9,
+              intervalDays: 10,
+              dueAt: 1_777_000_000_000 + 10 * 86400000,
+              correctStreak: 5,
             },
           },
         },
@@ -296,6 +301,41 @@ test('Grammar trouble mode targets the weakest concept without pinning focus pre
   assert.equal(start.state.prefs.focusConceptId, '');
   assert.equal(start.practiceSession.sessionKind, 'trouble');
   assert.ok(start.state.session.currentItem.skillIds.includes('adverbials'));
+});
+
+test('Grammar trouble mode honours explicit focus payloads separately from stored prefs', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {
+      data: {
+        mastery: {
+          concepts: {
+            adverbials: {
+              attempts: 4,
+              correct: 0,
+              wrong: 4,
+              strength: 0.12,
+              dueAt: 1,
+            },
+          },
+        },
+      },
+    },
+    command: 'start-session',
+    requestId: 'start-trouble-focused',
+    payload: {
+      mode: 'trouble',
+      focusConceptId: 'word_classes',
+      roundLength: 3,
+      seed: 42,
+    },
+  });
+
+  assert.equal(start.state.session.mode, 'trouble');
+  assert.equal(start.state.session.focusConceptId, 'word_classes');
+  assert.equal(start.state.prefs.focusConceptId, 'word_classes');
+  assert.ok(start.state.session.currentItem.skillIds.includes('word_classes'));
 });
 
 test('Grammar save-prefs clears completed summary state', () => {

@@ -373,8 +373,12 @@ test('Grammar setup can start trouble drill mode', () => {
   const harness = createGrammarHarness({ storage });
 
   harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-set-focus', { value: 'word_classes' });
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, 'word_classes');
+
   harness.dispatch('grammar-set-mode', { value: 'trouble' });
   assert.equal(harness.store.getState().subjectUi.grammar.prefs.mode, 'trouble');
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
 
   harness.dispatch('grammar-start', {
     payload: {
