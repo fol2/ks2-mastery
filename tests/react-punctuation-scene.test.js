@@ -82,3 +82,32 @@ test('punctuation text input remounts when the current text item changes', async
 
   assert.match(source, /<TextItem key=\{item\.id \|\| item\.prompt\}/);
 });
+
+test('punctuation React surface preserves newline-sensitive bullet text', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'bullet-ui',
+      length: 1,
+      answeredCount: 0,
+      currentItem: {
+        id: 'bp_choose_bring',
+        mode: 'choose',
+        inputKind: 'choice',
+        prompt: 'Choose the correctly punctuated bullet list.',
+        stem: 'Bring\n- a drink\n- a hat\n- a sketchbook',
+        options: [
+          { index: 0, text: 'Bring:\n- a drink\n- a hat\n- a sketchbook' },
+          { index: 1, text: 'Bring\n- a drink\n- a hat\n- a sketchbook' },
+        ],
+      },
+    },
+  });
+
+  const html = harness.render();
+  assert.match(html, /white-space:pre-wrap/);
+  assert.match(html, /Bring\n- a drink\n- a hat\n- a sketchbook/);
+  assert.match(html, /Bring:\n- a drink\n- a hat\n- a sketchbook/);
+});

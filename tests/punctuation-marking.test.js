@@ -235,11 +235,30 @@ test('structure transfer validators require explicit punctuation roles', () => {
   assert.equal(missingSemicolonList.correct, false);
   assert.equal(missingSemicolonList.misconceptionTags.includes('structure.semicolon_list_missing'), true);
 
+  for (const typed of [
+    'We visited York, England;; Cardiff, Wales; and Belfast, Northern Ireland.',
+    'We visited York, England; and Cardiff, Wales; and Belfast, Northern Ireland.',
+    'We visited York, England; Cardiff, Wales; and Belfast, Northern Ireland; Dublin, Ireland.',
+  ]) {
+    const malformedSemicolonList = markPunctuationAnswer({
+      item: item('sl_transfer_places'),
+      answer: { typed },
+    });
+    assert.equal(malformedSemicolonList.correct, false, typed);
+    assert.equal(malformedSemicolonList.misconceptionTags.includes('structure.semicolon_list_missing'), true, typed);
+  }
+
   const bullets = markPunctuationAnswer({
     item: item('bp_transfer_class'),
     answer: { typed: 'Bring:\n- a drink\n- a hat\n- a sketchbook' },
   });
   assert.equal(bullets.correct, true);
+
+  const fullStopBullets = markPunctuationAnswer({
+    item: item('bp_transfer_class'),
+    answer: { typed: 'Bring:\n- a drink.\n- a hat.\n- a sketchbook.' },
+  });
+  assert.equal(fullStopBullets.correct, true);
 
   const missingBulletMarker = markPunctuationAnswer({
     item: item('bp_transfer_class'),
@@ -260,6 +279,18 @@ test('structure transfer validators require explicit punctuation roles', () => {
   });
   assert.equal(mixedBulletPunctuation.correct, false);
   assert.equal(mixedBulletPunctuation.misconceptionTags.includes('structure.bullet_punctuation_inconsistent'), true);
+
+  for (const typed of [
+    'Bring:\n- a drink?\n- a hat?\n- a sketchbook?',
+    'Bring:\n- a drink!\n- a hat!\n- a sketchbook!',
+  ]) {
+    const invalidBulletEnding = markPunctuationAnswer({
+      item: item('bp_transfer_class'),
+      answer: { typed },
+    });
+    assert.equal(invalidBulletEnding.correct, false, typed);
+    assert.equal(invalidBulletEnding.misconceptionTags.includes('structure.bullet_punctuation_inconsistent'), true, typed);
+  }
 });
 
 test('structure exact marking honours parenthesis variants and line-based bullet lists', () => {
@@ -274,8 +305,23 @@ test('structure exact marking honours parenthesis variants and line-based bullet
   }).correct, true);
 
   assert.equal(markPunctuationAnswer({
+    item: item('pa_insert_museum'),
+    answer: { typed: 'The museum – a former station – was busy.' },
+  }).correct, true);
+
+  assert.equal(markPunctuationAnswer({
     item: item('bp_insert_kit'),
     answer: { typed: 'Bring:\n- a drink\n- a hat\n- a sketchbook' },
+  }).correct, true);
+
+  assert.equal(markPunctuationAnswer({
+    item: item('bp_insert_kit'),
+    answer: { typed: 'Bring:\n- a drink.\n- a hat.\n- a sketchbook.' },
+  }).correct, true);
+
+  assert.equal(markPunctuationAnswer({
+    item: item('bp_fix_consistency'),
+    answer: { typed: 'Bring:\n- a drink.\n- a hat.\n- a sketchbook.' },
   }).correct, true);
 
   const inlineExactBullets = markPunctuationAnswer({

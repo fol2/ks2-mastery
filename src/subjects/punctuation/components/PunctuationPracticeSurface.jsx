@@ -9,6 +9,10 @@ function learnerName(appState, learnerId) {
   return appState?.learners?.byId?.[learnerId]?.name || 'Learner';
 }
 
+function newlineTextStyle(value) {
+  return String(value || '').includes('\n') ? { whiteSpace: 'pre-wrap' } : undefined;
+}
+
 function SetupView({ learner, stats, ui, actions }) {
   const scene = bellstormSceneForPhase('setup');
   const content = ui.content || {};
@@ -58,7 +62,7 @@ function ChoiceItem({ item, disabled, onSubmit }) {
               checked={String(choiceIndex) === String(option.index)}
               onChange={() => setChoiceIndex(String(option.index))}
             />
-            <span>{option.text}</span>
+            <span style={newlineTextStyle(option.text)}>{option.text}</span>
           </label>
         ))}
       </div>
@@ -114,7 +118,7 @@ function ActiveItemView({ ui, actions }) {
           <p className="subtitle">{currentItemInstruction(item)}</p>
         </div>
       </div>
-      {item.stem ? <div className="callout" style={{ marginTop: 14 }}>{item.stem}</div> : null}
+      {item.stem ? <div className="callout" style={{ marginTop: 14, ...newlineTextStyle(item.stem) }}>{item.stem}</div> : null}
       <div className="progress" style={{ marginTop: 14 }}><span style={{ width: `${progress}%` }} /></div>
       <div style={{ marginTop: 16 }}>
         {item.inputKind === 'choice'

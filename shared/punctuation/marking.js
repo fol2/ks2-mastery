@@ -303,6 +303,7 @@ function semicolonList(text, validator = {}) {
   const items = (Array.isArray(validator.items) ? validator.items : [])
     .map((entry) => canonicalPunctuationText(entry))
     .filter(Boolean);
+  if (items.length < 2) return { wordsOk: false, separatorsOk: false };
   const indices = [];
   let cursor = 0;
   for (const item of items) {
@@ -311,11 +312,20 @@ function semicolonList(text, validator = {}) {
     indices.push({ index, item });
     cursor = index + item.length;
   }
-  const separatorsOk = indices.length >= 2 && indices.slice(0, -1).every((entry, index) => {
+  const prefixOk = !/;/.test(clean.slice(0, indices[0].index));
+  const separatorsOk = indices.slice(0, -1).every((entry, index) => {
     const next = indices[index + 1];
-    return /;/.test(clean.slice(entry.index + entry.item.length, next.index));
+    const gap = clean.slice(entry.index + entry.item.length, next.index);
+    return index === indices.length - 2
+      ? /^\s*;\s*(?:and\s+)?$/i.test(gap)
+      : /^\s*;\s*$/.test(gap);
   });
-  return { wordsOk: indices.length === items.length && items.length >= 2, separatorsOk };
+  const last = indices[indices.length - 1];
+  const tailOk = /^[.?!]?["']?$/.test(clean.slice(last.index + last.item.length).trim());
+  return {
+    wordsOk: indices.length === items.length,
+    separatorsOk: prefixOk && separatorsOk && tailOk,
+  };
 }
 
 function bulletStemAndItems(text, validator = {}) {
@@ -341,7 +351,8 @@ function bulletStemAndItems(text, validator = {}) {
     && parsedItems.length === items.length
     && parsedItems.every((entry, index) => entry && itemBase(entry) === itemBase(items[index]));
   const endings = parsedItems.filter(Boolean).map((entry) => entry.match(/[.!?]$/)?.[0] || '');
-  const punctuationOk = bulletMarkersOk && new Set(endings).size <= 1;
+  const allowedEndings = new Set(['', '.']);
+  const punctuationOk = bulletMarkersOk && endings.every((ending) => allowedEndings.has(ending)) && new Set(endings).size <= 1;
   return { stemOk, colonOk, itemsOk, bulletMarkersOk, punctuationOk };
 }
 
