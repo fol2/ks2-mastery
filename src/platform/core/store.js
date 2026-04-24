@@ -197,7 +197,7 @@ function isCleanSpellingSetupEntry(spellingUi, transientUi) {
     && !transientUi?.spellingWordBankDrillResult;
 }
 
-function normaliseSubjectEntryForOpen(current, route, repositories) {
+function normaliseSubjectEntryForOpen(current, route, writeSubjectUi) {
   if (route.screen !== 'subject' || route.subjectId !== 'spelling' || route.tab !== 'practice') {
     return current;
   }
@@ -216,9 +216,7 @@ function normaliseSubjectEntryForOpen(current, route, repositories) {
     awaitingAdvance: false,
   };
 
-  if (current.learners.selectedId) {
-    repositories.subjectStates.writeUi(current.learners.selectedId, 'spelling', nextSpellingUi);
-  }
+  if (current.learners.selectedId) writeSubjectUi(current.learners.selectedId, 'spelling', nextSpellingUi);
 
   return {
     ...current,
@@ -311,10 +309,7 @@ export function createStore(subjects, { repositories, cacheSubjectUiWrites = fal
     const nextTree = buildSubjectUiTree(registry);
     if (learnerId) {
       for (const subject of registry) {
-        const writer = cacheSubjectUiWrites && resolvedRepositories.subjectStates.cacheUi
-          ? resolvedRepositories.subjectStates.cacheUi
-          : resolvedRepositories.subjectStates.writeUi;
-        writer.call(resolvedRepositories.subjectStates, learnerId, subject.id, nextTree[subject.id]);
+        writeSubjectUi(learnerId, subject.id, nextTree[subject.id]);
       }
     }
     setState((current) => ({
@@ -322,6 +317,13 @@ export function createStore(subjects, { repositories, cacheSubjectUiWrites = fal
       subjectUi: nextTree,
       monsterCelebrations: emptyMonsterCelebrations(),
     }));
+  }
+
+  function writeSubjectUi(learnerId, subjectId, ui) {
+    const writer = cacheSubjectUiWrites && resolvedRepositories.subjectStates.cacheUi
+      ? resolvedRepositories.subjectStates.cacheUi
+      : resolvedRepositories.subjectStates.writeUi;
+    return writer.call(resolvedRepositories.subjectStates, learnerId, subjectId, ui);
   }
 
   return {
@@ -345,7 +347,7 @@ export function createStore(subjects, { repositories, cacheSubjectUiWrites = fal
       setState((current) => {
         const route = normaliseRoute({ screen: 'subject', subjectId, tab }, registry);
         return {
-          ...normaliseSubjectEntryForOpen(current, route, resolvedRepositories),
+          ...normaliseSubjectEntryForOpen(current, route, writeSubjectUi),
           route,
         };
       });
@@ -458,10 +460,7 @@ export function createStore(subjects, { repositories, cacheSubjectUiWrites = fal
           : { ...previous, ...updater };
 
         if (learnerId) {
-          const writer = cacheSubjectUiWrites && resolvedRepositories.subjectStates.cacheUi
-            ? resolvedRepositories.subjectStates.cacheUi
-            : resolvedRepositories.subjectStates.writeUi;
-          writer.call(resolvedRepositories.subjectStates, learnerId, subjectId, nextEntry);
+          writeSubjectUi(learnerId, subjectId, nextEntry);
         }
 
         return {
