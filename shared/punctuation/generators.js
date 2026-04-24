@@ -1,0 +1,435 @@
+import {
+  PUNCTUATION_CONTENT_MANIFEST,
+} from './content.js';
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function hashString(value) {
+  let hash = 2166136261;
+  const text = String(value ?? '');
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function shortHash(value) {
+  return hashString(value).toString(36).padStart(6, '0').slice(0, 8);
+}
+
+function pickTemplate(templates, seed, familyId, variantIndex) {
+  if (!templates.length) return null;
+  const offset = hashString(`${seed}:${familyId}`) % templates.length;
+  return templates[(offset + variantIndex) % templates.length];
+}
+
+function uniqueStrings(values = []) {
+  return [...new Set(values.filter((entry) => typeof entry === 'string' && entry))];
+}
+
+const GENERATED_TEMPLATE_BANK = Object.freeze({
+  gen_sentence_endings_insert: Object.freeze([
+    {
+      prompt: 'Add the capital letter and end punctuation.',
+      stem: 'where is the tide bell',
+      model: 'Where is the tide bell?',
+      misconceptionTags: ['endmarks.question_mark_missing', 'endmarks.capitalisation_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add the capital letter and end punctuation.',
+      stem: 'what a bright signal',
+      model: 'What a bright signal!',
+      misconceptionTags: ['endmarks.exclamation_mark_missing', 'endmarks.capitalisation_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_apostrophe_contractions_fix: Object.freeze([
+    {
+      prompt: 'Correct the apostrophes in the contractions.',
+      stem: 'We cant start because its raining.',
+      model: "We can't start because it's raining.",
+      misconceptionTags: ['apostrophe.contraction_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Correct the apostrophes in the contractions.',
+      stem: 'Theyre sure we wont be late.',
+      model: "They're sure we won't be late.",
+      misconceptionTags: ['apostrophe.contraction_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_apostrophe_possession_insert: Object.freeze([
+    {
+      prompt: 'Add apostrophes to show possession.',
+      stem: 'The captains whistle was beside the teams coats.',
+      model: "The captain's whistle was beside the team's coats.",
+      validator: {
+        type: 'requiresTokens',
+        tokens: ["captain's", "team's"],
+      },
+      misconceptionTags: ['apostrophe.possession_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add apostrophes to show possession.',
+      stem: 'The childrens sketches covered the teachers desk.',
+      model: "The children's sketches covered the teacher's desk.",
+      validator: {
+        type: 'requiresTokens',
+        tokens: ["children's", "teacher's"],
+      },
+      misconceptionTags: ['apostrophe.possession_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_speech_insert: Object.freeze([
+    {
+      prompt: 'Add the direct-speech punctuation.',
+      stem: 'Maya asked, can we start now?',
+      model: 'Maya asked, "Can we start now?"',
+      rubric: {
+        type: 'speech',
+        reportingPosition: 'before',
+        spokenWords: 'can we start now',
+        requiredTerminal: '?',
+      },
+      misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add the direct-speech punctuation.',
+      stem: 'Ravi said, the bell is ringing.',
+      model: 'Ravi said, "The bell is ringing."',
+      rubric: {
+        type: 'speech',
+        reportingPosition: 'before',
+        spokenWords: 'the bell is ringing',
+        requiredTerminal: '.',
+      },
+      misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_list_commas_insert: Object.freeze([
+    {
+      prompt: 'Add commas to separate the list items.',
+      stem: 'We packed ropes maps and snacks.',
+      model: 'We packed ropes, maps and snacks.',
+      validator: {
+        type: 'requiresListCommas',
+        items: ['ropes', 'maps', 'snacks'],
+      },
+      misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add commas to separate the list items.',
+      stem: 'The box held shells bells and chalk.',
+      model: 'The box held shells, bells and chalk.',
+      validator: {
+        type: 'requiresListCommas',
+        items: ['shells', 'bells', 'chalk'],
+      },
+      misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_fronted_adverbial_fix: Object.freeze([
+    {
+      prompt: 'Correct the comma after the fronted adverbial.',
+      stem: 'After the storm the path was muddy.',
+      model: 'After the storm, the path was muddy.',
+      validator: {
+        type: 'startsWithPhraseComma',
+        phrase: 'After the storm',
+      },
+      misconceptionTags: ['comma.fronted_adverbial_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Correct the comma after the fronted adverbial.',
+      stem: 'Before sunrise the crew checked the ropes.',
+      model: 'Before sunrise, the crew checked the ropes.',
+      validator: {
+        type: 'startsWithPhraseComma',
+        phrase: 'Before sunrise',
+      },
+      misconceptionTags: ['comma.fronted_adverbial_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_comma_clarity_insert: Object.freeze([
+    {
+      prompt: 'Add the comma that makes the meaning clear.',
+      stem: 'In the evening the harbour was quiet.',
+      model: 'In the evening, the harbour was quiet.',
+      validator: {
+        type: 'startsWithPhraseComma',
+        phrase: 'In the evening',
+      },
+      misconceptionTags: ['comma.clarity_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add the comma that makes the meaning clear.',
+      stem: 'When the mist lifted the tower appeared.',
+      model: 'When the mist lifted, the tower appeared.',
+      validator: {
+        type: 'startsWithPhraseComma',
+        phrase: 'When the mist lifted',
+      },
+      misconceptionTags: ['comma.clarity_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_semicolon_fix: Object.freeze([
+    {
+      prompt: 'Replace the comma splice with a semi-colon.',
+      stem: 'The lighthouse was bright, the boats still waited.',
+      model: 'The lighthouse was bright; the boats still waited.',
+      validator: {
+        type: 'requiresBoundaryBetweenClauses',
+        left: 'The lighthouse was bright',
+        right: 'the boats still waited',
+        mark: ';',
+      },
+      misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Replace the comma splice with a semi-colon.',
+      stem: 'The rain eased, the match could continue.',
+      model: 'The rain eased; the match could continue.',
+      validator: {
+        type: 'requiresBoundaryBetweenClauses',
+        left: 'The rain eased',
+        right: 'the match could continue',
+        mark: ';',
+      },
+      misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_dash_clause_fix: Object.freeze([
+    {
+      prompt: 'Add a dash between the related clauses.',
+      stem: 'The gate was stuck we found another path.',
+      model: 'The gate was stuck - we found another path.',
+      validator: {
+        type: 'requiresBoundaryBetweenClauses',
+        left: 'The gate was stuck',
+        right: 'we found another path',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add a dash between the related clauses.',
+      stem: 'The bell rang everyone hurried inside.',
+      model: 'The bell rang - everyone hurried inside.',
+      validator: {
+        type: 'requiresBoundaryBetweenClauses',
+        left: 'The bell rang',
+        right: 'everyone hurried inside',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_hyphen_insert: Object.freeze([
+    {
+      prompt: 'Add the hyphen that avoids ambiguity.',
+      stem: 'The little used path was hidden.',
+      model: 'The little-used path was hidden.',
+      validator: {
+        type: 'requiresHyphenatedPhrase',
+        phrase: 'little-used path',
+      },
+      misconceptionTags: ['boundary.hyphen_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add the hyphen that avoids ambiguity.',
+      stem: 'The fast moving tide covered the rocks.',
+      model: 'The fast-moving tide covered the rocks.',
+      validator: {
+        type: 'requiresHyphenatedPhrase',
+        phrase: 'fast-moving tide',
+      },
+      misconceptionTags: ['boundary.hyphen_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_parenthesis_fix: Object.freeze([
+    {
+      prompt: 'Correct the parenthesis punctuation.',
+      stem: 'The harbour, an old fishing port was busy.',
+      model: 'The harbour, an old fishing port, was busy.',
+      validator: {
+        type: 'requiresParentheticalPhrase',
+        before: 'The harbour',
+        phrase: 'an old fishing port',
+        after: 'was busy',
+      },
+      misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Correct the parenthesis punctuation.',
+      stem: 'The tower a useful lookout stood above the bay.',
+      model: 'The tower, a useful lookout, stood above the bay.',
+      validator: {
+        type: 'requiresParentheticalPhrase',
+        before: 'The tower',
+        phrase: 'a useful lookout',
+        after: 'stood above the bay',
+      },
+      misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_colon_list_insert: Object.freeze([
+    {
+      prompt: 'Add the colon before the list.',
+      stem: 'We needed three tools a torch, a rope and a map.',
+      model: 'We needed three tools: a torch, a rope and a map.',
+      validator: {
+        type: 'requiresColonBeforeList',
+        opening: 'We needed three tools',
+        items: ['a torch', 'a rope', 'a map'],
+      },
+      misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add the colon before the list.',
+      stem: 'The kit included three things a lantern, a compass and a notebook.',
+      model: 'The kit included three things: a lantern, a compass and a notebook.',
+      validator: {
+        type: 'requiresColonBeforeList',
+        opening: 'The kit included three things',
+        items: ['a lantern', 'a compass', 'a notebook'],
+      },
+      misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_semicolon_list_fix: Object.freeze([
+    {
+      prompt: 'Use semi-colons to separate the complex list items.',
+      stem: 'We visited Dover, England, Lyon, France and Porto, Portugal.',
+      model: 'We visited Dover, England; Lyon, France; and Porto, Portugal.',
+      validator: {
+        type: 'requiresSemicolonList',
+        items: ['Dover, England', 'Lyon, France', 'Porto, Portugal'],
+      },
+      misconceptionTags: ['structure.semicolon_list_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Use semi-colons to separate the complex list items.',
+      stem: 'The winners were Aria, Year 5, Noah, Year 6 and Sam, Year 4.',
+      model: 'The winners were Aria, Year 5; Noah, Year 6; and Sam, Year 4.',
+      validator: {
+        type: 'requiresSemicolonList',
+        items: ['Aria, Year 5', 'Noah, Year 6', 'Sam, Year 4'],
+      },
+      misconceptionTags: ['structure.semicolon_list_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_bullet_points_fix: Object.freeze([
+    {
+      prompt: 'Make the bullet punctuation consistent.',
+      stem: 'Bring:\n- a coat.\n- a torch\n- a notebook.',
+      model: 'Bring:\n- a coat.\n- a torch.\n- a notebook.',
+      validator: {
+        type: 'requiresBulletStemAndItems',
+        stem: 'Bring',
+        items: ['a coat', 'a torch', 'a notebook'],
+      },
+      misconceptionTags: ['structure.bullet_punctuation_inconsistent'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Make the bullet punctuation consistent.',
+      stem: 'Pack:\n- pencils\n- rulers.\n- glue sticks',
+      model: 'Pack:\n- pencils\n- rulers\n- glue sticks',
+      validator: {
+        type: 'requiresBulletStemAndItems',
+        stem: 'Pack',
+        items: ['pencils', 'rulers', 'glue sticks'],
+      },
+      misconceptionTags: ['structure.bullet_punctuation_inconsistent'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+  ]),
+});
+
+function buildGeneratedItem({ family, skill, template, seed, variantIndex }) {
+  const idSeed = `${seed}:${family.id}:${variantIndex}`;
+  const model = typeof template.model === 'string' ? template.model : '';
+  return {
+    id: `${family.id}_${shortHash(idSeed)}_${variantIndex + 1}`,
+    mode: family.mode,
+    skillIds: [family.skillId],
+    clusterId: skill.clusterId,
+    rewardUnitId: family.rewardUnitId,
+    prompt: template.prompt || 'Practise this punctuation pattern.',
+    stem: template.stem || '',
+    accepted: uniqueStrings([model, ...(Array.isArray(template.accepted) ? template.accepted : [])]),
+    explanation: template.explanation || 'This generated item practises the same published punctuation skill.',
+    model,
+    ...(isPlainObject(template.validator) ? { validator: template.validator } : {}),
+    ...(isPlainObject(template.rubric) ? { rubric: template.rubric } : {}),
+    misconceptionTags: uniqueStrings(template.misconceptionTags),
+    readiness: uniqueStrings(template.readiness),
+    source: 'generated',
+    generatorFamilyId: family.id,
+  };
+}
+
+export function createPunctuationGeneratedItems({
+  manifest = PUNCTUATION_CONTENT_MANIFEST,
+  seed = manifest.releaseId || 'punctuation',
+  perFamily = 1,
+} = {}) {
+  const limit = Math.max(0, Math.floor(Number(perFamily) || 0));
+  if (limit === 0) return [];
+  const skills = new Map((Array.isArray(manifest.skills) ? manifest.skills : []).map((skill) => [skill.id, skill]));
+  const items = [];
+  for (const family of Array.isArray(manifest.generatorFamilies) ? manifest.generatorFamilies : []) {
+    if (!family?.published) continue;
+    const skill = skills.get(family.skillId);
+    const templates = GENERATED_TEMPLATE_BANK[family.id] || [];
+    if (!skill || !templates.length) continue;
+    for (let index = 0; index < limit; index += 1) {
+      const template = pickTemplate(templates, seed, family.id, index);
+      items.push(buildGeneratedItem({ family, skill, template, seed, variantIndex: index }));
+    }
+  }
+  return items;
+}
+
+export function createPunctuationRuntimeManifest({
+  manifest = PUNCTUATION_CONTENT_MANIFEST,
+  seed = manifest.releaseId || 'punctuation',
+  generatedPerFamily = 1,
+} = {}) {
+  const generatedItems = createPunctuationGeneratedItems({ manifest, seed, perFamily: generatedPerFamily });
+  if (!generatedItems.length) return manifest;
+  return Object.freeze({
+    ...manifest,
+    items: Object.freeze([
+      ...(Array.isArray(manifest.items) ? manifest.items : []),
+      ...generatedItems,
+    ]),
+  });
+}

@@ -56,6 +56,22 @@ test('punctuation service follows setup -> active-item -> feedback -> active-ite
   assert.equal(repository.snapshot().practiceSession.status, 'completed');
 });
 
+test('punctuation service uses injected randomness for stable session ids and generated practice', () => {
+  const firstRepository = makeRepository();
+  const firstService = createPunctuationService({ repository: firstRepository, now: () => 1_800_000_000_000, random: () => 0.99 });
+  const firstStart = firstService.startSession('learner-a', { mode: 'endmarks', roundLength: '2' }).state;
+  const choiceIndex = firstStart.session.currentItem.options.find((option) => option.text === firstStart.session.currentItem.model)?.index ?? 0;
+  const firstFeedback = firstService.submitAnswer('learner-a', firstStart, { choiceIndex }).state;
+  const firstGenerated = firstService.continueSession('learner-a', firstFeedback).state;
+
+  const secondRepository = makeRepository();
+  const secondService = createPunctuationService({ repository: secondRepository, now: () => 1_800_000_000_000, random: () => 0.99 });
+  const secondStart = secondService.startSession('learner-a', { mode: 'endmarks', roundLength: '2' }).state;
+
+  assert.equal(secondStart.session.id, firstStart.session.id);
+  assert.equal(firstGenerated.session.currentItem.source, 'generated');
+});
+
 test('punctuation service emits misconception events and serialisable feedback', () => {
   const repository = makeRepository();
   const service = createPunctuationService({ repository, now: () => 1_800_000_000_000, random: () => 0 });

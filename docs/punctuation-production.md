@@ -75,6 +75,8 @@ Published practice modes include:
 - fix: proofread and repair a sentence
 - transfer: write or repair a constrained sentence against explicit facets
 
+Generated practice now runs through a deterministic compiler. Each published generator family can add extra practice items to the runtime manifest under a fixed release seed, so the Worker can broaden practice without using browser-owned random generation or changing the published reward denominator. Generated items carry `source: generated` internally, but the browser still receives only the redacted live-item read model.
+
 The first Speech rubric is deliberately strict:
 
 - accepts matched straight or curly single/double inverted commas
@@ -153,6 +155,7 @@ It must not expose server-only fields such as accepted answer lists, `correctInd
 The production bundle audit now rejects:
 
 - `shared/punctuation/content.js`
+- `shared/punctuation/generators.js`
 - `shared/punctuation/marking.js`
 - `shared/punctuation/scheduler.js`
 - `shared/punctuation/service.js`
