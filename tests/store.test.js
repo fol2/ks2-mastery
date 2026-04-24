@@ -38,6 +38,48 @@ test('shared store can switch subject tabs without losing route context', () => 
   assert.equal(state.route.tab, 'analytics');
 });
 
+test('shared store caches subject setup reset when runtime UI writes are cached', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  let cached = null;
+  const guardedRepositories = {
+    ...repositories,
+    subjectStates: {
+      ...repositories.subjectStates,
+      cacheUi(learnerId, subjectId, ui) {
+        cached = { learnerId, subjectId, ui };
+        return repositories.subjectStates.writeUi(learnerId, subjectId, ui);
+      },
+      writeUi() {
+        throw new Error('openSubject should cache the setup reset instead of queuing a runtime write.');
+      },
+    },
+  };
+  const store = createStore(SUBJECTS, { repositories: guardedRepositories, cacheSubjectUiWrites: true });
+  const learnerId = store.getState().learners.selectedId;
+
+  store.setState((current) => ({
+    ...current,
+    subjectUi: {
+      ...current.subjectUi,
+      spelling: {
+        ...current.subjectUi.spelling,
+        phase: 'word-bank',
+        error: 'stale setup flow',
+      },
+    },
+  }));
+
+  store.openSubject('spelling');
+
+  assert.equal(cached.learnerId, learnerId);
+  assert.equal(cached.subjectId, 'spelling');
+  assert.equal(cached.ui.phase, 'dashboard');
+  assert.equal(cached.ui.error, '');
+  assert.equal(store.getState().subjectUi.spelling.phase, 'dashboard');
+  assert.equal(store.getState().subjectUi.spelling.error, '');
+});
+
 test('shared store can route to adult operating surfaces', () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });
