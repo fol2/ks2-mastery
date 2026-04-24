@@ -17,7 +17,6 @@ const filterPublicFiles = source => {
   const relative = path.relative(rootDir, source).split(path.sep).join('/');
   const retiredClientFiles = new Set([
     'src/bundles/home.bundle.js',
-    'src/platform/ui/render.js',
     'src/surfaces/home/index.jsx',
     'src/surfaces/home/TopNav.jsx',
   ]);

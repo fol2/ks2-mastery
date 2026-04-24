@@ -43,7 +43,10 @@ test('golden-path smoke covers dashboard to spelling session to summary and back
 
   harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
 
-  assert.match(harness.render(), /data-home-mount="true"/);
+  const dashboardHtml = harness.render();
+  assert.match(dashboardHtml, /class="app-shell home-entry-shell"/);
+  assert.match(dashboardHtml, /Your subjects/);
+  assert.doesNotMatch(dashboardHtml, /data-home-mount/);
 
   harness.dispatch('open-subject', { subjectId: 'spelling' });
   assert.match(harness.render(), /Round setup/);
@@ -73,11 +76,12 @@ test('profile settings learner profile fields declare autofill behaviour explici
   const html = harness.render();
 
   assert.match(html, /Profile settings/);
-  assert.match(html, /data-action="learner-select"/);
-  assert.match(html, /data-action="learner-save-form"/);
-  assert.match(html, /<input class="input" name="name"[^>]*autocomplete="off"/);
-  assert.match(html, /<input class="input" type="number"[^>]*name="dailyMinutes"[^>]*autocomplete="off"/);
-  assert.match(html, /name="ttsProvider" value="openai"/);
+  assert.match(html, /class="learner-pill"/);
+  assert.match(html, /id="learner-profile-form"/);
+  assert.doesNotMatch(html, /data-action="learner-save-form"/);
+  assert.match(html, /<input class="input" name="name"[^>]*autoComplete="off"/);
+  assert.match(html, /<input class="input" type="number"[^>]*name="dailyMinutes"[^>]*autoComplete="off"/);
+  assert.match(html, /name="ttsProvider"[^>]*value="openai"/);
   assert.match(html, /name="ttsProvider" value="browser"/);
   assert.match(html, /name="bufferedGeminiVoice"/);
   assert.match(html, /Pre-cached UK male/);
@@ -92,7 +96,10 @@ test('codex route mounts the React codex surface', () => {
   harness.dispatch('open-codex');
 
   assert.equal(harness.store.getState().route.screen, 'codex');
-  assert.match(harness.render(), /data-codex-mount="true"/);
+  const html = harness.render();
+  assert.match(html, /class="codex-page"/);
+  assert.match(html, /Monster codex/);
+  assert.doesNotMatch(html, /data-codex-mount/);
 });
 
 test('golden-path smoke covers learner switch without losing the first learner session state', () => {
