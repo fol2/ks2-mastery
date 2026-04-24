@@ -112,7 +112,7 @@ function YearPicker({ prefs, actions, disabled = false }) {
   );
 }
 
-function ToggleChip({ pref, checked, label, actions, runtimeReadOnly = false }) {
+function ToggleChip({ pref, checked, label, actions, disabled = false }) {
   return (
     <button
       type="button"
@@ -120,7 +120,7 @@ function ToggleChip({ pref, checked, label, actions, runtimeReadOnly = false }) 
       aria-pressed={checked ? 'true' : 'false'}
       data-action="spelling-toggle-pref"
       data-pref={pref}
-      disabled={runtimeReadOnly}
+      disabled={disabled}
       onClick={(event) => renderAction(actions, event, 'spelling-toggle-pref', { pref })}
     >
       <span className="box" aria-hidden="true">{checked ? <CheckIcon /> : null}</span>
@@ -173,6 +173,7 @@ export function SpellingSetupScene({
   repositories,
   subject,
   prefs,
+  ui,
   codex,
   accent,
   actions,
@@ -192,6 +193,14 @@ export function SpellingSetupScene({
   const heroContrast = useSetupHeroContrast(heroBg, prefs.mode);
   const heroTone = heroContrast.contrast.tone || heroToneForBg(heroBg);
   const setupClasses = ['setup-main'];
+  const pendingCommand = ui?.pendingCommand || '';
+  const preferenceControlsDisabled = runtimeReadOnly || Boolean(pendingCommand && pendingCommand !== 'save-prefs');
+  const startDisabled = runtimeReadOnly || Boolean(pendingCommand);
+  const beginText = pendingCommand === 'start-session'
+    ? 'Starting...'
+    : pendingCommand === 'save-prefs'
+      ? 'Saving...'
+      : begin;
   if (heroContrast.contrast.shell === 'light') setupClasses.push('hero-dark');
 
   return (
@@ -228,7 +237,7 @@ export function SpellingSetupScene({
                   <ModeCard
                     mode={mode}
                     selected={prefs.mode === mode.id}
-                    disabled={runtimeReadOnly}
+                    disabled={preferenceControlsDisabled}
                     actions={actions}
                     textTone={heroContrast.contrast.cards[index] || heroContrast.contrast.shell}
                     key={mode.id}
@@ -239,18 +248,18 @@ export function SpellingSetupScene({
           <div className="setup-control-stack">
             <div className={tweakClass} {...tweakAria}>
               <span className="tool-label">Round length</span>
-              <LengthPicker prefs={prefs} actions={actions} disabled={hideTweaks || runtimeReadOnly} />
+              <LengthPicker prefs={prefs} actions={actions} disabled={hideTweaks || preferenceControlsDisabled} />
             </div>
             <div className={tweakClass} {...tweakAria}>
               <span className="tool-label">Pool</span>
-              <YearPicker prefs={prefs} actions={actions} disabled={hideTweaks || runtimeReadOnly} />
+              <YearPicker prefs={prefs} actions={actions} disabled={hideTweaks || preferenceControlsDisabled} />
             </div>
             <div className="tweak-row">
               <span className="tool-label">Options</span>
-              <ToggleChip pref="showCloze" checked={Boolean(prefs.showCloze)} label="Show sentence" actions={actions} runtimeReadOnly={runtimeReadOnly} />
-              <ToggleChip pref="autoSpeak" checked={Boolean(prefs.autoSpeak)} label="Auto-play audio" actions={actions} runtimeReadOnly={runtimeReadOnly} />
+              <ToggleChip pref="showCloze" checked={Boolean(prefs.showCloze)} label="Show sentence" actions={actions} disabled={preferenceControlsDisabled} />
+              <ToggleChip pref="autoSpeak" checked={Boolean(prefs.autoSpeak)} label="Auto-play audio" actions={actions} disabled={preferenceControlsDisabled} />
               {showExtraFamilyOption ? (
-                <ToggleChip pref="extraWordFamilies" checked={Boolean(prefs.extraWordFamilies)} label="Word-family variants" actions={actions} runtimeReadOnly={runtimeReadOnly} />
+                <ToggleChip pref="extraWordFamilies" checked={Boolean(prefs.extraWordFamilies)} label="Word-family variants" actions={actions} disabled={preferenceControlsDisabled} />
               ) : <span className="toggle-chip option-placeholder" aria-hidden="true" />}
             </div>
           </div>
@@ -260,10 +269,10 @@ export function SpellingSetupScene({
               className="btn primary xl"
               style={{ '--btn-accent': accent }}
               data-action="spelling-start"
-              disabled={runtimeReadOnly}
+              disabled={startDisabled}
               onClick={(event) => renderAction(actions, event, 'spelling-start')}
             >
-              {begin} <ArrowRightIcon />
+              {beginText} <ArrowRightIcon />
             </button>
           </div>
         </div>

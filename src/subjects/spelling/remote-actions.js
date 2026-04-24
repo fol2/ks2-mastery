@@ -21,7 +21,14 @@ const SPELLING_COMMAND_ACTIONS = new Set([
   'spelling-drill-single',
 ]);
 
+const SPELLING_SETUP_PREF_ACTIONS = new Set([
+  'spelling-set-mode',
+  'spelling-set-pref',
+  'spelling-toggle-pref',
+]);
+
 const SPELLING_IN_FLIGHT_DEDUPE_COMMANDS = new Set([
+  'save-prefs',
   'start-session',
   'submit-answer',
   'continue-session',
@@ -57,6 +64,17 @@ function commandErrorMessage(error, fallback) {
   return error?.payload?.message || error?.message || fallback;
 }
 
+function spellingPendingCommand(appState = {}) {
+  return appState.transientUi?.spellingPendingCommand || '';
+}
+
+function pendingCommandBlocksAction(action, appState = {}) {
+  const pendingCommand = spellingPendingCommand(appState);
+  if (!pendingCommand || !SPELLING_COMMAND_ACTIONS.has(action)) return false;
+  if (pendingCommand === 'save-prefs' && SPELLING_SETUP_PREF_ACTIONS.has(action)) return false;
+  return true;
+}
+
 export function shouldHandleRemoteSpellingAction(action) {
   return SPELLING_COMMAND_ACTIONS.has(action)
     || SPELLING_UI_LOCAL_ACTIONS.has(action)
@@ -74,6 +92,7 @@ export function spellingCommandDedupeKey(command, appState = {}) {
   const learnerId = appState.learners?.selectedId || '';
   if (!learnerId) return '';
   if (command === 'start-session') return `${command}:${learnerId}:setup`;
+  if (command === 'save-prefs') return `${command}:${learnerId}:prefs`;
   const session = appState.subjectUi?.spelling?.session || {};
   const sessionId = session.id || '';
   if (!sessionId) return '';
@@ -210,6 +229,48 @@ export function createRemoteSpellingActionHandler({
     }
   }
 
+  function setPendingCommand(command, { preserveExisting = false } = {}) {
+    if (!SPELLING_IN_FLIGHT_DEDUPE_COMMANDS.has(command)) return false;
+    if (preserveExisting && spellingPendingCommand(appState())) return false;
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingPendingCommand: command,
+      },
+    }));
+    return true;
+  }
+
+  function clearPendingCommand(command) {
+    if (!SPELLING_IN_FLIGHT_DEDUPE_COMMANDS.has(command)) return;
+    store.patch((current) => {
+      if (current.transientUi?.spellingPendingCommand !== command) return {};
+      return {
+        transientUi: {
+          ...current.transientUi,
+          spellingPendingCommand: '',
+        },
+      };
+    });
+  }
+
+  function beginPendingCommand(command) {
+    const state = appState();
+    const dedupeKey = spellingCommandDedupeKey(command, state);
+    if (dedupeKey && pendingCommandKeys.has(dedupeKey)) return { ok: false, dedupeKey: '' };
+    if (SPELLING_IN_FLIGHT_DEDUPE_COMMANDS.has(command) && spellingPendingCommand(state)) {
+      return { ok: false, dedupeKey: '' };
+    }
+    if (dedupeKey) pendingCommandKeys.add(dedupeKey);
+    setPendingCommand(command);
+    return { ok: true, dedupeKey };
+  }
+
+  function releasePendingCommand(command, dedupeKey) {
+    if (dedupeKey) pendingCommandKeys.delete(dedupeKey);
+    clearPendingCommand(command);
+  }
+
   async function sendCommand(command, payload = {}, { learnerId: requestedLearnerId = '', preferenceVersion = 0 } = {}) {
     const state = appState();
     const learnerId = requestedLearnerId || state.learners?.selectedId;
@@ -284,10 +345,16 @@ export function createRemoteSpellingActionHandler({
     let tracked;
     const next = previous
       .catch(() => {})
-      .then(() => sendCommand('save-prefs', { prefs }, { learnerId, preferenceVersion }));
+      .then(() => {
+        setPendingCommand('save-prefs', { preserveExisting: true });
+        return sendCommand('save-prefs', { prefs }, { learnerId, preferenceVersion });
+      });
     tracked = next.finally(() => {
       if (preferenceSaveChains.get(learnerId) === tracked) {
         preferenceSaveChains.delete(learnerId);
+        if (spellingPendingCommand(appState()) === 'save-prefs') {
+          clearPendingCommand('save-prefs');
+        }
       }
     });
     preferenceSaveChains.set(learnerId, tracked);
@@ -323,9 +390,8 @@ export function createRemoteSpellingActionHandler({
   }
 
   function runCommand(command, payload = {}, { learnerId: requestedLearnerId = '', beforeSend = null } = {}) {
-    const dedupeKey = spellingCommandDedupeKey(command, appState());
-    if (dedupeKey && pendingCommandKeys.has(dedupeKey)) return false;
-    if (dedupeKey) pendingCommandKeys.add(dedupeKey);
+    const pending = beginPendingCommand(command);
+    if (!pending.ok) return false;
     const commandPromise = typeof beforeSend === 'function'
       ? Promise.resolve()
         .then(beforeSend)
@@ -335,7 +401,7 @@ export function createRemoteSpellingActionHandler({
       globalThis.console?.warn?.('Spelling command failed.', error);
       setRuntimeError(commandErrorMessage(error, 'The spelling command could not be completed.'));
     }).finally(() => {
-      if (dedupeKey) pendingCommandKeys.delete(dedupeKey);
+      releasePendingCommand(command, pending.dedupeKey);
     });
     return true;
   }
@@ -586,6 +652,10 @@ export function createRemoteSpellingActionHandler({
       return true;
     }
 
+    if (pendingCommandBlocksAction(action, state)) {
+      return true;
+    }
+
     if (action === 'spelling-set-pref') {
       const patch = { [data.pref]: data.value };
       updateOptimisticPrefs(patch);
@@ -633,6 +703,8 @@ export function createRemoteSpellingActionHandler({
         const confirmed = globalThis.confirm?.('End the current spelling session and switch?');
         if (confirmed === false) return true;
       }
+      const pending = beginPendingCommand('start-session');
+      if (!pending.ok) return true;
       tts.stop();
       (async () => {
         await flushPendingPreferenceSave(learnerId);
@@ -649,6 +721,8 @@ export function createRemoteSpellingActionHandler({
       })().catch((error) => {
         globalThis.console?.warn?.('Spelling shortcut command failed.', error);
         setRuntimeError(commandErrorMessage(error, 'The spelling shortcut could not be completed.'));
+      }).finally(() => {
+        releasePendingCommand('start-session', pending.dedupeKey);
       });
       return true;
     }

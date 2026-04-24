@@ -59,7 +59,10 @@ export function SpellingSessionScene({
 
   const showCloze = prefs.showCloze && session.type !== 'test';
   const awaitingAdvance = Boolean(ui.awaitingAdvance);
+  const pendingCommand = ui.pendingCommand || '';
+  const pending = Boolean(pendingCommand);
   const submitLabel = spellingSessionSubmitLabel(session, awaitingAdvance);
+  const effectiveSubmitLabel = pendingCommand === 'submit-answer' ? 'Checking...' : submitLabel;
   const inputPlaceholder = spellingSessionInputPlaceholder(session);
   const contextNote = spellingSessionContextNote(session);
   const voiceNote = spellingSessionVoiceNote();
@@ -141,7 +144,7 @@ export function SpellingSessionScene({
                 {...spellingAnswerInputProps}
                 placeholder={inputPlaceholder}
                 aria-label="Type the spelling"
-                disabled={awaitingAdvance || runtimeReadOnly}
+                disabled={awaitingAdvance || runtimeReadOnly || pending}
               />
             </div>
             <div className="audio-row">
@@ -167,15 +170,15 @@ export function SpellingSessionScene({
               </button>
             </div>
             <div className="action-row">
-              <button className="btn primary lg" style={{ '--btn-accent': accent }} type="submit" disabled={awaitingAdvance || runtimeReadOnly}>
-                {submitLabel}{awaitingAdvance ? null : <> <ArrowRightIcon /></>}
+              <button className="btn primary lg" style={{ '--btn-accent': accent }} type="submit" disabled={awaitingAdvance || runtimeReadOnly || pending}>
+                {effectiveSubmitLabel}{awaitingAdvance || pending ? null : <> <ArrowRightIcon /></>}
               </button>
               {awaitingAdvance ? (
                 <button
                   className="btn good lg"
                   type="button"
                   data-action="spelling-continue"
-                  disabled={runtimeReadOnly}
+                  disabled={runtimeReadOnly || pending}
                   onClick={(event) => renderAction(actions, event, 'spelling-continue', {
                     flowTransition: isCompletingRound,
                   })}
@@ -188,7 +191,7 @@ export function SpellingSessionScene({
                   className="btn ghost lg"
                   type="button"
                   data-action="spelling-skip"
-                  disabled={runtimeReadOnly}
+                  disabled={runtimeReadOnly || pending}
                   onClick={(event) => renderAction(actions, event, 'spelling-skip')}
                 >
                   Skip for now
@@ -212,7 +215,7 @@ export function SpellingSessionScene({
               className="btn sm bad"
               type="button"
               data-action="spelling-end-early"
-              disabled={runtimeReadOnly}
+              disabled={runtimeReadOnly || pending}
               onClick={(event) => renderAction(actions, event, 'spelling-end-early')}
             >
               End round early

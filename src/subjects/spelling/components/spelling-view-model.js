@@ -481,7 +481,10 @@ export function findWordBankEntry(analytics, slug) {
 
 export function buildSpellingContext({ appState, service, repositories, subject }) {
   const learner = appState.learners.byId[appState.learners.selectedId];
-  const ui = service.initState(appState.subjectUi.spelling, learner.id);
+  const ui = {
+    ...service.initState(appState.subjectUi.spelling, learner.id),
+    pendingCommand: appState.transientUi?.spellingPendingCommand || '',
+  };
   const needsAnalytics = ui.phase === 'dashboard' || ui.phase === 'word-bank';
   const analytics = needsAnalytics ? service.getAnalyticsSnapshot(learner.id) : null;
   return {

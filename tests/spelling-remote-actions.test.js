@@ -100,6 +100,9 @@ function createTtsHarness() {
 
 test('spelling command dedupe key includes learner and prompt context', () => {
   assert.equal(spellingCommandDedupeKey('save-prefs', {}), '');
+  assert.equal(spellingCommandDedupeKey('save-prefs', {
+    learners: { selectedId: 'learner-a' },
+  }), 'save-prefs:learner-a:prefs');
   assert.equal(spellingCommandDedupeKey('start-session', {
     learners: { selectedId: 'learner-a' },
   }), 'start-session:learner-a:setup');
@@ -258,6 +261,121 @@ test('remote spelling start flushes pending setup preferences first', async () =
   assert.deepEqual(sent[0].payload, { prefs: { roundLength: '5' } });
   assert.equal(sent[1].payload.length, '5');
   assert.equal(sent[1].payload.mode, 'smart');
+});
+
+test('remote spelling start marks pending and ignores duplicate clicks before settlement', async () => {
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'dashboard',
+        prefs: {
+          mode: 'smart',
+          roundLength: '20',
+          yearFilter: 'core',
+          extraWordFamilies: false,
+        },
+        analytics: null,
+        audio: null,
+        error: '',
+      },
+    },
+  });
+  const tts = createTtsHarness();
+  const pending = deferred();
+  const sent = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: {
+      spelling: {
+        getPrefs() {
+          return getState().subjectUi.spelling.prefs;
+        },
+      },
+    },
+    tts,
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        return pending.promise;
+      },
+    },
+  });
+
+  assert.equal(handler.handle('spelling-start'), true);
+  assert.equal(getState().transientUi.spellingPendingCommand, 'start-session');
+  assert.equal(handler.handle('spelling-start'), true);
+  await flushPromises();
+  assert.equal(sent.length, 1);
+  assert.equal(tts.stopCalls, 1);
+
+  pending.resolve({ subjectReadModel: { phase: 'session' } });
+  await flushPromises();
+  await flushPromises();
+  assert.equal(getState().transientUi.spellingPendingCommand, '');
+});
+
+test('remote spelling start waits while an option save is in flight', async () => {
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'dashboard',
+        prefs: {
+          mode: 'smart',
+          roundLength: '10',
+          yearFilter: 'core',
+          autoSpeak: true,
+          showCloze: true,
+          extraWordFamilies: false,
+        },
+        analytics: null,
+        error: '',
+      },
+    },
+  });
+  const firstSave = deferred();
+  const tts = createTtsHarness();
+  const sent = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: {
+      spelling: {
+        getPrefs() {
+          return getState().subjectUi.spelling.prefs;
+        },
+      },
+    },
+    tts,
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        if (request.command === 'save-prefs') return firstSave.promise;
+        return Promise.resolve({ subjectReadModel: { phase: 'session' } });
+      },
+    },
+    preferenceSaveDebounceMs: 0,
+  });
+
+  assert.equal(handler.handle('spelling-set-pref', { pref: 'roundLength', value: '5' }), true);
+  await flushTimers();
+  await flushPromises();
+  assert.deepEqual(sent.map((request) => request.command), ['save-prefs']);
+  assert.equal(getState().transientUi.spellingPendingCommand, 'save-prefs');
+
+  assert.equal(handler.handle('spelling-start'), true);
+  await flushPromises();
+  assert.deepEqual(sent.map((request) => request.command), ['save-prefs']);
+  assert.equal(tts.stopCalls, 0);
+
+  firstSave.resolve({ subjectReadModel: { phase: 'dashboard' } });
+  await flushPromises();
+  await flushPromises();
+  assert.equal(getState().transientUi.spellingPendingCommand, '');
+
+  assert.equal(handler.handle('spelling-start'), true);
+  await flushPromises();
+  assert.deepEqual(sent.map((request) => request.command), ['save-prefs', 'start-session']);
 });
 
 test('remote spelling keeps newer pending preferences when an older save response reloads', async () => {
