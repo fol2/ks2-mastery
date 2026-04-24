@@ -13,16 +13,19 @@ function selectedGrammarUi(context) {
   return normaliseGrammarReadModel(context?.appState?.subjectUi?.[GRAMMAR_SUBJECT_ID], learnerId);
 }
 
-function setGrammarError(context, message) {
+function setGrammarError(context, message, { learnerId = selectedLearnerId(context) } = {}) {
+  if (learnerId && selectedLearnerId(context) !== learnerId) return;
   context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => ({
-    ...normaliseGrammarReadModel(current, selectedLearnerId(context)),
+    ...normaliseGrammarReadModel(current, learnerId),
     pendingCommand: '',
     error: message || 'Grammar practice is temporarily unavailable.',
   }));
 }
 
-function applyRemoteReadModel(context, response) {
-  const learnerId = selectedLearnerId(context);
+function applyRemoteReadModel(context, response, { learnerId } = {}) {
+  if (!learnerId || selectedLearnerId(context) !== learnerId) return;
+  const responseLearnerId = String(response?.subjectReadModel?.learnerId || learnerId);
+  if (responseLearnerId && responseLearnerId !== learnerId) return;
   if (response?.projections?.rewards?.toastEvents?.length) {
     context.store.pushToasts(response.projections.rewards.toastEvents);
   }
@@ -65,10 +68,10 @@ function sendGrammarCommand(context, command, payload = {}) {
     command,
     payload,
   }).then((response) => {
-    applyRemoteReadModel(context, response);
+    applyRemoteReadModel(context, response, { learnerId });
   }).catch((error) => {
     globalThis.console?.warn?.('Grammar command failed.', error);
-    setGrammarError(context, error?.payload?.message || error?.message || 'The Grammar command could not be completed.');
+    setGrammarError(context, error?.payload?.message || error?.message || 'The Grammar command could not be completed.', { learnerId });
   });
 
   return true;
@@ -103,6 +106,16 @@ function responseFromFormData(formData) {
     response[key] = String(value ?? '');
   }
   return response;
+}
+
+function hasGrammarResponseValue(value) {
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim());
+  return String(value ?? '').trim().length > 0;
+}
+
+function responseHasAnswer(response) {
+  if (!response || typeof response !== 'object' || Array.isArray(response)) return false;
+  return Object.entries(response).some(([, value]) => hasGrammarResponseValue(value));
 }
 
 function resetToDashboard(context) {
@@ -222,6 +235,10 @@ export const grammarModule = {
 
     if (action === 'grammar-submit-form') {
       const response = responseFromFormData(context.data?.formData);
+      if (!responseHasAnswer(response)) {
+        setGrammarError(context, 'Choose or type an answer before submitting.', { learnerId });
+        return true;
+      }
       if (service?.submitAnswer) return applyLocalTransition(context, service.submitAnswer(learnerId, ui, response));
       return sendGrammarCommand(context, 'submit-answer', { response });
     }

@@ -8,6 +8,8 @@ import {
 } from './helpers/grammar-subject-harness.js';
 import { readGrammarLegacyOracle } from './helpers/grammar-legacy-oracle.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
+import { grammarModule } from '../src/subjects/grammar/module.js';
+import { normaliseGrammarReadModel } from '../src/subjects/grammar/metadata.js';
 
 function grammarOracleSample(templateId = 'question_mark_select') {
   return readGrammarLegacyOracle().templates.find((template) => template.id === templateId);
@@ -66,6 +68,126 @@ test('Grammar surface runs from setup to Worker-style feedback and summary', () 
   harness.dispatch('grammar-back');
   assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');
   assert.match(harness.render(), /Grammar retrieval practice/);
+});
+
+test('Grammar submit requires an answer before recording an attempt', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample();
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  harness.dispatch('grammar-submit-form', { formData: new FormData() });
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.answered, 0);
+  assert.match(grammar.error, /Choose or type an answer/);
+  assert.equal(grammar.analytics.concepts.some((concept) => concept.attempts > 0), false);
+});
+
+test('Grammar command responses are pinned to the learner that sent them', async () => {
+  let resolveCommand;
+  const toasts = [];
+  const celebrations = [];
+  const context = {
+    appState: {
+      learners: { selectedId: 'learner-a' },
+      subjectUi: { grammar: normaliseGrammarReadModel({}, 'learner-a') },
+    },
+    runtimeReadOnly: false,
+    subjectCommands: {
+      send(request) {
+        assert.equal(request.learnerId, 'learner-a');
+        return new Promise((resolve) => {
+          resolveCommand = resolve;
+        });
+      },
+    },
+    store: {
+      updateSubjectUi(subjectId, updater) {
+        const previous = context.appState.subjectUi[subjectId] || {};
+        const next = typeof updater === 'function' ? updater(previous) : { ...previous, ...updater };
+        context.appState = {
+          ...context.appState,
+          subjectUi: {
+            ...context.appState.subjectUi,
+            [subjectId]: next,
+          },
+        };
+      },
+      pushToasts(events) {
+        toasts.push(...events);
+      },
+      pushMonsterCelebrations(events) {
+        celebrations.push(...events);
+      },
+      reloadFromRepositories() {
+        throw new Error('Late Grammar response must not reload the selected learner.');
+      },
+    },
+  };
+
+  grammarModule.handleAction('grammar-start', context);
+  assert.equal(context.appState.subjectUi.grammar.pendingCommand, 'start-session');
+
+  context.appState = {
+    ...context.appState,
+    learners: { selectedId: 'learner-b' },
+    subjectUi: { grammar: normaliseGrammarReadModel({}, 'learner-b') },
+  };
+  resolveCommand({
+    subjectReadModel: normaliseGrammarReadModel({
+      learnerId: 'learner-a',
+      phase: 'summary',
+      summary: { sessionId: 'learner-a-summary' },
+      analytics: { concepts: [] },
+    }, 'learner-a'),
+    projections: {
+      rewards: {
+        toastEvents: [{ id: 'toast-a' }],
+        events: [{ id: 'celebration-a' }],
+      },
+    },
+  });
+  await Promise.resolve();
+
+  const grammar = context.appState.subjectUi.grammar;
+  assert.equal(grammar.learnerId, 'learner-b');
+  assert.equal(grammar.phase, 'dashboard');
+  assert.equal(grammar.summary, null);
+  assert.equal(toasts.length, 0);
+  assert.equal(celebrations.length, 0);
+});
+
+test('Grammar normaliser preserves Worker concept copy over client placeholders', () => {
+  const grammar = normaliseGrammarReadModel({
+    analytics: {
+      concepts: [{
+        id: 'clauses',
+        name: 'Worker clauses',
+        domain: 'Worker domain',
+        summary: 'Worker-authored concept summary.',
+        punctuationForGrammar: false,
+        status: 'learning',
+        attempts: 3,
+      }],
+    },
+  }, 'learner-a');
+
+  const clauses = grammar.analytics.concepts.find((concept) => concept.id === 'clauses');
+  assert.equal(clauses.name, 'Worker clauses');
+  assert.equal(clauses.domain, 'Worker domain');
+  assert.equal(clauses.summary, 'Worker-authored concept summary.');
+  assert.equal(clauses.punctuationForGrammar, false);
+  assert.equal(clauses.attempts, 3);
 });
 
 test('Grammar locked future modes render unavailable without dispatching commands', () => {

@@ -2,7 +2,7 @@
 
 This Worker is now the production authority for sessions, learner access, subject commands, read models, and protected audio routes.
 
-Production browser sessions use API-backed repositories after sign-in or through an ephemeral demo session. `?local=1` is not a product runtime path. English Spelling and the first Punctuation release run through the Worker subject command boundary, with React acting as the UI shell. The Worker provides durable D1-backed storage for the generic platform collections, account-scoped spelling content, session/auth flows, protected selected-provider TTS, learner ownership at the API boundary, server-side subject runtime, Word Bank read models, and thin hub read-model routes for Parent Hub / Admin.
+Production browser sessions use API-backed repositories after sign-in or through an ephemeral demo session. `?local=1` is not a product runtime path. English Spelling, Stage 1 Grammar, and the first Punctuation release run through the Worker subject command boundary, with React acting as the UI shell. The Worker provides durable D1-backed storage for the generic platform collections, account-scoped spelling content, session/auth flows, protected selected-provider TTS, learner ownership at the API boundary, server-side subject runtime, Word Bank read models, and thin hub read-model routes for Parent Hub / Admin.
 
 ## What this Worker is now
 
@@ -130,11 +130,13 @@ The command boundary validates session ownership, learner access, demo expiry, r
 
 For Spelling, the Worker owns session creation, word queue selection, scoring, correction state, progress mutation, completed session writes, event publication, reward projection, and the returned read model.
 
+For Grammar, the Worker owns session creation, deterministic question generation, answer normalisation, scoring, mastery mutation, completed session writes, event publication, and the returned read model.
+
 For Punctuation, the Worker owns session creation, item selection, deterministic marking, spaced scheduling, misconception events, release-scoped secure-unit progress, completed session writes, Bellstorm Coast reward projection, and the returned read model.
 
 Punctuation remains behind the `PUNCTUATION_SUBJECT_ENABLED` rollout env var. The production default is `false`, so the command route and browser exposure stay unavailable until release verification is accepted and the flag is intentionally changed.
 
-The React client sends user intent and renders the response. It does not use a browser-local Spelling engine as a production fallback.
+The React client sends user intent and renders the response. It does not use browser-local Spelling, Grammar, or Punctuation engines as a production fallback.
 
 The same rule applies to Punctuation: the browser must not ship or fall back to `shared/punctuation/*` as a production engine.
 

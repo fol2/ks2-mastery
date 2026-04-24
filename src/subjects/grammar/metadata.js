@@ -219,15 +219,20 @@ function mergeConcepts(rawConcepts) {
   const byId = new Map((Array.isArray(rawConcepts) ? rawConcepts : [])
     .filter((concept) => concept && typeof concept === 'object' && !Array.isArray(concept))
     .map((concept) => [concept.id, concept]));
-  return GRAMMAR_CLIENT_CONCEPTS.map((concept) => ({
-    ...conceptFallback(concept),
-    ...(byId.get(concept.id) || {}),
-    id: concept.id,
-    name: concept.name,
-    domain: concept.domain,
-    summary: concept.summary,
-    punctuationForGrammar: Boolean(concept.punctuationForGrammar),
-  }));
+  return GRAMMAR_CLIENT_CONCEPTS.map((concept) => {
+    const workerConcept = byId.get(concept.id) || {};
+    return {
+      ...conceptFallback(concept),
+      ...workerConcept,
+      id: concept.id,
+      name: typeof workerConcept.name === 'string' && workerConcept.name ? workerConcept.name : concept.name,
+      domain: typeof workerConcept.domain === 'string' && workerConcept.domain ? workerConcept.domain : concept.domain,
+      summary: typeof workerConcept.summary === 'string' && workerConcept.summary ? workerConcept.summary : concept.summary,
+      punctuationForGrammar: typeof workerConcept.punctuationForGrammar === 'boolean'
+        ? workerConcept.punctuationForGrammar
+        : Boolean(concept.punctuationForGrammar),
+    };
+  });
 }
 
 function statsFromConcepts(concepts) {

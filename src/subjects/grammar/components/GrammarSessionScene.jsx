@@ -20,7 +20,7 @@ function ChoiceList({ inputSpec }) {
         const value = optionValue(option);
         return (
           <label className="grammar-choice" key={value}>
-            <input type={type} name={name} value={value} />
+            <input type={type} name={name} value={value} required={type === 'radio'} />
             <span>{optionLabel(option)}</span>
           </label>
         );
@@ -47,7 +47,7 @@ function TableChoice({ inputSpec }) {
               <td>{row.label}</td>
               {columns.map((column) => (
                 <td key={`${row.key}-${column}`}>
-                  <input type="radio" name={row.key} value={column} aria-label={`${row.label}: ${column}`} />
+                  <input type="radio" name={row.key} value={column} aria-label={`${row.label}: ${column}`} required />
                 </td>
               ))}
             </tr>
@@ -77,7 +77,7 @@ function MultiField({ field }) {
         <div className="grammar-choice-list compact">
           {options.map((option) => (
             <label className="grammar-choice" key={optionValue(option)}>
-              <input type="radio" name={field.key} value={optionValue(option)} />
+              <input type="radio" name={field.key} value={optionValue(option)} required />
               <span>{optionLabel(option)}</span>
             </label>
           ))}
@@ -88,7 +88,7 @@ function MultiField({ field }) {
   return (
     <label className="field grammar-field" key={field.key}>
       <span>{field.label}</span>
-      <input className="input" name={field.key} autoComplete="off" />
+      <input className="input" name={field.key} autoComplete="off" required />
     </label>
   );
 }
@@ -108,14 +108,14 @@ function GrammarInput({ inputSpec }) {
     return (
       <label className="field">
         <span>{inputSpec.label || 'Your answer'}</span>
-        <textarea className="input grammar-textarea" name="answer" placeholder={inputSpec.placeholder || ''} data-autofocus="true" />
+        <textarea className="input grammar-textarea" name="answer" placeholder={inputSpec.placeholder || ''} data-autofocus="true" required />
       </label>
     );
   }
   return (
     <label className="field">
       <span>{inputSpec?.label || 'Your answer'}</span>
-      <input className="input" name="answer" placeholder={inputSpec?.placeholder || ''} data-autofocus="true" autoComplete="off" />
+      <input className="input" name="answer" placeholder={inputSpec?.placeholder || ''} data-autofocus="true" autoComplete="off" required />
     </label>
   );
 }
