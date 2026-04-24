@@ -185,6 +185,13 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/demo' && request.method === 'GET') {
+          const currentSession = await auth.getSession(request);
+          if (currentSession && !currentSession.demo) {
+            return redirect(`${url.origin}/`, 302);
+          }
+          if (currentSession?.demo) {
+            return redirect(`${url.origin}/?demo=1`, 302);
+          }
           const result = await createDemoSession({
             env,
             request,
@@ -213,12 +220,14 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/auth/register' && request.method === 'POST') {
+          requireSameOrigin(request, env);
           const body = await readJson(request);
           const result = await registerWithEmail(env, request, body);
           return withCookies(json(result.payload, result.status), result.cookies);
         }
 
         if (url.pathname === '/api/auth/login' && request.method === 'POST') {
+          requireSameOrigin(request, env);
           const body = await readJson(request);
           const result = await loginWithEmail(env, request, body);
           return withCookies(json(result.payload, result.status), result.cookies);
@@ -235,6 +244,7 @@ export function createWorkerApp({
 
         const oauthStart = /^\/api\/auth\/([^/]+)\/start$/.exec(url.pathname);
         if (oauthStart && request.method === 'POST') {
+          requireSameOrigin(request, env);
           const body = await readJson(request);
           const result = await startSocialLogin(env, request, oauthStart[1], body);
           return withCookies(json(result.payload, result.status), result.cookies);

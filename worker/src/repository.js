@@ -144,6 +144,16 @@ function safeSpellingCurrentCard(card) {
   };
 }
 
+function safeSpellingSessionProgress(progress) {
+  if (!progress || typeof progress !== 'object' || Array.isArray(progress)) return null;
+  const output = {};
+  for (const key of ['done', 'total']) {
+    const value = Number(progress[key]);
+    if (Number.isFinite(value) && value >= 0) output[key] = Math.floor(value);
+  }
+  return Object.keys(output).length ? output : null;
+}
+
 function redactSpellingUiForClient(ui, data = {}, learnerId = '') {
   const raw = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {};
   const session = raw.session && typeof raw.session === 'object' && !Array.isArray(raw.session)
@@ -166,7 +176,7 @@ function redactSpellingUiForClient(ui, data = {}, learnerId = '') {
         phase: typeof session.phase === 'string' ? session.phase : 'question',
         promptCount: Number.isFinite(Number(session.promptCount)) ? Number(session.promptCount) : 0,
         startedAt: Number.isFinite(Number(session.startedAt)) ? Number(session.startedAt) : 0,
-        progress: cloneSerialisable(session.progress) || null,
+        progress: safeSpellingSessionProgress(session.progress),
         currentStage: Number.isFinite(Number(session.currentStage)) ? Number(session.currentStage) : 0,
         currentCard: safeSpellingCurrentCard(session.currentCard),
         serverAuthority: 'worker',

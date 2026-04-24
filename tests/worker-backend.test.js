@@ -54,6 +54,7 @@ async function postJson(server, path, body = {}, headers = {}) {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
+      origin: 'https://repo.test',
       ...headers,
     },
     body: JSON.stringify(body),

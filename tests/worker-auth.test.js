@@ -135,6 +135,51 @@ test('production login rejects bad credentials and accepts the registered passwo
   server.close();
 });
 
+test('production auth POST routes require same-origin headers before mutating sessions', async () => {
+  const server = productionServer({
+    GOOGLE_CLIENT_ID: 'google-client',
+    GOOGLE_CLIENT_SECRET: 'google-secret',
+  });
+
+  for (const route of [
+    {
+      path: '/api/auth/register',
+      body: { email: 'missing-origin-register@example.test', password: 'password-1234' },
+    },
+    {
+      path: '/api/auth/login',
+      body: { email: 'missing-origin-login@example.test', password: 'password-1234' },
+    },
+    {
+      path: '/api/auth/google/start',
+      body: {},
+    },
+  ]) {
+    const missingOrigin = await server.fetchRaw(`https://repo.test${route.path}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(route.body),
+    });
+    const missingPayload = await missingOrigin.json();
+    assert.equal(missingOrigin.status, 403, route.path);
+    assert.equal(missingPayload.code, 'same_origin_required', route.path);
+
+    const crossOrigin = await server.fetchRaw(`https://repo.test${route.path}`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: 'https://evil.example',
+      },
+      body: JSON.stringify(route.body),
+    });
+    const crossPayload = await crossOrigin.json();
+    assert.equal(crossOrigin.status, 403, route.path);
+    assert.equal(crossPayload.code, 'same_origin_required', route.path);
+  }
+
+  server.close();
+});
+
 test('production logout clears the server session and cookie', async () => {
   const server = productionServer();
   const register = await postJson(server, '/api/auth/register', {
@@ -338,6 +383,12 @@ test('production public bootstrap redacts spelling sentinels from subject state,
         mode: 'smart',
         label: 'Smart Review',
         phase: 'feedback',
+        progress: {
+          done: 2,
+          total: 5,
+          unsafe: sentinel,
+          nested: { wordSlug: sentinel.toLowerCase() },
+        },
         currentCard: {
           word: { word: sentinel, slug: sentinel.toLowerCase() },
           prompt: { cloze: 'Spell the hidden word', sentence: sentinel },
@@ -438,6 +489,7 @@ test('production public bootstrap redacts spelling sentinels from subject state,
   assert.equal(serialised.includes(sentinel.toLowerCase()), false);
   assert.equal(payload.subjectStates[`${learnerId}::spelling`].ui.feedback, null);
   assert.equal(payload.subjectStates[`${learnerId}::spelling`].ui.summary, null);
+  assert.deepEqual(payload.subjectStates[`${learnerId}::spelling`].ui.session.progress, { done: 2, total: 5 });
   assert.equal(payload.practiceSessions[0].sessionState, null);
   assert.equal(payload.practiceSessions[0].summary.mistakes[0].word, undefined);
   assert.equal(payload.practiceSessions[0].summary.mistakes[0].family, undefined);

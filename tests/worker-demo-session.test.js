@@ -171,6 +171,52 @@ test('/demo creates the same server-owned session and redirects to the app', asy
   server.close();
 });
 
+test('/demo does not overwrite an existing real account session', async () => {
+  const server = productionServer();
+  const register = await postJson(server, '/api/auth/register', {
+    email: 'real-demo-entry@example.test',
+    password: 'password-1234',
+  });
+  const cookie = cookieFrom(register);
+
+  const response = await server.fetchRaw('https://repo.test/demo', {
+    headers: { cookie },
+  });
+  const session = await server.fetchRaw('https://repo.test/api/session', {
+    headers: { cookie },
+  });
+  const payload = await session.json();
+
+  assert.equal(response.status, 302);
+  assert.equal(response.headers.get('location'), 'https://repo.test/');
+  assert.equal(cookieFrom(response), '');
+  assert.equal(session.status, 200);
+  assert.equal(payload.session.provider, 'email');
+  assert.equal(payload.session.demo, false);
+  assert.equal(payload.account.accountType, 'real');
+
+  server.close();
+});
+
+test('/demo reuses an existing demo session instead of creating another account', async () => {
+  const server = productionServer();
+  const demo = await postJson(server, '/api/demo/session');
+  const cookie = cookieFrom(demo);
+  const accountCountBefore = server.DB.db.prepare('SELECT COUNT(*) AS count FROM adult_accounts').get().count;
+
+  const response = await server.fetchRaw('https://repo.test/demo', {
+    headers: { cookie },
+  });
+  const accountCountAfter = server.DB.db.prepare('SELECT COUNT(*) AS count FROM adult_accounts').get().count;
+
+  assert.equal(response.status, 302);
+  assert.equal(response.headers.get('location'), 'https://repo.test/?demo=1');
+  assert.equal(cookieFrom(response), '');
+  assert.equal(accountCountAfter, accountCountBefore);
+
+  server.close();
+});
+
 test('state-changing demo creation rejects cross-origin requests', async () => {
   const server = productionServer();
 
