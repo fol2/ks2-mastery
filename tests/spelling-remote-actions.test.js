@@ -10,6 +10,10 @@ function flushPromises() {
   return Promise.resolve().then(() => Promise.resolve());
 }
 
+function flushTimers() {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 function deferred() {
   let resolve;
   let reject;
@@ -142,6 +146,118 @@ test('remote spelling actions dedupe in-flight session commands and release afte
   await flushPromises();
   assert.equal(handler.handle('spelling-submit-form', { formData }), true);
   assert.equal(sent.length, 2);
+});
+
+test('remote spelling setup preference changes are coalesced before saving', async () => {
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'dashboard',
+        prefs: {
+          mode: 'smart',
+          roundLength: '10',
+          yearFilter: 'core',
+          autoSpeak: true,
+          showCloze: true,
+        },
+        analytics: null,
+        error: '',
+      },
+    },
+  });
+  const sent = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: {
+      spelling: {
+        getPrefs() {
+          return getState().subjectUi.spelling.prefs;
+        },
+      },
+    },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        return Promise.resolve({ subjectReadModel: { phase: 'dashboard' } });
+      },
+    },
+    preferenceSaveDebounceMs: 0,
+  });
+
+  assert.equal(handler.handle('spelling-set-pref', { pref: 'roundLength', value: '5' }), true);
+  assert.equal(handler.handle('spelling-set-pref', { pref: 'yearFilter', value: 'extra' }), true);
+  assert.equal(handler.handle('spelling-toggle-pref', { pref: 'autoSpeak' }), true);
+
+  assert.equal(sent.length, 0);
+  assert.equal(getState().subjectUi.spelling.prefs.roundLength, '5');
+  assert.equal(getState().subjectUi.spelling.prefs.yearFilter, 'extra');
+  assert.equal(getState().subjectUi.spelling.prefs.autoSpeak, false);
+
+  await flushTimers();
+  await flushPromises();
+
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].command, 'save-prefs');
+  assert.deepEqual(sent[0].payload, {
+    prefs: {
+      roundLength: '5',
+      yearFilter: 'extra',
+      autoSpeak: false,
+    },
+  });
+});
+
+test('remote spelling start flushes pending setup preferences first', async () => {
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'dashboard',
+        prefs: {
+          mode: 'smart',
+          roundLength: '10',
+          yearFilter: 'core',
+          autoSpeak: true,
+          showCloze: true,
+          extraWordFamilies: false,
+        },
+        analytics: null,
+        error: '',
+      },
+    },
+  });
+  const sent = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: {
+      spelling: {
+        getPrefs() {
+          return getState().subjectUi.spelling.prefs;
+        },
+      },
+    },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        return Promise.resolve({ subjectReadModel: { phase: request.command === 'start-session' ? 'session' : 'dashboard' } });
+      },
+    },
+    preferenceSaveDebounceMs: 10_000,
+  });
+
+  assert.equal(handler.handle('spelling-set-pref', { pref: 'roundLength', value: '5' }), true);
+  assert.equal(handler.handle('spelling-start'), true);
+
+  await flushTimers();
+  await flushPromises();
+
+  assert.deepEqual(sent.map((request) => request.command), ['save-prefs', 'start-session']);
+  assert.deepEqual(sent[0].payload, { prefs: { roundLength: '5' } });
+  assert.equal(sent[1].payload.length, '5');
+  assert.equal(sent[1].payload.mode, 'smart');
 });
 
 test('remote spelling command response preserves reward side effects and TTS stop rules', () => {
