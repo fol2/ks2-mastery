@@ -236,16 +236,28 @@ function contentTypeForExtension(extension) {
   return extension === 'mp3' ? 'audio/mpeg' : 'audio/wav';
 }
 
-function bufferedAudioMetadata(payload = {}) {
+async function bufferedAudioMetadata(payload = {}) {
   if (payload.wordOnly) return null;
   const slug = cleanText(payload.slug).toLowerCase();
   const sentenceIndex = Number(payload.sentenceIndex);
-  if (!slug || !Number.isInteger(sentenceIndex) || sentenceIndex < 0) return null;
+  const accountId = cleanText(payload.accountId);
+  const word = cleanText(payload.word);
+  const sentence = cleanText(payload.sentence);
+  if (!accountId || !slug || !word || !sentence || !Number.isInteger(sentenceIndex) || sentenceIndex < 0) return null;
   const voice = normaliseBufferedGeminiVoice(payload.bufferedGeminiVoice);
   const speed = speedIdForSlow(payload.slow);
+  const contentKey = await sha256([
+    'spelling-audio-content-v1',
+    accountId,
+    slug,
+    String(sentenceIndex),
+    word,
+    sentence,
+  ].join('|'));
   return {
     voice,
     speed,
+    contentKey,
     slug,
     sentenceIndex,
   };
@@ -279,13 +291,35 @@ function objectContentType(object, extension) {
 }
 
 async function readBufferedGeminiAudio(env, payload) {
+  const metadata = await bufferedAudioMetadata(payload);
+  if (!metadata) return null;
   const bucket = spellingAudioBucket(env);
-  const metadata = bufferedAudioMetadata(payload);
-  if (!bucket || !metadata) return null;
+  if (!bucket) {
+    return {
+      object: null,
+      metadata,
+      key: bufferedAudioKey(metadata, 'wav'),
+      extension: 'wav',
+      contentType: 'audio/wav',
+      cacheUnavailable: true,
+    };
+  }
 
   for (const extension of BUFFERED_AUDIO_EXTENSIONS) {
     const key = bufferedAudioKey(metadata, extension);
-    const object = await bucket.get(key);
+    let object = null;
+    try {
+      object = await bucket.get(key);
+    } catch {
+      return {
+        object: null,
+        metadata,
+        key: bufferedAudioKey(metadata, 'wav'),
+        extension: 'wav',
+        contentType: 'audio/wav',
+        cacheUnavailable: true,
+      };
+    }
     if (!object) continue;
     return {
       object,
@@ -328,13 +362,14 @@ function cacheOnlyResponse(cacheState, cacheHit = null) {
 
 async function storeBufferedGeminiAudio(env, payload, response) {
   const cacheSlot = await readBufferedGeminiAudio(env, payload);
-  if (!cacheSlot?.metadata || !spellingAudioBucket(env)) {
+  if (!cacheSlot?.metadata || cacheSlot.cacheUnavailable || !spellingAudioBucket(env)) {
     const headers = new Headers(response.headers);
     headers.set('x-ks2-tts-cache', 'unavailable');
     return {
       response: new Response(response.body, { status: response.status, headers }),
       cacheState: 'unavailable',
       key: '',
+      metadata: cacheSlot?.metadata || null,
     };
   }
   if (cacheSlot.object) {
@@ -342,6 +377,7 @@ async function storeBufferedGeminiAudio(env, payload, response) {
       response: cachedGeminiAudioResponse(cacheSlot),
       cacheState: 'hit',
       key: cacheSlot.key,
+      metadata: cacheSlot.metadata,
     };
   }
 
@@ -354,6 +390,7 @@ async function storeBufferedGeminiAudio(env, payload, response) {
         model: SPELLING_AUDIO_MODEL,
         voice: cacheSlot.metadata.voice,
         speed: cacheSlot.metadata.speed,
+        contentKey: cacheSlot.metadata.contentKey,
         slug: cacheSlot.metadata.slug,
         sentenceIndex: String(cacheSlot.metadata.sentenceIndex),
         source: 'worker-gemini-tts',
@@ -371,6 +408,7 @@ async function storeBufferedGeminiAudio(env, payload, response) {
       }),
       cacheState: 'stored',
       key: cacheSlot.key,
+      metadata: cacheSlot.metadata,
     };
   } catch {
     const headers = new Headers(response.headers);
@@ -380,6 +418,7 @@ async function storeBufferedGeminiAudio(env, payload, response) {
       response: new Response(bytes, { status: 200, headers }),
       cacheState: 'store_failed',
       key: cacheSlot.key,
+      metadata: cacheSlot.metadata,
     };
   }
 }
@@ -585,6 +624,7 @@ export async function handleTextToSpeechRequest({
       accountId: session.accountId,
       body,
     })),
+    accountId: session.accountId,
     provider: cacheOnly ? 'gemini' : normaliseRemoteTtsProvider(body?.provider),
     bufferedGeminiVoice: normaliseBufferedGeminiVoice(body?.bufferedGeminiVoice || body?.cachedVoice),
     cacheOnly,
@@ -595,26 +635,35 @@ export async function handleTextToSpeechRequest({
     ...gemini,
     voice: payload.bufferedGeminiVoice || gemini.voice,
   };
+  let protectedRequest = false;
+  async function protectAudioRequest() {
+    if (protectedRequest) return;
+    await protectTts(env, request, session, now);
+    await protectDemoTtsFallback({ env, request, session, payload, now });
+    protectedRequest = true;
+  }
 
   if (payload.provider === 'gemini' && !payload.wordOnly) {
+    await protectAudioRequest();
     const cacheHit = await readBufferedGeminiAudio(env, payload);
     if (cacheHit?.object) {
-      return cacheOnly ? cacheOnlyResponse('hit', cacheHit) : cachedGeminiAudioResponse(cacheHit);
+      const output = cacheOnly ? cacheOnlyResponse('hit', cacheHit) : cachedGeminiAudioResponse(cacheHit);
+      return await recordDemoTtsFallback(env, session, now, output);
     }
+    if (cacheOnly && cacheHit?.cacheUnavailable) return cacheOnlyResponse('unavailable', cacheHit);
     if (cacheOnly && !cacheHit?.metadata) return cacheOnlyResponse('uncacheable');
   }
 
   if (payload.provider === 'gemini') {
     if (!geminiForPayload.apiKey) throw missingProviderConfig('gemini');
-    await protectTts(env, request, session, now);
-    await protectDemoTtsFallback({ env, request, session, payload, now });
+    await protectAudioRequest();
     try {
       const response = await requestGeminiSpeech({ config: geminiForPayload, payload, fetchFn });
       const stored = payload.wordOnly
         ? { response, cacheState: 'uncacheable' }
         : await storeBufferedGeminiAudio(env, payload, response);
       const output = cacheOnly
-        ? cacheOnlyResponse(stored.cacheState, { key: stored.key, metadata: bufferedAudioMetadata(payload) })
+        ? cacheOnlyResponse(stored.cacheState, { key: stored.key, metadata: stored.metadata })
         : stored.response;
       return await recordDemoTtsFallback(env, session, now, output);
     } catch (error) {
@@ -623,8 +672,7 @@ export async function handleTextToSpeechRequest({
   }
 
   if (!openAi.apiKey) throw missingProviderConfig('openai');
-  await protectTts(env, request, session, now);
-  await protectDemoTtsFallback({ env, request, session, payload, now });
+  await protectAudioRequest();
   try {
     const response = await requestOpenAiSpeech({ config: openAi, payload, fetchFn });
     return await recordDemoTtsFallback(env, session, now, response);

@@ -111,21 +111,30 @@ export function buildBufferedSpeechPrompt({ wordText, sentence, slow }) {
 export function buildAudioAssetKey({
   voice,
   speed,
+  contentKey,
   slug,
   sentenceIndex,
   extension = DEFAULT_AUDIO_EXTENSION,
 }) {
   const safeVoice = encodeURIComponent(String(voice || '').trim());
   const safeSpeed = encodeURIComponent(String(speed || '').trim());
+  const safeContentKey = encodeURIComponent(String(contentKey || '').trim());
   const safeSlug = encodeURIComponent(String(slug || '').trim());
   const safeSentenceIndex = Number(sentenceIndex);
   const safeExtension = String(extension || DEFAULT_AUDIO_EXTENSION).replace(/^\./, '');
 
-  if (!safeVoice || !safeSpeed || !safeSlug || !Number.isInteger(safeSentenceIndex) || safeSentenceIndex < 0) {
-    throw new Error('A valid voice, speed, slug, and sentence index are required.');
+  if (
+    !safeVoice
+    || !safeSpeed
+    || !safeContentKey
+    || !safeSlug
+    || !Number.isInteger(safeSentenceIndex)
+    || safeSentenceIndex < 0
+  ) {
+    throw new Error('A valid voice, speed, content key, slug, and sentence index are required.');
   }
 
-  return `${SPELLING_AUDIO_ROOT_PREFIX}/${SPELLING_AUDIO_MODEL}/${safeVoice}/${safeSpeed}/${safeSlug}/${safeSentenceIndex}.${safeExtension}`;
+  return `${SPELLING_AUDIO_ROOT_PREFIX}/${SPELLING_AUDIO_MODEL}/${safeVoice}/${safeSpeed}/${safeContentKey}/${safeSlug}/${safeSentenceIndex}.${safeExtension}`;
 }
 
 export function buildIndexedAudioFilename({

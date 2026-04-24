@@ -24,14 +24,14 @@ function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a'
   `).run(accountId, learnerId, now, now);
 }
 
-async function startSpellingPrompt(server) {
-  seedAccountLearner(server.DB);
-  const response = await server.fetch('https://repo.test/api/subjects/spelling/command', {
+async function startSpellingPrompt(server, { accountId = 'adult-a', learnerId = 'learner-a' } = {}) {
+  seedAccountLearner(server.DB, { accountId, learnerId });
+  const response = await server.fetchAs(accountId, 'https://repo.test/api/subjects/spelling/command', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       command: 'start-session',
-      learnerId: 'learner-a',
+      learnerId,
       requestId: 'tts-start-1',
       expectedLearnerRevision: 0,
       payload: {
@@ -148,7 +148,7 @@ function geminiAudioResponse(bytes = [1, 0, 2, 0]) {
   });
 }
 
-function createMemoryR2Bucket({ hit = null } = {}) {
+function createMemoryR2Bucket({ hit = null, failGet = false } = {}) {
   const objects = new Map();
   const gets = [];
   const puts = [];
@@ -163,6 +163,7 @@ function createMemoryR2Bucket({ hit = null } = {}) {
     puts,
     async get(key) {
       gets.push(key);
+      if (failGet) throw new Error('R2 get failed.');
       const item = objects.get(key) || objects.get('*');
       if (!item) return null;
       return {
@@ -325,8 +326,56 @@ test('TTS route serves pre-cached Gemini audio before provider generation', asyn
     assert.deepEqual([...bytes], [9, 8, 7]);
     assert.equal(providerCalls, 0);
     assert.equal(bucket.gets.length, 1);
-    assert.match(bucket.gets[0], /\/Sulafat\/standard\/early\//);
+    assert.match(bucket.gets[0], /\/Sulafat\/standard\/[^/]+\/early\//);
     assert.equal(bucket.puts.length, 0);
+    const limiterRows = server.DB.db.prepare(`
+      SELECT limiter_key
+      FROM request_limits
+      WHERE limiter_key LIKE 'tts-%'
+    `).all();
+    const limiterPrefixes = limiterRows.map((row) => row.limiter_key.split(':')[0]).sort();
+    assert.deepEqual(limiterPrefixes, ['tts-account', 'tts-ip']);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
+test('TTS route rate limits cached Gemini audio before reading R2', async () => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    throw new Error('Provider should not be called for rate-limited cached audio.');
+  };
+  const bucket = createMemoryR2Bucket({
+    hit: {
+      bytes: [9, 8, 7],
+      contentType: 'audio/mpeg',
+    },
+  });
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    const prompt = await startSpellingPrompt(server);
+    await seedRateLimit(server, 'tts-account', 'adult-a', 120);
+
+    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({
+      learnerId: prompt.learnerId,
+      promptToken: prompt.promptToken,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Sulafat',
+    }));
+    const payload = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.code, 'tts_rate_limited');
+    assert.equal(providerCalls, 0);
+    assert.equal(bucket.gets.length, 0);
   } finally {
     globalThis.fetch = originalFetch;
     server.close();
@@ -373,8 +422,83 @@ test('TTS route stores generated Gemini audio under the buffered batch key', asy
     assert.equal(calls[0].body.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName, 'Sulafat');
     assert.match(calls[0].body.contents[0].parts[0].text, /Generate speech only/);
     assert.equal(bucket.puts.length, 1);
-    assert.match(bucket.puts[0].key, /\/Sulafat\/slow\/early\/\d+\.wav$/);
+    assert.match(bucket.puts[0].key, /\/Sulafat\/slow\/[^/]+\/early\/\d+\.wav$/);
     assert.equal(bucket.puts[0].options.httpMetadata.contentType, 'audio/wav');
+    assert.ok(bucket.puts[0].options.customMetadata.contentKey);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
+test('TTS buffered Gemini keys separate accounts sharing the same spelling slug', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => geminiAudioResponse();
+  const bucket = createMemoryR2Bucket();
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      GEMINI_API_KEY: 'test-gemini-key',
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    const promptA = await startSpellingPrompt(server, { accountId: 'adult-a', learnerId: 'learner-a' });
+    await server.fetchAs('adult-a', 'https://repo.test/api/tts', ttsRequest({
+      learnerId: promptA.learnerId,
+      promptToken: promptA.promptToken,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Iapetus',
+    }));
+
+    const promptB = await startSpellingPrompt(server, { accountId: 'adult-b', learnerId: 'learner-b' });
+    await server.fetchAs('adult-b', 'https://repo.test/api/tts', ttsRequest({
+      learnerId: promptB.learnerId,
+      promptToken: promptB.promptToken,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Iapetus',
+    }));
+
+    assert.equal(bucket.puts.length, 2);
+    assert.match(bucket.puts[0].key, /\/Iapetus\/standard\/[^/]+\/early\/\d+\.wav$/);
+    assert.match(bucket.puts[1].key, /\/Iapetus\/standard\/[^/]+\/early\/\d+\.wav$/);
+    assert.notEqual(bucket.puts[0].key, bucket.puts[1].key);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
+test('TTS route falls back to provider generation when R2 reads fail', async () => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    return geminiAudioResponse();
+  };
+  const bucket = createMemoryR2Bucket({ failGet: true });
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      GEMINI_API_KEY: 'test-gemini-key',
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    const prompt = await startSpellingPrompt(server);
+    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({
+      learnerId: prompt.learnerId,
+      promptToken: prompt.promptToken,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Iapetus',
+    }));
+    const bytes = new Uint8Array(await response.arrayBuffer());
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('x-ks2-tts-cache'), 'unavailable');
+    assert.equal(String.fromCharCode(...bytes.slice(0, 4)), 'RIFF');
+    assert.equal(providerCalls, 1);
+    assert.equal(bucket.puts.length, 0);
   } finally {
     globalThis.fetch = originalFetch;
     server.close();
@@ -412,7 +536,7 @@ test('TTS cache-only requests warm Gemini audio without returning playback bytes
     assert.equal(bytes.length, 0);
     assert.equal(providerCalls, 1);
     assert.equal(bucket.puts.length, 1);
-    assert.match(bucket.puts[0].key, /\/Iapetus\/standard\/early\/\d+\.wav$/);
+    assert.match(bucket.puts[0].key, /\/Iapetus\/standard\/[^/]+\/early\/\d+\.wav$/);
   } finally {
     globalThis.fetch = originalFetch;
     server.close();
