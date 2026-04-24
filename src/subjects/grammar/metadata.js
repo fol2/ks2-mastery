@@ -253,6 +253,61 @@ function statsFromConcepts(concepts) {
   };
 }
 
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function humanLabel(id) {
+  return String(id || '')
+    .replace(/_confusion$/, '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function asTimestamp(value, fallback = 0) {
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value);
+    if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+  }
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric >= 0 ? numeric : fallback;
+}
+
+function fallbackMisconceptionPatterns(counts = {}) {
+  if (!isPlainObject(counts)) return [];
+  return Object.entries(counts)
+    .map(([id, rawEntry]) => {
+      const entry = isPlainObject(rawEntry) ? rawEntry : {};
+      return {
+        subjectId: 'grammar',
+        id,
+        label: `${humanLabel(id)} pattern`,
+        count: Math.max(0, Math.floor(Number(entry.count) || 0)),
+        lastSeenAt: asTimestamp(entry.lastSeenAt, 0),
+        source: 'grammar-state',
+      };
+    })
+    .filter((entry) => entry.count > 0)
+    .sort((a, b) => (b.count - a.count) || (b.lastSeenAt - a.lastSeenAt))
+    .slice(0, 5);
+}
+
+function progressSnapshotFromConcepts(concepts) {
+  const correct = concepts.reduce((sum, concept) => sum + (Number(concept.correct) || 0), 0);
+  const wrong = concepts.reduce((sum, concept) => sum + (Number(concept.wrong) || 0), 0);
+  const attempts = correct + wrong;
+  return {
+    subjectId: 'grammar',
+    totalConcepts: concepts.length,
+    trackedConcepts: concepts.filter((concept) => (Number(concept.attempts) || 0) > 0).length,
+    securedConcepts: concepts.filter((concept) => concept.status === 'secured').length,
+    dueConcepts: concepts.filter((concept) => concept.status === 'due').length,
+    weakConcepts: concepts.filter((concept) => concept.status === 'weak').length,
+    untouchedConcepts: concepts.filter((concept) => concept.status === 'new').length,
+    accuracyPercent: attempts ? Math.round((correct / attempts) * 100) : null,
+  };
+}
+
 export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
   const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
   const concepts = mergeConcepts(raw.analytics?.concepts);
@@ -267,6 +322,11 @@ export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
   const phase = ['dashboard', 'session', 'feedback', 'summary'].includes(raw.phase)
     ? raw.phase
     : 'dashboard';
+  const rawAnalytics = isPlainObject(raw.analytics) ? raw.analytics : {};
+  const misconceptionCounts = isPlainObject(rawAnalytics.misconceptionCounts) ? rawAnalytics.misconceptionCounts : {};
+  const progressSnapshot = isPlainObject(rawAnalytics.progressSnapshot)
+    ? { ...progressSnapshotFromConcepts(concepts), ...rawAnalytics.progressSnapshot }
+    : progressSnapshotFromConcepts(concepts);
 
   return {
     subjectId: GRAMMAR_SUBJECT_ID,
@@ -291,8 +351,15 @@ export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
     stats,
     analytics: {
       concepts,
-      misconceptionCounts: raw.analytics?.misconceptionCounts || {},
-      recentAttempts: Array.isArray(raw.analytics?.recentAttempts) ? raw.analytics.recentAttempts.slice(-12) : [],
+      misconceptionCounts,
+      misconceptionPatterns: Array.isArray(rawAnalytics.misconceptionPatterns)
+        ? rawAnalytics.misconceptionPatterns.slice(0, 5)
+        : fallbackMisconceptionPatterns(misconceptionCounts),
+      questionTypeSummary: Array.isArray(rawAnalytics.questionTypeSummary) ? rawAnalytics.questionTypeSummary.slice(0, 6) : [],
+      progressSnapshot,
+      evidenceSummary: Array.isArray(rawAnalytics.evidenceSummary) ? rawAnalytics.evidenceSummary.slice(0, 4) : [],
+      recentAttempts: Array.isArray(rawAnalytics.recentAttempts) ? rawAnalytics.recentAttempts.slice(-12) : [],
+      recentActivity: Array.isArray(rawAnalytics.recentActivity) ? rawAnalytics.recentActivity.slice(0, 8) : [],
     },
     capabilities: {
       enabledModes: Array.isArray(raw.capabilities?.enabledModes) && raw.capabilities.enabledModes.length
