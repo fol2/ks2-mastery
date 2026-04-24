@@ -8,6 +8,10 @@ import { MONSTERS } from '../src/platform/game/monsters.js';
 import { punctuationMonsterSummaryFromState } from '../src/platform/game/monster-system.js';
 import { buildCodexEntries } from '../src/surfaces/home/data.js';
 import {
+  createPunctuationMasteryKey,
+  PUNCTUATION_RELEASE_ID,
+} from '../shared/punctuation/content.js';
+import {
   bellstormSceneForPhase,
   punctuationMonsterAsset,
 } from '../src/subjects/punctuation/components/punctuation-view-model.js';
@@ -41,15 +45,20 @@ test('punctuation monster view model points at provided branch and stage assets'
 });
 
 test('Codex entries describe Punctuation as secure units rather than spelling words', () => {
+  const masteryKey = createPunctuationMasteryKey({
+    releaseId: PUNCTUATION_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+  });
   const summary = punctuationMonsterSummaryFromState({
     pealark: {
-      mastered: ['punctuation:release:endmarks:sentence-endings-core'],
+      mastered: [masteryKey],
       publishedTotal: 1,
       caught: true,
       branch: 'b1',
     },
     carillon: {
-      mastered: ['punctuation:release:endmarks:sentence-endings-core'],
+      mastered: [masteryKey],
       publishedTotal: 10,
       caught: true,
       branch: 'b2',

@@ -1,5 +1,7 @@
+import { PUNCTUATION_CURRENT_RELEASE_ID } from '../../src/subjects/punctuation/service-contract.js';
+
 export const PUNCTUATION_SUBJECT_ID = 'punctuation';
-export const PUNCTUATION_RELEASE_ID = 'punctuation-r3-endmarks-apostrophe-speech-comma-flow-boundary';
+export const PUNCTUATION_RELEASE_ID = PUNCTUATION_CURRENT_RELEASE_ID;
 
 export const PUNCTUATION_READINESS_ROWS = Object.freeze([
   'retrieve_discriminate',

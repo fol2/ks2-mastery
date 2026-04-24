@@ -74,6 +74,64 @@ test('first secure Punctuation unit records a cluster monster and the grand aggr
   assert.equal(repository.state().pealark.mastered.length, 1);
 });
 
+test('current release monster progress ignores mastery keys from previous releases', () => {
+  const oldReleaseId = 'punctuation-r2-endmarks-apostrophe-speech-comma-flow';
+  const oldMasteryKey = createPunctuationMasteryKey({
+    releaseId: oldReleaseId,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+  });
+  const repository = makeRepository({
+    pealark: { mastered: [oldMasteryKey], caught: true, publishedTotal: 1 },
+    carillon: { mastered: [oldMasteryKey], caught: true, publishedTotal: 10 },
+  });
+
+  assert.equal(progressForPunctuationMonster(repository.state(), 'pealark', { publishedTotal: 1 }).mastered, 0);
+  assert.equal(progressForPunctuationMonster(repository.state(), 'carillon', { publishedTotal: 10 }).mastered, 0);
+
+  rewardEventsFromPunctuationEvents([endmarkEvent], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  const state = repository.state();
+  const pealark = progressForPunctuationMonster(state, 'pealark', { publishedTotal: 1 });
+  const carillon = progressForPunctuationMonster(state, 'carillon', { publishedTotal: 10 });
+
+  assert.deepEqual(state.pealark.mastered, [oldMasteryKey, endmarkEvent.masteryKey]);
+  assert.deepEqual(pealark.masteredList, [endmarkEvent.masteryKey]);
+  assert.equal(pealark.mastered, 1);
+  assert.equal(carillon.mastered, 1);
+});
+
+test('previous release reward events cannot reserve current release mastery keys', () => {
+  const oldReleaseId = 'punctuation-r2-endmarks-apostrophe-speech-comma-flow';
+  const oldEvent = {
+    ...endmarkEvent,
+    id: 'punctuation.unit-secured:learner-a:r2:endmarks',
+    releaseId: oldReleaseId,
+    masteryKey: createPunctuationMasteryKey({
+      releaseId: oldReleaseId,
+      clusterId: 'endmarks',
+      rewardUnitId: 'sentence-endings-core',
+    }),
+  };
+  const repository = makeRepository();
+
+  assert.deepEqual(rewardEventsFromPunctuationEvents([oldEvent], {
+    gameStateRepository: repository,
+    random: () => 0,
+  }), []);
+  assert.deepEqual(repository.state(), {});
+  assert.equal(repository.writes(), 0);
+
+  const currentEvents = rewardEventsFromPunctuationEvents([endmarkEvent], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.equal(currentEvents.some((event) => event.monsterId === 'pealark'), true);
+  assert.deepEqual(repository.state().pealark.mastered, [endmarkEvent.masteryKey]);
+});
+
 test('Apostrophe cluster reaches stage 4 when all published units are secure', () => {
   const repository = makeRepository();
   recordPunctuationRewardUnitMastery({

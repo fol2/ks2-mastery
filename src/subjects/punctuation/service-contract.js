@@ -1,4 +1,5 @@
 export const PUNCTUATION_SERVICE_STATE_VERSION = 1;
+export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-r3-endmarks-apostrophe-speech-comma-flow-boundary';
 
 export const PUNCTUATION_PHASES = Object.freeze([
   'setup',

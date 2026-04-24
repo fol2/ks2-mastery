@@ -268,11 +268,19 @@ function sessionFocus(session = {}, indexes = PUNCTUATION_CONTENT_INDEXES) {
   return [...skills];
 }
 
+function currentPublishedRewardUnits(data, indexes = PUNCTUATION_CONTENT_INDEXES) {
+  const publishedKeys = new Set(indexes.publishedRewardUnits.map((unit) => unit.masteryKey));
+  return Object.entries(data.progress.rewardUnits)
+    .filter(([key, unit]) => publishedKeys.has(unit.masteryKey || key))
+    .map(([, unit]) => unit);
+}
+
 function statsFromData(data, indexes = PUNCTUATION_CONTENT_INDEXES, now = Date.now) {
   const publishedItems = indexes.items.filter((item) => indexes.skillById.get(item.skillIds?.[0])?.published);
   const snaps = publishedItems.map((item) => memorySnapshot(data.progress.items[item.id], now));
   const attempts = data.progress.attempts.length;
   const correct = data.progress.attempts.filter((attempt) => attempt.correct).length;
+  const securedRewardUnits = currentPublishedRewardUnits(data, indexes);
   return {
     total: publishedItems.length,
     secure: snaps.filter((snap) => snap.bucket === 'secure').length,
@@ -283,7 +291,7 @@ function statsFromData(data, indexes = PUNCTUATION_CONTENT_INDEXES, now = Date.n
     correct,
     accuracy: attempts ? Math.round((correct / attempts) * 100) : 0,
     publishedRewardUnits: indexes.publishedRewardUnits.length,
-    securedRewardUnits: Object.keys(data.progress.rewardUnits).length,
+    securedRewardUnits: securedRewardUnits.length,
     sessionsCompleted: data.progress.sessionsCompleted,
   };
 }
@@ -317,7 +325,7 @@ function analyticsFromData(data, indexes = PUNCTUATION_CONTENT_INDEXES, now = Da
       : 0,
     sessionsCompleted: data.progress.sessionsCompleted,
     skillRows,
-    rewardUnits: Object.values(data.progress.rewardUnits),
+    rewardUnits: currentPublishedRewardUnits(data, indexes),
     recentMistakes: data.progress.attempts.filter((attempt) => !attempt.correct).slice(-8).reverse(),
   };
 }
@@ -373,6 +381,14 @@ function roundLengthFromPrefs(prefs = {}) {
   return Math.max(1, Number.parseInt(value, 10) || 4);
 }
 
+function prefsForSession(session = {}, fallback = {}) {
+  return normalisePunctuationPrefs({
+    ...fallback,
+    mode: session.mode || fallback.mode,
+    roundLength: session.length || fallback.roundLength || fallback.length,
+  });
+}
+
 function sessionSummary(session, data, indexes, now = Date.now) {
   const total = Number(session?.answeredCount) || 0;
   const correct = Number(session?.correctCount) || 0;
@@ -389,7 +405,7 @@ function sessionSummary(session, data, indexes, now = Date.now) {
     misconceptionTags: normaliseStringArray(session?.misconceptionTags),
     publishedScope: PUNCTUATION_CONTENT_MANIFEST.publishedScopeCopy,
     rewardProgress: {
-      secured: Object.keys(data.progress.rewardUnits).length,
+      secured: currentPublishedRewardUnits(data, indexes).length,
       published: indexes.publishedRewardUnits.length,
     },
   };
@@ -662,7 +678,7 @@ export function createPunctuationService({
         session: { ...state.session, phase: 'active-item' },
         data,
         indexes,
-        prefs: data.prefs,
+        prefs: prefsForSession(state.session, data.prefs),
         now: clock,
         random,
       });
@@ -693,7 +709,15 @@ export function createPunctuationService({
           events: [createPunctuationSessionCompletedEvent({ learnerId, session: nextSession, summary, createdAt: clock() })],
         });
       }
-      const nextState = nextActiveState({ learnerId, session: nextSession, data, indexes, prefs: data.prefs, now: clock, random });
+      const nextState = nextActiveState({
+        learnerId,
+        session: nextSession,
+        data,
+        indexes,
+        prefs: prefsForSession(nextSession, data.prefs),
+        now: clock,
+        random,
+      });
       syncPracticeSession(repository, learnerId, nextState, clock);
       return stateTransition(nextState);
     },
