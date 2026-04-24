@@ -84,7 +84,7 @@ test('Apostrophe cluster reaches stage 4 when all published units are secure', (
     masteryKey: masteryKey('apostrophe', 'apostrophe-contractions-core'),
     monsterId: 'claspin',
     publishedTotal: 2,
-    aggregatePublishedTotal: 7,
+    aggregatePublishedTotal: 10,
     gameStateRepository: repository,
     random: () => 0,
   });
@@ -96,7 +96,7 @@ test('Apostrophe cluster reaches stage 4 when all published units are secure', (
     masteryKey: masteryKey('apostrophe', 'apostrophe-possession-core'),
     monsterId: 'claspin',
     publishedTotal: 2,
-    aggregatePublishedTotal: 7,
+    aggregatePublishedTotal: 10,
     gameStateRepository: repository,
     random: () => 0,
   });
@@ -115,13 +115,33 @@ test('Comma / Flow cluster reaches stage 4 when all published units are secure',
       masteryKey: masteryKey('comma_flow', rewardUnitId),
       monsterId: 'curlune',
       publishedTotal: 3,
-      aggregatePublishedTotal: 7,
+      aggregatePublishedTotal: 10,
       gameStateRepository: repository,
       random: () => 0,
     });
   }
 
   assert.equal(progressForPunctuationMonster(repository.state(), 'curlune', { publishedTotal: 3 }).stage, 4);
+});
+
+test('Boundary cluster reaches stage 4 when all published units are secure', () => {
+  const repository = makeRepository();
+  for (const rewardUnitId of ['semicolons-core', 'dash-clauses-core', 'hyphens-core']) {
+    recordPunctuationRewardUnitMastery({
+      learnerId: 'learner-a',
+      releaseId: PUNCTUATION_RELEASE_ID,
+      clusterId: 'boundary',
+      rewardUnitId,
+      masteryKey: masteryKey('boundary', rewardUnitId),
+      monsterId: 'hyphang',
+      publishedTotal: 3,
+      aggregatePublishedTotal: 10,
+      gameStateRepository: repository,
+      random: () => 0,
+    });
+  }
+
+  assert.equal(progressForPunctuationMonster(repository.state(), 'hyphang', { publishedTotal: 3 }).stage, 4);
 });
 
 test('published-release aggregate reaches stage 4 only for current published denominator', () => {
@@ -134,6 +154,9 @@ test('published-release aggregate reaches stage 4 only for current published den
     ['comma_flow', 'list-commas-core', 'curlune', 3],
     ['comma_flow', 'fronted-adverbials-core', 'curlune', 3],
     ['comma_flow', 'comma-clarity-core', 'curlune', 3],
+    ['boundary', 'semicolons-core', 'hyphang', 3],
+    ['boundary', 'dash-clauses-core', 'hyphang', 3],
+    ['boundary', 'hyphens-core', 'hyphang', 3],
   ]) {
     recordPunctuationRewardUnitMastery({
       learnerId: 'learner-a',
@@ -143,13 +166,13 @@ test('published-release aggregate reaches stage 4 only for current published den
       masteryKey: masteryKey(clusterId, rewardUnitId),
       monsterId,
       publishedTotal,
-      aggregatePublishedTotal: 7,
+      aggregatePublishedTotal: 10,
       gameStateRepository: repository,
       random: () => 0,
     });
   }
-  const carillon = progressForPunctuationMonster(repository.state(), 'carillon', { publishedTotal: 7 });
-  assert.equal(carillon.mastered, 7);
+  const carillon = progressForPunctuationMonster(repository.state(), 'carillon', { publishedTotal: 10 });
+  assert.equal(carillon.mastered, 10);
   assert.equal(carillon.stage, 4);
 });
 

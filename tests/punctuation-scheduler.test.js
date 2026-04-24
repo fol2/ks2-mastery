@@ -54,6 +54,21 @@ test('comma flow focus mode selects published comma cluster items only', () => {
   assert.equal(clusterModeForCluster('comma_flow'), 'comma_flow');
 });
 
+test('boundary focus mode selects published boundary cluster items only', () => {
+  const result = selectPunctuationItem({
+    progress: { items: {} },
+    session: { answeredCount: 0, recentItemIds: [] },
+    prefs: { mode: 'boundary' },
+    now: 0,
+    random: () => 0,
+  });
+
+  assert.equal(result.targetClusterId, 'boundary');
+  assert.equal(result.item.clusterId, 'boundary');
+  assert.equal(result.item.id, 'sc_choose_rain_pitch');
+  assert.equal(clusterModeForCluster('boundary'), 'boundary');
+});
+
 test('scheduler keeps candidate windows bounded for expanded manifests', async () => {
   const { PUNCTUATION_CONTENT_MANIFEST, createPunctuationContentIndexes } = await import('../shared/punctuation/content.js');
   const extraItems = Array.from({ length: 500 }, (_, index) => ({

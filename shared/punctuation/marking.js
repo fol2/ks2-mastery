@@ -9,6 +9,8 @@ const FACET_LABELS = Object.freeze({
   capitalisation: 'Capital letters',
   preservation: 'Target words preserved',
   comma_placement: 'Comma placement',
+  boundary_mark: 'Boundary mark',
+  hyphenated_phrase: 'Hyphenated phrase',
   terminal_punctuation: 'Terminal punctuation',
   unwanted_punctuation: 'No duplicated punctuation outside the quote',
 });
@@ -206,6 +208,33 @@ function primaryCommaTag(item, fallback) {
   return itemTags(item).find((tag) => tag.startsWith('comma.')) || fallback;
 }
 
+function boundaryBetweenClauses(text, validator = {}) {
+  const clean = canonicalPunctuationText(text);
+  const lower = clean.toLowerCase();
+  const left = canonicalPunctuationText(validator.left || '');
+  const right = canonicalPunctuationText(validator.right || '');
+  const leftLower = left.toLowerCase();
+  const rightLower = right.toLowerCase();
+  const leftIndex = leftLower ? lower.indexOf(leftLower) : -1;
+  const rightIndex = rightLower ? lower.indexOf(rightLower, Math.max(0, leftIndex + leftLower.length)) : -1;
+  const wordsOk = leftIndex >= 0 && rightIndex > leftIndex;
+  const between = wordsOk ? clean.slice(leftIndex + left.length, rightIndex) : '';
+  const mark = String(validator.mark || ';');
+  const markOk = mark.trim() === ';'
+    ? /^\s*;\s*$/.test(between)
+    : /^\s+-\s+$/.test(between);
+  return { wordsOk, markOk, between, mark };
+}
+
+function hyphenatedPhrase(text, phrase) {
+  const clean = canonicalPunctuationText(text);
+  const phraseText = canonicalPunctuationText(phrase || '').toLowerCase();
+  const phraseWords = phraseText.replace(/-/g, ' ').split(/\s+/).filter(Boolean);
+  const wordsOk = phraseWords.length > 0 && wordSequencePreserved(clean, phraseWords);
+  const hyphenOk = Boolean(phraseText) && clean.toLowerCase().includes(phraseText);
+  return { wordsOk, hyphenOk };
+}
+
 export function evaluateSpeechRubric(answer, rubric = {}) {
   const text = normaliseAnswerText(answer);
   const tags = [];
@@ -358,6 +387,58 @@ function markTransfer(item, answer) {
       note: rubric.correct ? 'The spoken words are punctuated as a question.' : 'Include inverted commas around the spoken words and keep the question mark with the speech.',
       misconceptionTags: rubric.misconceptionTags,
       facets: rubric.facets,
+    };
+  }
+
+  if (validator.type === 'requiresBoundaryBetweenClauses') {
+    const { wordsOk, markOk, between, mark } = boundaryBetweenClauses(text, validator);
+    const capitalOk = sentenceStartsWithCapital(text);
+    const terminalOk = sentenceEnds(text);
+    const correct = wordsOk && markOk && capitalOk && terminalOk;
+    const tags = [];
+    const isSemicolon = String(mark).trim() === ';';
+    if (!wordsOk) tags.push('boundary.words_changed');
+    if (wordsOk && !markOk) {
+      if (isSemicolon && /,/.test(between)) tags.push('boundary.comma_splice');
+      else tags.push(isSemicolon ? 'boundary.semicolon_missing' : 'boundary.dash_missing');
+    }
+    if (!capitalOk) tags.push('boundary.capitalisation_missing');
+    if (!terminalOk) tags.push('boundary.terminal_missing');
+    return {
+      correct,
+      expected: item.model || '',
+      note: correct ? 'The related clauses are joined with the target boundary mark.' : 'Keep both clauses in order and put the target boundary mark between them.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('boundary_mark', markOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+      ],
+    };
+  }
+
+  if (validator.type === 'requiresHyphenatedPhrase') {
+    const { wordsOk, hyphenOk } = hyphenatedPhrase(text, validator.phrase);
+    const capitalOk = sentenceStartsWithCapital(text);
+    const terminalOk = sentenceEnds(text);
+    const correct = wordsOk && hyphenOk && capitalOk && terminalOk;
+    const tags = [];
+    if (!wordsOk) tags.push('boundary.words_changed');
+    if (wordsOk && !hyphenOk) tags.push('boundary.hyphen_missing');
+    if (!capitalOk) tags.push('boundary.capitalisation_missing');
+    if (!terminalOk) tags.push('boundary.terminal_missing');
+    return {
+      correct,
+      expected: item.model || '',
+      note: correct ? `The phrase ${validator.phrase} is hyphenated clearly.` : `Include the exact hyphenated phrase ${validator.phrase} in a complete sentence.`,
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('hyphenated_phrase', hyphenOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+      ],
     };
   }
 
