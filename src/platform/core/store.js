@@ -1,7 +1,7 @@
 import { uid } from './utils.js';
 import { buildSubjectRegistry } from './subject-contract.js';
 import { validatePlatformRepositories } from './repositories/contract.js';
-import { normaliseLearnersSnapshot } from './repositories/helpers.js';
+import { cloneSerialisable, normaliseLearnersSnapshot } from './repositories/helpers.js';
 import {
   defaultPersistenceSnapshot,
   normalisePersistenceSnapshot,
@@ -158,6 +158,12 @@ function normaliseTransientUi(rawValue) {
   const rawDrillResult = typeof raw.spellingWordBankDrillResult === 'string'
     ? raw.spellingWordBankDrillResult
     : '';
+  const wordDetail = raw.spellingWordDetail
+    && typeof raw.spellingWordDetail === 'object'
+    && !Array.isArray(raw.spellingWordDetail)
+    && typeof raw.spellingWordDetail.slug === 'string'
+    ? cloneSerialisable(raw.spellingWordDetail)
+    : null;
   return {
     spellingAnalyticsWordSearch: typeof raw.spellingAnalyticsWordSearch === 'string'
       ? raw.spellingAnalyticsWordSearch.slice(0, 80)
@@ -172,6 +178,7 @@ function normaliseTransientUi(rawValue) {
       ? raw.spellingWordBankDrillTyped.slice(0, 80)
       : '',
     spellingWordBankDrillResult: VALID_WORD_DRILL_RESULTS.has(rawDrillResult) ? rawDrillResult : null,
+    spellingWordDetail: wordDetail,
   };
 }
 
@@ -180,6 +187,7 @@ function closeSpellingWordDetailTransientUi(transientUi) {
     ...transientUi,
     spellingWordDetailSlug: '',
     spellingWordDetailMode: 'explain',
+    spellingWordDetail: null,
     spellingWordBankDrillTyped: '',
     spellingWordBankDrillResult: null,
   };
@@ -193,6 +201,7 @@ function isCleanSpellingSetupEntry(spellingUi, transientUi) {
     && !spellingUi.error
     && !spellingUi.awaitingAdvance
     && !transientUi?.spellingWordDetailSlug
+    && !transientUi?.spellingWordDetail
     && !transientUi?.spellingWordBankDrillTyped
     && !transientUi?.spellingWordBankDrillResult;
 }

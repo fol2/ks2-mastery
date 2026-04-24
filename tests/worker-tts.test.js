@@ -2,6 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { sha256 } from '../worker/src/auth.js';
+import {
+  buildSpellingWordBankAudioCue,
+  resolveSpellingAudioRequest,
+} from '../worker/src/subjects/spelling/audio.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a' } = {}) {
@@ -367,6 +371,63 @@ test('TTS route supports server-tokened word bank vocabulary audio', async () =>
     globalThis.fetch = originalFetch;
     server.close();
   }
+});
+
+test('word-bank vocabulary audio tokens do not require example sentences', async () => {
+  const word = {
+    slug: 'century',
+    word: 'century',
+    sentence: '',
+  };
+  const repository = {
+    async readSubjectRuntime() {
+      return { subjectRecord: { ui: { phase: 'dashboard' } } };
+    },
+    async readSpellingRuntimeContent() {
+      return {
+        snapshot: {
+          wordBySlug: { century: word },
+        },
+      };
+    },
+  };
+
+  const wordCue = await buildSpellingWordBankAudioCue({
+    learnerId: 'learner-a',
+    word,
+    wordOnly: true,
+  });
+  const dictationCue = await buildSpellingWordBankAudioCue({
+    learnerId: 'learner-a',
+    word,
+  });
+
+  assert.ok(wordCue.promptToken);
+  assert.ok(dictationCue.promptToken);
+  assert.equal(wordCue.promptToken, dictationCue.promptToken);
+
+  const wordRequest = await resolveSpellingAudioRequest({
+    repository,
+    accountId: 'adult-a',
+    body: {
+      learnerId: 'learner-a',
+      promptToken: wordCue.promptToken,
+      slug: 'century',
+      wordOnly: true,
+    },
+  });
+  const dictationRequest = await resolveSpellingAudioRequest({
+    repository,
+    accountId: 'adult-a',
+    body: {
+      learnerId: 'learner-a',
+      promptToken: dictationCue.promptToken,
+      slug: 'century',
+    },
+  });
+
+  assert.equal(wordRequest.transcript, 'century');
+  assert.equal(dictationRequest.transcript, 'The word is century. The word is century.');
 });
 
 test('TTS route reports missing selected provider configuration clearly', async () => {
