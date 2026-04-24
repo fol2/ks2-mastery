@@ -84,9 +84,11 @@ test('worker subject runtime registers Grammar command handlers', async () => {
     'satsset',
     'trouble',
     'surgery',
+    'builder',
   ]);
   assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
   assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'surgery'), false);
+  assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'builder'), false);
 });
 
 test('worker subject runtime starts Grammar trouble drills against weak concepts', async () => {
@@ -312,6 +314,58 @@ test('Grammar command route starts explicit templates without inheriting stored 
   assert.equal(start.body.subjectReadModel.session.currentItem.templateId, sample.id);
   assert.equal(start.body.subjectReadModel.session.focusConceptId, '');
   assert.equal(start.body.subjectReadModel.prefs.focusConceptId, 'word_classes');
+
+  DB.close();
+});
+
+test('Grammar command route accepts sentence builder mode', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-builder-route-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'builder',
+      roundLength: 2,
+      seed: 120,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  assert.equal(start.body.subjectReadModel.phase, 'session');
+  assert.equal(start.body.subjectReadModel.session.mode, 'builder');
+  assert.equal(start.body.subjectReadModel.session.type, 'sentence-builder');
+  assert.equal(start.body.subjectReadModel.session.focusConceptId, '');
+  assert.match(start.body.subjectReadModel.session.currentItem.questionType, /^(build|rewrite)$/);
+  assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'builder'), false);
+
+  DB.close();
+});
+
+test('Grammar command route rejects non-builder template overrides in builder mode', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-builder-route-template-bypass',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'builder',
+      roundLength: 2,
+      seed: 120,
+      templateId: 'sentence_type_table',
+    },
+  });
+
+  assert.equal(start.response.status, 400, JSON.stringify(start.body));
+  assert.equal(start.body.code, 'grammar_template_unavailable_for_mode');
 
   DB.close();
 });

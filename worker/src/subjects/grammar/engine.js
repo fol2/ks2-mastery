@@ -20,8 +20,10 @@ const DEFAULT_MINI_SET_LENGTH = 8;
 const SHORT_RESPONSE_TEXT_LIMIT = 512;
 const LONG_RESPONSE_TEXT_LIMIT = 2000;
 const LIST_RESPONSE_LIMIT = 40;
-const ENABLED_MODES = new Set(['learn', 'smart', 'satsset', 'trouble', 'surgery']);
-const LOCKED_MODES = Object.freeze(['builder', 'worked', 'faded']);
+const ENABLED_MODES = new Set(['learn', 'smart', 'satsset', 'trouble', 'surgery', 'builder']);
+const LOCKED_MODES = Object.freeze(['worked', 'faded']);
+const NO_STORED_FOCUS_MODES = new Set(['trouble', 'surgery', 'builder']);
+const NO_SESSION_FOCUS_MODES = new Set(['surgery', 'builder']);
 const GRAMMAR_CONCEPT_IDS = new Set(GRAMMAR_CONCEPTS.map((concept) => concept.id));
 
 function isPlainObject(value) {
@@ -400,6 +402,7 @@ function templateFitsMode(template, mode) {
   if (!template) return false;
   if (mode === 'satsset' && !template.satsFriendly) return false;
   if (mode === 'surgery' && !(template.tags || []).includes('surgery')) return false;
+  if (mode === 'builder' && !(template.tags || []).includes('builder')) return false;
   return true;
 }
 
@@ -506,6 +509,7 @@ function normaliseMode(value) {
   const mode = String(value || 'smart').trim().toLowerCase().replace(/[\s_]+/g, '-');
   if (mode === 'mini-set' || mode === 'mini' || mode === 'test') return 'satsset';
   if (mode === 'sentence-surgery') return 'surgery';
+  if (mode === 'sentence-builder') return 'builder';
   return mode || 'smart';
 }
 
@@ -588,11 +592,11 @@ function startSession(state, payload, nowTs, learnerId) {
     ? payload.focusConceptId
     : (typeof payload.skillId === 'string' ? payload.skillId : '');
   const storedFocusConceptId = normaliseStoredFocusConceptId(state.prefs.focusConceptId);
-  const prefsFocusConceptId = mode === 'surgery'
+  const prefsFocusConceptId = NO_SESSION_FOCUS_MODES.has(mode)
     ? ''
     : (hasPayloadFocusConcept
       ? requestedFocusConceptId
-      : (mode === 'trouble' ? '' : storedFocusConceptId));
+      : (NO_STORED_FOCUS_MODES.has(mode) ? '' : storedFocusConceptId));
   const sessionRequestedFocusConceptId = templateId && !hasPayloadFocusConcept
     ? ''
     : prefsFocusConceptId;
@@ -639,7 +643,9 @@ function startSession(state, payload, nowTs, learnerId) {
     id: sessionId,
     type: mode === 'satsset'
       ? 'mini-set'
-      : (mode === 'trouble' ? 'trouble-drill' : (mode === 'surgery' ? 'sentence-surgery' : 'practice')),
+      : (mode === 'trouble'
+        ? 'trouble-drill'
+        : (mode === 'surgery' ? 'sentence-surgery' : (mode === 'builder' ? 'sentence-builder' : 'practice'))),
     mode,
     focusConceptId: sessionFocusConceptId,
     startedAt: nowTs,
@@ -901,7 +907,7 @@ function savePrefs(state, payload) {
   const prefs = isPlainObject(payload.prefs) ? payload.prefs : payload;
   const nextMode = prefs.mode ? normaliseMode(prefs.mode) : state.prefs.mode;
   const hasFocusConcept = Object.prototype.hasOwnProperty.call(prefs, 'focusConceptId');
-  const nextFocusConceptId = nextMode === 'trouble' || nextMode === 'surgery'
+  const nextFocusConceptId = NO_STORED_FOCUS_MODES.has(nextMode)
     ? ''
     : (hasFocusConcept
       ? normaliseStoredFocusConceptId(prefs.focusConceptId)

@@ -16,12 +16,13 @@ function selectedGrammarUi(context) {
 
 function grammarModeKey(value) {
   const mode = String(value || '').trim().toLowerCase().replace(/[\s_]+/g, '-');
+  if (mode === 'sentence-builder') return 'builder';
   return mode === 'sentence-surgery' ? 'surgery' : mode;
 }
 
 function grammarModeUsesFocus(value) {
   const mode = grammarModeKey(value);
-  return mode !== 'trouble' && mode !== 'surgery';
+  return mode !== 'trouble' && mode !== 'surgery' && mode !== 'builder';
 }
 
 function updateGrammarUiForLearner(context, learnerId, updater) {

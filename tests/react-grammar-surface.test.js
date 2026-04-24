@@ -347,6 +347,7 @@ test('Grammar normaliser upgrades stale persisted mode capabilities', () => {
       lockedModes: [
         { id: 'trouble', label: 'Weak concepts drill', reason: 'coming-next' },
         { id: 'surgery', label: 'Sentence surgery', reason: 'coming-next' },
+        { id: 'builder', label: 'Sentence builder', reason: 'coming-next' },
       ],
     },
   });
@@ -355,6 +356,8 @@ test('Grammar normaliser upgrades stale persisted mode capabilities', () => {
   assert.equal(grammar.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
   assert.equal(grammar.capabilities.enabledModes.some((mode) => mode.id === 'surgery'), true);
   assert.equal(grammar.capabilities.lockedModes.some((mode) => mode.id === 'surgery'), false);
+  assert.equal(grammar.capabilities.enabledModes.some((mode) => mode.id === 'builder'), true);
+  assert.equal(grammar.capabilities.lockedModes.some((mode) => mode.id === 'builder'), false);
 });
 
 test('Grammar locked future modes render unavailable without dispatching commands', () => {
@@ -368,7 +371,9 @@ test('Grammar locked future modes render unavailable without dispatching command
   assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Weak concepts drill/);
   assert.match(html, /<button class="grammar-mode" type="button">[\s\S]*Sentence surgery/);
   assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Sentence surgery/);
-  assert.match(html, /Sentence builder[\s\S]*Coming next/);
+  assert.match(html, /<button class="grammar-mode" type="button">[\s\S]*Sentence builder/);
+  assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Sentence builder/);
+  assert.match(html, /Worked examples[\s\S]*Coming next/);
   assert.match(html, /button class="grammar-mode locked" type="button" disabled=""/);
 });
 
@@ -454,4 +459,35 @@ test('Grammar explicit template starts ignore stored focus through the client wr
   assert.equal(grammar.session.currentItem.templateId, sample.id);
   assert.equal(grammar.session.focusConceptId, '');
   assert.equal(grammar.prefs.focusConceptId, 'word_classes');
+});
+
+test('Grammar setup can start sentence builder mode', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-set-focus', { value: 'word_classes' });
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, 'word_classes');
+
+  harness.dispatch('grammar-set-mode', { value: 'builder' });
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.mode, 'builder');
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
+  assert.match(harness.render(), /<select class="input" disabled=""><option value="" selected="">Builder mix<\/option>/);
+
+  harness.dispatch('grammar-set-focus', { value: 'word_classes' });
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
+
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      seed: 123,
+    },
+  });
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.mode, 'builder');
+  assert.equal(grammar.session.type, 'sentence-builder');
+  assert.equal(grammar.session.focusConceptId, '');
+  assert.match(grammar.session.currentItem.questionType, /^(build|rewrite)$/);
 });
