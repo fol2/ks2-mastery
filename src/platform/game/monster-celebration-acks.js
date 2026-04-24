@@ -5,7 +5,6 @@ import {
 
 const ACK_STORAGE_KEY = 'ks2-platform-v2.monster-celebration-acks';
 const ACK_LIMIT = 500;
-const DEFAULT_BASELINE_RECENT_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 
 function storage() {
   return globalThis.localStorage || null;
@@ -64,6 +63,13 @@ function saveLearnerAckEntry(snapshot, learnerId, entry) {
   };
 }
 
+function normaliseIdSet(value) {
+  if (value == null) return null;
+  const values = value instanceof Set ? Array.from(value) : value;
+  if (!Array.isArray(values)) return new Set();
+  return new Set(values.filter((id) => typeof id === 'string' && id));
+}
+
 export function acknowledgedMonsterCelebrationIds(learnerId, { store = storage() } = {}) {
   const snapshot = readSnapshot(store);
   return new Set(learnerAckEntry(snapshot, learnerId).ids);
@@ -90,7 +96,7 @@ export function acknowledgeMonsterCelebrationEvents(events, { learnerId = '', st
 
 function baselineExistingEvents(events, {
   learnerId,
-  baselineRecentWindowMs,
+  baselineEventIds = null,
   now,
   store,
 } = {}) {
@@ -98,16 +104,16 @@ function baselineExistingEvents(events, {
   const entry = learnerAckEntry(snapshot, learnerId);
   if (entry.baselineAt) return entry;
 
-  const cutoff = Math.max(0, Number(now) || Date.now()) - Math.max(0, Number(baselineRecentWindowMs) || 0);
-  const staleIds = (Array.isArray(events) ? events : [])
+  const baselineIds = normaliseIdSet(baselineEventIds);
+  const existingIds = (Array.isArray(events) ? events : [])
     .filter((event) => {
-      const createdAt = Number(event?.createdAt) || 0;
-      return eventId(event) && (!createdAt || createdAt < cutoff);
+      const id = eventId(event);
+      return id && (!baselineIds || baselineIds.has(id));
     })
     .map(eventId);
 
   saveLearnerAckEntry(snapshot, learnerId, {
-    ids: [...new Set([...entry.ids, ...staleIds])],
+    ids: [...new Set([...entry.ids, ...existingIds])],
     baselineAt: Math.max(0, Number(now) || Date.now()),
   });
   writeSnapshot(snapshot, store);
@@ -119,7 +125,7 @@ export function unacknowledgedMonsterCelebrationEvents(events, {
   ignoredIds = new Set(),
   limit = 1,
   baselineExisting = false,
-  baselineRecentWindowMs = DEFAULT_BASELINE_RECENT_WINDOW_MS,
+  baselineEventIds = null,
   now = Date.now(),
   store = storage(),
 } = {}) {
@@ -129,7 +135,7 @@ export function unacknowledgedMonsterCelebrationEvents(events, {
   if (baselineExisting) {
     baselineExistingEvents(scopedEvents, {
       learnerId,
-      baselineRecentWindowMs,
+      baselineEventIds,
       now,
       store,
     });

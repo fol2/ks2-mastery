@@ -525,7 +525,10 @@ test('remote spelling command compensates a logged monster celebration after the
         events: [],
       },
     },
-  }, { command: 'end-session' });
+  }, {
+    command: 'end-session',
+    compensationBaselineEventIds: new Set([olderCatch.id]),
+  });
 
   assert.deepEqual(calls.map(([name]) => name), [
     'reloadFromRepositories',
@@ -557,14 +560,17 @@ test('remote spelling command compensates a logged monster celebration after the
         events: [],
       },
     },
-  }, { command: 'end-session' });
+  }, {
+    command: 'end-session',
+    compensationBaselineEventIds: new Set([olderCatch.id, missedEvolution.id]),
+  });
 
   assert.equal(calls.some(([name]) => name === 'deferMonsterCelebrations'), false);
 });
 
-test('remote spelling compensation baselines old logged celebrations when ack state is empty', () => {
+test('remote spelling compensation baselines recent logged celebrations that existed before command', () => {
   installMemoryStorage();
-  const oldEvolution = {
+  const recentEvolution = {
     id: 'reward.monster:learner-a:inklet:evolve:1:2',
     type: 'reward.monster',
     kind: 'evolve',
@@ -577,13 +583,13 @@ test('remote spelling compensation baselines old logged celebrations when ack st
     },
     previous: { mastered: 9, stage: 0, level: 1, caught: true, branch: 'b1' },
     next: { mastered: 10, stage: 1, level: 2, caught: true, branch: 'b1' },
-    createdAt: Date.now() - (10 * 24 * 60 * 60 * 1000),
+    createdAt: Date.now() - 60_000,
   };
   const { calls, getState, store } = createStoreHarness({
     repositories: {
       eventLog: {
         list() {
-          return [oldEvolution];
+          return [recentEvolution];
         },
       },
     },
@@ -605,10 +611,88 @@ test('remote spelling compensation baselines old logged celebrations when ack st
         events: [],
       },
     },
-  }, { command: 'end-session' });
+  }, {
+    command: 'end-session',
+    compensationBaselineEventIds: new Set([recentEvolution.id]),
+  });
 
   assert.equal(calls.some(([name]) => name === 'deferMonsterCelebrations'), false);
   assert.equal(getState().monsterCelebrations.queue.length, 0);
+});
+
+test('remote spelling command compensates only rewards appended after the command starts', async () => {
+  installMemoryStorage();
+  const now = Date.now();
+  const priorEvolution = {
+    id: 'reward.monster:learner-a:inklet:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: 'learner-a',
+    subjectId: 'spelling',
+    monsterId: 'inklet',
+    monster: {
+      id: 'inklet',
+      name: 'Inklet',
+      accent: '#3E6FA8',
+    },
+    previous: { mastered: 9, stage: 0, level: 1, caught: true, branch: 'b1' },
+    next: { mastered: 10, stage: 1, level: 2, caught: true, branch: 'b1' },
+    createdAt: now - 60_000,
+  };
+  const commandMissedEvolution = {
+    id: 'reward.monster:learner-a:phaeton:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: 'learner-a',
+    subjectId: 'spelling',
+    monsterId: 'phaeton',
+    monster: {
+      id: 'phaeton',
+      name: 'Phaeton',
+      accent: '#7D5CC6',
+    },
+    previous: { mastered: 29, stage: 1, level: 2, caught: true, branch: 'b2' },
+    next: { mastered: 30, stage: 2, level: 3, caught: true, branch: 'b2' },
+    createdAt: now,
+  };
+  const events = [priorEvolution];
+  const { getState, store } = createStoreHarness({
+    repositories: {
+      eventLog: {
+        list(learnerId) {
+          assert.equal(learnerId, 'learner-a');
+          return events;
+        },
+      },
+    },
+  });
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      async send() {
+        events.push(commandMissedEvolution);
+        return {
+          learnerId: 'learner-a',
+          subjectReadModel: { phase: 'summary' },
+          projections: {
+            rewards: {
+              toastEvents: [],
+              events: [],
+            },
+          },
+        };
+      },
+    },
+  });
+
+  assert.equal(handler.runCommand('end-session'), true);
+  await flushPromises();
+
+  assert.equal(getState().monsterCelebrations.queue.length, 1);
+  assert.equal(getState().monsterCelebrations.queue[0].id, commandMissedEvolution.id);
 });
 
 test('remote spelling compensation preserves older recent missed celebrations for later replay', () => {
@@ -672,7 +756,10 @@ test('remote spelling compensation preserves older recent missed celebrations fo
         events: [],
       },
     },
-  }, { command: 'end-session' });
+  }, {
+    command: 'end-session',
+    compensationBaselineEventIds: new Set(),
+  });
 
   assert.equal(getState().monsterCelebrations.queue.length, 1);
   assert.equal(getState().monsterCelebrations.queue[0].id, phaetonEvolution.id);
@@ -699,7 +786,10 @@ test('remote spelling compensation preserves older recent missed celebrations fo
         events: [],
       },
     },
-  }, { command: 'end-session' });
+  }, {
+    command: 'end-session',
+    compensationBaselineEventIds: new Set([directEvolution.id, phaetonEvolution.id]),
+  });
 
   assert.deepEqual(calls.map(([name]) => name), [
     'reloadFromRepositories',
