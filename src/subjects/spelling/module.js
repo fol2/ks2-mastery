@@ -5,6 +5,29 @@ import {
   WORD_BANK_YEAR_FILTER_IDS,
   findWordBankEntry,
 } from './components/spelling-view-model.js';
+import { shouldHandleRemoteSpellingAction } from './remote-actions.js';
+
+function usesServerSyncedSpellingRuntime(context) {
+  const sessionMode = context?.session?.mode || context?.snapshot?.session?.mode || '';
+  if (sessionMode === 'remote-sync' || sessionMode === 'demo-sync') return true;
+
+  const persistence = context?.appState?.persistence || context?.snapshot?.appState?.persistence || null;
+  if (persistence?.mode === 'remote-sync') return true;
+  return persistence?.mode === 'degraded' && persistence?.remoteAvailable === true;
+}
+
+function delegateServerSyncedSpellingAction(action, context) {
+  if (!shouldHandleRemoteSpellingAction(action) || !usesServerSyncedSpellingRuntime(context)) return null;
+
+  if (typeof context?.handleRemoteSpellingAction === 'function') {
+    return Boolean(context.handleRemoteSpellingAction(action, context.data || {}));
+  }
+
+  context?.store?.updateSubjectUi?.('spelling', {
+    error: 'Spelling practice needs the Worker command boundary.',
+  });
+  return true;
+}
 
 function applySpellingTransition(context, transition) {
   if (!transition) return true;
@@ -113,6 +136,9 @@ export const spellingModule = {
     };
   },
   handleAction(action, context) {
+    const delegated = delegateServerSyncedSpellingAction(action, context);
+    if (delegated !== null) return delegated;
+
     const { appState, data, store, service, tts } = context;
     const learnerId = appState.learners.selectedId;
     const ui = service.initState(appState.subjectUi.spelling, learnerId);

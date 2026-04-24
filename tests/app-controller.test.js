@@ -224,6 +224,33 @@ test('controller dispatches spelling transitions through store, repositories, ev
   assert.ok(controller.repositories.practiceSessions.list(learnerId).length >= 1);
 });
 
+test('controller delegates server-synced spelling actions to the remote command boundary', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const remoteCalls = [];
+  const session = { signedIn: true, mode: 'remote-sync', platformRole: 'parent' };
+  const controller = createAppController({
+    repositories,
+    session,
+    extraContext: {
+      session,
+      handleRemoteSpellingAction(action, data) {
+        remoteCalls.push({ action, data });
+        return true;
+      },
+    },
+  });
+  const learnerId = controller.store.getState().learners.selectedId;
+
+  controller.dispatch('open-subject', { subjectId: 'spelling' });
+  controller.dispatch('spelling-start', { source: 'test' });
+
+  assert.deepEqual(remoteCalls, [{ action: 'spelling-start', data: { source: 'test' } }]);
+  assert.equal(controller.store.getState().subjectUi.spelling.phase, 'dashboard');
+  assert.equal(controller.repositories.practiceSessions.list(learnerId).length, 0);
+  assert.equal(controller.runtimeBoundary.list().length, 0);
+});
+
 test('controller keeps late Grammar command responses scoped to their original learner', async () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });
