@@ -86,7 +86,7 @@ It is the intentionally narrow contract for the first expansion slice.
 
 For production, this local service shape is a design and test harness, not the public authority boundary. The scalable path is to mirror the shape behind `POST /api/subjects/:subjectId/command` and subject-specific Worker read models, so future Arithmetic, Reasoning, Grammar and Reading slices can reuse auth, demo, idempotency, stale-write, degraded-mode, and bundle-audit guarantees.
 
-Punctuation proves that path with `POST /api/subjects/punctuation/command`, server-side marking/scheduling, read-model redaction, subject-expansion smoke tests, and bundle lockdown for `shared/punctuation/*`.
+Punctuation proves that path with `POST /api/subjects/punctuation/command`, server-side marking/scheduling, read-model redaction, subject-expansion smoke tests, and bundle lockdown for `shared/punctuation/*`. It also adds the first explicit subject exposure gate: the module can be implementation-ready while `PUNCTUATION_SUBJECT_ENABLED=false` keeps the Worker route, dashboard card, and direct route unavailable until release verification is accepted.
 
 ## Repository and event rules for a new subject
 

@@ -32,6 +32,7 @@
     "APP_HOSTNAME": "ks2.eugnel.uk",
     "AUTH_MODE": "production",
     "ENVIRONMENT": "production",
+    "PUNCTUATION_SUBJECT_ENABLED": "false",
     "SOCIAL_LOGIN_WIRE_ENABLED": "true"
   },
   "d1_databases": [

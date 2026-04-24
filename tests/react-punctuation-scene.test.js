@@ -3,6 +3,14 @@ import assert from 'node:assert/strict';
 
 import { createAppHarness } from './helpers/app-harness.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
+import { SUBJECT_EXPOSURE_GATES } from '../src/platform/core/subject-availability.js';
+
+function createPunctuationHarness() {
+  return createAppHarness({
+    storage: installMemoryStorage(),
+    subjectExposureGates: { [SUBJECT_EXPOSURE_GATES.punctuation]: true },
+  });
+}
 
 function startOneItemPunctuationSession(harness) {
   const learnerId = harness.store.getState().learners.selectedId;
@@ -26,7 +34,7 @@ function answerCurrentItemCorrectly(harness) {
 }
 
 test('punctuation React surface renders setup, active item, feedback and summary states', () => {
-  const harness = createAppHarness({ storage: installMemoryStorage() });
+  const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
 
   const setupHtml = harness.render();
@@ -55,7 +63,7 @@ test('punctuation React surface renders setup, active item, feedback and summary
 });
 
 test('punctuation React surface keeps server-only fields out of active HTML', () => {
-  const harness = createAppHarness({ storage: installMemoryStorage() });
+  const harness = createPunctuationHarness();
   startOneItemPunctuationSession(harness);
 
   const html = harness.render();

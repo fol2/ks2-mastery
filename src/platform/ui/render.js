@@ -1,6 +1,7 @@
 import { escapeHtml } from '../core/utils.js';
 import { platformRoleLabel } from '../access/roles.js';
 import { SUBJECTS, getSubject } from '../core/subject-registry.js';
+import { isSubjectExposed } from '../core/subject-availability.js';
 import { subjectTabLabel } from '../core/subject-runtime.js';
 import { monsterAsset, monsterAssetSrcSet } from '../game/monsters.js';
 import { monsterSummary, monsterSummaryFromSpellingAnalytics } from '../game/monster-system.js';
@@ -1201,6 +1202,21 @@ export function renderSubjectScreen(context) {
   const { appState } = context;
   const subject = resolveSubject(appState.route.subjectId, context);
   const ui = appState.subjectUi[subject.id] || {};
+  if (!isSubjectExposed(subject, context.subjectExposureGates)) {
+    return `
+      <main class="subject-entry-content">
+        <section class="card">
+          <div class="feedback warn">
+            <strong>${escapeHtml(subject.name)} is not available in this deployment yet</strong>
+            <div style="margin-top:8px;">It will appear once the final release checks are complete.</div>
+          </div>
+          <div class="actions" style="margin-top:16px;">
+            <button class="btn ghost" type="button" data-action="navigate-home">Dashboard</button>
+          </div>
+        </section>
+      </main>
+    `;
+  }
   if (!hasWritableLearner(appState)) {
     return `
       <main class="subject-entry-content">

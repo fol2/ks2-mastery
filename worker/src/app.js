@@ -22,7 +22,8 @@ import {
 } from './demo/sessions.js';
 import { normaliseSubjectCommandRequest } from './subjects/command-contract.js';
 import { createWorkerSubjectRuntime } from './subjects/runtime.js';
-import { ForbiddenError } from './errors.js';
+import { ForbiddenError, NotFoundError } from './errors.js';
+import { SUBJECT_EXPOSURE_GATES } from '../../src/platform/core/subject-availability.js';
 
 function withCookies(response, cookies = []) {
   cookies.filter(Boolean).forEach((cookie) => response.headers.append('set-cookie', cookie));
@@ -91,6 +92,7 @@ async function sessionPayload({ session, auth, env, now }) {
   return {
     ok: true,
     auth: auth.describe(),
+    subjectExposureGates: subjectExposureGatesFromEnv(env),
     account: account
       ? {
         id: account.id,
@@ -122,6 +124,7 @@ async function existingDemoSessionPayload({ session, env, now }) {
   const learnerIds = await repository.accessibleLearnerIds(session.accountId);
   return {
     ok: true,
+    subjectExposureGates: subjectExposureGatesFromEnv(env),
     session: {
       accountId: session.accountId,
       learnerId: account?.selected_learner_id || learnerIds[0] || null,
@@ -135,6 +138,26 @@ async function existingDemoSessionPayload({ session, env, now }) {
 function shouldUsePublicReadModels(request, env = {}) {
   if (request.headers.get('x-ks2-public-read-models') === '1') return true;
   return isProductionRuntime(env);
+}
+
+function envFlagEnabled(value) {
+  return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
+}
+
+export function subjectExposureGatesFromEnv(env = {}) {
+  return {
+    [SUBJECT_EXPOSURE_GATES.punctuation]: envFlagEnabled(env.PUNCTUATION_SUBJECT_ENABLED),
+  };
+}
+
+function requireSubjectCommandAvailable(command, env = {}) {
+  if (command?.subjectId !== 'punctuation') return;
+  if (subjectExposureGatesFromEnv(env)[SUBJECT_EXPOSURE_GATES.punctuation]) return;
+  throw new NotFoundError('Subject command is not available.', {
+    code: 'subject_command_not_found',
+    subjectId: command.subjectId,
+    command: command.command,
+  });
 }
 
 function requireDemoWriteAllowed(session) {
@@ -339,6 +362,7 @@ export function createWorkerApp({
             body,
             request,
           });
+          requireSubjectCommandAvailable(command, env);
           await protectDemoSubjectCommand({
             env,
             request,
@@ -387,6 +411,7 @@ export function createWorkerApp({
               idempotency: 'request-receipts',
               merge: 'none',
             },
+            subjectExposureGates: subjectExposureGatesFromEnv(env),
             ...bundle,
           });
         }
@@ -410,6 +435,7 @@ export function createWorkerApp({
               demo: true,
               demoExpiresAt: session.demoExpiresAt || null,
             },
+            subjectExposureGates: subjectExposureGatesFromEnv(env),
             ...bundle,
           });
         }

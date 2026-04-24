@@ -60,10 +60,16 @@ function acceptedAnswers(item) {
   return [...new Set([...accepted, ...model].filter((entry) => typeof entry === 'string' && entry))];
 }
 
+function parseChoiceIndex(value) {
+  if (Number.isSafeInteger(value) && value >= 0) return value;
+  if (typeof value === 'string' && /^\d+$/.test(value)) return Number(value);
+  return null;
+}
+
 function markChoose(item, answer) {
   const raw = isPlainObject(answer) ? answer.choiceIndex ?? answer.value ?? answer.typed : answer;
-  const parsed = Number.parseInt(String(raw ?? ''), 10);
-  const correct = Number.isInteger(parsed) && parsed === Number(item.correctIndex);
+  const parsed = parseChoiceIndex(raw);
+  const correct = parsed != null && parsed === Number(item.correctIndex);
   return {
     correct,
     expected: item.model || item.options?.[item.correctIndex] || '',

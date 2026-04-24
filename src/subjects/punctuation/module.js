@@ -1,4 +1,5 @@
 import { createInitialPunctuationState } from './service-contract.js';
+import { SUBJECT_EXPOSURE_GATES } from '../../platform/core/subject-availability.js';
 
 function applyTransition(context, transition) {
   if (!transition) return true;
@@ -24,6 +25,7 @@ export const punctuationModule = {
   accentTint: '#F7EEDC',
   icon: 'quote',
   available: true,
+  exposureGate: SUBJECT_EXPOSURE_GATES.punctuation,
   reactPractice: true,
   initState() {
     return createInitialPunctuationState();

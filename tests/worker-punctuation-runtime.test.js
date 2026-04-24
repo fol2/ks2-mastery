@@ -24,7 +24,7 @@ function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a'
   `).run(accountId, learnerId, now, now);
 }
 
-function createHarness() {
+function createHarness({ punctuationEnabled = true } = {}) {
   const nowRef = { value: Date.UTC(2026, 0, 1) };
   const DB = createMigratedSqliteD1Database();
   seedAccountLearner(DB);
@@ -36,6 +36,7 @@ function createHarness() {
     DB,
     AUTH_MODE: 'development-stub',
     ENVIRONMENT: 'test',
+    PUNCTUATION_SUBJECT_ENABLED: punctuationEnabled ? 'true' : 'false',
   };
   let revision = 0;
   let sequence = 0;
@@ -144,6 +145,26 @@ test('punctuation command route starts a session and persists through generic ru
   }
 });
 
+test('punctuation command route stays unavailable until the rollout gate is enabled', async () => {
+  const harness = createHarness({ punctuationEnabled: false });
+  try {
+    const start = await harness.postRaw({
+      command: 'start-session',
+      learnerId: 'learner-a',
+      requestId: 'punctuation-gated-start',
+      expectedLearnerRevision: 0,
+      payload: { mode: 'speech', roundLength: '1' },
+    });
+
+    assert.equal(start.response.status, 404);
+    assert.equal(start.body.code, 'subject_command_not_found');
+    assert.equal(harness.DB.db.prepare('SELECT COUNT(*) AS count FROM child_subject_state').get().count, 0);
+    assert.equal(harness.DB.db.prepare('SELECT COUNT(*) AS count FROM practice_sessions').get().count, 0);
+  } finally {
+    harness.close();
+  }
+});
+
 test('punctuation submit returns redacted feedback and completed summary', async () => {
   const harness = createHarness();
   try {
@@ -167,6 +188,28 @@ test('punctuation submit returns redacted feedback and completed summary', async
     assert.equal(completed.count, 1);
   } finally {
     harness.close();
+  }
+});
+
+test('punctuation choice answers reject coerced null, empty, and array indexes', async () => {
+  for (const [label, choiceIndex] of [
+    ['null', null],
+    ['empty string', ''],
+    ['array', [0]],
+  ]) {
+    const harness = createHarness();
+    try {
+      await harness.command('start-session', { mode: 'speech', roundLength: '1' });
+      const submit = await harness.command('submit-answer', { choiceIndex });
+
+      assert.equal(submit.body.subjectReadModel.session.currentItem.mode, 'choose', label);
+      assert.equal(submit.body.subjectReadModel.feedback.kind, 'error', label);
+      assert.equal(submit.body.subjectReadModel.session.correctCount, 0, label);
+      assert.equal(submit.body.domainEvents.some((event) => event.type === 'punctuation.unit-secured'), false, label);
+      assert.equal(submit.body.reactionEvents.length, 0, label);
+    } finally {
+      harness.close();
+    }
   }
 });
 

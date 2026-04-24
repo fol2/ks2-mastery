@@ -98,6 +98,7 @@ export async function startBrowserAppServer({
       env: {
         AUTH_MODE: 'production',
         ENVIRONMENT: 'production',
+        PUNCTUATION_SUBJECT_ENABLED: 'true',
       },
     })
     : null;

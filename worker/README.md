@@ -132,6 +132,8 @@ For Spelling, the Worker owns session creation, word queue selection, scoring, c
 
 For Punctuation, the Worker owns session creation, item selection, deterministic marking, spaced scheduling, misconception events, release-scoped secure-unit progress, completed session writes, Bellstorm Coast reward projection, and the returned read model.
 
+Punctuation remains behind the `PUNCTUATION_SUBJECT_ENABLED` rollout env var. The production default is `false`, so the command route and browser exposure stay unavailable until release verification is accepted and the flag is intentionally changed.
+
 The React client sends user intent and renders the response. It does not use a browser-local Spelling engine as a production fallback.
 
 The same rule applies to Punctuation: the browser must not ship or fall back to `shared/punctuation/*` as a production engine.

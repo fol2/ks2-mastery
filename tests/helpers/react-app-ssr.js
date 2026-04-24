@@ -74,11 +74,12 @@ function loadRenderer() {
         buildSurfaceActions: () => actionsFor(controller),
         buildSurfaceChromeModel: chrome,
         buildHomeModel(appState) {
+          const subjects = controller.contextFor().subjects || SUBJECTS;
           return {
             ...chrome(appState),
             monsterSummary: [],
-            subjects: SUBJECTS,
-            dashboardStats: Object.fromEntries(SUBJECTS.map((subject) => [subject.id, { pct: 0, due: 0, streak: 0, nextUp: 'Ready' }])),
+            subjects,
+            dashboardStats: Object.fromEntries(subjects.map((subject) => [subject.id, { pct: 0, due: 0, streak: 0, nextUp: 'Ready' }])),
             dueTotal: 0,
             roundNumber: 1,
             now: new Date('2026-04-22T12:00:00Z'),

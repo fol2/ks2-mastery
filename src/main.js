@@ -8,6 +8,11 @@ import { createRoot } from 'react-dom/client';
 import { App } from './app/App.jsx';
 import { AuthSurface } from './surfaces/auth/AuthSurface.jsx';
 import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
+import {
+  exposedSubjects,
+  isSubjectExposed,
+  normaliseSubjectExposureGates,
+} from './platform/core/subject-availability.js';
 import { probeRelLuminance } from './platform/ui/luminance.js';
 import { safeParseInt, uid } from './platform/core/utils.js';
 import { normalisePlatformRole } from './platform/access/roles.js';
@@ -191,6 +196,7 @@ if (!boot.repositories) {
 }
 const repositories = boot.repositories;
 globalThis.KS2_AUTH_SESSION = boot.session;
+const subjectExposureGates = normaliseSubjectExposureGates(boot.session.subjectExposureGates);
 await repositories.hydrate();
 
 const services = {
@@ -724,6 +730,7 @@ const controller = createAppController({
   repositories,
   subjects: SUBJECTS,
   session: boot.session,
+  subjectExposureGates,
   runtimeBoundary,
   autoAdvanceDispatchContinue: () => handleRemoteSpellingAction('spelling-continue'),
   tts,
@@ -1155,7 +1162,8 @@ function contextFor(subjectId = null) {
     tts,
     applySubjectTransition,
     runtimeBoundary,
-    subjects: SUBJECTS,
+    subjects: exposedSubjects(SUBJECTS, subjectExposureGates),
+    subjectExposureGates,
     runtimeReadOnly: appState.persistence?.mode === 'degraded',
     ...buildHubModels(appState),
   };
@@ -1174,7 +1182,7 @@ function homeSubjectContext(subject, context) {
 function buildHomeDashboardStats(appState, context) {
   const out = {};
   if (!appState.learners.selectedId) return out;
-  for (const subject of SUBJECTS) {
+  for (const subject of context.subjects || exposedSubjects(SUBJECTS, subjectExposureGates)) {
     if (!subject.getDashboardStats) continue;
     try {
       out[subject.id] = subject.getDashboardStats(appState, homeSubjectContext(subject, context));
@@ -1250,11 +1258,12 @@ function buildSurfaceChromeModel(appState) {
 function buildHomeModel(appState, context) {
   const learnerId = appState.learners.selectedId;
   const canOpenParentHub = Boolean(context.parentHub?.permissions?.canViewParentHub) || !boot.session.signedIn;
+  const visibleSubjects = context.subjects || exposedSubjects(SUBJECTS, subjectExposureGates);
 
   return {
     ...buildSurfaceChromeModel(appState),
     monsterSummary: buildHomeMonsterSummary(learnerId, context),
-    subjects: SUBJECTS,
+    subjects: visibleSubjects,
     dashboardStats: buildHomeDashboardStats(appState, context),
     dueTotal: buildHomeDueTotal(learnerId, context),
     roundNumber: 1,
@@ -1508,8 +1517,13 @@ function handleGlobalAction(action, data) {
   if (action === 'open-subject') {
     if (blockReadOnlyAdultAction(action)) return true;
     clearAdultSurfaceNotice();
+    const subject = getSubject(data.subjectId || 'spelling');
+    if (!isSubjectExposed(subject, subjectExposureGates)) {
+      store.goHome();
+      return true;
+    }
     tts.stop();
-    store.openSubject(data.subjectId || 'spelling', data.tab || 'practice');
+    store.openSubject(subject.id, data.tab || 'practice');
     return true;
   }
 
@@ -2447,6 +2461,10 @@ function handleRemoteSpellingAction(action, data = {}) {
 }
 
 function handleRemotePunctuationAction(action, data = {}) {
+  if (!isSubjectExposed(getSubject('punctuation'), subjectExposureGates)) {
+    store.goHome();
+    return true;
+  }
   if (action === 'punctuation-back') {
     store.updateSubjectUi('punctuation', { phase: 'setup', error: '' });
     return true;
@@ -2461,6 +2479,10 @@ function handleSubjectAction(action, data) {
   const subject = getSubject(appState.route.subjectId || 'spelling');
 
   try {
+    if (!isSubjectExposed(subject, subjectExposureGates)) {
+      store.goHome();
+      return true;
+    }
     const handled = subject.handleAction?.(action, {
       ...contextFor(subject.id),
       data,

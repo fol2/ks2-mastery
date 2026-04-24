@@ -13,6 +13,11 @@ import {
   spellingSessionEnded,
 } from '../game/monster-celebrations.js';
 import { SUBJECTS } from '../core/subject-registry.js';
+import {
+  exposedSubjects,
+  isSubjectExposed,
+  normaliseSubjectExposureGates,
+} from '../core/subject-availability.js';
 import { safeParseInt } from '../core/utils.js';
 import { buildControllerSnapshot, createDefaultControllerUiState } from './controller-snapshot.js';
 import { createAppSideEffectPorts, createNoopTtsPort } from './side-effect-ports.js';
@@ -41,9 +46,11 @@ export function createAppController({
   onEventError = null,
   extraContext = null,
   cacheSubjectUiWrites = false,
+  subjectExposureGates = session?.subjectExposureGates || {},
 } = {}) {
   const ports = createAppSideEffectPorts(portOverrides);
   const services = extraServices;
+  const exposureGates = normaliseSubjectExposureGates(subjectExposureGates);
 
   const eventRuntime = createEventRuntime({
     repositories,
@@ -76,7 +83,7 @@ export function createAppController({
       store,
       repositories,
       services,
-      subjects,
+      subjects: exposedSubjects(subjects, exposureGates),
       session,
       runtimeBoundary,
       uiState,
@@ -208,7 +215,8 @@ export function createAppController({
       tts,
       applySubjectTransition,
       runtimeBoundary,
-      subjects,
+      subjects: exposedSubjects(subjects, exposureGates),
+      subjectExposureGates: exposureGates,
       snapshot: getSnapshot(),
     };
     const additionalContext = typeof extraContext === 'function'
@@ -241,8 +249,13 @@ export function createAppController({
     }
 
     if (action === 'open-subject') {
+      const subject = resolveSubject(subjects, data.subjectId || 'spelling');
+      if (!isSubjectExposed(subject, exposureGates)) {
+        store.goHome();
+        return true;
+      }
       tts.stop();
-      store.openSubject(data.subjectId || 'spelling', data.tab || 'practice');
+      store.openSubject(subject.id, data.tab || 'practice');
       return true;
     }
 
@@ -393,6 +406,10 @@ export function createAppController({
     const subject = resolveSubject(subjects, appState.route.subjectId || 'spelling');
 
     try {
+      if (!isSubjectExposed(subject, exposureGates)) {
+        store.goHome();
+        return true;
+      }
       const handled = subject.handleAction?.(action, {
         ...contextFor(subject.id),
         data,

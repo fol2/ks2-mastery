@@ -1,6 +1,8 @@
+import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createAppHarness } from './helpers/app-harness.js';
+import { SUBJECT_EXPOSURE_GATES } from '../src/platform/core/subject-availability.js';
 import {
   registerGoldenPathSmokeSuite,
   registerSubjectConformanceSuite,
@@ -38,7 +40,11 @@ function answerSpellingCorrectly(harness) {
 }
 
 function createPunctuationHarness({ storage, subjects } = {}) {
-  return createAppHarness({ storage, subjects });
+  return createAppHarness({
+    storage,
+    subjects,
+    subjectExposureGates: { [SUBJECT_EXPOSURE_GATES.punctuation]: true },
+  });
 }
 
 function preparePunctuationHarness(harness) {
@@ -195,6 +201,28 @@ const punctuationSpec = {
     assert.equal(analytics.sessionsCompleted, 1);
   },
 };
+
+test('Punctuation stays off the dashboard and route path until its exposure gate opens', () => {
+  const gated = createAppHarness();
+
+  assert.equal(gated.contextFor().subjects.some((subject) => subject.id === 'punctuation'), false);
+
+  gated.dispatch('open-subject', { subjectId: 'punctuation' });
+  assert.equal(gated.store.getState().route.screen, 'dashboard');
+
+  gated.store.openSubject('punctuation');
+  assert.match(gated.render(), /not available in this deployment yet/);
+
+  const enabled = createAppHarness({
+    subjectExposureGates: { [SUBJECT_EXPOSURE_GATES.punctuation]: true },
+  });
+
+  assert.equal(enabled.contextFor().subjects.some((subject) => subject.id === 'punctuation'), true);
+
+  enabled.dispatch('open-subject', { subjectId: 'punctuation' });
+  assert.equal(enabled.store.getState().route.screen, 'subject');
+  assert.equal(enabled.store.getState().route.subjectId, 'punctuation');
+});
 
 registerSubjectConformanceSuite(spellingSpec);
 registerGoldenPathSmokeSuite(spellingSpec);

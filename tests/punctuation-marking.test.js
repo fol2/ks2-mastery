@@ -87,6 +87,16 @@ test('endmarks and apostrophe marking handles exact answers and constrained tran
   assert.equal(missingToken.misconceptionTags.includes('apostrophe.possession_missing'), true);
 });
 
+test('choice marking accepts integer indexes only without coercing malformed values', () => {
+  const speechChoice = item('sp_choose_reporting_comma');
+  assert.equal(markPunctuationAnswer({ item: speechChoice, answer: { choiceIndex: 0 } }).correct, true);
+  assert.equal(markPunctuationAnswer({ item: speechChoice, answer: { choiceIndex: '0' } }).correct, true);
+
+  for (const choiceIndex of [null, '', [0], '0abc']) {
+    assert.equal(markPunctuationAnswer({ item: speechChoice, answer: { choiceIndex } }).correct, false);
+  }
+});
+
 test('empty, whitespace-only, overlong, and unsupported answer payloads return marked results', () => {
   for (const answer of ['', '   ', { typed: 'x'.repeat(2000) }, { unexpected: true }]) {
     const result = markPunctuationAnswer({ item: item('se_fix_statement'), answer });

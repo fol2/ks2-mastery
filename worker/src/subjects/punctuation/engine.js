@@ -30,6 +30,12 @@ function practiceRecord(record) {
   return record ? normalisePracticeSessionRecord(record) : null;
 }
 
+function parseChoiceIndex(value) {
+  if (Number.isSafeInteger(value) && value >= 0) return value;
+  if (typeof value === 'string' && /^\d+$/.test(value)) return Number(value);
+  return null;
+}
+
 function createServerPersistence({ learnerId, data, now }) {
   let nextData = normaliseServerPunctuationData(data);
   let practiceSession = null;
@@ -71,7 +77,8 @@ function createServerPersistence({ learnerId, data, now }) {
 function typedAnswerFromPayload(payload = {}) {
   if (typeof payload.typed === 'string') return payload.typed;
   if (typeof payload.answer === 'string') return payload.answer;
-  if (Number.isInteger(Number(payload.choiceIndex))) return { choiceIndex: Number(payload.choiceIndex) };
+  const choiceIndex = parseChoiceIndex(payload.choiceIndex);
+  if (choiceIndex != null) return { choiceIndex };
   return '';
 }
 

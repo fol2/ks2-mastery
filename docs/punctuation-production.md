@@ -148,6 +148,8 @@ The Punctuation release gate includes:
 - asset tests for Bellstorm Coast scenes and Punctuation monster artwork
 - bundle/public-output audits proving engine/content source is not shipped to the browser
 
+Production exposure is controlled by the `PUNCTUATION_SUBJECT_ENABLED` Worker env var, which feeds the browser `punctuationProduction` subject exposure gate. The default production value is `false`: the Worker command route, dashboard card, and direct subject route stay unavailable until the full gate has passed and the env var is intentionally flipped.
+
 Before deployment, run:
 
 ```txt
