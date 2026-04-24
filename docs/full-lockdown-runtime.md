@@ -112,6 +112,14 @@ npm run smoke:production:punctuation
 
 It verifies a production demo session, the Punctuation exposure gate, a Worker-owned Punctuation start-submit-summary path, and a Worker-owned English Spelling start path with redacted prompt-token audio.
 
+When Grammar is the deployed change, run:
+
+```bash
+npm run smoke:production:grammar
+```
+
+It verifies a production demo session, a fixed Worker-owned Grammar start-submit-summary path, and the same English Spelling prompt-token start path so Grammar changes do not regress the reference subject.
+
 ## Operations
 
 Wrangler observability is enabled, but production should still alert on the signals that would indicate the lockdown boundary is under stress:
