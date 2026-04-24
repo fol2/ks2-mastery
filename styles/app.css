@@ -708,6 +708,93 @@ textarea:focus-visible {
 .feedback.good { background: var(--good-soft); border-color: #b8dfca; }
 .feedback.warn { background: var(--warn-soft); border-color: #edd9ae; }
 .feedback.bad { background: var(--bad-soft); border-color: #f0c8c5; }
+
+.punctuation-surface {
+  --btn-accent: #B8873F;
+  display: grid;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.punctuation-hero,
+.punctuation-strip {
+  display: grid;
+  align-items: center;
+  gap: 18px;
+}
+
+.punctuation-hero {
+  grid-template-columns: minmax(220px, 0.95fr) minmax(0, 1.05fr);
+}
+
+.punctuation-strip {
+  grid-template-columns: 168px minmax(0, 1fr);
+}
+
+.punctuation-hero img,
+.punctuation-strip img {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-soft);
+}
+
+.punctuation-hero img {
+  aspect-ratio: 16 / 9;
+}
+
+.punctuation-strip img {
+  aspect-ratio: 4 / 3;
+}
+
+.choice-list {
+  display: grid;
+  gap: 10px;
+}
+
+.choice-card {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.choice-card:hover,
+.choice-card:focus-within {
+  border-color: #B8873F;
+  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+}
+
+.choice-card input {
+  margin: 3px 0 0;
+  accent-color: #B8873F;
+}
+
+.choice-card span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .punctuation-hero,
+  .punctuation-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .punctuation-strip img {
+    aspect-ratio: 16 / 9;
+  }
+}
 .summary-grid { display: grid; gap: 16px; }
 .summary-hero {
   text-align: center;

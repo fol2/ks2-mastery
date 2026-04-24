@@ -19,8 +19,10 @@ import {
 } from './platform/hubs/shell-access.js';
 import { createSubjectRuntimeBoundary } from './platform/core/subject-runtime.js';
 import { createPracticeStreakSubscriber } from './platform/events/index.js';
+import { createSubjectCommandActionHandler } from './platform/runtime/subject-command-actions.js';
 import { createSubjectCommandClient } from './platform/runtime/subject-command-client.js';
 import { createReadModelClient } from './platform/runtime/read-model-client.js';
+import { createPunctuationReadModelService } from './subjects/punctuation/client-read-models.js';
 import { createPlatformTts } from './subjects/spelling/tts.js';
 import {
   DEFAULT_BUFFERED_GEMINI_VOICE,
@@ -192,6 +194,7 @@ globalThis.KS2_AUTH_SESSION = boot.session;
 await repositories.hydrate();
 
 const services = {
+  punctuation: null,
   spelling: null,
 };
 let store = null;
@@ -668,6 +671,14 @@ function rebuildSpellingService() {
   return services.spelling;
 }
 
+function rebuildPunctuationService() {
+  services.punctuation = createPunctuationReadModelService({
+    getState: () => store?.getState?.() || null,
+  });
+  return services.punctuation;
+}
+
+rebuildPunctuationService();
 rebuildSpellingService();
 
 function buildSignedInHubModels(appState) {
@@ -1876,6 +1887,10 @@ function shouldStopSpellingTtsForCommandResponse(command, response) {
   return command === 'submit-answer' || (nextPhase && nextPhase !== 'session');
 }
 
+function setPunctuationRuntimeError(message) {
+  store.updateSubjectUi('punctuation', { error: message || 'Punctuation practice is temporarily unavailable.' });
+}
+
 function applySpellingCommandResponse(response, { command = '' } = {}) {
   if (response?.projections?.rewards?.toastEvents?.length) {
     store.pushToasts(response.projections.rewards.toastEvents);
@@ -1892,7 +1907,71 @@ function applySpellingCommandResponse(response, { command = '' } = {}) {
   }
 }
 
+function applyPunctuationCommandResponse(response) {
+  if (response?.projections?.rewards?.toastEvents?.length) {
+    store.pushToasts(response.projections.rewards.toastEvents);
+  }
+  if (response?.projections?.rewards?.events?.length) {
+    store.pushMonsterCelebrations(response.projections.rewards.events);
+  }
+  store.reloadFromRepositories({ preserveRoute: true });
+}
+
 const pendingSpellingCommandKeys = new Set();
+const pendingPunctuationCommandKeys = new Set();
+
+const punctuationCommandActions = createSubjectCommandActionHandler({
+  subjectId: 'punctuation',
+  subjectCommands,
+  getState: () => store.getState(),
+  isReadOnly: runtimeIsReadOnly,
+  setSubjectError: setPunctuationRuntimeError,
+  pendingKeys: pendingPunctuationCommandKeys,
+  onCommandResult: applyPunctuationCommandResponse,
+  onCommandError(error) {
+    globalThis.console?.warn?.('Punctuation command failed.', error);
+    setPunctuationRuntimeError(error?.payload?.message || error?.message || 'The punctuation command could not be completed.');
+  },
+  actions: {
+    'punctuation-start': {
+      command: 'start-session',
+      payload({ data, state }) {
+        const prefs = state.subjectUi?.punctuation?.prefs || {};
+        return {
+          mode: data?.mode || prefs.mode || 'smart',
+          roundLength: prefs.roundLength || '4',
+        };
+      },
+    },
+    'punctuation-start-again': {
+      command: 'start-session',
+      payload({ state }) {
+        const prefs = state.subjectUi?.punctuation?.prefs || {};
+        return {
+          mode: prefs.mode || 'smart',
+          roundLength: prefs.roundLength || '4',
+        };
+      },
+    },
+    'punctuation-submit-form': {
+      command: 'submit-answer',
+      payload({ data }) {
+        if (data?.formData?.get) return { typed: data.formData.get('typed') || '' };
+        if (Number.isInteger(Number(data?.choiceIndex))) return { choiceIndex: Number(data.choiceIndex) };
+        return { typed: data?.typed || data?.answer || '' };
+      },
+    },
+    'punctuation-continue': { command: 'continue-session' },
+    'punctuation-skip': { command: 'skip-item' },
+    'punctuation-end-early': { command: 'end-session' },
+    'punctuation-set-mode': {
+      command: 'save-prefs',
+      payload({ data }) {
+        return { prefs: { mode: data?.value || data?.mode || 'smart' } };
+      },
+    },
+  },
+});
 
 function spellingCommandDedupeKey(command, appState = store.getState()) {
   if (command !== 'continue-session') return '';
@@ -2367,6 +2446,14 @@ function handleRemoteSpellingAction(action, data = {}) {
   return false;
 }
 
+function handleRemotePunctuationAction(action, data = {}) {
+  if (action === 'punctuation-back') {
+    store.updateSubjectUi('punctuation', { phase: 'setup', error: '' });
+    return true;
+  }
+  return punctuationCommandActions.handle(action, data);
+}
+
 function handleSubjectAction(action, data) {
   const appState = store.getState();
   const learnerId = appState.learners.selectedId;
@@ -2401,7 +2488,7 @@ function handleSubjectAction(action, data) {
 function dispatchAction(action, data = {}) {
   controller.autoAdvance.clear();
   captureWordDetailTrigger(action, data);
-  if (!handleGlobalAction(action, data) && !handleRemoteSpellingAction(action, data)) {
+  if (!handleGlobalAction(action, data) && !handleRemoteSpellingAction(action, data) && !handleRemotePunctuationAction(action, data)) {
     handleSubjectAction(action, data);
   }
   ensureSpellingAutoAdvanceFromCurrentState();

@@ -2,9 +2,11 @@ import React from 'react';
 import { SubjectBreadcrumb } from '../shell/SubjectBreadcrumb.jsx';
 import { SubjectRouteContext } from './SubjectRouteContext.js';
 import { SubjectRuntimeFallback } from './SubjectRuntimeFallback.jsx';
+import { PunctuationPracticeSurface } from '../../subjects/punctuation/components/PunctuationPracticeSurface.jsx';
 import { SpellingPracticeSurface } from '../../subjects/spelling/components/SpellingPracticeSurface.jsx';
 
 const REACT_SUBJECT_COMPONENTS = Object.freeze({
+  punctuation: PunctuationPracticeSurface,
   spelling: SpellingPracticeSurface,
 });
 

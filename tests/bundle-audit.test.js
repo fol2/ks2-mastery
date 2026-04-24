@@ -97,6 +97,62 @@ test('client bundle audit fails on legacy broad runtime write routes', async () 
   }, /legacy broad/);
 });
 
+test('client bundle audit fails on punctuation engine and content imports', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
+  const bundle = path.join(dir, 'app.bundle.js');
+  const metafile = path.join(dir, 'app.bundle.meta.json');
+  const publicDir = path.join(dir, 'public');
+  await mkdir(publicDir, { recursive: true });
+  await writeFile(bundle, 'console.log("PUNCTUATION_CONTENT_MANIFEST", "createPunctuationService");\n');
+  await writeFile(metafile, JSON.stringify({
+    inputs: {
+      'shared/punctuation/service.js': { bytes: 1 },
+      'worker/src/subjects/punctuation/commands.js': { bytes: 1 },
+    },
+  }));
+
+  assert.throws(() => {
+    execFileSync(process.execPath, [
+      './scripts/audit-client-bundle.mjs',
+      '--bundle',
+      bundle,
+      '--metafile',
+      metafile,
+      '--public-dir',
+      publicDir,
+    ], {
+      cwd: process.cwd(),
+      stdio: 'pipe',
+    });
+  }, /punctuation/);
+});
+
+test('client bundle audit fails when public output exposes shared punctuation source', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
+  const bundle = path.join(dir, 'app.bundle.js');
+  const metafile = path.join(dir, 'app.bundle.meta.json');
+  const publicDir = path.join(dir, 'public');
+  await mkdir(path.join(publicDir, 'shared', 'punctuation'), { recursive: true });
+  await writeFile(bundle, 'console.log("ok");\n');
+  await writeFile(metafile, JSON.stringify({ inputs: { 'src/main.js': { bytes: 1 } } }));
+  await writeFile(path.join(publicDir, 'shared', 'punctuation', 'content.js'), 'export const leaked = true;\n');
+
+  assert.throws(() => {
+    execFileSync(process.execPath, [
+      './scripts/audit-client-bundle.mjs',
+      '--bundle',
+      bundle,
+      '--metafile',
+      metafile,
+      '--public-dir',
+      publicDir,
+    ], {
+      cwd: process.cwd(),
+      stdio: 'pipe',
+    });
+  }, /shared source/);
+});
+
 test('worker spelling runtime imports the shared domain service instead of the browser service entrypoint', async () => {
   const workerEngine = await readFile('worker/src/subjects/spelling/engine.js', 'utf8');
   const browserService = await readFile('src/subjects/spelling/service.js', 'utf8');
@@ -111,6 +167,7 @@ test('worker-first asset routing keeps demo and source lockdown routes out of SP
     '/api/*',
     '/demo',
     '/src/*',
+    '/shared/*',
     '/worker/*',
     '/tests/*',
     '/docs/*',

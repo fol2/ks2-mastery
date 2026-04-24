@@ -37,6 +37,38 @@ function answerSpellingCorrectly(harness) {
   }
 }
 
+function createPunctuationHarness({ storage, subjects } = {}) {
+  return createAppHarness({ storage, subjects });
+}
+
+function preparePunctuationHarness(harness) {
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, {
+    mode: 'endmarks',
+    roundLength: '1',
+  });
+}
+
+function answerPunctuationCorrectly(harness) {
+  let guard = 0;
+  while (harness.store.getState().subjectUi.punctuation.phase !== 'summary' && guard < 12) {
+    guard += 1;
+    const state = harness.store.getState().subjectUi.punctuation;
+    if (state.phase === 'feedback') {
+      harness.dispatch('punctuation-continue');
+      continue;
+    }
+    if (state.phase !== 'active-item') break;
+    const item = state.session.currentItem;
+    if (item.inputKind === 'choice') {
+      const option = item.options.find((entry) => entry.text === item.model) || item.options[0];
+      harness.dispatch('punctuation-submit-form', { choiceIndex: option.index });
+      continue;
+    }
+    harness.dispatch('punctuation-submit-form', { typed: item.model });
+  }
+}
+
 const spellingSpec = {
   label: 'Spelling reference subject',
   subjectId: 'spelling',
@@ -121,7 +153,52 @@ const expansionFixtureSpec = {
   },
 };
 
+const punctuationSpec = {
+  label: 'Punctuation production subject',
+  subjectId: 'punctuation',
+  createHarness: createPunctuationHarness,
+  prepareHarness: preparePunctuationHarness,
+  expectReactPractice: true,
+  practiceMatcher: /Punctuation practice/,
+  sessionMatcher: /Choose the best punctuated sentence|Punctuate the sentence accurately|Correct the punctuation/,
+  summaryMatcher: /Punctuation session summary/,
+  getUiState(harness) {
+    return harness.store.getState().subjectUi.punctuation;
+  },
+  isSessionState(ui) {
+    return ui.phase === 'active-item';
+  },
+  isSummaryState(ui) {
+    return ui.phase === 'summary';
+  },
+  startRound(harness) {
+    harness.dispatch('punctuation-start', { mode: 'endmarks', roundLength: '1' });
+  },
+  answerCorrectly: answerPunctuationCorrectly,
+  backToDashboard(harness) {
+    harness.dispatch('punctuation-back');
+  },
+  expectedRestPhase: 'setup',
+  triggerActionName: 'punctuation-start',
+  triggerAction(harness) {
+    harness.dispatch('punctuation-start', { mode: 'endmarks', roundLength: '1' });
+  },
+  expectedCompletionEventType: 'punctuation.session-completed',
+  assertDashboardStats(stats) {
+    assert.ok(stats.pct >= 0 && stats.pct <= 100);
+    assert.equal(typeof stats.streak, 'number');
+  },
+  assertAnalytics(analytics) {
+    assert.equal(analytics.attempts, 1);
+    assert.equal(analytics.correct, 1);
+    assert.equal(analytics.accuracy, 100);
+    assert.equal(analytics.sessionsCompleted, 1);
+  },
+};
+
 registerSubjectConformanceSuite(spellingSpec);
 registerGoldenPathSmokeSuite(spellingSpec);
 registerSubjectConformanceSuite(expansionFixtureSpec);
 registerGoldenPathSmokeSuite(expansionFixtureSpec);
+registerSubjectConformanceSuite(punctuationSpec);
+registerGoldenPathSmokeSuite(punctuationSpec);

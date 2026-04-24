@@ -8,6 +8,7 @@ import {
 export function CodexHero({
   featured,
   heroBg,
+  hasPunctuation,
   learnerName,
   onNavigateHome,
   onPreviewCreature,
@@ -25,7 +26,9 @@ export function CodexHero({
           {learnerName ? `${learnerName}'s codex journal` : 'Codex journal'}
         </h1>
         <p className="codex-lede">
-          Track the creatures awakened by secure spellings, from first catch through each evolution.
+          {hasPunctuation
+            ? 'Track the creatures awakened by secure spelling words and punctuation units, from first catch through each evolution.'
+            : 'Track the creatures awakened by secure spellings, from first catch through each evolution.'}
         </p>
         <div className="hero-cta-row">
           <button type="button" className="btn ghost xl" onClick={onNavigateHome}>
@@ -36,7 +39,7 @@ export function CodexHero({
 
       <div className="codex-stat-strip" aria-label="Codex summary">
         <CodexStat value={totals.caught} label="Caught" />
-        <CodexStat value={totals.secure} label="Secure words" />
+        <CodexStat value={totals.secure} label="Secure units" />
         <CodexStat value={totals.highestStage} label="Highest stage" />
       </div>
 

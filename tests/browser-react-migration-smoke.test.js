@@ -77,6 +77,17 @@ test('browser migration smoke covers the React app root and spelling interaction
       ['wait', '.codex-page'],
       ['js', "const brand = document.querySelector('.profile-brand-button[data-action=\"navigate-home\"]'); if (!brand) throw new Error('missing codex brand home button'); brand.click(); 'clicked codex brand';"],
       ['wait', '.subject-grid'],
+      ['js', "document.querySelector('[data-action=\"open-subject\"][data-subject-id=\"punctuation\"]')?.click(); 'opened punctuation';"],
+      ['wait', '[data-punctuation-start]'],
+      ['text'],
+      ['click', '[data-punctuation-start]'],
+      ['wait', '[data-punctuation-submit]'],
+      ['js', "const choice = document.querySelector('input[name=\"choiceIndex\"]'); if (choice) choice.click(); 'picked punctuation option';"],
+      ['click', '[data-punctuation-submit]'],
+      ['wait', '[data-punctuation-continue]'],
+      ['text'],
+      ['js', "const punctuationHome = document.querySelector('.profile-brand-button[data-action=\"navigate-home\"]'); if (!punctuationHome) throw new Error('missing punctuation brand home button'); punctuationHome.click(); 'back from punctuation';"],
+      ['wait', '.subject-grid'],
       ['js', "document.querySelector('[data-action=\"open-subject\"][data-subject-id=\"spelling\"]')?.click(); 'opened spelling';"],
       ['text'],
       ['click', '[data-action="spelling-open-word-bank"]'],
@@ -101,6 +112,8 @@ test('browser migration smoke covers the React app root and spelling interaction
 
     assert.match(output, /Your subjects/);
     assert.doesNotMatch(output, /data-home-mount/);
+    assert.match(output, /Punctuation practice/);
+    assert.match(output, /Feedback/);
     assert.match(output, /Round setup/);
     assert.match(output, /wordBankScrollY:0/);
     assert.match(output, /Word bank progress/);

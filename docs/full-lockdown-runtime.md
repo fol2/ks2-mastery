@@ -96,7 +96,7 @@ Only run the remote migration step when there is a migration to apply. `npm run 
 The live smoke should prove the actual lockdown failure modes:
 
 - `/demo` returns a Worker-owned session cookie and redirects to `/?demo=1`.
-- `/src/main.js`, Spelling content-data paths, Worker source paths, and representative test paths return 404.
+- `/src/main.js`, Spelling content-data paths, Punctuation shared-engine paths, Worker source paths, and representative test paths return 404.
 - `/src/bundles/app.bundle.js` is the only allowed source-bundle path.
 - `/api/bootstrap` does not serialise Spelling sentinels from `subjectStates`, `practiceSessions`, `eventLog`, or `gameState`.
 - Old demo cookies fail after conversion or expiry.

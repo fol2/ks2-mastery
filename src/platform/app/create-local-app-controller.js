@@ -1,5 +1,8 @@
 import { createLocalPlatformRepositories } from '../core/repositories/index.js';
 import { createPracticeStreakSubscriber } from '../events/index.js';
+import { createPunctuationRewardSubscriber } from '../../subjects/punctuation/event-hooks.js';
+import { createPunctuationPersistence } from '../../subjects/punctuation/repository.js';
+import { createPunctuationService } from '../../subjects/punctuation/service.js';
 import { createSpellingRewardSubscriber } from '../../subjects/spelling/event-hooks.js';
 import { createSpellingPersistence } from '../../subjects/spelling/repository.js';
 import { createSpellingService } from '../../subjects/spelling/service.js';
@@ -21,6 +24,12 @@ export function createLocalAppController({
       tts,
     });
   }
+  if (!resolvedServices.punctuation) {
+    resolvedServices.punctuation = createPunctuationService({
+      repository: createPunctuationPersistence({ repositories }),
+      now,
+    });
+  }
 
   return createAppController({
     ...options,
@@ -29,6 +38,7 @@ export function createLocalAppController({
     subscribers: subscribers || [
       createPracticeStreakSubscriber(),
       createSpellingRewardSubscriber({ gameStateRepository: repositories.gameState }),
+      createPunctuationRewardSubscriber({ gameStateRepository: repositories.gameState }),
     ],
     now,
     tts,

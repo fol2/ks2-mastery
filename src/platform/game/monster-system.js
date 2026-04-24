@@ -13,10 +13,14 @@ const MONSTER_IDS = Object.freeze(Object.keys(MONSTERS));
 const SPELLING_MONSTER_IDS = Object.freeze(
   (MONSTERS_BY_SUBJECT.spelling || []).filter((monsterId) => MONSTERS[monsterId]),
 );
+const PUNCTUATION_MONSTER_IDS = Object.freeze(
+  (MONSTERS_BY_SUBJECT.punctuation || []).filter((monsterId) => MONSTERS[monsterId]),
+);
 const DIRECT_SPELLING_MONSTER_IDS = Object.freeze(
   SPELLING_MONSTER_IDS.filter((monsterId) => monsterId !== 'phaeton'),
 );
 const PHAETON_SOURCE_MONSTER_IDS = Object.freeze(['inklet', 'glimmerbug']);
+const PUNCTUATION_GRAND_MONSTER_ID = 'carillon';
 
 function readGameState(gameStateRepository, learnerId, systemId = DEFAULT_SYSTEM_ID) {
   if (!gameStateRepository) return {};
@@ -47,6 +51,21 @@ function masteredCount(entry) {
   return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
 }
 
+function punctuationTotal(entry, fallback = 1) {
+  const count = Number(entry?.publishedTotal);
+  return Number.isFinite(count) && count > 0 ? Math.floor(count) : Math.max(1, Number(fallback) || 1);
+}
+
+function punctuationStageFor(mastered, total) {
+  const denominator = Math.max(1, Number(total) || 1);
+  const ratio = Math.max(0, Math.min(1, (Number(mastered) || 0) / denominator));
+  if (ratio >= 1) return 4;
+  if (ratio >= 2 / 3) return 3;
+  if (ratio >= 1 / 3) return 2;
+  if (ratio > 0) return 1;
+  return 0;
+}
+
 function hasMasteryProgress(entry) {
   return masteredCount(entry) > 0 || entry?.caught === true;
 }
@@ -54,6 +73,11 @@ function hasMasteryProgress(entry) {
 function hasMonsterMasteryProgress(state) {
   if (!isPlainObject(state)) return false;
   return SPELLING_MONSTER_IDS.some((monsterId) => hasMasteryProgress(state[monsterId]));
+}
+
+function activePunctuationMonsterSummaryFromState(state = {}) {
+  return punctuationMonsterSummaryFromState(state)
+    .filter((entry) => entry.progress.caught || entry.progress.mastered > 0);
 }
 
 function analyticsHasWordRows(analytics) {
@@ -164,6 +188,21 @@ export function progressForMonster(state, monsterId) {
   };
 }
 
+export function progressForPunctuationMonster(state, monsterId, { publishedTotal = null } = {}) {
+  const entry = isPlainObject(state?.[monsterId]) ? state[monsterId] : { mastered: [], caught: false };
+  const mastered = masteredCount(entry);
+  const total = punctuationTotal(entry, publishedTotal || MONSTERS[monsterId]?.masteredMax || 1);
+  return {
+    mastered,
+    publishedTotal: total,
+    stage: punctuationStageFor(mastered, total),
+    level: Math.min(10, Math.round((mastered / Math.max(1, total)) * 10)),
+    caught: mastered >= 1,
+    branch: branchForMonster(state, monsterId),
+    masteredList: masteredList(entry),
+  };
+}
+
 export function derivePhaeton(state) {
   const combined = PHAETON_SOURCE_MONSTER_IDS
     .reduce((sum, monsterId) => sum + countMastered(state, monsterId), 0);
@@ -212,6 +251,55 @@ function buildEvent(learnerId, kind, monsterId, previous, next) {
   };
 }
 
+function buildPunctuationEvent({
+  learnerId,
+  kind,
+  monsterId,
+  previous,
+  next,
+  releaseId,
+  clusterId,
+  rewardUnitId,
+  masteryKey,
+  createdAt = Date.now(),
+} = {}) {
+  const monster = MONSTERS[monsterId];
+  return {
+    id: `reward.monster:${learnerId || 'default'}:punctuation:${releaseId}:${clusterId}:${rewardUnitId}:${monsterId}:${kind}`,
+    type: 'reward.monster',
+    kind,
+    learnerId,
+    subjectId: 'punctuation',
+    systemId: DEFAULT_SYSTEM_ID,
+    releaseId,
+    clusterId,
+    rewardUnitId,
+    masteryKey,
+    monsterId,
+    monster,
+    previous,
+    next,
+    createdAt,
+    toast: {
+      title: monster?.name || 'Reward update',
+      body: toastBodyFor(kind),
+    },
+  };
+}
+
+function punctuationEventFromTransition(payload, previous, next) {
+  if (!previous.caught && next.caught) {
+    return buildPunctuationEvent({ ...payload, kind: 'caught', previous, next });
+  }
+  if (next.stage > previous.stage) {
+    return buildPunctuationEvent({ ...payload, kind: next.stage === 4 ? 'mega' : 'evolve', previous, next });
+  }
+  if (next.level > previous.level) {
+    return buildPunctuationEvent({ ...payload, kind: 'levelup', previous, next });
+  }
+  return null;
+}
+
 export function recordMonsterMastery(learnerId, monsterId, wordSlug, gameStateRepository, options = {}) {
   if (monsterId === 'phaeton' || !MONSTERS[monsterId]) return [];
   const before = ensureMonsterBranches(learnerId, gameStateRepository, options);
@@ -246,15 +334,102 @@ export function recordMonsterMastery(learnerId, monsterId, wordSlug, gameStateRe
   return events;
 }
 
+export function recordPunctuationRewardUnitMastery({
+  learnerId,
+  releaseId,
+  clusterId,
+  rewardUnitId,
+  masteryKey,
+  monsterId,
+  publishedTotal = 1,
+  aggregateMonsterId = PUNCTUATION_GRAND_MONSTER_ID,
+  aggregatePublishedTotal = 1,
+  createdAt = Date.now(),
+  gameStateRepository,
+  random = Math.random,
+} = {}) {
+  if (!MONSTERS[monsterId] || !masteryKey) return [];
+  const before = ensureMonsterBranches(learnerId, gameStateRepository, { random });
+  const directEntry = isPlainObject(before[monsterId]) ? before[monsterId] : { mastered: [], caught: false };
+  const directMastered = masteredList(directEntry);
+  if (directMastered.includes(masteryKey)) return [];
+
+  const aggregateEntry = isPlainObject(before[aggregateMonsterId]) ? before[aggregateMonsterId] : { mastered: [], caught: false };
+  const aggregateMastered = masteredList(aggregateEntry);
+  const beforeDirect = progressForPunctuationMonster(before, monsterId, { publishedTotal });
+  const beforeAggregate = progressForPunctuationMonster(before, aggregateMonsterId, { publishedTotal: aggregatePublishedTotal });
+
+  const after = {
+    ...before,
+    [monsterId]: {
+      ...directEntry,
+      caught: true,
+      publishedTotal,
+      mastered: [...directMastered, masteryKey],
+    },
+    [aggregateMonsterId]: {
+      ...aggregateEntry,
+      caught: true,
+      publishedTotal: aggregatePublishedTotal,
+      mastered: aggregateMastered.includes(masteryKey)
+        ? aggregateMastered
+        : [...aggregateMastered, masteryKey],
+    },
+  };
+
+  const afterDirect = progressForPunctuationMonster(after, monsterId, { publishedTotal });
+  const afterAggregate = progressForPunctuationMonster(after, aggregateMonsterId, { publishedTotal: aggregatePublishedTotal });
+  saveMonsterState(learnerId, after, gameStateRepository);
+
+  const events = [];
+  const directEvent = punctuationEventFromTransition({
+    learnerId,
+    monsterId,
+    releaseId,
+    clusterId,
+    rewardUnitId,
+    masteryKey,
+    createdAt,
+  }, beforeDirect, afterDirect);
+  if (directEvent) events.push(directEvent);
+
+  const aggregateEvent = punctuationEventFromTransition({
+    learnerId,
+    monsterId: aggregateMonsterId,
+    releaseId,
+    clusterId: 'published_release',
+    rewardUnitId,
+    masteryKey,
+    createdAt,
+  }, beforeAggregate, afterAggregate);
+  if (aggregateEvent) events.push(aggregateEvent);
+
+  return events;
+}
+
 export function monsterSummary(learnerId, gameStateRepository) {
   const state = ensureMonsterBranches(learnerId, gameStateRepository);
   return monsterSummaryFromState(state);
 }
 
 export function monsterSummaryFromState(state = {}) {
-  return SPELLING_MONSTER_IDS.map((monsterId) => ({
+  const spelling = SPELLING_MONSTER_IDS.map((monsterId) => ({
+    subjectId: 'spelling',
     monster: MONSTERS[monsterId],
     progress: progressForMonster(state, monsterId),
+  }));
+  return [...spelling, ...activePunctuationMonsterSummaryFromState(state)];
+}
+
+export function punctuationMonsterSummaryFromState(state = {}, { clusterTotals = {}, aggregateTotal = 1 } = {}) {
+  return PUNCTUATION_MONSTER_IDS.map((monsterId) => ({
+    subjectId: 'punctuation',
+    monster: MONSTERS[monsterId],
+    progress: progressForPunctuationMonster(state, monsterId, {
+      publishedTotal: monsterId === PUNCTUATION_GRAND_MONSTER_ID
+        ? aggregateTotal
+        : (clusterTotals[monsterId] || MONSTERS[monsterId]?.masteredMax || 1),
+    }),
   }));
 }
 
@@ -276,5 +451,8 @@ export function monsterSummaryFromSpellingAnalytics(analytics, {
   }
 
   const state = secureWordsFromAnalytics(analytics, branchState);
-  return monsterSummaryFromState(state);
+  return [
+    ...monsterSummaryFromState(state),
+    ...activePunctuationMonsterSummaryFromState(branchState),
+  ];
 }

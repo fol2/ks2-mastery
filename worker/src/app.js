@@ -170,6 +170,7 @@ async function publicSourceAssetResponse(request, env = {}) {
 
 function isPublicSourceLockdownPath(pathname) {
   return pathname.startsWith('/src/')
+    || pathname.startsWith('/shared/')
     || pathname.startsWith('/worker/')
     || pathname.startsWith('/tests/')
     || pathname.startsWith('/docs/')

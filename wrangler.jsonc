@@ -19,6 +19,7 @@
       "/api/*",
       "/demo",
       "/src/*",
+      "/shared/*",
       "/worker/*",
       "/tests/*",
       "/docs/*",
