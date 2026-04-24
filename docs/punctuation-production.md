@@ -178,7 +178,7 @@ The Punctuation release gate includes:
 - asset tests for Bellstorm Coast scenes and Punctuation monster artwork
 - bundle/public-output audits proving engine/content source is not shipped to the browser
 
-Production exposure is controlled by the `PUNCTUATION_SUBJECT_ENABLED` Worker env var, which feeds the browser `punctuationProduction` subject exposure gate. The default production value is `false`: the Worker command route, dashboard card, and direct subject route stay unavailable until the full gate has passed and the env var is intentionally flipped.
+Production exposure is controlled by the `PUNCTUATION_SUBJECT_ENABLED` Worker env var, which feeds the browser `punctuationProduction` subject exposure gate. The release-smoke gate now covers both sides of the rollout: `false` keeps the Worker command route, dashboard card, and direct subject route unavailable; `true` exposes the subject only after the Worker-backed demo path has been verified.
 
 Before deployment, run:
 
@@ -191,6 +191,6 @@ After deployment, verify the production UI on `https://ks2.eugnel.uk` with a log
 
 ## Expansion Path
 
-The next Punctuation release should deepen one learning cluster or validator family at a time. Each expansion needs enough fixed items, generated templates, negative tests, misconception tags, transfer facets, and reward-unit denominators before the public exposure flag is changed.
+The next Punctuation release should deepen one learning cluster or validator family at a time. Each expansion needs enough fixed items, generated templates, negative tests, misconception tags, transfer facets, and reward-unit denominators before learner-facing mastery claims are widened.
 
 Do not expose planned clusters just because monster assets exist. Bellstorm Coast rewards should continue to follow secure learning evidence.

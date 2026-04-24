@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
 import { SUBJECT_EXPOSURE_GATES } from '../src/platform/core/subject-availability.js';
 import { createPunctuationContentIndexes } from '../shared/punctuation/content.js';
@@ -8,6 +9,11 @@ import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 const RUNTIME_PUNCTUATION_ITEMS = createPunctuationContentIndexes(createPunctuationRuntimeManifest()).itemById;
 const SERVER_ONLY_READ_MODEL_FIELDS = /accepted|correctIndex|rubric|validator|hiddenQueue|generator/;
+
+async function readWranglerVars() {
+  const source = await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
+  return JSON.parse(source).vars || {};
+}
 
 function productionServer({ punctuationEnabled = false } = {}) {
   return createWorkerRepositoryServer({
@@ -178,6 +184,11 @@ test('Punctuation release smoke keeps demo exposure blocked by default', async (
   } finally {
     server.close();
   }
+});
+
+test('Punctuation production rollout config intentionally enables the exposure gate', async () => {
+  const vars = await readWranglerVars();
+  assert.equal(vars.PUNCTUATION_SUBJECT_ENABLED, 'true');
 });
 
 test('Punctuation release smoke completes a gated demo action through Worker commands', async () => {
