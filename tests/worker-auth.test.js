@@ -579,6 +579,9 @@ test('production public bootstrap keeps Codex mastery visible from redacted spel
   assert.ok(publicSpelling.ui.stats.core.total > 0);
   assert.equal(publicSpelling.ui.stats.all.secure, 3);
   assert.equal(publicSpelling.ui.stats.core.secure, 3);
+  assert.equal(publicSpelling.ui.stats.y34.secure, 1);
+  assert.equal(publicSpelling.ui.stats.y56.secure, 2);
+  assert.equal(publicSpelling.ui.stats.extra.total, 23);
   assert.equal(publicSpelling.ui.stats.extra.secure, 1);
   assert.deepEqual(publicSpelling.ui.analytics.wordGroups, []);
   assert.equal(publicSpelling.ui.analytics.pools.core.secure, 3);

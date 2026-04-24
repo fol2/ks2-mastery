@@ -348,14 +348,11 @@ function publicMonsterCodexHasMastery(state) {
   return Object.values(state).some((entry) => Number(entry?.masteredCount) > 0 || entry?.caught === true);
 }
 
-async function mergePublicSpellingCodexState(db, accountId, subjectRows, gameState) {
+async function mergePublicSpellingCodexState(db, accountId, subjectRows, gameState, { runtimeSnapshot = null } = {}) {
   const spellingRows = subjectRows.filter((row) => row.subject_id === 'spelling');
   if (!spellingRows.length) return gameState;
 
-  const content = await readSubjectContentBundle(db, accountId, 'spelling');
-  const snapshot = resolveRuntimeSnapshot(content, {
-    referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
-  });
+  const snapshot = runtimeSnapshot || runtimeSnapshotForBundle(await readSubjectContentBundle(db, accountId, 'spelling'));
 
   for (const row of spellingRows) {
     const progress = spellingProgressFromSubjectRow(row);
@@ -1353,7 +1350,6 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
     WHERE learner_id IN (${placeholders})
     ORDER BY created_at ASC, id ASC
   `, learnerIds);
-
   const publicSpellingContent = publicReadModels && subjectRows.some((row) => row.subject_id === 'spelling')
     ? await readSpellingRuntimeContentBundle(db, accountId, 'spelling')
     : null;
@@ -1376,7 +1372,9 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
     if (record) gameState[gameStateKey(row.learner_id, row.system_id)] = record;
   });
   if (publicReadModels) {
-    await mergePublicSpellingCodexState(db, accountId, subjectRows, gameState);
+    await mergePublicSpellingCodexState(db, accountId, subjectRows, gameState, {
+      runtimeSnapshot: publicSpellingContent?.snapshot || null,
+    });
   }
 
   return {
