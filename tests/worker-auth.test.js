@@ -534,6 +534,58 @@ test('production public bootstrap redacts spelling sentinels from subject state,
   server.close();
 });
 
+test('production public bootstrap keeps Codex mastery visible from redacted spelling progress', async () => {
+  const server = productionServer();
+  const register = await postJson(server, '/api/auth/register', {
+    email: 'bootstrap-codex@example.test',
+    password: 'password-1234',
+  });
+  const registerPayload = await register.json();
+  const cookie = cookieFrom(register);
+  const accountId = registerPayload.session.accountId;
+  const now = Date.UTC(2026, 0, 1);
+
+  server.DB.db.prepare(`
+    INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+    VALUES ('learner-codex', 'Ava', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run(now, now);
+  server.DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES (?, 'learner-codex', 'owner', 0, ?, ?)
+  `).run(accountId, now, now);
+  server.DB.db.prepare('UPDATE adult_accounts SET selected_learner_id = ? WHERE id = ?')
+    .run('learner-codex', accountId);
+  server.DB.db.prepare(`
+    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+    VALUES ('learner-codex', 'spelling', ?, ?, ?, ?)
+  `).run(JSON.stringify({ phase: 'dashboard' }), JSON.stringify({
+    progress: {
+      possess: { stage: 4 },
+      accommodate: { stage: 4 },
+      necessary: { stage: 4 },
+      mollusc: { stage: 4 },
+    },
+  }), now, accountId);
+
+  const response = await server.fetchRaw('https://repo.test/api/bootstrap', {
+    headers: { cookie },
+  });
+  const payload = await response.json();
+  const publicSpelling = payload.subjectStates['learner-codex::spelling'];
+  const publicGameState = payload.gameState['learner-codex::monster-codex'];
+
+  assert.equal(response.status, 200, JSON.stringify(payload));
+  assert.equal(publicSpelling.data.progress, undefined);
+  assert.equal(publicGameState.inklet.mastered, undefined);
+  assert.equal(publicGameState.inklet.masteredCount, 1);
+  assert.equal(publicGameState.glimmerbug.masteredCount, 2);
+  assert.equal(publicGameState.phaeton.masteredCount, 3);
+  assert.equal(publicGameState.phaeton.caught, true);
+  assert.equal(publicGameState.vellhorn.masteredCount, 1);
+
+  server.close();
+});
+
 test('social sign-in start is explicit when a provider is not configured', async () => {
   const server = productionServer();
 

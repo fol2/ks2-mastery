@@ -385,6 +385,9 @@ const subjectCommands = createSubjectCommandClient({
   baseUrl: '',
   fetch: credentialFetch,
   getLearnerRevision: (learnerId) => repositories.runtime?.readLearnerRevision?.(learnerId) || 0,
+  onStaleWrite: async () => {
+    await repositories.hydrate({ cacheScope: 'subject-command-stale-write' });
+  },
   onCommandApplied: ({ learnerId, subjectId, response }) => {
     repositories.runtime?.applySubjectCommandResult?.({ learnerId, subjectId, response });
   },
@@ -685,6 +688,7 @@ const controller = createAppController({
   subjects: SUBJECTS,
   session: boot.session,
   runtimeBoundary,
+  autoAdvanceDispatchContinue: () => handleRemoteSpellingAction('spelling-continue'),
   tts,
   services,
   cacheSubjectUiWrites: true,
@@ -1848,6 +1852,15 @@ function applySpellingCommandResponse(response) {
   }
 }
 
+const pendingSpellingCommandKeys = new Set();
+
+function spellingCommandDedupeKey(command, appState = store.getState()) {
+  if (command !== 'continue-session') return '';
+  const learnerId = appState.learners?.selectedId || '';
+  const sessionId = appState.subjectUi?.spelling?.session?.id || '';
+  return learnerId && sessionId ? `${command}:${learnerId}:${sessionId}` : '';
+}
+
 function wordBankAnalyticsFromState(appState = store.getState()) {
   return appState.subjectUi?.spelling?.analytics || null;
 }
@@ -1951,11 +1964,17 @@ async function sendSpellingCommand(command, payload = {}) {
 }
 
 function runSpellingCommand(command, payload = {}) {
+  const dedupeKey = spellingCommandDedupeKey(command);
+  if (dedupeKey && pendingSpellingCommandKeys.has(dedupeKey)) return false;
+  if (dedupeKey) pendingSpellingCommandKeys.add(dedupeKey);
   sendSpellingCommand(command, payload).catch((error) => {
     globalThis.console?.warn?.('Spelling command failed.', error);
     const message = error?.payload?.message || error?.message || 'The spelling command could not be completed.';
     setSpellingRuntimeError(message);
+  }).finally(() => {
+    if (dedupeKey) pendingSpellingCommandKeys.delete(dedupeKey);
   });
+  return true;
 }
 
 function handleRemoteSpellingAction(action, data = {}) {

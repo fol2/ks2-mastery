@@ -381,3 +381,118 @@ test('subject command responses update the api cache without queuing broad runti
   assert.equal(repositories.eventLog.list('learner-a').length, 1);
   assert.equal(server.requests.some((request) => request.path === '/api/child-subject-state'), false);
 });
+
+test('subject commands rehydrate and retry once after a stale learner revision', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({
+    learners: learnerSnapshot(),
+    subjectStates: {
+      'learner-a::spelling': {
+        ui: { phase: 'dashboard' },
+        data: {},
+        updatedAt: 1,
+      },
+    },
+  });
+  const commandBodies = [];
+  let bootstrapCount = 0;
+  const fetch = async (input, init = {}) => {
+    const url = new URL(typeof input === 'string' ? input : input.url, 'https://repo.test');
+    const method = String(init.method || 'GET').toUpperCase();
+    if (url.pathname === '/api/bootstrap' && method === 'GET') {
+      bootstrapCount += 1;
+      const remote = await server.fetch(input, init);
+      const payload = await remote.json();
+      return new Response(JSON.stringify({
+        ...payload,
+        syncState: {
+          policyVersion: 1,
+          accountRevision: 0,
+          learnerRevisions: {
+            'learner-a': bootstrapCount === 1 ? 0 : 1,
+          },
+        },
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    if (url.pathname === '/api/subjects/spelling/command' && method === 'POST') {
+      const body = JSON.parse(init.body);
+      commandBodies.push(body);
+      if (commandBodies.length === 1) {
+        return new Response(JSON.stringify({
+          ok: false,
+          code: 'stale_write',
+          message: 'Mutation rejected because this state changed in another tab or device.',
+          mutation: {
+            expectedRevision: body.expectedLearnerRevision,
+            currentRevision: 1,
+          },
+        }), { status: 409, headers: { 'content-type': 'application/json' } });
+      }
+      return new Response(JSON.stringify({
+        ok: true,
+        subjectReadModel: {
+          subjectId: 'spelling',
+          learnerId: body.learnerId,
+          version: 1,
+          phase: 'session',
+          session: {
+            id: 'server-session',
+            type: 'learning',
+            mode: 'smart',
+            phase: 'question',
+            progress: { done: 0, total: 1 },
+            currentCard: { prompt: { cloze: 'A ________ prompt.' } },
+            serverAuthority: 'worker',
+          },
+          prefs: { mode: 'smart', yearFilter: 'core', roundLength: '1', showCloze: true, autoSpeak: true },
+          stats: {},
+          analytics: { pools: {}, wordGroups: [] },
+        },
+        projections: {
+          rewards: {
+            systemId: 'monster-codex',
+            state: { caught: ['spark'] },
+            events: [],
+            toastEvents: [],
+          },
+        },
+        mutation: {
+          appliedRevision: 2,
+        },
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    return server.fetch(input, init);
+  };
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch,
+    storage,
+  });
+  await repositories.hydrate();
+
+  const commands = createSubjectCommandClient({
+    baseUrl: 'https://repo.test',
+    fetch,
+    getLearnerRevision: (learnerId) => repositories.runtime.readLearnerRevision(learnerId),
+    onStaleWrite: async () => {
+      await repositories.hydrate({ cacheScope: 'subject-command-stale-write' });
+    },
+    onCommandApplied: ({ learnerId, subjectId, response }) => {
+      repositories.runtime.applySubjectCommandResult({ learnerId, subjectId, response });
+    },
+  });
+
+  await commands.send({
+    subjectId: 'spelling',
+    learnerId: 'learner-a',
+    command: 'start-session',
+    payload: { mode: 'smart', length: 1 },
+    requestId: 'cmd-client-stale',
+  });
+
+  assert.equal(bootstrapCount, 2);
+  assert.deepEqual(commandBodies.map((body) => body.expectedLearnerRevision), [0, 1]);
+  assert.equal(commandBodies[0].requestId, commandBodies[1].requestId);
+  assert.equal(repositories.runtime.readLearnerRevision('learner-a'), 2);
+  assert.equal(repositories.subjectStates.read('learner-a', 'spelling').ui.phase, 'session');
+});

@@ -1,5 +1,6 @@
 export function spellingAutoAdvanceDelay(state) {
   if (!state || state.phase !== 'session' || !state.awaitingAdvance || !state.session) return null;
+  if (state.error) return null;
   return state.session.type === 'test' ? 320 : 500;
 }
 

@@ -256,3 +256,30 @@ test('analytics summaries can project branches without writing during render', (
   assert.equal(summary.find((entry) => entry.monster.id === 'inklet').progress.mastered, 1);
   assert.equal(summary.find((entry) => entry.monster.id === 'vellhorn').progress.mastered, 0);
 });
+
+test('redacted analytics uses public monster projection state without writing during render', () => {
+  const repository = makeGameStateRepository({
+    inklet: { masteredCount: 12, caught: true, branch: 'b1' },
+    glimmerbug: { masteredCount: 4, caught: true, branch: 'b2' },
+    phaeton: { masteredCount: 16, caught: true, branch: 'b1' },
+    vellhorn: { masteredCount: 1, caught: true, branch: 'b2' },
+  });
+  const analytics = {
+    wordGroups: [],
+    wordBank: { source: 'server-read-model-api' },
+  };
+
+  const summary = monsterSummaryFromSpellingAnalytics(analytics, {
+    learnerId: 'learner-a',
+    gameStateRepository: repository,
+    persistBranches: false,
+  });
+
+  assert.equal(repository.writes(), 0);
+  assert.equal(summary.find((entry) => entry.monster.id === 'inklet').progress.mastered, 12);
+  assert.equal(summary.find((entry) => entry.monster.id === 'inklet').progress.stage, 1);
+  assert.equal(summary.find((entry) => entry.monster.id === 'glimmerbug').progress.mastered, 4);
+  assert.equal(summary.find((entry) => entry.monster.id === 'phaeton').progress.mastered, 16);
+  assert.equal(summary.find((entry) => entry.monster.id === 'phaeton').progress.caught, true);
+  assert.equal(summary.find((entry) => entry.monster.id === 'vellhorn').progress.branch, 'b2');
+});

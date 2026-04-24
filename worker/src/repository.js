@@ -30,6 +30,7 @@ import {
 } from '../../src/platform/access/roles.js';
 import { buildAdminHubReadModel } from '../../src/platform/hubs/admin-read-model.js';
 import { buildParentHubReadModel } from '../../src/platform/hubs/parent-read-model.js';
+import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system.js';
 import { buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
 import {
   BadRequestError,
@@ -71,9 +72,11 @@ const PUBLIC_EVENT_TYPES = new Set([
 ]);
 const PUBLIC_MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
 const PUBLIC_MONSTER_IDS = new Set(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']);
+const PUBLIC_DIRECT_SPELLING_MONSTER_IDS = ['inklet', 'glimmerbug', 'vellhorn'];
 const PUBLIC_MONSTER_BRANCHES = new Set(['b1', 'b2']);
 const SPELLING_RUNTIME_CONTENT_CACHE_LIMIT = 8;
 const spellingRuntimeContentCache = new Map();
+const SPELLING_SECURE_STAGE = 4;
 const PUBLIC_EVENT_TEXT_ENUMS = {
   mode: new Set(['smart', 'trouble', 'single', 'test']),
   sessionType: new Set(['learning', 'test']),
@@ -250,6 +253,83 @@ function publicMonsterCodexState(rawState) {
 function publicGameStateRowToRecord(row) {
   if (row.system_id !== PUBLIC_MONSTER_CODEX_SYSTEM_ID) return null;
   return publicMonsterCodexState(gameStateRowToRecord(row));
+}
+
+function secureSpellingProgress(entry) {
+  const stage = Number(entry?.stage);
+  return Number.isFinite(stage) && stage >= SPELLING_SECURE_STAGE;
+}
+
+function spellingProgressFromSubjectRow(row) {
+  const data = safeJsonParse(row?.data_json, {});
+  return isPlainObject(data?.progress) ? data.progress : null;
+}
+
+function publicMonsterCodexStateFromSpellingProgress(progress, snapshot, existingState = {}) {
+  if (!isPlainObject(progress)) return null;
+  const counts = Object.fromEntries(PUBLIC_DIRECT_SPELLING_MONSTER_IDS.map((monsterId) => [monsterId, 0]));
+  const words = Array.isArray(snapshot?.words) ? snapshot.words : [];
+  let knownWordCount = 0;
+
+  for (const word of words) {
+    if (!word?.slug || !isPlainObject(progress[word.slug])) continue;
+    knownWordCount += 1;
+    if (!secureSpellingProgress(progress[word.slug])) continue;
+    const monsterId = monsterIdForSpellingWord(word);
+    if (monsterId in counts) counts[monsterId] += 1;
+  }
+
+  const nextState = {};
+  for (const monsterId of PUBLIC_DIRECT_SPELLING_MONSTER_IDS) {
+    const existing = isPlainObject(existingState?.[monsterId]) ? existingState[monsterId] : {};
+    nextState[monsterId] = {
+      masteredCount: counts[monsterId],
+      caught: counts[monsterId] > 0,
+      ...(PUBLIC_MONSTER_BRANCHES.has(existing.branch) ? { branch: existing.branch } : {}),
+    };
+  }
+
+  const phaetonCount = counts.inklet + counts.glimmerbug;
+  const existingPhaeton = isPlainObject(existingState?.phaeton) ? existingState.phaeton : {};
+  nextState.phaeton = {
+    masteredCount: phaetonCount,
+    caught: phaetonCount >= 3,
+    ...(PUBLIC_MONSTER_BRANCHES.has(existingPhaeton.branch) ? { branch: existingPhaeton.branch } : {}),
+  };
+
+  return {
+    state: publicMonsterCodexState(nextState),
+    knownWordCount,
+  };
+}
+
+function publicMonsterCodexHasMastery(state) {
+  if (!isPlainObject(state)) return false;
+  return Object.values(state).some((entry) => Number(entry?.masteredCount) > 0 || entry?.caught === true);
+}
+
+async function mergePublicSpellingCodexState(db, accountId, subjectRows, gameState) {
+  const spellingRows = subjectRows.filter((row) => row.subject_id === 'spelling');
+  if (!spellingRows.length) return gameState;
+
+  const content = await readSubjectContentBundle(db, accountId, 'spelling');
+  const snapshot = resolveRuntimeSnapshot(content, {
+    referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+  });
+
+  for (const row of spellingRows) {
+    const progress = spellingProgressFromSubjectRow(row);
+    if (!progress) continue;
+    const key = gameStateKey(row.learner_id, PUBLIC_MONSTER_CODEX_SYSTEM_ID);
+    const existingState = publicMonsterCodexState(gameState[key] || {});
+    const derived = publicMonsterCodexStateFromSpellingProgress(progress, snapshot, existingState);
+    if (!derived) continue;
+    if (derived.knownWordCount > 0 || !publicMonsterCodexHasMastery(existingState)) {
+      gameState[key] = derived.state;
+    }
+  }
+
+  return gameState;
 }
 
 function practiceSessionRowToRecord(row) {
@@ -1248,6 +1328,9 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
       : gameStateRowToRecord(row);
     if (record) gameState[gameStateKey(row.learner_id, row.system_id)] = record;
   });
+  if (publicReadModels) {
+    await mergePublicSpellingCodexState(db, accountId, subjectRows, gameState);
+  }
 
   return {
     ...normaliseRepositoryBundle({

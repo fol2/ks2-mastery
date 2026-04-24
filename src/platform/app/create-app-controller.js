@@ -30,6 +30,7 @@ export function createAppController({
   subscribers = null,
   runtimeBoundary = createSubjectRuntimeBoundary(),
   scheduler = null,
+  autoAdvanceDispatchContinue = null,
   tts = createNoopTtsPort(),
   services: extraServices = {},
   ports: portOverrides = {},
@@ -55,7 +56,7 @@ export function createAppController({
     || (typeof globalThis.clearTimeout === 'function' ? globalThis.clearTimeout.bind(globalThis) : null);
   const autoAdvance = createSpellingAutoAdvanceController({
     getState: () => store.getState(),
-    dispatchContinue: () => dispatch('spelling-continue'),
+    dispatchContinue: dispatchAutoAdvanceContinue,
     setTimeoutFn,
     clearTimeoutFn,
   });
@@ -105,6 +106,13 @@ export function createAppController({
       return false;
     }
     return autoAdvance.ensureScheduledFromState(appState.subjectUi.spelling);
+  }
+
+  function dispatchAutoAdvanceContinue() {
+    if (typeof autoAdvanceDispatchContinue === 'function') {
+      return autoAdvanceDispatchContinue();
+    }
+    return dispatch('spelling-continue');
   }
 
   function clearDeferredAudio() {
