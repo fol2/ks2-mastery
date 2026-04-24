@@ -407,6 +407,116 @@ test('TTS route rejects arbitrary client-supplied transcript text', async () => 
   }
 });
 
+test('production bootstrap returns a redacted replay audio cue for the active spelling prompt', async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, init = {}) => {
+    calls.push({
+      url,
+      body: JSON.parse(init.body),
+    });
+    return new Response(new Uint8Array([7, 8, 9]), {
+      status: 200,
+      headers: { 'content-type': 'audio/mpeg' },
+    });
+  };
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      AUTH_MODE: 'production',
+      ENVIRONMENT: 'production',
+      APP_HOSTNAME: 'repo.test',
+      OPENAI_API_KEY: 'test-openai-key',
+    },
+  });
+  try {
+    const prompt = await startDemoSpellingPrompt(server);
+    const bootstrap = await server.fetchRaw('https://repo.test/api/bootstrap', {
+      headers: { cookie: prompt.cookie },
+    });
+    const payload = await bootstrap.json();
+    const spelling = payload.subjectStates[`${prompt.learnerId}::spelling`]?.ui;
+
+    assert.equal(bootstrap.status, 200, JSON.stringify(payload));
+    assert.equal(spelling.session.currentCard.word, undefined);
+    assert.equal(spelling.session.currentCard.prompt.sentence, undefined);
+    assert.ok(spelling.audio?.promptToken);
+    assert.equal(spelling.audio.learnerId, prompt.learnerId);
+    assert.equal(spelling.audio.promptToken, prompt.audio.promptToken);
+    assert.equal(JSON.stringify(spelling).includes('early'), false);
+
+    const replay = await server.fetchRaw('https://repo.test/api/tts', {
+      ...ttsRequest({
+        learnerId: spelling.audio.learnerId,
+        promptToken: spelling.audio.promptToken,
+      }),
+      headers: {
+        'content-type': 'application/json',
+        cookie: prompt.cookie,
+      },
+    });
+    const bytes = new Uint8Array(await replay.arrayBuffer());
+
+    assert.equal(replay.status, 200);
+    assert.deepEqual([...bytes], [7, 8, 9]);
+    assert.equal(calls.length, 1);
+    assert.match(calls[0].body.input, /The word is early\./);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
+test('spelling commands keep a replay cue when auto-play audio is disabled', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAccountLearner(server.DB);
+    const prefsResponse = await server.fetch('https://repo.test/api/subjects/spelling/command', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        command: 'save-prefs',
+        learnerId: 'learner-a',
+        requestId: 'tts-prefs-autoplay-off',
+        expectedLearnerRevision: 0,
+        payload: {
+          prefs: {
+            autoSpeak: false,
+            mode: 'single',
+            roundLength: '1',
+          },
+        },
+      }),
+    });
+    const prefsPayload = await prefsResponse.json();
+    assert.equal(prefsResponse.status, 200, JSON.stringify(prefsPayload));
+
+    const startResponse = await server.fetch('https://repo.test/api/subjects/spelling/command', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        command: 'start-session',
+        learnerId: 'learner-a',
+        requestId: 'tts-start-autoplay-off',
+        expectedLearnerRevision: 1,
+        payload: {
+          mode: 'single',
+          slug: 'early',
+          length: 1,
+        },
+      }),
+    });
+    const startPayload = await startResponse.json();
+
+    assert.equal(startResponse.status, 200, JSON.stringify(startPayload));
+    assert.equal(startPayload.audio, null);
+    assert.ok(startPayload.subjectReadModel.audio?.promptToken);
+    assert.equal(startPayload.subjectReadModel.audio.learnerId, 'learner-a');
+  } finally {
+    server.close();
+  }
+});
+
 test('demo TTS records fallback usage and demo-scoped limiter buckets', async () => {
   const originalFetch = globalThis.fetch;
   let providerCalls = 0;

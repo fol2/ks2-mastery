@@ -32,6 +32,7 @@ import { buildAdminHubReadModel } from '../../src/platform/hubs/admin-read-model
 import { buildParentHubReadModel } from '../../src/platform/hubs/parent-read-model.js';
 import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system.js';
 import { buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
+import { buildSpellingAudioCue } from './subjects/spelling/audio.js';
 import {
   BadRequestError,
   ConflictError,
@@ -157,7 +158,7 @@ function safeSpellingSessionProgress(progress) {
   return Object.keys(output).length ? output : null;
 }
 
-function redactSpellingUiForClient(ui, data = {}, learnerId = '') {
+function redactSpellingUiForClient(ui, data = {}, learnerId = '', { audio = null } = {}) {
   const raw = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {};
   const session = raw.session && typeof raw.session === 'object' && !Array.isArray(raw.session)
     ? raw.session
@@ -191,16 +192,20 @@ function redactSpellingUiForClient(ui, data = {}, learnerId = '') {
     prefs: cloneSerialisable(data?.prefs) || {},
     stats: {},
     analytics: null,
-    audio: null,
+    audio: audio ? cloneSerialisable(audio) : null,
     content: null,
   };
 }
 
-function publicSubjectStateRowToRecord(row) {
+async function publicSubjectStateRowToRecord(row) {
   const record = subjectStateRowToRecord(row);
   if (row.subject_id !== 'spelling') return record;
+  const audio = await buildSpellingAudioCue({
+    learnerId: row.learner_id,
+    state: record.ui,
+  });
   return normaliseSubjectStateRecord({
-    ui: redactSpellingUiForClient(record.ui, record.data, row.learner_id),
+    ui: redactSpellingUiForClient(record.ui, record.data, row.learner_id, { audio }),
     data: {},
     updatedAt: record.updatedAt,
   });
@@ -1237,11 +1242,11 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
   `, learnerIds);
 
   const subjectStates = {};
-  subjectRows.forEach((row) => {
+  for (const row of subjectRows) {
     subjectStates[subjectStateKey(row.learner_id, row.subject_id)] = publicReadModels
-      ? publicSubjectStateRowToRecord(row)
+      ? await publicSubjectStateRowToRecord(row)
       : subjectStateRowToRecord(row);
-  });
+  }
 
   const gameState = {};
   gameRows.forEach((row) => {

@@ -119,11 +119,15 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       reactionEvents: projectedRewards.rewardEvents,
       existingEvents: projectionState.events,
     });
-    const audioCue = await buildSpellingAudioCue({
+    const replayAudioCue = await buildSpellingAudioCue({
+      learnerId: command.learnerId,
+      state: result.state,
+    });
+    const transitionAudioCue = result.audio ? await buildSpellingAudioCue({
       learnerId: command.learnerId,
       state: result.state,
       audio: result.audio,
-    });
+    }) : null;
 
     const projections = buildCommandProjectionReadModel({
       gameState: projectedRewards.gameState,
@@ -141,7 +145,7 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         prefs: result.prefs,
         stats: result.stats,
         analytics: clientAnalytics(result.analytics),
-        audio: audioCue,
+        audio: replayAudioCue,
         content: contentMeta(contentResult, snapshot),
       }),
       projections,
@@ -149,7 +153,7 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       domainEvents: projectedEvents.domainEvents,
       reactionEvents: projectedEvents.reactionEvents,
       toastEvents: projectedEvents.toastEvents,
-      audio: audioCue,
+      audio: transitionAudioCue,
       runtimeWrite: {
         state: result.state,
         data: result.data,

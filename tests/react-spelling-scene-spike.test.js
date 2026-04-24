@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import { createLocalAppController } from '../src/platform/app/create-local-app-controller.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
+import { spellingModule } from '../src/subjects/spelling/module.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createAppHarness } from './helpers/app-harness.js';
 import { renderReactControllerApp } from './helpers/react-app-ssr.js';
@@ -67,6 +68,45 @@ test('spelling session spike preserves hidden answer, replay, submit, and contin
   finishCurrentRound(harness);
   assert.equal(harness.store.getState().subjectUi.spelling.phase, 'summary');
   assert.match(harness.render(), /summary-card/);
+});
+
+test('spelling replay uses a server audio cue when the prompt word is redacted', () => {
+  const spoken = [];
+  const audio = {
+    subjectId: 'spelling',
+    learnerId: 'learner-a',
+    sessionId: 'server-session',
+    promptToken: 'prompt-token-a',
+    wordOnly: false,
+  };
+  const ui = {
+    phase: 'session',
+    audio,
+    session: {
+      currentCard: {
+        prompt: { cloze: 'The birds sang ________ in the day.' },
+      },
+    },
+  };
+
+  const handled = spellingModule.handleAction('spelling-replay-slow', {
+    appState: {
+      learners: { selectedId: 'learner-a' },
+      subjectUi: { spelling: ui },
+    },
+    data: {},
+    store: {},
+    service: {
+      initState() { return ui; },
+      getAudioCue() { return audio; },
+    },
+    tts: {
+      speak(payload) { spoken.push(payload); },
+    },
+  });
+
+  assert.equal(handled, true);
+  assert.deepEqual(spoken, [{ ...audio, slow: true }]);
 });
 
 test('word-bank modal spike keeps drill isolated and Escape closes back to the word bank', () => {

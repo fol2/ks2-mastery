@@ -291,6 +291,8 @@ test('public bootstrap redacts spelling runtime state while preserving generic s
   assert.equal(publicSpelling.ui.session.currentCard.word, undefined);
   assert.equal(publicSpelling.ui.session.currentCard.prompt.sentence, undefined);
   assert.equal(publicSpelling.ui.session.currentCard.prompt.cloze, 'Do not expose ________.');
+  assert.ok(publicSpelling.ui.audio?.promptToken);
+  assert.equal(publicSpelling.ui.audio.learnerId, learnerId);
   assert.equal(publicPayload.practiceSessions[0].sessionState, null);
 
   server.close();
@@ -355,6 +357,8 @@ test('production bootstrap redacts spelling runtime state by default', async () 
   assert.equal(publicSpelling.ui.session.currentCard.word, undefined);
   assert.equal(publicSpelling.ui.session.currentCard.prompt.sentence, undefined);
   assert.equal(publicSpelling.ui.session.currentCard.prompt.cloze, 'Do not expose ________.');
+  assert.ok(publicSpelling.ui.audio?.promptToken);
+  assert.equal(publicSpelling.ui.audio.learnerId, 'learner-prod');
   assert.equal(payload.practiceSessions[0].sessionState, null);
 
   server.close();

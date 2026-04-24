@@ -19,6 +19,14 @@ function applySpellingTransition(context, transition) {
   return true;
 }
 
+function spellingReplayPayload({ service, learnerId, ui, slow = false } = {}) {
+  const audio = service?.getAudioCue?.(learnerId) || ui?.audio || null;
+  if (audio?.promptToken) return { ...audio, slow };
+  const card = ui?.session?.currentCard;
+  if (!card?.word) return null;
+  return { word: card.word, sentence: card.prompt?.sentence, slow };
+}
+
 function resetWordBankTransientUi(current) {
   return {
     ...current.transientUi,
@@ -174,16 +182,14 @@ export const spellingModule = {
     }
 
     if (action === 'spelling-replay') {
-      if (ui.session?.currentCard?.word) {
-        tts.speak({ word: ui.session.currentCard.word, sentence: ui.session.currentCard.prompt?.sentence });
-      }
+      const payload = spellingReplayPayload({ service, learnerId, ui });
+      if (payload) tts.speak(payload);
       return true;
     }
 
     if (action === 'spelling-replay-slow') {
-      if (ui.session?.currentCard?.word) {
-        tts.speak({ word: ui.session.currentCard.word, sentence: ui.session.currentCard.prompt?.sentence, slow: true });
-      }
+      const payload = spellingReplayPayload({ service, learnerId, ui, slow: true });
+      if (payload) tts.speak(payload);
       return true;
     }
 
