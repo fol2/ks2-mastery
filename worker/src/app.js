@@ -116,6 +116,22 @@ async function sessionPayload({ session, auth, env, now }) {
   };
 }
 
+async function existingDemoSessionPayload({ session, env, now }) {
+  const repository = createWorkerRepository({ env, now });
+  const account = await repository.ensureAccount(session);
+  const learnerIds = await repository.accessibleLearnerIds(session.accountId);
+  return {
+    ok: true,
+    session: {
+      accountId: session.accountId,
+      learnerId: account?.selected_learner_id || learnerIds[0] || null,
+      provider: 'demo',
+      demo: true,
+      expiresAt: session.demoExpiresAt || null,
+    },
+  };
+}
+
 function shouldUsePublicReadModels(request, env = {}) {
   if (request.headers.get('x-ks2-public-read-models') === '1') return true;
   return isProductionRuntime(env);
@@ -191,6 +207,21 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/demo/session' && request.method === 'POST') {
+          const currentSession = await auth.getSession(request);
+          if (currentSession && !currentSession.demo) {
+            return json({
+              ok: false,
+              code: 'demo_session_conflict',
+              message: 'Sign out before starting a demo session.',
+            }, 409);
+          }
+          if (currentSession?.demo) {
+            return json(await existingDemoSessionPayload({
+              session: currentSession,
+              env,
+              now,
+            }));
+          }
           const result = await createDemoSession({
             env,
             request,

@@ -253,6 +253,58 @@ test('/demo reuses an existing demo session instead of creating another account'
   server.close();
 });
 
+test('/api/demo/session does not overwrite an existing real account session', async () => {
+  const server = productionServer();
+  const register = await postJson(server, '/api/auth/register', {
+    email: 'real-demo-api@example.test',
+    password: 'password-1234',
+  });
+  const cookie = cookieFrom(register);
+  const accountCountBefore = server.DB.db.prepare('SELECT COUNT(*) AS count FROM adult_accounts').get().count;
+
+  const response = await postJson(server, '/api/demo/session', {}, { cookie });
+  const payload = await response.json();
+  const session = await server.fetchRaw('https://repo.test/api/session', {
+    headers: { cookie },
+  });
+  const sessionPayload = await session.json();
+  const accountCountAfter = server.DB.db.prepare('SELECT COUNT(*) AS count FROM adult_accounts').get().count;
+
+  assert.equal(response.status, 409);
+  assert.equal(payload.code, 'demo_session_conflict');
+  assert.equal(cookieFrom(response), '');
+  assert.equal(accountCountAfter, accountCountBefore);
+  assert.equal(session.status, 200);
+  assert.equal(sessionPayload.session.provider, 'email');
+  assert.equal(sessionPayload.session.demo, false);
+  assert.equal(sessionPayload.account.accountType, 'real');
+
+  server.close();
+});
+
+test('/api/demo/session reuses an existing demo session instead of creating another account', async () => {
+  const server = productionServer();
+  const demo = await postJson(server, '/api/demo/session');
+  const demoPayload = await demo.json();
+  const cookie = cookieFrom(demo);
+  const accountCountBefore = server.DB.db.prepare('SELECT COUNT(*) AS count FROM adult_accounts').get().count;
+
+  const response = await postJson(server, '/api/demo/session', {}, { cookie });
+  const payload = await response.json();
+  const accountCountAfter = server.DB.db.prepare('SELECT COUNT(*) AS count FROM adult_accounts').get().count;
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.session.accountId, demoPayload.session.accountId);
+  assert.equal(payload.session.learnerId, demoPayload.session.learnerId);
+  assert.equal(payload.session.provider, 'demo');
+  assert.equal(payload.session.demo, true);
+  assert.equal(cookieFrom(response), '');
+  assert.equal(accountCountAfter, accountCountBefore);
+
+  server.close();
+});
+
 test('state-changing demo creation rejects cross-origin requests', async () => {
   const server = productionServer();
 

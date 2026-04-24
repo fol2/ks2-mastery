@@ -170,11 +170,15 @@ export async function resolveSpellingAudioRequest({
     });
   }
 
-  const wordOnly = body.wordOnly === true;
+  if (body.wordOnly === true) {
+    throw new BadRequestError('Word-only audio is only available for vocabulary practice.', {
+      code: 'tts_word_only_scope_invalid',
+    });
+  }
   return {
-    transcript: transcriptFor(parts, { wordOnly }),
+    transcript: transcriptFor(parts),
     slow: Boolean(body.slow),
-    wordOnly,
+    wordOnly: false,
     promptToken: suppliedToken,
     learnerId,
     sessionId: parts.sessionId,

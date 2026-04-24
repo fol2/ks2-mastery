@@ -294,7 +294,7 @@ test('TTS route does not fall back when selected OpenAI exceeds the primary time
   }
 });
 
-test('TTS route supports word-only vocabulary audio', async () => {
+test('TTS route rejects word-only audio for an active spelling prompt token', async () => {
   const originalFetch = globalThis.fetch;
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
@@ -318,12 +318,11 @@ test('TTS route supports word-only vocabulary audio', async () => {
       promptToken: prompt.promptToken,
       wordOnly: true,
     }));
+    const payload = await response.json();
 
-    assert.equal(response.status, 200);
-    assert.equal(calls.length, 1);
-    assert.equal(calls[0].url, 'https://api.openai.com/v1/audio/speech');
-    assert.equal(calls[0].body.input, 'early');
-    assert.match(calls[0].body.instructions, /Read exactly the supplied word once/);
+    assert.equal(response.status, 400);
+    assert.equal(payload.code, 'tts_word_only_scope_invalid');
+    assert.equal(calls.length, 0);
   } finally {
     globalThis.fetch = originalFetch;
     server.close();
