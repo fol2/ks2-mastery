@@ -2,6 +2,7 @@ import {
   cloneSerialisable,
   normalisePracticeSessionRecord,
 } from '../../../../src/platform/core/repositories/helpers.js';
+import { parseChoiceIndex } from '../../../../shared/punctuation/choice-index.js';
 import {
   createInitialPunctuationData,
   createPunctuationService,
@@ -28,12 +29,6 @@ export function normaliseServerPunctuationData(value) {
 
 function practiceRecord(record) {
   return record ? normalisePracticeSessionRecord(record) : null;
-}
-
-function parseChoiceIndex(value) {
-  if (Number.isSafeInteger(value) && value >= 0) return value;
-  if (typeof value === 'string' && /^\d+$/.test(value)) return Number(value);
-  return null;
 }
 
 function createServerPersistence({ learnerId, data, now }) {

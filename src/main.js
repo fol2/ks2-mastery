@@ -28,6 +28,7 @@ import { createSubjectCommandActionHandler } from './platform/runtime/subject-co
 import { createSubjectCommandClient } from './platform/runtime/subject-command-client.js';
 import { createReadModelClient } from './platform/runtime/read-model-client.js';
 import { createPunctuationReadModelService } from './subjects/punctuation/client-read-models.js';
+import { punctuationSubjectCommandActions } from './subjects/punctuation/command-actions.js';
 import { createPlatformTts } from './subjects/spelling/tts.js';
 import {
   DEFAULT_BUFFERED_GEMINI_VOICE,
@@ -1946,45 +1947,7 @@ const punctuationCommandActions = createSubjectCommandActionHandler({
     globalThis.console?.warn?.('Punctuation command failed.', error);
     setPunctuationRuntimeError(error?.payload?.message || error?.message || 'The punctuation command could not be completed.');
   },
-  actions: {
-    'punctuation-start': {
-      command: 'start-session',
-      payload({ data, state }) {
-        const prefs = state.subjectUi?.punctuation?.prefs || {};
-        return {
-          mode: data?.mode || prefs.mode || 'smart',
-          roundLength: prefs.roundLength || '4',
-        };
-      },
-    },
-    'punctuation-start-again': {
-      command: 'start-session',
-      payload({ state }) {
-        const prefs = state.subjectUi?.punctuation?.prefs || {};
-        return {
-          mode: prefs.mode || 'smart',
-          roundLength: prefs.roundLength || '4',
-        };
-      },
-    },
-    'punctuation-submit-form': {
-      command: 'submit-answer',
-      payload({ data }) {
-        if (data?.formData?.get) return { typed: data.formData.get('typed') || '' };
-        if (Number.isInteger(Number(data?.choiceIndex))) return { choiceIndex: Number(data.choiceIndex) };
-        return { typed: data?.typed || data?.answer || '' };
-      },
-    },
-    'punctuation-continue': { command: 'continue-session' },
-    'punctuation-skip': { command: 'skip-item' },
-    'punctuation-end-early': { command: 'end-session' },
-    'punctuation-set-mode': {
-      command: 'save-prefs',
-      payload({ data }) {
-        return { prefs: { mode: data?.value || data?.mode || 'smart' } };
-      },
-    },
-  },
+  actions: punctuationSubjectCommandActions,
 });
 
 function spellingCommandDedupeKey(command, appState = store.getState()) {

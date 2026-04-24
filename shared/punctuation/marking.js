@@ -1,3 +1,5 @@
+import { parseChoiceIndex } from './choice-index.js';
+
 const MAX_ANSWER_LENGTH = 500;
 
 const FACET_LABELS = Object.freeze({
@@ -58,12 +60,6 @@ function acceptedAnswers(item) {
     : (Array.isArray(item?.answers) ? item.answers : []);
   const model = typeof item?.model === 'string' && item.model ? [item.model] : [];
   return [...new Set([...accepted, ...model].filter((entry) => typeof entry === 'string' && entry))];
-}
-
-function parseChoiceIndex(value) {
-  if (Number.isSafeInteger(value) && value >= 0) return value;
-  if (typeof value === 'string' && /^\d+$/.test(value)) return Number(value);
-  return null;
 }
 
 function markChoose(item, answer) {

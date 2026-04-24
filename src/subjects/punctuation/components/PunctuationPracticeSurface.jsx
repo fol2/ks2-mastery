@@ -42,7 +42,7 @@ function ChoiceItem({ item, disabled, onSubmit }) {
       style={{ display: 'grid', gap: 12 }}
       onSubmit={(event) => {
         event.preventDefault();
-        onSubmit({ choiceIndex: Number(choiceIndex) });
+        onSubmit({ choiceIndex });
       }}
     >
       <div className="choice-list" role="radiogroup" aria-label="Punctuation choices">

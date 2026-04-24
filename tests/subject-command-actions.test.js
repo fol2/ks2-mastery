@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createSubjectCommandActionHandler } from '../src/platform/runtime/subject-command-actions.js';
+import { punctuationSubjectCommandActions } from '../src/subjects/punctuation/command-actions.js';
 
 function flushPromises() {
   return Promise.resolve().then(() => Promise.resolve());
@@ -150,4 +151,33 @@ test('subject command action handler reports command failures', async () => {
   await flushPromises();
 
   assert.deepEqual(errors, ['Worker is unavailable']);
+});
+
+async function sendPunctuationActionPayload(data) {
+  const sent = [];
+  const handler = createSubjectCommandActionHandler({
+    subjectId: 'punctuation',
+    getState: baseState,
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        return Promise.resolve({ ok: true });
+      },
+    },
+    actions: punctuationSubjectCommandActions,
+  });
+
+  assert.equal(handler.handle('punctuation-submit-form', data), true);
+  await flushPromises();
+  assert.equal(sent.length, 1);
+  return sent[0].payload;
+}
+
+test('punctuation browser command action keeps choiceIndex parsing strict', async () => {
+  assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex: 0 }), { choiceIndex: 0 });
+  assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex: '0' }), { choiceIndex: 0 });
+
+  for (const choiceIndex of [null, '', [0]]) {
+    assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex }), { typed: '' });
+  }
 });
