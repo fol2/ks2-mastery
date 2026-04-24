@@ -77,9 +77,8 @@ function isLegacyRuntimeOperationKind(kind) {
   return LEGACY_RUNTIME_OPERATION_KINDS.has(String(kind || ''));
 }
 
-function assertLegacyRuntimeWriteAllowed(kind) {
-  if (LEGACY_RUNTIME_WRITES_ENABLED) return;
-  throw new Error(`Runtime writes must use the subject command boundary (${kind}).`);
+function isReplayablePendingOperation(operation, legacyRuntimeWritesEnabled = LEGACY_RUNTIME_WRITES_ENABLED) {
+  return legacyRuntimeWritesEnabled || !isLegacyRuntimeOperationKind(operation?.kind);
 }
 
 function legacyRuntimePath(...segments) {
@@ -886,11 +885,13 @@ export function createApiPlatformRepositories({
   authSession = createNoopRepositoryAuthSession(),
   cacheScopeKey = null,
   publicReadModels = false,
+  legacyRuntimeWritesEnabled = LEGACY_RUNTIME_WRITES_ENABLED,
 } = {}) {
   if (typeof fetchFn !== 'function') {
     throw new TypeError('API repositories require a fetch implementation.');
   }
 
+  const legacyWritesEnabled = legacyRuntimeWritesEnabled === true;
   const resolvedStorage = storage || globalThis.localStorage || createNoopStorage();
   const resolvedCacheScopeKey = typeof cacheScopeKey === 'string' && cacheScopeKey
     ? cacheScopeKey
@@ -898,7 +899,8 @@ export function createApiPlatformRepositories({
   const storageKey = apiCacheStorageKey(resolvedCacheScopeKey);
   const cachedState = loadCachedState(resolvedStorage, storageKey);
   const cache = normaliseRepositoryBundle(cachedState.bundle);
-  let pendingOperations = normalisePendingOperations(cachedState.pendingOperations);
+  let pendingOperations = normalisePendingOperations(cachedState.pendingOperations)
+    .filter((operation) => isReplayablePendingOperation(operation, legacyWritesEnabled));
   let syncState = normaliseSyncState(cachedState.syncState);
   let inFlightWriteCount = 0;
   let lastSyncAt = 0;
@@ -1003,6 +1005,11 @@ export function createApiPlatformRepositories({
   function markRemoteFailure(error) {
     lastRemoteError = error;
     recomputePersistence();
+  }
+
+  function assertRuntimeWriteAllowed(kind) {
+    if (legacyWritesEnabled) return;
+    throw new Error(`Runtime writes must use the subject command boundary (${kind}).`);
   }
 
   function removeOperationById(id) {
@@ -1216,11 +1223,11 @@ export function createApiPlatformRepositories({
         body: JSON.stringify({ learners: cloneSerialisable(operation.snapshot), mutation }),
       }, authSession);
     }
-    if (LEGACY_RUNTIME_WRITES_ENABLED && isLegacyRuntimeOperationKind(operation.kind)) {
+    if (legacyWritesEnabled && isLegacyRuntimeOperationKind(operation.kind)) {
       return sendLegacyRuntimeOperation(operation, mutation, headers);
     }
     if (isLegacyRuntimeOperationKind(operation.kind)) {
-      assertLegacyRuntimeWriteAllowed(operation.kind);
+      assertRuntimeWriteAllowed(operation.kind);
     }
     return null;
   }
@@ -1415,7 +1422,7 @@ export function createApiPlatformRepositories({
       return undefined;
     },
     clearAll() {
-      assertLegacyRuntimeWriteAllowed('debug.reset');
+      assertRuntimeWriteAllowed('debug.reset');
       const operation = createOperation('debug.reset', {}, syncState);
       queueOperation(operation);
       kickQueue();
@@ -1467,7 +1474,7 @@ export function createApiPlatformRepositories({
         return this.writeRecord(learnerId, subjectId, mergeSubjectData(this.read(learnerId, subjectId), data, nowTs()), 'data');
       },
       writeRecord(learnerId, subjectId, record, mergeStrategy = 'replace') {
-        assertLegacyRuntimeWriteAllowed('subjectStates.put');
+        assertRuntimeWriteAllowed('subjectStates.put');
         const operation = createOperation('subjectStates.put', {
           learnerId,
           subjectId,
@@ -1479,13 +1486,13 @@ export function createApiPlatformRepositories({
         return normaliseSubjectStateRecord(cache.subjectStates[subjectStateKey(learnerId, subjectId)]);
       },
       clear(learnerId, subjectId) {
-        assertLegacyRuntimeWriteAllowed('subjectStates.delete');
+        assertRuntimeWriteAllowed('subjectStates.delete');
         const operation = createOperation('subjectStates.delete', { learnerId, subjectId }, syncState);
         queueOperation(operation);
         kickQueue();
       },
       clearLearner(learnerId) {
-        assertLegacyRuntimeWriteAllowed('subjectStates.clearLearner');
+        assertRuntimeWriteAllowed('subjectStates.clearLearner');
         const operation = createOperation('subjectStates.clearLearner', { learnerId }, syncState);
         queueOperation(operation);
         kickQueue();
@@ -1504,7 +1511,7 @@ export function createApiPlatformRepositories({
         });
       },
       write(record) {
-        assertLegacyRuntimeWriteAllowed('practiceSessions.put');
+        assertRuntimeWriteAllowed('practiceSessions.put');
         const operation = createOperation('practiceSessions.put', {
           record: normalisePracticeSessionRecord(record),
         }, syncState);
@@ -1513,7 +1520,7 @@ export function createApiPlatformRepositories({
         return this.latest(operation.record.learnerId, operation.record.subjectId);
       },
       clear(learnerId, subjectId = null) {
-        assertLegacyRuntimeWriteAllowed(subjectId ? 'practiceSessions.delete' : 'practiceSessions.clearLearner');
+        assertRuntimeWriteAllowed(subjectId ? 'practiceSessions.delete' : 'practiceSessions.clearLearner');
         const operation = createOperation(subjectId ? 'practiceSessions.delete' : 'practiceSessions.clearLearner', {
           learnerId,
           subjectId,
@@ -1522,7 +1529,7 @@ export function createApiPlatformRepositories({
         kickQueue();
       },
       clearLearner(learnerId) {
-        assertLegacyRuntimeWriteAllowed('practiceSessions.clearLearner');
+        assertRuntimeWriteAllowed('practiceSessions.clearLearner');
         const operation = createOperation('practiceSessions.clearLearner', { learnerId }, syncState);
         queueOperation(operation);
         kickQueue();
@@ -1543,7 +1550,7 @@ export function createApiPlatformRepositories({
         return output;
       },
       write(learnerId, systemId, state) {
-        assertLegacyRuntimeWriteAllowed('gameState.put');
+        assertRuntimeWriteAllowed('gameState.put');
         const operation = createOperation('gameState.put', {
           learnerId,
           systemId,
@@ -1554,7 +1561,7 @@ export function createApiPlatformRepositories({
         return this.read(learnerId, systemId);
       },
       clear(learnerId, systemId = null) {
-        assertLegacyRuntimeWriteAllowed(systemId ? 'gameState.delete' : 'gameState.clearLearner');
+        assertRuntimeWriteAllowed(systemId ? 'gameState.delete' : 'gameState.clearLearner');
         const operation = createOperation(systemId ? 'gameState.delete' : 'gameState.clearLearner', {
           learnerId,
           systemId,
@@ -1563,7 +1570,7 @@ export function createApiPlatformRepositories({
         kickQueue();
       },
       clearLearner(learnerId) {
-        assertLegacyRuntimeWriteAllowed('gameState.clearLearner');
+        assertRuntimeWriteAllowed('gameState.clearLearner');
         const operation = createOperation('gameState.clearLearner', { learnerId }, syncState);
         queueOperation(operation);
         kickQueue();
@@ -1573,7 +1580,7 @@ export function createApiPlatformRepositories({
       append(event) {
         const next = cloneSerialisable(event) || null;
         if (!next || typeof next !== 'object' || Array.isArray(next)) return null;
-        assertLegacyRuntimeWriteAllowed('eventLog.append');
+        assertRuntimeWriteAllowed('eventLog.append');
         const operation = createOperation('eventLog.append', { event: next }, syncState);
         queueOperation(operation);
         kickQueue();
@@ -1584,7 +1591,7 @@ export function createApiPlatformRepositories({
         return cloneSerialisable(learnerId ? events.filter((event) => event?.learnerId === learnerId) : events);
       },
       clearLearner(learnerId) {
-        assertLegacyRuntimeWriteAllowed('eventLog.clearLearner');
+        assertRuntimeWriteAllowed('eventLog.clearLearner');
         const operation = createOperation('eventLog.clearLearner', { learnerId }, syncState);
         queueOperation(operation);
         kickQueue();
