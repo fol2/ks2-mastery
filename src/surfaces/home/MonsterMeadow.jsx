@@ -1,7 +1,10 @@
 import React from 'react';
-import { eggBreatheStyle, monsterAssetPath, monsterAssetSrcset, monsterFaceSign } from './data.js';
+import { useMonsterVisualConfig } from '../../platform/game/MonsterVisualConfigContext.jsx';
+import { resolveMonsterVisual } from '../../platform/game/monster-visual-config.js';
+import { eggBreatheStyle } from './data.js';
 
 export function MonsterMeadow({ monsters = [], maxSlots = 10 }) {
+  const monsterVisualConfig = useMonsterVisualConfig();
   const shown = monsters.slice(0, maxSlots);
   if (!shown.length) return null;
   return (
@@ -11,15 +14,24 @@ export function MonsterMeadow({ monsters = [], maxSlots = 10 }) {
         const size = Math.round(Number(m.size) || 64);
         const zIndex = 10 + Math.round(footPct);
         const isEgg = m.stage === 0;
-        const faceSign = monsterFaceSign(m.species, m.variant, m.stage);
-        const src = monsterAssetPath(m.species, m.variant, m.stage, 640);
-        const srcSet = monsterAssetSrcset(m.species, m.variant, m.stage);
+        const visual = resolveMonsterVisual({
+          monsterId: m.species,
+          branch: m.variant,
+          stage: m.stage,
+          context: 'meadow',
+          config: monsterVisualConfig?.config,
+          preferredSize: 640,
+        });
+        const faceSign = visual.faceSign;
+        const src = visual.src;
+        const srcSet = visual.srcSet;
         const shadowScale = Number.isFinite(m.perspectiveScale) ? m.perspectiveScale : 1;
+        const visualPath = meadowPathForRenderer(visual.path, isEgg ? 'none' : (m.path || 'walk'));
         return (
           <div
             key={m.id}
             className={'meadow-monster' + (isEgg ? ' egg' : '')}
-            data-path={isEgg ? 'none' : (m.path || 'walk')}
+            data-path={visualPath}
             data-lane={m.lane || 'ground'}
             style={{
               '--x': m.x || m.left,
@@ -40,7 +52,18 @@ export function MonsterMeadow({ monsters = [], maxSlots = 10 }) {
             }}
           >
             <span className="meadow-shadow" aria-hidden="true" />
-            <img src={src} srcSet={srcSet} sizes={`${size}px`} alt="" />
+            <span
+              className="meadow-visual"
+              style={{
+                '--visual-offset-x': px(visual.offsetX, 0),
+                '--visual-offset-y': px(visual.offsetY, 0),
+                '--visual-scale': Number.isFinite(Number(visual.scale)) ? Number(visual.scale).toFixed(3) : '1',
+                opacity: Number.isFinite(Number(visual.opacity)) ? Math.max(0, Math.min(1, Number(visual.opacity))) : 1,
+                filter: visual.filter && visual.filter !== 'none' ? visual.filter : undefined,
+              }}
+            >
+              <img src={src} srcSet={srcSet} sizes={`${size}px`} alt="" />
+            </span>
           </div>
         );
       })}
@@ -56,4 +79,10 @@ function px(value, fallback) {
 function signedPx(value, sign, fallback) {
   const numeric = Number(value);
   return `${(Number.isFinite(numeric) ? numeric : fallback) * sign}px`;
+}
+
+function meadowPathForRenderer(path, fallback) {
+  if (path === 'fly-a' || path === 'fly-b' || path === 'none') return path;
+  if (path === 'walk' || path === 'walk-b') return 'walk';
+  return fallback || 'walk';
 }

@@ -1,11 +1,16 @@
 import React from 'react';
-import { monsterAsset, monsterAssetSrcSet } from '../../platform/game/monsters.js';
+import { useMonsterVisualConfig } from '../../platform/game/MonsterVisualConfigContext.jsx';
+import { resolveMonsterVisual } from '../../platform/game/monster-visual-config.js';
 
-function imageSources(monsterId, stage, branch) {
-  return {
-    src: monsterAsset(monsterId, stage, 640, branch),
-    srcSet: monsterAssetSrcSet(monsterId, stage, branch),
-  };
+function imageVisual(monsterId, stage, branch, config) {
+  return resolveMonsterVisual({
+    monsterId,
+    branch,
+    stage,
+    context: 'celebrationOverlay',
+    config,
+    preferredSize: 640,
+  });
 }
 
 function stageName(monster, stage) {
@@ -41,6 +46,7 @@ function Particles() {
 }
 
 export function MonsterCelebrationOverlay({ queue = [], onDismiss }) {
+  const monsterVisualConfig = useMonsterVisualConfig();
   const event = queue[0];
   if (!event) return null;
 
@@ -54,6 +60,8 @@ export function MonsterCelebrationOverlay({ queue = [], onDismiss }) {
   const hasFrom = event.kind !== 'caught';
   const hasParts = event.kind === 'caught' || event.kind === 'mega';
   const isEggCrack = event.kind === 'evolve' && fromStage === 0 && toStage === 1;
+  const beforeVisual = hasFrom ? imageVisual(monster.id, fromStage, branch, monsterVisualConfig?.config) : null;
+  const afterVisual = imageVisual(monster.id, toStage, branch, monsterVisualConfig?.config);
 
   return (
     <section
@@ -76,7 +84,8 @@ export function MonsterCelebrationOverlay({ queue = [], onDismiss }) {
             className="monster-celebration-art before"
             alt=""
             data-stage={fromStage}
-            {...imageSources(monster.id, fromStage, branch)}
+            src={beforeVisual.src}
+            srcSet={beforeVisual.srcSet}
             sizes="min(90vw, 540px)"
           />
         )}
@@ -85,7 +94,8 @@ export function MonsterCelebrationOverlay({ queue = [], onDismiss }) {
           className="monster-celebration-art after"
           alt=""
           data-stage={toStage}
-          {...imageSources(monster.id, toStage, branch)}
+          src={afterVisual.src}
+          srcSet={afterVisual.srcSet}
           sizes="min(90vw, 540px)"
         />
       </div>

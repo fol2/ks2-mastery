@@ -1,5 +1,6 @@
 import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const rootDir = process.cwd();
 const publicDir = path.join(rootDir, 'dist', 'public');
@@ -32,6 +33,27 @@ async function walk(relativeDir = '') {
   return files;
 }
 
+async function currentMonsterAssetKeys() {
+  const monsterRoot = path.join(rootDir, 'assets', 'monsters');
+  const keys = new Map();
+  for (const monsterEntry of await readdir(monsterRoot, { withFileTypes: true })) {
+    if (!monsterEntry.isDirectory()) continue;
+    for (const branchEntry of await readdir(path.join(monsterRoot, monsterEntry.name), { withFileTypes: true })) {
+      if (!branchEntry.isDirectory()) continue;
+      const branchDir = path.join(monsterRoot, monsterEntry.name, branchEntry.name);
+      for (const file of await readdir(branchDir)) {
+        const match = file.match(/^(.+)-(b[0-9]+)-([0-9]+)\.(320|640|1280)\.webp$/);
+        if (!match) continue;
+        const [, monsterId, branch, stage, size] = match;
+        const key = `${monsterId}-${branch}-${stage}`;
+        if (!keys.has(key)) keys.set(key, new Set());
+        keys.get(key).add(Number(size));
+      }
+    }
+  }
+  return new Map(Array.from(keys.entries()).sort(([left], [right]) => left.localeCompare(right)));
+}
+
 await mustExist('index.html');
 await mustExist('_headers');
 await mustExist('styles/app.css');
@@ -55,6 +77,20 @@ await mustNotExist('src/subjects');
 await mustNotExist('src/platform/ui/render.js');
 await mustNotExist('src/surfaces/home/index.jsx');
 await mustNotExist('src/surfaces/home/TopNav.jsx');
+
+const manifestUrl = pathToFileURL(path.join(rootDir, 'src', 'platform', 'game', 'monster-asset-manifest.js')).href;
+const { MONSTER_ASSET_MANIFEST } = await import(`${manifestUrl}?assert=${Date.now()}`);
+const expectedMonsterAssets = await currentMonsterAssetKeys();
+const manifestKeys = new Map(MONSTER_ASSET_MANIFEST.assets.map((asset) => [asset.key, asset.sizes]));
+for (const [key, sizes] of expectedMonsterAssets) {
+  const manifestSizes = manifestKeys.get(key) || [];
+  if (Array.from(sizes).sort((left, right) => left - right).join(',') !== manifestSizes.join(',')) {
+    throw new Error(`Monster visual manifest is stale for ${key}. Regenerate src/platform/game/monster-asset-manifest.js.`);
+  }
+}
+if (manifestKeys.size !== expectedMonsterAssets.size) {
+  throw new Error('Monster visual manifest contains entries that do not match assets/monsters.');
+}
 
 const topLevel = await readdir(publicDir);
 const allowed = new Set(['_headers', 'index.html', 'styles', 'src', 'assets']);

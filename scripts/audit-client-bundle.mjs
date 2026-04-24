@@ -55,6 +55,10 @@ const REVIEW_ALLOWLIST = [
     reason: 'operator content import/export endpoint; content datasets are fetched only on explicit admin action',
   },
   {
+    token: '/api/admin/monster-visual-config',
+    reason: 'admin-only monster visual draft/publish endpoint; production renderers receive only the published bootstrap payload',
+  },
+  {
     token: '/api/subjects/spelling/word-bank',
     reason: 'authorised server read model endpoint for Word Bank rows and detail',
   },

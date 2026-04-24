@@ -92,6 +92,53 @@ export function renderSharedSurfaceFixture() {
   `);
 }
 
+export function renderMonsterVisualRendererFixture() {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { MonsterVisualConfigProvider } from ${JSON.stringify(absoluteSpecifier('src/platform/game/MonsterVisualConfigContext.jsx'))};
+    import { BUNDLED_MONSTER_VISUAL_CONFIG } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monster-visual-config.js'))};
+    import { MonsterMeadow } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/MonsterMeadow.jsx'))};
+    import { ToastShelf } from ${JSON.stringify(absoluteSpecifier('src/surfaces/shell/ToastShelf.jsx'))};
+
+    const config = structuredClone(BUNDLED_MONSTER_VISUAL_CONFIG);
+    config.assets['vellhorn-b1-3'].baseline.facing = 'right';
+    config.assets['inklet-b1-1'].contexts.toastPortrait.scale = 1.25;
+
+    const html = renderToStaticMarkup(
+      <MonsterVisualConfigProvider value={{ config }}>
+        <>
+          <MonsterMeadow
+            monsters={[{
+              id: 'vellhorn-caught',
+              species: 'vellhorn',
+              variant: 'b1',
+              stage: 3,
+              x: '50%',
+              footY: '80%',
+              size: 160,
+              path: 'walk',
+              lane: 'ground',
+              footPct: 80,
+            }]}
+          />
+          <ToastShelf
+            toasts={[{
+              id: 'toast-a',
+              type: 'reward.monster',
+              kind: 'caught',
+              monster: { id: 'inklet', name: 'Inklet' },
+              next: { stage: 1, branch: 'b1' },
+            }]}
+            onDismiss={() => {}}
+          />
+        </>
+      </MonsterVisualConfigProvider>
+    );
+    console.log(html);
+  `);
+}
+
 export function renderProfileSurfaceFixture({ demo = false, persistenceMode = 'remote-sync' } = {}) {
   return renderFixture(`
     import React from 'react';
@@ -159,6 +206,7 @@ export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
     import { renderToStaticMarkup } from 'react-dom/server';
     import { ParentHubSurface } from ${JSON.stringify(absoluteSpecifier('src/surfaces/hubs/ParentHubSurface.jsx'))};
     import { AdminHubSurface } from ${JSON.stringify(absoluteSpecifier('src/surfaces/hubs/AdminHubSurface.jsx'))};
+    import { BUNDLED_MONSTER_VISUAL_CONFIG } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monster-visual-config.js'))};
 
     const appState = {
       learners: {
@@ -199,8 +247,23 @@ export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
       permissions: { canViewParentHub: true, canMutateLearnerData: false, platformRoleLabel: 'Parent', membershipRoleLabel: 'Viewer', accessModeLabel: 'Read-only learner' },
     };
     const adminModel = {
-      account: { repoRevision: 5, selectedLearnerId: 'learner-a' },
-      permissions: { canViewAdminHub: true, platformRole: 'admin', platformRoleLabel: 'Admin' },
+      account: { id: 'adult-a', repoRevision: 5, selectedLearnerId: 'learner-a' },
+      permissions: { canViewAdminHub: true, platformRole: 'admin', platformRoleLabel: 'Admin', canManageMonsterVisualConfig: true },
+      monsterVisualConfig: {
+        permissions: { canManageMonsterVisualConfig: true, canViewMonsterVisualConfig: true },
+        status: {
+          schemaVersion: 1,
+          manifestHash: BUNDLED_MONSTER_VISUAL_CONFIG.manifestHash,
+          draftRevision: 0,
+          publishedVersion: 1,
+          publishedAt: Date.UTC(2026, 3, 22, 12, 0),
+          validation: { ok: true, errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+        },
+        draft: BUNDLED_MONSTER_VISUAL_CONFIG,
+        published: BUNDLED_MONSTER_VISUAL_CONFIG,
+        versions: [{ version: 1, manifestHash: BUNDLED_MONSTER_VISUAL_CONFIG.manifestHash, schemaVersion: 1, publishedAt: Date.UTC(2026, 3, 22, 12, 0), publishedByAccountId: 'system' }],
+        mutation: { policyVersion: 1, scopeType: 'platform', scopeId: 'monster-visual-config', draftRevision: 0 },
+      },
       contentReleaseStatus: { publishedVersion: 3, publishedReleaseId: 'release-3', runtimeWordCount: 213, runtimeSentenceCount: 213, currentDraftId: 'draft', currentDraftVersion: 4, draftUpdatedAt: Date.UTC(2026, 3, 22, 12, 0) },
       importValidationStatus: { ok: true, errorCount: 0, warningCount: 1, source: 'seeded', importedAt: Date.UTC(2026, 3, 22, 12, 0), errors: [] },
       auditLogLookup: { available: true, note: 'Recent mutations', entries: [{ requestId: 'req-1', mutationKind: 'learners.write', scopeType: 'account', scopeId: 'adult-a', appliedAt: Date.UTC(2026, 3, 22, 12, 0) }] },

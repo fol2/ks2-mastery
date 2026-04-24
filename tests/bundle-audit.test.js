@@ -98,6 +98,36 @@ test('client bundle audit permits reviewed endpoint strings without content modu
   });
 });
 
+test('client bundle audit permits the admin monster visual config endpoint', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
+  const bundle = path.join(dir, 'app.bundle.js');
+  const metafile = path.join(dir, 'app.bundle.meta.json');
+  const publicDir = path.join(dir, 'public');
+  await mkdir(publicDir, { recursive: true });
+  await writeFile(bundle, 'fetch("/api/admin/monster-visual-config/draft");\n');
+  await writeFile(metafile, JSON.stringify({
+    inputs: {
+      'src/main.js': { bytes: 1 },
+      'src/platform/hubs/api.js': { bytes: 1 },
+    },
+  }));
+
+  assert.doesNotThrow(() => {
+    execFileSync(process.execPath, [
+      './scripts/audit-client-bundle.mjs',
+      '--bundle',
+      bundle,
+      '--metafile',
+      metafile,
+      '--public-dir',
+      publicDir,
+    ], {
+      cwd: process.cwd(),
+      stdio: 'pipe',
+    });
+  });
+});
+
 test('client bundle audit fails on legacy broad runtime write routes', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
   const bundle = path.join(dir, 'app.bundle.js');

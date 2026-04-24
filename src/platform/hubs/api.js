@@ -75,5 +75,29 @@ export function createHubApi({
       });
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
+    async saveMonsterVisualConfigDraft({ draft, mutation } = {}) {
+      const url = buildRequestUrl(baseUrl, '/api/admin/monster-visual-config/draft');
+      return fetchHubJson(fetch, url, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ draft, mutation }),
+      }, authSession);
+    },
+    async publishMonsterVisualConfig({ mutation } = {}) {
+      const url = buildRequestUrl(baseUrl, '/api/admin/monster-visual-config/publish');
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ mutation }),
+      }, authSession);
+    },
+    async restoreMonsterVisualConfigVersion({ version, mutation } = {}) {
+      const url = buildRequestUrl(baseUrl, '/api/admin/monster-visual-config/restore');
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ version, mutation }),
+      }, authSession);
+    },
   };
 }

@@ -99,6 +99,7 @@ That keeps the surface explicitly separate from Operations-only accounts while l
 Admin / Operations is a thin operator skeleton.
 It currently shows:
 
+- monster visual config draft/review/publish controls
 - spelling content release status
 - draft import / validation status
 - mutation-receipt audit lookup
@@ -110,6 +111,8 @@ It currently shows:
 
 Admin / Operations reuses:
 
+- `platform_monster_visual_config`
+- `platform_monster_visual_config_versions`
 - `account_subject_content`
 - spelling content validation results
 - `mutation_receipts`
@@ -132,6 +135,14 @@ Account role management inside Operations is narrower:
 - the Worker blocks demoting the last remaining admin
 - role changes are written to `adult_accounts.platform_role`
 - role changes are recorded in `mutation_receipts`
+
+Monster visual config management is admin-only:
+
+- `admin` can edit the browser-local draft buffer, save the shared cloud draft, publish, and restore a retained version into draft
+- `ops` can inspect previews, validation state, changed assets, and blockers, but cannot mutate the config
+- publish is blocked unless every manifest asset and every renderer context has complete reviewed values
+- restore changes draft only; it does not change the live published version until a later publish
+- the latest 20 published versions are retained for rollback-to-draft
 
 ## Local reference build versus Worker API
 
@@ -164,12 +175,16 @@ The Worker now exposes:
 - `GET /api/hubs/admin?learnerId=...&requestId=...&auditLimit=...`
 - `GET /api/admin/accounts`
 - `PUT /api/admin/accounts/role`
+- `PUT /api/admin/monster-visual-config/draft`
+- `POST /api/admin/monster-visual-config/publish`
+- `POST /api/admin/monster-visual-config/restore`
 
 What is real there:
 
 - platform-role enforcement
 - learner membership checks
 - admin-only account role management
+- admin-only monster visual draft/publish/restore mutations
 - content release / validation summary from durable content
 - audit lookup from durable mutation receipts
 - learner diagnostics backed by durable learner data
@@ -208,6 +223,7 @@ The hub read models consume durable records after the fact.
 - audit lookup backed by mutation receipts on the Worker path
 - learner support / diagnostics summary
 - signed-in hub reads through the shared hub API client
+- global published monster visual config delivered through bootstrap for learner rendering
 - viewer membership diagnostics with read-only write affordance blocking
 - zero-writable signed-in shell state that does not fabricate a learner
 

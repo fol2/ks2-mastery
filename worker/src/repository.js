@@ -34,6 +34,12 @@ import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system
 import { buildSpellingProgressPools, buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
 import { buildSpellingAudioCue } from './subjects/spelling/audio.js';
 import {
+  BUNDLED_MONSTER_VISUAL_CONFIG,
+  MONSTER_VISUAL_SCHEMA_VERSION,
+  validateMonsterVisualConfigForPublish,
+} from '../../src/platform/game/monster-visual-config.js';
+import { MONSTER_ASSET_MANIFEST } from '../../src/platform/game/monster-asset-manifest.js';
+import {
   BadRequestError,
   ConflictError,
   ForbiddenError,
@@ -78,6 +84,9 @@ const PUBLIC_MONSTER_BRANCHES = new Set(['b1', 'b2']);
 const SPELLING_RUNTIME_CONTENT_CACHE_LIMIT = 8;
 const spellingRuntimeContentCache = new Map();
 const SPELLING_SECURE_STAGE = 4;
+const MONSTER_VISUAL_CONFIG_ID = 'global';
+const MONSTER_VISUAL_SCOPE_TYPE = 'platform';
+const MONSTER_VISUAL_SCOPE_ID = 'monster-visual-config';
 const PUBLIC_EVENT_TEXT_ENUMS = {
   mode: new Set(['smart', 'trouble', 'single', 'test']),
   sessionType: new Set(['learning', 'test']),
@@ -841,6 +850,15 @@ function requireAccountRoleManager(account) {
   }
 }
 
+function requireMonsterVisualConfigManager(account) {
+  if (accountType(account) === 'demo' || accountPlatformRole(account) !== 'admin') {
+    throw new ForbiddenError('Monster visual config changes require an admin account.', {
+      code: 'monster_visual_config_forbidden',
+      required: 'platform-role-admin',
+    });
+  }
+}
+
 function requireSubjectContentExportAccess(account) {
   if (!canViewAdminHub({ platformRole: accountPlatformRole(account) })) {
     throw new ForbiddenError('Spelling content export requires an admin or operations account.', {
@@ -1097,6 +1115,442 @@ async function readDemoOperationSummary(db, nowTs) {
   };
 }
 
+function seededMonsterVisualConfig({ source = 'published', version = 1 } = {}) {
+  return {
+    ...cloneSerialisable(BUNDLED_MONSTER_VISUAL_CONFIG),
+    schemaVersion: MONSTER_VISUAL_SCHEMA_VERSION,
+    manifestHash: MONSTER_ASSET_MANIFEST.manifestHash,
+    source,
+    version,
+  };
+}
+
+function normaliseMonsterVisualDraft(rawDraft) {
+  if (!isPlainObject(rawDraft)) {
+    throw new BadRequestError('Monster visual draft is required.', {
+      code: 'monster_visual_draft_required',
+    });
+  }
+  return {
+    ...cloneSerialisable(rawDraft),
+    schemaVersion: Number(rawDraft.schemaVersion) || MONSTER_VISUAL_SCHEMA_VERSION,
+    manifestHash: rawDraft.manifestHash || MONSTER_ASSET_MANIFEST.manifestHash,
+    source: 'draft',
+  };
+}
+
+function normaliseMonsterVisualMutation(rawValue) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const requestId = typeof raw.requestId === 'string' && raw.requestId ? raw.requestId : null;
+  const correlationId = typeof raw.correlationId === 'string' && raw.correlationId
+    ? raw.correlationId
+    : requestId;
+  const expectedRevision = Number.isFinite(Number(raw.expectedDraftRevision))
+    ? Number(raw.expectedDraftRevision)
+    : null;
+
+  if (!requestId) {
+    throw new BadRequestError('Monster visual mutation requestId is required.', {
+      code: 'mutation_request_id_required',
+      scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+    });
+  }
+  if (expectedRevision == null) {
+    throw new BadRequestError('Monster visual mutation expectedDraftRevision is required.', {
+      code: 'mutation_revision_required',
+      scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+    });
+  }
+
+  return {
+    requestId,
+    correlationId,
+    expectedRevision,
+  };
+}
+
+async function ensureMonsterVisualConfigRow(db, nowTs) {
+  const existing = await first(db, `
+    SELECT *
+    FROM platform_monster_visual_config
+    WHERE id = ?
+  `, [MONSTER_VISUAL_CONFIG_ID]);
+  if (existing) return existing;
+
+  const initialConfig = seededMonsterVisualConfig({ source: 'published', version: 1 });
+  const json = JSON.stringify(initialConfig);
+  await run(db, `
+    INSERT INTO platform_monster_visual_config (
+      id,
+      draft_json,
+      draft_revision,
+      draft_updated_at,
+      draft_updated_by_account_id,
+      published_json,
+      published_version,
+      published_at,
+      published_by_account_id,
+      manifest_hash,
+      schema_version
+    )
+    VALUES (?, ?, 0, ?, ?, ?, 1, ?, ?, ?, ?)
+  `, [
+    MONSTER_VISUAL_CONFIG_ID,
+    JSON.stringify({ ...initialConfig, source: 'draft' }),
+    nowTs,
+    'system',
+    json,
+    nowTs,
+    'system',
+    MONSTER_ASSET_MANIFEST.manifestHash,
+    MONSTER_VISUAL_SCHEMA_VERSION,
+  ]);
+  await run(db, `
+    INSERT OR IGNORE INTO platform_monster_visual_config_versions (
+      version,
+      config_json,
+      manifest_hash,
+      schema_version,
+      published_at,
+      published_by_account_id
+    )
+    VALUES (?, ?, ?, ?, ?, ?)
+  `, [
+    1,
+    json,
+    MONSTER_ASSET_MANIFEST.manifestHash,
+    MONSTER_VISUAL_SCHEMA_VERSION,
+    nowTs,
+    'system',
+  ]);
+  return first(db, `
+    SELECT *
+    FROM platform_monster_visual_config
+    WHERE id = ?
+  `, [MONSTER_VISUAL_CONFIG_ID]);
+}
+
+async function listMonsterVisualVersionRows(db) {
+  return all(db, `
+    SELECT version, manifest_hash, schema_version, published_at, published_by_account_id
+    FROM platform_monster_visual_config_versions
+    ORDER BY version DESC
+    LIMIT 20
+  `);
+}
+
+function monsterVisualConfigStateFromRow(row, versions = []) {
+  const draft = safeJsonParse(row?.draft_json, seededMonsterVisualConfig({ source: 'draft', version: Number(row?.published_version) || 1 }));
+  const published = safeJsonParse(row?.published_json, seededMonsterVisualConfig({ source: 'published', version: Number(row?.published_version) || 1 }));
+  const validation = validateMonsterVisualConfigForPublish(draft);
+  return {
+    status: {
+      schemaVersion: MONSTER_VISUAL_SCHEMA_VERSION,
+      manifestHash: MONSTER_ASSET_MANIFEST.manifestHash,
+      draftRevision: Number(row?.draft_revision) || 0,
+      draftUpdatedAt: Number(row?.draft_updated_at) || 0,
+      draftUpdatedByAccountId: row?.draft_updated_by_account_id || '',
+      publishedVersion: Number(row?.published_version) || 1,
+      publishedAt: Number(row?.published_at) || 0,
+      publishedByAccountId: row?.published_by_account_id || '',
+      validation: {
+        ok: validation.ok,
+        errorCount: validation.errors.length,
+        warningCount: validation.warnings.length,
+        errors: validation.errors.slice(0, 50),
+        warnings: validation.warnings.slice(0, 50),
+      },
+    },
+    draft,
+    published,
+    versions: (Array.isArray(versions) ? versions : []).map((version) => ({
+      version: Number(version.version) || 0,
+      manifestHash: version.manifest_hash || '',
+      schemaVersion: Number(version.schema_version) || 0,
+      publishedAt: Number(version.published_at) || 0,
+      publishedByAccountId: version.published_by_account_id || '',
+    })),
+    mutation: {
+      policyVersion: MUTATION_POLICY_VERSION,
+      scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+      scopeId: MONSTER_VISUAL_SCOPE_ID,
+      draftRevision: Number(row?.draft_revision) || 0,
+    },
+  };
+}
+
+async function readMonsterVisualConfigState(db, nowTs) {
+  const row = await ensureMonsterVisualConfigRow(db, nowTs);
+  const versions = await listMonsterVisualVersionRows(db);
+  return monsterVisualConfigStateFromRow(row, versions);
+}
+
+async function readPublishedMonsterVisualRuntimeConfig(db, nowTs) {
+  const row = await ensureMonsterVisualConfigRow(db, nowTs);
+  const published = safeJsonParse(
+    row?.published_json,
+    seededMonsterVisualConfig({ source: 'published', version: Number(row?.published_version) || 1 }),
+  );
+  return {
+    schemaVersion: MONSTER_VISUAL_SCHEMA_VERSION,
+    manifestHash: row?.manifest_hash || published.manifestHash || MONSTER_ASSET_MANIFEST.manifestHash,
+    publishedVersion: Number(row?.published_version) || Number(published.version) || 1,
+    publishedAt: Number(row?.published_at) || 0,
+    config: published,
+  };
+}
+
+function monsterVisualMutationMeta({ kind, mutation, expectedRevision, appliedRevision }) {
+  return buildMutationMeta({
+    kind,
+    scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+    scopeId: MONSTER_VISUAL_SCOPE_ID,
+    requestId: mutation.requestId,
+    correlationId: mutation.correlationId,
+    expectedRevision,
+    appliedRevision,
+  });
+}
+
+async function withMonsterVisualConfigMutation(db, {
+  actorAccountId,
+  kind,
+  payload,
+  mutation,
+  nowTs,
+  apply,
+}) {
+  const nextMutation = normaliseMonsterVisualMutation(mutation);
+  const requestHash = mutationPayloadHash(kind, payload);
+
+  return withTransaction(db, async () => {
+    const actor = await first(db, 'SELECT id, platform_role, account_type FROM adult_accounts WHERE id = ?', [actorAccountId]);
+    requireMonsterVisualConfigManager(actor);
+
+    const existingReceipt = await loadMutationReceipt(db, actorAccountId, nextMutation.requestId);
+    if (existingReceipt) {
+      if (existingReceipt.request_hash !== requestHash) {
+        throw idempotencyReuseError({
+          kind,
+          scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+          scopeId: MONSTER_VISUAL_SCOPE_ID,
+          requestId: nextMutation.requestId,
+          correlationId: nextMutation.correlationId,
+        });
+      }
+      const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+      return {
+        ...storedReplay,
+        monsterVisualConfig: await readMonsterVisualConfigState(db, nowTs),
+        monsterVisualMutation: {
+          ...(storedReplay.monsterVisualMutation || {}),
+          requestId: nextMutation.requestId,
+          correlationId: nextMutation.correlationId,
+          replayed: true,
+        },
+      };
+    }
+
+    const row = await ensureMonsterVisualConfigRow(db, nowTs);
+    const currentRevision = Number(row?.draft_revision) || 0;
+    if (currentRevision !== nextMutation.expectedRevision) {
+      throw staleWriteError({
+        kind,
+        scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+        scopeId: MONSTER_VISUAL_SCOPE_ID,
+        requestId: nextMutation.requestId,
+        correlationId: nextMutation.correlationId,
+        expectedRevision: nextMutation.expectedRevision,
+        currentRevision,
+      });
+    }
+
+    const appliedRevision = currentRevision + 1;
+    await apply({ row, appliedRevision, mutation: nextMutation });
+    const state = await readMonsterVisualConfigState(db, nowTs);
+    const response = {
+      monsterVisualConfig: state,
+      monsterVisualMutation: monsterVisualMutationMeta({
+        kind,
+        mutation: nextMutation,
+        expectedRevision: currentRevision,
+        appliedRevision,
+      }),
+    };
+    await storeMutationReceipt(db, {
+      accountId: actorAccountId,
+      requestId: nextMutation.requestId,
+      scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+      scopeId: MONSTER_VISUAL_SCOPE_ID,
+      mutationKind: kind,
+      requestHash,
+      response: {
+        monsterVisualMutation: response.monsterVisualMutation,
+      },
+      correlationId: nextMutation.correlationId,
+      appliedAt: nowTs,
+    });
+    return response;
+  });
+}
+
+async function saveMonsterVisualConfigDraft(db, actorAccountId, rawDraft, mutation, nowTs) {
+  const draft = normaliseMonsterVisualDraft(rawDraft);
+  return withMonsterVisualConfigMutation(db, {
+    actorAccountId,
+    kind: 'monster_visual_config.draft.save',
+    payload: { draft },
+    mutation,
+    nowTs,
+    apply: async ({ appliedRevision }) => {
+      await run(db, `
+        UPDATE platform_monster_visual_config
+        SET draft_json = ?,
+            draft_revision = ?,
+            draft_updated_at = ?,
+            draft_updated_by_account_id = ?,
+            manifest_hash = ?,
+            schema_version = ?
+        WHERE id = ?
+      `, [
+        JSON.stringify(draft),
+        appliedRevision,
+        nowTs,
+        actorAccountId,
+        MONSTER_ASSET_MANIFEST.manifestHash,
+        MONSTER_VISUAL_SCHEMA_VERSION,
+        MONSTER_VISUAL_CONFIG_ID,
+      ]);
+    },
+  });
+}
+
+async function publishMonsterVisualConfig(db, actorAccountId, mutation, nowTs) {
+  return withMonsterVisualConfigMutation(db, {
+    actorAccountId,
+    kind: 'monster_visual_config.publish',
+    payload: { publish: true },
+    mutation,
+    nowTs,
+    apply: async ({ row, appliedRevision }) => {
+      const draft = safeJsonParse(row.draft_json, null);
+      const validation = validateMonsterVisualConfigForPublish(draft);
+      if (!validation.ok) {
+        throw new BadRequestError('Monster visual config is not ready to publish.', {
+          code: 'monster_visual_publish_blocked',
+          validation,
+        });
+      }
+      const nextVersion = (Number(row.published_version) || 1) + 1;
+      const published = {
+        ...cloneSerialisable(draft),
+        source: 'published',
+        version: nextVersion,
+      };
+      const publishedJson = JSON.stringify(published);
+      await run(db, `
+        UPDATE platform_monster_visual_config
+        SET draft_json = ?,
+            draft_revision = ?,
+            draft_updated_at = ?,
+            draft_updated_by_account_id = ?,
+            published_json = ?,
+            published_version = ?,
+            published_at = ?,
+            published_by_account_id = ?,
+            manifest_hash = ?,
+            schema_version = ?
+        WHERE id = ?
+      `, [
+        JSON.stringify({ ...published, source: 'draft' }),
+        appliedRevision,
+        nowTs,
+        actorAccountId,
+        publishedJson,
+        nextVersion,
+        nowTs,
+        actorAccountId,
+        MONSTER_ASSET_MANIFEST.manifestHash,
+        MONSTER_VISUAL_SCHEMA_VERSION,
+        MONSTER_VISUAL_CONFIG_ID,
+      ]);
+      await run(db, `
+        INSERT INTO platform_monster_visual_config_versions (
+          version,
+          config_json,
+          manifest_hash,
+          schema_version,
+          published_at,
+          published_by_account_id
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+      `, [
+        nextVersion,
+        publishedJson,
+        MONSTER_ASSET_MANIFEST.manifestHash,
+        MONSTER_VISUAL_SCHEMA_VERSION,
+        nowTs,
+        actorAccountId,
+      ]);
+      await run(db, `
+        DELETE FROM platform_monster_visual_config_versions
+        WHERE version NOT IN (
+          SELECT version
+          FROM platform_monster_visual_config_versions
+          ORDER BY version DESC
+          LIMIT 20
+        )
+      `);
+    },
+  });
+}
+
+async function restoreMonsterVisualConfigVersion(db, actorAccountId, version, mutation, nowTs) {
+  const safeVersion = Math.max(1, Math.floor(Number(version) || 0));
+  return withMonsterVisualConfigMutation(db, {
+    actorAccountId,
+    kind: 'monster_visual_config.restore',
+    payload: { version: safeVersion },
+    mutation,
+    nowTs,
+    apply: async ({ appliedRevision }) => {
+      const versionRow = await first(db, `
+        SELECT version, config_json
+        FROM platform_monster_visual_config_versions
+        WHERE version = ?
+      `, [safeVersion]);
+      if (!versionRow) {
+        throw new NotFoundError('Monster visual config version was not found.', {
+          code: 'monster_visual_version_not_found',
+          version: safeVersion,
+        });
+      }
+      const restored = {
+        ...safeJsonParse(versionRow.config_json, seededMonsterVisualConfig({ source: 'draft', version: safeVersion })),
+        source: 'draft',
+      };
+      await run(db, `
+        UPDATE platform_monster_visual_config
+        SET draft_json = ?,
+            draft_revision = ?,
+            draft_updated_at = ?,
+            draft_updated_by_account_id = ?,
+            manifest_hash = ?,
+            schema_version = ?
+        WHERE id = ?
+      `, [
+        JSON.stringify(restored),
+        appliedRevision,
+        nowTs,
+        actorAccountId,
+        MONSTER_ASSET_MANIFEST.manifestHash,
+        MONSTER_VISUAL_SCHEMA_VERSION,
+        MONSTER_VISUAL_CONFIG_ID,
+      ]);
+    },
+  });
+}
+
 async function updateManagedAccountRole(db, {
   actorAccountId,
   targetAccountId,
@@ -1288,6 +1742,7 @@ async function releaseMembershipOrDeleteLearner(db, accountId, learnerId, role, 
 
 async function bootstrapBundle(db, accountId, { publicReadModels = false } = {}) {
   const account = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
+  const monsterVisualConfig = await readPublishedMonsterVisualRuntimeConfig(db, Date.now());
   const membershipRows = await listMembershipRows(db, accountId, { writableOnly: true });
   const learnersById = {};
   const learnerIds = [];
@@ -1324,6 +1779,7 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
         accountRevision: Number(account?.repo_revision) || 0,
         learnerRevisions: {},
       },
+      monsterVisualConfig,
     };
   }
 
@@ -1399,6 +1855,7 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
       accountRevision: Number(account?.repo_revision) || 0,
       learnerRevisions,
     },
+    monsterVisualConfig,
   };
 }
 
@@ -2566,6 +3023,7 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         limit: auditLimit,
       });
       const demoOperations = await readDemoOperationSummary(db, nowFactory());
+      const monsterVisualConfig = await readMonsterVisualConfigState(db, nowFactory());
       const model = buildAdminHubReadModel({
         account: {
           id: accountId,
@@ -2579,6 +3037,7 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         learnerBundles,
         runtimeSnapshots: { spelling: runtimeSnapshotForBundle(contentBundle) },
         demoOperations,
+        monsterVisualConfig,
         auditEntries: auditEntries.map((row) => ({
           requestId: row.request_id,
           mutationKind: row.mutation_kind,
@@ -2608,6 +3067,15 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         correlationId: correlationId || requestId,
         nowTs: nowFactory(),
       });
+    },
+    async saveMonsterVisualConfigDraft(accountId, { draft, mutation = {} } = {}) {
+      return saveMonsterVisualConfigDraft(db, accountId, draft, mutation, nowFactory());
+    },
+    async publishMonsterVisualConfig(accountId, { mutation = {} } = {}) {
+      return publishMonsterVisualConfig(db, accountId, mutation, nowFactory());
+    },
+    async restoreMonsterVisualConfigVersion(accountId, { version, mutation = {} } = {}) {
+      return restoreMonsterVisualConfigVersion(db, accountId, version, mutation, nowFactory());
     },
     async resetAccountScope(accountId, mutation = {}) {
       const nowTs = nowFactory();

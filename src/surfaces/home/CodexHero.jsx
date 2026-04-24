@@ -1,4 +1,5 @@
 import React from 'react';
+import { useMonsterVisualConfig } from '../../platform/game/MonsterVisualConfigContext.jsx';
 import { CodexCreatureTrigger } from './CodexCreature.jsx';
 import {
   codexEntryStateClassName,
@@ -51,10 +52,11 @@ export function CodexHero({
 }
 
 function CodexFeature({ entry, onPreviewCreature }) {
+  const monsterVisualConfig = useMonsterVisualConfig();
   return (
     <div
       className={codexEntryStateClassName('codex-feature', entry)}
-      style={codexFeatureStyle(entry)}
+      style={codexFeatureStyle(entry, monsterVisualConfig?.config)}
     >
       {entry.displayState !== 'fresh' && <span className="codex-feature-shadow" aria-hidden="true" />}
       <CodexCreatureTrigger

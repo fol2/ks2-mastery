@@ -2,6 +2,7 @@ import {
   CODEX_FEATURE_MAX_SIZE_BY_SPECIES,
   CODEX_STAGE_SCALE,
 } from './codex-visual-scale.js';
+import { resolveMonsterVisual } from '../../platform/game/monster-visual-config.js';
 
 export const CODEX_STAGES = Object.freeze([
   { value: 0, label: 'E', name: 'Egg' },
@@ -11,34 +12,21 @@ export const CODEX_STAGES = Object.freeze([
   { value: 4, label: 'M', name: 'Mega' },
 ]);
 
-const FEATURE_FOOT_PAD_BY_ASSET = Object.freeze({
-  inklet: Object.freeze({
-    b1: Object.freeze([18, 16, 12, 14, 8]),
-    b2: Object.freeze([18, 29, 22, 8, 7]),
-  }),
-  glimmerbug: Object.freeze({
-    b1: Object.freeze([25, 34, 24, 17, 8]),
-    b2: Object.freeze([20, 27, 14, 12, 2]),
-  }),
-  phaeton: Object.freeze({
-    b1: Object.freeze([6, 16, 22, 10, 4]),
-    b2: Object.freeze([16, 18, 10, 2, 0]),
-  }),
-  vellhorn: Object.freeze({
-    b1: Object.freeze([12, 10, 8, 6, 4]),
-    b2: Object.freeze([12, 10, 8, 6, 4]),
-  }),
-});
-
 const FEATURE_FOOT_PAD_SOURCE_SIZE = 320;
 
-function codexVisualMetrics(entry) {
+function codexVisualMetrics(entry, visualConfig = null) {
   const maxSize = CODEX_FEATURE_MAX_SIZE_BY_SPECIES[entry.id] || 760;
   const stage = entry.caught ? Math.max(0, Math.min(4, Number(entry.stage) || 0)) : 0;
   const visualSize = Math.round(maxSize * (CODEX_STAGE_SCALE[stage] || CODEX_STAGE_SCALE[0]));
   const footPad = entry.displayState === 'fresh'
     ? 0
-    : FEATURE_FOOT_PAD_BY_ASSET[entry.id]?.[entry.branch]?.[stage] ?? 0;
+    : resolveMonsterVisual({
+      monsterId: entry.id,
+      branch: entry.branch,
+      stage,
+      context: 'codexFeature',
+      config: visualConfig,
+    }).footPad;
   const footShift = Math.round(visualSize * (footPad / FEATURE_FOOT_PAD_SOURCE_SIZE));
   const rise = entry.displayState === 'monster'
     ? Math.min(155, 52 + (entry.stage * 24) + (entry.id === 'phaeton' ? 20 : 0))
@@ -74,12 +62,12 @@ export function codexTotals(entries = []) {
   };
 }
 
-export function codexFeatureStyle(entry) {
-  return codexFeatureStyleFromMetrics(codexVisualMetrics(entry));
+export function codexFeatureStyle(entry, visualConfig = null) {
+  return codexFeatureStyleFromMetrics(codexVisualMetrics(entry, visualConfig));
 }
 
-export function codexLightboxStyle(entry) {
-  const metrics = codexVisualMetrics(entry);
+export function codexLightboxStyle(entry, visualConfig = null) {
+  const metrics = codexVisualMetrics(entry, visualConfig);
   const { visualSize, footShift, rise } = metrics;
   const isEgg = entry.displayState === 'egg';
 

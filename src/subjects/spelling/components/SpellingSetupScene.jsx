@@ -1,4 +1,5 @@
 import React from 'react';
+import { useMonsterVisualConfig } from '../../../platform/game/MonsterVisualConfigContext.jsx';
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { useSetupHeroContrast } from './useSetupHeroContrast.js';
@@ -130,6 +131,7 @@ function ToggleChip({ pref, checked, label, actions, runtimeReadOnly = false }) 
 }
 
 function SetupMeadow({ codex }) {
+  const monsterVisualConfig = useMonsterVisualConfig();
   const caught = (Array.isArray(codex) ? codex : []).filter((entry) => entry?.progress?.caught);
   const shown = caught.slice(0, 4);
   if (!shown.length) {
@@ -139,7 +141,7 @@ function SetupMeadow({ codex }) {
     <div className="ss-meadow" aria-label={`${shown.length} caught monster${shown.length === 1 ? '' : 's'}`}>
       {shown.map(({ monster, progress }) => (
         <div className={`ss-meadow-cell${progress.stage === 0 ? ' egg' : ''}`} key={monster.id}>
-          <img alt="" {...monsterImageProps(monster, progress)} />
+          <img alt="" {...monsterImageProps(monster, progress, monsterVisualConfig?.config)} />
         </div>
       ))}
     </div>

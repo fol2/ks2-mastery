@@ -31,6 +31,7 @@ import {
   createNoopRepositoryAuthSession,
   repositoryAuthCacheScopeKey,
 } from './auth-session.js';
+import { normaliseMonsterVisualRuntimeConfig } from '../../game/monster-visual-config.js';
 
 const MUTATION_POLICY_VERSION = 1;
 const OPERATION_STATUS_PENDING = 'pending';
@@ -484,21 +485,24 @@ function loadCachedState(storage, storageKey) {
       bundle: normaliseRepositoryBundle(raw.bundle || raw),
       pendingOperations: normalisePendingOperations(raw.pendingOperations),
       syncState: normaliseSyncState(raw.syncState),
+      monsterVisualConfig: normaliseMonsterVisualRuntimeConfig(raw.monsterVisualConfig),
     };
   }
   return {
     bundle: emptyApiBundle(),
     pendingOperations: [],
     syncState: emptySyncState(),
+    monsterVisualConfig: null,
   };
 }
 
-function persistCachedState(storage, storageKey, bundle, pendingOperations, syncState) {
+function persistCachedState(storage, storageKey, bundle, pendingOperations, syncState, monsterVisualConfig) {
   try {
     storage?.setItem?.(storageKey, JSON.stringify({
       bundle,
       pendingOperations,
       syncState,
+      monsterVisualConfig,
     }));
     return null;
   } catch (error) {
@@ -902,6 +906,7 @@ export function createApiPlatformRepositories({
   let pendingOperations = normalisePendingOperations(cachedState.pendingOperations)
     .filter((operation) => isReplayablePendingOperation(operation, legacyWritesEnabled));
   let syncState = normaliseSyncState(cachedState.syncState);
+  let monsterVisualConfig = normaliseMonsterVisualRuntimeConfig(cachedState.monsterVisualConfig);
   let inFlightWriteCount = 0;
   let lastSyncAt = 0;
   let lastRemoteError = null;
@@ -919,7 +924,7 @@ export function createApiPlatformRepositories({
 
   function persistLocalCache(scope = 'api-cache') {
     cache.meta = currentRepositoryMeta();
-    const error = persistCachedState(resolvedStorage, storageKey, cache, pendingOperations, syncState);
+    const error = persistCachedState(resolvedStorage, storageKey, cache, pendingOperations, syncState, monsterVisualConfig);
     if (error) {
       lastCacheError = createPersistenceError({
         phase: 'cache-write',
@@ -1289,6 +1294,9 @@ export function createApiPlatformRepositories({
       }, authSession);
       const remoteBundle = normaliseRepositoryBundle(payload);
       const remoteSyncState = normaliseSyncState(payload?.syncState);
+      if (payload && Object.prototype.hasOwnProperty.call(payload, 'monsterVisualConfig')) {
+        monsterVisualConfig = normaliseMonsterVisualRuntimeConfig(payload.monsterVisualConfig);
+      }
       const rebase = applyHydratedState(remoteBundle, remoteSyncState, { rebasePending, rebasePayloads });
       markRemoteSuccess();
       persistLocalCache(cacheScope);
@@ -1595,6 +1603,11 @@ export function createApiPlatformRepositories({
         const operation = createOperation('eventLog.clearLearner', { learnerId }, syncState);
         queueOperation(operation);
         kickQueue();
+      },
+    },
+    monsterVisualConfig: {
+      read() {
+        return normaliseMonsterVisualRuntimeConfig(monsterVisualConfig);
       },
     },
     runtime: {

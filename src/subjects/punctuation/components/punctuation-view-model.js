@@ -1,4 +1,4 @@
-import { monsterAsset, monsterAssetSrcSet } from '../../../platform/game/monsters.js';
+import { resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
 
 const BELLSTORM_BASE = '/assets/regions/bellstorm-coast';
 
@@ -21,14 +21,22 @@ export function bellstormSceneForPhase(phase = 'setup') {
   };
 }
 
-export function punctuationMonsterAsset(monsterId = FALLBACK_MONSTER, stage = 0, branch = 'b1') {
+export function punctuationMonsterAsset(monsterId = FALLBACK_MONSTER, stage = 0, branch = 'b1', visualConfig = null) {
   const safeMonster = typeof monsterId === 'string' && monsterId ? monsterId : FALLBACK_MONSTER;
   const safeStage = Math.max(0, Math.min(4, Number(stage) || 0));
+  const visual = resolveMonsterVisual({
+    monsterId: safeMonster,
+    branch,
+    stage: safeStage,
+    context: 'codexCard',
+    config: visualConfig,
+    preferredSize: 640,
+  });
   return {
     id: safeMonster,
     stage: safeStage,
-    src: monsterAsset(safeMonster, safeStage, 640, branch),
-    srcSet: monsterAssetSrcSet(safeMonster, safeStage, branch),
+    src: visual.src,
+    srcSet: visual.srcSet,
   };
 }
 
