@@ -184,9 +184,9 @@ test('punctuation browser command action keeps choiceIndex parsing strict', asyn
 
 test('punctuation start command action preserves explicit focus mode and round length', () => {
   const payload = punctuationSubjectCommandActions['punctuation-start'].payload({
-    data: { mode: 'boundary', roundLength: '1' },
+    data: { mode: 'structure', roundLength: '1' },
     state: baseState(),
   });
 
-  assert.deepEqual(payload, { mode: 'boundary', roundLength: '1' });
+  assert.deepEqual(payload, { mode: 'structure', roundLength: '1' });
 });

@@ -75,7 +75,7 @@ test('first secure Punctuation unit records a cluster monster and the grand aggr
 });
 
 test('current release monster progress ignores mastery keys from previous releases', () => {
-  const oldReleaseId = 'punctuation-r2-endmarks-apostrophe-speech-comma-flow';
+  const oldReleaseId = 'punctuation-r3-endmarks-apostrophe-speech-comma-flow-boundary';
   const oldMasteryKey = createPunctuationMasteryKey({
     releaseId: oldReleaseId,
     clusterId: 'endmarks',
@@ -83,11 +83,11 @@ test('current release monster progress ignores mastery keys from previous releas
   });
   const repository = makeRepository({
     pealark: { mastered: [oldMasteryKey], caught: true, publishedTotal: 1 },
-    carillon: { mastered: [oldMasteryKey], caught: true, publishedTotal: 10 },
+    carillon: { mastered: [oldMasteryKey], caught: true, publishedTotal: 14 },
   });
 
   assert.equal(progressForPunctuationMonster(repository.state(), 'pealark', { publishedTotal: 1 }).mastered, 0);
-  assert.equal(progressForPunctuationMonster(repository.state(), 'carillon', { publishedTotal: 10 }).mastered, 0);
+  assert.equal(progressForPunctuationMonster(repository.state(), 'carillon', { publishedTotal: 14 }).mastered, 0);
 
   rewardEventsFromPunctuationEvents([endmarkEvent], {
     gameStateRepository: repository,
@@ -95,7 +95,7 @@ test('current release monster progress ignores mastery keys from previous releas
   });
   const state = repository.state();
   const pealark = progressForPunctuationMonster(state, 'pealark', { publishedTotal: 1 });
-  const carillon = progressForPunctuationMonster(state, 'carillon', { publishedTotal: 10 });
+  const carillon = progressForPunctuationMonster(state, 'carillon', { publishedTotal: 14 });
 
   assert.deepEqual(state.pealark.mastered, [oldMasteryKey, endmarkEvent.masteryKey]);
   assert.deepEqual(pealark.masteredList, [endmarkEvent.masteryKey]);
@@ -104,7 +104,7 @@ test('current release monster progress ignores mastery keys from previous releas
 });
 
 test('previous release reward events cannot reserve current release mastery keys', () => {
-  const oldReleaseId = 'punctuation-r2-endmarks-apostrophe-speech-comma-flow';
+  const oldReleaseId = 'punctuation-r3-endmarks-apostrophe-speech-comma-flow-boundary';
   const oldEvent = {
     ...endmarkEvent,
     id: 'punctuation.unit-secured:learner-a:r2:endmarks',
@@ -142,7 +142,7 @@ test('Apostrophe cluster reaches stage 4 when all published units are secure', (
     masteryKey: masteryKey('apostrophe', 'apostrophe-contractions-core'),
     monsterId: 'claspin',
     publishedTotal: 2,
-    aggregatePublishedTotal: 10,
+    aggregatePublishedTotal: 14,
     gameStateRepository: repository,
     random: () => 0,
   });
@@ -154,7 +154,7 @@ test('Apostrophe cluster reaches stage 4 when all published units are secure', (
     masteryKey: masteryKey('apostrophe', 'apostrophe-possession-core'),
     monsterId: 'claspin',
     publishedTotal: 2,
-    aggregatePublishedTotal: 10,
+    aggregatePublishedTotal: 14,
     gameStateRepository: repository,
     random: () => 0,
   });
@@ -173,7 +173,7 @@ test('Comma / Flow cluster reaches stage 4 when all published units are secure',
       masteryKey: masteryKey('comma_flow', rewardUnitId),
       monsterId: 'curlune',
       publishedTotal: 3,
-      aggregatePublishedTotal: 10,
+      aggregatePublishedTotal: 14,
       gameStateRepository: repository,
       random: () => 0,
     });
@@ -193,13 +193,33 @@ test('Boundary cluster reaches stage 4 when all published units are secure', () 
       masteryKey: masteryKey('boundary', rewardUnitId),
       monsterId: 'hyphang',
       publishedTotal: 3,
-      aggregatePublishedTotal: 10,
+      aggregatePublishedTotal: 14,
       gameStateRepository: repository,
       random: () => 0,
     });
   }
 
   assert.equal(progressForPunctuationMonster(repository.state(), 'hyphang', { publishedTotal: 3 }).stage, 4);
+});
+
+test('List / Structure cluster reaches stage 4 when all published units are secure', () => {
+  const repository = makeRepository();
+  for (const rewardUnitId of ['parenthesis-core', 'colons-core', 'semicolon-lists-core', 'bullet-points-core']) {
+    recordPunctuationRewardUnitMastery({
+      learnerId: 'learner-a',
+      releaseId: PUNCTUATION_RELEASE_ID,
+      clusterId: 'structure',
+      rewardUnitId,
+      masteryKey: masteryKey('structure', rewardUnitId),
+      monsterId: 'colisk',
+      publishedTotal: 4,
+      aggregatePublishedTotal: 14,
+      gameStateRepository: repository,
+      random: () => 0,
+    });
+  }
+
+  assert.equal(progressForPunctuationMonster(repository.state(), 'colisk', { publishedTotal: 4 }).stage, 4);
 });
 
 test('published-release aggregate reaches stage 4 only for current published denominator', () => {
@@ -212,6 +232,10 @@ test('published-release aggregate reaches stage 4 only for current published den
     ['comma_flow', 'list-commas-core', 'curlune', 3],
     ['comma_flow', 'fronted-adverbials-core', 'curlune', 3],
     ['comma_flow', 'comma-clarity-core', 'curlune', 3],
+    ['structure', 'parenthesis-core', 'colisk', 4],
+    ['structure', 'colons-core', 'colisk', 4],
+    ['structure', 'semicolon-lists-core', 'colisk', 4],
+    ['structure', 'bullet-points-core', 'colisk', 4],
     ['boundary', 'semicolons-core', 'hyphang', 3],
     ['boundary', 'dash-clauses-core', 'hyphang', 3],
     ['boundary', 'hyphens-core', 'hyphang', 3],
@@ -224,13 +248,13 @@ test('published-release aggregate reaches stage 4 only for current published den
       masteryKey: masteryKey(clusterId, rewardUnitId),
       monsterId,
       publishedTotal,
-      aggregatePublishedTotal: 10,
+      aggregatePublishedTotal: 14,
       gameStateRepository: repository,
       random: () => 0,
     });
   }
-  const carillon = progressForPunctuationMonster(repository.state(), 'carillon', { publishedTotal: 10 });
-  assert.equal(carillon.mastered, 10);
+  const carillon = progressForPunctuationMonster(repository.state(), 'carillon', { publishedTotal: 14 });
+  assert.equal(carillon.mastered, 14);
   assert.equal(carillon.stage, 4);
 });
 

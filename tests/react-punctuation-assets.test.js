@@ -59,11 +59,11 @@ test('Codex entries describe Punctuation as secure units rather than spelling wo
     },
     carillon: {
       mastered: [masteryKey],
-      publishedTotal: 10,
+      publishedTotal: 14,
       caught: true,
       branch: 'b2',
     },
-  }, { aggregateTotal: 10 });
+  }, { aggregateTotal: 14 });
   const entries = buildCodexEntries(summary);
   const pealark = entries.find((entry) => entry.id === 'pealark');
   const carillon = entries.find((entry) => entry.id === 'carillon');
@@ -77,7 +77,7 @@ test('Codex entries describe Punctuation as secure units rather than spelling wo
   assert.equal(carillon.subjectId, 'punctuation');
   assert.equal(carillon.secureLabel, '1 secure unit');
   assert.equal(carillon.wordBand, 'Published punctuation release');
-  assert.equal(carillon.progressPct, 10);
+  assert.equal(carillon.progressPct, 7);
 });
 
 test('Codex entry defaults remain spelling-compatible', () => {

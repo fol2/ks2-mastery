@@ -69,6 +69,21 @@ test('boundary focus mode selects published boundary cluster items only', () => 
   assert.equal(clusterModeForCluster('boundary'), 'boundary');
 });
 
+test('structure focus mode selects published structure cluster items only', () => {
+  const result = selectPunctuationItem({
+    progress: { items: {} },
+    session: { answeredCount: 0, recentItemIds: [] },
+    prefs: { mode: 'structure' },
+    now: 0,
+    random: () => 0,
+  });
+
+  assert.equal(result.targetClusterId, 'structure');
+  assert.equal(result.item.clusterId, 'structure');
+  assert.equal(result.item.id, 'pa_choose_coach');
+  assert.equal(clusterModeForCluster('structure'), 'structure');
+});
+
 test('scheduler keeps candidate windows bounded for expanded manifests', async () => {
   const { PUNCTUATION_CONTENT_MANIFEST, createPunctuationContentIndexes } = await import('../shared/punctuation/content.js');
   const extraItems = Array.from({ length: 500 }, (_, index) => ({

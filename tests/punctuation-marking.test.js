@@ -189,6 +189,60 @@ test('hyphen transfer validator requires the exact hyphenated phrase', () => {
   assert.equal(changedPhrase.misconceptionTags.includes('boundary.words_changed'), true);
 });
 
+test('structure transfer validators require explicit punctuation roles', () => {
+  const parenthesis = markPunctuationAnswer({
+    item: item('pa_transfer_library'),
+    answer: { typed: 'The library, which opened last year, is busy.' },
+  });
+  assert.equal(parenthesis.correct, true);
+
+  const unbalancedParenthesis = markPunctuationAnswer({
+    item: item('pa_transfer_library'),
+    answer: { typed: 'The library, which opened last year is busy.' },
+  });
+  assert.equal(unbalancedParenthesis.correct, false);
+  assert.equal(unbalancedParenthesis.misconceptionTags.includes('structure.parenthesis_unbalanced'), true);
+
+  const colon = markPunctuationAnswer({
+    item: item('cl_transfer_trip'),
+    answer: { typed: 'We needed three things: a torch, a map and a whistle.' },
+  });
+  assert.equal(colon.correct, true);
+
+  const missingColon = markPunctuationAnswer({
+    item: item('cl_transfer_trip'),
+    answer: { typed: 'We needed three things, a torch, a map and a whistle.' },
+  });
+  assert.equal(missingColon.correct, false);
+  assert.equal(missingColon.misconceptionTags.includes('structure.colon_missing'), true);
+
+  const semicolonList = markPunctuationAnswer({
+    item: item('sl_transfer_places'),
+    answer: { typed: 'We visited York, England; Cardiff, Wales; and Belfast, Northern Ireland.' },
+  });
+  assert.equal(semicolonList.correct, true);
+
+  const missingSemicolonList = markPunctuationAnswer({
+    item: item('sl_transfer_places'),
+    answer: { typed: 'We visited York, England, Cardiff, Wales and Belfast, Northern Ireland.' },
+  });
+  assert.equal(missingSemicolonList.correct, false);
+  assert.equal(missingSemicolonList.misconceptionTags.includes('structure.semicolon_list_missing'), true);
+
+  const bullets = markPunctuationAnswer({
+    item: item('bp_transfer_class'),
+    answer: { typed: 'Bring:\n- a drink\n- a hat\n- a sketchbook' },
+  });
+  assert.equal(bullets.correct, true);
+
+  const missingBulletMarker = markPunctuationAnswer({
+    item: item('bp_transfer_class'),
+    answer: { typed: 'Bring:\na drink\n- a hat\n- a sketchbook' },
+  });
+  assert.equal(missingBulletMarker.correct, false);
+  assert.equal(missingBulletMarker.misconceptionTags.includes('structure.bullet_marker_missing'), true);
+});
+
 test('choice marking accepts integer indexes only without coercing malformed values', () => {
   const speechChoice = item('sp_choose_reporting_comma');
   assert.equal(markPunctuationAnswer({ item: speechChoice, answer: { choiceIndex: 0 } }).correct, true);

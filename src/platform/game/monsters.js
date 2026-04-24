@@ -107,7 +107,7 @@ export const MONSTERS = {
     secondary: '#E8C45A',
     pale: '#F6EED7',
     nameByStage: ['Carillon Egg', 'Carillon', 'Chordwing', 'Bellstorm', 'Grand Carillon'],
-    masteredMax: 10,
+    masteredMax: 14,
   },
 };
 
