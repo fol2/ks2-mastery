@@ -302,12 +302,16 @@ export function createStore(subjects, { repositories, cacheSubjectUiWrites = fal
     return resolvedRepositories.learners.write(nextLearners);
   }
 
-  function reloadFromRepositories({ preserveRoute = false } = {}) {
+  function reloadFromRepositories({ preserveRoute = false, preserveMonsterCelebrations = false } = {}) {
     const previousRoute = state.route;
+    const previousMonsterCelebrations = state.monsterCelebrations;
     const nextState = stateFromRepositories(registry, resolvedRepositories);
     state = sanitiseState({
       ...nextState,
       route: preserveRoute ? previousRoute : nextState.route,
+      monsterCelebrations: preserveMonsterCelebrations
+        ? previousMonsterCelebrations
+        : nextState.monsterCelebrations,
     }, registry);
     notify();
     return state;

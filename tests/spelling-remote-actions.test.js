@@ -5,6 +5,11 @@ import {
   createRemoteSpellingActionHandler,
   spellingCommandDedupeKey,
 } from '../src/subjects/spelling/remote-actions.js';
+import {
+  acknowledgeMonsterCelebrationEvents,
+  clearMonsterCelebrationAcknowledgements,
+} from '../src/platform/game/monster-celebration-acks.js';
+import { installMemoryStorage } from './helpers/memory-storage.js';
 
 function flushPromises() {
   return Promise.resolve().then(() => Promise.resolve());
@@ -41,6 +46,10 @@ function createStoreHarness(initial = {}) {
         error: '',
       },
     },
+    monsterCelebrations: {
+      pending: [],
+      queue: [],
+    },
     transientUi: {},
     ...(initial || {}),
   };
@@ -72,10 +81,69 @@ function createStoreHarness(initial = {}) {
       calls.push(['pushToasts', toasts]);
     },
     pushMonsterCelebrations(events) {
+      state = {
+        ...state,
+        monsterCelebrations: {
+          ...state.monsterCelebrations,
+          queue: [...(state.monsterCelebrations?.queue || []), ...(Array.isArray(events) ? events : [events])],
+        },
+      };
       calls.push(['pushMonsterCelebrations', events]);
     },
+    deferMonsterCelebrations(events) {
+      state = {
+        ...state,
+        monsterCelebrations: {
+          ...state.monsterCelebrations,
+          pending: [...(state.monsterCelebrations?.pending || []), ...(Array.isArray(events) ? events : [events])],
+        },
+      };
+      calls.push(['deferMonsterCelebrations', events]);
+      return true;
+    },
+    releaseMonsterCelebrations() {
+      state = {
+        ...state,
+        monsterCelebrations: {
+          pending: [],
+          queue: [
+            ...(state.monsterCelebrations?.queue || []),
+            ...(state.monsterCelebrations?.pending || []),
+          ],
+        },
+      };
+      calls.push(['releaseMonsterCelebrations']);
+      return true;
+    },
+    dismissMonsterCelebration() {
+      state = {
+        ...state,
+        monsterCelebrations: {
+          ...state.monsterCelebrations,
+          queue: (state.monsterCelebrations?.queue || []).slice(1),
+        },
+      };
+      calls.push(['dismissMonsterCelebration']);
+      return true;
+    },
     reloadFromRepositories(options) {
+      if (!options?.preserveMonsterCelebrations) {
+        state = {
+          ...state,
+          monsterCelebrations: {
+            pending: [],
+            queue: [],
+          },
+        };
+      }
       calls.push(['reloadFromRepositories', options]);
+    },
+    repositories: initial.repositories || {
+      eventLog: {
+        list() {
+          return [];
+        },
+      },
     },
   };
   return {
@@ -346,29 +414,483 @@ test('remote spelling command response preserves reward side effects and TTS sto
   });
 
   handler.applyCommandResponse({
+    learnerId: 'learner-a',
     subjectReadModel: { phase: 'session' },
     projections: {
       rewards: {
         toastEvents: [{ id: 'toast-a' }],
-        events: [{ id: 'monster-a' }],
+        events: [{
+          id: 'reward.monster:learner-a:inklet:evolve:1:2',
+          type: 'reward.monster',
+          kind: 'evolve',
+          learnerId: 'learner-a',
+          monsterId: 'inklet',
+          monster: { id: 'inklet', name: 'Inklet' },
+          previous: { stage: 0, level: 1, caught: true, branch: 'b1' },
+          next: { stage: 1, level: 2, caught: true, branch: 'b1' },
+          createdAt: 100,
+        }],
       },
     },
   }, { command: 'submit-answer' });
 
   assert.equal(tts.stopCalls, 1);
   assert.deepEqual(calls.map(([name]) => name), [
-    'pushToasts',
-    'pushMonsterCelebrations',
     'reloadFromRepositories',
+    'pushToasts',
+    'deferMonsterCelebrations',
   ]);
 
   handler.applyCommandResponse({
+    learnerId: 'learner-a',
     subjectReadModel: { phase: 'session' },
     audio: { promptToken: 'prompt-a', word: 'early' },
   }, { command: 'submit-answer' });
 
   assert.equal(tts.stopCalls, 1);
   assert.deepEqual(tts.spoken, [{ promptToken: 'prompt-a', word: 'early' }]);
+});
+
+test('remote spelling command compensates a logged monster celebration after the next session finishes', () => {
+  installMemoryStorage();
+  const now = Date.now();
+  const olderCatch = {
+    id: 'reward.monster:learner-a:inklet:caught:0:0',
+    type: 'reward.monster',
+    kind: 'caught',
+    learnerId: 'learner-a',
+    monsterId: 'inklet',
+    monster: {
+      id: 'inklet',
+      name: 'Inklet',
+      accent: '#3E6FA8',
+    },
+    previous: { mastered: 0, stage: 0, level: 0, caught: false, branch: 'b1' },
+    next: { mastered: 1, stage: 0, level: 0, caught: true, branch: 'b1' },
+    createdAt: now - (10 * 24 * 60 * 60 * 1000),
+  };
+  const missedEvolution = {
+    id: 'reward.monster:learner-a:inklet:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: 'learner-a',
+    monsterId: 'inklet',
+    monster: {
+      id: 'inklet',
+      name: 'Inklet',
+      nameByStage: ['Inklet egg', 'Inklet sprout'],
+      accent: '#3E6FA8',
+    },
+    previous: { mastered: 9, stage: 0, level: 1, caught: true, branch: 'b1' },
+    next: { mastered: 10, stage: 1, level: 2, caught: true, branch: 'b1' },
+    createdAt: now - 1000,
+  };
+  const nonSpellingReward = {
+    id: 'reward.monster:learner-a:grammar:bracehart:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: 'learner-a',
+    subjectId: 'grammar',
+    monsterId: 'bracehart',
+    monster: {
+      id: 'bracehart',
+      name: 'Bracehart',
+      accent: '#3E6FA8',
+    },
+    previous: { mastered: 1, stage: 1, level: 2, caught: true, branch: 'b1' },
+    next: { mastered: 2, stage: 2, level: 4, caught: true, branch: 'b1' },
+    createdAt: now,
+  };
+  const { calls, getState, store } = createStoreHarness({
+    repositories: {
+      eventLog: {
+        list(learnerId) {
+          assert.equal(learnerId, 'learner-a');
+          return [olderCatch, missedEvolution, nonSpellingReward];
+        },
+      },
+    },
+  });
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: { send: async () => ({}) },
+  });
+
+  handler.applyCommandResponse({
+    learnerId: 'learner-a',
+    subjectReadModel: { phase: 'summary' },
+    projections: {
+      rewards: {
+        toastEvents: [],
+        events: [],
+      },
+    },
+  }, {
+    command: 'end-session',
+    compensationBaselineEventIds: new Set([olderCatch.id]),
+  });
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'reloadFromRepositories',
+    'deferMonsterCelebrations',
+    'releaseMonsterCelebrations',
+  ]);
+  assert.equal(getState().monsterCelebrations.pending.length, 0);
+  assert.equal(getState().monsterCelebrations.queue.length, 1);
+  assert.equal(getState().monsterCelebrations.queue[0].id, missedEvolution.id);
+
+  acknowledgeMonsterCelebrationEvents(missedEvolution, { learnerId: 'learner-a' });
+  store.dismissMonsterCelebration();
+  store.updateSubjectUi('spelling', {
+    phase: 'session',
+    session: {
+      id: 'session-b',
+      currentSlug: 'necessary',
+      phase: 'answer',
+      promptCount: 1,
+    },
+  });
+  calls.length = 0;
+  handler.applyCommandResponse({
+    learnerId: 'learner-a',
+    subjectReadModel: { phase: 'summary' },
+    projections: {
+      rewards: {
+        toastEvents: [],
+        events: [],
+      },
+    },
+  }, {
+    command: 'end-session',
+    compensationBaselineEventIds: new Set([olderCatch.id, missedEvolution.id]),
+  });
+
+  assert.equal(calls.some(([name]) => name === 'deferMonsterCelebrations'), false);
+});
+
+test('remote spelling compensation baselines recent logged celebrations that existed before command', () => {
+  installMemoryStorage();
+  const recentEvolution = {
+    id: 'reward.monster:learner-a:inklet:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: 'learner-a',
+    monsterId: 'inklet',
+    monster: {
+      id: 'inklet',
+      name: 'Inklet',
+      accent: '#3E6FA8',
+    },
+    previous: { mastered: 9, stage: 0, level: 1, caught: true, branch: 'b1' },
+    next: { mastered: 10, stage: 1, level: 2, caught: true, branch: 'b1' },
+    createdAt: Date.now() - 60_000,
+  };
+  const { calls, getState, store } = createStoreHarness({
+    repositories: {
+      eventLog: {
+        list() {
+          return [recentEvolution];
+        },
+      },
+    },
+  });
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: { send: async () => ({}) },
+  });
+
+  handler.applyCommandResponse({
+    learnerId: 'learner-a',
+    subjectReadModel: { phase: 'summary' },
+    projections: {
+      rewards: {
+        toastEvents: [],
+        events: [],
+      },
+    },
+  }, {
+    command: 'end-session',
+    compensationBaselineEventIds: new Set([recentEvolution.id]),
+  });
+
+  assert.equal(calls.some(([name]) => name === 'deferMonsterCelebrations'), false);
+  assert.equal(getState().monsterCelebrations.queue.length, 0);
+});
+
+test('remote spelling compensation can replay a deterministic reward id after reset clears acknowledgements', () => {
+  installMemoryStorage();
+  const reearnedEvolution = {
+    id: 'reward.monster:learner-a:inklet:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: 'learner-a',
+    subjectId: 'spelling',
+    monsterId: 'inklet',
+    monster: {
+      id: 'inklet',
+      name: 'Inklet',
+      accent: '#3E6FA8',
+    },
+    previous: { mastered: 9, stage: 0, level: 1, caught: true, branch: 'b1' },
+    next: { mastered: 10, stage: 1, level: 2, caught: true, branch: 'b1' },
+    createdAt: Date.now(),
+  };
+  acknowledgeMonsterCelebrationEvents(reearnedEvolution, { learnerId: 'learner-a' });
+  clearMonsterCelebrationAcknowledgements('learner-a');
+  const { calls, getState, store } = createStoreHarness({
+    repositories: {
+      eventLog: {
+        list(learnerId) {
+          assert.equal(learnerId, 'learner-a');
+          return [reearnedEvolution];
+        },
+      },
+    },
+  });
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: { send: async () => ({}) },
+  });
+
+  handler.applyCommandResponse({
+    learnerId: 'learner-a',
+    subjectReadModel: { phase: 'summary' },
+    projections: {
+      rewards: {
+        toastEvents: [],
+        events: [],
+      },
+    },
+  }, {
+    command: 'end-session',
+    compensationBaselineEventIds: new Set(),
+  });
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'reloadFromRepositories',
+    'deferMonsterCelebrations',
+    'releaseMonsterCelebrations',
+  ]);
+  assert.equal(getState().monsterCelebrations.queue.length, 1);
+  assert.equal(getState().monsterCelebrations.queue[0].id, reearnedEvolution.id);
+});
+
+test('remote spelling command compensates only rewards appended after the command starts', async () => {
+  installMemoryStorage();
+  const now = Date.now();
+  const priorEvolution = {
+    id: 'reward.monster:learner-a:inklet:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: 'learner-a',
+    subjectId: 'spelling',
+    monsterId: 'inklet',
+    monster: {
+      id: 'inklet',
+      name: 'Inklet',
+      accent: '#3E6FA8',
+    },
+    previous: { mastered: 9, stage: 0, level: 1, caught: true, branch: 'b1' },
+    next: { mastered: 10, stage: 1, level: 2, caught: true, branch: 'b1' },
+    createdAt: now - 60_000,
+  };
+  const commandMissedEvolution = {
+    id: 'reward.monster:learner-a:phaeton:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: 'learner-a',
+    subjectId: 'spelling',
+    monsterId: 'phaeton',
+    monster: {
+      id: 'phaeton',
+      name: 'Phaeton',
+      accent: '#7D5CC6',
+    },
+    previous: { mastered: 29, stage: 1, level: 2, caught: true, branch: 'b2' },
+    next: { mastered: 30, stage: 2, level: 3, caught: true, branch: 'b2' },
+    createdAt: now,
+  };
+  const events = [priorEvolution];
+  const { getState, store } = createStoreHarness({
+    repositories: {
+      eventLog: {
+        list(learnerId) {
+          assert.equal(learnerId, 'learner-a');
+          return events;
+        },
+      },
+    },
+  });
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      async send() {
+        events.push(commandMissedEvolution);
+        return {
+          learnerId: 'learner-a',
+          subjectReadModel: { phase: 'summary' },
+          projections: {
+            rewards: {
+              toastEvents: [],
+              events: [],
+            },
+          },
+        };
+      },
+    },
+  });
+
+  assert.equal(handler.runCommand('end-session'), true);
+  await flushPromises();
+
+  assert.equal(getState().monsterCelebrations.queue.length, 1);
+  assert.equal(getState().monsterCelebrations.queue[0].id, commandMissedEvolution.id);
+});
+
+test('remote spelling compensation preserves older recent missed celebrations for later replay', () => {
+  installMemoryStorage();
+  const now = Date.now();
+  const directEvolution = {
+    id: 'reward.monster:learner-a:inklet:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: 'learner-a',
+    subjectId: 'spelling',
+    monsterId: 'inklet',
+    monster: {
+      id: 'inklet',
+      name: 'Inklet',
+      accent: '#3E6FA8',
+    },
+    previous: { mastered: 9, stage: 0, level: 1, caught: true, branch: 'b1' },
+    next: { mastered: 10, stage: 1, level: 2, caught: true, branch: 'b1' },
+    createdAt: now - 2000,
+  };
+  const phaetonEvolution = {
+    id: 'reward.monster:learner-a:phaeton:evolve:1:2',
+    type: 'reward.monster',
+    kind: 'evolve',
+    learnerId: 'learner-a',
+    subjectId: 'spelling',
+    monsterId: 'phaeton',
+    monster: {
+      id: 'phaeton',
+      name: 'Phaeton',
+      accent: '#7D5CC6',
+    },
+    previous: { mastered: 29, stage: 1, level: 2, caught: true, branch: 'b2' },
+    next: { mastered: 30, stage: 2, level: 3, caught: true, branch: 'b2' },
+    createdAt: now - 1000,
+  };
+  const { calls, getState, store } = createStoreHarness({
+    repositories: {
+      eventLog: {
+        list() {
+          return [directEvolution, phaetonEvolution];
+        },
+      },
+    },
+  });
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: { send: async () => ({}) },
+  });
+
+  handler.applyCommandResponse({
+    learnerId: 'learner-a',
+    subjectReadModel: { phase: 'summary' },
+    projections: {
+      rewards: {
+        toastEvents: [],
+        events: [],
+      },
+    },
+  }, {
+    command: 'end-session',
+    compensationBaselineEventIds: new Set(),
+  });
+
+  assert.equal(getState().monsterCelebrations.queue.length, 1);
+  assert.equal(getState().monsterCelebrations.queue[0].id, phaetonEvolution.id);
+
+  acknowledgeMonsterCelebrationEvents(phaetonEvolution, { learnerId: 'learner-a' });
+  store.dismissMonsterCelebration();
+  store.updateSubjectUi('spelling', {
+    phase: 'session',
+    session: {
+      id: 'session-b',
+      currentSlug: 'necessary',
+      phase: 'answer',
+      promptCount: 1,
+    },
+  });
+  calls.length = 0;
+
+  handler.applyCommandResponse({
+    learnerId: 'learner-a',
+    subjectReadModel: { phase: 'summary' },
+    projections: {
+      rewards: {
+        toastEvents: [],
+        events: [],
+      },
+    },
+  }, {
+    command: 'end-session',
+    compensationBaselineEventIds: new Set([directEvolution.id, phaetonEvolution.id]),
+  });
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'reloadFromRepositories',
+    'deferMonsterCelebrations',
+    'releaseMonsterCelebrations',
+  ]);
+  assert.equal(getState().monsterCelebrations.queue.length, 1);
+  assert.equal(getState().monsterCelebrations.queue[0].id, directEvolution.id);
+});
+
+test('remote spelling command response ignores stale learner TTS side effects', () => {
+  const { store } = createStoreHarness({
+    learners: { selectedId: 'learner-b' },
+  });
+  const tts = createTtsHarness();
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts,
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: { send: async () => ({}) },
+  });
+
+  handler.applyCommandResponse({
+    learnerId: 'learner-a',
+    subjectReadModel: { phase: 'summary' },
+    projections: {
+      rewards: {
+        toastEvents: [{ id: 'toast-a' }],
+        events: [],
+      },
+    },
+    audio: { promptToken: 'prompt-a', word: 'early' },
+  }, { command: 'end-session' });
+
+  assert.equal(tts.stopCalls, 0);
+  assert.deepEqual(tts.spoken, []);
 });
 
 test('remote spelling word bank open loads analytics and detail into the store', async () => {
