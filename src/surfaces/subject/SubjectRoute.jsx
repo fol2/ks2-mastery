@@ -3,10 +3,12 @@ import { SubjectBreadcrumb } from '../shell/SubjectBreadcrumb.jsx';
 import { SubjectRouteContext } from './SubjectRouteContext.js';
 import { SubjectRuntimeFallback } from './SubjectRuntimeFallback.jsx';
 import { PunctuationPracticeSurface } from '../../subjects/punctuation/components/PunctuationPracticeSurface.jsx';
+import { GrammarPracticeSurface } from '../../subjects/grammar/components/GrammarPracticeSurface.jsx';
 import { SpellingPracticeSurface } from '../../subjects/spelling/components/SpellingPracticeSurface.jsx';
 import { isSubjectExposed } from '../../platform/core/subject-availability.js';
 
 const REACT_SUBJECT_COMPONENTS = Object.freeze({
+  grammar: GrammarPracticeSurface,
   punctuation: PunctuationPracticeSurface,
   spelling: SpellingPracticeSurface,
 });

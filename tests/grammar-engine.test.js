@@ -158,12 +158,13 @@ test('Grammar retry queue de-duplicates repeated misses for the same template an
   const state = createInitialGrammarState();
   const question = createGrammarQuestion({ templateId: 'fronted_adverbial_choose', seed: 1 });
   const item = serialiseGrammarQuestion(question);
+  const wrongAnswer = question.inputSpec.options.find((option) => !evaluateGrammarQuestion(question, { answer: option.value }).correct).value;
 
   for (let count = 0; count < 2; count += 1) {
     applyGrammarAttemptToState(state, {
       learnerId: 'learner-a',
       item,
-      response: { answer: 'not the answer' },
+      response: { answer: wrongAnswer },
       now: 1_777_000_000_000 + count,
     });
   }
@@ -191,6 +192,21 @@ test('Grammar attempt history stores bounded response fields only', () => {
   const persisted = state.recentAttempts[0].response;
   assert.deepEqual(Object.keys(persisted), ['answer']);
   assert.equal(persisted.answer.length, 2_000);
+});
+
+test('Grammar engine rejects empty answers before mastery is mutated', () => {
+  const state = createInitialGrammarState();
+  const question = createGrammarQuestion({ templateId: 'fronted_adverbial_choose', seed: 1 });
+  const item = serialiseGrammarQuestion(question);
+
+  assert.throws(() => applyGrammarAttemptToState(state, {
+    learnerId: 'learner-a',
+    item,
+    response: {},
+    now: 1_777_000_000_000,
+  }), (error) => error?.extra?.code === 'grammar_answer_required');
+  assert.deepEqual(state.mastery.concepts, {});
+  assert.equal(state.recentAttempts.length, 0);
 });
 
 test('Grammar server engine creates a session, marks an answer, and records summary events', () => {
@@ -236,4 +252,56 @@ test('Grammar server engine creates a session, marks an answer, and records summ
   assert.equal(done.state.phase, 'summary');
   assert.equal(done.practiceSession.status, 'completed');
   assert.ok(done.events.some((event) => event.type === 'grammar.session-completed'));
+});
+
+test('Grammar save-prefs clears completed summary state', () => {
+  const oracle = readGrammarLegacyOracle();
+  const sample = oracle.templates.find((template) => template.id === 'question_mark_select');
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'start-summary-reset',
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  const submit = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: start.state, data: start.data },
+    latestSession: start.practiceSession,
+    command: 'submit-answer',
+    requestId: 'submit-summary-reset',
+    payload: { response: sample.correctResponse },
+  });
+  const done = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: submit.state, data: submit.data },
+    latestSession: submit.practiceSession,
+    command: 'continue-session',
+    requestId: 'continue-summary-reset',
+    payload: {},
+  });
+  assert.equal(done.state.phase, 'summary');
+
+  const saved = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: done.state, data: done.data },
+    latestSession: done.practiceSession,
+    command: 'save-prefs',
+    requestId: 'prefs-summary-reset',
+    payload: { prefs: { mode: 'learn' } },
+  });
+
+  assert.equal(saved.state.phase, 'dashboard');
+  assert.equal(saved.state.summary, null);
+  assert.equal(saved.state.session, null);
+  assert.equal(saved.state.awaitingAdvance, false);
+  assert.equal(saved.state.prefs.mode, 'learn');
+  assert.equal(saved.practiceSession, null);
 });

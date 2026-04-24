@@ -129,6 +129,16 @@ function normaliseGrammarResponse(inputSpec, response) {
   return { answer: cappedString(raw.answer, LONG_RESPONSE_TEXT_LIMIT) };
 }
 
+function hasNormalisedResponseValue(value) {
+  if (Array.isArray(value)) return value.some((entry) => String(entry || '').trim());
+  return String(value ?? '').trim().length > 0;
+}
+
+function hasNormalisedGrammarResponse(response) {
+  if (!isPlainObject(response)) return false;
+  return Object.values(response).some((value) => hasNormalisedResponseValue(value));
+}
+
 function stableHash(value) {
   const text = String(value || '');
   let hash = 2166136261;
@@ -701,6 +711,12 @@ export function applyGrammarAttemptToState(state, {
     });
   }
   const normalisedResponse = normaliseGrammarResponse(question.inputSpec, response);
+  if (!hasNormalisedGrammarResponse(normalisedResponse)) {
+    throw new BadRequestError('Choose or type an answer before submitting.', {
+      code: 'grammar_answer_required',
+      subjectId: SUBJECT_ID,
+    });
+  }
   const result = evaluateGrammarQuestion(question, normalisedResponse);
   if (!result) {
     throw new BadRequestError('Grammar answer could not be marked.', {
@@ -842,6 +858,13 @@ function savePrefs(state, payload) {
     roundLength: roundLengthFor(nextMode, prefs, state.prefs),
     focusConceptId: nextFocusConceptId,
   };
+  if (state.phase === 'summary') {
+    state.phase = 'dashboard';
+    state.session = null;
+    state.feedback = null;
+    state.summary = null;
+    state.awaitingAdvance = false;
+  }
   return [];
 }
 

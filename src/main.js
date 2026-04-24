@@ -1160,6 +1160,7 @@ function contextFor(subjectId = null) {
     service: services[resolvedSubject.id] || null,
     spellingContent,
     readModels,
+    subjectCommands,
     tts,
     applySubjectTransition,
     runtimeBoundary,
