@@ -171,6 +171,42 @@ test('/demo creates the same server-owned session and redirects to the app', asy
   server.close();
 });
 
+test('/demo only creates a session for document navigation when fetch metadata is present', async () => {
+  const server = productionServer();
+
+  const subresource = await server.fetchRaw('https://repo.test/demo', {
+    headers: {
+      'sec-fetch-site': 'cross-site',
+      'sec-fetch-mode': 'no-cors',
+      'sec-fetch-dest': 'image',
+    },
+  });
+  const subresourcePayload = await subresource.json();
+  const accountCountAfterSubresource = server.DB.db
+    .prepare('SELECT COUNT(*) AS count FROM adult_accounts')
+    .get().count;
+
+  assert.equal(subresource.status, 403);
+  assert.equal(subresourcePayload.code, 'demo_navigation_required');
+  assert.equal(cookieFrom(subresource), '');
+  assert.equal(accountCountAfterSubresource, 0);
+
+  const navigation = await server.fetchRaw('https://repo.test/demo', {
+    headers: {
+      'sec-fetch-site': 'cross-site',
+      'sec-fetch-mode': 'navigate',
+      'sec-fetch-dest': 'document',
+      'sec-fetch-user': '?1',
+    },
+  });
+
+  assert.equal(navigation.status, 302);
+  assert.equal(navigation.headers.get('location'), 'https://repo.test/?demo=1');
+  assert.ok(cookieFrom(navigation));
+
+  server.close();
+});
+
 test('/demo does not overwrite an existing real account session', async () => {
   const server = productionServer();
   const register = await postJson(server, '/api/auth/register', {

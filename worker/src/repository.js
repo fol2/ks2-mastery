@@ -338,7 +338,7 @@ function safePublicEventNumber(value) {
 }
 
 function safePublicEventType(value) {
-  return PUBLIC_EVENT_TYPES.has(value) ? value : 'event';
+  return PUBLIC_EVENT_TYPES.has(value) ? value : null;
 }
 
 function safePublicEventEnum(key, value) {
@@ -350,8 +350,10 @@ function safePublicEventEnum(key, value) {
 function publicEventRowToRecord(row) {
   const event = eventRowToRecord(row);
   if (!event) return null;
+  const type = safePublicEventType(safePublicEventText(event.type) || safePublicEventText(row.event_type));
+  if (!type) return null;
   const output = {
-    type: safePublicEventType(safePublicEventText(event.type) || safePublicEventText(row.event_type)),
+    type,
     learnerId: safePublicEventText(event.learnerId),
     subjectId: event.subjectId === 'spelling' ? 'spelling' : null,
     createdAt: safePublicEventNumber(event.createdAt) ?? asTs(row.created_at, 0),
@@ -969,26 +971,34 @@ async function updateManagedAccountRole(db, {
 
     const currentRole = normalisePlatformRole(target.platform_role);
     if (currentRole === 'admin' && nextRole !== 'admin') {
-      const adminCount = Number(await scalar(db, `
-        SELECT COUNT(*) AS count
-        FROM adult_accounts
-        WHERE platform_role = 'admin'
-          AND COALESCE(account_type, 'real') <> 'demo'
-      `, [], 'count')) || 0;
-      if (adminCount <= 1) {
+      const updateResult = await run(db, `
+        UPDATE adult_accounts
+        SET platform_role = ?,
+            updated_at = ?
+        WHERE id = ?
+          AND EXISTS (
+            SELECT 1
+            FROM adult_accounts
+            WHERE platform_role = 'admin'
+              AND COALESCE(account_type, 'real') <> 'demo'
+              AND id <> ?
+          )
+      `, [nextRole, nowTs, targetAccountId, targetAccountId]);
+      const updateChanges = Number(updateResult?.meta?.changes) || 0;
+      if (updateChanges !== 1) {
         throw new ConflictError('At least one admin account must remain.', {
           code: 'last_admin_required',
           accountId: targetAccountId,
         });
       }
+    } else {
+      await run(db, `
+        UPDATE adult_accounts
+        SET platform_role = ?,
+            updated_at = ?
+        WHERE id = ?
+      `, [nextRole, nowTs, targetAccountId]);
     }
-
-    await run(db, `
-      UPDATE adult_accounts
-      SET platform_role = ?,
-          updated_at = ?
-      WHERE id = ?
-    `, [nextRole, nowTs, targetAccountId]);
 
     const directory = await accountDirectoryPayload(db, actorAccountId);
     const updatedAccount = directory.accounts.find((account) => account.id === targetAccountId) || null;

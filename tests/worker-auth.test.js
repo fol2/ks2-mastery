@@ -455,6 +455,24 @@ test('production public bootstrap redacts spelling sentinels from subject state,
     accountId,
   );
   server.DB.db.prepare(`
+    INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
+    VALUES (?, ?, 'spelling', ?, 'spelling.answer-secret', ?, ?, ?)
+  `).run(
+    `event-private-${sentinel}`,
+    learnerId,
+    sentinel,
+    JSON.stringify({
+      id: `spelling.answer-secret:${sentinel}`,
+      type: 'spelling.answer-secret',
+      learnerId,
+      subjectId: 'spelling',
+      answer: sentinel,
+      createdAt: now + 1,
+    }),
+    now + 1,
+    accountId,
+  );
+  server.DB.db.prepare(`
     INSERT INTO child_game_state (learner_id, system_id, state_json, updated_at, updated_by_account_id)
     VALUES (?, 'monster-codex', ?, ?, ?)
   `).run(
@@ -502,6 +520,7 @@ test('production public bootstrap redacts spelling sentinels from subject state,
   assert.equal(payload.eventLog[0].answer, undefined);
   assert.equal(payload.eventLog[0].monsterId, undefined);
   assert.equal(payload.eventLog[0].kind, undefined);
+  assert.equal(payload.eventLog.length, 1);
   const publicGameState = payload.gameState[`${learnerId}::monster-codex`];
   assert.equal(publicGameState.inklet.mastered, undefined);
   assert.equal(publicGameState.inklet.wordSlug, undefined);

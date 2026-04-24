@@ -40,6 +40,21 @@ function redirect(location, status = 302, cookies = []) {
   return withCookies(response, cookies);
 }
 
+function isDemoSubresourceRequest(request) {
+  const mode = request.headers.get('sec-fetch-mode');
+  const dest = request.headers.get('sec-fetch-dest');
+  const hasFetchMetadata = Boolean(
+    mode
+    || dest
+    || request.headers.get('sec-fetch-site')
+    || request.headers.get('sec-fetch-user'),
+  );
+  if (!hasFetchMetadata) return false;
+  if (mode && mode !== 'navigate') return true;
+  if (dest && dest !== 'document') return true;
+  return false;
+}
+
 function callbackErrorRedirect(request, message) {
   const url = new URL(request.url);
   return redirect(`${url.origin}/?auth_error=${encodeURIComponent(message || 'Could not complete sign-in.')}`);
@@ -191,6 +206,13 @@ export function createWorkerApp({
           }
           if (currentSession?.demo) {
             return redirect(`${url.origin}/?demo=1`, 302);
+          }
+          if (isDemoSubresourceRequest(request)) {
+            return json({
+              ok: false,
+              code: 'demo_navigation_required',
+              message: 'Open the demo directly to start a session.',
+            }, 403);
           }
           const result = await createDemoSession({
             env,
