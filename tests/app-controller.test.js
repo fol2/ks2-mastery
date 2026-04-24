@@ -178,10 +178,12 @@ test('controller persists profile TTS provider in spelling prefs', () => {
   formData.set('dailyMinutes', '15');
   formData.set('avatarColor', '#3E6FA8');
   formData.set('ttsProvider', 'gemini');
+  formData.set('bufferedGeminiVoice', 'Sulafat');
 
   controller.dispatch('learner-save-form', { formData });
 
   assert.equal(controller.services.spelling.getPrefs(learnerId).ttsProvider, 'gemini');
+  assert.equal(controller.services.spelling.getPrefs(learnerId).bufferedGeminiVoice, 'Sulafat');
 });
 
 test('controller dispatches profile TTS test through the selected provider', () => {
@@ -194,6 +196,7 @@ test('controller dispatches profile TTS test through the selected provider', () 
     word: 'early',
     sentence: 'The birds sang early in the day.',
     provider: 'browser',
+    bufferedGeminiVoice: 'Iapetus',
     kind: 'test',
   });
 });

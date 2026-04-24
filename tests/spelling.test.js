@@ -264,11 +264,12 @@ test('legacy all filter normalises to core stats and excludes Extra progress', (
 
 test('resetting spelling progress preserves the profile TTS provider', () => {
   const { service } = makeService();
-  service.savePrefs('learner-a', { ttsProvider: 'browser' });
+  service.savePrefs('learner-a', { ttsProvider: 'browser', bufferedGeminiVoice: 'Sulafat' });
 
   service.resetLearner('learner-a');
 
   assert.equal(service.getPrefs('learner-a').ttsProvider, 'browser');
+  assert.equal(service.getPrefs('learner-a').bufferedGeminiVoice, 'Sulafat');
 });
 
 test('Extra spelling accepts UK mollusc only', () => {

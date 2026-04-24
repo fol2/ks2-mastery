@@ -22,7 +22,12 @@ import { createPracticeStreakSubscriber } from './platform/events/index.js';
 import { createSubjectCommandClient } from './platform/runtime/subject-command-client.js';
 import { createReadModelClient } from './platform/runtime/read-model-client.js';
 import { createPlatformTts } from './subjects/spelling/tts.js';
-import { DEFAULT_TTS_PROVIDER, normaliseTtsProvider } from './subjects/spelling/tts-providers.js';
+import {
+  DEFAULT_BUFFERED_GEMINI_VOICE,
+  DEFAULT_TTS_PROVIDER,
+  normaliseBufferedGeminiVoice,
+  normaliseTtsProvider,
+} from './subjects/spelling/tts-providers.js';
 import { createSpellingReadModelService } from './subjects/spelling/client-read-models.js';
 import { resolveSpellingShortcut } from './subjects/spelling/shortcuts.js';
 import {
@@ -201,9 +206,20 @@ function selectedTtsProvider() {
   }
 }
 
+function selectedBufferedGeminiVoice() {
+  const learnerId = store?.getState?.()?.learners?.selectedId;
+  if (!learnerId) return DEFAULT_BUFFERED_GEMINI_VOICE;
+  try {
+    return normaliseBufferedGeminiVoice(services.spelling?.getPrefs?.(learnerId)?.bufferedGeminiVoice);
+  } catch {
+    return DEFAULT_BUFFERED_GEMINI_VOICE;
+  }
+}
+
 const tts = createPlatformTts({
   fetchFn: credentialFetch,
   provider: selectedTtsProvider,
+  bufferedVoice: selectedBufferedGeminiVoice,
 });
 
 /* Audio replay affordance state — maintained outside the store because it is a
@@ -803,7 +819,7 @@ async function resetServerSyncedLearnerProgress(learnerId) {
   store.reloadFromRepositories({ preserveRoute: true });
 }
 
-async function profileTtsPayload(provider) {
+async function profileTtsPayload(provider, bufferedGeminiVoice = selectedBufferedGeminiVoice()) {
   const learnerId = store.getState().learners.selectedId;
   if (provider === 'browser' || !learnerId) {
     return {
@@ -811,6 +827,7 @@ async function profileTtsPayload(provider) {
       word: 'early',
       sentence: 'The birds sang early in the day.',
       provider,
+      bufferedGeminiVoice,
       kind: 'test',
     };
   }
@@ -831,6 +848,7 @@ async function profileTtsPayload(provider) {
   return {
     ...cue,
     provider,
+    bufferedGeminiVoice,
     kind: 'test',
   };
 }
@@ -1207,6 +1225,7 @@ function buildSurfaceChromeModel(appState) {
     learnerLabel: learner ? `${learner.name} · ${learner.yearGroup}` : 'No learner selected',
     learnerOptions,
     ttsProvider: learnerId ? selectedTtsProvider() : DEFAULT_TTS_PROVIDER,
+    bufferedGeminiVoice: learnerId ? selectedBufferedGeminiVoice() : DEFAULT_BUFFERED_GEMINI_VOICE,
     signedInAs: boot.session.signedIn ? (boot.session.email || '') : null,
     session: boot.session,
     persistence: {
@@ -1596,8 +1615,9 @@ function handleGlobalAction(action, data) {
 
   if (action === 'tts-test') {
     const provider = normaliseTtsProvider(data.provider, selectedTtsProvider());
+    const bufferedGeminiVoice = normaliseBufferedGeminiVoice(data.bufferedGeminiVoice, selectedBufferedGeminiVoice());
     const token = beginProfileTtsTest(provider);
-    profileTtsPayload(provider)
+    profileTtsPayload(provider, bufferedGeminiVoice)
       .then((payload) => tts.speak(payload))
       .then((ok) => finishProfileTtsTest(token, Boolean(ok)))
       .catch(() => finishProfileTtsTest(token, false));
@@ -1610,6 +1630,7 @@ function handleGlobalAction(action, data) {
     runSpellingCommand('save-prefs', {
       prefs: {
         ttsProvider: normaliseTtsProvider(formData.get('ttsProvider')),
+        bufferedGeminiVoice: normaliseBufferedGeminiVoice(formData.get('bufferedGeminiVoice')),
       },
     });
     tts.stop();

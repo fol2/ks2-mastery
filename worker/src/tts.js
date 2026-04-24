@@ -4,6 +4,13 @@ import { BadRequestError, BackendUnavailableError } from './errors.js';
 import { readJson } from './http.js';
 import { protectDemoTtsFallback, recordDemoMetric } from './demo/sessions.js';
 import { resolveSpellingAudioRequest } from './subjects/spelling/audio.js';
+import {
+  SPELLING_AUDIO_MODEL,
+  buildAudioAssetKey,
+  buildBufferedSpeechPrompt,
+  normaliseBufferedGeminiVoice,
+  speedIdForSlow,
+} from '../../shared/spelling-audio.js';
 
 const OPENAI_SPEECH_URL = 'https://api.openai.com/v1/audio/speech';
 const GEMINI_GENERATE_CONTENT_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -18,6 +25,7 @@ const DEFAULT_GEMINI_MODEL = 'gemini-3.1-flash-tts-preview';
 const DEFAULT_GEMINI_VOICE = 'Kore';
 const DEFAULT_GEMINI_TIMEOUT_MS = 12000;
 const DEFAULT_GEMINI_SAMPLE_RATE = 24000;
+const BUFFERED_AUDIO_EXTENSIONS = Object.freeze(['mp3', 'wav']);
 const REMOTE_TTS_PROVIDERS = new Set(['openai', 'gemini']);
 
 function cleanText(value) {
@@ -110,6 +118,10 @@ function normaliseRemoteTtsProvider(value) {
     code: 'tts_provider_unsupported',
     provider,
   });
+}
+
+function normaliseTtsCacheOnly(value) {
+  return value === true || cleanText(value).toLowerCase() === 'true';
 }
 
 function ttsInstructions(slow = false, wordOnly = false) {
@@ -213,9 +225,176 @@ function missingProviderConfig(provider) {
   });
 }
 
-function geminiPrompt({ transcript, slow = false, wordOnly = false }) {
+function spellingAudioBucket(env = {}) {
+  const bucket = env.SPELLING_AUDIO_BUCKET;
+  return bucket && typeof bucket.get === 'function' && typeof bucket.put === 'function'
+    ? bucket
+    : null;
+}
+
+function contentTypeForExtension(extension) {
+  return extension === 'mp3' ? 'audio/mpeg' : 'audio/wav';
+}
+
+function bufferedAudioMetadata(payload = {}) {
+  if (payload.wordOnly) return null;
+  const slug = cleanText(payload.slug).toLowerCase();
+  const sentenceIndex = Number(payload.sentenceIndex);
+  if (!slug || !Number.isInteger(sentenceIndex) || sentenceIndex < 0) return null;
+  const voice = normaliseBufferedGeminiVoice(payload.bufferedGeminiVoice);
+  const speed = speedIdForSlow(payload.slow);
+  return {
+    voice,
+    speed,
+    slug,
+    sentenceIndex,
+  };
+}
+
+function bufferedAudioKey(metadata, extension = 'mp3') {
+  return buildAudioAssetKey({
+    ...metadata,
+    extension,
+  });
+}
+
+function bufferedAudioHeaders({ metadata, cacheState, contentType, key }) {
+  return {
+    'content-type': contentType,
+    'cache-control': 'private, max-age=86400',
+    'x-ks2-tts-provider': 'gemini',
+    'x-ks2-tts-model': SPELLING_AUDIO_MODEL,
+    'x-ks2-tts-voice': metadata.voice,
+    'x-ks2-tts-cache': cacheState,
+    'x-ks2-tts-cache-key': key,
+  };
+}
+
+function objectContentType(object, extension) {
+  return cleanText(
+    object?.httpMetadata?.contentType
+      || object?.httpMetadata?.content_type
+      || object?.customMetadata?.contentType,
+  ) || contentTypeForExtension(extension);
+}
+
+async function readBufferedGeminiAudio(env, payload) {
+  const bucket = spellingAudioBucket(env);
+  const metadata = bufferedAudioMetadata(payload);
+  if (!bucket || !metadata) return null;
+
+  for (const extension of BUFFERED_AUDIO_EXTENSIONS) {
+    const key = bufferedAudioKey(metadata, extension);
+    const object = await bucket.get(key);
+    if (!object) continue;
+    return {
+      object,
+      metadata,
+      key,
+      extension,
+      contentType: objectContentType(object, extension),
+    };
+  }
+  return {
+    object: null,
+    metadata,
+    key: bufferedAudioKey(metadata, 'wav'),
+    extension: 'wav',
+    contentType: 'audio/wav',
+  };
+}
+
+function cachedGeminiAudioResponse(cacheHit) {
+  return new Response(cacheHit.object.body, {
+    status: 200,
+    headers: bufferedAudioHeaders({
+      metadata: cacheHit.metadata,
+      cacheState: 'hit',
+      contentType: cacheHit.contentType,
+      key: cacheHit.key,
+    }),
+  });
+}
+
+function cacheOnlyResponse(cacheState, cacheHit = null) {
+  const headers = new Headers({
+    'cache-control': 'no-store',
+    'x-ks2-tts-cache': cacheState,
+  });
+  if (cacheHit?.key) headers.set('x-ks2-tts-cache-key', cacheHit.key);
+  if (cacheHit?.metadata?.voice) headers.set('x-ks2-tts-voice', cacheHit.metadata.voice);
+  return new Response(null, { status: 204, headers });
+}
+
+async function storeBufferedGeminiAudio(env, payload, response) {
+  const cacheSlot = await readBufferedGeminiAudio(env, payload);
+  if (!cacheSlot?.metadata || !spellingAudioBucket(env)) {
+    const headers = new Headers(response.headers);
+    headers.set('x-ks2-tts-cache', 'unavailable');
+    return {
+      response: new Response(response.body, { status: response.status, headers }),
+      cacheState: 'unavailable',
+      key: '',
+    };
+  }
+  if (cacheSlot.object) {
+    return {
+      response: cachedGeminiAudioResponse(cacheSlot),
+      cacheState: 'hit',
+      key: cacheSlot.key,
+    };
+  }
+
+  const contentType = response.headers.get('content-type') || 'audio/wav';
+  const bytes = await response.arrayBuffer();
+  try {
+    await spellingAudioBucket(env).put(cacheSlot.key, bytes, {
+      httpMetadata: { contentType },
+      customMetadata: {
+        model: SPELLING_AUDIO_MODEL,
+        voice: cacheSlot.metadata.voice,
+        speed: cacheSlot.metadata.speed,
+        slug: cacheSlot.metadata.slug,
+        sentenceIndex: String(cacheSlot.metadata.sentenceIndex),
+        source: 'worker-gemini-tts',
+      },
+    });
+    return {
+      response: new Response(bytes, {
+        status: 200,
+        headers: bufferedAudioHeaders({
+          metadata: cacheSlot.metadata,
+          cacheState: 'stored',
+          contentType,
+          key: cacheSlot.key,
+        }),
+      }),
+      cacheState: 'stored',
+      key: cacheSlot.key,
+    };
+  } catch {
+    const headers = new Headers(response.headers);
+    headers.set('x-ks2-tts-cache', 'store_failed');
+    headers.set('x-ks2-tts-cache-key', cacheSlot.key);
+    return {
+      response: new Response(bytes, { status: 200, headers }),
+      cacheState: 'store_failed',
+      key: cacheSlot.key,
+    };
+  }
+}
+
+function geminiPrompt(payload = {}) {
+  const { transcript, slow = false, wordOnly = false } = payload;
   if (wordOnly) {
     return `Read exactly this KS2 spelling word once in natural British English. Do not add any extra words:\n\n${transcript}`;
+  }
+  if (payload.word && payload.sentence) {
+    return buildBufferedSpeechPrompt({
+      wordText: payload.word,
+      sentence: payload.sentence,
+      slow,
+    });
   }
   const pace = slow
     ? 'slightly slower than normal, with clear pauses between the word and sentence'
@@ -399,31 +578,53 @@ export async function handleTextToSpeechRequest({
   fetchFn = fetch,
 } = {}) {
   const body = await readJson(request);
+  const cacheOnly = normaliseTtsCacheOnly(body?.cacheOnly);
   const payload = {
     ...(await resolveSpellingAudioRequest({
       repository,
       accountId: session.accountId,
       body,
     })),
-    provider: normaliseRemoteTtsProvider(body?.provider),
+    provider: cacheOnly ? 'gemini' : normaliseRemoteTtsProvider(body?.provider),
+    bufferedGeminiVoice: normaliseBufferedGeminiVoice(body?.bufferedGeminiVoice || body?.cachedVoice),
+    cacheOnly,
   };
   const openAi = openAiConfig(env);
   const gemini = geminiConfig(env);
+  const geminiForPayload = {
+    ...gemini,
+    voice: payload.bufferedGeminiVoice || gemini.voice,
+  };
 
-  await protectTts(env, request, session, now);
-  await protectDemoTtsFallback({ env, request, session, payload, now });
+  if (payload.provider === 'gemini' && !payload.wordOnly) {
+    const cacheHit = await readBufferedGeminiAudio(env, payload);
+    if (cacheHit?.object) {
+      return cacheOnly ? cacheOnlyResponse('hit', cacheHit) : cachedGeminiAudioResponse(cacheHit);
+    }
+    if (cacheOnly && !cacheHit?.metadata) return cacheOnlyResponse('uncacheable');
+  }
 
   if (payload.provider === 'gemini') {
-    if (!gemini.apiKey) throw missingProviderConfig('gemini');
+    if (!geminiForPayload.apiKey) throw missingProviderConfig('gemini');
+    await protectTts(env, request, session, now);
+    await protectDemoTtsFallback({ env, request, session, payload, now });
     try {
-      const response = await requestGeminiSpeech({ config: gemini, payload, fetchFn });
-      return await recordDemoTtsFallback(env, session, now, response);
+      const response = await requestGeminiSpeech({ config: geminiForPayload, payload, fetchFn });
+      const stored = payload.wordOnly
+        ? { response, cacheState: 'uncacheable' }
+        : await storeBufferedGeminiAudio(env, payload, response);
+      const output = cacheOnly
+        ? cacheOnlyResponse(stored.cacheState, { key: stored.key, metadata: bufferedAudioMetadata(payload) })
+        : stored.response;
+      return await recordDemoTtsFallback(env, session, now, output);
     } catch (error) {
       throw backendUnavailableFromFailure(error, [error]);
     }
   }
 
   if (!openAi.apiKey) throw missingProviderConfig('openai');
+  await protectTts(env, request, session, now);
+  await protectDemoTtsFallback({ env, request, session, payload, now });
   try {
     const response = await requestOpenAiSpeech({ config: openAi, payload, fetchFn });
     return await recordDemoTtsFallback(env, session, now, response);

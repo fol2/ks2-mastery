@@ -2,6 +2,7 @@ import { sha256 } from '../../auth.js';
 import { BadRequestError } from '../../errors.js';
 import { resolveRuntimeSnapshot } from '../../../../src/subjects/spelling/content/model.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../../../../src/subjects/spelling/data/content-data.js';
+import { resolveSentenceIndex } from '../../../../shared/spelling-audio.js';
 
 function cleanText(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
@@ -19,6 +20,7 @@ function currentPromptParts({ learnerId, state } = {}) {
     slug: word.slug || card.slug || '',
     word: cleanText(word.word),
     sentence,
+    sentenceIndex: resolveSentenceIndex(word, sentence),
   };
 }
 
@@ -100,6 +102,7 @@ async function wordBankPromptParts({ repository, accountId, learnerId, slug } = 
     slug: word.slug,
     word: cleanText(word.word),
     sentence,
+    sentenceIndex: resolveSentenceIndex(word, sentence),
   };
 }
 
@@ -141,6 +144,9 @@ export async function resolveSpellingAudioRequest({
         sessionId: null,
         scope: 'word-bank',
         slug: wordBankParts.slug,
+        word: wordBankParts.word,
+        sentence: wordBankParts.sentence,
+        sentenceIndex: wordBankParts.sentenceIndex,
       };
     }
     throw new BadRequestError('The spelling prompt is no longer active.', {
@@ -168,6 +174,9 @@ export async function resolveSpellingAudioRequest({
         sessionId: null,
         scope: 'word-bank',
         slug: wordBankParts.slug,
+        word: wordBankParts.word,
+        sentence: wordBankParts.sentence,
+        sentenceIndex: wordBankParts.sentenceIndex,
       };
     }
     throw new BadRequestError('The spelling prompt token is no longer valid.', {
@@ -187,5 +196,10 @@ export async function resolveSpellingAudioRequest({
     promptToken: suppliedToken,
     learnerId,
     sessionId: parts.sessionId,
+    scope: 'session',
+    slug: parts.slug,
+    word: parts.word,
+    sentence: parts.sentence,
+    sentenceIndex: parts.sentenceIndex,
   };
 }

@@ -1,7 +1,11 @@
 import React from 'react';
 import { TopNav } from '../shell/TopNav.jsx';
 import { PersistenceBanner } from '../shell/PersistenceBanner.jsx';
-import { normaliseTtsProvider } from '../../subjects/spelling/tts-providers.js';
+import {
+  BUFFERED_GEMINI_VOICE_OPTIONS,
+  normaliseBufferedGeminiVoice,
+  normaliseTtsProvider,
+} from '../../subjects/spelling/tts-providers.js';
 
 const TTS_PROVIDER_OPTIONS = [
   { value: 'openai', label: 'OpenAI' },
@@ -180,6 +184,7 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
 
   const accent = safeColour(learner.avatarColor);
   const ttsProvider = normaliseTtsProvider(chrome.ttsProvider);
+  const bufferedGeminiVoice = normaliseBufferedGeminiVoice(chrome.bufferedGeminiVoice);
   const submit = (event) => {
     event.preventDefault();
     actions.dispatch('learner-save-form', { formData: new FormData(event.currentTarget) });
@@ -189,6 +194,7 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
     const formData = form ? new FormData(form) : null;
     actions.dispatch('tts-test', {
       provider: normaliseTtsProvider(formData?.get('ttsProvider'), ttsProvider),
+      bufferedGeminiVoice: normaliseBufferedGeminiVoice(formData?.get('bufferedGeminiVoice'), bufferedGeminiVoice),
     });
   };
 
@@ -307,6 +313,14 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
                   </button>
                 </div>
               </div>
+              <label className="profile-form-field profile-form-field-wide">
+                <span>Pre-cached Gemini voice</span>
+                <select className="select" name="bufferedGeminiVoice" defaultValue={bufferedGeminiVoice} disabled={writeLocked}>
+                  {BUFFERED_GEMINI_VOICE_OPTIONS.map((option) => (
+                    <option value={option.id} key={option.id}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
             </div>
             <div className="profile-form-footer">
               <div className="profile-form-danger-actions">

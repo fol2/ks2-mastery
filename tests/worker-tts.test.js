@@ -148,6 +148,41 @@ function geminiAudioResponse(bytes = [1, 0, 2, 0]) {
   });
 }
 
+function createMemoryR2Bucket({ hit = null } = {}) {
+  const objects = new Map();
+  const gets = [];
+  const puts = [];
+  if (hit) {
+    objects.set('*', {
+      bytes: Uint8Array.from(hit.bytes || [9, 8, 7]),
+      contentType: hit.contentType || 'audio/mpeg',
+    });
+  }
+  return {
+    gets,
+    puts,
+    async get(key) {
+      gets.push(key);
+      const item = objects.get(key) || objects.get('*');
+      if (!item) return null;
+      return {
+        body: item.bytes,
+        httpMetadata: { contentType: item.contentType },
+        customMetadata: item.customMetadata || {},
+      };
+    },
+    async put(key, value, options = {}) {
+      const bytes = new Uint8Array(await new Response(value).arrayBuffer());
+      puts.push({ key, bytes, options });
+      objects.set(key, {
+        bytes,
+        contentType: options.httpMetadata?.contentType || 'application/octet-stream',
+        customMetadata: options.customMetadata || {},
+      });
+    },
+  };
+}
+
 test('TTS route requires an authenticated account session', async () => {
   const server = createWorkerRepositoryServer({
     env: { OPENAI_API_KEY: 'test-openai-key' },
@@ -246,8 +281,138 @@ test('TTS route proxies dictation audio through selected Gemini provider', async
     assert.equal(calls[0].headers['x-goog-api-key'], 'test-gemini-key');
     assert.equal(calls[0].body.generationConfig.responseModalities[0], 'AUDIO');
     assert.equal(calls[0].body.generationConfig.speechConfig.languageCode, 'en-GB');
-    assert.equal(calls[0].body.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName, 'Kore');
-    assert.match(calls[0].body.contents[0].parts[0].text, /The word is early/);
+    assert.equal(calls[0].body.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName, 'Iapetus');
+    assert.match(calls[0].body.contents[0].parts[0].text, /Generate speech only/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
+test('TTS route serves pre-cached Gemini audio before provider generation', async () => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    throw new Error('Provider should not be called for cached audio.');
+  };
+  const bucket = createMemoryR2Bucket({
+    hit: {
+      bytes: [9, 8, 7],
+      contentType: 'audio/mpeg',
+    },
+  });
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    const prompt = await startSpellingPrompt(server);
+    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({
+      learnerId: prompt.learnerId,
+      promptToken: prompt.promptToken,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Sulafat',
+    }));
+    const bytes = new Uint8Array(await response.arrayBuffer());
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'audio/mpeg');
+    assert.equal(response.headers.get('x-ks2-tts-cache'), 'hit');
+    assert.equal(response.headers.get('x-ks2-tts-voice'), 'Sulafat');
+    assert.deepEqual([...bytes], [9, 8, 7]);
+    assert.equal(providerCalls, 0);
+    assert.equal(bucket.gets.length, 1);
+    assert.match(bucket.gets[0], /\/Sulafat\/standard\/early\//);
+    assert.equal(bucket.puts.length, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
+test('TTS route stores generated Gemini audio under the buffered batch key', async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, init = {}) => {
+    calls.push({
+      url,
+      headers: init.headers,
+      body: JSON.parse(init.body),
+    });
+    return geminiAudioResponse();
+  };
+  const bucket = createMemoryR2Bucket();
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      GEMINI_API_KEY: 'test-gemini-key',
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    const prompt = await startSpellingPrompt(server);
+    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({
+      learnerId: prompt.learnerId,
+      promptToken: prompt.promptToken,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Sulafat',
+      slow: true,
+    }));
+    const bytes = new Uint8Array(await response.arrayBuffer());
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'audio/wav');
+    assert.equal(response.headers.get('x-ks2-tts-cache'), 'stored');
+    assert.equal(response.headers.get('x-ks2-tts-voice'), 'Sulafat');
+    assert.equal(String.fromCharCode(...bytes.slice(0, 4)), 'RIFF');
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].headers['x-goog-api-key'], 'test-gemini-key');
+    assert.equal(calls[0].body.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName, 'Sulafat');
+    assert.match(calls[0].body.contents[0].parts[0].text, /Generate speech only/);
+    assert.equal(bucket.puts.length, 1);
+    assert.match(bucket.puts[0].key, /\/Sulafat\/slow\/early\/\d+\.wav$/);
+    assert.equal(bucket.puts[0].options.httpMetadata.contentType, 'audio/wav');
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
+test('TTS cache-only requests warm Gemini audio without returning playback bytes', async () => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    return geminiAudioResponse();
+  };
+  const bucket = createMemoryR2Bucket();
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      GEMINI_API_KEY: 'test-gemini-key',
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    const prompt = await startSpellingPrompt(server);
+    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({
+      learnerId: prompt.learnerId,
+      promptToken: prompt.promptToken,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Iapetus',
+      cacheOnly: true,
+    }));
+    const bytes = new Uint8Array(await response.arrayBuffer());
+
+    assert.equal(response.status, 204);
+    assert.equal(response.headers.get('x-ks2-tts-cache'), 'stored');
+    assert.equal(bytes.length, 0);
+    assert.equal(providerCalls, 1);
+    assert.equal(bucket.puts.length, 1);
+    assert.match(bucket.puts[0].key, /\/Iapetus\/standard\/early\/\d+\.wav$/);
   } finally {
     globalThis.fetch = originalFetch;
     server.close();
