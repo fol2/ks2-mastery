@@ -483,7 +483,7 @@ sequenceDiagram
 **Verification:**
 - Grammar is registered in Worker subject runtime and can complete a command lifecycle without client-owned scoring.
 
-- [ ] U4. **Replace Grammar Placeholder With Stage 1 Clause Conservatory Surface**
+- [x] U4. **Replace Grammar Placeholder With Stage 1 Clause Conservatory Surface**
 
 **Goal:** Make Grammar a real React subject route that renders Worker read models, shows the full future map, and supports Stage 1 practice without importing production engine code.
 
@@ -531,7 +531,7 @@ sequenceDiagram
 **Verification:**
 - Grammar is visible as a real subject and passes subject expansion conformance without weakening browser/runtime containment.
 
-- [ ] U5. **Extend Monster System For Grammar Rewards**
+- [x] U5. **Extend Monster System For Grammar Rewards**
 
 **Goal:** Add Grammar monster metadata, domain routing, reward derivation, and celebration events for all seven Grammar creatures.
 

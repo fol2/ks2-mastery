@@ -1,6 +1,7 @@
 import { NotFoundError } from '../../errors.js';
 import { combineCommandEvents } from '../../projections/events.js';
 import { buildCommandProjectionReadModel } from '../../projections/read-models.js';
+import { projectGrammarRewards } from '../../projections/rewards.js';
 import { createServerGrammarEngine } from './engine.js';
 import { buildGrammarReadModel } from './read-models.js';
 
@@ -13,7 +14,7 @@ const GRAMMAR_COMMANDS = Object.freeze([
   'reset-learner',
 ]);
 
-export function createGrammarCommandHandlers({ now } = {}) {
+export function createGrammarCommandHandlers({ now, random } = {}) {
   async function handleGrammarCommand(command, context) {
     if (!GRAMMAR_COMMANDS.includes(command.command)) {
       throw new NotFoundError('Grammar command is not available.', {
@@ -44,13 +45,19 @@ export function createGrammarCommandHandlers({ now } = {}) {
       context.session.accountId,
       command.learnerId,
     );
+    const projectedRewards = projectGrammarRewards({
+      learnerId: command.learnerId,
+      domainEvents: result.events,
+      gameState: projectionState.gameState,
+      random,
+    });
     const projectedEvents = combineCommandEvents({
       domainEvents: result.events,
-      reactionEvents: [],
+      reactionEvents: projectedRewards.rewardEvents,
       existingEvents: projectionState.events,
     });
     const projections = buildCommandProjectionReadModel({
-      gameState: projectionState.gameState,
+      gameState: projectedRewards.gameState,
       domainEvents: projectedEvents.domainEvents,
       reactionEvents: projectedEvents.reactionEvents,
       toastEvents: projectedEvents.toastEvents,
@@ -74,6 +81,7 @@ export function createGrammarCommandHandlers({ now } = {}) {
         state: result.state,
         data: result.data,
         practiceSession: result.practiceSession,
+        gameState: projectedRewards.changedGameState,
         events: projectedEvents.events,
       },
     };

@@ -1,7 +1,8 @@
 import React from 'react';
+import { progressForGrammarMonster } from '../../../platform/game/monster-system.js';
+import { monsterAsset, monsterAssetSrcSet } from '../../../platform/game/monsters.js';
 import {
   GRAMMAR_MONSTER_ROUTES,
-  grammarMonsterAsset,
   groupedGrammarConcepts,
 } from '../metadata.js';
 
@@ -20,11 +21,12 @@ function securedCountForRoute(route, conceptsById) {
   ), 0);
 }
 
-export function GrammarAnalyticsScene({ grammar }) {
+export function GrammarAnalyticsScene({ grammar, rewardState: providedRewardState = null }) {
   const concepts = grammar.analytics?.concepts || [];
   const counts = grammar.stats?.concepts || {};
   const conceptsById = new Map(concepts.map((concept) => [concept.id, concept]));
   const grouped = groupedGrammarConcepts(concepts);
+  const rewardState = providedRewardState || grammar.projections?.rewards?.state || {};
   const recentAttempts = Array.isArray(grammar.analytics?.recentAttempts)
     ? grammar.analytics.recentAttempts.slice(-5).reverse()
     : [];
@@ -68,13 +70,22 @@ export function GrammarAnalyticsScene({ grammar }) {
           <div className="grammar-monster-grid">
             {GRAMMAR_MONSTER_ROUTES.map((route) => {
               const secured = securedCountForRoute(route, conceptsById);
+              const progress = progressForGrammarMonster(rewardState, route.id, {
+                conceptTotal: route.conceptIds.length,
+              });
               return (
                 <article className="grammar-monster-route" key={route.id}>
-                  <img src={grammarMonsterAsset(route.id)} alt="" loading="lazy" />
+                  <img
+                    src={monsterAsset(route.id, progress.stage, 320, progress.branch)}
+                    srcSet={monsterAssetSrcSet(route.id, progress.stage, progress.branch)}
+                    sizes="72px"
+                    alt=""
+                    loading="lazy"
+                  />
                   <div>
                     <strong>{route.name}</strong>
                     <span>{route.route}</span>
-                    <small>{secured}/{route.conceptIds.length} secured</small>
+                    <small>{progress.mastered}/{progress.conceptTotal} Codex · {secured}/{route.conceptIds.length} secured</small>
                   </div>
                 </article>
               );

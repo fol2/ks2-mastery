@@ -10,6 +10,7 @@ import { readGrammarLegacyOracle } from './helpers/grammar-legacy-oracle.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { grammarModule } from '../src/subjects/grammar/module.js';
 import { normaliseGrammarReadModel } from '../src/subjects/grammar/metadata.js';
+import { grammarMasteryKey } from '../src/platform/game/monster-system.js';
 
 function grammarOracleSample(templateId = 'question_mark_select') {
   return readGrammarLegacyOracle().templates.find((template) => template.id === templateId);
@@ -109,6 +110,37 @@ test('Grammar setup controls are disabled while a command is pending', () => {
   assert.match(html, /<select class="input" disabled=""[^>]*><option value="" selected="">Smart mix<\/option>/);
   assert.match(html, /<select class="input" disabled=""[^>]*><option value="3">3<\/option><option value="5" selected="">5<\/option>/);
   assert.match(html, /<button class="btn primary xl" type="button" disabled="">Starting\.\.\.<\/button>/);
+});
+
+test('Grammar monster progress rehydrates from persisted Codex state after reload normalisation', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const key = grammarMasteryKey('sentence_functions');
+
+  harness.repositories.gameState.write(learnerId, 'monster-codex', {
+    bracehart: {
+      branch: 'b1',
+      caught: true,
+      conceptTotal: 3,
+      mastered: [key],
+    },
+    concordium: {
+      branch: 'b1',
+      caught: true,
+      conceptTotal: 18,
+      mastered: [key],
+    },
+  });
+  harness.store.updateSubjectUi('grammar', normaliseGrammarReadModel({}, learnerId));
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+
+  const html = harness.render();
+
+  assert.match(html, /Bracehart/);
+  assert.match(html, /1\/3 Codex/);
+  assert.match(html, /Concordium/);
+  assert.match(html, /1\/18 Codex/);
 });
 
 test('Grammar command responses are pinned to the learner that sent them', async () => {
