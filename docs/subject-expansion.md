@@ -36,6 +36,8 @@ It exists only to prove the platform can carry a second deterministic thin slice
 
 The browser shell has since moved to a single React root. Subject presentation flows through `SubjectRoute` and React practice components.
 
+The full-lockdown baseline adds one more production rule: a new public subject must not ship its production engine as a browser runtime. The React component may render controls, local form state, and returned read models, but session creation, marking, scheduling, progress mutation, and reward projection should be owned by Worker subject commands before the subject is treated as production-ready.
+
 ## Thin-slice reference contract
 
 The platform already enforces the subject module contract at startup.
@@ -79,6 +81,8 @@ Transition-returning methods must stay explicit and serialisable:
 That is not a giant universal subject abstraction.
 It is the intentionally narrow contract for the first expansion slice.
 
+For production, this local service shape is a design and test harness, not the public authority boundary. The scalable path is to mirror the shape behind `POST /api/subjects/:subjectId/command` and subject-specific Worker read models, so future Arithmetic, Reasoning, Grammar, Punctuation and Reading slices can reuse auth, demo, idempotency, stale-write, degraded-mode, and bundle-audit guarantees.
+
 ## Repository and event rules for a new subject
 
 A new subject must reuse the existing durable generic platform boundaries.
@@ -101,6 +105,7 @@ Do not introduce:
 - subject-specific side databases
 - analytics-only shadow stores
 - direct subject writes to adult-facing dashboard state
+- production browser engines that can score, schedule, or mutate progress without the Worker command boundary
 
 ### Event publication
 
@@ -138,6 +143,7 @@ Use this checklist before merging a new real subject.
 - session selection / generation is deterministic under fixed inputs
 - transitions return `{ ok, changed, state, events, audio }`
 - no pedagogy or scheduling is hidden inside the shell renderer
+- production deployment has a Worker command/read-model boundary for the same behaviours
 
 ### 3. Repository wiring
 

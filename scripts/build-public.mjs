@@ -9,7 +9,6 @@ const entries = [
   '_headers',
   'index.html',
   'styles',
-  'src',
   'assets',
 ];
 
@@ -52,6 +51,13 @@ for (const entry of entries) {
     filter: filterPublicFiles,
   });
 }
+
+await mkdir(path.join(tmpDir, 'src', 'bundles'), { recursive: true });
+await cp(
+  path.join(rootDir, 'src', 'bundles', 'app.bundle.js'),
+  path.join(tmpDir, 'src', 'bundles', 'app.bundle.js'),
+  { force: true },
+);
 
 await rm(outputDir, { recursive: true, force: true });
 await cp(tmpDir, outputDir, { recursive: true, force: true });

@@ -112,7 +112,7 @@ function YearPicker({ prefs, actions, disabled = false }) {
   );
 }
 
-function ToggleChip({ pref, checked, label, actions }) {
+function ToggleChip({ pref, checked, label, actions, runtimeReadOnly = false }) {
   return (
     <button
       type="button"
@@ -120,6 +120,7 @@ function ToggleChip({ pref, checked, label, actions }) {
       aria-pressed={checked ? 'true' : 'false'}
       data-action="spelling-toggle-pref"
       data-pref={pref}
+      disabled={runtimeReadOnly}
       onClick={(event) => renderAction(actions, event, 'spelling-toggle-pref', { pref })}
     >
       <span className="box" aria-hidden="true">{checked ? <CheckIcon /> : null}</span>
@@ -177,6 +178,7 @@ export function SpellingSetupScene({
   actions,
   setupHeroTone = '',
   previousHeroBg = '',
+  runtimeReadOnly = false,
 }) {
   const statsFilter = prefs.mode === 'test' ? 'core' : prefs.yearFilter;
   const stats = service.getStats(learner.id, statsFilter);
@@ -226,6 +228,7 @@ export function SpellingSetupScene({
                   <ModeCard
                     mode={mode}
                     selected={prefs.mode === mode.id}
+                    disabled={runtimeReadOnly}
                     actions={actions}
                     textTone={heroContrast.contrast.cards[index] || heroContrast.contrast.shell}
                     key={mode.id}
@@ -236,18 +239,18 @@ export function SpellingSetupScene({
           <div className="setup-control-stack">
             <div className={tweakClass} {...tweakAria}>
               <span className="tool-label">Round length</span>
-              <LengthPicker prefs={prefs} actions={actions} disabled={hideTweaks} />
+              <LengthPicker prefs={prefs} actions={actions} disabled={hideTweaks || runtimeReadOnly} />
             </div>
             <div className={tweakClass} {...tweakAria}>
               <span className="tool-label">Pool</span>
-              <YearPicker prefs={prefs} actions={actions} disabled={hideTweaks} />
+              <YearPicker prefs={prefs} actions={actions} disabled={hideTweaks || runtimeReadOnly} />
             </div>
             <div className="tweak-row">
               <span className="tool-label">Options</span>
-              <ToggleChip pref="showCloze" checked={Boolean(prefs.showCloze)} label="Show sentence" actions={actions} />
-              <ToggleChip pref="autoSpeak" checked={Boolean(prefs.autoSpeak)} label="Auto-play audio" actions={actions} />
+              <ToggleChip pref="showCloze" checked={Boolean(prefs.showCloze)} label="Show sentence" actions={actions} runtimeReadOnly={runtimeReadOnly} />
+              <ToggleChip pref="autoSpeak" checked={Boolean(prefs.autoSpeak)} label="Auto-play audio" actions={actions} runtimeReadOnly={runtimeReadOnly} />
               {showExtraFamilyOption ? (
-                <ToggleChip pref="extraWordFamilies" checked={Boolean(prefs.extraWordFamilies)} label="Word-family variants" actions={actions} />
+                <ToggleChip pref="extraWordFamilies" checked={Boolean(prefs.extraWordFamilies)} label="Word-family variants" actions={actions} runtimeReadOnly={runtimeReadOnly} />
               ) : <span className="toggle-chip option-placeholder" aria-hidden="true" />}
             </div>
           </div>
@@ -257,6 +260,7 @@ export function SpellingSetupScene({
               className="btn primary xl"
               style={{ '--btn-accent': accent }}
               data-action="spelling-start"
+              disabled={runtimeReadOnly}
               onClick={(event) => renderAction(actions, event, 'spelling-start')}
             >
               {begin} <ArrowRightIcon />

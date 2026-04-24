@@ -52,7 +52,7 @@ Subject presentation metadata such as accent colours belongs on the subject modu
 
 Every real subject gets its own deterministic service.
 
-For Spelling, that service wraps the preserved legacy engine. In the hardened reference slice, the service also owns the serialisable subject state contract, session restoration, and domain-event emission. Reward persistence happens in a separate adapter after the service emits a secure-word event.
+For Spelling, the local/test service wraps the preserved legacy engine. In production, the Worker owns the Spelling runtime behind the subject command boundary: session creation, word selection, scoring, correction state, progress mutation, domain-event emission, and reward projection. The browser keeps a serialisable UI contract and renders the read model returned by the Worker.
 
 For future subjects, the service should own:
 
@@ -88,12 +88,11 @@ That keeps the product vision honest: game and learning compound each other with
 
 ### 5. Deployment boundary
 
-The browser version uses a React SPA with local persistence and deterministic services for speed and clarity.
+Production uses a React SPA with Worker-backed auth, ephemeral demo sessions, API repositories, subject commands, read models, and protected audio routes.
 
-The Cloudflare version swaps in API-backed repositories without changing subject components.
+Local repositories and deterministic services remain useful for Node tests, fixtures, and characterisation harnesses, but they are not a production browser runtime. The production client bundle must not import browser-local repositories, Spelling engine modules, content datasets, hub read-model builders, or local runtime switches.
 
-That means the real boundary is not “browser versus Worker”.
-It is “local repository versus remote repository”.
+The real production boundary is “React UI intent and display” versus “Worker-owned runtime authority”.
 
 ### 6. Operating read models
 

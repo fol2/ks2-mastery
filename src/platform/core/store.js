@@ -1,12 +1,11 @@
 import { uid } from './utils.js';
 import { buildSubjectRegistry } from './subject-contract.js';
+import { validatePlatformRepositories } from './repositories/contract.js';
+import { normaliseLearnersSnapshot } from './repositories/helpers.js';
 import {
-  createLocalPlatformRepositories,
   defaultPersistenceSnapshot,
-  normaliseLearnersSnapshot,
   normalisePersistenceSnapshot,
-  validatePlatformRepositories,
-} from './repositories/index.js';
+} from './repositories/persistence.js';
 import {
   emptyMonsterCelebrations,
   normaliseMonsterCelebrationEvents,
@@ -267,9 +266,9 @@ function subjectUiForLearner(registry, repositories, learnerId) {
   return buildSubjectUiTree(registry, persistedUi);
 }
 
-export function createStore(subjects, { repositories } = {}) {
+export function createStore(subjects, { repositories, cacheSubjectUiWrites = false } = {}) {
   const registry = buildSubjectRegistry(subjects);
-  const resolvedRepositories = validatePlatformRepositories(repositories || createLocalPlatformRepositories());
+  const resolvedRepositories = validatePlatformRepositories(repositories);
   let state = sanitiseState(stateFromRepositories(registry, resolvedRepositories), registry);
   const listeners = new Set();
 
@@ -312,7 +311,10 @@ export function createStore(subjects, { repositories } = {}) {
     const nextTree = buildSubjectUiTree(registry);
     if (learnerId) {
       for (const subject of registry) {
-        resolvedRepositories.subjectStates.writeUi(learnerId, subject.id, nextTree[subject.id]);
+        const writer = cacheSubjectUiWrites && resolvedRepositories.subjectStates.cacheUi
+          ? resolvedRepositories.subjectStates.cacheUi
+          : resolvedRepositories.subjectStates.writeUi;
+        writer.call(resolvedRepositories.subjectStates, learnerId, subject.id, nextTree[subject.id]);
       }
     }
     setState((current) => ({
@@ -456,7 +458,10 @@ export function createStore(subjects, { repositories } = {}) {
           : { ...previous, ...updater };
 
         if (learnerId) {
-          resolvedRepositories.subjectStates.writeUi(learnerId, subjectId, nextEntry);
+          const writer = cacheSubjectUiWrites && resolvedRepositories.subjectStates.cacheUi
+            ? resolvedRepositories.subjectStates.cacheUi
+            : resolvedRepositories.subjectStates.writeUi;
+          writer.call(resolvedRepositories.subjectStates, learnerId, subjectId, nextEntry);
         }
 
         return {

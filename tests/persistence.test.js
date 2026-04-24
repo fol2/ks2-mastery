@@ -5,6 +5,7 @@ import {
   createApiPlatformRepositories,
   createStaticHeaderRepositoryAuthSession,
 } from '../src/platform/core/repositories/index.js';
+import { createSubjectCommandClient } from '../src/platform/runtime/subject-command-client.js';
 import { createAppHarness } from './helpers/app-harness.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createMockRepositoryServer } from './helpers/mock-api-server.js';
@@ -300,4 +301,83 @@ test('api cache is scoped by auth session so degraded fallback does not leak bet
   });
 
   await assert.rejects(() => repoB.hydrate(), /bootstrap unavailable/i);
+});
+
+test('subject command responses update the api cache without queuing broad runtime writes', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({
+    learners: learnerSnapshot(),
+  });
+  const commandBodies = [];
+  const fetch = async (input, init = {}) => {
+    const url = new URL(typeof input === 'string' ? input : input.url, 'https://repo.test');
+    if (url.pathname === '/api/subjects/spelling/command' && String(init.method || 'GET').toUpperCase() === 'POST') {
+      const body = JSON.parse(init.body);
+      commandBodies.push(body);
+      return new Response(JSON.stringify({
+        ok: true,
+        subjectReadModel: {
+          subjectId: 'spelling',
+          learnerId: body.learnerId,
+          version: 1,
+          phase: 'session',
+          session: {
+            id: 'server-session',
+            type: 'learning',
+            mode: 'smart',
+            phase: 'question',
+            progress: { done: 0, total: 1 },
+            currentCard: { prompt: { cloze: 'A ________ prompt.' } },
+            serverAuthority: 'worker',
+          },
+          prefs: { mode: 'smart', yearFilter: 'core', roundLength: '1', showCloze: true, autoSpeak: true },
+          stats: {},
+          analytics: { pools: {}, wordGroups: [] },
+        },
+        projections: {
+          rewards: {
+            systemId: 'monster-codex',
+            state: { caught: ['spark'] },
+            events: [],
+            toastEvents: [],
+          },
+        },
+        events: [{ id: 'evt-1', type: 'spelling.session.started', learnerId: body.learnerId }],
+        mutation: {
+          appliedRevision: 1,
+        },
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    return server.fetch(input, init);
+  };
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch,
+    storage,
+  });
+  await repositories.hydrate();
+
+  const commands = createSubjectCommandClient({
+    baseUrl: 'https://repo.test',
+    fetch,
+    getLearnerRevision: (learnerId) => repositories.runtime.readLearnerRevision(learnerId),
+    onCommandApplied: ({ learnerId, subjectId, response }) => {
+      repositories.runtime.applySubjectCommandResult({ learnerId, subjectId, response });
+    },
+  });
+
+  await commands.send({
+    subjectId: 'spelling',
+    learnerId: 'learner-a',
+    command: 'start-session',
+    payload: { mode: 'smart', length: 1 },
+    requestId: 'cmd-client-1',
+  });
+
+  assert.equal(commandBodies[0].expectedLearnerRevision, 0);
+  assert.equal(repositories.runtime.readLearnerRevision('learner-a'), 1);
+  assert.equal(repositories.subjectStates.read('learner-a', 'spelling').ui.phase, 'session');
+  assert.equal(repositories.gameState.read('learner-a', 'monster-codex').caught[0], 'spark');
+  assert.equal(repositories.eventLog.list('learner-a').length, 1);
+  assert.equal(server.requests.some((request) => request.path === '/api/child-subject-state'), false);
 });

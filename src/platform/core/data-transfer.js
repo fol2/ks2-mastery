@@ -12,7 +12,7 @@ import {
   parseSubjectStateKey,
   REPO_SCHEMA_VERSION,
   subjectStateKey,
-} from './repositories/index.js';
+} from './repositories/helpers.js';
 
 export const PLATFORM_EXPORT_VERSION = 1;
 export const PLATFORM_EXPORT_KIND_APP = 'ks2-platform-data';

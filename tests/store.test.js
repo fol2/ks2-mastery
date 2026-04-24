@@ -9,8 +9,9 @@ import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
 
 test('shared store creates and selects a new learner', () => {
-  installMemoryStorage();
-  const store = createStore(SUBJECTS);
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const store = createStore(SUBJECTS, { repositories });
   const initial = store.getState();
   const initialCount = initial.learners.allIds.length;
 
@@ -24,8 +25,9 @@ test('shared store creates and selects a new learner', () => {
 });
 
 test('shared store can switch subject tabs without losing route context', () => {
-  installMemoryStorage();
-  const store = createStore(SUBJECTS);
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const store = createStore(SUBJECTS, { repositories });
 
   store.openSubject('spelling');
   store.setTab('analytics');
@@ -37,8 +39,9 @@ test('shared store can switch subject tabs without losing route context', () => 
 });
 
 test('shared store can route to adult operating surfaces', () => {
-  installMemoryStorage();
-  const store = createStore(SUBJECTS);
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const store = createStore(SUBJECTS, { repositories });
 
   store.openCodex();
   assert.equal(store.getState().route.screen, 'codex');

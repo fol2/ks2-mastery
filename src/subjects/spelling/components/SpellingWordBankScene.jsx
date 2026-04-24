@@ -120,7 +120,7 @@ function WordPill({ word, actions }) {
   );
 }
 
-function WordGroup({ group, words, query, actions }) {
+function WordGroup({ group, words, query, actions, runtimeReadOnly = false }) {
   const secureCount = words.filter((word) => Math.max(0, Number(word.progress?.stage) || 0) >= 4).length;
   const summaryText = words.length
     ? `${secureCount} secure out of ${words.length} visible spellings`
@@ -134,14 +134,14 @@ function WordGroup({ group, words, query, actions }) {
       </div>
       <div className="wb-word-bank">
         {words.length
-          ? words.map((word) => <WordPill word={word} actions={actions} key={word.slug} />)
+          ? words.map((word) => <WordPill word={word} actions={actions} runtimeReadOnly={runtimeReadOnly} key={word.slug} />)
           : <div className="wb-empty">{emptyText}</div>}
       </div>
     </section>
   );
 }
 
-function WordBankCard({ learner, analytics, appState, actions }) {
+function WordBankCard({ learner, analytics, appState, actions, runtimeReadOnly = false }) {
   const persistedSearchQuery = appState?.transientUi?.spellingAnalyticsWordSearch || '';
   const [draftSearch, setDraftSearch] = React.useState(persistedSearchQuery);
   const statusFilter = appState?.transientUi?.spellingAnalyticsStatusFilter || 'all';
@@ -159,6 +159,7 @@ function WordBankCard({ learner, analytics, appState, actions }) {
   const activeFilter = WORD_BANK_FILTER_IDS.has(statusFilter) ? statusFilter : 'all';
   const activeYearFilter = WORD_BANK_YEAR_FILTER_IDS.has(yearFilter) ? yearFilter : 'all';
   const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
+  const wordBankMeta = analytics.wordBank || {};
   const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
   const categoryWords = allWords.filter((word) => wordBankYearFilterMatches(activeYearFilter, word));
   const visibleGroups = groups
@@ -194,9 +195,13 @@ function WordBankCard({ learner, analytics, appState, actions }) {
   const ledeSearch = query
     ? ` Showing ${visibleWords.length} match${visibleWords.length === 1 ? '' : 'es'} for "${searchQuery}".`
     : '';
-  const footText = activeYearFilter === 'all'
-    ? `Showing ${visibleWords.length} of ${totalWords} tracked spellings.`
-    : `Showing ${visibleWords.length} of ${categoryTotal} ${categoryLabel} spellings.`;
+  const loadedRows = Number(wordBankMeta.returnedRows) || totalWords;
+  const filteredRows = Number(wordBankMeta.filteredRows) || categoryTotal || totalWords;
+  const footText = wordBankMeta.hasNextPage
+    ? `Showing ${visibleWords.length} visible spellings from ${loadedRows} loaded rows.`
+    : activeYearFilter === 'all'
+      ? `Showing ${visibleWords.length} of ${totalWords} tracked spellings.`
+      : `Showing ${visibleWords.length} of ${categoryTotal} ${categoryLabel} spellings.`;
   const learnerName = learner?.name ? `${learner.name}’s` : 'Learner';
 
   return (
@@ -236,11 +241,24 @@ function WordBankCard({ learner, analytics, appState, actions }) {
 
         <div className="wb-word-groups">
           {visibleGroups.length
-            ? visibleGroups.map((entry) => <WordGroup {...entry} query={query} actions={actions} key={entry.group.key} />)
+            ? visibleGroups.map((entry) => <WordGroup {...entry} query={query} actions={actions} runtimeReadOnly={runtimeReadOnly} key={entry.group.key} />)
             : <div className="wb-empty">{query ? 'No words match your search and filters.' : 'No words match your filters.'}</div>}
         </div>
 
-        <div className="wb-foot small muted">{footText}</div>
+        <div className="wb-foot small muted">
+          {footText}
+          {wordBankMeta.hasNextPage ? (
+            <button
+              type="button"
+              className="btn ghost sm"
+              data-action="spelling-word-bank-load-more"
+              onClick={(event) => renderAction(actions, event, 'spelling-word-bank-load-more')}
+            >
+              Load more
+            </button>
+          ) : null}
+          {wordBankMeta.hasNextPage ? <span> {filteredRows} authorised matches available.</span> : null}
+        </div>
       </div>
     </section>
   );
@@ -288,12 +306,23 @@ function WordBankAggregates({ analytics }) {
   );
 }
 
-export function SpellingWordBankScene({ appState, learner, analytics, accent, actions, previousHeroBg = '' }) {
+export function SpellingWordBankScene({
+  appState,
+  learner,
+  analytics,
+  accent,
+  actions,
+  previousHeroBg = '',
+  runtimeReadOnly = false,
+}) {
   const detailSlug = appState?.transientUi?.spellingWordDetailSlug || '';
   const detailMode = appState?.transientUi?.spellingWordDetailMode || 'explain';
   const drillTyped = appState?.transientUi?.spellingWordBankDrillTyped || '';
   const drillResult = appState?.transientUi?.spellingWordBankDrillResult || null;
-  const detailWord = findWordBankEntry(analytics, detailSlug);
+  const transientDetail = appState?.transientUi?.spellingWordDetail || null;
+  const detailWord = transientDetail?.slug === detailSlug
+    ? transientDetail
+    : findWordBankEntry(analytics, detailSlug);
   const heroBg = heroBgForLearner(learner.id);
 
   return (
@@ -312,7 +341,7 @@ export function SpellingWordBankScene({ appState, learner, analytics, accent, ac
           <h1 className="word-bank-title">{learner.name}’s spellings</h1>
         </header>
         <WordBankAggregates analytics={analytics} />
-        <WordBankCard learner={learner} analytics={analytics} appState={appState} actions={actions} />
+        <WordBankCard learner={learner} analytics={analytics} appState={appState} actions={actions} runtimeReadOnly={runtimeReadOnly} />
       </div>
       {detailWord ? (
         <SpellingWordDetailModal

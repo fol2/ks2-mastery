@@ -100,6 +100,19 @@ The Extra spelling expansion is outside the original statutory baseline.
 - Extra can opt into word-family variant prompts from the setup screen; variants carry their own explanations and sentences, but share the base Extra word's progress and secure state, so the Extra pool still counts the 22 base words
 - the first 22-word Extra release cannot naturally reach every Vellhorn stage under the 100-word direct-monster thresholds; mature Vellhorn rendering is covered by synthetic render fixtures only
 
+## Full lockdown U3 server-runtime update
+
+The first Worker-owned Spelling runtime is now available behind the generic subject command boundary.
+
+- `POST /api/subjects/spelling/command` can start, submit, continue, skip, end, save preferences, and reset Spelling state for an authorised learner.
+- The Worker command path reads published Spelling content, runs the extracted shared Spelling domain service from `shared/spelling/`, persists subject UI/data, active/completed practice sessions, and domain events inside the learner mutation boundary.
+- Active sessions created by the old browser-owned path are abandoned when a new Worker-owned Spelling session starts, while durable progress and completed-session history remain readable.
+- Command responses carry an authoritative Spelling read model, including live session state, feedback, summary, stats, analytics, content release metadata, and any audio cue metadata needed by later TTS lockdown work.
+- Secure-word command responses now also carry Worker-owned reward projections. The Worker persists monster/codex state and appends reward events in the command path; replayed command requests do not double-award.
+- Live command read models redact answer-bearing prompt fields and return prompt-token audio metadata. `/api/tts` derives the transcript from the current server session and rejects arbitrary client-supplied word/sentence text.
+
+The production React bundle is now locked down by the public-output and client-bundle audits. Local characterisation tests still import the browser compatibility entrypoint at `src/subjects/spelling/service.js`, but that entrypoint is a thin re-export of the shared domain service rather than the Worker runtime importing the browser service directly.
+
 ## Still not directly verified in this pass
 
 1. Exact browser playback timing and warm-up behaviour for old provider-backed TTS paths.

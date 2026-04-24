@@ -1,12 +1,8 @@
 import { createStore } from '../core/store.js';
-import { createLocalPlatformRepositories } from '../core/repositories/index.js';
 import { createSubjectRuntimeBoundary } from '../core/subject-runtime.js';
 import { createEventRuntime, createPracticeStreakSubscriber } from '../events/index.js';
-import { createSpellingRewardSubscriber } from '../../subjects/spelling/event-hooks.js';
 import { createSpellingAutoAdvanceController } from '../../subjects/spelling/auto-advance.js';
 import { resolveSpellingShortcut } from '../../subjects/spelling/shortcuts.js';
-import { createSpellingService } from '../../subjects/spelling/service.js';
-import { createSpellingPersistence } from '../../subjects/spelling/repository.js';
 import { normaliseTtsProvider } from '../../subjects/spelling/tts-providers.js';
 import {
   isMonsterCelebrationEvent,
@@ -27,7 +23,7 @@ function defaultSession() {
 }
 
 export function createAppController({
-  repositories = createLocalPlatformRepositories(),
+  repositories = null,
   subjects = SUBJECTS,
   session = defaultSession(),
   now = () => Date.now(),
@@ -40,27 +36,18 @@ export function createAppController({
   uiState = createDefaultControllerUiState(),
   onEventError = null,
   extraContext = null,
+  cacheSubjectUiWrites = false,
 } = {}) {
   const ports = createAppSideEffectPorts(portOverrides);
   const services = extraServices;
-  if (!services.spelling) {
-    services.spelling = createSpellingService({
-      repository: createSpellingPersistence({ repositories, now }),
-      now,
-      tts,
-    });
-  }
 
   const eventRuntime = createEventRuntime({
     repositories,
-    subscribers: subscribers || [
-      createPracticeStreakSubscriber(),
-      createSpellingRewardSubscriber({ gameStateRepository: repositories.gameState }),
-    ],
+    subscribers: subscribers || [createPracticeStreakSubscriber()],
     onError: onEventError,
   });
 
-  const store = createStore(subjects, { repositories });
+  const store = createStore(subjects, { repositories, cacheSubjectUiWrites });
   const controllerListeners = new Set();
   const setTimeoutFn = scheduler?.setTimeout?.bind(scheduler)
     || (typeof globalThis.setTimeout === 'function' ? globalThis.setTimeout.bind(globalThis) : null);

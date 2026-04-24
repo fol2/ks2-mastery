@@ -111,12 +111,14 @@ test('worker parent hub allows parent or admin platform roles with readable lear
   server.close();
 });
 
-test('worker hubs supplement legacy core-only content with seeded runtime additions', async () => {
+test('worker hubs supplement operator legacy core-only content with seeded runtime additions', async () => {
   const server = createWorkerRepositoryServer();
   try {
-    await seedLearnerData(server, 'adult-parent', 'parent');
+    await seedLearnerData(server, 'adult-parent', 'admin');
 
-    const initialResponse = await server.fetchAs('adult-parent', 'https://repo.test/api/content/spelling');
+    const initialResponse = await server.fetchAs('adult-parent', 'https://repo.test/api/content/spelling', {}, {
+      'x-ks2-dev-platform-role': 'admin',
+    });
     const initial = await initialResponse.json();
     const legacy = coreOnlyVersionOneContent(initial.content);
     const requestId = 'legacy-core-content-runtime-1';
@@ -131,6 +133,8 @@ test('worker hubs supplement legacy core-only content with seeded runtime additi
           expectedAccountRevision: initial.mutation.accountRevision,
         },
       }),
+    }, {
+      'x-ks2-dev-platform-role': 'admin',
     });
     const written = await writeResponse.json();
     assert.equal(writeResponse.status, 200);
@@ -174,6 +178,13 @@ test('worker admin account roles are listed and assignable by admins only', asyn
     displayName: 'Ops',
     platformRole: 'ops',
   });
+  server.DB.db.prepare(`
+    INSERT INTO adult_accounts (
+      id, email, display_name, platform_role, selected_learner_id,
+      created_at, updated_at, account_type, demo_expires_at
+    )
+    VALUES ('demo-role-target', NULL, 'Demo Visitor', 'parent', NULL, 1, 1, 'demo', ?)
+  `).run(Date.now() + 60_000);
 
   const listResponse = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/accounts', {}, {
     'x-ks2-dev-platform-role': 'admin',
@@ -187,6 +198,7 @@ test('worker admin account roles are listed and assignable by admins only', asyn
     && account.platformRole === 'admin'
     && account.providers.includes('google')
   )));
+  assert.equal(listPayload.accounts.some((account) => account.id === 'demo-role-target'), false);
 
   const deniedList = await server.fetchAs('adult-ops', 'https://repo.test/api/admin/accounts', {}, {
     'x-ks2-dev-platform-role': 'ops',
@@ -231,6 +243,33 @@ test('worker admin account roles are listed and assignable by admins only', asyn
   const replayPayload = await replayResponse.json();
   assert.equal(replayResponse.status, 200);
   assert.equal(replayPayload.roleMutation.replayed, true);
+
+  const demoUpdate = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/accounts/role', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      accountId: 'demo-role-target',
+      platformRole: 'admin',
+      requestId: 'role-demo-blocked',
+    }),
+  }, {
+    'x-ks2-dev-platform-role': 'admin',
+  });
+  const demoUpdatePayload = await demoUpdate.json();
+  assert.equal(demoUpdate.status, 403);
+  assert.equal(demoUpdatePayload.code, 'demo_account_role_forbidden');
+  assert.equal(
+    server.DB.db.prepare('SELECT platform_role FROM adult_accounts WHERE id = ?').get('demo-role-target')?.platform_role,
+    'parent',
+  );
+
+  server.DB.db.prepare("UPDATE adult_accounts SET platform_role = 'admin' WHERE id = 'demo-role-target'").run();
+  const demoAdminHub = await server.fetchAs('demo-role-target', 'https://repo.test/api/hubs/admin', {}, {
+    'x-ks2-dev-platform-role': 'admin',
+  });
+  const demoAdminHubPayload = await demoAdminHub.json();
+  assert.equal(demoAdminHub.status, 403);
+  assert.equal(demoAdminHubPayload.code, 'admin_hub_forbidden');
 
   const deniedUpdate = await server.fetchAs('adult-ops', 'https://repo.test/api/admin/accounts/role', {
     method: 'PUT',
@@ -307,6 +346,23 @@ test('worker prevents demoting the last admin account', async () => {
 test('worker admin hub requires admin or operations role and exposes content plus audit summaries', async () => {
   const server = createWorkerRepositoryServer();
   await seedLearnerData(server, 'adult-admin', 'admin');
+  const now = Date.now();
+  server.DB.db.exec(`
+    INSERT INTO demo_operation_metrics (metric_key, metric_count, updated_at)
+    VALUES
+      ('sessions_created', 6, ${now - 50}),
+      ('active_sessions', 99, ${now - 40}),
+      ('conversions', 2, ${now - 30}),
+      ('cleanup_count', 1, ${now - 20}),
+      ('rate_limit_blocks', 4, ${now - 10}),
+      ('tts_fallbacks', 3, ${now});
+
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, account_type, demo_expires_at)
+    VALUES
+      ('demo-active-a', NULL, 'Demo Active A', 'parent', NULL, 1, 1, 'demo', ${now + 60000}),
+      ('demo-active-b', NULL, 'Demo Active B', 'parent', NULL, 1, 1, 'demo', ${now + 120000}),
+      ('demo-expired', NULL, 'Demo Expired', 'parent', NULL, 1, 1, 'demo', ${now - 60000});
+  `);
 
   const adminResponse = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?learnerId=learner-a&auditLimit=10', {}, {
     'x-ks2-dev-platform-role': 'admin',
@@ -318,6 +374,12 @@ test('worker admin hub requires admin or operations role and exposes content plu
   assert.equal(adminPayload.adminHub.contentReleaseStatus.subjectId, 'spelling');
   assert.ok(adminPayload.adminHub.contentReleaseStatus.runtimeWordCount > 0);
   assert.ok(adminPayload.adminHub.auditLogLookup.entries.some((entry) => entry.mutationKind === 'learners.write'));
+  assert.equal(adminPayload.adminHub.demoOperations.sessionsCreated, 6);
+  assert.equal(adminPayload.adminHub.demoOperations.activeSessions, 2);
+  assert.equal(adminPayload.adminHub.demoOperations.conversions, 2);
+  assert.equal(adminPayload.adminHub.demoOperations.cleanupCount, 1);
+  assert.equal(adminPayload.adminHub.demoOperations.rateLimitBlocks, 4);
+  assert.equal(adminPayload.adminHub.demoOperations.ttsFallbacks, 3);
   assert.equal(adminPayload.adminHub.learnerSupport.accessibleLearners[0].learnerName, 'Ava');
 
   const parentDenied = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin', {}, {

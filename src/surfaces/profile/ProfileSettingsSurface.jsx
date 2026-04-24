@@ -9,6 +9,8 @@ const TTS_PROVIDER_OPTIONS = [
   { value: 'browser', label: 'Browser', title: 'Local browser voice, preferring Google UK English female where available' },
 ];
 
+const SOCIAL_PROVIDERS = ['google', 'facebook', 'x', 'apple'];
+
 function safeColour(value, fallback = '#3E6FA8') {
   const colour = String(value || '').trim();
   return /^#[0-9a-fA-F]{6}$/.test(colour) ? colour : fallback;
@@ -41,6 +43,31 @@ function learnerOrdinal(appState) {
   return index >= 0 ? index + 1 : 1;
 }
 
+function providerLabel(provider) {
+  return provider === 'x' ? 'X' : provider[0].toUpperCase() + provider.slice(1);
+}
+
+function profileWriteLockReason(appState, chrome) {
+  if (chrome.session?.demo) {
+    return 'Demo profile writes are read-only. Create an account to keep this learner permanently.';
+  }
+  if (appState.persistence?.mode === 'degraded') {
+    return 'Sync is degraded, so profile writes are disabled until persistence recovers.';
+  }
+  return '';
+}
+
+function dataImportLockReason(appState, chrome, profileLockReason = '') {
+  if (profileLockReason) return profileLockReason;
+  if (chrome.session?.signedIn) {
+    return 'JSON import is available only for local recovery. Server-synced accounts restore data from D1.';
+  }
+  if (appState.persistence?.mode === 'remote-sync') {
+    return 'JSON import is available only for local recovery. Server-synced accounts restore data from D1.';
+  }
+  return '';
+}
+
 function PersistenceInline({ snapshot }) {
   const mode = snapshot?.mode || 'local-only';
   const trust = snapshot?.trustedState === 'remote'
@@ -59,7 +86,7 @@ function PersistenceInline({ snapshot }) {
   );
 }
 
-function EmptyProfile({ actions }) {
+function EmptyProfile({ actions, writeLocked = false }) {
   return (
     <main className="profile-page">
       <section className="profile-empty-state hero-paper">
@@ -68,7 +95,7 @@ function EmptyProfile({ actions }) {
           <h1 className="profile-title">No writable learner is available</h1>
           <p className="profile-lede">Create or select a learner before changing study rhythm, profile colour, or portable data.</p>
           <div className="profile-hero-actions">
-            <button className="btn primary xl" type="button" onClick={() => actions.dispatch('learner-create')}>Add learner</button>
+            <button className="btn primary xl" type="button" disabled={writeLocked} onClick={() => actions.dispatch('learner-create')}>Add learner</button>
             <button className="btn ghost xl" type="button" onClick={actions.navigateHome}>Back to dashboard</button>
           </div>
         </div>
@@ -77,9 +104,57 @@ function EmptyProfile({ actions }) {
   );
 }
 
+function DemoConversionPanel({ actions }) {
+  const submit = (event) => {
+    event.preventDefault();
+    actions.dispatch('demo-convert-email', { formData: new FormData(event.currentTarget) });
+  };
+
+  return (
+    <section className="profile-panel profile-demo-conversion-panel">
+      <div className="profile-panel-head">
+        <div>
+          <div className="eyebrow">Demo progress</div>
+          <h2 className="section-title">Create an account</h2>
+        </div>
+        <span className="chip good">Progress kept</span>
+      </div>
+      <p className="subtitle">Keep this demo learner, spelling progress and Codex rewards by creating a parent account.</p>
+      <form className="auth-form" onSubmit={submit}>
+        <label className="field">
+          <span>Email</span>
+          <input className="input" type="email" name="email" autoComplete="email" required />
+        </label>
+        <label className="field">
+          <span>Password</span>
+          <input className="input" type="password" name="password" autoComplete="new-password" minLength={8} required />
+        </label>
+        <button className="btn primary lg" type="submit">Create account from demo</button>
+      </form>
+      <div className="auth-divider"><span>Social sign-in</span></div>
+      <div className="auth-social">
+        {SOCIAL_PROVIDERS.map((provider) => (
+          <button
+            key={provider}
+            className="btn secondary"
+            type="button"
+            onClick={() => actions.dispatch('demo-social-convert', { provider })}
+          >
+            {providerLabel(provider)}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount = 0, liveSubjectCount = 0 }) {
   const learner = selectedLearner(appState);
   const learners = learnerList(appState);
+  const writeLockReason = profileWriteLockReason(appState, chrome);
+  const writeLocked = Boolean(writeLockReason);
+  const importLockReason = dataImportLockReason(appState, chrome, writeLockReason);
+  const importLocked = Boolean(importLockReason);
   if (!learner) {
     return (
       <div className="app-shell profile-settings-shell">
@@ -98,7 +173,7 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
           persistenceLabel={chrome.persistence?.label || ''}
         />
         <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
-        <EmptyProfile actions={actions} />
+        <EmptyProfile actions={actions} writeLocked={writeLocked} />
       </div>
     );
   }
@@ -141,7 +216,7 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
             <h1 className="profile-title">Learning profile for {learner.name}</h1>
             <p className="profile-lede">Year group, goal and daily rhythm stay shared across every subject in the dashboard.</p>
             <div className="profile-hero-actions">
-              <button className="btn primary xl" type="button" onClick={() => actions.dispatch('learner-create')} style={{ background: accent }}>Add learner</button>
+              <button className="btn primary xl" type="button" disabled={writeLocked} onClick={() => actions.dispatch('learner-create')} style={{ background: accent }}>Add learner</button>
               <button className="btn ghost xl" type="button" onClick={actions.navigateHome}>Back to dashboard</button>
             </div>
           </div>
@@ -168,6 +243,7 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
               </div>
               <span className="chip" style={{ borderColor: accent, color: accent }}>Shared profile</span>
             </div>
+            {writeLockReason && <div className="feedback warn" role="status">{writeLockReason}</div>}
             {learners.length > 1 && (
               <label className="profile-form-field profile-form-field-wide">
                 <span>Current learner</span>
@@ -181,17 +257,17 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
             <div className="profile-form-grid">
               <label className="profile-form-field profile-form-field-wide">
                 <span>Name</span>
-                <input className="input" name="name" autoComplete="off" defaultValue={learner.name} />
+                <input className="input" name="name" autoComplete="off" defaultValue={learner.name} disabled={writeLocked} />
               </label>
               <label className="profile-form-field">
                 <span>Year group</span>
-                <select className="select" name="yearGroup" defaultValue={learner.yearGroup}>
+                <select className="select" name="yearGroup" defaultValue={learner.yearGroup} disabled={writeLocked}>
                   {['Y3', 'Y4', 'Y5', 'Y6'].map((value) => <option value={value} key={value}>{value}</option>)}
                 </select>
               </label>
               <label className="profile-form-field">
                 <span>Primary goal</span>
-                <select className="select" name="goal" defaultValue={learner.goal || 'sats'}>
+                <select className="select" name="goal" defaultValue={learner.goal || 'sats'} disabled={writeLocked}>
                   <option value="confidence">Confidence and habit</option>
                   <option value="sats">KS2 SATs prep</option>
                   <option value="catch-up">Catch-up and recovery</option>
@@ -199,11 +275,11 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
               </label>
               <label className="profile-form-field">
                 <span>Daily minutes</span>
-                <input className="input" type="number" min="5" max="60" name="dailyMinutes" autoComplete="off" defaultValue={learner.dailyMinutes || 15} />
+                <input className="input" type="number" min="5" max="60" name="dailyMinutes" autoComplete="off" defaultValue={learner.dailyMinutes || 15} disabled={writeLocked} />
               </label>
               <label className="profile-form-field profile-colour-field">
                 <span>Accent colour</span>
-                <input className="input" type="color" name="avatarColor" autoComplete="off" defaultValue={accent} />
+                <input className="input" type="color" name="avatarColor" autoComplete="off" defaultValue={accent} disabled={writeLocked} />
               </label>
               <div className="profile-form-field profile-form-field-wide">
                 <span>Dictation voice</span>
@@ -234,14 +310,15 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
             </div>
             <div className="profile-form-footer">
               <div className="profile-form-danger-actions">
-                <button className="btn warn lg" type="button" onClick={() => actions.dispatch('learner-reset-progress')}>Reset learner progress</button>
-                <button className="btn bad lg" type="button" onClick={() => actions.dispatch('learner-delete')}>Delete learner</button>
+                <button className="btn warn lg" type="button" disabled={writeLocked} onClick={() => actions.dispatch('learner-reset-progress')}>Reset learner progress</button>
+                <button className="btn bad lg" type="button" disabled={writeLocked} onClick={() => actions.dispatch('learner-delete')}>Delete learner</button>
               </div>
-              <button className="btn primary lg" style={{ background: accent }} type="submit">Save learner profile</button>
+              <button className="btn primary lg" style={{ background: accent }} type="submit" disabled={writeLocked}>Save learner profile</button>
             </div>
           </form>
 
           <aside className="profile-side-panels">
+            {chrome.session?.demo && <DemoConversionPanel actions={actions} />}
             <section className="profile-panel profile-data-panel">
               <div className="profile-panel-head">
                 <div>
@@ -251,10 +328,11 @@ export function ProfileSettingsSurface({ appState, chrome, actions, subjectCount
               </div>
               <p className="subtitle">Exports use JSON recovery points. Imports keep existing learners unless a full-app snapshot replaces this browser dataset.</p>
               <PersistenceInline snapshot={appState.persistence} />
+              {importLocked && <div className="feedback warn" role="status">{importLockReason}</div>}
               <div className="actions profile-data-actions">
                 <button className="btn secondary" type="button" onClick={() => actions.dispatch('platform-export-learner')}>Export current learner</button>
                 <button className="btn secondary" type="button" onClick={() => actions.dispatch('platform-export-app')}>Export full app</button>
-                <button className="btn ghost" type="button" onClick={() => actions.dispatch('platform-import')}>Import JSON</button>
+                <button className="btn ghost" type="button" disabled={importLocked} onClick={() => actions.dispatch('platform-import')}>Import JSON</button>
               </div>
               <input
                 id="platform-import-file"

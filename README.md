@@ -20,7 +20,7 @@ The goal is not to polish the old prototype. The goal is to give the product a s
 - `src/subjects/placeholders/*`
   - Clean extension slots for Arithmetic, Reasoning, Grammar, Punctuation and Reading.
 - `worker/*`
-  - A Cloudflare-friendly backend with D1-backed repository routes, account-scoped spelling content, learner ownership checks, production sessions, selected-provider Worker-side TTS proxying, and thin role-aware Parent/Admin hub routes.
+  - A Cloudflare-friendly backend with D1-backed repository routes, ephemeral demo sessions, account-scoped spelling content, learner ownership checks, production sessions, Worker-owned subject commands, selected-provider Worker-side TTS proxying, and thin role-aware Parent/Admin hub routes.
 - `docs/*`
   - Audit, architecture, refactor plan, migration map, repository notes, ownership/access notes, state-integrity notes, spelling-service and spelling-content notes, a direct spelling parity audit, operating-surface notes, and the subject-expansion readiness gate.
 - `tests/*`
@@ -32,7 +32,7 @@ English Spelling works in the new structure.
 
 The browser app is now a single React shell. `index.html` loads the built React app bundle, React owns dashboard, Codex, subject, profile, Parent Hub, Admin / Operations, toast and modal surfaces, and the existing controller/store/repository boundary still owns state transitions and side effects. Legacy string renderers remain only as local characterisation helpers while production routes compose React components.
 
-Production on `ks2.eugnel.uk` uses the API adapter by default after sign-in. Direct file/local mode, or `?local=1`, still uses browser storage for development only. The API adapter reports explicit persistence modes (`local-only`, `remote-sync`, `degraded`) so failed remote writes are visible instead of being treated as silent success. The Worker is D1-backed with learner ownership enforcement, atomic account / learner revision checks, idempotent request replay, account-scoped spelling content routes, role-aware Parent/Admin hub read routes, and profile-controlled dictation audio across OpenAI, Gemini, or local browser speech.
+Production on `ks2.eugnel.uk` uses Worker-backed auth, ephemeral demo sessions, API repositories, subject commands, server read models, and prompt-token TTS. `?local=1` no longer creates a browser-local product runtime; browser QA should use a signed-in Worker session or `/demo`. The API adapter reports explicit persistence modes (`local-only`, `remote-sync`, `degraded`) so failed remote writes are visible instead of being treated as silent success, but production practice authority stays behind Worker APIs. The Worker is D1-backed with learner ownership enforcement, atomic account / learner revision checks, idempotent request replay, account-scoped spelling content routes, a shared-domain Spelling runtime imported from `shared/spelling/`, role-aware Parent/Admin hub read routes, Word Bank read models, and protected dictation audio across OpenAI or Gemini, with local browser speech reserved for explicit browser-provider use.
 
 Signed-in Parent Hub and Admin / Operations use live Worker hub payloads. Those adult surfaces keep platform role, learner membership role, and writable/read-only access separate. `/api/bootstrap` remains writable-only for the main subject shell, while readable viewer learners are available inside hub surfaces with explicit read-only labels and blocked write affordances.
 
@@ -55,7 +55,7 @@ What they do not have yet is their own deterministic learning engine. That is de
 
 ### Open in a browser
 
-You can open `index.html` directly, or serve the folder statically.
+Build and serve the Worker-backed app for product QA, or use `/demo` after deployment/local Worker serving. Opening `index.html` directly is useful only for shell-loading checks because the production app expects Worker auth and read-model APIs.
 
 ### Run tests
 
@@ -72,6 +72,15 @@ npm run deploy
 ```
 
 The Cloudflare scripts run Wrangler through `scripts/wrangler-oauth.mjs`, which deliberately removes `CLOUDFLARE_API_TOKEN` for local child processes. This keeps deploys and remote D1 commands on the logged-in OAuth session even when the parent shell still has an old API token exported. Cloudflare Workers Builds sets `WORKERS_CI=1`, so the wrapper preserves the build-provided token in hosted CI. The legacy `*:oauth` aliases remain for muscle memory, but the default scripts are already OAuth-safe.
+
+The production-client lockdown gate is included in `npm run check`. For explicit evidence, run:
+
+```bash
+npm run audit:client
+npm run audit:production
+```
+
+`npm run deploy` runs the live production audit after upload. Run `npm run audit:production` manually only when rechecking an already deployed build; it checks the live HTML, referenced bundles, and representative source paths before making the strongest public claim.
 
 ## Core rebuild decisions
 
@@ -119,4 +128,4 @@ The fixture is not a shipped product subject, and Arithmetic is still intentiona
 
 ## Important note
 
-This reference rebuild is deliberately light on framework machinery. React owns the browser shell, while the Worker API, D1-backed repositories, deterministic services, and subject expansion harness remain the stable application boundaries.
+This reference rebuild is deliberately light on framework machinery. React owns the browser shell, while the Worker API, D1-backed repositories, server-authoritative subject commands, deterministic services, and subject expansion harness remain the stable application boundaries.

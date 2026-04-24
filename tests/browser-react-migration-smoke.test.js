@@ -17,7 +17,7 @@ function resolveBrowseBinary() {
 }
 
 async function startServerProcess() {
-  const child = spawn(process.execPath, ['./tests/helpers/browser-app-server.js', '--serve-only', '--port', '0'], {
+  const child = spawn(process.execPath, ['./tests/helpers/browser-app-server.js', '--serve-only', '--port', '0', '--with-worker-api'], {
     cwd: rootDir,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -69,7 +69,8 @@ test('browser migration smoke covers the React app root and spelling interaction
   try {
     const output = browseChain(binary, [
       ['viewport', '390x844'],
-      ['goto', `${server.origin}/?local=1`],
+      ['goto', `${server.origin}/demo`],
+      ['wait', '.subject-grid'],
       ['text'],
       ['html'],
       ['js', "document.querySelector('[data-action=\"open-subject\"][data-subject-id=\"spelling\"]')?.click(); 'opened spelling';"],
@@ -80,12 +81,14 @@ test('browser migration smoke covers the React app root and spelling interaction
       ['text'],
       ['click', '[data-action="spelling-close-word-bank"]'],
       ['wait', '[data-action="spelling-start"]'],
+      ['js', "document.querySelector('[data-action=\"spelling-toggle-pref\"][data-pref=\"autoSpeak\"][aria-pressed=\"true\"]')?.click(); 'disabled auto audio';"],
       ['js', "document.querySelector('[data-action=\"spelling-start\"]')?.click(); 'started spelling';"],
       ['wait', '.spelling-in-session.is-question-revealed input[name="typed"]'],
       ['text'],
       ['is', 'focused', 'input[name="typed"]'],
       ['fill', 'input[name="typed"]', 'zzzz'],
       ['press', 'Enter'],
+      ['wait', '.feedback-slot:not(.is-placeholder)'],
       ['text'],
       ['viewport', '768x1024'],
       ['text'],

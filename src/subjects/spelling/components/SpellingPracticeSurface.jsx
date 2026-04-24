@@ -63,6 +63,7 @@ export function SpellingPracticeSurface(props) {
     repositories,
     subject,
     actions,
+    runtimeReadOnly = false,
   } = props;
   const spelling = buildSpellingContext({ appState, service, repositories, subject });
   const learnerId = spelling.learner?.id || '';
@@ -108,11 +109,26 @@ export function SpellingPracticeSurface(props) {
   }, [spelling.ui.phase]);
 
   if (spelling.ui.phase === 'summary') {
-    return <SpellingSummaryScene {...spelling} previousHeroBg={previousHeroBg} actions={actions} />;
+    return (
+      <SpellingSummaryScene
+        {...spelling}
+        previousHeroBg={previousHeroBg}
+        actions={actions}
+        runtimeReadOnly={runtimeReadOnly}
+      />
+    );
   }
 
   if (spelling.ui.phase === 'session') {
-    return <SpellingSessionScene {...spelling} previousHeroBg={previousHeroBg} service={service} actions={actions} />;
+    return (
+      <SpellingSessionScene
+        {...spelling}
+        previousHeroBg={previousHeroBg}
+        service={service}
+        actions={actions}
+        runtimeReadOnly={runtimeReadOnly}
+      />
+    );
   }
 
   if (spelling.ui.phase === 'word-bank') {
@@ -124,6 +140,7 @@ export function SpellingPracticeSurface(props) {
         accent={spelling.accent}
         previousHeroBg={previousHeroBg}
         actions={actions}
+        runtimeReadOnly={runtimeReadOnly}
       />
     );
   }
@@ -137,6 +154,7 @@ export function SpellingPracticeSurface(props) {
       setupHeroTone={setupHeroTone}
       previousHeroBg={previousHeroBg}
       actions={actions}
+      runtimeReadOnly={runtimeReadOnly}
     />
   );
 }

@@ -1,7 +1,6 @@
 import {
   createCredentialFetch,
   createRepositoriesForBrowserRuntime,
-  shouldOpenLocalCodexReview,
 } from './platform/app/bootstrap.js';
 import { createAppController } from './platform/app/create-app-controller.js';
 import React from 'react';
@@ -12,9 +11,7 @@ import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
 import { probeRelLuminance } from './platform/ui/luminance.js';
 import { safeParseInt, uid } from './platform/core/utils.js';
 import { normalisePlatformRole } from './platform/access/roles.js';
-import { buildAdminHubReadModel } from './platform/hubs/admin-read-model.js';
 import { createHubApi } from './platform/hubs/api.js';
-import { buildParentHubReadModel } from './platform/hubs/parent-read-model.js';
 import {
   buildAdminHubAccessContext,
   buildParentHubAccessContext,
@@ -22,16 +19,11 @@ import {
 } from './platform/hubs/shell-access.js';
 import { createSubjectRuntimeBoundary } from './platform/core/subject-runtime.js';
 import { createPracticeStreakSubscriber } from './platform/events/index.js';
+import { createSubjectCommandClient } from './platform/runtime/subject-command-client.js';
+import { createReadModelClient } from './platform/runtime/read-model-client.js';
 import { createPlatformTts } from './subjects/spelling/tts.js';
-import { createSpellingService } from './subjects/spelling/service.js';
-import { createSpellingPersistence } from './subjects/spelling/repository.js';
 import { DEFAULT_TTS_PROVIDER, normaliseTtsProvider } from './subjects/spelling/tts-providers.js';
-import {
-  createApiSpellingContentRepository,
-  createLocalSpellingContentRepository,
-} from './subjects/spelling/content/repository.js';
-import { createSpellingContentService } from './subjects/spelling/content/service.js';
-import { createSpellingRewardSubscriber } from './subjects/spelling/event-hooks.js';
+import { createSpellingReadModelService } from './subjects/spelling/client-read-models.js';
 import { resolveSpellingShortcut } from './subjects/spelling/shortcuts.js';
 import {
   monsterSummary,
@@ -111,7 +103,7 @@ function captureWordDetailTrigger(action, data = {}) {
   };
 }
 
-async function submitAuthCredentials({ mode = 'login', email, password } = {}) {
+async function submitAuthCredentials({ mode = 'login', email, password, convertDemo = false } = {}) {
   const action = mode === 'register' ? 'register' : 'login';
   const response = await credentialFetch(`/api/auth/${action}`, {
     method: 'POST',
@@ -119,6 +111,7 @@ async function submitAuthCredentials({ mode = 'login', email, password } = {}) {
     body: JSON.stringify({
       email,
       password,
+      ...(convertDemo && action === 'register' ? { convertDemo: true } : {}),
     }),
   });
   const payload = await response.json().catch(() => ({}));
@@ -141,12 +134,26 @@ async function startSocialAuth(provider) {
   globalThis.location.href = payload.redirectUrl;
 }
 
+async function startDemoSession() {
+  const response = await credentialFetch('/api/demo/session', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.session?.accountId) {
+    throw new Error(payload.message || 'Could not start the demo.');
+  }
+  globalThis.location.href = '/';
+}
+
 function renderAuthRoot({ error = '' } = {}) {
   createRoot(root).render(
     <AuthSurface
       initialError={error}
       onSubmit={submitAuthCredentials}
       onSocialStart={startSocialAuth}
+      onDemoStart={startDemoSession}
     />,
   );
 }
@@ -215,6 +222,20 @@ const SLOW_REPLAY_SELECTORS = [
   '[data-action="spelling-replay-slow"]',
   '[data-action="spelling-word-bank-drill-replay-slow"]',
 ];
+const PROFILE_WRITE_ACTIONS = new Set([
+  'learner-create',
+  'learner-save-form',
+  'learner-delete',
+  'learner-reset-progress',
+  'platform-import',
+  'platform-import-file-selected',
+  'platform-reset-all',
+]);
+const SERVER_SYNC_LOCAL_DATASET_ACTIONS = new Set([
+  'platform-import',
+  'platform-import-file-selected',
+  'platform-reset-all',
+]);
 
 function syncAudioPlayingClass() {
   const normalNodes = root.querySelectorAll(NORMAL_REPLAY_SELECTORS.join(','));
@@ -358,11 +379,16 @@ tts.subscribe((event) => {
   syncAudioPlayingClass();
 });
 
-const spellingContentRepository = boot.session.signedIn
-  ? createApiSpellingContentRepository({ baseUrl: '', fetch: credentialFetch })
-  : createLocalSpellingContentRepository({ storage: globalThis.localStorage });
-const spellingContent = createSpellingContentService({ repository: spellingContentRepository });
-await spellingContent.hydrate();
+const readModels = createReadModelClient({ baseUrl: '', fetch: credentialFetch });
+const spellingContent = createSpellingContentApi({ fetch: credentialFetch });
+const subjectCommands = createSubjectCommandClient({
+  baseUrl: '',
+  fetch: credentialFetch,
+  getLearnerRevision: (learnerId) => repositories.runtime?.readLearnerRevision?.(learnerId) || 0,
+  onCommandApplied: ({ learnerId, subjectId, response }) => {
+    repositories.runtime?.applySubjectCommandResult?.({ learnerId, subjectId, response });
+  },
+});
 let shellPlatformRole = normalisePlatformRole(boot.session.platformRole || 'parent');
 let adminAccountDirectory = {
   status: 'idle',
@@ -469,7 +495,20 @@ function resolveActiveAdultAccessContext(appState) {
 }
 
 function blockedReadOnlyAdultActionReason(action) {
-  return readOnlyLearnerActionBlockReason(action, resolveActiveAdultAccessContext(store.getState()));
+  const appState = store.getState();
+  const adultReason = readOnlyLearnerActionBlockReason(action, resolveActiveAdultAccessContext(appState));
+  if (adultReason) return adultReason;
+  if (!PROFILE_WRITE_ACTIONS.has(String(action || ''))) return '';
+  if (boot.session.demo) {
+    return 'Demo profile writes are read-only. Create an account from the profile screen to keep this learner permanently.';
+  }
+  if (appState.persistence?.mode === 'degraded') {
+    return 'Sync is degraded, so profile write actions are blocked until persistence recovers.';
+  }
+  if (boot.session.signedIn && SERVER_SYNC_LOCAL_DATASET_ACTIONS.has(String(action || ''))) {
+    return 'JSON import and full browser reset are local recovery tools. Server-synced accounts are restored from D1.';
+  }
+  return '';
 }
 
 function blockReadOnlyAdultAction(action) {
@@ -594,86 +633,13 @@ async function loadAdminHub({ learnerId = null, force = false, auditLimit = 20 }
 }
 
 function rebuildSpellingService() {
-  services.spelling = createSpellingService({
-    repository: createSpellingPersistence({ repositories }),
-    tts,
-    contentSnapshot: spellingContent.getRuntimeSnapshot(),
+  services.spelling = createSpellingReadModelService({
+    getState: () => store?.getState?.() || null,
   });
   return services.spelling;
 }
 
 rebuildSpellingService();
-
-function learnerReadBundle(learnerId) {
-  return {
-    subjectStates: repositories.subjectStates.readForLearner(learnerId),
-    practiceSessions: repositories.practiceSessions.list(learnerId),
-    gameState: repositories.gameState.readForLearner(learnerId),
-    eventLog: repositories.eventLog.list(learnerId),
-  };
-}
-
-function buildLocalHubModels(appState) {
-  const runtimeSnapshot = spellingContent.getRuntimeSnapshot();
-  const selectedLearnerId = appState.learners.selectedId;
-  const selectedLearner = selectedLearnerId ? appState.learners.byId[selectedLearnerId] : null;
-  const learnerBundles = Object.fromEntries(appState.learners.allIds.map((learnerId) => [
-    learnerId,
-    learnerReadBundle(learnerId),
-  ]));
-
-  const parentHub = selectedLearner
-    ? buildParentHubReadModel({
-      learner: selectedLearner,
-      platformRole: shellPlatformRole,
-      membershipRole: 'owner',
-      subjectStates: learnerBundles[selectedLearnerId]?.subjectStates || {},
-      practiceSessions: learnerBundles[selectedLearnerId]?.practiceSessions || [],
-      eventLog: learnerBundles[selectedLearnerId]?.eventLog || [],
-      gameState: learnerBundles[selectedLearnerId]?.gameState || {},
-      runtimeSnapshots: { spelling: runtimeSnapshot },
-      now: Date.now,
-    })
-    : null;
-
-  const adminHub = buildAdminHubReadModel({
-    account: {
-      id: boot.session.accountId || 'local-browser',
-      selectedLearnerId,
-      repoRevision: Number(boot.session.repoRevision) || 0,
-      platformRole: shellPlatformRole,
-    },
-    platformRole: shellPlatformRole,
-    spellingContentBundle: spellingContent.readBundle(),
-    memberships: appState.learners.allIds.map((learnerId, index) => ({
-      learnerId,
-      role: 'owner',
-      sortIndex: index,
-      stateRevision: 0,
-      learner: appState.learners.byId[learnerId],
-    })),
-    learnerBundles,
-    runtimeSnapshots: { spelling: runtimeSnapshot },
-    auditEntries: [],
-    auditAvailable: false,
-    selectedLearnerId,
-    now: Date.now,
-  });
-
-  return {
-    shellAccess: {
-      platformRole: shellPlatformRole,
-      source: 'local-reference',
-    },
-    parentHub,
-    parentHubState: { status: 'loaded', learnerId: selectedLearnerId || '', error: '', notice: '' },
-    adminHub,
-    adminHubState: { status: 'loaded', learnerId: selectedLearnerId || '', error: '', notice: '' },
-    activeAdultLearnerContext: null,
-    adultSurfaceNotice: '',
-    adminAccountDirectory,
-  };
-}
 
 function buildSignedInHubModels(appState) {
   const parentHubState = {
@@ -704,31 +670,8 @@ function buildSignedInHubModels(appState) {
   };
 }
 
-function buildLocalShellHubModels(appState) {
-  const selectedLearnerId = appState.learners.selectedId;
-  return {
-    shellAccess: {
-      platformRole: shellPlatformRole,
-      source: 'local-reference',
-    },
-    parentHub: null,
-    parentHubState: { status: 'idle', learnerId: selectedLearnerId || '', error: '', notice: '' },
-    adminHub: null,
-    adminHubState: { status: 'idle', learnerId: selectedLearnerId || '', error: '', notice: '' },
-    activeAdultLearnerContext: null,
-    adultSurfaceNotice: '',
-    adminAccountDirectory,
-  };
-}
-
-function needsFullLocalHubModels(appState) {
-  return appState.route.screen === 'parent-hub' || appState.route.screen === 'admin-hub';
-}
-
-function buildRouteHubModels(appState) {
-  if (boot.session.signedIn) return buildSignedInHubModels(appState);
-  if (needsFullLocalHubModels(appState)) return buildLocalHubModels(appState);
-  return buildLocalShellHubModels(appState);
+function buildHubModels(appState) {
+  return buildSignedInHubModels(appState);
 }
 
 const runtimeBoundary = createSubjectRuntimeBoundary({
@@ -744,9 +687,9 @@ const controller = createAppController({
   runtimeBoundary,
   tts,
   services,
+  cacheSubjectUiWrites: true,
   subscribers: [
     createPracticeStreakSubscriber(),
-    createSpellingRewardSubscriber({ gameStateRepository: repositories.gameState }),
   ],
   onEventError(error) {
     globalThis.console?.error?.('Reward/event subscriber failed.', error);
@@ -783,6 +726,167 @@ function downloadJson(filename, payload) {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+async function parseApiJson(response) {
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.ok === false) {
+    const error = new Error(payload?.message || `Request failed (${response.status}).`);
+    error.status = response.status;
+    error.payload = payload;
+    throw error;
+  }
+  return payload;
+}
+
+function isServerSyncedRuntime() {
+  return boot.session.mode === 'remote-sync' || boot.session.mode === 'demo-sync';
+}
+
+function learnerSnapshotWithout(learnerId) {
+  const snapshot = store.getState().learners;
+  if (!snapshot.byId[learnerId] || snapshot.allIds.length <= 1) return null;
+  const byId = { ...snapshot.byId };
+  delete byId[learnerId];
+  const allIds = snapshot.allIds.filter((id) => id !== learnerId);
+  return {
+    byId,
+    allIds,
+    selectedId: snapshot.selectedId === learnerId ? allIds[0] : snapshot.selectedId,
+  };
+}
+
+function deleteLearnerFromServerSyncedAccount(learnerId) {
+  const nextLearners = learnerSnapshotWithout(learnerId);
+  if (!nextLearners) return false;
+  runtimeBoundary.clearLearner(learnerId);
+  repositories.learners.write(nextLearners);
+  store.reloadFromRepositories({ preserveRoute: true });
+  return true;
+}
+
+async function resetServerSyncedLearnerProgress(learnerId) {
+  const requestId = uid('learner-reset');
+  const response = await credentialFetch('/api/learners/reset-progress', {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      learnerId,
+      mutation: {
+        requestId,
+        correlationId: requestId,
+        expectedLearnerRevision: repositories.runtime.readLearnerRevision(learnerId),
+      },
+    }),
+  });
+  await parseApiJson(response);
+  await repositories.hydrate({ cacheScope: 'learner-reset-progress' });
+  runtimeBoundary.clearLearner(learnerId);
+  store.clearMonsterCelebrations();
+  store.reloadFromRepositories({ preserveRoute: true });
+}
+
+async function profileTtsPayload(provider) {
+  const learnerId = store.getState().learners.selectedId;
+  if (provider === 'browser' || !learnerId) {
+    return {
+      learnerId,
+      word: 'early',
+      sentence: 'The birds sang early in the day.',
+      provider,
+      kind: 'test',
+    };
+  }
+
+  const params = new URLSearchParams({
+    learnerId,
+    detailSlug: 'early',
+    pageSize: '1',
+  });
+  const response = await credentialFetch(`/api/subjects/spelling/word-bank?${params.toString()}`, {
+    headers: { accept: 'application/json' },
+  });
+  const payload = await parseApiJson(response);
+  const cue = payload?.wordBank?.detail?.audio?.dictation || null;
+  if (!cue?.learnerId || !cue?.promptToken) {
+    throw new Error('Could not prepare a server-authorised dictation test.');
+  }
+  return {
+    ...cue,
+    provider,
+    kind: 'test',
+  };
+}
+
+function createSpellingContentApi({ fetch: fetchFn }) {
+  let cachedContent = null;
+  let accountRevision = 0;
+
+  async function hydrate() {
+    const response = await fetchFn('/api/content/spelling', {
+      method: 'GET',
+      headers: { accept: 'application/json' },
+    });
+    const payload = await parseApiJson(response);
+    cachedContent = payload.content || null;
+    accountRevision = Math.max(0, Number(payload.mutation?.accountRevision) || accountRevision);
+    return cachedContent;
+  }
+
+  async function write(rawContent) {
+    const content = rawContent?.content && typeof rawContent.content === 'object'
+      ? rawContent.content
+      : rawContent;
+    if (!content || typeof content !== 'object' || Array.isArray(content)) {
+      throw new Error('Spelling content import did not include a content bundle.');
+    }
+    if (!cachedContent) await hydrate();
+    const requestId = uid('content');
+    const response = await fetchFn('/api/content/spelling', {
+      method: 'PUT',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        content,
+        mutation: {
+          requestId,
+          correlationId: requestId,
+          expectedAccountRevision: accountRevision,
+        },
+      }),
+    });
+    const payload = await parseApiJson(response);
+    cachedContent = payload.content || content;
+    accountRevision = Math.max(
+      accountRevision,
+      Number(payload.mutation?.accountRevision) || Number(payload.mutation?.appliedRevision) || accountRevision,
+    );
+    return cachedContent;
+  }
+
+  return {
+    hydrate,
+    async exportPortable() {
+      return hydrate();
+    },
+    importPortable(payload) {
+      return write(payload);
+    },
+    validate() {
+      return { ok: false, errors: [{ message: 'Publishing is now validated by the Worker content API.' }], warnings: [] };
+    },
+    publishDraft() {
+      throw new Error('Publishing is server-owned in this build. Use the Worker content API.');
+    },
+    resetToSeeded() {
+      throw new Error('Seed reset is server-owned in this build. Use the Worker content API.');
+    },
+  };
 }
 
 async function handleImportFileChange(input) {
@@ -985,10 +1089,6 @@ async function updateAdminAccountRole(accountId, platformRole) {
   }
 }
 
-if (shouldOpenLocalCodexReview({ location: globalThis.location })) {
-  store.openCodex();
-}
-
 function ensureSpellingAutoAdvanceFromCurrentState() {
   return controller.ensureSpellingAutoAdvanceFromCurrentState();
 }
@@ -1008,11 +1108,13 @@ function contextFor(subjectId = null) {
     subject: resolvedSubject,
     service: services[resolvedSubject.id] || null,
     spellingContent,
+    readModels,
     tts,
     applySubjectTransition,
     runtimeBoundary,
     subjects: SUBJECTS,
-    ...buildRouteHubModels(appState),
+    runtimeReadOnly: appState.persistence?.mode === 'degraded',
+    ...buildHubModels(appState),
   };
 }
 
@@ -1092,6 +1194,7 @@ function buildSurfaceChromeModel(appState) {
     learnerOptions,
     ttsProvider: learnerId ? selectedTtsProvider() : DEFAULT_TTS_PROVIDER,
     signedInAs: boot.session.signedIn ? (boot.session.email || '') : null,
+    session: boot.session,
     persistence: {
       mode: persistenceSnapshot?.mode || 'local-only',
       label: homePersistenceLabel(persistenceSnapshot),
@@ -1480,12 +1583,8 @@ function handleGlobalAction(action, data) {
   if (action === 'tts-test') {
     const provider = normaliseTtsProvider(data.provider, selectedTtsProvider());
     const token = beginProfileTtsTest(provider);
-    Promise.resolve(tts.speak({
-      word: 'early',
-      sentence: 'The birds sang early in the day.',
-      provider,
-      kind: 'test',
-    }))
+    profileTtsPayload(provider)
+      .then((payload) => tts.speak(payload))
       .then((ok) => finishProfileTtsTest(token, Boolean(ok)))
       .catch(() => finishProfileTtsTest(token, false));
     return true;
@@ -1494,8 +1593,10 @@ function handleGlobalAction(action, data) {
   if (action === 'learner-save-form') {
     if (blockReadOnlyAdultAction(action)) return true;
     const formData = data.formData;
-    services.spelling?.savePrefs?.(learnerId, {
-      ttsProvider: normaliseTtsProvider(formData.get('ttsProvider')),
+    runSpellingCommand('save-prefs', {
+      prefs: {
+        ttsProvider: normaliseTtsProvider(formData.get('ttsProvider')),
+      },
     });
     tts.stop();
     store.updateLearner(learnerId, {
@@ -1511,9 +1612,13 @@ function handleGlobalAction(action, data) {
   if (action === 'learner-delete') {
     if (blockReadOnlyAdultAction(action)) return true;
     if (!globalThis.confirm('Warning: delete the current learner and all their subject progress and codex state?')) return true;
-    runtimeBoundary.clearLearner(learnerId);
-    resetLearnerData(learnerId);
-    store.deleteLearner(learnerId);
+    if (isServerSyncedRuntime()) {
+      deleteLearnerFromServerSyncedAccount(learnerId);
+    } else {
+      runtimeBoundary.clearLearner(learnerId);
+      resetLearnerData(learnerId);
+      store.deleteLearner(learnerId);
+    }
     return true;
   }
 
@@ -1521,9 +1626,15 @@ function handleGlobalAction(action, data) {
     if (blockReadOnlyAdultAction(action)) return true;
     if (!globalThis.confirm('Warning: reset subject progress and codex rewards for the current learner?')) return true;
     tts.stop();
-    runtimeBoundary.clearLearner(learnerId);
-    resetLearnerData(learnerId);
-    store.resetSubjectUi();
+    if (isServerSyncedRuntime()) {
+      resetServerSyncedLearnerProgress(learnerId).catch((error) => {
+        globalThis.alert?.(error?.message || 'Could not reset learner progress.');
+      });
+    } else {
+      runtimeBoundary.clearLearner(learnerId);
+      resetLearnerData(learnerId);
+      store.resetSubjectUi();
+    }
     return true;
   }
 
@@ -1564,8 +1675,32 @@ function handleGlobalAction(action, data) {
     return true;
   }
 
+  if (action === 'demo-convert-email') {
+    const formData = data.formData;
+    submitAuthCredentials({
+      mode: 'register',
+      email: formData?.get('email'),
+      password: formData?.get('password'),
+      convertDemo: true,
+    }).catch((error) => {
+      globalThis.alert?.(error?.message || 'Could not create an account from this demo.');
+    });
+    return true;
+  }
+
+  if (action === 'demo-social-convert') {
+    startSocialAuth(data.provider).catch((error) => {
+      globalThis.alert?.(error?.message || 'Could not start social sign-in for this demo.');
+    });
+    return true;
+  }
+
   if (action === 'spelling-content-export') {
-    downloadJson('ks2-spelling-content.json', spellingContent.exportPortable());
+    spellingContent.exportPortable()
+      .then((content) => downloadJson('ks2-spelling-content.json', content))
+      .catch((error) => {
+        globalThis.alert(`Spelling content export failed: ${error?.message || 'Unknown error.'}`);
+      });
     return true;
   }
 
@@ -1653,6 +1788,526 @@ function handleGlobalAction(action, data) {
   return false;
 }
 
+const SPELLING_COMMAND_ACTIONS = new Set([
+  'spelling-set-mode',
+  'spelling-set-pref',
+  'spelling-toggle-pref',
+  'spelling-start',
+  'spelling-start-again',
+  'spelling-shortcut-start',
+  'spelling-submit-form',
+  'spelling-continue',
+  'spelling-skip',
+  'spelling-end-early',
+  'spelling-drill-all',
+  'spelling-drill-single',
+]);
+
+const SPELLING_UI_LOCAL_ACTIONS = new Set([
+  'spelling-back',
+  'spelling-replay',
+  'spelling-replay-slow',
+]);
+
+const SPELLING_WORD_BANK_ACTIONS = new Set([
+  'spelling-open-word-bank',
+  'spelling-close-word-bank',
+  'spelling-analytics-search',
+  'spelling-analytics-year-filter',
+  'spelling-analytics-status-filter',
+  'spelling-word-detail-open',
+  'spelling-word-detail-close',
+  'spelling-word-detail-mode',
+  'spelling-word-bank-drill-input',
+  'spelling-word-bank-drill-submit',
+  'spelling-word-bank-drill-try-again',
+  'spelling-word-bank-word-replay',
+  'spelling-word-bank-drill-replay',
+  'spelling-word-bank-drill-replay-slow',
+  'spelling-word-bank-load-more',
+]);
+
+function runtimeIsReadOnly() {
+  return store.getState().persistence?.mode === 'degraded';
+}
+
+function setSpellingRuntimeError(message) {
+  store.updateSubjectUi('spelling', { error: message || 'Practice is temporarily unavailable.' });
+}
+
+function applySpellingCommandResponse(response) {
+  if (response?.projections?.rewards?.toastEvents?.length) {
+    store.pushToasts(response.projections.rewards.toastEvents);
+  }
+  if (response?.projections?.rewards?.events?.length) {
+    store.pushMonsterCelebrations(response.projections.rewards.events);
+  }
+  store.reloadFromRepositories({ preserveRoute: true });
+  if (response?.audio?.promptToken) {
+    tts.speak(response.audio);
+  }
+}
+
+function wordBankAnalyticsFromState(appState = store.getState()) {
+  return appState.subjectUi?.spelling?.analytics || null;
+}
+
+function findLoadedWordBankEntry(analytics, slug) {
+  if (!slug) return null;
+  const groups = Array.isArray(analytics?.wordGroups) ? analytics.wordGroups : [];
+  for (const group of groups) {
+    const words = Array.isArray(group.words) ? group.words : [];
+    const found = words.find((word) => word.slug === slug);
+    if (found) return found;
+  }
+  return null;
+}
+
+function mergeWordBankAnalytics(current, incoming, { append = false } = {}) {
+  if (!append || !current?.wordGroups?.length) return incoming;
+  const currentGroups = new Map(current.wordGroups.map((group) => [group.key, group]));
+  const nextGroups = (Array.isArray(incoming?.wordGroups) ? incoming.wordGroups : []).map((group) => {
+    const existing = currentGroups.get(group.key);
+    const seen = new Set((existing?.words || []).map((word) => word.slug));
+    const additions = (Array.isArray(group.words) ? group.words : []).filter((word) => {
+      if (!word?.slug || seen.has(word.slug)) return false;
+      seen.add(word.slug);
+      return true;
+    });
+    return {
+      ...group,
+      words: [...(existing?.words || []), ...additions],
+    };
+  });
+  return {
+    ...incoming,
+    wordGroups: nextGroups,
+    wordBank: {
+      ...(incoming.wordBank || {}),
+      returnedRows: nextGroups.reduce((count, group) => count + (Array.isArray(group.words) ? group.words.length : 0), 0),
+    },
+  };
+}
+
+async function loadSpellingWordBank({ detailSlug = '', page = 1, append = false } = {}) {
+  const appState = store.getState();
+  const learnerId = appState.learners.selectedId;
+  if (!learnerId) return null;
+  const params = new URLSearchParams({
+    learnerId,
+    page: String(page),
+    pageSize: '250',
+  });
+  if (detailSlug) params.set('detailSlug', detailSlug);
+  const payload = await readModels.readJson(`/api/subjects/spelling/word-bank?${params.toString()}`);
+  const wordBank = payload.wordBank || null;
+  if (!wordBank?.analytics) return null;
+  const current = wordBankAnalyticsFromState();
+  const analytics = mergeWordBankAnalytics(current, wordBank.analytics, { append });
+  store.updateSubjectUi('spelling', {
+    analytics,
+    error: '',
+  });
+  if (wordBank.detail) {
+    store.patch((currentState) => ({
+      transientUi: {
+        ...currentState.transientUi,
+        spellingWordDetail: wordBank.detail,
+      },
+    }));
+  }
+  return wordBank;
+}
+
+function loadedWordBankDetail(appState = store.getState()) {
+  const detail = appState.transientUi?.spellingWordDetail;
+  const slug = appState.transientUi?.spellingWordDetailSlug || '';
+  if (detail?.slug && (!slug || detail.slug === slug)) return detail;
+  return findLoadedWordBankEntry(wordBankAnalyticsFromState(appState), slug);
+}
+
+function speakWordBankCue(kind, { slow = false } = {}) {
+  const detail = loadedWordBankDetail();
+  const cue = kind === 'word'
+    ? detail?.audio?.word
+    : detail?.audio?.dictation;
+  if (cue?.promptToken) {
+    tts.speak({ ...cue, slow });
+  }
+}
+
+async function sendSpellingCommand(command, payload = {}) {
+  const appState = store.getState();
+  const learnerId = appState.learners.selectedId;
+  if (!learnerId) return null;
+  const response = await subjectCommands.send({
+    subjectId: 'spelling',
+    learnerId,
+    command,
+    payload,
+  });
+  applySpellingCommandResponse(response);
+  return response;
+}
+
+function runSpellingCommand(command, payload = {}) {
+  sendSpellingCommand(command, payload).catch((error) => {
+    globalThis.console?.warn?.('Spelling command failed.', error);
+    const message = error?.payload?.message || error?.message || 'The spelling command could not be completed.';
+    setSpellingRuntimeError(message);
+  });
+}
+
+function handleRemoteSpellingAction(action, data = {}) {
+  if (!SPELLING_COMMAND_ACTIONS.has(action) && !SPELLING_UI_LOCAL_ACTIONS.has(action) && !SPELLING_WORD_BANK_ACTIONS.has(action)) return false;
+
+  const appState = store.getState();
+  const learnerId = appState.learners.selectedId;
+  const ui = appState.subjectUi?.spelling || {};
+  const spelling = services.spelling;
+
+  if (action === 'spelling-replay' || action === 'spelling-replay-slow') {
+    const audio = spelling?.getAudioCue?.(learnerId) || ui.audio || null;
+    if (audio?.promptToken) {
+      tts.speak({ ...audio, slow: action === 'spelling-replay-slow' });
+    }
+    return true;
+  }
+
+  if (action === 'spelling-back') {
+    tts.stop();
+    store.updateSubjectUi('spelling', { phase: 'dashboard', error: '' });
+    return true;
+  }
+
+  if (action === 'spelling-open-word-bank') {
+    tts.stop();
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingWordDetailSlug: '',
+        spellingWordDetailMode: 'explain',
+        spellingWordDetail: null,
+        spellingWordBankDrillTyped: '',
+        spellingWordBankDrillResult: null,
+        spellingWordBankStatus: runtimeIsReadOnly() ? 'cached' : 'loading',
+      },
+    }));
+    store.updateSubjectUi('spelling', { phase: 'word-bank', error: '' });
+    if (!runtimeIsReadOnly()) {
+      loadSpellingWordBank().then(() => {
+        store.patch((current) => ({
+          transientUi: {
+            ...current.transientUi,
+            spellingWordBankStatus: 'loaded',
+          },
+        }));
+      }).catch((error) => {
+        globalThis.console?.warn?.('Word bank load failed.', error);
+        setSpellingRuntimeError(error?.payload?.message || error?.message || 'The word bank could not be loaded.');
+        store.patch((current) => ({
+          transientUi: {
+            ...current.transientUi,
+            spellingWordBankStatus: 'error',
+          },
+        }));
+      });
+    }
+    return true;
+  }
+
+  if (action === 'spelling-close-word-bank') {
+    tts.stop();
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingWordDetailSlug: '',
+        spellingWordDetailMode: 'explain',
+        spellingWordDetail: null,
+        spellingWordBankDrillTyped: '',
+        spellingWordBankDrillResult: null,
+      },
+    }));
+    store.updateSubjectUi('spelling', { phase: 'dashboard', error: '' });
+    return true;
+  }
+
+  if (action === 'spelling-analytics-search') {
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingAnalyticsWordSearch: String(data.value || '').slice(0, 80),
+      },
+    }));
+    return true;
+  }
+
+  if (action === 'spelling-analytics-year-filter') {
+    const raw = String(data.value || 'all');
+    const allowed = new Set(['all', 'y3-4', 'y5-6', 'extra']);
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingAnalyticsYearFilter: allowed.has(raw) ? raw : 'all',
+      },
+    }));
+    return true;
+  }
+
+  if (action === 'spelling-analytics-status-filter') {
+    const raw = String(data.value || 'all');
+    const allowed = new Set(['all', 'due', 'weak', 'learning', 'secure', 'unseen']);
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingAnalyticsStatusFilter: allowed.has(raw) ? raw : 'all',
+      },
+    }));
+    return true;
+  }
+
+  if (action === 'spelling-word-detail-open') {
+    const slug = String(data.slug || '').trim();
+    if (!slug) return true;
+    const mode = data.value === 'drill' ? 'drill' : 'explain';
+    const existing = findLoadedWordBankEntry(wordBankAnalyticsFromState(appState), slug);
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingWordDetailSlug: slug,
+        spellingWordDetailMode: mode,
+        spellingWordDetail: existing || null,
+        spellingWordBankDrillTyped: '',
+        spellingWordBankDrillResult: null,
+      },
+    }));
+    if (!runtimeIsReadOnly()) {
+      loadSpellingWordBank({ detailSlug: slug }).then(() => {
+        if (mode === 'drill') speakWordBankCue('dictation');
+      }).catch((error) => {
+        globalThis.console?.warn?.('Word detail load failed.', error);
+        setSpellingRuntimeError(error?.payload?.message || error?.message || 'The spelling word could not be loaded.');
+      });
+    }
+    return true;
+  }
+
+  if (action === 'spelling-word-detail-close') {
+    tts.stop();
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingWordDetailSlug: '',
+        spellingWordDetailMode: 'explain',
+        spellingWordDetail: null,
+        spellingWordBankDrillTyped: '',
+        spellingWordBankDrillResult: null,
+      },
+    }));
+    return true;
+  }
+
+  if (action === 'spelling-word-detail-mode') {
+    const mode = data.value === 'drill' ? 'drill' : 'explain';
+    const previousMode = appState.transientUi?.spellingWordDetailMode === 'drill' ? 'drill' : 'explain';
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingWordDetailMode: mode,
+        ...(mode !== previousMode ? {
+          spellingWordBankDrillTyped: '',
+          spellingWordBankDrillResult: null,
+        } : {}),
+      },
+    }));
+    if (mode === 'drill') speakWordBankCue('dictation');
+    return true;
+  }
+
+  if (action === 'spelling-word-bank-drill-input') {
+    const typed = String(data.value || '').slice(0, 80);
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingWordBankDrillTyped: typed,
+        spellingWordBankDrillResult: current.transientUi?.spellingWordBankDrillResult === 'correct'
+          ? 'correct'
+          : null,
+      },
+    }));
+    return true;
+  }
+
+  if (action === 'spelling-word-bank-drill-submit') {
+    if (runtimeIsReadOnly()) {
+      setSpellingRuntimeError('Practice is read-only while sync is degraded. Retry sync before continuing.');
+      return true;
+    }
+    const slug = String(data.slug || appState.transientUi?.spellingWordDetailSlug || '').trim();
+    const typed = String(data.formData?.get?.('typed') || appState.transientUi?.spellingWordBankDrillTyped || '').trim();
+    if (!slug) return true;
+    subjectCommands.send({
+      subjectId: 'spelling',
+      learnerId,
+      command: 'check-word-bank-drill',
+      payload: { slug, typed },
+    }).then((response) => {
+      store.patch((current) => ({
+        transientUi: {
+          ...current.transientUi,
+          spellingWordBankDrillTyped: typed,
+          spellingWordBankDrillResult: response.wordBankDrill?.result || 'incorrect',
+        },
+      }));
+    }).catch((error) => {
+      globalThis.console?.warn?.('Word-bank drill check failed.', error);
+      setSpellingRuntimeError(error?.payload?.message || error?.message || 'The drill answer could not be checked.');
+    });
+    return true;
+  }
+
+  if (action === 'spelling-word-bank-drill-try-again') {
+    speakWordBankCue('dictation');
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingWordBankDrillTyped: '',
+        spellingWordBankDrillResult: null,
+      },
+    }));
+    return true;
+  }
+
+  if (action === 'spelling-word-bank-word-replay') {
+    speakWordBankCue('word');
+    return true;
+  }
+
+  if (action === 'spelling-word-bank-drill-replay' || action === 'spelling-word-bank-drill-replay-slow') {
+    speakWordBankCue('dictation', { slow: action === 'spelling-word-bank-drill-replay-slow' });
+    return true;
+  }
+
+  if (action === 'spelling-word-bank-load-more') {
+    const meta = wordBankAnalyticsFromState(appState)?.wordBank || {};
+    if (!meta.hasNextPage || runtimeIsReadOnly()) return true;
+    loadSpellingWordBank({
+      page: (Number(meta.page) || 1) + 1,
+      append: true,
+    }).catch((error) => {
+      globalThis.console?.warn?.('Word bank pagination failed.', error);
+      setSpellingRuntimeError(error?.payload?.message || error?.message || 'More words could not be loaded.');
+    });
+    return true;
+  }
+
+  if (runtimeIsReadOnly()) {
+    setSpellingRuntimeError('Practice is read-only while sync is degraded. Retry sync before continuing.');
+    return true;
+  }
+
+  if (action === 'spelling-set-pref') {
+    runSpellingCommand('save-prefs', { prefs: { [data.pref]: data.value } });
+    return true;
+  }
+
+  if (action === 'spelling-set-mode') {
+    runSpellingCommand('save-prefs', { prefs: { mode: data.value } });
+    return true;
+  }
+
+  if (action === 'spelling-toggle-pref') {
+    const current = spelling?.getPrefs?.(learnerId) || {};
+    runSpellingCommand('save-prefs', { prefs: { [data.pref]: !current[data.pref] } });
+    return true;
+  }
+
+  if (action === 'spelling-start' || action === 'spelling-start-again') {
+    const prefs = spelling?.getPrefs?.(learnerId) || {};
+    tts.stop();
+    runSpellingCommand('start-session', {
+      mode: prefs.mode,
+      yearFilter: prefs.yearFilter,
+      length: prefs.roundLength,
+    });
+    return true;
+  }
+
+  if (action === 'spelling-shortcut-start') {
+    const mode = data.mode;
+    if (!mode) return true;
+    if (ui.phase === 'session') {
+      const confirmed = globalThis.confirm?.('End the current spelling session and switch?');
+      if (confirmed === false) return true;
+    }
+    tts.stop();
+    (async () => {
+      await sendSpellingCommand('save-prefs', { prefs: { mode } });
+      const prefs = spelling?.getPrefs?.(learnerId) || { mode };
+      await sendSpellingCommand('start-session', {
+        mode: prefs.mode || mode,
+        yearFilter: prefs.yearFilter,
+        length: prefs.roundLength,
+      });
+    })().catch((error) => {
+      globalThis.console?.warn?.('Spelling shortcut command failed.', error);
+      setSpellingRuntimeError(error?.payload?.message || error?.message || 'The spelling shortcut could not be completed.');
+    });
+    return true;
+  }
+
+  if (action === 'spelling-submit-form') {
+    runSpellingCommand('submit-answer', { typed: data.formData?.get?.('typed') || '' });
+    return true;
+  }
+
+  if (action === 'spelling-continue') {
+    runSpellingCommand('continue-session');
+    return true;
+  }
+
+  if (action === 'spelling-skip') {
+    runSpellingCommand('skip-word');
+    return true;
+  }
+
+  if (action === 'spelling-end-early') {
+    const confirmed = globalThis.confirm?.('End this session now?');
+    if (confirmed === false) return true;
+    tts.stop();
+    runSpellingCommand('end-session');
+    return true;
+  }
+
+  if (action === 'spelling-drill-all') {
+    const mistakes = Array.isArray(ui.summary?.mistakes) ? ui.summary.mistakes : [];
+    if (!mistakes.length) return true;
+    tts.stop();
+    runSpellingCommand('start-session', {
+      mode: 'trouble',
+      words: mistakes.map((word) => word.slug).filter(Boolean),
+      yearFilter: 'all',
+      length: mistakes.length,
+    });
+    return true;
+  }
+
+  if (action === 'spelling-drill-single') {
+    const slug = String(data.slug || '').trim();
+    if (!slug) return true;
+    tts.stop();
+    runSpellingCommand('start-session', {
+      mode: 'single',
+      words: [slug],
+      yearFilter: 'all',
+      length: 1,
+    });
+    return true;
+  }
+
+  return false;
+}
+
 function handleSubjectAction(action, data) {
   const appState = store.getState();
   const learnerId = appState.learners.selectedId;
@@ -1687,7 +2342,7 @@ function handleSubjectAction(action, data) {
 function dispatchAction(action, data = {}) {
   controller.autoAdvance.clear();
   captureWordDetailTrigger(action, data);
-  if (!handleGlobalAction(action, data)) {
+  if (!handleGlobalAction(action, data) && !handleRemoteSpellingAction(action, data)) {
     handleSubjectAction(action, data);
   }
   ensureSpellingAutoAdvanceFromCurrentState();

@@ -23,7 +23,7 @@ function SummaryStatGrid({ cards = [] }) {
   );
 }
 
-export function SpellingSummaryScene({ learner, ui, accent, actions, previousHeroBg = '' }) {
+export function SpellingSummaryScene({ learner, ui, accent, actions, previousHeroBg = '', runtimeReadOnly = false }) {
   const summary = ui.summary;
   if (!summary) return null;
   const progressTotal = Math.max(1, summary.totalWords || 1);
@@ -67,6 +67,7 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, previousHer
                     data-action="spelling-drill-single"
                     data-slug={word.slug}
                     key={word.slug}
+                    disabled={runtimeReadOnly}
                     onClick={(event) => renderAction(actions, event, 'spelling-drill-single', { slug: word.slug })}
                   >
                     {word.word}
@@ -76,6 +77,7 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, previousHer
                   type="button"
                   className="btn primary sm"
                   data-action="spelling-drill-all"
+                  disabled={runtimeReadOnly}
                   onClick={(event) => renderAction(actions, event, 'spelling-drill-all')}
                 >
                   Drill all {summary.mistakes.length} <ArrowRightIcon />
@@ -98,6 +100,7 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, previousHer
               className="btn primary lg"
               style={{ '--btn-accent': accent }}
               data-action="spelling-start-again"
+              disabled={runtimeReadOnly}
               onClick={(event) => renderAction(actions, event, 'spelling-start-again')}
             >
               Start another round <ArrowRightIcon />

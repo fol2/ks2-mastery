@@ -30,6 +30,19 @@ export function normaliseAuditEntry(rawValue) {
   };
 }
 
+export function normaliseDemoOperations(rawValue) {
+  const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
+  return {
+    sessionsCreated: Math.max(0, Number(raw.sessionsCreated) || 0),
+    activeSessions: Math.max(0, Number(raw.activeSessions) || 0),
+    conversions: Math.max(0, Number(raw.conversions) || 0),
+    cleanupCount: Math.max(0, Number(raw.cleanupCount) || 0),
+    rateLimitBlocks: Math.max(0, Number(raw.rateLimitBlocks) || 0),
+    ttsFallbacks: Math.max(0, Number(raw.ttsFallbacks) || 0),
+    updatedAt: asTs(raw.updatedAt, 0),
+  };
+}
+
 export function buildAdminHubReadModel({
   account = null,
   platformRole = 'parent',
@@ -37,6 +50,7 @@ export function buildAdminHubReadModel({
   memberships = [],
   learnerBundles = {},
   runtimeSnapshots = {},
+  demoOperations = null,
   auditEntries = [],
   auditAvailable = false,
   selectedLearnerId = null,
@@ -128,6 +142,7 @@ export function buildAdminHubReadModel({
         ? 'Backed by durable mutation receipts on the Worker path.'
         : 'Local reference build does not have the Worker audit stream enabled yet.',
     },
+    demoOperations: normaliseDemoOperations(demoOperations),
     learnerSupport: {
       diagnosticsCount: diagnosticsEntries.length,
       selectedLearnerId: selectedDiagnostics?.learnerId || '',
@@ -154,6 +169,7 @@ export function buildAdminHubReadModel({
       contentReleaseStatus: 'real',
       importValidationStatus: 'real',
       auditLogLookup: auditAvailable ? 'real' : 'placeholder',
+      demoOperations: demoOperations ? 'real' : 'placeholder',
       learnerSupport: 'real',
     },
   };

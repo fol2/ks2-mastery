@@ -65,6 +65,36 @@ function AdminAccountRoles({ model, directory = {}, actions }) {
   );
 }
 
+function DemoOperationsSummary({ summary = {} }) {
+  const items = [
+    ['Demo sessions created', summary.sessionsCreated],
+    ['Active demo sessions', summary.activeSessions],
+    ['Conversions', summary.conversions],
+    ['Cleanup count', summary.cleanupCount],
+    ['Rate-limit blocks', summary.rateLimitBlocks],
+    ['TTS fallback indicators', summary.ttsFallbacks],
+  ];
+  return (
+    <section className="card" style={{ marginBottom: 20 }}>
+      <div className="card-header">
+        <div>
+          <div className="eyebrow">Demo operations</div>
+          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Aggregate demo health</h3>
+        </div>
+        <span className="chip">Updated {formatTimestamp(summary.updatedAt)}</span>
+      </div>
+      <div className="skill-list">
+        {items.map(([label, value]) => (
+          <div className="skill-row" key={label}>
+            <div><strong>{label}</strong></div>
+            <div>{String(Number(value) || 0)}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function AdminHubSurface({ appState, model, hubState = {}, accountDirectory = {}, accessContext = {}, actions }) {
   const loadingRemote = accessContext?.shellAccess?.source === 'worker-session' && hubState.status === 'loading' && !model;
   if (loadingRemote) {
@@ -134,6 +164,7 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
       </section>
 
       <AdminAccountRoles model={model} directory={accountDirectory} actions={actions} />
+      <DemoOperationsSummary summary={model.demoOperations} />
 
       <section className="two-col" style={{ marginBottom: 20 }}>
         <article className="card">

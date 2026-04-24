@@ -3,10 +3,18 @@
   "name": "ks2-platform-v2",
   "main": "./worker/src/index.js",
   "compatibility_date": "2026-04-19",
+  "build": {
+    "command": "npm run build && npm run assert:build-public && npm run audit:client"
+  },
   "assets": {
-    "directory": ".",
+    "directory": "./dist/public",
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/api/*",
+      "/demo",
+      "/src/*"
+    ]
   },
   "vars": {
     "AUTH_MODE": "production-placeholder",

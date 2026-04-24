@@ -49,6 +49,63 @@ Every state transition returns the same shape:
 
 `events` are domain events from the spelling service. The service does not mutate the reward layer directly.
 
+## Worker command runtime
+
+The full-lockdown runtime adds a server-owned Spelling command path through `POST /api/subjects/spelling/command`.
+
+Supported commands are:
+
+- `start-session`
+- `submit-answer`
+- `continue-session`
+- `skip-word`
+- `end-session`
+- `save-prefs`
+- `reset-learner`
+
+The Worker command handler owns the durable mutation. It reads the current learner Spelling subject record, resolves the published content snapshot, applies the Spelling transition, and persists:
+
+- normalised subject UI state
+- Spelling subject data (`prefs` and durable `progress`)
+- active, completed, or abandoned practice-session records
+- emitted Spelling domain events
+
+Each command still goes through the generic learner mutation policy, so request idempotency, stale revision checks, same-origin validation, demo expiry, and learner write access are enforced before the runtime writes. Command responses include an authoritative read model for React to render; React should not recompute scoring, word selection, retry/correction state, or progress mutation once it is migrated to this path.
+
+Active sessions from the browser-owned path are treated as stale for submit/continue commands and are replaced by new Worker-owned sessions on the next `start-session`. Durable progress and completed session history are kept.
+
+## Worker projections
+
+Spelling command responses now apply Worker-owned reward projection before returning.
+
+When a Spelling domain event secures a word, the Worker derives the monster/codex reward update, persists `child_game_state`, appends both the domain event and reward event, and returns:
+
+- `events`: all domain and reaction events applied by the command
+- `domainEvents`: Spelling-owned events
+- `reactionEvents`: reward/projection events
+- `toastEvents`: user-visible celebration events
+- `projections.rewards`: the latest server reward state and emitted reward events
+
+The projection is tied to the same learner mutation/idempotency receipt as the Spelling command. Replaying the same command returns the stored response and does not duplicate rewards or event log rows.
+
+## Prompt-token audio
+
+Live Spelling command read models no longer expose the current answer, word slug, raw sentence, queue, or answer-bearing session internals. The Worker returns a prompt token instead:
+
+```txt
+{
+  learnerId,
+  sessionId,
+  promptToken,
+  slow,
+  wordOnly
+}
+```
+
+The browser sends only `learnerId`, `promptToken`, and playback options to `/api/tts`. The Worker then reloads the current server-owned Spelling session, validates that the token still matches the active prompt, derives the transcript server-side, and only then calls the protected OpenAI TTS fallback. Arbitrary browser-supplied `word` and `sentence` payloads are rejected.
+
+This prepares the hybrid audio path: pre-generated/static audio can be checked first for the same prompt identity, with protected OpenAI fallback retained for prompts that are not ready yet.
+
 ## Persisted subject-state invariants
 
 The spelling subject state is JSON-serialisable and versioned.

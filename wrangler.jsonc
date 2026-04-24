@@ -8,12 +8,17 @@
     "enabled": true,
     "head_sampling_rate": 1
   },
+  "build": {
+    "command": "npm run build && npm run assert:build-public && npm run audit:client"
+  },
   "assets": {
     "directory": "./dist/public",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
     "run_worker_first": [
-      "/api/*"
+      "/api/*",
+      "/demo",
+      "/src/*"
     ]
   },
   "vars": {

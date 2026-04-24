@@ -30,6 +30,7 @@ import {
 } from '../../src/platform/access/roles.js';
 import { buildAdminHubReadModel } from '../../src/platform/hubs/admin-read-model.js';
 import { buildParentHubReadModel } from '../../src/platform/hubs/parent-read-model.js';
+import { buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
 import {
   BadRequestError,
   ConflictError,
@@ -51,6 +52,35 @@ import {
 const WRITABLE_MEMBERSHIP_ROLES = new Set(['owner', 'member']);
 const MEMBERSHIP_ROLES = new Set(['owner', 'member', 'viewer']);
 const MUTATION_POLICY_VERSION = 1;
+const PUBLIC_SPELLING_YEAR_LABELS = new Map([
+  ['3-4', 'Years 3-4'],
+  ['5-6', 'Years 5-6'],
+  ['extra', 'Extra spellings'],
+]);
+const PUBLIC_PRACTICE_CARD_LABELS = new Map([
+  ['correct', 'Correct'],
+  ['accuracy', 'Accuracy'],
+]);
+const PUBLIC_EVENT_TYPES = new Set([
+  'spelling.retry-cleared',
+  'spelling.word-secured',
+  'spelling.mastery-milestone',
+  'spelling.session-completed',
+  'reward.monster',
+  'platform.practice-streak-hit',
+]);
+const PUBLIC_MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
+const PUBLIC_MONSTER_IDS = new Set(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']);
+const PUBLIC_MONSTER_BRANCHES = new Set(['b1', 'b2']);
+const PUBLIC_EVENT_TEXT_ENUMS = {
+  mode: new Set(['smart', 'trouble', 'single', 'test']),
+  sessionType: new Set(['learning', 'test']),
+  kind: new Set(['caught', 'evolve', 'mega', 'levelup']),
+  monsterId: new Set(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']),
+  spellingPool: new Set(['core', 'extra']),
+  yearBand: new Set(['3-4', '5-6', 'extra']),
+  fromPhase: new Set(['retry', 'correction']),
+};
 
 function safeJsonParse(text, fallback) {
   if (text == null || text === '') return cloneSerialisable(fallback);
@@ -100,6 +130,79 @@ function subjectStateRowToRecord(row) {
   });
 }
 
+function safeSpellingPrompt(prompt) {
+  if (!prompt || typeof prompt !== 'object' || Array.isArray(prompt)) return null;
+  return {
+    cloze: typeof prompt.cloze === 'string' ? prompt.cloze : '',
+  };
+}
+
+function safeSpellingCurrentCard(card) {
+  if (!card || typeof card !== 'object' || Array.isArray(card)) return null;
+  return {
+    prompt: safeSpellingPrompt(card.prompt),
+  };
+}
+
+function safeSpellingSessionProgress(progress) {
+  if (!progress || typeof progress !== 'object' || Array.isArray(progress)) return null;
+  const output = {};
+  for (const key of ['done', 'total']) {
+    const value = Number(progress[key]);
+    if (Number.isFinite(value) && value >= 0) output[key] = Math.floor(value);
+  }
+  return Object.keys(output).length ? output : null;
+}
+
+function redactSpellingUiForClient(ui, data = {}, learnerId = '') {
+  const raw = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {};
+  const session = raw.session && typeof raw.session === 'object' && !Array.isArray(raw.session)
+    ? raw.session
+    : null;
+  return {
+    subjectId: 'spelling',
+    learnerId,
+    version: 1,
+    phase: typeof raw.phase === 'string' ? raw.phase : 'dashboard',
+    awaitingAdvance: Boolean(raw.awaitingAdvance),
+    session: session
+      ? {
+        id: typeof session.id === 'string' ? session.id : '',
+        type: typeof session.type === 'string' ? session.type : 'learning',
+        mode: typeof session.mode === 'string' ? session.mode : 'smart',
+        label: typeof session.label === 'string' ? session.label : 'Spelling round',
+        practiceOnly: Boolean(session.practiceOnly),
+        fallbackToSmart: Boolean(session.fallbackToSmart),
+        phase: typeof session.phase === 'string' ? session.phase : 'question',
+        promptCount: Number.isFinite(Number(session.promptCount)) ? Number(session.promptCount) : 0,
+        startedAt: Number.isFinite(Number(session.startedAt)) ? Number(session.startedAt) : 0,
+        progress: safeSpellingSessionProgress(session.progress),
+        currentStage: Number.isFinite(Number(session.currentStage)) ? Number(session.currentStage) : 0,
+        currentCard: safeSpellingCurrentCard(session.currentCard),
+        serverAuthority: 'worker',
+      }
+      : null,
+    feedback: null,
+    summary: null,
+    error: typeof raw.error === 'string' ? raw.error : '',
+    prefs: cloneSerialisable(data?.prefs) || {},
+    stats: {},
+    analytics: null,
+    audio: null,
+    content: null,
+  };
+}
+
+function publicSubjectStateRowToRecord(row) {
+  const record = subjectStateRowToRecord(row);
+  if (row.subject_id !== 'spelling') return record;
+  return normaliseSubjectStateRecord({
+    ui: redactSpellingUiForClient(record.ui, record.data, row.learner_id),
+    data: {},
+    updatedAt: record.updatedAt,
+  });
+}
+
 function learnerRowToRecord(row) {
   return normaliseLearnerRecord({
     id: row.id,
@@ -116,6 +219,37 @@ function gameStateRowToRecord(row) {
   return cloneSerialisable(safeJsonParse(row.state_json, {})) || {};
 }
 
+function publicMonsterCodexEntry(entry) {
+  if (!isPlainObject(entry)) return null;
+  const masteredCount = Number(entry.masteredCount);
+  const mastered = Array.isArray(entry.mastered)
+    ? entry.mastered.filter((slug) => typeof slug === 'string' && slug).length
+    : Number.isFinite(masteredCount) && masteredCount > 0
+      ? Math.floor(masteredCount)
+      : 0;
+  const output = {
+    masteredCount: mastered,
+    caught: Boolean(entry.caught) || mastered > 0,
+  };
+  if (PUBLIC_MONSTER_BRANCHES.has(entry.branch)) output.branch = entry.branch;
+  return output;
+}
+
+function publicMonsterCodexState(rawState) {
+  const state = isPlainObject(rawState) ? rawState : {};
+  const output = {};
+  for (const monsterId of PUBLIC_MONSTER_IDS) {
+    const entry = publicMonsterCodexEntry(state[monsterId]);
+    if (entry) output[monsterId] = entry;
+  }
+  return output;
+}
+
+function publicGameStateRowToRecord(row) {
+  if (row.system_id !== PUBLIC_MONSTER_CODEX_SYSTEM_ID) return null;
+  return publicMonsterCodexState(gameStateRowToRecord(row));
+}
+
 function practiceSessionRowToRecord(row) {
   return normalisePracticeSessionRecord({
     id: row.id,
@@ -127,6 +261,16 @@ function practiceSessionRowToRecord(row) {
     summary: safeJsonParse(row.summary_json, null),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  });
+}
+
+function publicPracticeSessionRowToRecord(row) {
+  const record = practiceSessionRowToRecord(row);
+  if (record.subjectId !== 'spelling') return record;
+  return normalisePracticeSessionRecord({
+    ...record,
+    sessionState: null,
+    summary: publicPracticeSessionSummary(record.summary, record.sessionKind),
   });
 }
 
@@ -145,6 +289,103 @@ function eventRowToRecord(row) {
     event.type = row.event_type || event.kind || 'event';
   }
   return event;
+}
+
+function publicPracticeLabel(sessionKind) {
+  if (sessionKind === 'test') return 'SATs 20 test';
+  return 'Smart Review';
+}
+
+function publicSummaryCards(cards) {
+  if (!Array.isArray(cards)) return [];
+  return cards
+    .map((card) => {
+      const key = String(card?.label || '').trim().toLowerCase();
+      const label = PUBLIC_PRACTICE_CARD_LABELS.get(key);
+      const value = String(card?.value || '').trim();
+      if (!label || !/^\d+(?:\/\d+)?%?$/.test(value)) return null;
+      return { label, value };
+    })
+    .filter(Boolean);
+}
+
+function publicMistakeSummary(mistake) {
+  const year = PUBLIC_SPELLING_YEAR_LABELS.has(mistake?.year) ? mistake.year : null;
+  return {
+    year,
+    yearLabel: year ? PUBLIC_SPELLING_YEAR_LABELS.get(year) : null,
+  };
+}
+
+function publicPracticeSessionSummary(summary, sessionKind) {
+  const raw = isPlainObject(summary) ? summary : {};
+  return {
+    label: publicPracticeLabel(sessionKind),
+    cards: publicSummaryCards(raw.cards),
+    mistakes: Array.isArray(raw.mistakes)
+      ? raw.mistakes.map(publicMistakeSummary)
+      : [],
+  };
+}
+
+function safePublicEventText(value) {
+  return typeof value === 'string' && value ? value : null;
+}
+
+function safePublicEventNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function safePublicEventType(value) {
+  return PUBLIC_EVENT_TYPES.has(value) ? value : null;
+}
+
+function safePublicEventEnum(key, value) {
+  const text = safePublicEventText(value);
+  const allowed = PUBLIC_EVENT_TEXT_ENUMS[key];
+  return text && allowed?.has(text) ? text : null;
+}
+
+function publicEventRowToRecord(row) {
+  const event = eventRowToRecord(row);
+  if (!event) return null;
+  const type = safePublicEventType(safePublicEventText(event.type) || safePublicEventText(row.event_type));
+  if (!type) return null;
+  const output = {
+    type,
+    learnerId: safePublicEventText(event.learnerId),
+    subjectId: event.subjectId === 'spelling' ? 'spelling' : null,
+    createdAt: safePublicEventNumber(event.createdAt) ?? asTs(row.created_at, 0),
+  };
+
+  [
+    'mode',
+    'sessionType',
+    'kind',
+    'monsterId',
+    'spellingPool',
+    'yearBand',
+    'fromPhase',
+  ].forEach((key) => {
+    const value = safePublicEventEnum(key, event[key]);
+    if (value) output[key] = value;
+  });
+
+  [
+    'totalWords',
+    'mistakeCount',
+    'milestone',
+    'secureCount',
+    'stage',
+    'attemptCount',
+    'streakDays',
+  ].forEach((key) => {
+    const value = safePublicEventNumber(event[key]);
+    if (value != null) output[key] = value;
+  });
+
+  return output;
 }
 
 function contentRowToBundle(row) {
@@ -310,6 +551,47 @@ async function storeMutationReceipt(db, {
   ]);
 }
 
+function storeMutationReceiptStatement(db, {
+  accountId,
+  requestId,
+  scopeType,
+  scopeId,
+  mutationKind,
+  requestHash,
+  response,
+  statusCode = 200,
+  correlationId = null,
+  appliedAt,
+}, { guard = null } = {}) {
+  const params = [
+    accountId,
+    requestId,
+    scopeType,
+    scopeId,
+    mutationKind,
+    requestHash,
+    JSON.stringify(response),
+    statusCode,
+    correlationId,
+    appliedAt,
+  ];
+  return bindStatement(db, `
+    INSERT INTO mutation_receipts (
+      account_id,
+      request_id,
+      scope_type,
+      scope_id,
+      mutation_kind,
+      request_hash,
+      response_json,
+      status_code,
+      correlation_id,
+      applied_at
+    )
+    ${guardedValueSource(params.length, guard)}
+  `, guardedParams(params, guard));
+}
+
 async function ensureAccount(db, session, nowTs) {
   const platformRole = normalisePlatformRole(session?.platformRole);
   await run(db, `
@@ -397,6 +679,10 @@ function accountPlatformRole(account) {
   return normalisePlatformRole(account?.platform_role);
 }
 
+function accountType(account) {
+  return account?.account_type === 'demo' ? 'demo' : 'real';
+}
+
 function requireParentHubAccess(account, membership) {
   if (!canViewParentHub({ platformRole: accountPlatformRole(account), membershipRole: membership?.role })) {
     throw new ForbiddenError('Parent Hub access denied.', {
@@ -408,7 +694,7 @@ function requireParentHubAccess(account, membership) {
 }
 
 function requireAdminHubAccess(account) {
-  if (!canViewAdminHub({ platformRole: accountPlatformRole(account) })) {
+  if (accountType(account) === 'demo' || !canViewAdminHub({ platformRole: accountPlatformRole(account) })) {
     throw new ForbiddenError('Admin / operations access denied.', {
       code: 'admin_hub_forbidden',
       required: 'platform-role-admin-or-ops',
@@ -417,9 +703,27 @@ function requireAdminHubAccess(account) {
 }
 
 function requireAccountRoleManager(account) {
-  if (!canManageAccountRoles({ platformRole: accountPlatformRole(account) })) {
+  if (accountType(account) === 'demo' || !canManageAccountRoles({ platformRole: accountPlatformRole(account) })) {
     throw new ForbiddenError('Account role management requires an admin account.', {
       code: 'account_roles_forbidden',
+      required: 'platform-role-admin',
+    });
+  }
+}
+
+function requireSubjectContentExportAccess(account) {
+  if (!canViewAdminHub({ platformRole: accountPlatformRole(account) })) {
+    throw new ForbiddenError('Spelling content export requires an admin or operations account.', {
+      code: 'subject_content_export_forbidden',
+      required: 'platform-role-admin-or-ops',
+    });
+  }
+}
+
+function requireSubjectContentWriteAccess(account) {
+  if (accountPlatformRole(account) !== 'admin') {
+    throw new ForbiddenError('Spelling content import requires an admin account.', {
+      code: 'subject_content_write_forbidden',
       required: 'platform-role-admin',
     });
   }
@@ -481,6 +785,7 @@ async function listAccountDirectoryRows(db) {
     LEFT JOIN account_identities ai ON ai.account_id = a.id
     LEFT JOIN account_credentials ac ON ac.account_id = a.id
     LEFT JOIN account_learner_memberships m ON m.account_id = a.id
+    WHERE COALESCE(a.account_type, 'real') <> 'demo'
     GROUP BY
       a.id,
       a.email,
@@ -503,7 +808,7 @@ async function accountDirectoryPayload(db, actorAccountId) {
 }
 
 async function listAccountDirectory(db, actorAccountId) {
-  const actor = await first(db, 'SELECT id, email, display_name, platform_role, repo_revision FROM adult_accounts WHERE id = ?', [actorAccountId]);
+  const actor = await first(db, 'SELECT id, email, display_name, platform_role, repo_revision, account_type FROM adult_accounts WHERE id = ?', [actorAccountId]);
   requireAccountRoleManager(actor);
   return accountDirectoryPayload(db, actorAccountId);
 }
@@ -572,6 +877,31 @@ async function listMutationReceiptRows(db, accountId, { requestId = null, scopeI
   `, params);
 }
 
+async function readDemoOperationSummary(db, nowTs) {
+  const rows = await all(db, `
+    SELECT metric_key, metric_count, updated_at
+    FROM demo_operation_metrics
+  `);
+  const activeRow = await first(db, `
+    SELECT COUNT(*) AS count
+    FROM adult_accounts
+    WHERE account_type = 'demo'
+      AND demo_expires_at > ?
+  `, [nowTs]);
+  const metrics = new Map(rows.map((row) => [row.metric_key, row]));
+  const count = (key) => Math.max(0, Number(metrics.get(key)?.metric_count) || 0);
+  const updatedAt = rows.reduce((latest, row) => Math.max(latest, Number(row.updated_at) || 0), 0);
+  return {
+    sessionsCreated: count('sessions_created'),
+    activeSessions: Math.max(0, Number(activeRow?.count) || 0),
+    conversions: count('conversions'),
+    cleanupCount: count('cleanup_count'),
+    rateLimitBlocks: count('rate_limit_blocks'),
+    ttsFallbacks: count('tts_fallbacks'),
+    updatedAt,
+  };
+}
+
 async function updateManagedAccountRole(db, {
   actorAccountId,
   targetAccountId,
@@ -599,7 +929,7 @@ async function updateManagedAccountRole(db, {
   });
 
   return withTransaction(db, async () => {
-    const actor = await first(db, 'SELECT id, email, display_name, platform_role, repo_revision FROM adult_accounts WHERE id = ?', [actorAccountId]);
+    const actor = await first(db, 'SELECT id, email, display_name, platform_role, repo_revision, account_type FROM adult_accounts WHERE id = ?', [actorAccountId]);
     requireAccountRoleManager(actor);
 
     const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
@@ -632,28 +962,43 @@ async function updateManagedAccountRole(db, {
         accountId: targetAccountId,
       });
     }
+    if (accountType(target) === 'demo') {
+      throw new ForbiddenError('Demo accounts cannot be managed from account role controls.', {
+        code: 'demo_account_role_forbidden',
+        accountId: targetAccountId,
+      });
+    }
 
     const currentRole = normalisePlatformRole(target.platform_role);
     if (currentRole === 'admin' && nextRole !== 'admin') {
-      const adminCount = Number(await scalar(db, `
-        SELECT COUNT(*) AS count
-        FROM adult_accounts
-        WHERE platform_role = 'admin'
-      `, [], 'count')) || 0;
-      if (adminCount <= 1) {
+      const updateResult = await run(db, `
+        UPDATE adult_accounts
+        SET platform_role = ?,
+            updated_at = ?
+        WHERE id = ?
+          AND EXISTS (
+            SELECT 1
+            FROM adult_accounts
+            WHERE platform_role = 'admin'
+              AND COALESCE(account_type, 'real') <> 'demo'
+              AND id <> ?
+          )
+      `, [nextRole, nowTs, targetAccountId, targetAccountId]);
+      const updateChanges = Number(updateResult?.meta?.changes) || 0;
+      if (updateChanges !== 1) {
         throw new ConflictError('At least one admin account must remain.', {
           code: 'last_admin_required',
           accountId: targetAccountId,
         });
       }
+    } else {
+      await run(db, `
+        UPDATE adult_accounts
+        SET platform_role = ?,
+            updated_at = ?
+        WHERE id = ?
+      `, [nextRole, nowTs, targetAccountId]);
     }
-
-    await run(db, `
-      UPDATE adult_accounts
-      SET platform_role = ?,
-          updated_at = ?
-      WHERE id = ?
-    `, [nextRole, nowTs, targetAccountId]);
 
     const directory = await accountDirectoryPayload(db, actorAccountId);
     const updatedAccount = directory.accounts.find((account) => account.id === targetAccountId) || null;
@@ -746,7 +1091,7 @@ async function releaseMembershipOrDeleteLearner(db, accountId, learnerId, role, 
   return 'membership_removed';
 }
 
-async function bootstrapBundle(db, accountId) {
+async function bootstrapBundle(db, accountId, { publicReadModels = false } = {}) {
   const account = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
   const membershipRows = await listMembershipRows(db, accountId, { writableOnly: true });
   const learnersById = {};
@@ -813,12 +1158,17 @@ async function bootstrapBundle(db, accountId) {
 
   const subjectStates = {};
   subjectRows.forEach((row) => {
-    subjectStates[subjectStateKey(row.learner_id, row.subject_id)] = subjectStateRowToRecord(row);
+    subjectStates[subjectStateKey(row.learner_id, row.subject_id)] = publicReadModels
+      ? publicSubjectStateRowToRecord(row)
+      : subjectStateRowToRecord(row);
   });
 
   const gameState = {};
   gameRows.forEach((row) => {
-    gameState[gameStateKey(row.learner_id, row.system_id)] = gameStateRowToRecord(row);
+    const record = publicReadModels
+      ? publicGameStateRowToRecord(row)
+      : gameStateRowToRecord(row);
+    if (record) gameState[gameStateKey(row.learner_id, row.system_id)] = record;
   });
 
   return {
@@ -830,9 +1180,13 @@ async function bootstrapBundle(db, accountId) {
         selectedId,
       },
       subjectStates,
-      practiceSessions: filterSessions(sessionRows.map(practiceSessionRowToRecord)),
+      practiceSessions: filterSessions(sessionRows.map(publicReadModels
+        ? publicPracticeSessionRowToRecord
+        : practiceSessionRowToRecord)),
       gameState,
-      eventLog: normaliseEventLog(eventRows.map(eventRowToRecord).filter(Boolean)),
+      eventLog: normaliseEventLog(eventRows.map(publicReadModels
+        ? publicEventRowToRecord
+        : eventRowToRecord).filter(Boolean)),
     }),
     syncState: {
       policyVersion: MUTATION_POLICY_VERSION,
@@ -840,6 +1194,252 @@ async function bootstrapBundle(db, accountId) {
       learnerRevisions,
     },
   };
+}
+
+async function readSubjectRuntimeBundle(db, accountId, learnerId, subjectId = 'spelling') {
+  await requireLearnerWriteAccess(db, accountId, learnerId);
+  const row = await first(db, `
+    SELECT learner_id, subject_id, ui_json, data_json, updated_at
+    FROM child_subject_state
+    WHERE learner_id = ? AND subject_id = ?
+  `, [learnerId, subjectId]);
+  const latestSession = await first(db, `
+    SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+    FROM practice_sessions
+    WHERE learner_id = ? AND subject_id = ?
+    ORDER BY updated_at DESC, id DESC
+    LIMIT 1
+  `, [learnerId, subjectId]);
+  return {
+    subjectRecord: row ? subjectStateRowToRecord(row) : normaliseSubjectStateRecord({}),
+    latestSession: latestSession ? practiceSessionRowToRecord(latestSession) : null,
+  };
+}
+
+async function readSpellingWordBankBundle(db, accountId, learnerId, filters, nowTs) {
+  if (!(typeof learnerId === 'string' && learnerId)) {
+    throw new BadRequestError('Learner id is required for the spelling word bank.', {
+      code: 'learner_id_required',
+    });
+  }
+  const runtimeRecord = await readSubjectRuntimeBundle(db, accountId, learnerId, 'spelling');
+  const content = await readSubjectContentBundle(db, accountId, 'spelling');
+  const snapshot = resolveRuntimeSnapshot(content, {
+    referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+  });
+  return buildSpellingWordBankReadModel({
+    learnerId,
+    contentSnapshot: snapshot,
+    data: runtimeRecord.subjectRecord?.data || {},
+    filters,
+    now: nowTs,
+  });
+}
+
+async function readLearnerProjectionBundle(db, accountId, learnerId) {
+  await requireLearnerWriteAccess(db, accountId, learnerId);
+  const gameRows = await all(db, `
+    SELECT learner_id, system_id, state_json, updated_at
+    FROM child_game_state
+    WHERE learner_id = ?
+  `, [learnerId]);
+  const eventRows = await all(db, `
+    SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+    FROM event_log
+    WHERE learner_id = ?
+    ORDER BY created_at ASC, id ASC
+  `, [learnerId]);
+
+  return {
+    gameState: Object.fromEntries(gameRows.map((row) => [row.system_id, gameStateRowToRecord(row)])),
+    events: normaliseEventLog(eventRows.map(eventRowToRecord).filter(Boolean)),
+  };
+}
+
+function guardedValueSource(valueCount, guard) {
+  const placeholders = sqlPlaceholders(valueCount);
+  if (!guard) return `VALUES (${placeholders})`;
+  return `SELECT ${placeholders}
+    WHERE EXISTS (
+      SELECT 1
+      FROM learner_profiles
+      WHERE id = ?
+        AND state_revision = ?
+    )`;
+}
+
+function guardedParams(params, guard) {
+  if (!guard) return params;
+  return [...params, guard.learnerId, guard.expectedRevision];
+}
+
+function guardedWhere(guard) {
+  if (!guard) return '';
+  return `
+          AND EXISTS (
+            SELECT 1
+            FROM learner_profiles
+            WHERE id = ?
+              AND state_revision = ?
+          )`;
+}
+
+function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs, { guard = null } = {}) {
+  const nextState = normaliseSubjectStateRecord({
+    ui: runtime?.state || null,
+    data: runtime?.data || {},
+    updatedAt: nowTs,
+  });
+  const statements = [];
+
+  const subjectParams = [
+    learnerId,
+    subjectId,
+    JSON.stringify(nextState.ui),
+    JSON.stringify(nextState.data),
+    nowTs,
+    accountId,
+  ];
+  statements.push(bindStatement(db, `
+    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+    ${guardedValueSource(subjectParams.length, guard)}
+    ON CONFLICT(learner_id, subject_id) DO UPDATE SET
+      ui_json = excluded.ui_json,
+      data_json = excluded.data_json,
+      updated_at = excluded.updated_at,
+      updated_by_account_id = excluded.updated_by_account_id
+  `, guardedParams(subjectParams, guard)));
+
+  const session = runtime?.practiceSession
+    ? normalisePracticeSessionRecord(runtime.practiceSession)
+    : null;
+  if (session?.id && session.learnerId === learnerId && session.subjectId === subjectId) {
+    if (session.status === 'active') {
+      statements.push(bindStatement(db, `
+        UPDATE practice_sessions
+        SET status = 'abandoned',
+            updated_at = ?,
+            updated_by_account_id = ?
+        WHERE learner_id = ?
+          AND subject_id = ?
+          AND status = 'active'
+          AND id <> ?
+          ${guardedWhere(guard)}
+      `, guardedParams([nowTs, accountId, learnerId, subjectId, session.id], guard)));
+    }
+
+    const createdAt = asTs(session.createdAt, nowTs);
+    const updatedAt = asTs(session.updatedAt, nowTs);
+    const sessionParams = [
+      session.id,
+      learnerId,
+      subjectId,
+      session.sessionKind,
+      session.status,
+      session.sessionState == null ? null : JSON.stringify(session.sessionState),
+      session.summary == null ? null : JSON.stringify(session.summary),
+      createdAt,
+      updatedAt,
+      accountId,
+    ];
+    statements.push(bindStatement(db, `
+      INSERT INTO practice_sessions (
+        id,
+        learner_id,
+        subject_id,
+        session_kind,
+        status,
+        session_state_json,
+        summary_json,
+        created_at,
+        updated_at,
+        updated_by_account_id
+      )
+      ${guardedValueSource(sessionParams.length, guard)}
+      ON CONFLICT(id) DO UPDATE SET
+        learner_id = excluded.learner_id,
+        subject_id = excluded.subject_id,
+        session_kind = excluded.session_kind,
+        status = excluded.status,
+        session_state_json = excluded.session_state_json,
+        summary_json = excluded.summary_json,
+        created_at = excluded.created_at,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, guardedParams(sessionParams, guard)));
+  }
+
+  const gameState = runtime?.gameState && typeof runtime.gameState === 'object' && !Array.isArray(runtime.gameState)
+    ? runtime.gameState
+    : {};
+  for (const [systemId, rawState] of Object.entries(gameState)) {
+    if (!(typeof systemId === 'string' && systemId)) continue;
+    const nextGameState = cloneSerialisable(rawState) || {};
+    const gameParams = [learnerId, systemId, JSON.stringify(nextGameState), nowTs, accountId];
+    statements.push(bindStatement(db, `
+      INSERT INTO child_game_state (learner_id, system_id, state_json, updated_at, updated_by_account_id)
+      ${guardedValueSource(gameParams.length, guard)}
+      ON CONFLICT(learner_id, system_id) DO UPDATE SET
+        state_json = excluded.state_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, guardedParams(gameParams, guard)));
+  }
+
+  const events = Array.isArray(runtime?.events) ? runtime.events : [];
+  const persistedEvents = [];
+  for (const rawEvent of events) {
+    const event = cloneSerialisable(rawEvent) || null;
+    if (!event || typeof event !== 'object' || Array.isArray(event)) continue;
+    const id = typeof event.id === 'string' && event.id ? event.id : uid('event');
+    const createdAt = asTs(event.createdAt, nowTs);
+    const eventType = typeof event.type === 'string' && event.type
+      ? event.type
+      : (typeof event.kind === 'string' && event.kind ? event.kind : 'event');
+    event.id = id;
+    event.learnerId = event.learnerId || learnerId;
+    event.subjectId = event.subjectId || subjectId;
+    event.createdAt = createdAt;
+    persistedEvents.push(event);
+    const eventParams = [
+      id,
+      event.learnerId,
+      event.subjectId || null,
+      event.systemId || null,
+      eventType,
+      JSON.stringify(event),
+      createdAt,
+      accountId,
+    ];
+    statements.push(bindStatement(db, `
+      INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
+      ${guardedValueSource(eventParams.length, guard)}
+      ON CONFLICT(id) DO UPDATE SET
+        learner_id = excluded.learner_id,
+        subject_id = excluded.subject_id,
+        system_id = excluded.system_id,
+        event_type = excluded.event_type,
+        event_json = excluded.event_json,
+        created_at = excluded.created_at,
+        actor_account_id = excluded.actor_account_id
+    `, guardedParams(eventParams, guard)));
+  }
+
+  const summary = {
+    key: `${learnerId || 'default'}::${subjectId || 'unknown'}`,
+    record: nextState,
+    practiceSession: session,
+    eventCount: persistedEvents.length,
+    gameStateCount: Object.keys(gameState).length,
+  };
+
+  return { statements, summary };
+}
+
+async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, runtime, nowTs) {
+  const plan = buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs);
+  await batch(db, plan.statements);
+  return plan.summary;
 }
 
 async function writeLearnersSnapshot(db, accountId, snapshot, nowTs) {
@@ -1038,6 +1638,7 @@ async function withLearnerMutation(db, {
   const requestHash = mutationPayloadHash(kind, payload);
 
   return withTransaction(db, async () => {
+    await requireLearnerWriteAccess(db, accountId, learnerId);
     const existingReceipt = await loadMutationReceipt(db, accountId, nextMutation.requestId);
     if (existingReceipt) {
       if (existingReceipt.request_hash !== requestHash) {
@@ -1069,7 +1670,6 @@ async function withLearnerMutation(db, {
       return replayed;
     }
 
-    await requireLearnerWriteAccess(db, accountId, learnerId);
     const learner = await first(db, 'SELECT id FROM learner_profiles WHERE id = ?', [learnerId]);
     if (!learner) throw new NotFoundError('Learner was not found.', { learnerId });
 
@@ -1132,6 +1732,159 @@ async function withLearnerMutation(db, {
   });
 }
 
+async function runSubjectCommandMutation(db, {
+  accountId,
+  command,
+  applyCommand,
+  nowTs,
+}) {
+  if (!(typeof command?.learnerId === 'string' && command.learnerId)) {
+    throw new BadRequestError('Learner id is required for this mutation.', {
+      code: 'learner_id_required',
+      kind: 'subject_command',
+    });
+  }
+  if (typeof applyCommand !== 'function') {
+    throw new TypeError('runSubjectCommand requires an applyCommand function.');
+  }
+
+  const kind = `subject_command.${command.subjectId}.${command.command}`;
+  const payload = {
+    subjectId: command.subjectId,
+    command: command.command,
+    learnerId: command.learnerId,
+    payload: command.payload,
+  };
+  const nextMutation = normaliseMutationInput({
+    requestId: command.requestId,
+    correlationId: command.correlationId,
+    expectedLearnerRevision: command.expectedLearnerRevision,
+  }, 'learner');
+  const requestHash = mutationPayloadHash(kind, payload);
+
+  await requireLearnerWriteAccess(db, accountId, command.learnerId);
+  const existingReceipt = await loadMutationReceipt(db, accountId, nextMutation.requestId);
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
+        kind,
+        scopeType: 'learner',
+        scopeId: command.learnerId,
+        requestId: nextMutation.requestId,
+        correlationId: nextMutation.correlationId,
+      });
+    }
+    const replayed = safeJsonParse(existingReceipt.response_json, {});
+    replayed.mutation = buildMutationMeta({
+      ...replayed.mutation,
+      kind,
+      scopeType: 'learner',
+      scopeId: command.learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+      replayed: true,
+    });
+    logMutation('info', 'mutation.replayed', {
+      kind,
+      scopeType: 'learner',
+      scopeId: command.learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+    });
+    return replayed;
+  }
+
+  const learner = await first(db, 'SELECT id, state_revision FROM learner_profiles WHERE id = ?', [command.learnerId]);
+  if (!learner) throw new NotFoundError('Learner was not found.', { learnerId: command.learnerId });
+
+  const appliedRaw = await applyCommand();
+  const appliedPayload = isPlainObject(appliedRaw) ? appliedRaw : {};
+  const { runtimeWrite = null, ...applied } = appliedPayload;
+  const currentRevision = Number(learner.state_revision) || 0;
+  const mutatesLearnerState = Boolean(runtimeWrite) || applied.changed !== false;
+  const appliedRevision = mutatesLearnerState ? nextMutation.expectedRevision + 1 : currentRevision;
+  const response = {
+    ...applied,
+    mutation: buildMutationMeta({
+      kind,
+      scopeType: 'learner',
+      scopeId: command.learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+      expectedRevision: nextMutation.expectedRevision,
+      appliedRevision,
+    }),
+  };
+  if (!mutatesLearnerState) {
+    logMutation('info', 'mutation.observed', {
+      kind,
+      scopeType: 'learner',
+      scopeId: command.learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+      expectedRevision: nextMutation.expectedRevision,
+      appliedRevision,
+    });
+    return response;
+  }
+  const guard = {
+    learnerId: command.learnerId,
+    expectedRevision: nextMutation.expectedRevision,
+  };
+  const statements = [];
+  if (runtimeWrite) {
+    const plan = buildSubjectRuntimePersistencePlan(db, accountId, command.learnerId, command.subjectId, runtimeWrite, nowTs, {
+      guard,
+    });
+    statements.push(...plan.statements);
+  }
+  statements.push(storeMutationReceiptStatement(db, {
+    accountId,
+    requestId: nextMutation.requestId,
+    scopeType: 'learner',
+    scopeId: command.learnerId,
+    mutationKind: kind,
+    requestHash,
+    response,
+    correlationId: nextMutation.correlationId,
+    appliedAt: nowTs,
+  }, { guard }));
+  statements.push(bindStatement(db, `
+    UPDATE learner_profiles
+    SET state_revision = state_revision + 1,
+        updated_at = ?
+    WHERE id = ?
+      AND state_revision = ?
+  `, [nowTs, command.learnerId, nextMutation.expectedRevision]));
+
+  const results = await batch(db, statements);
+  const casResult = results[results.length - 1] || null;
+  const casChanges = Number(casResult?.meta?.changes) || 0;
+  if (casChanges !== 1) {
+    const currentRevision = Number(await scalar(db, 'SELECT state_revision FROM learner_profiles WHERE id = ?', [command.learnerId], 'state_revision')) || 0;
+    throw staleWriteError({
+      kind,
+      scopeType: 'learner',
+      scopeId: command.learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+      expectedRevision: nextMutation.expectedRevision,
+      currentRevision,
+    });
+  }
+
+  logMutation('info', 'mutation.applied', {
+    kind,
+    scopeType: 'learner',
+    scopeId: command.learnerId,
+    requestId: nextMutation.requestId,
+    correlationId: nextMutation.correlationId,
+    expectedRevision: nextMutation.expectedRevision,
+    appliedRevision,
+  });
+  return response;
+}
+
 export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
   const db = requireDatabase(env);
   const nowFactory = () => asTs(now(), Date.now());
@@ -1145,8 +1898,17 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
     async readSession(accountId) {
       return first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
     },
-    async bootstrap(accountId) {
-      return bootstrapBundle(db, accountId);
+    async bootstrap(accountId, options = {}) {
+      return bootstrapBundle(db, accountId, options);
+    },
+    async readSubjectRuntime(accountId, learnerId, subjectId = 'spelling') {
+      return readSubjectRuntimeBundle(db, accountId, learnerId, subjectId);
+    },
+    async readLearnerProjectionState(accountId, learnerId) {
+      return readLearnerProjectionBundle(db, accountId, learnerId);
+    },
+    async persistSubjectRuntime(accountId, learnerId, subjectId = 'spelling', runtime = {}) {
+      return persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, runtime, nowFactory());
     },
     async writeLearners(accountId, snapshot, mutation = {}) {
       const nowTs = nowFactory();
@@ -1202,6 +1964,15 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
             record: next,
           };
         },
+      });
+    },
+    async runSubjectCommand(accountId, command, applyCommand) {
+      const nowTs = nowFactory();
+      return runSubjectCommandMutation(db, {
+        accountId,
+        command,
+        nowTs,
+        applyCommand,
       });
     },
     async clearSubjectState(accountId, learnerId, subjectId = null, mutation = {}) {
@@ -1418,6 +2189,45 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         },
       });
     },
+    async resetLearnerRuntime(accountId, learnerId, mutation = {}) {
+      const nowTs = nowFactory();
+      return withLearnerMutation(db, {
+        accountId,
+        learnerId,
+        kind: 'learner_runtime.reset',
+        payload: { learnerId },
+        mutation,
+        nowTs,
+        apply: async () => {
+          await batch(db, [
+            bindStatement(db, 'DELETE FROM child_subject_state WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM practice_sessions WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM child_game_state WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM event_log WHERE learner_id = ?', [learnerId]),
+          ]);
+          return {
+            learnerId,
+            reset: true,
+          };
+        },
+      });
+    },
+    async exportSubjectContent(accountId, subjectId = 'spelling') {
+      const account = await first(db, 'SELECT id, repo_revision, platform_role FROM adult_accounts WHERE id = ?', [accountId]);
+      requireSubjectContentExportAccess(account);
+      const content = await readSubjectContentBundle(db, accountId, subjectId);
+      return {
+        subjectId,
+        content,
+        summary: buildSpellingContentSummary(content),
+        mutation: {
+          policyVersion: MUTATION_POLICY_VERSION,
+          scopeType: 'account',
+          scopeId: accountId,
+          accountRevision: Number(account?.repo_revision) || 0,
+        },
+      };
+    },
     async readSubjectContent(accountId, subjectId = 'spelling') {
       const account = await first(db, 'SELECT id, repo_revision FROM adult_accounts WHERE id = ?', [accountId]);
       const content = await readSubjectContentBundle(db, accountId, subjectId);
@@ -1433,8 +2243,13 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         },
       };
     },
+    async readSpellingWordBank(accountId, learnerId, filters = {}) {
+      return readSpellingWordBankBundle(db, accountId, learnerId, filters, nowFactory());
+    },
     async writeSubjectContent(accountId, subjectId = 'spelling', rawContent, mutation = {}) {
       const nowTs = nowFactory();
+      const account = await first(db, 'SELECT id, platform_role FROM adult_accounts WHERE id = ?', [accountId]);
+      requireSubjectContentWriteAccess(account);
       const content = backfillSpellingWordExplanations(rawContent, SEEDED_SPELLING_CONTENT_BUNDLE);
       const validation = validateSpellingContentBundle(content);
       if (!validation.ok) {
@@ -1489,7 +2304,7 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
       });
     },
     async readParentHub(accountId, learnerId = null) {
-      const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role FROM adult_accounts WHERE id = ?', [accountId]);
+      const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role, account_type FROM adult_accounts WHERE id = ?', [accountId]);
       const readableMemberships = await listMembershipRows(db, accountId, { writableOnly: false });
       const defaultLearnerId = account?.selected_learner_id && readableMemberships.some((membership) => membership.id === account.selected_learner_id)
         ? account.selected_learner_id
@@ -1528,7 +2343,7 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
       };
     },
     async readAdminHub(accountId, { learnerId = null, requestId = null, auditLimit = 20 } = {}) {
-      const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role FROM adult_accounts WHERE id = ?', [accountId]);
+      const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role, account_type FROM adult_accounts WHERE id = ?', [accountId]);
       requireAdminHubAccess(account);
       const memberships = await listMembershipRows(db, accountId, { writableOnly: false });
       const contentBundle = await readSubjectContentBundle(db, accountId, 'spelling');
@@ -1544,6 +2359,7 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         requestId,
         limit: auditLimit,
       });
+      const demoOperations = await readDemoOperationSummary(db, nowFactory());
       const model = buildAdminHubReadModel({
         account: {
           id: accountId,
@@ -1556,6 +2372,7 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         memberships: memberships.map(membershipRowToModel),
         learnerBundles,
         runtimeSnapshots: { spelling: runtimeSnapshotForBundle(contentBundle) },
+        demoOperations,
         auditEntries: auditEntries.map((row) => ({
           requestId: row.request_id,
           mutationKind: row.mutation_kind,

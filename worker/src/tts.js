@@ -2,6 +2,8 @@ import { sha256 } from './auth.js';
 import { first, requireDatabase } from './d1.js';
 import { BadRequestError, BackendUnavailableError } from './errors.js';
 import { readJson } from './http.js';
+import { protectDemoTtsFallback, recordDemoMetric } from './demo/sessions.js';
+import { resolveSpellingAudioRequest } from './subjects/spelling/audio.js';
 
 const OPENAI_SPEECH_URL = 'https://api.openai.com/v1/audio/speech';
 const GEMINI_GENERATE_CONTENT_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -17,8 +19,6 @@ const DEFAULT_GEMINI_VOICE = 'Kore';
 const DEFAULT_GEMINI_TIMEOUT_MS = 12000;
 const DEFAULT_GEMINI_SAMPLE_RATE = 24000;
 const REMOTE_TTS_PROVIDERS = new Set(['openai', 'gemini']);
-const MAX_WORD_LENGTH = 80;
-const MAX_SENTENCE_LENGTH = 320;
 
 function cleanText(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
@@ -96,6 +96,13 @@ async function protectTts(env, request, session, now) {
   }
 }
 
+async function recordDemoTtsFallback(env, session, now, response) {
+  if (session?.demo) {
+    await recordDemoMetric(requireDatabase(env), 'tts_fallbacks', now);
+  }
+  return response;
+}
+
 function normaliseRemoteTtsProvider(value) {
   const provider = cleanText(value).toLowerCase() || 'openai';
   if (REMOTE_TTS_PROVIDERS.has(provider)) return provider;
@@ -103,31 +110,6 @@ function normaliseRemoteTtsProvider(value) {
     code: 'tts_provider_unsupported',
     provider,
   });
-}
-
-function normaliseTtsPayload(body) {
-  const word = cleanText(typeof body?.word === 'string' ? body.word : body?.word?.word);
-  const sentence = cleanText(body?.sentence);
-  const wordOnly = body?.wordOnly === true;
-
-  if (!word) {
-    throw new BadRequestError('A spelling word is required for dictation audio.', { code: 'tts_word_required' });
-  }
-  if (word.length > MAX_WORD_LENGTH || sentence.length > MAX_SENTENCE_LENGTH) {
-    throw new BadRequestError('Dictation audio request is too long.', { code: 'tts_input_too_long' });
-  }
-
-  let transcript = sentence
-    ? `The word is ${word}. ${sentence} The word is ${word}.`
-    : `The word is ${word}. The word is ${word}.`;
-  if (wordOnly) transcript = word;
-
-  return {
-    transcript,
-    provider: normaliseRemoteTtsProvider(body?.provider),
-    slow: Boolean(body?.slow),
-    wordOnly,
-  };
 }
 
 function ttsInstructions(slow = false, wordOnly = false) {
@@ -412,19 +394,30 @@ export async function handleTextToSpeechRequest({
   env,
   request,
   session,
+  repository,
   now = Date.now(),
   fetchFn = fetch,
 } = {}) {
+  const body = await readJson(request);
+  const payload = {
+    ...(await resolveSpellingAudioRequest({
+      repository,
+      accountId: session.accountId,
+      body,
+    })),
+    provider: normaliseRemoteTtsProvider(body?.provider),
+  };
   const openAi = openAiConfig(env);
   const gemini = geminiConfig(env);
 
   await protectTts(env, request, session, now);
-  const payload = normaliseTtsPayload(await readJson(request));
+  await protectDemoTtsFallback({ env, request, session, payload, now });
 
   if (payload.provider === 'gemini') {
     if (!gemini.apiKey) throw missingProviderConfig('gemini');
     try {
-      return await requestGeminiSpeech({ config: gemini, payload, fetchFn });
+      const response = await requestGeminiSpeech({ config: gemini, payload, fetchFn });
+      return await recordDemoTtsFallback(env, session, now, response);
     } catch (error) {
       throw backendUnavailableFromFailure(error, [error]);
     }
@@ -432,7 +425,8 @@ export async function handleTextToSpeechRequest({
 
   if (!openAi.apiKey) throw missingProviderConfig('openai');
   try {
-    return await requestOpenAiSpeech({ config: openAi, payload, fetchFn });
+    const response = await requestOpenAiSpeech({ config: openAi, payload, fetchFn });
+    return await recordDemoTtsFallback(env, session, now, response);
   } catch (error) {
     throw backendUnavailableFromFailure(error, [error]);
   }

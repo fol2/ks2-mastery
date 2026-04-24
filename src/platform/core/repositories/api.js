@@ -36,6 +36,22 @@ const MUTATION_POLICY_VERSION = 1;
 const OPERATION_STATUS_PENDING = 'pending';
 const OPERATION_STATUS_BLOCKED_STALE = 'blocked-stale';
 const SUBJECT_STATE_MERGE_STRATEGIES = new Set(['merge', 'ui', 'data', 'replace']);
+const LEGACY_RUNTIME_WRITES_ENABLED = typeof process === 'object'
+  && process?.env?.NODE_ENV !== 'production';
+const LEGACY_RUNTIME_OPERATION_KINDS = new Set([
+  'subjectStates.put',
+  'subjectStates.delete',
+  'subjectStates.clearLearner',
+  'practiceSessions.put',
+  'practiceSessions.delete',
+  'practiceSessions.clearLearner',
+  'gameState.put',
+  'gameState.delete',
+  'gameState.clearLearner',
+  'eventLog.append',
+  'eventLog.clearLearner',
+  'debug.reset',
+]);
 
 function apiCacheStorageKey(scope = 'default') {
   return `ks2-platform-v2.api-cache-state:${scope}`;
@@ -55,6 +71,19 @@ function joinUrl(baseUrl, path) {
   const base = String(baseUrl || '').replace(/\/$/, '');
   const suffix = String(path || '').startsWith('/') ? path : `/${path}`;
   return `${base}${suffix}`;
+}
+
+function isLegacyRuntimeOperationKind(kind) {
+  return LEGACY_RUNTIME_OPERATION_KINDS.has(String(kind || ''));
+}
+
+function assertLegacyRuntimeWriteAllowed(kind) {
+  if (LEGACY_RUNTIME_WRITES_ENABLED) return;
+  throw new Error(`Runtime writes must use the subject command boundary (${kind}).`);
+}
+
+function legacyRuntimePath(...segments) {
+  return `/${['api', ...segments].join('/')}`;
 }
 
 class RepositoryHttpError extends Error {
@@ -856,6 +885,7 @@ export function createApiPlatformRepositories({
   storage,
   authSession = createNoopRepositoryAuthSession(),
   cacheScopeKey = null,
+  publicReadModels = false,
 } = {}) {
   if (typeof fetchFn !== 'function') {
     throw new TypeError('API repositories require a fetch implementation.');
@@ -1007,6 +1037,55 @@ export function createApiPlatformRepositories({
     return rebase;
   }
 
+  function cacheSubjectUi(learnerId, subjectId, ui, { scope = 'subject-state-cache' } = {}) {
+    const key = subjectStateKey(learnerId, subjectId);
+    const current = normaliseSubjectStateRecord(cache.subjectStates[key]);
+    const next = normaliseSubjectStateRecord(mergeSubjectUi(current, ui, nowTs()));
+    cache.subjectStates[key] = next;
+    persistLocalCache(scope);
+    return next;
+  }
+
+  function appendCommandEvents(events = []) {
+    const current = Array.isArray(cache.eventLog) ? cache.eventLog : [];
+    const seen = new Set(current.map(eventToken).filter(Boolean));
+    const additions = [];
+    for (const event of Array.isArray(events) ? events : []) {
+      const next = cloneSerialisable(event) || null;
+      if (!next || typeof next !== 'object' || Array.isArray(next)) continue;
+      const token = eventToken(next);
+      if (token && seen.has(token)) continue;
+      if (token) seen.add(token);
+      additions.push(next);
+    }
+    if (additions.length) {
+      cache.eventLog = [...current, ...additions];
+    }
+  }
+
+  function applyCommandResultToCache({ learnerId, subjectId, response } = {}) {
+    if (!response || typeof response !== 'object' || Array.isArray(response)) return null;
+    const readModel = response.subjectReadModel || null;
+    if (readModel) {
+      cacheSubjectUi(learnerId, subjectId, readModel, { scope: 'subject-command:read-model' });
+    }
+
+    const rewardState = response.projections?.rewards?.state;
+    const rewardSystemId = response.projections?.rewards?.systemId;
+    if (rewardSystemId && rewardState && typeof rewardState === 'object' && !Array.isArray(rewardState)) {
+      cache.gameState[gameStateKey(learnerId, rewardSystemId)] = cloneSerialisable(rewardState) || {};
+    }
+
+    appendCommandEvents(response.events || response.domainEvents || []);
+
+    if (Number.isFinite(Number(response.mutation?.appliedRevision))) {
+      syncState = setScopeRevision(syncState, 'learner', learnerId, Number(response.mutation.appliedRevision));
+    }
+    markRemoteSuccess();
+    persistLocalCache('subject-command');
+    return normaliseSubjectStateRecord(cache.subjectStates[subjectStateKey(learnerId, subjectId)]);
+  }
+
   function queueOperation(operation) {
     syncScheduled = true;
     const queuedOperation = operationInBlockedBranch(operation, pendingOperations)
@@ -1028,6 +1107,90 @@ export function createApiPlatformRepositories({
     });
   }
 
+  async function sendLegacyRuntimeOperation(operation, mutation, headers) {
+    switch (operation.kind) {
+      case 'subjectStates.put':
+        return fetchJson(fetchFn, joinUrl(baseUrl, legacyRuntimePath('child-subject-state')), {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({
+            learnerId: operation.learnerId,
+            subjectId: operation.subjectId,
+            record: cloneSerialisable(operation.record),
+            mutation,
+          }),
+        }, authSession);
+      case 'subjectStates.delete':
+        return fetchJson(fetchFn, joinUrl(baseUrl, legacyRuntimePath('child-subject-state')), {
+          method: 'DELETE',
+          headers,
+          body: JSON.stringify({ learnerId: operation.learnerId, subjectId: operation.subjectId, mutation }),
+        }, authSession);
+      case 'subjectStates.clearLearner':
+        return fetchJson(fetchFn, joinUrl(baseUrl, legacyRuntimePath('child-subject-state')), {
+          method: 'DELETE',
+          headers,
+          body: JSON.stringify({ learnerId: operation.learnerId, mutation }),
+        }, authSession);
+      case 'practiceSessions.put':
+        return fetchJson(fetchFn, joinUrl(baseUrl, legacyRuntimePath('practice-sessions')), {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ record: cloneSerialisable(operation.record), mutation }),
+        }, authSession);
+      case 'practiceSessions.delete':
+        return fetchJson(fetchFn, joinUrl(baseUrl, legacyRuntimePath('practice-sessions')), {
+          method: 'DELETE',
+          headers,
+          body: JSON.stringify({ learnerId: operation.learnerId, subjectId: operation.subjectId, mutation }),
+        }, authSession);
+      case 'practiceSessions.clearLearner':
+        return fetchJson(fetchFn, joinUrl(baseUrl, legacyRuntimePath('practice-sessions')), {
+          method: 'DELETE',
+          headers,
+          body: JSON.stringify({ learnerId: operation.learnerId, mutation }),
+        }, authSession);
+      case 'gameState.put':
+        return fetchJson(fetchFn, joinUrl(baseUrl, legacyRuntimePath('child-game-state')), {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ learnerId: operation.learnerId, systemId: operation.systemId, state: cloneSerialisable(operation.state), mutation }),
+        }, authSession);
+      case 'gameState.delete':
+        return fetchJson(fetchFn, joinUrl(baseUrl, legacyRuntimePath('child-game-state')), {
+          method: 'DELETE',
+          headers,
+          body: JSON.stringify({ learnerId: operation.learnerId, systemId: operation.systemId, mutation }),
+        }, authSession);
+      case 'gameState.clearLearner':
+        return fetchJson(fetchFn, joinUrl(baseUrl, legacyRuntimePath('child-game-state')), {
+          method: 'DELETE',
+          headers,
+          body: JSON.stringify({ learnerId: operation.learnerId, mutation }),
+        }, authSession);
+      case 'eventLog.append':
+        return fetchJson(fetchFn, joinUrl(baseUrl, legacyRuntimePath('event-log')), {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ event: cloneSerialisable(operation.event), mutation }),
+        }, authSession);
+      case 'eventLog.clearLearner':
+        return fetchJson(fetchFn, joinUrl(baseUrl, legacyRuntimePath('event-log')), {
+          method: 'DELETE',
+          headers,
+          body: JSON.stringify({ learnerId: operation.learnerId, mutation }),
+        }, authSession);
+      case 'debug.reset':
+        return fetchJson(fetchFn, joinUrl(baseUrl, legacyRuntimePath('debug', 'reset')), {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ reset: true, mutation }),
+        }, authSession);
+      default:
+        return null;
+    }
+  }
+
   async function sendRemoteOperation(operation) {
     const mutation = operation.scopeType === 'account'
       ? {
@@ -1046,93 +1209,20 @@ export function createApiPlatformRepositories({
       'x-ks2-correlation-id': operation.correlationId,
     };
 
-    switch (operation.kind) {
-      case 'learners.write':
-        return fetchJson(fetchFn, joinUrl(baseUrl, '/api/learners'), {
-          method: 'PUT',
-          headers,
-          body: JSON.stringify({ learners: cloneSerialisable(operation.snapshot), mutation }),
-        }, authSession);
-      case 'subjectStates.put':
-        return fetchJson(fetchFn, joinUrl(baseUrl, '/api/child-subject-state'), {
-          method: 'PUT',
-          headers,
-          body: JSON.stringify({
-            learnerId: operation.learnerId,
-            subjectId: operation.subjectId,
-            record: cloneSerialisable(operation.record),
-            mutation,
-          }),
-        }, authSession);
-      case 'subjectStates.delete':
-        return fetchJson(fetchFn, joinUrl(baseUrl, '/api/child-subject-state'), {
-          method: 'DELETE',
-          headers,
-          body: JSON.stringify({ learnerId: operation.learnerId, subjectId: operation.subjectId, mutation }),
-        }, authSession);
-      case 'subjectStates.clearLearner':
-        return fetchJson(fetchFn, joinUrl(baseUrl, '/api/child-subject-state'), {
-          method: 'DELETE',
-          headers,
-          body: JSON.stringify({ learnerId: operation.learnerId, mutation }),
-        }, authSession);
-      case 'practiceSessions.put':
-        return fetchJson(fetchFn, joinUrl(baseUrl, '/api/practice-sessions'), {
-          method: 'PUT',
-          headers,
-          body: JSON.stringify({ record: cloneSerialisable(operation.record), mutation }),
-        }, authSession);
-      case 'practiceSessions.delete':
-        return fetchJson(fetchFn, joinUrl(baseUrl, '/api/practice-sessions'), {
-          method: 'DELETE',
-          headers,
-          body: JSON.stringify({ learnerId: operation.learnerId, subjectId: operation.subjectId, mutation }),
-        }, authSession);
-      case 'practiceSessions.clearLearner':
-        return fetchJson(fetchFn, joinUrl(baseUrl, '/api/practice-sessions'), {
-          method: 'DELETE',
-          headers,
-          body: JSON.stringify({ learnerId: operation.learnerId, mutation }),
-        }, authSession);
-      case 'gameState.put':
-        return fetchJson(fetchFn, joinUrl(baseUrl, '/api/child-game-state'), {
-          method: 'PUT',
-          headers,
-          body: JSON.stringify({ learnerId: operation.learnerId, systemId: operation.systemId, state: cloneSerialisable(operation.state), mutation }),
-        }, authSession);
-      case 'gameState.delete':
-        return fetchJson(fetchFn, joinUrl(baseUrl, '/api/child-game-state'), {
-          method: 'DELETE',
-          headers,
-          body: JSON.stringify({ learnerId: operation.learnerId, systemId: operation.systemId, mutation }),
-        }, authSession);
-      case 'gameState.clearLearner':
-        return fetchJson(fetchFn, joinUrl(baseUrl, '/api/child-game-state'), {
-          method: 'DELETE',
-          headers,
-          body: JSON.stringify({ learnerId: operation.learnerId, mutation }),
-        }, authSession);
-      case 'eventLog.append':
-        return fetchJson(fetchFn, joinUrl(baseUrl, '/api/event-log'), {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ event: cloneSerialisable(operation.event), mutation }),
-        }, authSession);
-      case 'eventLog.clearLearner':
-        return fetchJson(fetchFn, joinUrl(baseUrl, '/api/event-log'), {
-          method: 'DELETE',
-          headers,
-          body: JSON.stringify({ learnerId: operation.learnerId, mutation }),
-        }, authSession);
-      case 'debug.reset':
-        return fetchJson(fetchFn, joinUrl(baseUrl, '/api/debug/reset'), {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ reset: true, mutation }),
-        }, authSession);
-      default:
-        return null;
+    if (operation.kind === 'learners.write') {
+      return fetchJson(fetchFn, joinUrl(baseUrl, '/api/learners'), {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ learners: cloneSerialisable(operation.snapshot), mutation }),
+      }, authSession);
     }
+    if (LEGACY_RUNTIME_WRITES_ENABLED && isLegacyRuntimeOperationKind(operation.kind)) {
+      return sendLegacyRuntimeOperation(operation, mutation, headers);
+    }
+    if (isLegacyRuntimeOperationKind(operation.kind)) {
+      assertLegacyRuntimeWriteAllowed(operation.kind);
+    }
+    return null;
   }
 
   async function syncOperation(operation) {
@@ -1185,7 +1275,10 @@ export function createApiPlatformRepositories({
     try {
       const payload = await fetchJson(fetchFn, joinUrl(baseUrl, '/api/bootstrap'), {
         method: 'GET',
-        headers: { accept: 'application/json' },
+        headers: {
+          accept: 'application/json',
+          ...(publicReadModels ? { 'x-ks2-public-read-models': '1' } : {}),
+        },
       }, authSession);
       const remoteBundle = normaliseRepositoryBundle(payload);
       const remoteSyncState = normaliseSyncState(payload?.syncState);
@@ -1322,6 +1415,7 @@ export function createApiPlatformRepositories({
       return undefined;
     },
     clearAll() {
+      assertLegacyRuntimeWriteAllowed('debug.reset');
       const operation = createOperation('debug.reset', {}, syncState);
       queueOperation(operation);
       kickQueue();
@@ -1366,10 +1460,14 @@ export function createApiPlatformRepositories({
       writeUi(learnerId, subjectId, ui) {
         return this.writeRecord(learnerId, subjectId, mergeSubjectUi(this.read(learnerId, subjectId), ui, nowTs()), 'ui');
       },
+      cacheUi(learnerId, subjectId, ui) {
+        return cacheSubjectUi(learnerId, subjectId, ui, { scope: 'subject-state-cache' });
+      },
       writeData(learnerId, subjectId, data) {
         return this.writeRecord(learnerId, subjectId, mergeSubjectData(this.read(learnerId, subjectId), data, nowTs()), 'data');
       },
       writeRecord(learnerId, subjectId, record, mergeStrategy = 'replace') {
+        assertLegacyRuntimeWriteAllowed('subjectStates.put');
         const operation = createOperation('subjectStates.put', {
           learnerId,
           subjectId,
@@ -1381,11 +1479,13 @@ export function createApiPlatformRepositories({
         return normaliseSubjectStateRecord(cache.subjectStates[subjectStateKey(learnerId, subjectId)]);
       },
       clear(learnerId, subjectId) {
+        assertLegacyRuntimeWriteAllowed('subjectStates.delete');
         const operation = createOperation('subjectStates.delete', { learnerId, subjectId }, syncState);
         queueOperation(operation);
         kickQueue();
       },
       clearLearner(learnerId) {
+        assertLegacyRuntimeWriteAllowed('subjectStates.clearLearner');
         const operation = createOperation('subjectStates.clearLearner', { learnerId }, syncState);
         queueOperation(operation);
         kickQueue();
@@ -1404,6 +1504,7 @@ export function createApiPlatformRepositories({
         });
       },
       write(record) {
+        assertLegacyRuntimeWriteAllowed('practiceSessions.put');
         const operation = createOperation('practiceSessions.put', {
           record: normalisePracticeSessionRecord(record),
         }, syncState);
@@ -1412,6 +1513,7 @@ export function createApiPlatformRepositories({
         return this.latest(operation.record.learnerId, operation.record.subjectId);
       },
       clear(learnerId, subjectId = null) {
+        assertLegacyRuntimeWriteAllowed(subjectId ? 'practiceSessions.delete' : 'practiceSessions.clearLearner');
         const operation = createOperation(subjectId ? 'practiceSessions.delete' : 'practiceSessions.clearLearner', {
           learnerId,
           subjectId,
@@ -1420,6 +1522,7 @@ export function createApiPlatformRepositories({
         kickQueue();
       },
       clearLearner(learnerId) {
+        assertLegacyRuntimeWriteAllowed('practiceSessions.clearLearner');
         const operation = createOperation('practiceSessions.clearLearner', { learnerId }, syncState);
         queueOperation(operation);
         kickQueue();
@@ -1440,6 +1543,7 @@ export function createApiPlatformRepositories({
         return output;
       },
       write(learnerId, systemId, state) {
+        assertLegacyRuntimeWriteAllowed('gameState.put');
         const operation = createOperation('gameState.put', {
           learnerId,
           systemId,
@@ -1450,6 +1554,7 @@ export function createApiPlatformRepositories({
         return this.read(learnerId, systemId);
       },
       clear(learnerId, systemId = null) {
+        assertLegacyRuntimeWriteAllowed(systemId ? 'gameState.delete' : 'gameState.clearLearner');
         const operation = createOperation(systemId ? 'gameState.delete' : 'gameState.clearLearner', {
           learnerId,
           systemId,
@@ -1458,6 +1563,7 @@ export function createApiPlatformRepositories({
         kickQueue();
       },
       clearLearner(learnerId) {
+        assertLegacyRuntimeWriteAllowed('gameState.clearLearner');
         const operation = createOperation('gameState.clearLearner', { learnerId }, syncState);
         queueOperation(operation);
         kickQueue();
@@ -1467,6 +1573,7 @@ export function createApiPlatformRepositories({
       append(event) {
         const next = cloneSerialisable(event) || null;
         if (!next || typeof next !== 'object' || Array.isArray(next)) return null;
+        assertLegacyRuntimeWriteAllowed('eventLog.append');
         const operation = createOperation('eventLog.append', { event: next }, syncState);
         queueOperation(operation);
         kickQueue();
@@ -1477,9 +1584,19 @@ export function createApiPlatformRepositories({
         return cloneSerialisable(learnerId ? events.filter((event) => event?.learnerId === learnerId) : events);
       },
       clearLearner(learnerId) {
+        assertLegacyRuntimeWriteAllowed('eventLog.clearLearner');
         const operation = createOperation('eventLog.clearLearner', { learnerId }, syncState);
         queueOperation(operation);
         kickQueue();
+      },
+    },
+    runtime: {
+      readLearnerRevision(learnerId) {
+        const current = normaliseSyncState(syncState);
+        return Math.max(0, Number(current.learnerRevisions?.[learnerId]) || 0);
+      },
+      applySubjectCommandResult({ learnerId, subjectId, response } = {}) {
+        return applyCommandResultToCache({ learnerId, subjectId, response });
       },
     },
   };

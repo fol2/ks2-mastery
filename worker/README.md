@@ -1,11 +1,8 @@
 # Worker minimum viable backend
 
-This Worker is now a real minimum viable backend for the generic repository contract.
+This Worker is now the production authority for sessions, learner access, subject commands, read models, and protected audio routes.
 
-Production browser sessions use the API-backed repository after sign-in.
-Direct file/local mode, or `?local=1`, still uses browser storage for development.
-English Spelling still runs through the same subject/service boundary.
-The Worker now provides durable D1-backed storage for the generic platform collections, account-scoped spelling content, session/auth flows, selected-provider TTS proxying, learner ownership at the API boundary, and thin hub read-model routes for Parent Hub / Admin.
+Production browser sessions use API-backed repositories after sign-in or through an ephemeral demo session. `?local=1` is not a product runtime path. English Spelling production practice runs through the Worker subject command boundary, with React acting as the UI shell. The Worker provides durable D1-backed storage for the generic platform collections, account-scoped spelling content, session/auth flows, protected selected-provider TTS, learner ownership at the API boundary, server-side subject runtime, Word Bank read models, and thin hub read-model routes for Parent Hub / Admin.
 
 ## What this Worker is now
 
@@ -15,9 +12,12 @@ It is:
 - account-scoped spelling content storage for draft and published release bundles
 - an adult-account to learner ownership boundary
 - a place where learner-scoped permissions are enforced before repository writes happen
-- a provider-agnostic auth/session seam with production email and social login flows plus a safe development/test stub
+- a provider-agnostic auth/session boundary with production email and social login flows, ephemeral demo sessions, and a safe development/test stub
+- a server-authoritative subject command runtime for signed-in and demo practice
 - a Worker-side TTS proxy that keeps provider API keys out of the browser and honours the selected OpenAI or Gemini provider without automatic fallback
+- a prompt-token audio boundary so dictation text is resolved on the server
 - a read-model boundary for role-aware Parent Hub and Admin / Operations surfaces
+- a read-model boundary for authorised Spelling Word Bank rows and detail
 - an admin-only account role management boundary for production platform roles
 - a deployment boundary that still keeps subject UI rules out of the backend
 
@@ -105,6 +105,30 @@ Current use:
 - accounts with no stored spelling row receive the current seeded spelling bundle, including Extra, on read
 - accounts with an existing stored row keep that custom content until an operator imports/publishes the new bundle or intentionally resets to the seed
 
+## Demo sessions
+
+The Worker owns public demo access.
+
+- `POST /api/demo/session` creates a 24-hour isolated demo account and learner.
+- `GET /demo` creates the same server-owned session and redirects to the app.
+- `POST /api/demo/reset` refreshes the demo learner from the server template.
+- non-expired demo sessions can be converted into real accounts through registration.
+- expired demo sessions fail closed for bootstrap, hub reads, subject commands, reset, conversion, and protected audio fallback.
+
+Demo visitors use the same subject command and read-model routes as signed-in users. They do not receive Admin / Operations access and cannot read or mutate real account data.
+
+## Subject command runtime
+
+Production practice writes go through:
+
+```txt
+POST /api/subjects/:subjectId/command
+```
+
+The command boundary validates session ownership, learner access, demo expiry, request idempotency, expected learner revision, subject id, and command type before touching learner state. For Spelling, the Worker owns session creation, word queue selection, scoring, correction state, progress mutation, completed session writes, event publication, reward projection, and the returned read model.
+
+The React client sends user intent and renders the response. It does not use a browser-local Spelling engine as a production fallback.
+
 ## Current mutation safety rules
 
 The Worker now enforces a small mutation policy instead of last-write-wins.
@@ -155,6 +179,7 @@ Current behaviour:
 - every repository route except `/api/health` requires an authenticated adult session
 - the development/test auth stub is enabled only through the explicit development auth mode
 - bootstrap only returns learners the current account can actively work with now
+- demo bootstrap and runtime access require a non-expired demo account
 - learner-scoped writes require `owner` or `member`
 - deleting or omitting a learner is ownership-aware
 - if the last owner removes themselves from a shared learner, an existing member is promoted so the learner is not orphaned

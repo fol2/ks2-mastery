@@ -50,6 +50,8 @@ for (const unsafePath of ['worker', 'tests', 'docs', 'legacy', 'migration-plan.m
 }
 await mustNotExist('src/generated');
 await mustNotExist('src/bundles/home.bundle.js');
+await mustNotExist('src/main.js');
+await mustNotExist('src/subjects');
 await mustNotExist('src/platform/ui/render.js');
 await mustNotExist('src/surfaces/home/index.jsx');
 await mustNotExist('src/surfaces/home/TopNav.jsx');
@@ -64,6 +66,14 @@ if (unexpected.length) {
 const unsafeFiles = (await walk()).filter((file) => path.basename(file) === '.DS_Store');
 if (unsafeFiles.length) {
   throw new Error(`Unexpected macOS metadata in public output: ${unsafeFiles.join(', ')}`);
+}
+
+const rawSourceFiles = (await walk()).filter((file) => (
+  file.startsWith('src/')
+  && file !== 'src/bundles/app.bundle.js'
+));
+if (rawSourceFiles.length) {
+  throw new Error(`Public output must only expose the built app bundle under src/: ${rawSourceFiles.join(', ')}`);
 }
 
 const rawAssetPngs = (await walk()).filter((file) => file.startsWith('assets/') && file.endsWith('.png'));
@@ -87,6 +97,8 @@ for (const token of [
   'data-home-mount',
   'data-subject-topnav-mount',
   'home.bundle.js',
+  'SEEDED_SPELLING_CONTENT_BUNDLE',
+  'Legacy vendor seed for Pass 11 content model',
 ]) {
   if (appBundle.includes(token)) {
     throw new Error(`React app bundle must not include retired legacy client token: ${token}`);

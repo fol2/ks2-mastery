@@ -150,6 +150,15 @@ test('admin hub read model reports published release status, validation state, a
       },
     },
     runtimeSnapshots: {},
+    demoOperations: {
+      sessionsCreated: 9,
+      activeSessions: 2,
+      conversions: 3,
+      cleanupCount: 4,
+      rateLimitBlocks: 5,
+      ttsFallbacks: 1,
+      updatedAt: 5500,
+    },
     auditEntries: [
       {
         requestId: 'req-1',
@@ -172,6 +181,9 @@ test('admin hub read model reports published release status, validation state, a
   assert.equal(model.importValidationStatus.ok, true);
   assert.equal(model.auditLogLookup.available, true);
   assert.equal(model.auditLogLookup.entries[0].requestId, 'req-1');
+  assert.equal(model.demoOperations.sessionsCreated, 9);
+  assert.equal(model.demoOperations.activeSessions, 2);
+  assert.equal(model.demoOperations.ttsFallbacks, 1);
   assert.equal(model.learnerSupport.accessibleLearners[0].learnerName, 'Ava');
   assert.equal(model.learnerSupport.selectedDiagnostics.overview.secureWords, 1);
 });

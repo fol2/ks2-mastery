@@ -19,13 +19,7 @@ function buildSpeechTranscript({ word, sentence, wordOnly = false } = {}) {
 }
 
 function shouldUseRemoteTts() {
-  if (typeof window === 'undefined') return false;
-  try {
-    const url = new URL(window.location.href);
-    return url.searchParams.get('local') !== '1';
-  } catch {
-    return true;
-  }
+  return typeof window !== 'undefined';
 }
 
 function resolveProvider(provider) {
@@ -64,6 +58,22 @@ function chooseBrowserVoice(speechSynthesis) {
 function playbackKind({ kind = '', slow = false } = {}) {
   const explicit = String(kind || '').trim();
   return explicit || (slow ? 'slow' : 'normal');
+}
+
+function remotePromptRequest(payload = {}, providerId = DEFAULT_TTS_PROVIDER) {
+  const learnerId = typeof payload.learnerId === 'string' ? payload.learnerId : '';
+  const promptToken = typeof payload.promptToken === 'string' ? payload.promptToken : '';
+  if (!learnerId || !promptToken) return null;
+  const body = {
+    learnerId,
+    promptToken,
+    slow: Boolean(payload.slow),
+    provider: providerId,
+  };
+  if (payload.wordOnly) body.wordOnly = true;
+  if (typeof payload.slug === 'string' && payload.slug) body.slug = payload.slug;
+  if (typeof payload.scope === 'string' && payload.scope) body.scope = payload.scope;
+  return body;
 }
 
 export function createPlatformTts({
@@ -153,17 +163,17 @@ export function createPlatformTts({
     });
   }
 
-  async function speakWithRemote({ word, sentence, slow = false, wordOnly = false, kind = '' }, providerId, token) {
+  async function speakWithRemote(payload = {}, providerId, token) {
     if (!remoteEnabled || typeof fetchFn !== 'function' || typeof Audio === 'undefined' || typeof URL === 'undefined') {
       return false;
     }
+    const requestBody = remotePromptRequest(payload, providerId);
+    if (!requestBody) return false;
 
     currentAbort = new AbortController();
-    const kindId = playbackKind({ kind, slow });
+    const kindId = playbackKind(payload);
     emit({ type: 'loading', kind: kindId, provider: providerId });
     try {
-      const requestBody = { word, sentence, slow, provider: providerId };
-      if (wordOnly) requestBody.wordOnly = true;
       const response = await fetchFn(endpoint, {
         method: 'POST',
         credentials: 'include',

@@ -38,6 +38,34 @@ function learnerSnapshot(name = 'Ava') {
   };
 }
 
+function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a' } = {}) {
+  const now = Date.UTC(2026, 0, 1);
+  DB.db.prepare(`
+    INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+    VALUES (?, 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run(learnerId, now, now);
+  DB.db.prepare(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES (?, ?, 'Adult A', 'parent', ?, ?, ?, 0)
+    ON CONFLICT(id) DO UPDATE SET selected_learner_id = excluded.selected_learner_id
+  `).run(accountId, `${accountId}@example.test`, learnerId, now, now);
+  DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES (?, ?, 'owner', 0, ?, ?)
+    ON CONFLICT(account_id, learner_id) DO UPDATE SET role = excluded.role
+  `).run(accountId, learnerId, now, now);
+}
+
+function adminAuthSession(server, accountId = 'adult-a') {
+  return server.authSessionFor(accountId, { platformRole: 'admin' });
+}
+
+function fetchAdmin(server, input, init = {}, accountId = 'adult-a') {
+  return server.fetchAs(accountId, input, init, {
+    'x-ks2-dev-platform-role': 'admin',
+  });
+}
+
 function stripWordExplanations(bundle) {
   const next = cloneSerialisable(bundle);
   next.draft.words = next.draft.words.map(({ explanation: _explanation, ...word }) => word);
@@ -102,7 +130,7 @@ test('api spelling content repository hydrates the seeded published bundle and p
     const repository = createApiSpellingContentRepository({
       baseUrl: 'https://repo.test',
       fetch: server.fetch.bind(server),
-      authSession: server.authSessionFor('adult-a'),
+      authSession: adminAuthSession(server),
     });
 
     const bundle = await repository.hydrate();
@@ -125,7 +153,7 @@ test('api spelling content repository hydrates the seeded published bundle and p
     const fresh = createApiSpellingContentRepository({
       baseUrl: 'https://repo.test',
       fetch: server.fetch.bind(server),
-      authSession: server.authSessionFor('adult-a'),
+      authSession: adminAuthSession(server),
     });
     const reloaded = await fresh.hydrate();
     assert.equal(reloaded.draft.notes, 'Operator note from API repository test.');
@@ -135,14 +163,49 @@ test('api spelling content repository hydrates the seeded published bundle and p
   }
 });
 
+test('worker spelling content route is limited to operator roles', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const parentRead = await server.fetch('https://repo.test/api/content/spelling');
+    const parentPayload = await parentRead.json();
+    assert.equal(parentRead.status, 403);
+    assert.equal(parentPayload.code, 'subject_content_export_forbidden');
+
+    const opsRead = await server.fetchAs('adult-a', 'https://repo.test/api/content/spelling', {}, {
+      'x-ks2-dev-platform-role': 'ops',
+    });
+    assert.equal(opsRead.status, 200);
+
+    const opsWrite = await server.fetchAs('adult-a', 'https://repo.test/api/content/spelling', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        content: SEEDED_SPELLING_CONTENT_BUNDLE,
+        mutation: {
+          requestId: 'content-ops-write-forbidden',
+          correlationId: 'content-ops-write-forbidden',
+          expectedAccountRevision: 0,
+        },
+      }),
+    }, {
+      'x-ks2-dev-platform-role': 'ops',
+    });
+    const opsWritePayload = await opsWrite.json();
+    assert.equal(opsWrite.status, 403);
+    assert.equal(opsWritePayload.code, 'subject_content_write_forbidden');
+  } finally {
+    server.close();
+  }
+});
+
 test('worker spelling content route accepts valid Extra pool content without statutory year groups', async () => {
   const server = createWorkerRepositoryServer();
   try {
-    const initialResponse = await server.fetch('https://repo.test/api/content/spelling');
+    const initialResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling');
     const initial = await initialResponse.json();
     const updated = addExtraWordList(initial.content);
 
-    const response = await server.fetch('https://repo.test/api/content/spelling', {
+    const response = await fetchAdmin(server, 'https://repo.test/api/content/spelling', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -161,9 +224,67 @@ test('worker spelling content route accepts valid Extra pool content without sta
     assert.equal(payload.content.draft.words.find((word) => word.slug === 'cephalopod').spellingPool, 'extra');
     assert.deepEqual(payload.content.draft.words.find((word) => word.slug === 'cephalopod').yearGroups, []);
 
-    const reloadedResponse = await server.fetch('https://repo.test/api/content/spelling');
+    const reloadedResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling');
     const reloaded = await reloadedResponse.json();
     assert.equal(reloaded.content.draft.words.find((word) => word.slug === 'cephalopod').spellingPool, 'extra');
+  } finally {
+    server.close();
+  }
+});
+
+test('worker spelling word bank route returns paginated public rows and detail audio tokens', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAccountLearner(server.DB);
+
+    const response = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&pageSize=5&year=y3-4');
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.wordBank.learnerId, 'learner-a');
+    assert.equal(payload.wordBank.analytics.wordBank.returnedRows, 5);
+    assert.equal(payload.wordBank.analytics.wordBank.hasNextPage, true);
+    assert.ok(payload.wordBank.analytics.pools.core.total > 0);
+    const rows = payload.wordBank.analytics.wordGroups.flatMap((group) => group.words);
+    assert.equal(rows.length, 5);
+    assert.equal(rows[0].accepted, undefined);
+    assert.equal(rows[0].sentence, undefined);
+    assert.equal(rows[0].explanation, undefined);
+
+    const detailResponse = await server.fetch(`https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&detailSlug=${rows[0].slug}`);
+    const detailPayload = await detailResponse.json();
+
+    assert.equal(detailResponse.status, 200);
+    assert.equal(detailPayload.wordBank.detail.slug, rows[0].slug);
+    assert.equal(typeof detailPayload.wordBank.detail.sentence, 'string');
+    assert.ok(detailPayload.wordBank.detail.sentence.length > 0);
+    assert.equal(detailPayload.wordBank.detail.accepted, undefined);
+    assert.ok(detailPayload.wordBank.detail.audio.dictation.promptToken);
+    assert.ok(detailPayload.wordBank.detail.audio.word.promptToken);
+  } finally {
+    server.close();
+  }
+});
+
+test('worker spelling word bank route controls empty, high-page, and invalid-detail cases', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAccountLearner(server.DB);
+
+    const empty = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&q=zzzz-no-match');
+    const emptyPayload = await empty.json();
+    assert.equal(empty.status, 200);
+    assert.equal(emptyPayload.wordBank.analytics.wordBank.filteredRows, 0);
+
+    const highPage = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&page=999');
+    const highPagePayload = await highPage.json();
+    assert.equal(highPage.status, 200);
+    assert.equal(highPagePayload.wordBank.analytics.wordBank.returnedRows, 0);
+
+    const missing = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&detailSlug=not-a-word');
+    const missingPayload = await missing.json();
+    assert.equal(missing.status, 404);
+    assert.equal(missingPayload.code, 'spelling_word_not_found');
   } finally {
     server.close();
   }
@@ -172,11 +293,11 @@ test('worker spelling content route accepts valid Extra pool content without sta
 test('worker spelling content route backfills version-one core bundles without pool metadata', async () => {
   const server = createWorkerRepositoryServer();
   try {
-    const initialResponse = await server.fetch('https://repo.test/api/content/spelling');
+    const initialResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling');
     const initial = await initialResponse.json();
     const legacy = coreOnlyVersionOneContent(initial.content);
 
-    const response = await server.fetch('https://repo.test/api/content/spelling', {
+    const response = await fetchAdmin(server, 'https://repo.test/api/content/spelling', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -217,7 +338,7 @@ test('content writes share the account revision without leaving later learner wr
     const content = createApiSpellingContentRepository({
       baseUrl: 'https://repo.test',
       fetch: server.fetch.bind(server),
-      authSession,
+      authSession: adminAuthSession(server),
     });
     const bundle = await content.hydrate();
     assert.equal(content.getAccountRevision(), 1);
@@ -252,7 +373,7 @@ test('content writes share the account revision without leaving later learner wr
 test('worker spelling content receipt replay returns full content without storing the large bundle in receipts', async () => {
   const server = createWorkerRepositoryServer();
   try {
-    const initialResponse = await server.fetch('https://repo.test/api/content/spelling');
+    const initialResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling');
     const initial = await initialResponse.json();
     const updated = cloneSerialisable(initial.content);
     updated.draft.notes = 'Replay-safe content write test.';
@@ -266,7 +387,7 @@ test('worker spelling content receipt replay returns full content without storin
       },
     };
 
-    const firstResponse = await server.fetch('https://repo.test/api/content/spelling', {
+    const firstResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
@@ -280,7 +401,7 @@ test('worker spelling content receipt replay returns full content without storin
     assert.ok(receipt.response_json.length < 100_000);
     assert.equal(JSON.parse(receipt.response_json).content, undefined);
 
-    const replayResponse = await server.fetch('https://repo.test/api/content/spelling', {
+    const replayResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
@@ -297,12 +418,12 @@ test('worker spelling content receipt replay returns full content without storin
 test('worker spelling content route backfills legacy bundles before validation and persistence', async () => {
   const server = createWorkerRepositoryServer();
   try {
-    const initialResponse = await server.fetch('https://repo.test/api/content/spelling');
+    const initialResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling');
     const initial = await initialResponse.json();
     const legacy = stripWordExplanations(initial.content);
     legacy.draft.notes = 'Legacy spelling bundle without word explanations.';
 
-    const response = await server.fetch('https://repo.test/api/content/spelling', {
+    const response = await fetchAdmin(server, 'https://repo.test/api/content/spelling', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -319,7 +440,7 @@ test('worker spelling content route backfills legacy bundles before validation a
     assert.equal(payload.content.draft.words.find((word) => word.slug === 'possess').explanation, 'To possess something means to own it or have it.');
     assert.equal(payload.content.releases[0].snapshot.wordBySlug.possess.explanation, 'To possess something means to own it or have it.');
 
-    const reloadedResponse = await server.fetch('https://repo.test/api/content/spelling');
+    const reloadedResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling');
     const reloaded = await reloadedResponse.json();
     assert.equal(reloaded.content.draft.notes, 'Legacy spelling bundle without word explanations.');
     assert.equal(reloaded.content.releases[0].snapshot.wordBySlug.possess.explanation, 'To possess something means to own it or have it.');
@@ -335,7 +456,7 @@ test('worker spelling content route rejects invalid bundles with explicit valida
     invalid.draft.words[0].yearGroups = [];
     invalid.draft.words[0].sentenceEntryIds = ['missing-sentence'];
 
-    const response = await server.fetch('https://repo.test/api/content/spelling', {
+    const response = await fetchAdmin(server, 'https://repo.test/api/content/spelling', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
