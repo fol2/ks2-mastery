@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createAppHarness } from './helpers/app-harness.js';
 import { createManualScheduler } from './helpers/manual-scheduler.js';
+import { createLocalAppController } from '../src/platform/app/create-local-app-controller.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
 import { createSpellingService } from '../src/subjects/spelling/service.js';
@@ -288,6 +289,46 @@ test('legacy auto-advance delay is preserved for learning and SATs saves', () =>
     awaitingAdvance: true,
     session: { type: 'test' },
   }), 320);
+
+  assert.equal(spellingAutoAdvanceDelay({
+    phase: 'session',
+    awaitingAdvance: true,
+    error: 'Command failed',
+    session: { type: 'learning' },
+  }), null);
+});
+
+test('auto-advance can delegate continue through an injected command boundary', () => {
+  const storage = installMemoryStorage();
+  const scheduler = createManualScheduler();
+  const repositories = createLocalPlatformRepositories({ storage });
+  let autoContinueCalls = 0;
+  const controller = createLocalAppController({
+    repositories,
+    scheduler,
+    autoAdvanceDispatchContinue: () => {
+      autoContinueCalls += 1;
+      return true;
+    },
+  });
+  const learnerId = controller.store.getState().learners.selectedId;
+
+  controller.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  controller.dispatch('open-subject', { subjectId: 'spelling' });
+  controller.dispatch('spelling-start');
+
+  const answer = controller.store.getState().subjectUi.spelling.session.currentCard.word.word;
+  controller.dispatch('spelling-submit-form', { formData: typedFormData(answer) });
+  controller.services.spelling.continueSession = undefined;
+
+  assert.equal(controller.store.getState().subjectUi.spelling.awaitingAdvance, true);
+  assert.equal(scheduler.count(), 1);
+
+  scheduler.flushAll();
+
+  assert.equal(autoContinueCalls, 1);
+  assert.equal(controller.runtimeBoundary.list().length, 0);
+  assert.equal(controller.store.getState().subjectUi.spelling.awaitingAdvance, true);
 });
 
 test('legacy auto-advance can move a one-word learning round on without a manual continue click', () => {
