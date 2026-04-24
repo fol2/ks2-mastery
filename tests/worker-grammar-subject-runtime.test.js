@@ -250,6 +250,56 @@ test('Grammar command route rejects end-session without an active session', asyn
   DB.close();
 });
 
+test('Grammar command route normalises answer responses before storing read models', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'fronted_adverbial_choose');
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-normalise-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+
+  const submit = await postCommand(app, DB, {
+    command: 'submit-answer',
+    learnerId: 'learner-a',
+    requestId: 'grammar-normalise-submit',
+    expectedLearnerRevision: 1,
+    payload: {
+      response: {
+        ...sample.correctResponse,
+        extra: 'x'.repeat(120_000),
+        selected: Array.from({ length: 120 }, () => 'not an option'),
+        nested: { value: 'not persisted' },
+      },
+    },
+  });
+  assert.equal(submit.response.status, 200, JSON.stringify(submit.body));
+  assert.deepEqual(submit.body.subjectReadModel.feedback.response, sample.correctResponse);
+
+  const subject = DB.db.prepare(`
+    SELECT ui_json, data_json
+    FROM child_subject_state
+    WHERE learner_id = 'learner-a' AND subject_id = 'grammar'
+  `).get();
+  const ui = JSON.parse(subject.ui_json);
+  const data = JSON.parse(subject.data_json);
+  assert.deepEqual(ui.feedback.response, sample.correctResponse);
+  assert.deepEqual(data.recentAttempts[0].response, sample.correctResponse);
+
+  DB.close();
+});
+
 test('Grammar save-prefs drops invalid focus concepts so later sessions can start', async () => {
   const DB = createMigratedSqliteD1Database();
   const app = createWorkerApp({ now: () => 1_777_000_000_000 });

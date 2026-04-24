@@ -17,6 +17,9 @@ const SUBJECT_ID = 'grammar';
 const SERVER_AUTHORITY = 'worker';
 const DEFAULT_ROUND_LENGTH = 5;
 const DEFAULT_MINI_SET_LENGTH = 8;
+const SHORT_RESPONSE_TEXT_LIMIT = 512;
+const LONG_RESPONSE_TEXT_LIMIT = 2000;
+const LIST_RESPONSE_LIMIT = 40;
 const ENABLED_MODES = new Set(['learn', 'smart', 'satsset']);
 const LOCKED_MODES = Object.freeze(['trouble', 'surgery', 'builder', 'worked', 'faded']);
 const GRAMMAR_CONCEPT_IDS = new Set(GRAMMAR_CONCEPTS.map((concept) => concept.id));
@@ -40,6 +43,90 @@ function isGrammarConceptId(value) {
 
 function normaliseStoredFocusConceptId(value) {
   return isGrammarConceptId(value) ? value : '';
+}
+
+function cappedString(value, limit = SHORT_RESPONSE_TEXT_LIMIT) {
+  const text = value == null ? '' : String(value);
+  return text.length > limit ? text.slice(0, limit) : text;
+}
+
+function optionValue(option) {
+  if (Array.isArray(option)) return cappedString(option[0]);
+  if (isPlainObject(option)) return cappedString(option.value);
+  return cappedString(option);
+}
+
+function optionValueSet(options) {
+  return new Set(Array.isArray(options) ? options.map(optionValue) : []);
+}
+
+function normaliseChoiceValue(value, allowedValues) {
+  const text = cappedString(value);
+  return allowedValues.size && !allowedValues.has(text) ? '' : text;
+}
+
+function normaliseSelectedValues(value, allowedValues) {
+  if (!Array.isArray(value)) return [];
+  const maxItems = Math.min(
+    LIST_RESPONSE_LIMIT,
+    allowedValues.size || LIST_RESPONSE_LIMIT,
+  );
+  const selected = [];
+  const seen = new Set();
+  for (const item of value.slice(0, LIST_RESPONSE_LIMIT * 2)) {
+    const text = cappedString(item);
+    if ((allowedValues.size && !allowedValues.has(text)) || seen.has(text)) continue;
+    selected.push(text);
+    seen.add(text);
+    if (selected.length >= maxItems) break;
+  }
+  return selected;
+}
+
+function normaliseFieldResponse(field, value) {
+  const allowedValues = optionValueSet(field?.options);
+  if (allowedValues.size) return normaliseChoiceValue(value, allowedValues);
+  return cappedString(value, field?.kind === 'textarea' ? LONG_RESPONSE_TEXT_LIMIT : SHORT_RESPONSE_TEXT_LIMIT);
+}
+
+function normaliseGrammarResponse(inputSpec, response) {
+  const raw = isPlainObject(response) ? response : {};
+  const spec = isPlainObject(inputSpec) ? inputSpec : {};
+
+  if (spec.type === 'single_choice') {
+    return { answer: normaliseChoiceValue(raw.answer, optionValueSet(spec.options)) };
+  }
+
+  if (spec.type === 'checkbox_list') {
+    return { selected: normaliseSelectedValues(raw.selected, optionValueSet(spec.options)) };
+  }
+
+  if (spec.type === 'table_choice') {
+    const allowedValues = optionValueSet(spec.columns);
+    const output = {};
+    for (const row of Array.isArray(spec.rows) ? spec.rows.slice(0, LIST_RESPONSE_LIMIT) : []) {
+      const key = typeof row?.key === 'string' ? row.key : '';
+      if (!key) continue;
+      output[key] = normaliseChoiceValue(raw[key], allowedValues);
+    }
+    return output;
+  }
+
+  if (spec.type === 'multi') {
+    const output = {};
+    for (const field of Array.isArray(spec.fields) ? spec.fields.slice(0, LIST_RESPONSE_LIMIT) : []) {
+      const key = typeof field?.key === 'string' ? field.key : '';
+      if (!key) continue;
+      output[key] = normaliseFieldResponse(field, raw[key]);
+    }
+    return output;
+  }
+
+  if (spec.type === 'text') {
+    return { answer: cappedString(raw.answer, SHORT_RESPONSE_TEXT_LIMIT) };
+  }
+
+  return { answer: cappedString(raw.answer, LONG_RESPONSE_TEXT_LIMIT) };
 }
 
 function stableHash(value) {
@@ -613,7 +700,8 @@ export function applyGrammarAttemptToState(state, {
       templateId: item.templateId,
     });
   }
-  const result = evaluateGrammarQuestion(question, response);
+  const normalisedResponse = normaliseGrammarResponse(question.inputSpec, response);
+  const result = evaluateGrammarQuestion(question, normalisedResponse);
   if (!result) {
     throw new BadRequestError('Grammar answer could not be marked.', {
       code: 'grammar_answer_invalid',
@@ -645,7 +733,7 @@ export function applyGrammarAttemptToState(state, {
     seed: question.seed,
     questionType: question.questionType,
     conceptIds,
-    response: cloneSerialisable(response) || {},
+    response: cloneSerialisable(normalisedResponse) || {},
     result: cloneSerialisable(result) || {},
     supportLevel,
     attempts,
@@ -697,7 +785,7 @@ export function applyGrammarAttemptToState(state, {
       });
     }
   }
-  return { result, quality, events, attempt };
+  return { result, quality, events, attempt, response: normalisedResponse };
 }
 
 function submitAnswer(state, payload, command, nowTs) {
@@ -735,7 +823,7 @@ function submitAnswer(state, payload, command, nowTs) {
     itemId: session.currentItem.itemId,
     templateId: session.currentItem.templateId,
     result: cloneSerialisable(applied.result),
-    response: cloneSerialisable(response) || {},
+    response: cloneSerialisable(applied.response) || {},
     canContinue: session.answered < session.targetCount,
   };
   return applied.events;

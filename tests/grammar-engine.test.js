@@ -172,6 +172,27 @@ test('Grammar retry queue de-duplicates repeated misses for the same template an
   assert.equal(state.retryQueue[0].templateId, 'fronted_adverbial_choose');
 });
 
+test('Grammar attempt history stores bounded response fields only', () => {
+  const state = createInitialGrammarState();
+  const question = createGrammarQuestion({ templateId: 'fix_fronted_adverbial', seed: 1 });
+  const item = serialiseGrammarQuestion(question);
+
+  applyGrammarAttemptToState(state, {
+    learnerId: 'learner-a',
+    item,
+    response: {
+      answer: 'x'.repeat(120_000),
+      extra: 'y'.repeat(120_000),
+      nested: { value: 'not persisted' },
+    },
+    now: 1_777_000_000_000,
+  });
+
+  const persisted = state.recentAttempts[0].response;
+  assert.deepEqual(Object.keys(persisted), ['answer']);
+  assert.equal(persisted.answer.length, 2_000);
+});
+
 test('Grammar server engine creates a session, marks an answer, and records summary events', () => {
   const oracle = readGrammarLegacyOracle();
   const sample = oracle.templates.find((template) => template.id === 'question_mark_select');
