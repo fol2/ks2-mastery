@@ -5,6 +5,7 @@ import {
   renderSpellingClozeFixture,
   renderSpellingSurfaceFixture,
 } from './helpers/react-render.js';
+import { createSpellingReadModelService } from '../src/subjects/spelling/client-read-models.js';
 
 test('React spelling setup scene renders primary practice controls', async () => {
   const html = await renderSpellingSurfaceFixture({ phase: 'setup' });
@@ -12,6 +13,32 @@ test('React spelling setup scene renders primary practice controls', async () =>
   assert.match(html, /Round setup/);
   assert.match(html, /Begin 20 words/);
   assert.match(html, /data-action="spelling-start"/);
+});
+
+test('client spelling read model preserves word-family variant preference', () => {
+  const service = createSpellingReadModelService({
+    getState: () => ({
+      learners: { selectedId: 'learner-a' },
+      subjectUi: {
+        spelling: {
+          subjectId: 'spelling',
+          learnerId: 'learner-a',
+          version: 1,
+          phase: 'dashboard',
+          prefs: {
+            mode: 'smart',
+            yearFilter: 'extra',
+            roundLength: '20',
+            showCloze: true,
+            autoSpeak: true,
+            extraWordFamilies: true,
+          },
+        },
+      },
+    }),
+  });
+
+  assert.equal(service.getPrefs('learner-a').extraWordFamilies, true);
 });
 
 test('React spelling session scene preserves input, replay, and submit affordances', async () => {

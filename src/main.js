@@ -2359,6 +2359,7 @@ function handleRemoteSpellingAction(action, data = {}) {
       mode: prefs.mode,
       yearFilter: prefs.yearFilter,
       length: prefs.roundLength,
+      extraWordFamilies: prefs.extraWordFamilies,
     });
     return true;
   }
@@ -2378,6 +2379,7 @@ function handleRemoteSpellingAction(action, data = {}) {
         mode: prefs.mode || mode,
         yearFilter: prefs.yearFilter,
         length: prefs.roundLength,
+        extraWordFamilies: prefs.extraWordFamilies,
       });
     })().catch((error) => {
       globalThis.console?.warn?.('Spelling shortcut command failed.', error);

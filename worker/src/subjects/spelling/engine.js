@@ -199,6 +199,7 @@ function startOptionsFromPayload(payload = {}) {
     length: payload.length ?? payload.roundLength,
     words,
     practiceOnly: payload.practiceOnly,
+    extraWordFamilies: payload.extraWordFamilies,
   };
 }
 
