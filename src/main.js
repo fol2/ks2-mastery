@@ -1849,12 +1849,21 @@ function setSpellingRuntimeError(message) {
   store.updateSubjectUi('spelling', { error: message || 'Practice is temporarily unavailable.' });
 }
 
-function applySpellingCommandResponse(response) {
+function shouldStopSpellingTtsForCommandResponse(command, response) {
+  if (response?.audio?.promptToken) return false;
+  const nextPhase = response?.subjectReadModel?.phase || response?.state?.phase || '';
+  return command === 'submit-answer' || (nextPhase && nextPhase !== 'session');
+}
+
+function applySpellingCommandResponse(response, { command = '' } = {}) {
   if (response?.projections?.rewards?.toastEvents?.length) {
     store.pushToasts(response.projections.rewards.toastEvents);
   }
   if (response?.projections?.rewards?.events?.length) {
     store.pushMonsterCelebrations(response.projections.rewards.events);
+  }
+  if (shouldStopSpellingTtsForCommandResponse(command, response)) {
+    tts.stop();
   }
   store.reloadFromRepositories({ preserveRoute: true });
   if (response?.audio?.promptToken) {
@@ -1969,7 +1978,7 @@ async function sendSpellingCommand(command, payload = {}) {
     command,
     payload,
   });
-  applySpellingCommandResponse(response);
+  applySpellingCommandResponse(response, { command });
   return response;
 }
 

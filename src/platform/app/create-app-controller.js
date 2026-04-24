@@ -132,6 +132,12 @@ export function createAppController({
     return true;
   }
 
+  function shouldStopSpellingAudio(previousSubjectUi, nextSubjectUi, transition) {
+    if (transition?.audio?.word || transition?.audio?.promptToken) return false;
+    if (previousSubjectUi?.phase !== 'session') return nextSubjectUi?.phase && nextSubjectUi.phase !== 'session';
+    return nextSubjectUi?.phase !== 'session' || Boolean(nextSubjectUi?.awaitingAdvance);
+  }
+
   function applySubjectTransition(subjectId, transition) {
     if (!transition) return false;
     const previousSubjectUi = store.getState().subjectUi[subjectId] || null;
@@ -168,6 +174,11 @@ export function createAppController({
       subjectId,
       tab: store.getState().route.tab || 'practice',
     });
+
+    if (subjectId === 'spelling' && shouldStopSpellingAudio(previousSubjectUi, nextSubjectUi, transition)) {
+      clearDeferredAudio();
+      tts.stop();
+    }
 
     if (transition.audio?.word) {
       if (transition.deferAudioUntilFlowTransitionEnd) {
