@@ -13,4 +13,3 @@ export function MonsterVisualConfigProvider({ value = null, children }) {
 export function useMonsterVisualConfig() {
   return useContext(MonsterVisualConfigContext) || null;
 }
-

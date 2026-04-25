@@ -1247,24 +1247,54 @@ textarea:focus-visible {
    the silhouette visibly grows with each evolution. Only
    transform/opacity animate (filter dropped) — keeps the
    GPU compositor doing the whole job. */
-.monster-celebration-art {
+.monster-celebration-visual {
   position: absolute;
   top: 50%;
   left: 50%;
   width: 260px;
   height: 260px;
-  transform: translate(-50%, -50%);
+  transform:
+    translate(calc(-50% + var(--visual-offset-x, 0px)), calc(-50% + var(--visual-offset-y, 0px) - var(--visual-bob, 0px)))
+    rotate(var(--visual-tilt, 0deg))
+    scaleX(var(--visual-face, 1))
+    scale(var(--visual-scale, 1));
+  transform-origin: var(--visual-anchor-x, 50%) var(--visual-anchor-y, 100%);
+  will-change: transform, opacity;
+}
+
+.monster-celebration-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 7%;
+  z-index: 0;
+  width: 62%;
+  height: 14%;
+  border-radius: 50%;
+  background: rgba(8, 12, 18, 0.45);
+  opacity: calc(var(--visual-shadow-opacity, 0) * 0.65);
+  filter: blur(12px);
+  transform:
+    translate(calc(-50% + var(--visual-shadow-x, 0px)), var(--visual-shadow-y, 0px))
+    scale(var(--visual-shadow-scale, 1));
+}
+
+.monster-celebration-art {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;
   will-change: transform, opacity;
 }
 
-.monster-celebration-art[data-stage="0"] { width: 180px; height: 180px; } /* egg  */
-.monster-celebration-art[data-stage="1"] { width: 240px; height: 240px; }
-.monster-celebration-art[data-stage="2"] { width: 300px; height: 300px; }
-.monster-celebration-art[data-stage="3"] { width: 380px; height: 380px; }
-.monster-celebration-art[data-stage="4"] { width: 540px; height: 540px; } /* mega */
+.monster-celebration-visual[data-stage="0"] { width: 180px; height: 180px; } /* egg  */
+.monster-celebration-visual[data-stage="1"] { width: 240px; height: 240px; }
+.monster-celebration-visual[data-stage="2"] { width: 300px; height: 300px; }
+.monster-celebration-visual[data-stage="3"] { width: 380px; height: 380px; }
+.monster-celebration-visual[data-stage="4"] { width: 540px; height: 540px; } /* mega */
 
 /* Outgoing form — longer "behold" hold before the break, then
    opacity crossfade into the white flash. A subtle breathing
@@ -1272,7 +1302,7 @@ textarea:focus-visible {
    that power is building. */
 .monster-celebration-art.before {
   opacity: 0;
-  animation: monster-celebration-before var(--mc-duration) linear forwards;
+  animation: monster-celebration-before var(--mc-duration) linear var(--mc-art-delay, 0s) forwards;
 }
 
 @keyframes monster-celebration-before {
@@ -1290,7 +1320,7 @@ textarea:focus-visible {
 /* Incoming form — emerges from the white flash. */
 .monster-celebration-art.after {
   opacity: 0;
-  animation: monster-celebration-after var(--mc-duration) linear forwards;
+  animation: monster-celebration-after var(--mc-duration) linear var(--mc-art-delay, 0s) forwards;
 }
 
 @keyframes monster-celebration-after {
@@ -1522,7 +1552,7 @@ textarea:focus-visible {
    expand at the crack moment sells the burst. */
 .monster-celebration-overlay.egg-crack .monster-celebration-art.before {
   transform-origin: 50% 80%;
-  animation: monster-celebration-egg-wobble var(--mc-duration) linear forwards;
+  animation: monster-celebration-egg-wobble var(--mc-duration) linear var(--mc-art-delay, 0s) forwards;
 }
 
 @keyframes monster-celebration-egg-wobble {
@@ -1551,7 +1581,7 @@ textarea:focus-visible {
    the classic 12 principles of animation. */
 .monster-celebration-overlay.egg-crack .monster-celebration-art.after {
   transform-origin: 50% 80%;
-  animation: monster-celebration-monster-pop var(--mc-duration) linear forwards;
+  animation: monster-celebration-monster-pop var(--mc-duration) linear var(--mc-art-delay, 0s) forwards;
 }
 
 @keyframes monster-celebration-monster-pop {
@@ -1638,7 +1668,7 @@ textarea:focus-visible {
 /* Outgoing stage-3 — long hold with breathing + slight rise
    as power builds, then break into the white. */
 .monster-celebration-overlay.mega .monster-celebration-art.before {
-  animation: monster-celebration-mega-before var(--mc-duration) linear forwards;
+  animation: monster-celebration-mega-before var(--mc-duration) linear var(--mc-art-delay, 0s) forwards;
 }
 
 @keyframes monster-celebration-mega-before {
@@ -1659,7 +1689,7 @@ textarea:focus-visible {
    is already large via data-stage, so it settles rather than
    grows. */
 .monster-celebration-overlay.mega .monster-celebration-art.after {
-  animation: monster-celebration-mega-after var(--mc-duration) linear forwards;
+  animation: monster-celebration-mega-after var(--mc-duration) linear var(--mc-art-delay, 0s) forwards;
 }
 
 @keyframes monster-celebration-mega-after {
@@ -1789,6 +1819,7 @@ textarea:focus-visible {
 /* Reduced motion — freeze in the final state so the scene
    remains intelligible (new monster visible, reveal shown). */
 @media (prefers-reduced-motion: reduce) {
+  .monster-celebration-visual.before,
   .monster-celebration-art.before,
   .monster-celebration-halo,
   .monster-celebration-shine,
@@ -4497,23 +4528,33 @@ textarea:focus-visible {
   background:
     radial-gradient(ellipse 52% 8% at 50% 82%, rgba(29,43,58,0.22) 0%, transparent 72%);
 }
-.ss-meadow-cell img {
+.ss-meadow-visual {
+  display: block;
   width: 72%; height: auto;
+  transform:
+    translate(var(--visual-offset-x, 0px), var(--visual-offset-y, 0px))
+    scaleX(var(--visual-face, 1))
+    scale(calc(var(--visual-scale, 1) * var(--ss-egg-scale, 1)));
+  transform-origin: var(--visual-anchor-x, 50%) var(--visual-anchor-y, 100%);
+}
+.ss-meadow-art {
+  display: block;
+  width: 100%; height: auto;
   filter: drop-shadow(0 4px 6px rgba(29,43,58,0.22));
   animation: ss-breathe 4.8s ease-in-out infinite;
   will-change: transform;
 }
-.ss-meadow-cell:nth-child(2) img { animation-delay: 0.7s; }
-.ss-meadow-cell:nth-child(3) img { animation-delay: 1.4s; }
-.ss-meadow-cell:nth-child(4) img { animation-delay: 2.1s; }
-.ss-meadow-cell.egg img { transform: scale(0.86); }
+.ss-meadow-cell:nth-child(2) .ss-meadow-art { animation-delay: 0.7s; }
+.ss-meadow-cell:nth-child(3) .ss-meadow-art { animation-delay: 1.4s; }
+.ss-meadow-cell:nth-child(4) .ss-meadow-art { animation-delay: 2.1s; }
+.ss-meadow-cell.egg .ss-meadow-visual { --ss-egg-scale: 0.86; }
 
 @keyframes ss-breathe {
   0%, 100% { transform: translateY(0) scale(1); }
   50%      { transform: translateY(-4px) scale(1.03); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ss-meadow-cell img { animation: none; }
+  .ss-meadow-art { animation: none; }
 }
 
 .ss-meadow-empty {

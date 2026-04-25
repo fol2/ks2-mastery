@@ -166,6 +166,22 @@ test('bootstrap tolerates a concurrent singleton row insert', async () => {
   }
 });
 
+test('bootstrap falls back to bundled monster visuals when config storage is unavailable', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    server.DB.db.exec('DROP TABLE platform_monster_visual_config;');
+
+    const response = await fetchAdmin(server, '/api/bootstrap');
+    const payload = await json(response);
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.monsterVisualConfig.publishedVersion, 0);
+    assert.equal(payload.monsterVisualConfig.config.assets['vellhorn-b1-3'].baseline.facing, 'left');
+  } finally {
+    server.close();
+  }
+});
+
 test('ops can inspect monster visual config but cannot mutate it', async () => {
   const server = createWorkerRepositoryServer();
   try {
@@ -189,6 +205,58 @@ test('ops can inspect monster visual config but cannot mutate it', async () => {
 
     assert.equal(denied.status, 403);
     assert.equal(deniedPayload.code, 'monster_visual_config_forbidden');
+  } finally {
+    server.close();
+  }
+});
+
+test('monster visual draft save rolls back when the mutation receipt cannot be stored', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const initial = (await adminHub(server)).adminHub.monsterVisualConfig;
+    const draft = clone(initial.draft);
+    draft.assets['vellhorn-b1-3'].baseline.facing = 'right';
+    const body = {
+      draft,
+      mutation: {
+        requestId: 'visual-receipt-rollback-save',
+        expectedDraftRevision: initial.status.draftRevision,
+      },
+    };
+
+    server.env.DB = raceBeforeStatementRun(
+      server.DB,
+      sql => /INSERT\s+INTO\s+mutation_receipts/i.test(sql),
+      () => {
+        throw new Error('receipt storage unavailable');
+      },
+    );
+
+    const failedSave = await fetchAdmin(server, '/api/admin/monster-visual-config/draft', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    assert.equal(failedSave.status, 500);
+
+    const afterFailure = (await adminHub(server)).adminHub.monsterVisualConfig;
+    assert.equal(afterFailure.status.draftRevision, 0);
+    assert.equal(afterFailure.draft.assets['vellhorn-b1-3'].baseline.facing, 'left');
+    assert.equal(
+      server.DB.db.prepare('SELECT COUNT(*) AS count FROM mutation_receipts WHERE request_id = ?').get(body.mutation.requestId).count,
+      0,
+    );
+
+    const retry = await fetchAdmin(server, '/api/admin/monster-visual-config/draft', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const retryPayload = await json(retry);
+
+    assert.equal(retry.status, 200);
+    assert.equal(retryPayload.monsterVisualConfig.status.draftRevision, 1);
+    assert.equal(retryPayload.monsterVisualConfig.draft.assets['vellhorn-b1-3'].baseline.facing, 'right');
   } finally {
     server.close();
   }
@@ -262,6 +330,33 @@ test('admin saves, publishes, and restores global monster visual config with rec
     assert.equal(receipt.mutation_kind, 'monster_visual_config.publish');
     assert.equal(receipt.scope_type, 'platform');
     assert.equal(receipt.scope_id, 'monster-visual-config');
+  } finally {
+    server.close();
+  }
+});
+
+test('restore rejects invalid monster visual version payloads', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const initial = (await adminHub(server)).adminHub.monsterVisualConfig;
+    const response = await fetchAdmin(server, '/api/admin/monster-visual-config/restore', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        version: 'not-a-version',
+        mutation: {
+          requestId: 'visual-restore-invalid-version',
+          expectedDraftRevision: initial.status.draftRevision,
+        },
+      }),
+    });
+    const payload = await json(response);
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.code, 'monster_visual_version_invalid');
+
+    const after = (await adminHub(server)).adminHub.monsterVisualConfig;
+    assert.equal(after.status.draftRevision, initial.status.draftRevision);
   } finally {
     server.close();
   }

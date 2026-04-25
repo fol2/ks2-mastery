@@ -1,6 +1,7 @@
 import React from 'react';
 import { useMonsterVisualConfig } from '../../platform/game/MonsterVisualConfigContext.jsx';
 import { resolveMonsterVisual } from '../../platform/game/monster-visual-config.js';
+import { monsterVisualCelebrationStyle } from '../../platform/game/monster-visual-style.js';
 
 function imageVisual(monsterId, stage, branch, config) {
   return resolveMonsterVisual({
@@ -45,6 +46,26 @@ function Particles() {
   );
 }
 
+function CelebrationVisual({ className, stage, visual }) {
+  if (!visual) return null;
+  return (
+    <span
+      className={`monster-celebration-visual ${className}`}
+      data-stage={stage}
+      style={monsterVisualCelebrationStyle(visual)}
+    >
+      <span className="monster-celebration-shadow" />
+      <img
+        className={`monster-celebration-art ${className}`}
+        alt=""
+        src={visual.src}
+        srcSet={visual.srcSet}
+        sizes="min(90vw, 540px)"
+      />
+    </span>
+  );
+}
+
 export function MonsterCelebrationOverlay({ queue = [], onDismiss }) {
   const monsterVisualConfig = useMonsterVisualConfig();
   const event = queue[0];
@@ -79,25 +100,9 @@ export function MonsterCelebrationOverlay({ queue = [], onDismiss }) {
         {hasParts && <Particles />}
         <div className="monster-celebration-halo" />
         {event.kind === 'mega' && <div className="monster-celebration-shine" />}
-        {hasFrom && (
-          <img
-            className="monster-celebration-art before"
-            alt=""
-            data-stage={fromStage}
-            src={beforeVisual.src}
-            srcSet={beforeVisual.srcSet}
-            sizes="min(90vw, 540px)"
-          />
-        )}
+        {hasFrom && <CelebrationVisual className="before" stage={fromStage} visual={beforeVisual} />}
         <div className="monster-celebration-white" />
-        <img
-          className="monster-celebration-art after"
-          alt=""
-          data-stage={toStage}
-          src={afterVisual.src}
-          srcSet={afterVisual.srcSet}
-          sizes="min(90vw, 540px)"
-        />
+        <CelebrationVisual className="after" stage={toStage} visual={afterVisual} />
       </div>
 
       <div className="monster-celebration-card">

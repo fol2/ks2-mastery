@@ -106,6 +106,14 @@ function firstIssueLabel(validation) {
   return [issue.assetKey, issue.context, issue.field].filter(Boolean).join(' / ') || issue.code;
 }
 
+function reviewBlockingIssues(validation, assetKey, context) {
+  return (validation.errors || []).filter((issue) => (
+    issue.assetKey === assetKey
+    && issue.code !== 'monster_visual_review_required'
+    && (!issue.context || issue.context === context)
+  ));
+}
+
 function normaliseFieldValue(field, value) {
   if (STRING_CONTEXT_FIELDS.has(field) || field === 'facing') return String(value || '');
   const numeric = Number(value);
@@ -166,6 +174,9 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
   );
   const selectedEntry = draft?.assets?.[selectedManifestAsset?.key] || null;
   const contextEntry = selectedEntry?.contexts?.[selectedContext] || null;
+  const selectedReviewBlockingIssues = useMemo(() => (
+    reviewBlockingIssues(validation, selectedManifestAsset?.key, selectedContext)
+  ), [selectedContext, selectedManifestAsset?.key, validation]);
 
   const filteredAssets = useMemo(() => {
     const text = query.trim().toLowerCase();
@@ -444,6 +455,7 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
             onContextChange={updateContext}
             onMarkReviewed={markReviewed}
             onResetContext={resetContext}
+            reviewBlockingIssues={selectedReviewBlockingIssues}
           />
         </div>
       </div>

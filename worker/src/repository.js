@@ -701,7 +701,7 @@ function storeMutationReceiptStatement(db, {
   statusCode = 200,
   correlationId = null,
   appliedAt,
-}, { guard = null } = {}) {
+}, { guard = null, exists = null } = {}) {
   const params = [
     accountId,
     requestId,
@@ -727,8 +727,8 @@ function storeMutationReceiptStatement(db, {
       correlation_id,
       applied_at
     )
-    ${guardedValueSource(params.length, guard)}
-  `, guardedParams(params, guard));
+    ${exists ? guardedExistsValueSource(params.length, exists.sql) : guardedValueSource(params.length, guard)}
+  `, exists ? guardedExistsParams(params, exists) : guardedParams(params, guard));
 }
 
 async function ensureAccount(db, session, nowTs) {
@@ -1258,6 +1258,24 @@ async function requireMonsterVisualConfigUpdateApplied(db, result, {
   });
 }
 
+function requireMonsterVisualMutationReceiptStored(result, {
+  kind,
+  mutation,
+}) {
+  const receiptChanges = Number(result?.meta?.changes) || 0;
+  if (receiptChanges === 1) return;
+
+  throw new ConflictError('Mutation receipt was not stored. Retry the mutation after reloading the latest state.', {
+    code: 'mutation_receipt_not_stored',
+    retryable: true,
+    kind,
+    scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+    scopeId: MONSTER_VISUAL_SCOPE_ID,
+    requestId: mutation.requestId,
+    correlationId: mutation.correlationId,
+  });
+}
+
 async function listMonsterVisualVersionRows(db) {
   return all(db, `
     SELECT version, manifest_hash, schema_version, published_at, published_by_account_id
@@ -1313,6 +1331,17 @@ async function readMonsterVisualConfigState(db, nowTs) {
   return monsterVisualConfigStateFromRow(row, versions);
 }
 
+function bundledMonsterVisualRuntimeConfig() {
+  const config = seededMonsterVisualConfig({ source: 'bundled', version: 0 });
+  return {
+    schemaVersion: MONSTER_VISUAL_SCHEMA_VERSION,
+    manifestHash: MONSTER_ASSET_MANIFEST.manifestHash,
+    publishedVersion: 0,
+    publishedAt: 0,
+    config,
+  };
+}
+
 async function readPublishedMonsterVisualRuntimeConfig(db, nowTs) {
   const row = await ensureMonsterVisualConfigRow(db, nowTs);
   const published = safeJsonParse(
@@ -1328,6 +1357,17 @@ async function readPublishedMonsterVisualRuntimeConfig(db, nowTs) {
   };
 }
 
+async function readBootstrapMonsterVisualRuntimeConfig(db, nowTs) {
+  try {
+    return await readPublishedMonsterVisualRuntimeConfig(db, nowTs);
+  } catch (error) {
+    logMutation('warn', 'monster_visual_config.bootstrap_fallback', {
+      message: error?.message || 'Monster visual config storage unavailable.',
+    });
+    return bundledMonsterVisualRuntimeConfig();
+  }
+}
+
 function monsterVisualMutationMeta({ kind, mutation, expectedRevision, appliedRevision }) {
   return buildMutationMeta({
     kind,
@@ -1338,6 +1378,17 @@ function monsterVisualMutationMeta({ kind, mutation, expectedRevision, appliedRe
     expectedRevision,
     appliedRevision,
   });
+}
+
+function normaliseMonsterVisualRestoreVersion(version) {
+  const numeric = Number(version);
+  if (!Number.isInteger(numeric) || numeric < 1) {
+    throw new BadRequestError('Monster visual restore version must be a positive integer.', {
+      code: 'monster_visual_version_invalid',
+      version,
+    });
+  }
+  return numeric;
 }
 
 async function withMonsterVisualConfigMutation(db, {
@@ -1394,24 +1445,13 @@ async function withMonsterVisualConfigMutation(db, {
     }
 
     const appliedRevision = currentRevision + 1;
-    await apply({
-      row,
-      appliedRevision,
-      mutation: nextMutation,
-      expectedRevision: nextMutation.expectedRevision,
+    const mutationMeta = monsterVisualMutationMeta({
       kind,
+      mutation: nextMutation,
+      expectedRevision: currentRevision,
+      appliedRevision,
     });
-    const state = await readMonsterVisualConfigState(db, nowTs);
-    const response = {
-      monsterVisualConfig: state,
-      monsterVisualMutation: monsterVisualMutationMeta({
-        kind,
-        mutation: nextMutation,
-        expectedRevision: currentRevision,
-        appliedRevision,
-      }),
-    };
-    await storeMutationReceipt(db, {
+    const receipt = {
       accountId: actorAccountId,
       requestId: nextMutation.requestId,
       scopeType: MONSTER_VISUAL_SCOPE_TYPE,
@@ -1419,11 +1459,24 @@ async function withMonsterVisualConfigMutation(db, {
       mutationKind: kind,
       requestHash,
       response: {
-        monsterVisualMutation: response.monsterVisualMutation,
+        monsterVisualMutation: mutationMeta,
       },
       correlationId: nextMutation.correlationId,
       appliedAt: nowTs,
+    };
+    await apply({
+      row,
+      appliedRevision,
+      mutation: nextMutation,
+      expectedRevision: nextMutation.expectedRevision,
+      kind,
+      receipt,
     });
+    const state = await readMonsterVisualConfigState(db, nowTs);
+    const response = {
+      monsterVisualConfig: state,
+      monsterVisualMutation: mutationMeta,
+    };
     return response;
   });
 }
@@ -1441,31 +1494,75 @@ async function saveMonsterVisualConfigDraft(db, actorAccountId, rawDraft, mutati
       mutation: nextMutation,
       expectedRevision,
       kind,
+      receipt,
     }) => {
-      const updateResult = await run(db, `
+      const draftJson = JSON.stringify(draft);
+      const [updateResult, receiptResult] = await batch(db, [
+        bindStatement(db, `
         UPDATE platform_monster_visual_config
         SET draft_json = ?,
             draft_revision = ?,
             draft_updated_at = ?,
             draft_updated_by_account_id = ?,
             manifest_hash = ?,
-            schema_version = ?
+            schema_version = ?,
+            last_mutation_account_id = ?,
+            last_mutation_request_id = ?,
+            last_mutation_request_hash = ?,
+            last_mutation_kind = ?
         WHERE id = ?
           AND draft_revision = ?
       `, [
-        JSON.stringify(draft),
-        appliedRevision,
-        nowTs,
-        actorAccountId,
-        MONSTER_ASSET_MANIFEST.manifestHash,
-        MONSTER_VISUAL_SCHEMA_VERSION,
-        MONSTER_VISUAL_CONFIG_ID,
-        expectedRevision,
+          draftJson,
+          appliedRevision,
+          nowTs,
+          actorAccountId,
+          MONSTER_ASSET_MANIFEST.manifestHash,
+          MONSTER_VISUAL_SCHEMA_VERSION,
+          receipt.accountId,
+          receipt.requestId,
+          receipt.requestHash,
+          receipt.mutationKind,
+          MONSTER_VISUAL_CONFIG_ID,
+          expectedRevision,
+        ]),
+        storeMutationReceiptStatement(db, receipt, {
+          exists: {
+            sql: `
+              SELECT 1
+              FROM platform_monster_visual_config
+              WHERE id = ?
+                AND draft_revision = ?
+                AND draft_json = ?
+                AND draft_updated_at = ?
+                AND draft_updated_by_account_id = ?
+                AND last_mutation_account_id = ?
+                AND last_mutation_request_id = ?
+                AND last_mutation_request_hash = ?
+                AND last_mutation_kind = ?
+            `,
+            params: [
+              MONSTER_VISUAL_CONFIG_ID,
+              appliedRevision,
+              draftJson,
+              nowTs,
+              actorAccountId,
+              receipt.accountId,
+              receipt.requestId,
+              receipt.requestHash,
+              receipt.mutationKind,
+            ],
+          },
+        }),
       ]);
       await requireMonsterVisualConfigUpdateApplied(db, updateResult, {
         kind,
         mutation: nextMutation,
         expectedRevision,
+      });
+      requireMonsterVisualMutationReceiptStored(receiptResult, {
+        kind,
+        mutation: nextMutation,
       });
     },
   });
@@ -1484,6 +1581,7 @@ async function publishMonsterVisualConfig(db, actorAccountId, mutation, nowTs) {
       mutation: nextMutation,
       expectedRevision,
       kind,
+      receipt,
     }) => {
       const draft = safeJsonParse(row.draft_json, null);
       const validation = validateMonsterVisualConfigForPublish(draft);
@@ -1500,7 +1598,9 @@ async function publishMonsterVisualConfig(db, actorAccountId, mutation, nowTs) {
         version: nextVersion,
       };
       const publishedJson = JSON.stringify(published);
-      const updateResult = await run(db, `
+      const draftJson = JSON.stringify({ ...published, source: 'draft' });
+      const [updateResult, receiptResult] = await batch(db, [
+        bindStatement(db, `
         UPDATE platform_monster_visual_config
         SET draft_json = ?,
             draft_revision = ?,
@@ -1511,29 +1611,74 @@ async function publishMonsterVisualConfig(db, actorAccountId, mutation, nowTs) {
             published_at = ?,
             published_by_account_id = ?,
             manifest_hash = ?,
-            schema_version = ?
+            schema_version = ?,
+            last_mutation_account_id = ?,
+            last_mutation_request_id = ?,
+            last_mutation_request_hash = ?,
+            last_mutation_kind = ?
         WHERE id = ?
           AND draft_revision = ?
           AND published_version = ?
       `, [
-        JSON.stringify({ ...published, source: 'draft' }),
-        appliedRevision,
-        nowTs,
-        actorAccountId,
-        publishedJson,
-        nextVersion,
-        nowTs,
-        actorAccountId,
-        MONSTER_ASSET_MANIFEST.manifestHash,
-        MONSTER_VISUAL_SCHEMA_VERSION,
-        MONSTER_VISUAL_CONFIG_ID,
-        expectedRevision,
-        Number(row.published_version) || 1,
+          draftJson,
+          appliedRevision,
+          nowTs,
+          actorAccountId,
+          publishedJson,
+          nextVersion,
+          nowTs,
+          actorAccountId,
+          MONSTER_ASSET_MANIFEST.manifestHash,
+          MONSTER_VISUAL_SCHEMA_VERSION,
+          receipt.accountId,
+          receipt.requestId,
+          receipt.requestHash,
+          receipt.mutationKind,
+          MONSTER_VISUAL_CONFIG_ID,
+          expectedRevision,
+          Number(row.published_version) || 1,
+        ]),
+        storeMutationReceiptStatement(db, receipt, {
+          exists: {
+            sql: `
+              SELECT 1
+              FROM platform_monster_visual_config
+              WHERE id = ?
+                AND draft_revision = ?
+                AND draft_json = ?
+                AND published_json = ?
+                AND published_version = ?
+                AND published_at = ?
+                AND published_by_account_id = ?
+                AND last_mutation_account_id = ?
+                AND last_mutation_request_id = ?
+                AND last_mutation_request_hash = ?
+                AND last_mutation_kind = ?
+            `,
+            params: [
+              MONSTER_VISUAL_CONFIG_ID,
+              appliedRevision,
+              draftJson,
+              publishedJson,
+              nextVersion,
+              nowTs,
+              actorAccountId,
+              receipt.accountId,
+              receipt.requestId,
+              receipt.requestHash,
+              receipt.mutationKind,
+            ],
+          },
+        }),
       ]);
       await requireMonsterVisualConfigUpdateApplied(db, updateResult, {
         kind,
         mutation: nextMutation,
         expectedRevision,
+      });
+      requireMonsterVisualMutationReceiptStored(receiptResult, {
+        kind,
+        mutation: nextMutation,
       });
       await run(db, `
         DELETE FROM platform_monster_visual_config_versions
@@ -1549,7 +1694,7 @@ async function publishMonsterVisualConfig(db, actorAccountId, mutation, nowTs) {
 }
 
 async function restoreMonsterVisualConfigVersion(db, actorAccountId, version, mutation, nowTs) {
-  const safeVersion = Math.max(1, Math.floor(Number(version) || 0));
+  const safeVersion = normaliseMonsterVisualRestoreVersion(version);
   return withMonsterVisualConfigMutation(db, {
     actorAccountId,
     kind: 'monster_visual_config.restore',
@@ -1561,6 +1706,7 @@ async function restoreMonsterVisualConfigVersion(db, actorAccountId, version, mu
       mutation: nextMutation,
       expectedRevision,
       kind,
+      receipt,
     }) => {
       const versionRow = await first(db, `
         SELECT version, config_json
@@ -1577,30 +1723,73 @@ async function restoreMonsterVisualConfigVersion(db, actorAccountId, version, mu
         ...safeJsonParse(versionRow.config_json, seededMonsterVisualConfig({ source: 'draft', version: safeVersion })),
         source: 'draft',
       };
-      const updateResult = await run(db, `
+      const restoredJson = JSON.stringify(restored);
+      const [updateResult, receiptResult] = await batch(db, [
+        bindStatement(db, `
         UPDATE platform_monster_visual_config
         SET draft_json = ?,
             draft_revision = ?,
             draft_updated_at = ?,
             draft_updated_by_account_id = ?,
             manifest_hash = ?,
-            schema_version = ?
+            schema_version = ?,
+            last_mutation_account_id = ?,
+            last_mutation_request_id = ?,
+            last_mutation_request_hash = ?,
+            last_mutation_kind = ?
         WHERE id = ?
           AND draft_revision = ?
       `, [
-        JSON.stringify(restored),
-        appliedRevision,
-        nowTs,
-        actorAccountId,
-        MONSTER_ASSET_MANIFEST.manifestHash,
-        MONSTER_VISUAL_SCHEMA_VERSION,
-        MONSTER_VISUAL_CONFIG_ID,
-        expectedRevision,
+          restoredJson,
+          appliedRevision,
+          nowTs,
+          actorAccountId,
+          MONSTER_ASSET_MANIFEST.manifestHash,
+          MONSTER_VISUAL_SCHEMA_VERSION,
+          receipt.accountId,
+          receipt.requestId,
+          receipt.requestHash,
+          receipt.mutationKind,
+          MONSTER_VISUAL_CONFIG_ID,
+          expectedRevision,
+        ]),
+        storeMutationReceiptStatement(db, receipt, {
+          exists: {
+            sql: `
+              SELECT 1
+              FROM platform_monster_visual_config
+              WHERE id = ?
+                AND draft_revision = ?
+                AND draft_json = ?
+                AND draft_updated_at = ?
+                AND draft_updated_by_account_id = ?
+                AND last_mutation_account_id = ?
+                AND last_mutation_request_id = ?
+                AND last_mutation_request_hash = ?
+                AND last_mutation_kind = ?
+            `,
+            params: [
+              MONSTER_VISUAL_CONFIG_ID,
+              appliedRevision,
+              restoredJson,
+              nowTs,
+              actorAccountId,
+              receipt.accountId,
+              receipt.requestId,
+              receipt.requestHash,
+              receipt.mutationKind,
+            ],
+          },
+        }),
       ]);
       await requireMonsterVisualConfigUpdateApplied(db, updateResult, {
         kind,
         mutation: nextMutation,
         expectedRevision,
+      });
+      requireMonsterVisualMutationReceiptStored(receiptResult, {
+        kind,
+        mutation: nextMutation,
       });
     },
   });
@@ -1797,7 +1986,7 @@ async function releaseMembershipOrDeleteLearner(db, accountId, learnerId, role, 
 
 async function bootstrapBundle(db, accountId, { publicReadModels = false } = {}) {
   const account = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
-  const monsterVisualConfig = await readPublishedMonsterVisualRuntimeConfig(db, Date.now());
+  const monsterVisualConfig = await readBootstrapMonsterVisualRuntimeConfig(db, Date.now());
   const membershipRows = await listMembershipRows(db, accountId, { writableOnly: true });
   const learnersById = {};
   const learnerIds = [];
@@ -1983,9 +2172,20 @@ function guardedValueSource(valueCount, guard) {
     )`;
 }
 
+function guardedExistsValueSource(valueCount, existsSql) {
+  return `SELECT ${sqlPlaceholders(valueCount)}
+    WHERE EXISTS (
+      ${existsSql}
+    )`;
+}
+
 function guardedParams(params, guard) {
   if (!guard) return params;
   return [...params, guard.learnerId, guard.expectedRevision];
+}
+
+function guardedExistsParams(params, exists) {
+  return [...params, ...(Array.isArray(exists?.params) ? exists.params : [])];
 }
 
 function guardedWhere(guard) {

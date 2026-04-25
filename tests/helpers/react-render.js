@@ -100,7 +100,10 @@ export function renderMonsterVisualRendererFixture() {
     import { BUNDLED_MONSTER_VISUAL_CONFIG } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monster-visual-config.js'))};
     import { CodexCreatureVisual } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/CodexCreature.jsx'))};
     import { MonsterMeadow } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/MonsterMeadow.jsx'))};
+    import { SetupMeadow } from ${JSON.stringify(absoluteSpecifier('src/subjects/spelling/components/SpellingSetupScene.jsx'))};
+    import { MonsterCelebrationOverlay } from ${JSON.stringify(absoluteSpecifier('src/surfaces/shell/MonsterCelebrationOverlay.jsx'))};
     import { ToastShelf } from ${JSON.stringify(absoluteSpecifier('src/surfaces/shell/ToastShelf.jsx'))};
+    import { MONSTERS } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monsters.js'))};
 
     const config = structuredClone(BUNDLED_MONSTER_VISUAL_CONFIG);
     config.assets['vellhorn-b1-3'].baseline.facing = 'right';
@@ -112,6 +115,23 @@ export function renderMonsterVisualRendererFixture() {
     config.assets['vellhorn-b1-3'].contexts.codexCard.anchorX = 0.25;
     config.assets['vellhorn-b1-3'].contexts.codexCard.anchorY = 0.72;
     config.assets['vellhorn-b1-3'].contexts.codexCard.filter = 'brightness(1.1)';
+    config.assets['vellhorn-b1-3'].contexts.codexCard.cropX = 0.05;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.cropY = 0.10;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.cropWidth = 0.80;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.cropHeight = 0.85;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.offsetX = 18;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.offsetY = -14;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.scale = 1.12;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.anchorX = 0.42;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.anchorY = 0.78;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.shadowX = 7;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.shadowY = 9;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.shadowScale = 1.35;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.shadowOpacity = 0.34;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.duration = 6.25;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.delay = 0.40;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.bob = 5;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.tilt = 3;
     config.assets['inklet-b1-1'].contexts.toastPortrait.scale = 1.25;
 
     const html = renderToStaticMarkup(
@@ -142,6 +162,21 @@ export function renderMonsterVisualRendererFixture() {
               lane: 'ground',
               footPct: 80,
             }]}
+          />
+          <SetupMeadow
+            codex={[{
+              monster: { id: 'vellhorn', name: 'Vellhorn' },
+              progress: { branch: 'b1', stage: 3, caught: true },
+            }]}
+          />
+          <MonsterCelebrationOverlay
+            queue={[{
+              kind: 'caught',
+              monster: MONSTERS.vellhorn,
+              previous: null,
+              next: { stage: 3, branch: 'b1' },
+            }]}
+            onDismiss={() => {}}
           />
           <ToastShelf
             toasts={[{

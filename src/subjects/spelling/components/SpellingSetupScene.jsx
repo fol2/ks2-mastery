@@ -11,7 +11,7 @@ import {
   heroBgForSetup,
   heroBgStyle,
   heroToneForBg,
-  monsterImageProps,
+  monsterImageVisual,
   renderAction,
 } from './spelling-view-model.js';
 
@@ -130,7 +130,7 @@ function ToggleChip({ pref, checked, label, actions, disabled = false }) {
   );
 }
 
-function SetupMeadow({ codex }) {
+export function SetupMeadow({ codex }) {
   const monsterVisualConfig = useMonsterVisualConfig();
   const caught = (Array.isArray(codex) ? codex : []).filter((entry) => entry?.progress?.caught);
   const shown = caught.slice(0, 4);
@@ -139,11 +139,16 @@ function SetupMeadow({ codex }) {
   }
   return (
     <div className="ss-meadow" aria-label={`${shown.length} caught monster${shown.length === 1 ? '' : 's'}`}>
-      {shown.map(({ monster, progress }) => (
-        <div className={`ss-meadow-cell${progress.stage === 0 ? ' egg' : ''}`} key={monster.id}>
-          <img alt="" {...monsterImageProps(monster, progress, monsterVisualConfig?.config)} />
-        </div>
-      ))}
+      {shown.map(({ monster, progress }) => {
+        const visual = monsterImageVisual(monster, progress, monsterVisualConfig?.config);
+        return (
+          <div className={`ss-meadow-cell${progress.stage === 0 ? ' egg' : ''}`} key={monster.id}>
+            <span className="ss-meadow-visual" style={visual.style}>
+              <img className="ss-meadow-art" alt="" {...visual.imageProps} />
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }

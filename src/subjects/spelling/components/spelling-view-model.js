@@ -1,5 +1,6 @@
 import { monsterSummaryFromSpellingAnalytics } from '../../../platform/game/monster-system.js';
 import { resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
+import { monsterVisualFrameStyle } from '../../../platform/game/monster-visual-style.js';
 import { formatElapsedMinutes } from '../../../platform/core/utils.js';
 
 export const SPELLING_ACCENT = '#3E6FA8';
@@ -504,6 +505,10 @@ export function buildSpellingContext({ appState, service, repositories, subject 
 }
 
 export function monsterImageProps(monster, progress, visualConfig = null) {
+  return monsterImageVisual(monster, progress, visualConfig).imageProps;
+}
+
+export function monsterImageVisual(monster, progress, visualConfig = null) {
   const visual = resolveMonsterVisual({
     monsterId: monster.id,
     branch: progress.branch,
@@ -513,8 +518,11 @@ export function monsterImageProps(monster, progress, visualConfig = null) {
     preferredSize: 320,
   });
   return {
-    src: visual.src,
-    srcSet: visual.srcSet,
-    sizes: 'min(30vw, 120px)',
+    style: monsterVisualFrameStyle(visual),
+    imageProps: {
+      src: visual.src,
+      srcSet: visual.srcSet,
+      sizes: 'min(30vw, 120px)',
+    },
   };
 }

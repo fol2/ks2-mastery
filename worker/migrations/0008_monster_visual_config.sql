@@ -9,7 +9,11 @@ CREATE TABLE IF NOT EXISTS platform_monster_visual_config (
   published_at INTEGER NOT NULL,
   published_by_account_id TEXT,
   manifest_hash TEXT NOT NULL,
-  schema_version INTEGER NOT NULL
+  schema_version INTEGER NOT NULL,
+  last_mutation_account_id TEXT,
+  last_mutation_request_id TEXT,
+  last_mutation_request_hash TEXT,
+  last_mutation_kind TEXT
 );
 
 CREATE TABLE IF NOT EXISTS platform_monster_visual_config_versions (

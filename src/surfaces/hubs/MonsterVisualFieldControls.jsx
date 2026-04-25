@@ -66,7 +66,6 @@ function NumberField({ field, value, disabled, onChange }) {
     </label>
   );
 }
-
 export function MonsterVisualFieldControls({
   assetEntry,
   contextEntry,
@@ -76,9 +75,14 @@ export function MonsterVisualFieldControls({
   onContextChange = () => {},
   onMarkReviewed = () => {},
   onResetContext = () => {},
+  reviewBlockingIssues = [],
 } = {}) {
   if (!assetEntry || !contextEntry) return null;
   const reviewed = assetEntry.review?.contexts?.[selectedContext]?.reviewed === true;
+  const reviewBlocked = Array.isArray(reviewBlockingIssues) && reviewBlockingIssues.length > 0;
+  const reviewBlockLabel = reviewBlocked
+    ? [reviewBlockingIssues[0]?.context, reviewBlockingIssues[0]?.field].filter(Boolean).join(' / ') || 'Invalid fields'
+    : '';
 
   return (
     <div className="monster-visual-controls">
@@ -153,11 +157,18 @@ export function MonsterVisualFieldControls({
           ))}
         </div>
         <div className="actions" style={{ marginTop: 12 }}>
-          <button className="btn good" type="button" disabled={disabled || reviewed} onClick={() => onMarkReviewed(selectedContext)}>Mark reviewed</button>
+          <button
+            className="btn good"
+            type="button"
+            disabled={disabled || reviewed || reviewBlocked}
+            title={reviewBlockLabel}
+            onClick={() => onMarkReviewed(selectedContext)}
+          >
+            Mark reviewed
+          </button>
           <button className="btn ghost" type="button" disabled={disabled} onClick={() => onResetContext(selectedContext)}>Reset context</button>
         </div>
       </div>
     </div>
   );
 }
-
