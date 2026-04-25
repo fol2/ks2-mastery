@@ -1311,6 +1311,159 @@ async function restoreMonsterVisualConfigVersion({ version, expectedDraftRevisio
   }
 }
 
+function patchAdminHubAccountOpsMetadataEntry(updater, notice = '') {
+  patchAdultSurfaceState((state) => {
+    const payload = state.adminHub.payload || {};
+    const adminHub = payload.adminHub || {};
+    const directory = adminHub.accountOpsMetadata || { generatedAt: 0, accounts: [] };
+    const accounts = Array.isArray(directory.accounts) ? directory.accounts : [];
+    const nextAccounts = accounts.map((entry) => updater(entry) || entry);
+    return {
+      ...state,
+      notice,
+      adminHub: {
+        ...state.adminHub,
+        status: 'loaded',
+        payload: {
+          ...payload,
+          adminHub: {
+            ...adminHub,
+            accountOpsMetadata: {
+              ...directory,
+              accounts: nextAccounts,
+            },
+          },
+        },
+        error: '',
+      },
+    };
+  });
+}
+
+function patchAdminHubErrorEventEntry(updater, notice = '') {
+  patchAdultSurfaceState((state) => {
+    const payload = state.adminHub.payload || {};
+    const adminHub = payload.adminHub || {};
+    const summary = adminHub.errorLogSummary || { generatedAt: 0, totals: {}, entries: [] };
+    const entries = Array.isArray(summary.entries) ? summary.entries : [];
+    const nextEntries = entries.map((entry) => updater(entry) || entry);
+    return {
+      ...state,
+      notice,
+      adminHub: {
+        ...state.adminHub,
+        status: 'loaded',
+        payload: {
+          ...payload,
+          adminHub: {
+            ...adminHub,
+            errorLogSummary: {
+              ...summary,
+              entries: nextEntries,
+            },
+          },
+        },
+        error: '',
+      },
+    };
+  });
+}
+
+// R7, R8, R21: admin-only account ops metadata mutation with optimistic update
+// and rollback. Mirrors the updateAdminAccountRole pattern at lines 1145-1202.
+async function updateAccountOpsMetadata({ accountId, patch }) {
+  if (!hubApi) return;
+  if (!(typeof accountId === 'string' && accountId)) return;
+  if (!patch || typeof patch !== 'object') return;
+
+  const requestId = uid('account-ops-metadata');
+  const mutation = { requestId, correlationId: requestId };
+
+  // Snapshot the pre-optimistic entry so we can roll back on failure.
+  let snapshot = null;
+  patchAdminHubAccountOpsMetadataEntry((entry) => {
+    if (entry.accountId !== accountId) return entry;
+    if (!snapshot) snapshot = { ...entry, tags: [...(entry.tags || [])] };
+    return {
+      ...entry,
+      ...(Object.prototype.hasOwnProperty.call(patch, 'opsStatus') ? { opsStatus: patch.opsStatus } : {}),
+      ...(Object.prototype.hasOwnProperty.call(patch, 'planLabel') ? { planLabel: patch.planLabel } : {}),
+      ...(Object.prototype.hasOwnProperty.call(patch, 'tags') ? { tags: patch.tags } : {}),
+      ...(Object.prototype.hasOwnProperty.call(patch, 'internalNotes') ? { internalNotes: patch.internalNotes } : {}),
+    };
+  }, 'Saving account ops metadata...');
+
+  try {
+    const payload = await hubApi.updateAccountOpsMetadata({
+      accountId,
+      patch,
+      mutation,
+    });
+    const entry = payload?.accountOpsMetadataEntry || null;
+    if (entry) {
+      patchAdminHubAccountOpsMetadataEntry((row) => {
+        if (row.accountId !== accountId) return row;
+        return {
+          ...row,
+          opsStatus: entry.opsStatus ?? row.opsStatus,
+          planLabel: entry.planLabel ?? row.planLabel,
+          tags: Array.isArray(entry.tags) ? entry.tags : row.tags,
+          internalNotes: entry.internalNotes ?? row.internalNotes,
+          updatedAt: entry.updatedAt ?? row.updatedAt,
+          updatedByAccountId: entry.updatedByAccountId ?? row.updatedByAccountId,
+        };
+      }, 'Account ops metadata saved.');
+    }
+  } catch (error) {
+    // Roll back to the snapshot.
+    if (snapshot) {
+      patchAdminHubAccountOpsMetadataEntry((row) => (
+        row.accountId === accountId ? snapshot : row
+      ), '');
+    }
+    globalThis.alert?.(`Account ops metadata save failed: ${error?.message || 'Unknown error.'}`);
+  }
+}
+
+// R10, R21: admin-only error event status mutation with optimistic update + rollback.
+async function updateOpsErrorEventStatus({ eventId, status }) {
+  if (!hubApi) return;
+  if (!(typeof eventId === 'string' && eventId)) return;
+  if (!(typeof status === 'string' && status)) return;
+
+  const requestId = uid('ops-error-event-status');
+  const mutation = { requestId, correlationId: requestId };
+
+  let snapshot = null;
+  patchAdminHubErrorEventEntry((entry) => {
+    if (entry.id !== eventId) return entry;
+    if (!snapshot) snapshot = { ...entry };
+    return { ...entry, status };
+  }, 'Updating error event status...');
+
+  try {
+    const payload = await hubApi.updateOpsErrorEventStatus({ eventId, status, mutation });
+    const event = payload?.opsErrorEvent || null;
+    if (event) {
+      patchAdminHubErrorEventEntry((row) => {
+        if (row.id !== eventId) return row;
+        return {
+          ...row,
+          status: event.status ?? row.status,
+          lastSeen: event.lastSeen ?? row.lastSeen,
+        };
+      }, payload?.noop ? '' : 'Error event status updated.');
+    }
+  } catch (error) {
+    if (snapshot) {
+      patchAdminHubErrorEventEntry((row) => (
+        row.id === eventId ? snapshot : row
+      ), '');
+    }
+    globalThis.alert?.(`Error event status update failed: ${error?.message || 'Unknown error.'}`);
+  }
+}
+
 function ensureSpellingAutoAdvanceFromCurrentState() {
   return controller.ensureSpellingAutoAdvanceFromCurrentState();
 }
@@ -1755,6 +1908,35 @@ function handleGlobalAction(action, data) {
 
   if (action === 'monster-visual-config-restore') {
     restoreMonsterVisualConfigVersion(data);
+    return true;
+  }
+
+  if (
+    action === 'admin-ops-kpi-refresh'
+    || action === 'admin-ops-activity-refresh'
+    || action === 'admin-ops-error-events-refresh'
+    || action === 'account-ops-metadata-refresh'
+  ) {
+    // Each per-panel Refresh button reloads the full admin hub bundle. The
+    // plan (R18) prefers narrow per-panel GETs, but U5 scope defers that
+    // optimisation; for now a forced hub reload keeps every panel fresh.
+    if (boot.session.signedIn) loadAdminHub({ force: true });
+    return true;
+  }
+
+  if (action === 'account-ops-metadata-save') {
+    updateAccountOpsMetadata({
+      accountId: data?.accountId,
+      patch: data?.patch,
+    });
+    return true;
+  }
+
+  if (action === 'ops-error-event-status-set') {
+    updateOpsErrorEventStatus({
+      eventId: data?.eventId,
+      status: data?.status,
+    });
     return true;
   }
 

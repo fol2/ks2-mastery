@@ -61,19 +61,53 @@ test('React Admin Operations surface renders content, audit, account roles, and 
   assert.match(html, /ops-meta@example\.com/);
   assert.match(html, /demo notes/);
 
-  // U4: Error log centre panel (read-only)
+  // U4: Error log centre panel
   assert.match(html, /Error log centre/);
   assert.match(html, /TypeError/);
   assert.match(html, /x is undefined/);
 
-  // U4: no mutation controls in account ops metadata panel (edit inputs land in U5).
-  // Assert the panel region does not carry known U5 mutation-surface form tags.
+  // U5: admin-role now sees mutation UI inside the account ops panel
+  // (ops_status select, plan_label input, tags input, internal_notes textarea,
+  // Save button) plus the R27 non-enforcement callout.
   const opsMetaStart = html.indexOf('Account ops metadata');
   assert.ok(opsMetaStart >= 0, 'Account ops metadata panel must render');
   const opsMetaEnd = html.indexOf('Error log centre', opsMetaStart);
   assert.ok(opsMetaEnd > opsMetaStart, 'Error log centre panel must render after account ops metadata');
   const opsMetaRegion = html.slice(opsMetaStart, opsMetaEnd);
-  assert.doesNotMatch(opsMetaRegion, /<input\b/);
-  assert.doesNotMatch(opsMetaRegion, /<select\b/);
-  assert.doesNotMatch(opsMetaRegion, /<textarea\b/);
+  assert.match(opsMetaRegion, /<select\b[^>]*name="opsStatus"/);
+  assert.match(opsMetaRegion, /<input\b[^>]*name="planLabel"/);
+  assert.match(opsMetaRegion, /<textarea\b[^>]*name="internalNotes"/);
+  assert.match(opsMetaRegion, /Save/);
+  // R27 callout wording must be exact.
+  assert.match(opsMetaRegion, /Status labels are informational only\. Suspension, payment-hold, and deactivation are not currently enforced by sign-in\. Enforcement is planned for a later release\./);
+
+  // U5: admin-role also sees a status select inside each error log row.
+  const errorLogStart = html.indexOf('Error log centre');
+  assert.ok(errorLogStart >= 0);
+  const errorLogRegion = html.slice(errorLogStart);
+  assert.match(errorLogRegion, /<select\b[^>]*name="errorEventStatus"/);
+});
+
+test('U5: ops-role viewer sees read-only rows with the R27 callout but no edit controls', async () => {
+  const html = await renderHubSurfaceFixture({ surface: 'admin', platformRole: 'ops' });
+
+  // Ops-role path must still render the same panels.
+  assert.match(html, /Account ops metadata/);
+  assert.match(html, /Error log centre/);
+
+  // R27 callout is visible for ops-role viewers too.
+  assert.match(html, /Status labels are informational only\. Suspension, payment-hold, and deactivation are not currently enforced by sign-in\. Enforcement is planned for a later release\./);
+
+  // No mutation controls should appear anywhere in the account ops panel for ops-role.
+  const opsMetaStart = html.indexOf('Account ops metadata');
+  const opsMetaEnd = html.indexOf('Error log centre', opsMetaStart);
+  const opsMetaRegion = html.slice(opsMetaStart, opsMetaEnd);
+  assert.doesNotMatch(opsMetaRegion, /<select\b[^>]*name="opsStatus"/);
+  assert.doesNotMatch(opsMetaRegion, /<input\b[^>]*name="planLabel"/);
+  assert.doesNotMatch(opsMetaRegion, /<textarea\b[^>]*name="internalNotes"/);
+
+  // No status select in error log centre either.
+  const errorLogStart = html.indexOf('Error log centre');
+  const errorLogRegion = html.slice(errorLogStart);
+  assert.doesNotMatch(errorLogRegion, /<select\b[^>]*name="errorEventStatus"/);
 });

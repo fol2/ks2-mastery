@@ -599,6 +599,36 @@ export function createWorkerApp({
           return json({ ok: true, ...result });
         }
 
+        // R31: regex dispatch for parameterised admin ops mutations. Placed
+        // AFTER literal /api/admin/accounts and /api/admin/accounts/role so
+        // those take priority, and AFTER the three /api/admin/ops/* GET
+        // routes above.
+        const accountOpsMetadataMatch = /^\/api\/admin\/accounts\/([^/]+)\/ops-metadata$/.exec(url.pathname);
+        if (accountOpsMetadataMatch && request.method === 'PUT') {
+          requireSameOrigin(request, env);
+          const targetAccountId = decodeURIComponent(accountOpsMetadataMatch[1]);
+          const body = await readJson(request);
+          const result = await repository.updateAccountOpsMetadata(session.accountId, {
+            targetAccountId,
+            patch: body?.patch,
+            mutation: mutationFromRequest(body, request),
+          });
+          return json({ ok: true, ...result });
+        }
+
+        const opsErrorEventStatusMatch = /^\/api\/admin\/ops\/error-events\/([^/]+)\/status$/.exec(url.pathname);
+        if (opsErrorEventStatusMatch && request.method === 'PUT') {
+          requireSameOrigin(request, env);
+          const eventId = decodeURIComponent(opsErrorEventStatusMatch[1]);
+          const body = await readJson(request);
+          const result = await repository.updateOpsErrorEventStatus(session.accountId, {
+            eventId,
+            status: body?.status,
+            mutation: mutationFromRequest(body, request),
+          });
+          return json({ ok: true, ...result });
+        }
+
         if (url.pathname === '/api/content/spelling' && request.method === 'PUT') {
           requireSameOrigin(request, env);
           const body = await readJson(request);

@@ -446,7 +446,7 @@ export function renderProfileSurfaceFixture({ demo = false, persistenceMode = 'r
   `);
 }
 
-export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
+export function renderHubSurfaceFixture({ surface = 'parent', platformRole = 'admin' } = {}) {
   return renderFixture(`
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
@@ -531,9 +531,10 @@ export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
       permissions: { canViewParentHub: true, canMutateLearnerData: false, platformRoleLabel: 'Parent', membershipRoleLabel: 'Viewer', accessModeLabel: 'Read-only learner' },
     };
     const adminNow = Date.UTC(2026, 3, 22, 12, 0);
+    const __platformRole = ${JSON.stringify(platformRole)};
     const adminModel = {
       account: { id: 'adult-a', repoRevision: 5, selectedLearnerId: 'learner-a' },
-      permissions: { canViewAdminHub: true, platformRole: 'admin', platformRoleLabel: 'Admin', canManageMonsterVisualConfig: true },
+      permissions: { canViewAdminHub: true, platformRole: __platformRole, platformRoleLabel: __platformRole === 'admin' ? 'Admin' : 'Ops', canManageMonsterVisualConfig: __platformRole === 'admin' },
       monsterVisualConfig: {
         permissions: { canManageMonsterVisualConfig: true, canViewMonsterVisualConfig: true },
         status: {

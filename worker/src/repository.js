@@ -2039,6 +2039,470 @@ function bumpAdminKpiMetricStatement(db, key, nowTs, delta = 1) {
   `, [key, seedCount, ts, resolvedDelta, ts]);
 }
 
+// ---------------------------------------------------------------------------
+// U5: admin ops mutations.
+// Two admin-only mutations with batch-based atomicity (R21):
+//   1. updateAccountOpsMetadata  — UPSERT account_ops_metadata + receipt
+//      + bump admin_kpi_metrics.account_ops_metadata.updates counter.
+//   2. updateOpsErrorEventStatus — UPDATE ops_error_events.status + receipt
+//      + swap admin_kpi_metrics.ops_error_events.status.<old>/<new> counters.
+// withTransaction is NOT used as the atomicity primitive — it degrades to a
+// no-op under production D1 per worker/src/d1.js:60-81. Every helper composes
+// its writes into a single batch(db, [stmt1, stmt2, ...]) call which is the
+// only primitive the platform treats atomically.
+// ---------------------------------------------------------------------------
+
+const OPS_STATUS_VALUES = Object.freeze(['active', 'suspended', 'payment_hold']);
+const OPS_PLAN_LABEL_MAX_CHARS = 64;
+const OPS_TAGS_MAX_COUNT = 10;
+const OPS_TAG_MAX_CHARS = 32;
+const OPS_INTERNAL_NOTES_MAX_CHARS = 2000;
+const ACCOUNT_OPS_METADATA_MUTATION_KIND = 'admin.account_ops_metadata.update';
+const OPS_ERROR_EVENT_STATUS_MUTATION_KIND = 'admin.ops_error_event.status-set';
+
+function normaliseMutationEnvelope(rawMutation, { scopeType, scopeId } = {}) {
+  const raw = isPlainObject(rawMutation) ? rawMutation : {};
+  const requestId = typeof raw.requestId === 'string' && raw.requestId ? raw.requestId : null;
+  const correlationId = typeof raw.correlationId === 'string' && raw.correlationId
+    ? raw.correlationId
+    : requestId;
+  if (!requestId) {
+    throw new BadRequestError('Mutation requestId is required.', {
+      code: 'mutation_request_id_required',
+      scopeType: scopeType || null,
+      scopeId: scopeId || null,
+    });
+  }
+  return { requestId, correlationId };
+}
+
+function validateAccountOpsPatch(rawPatch) {
+  if (!isPlainObject(rawPatch)) {
+    throw new BadRequestError('Account ops metadata patch is required.', {
+      code: 'validation_failed',
+      field: 'patch',
+    });
+  }
+  const patch = {};
+  let provided = 0;
+
+  if (Object.prototype.hasOwnProperty.call(rawPatch, 'opsStatus')) {
+    const value = rawPatch.opsStatus;
+    if (typeof value !== 'string' || !OPS_STATUS_VALUES.includes(value)) {
+      throw new BadRequestError('Ops status is not a supported value.', {
+        code: 'validation_failed',
+        field: 'opsStatus',
+        allowed: OPS_STATUS_VALUES,
+      });
+    }
+    patch.opsStatus = value;
+    provided += 1;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(rawPatch, 'planLabel')) {
+    const value = rawPatch.planLabel;
+    if (value === null) {
+      patch.planLabel = null;
+    } else if (typeof value === 'string' && value.length <= OPS_PLAN_LABEL_MAX_CHARS) {
+      patch.planLabel = value;
+    } else {
+      throw new BadRequestError('Plan label must be a string of at most 64 characters.', {
+        code: 'validation_failed',
+        field: 'planLabel',
+        maxChars: OPS_PLAN_LABEL_MAX_CHARS,
+      });
+    }
+    provided += 1;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(rawPatch, 'tags')) {
+    const value = rawPatch.tags;
+    if (!Array.isArray(value) || value.length > OPS_TAGS_MAX_COUNT) {
+      throw new BadRequestError('Tags must be an array of at most 10 strings.', {
+        code: 'validation_failed',
+        field: 'tags',
+        maxCount: OPS_TAGS_MAX_COUNT,
+      });
+    }
+    const cleaned = [];
+    for (const tag of value) {
+      if (typeof tag !== 'string' || tag.length > OPS_TAG_MAX_CHARS) {
+        throw new BadRequestError('Each tag must be a string of at most 32 characters.', {
+          code: 'validation_failed',
+          field: 'tags',
+          maxChars: OPS_TAG_MAX_CHARS,
+        });
+      }
+      cleaned.push(tag);
+    }
+    patch.tags = cleaned;
+    provided += 1;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(rawPatch, 'internalNotes')) {
+    const value = rawPatch.internalNotes;
+    if (value === null) {
+      patch.internalNotes = null;
+    } else if (typeof value === 'string' && value.length <= OPS_INTERNAL_NOTES_MAX_CHARS) {
+      patch.internalNotes = value;
+    } else {
+      throw new BadRequestError('Internal notes must be a string of at most 2000 characters.', {
+        code: 'validation_failed',
+        field: 'internalNotes',
+        maxChars: OPS_INTERNAL_NOTES_MAX_CHARS,
+      });
+    }
+    provided += 1;
+  }
+
+  if (provided === 0) {
+    throw new BadRequestError('Account ops metadata patch must include at least one field.', {
+      code: 'validation_failed',
+      field: 'patch',
+    });
+  }
+  return patch;
+}
+
+async function loadAccountOpsMetadataRow(db, targetAccountId) {
+  return first(db, `
+    SELECT account_id, ops_status, plan_label, tags_json, internal_notes,
+           updated_at, updated_by_account_id
+    FROM account_ops_metadata
+    WHERE account_id = ?
+  `, [targetAccountId]);
+}
+
+function accountOpsMetadataRowToModel(row, targetAccountId, includeNotes) {
+  if (!row) {
+    return {
+      accountId: targetAccountId,
+      opsStatus: 'active',
+      planLabel: null,
+      tags: [],
+      internalNotes: includeNotes ? null : null,
+      updatedAt: 0,
+      updatedByAccountId: null,
+    };
+  }
+  return {
+    accountId: typeof row.account_id === 'string' ? row.account_id : targetAccountId,
+    opsStatus: typeof row.ops_status === 'string' ? row.ops_status : 'active',
+    planLabel: typeof row.plan_label === 'string' ? row.plan_label : null,
+    tags: normaliseTagsJson(row.tags_json),
+    internalNotes: includeNotes
+      ? (typeof row.internal_notes === 'string' ? row.internal_notes : null)
+      : null,
+    updatedAt: Number(row.updated_at) || 0,
+    updatedByAccountId: typeof row.updated_by_account_id === 'string' ? row.updated_by_account_id : null,
+  };
+}
+
+async function updateAccountOpsMetadata(db, {
+  actorAccountId,
+  targetAccountId,
+  patch: rawPatch,
+  mutation,
+  nowTs,
+} = {}) {
+  if (!(typeof targetAccountId === 'string' && targetAccountId)) {
+    throw new BadRequestError('Target account id is required.', {
+      code: 'target_account_required',
+    });
+  }
+  const actor = await assertAdminHubActor(db, actorAccountId);
+  requireAccountRoleManager(actor);
+
+  const patch = validateAccountOpsPatch(rawPatch);
+  const { requestId, correlationId } = normaliseMutationEnvelope(mutation, {
+    scopeType: 'account',
+    scopeId: targetAccountId,
+  });
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const requestHash = mutationPayloadHash(ACCOUNT_OPS_METADATA_MUTATION_KIND, {
+    targetAccountId,
+    patch,
+  });
+
+  // Idempotency preflight — replay-safe without relying on savepoints.
+  const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
+        kind: ACCOUNT_OPS_METADATA_MUTATION_KIND,
+        scopeType: 'account',
+        scopeId: targetAccountId,
+        requestId,
+        correlationId,
+      });
+    }
+    const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+    return {
+      ...storedReplay,
+      opsMetadataMutation: {
+        ...(storedReplay.opsMetadataMutation || {}),
+        requestId,
+        correlationId,
+        replayed: true,
+      },
+    };
+  }
+
+  const target = await first(db, 'SELECT id, account_type FROM adult_accounts WHERE id = ?', [targetAccountId]);
+  if (!target) {
+    throw new NotFoundError('Target account was not found.', {
+      code: 'target_account_not_found',
+      accountId: targetAccountId,
+    });
+  }
+  if (accountType(target) === 'demo') {
+    throw new ForbiddenError('Demo accounts cannot be managed from account ops metadata controls.', {
+      code: 'demo_account_ops_forbidden',
+      accountId: targetAccountId,
+    });
+  }
+
+  const existingRow = await loadAccountOpsMetadataRow(db, targetAccountId);
+  const existingTags = normaliseTagsJson(existingRow?.tags_json);
+  const mergedOpsStatus = Object.prototype.hasOwnProperty.call(patch, 'opsStatus')
+    ? patch.opsStatus
+    : (typeof existingRow?.ops_status === 'string' ? existingRow.ops_status : 'active');
+  const mergedPlanLabel = Object.prototype.hasOwnProperty.call(patch, 'planLabel')
+    ? patch.planLabel
+    : (typeof existingRow?.plan_label === 'string' ? existingRow.plan_label : null);
+  const mergedTags = Object.prototype.hasOwnProperty.call(patch, 'tags')
+    ? patch.tags
+    : existingTags;
+  const mergedInternalNotes = Object.prototype.hasOwnProperty.call(patch, 'internalNotes')
+    ? patch.internalNotes
+    : (typeof existingRow?.internal_notes === 'string' ? existingRow.internal_notes : null);
+  const mergedTagsJson = JSON.stringify(mergedTags);
+
+  const appliedRow = {
+    accountId: targetAccountId,
+    opsStatus: mergedOpsStatus,
+    planLabel: mergedPlanLabel,
+    tags: mergedTags,
+    internalNotes: mergedInternalNotes,
+    updatedAt: ts,
+    updatedByAccountId: actorAccountId,
+  };
+  const mutationMeta = {
+    policyVersion: MUTATION_POLICY_VERSION,
+    kind: ACCOUNT_OPS_METADATA_MUTATION_KIND,
+    scopeType: 'account',
+    scopeId: targetAccountId,
+    requestId,
+    correlationId,
+    appliedAt: ts,
+    replayed: false,
+  };
+  const response = {
+    accountOpsMetadataEntry: appliedRow,
+    opsMetadataMutation: mutationMeta,
+  };
+
+  // R21 batch atomicity: UPSERT + receipt + counter bump commit together.
+  await batch(db, [
+    bindStatement(db, `
+      INSERT INTO account_ops_metadata (
+        account_id,
+        ops_status,
+        plan_label,
+        tags_json,
+        internal_notes,
+        updated_at,
+        updated_by_account_id
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(account_id) DO UPDATE SET
+        ops_status = excluded.ops_status,
+        plan_label = excluded.plan_label,
+        tags_json = excluded.tags_json,
+        internal_notes = excluded.internal_notes,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, [
+      targetAccountId,
+      mergedOpsStatus,
+      mergedPlanLabel,
+      mergedTagsJson,
+      mergedInternalNotes,
+      ts,
+      actorAccountId,
+    ]),
+    storeMutationReceiptStatement(db, {
+      accountId: actorAccountId,
+      requestId,
+      scopeType: 'account',
+      scopeId: targetAccountId,
+      mutationKind: ACCOUNT_OPS_METADATA_MUTATION_KIND,
+      requestHash,
+      response,
+      correlationId,
+      appliedAt: ts,
+    }),
+    bumpAdminKpiMetricStatement(db, KPI_ACCOUNT_OPS_UPDATES_METRIC_KEY, ts, 1),
+  ]);
+
+  // Return the merged shape so callers (and optimistic clients) get the final row.
+  return response;
+}
+
+async function updateOpsErrorEventStatus(db, {
+  actorAccountId,
+  eventId,
+  status: nextStatus,
+  mutation,
+  nowTs,
+} = {}) {
+  if (!(typeof eventId === 'string' && eventId)) {
+    throw new BadRequestError('Error event id is required.', {
+      code: 'validation_failed',
+      field: 'eventId',
+    });
+  }
+  if (typeof nextStatus !== 'string' || !OPS_ERROR_STATUSES.includes(nextStatus)) {
+    throw new BadRequestError('Error event status is not a supported value.', {
+      code: 'validation_failed',
+      field: 'status',
+      allowed: OPS_ERROR_STATUSES,
+    });
+  }
+  const actor = await assertAdminHubActor(db, actorAccountId);
+  requireAccountRoleManager(actor);
+
+  const { requestId, correlationId } = normaliseMutationEnvelope(mutation, {
+    scopeType: 'platform',
+    scopeId: `ops-error-event:${eventId}`,
+  });
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const requestHash = mutationPayloadHash(OPS_ERROR_EVENT_STATUS_MUTATION_KIND, {
+    eventId,
+    status: nextStatus,
+  });
+  const scopeId = `ops-error-event:${eventId}`;
+
+  // Idempotency preflight.
+  const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
+        kind: OPS_ERROR_EVENT_STATUS_MUTATION_KIND,
+        scopeType: 'platform',
+        scopeId,
+        requestId,
+        correlationId,
+      });
+    }
+    const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+    return {
+      ...storedReplay,
+      opsErrorEventStatusMutation: {
+        ...(storedReplay.opsErrorEventStatusMutation || {}),
+        requestId,
+        correlationId,
+        replayed: true,
+      },
+    };
+  }
+
+  const currentRow = await first(db, `
+    SELECT id, fingerprint, error_kind, message_first_line, first_frame, route_name,
+           user_agent, account_id, occurrence_count, first_seen, last_seen, status
+    FROM ops_error_events
+    WHERE id = ?
+  `, [eventId]);
+  if (!currentRow) {
+    throw new NotFoundError('Error event was not found.', {
+      code: 'not_found',
+      eventId,
+    });
+  }
+  const oldStatus = typeof currentRow.status === 'string' ? currentRow.status : 'open';
+
+  const buildEntry = (statusValue, lastSeenOverride = null) => ({
+    id: typeof currentRow.id === 'string' ? currentRow.id : eventId,
+    errorKind: typeof currentRow.error_kind === 'string' ? currentRow.error_kind : '',
+    messageFirstLine: typeof currentRow.message_first_line === 'string' ? currentRow.message_first_line : '',
+    firstFrame: typeof currentRow.first_frame === 'string' ? currentRow.first_frame : null,
+    routeName: typeof currentRow.route_name === 'string' ? currentRow.route_name : null,
+    userAgent: typeof currentRow.user_agent === 'string' ? currentRow.user_agent : null,
+    accountIdMasked: currentRow.account_id ? maskAccountIdLastN(currentRow.account_id) : null,
+    occurrenceCount: Math.max(0, Number(currentRow.occurrence_count) || 0),
+    firstSeen: Number(currentRow.first_seen) || 0,
+    lastSeen: lastSeenOverride == null ? (Number(currentRow.last_seen) || 0) : lastSeenOverride,
+    status: statusValue,
+  });
+
+  if (oldStatus === nextStatus) {
+    // No-op transition — return current row without persisting a receipt or
+    // bumping counters. Keeps classroom admins from writing churn when
+    // double-clicking the active option.
+    return {
+      ok: true,
+      noop: true,
+      opsErrorEvent: buildEntry(oldStatus),
+      opsErrorEventStatusMutation: {
+        policyVersion: MUTATION_POLICY_VERSION,
+        kind: OPS_ERROR_EVENT_STATUS_MUTATION_KIND,
+        scopeType: 'platform',
+        scopeId,
+        requestId,
+        correlationId,
+        previousStatus: oldStatus,
+        status: nextStatus,
+        appliedAt: ts,
+        replayed: false,
+        noop: true,
+      },
+    };
+  }
+
+  const appliedEvent = buildEntry(nextStatus, ts);
+  const mutationMeta = {
+    policyVersion: MUTATION_POLICY_VERSION,
+    kind: OPS_ERROR_EVENT_STATUS_MUTATION_KIND,
+    scopeType: 'platform',
+    scopeId,
+    requestId,
+    correlationId,
+    previousStatus: oldStatus,
+    status: nextStatus,
+    appliedAt: ts,
+    replayed: false,
+  };
+  const response = {
+    opsErrorEvent: appliedEvent,
+    opsErrorEventStatusMutation: mutationMeta,
+  };
+
+  // R21 batch atomicity: status UPDATE, receipt, and swap-counter bumps commit together.
+  await batch(db, [
+    bindStatement(db, `
+      UPDATE ops_error_events
+      SET status = ?,
+          last_seen = ?
+      WHERE id = ?
+    `, [nextStatus, ts, eventId]),
+    storeMutationReceiptStatement(db, {
+      accountId: actorAccountId,
+      requestId,
+      scopeType: 'platform',
+      scopeId,
+      mutationKind: OPS_ERROR_EVENT_STATUS_MUTATION_KIND,
+      requestHash,
+      response,
+      correlationId,
+      appliedAt: ts,
+    }),
+    bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}${oldStatus}`, ts, -1),
+    bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}${nextStatus}`, ts, 1),
+  ]);
+
+  return response;
+}
+
 function seededMonsterVisualConfig({ source = 'published', version = 1 } = {}) {
   return {
     ...cloneSerialisable(BUNDLED_MONSTER_VISUAL_CONFIG),
@@ -4560,6 +5024,24 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         platformRole,
         requestId,
         correlationId: correlationId || requestId,
+        nowTs: nowFactory(),
+      });
+    },
+    async updateAccountOpsMetadata(accountId, { targetAccountId, patch, mutation = {} } = {}) {
+      return updateAccountOpsMetadata(db, {
+        actorAccountId: accountId,
+        targetAccountId,
+        patch,
+        mutation,
+        nowTs: nowFactory(),
+      });
+    },
+    async updateOpsErrorEventStatus(accountId, { eventId, status, mutation = {} } = {}) {
+      return updateOpsErrorEventStatus(db, {
+        actorAccountId: accountId,
+        eventId,
+        status,
+        mutation,
         nowTs: nowFactory(),
       });
     },
