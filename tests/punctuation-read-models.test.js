@@ -197,6 +197,28 @@ test('availability payload fails closed on forbidden fields', () => {
   }), /server-only .*field: seed/);
 });
 
+test('scan catches rawGenerator, queueItemIds, and responses at any depth', () => {
+  for (const key of ['rawGenerator', 'queueItemIds', 'responses']) {
+    const leaky = {
+      ...BASE_STATE,
+      summary: {
+        ...BASE_STATE.summary,
+        metadata: { [key]: { payload: 'leak' } },
+      },
+    };
+    assert.throws(
+      () => buildPunctuationReadModel({
+        learnerId: 'learner-a',
+        state: leaky,
+        prefs: {},
+        stats: {},
+      }),
+      new RegExp(`server-only .*field: ${key}`),
+      `forbidden key ${key} must trip the recursive scan`,
+    );
+  }
+});
+
 test('clean payloads with all allowed fields pass redaction', () => {
   const result = buildPunctuationReadModel({
     learnerId: 'learner-a',
