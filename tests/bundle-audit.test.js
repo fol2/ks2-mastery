@@ -622,6 +622,78 @@ test('assertCacheSplitRules rejects a drifted _headers per path group', async ()
   );
 });
 
+test('assertCacheSplitRules rejects duplicate path groups (adv-2)', () => {
+  const duplicateManifest = [
+    '/*',
+    '  X-Content-Type-Options: nosniff',
+    '  Cache-Control: no-store',
+    '',
+    '/manifest.webmanifest',
+    '  Cache-Control: public, max-age=3600',
+    '',
+    '/manifest.webmanifest',
+    '  Cache-Control: no-store',
+    '',
+    '/favicon.ico',
+    '  Cache-Control: public, max-age=86400',
+    '',
+    '/',
+    '  Cache-Control: no-store',
+    '',
+    '/index.html',
+    '  Cache-Control: no-store',
+    '',
+    '/assets/bundles/*',
+    '  Cache-Control: public, max-age=31536000, immutable',
+    '',
+    '/assets/app-icons/*',
+    '  Cache-Control: public, max-age=31536000, immutable',
+    '',
+    '/styles/*',
+    '  Cache-Control: public, max-age=31536000, immutable',
+    '',
+  ].join('\n');
+  assert.throws(
+    () => assertCacheSplitRules(duplicateManifest),
+    /duplicate path group: \/manifest\.webmanifest/,
+  );
+});
+
+test('assertCacheSplitRules rejects multiple Cache-Control lines in one block (adv-3)', () => {
+  const doubleCacheManifest = [
+    '/*',
+    '  X-Content-Type-Options: nosniff',
+    '  Cache-Control: no-store',
+    '',
+    '/manifest.webmanifest',
+    '  Cache-Control: public, max-age=3600',
+    '  Cache-Control: no-store',
+    '',
+    '/favicon.ico',
+    '  Cache-Control: public, max-age=86400',
+    '',
+    '/',
+    '  Cache-Control: no-store',
+    '',
+    '/index.html',
+    '  Cache-Control: no-store',
+    '',
+    '/assets/bundles/*',
+    '  Cache-Control: public, max-age=31536000, immutable',
+    '',
+    '/assets/app-icons/*',
+    '  Cache-Control: public, max-age=31536000, immutable',
+    '',
+    '/styles/*',
+    '  Cache-Control: public, max-age=31536000, immutable',
+    '',
+  ].join('\n');
+  assert.throws(
+    () => assertCacheSplitRules(doubleCacheManifest),
+    /has 2 Cache-Control lines; expected exactly one/,
+  );
+});
+
 test('parseHeadersBlocks segments a `_headers` file into path/body pairs', () => {
   const sample = [
     '/*',

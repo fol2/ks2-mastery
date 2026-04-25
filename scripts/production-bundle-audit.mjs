@@ -284,14 +284,18 @@ async function auditProduction(origin) {
   //   - `/` — HTML must never be cached (no-store).
   //   - `/src/bundles/app.bundle.js` — Worker-wrapped hashed bundle (immutable).
   //   - `/assets/app-icons/favicon-32.png` — ASSETS-direct hashed asset (immutable).
-  //   - `/api/bootstrap` — Worker endpoint must stay no-store.
   //   - `/manifest.webmanifest` — intentional 1-hour short cache (neither
   //     immutable nor no-store).
+  //
+  // `/api/bootstrap` intentionally NOT probed: HEAD requests fall through
+  // to the json() 404-fallback which hardcodes no-store, so the probe
+  // would always pass against the fallback path rather than the real GET
+  // handler. `json()`'s hardcoded cache-control already makes the GET
+  // endpoint no-store by construction (adv-1).
   const CACHE_SPLIT_CHECKS = [
     { path: '/', label: 'root index', expected: 'no-store' },
     { path: '/src/bundles/app.bundle.js', label: 'Worker-wrapped bundle', expected: 'public, max-age=31536000, immutable' },
     { path: '/assets/app-icons/favicon-32.png', label: 'ASSETS app icon', expected: 'public, max-age=31536000, immutable' },
-    { path: '/api/bootstrap', label: 'Worker /api/bootstrap', expected: 'no-store', allowAnyStatus: true },
     { path: '/manifest.webmanifest', label: 'web app manifest', expected: 'public, max-age=3600' },
   ];
   let cacheChecksPassed = 0;

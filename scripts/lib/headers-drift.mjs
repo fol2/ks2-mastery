@@ -171,20 +171,33 @@ export function assertCacheSplitRules(headersContent, { rules = CACHE_SPLIT_RULE
   }
   const blocks = parseHeadersBlocks(headersContent);
   const byPath = new Map();
-  for (const block of blocks) byPath.set(block.path, block);
+  for (const block of blocks) {
+    // adv-2: reject duplicate path groups so a rebase leftover cannot
+    // silently ship two contradictory rules for the same path.
+    if (byPath.has(block.path)) {
+      throw new Error(`Published _headers has duplicate path group: ${block.path}`);
+    }
+    byPath.set(block.path, block);
+  }
   for (const rule of rules) {
     const block = byPath.get(rule.path);
     if (!block) {
       throw new Error(`Published _headers is missing path group: ${rule.path}`);
     }
-    // Match the last Cache-Control line in the block; if there are
-    // multiple (a drift shape), the final one is what Cloudflare applies.
     const matches = block.body.match(/^\s*Cache-Control:\s*(.+)$/gmu) || [];
     if (matches.length === 0) {
       throw new Error(`Published _headers path group ${rule.path} is missing a Cache-Control line (expected: ${rule.cacheControl}).`);
     }
-    const lastMatch = matches[matches.length - 1];
-    const observed = lastMatch.replace(/^\s*Cache-Control:\s*/u, '').trim();
+    // adv-3: reject multiple Cache-Control lines in one block — Cloudflare
+    // semantics for duplicate-within-block are not contractually specified,
+    // and a malformed shape should fail loudly regardless of which edge
+    // behaviour applies.
+    if (matches.length > 1) {
+      throw new Error(
+        `Published _headers path group ${rule.path} has ${matches.length} Cache-Control lines; expected exactly one (${rule.cacheControl}).`,
+      );
+    }
+    const observed = matches[0].replace(/^\s*Cache-Control:\s*/u, '').trim();
     if (observed !== rule.cacheControl) {
       throw new Error(
         `Published _headers path group ${rule.path} has Cache-Control: ${observed} (expected: ${rule.cacheControl}).`,
