@@ -433,7 +433,7 @@ tests/
 
 ---
 
-- [ ] U9. **Expand Analytics And Parent/Admin Evidence**
+- [x] U9. **Expand Analytics And Parent/Admin Evidence**
 
 **Goal:** Port the legacy analytics depth into production read models and adult reporting surfaces.
 

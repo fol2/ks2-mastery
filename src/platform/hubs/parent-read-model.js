@@ -9,6 +9,7 @@ import {
 } from '../access/roles.js';
 import { buildSpellingLearnerReadModel } from '../../subjects/spelling/read-model.js';
 import { buildGrammarLearnerReadModel } from '../../subjects/grammar/read-model.js';
+import { buildPunctuationLearnerReadModel } from '../../subjects/punctuation/read-model.js';
 
 function asTs(value, fallback = 0) {
   const numeric = Number(value);
@@ -47,6 +48,26 @@ function grammarEvidenceFromReadModel(grammar = {}) {
     recentActivity: Array.isArray(grammar.recentActivity) ? grammar.recentActivity : [],
     recentSessions: Array.isArray(grammar.recentSessions) ? grammar.recentSessions : [],
     parentSummaryDraft: grammar.parentSummaryDraft || null,
+  };
+}
+
+function punctuationEvidenceFromReadModel(punctuation = {}) {
+  return {
+    subjectId: 'punctuation',
+    hasEvidence: Boolean(punctuation.hasEvidence),
+    progressSnapshot: punctuation.progressSnapshot || null,
+    overview: punctuation.overview || null,
+    currentFocus: punctuation.currentFocus || null,
+    skillRows: Array.isArray(punctuation.skillRows) ? punctuation.skillRows : [],
+    bySessionMode: Array.isArray(punctuation.bySessionMode) ? punctuation.bySessionMode : [],
+    byItemMode: Array.isArray(punctuation.byItemMode) ? punctuation.byItemMode : [],
+    weakestFacets: Array.isArray(punctuation.weakestFacets) ? punctuation.weakestFacets : [],
+    recentMistakes: Array.isArray(punctuation.recentMistakes) ? punctuation.recentMistakes : [],
+    misconceptionPatterns: Array.isArray(punctuation.misconceptionPatterns) ? punctuation.misconceptionPatterns : [],
+    recentSessions: Array.isArray(punctuation.recentSessions) ? punctuation.recentSessions : [],
+    dailyGoal: punctuation.dailyGoal || null,
+    streak: punctuation.streak || null,
+    releaseDiagnostics: punctuation.releaseDiagnostics || null,
   };
 }
 
@@ -96,16 +117,24 @@ export function buildParentHubReadModel({
     eventLog,
     now,
   });
+  const punctuation = buildPunctuationLearnerReadModel({
+    subjectStateRecord: isPlainObject(subjectStates.punctuation) ? subjectStates.punctuation : null,
+    practiceSessions,
+    now,
+  });
   const grammarEvidence = grammarEvidenceFromReadModel(grammar);
+  const punctuationEvidence = punctuationEvidenceFromReadModel(punctuation);
   const activeSubjectCount = [
     spelling.progressSnapshot.trackedWords > 0,
     grammar.hasEvidence,
+    punctuation.hasEvidence,
   ].filter(Boolean).length;
 
   const lastActivityAt = Math.max(
     asTs(learner?.createdAt, 0),
     asTs(spelling?.overview?.lastActivityAt, 0),
     asTs(grammar?.overview?.lastActivityAt, 0),
+    asTs(punctuation?.overview?.lastActivityAt, 0),
     ...Object.values(isPlainObject(gameState) ? gameState : {}).map((entry) => asTs(entry?.updatedAt, 0)),
     0,
   );
@@ -153,6 +182,10 @@ export function buildParentHubReadModel({
       dueGrammarConcepts: grammar.progressSnapshot.dueConcepts,
       weakGrammarConcepts: grammar.progressSnapshot.weakConcepts,
       grammarAccuracyPercent: grammar.progressSnapshot.accuracyPercent,
+      securePunctuationUnits: punctuation.progressSnapshot.securedRewardUnits,
+      duePunctuationItems: punctuation.progressSnapshot.dueItems,
+      weakPunctuationItems: punctuation.progressSnapshot.weakItems,
+      punctuationAccuracyPercent: punctuation.progressSnapshot.accuracyPercent,
       recentSessions: spelling.recentSessions.length,
     },
     selectedLearnerId: resolvedLearnerId,
@@ -160,20 +193,23 @@ export function buildParentHubReadModel({
     dueWork: orderDueWork([
       spelling.currentFocus,
       ...(grammar.hasEvidence ? [grammar.currentFocus] : []),
+      ...(punctuation.hasEvidence ? [punctuation.currentFocus] : []),
     ]),
-    recentSessions: [...spelling.recentSessions, ...grammar.recentSessions]
+    recentSessions: [...spelling.recentSessions, ...grammar.recentSessions, ...punctuation.recentSessions]
       .sort((a, b) => asTs(b.updatedAt, 0) - asTs(a.updatedAt, 0))
       .slice(0, 6),
-    strengths: [...spelling.strengths, ...grammar.strengths].slice(0, 6),
-    weaknesses: [...spelling.weaknesses, ...grammar.weaknesses].slice(0, 6),
-    misconceptionPatterns: [...spelling.misconceptionPatterns, ...grammar.misconceptionPatterns]
+    strengths: [...spelling.strengths, ...grammar.strengths, ...punctuation.strengths].slice(0, 6),
+    weaknesses: [...spelling.weaknesses, ...grammar.weaknesses, ...punctuation.weaknesses].slice(0, 6),
+    misconceptionPatterns: [...spelling.misconceptionPatterns, ...grammar.misconceptionPatterns, ...punctuation.misconceptionPatterns]
       .sort((a, b) => (Number(b.count) || 0) - (Number(a.count) || 0) || asTs(b.lastSeenAt, 0) - asTs(a.lastSeenAt, 0))
       .slice(0, 8),
     progressSnapshots: [
       spelling.progressSnapshot,
       ...(grammar.hasEvidence ? [grammar.progressSnapshot] : []),
+      ...(punctuation.hasEvidence ? [punctuation.progressSnapshot] : []),
     ],
     grammarEvidence,
+    punctuationEvidence,
     exportEntryPoints: [
       {
         kind: 'learner',

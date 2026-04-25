@@ -126,6 +126,7 @@ export function buildAdminHubReadModel({
       overview: parentHub.learnerOverview,
       currentFocus: parentHub.dueWork[0] || null,
       grammarEvidence: parentHub.grammarEvidence || null,
+      punctuationEvidence: parentHub.punctuationEvidence || null,
     };
   });
 
@@ -188,6 +189,7 @@ export function buildAdminHubReadModel({
       selectedLearnerId: selectedDiagnostics?.learnerId || '',
       accessibleLearners: diagnosticsEntries,
       selectedDiagnostics,
+      punctuationReleaseDiagnostics: selectedDiagnostics?.punctuationEvidence?.releaseDiagnostics || null,
       entryPoints: [
         ...(canOpenParentHub ? [{
           label: 'Open Parent Hub',
@@ -197,6 +199,12 @@ export function buildAdminHubReadModel({
           label: 'Open Spelling analytics',
           action: 'open-subject',
           subjectId: 'spelling',
+          tab: 'analytics',
+        },
+        {
+          label: 'Open Punctuation analytics',
+          action: 'open-subject',
+          subjectId: 'punctuation',
           tab: 'analytics',
         },
         {

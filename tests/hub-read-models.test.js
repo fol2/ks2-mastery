@@ -4,6 +4,10 @@ import assert from 'node:assert/strict';
 import { buildParentHubReadModel } from '../src/platform/hubs/parent-read-model.js';
 import { buildAdminHubReadModel } from '../src/platform/hubs/admin-read-model.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
+import { createPunctuationMasteryKey, PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
+import { createMemoryState, updateMemoryState } from '../shared/punctuation/scheduler.js';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function makeLearner(id = 'learner-a', name = 'Ava') {
   return {
@@ -15,6 +19,90 @@ function makeLearner(id = 'learner-a', name = 'Ava') {
     avatarColor: '#3E6FA8',
     createdAt: 1000,
   };
+}
+
+function makePunctuationSubjectState(now = 1_777_000_000_000) {
+  const securedMasteryKey = createPunctuationMasteryKey({
+    releaseId: PUNCTUATION_RELEASE_ID,
+    clusterId: 'speech',
+    rewardUnitId: 'speech-core',
+  });
+  return {
+    data: {
+      progress: {
+        items: {
+          sp_insert_question: updateMemoryState(createMemoryState(), false, now),
+          sp_choose_reporting_comma: updateMemoryState(createMemoryState(), true, now - DAY_MS),
+        },
+        facets: {
+          'speech::insert': updateMemoryState(createMemoryState(), false, now),
+          'speech::choose': updateMemoryState(createMemoryState(), true, now - DAY_MS),
+        },
+        rewardUnits: {
+          [securedMasteryKey]: {
+            masteryKey: securedMasteryKey,
+            releaseId: PUNCTUATION_RELEASE_ID,
+            clusterId: 'speech',
+            rewardUnitId: 'speech-core',
+            securedAt: now - 5000,
+          },
+        },
+        attempts: [
+          {
+            ts: now - DAY_MS,
+            sessionId: 'punctuation-gps',
+            itemId: 'sp_choose_reporting_comma',
+            mode: 'choose',
+            skillIds: ['speech'],
+            rewardUnitId: 'speech-core',
+            sessionMode: 'gps',
+            testMode: 'gps',
+            correct: true,
+          },
+          {
+            ts: now,
+            sessionId: 'punctuation-guided',
+            itemId: 'sp_insert_question',
+            mode: 'insert',
+            itemMode: 'insert',
+            skillIds: ['speech'],
+            rewardUnitId: 'speech-core',
+            sessionMode: 'guided',
+            supportLevel: 2,
+            supportKind: 'guided',
+            correct: false,
+            attemptedAnswer: 'Noah shouted we made it.',
+            model: '"We made it!" shouted Noah.',
+            displayCorrection: '"We made it!" shouted Noah.',
+            misconceptionTags: ['speech.quote_missing'],
+            facetOutcomes: [{ id: 'speech::insert', label: 'Speech - Insert punctuation', ok: false }],
+          },
+        ],
+        sessionsCompleted: 2,
+      },
+    },
+    updatedAt: now,
+  };
+}
+
+function addUnknownPunctuationRewardUnits(subjectState, now = 1_777_000_000_000) {
+  const rewardUnits = subjectState.data.progress.rewardUnits;
+  const validUnit = rewardUnits[Object.keys(rewardUnits)[0]];
+  rewardUnits['duplicate-speech-core'] = {
+    ...validUnit,
+    securedAt: now - 4000,
+  };
+  for (let index = 0; index < 15; index += 1) {
+    const masteryKey = `punctuation:${PUNCTUATION_RELEASE_ID}:fake-cluster-${index}:fake-unit-${index}`;
+    rewardUnits[masteryKey] = {
+      masteryKey,
+      releaseId: PUNCTUATION_RELEASE_ID,
+      clusterId: `fake-cluster-${index}`,
+      rewardUnitId: `fake-unit-${index}`,
+      securedAt: now - index,
+    };
+  }
+  return subjectState;
 }
 
 test('parent hub read model summarises due work, recent sessions, strengths, and misconception patterns', () => {
@@ -237,6 +325,49 @@ test('parent hub read model includes Grammar evidence without replacing Spelling
   assert.ok(model.recentSessions.some((entry) => entry.subjectId === 'grammar' && entry.headline === '0/1'));
 });
 
+test('parent hub read model includes Punctuation analytics evidence without raw answers', () => {
+  const learner = makeLearner();
+  const now = 1_777_000_000_000;
+  const punctuationSubjectState = addUnknownPunctuationRewardUnits(makePunctuationSubjectState(now), now);
+  const model = buildParentHubReadModel({
+    learner,
+    platformRole: 'parent',
+    membershipRole: 'owner',
+    subjectStates: {
+      punctuation: punctuationSubjectState,
+    },
+    practiceSessions: [
+      {
+        id: 'punctuation-complete',
+        learnerId: learner.id,
+        subjectId: 'punctuation',
+        sessionKind: 'guided',
+        status: 'completed',
+        summary: { label: 'Guided punctuation', total: 2, correct: 1 },
+        createdAt: now - 1000,
+        updatedAt: now,
+      },
+    ],
+    eventLog: [],
+    now: () => now,
+  });
+
+  assert.equal(model.progressSnapshots.some((snapshot) => snapshot.subjectId === 'punctuation'), true);
+  assert.equal(model.learnerOverview.securePunctuationUnits, 1);
+  assert.equal(model.punctuationEvidence.progressSnapshot.trackedRewardUnits, 1);
+  assert.equal(model.punctuationEvidence.progressSnapshot.totalRewardUnits, 14);
+  assert.equal(model.learnerOverview.weakPunctuationItems, 1);
+  assert.equal(model.dueWork[0].subjectId, 'punctuation');
+  assert.equal(model.punctuationEvidence.bySessionMode.find((entry) => entry.id === 'guided').wrong, 1);
+  assert.equal(model.punctuationEvidence.byItemMode.find((entry) => entry.id === 'insert').attempts, 1);
+  assert.equal(model.punctuationEvidence.weakestFacets[0].id, 'speech::insert');
+  assert.equal(model.punctuationEvidence.recentMistakes[0].supportKind, 'guided');
+  assert.equal(Object.hasOwn(model.punctuationEvidence.recentMistakes[0], 'attemptedAnswer'), false);
+  assert.equal(Object.hasOwn(model.punctuationEvidence.recentMistakes[0], 'model'), false);
+  assert.ok(model.misconceptionPatterns.some((entry) => entry.subjectId === 'punctuation' && /Speech Quote Missing/.test(entry.label)));
+  assert.ok(model.recentSessions.some((entry) => entry.subjectId === 'punctuation' && entry.headline === '1/2'));
+});
+
 test('parent hub read model normalises malformed restored Grammar state safely', () => {
   const learner = makeLearner();
   const model = buildParentHubReadModel({
@@ -314,6 +445,60 @@ test('admin hub diagnostics use actionable Grammar focus before empty Spelling f
   assert.equal(model.learnerSupport.selectedDiagnostics.currentFocus.subjectId, 'grammar');
   assert.match(model.learnerSupport.selectedDiagnostics.currentFocus.label, /Grammar/);
   assert.equal(model.learnerSupport.selectedDiagnostics.grammarEvidence.weakConcepts[0].id, 'adverbials');
+});
+
+test('admin hub diagnostics expose Punctuation release and learner evidence', () => {
+  const learner = makeLearner();
+  const now = 1_777_000_000_000;
+  const model = buildAdminHubReadModel({
+    account: {
+      id: 'adult-admin',
+      selectedLearnerId: learner.id,
+      platformRole: 'admin',
+    },
+    platformRole: 'admin',
+    spellingContentBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+    memberships: [
+      {
+        learnerId: learner.id,
+        learner,
+        role: 'owner',
+      },
+    ],
+    learnerBundles: {
+      [learner.id]: {
+        subjectStates: {
+          punctuation: addUnknownPunctuationRewardUnits(makePunctuationSubjectState(now), now),
+        },
+        practiceSessions: [
+          {
+            id: 'punctuation-complete',
+            learnerId: learner.id,
+            subjectId: 'punctuation',
+            sessionKind: 'guided',
+            status: 'completed',
+            summary: { label: 'Guided punctuation', total: 2, correct: 1 },
+            createdAt: now - 1000,
+            updatedAt: now,
+          },
+        ],
+        eventLog: [],
+        gameState: {},
+      },
+    },
+    selectedLearnerId: learner.id,
+    now: () => now,
+  });
+
+  const diagnostics = model.learnerSupport.selectedDiagnostics;
+  assert.equal(diagnostics.currentFocus.subjectId, 'punctuation');
+  assert.equal(diagnostics.punctuationEvidence.progressSnapshot.securedRewardUnits, 1);
+  assert.equal(diagnostics.punctuationEvidence.weakestFacets[0].id, 'speech::insert');
+  assert.equal(model.learnerSupport.punctuationReleaseDiagnostics.releaseId, PUNCTUATION_RELEASE_ID);
+  assert.equal(model.learnerSupport.punctuationReleaseDiagnostics.trackedRewardUnitCount, 1);
+  assert.equal(model.learnerSupport.punctuationReleaseDiagnostics.sessionCount, 1);
+  assert.equal(model.learnerSupport.punctuationReleaseDiagnostics.productionExposureStatus, 'enabled');
+  assert.equal(model.learnerSupport.entryPoints.some((entry) => entry.subjectId === 'punctuation' && entry.tab === 'analytics'), true);
 });
 
 test('admin hub read model reports published release status, validation state, audit stream, and learner diagnostics', () => {

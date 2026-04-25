@@ -37,6 +37,28 @@ const SUBJECT_ID = 'punctuation';
 const SERVER_AUTHORITY = 'worker';
 const GENERATED_ITEMS_PER_FAMILY = 1;
 const MAX_GPS_QUEUE_LENGTH = 12;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const DAILY_TARGET_ATTEMPTS = 4;
+const ITEM_MODE_LABELS = Object.freeze({
+  choose: 'Choice',
+  insert: 'Insert punctuation',
+  fix: 'Proofreading',
+  transfer: 'Transfer writing',
+  combine: 'Sentence combining',
+  paragraph: 'Paragraph repair',
+});
+const SESSION_MODE_LABELS = Object.freeze({
+  smart: 'Smart review',
+  guided: 'Guided learn',
+  weak: 'Weak spots',
+  gps: 'GPS test',
+  endmarks: 'Endmarks focus',
+  apostrophe: 'Apostrophe focus',
+  speech: 'Speech focus',
+  comma_flow: 'Comma / flow focus',
+  boundary: 'Boundary focus',
+  structure: 'Structure focus',
+});
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -152,13 +174,22 @@ export function normalisePunctuationData(value) {
               sessionId: typeof attempt.sessionId === 'string' ? attempt.sessionId : null,
               itemId: typeof attempt.itemId === 'string' ? attempt.itemId : '',
               mode: typeof attempt.mode === 'string' ? attempt.mode : '',
+              itemMode: typeof attempt.itemMode === 'string'
+                ? attempt.itemMode
+                : (typeof attempt.mode === 'string' ? attempt.mode : ''),
               skillIds: normaliseStringArray(attempt.skillIds),
               rewardUnitId: typeof attempt.rewardUnitId === 'string' ? attempt.rewardUnitId : '',
               sessionMode: typeof attempt.sessionMode === 'string' ? attempt.sessionMode : '',
               testMode: attempt.testMode === 'gps' ? 'gps' : null,
               supportLevel: normaliseNonNegativeInteger(attempt.supportLevel, 0),
+              supportKind: typeof attempt.supportKind === 'string'
+                ? attempt.supportKind
+                : (normaliseNonNegativeInteger(attempt.supportLevel, 0) > 0 ? 'guided' : null),
               correct: attempt.correct === true,
               misconceptionTags: normaliseStringArray(attempt.misconceptionTags),
+              facetOutcomes: Array.isArray(attempt.facetOutcomes)
+                ? attempt.facetOutcomes.map(normaliseFacetForReview).filter(Boolean)
+                : [],
             }))
             .slice(-1000)
         : [],
@@ -432,6 +463,199 @@ function statsFromData(data, indexes = PUNCTUATION_CONTENT_INDEXES, now = Date.n
   };
 }
 
+function percent(correct, attempts) {
+  const total = Math.max(0, Number(attempts) || 0);
+  if (!total) return null;
+  return Math.round((Math.max(0, Number(correct) || 0) / total) * 100);
+}
+
+function humanLabel(value) {
+  return String(value || '')
+    .replace(/[._-]+/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    .trim();
+}
+
+function itemModeLabel(value) {
+  return ITEM_MODE_LABELS[value] || humanLabel(value) || 'Practice item';
+}
+
+function sessionModeLabel(value) {
+  return SESSION_MODE_LABELS[value] || humanLabel(value) || 'Practice session';
+}
+
+function primarySkill(indexes, skillIds = []) {
+  const firstSkillId = Array.isArray(skillIds) ? skillIds.find((entry) => typeof entry === 'string' && entry) : '';
+  return firstSkillId ? indexes.skillById.get(firstSkillId) : null;
+}
+
+function skillNames(indexes, skillIds = []) {
+  return normaliseStringArray(skillIds)
+    .map((skillId) => indexes.skillById.get(skillId)?.name || humanLabel(skillId))
+    .filter(Boolean);
+}
+
+function groupAttemptAccuracy(attempts, keyFn, labelFn) {
+  const groups = new Map();
+  for (const attempt of attempts) {
+    const id = keyFn(attempt) || 'unknown';
+    const current = groups.get(id) || {
+      subjectId: SUBJECT_ID,
+      id,
+      label: labelFn(id),
+      attempts: 0,
+      correct: 0,
+      wrong: 0,
+      accuracy: null,
+    };
+    current.attempts += 1;
+    if (attempt.correct) current.correct += 1;
+    else current.wrong += 1;
+    current.accuracy = percent(current.correct, current.attempts);
+    groups.set(id, current);
+  }
+  return [...groups.values()]
+    .sort((a, b) => b.attempts - a.attempts || String(a.label).localeCompare(String(b.label)));
+}
+
+function facetRowsFromData(data, indexes, now) {
+  return Object.entries(data.progress.facets || {})
+    .map(([id, rawState]) => {
+      const [skillId, itemMode] = id.split('::');
+      const snap = memorySnapshot(rawState, now);
+      const state = snap.state;
+      const skill = indexes.skillById.get(skillId);
+      const attempts = Number(state.attempts) || 0;
+      return {
+        subjectId: SUBJECT_ID,
+        id,
+        skillId,
+        skillName: skill?.name || humanLabel(skillId),
+        itemMode: itemMode || '',
+        itemModeLabel: itemModeLabel(itemMode),
+        label: `${skill?.name || humanLabel(skillId)} · ${itemModeLabel(itemMode)}`,
+        status: snap.bucket,
+        attempts,
+        correct: Number(state.correct) || 0,
+        wrong: Number(state.incorrect) || 0,
+        accuracy: percent(state.correct, attempts),
+        mastery: snap.mastery,
+        dueAt: Number(state.dueAt) || 0,
+        lastSeenAt: Number(state.lastSeen) || 0,
+      };
+    })
+    .filter((entry) => entry.attempts > 0)
+    .sort((a, b) => {
+      const statusOrder = { weak: 0, due: 1, learning: 2, new: 3, secure: 4 };
+      return (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99)
+        || a.mastery - b.mastery
+        || b.wrong - a.wrong
+        || b.lastSeenAt - a.lastSeenAt
+        || String(a.label).localeCompare(String(b.label));
+    });
+}
+
+function recentMistakesFromAttempts(attempts, indexes) {
+  return attempts
+    .filter((attempt) => attempt.correct !== true)
+    .slice(-8)
+    .reverse()
+    .map((attempt) => {
+      const itemMode = attempt.itemMode || attempt.mode || '';
+      const names = skillNames(indexes, attempt.skillIds);
+      const primary = primarySkill(indexes, attempt.skillIds);
+      return {
+        subjectId: SUBJECT_ID,
+        itemId: attempt.itemId || '',
+        label: `${primary?.name || names[0] || 'Punctuation'} · ${itemModeLabel(itemMode)}`,
+        itemMode,
+        itemModeLabel: itemModeLabel(itemMode),
+        sessionMode: attempt.sessionMode || 'smart',
+        sessionModeLabel: sessionModeLabel(attempt.sessionMode || 'smart'),
+        skillIds: normaliseStringArray(attempt.skillIds),
+        skillNames: names,
+        rewardUnitId: attempt.rewardUnitId || '',
+        misconceptionTags: normaliseStringArray(attempt.misconceptionTags).slice(0, 6),
+        facetOutcomes: Array.isArray(attempt.facetOutcomes)
+          ? attempt.facetOutcomes
+              .filter((facet) => facet && facet.ok !== true)
+              .map((facet) => ({
+                id: facet.id,
+                label: facet.label || humanLabel(facet.id),
+                ok: false,
+              }))
+              .slice(0, 6)
+          : [],
+        supportLevel: normaliseNonNegativeInteger(attempt.supportLevel, 0),
+        supportKind: attempt.supportKind || null,
+        testMode: attempt.testMode || null,
+        createdAt: normaliseTimestamp(attempt.ts, 0),
+      };
+    });
+}
+
+function misconceptionPatternsFromAttempts(attempts) {
+  const patterns = new Map();
+  for (const attempt of attempts) {
+    for (const tag of normaliseStringArray(attempt.misconceptionTags)) {
+      const current = patterns.get(tag) || {
+        subjectId: SUBJECT_ID,
+        id: tag,
+        label: `${humanLabel(tag)} pattern`,
+        count: 0,
+        lastSeenAt: 0,
+        source: 'punctuation-attempts',
+      };
+      current.count += 1;
+      current.lastSeenAt = Math.max(current.lastSeenAt, normaliseTimestamp(attempt.ts, 0));
+      patterns.set(tag, current);
+    }
+  }
+  return [...patterns.values()]
+    .sort((a, b) => b.count - a.count || b.lastSeenAt - a.lastSeenAt)
+    .slice(0, 8);
+}
+
+function dayIndex(value) {
+  return Math.floor(normaliseTimestamp(value, 0) / DAY_MS);
+}
+
+function streakSummary(attempts, now) {
+  const today = dayIndex(timestamp(now));
+  const activeDays = [...new Set(attempts
+    .map((attempt) => dayIndex(attempt.ts))
+    .filter((day) => Number.isFinite(day) && day >= 0))]
+    .sort((a, b) => a - b);
+  const activeDaySet = new Set(activeDays);
+  let currentDays = 0;
+  for (let day = today; day >= 0 && activeDaySet.has(day); day -= 1) currentDays += 1;
+  let bestDays = 0;
+  let run = 0;
+  let previous = null;
+  for (const day of activeDays) {
+    run = previous != null && day === previous + 1 ? run + 1 : 1;
+    bestDays = Math.max(bestDays, run);
+    previous = day;
+  }
+  return {
+    currentDays,
+    bestDays,
+    activeDays: activeDays.length,
+  };
+}
+
+function dailyGoalSummary(attempts, now) {
+  const today = dayIndex(timestamp(now));
+  const attemptsToday = attempts.filter((attempt) => dayIndex(attempt.ts) === today);
+  return {
+    targetAttempts: DAILY_TARGET_ATTEMPTS,
+    attemptsToday: attemptsToday.length,
+    correctToday: attemptsToday.filter((attempt) => attempt.correct).length,
+    completed: attemptsToday.length >= DAILY_TARGET_ATTEMPTS,
+    progressPercent: Math.min(100, Math.round((attemptsToday.length / DAILY_TARGET_ATTEMPTS) * 100)),
+  };
+}
+
 function analyticsFromData(data, indexes = PUNCTUATION_CONTENT_INDEXES, now = Date.now) {
   const skillRows = indexes.skills.map((skill) => {
     const items = indexes.itemsBySkill.get(skill.id) || [];
@@ -452,17 +676,24 @@ function analyticsFromData(data, indexes = PUNCTUATION_CONTENT_INDEXES, now = Da
       mastery: snaps.length ? Math.round(snaps.reduce((sum, snap) => sum + snap.mastery, 0) / snaps.length) : 0,
     };
   });
+  const attempts = data.progress.attempts;
+  const correct = attempts.filter((attempt) => attempt.correct).length;
+  const weakestFacets = facetRowsFromData(data, indexes, now);
   return {
     releaseId: PUNCTUATION_RELEASE_ID,
-    attempts: data.progress.attempts.length,
-    correct: data.progress.attempts.filter((attempt) => attempt.correct).length,
-    accuracy: data.progress.attempts.length
-      ? Math.round((data.progress.attempts.filter((attempt) => attempt.correct).length / data.progress.attempts.length) * 100)
-      : 0,
+    attempts: attempts.length,
+    correct,
+    accuracy: attempts.length ? Math.round((correct / attempts.length) * 100) : 0,
     sessionsCompleted: data.progress.sessionsCompleted,
     skillRows,
     rewardUnits: currentPublishedRewardUnits(data, indexes),
-    recentMistakes: data.progress.attempts.filter((attempt) => !attempt.correct).slice(-8).reverse(),
+    bySessionMode: groupAttemptAccuracy(attempts, (attempt) => attempt.sessionMode || 'smart', sessionModeLabel),
+    byItemMode: groupAttemptAccuracy(attempts, (attempt) => attempt.itemMode || attempt.mode || 'unknown', itemModeLabel),
+    weakestFacets: weakestFacets.slice(0, 8),
+    recentMistakes: recentMistakesFromAttempts(attempts, indexes),
+    misconceptionPatterns: misconceptionPatternsFromAttempts(attempts),
+    dailyGoal: dailyGoalSummary(attempts, now),
+    streak: streakSummary(attempts, now),
   };
 }
 
@@ -617,13 +848,18 @@ function applyMarkedAttemptToProgress({
     sessionId: session.id,
     itemId: item.id,
     mode: item.mode,
+    itemMode: item.mode,
     skillIds: item.skillIds || [],
     rewardUnitId: item.rewardUnitId || '',
     sessionMode: session.mode || '',
     testMode: session.mode === 'gps' ? 'gps' : null,
     supportLevel,
+    supportKind: supportLevel > 0 ? 'guided' : null,
     correct: result.correct,
     misconceptionTags: result.misconceptionTags || [],
+    facetOutcomes: Array.isArray(result.facets)
+      ? result.facets.map(normaliseFacetForReview).filter(Boolean)
+      : [],
   });
   data.progress.attempts = data.progress.attempts.slice(-1000);
 

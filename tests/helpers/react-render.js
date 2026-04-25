@@ -358,15 +358,16 @@ export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
     };
     const parentModel = {
       learner: { id: 'learner-a', name: 'Ava', lastActivityAt: Date.UTC(2026, 3, 22, 12, 0) },
-      learnerOverview: { secureWords: 8, dueWords: 2, troubleWords: 1, accuracyPercent: 82, secureGrammarConcepts: 2, dueGrammarConcepts: 1, weakGrammarConcepts: 1, grammarAccuracyPercent: 67 },
-      dueWork: [{ label: 'Review due spellings', detail: 'Two words are ready.' }, { subjectId: 'grammar', label: 'Repair Grammar misconceptions', detail: 'Adverbials need another pass.' }],
-      recentSessions: [{ id: 'session-1', label: 'Smart Review', status: 'completed', sessionKind: 'spelling', mistakeCount: 1, updatedAt: Date.UTC(2026, 3, 22, 12, 0), headline: 'Good recall' }],
+      learnerOverview: { secureWords: 8, dueWords: 2, troubleWords: 1, accuracyPercent: 82, secureGrammarConcepts: 2, dueGrammarConcepts: 1, weakGrammarConcepts: 1, grammarAccuracyPercent: 67, securePunctuationUnits: 1, duePunctuationItems: 1, weakPunctuationItems: 1, punctuationAccuracyPercent: 50 },
+      dueWork: [{ label: 'Review due spellings', detail: 'Two words are ready.' }, { subjectId: 'grammar', label: 'Repair Grammar misconceptions', detail: 'Adverbials need another pass.' }, { subjectId: 'punctuation', label: 'Run a Punctuation weak spots drill next', detail: 'Speech - Insert punctuation' }],
+      recentSessions: [{ id: 'session-1', label: 'Smart Review', status: 'completed', sessionKind: 'spelling', mistakeCount: 1, updatedAt: Date.UTC(2026, 3, 22, 12, 0), headline: 'Good recall' }, { id: 'punctuation-session-1', subjectId: 'punctuation', label: 'Guided punctuation', status: 'completed', sessionKind: 'guided', mistakeCount: 1, updatedAt: Date.UTC(2026, 3, 22, 13, 0), headline: '1/2' }],
       strengths: [{ label: 'Suffixes', detail: 'Secure recall', secureCount: 4, troubleCount: 0 }],
       weaknesses: [{ label: 'Possession', detail: 'Needs another pass', secureCount: 1, troubleCount: 1 }],
-      misconceptionPatterns: [{ label: 'Double consonant', source: 'event log', count: 2, lastSeenAt: Date.UTC(2026, 3, 22, 12, 0) }],
+      misconceptionPatterns: [{ label: 'Double consonant', source: 'event log', count: 2, lastSeenAt: Date.UTC(2026, 3, 22, 12, 0) }, { subjectId: 'punctuation', label: 'Speech Quote Missing pattern', source: 'punctuation-attempts', count: 1, lastSeenAt: Date.UTC(2026, 3, 22, 13, 0) }],
       progressSnapshots: [
         { subjectId: 'spelling', trackedWords: 213, totalPublishedWords: 235 },
         { subjectId: 'grammar', trackedConcepts: 3, totalConcepts: 18, securedConcepts: 2, dueConcepts: 1, weakConcepts: 1 },
+        { subjectId: 'punctuation', totalRewardUnits: 14, trackedRewardUnits: 1, securedRewardUnits: 1, dueItems: 1, weakItems: 1, attempts: 2, accuracyPercent: 50 },
       ],
       grammarEvidence: {
         subjectId: 'grammar',
@@ -387,6 +388,20 @@ export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
           nextSteps: ['Practise two fronted adverbial choices'],
           generatedAt: Date.UTC(2026, 3, 22, 12, 0),
         },
+      },
+      punctuationEvidence: {
+        subjectId: 'punctuation',
+        hasEvidence: true,
+        progressSnapshot: { subjectId: 'punctuation', totalRewardUnits: 14, trackedRewardUnits: 1, securedRewardUnits: 1, dueItems: 1, weakItems: 1, attempts: 2, accuracyPercent: 50 },
+        bySessionMode: [{ id: 'guided', label: 'Guided learn', attempts: 1, correct: 0, wrong: 1, accuracy: 0 }],
+        byItemMode: [{ id: 'insert', label: 'Insert punctuation', attempts: 1, correct: 0, wrong: 1, accuracy: 0 }],
+        weakestFacets: [{ id: 'speech::insert', label: 'Speech - Insert punctuation', status: 'weak', attempts: 1, correct: 0, wrong: 1, accuracy: 0 }],
+        recentMistakes: [{ itemId: 'sp_insert_question', label: 'Inverted commas and speech punctuation - Insert punctuation', sessionMode: 'guided', sessionModeLabel: 'Guided learn', createdAt: Date.UTC(2026, 3, 22, 13, 0), supportKind: 'guided' }],
+        misconceptionPatterns: [{ id: 'speech.quote_missing', label: 'Speech Quote Missing pattern', count: 1, lastSeenAt: Date.UTC(2026, 3, 22, 13, 0) }],
+        recentSessions: [],
+        dailyGoal: { targetAttempts: 4, attemptsToday: 1, correctToday: 0, completed: false, progressPercent: 25 },
+        streak: { currentDays: 1, bestDays: 1, activeDays: 1 },
+        releaseDiagnostics: { releaseId: 'punctuation-r4-full-14-skill-structure', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
       },
       exportEntryPoints: [{ action: 'platform-export-learner', label: 'Export current learner' }],
       accessibleLearners: [{ learnerId: 'learner-a', learnerName: 'Ava', yearGroup: 'Y5', membershipRoleLabel: 'Viewer', writable: false }],
@@ -419,11 +434,16 @@ export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
         selectedDiagnostics: {
           learnerId: 'learner-a',
           learnerName: 'Ava',
-          overview: { secureWords: 8, dueWords: 2, troubleWords: 1, secureGrammarConcepts: 2, dueGrammarConcepts: 1, weakGrammarConcepts: 1 },
+          overview: { secureWords: 8, dueWords: 2, troubleWords: 1, secureGrammarConcepts: 2, dueGrammarConcepts: 1, weakGrammarConcepts: 1, securePunctuationUnits: 1, duePunctuationItems: 1, weakPunctuationItems: 1 },
           currentFocus: { detail: 'Review due spellings' },
           grammarEvidence: {
             progressSnapshot: { securedConcepts: 2, dueConcepts: 1, weakConcepts: 1 },
             questionTypeSummary: [{ id: 'choose', label: 'Choose the correct sentence' }],
+          },
+          punctuationEvidence: {
+            progressSnapshot: { securedRewardUnits: 1, dueItems: 1, weakItems: 1 },
+            weakestFacets: [{ id: 'speech::insert', label: 'Speech - Insert punctuation' }],
+            releaseDiagnostics: { releaseId: 'punctuation-r4-full-14-skill-structure', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
           },
         },
         accessibleLearners: [{
@@ -433,11 +453,13 @@ export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
           membershipRoleLabel: 'Viewer',
           accessModeLabel: 'Read-only learner',
           writable: false,
-          overview: { dueWords: 2, dueGrammarConcepts: 1, weakGrammarConcepts: 1 },
+          overview: { dueWords: 2, dueGrammarConcepts: 1, weakGrammarConcepts: 1, duePunctuationItems: 1, weakPunctuationItems: 1 },
           grammarEvidence: { progressSnapshot: { dueConcepts: 1, weakConcepts: 1 } },
+          punctuationEvidence: { progressSnapshot: { dueItems: 1, weakItems: 1 } },
           currentFocus: { label: 'Due spellings' },
         }],
-        entryPoints: [{ action: 'open-subject', label: 'Open Spelling', subjectId: 'spelling' }],
+        punctuationReleaseDiagnostics: { releaseId: 'punctuation-r4-full-14-skill-structure', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
+        entryPoints: [{ action: 'open-subject', label: 'Open Spelling', subjectId: 'spelling' }, { action: 'open-subject', label: 'Open Punctuation analytics', subjectId: 'punctuation', tab: 'analytics' }],
       },
     };
     const accountDirectory = {

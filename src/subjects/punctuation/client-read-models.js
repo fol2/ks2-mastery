@@ -45,13 +45,30 @@ export function createPunctuationReadModelService({ getState } = {}) {
     },
     getAnalyticsSnapshot(learnerId) {
       return clone(currentUi(getState, learnerId).ui.analytics) || {
+        releaseId: 'punctuation-r4-full-14-skill-structure',
         attempts: 0,
         correct: 0,
         accuracy: 0,
         sessionsCompleted: 0,
         skillRows: [],
         rewardUnits: [],
+        bySessionMode: [],
+        byItemMode: [],
+        weakestFacets: [],
         recentMistakes: [],
+        misconceptionPatterns: [],
+        dailyGoal: {
+          targetAttempts: 4,
+          attemptsToday: 0,
+          correctToday: 0,
+          completed: false,
+          progressPercent: 0,
+        },
+        streak: {
+          currentDays: 0,
+          bestDays: 0,
+          activeDays: 0,
+        },
       };
     },
     startSession() {},
