@@ -98,6 +98,10 @@ const PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER = 50;
 const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 1;
 const PUBLIC_MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
 const PROJECTION_RECENT_EVENT_LIMIT = 200;
+const CAPACITY_READ_MODEL_TABLES = Object.freeze([
+  'learner_read_models',
+  'learner_activity_feed',
+]);
 const COMMAND_PROJECTION_READ_MODEL_VERSION = 1;
 const PUBLIC_MONSTER_IDS = new Set(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']);
 const PUBLIC_DIRECT_SPELLING_MONSTER_IDS = ['inklet', 'glimmerbug', 'vellhorn'];
@@ -131,6 +135,15 @@ function asTs(value, fallback) {
   const numeric = Number(value);
   if (Number.isFinite(numeric)) return numeric;
   return fallback;
+}
+
+function isMissingTableError(error, tableName) {
+  const message = String(error?.message || '');
+  return new RegExp(`no such table:\\s*${tableName}\\b`, 'i').test(message);
+}
+
+function isMissingCapacityReadModelTableError(error) {
+  return CAPACITY_READ_MODEL_TABLES.some((tableName) => isMissingTableError(error, tableName));
 }
 
 function isPlainObject(value) {
@@ -1338,25 +1351,52 @@ function bindLearnerReadModelUpsertStatement(db, learnerId, modelKey, model, {
     Math.max(0, Number(generatedAt) || timestamp),
     timestamp,
   ];
-  return bindStatement(db, `
-    INSERT INTO learner_read_models (learner_id, model_key, model_json, source_revision, generated_at, updated_at)
-    ${guardedValueSource(params.length, guard)}
-    ON CONFLICT(learner_id, model_key) DO UPDATE SET
-      model_json = excluded.model_json,
-      source_revision = excluded.source_revision,
-      generated_at = excluded.generated_at,
-      updated_at = excluded.updated_at
-  `, guardedParams(params, guard));
+  try {
+    return bindStatement(db, `
+      INSERT INTO learner_read_models (learner_id, model_key, model_json, source_revision, generated_at, updated_at)
+      ${guardedValueSource(params.length, guard)}
+      ON CONFLICT(learner_id, model_key) DO UPDATE SET
+        model_json = excluded.model_json,
+        source_revision = excluded.source_revision,
+        generated_at = excluded.generated_at,
+        updated_at = excluded.updated_at
+    `, guardedParams(params, guard));
+  } catch (error) {
+    if (isMissingTableError(error, 'learner_read_models')) return null;
+    throw error;
+  }
 }
 
 async function readLearnerReadModel(db, learnerId, modelKey) {
   const key = normaliseReadModelKey(modelKey);
-  const row = await first(db, `
-    SELECT learner_id, model_key, model_json, source_revision, generated_at, updated_at
-    FROM learner_read_models
-    WHERE learner_id = ? AND model_key = ?
-  `, [learnerId, key]);
+  let row = null;
+  try {
+    row = await first(db, `
+      SELECT learner_id, model_key, model_json, source_revision, generated_at, updated_at
+      FROM learner_read_models
+      WHERE learner_id = ? AND model_key = ?
+    `, [learnerId, key]);
+  } catch (error) {
+    if (isMissingTableError(error, 'learner_read_models')) return emptyLearnerReadModel(key);
+    throw error;
+  }
   return row ? normaliseLearnerReadModelRow(row, key) : emptyLearnerReadModel(key);
+}
+
+async function capacityReadModelTablesAvailable(db) {
+  try {
+    const rows = await all(db, `
+      SELECT name
+      FROM sqlite_master
+      WHERE type = 'table'
+        AND name IN (${sqlPlaceholders(CAPACITY_READ_MODEL_TABLES.length)})
+    `, CAPACITY_READ_MODEL_TABLES);
+    const tableNames = new Set(rows.map((row) => row.name).filter(Boolean));
+    return CAPACITY_READ_MODEL_TABLES.every((tableName) => tableNames.has(tableName));
+  } catch (error) {
+    if (isMissingCapacityReadModelTableError(error)) return false;
+    throw error;
+  }
 }
 
 async function upsertLearnerActivityFeedRows(db, activityRows = []) {
@@ -1425,21 +1465,26 @@ function bindLearnerActivityFeedUpsertStatement(db, row, { guard = null } = {}) 
     Math.max(0, Number(row.createdAt) || 0),
     Math.max(0, Number(row.updatedAt) || Date.now()),
   ];
-  return bindStatement(db, `
-    INSERT INTO learner_activity_feed (
-      id, learner_id, subject_id, activity_type, activity_json,
-      source_event_id, created_at, updated_at
-    )
-    ${guardedValueSource(params.length, guard)}
-    ON CONFLICT(id) DO UPDATE SET
-      learner_id = excluded.learner_id,
-      subject_id = excluded.subject_id,
-      activity_type = excluded.activity_type,
-      activity_json = excluded.activity_json,
-      source_event_id = excluded.source_event_id,
-      created_at = excluded.created_at,
-      updated_at = excluded.updated_at
-  `, guardedParams(params, guard));
+  try {
+    return bindStatement(db, `
+      INSERT INTO learner_activity_feed (
+        id, learner_id, subject_id, activity_type, activity_json,
+        source_event_id, created_at, updated_at
+      )
+      ${guardedValueSource(params.length, guard)}
+      ON CONFLICT(id) DO UPDATE SET
+        learner_id = excluded.learner_id,
+        subject_id = excluded.subject_id,
+        activity_type = excluded.activity_type,
+        activity_json = excluded.activity_json,
+        source_event_id = excluded.source_event_id,
+        created_at = excluded.created_at,
+        updated_at = excluded.updated_at
+    `, guardedParams(params, guard));
+  } catch (error) {
+    if (isMissingTableError(error, 'learner_activity_feed')) return null;
+    throw error;
+  }
 }
 
 function commandProjectionReadModelFromRuntime(runtime, events, nowTs) {
@@ -2875,7 +2920,10 @@ function guardedWhere(guard) {
           )`;
 }
 
-function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs, { guard = null } = {}) {
+function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs, {
+  guard = null,
+  includeCapacityReadModels = true,
+} = {}) {
   const nextState = normaliseSubjectStateRecord({
     ui: runtime?.state || null,
     data: runtime?.data || {},
@@ -3023,12 +3071,14 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
       createdAt,
       now: nowTs,
     });
-    const activityStatement = bindLearnerActivityFeedUpsertStatement(db, activityRow, { guard });
-    if (activityStatement) statements.push(activityStatement);
+    if (includeCapacityReadModels) {
+      const activityStatement = bindLearnerActivityFeedUpsertStatement(db, activityRow, { guard });
+      if (activityStatement) statements.push(activityStatement);
+    }
   }
-  if (Object.prototype.hasOwnProperty.call(gameState, PUBLIC_MONSTER_CODEX_SYSTEM_ID)) {
+  if (includeCapacityReadModels && Object.prototype.hasOwnProperty.call(gameState, PUBLIC_MONSTER_CODEX_SYSTEM_ID)) {
     const commandProjectionReadModel = commandProjectionReadModelFromRuntime(runtime, persistedEvents, nowTs);
-    statements.push(bindLearnerReadModelUpsertStatement(
+    const readModelStatement = bindLearnerReadModelUpsertStatement(
       db,
       learnerId,
       COMMAND_PROJECTION_MODEL_KEY,
@@ -3039,7 +3089,8 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
         updatedAt: nowTs,
         guard,
       },
-    ));
+    );
+    if (readModelStatement) statements.push(readModelStatement);
   }
 
   const summary = {
@@ -3054,7 +3105,10 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
 }
 
 async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, runtime, nowTs) {
-  const plan = buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs);
+  const includeCapacityReadModels = await capacityReadModelTablesAvailable(db);
+  const plan = buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs, {
+    includeCapacityReadModels,
+  });
   await batch(db, plan.statements);
   return plan.summary;
 }
@@ -3450,8 +3504,10 @@ async function runSubjectCommandMutation(db, {
   };
   const statements = [];
   if (runtimeWrite) {
+    const includeCapacityReadModels = await capacityReadModelTablesAvailable(db);
     const plan = buildSubjectRuntimePersistencePlan(db, accountId, command.learnerId, command.subjectId, runtimeWrite, nowTs, {
       guard,
+      includeCapacityReadModels,
     });
     statements.push(...plan.statements);
   }

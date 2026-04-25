@@ -65,7 +65,7 @@ test('client bundle audit fails when Grammar server engine or content enters the
       cwd: process.cwd(),
       stdio: 'pipe',
     });
-  }, /server-authoritative Grammar engine\/content/);
+  }, /server-authoritative Grammar runtime, engine, content, and enrichment code/);
 });
 
 test('client bundle audit fails on browser-side AI provider key tokens', async () => {
