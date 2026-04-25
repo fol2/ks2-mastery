@@ -5,9 +5,9 @@
 //
 // JSX-bearing: imports CelebrationShell whose body uses JSX. This module
 // only loads via the bundler (esbuild in tests, esbuild in production),
-// never plain `node --test`. The index module gates that import behind
-// `prepareEffectTemplates()` so tests targeting the rest of the registry
-// stay Node-loadable.
+// never plain `node --test`. The index module accepts the default export
+// through `__registerCelebrationTemplates`, so tests targeting the rest of
+// the registry stay Node-loadable.
 
 import { CelebrationShell, clampStage, stageName } from '../effects/celebration-shell.js';
 import { TEMPLATE_PARAM_SCHEMAS } from './param-schemas.js';

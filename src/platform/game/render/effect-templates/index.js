@@ -7,11 +7,10 @@
 //
 // Two templates (`particles-burst`, `shine-streak`) render via the
 // JSX-bearing <CelebrationShell> component and so cannot be parsed by
-// plain `node --test`. We keep them out of the static graph here and load
-// them through `prepareEffectTemplates()` (an async dynamic-import gate)
-// so that test files importing this index module stay Node-loadable.
-// Production code paths run through the bundler, which resolves the
-// dynamic imports at boot.
+// plain `node --test`. We keep them out of the static graph here and the
+// production bootstrap (App.jsx) feeds their default exports in via
+// `__registerCelebrationTemplates` so test files importing this index
+// module stay Node-loadable.
 
 import motion from './motion.js';
 import sparkle from './sparkle.js';
@@ -26,12 +25,11 @@ const TEMPLATES = {
   glow,
   aura,
   'pulse-halo': pulseHalo,
-  // Filled in by prepareEffectTemplates() — kept null on Node-only paths.
+  // Filled in by `__registerCelebrationTemplates` — kept null on Node-only
+  // paths so the JSX-bearing modules are never parsed by the test runner.
   'particles-burst': null,
   'shine-streak': null,
 };
-
-let celebrationLoaded = false;
 
 export const EFFECT_TEMPLATE_IDS = Object.freeze([
   'motion',
@@ -43,28 +41,13 @@ export const EFFECT_TEMPLATE_IDS = Object.freeze([
   'pulse-halo',
 ]);
 
-// Bundler-aware loaders register celebration templates after the JSX-bearing
-// <CelebrationShell> module has been resolved. On plain Node (tests for
-// non-celebration paths) `prepareEffectTemplates` is never called, so the
-// JSX modules are never parsed.
-export async function prepareEffectTemplates() {
-  if (celebrationLoaded) return;
-  const [pb, ss] = await Promise.all([
-    import('./particles-burst.js'),
-    import('./shine-streak.js'),
-  ]);
-  TEMPLATES['particles-burst'] = pb.default;
-  TEMPLATES['shine-streak'] = ss.default;
-  celebrationLoaded = true;
-}
-
-// Test seam: lets SSR fixtures register pre-loaded celebration template
-// modules synchronously. Mirrors the production import path closed-loop —
-// after registration the rest of the registry behaves identically.
+// Test/bootstrap seam: lets the production entry point and SSR fixtures
+// register pre-loaded celebration template modules synchronously. Naming
+// keeps the `__` prefix as a flag that callers must own the import edge
+// (the bundler then resolves the JSX cleanly).
 export function __registerCelebrationTemplates({ particlesBurst, shineStreak } = {}) {
   if (particlesBurst) TEMPLATES['particles-burst'] = particlesBurst;
   if (shineStreak) TEMPLATES['shine-streak'] = shineStreak;
-  if (particlesBurst && shineStreak) celebrationLoaded = true;
 }
 
 export function lookupTemplate(id) {

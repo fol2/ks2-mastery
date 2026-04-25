@@ -7,11 +7,6 @@ import {
   validateCelebrationTunables,
   validateEffectConfig,
 } from '../src/platform/game/render/effect-config-schema.js';
-import {
-  validatePublishedConfigEnvelope,
-  BUNDLED_MONSTER_VISUAL_CONFIG,
-  MONSTER_VISUAL_CONTEXTS,
-} from '../src/platform/game/monster-visual-config.js';
 import { bundledEffectConfig } from '../src/platform/game/render/effect-config-defaults.js';
 
 function minimalCatalogEntry(overrides = {}) {
@@ -31,22 +26,6 @@ function minimalCatalogEntry(overrides = {}) {
     reviewed: true,
     ...overrides,
   };
-}
-
-function reviewedVisualConfig() {
-  const reviewed = structuredClone(BUNDLED_MONSTER_VISUAL_CONFIG);
-  for (const entry of Object.values(reviewed.assets || {})) {
-    entry.review = entry.review || { contexts: {} };
-    entry.review.contexts = entry.review.contexts || {};
-    for (const context of MONSTER_VISUAL_CONTEXTS) {
-      entry.review.contexts[context] = {
-        reviewed: true,
-        reviewedAt: 0,
-        reviewedBy: 'test-admin',
-      };
-    }
-  }
-  return reviewed;
 }
 
 // 1. Happy path
@@ -250,24 +229,3 @@ test('validateEffectConfig: missing celebrationTunables returns error naming the
   assert.ok(result.errors.some((e) => /celebrationTunables/.test(e.message)));
 });
 
-// 18. Integration — envelope happy path
-test('validatePublishedConfigEnvelope: visual + effect both valid returns ok', () => {
-  const envelope = {
-    visual: reviewedVisualConfig(),
-    effect: bundledEffectConfig(),
-  };
-  const result = validatePublishedConfigEnvelope(envelope);
-  assert.equal(result.ok, true);
-  assert.deepEqual(result.errors, []);
-});
-
-// 19. Integration — missing effect tolerated with warning
-test('validatePublishedConfigEnvelope: missing effect returns ok with warning', () => {
-  const envelope = {
-    visual: reviewedVisualConfig(),
-  };
-  const result = validatePublishedConfigEnvelope(envelope);
-  assert.equal(result.ok, true);
-  assert.ok(Array.isArray(result.warnings));
-  assert.ok(result.warnings.some((w) => /effect/i.test(w.message)));
-});

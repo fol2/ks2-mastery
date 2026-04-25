@@ -86,6 +86,26 @@ test('admin panel publish gate: fully reviewed merged draft validates clean', as
   assert.equal(result.ok, true, JSON.stringify(result.errors));
 });
 
+// 19. Panel chip canary: the publish chip mirrors the strict gate, so an
+// otherwise-clean draft with `effect.catalog.shiny.reviewed = false` must
+// fail validation and surface a not-publishable state. Mirrors test 18 but
+// inverts the catalog review flag — guards the panel chip path that calls
+// `validatePublishedConfigForPublish` from `MonsterVisualConfigPanel.jsx`.
+test('admin panel publish gate: unreviewed catalog entry blocks publish', async () => {
+  const { validatePublishedConfigForPublish } = await import('../src/platform/game/monster-visual-config.js');
+  const draft = reviewedDraftWithEffect();
+  draft.effect.catalog.shiny.reviewed = false;
+  const result = validatePublishedConfigForPublish({
+    visual: { ...draft, effect: undefined },
+    effect: draft.effect,
+  });
+  assert.equal(result.ok, false, 'unreviewed catalog entry must block the publish chip');
+  assert.ok(
+    result.errors.some((err) => /catalog|shiny|reviewed/i.test(err.message)),
+    `expected an error citing the unreviewed catalog entry, got ${JSON.stringify(result.errors)}`,
+  );
+});
+
 // SSR smoke: the admin hub panel still renders the queue filter dropdown
 // with the new effect-aware options. This catches accidental rename / typo
 // regressions to the option labels.
