@@ -14,8 +14,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { renderMonsterEffectBindingsPanelFixture } from './helpers/react-render.js';
-import { bundledEffectConfig } from '../src/platform/game/render/effect-config-defaults.js';
+import {
+  renderMonsterEffectBindingsPanelFixture,
+  renderMonsterVisualPreviewGridFixture,
+} from './helpers/react-render.js';
+import { bundledEffectConfig, BUNDLED_EFFECT_CATALOG } from '../src/platform/game/render/effect-config-defaults.js';
 import {
   assetBindingsAllReviewed,
   bindingRowAllErrors,
@@ -24,6 +27,8 @@ import {
   exclusiveGroupCollisions,
   BINDING_LIFECYCLES,
 } from '../src/surfaces/hubs/monster-effect-bindings-helpers.js';
+
+const SPARKLE_DEFAULTS = BUNDLED_EFFECT_CATALOG.shiny.params;
 
 function clone(value) {
   return value == null ? value : JSON.parse(JSON.stringify(value));
@@ -42,9 +47,10 @@ test('defaultBindingRow seeds params from catalog entry paramSchema defaults', (
   assert.equal(row.lifecycle, 'persistent');
   assert.equal(row.enabled, true);
   assert.equal(row.reviewed, false);
-  // sparkle template paramSchema → intensity default 0.6, palette default 'accent'.
-  assert.equal(row.params.intensity, 0.6);
-  assert.equal(row.params.palette, 'accent');
+  // Defaults sourced from the bundled sparkle paramSchema, not hard-coded
+  // here, so the assertion tracks any future shift in the seed values (L6).
+  assert.equal(row.params.intensity, SPARKLE_DEFAULTS.intensity.default);
+  assert.equal(row.params.palette, SPARKLE_DEFAULTS.palette.default);
 });
 
 test('defaultBindingRow with unknown lifecycle falls back to persistent', () => {
@@ -206,8 +212,13 @@ test('bindings panel SSR: exclusive-group collision renders as a <ul>, not inlin
   `;
   const html = await renderMonsterEffectBindingsPanelFixture({ canManage: true, draftMutator });
   assert.match(html, /Exclusive group collision/);
-  // The collision summary is an actual list item, not concatenated spans.
-  assert.match(html, /<li[^>]*>rarity:/);
+  // The "later wins" copy is the runtime contract documented to admin.
+  assert.match(html, /later binding wins/);
+  // The collision summary is an actual list item; kinds are listed in the
+  // catalog z-index order (composeEffects() resolves z-index ascending,
+  // so the higher-z `shiny` (10) lists after the lower-z `rare-glow` (8) —
+  // matching the document order in `Object.values(catalog)`).
+  assert.match(html, /<li[^>]*>rarity:\s*shiny vs rare-glow/);
 });
 
 // Behavioural simulation — the panel's onDraftChange path. We mirror the
@@ -280,8 +291,140 @@ test('row referencing deleted catalog kind: errors keep field-controls disabled 
     enabled: true,
   });
   const errors = bindingRowAllErrors(draft.bindings['inklet-b1-3'].persistent[0], { catalog: draft.catalog });
-  assert.ok(errors.some((e) => e.code === 'effect_binding_kind_unknown'));
+  assert.deepEqual(errors.map((e) => e.code).sort(), ['effect_binding_kind_unknown']);
   // After a Remove call, the row is gone.
   draft.bindings['inklet-b1-3'].persistent.splice(0, 1);
   assert.equal(draft.bindings['inklet-b1-3'].persistent.length, 0);
+});
+
+// ---------- Helper boundary cases (M8) ----------
+
+test('defaultBindingRow with empty catalog seeds an empty params object (no template defaults)', () => {
+  const row = defaultBindingRow({ kind: 'unknown', catalog: {} });
+  assert.equal(row.kind, 'unknown');
+  assert.deepEqual(row.params, {});
+  assert.equal(row.reviewed, false);
+});
+
+test('bindingRowAllErrors with undefined catalog flags missing-kind catalog as deleted', () => {
+  const errors = bindingRowAllErrors(
+    { kind: 'shiny', params: {}, reviewed: false },
+    { catalog: undefined },
+  );
+  assert.deepEqual(errors.map((e) => e.code).sort(), ['effect_binding_kind_unknown']);
+});
+
+// ---------- H4: assetBindingsAllReviewed catalog awareness ----------
+
+test('assetBindingsAllReviewed: row reviewed=true but catalog kind deleted → returns false', () => {
+  const draft = bundledEffectConfig();
+  draft.bindings['inklet-b1-3'].persistent.push({
+    kind: 'shiny',
+    params: { intensity: 0.6, palette: 'accent' },
+    reviewed: true,
+    enabled: true,
+  });
+  // First confirm the asset is currently all-reviewed (with the shiny row).
+  assert.equal(assetBindingsAllReviewed(draft, 'inklet-b1-3'), true);
+  // Now delete the catalog entry: the row is suddenly orphaned.
+  delete draft.catalog['shiny'];
+  assert.equal(
+    assetBindingsAllReviewed(draft, 'inklet-b1-3'),
+    false,
+    'a row that no longer resolves to a catalog entry must not count as reviewed',
+  );
+});
+
+// ---------- H6: shiny binding's overlay markup actually reaches the preview tile ----------
+
+test('preview grid: shiny@0.8 binding renders fx-shiny overlay with intensity 0.8 in lightbox tile', async () => {
+  const html = await renderMonsterVisualPreviewGridFixture({
+    effectMutator: `
+      effectDraft.bindings['inklet-b1-3'].persistent.push({
+        kind: 'shiny',
+        params: { intensity: 0.8, palette: 'accent' },
+        reviewed: true,
+        enabled: true,
+      });
+    `,
+  });
+  // Surface filter on the bundled shiny entry includes 'lightbox'; the
+  // sparkle template renders a `fx fx-shiny` span with the intensity bound
+  // to a CSS custom property.
+  assert.match(html, /class="fx fx-shiny"[^>]*--fx-shiny-intensity:0\.8/);
+  // The overlay sits inside the lightbox-context frame — verifies the
+  // binding actually flowed through MonsterEffectConfigProvider rather
+  // than falling back to the per-displayState defaults.
+  assert.match(html, /monster-visual-frame-lightbox[\s\S]*?fx fx-shiny/);
+});
+
+// ---------- H7: autosave draft is restored on the next mount ----------
+
+test('bindings panel autosave: a stored draft remounts with the persisted row intact', async () => {
+  // The panel itself does not own the autosave (that's
+  // MonsterVisualConfigPanel) — but a remount of the bindings panel from
+  // a draft that was previously serialised through autosave must round-trip
+  // every authored field. We simulate the autosave round-trip by JSON-
+  // serialising the draft (the actual storage wire format) and re-mounting
+  // the SSR fixture from the deserialised value.
+  const seedDraft = bundledEffectConfig();
+  seedDraft.bindings['inklet-b1-3'].persistent.push({
+    kind: 'shiny',
+    params: { intensity: 0.85, palette: 'secondary' },
+    reviewed: false,
+    enabled: true,
+  });
+  const persisted = JSON.parse(JSON.stringify(seedDraft));
+  // Fixture re-mount: feed the deserialised draft through draftMutator so
+  // the SSR pass starts from autosave-replay state.
+  const draftMutator = `
+    Object.assign(draft, ${JSON.stringify(persisted)});
+  `;
+  const html = await renderMonsterEffectBindingsPanelFixture({ canManage: true, draftMutator });
+  // Each authored field survives the round-trip: kind, intensity, palette
+  // — and the row sits under the persistent slot (z-index 10 overlay).
+  assert.match(html, /Persistent overlays/);
+  // The intensity field is stamped into the input `value` attribute by the
+  // typed number control.
+  assert.match(html, /value="0\.85"/);
+  // Palette enum surfaces as a selected option.
+  assert.match(html, /<option[^>]*value="secondary"[^>]*selected/);
+});
+
+// ---------- H9: marking every effect row reviewed flips the queue/publish gate ----------
+
+test('queue / publish gate: marking every binding + tunable reviewed flips assetBindingsAllReviewed AND assetCelebrationAllReviewed to true for every asset', async () => {
+  // This is the integration shape the `effect-incomplete` filter and the
+  // publish chip both consume. We emulate the Mark-reviewed sweep by
+  // forcing every row + tunable to reviewed=true and confirm the
+  // helper-level gate clears for every asset in the manifest.
+  const { MONSTER_ASSET_MANIFEST } = await import('../src/platform/game/monster-asset-manifest.js');
+  const { assetCelebrationAllReviewed } = await import('../src/surfaces/hubs/monster-effect-celebration-helpers.js');
+  const draft = bundledEffectConfig();
+  // Push one extra binding into a single asset to make the assertion
+  // non-vacuous (bundled defaults are already all-reviewed; without an
+  // unreviewed row to flip, the test would pass trivially even before H4).
+  draft.bindings['inklet-b1-3'].persistent.push({
+    kind: 'shiny',
+    params: { intensity: 0.6, palette: 'accent' },
+    reviewed: false,
+    enabled: true,
+  });
+  // Sanity: at least one asset is currently incomplete.
+  assert.equal(assetBindingsAllReviewed(draft, 'inklet-b1-3'), false);
+  // Mark-reviewed sweep on every row and every kind.
+  for (const asset of MONSTER_ASSET_MANIFEST.assets) {
+    for (const slot of BINDING_LIFECYCLES) {
+      for (const entry of draft.bindings[asset.key]?.[slot] || []) {
+        entry.reviewed = true;
+      }
+    }
+    for (const tunable of Object.values(draft.celebrationTunables[asset.key] || {})) {
+      tunable.reviewed = true;
+    }
+  }
+  for (const asset of MONSTER_ASSET_MANIFEST.assets) {
+    assert.equal(assetBindingsAllReviewed(draft, asset.key), true, `bindings dirty for ${asset.key}`);
+    assert.equal(assetCelebrationAllReviewed(draft, asset.key), true, `tunables dirty for ${asset.key}`);
+  }
 });
