@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execSync } from 'node:child_process';
+import { execSync, execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { relative, resolve } from 'node:path';
@@ -221,16 +221,89 @@ function checkStructuralCoherence(payload) {
 }
 
 /**
+ * Probe shallow-clone state. Shallow clones legitimately cannot resolve every
+ * commit, so the ancestry check must tolerate unknown SHAs there. A full
+ * clone that cannot resolve an evidence commit is a fabrication signal and
+ * must fail closed (round 6 probe E).
+ *
+ * Returns `true` when the git CLI reports the current working tree is a
+ * shallow clone. Returns `false` on any failure — treating an unreadable git
+ * environment as "not shallow" is the safe default: we err towards failing
+ * closed on unknown SHAs rather than silently tolerating them.
+ */
+function isShallowClone() {
+  try {
+    const out = execFileSync('git', ['rev-parse', '--is-shallow-repository'], {
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 2000,
+    }).toString().trim();
+    return out === 'true';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Probe whether `evidenceCommit` exists in the local git object database.
+ * `git cat-file -e <sha>^{commit}` exits 0 when the object is present and
+ * non-zero when it is not — which is what we use to distinguish a legitimate
+ * SHA the clone simply does not have (shallow depth) from a fabricated SHA
+ * that no clone will ever resolve.
+ *
+ * Returns one of:
+ *  - `'present'` — the commit is known locally.
+ *  - `'missing'` — git replied but the object is not here.
+ *  - `'unknown'` — git could not be consulted (no repo, command failure). The
+ *    caller must treat this as a soft state and degrade to a warning, because
+ *    the commit MIGHT exist in a clone with history — we simply cannot tell.
+ */
+function probeCommitExists(evidenceCommit) {
+  // Use execFileSync with an args array to avoid shell quoting pitfalls —
+  // `^` is a shell escape character on Windows cmd and strips the following
+  // brace, so the traditional `git cat-file -e <sha>^{commit}` string would
+  // lose its `{commit}` suffix and silently fall through to the wrong branch.
+  // execFileSync bypasses the shell entirely and hands git the args verbatim.
+  try {
+    execFileSync('git', ['cat-file', '-e', `${evidenceCommit}^{commit}`], {
+      stdio: ['ignore', 'ignore', 'pipe'],
+      timeout: 2000,
+    });
+    return 'present';
+  } catch (error) {
+    // A clean "object does not exist" reply from git is status 1 with a
+    // "Not a valid object name" stderr. Other statuses (128 = fatal, unknown
+    // repo) are "unknown" — the caller falls back to a warning so CI-shards
+    // without the full object database stay working.
+    const stderr = String(error?.stderr || '');
+    if (error && (error.status === 1 || /Not a valid object name|bad revision|unknown revision/.test(stderr))) {
+      return 'missing';
+    }
+    return 'unknown';
+  }
+}
+
+/**
  * Round 5 Finding 4 (Low): confirm the committed tier config commit is an
  * ancestor of the evidence commit. Catches the rebase-race route where a
  * config-loosening PR merges between an evidence run and its row commit: the
  * evidence cites the pre-merge SHA but the committed config would be the
  * post-merge loosened one.
  *
- * Degrades gracefully: git failures (missing history, unknown SHA, not in a
- * repo) produce a WARNING string on stderr and do not fail verification;
- * CI-without-history shards keep working. The documented env escape hatch
- * CAPACITY_VERIFY_SKIP_ANCESTRY=1 disables the check entirely.
+ * Round 6 Finding 2 (P1): closes the fabricated-SHA bypass. The previous
+ * helper treated ALL git-errors from `merge-base --is-ancestor` as warnings,
+ * so an operator could submit a plausible 40-char hex SHA that no clone
+ * contains and sail through with warnings only. The helper now:
+ *   1. probes commit existence via `git cat-file -e`,
+ *   2. detects shallow clones via `git rev-parse --is-shallow-repository`,
+ *   3. fails closed on non-shallow clones that do not contain the evidence
+ *      commit — a reliable fabrication signal,
+ *   4. degrades to a warning on shallow clones or unreadable git state so
+ *      CI-without-history shards keep working.
+ *
+ * Round 6 Finding 1 (P1): when CAPACITY_VERIFY_SKIP_ANCESTRY=1 disables the
+ * check we now emit an audit warning naming the env var. Previously the skip
+ * path returned silently, leaving no trace an operator had bypassed the
+ * check.
  *
  * Returns an object `{ failures: string[], warnings: string[] }`. Callers push
  * failures into the row's message list; warnings are printed via console.warn
@@ -238,7 +311,12 @@ function checkStructuralCoherence(payload) {
  */
 function requireConfigAncestry(configRelativePath, evidenceCommit) {
   if (process.env.CAPACITY_VERIFY_SKIP_ANCESTRY === '1') {
-    return { failures: [], warnings: [] };
+    return {
+      failures: [],
+      warnings: [
+        'ancestry check disabled via CAPACITY_VERIFY_SKIP_ANCESTRY=1 — justified only for shallow-clone CI shards',
+      ],
+    };
   }
   if (!evidenceCommit || evidenceCommit === 'unknown') {
     return {
@@ -272,11 +350,45 @@ function requireConfigAncestry(configRelativePath, evidenceCommit) {
       ],
     };
   }
+  // Round 6 probe E: resolve commit existence BEFORE calling merge-base so a
+  // fabricated SHA never reaches the is-ancestor branch. The is-ancestor
+  // error paths there are indistinguishable from a legitimate "not an
+  // ancestor" in the presence of unknown objects.
+  const existence = probeCommitExists(evidenceCommit);
+  if (existence === 'missing') {
+    if (isShallowClone()) {
+      return {
+        failures: [],
+        warnings: [
+          `ancestry check degraded: evidence commit ${evidenceCommit.slice(0, 10)} is not in the local clone, but the repo is shallow. `
+          + 'Set CAPACITY_VERIFY_SKIP_ANCESTRY=1 in CI if this is a known shallow shard.',
+        ],
+      };
+    }
+    return {
+      failures: [
+        `evidence commit ${evidenceCommit.slice(0, 10)} does not exist in repo history; possible fabrication. `
+        + 'Full clones must resolve the evidence commit before ancestry can be cross-checked.',
+      ],
+      warnings: [],
+    };
+  }
+  if (existence === 'unknown') {
+    return {
+      failures: [],
+      warnings: [
+        `ancestry check could not probe commit ${evidenceCommit.slice(0, 10)}: git unavailable. `
+        + 'Set CAPACITY_VERIFY_SKIP_ANCESTRY=1 to silence this warning.',
+      ],
+    };
+  }
   try {
     // --is-ancestor exits 0 if the first SHA is an ancestor of the second, 1
     // otherwise. execSync throws on non-zero exit; we distinguish the
     // "definitely not an ancestor" outcome from the "git error" outcome by
-    // checking the thrown `status` field.
+    // checking the thrown `status` field. Commit existence has already been
+    // resolved above, so status other than 0 or 1 only happens on real git
+    // failures and is treated as a warning to preserve shallow-CI behaviour.
     execSync(`git merge-base --is-ancestor ${configCommit} ${evidenceCommit}`, {
       stdio: ['ignore', 'ignore', 'pipe'],
       timeout: 2000,

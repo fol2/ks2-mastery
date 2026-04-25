@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
+import { execSync } from 'node:child_process';
 
 import {
   parseEvidenceTable,
@@ -1272,6 +1273,286 @@ test('ancestry check on git-less tempdir degrades to warning, not failure (adv-r
     // Git cannot resolve in a non-repo tempdir — helper degrades to warning.
     // Verification stays ok:true because the other checks all pass.
     assert.equal(result.ok, true, `git-less dir should stay ok:true via warning path; got: ${JSON.stringify(result.report)}`);
+  } finally {
+    process.chdir(cwd);
+    if (previousSkip === undefined) delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+    else process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = previousSkip;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// ===========================================================================
+// Round 6 adversarial findings
+// ---------------------------------------------------------------------------
+// Two P1 blockers + one docs-anchor invariant. See
+// .context/compound-engineering/ce-code-review/round6/ for the probe runners.
+// ===========================================================================
+
+// Helpers: build a throwaway git repo with the canonical evidence layout so
+// each round 6 test can reason about ancestry independently. Kept inline
+// rather than factored to a top-level helper because only round 6 tests need
+// real git state on disk; other tests stay isolated from git.
+function writeSmallPilotConfig(configPath) {
+  writeFileSync(configPath, JSON.stringify({
+    tier: 'small-pilot-provisional',
+    thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750 },
+  }));
+}
+
+function writeSmallPilotDoc(docPath, commitPrefix) {
+  writeFileSync(docPath, makeDoc([
+    [
+      '2026-04-25',
+      commitPrefix,
+      'preview',
+      'Free',
+      '10',
+      '10',
+      '1',
+      '320',
+      '180',
+      '81000',
+      '0',
+      'none',
+      'small-pilot-provisional',
+      'reports/capacity/latest-preview.json',
+    ],
+  ]));
+}
+
+function writeSmallPilotEvidence(evidencePath, commitSha) {
+  writeFileSync(evidencePath, JSON.stringify({
+    ok: true,
+    reportMeta: {
+      commit: commitSha,
+      evidenceSchemaVersion: 1,
+      learners: 10,
+      bootstrapBurst: 10,
+      rounds: 1,
+    },
+    safety: { mode: 'production', origin: 'https://example.test', authMode: 'cookie' },
+    summary: {
+      ok: true,
+      totalRequests: 20,
+      startedAt: '2026-04-25T00:00:00Z',
+      finishedAt: '2026-04-25T00:00:30Z',
+      endpoints: {
+        'GET /api/bootstrap': { sampleCount: 10, count: 10, p50WallMs: 100, p95WallMs: 320, maxResponseBytes: 81000 },
+        'POST /api/subjects/grammar/command': { sampleCount: 10, count: 10, p50WallMs: 90, p95WallMs: 180, maxResponseBytes: 5000 },
+      },
+      signals: {},
+      failures: [],
+    },
+    tier: {
+      tier: 'small-pilot-provisional',
+      configPath: 'reports/capacity/configs/small-pilot.json',
+    },
+    thresholds: {
+      max5xx: { configured: 0, observed: 0, passed: true },
+      maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+      maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
+    },
+    failures: [],
+  }));
+}
+
+// r6-probe-c (P1): CAPACITY_VERIFY_SKIP_ANCESTRY=1 must leave an audit trail.
+// The env-escape path previously returned `{failures:[], warnings:[]}` silently.
+// After the fix it must push a warning naming the env var so the --json
+// envelope and stderr carry a record that ancestry was bypassed.
+test('CAPACITY_VERIFY_SKIP_ANCESTRY=1 emits an audit warning in verify output (r6-probe-c)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-r6c-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+  writeSmallPilotConfig(configPath);
+  writeSmallPilotEvidence(evidencePath, 'abc1234567890');
+  writeSmallPilotDoc(docPath, 'abc1234');
+
+  const cwd = process.cwd();
+  const previousSkip = process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = '1';
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, true, `skip path should pass; got: ${JSON.stringify(result.report)}`);
+    assert.ok(Array.isArray(result.warnings), 'warnings array must be present on envelope');
+    assert.ok(
+      result.warnings.some((w) => w.includes('CAPACITY_VERIFY_SKIP_ANCESTRY')),
+      `expected warning naming the env var; got:\n${JSON.stringify(result.warnings, null, 2)}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    if (previousSkip === undefined) delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+    else process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = previousSkip;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// r6-probe-c (P1): docs-anchor invariant — docs/operations/capacity.md must
+// name the escape hatch explicitly. Locks docs-code invariant so that future
+// removals of the docs section break this test and force rewiring.
+test('docs/operations/capacity.md names CAPACITY_VERIFY_SKIP_ANCESTRY escape hatch (r6-probe-c docs anchor)', () => {
+  const docPath = resolve(process.cwd(), 'docs/operations/capacity.md');
+  const markdown = readFileSync(docPath, 'utf8');
+  assert.ok(
+    markdown.includes('CAPACITY_VERIFY_SKIP_ANCESTRY'),
+    'docs/operations/capacity.md must document the CAPACITY_VERIFY_SKIP_ANCESTRY escape hatch.',
+  );
+});
+
+// r6-probe-e (P1): fabricated evidence commit in a FULL clone must fail closed.
+// Previously the ancestry helper degraded to a warning whenever
+// `git merge-base --is-ancestor` errored — including when the evidenceCommit
+// did not exist. Operators could thus fabricate a plausible 40-char hex SHA
+// and sail through with warnings only. After the fix, commit existence is
+// probed via `git cat-file -e` first and a non-shallow repo rejects unknown
+// SHAs outright.
+test('fabricated evidence commit on a full clone fails closed (r6-probe-e)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-r6e-full-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+  writeSmallPilotConfig(configPath);
+
+  // Build a full (non-shallow) git repo so the config gets a real SHA and
+  // the shallow-detection branch stays false.
+  execSync('git init -q', { cwd: tempDir });
+  execSync('git config user.email r6probe@example.test', { cwd: tempDir });
+  execSync('git config user.name R6Probe', { cwd: tempDir });
+  execSync('git add reports/capacity/configs/small-pilot.json', { cwd: tempDir });
+  execSync('git commit -q -m "initial config"', { cwd: tempDir });
+
+  // Evidence cites a fabricated SHA that does not exist in this repo.
+  const fabricatedSha = 'f00dbabe1234567890abcdef1234567890abcdef';
+  writeSmallPilotEvidence(evidencePath, fabricatedSha);
+  writeSmallPilotDoc(docPath, fabricatedSha.slice(0, 7));
+
+  const cwd = process.cwd();
+  const previousSkip = process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(
+      result.ok,
+      false,
+      `fabricated SHA on full clone must fail closed; got ok:true with report=${JSON.stringify(result.report)}`,
+    );
+    assert.ok(
+      result.report.some((line) => line.includes('does not exist')),
+      `expected "does not exist" failure; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    if (previousSkip === undefined) delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+    else process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = previousSkip;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// r6-probe-e (P1): shallow-clone tolerance. In a shallow clone the evidence
+// commit may legitimately be outside the fetched depth. When commit existence
+// cannot be probed AND the repo is shallow, the ancestry check degrades to a
+// warning (not a failure) so shallow CI shards keep working.
+test('fabricated evidence commit on a shallow clone degrades to warning (r6-probe-e shallow-tolerance)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-r6e-shallow-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+  writeSmallPilotConfig(configPath);
+
+  // Build a repo and mark it shallow via the sentinel file git recognises.
+  execSync('git init -q', { cwd: tempDir });
+  execSync('git config user.email r6probe@example.test', { cwd: tempDir });
+  execSync('git config user.name R6Probe', { cwd: tempDir });
+  execSync('git add reports/capacity/configs/small-pilot.json', { cwd: tempDir });
+  execSync('git commit -q -m "initial config"', { cwd: tempDir });
+  // Forge a shallow marker so `git rev-parse --is-shallow-repository` returns
+  // true. Git treats any non-empty .git/shallow as a shallow repo marker.
+  const gitDir = execSync('git rev-parse --git-dir', { cwd: tempDir }).toString().trim();
+  const absoluteGitDir = resolve(tempDir, gitDir);
+  writeFileSync(join(absoluteGitDir, 'shallow'), 'deadbeef1234567890abcdef1234567890abcdef\n');
+
+  const fabricatedSha = 'f00dbabe1234567890abcdef1234567890abcdef';
+  writeSmallPilotEvidence(evidencePath, fabricatedSha);
+  writeSmallPilotDoc(docPath, fabricatedSha.slice(0, 7));
+
+  const cwd = process.cwd();
+  const previousSkip = process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(
+      result.ok,
+      true,
+      `shallow clone should tolerate unknown SHA via warning; got ok:false report=${JSON.stringify(result.report)}`,
+    );
+    assert.ok(
+      Array.isArray(result.warnings) && result.warnings.length > 0,
+      'shallow-clone path must emit at least one warning about the unknown evidence commit.',
+    );
+  } finally {
+    process.chdir(cwd);
+    if (previousSkip === undefined) delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+    else process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = previousSkip;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// r6-probe-e (regression): on a full clone with a real ancestry relationship
+// verification continues to pass without warnings — the fabrication detector
+// must not break the happy path.
+test('full clone + real ancestor commit + real ancestry still passes (r6-probe-e regression)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-r6e-regression-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+  writeSmallPilotConfig(configPath);
+
+  // Build a full repo, commit the config, then add a later empty commit whose
+  // SHA is used as the evidence commit — the config SHA is therefore an
+  // ancestor of the evidence SHA (the legitimate production shape).
+  execSync('git init -q', { cwd: tempDir });
+  execSync('git config user.email r6probe@example.test', { cwd: tempDir });
+  execSync('git config user.name R6Probe', { cwd: tempDir });
+  execSync('git add reports/capacity/configs/small-pilot.json', { cwd: tempDir });
+  execSync('git commit -q -m "initial config"', { cwd: tempDir });
+  execSync('git commit -q --allow-empty -m "evidence commit"', { cwd: tempDir });
+  const evidenceSha = execSync('git rev-parse HEAD', { cwd: tempDir }).toString().trim();
+
+  writeSmallPilotEvidence(evidencePath, evidenceSha);
+  writeSmallPilotDoc(docPath, evidenceSha.slice(0, 7));
+
+  const cwd = process.cwd();
+  const previousSkip = process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, true, `regression: real ancestor must pass; got: ${JSON.stringify(result.report)}`);
+    // No ancestry warnings on the happy path.
+    assert.ok(
+      !(result.warnings || []).some((w) => w.includes('does not exist') || w.includes('could not resolve')),
+      `unexpected ancestry warnings on the happy path: ${JSON.stringify(result.warnings)}`,
+    );
   } finally {
     process.chdir(cwd);
     if (previousSkip === undefined) delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
