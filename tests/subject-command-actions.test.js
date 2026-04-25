@@ -247,3 +247,46 @@ test('punctuation start command action passes guided skill only when present', (
 
   assert.deepEqual(payload, { mode: 'guided', roundLength: '2', skillId: 'speech' });
 });
+
+test('punctuation context-pack action sends only safe request metadata', () => {
+  const action = punctuationSubjectCommandActions['punctuation-context-pack'];
+  const payload = action.payload({
+    data: { seed: 'context-seed', prompt: 'do not forward' },
+    state: baseState(),
+  });
+
+  assert.equal(action.command, 'request-context-pack');
+  assert.equal(action.mutates, false);
+  assert.deepEqual(payload, { seed: 'context-seed' });
+});
+
+test('punctuation context-pack action remains available while practice is read-only', async () => {
+  const sent = [];
+  const errors = [];
+  const handler = createSubjectCommandActionHandler({
+    subjectId: 'punctuation',
+    getState: baseState,
+    isReadOnly: () => true,
+    setSubjectError(message) {
+      errors.push(message);
+    },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        return Promise.resolve({ ok: false, contextPack: { status: 'unavailable' } });
+      },
+    },
+    actions: punctuationSubjectCommandActions,
+  });
+
+  assert.equal(handler.handle('punctuation-context-pack', { seed: 'read-only-seed' }), true);
+  await flushPromises();
+
+  assert.deepEqual(errors, []);
+  assert.deepEqual(sent, [{
+    subjectId: 'punctuation',
+    learnerId: 'learner-a',
+    command: 'request-context-pack',
+    payload: { seed: 'read-only-seed' },
+  }]);
+});

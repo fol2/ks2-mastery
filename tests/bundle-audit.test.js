@@ -97,6 +97,35 @@ test('client bundle audit fails on browser-side AI provider key tokens', async (
   }, /browser-side AI provider key flow/);
 });
 
+test('client bundle audit fails on Punctuation browser-side AI context-pack provider flows', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
+  const bundle = path.join(dir, 'app.bundle.js');
+  const metafile = path.join(dir, 'app.bundle.meta.json');
+  const publicDir = path.join(dir, 'public');
+  await mkdir(publicDir, { recursive: true });
+  await writeFile(bundle, 'localStorage.setItem("PUNCTUATION_AI_CONTEXT_PACK_KEY", "browser-key"); fetch("https://generativelanguage.googleapis.com/v1beta/models");\n');
+  await writeFile(metafile, JSON.stringify({
+    inputs: {
+      'src/main.js': { bytes: 1 },
+    },
+  }));
+
+  assert.throws(() => {
+    execFileSync(process.execPath, [
+      './scripts/audit-client-bundle.mjs',
+      '--bundle',
+      bundle,
+      '--metafile',
+      metafile,
+      '--public-dir',
+      publicDir,
+    ], {
+      cwd: process.cwd(),
+      stdio: 'pipe',
+    });
+  }, /browser-side Punctuation AI context-pack provider flow|browser-side AI provider endpoint flow/);
+});
+
 test('client bundle audit permits reviewed endpoint strings without content modules', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
   const bundle = path.join(dir, 'app.bundle.js');
@@ -298,6 +327,54 @@ test('production bundle audit fails source paths served by SPA fallback', async 
       });
     }, (error) => {
       assert.match(error.stderr, /Direct URL should be denied with a 4xx response, got 200: \/src\/main\.js/);
+      return true;
+    });
+  } finally {
+    server.closeAllConnections?.();
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+  }
+});
+
+test('production bundle audit fails on deployed Punctuation context-pack source and provider tokens', async () => {
+  const server = createServer((request, response) => {
+    if (request.url === '/assets/app.js') {
+      response.writeHead(200, { 'content-type': 'application/javascript' });
+      response.end('console.log("PUNCTUATION_AI_CONTEXT_PACK_KEY", "generativelanguage.googleapis.com");');
+      return;
+    }
+    if (request.url === '/shared/punctuation/context-packs.js') {
+      response.writeHead(200, { 'content-type': 'application/javascript' });
+      response.end('export const PUNCTUATION_CONTEXT_PACK_LIMITS = {}; export function normalisePunctuationContextPack() {}');
+      return;
+    }
+    if (request.url === '/') {
+      response.writeHead(200, { 'content-type': 'text/html' });
+      response.end('<!doctype html><script src="/assets/app.js"></script>');
+      return;
+    }
+    response.writeHead(404, { 'content-type': 'text/plain' });
+    response.end('not found');
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 5000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /forbidden deployed token: PUNCTUATION_AI_CONTEXT_PACK_KEY/);
+      assert.match(error.stderr, /forbidden deployed token: generativelanguage\.googleapis\.com/);
+      assert.match(error.stderr, /Direct URL should be denied with a 4xx response, got 200: \/shared\/punctuation\/context-packs\.js/);
+      assert.match(error.stderr, /forbidden deployed token: PUNCTUATION_CONTEXT_PACK_LIMITS/);
+      assert.match(error.stderr, /forbidden deployed token: normalisePunctuationContextPack/);
       return true;
     });
   } finally {

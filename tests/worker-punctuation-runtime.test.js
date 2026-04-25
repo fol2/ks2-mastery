@@ -28,7 +28,7 @@ function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a'
   `).run(accountId, learnerId, now, now);
 }
 
-function createHarness({ punctuationEnabled = true, random = () => 0 } = {}) {
+function createHarness({ punctuationEnabled = true, random = () => 0, envOverrides = {} } = {}) {
   const nowRef = { value: Date.UTC(2026, 0, 1) };
   const DB = createMigratedSqliteD1Database();
   seedAccountLearner(DB);
@@ -41,6 +41,7 @@ function createHarness({ punctuationEnabled = true, random = () => 0 } = {}) {
     AUTH_MODE: 'development-stub',
     ENVIRONMENT: 'test',
     PUNCTUATION_SUBJECT_ENABLED: punctuationEnabled ? 'true' : 'false',
+    ...envOverrides,
   };
   let revision = 0;
   let sequence = 0;
@@ -536,6 +537,96 @@ test('punctuation command route stays unavailable until the rollout gate is enab
     assert.equal(start.body.code, 'subject_command_not_found');
     assert.equal(harness.DB.db.prepare('SELECT COUNT(*) AS count FROM child_subject_state').get().count, 0);
     assert.equal(harness.DB.db.prepare('SELECT COUNT(*) AS count FROM practice_sessions').get().count, 0);
+  } finally {
+    harness.close();
+  }
+});
+
+test('punctuation context-pack command returns a named configuration error without a server provider', async () => {
+  const harness = createHarness();
+  try {
+    const result = await harness.postRaw({
+      command: 'request-context-pack',
+      learnerId: 'learner-a',
+      requestId: 'punctuation-context-missing-provider',
+      expectedLearnerRevision: 0,
+      payload: {},
+    });
+
+    assert.equal(result.response.status, 200);
+    assert.equal(result.body.ok, false);
+    assert.equal(result.body.changed, false);
+    assert.equal(result.body.mutation.appliedRevision, 0);
+    assert.equal(result.body.contextPack.status, 'unavailable');
+    assert.equal(result.body.contextPack.code, 'punctuation_context_provider_missing');
+    assert.equal(result.body.subjectReadModel.contextPack.code, 'punctuation_context_provider_missing');
+    assert.equal(harness.DB.db.prepare('SELECT COUNT(*) AS count FROM child_subject_state').get().count, 0);
+  } finally {
+    harness.close();
+  }
+});
+
+test('punctuation context-pack command rejects malformed configured JSON without mutating learner state', async () => {
+  const harness = createHarness({
+    envOverrides: {
+      PUNCTUATION_AI_CONTEXT_PACK_JSON: '{bad json',
+    },
+  });
+  try {
+    const result = await harness.postRaw({
+      command: 'request-context-pack',
+      learnerId: 'learner-a',
+      requestId: 'punctuation-context-invalid-config',
+      expectedLearnerRevision: 0,
+      payload: {},
+    });
+
+    assert.equal(result.response.status, 200);
+    assert.equal(result.body.ok, false);
+    assert.equal(result.body.changed, false);
+    assert.equal(result.body.mutation.appliedRevision, 0);
+    assert.equal(result.body.contextPack.status, 'unavailable');
+    assert.equal(result.body.contextPack.code, 'punctuation_context_pack_invalid');
+    assert.equal(result.body.contextPack.acceptedCount, 0);
+    assert.equal(result.body.contextPack.rejectedCount, 1);
+    assert.equal(result.body.subjectReadModel.contextPack.code, 'punctuation_context_pack_invalid');
+    assert.doesNotMatch(payloadText(result.body), /\{bad json|provider|key/i);
+    assert.equal(harness.DB.db.prepare('SELECT COUNT(*) AS count FROM child_subject_state').get().count, 0);
+  } finally {
+    harness.close();
+  }
+});
+
+test('punctuation context-pack command returns only a safe compiler summary when configured', async () => {
+  const harness = createHarness({
+    envOverrides: {
+      PUNCTUATION_AI_CONTEXT_PACK_JSON: JSON.stringify({
+        names: ['Maya'],
+        listNouns: ['ropes', 'maps', 'snacks'],
+        speechQuestions: ['can we start now'],
+        hyphenCompoundRows: [{ left: 'well', right: 'known', noun: 'author' }],
+      }),
+    },
+  });
+  try {
+    const result = await harness.postRaw({
+      command: 'request-context-pack',
+      learnerId: 'learner-a',
+      requestId: 'punctuation-context-configured',
+      expectedLearnerRevision: 0,
+      payload: { seed: 'worker-context-pack' },
+    });
+
+    assert.equal(result.response.status, 200);
+    assert.equal(result.body.ok, true);
+    assert.equal(result.body.changed, false);
+    assert.equal(result.body.mutation.appliedRevision, 0);
+    assert.equal(result.body.contextPack.status, 'ready');
+    assert.equal(result.body.contextPack.acceptedCount, 6);
+    assert.equal(result.body.contextPack.affectedGeneratorFamilies.includes('gen_speech_insert'), true);
+    assert.equal(result.body.contextPack.generatedItemCount > 0, true);
+    assert.doesNotMatch(payloadText(result.body.subjectReadModel.contextPack), /Maya|ropes|can we start now|well-known|raw|prompt|provider|key/i);
+    assert.doesNotMatch(payloadText(result.body.subjectReadModel), /"accepted"|correctIndex|rubric|validator|hiddenQueue|generatorFamilyId/);
   } finally {
     harness.close();
   }

@@ -172,6 +172,14 @@ export function createServerPunctuationEngine({ now = Date.now, random = Math.ra
           };
         } else if (command === 'reset-learner') {
           transition = service.resetLearner(learnerId);
+        } else if (command === 'request-context-pack') {
+          transition = {
+            ok: true,
+            changed: false,
+            state: currentState,
+            events: [],
+            prefs: service.getPrefs(learnerId),
+          };
         } else {
           throw new BadRequestError('Unsupported punctuation command.', {
             code: 'punctuation_command_unsupported',

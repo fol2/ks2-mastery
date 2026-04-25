@@ -226,15 +226,15 @@
     },
     {
       "id": "safe_context_atoms",
-      "status": "planned",
+      "status": "ported",
       "ownerUnit": "U8",
-      "notes": "AI may propose vocabulary/context atoms after deterministic sanitisation."
+      "notes": "Server-side enrichment may propose vocabulary/context atoms, but only deterministic sanitisation summaries are exposed."
     },
     {
       "id": "deterministic_compiler",
-      "status": "planned",
+      "status": "ported",
       "ownerUnit": "U8",
-      "notes": "All score-bearing generated practice must still be compiled and marked deterministically."
+      "notes": "Context-pack atoms compile through deterministic generator families and marking remains deterministic."
     },
     {
       "id": "no_ai_marking",

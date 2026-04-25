@@ -1,6 +1,9 @@
 import {
   PUNCTUATION_CONTENT_MANIFEST,
 } from './content.js';
+import {
+  contextPackTemplatesForFamily,
+} from './context-packs.js';
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -820,6 +823,7 @@ export function createPunctuationGeneratedItems({
   manifest = PUNCTUATION_CONTENT_MANIFEST,
   seed = manifest.releaseId || 'punctuation',
   perFamily = 1,
+  contextPack = null,
 } = {}) {
   const limit = Math.max(0, Math.floor(Number(perFamily) || 0));
   if (limit === 0) return [];
@@ -828,7 +832,10 @@ export function createPunctuationGeneratedItems({
   for (const family of Array.isArray(manifest.generatorFamilies) ? manifest.generatorFamilies : []) {
     if (!family?.published) continue;
     const skill = skills.get(family.skillId);
-    const templates = GENERATED_TEMPLATE_BANK[family.id] || [];
+    const contextTemplates = contextPack
+      ? contextPackTemplatesForFamily(family.id, contextPack)
+      : [];
+    const templates = contextTemplates.length ? contextTemplates : (GENERATED_TEMPLATE_BANK[family.id] || []);
     if (!skill || !templates.length) continue;
     for (let index = 0; index < limit; index += 1) {
       const template = pickTemplate(templates, seed, family.id, index);
@@ -842,8 +849,14 @@ export function createPunctuationRuntimeManifest({
   manifest = PUNCTUATION_CONTENT_MANIFEST,
   seed = manifest.releaseId || 'punctuation',
   generatedPerFamily = 1,
+  contextPack = null,
 } = {}) {
-  const generatedItems = createPunctuationGeneratedItems({ manifest, seed, perFamily: generatedPerFamily });
+  const generatedItems = createPunctuationGeneratedItems({
+    manifest,
+    seed,
+    perFamily: generatedPerFamily,
+    contextPack,
+  });
   if (!generatedItems.length) return manifest;
   return Object.freeze({
     ...manifest,
