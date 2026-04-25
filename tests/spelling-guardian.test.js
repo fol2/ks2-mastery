@@ -32,6 +32,10 @@ import { createSpellingPersistence } from '../src/subjects/spelling/repository.j
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
+import {
+  buildSpellingLearnerReadModel,
+  getSpellingPostMasteryState,
+} from '../src/subjects/spelling/read-model.js';
 
 const TODAY = 18_000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -927,4 +931,366 @@ test('selectGuardianWords top-up prefers wobbling non-due over non-wobbling non-
   // length=2 is below GUARDIAN_MIN_ROUND_LENGTH=5 after due is empty and no
   // lazy candidates — top-up fills both slots; wobbling must land first.
   assert.deepEqual(selected, ['possess', 'believe']);
+});
+
+// ----- U4: post-mastery read-model selector -----------------------------------
+
+/*
+ * U4 tests work over synthesised runtime snapshots so we can hit the exact
+ * plan numbers (170 core, 80 extra) without depending on the real statutory
+ * list. Each test builds its own snapshot + subjectStateRecord, passes them
+ * into the selector directly, and spot-checks the derived fields.
+ */
+
+function makeCoreWord(index) {
+  return {
+    slug: `core-${String(index).padStart(3, '0')}`,
+    word: `core-${index}`,
+    family: `family-${index % 12}`,
+    year: index % 2 === 0 ? '3-4' : '5-6',
+    yearLabel: index % 2 === 0 ? 'Years 3-4' : 'Years 5-6',
+    spellingPool: 'core',
+    accepted: [`core-${index}`],
+    sentence: `Sentence for core word ${index}.`,
+  };
+}
+
+function makeExtraWord(index) {
+  return {
+    slug: `extra-${String(index).padStart(3, '0')}`,
+    word: `extra-${index}`,
+    family: `family-extra-${index % 4}`,
+    year: 'extra',
+    yearLabel: 'Extra',
+    spellingPool: 'extra',
+    accepted: [`extra-${index}`],
+    sentence: `Sentence for extra word ${index}.`,
+  };
+}
+
+function makeRuntimeSnapshot({ coreCount = 170, extraCount = 0 } = {}) {
+  const coreWords = Array.from({ length: coreCount }, (_, i) => makeCoreWord(i + 1));
+  const extraWords = Array.from({ length: extraCount }, (_, i) => makeExtraWord(i + 1));
+  const words = [...coreWords, ...extraWords];
+  const wordBySlug = Object.fromEntries(words.map((word) => [word.slug, word]));
+  return { words, wordBySlug, coreWords, extraWords };
+}
+
+function secureProgressEntries(words) {
+  return Object.fromEntries(
+    words.map((word) => [word.slug, {
+      stage: 4,
+      attempts: 6,
+      correct: 5,
+      wrong: 1,
+      dueDay: TODAY + 60,
+      lastDay: TODAY - 7,
+      lastResult: true,
+    }]),
+  );
+}
+
+function makeSubjectStateRecord({ progress = {}, guardian = {}, prefs = {} } = {}) {
+  return {
+    data: {
+      prefs,
+      progress,
+      guardian,
+    },
+  };
+}
+
+const U4_NOW_MS = TODAY * DAY_MS;
+
+test('U4 happy path: 170 secure core words + 170 published core words => allWordsMega true', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 170 });
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.allWordsMega, true);
+});
+
+test('U4 edge: 169/170 secure core words => allWordsMega false', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 170 });
+  // Secure all but the last core word.
+  const secureSubset = runtimeSnapshot.coreWords.slice(0, 169);
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(secureSubset),
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.allWordsMega, false);
+});
+
+test('U4 edge: 170/170 core secure + 50/80 extra secure => allWordsMega true (extra excluded)', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 170, extraCount: 80 });
+  const progress = {
+    ...secureProgressEntries(runtimeSnapshot.coreWords),
+    ...secureProgressEntries(runtimeSnapshot.extraWords.slice(0, 50)),
+  };
+  const subjectStateRecord = makeSubjectStateRecord({ progress });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.allWordsMega, true, 'extra pool does not block or inflate the comparison');
+});
+
+test('U4 edge: guardianDueCount === 0 when data.guardian is empty', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 170 });
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+    guardian: {},
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.guardianDueCount, 0);
+  assert.equal(state.wobblingCount, 0);
+});
+
+test('U4 edge: nextGuardianDueDay is null when guardian map is empty; otherwise min(nextDueDay)', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 170 });
+  const emptyRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+    guardian: {},
+  });
+  assert.equal(
+    getSpellingPostMasteryState({ subjectStateRecord: emptyRecord, runtimeSnapshot, now: U4_NOW_MS }).nextGuardianDueDay,
+    null,
+  );
+
+  const seededRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+    guardian: {
+      [runtimeSnapshot.coreWords[0].slug]: {
+        reviewLevel: 2,
+        lastReviewedDay: TODAY - 5,
+        nextDueDay: TODAY + 14,
+        correctStreak: 2,
+        lapses: 0,
+        renewals: 0,
+        wobbling: false,
+      },
+      [runtimeSnapshot.coreWords[1].slug]: {
+        reviewLevel: 0,
+        lastReviewedDay: null,
+        nextDueDay: TODAY + 3, // min
+        correctStreak: 0,
+        lapses: 0,
+        renewals: 0,
+        wobbling: false,
+      },
+      [runtimeSnapshot.coreWords[2].slug]: {
+        reviewLevel: 1,
+        lastReviewedDay: TODAY - 2,
+        nextDueDay: TODAY + 7,
+        correctStreak: 1,
+        lapses: 0,
+        renewals: 0,
+        wobbling: false,
+      },
+    },
+  });
+  assert.equal(
+    getSpellingPostMasteryState({ subjectStateRecord: seededRecord, runtimeSnapshot, now: U4_NOW_MS }).nextGuardianDueDay,
+    TODAY + 3,
+  );
+});
+
+test('U4 edge: guardianDueCount + wobblingCount track todayDay correctly', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 170 });
+  const [w0, w1, w2, w3] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+    guardian: {
+      [w0.slug]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+      [w1.slug]: { reviewLevel: 2, lastReviewedDay: TODAY - 2, nextDueDay: TODAY, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+      [w2.slug]: { reviewLevel: 3, lastReviewedDay: TODAY - 1, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+      [w3.slug]: { reviewLevel: 1, lastReviewedDay: TODAY - 4, nextDueDay: TODAY + 1, correctStreak: 0, lapses: 2, renewals: 0, wobbling: true },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.guardianDueCount, 2, 'two records have nextDueDay <= today');
+  assert.equal(state.wobblingCount, 2, 'two records are wobbling regardless of due-state');
+});
+
+test('U4 edge: recommendedWords.length === 0 when allWordsMega === false', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 170 });
+  // Secure only 10 core words — far short of 170 → allWordsMega false.
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords.slice(0, 10)),
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.allWordsMega, false);
+  assert.deepEqual(state.recommendedWords, []);
+});
+
+test('U4 edge: recommendedWords is a deterministic preview when allWordsMega === true', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 170 });
+  // Seed guardian records so the selector has due entries to drain first; the
+  // preview length should be min(8, available).
+  const [w0, w1, w2] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+    guardian: {
+      [w0.slug]: { reviewLevel: 1, lastReviewedDay: TODAY - 2, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+      [w1.slug]: { reviewLevel: 2, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+      [w2.slug]: { reviewLevel: 0, lastReviewedDay: TODAY - 1, nextDueDay: TODAY, correctStreak: 1, lapses: 0, renewals: 0, wobbling: false },
+    },
+  });
+  const a = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  const b = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.ok(a.recommendedWords.length > 0, 'preview non-empty when learner has graduated + has due guardians');
+  assert.ok(a.recommendedWords.length <= GUARDIAN_MAX_ROUND_LENGTH, 'preview bounded by max round length');
+  assert.deepEqual(a.recommendedWords, b.recommendedWords, 'deterministic across calls');
+  // Preview surfaces the due wobbling word first, then due non-wobbling.
+  assert.equal(a.recommendedWords[0], w0.slug, 'wobbling due first');
+});
+
+test('U4 edge: postMastery always present on buildSpellingLearnerReadModel output — never undefined', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 170 });
+  const emptyRecord = makeSubjectStateRecord({});
+  const output = buildSpellingLearnerReadModel({
+    subjectStateRecord: emptyRecord,
+    runtimeSnapshot,
+    now: U4_NOW_MS,
+  });
+  assert.ok(output.postMastery, 'postMastery present even with zero secure words');
+  assert.equal(output.postMastery.allWordsMega, false);
+  assert.equal(output.postMastery.guardianDueCount, 0);
+  assert.equal(output.postMastery.wobblingCount, 0);
+  assert.deepEqual(output.postMastery.recommendedWords, []);
+  assert.equal(output.postMastery.nextGuardianDueDay, null);
+});
+
+test('U4 integration: recommendedMode is "guardian" when allWordsMega && guardianDueCount > 0', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 170 });
+  const [w0] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+    guardian: {
+      [w0.slug]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+    },
+  });
+  const output = buildSpellingLearnerReadModel({
+    subjectStateRecord,
+    runtimeSnapshot,
+    now: U4_NOW_MS,
+  });
+  assert.equal(output.postMastery.allWordsMega, true);
+  assert.equal(output.postMastery.guardianDueCount, 1);
+  assert.equal(output.postMastery.recommendedMode, 'guardian');
+});
+
+test('U4 integration: recommendedMode inherits currentFocus.recommendedMode when not (allWordsMega && due)', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 170 });
+  // Case A: not graduated — inherits the non-graduated currentFocus default ('smart').
+  const belowMegaRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords.slice(0, 10)),
+  });
+  const belowMega = buildSpellingLearnerReadModel({
+    subjectStateRecord: belowMegaRecord,
+    runtimeSnapshot,
+    now: U4_NOW_MS,
+  });
+  assert.equal(belowMega.postMastery.allWordsMega, false);
+  assert.equal(belowMega.postMastery.recommendedMode, belowMega.currentFocus.recommendedMode);
+
+  // Case B: graduated but no Guardian duties due — should NOT promote to 'guardian';
+  // should inherit currentFocus.recommendedMode instead.
+  const graduatedNoDueRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+    guardian: {
+      [runtimeSnapshot.coreWords[0].slug]: {
+        reviewLevel: 3,
+        lastReviewedDay: TODAY - 1,
+        nextDueDay: TODAY + 30,
+        correctStreak: 3,
+        lapses: 0,
+        renewals: 0,
+        wobbling: false,
+      },
+    },
+  });
+  const graduatedNoDue = buildSpellingLearnerReadModel({
+    subjectStateRecord: graduatedNoDueRecord,
+    runtimeSnapshot,
+    now: U4_NOW_MS,
+  });
+  assert.equal(graduatedNoDue.postMastery.allWordsMega, true);
+  assert.equal(graduatedNoDue.postMastery.guardianDueCount, 0);
+  assert.equal(graduatedNoDue.postMastery.recommendedMode, graduatedNoDue.currentFocus.recommendedMode);
+});
+
+test('U4 integration: buildSpellingLearnerReadModel.postMastery matches getSpellingPostMasteryState directly', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 170 });
+  const [w0, w1] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+    guardian: {
+      [w0.slug]: { reviewLevel: 1, lastReviewedDay: TODAY - 2, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+      [w1.slug]: { reviewLevel: 2, lastReviewedDay: TODAY - 3, nextDueDay: TODAY + 14, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+    },
+  });
+  const direct = getSpellingPostMasteryState({
+    subjectStateRecord,
+    runtimeSnapshot,
+    now: U4_NOW_MS,
+  });
+  const viaReadModel = buildSpellingLearnerReadModel({
+    subjectStateRecord,
+    runtimeSnapshot,
+    now: U4_NOW_MS,
+  }).postMastery;
+  // recommendedMode is layered on top of the direct selector output; assert
+  // the 5 underlying fields match exactly.
+  assert.equal(viaReadModel.allWordsMega, direct.allWordsMega);
+  assert.equal(viaReadModel.guardianDueCount, direct.guardianDueCount);
+  assert.equal(viaReadModel.wobblingCount, direct.wobblingCount);
+  assert.deepEqual(viaReadModel.recommendedWords, direct.recommendedWords);
+  assert.equal(viaReadModel.nextGuardianDueDay, direct.nextGuardianDueDay);
+});
+
+test('U4 integration: existing legacy fields of buildSpellingLearnerReadModel output are unchanged', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 170 });
+  // A partially secured learner so strengths / weaknesses / currentFocus
+  // have real content to spot-check.
+  const secureSubset = runtimeSnapshot.coreWords.slice(0, 40);
+  const dueSubset = runtimeSnapshot.coreWords.slice(40, 60);
+  const progress = {
+    ...secureProgressEntries(secureSubset),
+    ...Object.fromEntries(dueSubset.map((word, i) => [word.slug, {
+      stage: 2,
+      attempts: 5,
+      correct: 3,
+      wrong: 2,
+      dueDay: TODAY - 1, // due today
+      lastDay: TODAY - 2,
+      lastResult: i % 2 === 0,
+    }])),
+  };
+  const subjectStateRecord = makeSubjectStateRecord({ progress });
+  const output = buildSpellingLearnerReadModel({
+    subjectStateRecord,
+    runtimeSnapshot,
+    now: U4_NOW_MS,
+  });
+
+  // progressSnapshot — canonical legacy shape
+  assert.equal(output.progressSnapshot.subjectId, 'spelling');
+  assert.equal(output.progressSnapshot.totalPublishedWords, 170);
+  assert.equal(output.progressSnapshot.trackedWords, 60);
+  assert.equal(output.progressSnapshot.secureWords, 40);
+  assert.equal(output.progressSnapshot.dueWords, 20);
+
+  // overview is a sibling snapshot — must still be present and non-null.
+  assert.equal(output.overview.trackedWords, 60);
+  assert.equal(output.overview.secureWords, 40);
+
+  // strengths / weaknesses arrays still populated when there is relevant data.
+  assert.ok(Array.isArray(output.strengths));
+  assert.ok(Array.isArray(output.weaknesses));
+  assert.ok(output.strengths.length > 0, 'strengths populated from secure rows');
+  assert.ok(output.weaknesses.length > 0, 'weaknesses populated from due rows');
+
+  // currentFocus preserved with the legacy recommendation shape.
+  assert.equal(output.currentFocus.subjectId, 'spelling');
+  assert.equal(typeof output.currentFocus.recommendedMode, 'string');
+  assert.equal(typeof output.currentFocus.label, 'string');
 });
