@@ -144,6 +144,12 @@ test('Grammar surface runs KS2 mini-set mode with delayed feedback and end revie
   assert.match(html, /Q2/);
 });
 
+// U4 strict mini-test SSR coverage — known limits (documented in plan):
+// the SSR harness cannot observe pointer-capture, focus management, CSS
+// overflow, scroll-into-view, or IME behaviour. The tests below exercise
+// state transitions and rendered-HTML invariants; browser-visual regressions
+// must be caught by production UI verification, not this file.
+
 test('U4: strict mini-test preserves answers across navigation', () => {
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });
@@ -243,6 +249,12 @@ test('U4: strict mini-test blocks worked/faded/AI/similar-problem commands while
   assert.equal(masteryAfter, masteryBefore, 'mastery must not change from failed repair commands during active mini-test');
   // Feedback must remain absent (no leaked guidance)
   assert.equal(grammar.feedback, null, 'no feedback leaked during active mini-test');
+  // Repair state must not record worked/faded escalation — the commands most
+  // visibly mutate session.repair outside mini-tests, so a passing test without
+  // this assertion could miss a silent-no-op bug.
+  const repair = grammar.session.repair || {};
+  assert.ok(!repair.workedSolutionShown, 'worked-solution repair must not be marked during active mini-test');
+  assert.ok(!repair.requestedFadedSupport, 'faded-support repair must not be marked during active mini-test');
 });
 
 test('U4: strict mini-test timer expiry auto-finishes with deterministic marking', () => {
