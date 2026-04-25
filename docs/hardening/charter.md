@@ -4,6 +4,8 @@
 
 **During hardening, no new learner-visible feature is accepted unless it fixes an existing broken, confusing, unsafe, slow, or inaccessible behaviour.**
 
+**A PR that frames itself as a fix must cite the specific `p1-baseline.md` entry it addresses.** Work that cannot cite a baseline entry is out of scope. This pins the rule to an objective oracle — the baseline is the sole list of what counts as "existing broken" for this sprint. A new entry may be added to the baseline only via its own PR with evidence (file path, test name, or reproducible observation).
+
 Every PR opened during this sprint is reviewed against this rule. Work that cannot be framed as a fix is redirected to a follow-up plan; work that fits the rule is accepted even when the surface area is small.
 
 ## Allowed Scope
@@ -15,7 +17,7 @@ The following categories of change are in scope for this pass:
 - Broken states (blank screens, missing empty-state copy, modal-scroll traps, toast overlap, sprite/effect layering glitches).
 - Stale-write recovery affordances (409 stale-write, 409 idempotency reuse, blocked-stale banners, retry transparency).
 - Better loading and error affordances (skeletons, retry buttons, error copy, degraded-mode banner polish).
-- Server hot-path bounding (bootstrap caps, command validation, projection bounding — continuation of PRs #126-#139).
+- Server hot-path bounding (bootstrap caps, command validation, projection bounding — continuation of the capacity work merged as PRs #126, #127, #129, #131, #133, #134, #135, #136, #139).
 - Smaller bundles (splitting vendor/app, trimming dead imports, dropping unused locales).
 - Safer response headers (CSP, HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `frame-ancestors`, COOP, CORP).
 - Test coverage for the bugs fixed and for regressions that could reintroduce them (parser-level contract tests, Playwright golden paths, chaos tests at the HTTP boundary, access-matrix tests).
@@ -44,6 +46,8 @@ The residual XSS-via-CSS vector (CSS `url()` exfiltration, attribute-selector si
 
 - `img-src 'self' data: blob:` — CSS `url()` fetches for background images, list-style images, border images, and cursor images are constrained to the same origin. This closes the main exfiltration path that arbitrary inline style injection would otherwise unlock.
 - `font-src 'self' https://fonts.gstatic.com` — font-family fetches are constrained to the same origin plus the explicitly allowed Google Fonts CDN. Attacker-controlled `@font-face src: url(...)` cannot reach arbitrary external origins.
+
+This does not eliminate CSS-based side-channels (timing attacks via `:has()` or `transition` observation, attribute-selector state observability, same-origin `url()` GETs that leak data in the request path); it closes the direct cross-origin exfiltration vector. Second-order residuals remain and are tracked as lower-priority hardening items.
 
 The residual vector retires when the `style={}` migration lands as a separate plan. Until then, the CSP string explicitly documents the trade-off.
 
