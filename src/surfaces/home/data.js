@@ -632,8 +632,13 @@ function withSynthesisedUncaughtMonsters(summary = []) {
   return [...summary, ...synthesised];
 }
 
+// Subject groups rendered in Codex. Reserved / non-learner-facing groupings
+// inside MONSTERS_BY_SUBJECT (e.g. `punctuationReserve`) are excluded so the
+// Codex keeps the spelling -> punctuation -> grammar ordering learners expect.
+const CODEX_SUBJECT_GROUP_IDS = Object.freeze(['spelling', 'punctuation', 'grammar']);
+
 export function buildCodexSubjectGroups(entries = []) {
-  return Object.keys(MONSTERS_BY_SUBJECT)
+  return CODEX_SUBJECT_GROUP_IDS
     .map((subjectId) => {
       const subjectEntries = entries.filter((entry) => entry.subjectId === subjectId);
       if (!subjectEntries.length) return null;
@@ -749,13 +754,15 @@ function nextCodexMilestone(monsterId, mastered, { subjectId = 'spelling', max =
 
 function codexWordBand(monsterId, subjectId = 'spelling') {
   if (subjectId === 'punctuation') {
-    if (monsterId === 'pealark') return 'Endmarks';
+    if (monsterId === 'pealark') return 'Endmarks, speech and boundary';
     if (monsterId === 'claspin') return 'Apostrophe';
-    if (monsterId === 'quoral') return 'Speech punctuation';
-    if (monsterId === 'curlune') return 'Comma and flow';
-    if (monsterId === 'colisk') return 'List and structure';
-    if (monsterId === 'hyphang') return 'Boundary punctuation';
-    if (monsterId === 'carillon') return 'Published punctuation release';
+    if (monsterId === 'curlune') return 'Comma, flow and structure';
+    if (monsterId === 'quoral') return 'Published punctuation release';
+    // Reserved monsters retain descriptive copy for Admin / asset tooling
+    // even though they are filtered out of active learner summaries.
+    if (monsterId === 'colisk') return 'Reserved: future list and structure';
+    if (monsterId === 'hyphang') return 'Reserved: future boundary expansion';
+    if (monsterId === 'carillon') return 'Reserved: future aggregate legendary';
     return 'Punctuation codex';
   }
   if (subjectId === 'grammar') {

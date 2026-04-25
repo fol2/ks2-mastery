@@ -197,6 +197,14 @@ export const PUNCTUATION_SKILLS = Object.freeze([
   },
 ]);
 
+// Active Punctuation cluster -> direct monster mapping for the Phase 2
+// roster reduction. Learning clusters stay the same six groupings; only
+// reward projection collapses to 3 direct creatures + 1 grand.
+//   Pealark  : endmarks, speech, boundary
+//   Claspin  : apostrophe
+//   Curlune  : comma_flow, structure
+//   Quoral   : grand aggregate across all 14 reward units (see
+//              PUNCTUATION_GRAND_MONSTER below)
 export const PUNCTUATION_CLUSTERS = Object.freeze([
   {
     id: 'endmarks',
@@ -215,7 +223,7 @@ export const PUNCTUATION_CLUSTERS = Object.freeze([
   {
     id: 'speech',
     name: 'Speech',
-    monsterId: 'quoral',
+    monsterId: 'pealark',
     published: true,
     skillIds: ['speech'],
   },
@@ -229,14 +237,14 @@ export const PUNCTUATION_CLUSTERS = Object.freeze([
   {
     id: 'structure',
     name: 'List / Structure',
-    monsterId: 'colisk',
+    monsterId: 'curlune',
     published: true,
     skillIds: ['parenthesis', 'colon_list', 'semicolon_list', 'bullet_points'],
   },
   {
     id: 'boundary',
     name: 'Boundary',
-    monsterId: 'hyphang',
+    monsterId: 'pealark',
     published: true,
     skillIds: ['semicolon', 'dash_clause', 'hyphen'],
   },
@@ -245,7 +253,7 @@ export const PUNCTUATION_CLUSTERS = Object.freeze([
 export const PUNCTUATION_GRAND_MONSTER = Object.freeze({
   id: 'published_release',
   name: 'Published Punctuation release',
-  monsterId: 'carillon',
+  monsterId: 'quoral',
 });
 
 export function createPunctuationMasteryKey({
