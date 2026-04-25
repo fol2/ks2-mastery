@@ -17,39 +17,19 @@ import {
   loadBootstrap,
   subjectCommand,
 } from './lib/production-smoke.mjs';
+import {
+  FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS as SHARED_FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS,
+  FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS as SHARED_FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS,
+} from '../tests/helpers/forbidden-keys.mjs';
 
-// Kept aligned with worker/src/subjects/punctuation/read-models.js
-// FORBIDDEN_READ_MODEL_KEYS. Any new forbidden key must be added in both
-// places — the Worker enforces the contract at build time, the smoke scans
-// enforce it at deploy time.
-const FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS = new Set([
-  'accepted',
-  'answers',
-  'correctIndex',
-  'rubric',
-  'validator',
-  'seed',
-  'generator',
-  'rawGenerator',
-  'hiddenQueue',
-  'queueItemIds',
-  'responses',
-  'unpublished',
-]);
-
-const FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS = new Set([
-  ...FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS,
-  'attemptedAnswer',
-  'choiceIndex',
-  'correctAnswer',
-  'displayCorrection',
-  'expected',
-  'expectedAnswer',
-  'model',
-  'rawResponse',
-  'response',
-  'typed',
-]);
+// Sets are built at module load from the shared Array exports. The canonical
+// list lives in tests/helpers/forbidden-keys.mjs and is kept aligned with
+// worker/src/subjects/punctuation/read-models.js FORBIDDEN_READ_MODEL_KEYS.
+// Any new forbidden key must be added in the shared module first; the Worker
+// enforces the contract at build time, and the smoke scans enforce it at
+// deploy time.
+const FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS = new Set(SHARED_FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS);
+const FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS = new Set(SHARED_FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS);
 
 export function assertNoForbiddenPunctuationReadModelKeys(value, path = 'punctuation.subjectReadModel') {
   assertNoForbiddenObjectKeys(value, FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS, path);

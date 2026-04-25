@@ -1,6 +1,37 @@
 import { runClientBundleAudit } from './audit-client-bundle.mjs';
+import { createDemoSession, loadBootstrap } from './lib/production-smoke.mjs';
+import { FORBIDDEN_KEYS_EVERYWHERE } from '../tests/helpers/forbidden-keys.mjs';
 
 const DEFAULT_ORIGIN = 'https://ks2.eugnel.uk';
+
+// U13 redaction matrix forbidden-key check: these keys must never appear in any
+// authenticated response surface reached via the demo session. The set is
+// imported from tests/helpers/forbidden-keys.mjs so the matrix oracle, the
+// production audit, and the subject-level smokes cannot drift.
+const MATRIX_FORBIDDEN_KEYS = FORBIDDEN_KEYS_EVERYWHERE;
+
+function collectAllKeys(value, bucket = new Set()) {
+  if (value == null) return bucket;
+  if (Array.isArray(value)) {
+    value.forEach((entry) => collectAllKeys(entry, bucket));
+    return bucket;
+  }
+  if (typeof value !== 'object') return bucket;
+  for (const [key, child] of Object.entries(value)) {
+    bucket.add(key);
+    collectAllKeys(child, bucket);
+  }
+  return bucket;
+}
+
+function assertMatrixForbiddenKeysAbsent(label, payload, failures) {
+  const allKeys = collectAllKeys(payload);
+  for (const key of MATRIX_FORBIDDEN_KEYS) {
+    if (allKeys.has(key)) {
+      failures.push(`${label} exposed redaction-matrix forbidden key: ${key}`);
+    }
+  }
+}
 const DIRECT_DENIAL_PATHS = [
   '/src/main.js',
   '/src/subjects/spelling/data/content-data.js',
@@ -137,6 +168,19 @@ async function auditProduction(origin) {
     }
   }
 
+  // U13: matrix-driven forbidden-key check against a live demo bootstrap.
+  // The demo session is the only path where we can exercise an authenticated
+  // production response without real-learner PII risk.
+  let demoChecked = false;
+  try {
+    const demo = await createDemoSession(base.origin);
+    const bootstrap = await loadBootstrap(base.origin, demo.cookie, { expectedSession: demo.session });
+    assertMatrixForbiddenKeysAbsent('Production demo /api/bootstrap', bootstrap.payload, failures);
+    demoChecked = true;
+  } catch (error) {
+    failures.push(`Production demo bootstrap probe failed: ${error?.message || error}`);
+  }
+
   return {
     ok: failures.length === 0,
     failures,
@@ -144,6 +188,7 @@ async function auditProduction(origin) {
       origin: base.href,
       scriptCount: scripts.length,
       directPathCount: DIRECT_DENIAL_PATHS.length,
+      matrixDemoChecked: demoChecked,
     },
   };
 }
@@ -174,4 +219,4 @@ if (!result?.ok) {
   console.error(result?.failures?.join('\n') || 'Production bundle audit failed.');
   process.exit(1);
 }
-console.log(`Production bundle audit passed for ${result.checked.origin} (${result.checked.scriptCount} bundle(s), ${result.checked.directPathCount} direct paths).`);
+console.log(`Production bundle audit passed for ${result.checked.origin} (${result.checked.scriptCount} bundle(s), ${result.checked.directPathCount} direct paths, matrix demo check: ${result.checked.matrixDemoChecked ? 'ok' : 'skipped'}).`);

@@ -1,0 +1,94 @@
+// Shared forbidden-key oracles used by:
+//   - tests/redaction-access-matrix.test.js (matrix oracle)
+//   - scripts/production-bundle-audit.mjs (post-deploy demo bootstrap audit)
+//   - scripts/grammar-production-smoke.mjs (grammar read-model smoke)
+//   - scripts/punctuation-production-smoke.mjs (punctuation read-model smoke)
+//
+// This module is the single source of truth for the forbidden-key universe. It
+// MUST stay side-effect free: every exported value is a frozen Array, and no
+// other runtime behaviour is allowed here. Downstream consumers can lift the
+// arrays into Sets if they need membership lookups; we intentionally do not
+// pre-freeze Sets here because `Object.freeze(new Set())` does not prevent
+// mutation of the underlying Set.
+//
+// Extension rules (P3 oracle-drift regression lock):
+//   - FORBIDDEN_KEYS_EVERYWHERE is the universal floor. Every authenticated HTTP
+//     response surface must be clean of these keys.
+//   - Subject-specific sets (grammar/punctuation) either extend the universal
+//     floor (grammar) or overlap with it (punctuation). For any universal key
+//     that could appear on a subject surface, the subject set MUST include it —
+//     otherwise subject-side coverage would be weaker than the universal floor,
+//     which is exactly the drift we are locking out.
+//   - When a new forbidden key is introduced, add it here first; downstream
+//     consumers import, so they cannot drift.
+
+export const FORBIDDEN_KEYS_EVERYWHERE = Object.freeze([
+  'solutionLines',
+  'correctResponse',
+  'correctResponses',
+  'accepted',
+  'answers',
+  'evaluate',
+  'generator',
+  'templates',
+  'passwordHash',
+  'password_hash',
+  'sessionHash',
+  'session_hash',
+  'sessionId',
+  'session_id',
+]);
+
+// Grammar read-model surface: strict superset of FORBIDDEN_KEYS_EVERYWHERE.
+// The extra entry `template` (singular) is grammar-private — it appears on
+// grammar question items as a meta field and must never round-trip to the
+// browser. It is NOT in the universal floor because monster visual config
+// legitimately uses `template` (effect catalog entries keyed by template
+// name), so checking it everywhere would false-positive.
+export const FORBIDDEN_GRAMMAR_READ_MODEL_KEYS = Object.freeze([
+  ...FORBIDDEN_KEYS_EVERYWHERE,
+  'template',
+]);
+
+// Grammar session.currentItem surface. Currently identical to the read-model
+// surface but kept as a separate export so item-specific keys can be added
+// without widening the read-model contract.
+export const FORBIDDEN_GRAMMAR_ITEM_KEYS = Object.freeze([
+  ...FORBIDDEN_GRAMMAR_READ_MODEL_KEYS,
+]);
+
+// Punctuation read-model surface. Not a full superset of the universal floor
+// by design: punctuation's internal key vocabulary (correctIndex, rubric,
+// validator, seed, rawGenerator, hiddenQueue, queueItemIds, responses,
+// unpublished) is disjoint from grammar's. The overlap with the universal
+// floor covers the shared concerns ('accepted', 'answers', 'generator').
+export const FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS = Object.freeze([
+  'accepted',
+  'answers',
+  'correctIndex',
+  'rubric',
+  'validator',
+  'seed',
+  'generator',
+  'rawGenerator',
+  'hiddenQueue',
+  'queueItemIds',
+  'responses',
+  'unpublished',
+]);
+
+// Punctuation adult evidence surface extends the read-model surface with
+// evidence-only keys that may appear in marking records.
+export const FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS = Object.freeze([
+  ...FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS,
+  'attemptedAnswer',
+  'choiceIndex',
+  'correctAnswer',
+  'displayCorrection',
+  'expected',
+  'expectedAnswer',
+  'model',
+  'rawResponse',
+  'response',
+  'typed',
+]);

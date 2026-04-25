@@ -1119,13 +1119,25 @@ export function createDevelopmentSessionProvider() {
         || request.headers.get('x-ks2-account-id'),
       );
       if (!accountId) return null;
+      // TEST-ONLY: the `x-ks2-dev-demo` and `x-ks2-dev-demo-expires-at` headers
+      // exist so tests can drive the F-10 demo guard (requireActiveDemoAccount)
+      // through the dev-stub session provider. Production auth never reads
+      // these headers because it resolves sessions from the D1 cookie token.
+      const isDemo = String(request.headers.get('x-ks2-dev-demo') || '').trim() === '1';
+      const demoExpiresAtRaw = request.headers.get('x-ks2-dev-demo-expires-at');
+      const demoExpiresAt = Number.isFinite(Number(demoExpiresAtRaw))
+        ? Number(demoExpiresAtRaw)
+        : null;
       return {
         accountId,
         email: cleanText(request.headers.get('x-ks2-dev-email')),
         displayName: cleanText(request.headers.get('x-ks2-dev-name')),
         platformRole: normalisePlatformRole(request.headers.get('x-ks2-dev-platform-role')),
-        provider: 'development-stub',
+        provider: isDemo ? 'demo' : 'development-stub',
         sessionId: `dev:${accountId}`,
+        accountType: isDemo ? 'demo' : 'real',
+        demo: isDemo,
+        demoExpiresAt,
       };
     },
   };
