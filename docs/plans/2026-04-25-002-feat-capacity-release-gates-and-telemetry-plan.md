@@ -76,7 +76,7 @@ Without persisted evidence JSON, threshold-enforced exit codes, telemetry correl
 - `scripts/classroom-load-test.mjs` — existing driver. `parseClassroomLoadArgs()`, `buildClassroomLoadPlan()`, `summariseCapacityResults()`, `signalFor()` already return `{ok, totalRequests, expectedRequests, statusCounts, endpointStatus, endpoints, signals, failures}`. Exit codes already use `process.exitCode` with `0/1/2`. `timedJsonRequest()` uses `Object.defineProperty` to keep `payload`/`failureText`/`cookie` non-enumerable — every new evidence-persistence path must preserve this.
 - `scripts/probe-production-bootstrap.mjs` and `scripts/lib/production-smoke.mjs` — the shared `configuredOrigin`, `createDemoSession`, `loadBootstrap`, `subjectCommand` helpers. New smoke scripts must reuse them, not rebuild demo-session / cookie logic.
 - `scripts/grammar-production-smoke.mjs`, `scripts/punctuation-production-smoke.mjs` — naming convention `smoke:production:{subject}` and the pattern of one function per scenario (`smokeGrammarNormalRound`, `smokeGrammarMiniTest`, etc.) are the template for the new `smoke:production:spelling-start`.
-- `worker/src/d1.js` — thin wrapper (`bindStatement`, `run`, `first`, `all`, `scalar`, `batch`, `exec`, `withTransaction`). No per-request accounting today. Cleanest telemetry hook point. `batch()` already returns `{success, meta: {rows_read, rows_written, changes, last_row_id}}` — use `meta.rows_read/rows_written` directly; for `first()` / `all()` the wrapper must either capture from the D1 statement result or synthesize (see `tests/helpers/sqlite-d1.js` for how local fixtures synthesise `rows_read: rows.length`).
+- `worker/src/d1.js` — thin wrapper (`bindStatement`, `run`, `first`, `all`, `scalar`, `batch`, `exec`, `withTransaction`). No per-request accounting today. Cleanest telemetry hook point. `batch()` already returns `{success, meta: {rows_read, rows_written, changes, last_row_id}}` — use `meta.rows_read/rows_written` directly; for `first()` / `all()` the wrapper must either capture from the D1 statement result or synthesise (see `tests/helpers/sqlite-d1.js` for how local fixtures synthesise `rows_read: rows.length`).
 - `worker/src/app.js` — monolithic `if/else` dispatch inside `createWorkerApp.fetch` (lines ~210-698). New per-request collector lives in the outer `try/catch`. Existing `x-ks2-request-id` handling exists only inside `mutationFromRequest()` for legacy runtime writes and subject command normalisation; bootstrap / history routes do not currently stamp a request id. Telemetry PR must generate-if-missing, attach to the collector, and echo in response headers for every capacity-relevant route.
 - `worker/src/repository.js` — `bootstrapBundle()` (~line 2652) still fans out per writable learner. `bootstrapCapacityMeta()` (~line 2616) emits caps as `learnerCount × perLearnerLimit`. `readLearnerProjectionBundle()` (~line 2828) reads bounded 200-event window **and** `command.projection.v1` but the read model is **not yet consumed** — spelling, grammar, punctuation handlers pass `projectionState.events` into `combineCommandEvents` for dedupe. This is the exact surface U6 (hot-path projection consumption) must change.
 - `worker/src/read-models/learner-read-models.js` — exports `COMMAND_PROJECTION_MODEL_KEY='command.projection.v1'`, `PUBLIC_ACTIVITY_TYPES` allowlist, `publicActivityFromEventRow`, redaction-safe row normalisers. Any hot-path consumption must go through these normalisers.
@@ -122,7 +122,7 @@ This plan was strengthened after a parallel five-reviewer confidence check (corr
 - **U3 telemetry:** request-id ingress validation (regex-based, non-matching replaced server-side); `CapacityCollector.toPublicJSON()` as explicit closed allowlist with schema test; constructor-injection design choice documented (not AsyncLocalStorage); `statements[]` hard-capped at 50 to bound JSON serialisation cost; benchmark-gated PR merge (+10% bootstrap / +5% command wall-time budget); `CAPACITY_LOG_SAMPLE_RATE` env default 0.1 in production with always-on logging for `status >= 500`; pre-route 401 emits log with `phase: 'pre-route'` but no `meta.capacity` in body.
 - **U1 evidence gates:** `scripts/verify-capacity-evidence.mjs` wired into `npm run check` cross-checks `docs/operations/capacity.md` rows against JSON files; `evidenceSchemaVersion` migration rule (v1 U1-only, v2 after U3; tier claims above `smoke-pass` require v2); certification-tier runs require a pinned `--config reports/capacity/configs/<tier>.json` (PR-reviewed, no ad-hoc threshold relaxation); network-failure threshold required when any status threshold set.
 - **U5 dense-history smoke:** explicit fixture credential management (Cloudflare secret storage, quarterly rotation runbook, fail-closed auth, `demo-only` scope, KV-backed advisory lock for concurrent-operator protection); 503 `projection_unavailable` scenario fails smoke with distinguishable exit code; narrow tolerance for 503 only on stale-409 retry race.
-- **U9 circuit breakers:** state lives under `persistence.breakers.*` sub-namespace (architecture feedback: avoid flattening 20+ fields onto the existing snapshot); client-facing exposure reduced to aggregate `breakersDegraded` boolean map (security feedback: don't expose named-endpoint health map to low-privilege clients); short-TTL `localStorage` multi-tab broadcast to prevent Tab B retry storms; incognito / managed-profile fallback documented as accepted residual risk; breaker ordering with `notModified` is notModified-first, breaker-second; refuse-cache backstop after 3 consecutive missing-metadata bootstraps.
+- **U9 circuit breakers:** state lives under `persistenceChannel.breakers.*` sub-namespace (architecture feedback: avoid flattening 20+ fields onto the existing snapshot); client-facing exposure reduced to aggregate `breakersDegraded` boolean map (security feedback: don't expose named-endpoint health map to low-privilege clients); short-TTL `localStorage` multi-tab broadcast to prevent Tab B retry storms; incognito / managed-profile fallback documented as accepted residual risk; breaker ordering with `notModified` is notModified-first, breaker-second; refuse-cache backstop after 3 consecutive missing-metadata bootstraps.
 - **U4 local-Worker:** environment-strip verification (assert `CLOUDFLARE_API_TOKEN` absent in subprocess env); log output scrubbed through redaction filter; two-stage readiness check (static asset + demo-session creation) to avoid treating auth-401 as ready; explicit port logging (not silent selection); Windows CI pre-step safety pass.
 - **Phase ordering:** U4 runs in parallel with U3 (architecture feedback); U6 `Files` now includes `src/platform/runtime/subject-command-client.js` (correctness feedback: the retry-classifier work must not be deferred to U9).
 
@@ -213,7 +213,7 @@ This plan was strengthened after a parallel five-reviewer confidence check (corr
 - **`BOOTSTRAP_CAPACITY_VERSION` bump release rule** — resolved as required-field addition must bump version in the same PR; snapshot test enforces.
 - **Evidence integrity cross-check** — resolved as `scripts/verify-capacity-evidence.mjs` in `npm run check`.
 - **`evidenceSchemaVersion` migration** — resolved as v1 (U1) for `smoke-pass` only; v2 (U3+) required for tier claims above.
-- **Circuit-breaker state surface** — resolved as `persistence.breakers.*` sub-namespace for internal; aggregate `breakersDegraded` boolean map for UI components.
+- **Circuit-breaker state surface** — resolved as `persistenceChannel.breakers.*` sub-namespace for internal; aggregate `breakersDegraded` boolean map for UI components.
 - **Multi-tab breaker coordination** — resolved as short-TTL `localStorage` broadcast with per-tab fallback when unavailable.
 - **Projection schema rollback semantics** — resolved as asymmetric: `newer-opaque` on rollback direction (preserve data), `miss-rehydrated` on migration direction (overwrite safely).
 - **U4 wrangler readiness-detection strategy** — resolved as two-stage check: poll a static endpoint (health or ASSETS root) first, then post a demo-session creation request, both must return 200 before the load driver starts. Avoids the "auth-401 treated as ready" ambiguity when D1 bindings are misconfigured.
@@ -384,8 +384,8 @@ Dashed edges indicate "helps but does not hard-block." Classroom-tier certificat
 - Make `report.ok === false` when any threshold fails; preserve existing `process.exitCode = report.ok ? 0 : 1` and `2` on thrown errors.
 - **Network-failure threshold required when any status threshold is set** — if `--max-5xx` is provided, `--max-network-failures` must also be provided (default 0 suggested). Prevents the silent-success case where 100% network failure reports `max5xx: {observed: 0, passed: true}`. Validation rejects the CLI combination at parse.
 - Add a Capacity Evidence table to `docs/operations/capacity.md` with the columns from the origin document (`Date | Commit | Env | Plan | Learners | Burst | Rounds | P95 Bootstrap | P95 Command | Max Bytes | 5xx | Signals | Decision`).
-- **Evidence integrity cross-check:** add `scripts/verify-capacity-evidence.mjs` (called from `npm run check` as a lightweight assertion) that scans `docs/operations/capacity.md` for rows claiming "certified" / "provisional" and verifies each such claim points to a JSON evidence file at `reports/capacity/snapshots/` or `reports/capacity/latest-*.json` with (a) matching `commit` SHA, (b) `report.ok === true`, (c) `evidenceSchemaVersion >= 2` (i.e. U3 telemetry fields present; v1 evidence files cannot back tier claims beyond smoke-pass). A row without a matching file fails `npm run check`. Handwritten "looks good" decisions are rejected. Stops threshold-drift and fabricated-row incentive distortion.
-- **`evidenceSchemaVersion` migration rule:** U1 ships `evidenceSchemaVersion: 1` (no telemetry fields). U3 bumps to `evidenceSchemaVersion: 2` (adds `d1RowsRead`, `queryCount`, per-endpoint telemetry aggregates). Tier claims above `smoke-pass` require `v2`. `docs/operations/capacity.md` section explicitly lists which tiers each schema version can back.
+- **Evidence integrity cross-check:** add `scripts/verify-capacity-evidence.mjs` (called from `npm run check` as a lightweight assertion) that scans `docs/operations/capacity.md` for rows claiming "certified" / "provisional" and verifies each such claim points to a JSON evidence file at `reports/capacity/snapshots/` or `reports/capacity/latest-*.json` with (a) matching `commit` SHA, (b) `report.ok === true`, (c) **tier-appropriate `evidenceSchemaVersion`** — `smoke-pass` and `small-pilot-provisional` accept `v1` or later; `30-learner-beta-certified`, `60-learner-stretch-certified`, and `100-plus-certified` require `v2` or later (i.e. U3 telemetry fields must be present before classroom-tier certification). A row without a matching file fails `npm run check`. Handwritten "looks good" decisions are rejected. Between U1 merge and U3 merge, only `smoke-pass` / `small-pilot-provisional` rows can be added — the verify script errors with a clear "U3 not yet shipped — classroom-tier certification not available" message for any higher-tier row. Stops threshold-drift and fabricated-row incentive distortion.
+- **`evidenceSchemaVersion` migration rule:** U1 ships `evidenceSchemaVersion: 1` (no telemetry fields). U3 bumps to `evidenceSchemaVersion: 2` (adds `d1RowsRead`, `queryCount`, per-endpoint telemetry aggregates). Tier claims above `small-pilot-provisional` require `v2`. `docs/operations/capacity.md` section explicitly lists which tiers each schema version can back. Until U3 merges, the verify script tolerates v1 evidence files for the two eligible tiers only; after U3 merges, new `v2` evidence can back higher tiers.
 - **Threshold-drift prevention:** certification-tier runs (learners ≥ 20) are run via a config file input `--config reports/capacity/configs/<tier>.json` that pins the full threshold set; omitting the config is allowed only for `--dry-run` or small-pilot (<10 learner) runs. Config files are checked into git; any change goes through PR review. Prevents an operator under pressure from relaxing thresholds ad-hoc.
 
 **Execution note:** Characterization-first. Add tests that assert current-shape evidence before introducing threshold flags; then TDD new threshold logic.
@@ -396,7 +396,7 @@ Dashed edges indicate "helps but does not hard-block." Classroom-tier certificat
 - Existing rejection tests in `tests/capacity-scripts.test.js` lines 196-226
 
 **Test scenarios:**
-- Happy path: `--max-5xx 0 --max-bootstrap-p95-ms 1000 --output <tmp>` on a passing dry-run writes JSON with every threshold `passed: true`, `failures: []`, `report.ok: true`, exit 0.
+- Happy path: `--max-5xx 0 --max-network-failures 0 --max-bootstrap-p95-ms 1000 --output <tmp>` on a passing dry-run writes JSON with every threshold `passed: true`, `failures: []`, `report.ok: true`, exit 0. (`--max-network-failures` is required whenever `--max-5xx` is set — see the network-failure threshold rule in Approach.)
 - Happy path: evidence JSON includes `reportMeta` with commit SHA (or `unknown`), environment, origin, authMode, learners, burst, rounds, startedAt, finishedAt, evidenceSchemaVersion.
 - Edge case: threshold flag `0` vs undefined — `--max-5xx 0` must still gate (strict zero), whereas omitted flag skips the gate.
 - Edge case: `--output` to a non-existent directory creates the path recursively; `--output` to a read-only path fails with clear error and exit 2.
@@ -476,7 +476,7 @@ Dashed edges indicate "helps but does not hard-block." Classroom-tier certificat
 - Modify: `worker/src/repository.js`
 - Modify: `worker/src/http.js`
 - Modify: `src/platform/core/repositories/api.js`
-- Modify: `src/platform/runtime/subject-command-client.js`
+- Modify: `src/platform/runtime/subject-command-client.js` (**coordinate with U6**: U3's touch is an ingest-validator audit on outgoing `x-ks2-request-id` only; U6 adds `isCommandBackendExhausted()`. Whichever unit lands first, the second must rebase cleanly — both edits target different functions in the same file.)
 - Modify: `scripts/classroom-load-test.mjs`
 - Modify: `scripts/probe-production-bootstrap.mjs`
 - Test: `tests/worker-capacity-telemetry.test.js` (new)
@@ -521,7 +521,7 @@ Dashed edges indicate "helps but does not hard-block." Classroom-tier certificat
 - Error path: sample-rate config — `CAPACITY_LOG_SAMPLE_RATE=0.0` still emits every log line for `status >= 500`; `meta.capacity` in response body always present regardless of sample rate.
 - Integration: overhead benchmark — `/api/bootstrap` wall-time with collector enabled stays within +10% of Phase 1 baseline on a 30-learner account; benchmark gates PR merge.
 - Integration: `tests/worker-bootstrap-capacity.test.js` assertions extend to check `bootstrapCapacity` stamped on collector matches the payload.
-- Integration: `tests/worker-projections.test.js` dense-history fixture shows `queryCount ≤ 15` for a common projection command (documents the soft budget).
+- Integration: `tests/worker-projections.test.js` dense-history fixture shows `queryCount ≤ 15` for a common projection command (pre-U6 soft budget — this is U3's baseline while projection is still bounded-fallback-based. U6 tightens the budget to `≤ 12` once the read model becomes the hot-path input — see U6 test scenarios and Success Metrics).
 - Integration: load driver `--output` evidence JSON (U1) gains `d1RowsRead`, `queryCount` aggregated per endpoint once U3 lands; `--include-request-samples` opt-in caps samples at 100+100 per endpoint.
 
 **Verification:**
@@ -598,7 +598,7 @@ Dashed edges indicate "helps but does not hard-block." Classroom-tier certificat
 
 **Approach:**
 - Reuse `scripts/lib/production-smoke.mjs` shared helpers (`configuredOrigin`, `createDemoSession`, `loadBootstrap`, `subjectCommand`). Do not duplicate demo-session / cookie logic.
-- Add `scripts/spelling-production-smoke.mjs` exporting `smokeSpellingSmartReviewStart`, `smokeSpellingAnswerAdvance`, `smokeSpellingEndSession`. Each function asserts `status === 200`, no 5xx, `meta.capacity.signals` empty, `wallMs` under per-endpoint threshold, response bytes under threshold, `meta.capacity.projectionFallback` value meets expectation (`null` for fresh learner; `rehydrated` allowed once during migration).
+- Add `scripts/spelling-production-smoke.mjs` exporting `smokeSpellingSmartReviewStart`, `smokeSpellingAnswerAdvance`, `smokeSpellingEndSession`. Each function asserts `status === 200`, no 5xx, `meta.capacity.signals` empty, `wallMs` under per-endpoint threshold, response bytes under threshold, `meta.capacity.projectionFallback` value meets expectation (`null` for fresh learner; `'miss-rehydrated'` allowed once during migration). Values MUST match U6's closed union: `'hit' | 'miss-rehydrated' | 'stale-catchup' | 'rejected' | 'newer-opaque'`.
 - Add a "dense-history seed" mode: seed a fixture learner (stable identifier `ks2-capacity-probe@internal`, documented in `docs/operations/capacity.md`) with ≥ 200 events, shared across smoke runs.
 - **Fixture credential management (explicit specification):**
   - **Storage:** account password stored as `KS2_CAPACITY_PROBE_PASSWORD` Cloudflare secret (never in git, never in CI plain env); local operator runs pull from a password manager. Session cookies derived per run.
@@ -619,7 +619,7 @@ Dashed edges indicate "helps but does not hard-block." Classroom-tier certificat
 - `docs/full-lockdown-runtime.md` manual-post-deploy convention
 
 **Test scenarios:**
-- Happy path: dense-history Spelling Smart Review start-session returns 200 with `meta.capacity.wallMs < 500`, `signals: []`, `projectionFallback: null` (after U6 lands, or `rehydrated` otherwise).
+- Happy path: dense-history Spelling Smart Review start-session returns 200 with `meta.capacity.wallMs < 500`, `signals: []`, `projectionFallback: 'hit'` (steady state after U6 lands, or `'miss-rehydrated'` on first run against a learner whose projection has not yet been persisted).
 - Happy path: full loop (start → answer → advance → end) completes without a 5xx, each step under its threshold.
 - Happy path: second round after the first shows `meta.capacity` with zero `event_log`-named queries (once U6 lands — assertion gated by telemetry field rather than deleted).
 - Edge case: Parent Hub recent-sessions first page → second page via cursor; no duplicate `session.id`, page 2 response bytes under threshold.
@@ -658,7 +658,7 @@ Dashed edges indicate "helps but does not hard-block." Classroom-tier certificat
 - Modify: `worker/src/subjects/grammar/commands.js`
 - Modify: `worker/src/subjects/punctuation/commands.js`
 - Modify: `worker/src/errors.js` (add `ProjectionUnavailableError` alongside existing error classes)
-- Modify: `src/platform/runtime/subject-command-client.js` (non-retryable classifier for `projection_unavailable`)
+- Modify: `src/platform/runtime/subject-command-client.js` (non-retryable classifier for `projection_unavailable`; **coordinate with U3**: whichever unit lands first, the second rebases cleanly — U3's ingest-validator audit and U6's `isCommandBackendExhausted()` target different functions in the same file)
 - Test: `tests/worker-projection-hot-path.test.js` (new)
 - Test: `tests/worker-projections.test.js`
 - Test: `tests/spelling.test.js`
@@ -721,7 +721,7 @@ Dashed edges indicate "helps but does not hard-block." Classroom-tier certificat
 
 **Requirements:** R10, R11, R14, R15
 
-**Dependencies:** U3 (to measure byte-drop evidence and add `meta.capacity.bootstrapMode: 'full' | 'notModified'`)
+**Dependencies:** U3 (to measure byte-drop evidence and surface `meta.capacity.bootstrapMode`, which uses U7's canonical enum `'selected-learner-bounded' | 'full-legacy' | 'not-modified'`)
 
 **Files:**
 - Modify: `worker/src/app.js`
@@ -874,7 +874,7 @@ Dashed edges indicate "helps but does not hard-block." Classroom-tier certificat
 
 **Approach:**
 - Introduce a `CircuitBreaker` primitive (closed / half-open / open) parameterised by `{failureThreshold, cooldownMs, probeIntervalMs, cooldownMaxMs}`. Distinct breakers per surface: `parentHubRecentSessions`, `parentHubActivity`, `classroomSummary`, `readModelDerivedWrite`, `bootstrapCapacityMetadata`.
-- **Breaker state lives under a sub-namespace: `persistenceChannel.read().breakers = { parentHubRecentSessions: {state, openedAt, failureCount, cooldownUntil}, ... }`.** NOT flattened onto the top-level snapshot. Keeps the existing 7-field snapshot readable; maps cleanly onto `docs/repositories.md` vocabulary; avoids forcing every `persistenceChannel.read()` consumer to learn 20+ new fields.
+- **Breaker state lives under a sub-namespace: `persistenceChannel.read().breakers = { parentHubRecentSessions: {state, openedAt, failureCount, cooldownUntil}, ... }`.** NOT flattened onto the top-level snapshot. Keeps the existing 7-field snapshot readable; maps cleanly onto `docs/repositories.md` vocabulary; avoids forcing every `persistenceChannel.read()` consumer to learn 20+ new fields. (Shorthand `persistenceChannel.breakers.*` used elsewhere in this plan refers to the same structure.)
 - **Client-facing exposure:** only a minimal `breakersDegraded: { parentHub: boolean, classroomSummary: boolean, derivedWrite: boolean, bootstrapCapacity: boolean }` boolean map is exposed to components that render UX; the full state (with endpoint names, failure counts, transition timestamps) stays inside `persistenceChannel` for internal observability only. This avoids a low-privilege client learning a live map of degraded backend surfaces for targeted timing.
 - Client UX rules:
   - `parentHubRecentSessions` open → show "Recent history temporarily unavailable" in Parent Hub; practice unaffected.
@@ -915,7 +915,7 @@ Dashed edges indicate "helps but does not hard-block." Classroom-tier certificat
 - Error path: breaker transition during command in-flight — in-flight commands preserve `docs/mutation-policy.md` semantics; breaker state change does not retroactively alter their outcome.
 - Integration: Parent Hub `recent-sessions` 5xx triggers `parentHubRecentSessions` breaker; UI shows degraded message; subsequent practice commands succeed.
 - Integration: `meta.capacity.signals` from U3 includes breaker state transitions (`breakerTransition: parentHubRecentSessions:closed->open`).
-- Integration: client-facing `breakersDegraded` map is the ONLY breaker state exposed to UI components; full state in `persistence.breakers.*` is internal observability only (regression test asserts no component imports the full state).
+- Integration: client-facing `breakersDegraded` map is the ONLY breaker state exposed to UI components; full state in `persistenceChannel.breakers.*` is internal observability only (regression test asserts no component imports the full state).
 - Covers AE: a learner can complete a spelling answer/advance/end-session loop while every non-critical breaker is open.
 
 **Verification:**
