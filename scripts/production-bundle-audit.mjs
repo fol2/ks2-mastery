@@ -206,6 +206,12 @@ async function auditProduction(origin) {
     'x-frame-options',
     'cross-origin-opener-policy',
     'cross-origin-resource-policy',
+    // U7: Content-Security-Policy-Report-Only + the two reporting
+    // headers must reach every production response lane before we
+    // flip CSP to enforcing.
+    'content-security-policy-report-only',
+    'report-to',
+    'reporting-endpoints',
   ];
   let headerChecksPassed = 0;
   for (const check of SECURITY_HEADER_CHECKS) {
@@ -229,6 +235,29 @@ async function auditProduction(origin) {
       if (/preload/i.test(response.headers.get('strict-transport-security') || '')) {
         failures.push(
           `Security header HEAD check found HSTS preload on ${check.label}; preload is deferred (F-03).`,
+        );
+        continue;
+      }
+      // U7: CSP Report-Only must carry the substituted theme-script
+      // hash and the strict-dynamic / report-uri directives. A silent
+      // regression (lost hash, dropped report-uri) would otherwise
+      // ship to production.
+      const cspValue = response.headers.get('content-security-policy-report-only') || '';
+      if (!/sha256-[A-Za-z0-9+/]+=*/.test(cspValue)) {
+        failures.push(
+          `Security header HEAD check on ${check.label}: CSP-Report-Only is missing a sha256-<base64> hash (got: ${cspValue.slice(0, 120) || 'absent'}).`,
+        );
+        continue;
+      }
+      if (!/'strict-dynamic'/.test(cspValue)) {
+        failures.push(
+          `Security header HEAD check on ${check.label}: CSP-Report-Only is missing 'strict-dynamic'.`,
+        );
+        continue;
+      }
+      if (!/report-uri \/api\/security\/csp-report/.test(cspValue)) {
+        failures.push(
+          `Security header HEAD check on ${check.label}: CSP-Report-Only is missing report-uri /api/security/csp-report.`,
         );
         continue;
       }

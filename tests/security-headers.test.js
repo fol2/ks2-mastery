@@ -5,6 +5,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  CSP_INLINE_SCRIPT_HASH,
+  CSP_POLICY_VALUE,
+  REPORT_TO_VALUE,
+  REPORTING_ENDPOINTS_VALUE,
   SECURITY_HEADERS,
   applySecurityHeaders,
   serialiseHeadersBlock,
@@ -17,8 +21,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '..');
 
-// U6: the seven default security headers that every Worker response + every
-// `_headers` group must carry. Mirrors plan line 583. CSP lands in U7.
+// U6 + U7: security headers every Worker response + every `_headers`
+// group must carry. U6 seeded the seven non-CSP headers; U7 added
+// Content-Security-Policy-Report-Only, Report-To, and
+// Reporting-Endpoints.
 const EXPECTED_HEADER_NAMES = [
   'strict-transport-security',
   'x-content-type-options',
@@ -27,6 +33,9 @@ const EXPECTED_HEADER_NAMES = [
   'x-frame-options',
   'cross-origin-opener-policy',
   'cross-origin-resource-policy',
+  'content-security-policy-report-only',
+  'report-to',
+  'reporting-endpoints',
 ];
 
 function assertHasAllSecurityHeaders(response) {
@@ -395,8 +404,11 @@ test('assert:build-public logic rejects a drifted _headers that lacks the securi
   // inspection of `scripts/assert-build-public.mjs`, which a future refactor
   // could silently pass by leaving dead-code tokens behind.
   const freshContent = await readFile(path.join(REPO_ROOT, '_headers'), 'utf8');
+  // Repo-root `_headers` carries the `'sha256-BUILD_TIME_HASH'` placeholder;
+  // `scripts/build-public.mjs` substitutes it when copying into
+  // `dist/public/_headers`. Allow the placeholder here (U7 drift contract).
   assert.doesNotThrow(
-    () => assertHeadersBlockIsFresh(freshContent),
+    () => assertHeadersBlockIsFresh(freshContent, { allowPlaceholderHash: true }),
     'The checked-in repo-root _headers must pass the drift contract.',
   );
 
@@ -591,4 +603,113 @@ test('/api/auth/logout response carries all seven security headers plus Clear-Si
     `logout must carry Clear-Site-Data with cache, cookies, storage — got ${clearSiteData}`,
   );
   server.close();
+});
+
+// ---------------------------------------------------------------------------
+// U7: Content-Security-Policy-Report-Only coverage.
+// ---------------------------------------------------------------------------
+
+test('CSP_INLINE_SCRIPT_HASH is a well-formed sha256 CSP token', () => {
+  assert.match(
+    CSP_INLINE_SCRIPT_HASH,
+    /^sha256-[A-Za-z0-9+/]+=*$/,
+    'The generated hash must be a CSP-compliant sha256-<base64> token.',
+  );
+});
+
+test('CSP_POLICY_VALUE includes all baseline directives', () => {
+  const policy = CSP_POLICY_VALUE;
+  assert.match(policy, /default-src 'none'/, 'default-src must deny-by-default');
+  assert.match(policy, /'strict-dynamic'/, 'script-src must carry strict-dynamic');
+  assert.ok(policy.includes(`'${CSP_INLINE_SCRIPT_HASH}'`), 'CSP must list the inline theme-script hash');
+  assert.match(policy, /manifest-src 'self'/, 'manifest-src must be explicit (F-06)');
+  assert.match(policy, /worker-src 'none'/, 'worker-src must deny Service Workers (F-06)');
+  assert.match(policy, /connect-src[^;]*https:\/\/fonts\.googleapis\.com/, 'connect-src must list Google Fonts CSS origin');
+  assert.match(policy, /connect-src[^;]*https:\/\/fonts\.gstatic\.com/, 'connect-src must list Google Fonts static origin');
+  assert.match(policy, /frame-ancestors 'none'/);
+  assert.match(policy, /base-uri 'none'/);
+  assert.match(policy, /object-src 'none'/);
+  assert.match(policy, /upgrade-insecure-requests/);
+  assert.match(policy, /report-uri \/api\/security\/csp-report/);
+  assert.match(policy, /report-to csp-endpoint/);
+});
+
+test('REPORT_TO_VALUE is valid JSON with the csp-endpoint group', () => {
+  const parsed = JSON.parse(REPORT_TO_VALUE);
+  assert.equal(parsed.group, 'csp-endpoint');
+  assert.equal(Array.isArray(parsed.endpoints), true);
+  assert.equal(parsed.endpoints[0].url, '/api/security/csp-report');
+});
+
+test('REPORTING_ENDPOINTS_VALUE targets the csp-report route', () => {
+  assert.match(REPORTING_ENDPOINTS_VALUE, /csp-endpoint="\/api\/security\/csp-report"/);
+});
+
+test('SECURITY_HEADERS exposes the three U7 reporting headers', () => {
+  assert.ok(SECURITY_HEADERS['Content-Security-Policy-Report-Only']);
+  assert.ok(SECURITY_HEADERS['Report-To']);
+  assert.ok(SECURITY_HEADERS['Reporting-Endpoints']);
+  // The CSP header must contain the same hash the build substitutes
+  // into `_headers` — a drift between source and header would otherwise
+  // ship silently.
+  assert.ok(
+    SECURITY_HEADERS['Content-Security-Policy-Report-Only'].includes(CSP_INLINE_SCRIPT_HASH),
+    'Worker-emitted CSP must include the inline-script hash exported by the generated module.',
+  );
+});
+
+test('applySecurityHeaders stamps CSP-Report-Only on JSON responses', () => {
+  const response = new Response('{"ok":true}', {
+    status: 200,
+    headers: { 'content-type': 'application/json; charset=utf-8' },
+  });
+  const wrapped = applySecurityHeaders(response, { path: '/api/bootstrap' });
+  assert.ok(wrapped.headers.get('content-security-policy-report-only')?.includes(CSP_INLINE_SCRIPT_HASH));
+  assert.ok(wrapped.headers.get('report-to')?.includes('csp-endpoint'));
+  assert.ok(wrapped.headers.get('reporting-endpoints')?.includes('csp-endpoint'));
+});
+
+test('applySecurityHeaders never emits the enforcing Content-Security-Policy header (Report-Only only in this unit)', () => {
+  const wrapped = applySecurityHeaders(new Response('x', { status: 200 }), { path: '/' });
+  assert.equal(
+    wrapped.headers.get('content-security-policy'),
+    null,
+    'U7 ships Report-Only; enforcement flip is a follow-up PR.',
+  );
+});
+
+test('Worker JSON response carries the CSP Report-Only header with a substituted hash', async () => {
+  const server = createWorkerRepositoryServer();
+  const response = await server.fetch('https://repo.test/api/bootstrap');
+  const policy = response.headers.get('content-security-policy-report-only') || '';
+  assert.ok(policy.includes(CSP_INLINE_SCRIPT_HASH), `policy must carry hash — got ${policy.slice(0, 120)}...`);
+  assert.match(policy, /'strict-dynamic'/);
+  assert.match(policy, /report-uri \/api\/security\/csp-report/);
+  server.close();
+});
+
+test('Worker 302 redirect carries the CSP Report-Only header', async () => {
+  const server = createWorkerRepositoryServer({
+    env: { AUTH_MODE: 'development-stub' },
+  });
+  const response = await server.fetchRaw('https://repo.test/demo', {
+    method: 'GET',
+    headers: { 'sec-fetch-mode': 'navigate', 'sec-fetch-dest': 'document' },
+  });
+  assert.equal(response.status, 302);
+  assert.ok(response.headers.get('content-security-policy-report-only')?.includes(CSP_INLINE_SCRIPT_HASH));
+  server.close();
+});
+
+test('_headers repo file contains the CSP Report-Only line (pre-substitution via placeholder)', async () => {
+  const content = await readFile(path.join(REPO_ROOT, '_headers'), 'utf8');
+  assert.match(content, /Content-Security-Policy-Report-Only:/);
+  // Repo-root copy has the placeholder; build-public.mjs substitutes.
+  assert.ok(
+    content.includes("'sha256-BUILD_TIME_HASH'") || /'sha256-[A-Za-z0-9+/]+=*'/.test(content),
+    '_headers must carry either the placeholder or a substituted sha256 token.',
+  );
+  assert.match(content, /report-uri \/api\/security\/csp-report/);
+  assert.match(content, /Report-To:[^\n]*csp-endpoint/);
+  assert.match(content, /Reporting-Endpoints:[^\n]*csp-endpoint/);
 });

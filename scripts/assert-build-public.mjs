@@ -103,7 +103,20 @@ if (manifestKeys.size !== expectedMonsterAssets.size) {
 }
 
 const topLevel = await readdir(publicDir);
-const allowed = new Set(['_headers', 'favicon.ico', 'index.html', 'manifest.webmanifest', 'styles', 'src', 'assets']);
+// U7 (sys-hardening p1): `.csp-theme-hash` is a build-time artefact
+// written by `scripts/build-public.mjs` so operators (and future drift
+// audits) can inspect the CSP inline-script hash that shipped without
+// having to parse _headers.
+const allowed = new Set([
+  '_headers',
+  'favicon.ico',
+  'index.html',
+  'manifest.webmanifest',
+  'styles',
+  'src',
+  'assets',
+  '.csp-theme-hash',
+]);
 const unexpected = topLevel.filter((entry) => !allowed.has(entry));
 if (unexpected.length) {
   throw new Error(`Unexpected top-level public entries: ${unexpected.join(', ')}`);

@@ -1,7 +1,8 @@
 import { sha256 } from './auth.js';
-import { first, requireDatabase } from './d1.js';
+import { requireDatabase } from './d1.js';
 import { BadRequestError, BackendUnavailableError } from './errors.js';
 import { readJson } from './http.js';
+import { consumeRateLimit } from './rate-limit.js';
 import { protectDemoTtsFallback, protectDemoTtsLookup, recordDemoMetric } from './demo/sessions.js';
 import { resolveSpellingAudioRequest } from './subjects/spelling/audio.js';
 import {
@@ -54,35 +55,9 @@ function clientIp(request) {
   ) || 'unknown';
 }
 
-function currentWindowStart(timestamp, windowMs) {
-  return Math.floor(timestamp / windowMs) * windowMs;
-}
-
-async function consumeRateLimit(env, { bucket, identifier, limit, windowMs, now }) {
-  if (!bucket || !identifier || !limit || !windowMs) return { allowed: true, retryAfterSeconds: 0 };
-  const db = requireDatabase(env);
-  const windowStartedAt = currentWindowStart(now, windowMs);
-  const limiterKey = `${bucket}:${await sha256(identifier)}`;
-  const row = await first(db, `
-    INSERT INTO request_limits (limiter_key, window_started_at, request_count, updated_at)
-    VALUES (?, ?, 1, ?)
-    ON CONFLICT(limiter_key) DO UPDATE SET
-      request_count = CASE
-        WHEN request_limits.window_started_at = excluded.window_started_at
-          THEN request_limits.request_count + 1
-        ELSE 1
-      END,
-      window_started_at = excluded.window_started_at,
-      updated_at = excluded.updated_at
-    RETURNING request_count, window_started_at
-  `, [limiterKey, windowStartedAt, now]);
-  const count = Number(row?.request_count || 1);
-  const storedWindow = Number(row?.window_started_at || windowStartedAt);
-  return {
-    allowed: count <= limit,
-    retryAfterSeconds: Math.max(1, Math.ceil(((storedWindow + windowMs) - now) / 1000)),
-  };
-}
+// U7: `currentWindowStart` + `consumeRateLimit` extracted to
+// `worker/src/rate-limit.js`. TTS uses the shared helper with an
+// env-first signature, same shape as before (feasibility F-06).
 
 async function protectTts(env, request, session, now) {
   const accountLimit = await consumeRateLimit(env, {

@@ -16,8 +16,8 @@ import { FORBIDDEN_KEYS_EVERYWHERE as SHARED_FORBIDDEN_KEYS_EVERYWHERE } from '.
 //                       OAuth start, OAuth callback
 // - Expected shape:     authRequired, expectedStatus, allowedKeys, forbiddenKeys
 //
-// The CSP report endpoint (/api/security/csp-report) is intentionally omitted here; it
-// lands in U7 and the matrix will be extended when that route ships.
+// The CSP report endpoint (/api/security/csp-report) is covered at the end of the file
+// via the U7 rows: happy-path POST (legacy body -> 204) and oversize (413) probe.
 //
 // The matrix is a single oracle: new routes or new role combinations cannot be merged
 // without extending the matrix. That is enforced by the assertion coverage summary at
@@ -911,9 +911,46 @@ test('matrix: /api/auth/google/callback with invalid state returns error redirec
 });
 
 // -------------------- Route 11: CSP report endpoint --------------------
-// The /api/security/csp-report endpoint ships in U7 and is intentionally omitted from
-// this matrix until that unit lands. When it does, add an unauthenticated + valid-body
-// row here.
+
+test('matrix: unauthenticated POST /api/security/csp-report with a legacy body returns 204', async () => {
+  const server = productionServer();
+  coverage.noteRoute('/api/security/csp-report');
+  coverage.noteCombination('unauthenticated + POST /api/security/csp-report (legacy body)');
+
+  const response = await server.fetchRaw(`${ORIGIN}/api/security/csp-report`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/csp-report' },
+    body: JSON.stringify({
+      'csp-report': {
+        'blocked-uri': 'https://evil.example/naughty.js',
+        'document-uri': ORIGIN,
+        'violated-directive': 'script-src',
+      },
+    }),
+  });
+  assert.equal(response.status, 204, 'CSP report endpoint must accept valid body without auth');
+  server.close();
+});
+
+test('matrix: unauthenticated POST /api/security/csp-report rejects oversize body with 413', async () => {
+  const server = productionServer();
+  coverage.noteRoute('/api/security/csp-report');
+  coverage.noteCombination('unauthenticated + POST /api/security/csp-report (413 oversize)');
+
+  const body = JSON.stringify({
+    'csp-report': { 'blocked-uri': 'x'.repeat(16384) },
+  });
+  const response = await server.fetchRaw(`${ORIGIN}/api/security/csp-report`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/csp-report',
+      'content-length': String(Buffer.byteLength(body, 'utf8')),
+    },
+    body,
+  });
+  assert.equal(response.status, 413, 'Oversize CSP report must be rejected before parsing');
+  server.close();
+});
 
 // -------------------- Matrix coverage summary --------------------
 
@@ -933,6 +970,7 @@ test('matrix: coverage summary — every authenticated route is exercised at lea
     '/api/demo/reset',
     '/api/auth/*/start',
     '/api/auth/*/callback',
+    '/api/security/csp-report',
   ];
   for (const route of requiredRoutes) {
     assert.equal(
@@ -945,9 +983,10 @@ test('matrix: coverage summary — every authenticated route is exercised at lea
   // this assertion fails. Baseline reflects the U13 review-follower additions
   // (P1-A /api/session + /api/auth/session allowlist rows, P1-B F-10 drive
   // test, P2 cross-account foreign-learnerId probes, P2 demo+admin
-  // combination). Raise it when adding new rows.
+  // combination) plus the U7 CSP report endpoint rows. Raise it when
+  // adding new rows.
   assert.ok(
-    coverage.combinationsCovered.length >= 28,
-    `Expected at least 28 matrix combinations, got ${coverage.combinationsCovered.length}: ${coverage.combinationsCovered.join(' | ')}`,
+    coverage.combinationsCovered.length >= 30,
+    `Expected at least 30 matrix combinations, got ${coverage.combinationsCovered.length}: ${coverage.combinationsCovered.join(' | ')}`,
   );
 });
