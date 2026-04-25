@@ -4,7 +4,7 @@ Punctuation is now a production subject slice for KS2 Mastery, built from the le
 
 The release deliberately keeps the learner engine first. Monsters and Codex rewards are projections from secured learning evidence; they are not the primary game loop and they do not drive scoring.
 
-## First Release Scope
+## Current Release Scope
 
 Release id:
 
@@ -229,7 +229,7 @@ Worker-first asset routing also denies `/shared/*`, `/worker/*`, `/tests/*`, `/d
 
 The Punctuation release gate includes:
 
-- manifest validation for the 14-skill map, first-release scope, readiness rows, and stable reward keys
+- manifest validation for the 14-skill map, current release scope, readiness rows, and stable reward keys
 - marking tests for exact answers, Speech variants, and misconception tags
 - scheduler and service tests for spaced secure thresholds and transition errors
 - Worker command tests for start, submit, continue, stale transitions, redaction, and idempotent reward projection
