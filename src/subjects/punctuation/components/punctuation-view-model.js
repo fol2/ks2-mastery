@@ -52,6 +52,7 @@ export function currentItemInstruction(item = {}) {
   if (item.inputKind === 'choice') return 'Choose the best sentence.';
   if (item.mode === 'transfer') return 'Write one accurate sentence.';
   if (item.mode === 'combine') return 'Combine the parts into one punctuated sentence.';
+  if (item.mode === 'paragraph') return 'Repair the whole passage.';
   if (item.mode === 'fix') return 'Correct the sentence.';
   return 'Type the sentence with punctuation.';
 }

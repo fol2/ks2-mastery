@@ -262,6 +262,34 @@ test('punctuation command route serves combine items through redacted text-entry
   }
 });
 
+test('punctuation command route serves paragraph items through redacted multiline read models', async () => {
+  const harness = createHarness();
+  try {
+    await harness.command('start-session', { mode: 'boundary', roundLength: '6' });
+    await harness.command('skip-item');
+    await harness.command('skip-item');
+    await harness.command('skip-item');
+    await harness.command('skip-item');
+    const paragraph = await harness.command('skip-item');
+
+    assert.equal(paragraph.body.subjectReadModel.phase, 'active-item');
+    assert.equal(paragraph.body.subjectReadModel.session.currentItem.id, 'pg_colon_semicolon');
+    assert.equal(paragraph.body.subjectReadModel.session.currentItem.mode, 'paragraph');
+    assert.equal(paragraph.body.subjectReadModel.session.currentItem.inputKind, 'text');
+    assert.match(paragraph.body.subjectReadModel.session.currentItem.prompt, /Repair the punctuation/i);
+    assert.match(paragraph.body.subjectReadModel.session.currentItem.stem, /The kit included three tools/);
+    assert.doesNotMatch(payloadText(paragraph.body.subjectReadModel), /accepted|correctIndex|rubric|validator|hiddenQueue|generator/);
+
+    const submit = await harness.command('submit-answer', {
+      typed: 'The kit included three tools: a torch, a rope and a map. The weather changed; the team packed quickly.',
+    });
+    assert.equal(submit.body.subjectReadModel.feedback.kind, 'success');
+    assert.equal(submit.body.domainEvents.some((event) => event.type === 'punctuation.item-attempted'), true);
+  } finally {
+    harness.close();
+  }
+});
+
 test('punctuation command route stays unavailable until the rollout gate is enabled', async () => {
   const harness = createHarness({ punctuationEnabled: false });
   try {

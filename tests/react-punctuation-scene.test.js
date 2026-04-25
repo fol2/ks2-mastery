@@ -208,6 +208,35 @@ test('punctuation React surface renders combine tasks as text-entry rewrites', (
   assert.doesNotMatch(html, /accepted|correctIndex|rubric|validator|generator|hiddenQueue/);
 });
 
+test('punctuation React surface renders paragraph repair as multiline text entry', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'paragraph-ui',
+      mode: 'smart',
+      length: 1,
+      answeredCount: 0,
+      currentItem: {
+        id: 'pg_bullet_consistency',
+        mode: 'paragraph',
+        inputKind: 'text',
+        prompt: 'Repair the bullet-list punctuation.',
+        stem: 'Bring\n- a drink.\n- a hat\n- a sketchbook.',
+      },
+    },
+  });
+
+  const html = harness.render();
+  assert.match(html, /Repair the whole passage/);
+  assert.match(html, /textarea/);
+  assert.match(html, /rows="6"/);
+  assert.match(html, /white-space:pre-wrap/);
+  assert.match(html, /Bring\n- a drink\.\n- a hat\n- a sketchbook\./);
+  assert.doesNotMatch(html, /accepted|correctIndex|rubric|validator|generator|hiddenQueue/);
+});
+
 test('punctuation React surface preserves newline-sensitive bullet text', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
