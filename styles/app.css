@@ -8103,3 +8103,204 @@ textarea:focus-visible {
     background var(--dur) var(--ease-out),
     color var(--dur) var(--ease-out);
 }
+
+/* ==========================================================
+   Polish layer 3 + 4 — detail and texture refinements that
+   continue the paper aesthetic. Editorial focus halo, generic
+   <details> chevron, refined ink/caret/selection, smooth scroll,
+   custom paper scrollbars, italic-em editorial pop, dormant
+   button loading state. All additive, no token changes.
+   ========================================================== */
+
+/* ---------- Layer 3 · Editorial focus halo ----------
+   Soft brand-tinted halo around a slightly transparent ink rule.
+   Specificity = (0,1,1) so bespoke focus styles like
+   `.codex-creature-button:focus-visible`, `.subject-breadcrumb-link
+   :focus-visible`, `.wb-drill-audio-btn:focus-visible` (all (0,2,0))
+   continue to win where they own the paper-native focus styling. */
+button:focus-visible,
+.btn:focus-visible,
+.home-section-link:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--ink) 78%, transparent);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--brand) 14%, transparent);
+}
+.btn.primary:focus-visible {
+  box-shadow:
+    0 0 0 5px color-mix(in oklab, var(--brand) 22%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.28);
+}
+
+/* ---------- Layer 3 · Generic <details> chevron ----------
+   Applies to plain <details> blocks (PersistenceBanner,
+   AdminHubSurface). Lower specificity than the existing
+   `.parent-hub-session-item summary` rules, so parent-hub keeps
+   its bespoke chevron and layout. */
+details > summary {
+  list-style: none;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color var(--dur) var(--ease-out);
+}
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before {
+  content: "›";
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--muted);
+  display: inline-block;
+  transform-origin: center;
+  transition: transform var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+}
+details[open] > summary::before {
+  transform: rotate(90deg);
+  color: var(--brand);
+}
+details > summary:hover {
+  color: var(--brand-ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  details > summary::before {
+    transition: none !important;
+  }
+}
+
+/* ---------- Layer 3 · Caret + selection refinement ---------- */
+input, textarea {
+  caret-color: var(--brand);
+}
+::selection {
+  background: color-mix(in oklab, var(--brand) 24%, transparent);
+  color: var(--ink);
+}
+
+/* ---------- Layer 3 · Placeholder ink ---------- */
+input::placeholder,
+textarea::placeholder {
+  color: var(--subtle);
+  opacity: 1;
+  font-style: italic;
+}
+
+/* ---------- Layer 3 · Smooth scroll ----------
+   Existing `@media (prefers-reduced-motion: reduce)` already
+   sets `scroll-behavior: auto !important;` so this is safe. */
+html { scroll-behavior: smooth; }
+
+/* ---------- Layer 3 · Dormant button loading state ----------
+   Activates only when JSX adds `.is-loading`. Inline spinner
+   replaces label without changing button geometry. */
+.btn.is-loading {
+  pointer-events: none;
+  position: relative;
+  color: transparent !important;
+  text-shadow: none !important;
+}
+.btn.is-loading::after {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 1em; height: 1em;
+  margin: -0.5em 0 0 -0.5em;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  color: var(--ink-2);
+  animation: polish-spin 720ms linear infinite;
+}
+.btn.primary.is-loading::after { color: rgba(255,255,255,0.9); }
+@keyframes polish-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn.is-loading::after {
+    animation-duration: 1.6s !important;
+  }
+}
+
+/* ---------- Layer 4 · Italic-em editorial pop ----------
+   The hero mission italic word ("waiting." in the home hero)
+   gets a soft brand bloom — barely perceptible but lifts the
+   word off the paper. */
+.hero-mission .mission em {
+  text-shadow: 0 1px 0 color-mix(in oklab, var(--brand-soft) 70%, transparent);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hero-mission .mission em {
+    text-shadow: 0 0 18px color-mix(in oklab, var(--brand) 28%, transparent);
+  }
+}
+:root[data-theme="dark"] .hero-mission .mission em {
+  text-shadow: 0 0 18px color-mix(in oklab, var(--brand) 28%, transparent);
+}
+
+/* ---------- Layer 4 · Paper-aesthetic scrollbars ----------
+   Thin warm scrollbars instead of generic OS-native chrome.
+   Falls back gracefully on browsers that ignore the standards. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+  transition: background var(--dur) var(--ease-out);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ---------- Layer 4 · Section-divider hairline above section heads ----------
+   Gives the journal-feel separator between the hero and the
+   first section, and between subsequent sections. The eyebrow
+   above each parent-hub section already provides a soft tag —
+   this hairline reinforces the page rhythm. */
+.home-section-head {
+  position: relative;
+  padding-top: 28px;
+}
+.home-section-head::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in oklab, var(--line-strong) 70%, transparent) 14%,
+    color-mix(in oklab, var(--line-strong) 70%, transparent) 86%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* ---------- Layer 4 · Print refinement ---------- */
+@media print {
+  .hero-paper,
+  .codex-card,
+  .subject-card,
+  .parent-hub-card {
+    box-shadow: none !important;
+    animation: none !important;
+  }
+  .codex-stage-dot.is-current {
+    animation: none !important;
+  }
+}
