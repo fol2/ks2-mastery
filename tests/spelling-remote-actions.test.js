@@ -1329,3 +1329,92 @@ test('remote spelling successful commands clear scoped save errors', async () =>
   handler.reapplyPendingOptimisticPrefs();
   assert.equal(getState().subjectUi.spelling.error, '');
 });
+
+// -----------------------------------------------------------------------------
+// U3: Guardian-safe summary drill parity on the remote-sync path.
+//
+// `module.js` U3 branch + `remote-actions.js` U3 branch must round-trip the
+// same `practiceOnly` flag for Guardian-origin summaries, otherwise a learner
+// running on remote-sync (which routes `spelling-drill-all` / -single through
+// the Worker) would bypass the local practiceOnly gate and the Worker would
+// happily call `applyLearningOutcome`, demoting Mega on a wrong answer in the
+// practice round.
+// -----------------------------------------------------------------------------
+
+function createDrillHarness({ summaryMode, mistakes = [{ slug: 'possess', word: 'possess' }] }) {
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'summary',
+        summary: {
+          mode: summaryMode,
+          mistakes,
+          totalWords: Math.max(1, mistakes.length),
+        },
+        session: null,
+        analytics: null,
+        error: '',
+      },
+    },
+  });
+  const sent = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: {
+      spelling: {
+        getPrefs() {
+          return { mode: 'smart', roundLength: '10', yearFilter: 'core', autoSpeak: true, showCloze: true, extraWordFamilies: false };
+        },
+      },
+    },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        return Promise.resolve({ subjectReadModel: { phase: 'session' } });
+      },
+    },
+  });
+  return { handler, sent, getState };
+}
+
+test('U3 remote-sync: guardian-origin drill-all forwards practiceOnly:true on the Worker start-session command', async () => {
+  const { handler, sent } = createDrillHarness({ summaryMode: 'guardian' });
+  assert.equal(handler.handle('spelling-drill-all'), true);
+  await flushPromises();
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].command, 'start-session');
+  assert.equal(sent[0].payload.mode, 'trouble');
+  assert.equal(sent[0].payload.practiceOnly, true, 'Guardian-origin remote drill-all must carry practiceOnly=true');
+  assert.deepEqual(sent[0].payload.words, ['possess']);
+});
+
+test('U3 remote-sync: guardian-origin drill-single forwards practiceOnly:true on the Worker start-session command', async () => {
+  const { handler, sent } = createDrillHarness({ summaryMode: 'guardian' });
+  assert.equal(handler.handle('spelling-drill-single', { slug: 'possess' }), true);
+  await flushPromises();
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].command, 'start-session');
+  assert.equal(sent[0].payload.mode, 'single');
+  assert.equal(sent[0].payload.practiceOnly, true, 'Guardian-origin remote drill-single must carry practiceOnly=true');
+  assert.deepEqual(sent[0].payload.words, ['possess']);
+});
+
+test('U3 remote-sync: legacy non-Guardian drill-all does NOT set practiceOnly (characterisation)', async () => {
+  const { handler, sent } = createDrillHarness({ summaryMode: 'smart' });
+  assert.equal(handler.handle('spelling-drill-all'), true);
+  await flushPromises();
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].payload.mode, 'trouble');
+  assert.notEqual(sent[0].payload.practiceOnly, true, 'non-Guardian remote drill-all must keep legacy behaviour (practiceOnly !== true)');
+});
+
+test('U3 remote-sync: legacy non-Guardian drill-single does NOT set practiceOnly (characterisation)', async () => {
+  const { handler, sent } = createDrillHarness({ summaryMode: 'smart' });
+  assert.equal(handler.handle('spelling-drill-single', { slug: 'possess' }), true);
+  await flushPromises();
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].payload.mode, 'single');
+  assert.notEqual(sent[0].payload.practiceOnly, true, 'non-Guardian remote drill-single must keep legacy behaviour (practiceOnly !== true)');
+});

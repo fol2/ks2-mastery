@@ -9,6 +9,8 @@ import {
   WORD_BANK_GUARDIAN_FILTER_HINTS,
   WORD_BANK_GUARDIAN_FILTER_IDS,
   guardianLabel,
+  guardianPracticeActionLabel,
+  guardianSummaryCopy,
   guardianSummaryCards,
   renderAction,
   summaryModeLabel,
@@ -599,4 +601,29 @@ test('wordBankFilterMatchesStatus: wobbling requires status === "secure" (R10 ti
     true,
     'secure + wobbling still → true',
   );
+});
+
+// ----- U3: Guardian-safe summary drill copy (single-source-of-truth) ---------
+
+test('guardianPracticeActionLabel: button label is the canonical "Practice wobbling words" string', () => {
+  // Scene consumers must read this string from one place (the view-model) so
+  // the copy cannot drift between button text and telemetry. Every deviation
+  // from this exact string weakens the "practice ≠ real Guardian round"
+  // identity separation (see plan Key Technical Decisions).
+  assert.equal(guardianPracticeActionLabel(), 'Practice wobbling words');
+});
+
+test('guardianSummaryCopy: help text covers "Optional practice", "schedule will not change", and "tomorrow"', () => {
+  // The plan fixes this copy as the identity-preserver between Guardian
+  // (single-attempt, spaced) and practice-only (optional rehearsal).
+  // Copy changes that drop any of these three phrases regress the product
+  // contract, so this test asserts on phrases rather than exact equality so
+  // a tone tweak is still possible without accidentally stripping the
+  // identity-guarding words.
+  const copy = guardianSummaryCopy();
+  assert.match(copy, /Optional practice/);
+  assert.match(copy, /schedule will not change/i);
+  assert.match(copy, /tomorrow/i);
+  // Guardian Mega invariant must be named explicitly.
+  assert.match(copy, /Mega/);
 });

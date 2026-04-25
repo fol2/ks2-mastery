@@ -279,3 +279,51 @@ test('React spelling Summary scene does NOT render the Guardian band for mode="s
   assert.doesNotMatch(html, /summary-stat--guardian/);
   assert.doesNotMatch(html, /Guardian round complete/);
 });
+
+// ----- U3: Guardian-safe summary drill ---------------------------------------
+
+test('U3 characterisation: legacy non-Guardian summary must not sprout the Practice button copy', async () => {
+  // Characterisation baseline: today's Smart Review summary path still reads
+  // like it did pre-U3 — none of the new Guardian-origin copy leaks into a
+  // non-Guardian summary, regardless of whether mistakes are present. Only
+  // Guardian summaries branch to the practice-only affordance.
+  const html = await renderSpellingSurfaceFixture({ phase: 'summary' });
+  assert.doesNotMatch(html, /Practice wobbling words/, 'non-Guardian summary must not show the U3 practice button');
+  assert.doesNotMatch(html, /Optional practice\. Mega/, 'non-Guardian summary must not show U3 help copy');
+});
+
+test('U3 happy path: Guardian summary with mistakes renders "Practice wobbling words", not "Drill all"', async () => {
+  // Wrong answer path yields `summary.mistakes.length === 1`. The new branch
+  // must replace legacy "Drill all" + per-word "Drill" chips with a single
+  // Practice button backed by the canonical guardianPracticeActionLabel().
+  const html = await renderSpellingGuardianSummaryFixture({ correct: false });
+  assert.match(html, /Practice wobbling words/, 'Guardian mistakes summary must show the Practice button');
+  assert.doesNotMatch(html, /Drill all 1/, 'Guardian mistakes summary must not show the legacy "Drill all" label');
+  // Canonical help copy from `guardianSummaryCopy()`.
+  assert.match(html, /Optional practice\./);
+  assert.match(html, /schedule will not change/);
+  assert.match(html, /tomorrow/i);
+});
+
+test('U3 happy path: Guardian summary with mistakes hides per-word data-action="spelling-drill-single" chips', async () => {
+  // The per-word "Drill" chip dispatches `spelling-drill-single` which in
+  // legacy land starts a live-learning session that can demote on wrong. In
+  // Guardian origin we must hide it entirely — the single Practice button is
+  // the only affordance (it routes through mode='trouble', practiceOnly=true
+  // and covers all mistakes at once).
+  const html = await renderSpellingGuardianSummaryFixture({ correct: false });
+  assert.doesNotMatch(html, /data-action="spelling-drill-single"/, 'Guardian summary must not expose per-word drill chips');
+  // The Practice button is a single new affordance with a Guardian-specific
+  // data-action so telemetry can distinguish it from the legacy drill.
+  assert.match(html, /data-action="spelling-drill-all"/, 'Practice button wires into the same spelling-drill-all dispatch path');
+});
+
+test('U3 edge case: Guardian summary with zero mistakes does not render the Practice button', async () => {
+  // All-correct Guardian round: summary.mistakes is empty, the drill area is
+  // skipped entirely (legacy code already guards on mistakes.length).
+  // This matches the existing SpellingSummaryScene contract — the Practice
+  // button only makes sense when there is something to practice.
+  const html = await renderSpellingGuardianSummaryFixture({ correct: true });
+  assert.doesNotMatch(html, /Practice wobbling words/, 'zero-mistake Guardian summary must not render the Practice button');
+  assert.doesNotMatch(html, /summary-drill-chips/, 'zero-mistake Guardian summary must not render the drill chips container');
+});
