@@ -1,5 +1,6 @@
 import { WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from './data/word-data.js';
-import { normaliseYearFilter } from './service-contract.js';
+import { normaliseGuardianMap, normaliseYearFilter } from './service-contract.js';
+import { selectGuardianWords } from '../../../shared/spelling/service.js';
 import { normaliseBufferedGeminiVoice, normaliseTtsProvider } from './tts-providers.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -90,6 +91,92 @@ function sessionLabel(kind) {
   if (kind === 'single') return 'Single word';
   if (kind === 'trouble') return 'Trouble drill';
   return 'Smart review';
+}
+
+const POST_MASTERY_PREVIEW_LENGTH = 8;
+
+/**
+ * Pure post-mastery selector. No side effects, no event-log replay — just
+ * derives the aggregates the Setup / Summary / Word Bank scenes need from the
+ * current `{prefs, progress, guardian}` data map plus the runtime content
+ * snapshot.
+ *
+ * `now` defaults to `Date.now` so callers that don't care about determinism
+ * can omit it; the U4 tests always inject a fixed `now` to keep assertions
+ * reproducible.
+ */
+export function getSpellingPostMasteryState({
+  subjectStateRecord = null,
+  runtimeSnapshot = null,
+  now = Date.now,
+} = {}) {
+  const nowTs = typeof now === 'function' ? asTs(now(), Date.now()) : asTs(now, Date.now());
+  const currentDay = todayDay(nowTs);
+  const stateRecord = subjectStateRecord && typeof subjectStateRecord === 'object' && !Array.isArray(subjectStateRecord)
+    ? subjectStateRecord
+    : {};
+  const progressMap = isPlainObject(stateRecord?.data?.progress) ? stateRecord.data.progress : {};
+  const rawGuardianMap = isPlainObject(stateRecord?.data?.guardian) ? stateRecord.data.guardian : {};
+  const guardianMap = normaliseGuardianMap(rawGuardianMap, currentDay);
+  const runtime = runtimeWordMap(runtimeSnapshot);
+
+  // allWordsMega requires BOTH: (1) the secure-core count equals the
+  // published-core count, AND (2) the published core count is non-zero.
+  // Extra-pool entries are excluded entirely from either side of the
+  // comparison — graduation is a statutory-pool concept only.
+  let publishedCoreCount = 0;
+  for (const word of runtime.words) {
+    if (!word) continue;
+    if ((word.spellingPool === 'extra' ? 'extra' : 'core') === 'core') publishedCoreCount += 1;
+  }
+  let secureCoreCount = 0;
+  for (const [slug, entry] of Object.entries(progressMap)) {
+    const progress = normaliseProgressRecord(entry);
+    if (progress.stage < SECURE_STAGE) continue;
+    const word = runtime.bySlug[slug] || DEFAULT_WORD_BY_SLUG[slug];
+    const pool = word ? (word.spellingPool === 'extra' ? 'extra' : 'core') : 'core';
+    if (pool !== 'core') continue;
+    secureCoreCount += 1;
+  }
+  const allWordsMega = publishedCoreCount > 0 && secureCoreCount === publishedCoreCount;
+
+  const guardianEntries = Object.entries(guardianMap);
+  let guardianDueCount = 0;
+  let wobblingCount = 0;
+  let nextGuardianDueDay = null;
+  for (const [, record] of guardianEntries) {
+    if (!record) continue;
+    if (record.nextDueDay <= currentDay) guardianDueCount += 1;
+    if (record.wobbling === true) wobblingCount += 1;
+    if (nextGuardianDueDay === null || record.nextDueDay < nextGuardianDueDay) {
+      nextGuardianDueDay = record.nextDueDay;
+    }
+  }
+
+  // Recommended words — a deterministic preview for UI consumers. We only
+  // produce this when the learner has actually graduated; otherwise the
+  // preview would be meaningless (no Guardian surface to consume it yet).
+  // A constant seeded random (() => 0.5) keeps the output deterministic
+  // across renders and test runs; the UI is explicitly documented as a
+  // snapshot preview, not a stochastic reselection.
+  const recommendedWords = allWordsMega
+    ? selectGuardianWords({
+        guardianMap,
+        progressMap,
+        wordBySlug: runtime.bySlug,
+        todayDay: currentDay,
+        length: POST_MASTERY_PREVIEW_LENGTH,
+        random: () => 0.5,
+      })
+    : [];
+
+  return {
+    allWordsMega,
+    guardianDueCount,
+    wobblingCount,
+    recommendedWords,
+    nextGuardianDueDay,
+  };
 }
 
 export function buildSpellingLearnerReadModel({
@@ -309,6 +396,25 @@ export function buildSpellingLearnerReadModel({
     0,
   );
 
+  // Post-mastery aggregates — computed via the same selector that external
+  // callers use, so `buildSpellingLearnerReadModel(...).postMastery` and
+  // `getSpellingPostMasteryState(...)` stay in lockstep (single source of
+  // truth). `recommendedMode` is the only field that layers extra logic on
+  // top: we prefer 'guardian' when the learner has graduated AND something
+  // is actually due; otherwise we inherit the recommendation the legacy
+  // branch above has already computed (smart / trouble / active-session).
+  const postMasteryState = getSpellingPostMasteryState({
+    subjectStateRecord: stateRecord,
+    runtimeSnapshot,
+    now,
+  });
+  const postMastery = {
+    ...postMasteryState,
+    recommendedMode: postMasteryState.allWordsMega && postMasteryState.guardianDueCount > 0
+      ? 'guardian'
+      : currentFocus.recommendedMode,
+  };
+
   return {
     subjectId: 'spelling',
     prefs: {
@@ -341,5 +447,6 @@ export function buildSpellingLearnerReadModel({
     weaknesses,
     misconceptionPatterns,
     recentSessions,
+    postMastery,
   };
 }

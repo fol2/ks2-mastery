@@ -115,10 +115,12 @@ test('Concordium reaches Mega only when the full Grammar denominator is secure',
 });
 
 test('Grammar progress counts unique current-release concepts only', () => {
+  // Phase 3 U0: Couronnail is the post-flip direct for `word_classes`.
+  // `publishedTotal` of 3 mirrors the new cluster size.
   const state = {
-    glossbloom: {
+    couronnail: {
       caught: true,
-      conceptTotal: 2,
+      conceptTotal: 3,
       mastered: [
         'grammar:old-release:word_classes',
         grammarMasteryKey('word_classes'),
@@ -127,10 +129,11 @@ test('Grammar progress counts unique current-release concepts only', () => {
     },
   };
 
-  const progress = progressForGrammarMonster(state, 'glossbloom');
+  const progress = progressForGrammarMonster(state, 'couronnail');
 
   assert.equal(progress.mastered, 1);
-  assert.equal(progress.stage, 2);
+  // One concept out of three in Couronnail's cluster -> stage 1 (ratio > 0 but < 0.5).
+  assert.equal(progress.stage, 1);
   assert.deepEqual(progress.masteredList, [grammarMasteryKey('word_classes')]);
 });
 
@@ -145,4 +148,110 @@ test('Grammar reward subscriber ignores non-secured and unknown concept events',
 
   assert.deepEqual(events, []);
   assert.equal(repository.writes(), 0);
+});
+
+// -------- Phase 3 U0: cluster remap regressions ---------------------------
+
+test('Phase 3 U0: word_classes now records Couronnail (not Glossbloom) as the direct', () => {
+  const repository = makeRepository();
+  const events = rewardEventsFromGrammarEvents([securedEvent('word_classes')], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  const state = repository.state();
+
+  assert.equal(
+    events.some((event) => event.monsterId === 'couronnail' && event.kind === 'caught'),
+    true,
+    'Couronnail absorbs the retired Glossbloom word_classes cluster',
+  );
+  assert.equal(events.some((event) => event.monsterId === 'glossbloom'), false);
+  assert.ok(state.couronnail);
+  assert.equal(state.glossbloom, undefined);
+});
+
+test('Phase 3 U0: noun_phrases records Bracehart (Sentence structure absorption)', () => {
+  const repository = makeRepository();
+  const events = rewardEventsFromGrammarEvents([securedEvent('noun_phrases')], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.equal(events.some((event) => event.monsterId === 'bracehart' && event.kind === 'caught'), true);
+  assert.equal(events.some((event) => event.monsterId === 'glossbloom'), false);
+});
+
+test('Phase 3 U0: adverbials records Chronalyx (Flow / Linkage absorption)', () => {
+  const repository = makeRepository();
+  const events = rewardEventsFromGrammarEvents([securedEvent('adverbials')], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.equal(events.some((event) => event.monsterId === 'chronalyx' && event.kind === 'caught'), true);
+  assert.equal(events.some((event) => event.monsterId === 'loomrill'), false);
+});
+
+test('Phase 3 U0: active_passive records Bracehart (Sentence structure absorption)', () => {
+  const repository = makeRepository();
+  const events = rewardEventsFromGrammarEvents([securedEvent('active_passive')], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.equal(events.some((event) => event.monsterId === 'bracehart' && event.kind === 'caught'), true);
+  assert.equal(events.some((event) => event.monsterId === 'mirrane'), false);
+});
+
+// -------- Phase 3 U0: writer self-heal suppresses direct re-emission -----
+
+test('writer self-heal silently seeds Bracehart from retired Glossbloom noun_phrases evidence', () => {
+  // Pre-flip learner had Glossbloom.mastered containing the noun_phrases key.
+  // Post-flip the direct for noun_phrases is Bracehart. A fresh answer for
+  // noun_phrases must persist the Bracehart seed state but must NOT emit a
+  // `caught` event for Bracehart (the learner already earned that milestone
+  // under Glossbloom).
+  const preFlipKey = grammarMasteryKey('noun_phrases');
+  const repository = makeRepository({
+    glossbloom: { caught: true, conceptTotal: 2, mastered: [preFlipKey] },
+  });
+
+  const events = rewardEventsFromGrammarEvents([securedEvent('noun_phrases')], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // Bracehart `caught` must be suppressed by the self-heal.
+  assert.equal(
+    events.some((event) => event.monsterId === 'bracehart' && event.kind === 'caught'),
+    false,
+    'writer self-heal suppresses Bracehart caught for pre-flip retired-id holders',
+  );
+  // Concordium still emits (first secure on the aggregate).
+  assert.equal(
+    events.some((event) => event.monsterId === 'concordium' && event.kind === 'caught'),
+    true,
+    'Concordium aggregate still emits when crossing the caught threshold',
+  );
+
+  // State delta still persists — Bracehart mastered contains the key.
+  const state = repository.state();
+  assert.ok(state.bracehart, 'Bracehart seed persisted');
+  assert.equal(state.bracehart.caught, true);
+  assert.deepEqual(state.bracehart.mastered, [preFlipKey]);
+  // Retired Glossbloom entry stays untouched for asset-tool compatibility.
+  assert.ok(state.glossbloom);
+  assert.deepEqual(state.glossbloom.mastered, [preFlipKey]);
+});
+
+test('writer self-heal does not fire for a truly fresh learner (no retired state)', () => {
+  const repository = makeRepository();
+  const events = rewardEventsFromGrammarEvents([securedEvent('noun_phrases')], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // A fresh learner MUST get a Bracehart caught event.
+  assert.equal(
+    events.some((event) => event.monsterId === 'bracehart' && event.kind === 'caught'),
+    true,
+    'fresh learners still earn the Bracehart caught milestone',
+  );
 });

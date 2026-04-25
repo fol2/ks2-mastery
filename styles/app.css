@@ -4471,6 +4471,283 @@ textarea:focus-visible {
   visibility: hidden;
 }
 
+/* =============================================================
+   Post-Mega dashboard (U5)
+   -------------------------------------------------------------
+   Dense block of Guardian-specific styling. The section reuses
+   the existing hero backdrop, text-tone tokens, and mode-card
+   silhouette so the transition from Smart Review to Guardian
+   feels like the same scene growing a new capability, not a
+   swap to a different page.
+
+   Visual commitments:
+   - Three distinct card identities: active-duty (accent stroke),
+     all-rested (dashed accent, inert), placeholder (parchment
+     fill + roadmap index).
+   - Typographic glyph placeholder for Guardian / Boss / etc.
+     icons we have not drawn yet — shipping a stock icon would
+     read as "we forgot to finish this".
+   - Stat ribbon sits above the mode row: it reframes the learner
+     as a duty-holder rather than a player chasing a target.
+   ============================================================= */
+.setup-content--post-mega .eyebrow.post-mega-eyebrow {
+  letter-spacing: 0.22em;
+  font-weight: 700;
+  color: color-mix(in oklab, var(--brand) 72%, var(--ink));
+}
+.setup-content--post-mega .title.post-mega-title {
+  font-family: var(--font-serif);
+  letter-spacing: -0.018em;
+  line-height: 1.05;
+  max-width: 22ch;
+}
+.setup-content--post-mega .lede.post-mega-lede {
+  max-width: 58ch;
+  color: var(--mode-card-copy, var(--muted));
+}
+.post-mega-stat-ribbon {
+  margin: 18px 0 4px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 18px 24px;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid color-mix(in oklab, var(--brand) 26%, transparent);
+  background:
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--brand-soft) 32%, transparent) 0%,
+      color-mix(in oklab, var(--panel) 42%, transparent) 100%);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+}
+.post-mega-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.post-mega-stat dt {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--mode-card-title, var(--ink)) 72%, transparent);
+  text-shadow: var(--mode-card-copy-shadow, none);
+}
+.post-mega-stat dd {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--mode-card-title, var(--ink));
+  text-shadow: var(--mode-card-heading-shadow, none);
+}
+.post-mega-stat--due dd { color: var(--warn-strong, color-mix(in oklab, var(--brand) 80%, var(--ink))); }
+.post-mega-stat--wobbling dd { color: color-mix(in oklab, var(--bad-strong, #b3372c) 88%, var(--ink)); }
+
+.mode-row.mode-row-post-mega {
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(196px, auto);
+  gap: 14px;
+  margin-top: 22px;
+}
+@media (max-width: 880px) {
+  .mode-row.mode-row-post-mega {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mode-row.mode-row-post-mega .mode-card-post:first-child {
+    grid-column: span 2;
+  }
+}
+@media (max-width: 540px) {
+  .mode-row.mode-row-post-mega,
+  .mode-row.mode-row-post-mega .mode-card-post:first-child {
+    grid-template-columns: 1fr;
+    grid-column: auto;
+  }
+}
+.mode-card.mode-card-post {
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mode-card.mode-card-post:hover { transform: none; box-shadow: none; }
+.mode-card.mode-card-post--active {
+  cursor: default;
+  border: 1.75px solid color-mix(in oklab, var(--brand) 82%, transparent);
+  background:
+    linear-gradient(165deg,
+      color-mix(in oklab, var(--brand-soft) 54%, transparent) 0%,
+      color-mix(in oklab, var(--panel) 28%, transparent) 82%),
+    color-mix(in oklab, var(--panel) 22%, transparent);
+  box-shadow:
+    0 18px 42px -28px color-mix(in oklab, var(--brand) 45%, transparent),
+    inset 0 1px 0 color-mix(in oklab, white 38%, transparent);
+}
+.mode-card.mode-card-post--active.is-active-duty {
+  /* Earned authority: a single accent line anchors the card without
+     shouting. Kept subtle so the stat ribbon above does the loud work. */
+  position: relative;
+}
+.mode-card.mode-card-post--active.is-active-duty::before {
+  content: '';
+  position: absolute;
+  inset: auto auto 0 16px;
+  width: 38px;
+  height: 3px;
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--brand) 82%, transparent);
+  opacity: 0.92;
+}
+.mode-card.mode-card-post--rested {
+  cursor: default;
+  border: 1.5px dashed color-mix(in oklab, var(--brand) 46%, transparent);
+  background: color-mix(in oklab, var(--panel) 30%, transparent);
+  filter: none;
+  opacity: 1;
+}
+.mode-card.mode-card-post--placeholder {
+  cursor: default;
+  border: 1.25px solid color-mix(in oklab, var(--brand) 16%, var(--line));
+  background:
+    repeating-linear-gradient(135deg,
+      color-mix(in oklab, var(--panel) 34%, transparent) 0,
+      color-mix(in oklab, var(--panel) 34%, transparent) 6px,
+      color-mix(in oklab, var(--panel) 20%, transparent) 6px,
+      color-mix(in oklab, var(--panel) 20%, transparent) 12px);
+  opacity: 0.94;
+  filter: saturate(0.82);
+}
+.mode-card.mode-card-post--placeholder h4,
+.mode-card.mode-card-post--placeholder p {
+  opacity: 0.88;
+}
+.mode-card .mc-icon.mc-icon-glyph {
+  background:
+    radial-gradient(110% 140% at 12% 16%,
+      color-mix(in oklab, var(--brand-soft) 78%, transparent) 0%,
+      color-mix(in oklab, var(--panel) 26%, transparent) 70%);
+  border-color: color-mix(in oklab, white 44%, transparent);
+  color: color-mix(in oklab, var(--brand) 86%, var(--ink));
+}
+.mode-card-post--active .mc-icon.mc-icon-glyph {
+  background:
+    radial-gradient(120% 160% at 18% 12%,
+      color-mix(in oklab, var(--brand) 88%, transparent) 0%,
+      color-mix(in oklab, var(--brand-soft) 65%, transparent) 80%);
+  color: #fff;
+  border-color: color-mix(in oklab, white 60%, transparent);
+}
+.mode-card-post--placeholder .mc-icon.mc-icon-glyph {
+  background: color-mix(in oklab, var(--panel) 34%, transparent);
+  color: color-mix(in oklab, var(--brand) 36%, var(--ink));
+  border-color: color-mix(in oklab, white 24%, transparent);
+}
+.mc-glyph {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.6rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.mc-badge.mc-badge-post {
+  background: color-mix(in oklab, var(--brand-soft) 60%, transparent);
+  color: color-mix(in oklab, var(--brand) 82%, var(--ink));
+  border: 1px solid color-mix(in oklab, var(--brand) 32%, transparent);
+}
+.mc-badge-post--active {
+  background: color-mix(in oklab, var(--brand) 88%, transparent);
+  color: #fff;
+  border-color: color-mix(in oklab, white 50%, transparent);
+  letter-spacing: 0.12em;
+}
+.mc-badge-post--rested {
+  background: color-mix(in oklab, var(--panel) 50%, transparent);
+  color: color-mix(in oklab, var(--brand) 60%, var(--ink));
+  border-style: dashed;
+  letter-spacing: 0.12em;
+}
+.mc-badge-roadmap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  padding: 4px 8px 3px;
+  line-height: 1;
+  background: transparent;
+  color: color-mix(in oklab, var(--brand) 56%, var(--ink));
+  border: 0;
+}
+.mc-badge-roadmap-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  opacity: 0.62;
+}
+.mc-badge-roadmap-index {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: color-mix(in oklab, var(--brand) 72%, var(--ink));
+}
+.mode-card-post-cta {
+  margin-top: auto;
+  align-self: flex-start;
+  padding: 8px 14px;
+  font-size: 0.92rem;
+  border-radius: calc(var(--radius) - 6px);
+}
+.mode-card-post-status {
+  margin-top: auto;
+  align-self: flex-start;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--panel) 38%, transparent);
+  color: color-mix(in oklab, var(--brand) 60%, var(--ink));
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px dashed color-mix(in oklab, var(--brand) 36%, transparent);
+}
+.setup-begin-row.post-mega-begin-row {
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 28px;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.post-mega-begin-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: color-mix(in oklab, var(--mode-card-copy, var(--muted)) 88%, transparent);
+  opacity: 0.86;
+}
+.post-mega-begin-hint[aria-hidden="true"] { opacity: 0.3; }
+.post-mega-begin-hint kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-family: var(--font-mono, ui-monospace, 'SFMono-Regular', Menlo, monospace);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.1;
+  background: color-mix(in oklab, var(--panel) 45%, transparent);
+  border: 1px solid color-mix(in oklab, var(--brand) 28%, transparent);
+  color: color-mix(in oklab, var(--brand) 80%, var(--ink));
+  box-shadow: inset 0 -1px 0 color-mix(in oklab, black 10%, transparent);
+}
+.post-mega-begin-hint-join { opacity: 0.55; font-weight: 600; }
+.post-mega-begin-hint-label {
+  letter-spacing: 0.02em;
+  margin-left: 4px;
+}
+
 .setup-control-stack {
   min-height: 196px;
   margin-top: 20px;
@@ -5569,6 +5846,71 @@ textarea:focus-visible {
   margin-top: 4px;
 }
 
+/* ---------- U6 Guardian summary band ---------- */
+/* The Guardian band sits below the standard stat grid on a Guardian-mode
+   summary. A hairline divider + eyebrow read it as "different kind of
+   information" rather than "three more stats", so the maintenance metaphor
+   reads distinct from the competence ribbon above. */
+.spelling-in-session .summary-guardian-band {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid color-mix(in oklab, var(--line) 80%, transparent);
+}
+.spelling-in-session .summary-guardian-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin-bottom: 10px;
+}
+.spelling-in-session .summary-guardian-eyebrow {
+  font-family: var(--font-display, var(--font-sans));
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--brand-ink, var(--ink)) 70%, var(--ink));
+}
+.spelling-in-session .summary-guardian-sub {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+.spelling-in-session .summary-stats--guardian {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0;
+}
+@media (max-width: 720px) {
+  .spelling-in-session .summary-stats--guardian { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+}
+.spelling-in-session .summary-stat--guardian {
+  position: relative;
+  background: color-mix(in oklab, var(--brand-soft, var(--panel-soft)) 55%, var(--panel));
+  border-color: color-mix(in oklab, var(--brand, #3E6FA8) 22%, var(--line));
+}
+.spelling-in-session .summary-stat--guardian::before {
+  content: "";
+  position: absolute;
+  inset: -1px auto -1px -1px;
+  width: 3px;
+  border-radius: 14px 0 0 14px;
+  background: color-mix(in oklab, var(--brand, #3E6FA8) 48%, transparent);
+}
+.spelling-in-session .summary-stat--guardian .l {
+  color: color-mix(in oklab, var(--brand-ink, var(--ink-2)) 85%, var(--ink-2));
+}
+.spelling-in-session .summary-stat--guardian-renewed .v {
+  color: color-mix(in oklab, var(--good-strong, var(--ink)) 80%, var(--ink));
+}
+.spelling-in-session .summary-stat--guardian-wobbling .v {
+  color: color-mix(in oklab, var(--bad-strong, #b3372c) 75%, var(--ink));
+}
+.spelling-in-session .summary-stat--guardian-next-check .v {
+  font-size: 1.4rem;
+  letter-spacing: -0.01em;
+}
+
 .spelling-in-session .summary-drill {
   margin-top: 20px;
   padding: 14px 18px 16px;
@@ -5964,6 +6306,84 @@ textarea:focus-visible {
 }
 .wb-status-swatch.trouble {
   color: var(--bad);
+}
+
+/* ---------- U6 Guardian filter chips ---------- */
+/* The Guardian chip row sits BELOW the legacy status chips when
+   postMastery.allWordsMega === true. Guardian chips use a distinct visual
+   identity (soft-pill shape with a left-edge keyline mark + flatter bottom
+   on the active state) so learners reading 10 chips don't treat them all
+   as "pick one more". The mental model is maintenance, not learning. */
+.wb-chips--guardian {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px dashed color-mix(in oklab, var(--line) 65%, transparent);
+  gap: 6px 8px;
+}
+.wb-chip-guardian {
+  gap: 8px;
+  background: color-mix(in oklab, var(--brand-soft, var(--panel-soft)) 34%, var(--panel));
+  border-style: solid;
+  border-color: color-mix(in oklab, var(--brand, #3E6FA8) 18%, var(--line));
+  color: color-mix(in oklab, var(--brand-ink, var(--ink-2)) 75%, var(--ink-2));
+  border-radius: 10px 10px 4px 4px;
+  padding-left: 10px;
+}
+.wb-chip-guardian:hover {
+  border-color: color-mix(in oklab, var(--brand, #3E6FA8) 40%, var(--line));
+  color: color-mix(in oklab, var(--brand-ink, var(--ink)) 95%, var(--ink));
+}
+.wb-chip-guardian.on {
+  background: color-mix(in oklab, var(--brand, #3E6FA8) 14%, var(--panel));
+  border-color: color-mix(in oklab, var(--brand, #3E6FA8) 62%, transparent);
+  color: var(--brand-ink, var(--ink));
+  box-shadow: inset 0 -2px 0 0 color-mix(in oklab, var(--brand, #3E6FA8) 55%, transparent);
+}
+.wb-chip-guardian .wb-chip-count {
+  background: color-mix(in oklab, var(--brand, #3E6FA8) 10%, var(--panel));
+  border-color: color-mix(in oklab, var(--brand, #3E6FA8) 20%, transparent);
+}
+.wb-chip-guardian.on .wb-chip-count {
+  background: color-mix(in oklab, var(--brand, #3E6FA8) 28%, var(--panel));
+  border-color: color-mix(in oklab, var(--brand, #3E6FA8) 48%, transparent);
+  color: var(--brand-ink, var(--ink));
+}
+.wb-chip-guardian-mark {
+  width: 6px;
+  height: 10px;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: 0.42;
+  flex: 0 0 auto;
+}
+.wb-chip-guardian--wobbling .wb-chip-guardian-mark {
+  background: color-mix(in oklab, var(--bad, #b3372c) 70%, currentColor);
+  opacity: 0.72;
+}
+.wb-chip-guardian--guardianDue .wb-chip-guardian-mark {
+  background: color-mix(in oklab, var(--warn, #d08b2e) 70%, currentColor);
+  opacity: 0.72;
+}
+.wb-chip-guardian--renewedRecently .wb-chip-guardian-mark {
+  background: color-mix(in oklab, var(--good, #3aa268) 70%, currentColor);
+  opacity: 0.72;
+}
+.wb-chip-guardian--neverRenewed .wb-chip-guardian-mark {
+  background: color-mix(in oklab, var(--muted, #8a8a8a) 80%, currentColor);
+  opacity: 0.62;
+}
+.wb-guardian-hint {
+  margin: 12px 0 6px;
+  padding: 10px 14px;
+  border-left: 3px solid color-mix(in oklab, var(--brand, #3E6FA8) 52%, transparent);
+  background: color-mix(in oklab, var(--brand-soft, var(--panel-soft)) 50%, var(--panel));
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: color-mix(in oklab, var(--brand-ink, var(--ink)) 90%, var(--ink));
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+@media (max-width: 720px) {
+  .wb-chips--guardian { padding-top: 8px; }
 }
 
 /* ---------- Subject-screen breadcrumb ---------- */

@@ -43,6 +43,15 @@ test('punctuation React surface renders setup, active item, feedback and summary
   assert.match(setupHtml, /Bellstorm Coast/);
   assert.match(setupHtml, /Punctuation practice/);
   assert.match(setupHtml, /data-punctuation-start/);
+  // Phase 2 U8: all six cluster focus buttons must reach the setup surface.
+  assert.match(setupHtml, /data-punctuation-endmarks-start/);
+  assert.match(setupHtml, /data-punctuation-apostrophe-start/);
+  assert.match(setupHtml, />Endmarks focus</);
+  assert.match(setupHtml, />Apostrophe focus</);
+  assert.match(setupHtml, />Speech focus</);
+  assert.match(setupHtml, />Comma focus</);
+  assert.match(setupHtml, />Boundary focus</);
+  assert.match(setupHtml, />Structure focus</);
 
   startOneItemPunctuationSession(harness);
   const activeHtml = harness.render();
@@ -345,4 +354,114 @@ test('punctuation React surface preserves newline-sensitive bullet text', () => 
   assert.match(html, /white-space:pre-wrap/);
   assert.match(html, /Bring\n- a drink\n- a hat\n- a sketchbook/);
   assert.match(html, /Bring:\n- a drink\n- a hat\n- a sketchbook/);
+});
+
+test('punctuation text-item controls disable while a command is pending', () => {
+  // Use a text-input item so the "disabled" outcome isolates to the composite
+  // pending/degraded signal (not to "no choice selected").
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    pendingCommand: 'punctuation-submit-form',
+    session: {
+      id: 'pending-ui',
+      mode: 'smart',
+      length: 2,
+      answeredCount: 0,
+      currentItem: {
+        id: 'sp_insert_endmark',
+        mode: 'insert',
+        inputKind: 'text',
+        prompt: 'Insert the punctuation.',
+        stem: 'We met at noon',
+      },
+    },
+  });
+  const html = harness.render();
+  // Submit and Reset buttons must both be disabled while pendingCommand is set.
+  assert.match(html, /<button[^>]*disabled[^>]*data-punctuation-submit/);
+  assert.match(html, /Reset text[^<]*<\/button>/);
+  assert.match(html, /disabled[^<]*>Reset text/);
+});
+
+test('punctuation text-item controls disable when runtime is degraded', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    availability: { status: 'degraded', code: 'runtime_degraded', message: 'Punctuation is temporarily read-only.' },
+    session: {
+      id: 'degraded-ui',
+      mode: 'smart',
+      length: 1,
+      answeredCount: 0,
+      currentItem: {
+        id: 'sp_insert_endmark_degraded',
+        mode: 'insert',
+        inputKind: 'text',
+        prompt: 'Insert the punctuation.',
+        stem: 'We met at noon',
+      },
+    },
+  });
+  const html = harness.render();
+  assert.match(html, /<button[^>]*disabled[^>]*data-punctuation-submit/);
+});
+
+test('punctuation setup view disables Start practice when availability is degraded', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'setup',
+    availability: { status: 'degraded', code: 'runtime_degraded', message: 'paused' },
+  });
+  const html = harness.render();
+  assert.match(html, /<button[^>]*disabled[^>]*data-punctuation-start/);
+});
+
+test('punctuation feedback view disables Continue while a command is pending', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'feedback',
+    pendingCommand: 'punctuation-continue',
+    session: {
+      id: 'feedback-pending',
+      mode: 'smart',
+      length: 2,
+      answeredCount: 1,
+      currentItem: { id: 'x', mode: 'insert', inputKind: 'text', prompt: 'p', stem: '' },
+    },
+    feedback: { kind: 'success', headline: 'Nice.', body: 'Punctuation correct.' },
+  });
+  const html = harness.render();
+  assert.match(html, /<button[^>]*disabled[^>]*data-punctuation-continue/);
+});
+
+test('punctuation text-item submit remains enabled in the idle state', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'idle-ui',
+      mode: 'smart',
+      length: 1,
+      answeredCount: 0,
+      currentItem: {
+        id: 'sp_insert_endmark_idle',
+        mode: 'insert',
+        inputKind: 'text',
+        prompt: 'Insert the punctuation.',
+        stem: 'We met at noon',
+      },
+    },
+  });
+  const html = harness.render();
+  assert.doesNotMatch(
+    html,
+    /<button[^>]*disabled[^>]*data-punctuation-submit/,
+    'idle active text item must allow submit',
+  );
 });

@@ -1,12 +1,14 @@
 ---
 title: "feat: Grammar Perfection Pass"
 type: feat
-status: active
+status: completed
 date: 2026-04-25
+completed_at: 2026-04-25
 deepened: 2026-04-25
 origin: docs/brainstorms/2026-04-24-grammar-mastery-region-requirements.md
 source_plan: docs/plans/2026-04-25-001-feat-grammar-functionality-completeness-plan.md
 review_input: docs/plans/james/grammar/grammar-phase2.md
+landed_in: "PRs #144 (U1), #146 (U2), #148 (U3), #150 (U4), #153 (U5), #156 (U6), #158 (U7), and U8"
 ---
 
 # feat: Grammar Perfection Pass

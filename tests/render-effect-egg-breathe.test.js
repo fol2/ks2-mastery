@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import {
-  computeEggBreatheStyle,
-  eggBreatheEffect,
-} from '../src/platform/game/render/effects/egg-breathe.js';
+import { computeEggBreatheStyle } from '../src/platform/game/render/effects/egg-breathe.js';
+import { runtimeRegistration } from '../src/platform/game/render/runtime-registration.js';
+import { lookupEffect, resetRegistry } from '../src/platform/game/render/registry.js';
+import { resetWarnOnce } from '../src/platform/game/render/composition.js';
 
 // Fixtures captured from the original `eggBreatheStyle` helper before the
 // port. Byte-identity proves the new effect does not drift from today's
@@ -82,20 +82,42 @@ test('egg-breathe: edge case — missing seed.id falls back to species + branch 
   );
 });
 
-test('egg-breathe: descriptor metadata matches contract', () => {
-  assert.equal(eggBreatheEffect.kind, 'egg-breathe');
-  assert.equal(eggBreatheEffect.lifecycle, 'continuous');
-  assert.equal(eggBreatheEffect.layer, 'base');
-  assert.deepEqual([...eggBreatheEffect.surfaces], ['*']);
-  assert.equal(eggBreatheEffect.reducedMotion, 'simplify');
+// The `egg-breathe` EffectSpec is now produced by the `motion` template
+// during `runtimeRegistration`. We assert against the registered descriptor
+// to lock the contract — this is the spec production code paths see.
+function withRuntimeRegistration(fn) {
+  resetRegistry();
+  resetWarnOnce();
+  try {
+    runtimeRegistration({ catalog: undefined });
+    fn();
+  } finally {
+    resetRegistry();
+    resetWarnOnce();
+  }
+}
+
+test('egg-breathe: descriptor metadata matches contract (via runtimeRegistration)', () => {
+  withRuntimeRegistration(() => {
+    const eggBreatheEffect = lookupEffect('egg-breathe');
+    assert.ok(eggBreatheEffect, 'runtimeRegistration must register egg-breathe');
+    assert.equal(eggBreatheEffect.kind, 'egg-breathe');
+    assert.equal(eggBreatheEffect.lifecycle, 'continuous');
+    assert.equal(eggBreatheEffect.layer, 'base');
+    assert.deepEqual([...eggBreatheEffect.surfaces], ['*']);
+    assert.equal(eggBreatheEffect.reducedMotion, 'simplify');
+  });
 });
 
-test('egg-breathe: applyTransform delegates to the same compute function', () => {
-  const fixture = EGG_BREATHE_FIXTURES[1];
-  const viaApply = eggBreatheEffect.applyTransform({
-    params: {},
-    monster: fixture.seed,
-    context: fixture.context,
+test('egg-breathe: applyTransform delegates to the same compute function (via runtimeRegistration)', () => {
+  withRuntimeRegistration(() => {
+    const eggBreatheEffect = lookupEffect('egg-breathe');
+    const fixture = EGG_BREATHE_FIXTURES[1];
+    const viaApply = eggBreatheEffect.applyTransform({
+      params: {},
+      monster: fixture.seed,
+      context: fixture.context,
+    });
+    assert.deepEqual(viaApply, fixture.expected);
   });
-  assert.deepEqual(viaApply, fixture.expected);
 });

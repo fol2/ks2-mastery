@@ -14,6 +14,10 @@ import {
   loadBootstrap,
   subjectCommand,
 } from './lib/production-smoke.mjs';
+import {
+  FORBIDDEN_GRAMMAR_ITEM_KEYS as SHARED_FORBIDDEN_GRAMMAR_ITEM_KEYS,
+  FORBIDDEN_GRAMMAR_READ_MODEL_KEYS as SHARED_FORBIDDEN_GRAMMAR_READ_MODEL_KEYS,
+} from '../tests/helpers/forbidden-keys.mjs';
 
 const GRAMMAR_SMOKE_ITEM = Object.freeze({
   templateId: 'fronted_adverbial_choose',
@@ -25,21 +29,11 @@ const GRAMMAR_MINI_TEST_ITEM = Object.freeze({
   seed: 11,
 });
 
-const FORBIDDEN_GRAMMAR_READ_MODEL_KEYS = new Set([
-  'solutionLines',
-  'correctResponse',
-  'correctResponses',
-  'accepted',
-  'answers',
-  'evaluate',
-  'generator',
-  'template',
-]);
-
-const FORBIDDEN_GRAMMAR_ITEM_KEYS = new Set([
-  ...FORBIDDEN_GRAMMAR_READ_MODEL_KEYS,
-  'templates',
-]);
+// Sets are built at module load from the shared Array exports so the single
+// source of truth in tests/helpers/forbidden-keys.mjs cannot drift from this
+// smoke test's checks.
+const FORBIDDEN_GRAMMAR_READ_MODEL_KEYS = new Set(SHARED_FORBIDDEN_GRAMMAR_READ_MODEL_KEYS);
+const FORBIDDEN_GRAMMAR_ITEM_KEYS = new Set(SHARED_FORBIDDEN_GRAMMAR_ITEM_KEYS);
 
 function normaliseChoiceOptions(inputSpec, context, { allowExtraKeys = false } = {}) {
   assert.ok(Array.isArray(inputSpec?.options) && inputSpec.options.length > 0, `${context} did not expose answer options.`);

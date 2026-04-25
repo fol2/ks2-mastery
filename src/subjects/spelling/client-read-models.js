@@ -111,6 +111,26 @@ export function createSpellingReadModelService({ getState = () => null } = {}) {
     getAnalyticsSnapshot(learnerId) {
       return cloneSerialisable(readModel(learnerId).analytics || emptyAnalytics());
     },
+    getPostMasteryState(learnerId) {
+      // Remote-sync runtime: the shell does not have direct access to the
+      // learner's guardian map, so the read-model falls back to "not
+      // graduated yet". The server-synced surface re-issues the Setup scene
+      // through the next cached command response which carries the real
+      // state via the Worker engine. This keeps the Setup render stable
+      // while the first round trip is in flight.
+      const cached = readModel(learnerId).postMastery;
+      if (cached && typeof cached === 'object' && !Array.isArray(cached)) {
+        return cloneSerialisable(cached);
+      }
+      return {
+        allWordsMega: false,
+        guardianDueCount: 0,
+        wobblingCount: 0,
+        nextGuardianDueDay: null,
+        todayDay: Math.floor(Date.now() / (24 * 60 * 60 * 1000)),
+        guardianMap: {},
+      };
+    },
     getAudioCue(learnerId) {
       return cloneSerialisable(readModel(learnerId).audio || null);
     },

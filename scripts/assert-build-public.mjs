@@ -1,6 +1,7 @@
 import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { assertHeadersBlockIsFresh } from './lib/headers-drift.mjs';
 
 const rootDir = process.cwd();
 const publicDir = path.join(rootDir, 'dist', 'public');
@@ -129,6 +130,18 @@ const rawAssetPngs = (await walk()).filter((file) => (
 if (rawAssetPngs.length) {
   throw new Error(`Raw asset PNG files must not be copied into public output: ${rawAssetPngs.join(', ')}`);
 }
+
+// U6 (sys-hardening p1): assert that the published `_headers` carries the
+// full security-header block. Prevents silent drift between the repo-root
+// `_headers` (single source of truth) and `dist/public/_headers` that ships
+// with the deploy artefact.
+//
+// The assertion lives in `scripts/lib/headers-drift.mjs` so the drift test
+// (tests/security-headers.test.js) can call the pure function directly with
+// drifted strings — execution-based verification rather than substring
+// inspection of this file (review testing-gap-3).
+const publishedHeadersContent = await readFile(path.join(publicDir, '_headers'), 'utf8');
+assertHeadersBlockIsFresh(publishedHeadersContent);
 
 const indexHtml = await readFile(path.join(publicDir, 'index.html'), 'utf8');
 if (!indexHtml.includes('/manifest.webmanifest')) {

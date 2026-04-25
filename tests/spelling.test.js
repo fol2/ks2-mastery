@@ -6,6 +6,7 @@ import { createLocalPlatformRepositories } from '../src/platform/core/repositori
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
 import { SPELLING_EVENT_TYPES } from '../src/subjects/spelling/events.js';
+import { SPELLING_SERVICE_STATE_VERSION } from '../src/subjects/spelling/service-contract.js';
 import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
 import { rewardEventsFromSpellingEvents } from '../src/subjects/spelling/event-hooks.js';
 import { monsterSummaryFromSpellingAnalytics } from '../src/platform/game/monster-system.js';
@@ -116,7 +117,7 @@ test('starts a spelling session with an explicit subject-state contract', () => 
   const transition = service.startSession('learner-a', { mode: 'smart', yearFilter: 'all', length: 5 });
 
   assert.equal(transition.ok, true);
-  assert.equal(transition.state.version, 1);
+  assert.equal(transition.state.version, SPELLING_SERVICE_STATE_VERSION);
   assert.equal(transition.state.phase, 'session');
   assert.equal(transition.state.session.progress.total, 5);
   assert.ok(transition.state.session.currentCard.word.word);
@@ -660,7 +661,7 @@ test('analytics snapshot is explicit and normalised', () => {
   const { service } = makeService();
   const snapshot = service.getAnalyticsSnapshot('learner-a');
 
-  assert.equal(snapshot.version, 1);
+  assert.equal(snapshot.version, SPELLING_SERVICE_STATE_VERSION);
   assert.ok(Number.isFinite(snapshot.generatedAt));
   assert.deepEqual(Object.keys(snapshot.pools), ['all', 'core', 'y34', 'y56', 'extra']);
   assert.equal(snapshot.pools.all.total > 0, true);

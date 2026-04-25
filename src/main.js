@@ -40,10 +40,12 @@ import {
 import { createSpellingReadModelService } from './subjects/spelling/client-read-models.js';
 import { getOverallSpellingStats } from './subjects/spelling/module.js';
 import { resolveSpellingShortcut } from './subjects/spelling/shortcuts.js';
+import { resolveGrammarShortcut } from './subjects/grammar/shortcuts.js';
 import {
   monsterSummary,
   monsterSummaryFromSpellingAnalytics,
 } from './platform/game/monster-system.js';
+import { createMonsterEffectConfigGetter } from './platform/game/monster-effect-runtime.js';
 import {
   acknowledgeMonsterCelebrationEvents,
   clearAllMonsterCelebrationAcknowledgements,
@@ -1625,6 +1627,14 @@ function extractHeroBgUrl(styleAttr) {
 const appRuntime = {
   contextFor,
   monsterVisualConfig: () => repositories.monsterVisualConfig?.read?.() || null,
+  // Returns the published `effect` sub-document from the loaded
+  // monsterVisualConfig row. The combined publish envelope from PR #157
+  // stores `{ visual, effect }` together — we surface the `effect` slice so
+  // <MonsterEffectConfigProvider> receives it without re-reading. The factory
+  // memoises by serialised content so repeat calls with structurally
+  // identical data return the same reference, keeping App.jsx's
+  // `[monsterEffectConfig?.catalog]` useEffect dep stable across renders.
+  monsterEffectConfig: createMonsterEffectConfigGetter(repositories),
   buildHomeModel,
   buildCodexModel,
   buildSurfaceChromeModel,
@@ -2223,7 +2233,9 @@ document.addEventListener('keydown', (event) => {
 }, true);
 
 globalThis.addEventListener?.('keydown', (event) => {
-  const shortcut = resolveSpellingShortcut(event, store.getState());
+  const appState = store.getState();
+  const shortcut = resolveSpellingShortcut(event, appState)
+    || resolveGrammarShortcut(event, appState);
   if (!shortcut) return;
   if (shortcut.preventDefault) event.preventDefault();
   if (shortcut.focusSelector) {

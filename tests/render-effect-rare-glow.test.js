@@ -1,12 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { renderMonsterRenderFixture } from './helpers/react-render.js';
 
-const RARE_GLOW_MODULE = {
-  path: 'src/platform/game/render/effects/rare-glow.js',
-  exports: ['rareGlowEffect'],
-};
+// `rare-glow` registers through the bundled `pulse-halo` template, exercised
+// here via `runtimeRegistration` — the production registration path.
+
+const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const REGISTER_VIA_RUNTIME = `
+  import { runtimeRegistration } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/runtime-registration.js'))};
+  runtimeRegistration({ catalog: undefined });
+`;
 
 function makeMonster(overrides = {}) {
   return {
@@ -28,7 +35,10 @@ function makeMonster(overrides = {}) {
 }
 
 async function run(opts) {
-  const out = await renderMonsterRenderFixture(opts);
+  const out = await renderMonsterRenderFixture({
+    ...opts,
+    registrations: `${REGISTER_VIA_RUNTIME}\n${opts.registrations || ''}`,
+  });
   return JSON.parse(out);
 }
 
@@ -37,7 +47,6 @@ test('rare-glow: happy path — single overlay element with aria-hidden and pale
     monster: makeMonster(),
     context: 'codex',
     effects: [{ kind: 'rare-glow' }],
-    effectModules: [RARE_GLOW_MODULE],
   });
 
   assert.match(html, /class="fx fx-rare-glow"/);
@@ -54,7 +63,6 @@ test('rare-glow: edge case — intensity out of range (2.5) clamps to 1', async 
     monster: makeMonster(),
     context: 'codex',
     effects: [{ kind: 'rare-glow', params: { intensity: 2.5 } }],
-    effectModules: [RARE_GLOW_MODULE],
   });
 
   assert.match(html, /--fx-rare-intensity:\s*1(?![\d.])/);
@@ -65,7 +73,6 @@ test('rare-glow: edge case — monster missing pale palette falls back to accent
     monster: makeMonster({ pale: '' }),
     context: 'codex',
     effects: [{ kind: 'rare-glow' }],
-    effectModules: [RARE_GLOW_MODULE],
   });
 
   // Falls back to accent.
@@ -81,7 +88,6 @@ test('rare-glow: edge case — surface "lesson" filtered out, no overlay rendere
     monster: makeMonster(),
     context: 'lesson',
     effects: [{ kind: 'rare-glow' }],
-    effectModules: [RARE_GLOW_MODULE],
   });
 
   assert.equal(html.includes('fx-rare-glow'), false);
@@ -97,7 +103,6 @@ test('rare-glow: integration — reducedMotion=true emits is-simplified class', 
     context: 'codex',
     effects: [{ kind: 'rare-glow' }],
     reducedMotion: true,
-    effectModules: [RARE_GLOW_MODULE],
   });
 
   assert.match(html, /class="fx fx-rare-glow is-simplified"/);

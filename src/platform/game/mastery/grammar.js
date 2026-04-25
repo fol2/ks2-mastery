@@ -5,6 +5,7 @@ import {
   ensureMonsterBranches,
   GRAMMAR_GRAND_MONSTER_ID,
   GRAMMAR_MONSTER_IDS,
+  GRAMMAR_RESERVED_MONSTER_IDS,
   isPlainObject,
   masteredList,
   releaseIdForEntry,
@@ -13,13 +14,34 @@ import {
 } from './shared.js';
 
 export const GRAMMAR_REWARD_RELEASE_ID = 'grammar-legacy-reviewed-2026-04-24';
+// Phase 3 U0 cluster remap. The six pre-flip direct clusters collapse into
+// three post-flip direct clusters plus Concordium's 18-concept aggregate.
+// Bracehart absorbs Sentence structure (`active_passive`, `subject_object`)
+// and Phrases (`noun_phrases`) on top of its existing Sentences and clauses.
+// Chronalyx absorbs Flow / Linkage (`adverbials`, `pronouns_cohesion`) on
+// top of Verb forms. Couronnail absorbs Word classes (`word_classes`) on
+// top of Standard English and register. Concordium continues to aggregate
+// every Grammar concept including the five punctuation-for-grammar ones.
 export const GRAMMAR_MONSTER_CONCEPTS = Object.freeze({
-  bracehart: Object.freeze(['sentence_functions', 'clauses', 'relative_clauses']),
-  glossbloom: Object.freeze(['word_classes', 'noun_phrases']),
-  loomrill: Object.freeze(['adverbials', 'pronouns_cohesion']),
-  chronalyx: Object.freeze(['tense_aspect', 'modal_verbs']),
-  couronnail: Object.freeze(['standard_english', 'formality']),
-  mirrane: Object.freeze(['active_passive', 'subject_object']),
+  bracehart: Object.freeze([
+    'sentence_functions',
+    'clauses',
+    'relative_clauses',
+    'noun_phrases',
+    'active_passive',
+    'subject_object',
+  ]),
+  chronalyx: Object.freeze([
+    'tense_aspect',
+    'modal_verbs',
+    'adverbials',
+    'pronouns_cohesion',
+  ]),
+  couronnail: Object.freeze([
+    'word_classes',
+    'standard_english',
+    'formality',
+  ]),
 });
 export const GRAMMAR_AGGREGATE_CONCEPTS = Object.freeze([
   'sentence_functions',
@@ -41,7 +63,7 @@ export const GRAMMAR_AGGREGATE_CONCEPTS = Object.freeze([
   'boundary_punctuation',
   'hyphen_ambiguity',
 ]);
-const GRAMMAR_CONCEPT_TO_MONSTER = Object.freeze(Object.fromEntries(
+export const GRAMMAR_CONCEPT_TO_MONSTER = Object.freeze(Object.fromEntries(
   Object.entries(GRAMMAR_MONSTER_CONCEPTS)
     .flatMap(([monsterId, conceptIds]) => conceptIds.map((conceptId) => [conceptId, monsterId])),
 ));
@@ -74,11 +96,67 @@ export function grammarMasteryKey(conceptId, releaseId = GRAMMAR_REWARD_RELEASE_
   return `grammar:${releaseId}:${conceptId}`;
 }
 
-function grammarConceptIdFromMasteryKey(key, releaseId = GRAMMAR_REWARD_RELEASE_ID) {
+export function grammarConceptIdFromMasteryKey(key, releaseId = GRAMMAR_REWARD_RELEASE_ID) {
   if (typeof key !== 'string' || !key) return '';
   const prefix = `grammar:${releaseId}:`;
   if (key.startsWith(prefix)) return key.slice(prefix.length);
   return '';
+}
+
+// Phase 3 U0 read-time normaliser. Unions mastery keys stored under the
+// retired direct ids (Glossbloom / Loomrill / Mirrane) into Concordium's
+// aggregate view for display purposes only. Retired entries remain
+// untouched in the returned object so Admin tooling and asset pipelines
+// that read raw state still resolve them. Dedupe happens by concept id
+// (via `grammarConceptIdFromMasteryKey`) rather than raw string equality,
+// so retired entries carrying a different `releaseId` than the post-flip
+// Concordium entry still collapse to one concept slot.
+export function normaliseGrammarRewardState(rawState = {}, releaseId = GRAMMAR_REWARD_RELEASE_ID) {
+  const source = isPlainObject(rawState) ? rawState : {};
+  if (!GRAMMAR_RESERVED_MONSTER_IDS.length) return source;
+
+  const currentGrandEntry = isPlainObject(source[GRAMMAR_GRAND_MONSTER_ID])
+    ? source[GRAMMAR_GRAND_MONSTER_ID]
+    : { mastered: [], caught: false };
+  const grandScopedReleaseId = releaseIdForEntry(currentGrandEntry, releaseId) || releaseId;
+  const grandMasteredKeys = masteredList(currentGrandEntry);
+  const conceptToKey = new Map();
+  for (const key of grandMasteredKeys) {
+    const conceptId = grammarConceptIdFromMasteryKey(key, grandScopedReleaseId);
+    if (!conceptId || conceptToKey.has(conceptId)) continue;
+    conceptToKey.set(conceptId, key);
+  }
+
+  let addedFromRetired = false;
+  let caughtFromRetired = false;
+  for (const retiredId of GRAMMAR_RESERVED_MONSTER_IDS) {
+    const retiredEntry = source[retiredId];
+    if (!isPlainObject(retiredEntry)) continue;
+    if (retiredEntry.caught === true) caughtFromRetired = true;
+    const retiredScopedReleaseId = releaseIdForEntry(retiredEntry, releaseId) || releaseId;
+    for (const retiredKey of masteredList(retiredEntry)) {
+      const conceptId = grammarConceptIdFromMasteryKey(retiredKey, retiredScopedReleaseId);
+      if (!conceptId || conceptToKey.has(conceptId)) continue;
+      // Prefer the post-flip release mastery key so the aggregate view stays
+      // consistent with freshly recorded concepts. Fall back to the retired
+      // key only when the release cannot be normalised.
+      const preferredKey = grammarMasteryKey(conceptId, releaseId);
+      conceptToKey.set(conceptId, preferredKey);
+      addedFromRetired = true;
+    }
+  }
+
+  if (!addedFromRetired && !caughtFromRetired) return source;
+
+  const unionedMastered = Array.from(conceptToKey.values());
+  return {
+    ...source,
+    [GRAMMAR_GRAND_MONSTER_ID]: {
+      ...currentGrandEntry,
+      caught: currentGrandEntry.caught === true || caughtFromRetired || addedFromRetired,
+      mastered: unionedMastered,
+    },
+  };
 }
 
 function grammarMasteredList(entry, releaseId = GRAMMAR_REWARD_RELEASE_ID) {
@@ -163,6 +241,30 @@ function grammarEventFromTransition(payload, previous, next) {
   return null;
 }
 
+// Phase 3 U0 writer self-heal. When a learner had pre-flip direct evidence
+// under a retired id (Glossbloom / Loomrill / Mirrane) for the same concept
+// now being recorded, seed the post-flip direct's `mastered[]` silently and
+// suppress the `caught` event for the seed path. Without this, the existing
+// early-out at line 190 only consults the current direct's `mastered[]`, so
+// a pre-flip Glossbloom-caught learner answering any remapped concept would
+// cause the writer to re-fire a spurious Bracehart `caught` toast. The
+// persistence path delivers the state delta; the emission path independently
+// decides whether to emit — see the cross-direct re-emission landmine
+// flagged in docs/plans/james/punctuation/punctuation-p2-completion-report.md
+// §2.U5.
+function retiredStateHoldsConcept({ before, conceptId, releaseId }) {
+  for (const retiredId of GRAMMAR_RESERVED_MONSTER_IDS) {
+    const retiredEntry = before?.[retiredId];
+    if (!isPlainObject(retiredEntry)) continue;
+    const retiredScopedReleaseId = releaseIdForEntry(retiredEntry, releaseId) || releaseId;
+    for (const retiredKey of masteredList(retiredEntry)) {
+      const retiredConceptId = grammarConceptIdFromMasteryKey(retiredKey, retiredScopedReleaseId);
+      if (retiredConceptId === conceptId) return true;
+    }
+  }
+  return false;
+}
+
 export function recordGrammarConceptMastery({
   learnerId,
   conceptId,
@@ -186,6 +288,14 @@ export function recordGrammarConceptMastery({
     ? before[directMonsterId]
     : { mastered: [], caught: false };
   const directMastered = directMonsterId ? masteredList(directEntry) : [];
+
+  // Pre-flip learners with evidence under retired ids must have their new
+  // direct silently seeded before any emission decision runs. The seed
+  // persists the state delta but does not emit a `caught` event for the
+  // direct — the learner already earned that milestone under the retired id.
+  const shouldSelfHealDirect = Boolean(directMonsterId)
+    && !directMastered.includes(masteryKey)
+    && retiredStateHoldsConcept({ before, conceptId, releaseId });
 
   if (aggregateMastered.includes(masteryKey) && (!directMonsterId || directMastered.includes(masteryKey))) {
     return [];
@@ -236,7 +346,7 @@ export function recordGrammarConceptMastery({
   saveMonsterState(learnerId, after, gameStateRepository);
 
   const events = [];
-  if (directMonsterId) {
+  if (directMonsterId && !shouldSelfHealDirect) {
     const directEvent = grammarEventFromTransition({
       learnerId,
       monsterId: directMonsterId,

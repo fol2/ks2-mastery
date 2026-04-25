@@ -17,6 +17,7 @@ import {
   isProductionRuntime,
   protectDemoParentHubRead,
   protectDemoSubjectCommand,
+  requireActiveDemoAccount,
   requireSameOrigin,
   resetDemoAccount,
 } from './demo/sessions.js';
@@ -108,10 +109,18 @@ async function sessionPayload({ session, auth, env, now }) {
       : null,
     session: session
       ? {
-        ...session,
-        demo: Boolean(session.demo),
+        // P1-A: explicit allowlist, mirrors /api/bootstrap session shape. The
+        // previous `...session` spread leaked sessionHash + sessionId (database
+        // lookup keys — credential-adjacent) into /api/session and
+        // /api/auth/session response bodies. Never replace with a spread.
+        accountId: session.accountId,
+        provider: session.provider,
+        platformRole: session.platformRole || 'parent',
         accountType: session.accountType || 'real',
+        demo: Boolean(session.demo),
         demoExpiresAt: session.demoExpiresAt || null,
+        email: session.email || null,
+        displayName: session.displayName || null,
       }
       : null,
     learnerCount: learnerIds.length,
@@ -324,7 +333,12 @@ export function createWorkerApp({
           try {
             await deleteCurrentSession(env, request);
           } finally {
-            return withCookies(json({ ok: true }), [clearSessionCookie(request)]);
+            // U6 (plan KTD F-08): full browsing-state cleanup on logout.
+            // Shared school and family devices are an expected deployment
+            // context, so we clear cache, cookies, and storage.
+            const response = withCookies(json({ ok: true }), [clearSessionCookie(request)]);
+            response.headers.set('Clear-Site-Data', '"cache", "cookies", "storage"');
+            return response;
           }
         }
 
@@ -389,6 +403,9 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/bootstrap' && request.method === 'GET') {
+          if (session?.demo) {
+            await requireActiveDemoAccount(requireDatabase(env), session.accountId, now());
+          }
           const bundle = await repository.bootstrap(session.accountId, {
             publicReadModels: shouldUsePublicReadModels(request, env),
           });

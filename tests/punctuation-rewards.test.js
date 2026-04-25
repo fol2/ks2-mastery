@@ -61,10 +61,11 @@ test('first secure Punctuation unit records a cluster monster and the grand aggr
   });
   const state = repository.state();
 
+  // Under the Phase 2 roster: endmarks -> pealark (direct) + quoral (grand).
   assert.equal(events.some((event) => event.monsterId === 'pealark'), true);
-  assert.equal(events.some((event) => event.monsterId === 'carillon'), true);
+  assert.equal(events.some((event) => event.monsterId === 'quoral'), true);
   assert.deepEqual(state.pealark.mastered, [endmarkEvent.masteryKey]);
-  assert.deepEqual(state.carillon.mastered, [endmarkEvent.masteryKey]);
+  assert.deepEqual(state.quoral.mastered, [endmarkEvent.masteryKey]);
 
   const duplicate = rewardEventsFromPunctuationEvents([endmarkEvent], {
     gameStateRepository: repository,
@@ -82,25 +83,27 @@ test('current release monster progress ignores mastery keys from previous releas
     rewardUnitId: 'sentence-endings-core',
   });
   const repository = makeRepository({
-    pealark: { mastered: [oldMasteryKey], caught: true, publishedTotal: 1 },
-    carillon: { mastered: [oldMasteryKey], caught: true, publishedTotal: 14 },
+    // Pealark covers endmarks + speech + boundary under the Phase 2 roster.
+    // Quoral (grand) covers the full 14-unit release.
+    pealark: { mastered: [oldMasteryKey], caught: true, publishedTotal: 5 },
+    quoral: { mastered: [oldMasteryKey], caught: true, publishedTotal: 14 },
   });
 
-  assert.equal(progressForPunctuationMonster(repository.state(), 'pealark', { publishedTotal: 1 }).mastered, 0);
-  assert.equal(progressForPunctuationMonster(repository.state(), 'carillon', { publishedTotal: 14 }).mastered, 0);
+  assert.equal(progressForPunctuationMonster(repository.state(), 'pealark', { publishedTotal: 5 }).mastered, 0);
+  assert.equal(progressForPunctuationMonster(repository.state(), 'quoral', { publishedTotal: 14 }).mastered, 0);
 
   rewardEventsFromPunctuationEvents([endmarkEvent], {
     gameStateRepository: repository,
     random: () => 0,
   });
   const state = repository.state();
-  const pealark = progressForPunctuationMonster(state, 'pealark', { publishedTotal: 1 });
-  const carillon = progressForPunctuationMonster(state, 'carillon', { publishedTotal: 14 });
+  const pealark = progressForPunctuationMonster(state, 'pealark', { publishedTotal: 5 });
+  const quoral = progressForPunctuationMonster(state, 'quoral', { publishedTotal: 14 });
 
   assert.deepEqual(state.pealark.mastered, [oldMasteryKey, endmarkEvent.masteryKey]);
   assert.deepEqual(pealark.masteredList, [endmarkEvent.masteryKey]);
   assert.equal(pealark.mastered, 1);
-  assert.equal(carillon.mastered, 1);
+  assert.equal(quoral.mastered, 1);
 });
 
 test('previous release reward events cannot reserve current release mastery keys', () => {
@@ -162,83 +165,82 @@ test('Apostrophe cluster reaches stage 4 when all published units are secure', (
   assert.equal(progressForPunctuationMonster(repository.state(), 'claspin', { publishedTotal: 2 }).stage, 4);
 });
 
-test('Comma / Flow cluster reaches stage 4 when all published units are secure', () => {
+test('Curlune reaches stage 4 when all published comma_flow + structure units are secure', () => {
+  // Phase 2 roster: Curlune covers comma_flow (3) + structure (4) = 7 units.
   const repository = makeRepository();
-  for (const rewardUnitId of ['list-commas-core', 'fronted-adverbials-core', 'comma-clarity-core']) {
+  const curluneUnits = [
+    ['comma_flow', 'list-commas-core'],
+    ['comma_flow', 'fronted-adverbials-core'],
+    ['comma_flow', 'comma-clarity-core'],
+    ['structure', 'parenthesis-core'],
+    ['structure', 'colons-core'],
+    ['structure', 'semicolon-lists-core'],
+    ['structure', 'bullet-points-core'],
+  ];
+  for (const [clusterId, rewardUnitId] of curluneUnits) {
     recordPunctuationRewardUnitMastery({
       learnerId: 'learner-a',
       releaseId: PUNCTUATION_RELEASE_ID,
-      clusterId: 'comma_flow',
+      clusterId,
       rewardUnitId,
-      masteryKey: masteryKey('comma_flow', rewardUnitId),
+      masteryKey: masteryKey(clusterId, rewardUnitId),
       monsterId: 'curlune',
-      publishedTotal: 3,
+      publishedTotal: 7,
       aggregatePublishedTotal: 14,
       gameStateRepository: repository,
       random: () => 0,
     });
   }
 
-  assert.equal(progressForPunctuationMonster(repository.state(), 'curlune', { publishedTotal: 3 }).stage, 4);
+  assert.equal(progressForPunctuationMonster(repository.state(), 'curlune', { publishedTotal: 7 }).stage, 4);
 });
 
-test('Boundary cluster reaches stage 4 when all published units are secure', () => {
+test('Pealark reaches stage 4 when all published endmarks + speech + boundary units are secure', () => {
+  // Phase 2 roster: Pealark covers endmarks (1) + speech (1) + boundary (3) = 5 units.
   const repository = makeRepository();
-  for (const rewardUnitId of ['semicolons-core', 'dash-clauses-core', 'hyphens-core']) {
+  const pealarkUnits = [
+    ['endmarks', 'sentence-endings-core'],
+    ['speech', 'speech-core'],
+    ['boundary', 'semicolons-core'],
+    ['boundary', 'dash-clauses-core'],
+    ['boundary', 'hyphens-core'],
+  ];
+  for (const [clusterId, rewardUnitId] of pealarkUnits) {
     recordPunctuationRewardUnitMastery({
       learnerId: 'learner-a',
       releaseId: PUNCTUATION_RELEASE_ID,
-      clusterId: 'boundary',
+      clusterId,
       rewardUnitId,
-      masteryKey: masteryKey('boundary', rewardUnitId),
-      monsterId: 'hyphang',
-      publishedTotal: 3,
+      masteryKey: masteryKey(clusterId, rewardUnitId),
+      monsterId: 'pealark',
+      publishedTotal: 5,
       aggregatePublishedTotal: 14,
       gameStateRepository: repository,
       random: () => 0,
     });
   }
 
-  assert.equal(progressForPunctuationMonster(repository.state(), 'hyphang', { publishedTotal: 3 }).stage, 4);
-});
-
-test('List / Structure cluster reaches stage 4 when all published units are secure', () => {
-  const repository = makeRepository();
-  for (const rewardUnitId of ['parenthesis-core', 'colons-core', 'semicolon-lists-core', 'bullet-points-core']) {
-    recordPunctuationRewardUnitMastery({
-      learnerId: 'learner-a',
-      releaseId: PUNCTUATION_RELEASE_ID,
-      clusterId: 'structure',
-      rewardUnitId,
-      masteryKey: masteryKey('structure', rewardUnitId),
-      monsterId: 'colisk',
-      publishedTotal: 4,
-      aggregatePublishedTotal: 14,
-      gameStateRepository: repository,
-      random: () => 0,
-    });
-  }
-
-  assert.equal(progressForPunctuationMonster(repository.state(), 'colisk', { publishedTotal: 4 }).stage, 4);
+  assert.equal(progressForPunctuationMonster(repository.state(), 'pealark', { publishedTotal: 5 }).stage, 4);
 });
 
 test('published-release aggregate reaches stage 4 only for current published denominator', () => {
+  // Phase 2 cluster -> monster remap. Grand aggregate is now Quoral.
   const repository = makeRepository();
   for (const [clusterId, rewardUnitId, monsterId, publishedTotal] of [
-    ['endmarks', 'sentence-endings-core', 'pealark', 1],
+    ['endmarks', 'sentence-endings-core', 'pealark', 5],
     ['apostrophe', 'apostrophe-contractions-core', 'claspin', 2],
     ['apostrophe', 'apostrophe-possession-core', 'claspin', 2],
-    ['speech', 'speech-core', 'quoral', 1],
-    ['comma_flow', 'list-commas-core', 'curlune', 3],
-    ['comma_flow', 'fronted-adverbials-core', 'curlune', 3],
-    ['comma_flow', 'comma-clarity-core', 'curlune', 3],
-    ['structure', 'parenthesis-core', 'colisk', 4],
-    ['structure', 'colons-core', 'colisk', 4],
-    ['structure', 'semicolon-lists-core', 'colisk', 4],
-    ['structure', 'bullet-points-core', 'colisk', 4],
-    ['boundary', 'semicolons-core', 'hyphang', 3],
-    ['boundary', 'dash-clauses-core', 'hyphang', 3],
-    ['boundary', 'hyphens-core', 'hyphang', 3],
+    ['speech', 'speech-core', 'pealark', 5],
+    ['comma_flow', 'list-commas-core', 'curlune', 7],
+    ['comma_flow', 'fronted-adverbials-core', 'curlune', 7],
+    ['comma_flow', 'comma-clarity-core', 'curlune', 7],
+    ['structure', 'parenthesis-core', 'curlune', 7],
+    ['structure', 'colons-core', 'curlune', 7],
+    ['structure', 'semicolon-lists-core', 'curlune', 7],
+    ['structure', 'bullet-points-core', 'curlune', 7],
+    ['boundary', 'semicolons-core', 'pealark', 5],
+    ['boundary', 'dash-clauses-core', 'pealark', 5],
+    ['boundary', 'hyphens-core', 'pealark', 5],
   ]) {
     recordPunctuationRewardUnitMastery({
       learnerId: 'learner-a',
@@ -253,9 +255,9 @@ test('published-release aggregate reaches stage 4 only for current published den
       random: () => 0,
     });
   }
-  const carillon = progressForPunctuationMonster(repository.state(), 'carillon', { publishedTotal: 14 });
-  assert.equal(carillon.mastered, 14);
-  assert.equal(carillon.stage, 4);
+  const quoral = progressForPunctuationMonster(repository.state(), 'quoral', { publishedTotal: 14 });
+  assert.equal(quoral.mastered, 14);
+  assert.equal(quoral.stage, 4);
 });
 
 test('generated-template expansion does not change release-scoped mastery keys', () => {
@@ -276,4 +278,152 @@ test('generated-template expansion does not change release-scoped mastery keys',
   });
   assert.ok(first.length >= 1);
   assert.deepEqual(second, []);
+});
+
+// --------------- U7: projection-layer dedupe across roster flip -----------
+
+import {
+  combineCommandEvents,
+  terminalRewardToken,
+} from '../worker/src/projections/events.js';
+
+test('terminalRewardToken uses (learnerId, monsterId, kind, releaseId)', () => {
+  const token = terminalRewardToken({
+    type: 'reward.monster',
+    kind: 'caught',
+    learnerId: 'learner-a',
+    monsterId: 'quoral',
+    releaseId: 'punctuation-r4-full-14-skill-structure',
+  });
+  assert.equal(token, 'reward.monster.terminal:learner-a:quoral:caught:punctuation-r4-full-14-skill-structure');
+});
+
+test('terminalRewardToken returns null for non-terminal transitions', () => {
+  assert.equal(terminalRewardToken({ type: 'reward.monster', kind: 'levelup', learnerId: 'a', monsterId: 'quoral' }), null);
+  assert.equal(terminalRewardToken({ type: 'reward.monster', kind: 'evolve', learnerId: 'a', monsterId: 'quoral' }), null);
+  assert.equal(terminalRewardToken({ type: 'punctuation.unit-secured', learnerId: 'a' }), null);
+  assert.equal(terminalRewardToken(null), null);
+});
+
+test('cross-flip caught events dedupe to one terminal transition per (learner, monster, release)', () => {
+  // Simulate pre-flip + post-flip caught events for the same learner and
+  // monster within the same release. The id-based dedupe keeps both (the
+  // cluster segment differs), but the terminal token collapses them.
+  const preFlip = {
+    id: 'reward.monster:learner-a:punctuation:r4:speech:speech-core:quoral:caught',
+    type: 'reward.monster',
+    kind: 'caught',
+    learnerId: 'learner-a',
+    monsterId: 'quoral',
+    releaseId: 'punctuation-r4-full-14-skill-structure',
+    clusterId: 'speech',
+  };
+  const postFlip = {
+    id: 'reward.monster:learner-a:punctuation:r4:published_release:speech-core:quoral:caught',
+    type: 'reward.monster',
+    kind: 'caught',
+    learnerId: 'learner-a',
+    monsterId: 'quoral',
+    releaseId: 'punctuation-r4-full-14-skill-structure',
+    clusterId: 'published_release',
+  };
+  // Case A: pre-flip is already persisted; post-flip arrives fresh.
+  const combined = combineCommandEvents({
+    domainEvents: [postFlip],
+    existingEvents: [preFlip],
+  });
+  assert.equal(combined.events.length, 0, 'post-flip duplicate collapses against existing pre-flip row');
+
+  // Case B: both arrive together as new events.
+  const fresh = combineCommandEvents({
+    domainEvents: [preFlip, postFlip],
+  });
+  assert.equal(fresh.events.length, 1, 'batch of pre + post emits only one terminal');
+  assert.equal(fresh.events[0].clusterId, 'speech', 'first-in-wins (pre-flip id retained)');
+});
+
+test('cross-release caught events remain distinct — future release re-emits', () => {
+  const r4 = {
+    id: 'reward.monster:learner-a:punctuation:r4:published_release:speech-core:quoral:caught',
+    type: 'reward.monster',
+    kind: 'caught',
+    learnerId: 'learner-a',
+    monsterId: 'quoral',
+    releaseId: 'punctuation-r4-full-14-skill-structure',
+  };
+  const r5 = {
+    ...r4,
+    id: 'reward.monster:learner-a:punctuation:r5:published_release:speech-core:quoral:caught',
+    releaseId: 'punctuation-r5-future',
+  };
+  const combined = combineCommandEvents({
+    domainEvents: [r5],
+    existingEvents: [r4],
+  });
+  assert.equal(combined.events.length, 1, 'new release must still emit a terminal transition');
+  assert.equal(combined.events[0].releaseId, 'punctuation-r5-future');
+});
+
+test('mega across flip also dedupes by terminal token', () => {
+  const preFlipMega = {
+    id: 'reward.monster:learner-a:punctuation:r4:speech:speech-core:quoral:mega',
+    type: 'reward.monster',
+    kind: 'mega',
+    learnerId: 'learner-a',
+    monsterId: 'quoral',
+    releaseId: 'punctuation-r4-full-14-skill-structure',
+  };
+  const postFlipMega = {
+    ...preFlipMega,
+    id: 'reward.monster:learner-a:punctuation:r4:published_release:bullet-points-core:quoral:mega',
+  };
+  const combined = combineCommandEvents({
+    domainEvents: [postFlipMega],
+    existingEvents: [preFlipMega],
+  });
+  assert.equal(combined.events.length, 0, 'mega dedupes by (learner, monster, kind, release)');
+});
+
+test('caught and mega coexist for the same (learner, monster, release)', () => {
+  // Terminal dedupe keys on `kind`, so caught and mega with identical
+  // (learner, monster, release) must both survive — they are separate
+  // milestones a learner is entitled to celebrate.
+  const caught = {
+    id: 'reward.monster:learner-a:punctuation:r4:speech:speech-core:quoral:caught',
+    type: 'reward.monster',
+    kind: 'caught',
+    learnerId: 'learner-a',
+    monsterId: 'quoral',
+    releaseId: 'punctuation-r4-full-14-skill-structure',
+  };
+  const mega = {
+    ...caught,
+    id: 'reward.monster:learner-a:punctuation:r4:published_release:bullet-points-core:quoral:mega',
+    kind: 'mega',
+  };
+  const combined = combineCommandEvents({ domainEvents: [caught, mega] });
+  assert.equal(combined.events.length, 2, 'caught and mega are distinct milestones');
+  assert.deepEqual(combined.events.map((event) => event.kind).sort(), ['caught', 'mega']);
+});
+
+test('levelup and evolve are unaffected by terminal dedupe', () => {
+  const existing = {
+    id: 'reward.monster:learner-a:punctuation:r4:speech:speech-core:quoral:levelup',
+    type: 'reward.monster',
+    kind: 'levelup',
+    learnerId: 'learner-a',
+    monsterId: 'quoral',
+    releaseId: 'punctuation-r4-full-14-skill-structure',
+  };
+  const next = {
+    ...existing,
+    id: 'reward.monster:learner-a:punctuation:r4:published_release:speech-core:quoral:levelup',
+  };
+  const combined = combineCommandEvents({
+    domainEvents: [next],
+    existingEvents: [existing],
+  });
+  // levelup / evolve are id-deduped only (different ids -> both survive).
+  // This is deliberate: only caught / mega represent terminal milestones.
+  assert.equal(combined.events.length, 1);
 });

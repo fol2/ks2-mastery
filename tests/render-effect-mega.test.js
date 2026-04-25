@@ -14,11 +14,17 @@ import { normaliseMonsterCelebrationEvent } from '../src/platform/game/monster-c
 import { installMemoryStorage } from './helpers/memory-storage.js';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const MEGA_PATH = path.join(rootDir, 'src/platform/game/render/effects/mega.js');
 
+// `mega` registers through the `shine-streak` template via
+// `runtimeRegistration`; pre-registering JSX templates mirrors the
+// production bootstrap path.
 const REGISTER_MEGA = `
-  import * as __megaMod from ${JSON.stringify(MEGA_PATH)};
-  registerEffect(__megaMod.megaEffect);
+  import { runtimeRegistration } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/runtime-registration.js'))};
+  import { __registerCelebrationTemplates } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/index.js'))};
+  import particlesBurst from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/particles-burst.js'))};
+  import shineStreak from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/shine-streak.js'))};
+  __registerCelebrationTemplates({ particlesBurst, shineStreak });
+  runtimeRegistration({ catalog: undefined });
 `;
 
 function makeMonster(overrides = {}) {
@@ -108,8 +114,14 @@ test('mega effect: dismissal — onComplete drains the queue and persists an ack
   const eventTemplate = makeMegaEvent({ id: 'reward.monster:dismissal:mega:inklet' });
   const out = await renderCelebrationLayerFixture({
     registrations: `
-      import * as __megaMod from ${JSON.stringify(MEGA_PATH)};
-      const __original = __megaMod.megaEffect;
+      import { runtimeRegistration } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/runtime-registration.js'))};
+      import { __registerCelebrationTemplates } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/index.js'))};
+      import particlesBurst from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/particles-burst.js'))};
+      import shineStreak from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/shine-streak.js'))};
+      import { lookupEffect } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/registry.js'))};
+      __registerCelebrationTemplates({ particlesBurst, shineStreak });
+      runtimeRegistration({ catalog: undefined });
+      const __original = lookupEffect('mega');
       registerEffect(defineEffect({
         kind: 'mega',
         lifecycle: 'transient',
@@ -139,6 +151,32 @@ test('mega effect: dismissal — onComplete drains the queue and persists an ack
     result.after.ackedIds.includes('reward.monster:dismissal:mega:inklet'),
     `expected dismissed event to be acked; got ${JSON.stringify(result.after.ackedIds)}`,
   );
+});
+
+test('mega effect: U4 — tunables.showShine=false hides the shine streak element', async () => {
+  // Default mega renders showShine=true. Tunables force showShine=false
+  // so the `.monster-celebration-shine` element is absent.
+  const event = makeMegaEvent({
+    previous: { stage: 3, branch: 'b1' },
+    next: { stage: 4, branch: 'b1' },
+  });
+  const out = await renderCelebrationLayerFixture({
+    effectConfigValue: {
+      celebrationTunables: {
+        'inklet-b1-4': {
+          mega: { showParticles: true, showShine: false, modifierClass: '' },
+        },
+      },
+    },
+    registrations: REGISTER_MEGA,
+    setup: `
+      store.pushMonsterCelebrations([${JSON.stringify(event)}]);
+    `,
+  });
+  const { html } = JSON.parse(out);
+
+  assert.match(html, /class="monster-celebration-overlay mega"/);
+  assert.equal(html.includes('class="monster-celebration-shine"'), false);
 });
 
 test('mega effect: integration — controller dispatch advances queue and persists ack', () => {

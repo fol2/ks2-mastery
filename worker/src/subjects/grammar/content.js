@@ -1,5 +1,6 @@
 // Generated from the reviewed KS2 Grammar legacy engine.
 // Regenerate with: node scripts/extract-grammar-legacy-oracle.mjs --source <legacy-html>
+import { markByAnswerSpec } from './answer-spec.js';
 
 const MISCONCEPTIONS = {
   sentence_function_confusion: "Mixed up sentence functions or punctuation cues",
@@ -3877,40 +3878,28 @@ function mkResult({correct, score, maxScore, misconception, feedbackShort, feedb
   };
 }
 
+// Thin adapter — U5 migration window. Inline `accepted: [...]` arrays on
+// template items continue to flow through this helper, which constructs a
+// transient `acceptedSet` answerSpec and delegates to the shared
+// markByAnswerSpec marker in ./answer-spec.js. Every marking call in this
+// module therefore routes through the same declarative code path, even before
+// per-template answerSpec declarations land in a content-release PR.
+//
+// We keep the legacy `minimalHint` lookup injection here so the result shape
+// matches `mkResult` exactly (oracle fixtures depend on it).
 function markStringAnswer(respText, acceptedList, opts = {}) {
-  const cmp = compareAnswerString(respText, acceptedList);
-  const fullMarks = opts.maxScore || 2;
-  const exactText = acceptedList[0];
-  if (cmp.exact) {
-    return mkResult({
-      correct:true,
-      score:fullMarks,
-      maxScore:fullMarks,
-      feedbackShort:"Correct.",
-      feedbackLong: opts.feedbackLong || `Correct answer: ${exactText}`,
-      answerText: exactText
-    });
-  }
-  if (cmp.bare && fullMarks > 1) {
-    return mkResult({
-      correct:false,
-      score:fullMarks - 1,
-      maxScore:fullMarks,
-      misconception: opts.punctuationMisconception || "punctuation_precision",
-      feedbackShort:"The grammar idea is close, but the exact punctuation or wording is not fully correct.",
-      feedbackLong: opts.feedbackLong || `Correct answer: ${exactText}`,
-      answerText: exactText
-    });
-  }
-  return mkResult({
-    correct:false,
-    score:0,
-    maxScore:fullMarks,
-    misconception: opts.misconception || "misread_question",
-    feedbackShort:"Not quite.",
-    feedbackLong: opts.feedbackLong || `Correct answer: ${exactText}`,
-    answerText: exactText
-  });
+  const spec = {
+    kind: 'acceptedSet',
+    golden: Array.isArray(acceptedList) ? acceptedList.slice() : [],
+    nearMiss: [],
+    maxScore: opts.maxScore || 2,
+    misconception: opts.misconception,
+    punctuationMisconception: opts.punctuationMisconception,
+    feedbackLong: opts.feedbackLong,
+  };
+  const result = markByAnswerSpec(spec, { answer: respText });
+  result.minimalHint = MINIMAL_HINTS[result.misconception] || "Check the sentence structure and the instruction again.";
+  return result;
 }
 
 function makeBaseQuestion(template, seed, data) {

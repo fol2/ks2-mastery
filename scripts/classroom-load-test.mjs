@@ -242,12 +242,38 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     headers: [],
     demoSessions: false,
     confirmProductionLoad: false,
+    confirmHighProductionLoad: false,
     includeMeasurements: true,
     includeRequestSamples: false,
     help: false,
     output: undefined,
     configPath: '',
     thresholds: {},
+    // Flat mirrors of nested thresholds for back-compat with PR #177 test
+    // harnesses that read options.max5xx directly. Both shapes are kept in
+    // sync by the threshold-parsing branches below.
+    max5xx: null,
+    maxNetworkFailures: null,
+    maxBootstrapP95Ms: null,
+    maxCommandP95Ms: null,
+    maxResponseBytes: null,
+    requireZeroSignals: false,
+  };
+
+  let modeFlag = null;
+  const assignedFlags = new Set();
+  const assignOnce = (flag) => {
+    if (assignedFlags.has(flag)) {
+      throw new Error(`${flag} specified more than once; refusing to let later value silently override the earlier one.`);
+    }
+    assignedFlags.add(flag);
+  };
+  const setMode = (flag, nextMode) => {
+    if (modeFlag && modeFlag !== flag) {
+      throw new Error(`Conflicting mode flags: ${modeFlag} and ${flag}. Specify exactly one of --dry-run, --local-fixture, --production.`);
+    }
+    modeFlag = flag;
+    options.mode = nextMode;
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -255,69 +281,93 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     if (arg === '--help' || arg === '-h') {
       options.help = true;
     } else if (arg === '--dry-run') {
-      options.mode = 'dry-run';
+      setMode(arg, 'dry-run');
     } else if (arg === '--local-fixture') {
-      options.mode = 'local-fixture';
+      setMode(arg, 'local-fixture');
     } else if (arg === '--production') {
-      options.mode = 'production';
+      setMode(arg, 'production');
     } else if (arg === '--origin' || arg === '--url') {
+      assignOnce('--origin/--url');
       options.origin = normaliseOrigin(readOptionValue(argv, index, arg));
       index += 1;
     } else if (arg === '--learners') {
+      assignOnce(arg);
       options.learners = positiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--bootstrap-burst') {
+      assignOnce(arg);
       options.bootstrapBurst = positiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--rounds') {
+      assignOnce(arg);
       options.rounds = positiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--pacing-ms') {
+      assignOnce(arg);
       options.pacingMs = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--timeout-ms') {
+      assignOnce(arg);
       options.timeoutMs = positiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--cookie') {
+      assignOnce(arg);
       options.cookie = readOptionValue(argv, index, arg);
       index += 1;
     } else if (arg === '--bearer') {
+      assignOnce(arg);
       options.bearer = readOptionValue(argv, index, arg);
       index += 1;
     } else if (arg === '--header') {
+      // Headers are cumulative by design (repeatable per docs); no assignOnce.
       options.headers.push(readOptionValue(argv, index, arg));
       index += 1;
     } else if (arg === '--demo-sessions') {
       options.demoSessions = true;
     } else if (arg === '--confirm-production-load') {
       options.confirmProductionLoad = true;
+    } else if (arg === '--confirm-high-production-load') {
+      options.confirmHighProductionLoad = true;
     } else if (arg === '--summary-only') {
       options.includeMeasurements = false;
     } else if (arg === '--include-request-samples') {
       options.includeRequestSamples = true;
     } else if (arg === '--output') {
+      assignOnce(arg);
       options.output = readOptionValue(argv, index, arg);
       index += 1;
     } else if (arg === '--config') {
+      assignOnce(arg);
       options.configPath = readOptionValue(argv, index, arg);
       index += 1;
     } else if (arg === '--max-5xx') {
+      assignOnce(arg);
       options.thresholds.max5xx = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      options.max5xx = options.thresholds.max5xx;
       index += 1;
     } else if (arg === '--max-network-failures') {
+      assignOnce(arg);
       options.thresholds.maxNetworkFailures = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      options.maxNetworkFailures = options.thresholds.maxNetworkFailures;
       index += 1;
     } else if (arg === '--max-bootstrap-p95-ms') {
+      assignOnce(arg);
       options.thresholds.maxBootstrapP95Ms = positiveInteger(readOptionValue(argv, index, arg), arg);
+      options.maxBootstrapP95Ms = options.thresholds.maxBootstrapP95Ms;
       index += 1;
     } else if (arg === '--max-command-p95-ms') {
+      assignOnce(arg);
       options.thresholds.maxCommandP95Ms = positiveInteger(readOptionValue(argv, index, arg), arg);
+      options.maxCommandP95Ms = options.thresholds.maxCommandP95Ms;
       index += 1;
     } else if (arg === '--max-response-bytes') {
+      assignOnce(arg);
       options.thresholds.maxResponseBytes = positiveInteger(readOptionValue(argv, index, arg), arg);
+      options.maxResponseBytes = options.thresholds.maxResponseBytes;
       index += 1;
     } else if (arg === '--require-zero-signals') {
       options.thresholds.requireZeroSignals = true;
+      options.requireZeroSignals = true;
     } else if (arg === '--require-bootstrap-capacity') {
       options.thresholds.requireBootstrapCapacity = true;
     } else {
@@ -327,6 +377,8 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
 
   return options;
 }
+
+const HIGH_PRODUCTION_LOAD_THRESHOLD = 20;
 
 export function buildClassroomLoadPlan(options = {}) {
   const mode = options.mode || 'dry-run';
@@ -370,11 +422,22 @@ export function buildClassroomLoadPlan(options = {}) {
 }
 
 export function validateClassroomLoadOptions(options = {}) {
+  if (options.help) return;
+  if (options.mode === 'dry-run') {
+    // Dry-run has no measurements, so threshold gates cannot meaningfully evaluate.
+    // If thresholds are set, fail closed so CI cannot accidentally ship a permanent
+    // silent-green gate via --dry-run + --max-* flags. Adversarial review finding adv-001.
+    // This check runs before the pairing rule so the clearer adv-001 error is
+    // surfaced first; a dry-run consumer cannot meaningfully pair thresholds.
+    if (hasThresholdFlags(options)) {
+      throw new Error('Threshold flags (--max-*, --require-zero-signals) cannot be combined with --dry-run; dry-run has no measurements and would always pass. Use --local-fixture or --production.');
+    }
+    return;
+  }
   const thresholds = options.thresholds || {};
   if (thresholds.max5xx !== undefined && thresholds.maxNetworkFailures === undefined) {
     throw new Error('--max-5xx requires --max-network-failures to avoid a silent success on total network failure.');
   }
-  if (options.help || options.mode === 'dry-run') return;
   if (!options.origin) {
     throw new Error(`${options.mode} load requires --origin.`);
   }
@@ -391,6 +454,17 @@ export function validateClassroomLoadOptions(options = {}) {
     const hasAuth = hasExplicitAuthConfig(options);
     if (!options.confirmProductionLoad || !hasAuth) {
       throw new Error('production load requires --confirm-production-load and explicit auth configuration (--cookie, --bearer, --header, or --demo-sessions).');
+    }
+    // H4 enforcement per docs/hardening/p1-baseline.md and docs/operations/capacity.md.
+    // Classroom-scale production loads (>=20 learners or >=20 bootstrap burst) must carry
+    // the second confirmation, otherwise the documented safety rail is a no-op.
+    // Adversarial review finding adv-003.
+    const highLoad = Number(options.learners) >= HIGH_PRODUCTION_LOAD_THRESHOLD
+      || Number(options.bootstrapBurst) >= HIGH_PRODUCTION_LOAD_THRESHOLD;
+    if (highLoad && !options.confirmHighProductionLoad) {
+      throw new Error(
+        `production load at classroom scale (learners >= ${HIGH_PRODUCTION_LOAD_THRESHOLD} or bootstrap-burst >= ${HIGH_PRODUCTION_LOAD_THRESHOLD}) requires --confirm-high-production-load in addition to --confirm-production-load.`,
+      );
     }
   }
 }
@@ -417,6 +491,198 @@ function signalFor(entry) {
   if (entry.status === 429) return 'rateLimited';
   if (!entry.status) return 'networkFailure';
   return null;
+}
+
+const OPERATIONAL_SIGNAL_KEYS = Object.freeze([
+  'exceededCpu',
+  'd1Overloaded',
+  'd1DailyLimit',
+  'rateLimited',
+  'networkFailure',
+  'server5xx',
+]);
+
+const BOOTSTRAP_P95_ENDPOINTS = Object.freeze([
+  'GET /api/bootstrap',
+]);
+
+const COMMAND_P95_ENDPOINTS = Object.freeze([
+  'POST /api/subjects/grammar/command',
+]);
+
+function collectObservedSignals(signals = {}) {
+  const observed = [];
+  for (const key of OPERATIONAL_SIGNAL_KEYS) {
+    if (Number(signals[key]) > 0) observed.push(key);
+  }
+  return observed;
+}
+
+function highestP95(summary, endpointList) {
+  let peak = 0;
+  for (const key of endpointList) {
+    const metrics = summary.endpoints?.[key];
+    if (metrics && Number(metrics.p95WallMs) > peak) peak = Number(metrics.p95WallMs);
+  }
+  return peak;
+}
+
+function gatedEndpointsHaveMeasurements(summary, endpointList) {
+  for (const key of endpointList) {
+    const metrics = summary.endpoints?.[key];
+    if (metrics && Number(metrics.count) > 0) return true;
+  }
+  return false;
+}
+
+function maxResponseBytesAcross(summary) {
+  let peak = 0;
+  for (const metrics of Object.values(summary.endpoints || {})) {
+    if (metrics && Number(metrics.maxResponseBytes) > peak) peak = Number(metrics.maxResponseBytes);
+  }
+  return peak;
+}
+
+/**
+ * Normalise threshold config so either shape works:
+ *   { max5xx: 0, maxNetworkFailures: 0, ... }           (PR #177 flat)
+ *   { thresholds: { max5xx: 0, maxNetworkFailures: 0 }} (U1 nested, supports --config loading)
+ * Flat keys on the top-level override nested values so ad-hoc invocations
+ * (test harnesses, single-file consumers) still work against the canonical
+ * implementation that the CLI drives via nested `options.thresholds`.
+ */
+function normaliseThresholdView(options = {}) {
+  const nested = options.thresholds || {};
+  const flatKeys = [
+    'max5xx',
+    'maxNetworkFailures',
+    'maxBootstrapP95Ms',
+    'maxCommandP95Ms',
+    'maxResponseBytes',
+    'requireZeroSignals',
+    'requireBootstrapCapacity',
+  ];
+  const view = { ...nested };
+  for (const key of flatKeys) {
+    if (options[key] != null) view[key] = options[key];
+  }
+  return view;
+}
+
+export function evaluateCapacityThresholds(summary = {}, options = {}) {
+  const thresholds = normaliseThresholdView(options);
+  const violations = [];
+
+  if (thresholds.max5xx != null) {
+    const observed = Number(summary.signals?.server5xx || 0);
+    if (observed > thresholds.max5xx) {
+      violations.push({
+        threshold: 'max-5xx',
+        limit: thresholds.max5xx,
+        observed,
+        message: `Observed ${observed} 5xx response(s); limit is ${thresholds.max5xx}.`,
+      });
+    }
+  }
+
+  if (thresholds.maxNetworkFailures != null) {
+    const observed = Number(summary.signals?.networkFailure || 0);
+    if (observed > thresholds.maxNetworkFailures) {
+      violations.push({
+        threshold: 'max-network-failures',
+        limit: thresholds.maxNetworkFailures,
+        observed,
+        message: `Observed ${observed} network failure(s); limit is ${thresholds.maxNetworkFailures}.`,
+      });
+    }
+  }
+
+  if (thresholds.maxBootstrapP95Ms != null) {
+    if (!gatedEndpointsHaveMeasurements(summary, BOOTSTRAP_P95_ENDPOINTS)) {
+      // Adversarial review adv-006: fail closed when the gated endpoint set
+      // produced no measurements. Otherwise an unrelated bug (missed scenario,
+      // endpoint path drift) silently deactivates the gate.
+      violations.push({
+        threshold: 'max-bootstrap-p95-ms',
+        limit: thresholds.maxBootstrapP95Ms,
+        observed: null,
+        gatedEndpoints: [...BOOTSTRAP_P95_ENDPOINTS],
+        message: `No measurements captured for bootstrap gated endpoints (${BOOTSTRAP_P95_ENDPOINTS.join(', ')}); threshold cannot be evaluated safely.`,
+      });
+    } else {
+      const observed = highestP95(summary, BOOTSTRAP_P95_ENDPOINTS);
+      if (observed > thresholds.maxBootstrapP95Ms) {
+        violations.push({
+          threshold: 'max-bootstrap-p95-ms',
+          limit: thresholds.maxBootstrapP95Ms,
+          observed,
+          message: `Bootstrap P95 wall time ${observed} ms exceeds ${thresholds.maxBootstrapP95Ms} ms.`,
+        });
+      }
+    }
+  }
+
+  if (thresholds.maxCommandP95Ms != null) {
+    if (!gatedEndpointsHaveMeasurements(summary, COMMAND_P95_ENDPOINTS)) {
+      violations.push({
+        threshold: 'max-command-p95-ms',
+        limit: thresholds.maxCommandP95Ms,
+        observed: null,
+        gatedEndpoints: [...COMMAND_P95_ENDPOINTS],
+        message: `No measurements captured for command gated endpoints (${COMMAND_P95_ENDPOINTS.join(', ')}); threshold cannot be evaluated safely.`,
+      });
+    } else {
+      const observed = highestP95(summary, COMMAND_P95_ENDPOINTS);
+      if (observed > thresholds.maxCommandP95Ms) {
+        violations.push({
+          threshold: 'max-command-p95-ms',
+          limit: thresholds.maxCommandP95Ms,
+          observed,
+          message: `Subject-command P95 wall time ${observed} ms exceeds ${thresholds.maxCommandP95Ms} ms.`,
+        });
+      }
+    }
+  }
+
+  if (thresholds.maxResponseBytes != null) {
+    const observed = maxResponseBytesAcross(summary);
+    if (observed > thresholds.maxResponseBytes) {
+      violations.push({
+        threshold: 'max-response-bytes',
+        limit: thresholds.maxResponseBytes,
+        observed,
+        message: `Response bytes ${observed} exceeded cap ${thresholds.maxResponseBytes}.`,
+      });
+    }
+  }
+
+  if (thresholds.requireZeroSignals) {
+    const signals = collectObservedSignals(summary.signals || {});
+    if (signals.length) {
+      violations.push({
+        threshold: 'require-zero-signals',
+        limit: 0,
+        observed: signals.length,
+        signals,
+        message: `Observed operational signal(s): ${signals.join(', ')}.`,
+      });
+    }
+  }
+
+  return violations;
+}
+
+export function hasThresholdFlags(options = {}) {
+  const thresholds = normaliseThresholdView(options);
+  return (
+    thresholds.max5xx != null
+    || thresholds.maxNetworkFailures != null
+    || thresholds.maxBootstrapP95Ms != null
+    || thresholds.maxCommandP95Ms != null
+    || thresholds.maxResponseBytes != null
+    || thresholds.requireZeroSignals === true
+    || thresholds.requireBootstrapCapacity === true
+  );
 }
 
 export function summariseCapacityResults(measurements = [], plan = {}) {
@@ -688,6 +954,25 @@ function mergeThresholds(configThresholds = {}, cliThresholds = {}) {
   return merged;
 }
 
+function buildThresholdsBlock(options, summary) {
+  const thresholds = normaliseThresholdView(options);
+  const configured = hasThresholdFlags(options);
+  const violations = configured ? evaluateCapacityThresholds(summary, options) : [];
+  return {
+    configured,
+    limits: {
+      max5xx: thresholds.max5xx ?? null,
+      maxNetworkFailures: thresholds.maxNetworkFailures ?? null,
+      maxBootstrapP95Ms: thresholds.maxBootstrapP95Ms ?? null,
+      maxCommandP95Ms: thresholds.maxCommandP95Ms ?? null,
+      maxResponseBytes: thresholds.maxResponseBytes ?? null,
+      requireZeroSignals: thresholds.requireZeroSignals === true,
+    },
+    violations,
+  };
+}
+
+
 export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
   const options = parseClassroomLoadArgs(argv);
   if (options.help) {
@@ -697,18 +982,21 @@ export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
   // threshold set: a config-only `max5xx` must still trip the
   // `--max-network-failures` pairing rule.
   const config = loadThresholdConfig(options.configPath);
-  const thresholds = mergeThresholds(config.thresholds, options.thresholds);
-  validateClassroomLoadOptions({ ...options, thresholds });
+  const mergedThresholds = mergeThresholds(config.thresholds, options.thresholds);
+  const optionsWithMergedThresholds = { ...options, thresholds: mergedThresholds };
+  validateClassroomLoadOptions(optionsWithMergedThresholds);
   const plan = buildClassroomLoadPlan(options);
 
   const startedAt = new Date().toISOString();
   let report;
+  let summary;
   if (options.mode === 'dry-run') {
+    summary = summariseCapacityResults([], plan);
     report = {
       ok: true,
       dryRun: true,
       plan,
-      summary: summariseCapacityResults([], plan),
+      summary,
     };
   } else {
     const origin = options.origin;
@@ -717,7 +1005,7 @@ export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
     measurements.push(...prepared.measurements);
     measurements.push(...await runColdBootstrapBurst(origin, options, prepared.contexts, plan));
     measurements.push(...await runHumanPacedRounds(origin, options, prepared.contexts, plan));
-    const summary = summariseCapacityResults(measurements, { ...plan });
+    summary = summariseCapacityResults(measurements, { ...plan });
     report = {
       ok: summary.ok,
       dryRun: false,
@@ -728,10 +1016,11 @@ export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
   }
 
   const finishedAt = new Date().toISOString();
+  const thresholdsBlock = buildThresholdsBlock(optionsWithMergedThresholds, summary);
   const evidence = buildEvidencePayload({
     report,
-    thresholds,
-    options,
+    thresholds: mergedThresholds,
+    options: optionsWithMergedThresholds,
     timings: { startedAt, finishedAt },
   });
 
@@ -747,16 +1036,27 @@ export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
       configPath: options.configPath || null,
     }
     : null;
+  // Merge per-key evidence thresholds (U1) with PR #177 threshold block shape
+  // ({configured, violations, limits}). Both test harnesses probe distinct
+  // keys: U1 reads `report.thresholds.max5xx.passed`, PR #177 reads
+  // `report.thresholds.configured` / `.violations`. Using a flat spread keeps
+  // both lookup patterns live without a breaking rename.
+  const mergedThresholdsReport = {
+    ...(evidence.thresholds || {}),
+    configured: thresholdsBlock.configured,
+    violations: thresholdsBlock.violations,
+    limits: thresholdsBlock.limits,
+  };
   const finalReport = {
     ...report,
     startedAt,
     finishedAt,
-    thresholds: evidence.thresholds,
+    thresholds: mergedThresholdsReport,
     failures: evidence.failures,
     safety: evidence.safety,
     reportMeta: evidence.reportMeta,
     ...(evidenceTier ? { tier: evidenceTier } : {}),
-    ok: evidence.ok,
+    ok: evidence.ok && thresholdsBlock.violations.length === 0,
   };
 
   // Only persist when --output was explicitly passed. `parseClassroomLoadArgs`
@@ -782,35 +1082,39 @@ export function usage() {
     'Usage: node ./scripts/classroom-load-test.mjs [options]',
     '',
     'Modes:',
-    '  --dry-run                  Print the planned capacity run without network requests (default)',
-    '  --local-fixture            Run against a local/loopback origin using demo sessions',
-    '  --production               Run against a production or preview origin; requires explicit confirmation and auth',
+    '  --dry-run                         Print the planned capacity run without network requests (default)',
+    '  --local-fixture                   Run against a local/loopback origin using demo sessions',
+    '  --production                      Run against a production or preview origin; requires explicit confirmation and auth',
     '',
     'Options:',
-    '  --origin <url>             Target origin for local-fixture or production runs',
-    '  --learners <number>        Virtual learner count, default 3',
-    '  --bootstrap-burst <number> Concurrent cold bootstrap requests, default 6',
-    '  --rounds <number>          Human-paced Grammar rounds per learner, default 1',
-    '  --pacing-ms <number>       Delay between learner command groups, default 0',
-    '  --timeout-ms <number>      Per-request timeout, default 15000',
-    '  --cookie <cookie>          Cookie header for an existing authenticated run',
-    '  --bearer <token>           Authorization bearer token',
-    '  --header "name: value"     Extra request header, repeatable',
-    '  --demo-sessions            Create one isolated demo session per virtual learner',
-    '  --confirm-production-load  Required before --production sends requests',
-    '  --summary-only             Omit per-request measurements from JSON output',
-    '  --include-request-samples  Include per-request measurements in --output evidence (default off)',
+    '  --origin <url>                    Target origin for local-fixture or production runs',
+    '  --learners <number>               Virtual learner count, default 3',
+    '  --bootstrap-burst <number>        Concurrent cold bootstrap requests, default 6',
+    '  --rounds <number>                 Human-paced Grammar rounds per learner, default 1',
+    '  --pacing-ms <number>              Delay between learner command groups, default 0',
+    '  --timeout-ms <number>             Per-request timeout, default 15000',
+    '  --cookie <cookie>                 Cookie header for an existing authenticated run',
+    '  --bearer <token>                  Authorization bearer token',
+    '  --header "name: value"            Extra request header, repeatable',
+    '  --demo-sessions                   Create one isolated demo session per virtual learner',
+    '  --confirm-production-load         Required before --production sends requests',
+    '  --confirm-high-production-load    Additional acknowledgement for larger production load shapes',
+    '  --summary-only                    Omit per-request measurements from JSON output',
+    '  --include-request-samples         Include per-request measurements in --output evidence (default off)',
     '',
     'Evidence and thresholds:',
-    '  --output <path>            Persist evidence JSON to <path>; auto-names when flag is set without value',
-    '  --config <path>            Load pinned thresholds from JSON file (CLI flags override)',
-    '  --max-5xx <n>              Fail run when 5xx count exceeds n (requires --max-network-failures)',
-    '  --max-network-failures <n> Fail run when network-failure count exceeds n',
-    '  --max-bootstrap-p95-ms <n> Fail run when P95 bootstrap wall time exceeds n ms',
-    '  --max-command-p95-ms <n>   Fail run when P95 subject command wall time exceeds n ms',
-    '  --max-response-bytes <n>   Fail run when any endpoint response exceeds n bytes',
-    '  --require-zero-signals     Fail run when any operational signal fires',
-    '  --require-bootstrap-capacity  Assert meta.capacity.bootstrapCapacity is present (U3)',
+    '  --output <path>                   Persist evidence JSON to <path>',
+    '  --config <path>                   Load pinned thresholds from JSON file (CLI flags override)',
+    '',
+    'Threshold gates (release-gate mode; non-zero exit on any violation):',
+    '  --max-5xx <count>                 Maximum tolerated HTTP 5xx responses (requires --max-network-failures)',
+    '  --max-network-failures <count>    Maximum tolerated network failures',
+    '  --max-bootstrap-p95-ms <ms>       Maximum tolerated /api/bootstrap P95 wall time',
+    '  --max-command-p95-ms <ms>         Maximum tolerated subject-command P95 wall time',
+    '  --max-response-bytes <bytes>      Maximum tolerated response bytes across endpoints',
+    '  --require-zero-signals            Fail on any exceededCpu / d1Overloaded / d1DailyLimit /',
+    '                                    rateLimited / networkFailure / server5xx signal',
+    '  --require-bootstrap-capacity      Assert meta.capacity.bootstrapCapacity is present (U3)',
   ].join('\n');
 }
 

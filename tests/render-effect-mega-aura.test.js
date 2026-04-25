@@ -1,17 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { renderMonsterRenderFixture } from './helpers/react-render.js';
 
-const MEGA_AURA_MODULE = {
-  path: 'src/platform/game/render/effects/mega-aura.js',
-  exports: ['megaAuraEffect'],
-};
+// `mega-aura` and `shiny` register through the bundled effect catalog +
+// templates, exercised here via `runtimeRegistration` — the same path
+// production uses on app boot.
 
-const SHINY_MODULE = {
-  path: 'src/platform/game/render/effects/shiny.js',
-  exports: ['shinyEffect'],
-};
+const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const REGISTER_VIA_RUNTIME = `
+  import { runtimeRegistration } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/runtime-registration.js'))};
+  runtimeRegistration({ catalog: undefined });
+`;
 
 function makeMonster(overrides = {}) {
   return {
@@ -33,7 +36,10 @@ function makeMonster(overrides = {}) {
 }
 
 async function run(opts) {
-  const out = await renderMonsterRenderFixture(opts);
+  const out = await renderMonsterRenderFixture({
+    ...opts,
+    registrations: `${REGISTER_VIA_RUNTIME}\n${opts.registrations || ''}`,
+  });
   return JSON.parse(out);
 }
 
@@ -42,7 +48,6 @@ test('mega-aura: happy path — single overlay with aria-hidden and accent + sec
     monster: makeMonster(),
     context: 'codex',
     effects: [{ kind: 'mega-aura' }],
-    effectModules: [MEGA_AURA_MODULE],
   });
 
   assert.match(html, /class="fx fx-mega-aura"/);
@@ -59,7 +64,6 @@ test('mega-aura: edge case — intensity out of range (-0.5) clamps to 0', async
     monster: makeMonster(),
     context: 'codex',
     effects: [{ kind: 'mega-aura', params: { intensity: -0.5 } }],
-    effectModules: [MEGA_AURA_MODULE],
   });
 
   assert.match(html, /--fx-mega-intensity:\s*0(?![\d.])/);
@@ -70,7 +74,6 @@ test('mega-aura: edge case — monster missing secondary falls back to accent', 
     monster: makeMonster({ secondary: '' }),
     context: 'codex',
     effects: [{ kind: 'mega-aura' }],
-    effectModules: [MEGA_AURA_MODULE],
   });
 
   // Both colour vars resolve to accent when secondary is missing.
@@ -83,7 +86,6 @@ test('mega-aura: edge case — surface "lesson" filtered out, no overlay rendere
     monster: makeMonster(),
     context: 'lesson',
     effects: [{ kind: 'mega-aura' }],
-    effectModules: [MEGA_AURA_MODULE],
   });
 
   assert.equal(html.includes('fx-mega-aura'), false);
@@ -99,7 +101,6 @@ test('mega-aura: integration — reducedMotion=true emits is-simplified class', 
     context: 'codex',
     effects: [{ kind: 'mega-aura' }],
     reducedMotion: true,
-    effectModules: [MEGA_AURA_MODULE],
   });
 
   assert.match(html, /class="fx fx-mega-aura is-simplified"/);
@@ -110,7 +111,6 @@ test('mega-aura: stacks freely with shiny — both render, no exclusive-group co
     monster: makeMonster(),
     context: 'codex',
     effects: [{ kind: 'shiny' }, { kind: 'mega-aura' }],
-    effectModules: [SHINY_MODULE, MEGA_AURA_MODULE],
   });
 
   assert.match(html, /class="fx fx-shiny"/);

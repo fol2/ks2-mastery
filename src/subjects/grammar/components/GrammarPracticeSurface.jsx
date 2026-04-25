@@ -4,31 +4,15 @@ import { GrammarSessionScene } from './GrammarSessionScene.jsx';
 import { GrammarSetupScene } from './GrammarSetupScene.jsx';
 import { GrammarSummaryScene } from './GrammarSummaryScene.jsx';
 import { GRAMMAR_MONSTER_ROUTES, GRAMMAR_SUBJECT_ID, normaliseGrammarReadModel } from '../metadata.js';
+import { normaliseGrammarRewardState } from '../../../platform/game/monster-system.js';
 
 const MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
 
-const GRAMMAR_TRANSFER_PLACEHOLDERS = Object.freeze([
-  {
-    id: 'paragraph-transfer',
-    eyebrow: 'Non-scored transfer',
-    title: 'Paragraph transfer',
-    copy: 'Decision: this will be non-scored paragraph application first, so learners can use Grammar choices in a wider piece of writing without changing mastery evidence.',
-    bullets: [
-      'No score, retry, reward, or Concordium progress is recorded from this transfer lane.',
-      'Teacher review and deterministic paragraph scoring are separate future decisions, not hidden promises.',
-    ],
-  },
-  {
-    id: 'writing-application',
-    eyebrow: 'Future writing application',
-    title: 'Richer writing tasks',
-    copy: 'Reserved for sentence-to-writing practice after the non-scored transfer lane proves the right evidence shape.',
-    bullets: [
-      'Worker-marked Grammar remains the only score-bearing authority.',
-      'Any future score-bearing writing workflow will ship as its own reviewed capability.',
-    ],
-  },
-]);
+// Phase 3 U1 removes the adult-diagnostic roadmap placeholders. The
+// U6b Writing Try scene and U2 Grammar Bank scene take over the slots
+// with real child-facing scenes. Until those ship, U1 routes their
+// phase transitions through a minimal stub below so the state machine
+// remains safe and a "return" button lets the learner back out.
 
 function selectedLearner(appState) {
   const learnerId = appState?.learners?.selectedId || '';
@@ -61,41 +45,52 @@ function resolveGrammarRewardState({ grammar, learner, repositories }) {
     : {};
   const persistedState = readPersistedRewardState(repositories, learner?.id || '');
 
-  if (hasGrammarRewardProgress(projectedState)) return projectedState;
-  if (hasGrammarRewardProgress(persistedState)) return persistedState;
-  return Object.keys(projectedState).length ? projectedState : persistedState;
+  // Route through `normaliseGrammarRewardState` before `hasGrammarRewardProgress`
+  // so a pre-flip learner whose only evidence is under a retired id (e.g.
+  // `glossbloom.mastered: [...]`) is detected as a returning learner via the
+  // unioned Concordium view. Without the union, `GRAMMAR_MONSTER_ROUTES` now
+  // only includes 4 entries and retired-id progress would read as "fresh".
+  const normalisedProjected = normaliseGrammarRewardState(projectedState);
+  if (hasGrammarRewardProgress(normalisedProjected)) return normalisedProjected;
+  const normalisedPersisted = normaliseGrammarRewardState(persistedState);
+  if (hasGrammarRewardProgress(normalisedPersisted)) return normalisedPersisted;
+  return Object.keys(normalisedProjected).length ? normalisedProjected : normalisedPersisted;
 }
 
-function GrammarTransferPlaceholders() {
+function GrammarBankPlaceholderScene({ actions }) {
+  // U1 wires the "Grammar Bank" primary mode card; U2 ships the real scene.
+  // Until then, this stub honours the state transition and offers a way back
+  // so the learner is never stuck.
   return (
-    <section className="card grammar-transfer-placeholders" aria-labelledby="grammar-transfer-title">
-      <div className="card-header">
-        <div>
-          <div className="eyebrow">Transfer bridge</div>
-          <h3 className="section-title" id="grammar-transfer-title">Writing application roadmap</h3>
-        </div>
-        <span className="chip">Coming next</span>
-      </div>
-      <div className="grammar-transfer-grid">
-        {GRAMMAR_TRANSFER_PLACEHOLDERS.map((entry) => (
-          <article className="grammar-transfer-card" key={entry.id}>
-            <div className="eyebrow">{entry.eyebrow}</div>
-            <h4>{entry.title}</h4>
-            <p>{entry.copy}</p>
-            <ul>
-              {entry.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}
-            </ul>
-            <button
-              className="btn secondary"
-              type="button"
-              disabled
-              data-grammar-transfer-placeholder={entry.id}
-            >
-              Coming next
-            </button>
-          </article>
-        ))}
-      </div>
+    <section className="grammar-bank-placeholder" aria-labelledby="grammar-bank-placeholder-title">
+      <h2 id="grammar-bank-placeholder-title">Grammar Bank</h2>
+      <p>Your full concept bank lands here soon — browse all 18 grammar concepts with child-friendly statuses.</p>
+      <button
+        type="button"
+        className="btn primary"
+        data-action="grammar-back"
+        onClick={() => actions.dispatch('grammar-back')}
+      >
+        Back to Grammar Garden
+      </button>
+    </section>
+  );
+}
+
+function GrammarTransferPlaceholderScene({ actions }) {
+  // U1 wires the "Writing Try" secondary button; U6b ships the real scene.
+  return (
+    <section className="grammar-transfer-placeholder" aria-labelledby="grammar-transfer-placeholder-title">
+      <h2 id="grammar-transfer-placeholder-title">Writing Try</h2>
+      <p>Non-scored writing practice is opening up soon. Nothing you write here will change your Grammar scores.</p>
+      <button
+        type="button"
+        className="btn primary"
+        data-action="grammar-back"
+        onClick={() => actions.dispatch('grammar-back')}
+      >
+        Back to Grammar Garden
+      </button>
     </section>
   );
 }
@@ -127,11 +122,33 @@ export function GrammarPracticeSurface({
     return <GrammarSummaryScene {...shared} />;
   }
 
+  if (grammar.phase === 'bank') {
+    return (
+      <div className="grammar-surface">
+        <GrammarBankPlaceholderScene {...shared} />
+      </div>
+    );
+  }
+
+  if (grammar.phase === 'transfer') {
+    return (
+      <div className="grammar-surface">
+        <GrammarTransferPlaceholderScene {...shared} />
+      </div>
+    );
+  }
+
   return (
     <div className="grammar-surface">
       <GrammarSetupScene {...shared} />
-      <GrammarAnalyticsScene {...shared} />
-      <GrammarTransferPlaceholders />
+      {/* Phase 3 U1 keeps the analytics surface reachable but demoted from
+          the dashboard primary view — it now lives behind a "Grown-up view"
+          disclosure per the U5 summary decision. Until U5/U7 land the
+          full split, this stays here as the non-primary grown-up surface. */}
+      <details className="grammar-grown-up-view">
+        <summary>Grown-up view</summary>
+        <GrammarAnalyticsScene {...shared} />
+      </details>
     </div>
   );
 }

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "claude-design": {
+      "source": "fol2/claude-design",
+      "sourceType": "github",
+      "computedHash": "cbba5a0a8e3df3a0f7d8c0a12849f6ffadc4222e191f1ea0396aa1192deb7638"
+    }
+  }
+}

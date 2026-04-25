@@ -18,7 +18,7 @@ import {
 } from './shared.js';
 import { derivePhaeton, PHAETON_SOURCE_MONSTER_IDS } from './phaeton.js';
 import { activePunctuationMonsterSummaryFromState } from './punctuation.js';
-import { activeGrammarMonsterSummaryFromState } from './grammar.js';
+import { activeGrammarMonsterSummaryFromState, normaliseGrammarRewardState } from './grammar.js';
 
 function hasMonsterMasteryProgress(state) {
   if (!isPlainObject(state)) return false;
@@ -140,10 +140,16 @@ export function monsterSummaryFromState(state = {}) {
     monster: MONSTERS[monsterId],
     progress: progressForMonster(state, monsterId),
   }));
+  // Route Grammar through `normaliseGrammarRewardState` so pre-flip learners
+  // whose only evidence is under a retired direct id (Glossbloom / Loomrill /
+  // Mirrane) still surface Concordium on the home meadow via the unioned
+  // view. Without the normaliser, `activeGrammarMonsterSummaryFromState`
+  // would read the four active ids only and miss retired-id progress.
+  const normalisedGrammarState = normaliseGrammarRewardState(state);
   return [
     ...spelling,
     ...activePunctuationMonsterSummaryFromState(state),
-    ...activeGrammarMonsterSummaryFromState(state),
+    ...activeGrammarMonsterSummaryFromState(normalisedGrammarState),
   ];
 }
 
@@ -165,9 +171,13 @@ export function monsterSummaryFromSpellingAnalytics(analytics, {
   }
 
   const state = secureWordsFromAnalytics(analytics, branchState);
+  // `monsterSummaryFromState(state)` already routes Grammar through the
+  // normaliser; use the same treatment for the fallback branch state so
+  // pre-flip retired-id progress still surfaces Concordium on the meadow.
+  const normalisedBranchState = normaliseGrammarRewardState(branchState);
   return [
     ...monsterSummaryFromState(state),
     ...activePunctuationMonsterSummaryFromState(branchState),
-    ...activeGrammarMonsterSummaryFromState(branchState),
+    ...activeGrammarMonsterSummaryFromState(normalisedBranchState),
   ];
 }

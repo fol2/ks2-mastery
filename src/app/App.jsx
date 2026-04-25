@@ -9,15 +9,30 @@ import { ParentHubSurface } from '../surfaces/hubs/ParentHubSurface.jsx';
 import { AdminHubSurface } from '../surfaces/hubs/AdminHubSurface.jsx';
 import { SubjectRoute } from '../surfaces/subject/SubjectRoute.jsx';
 import { MonsterVisualConfigProvider } from '../platform/game/MonsterVisualConfigContext.jsx';
+import { MonsterEffectConfigProvider } from '../platform/game/MonsterEffectConfigContext.jsx';
 import { ErrorBoundary } from '../platform/react/ErrorBoundary.jsx';
 import { usePlatformStore } from '../platform/react/use-platform-store.js';
 import { CelebrationLayer } from '../platform/game/render/CelebrationLayer.jsx';
-// Transient overlay effects register themselves at module load. Importing
-// them here is the single mount point — `<CelebrationLayer>` looks each
-// up via the registry, so the import is purely for side effects.
-import '../platform/game/render/effects/caught.js';
-import '../platform/game/render/effects/evolve.js';
-import '../platform/game/render/effects/mega.js';
+import { runtimeRegistration } from '../platform/game/render/runtime-registration.js';
+import { __registerCelebrationTemplates } from '../platform/game/render/effect-templates/index.js';
+// JSX-bearing templates: the bundler (esbuild) compiles their JSX cleanly.
+// We pre-register them via the synchronous test seam so the templates are
+// already in the registry's lookup table when `runtimeRegistration()` walks
+// the bundled catalog. Without this, the `caught`/`evolve`/`mega` celebration
+// kinds would silently skip — the same surface that PR #119 used module-load
+// side effects to guarantee.
+import particlesBurstTemplate from '../platform/game/render/effect-templates/particles-burst.js';
+import shineStreakTemplate from '../platform/game/render/effect-templates/shine-streak.js';
+
+// One-shot bootstrap: register bundled defaults (and any published catalog
+// once U5 wires it through) BEFORE <MonsterRender> / <CelebrationLayer>
+// mount. Replaces the ad-hoc `effects/{caught,evolve,mega}.js` side-effect
+// imports the file used to perform.
+__registerCelebrationTemplates({
+  particlesBurst: particlesBurstTemplate,
+  shineStreak: shineStreakTemplate,
+});
+runtimeRegistration();
 
 const REACT_ROUTES = new Set([
   'dashboard',
@@ -88,7 +103,18 @@ export function App({ controller, runtime }) {
   const routedSubjectId = appState.route?.subjectId || 'spelling';
   const context = runtime.contextFor(routedSubjectId);
   const monsterVisualConfig = runtime.monsterVisualConfig?.() || null;
+  const monsterEffectConfig = runtime.monsterEffectConfig?.() || null;
   const baseActions = useMemo(() => runtime.buildSurfaceActions(), [runtime]);
+
+  // Refresh the effect registry whenever the published catalog changes so a
+  // fresh admin publish lands in <MonsterRender>/<CelebrationLayer> without a
+  // page reload. The module-load `runtimeRegistration()` above already
+  // bootstrapped the bundled defaults; this effect re-runs it with the new
+  // catalog (config wins on `kind` collision per U3).
+  useEffect(() => {
+    runtimeRegistration({ catalog: monsterEffectConfig?.catalog });
+  }, [monsterEffectConfig?.catalog]);
+
   const [subjectExitPhase, setSubjectExitPhase] = useState('idle');
   const subjectExitTimer = useRef(null);
 
@@ -142,6 +168,7 @@ export function App({ controller, runtime }) {
 
   return (
     <MonsterVisualConfigProvider value={monsterVisualConfig}>
+      <MonsterEffectConfigProvider value={monsterEffectConfig}>
       <ErrorBoundary>
       {screen === 'dashboard' && (
         <>
@@ -225,6 +252,7 @@ export function App({ controller, runtime }) {
         </div>
       )}
       </ErrorBoundary>
+      </MonsterEffectConfigProvider>
     </MonsterVisualConfigProvider>
   );
 }

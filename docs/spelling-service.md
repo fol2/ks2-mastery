@@ -143,6 +143,14 @@ The service now emits:
   - Fired when total secure-word count hits a milestone such as 1, 5, 10 or 25
 - `spelling.session-completed`
   - Fired when a round finalises to a summary
+- `spelling.guardian.renewed`
+  - Fired in a Guardian Mission when a non-wobbling word is answered correctly, advancing its `reviewLevel` along the `[3, 7, 14, 30, 60, 90]` day ladder
+- `spelling.guardian.wobbled`
+  - Fired when a Guardian Mission word is answered wrongly; marks `wobbling: true` on the per-word guardian record but never mutates `progress.stage` (Mega is preserved)
+- `spelling.guardian.recovered`
+  - Fired when a previously-wobbling word is answered correctly; clears wobbling, bumps `renewals`, preserves the existing `reviewLevel`
+- `spelling.guardian.mission-completed`
+  - Fired when a Guardian Mission round finalises to summary; carries `renewalCount`, `wobbledCount`, `recoveredCount`, `totalWords`
 
 The platform runtime may then derive additional platform-wide events such as `platform.practice-streak-hit` from those subject events.
 The spelling reward subscriber translates `spelling.word-secured` into monster/codex reaction events and persisted reward history.
@@ -170,7 +178,7 @@ These were kept on purpose:
 - SATs test mode stays statutory core-only, even if the learner has selected Extra elsewhere
 - skipping only works in learning question phase and pushes the word later in the round
 - marked cards auto-advance after the preserved short delay instead of needing an extra manual confirmation step
-- the preserved shortcut loop remains available inside active Spelling practice (`Esc`, `Shift+Esc`, `Alt+1/2/3`, `Alt+S`, `Alt+K`) while still avoiding cross-subject collisions in the wider shell
+- the preserved shortcut loop remains available inside active Spelling practice (`Esc`, `Shift+Esc`, `Alt+1/2/3`, `Alt+S`, `Alt+K`) while still avoiding cross-subject collisions in the wider shell; `Alt+4` is an additive Guardian Mission quick-start that is gated at the module layer on `allWordsMega` (silent no-op when the learner has not graduated)
 - dictation audio honours the learner's selected profile provider: OpenAI, Gemini, or local browser speech
 - stage progression and due-day scheduling still come from the preserved legacy engine
 

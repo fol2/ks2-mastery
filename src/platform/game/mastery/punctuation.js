@@ -8,10 +8,18 @@ import {
   masteredList,
   PUNCTUATION_GRAND_MONSTER_ID,
   PUNCTUATION_MONSTER_IDS,
+  PUNCTUATION_RESERVED_MONSTER_IDS,
   releaseIdForEntry,
   saveMonsterState,
   toastBodyFor,
 } from './shared.js';
+
+// Pre-flip monster ids that should be unioned into the grand view after the
+// Phase 2 roster reduction. When a learner had stored progress under the old
+// `carillon` aggregate, those mastery keys must still count toward the new
+// `quoral` grand monster without requiring a stored-state rewrite. The
+// normaliser is read-only — no entries are deleted or mutated on hydrate.
+const PUNCTUATION_PRE_FLIP_GRAND_MONSTER_IDS = Object.freeze(['carillon']);
 
 function punctuationMasteredList(entry, releaseId = null) {
   const mastered = masteredList(entry);
@@ -28,9 +36,75 @@ function punctuationMasteredCount(entry, releaseId = null) {
   return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
 }
 
-function punctuationTotal(entry, fallback = 1) {
+// Grand aggregate must always read the release denominator even when the
+// stored `publishedTotal` lags (e.g. a learner whose only pre-flip Quoral
+// evidence was the single Speech-core key has publishedTotal: 1 persisted).
+// The caller supplies the authoritative fallback via `fallback`; we prefer
+// that fallback for the grand monster regardless of stored publishedTotal.
+function punctuationTotal(entry, fallback = 1, { monsterId = null } = {}) {
+  const fallbackTotal = Math.max(1, Number(fallback) || 1);
+  if (monsterId === PUNCTUATION_GRAND_MONSTER_ID) return fallbackTotal;
   const count = Number(entry?.publishedTotal);
-  return Number.isFinite(count) && count > 0 ? Math.floor(count) : Math.max(1, Number(fallback) || 1);
+  return Number.isFinite(count) && count > 0 ? Math.floor(count) : fallbackTotal;
+}
+
+// Read-time normaliser for Punctuation monster state. Produces a view that
+// rolls pre-flip grand evidence (carillon.mastered) into the new grand
+// creature (quoral.mastered) for display purposes only. Stored state is
+// untouched — running this N times returns equivalent views and never
+// mutates `state` or its nested arrays. Reserved monster entries stay
+// visible to Admin tooling that reads raw state directly; the helper
+// exposes them under a `reserved` map so active surfaces can ignore them.
+export function normalisePunctuationMonsterState(state = {}) {
+  const source = isPlainObject(state) ? state : {};
+  const view = { ...source };
+
+  // Union pre-flip grand evidence into the current grand monster's view
+  // without losing the stored pre-flip entry. The union dedupes by mastery
+  // key so a learner who already has the same key on both ends does not
+  // double-count.
+  if (PUNCTUATION_PRE_FLIP_GRAND_MONSTER_IDS.length) {
+    const currentGrandEntry = isPlainObject(source[PUNCTUATION_GRAND_MONSTER_ID])
+      ? source[PUNCTUATION_GRAND_MONSTER_ID]
+      : { mastered: [], caught: false };
+    const currentGrandMastered = masteredList(currentGrandEntry);
+    const combined = new Set(currentGrandMastered);
+    let caughtFromPreFlip = false;
+    for (const legacyId of PUNCTUATION_PRE_FLIP_GRAND_MONSTER_IDS) {
+      const legacyEntry = source[legacyId];
+      if (!isPlainObject(legacyEntry)) continue;
+      if (legacyEntry.caught) caughtFromPreFlip = true;
+      for (const key of masteredList(legacyEntry)) {
+        // Skip malformed keys rather than throwing; the scheduler will log
+        // a telemetry warning when it encounters them downstream.
+        if (typeof key === 'string' && key.length > 0) combined.add(key);
+      }
+    }
+    // Only layer the union when at least one pre-flip key actually contributes.
+    // Otherwise keep the stored currentGrandEntry untouched so tests that
+    // assert identity on a post-flip-only learner still pass.
+    if (combined.size > currentGrandMastered.length || caughtFromPreFlip) {
+      view[PUNCTUATION_GRAND_MONSTER_ID] = {
+        ...currentGrandEntry,
+        caught: currentGrandEntry.caught === true || caughtFromPreFlip,
+        mastered: Array.from(combined),
+      };
+    }
+  }
+
+  return view;
+}
+
+// Expose the reserved view for Admin tooling. Returns a plain object of
+// reserved monster ids -> stored entries (or nulls). Active surfaces never
+// need this.
+export function reservedPunctuationMonsterEntries(state = {}) {
+  const source = isPlainObject(state) ? state : {};
+  const reserved = {};
+  for (const id of PUNCTUATION_RESERVED_MONSTER_IDS) {
+    reserved[id] = isPlainObject(source[id]) ? source[id] : null;
+  }
+  return reserved;
 }
 
 function punctuationStageFor(mastered, total) {
@@ -49,16 +123,21 @@ export function activePunctuationMonsterSummaryFromState(state = {}) {
 }
 
 export function progressForPunctuationMonster(state, monsterId, { publishedTotal = null, releaseId = PUNCTUATION_CURRENT_RELEASE_ID } = {}) {
-  const entry = isPlainObject(state?.[monsterId]) ? state[monsterId] : { mastered: [], caught: false };
+  // Run every progress read through the normaliser so pre-flip grand
+  // evidence (carillon.mastered) contributes to the new grand view
+  // without requiring a stored-state rewrite.
+  const normalised = normalisePunctuationMonsterState(state);
+  const entry = isPlainObject(normalised?.[monsterId]) ? normalised[monsterId] : { mastered: [], caught: false };
   const mastered = punctuationMasteredCount(entry, releaseId);
-  const total = punctuationTotal(entry, publishedTotal || MONSTERS[monsterId]?.masteredMax || 1);
+  const fallback = publishedTotal || MONSTERS[monsterId]?.masteredMax || 1;
+  const total = punctuationTotal(entry, fallback, { monsterId });
   return {
     mastered,
     publishedTotal: total,
     stage: punctuationStageFor(mastered, total),
     level: Math.min(10, Math.round((mastered / Math.max(1, total)) * 10)),
     caught: mastered >= 1,
-    branch: branchForMonster(state, monsterId),
+    branch: branchForMonster(normalised, monsterId),
     masteredList: punctuationMasteredList(entry, releaseId),
   };
 }

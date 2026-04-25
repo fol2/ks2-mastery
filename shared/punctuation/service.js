@@ -369,7 +369,13 @@ function normaliseState(value) {
     error: typeof raw.error === 'string' ? raw.error : '',
     availability: isPlainObject(raw.availability)
       ? {
-          status: raw.availability.status === 'unavailable' ? 'unavailable' : 'ready',
+          // Accepted statuses: 'ready' (default), 'degraded' (runtime still
+          // writable but UI should pause mutations), 'unavailable' (exposure
+          // gate off or content missing). Anything else coerces to 'ready'.
+          status: (raw.availability.status === 'unavailable'
+            || raw.availability.status === 'degraded')
+            ? raw.availability.status
+            : 'ready',
           code: typeof raw.availability.code === 'string' ? raw.availability.code : null,
           message: typeof raw.availability.message === 'string' ? raw.availability.message : '',
         }
