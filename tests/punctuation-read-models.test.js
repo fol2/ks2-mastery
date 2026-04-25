@@ -250,14 +250,34 @@ test('client normaliser drops contextPack if the worker ever re-adds it (U8 belt
 });
 
 test('client normaliser passes through an ordinary payload unchanged (U8)', () => {
+  // Proves the normaliser ran (phase + error survive) without relying on
+  // `'contextPack' in normalised === false` — that would pass vacuously
+  // because `createInitialPunctuationState()` already omits contextPack,
+  // so the assertion held even if stripForbiddenChildScopeFields were a no-op.
   const service = createPunctuationReadModelService({ getState: () => null });
   const normalised = service.initState({
     subjectId: 'punctuation',
     phase: 'setup',
     error: '',
   });
-  assert.equal(normalised.phase, 'setup');
-  assert.equal('contextPack' in normalised, false);
+  assert.strictEqual(normalised.phase, 'setup');
+  assert.strictEqual(normalised.error, '');
+});
+
+test('client-normaliser strip is shallow: nested contextPack is preserved (documented contract)', () => {
+  // Strip only removes top-level `contextPack`, not nested occurrences. The Worker's
+  // assertNoForbiddenReadModelKeys + safeSummary allowlist handle deep-nested forbidden
+  // keys; this client strip is an intentionally cheap top-level last-line-of-defence.
+  const service = createPunctuationReadModelService({ getState: () => null });
+  const normalised = service.initState({
+    subjectId: 'punctuation',
+    phase: 'setup',
+    summary: { contextPack: { status: 'ready' }, total: 3 },
+  });
+  assert.ok(normalised.summary, 'summary should still normalise');
+  assert.strictEqual(normalised.summary.total, 3);
+  assert.ok('contextPack' in normalised.summary, 'nested contextPack is intentionally preserved by shallow strip');
+  assert.strictEqual('contextPack' in normalised, false, 'top-level contextPack is still stripped');
 });
 
 test('clean payloads with all allowed fields pass redaction', () => {
