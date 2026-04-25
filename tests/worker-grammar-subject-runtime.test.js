@@ -230,6 +230,91 @@ test('Grammar command route accepts trouble drill mode', async () => {
   DB.close();
 });
 
+test('Grammar command route runs strict mini-test save, navigation, and finish commands', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'fronted_adverbial_choose');
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-mini-route-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'satsset',
+      roundLength: 8,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  assert.equal(start.body.subjectReadModel.phase, 'session');
+  assert.equal(start.body.subjectReadModel.session.type, 'mini-set');
+  assert.equal(start.body.subjectReadModel.session.miniTest.questions.length, 8);
+  assert.equal(start.body.subjectReadModel.feedback, null);
+
+  const ai = await postCommand(app, DB, {
+    command: 'request-ai-enrichment',
+    learnerId: 'learner-a',
+    requestId: 'grammar-mini-route-ai',
+    expectedLearnerRevision: 1,
+    payload: { kind: 'explanation' },
+  });
+  assert.equal(ai.response.status, 400, JSON.stringify(ai.body));
+  assert.equal(ai.body.code, 'grammar_ai_unavailable_for_mini_test');
+
+  const save = await postCommand(app, DB, {
+    command: 'save-mini-test-response',
+    learnerId: 'learner-a',
+    requestId: 'grammar-mini-route-save',
+    expectedLearnerRevision: 1,
+    payload: {
+      response: sample.correctResponse,
+      advance: true,
+    },
+  });
+  assert.equal(save.response.status, 200, JSON.stringify(save.body));
+  assert.equal(save.body.subjectReadModel.phase, 'session');
+  assert.equal(save.body.subjectReadModel.session.currentIndex, 1);
+  assert.equal(save.body.subjectReadModel.session.answered, 1);
+  assert.equal(save.body.subjectReadModel.feedback, null);
+  assert.equal(save.body.domainEvents.some((event) => event.type === 'grammar.answer-submitted'), false);
+  assert.equal(save.body.mutation.appliedRevision, 2);
+
+  const move = await postCommand(app, DB, {
+    command: 'move-mini-test',
+    learnerId: 'learner-a',
+    requestId: 'grammar-mini-route-move',
+    expectedLearnerRevision: 2,
+    payload: {
+      index: 0,
+    },
+  });
+  assert.equal(move.response.status, 200, JSON.stringify(move.body));
+  assert.equal(move.body.subjectReadModel.session.currentIndex, 0);
+  assert.equal(move.body.subjectReadModel.session.miniTest.questions[0].answered, true);
+
+  const finish = await postCommand(app, DB, {
+    command: 'finish-mini-test',
+    learnerId: 'learner-a',
+    requestId: 'grammar-mini-route-finish',
+    expectedLearnerRevision: 3,
+    payload: {
+      saveCurrent: false,
+    },
+  });
+  assert.equal(finish.response.status, 200, JSON.stringify(finish.body));
+  assert.equal(finish.body.subjectReadModel.phase, 'summary');
+  assert.equal(finish.body.subjectReadModel.summary.answered, 1);
+  assert.equal(finish.body.subjectReadModel.summary.miniTestReview.questions.length, 8);
+  assert.equal(finish.body.domainEvents.filter((event) => event.type === 'grammar.answer-submitted').length, 1);
+  assert.equal(finish.body.domainEvents.some((event) => event.type === 'grammar.session-completed'), true);
+
+  DB.close();
+});
+
 test('Grammar command route accepts sentence surgery mode', async () => {
   const DB = createMigratedSqliteD1Database();
   const app = createWorkerApp({ now: () => 1_777_000_000_000 });

@@ -90,6 +90,18 @@ export function createGrammarTestService({ repositories, now = Date.now } = {}) 
     submitAnswer(learnerId, _uiState, response = {}) {
       return apply(learnerId, 'submit-answer', { response });
     },
+    saveMiniTestResponse(learnerId, response = {}, options = false) {
+      const payload = options && typeof options === 'object' && !Array.isArray(options)
+        ? { ...options, response }
+        : { response, advance: Boolean(options) };
+      return apply(learnerId, 'save-mini-test-response', payload);
+    },
+    moveMiniTest(learnerId, payload = {}) {
+      return apply(learnerId, 'move-mini-test', payload);
+    },
+    finishMiniTest(learnerId, payload = {}) {
+      return apply(learnerId, 'finish-mini-test', payload);
+    },
     continueSession(learnerId) {
       return apply(learnerId, 'continue-session');
     },

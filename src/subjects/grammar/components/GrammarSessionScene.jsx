@@ -10,17 +10,20 @@ function optionValue(option) {
   return String(option?.value ?? '');
 }
 
-function ChoiceList({ inputSpec }) {
+function ChoiceList({ inputSpec, required = true, response = {} }) {
   const options = Array.isArray(inputSpec?.options) ? inputSpec.options : [];
   const type = inputSpec?.type === 'checkbox_list' ? 'checkbox' : 'radio';
   const name = inputSpec?.type === 'checkbox_list' ? 'selected' : 'answer';
+  const selectedValues = new Set(Array.isArray(response.selected) ? response.selected.map(String) : []);
+  const selectedAnswer = String(response.answer ?? '');
   return (
     <div className={`grammar-choice-list ${inputSpec?.asTokens ? 'tokens' : ''}`}>
       {options.map((option) => {
         const value = optionValue(option);
+        const checked = type === 'checkbox' ? selectedValues.has(value) : selectedAnswer === value;
         return (
           <label className="grammar-choice" key={value}>
-            <input type={type} name={name} value={value} required={type === 'radio'} />
+            <input type={type} name={name} value={value} required={required && type === 'radio'} defaultChecked={checked} />
             <span>{optionLabel(option)}</span>
           </label>
         );
@@ -29,7 +32,7 @@ function ChoiceList({ inputSpec }) {
   );
 }
 
-function TableChoice({ inputSpec }) {
+function TableChoice({ inputSpec, required = true, response = {} }) {
   const rows = Array.isArray(inputSpec?.rows) ? inputSpec.rows : [];
   const columns = Array.isArray(inputSpec?.columns) ? inputSpec.columns : [];
   return (
@@ -47,7 +50,14 @@ function TableChoice({ inputSpec }) {
               <td>{row.label}</td>
               {columns.map((column) => (
                 <td key={`${row.key}-${column}`}>
-                  <input type="radio" name={row.key} value={column} aria-label={`${row.label}: ${column}`} required />
+                  <input
+                    type="radio"
+                    name={row.key}
+                    value={column}
+                    aria-label={`${row.label}: ${column}`}
+                    required={required}
+                    defaultChecked={String(response[row.key] ?? '') === String(column)}
+                  />
                 </td>
               ))}
             </tr>
@@ -58,13 +68,14 @@ function TableChoice({ inputSpec }) {
   );
 }
 
-function MultiField({ field }) {
+function MultiField({ field, required = true, response = {} }) {
   const options = Array.isArray(field?.options) ? field.options : [];
+  const value = String(response[field?.key] ?? '');
   if (field?.kind === 'select') {
     return (
       <label className="field grammar-field" key={field.key}>
         <span>{field.label}</span>
-        <select className="input" name={field.key}>
+        <select className="input" name={field.key} defaultValue={value}>
           {options.map((option) => <option value={optionValue(option)} key={optionValue(option)}>{optionLabel(option)}</option>)}
         </select>
       </label>
@@ -77,7 +88,13 @@ function MultiField({ field }) {
         <div className="grammar-choice-list compact">
           {options.map((option) => (
             <label className="grammar-choice" key={optionValue(option)}>
-              <input type="radio" name={field.key} value={optionValue(option)} required />
+              <input
+                type="radio"
+                name={field.key}
+                value={optionValue(option)}
+                required={required}
+                defaultChecked={value === optionValue(option)}
+              />
               <span>{optionLabel(option)}</span>
             </label>
           ))}
@@ -88,34 +105,49 @@ function MultiField({ field }) {
   return (
     <label className="field grammar-field" key={field.key}>
       <span>{field.label}</span>
-      <input className="input" name={field.key} autoComplete="off" required />
+      <input className="input" name={field.key} autoComplete="off" required={required} defaultValue={value} />
     </label>
   );
 }
 
-function GrammarInput({ inputSpec }) {
+function GrammarInput({ inputSpec, required = true, response = {} }) {
   if (inputSpec?.type === 'single_choice' || inputSpec?.type === 'checkbox_list') {
-    return <ChoiceList inputSpec={inputSpec} />;
+    return <ChoiceList inputSpec={inputSpec} required={required} response={response} />;
   }
   if (inputSpec?.type === 'table_choice') {
-    return <TableChoice inputSpec={inputSpec} />;
+    return <TableChoice inputSpec={inputSpec} required={required} response={response} />;
   }
   if (inputSpec?.type === 'multi') {
     const fields = Array.isArray(inputSpec?.fields) ? inputSpec.fields : [];
-    return <div className="grammar-multi-fields">{fields.map((field) => <MultiField field={field} key={field.key} />)}</div>;
+    return <div className="grammar-multi-fields">{fields.map((field) => <MultiField field={field} required={required} response={response} key={field.key} />)}</div>;
   }
   if (inputSpec?.type === 'textarea') {
     return (
       <label className="field">
         <span>{inputSpec.label || 'Your answer'}</span>
-        <textarea className="input grammar-textarea" name="answer" placeholder={inputSpec.placeholder || ''} data-autofocus="true" required />
+        <textarea
+          className="input grammar-textarea"
+          name="answer"
+          placeholder={inputSpec.placeholder || ''}
+          data-autofocus="true"
+          required={required}
+          defaultValue={String(response.answer ?? '')}
+        />
       </label>
     );
   }
   return (
     <label className="field">
       <span>{inputSpec?.label || 'Your answer'}</span>
-      <input className="input" name="answer" placeholder={inputSpec?.placeholder || ''} data-autofocus="true" autoComplete="off" required />
+      <input
+        className="input"
+        name="answer"
+        placeholder={inputSpec?.placeholder || ''}
+        data-autofocus="true"
+        autoComplete="off"
+        required={required}
+        defaultValue={String(response.answer ?? '')}
+      />
     </label>
   );
 }
@@ -227,14 +259,85 @@ function AiEnrichmentPanel({ enrichment }) {
   );
 }
 
+function formatMiniTestTime(ms) {
+  const safeMs = Math.max(0, Number(ms) || 0);
+  const totalSeconds = Math.ceil(safeMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+function useMiniTestRemaining(miniTest) {
+  const expiresAt = Number(miniTest?.expiresAt) || 0;
+  const seededRemaining = Number(miniTest?.remainingMs);
+  const [now, setNow] = React.useState(() => Date.now());
+
+  React.useEffect(() => {
+    if (!expiresAt || miniTest?.finished) return undefined;
+    const timer = globalThis.setInterval?.(() => setNow(Date.now()), 1000);
+    return () => {
+      if (timer) globalThis.clearInterval?.(timer);
+    };
+  }, [expiresAt, miniTest?.finished]);
+
+  if (!expiresAt && Number.isFinite(seededRemaining)) return Math.max(0, seededRemaining);
+  return Math.max(0, expiresAt - now);
+}
+
+function MiniTestStatus({ miniTest, pending, runtimeReadOnly }) {
+  if (!miniTest) return null;
+  const questions = Array.isArray(miniTest.questions) ? miniTest.questions : [];
+  const currentIndex = Number(miniTest.currentIndex) || 0;
+  const answered = questions.filter((question) => question.answered).length;
+  const remainingMs = useMiniTestRemaining(miniTest);
+
+  return (
+    <div className="grammar-mini-test-panel" aria-label="Mini-test status">
+      <div className="grammar-mini-test-meta">
+        <span className="chip good">Timed test</span>
+        <span className="chip">Question {currentIndex + 1} of {Math.max(1, questions.length)}</span>
+        <span className="chip">{answered} saved</span>
+        <span className={`chip ${remainingMs <= 60_000 ? 'warn' : ''}`}>Time left {formatMiniTestTime(remainingMs)}</span>
+      </div>
+      <div className="grammar-mini-test-nav" aria-label="Mini-test questions">
+        {questions.map((question, index) => (
+          <button
+            className={`grammar-mini-test-nav-button${question.current ? ' current' : ''}${question.answered ? ' answered' : ''}`}
+            type="submit"
+            name="_action"
+            value="move"
+            data-index={index}
+            disabled={runtimeReadOnly || pending || question.current}
+            aria-current={question.current ? 'step' : undefined}
+            key={`${question.itemId || question.templateId}-${index}`}
+          >
+            <span>{index + 1}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
   const session = grammar.session || {};
+  const miniTest = session.type === 'mini-set' ? session.miniTest : null;
+  const miniTestQuestions = Array.isArray(miniTest?.questions) ? miniTest.questions : [];
+  const miniTestCurrent = miniTestQuestions.find((question) => question.current)
+    || miniTestQuestions[Number(miniTest?.currentIndex) || 0]
+    || null;
   const item = session.currentItem || {};
-  const progressDone = Math.min(Number(session.answered) || 0, Number(session.targetCount) || 0);
-  const progressTotal = Math.max(1, Number(session.targetCount) || 1);
+  const isMiniTest = Boolean(miniTest);
+  const progressDone = isMiniTest
+    ? miniTestQuestions.filter((question) => question.answered).length
+    : Math.min(Number(session.answered) || 0, Number(session.targetCount) || 0);
+  const progressTotal = isMiniTest
+    ? Math.max(1, Number(miniTest?.setSize) || miniTestQuestions.length || 1)
+    : Math.max(1, Number(session.targetCount) || 1);
   const isFeedback = grammar.phase === 'feedback' || grammar.awaitingAdvance;
   const pending = Boolean(grammar.pendingCommand);
-  const submitDisabled = runtimeReadOnly || pending || isFeedback;
+  const submitDisabled = runtimeReadOnly || pending || (!isMiniTest && isFeedback);
+  const currentResponse = isMiniTest ? (miniTestCurrent?.response || {}) : {};
 
   return (
     <section className="grammar-session" aria-labelledby="grammar-session-title">
@@ -251,24 +354,49 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
 
       <div className="grammar-prompt-card">
         <div className="chip-row">
+          {isMiniTest ? <span className="chip good">KS2-style mini-test</span> : null}
           {item.domain ? <span className="chip">{item.domain}</span> : null}
           {item.questionType ? <span className="chip">{item.questionType}</span> : null}
           {session.serverAuthority ? <span className="chip good">Worker authority</span> : null}
         </div>
+        {isMiniTest ? (
+          <MiniTestStatus
+            miniTest={miniTest}
+            pending={pending}
+            runtimeReadOnly={runtimeReadOnly}
+          />
+        ) : null}
         <p className="grammar-prompt">{item.promptText || 'Loading the next Grammar item...'}</p>
         {item.checkLine ? <p className="grammar-check-line">{item.checkLine}</p> : null}
-        <GuidancePanel support={session.supportGuidance} />
-        <AiEnrichmentPanel enrichment={grammar.aiEnrichment} />
+        {!isMiniTest ? <GuidancePanel support={session.supportGuidance} /> : null}
+        {!isMiniTest ? <AiEnrichmentPanel enrichment={grammar.aiEnrichment} /> : null}
 
         <form
           className="grammar-answer-form"
+          key={`${session.id || 'grammar'}-${session.currentIndex || 0}`}
           onSubmit={(event) => {
             event.preventDefault();
-            actions.dispatch('grammar-submit-form', { formData: new FormData(event.currentTarget) });
+            const submitter = event.nativeEvent?.submitter;
+            const submitAction = submitter?.value || 'save';
+            const formData = new FormData(event.currentTarget);
+            if (isMiniTest) {
+              if (submitAction === 'finish') {
+                actions.dispatch('grammar-finish-mini-test', { formData });
+                return;
+              }
+              const payload = {
+                formData,
+                advance: submitAction === 'save-next',
+              };
+              if (submitAction === 'move') payload.index = submitter?.dataset?.index;
+              actions.dispatch('grammar-save-mini-test-response', payload);
+              return;
+            }
+            actions.dispatch('grammar-submit-form', { formData });
           }}
         >
-          <GrammarInput inputSpec={item.inputSpec || { type: 'text' }} />
-          <FeedbackPanel feedback={grammar.feedback} />
+          <GrammarInput inputSpec={item.inputSpec || { type: 'text' }} required={!isMiniTest} response={currentResponse} />
+          {!isMiniTest ? <FeedbackPanel feedback={grammar.feedback} /> : null}
           {grammar.error ? (
             <div className="feedback bad" role="alert">
               <strong>Grammar command failed</strong>
@@ -276,10 +404,24 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
             </div>
           ) : null}
           <div className="actions">
-            <button className="btn primary" type="submit" disabled={submitDisabled}>
-              {pending && grammar.pendingCommand === 'submit-answer' ? 'Checking...' : 'Submit answer'}
-            </button>
-            {isFeedback ? (
+            {isMiniTest ? (
+              <>
+                <button className="btn primary" type="submit" name="_action" value="save" disabled={submitDisabled}>
+                  {pending && grammar.pendingCommand === 'save-mini-test-response' ? 'Saving...' : 'Save response'}
+                </button>
+                <button className="btn secondary" type="submit" name="_action" value="save-next" disabled={submitDisabled}>
+                  Save and next
+                </button>
+                <button className="btn ghost" type="submit" name="_action" value="finish" disabled={runtimeReadOnly || pending}>
+                  {pending && grammar.pendingCommand === 'finish-mini-test' ? 'Finishing...' : 'Finish mini-set'}
+                </button>
+              </>
+            ) : (
+              <button className="btn primary" type="submit" disabled={submitDisabled}>
+                {pending && grammar.pendingCommand === 'submit-answer' ? 'Checking...' : 'Submit answer'}
+              </button>
+            )}
+            {!isMiniTest && isFeedback ? (
               <button
                 className="btn secondary"
                 type="button"
@@ -289,14 +431,16 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
                 {progressDone >= progressTotal ? 'Finish round' : 'Next question'}
               </button>
             ) : null}
-            <button
-              className="btn ghost"
-              type="button"
-              disabled={pending}
-              onClick={() => actions.dispatch('grammar-end-early')}
-            >
-              End round
-            </button>
+            {!isMiniTest ? (
+              <button
+                className="btn ghost"
+                type="button"
+                disabled={pending}
+                onClick={() => actions.dispatch('grammar-end-early')}
+              >
+                End round
+              </button>
+            ) : null}
           </div>
         </form>
       </div>

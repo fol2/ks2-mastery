@@ -8,6 +8,9 @@ import { buildGrammarReadModel } from './read-models.js';
 const GRAMMAR_COMMANDS = Object.freeze([
   'start-session',
   'submit-answer',
+  'save-mini-test-response',
+  'move-mini-test',
+  'finish-mini-test',
   'continue-session',
   'end-session',
   'save-prefs',

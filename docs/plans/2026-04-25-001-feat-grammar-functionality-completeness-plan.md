@@ -196,7 +196,7 @@ flowchart TB
   U7 --> U8
 ```
 
-- U1. **Create the Grammar Completeness Baseline**
+- [x] U1. **Create the Grammar Completeness Baseline**
 
 **Goal:** Convert the reviewed legacy functionality audit into a durable repo-local baseline that distinguishes completed, planned, replaced, and rejected behaviours.
 
@@ -235,7 +235,7 @@ flowchart TB
 
 ---
 
-- U2. **Implement True Strict Mini-Test Mode**
+- [x] U2. **Implement True Strict Mini-Test Mode**
 
 **Goal:** Make `satsset` behave like a strict KS2-style mini-paper rather than a normal round with per-item feedback.
 

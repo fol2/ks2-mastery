@@ -72,6 +72,67 @@ test('Grammar surface runs from setup to Worker-style feedback and summary', () 
   assert.match(harness.render(), /Grammar retrieval practice/);
 });
 
+test('Grammar surface runs KS2 mini-set mode with delayed feedback and end review', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-set-mode', { value: 'satsset' });
+  let html = harness.render();
+  assert.match(html, /Mini-set size/);
+  assert.match(html, /<option value="8" selected="">8<\/option><option value="12">12<\/option>/);
+
+  harness.dispatch('grammar-start', {
+    payload: {
+      mode: 'satsset',
+      roundLength: 8,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  let grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.type, 'mini-set');
+  assert.equal(grammar.session.miniTest.questions.length, 8);
+
+  html = harness.render();
+  assert.match(html, /KS2-style mini-test/);
+  assert.match(html, /Timed test/);
+  assert.match(html, /Question 1 of 8/);
+  assert.match(html, /Save response/);
+  assert.match(html, /Finish mini-set/);
+  assert.doesNotMatch(html, /Correct\./);
+  assert.doesNotMatch(html, /Non-scored/);
+
+  harness.dispatch('grammar-save-mini-test-response', {
+    formData: grammarResponseFormData(sample.correctResponse),
+    advance: true,
+  });
+
+  grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.feedback, null);
+  assert.equal(grammar.session.answered, 1);
+  assert.equal(grammar.session.currentIndex, 1);
+  assert.equal(grammar.analytics.concepts.some((concept) => concept.attempts > 0), false);
+  assert.match(harness.render(), /Question 2 of 8/);
+
+  harness.dispatch('grammar-finish-mini-test');
+
+  grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'summary');
+  assert.equal(grammar.summary.answered, 1);
+  assert.equal(grammar.summary.miniTestReview.questions.length, 8);
+  html = harness.render();
+  assert.match(html, /Mini-set review/);
+  assert.match(html, /Delayed feedback/);
+  assert.match(html, /No answer saved/);
+  assert.match(html, /Q1/);
+  assert.match(html, /Q2/);
+});
+
 test('Grammar submit requires an answer before recording an attempt', () => {
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });

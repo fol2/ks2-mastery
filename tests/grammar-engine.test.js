@@ -570,6 +570,9 @@ test('Grammar strict mini-set rejects pre-answer support payloads', () => {
       seed: sample.sample.seed,
     },
   });
+  assert.equal(start.state.session.type, 'mini-set');
+  assert.equal(start.state.session.targetCount, 8);
+  assert.equal(start.state.session.miniTest.questions.length, 8);
 
   assert.throws(() => engine.apply({
     learnerId: 'learner-a',
@@ -582,6 +585,94 @@ test('Grammar strict mini-set rejects pre-answer support payloads', () => {
       supportLevel: 1,
     },
   }), (error) => error?.extra?.code === 'grammar_support_unavailable_for_mode');
+});
+
+test('Grammar strict mini-set saves responses without feedback and marks only on finish', () => {
+  const oracle = readGrammarLegacyOracle();
+  const sample = oracle.templates.find((template) => template.id === 'fronted_adverbial_choose');
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'start-strict-mini-test',
+    payload: {
+      mode: 'satsset',
+      roundLength: 8,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  assert.equal(start.state.phase, 'session');
+  assert.equal(start.state.session.type, 'mini-set');
+  assert.equal(start.state.feedback, null);
+  assert.equal(start.state.session.miniTest.setSize, 8);
+  assert.equal(start.state.session.miniTest.timeLimitMs, Math.max(6 * 60_000, start.state.session.totalMarks * 54_000));
+
+  const saved = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: start.state, data: start.data },
+    latestSession: start.practiceSession,
+    command: 'save-mini-test-response',
+    requestId: 'save-strict-mini-test',
+    payload: {
+      response: sample.correctResponse,
+      advance: true,
+    },
+  });
+
+  assert.equal(saved.state.phase, 'session');
+  assert.equal(saved.state.feedback, null);
+  assert.equal(saved.events.length, 0);
+  assert.equal(saved.state.session.answered, 1);
+  assert.equal(saved.state.session.currentIndex, 1);
+  assert.equal(saved.state.recentAttempts.length, 0);
+
+  const finished = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: saved.state, data: saved.data },
+    latestSession: saved.practiceSession,
+    command: 'finish-mini-test',
+    requestId: 'finish-strict-mini-test',
+    payload: {},
+  });
+
+  assert.equal(finished.state.phase, 'summary');
+  assert.equal(finished.state.feedback, null);
+  assert.equal(finished.state.session, null);
+  assert.equal(finished.state.summary.answered, 1);
+  assert.equal(finished.state.summary.targetCount, 8);
+  assert.equal(finished.state.summary.miniTestReview.questions.length, 8);
+  assert.equal(finished.state.summary.miniTestReview.questions[0].marked.result.correct, true);
+  assert.equal(finished.state.summary.miniTestReview.questions[1].marked.result.feedbackShort, 'No answer saved.');
+  assert.equal(finished.events.filter((event) => event.type === 'grammar.answer-submitted').length, 1);
+  assert.ok(finished.events.some((event) => event.type === 'grammar.session-completed'));
+});
+
+test('Grammar strict mini-set rejects AI enrichment until review is complete', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'start-strict-ai',
+    payload: {
+      mode: 'satsset',
+      roundLength: 8,
+      seed: 12,
+    },
+  });
+
+  assert.throws(() => engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: start.state, data: start.data },
+    latestSession: start.practiceSession,
+    command: 'request-ai-enrichment',
+    requestId: 'strict-ai-request',
+    payload: { kind: 'explanation' },
+  }), (error) => error?.extra?.code === 'grammar_ai_unavailable_for_mini_test');
 });
 
 test('Grammar save-prefs clears completed summary state', () => {

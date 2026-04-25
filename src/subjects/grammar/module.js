@@ -283,12 +283,42 @@ export const grammarModule = {
 
     if (action === 'grammar-submit-form') {
       const response = responseFromFormData(context.data?.formData);
+      if (ui.session?.type === 'mini-set') {
+        const payload = { response, advance: Boolean(context.data?.advance) };
+        if (service?.saveMiniTestResponse) return applyLocalTransition(context, service.saveMiniTestResponse(learnerId, response, payload.advance));
+        return sendGrammarCommand(context, 'save-mini-test-response', payload);
+      }
       if (!responseHasAnswer(response)) {
         setGrammarError(context, 'Choose or type an answer before submitting.', { learnerId });
         return true;
       }
       if (service?.submitAnswer) return applyLocalTransition(context, service.submitAnswer(learnerId, ui, response));
       return sendGrammarCommand(context, 'submit-answer', { response });
+    }
+
+    if (action === 'grammar-save-mini-test-response') {
+      const response = responseFromFormData(context.data?.formData);
+      const payload = { response, advance: Boolean(context.data?.advance) };
+      if (context.data?.index !== undefined) payload.index = Number(context.data.index);
+      if (service?.saveMiniTestResponse) return applyLocalTransition(context, service.saveMiniTestResponse(learnerId, response, payload));
+      return sendGrammarCommand(context, 'save-mini-test-response', payload);
+    }
+
+    if (action === 'grammar-move-mini-test') {
+      const payload = {};
+      if (Object.prototype.hasOwnProperty.call(context.data || {}, 'index')) payload.index = Number(context.data.index);
+      if (Object.prototype.hasOwnProperty.call(context.data || {}, 'delta')) payload.delta = Number(context.data.delta);
+      if (service?.moveMiniTest) return applyLocalTransition(context, service.moveMiniTest(learnerId, payload));
+      return sendGrammarCommand(context, 'move-mini-test', payload);
+    }
+
+    if (action === 'grammar-finish-mini-test') {
+      const hasFormData = Boolean(context.data?.formData?.entries);
+      const payload = hasFormData
+        ? { response: responseFromFormData(context.data.formData) }
+        : { saveCurrent: false };
+      if (service?.finishMiniTest) return applyLocalTransition(context, service.finishMiniTest(learnerId, payload));
+      return sendGrammarCommand(context, 'finish-mini-test', payload);
     }
 
     if (action === 'grammar-continue') {

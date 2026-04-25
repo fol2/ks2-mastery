@@ -131,9 +131,17 @@
     {
       "id": "strict-mini-test-flow",
       "legacyCapability": "KS2-style mini-test has fixed set size, timer, navigation, delayed feedback and end review",
-      "status": "planned",
-      "ownerUnit": "U2",
-      "reason": "Current satsset mode uses the generic per-item feedback loop."
+      "status": "completed",
+      "evidence": [
+        "worker/src/subjects/grammar/engine.js",
+        "worker/src/subjects/grammar/commands.js",
+        "worker/src/subjects/grammar/read-models.js",
+        "src/subjects/grammar/components/GrammarSessionScene.jsx",
+        "src/subjects/grammar/components/GrammarSummaryScene.jsx",
+        "tests/grammar-engine.test.js",
+        "tests/worker-grammar-subject-runtime.test.js",
+        "tests/react-grammar-surface.test.js"
+      ]
     },
     {
       "id": "session-goals",

@@ -18,6 +18,9 @@ const SUBJECT_ID = 'grammar';
 const SERVER_AUTHORITY = 'worker';
 const DEFAULT_ROUND_LENGTH = 5;
 const DEFAULT_MINI_SET_LENGTH = 8;
+const MINI_SET_LENGTHS = Object.freeze([8, 12]);
+const MINI_SET_MIN_TIME_LIMIT_MS = 6 * 60000;
+const MINI_SET_MS_PER_MARK = 54000;
 const SHORT_RESPONSE_TEXT_LIMIT = 512;
 const LONG_RESPONSE_TEXT_LIMIT = 2000;
 const LIST_RESPONSE_LIMIT = 40;
@@ -542,9 +545,23 @@ function supportedModeOrThrow(mode) {
 }
 
 function roundLengthFor(mode, payload = {}, prefs = {}) {
+  if (mode === 'satsset') return miniSetSizeFor(payload, prefs);
   const fallback = mode === 'satsset' ? DEFAULT_MINI_SET_LENGTH : DEFAULT_ROUND_LENGTH;
   const raw = Number(payload.length ?? payload.roundLength ?? prefs.roundLength ?? fallback);
   return clamp(Number.isFinite(raw) ? Math.floor(raw) : fallback, 1, mode === 'satsset' ? 20 : 15);
+}
+
+function miniSetSizeFor(payload = {}, prefs = {}) {
+  const raw = Number(payload.setSize ?? payload.miniSetSize ?? payload.length ?? payload.roundLength ?? prefs.roundLength ?? DEFAULT_MINI_SET_LENGTH);
+  const requested = Number.isFinite(raw) ? Math.floor(raw) : DEFAULT_MINI_SET_LENGTH;
+  if (MINI_SET_LENGTHS.includes(requested)) return requested;
+  return requested >= 10 ? 12 : 8;
+}
+
+function miniSetTimeLimitMs(items = []) {
+  const totalMarks = (Array.isArray(items) ? items : [])
+    .reduce((sum, item) => sum + (Number(item?.marks) || 1), 0);
+  return Math.max(MINI_SET_MIN_TIME_LIMIT_MS, Math.round(totalMarks * MINI_SET_MS_PER_MARK));
 }
 
 function serverSessionId(learnerId, { requestId = '', nowTs, baseSeed, mode, focusConceptId = '' }) {
@@ -603,6 +620,50 @@ export function buildGrammarMiniSet({ size = DEFAULT_MINI_SET_LENGTH, focusConce
   });
 }
 
+function buildStrictMiniTestItems(state, { size, focusConceptId, seed, templateId = '', nowTs } = {}) {
+  const length = miniSetSizeFor({ setSize: size });
+  return miniSetSeeds(Number(seed) || 1, length).map((itemSeed, index) => {
+    if (index === 0 && templateId) {
+      const template = grammarTemplateById(templateId);
+      if (!template) {
+        throw new NotFoundError('Grammar template is not available.', {
+          code: 'grammar_template_not_found',
+          subjectId: SUBJECT_ID,
+          templateId,
+        });
+      }
+      if (!templateFits(template, { mode: 'satsset', focusConceptId })) {
+        throw new BadRequestError('Grammar template is not available for this Grammar mode or focus concept.', {
+          code: 'grammar_template_unavailable_for_mode',
+          subjectId: SUBJECT_ID,
+          mode: 'satsset',
+          focusConceptId,
+          templateId,
+        });
+      }
+      return itemFromTemplate(template, itemSeed + index);
+    }
+    const template = weightedTemplatePick(state, {
+      mode: 'satsset',
+      focusConceptId,
+      seed: itemSeed + index,
+      nowTs,
+    });
+    return itemFromTemplate(template, itemSeed + index);
+  });
+}
+
+function miniTestQuestionEntries(items = []) {
+  return items.map((item, index) => ({
+    index,
+    item,
+    response: {},
+    answered: false,
+    marked: null,
+    savedAt: null,
+  }));
+}
+
 function startSession(state, payload, nowTs, learnerId) {
   const mode = supportedModeOrThrow(normaliseMode(payload.mode || state.prefs.mode));
   const templateId = typeof payload.templateId === 'string' ? payload.templateId : '';
@@ -640,6 +701,56 @@ function startSession(state, payload, nowTs, learnerId) {
     mode,
     focusConceptId: sessionFocusConceptId,
   });
+  if (mode === 'satsset') {
+    const items = buildStrictMiniTestItems(state, {
+      size: roundLength,
+      focusConceptId: sessionFocusConceptId,
+      seed: baseSeed,
+      templateId,
+      nowTs,
+    });
+    const timeLimitMs = miniSetTimeLimitMs(items);
+    const questions = miniTestQuestionEntries(items);
+    state.phase = 'session';
+    state.awaitingAdvance = false;
+    state.feedback = null;
+    state.summary = null;
+    state.error = '';
+    state.prefs = {
+      ...state.prefs,
+      mode,
+      roundLength,
+      focusConceptId: prefsFocusConceptId,
+    };
+    state.session = {
+      id: sessionId,
+      type: 'mini-set',
+      mode,
+      focusConceptId: sessionFocusConceptId,
+      startedAt: nowTs,
+      targetCount: questions.length,
+      answered: 0,
+      correct: 0,
+      totalScore: 0,
+      totalMarks: items.reduce((sum, item) => sum + (Number(item.marks) || 1), 0),
+      seed: baseSeed,
+      currentIndex: 0,
+      currentItem: questions[0]?.item || null,
+      attemptsForCurrent: 0,
+      supportLevel: 0,
+      miniTest: {
+        setSize: questions.length,
+        startedAt: nowTs,
+        timeLimitMs,
+        expiresAt: nowTs + timeLimitMs,
+        currentIndex: 0,
+        questions,
+        finished: false,
+      },
+      serverAuthority: SERVER_AUTHORITY,
+    };
+    return [];
+  }
   const firstItem = nextItem(state, {
     mode,
     focusConceptId: sessionFocusConceptId,
@@ -701,6 +812,9 @@ function completeSession(state, nowTs, command) {
       subjectId: SUBJECT_ID,
     });
   }
+  if (isActiveMiniTestSession(state)) {
+    return finishMiniTest(state, nowTs, command, { timedOut: miniTestExpired(state.session, nowTs) });
+  }
   const summary = completionSummary(state, nowTs);
   state.phase = 'summary';
   state.awaitingAdvance = false;
@@ -723,6 +837,219 @@ function completeSession(state, nowTs, command) {
   return [event];
 }
 
+function isActiveMiniTestSession(state) {
+  return state.session?.type === 'mini-set' && state.phase === 'session' && !state.session.miniTest?.finished;
+}
+
+function miniTestExpired(session, nowTs) {
+  return Number(session?.miniTest?.expiresAt) > 0 && nowTs >= Number(session.miniTest.expiresAt);
+}
+
+function miniTestCurrentQuestion(session) {
+  const miniTest = session?.miniTest;
+  if (!miniTest || !Array.isArray(miniTest.questions)) return null;
+  const index = clamp(Math.floor(Number(miniTest.currentIndex ?? session.currentIndex) || 0), 0, Math.max(0, miniTest.questions.length - 1));
+  return miniTest.questions[index] || null;
+}
+
+function syncMiniTestSession(session) {
+  const miniTest = session.miniTest;
+  const questions = Array.isArray(miniTest?.questions) ? miniTest.questions : [];
+  const index = clamp(Math.floor(Number(miniTest?.currentIndex ?? session.currentIndex) || 0), 0, Math.max(0, questions.length - 1));
+  const answered = questions.filter((entry) => entry?.answered).length;
+  miniTest.currentIndex = index;
+  session.currentIndex = index;
+  session.currentItem = questions[index]?.item || null;
+  session.answered = answered;
+  session.targetCount = questions.length || Number(session.targetCount) || 0;
+  session.totalMarks = questions.reduce((sum, entry) => sum + (Number(entry?.item?.marks) || 1), 0);
+}
+
+function saveMiniTestResponse(state, payload = {}, nowTs = Date.now()) {
+  if (!isActiveMiniTestSession(state)) {
+    throw new BadRequestError('This Grammar mini-test is no longer active.', {
+      code: 'grammar_session_stale',
+      subjectId: SUBJECT_ID,
+    });
+  }
+  const session = state.session;
+  if (miniTestExpired(session, nowTs)) return null;
+  const question = miniTestCurrentQuestion(session);
+  if (!question?.item) return [];
+  const response = isPlainObject(payload.response) ? payload.response : (isPlainObject(payload.answer) ? payload.answer : { answer: payload.answer ?? '' });
+  question.response = normaliseGrammarResponse(question.item.inputSpec, response);
+  question.answered = hasNormalisedGrammarResponse(question.response);
+  question.savedAt = nowTs;
+  syncMiniTestSession(session);
+  return [];
+}
+
+function moveMiniTest(state, payload = {}, nowTs = Date.now()) {
+  if (!isActiveMiniTestSession(state)) {
+    throw new BadRequestError('This Grammar mini-test is no longer active.', {
+      code: 'grammar_session_stale',
+      subjectId: SUBJECT_ID,
+    });
+  }
+  if (miniTestExpired(state.session, nowTs)) return null;
+  const session = state.session;
+  const questions = Array.isArray(session.miniTest?.questions) ? session.miniTest.questions : [];
+  const current = Number(session.miniTest.currentIndex ?? session.currentIndex) || 0;
+  const requested = Object.prototype.hasOwnProperty.call(payload, 'index')
+    ? Number(payload.index)
+    : current + (Number(payload.delta) || 0);
+  const nextIndex = clamp(Math.floor(Number.isFinite(requested) ? requested : current), 0, Math.max(0, questions.length - 1));
+  session.miniTest.currentIndex = nextIndex;
+  syncMiniTestSession(session);
+  state.feedback = null;
+  state.awaitingAdvance = false;
+  return [];
+}
+
+function unansweredMiniTestResult(item) {
+  return {
+    correct: false,
+    score: 0,
+    maxScore: Number(item?.marks) || 1,
+    misconception: null,
+    feedbackShort: 'No answer saved.',
+    feedbackLong: 'This question was not answered before the mini-set was marked.',
+    answerText: '',
+    minimalHint: '',
+  };
+}
+
+function finishMiniTest(state, nowTs, command, { timedOut = false } = {}) {
+  if (!isActiveMiniTestSession(state)) {
+    throw new BadRequestError('This Grammar mini-test is no longer active.', {
+      code: 'grammar_session_stale',
+      subjectId: SUBJECT_ID,
+    });
+  }
+  const session = state.session;
+  const questions = Array.isArray(session.miniTest?.questions) ? session.miniTest.questions : [];
+  const events = [];
+  let answered = 0;
+  let correct = 0;
+  let totalScore = 0;
+  let totalMarks = 0;
+
+  questions.forEach((entry, index) => {
+    const item = entry?.item;
+    const maxMarks = Number(item?.marks) || 1;
+    totalMarks += maxMarks;
+    if (entry?.answered && item) {
+      const applied = applyGrammarAttemptToState(state, {
+        learnerId: command.learnerId,
+        item,
+        response: entry.response,
+        supportLevel: 0,
+        attempts: 1,
+        requestId: `${command.requestId || 'mini-test'}.${index + 1}`,
+        now: nowTs,
+      });
+      entry.marked = {
+        response: cloneSerialisable(applied.response) || {},
+        result: cloneSerialisable(applied.result) || {},
+      };
+      answered += 1;
+      if (applied.result.correct) correct += 1;
+      totalScore += Number(applied.result.score) || 0;
+      events.push(...applied.events);
+    } else {
+      entry.marked = {
+        response: cloneSerialisable(entry?.response) || {},
+        result: unansweredMiniTestResult(item),
+      };
+    }
+  });
+
+  session.miniTest.finished = true;
+  session.miniTest.finishedAt = nowTs;
+  session.miniTest.timedOut = Boolean(timedOut);
+  session.answered = answered;
+  session.correct = correct;
+  session.totalScore = totalScore;
+  session.totalMarks = totalMarks;
+
+  const summary = {
+    ...completionSummary(state, nowTs),
+    answered,
+    correct,
+    totalScore,
+    totalMarks,
+    targetCount: questions.length,
+    timedOut: Boolean(timedOut),
+    miniTestReview: {
+      setSize: questions.length,
+      timeLimitMs: Number(session.miniTest.timeLimitMs) || 0,
+      startedAt: Number(session.miniTest.startedAt) || session.startedAt || nowTs,
+      finishedAt: nowTs,
+      questions: questions.map((entry) => ({
+        index: Number(entry.index) || 0,
+        item: cloneSerialisable(entry.item) || null,
+        response: cloneSerialisable(entry.response) || {},
+        answered: Boolean(entry.answered),
+        marked: cloneSerialisable(entry.marked) || null,
+      })),
+    },
+  };
+  state.phase = 'summary';
+  state.awaitingAdvance = false;
+  state.summary = summary;
+  state.feedback = null;
+  state.session = null;
+  events.push({
+    id: `grammar.session.${summary.sessionId}.${command.requestId || nowTs}`,
+    type: 'grammar.session-completed',
+    subjectId: SUBJECT_ID,
+    learnerId: command.learnerId,
+    sessionId: summary.sessionId,
+    mode: summary.mode,
+    answered: summary.answered,
+    correct: summary.correct,
+    totalScore: summary.totalScore,
+    totalMarks: summary.totalMarks,
+    timedOut: Boolean(timedOut),
+    createdAt: nowTs,
+  });
+  return events;
+}
+
+function saveMiniTestCommand(state, payload, command, nowTs) {
+  const saved = saveMiniTestResponse(state, payload, nowTs);
+  if (saved === null) return finishMiniTest(state, nowTs, command, { timedOut: true });
+  if (Object.prototype.hasOwnProperty.call(payload, 'index')) {
+    const moved = moveMiniTest(state, { index: payload.index }, nowTs);
+    if (moved === null) return finishMiniTest(state, nowTs, command, { timedOut: true });
+    return saved;
+  }
+  if (!payload.advance) return saved;
+  const moved = moveMiniTest(state, { delta: 1 }, nowTs);
+  if (moved === null) return finishMiniTest(state, nowTs, command, { timedOut: true });
+  return saved;
+}
+
+function moveMiniTestCommand(state, payload, command, nowTs) {
+  const moved = moveMiniTest(state, payload, nowTs);
+  if (moved === null) return finishMiniTest(state, nowTs, command, { timedOut: true });
+  return moved;
+}
+
+function finishMiniTestCommand(state, payload, command, nowTs) {
+  if (isActiveMiniTestSession(state) && !miniTestExpired(state.session, nowTs)) {
+    const shouldSaveCurrent = payload.saveCurrent !== false && (
+      Object.prototype.hasOwnProperty.call(payload, 'response')
+      || Object.prototype.hasOwnProperty.call(payload, 'answer')
+    );
+    if (shouldSaveCurrent) {
+      const saved = saveMiniTestResponse(state, payload, nowTs);
+      if (saved === null) return finishMiniTest(state, nowTs, command, { timedOut: true });
+    }
+  }
+  return finishMiniTest(state, nowTs, command, { timedOut: miniTestExpired(state.session, nowTs) });
+}
+
 function continueSession(state, nowTs) {
   const session = state.session;
   if (!session || !['session', 'feedback'].includes(state.phase)) {
@@ -732,6 +1059,7 @@ function continueSession(state, nowTs) {
     });
   }
   if (!state.awaitingAdvance) {
+    if (isActiveMiniTestSession(state)) return moveMiniTest(state, { delta: 1 }, nowTs);
     throw new BadRequestError('This Grammar item is not awaiting the next question.', {
       code: 'grammar_advance_not_ready',
       subjectId: SUBJECT_ID,
@@ -891,6 +1219,20 @@ function submitAnswer(state, payload, command, nowTs) {
       subjectId: SUBJECT_ID,
     });
   }
+  if (session.type === 'mini-set') {
+    const requestedSupportLevel = Number(payload.supportLevel ?? 0) || 0;
+    if (requestedSupportLevel > 0) {
+      throw new BadRequestError('This Grammar mode does not allow pre-answer support.', {
+        code: 'grammar_support_unavailable_for_mode',
+        subjectId: SUBJECT_ID,
+        mode: session.mode,
+      });
+    }
+    if (miniTestExpired(session, nowTs)) return finishMiniTest(state, nowTs, command, { timedOut: true });
+    saveMiniTestResponse(state, payload, nowTs);
+    if (payload.advance) moveMiniTest(state, { delta: 1 }, nowTs);
+    return [];
+  }
   const response = isPlainObject(payload.response) ? payload.response : (isPlainObject(payload.answer) ? payload.answer : { answer: payload.answer ?? '' });
   const modeSupportLevel = supportLevelForMode(session.mode);
   const requestedSupportLevel = Number(payload.supportLevel ?? modeSupportLevel) || 0;
@@ -953,6 +1295,13 @@ function savePrefs(state, payload) {
 }
 
 function requestAiEnrichment(state, payload, nowTs) {
+  if (isActiveMiniTestSession(state)) {
+    throw new BadRequestError('Grammar enrichment is unavailable until the mini-test is complete.', {
+      code: 'grammar_ai_unavailable_for_mini_test',
+      subjectId: SUBJECT_ID,
+      mode: state.session?.mode || 'satsset',
+    });
+  }
   return compileGrammarAiEnrichment({
     payload,
     state,
@@ -1008,6 +1357,12 @@ export function createServerGrammarEngine({ now = Date.now } = {}) {
         });
       } else if (command === 'submit-answer') {
         events = submitAnswer(state, payload, commandContext, nowTs);
+      } else if (command === 'save-mini-test-response') {
+        events = saveMiniTestCommand(state, payload, commandContext, nowTs);
+      } else if (command === 'move-mini-test') {
+        events = moveMiniTestCommand(state, payload, commandContext, nowTs);
+      } else if (command === 'finish-mini-test') {
+        events = finishMiniTestCommand(state, payload, commandContext, nowTs);
       } else if (command === 'continue-session') {
         events = continueSession(state, nowTs) ?? completeSession(state, nowTs, commandContext);
       } else if (command === 'end-session') {

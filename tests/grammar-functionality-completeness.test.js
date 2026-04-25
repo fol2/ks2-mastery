@@ -85,7 +85,8 @@ test('Grammar completeness baseline pins legacy mode coverage separately from be
   assert.deepEqual(enabledModes.slice().sort(), baseline.legacyModes.slice().sort());
   assert.deepEqual(GRAMMAR_LOCKED_MODES, []);
   assert.equal(capabilityById(baseline, 'legacy-mode-ids-enabled')?.status, 'completed');
-  assert.equal(capabilityById(baseline, 'strict-mini-test-flow')?.ownerUnit, 'U2');
+  assert.equal(capabilityById(baseline, 'strict-mini-test-flow')?.status, 'completed');
+  assert.ok(capabilityById(baseline, 'strict-mini-test-flow')?.evidence.includes('worker/src/subjects/grammar/engine.js'));
   assert.equal(capabilityById(baseline, 'session-goals')?.ownerUnit, 'U3');
   assert.equal(capabilityById(baseline, 'in-session-repair-loop')?.ownerUnit, 'U4');
   assert.equal(capabilityById(baseline, 'ai-visible-triggers')?.ownerUnit, 'U5');

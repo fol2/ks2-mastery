@@ -14,7 +14,7 @@ This document tracks Grammar-only functionality completeness against the reviewe
 
 | Area | Status | Owner unit |
 |---|---|---|
-| Strict mini-test with fixed set, timer, navigation, delayed feedback, finish action, and end review | Planned | U2 |
+| Strict mini-test with fixed set, timer, navigation, delayed feedback, finish action, and end review | Completed | U2 |
 | Session goals: ten minutes, fifteen questions, and clear due items | Planned | U3 |
 | Practice settings: Smart Review teaching items and show-domain-before-answer | Planned | U3 |
 | In-session repair: retry, worked solution, faded support, and built-in similar problem | Planned | U4 |

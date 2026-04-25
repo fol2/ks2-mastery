@@ -6697,6 +6697,57 @@ textarea:focus-visible {
   line-height: 1.5;
 }
 
+.grammar-mini-test-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #c5d9cf;
+  border-radius: 8px;
+  background: #f6fbf8;
+}
+
+.grammar-mini-test-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.grammar-mini-test-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(42px, 1fr));
+  gap: 8px;
+}
+
+.grammar-mini-test-nav-button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 42px;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.grammar-mini-test-nav-button.answered {
+  border-color: #b8dfca;
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.grammar-mini-test-nav-button.current {
+  border-color: #2e8479;
+  background: #2e8479;
+  color: #fff;
+}
+
+.grammar-mini-test-nav-button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .grammar-guidance {
   display: grid;
   gap: 12px;
@@ -6928,6 +6979,72 @@ textarea:focus-visible {
 .grammar-summary-card {
   display: grid;
   gap: 18px;
+}
+
+.grammar-mini-review {
+  display: grid;
+  gap: 16px;
+}
+
+.grammar-mini-review-list {
+  display: grid;
+  gap: 12px;
+}
+
+.grammar-mini-review-item {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.grammar-mini-review-item.correct {
+  border-color: #b8dfca;
+  background: #f5fbf7;
+}
+
+.grammar-mini-review-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.grammar-mini-review-head strong {
+  flex: 1 1 220px;
+}
+
+.grammar-mini-review-head small {
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.grammar-mini-review-item p {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+
+.grammar-mini-review-response {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.grammar-mini-review-response span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.grammar-mini-review-response strong {
+  overflow-wrap: anywhere;
 }
 
 .grammar-summary-stats {

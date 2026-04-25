@@ -36,6 +36,7 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
   const counts = grammar.stats?.concepts || {};
   const templates = grammar.stats?.templates || {};
   const selectedMode = grammar.prefs?.mode || 'smart';
+  const miniTestMode = selectedMode === 'satsset';
   const troubleMode = selectedMode === 'trouble';
   const surgeryMode = selectedMode === 'surgery';
   const builderMode = selectedMode === 'builder';
@@ -44,6 +45,10 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
   const focusPlaceholder = troubleMode ? 'Weakest concept' : (surgeryMode ? 'Surgery mix' : (builderMode ? 'Builder mix' : 'Smart mix'));
   const groupedConcepts = groupedGrammarConcepts(grammar.analytics?.concepts || []);
   const setupDisabled = runtimeReadOnly || Boolean(grammar.pendingCommand);
+  const lengthOptions = miniTestMode ? [8, 12] : [3, 5, 8, 10, 15];
+  const selectedLength = miniTestMode
+    ? (Number(grammar.prefs?.roundLength) >= 10 ? 12 : 8)
+    : (Number(grammar.prefs?.roundLength) || 5);
 
   return (
     <section className="grammar-setup" aria-labelledby="grammar-setup-title">
@@ -118,14 +123,14 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
               </select>
             </label>
             <label className="field">
-              <span>Round length</span>
+              <span>{miniTestMode ? 'Mini-set size' : 'Round length'}</span>
               <select
                 className="input"
-                value={String(grammar.prefs?.roundLength || 5)}
+                value={String(selectedLength)}
                 disabled={setupDisabled}
                 onChange={(event) => actions.dispatch('grammar-set-round-length', { value: event.currentTarget.value })}
               >
-                {[3, 5, 8, 10, 15].map((length) => <option value={length} key={length}>{length}</option>)}
+                {lengthOptions.map((length) => <option value={length} key={length}>{length}</option>)}
               </select>
             </label>
           </div>
