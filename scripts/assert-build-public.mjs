@@ -130,6 +130,34 @@ if (rawAssetPngs.length) {
   throw new Error(`Raw asset PNG files must not be copied into public output: ${rawAssetPngs.join(', ')}`);
 }
 
+// U6 (sys-hardening p1): assert that the published `_headers` carries the
+// full security-header block. Prevents silent drift between the repo-root
+// `_headers` (single source of truth) and `dist/public/_headers` that ships
+// with the deploy artefact.
+const publishedHeadersContent = await readFile(path.join(publicDir, '_headers'), 'utf8');
+const REQUIRED_SECURITY_HEADER_LINES = [
+  'Strict-Transport-Security: max-age=63072000; includeSubDomains',
+  'X-Content-Type-Options: nosniff',
+  'Referrer-Policy: strict-origin-when-cross-origin',
+  'X-Frame-Options: DENY',
+  'Cross-Origin-Opener-Policy: same-origin-allow-popups',
+  'Cross-Origin-Resource-Policy: same-site',
+];
+for (const line of REQUIRED_SECURITY_HEADER_LINES) {
+  if (!publishedHeadersContent.includes(line)) {
+    throw new Error(`Published _headers is missing required security-header line: ${line}`);
+  }
+}
+if (!/Permissions-Policy:[^\n]*microphone=\(\)/.test(publishedHeadersContent)) {
+  throw new Error('Published _headers is missing Permissions-Policy with microphone=() (F-09 deny-by-default).');
+}
+if (/preload/.test(publishedHeadersContent)) {
+  throw new Error('Published _headers must not carry HSTS preload in this pass (F-03 deferred).');
+}
+if (!/public, max-age=31536000, immutable/.test(publishedHeadersContent)) {
+  throw new Error('Published _headers must carry an immutable cache rule for hashed bundles.');
+}
+
 const indexHtml = await readFile(path.join(publicDir, 'index.html'), 'utf8');
 if (!indexHtml.includes('/manifest.webmanifest')) {
   throw new Error('Public index.html must link the web app manifest.');
