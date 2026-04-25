@@ -123,12 +123,24 @@ test('Grammar surface runs from setup to Worker-style feedback and summary', () 
   harness.dispatch('grammar-continue');
   assert.equal(harness.store.getState().subjectUi.grammar.phase, 'summary');
   html = harness.render();
-  assert.match(html, /Grammar session summary/);
-  assert.match(html, /1\/1/);
+  // Phase 3 U5: child-facing summary headline replaces the adult "Grammar
+  // session summary" eyebrow. The round stats are surfaced via the five
+  // summary cards (Answered/Correct/Trouble spots/New secure/Monster
+  // progress) rather than a "1/1" score string.
+  assert.match(html, /Nice work — round complete/);
+  assert.match(html, /data-card-id="answered"/);
+  assert.match(html, /data-card-id="monster-progress"/);
 
-  harness.dispatch('grammar-back');
-  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');
-  assert.match(harness.render(), /Grammar Garden/);
+  // Phase 3 U5: retired buttons replaced with three primary actions
+  // (Practise missed / Start another round / Open Grammar Bank) plus the
+  // secondary `Grown-up view` (dispatches `grammar-open-analytics`). The
+  // old `grammar-back` button is no longer on the summary, so return to
+  // the dashboard via `Open Grammar Bank` → dashboard routing is covered
+  // elsewhere; here we assert `Start another round` remains wired.
+  assert.match(html, /data-action="grammar-start-again"/);
+  assert.match(html, /data-action="grammar-practise-missed"/);
+  assert.match(html, /data-action="grammar-open-concept-bank"/);
+  assert.match(html, /data-action="grammar-open-analytics"/);
 });
 
 test('Grammar Enter key advances from feedback to the next question', () => {
@@ -958,6 +970,14 @@ test('Grammar analytics renders evidence before reward progress', () => {
     formData: grammarResponseFormData({ answer: sample.sample.inputSpec.options[0].value }),
   });
   harness.dispatch('grammar-continue');
+
+  // Phase 3 U5: analytics is no longer auto-rendered beneath the summary.
+  // The summary carries a `Grown-up view` button dispatching
+  // `grammar-open-analytics`, which flips phase to `'analytics'` and
+  // renders `GrammarAnalyticsScene`. We dispatch here to surface the
+  // analytics HTML this test is asserting on.
+  harness.dispatch('grammar-open-analytics');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'analytics');
 
   const html = harness.render();
 
@@ -2461,4 +2481,263 @@ test('U3 follower: error banner renders child copy with role="alert"', () => {
   // In this validation path, the translator preserves the already-child
   // copy string verbatim — so the banner body shows it.
   assert.match(sessionHtml, /Choose or type an answer before submitting\./);
+});
+
+// ---------------------------------------------------------------------------
+// U5: Summary redesign (child-friendly round end + Grown-up view gate)
+// ---------------------------------------------------------------------------
+// The regular-practice summary is the five-card grid produced by
+// `grammarSummaryCards(summary, rewardState)` plus the three primary actions
+// (Practise missed / Start another round / Open Grammar Bank) and the quiet
+// `Grown-up view` secondary. The mini-test summary renders a score card,
+// the existing `GrammarMiniTestReview`, and two primary actions (Review
+// answers / Fix missed concepts) plus the same `Grown-up view`. The adult
+// analytics surface is gated behind `grammar-open-analytics` — it never
+// auto-renders in the summary HTML.
+
+function u5RunRegularToSummary() {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample();
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData(sample.correctResponse),
+  });
+  harness.dispatch('grammar-continue');
+  return { harness, sample };
+}
+
+function u5ScopeToSummaryHtml(html) {
+  const match = html.match(/<div class="grammar-summary-shell[^"]*">[\s\S]*?<\/div><\/main>/);
+  assert.ok(match, 'summary shell was rendered');
+  // Trim trailing `</main>` so the returned HTML is the summary subtree.
+  return match[0].replace(/<\/main>$/, '');
+}
+
+test('U5: regular summary renders exactly five summary cards', () => {
+  const { harness } = u5RunRegularToSummary();
+  const html = u5ScopeToSummaryHtml(harness.render());
+
+  const cardIds = ['answered', 'correct', 'trouble', 'new-secure', 'monster-progress'];
+  for (const id of cardIds) {
+    assert.match(html, new RegExp(`data-card-id="${id}"`), `summary card missing: ${id}`);
+  }
+  // Exactly five cards — no drift.
+  const cardMatches = html.match(/data-card-id="/g) || [];
+  assert.equal(cardMatches.length, 5, 'summary must render exactly five cards');
+
+  // Labels match the plan spec.
+  assert.match(html, /Answered/);
+  assert.match(html, /Correct/);
+  assert.match(html, /Trouble spots found/);
+  assert.match(html, /New secure/);
+  assert.match(html, /Monster progress/);
+});
+
+test('U5: regular summary primary action row has three buttons (Practise missed, Start another round, Open Grammar Bank)', () => {
+  const { harness } = u5RunRegularToSummary();
+  const html = u5ScopeToSummaryHtml(harness.render());
+
+  const primaryRow = html.match(
+    /<div class="grammar-summary-primary-actions"[^>]*>[\s\S]*?<\/div>/,
+  )?.[0];
+  assert.ok(primaryRow, 'primary action row rendered');
+
+  assert.match(primaryRow, /data-action="grammar-practise-missed"[^>]*>Practise missed</);
+  assert.match(primaryRow, /data-action="grammar-start-again"[^>]*>Start another round</);
+  assert.match(primaryRow, /data-action="grammar-open-concept-bank"[^>]*>Open Grammar Bank</);
+
+  // Exactly three buttons in the primary row — no drift.
+  const buttonCount = (primaryRow.match(/<button /g) || []).length;
+  assert.equal(buttonCount, 3, 'primary row must hold exactly three buttons');
+});
+
+test('U5: regular summary secondary row holds the Grown-up view button with aria-label="Open adult report"', () => {
+  const { harness } = u5RunRegularToSummary();
+  const html = u5ScopeToSummaryHtml(harness.render());
+
+  const secondaryRow = html.match(
+    /<div class="grammar-summary-secondary-actions"[^>]*>[\s\S]*?<\/div>/,
+  )?.[0];
+  assert.ok(secondaryRow, 'secondary action row rendered');
+  assert.match(secondaryRow, /data-action="grammar-open-analytics"/);
+  assert.match(secondaryRow, /aria-label="Open adult report"/);
+  assert.match(secondaryRow, />Grown-up view</);
+});
+
+test('U5: Grown-up view dispatches grammar-open-analytics and flips phase to analytics', () => {
+  const { harness } = u5RunRegularToSummary();
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'summary');
+
+  harness.dispatch('grammar-open-analytics');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'analytics');
+
+  const html = harness.render();
+  // Analytics scene is rendered directly by the phase router. The adult
+  // surface carries Misconception repair / Question-type evidence / etc.
+  assert.match(html, /class="grammar-analytics-back-row"/);
+  assert.match(html, /data-action="grammar-close-analytics"/);
+  assert.match(html, /Grammar analytics/);
+
+  // `grammar-close-analytics` returns to summary (because `grammar.summary`
+  // is still populated).
+  harness.dispatch('grammar-close-analytics');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'summary');
+});
+
+test('U5: regular summary Monster progress card iterates the four active monsters only', () => {
+  const { harness } = u5RunRegularToSummary();
+  const html = u5ScopeToSummaryHtml(harness.render());
+
+  const monsterBlock = html.match(
+    /<div class="grammar-summary-card grammar-summary-card--monster"[\s\S]*?<\/ul>/,
+  )?.[0];
+  assert.ok(monsterBlock, 'monster progress card rendered');
+
+  const activeIds = ['bracehart', 'chronalyx', 'couronnail', 'concordium'];
+  for (const id of activeIds) {
+    assert.match(monsterBlock, new RegExp(`data-monster-id="${id}"`));
+  }
+  // Exactly four active monsters — reserved ids absent per R15.
+  const monsterRows = (monsterBlock.match(/data-monster-id="/g) || []).length;
+  assert.equal(monsterRows, 4, 'monster progress card must iterate exactly four active monsters');
+
+  assert.doesNotMatch(monsterBlock, /Glossbloom/i);
+  assert.doesNotMatch(monsterBlock, /Loomrill/i);
+  assert.doesNotMatch(monsterBlock, /Mirrane/i);
+});
+
+test('U5: regular summary HTML does not leak adult-diagnostic analytics copy or reserved monsters', () => {
+  const { harness } = u5RunRegularToSummary();
+  const html = u5ScopeToSummaryHtml(harness.render());
+
+  // The densest adult-only strings from `GrammarAnalyticsScene` — evidence
+  // summary header, parent summary draft aside, misconception pattern
+  // block, Bellstorm bridge copy — must not appear in the default summary.
+  assert.doesNotMatch(html, /Evidence summary|parent summary|misconception pattern|Bellstorm bridge/i);
+
+  // Reserved monsters absent from every corner of the summary.
+  assert.doesNotMatch(html, /Glossbloom|Loomrill|Mirrane/i);
+
+  // Forbidden-terms sweep across the full summary subtree.
+  for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+    assert.doesNotMatch(
+      html,
+      new RegExp(escapeRegExp(term), 'i'),
+      `forbidden term leaked into default summary HTML: ${term}`,
+    );
+  }
+});
+
+test('U5: mini-test summary renders score card plus Review answers + Fix missed concepts primary actions', () => {
+  const { harness, sample } = u4HarnessWithMiniSet();
+  harness.dispatch('grammar-save-mini-test-response', {
+    formData: grammarResponseFormData(sample.correctResponse),
+    advance: false,
+  });
+  harness.dispatch('grammar-finish-mini-test');
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'summary');
+  assert.ok(grammar.summary?.miniTestReview?.questions?.length);
+
+  const html = u5ScopeToSummaryHtml(harness.render());
+
+  // Score card headline (correct of total + percent accuracy).
+  const scoreBlock = html.match(/<div class="grammar-summary-score"[\s\S]*?<\/div>/)?.[0];
+  assert.ok(scoreBlock, 'mini-test score card rendered');
+  assert.match(scoreBlock, /1 of 8 correct/);
+  assert.match(scoreBlock, /13% accuracy/);
+
+  // Primary actions row: `Review answers` + `Fix missed concepts`. Exactly two.
+  const primaryRow = html.match(
+    /<div class="grammar-summary-primary-actions"[^>]*>[\s\S]*?<\/div>/,
+  )?.[0];
+  assert.ok(primaryRow, 'mini-test primary actions row rendered');
+  assert.match(primaryRow, />Review answers</);
+  assert.match(primaryRow, />Fix missed concepts</);
+  assert.match(primaryRow, /data-action="grammar-practise-missed"/);
+
+  const buttonCount = (primaryRow.match(/<button /g) || []).length;
+  assert.equal(buttonCount, 2, 'mini-test primary row holds exactly two buttons');
+
+  // The old generic buttons `Start another round` + `Back to Grammar setup`
+  // must NOT appear on the mini-test summary variant.
+  assert.doesNotMatch(primaryRow, /Start another round/);
+  assert.doesNotMatch(primaryRow, /Back to Grammar setup/);
+
+  // `GrammarMiniTestReview` is still mounted below the summary card, so the
+  // adjacent review section is present (contains its own `Mini Test results`
+  // score card + per-question rows).
+  assert.match(html, /class="card grammar-mini-review"/);
+  assert.match(html, /Mini Test results/);
+
+  // Grown-up view still surfaces the adult analytics for this variant.
+  assert.match(html, /data-action="grammar-open-analytics"/);
+  assert.match(html, /aria-label="Open adult report"/);
+});
+
+test('U5: grammar-practise-missed routes the learner out of summary with the first missed concept id as focus', () => {
+  const { harness } = u4HarnessWithMiniSet();
+  // Leave every question Blank — every review entry is missed.
+  harness.dispatch('grammar-finish-mini-test');
+
+  let grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'summary');
+  const firstQuestion = grammar.summary.miniTestReview.questions[0];
+  const expectedConceptId = firstQuestion.item.skillIds[0]
+    || firstQuestion.item.replay?.conceptIds?.[0]
+    || '';
+  assert.ok(expectedConceptId, 'first review question carries a concept id');
+
+  harness.dispatch('grammar-practise-missed');
+  grammar = harness.store.getState().subjectUi.grammar;
+
+  // `grammar-practise-missed` delegates to `grammar-focus-concept`, which
+  // saves the focus preference and starts a fresh focused round. The
+  // learner is no longer on the summary phase.
+  assert.notEqual(grammar.phase, 'summary');
+  assert.equal(grammar.prefs.focusConceptId, expectedConceptId);
+  assert.ok(['session', 'dashboard'].includes(grammar.phase), 'phase routed to focused practice');
+});
+
+test('U5: grammar-open-analytics renders GrammarAnalyticsScene via the phase router', () => {
+  const { harness } = u5RunRegularToSummary();
+  harness.dispatch('grammar-open-analytics');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'analytics');
+
+  const html = harness.render();
+  // The analytics surface lives inside `.grammar-surface--analytics` now
+  // (phase: 'analytics') — not behind `<details class="grammar-grown-up-view">`.
+  assert.match(html, /class="grammar-surface grammar-surface--analytics"/);
+  // Back affordance routes `grammar-close-analytics`.
+  assert.match(html, /data-action="grammar-close-analytics"/);
+  // Canonical analytics content is present.
+  assert.match(html, /Grammar analytics/);
+  assert.match(html, /Evidence snapshot/);
+});
+
+test('U5: grammar-open-analytics is a no-op mid-session so the active round is not wiped', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample();
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: { roundLength: 1, templateId: sample.id, seed: sample.sample.seed },
+  });
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'session');
+
+  harness.dispatch('grammar-open-analytics');
+  // Phase stays on session — `grammar-open-analytics` refuses to fire
+  // mid-session or mid-feedback.
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'session');
 });
