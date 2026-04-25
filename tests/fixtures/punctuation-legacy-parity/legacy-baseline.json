@@ -29,9 +29,10 @@
     {
       "id": "guided",
       "legacyLabel": "Guided learn",
-      "status": "planned",
+      "status": "ported",
       "ownerUnit": "U2",
-      "notes": "Needs teach boxes, worked examples, self-check prompts, and support-aware evidence."
+      "assertPresent": true,
+      "notes": "Worker-owned guided mode exposes safe teach boxes, worked examples, self-check prompts, and support-aware evidence."
     },
     {
       "id": "insert",
@@ -144,9 +145,9 @@
     {
       "id": "self_check_prompt",
       "legacyKey": "showSelfCheck",
-      "status": "planned",
+      "status": "ported",
       "ownerUnit": "U2",
-      "notes": "Guided mode may expose safe self-check prompts; GPS must suppress them."
+      "notes": "Guided mode exposes safe self-check prompts through the read model; GPS must suppress them."
     },
     {
       "id": "auto_generate_items",

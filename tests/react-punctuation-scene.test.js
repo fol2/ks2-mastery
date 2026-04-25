@@ -74,6 +74,66 @@ test('punctuation React surface keeps server-only fields out of active HTML', ()
   assert.equal(html.includes(PUNCTUATION_RELEASE_ID), false);
 });
 
+test('punctuation React surface renders guided setup controls and teach boxes', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'setup',
+    content: {
+      publishedScopeCopy: 'This Punctuation release covers all 14 KS2 punctuation skills.',
+      skills: [
+        { id: 'sentence_endings', name: 'Capital letters and sentence endings', clusterId: 'endmarks' },
+        { id: 'speech', name: 'Inverted commas and speech punctuation', clusterId: 'speech' },
+      ],
+    },
+  });
+
+  const setupHtml = harness.render();
+  assert.match(setupHtml, /Guided skill/);
+  assert.match(setupHtml, /Guided learn/);
+  assert.match(setupHtml, /data-punctuation-guided-start/);
+
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'guided-ui',
+      mode: 'guided',
+      length: 1,
+      answeredCount: 0,
+      guided: {
+        skillId: 'speech',
+        supportLevel: 2,
+        teachBox: {
+          name: 'Inverted commas and speech punctuation',
+          rule: 'Put spoken words inside inverted commas.',
+          workedExample: {
+            before: 'Mia said come here.',
+            after: 'Mia said, "Come here."',
+          },
+          contrastExample: {
+            before: 'Mia said "come here".',
+            after: 'Mia said, "Come here."',
+          },
+          selfCheckPrompt: 'Check the rule, compare the examples, then try the item without looking for the answer pattern.',
+        },
+      },
+      currentItem: {
+        id: 'sp_insert_question',
+        mode: 'insert',
+        inputKind: 'text',
+        prompt: 'Add the direct-speech punctuation.',
+        stem: 'Ella asked, can we start now?',
+      },
+    },
+  });
+  const activeHtml = harness.render();
+  assert.match(activeHtml, /Inverted commas and speech punctuation/);
+  assert.match(activeHtml, /Put spoken words inside inverted commas/);
+  assert.match(activeHtml, /Worked example/);
+  assert.match(activeHtml, /Common mistake/);
+  assert.doesNotMatch(activeHtml, /accepted|correctIndex|rubric|validator|generator|hiddenQueue/);
+});
+
 test('punctuation text input remounts when the current text item changes', async () => {
   const source = await readFile(
     new URL('../src/subjects/punctuation/components/PunctuationPracticeSurface.jsx', import.meta.url),

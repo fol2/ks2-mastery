@@ -152,6 +152,8 @@ export function normalisePunctuationData(value) {
               mode: typeof attempt.mode === 'string' ? attempt.mode : '',
               skillIds: normaliseStringArray(attempt.skillIds),
               rewardUnitId: typeof attempt.rewardUnitId === 'string' ? attempt.rewardUnitId : '',
+              sessionMode: typeof attempt.sessionMode === 'string' ? attempt.sessionMode : '',
+              supportLevel: normaliseNonNegativeInteger(attempt.supportLevel, 0),
               correct: attempt.correct === true,
               misconceptionTags: normaliseStringArray(attempt.misconceptionTags),
             }))
@@ -194,8 +196,43 @@ function normaliseItemForState(item) {
   return safe;
 }
 
+function guidedTeachBoxForSkill(skillId, supportLevel = 0) {
+  const skill = PUNCTUATION_CONTENT_MANIFEST.skills.find((entry) => entry.id === skillId && entry.published);
+  if (!skill) return null;
+  const level = normaliseNonNegativeInteger(supportLevel, 0);
+  if (level <= 0) return null;
+  const box = {
+    skillId: skill.id,
+    name: skill.name,
+    rule: skill.rule || '',
+    selfCheckPrompt: 'Check the rule, compare the examples, then try the item without looking for the answer pattern.',
+  };
+  if (level >= 2) {
+    box.workedExample = {
+      before: skill.workedBad || '',
+      after: skill.workedGood || '',
+    };
+    box.contrastExample = {
+      before: skill.contrastBad || '',
+      after: skill.contrastGood || '',
+    };
+  }
+  return box;
+}
+
+function guidedSessionReadModel(skillId, supportLevel) {
+  if (!skillId) return null;
+  return {
+    skillId,
+    supportLevel: normaliseNonNegativeInteger(supportLevel, 0),
+    teachBox: guidedTeachBoxForSkill(skillId, supportLevel),
+  };
+}
+
 function normaliseSession(value) {
   if (!isPlainObject(value)) return null;
+  const guidedSkillId = typeof value.guidedSkillId === 'string' ? value.guidedSkillId : null;
+  const guidedSupportLevel = normaliseNonNegativeInteger(value.guidedSupportLevel, 0);
   return {
     id: typeof value.id === 'string' && value.id ? value.id : '',
     releaseId: typeof value.releaseId === 'string' ? value.releaseId : PUNCTUATION_RELEASE_ID,
@@ -211,6 +248,11 @@ function normaliseSession(value) {
     recentItemIds: normaliseStringArray(value.recentItemIds).slice(-10),
     securedUnits: normaliseStringArray(value.securedUnits),
     misconceptionTags: normaliseStringArray(value.misconceptionTags),
+    guidedSkillId,
+    guidedSupportLevel,
+    guided: value.mode === 'guided'
+      ? (isPlainObject(value.guided) ? cloneSerialisable(value.guided) : guidedSessionReadModel(guidedSkillId, guidedSupportLevel))
+      : null,
     serverAuthority: value.serverAuthority === SERVER_AUTHORITY ? SERVER_AUTHORITY : null,
   };
 }
@@ -264,6 +306,27 @@ function rewardUnitForItem(indexes, item) {
 
 function facetKey(skillId, mode) {
   return `${skillId}::${mode}`;
+}
+
+function publishedSkill(indexes, skillId) {
+  const skill = indexes.skillById.get(skillId);
+  return skill?.published ? skill : null;
+}
+
+function chooseGuidedSkill(data, indexes, requestedSkillId, now = Date.now) {
+  if (publishedSkill(indexes, requestedSkillId)) return requestedSkillId;
+  const rows = indexes.publishedSkillIds.map((skillId, order) => {
+    const items = indexes.itemsBySkill.get(skillId) || [];
+    const snaps = items.map((item) => memorySnapshot(data.progress.items[item.id], now));
+    const hasWeak = snaps.some((snap) => snap.bucket === 'weak');
+    const hasDue = snaps.some((snap) => snap.bucket === 'due');
+    const mastery = snaps.length ? snaps.reduce((sum, snap) => sum + snap.mastery, 0) / snaps.length : 0;
+    const attempts = snaps.reduce((sum, snap) => sum + snap.attempts, 0);
+    const rank = hasWeak ? 0 : hasDue ? 1 : attempts ? 2 : 3;
+    return { skillId, rank, mastery, order };
+  });
+  rows.sort((a, b) => a.rank - b.rank || a.mastery - b.mastery || a.order - b.order);
+  return rows[0]?.skillId || indexes.publishedSkillIds[0] || null;
 }
 
 function sessionFocus(session = {}, indexes = PUNCTUATION_CONTENT_INDEXES) {
@@ -533,6 +596,12 @@ export function createPunctuationService({
     startSession(learnerId, options = {}) {
       const current = readData(repository, learnerId);
       const prefs = normalisePunctuationPrefs({ ...current.prefs, ...options });
+      const requestedGuidedSkillId = typeof options?.skillId === 'string'
+        ? options.skillId
+        : (typeof options?.guidedSkillId === 'string' ? options.guidedSkillId : null);
+      const guidedSkillId = prefs.mode === 'guided'
+        ? chooseGuidedSkill(current, indexes, requestedGuidedSkillId, clock)
+        : null;
       const session = {
         id: uid('punctuation-session', clock, random),
         releaseId: manifest.releaseId || PUNCTUATION_RELEASE_ID,
@@ -548,6 +617,9 @@ export function createPunctuationService({
         recentItemIds: [],
         securedUnits: [],
         misconceptionTags: [],
+        guidedSkillId,
+        guidedSupportLevel: guidedSkillId ? 2 : 0,
+        guided: guidedSkillId ? guidedSessionReadModel(guidedSkillId, 2) : null,
       };
       const state = nextActiveState({ learnerId, session, data: current, indexes, prefs, now: clock, random });
       syncPracticeSession(repository, learnerId, state, clock);
@@ -567,17 +639,24 @@ export function createPunctuationService({
         : { typed: normaliseAnswerText(rawAnswer) };
       const result = markPunctuationAnswer({ item, answer });
       const nowValue = clock();
+      const supportLevel = state.session.mode === 'guided'
+        ? normaliseNonNegativeInteger(state.session.guidedSupportLevel, 0)
+        : 0;
+      const guidedSupport = supportLevel > 0;
       const rewardUnit = rewardUnitForItem(indexes, item);
       const previousUnitSnap = rewardUnit
         ? memorySnapshot(data.progress.rewardUnits[rewardUnit.masteryKey] ? { attempts: 3, correct: 3, streak: 3, firstCorrectAt: 0, lastCorrectAt: 8 * 24 * 60 * 60 * 1000 } : data.progress.items[item.id], nowValue)
         : null;
 
-      data.progress.items[item.id] = updateMemoryState(data.progress.items[item.id], result.correct, nowValue);
+      data.progress.items[item.id] = updateMemoryState(data.progress.items[item.id], result.correct, nowValue, {
+        supported: guidedSupport,
+      });
       for (const skillId of item.skillIds || []) {
         data.progress.facets[facetKey(skillId, item.mode)] = updateMemoryState(
           data.progress.facets[facetKey(skillId, item.mode)],
           result.correct,
           nowValue,
+          { supported: guidedSupport },
         );
       }
       const nextItemSnap = memorySnapshot(data.progress.items[item.id], nowValue);
@@ -600,6 +679,8 @@ export function createPunctuationService({
         mode: item.mode,
         skillIds: item.skillIds || [],
         rewardUnitId: item.rewardUnitId || '',
+        sessionMode: state.session.mode || '',
+        supportLevel,
         correct: result.correct,
         misconceptionTags: result.misconceptionTags || [],
       });
@@ -614,7 +695,13 @@ export function createPunctuationService({
         updatedAt: nowValue,
         securedUnits: [...new Set([...(state.session.securedUnits || []), ...securedUnits])],
         misconceptionTags: [...new Set([...(state.session.misconceptionTags || []), ...(result.misconceptionTags || [])])],
+        guidedSupportLevel: state.session.mode === 'guided'
+          ? (result.correct ? Math.max(0, supportLevel - 1) : 2)
+          : 0,
       };
+      nextSession.guided = state.session.mode === 'guided'
+        ? guidedSessionReadModel(nextSession.guidedSkillId, nextSession.guidedSupportLevel)
+        : null;
       const feedback = {
         kind: result.correct ? 'success' : 'error',
         headline: result.correct ? 'Correct.' : 'Not quite.',

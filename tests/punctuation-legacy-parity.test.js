@@ -46,8 +46,12 @@ test('punctuation legacy parity records shipped item modes and open mode gaps', 
     assert.equal(row?.present, true, `${mode} should exist in production item modes`);
   }
 
+  const guided = report.rows.find((entry) => entry.section === 'sessionModes' && entry.id === 'guided');
+  assert.equal(guided?.status, 'ported');
+  assert.equal(guided?.ownerUnit, 'U2');
+  assert.equal(guided?.present, true);
+
   for (const [id, ownerUnit] of [
-    ['guided', 'U2'],
     ['weak', 'U3'],
     ['combine', 'U4'],
     ['paragraph', 'U5'],

@@ -4,7 +4,10 @@ import assert from 'node:assert/strict';
 import { createWorkerApp } from '../worker/src/app.js';
 import { createWorkerSubjectRuntime } from '../worker/src/subjects/runtime.js';
 import { buildPunctuationReadModel } from '../worker/src/subjects/punctuation/read-models.js';
-import { createPunctuationMasteryKey } from '../shared/punctuation/content.js';
+import {
+  createPunctuationContentIndexes,
+  createPunctuationMasteryKey,
+} from '../shared/punctuation/content.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -90,6 +93,13 @@ function payloadText(value) {
   return JSON.stringify(value);
 }
 
+function correctAnswerFor(readItem) {
+  const source = createPunctuationContentIndexes().itemById.get(readItem.id);
+  assert.ok(source, `Expected source item for ${readItem.id}`);
+  if (readItem.inputKind === 'choice') return { choiceIndex: source.correctIndex };
+  return { typed: source.model };
+}
+
 test('Worker runtime registers punctuation command handlers', async () => {
   const runtime = createWorkerSubjectRuntime({ punctuation: { random: () => 0 } });
   let runtimeReads = 0;
@@ -141,6 +151,56 @@ test('punctuation command route starts a session and persists through generic ru
     `).get();
     assert.equal(subjectRows.count, 1);
     assert.equal(sessionRows.count, 1);
+  } finally {
+    harness.close();
+  }
+});
+
+test('punctuation command route starts guided mode with a redacted teach box', async () => {
+  const harness = createHarness();
+  try {
+    const start = await harness.command('start-session', {
+      mode: 'guided',
+      skillId: 'speech',
+      roundLength: '1',
+    });
+
+    assert.equal(start.body.subjectReadModel.phase, 'active-item');
+    assert.equal(start.body.subjectReadModel.session.mode, 'guided');
+    assert.equal(start.body.subjectReadModel.session.guided.skillId, 'speech');
+    assert.equal(start.body.subjectReadModel.session.guided.supportLevel, 2);
+    assert.match(start.body.subjectReadModel.session.guided.teachBox.rule, /spoken words/i);
+    assert.ok(start.body.subjectReadModel.session.guided.teachBox.workedExample);
+    assert.ok(start.body.subjectReadModel.session.guided.teachBox.contrastExample);
+    assert.equal(start.body.subjectReadModel.session.currentItem.skillIds.includes('speech'), true);
+    assert.doesNotMatch(payloadText(start.body.subjectReadModel), /accepted|correctIndex|rubric|validator|hiddenQueue|generator/);
+  } finally {
+    harness.close();
+  }
+});
+
+test('punctuation guided mode fades visible support with the recorded support level', async () => {
+  const harness = createHarness();
+  try {
+    const start = await harness.command('start-session', {
+      mode: 'guided',
+      skillId: 'sentence_endings',
+      roundLength: '2',
+    });
+    const firstAnswer = correctAnswerFor(start.body.subjectReadModel.session.currentItem);
+    const first = await harness.command('submit-answer', firstAnswer);
+
+    assert.equal(first.body.subjectReadModel.session.guided.supportLevel, 1);
+    assert.match(first.body.subjectReadModel.session.guided.teachBox.rule, /sentence/i);
+    assert.equal(first.body.subjectReadModel.session.guided.teachBox.workedExample, undefined);
+    assert.equal(first.body.subjectReadModel.session.guided.teachBox.contrastExample, undefined);
+
+    const next = await harness.command('continue-session');
+    const secondAnswer = correctAnswerFor(next.body.subjectReadModel.session.currentItem);
+    const second = await harness.command('submit-answer', secondAnswer);
+
+    assert.equal(second.body.subjectReadModel.session.guided.supportLevel, 0);
+    assert.equal(second.body.subjectReadModel.session.guided.teachBox, null);
   } finally {
     harness.close();
   }

@@ -4,6 +4,7 @@ export const DAY_MS = 24 * 60 * 60 * 1000;
 export const MIN_MS = 60 * 1000;
 
 const SMART_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix', 'transfer']);
+const GUIDED_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix']);
 const CLUSTER_MODE = Object.freeze({
   endmarks: 'endmarks',
   apostrophe: 'apostrophe',
@@ -98,9 +99,10 @@ export function memorySnapshot(value, now = Date.now) {
   };
 }
 
-export function updateMemoryState(rawState, wasCorrect, now = Date.now) {
+export function updateMemoryState(rawState, wasCorrect, now = Date.now, options = {}) {
   const state = normaliseMemoryState(rawState);
   const nowValue = timestamp(now);
+  const supported = Boolean(options?.supported);
   state.attempts += 1;
   state.lastSeen = nowValue;
   state.lastCorrect = Boolean(wasCorrect);
@@ -109,14 +111,20 @@ export function updateMemoryState(rawState, wasCorrect, now = Date.now) {
 
   if (wasCorrect) {
     state.correct += 1;
-    state.streak += 1;
-    if (state.firstCorrectAt == null) state.firstCorrectAt = nowValue;
-    state.lastCorrectAt = nowValue;
-    if (state.attempts === 1) state.intervalDays = 1;
-    else if (state.streak === 2) state.intervalDays = Math.max(2, state.intervalDays + 2);
-    else state.intervalDays = Math.max(1, Math.round((state.intervalDays || 1) * state.ease));
-    state.ease = Math.max(1.25, Math.min(3.2, state.ease + 0.06));
-    state.dueAt = nowValue + state.intervalDays * DAY_MS;
+    if (supported) {
+      state.ease = Math.max(1.25, Math.min(3.2, state.ease + 0.02));
+      state.intervalDays = Math.max(1, state.intervalDays || 1);
+      state.dueAt = nowValue + DAY_MS;
+    } else {
+      state.streak += 1;
+      if (state.firstCorrectAt == null) state.firstCorrectAt = nowValue;
+      state.lastCorrectAt = nowValue;
+      if (state.attempts === 1) state.intervalDays = 1;
+      else if (state.streak === 2) state.intervalDays = Math.max(2, state.intervalDays + 2);
+      else state.intervalDays = Math.max(1, Math.round((state.intervalDays || 1) * state.ease));
+      state.ease = Math.max(1.25, Math.min(3.2, state.ease + 0.06));
+      state.dueAt = nowValue + state.intervalDays * DAY_MS;
+    }
   } else {
     state.incorrect += 1;
     state.lapses += 1;
@@ -134,29 +142,34 @@ function progressForItem(progress, itemId) {
 }
 
 function targetMode(session, prefs = {}) {
-  const mode = prefs.mode || 'smart';
+  const mode = session?.mode || prefs.mode || 'smart';
+  if (mode === 'guided') {
+    return GUIDED_MODE_CYCLE[(Number(session?.answeredCount) || 0) % GUIDED_MODE_CYCLE.length];
+  }
   if (mode === 'endmarks' || mode === 'apostrophe' || mode === 'speech' || mode === 'comma_flow' || mode === 'boundary' || mode === 'structure') {
     return SMART_MODE_CYCLE[(Number(session?.answeredCount) || 0) % SMART_MODE_CYCLE.length];
   }
   return SMART_MODE_CYCLE[(Number(session?.answeredCount) || 0) % SMART_MODE_CYCLE.length];
 }
 
-function targetCluster(prefs = {}) {
-  if (prefs.mode === 'endmarks') return 'endmarks';
-  if (prefs.mode === 'apostrophe') return 'apostrophe';
-  if (prefs.mode === 'speech') return 'speech';
-  if (prefs.mode === 'comma_flow') return 'comma_flow';
-  if (prefs.mode === 'boundary') return 'boundary';
-  if (prefs.mode === 'structure') return 'structure';
+function targetCluster(prefs = {}, session = {}) {
+  const mode = session?.mode || prefs.mode;
+  if (mode === 'endmarks') return 'endmarks';
+  if (mode === 'apostrophe') return 'apostrophe';
+  if (mode === 'speech') return 'speech';
+  if (mode === 'comma_flow') return 'comma_flow';
+  if (mode === 'boundary') return 'boundary';
+  if (mode === 'structure') return 'structure';
   return null;
 }
 
-function candidateItems(indexes, { mode, clusterId }) {
+function candidateItems(indexes, { mode, clusterId, skillId }) {
   const source = indexes.itemsByMode.get(mode) || [];
   return source.filter((item) => {
     const skill = indexes.skillById.get(item.skillIds?.[0]);
     if (!skill?.published) return false;
     if (clusterId && item.clusterId !== clusterId) return false;
+    if (skillId && !item.skillIds?.includes(skillId)) return false;
     return true;
   });
 }
@@ -188,9 +201,12 @@ export function selectPunctuationItem({
   candidateWindow = 32,
 } = {}) {
   const mode = targetMode(session, prefs);
-  const clusterId = targetCluster(prefs);
+  const clusterId = targetCluster(prefs, session);
+  const guidedSkillId = (session?.mode || prefs.mode) === 'guided'
+    ? (session?.guidedSkillId || prefs.guidedSkillId || null)
+    : null;
   const recent = new Set(Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : []);
-  const candidates = candidateItems(indexes, { mode, clusterId });
+  const candidates = candidateItems(indexes, { mode, clusterId, skillId: guidedSkillId });
   const windowed = candidates.slice(0, Math.max(1, candidateWindow));
   const rows = windowed.map((item) => {
     const snap = memorySnapshot(progressForItem(progress, item.id), now);
