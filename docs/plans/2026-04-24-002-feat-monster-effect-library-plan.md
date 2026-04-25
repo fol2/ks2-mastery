@@ -432,7 +432,7 @@ playCelebration(spec) -> store.pushCelebration(spec)
 
 ---
 
-- [ ] U7. **Split mastery from render: extract `mastery/` module**
+- [x] U7. **Split mastery from render: extract `mastery/` module**
 
 **Goal:** Move subject-facing mastery functions out of the visual library so `src/platform/game/render/` is purely visual. Subjects keep their public API surface unchanged.
 
