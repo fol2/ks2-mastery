@@ -261,7 +261,7 @@ function SummaryView({ ui, actions }) {
   const scene = bellstormSceneForPhase('summary');
   const gpsReview = Array.isArray(summary.gps?.reviewItems) ? summary.gps.reviewItems : [];
   return (
-    <section className="card border-top punctuation-surface" style={{ borderTopColor: '#2E8479' }}>
+    <section className="card border-top punctuation-surface" data-punctuation-summary style={{ borderTopColor: '#2E8479' }}>
       <div className="punctuation-strip">
         <img src={scene.src} srcSet={scene.srcSet} sizes="(max-width: 980px) 100vw, 960px" alt="" aria-hidden="true" />
         <div>

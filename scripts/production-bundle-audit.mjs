@@ -15,6 +15,7 @@ const DIRECT_DENIAL_PATHS = [
   '/shared/punctuation/service.js',
   '/worker/src/subjects/punctuation/commands.js',
   '/worker/src/subjects/punctuation/read-models.js',
+  '/src/subjects/punctuation/read-model.js',
   '/src/subjects/punctuation/service.js',
   '/src/subjects/punctuation/repository.js',
   '/src/platform/core/local-review-profile.js',
