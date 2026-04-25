@@ -63,6 +63,16 @@ await cp(
   { force: true },
 );
 
+// Render-effect CSS lives next to its effect modules so visual + behaviour
+// stay co-located. Mirror it into the public styles directory so the
+// existing single-link pattern in index.html continues to work without a
+// new module-aware loader.
+await cp(
+  path.join(rootDir, 'src', 'platform', 'game', 'render', 'effects', 'effects.css'),
+  path.join(tmpDir, 'styles', 'effects.css'),
+  { force: true },
+);
+
 await rm(outputDir, { recursive: true, force: true });
 await cp(tmpDir, outputDir, { recursive: true, force: true });
 await rm(tmpDir, { recursive: true, force: true });

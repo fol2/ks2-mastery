@@ -99,11 +99,22 @@ export function renderMonsterRenderFixture({
   reducedMotion = false,
   sizes,
   registrations = '',
+  effectModules = [],
 } = {}) {
   // `registrations` is a JS source snippet that runs before render so
   // tests can register inline test-only effects (with custom render /
   // applyTransform) without us having to invent a serialisation format
-  // for functions.
+  // for functions. `effectModules` is an array of { path, exports[] }
+  // entries — each named export from `path` is rebound and passed to
+  // registerEffect() after the registry reset.
+  const moduleImports = effectModules
+    .map((mod, idx) => `import * as __mod${idx} from ${JSON.stringify(absoluteSpecifier(mod.path))};`)
+    .join('\n    ');
+  const moduleRegistrations = effectModules
+    .map((mod, idx) => mod.exports
+      .map((name) => `registerEffect(__mod${idx}[${JSON.stringify(name)}]);`)
+      .join('\n    '))
+    .join('\n    ');
   return renderFixture(`
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
@@ -111,8 +122,10 @@ export function renderMonsterRenderFixture({
     import { defineEffect } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/define-effect.js'))};
     import { registerEffect, resetRegistry } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/registry.js'))};
     import { resetWarnOnce, setDevMode, __setWarnSink } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/composition.js'))};
+    ${moduleImports}
 
     resetRegistry();
+    ${moduleRegistrations}
     resetWarnOnce();
     setDevMode(true);
     const __warnings = [];

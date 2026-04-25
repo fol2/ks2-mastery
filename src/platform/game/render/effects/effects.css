@@ -1,0 +1,130 @@
+/*
+ * Overlay effect styles for the monster render library.
+ *
+ * Pipeline: this file lives next to the effect modules so visual + behaviour
+ * stay co-located. The browser loads it via the explicit <link> tag in
+ * index.html (mirrored into dist/ by `scripts/build-public.mjs`). The SSR
+ * tests assert on HTML output only, so animation visibility is not on the
+ * test path -- but the variables and class names below MUST stay in sync
+ * with the inline `style` blocks emitted by each effect's render().
+ *
+ * Each effect adds at most one DOM node and one keyframe animation.
+ * `is-simplified` swaps animations for a static fallback so reduced-motion
+ * preferences degrade gracefully.
+ */
+
+/* ============================================================
+ * shiny — sparkle overlay, accent-coloured
+ * ============================================================ */
+
+.fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.fx-shiny {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, calc(var(--fx-shiny-intensity, 0.6) * 0.55)) 0%, transparent 22%),
+    radial-gradient(circle at 70% 65%, rgba(255, 255, 255, calc(var(--fx-shiny-intensity, 0.6) * 0.45)) 0%, transparent 28%),
+    radial-gradient(circle at 50% 50%, var(--fx-shiny-color, currentColor) 0%, transparent 65%);
+  background-blend-mode: screen, screen, soft-light;
+  mix-blend-mode: screen;
+  opacity: calc(var(--fx-shiny-intensity, 0.6) * 0.8);
+  animation: fx-shiny-twinkle 3.4s ease-in-out infinite;
+}
+
+.fx-shiny.is-simplified {
+  animation: none;
+  opacity: calc(var(--fx-shiny-intensity, 0.6) * 0.55);
+}
+
+@keyframes fx-shiny-twinkle {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.04); filter: brightness(1.18); }
+}
+
+/* ============================================================
+ * mega-aura — radiating rays + slow rotation
+ * ============================================================ */
+
+.fx-mega-aura {
+  background:
+    conic-gradient(
+      from 0deg,
+      var(--fx-mega-color-a, currentColor) 0deg,
+      transparent 18deg,
+      var(--fx-mega-color-b, currentColor) 36deg,
+      transparent 54deg,
+      var(--fx-mega-color-a, currentColor) 72deg,
+      transparent 90deg,
+      var(--fx-mega-color-b, currentColor) 108deg,
+      transparent 126deg,
+      var(--fx-mega-color-a, currentColor) 144deg,
+      transparent 162deg,
+      var(--fx-mega-color-b, currentColor) 180deg,
+      transparent 198deg,
+      var(--fx-mega-color-a, currentColor) 216deg,
+      transparent 234deg,
+      var(--fx-mega-color-b, currentColor) 252deg,
+      transparent 270deg,
+      var(--fx-mega-color-a, currentColor) 288deg,
+      transparent 306deg,
+      var(--fx-mega-color-b, currentColor) 324deg,
+      transparent 342deg,
+      var(--fx-mega-color-a, currentColor) 360deg
+    );
+  mask-image: radial-gradient(circle, transparent 38%, black 65%, transparent 92%);
+  opacity: calc(var(--fx-mega-intensity, 0.8) * 0.5);
+  mix-blend-mode: screen;
+  animation: fx-mega-aura-spin 14s linear infinite;
+}
+
+.fx-mega-aura.is-simplified {
+  animation: none;
+  opacity: calc(var(--fx-mega-intensity, 0.8) * 0.35);
+}
+
+@keyframes fx-mega-aura-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+ * rare-glow — soft pulsing halo
+ * ============================================================ */
+
+.fx-rare-glow {
+  border-radius: 9999px;
+  box-shadow:
+    0 0 calc(20px * var(--fx-rare-intensity, 0.5)) calc(6px * var(--fx-rare-intensity, 0.5)) var(--fx-rare-color, currentColor),
+    0 0 calc(40px * var(--fx-rare-intensity, 0.5)) calc(12px * var(--fx-rare-intensity, 0.5)) var(--fx-rare-color, currentColor);
+  opacity: calc(var(--fx-rare-intensity, 0.5) * 0.7);
+  mix-blend-mode: screen;
+  animation: fx-rare-glow-pulse 4.2s ease-in-out infinite;
+}
+
+.fx-rare-glow.is-simplified {
+  animation: none;
+  opacity: calc(var(--fx-rare-intensity, 0.5) * 0.5);
+}
+
+@keyframes fx-rare-glow-pulse {
+  0%, 100% { transform: scale(1); opacity: calc(var(--fx-rare-intensity, 0.5) * 0.55); }
+  50% { transform: scale(1.05); opacity: calc(var(--fx-rare-intensity, 0.5) * 0.85); }
+}
+
+/* ============================================================
+ * Reduced-motion safety net — even if an effect forgets the
+ * `is-simplified` swap, all animations on `.fx*` are silenced
+ * when the OS reports reduce.
+ * ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-shiny,
+  .fx-mega-aura,
+  .fx-rare-glow {
+    animation: none !important;
+  }
+}

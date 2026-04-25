@@ -343,7 +343,7 @@ playCelebration(spec) -> store.pushCelebration(spec)
 
 ---
 
-- [ ] U5. **Add the first three new overlay effects: `shiny`, `mega-aura`, `rare-glow`**
+- [x] U5. **Add the first three new overlay effects: `shiny`, `mega-aura`, `rare-glow`**
 
 **Goal:** Concrete validation that the contract supports the brainstorm catalog. These effects can be mounted by callers but no caller in this plan triggers them automatically — they are exercised via tests and a dev playground story.
 

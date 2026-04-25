@@ -134,6 +134,10 @@ export function MonsterRender({
             params: effect.params,
             monster,
             context,
+            // composeEffects() flags entries with `simplified: true` when
+            // reducedMotion === 'simplify'. Effects use this to swap
+            // animations for static fallbacks.
+            simplified: effect.simplified === true,
           });
         } catch (_err) {
           warnOnce(
