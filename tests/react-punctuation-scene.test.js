@@ -43,6 +43,15 @@ test('punctuation React surface renders setup, active item, feedback and summary
   assert.match(setupHtml, /Bellstorm Coast/);
   assert.match(setupHtml, /Punctuation practice/);
   assert.match(setupHtml, /data-punctuation-start/);
+  // Phase 2 U8: all six cluster focus buttons must reach the setup surface.
+  assert.match(setupHtml, /data-punctuation-endmarks-start/);
+  assert.match(setupHtml, /data-punctuation-apostrophe-start/);
+  assert.match(setupHtml, />Endmarks focus</);
+  assert.match(setupHtml, />Apostrophe focus</);
+  assert.match(setupHtml, />Speech focus</);
+  assert.match(setupHtml, />Comma focus</);
+  assert.match(setupHtml, />Boundary focus</);
+  assert.match(setupHtml, />Structure focus</);
 
   startOneItemPunctuationSession(harness);
   const activeHtml = harness.render();

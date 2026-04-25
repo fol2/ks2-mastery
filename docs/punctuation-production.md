@@ -185,7 +185,7 @@ Pre-flip learner progress is preserved without a stored-state rewrite:
 
 ### Rollback
 
-Rollback to the pre-Phase-2 bundle is lossless for learners with `publishedTotal: 1` stored on Quoral — `punctuationStageFor(1, 14)` returns stage 1, which matches the pre-flip stage for the same secured set. Learners who earned multiple Speech-era Quoral stages (not possible under the pre-Phase-2 release because Quoral covered only `speech-core`) would see a demotion; confirm the cohort is empty via production D1 before deploying.
+Rollback to the pre-Phase-2 bundle is lossless for learners whose stored Quoral entry has `publishedTotal: 1` with one mastered key. The pre-flip bundle reads the stored `publishedTotal: 1` directly (pre-flip Quoral was a direct Speech monster with `masteredMax: 1`), so `punctuationStageFor(1, 1)` returns stage 4 — exactly the stage these learners saw pre-flip. Quoral only carried `speech-core` under the pre-Phase-2 roster, so no learner could have `publishedTotal > 1` from the old code path. Post-Phase-2, if U7's writer path has rewritten a learner's stored `publishedTotal` upward to 14 before rollback, the pre-flip bundle would read `punctuationStageFor(mastered, 14)` and display stage 1 instead of stage 4. That case is avoided in practice because U6's read-time override provides correct display without requiring a stored-value rewrite; confirm the cohort is empty via production D1 before deploying rollback.
 
 ### Domain events
 
