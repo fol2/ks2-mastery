@@ -7,13 +7,14 @@ import {
   registerWithEmail,
   startSocialLogin,
 } from './auth.js';
-import { requireDatabase } from './d1.js';
+import { requireDatabase, requireDatabaseWithCapacity } from './d1.js';
 import { errorResponse } from './errors.js';
 import { json, readForm, readJson, readJsonBounded } from './http.js';
 import {
   CapacityCollector,
   capacityRequest,
   generateRequestId,
+  measureUtf8Bytes,
   validateRequestId,
 } from './logger.js';
 import { createWorkerRepository } from './repository.js';
@@ -256,7 +257,11 @@ async function readResponseBytesAndBody(response) {
   // not capacity-relevant anyway).
   try {
     const text = await response.clone().text();
-    return { bytes: Buffer.byteLength(text, 'utf8'), text, contentType };
+    // U3 round 1 (P0 #02): use TextEncoder to measure UTF-8 bytes. Buffer
+    // is Node-only and not exposed in Workers without nodejs_compat —
+    // which we intentionally do NOT enable (auth.js, http.js, repository.js
+    // all use TextEncoder/TextDecoder for consistency).
+    return { bytes: measureUtf8Bytes(text), text, contentType };
   } catch {
     return { bytes: 0, text: '', contentType };
   }
@@ -304,7 +309,6 @@ export function createWorkerApp({
   return {
     async fetch(request, env) {
       const url = new URL(request.url);
-      const auth = createSessionAuthBoundary({ env });
 
       // U3: validate incoming x-ks2-request-id ingress; reject non-matching
       // values silently and generate fresh ids so client-log-forging and
@@ -322,6 +326,10 @@ export function createWorkerApp({
         method: request.method,
         startedAt: capacityStartedAt,
       });
+
+      // U3 round 1 (P1 #03): thread the capacity collector through the
+      // auth boundary so the production session-lookup query is counted.
+      const auth = createSessionAuthBoundary({ env, capacity });
 
       let response;
       let errorCaught = null;
@@ -374,6 +382,7 @@ export function createWorkerApp({
             env,
             request,
             now: now(),
+            capacity,
           });
           return withCookies(json(result.payload, result.status), result.cookies);
         }
@@ -398,6 +407,7 @@ export function createWorkerApp({
             request,
             now: now(),
             allowMissingOrigin: true,
+            capacity,
           });
           return redirect(`${url.origin}/?demo=1`, 302, result.cookies);
         }
@@ -499,7 +509,9 @@ export function createWorkerApp({
           // public-endpoint rate-limit call site, so this is deferred
           // to a dedicated follow-up rather than being lumped into the
           // ops-error hot path fix.
-          const db = requireDatabase(env);
+          // U3 round 1 (P1 #03): route ops-error rate-limit through the
+          // capacity proxy so the bucket write is counted.
+          const db = requireDatabaseWithCapacity(env, capacity);
           const rateLimit = await consumeRateLimit(db, {
             bucket: 'ops-error-capture-ip',
             identifier: resolveClientIp(request),
@@ -615,6 +627,7 @@ export function createWorkerApp({
             session,
             command,
             now: now(),
+            capacity,
           });
           const result = await repository.runSubjectCommand(
             session.accountId,
@@ -636,7 +649,9 @@ export function createWorkerApp({
 
         if (url.pathname === '/api/bootstrap' && request.method === 'GET') {
           if (session?.demo) {
-            await requireActiveDemoAccount(requireDatabase(env), session.accountId, now());
+            // U3 round 1 (P1 #03): use the capacity-wrapped DB so the
+            // demo-active lookup is counted.
+            await requireActiveDemoAccount(requireDatabaseWithCapacity(env, capacity), session.accountId, now());
           }
           const bundle = await repository.bootstrap(session.accountId, {
             publicReadModels: shouldUsePublicReadModels(request, env),
@@ -671,6 +686,7 @@ export function createWorkerApp({
             request,
             session,
             now: now(),
+            capacity,
           });
           const bundle = await repository.bootstrap(session.accountId, {
             publicReadModels: shouldUsePublicReadModels(request, env),
@@ -736,6 +752,7 @@ export function createWorkerApp({
             request,
             session,
             now: now(),
+            capacity,
           });
           const result = await repository.readParentRecentSessions(session.accountId, {
             learnerId: url.searchParams.get('learnerId') || null,
@@ -751,6 +768,7 @@ export function createWorkerApp({
             request,
             session,
             now: now(),
+            capacity,
           });
           const result = await repository.readParentActivity(session.accountId, {
             learnerId: url.searchParams.get('learnerId') || null,
@@ -766,6 +784,7 @@ export function createWorkerApp({
             request,
             session,
             now: now(),
+            capacity,
           });
           const learnerId = url.searchParams.get('learnerId') || null;
           const result = await repository.readParentHub(session.accountId, learnerId);
@@ -1089,7 +1108,7 @@ async function finaliseTelemetry({
         const publicJson = capacity.toPublicJSON();
         const rewritten = attachCapacityToJsonBody(text, publicJson);
         attachText = rewritten;
-        responseBytes = Buffer.byteLength(rewritten, 'utf8');
+        responseBytes = measureUtf8Bytes(rewritten);
       } else {
         attachText = text;
       }

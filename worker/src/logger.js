@@ -26,6 +26,57 @@ const STATEMENT_HARD_CAP = 50;
 const REQUEST_ID_PATTERN = /^ks2_req_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const MAX_REQUEST_ID_LENGTH = 48;
 
+// U3 round 1 (P0 #01): closed allowlist of signal tokens that may appear
+// on `meta.capacity.signals[]`. Any string outside the set is silently
+// rejected (match the existing "non-string ignored" pattern) and the
+// internal `signalsRejected` counter is incremented so misuse is visible
+// to tests and, if ever needed, ad-hoc logs — but NEVER to public JSON.
+const SIGNAL_ALLOWED_TOKENS = new Set([
+  'exceededCpu',
+  'd1Overloaded',
+  'd1DailyLimit',
+  'rateLimited',
+  'networkFailure',
+  'server5xx',
+  'bootstrapFallback',
+  'projectionFallback',
+  'derivedWriteSkipped',
+  'breakerTransition',
+]);
+
+// U3 round 1 (P1 #05): closed allowlist of `bootstrapCapacity` keys that
+// may be stamped onto the collector. Matches what `bootstrapBundle()` in
+// `worker/src/repository.js` can emit today: version, mode, limits,
+// learners, practiceSessions, eventLog. Unknown keys are dropped silently
+// and counted via `bootstrapCapacityDroppedKeys`.
+const BOOTSTRAP_CAPACITY_ALLOWED_KEYS = new Set([
+  'version',
+  'mode',
+  'limits',
+  'learners',
+  'practiceSessions',
+  'eventLog',
+]);
+
+// U3 round 1 (P1 #05): closed allowlist of `bootstrapMode` strings. Any
+// string outside the set resets the field to null (silent reject).
+const BOOTSTRAP_MODE_ALLOWED = new Set([
+  'fresh',
+  'rehydrated',
+  'miss-rehydrated',
+  'public-bounded',
+]);
+
+// U3 round 1 (P0 #02): measure UTF-8 byte length without referencing the
+// Node-only `Buffer` global. Cloudflare Workers does not expose `Buffer`
+// unless `nodejs_compat` is enabled, and the rest of the worker (auth.js,
+// http.js, repository.js) already uses `TextEncoder` for byte math — keep
+// the pattern consistent.
+export function measureUtf8Bytes(text) {
+  if (text == null) return 0;
+  return new TextEncoder().encode(String(text)).byteLength;
+}
+
 /**
  * Validate an incoming `x-ks2-request-id` header and return it only when it
  * matches the prefix + UUID v4 shape. Non-matching, missing, blank, or
@@ -102,6 +153,18 @@ export class CapacityCollector {
     this.derivedWriteSkipped = null;
     this.bootstrapMode = null;
     this.signals = [];
+
+    // U3 round 1 internal counters: test-visible, never published. These
+    // NEVER appear in `toPublicJSON()` or `toStructuredLog()`.
+    this.signalsRejected = 0;
+    this.bootstrapCapacityDroppedKeys = 0;
+
+    // U3 round 1 (P2 #06): once `setFinal()` stamps the final status,
+    // further mutations to `signals[]` are a no-op. This preserves the
+    // invariant that the structured log emitted via `capacityRequest()`
+    // matches the `meta.capacity` on the returned body; otherwise a late
+    // `addSignal()` race could land in the log but not the response.
+    this.finalised = false;
   }
 
   /**
@@ -139,27 +202,114 @@ export class CapacityCollector {
   /**
    * Append a short-lived, bounded signal string (e.g. a rate-limit or
    * backoff hint) to the collector. Signals are part of the public
-   * allowlist so they may appear in `meta.capacity`. Keep the payload
-   * terse and free of PII.
+   * allowlist so they may appear in `meta.capacity`. Tokens MUST belong
+   * to the closed `SIGNAL_ALLOWED_TOKENS` set — arbitrary strings (PII,
+   * raw error messages, learner names) are silently rejected and the
+   * internal `signalsRejected` counter increments so tests can catch
+   * misuse. Post-`setFinal()` calls are a no-op (P2 #06) to preserve
+   * log/response parity.
    *
    * @param {string} token
    */
   addSignal(token) {
+    if (this.finalised) return;
     if (typeof token !== 'string' || !token) return;
+    if (!SIGNAL_ALLOWED_TOKENS.has(token)) {
+      this.signalsRejected += 1;
+      return;
+    }
     if (this.signals.length >= 20) return; // Defence in depth: bounded.
     this.signals.push(token);
   }
 
   /**
+   * Validate and stamp the `bootstrapCapacity` structural meta. Non-object
+   * inputs and arrays are rejected outright. Unknown keys are dropped
+   * silently and counted via `bootstrapCapacityDroppedKeys`.
+   *
+   * @param {object|null} value
+   */
+  setBootstrapCapacity(value) {
+    if (value == null) {
+      this.bootstrapCapacity = null;
+      return;
+    }
+    if (typeof value !== 'object' || Array.isArray(value)) {
+      this.bootstrapCapacity = null;
+      return;
+    }
+    const filtered = {};
+    for (const [key, entryValue] of Object.entries(value)) {
+      if (BOOTSTRAP_CAPACITY_ALLOWED_KEYS.has(key)) {
+        filtered[key] = entryValue;
+      } else {
+        this.bootstrapCapacityDroppedKeys += 1;
+      }
+    }
+    this.bootstrapCapacity = filtered;
+  }
+
+  /**
+   * Boolean-only setter for `projectionFallback`. Non-booleans are
+   * silently ignored — retains the previous value (null on first call).
+   *
+   * @param {boolean|null} value
+   */
+  setProjectionFallback(value) {
+    if (value === null) { this.projectionFallback = null; return; }
+    if (typeof value === 'boolean') this.projectionFallback = value;
+  }
+
+  /**
+   * Boolean-only setter for `derivedWriteSkipped`.
+   *
+   * @param {boolean|null} value
+   */
+  setDerivedWriteSkipped(value) {
+    if (value === null) { this.derivedWriteSkipped = null; return; }
+    if (typeof value === 'boolean') this.derivedWriteSkipped = value;
+  }
+
+  /**
+   * Closed-set setter for `bootstrapMode`. Accepts only the documented
+   * enum values; everything else is ignored.
+   *
+   * @param {string|null} value
+   */
+  setBootstrapMode(value) {
+    if (value === null) { this.bootstrapMode = null; return; }
+    if (typeof value === 'string' && BOOTSTRAP_MODE_ALLOWED.has(value)) {
+      this.bootstrapMode = value;
+    }
+  }
+
+  /**
    * Final status and byte budget. Called once, just before log emit.
+   * Only fields the caller supplies are updated (P2 #08): absent keys do
+   * NOT zero-overwrite previously-set values. Sets `this.finalised` so
+   * later `addSignal()` calls are a no-op (P2 #06).
    *
    * @param {{wallMs?: number, responseBytes?: number, status?: number, phase?: string}} state
    */
-  setFinal({ wallMs = null, responseBytes = null, status = null, phase = null } = {}) {
-    if (Number.isFinite(Number(wallMs))) this.wallMs = Number(wallMs);
-    if (Number.isFinite(Number(responseBytes))) this.responseBytes = Number(responseBytes);
-    if (Number.isFinite(Number(status))) this.status = Number(status);
-    if (typeof phase === 'string' && phase) this.phase = phase;
+  setFinal(state = {}) {
+    if (state && typeof state === 'object') {
+      if (Object.prototype.hasOwnProperty.call(state, 'wallMs')) {
+        const n = Number(state.wallMs);
+        if (Number.isFinite(n)) this.wallMs = n;
+      }
+      if (Object.prototype.hasOwnProperty.call(state, 'responseBytes')) {
+        const n = Number(state.responseBytes);
+        if (Number.isFinite(n)) this.responseBytes = n;
+      }
+      if (Object.prototype.hasOwnProperty.call(state, 'status')) {
+        const n = Number(state.status);
+        if (Number.isFinite(n)) this.status = n;
+      }
+      if (Object.prototype.hasOwnProperty.call(state, 'phase')) {
+        if (typeof state.phase === 'string' && state.phase) this.phase = state.phase;
+      }
+    }
+    this.finalised = true;
   }
 
   /**
@@ -221,7 +371,11 @@ export class CapacityCollector {
  * Emit a single `[ks2-worker]` structured log line carrying the
  * `capacity.request` event. Sampling is applied here: when
  * `CAPACITY_LOG_SAMPLE_RATE` is below 1.0, non-error requests may be
- * suppressed. Requests with `status >= 500` are ALWAYS logged regardless.
+ * suppressed. Force-logged (never sampled) cases:
+ *   - `status >= 500` — all server errors land.
+ *   - `phase === 'pre-route'` — plan line 492 (auth-storm observability).
+ *     Pre-route 401s are force-logged so operators can see credential-
+ *     stuffing bursts at production sample 0.1.
  *
  * @param {CapacityCollector} collector
  * @param {{env?: object, random?: () => number, console?: Console}} [options]
@@ -232,7 +386,7 @@ export function capacityRequest(collector, { env = null, random = Math.random, c
   const payload = collector.toStructuredLog();
   if (!payload) return;
 
-  const alwaysLog = Number(payload.status) >= 500;
+  const alwaysLog = Number(payload.status) >= 500 || payload.phase === 'pre-route';
   if (!alwaysLog) {
     const rawRate = env?.CAPACITY_LOG_SAMPLE_RATE;
     const rate = normaliseSampleRate(rawRate);
