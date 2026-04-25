@@ -213,6 +213,17 @@ Current behaviour:
 - role changes are idempotent by request id and recorded in `mutation_receipts`
 - monster visual config mutations are admin-only, idempotent by request id, and recorded in `mutation_receipts`
 
+### Admin ops console routes
+
+The Admin / Operations surface also exposes a small additional slice for KPI, activity, error-log, and account ops metadata:
+
+- `GET /api/admin/ops/kpi` — dashboard KPI counters (admin + ops)
+- `GET /api/admin/ops/activity?limit=N` — recent mutation receipts across accounts (admin + ops)
+- `GET /api/admin/ops/error-events?status=X&limit=N` — ops error events with optional status filter (admin + ops)
+- `PUT /api/admin/accounts/:accountId/ops-metadata` — update account ops metadata (admin only)
+- `PUT /api/admin/ops/error-events/:eventId/status` — transition error event status (admin only)
+- `POST /api/ops/error-event` — public ingest for client runtime errors (rate-limited, no auth)
+
 ## Current access rules
 
 - every repository route except `/api/health` requires an authenticated adult session

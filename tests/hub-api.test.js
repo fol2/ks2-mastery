@@ -176,6 +176,220 @@ test('hub api client writes monster visual draft, publish, and restore routes', 
   });
 });
 
+test('hub api client reads admin ops KPI with auth headers threaded', async () => {
+  const calls = [];
+  const api = createHubApi({
+    baseUrl: 'https://repo.test',
+    fetch: async (url, init = {}) => {
+      calls.push({ url: String(url), init });
+      return jsonResponse({ ok: true, dashboardKpis: { accounts: { total: 1 } } });
+    },
+    authSession: createStaticHeaderRepositoryAuthSession({
+      cacheScopeKey: 'account:adult-admin',
+      headers: { 'x-test-auth': 'adult-admin' },
+    }),
+  });
+
+  await api.readAdminOpsKpi();
+
+  assert.equal(calls.length, 1);
+  const requestUrl = new URL(calls[0].url);
+  assert.equal(requestUrl.pathname, '/api/admin/ops/kpi');
+  assert.equal(calls[0].init.method, 'GET');
+  assert.equal(calls[0].init.headers['x-test-auth'], 'adult-admin');
+});
+
+test('hub api client reads admin ops activity stream with limit query param', async () => {
+  const calls = [];
+  const api = createHubApi({
+    baseUrl: '',
+    fetch: async (url, init = {}) => {
+      calls.push({ url: String(url), init });
+      return jsonResponse({ ok: true, opsActivityStream: { entries: [] } });
+    },
+    authSession: createStaticHeaderRepositoryAuthSession({
+      cacheScopeKey: 'account:adult-ops',
+      headers: { 'x-test-auth': 'adult-ops' },
+    }),
+  });
+
+  await api.readAdminOpsActivity({ limit: 25 });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, '/api/admin/ops/activity?limit=25');
+  assert.equal(calls[0].init.method, 'GET');
+  assert.equal(calls[0].init.headers['x-test-auth'], 'adult-ops');
+});
+
+test('hub api client reads admin ops accounts metadata via dedicated narrow GET (PR #188 H1)', async () => {
+  const calls = [];
+  const api = createHubApi({
+    baseUrl: '',
+    fetch: async (url, init = {}) => {
+      calls.push({ url: String(url), init });
+      return jsonResponse({ ok: true, accounts: [] });
+    },
+    authSession: createStaticHeaderRepositoryAuthSession({
+      cacheScopeKey: 'account:adult-admin',
+      headers: { 'x-test-auth': 'adult-admin' },
+    }),
+  });
+
+  await api.readAdminOpsAccountsMetadata();
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, '/api/admin/ops/accounts-metadata');
+  assert.equal(calls[0].init.method, 'GET');
+  assert.equal(calls[0].init.headers['x-test-auth'], 'adult-admin');
+});
+
+test('hub api client reads admin ops error events with status and limit query params', async () => {
+  const calls = [];
+  const api = createHubApi({
+    baseUrl: '',
+    fetch: async (url, init = {}) => {
+      calls.push({ url: String(url), init });
+      return jsonResponse({ ok: true, errorLogSummary: { entries: [] } });
+    },
+  });
+
+  await api.readAdminOpsErrorEvents({ status: 'open', limit: 10 });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, '/api/admin/ops/error-events?status=open&limit=10');
+  assert.equal(calls[0].init.method, 'GET');
+});
+
+test('hub api client writes account ops metadata PUT with JSON body', async () => {
+  const calls = [];
+  const api = createHubApi({
+    baseUrl: '',
+    fetch: async (url, init = {}) => {
+      calls.push({ url: String(url), init });
+      return jsonResponse({ ok: true });
+    },
+    authSession: createStaticHeaderRepositoryAuthSession({
+      cacheScopeKey: 'account:adult-admin',
+      headers: { 'x-test-auth': 'adult-admin' },
+    }),
+  });
+
+  await api.updateAccountOpsMetadata({
+    accountId: 'acc1',
+    patch: { opsStatus: 'suspended' },
+    mutation: { requestId: 'r1', correlationId: 'r1' },
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, '/api/admin/accounts/acc1/ops-metadata');
+  assert.equal(calls[0].init.method, 'PUT');
+  assert.equal(calls[0].init.headers['content-type'], 'application/json');
+  assert.equal(calls[0].init.headers['x-test-auth'], 'adult-admin');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    patch: { opsStatus: 'suspended' },
+    mutation: { requestId: 'r1', correlationId: 'r1' },
+  });
+});
+
+test('hub api client encodes account id segments that need escaping', async () => {
+  const calls = [];
+  const api = createHubApi({
+    baseUrl: '',
+    fetch: async (url, init = {}) => {
+      calls.push({ url: String(url), init });
+      return jsonResponse({ ok: true });
+    },
+  });
+
+  await api.updateAccountOpsMetadata({
+    accountId: 'acc/slash?raw',
+    patch: { planLabel: 'x' },
+    mutation: { requestId: 'r1' },
+  });
+
+  assert.equal(calls[0].url, '/api/admin/accounts/acc%2Fslash%3Fraw/ops-metadata');
+});
+
+test('hub api client writes ops error event status PUT with JSON body', async () => {
+  const calls = [];
+  const api = createHubApi({
+    baseUrl: '',
+    fetch: async (url, init = {}) => {
+      calls.push({ url: String(url), init });
+      return jsonResponse({ ok: true });
+    },
+  });
+
+  await api.updateOpsErrorEventStatus({
+    eventId: 'e1',
+    status: 'resolved',
+    mutation: { requestId: 'r2', correlationId: 'r2' },
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, '/api/admin/ops/error-events/e1/status');
+  assert.equal(calls[0].init.method, 'PUT');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    status: 'resolved',
+    mutation: { requestId: 'r2', correlationId: 'r2' },
+  });
+});
+
+test('postClientErrorEvent posts to the public endpoint without admin auth headers', async () => {
+  const calls = [];
+  const api = createHubApi({
+    baseUrl: '',
+    fetch: async (url, init = {}) => {
+      calls.push({ url: String(url), init });
+      return jsonResponse({ ok: true, eventId: 'evt-1', deduped: false });
+    },
+    authSession: createStaticHeaderRepositoryAuthSession({
+      cacheScopeKey: 'account:adult-admin',
+      headers: { 'x-test-auth': 'adult-admin', authorization: 'Bearer secret' },
+    }),
+  });
+
+  const result = await api.postClientErrorEvent({
+    errorKind: 'TypeError',
+    messageFirstLine: 'x undef',
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, '/api/ops/error-event');
+  assert.equal(calls[0].init.method, 'POST');
+  assert.equal(calls[0].init.headers['content-type'], 'application/json');
+  // Must NOT reuse the admin auth session headers on the public endpoint.
+  assert.equal(calls[0].init.headers['x-test-auth'], undefined);
+  assert.equal(calls[0].init.headers.authorization, undefined);
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    errorKind: 'TypeError',
+    messageFirstLine: 'x undef',
+  });
+});
+
+test('admin ops methods propagate structured error shape (status, code, payload)', async () => {
+  const api = createHubApi({
+    baseUrl: '',
+    fetch: async () => new Response(JSON.stringify({ ok: false, code: 'forbidden', message: 'no' }), {
+      status: 403,
+      headers: { 'content-type': 'application/json' },
+    }),
+  });
+
+  await assert.rejects(
+    async () => api.readAdminOpsKpi(),
+    (error) => {
+      assert.equal(error.status, 403);
+      assert.equal(error.code, 'forbidden');
+      assert.equal(error.payload.code, 'forbidden');
+      assert.equal(error.payload.message, 'no');
+      assert.equal(error.message, 'no');
+      return true;
+    },
+  );
+});
+
 // --- merged publish path: visual + effect together (U5) ---
 
 function clone(value) {

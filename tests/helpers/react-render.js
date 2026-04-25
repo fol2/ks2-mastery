@@ -496,7 +496,7 @@ export function renderMonsterEffectCatalogPanelFixture({ canManage = true } = {}
   `);
 }
 
-export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
+export function renderHubSurfaceFixture({ surface = 'parent', platformRole = 'admin' } = {}) {
   return renderFixture(`
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
@@ -580,9 +580,11 @@ export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
       selectedLearnerId: 'learner-a',
       permissions: { canViewParentHub: true, canMutateLearnerData: false, platformRoleLabel: 'Parent', membershipRoleLabel: 'Viewer', accessModeLabel: 'Read-only learner' },
     };
+    const adminNow = Date.UTC(2026, 3, 22, 12, 0);
+    const __platformRole = ${JSON.stringify(platformRole)};
     const adminModel = {
       account: { id: 'adult-a', repoRevision: 5, selectedLearnerId: 'learner-a' },
-      permissions: { canViewAdminHub: true, platformRole: 'admin', platformRoleLabel: 'Admin', canManageMonsterVisualConfig: true },
+      permissions: { canViewAdminHub: true, platformRole: __platformRole, platformRoleLabel: __platformRole === 'admin' ? 'Admin' : 'Ops', canManageMonsterVisualConfig: __platformRole === 'admin' },
       monsterVisualConfig: {
         permissions: { canManageMonsterVisualConfig: true, canViewMonsterVisualConfig: true },
         status: {
@@ -601,6 +603,36 @@ export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
       contentReleaseStatus: { publishedVersion: 3, publishedReleaseId: 'release-3', runtimeWordCount: 213, runtimeSentenceCount: 213, currentDraftId: 'draft', currentDraftVersion: 4, draftUpdatedAt: Date.UTC(2026, 3, 22, 12, 0) },
       importValidationStatus: { ok: true, errorCount: 0, warningCount: 1, source: 'seeded', importedAt: Date.UTC(2026, 3, 22, 12, 0), errors: [] },
       auditLogLookup: { available: true, note: 'Recent mutations', entries: [{ requestId: 'req-1', mutationKind: 'learners.write', scopeType: 'account', scopeId: 'adult-a', appliedAt: Date.UTC(2026, 3, 22, 12, 0) }] },
+      dashboardKpis: {
+        generatedAt: adminNow,
+        accounts: { total: 3 },
+        learners: { total: 2 },
+        demos: { active: 1 },
+        practiceSessions: { last7d: 12, last30d: 34 },
+        eventLog: { last7d: 100 },
+        mutationReceipts: { last7d: 20 },
+        errorEvents: { byStatus: { open: 1, investigating: 0, resolved: 2, ignored: 0 } },
+        accountOpsUpdates: { total: 5 },
+      },
+      opsActivityStream: {
+        generatedAt: adminNow,
+        entries: [
+          { requestId: 'req-ops-1', accountIdMasked: 'abc123', mutationKind: 'admin.account.role-set', scopeType: 'account', scopeId: 'xyz456', correlationId: 'cor-1', statusCode: 200, appliedAt: adminNow - 5000 },
+        ],
+      },
+      accountOpsMetadata: {
+        generatedAt: adminNow,
+        accounts: [
+          { accountId: 'adult-admin', email: 'ops-meta@example.com', displayName: 'Admin One', platformRole: 'admin', opsStatus: 'active', planLabel: 'internal', tags: ['staff'], internalNotes: 'demo notes', updatedAt: adminNow, updatedByAccountId: 'adult-admin' },
+        ],
+      },
+      errorLogSummary: {
+        generatedAt: adminNow,
+        totals: { open: 1, investigating: 0, resolved: 2, ignored: 0, all: 3 },
+        entries: [
+          { id: 'err-1', errorKind: 'TypeError', messageFirstLine: 'x is undefined', firstFrame: 'at foo (bar.js:12)', routeName: '/spelling', userAgent: 'Mozilla/5.0', accountIdMasked: '', occurrenceCount: 7, firstSeen: adminNow - 86400000, lastSeen: adminNow - 3600000, status: 'open' },
+        ],
+      },
       learnerSupport: {
         selectedLearnerId: 'learner-a',
         selectedDiagnostics: {

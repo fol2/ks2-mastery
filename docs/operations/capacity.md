@@ -164,6 +164,14 @@ Use evidence-tied language:
 
 Do not claim classroom or school readiness from Free-tier limits alone.
 
+### Admin ops console KPI endpoint
+
+`GET /api/admin/ops/kpi` runs 7 live `COUNT(*)` queries against `adult_accounts`, `learner_profiles`, `practice_sessions`, `event_log`, `mutation_receipts` plus 1 read against `admin_kpi_metrics`. Cost is bounded by the 3 new indexes added in migration `0010` (`idx_event_log_created`, `idx_practice_sessions_updated`, `idx_mutation_receipts_applied`); `EXPLAIN QUERY PLAN` verifies index usage.
+
+The endpoint is manual-refresh only (no polling). Current KS2 scale keeps per-refresh cost well under the D1 Free-tier 10ms CPU budget. Re-evaluate if `event_log` exceeds ~500K rows — at that point consider a pre-aggregated `admin_kpi_metrics`-style counter for the windowed totals in place of live COUNTs.
+
+**Telemetry (follow-up):** `capacity.admin_ops_kpi` timing + rows-read telemetry is not yet wired; adding it is a deferred operational hardening task.
+
 ## Evidence Verification Escape Hatches
 
 `scripts/verify-capacity-evidence.mjs` honours a narrow set of documented escape hatches. Each one is intended for a specific CI shape only and must be justified in the PR that introduces it.

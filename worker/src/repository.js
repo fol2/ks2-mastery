@@ -1636,6 +1636,1251 @@ async function readDemoOperationSummary(db, nowTs) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Admin ops console read helpers (plan: admin-ops-console-extensions, U2).
+// Every helper calls requireAdminHubAccess(account) before any DB query. Reads
+// of admin_kpi_metrics / account_ops_metadata / ops_error_events are wrapped
+// in isMissingTableError soft-fail per R19 so the admin hub loads cleanly on a
+// pre-migration-0010 deploy.
+// ---------------------------------------------------------------------------
+
+const OPS_ERROR_STATUSES = Object.freeze(['open', 'investigating', 'resolved', 'ignored']);
+const OPS_ACTIVITY_STREAM_DEFAULT_LIMIT = 50;
+const OPS_ACTIVITY_STREAM_MAX_LIMIT = 50;
+const OPS_ERROR_EVENTS_DEFAULT_LIMIT = 50;
+const OPS_ERROR_EVENTS_MAX_LIMIT = 50;
+const OPS_ACCOUNT_DIRECTORY_LIMIT = 200;
+const ACCOUNT_ID_MASK_LAST_N = 6;
+const LEARNER_SCOPE_ID_MASK_LAST_N = 8;
+const KPI_WINDOW_7D_MS = 7 * 24 * 60 * 60 * 1000;
+const KPI_WINDOW_30D_MS = 30 * 24 * 60 * 60 * 1000;
+const KPI_ERROR_STATUS_METRIC_PREFIX = 'ops_error_events.status.';
+const KPI_ACCOUNT_OPS_UPDATES_METRIC_KEY = 'account_ops_metadata.updates';
+
+function maskAccountIdLastN(accountId, lastN = ACCOUNT_ID_MASK_LAST_N) {
+  const value = typeof accountId === 'string' ? accountId : '';
+  if (!value) return '';
+  return value.length <= lastN ? value : value.slice(-lastN);
+}
+
+function maskMutationReceiptScopeId(scopeType, scopeId) {
+  const value = typeof scopeId === 'string' ? scopeId : '';
+  if (!value) return '';
+  // R26: learner-scoped receipts leak learner UUIDs to ops-role viewers when
+  // combined with the masked account id; truncate to last 8 chars.
+  if (scopeType === 'learner') {
+    return value.length <= LEARNER_SCOPE_ID_MASK_LAST_N
+      ? value
+      : value.slice(-LEARNER_SCOPE_ID_MASK_LAST_N);
+  }
+  // R26: account-scoped receipts already mask to last 6 chars (same rule as
+  // the directory display). Platform-scoped identifiers (e.g. ops-error-event:<id>)
+  // are stable plan-local identifiers, not PII, so pass through unchanged.
+  if (scopeType === 'account') {
+    return maskAccountIdLastN(value, ACCOUNT_ID_MASK_LAST_N);
+  }
+  return value;
+}
+
+async function assertAdminHubActor(db, actorAccountId) {
+  const actor = await first(
+    db,
+    'SELECT id, email, display_name, platform_role, repo_revision, account_type FROM adult_accounts WHERE id = ?',
+    [actorAccountId],
+  );
+  requireAdminHubAccess(actor);
+  return actor;
+}
+
+function emptyDashboardKpis(generatedAt) {
+  return {
+    generatedAt,
+    accounts: { total: 0 },
+    learners: { total: 0 },
+    demos: { active: 0 },
+    practiceSessions: { last7d: 0, last30d: 0 },
+    eventLog: { last7d: 0 },
+    mutationReceipts: { last7d: 0 },
+    errorEvents: {
+      byStatus: {
+        open: 0,
+        investigating: 0,
+        resolved: 0,
+        ignored: 0,
+      },
+    },
+    accountOpsUpdates: { total: 0 },
+  };
+}
+
+async function scalarCountSafe(db, sql, params, tableName) {
+  try {
+    const value = await scalar(db, sql, params);
+    return Math.max(0, Number(value) || 0);
+  } catch (error) {
+    if (tableName && isMissingTableError(error, tableName)) return 0;
+    throw error;
+  }
+}
+
+async function readDashboardKpis(db, { now, actorAccountId } = {}) {
+  await assertAdminHubActor(db, actorAccountId);
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const cutoff7d = nowTs - KPI_WINDOW_7D_MS;
+  const cutoff30d = nowTs - KPI_WINDOW_30D_MS;
+
+  const [
+    accountsTotal,
+    learnersTotal,
+    demosActive,
+    practice7d,
+    practice30d,
+    eventLog7d,
+    receipts7d,
+  ] = await Promise.all([
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM adult_accounts
+      WHERE COALESCE(account_type, 'real') <> 'demo'
+    `, []),
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM learner_profiles
+    `, []),
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM adult_accounts
+      WHERE account_type = 'demo'
+        AND demo_expires_at > ?
+    `, [nowTs]),
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM practice_sessions
+      WHERE updated_at > ?
+    `, [cutoff7d]),
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM practice_sessions
+      WHERE updated_at > ?
+    `, [cutoff30d]),
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM event_log
+      WHERE created_at > ?
+    `, [cutoff7d]),
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM mutation_receipts
+      WHERE applied_at > ?
+    `, [cutoff7d]),
+  ]);
+
+  const errorByStatus = {
+    open: 0,
+    investigating: 0,
+    resolved: 0,
+    ignored: 0,
+  };
+  let accountOpsUpdatesTotal = 0;
+
+  try {
+    const statusRows = await all(db, `
+      SELECT metric_key, metric_count
+      FROM admin_kpi_metrics
+      WHERE metric_key LIKE ?
+    `, [`${KPI_ERROR_STATUS_METRIC_PREFIX}%`]);
+    for (const row of statusRows) {
+      const key = typeof row?.metric_key === 'string' ? row.metric_key : '';
+      if (!key.startsWith(KPI_ERROR_STATUS_METRIC_PREFIX)) continue;
+      const status = key.slice(KPI_ERROR_STATUS_METRIC_PREFIX.length);
+      if (!OPS_ERROR_STATUSES.includes(status)) continue;
+      errorByStatus[status] = Math.max(0, Number(row?.metric_count) || 0);
+    }
+    const updatesRow = await first(db, `
+      SELECT metric_count
+      FROM admin_kpi_metrics
+      WHERE metric_key = ?
+    `, [KPI_ACCOUNT_OPS_UPDATES_METRIC_KEY]);
+    accountOpsUpdatesTotal = Math.max(0, Number(updatesRow?.metric_count) || 0);
+  } catch (error) {
+    if (!isMissingTableError(error, 'admin_kpi_metrics')) throw error;
+    // Soft-fail: counters stay at zero. The admin hub still loads before the
+    // migration lands in remote D1.
+  }
+
+  return {
+    generatedAt: nowTs,
+    accounts: { total: accountsTotal },
+    learners: { total: learnersTotal },
+    demos: { active: demosActive },
+    practiceSessions: { last7d: practice7d, last30d: practice30d },
+    eventLog: { last7d: eventLog7d },
+    mutationReceipts: { last7d: receipts7d },
+    errorEvents: { byStatus: errorByStatus },
+    accountOpsUpdates: { total: accountOpsUpdatesTotal },
+  };
+}
+
+async function listRecentMutationReceipts(db, { now, actorAccountId, limit = OPS_ACTIVITY_STREAM_DEFAULT_LIMIT } = {}) {
+  await assertAdminHubActor(db, actorAccountId);
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const safeLimit = Math.max(1, Math.min(OPS_ACTIVITY_STREAM_MAX_LIMIT, Number(limit) || OPS_ACTIVITY_STREAM_DEFAULT_LIMIT));
+  const rows = await all(db, `
+    SELECT account_id, request_id, scope_type, scope_id, mutation_kind, status_code, correlation_id, applied_at
+    FROM mutation_receipts
+    ORDER BY applied_at DESC, request_id DESC
+    LIMIT ?
+  `, [safeLimit]);
+  return {
+    generatedAt: nowTs,
+    entries: rows.map((row) => ({
+      requestId: typeof row?.request_id === 'string' ? row.request_id : '',
+      accountIdMasked: maskAccountIdLastN(row?.account_id),
+      mutationKind: typeof row?.mutation_kind === 'string' ? row.mutation_kind : '',
+      scopeType: typeof row?.scope_type === 'string' ? row.scope_type : '',
+      scopeId: maskMutationReceiptScopeId(row?.scope_type, row?.scope_id),
+      correlationId: typeof row?.correlation_id === 'string' ? row.correlation_id : '',
+      statusCode: Number(row?.status_code) || 0,
+      appliedAt: Number(row?.applied_at) || 0,
+    })),
+  };
+}
+
+function normaliseTagsJson(tagsJson) {
+  if (tagsJson == null || tagsJson === '') return [];
+  try {
+    const parsed = JSON.parse(tagsJson);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((tag) => (typeof tag === 'string' ? tag : ''))
+      .filter((tag) => tag.length > 0);
+  } catch {
+    return [];
+  }
+}
+
+async function readAccountOpsMetadataDirectory(db, { now, actorAccountId, actorPlatformRole = null } = {}) {
+  const actor = await assertAdminHubActor(db, actorAccountId);
+  const resolvedPlatformRole = normalisePlatformRole(actorPlatformRole || actor?.platform_role);
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  let rows = [];
+  try {
+    rows = await all(db, `
+      SELECT
+        a.id AS account_id,
+        a.email AS email,
+        a.display_name AS display_name,
+        a.platform_role AS platform_role,
+        COALESCE(om.ops_status, 'active') AS ops_status,
+        om.plan_label AS plan_label,
+        COALESCE(om.tags_json, '[]') AS tags_json,
+        om.internal_notes AS internal_notes,
+        COALESCE(om.updated_at, a.updated_at) AS updated_at,
+        om.updated_by_account_id AS updated_by_account_id
+      FROM adult_accounts a
+      LEFT JOIN account_ops_metadata om ON om.account_id = a.id
+      WHERE COALESCE(a.account_type, 'real') <> 'demo'
+      ORDER BY COALESCE(om.updated_at, a.updated_at) DESC, a.id ASC
+      LIMIT ?
+    `, [OPS_ACCOUNT_DIRECTORY_LIMIT]);
+  } catch (error) {
+    if (!isMissingTableError(error, 'account_ops_metadata')) throw error;
+    // Soft-fail: fall back to the core account list with defaulted metadata.
+    rows = await all(db, `
+      SELECT
+        id AS account_id,
+        email AS email,
+        display_name AS display_name,
+        platform_role AS platform_role,
+        'active' AS ops_status,
+        NULL AS plan_label,
+        '[]' AS tags_json,
+        NULL AS internal_notes,
+        updated_at AS updated_at,
+        NULL AS updated_by_account_id
+      FROM adult_accounts
+      WHERE COALESCE(account_type, 'real') <> 'demo'
+      ORDER BY updated_at DESC, id ASC
+      LIMIT ?
+    `, [OPS_ACCOUNT_DIRECTORY_LIMIT]);
+  }
+
+  // R25: internal_notes is admin-only; ops-role readers see null.
+  const includeNotes = resolvedPlatformRole === 'admin';
+
+  return {
+    generatedAt: nowTs,
+    accounts: rows.map((row) => ({
+      accountId: typeof row?.account_id === 'string' ? row.account_id : '',
+      email: typeof row?.email === 'string' ? row.email : null,
+      displayName: typeof row?.display_name === 'string' ? row.display_name : null,
+      platformRole: normalisePlatformRole(row?.platform_role),
+      opsStatus: typeof row?.ops_status === 'string' ? row.ops_status : 'active',
+      planLabel: typeof row?.plan_label === 'string' ? row.plan_label : null,
+      tags: normaliseTagsJson(row?.tags_json),
+      internalNotes: includeNotes
+        ? (typeof row?.internal_notes === 'string' ? row.internal_notes : null)
+        : null,
+      updatedAt: Number(row?.updated_at) || 0,
+      updatedByAccountId: typeof row?.updated_by_account_id === 'string' ? row.updated_by_account_id : null,
+    })),
+  };
+}
+
+function emptyOpsErrorEventSummary(generatedAt) {
+  return {
+    generatedAt,
+    totals: {
+      open: 0,
+      investigating: 0,
+      resolved: 0,
+      ignored: 0,
+      all: 0,
+    },
+    entries: [],
+  };
+}
+
+async function readOpsErrorEventSummary(db, { now, actorAccountId, status = null, limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT } = {}) {
+  await assertAdminHubActor(db, actorAccountId);
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const safeLimit = Math.max(1, Math.min(OPS_ERROR_EVENTS_MAX_LIMIT, Number(limit) || OPS_ERROR_EVENTS_DEFAULT_LIMIT));
+  const statusFilter = typeof status === 'string' && OPS_ERROR_STATUSES.includes(status) ? status : null;
+
+  try {
+    const totalsRows = await all(db, `
+      SELECT status, COUNT(*) AS value
+      FROM ops_error_events
+      GROUP BY status
+    `);
+    const totals = {
+      open: 0,
+      investigating: 0,
+      resolved: 0,
+      ignored: 0,
+      all: 0,
+    };
+    for (const row of totalsRows) {
+      const rawStatus = typeof row?.status === 'string' ? row.status : '';
+      const count = Math.max(0, Number(row?.value) || 0);
+      if (OPS_ERROR_STATUSES.includes(rawStatus)) {
+        totals[rawStatus] = count;
+      }
+      totals.all += count;
+    }
+
+    const entryRows = statusFilter
+      ? await all(db, `
+        SELECT id, error_kind, message_first_line, first_frame, route_name, user_agent,
+               account_id, occurrence_count, first_seen, last_seen, status
+        FROM ops_error_events
+        WHERE status = ?
+        ORDER BY last_seen DESC, id DESC
+        LIMIT ?
+      `, [statusFilter, safeLimit])
+      : await all(db, `
+        SELECT id, error_kind, message_first_line, first_frame, route_name, user_agent,
+               account_id, occurrence_count, first_seen, last_seen, status
+        FROM ops_error_events
+        ORDER BY last_seen DESC, id DESC
+        LIMIT ?
+      `, [safeLimit]);
+
+    return {
+      generatedAt: nowTs,
+      totals,
+      entries: entryRows.map((row) => ({
+        id: typeof row?.id === 'string' ? row.id : '',
+        errorKind: typeof row?.error_kind === 'string' ? row.error_kind : '',
+        messageFirstLine: typeof row?.message_first_line === 'string' ? row.message_first_line : '',
+        firstFrame: typeof row?.first_frame === 'string' ? row.first_frame : null,
+        routeName: typeof row?.route_name === 'string' ? row.route_name : null,
+        userAgent: typeof row?.user_agent === 'string' ? row.user_agent : null,
+        accountIdMasked: row?.account_id ? maskAccountIdLastN(row.account_id) : null,
+        occurrenceCount: Math.max(0, Number(row?.occurrence_count) || 0),
+        firstSeen: Number(row?.first_seen) || 0,
+        lastSeen: Number(row?.last_seen) || 0,
+        status: typeof row?.status === 'string' ? row.status : 'open',
+      })),
+    };
+  } catch (error) {
+    if (!isMissingTableError(error, 'ops_error_events')) throw error;
+    return emptyOpsErrorEventSummary(nowTs);
+  }
+}
+
+async function bumpAdminKpiMetric(db, key, nowTs, delta = 1) {
+  if (!(typeof key === 'string' && key)) return;
+  const resolvedDelta = Number.isFinite(Number(delta)) ? Number(delta) : 1;
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const seedCount = Math.max(0, resolvedDelta);
+  try {
+    await run(db, `
+      INSERT INTO admin_kpi_metrics (metric_key, metric_count, updated_at)
+      VALUES (?, ?, ?)
+      ON CONFLICT(metric_key) DO UPDATE SET
+        metric_count = MAX(0, admin_kpi_metrics.metric_count + ?),
+        updated_at = ?
+    `, [key, seedCount, ts, resolvedDelta, ts]);
+  } catch (error) {
+    if (isMissingTableError(error, 'admin_kpi_metrics')) return;
+    throw error;
+  }
+}
+
+function bumpAdminKpiMetricStatement(db, key, nowTs, delta = 1) {
+  const resolvedDelta = Number.isFinite(Number(delta)) ? Number(delta) : 1;
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const seedCount = Math.max(0, resolvedDelta);
+  return bindStatement(db, `
+    INSERT INTO admin_kpi_metrics (metric_key, metric_count, updated_at)
+    VALUES (?, ?, ?)
+    ON CONFLICT(metric_key) DO UPDATE SET
+      metric_count = MAX(0, admin_kpi_metrics.metric_count + ?),
+      updated_at = ?
+  `, [key, seedCount, ts, resolvedDelta, ts]);
+}
+
+// ---------------------------------------------------------------------------
+// U5: admin ops mutations.
+// Two admin-only mutations with batch-based atomicity (R21):
+//   1. updateAccountOpsMetadata  — UPSERT account_ops_metadata + receipt
+//      + bump admin_kpi_metrics.account_ops_metadata.updates counter.
+//   2. updateOpsErrorEventStatus — UPDATE ops_error_events.status + receipt
+//      + swap admin_kpi_metrics.ops_error_events.status.<old>/<new> counters.
+// withTransaction is NOT used as the atomicity primitive — it degrades to a
+// no-op under production D1 per worker/src/d1.js:60-81. Every helper composes
+// its writes into a single batch(db, [stmt1, stmt2, ...]) call which is the
+// only primitive the platform treats atomically.
+// ---------------------------------------------------------------------------
+
+const OPS_STATUS_VALUES = Object.freeze(['active', 'suspended', 'payment_hold']);
+const OPS_PLAN_LABEL_MAX_CHARS = 64;
+const OPS_TAGS_MAX_COUNT = 10;
+const OPS_TAG_MAX_CHARS = 32;
+const OPS_INTERNAL_NOTES_MAX_CHARS = 2000;
+const ACCOUNT_OPS_METADATA_MUTATION_KIND = 'admin.account_ops_metadata.update';
+const OPS_ERROR_EVENT_STATUS_MUTATION_KIND = 'admin.ops_error_event.status-set';
+
+function normaliseMutationEnvelope(rawMutation, { scopeType, scopeId } = {}) {
+  const raw = isPlainObject(rawMutation) ? rawMutation : {};
+  const requestId = typeof raw.requestId === 'string' && raw.requestId ? raw.requestId : null;
+  const correlationId = typeof raw.correlationId === 'string' && raw.correlationId
+    ? raw.correlationId
+    : requestId;
+  if (!requestId) {
+    throw new BadRequestError('Mutation requestId is required.', {
+      code: 'mutation_request_id_required',
+      scopeType: scopeType || null,
+      scopeId: scopeId || null,
+    });
+  }
+  return { requestId, correlationId };
+}
+
+function validateAccountOpsPatch(rawPatch) {
+  if (!isPlainObject(rawPatch)) {
+    throw new BadRequestError('Account ops metadata patch is required.', {
+      code: 'validation_failed',
+      field: 'patch',
+    });
+  }
+  const patch = {};
+  let provided = 0;
+
+  if (Object.prototype.hasOwnProperty.call(rawPatch, 'opsStatus')) {
+    const value = rawPatch.opsStatus;
+    if (typeof value !== 'string' || !OPS_STATUS_VALUES.includes(value)) {
+      throw new BadRequestError('Ops status is not a supported value.', {
+        code: 'validation_failed',
+        field: 'opsStatus',
+        allowed: OPS_STATUS_VALUES,
+      });
+    }
+    patch.opsStatus = value;
+    provided += 1;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(rawPatch, 'planLabel')) {
+    const value = rawPatch.planLabel;
+    if (value === null) {
+      patch.planLabel = null;
+    } else if (typeof value === 'string' && value.length <= OPS_PLAN_LABEL_MAX_CHARS) {
+      patch.planLabel = value;
+    } else {
+      throw new BadRequestError('Plan label must be a string of at most 64 characters.', {
+        code: 'validation_failed',
+        field: 'planLabel',
+        maxChars: OPS_PLAN_LABEL_MAX_CHARS,
+      });
+    }
+    provided += 1;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(rawPatch, 'tags')) {
+    const value = rawPatch.tags;
+    if (!Array.isArray(value) || value.length > OPS_TAGS_MAX_COUNT) {
+      throw new BadRequestError('Tags must be an array of at most 10 strings.', {
+        code: 'validation_failed',
+        field: 'tags',
+        maxCount: OPS_TAGS_MAX_COUNT,
+      });
+    }
+    const cleaned = [];
+    for (const tag of value) {
+      if (typeof tag !== 'string' || tag.length > OPS_TAG_MAX_CHARS) {
+        throw new BadRequestError('Each tag must be a string of at most 32 characters.', {
+          code: 'validation_failed',
+          field: 'tags',
+          maxChars: OPS_TAG_MAX_CHARS,
+        });
+      }
+      cleaned.push(tag);
+    }
+    patch.tags = cleaned;
+    provided += 1;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(rawPatch, 'internalNotes')) {
+    const value = rawPatch.internalNotes;
+    if (value === null) {
+      patch.internalNotes = null;
+    } else if (typeof value === 'string' && value.length <= OPS_INTERNAL_NOTES_MAX_CHARS) {
+      patch.internalNotes = value;
+    } else {
+      throw new BadRequestError('Internal notes must be a string of at most 2000 characters.', {
+        code: 'validation_failed',
+        field: 'internalNotes',
+        maxChars: OPS_INTERNAL_NOTES_MAX_CHARS,
+      });
+    }
+    provided += 1;
+  }
+
+  if (provided === 0) {
+    throw new BadRequestError('Account ops metadata patch must include at least one field.', {
+      code: 'validation_failed',
+      field: 'patch',
+    });
+  }
+  return patch;
+}
+
+async function loadAccountOpsMetadataRow(db, targetAccountId) {
+  return first(db, `
+    SELECT account_id, ops_status, plan_label, tags_json, internal_notes,
+           updated_at, updated_by_account_id
+    FROM account_ops_metadata
+    WHERE account_id = ?
+  `, [targetAccountId]);
+}
+
+function accountOpsMetadataRowToModel(row, targetAccountId, includeNotes) {
+  if (!row) {
+    return {
+      accountId: targetAccountId,
+      opsStatus: 'active',
+      planLabel: null,
+      tags: [],
+      internalNotes: includeNotes ? null : null,
+      updatedAt: 0,
+      updatedByAccountId: null,
+    };
+  }
+  return {
+    accountId: typeof row.account_id === 'string' ? row.account_id : targetAccountId,
+    opsStatus: typeof row.ops_status === 'string' ? row.ops_status : 'active',
+    planLabel: typeof row.plan_label === 'string' ? row.plan_label : null,
+    tags: normaliseTagsJson(row.tags_json),
+    internalNotes: includeNotes
+      ? (typeof row.internal_notes === 'string' ? row.internal_notes : null)
+      : null,
+    updatedAt: Number(row.updated_at) || 0,
+    updatedByAccountId: typeof row.updated_by_account_id === 'string' ? row.updated_by_account_id : null,
+  };
+}
+
+async function updateAccountOpsMetadata(db, {
+  actorAccountId,
+  targetAccountId,
+  patch: rawPatch,
+  mutation,
+  nowTs,
+} = {}) {
+  if (!(typeof targetAccountId === 'string' && targetAccountId)) {
+    throw new BadRequestError('Target account id is required.', {
+      code: 'target_account_required',
+    });
+  }
+  const actor = await assertAdminHubActor(db, actorAccountId);
+  requireAccountRoleManager(actor);
+
+  const patch = validateAccountOpsPatch(rawPatch);
+  const { requestId, correlationId } = normaliseMutationEnvelope(mutation, {
+    scopeType: 'account',
+    scopeId: targetAccountId,
+  });
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const requestHash = mutationPayloadHash(ACCOUNT_OPS_METADATA_MUTATION_KIND, {
+    targetAccountId,
+    patch,
+  });
+
+  // Idempotency preflight — replay-safe without relying on savepoints.
+  const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
+        kind: ACCOUNT_OPS_METADATA_MUTATION_KIND,
+        scopeType: 'account',
+        scopeId: targetAccountId,
+        requestId,
+        correlationId,
+      });
+    }
+    const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+    return {
+      ...storedReplay,
+      opsMetadataMutation: {
+        ...(storedReplay.opsMetadataMutation || {}),
+        requestId,
+        correlationId,
+        replayed: true,
+      },
+    };
+  }
+
+  const target = await first(db, 'SELECT id, account_type FROM adult_accounts WHERE id = ?', [targetAccountId]);
+  if (!target) {
+    throw new NotFoundError('Target account was not found.', {
+      code: 'target_account_not_found',
+      accountId: targetAccountId,
+    });
+  }
+  if (accountType(target) === 'demo') {
+    throw new ForbiddenError('Demo accounts cannot be managed from account ops metadata controls.', {
+      code: 'demo_account_ops_forbidden',
+      accountId: targetAccountId,
+    });
+  }
+
+  const existingRow = await loadAccountOpsMetadataRow(db, targetAccountId);
+  const existingTags = normaliseTagsJson(existingRow?.tags_json);
+  const mergedOpsStatus = Object.prototype.hasOwnProperty.call(patch, 'opsStatus')
+    ? patch.opsStatus
+    : (typeof existingRow?.ops_status === 'string' ? existingRow.ops_status : 'active');
+  const mergedPlanLabel = Object.prototype.hasOwnProperty.call(patch, 'planLabel')
+    ? patch.planLabel
+    : (typeof existingRow?.plan_label === 'string' ? existingRow.plan_label : null);
+  const mergedTags = Object.prototype.hasOwnProperty.call(patch, 'tags')
+    ? patch.tags
+    : existingTags;
+  const mergedInternalNotes = Object.prototype.hasOwnProperty.call(patch, 'internalNotes')
+    ? patch.internalNotes
+    : (typeof existingRow?.internal_notes === 'string' ? existingRow.internal_notes : null);
+  const mergedTagsJson = JSON.stringify(mergedTags);
+
+  const appliedRow = {
+    accountId: targetAccountId,
+    opsStatus: mergedOpsStatus,
+    planLabel: mergedPlanLabel,
+    tags: mergedTags,
+    internalNotes: mergedInternalNotes,
+    updatedAt: ts,
+    updatedByAccountId: actorAccountId,
+  };
+  const mutationMeta = {
+    policyVersion: MUTATION_POLICY_VERSION,
+    kind: ACCOUNT_OPS_METADATA_MUTATION_KIND,
+    scopeType: 'account',
+    scopeId: targetAccountId,
+    requestId,
+    correlationId,
+    appliedAt: ts,
+    replayed: false,
+  };
+  const response = {
+    accountOpsMetadataEntry: appliedRow,
+    opsMetadataMutation: mutationMeta,
+  };
+
+  // R21 batch atomicity: UPSERT + receipt + counter bump commit together.
+  await batch(db, [
+    bindStatement(db, `
+      INSERT INTO account_ops_metadata (
+        account_id,
+        ops_status,
+        plan_label,
+        tags_json,
+        internal_notes,
+        updated_at,
+        updated_by_account_id
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(account_id) DO UPDATE SET
+        ops_status = excluded.ops_status,
+        plan_label = excluded.plan_label,
+        tags_json = excluded.tags_json,
+        internal_notes = excluded.internal_notes,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, [
+      targetAccountId,
+      mergedOpsStatus,
+      mergedPlanLabel,
+      mergedTagsJson,
+      mergedInternalNotes,
+      ts,
+      actorAccountId,
+    ]),
+    storeMutationReceiptStatement(db, {
+      accountId: actorAccountId,
+      requestId,
+      scopeType: 'account',
+      scopeId: targetAccountId,
+      mutationKind: ACCOUNT_OPS_METADATA_MUTATION_KIND,
+      requestHash,
+      response,
+      correlationId,
+      appliedAt: ts,
+    }),
+    bumpAdminKpiMetricStatement(db, KPI_ACCOUNT_OPS_UPDATES_METRIC_KEY, ts, 1),
+  ]);
+
+  // Return the merged shape so callers (and optimistic clients) get the final row.
+  return response;
+}
+
+async function updateOpsErrorEventStatus(db, {
+  actorAccountId,
+  eventId,
+  status: nextStatus,
+  expectedPreviousStatus = null,
+  mutation,
+  nowTs,
+} = {}) {
+  if (!(typeof eventId === 'string' && eventId)) {
+    throw new BadRequestError('Error event id is required.', {
+      code: 'validation_failed',
+      field: 'eventId',
+    });
+  }
+  if (typeof nextStatus !== 'string' || !OPS_ERROR_STATUSES.includes(nextStatus)) {
+    throw new BadRequestError('Error event status is not a supported value.', {
+      code: 'validation_failed',
+      field: 'status',
+      allowed: OPS_ERROR_STATUSES,
+    });
+  }
+  // U5 review follow-up (Finding 2): optional client-driven CAS guard.
+  // When the client supplies `expectedPreviousStatus`, the handler uses that
+  // as the authoritative pre-image and rejects the transition with 409 if
+  // the on-disk row has moved off that value. Clients may omit this field
+  // for legacy compatibility; the handler then derives the pre-image from
+  // the DB row and still carries `AND status = ?` on the UPDATE as
+  // defence-in-depth against sub-millisecond races.
+  if (expectedPreviousStatus !== null && expectedPreviousStatus !== undefined) {
+    if (typeof expectedPreviousStatus !== 'string' || !OPS_ERROR_STATUSES.includes(expectedPreviousStatus)) {
+      throw new BadRequestError('Expected previous status is not a supported value.', {
+        code: 'validation_failed',
+        field: 'expectedPreviousStatus',
+        allowed: OPS_ERROR_STATUSES,
+      });
+    }
+  }
+  const actor = await assertAdminHubActor(db, actorAccountId);
+  requireAccountRoleManager(actor);
+
+  const { requestId, correlationId } = normaliseMutationEnvelope(mutation, {
+    scopeType: 'platform',
+    scopeId: `ops-error-event:${eventId}`,
+  });
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  // Include expectedPreviousStatus in the request hash so replays that target
+  // a different pre-image (e.g. client re-read after a 409 stale error) are
+  // treated as new payloads, not as idempotent duplicates.
+  const requestHash = mutationPayloadHash(OPS_ERROR_EVENT_STATUS_MUTATION_KIND, {
+    eventId,
+    status: nextStatus,
+    expectedPreviousStatus: typeof expectedPreviousStatus === 'string' ? expectedPreviousStatus : null,
+  });
+  const scopeId = `ops-error-event:${eventId}`;
+
+  // Idempotency preflight.
+  const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
+        kind: OPS_ERROR_EVENT_STATUS_MUTATION_KIND,
+        scopeType: 'platform',
+        scopeId,
+        requestId,
+        correlationId,
+      });
+    }
+    const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+    return {
+      ...storedReplay,
+      opsErrorEventStatusMutation: {
+        ...(storedReplay.opsErrorEventStatusMutation || {}),
+        requestId,
+        correlationId,
+        replayed: true,
+      },
+    };
+  }
+
+  const currentRow = await first(db, `
+    SELECT id, fingerprint, error_kind, message_first_line, first_frame, route_name,
+           user_agent, account_id, occurrence_count, first_seen, last_seen, status
+    FROM ops_error_events
+    WHERE id = ?
+  `, [eventId]);
+  if (!currentRow) {
+    throw new NotFoundError('Error event was not found.', {
+      code: 'not_found',
+      eventId,
+    });
+  }
+  const currentStatus = typeof currentRow.status === 'string' ? currentRow.status : 'open';
+  // U5 review follow-up (Finding 2): if the client supplied an
+  // expectedPreviousStatus, honour it as the authoritative CAS pre-image. A
+  // mismatch with the on-disk row means another admin raced ahead; reject
+  // immediately so the client re-reads before retrying. Counter bumps never
+  // fire in this path because the batch is not assembled.
+  if (typeof expectedPreviousStatus === 'string'
+    && expectedPreviousStatus !== currentStatus
+  ) {
+    throw new ConflictError('Error event status has changed since it was last read. Re-read and retry.', {
+      code: 'ops_error_event_status_stale',
+      retryable: true,
+      eventId,
+      expected: expectedPreviousStatus,
+      current: currentStatus,
+    });
+  }
+  const oldStatus = currentStatus;
+
+  const buildEntry = (statusValue, lastSeenOverride = null) => ({
+    id: typeof currentRow.id === 'string' ? currentRow.id : eventId,
+    errorKind: typeof currentRow.error_kind === 'string' ? currentRow.error_kind : '',
+    messageFirstLine: typeof currentRow.message_first_line === 'string' ? currentRow.message_first_line : '',
+    firstFrame: typeof currentRow.first_frame === 'string' ? currentRow.first_frame : null,
+    routeName: typeof currentRow.route_name === 'string' ? currentRow.route_name : null,
+    userAgent: typeof currentRow.user_agent === 'string' ? currentRow.user_agent : null,
+    accountIdMasked: currentRow.account_id ? maskAccountIdLastN(currentRow.account_id) : null,
+    occurrenceCount: Math.max(0, Number(currentRow.occurrence_count) || 0),
+    firstSeen: Number(currentRow.first_seen) || 0,
+    lastSeen: lastSeenOverride == null ? (Number(currentRow.last_seen) || 0) : lastSeenOverride,
+    status: statusValue,
+  });
+
+  if (oldStatus === nextStatus) {
+    // No-op transition — return current row without persisting a receipt or
+    // bumping counters. Keeps classroom admins from writing churn when
+    // double-clicking the active option.
+    return {
+      ok: true,
+      noop: true,
+      opsErrorEvent: buildEntry(oldStatus),
+      opsErrorEventStatusMutation: {
+        policyVersion: MUTATION_POLICY_VERSION,
+        kind: OPS_ERROR_EVENT_STATUS_MUTATION_KIND,
+        scopeType: 'platform',
+        scopeId,
+        requestId,
+        correlationId,
+        previousStatus: oldStatus,
+        status: nextStatus,
+        appliedAt: ts,
+        replayed: false,
+        noop: true,
+      },
+    };
+  }
+
+  // U5 review follow-up (Finding 3): drop `last_seen = ?` from the UPDATE.
+  // Status transitions must NOT rewrite the observation timestamp — the admin's
+  // resolution time is tracked via the mutation receipt's appliedAt column.
+  // Only U6's recordClientErrorEvent (the INSERT ON CONFLICT DO UPDATE path)
+  // bumps last_seen, preserving the `ORDER BY last_seen DESC` triage ordering.
+  const appliedEvent = buildEntry(nextStatus);
+  const mutationMeta = {
+    policyVersion: MUTATION_POLICY_VERSION,
+    kind: OPS_ERROR_EVENT_STATUS_MUTATION_KIND,
+    scopeType: 'platform',
+    scopeId,
+    requestId,
+    correlationId,
+    previousStatus: oldStatus,
+    status: nextStatus,
+    appliedAt: ts,
+    replayed: false,
+  };
+  const response = {
+    opsErrorEvent: appliedEvent,
+    opsErrorEventStatusMutation: mutationMeta,
+  };
+
+  // R21 batch atomicity: status UPDATE, receipt, and swap-counter bumps commit together.
+  // U5 review follow-up (Finding 2): UPDATE carries `AND status = ?` as a
+  // defence-in-depth CAS guard so that a sub-millisecond race between the
+  // line-2410 SELECT above and this batch still produces a no-op UPDATE
+  // (rather than overwriting another admin's write) — a post-batch verify
+  // SELECT catches that tail window and emits the same 409, accepting narrow
+  // counter-drift on the extreme-race path. The primary correctness check
+  // is the client-driven `expectedPreviousStatus` guard higher up the
+  // function, which rejects stale dispatches before the batch is composed.
+  await batch(db, [
+    bindStatement(db, `
+      UPDATE ops_error_events
+      SET status = ?
+      WHERE id = ? AND status = ?
+    `, [nextStatus, eventId, oldStatus]),
+    storeMutationReceiptStatement(db, {
+      accountId: actorAccountId,
+      requestId,
+      scopeType: 'platform',
+      scopeId,
+      mutationKind: OPS_ERROR_EVENT_STATUS_MUTATION_KIND,
+      requestHash,
+      response,
+      correlationId,
+      appliedAt: ts,
+    }),
+    bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}${oldStatus}`, ts, -1),
+    bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}${nextStatus}`, ts, 1),
+  ]);
+
+  // Finding 2: post-batch verify to catch the sub-millisecond race window
+  // between the line-2410 SELECT and the batch commit. If the status did not
+  // land at nextStatus, a racing admin's write took the row first — emit a
+  // 409 so the client re-reads and retries. Counter deltas from this call
+  // already committed in that tail window (accepted drift in a
+  // single-operator context; the expectedPreviousStatus guard higher up
+  // prevents the common case).
+  const postBatchStatusRow = await first(db, `
+    SELECT status FROM ops_error_events WHERE id = ?
+  `, [eventId]);
+  const postBatchStatus = typeof postBatchStatusRow?.status === 'string' ? postBatchStatusRow.status : null;
+  if (postBatchStatus !== nextStatus) {
+    throw new ConflictError('Error event status transition lost to a concurrent write. Re-read and retry.', {
+      code: 'ops_error_event_status_stale',
+      retryable: true,
+      eventId,
+      expected: nextStatus,
+      current: postBatchStatus,
+    });
+  }
+
+  return response;
+}
+
+// ---------------------------------------------------------------------------
+// U6: public client error capture ingest.
+//
+// recordClientErrorEvent persists a client-reported error into
+// ops_error_events with tuple-authoritative dedup (R24). The Worker route in
+// app.js owns the byte-cap, rate-limit, attribution, and same-regex server-
+// side redaction pass; this helper owns the dedup + fingerprint + counter
+// bump logic. Behaviour:
+//
+//   - Re-run expanded redaction (R12 + R28 + R29) defensively: never trust
+//     that the client hit the identical regex set.
+//   - Compute fingerprint = sha256(errorKind + '|' + messageFirstLine + '|'
+//     + firstFrame) server-side; the client-supplied value is ignored.
+//   - Preflight by (error_kind, message_first_line, first_frame) tuple (R24).
+//     If matched, UPDATE last_seen + increment occurrence_count. The
+//     `.status.open` counter is NOT bumped on a dedup hit.
+//   - On fresh insert, batch the INSERT (with ON CONFLICT(fingerprint)
+//     DO NOTHING to absorb theoretical fingerprint collisions) together with
+//     the `.status.open` counter bump.
+//   - Missing table (pre-migration deploy) returns `{unavailable: true}` so
+//     the route can respond 200 and the client keeps working.
+// ---------------------------------------------------------------------------
+
+const SERVER_SENSITIVE_REGEX = /(answer_raw|prompt|learner_name|email|password|session|cookie|token|spelling_word|punctuation_answer|grammar_concept|prompt_token|learner_id)/gi;
+// U6 review follow-up (Finding 1): broaden the all-caps match to cross
+// underscore boundaries. `\b` in JS regex treats `_` as a word character,
+// so the previous `\b[A-Z]{4,}\b` was a no-op on `PRINCIPAL_HANDLER`
+// (a single long `\w+` token). The lookaround pair matches a run of 4+
+// upper-case letters with any non-letter (including `_`) on either side,
+// so snake_case identifiers containing spelling words are scrubbed. The
+// 3-letter acronym exemption (URL, TTS, API) still holds.
+const SERVER_ALL_CAPS_REGEX = /(?<![A-Za-z])[A-Z]{4,}(?![A-Za-z])/g;
+const SERVER_UUID_SEGMENT_REGEX = /^[0-9a-f-]{32,36}$/i;
+const SERVER_LEARNER_ID_SEGMENT_REGEX = /^learner-[a-z0-9-]+$/i;
+const OPS_ERROR_MESSAGE_MAX_CHARS = 500;
+const OPS_ERROR_FIRST_FRAME_MAX_CHARS = 300;
+const OPS_ERROR_ROUTE_MAX_CHARS = 128;
+const OPS_ERROR_USER_AGENT_MAX_CHARS = 256;
+const OPS_ERROR_KIND_MAX_CHARS = 128;
+
+function scrubSensitiveServer(value) {
+  return String(value || '').replace(SERVER_SENSITIVE_REGEX, '[redacted]');
+}
+
+function scrubAllCapsServer(value) {
+  return String(value || '').replace(SERVER_ALL_CAPS_REGEX, '[word]');
+}
+
+function firstLineServer(value) {
+  return String(value || '').split('\n', 1)[0] || '';
+}
+
+function normaliseRouteNameServer(raw) {
+  const base = typeof raw === 'string' ? raw : '';
+  if (!base) return '';
+  const withoutQueryHash = base.split(/[?#]/, 1)[0] || '';
+  const capped = withoutQueryHash.slice(0, OPS_ERROR_ROUTE_MAX_CHARS);
+  const segments = capped.split('/').map((segment) => {
+    if (!segment) return segment;
+    if (SERVER_UUID_SEGMENT_REGEX.test(segment) || SERVER_LEARNER_ID_SEGMENT_REGEX.test(segment)) return '[id]';
+    return segment;
+  });
+  // U6 review follow-up (Finding 1): apply the all-caps scrub to the
+  // route name as well. KS2 spelling words routed as path segments
+  // (e.g. `/word/PRINCIPAL`) previously passed through unredacted.
+  // This mirrors the client-side fix so defence-in-depth stays intact.
+  return scrubAllCapsServer(scrubSensitiveServer(segments.join('/')));
+}
+
+function serverRedactClientEvent(raw) {
+  const source = isPlainObject(raw) ? raw : {};
+  const errorKindRaw = typeof source.errorKind === 'string' && source.errorKind
+    ? source.errorKind
+    : 'Error';
+  const errorKind = errorKindRaw.slice(0, OPS_ERROR_KIND_MAX_CHARS);
+
+  const messageRaw = typeof source.messageFirstLine === 'string'
+    ? source.messageFirstLine
+    : (typeof source.message === 'string' ? source.message : '');
+  const messageFirstLine = scrubAllCapsServer(
+    scrubSensitiveServer(firstLineServer(messageRaw).slice(0, OPS_ERROR_MESSAGE_MAX_CHARS)),
+  );
+
+  const firstFrameRaw = typeof source.firstFrame === 'string'
+    ? source.firstFrame
+    : (typeof source.stack === 'string' ? source.stack : '');
+  // U6 review follow-up (Finding 1): apply the all-caps scrub to the
+  // first-frame too. Stack frames like `at PRINCIPAL_HANDLER (x.js:1)`
+  // previously reached the DB unredacted because only messageFirstLine
+  // ran the 4+ letter all-caps rule. Parity with the client-side fix.
+  const firstFrame = scrubAllCapsServer(
+    scrubSensitiveServer(firstLineServer(firstFrameRaw).slice(0, OPS_ERROR_FIRST_FRAME_MAX_CHARS)),
+  );
+
+  const routeName = normaliseRouteNameServer(source.routeName);
+
+  const userAgentRaw = typeof source.userAgent === 'string' ? source.userAgent : '';
+  const userAgent = userAgentRaw.slice(0, OPS_ERROR_USER_AGENT_MAX_CHARS);
+
+  return {
+    errorKind,
+    messageFirstLine,
+    firstFrame,
+    routeName,
+    userAgent,
+  };
+}
+
+async function sha256HexOpsError(text) {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(String(text || ''));
+  if (!globalThis.crypto?.subtle?.digest) {
+    // Extremely unusual runtime — fall back to a deterministic low-quality hash
+    // so the fingerprint column never goes NULL. The (error_kind, message,
+    // frame) tuple is still the authoritative dedup key per R24, so this is a
+    // degradation only for the UNIQUE index cache.
+    let hash = 0;
+    for (let i = 0; i < bytes.length; i += 1) {
+      hash = ((hash << 5) - hash + bytes[i]) | 0;
+    }
+    return `legacy_${(hash >>> 0).toString(16)}`;
+  }
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+  const bytesOut = new Uint8Array(digest);
+  let hex = '';
+  for (let i = 0; i < bytesOut.length; i += 1) {
+    hex += bytesOut[i].toString(16).padStart(2, '0');
+  }
+  return hex;
+}
+
+function generateOpsErrorEventId(nowTs) {
+  const random = globalThis.crypto?.randomUUID?.();
+  if (typeof random === 'string' && random) return `ops-error-${random}`;
+  // Fallback for runtimes without crypto.randomUUID (older mocks).
+  const stamp = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const entropy = Math.random().toString(36).slice(2, 10);
+  return `ops-error-${stamp.toString(36)}-${entropy}`;
+}
+
+async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null, nowTs } = {}) {
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const redacted = serverRedactClientEvent(clientEvent);
+
+  // Basic shape validation — empty errorKind / messageFirstLine after redaction
+  // points to a malformed client call. Keep the error code stable for tests.
+  if (!redacted.errorKind || !redacted.messageFirstLine) {
+    throw new BadRequestError('Error event is missing errorKind or messageFirstLine.', {
+      code: 'validation_failed',
+      field: !redacted.errorKind ? 'errorKind' : 'messageFirstLine',
+    });
+  }
+
+  const fingerprintSource = `${redacted.errorKind}|${redacted.messageFirstLine}|${redacted.firstFrame || ''}`;
+  const fingerprint = await sha256HexOpsError(fingerprintSource);
+  const attributedAccountId = typeof sessionAccountId === 'string' && sessionAccountId
+    ? sessionAccountId
+    : null;
+
+  try {
+    // R24: dedup authoritative key is the (errorKind, messageFirstLine,
+    // firstFrame) tuple. Fingerprint is a UNIQUE index cache only.
+    const existing = await first(db, `
+      SELECT id, first_seen, occurrence_count, status
+      FROM ops_error_events
+      WHERE error_kind = ?
+        AND message_first_line = ?
+        AND first_frame = ?
+      ORDER BY first_seen ASC, id ASC
+      LIMIT 1
+    `, [redacted.errorKind, redacted.messageFirstLine, redacted.firstFrame || '']);
+
+    if (existing && typeof existing.id === 'string' && existing.id) {
+      // Dedup hit — UPDATE last_seen and bump occurrence_count. Do NOT
+      // touch admin_kpi_metrics.ops_error_events.status.open (R22): that
+      // counter tracks fresh inserts, not replay-induced bumps.
+      await run(db, `
+        UPDATE ops_error_events
+        SET last_seen = ?,
+            occurrence_count = occurrence_count + 1
+        WHERE id = ?
+      `, [ts, existing.id]);
+      return {
+        eventId: existing.id,
+        deduped: true,
+        unavailable: false,
+      };
+    }
+
+    // Fresh insert path. U6 review follow-up (Finding 5): split the INSERT
+    // from the `.status.open` counter bump so that a concurrent Worker
+    // invocation that lost the INSERT race does NOT also fire the counter
+    // bump. The previous implementation batched the INSERT and the bump
+    // together; when two invocations both reached this branch before either
+    // committed, the first INSERT succeeded + bumped, and the second's
+    // `INSERT ... ON CONFLICT DO NOTHING` silently no-opped — but its
+    // batched counter-bump statement fired unconditionally, drifting the
+    // counter +2 for a single row.
+    //
+    // Trade-off: R21 (single-batch atomicity) is relaxed for this specific
+    // insert. A rare tail window exists between the INSERT commit and the
+    // counter bump where a crash could leave the row without the
+    // .status.open increment. That one-missing-bump drift is strictly
+    // better than one-extra-bump-per-race drift, which compounds under
+    // sustained concurrent reports of the same error. The dedup UPDATE
+    // path (the common case) is untouched and still commits atomically.
+    const eventId = generateOpsErrorEventId(ts);
+    const insertResult = await run(db, `
+      INSERT INTO ops_error_events (
+        id,
+        fingerprint,
+        error_kind,
+        message_first_line,
+        first_frame,
+        route_name,
+        user_agent,
+        account_id,
+        first_seen,
+        last_seen,
+        occurrence_count,
+        status
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'open')
+      ON CONFLICT(fingerprint) DO NOTHING
+    `, [
+      eventId,
+      fingerprint,
+      redacted.errorKind,
+      redacted.messageFirstLine,
+      redacted.firstFrame || '',
+      redacted.routeName || '',
+      redacted.userAgent || '',
+      attributedAccountId,
+      ts,
+      ts,
+    ]);
+    const insertChanges = Number(insertResult?.meta?.changes) || 0;
+
+    if (insertChanges === 1) {
+      // Row is genuinely fresh — bump the status.open counter. Running
+      // the prepared statement directly (rather than wrapping in a new
+      // batch) keeps the non-atomic window between INSERT and bump as
+      // small as possible.
+      await bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}open`, ts, 1).run();
+      return {
+        eventId,
+        deduped: false,
+        unavailable: false,
+      };
+    }
+
+    // Lost the race to a concurrent insert of the same fingerprint (or a
+    // pathological SHA-256 collision). Fall through to the dedup UPDATE
+    // path on the winning row — bump occurrence_count + last_seen, skip
+    // the counter bump. Preserves R24 tuple-authoritative dedup semantics
+    // because the winning row has the identical (errorKind, messageFirstLine,
+    // firstFrame) tuple (by construction: the fingerprint derives from the
+    // same three fields, and the ON CONFLICT key is the fingerprint UNIQUE
+    // index).
+    const winner = await first(db, `
+      SELECT id, first_seen, occurrence_count, status
+      FROM ops_error_events
+      WHERE error_kind = ?
+        AND message_first_line = ?
+        AND first_frame = ?
+      ORDER BY first_seen ASC, id ASC
+      LIMIT 1
+    `, [redacted.errorKind, redacted.messageFirstLine, redacted.firstFrame || '']);
+
+    if (winner && typeof winner.id === 'string' && winner.id) {
+      await run(db, `
+        UPDATE ops_error_events
+        SET last_seen = ?,
+            occurrence_count = occurrence_count + 1
+        WHERE id = ?
+      `, [ts, winner.id]);
+      return {
+        eventId: winner.id,
+        deduped: true,
+        unavailable: false,
+      };
+    }
+
+    // Extreme edge case: insert no-opped but no row satisfies the tuple
+    // lookup (possible only under SHA-256 fingerprint collision with a
+    // different tuple). Surface the degradation so the route returns 200
+    // without drift; admins lose visibility of this report, which is the
+    // safer failure mode than double-counting.
+    return {
+      eventId: null,
+      deduped: false,
+      unavailable: false,
+    };
+  } catch (error) {
+    if (isMissingTableError(error, 'ops_error_events') || isMissingTableError(error, 'admin_kpi_metrics')) {
+      return {
+        eventId: null,
+        deduped: false,
+        unavailable: true,
+      };
+    }
+    throw error;
+  }
+}
+
 // The merged config envelope today lives at the top level of `draft_json`
 // (and `published_json` / `versions.config_json`): visual fields stay at
 // the root, the effect sub-document hangs off `effect`. Existing visual-only
@@ -4100,8 +5345,25 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         requestId,
         limit: auditLimit,
       });
-      const demoOperations = await readDemoOperationSummary(db, nowFactory());
-      const monsterVisualConfig = await readMonsterVisualConfigState(db, nowFactory());
+      const nowTs = nowFactory();
+      const demoOperations = await readDemoOperationSummary(db, nowTs);
+      const monsterVisualConfig = await readMonsterVisualConfigState(db, nowTs);
+      const dashboardKpis = await readDashboardKpis(db, { now: nowTs, actorAccountId: accountId });
+      const opsActivityStream = await listRecentMutationReceipts(db, {
+        now: nowTs,
+        actorAccountId: accountId,
+        limit: OPS_ACTIVITY_STREAM_DEFAULT_LIMIT,
+      });
+      const accountOpsMetadata = await readAccountOpsMetadataDirectory(db, {
+        now: nowTs,
+        actorAccountId: accountId,
+        actorPlatformRole: accountPlatformRole(account),
+      });
+      const errorLogSummary = await readOpsErrorEventSummary(db, {
+        now: nowTs,
+        actorAccountId: accountId,
+        limit: OPS_ERROR_EVENTS_DEFAULT_LIMIT,
+      });
       const model = buildAdminHubReadModel({
         account: {
           id: accountId,
@@ -4130,8 +5392,51 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         now: nowFactory,
       });
       return {
-        adminHub: model,
+        adminHub: {
+          ...model,
+          dashboardKpis,
+          opsActivityStream,
+          accountOpsMetadata,
+          errorLogSummary,
+        },
       };
+    },
+    async readAdminOpsKpi(accountId) {
+      return readDashboardKpis(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
+      });
+    },
+    async listAdminOpsActivity(accountId, { limit = OPS_ACTIVITY_STREAM_DEFAULT_LIMIT } = {}) {
+      return listRecentMutationReceipts(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
+        limit,
+      });
+    },
+    async readAdminOpsErrorEvents(accountId, { status = null, limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT } = {}) {
+      return readOpsErrorEventSummary(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
+        status,
+        limit,
+      });
+    },
+    // PR #188 H1: dedicated narrow read that mirrors the other three admin
+    // ops GETs. Calls into the shared `readAccountOpsMetadataDirectory`
+    // helper so R25 (ops-role internalNotes redaction) is enforced identically
+    // whether the caller is the full hub bundle or the narrow per-panel route.
+    async readAdminOpsAccountsMetadata(accountId) {
+      const actor = await assertAdminHubActor(db, accountId);
+      const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
+      return readAccountOpsMetadataDirectory(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
+        actorPlatformRole,
+      });
+    },
+    async bumpAdminKpiMetric(key, delta = 1) {
+      return bumpAdminKpiMetric(db, key, nowFactory(), delta);
     },
     async listAdminAccounts(accountId) {
       return listAccountDirectory(db, accountId);
@@ -4143,6 +5448,37 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         platformRole,
         requestId,
         correlationId: correlationId || requestId,
+        nowTs: nowFactory(),
+      });
+    },
+    async updateAccountOpsMetadata(accountId, { targetAccountId, patch, mutation = {} } = {}) {
+      return updateAccountOpsMetadata(db, {
+        actorAccountId: accountId,
+        targetAccountId,
+        patch,
+        mutation,
+        nowTs: nowFactory(),
+      });
+    },
+    async updateOpsErrorEventStatus(accountId, {
+      eventId,
+      status,
+      expectedPreviousStatus = null,
+      mutation = {},
+    } = {}) {
+      return updateOpsErrorEventStatus(db, {
+        actorAccountId: accountId,
+        eventId,
+        status,
+        expectedPreviousStatus,
+        mutation,
+        nowTs: nowFactory(),
+      });
+    },
+    async recordClientErrorEvent({ clientEvent, sessionAccountId = null } = {}) {
+      return recordClientErrorEvent(db, {
+        clientEvent,
+        sessionAccountId,
         nowTs: nowFactory(),
       });
     },

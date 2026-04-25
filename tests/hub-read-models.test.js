@@ -2,7 +2,19 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { buildParentHubReadModel } from '../src/platform/hubs/parent-read-model.js';
-import { buildAdminHubReadModel } from '../src/platform/hubs/admin-read-model.js';
+import {
+  buildAdminHubReadModel,
+  normaliseAccountOpsMetadataDirectory,
+  normaliseDashboardKpis,
+  normaliseErrorEventSummary,
+  normaliseOpsActivityStream,
+} from '../src/platform/hubs/admin-read-model.js';
+import {
+  applyAdminHubAccountOpsMetadataPatch,
+  applyAdminHubDashboardKpisPatch,
+  applyAdminHubErrorLogSummaryPatch,
+  applyAdminHubOpsActivityPatch,
+} from '../src/platform/hubs/admin-panel-patches.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
 import { createPunctuationMasteryKey, PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
 import { createMemoryState, updateMemoryState } from '../shared/punctuation/scheduler.js';
@@ -676,4 +688,416 @@ test('admin hub can link to parent hub when the selected learner is readable', (
   assert.equal(model.permissions.canViewParentHub, true);
   assert.equal(model.permissions.canManageAccountRoles, true);
   assert.equal(model.learnerSupport.entryPoints.some((entry) => entry.action === 'open-parent-hub'), true);
+});
+
+test('normaliseDashboardKpis keeps all numeric counters with a full payload', () => {
+  const kpis = normaliseDashboardKpis({
+    generatedAt: 1_777_000_000_000,
+    accounts: { total: 42 },
+    learners: { total: 17 },
+    demos: { active: 5 },
+    practiceSessions: { last7d: 12, last30d: 44 },
+    eventLog: { last7d: 9 },
+    mutationReceipts: { last7d: 3 },
+    errorEvents: { byStatus: { open: 2, investigating: 1, resolved: 4, ignored: 0 } },
+    accountOpsUpdates: { total: 6 },
+  });
+
+  assert.equal(kpis.generatedAt, 1_777_000_000_000);
+  assert.equal(kpis.accounts.total, 42);
+  assert.equal(kpis.learners.total, 17);
+  assert.equal(kpis.demos.active, 5);
+  assert.equal(kpis.practiceSessions.last7d, 12);
+  assert.equal(kpis.practiceSessions.last30d, 44);
+  assert.equal(kpis.eventLog.last7d, 9);
+  assert.equal(kpis.mutationReceipts.last7d, 3);
+  assert.equal(kpis.errorEvents.byStatus.open, 2);
+  assert.equal(kpis.errorEvents.byStatus.investigating, 1);
+  assert.equal(kpis.errorEvents.byStatus.resolved, 4);
+  assert.equal(kpis.errorEvents.byStatus.ignored, 0);
+  assert.equal(kpis.accountOpsUpdates.total, 6);
+});
+
+test('normaliseDashboardKpis returns a fully zeroed shape for null input', () => {
+  const kpis = normaliseDashboardKpis(null);
+  assert.equal(kpis.generatedAt, 0);
+  assert.equal(kpis.accounts.total, 0);
+  assert.equal(kpis.learners.total, 0);
+  assert.equal(kpis.demos.active, 0);
+  assert.equal(kpis.practiceSessions.last7d, 0);
+  assert.equal(kpis.practiceSessions.last30d, 0);
+  assert.equal(kpis.eventLog.last7d, 0);
+  assert.equal(kpis.mutationReceipts.last7d, 0);
+  assert.equal(kpis.errorEvents.byStatus.open, 0);
+  assert.equal(kpis.errorEvents.byStatus.investigating, 0);
+  assert.equal(kpis.errorEvents.byStatus.resolved, 0);
+  assert.equal(kpis.errorEvents.byStatus.ignored, 0);
+  assert.equal(kpis.accountOpsUpdates.total, 0);
+});
+
+test('normaliseDashboardKpis defaults byStatus to zero counters when null or malformed', () => {
+  const kpis = normaliseDashboardKpis({ errorEvents: { byStatus: null } });
+  assert.deepEqual(kpis.errorEvents.byStatus, {
+    open: 0,
+    investigating: 0,
+    resolved: 0,
+    ignored: 0,
+  });
+  const again = normaliseDashboardKpis({ errorEvents: 'nope' });
+  assert.deepEqual(again.errorEvents.byStatus, {
+    open: 0,
+    investigating: 0,
+    resolved: 0,
+    ignored: 0,
+  });
+});
+
+test('normaliseDashboardKpis clamps negative or non-numeric counters to zero', () => {
+  const kpis = normaliseDashboardKpis({
+    accounts: { total: -5 },
+    practiceSessions: { last7d: 'NaN', last30d: Number.NaN },
+    errorEvents: { byStatus: { open: -3, investigating: 'bogus' } },
+  });
+  assert.equal(kpis.accounts.total, 0);
+  assert.equal(kpis.practiceSessions.last7d, 0);
+  assert.equal(kpis.practiceSessions.last30d, 0);
+  assert.equal(kpis.errorEvents.byStatus.open, 0);
+  assert.equal(kpis.errorEvents.byStatus.investigating, 0);
+});
+
+test('normaliseOpsActivityStream coerces a non-array entries field to an empty list', () => {
+  const stream = normaliseOpsActivityStream({ generatedAt: 1000, entries: 'not an array' });
+  assert.equal(stream.generatedAt, 1000);
+  assert.deepEqual(stream.entries, []);
+  const fromNull = normaliseOpsActivityStream(null);
+  assert.equal(fromNull.generatedAt, 0);
+  assert.deepEqual(fromNull.entries, []);
+});
+
+test('normaliseOpsActivityStream preserves entry fields and uses pre-masked scope ids', () => {
+  const stream = normaliseOpsActivityStream({
+    generatedAt: 2000,
+    entries: [
+      {
+        requestId: 'req-1',
+        accountIdMasked: '...abc123',
+        mutationKind: 'admin.test',
+        scopeType: 'learner',
+        scopeId: 'abcd1234',
+        correlationId: 'corr-1',
+        statusCode: 200,
+        appliedAt: 1234,
+      },
+      // Malformed entry still lands with defensive defaults.
+      { mutationKind: 'noise', appliedAt: 'not-a-number' },
+    ],
+  });
+  assert.equal(stream.entries.length, 2);
+  assert.equal(stream.entries[0].requestId, 'req-1');
+  assert.equal(stream.entries[0].scopeId, 'abcd1234');
+  assert.equal(stream.entries[0].statusCode, 200);
+  assert.equal(stream.entries[0].appliedAt, 1234);
+  assert.equal(stream.entries[1].mutationKind, 'noise');
+  assert.equal(stream.entries[1].appliedAt, 0);
+  assert.equal(stream.entries[1].requestId, '');
+});
+
+test('normaliseAccountOpsMetadataDirectory parses tagsJson and preserves internalNotes for admin', () => {
+  const directory = normaliseAccountOpsMetadataDirectory({
+    generatedAt: 3000,
+    accounts: [
+      {
+        accountId: 'a1',
+        email: 'ops@example.com',
+        displayName: 'Ops User',
+        platformRole: 'ops',
+        opsStatus: 'suspended',
+        planLabel: 'Classroom',
+        tagsJson: '["foo","bar"]',
+        internalNotes: 'secret',
+        updatedAt: 1000,
+        updatedByAccountId: 'admin-id',
+      },
+    ],
+  });
+  assert.equal(directory.generatedAt, 3000);
+  assert.equal(directory.accounts[0].accountId, 'a1');
+  assert.deepEqual(directory.accounts[0].tags, ['foo', 'bar']);
+  assert.equal(directory.accounts[0].internalNotes, 'secret');
+  assert.equal(directory.accounts[0].opsStatus, 'suspended');
+});
+
+test('normaliseAccountOpsMetadataDirectory falls back to empty tags when tagsJson is malformed', () => {
+  const directory = normaliseAccountOpsMetadataDirectory({
+    accounts: [
+      { accountId: 'a1', tagsJson: 'bad json [' },
+      { accountId: 'a2', tagsJson: '{"not":"array"}' },
+      { accountId: 'a3', tags: ['already', 'parsed'] },
+    ],
+  });
+  assert.deepEqual(directory.accounts[0].tags, []);
+  assert.deepEqual(directory.accounts[1].tags, []);
+  assert.deepEqual(directory.accounts[2].tags, ['already', 'parsed']);
+});
+
+test('normaliseAccountOpsMetadataDirectory keeps internalNotes=null for ops-role payloads (R25)', () => {
+  const directory = normaliseAccountOpsMetadataDirectory({
+    accounts: [
+      { accountId: 'a1', internalNotes: null },
+      { accountId: 'a2' },
+      { accountId: 'a3', internalNotes: 42 },
+    ],
+  });
+  assert.equal(directory.accounts[0].internalNotes, null);
+  assert.equal(directory.accounts[1].internalNotes, null);
+  assert.equal(directory.accounts[2].internalNotes, null);
+});
+
+test('normaliseErrorEventSummary clamps malformed totals to zero', () => {
+  const summary = normaliseErrorEventSummary({ totals: { all: 'NaN', open: -7 } });
+  assert.equal(summary.totals.all, 0);
+  assert.equal(summary.totals.open, 0);
+  assert.equal(summary.totals.investigating, 0);
+  assert.equal(summary.totals.resolved, 0);
+  assert.equal(summary.totals.ignored, 0);
+  assert.deepEqual(summary.entries, []);
+});
+
+test('normaliseErrorEventSummary preserves entry fields with defensive defaults', () => {
+  const summary = normaliseErrorEventSummary({
+    generatedAt: 4000,
+    totals: { open: 2, investigating: 0, resolved: 1, ignored: 0, all: 3 },
+    entries: [
+      {
+        id: 'evt-1',
+        errorKind: 'TypeError',
+        messageFirstLine: 'x undef',
+        firstFrame: 'at foo (bar.js:1)',
+        routeName: '/demo',
+        userAgent: 'ua-string',
+        accountIdMasked: '...abc',
+        occurrenceCount: 5,
+        firstSeen: 1000,
+        lastSeen: 2000,
+        status: 'open',
+      },
+    ],
+  });
+  assert.equal(summary.generatedAt, 4000);
+  assert.equal(summary.totals.all, 3);
+  assert.equal(summary.entries[0].id, 'evt-1');
+  assert.equal(summary.entries[0].occurrenceCount, 5);
+  assert.equal(summary.entries[0].status, 'open');
+});
+
+test('buildAdminHubReadModel emits the four new sibling keys and preserves existing ones', () => {
+  const model = buildAdminHubReadModel({
+    account: { id: 'adult-admin', platformRole: 'admin' },
+    platformRole: 'admin',
+    spellingContentBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+    memberships: [],
+    learnerBundles: {},
+    dashboardKpis: {
+      generatedAt: 500,
+      accounts: { total: 3 },
+      errorEvents: { byStatus: { open: 1, investigating: 0, resolved: 0, ignored: 0 } },
+    },
+    opsActivityStream: {
+      generatedAt: 600,
+      entries: [
+        { requestId: 'r1', mutationKind: 'admin.test', scopeType: 'account', scopeId: '...abc', appliedAt: 100 },
+      ],
+    },
+    accountOpsMetadata: {
+      generatedAt: 700,
+      accounts: [{ accountId: 'a1', internalNotes: 'admin-note', tags: ['priority'] }],
+    },
+    errorLogSummary: {
+      generatedAt: 800,
+      totals: { open: 1, investigating: 0, resolved: 0, ignored: 0, all: 1 },
+      entries: [],
+    },
+    now: () => 900,
+  });
+
+  // All 4 new sibling keys
+  assert.ok(model.dashboardKpis);
+  assert.equal(model.dashboardKpis.accounts.total, 3);
+  assert.equal(model.dashboardKpis.errorEvents.byStatus.open, 1);
+  assert.ok(model.opsActivityStream);
+  assert.equal(model.opsActivityStream.entries[0].requestId, 'r1');
+  assert.ok(model.accountOpsMetadata);
+  assert.equal(model.accountOpsMetadata.accounts[0].internalNotes, 'admin-note');
+  assert.deepEqual(model.accountOpsMetadata.accounts[0].tags, ['priority']);
+  assert.ok(model.errorLogSummary);
+  assert.equal(model.errorLogSummary.totals.all, 1);
+
+  // Existing keys still present and untouched in shape.
+  assert.ok(model.permissions);
+  assert.ok(model.account);
+  assert.ok(model.contentReleaseStatus);
+  assert.ok(model.importValidationStatus);
+  assert.ok(model.auditLogLookup);
+  assert.ok(model.demoOperations);
+  assert.ok(model.monsterVisualConfig);
+  assert.ok(model.learnerSupport);
+  assert.ok(model.reality);
+});
+
+test('buildAdminHubReadModel defaults the four new sibling keys to empty shapes when unset', () => {
+  const model = buildAdminHubReadModel({
+    account: { id: 'adult-admin', platformRole: 'admin' },
+    platformRole: 'admin',
+    spellingContentBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+    memberships: [],
+    learnerBundles: {},
+    now: () => 1000,
+  });
+  assert.equal(model.dashboardKpis.accounts.total, 0);
+  assert.deepEqual(model.opsActivityStream.entries, []);
+  assert.deepEqual(model.accountOpsMetadata.accounts, []);
+  assert.equal(model.errorLogSummary.totals.all, 0);
+});
+
+// PR #188 H1: narrow per-panel patch helpers. Each helper must replace only
+// one sibling field, preserve all others, avoid mutating the input, and keep
+// the U5 saving scalars (`savingAccountId` / `savingEventId`) intact so a
+// refresh mid-save does not unmask the in-flight row.
+function makeAdminHubFixture() {
+  return {
+    permissions: { platformRole: 'admin' },
+    account: { id: 'adult-admin' },
+    dashboardKpis: { accounts: { total: 1 }, errorEvents: { byStatus: { open: 1 } } },
+    opsActivityStream: { generatedAt: 10, entries: [{ requestId: 'r0' }] },
+    accountOpsMetadata: {
+      generatedAt: 20,
+      accounts: [{ accountId: 'a1', opsStatus: 'active', tags: ['flag'] }],
+      savingAccountId: 'a1',
+    },
+    errorLogSummary: {
+      generatedAt: 30,
+      totals: { open: 1, investigating: 0, resolved: 0, ignored: 0, all: 1 },
+      entries: [{ id: 'e1', status: 'open' }],
+      savingEventId: 'e1',
+    },
+    monsterVisualConfig: { status: { schemaVersion: 2 } },
+  };
+}
+
+test('applyAdminHubDashboardKpisPatch replaces KPIs and preserves every sibling', () => {
+  const hub = makeAdminHubFixture();
+  const snapshot = JSON.parse(JSON.stringify(hub));
+  const next = applyAdminHubDashboardKpisPatch(hub, {
+    generatedAt: 99,
+    accounts: { total: 5 },
+    errorEvents: { byStatus: { open: 2 } },
+  });
+
+  assert.notEqual(next, hub, 'must return a new adminHub object');
+  assert.equal(next.dashboardKpis.accounts.total, 5);
+  assert.equal(next.dashboardKpis.errorEvents.byStatus.open, 2);
+  assert.equal(next.dashboardKpis.generatedAt, 99);
+  // Siblings untouched.
+  assert.equal(next.opsActivityStream, hub.opsActivityStream);
+  assert.equal(next.accountOpsMetadata, hub.accountOpsMetadata);
+  assert.equal(next.errorLogSummary, hub.errorLogSummary);
+  assert.equal(next.monsterVisualConfig, hub.monsterVisualConfig);
+  // Input not mutated.
+  assert.deepEqual(hub, snapshot);
+});
+
+test('applyAdminHubOpsActivityPatch replaces only the activity stream', () => {
+  const hub = makeAdminHubFixture();
+  const snapshot = JSON.parse(JSON.stringify(hub));
+  const next = applyAdminHubOpsActivityPatch(hub, {
+    generatedAt: 111,
+    entries: [
+      { requestId: 'r1', mutationKind: 'admin.test', scopeType: 'account', scopeId: 'x', appliedAt: 200 },
+    ],
+  });
+
+  assert.equal(next.opsActivityStream.entries.length, 1);
+  assert.equal(next.opsActivityStream.entries[0].requestId, 'r1');
+  assert.equal(next.dashboardKpis, hub.dashboardKpis);
+  assert.equal(next.accountOpsMetadata, hub.accountOpsMetadata);
+  assert.equal(next.errorLogSummary, hub.errorLogSummary);
+  assert.deepEqual(hub, snapshot);
+});
+
+test('applyAdminHubErrorLogSummaryPatch preserves savingEventId across a narrow refresh', () => {
+  const hub = makeAdminHubFixture();
+  const next = applyAdminHubErrorLogSummaryPatch(hub, {
+    generatedAt: 500,
+    totals: { open: 3, investigating: 0, resolved: 0, ignored: 0, all: 3 },
+    entries: [
+      { id: 'e2', status: 'open' },
+      { id: 'e3', status: 'open' },
+      { id: 'e4', status: 'open' },
+    ],
+  });
+
+  assert.equal(next.errorLogSummary.totals.open, 3);
+  assert.equal(next.errorLogSummary.entries.length, 3);
+  // U5 saving scalar preserved so mid-save PUT is not unmasked.
+  assert.equal(next.errorLogSummary.savingEventId, 'e1');
+  // Sibling panels untouched.
+  assert.equal(next.dashboardKpis, hub.dashboardKpis);
+  assert.equal(next.opsActivityStream, hub.opsActivityStream);
+  assert.equal(next.accountOpsMetadata, hub.accountOpsMetadata);
+});
+
+test('applyAdminHubAccountOpsMetadataPatch preserves savingAccountId across a narrow refresh', () => {
+  const hub = makeAdminHubFixture();
+  const next = applyAdminHubAccountOpsMetadataPatch(hub, {
+    generatedAt: 600,
+    accounts: [{ accountId: 'a2', opsStatus: 'suspended', tags: ['trial'] }],
+  });
+
+  assert.equal(next.accountOpsMetadata.accounts.length, 1);
+  assert.equal(next.accountOpsMetadata.accounts[0].accountId, 'a2');
+  // U5 saving scalar preserved so mid-save PUT is not unmasked.
+  assert.equal(next.accountOpsMetadata.savingAccountId, 'a1');
+  assert.equal(next.dashboardKpis, hub.dashboardKpis);
+  assert.equal(next.opsActivityStream, hub.opsActivityStream);
+  assert.equal(next.errorLogSummary, hub.errorLogSummary);
+});
+
+test('narrow-patch helpers drop the saving scalar when it was empty in the previous hub', () => {
+  const hub = makeAdminHubFixture();
+  hub.accountOpsMetadata = { ...hub.accountOpsMetadata, savingAccountId: '' };
+  hub.errorLogSummary = { ...hub.errorLogSummary, savingEventId: '' };
+
+  const nextOps = applyAdminHubAccountOpsMetadataPatch(hub, { accounts: [] });
+  const nextErrors = applyAdminHubErrorLogSummaryPatch(hub, { totals: {}, entries: [] });
+
+  assert.equal(Object.prototype.hasOwnProperty.call(nextOps.accountOpsMetadata, 'savingAccountId'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(nextErrors.errorLogSummary, 'savingEventId'), false);
+});
+
+test('narrow-patch helpers no-op when adminHub is not a plain object', () => {
+  for (const patch of [
+    applyAdminHubDashboardKpisPatch,
+    applyAdminHubOpsActivityPatch,
+    applyAdminHubErrorLogSummaryPatch,
+    applyAdminHubAccountOpsMetadataPatch,
+  ]) {
+    assert.equal(patch(null, { accounts: [] }), null);
+    assert.equal(patch(undefined, {}), undefined);
+  }
+});
+
+test('narrow-patch helpers strip the Worker ok envelope before writing to the model', () => {
+  const hub = makeAdminHubFixture();
+  const next = applyAdminHubDashboardKpisPatch(hub, { ok: true, generatedAt: 42, accounts: { total: 9 } });
+  assert.equal(Object.prototype.hasOwnProperty.call(next.dashboardKpis, 'ok'), false);
+  assert.equal(next.dashboardKpis.generatedAt, 42);
+  assert.equal(next.dashboardKpis.accounts.total, 9);
+});
+
+test('narrow-patch helpers reject malformed (non-object) responses without mutating adminHub', () => {
+  const hub = makeAdminHubFixture();
+  assert.equal(applyAdminHubDashboardKpisPatch(hub, null).dashboardKpis, hub.dashboardKpis);
+  assert.equal(applyAdminHubOpsActivityPatch(hub, 'oops').opsActivityStream, hub.opsActivityStream);
+  assert.equal(applyAdminHubErrorLogSummaryPatch(hub, 42).errorLogSummary, hub.errorLogSummary);
+  assert.equal(applyAdminHubAccountOpsMetadataPatch(hub, [1, 2]).accountOpsMetadata, hub.accountOpsMetadata);
 });

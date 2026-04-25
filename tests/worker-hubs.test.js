@@ -382,6 +382,29 @@ test('worker admin hub requires admin or operations role and exposes content plu
   assert.equal(adminPayload.adminHub.demoOperations.ttsFallbacks, 3);
   assert.equal(adminPayload.adminHub.learnerSupport.accessibleLearners[0].learnerName, 'Ava');
 
+  // U2: admin hub payload is additively extended with four new sibling fields.
+  // Every existing sibling (permissions / account / learnerSupport / demoOperations /
+  // contentReleaseStatus / importValidationStatus / auditLogLookup / monsterVisualConfig)
+  // must remain present alongside the new ones.
+  assert.ok(adminPayload.adminHub.permissions, 'permissions preserved');
+  assert.ok(adminPayload.adminHub.account, 'account preserved');
+  assert.ok(adminPayload.adminHub.learnerSupport, 'learnerSupport preserved');
+  assert.ok(adminPayload.adminHub.demoOperations, 'demoOperations preserved');
+  assert.ok(adminPayload.adminHub.contentReleaseStatus, 'contentReleaseStatus preserved');
+  assert.ok(adminPayload.adminHub.importValidationStatus, 'importValidationStatus preserved');
+  assert.ok(adminPayload.adminHub.auditLogLookup, 'auditLogLookup preserved');
+  assert.ok(adminPayload.adminHub.monsterVisualConfig, 'monsterVisualConfig preserved');
+  assert.ok(adminPayload.adminHub.dashboardKpis, 'dashboardKpis added');
+  assert.ok(adminPayload.adminHub.opsActivityStream, 'opsActivityStream added');
+  assert.ok(adminPayload.adminHub.accountOpsMetadata, 'accountOpsMetadata added');
+  assert.ok(adminPayload.adminHub.errorLogSummary, 'errorLogSummary added');
+  assert.equal(typeof adminPayload.adminHub.dashboardKpis.accounts.total, 'number');
+  assert.equal(typeof adminPayload.adminHub.dashboardKpis.demos.active, 'number');
+  assert.equal(adminPayload.adminHub.dashboardKpis.errorEvents.byStatus.open, 0);
+  assert.ok(Array.isArray(adminPayload.adminHub.opsActivityStream.entries));
+  assert.ok(Array.isArray(adminPayload.adminHub.accountOpsMetadata.accounts));
+  assert.ok(Array.isArray(adminPayload.adminHub.errorLogSummary.entries));
+
   const parentDenied = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin', {}, {
     'x-ks2-dev-platform-role': 'parent',
   });
