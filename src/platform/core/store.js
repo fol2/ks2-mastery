@@ -127,6 +127,17 @@ const VALID_SPELLING_WORD_BANK_FILTERS = new Set([
   'learning',
   'secure',
   'unseen',
+  // ----- U6 Guardian filters ---------------------------------------------
+  // Mirrors the subject-level WORD_BANK_FILTER_IDS expansion in
+  // `src/subjects/spelling/components/spelling-view-model.js`. This Set is
+  // the platform-layer transientUi sanitiser — it runs on boot against
+  // persisted state, so without the expansion a learner who closed the
+  // tab on a Guardian filter would have their persisted filter silently
+  // reset to 'all' on next load. Keep these two Sets in lockstep.
+  'guardianDue',
+  'wobbling',
+  'renewedRecently',
+  'neverRenewed',
 ]);
 const VALID_SPELLING_WORD_BANK_YEAR_FILTERS = new Set([
   'all',

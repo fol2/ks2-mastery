@@ -5,6 +5,8 @@ import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { SpellingWordDetailModal } from './SpellingWordDetailModal.jsx';
 import {
   WORD_BANK_FILTER_IDS,
+  WORD_BANK_GUARDIAN_FILTER_IDS,
+  WORD_BANK_GUARDIAN_FILTER_ID_SET,
   WORD_BANK_YEAR_FILTER_IDS,
   countWordBankExtra,
   countWordBankStatus,
@@ -29,6 +31,24 @@ import {
   wordMatchesSearch,
   wordStatusLabel,
 } from './spelling-view-model.js';
+
+// Guardian chip copy is deliberately grounded and specific — no "Great work!"
+// slop, no zero-celebration. Labels pair with a short hint that renders
+// above the chip row when any guardian filter is active so learners aren't
+// confronted with e.g. "170 never-renewed" rows without context.
+const GUARDIAN_CHIP_LABELS = Object.freeze({
+  guardianDue: 'Guardian due',
+  wobbling: 'Wobbling',
+  renewedRecently: 'Renewed (7d)',
+  neverRenewed: 'Untouched',
+});
+const GUARDIAN_CHIP_ORDER = WORD_BANK_GUARDIAN_FILTER_IDS;
+const GUARDIAN_FILTER_HINTS = Object.freeze({
+  guardianDue: 'Secure words the Vault wants you to recheck today.',
+  wobbling: 'Secure words that slipped last time — one more pass clears them.',
+  renewedRecently: 'Secure words you renewed in the last seven days.',
+  neverRenewed: 'Secure words the Guardian has not inspected yet — nothing is wrong, just untouched.',
+});
 
 function FilterChips({ counts, activeFilter, actions }) {
   const chips = [
@@ -56,6 +76,41 @@ function FilterChips({ counts, activeFilter, actions }) {
             <span className={`wb-status-swatch ${chip.swatch}`} aria-hidden="true" />
             <span className="wb-chip-label">{chip.label}</span>
             <CountUpValue className="wb-chip-count" value={counts[chip.id] ?? 0} />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* Guardian filter chips sit on a row below the legacy status chips — same
+ * underlying data-action so the Set expansion in module.js accepts the four
+ * new IDs for free. The distinct wrapper class + square-cornered chip
+ * variant visually distinguishes "maintenance" (Guardian) from "learning"
+ * (legacy) so a learner with 10 chips in front of them doesn't read them
+ * as one undifferentiated decision. */
+function GuardianFilterChips({ counts, activeFilter, actions }) {
+  return (
+    <div
+      className="wb-chips wb-status-chips wb-chips--guardian"
+      role="group"
+      aria-label="Filter word bank by Guardian status"
+    >
+      {GUARDIAN_CHIP_ORDER.map((id) => {
+        const active = id === activeFilter;
+        return (
+          <button
+            type="button"
+            aria-pressed={active ? 'true' : 'false'}
+            className={`wb-chip wb-chip-status wb-chip-guardian wb-chip-guardian--${id}${active ? ' on' : ''}`}
+            data-action="spelling-analytics-status-filter"
+            data-value={id}
+            key={id}
+            onClick={(event) => renderAction(actions, event, 'spelling-analytics-status-filter', { value: id })}
+          >
+            <span className="wb-chip-guardian-mark" aria-hidden="true" />
+            <span className="wb-chip-label">{GUARDIAN_CHIP_LABELS[id]}</span>
+            <CountUpValue className="wb-chip-count" value={counts[id] ?? 0} />
           </button>
         );
       })}
@@ -141,7 +196,7 @@ function WordGroup({ group, words, query, actions, runtimeReadOnly = false }) {
   );
 }
 
-function WordBankCard({ learner, analytics, appState, actions, runtimeReadOnly = false }) {
+function WordBankCard({ learner, analytics, appState, actions, postMastery = null, runtimeReadOnly = false }) {
   const persistedSearchQuery = appState?.transientUi?.spellingAnalyticsWordSearch || '';
   const [draftSearch, setDraftSearch] = React.useState(persistedSearchQuery);
   const statusFilter = appState?.transientUi?.spellingAnalyticsStatusFilter || 'all';
@@ -156,29 +211,60 @@ function WordBankCard({ learner, analytics, appState, actions, runtimeReadOnly =
   }, [actions, persistedSearchQuery]);
   const searchQuery = draftSearch;
   const query = normaliseSearchText(searchQuery);
-  const activeFilter = WORD_BANK_FILTER_IDS.has(statusFilter) ? statusFilter : 'all';
+  const showGuardianFilters = Boolean(postMastery?.allWordsMega);
+  const guardianMap = postMastery?.guardianMap && typeof postMastery.guardianMap === 'object'
+    ? postMastery.guardianMap
+    : {};
+  const todayDay = Number.isFinite(Number(postMastery?.todayDay))
+    ? Math.floor(Number(postMastery.todayDay))
+    : 0;
+  // A persisted filter ID might point at a Guardian chip. If the learner is
+  // not currently post-mega (e.g. a new statutory word just published),
+  // collapse back to `all` so the UI never tries to apply a filter that has
+  // no visible chip. Legacy filters pass through unchanged.
+  const rawStatusFilter = WORD_BANK_FILTER_IDS.has(statusFilter) ? statusFilter : 'all';
+  const activeFilter = !showGuardianFilters && WORD_BANK_GUARDIAN_FILTER_ID_SET.has(rawStatusFilter)
+    ? 'all'
+    : rawStatusFilter;
   const activeYearFilter = WORD_BANK_YEAR_FILTER_IDS.has(yearFilter) ? yearFilter : 'all';
   const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
   const wordBankMeta = analytics.wordBank || {};
   const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
   const categoryWords = allWords.filter((word) => wordBankYearFilterMatches(activeYearFilter, word));
+  const filterOptions = { guardianMap, todayDay };
   const visibleGroups = groups
     .filter((group) => (activeYearFilter === 'all' ? true : group.key === activeYearFilter))
     .map((group) => ({
       group,
       words: (Array.isArray(group.words) ? group.words : [])
-        .filter((word) => wordBankFilterMatchesStatus(activeFilter, word.status))
+        .filter((word) => wordBankFilterMatchesStatus(activeFilter, word.status, {
+          guardian: guardianMap[word.slug] || null,
+          todayDay,
+        }))
         .filter((word) => wordMatchesSearch(word, query)),
     }))
     .filter((entry) => (activeFilter === 'all' && !query ? true : entry.words.length > 0));
   const visibleWords = visibleGroups.flatMap((entry) => entry.words);
+  const legacyStats = wordBankAggregateStats(categoryWords);
+  const guardianStats = showGuardianFilters
+    ? wordBankAggregateStats(categoryWords, { guardianMap, todayDay })
+    : null;
   const counts = {
     all: categoryWords.length,
-    due: countWordBankStatus(categoryWords, 'due'),
-    weak: countWordBankStatus(categoryWords, 'trouble'),
-    learning: countWordBankStatus(categoryWords, 'learning'),
-    secure: countWordBankStatus(categoryWords, 'secure'),
-    unseen: countWordBankStatus(categoryWords, 'new'),
+    due: legacyStats.due,
+    weak: legacyStats.trouble,
+    learning: legacyStats.learning,
+    secure: legacyStats.secure,
+    unseen: legacyStats.unseen,
+    // Guardian counts only materialise when the chips are surfaced. Keeping
+    // them off the object entirely when allWordsMega === false means the
+    // legacy `counts` literal is byte-identical to what shipped before U6.
+    ...(guardianStats ? {
+      guardianDue: guardianStats.guardianDue,
+      wobbling: guardianStats.wobbling,
+      renewedRecently: guardianStats.renewedRecently,
+      neverRenewed: guardianStats.neverRenewed,
+    } : {}),
   };
   const yearCounts = {
     all: allWords.length,
@@ -236,8 +322,17 @@ function WordBankCard({ learner, analytics, appState, actions, runtimeReadOnly =
           <div className="wb-filter-stack">
             <YearChips counts={yearCounts} activeYearFilter={activeYearFilter} actions={actions} />
             <FilterChips counts={counts} activeFilter={activeFilter} actions={actions} />
+            {showGuardianFilters ? (
+              <GuardianFilterChips counts={counts} activeFilter={activeFilter} actions={actions} />
+            ) : null}
           </div>
         </div>
+
+        {showGuardianFilters && WORD_BANK_GUARDIAN_FILTER_ID_SET.has(activeFilter) ? (
+          <p className="wb-guardian-hint" role="status">
+            {GUARDIAN_FILTER_HINTS[activeFilter]}
+          </p>
+        ) : null}
 
         <div className="wb-word-groups">
           {visibleGroups.length
@@ -264,31 +359,46 @@ function WordBankCard({ learner, analytics, appState, actions, runtimeReadOnly =
   );
 }
 
-function WordBankAggregates({ analytics }) {
+function WordBankAggregates({ analytics, postMastery = null }) {
   const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
   const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
-  const core = wordBankAggregateStats(allWords.filter((word) => word.spellingPool !== 'extra'));
-  const y34 = wordBankAggregateStats(allWords.filter((word) => word.year === '3-4'));
-  const y56 = wordBankAggregateStats(allWords.filter((word) => word.year === '5-6'));
-  const extra = wordBankAggregateStats(allWords.filter((word) => word.spellingPool === 'extra'));
+  const showGuardianCards = Boolean(postMastery?.allWordsMega);
+  const guardianMap = postMastery?.guardianMap && typeof postMastery.guardianMap === 'object'
+    ? postMastery.guardianMap
+    : {};
+  const todayDay = Number.isFinite(Number(postMastery?.todayDay))
+    ? Math.floor(Number(postMastery.todayDay))
+    : 0;
+  // When showGuardianCards is false we explicitly pass the zero-arg shape
+  // so the aggregate keeps its byte-identical six-field legacy output.
+  const statsOptions = showGuardianCards ? { guardianMap, todayDay } : undefined;
+  const cardOptions = showGuardianCards ? { showGuardian: true } : undefined;
+  const core = wordBankAggregateStats(allWords.filter((word) => word.spellingPool !== 'extra'), statsOptions);
+  const y34 = wordBankAggregateStats(allWords.filter((word) => word.year === '3-4'), statsOptions);
+  const y56 = wordBankAggregateStats(allWords.filter((word) => word.year === '5-6'), statsOptions);
+  const extra = wordBankAggregateStats(allWords.filter((word) => word.spellingPool === 'extra'), statsOptions);
   const cards = [
     {
       eyebrow: 'Core spellings',
       title: 'Core statutory progress',
-      stats: wordBankAggregateCards(core, 'Words in core pool'),
+      stats: wordBankAggregateCards(core, 'Words in core pool', cardOptions),
     },
     {
       eyebrow: 'Years 3-4',
       title: 'Lower KS2 spelling pool',
-      stats: wordBankAggregateCards(y34, 'Words in pool'),
+      stats: wordBankAggregateCards(y34, 'Words in pool', cardOptions),
     },
     {
       eyebrow: 'Years 5-6',
       title: 'Upper KS2 spelling pool',
-      stats: wordBankAggregateCards(y56, 'Words in pool'),
+      stats: wordBankAggregateCards(y56, 'Words in pool', cardOptions),
     },
     {
       eyebrow: 'Extra',
+      // Extra pool is never Guardian-eligible (Guardian Mega is core-only),
+      // so we always use the legacy card shape here regardless of
+      // showGuardianCards. This keeps the Extra card's visual rhythm
+      // identical across the post-Mega transition.
       title: 'Expansion spelling pool',
       stats: wordBankAggregateCards(extra, 'Words in pool'),
     },
@@ -312,6 +422,7 @@ export function SpellingWordBankScene({
   analytics,
   accent,
   actions,
+  postMastery = null,
   previousHeroBg = '',
   runtimeReadOnly = false,
 }) {
@@ -340,8 +451,15 @@ export function SpellingWordBankScene({
           </button>
           <h1 className="word-bank-title">{learner.name}’s spellings</h1>
         </header>
-        <WordBankAggregates analytics={analytics} />
-        <WordBankCard learner={learner} analytics={analytics} appState={appState} actions={actions} runtimeReadOnly={runtimeReadOnly} />
+        <WordBankAggregates analytics={analytics} postMastery={postMastery} />
+        <WordBankCard
+          learner={learner}
+          analytics={analytics}
+          appState={appState}
+          actions={actions}
+          postMastery={postMastery}
+          runtimeReadOnly={runtimeReadOnly}
+        />
       </div>
       {detailWord ? (
         <SpellingWordDetailModal

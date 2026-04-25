@@ -5846,6 +5846,71 @@ textarea:focus-visible {
   margin-top: 4px;
 }
 
+/* ---------- U6 Guardian summary band ---------- */
+/* The Guardian band sits below the standard stat grid on a Guardian-mode
+   summary. A hairline divider + eyebrow read it as "different kind of
+   information" rather than "three more stats", so the maintenance metaphor
+   reads distinct from the competence ribbon above. */
+.spelling-in-session .summary-guardian-band {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid color-mix(in oklab, var(--line) 80%, transparent);
+}
+.spelling-in-session .summary-guardian-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin-bottom: 10px;
+}
+.spelling-in-session .summary-guardian-eyebrow {
+  font-family: var(--font-display, var(--font-sans));
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--brand-ink, var(--ink)) 70%, var(--ink));
+}
+.spelling-in-session .summary-guardian-sub {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+.spelling-in-session .summary-stats--guardian {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0;
+}
+@media (max-width: 720px) {
+  .spelling-in-session .summary-stats--guardian { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+}
+.spelling-in-session .summary-stat--guardian {
+  position: relative;
+  background: color-mix(in oklab, var(--brand-soft, var(--panel-soft)) 55%, var(--panel));
+  border-color: color-mix(in oklab, var(--brand, #3E6FA8) 22%, var(--line));
+}
+.spelling-in-session .summary-stat--guardian::before {
+  content: "";
+  position: absolute;
+  inset: -1px auto -1px -1px;
+  width: 3px;
+  border-radius: 14px 0 0 14px;
+  background: color-mix(in oklab, var(--brand, #3E6FA8) 48%, transparent);
+}
+.spelling-in-session .summary-stat--guardian .l {
+  color: color-mix(in oklab, var(--brand-ink, var(--ink-2)) 85%, var(--ink-2));
+}
+.spelling-in-session .summary-stat--guardian-renewed .v {
+  color: color-mix(in oklab, var(--good-strong, var(--ink)) 80%, var(--ink));
+}
+.spelling-in-session .summary-stat--guardian-wobbling .v {
+  color: color-mix(in oklab, var(--bad-strong, #b3372c) 75%, var(--ink));
+}
+.spelling-in-session .summary-stat--guardian-next-check .v {
+  font-size: 1.4rem;
+  letter-spacing: -0.01em;
+}
+
 .spelling-in-session .summary-drill {
   margin-top: 20px;
   padding: 14px 18px 16px;
@@ -6241,6 +6306,84 @@ textarea:focus-visible {
 }
 .wb-status-swatch.trouble {
   color: var(--bad);
+}
+
+/* ---------- U6 Guardian filter chips ---------- */
+/* The Guardian chip row sits BELOW the legacy status chips when
+   postMastery.allWordsMega === true. Guardian chips use a distinct visual
+   identity (soft-pill shape with a left-edge keyline mark + flatter bottom
+   on the active state) so learners reading 10 chips don't treat them all
+   as "pick one more". The mental model is maintenance, not learning. */
+.wb-chips--guardian {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px dashed color-mix(in oklab, var(--line) 65%, transparent);
+  gap: 6px 8px;
+}
+.wb-chip-guardian {
+  gap: 8px;
+  background: color-mix(in oklab, var(--brand-soft, var(--panel-soft)) 34%, var(--panel));
+  border-style: solid;
+  border-color: color-mix(in oklab, var(--brand, #3E6FA8) 18%, var(--line));
+  color: color-mix(in oklab, var(--brand-ink, var(--ink-2)) 75%, var(--ink-2));
+  border-radius: 10px 10px 4px 4px;
+  padding-left: 10px;
+}
+.wb-chip-guardian:hover {
+  border-color: color-mix(in oklab, var(--brand, #3E6FA8) 40%, var(--line));
+  color: color-mix(in oklab, var(--brand-ink, var(--ink)) 95%, var(--ink));
+}
+.wb-chip-guardian.on {
+  background: color-mix(in oklab, var(--brand, #3E6FA8) 14%, var(--panel));
+  border-color: color-mix(in oklab, var(--brand, #3E6FA8) 62%, transparent);
+  color: var(--brand-ink, var(--ink));
+  box-shadow: inset 0 -2px 0 0 color-mix(in oklab, var(--brand, #3E6FA8) 55%, transparent);
+}
+.wb-chip-guardian .wb-chip-count {
+  background: color-mix(in oklab, var(--brand, #3E6FA8) 10%, var(--panel));
+  border-color: color-mix(in oklab, var(--brand, #3E6FA8) 20%, transparent);
+}
+.wb-chip-guardian.on .wb-chip-count {
+  background: color-mix(in oklab, var(--brand, #3E6FA8) 28%, var(--panel));
+  border-color: color-mix(in oklab, var(--brand, #3E6FA8) 48%, transparent);
+  color: var(--brand-ink, var(--ink));
+}
+.wb-chip-guardian-mark {
+  width: 6px;
+  height: 10px;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: 0.42;
+  flex: 0 0 auto;
+}
+.wb-chip-guardian--wobbling .wb-chip-guardian-mark {
+  background: color-mix(in oklab, var(--bad, #b3372c) 70%, currentColor);
+  opacity: 0.72;
+}
+.wb-chip-guardian--guardianDue .wb-chip-guardian-mark {
+  background: color-mix(in oklab, var(--warn, #d08b2e) 70%, currentColor);
+  opacity: 0.72;
+}
+.wb-chip-guardian--renewedRecently .wb-chip-guardian-mark {
+  background: color-mix(in oklab, var(--good, #3aa268) 70%, currentColor);
+  opacity: 0.72;
+}
+.wb-chip-guardian--neverRenewed .wb-chip-guardian-mark {
+  background: color-mix(in oklab, var(--muted, #8a8a8a) 80%, currentColor);
+  opacity: 0.62;
+}
+.wb-guardian-hint {
+  margin: 12px 0 6px;
+  padding: 10px 14px;
+  border-left: 3px solid color-mix(in oklab, var(--brand, #3E6FA8) 52%, transparent);
+  background: color-mix(in oklab, var(--brand-soft, var(--panel-soft)) 50%, var(--panel));
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: color-mix(in oklab, var(--brand-ink, var(--ink)) 90%, var(--ink));
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+@media (max-width: 720px) {
+  .wb-chips--guardian { padding-top: 8px; }
 }
 
 /* ---------- Subject-screen breadcrumb ---------- */

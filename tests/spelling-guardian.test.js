@@ -1419,3 +1419,50 @@ test('U5 shortcut resolver: Alt+1/2/3 mappings remain intact after Alt+4 additio
   }, appState);
   assert.deepEqual(sats, { action: 'spelling-shortcut-start', data: { mode: 'test' }, preventDefault: true });
 });
+
+// -----------------------------------------------------------------------------
+// U6 action-routing: the spelling-analytics-status-filter handler validates
+// incoming values against WORD_BANK_FILTER_IDS — extending the Set in U6
+// should make each of the four new Guardian filters round-trip through the
+// module handler with no further code change.
+// -----------------------------------------------------------------------------
+
+const GUARDIAN_FILTER_IDS = ['guardianDue', 'wobbling', 'renewedRecently', 'neverRenewed'];
+
+for (const filterId of GUARDIAN_FILTER_IDS) {
+  test(`U6 action routing: spelling-analytics-status-filter accepts value="${filterId}" via WORD_BANK_FILTER_IDS Set expansion`, async () => {
+    const createAppHarness = await importAppHarness();
+    const storage = installMemoryStorage();
+    const harness = createAppHarness({ storage });
+    harness.dispatch('open-subject', { subjectId: 'spelling' });
+
+    // Seed the filter to `all` via the legacy path first, so we can assert
+    // the handler actually advanced to the Guardian ID (and didn't silently
+    // fall through to the 'all' fallback).
+    harness.dispatch('spelling-analytics-status-filter', { value: 'secure' });
+    assert.equal(
+      harness.store.getState().transientUi.spellingAnalyticsStatusFilter,
+      'secure',
+      'baseline: legacy filter ID writes to transientUi',
+    );
+
+    harness.dispatch('spelling-analytics-status-filter', { value: filterId });
+    assert.equal(
+      harness.store.getState().transientUi.spellingAnalyticsStatusFilter,
+      filterId,
+      `${filterId} should be written to transientUi.spellingAnalyticsStatusFilter`,
+    );
+  });
+}
+
+test('U6 action routing: unknown filter IDs still fall back to "all"', async () => {
+  // Regression guard: the WORD_BANK_FILTER_IDS Set expansion must not
+  // accept arbitrary strings. Any value that is not in the Set collapses
+  // back to 'all' (existing contract).
+  const createAppHarness = await importAppHarness();
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-analytics-status-filter', { value: 'not-a-real-filter' });
+  assert.equal(harness.store.getState().transientUi.spellingAnalyticsStatusFilter, 'all');
+});

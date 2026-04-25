@@ -74,8 +74,37 @@ export const YEAR_FILTER_OPTIONS = Object.freeze([
   { value: 'y5-6', label: 'Y5-6' },
   { value: 'extra', label: 'Extra' },
 ]);
-export const WORD_BANK_FILTER_IDS = new Set(['all', 'due', 'weak', 'learning', 'secure', 'unseen']);
+export const WORD_BANK_FILTER_IDS = new Set([
+  'all',
+  'due',
+  'weak',
+  'learning',
+  'secure',
+  'unseen',
+  // ----- U6 Guardian filters ---------------------------------------------
+  // Appended to the legacy set (not reordered) so serialised filter IDs
+  // persisted to `transientUi.spellingAnalyticsStatusFilter` remain
+  // byte-compatible for any learner who graduated before U6 landed. The
+  // `module.js` handler at `spelling-analytics-status-filter` accepts any
+  // ID that the Set contains, so surfacing these four chips is enough.
+  'guardianDue',
+  'wobbling',
+  'renewedRecently',
+  'neverRenewed',
+]);
+export const WORD_BANK_GUARDIAN_FILTER_IDS = Object.freeze([
+  'guardianDue',
+  'wobbling',
+  'renewedRecently',
+  'neverRenewed',
+]);
+export const WORD_BANK_GUARDIAN_FILTER_ID_SET = new Set(WORD_BANK_GUARDIAN_FILTER_IDS);
 export const WORD_BANK_YEAR_FILTER_IDS = new Set(['all', 'y3-4', 'y5-6', 'extra']);
+
+// How many days after lastReviewedDay still counts as "renewed recently" for
+// the Word Bank filter. Seven days mirrors the shortest Guardian interval
+// (reviewLevel 1 = 7 days) — anything inside that window is still fresh.
+export const GUARDIAN_RENEWED_RECENTLY_WINDOW_DAYS = 7;
 
 const SCRIBE_DOWNS_BASE = '/assets/regions/the-scribe-downs';
 const spellingHeroUrl = (variant) => `${SCRIBE_DOWNS_BASE}/the-scribe-downs-${variant}.1280.webp`;
@@ -249,11 +278,70 @@ export function normaliseSearchText(value) {
   return String(value || '').trim().toLowerCase();
 }
 
-export function wordBankFilterMatchesStatus(filter, status) {
+/**
+ * Match a word-bank row against an active status filter.
+ *
+ * Legacy filter IDs (`all`/`due`/`weak`/`learning`/`secure`/`unseen`) look
+ * only at `status` — their behaviour is byte-identical to what shipped
+ * before the Guardian work, even when `options` omits the guardian context.
+ * The four Guardian filter IDs additionally consult the learner's guardian
+ * record for the slug so "renewed recently" isn't guessed from `progress`
+ * alone.
+ *
+ * @param {string} filter Active filter id from `WORD_BANK_FILTER_IDS`.
+ * @param {string} status Status string on the word-bank row.
+ * @param {object} [options]
+ * @param {object|null} [options.guardian] Normalised guardian record for the
+ *   slug (from `data.guardian[slug]`), or `null`/`undefined` when absent.
+ * @param {number} [options.todayDay] Integer day (Math.floor(ts / DAY_MS)).
+ */
+export function wordBankFilterMatchesStatus(filter, status, options = {}) {
   if (filter === 'all') return true;
   if (filter === 'weak') return status === 'trouble';
   if (filter === 'unseen') return status === 'new';
-  return filter === status;
+  if (!WORD_BANK_GUARDIAN_FILTER_ID_SET.has(filter)) {
+    // Legacy filters keep their historic semantics. No guardian inspection.
+    return filter === status;
+  }
+
+  const guardian = options && typeof options === 'object' ? options.guardian : null;
+  const todayRaw = options && typeof options === 'object' ? options.todayDay : undefined;
+  const todayDay = Number.isFinite(Number(todayRaw)) ? Math.floor(Number(todayRaw)) : 0;
+  const hasGuardian = guardian && typeof guardian === 'object' && !Array.isArray(guardian);
+
+  if (filter === 'guardianDue') {
+    // Guardian Due is defined as: guardian record exists AND nextDueDay has
+    // arrived. We also require `status === 'secure'` because a word can
+    // drop out of `secure` (e.g. dueDay rolls over) while still owning a
+    // guardian record from a previous Guardian round — those should show
+    // under the legacy `due` chip, not here.
+    if (!hasGuardian) return false;
+    if (status !== 'secure') return false;
+    const nextDue = Number.isFinite(Number(guardian.nextDueDay)) ? Math.floor(Number(guardian.nextDueDay)) : Infinity;
+    return nextDue <= todayDay;
+  }
+
+  if (filter === 'wobbling') {
+    return Boolean(hasGuardian && guardian.wobbling === true);
+  }
+
+  if (filter === 'renewedRecently') {
+    if (!hasGuardian) return false;
+    if (guardian.lastReviewedDay == null) return false;
+    const last = Number(guardian.lastReviewedDay);
+    if (!Number.isFinite(last)) return false;
+    return (todayDay - Math.floor(last)) <= GUARDIAN_RENEWED_RECENTLY_WINDOW_DAYS;
+  }
+
+  if (filter === 'neverRenewed') {
+    // "Never renewed" is the freshly-graduated state: a word is secure (Mega)
+    // but has no guardian record yet because the learner hasn't touched it
+    // in a Guardian round. Non-secure words don't qualify because they
+    // never crossed into the maintenance loop in the first place.
+    return status === 'secure' && !hasGuardian;
+  }
+
+  return false;
 }
 
 export function wordBankYearFilterMatches(filter, word) {
@@ -486,6 +574,88 @@ export function guardianLabel(record, todayDay) {
   return `Next check in ${delta} days`;
 }
 
+/**
+ * Build the three Guardian-specific summary cards appended to the base
+ * summary stat grid after a Guardian Mission round.
+ *
+ * The shared `normaliseSummary` contract (service-contract.js) is
+ * intentionally minimal and does not carry Guardian-specific aggregates.
+ * Rather than widening that contract we derive counts from the two fields
+ * every `learningSummary` already populates:
+ *
+ *   • `summary.totalWords`    — round size (derived by `normaliseSummary`)
+ *   • `summary.mistakes`      — every word that was wrong at least once
+ *
+ * In Guardian mode a wrong answer emits `spelling.guardian.wobbled`, so
+ * `mistakes.length` is the wobbled count. Everything else was renewed
+ * (including words that recovered from a previous wobble — recoveries and
+ * fresh renewals both count as "kept alive in the Vault" for summary
+ * purposes; the event log still distinguishes them for downstream analytics).
+ *
+ * `nextGuardianDueDay` is the min `nextDueDay` across the learner's current
+ * guardian map (from `service.getPostMasteryState(...).nextGuardianDueDay`)
+ * threaded through as a prop so we can say "Next check: tomorrow" without a
+ * second storage round-trip in the scene.
+ *
+ * @param {object} params
+ * @param {object} params.summary Normalised summary (`normaliseSummary` shape).
+ * @param {number|null} params.nextGuardianDueDay Min across all records, or null.
+ * @param {number|null} params.todayDay Integer day for the delta calculation.
+ */
+export function guardianSummaryCards({ summary, nextGuardianDueDay, todayDay }) {
+  const totalWords = Math.max(0, Number(summary?.totalWords) || 0);
+  const mistakes = Array.isArray(summary?.mistakes) ? summary.mistakes : [];
+  const wobbledCount = Math.min(totalWords, mistakes.length);
+  const renewedTotal = Math.max(0, totalWords - wobbledCount);
+
+  const today = typeof todayDay === 'number' && Number.isFinite(todayDay) ? Math.floor(todayDay) : null;
+  const nextDue = typeof nextGuardianDueDay === 'number' && Number.isFinite(nextGuardianDueDay)
+    ? Math.floor(nextGuardianDueDay)
+    : null;
+  let nextCheckValue = '—';
+  let nextCheckSub = 'No more duties scheduled';
+  if (nextDue !== null && today !== null) {
+    const delta = nextDue - today;
+    if (delta <= 0) {
+      nextCheckValue = 'Today';
+      nextCheckSub = 'A fresh round is waiting';
+    } else if (delta === 1) {
+      nextCheckValue = 'Tomorrow';
+      nextCheckSub = 'Come back for the next check';
+    } else if (delta <= 30) {
+      nextCheckValue = `${delta} days`;
+      nextCheckSub = 'Words resting until next check';
+    } else {
+      nextCheckValue = `${delta} days`;
+      nextCheckSub = 'Long-term maintenance schedule';
+    }
+  }
+  return [
+    {
+      id: 'guardian-renewed',
+      label: 'Words renewed',
+      value: renewedTotal,
+      sub: renewedTotal === 0
+        ? 'No words held the line'
+        : 'Kept alive in the Vault',
+    },
+    {
+      id: 'guardian-wobbling',
+      label: 'Words wobbling',
+      value: wobbledCount,
+      sub: wobbledCount === 0
+        ? 'No new wobbles today'
+        : 'Returning tomorrow for recovery',
+    },
+    {
+      id: 'guardian-next-check',
+      label: 'Next check',
+      value: nextCheckValue,
+      sub: nextCheckSub,
+    },
+  ];
+}
+
 export function summaryHeadline(summary) {
   if (summary?.totalWords > 0 && typeof summary.correct === 'number') {
     return `${summary.correct} of ${summary.totalWords} words landed.`;
@@ -511,7 +681,23 @@ export function countWordBankExtra(words) {
   return words.reduce((count, word) => count + (word.spellingPool === 'extra' ? 1 : 0), 0);
 }
 
-export function wordBankAggregateStats(words) {
+/**
+ * Build the six legacy counts plus (optionally) four Guardian-scoped counts.
+ *
+ * When called as `wordBankAggregateStats(words)` the output is the exact
+ * six-field shape that shipped before U6. Passing `{ guardianMap, todayDay }`
+ * opts in to the Guardian aggregation — the extra counts are appended to the
+ * same object so one pass over the word list is enough. Legacy consumers
+ * that destructure `{ total, secure, due, trouble, learning, unseen }` keep
+ * their existing shape; Guardian-aware consumers also read the four new
+ * fields without a second reducer pass.
+ *
+ * @param {Array} words Word-bank rows (each has `slug`, `status`).
+ * @param {object} [options]
+ * @param {object} [options.guardianMap] slug -> guardian record.
+ * @param {number} [options.todayDay] Integer day (Math.floor(ts / DAY_MS)).
+ */
+export function wordBankAggregateStats(words, options = {}) {
   const stats = {
     total: 0,
     secure: 0,
@@ -520,6 +706,19 @@ export function wordBankAggregateStats(words) {
     learning: 0,
     unseen: 0,
   };
+  const hasGuardianContext = Boolean(
+    options && typeof options === 'object' && options.guardianMap && typeof options.guardianMap === 'object',
+  );
+  if (hasGuardianContext) {
+    stats.guardianDue = 0;
+    stats.wobbling = 0;
+    stats.renewedRecently = 0;
+    stats.neverRenewed = 0;
+  }
+  const guardianMap = hasGuardianContext ? options.guardianMap : null;
+  const todayRaw = hasGuardianContext ? options.todayDay : undefined;
+  const todayDay = Number.isFinite(Number(todayRaw)) ? Math.floor(Number(todayRaw)) : 0;
+
   for (const word of Array.isArray(words) ? words : []) {
     stats.total += 1;
     if (word.status === 'secure') stats.secure += 1;
@@ -527,18 +726,34 @@ export function wordBankAggregateStats(words) {
     else if (word.status === 'trouble') stats.trouble += 1;
     else if (word.status === 'learning') stats.learning += 1;
     else if (word.status === 'new') stats.unseen += 1;
+
+    if (!hasGuardianContext) continue;
+    const guardian = word && word.slug ? guardianMap[word.slug] : null;
+    if (wordBankFilterMatchesStatus('guardianDue', word.status, { guardian, todayDay })) stats.guardianDue += 1;
+    if (wordBankFilterMatchesStatus('wobbling', word.status, { guardian, todayDay })) stats.wobbling += 1;
+    if (wordBankFilterMatchesStatus('renewedRecently', word.status, { guardian, todayDay })) stats.renewedRecently += 1;
+    if (wordBankFilterMatchesStatus('neverRenewed', word.status, { guardian, todayDay })) stats.neverRenewed += 1;
   }
   return stats;
 }
 
-export function wordBankAggregateCards(stats, totalSub) {
-  return [
+export function wordBankAggregateCards(stats, totalSub, options = {}) {
+  const baseCards = [
     { label: 'Total', value: stats.total, sub: totalSub },
     { label: 'Secure', value: stats.secure, sub: 'Stable recall' },
     { label: 'Due now', value: stats.due, sub: 'Due today or overdue' },
     { label: 'Trouble', value: stats.trouble, sub: 'Weak or fragile' },
     { label: 'Learning', value: stats.learning, sub: 'Introduced, not secure' },
     { label: 'Unseen', value: stats.unseen, sub: 'Not yet introduced' },
+  ];
+  const showGuardian = Boolean(options && typeof options === 'object' && options.showGuardian === true);
+  if (!showGuardian) return baseCards;
+  return [
+    ...baseCards,
+    { label: 'Renewed (7d)', value: Number(stats.renewedRecently) || 0, sub: 'Guarded this week' },
+    { label: 'Guardian due', value: Number(stats.guardianDue) || 0, sub: 'Ready for a check' },
+    { label: 'Wobbling', value: Number(stats.wobbling) || 0, sub: 'One miss away' },
+    { label: 'Untouched', value: Number(stats.neverRenewed) || 0, sub: 'Secure, never guarded' },
   ];
 }
 
@@ -561,11 +776,14 @@ export function buildSpellingContext({ appState, service, repositories, subject 
   };
   const needsAnalytics = ui.phase === 'dashboard' || ui.phase === 'word-bank';
   const analytics = needsAnalytics ? service.getAnalyticsSnapshot(learner.id) : null;
-  // Post-mastery aggregates are only needed for the dashboard branch. On
-  // other phases we return a conservative default so downstream code never
-  // has to null-check the field. The service contract guarantees this shape
-  // after U5.
-  const postMastery = ui.phase === 'dashboard' && typeof service.getPostMasteryState === 'function'
+  // Post-mastery aggregates are needed on the dashboard (mode selection,
+  // Alt+4 gate), the summary scene (to render "Next check" in Guardian
+  // mode), and the Word Bank (to gate the four Guardian filter chips and
+  // feed `guardianMap` into the row predicates). Session-phase rendering
+  // does not consult these, so we skip the storage read there to keep the
+  // session hot-path cheap.
+  const postMasteryPhases = new Set(['dashboard', 'summary', 'word-bank']);
+  const postMastery = postMasteryPhases.has(ui.phase) && typeof service.getPostMasteryState === 'function'
     ? service.getPostMasteryState(learner.id)
     : {
         allWordsMega: false,

@@ -4,9 +4,15 @@ import assert from 'node:assert/strict';
 import {
   MODE_CARDS,
   POST_MEGA_MODE_CARDS,
+  WORD_BANK_FILTER_IDS,
+  WORD_BANK_GUARDIAN_FILTER_IDS,
   guardianLabel,
+  guardianSummaryCards,
   renderAction,
   summaryModeLabel,
+  wordBankAggregateCards,
+  wordBankAggregateStats,
+  wordBankFilterMatchesStatus,
 } from '../src/subjects/spelling/components/spelling-view-model.js';
 
 function createEventStub() {
@@ -215,4 +221,276 @@ test('guardianLabel: returns "Not guarded yet" when the record is missing or mal
   assert.equal(guardianLabel(undefined, today), 'Not guarded yet');
   assert.equal(guardianLabel('garbage', today), 'Not guarded yet');
   assert.equal(guardianLabel([], today), 'Not guarded yet');
+});
+
+// ----- U6: Word Bank guardian filter predicates + aggregates ------------------
+
+test('WORD_BANK_FILTER_IDS gains exactly four Guardian IDs on top of the six legacy IDs', () => {
+  // Baseline: legacy chips shipped before U6 were all/due/weak/learning/secure/unseen.
+  const legacyIds = ['all', 'due', 'weak', 'learning', 'secure', 'unseen'];
+  for (const id of legacyIds) {
+    assert.equal(WORD_BANK_FILTER_IDS.has(id), true, `${id} must still be in WORD_BANK_FILTER_IDS`);
+  }
+  const guardianIds = ['guardianDue', 'wobbling', 'renewedRecently', 'neverRenewed'];
+  for (const id of guardianIds) {
+    assert.equal(WORD_BANK_FILTER_IDS.has(id), true, `${id} must be in WORD_BANK_FILTER_IDS`);
+  }
+  assert.equal(WORD_BANK_FILTER_IDS.size, legacyIds.length + guardianIds.length);
+  assert.deepEqual([...WORD_BANK_GUARDIAN_FILTER_IDS], guardianIds);
+});
+
+test('wordBankFilterMatchesStatus: legacy filters preserve their historic semantics (no guardian context)', () => {
+  // Legacy contract: two positional args, no third options arg. Guardian
+  // shape must not leak in when callers only pass (filter, status).
+  assert.equal(wordBankFilterMatchesStatus('all', 'secure'), true);
+  assert.equal(wordBankFilterMatchesStatus('all', 'new'), true);
+  assert.equal(wordBankFilterMatchesStatus('secure', 'secure'), true);
+  assert.equal(wordBankFilterMatchesStatus('secure', 'due'), false);
+  assert.equal(wordBankFilterMatchesStatus('due', 'due'), true);
+  assert.equal(wordBankFilterMatchesStatus('due', 'secure'), false);
+  assert.equal(wordBankFilterMatchesStatus('weak', 'trouble'), true);
+  assert.equal(wordBankFilterMatchesStatus('weak', 'secure'), false);
+  assert.equal(wordBankFilterMatchesStatus('learning', 'learning'), true);
+  assert.equal(wordBankFilterMatchesStatus('learning', 'new'), false);
+  assert.equal(wordBankFilterMatchesStatus('unseen', 'new'), true);
+  assert.equal(wordBankFilterMatchesStatus('unseen', 'secure'), false);
+});
+
+test('wordBankFilterMatchesStatus: guardianDue is true when nextDueDay <= todayDay on a secure word', () => {
+  const today = 20_000;
+  assert.equal(
+    wordBankFilterMatchesStatus('guardianDue', 'secure', {
+      guardian: { nextDueDay: today, wobbling: false },
+      todayDay: today,
+    }),
+    true,
+  );
+  assert.equal(
+    wordBankFilterMatchesStatus('guardianDue', 'secure', {
+      guardian: { nextDueDay: today - 5, wobbling: false },
+      todayDay: today,
+    }),
+    true,
+  );
+});
+
+test('wordBankFilterMatchesStatus: guardianDue is false when nextDueDay > todayDay', () => {
+  const today = 20_000;
+  assert.equal(
+    wordBankFilterMatchesStatus('guardianDue', 'secure', {
+      guardian: { nextDueDay: today + 1, wobbling: false },
+      todayDay: today,
+    }),
+    false,
+  );
+});
+
+test('wordBankFilterMatchesStatus: guardianDue requires a guardian record (returns false when absent)', () => {
+  const today = 20_000;
+  assert.equal(
+    wordBankFilterMatchesStatus('guardianDue', 'secure', { guardian: null, todayDay: today }),
+    false,
+  );
+});
+
+test('wordBankFilterMatchesStatus: guardianDue requires status === "secure" — due non-secure words show under the legacy chip, not here', () => {
+  const today = 20_000;
+  const dueRecord = { nextDueDay: today, wobbling: false };
+  assert.equal(wordBankFilterMatchesStatus('guardianDue', 'due', { guardian: dueRecord, todayDay: today }), false);
+  assert.equal(wordBankFilterMatchesStatus('guardianDue', 'trouble', { guardian: dueRecord, todayDay: today }), false);
+});
+
+test('wordBankFilterMatchesStatus: wobbling is true iff guardian.wobbling === true', () => {
+  assert.equal(wordBankFilterMatchesStatus('wobbling', 'secure', { guardian: { wobbling: true } }), true);
+  assert.equal(wordBankFilterMatchesStatus('wobbling', 'secure', { guardian: { wobbling: false } }), false);
+  assert.equal(wordBankFilterMatchesStatus('wobbling', 'secure', { guardian: null }), false);
+  assert.equal(wordBankFilterMatchesStatus('wobbling', 'secure', {}), false);
+});
+
+test('wordBankFilterMatchesStatus: renewedRecently inclusive at the 7-day boundary', () => {
+  const today = 20_000;
+  assert.equal(
+    wordBankFilterMatchesStatus('renewedRecently', 'secure', {
+      guardian: { lastReviewedDay: today - 7 },
+      todayDay: today,
+    }),
+    true,
+    'exactly 7 days ago counts as recent',
+  );
+  assert.equal(
+    wordBankFilterMatchesStatus('renewedRecently', 'secure', {
+      guardian: { lastReviewedDay: today - 8 },
+      todayDay: today,
+    }),
+    false,
+    '8 days ago is outside the window',
+  );
+  assert.equal(
+    wordBankFilterMatchesStatus('renewedRecently', 'secure', {
+      guardian: { lastReviewedDay: null },
+      todayDay: today,
+    }),
+    false,
+    'null lastReviewedDay never qualifies',
+  );
+  assert.equal(
+    wordBankFilterMatchesStatus('renewedRecently', 'secure', {
+      guardian: null,
+      todayDay: today,
+    }),
+    false,
+    'no guardian record → false',
+  );
+});
+
+test('wordBankFilterMatchesStatus: neverRenewed is true only for secure words with no guardian record', () => {
+  assert.equal(
+    wordBankFilterMatchesStatus('neverRenewed', 'secure', { guardian: null }),
+    true,
+    'secure + no guardian → true',
+  );
+  assert.equal(
+    wordBankFilterMatchesStatus('neverRenewed', 'secure', {}),
+    true,
+    'options w/ no guardian key → true',
+  );
+  assert.equal(
+    wordBankFilterMatchesStatus('neverRenewed', 'due', { guardian: null }),
+    false,
+    'non-secure never qualifies',
+  );
+  assert.equal(
+    wordBankFilterMatchesStatus('neverRenewed', 'new', { guardian: null }),
+    false,
+  );
+  assert.equal(
+    wordBankFilterMatchesStatus('neverRenewed', 'secure', {
+      guardian: { reviewLevel: 0, lastReviewedDay: null, nextDueDay: 20_000, wobbling: false },
+    }),
+    false,
+    'secure with a guardian record → false',
+  );
+});
+
+test('wordBankAggregateStats: with no guardian context, returns the legacy six-field shape identically', () => {
+  const words = [
+    { slug: 'a', status: 'secure' },
+    { slug: 'b', status: 'secure' },
+    { slug: 'c', status: 'due' },
+    { slug: 'd', status: 'trouble' },
+    { slug: 'e', status: 'learning' },
+    { slug: 'f', status: 'new' },
+  ];
+  const stats = wordBankAggregateStats(words);
+  assert.deepEqual(stats, { total: 6, secure: 2, due: 1, trouble: 1, learning: 1, unseen: 1 });
+  // No guardian fields should leak in when context is absent.
+  assert.equal(Object.prototype.hasOwnProperty.call(stats, 'guardianDue'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(stats, 'wobbling'), false);
+});
+
+test('wordBankAggregateStats: with guardian context, appends the four Guardian counts', () => {
+  const today = 20_000;
+  const words = [
+    { slug: 'renew', status: 'secure' },   // renewed recently + not due
+    { slug: 'due', status: 'secure' },     // guardian due today
+    { slug: 'wob', status: 'secure' },     // wobbling
+    { slug: 'none', status: 'secure' },    // secure, no guardian record
+    { slug: 'fresh', status: 'new' },      // no Guardian effect (non-secure)
+  ];
+  const guardianMap = {
+    renew: { nextDueDay: today + 7, lastReviewedDay: today - 3, wobbling: false },
+    due: { nextDueDay: today, lastReviewedDay: today - 30, wobbling: false },
+    wob: { nextDueDay: today, lastReviewedDay: today - 1, wobbling: true },
+  };
+  const stats = wordBankAggregateStats(words, { guardianMap, todayDay: today });
+  assert.equal(stats.total, 5);
+  assert.equal(stats.secure, 4);
+  assert.equal(stats.unseen, 1);
+  assert.equal(stats.guardianDue, 2, 'due + wob both qualify as guardian due (both nextDueDay <= today)');
+  assert.equal(stats.wobbling, 1);
+  // "renew" reviewed 3 days ago, "wob" reviewed yesterday — both count as renewed recently.
+  assert.equal(stats.renewedRecently, 2);
+  assert.equal(stats.neverRenewed, 1, 'only "none" is secure with no guardian record');
+});
+
+test('wordBankAggregateCards: with showGuardian === false (default) returns the 6 legacy cards', () => {
+  const stats = {
+    total: 10, secure: 5, due: 2, trouble: 1, learning: 1, unseen: 1,
+  };
+  const cards = wordBankAggregateCards(stats, 'Words in pool');
+  assert.equal(cards.length, 6);
+  assert.deepEqual(cards.map((c) => c.label), [
+    'Total', 'Secure', 'Due now', 'Trouble', 'Learning', 'Unseen',
+  ]);
+});
+
+test('wordBankAggregateCards: with showGuardian === true appends 4 Guardian cards (10 total)', () => {
+  const stats = {
+    total: 10, secure: 5, due: 2, trouble: 1, learning: 1, unseen: 1,
+    guardianDue: 3, wobbling: 1, renewedRecently: 2, neverRenewed: 4,
+  };
+  const cards = wordBankAggregateCards(stats, 'Words in pool', { showGuardian: true });
+  assert.equal(cards.length, 10);
+  const labels = cards.map((c) => c.label);
+  // Legacy order must still come first so the existing visual rhythm is preserved.
+  assert.deepEqual(labels.slice(0, 6), ['Total', 'Secure', 'Due now', 'Trouble', 'Learning', 'Unseen']);
+  assert.deepEqual(labels.slice(6), ['Renewed (7d)', 'Guardian due', 'Wobbling', 'Untouched']);
+  assert.equal(cards[6].value, 2);
+  assert.equal(cards[7].value, 3);
+  assert.equal(cards[8].value, 1);
+  assert.equal(cards[9].value, 4);
+});
+
+test('wordBankAggregateCards: showGuardian defaults to false when options omit the flag', () => {
+  const stats = { total: 1, secure: 1, due: 0, trouble: 0, learning: 0, unseen: 0 };
+  const cards = wordBankAggregateCards(stats, 'Words', {});
+  assert.equal(cards.length, 6);
+});
+
+// ----- U6: Guardian summary cards ---------------------------------------------
+
+test('guardianSummaryCards: derives renewed = totalWords - mistakes.length and wobbled = mistakes.length', () => {
+  const summary = { totalWords: 5, mistakes: [{ slug: 'a' }, { slug: 'b' }] };
+  const cards = guardianSummaryCards({ summary, nextGuardianDueDay: 20_005, todayDay: 20_000 });
+  assert.equal(cards.length, 3);
+  const [renewed, wobbling, nextCheck] = cards;
+  assert.equal(renewed.id, 'guardian-renewed');
+  assert.equal(renewed.value, 3);
+  assert.equal(wobbling.id, 'guardian-wobbling');
+  assert.equal(wobbling.value, 2);
+  assert.equal(nextCheck.id, 'guardian-next-check');
+  assert.equal(nextCheck.value, '5 days');
+});
+
+test('guardianSummaryCards: formats "Today" / "Tomorrow" / "N days" on the next-check card', () => {
+  const today = 20_000;
+  const mkCards = (delta) => guardianSummaryCards({
+    summary: { totalWords: 1, mistakes: [] },
+    nextGuardianDueDay: today + delta,
+    todayDay: today,
+  });
+  assert.equal(mkCards(0)[2].value, 'Today');
+  assert.equal(mkCards(-3)[2].value, 'Today', 'overdue collapses to "Today"');
+  assert.equal(mkCards(1)[2].value, 'Tomorrow');
+  assert.equal(mkCards(5)[2].value, '5 days');
+  assert.equal(mkCards(60)[2].value, '60 days');
+});
+
+test('guardianSummaryCards: when no Guardian work remains, next-check renders "—"', () => {
+  const cards = guardianSummaryCards({
+    summary: { totalWords: 1, mistakes: [] },
+    nextGuardianDueDay: null,
+    todayDay: 20_000,
+  });
+  assert.equal(cards[2].value, '—');
+});
+
+test('guardianSummaryCards: clamps wobbled to totalWords when summary.mistakes is inconsistent', () => {
+  // Defensive branch: a duplicated mistake entry or a mistaken mapping
+  // cannot push wobbled > totalWords. The UI never displays a negative
+  // renewed count.
+  const summary = { totalWords: 2, mistakes: [{ slug: 'a' }, { slug: 'b' }, { slug: 'c' }] };
+  const cards = guardianSummaryCards({ summary, nextGuardianDueDay: null, todayDay: 20_000 });
+  assert.equal(cards[0].value, 0, 'renewed never goes negative');
+  assert.equal(cards[1].value, 2, 'wobbled clamps to totalWords');
 });
