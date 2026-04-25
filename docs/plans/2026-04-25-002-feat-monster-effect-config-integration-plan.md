@@ -389,7 +389,7 @@ on app boot OR config change:
 
 ---
 
-- [ ] U5. **Cloud draft + strict publish + validation**
+- [x] U5. **Cloud draft + strict publish + validation**
 
 **Goal:** Extend PR #100's autosave, cloud draft write, validation, publish, and restore paths to cover the new `effect` sub-document. One publish action covers visual + effect together; one validation gate stops both.
 

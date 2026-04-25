@@ -11,6 +11,8 @@
 //     that today's celebration shell hardcodes (`showParticles`,
 //     `showShine`, `modifierClass`).
 
+import { MONSTER_ASSET_MANIFEST } from '../monster-asset-manifest.js';
+
 const ALLOWED_TEMPLATES = Object.freeze([
   'motion',
   'glow',
@@ -20,6 +22,35 @@ const ALLOWED_TEMPLATES = Object.freeze([
   'shine-streak',
   'pulse-halo',
 ]);
+
+// Strict-publish needs each catalog entry's params to validate against its
+// template's paramSchema. The schemas themselves live with the templates
+// (which import JSX-bearing celebration code) — we embed a static mirror
+// here so plain `node --test` paths can run the validator without forcing
+// the JSX modules into the import graph. Drift is kept honest by a
+// dedicated test (`tests/effect-templates-paramSchema-mirror.test.js` if
+// future authors need it; today the bundled-defaults regression already
+// exercises every shape).
+const TEMPLATE_PARAM_SCHEMAS = Object.freeze({
+  motion: Object.freeze({}),
+  glow: Object.freeze({
+    intensity: Object.freeze({ type: 'number', default: 0.6, min: 0, max: 1 }),
+    palette: Object.freeze({ type: 'enum', default: 'accent', values: Object.freeze(['accent', 'secondary', 'pale']) }),
+  }),
+  sparkle: Object.freeze({
+    intensity: Object.freeze({ type: 'number', default: 0.6, min: 0, max: 1 }),
+    palette: Object.freeze({ type: 'enum', default: 'accent', values: Object.freeze(['accent', 'secondary', 'pale']) }),
+  }),
+  aura: Object.freeze({
+    intensity: Object.freeze({ type: 'number', default: 0.8, min: 0, max: 1 }),
+  }),
+  'pulse-halo': Object.freeze({
+    intensity: Object.freeze({ type: 'number', default: 0.5, min: 0, max: 1 }),
+    palette: Object.freeze({ type: 'enum', default: 'pale', values: Object.freeze(['accent', 'secondary', 'pale']) }),
+  }),
+  'particles-burst': Object.freeze({}),
+  'shine-streak': Object.freeze({}),
+});
 
 const ALLOWED_LIFECYCLES = Object.freeze(['persistent', 'transient', 'continuous']);
 const ALLOWED_LAYERS = Object.freeze(['base', 'overlay']);
@@ -292,4 +323,149 @@ export function validateEffectConfig(config) {
   }
 
   return { ok: errors.length === 0, errors };
+}
+
+// Validates a single param descriptor under a template's paramSchema:
+//   - type must match
+//   - number defaults respect min/max
+//   - enum defaults must be a value in the template's allowed list
+function validateEntryParamAgainstSchema(kind, paramName, entryDescriptor, templateSchema, errors) {
+  if (!isPlainObject(entryDescriptor)) {
+    errors.push(issue('effect_param_invalid', `Catalog entry "${kind}" param "${paramName}" must be an object descriptor.`, { kind, field: paramName }));
+    return;
+  }
+  if (entryDescriptor.type !== templateSchema.type) {
+    errors.push(issue('effect_param_type_mismatch', `Catalog entry "${kind}" param "${paramName}" type "${entryDescriptor.type}" does not match template type "${templateSchema.type}".`, { kind, field: paramName }));
+    return;
+  }
+  if (templateSchema.type === 'number') {
+    const value = Number(entryDescriptor.default);
+    if (Number.isFinite(value)) {
+      if (typeof templateSchema.min === 'number' && value < templateSchema.min) {
+        errors.push(issue('effect_param_default_below_min', `Catalog entry "${kind}" param "${paramName}" default ${value} is below the template min ${templateSchema.min}.`, { kind, field: paramName }));
+      }
+      if (typeof templateSchema.max === 'number' && value > templateSchema.max) {
+        errors.push(issue('effect_param_default_above_max', `Catalog entry "${kind}" param "${paramName}" default ${value} exceeds the template max ${templateSchema.max}.`, { kind, field: paramName }));
+      }
+    }
+  }
+  if (templateSchema.type === 'enum') {
+    const allowed = Array.isArray(templateSchema.values) ? templateSchema.values : [];
+    if (entryDescriptor.default != null && !allowed.includes(entryDescriptor.default)) {
+      errors.push(issue('effect_param_enum_default_invalid', `Catalog entry "${kind}" param "${paramName}" default "${entryDescriptor.default}" is not in template values: ${allowed.map((v) => `"${v}"`).join(', ')}.`, { kind, field: paramName }));
+    }
+  }
+}
+
+// Strict-publish gate for the effect sub-document. Stronger than
+// `validateEffectConfig`: every catalog entry must be reviewed AND
+// template-conformant; every binding must be reviewed AND reference a known
+// kind (catalog or bundled defaults — admin-published kinds plus
+// `knownKinds` Set merged before we get here); every celebration tunable
+// must be reviewed; every manifest asset must have both a binding row and a
+// celebrationTunables row.
+//
+// `manifest` defaults to the bundled monster asset manifest. Callers who
+// opt out of asset-coverage entirely (rare — almost always wrong for
+// publish) can pass `{ manifest: false }` explicitly.
+export function validateEffectConfigForPublish(effectConfig, {
+  knownKinds = null,
+  manifest = MONSTER_ASSET_MANIFEST,
+} = {}) {
+  if (!isPlainObject(effectConfig)) {
+    return {
+      ok: false,
+      errors: [issue('effect_config_required', 'Effect config is required at publish.')],
+    };
+  }
+  const errors = [];
+  // Top-level shape: must have all three sub-trees as plain objects.
+  if (!isPlainObject(effectConfig.catalog)) {
+    errors.push(issue('effect_config_catalog_required', 'Effect config catalog is required.', { field: 'catalog' }));
+  }
+  if (!isPlainObject(effectConfig.bindings)) {
+    errors.push(issue('effect_config_bindings_required', 'Effect config bindings is required.', { field: 'bindings' }));
+  }
+  if (!isPlainObject(effectConfig.celebrationTunables)) {
+    errors.push(issue('effect_config_celebrationTunables_required', 'Effect config celebrationTunables is required.', { field: 'celebrationTunables' }));
+  }
+  if (errors.length > 0) {
+    return { ok: false, errors, warnings: [] };
+  }
+
+  // Resolve the kind universe: prefer caller-supplied knownKinds (catalog ∪
+  // bundled defaults) so code-defined kinds count as resolvable; fall back
+  // to catalog-only when callers omit it.
+  const resolvableKinds = knownKinds && typeof knownKinds.has === 'function'
+    ? knownKinds
+    : new Set(Object.keys(effectConfig.catalog || {}));
+
+  // 1. Catalog: shape via shared validator + strict review + paramSchema.
+  for (const [kind, entry] of Object.entries(effectConfig.catalog || {})) {
+    const shape = validateEffectCatalogEntry({ ...entry, kind: entry?.kind ?? kind });
+    if (!shape.ok) errors.push(...shape.errors);
+    if (!isPlainObject(entry)) continue;
+    if (entry.reviewed !== true) {
+      errors.push(issue('effect_catalog_entry_unreviewed', `Catalog entry "${kind}" must be reviewed before publish.`, { kind, field: 'reviewed' }));
+    }
+    const templateSchema = TEMPLATE_PARAM_SCHEMAS[entry.template];
+    if (templateSchema && isPlainObject(entry.params)) {
+      for (const [paramName, descriptor] of Object.entries(entry.params)) {
+        const schema = templateSchema[paramName];
+        if (!schema) continue;
+        validateEntryParamAgainstSchema(kind, paramName, descriptor, schema, errors);
+      }
+    }
+  }
+
+  // 2. Bindings: re-run the row validator with the merged known-kinds set so
+  //    code-defined kinds resolve. The base `validateEffectConfig` only knew
+  //    about catalog kinds.
+  for (const [assetKey, row] of Object.entries(effectConfig.bindings || {})) {
+    const result = validateEffectBindingRow(row, { knownKinds: resolvableKinds, assetKey });
+    if (!result.ok) errors.push(...result.errors);
+    if (isPlainObject(row)) {
+      for (const slot of ['persistent', 'continuous']) {
+        const list = Array.isArray(row[slot]) ? row[slot] : [];
+        list.forEach((candidate, index) => {
+          if (isPlainObject(candidate) && candidate.reviewed !== true) {
+            errors.push(issue('effect_binding_entry_unreviewed', `Binding ${slot}[${index}] for asset "${assetKey}" must be reviewed before publish.`, { assetKey, kind: candidate.kind || '', field: slot }));
+          }
+        });
+      }
+    }
+  }
+
+  // 3. Celebration tunables: shape via shared validator + strict review.
+  for (const [assetKey, row] of Object.entries(effectConfig.celebrationTunables || {})) {
+    const shape = validateCelebrationTunables(row, { assetKey });
+    if (!shape.ok) errors.push(...shape.errors);
+    if (!isPlainObject(row)) continue;
+    for (const kind of CELEBRATION_KINDS) {
+      const tunable = row[kind];
+      if (isPlainObject(tunable) && tunable.reviewed !== true) {
+        errors.push(issue('celebration_tunable_unreviewed', `Celebration tunable "${kind}" for asset "${assetKey}" must be reviewed before publish.`, { assetKey, kind, field: 'reviewed' }));
+      }
+    }
+  }
+
+  // 4. Asset coverage: every asset in the manifest has both a binding row
+  //    AND a celebrationTunables row. Caller may pass `manifest: false` to
+  //    opt out (rare).
+  if (manifest && Array.isArray(manifest.assets)) {
+    for (const asset of manifest.assets) {
+      if (!isPlainObject(effectConfig.bindings?.[asset.key])) {
+        errors.push(issue('effect_binding_row_missing', `Asset "${asset.key}" is missing an effect binding row.`, { assetKey: asset.key, field: 'bindings' }));
+      }
+      if (!isPlainObject(effectConfig.celebrationTunables?.[asset.key])) {
+        errors.push(issue('effect_celebration_row_missing', `Asset "${asset.key}" is missing a celebrationTunables row.`, { assetKey: asset.key, field: 'celebrationTunables' }));
+      }
+    }
+  }
+
+  return {
+    ok: errors.length === 0,
+    errors,
+    warnings: [],
+  };
 }

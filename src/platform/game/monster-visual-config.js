@@ -1,6 +1,10 @@
 import { MONSTER_ASSET_MANIFEST } from './monster-asset-manifest.js';
 import { MONSTER_ASSET_VERSION } from './monsters.js';
-import { validateEffectConfig } from './render/effect-config-schema.js';
+import {
+  validateEffectConfig,
+  validateEffectConfigForPublish,
+} from './render/effect-config-schema.js';
+import { BUNDLED_EFFECT_CATALOG } from './render/effect-config-defaults.js';
 
 export const MONSTER_VISUAL_SCHEMA_VERSION = 1;
 export const MONSTER_VISUAL_CONTEXTS = Object.freeze([
@@ -523,8 +527,8 @@ export function resolveMonsterVisual({
 // Combined publish envelope: { visual, effect }. Existing visual-only
 // callers continue to use `validateMonsterVisualConfigForPublish`; this
 // orchestrator runs both validators and aggregates errors. A missing
-// `effect` is tolerated with a warning so the publish gate can run before
-// U5 lands the strict effect publish path.
+// `effect` is tolerated with a warning so the permissive bootstrap path
+// can run while admins migrate.
 export function validatePublishedConfigEnvelope(envelope, options = {}) {
   if (!isPlainObject(envelope)) {
     return {
@@ -543,6 +547,50 @@ export function validatePublishedConfigEnvelope(envelope, options = {}) {
     const effectResult = validateEffectConfig(envelope.effect);
     if (!effectResult.ok) {
       errors.push(...effectResult.errors);
+    }
+  }
+
+  return {
+    ok: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+
+// Strict combined publish gate. Used by the worker publish handler and the
+// admin panel's local pre-publish check. Unlike the permissive envelope
+// validator above, the effect sub-document is REQUIRED here and every
+// entry must be reviewed (mirrors the visual side's R20 strict gate).
+//
+// `knownKinds` for binding resolution defaults to (catalog kinds ∪ bundled
+// defaults) so admin-published catalogs never have to repeat the eight
+// code-defined kinds.
+export function validatePublishedConfigForPublish(envelope, options = {}) {
+  if (!isPlainObject(envelope)) {
+    return {
+      ok: false,
+      errors: [issue('published_config_envelope_required', 'Published config envelope is required.')],
+      warnings: [],
+    };
+  }
+  const visualResult = validateMonsterVisualConfigForPublish(envelope.visual, options);
+  const errors = [...visualResult.errors];
+  const warnings = [...(visualResult.warnings || [])];
+
+  if (envelope.effect == null) {
+    errors.push(issue('published_config_effect_required', 'Effect sub-document is required at publish.', { field: 'effect' }));
+  } else {
+    const catalogKinds = isPlainObject(envelope.effect.catalog) ? Object.keys(envelope.effect.catalog) : [];
+    const knownKinds = new Set([...catalogKinds, ...Object.keys(BUNDLED_EFFECT_CATALOG)]);
+    const effectResult = validateEffectConfigForPublish(envelope.effect, {
+      knownKinds,
+      manifest: options.manifest || MONSTER_ASSET_MANIFEST,
+    });
+    if (!effectResult.ok) {
+      errors.push(...effectResult.errors);
+    }
+    if (effectResult.warnings) {
+      warnings.push(...effectResult.warnings);
     }
   }
 
