@@ -157,17 +157,55 @@ Punctuation emits domain events:
 - `punctuation.unit-secured`
 - `punctuation.session-completed`
 
-Reward projection maps secure units to Bellstorm Coast creatures:
+### Monster Roster (Phase 2)
 
-- Endmarks: Pealark
-- Apostrophe: Claspin
-- Speech: Quoral
-- Comma / Flow: Curlune
-- List / Structure: Colisk
-- Boundary: Hyphang
-- Published release aggregate: Carillon
+The Punctuation roster collapsed in Phase 2 to three active direct creatures plus one grand:
 
-The Punctuation service does not mutate game state directly. It emits domain events; the reward projection records deduplicated mastery keys in the Monster Codex state. Replayed commands or duplicate `unit-secured` events do not double-award the same mastery key.
+- Pealark: Endmarks, Speech, Boundary (5 reward units)
+- Claspin: Apostrophe (2 reward units)
+- Curlune: Comma / Flow, List / Structure (7 reward units)
+- Quoral (grand): full 14 published reward units aggregated across every cluster
+
+Reserved for future Punctuation expansions:
+
+- Colisk
+- Hyphang
+- Carillon
+
+Reserved creatures stay in the `MONSTERS` manifest so the Monster Visual Config tooling, asset manifest, and Admin review pipeline continue to cover them. They are filtered out of active learner Codex / Parent Hub / Admin Hub summaries via the `PUNCTUATION_RESERVED_MONSTER_IDS` constant.
+
+### Migration from the pre-Phase-2 roster
+
+Pre-flip learner progress is preserved without a stored-state rewrite:
+
+- `src/platform/game/mastery/punctuation.js` exports a read-only `normalisePunctuationMonsterState(state)` that unions stored `carillon.mastered` keys into the new `quoral` grand view on every read.
+- `punctuationTotal(entry, fallback, { monsterId })` forces the grand monster to read the release denominator (14) regardless of stored `publishedTotal`. Pre-flip learners with `quoral.publishedTotal: 1` display correctly.
+- Reward writes on the new cluster map organically rewrite stored `publishedTotal` on the next post-flip secure, so stored state self-heals without a migration script.
+- `worker/src/projections/events.js` adds `terminalRewardToken` — a projection-layer dedupe on `(learnerId, monsterId, kind, releaseId)` that collapses pre-flip + post-flip `caught`/`mega` events for the same milestone. Cross-release mega re-emission stays intentional.
+
+### Rollback
+
+Rollback to the pre-Phase-2 bundle is lossless for learners whose stored Quoral entry has `publishedTotal: 1` with one mastered key. The pre-flip bundle reads the stored `publishedTotal: 1` directly (pre-flip Quoral was a direct Speech monster with `masteredMax: 1`), so `punctuationStageFor(1, 1)` returns stage 4 — exactly the stage these learners saw pre-flip. Quoral only carried `speech-core` under the pre-Phase-2 roster, so no learner could have `publishedTotal > 1` from the old code path. Post-Phase-2, if U7's writer path has rewritten a learner's stored `publishedTotal` upward to 14 before rollback, the pre-flip bundle would read `punctuationStageFor(mastered, 14)` and display stage 1 instead of stage 4. That case is avoided in practice because U6's read-time override provides correct display without requiring a stored-value rewrite; confirm the cohort is empty via production D1 before deploying rollback.
+
+### Domain events
+
+The Punctuation service does not mutate game state directly. It emits domain events; the reward projection records deduplicated mastery keys in the Monster Codex state. Replayed commands or duplicate `unit-secured` events do not double-award the same mastery key. Mastery keys use the stable format:
+
+```txt
+punctuation:<releaseId>:<clusterId>:<rewardUnitId>
+```
+
+Migration-read coverage for historical mastery keys lives in `tests/punctuation-monster-migration.test.js`.
+
+## AI Context Pack Decision (Phase 2)
+
+The Worker plumbing for an AI-assisted context-pack compiler stays in place, but the learner React surface deliberately ignores the field in Phase 2. The existing `safeContextPackSummary` allowlist ensures any future upstream field addition trips the fail-closed redaction guard added in Phase 2 U2. Phase 3 will decide whether to productise the context pack as a post-feedback learner surface or keep it teacher/admin-only; until then, the Parent / Admin evidence path is the only surface that consumes it.
+
+## Read-Model Redaction (Phase 2)
+
+Every phase output (active item, feedback, summary, GPS review, analytics, Parent / Admin evidence, context-pack summary) is built from explicit allowlists. A recursive `assertNoForbiddenReadModelKeys` scan runs on the assembled payload before it leaves the Worker so a forbidden field added at any depth of any branch (e.g. `summary.metadata.rawGenerator`, `reviewRow.validator`, `analytics.byItemMode[].rubric`) throws in `NODE_ENV=test` and emits a structured warning + strips the field in production.
+
+The forbidden-key set is kept aligned between `worker/src/subjects/punctuation/read-models.js` (`FORBIDDEN_READ_MODEL_KEYS`) and `scripts/punctuation-production-smoke.mjs` (`FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS`). Adding a new forbidden key means editing both files in the same PR; CI will fail with a clear "server-only field: &lt;key&gt;" message if drift is introduced.
 
 ## Browser Read Model And Lockdown
 
