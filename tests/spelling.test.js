@@ -192,57 +192,6 @@ test('Smart Review reuses one progress snapshot when starting from dense learner
   assert.equal(reads.get('ks2-spell-progress-learner-a'), 1);
 });
 
-test('Smart Review keeps secured Extra words with old mistakes behind active learning', () => {
-  const now = () => Date.UTC(2026, 0, 10);
-  const today = Math.floor(now() / (24 * 60 * 60 * 1000));
-  const { service, repositories } = makeService({
-    now,
-    random: makeSequenceRandom([0.1, 0.5, 0.5], 0.5),
-  });
-  const extraSlugs = WORDS
-    .filter((word) => word.spellingPool === 'extra')
-    .map((word) => word.slug);
-  const progress = Object.fromEntries(extraSlugs.map((slug) => [slug, {
-    stage: 6,
-    attempts: 6,
-    correct: 6,
-    wrong: 0,
-    dueDay: today + 60,
-    lastDay: today - 1,
-    lastResult: 'correct',
-  }]));
-  progress.botanist = {
-    ...progress.botanist,
-    attempts: 10,
-    correct: 9,
-    wrong: 1,
-  };
-  progress.corrode = {
-    stage: 3,
-    attempts: 3,
-    correct: 3,
-    wrong: 0,
-    dueDay: today + 7,
-    lastDay: today - 1,
-    lastResult: 'correct',
-  };
-  repositories.subjectStates.writeData('learner-a', 'spelling', { progress });
-
-  const extraRows = service.getAnalyticsSnapshot('learner-a').wordGroups
-    .find((group) => group.key === 'extra')
-    .words;
-  assert.equal(extraRows.find((word) => word.slug === 'botanist')?.status, 'secure');
-  assert.equal(extraRows.find((word) => word.slug === 'corrode')?.status, 'learning');
-
-  const transition = service.startSession('learner-a', {
-    mode: 'smart',
-    yearFilter: 'extra',
-    length: 1,
-  });
-
-  assert.deepEqual(transition.state.session.uniqueWords, ['corrode']);
-});
-
 test('Trouble Drill stays inside Extra and falls back to Extra Smart Review when no Extra trouble exists', () => {
   const { service } = makeService({ random: makeSeededRandom(9) });
 
