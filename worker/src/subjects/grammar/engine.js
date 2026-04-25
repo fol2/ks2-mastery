@@ -429,6 +429,11 @@ function stateData(state) {
     retryQueue: cloneSerialisable(state.retryQueue) || [],
     misconceptions: cloneSerialisable(state.misconceptions) || {},
     recentAttempts: cloneSerialisable(state.recentAttempts) || [],
+    // transferEvidence is included conditionally to keep the persisted payload
+    // compact for learners who have not touched the non-scored transfer lane.
+    // On reload, normaliseServerGrammarData defaults the slot back to {}, so
+    // the asymmetry with always-written slots (retryQueue, misconceptions) is
+    // cosmetic only.
     ...(isPlainObject(state.transferEvidence) && Object.keys(state.transferEvidence).length
       ? { transferEvidence: cloneSerialisable(state.transferEvidence) }
       : {}),

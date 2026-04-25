@@ -254,10 +254,47 @@ test('U7: save-transfer-evidence never updates mastery, retryQueue, or reward pr
     'mastery must not change across save-transfer-evidence');
   assert.equal(JSON.stringify(result.state.retryQueue), retryBefore,
     'retryQueue must not change across save-transfer-evidence');
+  assert.equal(JSON.stringify(result.state.misconceptions), JSON.stringify(priming.state.misconceptions),
+    'misconceptions must not change across save-transfer-evidence');
   // The event must not resemble any scored event type
   for (const event of result.events) {
     assert.notEqual(event.type, 'grammar.answer-submitted');
     assert.notEqual(event.type, 'grammar.concept-secured');
     assert.notEqual(event.type, 'grammar.misconception-seen');
   }
+});
+
+test('U7: save for an existing prompt at the cap succeeds (quota only trips on NEW prompt slots)', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  let state = createInitialGrammarState();
+  // Fill the quota with filler slots so only existing promptIds are available.
+  state.transferEvidence = {};
+  for (let i = 0; i < GRAMMAR_TRANSFER_MAX_PROMPTS - 1; i += 1) {
+    state.transferEvidence[`filler-${i}`] = {
+      promptId: `filler-${i}`,
+      latest: { writing: 'x', selfAssessment: [], savedAt: 1, source: 'transfer-lane' },
+      history: [],
+      updatedAt: 1,
+    };
+  }
+  // Add the real prompt so there are 20 total (at the cap) and the real one is re-saveable.
+  const realPromptId = GRAMMAR_TRANSFER_PROMPT_IDS[0];
+  state.transferEvidence[realPromptId] = {
+    promptId: realPromptId,
+    latest: { writing: 'initial', selfAssessment: [], savedAt: 1, source: 'transfer-lane' },
+    history: [],
+    updatedAt: 1,
+  };
+
+  // A re-save for the existing realPromptId must succeed even at the cap.
+  const result = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: state, data: { ...state } },
+    command: 'save-transfer-evidence',
+    requestId: 'tx-existing-at-cap',
+    payload: { promptId: realPromptId, writing: 'updated draft' },
+  });
+  assert.equal(result.state.transferEvidence[realPromptId].latest.writing, 'updated draft');
+  // Quota unchanged
+  assert.equal(Object.keys(result.state.transferEvidence).length, GRAMMAR_TRANSFER_MAX_PROMPTS);
 });

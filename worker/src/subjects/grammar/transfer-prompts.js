@@ -6,10 +6,13 @@
 // import of `worker/src/subjects/grammar/transfer-prompts.js`.
 //
 // Per docs/grammar-transfer-decision.md, the transfer lane is non-scored.
-// These prompts use the `manualReviewOnly` answerSpec kind from answer-spec.js:
-// the learner writes a paragraph, the platform saves evidence with self-
-// assessment flags, and an adult reviews it later. The lane never mutates
-// mastery, retryQueue, reward projection, or Concordium progress.
+// These prompts share the intent of U5's `manualReviewOnly` answerSpec kind
+// (no auto-marking) but do not produce answerSpec objects themselves — saves
+// go through a bespoke save-transfer-evidence Worker command that is isolated
+// from the scored evaluateAnswer path entirely. The learner writes a
+// paragraph, the platform saves evidence with self-assessment flags, and an
+// adult reviews it later. The lane never mutates mastery, retryQueue, reward
+// projection, or Concordium progress.
 
 export const GRAMMAR_TRANSFER_MAX_PROMPTS = 20;
 export const GRAMMAR_TRANSFER_HISTORY_PER_PROMPT = 5;
