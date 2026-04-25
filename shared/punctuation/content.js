@@ -403,6 +403,26 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     source: 'fixed',
   },
   {
+    id: 'lc_transfer_bake_sale',
+    mode: 'transfer',
+    skillIds: ['list_commas'],
+    clusterId: 'comma_flow',
+    rewardUnitId: 'list-commas-core',
+    prompt: 'Write one sentence using this exact stem and list: For the bake sale we needed eggs, flour, butter and sugar.',
+    stem: '',
+    accepted: ['For the bake sale we needed eggs, flour, butter and sugar.'],
+    explanation: 'The sentence keeps the stem and separates the list items with commas.',
+    model: 'For the bake sale we needed eggs, flour, butter and sugar.',
+    validator: {
+      type: 'requiresListCommas',
+      opening: 'For the bake sale we needed',
+      items: ['eggs', 'flour', 'butter', 'sugar'],
+    },
+    misconceptionTags: ['comma.list_separator_missing', 'comma.list_words_changed', 'comma.unnecessary_final_comma'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
     id: 'lc_combine_trip_list',
     mode: 'combine',
     skillIds: ['list_commas'],
@@ -624,7 +644,7 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     skillIds: ['speech'],
     clusterId: 'speech',
     rewardUnitId: 'speech-core',
-    prompt: 'Write one sentence of direct speech using these exact spoken words: can we start now',
+    prompt: 'Write one sentence of direct speech using these exact spoken words: Can we start now?',
     stem: '',
     accepted: ['Mia asked, "Can we start now?"'],
     explanation: 'Direct speech needs inverted commas, a capital letter, and a question mark inside the closing inverted comma.',
@@ -637,6 +657,28 @@ export const PUNCTUATION_ITEMS = Object.freeze([
       requiredTerminal: '?',
     },
     misconceptionTags: ['speech.quote_missing', 'speech.punctuation_outside_quote', 'speech.reporting_comma_missing', 'speech.capitalisation_missing', 'speech.words_changed'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
+    id: 'sp_fa_transfer_at_last_speech',
+    mode: 'transfer',
+    skillIds: ['speech', 'fronted_adverbial'],
+    clusterId: 'speech',
+    rewardUnitId: 'speech-core',
+    prompt: 'Write one sentence using this exact opening, reporting clause and spoken words: At last / Noah shouted / we made it!',
+    stem: '',
+    accepted: ['At last, Noah shouted, "We made it!"'],
+    explanation: 'The fronted adverbial needs a comma, and the spoken words need inverted commas and correct end punctuation.',
+    model: 'At last, Noah shouted, "We made it!"',
+    validator: {
+      type: 'frontedAdverbialWithSpeech',
+      phrase: 'At last',
+      reportingClause: 'Noah shouted',
+      words: 'we made it',
+      requiredTerminal: '!',
+    },
+    misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing', 'speech.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
     source: 'fixed',
   },
@@ -1043,6 +1085,22 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     source: 'fixed',
   },
   {
+    id: 'hy_transfer_man_eating_shark',
+    mode: 'transfer',
+    skillIds: ['hyphen'],
+    clusterId: 'boundary',
+    rewardUnitId: 'hyphens-core',
+    prompt: "Write one sentence that includes this exact phrase: man-eating shark.",
+    stem: '',
+    accepted: ['The divers spotted a man-eating shark near the reef.'],
+    explanation: 'The hyphen avoids ambiguity in the noun phrase.',
+    model: 'The divers spotted a man-eating shark near the reef.',
+    validator: { type: 'requiresHyphenatedPhrase', phrase: 'man-eating shark' },
+    misconceptionTags: ['boundary.hyphen_missing', 'boundary.words_changed'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
     id: 'pa_choose_coach',
     mode: 'choose',
     skillIds: ['parenthesis'],
@@ -1118,7 +1176,7 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     skillIds: ['parenthesis'],
     clusterId: 'structure',
     rewardUnitId: 'parenthesis-core',
-    prompt: 'Write one sentence that adds this parenthesis: which opened last year.',
+    prompt: 'Write one sentence using this exact frame and parenthesis: The library / which opened last year / is busy.',
     stem: '',
     accepted: ['The library, which opened last year, is busy.'],
     explanation: 'The parenthesis is marked before and after the extra information.',
@@ -1214,7 +1272,7 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     skillIds: ['colon_list'],
     clusterId: 'structure',
     rewardUnitId: 'colons-core',
-    prompt: 'Write one sentence that uses a colon to introduce this exact list: a torch, a map and a whistle.',
+    prompt: 'Write one sentence using this exact opening and list: We needed three things / a torch, a map and a whistle.',
     stem: '',
     accepted: ['We needed three things: a torch, a map and a whistle.'],
     explanation: 'The colon introduces the list after a complete opening clause.',
@@ -1223,6 +1281,26 @@ export const PUNCTUATION_ITEMS = Object.freeze([
       type: 'requiresColonBeforeList',
       opening: 'We needed three things',
       items: ['a torch', 'a map', 'a whistle'],
+    },
+    misconceptionTags: ['structure.colon_missing', 'structure.list_words_changed', 'structure.list_separator_missing'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
+    id: 'cl_lc_transfer_toolkit',
+    mode: 'transfer',
+    skillIds: ['colon_list', 'list_commas'],
+    clusterId: 'structure',
+    rewardUnitId: 'colons-core',
+    prompt: 'Write one sentence using this exact stem and list after a colon: Our toolkit contained three items / glue, card and scissors.',
+    stem: '',
+    accepted: ['Our toolkit contained three items: glue, card and scissors.'],
+    explanation: 'A complete opening clause can be followed by a colon and a list.',
+    model: 'Our toolkit contained three items: glue, card and scissors.',
+    validator: {
+      type: 'requiresColonBeforeList',
+      opening: 'Our toolkit contained three items',
+      items: ['glue', 'card', 'scissors'],
     },
     misconceptionTags: ['structure.colon_missing', 'structure.list_words_changed', 'structure.list_separator_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
@@ -1575,13 +1653,13 @@ export const PUNCTUATION_REWARD_UNITS = Object.freeze([
     id: 'speech-core',
     clusterId: 'speech',
     skillIds: ['speech'],
-    evidenceItemIds: ['sp_choose_reporting_comma', 'sp_insert_question', 'sp_fix_question', 'sp_transfer_question', 'pg_fronted_speech'],
+    evidenceItemIds: ['sp_choose_reporting_comma', 'sp_insert_question', 'sp_fix_question', 'sp_transfer_question', 'sp_fa_transfer_at_last_speech', 'pg_fronted_speech'],
   }),
   rewardUnit({
     id: 'list-commas-core',
     clusterId: 'comma_flow',
     skillIds: ['list_commas'],
-    evidenceItemIds: ['lc_choose_picnic', 'lc_insert_supplies', 'lc_fix_display', 'lc_transfer_trip', 'lc_combine_trip_list'],
+    evidenceItemIds: ['lc_choose_picnic', 'lc_insert_supplies', 'lc_fix_display', 'lc_transfer_trip', 'lc_transfer_bake_sale', 'lc_combine_trip_list'],
   }),
   rewardUnit({
     id: 'fronted-adverbials-core',
@@ -1611,7 +1689,7 @@ export const PUNCTUATION_REWARD_UNITS = Object.freeze([
     id: 'hyphens-core',
     clusterId: 'boundary',
     skillIds: ['hyphen'],
-    evidenceItemIds: ['hy_choose_shark', 'hy_insert_little_used', 'hy_fix_fast_moving', 'hy_transfer_well_known'],
+    evidenceItemIds: ['hy_choose_shark', 'hy_insert_little_used', 'hy_fix_fast_moving', 'hy_transfer_well_known', 'hy_transfer_man_eating_shark'],
   }),
   rewardUnit({
     id: 'parenthesis-core',
@@ -1623,7 +1701,7 @@ export const PUNCTUATION_REWARD_UNITS = Object.freeze([
     id: 'colons-core',
     clusterId: 'structure',
     skillIds: ['colon_list'],
-    evidenceItemIds: ['cl_choose_supplies', 'cl_insert_awards', 'cl_fix_camp', 'cl_transfer_trip', 'cl_combine_awards'],
+    evidenceItemIds: ['cl_choose_supplies', 'cl_insert_awards', 'cl_fix_camp', 'cl_transfer_trip', 'cl_lc_transfer_toolkit', 'cl_combine_awards'],
   }),
   rewardUnit({
     id: 'semicolon-lists-core',
@@ -1879,6 +1957,75 @@ function assertNoDuplicates(values, label, errors) {
   }
 }
 
+function normaliseVisibleContractText(value) {
+  return String(value ?? '')
+    .toLowerCase()
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/[–—]/g, '-')
+    .replace(/\s+([,.;:?!])/g, '$1')
+    .replace(/\s*-\s*/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function visibleContractIncludes(visibleText, requirement) {
+  const required = normaliseVisibleContractText(requirement);
+  return !required || visibleText.includes(required);
+}
+
+function transferValidatorRequirements(item) {
+  if (item?.mode !== 'transfer') return [];
+  const validator = item.validator || {};
+  switch (validator.type) {
+    case 'startsWithWordQuestion':
+      return [validator.word];
+    case 'requiresTokens':
+      return asArray(validator.tokens);
+    case 'requiresListCommas':
+      return [
+        validator.opening || validator.stem,
+        ...asArray(validator.items),
+      ];
+    case 'startsWithPhraseComma':
+      return [validator.phrase];
+    case 'speechWithWords':
+      return [
+        validator.requiredTerminal
+          ? `${validator.words || validator.spokenWords}${validator.requiredTerminal}`
+          : (validator.words || validator.spokenWords),
+      ];
+    case 'frontedAdverbialWithSpeech':
+      return [
+        validator.phrase,
+        validator.reportingClause,
+        validator.requiredTerminal
+          ? `${validator.words || validator.spokenWords}${validator.requiredTerminal}`
+          : (validator.words || validator.spokenWords),
+      ];
+    case 'requiresBoundaryBetweenClauses':
+      return [validator.left, validator.right];
+    case 'requiresHyphenatedPhrase':
+      return [validator.phrase];
+    case 'requiresParentheticalPhrase':
+      return [validator.before, validator.phrase, validator.after];
+    case 'requiresColonBeforeList':
+      return [
+        validator.opening,
+        ...asArray(validator.items),
+      ];
+    case 'requiresSemicolonList':
+      return asArray(validator.items);
+    case 'requiresBulletStemAndItems':
+      return [
+        validator.stem,
+        ...asArray(validator.items),
+      ];
+    default:
+      return [];
+  }
+}
+
 function pushIndexed(map, key, value) {
   if (!map.has(key)) map.set(key, []);
   map.get(key).push(value);
@@ -2010,6 +2157,12 @@ export function validatePunctuationManifest(manifest = PUNCTUATION_CONTENT_MANIF
     for (const skillId of asArray(item.skillIds)) {
       if (!indexes.skillById.has(skillId)) errors.push(`Item ${item.id} references missing skill ${skillId}.`);
     }
+    const visibleContract = normaliseVisibleContractText(`${item.prompt || ''} ${item.stem || ''}`);
+    for (const requirement of transferValidatorRequirements(item)) {
+      if (!visibleContractIncludes(visibleContract, requirement)) {
+        errors.push(`Transfer item ${item.id} hides validator requirement ${requirement}.`);
+      }
+    }
   }
 
   for (const unit of indexes.rewardUnits) {
@@ -2020,6 +2173,16 @@ export function validatePunctuationManifest(manifest = PUNCTUATION_CONTENT_MANIF
     const hasGenerator = asArray(unit.generatorFamilyIds).some((familyId) => indexes.generatorFamilyById.has(familyId));
     if (unit.published && !hasEvidenceItem && !hasGenerator) {
       errors.push(`Published reward unit ${unit.rewardUnitId} has no deterministic evidence.`);
+    }
+    for (const itemId of asArray(unit.evidenceItemIds)) {
+      const item = indexes.itemById.get(itemId);
+      if (!item) {
+        errors.push(`Reward unit ${unit.rewardUnitId} lists missing evidence item ${itemId}.`);
+        continue;
+      }
+      if (item.rewardUnitId !== unit.rewardUnitId) {
+        errors.push(`Reward unit ${unit.rewardUnitId} lists evidence item ${itemId} from ${item.rewardUnitId}.`);
+      }
     }
     const expectedKey = createPunctuationMasteryKey({
       releaseId: unit.releaseId,
