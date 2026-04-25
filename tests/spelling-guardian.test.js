@@ -1294,3 +1294,128 @@ test('U4 integration: existing legacy fields of buildSpellingLearnerReadModel ou
   assert.equal(typeof output.currentFocus.recommendedMode, 'string');
   assert.equal(typeof output.currentFocus.label, 'string');
 });
+
+// ----- U5: action routing + Alt+4 shortcut gate -------------------------------
+
+/*
+ * U5 tests rely on the full app harness to exercise the module's
+ * `spelling-shortcut-start` handler. Unlike the pure U3 scheduler tests,
+ * these assertions round-trip through the harness dispatcher → subject
+ * module → spelling service, so a regression in the `mode === 'guardian'`
+ * gate will surface as an unwanted state mutation rather than a unit
+ * assertion.
+ */
+async function importAppHarness() {
+  const mod = await import('./helpers/app-harness.js');
+  return mod.createAppHarness;
+}
+
+test('U5 action routing: spelling-shortcut-start with mode=guardian is a no-op when allWordsMega is false', async () => {
+  const createAppHarness = await importAppHarness();
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  const stateBefore = structuredClone(harness.store.getState().subjectUi.spelling);
+  const prefsBefore = structuredClone(harness.services.spelling.getPrefs(learnerId));
+  assert.equal(prefsBefore.mode, 'smart');
+  assert.equal(stateBefore.phase, 'dashboard');
+
+  harness.dispatch('spelling-shortcut-start', { mode: 'guardian' });
+
+  const stateAfter = harness.store.getState().subjectUi.spelling;
+  const prefsAfter = harness.services.spelling.getPrefs(learnerId);
+  // No session started, no mode mutation, no phase transition.
+  assert.equal(stateAfter.phase, 'dashboard', 'phase must stay on dashboard');
+  assert.equal(stateAfter.session, null, 'no session should be created');
+  assert.equal(prefsAfter.mode, 'smart', 'pref mode must stay on smart — guardian gate is inert');
+});
+
+test('U5 action routing: spelling-shortcut-start with mode=guardian starts a session when allWordsMega is true', async () => {
+  const createAppHarness = await importAppHarness();
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+
+  // Seed every core word to stage 4 via the subjectStates repository (same
+  // proxy the service's storage uses), then open the subject.
+  const today = Math.floor(Date.now() / DAY_MS_TS);
+  seedAllCoreMega(harness.repositories, learnerId, today);
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+
+  // Sanity check: the service reports post-mastery.
+  const postMastery = harness.services.spelling.getPostMasteryState(learnerId);
+  assert.equal(postMastery.allWordsMega, true);
+
+  harness.dispatch('spelling-shortcut-start', { mode: 'guardian' });
+
+  const stateAfter = harness.store.getState().subjectUi.spelling;
+  const prefsAfter = harness.services.spelling.getPrefs(learnerId);
+  assert.equal(prefsAfter.mode, 'guardian', 'pref saved to guardian before startSession');
+  assert.equal(stateAfter.phase, 'session', 'Guardian Mission session is in flight');
+  assert.equal(stateAfter.session.mode, 'guardian');
+  assert.equal(stateAfter.session.label, 'Guardian Mission');
+  assert.ok(stateAfter.session.id, 'session id assigned');
+});
+
+test('U5 shortcut resolver: Alt+4 maps to spelling-shortcut-start with mode=guardian, regardless of allWordsMega', async () => {
+  const { resolveSpellingShortcut } = await import('../src/subjects/spelling/shortcuts.js');
+  const appState = {
+    route: { subjectId: 'spelling', tab: 'practice' },
+    subjectUi: {
+      spelling: { phase: 'dashboard' },
+    },
+  };
+  // The keybinding layer stays simple — it only produces the action. The
+  // module-level gate decides whether to run it, so the resolver test
+  // doesn't care about allWordsMega at all.
+  assert.deepEqual(resolveSpellingShortcut({
+    key: '4',
+    altKey: true,
+    shiftKey: false,
+    ctrlKey: false,
+    metaKey: false,
+    target: { tagName: 'BODY' },
+  }, appState), {
+    action: 'spelling-shortcut-start',
+    data: { mode: 'guardian' },
+    preventDefault: true,
+  });
+});
+
+test('U5 shortcut resolver: Alt+1/2/3 mappings remain intact after Alt+4 addition', async () => {
+  const { resolveSpellingShortcut } = await import('../src/subjects/spelling/shortcuts.js');
+  const appState = {
+    route: { subjectId: 'spelling', tab: 'practice' },
+    subjectUi: { spelling: { phase: 'dashboard' } },
+  };
+  const smart = resolveSpellingShortcut({
+    key: '1',
+    altKey: true,
+    shiftKey: false,
+    ctrlKey: false,
+    metaKey: false,
+    target: { tagName: 'BODY' },
+  }, appState);
+  assert.deepEqual(smart, { action: 'spelling-shortcut-start', data: { mode: 'smart' }, preventDefault: true });
+  const trouble = resolveSpellingShortcut({
+    key: '2',
+    altKey: true,
+    shiftKey: false,
+    ctrlKey: false,
+    metaKey: false,
+    target: { tagName: 'BODY' },
+  }, appState);
+  assert.deepEqual(trouble, { action: 'spelling-shortcut-start', data: { mode: 'trouble' }, preventDefault: true });
+  const sats = resolveSpellingShortcut({
+    key: '3',
+    altKey: true,
+    shiftKey: false,
+    ctrlKey: false,
+    metaKey: false,
+    target: { tagName: 'BODY' },
+  }, appState);
+  assert.deepEqual(sats, { action: 'spelling-shortcut-start', data: { mode: 'test' }, preventDefault: true });
+});

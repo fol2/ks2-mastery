@@ -726,6 +726,45 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     };
   }
 
+  /**
+   * Live post-mastery snapshot for UI consumers. Derives the same aggregates
+   * as `getSpellingPostMasteryState` (read-model) but against the in-memory
+   * service state so the Setup scene, Alt+4 gate, and summary copy see a
+   * consistent view without drilling a read-model through the container tree.
+   *
+   * Returns: { allWordsMega, guardianDueCount, wobblingCount, nextGuardianDueDay, todayDay, guardianMap }
+   * The raw `guardianMap` is included so UI consumers can compute per-word
+   * labels (e.g. "Wobbling — due tomorrow") via `guardianLabel` without a
+   * second round-trip to storage.
+   */
+  function getPostMasteryState(learnerId) {
+    const progressStore = progressSnapshot(learnerId) || {};
+    const guardianMap = loadGuardianMap(learnerId);
+    const today = currentTodayDay();
+    const allWordsMega = isAllWordsMega(progressStore);
+
+    let guardianDueCount = 0;
+    let wobblingCount = 0;
+    let nextGuardianDueDay = null;
+    for (const record of Object.values(guardianMap)) {
+      if (!record) continue;
+      if (record.nextDueDay <= today) guardianDueCount += 1;
+      if (record.wobbling === true) wobblingCount += 1;
+      if (nextGuardianDueDay === null || record.nextDueDay < nextGuardianDueDay) {
+        nextGuardianDueDay = record.nextDueDay;
+      }
+    }
+
+    return {
+      allWordsMega,
+      guardianDueCount,
+      wobblingCount,
+      nextGuardianDueDay,
+      todayDay: today,
+      guardianMap,
+    };
+  }
+
   function buildResumeSession(rawSession, learnerId) {
     if (!rawSession || typeof rawSession !== 'object' || Array.isArray(rawSession)) {
       return { session: null, summary: null, error: 'This spelling session is missing its saved state.' };
@@ -1526,6 +1565,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     getStats,
     getWordBankEntry,
     getAnalyticsSnapshot,
+    getPostMasteryState,
     startSession,
     submitAnswer,
     continueSession,

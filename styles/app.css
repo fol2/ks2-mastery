@@ -4471,6 +4471,283 @@ textarea:focus-visible {
   visibility: hidden;
 }
 
+/* =============================================================
+   Post-Mega dashboard (U5)
+   -------------------------------------------------------------
+   Dense block of Guardian-specific styling. The section reuses
+   the existing hero backdrop, text-tone tokens, and mode-card
+   silhouette so the transition from Smart Review to Guardian
+   feels like the same scene growing a new capability, not a
+   swap to a different page.
+
+   Visual commitments:
+   - Three distinct card identities: active-duty (accent stroke),
+     all-rested (dashed accent, inert), placeholder (parchment
+     fill + roadmap index).
+   - Typographic glyph placeholder for Guardian / Boss / etc.
+     icons we have not drawn yet — shipping a stock icon would
+     read as "we forgot to finish this".
+   - Stat ribbon sits above the mode row: it reframes the learner
+     as a duty-holder rather than a player chasing a target.
+   ============================================================= */
+.setup-content--post-mega .eyebrow.post-mega-eyebrow {
+  letter-spacing: 0.22em;
+  font-weight: 700;
+  color: color-mix(in oklab, var(--brand) 72%, var(--ink));
+}
+.setup-content--post-mega .title.post-mega-title {
+  font-family: var(--font-serif);
+  letter-spacing: -0.018em;
+  line-height: 1.05;
+  max-width: 22ch;
+}
+.setup-content--post-mega .lede.post-mega-lede {
+  max-width: 58ch;
+  color: var(--mode-card-copy, var(--muted));
+}
+.post-mega-stat-ribbon {
+  margin: 18px 0 4px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 18px 24px;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid color-mix(in oklab, var(--brand) 26%, transparent);
+  background:
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--brand-soft) 32%, transparent) 0%,
+      color-mix(in oklab, var(--panel) 42%, transparent) 100%);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+}
+.post-mega-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.post-mega-stat dt {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--mode-card-title, var(--ink)) 72%, transparent);
+  text-shadow: var(--mode-card-copy-shadow, none);
+}
+.post-mega-stat dd {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--mode-card-title, var(--ink));
+  text-shadow: var(--mode-card-heading-shadow, none);
+}
+.post-mega-stat--due dd { color: var(--warn-strong, color-mix(in oklab, var(--brand) 80%, var(--ink))); }
+.post-mega-stat--wobbling dd { color: color-mix(in oklab, var(--bad-strong, #b3372c) 88%, var(--ink)); }
+
+.mode-row.mode-row-post-mega {
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(196px, auto);
+  gap: 14px;
+  margin-top: 22px;
+}
+@media (max-width: 880px) {
+  .mode-row.mode-row-post-mega {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mode-row.mode-row-post-mega .mode-card-post:first-child {
+    grid-column: span 2;
+  }
+}
+@media (max-width: 540px) {
+  .mode-row.mode-row-post-mega,
+  .mode-row.mode-row-post-mega .mode-card-post:first-child {
+    grid-template-columns: 1fr;
+    grid-column: auto;
+  }
+}
+.mode-card.mode-card-post {
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mode-card.mode-card-post:hover { transform: none; box-shadow: none; }
+.mode-card.mode-card-post--active {
+  cursor: default;
+  border: 1.75px solid color-mix(in oklab, var(--brand) 82%, transparent);
+  background:
+    linear-gradient(165deg,
+      color-mix(in oklab, var(--brand-soft) 54%, transparent) 0%,
+      color-mix(in oklab, var(--panel) 28%, transparent) 82%),
+    color-mix(in oklab, var(--panel) 22%, transparent);
+  box-shadow:
+    0 18px 42px -28px color-mix(in oklab, var(--brand) 45%, transparent),
+    inset 0 1px 0 color-mix(in oklab, white 38%, transparent);
+}
+.mode-card.mode-card-post--active.is-active-duty {
+  /* Earned authority: a single accent line anchors the card without
+     shouting. Kept subtle so the stat ribbon above does the loud work. */
+  position: relative;
+}
+.mode-card.mode-card-post--active.is-active-duty::before {
+  content: '';
+  position: absolute;
+  inset: auto auto 0 16px;
+  width: 38px;
+  height: 3px;
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--brand) 82%, transparent);
+  opacity: 0.92;
+}
+.mode-card.mode-card-post--rested {
+  cursor: default;
+  border: 1.5px dashed color-mix(in oklab, var(--brand) 46%, transparent);
+  background: color-mix(in oklab, var(--panel) 30%, transparent);
+  filter: none;
+  opacity: 1;
+}
+.mode-card.mode-card-post--placeholder {
+  cursor: default;
+  border: 1.25px solid color-mix(in oklab, var(--brand) 16%, var(--line));
+  background:
+    repeating-linear-gradient(135deg,
+      color-mix(in oklab, var(--panel) 34%, transparent) 0,
+      color-mix(in oklab, var(--panel) 34%, transparent) 6px,
+      color-mix(in oklab, var(--panel) 20%, transparent) 6px,
+      color-mix(in oklab, var(--panel) 20%, transparent) 12px);
+  opacity: 0.94;
+  filter: saturate(0.82);
+}
+.mode-card.mode-card-post--placeholder h4,
+.mode-card.mode-card-post--placeholder p {
+  opacity: 0.88;
+}
+.mode-card .mc-icon.mc-icon-glyph {
+  background:
+    radial-gradient(110% 140% at 12% 16%,
+      color-mix(in oklab, var(--brand-soft) 78%, transparent) 0%,
+      color-mix(in oklab, var(--panel) 26%, transparent) 70%);
+  border-color: color-mix(in oklab, white 44%, transparent);
+  color: color-mix(in oklab, var(--brand) 86%, var(--ink));
+}
+.mode-card-post--active .mc-icon.mc-icon-glyph {
+  background:
+    radial-gradient(120% 160% at 18% 12%,
+      color-mix(in oklab, var(--brand) 88%, transparent) 0%,
+      color-mix(in oklab, var(--brand-soft) 65%, transparent) 80%);
+  color: #fff;
+  border-color: color-mix(in oklab, white 60%, transparent);
+}
+.mode-card-post--placeholder .mc-icon.mc-icon-glyph {
+  background: color-mix(in oklab, var(--panel) 34%, transparent);
+  color: color-mix(in oklab, var(--brand) 36%, var(--ink));
+  border-color: color-mix(in oklab, white 24%, transparent);
+}
+.mc-glyph {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.6rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.mc-badge.mc-badge-post {
+  background: color-mix(in oklab, var(--brand-soft) 60%, transparent);
+  color: color-mix(in oklab, var(--brand) 82%, var(--ink));
+  border: 1px solid color-mix(in oklab, var(--brand) 32%, transparent);
+}
+.mc-badge-post--active {
+  background: color-mix(in oklab, var(--brand) 88%, transparent);
+  color: #fff;
+  border-color: color-mix(in oklab, white 50%, transparent);
+  letter-spacing: 0.12em;
+}
+.mc-badge-post--rested {
+  background: color-mix(in oklab, var(--panel) 50%, transparent);
+  color: color-mix(in oklab, var(--brand) 60%, var(--ink));
+  border-style: dashed;
+  letter-spacing: 0.12em;
+}
+.mc-badge-roadmap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  padding: 4px 8px 3px;
+  line-height: 1;
+  background: transparent;
+  color: color-mix(in oklab, var(--brand) 56%, var(--ink));
+  border: 0;
+}
+.mc-badge-roadmap-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  opacity: 0.62;
+}
+.mc-badge-roadmap-index {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: color-mix(in oklab, var(--brand) 72%, var(--ink));
+}
+.mode-card-post-cta {
+  margin-top: auto;
+  align-self: flex-start;
+  padding: 8px 14px;
+  font-size: 0.92rem;
+  border-radius: calc(var(--radius) - 6px);
+}
+.mode-card-post-status {
+  margin-top: auto;
+  align-self: flex-start;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--panel) 38%, transparent);
+  color: color-mix(in oklab, var(--brand) 60%, var(--ink));
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px dashed color-mix(in oklab, var(--brand) 36%, transparent);
+}
+.setup-begin-row.post-mega-begin-row {
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 28px;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.post-mega-begin-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: color-mix(in oklab, var(--mode-card-copy, var(--muted)) 88%, transparent);
+  opacity: 0.86;
+}
+.post-mega-begin-hint[aria-hidden="true"] { opacity: 0.3; }
+.post-mega-begin-hint kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-family: var(--font-mono, ui-monospace, 'SFMono-Regular', Menlo, monospace);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.1;
+  background: color-mix(in oklab, var(--panel) 45%, transparent);
+  border: 1px solid color-mix(in oklab, var(--brand) 28%, transparent);
+  color: color-mix(in oklab, var(--brand) 80%, var(--ink));
+  box-shadow: inset 0 -1px 0 color-mix(in oklab, black 10%, transparent);
+}
+.post-mega-begin-hint-join { opacity: 0.55; font-weight: 600; }
+.post-mega-begin-hint-label {
+  letter-spacing: 0.02em;
+  margin-left: 4px;
+}
+
 .setup-control-stack {
   min-height: 196px;
   margin-top: 20px;

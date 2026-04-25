@@ -92,3 +92,86 @@ test('React spelling summary and word bank scenes render migration-critical stat
   assert.match(modalHtml, /aria-labelledby="wb-modal-word"/);
   assert.match(modalHtml, /data-action="spelling-word-bank-drill-submit"/);
 });
+
+// ----- U5: post-Mega dashboard + Alt+4 shortcut --------------------------------
+
+test('React spelling setup scene renders the legacy 3-mode row when allWordsMega is false', async () => {
+  const html = await renderSpellingSurfaceFixture({ phase: 'setup' });
+
+  assert.match(html, /Smart Review/);
+  assert.match(html, /Trouble Drill/);
+  assert.match(html, /SATs Test/);
+  assert.doesNotMatch(html, /Guardian Mission/);
+  assert.doesNotMatch(html, /The Word Vault is yours/);
+  assert.doesNotMatch(html, /Graduated · Spelling Guardian/);
+});
+
+test('React spelling setup scene renders the post-Mega dashboard with Guardian Mission + 3 placeholders when allWordsMega is true and words are due', async () => {
+  // Seed a guardian record that is due today so the Guardian card renders
+  // with the "active duty" treatment, not the "all rested" fallback.
+  const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+  const html = await renderSpellingSurfaceFixture({
+    phase: 'setup',
+    postMega: {
+      guardian: {
+        possess: {
+          reviewLevel: 2,
+          lastReviewedDay: today - 7,
+          nextDueDay: today,
+          correctStreak: 2,
+          lapses: 0,
+          renewals: 0,
+          wobbling: false,
+        },
+      },
+    },
+  });
+
+  assert.match(html, /Graduated · Spelling Guardian/);
+  assert.match(html, /The Word Vault is yours/);
+  assert.match(html, /Guardian Mission/);
+  assert.match(html, /Boss Dictation/);
+  assert.match(html, /Word Detective/);
+  assert.match(html, /Story Challenge/);
+  // Placeholder roadmap labels should show "Next 02/03/04" rather than a
+  // single generic "Coming soon" shield, so the codex reads as planned steps.
+  assert.match(html, /mc-badge-roadmap/);
+  // The begin button explicitly routes through spelling-shortcut-start with
+  // mode=guardian so the module-level gate is the one source of truth.
+  assert.match(html, /data-action="spelling-shortcut-start"[^>]*data-mode="guardian"/);
+  assert.match(html, /ACTIVE DUTY/);
+  assert.doesNotMatch(html, /Choose today/);
+});
+
+test('React spelling setup scene shows "All guardians rested" copy when allWordsMega && guardianDueCount === 0', async () => {
+  // Seed guardians but schedule them all for the future so nothing is due
+  // today. The Begin button should be inert and the card should read as a
+  // quiet signal rather than a greyed-out state.
+  const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+  const html = await renderSpellingSurfaceFixture({
+    phase: 'setup',
+    postMega: {
+      guardian: {
+        possess: {
+          reviewLevel: 2,
+          lastReviewedDay: today,
+          nextDueDay: today + 5,
+          correctStreak: 2,
+          lapses: 0,
+          renewals: 0,
+          wobbling: false,
+        },
+      },
+    },
+  });
+
+  assert.match(html, /Graduated · Spelling Guardian/);
+  assert.match(html, /Guardian Mission/);
+  assert.match(html, /All guardians rested/);
+  assert.match(html, /ALL RESTED/);
+  // The primary begin CTA must be disabled so clicking it does nothing.
+  assert.match(html, /<button[^>]*data-action="spelling-shortcut-start"[^>]*data-mode="guardian"[^>]*disabled=""/);
+  // The rested-state "Rested" chip appears on the Guardian card frame itself.
+  assert.match(html, /mode-card-post-status/);
+  assert.match(html, /Rested/);
+});
