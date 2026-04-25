@@ -2,8 +2,14 @@
 // evolve, mega) only differs in which decorative slots are populated and
 // in the eyebrow/body copy — everything else is centralised here so the
 // existing `.monster-celebration-*` CSS continues to drive visuals.
+//
+// Sprite positioning flows through monster-visual-config (`celebrationOverlay`
+// context) so per-monster offset/anchor/scale match codex tiles. Without
+// this the halo stays centred but the sprite renders unaligned.
 
-import { monsterAsset, monsterAssetSrcSet } from '../../monsters.js';
+import { useMonsterVisualConfig } from '../../MonsterVisualConfigContext.jsx';
+import { resolveMonsterVisual } from '../../monster-visual-config.js';
+import { monsterVisualCelebrationStyle } from '../../monster-visual-style.js';
 
 const PALETTE_DEFAULTS = Object.freeze({
   primary: '#3E6FA8',
@@ -21,13 +27,6 @@ export function stageName(monster, stage) {
     : `${monster?.name || 'Monster'} stage ${stage}`;
 }
 
-function imageSources(monsterId, stage, branch) {
-  return {
-    src: monsterAsset(monsterId, stage, 640, branch),
-    srcSet: monsterAssetSrcSet(monsterId, stage, branch),
-  };
-}
-
 function CelebrationParticles() {
   return (
     <div className="monster-celebration-parts">
@@ -35,6 +34,26 @@ function CelebrationParticles() {
         <span className="monster-celebration-part" key={index} />
       ))}
     </div>
+  );
+}
+
+function CelebrationVisual({ className, stage, visual }) {
+  if (!visual) return null;
+  return (
+    <span
+      className={`monster-celebration-visual ${className}`}
+      data-stage={stage}
+      style={monsterVisualCelebrationStyle(visual)}
+    >
+      <span className="monster-celebration-shadow" />
+      <img
+        className={`monster-celebration-art ${className}`}
+        alt=""
+        src={visual.src}
+        srcSet={visual.srcSet}
+        sizes="min(90vw, 540px)"
+      />
+    </span>
   );
 }
 
@@ -52,12 +71,35 @@ export function CelebrationShell({
   body,
   onComplete,
 }) {
+  const monsterVisualConfig = useMonsterVisualConfig();
+  const config = monsterVisualConfig?.config;
+
   const className = `monster-celebration-overlay ${kind}${modifierClass ? ` ${modifierClass}` : ''}`;
   const palette = {
     primary: monster?.accent || PALETTE_DEFAULTS.primary,
     secondary: monster?.secondary || PALETTE_DEFAULTS.secondary,
     pale: monster?.pale || PALETTE_DEFAULTS.pale,
   };
+
+  const beforeVisual = showBefore
+    ? resolveMonsterVisual({
+        monsterId: monster?.id,
+        branch,
+        stage: fromStage,
+        context: 'celebrationOverlay',
+        config,
+        preferredSize: 640,
+      })
+    : null;
+
+  const afterVisual = resolveMonsterVisual({
+    monsterId: monster?.id,
+    branch,
+    stage: toStage,
+    context: 'celebrationOverlay',
+    config,
+    preferredSize: 640,
+  });
 
   return (
     <section
@@ -76,22 +118,10 @@ export function CelebrationShell({
         <div className="monster-celebration-halo" />
         {showShine && <div className="monster-celebration-shine" />}
         {showBefore && (
-          <img
-            className="monster-celebration-art before"
-            alt=""
-            data-stage={fromStage}
-            {...imageSources(monster?.id, fromStage, branch)}
-            sizes="min(90vw, 540px)"
-          />
+          <CelebrationVisual className="before" stage={fromStage} visual={beforeVisual} />
         )}
         <div className="monster-celebration-white" />
-        <img
-          className="monster-celebration-art after"
-          alt=""
-          data-stage={toStage}
-          {...imageSources(monster?.id, toStage, branch)}
-          sizes="min(90vw, 540px)"
-        />
+        <CelebrationVisual className="after" stage={toStage} visual={afterVisual} />
       </div>
 
       <div className="monster-celebration-card">
