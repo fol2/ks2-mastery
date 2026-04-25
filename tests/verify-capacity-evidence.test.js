@@ -81,7 +81,7 @@ function evidenceEnvelope(overrides = {}) {
   return {
     ok: true,
     reportMeta: {
-      commit: 'abc1234567890',
+      commit: 'abc1234567890abcdef1234567890abcdef12345',
       evidenceSchemaVersion: 1,
       learners: 10,
       bootstrapBurst: 10,
@@ -146,7 +146,7 @@ test('tier above small-pilot-provisional requires evidenceSchemaVersion >= 2', (
   }));
   // Evidence is a small-pilot v1 shape but the row claims classroom-tier.
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 30, bootstrapBurst: 30, rounds: 3 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 30, bootstrapBurst: 30, rounds: 3 },
     tier: {
       tier: '30-learner-beta-certified',
       configPath: 'reports/capacity/configs/30-learner-beta.json',
@@ -188,7 +188,7 @@ test('small-pilot tier row with pinned config + matching learners passes (U1 cur
     thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750 },
   }));
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
     tier: {
       tier: 'small-pilot-provisional',
       minEvidenceSchemaVersion: 1,
@@ -222,7 +222,7 @@ test('tier row rejects --config path outside reports/capacity/configs/', () => {
   mkdirSync(evidenceDir, { recursive: true });
   const evidencePath = join(evidenceDir, 'latest-production.json');
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 2, learners: 30, bootstrapBurst: 30, rounds: 3 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 2, learners: 30, bootstrapBurst: 30, rounds: 3 },
     tier: {
       tier: '30-learner-beta-certified',
       // Adversarial: config path outside the PR-reviewed directory.
@@ -251,7 +251,7 @@ test('tier row rejects missing tier.configPath entirely', () => {
   mkdirSync(evidenceDir, { recursive: true });
   const evidencePath = join(evidenceDir, 'latest-production.json');
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 2, learners: 30, bootstrapBurst: 30, rounds: 3 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 2, learners: 30, bootstrapBurst: 30, rounds: 3 },
     tier: { tier: '30-learner-beta-certified' },  // configPath missing
   })));
   writeFileSync(docPath, makeDoc([
@@ -277,7 +277,7 @@ test('numeric cells in capacity.md must match evidence reportMeta', () => {
   const evidencePath = join(evidenceDir, 'latest-preview.json');
   // Evidence was a 10-learner run; row lies about 30 learners.
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
   })));
   writeFileSync(docPath, makeDoc([
     ['2026-04-25', 'abc1234', 'preview', 'Free', '30', '30', '3', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
@@ -302,7 +302,7 @@ test('future evidenceSchemaVersion rejected (adversarial hand-edit bump)', () =>
   const evidencePath = join(evidenceDir, 'latest-preview.json');
   // Hand-edit: bump schema to 99 to try to unlock classroom-tier claims.
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 99 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 99 },
   })));
   writeFileSync(docPath, makeDoc([
     ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
@@ -326,7 +326,7 @@ test('row commit prefix shorter than 7 chars is rejected', () => {
   mkdirSync(evidenceDir, { recursive: true });
   const evidencePath = join(evidenceDir, 'latest-preview.json');
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1 },
   })));
   writeFileSync(docPath, makeDoc([
     ['2026-04-25', 'abc', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
@@ -351,7 +351,7 @@ test('tier above small-pilot-provisional requires evidence.tier.tier to match ro
   const evidencePath = join(evidenceDir, 'latest-production.json');
   // Missing tier metadata — evidence was produced without --config.
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 2 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 2 },
   })));
   writeFileSync(docPath, makeDoc([
     ['2026-04-27', 'abc1234', 'prod', 'Free', '30', '30', '3', '900', '600', '500000', '0', 'none', '30-learner-beta-certified', 'reports/capacity/latest-production.json'],
@@ -375,7 +375,7 @@ test('tier mismatch between row decision and evidence tier.tier fails', () => {
   mkdirSync(evidenceDir, { recursive: true });
   const evidencePath = join(evidenceDir, 'latest-production.json');
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 2 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 2 },
     tier: { tier: '60-learner-stretch-certified' },
   })));
   writeFileSync(docPath, makeDoc([
@@ -402,7 +402,7 @@ test('hand-written fabrication missing required envelope keys is rejected', () =
   // Exactly the adversarial-review fabrication shape.
   writeFileSync(evidencePath, JSON.stringify({
     ok: true,
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 2 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 2 },
   }));
   writeFileSync(docPath, makeDoc([
     ['2026-04-27', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
@@ -454,7 +454,7 @@ test('missing evidenceSchemaVersion fails (was silent pass via NaN gate)', () =>
   // hand-edit or a truncated write).
   writeFileSync(evidencePath, JSON.stringify({
     ok: true,
-    reportMeta: { commit: 'abc1234567890', learners: 10, bootstrapBurst: 10, rounds: 1 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', learners: 10, bootstrapBurst: 10, rounds: 1 },
     summary: { ok: true, totalRequests: 1, endpoints: {}, signals: {}, failures: [] },
     failures: [],
     thresholds: {},
@@ -604,7 +604,7 @@ test('committed tier config threshold tampering is caught (local-tamper-don\'t-p
   // the config, running, then committing only the evidence file without the
   // tampered config).
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
     tier: {
       tier: 'small-pilot-provisional',
       configPath: 'reports/capacity/configs/small-pilot.json',
@@ -651,7 +651,7 @@ test('committed config tier mismatch with row decision is caught', () => {
 
   // Evidence points to the 100-plus config but claims small-pilot tier.
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
     tier: {
       tier: 'small-pilot-provisional',
       configPath: 'reports/capacity/configs/100-plus.json',
@@ -758,7 +758,7 @@ test('threshold in evidence not in committed config is flagged (adv-1 reverse di
     thresholds: { max5xx: 0 },
   }));
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
     tier: {
       tier: 'small-pilot-provisional',
       configPath: 'reports/capacity/configs/small-pilot.json',
@@ -801,7 +801,7 @@ test('minEvidenceSchemaVersion declared in config is honoured (adv-2)', () => {
     thresholds: {},
   }));
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
     tier: {
       tier: 'small-pilot-provisional',
       configPath: 'reports/capacity/configs/small-pilot.json',
@@ -838,7 +838,7 @@ test('config without top-level tier field is rejected (adv-3)', () => {
     thresholds: { max5xx: 999 },  // intentionally loose
   }));
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
     tier: {
       tier: 'small-pilot-provisional',
       configPath: 'reports/capacity/configs/pilot-override.json',
@@ -870,7 +870,7 @@ test('runVerify empty tier object does not satisfy tier cross-check', () => {
   mkdirSync(evidenceDir, { recursive: true });
   const evidencePath = join(evidenceDir, 'latest-production.json');
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 30, bootstrapBurst: 30, rounds: 3 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 30, bootstrapBurst: 30, rounds: 3 },
     tier: {},  // empty object — edge case round 2 testing flagged
   })));
   writeFileSync(docPath, makeDoc([
@@ -910,7 +910,7 @@ test('dryRun:true cannot back a decision above smoke-pass (adv-r5-f1)', () => {
   // otherwise accept this because dryRun:true makes null-observed pass.
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
     dryRun: true,
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
     tier: {
       tier: 'small-pilot-provisional',
       configPath: 'reports/capacity/configs/small-pilot.json',
@@ -947,7 +947,7 @@ test('dryRun:true on smoke-pass row still allowed (dryRun preview legitimate)', 
   const evidencePath = join(evidenceDir, 'latest-preview.json');
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
     dryRun: true,
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
   })));
   writeFileSync(docPath, makeDoc([
     ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
@@ -1099,7 +1099,7 @@ test('small-pilot-provisional config with empty thresholds:{} fails verify (adv-
     thresholds: {},  // empty — now invalid per plan's minimum-thresholds rule
   }));
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
     tier: {
       tier: 'small-pilot-provisional',
       configPath: 'reports/capacity/configs/small-pilot.json',
@@ -1149,7 +1149,7 @@ test('30-learner-beta config requires maxBootstrapBytes in addition to base 3 (a
     // gate for classroom tiers fires separately and is not what this test
     // is exercising. The minimum-threshold-keys check must run BEFORE the
     // schema-version check in verifyEvidenceRow so the message is emitted.
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 30, bootstrapBurst: 30, rounds: 3 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 30, bootstrapBurst: 30, rounds: 3 },
     tier: {
       tier: '30-learner-beta-certified',
       configPath: 'reports/capacity/configs/30-learner-beta.json',
@@ -1202,7 +1202,7 @@ test('CAPACITY_VERIFY_SKIP_ANCESTRY=1 skips ancestry check (adv-r5-f4a)', () => 
     thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750 },
   }));
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
     tier: {
       tier: 'small-pilot-provisional',
       configPath: 'reports/capacity/configs/small-pilot.json',
@@ -1250,7 +1250,7 @@ test('ancestry check on git-less tempdir degrades to warning, not failure (adv-r
     thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750 },
   }));
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
-    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
     tier: {
       tier: 'small-pilot-provisional',
       configPath: 'reports/capacity/configs/small-pilot.json',
@@ -1370,7 +1370,7 @@ test('CAPACITY_VERIFY_SKIP_ANCESTRY=1 emits an audit warning in verify output (r
   const evidencePath = join(evidenceDir, 'latest-preview.json');
   const configPath = join(configsDir, 'small-pilot.json');
   writeSmallPilotConfig(configPath);
-  writeSmallPilotEvidence(evidencePath, 'abc1234567890');
+  writeSmallPilotEvidence(evidencePath, 'abc1234567890abcdef1234567890abcdef12345');
   writeSmallPilotDoc(docPath, 'abc1234');
 
   const cwd = process.cwd();
@@ -1559,4 +1559,250 @@ test('full clone + real ancestor commit + real ancestry still passes (r6-probe-e
     else process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = previousSkip;
     rmSync(tempDir, { recursive: true, force: true });
   }
+});
+
+// ===========================================================================
+// Round 7 adversarial findings
+// ---------------------------------------------------------------------------
+// Two P1 blockers (abbreviated-commit bypass, smoke-pass ancestry skip) and a
+// P3 docs-anchor advisory. See
+// .context/compound-engineering/ce-code-review/round7/ for the probe runners.
+// ===========================================================================
+
+// r7-01 (P1): reportMeta.commit must be a 40-char hex SHA. A 7-char abbreviation
+// of a real commit previously passed `git cat-file -e <abbrev>^{commit}` because
+// git honours abbreviation resolution. The new format check rejects anything
+// shorter than 40 hex characters before any git helper runs.
+test('reportMeta.commit of 7 hex chars is rejected as non-full-SHA (r7-01 T1)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-r7-01-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    // Exactly the adversarial shape: 7-char prefix in place of a full SHA.
+    reportMeta: { commit: 'c99406a', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'c99406a', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('must be a 40-char hex SHA')),
+      `expected 40-char hex SHA rejection; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// r7-01 (P1): non-hex garbage in reportMeta.commit is rejected by the same
+// format gate. Catches ref syntax (e.g. "HEAD~1"), placeholders, and any
+// value that slipped past the shape guard but is not a real SHA.
+test('reportMeta.commit of non-hex garbage is rejected (r7-01 T2)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-r7-01b-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: {
+      commit: 'not-a-sha-just-words-here-pretend-sha-x-x',
+      evidenceSchemaVersion: 1,
+      learners: 10,
+      bootstrapBurst: 10,
+      rounds: 1,
+    },
+  })));
+  // Row commit must be valid hex so the format-gate firing is on the evidence
+  // commit, not the row commit (that's a separate test below).
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('must be a 40-char hex SHA')),
+      `expected 40-char hex SHA rejection on non-hex value; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// r7-01 (P1): row commit cell is tightened to /^[0-9a-f]{7,40}$/i. Values like
+// "HEAD123" satisfy the legacy length>=7 check but are not valid git SHAs (or
+// SHA abbreviations); the new format gate rejects them as ref syntax/garbage.
+// Uses a 7-char mixed-case non-hex string so the old length-only check would
+// have let it through.
+test('row commit cell with ref-shaped 7-char value is rejected (r7-01 T3)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-r7-01c-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    // Evidence commit must be a valid 40-char hex so the only failing check
+    // is the row-commit format gate, not the reportMeta.commit gate.
+    reportMeta: {
+      commit: 'abcdef0123456789abcdef0123456789abcdef01',
+      evidenceSchemaVersion: 1,
+      learners: 10,
+      bootstrapBurst: 10,
+      rounds: 1,
+    },
+  })));
+  // Row commit: 7 chars, passes the legacy length check, contains non-hex 'H',
+  // 'E', 'A', 'D'. The new format gate must reject it.
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'HEAD123', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('row commit') && line.includes('hex')),
+      `expected row commit hex-format rejection; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// r7-02 (P1): smoke-pass rows never require a configPath, so the configPath-
+// gated ancestry block silently skipped probeCommitExists. Operators could
+// forge any well-formed 40-char hex as reportMeta.commit and sail through on
+// smoke-pass even on a full clone. After the hoist, commit existence is
+// probed for every non-placeholder non-fail row whose commit passes the
+// format gate.
+test('smoke-pass row with forged 40-char hex on full clone fails closed (r7-02 T4)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-r7-02-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+
+  // Build a full (non-shallow) git repo so the shallow-detection branch
+  // stays false and the "does not exist" failure path fires.
+  execSync('git init -q', { cwd: tempDir });
+  execSync('git config user.email r7probe@example.test', { cwd: tempDir });
+  execSync('git config user.name R7Probe', { cwd: tempDir });
+  execSync('git commit -q --allow-empty -m "initial"', { cwd: tempDir });
+
+  // Fabricated 40-char hex that does not exist in the repo.
+  const forgedSha = 'f00dbabe1234567890abcdef1234567890abcdef';
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: { commit: forgedSha, evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    // smoke-pass deliberately has no tier.configPath.
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', forgedSha.slice(0, 7), 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  const previousSkip = process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(
+      result.ok,
+      false,
+      `smoke-pass + forged SHA on full clone must fail; got ok:true report=${JSON.stringify(result.report)}`,
+    );
+    assert.ok(
+      result.report.some((line) => line.includes('does not exist')),
+      `expected "does not exist" failure on smoke-pass; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    if (previousSkip === undefined) delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+    else process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = previousSkip;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// r7-02 (regression): smoke-pass row whose reportMeta.commit IS a real commit
+// in the local git object database continues to pass. Keeps the happy path
+// intact when ancestry-probing is hoisted.
+test('smoke-pass row with real 40-char commit still passes (r7-02 T5 regression)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-r7-02-happy-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+
+  execSync('git init -q', { cwd: tempDir });
+  execSync('git config user.email r7probe@example.test', { cwd: tempDir });
+  execSync('git config user.name R7Probe', { cwd: tempDir });
+  execSync('git commit -q --allow-empty -m "initial"', { cwd: tempDir });
+  const realSha = execSync('git rev-parse HEAD', { cwd: tempDir }).toString().trim();
+
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: { commit: realSha, evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', realSha.slice(0, 7), 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  const previousSkip = process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(
+      result.ok,
+      true,
+      `smoke-pass + real commit must still pass; got ok:false report=${JSON.stringify(result.report)}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    if (previousSkip === undefined) delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+    else process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = previousSkip;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// r7 P3 advisory: docs-anchor upgrade. The round 6 version used substring
+// inclusion on the whole doc, which could be satisfied by a stray token in an
+// unrelated HTML comment. The strengthened form asserts that
+// docs/operations/capacity.md has a heading "## Evidence Verification Escape
+// Hatches" AND within that section's body the token CAPACITY_VERIFY_SKIP_ANCESTRY
+// appears. Gutting the section while leaving the token in a comment no longer
+// satisfies the test.
+test('docs anchor: CAPACITY_VERIFY_SKIP_ANCESTRY is documented inside the Escape Hatches section body (r7 P3 T6)', () => {
+  const docPath = resolve(process.cwd(), 'docs/operations/capacity.md');
+  const markdown = readFileSync(docPath, 'utf8');
+  // Section heading must exist exactly as "## Evidence Verification Escape Hatches".
+  const headingRegex = /^##\s+Evidence Verification Escape Hatches\s*$/m;
+  assert.ok(
+    headingRegex.test(markdown),
+    'docs/operations/capacity.md must contain a "## Evidence Verification Escape Hatches" heading.',
+  );
+  // Slice from the heading to the next top-level H2 (or EOF). The token must
+  // appear inside that section body. An HTML comment containing the token
+  // outside the section no longer counts; a comment INSIDE the section still
+  // counts because an in-section comment is at least co-located with the
+  // documentation — the real weakness the r6 form invited was treating the
+  // whole file as one undifferentiated blob.
+  const headingMatch = markdown.match(/^##\s+Evidence Verification Escape Hatches\s*$/m);
+  const startIndex = headingMatch.index + headingMatch[0].length;
+  const remainder = markdown.slice(startIndex);
+  const nextHeadingMatch = remainder.match(/^##\s+/m);
+  const sectionBody = nextHeadingMatch ? remainder.slice(0, nextHeadingMatch.index) : remainder;
+  assert.ok(
+    sectionBody.includes('CAPACITY_VERIFY_SKIP_ANCESTRY'),
+    'Escape Hatches section body must name CAPACITY_VERIFY_SKIP_ANCESTRY so reviewers see it in context.',
+  );
 });

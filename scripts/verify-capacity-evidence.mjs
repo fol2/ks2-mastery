@@ -63,6 +63,21 @@ export const PLACEHOLDER_DATE_SENTINEL = '_pending first run_';
 // mandatory tier metadata on certification-tier claims.
 const REQUIRED_EVIDENCE_KEYS = ['ok', 'reportMeta', 'summary', 'failures', 'thresholds', 'safety'];
 
+// Round 7 Finding 1 (P1): reportMeta.commit MUST be a full 40-char hex SHA.
+// `git cat-file -e <abbrev>^{commit}` resolves abbreviations, so a 7-char
+// prefix of any real commit (for example the PR's own merge-commit prefix)
+// would otherwise satisfy the existence probe. The format gate runs before
+// any git helper so operators cannot exploit abbreviation resolution. Accept
+// upper- or lower-case hex; the value is not rewritten — the probe uses it
+// verbatim.
+const COMMIT_SHA_REGEX = /^[0-9a-f]{40}$/i;
+
+// Row commit cells are copied from evidence and should be hex prefixes (7..40
+// chars inclusive). Tightening from the legacy length-only check rejects ref
+// syntax like "HEAD", "master", "@{upstream}", and non-hex garbage that
+// happens to exceed 7 characters.
+const COMMIT_PREFIX_REGEX = /^[0-9a-f]{7,40}$/i;
+
 const EXIT_OK = 0;
 const EXIT_GATE_FAIL = 1;
 const EXIT_USAGE_ERROR = 2;
@@ -283,6 +298,54 @@ function probeCommitExists(evidenceCommit) {
 }
 
 /**
+ * Round 7 Finding 2 (P1): probe whether the evidence commit exists in the
+ * local git database. Previously the equivalent check lived INSIDE
+ * `requireConfigAncestry`, which was only invoked when `tier.configPath` was
+ * set. Smoke-pass rows (which never carry a configPath) therefore skipped
+ * the existence probe entirely and accepted any well-formed 40-char hex SHA.
+ * After the hoist, this helper runs for every non-placeholder non-fail row
+ * whose commit passes the format gate.
+ *
+ * Returns `{ failures: string[], warnings: string[] }`:
+ *   - present on full clone → no messages.
+ *   - missing on full clone → failure (fabrication signal).
+ *   - missing on shallow clone → warning (legitimate depth limit).
+ *   - unknown (git unavailable) → warning (CI-without-history tolerance).
+ */
+function probeEvidenceCommitPresence(evidenceCommit) {
+  const existence = probeCommitExists(evidenceCommit);
+  if (existence === 'present') {
+    return { failures: [], warnings: [] };
+  }
+  if (existence === 'missing') {
+    if (isShallowClone()) {
+      return {
+        failures: [],
+        warnings: [
+          `evidence commit ${evidenceCommit.slice(0, 10)} is not in the local clone, but the repo is shallow. `
+          + 'Set CAPACITY_VERIFY_SKIP_ANCESTRY=1 in CI if this is a known shallow shard.',
+        ],
+      };
+    }
+    return {
+      failures: [
+        `evidence commit ${evidenceCommit.slice(0, 10)} does not exist in repo history; possible fabrication. `
+        + 'Full clones must resolve the evidence commit before it can be accepted.',
+      ],
+      warnings: [],
+    };
+  }
+  // 'unknown' — git could not be consulted (no repo, permission issue, etc.).
+  return {
+    failures: [],
+    warnings: [
+      `could not probe commit ${evidenceCommit.slice(0, 10)}: git unavailable. `
+      + 'Set CAPACITY_VERIFY_SKIP_ANCESTRY=1 to silence this warning.',
+    ],
+  };
+}
+
+/**
  * Round 5 Finding 4 (Low): confirm the committed tier config commit is an
  * ancestor of the evidence commit. Catches the rebase-race route where a
  * config-loosening PR merges between an evidence run and its row commit: the
@@ -293,17 +356,22 @@ function probeCommitExists(evidenceCommit) {
  * helper treated ALL git-errors from `merge-base --is-ancestor` as warnings,
  * so an operator could submit a plausible 40-char hex SHA that no clone
  * contains and sail through with warnings only. The helper now:
- *   1. probes commit existence via `git cat-file -e`,
- *   2. detects shallow clones via `git rev-parse --is-shallow-repository`,
- *   3. fails closed on non-shallow clones that do not contain the evidence
- *      commit — a reliable fabrication signal,
- *   4. degrades to a warning on shallow clones or unreadable git state so
+ *   1. detects shallow clones via `git rev-parse --is-shallow-repository`,
+ *   2. relies on the hoisted `probeEvidenceCommitPresence` check (round 7)
+ *      to have already rejected fabricated SHAs on full clones,
+ *   3. degrades to a warning on shallow clones or unreadable git state so
  *      CI-without-history shards keep working.
  *
  * Round 6 Finding 1 (P1): when CAPACITY_VERIFY_SKIP_ANCESTRY=1 disables the
  * check we now emit an audit warning naming the env var. Previously the skip
  * path returned silently, leaving no trace an operator had bypassed the
  * check.
+ *
+ * Round 7 Finding 2 (P1): commit-existence probing hoisted to caller so
+ * smoke-pass rows (no configPath, no ancestry call) still get the existence
+ * check. `requireConfigAncestry` therefore focuses on the merge-base
+ * comparison only; the caller has already surfaced any missing-commit
+ * failure or warning.
  *
  * Returns an object `{ failures: string[], warnings: string[] }`. Callers push
  * failures into the row's message list; warnings are printed via console.warn
@@ -350,37 +418,14 @@ function requireConfigAncestry(configRelativePath, evidenceCommit) {
       ],
     };
   }
-  // Round 6 probe E: resolve commit existence BEFORE calling merge-base so a
-  // fabricated SHA never reaches the is-ancestor branch. The is-ancestor
-  // error paths there are indistinguishable from a legitimate "not an
-  // ancestor" in the presence of unknown objects.
+  // Round 7 (P1): commit existence is resolved by the caller via
+  // `probeEvidenceCommitPresence`. If the commit is missing locally the
+  // caller has already emitted either a failure (full clone) or a warning
+  // (shallow). Re-probe silently here and skip merge-base for missing
+  // commits so we do not emit a duplicate "could not resolve" warning.
   const existence = probeCommitExists(evidenceCommit);
-  if (existence === 'missing') {
-    if (isShallowClone()) {
-      return {
-        failures: [],
-        warnings: [
-          `ancestry check degraded: evidence commit ${evidenceCommit.slice(0, 10)} is not in the local clone, but the repo is shallow. `
-          + 'Set CAPACITY_VERIFY_SKIP_ANCESTRY=1 in CI if this is a known shallow shard.',
-        ],
-      };
-    }
-    return {
-      failures: [
-        `evidence commit ${evidenceCommit.slice(0, 10)} does not exist in repo history; possible fabrication. `
-        + 'Full clones must resolve the evidence commit before ancestry can be cross-checked.',
-      ],
-      warnings: [],
-    };
-  }
-  if (existence === 'unknown') {
-    return {
-      failures: [],
-      warnings: [
-        `ancestry check could not probe commit ${evidenceCommit.slice(0, 10)}: git unavailable. `
-        + 'Set CAPACITY_VERIFY_SKIP_ANCESTRY=1 to silence this warning.',
-      ],
-    };
+  if (existence !== 'present') {
+    return { failures: [], warnings: [] };
   }
   try {
     // --is-ancestor exits 0 if the first SHA is an ancestor of the second, 1
@@ -711,6 +756,24 @@ export function verifyEvidenceRow(row) {
     );
   }
 
+  // Round 7 Finding 1 (P1): reject reportMeta.commit values that are not a
+  // full 40-char hex SHA. `git cat-file -e <abbrev>^{commit}` honours
+  // abbreviation resolution, so a 7-char prefix of any real commit would
+  // otherwise satisfy the existence probe. This gate fires BEFORE any git
+  // helper runs so operators cannot exploit abbreviation resolution. The
+  // check is additive: other checks (report.ok, schema version, tier cross-
+  // reference) still run so their messages surface too — but the downstream
+  // git probes are gated on this flag so we never hand git an abbreviation.
+  const evidenceCommitValue = payload.reportMeta?.commit;
+  const evidenceCommitString = typeof evidenceCommitValue === 'string' ? evidenceCommitValue : '';
+  const evidenceCommitFormatValid = COMMIT_SHA_REGEX.test(evidenceCommitString);
+  if (!evidenceCommitFormatValid) {
+    messages.push(
+      `reportMeta.commit must be a 40-char hex SHA, got ${JSON.stringify(evidenceCommitValue)}. `
+      + 'Evidence must carry the full commit SHA; abbreviated or ref-syntax values are rejected.',
+    );
+  }
+
   if (payload.ok !== true) {
     messages.push(`evidence file report.ok is not true (found ${payload.ok})`);
   }
@@ -728,16 +791,22 @@ export function verifyEvidenceRow(row) {
     );
   }
 
-  const evidenceCommitRaw = String(payload.reportMeta?.commit || '');
+  const evidenceCommitRaw = evidenceCommitString;
   const rowCommitRaw = String(row.commit || '').trim();
   if (rowCommitRaw && rowCommitRaw !== '—') {
-    // Row commit must be a prefix of the evidence commit (the evidence carries
-    // the full SHA; operators typically write the first 7 chars). Very short
-    // prefixes (<7) are rejected separately because they'd accept too many
-    // unrelated commits.
+    // Round 7 Finding 1 (P1): row commit cell is tightened from a length-only
+    // check to a hex-prefix format gate. Values like "HEAD", "master",
+    // "@{upstream}", or "HEAD123" used to satisfy length >= 7 and then sneak
+    // through to `evidenceCommitRaw.startsWith(rowCommitRaw)` with
+    // startsWith's string matching. The format gate rejects anything that
+    // isn't 7..40 hex characters before any comparison runs.
     if (rowCommitRaw.length < 7) {
       messages.push(
         `row commit "${rowCommitRaw}" is too short; use at least 7 hex chars.`,
+      );
+    } else if (!COMMIT_PREFIX_REGEX.test(rowCommitRaw)) {
+      messages.push(
+        `row commit "${rowCommitRaw}" is not a valid hex SHA prefix; use 7..40 hex chars.`,
       );
     } else if (!evidenceCommitRaw.startsWith(rowCommitRaw)) {
       messages.push(`commit mismatch: row=${rowCommitRaw} evidence=${evidenceCommitRaw || 'unknown'}`);
@@ -790,6 +859,25 @@ export function verifyEvidenceRow(row) {
         `tier "${row.decision}" requires evidence to record tier.configPath. `
         + 'Re-run with --config reports/capacity/configs/<tier>.json.',
       );
+    }
+  }
+
+  // Round 7 Finding 2 (P1): probe evidence commit presence for EVERY
+  // non-placeholder non-fail row — not only rows with a tier.configPath.
+  // Previously this check lived inside `requireConfigAncestry`, which was
+  // only called when `configPath` was set. Smoke-pass rows therefore skipped
+  // the existence probe and accepted any well-formed 40-char hex SHA.
+  // Runs only when (a) the format gate passed and (b) the operator has not
+  // opted out via CAPACITY_VERIFY_SKIP_ANCESTRY, mirroring the escape hatch
+  // documented in docs/operations/capacity.md.
+  if (evidenceCommitFormatValid && process.env.CAPACITY_VERIFY_SKIP_ANCESTRY !== '1') {
+    const presence = probeEvidenceCommitPresence(evidenceCommitString);
+    if (presence.failures.length) messages.push(...presence.failures);
+    if (presence.warnings.length) {
+      for (const warning of presence.warnings) {
+        warnings.push(warning);
+        console.warn(`[capacity-verify] ${warning}`);
+      }
     }
   }
 
