@@ -399,6 +399,261 @@ test('U4: strict mini-test timer expiry auto-finishes with deterministic marking
   assert.equal(grammar.summary.miniTestReview.questions.length, 8);
 });
 
+// --- U4 Phase 3: mini-test strictness + post-finish review ------------------
+//
+// These tests pin the pre-finish strictness (no feedback / worked / AI /
+// similar / faded surface) and the post-finish review (score card,
+// expandable per-question rows, `Practise this later` hand-off). They also
+// guard the `aria-current="step"` / `aria-pressed` attributes on the
+// mini-test nav buttons per the plan's a11y pass.
+
+function u4HarnessWithMiniSet() {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: { mode: 'satsset', roundLength: 8, templateId: sample.id, seed: sample.sample.seed },
+  });
+  return { harness, sample };
+}
+
+function u4ScopeToSessionHtml(html) {
+  const match = html.match(/<section class="grammar-session"[\s\S]*?<\/section>/);
+  assert.ok(match, 'session scene was rendered');
+  return match[0];
+}
+
+function u4ScopeToReviewHtml(html) {
+  const match = html.match(/<section class="card grammar-mini-review"[\s\S]*?<\/section>/);
+  assert.ok(match, 'mini-set review section was rendered');
+  return match[0];
+}
+
+test('U4 Phase 3: mini-test before finish hides every feedback / help surface', () => {
+  const { harness } = u4HarnessWithMiniSet();
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.type, 'mini-set');
+  assert.equal(grammar.session.miniTest.finished, false);
+
+  // Silent-no-op hedge (Phase 2 U4 pattern): these flags must stay false for
+  // the duration of the mini-set. If a stray repair button leaked through
+  // the U8 gate and was clicked, `session.repair.*` would flip even if the
+  // HTML assertion below happened to tolerate the DOM change.
+  assert.equal(grammar.session.repair?.workedSolutionShown || false, false);
+  assert.equal(grammar.session.repair?.requestedFadedSupport || false, false);
+
+  const sessionHtml = u4ScopeToSessionHtml(harness.render());
+
+  // Timer, nav, Save-and-next are present.
+  assert.match(sessionHtml, /Time left \d+:\d{2}/);
+  assert.match(sessionHtml, /Mini Test — Question 1 of 8/);
+  assert.match(sessionHtml, /grammar-mini-test-nav-button/);
+  assert.match(sessionHtml, />Save and next</);
+  assert.match(sessionHtml, />Finish mini-set</);
+
+  // Every feedback / help / AI / worked / repair surface is absent.
+  assert.doesNotMatch(sessionHtml, /Correct\./);
+  assert.doesNotMatch(sessionHtml, /Not quite/);
+  assert.doesNotMatch(sessionHtml, /Worked solution/i);
+  assert.doesNotMatch(sessionHtml, /Similar problem/i);
+  assert.doesNotMatch(sessionHtml, /Explain this/);
+  assert.doesNotMatch(sessionHtml, /Explain another way/);
+  assert.doesNotMatch(sessionHtml, /Faded support/i);
+  assert.doesNotMatch(sessionHtml, /Faded guidance/i);
+  assert.doesNotMatch(sessionHtml, /Show a step/);
+  assert.doesNotMatch(sessionHtml, /Show answer/);
+  assert.doesNotMatch(sessionHtml, /Revision cards/);
+  assert.doesNotMatch(sessionHtml, /Non-scored/);
+
+  // Full forbidden-terms sweep. Any adult-diagnostic leak (Worker authority,
+  // evidence snapshot, read model, ...) trips this loop.
+  for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+    assert.doesNotMatch(
+      sessionHtml,
+      new RegExp(escapeRegExp(term), 'i'),
+      `forbidden term leaked into pre-finish mini-test HTML: ${term}`,
+    );
+  }
+});
+
+test('U4 Phase 3: mini-test nav exposes aria-current=step and aria-pressed=answered', () => {
+  const { harness } = u4HarnessWithMiniSet();
+
+  // Before any answers: current button (index 0) carries aria-current="step"
+  // and every nav button reports aria-pressed="false".
+  let grammar = harness.store.getState().subjectUi.grammar;
+  const q1Value = grammar.session.miniTest.questions[0].item.inputSpec.options[0].value;
+  let sessionHtml = u4ScopeToSessionHtml(harness.render());
+  const currentBeforeAnswer = sessionHtml.match(
+    /<button[^>]*class="grammar-mini-test-nav-button current"[^>]*>/,
+  )?.[0];
+  assert.ok(currentBeforeAnswer, 'current nav button is rendered');
+  assert.match(currentBeforeAnswer, /aria-current="step"/);
+  assert.match(currentBeforeAnswer, /aria-pressed="false"/);
+
+  // Answer Q1, advance to Q2, then read the nav buttons again. Q1 now carries
+  // `answered` + `aria-pressed="true"`; Q2 is current + aria-current.
+  harness.dispatch('grammar-save-mini-test-response', {
+    formData: grammarResponseFormData({ answer: q1Value }),
+    advance: true,
+  });
+  grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.session.currentIndex, 1, 'advance moved to Q2');
+  sessionHtml = u4ScopeToSessionHtml(harness.render());
+
+  const answeredButton = sessionHtml.match(
+    /<button[^>]*data-index="0"[^>]*>/,
+  )?.[0];
+  assert.ok(answeredButton, 'Q1 nav button is rendered');
+  assert.match(answeredButton, /class="[^"]*\banswered\b[^"]*"/);
+  assert.match(answeredButton, /aria-pressed="true"/);
+  assert.doesNotMatch(answeredButton, /aria-current="step"/);
+
+  const currentQ2 = sessionHtml.match(
+    /<button[^>]*data-index="1"[^>]*>/,
+  )?.[0];
+  assert.ok(currentQ2, 'Q2 nav button is rendered');
+  assert.match(currentQ2, /aria-current="step"/);
+  assert.match(currentQ2, /aria-pressed="false"/);
+});
+
+test('U4 Phase 3: post-finish review renders score card + expandable per-question rows', () => {
+  const { harness, sample } = u4HarnessWithMiniSet();
+
+  // Answer only Q1 correctly, leave the rest Blank, then finish.
+  harness.dispatch('grammar-save-mini-test-response', {
+    formData: grammarResponseFormData(sample.correctResponse),
+    advance: false,
+  });
+  harness.dispatch('grammar-finish-mini-test');
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'summary');
+  const review = grammar.summary.miniTestReview;
+  assert.equal(review.questions.length, 8);
+
+  const reviewHtml = u4ScopeToReviewHtml(harness.render());
+
+  // Score card: `X of N correct` + percentage caption.
+  assert.match(reviewHtml, /Mini-set review/);
+  assert.match(reviewHtml, /Delayed feedback/);
+  assert.match(reviewHtml, /1 of 8 correct/);
+  assert.match(reviewHtml, /13% accuracy/);
+
+  // Expandable per-question rows use `<details><summary>` so a11y keyboard
+  // users get native disclosure semantics and SSR renders the body.
+  const detailsCount = (reviewHtml.match(/<details class="grammar-mini-review-item/g) || []).length;
+  assert.equal(detailsCount, 8, 'every question renders as a <details> row');
+
+  // Q1 was correct: chip reads `Correct`, no `Practise this later` button.
+  assert.match(reviewHtml, /data-index="0"[\s\S]*?<span class="chip good">Correct<\/span>/);
+  const q1Slice = reviewHtml.match(
+    /<details class="grammar-mini-review-item correct" data-index="0"[\s\S]*?<\/details>/,
+  )?.[0];
+  assert.ok(q1Slice, 'Q1 slice rendered');
+  assert.doesNotMatch(q1Slice, /Practise this later/);
+
+  // Q2 was Blank: chip reads `Blank` (never `Wrong`); a `Practise this later`
+  // button is present with `data-concept-id` set from the item's skillIds.
+  const q2Slice = reviewHtml.match(
+    /<details class="grammar-mini-review-item blank" data-index="1"[\s\S]*?<\/details>/,
+  )?.[0];
+  assert.ok(q2Slice, 'Q2 slice rendered');
+  assert.match(q2Slice, /<span class="chip muted">Blank<\/span>/);
+  assert.doesNotMatch(q2Slice, /Wrong/);
+  assert.match(q2Slice, /Practise this later/);
+  assert.match(q2Slice, /data-action="grammar-focus-concept"/);
+  assert.match(q2Slice, /data-concept-id="[a-z_]+/);
+  assert.match(q2Slice, /<dt>Your answer<\/dt><dd>Blank<\/dd>/);
+
+  // Forbidden-terms sweep on the full review HTML — the post-finish panel
+  // must remain child-facing.
+  for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+    assert.doesNotMatch(
+      reviewHtml,
+      new RegExp(escapeRegExp(term), 'i'),
+      `forbidden term leaked into post-finish review HTML: ${term}`,
+    );
+  }
+});
+
+test('U4 Phase 3: review Practise this later dispatches grammar-focus-concept with the missed concept id', () => {
+  const { harness, sample } = u4HarnessWithMiniSet();
+  // Leave every question Blank, then finish.
+  harness.dispatch('grammar-finish-mini-test');
+
+  let grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'summary');
+  const missedQuestion = grammar.summary.miniTestReview.questions.find(
+    (question) => !question.answered,
+  );
+  assert.ok(missedQuestion, 'at least one missed question to review');
+  const missedConceptId = missedQuestion.item.skillIds[0]
+    || missedQuestion.item.replay?.conceptIds?.[0]
+    || '';
+  assert.ok(missedConceptId, 'missed question carries a concept id');
+
+  const reviewHtml = u4ScopeToReviewHtml(harness.render());
+  const button = reviewHtml.match(
+    new RegExp(
+      `<button[^>]*data-concept-id="${escapeRegExp(missedConceptId)}"[^>]*>Practise this later<\\/button>`,
+    ),
+  )?.[0];
+  assert.ok(button, 'Practise this later button wired to the missed concept id');
+
+  // Dispatching the action flips the focus preference + phase as per
+  // `grammar-focus-concept` (added in U2) — the UI now routes to focused
+  // practice with the missed concept id.
+  harness.dispatch('grammar-focus-concept', { conceptId: missedConceptId });
+  grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.prefs.focusConceptId, missedConceptId);
+  // U2 contract: focus-concept takes the learner out of the mini-set phase
+  // and into a fresh focused session on that concept.
+  assert.ok(['session', 'dashboard'].includes(grammar.phase), 'phase routed to focused practice');
+  // Avoid `void` above — explicitly assert the phase is no longer summary.
+  assert.notEqual(grammar.phase, 'summary');
+  // sample is unused in this assertion — referenced to silence lint noise.
+  void sample;
+});
+
+test('U4 Phase 3: review for a fully-blank mini-set shows 0 of N correct and all Blank rows', () => {
+  const { harness } = u4HarnessWithMiniSet();
+  harness.dispatch('grammar-finish-mini-test');
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'summary');
+
+  const reviewHtml = u4ScopeToReviewHtml(harness.render());
+  assert.match(reviewHtml, /0 of 8 correct/);
+  // Every row carries the `blank` class and the `Blank` chip — never `Wrong`.
+  const blankCount = (reviewHtml.match(/grammar-mini-review-item blank/g) || []).length;
+  assert.equal(blankCount, 8);
+  assert.doesNotMatch(reviewHtml, /Wrong/);
+  // Unanswered rows surface the Worker's `feedbackShort` (`No answer saved.`)
+  // in the Why body so the learner sees why the row is Blank.
+  assert.match(reviewHtml, /No answer saved\./);
+});
+
+test('U4 Phase 3: mini-test timer chip uses minutes:seconds format alongside Timed test badge', () => {
+  // The timer chip is rendered by `MiniTestStatus` (GrammarSessionScene).
+  // The `remainingMs <= 60_000` warning-class branch exists in the
+  // component and flips at runtime via `useMiniTestRemaining` when the
+  // React hook re-reads `Date.now()` through the 1 Hz interval. The SSR
+  // harness cannot advance the hook's internal clock — pointer-capture,
+  // React state, and `setInterval` are explicitly out of scope per the
+  // plan's SSR limits note. We instead pin the fact that the initial
+  // render contains a `Time left M:SS` chip alongside the `Timed test`
+  // badge; the warning branch is covered end-to-end by the timer-expiry
+  // auto-finish test above (`timer expiry auto-finishes`), which
+  // exercises the expiresAt boundary through the Worker state machine.
+  const { harness } = u4HarnessWithMiniSet();
+  const sessionHtml = u4ScopeToSessionHtml(harness.render());
+  assert.match(sessionHtml, /Timed test/);
+  assert.match(sessionHtml, /Time left \d+:\d{2}/);
+});
+
 test('Grammar surface exposes post-answer repair actions without local scoring', () => {
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });
