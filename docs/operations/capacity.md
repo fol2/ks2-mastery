@@ -48,6 +48,15 @@ npm run check
 npm run deploy
 ```
 
+## Capacity Telemetry Environment Variables (Phase 2 U3)
+
+The Worker exposes per-request capacity telemetry on every response. Two surfaces render the same collector state: a `meta.capacity` block on capacity-relevant JSON responses (`/api/bootstrap`, `/api/subjects/:subject/command`, `/api/hubs/parent/*`, `/api/classroom/*`) and a structured `[ks2-worker] {event: "capacity.request", ...}` log line. Both shapes follow a closed allowlist; per-statement breakdown NEVER appears in `meta.capacity`.
+
+- `CAPACITY_LOG_SAMPLE_RATE` — numeric string in `[0, 1]`. Default `1.0` for local and preview environments, `0.1` recommended for production. Sampling applies to the structured log line only: `meta.capacity` is always present on responses regardless of the rate. Requests that end with `status >= 500` are always logged at rate `1.0` regardless of the configured value — error tails must never be silently dropped.
+- `x-ks2-request-id` — every inbound request is checked against `/^ks2_req_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/` (prefix + UUID v4, max 48 chars). Non-matching, blank, or oversized values are rejected silently; the Worker generates a fresh id via `crypto.randomUUID()` and echoes that validated id on every response (including pre-route 401s). The rejected raw value never appears in logs, response headers, or response bodies.
+
+Operators correlate a load-driver wall-time sample with a server-side structured log by looking up the echoed `x-ks2-request-id` on the response headers. `scripts/classroom-load-test.mjs` and `scripts/probe-production-bootstrap.mjs` capture both the client-generated id and the server echo on every measurement.
+
 ## Threshold-Run Procedure
 
 The classroom load driver and production bootstrap probe both support hard threshold gates so a CI step can fail purely on threshold violation. No threshold flag is set by default — absent flags preserve the existing reporting behaviour exactly.

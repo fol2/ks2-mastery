@@ -102,9 +102,21 @@ export function parseProbeArgs(argv = process.argv.slice(2)) {
   return options;
 }
 
+function probeRequestId() {
+  const randomUuid = typeof globalThis.crypto?.randomUUID === 'function'
+    ? globalThis.crypto.randomUUID()
+    : `${Date.now().toString(16)}-${Math.random().toString(16).slice(2, 18)}`;
+  return `ks2_req_${randomUuid}`;
+}
+
 export function buildProbeHeaders(options = {}) {
   const headers = {
     accept: 'application/json',
+    // U3: probe always sends a valid x-ks2-request-id so the Worker
+    // ingress validator accepts it verbatim. Operators can correlate
+    // probe wall-time with the server-side capacity.request structured
+    // log entry via the echoed header.
+    'x-ks2-request-id': probeRequestId(),
   };
 
   if (options.cookie) headers.cookie = options.cookie;
@@ -282,9 +294,11 @@ export function analyseBootstrapPayload(payload, {
 export async function probeProductionBootstrap(options = {}) {
   const url = new URL('/api/bootstrap', options.url || DEFAULT_URL);
   const startedAt = new Date().toISOString();
+  const probeHeaders = buildProbeHeaders(options);
+  const clientRequestId = probeHeaders['x-ks2-request-id'] || null;
   const response = await fetch(url, {
     method: 'GET',
-    headers: buildProbeHeaders(options),
+    headers: probeHeaders,
   });
   const text = await response.text();
   const responseBytes = Buffer.byteLength(text, 'utf8');
@@ -312,6 +326,20 @@ export async function probeProductionBootstrap(options = {}) {
     analysis.failures.unshift(`Bootstrap response is not valid JSON: ${parseError.message}`);
   }
 
+  // U3: surface the request-id echo + meta.capacity fields (when present)
+  // so operators can correlate probe wall-time with the server-side
+  // capacity.request structured log entry.
+  const serverRequestId = response.headers?.get?.('x-ks2-request-id') || null;
+  const capacity = payload?.meta?.capacity && typeof payload.meta.capacity === 'object'
+    ? {
+      queryCount: payload.meta.capacity.queryCount ?? null,
+      d1RowsRead: payload.meta.capacity.d1RowsRead ?? null,
+      d1RowsWritten: payload.meta.capacity.d1RowsWritten ?? null,
+      serverWallMs: payload.meta.capacity.wallMs ?? null,
+      responseBytes: payload.meta.capacity.responseBytes ?? null,
+    }
+    : null;
+
   // Correctness residual C-R1: put the spread before the explicit `ok`
   // so that a valid-looking JSON body with HTTP 5xx (which unshifts a
   // failure above) cannot leak `analysis.ok === true` into the outer
@@ -321,6 +349,9 @@ export async function probeProductionBootstrap(options = {}) {
     ok: analysis.failures.length === 0,
     url: url.toString(),
     status: response.status,
+    clientRequestId,
+    serverRequestId,
+    capacity,
     startedAt,
     finishedAt: new Date().toISOString(),
   };
