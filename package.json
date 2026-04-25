@@ -14,6 +14,7 @@
     "assets:monster-visual-manifest": "node ./scripts/generate-monster-visual-manifest.mjs",
     "check": "node ./scripts/wrangler-oauth.mjs deploy --dry-run",
     "check:oauth": "npm run check",
+    "capacity:classroom": "node ./scripts/classroom-load-test.mjs",
     "content:seed": "node scripts/seed-spelling-content-from-legacy.mjs",
     "content:enrich": "node scripts/enrich-spelling-vocabulary.mjs",
     "content:validate": "node scripts/validate-spelling-content.mjs",
