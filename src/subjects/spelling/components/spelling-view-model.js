@@ -106,9 +106,11 @@ export const WORD_BANK_YEAR_FILTER_IDS = new Set(['all', 'y3-4', 'y5-6', 'extra'
  * The chip-label map lives in the view-model (not the JSX scene) so there is
  * a single source of truth for display text; the scene imports from here.
  * Labels are deliberately grounded and child-specific — no "Great work!"
- * slop, no zero-celebration — and matched by ARIA labels at render time so
- * screen-reader users hear the same phrase. The hint map mirrors the chip
- * IDs so an accidental label/hint divergence fails the parity tests.
+ * slop, no zero-celebration — and because each chip button's visible label
+ * span doubles as its accessible name (no explicit aria-label on the chip
+ * button), renaming the label here automatically updates the screen-reader
+ * text too. The hint map mirrors the chip IDs so an accidental label/hint
+ * divergence fails the parity tests.
  *
  * Previous copy (pre-U5, kept in comments for historical reference):
  *   guardianDue     → 'Guardian due'

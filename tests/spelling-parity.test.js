@@ -571,3 +571,37 @@ test('SATs Test session does not leak Guardian copy after U5 (parity guard)', ()
   assert.doesNotMatch(html, /Spell the word from memory\. One clean attempt\./);
   assert.doesNotMatch(html, /Boss round\. Mega words only\./);
 });
+
+// Trouble Drill pure-function parity. Integration-level trouble sessions
+// depend on the learner having a due backlog, which is brittle to seed in
+// a byte-for-byte parity test. We assert the pure session-ui helpers
+// instead so regressions in branch ordering — e.g. an accidental Guardian
+// chip leaking into trouble — are caught reliably.
+test('Trouble Drill pure session-ui helpers: byte-for-byte unchanged under U5', async () => {
+  const {
+    spellingSessionContextNote,
+    spellingSessionInfoChips,
+    spellingSessionInputPlaceholder,
+    spellingSessionProgressLabel,
+    spellingSessionSubmitLabel,
+    spellingSessionSkipLabel,
+  } = await import('../src/subjects/spelling/session-ui.js');
+  const trouble = {
+    type: 'learning',
+    mode: 'trouble',
+    phase: 'question',
+    practiceOnly: false,
+    currentCard: { word: { yearLabel: 'Y5-6' } },
+  };
+  assert.equal(spellingSessionSubmitLabel(trouble), 'Submit');
+  assert.equal(spellingSessionInputPlaceholder(trouble), 'Type the spelling here');
+  assert.equal(spellingSessionContextNote(trouble), 'Family hidden during live recall.');
+  assert.equal(spellingSessionProgressLabel(trouble), 'Phase: question');
+  assert.deepEqual(spellingSessionInfoChips(trouble), ['Y5-6']);
+  assert.equal(spellingSessionSkipLabel(trouble), 'Skip for now');
+
+  // Practice-only trouble drill (U3) — chip row + progress label unchanged.
+  const practiceTrouble = { ...trouble, practiceOnly: true };
+  assert.equal(spellingSessionProgressLabel(practiceTrouble), 'Practice only');
+  assert.deepEqual(spellingSessionInfoChips(practiceTrouble), ['Y5-6', 'Practice only']);
+});
