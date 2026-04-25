@@ -1,8 +1,9 @@
 ---
 title: feat: Monster effect config integration
 type: feat
-status: active
+status: shipped
 date: 2026-04-25
+shipped: 2026-04-25
 origin: docs/brainstorms/2026-04-24-monster-visual-config-centre-requirements.md
 ---
 
@@ -471,7 +472,7 @@ on app boot OR config change:
 
 ---
 
-- [ ] U7. **Admin UI: per-monster bindings + celebration tunables panel**
+- [x] U7. **Admin UI: per-monster bindings + celebration tunables panel** — shipped via PR #211 (squash `680b6bc`).
 
 **Goal:** Inside the existing per-asset detail view, add two sub-panels: one for `bindings` (persistent + continuous effects this monster wears) and one for `celebrationTunables` (caught / evolve / mega overrides). Both render preview alongside the existing six visual contexts.
 
@@ -513,7 +514,7 @@ on app boot OR config change:
 
 ---
 
-- [ ] U8. **Documentation, smoke, and rollout**
+- [x] U8. **Documentation, smoke, and rollout** — shipped via PR #217 (squash `1bdffae`).
 
 **Goal:** Update operational docs for the merged centre, add a production smoke probe for the effect config endpoint, and outline a rollout sequence that respects "publish covers both atomically".
 
