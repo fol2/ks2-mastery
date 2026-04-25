@@ -186,7 +186,9 @@ const grammarSpec = {
   subjectId: 'grammar',
   createHarness: createGrammarHarness,
   expectReactPractice: true,
-  practiceMatcher: /Grammar retrieval practice/,
+  // U1 renames the dashboard hero copy from "Grammar retrieval practice"
+  // to the child-facing `GRAMMAR_DASHBOARD_HERO.title` ("Grammar Garden").
+  practiceMatcher: /Grammar Garden/,
   sessionMatcher: /Grammar practice|question marks/i,
   summaryMatcher: /Grammar session summary/,
   getUiState(harness) {

@@ -497,10 +497,12 @@ test('U6a: orphaned evidence (promptId not in prompts catalogue) passes through 
   assert.equal(clientRm.transferLane.prompts[0].id, 'real-prompt');
 });
 
-test('U6a: U6a does NOT add "transfer" to the phase allowlist — that is U6b scope', () => {
-  // U6a is plumbing only; the `'transfer'` phase string belongs to U6b when
-  // the scene ships. Assert that passing `phase: 'transfer'` still falls back
-  // to the default `'dashboard'` phase on the client.
+test('U1: the dashboard rewrite expands the phase allowlist to accept "transfer" so the Writing Try button routes safely', () => {
+  // U6a was plumbing only; U1 (the dashboard rewrite) legitimately wires the
+  // Writing Try secondary button and needs the `'transfer'` phase as a stub
+  // target until U6b ships the real scene. Assert the normaliser now accepts
+  // `'transfer'` as an allowed phase (and does NOT silently downgrade it to
+  // `'dashboard'`), so clicking "Writing Try" actually transitions.
   const clientRm = normaliseGrammarReadModel({ phase: 'transfer' }, 'learner-a');
-  assert.equal(clientRm.phase, 'dashboard');
+  assert.equal(clientRm.phase, 'transfer');
 });

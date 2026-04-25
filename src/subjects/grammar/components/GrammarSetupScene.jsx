@@ -1,12 +1,39 @@
 import React from 'react';
 import {
-  GRAMMAR_ENABLED_MODES,
-  GRAMMAR_LOCKED_MODES,
   GRAMMAR_REGION_IMAGE,
   GRAMMAR_REGION_IMAGE_SMALL,
-  groupedGrammarConcepts,
+  grammarMonsterAsset,
 } from '../metadata.js';
 import { normaliseGrammarSpeechRate } from '../speech.js';
+import {
+  GRAMMAR_DASHBOARD_HERO,
+  GRAMMAR_MORE_PRACTICE_MODES,
+  GRAMMAR_PRIMARY_MODE_CARDS,
+  buildGrammarDashboardModel,
+} from './grammar-view-model.js';
+
+// Phase 3 U1: Child-facing Grammar dashboard. Every label, mode id, and
+// card comes from the U8 view-model (`grammar-view-model.js`). The JSX
+// layer is a layout-only component — we do not restate copy, filter ids,
+// or mode ids inline. Hero copy is driven by `GRAMMAR_DASHBOARD_HERO` so
+// James can swap the wording in one place after review.
+//
+// Structure mirrors `SpellingSetupScene.jsx`:
+//   - Hero (headline + subheadline)
+//   - Today cards row (Due / Trouble spots / Secure / Streak)
+//   - Concordium progress (drawn from `buildGrammarDashboardModel` →
+//     `concordiumProgress`)
+//   - Primary mode cards (4 cards from `GRAMMAR_PRIMARY_MODE_CARDS`)
+//   - Writing Try secondary entry (dispatches `grammar-open-transfer` —
+//     U6b renders the scene)
+//   - More practice <details> disclosure (5 cards from
+//     `GRAMMAR_MORE_PRACTICE_MODES`). Closed by default.
+//   - Quiet round-length + speech-rate controls.
+//
+// Everything the old adult-diagnostic surface said (`Worker-marked modes`,
+// `Worker marked` chip, `full map`, `Full placeholder map`, `All 18
+// Grammar concepts` grid) is removed. U10's fixture-driven absence test
+// covers regressions.
 
 const SPEECH_RATE_OPTIONS = Object.freeze([
   { value: 0.6, label: '0.6x slow' },
@@ -16,53 +43,86 @@ const SPEECH_RATE_OPTIONS = Object.freeze([
   { value: 1.4, label: '1.4x fast' },
 ]);
 
-function Stat({ label, value, detail }) {
+function TodayCard({ card }) {
   return (
-    <div className="grammar-stat">
-      <span>{label}</span>
-      <strong>{value}</strong>
-      {detail ? <small>{detail}</small> : null}
+    <div className="grammar-today-card" data-today-id={card.id}>
+      <div className="grammar-today-label">{card.label}</div>
+      <div className="grammar-today-value">{card.value}</div>
+      <div className="grammar-today-detail">{card.detail}</div>
     </div>
   );
 }
 
-function ModeButton({ mode, selected, disabled, locked, reason, actions }) {
-  const className = `grammar-mode${selected ? ' selected' : ''}${locked ? ' locked' : ''}`;
+function PrimaryModeCard({ card, selected, disabled, actions }) {
+  const featured = card.featured === true;
+  const classes = ['grammar-primary-mode'];
+  if (selected) classes.push('selected');
+  if (disabled) classes.push('is-disabled');
+  if (featured) classes.push('is-recommended');
+  const action = card.id === 'bank' ? 'grammar-open-concept-bank' : 'grammar-set-mode';
   return (
     <button
-      className={className}
       type="button"
+      className={classes.join(' ')}
+      data-mode-id={card.id}
+      data-action={action}
+      data-featured={featured ? 'true' : 'false'}
+      aria-pressed={selected ? 'true' : 'false'}
       disabled={disabled}
-      onClick={() => actions.dispatch('grammar-set-mode', { value: mode.id })}
+      onClick={() => {
+        if (disabled) return;
+        if (card.id === 'bank') {
+          actions.dispatch('grammar-open-concept-bank');
+          return;
+        }
+        actions.dispatch('grammar-set-mode', { value: card.id });
+      }}
     >
-      <span>{mode.label}</span>
-      <small>{mode.detail || reason || ''}</small>
+      {featured ? <span className="grammar-primary-mode-eyebrow">Recommended</span> : null}
+      <h4 className="grammar-primary-mode-title">{card.title}</h4>
+      <p className="grammar-primary-mode-desc">{card.desc}</p>
     </button>
   );
 }
 
-export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }) {
-  const counts = grammar.stats?.concepts || {};
-  const templates = grammar.stats?.templates || {};
-  const selectedMode = grammar.prefs?.mode || 'smart';
-  const selectedGoal = grammar.prefs?.goalType || 'questions';
+function MoreModeCard({ card, selected, disabled, actions }) {
+  const classes = ['grammar-secondary-mode'];
+  if (selected) classes.push('selected');
+  if (disabled) classes.push('is-disabled');
+  return (
+    <button
+      type="button"
+      className={classes.join(' ')}
+      data-mode-id={card.id}
+      data-action="grammar-set-mode"
+      aria-pressed={selected ? 'true' : 'false'}
+      disabled={disabled}
+      onClick={() => {
+        if (disabled) return;
+        actions.dispatch('grammar-set-mode', { value: card.id });
+      }}
+    >
+      <h5 className="grammar-secondary-mode-title">{card.title}</h5>
+      <p className="grammar-secondary-mode-desc">{card.desc}</p>
+    </button>
+  );
+}
+
+export function GrammarSetupScene({ learner, grammar, rewardState, actions, runtimeReadOnly }) {
+  const dashboard = buildGrammarDashboardModel(grammar, learner, rewardState);
+  const selectedMode = dashboard.primaryMode;
   const miniTestMode = selectedMode === 'satsset';
-  const troubleMode = selectedMode === 'trouble';
-  const surgeryMode = selectedMode === 'surgery';
-  const builderMode = selectedMode === 'builder';
-  const focusDisabled = troubleMode || surgeryMode || builderMode;
-  const selectedFocus = focusDisabled ? '' : (grammar.prefs?.focusConceptId || '');
-  const focusPlaceholder = troubleMode ? 'Weakest concept' : (surgeryMode ? 'Surgery mix' : (builderMode ? 'Builder mix' : 'Smart mix'));
-  const groupedConcepts = groupedGrammarConcepts(grammar.analytics?.concepts || []);
   const setupDisabled = runtimeReadOnly || Boolean(grammar.pendingCommand);
   const lengthOptions = miniTestMode ? [8, 12] : [3, 5, 8, 10, 15];
   const selectedLength = miniTestMode
     ? (Number(grammar.prefs?.roundLength) >= 10 ? 12 : 8)
     : (Number(grammar.prefs?.roundLength) || 5);
   const selectedSpeechRate = normaliseGrammarSpeechRate(grammar.prefs?.speechRate);
+  const { title: heroTitle, subtitle: heroSubtitle } = GRAMMAR_DASHBOARD_HERO;
+  const concordium = dashboard.concordiumProgress;
 
   return (
-    <section className="grammar-setup" aria-labelledby="grammar-setup-title">
+    <section className="grammar-dashboard" aria-labelledby="grammar-dashboard-title">
       <div
         className="grammar-hero"
         style={{ '--grammar-hero-bg': `url(${GRAMMAR_REGION_IMAGE})` }}
@@ -72,174 +132,122 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
           <img src={GRAMMAR_REGION_IMAGE} alt="" />
         </picture>
         <div className="grammar-hero-copy">
-          <div className="eyebrow">Clause Conservatory</div>
-          <h2 id="grammar-setup-title">Grammar retrieval practice</h2>
-          <p>
-            {learner?.name || 'This learner'} can practise with Worker-marked grammar modes while the
-            full concept map stays visible for the larger product build.
-          </p>
-          <div className="grammar-hero-stats" aria-label="Grammar coverage">
-            <Stat label="Concepts" value={counts.total || 18} detail="full map" />
-            <Stat label="Templates" value={templates.total || 51} detail="Worker-held" />
-            <Stat label="Secured" value={counts.secured || 0} detail={`${counts.due || 0} due`} />
-          </div>
+          <h2 id="grammar-dashboard-title" className="grammar-hero-title">{heroTitle}</h2>
+          <p className="grammar-hero-subtitle">{heroSubtitle}</p>
+          {learner?.name ? (
+            <p className="grammar-hero-welcome">Hi {learner.name} — ready for a short round?</p>
+          ) : null}
         </div>
       </div>
 
-      <div className="grammar-setup-grid">
-        <section className="card grammar-start-card" aria-labelledby="grammar-start-title">
-          <div className="card-header">
-            <div>
-              <div className="eyebrow">Worker-marked modes</div>
-              <h3 className="section-title" id="grammar-start-title">Start a Grammar round</h3>
-            </div>
-            <span className="chip good">Worker marked</span>
+      <section className="grammar-today" aria-label="Today at a glance">
+        {dashboard.isEmpty ? (
+          <div className="grammar-today-empty" data-testid="grammar-today-empty">
+            Start your first round to see your scores here.
           </div>
-
-          <div className="grammar-mode-grid" aria-label="Grammar practice mode">
-            {GRAMMAR_ENABLED_MODES.map((mode) => (
-              <ModeButton
-                key={mode.id}
-                mode={mode}
-                selected={mode.id === selectedMode}
-                disabled={setupDisabled}
-                actions={actions}
-              />
-            ))}
-            {GRAMMAR_LOCKED_MODES.map((mode) => (
-              <ModeButton
-                key={mode.id}
-                mode={mode}
-                disabled
-                locked
-                reason="Coming next"
-                actions={actions}
-              />
+        ) : (
+          <div className="grammar-today-grid">
+            {dashboard.todayCards.map((card) => (
+              <TodayCard card={card} key={card.id} />
             ))}
           </div>
+        )}
+        <div className="grammar-concordium-progress" data-testid="grammar-concordium-progress">
+          <img
+            className="grammar-concordium-image"
+            src={grammarMonsterAsset('concordium', 320)}
+            alt=""
+            aria-hidden="true"
+          />
+          <span className="grammar-concordium-label">Grow Concordium</span>
+          <strong className="grammar-concordium-value">{`${concordium.mastered}/${concordium.total}`}</strong>
+        </div>
+      </section>
 
-          <div className="grammar-controls">
-            <label className="field">
-              <span>Focus concept</span>
-              <select
-                className="input"
-                value={selectedFocus}
-                disabled={setupDisabled || focusDisabled}
-                onChange={(event) => actions.dispatch('grammar-set-focus', { value: event.currentTarget.value })}
-              >
-                <option value="">{focusPlaceholder}</option>
-                {(grammar.analytics?.concepts || []).map((concept) => (
-                  <option value={concept.id} key={concept.id}>{concept.name}</option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              <span>{miniTestMode ? 'Mini-set size' : 'Round length'}</span>
-              <select
-                className="input"
-                value={String(selectedLength)}
-                disabled={setupDisabled}
-                onChange={(event) => actions.dispatch('grammar-set-round-length', { value: event.currentTarget.value })}
-              >
-                {lengthOptions.map((length) => <option value={length} key={length}>{length}</option>)}
-              </select>
-            </label>
-            {!miniTestMode ? (
-              <label className="field">
-                <span>Session goal</span>
-                <select
-                  className="input"
-                  value={selectedGoal}
-                  disabled={setupDisabled}
-                  onChange={(event) => actions.dispatch('grammar-set-goal', { value: event.currentTarget.value })}
-                >
-                  <option value="questions">Question count</option>
-                  <option value="timed">Ten minutes</option>
-                  <option value="due">Clear due items</option>
-                </select>
-              </label>
-            ) : null}
-            <label className="field">
-              <span>Speech rate</span>
-              <select
-                className="input"
-                value={String(selectedSpeechRate)}
-                disabled={setupDisabled}
-                onChange={(event) => actions.dispatch('grammar-set-speech-rate', { value: event.currentTarget.value })}
-              >
-                {SPEECH_RATE_OPTIONS.map((option) => (
-                  <option value={option.value} key={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className="grammar-settings-list" aria-label="Grammar practice settings">
-            <label className="grammar-setting-toggle">
-              <input
-                type="checkbox"
-                checked={grammar.prefs?.allowTeachingItems === true}
-                disabled={setupDisabled || selectedMode !== 'smart'}
-                onChange={(event) => actions.dispatch('grammar-set-practice-setting', {
-                  key: 'allowTeachingItems',
-                  value: event.currentTarget.checked,
-                })}
-              />
-              <span>Smart Review teaching items</span>
-            </label>
-            <label className="grammar-setting-toggle">
-              <input
-                type="checkbox"
-                checked={grammar.prefs?.showDomainBeforeAnswer !== false}
-                disabled={setupDisabled}
-                onChange={(event) => actions.dispatch('grammar-set-practice-setting', {
-                  key: 'showDomainBeforeAnswer',
-                  value: event.currentTarget.checked,
-                })}
-              />
-              <span>Show domain before answering</span>
-            </label>
-          </div>
-
-          {grammar.error ? (
-            <div className="feedback bad" role="alert">
-              <strong>Grammar is unavailable right now</strong>
-              <div>{grammar.error}</div>
-            </div>
-          ) : null}
-
-          <div className="actions">
-            <button
-              className="btn primary xl"
-              type="button"
+      <section className="grammar-primary-modes" aria-label="Choose a round">
+        <div className="grammar-primary-grid">
+          {GRAMMAR_PRIMARY_MODE_CARDS.map((card) => (
+            <PrimaryModeCard
+              card={card}
+              selected={card.id !== 'bank' && card.id === selectedMode}
               disabled={setupDisabled}
-              onClick={() => actions.dispatch('grammar-start')}
-            >
-              {grammar.pendingCommand === 'start-session' ? 'Starting...' : 'Start practice'}
-            </button>
-          </div>
-        </section>
+              actions={actions}
+              key={card.id}
+            />
+          ))}
+        </div>
 
-        <section className="card grammar-map-card" aria-labelledby="grammar-map-title">
-          <div className="eyebrow">Full placeholder map</div>
-          <h3 className="section-title" id="grammar-map-title">All 18 Grammar concepts</h3>
-          <div className="grammar-domain-list">
-            {groupedConcepts.map((group) => (
-              <div className="grammar-domain" key={group.domain}>
-                <div className="grammar-domain-title">{group.domain}</div>
-                <div className="grammar-concept-list">
-                  {group.concepts.map((concept) => (
-                    <span className={`grammar-concept ${concept.status}`} key={concept.id}>
-                      <span>{concept.name}</span>
-                      <small>{concept.status}</small>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
+        <div className="grammar-round-controls">
+          <label className="field">
+            <span>{miniTestMode ? 'Mini-set size' : 'Round length'}</span>
+            <select
+              className="input"
+              value={String(selectedLength)}
+              disabled={setupDisabled}
+              onChange={(event) => actions.dispatch('grammar-set-round-length', { value: event.currentTarget.value })}
+            >
+              {lengthOptions.map((length) => <option value={length} key={length}>{length}</option>)}
+            </select>
+          </label>
+          <label className="field">
+            <span>Speech rate</span>
+            <select
+              className="input"
+              value={String(selectedSpeechRate)}
+              disabled={setupDisabled}
+              onChange={(event) => actions.dispatch('grammar-set-speech-rate', { value: event.currentTarget.value })}
+            >
+              {SPEECH_RATE_OPTIONS.map((option) => (
+                <option value={option.value} key={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {grammar.error ? (
+          <div className="feedback bad" role="alert">
+            <strong>Grammar is unavailable right now</strong>
+            <div>{grammar.error}</div>
           </div>
-        </section>
-      </div>
+        ) : null}
+
+        <div className="grammar-start-row">
+          <button
+            className="btn primary xl"
+            type="button"
+            disabled={setupDisabled}
+            onClick={() => actions.dispatch('grammar-start')}
+          >
+            {grammar.pendingCommand === 'start-session' ? 'Starting...' : 'Begin round'}
+          </button>
+          {dashboard.writingTryAvailable ? (
+            <button
+              className="btn secondary"
+              type="button"
+              data-action="grammar-open-transfer"
+              disabled={setupDisabled}
+              onClick={() => actions.dispatch('grammar-open-transfer')}
+            >
+              Writing Try · non-scored
+            </button>
+          ) : null}
+        </div>
+      </section>
+
+      <details className="grammar-more-practice">
+        <summary>More practice</summary>
+        <div className="grammar-more-practice-grid">
+          {GRAMMAR_MORE_PRACTICE_MODES.map((card) => (
+            <MoreModeCard
+              card={card}
+              selected={card.id === selectedMode}
+              disabled={setupDisabled}
+              actions={actions}
+              key={card.id}
+            />
+          ))}
+        </div>
+      </details>
     </section>
   );
 }

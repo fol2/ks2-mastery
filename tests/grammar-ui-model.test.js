@@ -495,12 +495,19 @@ test('U8 view-model: buildGrammarDashboardModel returns safe empty shape on null
   assert.equal(Array.isArray(model.modeCards), true);
   assert.equal(model.modeCards.length, 4);
   assert.equal(model.todayCards.length, 4);
+  assert.equal(model.isEmpty, true);
   assert.equal(model.concordiumProgress.mastered, 0);
   assert.equal(model.concordiumProgress.total, 18);
   assert.equal(model.primaryMode, 'smart');
   assert.equal(Array.isArray(model.moreModes), true);
   assert.equal(model.moreModes.length, 5);
   assert.equal(typeof model.writingTryAvailable, 'boolean');
+  // U1 follower: Smart Practice card is flagged as featured so U9 can style it.
+  const smartCard = model.modeCards.find((card) => card.id === 'smart');
+  assert.equal(smartCard.featured, true);
+  for (const card of model.modeCards) {
+    if (card.id !== 'smart') assert.notEqual(card.featured, true);
+  }
 });
 
 test('U8 view-model: buildGrammarDashboardModel surfaces concept counts', () => {
@@ -520,6 +527,8 @@ test('U8 view-model: buildGrammarDashboardModel surfaces concept counts', () => 
   assert.equal(byId.trouble.value, 2);
   assert.equal(byId.secure.value, 4);
   assert.equal(model.primaryMode, 'trouble');
+  // Any non-zero Today count flips isEmpty to false (U1 follower).
+  assert.equal(model.isEmpty, false);
 });
 
 test('U8 view-model: buildGrammarDashboardModel concordium progress reads reward state', () => {
