@@ -7,6 +7,7 @@ import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 const BASE_URL = 'https://repo.test';
 const NOW = Date.UTC(2026, 0, 1);
 const RECENT_SESSION_LIMIT_PER_LEARNER = 5;
+const ACTIVE_SESSION_LIMIT_PER_LEARNER = 1;
 const RECENT_EVENT_LIMIT_PER_LEARNER = 50;
 
 function cookieFrom(response) {
@@ -154,6 +155,16 @@ function seedHighHistoryLearner(server, accountId, learnerId) {
     updatedAt: NOW + 10_000,
   });
 
+  for (let index = 0; index < 30; index += 1) {
+    insertPracticeSession(server, accountId, {
+      id: `${learnerId}-stale-active-${String(index).padStart(3, '0')}`,
+      learnerId,
+      status: 'active',
+      createdAt: NOW + 20_000 + index,
+      updatedAt: NOW + 20_000 + index,
+    });
+  }
+
   for (let index = 0; index < 40; index += 1) {
     insertPracticeSession(server, accountId, {
       id: `${learnerId}-completed-${String(index).padStart(3, '0')}`,
@@ -236,9 +247,10 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   const learnerCount = payload.learners.allIds.length;
   assert.ok(payload.bootstrapCapacity);
   assert.equal(payload.bootstrapCapacity.mode, 'public-bounded');
+  assert.equal(payload.bootstrapCapacity.limits.activeSessionsPerLearner, ACTIVE_SESSION_LIMIT_PER_LEARNER);
   assert.equal(payload.bootstrapCapacity.practiceSessions.returned, payload.practiceSessions.length);
   assert.equal(payload.bootstrapCapacity.eventLog.returned, payload.eventLog.length);
-  assert.ok(payload.practiceSessions.length <= learnerCount * (RECENT_SESSION_LIMIT_PER_LEARNER + 1));
+  assert.ok(payload.practiceSessions.length <= learnerCount * (RECENT_SESSION_LIMIT_PER_LEARNER + ACTIVE_SESSION_LIMIT_PER_LEARNER));
   assert.ok(payload.eventLog.length <= learnerCount * RECENT_EVENT_LIMIT_PER_LEARNER);
   assert.equal(payload.practiceSessions.every((session) => session.subjectId !== 'spelling' || session.sessionState === null), true);
 
@@ -249,7 +261,7 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   const analysis = analyseBootstrapPayload(payload, {
     responseBytes,
     maxBytes: 600_000,
-    maxSessions: learnerCount * (RECENT_SESSION_LIMIT_PER_LEARNER + 1),
+    maxSessions: learnerCount * (RECENT_SESSION_LIMIT_PER_LEARNER + ACTIVE_SESSION_LIMIT_PER_LEARNER),
     maxEvents: learnerCount * RECENT_EVENT_LIMIT_PER_LEARNER,
     forbiddenTokens: ['private-active-word', 'top-secret-prompt-sentence'],
   });

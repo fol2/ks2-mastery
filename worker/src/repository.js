@@ -33,6 +33,7 @@ import { buildParentHubReadModel } from '../../src/platform/hubs/parent-read-mod
 import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system.js';
 import { buildSpellingProgressPools, buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
 import {
+  activityFeedRowFromEventRow,
   emptyLearnerReadModel,
   normaliseActivityFeedRow,
   normaliseLearnerReadModelRow,
@@ -90,6 +91,8 @@ const PUBLIC_EVENT_TYPES = new Set([
   'platform.practice-streak-hit',
 ]);
 const PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER = 5;
+const PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER = 1;
+const PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LOOKUP_LIMIT_PER_LEARNER = 5;
 const PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER = 50;
 const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 1;
 const PUBLIC_MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
@@ -1359,6 +1362,56 @@ async function upsertLearnerActivityFeedRows(db, activityRows = []) {
   return { count: written };
 }
 
+function activityFeedRowFromEventRecord(event, {
+  id,
+  learnerId,
+  subjectId = null,
+  systemId = null,
+  eventType,
+  createdAt,
+  now = Date.now(),
+} = {}) {
+  if (!event || typeof event !== 'object' || Array.isArray(event)) return null;
+  return activityFeedRowFromEventRow({
+    id,
+    learner_id: learnerId,
+    subject_id: subjectId,
+    system_id: systemId,
+    event_type: eventType,
+    event_json: JSON.stringify(event),
+    created_at: createdAt,
+  }, { now });
+}
+
+function bindLearnerActivityFeedUpsertStatement(db, row, { guard = null } = {}) {
+  if (!row?.id || !row?.learnerId || !row?.activityType || !row?.activity) return null;
+  const params = [
+    row.id,
+    row.learnerId,
+    row.subjectId || null,
+    row.activityType,
+    JSON.stringify(cloneSerialisable(row.activity) || {}),
+    row.sourceEventId || null,
+    Math.max(0, Number(row.createdAt) || 0),
+    Math.max(0, Number(row.updatedAt) || Date.now()),
+  ];
+  return bindStatement(db, `
+    INSERT INTO learner_activity_feed (
+      id, learner_id, subject_id, activity_type, activity_json,
+      source_event_id, created_at, updated_at
+    )
+    ${guardedValueSource(params.length, guard)}
+    ON CONFLICT(id) DO UPDATE SET
+      learner_id = excluded.learner_id,
+      subject_id = excluded.subject_id,
+      activity_type = excluded.activity_type,
+      activity_json = excluded.activity_json,
+      source_event_id = excluded.source_event_id,
+      created_at = excluded.created_at,
+      updated_at = excluded.updated_at
+  `, guardedParams(params, guard));
+}
+
 async function readLearnerActivityFeed(db, learnerId, {
   limit = null,
   cursor = null,
@@ -2374,20 +2427,57 @@ function sortEventRowsAscending(rows) {
   });
 }
 
+function subjectStateActiveSessionId(row) {
+  const ui = safeJsonParse(row?.ui_json, {});
+  const sessionId = ui?.session?.id;
+  return typeof sessionId === 'string' && sessionId ? sessionId : null;
+}
+
+async function listPublicBootstrapActiveSessionIds(db, learnerIds) {
+  const ids = [];
+  for (const learnerId of learnerIds) {
+    const rows = await all(db, `
+      SELECT ui_json
+      FROM child_subject_state
+      WHERE learner_id = ?
+      ORDER BY updated_at DESC, subject_id ASC
+      LIMIT ?
+    `, [learnerId, PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LOOKUP_LIMIT_PER_LEARNER]);
+    const sessionIdsForLearner = new Set();
+    for (const row of rows) {
+      const sessionId = subjectStateActiveSessionId(row);
+      if (!sessionId || sessionIdsForLearner.has(sessionId)) continue;
+      sessionIdsForLearner.add(sessionId);
+      ids.push(sessionId);
+      if (sessionIdsForLearner.size >= PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER) break;
+    }
+  }
+  return ids;
+}
+
 async function listPublicBootstrapSessionRows(db, learnerIds) {
   if (!learnerIds.length) return [];
   const rowsById = new Map();
   const placeholders = sqlPlaceholders(learnerIds.length);
-  const activeRows = await all(db, `
-    SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
-    FROM practice_sessions
-    WHERE learner_id IN (${placeholders})
-      AND status = 'active'
-    ORDER BY updated_at DESC, id DESC
-  `, learnerIds);
+  const activeSessionIds = await listPublicBootstrapActiveSessionIds(db, learnerIds);
+  if (activeSessionIds.length) {
+    const activeRows = await all(db, `
+      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+      FROM practice_sessions
+      WHERE learner_id IN (${placeholders})
+        AND id IN (${sqlPlaceholders(activeSessionIds.length)})
+        AND status = 'active'
+      ORDER BY updated_at DESC, id DESC
+      LIMIT ?
+    `, [
+      ...learnerIds,
+      ...activeSessionIds,
+      learnerIds.length * PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER,
+    ]);
 
-  for (const row of activeRows) {
-    rowsById.set(rowKey(row), row);
+    for (const row of activeRows) {
+      rowsById.set(rowKey(row), row);
+    }
   }
 
   for (const learnerId of learnerIds) {
@@ -2434,12 +2524,15 @@ function bootstrapCapacityMeta({
   eventRows,
 }) {
   if (!publicReadModels) return null;
+  const sessionActiveLimit = learnerCount * PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER;
   const sessionRecentLimit = learnerCount * PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER;
+  const sessionLimit = sessionActiveLimit + sessionRecentLimit;
   const eventRecentLimit = learnerCount * PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER;
   return {
     version: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
     mode: 'public-bounded',
     limits: {
+      activeSessionsPerLearner: PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER,
       recentSessionsPerLearner: PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER,
       recentEventsPerLearner: PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER,
     },
@@ -2450,6 +2543,7 @@ function bootstrapCapacityMeta({
       returned: sessionRows.length,
       bounded: true,
       atOrAboveRecentLimit: learnerCount > 0 && sessionRows.length >= sessionRecentLimit,
+      atOrAboveMaximumLimit: learnerCount > 0 && sessionRows.length >= sessionLimit,
     },
     eventLog: {
       returned: eventRows.length,
@@ -2864,6 +2958,17 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
         created_at = excluded.created_at,
         actor_account_id = excluded.actor_account_id
     `, guardedParams(eventParams, guard)));
+    const activityRow = activityFeedRowFromEventRecord(event, {
+      id,
+      learnerId: event.learnerId,
+      subjectId: event.subjectId || null,
+      systemId: event.systemId || null,
+      eventType,
+      createdAt,
+      now: nowTs,
+    });
+    const activityStatement = bindLearnerActivityFeedUpsertStatement(db, activityRow, { guard });
+    if (activityStatement) statements.push(activityStatement);
   }
 
   const summary = {
@@ -3614,6 +3719,16 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
             createdAt,
             accountId,
           ]);
+          const activityRow = activityFeedRowFromEventRecord(next, {
+            id,
+            learnerId: next.learnerId,
+            subjectId: next.subjectId || null,
+            systemId: next.systemId || null,
+            eventType,
+            createdAt,
+            now: nowTs,
+          });
+          if (activityRow) await upsertLearnerActivityFeedRows(db, [activityRow]);
           return { count: next ? 1 : 0, event: next };
         },
       });
@@ -3628,7 +3743,11 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         mutation,
         nowTs,
         apply: async () => {
-          await run(db, 'DELETE FROM event_log WHERE learner_id = ?', [learnerId]);
+          await batch(db, [
+            bindStatement(db, 'DELETE FROM event_log WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM learner_activity_feed WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM learner_read_models WHERE learner_id = ?', [learnerId]),
+          ]);
           return { learnerId, cleared: true };
         },
       });
@@ -3648,6 +3767,8 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
             bindStatement(db, 'DELETE FROM practice_sessions WHERE learner_id = ?', [learnerId]),
             bindStatement(db, 'DELETE FROM child_game_state WHERE learner_id = ?', [learnerId]),
             bindStatement(db, 'DELETE FROM event_log WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM learner_activity_feed WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM learner_read_models WHERE learner_id = ?', [learnerId]),
           ]);
           return {
             learnerId,

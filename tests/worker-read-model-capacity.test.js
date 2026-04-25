@@ -10,6 +10,10 @@ function runSql(server, sql, params = []) {
   server.DB.db.prepare(sql).run(...params);
 }
 
+function countRows(server, tableName, learnerId = 'learner-read-model') {
+  return server.DB.db.prepare(`SELECT COUNT(*) AS count FROM ${tableName} WHERE learner_id = ?`).get(learnerId).count;
+}
+
 function seedLearner(server, learnerId = 'learner-read-model') {
   runSql(server, `
     INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
@@ -62,6 +66,168 @@ test('capacity read-model migration creates indexed summary and activity stores'
     'idx_learner_activity_feed_subject_created',
     'idx_learner_read_models_key_updated',
   ]);
+
+  server.close();
+});
+
+test('event appends update learner activity feed after backfill rows exist', async () => {
+  const server = createWorkerRepositoryServer();
+  seedParentAccess(server);
+  const repository = createWorkerRepository({ env: server.env, now: () => NOW + 10 });
+
+  await repository.upsertLearnerActivityFeedRows([
+    {
+      id: 'activity-existing',
+      learnerId: 'learner-read-model',
+      subjectId: 'spelling',
+      activityType: 'spelling.word-secured',
+      activity: {
+        type: 'spelling.word-secured',
+        learnerId: 'learner-read-model',
+        subjectId: 'spelling',
+        createdAt: NOW + 1,
+        secureCount: 1,
+      },
+      sourceEventId: 'event-existing',
+      createdAt: NOW + 1,
+      updatedAt: NOW + 1,
+    },
+  ]);
+
+  await repository.appendEvent('adult-parent', {
+    id: 'event-after-backfill',
+    learnerId: 'learner-read-model',
+    subjectId: 'spelling',
+    type: 'spelling.word-secured',
+    mode: 'smart',
+    sessionType: 'learning',
+    secureCount: 9,
+    privatePrompt: 'secret-prompt-sentence',
+    createdAt: NOW + 10,
+  }, {
+    requestId: 'append-after-backfill',
+    expectedLearnerRevision: 4,
+  });
+
+  server.DB.clearQueryLog();
+  const response = await server.fetchAs(
+    'adult-parent',
+    'https://repo.test/api/hubs/parent/activity?learnerId=learner-read-model&limit=2',
+  );
+  const payload = await response.json();
+  const queryLog = server.DB.takeQueryLog();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.source, 'learner_activity_feed');
+  assert.deepEqual(payload.activity.map((event) => event.secureCount), [9, 1]);
+  assert.equal(JSON.stringify(payload).includes('secret-prompt-sentence'), false);
+  assert.equal(queryLog.some((entry) => /\bFROM event_log\b/i.test(entry.sql)), false);
+
+  server.close();
+});
+
+test('subject runtime persistence writes public activity feed rows', async () => {
+  const server = createWorkerRepositoryServer();
+  seedParentAccess(server);
+  const repository = createWorkerRepository({ env: server.env, now: () => NOW + 20 });
+
+  await repository.persistSubjectRuntime('adult-parent', 'learner-read-model', 'spelling', {
+    events: [
+      {
+        id: 'runtime-public-event',
+        type: 'spelling.word-secured',
+        learnerId: 'learner-read-model',
+        subjectId: 'spelling',
+        mode: 'smart',
+        sessionType: 'learning',
+        secureCount: 4,
+        privatePrompt: 'secret-prompt-sentence',
+        createdAt: NOW + 20,
+      },
+    ],
+  });
+
+  const response = await server.fetchAs(
+    'adult-parent',
+    'https://repo.test/api/hubs/parent/activity?learnerId=learner-read-model&limit=1',
+  );
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.source, 'learner_activity_feed');
+  assert.deepEqual(payload.activity.map((event) => event.secureCount), [4]);
+  assert.equal(JSON.stringify(payload).includes('secret-prompt-sentence'), false);
+
+  server.close();
+});
+
+test('event clear and runtime reset clear learner activity projections', async () => {
+  const server = createWorkerRepositoryServer();
+  seedParentAccess(server);
+  const repository = createWorkerRepository({ env: server.env, now: () => NOW });
+
+  await repository.upsertLearnerReadModel('learner-read-model', 'parent.summary.v1', {
+    overview: { secureWords: 1 },
+  }, { sourceRevision: 4, generatedAt: NOW });
+  await repository.upsertLearnerActivityFeedRows([
+    {
+      id: 'activity-clearable',
+      learnerId: 'learner-read-model',
+      subjectId: 'spelling',
+      activityType: 'spelling.word-secured',
+      activity: {
+        type: 'spelling.word-secured',
+        learnerId: 'learner-read-model',
+        subjectId: 'spelling',
+        createdAt: NOW,
+        secureCount: 1,
+      },
+      sourceEventId: 'event-clearable',
+      createdAt: NOW,
+      updatedAt: NOW,
+    },
+  ]);
+
+  assert.equal(countRows(server, 'learner_activity_feed'), 1);
+  assert.equal(countRows(server, 'learner_read_models'), 1);
+
+  await repository.clearEventLog('adult-parent', 'learner-read-model', {
+    requestId: 'clear-event-projections',
+    expectedLearnerRevision: 4,
+  });
+
+  assert.equal(countRows(server, 'learner_activity_feed'), 0);
+  assert.equal(countRows(server, 'learner_read_models'), 0);
+
+  await repository.upsertLearnerReadModel('learner-read-model', 'parent.summary.v1', {
+    overview: { secureWords: 2 },
+  }, { sourceRevision: 5, generatedAt: NOW });
+  await repository.upsertLearnerActivityFeedRows([
+    {
+      id: 'activity-resettable',
+      learnerId: 'learner-read-model',
+      subjectId: 'spelling',
+      activityType: 'spelling.word-secured',
+      activity: {
+        type: 'spelling.word-secured',
+        learnerId: 'learner-read-model',
+        subjectId: 'spelling',
+        createdAt: NOW + 1,
+        secureCount: 2,
+      },
+      sourceEventId: 'event-resettable',
+      createdAt: NOW + 1,
+      updatedAt: NOW + 1,
+    },
+  ]);
+
+  await repository.resetLearnerRuntime('adult-parent', 'learner-read-model', {
+    requestId: 'reset-runtime-projections',
+    expectedLearnerRevision: 5,
+  });
+
+  assert.equal(countRows(server, 'learner_activity_feed'), 0);
+  assert.equal(countRows(server, 'learner_read_models'), 0);
 
   server.close();
 });
