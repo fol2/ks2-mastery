@@ -20,6 +20,8 @@ import {
   grammarMasteryKey,
   grammarMonsterSummaryFromState,
   monsterIdForGrammarConcept,
+  monsterSummaryFromSpellingAnalytics,
+  monsterSummaryFromState,
   normaliseGrammarRewardState,
   progressForGrammarMonster,
   recordGrammarConceptMastery,
@@ -502,4 +504,63 @@ test('GRAMMAR_CONCEPT_TO_MONSTER covers all 13 direct-cluster concepts', () => {
   assert.equal(GRAMMAR_CONCEPT_TO_MONSTER.word_classes, 'couronnail');
   assert.equal(GRAMMAR_CONCEPT_TO_MONSTER.noun_phrases, 'bracehart');
   assert.equal(GRAMMAR_CONCEPT_TO_MONSTER.adverbials, 'chronalyx');
+});
+
+// -------- spelling.js callsites route through the normaliser (U0 follower) --
+// These pin the two `normaliseGrammarRewardState(state)` /
+// `normaliseGrammarRewardState(branchState)` calls inside
+// `src/platform/game/mastery/spelling.js`. Reverting either call would leave
+// Concordium invisible on the home meadow for pre-flip learners whose only
+// evidence lives under a retired direct id.
+
+test('monsterSummaryFromState routes Grammar state through the normaliser for retired-id progress', () => {
+  const preFlipKey = grammarMasteryKey('noun_phrases');
+  const state = {
+    glossbloom: { caught: true, mastered: [preFlipKey] },
+    // No bracehart / concordium on disk — Concordium visibility must come
+    // from the normaliser unioning retired-id evidence into the aggregate.
+  };
+
+  const summary = monsterSummaryFromState(state);
+  const grammarConcordium = summary.find((entry) => (
+    entry.subjectId === 'grammar' && entry.monster?.id === 'concordium'
+  ));
+
+  assert.ok(grammarConcordium, 'Concordium must appear in the combined meadow summary');
+  assert.equal(grammarConcordium.progress.caught, true);
+  assert.ok(grammarConcordium.progress.mastered >= 1,
+    'Concordium mastered count must include the retired-id concept via the unioned view');
+});
+
+test('monsterSummaryFromSpellingAnalytics routes persisted branch state through the normaliser', () => {
+  const preFlipKey = grammarMasteryKey('word_classes');
+  const learnerId = 'learner-retired-id-only';
+
+  // Persisted Codex state holds only a retired-id entry with mastered +
+  // caught. This simulates a pre-flip learner whose evidence was recorded
+  // under Glossbloom before the 7 -> 4 roster flip.
+  const repository = makeRepository({
+    glossbloom: { caught: true, mastered: [preFlipKey] },
+  });
+
+  // Empty analytics (no word rows) forces the fallback branch-state path.
+  // That path unions the retired-id state via `normaliseGrammarRewardState`
+  // before appending the active Grammar summary — without the normaliser
+  // the Concordium aggregate would stay at zero.
+  const analytics = { wordGroups: [] };
+
+  const summary = monsterSummaryFromSpellingAnalytics(analytics, {
+    learnerId,
+    gameStateRepository: repository,
+    persistBranches: false,
+  });
+
+  const grammarConcordium = summary.find((entry) => (
+    entry.subjectId === 'grammar' && entry.monster?.id === 'concordium'
+  ));
+
+  assert.ok(grammarConcordium, 'Concordium must appear in the meadow summary from persisted retired-id state');
+  assert.equal(grammarConcordium.progress.caught, true);
+  assert.ok(grammarConcordium.progress.mastered >= 1,
+    'Concordium mastered count must reflect the unioned retired-id evidence');
 });
