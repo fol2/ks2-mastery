@@ -385,6 +385,16 @@ function safeSession(session, now = Date.now()) {
 //   consolidating strength >= 0.82 AND correctStreak >= 3 AND intervalDays < 7
 //                (heavy same-week practice, not yet spaced)
 //   building     everything else
+//
+// Notes:
+// - Low-strength detection is delegated to `status === 'weak'`, not to a raw
+//   strength threshold. The grammarConceptStatus machine is the authoritative
+//   source for "weak"; if it declares a node weak, needs-repair follows.
+//   Raw strength alone does not trigger needs-repair because strength can
+//   drift below a threshold momentarily after a single wrong answer without
+//   the status machine escalating it.
+// - The label order is "weakest-to-strongest then needs-repair" by semantic
+//   intent. Consumers iterating the frozen array get that semantic order.
 export const GRAMMAR_CONFIDENCE_LABELS = Object.freeze([
   'emerging',
   'building',
@@ -393,16 +403,26 @@ export const GRAMMAR_CONFIDENCE_LABELS = Object.freeze([
   'needs-repair',
 ]);
 
+// Shared horizon for "recent" windows in the confidence projection.
+// Exposed so parent hubs and other consumers can describe the signal
+// consistently ("missed 2 of the last N attempts"). The engine caps
+// state.recentAttempts at 80 at write time; this is the read-side slice.
+export const GRAMMAR_RECENT_ATTEMPT_HORIZON = 12;
+
 function intervalDaysFromNode(node) {
   if (!node) return 0;
   if (Number.isFinite(Number(node.intervalDays))) return Number(node.intervalDays);
   return 0;
 }
 
+function recentWindow(recentAttempts) {
+  return Array.isArray(recentAttempts) ? recentAttempts.slice(-GRAMMAR_RECENT_ATTEMPT_HORIZON) : [];
+}
+
 function recentMissCountForConcept(recentAttempts, conceptId) {
-  if (!Array.isArray(recentAttempts) || !conceptId) return 0;
+  if (!conceptId) return 0;
   let count = 0;
-  for (const attempt of recentAttempts.slice(-12)) {
+  for (const attempt of recentWindow(recentAttempts)) {
     const conceptIds = Array.isArray(attempt?.conceptIds) ? attempt.conceptIds : [];
     const result = isPlainObject(attempt?.result) ? attempt.result : {};
     if (conceptIds.includes(conceptId) && result.correct === false) count += 1;
@@ -411,19 +431,20 @@ function recentMissCountForConcept(recentAttempts, conceptId) {
 }
 
 function recentMissCountForQuestionType(recentAttempts, questionType) {
-  if (!Array.isArray(recentAttempts) || !questionType) return 0;
+  if (!questionType) return 0;
   let count = 0;
-  for (const attempt of recentAttempts.slice(-12)) {
+  for (const attempt of recentWindow(recentAttempts)) {
     const result = isPlainObject(attempt?.result) ? attempt.result : {};
     if (attempt?.questionType === questionType && result.correct === false) count += 1;
   }
   return count;
 }
 
+// Aligned to GRAMMAR_RECENT_ATTEMPT_HORIZON so distinctTemplates and
+// recentMisses are directly comparable "recent" signals.
 function distinctTemplatesFor(recentAttempts, matcher) {
-  if (!Array.isArray(recentAttempts)) return 0;
   const seen = new Set();
-  for (const attempt of recentAttempts) {
+  for (const attempt of recentWindow(recentAttempts)) {
     if (matcher(attempt) && typeof attempt?.templateId === 'string' && attempt.templateId) {
       seen.add(attempt.templateId);
     }
