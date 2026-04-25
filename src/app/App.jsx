@@ -4,13 +4,19 @@ import { CodexSurface } from '../surfaces/home/CodexSurface.jsx';
 import { TopNav } from '../surfaces/shell/TopNav.jsx';
 import { PersistenceBanner } from '../surfaces/shell/PersistenceBanner.jsx';
 import { ToastShelf } from '../surfaces/shell/ToastShelf.jsx';
-import { MonsterCelebrationOverlay } from '../surfaces/shell/MonsterCelebrationOverlay.jsx';
 import { ProfileSettingsSurface } from '../surfaces/profile/ProfileSettingsSurface.jsx';
 import { ParentHubSurface } from '../surfaces/hubs/ParentHubSurface.jsx';
 import { AdminHubSurface } from '../surfaces/hubs/AdminHubSurface.jsx';
 import { SubjectRoute } from '../surfaces/subject/SubjectRoute.jsx';
 import { ErrorBoundary } from '../platform/react/ErrorBoundary.jsx';
 import { usePlatformStore } from '../platform/react/use-platform-store.js';
+import { CelebrationLayer } from '../platform/game/render/CelebrationLayer.jsx';
+// Transient overlay effects register themselves at module load. Importing
+// them here is the single mount point — `<CelebrationLayer>` looks each
+// up via the registry, so the import is purely for side effects.
+import '../platform/game/render/effects/caught.js';
+import '../platform/game/render/effects/evolve.js';
+import '../platform/game/render/effects/mega.js';
 
 const REACT_ROUTES = new Set([
   'dashboard',
@@ -29,14 +35,11 @@ function prefersReducedMotion() {
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-function SharedOverlays({ appState, actions }) {
+function SharedOverlays({ appState, actions, controller }) {
   return (
     <div className="home-overlays">
       <ToastShelf toasts={appState.toasts || []} onDismiss={(index) => actions.dispatch('toast-dismiss', { index })} />
-      <MonsterCelebrationOverlay
-        queue={appState.monsterCelebrations?.queue || []}
-        onDismiss={() => actions.dispatch('monster-celebration-dismiss')}
-      />
+      <CelebrationLayer store={controller?.store} controller={controller} />
     </div>
   );
 }
@@ -145,7 +148,7 @@ export function App({ controller, runtime }) {
             actions={actions}
             shellClassName="app-shell home-entry-shell"
           />
-          <SharedOverlays appState={appState} actions={actions} />
+          <SharedOverlays appState={appState} actions={actions} controller={controller} />
         </>
       )}
 
@@ -153,7 +156,7 @@ export function App({ controller, runtime }) {
         <>
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
           <CodexSurface model={runtime.buildCodexModel(appState, context)} actions={actions} />
-          <SharedOverlays appState={appState} actions={actions} />
+          <SharedOverlays appState={appState} actions={actions} controller={controller} />
         </>
       )}
 
@@ -162,7 +165,7 @@ export function App({ controller, runtime }) {
           <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
           <SubjectRoute key={routedSubjectId} appState={appState} context={context} actions={actions} />
-          <SharedOverlays appState={appState} actions={actions} />
+          <SharedOverlays appState={appState} actions={actions} controller={controller} />
         </div>
       )}
 
@@ -175,7 +178,7 @@ export function App({ controller, runtime }) {
             subjectCount={context.subjects?.length || 0}
             liveSubjectCount={(context.subjects || []).filter((subject) => subject.available !== false).length}
           />
-          <SharedOverlays appState={appState} actions={actions} />
+          <SharedOverlays appState={appState} actions={actions} controller={controller} />
         </>
       )}
 
@@ -190,7 +193,7 @@ export function App({ controller, runtime }) {
             accessContext={context}
             actions={actions}
           />
-          <SharedOverlays appState={appState} actions={actions} />
+          <SharedOverlays appState={appState} actions={actions} controller={controller} />
         </div>
       )}
 
@@ -206,7 +209,7 @@ export function App({ controller, runtime }) {
             accessContext={context}
             actions={actions}
           />
-          <SharedOverlays appState={appState} actions={actions} />
+          <SharedOverlays appState={appState} actions={actions} controller={controller} />
         </div>
       )}
 
@@ -215,7 +218,7 @@ export function App({ controller, runtime }) {
           <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
           <UnknownRouteSurface screen={screen} actions={actions} />
-          <SharedOverlays appState={appState} actions={actions} />
+          <SharedOverlays appState={appState} actions={actions} controller={controller} />
         </div>
       )}
     </ErrorBoundary>

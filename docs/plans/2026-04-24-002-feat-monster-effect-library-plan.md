@@ -386,7 +386,7 @@ playCelebration(spec) -> store.pushCelebration(spec)
 
 ---
 
-- [ ] U6. **Migrate `caught` / `evolve` / `mega` celebrations to `<CelebrationLayer>`**
+- [x] U6. **Migrate `caught` / `evolve` / `mega` celebrations to `<CelebrationLayer>`**
 
 **Goal:** Replace today's celebration overlay with the new layer + transient effect modules. Existing reward events (`type: 'reward.monster'`, `kind: 'caught' | 'evolve' | 'mega'`) flow through the new layer with no shape change.
 
