@@ -1,7 +1,7 @@
 ---
 title: "feat: Post-Mega Spelling Guardian MVP"
 type: feat
-status: active
+status: completed
 date: 2026-04-25
 origin: docs/plans/james/post-mega-spelling/post-mega-spelling-p1.md
 ---

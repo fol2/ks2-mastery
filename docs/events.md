@@ -19,6 +19,13 @@ subject service -> domain events -> platform event runtime -> subscribers -> rew
 - `spelling.word-secured`
 - `spelling.mastery-milestone`
 - `spelling.session-completed`
+- `spelling.guardian.renewed`
+- `spelling.guardian.wobbled`
+- `spelling.guardian.recovered`
+- `spelling.guardian.mission-completed`
+
+The `spelling.guardian.*` family is emitted from the post-Mega "Spelling Guardian" maintenance layer (see `docs/spelling-service.md` for the schedule contract).
+No reward subscriber consumes these events yet; the MVP treats Guardian as a pedagogy-only surface. A future reward subscriber may react to `renewed`/`recovered` toasts without touching the spelling service, consistent with the "subject decides, reward reacts" rule.
 
 ### Derived by the platform runtime
 
