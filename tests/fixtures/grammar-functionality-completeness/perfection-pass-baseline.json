@@ -106,7 +106,7 @@
       "label": "Accepted-answer handling relies on inline arrays, not a declarative registry",
       "status": "completed",
       "ownerUnit": "U5",
-      "reason": "Declarative answerSpec registry with six kinds (exact, normalisedText, acceptedSet, punctuationPattern, multiField, manualReviewOnly). markByAnswerSpec is the single marking entry point. content.js markStringAnswer is a thin adapter for the migration window; per-template answerSpec declarations land in a follow-up content-release PR. No contentReleaseId bump required.",
+      "reason": "Declarative answerSpec registry with six kinds (exact, normalisedText, acceptedSet, punctuationPattern, multiField, manualReviewOnly). markByAnswerSpec is the single marking entry point. content.js markStringAnswer is a thin adapter for the migration window; per-template answerSpec declarations land in a follow-up content-release PR. No contentReleaseId bump required for U5 machinery; the content-release PR that adds per-template declarations will pair with a bump per the U5 plan's policy when marking behaviour changes.",
       "landedIn": "PR #153 (U5)",
       "evidence": [
         "worker/src/subjects/grammar/answer-spec.js",
