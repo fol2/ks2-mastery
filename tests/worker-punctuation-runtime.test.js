@@ -559,7 +559,10 @@ test('punctuation context-pack command returns a named configuration error witho
     assert.equal(result.body.mutation.appliedRevision, 0);
     assert.equal(result.body.contextPack.status, 'unavailable');
     assert.equal(result.body.contextPack.code, 'punctuation_context_provider_missing');
-    assert.equal(result.body.subjectReadModel.contextPack.code, 'punctuation_context_provider_missing');
+    // Phase 3 U8: context-pack summary stays on the top-level response body
+    // (useful for a future Parent/Admin surface) but must not be attached to
+    // the child-scope `subjectReadModel` payload.
+    assert.equal('contextPack' in result.body.subjectReadModel, false);
     assert.equal(harness.DB.db.prepare('SELECT COUNT(*) AS count FROM child_subject_state').get().count, 0);
   } finally {
     harness.close();
@@ -589,7 +592,8 @@ test('punctuation context-pack command rejects malformed configured JSON without
     assert.equal(result.body.contextPack.code, 'punctuation_context_pack_invalid');
     assert.equal(result.body.contextPack.acceptedCount, 0);
     assert.equal(result.body.contextPack.rejectedCount, 1);
-    assert.equal(result.body.subjectReadModel.contextPack.code, 'punctuation_context_pack_invalid');
+    // Phase 3 U8: child-scope `subjectReadModel` no longer carries contextPack.
+    assert.equal('contextPack' in result.body.subjectReadModel, false);
     assert.doesNotMatch(payloadText(result.body), /\{bad json|provider|key/i);
     assert.equal(harness.DB.db.prepare('SELECT COUNT(*) AS count FROM child_subject_state').get().count, 0);
   } finally {
@@ -625,8 +629,11 @@ test('punctuation context-pack command returns only a safe compiler summary when
     assert.equal(result.body.contextPack.acceptedCount, 6);
     assert.equal(result.body.contextPack.affectedGeneratorFamilies.includes('gen_speech_insert'), true);
     assert.equal(result.body.contextPack.generatedItemCount > 0, true);
-    assert.doesNotMatch(payloadText(result.body.subjectReadModel.contextPack), /Maya|ropes|can we start now|well-known|raw|prompt|provider|key/i);
+    // Phase 3 U8: child-scope `subjectReadModel` no longer carries contextPack;
+    // the top-level response body still does for a future Parent/Admin caller.
+    assert.equal('contextPack' in result.body.subjectReadModel, false);
     assert.doesNotMatch(payloadText(result.body.subjectReadModel), /"accepted"|correctIndex|rubric|validator|hiddenQueue|generatorFamilyId/);
+    assert.doesNotMatch(payloadText(result.body.subjectReadModel), /Maya|ropes|can we start now|well-known|raw|prompt|provider|key/i);
   } finally {
     harness.close();
   }

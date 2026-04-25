@@ -180,7 +180,10 @@ function safeSummary(summary) {
   return cloneSerialisable(summary);
 }
 
-function safeContextPackSummary(summary) {
+// Retained for a future Parent/Admin scope wiring (origin R34). Not dispatched
+// by the child read-model since Phase 3 U8; exported so the future caller can
+// reuse the same allowlist rather than reinventing it.
+export function safeContextPackSummary(summary) {
   if (!isPlainObject(summary)) return null;
   return {
     status: summary.status === 'ready' ? 'ready' : (summary.status === 'unavailable' ? 'unavailable' : 'not_requested'),
@@ -228,6 +231,12 @@ export function buildPunctuationReadModel({
   stats,
   analytics = null,
   content = null,
+  // contextPack is accepted for forward compatibility with a future Parent/Admin
+  // scope, but Phase 3 U8 (origin R34) never attaches it to the default child
+  // payload — the child surface never renders it. `safeContextPackSummary` and
+  // `worker/src/subjects/punctuation/ai-enrichment.js` stay in place for that
+  // future caller; today the argument is silently ignored by the read-model.
+  // eslint-disable-next-line no-unused-vars
   contextPack = null,
 } = {}) {
   const safeState = cloneSerialisable(state) || {};
@@ -247,7 +256,6 @@ export function buildPunctuationReadModel({
     prefs: cloneSerialisable(prefs) || {},
     stats: cloneSerialisable(stats) || {},
     analytics: analytics ? cloneSerialisable(analytics) : null,
-    contextPack: safeContextPackSummary(contextPack),
     content: content ? cloneSerialisable(content) : {
       releaseId: PUNCTUATION_RELEASE_ID,
       releaseName: PUNCTUATION_CONTENT_MANIFEST.releaseName,

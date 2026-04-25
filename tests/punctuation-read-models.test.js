@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { buildPunctuationReadModel } from '../worker/src/subjects/punctuation/read-models.js';
+import { createPunctuationReadModelService } from '../src/subjects/punctuation/client-read-models.js';
 
 const BASE_STATE = {
   phase: 'summary',
@@ -140,10 +141,11 @@ test('analytics payload fails closed on forbidden fields', () => {
   }), /server-only .*field: rubric/);
 });
 
-test('contextPack allowlist strips forbidden fields before the recursive scan', () => {
-  // contextPack goes through safeContextPackSummary's allowlist, so a
-  // forbidden field never reaches the payload. Defence-in-depth happens
-  // earlier; the scan covers clone-passthrough paths instead.
+test('default child-scope payload does not carry contextPack (U8)', () => {
+  // Phase 3 U8: even when the Worker composes a read-model with a fully
+  // populated context-pack summary, the child-scope payload must not
+  // expose the `contextPack` key. Parent/Admin surfaces will opt back in
+  // via a future scope parameter; today child is the only caller.
   const result = buildPunctuationReadModel({
     learnerId: 'learner-a',
     state: BASE_STATE,
@@ -157,8 +159,17 @@ test('contextPack allowlist strips forbidden fields before the recursive scan', 
       generator: { seed: 'leak' },
     },
   });
-  assert.equal(result.contextPack.acceptedCount, 3);
-  assert.equal('generator' in result.contextPack, false);
+  assert.equal('contextPack' in result, false);
+});
+
+test('child-scope payload has no contextPack key when contextPack arg is omitted (U8)', () => {
+  const result = buildPunctuationReadModel({
+    learnerId: 'learner-a',
+    state: BASE_STATE,
+    prefs: {},
+    stats: {},
+  });
+  assert.equal('contextPack' in result, false);
 });
 
 test('stats payload fails closed on forbidden fields', () => {
@@ -219,6 +230,36 @@ test('scan catches rawGenerator, queueItemIds, and responses at any depth', () =
   }
 });
 
+test('client normaliser drops contextPack if the worker ever re-adds it (U8 belt-and-braces)', () => {
+  // Guards against a future Worker regression that sneaks `contextPack` back
+  // into the default child-scope payload. The cache-hydration path must strip
+  // the field before the React surface ever sees it.
+  const service = createPunctuationReadModelService({ getState: () => null });
+  const rawFromWorker = {
+    subjectId: 'punctuation',
+    phase: 'summary',
+    contextPack: {
+      status: 'ready',
+      acceptedCount: 3,
+      rejectedCount: 0,
+      atomKinds: ['noun'],
+    },
+  };
+  const normalised = service.initState(rawFromWorker);
+  assert.equal('contextPack' in normalised, false);
+});
+
+test('client normaliser passes through an ordinary payload unchanged (U8)', () => {
+  const service = createPunctuationReadModelService({ getState: () => null });
+  const normalised = service.initState({
+    subjectId: 'punctuation',
+    phase: 'setup',
+    error: '',
+  });
+  assert.equal(normalised.phase, 'setup');
+  assert.equal('contextPack' in normalised, false);
+});
+
 test('clean payloads with all allowed fields pass redaction', () => {
   const result = buildPunctuationReadModel({
     learnerId: 'learner-a',
@@ -230,6 +271,7 @@ test('clean payloads with all allowed fields pass redaction', () => {
       releaseId: 'punctuation-r4-full-14-skill-structure',
       skills: [{ id: 'speech', name: 'Speech', clusterId: 'speech' }],
     },
+    // contextPack is intentionally passed but not exposed on the child payload (U8).
     contextPack: {
       status: 'ready',
       acceptedCount: 3,
@@ -241,6 +283,6 @@ test('clean payloads with all allowed fields pass redaction', () => {
   });
   assert.equal(result.phase, 'summary');
   assert.equal(result.summary.correctCount, 2);
-  assert.equal(result.contextPack.acceptedCount, 3);
+  assert.equal('contextPack' in result, false);
   assert.equal(result.content.skills[0].id, 'speech');
 });
