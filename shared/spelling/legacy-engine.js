@@ -265,6 +265,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
       }
 
       function smartBucket(profileId, word, progressStore) {
+        // Any historical `wrong > 0` routes to fragile before due/new/secure — legacy priority restored by PR #145 (reverts #87).
         var p = getProgressFromStore(profileId, word.slug, progressStore);
         var today = todayDay();
         if (p.wrong > 0 && p.dueDay <= today) return "urgent";
