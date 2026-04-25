@@ -1,7 +1,7 @@
 import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { assertHeadersBlockIsFresh } from './lib/headers-drift.mjs';
+import { assertCacheSplitRules, assertHeadersBlockIsFresh } from './lib/headers-drift.mjs';
 
 const rootDir = process.cwd();
 const publicDir = path.join(rootDir, 'dist', 'public');
@@ -155,6 +155,11 @@ if (rawAssetPngs.length) {
 // inspection of this file (review testing-gap-3).
 const publishedHeadersContent = await readFile(path.join(publicDir, '_headers'), 'utf8');
 assertHeadersBlockIsFresh(publishedHeadersContent);
+// U8 (sys-hardening p1): enforce the cache-split contract on the published
+// `_headers`. A regression that removes `immutable` on hashed bundles, swaps
+// the manifest rule to `no-store`, or drops the `/index.html` group fails
+// the build rather than shipping the degraded cache policy.
+assertCacheSplitRules(publishedHeadersContent);
 
 const indexHtml = await readFile(path.join(publicDir, 'index.html'), 'utf8');
 if (!indexHtml.includes('/manifest.webmanifest')) {

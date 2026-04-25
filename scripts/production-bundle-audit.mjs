@@ -278,6 +278,47 @@ async function auditProduction(origin) {
     }
   }
 
+  // U8 (sys-hardening p1): HEAD-check the cache-policy split on the live
+  // origin. Covers one representative per cache lane so a regression in
+  // `_headers` or the Worker wrapper surfaces immediately:
+  //   - `/` — HTML must never be cached (no-store).
+  //   - `/src/bundles/app.bundle.js` — Worker-wrapped hashed bundle (immutable).
+  //   - `/assets/app-icons/favicon-32.png` — ASSETS-direct hashed asset (immutable).
+  //   - `/api/bootstrap` — Worker endpoint must stay no-store.
+  //   - `/manifest.webmanifest` — intentional 1-hour short cache (neither
+  //     immutable nor no-store).
+  const CACHE_SPLIT_CHECKS = [
+    { path: '/', label: 'root index', expected: 'no-store' },
+    { path: '/src/bundles/app.bundle.js', label: 'Worker-wrapped bundle', expected: 'public, max-age=31536000, immutable' },
+    { path: '/assets/app-icons/favicon-32.png', label: 'ASSETS app icon', expected: 'public, max-age=31536000, immutable' },
+    { path: '/api/bootstrap', label: 'Worker /api/bootstrap', expected: 'no-store', allowAnyStatus: true },
+    { path: '/manifest.webmanifest', label: 'web app manifest', expected: 'public, max-age=3600' },
+  ];
+  let cacheChecksPassed = 0;
+  for (const check of CACHE_SPLIT_CHECKS) {
+    const target = new URL(check.path, base);
+    try {
+      const response = await fetch(target.href, { method: 'HEAD' });
+      if (!check.allowAnyStatus && (response.status < 200 || response.status >= 400)) {
+        failures.push(`Cache-split HEAD check failed (${response.status}): ${target.href}`);
+        continue;
+      }
+      const observed = (response.headers.get('cache-control') || '').trim();
+      // Normalise whitespace so a `public,max-age=...` variant does not
+      // false-fail against the canonical `public, max-age=...` form.
+      const normalise = (value) => value.replace(/\s+/gu, ' ').replace(/,\s*/gu, ', ').trim();
+      if (normalise(observed) !== normalise(check.expected)) {
+        failures.push(
+          `Cache-split HEAD check on ${check.label} (${target.href}) expected Cache-Control: ${check.expected}, got: ${observed || 'absent'}`,
+        );
+        continue;
+      }
+      cacheChecksPassed += 1;
+    } catch (error) {
+      failures.push(`Cache-split HEAD check errored on ${check.label}: ${error?.message || error}`);
+    }
+  }
+
   return {
     ok: failures.length === 0,
     failures,
@@ -288,6 +329,8 @@ async function auditProduction(origin) {
       matrixDemoChecked: demoChecked,
       securityHeaderChecksPassed: headerChecksPassed,
       securityHeaderChecksTotal: SECURITY_HEADER_CHECKS.length,
+      cacheSplitChecksPassed: cacheChecksPassed,
+      cacheSplitChecksTotal: CACHE_SPLIT_CHECKS.length,
     },
   };
 }
@@ -323,5 +366,6 @@ console.log(
   + `(${result.checked.scriptCount} bundle(s), `
   + `${result.checked.directPathCount} direct paths, `
   + `matrix demo check: ${result.checked.matrixDemoChecked ? 'ok' : 'skipped'}, `
-  + `security-header checks: ${result.checked.securityHeaderChecksPassed}/${result.checked.securityHeaderChecksTotal}).`
+  + `security-header checks: ${result.checked.securityHeaderChecksPassed}/${result.checked.securityHeaderChecksTotal}, `
+  + `cache-split checks: ${result.checked.cacheSplitChecksPassed}/${result.checked.cacheSplitChecksTotal}).`
 );
