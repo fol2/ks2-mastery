@@ -469,6 +469,70 @@ export function renderProfileSurfaceFixture({ demo = false, persistenceMode = 'r
   `);
 }
 
+export function renderMonsterEffectBindingsPanelFixture({
+  canManage = true,
+  draftMutator = '',
+  assetKey = 'inklet-b1-3',
+} = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { MonsterEffectBindingsPanel } from ${JSON.stringify(absoluteSpecifier('src/surfaces/hubs/MonsterEffectBindingsPanel.jsx'))};
+    import { bundledEffectConfig } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/effect-config-defaults.js'))};
+    import { MONSTER_ASSET_MANIFEST } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monster-asset-manifest.js'))};
+
+    const draft = bundledEffectConfig();
+    const assetKey = ${JSON.stringify(assetKey)};
+    const asset = MONSTER_ASSET_MANIFEST.assets.find((a) => a.key === assetKey)
+      || MONSTER_ASSET_MANIFEST.assets[0];
+    ${draftMutator}
+    const canManage = ${canManage ? 'true' : 'false'};
+    const onChange = () => {};
+    const html = renderToStaticMarkup(
+      <MonsterEffectBindingsPanel
+        asset={asset}
+        draft={draft}
+        published={draft}
+        canManage={canManage}
+        onDraftChange={onChange}
+      />
+    );
+    console.log(html);
+  `);
+}
+
+export function renderMonsterEffectCelebrationPanelFixture({
+  canManage = true,
+  draftMutator = '',
+  assetKey = 'inklet-b1-3',
+} = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { MonsterEffectCelebrationPanel } from ${JSON.stringify(absoluteSpecifier('src/surfaces/hubs/MonsterEffectCelebrationPanel.jsx'))};
+    import { bundledEffectConfig } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/effect-config-defaults.js'))};
+    import { MONSTER_ASSET_MANIFEST } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monster-asset-manifest.js'))};
+
+    const draft = bundledEffectConfig();
+    const assetKey = ${JSON.stringify(assetKey)};
+    const asset = MONSTER_ASSET_MANIFEST.assets.find((a) => a.key === assetKey)
+      || MONSTER_ASSET_MANIFEST.assets[0];
+    ${draftMutator}
+    const canManage = ${canManage ? 'true' : 'false'};
+    const onChange = () => {};
+    const html = renderToStaticMarkup(
+      <MonsterEffectCelebrationPanel
+        asset={asset}
+        draft={draft}
+        published={draft}
+        canManage={canManage}
+        onDraftChange={onChange}
+      />
+    );
+    console.log(html);
+  `);
+}
+
 export function renderMonsterEffectCatalogPanelFixture({ canManage = true } = {}) {
   // SSR fixture for the U6 catalog panel. We feed it the bundled effect
   // config as the draft + published state so the listing covers all eight

@@ -4,10 +4,13 @@ import {
   MONSTER_VISUAL_CONTEXTS,
   validatePublishedConfigForPublish,
 } from '../../platform/game/monster-visual-config.js';
-import { EFFECT_CONFIG_CELEBRATION_KINDS } from '../../platform/game/render/effect-config-schema.js';
 import { MonsterVisualFieldControls } from './MonsterVisualFieldControls.jsx';
 import { MonsterVisualPreviewGrid } from './MonsterVisualPreviewGrid.jsx';
 import { MonsterEffectCatalogPanel } from './MonsterEffectCatalogPanel.jsx';
+import { MonsterEffectBindingsPanel } from './MonsterEffectBindingsPanel.jsx';
+import { MonsterEffectCelebrationPanel } from './MonsterEffectCelebrationPanel.jsx';
+import { assetBindingsAllReviewed } from './monster-effect-bindings-helpers.js';
+import { assetCelebrationAllReviewed } from './monster-effect-celebration-helpers.js';
 import { bundledEffectConfig } from '../../platform/game/render/effect-config-defaults.js';
 import { formatTimestamp } from './hub-utils.js';
 
@@ -109,24 +112,13 @@ function assetDiffersFromPublished(draft, published, assetKey) {
 // `effect-incomplete`: an asset whose effect binding row OR celebration
 // tunables row has any entry that is not yet reviewed. Returns false when
 // the effect sub-document is absent — the visual `review` filter still
-// covers that case.
+// covers that case. Delegates to the helper modules so the U7 panels and
+// this queue filter share one source of truth.
 function assetEffectIncomplete(draft, assetKey) {
-  const bindings = draft?.effect?.bindings?.[assetKey];
-  const tunables = draft?.effect?.celebrationTunables?.[assetKey];
-  if (bindings && typeof bindings === 'object') {
-    for (const slot of ['persistent', 'continuous']) {
-      const list = Array.isArray(bindings[slot]) ? bindings[slot] : [];
-      for (const entry of list) {
-        if (entry && entry.reviewed !== true) return true;
-      }
-    }
-  }
-  if (tunables && typeof tunables === 'object') {
-    for (const kind of EFFECT_CONFIG_CELEBRATION_KINDS) {
-      if (tunables[kind] && tunables[kind].reviewed !== true) return true;
-    }
-  }
-  return false;
+  const effect = draft?.effect;
+  if (!effect) return false;
+  return !assetBindingsAllReviewed(effect, assetKey)
+    || !assetCelebrationAllReviewed(effect, assetKey);
 }
 
 // `effect-changed`: this asset's effect binding row OR celebration tunables
@@ -527,6 +519,7 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
           <MonsterVisualPreviewGrid
             asset={selectedManifestAsset}
             draft={draft}
+            effectDraft={effectDraft}
             selectedContext={selectedContext}
             onSelectContext={setSelectedContext}
           />
@@ -540,6 +533,22 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
             onMarkReviewed={markReviewed}
             onResetContext={resetContext}
             reviewBlockingIssues={selectedReviewBlockingIssues}
+          />
+          <MonsterEffectBindingsPanel
+            asset={selectedManifestAsset}
+            draft={effectDraft}
+            published={effectPublished}
+            canManage={canManage}
+            accountId={accountId}
+            onDraftChange={handleEffectDraftChange}
+          />
+          <MonsterEffectCelebrationPanel
+            asset={selectedManifestAsset}
+            draft={effectDraft}
+            published={effectPublished}
+            canManage={canManage}
+            accountId={accountId}
+            onDraftChange={handleEffectDraftChange}
           />
         </div>
       </div>
