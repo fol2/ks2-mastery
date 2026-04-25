@@ -1,7 +1,7 @@
 ---
 title: "feat: Admin / Operations console extensions (P1)"
 type: feat
-status: active
+status: completed
 date: 2026-04-25
 deepened: 2026-04-25
 origin: docs/plans/james/admin-page/admin-page-p1.md
