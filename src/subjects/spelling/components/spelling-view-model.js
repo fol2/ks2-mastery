@@ -1,5 +1,6 @@
 import { monsterSummaryFromSpellingAnalytics } from '../../../platform/game/monster-system.js';
-import { monsterAsset, monsterAssetSrcSet } from '../../../platform/game/monsters.js';
+import { resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
+import { monsterVisualFrameStyle } from '../../../platform/game/monster-visual-style.js';
 import { formatElapsedMinutes } from '../../../platform/core/utils.js';
 
 export const SPELLING_ACCENT = '#3E6FA8';
@@ -503,10 +504,25 @@ export function buildSpellingContext({ appState, service, repositories, subject 
   };
 }
 
-export function monsterImageProps(monster, progress) {
+export function monsterImageProps(monster, progress, visualConfig = null) {
+  return monsterImageVisual(monster, progress, visualConfig).imageProps;
+}
+
+export function monsterImageVisual(monster, progress, visualConfig = null) {
+  const visual = resolveMonsterVisual({
+    monsterId: monster.id,
+    branch: progress.branch,
+    stage: progress.stage,
+    context: 'codexCard',
+    config: visualConfig,
+    preferredSize: 320,
+  });
   return {
-    src: monsterAsset(monster.id, progress.stage, 320, progress.branch),
-    srcSet: monsterAssetSrcSet(monster.id, progress.stage, progress.branch),
-    sizes: 'min(30vw, 120px)',
+    style: monsterVisualFrameStyle(visual),
+    imageProps: {
+      src: visual.src,
+      srcSet: visual.srcSet,
+      sizes: 'min(30vw, 120px)',
+    },
   };
 }

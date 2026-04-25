@@ -57,7 +57,36 @@ function recentActivityForAnalytics(analytics = {}) {
   return [];
 }
 
-export function GrammarAnalyticsScene({ grammar, rewardState: providedRewardState = null }) {
+function punctuationGrammarConcepts(concepts = []) {
+  return concepts.filter((concept) => concept.punctuationForGrammar === true);
+}
+
+function ParentSummaryDraft({ enrichment }) {
+  const summary = enrichment?.parentSummary;
+  if (!summary?.body) return null;
+  const nextSteps = Array.isArray(summary.nextSteps) ? summary.nextSteps.filter(Boolean) : [];
+  return (
+    <aside className="grammar-parent-summary-draft" aria-label="Parent summary draft">
+      <div className="grammar-ai-head">
+        <span className="chip good">Non-scored</span>
+        <strong>{summary.title || 'Parent summary draft'}</strong>
+      </div>
+      <p>{summary.body}</p>
+      {nextSteps.length ? (
+        <ol>
+          {nextSteps.map((step) => <li key={step}>{step}</li>)}
+        </ol>
+      ) : null}
+    </aside>
+  );
+}
+
+export function GrammarAnalyticsScene({
+  grammar,
+  rewardState: providedRewardState = null,
+  actions = null,
+  runtimeReadOnly = false,
+}) {
   const concepts = grammar.analytics?.concepts || [];
   const counts = grammar.stats?.concepts || {};
   const progressSnapshot = grammar.analytics?.progressSnapshot || {};
@@ -68,6 +97,8 @@ export function GrammarAnalyticsScene({ grammar, rewardState: providedRewardStat
   const grouped = groupedGrammarConcepts(concepts);
   const rewardState = providedRewardState || grammar.projections?.rewards?.state || {};
   const recentActivity = recentActivityForAnalytics(grammar.analytics || {});
+  const punctuationConcepts = punctuationGrammarConcepts(concepts);
+  const securedPunctuationConcepts = punctuationConcepts.filter((concept) => concept.status === 'secured').length;
 
   return (
     <section className="card grammar-analytics" aria-labelledby="grammar-analytics-title">
@@ -76,7 +107,19 @@ export function GrammarAnalyticsScene({ grammar, rewardState: providedRewardStat
           <div className="eyebrow">Evidence snapshot</div>
           <h3 className="section-title" id="grammar-analytics-title">Grammar analytics</h3>
         </div>
-        <span className="chip">Stage 1</span>
+        <div className="grammar-analytics-actions">
+          <span className="chip">Stage 1</span>
+          {actions?.dispatch ? (
+            <button
+              className="btn secondary"
+              type="button"
+              disabled={runtimeReadOnly || Boolean(grammar.pendingCommand)}
+              onClick={() => actions.dispatch('grammar-request-ai-enrichment', { kind: 'parent-summary' })}
+            >
+              Parent summary draft
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="grammar-status-strip" aria-label="Concept status counts">
@@ -85,6 +128,29 @@ export function GrammarAnalyticsScene({ grammar, rewardState: providedRewardStat
         <StatusCount label="weak" value={counts.weak || 0} className="weak" />
         <StatusCount label="due" value={counts.due || 0} className="due" />
         <StatusCount label="secured" value={counts.secured || 0} className="secured" />
+      </div>
+
+      <ParentSummaryDraft enrichment={grammar.aiEnrichment} />
+
+      <div className="grammar-bellstorm-bridge" aria-label="Grammar and Bellstorm Coast bridge">
+        <div>
+          <div className="eyebrow">Bellstorm bridge</div>
+          <h4>Punctuation-for-grammar stays in Grammar</h4>
+          <p>
+            These {punctuationConcepts.length} concepts count inside the 18-concept Grammar denominator for
+            KS2 GPS mastery. Bellstorm Coast remains the separate Punctuation subject for richer punctuation
+            progression.
+          </p>
+        </div>
+        <div className="grammar-bridge-counts" aria-label="Punctuation-for-grammar concept progress">
+          <strong>{securedPunctuationConcepts}/{punctuationConcepts.length || 0}</strong>
+          <span>secured in Grammar</span>
+        </div>
+        <div className="grammar-bridge-concepts" aria-label="Punctuation-for-grammar concepts">
+          {punctuationConcepts.map((concept) => (
+            <span className={`grammar-mini-concept ${concept.status}`} key={concept.id}>{concept.name}</span>
+          ))}
+        </div>
       </div>
 
       <div className="grammar-analytics-grid">

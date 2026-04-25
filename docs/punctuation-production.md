@@ -74,8 +74,14 @@ Published practice modes include:
 - insert: add punctuation to an unpunctuated sentence
 - fix: proofread and repair a sentence
 - transfer: write or repair a constrained sentence against explicit facets
+- combine: join notes, clauses, or extra detail into one score-bearing punctuated sentence
+- paragraph: proofread a short passage where several punctuation skills can be exercised together
 
 Generated practice now runs through a deterministic compiler. Each published generator family can add extra practice items to the runtime manifest under a fixed release seed, so the Worker can broaden practice without using browser-owned random generation or changing the published reward denominator. Generated items carry `source: generated` internally, but the browser still receives only the redacted live-item read model.
+
+Sentence-combining practice is now ported as a Worker-owned item mode rather than a separate browser session. Smart review and focused cluster sessions include `combine` at controlled frequency, weak spots can target weak `skill::combine` facets, and unsupported clusters fall back to their available item modes instead of exposing an empty queue.
+
+Paragraph-repair practice is also ported as a Worker-owned item mode rather than a separate browser session. Smart review and focused cluster sessions include `paragraph` after the combine slot, weak spots can target weak `skill::paragraph` facets, and the browser receives only the short passage prompt/stem rather than accepted answers or validators.
 
 The first Speech rubric is deliberately strict:
 
@@ -104,6 +110,23 @@ Structure marking adds deterministic transfer validators for:
 - colons before preserved lists after complete opening clauses
 - semi-colons between complex list items
 - colon-led bullet lists with preserved bullet items
+
+Combine marking adds stricter one-sentence validators for the first legacy-shaped rewrite families:
+
+- list-comma note combination without an unnecessary final comma
+- fronted-adverbial rewrites with the opening comma
+- parenthesis rewrites with matched commas, brackets, or dashes
+- colon-list combinations after a complete opening clause
+- semi-colon clause combinations that reject comma splices
+- spaced-dash clause combinations that reject unpunctuated joins
+
+Paragraph marking composes the deterministic validators across a short passage for the first legacy-shaped proofreading families:
+
+- fronted adverbial plus direct speech
+- parenthesis plus direct speech
+- colon before a list plus semi-colon between clauses
+- colon-led bullet lists with consistent line-based punctuation
+- mixed apostrophe contractions and possession
 
 ## Worker Runtime
 
@@ -174,9 +197,11 @@ The Punctuation release gate includes:
 - Worker command tests for start, submit, continue, stale transitions, redaction, and idempotent reward projection
 - React scene tests for setup, active, feedback, summary, and hidden-field absence
 - subject expansion conformance and golden-path smoke coverage
-- deterministic demo release smoke proving default hidden exposure and gated Worker command execution
+- deterministic demo release smoke proving default hidden exposure, Smart review, GPS delayed review, Parent Hub evidence, gated Worker command execution, and English Spelling startup
 - asset tests for Bellstorm Coast scenes and Punctuation monster artwork
-- bundle/public-output audits proving engine/content source is not shipped to the browser
+- bundle/public-output audits proving engine/content source and raw source paths are not shipped to the browser
+- performance coverage for bounded scheduling across fixed items, generated items, sentence combining, and paragraph repair
+- local release smoke coverage for Admin Hub Punctuation evidence redaction; live production smoke does not require an admin session
 
 Production exposure is controlled by the `PUNCTUATION_SUBJECT_ENABLED` Worker env var, which feeds the browser `punctuationProduction` subject exposure gate. The release-smoke gate now covers both sides of the rollout: `false` keeps the Worker command route, dashboard card, and direct subject route unavailable; `true` exposes the subject only after the Worker-backed demo path has been verified.
 
@@ -195,10 +220,34 @@ For repeatable HTTP evidence after a Punctuation deploy, run:
 npm run smoke:production:punctuation
 ```
 
-The smoke creates an isolated demo session on production, confirms `punctuationProduction` is enabled, completes one Worker-backed Punctuation item through summary, and starts a Worker-backed English Spelling session with a redacted prompt token. This keeps the Punctuation rollout gate tied to the live subject command boundary while also proving the reference Spelling subject still starts correctly.
+The smoke creates an isolated demo session on production, confirms `punctuationProduction` is enabled, completes one Worker-backed Smart review item through summary, completes one GPS test item through delayed review, checks Parent Hub Punctuation evidence for hidden-field redaction, and starts a Worker-backed English Spelling session with a redacted prompt token. This keeps the Punctuation rollout gate tied to the live subject command boundary while also proving the reference Spelling subject still starts correctly.
 
 ## Expansion Path
 
 The next Punctuation release should deepen one learning cluster or validator family at a time. Each expansion needs enough fixed items, generated templates, negative tests, misconception tags, transfer facets, and reward-unit denominators before learner-facing mastery claims are widened.
 
 Do not expose planned clusters just because monster assets exist. Bellstorm Coast rewards should continue to follow secure learning evidence.
+
+## Legacy Parity Baseline
+
+Full legacy HTML learner-facing parity is now claimed against the repo-local baseline. This means the legacy modes and item behaviours are available through the production Worker-owned subject, not that the old single-file architecture has been copied.
+
+The baseline fixture lives at:
+
+```txt
+tests/fixtures/punctuation-legacy-parity/legacy-baseline.json
+```
+
+The comparison helper lives at:
+
+```txt
+shared/punctuation/legacy-parity.js
+```
+
+The baseline currently classifies legacy behaviour as:
+
+- Ported: the 14-skill map, Worker command runtime, Smart review, guided learning, dedicated weak spots, GPS test mode, `choose`, `insert`, `fix`, `transfer`, `combine`, `paragraph`, deterministic transfer validators, safe context-pack compilation, reward-unit analytics, session-mode and item-mode analytics, weakest facets, daily goal, streak, recent mistakes, and Parent/Admin evidence.
+- Replaced: legacy standalone `choose`, `insert`, `fix`, `transfer`, sentence-combining, and paragraph-repair session buttons are represented by production item modes inside Smart review, weak spots, guided practice, GPS, and focused cluster sessions. The legacy browser AI lane is represented by a server-side context-pack compiler that can only contribute sanitised atoms to deterministic generators.
+- Rejected: the legacy single-file production route, localStorage source of truth, browser-owned marking, browser-stored AI provider keys, browser-direct provider calls, unconstrained free-writing auto-scoring, and AI-authored score-bearing items or marking decisions.
+
+This baseline is deliberately a guardrail, not a demand to copy the legacy architecture. New parity slices should update the fixture status only when the replacement Worker-owned implementation, redacted read model, tests, and release gate exist.

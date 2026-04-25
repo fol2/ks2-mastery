@@ -12,6 +12,9 @@ export const PUNCTUATION_PHASES = Object.freeze([
 
 export const PUNCTUATION_MODES = Object.freeze([
   'smart',
+  'guided',
+  'weak',
+  'gps',
   'endmarks',
   'apostrophe',
   'speech',
@@ -126,6 +129,49 @@ export function normalisePunctuationFeedback(value) {
   };
 }
 
+function normalisePunctuationFacet(value) {
+  if (!isPlainObject(value)) return null;
+  const id = normaliseString(value.id);
+  if (!id) return null;
+  return {
+    id,
+    ok: normaliseBoolean(value.ok),
+    label: normaliseString(value.label),
+  };
+}
+
+function normaliseGpsReviewItem(value, index) {
+  if (!isPlainObject(value)) return null;
+  return {
+    index: normaliseNonNegativeInteger(value.index, index + 1),
+    itemId: normaliseString(value.itemId),
+    mode: normaliseString(value.mode),
+    skillIds: normaliseStringArray(value.skillIds),
+    prompt: normaliseString(value.prompt),
+    stem: normaliseString(value.stem),
+    attemptedAnswer: normaliseString(value.attemptedAnswer).trim().slice(0, 500),
+    displayCorrection: normaliseString(value.displayCorrection),
+    explanation: normaliseString(value.explanation),
+    correct: normaliseBoolean(value.correct),
+    misconceptionTags: normaliseStringArray(value.misconceptionTags),
+    facets: Array.isArray(value.facets)
+      ? value.facets.map(normalisePunctuationFacet).filter(Boolean)
+      : [],
+  };
+}
+
+function normaliseGpsSummary(value) {
+  if (!isPlainObject(value)) return null;
+  return {
+    delayedFeedback: normaliseBoolean(value.delayedFeedback, true),
+    recommendedMode: normalisePunctuationMode(value.recommendedMode, 'smart'),
+    recommendedLabel: normaliseString(value.recommendedLabel, 'Smart review'),
+    reviewItems: Array.isArray(value.reviewItems)
+      ? value.reviewItems.map(normaliseGpsReviewItem).filter(Boolean)
+      : [],
+  };
+}
+
 export function normalisePunctuationSummary(value) {
   if (!isPlainObject(value)) return null;
   const total = normaliseNonNegativeInteger(value.total, 0);
@@ -142,5 +188,6 @@ export function normalisePunctuationSummary(value) {
     focus: normaliseStringArray(value.focus),
     securedUnits: normaliseStringArray(value.securedUnits),
     misconceptionTags: normaliseStringArray(value.misconceptionTags),
+    gps: normaliseGpsSummary(value.gps),
   };
 }

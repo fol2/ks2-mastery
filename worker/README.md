@@ -20,6 +20,7 @@ It is:
 - a read-model boundary for authorised Spelling Word Bank rows and detail
 - a read-model boundary for Punctuation practice state that redacts answer-bearing engine fields
 - an admin-only account role management boundary for production platform roles
+- an admin-only monster visual config boundary with draft, publish, restore, and retained versions
 - a deployment boundary that still keeps subject UI rules out of the backend
 
 ## What it still is not
@@ -106,6 +107,23 @@ Current use:
 - accounts with no stored spelling row receive the current seeded spelling bundle, including Extra, on read
 - accounts with an existing stored row keep that custom content until an operator imports/publishes the new bundle or intentionally resets to the seed
 
+### Global monster visual config
+
+`platform_monster_visual_config` stores the global monster visual draft and the current published config.
+`platform_monster_visual_config_versions` keeps the latest 20 published versions for rollback-to-draft.
+
+Current use:
+
+- Admin / Operations edits the draft inside the Monster visuals panel
+- `admin` can save draft, publish, and restore; `ops` can inspect only
+- every mutation requires a request id and expected draft revision
+- stale draft writes return `409 stale_write`
+- publish validation requires the current generated monster asset manifest hash, every manifest asset, every renderer context, every required field, and reviewed state for each asset/context
+- restore updates draft only and does not change the live published version
+- `/api/bootstrap` returns the published runtime payload only; it never returns the admin draft
+
+Runtime renderers treat this payload as optional. If the published payload is missing, stale, or incomplete for one asset/context, the browser falls back to bundled visual defaults for that render path rather than blanking a monster.
+
 ## Demo sessions
 
 The Worker owns public demo access.
@@ -182,6 +200,9 @@ The Worker also exposes an admin-only role management slice.
 
 - `GET /api/admin/accounts`
 - `PUT /api/admin/accounts/role`
+- `PUT /api/admin/monster-visual-config/draft`
+- `POST /api/admin/monster-visual-config/publish`
+- `POST /api/admin/monster-visual-config/restore`
 
 Current behaviour:
 
@@ -190,6 +211,7 @@ Current behaviour:
 - the Worker blocks demoting the last remaining admin
 - role changes write `adult_accounts.platform_role`
 - role changes are idempotent by request id and recorded in `mutation_receipts`
+- monster visual config mutations are admin-only, idempotent by request id, and recorded in `mutation_receipts`
 
 ## Current access rules
 

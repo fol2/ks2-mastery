@@ -262,7 +262,7 @@ function savedPromptForSlug(rawSession, slug, wordBySlug = DEFAULT_WORD_BY_SLUG)
     || normalisePromptForSlug(rawSession?.currentCard?.prompt, slug, wordBySlug);
 }
 
-function decorateSession(engine, learnerId, session, wordBySlug = DEFAULT_WORD_BY_SLUG) {
+function decorateSession(engine, learnerId, session, wordBySlug = DEFAULT_WORD_BY_SLUG, progressStore = null) {
   if (!session) return null;
   const currentPrompt = session.currentSlug ? buildPrompt(engine, session, session.currentSlug, wordBySlug) : null;
   const currentCard = session.currentSlug && currentPrompt
@@ -272,6 +272,11 @@ function decorateSession(engine, learnerId, session, wordBySlug = DEFAULT_WORD_B
         prompt: currentPrompt,
       }
     : null;
+  const currentProgress = currentCard?.slug
+    ? (progressStore && typeof engine.progressForSlug === 'function'
+      ? engine.progressForSlug(progressStore, currentCard.slug)
+      : engine.getProgress(learnerId, currentCard.slug))
+    : null;
 
   return {
     ...session,
@@ -279,7 +284,7 @@ function decorateSession(engine, learnerId, session, wordBySlug = DEFAULT_WORD_B
     currentPrompt,
     currentCard,
     progress: buildProgressMeta(session),
-    currentStage: currentCard?.slug ? engine.getProgress(learnerId, currentCard.slug).stage : 0,
+    currentStage: currentProgress?.stage || 0,
   };
 }
 
@@ -671,8 +676,8 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       }, { ok: false });
     }
 
-    const firstCard = engine.advanceCard(created.session, learnerId);
-    const session = firstCard.done ? null : decorateSession(engine, learnerId, created.session, runtimeWordBySlug);
+    const firstCard = engine.advanceCard(created.session, learnerId, created.progressStore);
+    const session = firstCard.done ? null : decorateSession(engine, learnerId, created.session, runtimeWordBySlug, created.progressStore);
     if (!session) {
       return buildTransition({
         ...createInitialSpellingState(),

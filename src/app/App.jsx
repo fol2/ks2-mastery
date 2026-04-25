@@ -8,6 +8,7 @@ import { ProfileSettingsSurface } from '../surfaces/profile/ProfileSettingsSurfa
 import { ParentHubSurface } from '../surfaces/hubs/ParentHubSurface.jsx';
 import { AdminHubSurface } from '../surfaces/hubs/AdminHubSurface.jsx';
 import { SubjectRoute } from '../surfaces/subject/SubjectRoute.jsx';
+import { MonsterVisualConfigProvider } from '../platform/game/MonsterVisualConfigContext.jsx';
 import { ErrorBoundary } from '../platform/react/ErrorBoundary.jsx';
 import { usePlatformStore } from '../platform/react/use-platform-store.js';
 import { CelebrationLayer } from '../platform/game/render/CelebrationLayer.jsx';
@@ -86,6 +87,7 @@ export function App({ controller, runtime }) {
   const screen = appState.route?.screen || 'dashboard';
   const routedSubjectId = appState.route?.subjectId || 'spelling';
   const context = runtime.contextFor(routedSubjectId);
+  const monsterVisualConfig = runtime.monsterVisualConfig?.() || null;
   const baseActions = useMemo(() => runtime.buildSurfaceActions(), [runtime]);
   const [subjectExitPhase, setSubjectExitPhase] = useState('idle');
   const subjectExitTimer = useRef(null);
@@ -139,7 +141,8 @@ export function App({ controller, runtime }) {
   ].filter(Boolean).join(' ');
 
   return (
-    <ErrorBoundary>
+    <MonsterVisualConfigProvider value={monsterVisualConfig}>
+      <ErrorBoundary>
       {screen === 'dashboard' && (
         <>
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
@@ -221,6 +224,7 @@ export function App({ controller, runtime }) {
           <SharedOverlays appState={appState} actions={actions} controller={controller} />
         </div>
       )}
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </MonsterVisualConfigProvider>
   );
 }

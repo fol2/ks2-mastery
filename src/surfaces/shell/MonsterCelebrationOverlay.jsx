@@ -1,11 +1,17 @@
 import React from 'react';
-import { monsterAsset, monsterAssetSrcSet } from '../../platform/game/monsters.js';
+import { useMonsterVisualConfig } from '../../platform/game/MonsterVisualConfigContext.jsx';
+import { resolveMonsterVisual } from '../../platform/game/monster-visual-config.js';
+import { monsterVisualCelebrationStyle } from '../../platform/game/monster-visual-style.js';
 
-function imageSources(monsterId, stage, branch) {
-  return {
-    src: monsterAsset(monsterId, stage, 640, branch),
-    srcSet: monsterAssetSrcSet(monsterId, stage, branch),
-  };
+function imageVisual(monsterId, stage, branch, config) {
+  return resolveMonsterVisual({
+    monsterId,
+    branch,
+    stage,
+    context: 'celebrationOverlay',
+    config,
+    preferredSize: 640,
+  });
 }
 
 function stageName(monster, stage) {
@@ -40,7 +46,28 @@ function Particles() {
   );
 }
 
+function CelebrationVisual({ className, stage, visual }) {
+  if (!visual) return null;
+  return (
+    <span
+      className={`monster-celebration-visual ${className}`}
+      data-stage={stage}
+      style={monsterVisualCelebrationStyle(visual)}
+    >
+      <span className="monster-celebration-shadow" />
+      <img
+        className={`monster-celebration-art ${className}`}
+        alt=""
+        src={visual.src}
+        srcSet={visual.srcSet}
+        sizes="min(90vw, 540px)"
+      />
+    </span>
+  );
+}
+
 export function MonsterCelebrationOverlay({ queue = [], onDismiss }) {
+  const monsterVisualConfig = useMonsterVisualConfig();
   const event = queue[0];
   if (!event) return null;
 
@@ -54,6 +81,8 @@ export function MonsterCelebrationOverlay({ queue = [], onDismiss }) {
   const hasFrom = event.kind !== 'caught';
   const hasParts = event.kind === 'caught' || event.kind === 'mega';
   const isEggCrack = event.kind === 'evolve' && fromStage === 0 && toStage === 1;
+  const beforeVisual = hasFrom ? imageVisual(monster.id, fromStage, branch, monsterVisualConfig?.config) : null;
+  const afterVisual = imageVisual(monster.id, toStage, branch, monsterVisualConfig?.config);
 
   return (
     <section
@@ -71,23 +100,9 @@ export function MonsterCelebrationOverlay({ queue = [], onDismiss }) {
         {hasParts && <Particles />}
         <div className="monster-celebration-halo" />
         {event.kind === 'mega' && <div className="monster-celebration-shine" />}
-        {hasFrom && (
-          <img
-            className="monster-celebration-art before"
-            alt=""
-            data-stage={fromStage}
-            {...imageSources(monster.id, fromStage, branch)}
-            sizes="min(90vw, 540px)"
-          />
-        )}
+        {hasFrom && <CelebrationVisual className="before" stage={fromStage} visual={beforeVisual} />}
         <div className="monster-celebration-white" />
-        <img
-          className="monster-celebration-art after"
-          alt=""
-          data-stage={toStage}
-          {...imageSources(monster.id, toStage, branch)}
-          sizes="min(90vw, 540px)"
-        />
+        <CelebrationVisual className="after" stage={toStage} visual={afterVisual} />
       </div>
 
       <div className="monster-celebration-card">

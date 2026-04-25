@@ -1,5 +1,8 @@
 import { uid } from '../core/utils.js';
 
+const DEFAULT_RETRY_JITTER_MAX_MS = 125;
+const DEFAULT_RETRY_MAX_DELAY_MS = 2_000;
+
 function joinUrl(baseUrl, path) {
   const base = String(baseUrl || '').replace(/\/$/, '');
   const suffix = String(path || '').startsWith('/') ? path : `/${path}`;
@@ -28,6 +31,51 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, delay));
 }
 
+function boundedRandom(random) {
+  try {
+    const raw = typeof random === 'function' ? Number(random()) : 0;
+    if (!Number.isFinite(raw)) return 0;
+    return Math.min(1, Math.max(0, raw));
+  } catch {
+    return 0;
+  }
+}
+
+function retryDelayForAttempt(attempt, { baseDelayMs, jitterMaxMs, maxDelayMs, random }) {
+  const exponent = Math.max(0, Number(attempt) || 0);
+  const baseDelay = Math.max(0, Number(baseDelayMs) || 0) * (2 ** exponent);
+  if (!baseDelay) return 0;
+  const jitter = Math.floor(Math.max(0, Number(jitterMaxMs) || 0) * boundedRandom(random));
+  const uncapped = baseDelay + jitter;
+  const maxDelay = Math.max(0, Number(maxDelayMs) || 0);
+  return maxDelay ? Math.min(maxDelay, uncapped) : uncapped;
+}
+
+function snapshotCommandPayload(payload) {
+  if (payload === undefined) return {};
+  const serialised = JSON.stringify(payload);
+  return serialised === undefined ? undefined : JSON.parse(serialised);
+}
+
+function createCommandBody({
+  cleanSubjectId,
+  cleanLearnerId,
+  cleanCommand,
+  payloadSnapshot,
+  requestId,
+  expectedLearnerRevision,
+}) {
+  return JSON.stringify({
+    subjectId: cleanSubjectId,
+    learnerId: cleanLearnerId,
+    command: cleanCommand,
+    requestId,
+    correlationId: requestId,
+    expectedLearnerRevision,
+    payload: payloadSnapshot,
+  });
+}
+
 export class SubjectCommandClientError extends Error {
   constructor({ status = 0, payload = null, message = '' } = {}) {
     super(message || payload?.message || `Subject command failed (${status}).`);
@@ -47,6 +95,10 @@ export function createSubjectCommandClient({
   onStaleWrite = null,
   retryAttempts = 2,
   retryDelayMs = 250,
+  retryJitterMs = null,
+  retryMaxDelayMs = DEFAULT_RETRY_MAX_DELAY_MS,
+  random = Math.random,
+  sleep: sleepFn = sleep,
 } = {}) {
   if (typeof fetchFn !== 'function') {
     throw new TypeError('Subject command client requires a fetch implementation.');
@@ -67,8 +119,7 @@ export function createSubjectCommandClient({
     return queued;
   }
 
-  async function sendOnce({ cleanSubjectId, cleanLearnerId, cleanCommand, payload, requestId }) {
-    const expectedLearnerRevision = Number(getLearnerRevision(cleanLearnerId)) || 0;
+  async function sendOnce({ cleanSubjectId, requestId, body }) {
     let response;
     try {
       response = await fetchFn(joinUrl(baseUrl, `/api/subjects/${encodeURIComponent(cleanSubjectId)}/command`), {
@@ -79,15 +130,7 @@ export function createSubjectCommandClient({
           'x-ks2-request-id': requestId,
           'x-ks2-correlation-id': requestId,
         },
-        body: JSON.stringify({
-          subjectId: cleanSubjectId,
-          learnerId: cleanLearnerId,
-          command: cleanCommand,
-          requestId,
-          correlationId: requestId,
-          expectedLearnerRevision,
-          payload,
-        }),
+        body,
       });
     } catch (error) {
       throw new SubjectCommandClientError({
@@ -111,18 +154,39 @@ export function createSubjectCommandClient({
   async function sendWithRetry({ cleanSubjectId, cleanLearnerId, cleanCommand, payload, requestId }) {
     const maxRetryAttempts = Math.max(0, Number(retryAttempts) || 0);
     const baseRetryDelayMs = Math.max(0, Number(retryDelayMs) || 0);
+    const retryJitterMaxMs = retryJitterMs == null
+      ? Math.min(DEFAULT_RETRY_JITTER_MAX_MS, Math.floor(baseRetryDelayMs / 2))
+      : Math.max(0, Number(retryJitterMs) || 0);
+    const commandSleep = typeof sleepFn === 'function' ? sleepFn : sleep;
     let transportAttempts = 0;
     let staleWriteRetried = false;
+    let expectedLearnerRevision = Number(getLearnerRevision(cleanLearnerId)) || 0;
+    let payloadSnapshot;
+    try {
+      payloadSnapshot = snapshotCommandPayload(payload);
+    } catch (error) {
+      throw new SubjectCommandClientError({
+        status: 400,
+        payload: { code: 'subject_command_client_invalid_payload' },
+        message: error?.message || 'Subject command payload must be JSON serialisable.',
+      });
+    }
+    let body = createCommandBody({
+      cleanSubjectId,
+      cleanLearnerId,
+      cleanCommand,
+      payloadSnapshot,
+      requestId,
+      expectedLearnerRevision,
+    });
     let responsePayload;
 
     while (!responsePayload) {
       try {
         responsePayload = await sendOnce({
           cleanSubjectId,
-          cleanLearnerId,
-          cleanCommand,
-          payload,
           requestId,
+          body,
         });
       } catch (error) {
         if (isStaleWriteConflict(error) && !staleWriteRetried && typeof onStaleWrite === 'function') {
@@ -132,16 +196,31 @@ export function createSubjectCommandClient({
             learnerId: cleanLearnerId,
             subjectId: cleanSubjectId,
             command: cleanCommand,
-            payload,
+            payload: snapshotCommandPayload(payloadSnapshot),
             requestId,
+          });
+          expectedLearnerRevision = Number(getLearnerRevision(cleanLearnerId)) || 0;
+          transportAttempts = 0;
+          body = createCommandBody({
+            cleanSubjectId,
+            cleanLearnerId,
+            cleanCommand,
+            payloadSnapshot,
+            requestId,
+            expectedLearnerRevision,
           });
           continue;
         }
 
         if (isRetryableTransportFailure(error) && transportAttempts < maxRetryAttempts) {
-          const delayMs = baseRetryDelayMs * (2 ** transportAttempts);
+          const delayMs = retryDelayForAttempt(transportAttempts, {
+            baseDelayMs: baseRetryDelayMs,
+            jitterMaxMs: retryJitterMaxMs,
+            maxDelayMs: retryMaxDelayMs,
+            random,
+          });
           transportAttempts += 1;
-          await sleep(delayMs);
+          await commandSleep(delayMs);
           continue;
         }
 

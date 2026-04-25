@@ -11,6 +11,16 @@ const QUESTION_TYPE_LABELS = Object.freeze({
   fill: 'Complete the sentence',
 });
 
+const CONCEPT_STATUS_ORDER = Object.freeze({
+  weak: 0,
+  due: 1,
+  learning: 2,
+  secured: 3,
+  new: 4,
+});
+
+const VALID_CONCEPT_STATUSES = new Set(Object.keys(CONCEPT_STATUS_ORDER));
+
 function asTs(value, fallback = 0) {
   if (typeof value === 'string') {
     const parsed = Date.parse(value);
@@ -65,6 +75,13 @@ function questionTypeLabel(id) {
   return QUESTION_TYPE_LABELS[id] || humanLabel(id);
 }
 
+function safeTextList(value, limit = 4) {
+  return (Array.isArray(value) ? value : [])
+    .map((entry) => String(entry || '').trim())
+    .filter(Boolean)
+    .slice(0, limit);
+}
+
 function sortTop(entries, scoreFn, limit = 3) {
   return [...entries]
     .sort((a, b) => {
@@ -75,24 +92,47 @@ function sortTop(entries, scoreFn, limit = 3) {
     .slice(0, limit);
 }
 
-function conceptRowsFromState(state, nowTs) {
-  const mastery = isPlainObject(state?.mastery?.concepts) ? state.mastery.concepts : {};
-  return GRAMMAR_CLIENT_CONCEPTS.map((concept) => {
-    const node = normaliseMasteryNode(mastery[concept.id]);
-    const status = grammarConceptStatus(node, nowTs);
-    return {
-      ...concept,
-      status,
-      attempts: node.attempts,
-      correct: node.correct,
-      wrong: node.wrong,
-      strength: node.strength,
-      dueAt: node.dueAt,
-      lastSeenAt: node.lastSeenAt,
-      lastWrongAt: node.lastWrongAt,
-      correctStreak: node.correctStreak,
-    };
-  });
+function normaliseConceptRow(rawValue, concept, nowTs) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const node = normaliseMasteryNode(raw);
+  const status = VALID_CONCEPT_STATUSES.has(raw.status)
+    ? raw.status
+    : grammarConceptStatus(node, nowTs);
+  return {
+    ...concept,
+    subjectId: 'grammar',
+    status,
+    attempts: node.attempts,
+    correct: node.correct,
+    wrong: node.wrong,
+    accuracyPercent: accuracyPercent(node.correct, node.wrong),
+    strength: node.strength,
+    dueAt: node.dueAt,
+    lastSeenAt: node.lastSeenAt,
+    lastWrongAt: node.lastWrongAt,
+    correctStreak: node.correctStreak,
+  };
+}
+
+function analyticsFromStateOrUi(state, ui) {
+  if (isPlainObject(ui?.analytics)) return ui.analytics;
+  if (isPlainObject(state?.analytics)) return state.analytics;
+  return {};
+}
+
+function conceptRowsFromState(state, nowTs, ui = null) {
+  const mastery = isPlainObject(state?.mastery?.concepts) ? state.mastery.concepts : null;
+  if (mastery) {
+    return GRAMMAR_CLIENT_CONCEPTS.map((concept) => normaliseConceptRow(mastery[concept.id], concept, nowTs));
+  }
+  const analytics = analyticsFromStateOrUi(state, ui);
+  if (Array.isArray(analytics.concepts) && analytics.concepts.length) {
+    const rowsById = new Map(analytics.concepts
+      .filter((entry) => typeof entry?.id === 'string')
+      .map((entry) => [entry.id, entry]));
+    return GRAMMAR_CLIENT_CONCEPTS.map((concept) => normaliseConceptRow(rowsById.get(concept.id), concept, nowTs));
+  }
+  return GRAMMAR_CLIENT_CONCEPTS.map((concept) => normaliseConceptRow(null, concept, nowTs));
 }
 
 function progressSnapshotFromConcepts(concepts) {
@@ -109,6 +149,18 @@ function progressSnapshotFromConcepts(concepts) {
     untouchedConcepts: concepts.filter((concept) => concept.status === 'new').length,
     accuracyPercent: accuracyPercent(correct, wrong),
   };
+}
+
+function orderedConceptEvidence(concepts) {
+  return [...concepts].sort((a, b) => {
+    const statusDelta = (CONCEPT_STATUS_ORDER[a.status] ?? 99) - (CONCEPT_STATUS_ORDER[b.status] ?? 99);
+    if (statusDelta) return statusDelta;
+    const wrongDelta = (Number(b.wrong) || 0) - (Number(a.wrong) || 0);
+    if (wrongDelta) return wrongDelta;
+    const dueDelta = asTs(a.dueAt, Number.MAX_SAFE_INTEGER) - asTs(b.dueAt, Number.MAX_SAFE_INTEGER);
+    if (dueDelta) return dueDelta;
+    return String(a.name || a.id || '').localeCompare(String(b.name || b.id || ''));
+  });
 }
 
 function domainSummaries(concepts) {
@@ -141,19 +193,35 @@ function domainSummaries(concepts) {
   }));
 }
 
-function misconceptionPatternsFromState(state, eventLog = []) {
+function normaliseMisconceptionPattern(id, rawEntry, source = 'grammar-state') {
+  const entry = isPlainObject(rawEntry) ? rawEntry : {};
+  return {
+    subjectId: 'grammar',
+    id,
+    label: entry.label || `${humanLabel(id)} pattern`,
+    count: Math.max(0, Math.floor(Number(entry.count) || 0)),
+    lastSeenAt: asTs(entry.lastSeenAt, 0),
+    source: typeof entry.source === 'string' ? entry.source : source,
+  };
+}
+
+function misconceptionPatternsFromState(state, eventLog = [], ui = null) {
   const patterns = new Map();
+  const analytics = analyticsFromStateOrUi(state, ui);
+  if (Array.isArray(analytics.misconceptionPatterns)) {
+    for (const rawEntry of analytics.misconceptionPatterns) {
+      if (!isPlainObject(rawEntry)) continue;
+      const id = typeof rawEntry.id === 'string' && rawEntry.id ? rawEntry.id : String(rawEntry.label || '').toLowerCase().replace(/\W+/g, '_');
+      if (!id) continue;
+      patterns.set(id, normaliseMisconceptionPattern(id, rawEntry, 'grammar-read-model'));
+    }
+  }
+
   const misconceptions = isPlainObject(state?.misconceptions) ? state.misconceptions : {};
   for (const [id, rawEntry] of Object.entries(misconceptions)) {
-    const entry = isPlainObject(rawEntry) ? rawEntry : {};
-    patterns.set(id, {
-      subjectId: 'grammar',
-      id,
-      label: `${humanLabel(id)} pattern`,
-      count: Math.max(0, Math.floor(Number(entry.count) || 0)),
-      lastSeenAt: asTs(entry.lastSeenAt, 0),
-      source: 'grammar-state',
-    });
+    const next = normaliseMisconceptionPattern(id, rawEntry, 'grammar-state');
+    const current = patterns.get(id);
+    patterns.set(id, current && current.count >= next.count ? current : next);
   }
 
   for (const event of Array.isArray(eventLog) ? eventLog : []) {
@@ -178,31 +246,111 @@ function misconceptionPatternsFromState(state, eventLog = []) {
     .slice(0, 5);
 }
 
-function questionTypeSummaryFromState(state, nowTs) {
-  const mastery = isPlainObject(state?.mastery?.questionTypes) ? state.mastery.questionTypes : {};
-  return Object.entries(mastery)
-    .map(([id, rawNode]) => {
-      const node = normaliseMasteryNode(rawNode);
-      return {
-        subjectId: 'grammar',
-        id,
-        label: questionTypeLabel(id),
-        status: grammarConceptStatus(node, nowTs),
-        attempts: node.attempts,
-        correct: node.correct,
-        wrong: node.wrong,
-        accuracyPercent: accuracyPercent(node.correct, node.wrong),
-        strength: node.strength,
-        dueAt: node.dueAt,
-      };
-    })
-    .filter((entry) => entry.attempts > 0)
-    .sort((a, b) => {
-      const troubleDelta = (Number(b.wrong) - Number(a.wrong)) || (Number(a.accuracyPercent ?? 101) - Number(b.accuracyPercent ?? 101));
-      if (troubleDelta) return troubleDelta;
-      return String(a.label).localeCompare(String(b.label));
-    })
-    .slice(0, 6);
+function normaliseQuestionTypeEntry(id, rawNode, nowTs) {
+  const node = normaliseMasteryNode(rawNode);
+  const status = VALID_CONCEPT_STATUSES.has(rawNode?.status)
+    ? rawNode.status
+    : grammarConceptStatus(node, nowTs);
+  return {
+    subjectId: 'grammar',
+    id,
+    label: rawNode?.label || questionTypeLabel(id),
+    status,
+    attempts: node.attempts,
+    correct: node.correct,
+    wrong: node.wrong,
+    accuracyPercent: accuracyPercent(node.correct, node.wrong),
+    strength: node.strength,
+    dueAt: node.dueAt,
+  };
+}
+
+function questionTypeSummaryFromState(state, nowTs, ui = null) {
+  const mastery = isPlainObject(state?.mastery?.questionTypes) ? state.mastery.questionTypes : null;
+  if (mastery) {
+    return Object.entries(mastery)
+      .map(([id, rawNode]) => normaliseQuestionTypeEntry(id, rawNode, nowTs))
+      .filter((entry) => entry.attempts > 0)
+      .sort((a, b) => {
+        const troubleDelta = (Number(b.wrong) - Number(a.wrong)) || (Number(a.accuracyPercent ?? 101) - Number(b.accuracyPercent ?? 101));
+        if (troubleDelta) return troubleDelta;
+        return String(a.label).localeCompare(String(b.label));
+      })
+      .slice(0, 6);
+  }
+  const analytics = analyticsFromStateOrUi(state, ui);
+  if (Array.isArray(analytics.questionTypeSummary) && analytics.questionTypeSummary.length) {
+    return analytics.questionTypeSummary
+      .filter((entry) => isPlainObject(entry) && typeof entry.id === 'string')
+      .map((entry) => normaliseQuestionTypeEntry(entry.id, entry, nowTs))
+      .filter((entry) => entry.attempts > 0)
+      .slice(0, 6);
+  }
+  return [];
+}
+
+function normaliseRecentActivityEntry(rawValue) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const result = isPlainObject(raw.result) ? raw.result : raw;
+  const questionType = typeof raw.questionType === 'string' ? raw.questionType : '';
+  return {
+    subjectId: 'grammar',
+    templateId: typeof raw.templateId === 'string' ? raw.templateId : '',
+    itemId: typeof raw.itemId === 'string' ? raw.itemId : '',
+    questionType,
+    label: raw.label || raw.questionTypeLabel || questionTypeLabel(questionType),
+    conceptIds: Array.isArray(raw.conceptIds) ? raw.conceptIds.filter(Boolean).map(String) : [],
+    correct: Boolean(result.correct),
+    score: Number(result.score) || 0,
+    maxScore: Number(result.maxScore) || 1,
+    supportLevel: Math.max(0, Math.floor(Number(raw.supportLevel) || 0)),
+    attempts: Math.max(1, Math.floor(Number(raw.attempts) || 1)),
+    misconception: typeof result.misconception === 'string' ? result.misconception : '',
+    createdAt: asTs(raw.createdAt, 0),
+  };
+}
+
+function recentActivityFromState(state, ui = null) {
+  if (Array.isArray(state?.recentAttempts)) {
+    return state.recentAttempts
+      .slice(-8)
+      .reverse()
+      .map(normaliseRecentActivityEntry)
+      .filter((entry) => entry.itemId || entry.templateId || entry.createdAt);
+  }
+  const analytics = analyticsFromStateOrUi(state, ui);
+  if (Array.isArray(analytics.recentActivity) && analytics.recentActivity.length) {
+    return analytics.recentActivity
+      .map(normaliseRecentActivityEntry)
+      .filter((entry) => entry.itemId || entry.templateId || entry.createdAt)
+      .slice(0, 8);
+  }
+  return [];
+}
+
+function parentSummaryDraftFromRecord(record) {
+  const candidates = [
+    record?.ui?.aiEnrichment,
+    record?.data?.aiEnrichment,
+  ];
+  for (const candidate of candidates) {
+    if (!isPlainObject(candidate) || !isPlainObject(candidate.parentSummary)) continue;
+    const summary = candidate.parentSummary;
+    const body = typeof summary.body === 'string' ? summary.body.trim() : '';
+    const title = typeof summary.title === 'string' ? summary.title.trim() : '';
+    const nextSteps = safeTextList(summary.nextSteps, 4);
+    if (!body && !title && !nextSteps.length) continue;
+    return {
+      subjectId: 'grammar',
+      kind: 'parent-summary',
+      status: candidate.status === 'ready' ? 'ready' : 'failed',
+      generatedAt: asTs(candidate.generatedAt, 0),
+      title: title || 'Parent summary draft',
+      body,
+      nextSteps,
+    };
+  }
+  return null;
 }
 
 function recentGrammarSessions(practiceSessions = []) {
@@ -284,10 +432,13 @@ export function buildGrammarLearnerReadModel({
 } = {}) {
   const nowTs = typeof now === 'function' ? asTs(now(), Date.now()) : asTs(now, Date.now());
   const record = isPlainObject(subjectStateRecord) ? subjectStateRecord : {};
-  const state = isPlainObject(record.data) && isPlainObject(record.data.mastery)
-    ? record.data
-    : (isPlainObject(record.ui) ? record.ui : {});
-  const concepts = conceptRowsFromState(state, nowTs);
+  const data = isPlainObject(record.data) ? record.data : {};
+  const ui = isPlainObject(record.ui) ? record.ui : {};
+  const state = isPlainObject(data.mastery) ? data : ui;
+  const concepts = conceptRowsFromState(state, nowTs, ui);
+  const conceptStatus = orderedConceptEvidence(concepts);
+  const dueConcepts = conceptStatus.filter((concept) => concept.status === 'due').slice(0, 8);
+  const weakConcepts = conceptStatus.filter((concept) => concept.status === 'weak').slice(0, 8);
   const snapshot = progressSnapshotFromConcepts(concepts);
   const domains = domainSummaries(concepts);
   const sessions = recentGrammarSessions(practiceSessions);
@@ -317,12 +468,16 @@ export function buildGrammarLearnerReadModel({
     dueCount: entry.dueCount,
     troubleCount: entry.weakCount,
   }));
-  const misconceptionPatterns = misconceptionPatternsFromState(state, eventLog);
-  const questionTypeSummary = questionTypeSummaryFromState(state, nowTs);
+  const misconceptionPatterns = misconceptionPatternsFromState(state, eventLog, ui);
+  const questionTypeSummary = questionTypeSummaryFromState(state, nowTs, ui);
+  const recentActivity = recentActivityFromState(state, ui);
+  const parentSummaryDraft = parentSummaryDraftFromRecord(record);
   const lastActivityAt = Math.max(
     asTs(record.updatedAt, 0),
     ...concepts.map((concept) => asTs(concept.lastSeenAt, 0)),
     ...sessions.map((session) => asTs(session.updatedAt, 0)),
+    ...recentActivity.map((entry) => asTs(entry.createdAt, 0)),
+    asTs(parentSummaryDraft?.generatedAt, 0),
     ...((Array.isArray(eventLog) ? eventLog : []).filter((event) => event?.subjectId === 'grammar').map((event) => asTs(event.createdAt, 0))),
     0,
   );
@@ -335,11 +490,21 @@ export function buildGrammarLearnerReadModel({
       ...snapshot,
       lastActivityAt,
     },
+    conceptStatus,
+    dueConcepts,
+    weakConcepts,
     strengths,
     weaknesses,
     misconceptionPatterns,
     questionTypeSummary,
+    recentActivity,
     recentSessions: sessions,
-    hasEvidence: snapshot.trackedConcepts > 0 || sessions.length > 0 || misconceptionPatterns.length > 0,
+    parentSummaryDraft,
+    hasEvidence: snapshot.trackedConcepts > 0
+      || sessions.length > 0
+      || misconceptionPatterns.length > 0
+      || questionTypeSummary.length > 0
+      || recentActivity.length > 0
+      || Boolean(parentSummaryDraft),
   };
 }

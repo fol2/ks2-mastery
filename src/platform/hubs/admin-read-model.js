@@ -43,6 +43,42 @@ export function normaliseDemoOperations(rawValue) {
   };
 }
 
+export function normaliseMonsterVisualConfigAdminModel(rawValue, platformRole = 'parent') {
+  const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
+  const status = raw.status && typeof raw.status === 'object' && !Array.isArray(raw.status) ? raw.status : {};
+  const validation = status.validation && typeof status.validation === 'object' && !Array.isArray(status.validation)
+    ? status.validation
+    : {};
+  const canManageMonsterVisualConfig = normalisePlatformRole(platformRole) === 'admin';
+  return {
+    permissions: {
+      canManageMonsterVisualConfig,
+      canViewMonsterVisualConfig: canViewAdminHub({ platformRole }),
+    },
+    status: {
+      schemaVersion: Number(status.schemaVersion) || 0,
+      manifestHash: typeof status.manifestHash === 'string' ? status.manifestHash : '',
+      draftRevision: Number(status.draftRevision) || 0,
+      draftUpdatedAt: asTs(status.draftUpdatedAt, 0),
+      draftUpdatedByAccountId: typeof status.draftUpdatedByAccountId === 'string' ? status.draftUpdatedByAccountId : '',
+      publishedVersion: Number(status.publishedVersion) || 0,
+      publishedAt: asTs(status.publishedAt, 0),
+      publishedByAccountId: typeof status.publishedByAccountId === 'string' ? status.publishedByAccountId : '',
+      validation: {
+        ok: Boolean(validation.ok),
+        errorCount: Number(validation.errorCount) || 0,
+        warningCount: Number(validation.warningCount) || 0,
+        errors: Array.isArray(validation.errors) ? validation.errors : [],
+        warnings: Array.isArray(validation.warnings) ? validation.warnings : [],
+      },
+    },
+    draft: raw.draft && typeof raw.draft === 'object' && !Array.isArray(raw.draft) ? raw.draft : null,
+    published: raw.published && typeof raw.published === 'object' && !Array.isArray(raw.published) ? raw.published : null,
+    versions: Array.isArray(raw.versions) ? raw.versions : [],
+    mutation: raw.mutation && typeof raw.mutation === 'object' && !Array.isArray(raw.mutation) ? raw.mutation : {},
+  };
+}
+
 export function buildAdminHubReadModel({
   account = null,
   platformRole = 'parent',
@@ -51,6 +87,7 @@ export function buildAdminHubReadModel({
   learnerBundles = {},
   runtimeSnapshots = {},
   demoOperations = null,
+  monsterVisualConfig = null,
   auditEntries = [],
   auditAvailable = false,
   selectedLearnerId = null,
@@ -88,6 +125,8 @@ export function buildAdminHubReadModel({
       accessModeLabel: writable ? 'Writable learner' : 'Read-only learner',
       overview: parentHub.learnerOverview,
       currentFocus: parentHub.dueWork[0] || null,
+      grammarEvidence: parentHub.grammarEvidence || null,
+      punctuationEvidence: parentHub.punctuationEvidence || null,
     };
   });
 
@@ -107,6 +146,7 @@ export function buildAdminHubReadModel({
       canViewAdminHub: canViewAdminHub({ platformRole: resolvedPlatformRole }),
       canViewParentHub: canOpenParentHub,
       canManageAccountRoles: canManageAccountRoles({ platformRole: resolvedPlatformRole }),
+      canManageMonsterVisualConfig: resolvedPlatformRole === 'admin',
     },
     account: {
       id: account?.id || 'local-browser',
@@ -143,11 +183,13 @@ export function buildAdminHubReadModel({
         : 'Local reference build does not have the Worker audit stream enabled yet.',
     },
     demoOperations: normaliseDemoOperations(demoOperations),
+    monsterVisualConfig: normaliseMonsterVisualConfigAdminModel(monsterVisualConfig, resolvedPlatformRole),
     learnerSupport: {
       diagnosticsCount: diagnosticsEntries.length,
       selectedLearnerId: selectedDiagnostics?.learnerId || '',
       accessibleLearners: diagnosticsEntries,
       selectedDiagnostics,
+      punctuationReleaseDiagnostics: selectedDiagnostics?.punctuationEvidence?.releaseDiagnostics || null,
       entryPoints: [
         ...(canOpenParentHub ? [{
           label: 'Open Parent Hub',
@@ -157,6 +199,12 @@ export function buildAdminHubReadModel({
           label: 'Open Spelling analytics',
           action: 'open-subject',
           subjectId: 'spelling',
+          tab: 'analytics',
+        },
+        {
+          label: 'Open Punctuation analytics',
+          action: 'open-subject',
+          subjectId: 'punctuation',
           tab: 'analytics',
         },
         {
@@ -170,6 +218,7 @@ export function buildAdminHubReadModel({
       importValidationStatus: 'real',
       auditLogLookup: auditAvailable ? 'real' : 'placeholder',
       demoOperations: demoOperations ? 'real' : 'placeholder',
+      monsterVisualConfig: monsterVisualConfig ? 'real' : 'placeholder',
       learnerSupport: 'real',
     },
   };

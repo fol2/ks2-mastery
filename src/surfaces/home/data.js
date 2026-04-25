@@ -9,6 +9,13 @@ import {
 import { hashString, valueBetween } from '../../platform/game/render/seed.js';
 import { computeEggBreatheStyle } from '../../platform/game/render/effects/egg-breathe.js';
 import { computeMonsterMotionStyle } from '../../platform/game/render/effects/monster-motion-float.js';
+import {
+  buildMonsterAssetKey,
+  defaultMonsterMeadowPath,
+  monsterVisualAssetPath,
+  monsterVisualAssetSources,
+  monsterVisualFaceSign,
+} from '../../platform/game/monster-visual-config.js';
 
 const MONSTER_VARIANTS = ['b1', 'b2'];
 const CODEX_POWER_RANK = Object.freeze({
@@ -113,25 +120,6 @@ const MEADOW_RANDOM_ZONES = Object.freeze({
   }),
 });
 
-const MONSTER_FACE = Object.freeze({
-  'inklet-b1-0': 'left',     'inklet-b1-1': 'left',     'inklet-b1-2': 'left',
-  'inklet-b1-3': 'left',     'inklet-b1-4': 'left',
-  'inklet-b2-0': 'left',     'inklet-b2-1': 'left',     'inklet-b2-2': 'left',
-  'inklet-b2-3': 'left',     'inklet-b2-4': 'left',
-  'glimmerbug-b1-0': 'left', 'glimmerbug-b1-1': 'left', 'glimmerbug-b1-2': 'left',
-  'glimmerbug-b1-3': 'left', 'glimmerbug-b1-4': 'left',
-  'glimmerbug-b2-0': 'left', 'glimmerbug-b2-1': 'left', 'glimmerbug-b2-2': 'left',
-  'glimmerbug-b2-3': 'left', 'glimmerbug-b2-4': 'right',
-  'phaeton-b1-0': 'right',   'phaeton-b1-1': 'right',   'phaeton-b1-2': 'right',
-  'phaeton-b1-3': 'right',   'phaeton-b1-4': 'right',
-  'phaeton-b2-0': 'left',    'phaeton-b2-1': 'left',    'phaeton-b2-2': 'right',
-  'phaeton-b2-3': 'left',    'phaeton-b2-4': 'left',
-  'vellhorn-b1-0': 'right',  'vellhorn-b1-1': 'right',  'vellhorn-b1-2': 'right',
-  'vellhorn-b1-3': 'right',  'vellhorn-b1-4': 'right',
-  'vellhorn-b2-0': 'left',   'vellhorn-b2-1': 'left',   'vellhorn-b2-2': 'left',
-  'vellhorn-b2-3': 'left',   'vellhorn-b2-4': 'left',
-});
-
 const SUBJECT_DECOR = Object.freeze({
   spelling: {
     eyebrow: 'The Scribe Downs',
@@ -185,18 +173,19 @@ export function subjectDecor(subjectId) {
 }
 
 export function monsterFaceSign(species, variant, stage) {
-  const key = `${species}-${variant}-${stage}`;
-  return MONSTER_FACE[key] === 'left' ? -1 : 1;
+  return monsterVisualFaceSign(species, variant, stage);
 }
 
 export function monsterAssetPath(species, variant, stage, size) {
-  return `./assets/monsters/${species}/${variant}/${species}-${variant}-${stage}.${size}.webp`;
+  return monsterVisualAssetPath(buildMonsterAssetKey(species, variant, stage), size, {
+    versioned: false,
+  });
 }
 
 export function monsterAssetSrcset(species, variant, stage) {
-  return [320, 640, 1280]
-    .map((size) => `${monsterAssetPath(species, variant, stage, size)} ${size}w`)
-    .join(', ');
+  return monsterVisualAssetSources(buildMonsterAssetKey(species, variant, stage), {
+    versioned: false,
+  }).srcSet;
 }
 
 // Backward-compatible shims: existing surface code still imports
@@ -253,11 +242,7 @@ export function buildMeadowMonsters(summary = [], { seed = 'default-meadow' } = 
 }
 
 function defaultPathForMonster(monsterId) {
-  if (monsterId === 'inklet') return 'walk';
-  if (monsterId === 'glimmerbug') return 'fly-a';
-  if (monsterId === 'phaeton') return 'fly-b';
-  if (monsterId === 'vellhorn') return 'walk-b';
-  return 'walk';
+  return defaultMonsterMeadowPath(monsterId, 1);
 }
 
 function meadowEntriesByPower(entries) {

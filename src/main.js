@@ -424,12 +424,47 @@ tts.subscribe((event) => {
 
 const readModels = createReadModelClient({ baseUrl: '', fetch: credentialFetch });
 const spellingContent = createSpellingContentApi({ fetch: credentialFetch });
+
+function staleWriteCurrentRevision(error) {
+  const payload = error?.payload;
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
+
+  const expectedCandidates = [
+    payload.expectedRevision,
+    payload.mutation?.expectedRevision,
+  ];
+  let expectedRevision = null;
+  for (const candidate of expectedCandidates) {
+    const revision = Number(candidate);
+    if (Number.isFinite(revision) && revision >= 0) {
+      expectedRevision = revision;
+      break;
+    }
+  }
+
+  const currentCandidates = [
+    payload.currentRevision,
+    payload.mutation?.currentRevision,
+  ];
+  for (const candidate of currentCandidates) {
+    const revision = Number(candidate);
+    if (!Number.isFinite(revision) || revision < 0) continue;
+    if (expectedRevision !== null && revision <= expectedRevision) continue;
+    return revision;
+  }
+  return null;
+}
+
 const subjectCommands = createSubjectCommandClient({
   baseUrl: '',
   fetch: credentialFetch,
   getLearnerRevision: (learnerId) => repositories.runtime?.readLearnerRevision?.(learnerId) || 0,
-  onStaleWrite: async () => {
-    await repositories.hydrate({ cacheScope: 'subject-command-stale-write' });
+  onStaleWrite: async ({ error, learnerId }) => {
+    const refreshed = repositories.runtime?.applyLearnerRevisionHint?.(
+      learnerId,
+      staleWriteCurrentRevision(error),
+    ) === true;
+    if (!refreshed) await repositories.hydrate({ cacheScope: 'subject-command-stale-write' });
   },
   onCommandApplied: ({ learnerId, subjectId, response }) => {
     repositories.runtime?.applySubjectCommandResult?.({ learnerId, subjectId, response });
@@ -701,6 +736,8 @@ function buildSignedInHubModels(appState) {
     learnerId: adultSurfaceState.parentHub.learnerId || '',
     error: adultSurfaceState.parentHub.error || '',
     notice: adultSurfaceState.notice || '',
+    recentSessionsStatus: adultSurfaceState.parentHub.payload?.parentHistory?.recentSessions?.status || '',
+    recentSessionsError: adultSurfaceState.parentHub.payload?.parentHistory?.recentSessions?.error || '',
   };
   const adminHubState = {
     status: adultSurfaceState.adminHub.status,
@@ -1163,6 +1200,116 @@ async function updateAdminAccountRole(accountId, platformRole) {
   }
 }
 
+function patchAdminHubMonsterVisualConfig(monsterVisualConfig, notice = '') {
+  patchAdultSurfaceState((state) => {
+    const payload = state.adminHub.payload || {};
+    const adminHub = payload.adminHub || {};
+    const nextMonsterVisualConfig = {
+      ...(monsterVisualConfig || {}),
+      permissions: monsterVisualConfigPermissions(adminHub),
+    };
+    return {
+      ...state,
+      notice,
+      adminHub: {
+        ...state.adminHub,
+        status: 'loaded',
+        payload: {
+          ...payload,
+          adminHub: {
+            ...adminHub,
+            monsterVisualConfig: nextMonsterVisualConfig,
+          },
+        },
+        error: '',
+      },
+    };
+  });
+}
+
+function monsterVisualConfigPermissions(adminHub) {
+  const existing = adminHub.monsterVisualConfig?.permissions || {};
+  const hubPermissions = adminHub.permissions || {};
+  const canManage = typeof hubPermissions.canManageMonsterVisualConfig === 'boolean'
+    ? hubPermissions.canManageMonsterVisualConfig
+    : normalisePlatformRole(hubPermissions.platformRole || shellPlatformRole) === 'admin';
+  const canView = typeof existing.canViewMonsterVisualConfig === 'boolean'
+    ? existing.canViewMonsterVisualConfig
+    : Boolean(hubPermissions.canViewAdminHub || canManage);
+  return {
+    ...existing,
+    canManageMonsterVisualConfig: canManage,
+    canViewMonsterVisualConfig: canView,
+  };
+}
+
+function clearMonsterVisualAutosave(key) {
+  if (!key) return;
+  try {
+    globalThis.localStorage?.removeItem?.(key);
+  } catch {
+    /* Browser storage is best-effort for operator drafts. */
+  }
+}
+
+async function saveMonsterVisualConfigDraft({ draft, expectedDraftRevision, autosaveKey = '' } = {}) {
+  if (!hubApi) return;
+  try {
+    const requestId = uid('monster-visual-save');
+    const payload = await hubApi.saveMonsterVisualConfigDraft({
+      draft,
+      mutation: {
+        requestId,
+        correlationId: requestId,
+        expectedDraftRevision,
+      },
+    });
+    clearMonsterVisualAutosave(autosaveKey);
+    patchAdminHubMonsterVisualConfig(payload.monsterVisualConfig, 'Monster visual draft saved.');
+  } catch (error) {
+    globalThis.alert?.(`Monster visual draft save failed: ${error?.message || 'Unknown error.'}`);
+  }
+}
+
+async function publishMonsterVisualConfig({ expectedDraftRevision } = {}) {
+  if (!hubApi) return;
+  try {
+    const requestId = uid('monster-visual-publish');
+    const payload = await hubApi.publishMonsterVisualConfig({
+      mutation: {
+        requestId,
+        correlationId: requestId,
+        expectedDraftRevision,
+      },
+    });
+    patchAdminHubMonsterVisualConfig(payload.monsterVisualConfig, 'Monster visual config published.');
+    await repositories.hydrate({ cacheScope: 'monster-visual-config-publish' });
+    store.patch(() => ({}));
+  } catch (error) {
+    const validationCount = Number(error?.payload?.validation?.errors?.length) || 0;
+    const suffix = validationCount ? ` (${validationCount} validation errors)` : '';
+    globalThis.alert?.(`Monster visual publish failed${suffix}: ${error?.message || 'Unknown error.'}`);
+  }
+}
+
+async function restoreMonsterVisualConfigVersion({ version, expectedDraftRevision } = {}) {
+  if (!hubApi) return;
+  try {
+    const requestId = uid('monster-visual-restore');
+    const payload = await hubApi.restoreMonsterVisualConfigVersion({
+      version,
+      mutation: {
+        requestId,
+        correlationId: requestId,
+        expectedDraftRevision,
+      },
+    });
+    patchAdminHubMonsterVisualConfig(payload.monsterVisualConfig, `Monster visual version ${version} restored into draft.`);
+  } catch (error) {
+    globalThis.alert?.(`Monster visual restore failed: ${error?.message || 'Unknown error.'}`);
+  }
+}
+
 function ensureSpellingAutoAdvanceFromCurrentState() {
   return controller.ensureSpellingAutoAdvanceFromCurrentState();
 }
@@ -1477,6 +1624,7 @@ function extractHeroBgUrl(styleAttr) {
 
 const appRuntime = {
   contextFor,
+  monsterVisualConfig: () => repositories.monsterVisualConfig?.read?.() || null,
   buildHomeModel,
   buildCodexModel,
   buildSurfaceChromeModel,
@@ -1591,6 +1739,21 @@ function handleGlobalAction(action, data) {
 
   if (action === 'admin-account-role-set') {
     updateAdminAccountRole(data.accountId, data.value);
+    return true;
+  }
+
+  if (action === 'monster-visual-config-save') {
+    saveMonsterVisualConfigDraft(data);
+    return true;
+  }
+
+  if (action === 'monster-visual-config-publish') {
+    publishMonsterVisualConfig(data);
+    return true;
+  }
+
+  if (action === 'monster-visual-config-restore') {
+    restoreMonsterVisualConfigVersion(data);
     return true;
   }
 

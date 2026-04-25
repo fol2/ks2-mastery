@@ -3,14 +3,31 @@ import assert from 'node:assert/strict';
 
 import {
   createApiPlatformRepositories,
+  createLocalPlatformRepositories,
   createStaticHeaderRepositoryAuthSession,
 } from '../src/platform/core/repositories/index.js';
+import {
+  exportPlatformSnapshot,
+  importPlatformSnapshot,
+} from '../src/platform/core/data-transfer.js';
 import { createSubjectCommandClient } from '../src/platform/runtime/subject-command-client.js';
 import { createAppHarness } from './helpers/app-harness.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createMockRepositoryServer } from './helpers/mock-api-server.js';
 
 const DEFAULT_API_CACHE_STORAGE_KEY = 'ks2-platform-v2.api-cache-state:default';
+
+function staleWriteCurrentRevision(payload) {
+  const candidates = [
+    payload?.currentRevision,
+    payload?.mutation?.currentRevision,
+  ];
+  for (const candidate of candidates) {
+    const revision = Number(candidate);
+    if (Number.isFinite(revision) && revision >= 0) return revision;
+  }
+  return null;
+}
 
 async function waitForPersistenceIdle(repositories, attempts = 25) {
   await Promise.resolve();
@@ -38,6 +55,74 @@ function learnerSnapshot() {
     selectedId: 'learner-a',
   };
 }
+
+test('platform export and import preserve Grammar state, preferences, and adult summary drafts', () => {
+  const source = createLocalPlatformRepositories({ storage: installMemoryStorage() });
+  source.learners.write(learnerSnapshot());
+  source.subjectStates.writeRecord('learner-a', 'grammar', {
+    ui: {
+      phase: 'dashboard',
+      prefs: { mode: 'smart', roundLength: 5, speechRate: 1.4 },
+      aiEnrichment: {
+        kind: 'parent-summary',
+        status: 'ready',
+        nonScored: true,
+        generatedAt: 1_777_000_010_000,
+        parentSummary: {
+          title: 'Parent summary draft',
+          body: 'Ava is ready to revisit fronted adverbials.',
+          nextSteps: ['Practise fronted adverbial choices'],
+        },
+      },
+    },
+    data: {
+      prefs: { mode: 'smart', roundLength: 5, speechRate: 1.4, showDomainBeforeAnswer: true },
+      mastery: {
+        concepts: {
+          adverbials: {
+            attempts: 1,
+            correct: 0,
+            wrong: 1,
+            strength: 0.1,
+            dueAt: 1,
+            lastSeenAt: '2026-04-24T10:00:00.000Z',
+          },
+        },
+        questionTypes: {
+          choose: {
+            attempts: 1,
+            correct: 0,
+            wrong: 1,
+            strength: 0.1,
+            dueAt: 1,
+          },
+        },
+      },
+      recentAttempts: [{
+        templateId: 'fronted-adverbial-choice',
+        itemId: 'fronted-adverbial-choice:101',
+        questionType: 'choose',
+        conceptIds: ['adverbials'],
+        result: { correct: false, score: 0, maxScore: 1 },
+        createdAt: 1_777_000_000_000,
+      }],
+    },
+    updatedAt: 1_777_000_010_000,
+  });
+
+  const exported = exportPlatformSnapshot(source);
+  const target = createLocalPlatformRepositories({ storage: installMemoryStorage() });
+  const result = importPlatformSnapshot(target, exported);
+  const restored = target.subjectStates.read('learner-a', 'grammar');
+
+  assert.equal(result.kind, 'app');
+  assert.equal(restored.ui.prefs.speechRate, 1.4);
+  assert.equal(restored.ui.aiEnrichment.parentSummary.body, 'Ava is ready to revisit fronted adverbials.');
+  assert.equal(restored.data.prefs.showDomainBeforeAnswer, true);
+  assert.equal(restored.data.mastery.concepts.adverbials.attempts, 1);
+  assert.equal(restored.data.mastery.questionTypes.choose.wrong, 1);
+  assert.equal(restored.data.recentAttempts[0].itemId, 'fronted-adverbial-choice:101');
+});
 
 test('retired legacy runtime pending writes are discarded once remote bootstrap succeeds', async () => {
   const storage = installMemoryStorage();
@@ -408,6 +493,483 @@ test('api cache is scoped by auth session so degraded fallback does not leak bet
   await assert.rejects(() => repoB.hydrate(), /bootstrap unavailable/i);
 });
 
+test('bootstrap 503 with a usable cache degrades once and backs off immediate full-bootstrap retries', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({ learners: learnerSnapshot() });
+  let now = 1_000;
+  const commonOptions = {
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    storage,
+    now: () => now,
+    random: () => 0,
+  };
+  const bootstrapRequestCount = () => server.requests
+    .filter((request) => request.method === 'GET' && request.path === '/api/bootstrap')
+    .length;
+
+  const warmRepositories = createApiPlatformRepositories(commonOptions);
+  await warmRepositories.hydrate();
+  assert.equal(bootstrapRequestCount(), 1);
+
+  server.setFailure('GET', '/api/bootstrap', {
+    status: 503,
+    body: {
+      ok: false,
+      code: 'exceeded_cpu',
+      message: 'Worker CPU limit exceeded during bootstrap.',
+    },
+  });
+
+  const restoredRepositories = createApiPlatformRepositories(commonOptions);
+  await restoredRepositories.hydrate();
+
+  const degraded = restoredRepositories.persistence.read();
+  assert.equal(bootstrapRequestCount(), 2);
+  assert.equal(degraded.mode, 'degraded');
+  assert.equal(degraded.trustedState, 'local-cache');
+  assert.equal(degraded.cacheState, 'stale-copy');
+  assert.equal(degraded.pendingWriteCount, 0);
+  assert.equal(degraded.lastError.code, 'exceeded_cpu');
+  assert.equal(degraded.lastError.details.bootstrapBackoff.attempt, 1);
+  assert.equal(degraded.lastError.details.bootstrapBackoff.retryAfterMs, 2_000);
+  assert.equal(restoredRepositories.learners.read().selectedId, 'learner-a');
+  assert.equal(JSON.parse(storage.getItem(DEFAULT_API_CACHE_STORAGE_KEY)).bootstrapBackoff.retryAt, 3_000);
+
+  await assert.rejects(
+    () => restoredRepositories.persistence.retry(),
+    /backing off/i,
+  );
+
+  const throttled = restoredRepositories.persistence.read();
+  assert.equal(bootstrapRequestCount(), 2);
+  assert.equal(throttled.mode, 'degraded');
+  assert.equal(throttled.lastError.code, 'bootstrap_retry_backoff');
+  assert.equal(throttled.lastError.details.retryAfterMs, 2_000);
+
+  const reloadedDuringBackoff = createApiPlatformRepositories(commonOptions);
+  await reloadedDuringBackoff.hydrate();
+  assert.equal(bootstrapRequestCount(), 2);
+  assert.equal(reloadedDuringBackoff.persistence.read().lastError.code, 'bootstrap_retry_backoff');
+
+  server.clearFailure('GET', '/api/bootstrap');
+  now = 3_000;
+  const recovered = await reloadedDuringBackoff.persistence.retry();
+
+  assert.equal(bootstrapRequestCount(), 3);
+  assert.equal(recovered.mode, 'remote-sync');
+  assert.equal(recovered.lastError, null);
+});
+
+test('bootstrap backoff blocks retry flush from masking pending-write recovery state', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer();
+  let now = 5_000;
+  const commonOptions = {
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    storage,
+    now: () => now,
+    random: () => 0,
+  };
+  const bootstrapRequestCount = () => server.requests
+    .filter((request) => request.method === 'GET' && request.path === '/api/bootstrap')
+    .length;
+  const learnerWriteCount = () => server.requests
+    .filter((request) => request.method === 'PUT' && request.path === '/api/learners')
+    .length;
+
+  const repositories = createApiPlatformRepositories(commonOptions);
+  await repositories.hydrate();
+  server.failNext('PUT', '/api/learners', {
+    status: 503,
+    body: { ok: false, message: 'write temporarily unavailable' },
+  });
+  repositories.learners.write(learnerSnapshot());
+  await waitForPersistenceIdle(repositories);
+  assert.equal(repositories.persistence.read().pendingWriteCount, 1);
+  assert.equal(server.store.learners.selectedId, null);
+  assert.equal(learnerWriteCount(), 1);
+
+  server.setFailure('GET', '/api/bootstrap', {
+    status: 503,
+    body: {
+      ok: false,
+      code: 'exceeded_cpu',
+      message: 'Worker CPU limit exceeded during bootstrap.',
+    },
+  });
+  const restoredRepositories = createApiPlatformRepositories(commonOptions);
+  await restoredRepositories.hydrate();
+  assert.equal(bootstrapRequestCount(), 2);
+  assert.equal(restoredRepositories.persistence.read().lastError.code, 'exceeded_cpu');
+
+  await assert.rejects(
+    () => restoredRepositories.persistence.retry(),
+    /backing off/i,
+  );
+
+  const backedOff = restoredRepositories.persistence.read();
+  assert.equal(bootstrapRequestCount(), 2);
+  assert.equal(learnerWriteCount(), 1);
+  assert.equal(backedOff.mode, 'degraded');
+  assert.equal(backedOff.pendingWriteCount, 1);
+  assert.equal(backedOff.lastError.code, 'bootstrap_retry_backoff');
+  assert.equal(server.store.learners.selectedId, null);
+
+  server.clearFailure('GET', '/api/bootstrap');
+  now = 7_000;
+  const recovered = await restoredRepositories.persistence.retry();
+
+  assert.equal(bootstrapRequestCount(), 3);
+  assert.equal(learnerWriteCount(), 2);
+  assert.equal(recovered.mode, 'remote-sync');
+  assert.equal(recovered.pendingWriteCount, 0);
+  assert.equal(server.store.learners.selectedId, 'learner-a');
+});
+
+test('bootstrap hydrate backs off when another tab is already refreshing a usable cache', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({
+    learners: learnerSnapshot(),
+  });
+  let now = 8_000;
+  let pauseNextBootstrap = false;
+  let resumeBootstrap = null;
+  const bootstrapRequests = [];
+  const fetch = async (input, init = {}) => {
+    const url = new URL(typeof input === 'string' ? input : input.url, 'https://repo.test');
+    const method = String(init.method || 'GET').toUpperCase();
+    if (url.pathname === '/api/bootstrap' && method === 'GET') {
+      bootstrapRequests.push(now);
+      if (pauseNextBootstrap) {
+        pauseNextBootstrap = false;
+        await new Promise((resolve) => {
+          resumeBootstrap = resolve;
+        });
+      }
+    }
+    return server.fetch(input, init);
+  };
+  const commonOptions = {
+    baseUrl: 'https://repo.test',
+    fetch,
+    storage,
+    now: () => now,
+    random: () => 0,
+  };
+
+  const warmRepositories = createApiPlatformRepositories(commonOptions);
+  await warmRepositories.hydrate();
+  assert.equal(bootstrapRequests.length, 1);
+
+  pauseNextBootstrap = true;
+  const refreshingTab = createApiPlatformRepositories(commonOptions);
+  const refreshPromise = refreshingTab.hydrate();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  const backedOffTab = createApiPlatformRepositories(commonOptions);
+  await backedOffTab.hydrate();
+  const backedOff = backedOffTab.persistence.read();
+
+  assert.equal(bootstrapRequests.length, 2);
+  assert.equal(backedOff.mode, 'degraded');
+  assert.equal(backedOff.lastError.code, 'bootstrap_retry_backoff');
+  assert.equal(backedOff.lastError.details.reason.code, 'bootstrap_in_flight');
+  assert.equal(backedOff.pendingWriteCount, 0);
+  assert.equal(backedOffTab.learners.read().selectedId, 'learner-a');
+
+  resumeBootstrap();
+  await refreshPromise;
+  assert.equal(refreshingTab.persistence.read().mode, 'remote-sync');
+});
+
+test('bootstrap hydrate backs off when another tab wins the coordination race', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({
+    learners: learnerSnapshot(),
+  });
+  let now = 12_000;
+  let forceRaceLoss = false;
+  const originalSetItem = storage.setItem.bind(storage);
+  storage.setItem = (key, value) => {
+    originalSetItem(key, value);
+    if (forceRaceLoss && String(key).endsWith(':bootstrap-coordination')) {
+      forceRaceLoss = false;
+      originalSetItem(key, JSON.stringify({
+        ownerId: 'other-tab',
+        startedAt: now,
+        expiresAt: now + 2_000,
+      }));
+    }
+  };
+  const bootstrapRequests = [];
+  const fetch = async (input, init = {}) => {
+    const url = new URL(typeof input === 'string' ? input : input.url, 'https://repo.test');
+    const method = String(init.method || 'GET').toUpperCase();
+    if (url.pathname === '/api/bootstrap' && method === 'GET') bootstrapRequests.push(now);
+    return server.fetch(input, init);
+  };
+  const commonOptions = {
+    baseUrl: 'https://repo.test',
+    fetch,
+    storage,
+    now: () => now,
+    random: () => 0,
+  };
+
+  const warmRepositories = createApiPlatformRepositories(commonOptions);
+  await warmRepositories.hydrate();
+  assert.equal(bootstrapRequests.length, 1);
+
+  forceRaceLoss = true;
+  const raceLostTab = createApiPlatformRepositories(commonOptions);
+  await raceLostTab.hydrate();
+
+  const backedOff = raceLostTab.persistence.read();
+  assert.equal(bootstrapRequests.length, 1);
+  assert.equal(backedOff.mode, 'degraded');
+  assert.equal(backedOff.lastError.code, 'bootstrap_retry_backoff');
+  assert.equal(backedOff.lastError.details.reason.code, 'bootstrap_in_flight');
+  assert.equal(raceLostTab.learners.read().selectedId, 'learner-a');
+});
+
+test('bootstrap hydrate backs off when a confirmed lease is overwritten before fetch', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({
+    learners: learnerSnapshot(),
+  });
+  let now = 16_000;
+  let overwriteAfterConfirm = false;
+  const originalGetItem = storage.getItem.bind(storage);
+  const originalSetItem = storage.setItem.bind(storage);
+  storage.getItem = (key) => {
+    const value = originalGetItem(key);
+    if (overwriteAfterConfirm && String(key).endsWith(':bootstrap-coordination') && value) {
+      const parsed = JSON.parse(value);
+      if (String(parsed?.ownerId || '').startsWith('bootstrap-tab')) {
+        overwriteAfterConfirm = false;
+        originalSetItem(key, JSON.stringify({
+          ownerId: 'other-tab',
+          startedAt: now,
+          expiresAt: now + 30_000,
+        }));
+      }
+    }
+    return value;
+  };
+  const bootstrapRequests = [];
+  const fetch = async (input, init = {}) => {
+    const url = new URL(typeof input === 'string' ? input : input.url, 'https://repo.test');
+    const method = String(init.method || 'GET').toUpperCase();
+    if (url.pathname === '/api/bootstrap' && method === 'GET') bootstrapRequests.push(now);
+    return server.fetch(input, init);
+  };
+  const commonOptions = {
+    baseUrl: 'https://repo.test',
+    fetch,
+    storage,
+    now: () => now,
+    random: () => 0,
+  };
+
+  const warmRepositories = createApiPlatformRepositories(commonOptions);
+  await warmRepositories.hydrate();
+  assert.equal(bootstrapRequests.length, 1);
+
+  overwriteAfterConfirm = true;
+  const raceLostTab = createApiPlatformRepositories(commonOptions);
+  await raceLostTab.hydrate();
+
+  const backedOff = raceLostTab.persistence.read();
+  assert.equal(bootstrapRequests.length, 1);
+  assert.equal(backedOff.mode, 'degraded');
+  assert.equal(backedOff.lastError.code, 'bootstrap_retry_backoff');
+  assert.equal(backedOff.lastError.details.reason.code, 'bootstrap_in_flight');
+  assert.equal(raceLostTab.learners.read().selectedId, 'learner-a');
+});
+
+test('bootstrap coordination lease covers a slow in-flight refresh', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({
+    learners: learnerSnapshot(),
+  });
+  let now = 20_000;
+  let pauseNextBootstrap = false;
+  let resumeBootstrap = null;
+  const bootstrapRequests = [];
+  const fetch = async (input, init = {}) => {
+    const url = new URL(typeof input === 'string' ? input : input.url, 'https://repo.test');
+    const method = String(init.method || 'GET').toUpperCase();
+    if (url.pathname === '/api/bootstrap' && method === 'GET') {
+      bootstrapRequests.push(now);
+      if (pauseNextBootstrap) {
+        pauseNextBootstrap = false;
+        await new Promise((resolve) => {
+          resumeBootstrap = resolve;
+        });
+      }
+    }
+    return server.fetch(input, init);
+  };
+  const commonOptions = {
+    baseUrl: 'https://repo.test',
+    fetch,
+    storage,
+    now: () => now,
+    random: () => 0,
+  };
+
+  const warmRepositories = createApiPlatformRepositories(commonOptions);
+  await warmRepositories.hydrate();
+  assert.equal(bootstrapRequests.length, 1);
+
+  pauseNextBootstrap = true;
+  const refreshingTab = createApiPlatformRepositories(commonOptions);
+  const refreshPromise = refreshingTab.hydrate();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  now += 2_501;
+
+  const backedOffTab = createApiPlatformRepositories(commonOptions);
+  await backedOffTab.hydrate();
+  const backedOff = backedOffTab.persistence.read();
+
+  assert.equal(bootstrapRequests.length, 2);
+  assert.equal(backedOff.lastError.code, 'bootstrap_retry_backoff');
+  assert.equal(backedOff.lastError.details.reason.code, 'bootstrap_in_flight');
+  assert.equal(backedOffTab.learners.read().selectedId, 'learner-a');
+
+  resumeBootstrap();
+  await refreshPromise;
+  assert.equal(refreshingTab.persistence.read().mode, 'remote-sync');
+});
+
+test('bootstrap coordination backoff does not overwrite a fresher shared cache', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({
+    learners: learnerSnapshot(),
+  });
+  let now = 30_000;
+  const fetch = async (input, init = {}) => server.fetch(input, init);
+  const commonOptions = {
+    baseUrl: 'https://repo.test',
+    fetch,
+    storage,
+    now: () => now,
+    random: () => 0,
+  };
+
+  const warmRepositories = createApiPlatformRepositories(commonOptions);
+  await warmRepositories.hydrate();
+
+  const staleTab = createApiPlatformRepositories(commonOptions);
+  assert.equal(staleTab.learners.read().selectedId, 'learner-a');
+
+  const stored = JSON.parse(storage.getItem(DEFAULT_API_CACHE_STORAGE_KEY));
+  stored.bundle.learners = {
+    byId: {
+      'learner-b': {
+        id: 'learner-b',
+        name: 'Ben',
+        yearGroup: 'Y5',
+        goal: 'sats',
+        dailyMinutes: 15,
+        avatarColor: '#47A878',
+        createdAt: 2,
+      },
+    },
+    allIds: ['learner-b'],
+    selectedId: 'learner-b',
+  };
+  stored.syncState.learnerRevisions = { 'learner-b': 4 };
+  storage.setItem(DEFAULT_API_CACHE_STORAGE_KEY, JSON.stringify(stored));
+  storage.setItem(`${DEFAULT_API_CACHE_STORAGE_KEY}:bootstrap-coordination`, JSON.stringify({
+    ownerId: 'other-tab',
+    startedAt: now,
+    expiresAt: now + 30_000,
+  }));
+
+  await staleTab.hydrate();
+
+  const after = JSON.parse(storage.getItem(DEFAULT_API_CACHE_STORAGE_KEY));
+  assert.equal(after.bundle.learners.selectedId, 'learner-b');
+  assert.deepEqual(after.bundle.learners.allIds, ['learner-b']);
+  assert.equal(after.bundle.learners.byId['learner-a'], undefined);
+  assert.equal(after.syncState.learnerRevisions['learner-b'], 4);
+  assert.equal(staleTab.persistence.read().lastError.code, 'bootstrap_retry_backoff');
+  assert.equal(staleTab.learners.read().selectedId, 'learner-a');
+});
+
+test('bootstrap failure backoff preserves a fresher shared cache and pending queue', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({
+    learners: learnerSnapshot(),
+  });
+  let now = 40_000;
+  const commonOptions = {
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    storage,
+    now: () => now,
+    random: () => 0,
+  };
+
+  const warmRepositories = createApiPlatformRepositories(commonOptions);
+  await warmRepositories.hydrate();
+
+  const staleTab = createApiPlatformRepositories(commonOptions);
+  assert.equal(staleTab.learners.read().selectedId, 'learner-a');
+
+  const learnerB = {
+    id: 'learner-b',
+    name: 'Ben',
+    yearGroup: 'Y5',
+    goal: 'sats',
+    dailyMinutes: 15,
+    avatarColor: '#47A878',
+    createdAt: 2,
+  };
+  const fresherLearners = {
+    byId: { 'learner-b': learnerB },
+    allIds: ['learner-b'],
+    selectedId: 'learner-b',
+  };
+  const stored = JSON.parse(storage.getItem(DEFAULT_API_CACHE_STORAGE_KEY));
+  stored.bundle.learners = fresherLearners;
+  stored.pendingOperations = [{
+    id: 'pending-learner-b',
+    kind: 'learners.write',
+    createdAt: now,
+    status: 'pending',
+    expectedRevision: 4,
+    correlationId: 'pending-learner-b',
+    snapshot: fresherLearners,
+  }];
+  stored.syncState.learnerRevisions = { 'learner-b': 4 };
+  storage.setItem(DEFAULT_API_CACHE_STORAGE_KEY, JSON.stringify(stored));
+  server.setFailure('GET', '/api/bootstrap', {
+    status: 503,
+    body: {
+      ok: false,
+      code: 'exceeded_cpu',
+      message: 'Worker CPU limit exceeded during bootstrap.',
+    },
+  });
+
+  await staleTab.hydrate();
+
+  const after = JSON.parse(storage.getItem(DEFAULT_API_CACHE_STORAGE_KEY));
+  assert.equal(after.bundle.learners.selectedId, 'learner-b');
+  assert.deepEqual(after.bundle.learners.allIds, ['learner-b']);
+  assert.equal(after.bundle.learners.byId['learner-a'], undefined);
+  assert.equal(after.syncState.learnerRevisions['learner-b'], 4);
+  assert.equal(after.pendingOperations.length, 1);
+  assert.equal(after.pendingOperations[0].id, 'pending-learner-b');
+  assert.equal(after.bootstrapBackoff.retryAt, 42_000);
+  assert.equal(staleTab.persistence.read().lastError.code, 'exceeded_cpu');
+  assert.equal(staleTab.learners.read().selectedId, 'learner-a');
+});
+
 test('subject command responses update the api cache without queuing broad runtime writes', async () => {
   const storage = installMemoryStorage();
   const server = createMockRepositoryServer({
@@ -487,7 +1049,7 @@ test('subject command responses update the api cache without queuing broad runti
   assert.equal(server.requests.some((request) => request.path === '/api/child-subject-state'), false);
 });
 
-test('subject commands rehydrate and retry once after a stale learner revision', async () => {
+test('subject commands refresh stale learner revision without a second bootstrap', async () => {
   const storage = installMemoryStorage();
   const server = createMockRepositoryServer({
     learners: learnerSnapshot(),
@@ -514,7 +1076,7 @@ test('subject commands rehydrate and retry once after a stale learner revision',
           policyVersion: 1,
           accountRevision: 0,
           learnerRevisions: {
-            'learner-a': bootstrapCount === 1 ? 0 : 1,
+            'learner-a': 0,
           },
         },
       }), { status: 200, headers: { 'content-type': 'application/json' } });
@@ -527,10 +1089,8 @@ test('subject commands rehydrate and retry once after a stale learner revision',
           ok: false,
           code: 'stale_write',
           message: 'Mutation rejected because this state changed in another tab or device.',
-          mutation: {
-            expectedRevision: body.expectedLearnerRevision,
-            currentRevision: 1,
-          },
+          expectedRevision: body.expectedLearnerRevision,
+          currentRevision: 1,
         }), { status: 409, headers: { 'content-type': 'application/json' } });
       }
       return new Response(JSON.stringify({
@@ -579,8 +1139,12 @@ test('subject commands rehydrate and retry once after a stale learner revision',
     baseUrl: 'https://repo.test',
     fetch,
     getLearnerRevision: (learnerId) => repositories.runtime.readLearnerRevision(learnerId),
-    onStaleWrite: async () => {
-      await repositories.hydrate({ cacheScope: 'subject-command-stale-write' });
+    onStaleWrite: async ({ error, learnerId }) => {
+      const refreshed = repositories.runtime.applyLearnerRevisionHint(
+        learnerId,
+        staleWriteCurrentRevision(error?.payload),
+      );
+      if (!refreshed) await repositories.hydrate({ cacheScope: 'subject-command-stale-write' });
     },
     onCommandApplied: ({ learnerId, subjectId, response }) => {
       repositories.runtime.applySubjectCommandResult({ learnerId, subjectId, response });
@@ -595,9 +1159,96 @@ test('subject commands rehydrate and retry once after a stale learner revision',
     requestId: 'cmd-client-stale',
   });
 
-  assert.equal(bootstrapCount, 2);
+  assert.equal(bootstrapCount, 1);
   assert.deepEqual(commandBodies.map((body) => body.expectedLearnerRevision), [0, 1]);
   assert.equal(commandBodies[0].requestId, commandBodies[1].requestId);
   assert.equal(repositories.runtime.readLearnerRevision('learner-a'), 2);
   assert.equal(repositories.subjectStates.read('learner-a', 'spelling').ui.phase, 'session');
+});
+
+test('subject commands fall back to bootstrap when stale revision hints are missing', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({
+    learners: learnerSnapshot(),
+    subjectStates: {
+      'learner-a::spelling': {
+        ui: { phase: 'dashboard' },
+        data: {},
+        updatedAt: 1,
+      },
+    },
+  });
+  const commandBodies = [];
+  let bootstrapCount = 0;
+  const fetch = async (input, init = {}) => {
+    const url = new URL(typeof input === 'string' ? input : input.url, 'https://repo.test');
+    const method = String(init.method || 'GET').toUpperCase();
+    if (url.pathname === '/api/bootstrap' && method === 'GET') {
+      bootstrapCount += 1;
+      const remote = await server.fetch(input, init);
+      const payload = await remote.json();
+      return new Response(JSON.stringify({
+        ...payload,
+        syncState: {
+          policyVersion: 1,
+          accountRevision: 0,
+          learnerRevisions: {
+            'learner-a': bootstrapCount === 1 ? 0 : 1,
+          },
+        },
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    if (url.pathname === '/api/subjects/spelling/command' && method === 'POST') {
+      const body = JSON.parse(init.body);
+      commandBodies.push(body);
+      if (commandBodies.length === 1) {
+        return new Response(JSON.stringify({
+          ok: false,
+          code: 'stale_write',
+          message: 'Mutation rejected because this state changed in another tab or device.',
+        }), { status: 409, headers: { 'content-type': 'application/json' } });
+      }
+      return new Response(JSON.stringify({
+        ok: true,
+        mutation: {
+          appliedRevision: 2,
+        },
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    return server.fetch(input, init);
+  };
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch,
+    storage,
+  });
+  await repositories.hydrate();
+
+  const commands = createSubjectCommandClient({
+    baseUrl: 'https://repo.test',
+    fetch,
+    getLearnerRevision: (learnerId) => repositories.runtime.readLearnerRevision(learnerId),
+    onStaleWrite: async ({ error, learnerId }) => {
+      const refreshed = repositories.runtime.applyLearnerRevisionHint(
+        learnerId,
+        staleWriteCurrentRevision(error?.payload),
+      );
+      if (!refreshed) await repositories.hydrate({ cacheScope: 'subject-command-stale-write' });
+    },
+    onCommandApplied: ({ learnerId, subjectId, response }) => {
+      repositories.runtime.applySubjectCommandResult({ learnerId, subjectId, response });
+    },
+  });
+
+  await commands.send({
+    subjectId: 'spelling',
+    learnerId: 'learner-a',
+    command: 'start-session',
+    payload: { mode: 'smart', length: 1 },
+    requestId: 'cmd-client-stale-fallback',
+  });
+
+  assert.equal(bootstrapCount, 2);
+  assert.deepEqual(commandBodies.map((body) => body.expectedLearnerRevision), [0, 1]);
+  assert.equal(repositories.runtime.readLearnerRevision('learner-a'), 2);
 });

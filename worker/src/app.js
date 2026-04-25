@@ -481,6 +481,36 @@ export function createWorkerApp({
           return json({ ok: true, wordBank: result });
         }
 
+        if (url.pathname === '/api/hubs/parent/recent-sessions' && request.method === 'GET') {
+          await protectDemoParentHubRead({
+            env,
+            request,
+            session,
+            now: now(),
+          });
+          const result = await repository.readParentRecentSessions(session.accountId, {
+            learnerId: url.searchParams.get('learnerId') || null,
+            limit: url.searchParams.get('limit') || null,
+            cursor: url.searchParams.get('cursor') || null,
+          });
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/hubs/parent/activity' && request.method === 'GET') {
+          await protectDemoParentHubRead({
+            env,
+            request,
+            session,
+            now: now(),
+          });
+          const result = await repository.readParentActivity(session.accountId, {
+            learnerId: url.searchParams.get('learnerId') || null,
+            limit: url.searchParams.get('limit') || null,
+            cursor: url.searchParams.get('cursor') || null,
+          });
+          return json({ ok: true, ...result });
+        }
+
         if (url.pathname === '/api/hubs/parent' && request.method === 'GET') {
           await protectDemoParentHubRead({
             env,
@@ -515,6 +545,35 @@ export function createWorkerApp({
             platformRole: body.platformRole,
             requestId: body.requestId || request.headers.get('x-ks2-request-id') || null,
             correlationId: body.correlationId || request.headers.get('x-ks2-correlation-id') || null,
+          });
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/admin/monster-visual-config/draft' && request.method === 'PUT') {
+          requireSameOrigin(request, env);
+          const body = await readJson(request);
+          const result = await repository.saveMonsterVisualConfigDraft(session.accountId, {
+            draft: body.draft || body.config,
+            mutation: mutationFromRequest(body, request),
+          });
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/admin/monster-visual-config/publish' && request.method === 'POST') {
+          requireSameOrigin(request, env);
+          const body = await readJson(request);
+          const result = await repository.publishMonsterVisualConfig(session.accountId, {
+            mutation: mutationFromRequest(body, request),
+          });
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/admin/monster-visual-config/restore' && request.method === 'POST') {
+          requireSameOrigin(request, env);
+          const body = await readJson(request);
+          const result = await repository.restoreMonsterVisualConfigVersion(session.accountId, {
+            version: body.version,
+            mutation: mutationFromRequest(body, request),
           });
           return json({ ok: true, ...result });
         }

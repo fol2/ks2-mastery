@@ -279,3 +279,82 @@ test('worker spelling command route starts, submits, continues, and completes se
     server.close();
   }
 });
+
+test('worker spelling command route keeps core practice available while capacity read-model migration is pending', async () => {
+  const server = createWorkerRepositoryServer();
+  seedAccountLearner(server.DB);
+  server.DB.db.exec(`
+    DROP TABLE learner_activity_feed;
+    DROP TABLE learner_read_models;
+  `);
+
+  try {
+    let step = await postCommand(server, {
+      command: 'start-session',
+      requestId: 'spell-start-without-capacity-tables',
+      expectedLearnerRevision: 0,
+      payload: {
+        mode: 'single',
+        slug: 'possess',
+        length: 1,
+      },
+    });
+    assert.equal(step.response.status, 200);
+    assert.equal(step.body.subjectReadModel.phase, 'session');
+    assert.equal(step.body.mutation.appliedRevision, 1);
+
+    step = await postCommand(server, {
+      command: 'submit-answer',
+      requestId: 'spell-submit-without-capacity-tables-1',
+      expectedLearnerRevision: 1,
+      payload: { answer: 'possess' },
+    });
+    assert.equal(step.response.status, 200);
+    assert.equal(step.body.subjectReadModel.awaitingAdvance, true);
+
+    step = await postCommand(server, {
+      command: 'continue-session',
+      requestId: 'spell-continue-without-capacity-tables-1',
+      expectedLearnerRevision: 2,
+    });
+    assert.equal(step.response.status, 200);
+    assert.equal(step.body.subjectReadModel.phase, 'session');
+
+    step = await postCommand(server, {
+      command: 'submit-answer',
+      requestId: 'spell-submit-without-capacity-tables-2',
+      expectedLearnerRevision: 3,
+      payload: { answer: 'possess' },
+    });
+    assert.equal(step.response.status, 200);
+    assert.equal(step.body.subjectReadModel.awaitingAdvance, true);
+
+    step = await postCommand(server, {
+      command: 'continue-session',
+      requestId: 'spell-continue-without-capacity-tables-2',
+      expectedLearnerRevision: 4,
+    });
+    assert.equal(step.response.status, 200);
+    assert.equal(step.body.subjectReadModel.phase, 'summary');
+    assert.ok(step.body.events.some((event) => event.type === 'spelling.session-completed'));
+
+    const subject = server.DB.db.prepare(`
+      SELECT ui_json, data_json
+      FROM child_subject_state
+      WHERE learner_id = 'learner-a' AND subject_id = 'spelling'
+    `).get();
+    const ui = JSON.parse(subject.ui_json);
+    const data = JSON.parse(subject.data_json);
+    assert.equal(ui.phase, 'summary');
+    assert.equal(data.progress.possess.correct, 1);
+
+    const eventCount = server.DB.db.prepare(`
+      SELECT COUNT(*) AS count
+      FROM event_log
+      WHERE learner_id = 'learner-a' AND subject_id = 'spelling'
+    `).get().count;
+    assert.ok(eventCount > 0);
+  } finally {
+    server.close();
+  }
+});

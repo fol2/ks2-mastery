@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -6,6 +7,13 @@ import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+
+function nodePaths() {
+  return [
+    path.join(rootDir, 'node_modules'),
+    ...String(process.env.NODE_PATH || '').split(path.delimiter),
+  ].filter((entry) => entry && existsSync(entry));
+}
 
 async function renderFixture(entrySource) {
   const tmpDir = await mkdtemp(path.join(tmpdir(), 'ks2-react-render-'));
@@ -24,7 +32,7 @@ async function renderFixture(entrySource) {
       jsx: 'automatic',
       jsxImportSource: 'react',
       loader: { '.js': 'jsx' },
-      nodePaths: [path.join(rootDir, 'node_modules')],
+      nodePaths: nodePaths(),
       logLevel: 'silent',
     });
     return execFileSync(process.execPath, [bundlePath], {
@@ -214,6 +222,146 @@ export function renderCelebrationLayerFixture({
   `);
 }
 
+export function renderMonsterVisualRendererFixture() {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { MonsterVisualConfigProvider } from ${JSON.stringify(absoluteSpecifier('src/platform/game/MonsterVisualConfigContext.jsx'))};
+    import { BUNDLED_MONSTER_VISUAL_CONFIG } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monster-visual-config.js'))};
+    import { CodexCard } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/CodexCard.jsx'))};
+    import { CodexCreatureVisual } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/CodexCreature.jsx'))};
+    import { MonsterMeadow } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/MonsterMeadow.jsx'))};
+    import { SetupMeadow } from ${JSON.stringify(absoluteSpecifier('src/subjects/spelling/components/SpellingSetupScene.jsx'))};
+    import { MonsterCelebrationOverlay } from ${JSON.stringify(absoluteSpecifier('src/surfaces/shell/MonsterCelebrationOverlay.jsx'))};
+    import { ToastShelf } from ${JSON.stringify(absoluteSpecifier('src/surfaces/shell/ToastShelf.jsx'))};
+    import { MONSTERS } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monsters.js'))};
+
+    const config = structuredClone(BUNDLED_MONSTER_VISUAL_CONFIG);
+    config.assets['vellhorn-b1-3'].baseline.facing = 'right';
+    config.assets['vellhorn-b1-3'].baseline.opacity = 0.82;
+    config.assets['vellhorn-b1-3'].baseline.anchorX = 0.25;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.offsetX = 12;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.offsetY = -6;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.scale = 1.18;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.anchorX = 0.25;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.anchorY = 0.72;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.filter = 'brightness(1.1)';
+    config.assets['vellhorn-b1-3'].contexts.codexCard.cropX = 0.05;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.cropY = 0.10;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.cropWidth = 0.80;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.cropHeight = 0.85;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.offsetX = 18;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.offsetY = -14;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.scale = 1.12;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.anchorX = 0.42;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.anchorY = 0.78;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.shadowX = 7;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.shadowY = 9;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.shadowScale = 1.35;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.shadowOpacity = 0.34;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.duration = 6.25;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.delay = 0.40;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.bob = 5;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.tilt = 3;
+    config.assets['inklet-b1-1'].contexts.toastPortrait.scale = 1.25;
+
+    const html = renderToStaticMarkup(
+      <MonsterVisualConfigProvider value={{ config }}>
+        <>
+          <CodexCreatureVisual
+            entry={{
+              id: 'vellhorn',
+              branch: 'b1',
+              stage: 3,
+              displayState: 'monster',
+              imageAlt: 'Vellhorn',
+              img: '',
+              srcSet: '',
+            }}
+            sizes="160px"
+          />
+          <CodexCreatureVisual
+            entry={{
+              id: 'phaeton',
+              branch: 'b1',
+              stage: 4,
+              displayState: 'monster',
+              imageAlt: 'Phaeton',
+              img: '',
+              srcSet: '',
+            }}
+            context="feature"
+            sizes="(max-width: 820px) 76vw, 700px"
+          />
+          <CodexCard
+            entry={{
+              id: 'glimmerbug',
+              subjectId: 'spelling',
+              name: 'Mega Lanternwing',
+              speciesName: 'Glimmerbug',
+              blurb: 'Review card fixture.',
+              caught: true,
+              stage: 4,
+              mastered: 100,
+              progressPct: 100,
+              colour: '#B43CD9',
+              soft: '#F8E7F1',
+              branch: 'b1',
+              displayState: 'monster',
+              imageAlt: 'Mega Lanternwing',
+              stageLabel: 'Stage 4',
+              secureLabel: '100 secure words',
+              wordBand: 'Year 5-6 spellings',
+            }}
+            onPractice={() => {}}
+            onPreview={() => {}}
+          />
+          <MonsterMeadow
+            monsters={[{
+              id: 'vellhorn-caught',
+              species: 'vellhorn',
+              variant: 'b1',
+              stage: 3,
+              x: '50%',
+              footY: '80%',
+              size: 160,
+              path: 'walk',
+              lane: 'ground',
+              footPct: 80,
+            }]}
+          />
+          <SetupMeadow
+            codex={[{
+              monster: { id: 'vellhorn', name: 'Vellhorn' },
+              progress: { branch: 'b1', stage: 3, caught: true },
+            }]}
+          />
+          <MonsterCelebrationOverlay
+            queue={[{
+              kind: 'caught',
+              monster: MONSTERS.vellhorn,
+              previous: null,
+              next: { stage: 3, branch: 'b1' },
+            }]}
+            onDismiss={() => {}}
+          />
+          <ToastShelf
+            toasts={[{
+              id: 'toast-a',
+              type: 'reward.monster',
+              kind: 'caught',
+              monster: { id: 'inklet', name: 'Inklet' },
+              next: { stage: 1, branch: 'b1' },
+            }]}
+            onDismiss={() => {}}
+          />
+        </>
+      </MonsterVisualConfigProvider>
+    );
+    console.log(html);
+  `);
+}
+
 export function renderMonsterCelebrationOverlayFixture() {
   return renderFixture(`
     import React from 'react';
@@ -304,6 +452,7 @@ export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
     import { renderToStaticMarkup } from 'react-dom/server';
     import { ParentHubSurface } from ${JSON.stringify(absoluteSpecifier('src/surfaces/hubs/ParentHubSurface.jsx'))};
     import { AdminHubSurface } from ${JSON.stringify(absoluteSpecifier('src/surfaces/hubs/AdminHubSurface.jsx'))};
+    import { BUNDLED_MONSTER_VISUAL_CONFIG } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monster-visual-config.js'))};
 
     const appState = {
       learners: {
@@ -331,32 +480,108 @@ export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
     };
     const parentModel = {
       learner: { id: 'learner-a', name: 'Ava', lastActivityAt: Date.UTC(2026, 3, 22, 12, 0) },
-      learnerOverview: { secureWords: 8, dueWords: 2, troubleWords: 1, accuracyPercent: 82, secureGrammarConcepts: 2, dueGrammarConcepts: 1, weakGrammarConcepts: 1, grammarAccuracyPercent: 67 },
-      dueWork: [{ label: 'Review due spellings', detail: 'Two words are ready.' }, { subjectId: 'grammar', label: 'Repair Grammar misconceptions', detail: 'Adverbials need another pass.' }],
-      recentSessions: [{ id: 'session-1', label: 'Smart Review', status: 'completed', sessionKind: 'spelling', mistakeCount: 1, updatedAt: Date.UTC(2026, 3, 22, 12, 0), headline: 'Good recall' }],
+      learnerOverview: { secureWords: 8, dueWords: 2, troubleWords: 1, accuracyPercent: 82, secureGrammarConcepts: 2, dueGrammarConcepts: 1, weakGrammarConcepts: 1, grammarAccuracyPercent: 67, securePunctuationUnits: 1, duePunctuationItems: 1, weakPunctuationItems: 1, punctuationAccuracyPercent: 50 },
+      dueWork: [{ label: 'Review due spellings', detail: 'Two words are ready.' }, { subjectId: 'grammar', label: 'Repair Grammar misconceptions', detail: 'Adverbials need another pass.' }, { subjectId: 'punctuation', label: 'Run a Punctuation weak spots drill next', detail: 'Speech - Insert punctuation' }],
+      recentSessions: [{ id: 'session-1', label: 'Smart Review', status: 'completed', sessionKind: 'spelling', mistakeCount: 1, updatedAt: Date.UTC(2026, 3, 22, 12, 0), headline: 'Good recall' }, { id: 'punctuation-session-1', subjectId: 'punctuation', label: 'Guided punctuation', status: 'completed', sessionKind: 'guided', mistakeCount: 1, updatedAt: Date.UTC(2026, 3, 22, 13, 0), headline: '1/2' }],
       strengths: [{ label: 'Suffixes', detail: 'Secure recall', secureCount: 4, troubleCount: 0 }],
       weaknesses: [{ label: 'Possession', detail: 'Needs another pass', secureCount: 1, troubleCount: 1 }],
-      misconceptionPatterns: [{ label: 'Double consonant', source: 'event log', count: 2, lastSeenAt: Date.UTC(2026, 3, 22, 12, 0) }],
+      misconceptionPatterns: [{ label: 'Double consonant', source: 'event log', count: 2, lastSeenAt: Date.UTC(2026, 3, 22, 12, 0) }, { subjectId: 'punctuation', label: 'Speech Quote Missing pattern', source: 'punctuation-attempts', count: 1, lastSeenAt: Date.UTC(2026, 3, 22, 13, 0) }],
       progressSnapshots: [
         { subjectId: 'spelling', trackedWords: 213, totalPublishedWords: 235 },
         { subjectId: 'grammar', trackedConcepts: 3, totalConcepts: 18, securedConcepts: 2, dueConcepts: 1, weakConcepts: 1 },
+        { subjectId: 'punctuation', totalRewardUnits: 14, trackedRewardUnits: 1, securedRewardUnits: 1, dueItems: 1, weakItems: 1, attempts: 2, accuracyPercent: 50 },
       ],
+      grammarEvidence: {
+        subjectId: 'grammar',
+        hasEvidence: true,
+        progressSnapshot: { subjectId: 'grammar', trackedConcepts: 3, totalConcepts: 18, securedConcepts: 2, dueConcepts: 1, weakConcepts: 1 },
+        conceptStatus: [
+          { id: 'adverbials', name: 'Adverbials', domain: 'Clauses and phrases', status: 'weak', attempts: 3, correct: 1, wrong: 2, accuracyPercent: 33 },
+        ],
+        dueConcepts: [{ id: 'relative-clauses', name: 'Relative clauses', domain: 'Clauses and phrases', status: 'due', attempts: 2, correct: 1, wrong: 1, accuracyPercent: 50 }],
+        weakConcepts: [{ id: 'adverbials', name: 'Adverbials', domain: 'Clauses and phrases', status: 'weak', attempts: 3, correct: 1, wrong: 2, accuracyPercent: 33 }],
+        questionTypeSummary: [{ id: 'choose', label: 'Choose the correct sentence', status: 'weak', attempts: 4, correct: 1, wrong: 3, accuracyPercent: 25 }],
+        misconceptionPatterns: [{ id: 'fronted_adverbial_confusion', label: 'Fronted Adverbial pattern', count: 2, lastSeenAt: Date.UTC(2026, 3, 22, 12, 0) }],
+        recentActivity: [{ itemId: 'grammar-item-1', templateId: 'fronted-adverbial-choice', label: 'Choose the correct sentence', correct: false, score: 0, maxScore: 1, createdAt: Date.UTC(2026, 3, 22, 12, 0) }],
+        recentSessions: [],
+        parentSummaryDraft: {
+          title: 'Parent summary draft',
+          body: 'Ava should revisit fronted adverbials before the next mixed review.',
+          nextSteps: ['Practise two fronted adverbial choices'],
+          generatedAt: Date.UTC(2026, 3, 22, 12, 0),
+        },
+      },
+      punctuationEvidence: {
+        subjectId: 'punctuation',
+        hasEvidence: true,
+        progressSnapshot: { subjectId: 'punctuation', totalRewardUnits: 14, trackedRewardUnits: 1, securedRewardUnits: 1, dueItems: 1, weakItems: 1, attempts: 2, accuracyPercent: 50 },
+        bySessionMode: [{ id: 'guided', label: 'Guided learn', attempts: 1, correct: 0, wrong: 1, accuracy: 0 }],
+        byItemMode: [{ id: 'insert', label: 'Insert punctuation', attempts: 1, correct: 0, wrong: 1, accuracy: 0 }],
+        weakestFacets: [{ id: 'speech::insert', label: 'Speech - Insert punctuation', status: 'weak', attempts: 1, correct: 0, wrong: 1, accuracy: 0 }],
+        recentMistakes: [{ itemId: 'sp_insert_question', label: 'Inverted commas and speech punctuation - Insert punctuation', sessionMode: 'guided', sessionModeLabel: 'Guided learn', createdAt: Date.UTC(2026, 3, 22, 13, 0), supportKind: 'guided' }],
+        misconceptionPatterns: [{ id: 'speech.quote_missing', label: 'Speech Quote Missing pattern', count: 1, lastSeenAt: Date.UTC(2026, 3, 22, 13, 0) }],
+        recentSessions: [],
+        dailyGoal: { targetAttempts: 4, attemptsToday: 1, correctToday: 0, completed: false, progressPercent: 25 },
+        streak: { currentDays: 1, bestDays: 1, activeDays: 1 },
+        releaseDiagnostics: { releaseId: 'punctuation-r4-full-14-skill-structure', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
+      },
       exportEntryPoints: [{ action: 'platform-export-learner', label: 'Export current learner' }],
       accessibleLearners: [{ learnerId: 'learner-a', learnerName: 'Ava', yearGroup: 'Y5', membershipRoleLabel: 'Viewer', writable: false }],
       selectedLearnerId: 'learner-a',
       permissions: { canViewParentHub: true, canMutateLearnerData: false, platformRoleLabel: 'Parent', membershipRoleLabel: 'Viewer', accessModeLabel: 'Read-only learner' },
     };
     const adminModel = {
-      account: { repoRevision: 5, selectedLearnerId: 'learner-a' },
-      permissions: { canViewAdminHub: true, platformRole: 'admin', platformRoleLabel: 'Admin' },
+      account: { id: 'adult-a', repoRevision: 5, selectedLearnerId: 'learner-a' },
+      permissions: { canViewAdminHub: true, platformRole: 'admin', platformRoleLabel: 'Admin', canManageMonsterVisualConfig: true },
+      monsterVisualConfig: {
+        permissions: { canManageMonsterVisualConfig: true, canViewMonsterVisualConfig: true },
+        status: {
+          schemaVersion: 1,
+          manifestHash: BUNDLED_MONSTER_VISUAL_CONFIG.manifestHash,
+          draftRevision: 0,
+          publishedVersion: 1,
+          publishedAt: Date.UTC(2026, 3, 22, 12, 0),
+          validation: { ok: true, errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+        },
+        draft: BUNDLED_MONSTER_VISUAL_CONFIG,
+        published: BUNDLED_MONSTER_VISUAL_CONFIG,
+        versions: [{ version: 1, manifestHash: BUNDLED_MONSTER_VISUAL_CONFIG.manifestHash, schemaVersion: 1, publishedAt: Date.UTC(2026, 3, 22, 12, 0), publishedByAccountId: 'system' }],
+        mutation: { policyVersion: 1, scopeType: 'platform', scopeId: 'monster-visual-config', draftRevision: 0 },
+      },
       contentReleaseStatus: { publishedVersion: 3, publishedReleaseId: 'release-3', runtimeWordCount: 213, runtimeSentenceCount: 213, currentDraftId: 'draft', currentDraftVersion: 4, draftUpdatedAt: Date.UTC(2026, 3, 22, 12, 0) },
       importValidationStatus: { ok: true, errorCount: 0, warningCount: 1, source: 'seeded', importedAt: Date.UTC(2026, 3, 22, 12, 0), errors: [] },
       auditLogLookup: { available: true, note: 'Recent mutations', entries: [{ requestId: 'req-1', mutationKind: 'learners.write', scopeType: 'account', scopeId: 'adult-a', appliedAt: Date.UTC(2026, 3, 22, 12, 0) }] },
       learnerSupport: {
         selectedLearnerId: 'learner-a',
-        selectedDiagnostics: { learnerId: 'learner-a', learnerName: 'Ava', overview: { secureWords: 8, dueWords: 2, troubleWords: 1 }, currentFocus: { detail: 'Review due spellings' } },
-        accessibleLearners: [{ learnerId: 'learner-a', learnerName: 'Ava', yearGroup: 'Y5', membershipRoleLabel: 'Viewer', accessModeLabel: 'Read-only learner', writable: false, overview: { dueWords: 2 }, currentFocus: { label: 'Due spellings' } }],
-        entryPoints: [{ action: 'open-subject', label: 'Open Spelling', subjectId: 'spelling' }],
+        selectedDiagnostics: {
+          learnerId: 'learner-a',
+          learnerName: 'Ava',
+          overview: { secureWords: 8, dueWords: 2, troubleWords: 1, secureGrammarConcepts: 2, dueGrammarConcepts: 1, weakGrammarConcepts: 1, securePunctuationUnits: 1, duePunctuationItems: 1, weakPunctuationItems: 1 },
+          currentFocus: { detail: 'Review due spellings' },
+          grammarEvidence: {
+            progressSnapshot: { securedConcepts: 2, dueConcepts: 1, weakConcepts: 1 },
+            questionTypeSummary: [{ id: 'choose', label: 'Choose the correct sentence' }],
+          },
+          punctuationEvidence: {
+            progressSnapshot: { securedRewardUnits: 1, dueItems: 1, weakItems: 1 },
+            weakestFacets: [{ id: 'speech::insert', label: 'Speech - Insert punctuation' }],
+            releaseDiagnostics: { releaseId: 'punctuation-r4-full-14-skill-structure', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
+          },
+        },
+        accessibleLearners: [{
+          learnerId: 'learner-a',
+          learnerName: 'Ava',
+          yearGroup: 'Y5',
+          membershipRoleLabel: 'Viewer',
+          accessModeLabel: 'Read-only learner',
+          writable: false,
+          overview: { dueWords: 2, dueGrammarConcepts: 1, weakGrammarConcepts: 1, duePunctuationItems: 1, weakPunctuationItems: 1 },
+          grammarEvidence: { progressSnapshot: { dueConcepts: 1, weakConcepts: 1 } },
+          punctuationEvidence: { progressSnapshot: { dueItems: 1, weakItems: 1 } },
+          currentFocus: { label: 'Due spellings' },
+        }],
+        punctuationReleaseDiagnostics: { releaseId: 'punctuation-r4-full-14-skill-structure', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
+        entryPoints: [{ action: 'open-subject', label: 'Open Spelling', subjectId: 'spelling' }, { action: 'open-subject', label: 'Open Punctuation analytics', subjectId: 'punctuation', tab: 'analytics' }],
       },
     };
     const accountDirectory = {

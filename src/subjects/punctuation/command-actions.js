@@ -7,15 +7,42 @@ export function punctuationSubmitAnswerPayload(data = {}) {
   return { typed: data?.typed || data?.answer || '' };
 }
 
+function commandExpectationForState(state = {}) {
+  const session = state.subjectUi?.punctuation?.session;
+  if (!session || typeof session !== 'object') return {};
+  const expectation = {};
+  if (typeof session.id === 'string' && session.id) expectation.expectedSessionId = session.id;
+  if (typeof session.currentItem?.id === 'string' && session.currentItem.id) {
+    expectation.expectedItemId = session.currentItem.id;
+  }
+  if (Number.isFinite(Number(session.answeredCount))) {
+    expectation.expectedAnsweredCount = Number(session.answeredCount);
+  }
+  if (typeof session.releaseId === 'string' && session.releaseId) {
+    expectation.expectedReleaseId = session.releaseId;
+  }
+  return expectation;
+}
+
+function withCommandExpectation(payload = {}, state = {}) {
+  return {
+    ...payload,
+    ...commandExpectationForState(state),
+  };
+}
+
 export const punctuationSubjectCommandActions = Object.freeze({
   'punctuation-start': {
     command: 'start-session',
     payload({ data, state }) {
       const prefs = state.subjectUi?.punctuation?.prefs || {};
-      return {
+      const payload = {
         mode: data?.mode || prefs.mode || 'smart',
         roundLength: data?.roundLength || prefs.roundLength || '4',
       };
+      const skillId = data?.skillId || data?.guidedSkillId;
+      if (skillId) payload.skillId = skillId;
+      return payload;
     },
   },
   'punctuation-start-again': {
@@ -30,13 +57,32 @@ export const punctuationSubjectCommandActions = Object.freeze({
   },
   'punctuation-submit-form': {
     command: 'submit-answer',
-    payload({ data }) {
-      return punctuationSubmitAnswerPayload(data);
+    payload({ data, state }) {
+      return withCommandExpectation(punctuationSubmitAnswerPayload(data), state);
     },
   },
   'punctuation-continue': { command: 'continue-session' },
-  'punctuation-skip': { command: 'skip-item' },
-  'punctuation-end-early': { command: 'end-session' },
+  'punctuation-skip': {
+    command: 'skip-item',
+    payload({ state }) {
+      return withCommandExpectation({}, state);
+    },
+  },
+  'punctuation-end-early': {
+    command: 'end-session',
+    payload({ state }) {
+      return withCommandExpectation({}, state);
+    },
+  },
+  'punctuation-context-pack': {
+    mutates: false,
+    command: 'request-context-pack',
+    payload({ data }) {
+      return {
+        seed: data?.seed || '',
+      };
+    },
+  },
   'punctuation-set-mode': {
     command: 'save-prefs',
     payload({ data }) {

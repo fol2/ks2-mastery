@@ -74,6 +74,184 @@ test('punctuation React surface keeps server-only fields out of active HTML', ()
   assert.equal(html.includes(PUNCTUATION_RELEASE_ID), false);
 });
 
+test('punctuation React surface renders guided setup controls and teach boxes', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'setup',
+    content: {
+      publishedScopeCopy: 'This Punctuation release covers all 14 KS2 punctuation skills.',
+      skills: [
+        { id: 'sentence_endings', name: 'Capital letters and sentence endings', clusterId: 'endmarks' },
+        { id: 'speech', name: 'Inverted commas and speech punctuation', clusterId: 'speech' },
+      ],
+    },
+  });
+
+  const setupHtml = harness.render();
+  assert.match(setupHtml, /Guided skill/);
+  assert.match(setupHtml, /Guided learn/);
+  assert.match(setupHtml, /data-punctuation-guided-start/);
+  assert.match(setupHtml, /Weak spots/);
+  assert.match(setupHtml, /data-punctuation-weak-start/);
+  assert.match(setupHtml, /GPS test/);
+  assert.match(setupHtml, /data-punctuation-gps-start/);
+
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'guided-ui',
+      mode: 'guided',
+      length: 1,
+      answeredCount: 0,
+      guided: {
+        skillId: 'speech',
+        supportLevel: 2,
+        teachBox: {
+          name: 'Inverted commas and speech punctuation',
+          rule: 'Put spoken words inside inverted commas.',
+          workedExample: {
+            before: 'Mia said come here.',
+            after: 'Mia said, "Come here."',
+          },
+          contrastExample: {
+            before: 'Mia said "come here".',
+            after: 'Mia said, "Come here."',
+          },
+          selfCheckPrompt: 'Check the rule, compare the examples, then try the item without looking for the answer pattern.',
+        },
+      },
+      currentItem: {
+        id: 'sp_insert_question',
+        mode: 'insert',
+        inputKind: 'text',
+        prompt: 'Add the direct-speech punctuation.',
+        stem: 'Ella asked, can we start now?',
+      },
+    },
+  });
+  const activeHtml = harness.render();
+  assert.match(activeHtml, /Inverted commas and speech punctuation/);
+  assert.match(activeHtml, /Put spoken words inside inverted commas/);
+  assert.match(activeHtml, /Worked example/);
+  assert.match(activeHtml, /Common mistake/);
+  assert.doesNotMatch(activeHtml, /accepted|correctIndex|rubric|validator|generator|hiddenQueue/);
+});
+
+test('punctuation React surface renders weak focus chips safely', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'weak-ui',
+      mode: 'weak',
+      length: 1,
+      answeredCount: 0,
+      weakFocus: {
+        skillId: 'speech',
+        skillName: 'Inverted commas and speech punctuation',
+        mode: 'insert',
+        clusterId: 'speech',
+        bucket: 'weak',
+        source: 'weak_facet',
+      },
+      currentItem: {
+        id: 'sp_insert_question',
+        mode: 'insert',
+        inputKind: 'text',
+        prompt: 'Add the direct-speech punctuation.',
+        stem: 'Ella asked, can we start now?',
+      },
+    },
+  });
+
+  const html = harness.render();
+  assert.match(html, /Weak focus/);
+  assert.match(html, /Inverted commas and speech punctuation/);
+  assert.match(html, /insert/);
+  assert.doesNotMatch(html, /accepted|correctIndex|rubric|validator|generator|hiddenQueue/);
+});
+
+test('punctuation React surface renders GPS active progress and final review', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'gps-ui',
+      mode: 'gps',
+      length: 3,
+      answeredCount: 1,
+      gps: {
+        testLength: 3,
+        answeredCount: 1,
+        remainingCount: 2,
+        delayedFeedback: true,
+      },
+      guided: null,
+      currentItem: {
+        id: 'se_insert_capital',
+        mode: 'insert',
+        inputKind: 'text',
+        prompt: 'Add the missing capital letter and full stop.',
+        stem: 'the boat reached the harbour',
+      },
+    },
+  });
+
+  const activeHtml = harness.render();
+  assert.match(activeHtml, /GPS test/);
+  assert.match(activeHtml, /Delayed feedback/);
+  assert.match(activeHtml, /2 of 3/);
+  assert.doesNotMatch(activeHtml, /Worked example|Common mistake|displayCorrection|accepted|correctIndex|rubric|validator|generator|hiddenQueue|queueItemIds|responses/);
+
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'summary',
+    summary: {
+      label: 'Punctuation GPS test summary',
+      message: 'GPS test complete.',
+      total: 2,
+      correct: 1,
+      accuracy: 50,
+      gps: {
+        delayedFeedback: true,
+        recommendedMode: 'weak',
+        recommendedLabel: 'Weak spots',
+        reviewItems: [
+          {
+            index: 1,
+            itemId: 'se_insert_capital',
+            mode: 'insert',
+            prompt: 'Add the missing capital letter and full stop.',
+            attemptedAnswer: 'The boat reached the harbour.',
+            displayCorrection: 'The boat reached the harbour.',
+            correct: true,
+            misconceptionTags: [],
+          },
+          {
+            index: 2,
+            itemId: 'sp_insert_question',
+            mode: 'insert',
+            prompt: 'Add the direct-speech punctuation.',
+            attemptedAnswer: 'Ella asked can we start now',
+            displayCorrection: 'Ella asked, "Can we start now?"',
+            correct: false,
+            misconceptionTags: ['speech.quote_missing'],
+          },
+        ],
+      },
+    },
+  });
+
+  const summaryHtml = harness.render();
+  assert.match(summaryHtml, /GPS review/);
+  assert.match(summaryHtml, /Next: Weak spots/);
+  assert.match(summaryHtml, /1\. Correct/);
+  assert.match(summaryHtml, /2\. Review/);
+  assert.match(summaryHtml, /speech\.quote_missing/);
+});
+
 test('punctuation text input remounts when the current text item changes', async () => {
   const source = await readFile(
     new URL('../src/subjects/punctuation/components/PunctuationPracticeSurface.jsx', import.meta.url),
@@ -81,6 +259,63 @@ test('punctuation text input remounts when the current text item changes', async
   );
 
   assert.match(source, /<TextItem key=\{item\.id \|\| item\.prompt\}/);
+});
+
+test('punctuation React surface renders combine tasks as text-entry rewrites', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'combine-ui',
+      mode: 'smart',
+      length: 1,
+      answeredCount: 0,
+      currentItem: {
+        id: 'sc_combine_rain_pitch',
+        mode: 'combine',
+        inputKind: 'text',
+        prompt: 'Combine the two related clauses into one sentence with a semi-colon.',
+        stem: 'The rain had stopped.\nThe pitch was still slippery.',
+      },
+    },
+  });
+
+  const html = harness.render();
+  assert.match(html, /Combine the two related clauses/);
+  assert.match(html, /Combine the parts into one punctuated sentence/);
+  assert.match(html, /textarea/);
+  assert.match(html, /The rain had stopped\.\nThe pitch was still slippery\./);
+  assert.doesNotMatch(html, /accepted|correctIndex|rubric|validator|generator|hiddenQueue/);
+});
+
+test('punctuation React surface renders paragraph repair as multiline text entry', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'paragraph-ui',
+      mode: 'smart',
+      length: 1,
+      answeredCount: 0,
+      currentItem: {
+        id: 'pg_bullet_consistency',
+        mode: 'paragraph',
+        inputKind: 'text',
+        prompt: 'Repair the bullet-list punctuation.',
+        stem: 'Bring\n- a drink.\n- a hat\n- a sketchbook.',
+      },
+    },
+  });
+
+  const html = harness.render();
+  assert.match(html, /Repair the whole passage/);
+  assert.match(html, /textarea/);
+  assert.match(html, /rows="6"/);
+  assert.match(html, /white-space:pre-wrap/);
+  assert.match(html, /Bring\n- a drink\.\n- a hat\n- a sketchbook\./);
+  assert.doesNotMatch(html, /accepted|correctIndex|rubric|validator|generator|hiddenQueue/);
 });
 
 test('punctuation React surface preserves newline-sensitive bullet text', () => {

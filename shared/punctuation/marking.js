@@ -8,6 +8,7 @@ const FACET_LABELS = Object.freeze({
   reporting_clause: 'Reporting-clause comma',
   capitalisation: 'Capital letters',
   preservation: 'Target words preserved',
+  apostrophe_forms: 'Apostrophe forms',
   comma_placement: 'Comma placement',
   boundary_mark: 'Boundary mark',
   hyphenated_phrase: 'Hyphenated phrase',
@@ -17,6 +18,7 @@ const FACET_LABELS = Object.freeze({
   bullet_markers: 'Bullet markers',
   bullet_punctuation: 'Bullet punctuation',
   terminal_punctuation: 'Terminal punctuation',
+  single_sentence: 'One combined sentence',
   unwanted_punctuation: 'No duplicated punctuation outside the quote',
 });
 
@@ -199,11 +201,53 @@ function wordSequencePreserved(text, words = []) {
   for (const word of words) {
     const target = stripPunctuation(word);
     if (!target) continue;
-    const index = clean.indexOf(target, cursor);
-    if (index < 0) return false;
-    cursor = index + target.length;
+    const slice = clean.slice(cursor);
+    const match = new RegExp(`(?:^|\\s)${escapeRegExp(target)}(?=\\s|$)`).exec(slice);
+    if (!match) return false;
+    cursor += match.index + match[0].length;
   }
   return true;
+}
+
+function wordCount(value) {
+  const clean = stripPunctuation(value);
+  return clean ? clean.split(' ').filter(Boolean).length : 0;
+}
+
+function requiredTokenCoverage(text, tokens = []) {
+  const clean = canonicalPunctuationText(text).toLowerCase();
+  const required = (Array.isArray(tokens) ? tokens : [])
+    .map((token) => canonicalPunctuationText(token))
+    .filter(Boolean);
+  const missing = required.filter((token) => {
+    const exactTokenPattern = new RegExp(`(?:^|[^a-z0-9])${escapeRegExp(token.toLowerCase())}(?=$|[^a-z0-9])`);
+    return !exactTokenPattern.test(clean);
+  });
+  return {
+    missing,
+    ok: required.length > 0 && missing.length === 0,
+  };
+}
+
+function terminalMarkFromModel(item, fallback = '.') {
+  const clean = canonicalPunctuationText(item?.model || acceptedAnswers(item)[0] || '');
+  return clean.match(/([.?!])["']?$/)?.[1] || fallback;
+}
+
+function terminalSuffixPattern(requiredTerminal = null) {
+  const mark = requiredTerminal ? escapeRegExp(requiredTerminal) : '[.?!]';
+  return `\\s*${mark}["']?$`;
+}
+
+function singleSentenceOk(text, requiredTerminal = null) {
+  const clean = canonicalPunctuationText(text);
+  if (!sentenceEnds(clean, requiredTerminal)) return false;
+  const body = clean.replace(/[.?!]["']?$/, '').trim();
+  return !/[.?!]/.test(body);
+}
+
+function transferSentenceOk(item, text, requiredTerminal = null) {
+  return item?.mode === 'paragraph' ? true : singleSentenceOk(text, requiredTerminal);
 }
 
 function listCommaPattern(words = [], { finalComma = false } = {}) {
@@ -229,6 +273,23 @@ function listCommaOk(text, words = []) {
   };
 }
 
+function openingPhraseMainClause(text, phrase) {
+  const clean = canonicalPunctuationText(text);
+  const canonicalPhrase = canonicalPunctuationText(phrase || '');
+  const lower = clean.toLowerCase();
+  const phraseOk = Boolean(canonicalPhrase) && lower.startsWith(canonicalPhrase.toLowerCase());
+  const afterPhrase = phraseOk ? clean.slice(canonicalPhrase.length) : '';
+  const commaOk = phraseOk && /^\s*,/.test(afterPhrase);
+  const mainClause = commaOk
+    ? afterPhrase.replace(/^\s*,\s*/, '').replace(/[.?!]["']?$/, '').trim()
+    : '';
+  return {
+    phraseOk,
+    commaOk,
+    mainClauseOk: commaOk && wordCount(mainClause) >= 2,
+  };
+}
+
 function listCommaShapePattern(words = []) {
   const items = words.map((word) => canonicalPunctuationText(word).toLowerCase()).filter(Boolean);
   if (items.length < 2) return null;
@@ -244,6 +305,10 @@ function listCommaShapePattern(words = []) {
 
 function itemTags(item) {
   return Array.isArray(item?.misconceptionTags) ? [...item.misconceptionTags] : [];
+}
+
+function uniqueStrings(values = []) {
+  return [...new Set(values.filter((entry) => typeof entry === 'string' && entry))];
 }
 
 function primaryCommaTag(item, fallback) {
@@ -273,7 +338,10 @@ function hyphenatedPhrase(text, phrase) {
   const phraseText = canonicalPunctuationText(phrase || '').toLowerCase();
   const phraseWords = phraseText.replace(/-/g, ' ').split(/\s+/).filter(Boolean);
   const wordsOk = phraseWords.length > 0 && wordSequencePreserved(clean, phraseWords);
-  const hyphenOk = Boolean(phraseText) && clean.toLowerCase().includes(phraseText);
+  const hyphenOk = Boolean(phraseText) && new RegExp(
+    `(?:^|[^a-z0-9])${escapeRegExp(phraseText)}(?=$|[^a-z0-9])`,
+    'i',
+  ).test(clean);
   return { wordsOk, hyphenOk };
 }
 
@@ -311,8 +379,11 @@ function colonBeforeList(text, validator = {}) {
   const afterOpening = wordsOk ? clean.slice(opening.length) : '';
   const colonOk = /^\s*:\s*/.test(afterOpening);
   const expectedList = listCommaShapePattern(items);
+  const tailPattern = validator.allowTrailingText === true
+    ? '[.?!](?:\\s+\\S.*)?$'
+    : '[.?!]?["\']?$';
   const listOk = Boolean(expectedList) && new RegExp(
-    `^\\s*${escapeRegExp(opening)}\\s*:\\s*${expectedList}\\s*[.?!]?["']?$`,
+    `^\\s*${escapeRegExp(opening)}\\s*:\\s*${expectedList}\\s*${tailPattern}`,
     'i',
   ).test(clean);
   const { hasFinalComma } = listCommaOk(clean, items);
@@ -378,6 +449,122 @@ function bulletStemAndItems(text, validator = {}) {
   return { stemOk, colonOk, itemsOk, bulletMarkersOk, punctuationOk };
 }
 
+function frontedAdverbialWithSpeech(text, validator = {}, requiredTerminal = null) {
+  const clean = canonicalPunctuationText(text);
+  const phrase = canonicalPunctuationText(validator.phrase || '');
+  const expectedReportingClause = canonicalPunctuationText(validator.reportingClause || '');
+  const phraseParts = openingPhraseMainClause(clean, phrase);
+  const quote = findQuotePair(text);
+  const beforeQuoteText = quote.ok ? beforeOpeningQuote(text, quote.pair) : '';
+  const afterPhraseBeforeQuote = phraseParts.phraseOk
+    ? canonicalPunctuationText(beforeQuoteText).slice(phrase.length).trim()
+    : '';
+  const reportingWords = afterPhraseBeforeQuote
+    .replace(/^,\s*/, '')
+    .replace(/,\s*$/, '')
+    .trim();
+  const reportingWordsOk = expectedReportingClause
+    ? stripPunctuation(reportingWords) === stripPunctuation(expectedReportingClause)
+    : wordCount(reportingWords) >= 2;
+  const reportingClauseOk = quote.ok
+    && /,\s*$/.test(beforeQuoteText)
+    && reportingWordsOk;
+  const speech = evaluateSpeechRubric(text, {
+    type: 'speech',
+    reportingPosition: 'before',
+    spokenWords: validator.words || validator.spokenWords,
+    requiredTerminal,
+  });
+  const speechFacetOk = (id) => speech.facets.find((entry) => entry.id === id)?.ok === true;
+  const quoteOk = speechFacetOk('quote_variant');
+  const speechPunctuationOkValue = speechFacetOk('speech_punctuation');
+  const capitalOk = speechFacetOk('capitalisation');
+  const speechWordsOk = speechFacetOk('preservation');
+  const unwantedOk = quote.ok ? speechFacetOk('unwanted_punctuation') : true;
+  const sentenceOk = singleSentenceOk(text, requiredTerminal);
+  return {
+    correct: phraseParts.phraseOk
+      && phraseParts.commaOk
+      && reportingClauseOk
+      && speech.correct
+      && sentenceOk,
+    phraseOk: phraseParts.phraseOk,
+    commaOk: phraseParts.commaOk,
+    reportingClauseOk,
+    quoteOk,
+    speechPunctuationOk: speechPunctuationOkValue,
+    capitalOk,
+    preservationOk: phraseParts.phraseOk && reportingWordsOk && speechWordsOk,
+    unwantedOk,
+    sentenceOk,
+    speech,
+  };
+}
+
+function anchoredListSentence(text, validator = {}, requiredTerminal = null) {
+  const clean = canonicalPunctuationText(text);
+  const opening = canonicalPunctuationText(validator.opening || '');
+  const items = (Array.isArray(validator.items) ? validator.items : [])
+    .map((entry) => canonicalPunctuationText(entry))
+    .filter(Boolean);
+  const expectedList = listCommaShapePattern(items);
+  const wordsOk = Boolean(opening && expectedList) && wordSequencePreserved(clean, [opening, ...items]);
+  const sentenceOk = singleSentenceOk(clean, requiredTerminal);
+  const listOk = Boolean(opening && expectedList) && new RegExp(
+    `^${escapeRegExp(opening)}\\s+${expectedList}${terminalSuffixPattern(requiredTerminal)}`,
+    'i',
+  ).test(clean);
+  const { hasFinalComma } = listCommaOk(clean, items);
+  return { wordsOk, listOk, sentenceOk, hasFinalComma };
+}
+
+function anchoredFrontedAdverbial(text, validator = {}, requiredTerminal = null) {
+  const clean = canonicalPunctuationText(text);
+  const phrase = canonicalPunctuationText(validator.phrase || '');
+  const mainClause = canonicalPunctuationText(validator.mainClause || '');
+  const lower = clean.toLowerCase();
+  const phraseOk = Boolean(phrase) && lower.startsWith(phrase.toLowerCase());
+  const wordsOk = phraseOk && Boolean(mainClause) && wordSequencePreserved(clean, [phrase, mainClause]);
+  const commaOk = Boolean(phrase && mainClause) && new RegExp(
+    `^${escapeRegExp(phrase)},\\s*${escapeRegExp(mainClause)}${terminalSuffixPattern(requiredTerminal)}`,
+    'i',
+  ).test(clean);
+  return { wordsOk, phraseOk, commaOk, sentenceOk: singleSentenceOk(clean, requiredTerminal) };
+}
+
+function anchoredParentheticalPhrase(text, validator = {}, requiredTerminal = null) {
+  const clean = canonicalPunctuationText(text);
+  const before = canonicalPunctuationText(validator.before || '');
+  const phrase = canonicalPunctuationText(validator.phrase || '');
+  const after = canonicalPunctuationText(validator.after || '');
+  const wordsOk = Boolean(before && phrase && after) && wordSequencePreserved(clean, [before, phrase, after]);
+  const loose = parentheticalPhrase(clean, validator);
+  const terminal = terminalSuffixPattern(requiredTerminal);
+  const commaPattern = `^${escapeRegExp(before)}\\s*,\\s*${escapeRegExp(phrase)}\\s*,\\s*${escapeRegExp(after)}${terminal}`;
+  const bracketPattern = `^${escapeRegExp(before)}\\s*\\(\\s*${escapeRegExp(phrase)}\\s*\\)\\s*${escapeRegExp(after)}${terminal}`;
+  const dashPattern = `^${escapeRegExp(before)}\\s+[-–—]\\s+${escapeRegExp(phrase)}\\s+[-–—]\\s+${escapeRegExp(after)}${terminal}`;
+  const punctuationOk = Boolean(before && phrase && after) && [commaPattern, bracketPattern, dashPattern]
+    .some((pattern) => new RegExp(pattern, 'i').test(clean));
+  return { wordsOk, openOk: loose.openOk, closeOk: loose.closeOk, punctuationOk, sentenceOk: singleSentenceOk(clean, requiredTerminal) };
+}
+
+function anchoredBoundarySentence(text, validator = {}, requiredTerminal = null) {
+  const clean = canonicalPunctuationText(text);
+  const left = canonicalPunctuationText(validator.left || '');
+  const right = canonicalPunctuationText(validator.right || '');
+  const mark = String(validator.mark || ';').trim();
+  const wordsOk = Boolean(left && right)
+    && clean.toLowerCase().startsWith(left.toLowerCase())
+    && wordSequencePreserved(clean, [left, right]);
+  const markPattern = mark === ';' ? '\\s*;\\s*' : '\\s+-\\s+';
+  const markOk = Boolean(left && right) && new RegExp(
+    `^${escapeRegExp(left)}${markPattern}${escapeRegExp(right)}${terminalSuffixPattern(requiredTerminal)}`,
+    'i',
+  ).test(clean);
+  const loose = boundaryBetweenClauses(clean, validator);
+  return { wordsOk, markOk, between: loose.between, mark, sentenceOk: singleSentenceOk(clean, requiredTerminal) };
+}
+
 export function evaluateSpeechRubric(answer, rubric = {}) {
   const text = normaliseAnswerText(answer);
   const tags = [];
@@ -436,48 +623,72 @@ function markTransfer(item, answer) {
   if (validator.type === 'startsWithWordQuestion') {
     const firstWord = String(validator.word || '').toLowerCase();
     const lower = text.toLowerCase();
-    const correct = lower.startsWith(`${firstWord} `) && sentenceStartsWithCapital(text) && sentenceEnds(text, '?');
+    const wordOk = lower.startsWith(`${firstWord} `);
+    const capitalOk = sentenceStartsWithCapital(text);
+    const terminalOk = sentenceEnds(text, '?');
+    const sentenceOk = transferSentenceOk(item, text, '?');
+    const correct = wordOk && capitalOk && terminalOk && sentenceOk;
     return {
       correct,
       expected: item.model || '',
       note: correct ? 'That begins like a question and ends with a question mark.' : `Start with ${validator.word}, use a capital letter, and end with a question mark.`,
-      misconceptionTags: correct ? [] : ['endmarks.question_mark_missing', 'endmarks.capitalisation_missing'],
+      misconceptionTags: correct ? [] : [...new Set([
+        ...(wordOk ? [] : ['endmarks.question_starter_changed']),
+        ...(terminalOk ? [] : ['endmarks.question_mark_missing']),
+        ...(capitalOk ? [] : ['endmarks.capitalisation_missing']),
+        ...(sentenceOk ? [] : ['transfer.extra_sentence']),
+      ])],
       facets: [
-        facet('capitalisation', sentenceStartsWithCapital(text)),
-        facet('speech_punctuation', sentenceEnds(text, '?')),
+        facet('preservation', wordOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+        ...(item.mode === 'paragraph' ? [] : [facet('single_sentence', sentenceOk)]),
       ],
     };
   }
 
   if (validator.type === 'requiresTokens') {
-    const lower = text.toLowerCase();
-    const missing = (Array.isArray(validator.tokens) ? validator.tokens : [])
-      .filter((token) => !lower.includes(String(token).toLowerCase()));
-    const correct = missing.length === 0 && sentenceStartsWithCapital(text) && sentenceEnds(text);
+    const { missing, ok: tokensOk } = requiredTokenCoverage(text, validator.tokens);
+    const capitalOk = sentenceStartsWithCapital(text);
+    const terminalOk = sentenceEnds(text);
+    const sentenceOk = transferSentenceOk(item, text);
+    const correct = tokensOk && capitalOk && terminalOk && sentenceOk;
     return {
       correct,
       expected: item.model || '',
       note: missing.length ? `Include these exact forms: ${missing.join(', ')}.` : 'Good. The required punctuated forms are present.',
-      misconceptionTags: correct ? [] : (Array.isArray(item.misconceptionTags) ? [...item.misconceptionTags] : []),
+      misconceptionTags: correct ? [] : [...new Set([
+        ...(tokensOk ? [] : itemTags(item)),
+        ...(capitalOk ? [] : ['apostrophe.capitalisation_missing']),
+        ...(terminalOk ? [] : ['apostrophe.terminal_missing']),
+        ...(sentenceOk ? [] : ['transfer.extra_sentence']),
+      ])],
       facets: [
-        facet('capitalisation', sentenceStartsWithCapital(text)),
-        facet('speech_punctuation', sentenceEnds(text)),
+        facet('preservation', tokensOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+        ...(item.mode === 'paragraph' ? [] : [facet('single_sentence', sentenceOk)]),
       ],
     };
   }
 
   if (validator.type === 'requiresListCommas') {
     const words = Array.isArray(validator.items) ? validator.items : [];
-    const wordsOk = words.length >= 2 && wordSequencePreserved(text, words);
+    const opening = canonicalPunctuationText(validator.opening || validator.stem || '');
+    const clean = canonicalPunctuationText(text);
+    const openingOk = !opening || clean.toLowerCase().startsWith(opening.toLowerCase());
+    const wordsOk = words.length >= 2 && openingOk && wordSequencePreserved(text, opening ? [opening, ...words] : words);
     const { commaPlacement, hasFinalComma } = listCommaOk(text, words);
     const capitalOk = sentenceStartsWithCapital(text);
     const terminalOk = sentenceEnds(text);
-    const correct = wordsOk && commaPlacement && capitalOk && terminalOk;
+    const sentenceOk = transferSentenceOk(item, text);
+    const correct = wordsOk && commaPlacement && capitalOk && terminalOk && sentenceOk;
     const tags = [];
     if (!wordsOk) tags.push('comma.list_words_changed');
     if (!commaPlacement) tags.push(hasFinalComma ? 'comma.unnecessary_final_comma' : 'comma.list_separator_missing');
     if (!capitalOk) tags.push('comma.capitalisation_missing');
     if (!terminalOk) tags.push('comma.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('transfer.extra_sentence');
     return {
       correct,
       expected: item.model || '',
@@ -488,49 +699,87 @@ function markTransfer(item, answer) {
         facet('comma_placement', commaPlacement),
         facet('capitalisation', capitalOk),
         facet('terminal_punctuation', terminalOk),
+        ...(item.mode === 'paragraph' ? [] : [facet('single_sentence', sentenceOk)]),
       ],
     };
   }
 
   if (validator.type === 'startsWithPhraseComma') {
-    const phrase = canonicalPunctuationText(validator.phrase || '');
-    const clean = canonicalPunctuationText(text);
-    const phraseOk = Boolean(phrase) && clean.toLowerCase().startsWith(phrase.toLowerCase());
-    const commaOk = Boolean(phrase) && clean.toLowerCase().startsWith(`${phrase.toLowerCase()},`);
+    const { phraseOk, commaOk, mainClauseOk } = openingPhraseMainClause(text, validator.phrase);
     const capitalOk = sentenceStartsWithCapital(text);
     const terminalOk = sentenceEnds(text);
-    const correct = phraseOk && commaOk && capitalOk && terminalOk;
+    const sentenceOk = transferSentenceOk(item, text);
+    const correct = phraseOk && commaOk && mainClauseOk && capitalOk && terminalOk && sentenceOk;
     const tags = [];
     if (!phraseOk) tags.push('comma.opening_phrase_changed');
     if (phraseOk && !commaOk) tags.push(primaryCommaTag(item, 'comma.fronted_adverbial_missing'));
+    if (commaOk && !mainClauseOk) tags.push('comma.main_clause_missing');
     if (!capitalOk) tags.push('comma.capitalisation_missing');
     if (!terminalOk) tags.push('comma.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('transfer.extra_sentence');
     return {
       correct,
       expected: item.model || '',
       note: correct ? 'The opening phrase is followed by a comma.' : `Begin with ${validator.phrase}, add the comma, and finish the sentence.`,
       misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
       facets: [
-        facet('preservation', phraseOk),
+        facet('preservation', phraseOk && mainClauseOk),
         facet('comma_placement', commaOk),
         facet('capitalisation', capitalOk),
         facet('terminal_punctuation', terminalOk),
+        ...(item.mode === 'paragraph' ? [] : [facet('single_sentence', sentenceOk)]),
       ],
     };
   }
 
   if (validator.type === 'speechWithWords') {
+    const requiredTerminal = validator.requiredTerminal || '?';
     const rubric = evaluateSpeechRubric(text, {
       type: 'speech',
       spokenWords: validator.words,
-      requiredTerminal: validator.requiredTerminal || '?',
+      requiredTerminal,
     });
+    const sentenceOk = transferSentenceOk(item, text, requiredTerminal);
+    const correct = rubric.correct && sentenceOk;
     return {
-      correct: rubric.correct,
+      correct,
       expected: item.model || '',
       note: rubric.correct ? 'The spoken words are punctuated as a question.' : 'Include inverted commas around the spoken words and keep the question mark with the speech.',
-      misconceptionTags: rubric.misconceptionTags,
-      facets: rubric.facets,
+      misconceptionTags: correct ? [] : [...new Set([
+        ...(rubric.correct ? [] : rubric.misconceptionTags),
+        ...(sentenceOk ? [] : ['transfer.extra_sentence']),
+      ])],
+      facets: [
+        ...rubric.facets,
+        ...(item.mode === 'paragraph' ? [] : [facet('single_sentence', sentenceOk)]),
+      ],
+    };
+  }
+
+  if (validator.type === 'frontedAdverbialWithSpeech') {
+    const requiredTerminal = validator.requiredTerminal || terminalMarkFromModel(item, '!');
+    const result = frontedAdverbialWithSpeech(text, validator, requiredTerminal);
+    const tags = [];
+    if (!result.phraseOk) tags.push('comma.opening_phrase_changed');
+    if (result.phraseOk && !result.commaOk) tags.push(primaryCommaTag(item, 'comma.fronted_adverbial_missing'));
+    if (result.quoteOk && !result.reportingClauseOk) tags.push('speech.reporting_comma_missing');
+    if (!result.sentenceOk) tags.push('transfer.extra_sentence');
+    tags.push(...result.speech.misconceptionTags);
+    return {
+      correct: result.correct,
+      expected: item.model || '',
+      note: result.correct ? 'That combines a fronted adverbial with direct speech.' : `Begin with "${validator.phrase}," and include correctly punctuated direct speech.`,
+      misconceptionTags: result.correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', result.preservationOk),
+        facet('comma_placement', result.commaOk),
+        facet('quote_variant', result.quoteOk),
+        facet('speech_punctuation', result.speechPunctuationOk),
+        facet('reporting_clause', result.reportingClauseOk),
+        facet('capitalisation', result.capitalOk),
+        facet('unwanted_punctuation', result.unwantedOk),
+        facet('single_sentence', result.sentenceOk),
+      ],
     };
   }
 
@@ -538,7 +787,8 @@ function markTransfer(item, answer) {
     const { wordsOk, markOk, between, mark } = boundaryBetweenClauses(text, validator);
     const capitalOk = sentenceStartsWithCapital(text);
     const terminalOk = sentenceEnds(text);
-    const correct = wordsOk && markOk && capitalOk && terminalOk;
+    const sentenceOk = transferSentenceOk(item, text);
+    const correct = wordsOk && markOk && capitalOk && terminalOk && sentenceOk;
     const tags = [];
     const isSemicolon = String(mark).trim() === ';';
     if (!wordsOk) tags.push('boundary.words_changed');
@@ -548,6 +798,7 @@ function markTransfer(item, answer) {
     }
     if (!capitalOk) tags.push('boundary.capitalisation_missing');
     if (!terminalOk) tags.push('boundary.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('transfer.extra_sentence');
     return {
       correct,
       expected: item.model || '',
@@ -558,6 +809,7 @@ function markTransfer(item, answer) {
         facet('boundary_mark', markOk),
         facet('capitalisation', capitalOk),
         facet('terminal_punctuation', terminalOk),
+        ...(item.mode === 'paragraph' ? [] : [facet('single_sentence', sentenceOk)]),
       ],
     };
   }
@@ -566,12 +818,14 @@ function markTransfer(item, answer) {
     const { wordsOk, hyphenOk } = hyphenatedPhrase(text, validator.phrase);
     const capitalOk = sentenceStartsWithCapital(text);
     const terminalOk = sentenceEnds(text);
-    const correct = wordsOk && hyphenOk && capitalOk && terminalOk;
+    const sentenceOk = transferSentenceOk(item, text);
+    const correct = wordsOk && hyphenOk && capitalOk && terminalOk && sentenceOk;
     const tags = [];
     if (!wordsOk) tags.push('boundary.words_changed');
     if (wordsOk && !hyphenOk) tags.push('boundary.hyphen_missing');
     if (!capitalOk) tags.push('boundary.capitalisation_missing');
     if (!terminalOk) tags.push('boundary.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('transfer.extra_sentence');
     return {
       correct,
       expected: item.model || '',
@@ -582,6 +836,7 @@ function markTransfer(item, answer) {
         facet('hyphenated_phrase', hyphenOk),
         facet('capitalisation', capitalOk),
         facet('terminal_punctuation', terminalOk),
+        ...(item.mode === 'paragraph' ? [] : [facet('single_sentence', sentenceOk)]),
       ],
     };
   }
@@ -590,12 +845,14 @@ function markTransfer(item, answer) {
     const { wordsOk, openOk, closeOk, punctuationOk } = parentheticalPhrase(text, validator);
     const capitalOk = sentenceStartsWithCapital(text);
     const terminalOk = sentenceEnds(text);
-    const correct = wordsOk && punctuationOk && capitalOk && terminalOk;
+    const sentenceOk = transferSentenceOk(item, text);
+    const correct = wordsOk && punctuationOk && capitalOk && terminalOk && sentenceOk;
     const tags = [];
     if (!wordsOk) tags.push('structure.words_changed');
     if (wordsOk && !punctuationOk) tags.push(openOk || closeOk ? 'structure.parenthesis_unbalanced' : 'structure.parenthesis_missing');
     if (!capitalOk) tags.push('structure.capitalisation_missing');
     if (!terminalOk) tags.push('structure.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('transfer.extra_sentence');
     return {
       correct,
       expected: item.model || '',
@@ -606,6 +863,7 @@ function markTransfer(item, answer) {
         facet('parenthetical_phrase', punctuationOk),
         facet('capitalisation', capitalOk),
         facet('terminal_punctuation', terminalOk),
+        ...(item.mode === 'paragraph' ? [] : [facet('single_sentence', sentenceOk)]),
       ],
     };
   }
@@ -614,13 +872,15 @@ function markTransfer(item, answer) {
     const { wordsOk, colonOk, listOk, hasFinalComma } = colonBeforeList(text, validator);
     const capitalOk = sentenceStartsWithCapital(text);
     const terminalOk = sentenceEnds(text);
-    const correct = wordsOk && colonOk && listOk && capitalOk && terminalOk;
+    const sentenceOk = transferSentenceOk(item, text);
+    const correct = wordsOk && colonOk && listOk && capitalOk && terminalOk && sentenceOk;
     const tags = [];
     if (!wordsOk) tags.push('structure.list_words_changed');
     if (wordsOk && !colonOk) tags.push('structure.colon_missing');
     if (wordsOk && !listOk) tags.push(hasFinalComma ? 'comma.unnecessary_final_comma' : 'structure.list_separator_missing');
     if (!capitalOk) tags.push('structure.capitalisation_missing');
     if (!terminalOk) tags.push('structure.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('transfer.extra_sentence');
     return {
       correct,
       expected: item.model || '',
@@ -632,6 +892,7 @@ function markTransfer(item, answer) {
         facet('list_separators', listOk),
         facet('capitalisation', capitalOk),
         facet('terminal_punctuation', terminalOk),
+        ...(item.mode === 'paragraph' ? [] : [facet('single_sentence', sentenceOk)]),
       ],
     };
   }
@@ -640,12 +901,14 @@ function markTransfer(item, answer) {
     const { wordsOk, separatorsOk } = semicolonList(text, validator);
     const capitalOk = sentenceStartsWithCapital(text);
     const terminalOk = sentenceEnds(text);
-    const correct = wordsOk && separatorsOk && capitalOk && terminalOk;
+    const sentenceOk = transferSentenceOk(item, text);
+    const correct = wordsOk && separatorsOk && capitalOk && terminalOk && sentenceOk;
     const tags = [];
     if (!wordsOk) tags.push('structure.list_words_changed');
     if (wordsOk && !separatorsOk) tags.push('structure.semicolon_list_missing');
     if (!capitalOk) tags.push('structure.capitalisation_missing');
     if (!terminalOk) tags.push('structure.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('transfer.extra_sentence');
     return {
       correct,
       expected: item.model || '',
@@ -656,6 +919,7 @@ function markTransfer(item, answer) {
         facet('list_separators', separatorsOk),
         facet('capitalisation', capitalOk),
         facet('terminal_punctuation', terminalOk),
+        ...(item.mode === 'paragraph' ? [] : [facet('single_sentence', sentenceOk)]),
       ],
     };
   }
@@ -678,6 +942,238 @@ function markTransfer(item, answer) {
         facet('colon_boundary', colonOk),
         facet('bullet_markers', bulletMarkersOk),
         facet('bullet_punctuation', punctuationOk),
+      ],
+    };
+  }
+
+  return null;
+}
+
+function paragraphCheckItem(item, check = {}) {
+  return {
+    ...item,
+    validator: check,
+    misconceptionTags: uniqueStrings([
+      ...(Array.isArray(check.misconceptionTags) ? check.misconceptionTags : []),
+      ...itemTags(item),
+    ]),
+  };
+}
+
+function markRequiredApostropheForms(check = {}, rawText = '') {
+  const clean = normaliseAnswerText(rawText)
+    .replace(/[‘’]/g, "'")
+    .replace(/\s+([,.;:?!])/g, '$1')
+    .toLowerCase();
+  const required = Array.isArray(check.tokens) ? check.tokens : [];
+  const forbidden = Array.isArray(check.forbidden) ? check.forbidden : [];
+  const missing = required.filter((token) => !clean.includes(String(token).toLowerCase()));
+  const unrepaired = forbidden.filter((token) => clean.includes(String(token).toLowerCase()));
+  const correct = missing.length === 0 && unrepaired.length === 0;
+  const tags = [];
+  if (missing.length) tags.push('apostrophe.required_forms_missing');
+  if (unrepaired.length) tags.push('apostrophe.unrepaired_forms');
+  return {
+    correct,
+    expected: '',
+    note: correct ? 'The apostrophe forms are repaired.' : 'Repair every required apostrophe form and remove the unpunctuated forms.',
+    misconceptionTags: correct ? [] : uniqueStrings([
+      ...tags,
+      ...(Array.isArray(check.misconceptionTags) ? check.misconceptionTags : []),
+    ]),
+    facets: [
+      facet('apostrophe_forms', correct),
+    ],
+  };
+}
+
+function markParagraphPassageShape(item, rawText = '') {
+  const expectedWords = stripPunctuation(item.model || acceptedAnswers(item)[0] || '');
+  const typedWords = stripPunctuation(rawText);
+  const correct = Boolean(expectedWords) && typedWords === expectedWords;
+  return {
+    correct,
+    expected: item.model || '',
+    note: correct ? 'The passage wording is preserved.' : 'Keep the whole passage wording and do not add extra sentences.',
+    misconceptionTags: correct ? [] : ['paragraph.words_changed'],
+    facets: [
+      facet('preservation', correct),
+    ],
+  };
+}
+
+function aggregateParagraphFacets(results = []) {
+  const facets = new Map();
+  for (const result of results) {
+    for (const entry of Array.isArray(result.facets) ? result.facets : []) {
+      if (!entry?.id) continue;
+      const current = facets.get(entry.id);
+      facets.set(entry.id, {
+        id: entry.id,
+        ok: current ? current.ok && entry.ok === true : entry.ok === true,
+        label: entry.label || current?.label || entry.id,
+      });
+    }
+  }
+  return [...facets.values()];
+}
+
+function markParagraph(item, answer) {
+  if (item.validator?.type !== 'paragraphRepair') return null;
+  const rawText = isPlainObject(answer) ? answer.typed ?? answer.answer : answer;
+  const checks = Array.isArray(item.validator?.checks) ? item.validator.checks : [];
+  if (!checks.length) return null;
+  const results = [
+    markParagraphPassageShape(item, rawText),
+    ...checks.map((check) => {
+      if (check?.type === 'requiresApostropheForms') return markRequiredApostropheForms(check, rawText);
+      return markTransfer(paragraphCheckItem(item, check), { typed: rawText });
+    }),
+  ].filter(Boolean);
+  if (!results.length) return null;
+
+  const correct = results.every((result) => result.correct);
+  return {
+    correct,
+    expected: item.model || '',
+    note: correct ? (item.explanation || 'The passage has been repaired.') : 'Repair every punctuation pattern in the passage.',
+    misconceptionTags: correct ? [] : uniqueStrings(results.flatMap((result) => result.correct ? [] : result.misconceptionTags || [])),
+    facets: aggregateParagraphFacets(results),
+  };
+}
+
+function markCombine(item, answer) {
+  const rawText = isPlainObject(answer) ? answer.typed ?? answer.answer : answer;
+  const text = normaliseAnswerText(rawText);
+  const validator = item.validator || {};
+  const capitalOk = sentenceStartsWithCapital(text);
+  const requiredTerminal = terminalMarkFromModel(item);
+  const terminalOk = sentenceEnds(text, requiredTerminal);
+  const expected = item.model || '';
+
+  if (validator.type === 'combineListSentence') {
+    const { wordsOk, listOk, sentenceOk, hasFinalComma } = anchoredListSentence(text, validator, requiredTerminal);
+    const correct = wordsOk && listOk && capitalOk && terminalOk && sentenceOk;
+    const tags = [];
+    if (!wordsOk) tags.push('comma.list_words_changed');
+    if (wordsOk && !listOk) tags.push(hasFinalComma ? 'comma.unnecessary_final_comma' : 'comma.list_separator_missing');
+    if (!capitalOk) tags.push('comma.capitalisation_missing');
+    if (!terminalOk) tags.push('comma.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('combine.extra_sentence');
+    return {
+      correct,
+      expected,
+      note: correct ? 'The notes have been combined into one clear list sentence.' : 'Keep the list words in order and separate the list with the expected comma.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('comma_placement', listOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+        facet('single_sentence', sentenceOk),
+      ],
+    };
+  }
+
+  if (validator.type === 'combineFrontedAdverbial') {
+    const { wordsOk, phraseOk, commaOk, sentenceOk } = anchoredFrontedAdverbial(text, validator, requiredTerminal);
+    const correct = wordsOk && commaOk && capitalOk && terminalOk && sentenceOk;
+    const tags = [];
+    if (!phraseOk || !wordsOk) tags.push('comma.opening_phrase_changed');
+    if (phraseOk && !commaOk) tags.push(primaryCommaTag(item, 'comma.fronted_adverbial_missing'));
+    if (!capitalOk) tags.push('comma.capitalisation_missing');
+    if (!terminalOk) tags.push('comma.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('combine.extra_sentence');
+    return {
+      correct,
+      expected,
+      note: correct ? 'The fronted adverbial is combined with a comma after it.' : 'Keep the phrase first, add the comma, and combine it with the main clause.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('comma_placement', commaOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+        facet('single_sentence', sentenceOk),
+      ],
+    };
+  }
+
+  if (validator.type === 'combineParentheticalPhrase') {
+    const { wordsOk, openOk, closeOk, punctuationOk, sentenceOk } = anchoredParentheticalPhrase(text, validator, requiredTerminal);
+    const correct = wordsOk && punctuationOk && capitalOk && terminalOk && sentenceOk;
+    const tags = [];
+    if (!wordsOk) tags.push('structure.words_changed');
+    if (wordsOk && !punctuationOk) tags.push(openOk || closeOk ? 'structure.parenthesis_unbalanced' : 'structure.parenthesis_missing');
+    if (!capitalOk) tags.push('structure.capitalisation_missing');
+    if (!terminalOk) tags.push('structure.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('combine.extra_sentence');
+    return {
+      correct,
+      expected,
+      note: correct ? 'The extra detail is combined as clear parenthesis.' : 'Keep the sentence parts in order and mark both sides of the parenthesis.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('parenthetical_phrase', punctuationOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+        facet('single_sentence', sentenceOk),
+      ],
+    };
+  }
+
+  if (validator.type === 'combineColonList') {
+    const { wordsOk, colonOk, listOk, hasFinalComma } = colonBeforeList(text, validator);
+    const sentenceOk = singleSentenceOk(text, requiredTerminal);
+    const correct = wordsOk && colonOk && listOk && capitalOk && terminalOk && sentenceOk;
+    const tags = [];
+    if (!wordsOk) tags.push('structure.list_words_changed');
+    if (wordsOk && !colonOk) tags.push('structure.colon_missing');
+    if (wordsOk && !listOk) tags.push(hasFinalComma ? 'comma.unnecessary_final_comma' : 'structure.list_separator_missing');
+    if (!capitalOk) tags.push('structure.capitalisation_missing');
+    if (!terminalOk) tags.push('structure.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('combine.extra_sentence');
+    return {
+      correct,
+      expected,
+      note: correct ? 'The opening clause and list are combined with a colon.' : 'Use the colon after the opening clause and keep the list items in order.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('colon_boundary', colonOk),
+        facet('list_separators', listOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+        facet('single_sentence', sentenceOk),
+      ],
+    };
+  }
+
+  if (validator.type === 'combineBoundaryBetweenClauses') {
+    const { wordsOk, markOk, between, mark, sentenceOk } = anchoredBoundarySentence(text, validator, requiredTerminal);
+    const isSemicolon = mark === ';';
+    const correct = wordsOk && markOk && capitalOk && terminalOk && sentenceOk;
+    const tags = [];
+    if (!wordsOk) tags.push('boundary.words_changed');
+    if (wordsOk && !markOk) {
+      if (isSemicolon && /,/.test(between)) tags.push('boundary.comma_splice');
+      else tags.push(isSemicolon ? 'boundary.semicolon_missing' : 'boundary.dash_missing');
+    }
+    if (!capitalOk) tags.push('boundary.capitalisation_missing');
+    if (!terminalOk) tags.push('boundary.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('combine.extra_sentence');
+    return {
+      correct,
+      expected,
+      note: correct ? 'The related clauses are combined into one punctuated sentence.' : 'Keep both clauses in order and put the target boundary mark between them.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('boundary_mark', markOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+        facet('single_sentence', sentenceOk),
       ],
     };
   }
@@ -726,6 +1222,14 @@ export function markPunctuationAnswer({ item, answer } = {}) {
   }
 
   if (item.mode === 'choose') return markChoose(item, answer);
+  if (item.mode === 'paragraph') {
+    const paragraph = markParagraph(item, answer);
+    if (paragraph) return paragraph;
+  }
+  if (item.mode === 'combine') {
+    const combine = markCombine(item, answer);
+    if (combine) return combine;
+  }
   if (item.validator) {
     const transfer = markTransfer(item, answer);
     if (transfer) return transfer;

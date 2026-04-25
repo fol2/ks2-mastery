@@ -2,10 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  createPunctuationContentIndexes,
   createPunctuationMasteryKey,
+  PUNCTUATION_CONTENT_MANIFEST,
   PUNCTUATION_RELEASE_ID,
 } from '../shared/punctuation/content.js';
 import { PUNCTUATION_EVENT_TYPES } from '../shared/punctuation/events.js';
+import { createMemoryState, updateMemoryState } from '../shared/punctuation/scheduler.js';
 import { createPunctuationService, PunctuationServiceError } from '../shared/punctuation/service.js';
 
 function makeRepository() {
@@ -31,6 +34,13 @@ function makeRepository() {
       return { data, practiceSession };
     },
   };
+}
+
+function correctAnswerFor(item) {
+  if (item.inputKind === 'choice') {
+    return { choiceIndex: item.options.find((option) => option.text === item.model)?.index ?? 0 };
+  }
+  return { typed: item.model };
 }
 
 test('punctuation service follows setup -> active-item -> feedback -> active-item -> summary', () => {
@@ -115,6 +125,58 @@ test('focus sessions keep their selected cluster after continue and skip', () =>
 
   const skipped = service.skipItem('learner-a', continued).state;
   assert.equal(skipped.session.currentItem.clusterId, 'structure');
+});
+
+test('weak spots sessions target weak facets and record weak attempt metadata', () => {
+  const repository = makeRepository();
+  repository.writeData('learner-a', {
+    prefs: { mode: 'smart', roundLength: '1' },
+    progress: {
+      items: {},
+      facets: { 'speech::insert': updateMemoryState(createMemoryState(), false, 0) },
+      rewardUnits: {},
+      attempts: [],
+      sessionsCompleted: 0,
+    },
+  });
+  const service = createPunctuationService({ repository, now: () => 0, random: () => 0 });
+
+  const start = service.startSession('learner-a', { mode: 'weak', roundLength: '1' }).state;
+  assert.equal(start.session.mode, 'weak');
+  assert.equal(start.session.currentItem.id, 'sp_insert_question');
+  assert.equal(start.session.weakFocus.skillId, 'speech');
+  assert.equal(start.session.weakFocus.source, 'weak_facet');
+
+  service.submitAnswer('learner-a', start, correctAnswerFor(start.session.currentItem));
+  const attempt = repository.snapshot().data.progress.attempts.at(-1);
+  assert.equal(attempt.sessionMode, 'weak');
+  assert.equal(attempt.supportLevel, 0);
+});
+
+test('mixed transfer attempts update every included skill-by-mode facet', () => {
+  const mixedTransfer = PUNCTUATION_CONTENT_MANIFEST.items.find((entry) => entry.id === 'sp_fa_transfer_at_last_speech');
+  const manifest = {
+    ...PUNCTUATION_CONTENT_MANIFEST,
+    items: [mixedTransfer],
+    generatorFamilies: [],
+  };
+  const repository = makeRepository();
+  const service = createPunctuationService({
+    repository,
+    now: () => 0,
+    random: () => 0,
+    manifest,
+    indexes: createPunctuationContentIndexes(manifest),
+  });
+
+  const start = service.startSession('learner-a', { mode: 'smart', roundLength: '1' }).state;
+  assert.equal(start.session.currentItem.id, 'sp_fa_transfer_at_last_speech');
+  service.submitAnswer('learner-a', start, { typed: 'At last, Noah shouted, "We made it!"' });
+
+  const data = repository.snapshot().data;
+  assert.equal(data.progress.attempts.at(-1).mode, 'transfer');
+  assert.equal(data.progress.facets['speech::transfer'].correct, 1);
+  assert.equal(data.progress.facets['fronted_adverbial::transfer'].correct, 1);
 });
 
 test('one correct answer does not unlock secure-unit progress', () => {

@@ -18,7 +18,7 @@ export function CodexCard({ entry, onPractice, onPreview }) {
         <div className="codex-portrait">
           <CodexCreatureTrigger
             entry={entry}
-            sizes="(max-width: 820px) 45vw, 180px"
+            sizes="(max-width: 820px) 72vw, 360px"
             onPreview={onPreview}
           />
         </div>

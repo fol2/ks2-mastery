@@ -403,6 +403,46 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     source: 'fixed',
   },
   {
+    id: 'lc_transfer_bake_sale',
+    mode: 'transfer',
+    skillIds: ['list_commas'],
+    clusterId: 'comma_flow',
+    rewardUnitId: 'list-commas-core',
+    prompt: 'Write one sentence using this exact stem and list: For the bake sale we needed eggs, flour, butter and sugar.',
+    stem: '',
+    accepted: ['For the bake sale we needed eggs, flour, butter and sugar.'],
+    explanation: 'The sentence keeps the stem and separates the list items with commas.',
+    model: 'For the bake sale we needed eggs, flour, butter and sugar.',
+    validator: {
+      type: 'requiresListCommas',
+      opening: 'For the bake sale we needed',
+      items: ['eggs', 'flour', 'butter', 'sugar'],
+    },
+    misconceptionTags: ['comma.list_separator_missing', 'comma.list_words_changed', 'comma.unnecessary_final_comma'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
+    id: 'lc_combine_trip_list',
+    mode: 'combine',
+    skillIds: ['list_commas'],
+    clusterId: 'comma_flow',
+    rewardUnitId: 'list-commas-core',
+    prompt: 'Combine the notes into one correctly punctuated sentence.',
+    stem: 'We packed\n- torches\n- maps\n- water',
+    accepted: ['We packed torches, maps and water.'],
+    explanation: 'The list items stay in order, with a comma between torches and maps.',
+    model: 'We packed torches, maps and water.',
+    validator: {
+      type: 'combineListSentence',
+      opening: 'We packed',
+      items: ['torches', 'maps', 'water'],
+    },
+    misconceptionTags: ['comma.list_separator_missing', 'comma.list_words_changed', 'comma.unnecessary_final_comma'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
     id: 'ac_choose_contractions',
     mode: 'choose',
     skillIds: ['apostrophe_contractions'],
@@ -604,7 +644,7 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     skillIds: ['speech'],
     clusterId: 'speech',
     rewardUnitId: 'speech-core',
-    prompt: 'Write one sentence of direct speech using these exact spoken words: can we start now',
+    prompt: 'Write one sentence of direct speech using these exact spoken words: Can we start now?',
     stem: '',
     accepted: ['Mia asked, "Can we start now?"'],
     explanation: 'Direct speech needs inverted commas, a capital letter, and a question mark inside the closing inverted comma.',
@@ -617,6 +657,28 @@ export const PUNCTUATION_ITEMS = Object.freeze([
       requiredTerminal: '?',
     },
     misconceptionTags: ['speech.quote_missing', 'speech.punctuation_outside_quote', 'speech.reporting_comma_missing', 'speech.capitalisation_missing', 'speech.words_changed'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
+    id: 'sp_fa_transfer_at_last_speech',
+    mode: 'transfer',
+    skillIds: ['speech', 'fronted_adverbial'],
+    clusterId: 'speech',
+    rewardUnitId: 'speech-core',
+    prompt: 'Write one sentence using this exact opening, reporting clause and spoken words: At last / Noah shouted / we made it!',
+    stem: '',
+    accepted: ['At last, Noah shouted, "We made it!"'],
+    explanation: 'The fronted adverbial needs a comma, and the spoken words need inverted commas and correct end punctuation.',
+    model: 'At last, Noah shouted, "We made it!"',
+    validator: {
+      type: 'frontedAdverbialWithSpeech',
+      phrase: 'At last',
+      reportingClause: 'Noah shouted',
+      words: 'we made it',
+      requiredTerminal: '!',
+    },
+    misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing', 'speech.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
     source: 'fixed',
   },
@@ -683,6 +745,26 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'After lunch, we practised our lines.',
     validator: { type: 'startsWithPhraseComma', phrase: 'After lunch' },
     misconceptionTags: ['comma.fronted_adverbial_missing', 'comma.capitalisation_missing'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
+    id: 'fa_combine_after_storm',
+    mode: 'combine',
+    skillIds: ['fronted_adverbial'],
+    clusterId: 'comma_flow',
+    rewardUnitId: 'fronted-adverbials-core',
+    prompt: 'Combine the adverbial and main clause into one sentence.',
+    stem: 'After the storm\nThe playground gleamed.',
+    accepted: ['After the storm, the playground gleamed.'],
+    explanation: 'The fronted adverbial After the storm is followed by a comma.',
+    model: 'After the storm, the playground gleamed.',
+    validator: {
+      type: 'combineFrontedAdverbial',
+      phrase: 'After the storm',
+      mainClause: 'the playground gleamed',
+    },
+    misconceptionTags: ['comma.fronted_adverbial_missing', 'comma.opening_phrase_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
     source: 'fixed',
   },
@@ -824,6 +906,27 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     source: 'fixed',
   },
   {
+    id: 'sc_combine_rain_pitch',
+    mode: 'combine',
+    skillIds: ['semicolon'],
+    clusterId: 'boundary',
+    rewardUnitId: 'semicolons-core',
+    prompt: 'Combine the two related clauses into one sentence with a semi-colon.',
+    stem: 'The rain had stopped.\nThe pitch was still slippery.',
+    accepted: ['The rain had stopped; the pitch was still slippery.'],
+    explanation: 'The semi-colon joins two closely related main clauses in one sentence.',
+    model: 'The rain had stopped; the pitch was still slippery.',
+    validator: {
+      type: 'combineBoundaryBetweenClauses',
+      mark: ';',
+      left: 'The rain had stopped',
+      right: 'the pitch was still slippery',
+    },
+    misconceptionTags: ['boundary.semicolon_missing', 'boundary.comma_splice', 'boundary.words_changed'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
     id: 'dc_choose_flooded_route',
     mode: 'choose',
     skillIds: ['dash_clause'],
@@ -895,6 +998,27 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     source: 'fixed',
   },
   {
+    id: 'dc_combine_flooded_route',
+    mode: 'combine',
+    skillIds: ['dash_clause'],
+    clusterId: 'boundary',
+    rewardUnitId: 'dash-clauses-core',
+    prompt: 'Combine the two related clauses into one sentence with a dash.',
+    stem: 'The path was flooded.\nWe took the longer route.',
+    accepted: ['The path was flooded - we took the longer route.'],
+    explanation: 'A spaced dash marks the sharp boundary between the related clauses.',
+    model: 'The path was flooded - we took the longer route.',
+    validator: {
+      type: 'combineBoundaryBetweenClauses',
+      mark: '-',
+      left: 'The path was flooded',
+      right: 'we took the longer route',
+    },
+    misconceptionTags: ['boundary.dash_missing', 'boundary.comma_splice', 'boundary.words_changed'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
     id: 'hy_choose_shark',
     mode: 'choose',
     skillIds: ['hyphen'],
@@ -956,6 +1080,22 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     explanation: 'Well-known is hyphenated because the words work together before author.',
     model: 'The well-known author visited our class.',
     validator: { type: 'requiresHyphenatedPhrase', phrase: 'well-known author' },
+    misconceptionTags: ['boundary.hyphen_missing', 'boundary.words_changed'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
+    id: 'hy_transfer_man_eating_shark',
+    mode: 'transfer',
+    skillIds: ['hyphen'],
+    clusterId: 'boundary',
+    rewardUnitId: 'hyphens-core',
+    prompt: "Write one sentence that includes this exact phrase: man-eating shark.",
+    stem: '',
+    accepted: ['The divers spotted a man-eating shark near the reef.'],
+    explanation: 'The hyphen avoids ambiguity in the noun phrase.',
+    model: 'The divers spotted a man-eating shark near the reef.',
+    validator: { type: 'requiresHyphenatedPhrase', phrase: 'man-eating shark' },
     misconceptionTags: ['boundary.hyphen_missing', 'boundary.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
     source: 'fixed',
@@ -1036,7 +1176,7 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     skillIds: ['parenthesis'],
     clusterId: 'structure',
     rewardUnitId: 'parenthesis-core',
-    prompt: 'Write one sentence that adds this parenthesis: which opened last year.',
+    prompt: 'Write one sentence using this exact frame and parenthesis: The library / which opened last year / is busy.',
     stem: '',
     accepted: ['The library, which opened last year, is busy.'],
     explanation: 'The parenthesis is marked before and after the extra information.',
@@ -1046,6 +1186,31 @@ export const PUNCTUATION_ITEMS = Object.freeze([
       before: 'The library',
       phrase: 'which opened last year',
       after: 'is busy',
+    },
+    misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'structure.words_changed'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
+    id: 'pa_combine_lighthouse',
+    mode: 'combine',
+    skillIds: ['parenthesis'],
+    clusterId: 'structure',
+    rewardUnitId: 'parenthesis-core',
+    prompt: 'Combine the sentence and extra detail using parenthesis.',
+    stem: 'The lighthouse guided the boats.\nExtra detail: a useful lookout',
+    accepted: [
+      'The lighthouse, a useful lookout, guided the boats.',
+      'The lighthouse (a useful lookout) guided the boats.',
+      'The lighthouse - a useful lookout - guided the boats.',
+    ],
+    explanation: 'The extra detail a useful lookout is marked off clearly as parenthesis.',
+    model: 'The lighthouse, a useful lookout, guided the boats.',
+    validator: {
+      type: 'combineParentheticalPhrase',
+      before: 'The lighthouse',
+      phrase: 'a useful lookout',
+      after: 'guided the boats',
     },
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'structure.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
@@ -1107,7 +1272,7 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     skillIds: ['colon_list'],
     clusterId: 'structure',
     rewardUnitId: 'colons-core',
-    prompt: 'Write one sentence that uses a colon to introduce this exact list: a torch, a map and a whistle.',
+    prompt: 'Write one sentence using this exact opening and list: We needed three things / a torch, a map and a whistle.',
     stem: '',
     accepted: ['We needed three things: a torch, a map and a whistle.'],
     explanation: 'The colon introduces the list after a complete opening clause.',
@@ -1116,6 +1281,46 @@ export const PUNCTUATION_ITEMS = Object.freeze([
       type: 'requiresColonBeforeList',
       opening: 'We needed three things',
       items: ['a torch', 'a map', 'a whistle'],
+    },
+    misconceptionTags: ['structure.colon_missing', 'structure.list_words_changed', 'structure.list_separator_missing'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
+    id: 'cl_lc_transfer_toolkit',
+    mode: 'transfer',
+    skillIds: ['colon_list', 'list_commas'],
+    clusterId: 'structure',
+    rewardUnitId: 'colons-core',
+    prompt: 'Write one sentence using this exact stem and list after a colon: Our toolkit contained three items / glue, card and scissors.',
+    stem: '',
+    accepted: ['Our toolkit contained three items: glue, card and scissors.'],
+    explanation: 'A complete opening clause can be followed by a colon and a list.',
+    model: 'Our toolkit contained three items: glue, card and scissors.',
+    validator: {
+      type: 'requiresColonBeforeList',
+      opening: 'Our toolkit contained three items',
+      items: ['glue', 'card', 'scissors'],
+    },
+    misconceptionTags: ['structure.colon_missing', 'structure.list_words_changed', 'structure.list_separator_missing'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
+    id: 'cl_combine_awards',
+    mode: 'combine',
+    skillIds: ['colon_list'],
+    clusterId: 'structure',
+    rewardUnitId: 'colons-core',
+    prompt: 'Combine the opening clause and list using a colon.',
+    stem: 'The team won three awards\nplayer of the match / best defence / fair play',
+    accepted: ['The team won three awards: player of the match, best defence and fair play.'],
+    explanation: 'The colon introduces the list after a complete opening clause.',
+    model: 'The team won three awards: player of the match, best defence and fair play.',
+    validator: {
+      type: 'combineColonList',
+      opening: 'The team won three awards',
+      items: ['player of the match', 'best defence', 'fair play'],
     },
     misconceptionTags: ['structure.colon_missing', 'structure.list_words_changed', 'structure.list_separator_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
@@ -1270,6 +1475,159 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
     source: 'fixed',
   },
+  {
+    id: 'pg_fronted_speech',
+    mode: 'paragraph',
+    skillIds: ['fronted_adverbial', 'speech'],
+    clusterId: 'speech',
+    rewardUnitId: 'speech-core',
+    prompt: 'Repair the punctuation in the short passage.',
+    stem: 'After lunch Mia asked can we start now',
+    accepted: ['After lunch, Mia asked, "Can we start now?"'],
+    explanation: 'The fronted adverbial needs a comma, and the spoken question needs inverted commas and a question mark inside the speech.',
+    model: 'After lunch, Mia asked, "Can we start now?"',
+    validator: {
+      type: 'paragraphRepair',
+      checks: [
+        {
+          type: 'startsWithPhraseComma',
+          phrase: 'After lunch',
+          misconceptionTags: ['comma.fronted_adverbial_missing'],
+        },
+        {
+          type: 'speechWithWords',
+          words: 'can we start now',
+          requiredTerminal: '?',
+          misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
+        },
+      ],
+    },
+    misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
+    id: 'pg_parenthesis_speech',
+    mode: 'paragraph',
+    skillIds: ['parenthesis', 'speech'],
+    clusterId: 'structure',
+    rewardUnitId: 'parenthesis-core',
+    prompt: 'Repair the punctuation in the short passage.',
+    stem: 'The museum a former station was busy. Noor said the queue is moving',
+    accepted: ['The museum, a former station, was busy. Noor said, "The queue is moving."'],
+    explanation: 'The extra detail is marked as parenthesis, and the spoken sentence is punctuated inside inverted commas.',
+    model: 'The museum, a former station, was busy. Noor said, "The queue is moving."',
+    validator: {
+      type: 'paragraphRepair',
+      checks: [
+        {
+          type: 'requiresParentheticalPhrase',
+          before: 'The museum',
+          phrase: 'a former station',
+          after: 'was busy',
+          misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
+        },
+        {
+          type: 'speechWithWords',
+          words: 'the queue is moving',
+          requiredTerminal: '.',
+          misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
+        },
+      ],
+    },
+    misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'speech.quote_missing', 'speech.reporting_comma_missing'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
+    id: 'pg_colon_semicolon',
+    mode: 'paragraph',
+    skillIds: ['colon_list', 'semicolon'],
+    clusterId: 'boundary',
+    rewardUnitId: 'semicolons-core',
+    prompt: 'Repair the punctuation in the short passage.',
+    stem: 'The kit included three tools, a torch, a rope and a map. The weather changed, the team packed quickly.',
+    accepted: ['The kit included three tools: a torch, a rope and a map. The weather changed; the team packed quickly.'],
+    explanation: 'A colon introduces the list, and a semi-colon joins the related clauses.',
+    model: 'The kit included three tools: a torch, a rope and a map. The weather changed; the team packed quickly.',
+    validator: {
+      type: 'paragraphRepair',
+      checks: [
+        {
+          type: 'requiresColonBeforeList',
+          opening: 'The kit included three tools',
+          items: ['a torch', 'a rope', 'a map'],
+          allowTrailingText: true,
+          misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
+        },
+        {
+          type: 'requiresBoundaryBetweenClauses',
+          mark: ';',
+          left: 'The weather changed',
+          right: 'the team packed quickly',
+          misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
+        },
+      ],
+    },
+    misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing', 'boundary.comma_splice', 'boundary.semicolon_missing'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
+    id: 'pg_bullet_consistency',
+    mode: 'paragraph',
+    skillIds: ['bullet_points'],
+    clusterId: 'structure',
+    rewardUnitId: 'bullet-points-core',
+    prompt: 'Repair the bullet-list punctuation.',
+    stem: 'Bring\n- a drink.\n- a hat\n- a sketchbook.',
+    accepted: [
+      'Bring:\n- a drink\n- a hat\n- a sketchbook',
+      'Bring:\n- a drink.\n- a hat.\n- a sketchbook.',
+    ],
+    explanation: 'The stem needs a colon, each bullet stays on its own line, and the bullet punctuation is consistent.',
+    model: 'Bring:\n- a drink\n- a hat\n- a sketchbook',
+    validator: {
+      type: 'paragraphRepair',
+      checks: [
+        {
+          type: 'requiresBulletStemAndItems',
+          stem: 'Bring',
+          items: ['a drink', 'a hat', 'a sketchbook'],
+          misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
+        },
+      ],
+    },
+    misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
+  {
+    id: 'pg_apostrophe_mix',
+    mode: 'paragraph',
+    skillIds: ['apostrophe_contractions', 'apostrophe_possession'],
+    clusterId: 'apostrophe',
+    rewardUnitId: 'apostrophe-possession-core',
+    prompt: 'Repair the apostrophes in the short passage.',
+    stem: 'We cant find the childrens coats. The girls bags are in the hall.',
+    accepted: ["We can't find the children's coats. The girls' bags are in the hall."],
+    explanation: "Can't is a contraction, children's is an irregular plural possession, and girls' shows possession by more than one girl.",
+    model: "We can't find the children's coats. The girls' bags are in the hall.",
+    validator: {
+      type: 'paragraphRepair',
+      checks: [
+        {
+          type: 'requiresApostropheForms',
+          tokens: ["can't", "children's", "girls' bags"],
+          forbidden: ['cant', 'childrens', 'girls bags'],
+          misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing', 'apostrophe.possession_number'],
+        },
+      ],
+    },
+    misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing', 'apostrophe.possession_number'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    source: 'fixed',
+  },
 ]);
 
 export const PUNCTUATION_REWARD_UNITS = Object.freeze([
@@ -1289,25 +1647,25 @@ export const PUNCTUATION_REWARD_UNITS = Object.freeze([
     id: 'apostrophe-possession-core',
     clusterId: 'apostrophe',
     skillIds: ['apostrophe_possession'],
-    evidenceItemIds: ['ap_choose_possession', 'ap_insert_singular', 'ap_fix_irregular', 'ap_transfer_possession'],
+    evidenceItemIds: ['ap_choose_possession', 'ap_insert_singular', 'ap_fix_irregular', 'ap_transfer_possession', 'pg_apostrophe_mix'],
   }),
   rewardUnit({
     id: 'speech-core',
     clusterId: 'speech',
     skillIds: ['speech'],
-    evidenceItemIds: ['sp_choose_reporting_comma', 'sp_insert_question', 'sp_fix_question', 'sp_transfer_question'],
+    evidenceItemIds: ['sp_choose_reporting_comma', 'sp_insert_question', 'sp_fix_question', 'sp_transfer_question', 'sp_fa_transfer_at_last_speech', 'pg_fronted_speech'],
   }),
   rewardUnit({
     id: 'list-commas-core',
     clusterId: 'comma_flow',
     skillIds: ['list_commas'],
-    evidenceItemIds: ['lc_choose_picnic', 'lc_insert_supplies', 'lc_fix_display', 'lc_transfer_trip'],
+    evidenceItemIds: ['lc_choose_picnic', 'lc_insert_supplies', 'lc_fix_display', 'lc_transfer_trip', 'lc_transfer_bake_sale', 'lc_combine_trip_list'],
   }),
   rewardUnit({
     id: 'fronted-adverbials-core',
     clusterId: 'comma_flow',
     skillIds: ['fronted_adverbial'],
-    evidenceItemIds: ['fa_choose_before_lunch', 'fa_insert_without_warning', 'fa_fix_at_last', 'fa_transfer_after_lunch'],
+    evidenceItemIds: ['fa_choose_before_lunch', 'fa_insert_without_warning', 'fa_fix_at_last', 'fa_transfer_after_lunch', 'fa_combine_after_storm'],
   }),
   rewardUnit({
     id: 'comma-clarity-core',
@@ -1319,31 +1677,31 @@ export const PUNCTUATION_REWARD_UNITS = Object.freeze([
     id: 'semicolons-core',
     clusterId: 'boundary',
     skillIds: ['semicolon'],
-    evidenceItemIds: ['sc_choose_rain_pitch', 'sc_insert_lights_audience', 'sc_fix_path_map', 'sc_transfer_rain_pitch'],
+    evidenceItemIds: ['sc_choose_rain_pitch', 'sc_insert_lights_audience', 'sc_fix_path_map', 'sc_transfer_rain_pitch', 'sc_combine_rain_pitch', 'pg_colon_semicolon'],
   }),
   rewardUnit({
     id: 'dash-clauses-core',
     clusterId: 'boundary',
     skillIds: ['dash_clause'],
-    evidenceItemIds: ['dc_choose_flooded_route', 'dc_insert_door_froze', 'dc_fix_signal_team', 'dc_transfer_flooded_route'],
+    evidenceItemIds: ['dc_choose_flooded_route', 'dc_insert_door_froze', 'dc_fix_signal_team', 'dc_transfer_flooded_route', 'dc_combine_flooded_route'],
   }),
   rewardUnit({
     id: 'hyphens-core',
     clusterId: 'boundary',
     skillIds: ['hyphen'],
-    evidenceItemIds: ['hy_choose_shark', 'hy_insert_little_used', 'hy_fix_fast_moving', 'hy_transfer_well_known'],
+    evidenceItemIds: ['hy_choose_shark', 'hy_insert_little_used', 'hy_fix_fast_moving', 'hy_transfer_well_known', 'hy_transfer_man_eating_shark'],
   }),
   rewardUnit({
     id: 'parenthesis-core',
     clusterId: 'structure',
     skillIds: ['parenthesis'],
-    evidenceItemIds: ['pa_choose_coach', 'pa_insert_museum', 'pa_fix_author', 'pa_transfer_library'],
+    evidenceItemIds: ['pa_choose_coach', 'pa_insert_museum', 'pa_fix_author', 'pa_transfer_library', 'pa_combine_lighthouse', 'pg_parenthesis_speech'],
   }),
   rewardUnit({
     id: 'colons-core',
     clusterId: 'structure',
     skillIds: ['colon_list'],
-    evidenceItemIds: ['cl_choose_supplies', 'cl_insert_awards', 'cl_fix_camp', 'cl_transfer_trip'],
+    evidenceItemIds: ['cl_choose_supplies', 'cl_insert_awards', 'cl_fix_camp', 'cl_transfer_trip', 'cl_lc_transfer_toolkit', 'cl_combine_awards'],
   }),
   rewardUnit({
     id: 'semicolon-lists-core',
@@ -1355,7 +1713,7 @@ export const PUNCTUATION_REWARD_UNITS = Object.freeze([
     id: 'bullet-points-core',
     clusterId: 'structure',
     skillIds: ['bullet_points'],
-    evidenceItemIds: ['bp_choose_bring', 'bp_insert_kit', 'bp_fix_consistency', 'bp_transfer_class'],
+    evidenceItemIds: ['bp_choose_bring', 'bp_insert_kit', 'bp_fix_consistency', 'bp_transfer_class', 'pg_bullet_consistency'],
   }),
 ]);
 
@@ -1385,6 +1743,14 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
+    id: 'gen_apostrophe_mix_paragraph',
+    skillId: 'apostrophe_possession',
+    rewardUnitId: 'apostrophe-possession-core',
+    published: true,
+    mode: 'paragraph',
+    deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
+  },
+  {
     id: 'gen_speech_insert',
     skillId: 'speech',
     rewardUnitId: 'speech-core',
@@ -1401,11 +1767,35 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
+    id: 'gen_list_commas_combine',
+    skillId: 'list_commas',
+    rewardUnitId: 'list-commas-core',
+    published: true,
+    mode: 'combine',
+    deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
+  },
+  {
     id: 'gen_fronted_adverbial_fix',
     skillId: 'fronted_adverbial',
     rewardUnitId: 'fronted-adverbials-core',
     published: true,
     mode: 'fix',
+    deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
+  },
+  {
+    id: 'gen_fronted_adverbial_combine',
+    skillId: 'fronted_adverbial',
+    rewardUnitId: 'fronted-adverbials-core',
+    published: true,
+    mode: 'combine',
+    deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
+  },
+  {
+    id: 'gen_fronted_speech_paragraph',
+    skillId: 'speech',
+    rewardUnitId: 'speech-core',
+    published: true,
+    mode: 'paragraph',
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -1425,11 +1815,35 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
+    id: 'gen_semicolon_combine',
+    skillId: 'semicolon',
+    rewardUnitId: 'semicolons-core',
+    published: true,
+    mode: 'combine',
+    deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
+  },
+  {
+    id: 'gen_colon_semicolon_paragraph',
+    skillId: 'semicolon',
+    rewardUnitId: 'semicolons-core',
+    published: true,
+    mode: 'paragraph',
+    deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
+  },
+  {
     id: 'gen_dash_clause_fix',
     skillId: 'dash_clause',
     rewardUnitId: 'dash-clauses-core',
     published: true,
     mode: 'fix',
+    deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
+  },
+  {
+    id: 'gen_dash_clause_combine',
+    skillId: 'dash_clause',
+    rewardUnitId: 'dash-clauses-core',
+    published: true,
+    mode: 'combine',
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -1449,11 +1863,35 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
+    id: 'gen_parenthesis_combine',
+    skillId: 'parenthesis',
+    rewardUnitId: 'parenthesis-core',
+    published: true,
+    mode: 'combine',
+    deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
+  },
+  {
+    id: 'gen_parenthesis_speech_paragraph',
+    skillId: 'parenthesis',
+    rewardUnitId: 'parenthesis-core',
+    published: true,
+    mode: 'paragraph',
+    deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
+  },
+  {
     id: 'gen_colon_list_insert',
     skillId: 'colon_list',
     rewardUnitId: 'colons-core',
     published: true,
     mode: 'insert',
+    deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
+  },
+  {
+    id: 'gen_colon_list_combine',
+    skillId: 'colon_list',
+    rewardUnitId: 'colons-core',
+    published: true,
+    mode: 'combine',
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -1470,6 +1908,14 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     rewardUnitId: 'bullet-points-core',
     published: true,
     mode: 'fix',
+    deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
+  },
+  {
+    id: 'gen_bullet_points_paragraph',
+    skillId: 'bullet_points',
+    rewardUnitId: 'bullet-points-core',
+    published: true,
+    mode: 'paragraph',
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
 ]);
@@ -1508,6 +1954,75 @@ function assertNoDuplicates(values, label, errors) {
   const duplicates = duplicateValues(values.filter(Boolean));
   for (const duplicate of duplicates) {
     errors.push(`Duplicate ${label}: ${duplicate}`);
+  }
+}
+
+function normaliseVisibleContractText(value) {
+  return String(value ?? '')
+    .toLowerCase()
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/[–—]/g, '-')
+    .replace(/\s+([,.;:?!])/g, '$1')
+    .replace(/\s*-\s*/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function visibleContractIncludes(visibleText, requirement) {
+  const required = normaliseVisibleContractText(requirement);
+  return !required || visibleText.includes(required);
+}
+
+function transferValidatorRequirements(item) {
+  if (item?.mode !== 'transfer') return [];
+  const validator = item.validator || {};
+  switch (validator.type) {
+    case 'startsWithWordQuestion':
+      return [validator.word];
+    case 'requiresTokens':
+      return asArray(validator.tokens);
+    case 'requiresListCommas':
+      return [
+        validator.opening || validator.stem,
+        ...asArray(validator.items),
+      ];
+    case 'startsWithPhraseComma':
+      return [validator.phrase];
+    case 'speechWithWords':
+      return [
+        validator.requiredTerminal
+          ? `${validator.words || validator.spokenWords}${validator.requiredTerminal}`
+          : (validator.words || validator.spokenWords),
+      ];
+    case 'frontedAdverbialWithSpeech':
+      return [
+        validator.phrase,
+        validator.reportingClause,
+        validator.requiredTerminal
+          ? `${validator.words || validator.spokenWords}${validator.requiredTerminal}`
+          : (validator.words || validator.spokenWords),
+      ];
+    case 'requiresBoundaryBetweenClauses':
+      return [validator.left, validator.right];
+    case 'requiresHyphenatedPhrase':
+      return [validator.phrase];
+    case 'requiresParentheticalPhrase':
+      return [validator.before, validator.phrase, validator.after];
+    case 'requiresColonBeforeList':
+      return [
+        validator.opening,
+        ...asArray(validator.items),
+      ];
+    case 'requiresSemicolonList':
+      return asArray(validator.items);
+    case 'requiresBulletStemAndItems':
+      return [
+        validator.stem,
+        ...asArray(validator.items),
+      ];
+    default:
+      return [];
   }
 }
 
@@ -1642,6 +2157,12 @@ export function validatePunctuationManifest(manifest = PUNCTUATION_CONTENT_MANIF
     for (const skillId of asArray(item.skillIds)) {
       if (!indexes.skillById.has(skillId)) errors.push(`Item ${item.id} references missing skill ${skillId}.`);
     }
+    const visibleContract = normaliseVisibleContractText(`${item.prompt || ''} ${item.stem || ''}`);
+    for (const requirement of transferValidatorRequirements(item)) {
+      if (!visibleContractIncludes(visibleContract, requirement)) {
+        errors.push(`Transfer item ${item.id} hides validator requirement ${requirement}.`);
+      }
+    }
   }
 
   for (const unit of indexes.rewardUnits) {
@@ -1652,6 +2173,16 @@ export function validatePunctuationManifest(manifest = PUNCTUATION_CONTENT_MANIF
     const hasGenerator = asArray(unit.generatorFamilyIds).some((familyId) => indexes.generatorFamilyById.has(familyId));
     if (unit.published && !hasEvidenceItem && !hasGenerator) {
       errors.push(`Published reward unit ${unit.rewardUnitId} has no deterministic evidence.`);
+    }
+    for (const itemId of asArray(unit.evidenceItemIds)) {
+      const item = indexes.itemById.get(itemId);
+      if (!item) {
+        errors.push(`Reward unit ${unit.rewardUnitId} lists missing evidence item ${itemId}.`);
+        continue;
+      }
+      if (item.rewardUnitId !== unit.rewardUnitId) {
+        errors.push(`Reward unit ${unit.rewardUnitId} lists evidence item ${itemId} from ${item.rewardUnitId}.`);
+      }
     }
     const expectedKey = createPunctuationMasteryKey({
       releaseId: unit.releaseId,

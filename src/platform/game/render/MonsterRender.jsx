@@ -76,6 +76,7 @@ export function MonsterRender({
   effects = [],
   sizes,
   reducedMotion,
+  extraStyle,
 }) {
   const motionPreferred = typeof reducedMotion === 'boolean'
     ? reducedMotion
@@ -95,8 +96,14 @@ export function MonsterRender({
   // stage-tier profile lookup, so all four belong in the deps. id alone is
   // not enough — already-caught monsters keep displayState='monster' across
   // every stage transition, so the cache would otherwise hold stale motion.
+  // `extraStyle` (from a caller's monster-visual-config or similar) is
+  // spread last so per-monster overrides win over effect-derived defaults.
   const baseStyle = useMemo(
-    () => mergeTransformStyle(base, monster, context),
+    () => {
+      const fromEffects = mergeTransformStyle(base, monster, context);
+      if (!extraStyle) return fromEffects;
+      return { ...(fromEffects || {}), ...extraStyle };
+    },
     [
       base,
       monster?.id,
@@ -105,6 +112,7 @@ export function MonsterRender({
       monster?.branch,
       monster?.variant,
       context,
+      extraStyle,
     ],
   );
 

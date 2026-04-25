@@ -32,7 +32,27 @@ import { buildAdminHubReadModel } from '../../src/platform/hubs/admin-read-model
 import { buildParentHubReadModel } from '../../src/platform/hubs/parent-read-model.js';
 import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system.js';
 import { buildSpellingProgressPools, buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
+import {
+  activityFeedRowFromEventRow,
+  COMMAND_PROJECTION_MODEL_KEY,
+  emptyLearnerReadModel,
+  normaliseActivityFeedRow,
+  normaliseLearnerReadModelRow,
+  normaliseReadModelKey,
+} from './read-models/learner-read-models.js';
 import { buildSpellingAudioCue } from './subjects/spelling/audio.js';
+import { buildPunctuationReadModel } from './subjects/punctuation/read-models.js';
+import { createPunctuationService } from '../../shared/punctuation/service.js';
+import {
+  createInitialPunctuationState,
+  normalisePunctuationSummary,
+} from '../../src/subjects/punctuation/service-contract.js';
+import {
+  BUNDLED_MONSTER_VISUAL_CONFIG,
+  MONSTER_VISUAL_SCHEMA_VERSION,
+  validateMonsterVisualConfigForPublish,
+} from '../../src/platform/game/monster-visual-config.js';
+import { MONSTER_ASSET_MANIFEST } from '../../src/platform/game/monster-asset-manifest.js';
 import {
   BadRequestError,
   ConflictError,
@@ -71,13 +91,27 @@ const PUBLIC_EVENT_TYPES = new Set([
   'reward.monster',
   'platform.practice-streak-hit',
 ]);
+const PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER = 5;
+const PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER = 1;
+const PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LOOKUP_LIMIT_PER_LEARNER = 5;
+const PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER = 50;
+const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 1;
 const PUBLIC_MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
+const PROJECTION_RECENT_EVENT_LIMIT = 200;
+const CAPACITY_READ_MODEL_TABLES = Object.freeze([
+  'learner_read_models',
+  'learner_activity_feed',
+]);
+const COMMAND_PROJECTION_READ_MODEL_VERSION = 1;
 const PUBLIC_MONSTER_IDS = new Set(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']);
 const PUBLIC_DIRECT_SPELLING_MONSTER_IDS = ['inklet', 'glimmerbug', 'vellhorn'];
 const PUBLIC_MONSTER_BRANCHES = new Set(['b1', 'b2']);
 const SPELLING_RUNTIME_CONTENT_CACHE_LIMIT = 8;
 const spellingRuntimeContentCache = new Map();
 const SPELLING_SECURE_STAGE = 4;
+const MONSTER_VISUAL_CONFIG_ID = 'global';
+const MONSTER_VISUAL_SCOPE_TYPE = 'platform';
+const MONSTER_VISUAL_SCOPE_ID = 'monster-visual-config';
 const PUBLIC_EVENT_TEXT_ENUMS = {
   mode: new Set(['smart', 'trouble', 'single', 'test']),
   sessionType: new Set(['learning', 'test']),
@@ -101,6 +135,15 @@ function asTs(value, fallback) {
   const numeric = Number(value);
   if (Number.isFinite(numeric)) return numeric;
   return fallback;
+}
+
+function isMissingTableError(error, tableName) {
+  const message = String(error?.message || '');
+  return new RegExp(`no such table:\\s*${tableName}\\b`, 'i').test(message);
+}
+
+function isMissingCapacityReadModelTableError(error) {
+  return CAPACITY_READ_MODEL_TABLES.some((tableName) => isMissingTableError(error, tableName));
 }
 
 function isPlainObject(value) {
@@ -230,8 +273,43 @@ function redactSpellingUiForClient(ui, data = {}, learnerId = '', {
   };
 }
 
+function createPunctuationReadModelService(data, now) {
+  return createPunctuationService({
+    repository: {
+      readData() {
+        return cloneSerialisable(data) || {};
+      },
+    },
+    now: () => now,
+    random: () => 0,
+  });
+}
+
+function redactPunctuationUiForClient(ui, data = {}, learnerId = '', { now = Date.now() } = {}) {
+  const service = createPunctuationReadModelService(data, now);
+  const state = service.initState(ui || createInitialPunctuationState());
+  const readModel = buildPunctuationReadModel({
+    learnerId,
+    state,
+    prefs: service.getPrefs(learnerId),
+    stats: service.getStats(learnerId),
+    analytics: service.getAnalyticsSnapshot(learnerId),
+  });
+  if (readModel.summary?.gps) {
+    readModel.summary = publicPunctuationPracticeSessionSummary(readModel.summary);
+  }
+  return readModel;
+}
+
 async function publicSubjectStateRowToRecord(row, { spellingContentSnapshot = null, now = Date.now() } = {}) {
   const record = subjectStateRowToRecord(row);
+  if (row.subject_id === 'punctuation') {
+    return normaliseSubjectStateRecord({
+      ui: redactPunctuationUiForClient(record.ui, record.data, row.learner_id, { now }),
+      data: {},
+      updatedAt: record.updatedAt,
+    });
+  }
   if (row.subject_id !== 'spelling') return record;
   const audio = await buildSpellingAudioCue({
     learnerId: row.learner_id,
@@ -385,12 +463,21 @@ function practiceSessionRowToRecord(row) {
 
 function publicPracticeSessionRowToRecord(row) {
   const record = practiceSessionRowToRecord(row);
-  if (record.subjectId !== 'spelling') return record;
-  return normalisePracticeSessionRecord({
-    ...record,
-    sessionState: null,
-    summary: publicPracticeSessionSummary(record.summary, record.sessionKind),
-  });
+  if (record.subjectId === 'spelling') {
+    return normalisePracticeSessionRecord({
+      ...record,
+      sessionState: null,
+      summary: publicPracticeSessionSummary(record.summary, record.sessionKind),
+    });
+  }
+  if (record.subjectId === 'punctuation') {
+    return normalisePracticeSessionRecord({
+      ...record,
+      sessionState: null,
+      summary: publicPunctuationPracticeSessionSummary(record.summary),
+    });
+  }
+  return record;
 }
 
 function eventRowToRecord(row) {
@@ -444,6 +531,22 @@ function publicPracticeSessionSummary(summary, sessionKind) {
     mistakes: Array.isArray(raw.mistakes)
       ? raw.mistakes.map(publicMistakeSummary)
       : [],
+  };
+}
+
+function publicPunctuationPracticeSessionSummary(summary) {
+  const safe = normalisePunctuationSummary(summary);
+  if (!safe) return null;
+  return {
+    ...safe,
+    gps: safe.gps
+      ? {
+        delayedFeedback: safe.gps.delayedFeedback,
+        recommendedMode: safe.gps.recommendedMode,
+        recommendedLabel: safe.gps.recommendedLabel,
+        reviewItems: [],
+      }
+      : null,
   };
 }
 
@@ -692,7 +795,7 @@ function storeMutationReceiptStatement(db, {
   statusCode = 200,
   correlationId = null,
   appliedAt,
-}, { guard = null } = {}) {
+}, { guard = null, exists = null } = {}) {
   const params = [
     accountId,
     requestId,
@@ -718,8 +821,8 @@ function storeMutationReceiptStatement(db, {
       correlation_id,
       applied_at
     )
-    ${guardedValueSource(params.length, guard)}
-  `, guardedParams(params, guard));
+    ${exists ? guardedExistsValueSource(params.length, exists.sql) : guardedValueSource(params.length, guard)}
+  `, exists ? guardedExistsParams(params, exists) : guardedParams(params, guard));
 }
 
 async function ensureAccount(db, session, nowTs) {
@@ -836,6 +939,15 @@ function requireAccountRoleManager(account) {
   if (accountType(account) === 'demo' || !canManageAccountRoles({ platformRole: accountPlatformRole(account) })) {
     throw new ForbiddenError('Account role management requires an admin account.', {
       code: 'account_roles_forbidden',
+      required: 'platform-role-admin',
+    });
+  }
+}
+
+function requireMonsterVisualConfigManager(account) {
+  if (accountType(account) === 'demo' || accountPlatformRole(account) !== 'admin') {
+    throw new ForbiddenError('Monster visual config changes require an admin account.', {
+      code: 'monster_visual_config_forbidden',
       required: 'platform-role-admin',
     });
   }
@@ -1050,6 +1162,431 @@ async function loadLearnerReadBundle(db, learnerId) {
   };
 }
 
+function normaliseHistoryLimit(value, { fallback = 10, max = 50 } = {}) {
+  if (value == null || value === '') return fallback;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new BadRequestError('History limit must be a positive integer.', {
+      code: 'history_limit_invalid',
+      limit: value,
+    });
+  }
+  return Math.min(parsed, max);
+}
+
+function encodeHistoryCursor(row, timestampField) {
+  const timestamp = Number(row?.[timestampField]) || 0;
+  const id = encodeURIComponent(String(row?.id || ''));
+  return `${timestamp}:${id}`;
+}
+
+function decodeHistoryCursor(rawCursor) {
+  if (!rawCursor) return null;
+  const separator = String(rawCursor).indexOf(':');
+  if (separator <= 0) {
+    throw new BadRequestError('History cursor is invalid.', {
+      code: 'history_cursor_invalid',
+    });
+  }
+  const timestamp = Number(String(rawCursor).slice(0, separator));
+  const id = decodeURIComponent(String(rawCursor).slice(separator + 1));
+  if (!Number.isFinite(timestamp) || timestamp < 0 || !id) {
+    throw new BadRequestError('History cursor is invalid.', {
+      code: 'history_cursor_invalid',
+    });
+  }
+  return { timestamp, id };
+}
+
+function pageFromRows(rows, limit, timestampField) {
+  const pageRows = rows.slice(0, limit);
+  const hasMore = rows.length > limit;
+  return {
+    rows: pageRows,
+    page: {
+      limit,
+      nextCursor: hasMore && pageRows.length
+        ? encodeHistoryCursor(pageRows[pageRows.length - 1], timestampField)
+        : null,
+      hasMore,
+    },
+  };
+}
+
+function publicHistoryPracticeSessionRowToRecord(row) {
+  return normalisePracticeSessionRecord({
+    ...publicPracticeSessionRowToRecord(row),
+    sessionState: null,
+  });
+}
+
+function recentSessionLabel(record) {
+  if (record?.summary?.label) return record.summary.label;
+  if (record?.subjectId === 'grammar') return `Grammar ${record.sessionKind || 'practice'}`;
+  if (record?.subjectId === 'punctuation') return `Punctuation ${record.sessionKind || 'practice'}`;
+  if (record?.sessionKind === 'test') return 'SATs 20 test';
+  return 'Smart Review';
+}
+
+function recentSessionHeadline(record) {
+  const summary = record?.summary || {};
+  const cards = Array.isArray(summary.cards) ? summary.cards : [];
+  const correctCard = cards.find((card) => String(card?.label || '').toLowerCase().includes('correct'));
+  if (correctCard?.value != null) return String(correctCard.value);
+  const answered = Number(summary.answered);
+  const correct = Number(summary.correct);
+  if (Number.isFinite(answered) && answered > 0 && Number.isFinite(correct)) {
+    return `${correct}/${answered}`;
+  }
+  return '';
+}
+
+function parentRecentSessionFromRecord(record) {
+  return {
+    id: record.id,
+    subjectId: record.subjectId,
+    status: record.status,
+    sessionKind: record.sessionKind,
+    label: recentSessionLabel(record),
+    updatedAt: Number(record.updatedAt) || Number(record.createdAt) || 0,
+    mistakeCount: Array.isArray(record?.summary?.mistakes)
+      ? record.summary.mistakes.length
+      : Math.max(0, (Number(record?.summary?.answered) || 0) - (Number(record?.summary?.correct) || 0)),
+    headline: recentSessionHeadline(record),
+  };
+}
+
+async function resolveParentHistoryAccess(db, accountId, requestedLearnerId = null) {
+  const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role, account_type FROM adult_accounts WHERE id = ?', [accountId]);
+  const readableMemberships = await listMembershipRows(db, accountId, { writableOnly: false });
+  const defaultLearnerId = account?.selected_learner_id && readableMemberships.some((membership) => membership.id === account.selected_learner_id)
+    ? account.selected_learner_id
+    : (readableMemberships[0]?.id || null);
+  const learnerId = requestedLearnerId || defaultLearnerId;
+  if (!learnerId) {
+    throw new NotFoundError('No learner is selected for this parent view.', {
+      code: 'parent_hub_missing_learner',
+    });
+  }
+  const membership = await requireLearnerReadAccess(db, accountId, learnerId);
+  requireParentHubAccess(account, membership);
+  return {
+    account,
+    readableMemberships,
+    learnerId,
+    membership,
+  };
+}
+
+async function readParentRecentSessions(db, accountId, {
+  learnerId = null,
+  limit = null,
+  cursor = null,
+} = {}) {
+  const access = await resolveParentHistoryAccess(db, accountId, learnerId);
+  const resolvedLimit = normaliseHistoryLimit(limit);
+  const decodedCursor = decodeHistoryCursor(cursor);
+  const cursorClause = decodedCursor
+    ? 'AND (updated_at < ? OR (updated_at = ? AND id < ?))'
+    : '';
+  const cursorParams = decodedCursor
+    ? [decodedCursor.timestamp, decodedCursor.timestamp, decodedCursor.id]
+    : [];
+  const rows = await all(db, `
+    SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+    FROM practice_sessions
+    WHERE learner_id = ?
+      ${cursorClause}
+    ORDER BY updated_at DESC, id DESC
+    LIMIT ?
+  `, [access.learnerId, ...cursorParams, resolvedLimit + 1]);
+  const page = pageFromRows(rows, resolvedLimit, 'updated_at');
+  const sessions = page.rows.map(publicHistoryPracticeSessionRowToRecord);
+  return {
+    learnerId: access.learnerId,
+    sessions,
+    recentSessions: sessions.map(parentRecentSessionFromRecord),
+    page: page.page,
+  };
+}
+
+async function upsertLearnerReadModel(db, learnerId, modelKey, model, {
+  sourceRevision = 0,
+  generatedAt = Date.now(),
+} = {}) {
+  const key = normaliseReadModelKey(modelKey);
+  const timestamp = Math.max(0, Number(generatedAt) || Date.now());
+  await run(db, `
+    INSERT INTO learner_read_models (learner_id, model_key, model_json, source_revision, generated_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(learner_id, model_key) DO UPDATE SET
+      model_json = excluded.model_json,
+      source_revision = excluded.source_revision,
+      generated_at = excluded.generated_at,
+      updated_at = excluded.updated_at
+  `, [
+    learnerId,
+    key,
+    JSON.stringify(cloneSerialisable(model) || {}),
+    Math.max(0, Number(sourceRevision) || 0),
+    timestamp,
+    timestamp,
+  ]);
+  return readLearnerReadModel(db, learnerId, key);
+}
+
+function bindLearnerReadModelUpsertStatement(db, learnerId, modelKey, model, {
+  sourceRevision = 0,
+  generatedAt = Date.now(),
+  updatedAt = generatedAt,
+  guard = null,
+} = {}) {
+  const key = normaliseReadModelKey(modelKey);
+  const timestamp = Math.max(0, Number(updatedAt) || Date.now());
+  const params = [
+    learnerId,
+    key,
+    JSON.stringify(cloneSerialisable(model) || {}),
+    Math.max(0, Number(sourceRevision) || 0),
+    Math.max(0, Number(generatedAt) || timestamp),
+    timestamp,
+  ];
+  try {
+    return bindStatement(db, `
+      INSERT INTO learner_read_models (learner_id, model_key, model_json, source_revision, generated_at, updated_at)
+      ${guardedValueSource(params.length, guard)}
+      ON CONFLICT(learner_id, model_key) DO UPDATE SET
+        model_json = excluded.model_json,
+        source_revision = excluded.source_revision,
+        generated_at = excluded.generated_at,
+        updated_at = excluded.updated_at
+    `, guardedParams(params, guard));
+  } catch (error) {
+    if (isMissingTableError(error, 'learner_read_models')) return null;
+    throw error;
+  }
+}
+
+async function readLearnerReadModel(db, learnerId, modelKey) {
+  const key = normaliseReadModelKey(modelKey);
+  let row = null;
+  try {
+    row = await first(db, `
+      SELECT learner_id, model_key, model_json, source_revision, generated_at, updated_at
+      FROM learner_read_models
+      WHERE learner_id = ? AND model_key = ?
+    `, [learnerId, key]);
+  } catch (error) {
+    if (isMissingTableError(error, 'learner_read_models')) return emptyLearnerReadModel(key);
+    throw error;
+  }
+  return row ? normaliseLearnerReadModelRow(row, key) : emptyLearnerReadModel(key);
+}
+
+async function capacityReadModelTablesAvailable(db) {
+  try {
+    const rows = await all(db, `
+      SELECT name
+      FROM sqlite_master
+      WHERE type = 'table'
+        AND name IN (${sqlPlaceholders(CAPACITY_READ_MODEL_TABLES.length)})
+    `, CAPACITY_READ_MODEL_TABLES);
+    const tableNames = new Set(rows.map((row) => row.name).filter(Boolean));
+    return CAPACITY_READ_MODEL_TABLES.every((tableName) => tableNames.has(tableName));
+  } catch (error) {
+    if (isMissingCapacityReadModelTableError(error)) return false;
+    throw error;
+  }
+}
+
+async function upsertLearnerActivityFeedRows(db, activityRows = []) {
+  let written = 0;
+  for (const row of activityRows) {
+    if (!row?.id || !row?.learnerId || !row?.activityType || !row?.activity) continue;
+    const result = await run(db, `
+      INSERT INTO learner_activity_feed (
+        id, learner_id, subject_id, activity_type, activity_json,
+        source_event_id, created_at, updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        learner_id = excluded.learner_id,
+        subject_id = excluded.subject_id,
+        activity_type = excluded.activity_type,
+        activity_json = excluded.activity_json,
+        source_event_id = excluded.source_event_id,
+        created_at = excluded.created_at,
+        updated_at = excluded.updated_at
+    `, [
+      row.id,
+      row.learnerId,
+      row.subjectId || null,
+      row.activityType,
+      JSON.stringify(cloneSerialisable(row.activity) || {}),
+      row.sourceEventId || null,
+      Math.max(0, Number(row.createdAt) || 0),
+      Math.max(0, Number(row.updatedAt) || Date.now()),
+    ]);
+    written += Math.max(0, Number(result?.meta?.rows_written ?? result?.meta?.changes) || 0);
+  }
+  return { count: written };
+}
+
+function activityFeedRowFromEventRecord(event, {
+  id,
+  learnerId,
+  subjectId = null,
+  systemId = null,
+  eventType,
+  createdAt,
+  now = Date.now(),
+} = {}) {
+  if (!event || typeof event !== 'object' || Array.isArray(event)) return null;
+  return activityFeedRowFromEventRow({
+    id,
+    learner_id: learnerId,
+    subject_id: subjectId,
+    system_id: systemId,
+    event_type: eventType,
+    event_json: JSON.stringify(event),
+    created_at: createdAt,
+  }, { now });
+}
+
+function bindLearnerActivityFeedUpsertStatement(db, row, { guard = null } = {}) {
+  if (!row?.id || !row?.learnerId || !row?.activityType || !row?.activity) return null;
+  const params = [
+    row.id,
+    row.learnerId,
+    row.subjectId || null,
+    row.activityType,
+    JSON.stringify(cloneSerialisable(row.activity) || {}),
+    row.sourceEventId || null,
+    Math.max(0, Number(row.createdAt) || 0),
+    Math.max(0, Number(row.updatedAt) || Date.now()),
+  ];
+  try {
+    return bindStatement(db, `
+      INSERT INTO learner_activity_feed (
+        id, learner_id, subject_id, activity_type, activity_json,
+        source_event_id, created_at, updated_at
+      )
+      ${guardedValueSource(params.length, guard)}
+      ON CONFLICT(id) DO UPDATE SET
+        learner_id = excluded.learner_id,
+        subject_id = excluded.subject_id,
+        activity_type = excluded.activity_type,
+        activity_json = excluded.activity_json,
+        source_event_id = excluded.source_event_id,
+        created_at = excluded.created_at,
+        updated_at = excluded.updated_at
+    `, guardedParams(params, guard));
+  } catch (error) {
+    if (isMissingTableError(error, 'learner_activity_feed')) return null;
+    throw error;
+  }
+}
+
+function commandProjectionReadModelFromRuntime(runtime, events, nowTs) {
+  const gameState = runtime?.gameState && typeof runtime.gameState === 'object' && !Array.isArray(runtime.gameState)
+    ? runtime.gameState
+    : {};
+  const rewardState = cloneSerialisable(gameState[PUBLIC_MONSTER_CODEX_SYSTEM_ID]) || {};
+  const eventList = Array.isArray(events) ? events : [];
+  return {
+    version: COMMAND_PROJECTION_READ_MODEL_VERSION,
+    generatedAt: Math.max(0, Number(nowTs) || Date.now()),
+    rewards: {
+      systemId: PUBLIC_MONSTER_CODEX_SYSTEM_ID,
+      state: rewardState,
+    },
+    eventCounts: {
+      written: eventList.length,
+      domain: eventList.filter((event) => typeof event?.type === 'string' && !event.type.startsWith('reward.')).length,
+      reactions: eventList.filter((event) => typeof event?.type === 'string' && event.type.startsWith('reward.')).length,
+    },
+  };
+}
+
+async function readLearnerActivityFeed(db, learnerId, {
+  limit = null,
+  cursor = null,
+} = {}) {
+  const resolvedLimit = normaliseHistoryLimit(limit);
+  const decodedCursor = decodeHistoryCursor(cursor);
+  const cursorClause = decodedCursor
+    ? 'AND (created_at < ? OR (created_at = ? AND id < ?))'
+    : '';
+  const cursorParams = decodedCursor
+    ? [decodedCursor.timestamp, decodedCursor.timestamp, decodedCursor.id]
+    : [];
+  const rows = await all(db, `
+    SELECT id, learner_id, subject_id, activity_type, activity_json, source_event_id, created_at, updated_at
+    FROM learner_activity_feed
+    WHERE learner_id = ?
+      ${cursorClause}
+    ORDER BY created_at DESC, id DESC
+    LIMIT ?
+  `, [learnerId, ...cursorParams, resolvedLimit + 1]);
+  const page = pageFromRows(rows, resolvedLimit, 'created_at');
+  const feedRowCount = rows.length
+    ? rows.length
+    : Number(await scalar(db, 'SELECT COUNT(*) AS count FROM learner_activity_feed WHERE learner_id = ?', [learnerId], 'count') || 0);
+  return {
+    learnerId,
+    activities: page.rows.map(normaliseActivityFeedRow).filter(Boolean),
+    page: page.page,
+    hasFeedRows: feedRowCount > 0,
+  };
+}
+
+async function readParentActivity(db, accountId, {
+  learnerId = null,
+  limit = null,
+  cursor = null,
+} = {}) {
+  const access = await resolveParentHistoryAccess(db, accountId, learnerId);
+  const resolvedLimit = normaliseHistoryLimit(limit);
+  const feed = await readLearnerActivityFeed(db, access.learnerId, {
+    limit: resolvedLimit,
+    cursor,
+  });
+  if (feed.hasFeedRows) {
+    return {
+      learnerId: access.learnerId,
+      activity: feed.activities.map((entry) => entry.activity),
+      page: feed.page,
+      source: 'learner_activity_feed',
+    };
+  }
+
+  const decodedCursor = decodeHistoryCursor(cursor);
+  const eventTypes = [...PUBLIC_EVENT_TYPES];
+  const eventTypePlaceholders = sqlPlaceholders(eventTypes.length);
+  const cursorClause = decodedCursor
+    ? 'AND (created_at < ? OR (created_at = ? AND id < ?))'
+    : '';
+  const cursorParams = decodedCursor
+    ? [decodedCursor.timestamp, decodedCursor.timestamp, decodedCursor.id]
+    : [];
+  const rows = await all(db, `
+    SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+    FROM event_log
+    WHERE learner_id = ?
+      AND event_type IN (${eventTypePlaceholders})
+      ${cursorClause}
+    ORDER BY created_at DESC, id DESC
+    LIMIT ?
+  `, [access.learnerId, ...eventTypes, ...cursorParams, resolvedLimit + 1]);
+  const page = pageFromRows(rows, resolvedLimit, 'created_at');
+  return {
+    learnerId: access.learnerId,
+    activity: page.rows.map(publicEventRowToRecord).filter(Boolean),
+    page: page.page,
+    source: 'event_log',
+  };
+}
+
 async function listMutationReceiptRows(db, accountId, { requestId = null, scopeId = null, limit = 20 } = {}) {
   const clauses = ['account_id = ?'];
   const params = [accountId];
@@ -1095,6 +1632,686 @@ async function readDemoOperationSummary(db, nowTs) {
     ttsFallbacks: count('tts_fallbacks'),
     updatedAt,
   };
+}
+
+function seededMonsterVisualConfig({ source = 'published', version = 1 } = {}) {
+  return {
+    ...cloneSerialisable(BUNDLED_MONSTER_VISUAL_CONFIG),
+    schemaVersion: MONSTER_VISUAL_SCHEMA_VERSION,
+    manifestHash: MONSTER_ASSET_MANIFEST.manifestHash,
+    source,
+    version,
+  };
+}
+
+function normaliseMonsterVisualDraft(rawDraft) {
+  if (!isPlainObject(rawDraft)) {
+    throw new BadRequestError('Monster visual draft is required.', {
+      code: 'monster_visual_draft_required',
+    });
+  }
+  return {
+    ...cloneSerialisable(rawDraft),
+    schemaVersion: Number(rawDraft.schemaVersion) || MONSTER_VISUAL_SCHEMA_VERSION,
+    manifestHash: rawDraft.manifestHash || MONSTER_ASSET_MANIFEST.manifestHash,
+    source: 'draft',
+  };
+}
+
+function normaliseMonsterVisualMutation(rawValue) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const requestId = typeof raw.requestId === 'string' && raw.requestId ? raw.requestId : null;
+  const correlationId = typeof raw.correlationId === 'string' && raw.correlationId
+    ? raw.correlationId
+    : requestId;
+  const expectedRevision = Number.isFinite(Number(raw.expectedDraftRevision))
+    ? Number(raw.expectedDraftRevision)
+    : null;
+
+  if (!requestId) {
+    throw new BadRequestError('Monster visual mutation requestId is required.', {
+      code: 'mutation_request_id_required',
+      scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+    });
+  }
+  if (expectedRevision == null) {
+    throw new BadRequestError('Monster visual mutation expectedDraftRevision is required.', {
+      code: 'mutation_revision_required',
+      scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+    });
+  }
+
+  return {
+    requestId,
+    correlationId,
+    expectedRevision,
+  };
+}
+
+async function ensureMonsterVisualConfigRow(db, nowTs) {
+  const existing = await first(db, `
+    SELECT *
+    FROM platform_monster_visual_config
+    WHERE id = ?
+  `, [MONSTER_VISUAL_CONFIG_ID]);
+  if (existing) return existing;
+
+  const initialConfig = seededMonsterVisualConfig({ source: 'published', version: 1 });
+  const json = JSON.stringify(initialConfig);
+  await run(db, `
+    INSERT OR IGNORE INTO platform_monster_visual_config (
+      id,
+      draft_json,
+      draft_revision,
+      draft_updated_at,
+      draft_updated_by_account_id,
+      published_json,
+      published_version,
+      published_at,
+      published_by_account_id,
+      manifest_hash,
+      schema_version
+    )
+    VALUES (?, ?, 0, ?, ?, ?, 1, ?, ?, ?, ?)
+  `, [
+    MONSTER_VISUAL_CONFIG_ID,
+    JSON.stringify({ ...initialConfig, source: 'draft' }),
+    nowTs,
+    'system',
+    json,
+    nowTs,
+    'system',
+    MONSTER_ASSET_MANIFEST.manifestHash,
+    MONSTER_VISUAL_SCHEMA_VERSION,
+  ]);
+  await run(db, `
+    INSERT OR IGNORE INTO platform_monster_visual_config_versions (
+      version,
+      config_json,
+      manifest_hash,
+      schema_version,
+      published_at,
+      published_by_account_id
+    )
+    VALUES (?, ?, ?, ?, ?, ?)
+  `, [
+    1,
+    json,
+    MONSTER_ASSET_MANIFEST.manifestHash,
+    MONSTER_VISUAL_SCHEMA_VERSION,
+    nowTs,
+    'system',
+  ]);
+  return first(db, `
+    SELECT *
+    FROM platform_monster_visual_config
+    WHERE id = ?
+  `, [MONSTER_VISUAL_CONFIG_ID]);
+}
+
+async function readMonsterVisualConfigRow(db) {
+  return first(db, `
+    SELECT *
+    FROM platform_monster_visual_config
+    WHERE id = ?
+  `, [MONSTER_VISUAL_CONFIG_ID]);
+}
+
+async function requireMonsterVisualConfigUpdateApplied(db, result, {
+  kind,
+  mutation,
+  expectedRevision,
+}) {
+  const updateChanges = Number(result?.meta?.changes) || 0;
+  if (updateChanges === 1) return;
+
+  const row = await readMonsterVisualConfigRow(db);
+  throw staleWriteError({
+    kind,
+    scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+    scopeId: MONSTER_VISUAL_SCOPE_ID,
+    requestId: mutation.requestId,
+    correlationId: mutation.correlationId,
+    expectedRevision,
+    currentRevision: Number(row?.draft_revision) || 0,
+  });
+}
+
+function requireMonsterVisualMutationReceiptStored(result, {
+  kind,
+  mutation,
+}) {
+  const receiptChanges = Number(result?.meta?.changes) || 0;
+  if (receiptChanges === 1) return;
+
+  throw new ConflictError('Mutation receipt was not stored. Retry the mutation after reloading the latest state.', {
+    code: 'mutation_receipt_not_stored',
+    retryable: true,
+    kind,
+    scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+    scopeId: MONSTER_VISUAL_SCOPE_ID,
+    requestId: mutation.requestId,
+    correlationId: mutation.correlationId,
+  });
+}
+
+async function listMonsterVisualVersionRows(db) {
+  return all(db, `
+    SELECT version, manifest_hash, schema_version, published_at, published_by_account_id
+    FROM platform_monster_visual_config_versions
+    ORDER BY version DESC
+    LIMIT 20
+  `);
+}
+
+function monsterVisualConfigStateFromRow(row, versions = []) {
+  const draft = safeJsonParse(row?.draft_json, seededMonsterVisualConfig({ source: 'draft', version: Number(row?.published_version) || 1 }));
+  const published = safeJsonParse(row?.published_json, seededMonsterVisualConfig({ source: 'published', version: Number(row?.published_version) || 1 }));
+  const validation = validateMonsterVisualConfigForPublish(draft);
+  return {
+    status: {
+      schemaVersion: MONSTER_VISUAL_SCHEMA_VERSION,
+      manifestHash: MONSTER_ASSET_MANIFEST.manifestHash,
+      draftRevision: Number(row?.draft_revision) || 0,
+      draftUpdatedAt: Number(row?.draft_updated_at) || 0,
+      draftUpdatedByAccountId: row?.draft_updated_by_account_id || '',
+      publishedVersion: Number(row?.published_version) || 1,
+      publishedAt: Number(row?.published_at) || 0,
+      publishedByAccountId: row?.published_by_account_id || '',
+      validation: {
+        ok: validation.ok,
+        errorCount: validation.errors.length,
+        warningCount: validation.warnings.length,
+        errors: validation.errors.slice(0, 50),
+        warnings: validation.warnings.slice(0, 50),
+      },
+    },
+    draft,
+    published,
+    versions: (Array.isArray(versions) ? versions : []).map((version) => ({
+      version: Number(version.version) || 0,
+      manifestHash: version.manifest_hash || '',
+      schemaVersion: Number(version.schema_version) || 0,
+      publishedAt: Number(version.published_at) || 0,
+      publishedByAccountId: version.published_by_account_id || '',
+    })),
+    mutation: {
+      policyVersion: MUTATION_POLICY_VERSION,
+      scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+      scopeId: MONSTER_VISUAL_SCOPE_ID,
+      draftRevision: Number(row?.draft_revision) || 0,
+    },
+  };
+}
+
+async function readMonsterVisualConfigState(db, nowTs) {
+  const row = await ensureMonsterVisualConfigRow(db, nowTs);
+  const versions = await listMonsterVisualVersionRows(db);
+  return monsterVisualConfigStateFromRow(row, versions);
+}
+
+function bundledMonsterVisualRuntimeConfig() {
+  const config = seededMonsterVisualConfig({ source: 'bundled', version: 0 });
+  return {
+    schemaVersion: MONSTER_VISUAL_SCHEMA_VERSION,
+    manifestHash: MONSTER_ASSET_MANIFEST.manifestHash,
+    publishedVersion: 0,
+    publishedAt: 0,
+    config,
+  };
+}
+
+async function readPublishedMonsterVisualRuntimeConfig(db, nowTs) {
+  const row = await ensureMonsterVisualConfigRow(db, nowTs);
+  const published = safeJsonParse(
+    row?.published_json,
+    seededMonsterVisualConfig({ source: 'published', version: Number(row?.published_version) || 1 }),
+  );
+  return {
+    schemaVersion: MONSTER_VISUAL_SCHEMA_VERSION,
+    manifestHash: row?.manifest_hash || published.manifestHash || MONSTER_ASSET_MANIFEST.manifestHash,
+    publishedVersion: Number(row?.published_version) || Number(published.version) || 1,
+    publishedAt: Number(row?.published_at) || 0,
+    config: published,
+  };
+}
+
+async function readBootstrapMonsterVisualRuntimeConfig(db, nowTs) {
+  try {
+    return await readPublishedMonsterVisualRuntimeConfig(db, nowTs);
+  } catch (error) {
+    logMutation('warn', 'monster_visual_config.bootstrap_fallback', {
+      message: error?.message || 'Monster visual config storage unavailable.',
+    });
+    return bundledMonsterVisualRuntimeConfig();
+  }
+}
+
+function monsterVisualMutationMeta({ kind, mutation, expectedRevision, appliedRevision }) {
+  return buildMutationMeta({
+    kind,
+    scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+    scopeId: MONSTER_VISUAL_SCOPE_ID,
+    requestId: mutation.requestId,
+    correlationId: mutation.correlationId,
+    expectedRevision,
+    appliedRevision,
+  });
+}
+
+function normaliseMonsterVisualRestoreVersion(version) {
+  const numeric = Number(version);
+  if (!Number.isInteger(numeric) || numeric < 1) {
+    throw new BadRequestError('Monster visual restore version must be a positive integer.', {
+      code: 'monster_visual_version_invalid',
+      version,
+    });
+  }
+  return numeric;
+}
+
+async function withMonsterVisualConfigMutation(db, {
+  actorAccountId,
+  kind,
+  payload,
+  mutation,
+  nowTs,
+  apply,
+}) {
+  const nextMutation = normaliseMonsterVisualMutation(mutation);
+  const requestHash = mutationPayloadHash(kind, payload);
+
+  return withTransaction(db, async () => {
+    const actor = await first(db, 'SELECT id, platform_role, account_type FROM adult_accounts WHERE id = ?', [actorAccountId]);
+    requireMonsterVisualConfigManager(actor);
+
+    const existingReceipt = await loadMutationReceipt(db, actorAccountId, nextMutation.requestId);
+    if (existingReceipt) {
+      if (existingReceipt.request_hash !== requestHash) {
+        throw idempotencyReuseError({
+          kind,
+          scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+          scopeId: MONSTER_VISUAL_SCOPE_ID,
+          requestId: nextMutation.requestId,
+          correlationId: nextMutation.correlationId,
+        });
+      }
+      const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+      return {
+        ...storedReplay,
+        monsterVisualConfig: await readMonsterVisualConfigState(db, nowTs),
+        monsterVisualMutation: {
+          ...(storedReplay.monsterVisualMutation || {}),
+          requestId: nextMutation.requestId,
+          correlationId: nextMutation.correlationId,
+          replayed: true,
+        },
+      };
+    }
+
+    const row = await ensureMonsterVisualConfigRow(db, nowTs);
+    const currentRevision = Number(row?.draft_revision) || 0;
+    if (currentRevision !== nextMutation.expectedRevision) {
+      throw staleWriteError({
+        kind,
+        scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+        scopeId: MONSTER_VISUAL_SCOPE_ID,
+        requestId: nextMutation.requestId,
+        correlationId: nextMutation.correlationId,
+        expectedRevision: nextMutation.expectedRevision,
+        currentRevision,
+      });
+    }
+
+    const appliedRevision = currentRevision + 1;
+    const mutationMeta = monsterVisualMutationMeta({
+      kind,
+      mutation: nextMutation,
+      expectedRevision: currentRevision,
+      appliedRevision,
+    });
+    const receipt = {
+      accountId: actorAccountId,
+      requestId: nextMutation.requestId,
+      scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+      scopeId: MONSTER_VISUAL_SCOPE_ID,
+      mutationKind: kind,
+      requestHash,
+      response: {
+        monsterVisualMutation: mutationMeta,
+      },
+      correlationId: nextMutation.correlationId,
+      appliedAt: nowTs,
+    };
+    await apply({
+      row,
+      appliedRevision,
+      mutation: nextMutation,
+      expectedRevision: nextMutation.expectedRevision,
+      kind,
+      receipt,
+    });
+    const state = await readMonsterVisualConfigState(db, nowTs);
+    const response = {
+      monsterVisualConfig: state,
+      monsterVisualMutation: mutationMeta,
+    };
+    return response;
+  });
+}
+
+async function saveMonsterVisualConfigDraft(db, actorAccountId, rawDraft, mutation, nowTs) {
+  const draft = normaliseMonsterVisualDraft(rawDraft);
+  return withMonsterVisualConfigMutation(db, {
+    actorAccountId,
+    kind: 'monster_visual_config.draft.save',
+    payload: { draft },
+    mutation,
+    nowTs,
+    apply: async ({
+      appliedRevision,
+      mutation: nextMutation,
+      expectedRevision,
+      kind,
+      receipt,
+    }) => {
+      const draftJson = JSON.stringify(draft);
+      const [updateResult, receiptResult] = await batch(db, [
+        bindStatement(db, `
+        UPDATE platform_monster_visual_config
+        SET draft_json = ?,
+            draft_revision = ?,
+            draft_updated_at = ?,
+            draft_updated_by_account_id = ?,
+            manifest_hash = ?,
+            schema_version = ?,
+            last_mutation_account_id = ?,
+            last_mutation_request_id = ?,
+            last_mutation_request_hash = ?,
+            last_mutation_kind = ?
+        WHERE id = ?
+          AND draft_revision = ?
+      `, [
+          draftJson,
+          appliedRevision,
+          nowTs,
+          actorAccountId,
+          MONSTER_ASSET_MANIFEST.manifestHash,
+          MONSTER_VISUAL_SCHEMA_VERSION,
+          receipt.accountId,
+          receipt.requestId,
+          receipt.requestHash,
+          receipt.mutationKind,
+          MONSTER_VISUAL_CONFIG_ID,
+          expectedRevision,
+        ]),
+        storeMutationReceiptStatement(db, receipt, {
+          exists: {
+            sql: `
+              SELECT 1
+              FROM platform_monster_visual_config
+              WHERE id = ?
+                AND draft_revision = ?
+                AND draft_json = ?
+                AND draft_updated_at = ?
+                AND draft_updated_by_account_id = ?
+                AND last_mutation_account_id = ?
+                AND last_mutation_request_id = ?
+                AND last_mutation_request_hash = ?
+                AND last_mutation_kind = ?
+            `,
+            params: [
+              MONSTER_VISUAL_CONFIG_ID,
+              appliedRevision,
+              draftJson,
+              nowTs,
+              actorAccountId,
+              receipt.accountId,
+              receipt.requestId,
+              receipt.requestHash,
+              receipt.mutationKind,
+            ],
+          },
+        }),
+      ]);
+      await requireMonsterVisualConfigUpdateApplied(db, updateResult, {
+        kind,
+        mutation: nextMutation,
+        expectedRevision,
+      });
+      requireMonsterVisualMutationReceiptStored(receiptResult, {
+        kind,
+        mutation: nextMutation,
+      });
+    },
+  });
+}
+
+async function publishMonsterVisualConfig(db, actorAccountId, mutation, nowTs) {
+  return withMonsterVisualConfigMutation(db, {
+    actorAccountId,
+    kind: 'monster_visual_config.publish',
+    payload: { publish: true },
+    mutation,
+    nowTs,
+    apply: async ({
+      row,
+      appliedRevision,
+      mutation: nextMutation,
+      expectedRevision,
+      kind,
+      receipt,
+    }) => {
+      const draft = safeJsonParse(row.draft_json, null);
+      const validation = validateMonsterVisualConfigForPublish(draft);
+      if (!validation.ok) {
+        throw new BadRequestError('Monster visual config is not ready to publish.', {
+          code: 'monster_visual_publish_blocked',
+          validation,
+        });
+      }
+      const nextVersion = (Number(row.published_version) || 1) + 1;
+      const published = {
+        ...cloneSerialisable(draft),
+        source: 'published',
+        version: nextVersion,
+      };
+      const publishedJson = JSON.stringify(published);
+      const draftJson = JSON.stringify({ ...published, source: 'draft' });
+      const [updateResult, receiptResult] = await batch(db, [
+        bindStatement(db, `
+        UPDATE platform_monster_visual_config
+        SET draft_json = ?,
+            draft_revision = ?,
+            draft_updated_at = ?,
+            draft_updated_by_account_id = ?,
+            published_json = ?,
+            published_version = ?,
+            published_at = ?,
+            published_by_account_id = ?,
+            manifest_hash = ?,
+            schema_version = ?,
+            last_mutation_account_id = ?,
+            last_mutation_request_id = ?,
+            last_mutation_request_hash = ?,
+            last_mutation_kind = ?
+        WHERE id = ?
+          AND draft_revision = ?
+          AND published_version = ?
+      `, [
+          draftJson,
+          appliedRevision,
+          nowTs,
+          actorAccountId,
+          publishedJson,
+          nextVersion,
+          nowTs,
+          actorAccountId,
+          MONSTER_ASSET_MANIFEST.manifestHash,
+          MONSTER_VISUAL_SCHEMA_VERSION,
+          receipt.accountId,
+          receipt.requestId,
+          receipt.requestHash,
+          receipt.mutationKind,
+          MONSTER_VISUAL_CONFIG_ID,
+          expectedRevision,
+          Number(row.published_version) || 1,
+        ]),
+        storeMutationReceiptStatement(db, receipt, {
+          exists: {
+            sql: `
+              SELECT 1
+              FROM platform_monster_visual_config
+              WHERE id = ?
+                AND draft_revision = ?
+                AND draft_json = ?
+                AND published_json = ?
+                AND published_version = ?
+                AND published_at = ?
+                AND published_by_account_id = ?
+                AND last_mutation_account_id = ?
+                AND last_mutation_request_id = ?
+                AND last_mutation_request_hash = ?
+                AND last_mutation_kind = ?
+            `,
+            params: [
+              MONSTER_VISUAL_CONFIG_ID,
+              appliedRevision,
+              draftJson,
+              publishedJson,
+              nextVersion,
+              nowTs,
+              actorAccountId,
+              receipt.accountId,
+              receipt.requestId,
+              receipt.requestHash,
+              receipt.mutationKind,
+            ],
+          },
+        }),
+      ]);
+      await requireMonsterVisualConfigUpdateApplied(db, updateResult, {
+        kind,
+        mutation: nextMutation,
+        expectedRevision,
+      });
+      requireMonsterVisualMutationReceiptStored(receiptResult, {
+        kind,
+        mutation: nextMutation,
+      });
+      await run(db, `
+        DELETE FROM platform_monster_visual_config_versions
+        WHERE version NOT IN (
+          SELECT version
+          FROM platform_monster_visual_config_versions
+          ORDER BY version DESC
+          LIMIT 20
+        )
+      `);
+    },
+  });
+}
+
+async function restoreMonsterVisualConfigVersion(db, actorAccountId, version, mutation, nowTs) {
+  const safeVersion = normaliseMonsterVisualRestoreVersion(version);
+  return withMonsterVisualConfigMutation(db, {
+    actorAccountId,
+    kind: 'monster_visual_config.restore',
+    payload: { version: safeVersion },
+    mutation,
+    nowTs,
+    apply: async ({
+      appliedRevision,
+      mutation: nextMutation,
+      expectedRevision,
+      kind,
+      receipt,
+    }) => {
+      const versionRow = await first(db, `
+        SELECT version, config_json
+        FROM platform_monster_visual_config_versions
+        WHERE version = ?
+      `, [safeVersion]);
+      if (!versionRow) {
+        throw new NotFoundError('Monster visual config version was not found.', {
+          code: 'monster_visual_version_not_found',
+          version: safeVersion,
+        });
+      }
+      const restored = {
+        ...safeJsonParse(versionRow.config_json, seededMonsterVisualConfig({ source: 'draft', version: safeVersion })),
+        source: 'draft',
+      };
+      const restoredJson = JSON.stringify(restored);
+      const [updateResult, receiptResult] = await batch(db, [
+        bindStatement(db, `
+        UPDATE platform_monster_visual_config
+        SET draft_json = ?,
+            draft_revision = ?,
+            draft_updated_at = ?,
+            draft_updated_by_account_id = ?,
+            manifest_hash = ?,
+            schema_version = ?,
+            last_mutation_account_id = ?,
+            last_mutation_request_id = ?,
+            last_mutation_request_hash = ?,
+            last_mutation_kind = ?
+        WHERE id = ?
+          AND draft_revision = ?
+      `, [
+          restoredJson,
+          appliedRevision,
+          nowTs,
+          actorAccountId,
+          MONSTER_ASSET_MANIFEST.manifestHash,
+          MONSTER_VISUAL_SCHEMA_VERSION,
+          receipt.accountId,
+          receipt.requestId,
+          receipt.requestHash,
+          receipt.mutationKind,
+          MONSTER_VISUAL_CONFIG_ID,
+          expectedRevision,
+        ]),
+        storeMutationReceiptStatement(db, receipt, {
+          exists: {
+            sql: `
+              SELECT 1
+              FROM platform_monster_visual_config
+              WHERE id = ?
+                AND draft_revision = ?
+                AND draft_json = ?
+                AND draft_updated_at = ?
+                AND draft_updated_by_account_id = ?
+                AND last_mutation_account_id = ?
+                AND last_mutation_request_id = ?
+                AND last_mutation_request_hash = ?
+                AND last_mutation_kind = ?
+            `,
+            params: [
+              MONSTER_VISUAL_CONFIG_ID,
+              appliedRevision,
+              restoredJson,
+              nowTs,
+              actorAccountId,
+              receipt.accountId,
+              receipt.requestId,
+              receipt.requestHash,
+              receipt.mutationKind,
+            ],
+          },
+        }),
+      ]);
+      await requireMonsterVisualConfigUpdateApplied(db, updateResult, {
+        kind,
+        mutation: nextMutation,
+        expectedRevision,
+      });
+      requireMonsterVisualMutationReceiptStored(receiptResult, {
+        kind,
+        mutation: nextMutation,
+      });
+    },
+  });
 }
 
 async function updateManagedAccountRole(db, {
@@ -1286,8 +2503,155 @@ async function releaseMembershipOrDeleteLearner(db, accountId, learnerId, role, 
   return 'membership_removed';
 }
 
+function rowKey(row, fields = ['id']) {
+  return fields.map((field) => String(row?.[field] ?? '')).join('::');
+}
+
+function sortSessionRows(rows) {
+  return [...rows].sort((a, b) => {
+    const updatedDiff = (Number(b.updated_at) || 0) - (Number(a.updated_at) || 0);
+    if (updatedDiff !== 0) return updatedDiff;
+    return String(b.id || '').localeCompare(String(a.id || ''));
+  });
+}
+
+function sortEventRowsAscending(rows) {
+  return [...rows].sort((a, b) => {
+    const createdDiff = (Number(a.created_at) || 0) - (Number(b.created_at) || 0);
+    if (createdDiff !== 0) return createdDiff;
+    return String(a.id || '').localeCompare(String(b.id || ''));
+  });
+}
+
+function subjectStateActiveSessionId(row) {
+  const ui = safeJsonParse(row?.ui_json, {});
+  const sessionId = ui?.session?.id;
+  return typeof sessionId === 'string' && sessionId ? sessionId : null;
+}
+
+async function listPublicBootstrapActiveSessionIds(db, learnerIds) {
+  const ids = [];
+  for (const learnerId of learnerIds) {
+    const rows = await all(db, `
+      SELECT ui_json
+      FROM child_subject_state
+      WHERE learner_id = ?
+      ORDER BY updated_at DESC, subject_id ASC
+      LIMIT ?
+    `, [learnerId, PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LOOKUP_LIMIT_PER_LEARNER]);
+    const sessionIdsForLearner = new Set();
+    for (const row of rows) {
+      const sessionId = subjectStateActiveSessionId(row);
+      if (!sessionId || sessionIdsForLearner.has(sessionId)) continue;
+      sessionIdsForLearner.add(sessionId);
+      ids.push(sessionId);
+      if (sessionIdsForLearner.size >= PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER) break;
+    }
+  }
+  return ids;
+}
+
+async function listPublicBootstrapSessionRows(db, learnerIds) {
+  if (!learnerIds.length) return [];
+  const rowsById = new Map();
+  const placeholders = sqlPlaceholders(learnerIds.length);
+  const activeSessionIds = await listPublicBootstrapActiveSessionIds(db, learnerIds);
+  if (activeSessionIds.length) {
+    const activeRows = await all(db, `
+      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+      FROM practice_sessions
+      WHERE learner_id IN (${placeholders})
+        AND id IN (${sqlPlaceholders(activeSessionIds.length)})
+        AND status = 'active'
+      ORDER BY updated_at DESC, id DESC
+      LIMIT ?
+    `, [
+      ...learnerIds,
+      ...activeSessionIds,
+      learnerIds.length * PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER,
+    ]);
+
+    for (const row of activeRows) {
+      rowsById.set(rowKey(row), row);
+    }
+  }
+
+  for (const learnerId of learnerIds) {
+    const recentRows = await all(db, `
+      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+      FROM practice_sessions
+      WHERE learner_id = ?
+      ORDER BY updated_at DESC, id DESC
+      LIMIT ?
+    `, [learnerId, PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER]);
+    for (const row of recentRows) {
+      rowsById.set(rowKey(row), row);
+    }
+  }
+
+  return sortSessionRows([...rowsById.values()]);
+}
+
+async function listPublicBootstrapEventRows(db, learnerIds) {
+  if (!learnerIds.length) return [];
+  const eventTypes = [...PUBLIC_EVENT_TYPES];
+  if (!eventTypes.length) return [];
+  const eventTypePlaceholders = sqlPlaceholders(eventTypes.length);
+  const rows = [];
+
+  for (const learnerId of learnerIds) {
+    rows.push(...await all(db, `
+      SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+      FROM event_log
+      WHERE learner_id = ?
+        AND event_type IN (${eventTypePlaceholders})
+      ORDER BY created_at DESC, id DESC
+      LIMIT ?
+    `, [learnerId, ...eventTypes, PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER]));
+  }
+
+  return sortEventRowsAscending(rows);
+}
+
+function bootstrapCapacityMeta({
+  publicReadModels,
+  learnerCount,
+  sessionRows,
+  eventRows,
+}) {
+  if (!publicReadModels) return null;
+  const sessionActiveLimit = learnerCount * PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER;
+  const sessionRecentLimit = learnerCount * PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER;
+  const sessionLimit = sessionActiveLimit + sessionRecentLimit;
+  const eventRecentLimit = learnerCount * PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER;
+  return {
+    version: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
+    mode: 'public-bounded',
+    limits: {
+      activeSessionsPerLearner: PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER,
+      recentSessionsPerLearner: PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER,
+      recentEventsPerLearner: PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER,
+    },
+    learners: {
+      returned: learnerCount,
+    },
+    practiceSessions: {
+      returned: sessionRows.length,
+      bounded: true,
+      atOrAboveRecentLimit: learnerCount > 0 && sessionRows.length >= sessionRecentLimit,
+      atOrAboveMaximumLimit: learnerCount > 0 && sessionRows.length >= sessionLimit,
+    },
+    eventLog: {
+      returned: eventRows.length,
+      bounded: true,
+      atOrAboveRecentLimit: learnerCount > 0 && eventRows.length >= eventRecentLimit,
+    },
+  };
+}
+
 async function bootstrapBundle(db, accountId, { publicReadModels = false } = {}) {
   const account = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
+  const monsterVisualConfig = await readBootstrapMonsterVisualRuntimeConfig(db, Date.now());
   const membershipRows = await listMembershipRows(db, accountId, { writableOnly: true });
   const learnersById = {};
   const learnerIds = [];
@@ -1324,6 +2688,15 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
         accountRevision: Number(account?.repo_revision) || 0,
         learnerRevisions: {},
       },
+      monsterVisualConfig,
+      ...(publicReadModels ? {
+        bootstrapCapacity: bootstrapCapacityMeta({
+          publicReadModels,
+          learnerCount: 0,
+          sessionRows: [],
+          eventRows: [],
+        }),
+      } : {}),
     };
   }
 
@@ -1333,23 +2706,27 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
     FROM child_subject_state
     WHERE learner_id IN (${placeholders})
   `, learnerIds);
-  const sessionRows = await all(db, `
-    SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
-    FROM practice_sessions
-    WHERE learner_id IN (${placeholders})
-    ORDER BY updated_at DESC, id DESC
-  `, learnerIds);
+  const sessionRows = publicReadModels
+    ? await listPublicBootstrapSessionRows(db, learnerIds)
+    : await all(db, `
+      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+      FROM practice_sessions
+      WHERE learner_id IN (${placeholders})
+      ORDER BY updated_at DESC, id DESC
+    `, learnerIds);
   const gameRows = await all(db, `
     SELECT learner_id, system_id, state_json, updated_at
     FROM child_game_state
     WHERE learner_id IN (${placeholders})
   `, learnerIds);
-  const eventRows = await all(db, `
-    SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
-    FROM event_log
-    WHERE learner_id IN (${placeholders})
-    ORDER BY created_at ASC, id ASC
-  `, learnerIds);
+  const eventRows = publicReadModels
+    ? await listPublicBootstrapEventRows(db, learnerIds)
+    : await all(db, `
+      SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+      FROM event_log
+      WHERE learner_id IN (${placeholders})
+      ORDER BY created_at ASC, id ASC
+    `, learnerIds);
   const publicSpellingContent = publicReadModels && subjectRows.some((row) => row.subject_id === 'spelling')
     ? await readSpellingRuntimeContentBundle(db, accountId, 'spelling')
     : null;
@@ -1399,6 +2776,15 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
       accountRevision: Number(account?.repo_revision) || 0,
       learnerRevisions,
     },
+    monsterVisualConfig,
+    ...(publicReadModels ? {
+      bootstrapCapacity: bootstrapCapacityMeta({
+        publicReadModels,
+        learnerCount: learnerIds.length,
+        sessionRows,
+        eventRows,
+      }),
+    } : {}),
   };
 }
 
@@ -1450,12 +2836,17 @@ async function readLearnerProjectionBundle(db, accountId, learnerId) {
     SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
     FROM event_log
     WHERE learner_id = ?
-    ORDER BY created_at ASC, id ASC
-  `, [learnerId]);
+    ORDER BY created_at DESC, id DESC
+    LIMIT ?
+  `, [learnerId, PROJECTION_RECENT_EVENT_LIMIT]);
+  const commandProjectionReadModel = await readLearnerReadModel(db, learnerId, COMMAND_PROJECTION_MODEL_KEY);
 
   return {
     gameState: Object.fromEntries(gameRows.map((row) => [row.system_id, gameStateRowToRecord(row)])),
-    events: normaliseEventLog(eventRows.map(eventRowToRecord).filter(Boolean)),
+    events: normaliseEventLog(sortEventRowsAscending(eventRows).map(eventRowToRecord).filter(Boolean)),
+    readModels: {
+      commandProjection: commandProjectionReadModel,
+    },
   };
 }
 
@@ -1502,9 +2893,20 @@ function guardedValueSource(valueCount, guard) {
     )`;
 }
 
+function guardedExistsValueSource(valueCount, existsSql) {
+  return `SELECT ${sqlPlaceholders(valueCount)}
+    WHERE EXISTS (
+      ${existsSql}
+    )`;
+}
+
 function guardedParams(params, guard) {
   if (!guard) return params;
   return [...params, guard.learnerId, guard.expectedRevision];
+}
+
+function guardedExistsParams(params, exists) {
+  return [...params, ...(Array.isArray(exists?.params) ? exists.params : [])];
 }
 
 function guardedWhere(guard) {
@@ -1518,7 +2920,10 @@ function guardedWhere(guard) {
           )`;
 }
 
-function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs, { guard = null } = {}) {
+function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs, {
+  guard = null,
+  includeCapacityReadModels = true,
+} = {}) {
   const nextState = normaliseSubjectStateRecord({
     ui: runtime?.state || null,
     data: runtime?.data || {},
@@ -1657,6 +3062,35 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
         created_at = excluded.created_at,
         actor_account_id = excluded.actor_account_id
     `, guardedParams(eventParams, guard)));
+    const activityRow = activityFeedRowFromEventRecord(event, {
+      id,
+      learnerId: event.learnerId,
+      subjectId: event.subjectId || null,
+      systemId: event.systemId || null,
+      eventType,
+      createdAt,
+      now: nowTs,
+    });
+    if (includeCapacityReadModels) {
+      const activityStatement = bindLearnerActivityFeedUpsertStatement(db, activityRow, { guard });
+      if (activityStatement) statements.push(activityStatement);
+    }
+  }
+  if (includeCapacityReadModels && Object.prototype.hasOwnProperty.call(gameState, PUBLIC_MONSTER_CODEX_SYSTEM_ID)) {
+    const commandProjectionReadModel = commandProjectionReadModelFromRuntime(runtime, persistedEvents, nowTs);
+    const readModelStatement = bindLearnerReadModelUpsertStatement(
+      db,
+      learnerId,
+      COMMAND_PROJECTION_MODEL_KEY,
+      commandProjectionReadModel,
+      {
+        sourceRevision: guard ? guard.expectedRevision + 1 : 0,
+        generatedAt: nowTs,
+        updatedAt: nowTs,
+        guard,
+      },
+    );
+    if (readModelStatement) statements.push(readModelStatement);
   }
 
   const summary = {
@@ -1671,7 +3105,10 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
 }
 
 async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, runtime, nowTs) {
-  const plan = buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs);
+  const includeCapacityReadModels = await capacityReadModelTablesAvailable(db);
+  const plan = buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs, {
+    includeCapacityReadModels,
+  });
   await batch(db, plan.statements);
   return plan.summary;
 }
@@ -2067,8 +3504,10 @@ async function runSubjectCommandMutation(db, {
   };
   const statements = [];
   if (runtimeWrite) {
+    const includeCapacityReadModels = await capacityReadModelTablesAvailable(db);
     const plan = buildSubjectRuntimePersistencePlan(db, accountId, command.learnerId, command.subjectId, runtimeWrite, nowTs, {
       guard,
+      includeCapacityReadModels,
     });
     statements.push(...plan.statements);
   }
@@ -2407,6 +3846,16 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
             createdAt,
             accountId,
           ]);
+          const activityRow = activityFeedRowFromEventRecord(next, {
+            id,
+            learnerId: next.learnerId,
+            subjectId: next.subjectId || null,
+            systemId: next.systemId || null,
+            eventType,
+            createdAt,
+            now: nowTs,
+          });
+          if (activityRow) await upsertLearnerActivityFeedRows(db, [activityRow]);
           return { count: next ? 1 : 0, event: next };
         },
       });
@@ -2421,7 +3870,11 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         mutation,
         nowTs,
         apply: async () => {
-          await run(db, 'DELETE FROM event_log WHERE learner_id = ?', [learnerId]);
+          await batch(db, [
+            bindStatement(db, 'DELETE FROM event_log WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM learner_activity_feed WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM learner_read_models WHERE learner_id = ?', [learnerId]),
+          ]);
           return { learnerId, cleared: true };
         },
       });
@@ -2441,6 +3894,8 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
             bindStatement(db, 'DELETE FROM practice_sessions WHERE learner_id = ?', [learnerId]),
             bindStatement(db, 'DELETE FROM child_game_state WHERE learner_id = ?', [learnerId]),
             bindStatement(db, 'DELETE FROM event_log WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM learner_activity_feed WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM learner_read_models WHERE learner_id = ?', [learnerId]),
           ]);
           return {
             learnerId,
@@ -2485,6 +3940,24 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
     },
     async readSpellingWordBank(accountId, learnerId, filters = {}) {
       return readSpellingWordBankBundle(db, accountId, learnerId, filters, nowFactory());
+    },
+    async readParentRecentSessions(accountId, options = {}) {
+      return readParentRecentSessions(db, accountId, options);
+    },
+    async readParentActivity(accountId, options = {}) {
+      return readParentActivity(db, accountId, options);
+    },
+    async upsertLearnerReadModel(learnerId, modelKey, model, options = {}) {
+      return upsertLearnerReadModel(db, learnerId, modelKey, model, options);
+    },
+    async readLearnerReadModel(learnerId, modelKey) {
+      return readLearnerReadModel(db, learnerId, modelKey);
+    },
+    async upsertLearnerActivityFeedRows(rows = []) {
+      return upsertLearnerActivityFeedRows(db, rows);
+    },
+    async readLearnerActivityFeed(learnerId, options = {}) {
+      return readLearnerActivityFeed(db, learnerId, options);
     },
     async writeSubjectContent(accountId, subjectId = 'spelling', rawContent, mutation = {}) {
       const nowTs = nowFactory();
@@ -2544,19 +4017,12 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
       });
     },
     async readParentHub(accountId, learnerId = null) {
-      const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role, account_type FROM adult_accounts WHERE id = ?', [accountId]);
-      const readableMemberships = await listMembershipRows(db, accountId, { writableOnly: false });
-      const defaultLearnerId = account?.selected_learner_id && readableMemberships.some((membership) => membership.id === account.selected_learner_id)
-        ? account.selected_learner_id
-        : (readableMemberships[0]?.id || null);
-      const resolvedLearnerId = learnerId || defaultLearnerId;
-      if (!resolvedLearnerId) {
-        throw new NotFoundError('No learner is selected for this parent view.', {
-          code: 'parent_hub_missing_learner',
-        });
-      }
-      const membership = await requireLearnerReadAccess(db, accountId, resolvedLearnerId);
-      requireParentHubAccess(account, membership);
+      const {
+        account,
+        readableMemberships,
+        learnerId: resolvedLearnerId,
+        membership,
+      } = await resolveParentHistoryAccess(db, accountId, learnerId);
       const learnerRow = await first(db, `
         SELECT l.id, l.name, l.year_group, l.avatar_color, l.goal, l.daily_minutes, l.created_at, l.updated_at
         FROM learner_profiles l
@@ -2600,6 +4066,7 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         limit: auditLimit,
       });
       const demoOperations = await readDemoOperationSummary(db, nowFactory());
+      const monsterVisualConfig = await readMonsterVisualConfigState(db, nowFactory());
       const model = buildAdminHubReadModel({
         account: {
           id: accountId,
@@ -2613,6 +4080,7 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         learnerBundles,
         runtimeSnapshots: { spelling: runtimeSnapshotForBundle(contentBundle) },
         demoOperations,
+        monsterVisualConfig,
         auditEntries: auditEntries.map((row) => ({
           requestId: row.request_id,
           mutationKind: row.mutation_kind,
@@ -2642,6 +4110,15 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         correlationId: correlationId || requestId,
         nowTs: nowFactory(),
       });
+    },
+    async saveMonsterVisualConfigDraft(accountId, { draft, mutation = {} } = {}) {
+      return saveMonsterVisualConfigDraft(db, accountId, draft, mutation, nowFactory());
+    },
+    async publishMonsterVisualConfig(accountId, { mutation = {} } = {}) {
+      return publishMonsterVisualConfig(db, accountId, mutation, nowFactory());
+    },
+    async restoreMonsterVisualConfigVersion(accountId, { version, mutation = {} } = {}) {
+      return restoreMonsterVisualConfigVersion(db, accountId, version, mutation, nowFactory());
     },
     async resetAccountScope(accountId, mutation = {}) {
       const nowTs = nowFactory();

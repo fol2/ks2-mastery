@@ -56,7 +56,7 @@ function browseChain(binary, commands, options = {}) {
   });
 }
 
-test('browser migration smoke covers the React app root and spelling interaction contract', {
+test('browser migration smoke covers the React app root, Grammar completeness controls, and spelling interaction contract', {
   skip: process.env.KS2_BROWSER_SMOKE ? false : 'Set KS2_BROWSER_SMOKE=1 to run the gstack browser smoke.',
 }, async () => {
   const binary = resolveBrowseBinary();
@@ -81,12 +81,58 @@ test('browser migration smoke covers the React app root and spelling interaction
       ['wait', '[data-punctuation-start]'],
       ['text'],
       ['click', '[data-punctuation-start]'],
-      ['wait', '[data-punctuation-submit]'],
-      ['js', "const choice = document.querySelector('input[name=\"choiceIndex\"]'); if (choice) choice.click(); 'picked punctuation option';"],
+      ['wait', 'input[name="choiceIndex"]'],
+      ['click', 'input[name="choiceIndex"]'],
       ['click', '[data-punctuation-submit]'],
       ['wait', '[data-punctuation-continue]'],
+      ['click', '[data-punctuation-continue]'],
+      ['wait', 'textarea[name="typed"]'],
+      ['fill', 'textarea[name="typed"]', 'where is the library'],
+      ['click', '[data-punctuation-submit]'],
+      ['wait', '[data-punctuation-continue]'],
+      ['click', '[data-punctuation-continue]'],
+      ['wait', 'textarea[name="typed"]'],
+      ['fill', 'textarea[name="typed"]', 'the pupils packed pencils rubbers and rulers'],
+      ['click', '[data-punctuation-submit]'],
+      ['wait', '[data-punctuation-continue]'],
+      ['click', '[data-punctuation-continue]'],
+      ['wait', 'textarea[name="typed"]'],
+      ['fill', 'textarea[name="typed"]', 'After lunch, the class checked their work.'],
+      ['click', '[data-punctuation-submit]'],
+      ['wait', '[data-punctuation-continue]'],
+      ['click', '[data-punctuation-continue]'],
+      ['wait', '[data-punctuation-summary]'],
       ['text'],
       ['js', "const punctuationHome = document.querySelector('.profile-brand-button[data-action=\"navigate-home\"]'); if (!punctuationHome) throw new Error('missing punctuation brand home button'); punctuationHome.click(); 'back from punctuation';"],
+      ['wait', '.subject-grid'],
+      ['js', "try { Object.defineProperty(window, 'speechSynthesis', { value: undefined, configurable: true }); Object.defineProperty(window, 'SpeechSynthesisUtterance', { value: undefined, configurable: true }); } catch (_) { window.speechSynthesis = undefined; window.SpeechSynthesisUtterance = undefined; } 'speech synthesis disabled';"],
+      ['js', "document.querySelector('[data-action=\"open-subject\"][data-subject-id=\"grammar\"]')?.click(); 'opened grammar';"],
+      ['wait', '.grammar-setup'],
+      ['text'],
+      ['js', "Array.from(document.querySelectorAll('.grammar-mode')).find((button) => button.textContent?.includes('KS2-style mini-test'))?.click(); 'selected mini-test';"],
+      ['js', "document.querySelector('.grammar-start-card .btn.primary')?.click(); 'started grammar mini-test';"],
+      ['wait', '.grammar-mini-test-panel'],
+      ['text'],
+      ['js', "Array.from(document.querySelectorAll('button')).find((button) => button.textContent?.includes('Finish mini-set'))?.click(); 'finished grammar mini-test';"],
+      ['wait', '.grammar-summary-shell'],
+      ['text'],
+      ['js', "Array.from(document.querySelectorAll('button')).find((button) => button.textContent?.includes('Back to Grammar setup'))?.click(); 'back to grammar setup';"],
+      ['wait', '.grammar-setup'],
+      ['js', "Array.from(document.querySelectorAll('.grammar-mode')).find((button) => button.textContent?.includes('Smart mixed review'))?.click(); 'selected smart grammar';"],
+      ['js', "document.querySelector('.grammar-start-card .btn.primary')?.click(); 'started grammar smart';"],
+      ['wait', '.grammar-session'],
+      ['text'],
+      ['js', "Array.from(document.querySelectorAll('button')).find((button) => button.textContent?.includes('Faded support'))?.click(); 'requested faded support';"],
+      ['wait', '.grammar-guidance.faded'],
+      ['js', "Array.from(document.querySelectorAll('button')).find((button) => button.textContent?.includes('Explain this'))?.click(); 'requested grammar ai';"],
+      ['wait', '.grammar-ai-enrichment'],
+      ['text'],
+      ['js', "const grammarHome = document.querySelector('.profile-brand-button[data-action=\"navigate-home\"]'); if (!grammarHome) throw new Error('missing grammar brand home button'); grammarHome.click(); 'back from grammar';"],
+      ['wait', '.subject-grid'],
+      ['js', "Array.from(document.querySelectorAll('button')).find((button) => button.textContent?.includes('Parent hub'))?.click(); 'opened parent hub';"],
+      ['wait', '.parent-hub-hero'],
+      ['text'],
+      ['js', "const parentHome = document.querySelector('.profile-brand-button[data-action=\"navigate-home\"]'); if (!parentHome) throw new Error('missing parent hub brand home button'); parentHome.click(); 'back from parent hub';"],
       ['wait', '.subject-grid'],
       ['js', "document.querySelector('[data-action=\"open-subject\"][data-subject-id=\"spelling\"]')?.click(); 'opened spelling';"],
       ['text'],
@@ -113,7 +159,16 @@ test('browser migration smoke covers the React app root and spelling interaction
     assert.match(output, /Your subjects/);
     assert.doesNotMatch(output, /data-home-mount/);
     assert.match(output, /Punctuation practice/);
-    assert.match(output, /Feedback/);
+    assert.match(output, /Punctuation session summary/);
+    assert.match(output, /Grammar retrieval practice/);
+    assert.match(output, /KS2-style mini-test/);
+    assert.match(output, /Timed test/);
+    assert.match(output, /Mini-set review/);
+    assert.match(output, /Faded guidance/);
+    assert.match(output, /Non-scored/);
+    assert.match(output, /Read aloud/);
+    assert.match(output, /Speech synthesis unavailable/);
+    assert.match(output, /Grammar evidence/);
     assert.match(output, /Round setup/);
     assert.match(output, /wordBankScrollY:0/);
     assert.match(output, /Word bank progress/);

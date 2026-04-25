@@ -63,7 +63,289 @@ function safeCurrentItem(item) {
   };
 }
 
-function safeSession(session) {
+function safeMiniTestQuestion(entry, index, currentIndex, { includeItem = false, includeMarked = false } = {}) {
+  const item = safeCurrentItem(entry?.item);
+  const output = {
+    index: Number.isFinite(Number(entry?.index)) ? Number(entry.index) : index,
+    itemId: item?.itemId || '',
+    templateId: item?.templateId || '',
+    templateLabel: item?.templateLabel || '',
+    questionType: item?.questionType || '',
+    marks: Number.isFinite(Number(item?.marks)) ? Number(item.marks) : 1,
+    answered: Boolean(entry?.answered),
+    current: index === currentIndex,
+    response: isPlainObject(entry?.response) ? cloneSerialisable(entry.response) : {},
+    savedAt: Number.isFinite(Number(entry?.savedAt)) ? Number(entry.savedAt) : 0,
+  };
+  if (includeItem) output.item = item;
+  if (includeMarked && isPlainObject(entry?.marked)) {
+    const result = isPlainObject(entry.marked.result) ? entry.marked.result : {};
+    output.marked = {
+      response: isPlainObject(entry.marked.response) ? cloneSerialisable(entry.marked.response) : {},
+      result: {
+        correct: Boolean(result.correct),
+        score: Number.isFinite(Number(result.score)) ? Number(result.score) : 0,
+        maxScore: Number.isFinite(Number(result.maxScore)) ? Number(result.maxScore) : output.marks,
+        misconception: typeof result.misconception === 'string' ? result.misconception : null,
+        feedbackShort: typeof result.feedbackShort === 'string' ? result.feedbackShort : '',
+        feedbackLong: typeof result.feedbackLong === 'string' ? result.feedbackLong : '',
+        answerText: typeof result.answerText === 'string' ? result.answerText : '',
+        minimalHint: typeof result.minimalHint === 'string' ? result.minimalHint : '',
+      },
+    };
+  }
+  return output;
+}
+
+function safeMiniTest(miniTest, now = Date.now()) {
+  if (!isPlainObject(miniTest)) return null;
+  const questions = Array.isArray(miniTest.questions) ? miniTest.questions : [];
+  const currentIndex = Math.min(
+    Math.max(0, Math.floor(Number(miniTest.currentIndex) || 0)),
+    Math.max(0, questions.length - 1),
+  );
+  const expiresAt = Number.isFinite(Number(miniTest.expiresAt)) ? Number(miniTest.expiresAt) : 0;
+  const nowTs = asTs(now, Date.now());
+  return {
+    setSize: Number.isFinite(Number(miniTest.setSize)) ? Number(miniTest.setSize) : questions.length,
+    startedAt: asTs(miniTest.startedAt, 0),
+    timeLimitMs: Number.isFinite(Number(miniTest.timeLimitMs)) ? Number(miniTest.timeLimitMs) : 0,
+    expiresAt,
+    remainingMs: expiresAt ? Math.max(0, expiresAt - nowTs) : 0,
+    currentIndex,
+    finished: Boolean(miniTest.finished),
+    timedOut: Boolean(miniTest.timedOut),
+    questions: questions.map((entry, index) => safeMiniTestQuestion(entry, index, currentIndex, {
+      includeItem: true,
+    })),
+  };
+}
+
+function safeMiniTestReview(review) {
+  if (!isPlainObject(review)) return null;
+  const questions = Array.isArray(review.questions) ? review.questions : [];
+  return {
+    setSize: Number.isFinite(Number(review.setSize)) ? Number(review.setSize) : questions.length,
+    timeLimitMs: Number.isFinite(Number(review.timeLimitMs)) ? Number(review.timeLimitMs) : 0,
+    startedAt: asTs(review.startedAt, 0),
+    finishedAt: asTs(review.finishedAt, 0),
+    questions: questions.map((entry, index) => safeMiniTestQuestion(entry, index, -1, {
+      includeItem: true,
+      includeMarked: true,
+    })),
+  };
+}
+
+function safeGoal(goal, now = Date.now()) {
+  if (!isPlainObject(goal)) return { type: 'questions' };
+  const type = ['questions', 'timed', 'due'].includes(goal.type) ? goal.type : 'questions';
+  const expiresAt = asTs(goal.expiresAt, 0);
+  const nowTs = asTs(now, Date.now());
+  const output = {
+    type,
+    targetCount: Number.isFinite(Number(goal.targetCount)) ? Number(goal.targetCount) : 0,
+    startedAt: asTs(goal.startedAt, 0),
+  };
+  if (type === 'timed') {
+    output.timeLimitMs = Number.isFinite(Number(goal.timeLimitMs)) ? Number(goal.timeLimitMs) : 0;
+    output.expiresAt = expiresAt;
+    output.remainingMs = expiresAt ? Math.max(0, expiresAt - nowTs) : 0;
+  }
+  if (type === 'due') {
+    output.initialDueCount = Number.isFinite(Number(goal.initialDueCount)) ? Number(goal.initialDueCount) : 0;
+  }
+  return output;
+}
+
+function safeSummary(summary) {
+  if (!isPlainObject(summary)) return null;
+  const output = {
+    sessionId: typeof summary.sessionId === 'string' ? summary.sessionId : '',
+    mode: typeof summary.mode === 'string' ? summary.mode : 'smart',
+    startedAt: asTs(summary.startedAt, 0),
+    completedAt: asTs(summary.completedAt, 0),
+    answered: Number.isFinite(Number(summary.answered)) ? Number(summary.answered) : 0,
+    correct: Number.isFinite(Number(summary.correct)) ? Number(summary.correct) : 0,
+    totalScore: Number.isFinite(Number(summary.totalScore)) ? Number(summary.totalScore) : 0,
+    totalMarks: Number.isFinite(Number(summary.totalMarks)) ? Number(summary.totalMarks) : 0,
+    targetCount: Number.isFinite(Number(summary.targetCount)) ? Number(summary.targetCount) : 0,
+    goal: safeGoal(summary.goal, summary.completedAt),
+  };
+  if (Object.prototype.hasOwnProperty.call(summary, 'timedOut')) {
+    output.timedOut = Boolean(summary.timedOut);
+  }
+  const miniTestReview = safeMiniTestReview(summary.miniTestReview);
+  if (miniTestReview) output.miniTestReview = miniTestReview;
+  return output;
+}
+
+function conceptById(conceptId) {
+  return GRAMMAR_CONCEPTS.find((concept) => concept.id === conceptId) || null;
+}
+
+function conceptSupportSummary(concept) {
+  if (!concept) return null;
+  return {
+    id: concept.id,
+    name: concept.name,
+    domain: concept.domain,
+    summary: concept.summary,
+  };
+}
+
+function normaliseComparableText(value) {
+  if (typeof value !== 'string') return '';
+  return value
+    .normalize('NFKC')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function addCurrentSurfaceText(texts, value) {
+  const normalised = normaliseComparableText(value);
+  if (normalised.length >= 4) texts.add(normalised);
+}
+
+function addChoiceSurfaceTexts(texts, options) {
+  if (!Array.isArray(options)) return;
+  for (const option of options) {
+    if (Array.isArray(option)) {
+      addCurrentSurfaceText(texts, option[0]);
+      addCurrentSurfaceText(texts, option[1]);
+    } else if (isPlainObject(option)) {
+      addCurrentSurfaceText(texts, option.value);
+      addCurrentSurfaceText(texts, option.label);
+    } else {
+      addCurrentSurfaceText(texts, option);
+    }
+  }
+}
+
+function addInputSurfaceTexts(texts, inputSpec) {
+  if (!isPlainObject(inputSpec)) return;
+  addCurrentSurfaceText(texts, inputSpec.label);
+  addChoiceSurfaceTexts(texts, inputSpec.options);
+
+  if (Array.isArray(inputSpec.rows)) {
+    for (const row of inputSpec.rows) {
+      if (!isPlainObject(row)) continue;
+      addCurrentSurfaceText(texts, row.label);
+      addChoiceSurfaceTexts(texts, row.options);
+    }
+  }
+
+  if (Array.isArray(inputSpec.fields)) {
+    for (const field of inputSpec.fields) {
+      if (!isPlainObject(field)) continue;
+      addCurrentSurfaceText(texts, field.label);
+      addChoiceSurfaceTexts(texts, field.options);
+    }
+  }
+}
+
+function currentItemSurfaceTexts(item) {
+  const texts = new Set();
+  if (!isPlainObject(item)) return texts;
+  addCurrentSurfaceText(texts, item.promptText);
+  addCurrentSurfaceText(texts, item.reflectionPrompt);
+  addCurrentSurfaceText(texts, item.checkLine);
+  if (Array.isArray(item.solutionLines)) {
+    for (const line of item.solutionLines) addCurrentSurfaceText(texts, line);
+  }
+  addInputSurfaceTexts(texts, item.inputSpec);
+  return texts;
+}
+
+function overlapsCurrentItemSurface(value, currentTexts) {
+  const candidate = normaliseComparableText(value);
+  if (candidate.length < 4) return false;
+  for (const current of currentTexts) {
+    if (candidate === current) return true;
+    if (current.length >= 12 && candidate.includes(current)) return true;
+    if (current.includes(candidate)) return true;
+  }
+  return false;
+}
+
+function safeGuidanceText(value, currentTexts) {
+  if (typeof value !== 'string') return '';
+  return overlapsCurrentItemSurface(value, currentTexts) ? '' : value;
+}
+
+function safeWorkedExample(concept, currentTexts = new Set()) {
+  const worked = isPlainObject(concept?.worked) ? concept.worked : {};
+  if (!worked.prompt && !worked.answer && !worked.why) return null;
+  const prompt = safeGuidanceText(worked.prompt, currentTexts);
+  const exampleResponse = safeGuidanceText(worked.answer, currentTexts);
+  const why = safeGuidanceText(worked.why, currentTexts);
+  if (!prompt && !exampleResponse && !why) return null;
+  const model = {};
+  if (prompt) model.prompt = prompt;
+  if (exampleResponse) model.exampleResponse = exampleResponse;
+  if (why) model.why = why;
+  return model;
+}
+
+function safeContrast(concept, currentTexts = new Set()) {
+  const contrast = isPlainObject(concept?.contrast) ? concept.contrast : {};
+  if (!contrast.good && !contrast.nearMiss && !contrast.why) return null;
+  const secureExample = safeGuidanceText(contrast.good, currentTexts);
+  const nearMiss = safeGuidanceText(contrast.nearMiss, currentTexts);
+  const why = safeGuidanceText(contrast.why, currentTexts);
+  if (!secureExample && !nearMiss && !why) return null;
+  const model = {};
+  if (secureExample) model.secureExample = secureExample;
+  if (nearMiss) model.nearMiss = nearMiss;
+  if (why) model.why = why;
+  return model;
+}
+
+function supportGuidanceForSession(session) {
+  const level = Math.max(0, Number(session?.supportLevel) || 0);
+  if (!level) return null;
+  const currentTexts = currentItemSurfaceTexts(session?.currentItem);
+  const conceptIds = Array.isArray(session?.currentItem?.skillIds)
+    ? session.currentItem.skillIds.filter(Boolean).map(String)
+    : [];
+  const concepts = conceptIds
+    .map(conceptById)
+    .filter(Boolean);
+  const primary = concepts[0] || null;
+  const summaries = concepts
+    .map(conceptSupportSummary)
+    .filter(Boolean);
+
+  if (level >= 2) {
+    return {
+      kind: 'worked',
+      level,
+      title: 'Worked example',
+      concepts: summaries,
+      workedExample: safeWorkedExample(primary, currentTexts),
+      notices: Array.isArray(primary?.notices) ? primary.notices.slice(0, 2) : [],
+    };
+  }
+
+  return {
+    kind: 'faded',
+    level,
+    title: 'Faded guidance',
+    concepts: summaries,
+    summary: typeof primary?.summary === 'string' ? primary.summary : '',
+    notices: Array.isArray(primary?.notices) ? primary.notices.slice(0, 3) : [],
+    contrast: safeContrast(primary, currentTexts),
+  };
+}
+
+function safeSession(session, now = Date.now()) {
   if (!isPlainObject(session)) return null;
   return {
     id: typeof session.id === 'string' ? session.id : '',
@@ -78,6 +360,18 @@ function safeSession(session) {
     totalMarks: Number.isFinite(Number(session.totalMarks)) ? Number(session.totalMarks) : 0,
     currentIndex: Number.isFinite(Number(session.currentIndex)) ? Number(session.currentIndex) : 0,
     currentItem: safeCurrentItem(session.currentItem),
+    goal: safeGoal(session.goal, now),
+    miniTest: safeMiniTest(session.miniTest, now),
+    repair: isPlainObject(session.repair)
+      ? {
+        retryingCurrent: Boolean(session.repair.retryingCurrent),
+        similarProblems: Number.isFinite(Number(session.repair.similarProblems)) ? Number(session.repair.similarProblems) : 0,
+        requestedFadedSupport: Boolean(session.repair.requestedFadedSupport),
+        workedSolutionShown: Boolean(session.repair.workedSolutionShown),
+      }
+      : null,
+    supportLevel: Number.isFinite(Number(session.supportLevel)) ? Math.max(0, Number(session.supportLevel)) : 0,
+    supportGuidance: supportGuidanceForSession(session),
     serverAuthority: session.serverAuthority === GRAMMAR_SERVER_AUTHORITY ? GRAMMAR_SERVER_AUTHORITY : null,
   };
 }
@@ -247,6 +541,79 @@ function evidenceSummary({ concepts, patterns }) {
   ];
 }
 
+function safeAiTextList(value, limit = 5) {
+  return (Array.isArray(value) ? value : [])
+    .map((entry) => String(entry || '').trim())
+    .filter(Boolean)
+    .slice(0, limit);
+}
+
+function safeAiEnrichment(raw) {
+  if (!isPlainObject(raw)) return null;
+  const kind = ['explanation', 'revision-card', 'parent-summary'].includes(raw.kind)
+    ? raw.kind
+    : 'explanation';
+  const status = raw.status === 'ready' ? 'ready' : 'failed';
+  const output = {
+    kind,
+    status,
+    nonScored: raw.nonScored !== false,
+    generatedAt: asTs(raw.generatedAt, 0),
+  };
+  if (raw.source === 'server-validated-ai') output.source = raw.source;
+  if (isPlainObject(raw.error)) {
+    output.error = {
+      code: typeof raw.error.code === 'string' ? raw.error.code : 'grammar_ai_enrichment_failed',
+      message: typeof raw.error.message === 'string' ? raw.error.message : 'Grammar enrichment is unavailable.',
+    };
+  }
+  if (isPlainObject(raw.concept)) {
+    output.concept = {
+      id: typeof raw.concept.id === 'string' ? raw.concept.id : '',
+      name: typeof raw.concept.name === 'string' ? raw.concept.name : '',
+      domain: typeof raw.concept.domain === 'string' ? raw.concept.domain : '',
+    };
+  } else {
+    output.concept = null;
+  }
+  if (isPlainObject(raw.explanation)) {
+    output.explanation = {
+      title: typeof raw.explanation.title === 'string' ? raw.explanation.title : '',
+      body: typeof raw.explanation.body === 'string' ? raw.explanation.body : '',
+      keyPoints: safeAiTextList(raw.explanation.keyPoints, 5),
+    };
+  }
+  output.revisionCards = (Array.isArray(raw.revisionCards) ? raw.revisionCards : [])
+    .filter(isPlainObject)
+    .map((card) => ({
+      title: typeof card.title === 'string' ? card.title : '',
+      front: typeof card.front === 'string' ? card.front : '',
+      back: typeof card.back === 'string' ? card.back : '',
+    }))
+    .filter((card) => card.front || card.back)
+    .slice(0, 4);
+  output.parentSummary = isPlainObject(raw.parentSummary)
+    ? {
+      title: typeof raw.parentSummary.title === 'string' ? raw.parentSummary.title : '',
+      body: typeof raw.parentSummary.body === 'string' ? raw.parentSummary.body : '',
+      nextSteps: safeAiTextList(raw.parentSummary.nextSteps, 4),
+    }
+    : null;
+  output.revisionDrills = (Array.isArray(raw.revisionDrills) ? raw.revisionDrills : [])
+    .filter(isPlainObject)
+    .map((drill) => ({
+      templateId: typeof drill.templateId === 'string' ? drill.templateId : '',
+      label: typeof drill.label === 'string' ? drill.label : '',
+      conceptIds: Array.isArray(drill.conceptIds) ? drill.conceptIds.filter(Boolean).map(String) : [],
+      questionType: typeof drill.questionType === 'string' ? drill.questionType : '',
+      deterministic: drill.deterministic !== false,
+    }))
+    .filter((drill) => drill.templateId)
+    .slice(0, 6);
+  output.notices = safeAiTextList(raw.notices, 4);
+  return output;
+}
+
 function capabilityMetadata() {
   const modes = {
     learn: { label: 'Learn a concept', detail: 'Focused retrieval on one concept at a time.' },
@@ -254,13 +621,18 @@ function capabilityMetadata() {
     satsset: { label: 'KS2-style mini-set', detail: 'A short mixed set with SATs-friendly question shapes.' },
     trouble: { label: 'Weak concepts drill', detail: 'Targets the weakest Grammar concepts with retry pressure.' },
     surgery: { label: 'Sentence surgery', detail: 'Fix and rewrite sentence-level Grammar errors.' },
-    builder: { label: 'Sentence builder' },
-    worked: { label: 'Worked examples' },
-    faded: { label: 'Faded guidance' },
+    builder: { label: 'Sentence builder', detail: 'Build and rewrite sentences from structured prompts.' },
+    worked: { label: 'Worked examples', detail: 'Practise with a model example before answering.' },
+    faded: { label: 'Faded guidance', detail: 'Practise with prompts and contrasts, but no answer to the current item.' },
   };
   return {
     enabledModes: Array.from(GRAMMAR_ENABLED_MODES).map((id) => ({ id, ...(modes[id] || { label: id }) })),
     lockedModes: Array.from(GRAMMAR_LOCKED_MODES).map((id) => ({ id, label: modes[id]?.label || id, reason: 'coming-next' })),
+    aiEnrichment: {
+      enabled: true,
+      nonScored: true,
+      kinds: ['explanation', 'revision-card', 'parent-summary'],
+    },
   };
 }
 
@@ -269,6 +641,7 @@ export function buildGrammarReadModel({
   state,
   projections = null,
   now = Date.now(),
+  aiEnrichment = null,
 } = {}) {
   const safeState = cloneSerialisable(state) || {};
   const concepts = conceptMap(safeState, now);
@@ -289,9 +662,9 @@ export function buildGrammarReadModel({
     },
     phase: typeof safeState.phase === 'string' ? safeState.phase : 'dashboard',
     awaitingAdvance: Boolean(safeState.awaitingAdvance),
-    session: safeSession(safeState.session),
+    session: safeSession(safeState.session, now),
     feedback: isPlainObject(safeState.feedback) ? cloneSerialisable(safeState.feedback) : null,
-    summary: isPlainObject(safeState.summary) ? cloneSerialisable(safeState.summary) : null,
+    summary: safeSummary(safeState.summary),
     prefs: isPlainObject(safeState.prefs) ? cloneSerialisable(safeState.prefs) : {},
     stats: statsFromConcepts(concepts),
     analytics: {
@@ -305,6 +678,7 @@ export function buildGrammarReadModel({
       recentActivity: recentActivityFromAttempts(recentAttempts),
     },
     capabilities: capabilityMetadata(),
+    aiEnrichment: safeAiEnrichment(aiEnrichment || safeState.aiEnrichment),
     projections: projections ? cloneSerialisable(projections) : null,
     error: typeof safeState.error === 'string' ? safeState.error : '',
   };

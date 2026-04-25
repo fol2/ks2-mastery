@@ -9,6 +9,7 @@ import {
   codexStageDotClassName,
   codexTotals,
 } from '../src/surfaces/home/codex-view-model.js';
+import { BUNDLED_MONSTER_VISUAL_CONFIG } from '../src/platform/game/monster-visual-config.js';
 
 test('codex totals prefer the aggregate secure count when it is ahead', () => {
   const totals = codexTotals([
@@ -98,6 +99,21 @@ test('codex lightbox style binds the preview halo to the creature scale', () => 
   assert.equal(megaStyle['--codex-lightbox-visual-size'], '700px');
   assert.equal(megaStyle['--codex-lightbox-orbit-size'], '868px');
   assert.ok(parseInt(megaStyle['--codex-lightbox-lift'], 10) > 0);
+});
+
+test('codex feature metrics can use published visual config foot pads', () => {
+  const config = structuredClone(BUNDLED_MONSTER_VISUAL_CONFIG);
+  config.assets['phaeton-b1-4'].contexts.codexFeature.footPad = 64;
+
+  const style = codexFeatureStyle({
+    id: 'phaeton',
+    branch: 'b1',
+    caught: true,
+    stage: 4,
+    displayState: 'monster',
+  }, config);
+
+  assert.equal(style['--codex-feature-foot-shift'], '140px');
 });
 
 test('codex class helpers preserve stage and locked state semantics', () => {

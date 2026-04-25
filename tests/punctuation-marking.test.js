@@ -8,6 +8,10 @@ function item(id) {
   return PUNCTUATION_CONTENT_INDEXES.itemById.get(id);
 }
 
+function facet(result, id) {
+  return result.facets.find((entry) => entry.id === id);
+}
+
 test('speech rubric accepts straight, curly, single, and double inverted commas', () => {
   const rubric = {
     type: 'speech',
@@ -79,12 +83,22 @@ test('endmarks and apostrophe marking handles exact answers and constrained tran
     answer: { typed: "We can't leave yet because we're still tidying up." },
   }).correct, true);
 
+  const embeddedContractions = markPunctuationAnswer({
+    item: item('ac_transfer_contractions'),
+    answer: { typed: "We can'tankerous because we'rewolf." },
+  });
+  assert.equal(embeddedContractions.correct, false);
+  assert.equal(embeddedContractions.misconceptionTags.includes('apostrophe.contraction_missing'), true);
+  assert.equal(facet(embeddedContractions, 'preservation')?.ok, false);
+
   const missingToken = markPunctuationAnswer({
     item: item('ap_transfer_possession'),
     answer: { typed: "The children's paintings were near the teachers notices." },
   });
   assert.equal(missingToken.correct, false);
   assert.equal(missingToken.misconceptionTags.includes('apostrophe.possession_missing'), true);
+  assert.equal(facet(missingToken, 'preservation')?.ok, false);
+  assert.equal(facet(missingToken, 'terminal_punctuation')?.ok, true);
 });
 
 test('comma list transfer requires preserved items and KS2 list comma placement', () => {
@@ -108,6 +122,19 @@ test('comma list transfer requires preserved items and KS2 list comma placement'
   });
   assert.equal(finalComma.correct, false);
   assert.equal(finalComma.misconceptionTags.includes('comma.unnecessary_final_comma'), true);
+
+  const anchored = markPunctuationAnswer({
+    item: item('lc_transfer_bake_sale'),
+    answer: { typed: 'For the bake sale we needed eggs, flour, butter and sugar.' },
+  });
+  assert.equal(anchored.correct, true);
+
+  const changedStem = markPunctuationAnswer({
+    item: item('lc_transfer_bake_sale'),
+    answer: { typed: 'For the party we needed eggs, flour, butter and sugar.' },
+  });
+  assert.equal(changedStem.correct, false);
+  assert.equal(changedStem.misconceptionTags.includes('comma.list_words_changed'), true);
 });
 
 test('fronted adverbial and clarity transfers require the opening phrase comma', () => {
@@ -136,6 +163,14 @@ test('fronted adverbial and clarity transfers require the opening phrase comma',
   });
   assert.equal(missingClarityComma.correct, false);
   assert.equal(missingClarityComma.misconceptionTags.includes('comma.clarity_missing'), true);
+
+  const noMainClause = markPunctuationAnswer({
+    item: item('fa_transfer_after_lunch'),
+    answer: { typed: 'After lunch,.' },
+  });
+  assert.equal(noMainClause.correct, false);
+  assert.equal(noMainClause.misconceptionTags.includes('comma.main_clause_missing'), true);
+  assert.equal(facet(noMainClause, 'preservation')?.ok, false);
 });
 
 test('boundary transfer validators require target marks between preserved clauses', () => {
@@ -187,6 +222,97 @@ test('hyphen transfer validator requires the exact hyphenated phrase', () => {
   });
   assert.equal(changedPhrase.correct, false);
   assert.equal(changedPhrase.misconceptionTags.includes('boundary.words_changed'), true);
+
+  const legacyPhrase = markPunctuationAnswer({
+    item: item('hy_transfer_man_eating_shark'),
+    answer: { typed: 'The divers spotted a man-eating shark near the reef.' },
+  });
+  assert.equal(legacyPhrase.correct, true);
+
+  const missingLegacyHyphen = markPunctuationAnswer({
+    item: item('hy_transfer_man_eating_shark'),
+    answer: { typed: 'The divers spotted a man eating shark near the reef.' },
+  });
+  assert.equal(missingLegacyHyphen.correct, false);
+  assert.equal(missingLegacyHyphen.misconceptionTags.includes('boundary.hyphen_missing'), true);
+
+  const embeddedLegacyPhrase = markPunctuationAnswer({
+    item: item('hy_transfer_man_eating_shark'),
+    answer: { typed: 'The divers spotted a human-eating shark near the reef.' },
+  });
+  assert.equal(embeddedLegacyPhrase.correct, false);
+  assert.equal(embeddedLegacyPhrase.misconceptionTags.includes('boundary.words_changed'), true);
+
+  const embeddedWellKnownPhrase = markPunctuationAnswer({
+    item: item('hy_transfer_well_known'),
+    answer: { typed: 'The swell-known author visited our class.' },
+  });
+  assert.equal(embeddedWellKnownPhrase.correct, false);
+  assert.equal(embeddedWellKnownPhrase.misconceptionTags.includes('boundary.words_changed'), true);
+});
+
+test('mixed transfer validators constrain fronted speech and colon-list stems', () => {
+  const frontedSpeech = markPunctuationAnswer({
+    item: item('sp_fa_transfer_at_last_speech'),
+    answer: { typed: 'At last, Noah shouted, "We made it!"' },
+  });
+  assert.equal(frontedSpeech.correct, true);
+  assert.equal(facet(frontedSpeech, 'comma_placement')?.ok, true);
+  assert.equal(facet(frontedSpeech, 'speech_punctuation')?.ok, true);
+  assert.equal(facet(frontedSpeech, 'single_sentence')?.ok, true);
+
+  const missingFrontedComma = markPunctuationAnswer({
+    item: item('sp_fa_transfer_at_last_speech'),
+    answer: { typed: 'At last Noah shouted, "We made it!"' },
+  });
+  assert.equal(missingFrontedComma.correct, false);
+  assert.equal(missingFrontedComma.misconceptionTags.includes('comma.fronted_adverbial_missing'), true);
+  assert.equal(missingFrontedComma.misconceptionTags.includes('speech.reporting_comma_missing'), false);
+  assert.equal(facet(missingFrontedComma, 'reporting_clause')?.ok, true);
+
+  const invalidReportingClause = markPunctuationAnswer({
+    item: item('sp_fa_transfer_at_last_speech'),
+    answer: { typed: 'At last, blue green, "We made it!"' },
+  });
+  assert.equal(invalidReportingClause.correct, false);
+  assert.equal(facet(invalidReportingClause, 'preservation')?.ok, false);
+  assert.equal(facet(invalidReportingClause, 'reporting_clause')?.ok, false);
+
+  const changedSpeechWords = markPunctuationAnswer({
+    item: item('sp_fa_transfer_at_last_speech'),
+    answer: { typed: 'At last, Noah shouted, "We missed it!"' },
+  });
+  assert.equal(changedSpeechWords.correct, false);
+  assert.equal(changedSpeechWords.misconceptionTags.includes('speech.words_changed'), true);
+
+  const missingReportingClause = markPunctuationAnswer({
+    item: item('sp_fa_transfer_at_last_speech'),
+    answer: { typed: 'At last, "We made it!"' },
+  });
+  assert.equal(missingReportingClause.correct, false);
+  assert.equal(missingReportingClause.misconceptionTags.includes('speech.reporting_comma_missing'), true);
+
+  const mixedColonList = markPunctuationAnswer({
+    item: item('cl_lc_transfer_toolkit'),
+    answer: { typed: 'Our toolkit contained three items: glue, card and scissors.' },
+  });
+  assert.equal(mixedColonList.correct, true);
+  assert.equal(facet(mixedColonList, 'colon_boundary')?.ok, true);
+  assert.equal(facet(mixedColonList, 'list_separators')?.ok, true);
+
+  const changedStem = markPunctuationAnswer({
+    item: item('cl_lc_transfer_toolkit'),
+    answer: { typed: 'Our toolkit contained useful items: glue, card and scissors.' },
+  });
+  assert.equal(changedStem.correct, false);
+  assert.equal(changedStem.misconceptionTags.includes('structure.list_words_changed'), true);
+
+  const finalComma = markPunctuationAnswer({
+    item: item('cl_lc_transfer_toolkit'),
+    answer: { typed: 'Our toolkit contained three items: glue, card, and scissors.' },
+  });
+  assert.equal(finalComma.correct, false);
+  assert.equal(finalComma.misconceptionTags.includes('comma.unnecessary_final_comma'), true);
 });
 
 test('structure transfer validators require explicit punctuation roles', () => {

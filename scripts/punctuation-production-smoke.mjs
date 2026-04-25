@@ -1,12 +1,24 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
+import { pathToFileURL } from 'node:url';
 
-import { createPunctuationContentIndexes } from '../shared/punctuation/content.js';
+import {
+  createPunctuationContentIndexes,
+  PUNCTUATION_RELEASE_ID,
+} from '../shared/punctuation/content.js';
 import { createPunctuationRuntimeManifest } from '../shared/punctuation/generators.js';
+import {
+  assertNoForbiddenObjectKeys,
+  assertOkResponse,
+  configuredOrigin,
+  createDemoSession,
+  getJson,
+  loadBootstrap,
+  subjectCommand,
+} from './lib/production-smoke.mjs';
 
-const DEFAULT_ORIGIN = 'https://ks2.eugnel.uk';
-const FORBIDDEN_READ_MODEL_KEYS = new Set([
+const FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS = new Set([
   'accepted',
   'answers',
   'correctIndex',
@@ -14,159 +26,83 @@ const FORBIDDEN_READ_MODEL_KEYS = new Set([
   'validator',
   'seed',
   'generator',
+  'rawGenerator',
   'hiddenQueue',
+  'queueItemIds',
+  'responses',
   'unpublished',
 ]);
 
-function argValue(...names) {
-  for (const name of names) {
-    const index = process.argv.indexOf(name);
-    if (index !== -1 && index + 1 < process.argv.length) return process.argv[index + 1];
+const FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS = new Set([
+  ...FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS,
+  'attemptedAnswer',
+  'choiceIndex',
+  'correctAnswer',
+  'displayCorrection',
+  'expected',
+  'expectedAnswer',
+  'model',
+  'rawResponse',
+  'response',
+  'typed',
+]);
+
+export function assertNoForbiddenPunctuationReadModelKeys(value, path = 'punctuation.subjectReadModel') {
+  assertNoForbiddenObjectKeys(value, FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS, path);
+}
+
+export function assertNoForbiddenPunctuationAdultEvidenceKeys(value, path = 'punctuation.adultEvidence') {
+  assertNoForbiddenObjectKeys(value, FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS, path);
+}
+
+function normaliseSourceOption(option, index) {
+  if (option && typeof option === 'object' && !Array.isArray(option)) {
+    const optionIndex = Number(option.index);
+    return {
+      index: Number.isInteger(optionIndex) && optionIndex >= 0 ? optionIndex : index,
+      text: typeof option.text === 'string' ? option.text : '',
+    };
   }
-  return '';
-}
-
-function configuredOrigin() {
-  const raw = argValue('--origin', '--url') || process.env.KS2_SMOKE_ORIGIN || DEFAULT_ORIGIN;
-  const value = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-  return new URL(value).origin;
-}
-
-function getSetCookies(response) {
-  const values = response.headers.getSetCookie?.();
-  if (Array.isArray(values) && values.length) return values;
-  return String(response.headers.get('set-cookie') || '')
-    .split(/,\s*(?=ks2_)/)
-    .filter(Boolean);
-}
-
-function sessionCookieFrom(response) {
-  return getSetCookies(response)
-    .map((cookie) => String(cookie || '').split(';')[0])
-    .find((cookie) => cookie.startsWith('ks2_session=')) || '';
-}
-
-async function readJsonResponse(response) {
-  const text = await response.text().catch(() => '');
-  try {
-    return text ? JSON.parse(text) : {};
-  } catch {
-    return { rawBody: text };
-  }
-}
-
-async function fetchJson(url, init = {}) {
-  const response = await fetch(url, init);
-  const payload = await readJsonResponse(response);
-  return { response, payload };
-}
-
-function sameOriginHeaders(origin, cookie = '') {
   return {
-    accept: 'application/json',
-    'content-type': 'application/json',
-    origin,
-    ...(cookie ? { cookie } : {}),
+    index,
+    text: typeof option === 'string' ? option : '',
   };
 }
 
-async function postJson(origin, path, body = {}, { cookie = '' } = {}) {
-  return fetchJson(new URL(path, origin), {
-    method: 'POST',
-    headers: sameOriginHeaders(origin, cookie),
-    body: JSON.stringify(body),
+function visibleOptionSet(readItem) {
+  assert.ok(Array.isArray(readItem?.options), `${readItem?.id || 'unknown item'} did not expose visible choice options.`);
+  return readItem.options.map((option, index) => {
+    assert.equal(typeof option?.text, 'string', `${readItem.id} exposed option ${index + 1} without visible text.`);
+    assert.equal(Number.isInteger(Number(option?.index)), true, `${readItem.id} exposed option ${index + 1} without a numeric index.`);
+    return {
+      index: Number(option.index),
+      text: option.text,
+    };
   });
 }
 
-async function getJson(origin, path, { cookie = '' } = {}) {
-  return fetchJson(new URL(path, origin), {
-    method: 'GET',
-    headers: {
-      accept: 'application/json',
-      ...(cookie ? { cookie } : {}),
-    },
-  });
-}
+function assertVisiblePunctuationItemMatchesSource(readItem, source, path = 'punctuation.currentItem') {
+  assert.equal(readItem?.id, source.id, `${path}.id did not match the source item.`);
+  assert.equal(readItem?.mode, source.mode, `${path}.mode did not match the source item.`);
+  assert.equal(readItem?.inputKind, source.mode === 'choose' ? 'choice' : 'text', `${path}.inputKind did not match the source item.`);
+  assert.equal(readItem?.prompt, source.prompt || '', `${path}.prompt did not match the source item.`);
+  assert.equal(readItem?.stem || '', source.stem || '', `${path}.stem did not match the source item.`);
+  assert.equal(readItem?.clusterId || null, source.clusterId || null, `${path}.clusterId did not match the source item.`);
+  assert.deepEqual(readItem?.skillIds || [], Array.isArray(source.skillIds) ? source.skillIds : [], `${path}.skillIds did not match the source item.`);
+  assert.equal(readItem?.source, source.source === 'generated' ? 'generated' : 'fixed', `${path}.source did not match the source item.`);
 
-function assertOkResponse(label, result) {
-  assert.ok(result.response.ok, `${label} failed with ${result.response.status}: ${JSON.stringify(result.payload)}`);
-  assert.notEqual(result.payload?.ok, false, `${label} returned ok=false: ${JSON.stringify(result.payload)}`);
-}
-
-function assertNoForbiddenReadModelKeys(value, path = 'subjectReadModel') {
-  if (value == null || typeof value !== 'object') return;
-  if (Array.isArray(value)) {
-    value.forEach((entry, index) => assertNoForbiddenReadModelKeys(entry, `${path}[${index}]`));
-    return;
-  }
-  for (const [key, child] of Object.entries(value)) {
-    assert.equal(FORBIDDEN_READ_MODEL_KEYS.has(key), false, `${path}.${key} exposed a server-only read-model field.`);
-    assertNoForbiddenReadModelKeys(child, `${path}.${key}`);
+  if (readItem.inputKind === 'choice') {
+    const expectedOptions = (Array.isArray(source.options) ? source.options : []).map(normaliseSourceOption);
+    assert.deepEqual(visibleOptionSet(readItem), expectedOptions, `${path}.options did not match the source item visible option set.`);
   }
 }
 
-function nextRevisionFrom(commandPayload, previousRevision) {
-  const applied = Number(commandPayload?.mutation?.appliedRevision);
-  return Number.isFinite(applied) ? applied : previousRevision;
-}
-
-function createRequestId(prefix) {
-  createRequestId.sequence = (createRequestId.sequence || 0) + 1;
-  return `${prefix}-${Date.now()}-${createRequestId.sequence}`;
-}
-
-async function createDemoSession(origin) {
-  const result = await postJson(origin, '/api/demo/session');
-  assertOkResponse('Demo session creation', result);
-  const cookie = sessionCookieFrom(result.response);
-  assert.ok(cookie, 'Demo session did not return a ks2_session cookie.');
-  assert.equal(result.payload?.session?.demo, true, 'Demo session payload was not marked as demo.');
-  return { cookie, session: result.payload.session };
-}
-
-async function loadBootstrap(origin, cookie) {
-  const result = await getJson(origin, '/api/bootstrap', { cookie });
-  assertOkResponse('Bootstrap', result);
-  const learnerId = result.payload?.learners?.selectedId;
-  assert.ok(learnerId, 'Bootstrap did not include a selected learner.');
-  return {
-    payload: result.payload,
-    learnerId,
-    revision: Number(result.payload?.learners?.byId?.[learnerId]?.stateRevision) || 0,
-  };
-}
-
-async function subjectCommand({
-  origin,
-  cookie,
-  subjectId,
-  learnerId,
-  revision,
-  command,
-  payload = {},
-}) {
-  const requestId = createRequestId(`${subjectId}-${command}`);
-  const result = await postJson(origin, `/api/subjects/${encodeURIComponent(subjectId)}/command`, {
-    subjectId,
-    learnerId,
-    command,
-    requestId,
-    correlationId: requestId,
-    expectedLearnerRevision: revision,
-    payload,
-  }, { cookie });
-  assertOkResponse(`${subjectId} ${command}`, result);
-  return {
-    payload: result.payload,
-    revision: nextRevisionFrom(result.payload, revision),
-  };
-}
-
-function punctuationAnswerFor(readItem) {
+export function punctuationAnswerFor(readItem) {
   const manifest = createPunctuationRuntimeManifest();
   const indexes = createPunctuationContentIndexes(manifest);
   const source = indexes.itemById.get(readItem?.id);
   assert.ok(source, `Could not find source punctuation item for ${readItem?.id || 'unknown item'}.`);
+  assertVisiblePunctuationItemMatchesSource(readItem, source);
 
   if (readItem.inputKind === 'choice') {
     assert.ok(Number.isInteger(source.correctIndex), `Punctuation choice item ${source.id} has no correctIndex.`);
@@ -180,7 +116,23 @@ function punctuationAnswerFor(readItem) {
   return { typed };
 }
 
-async function smokePunctuation({ origin, cookie, learnerId, revision }) {
+export function punctuationExpectedContextFor(session = {}) {
+  const context = {};
+  if (typeof session.id === 'string' && session.id) context.expectedSessionId = session.id;
+  if (typeof session.currentItem?.id === 'string' && session.currentItem.id) {
+    context.expectedItemId = session.currentItem.id;
+  }
+  if (Number.isFinite(Number(session.answeredCount))) {
+    context.expectedAnsweredCount = Number(session.answeredCount);
+  }
+  if (typeof session.releaseId === 'string' && session.releaseId) {
+    context.expectedReleaseId = session.releaseId;
+  }
+  assert.equal(session.releaseId, PUNCTUATION_RELEASE_ID, 'Punctuation session release id did not match the current runtime release.');
+  return context;
+}
+
+async function smokePunctuationSmartRound({ origin, cookie, learnerId, revision }) {
   let step = await subjectCommand({
     origin,
     cookie,
@@ -195,10 +147,11 @@ async function smokePunctuation({ origin, cookie, learnerId, revision }) {
   assert.equal(startModel?.phase, 'active-item', 'Punctuation did not start in active-item phase.');
   assert.equal(startModel?.session?.serverAuthority, 'worker', 'Punctuation session was not Worker-owned.');
   assert.equal(startModel?.session?.length, 1, 'Punctuation smoke round did not use length 1.');
-  assertNoForbiddenReadModelKeys(startModel);
+  assertNoForbiddenPunctuationReadModelKeys(startModel, 'punctuation.smart.startModel');
 
   const currentItem = startModel.session?.currentItem;
   const answer = punctuationAnswerFor(currentItem);
+  const expectedContext = punctuationExpectedContextFor(startModel.session);
   step = await subjectCommand({
     origin,
     cookie,
@@ -206,13 +159,13 @@ async function smokePunctuation({ origin, cookie, learnerId, revision }) {
     learnerId,
     revision,
     command: 'submit-answer',
-    payload: answer,
+    payload: { ...answer, ...expectedContext },
   });
   revision = step.revision;
   const feedbackModel = step.payload.subjectReadModel;
   assert.equal(feedbackModel?.phase, 'feedback', 'Punctuation submit did not return feedback phase.');
   assert.equal(feedbackModel?.feedback?.kind, 'success', `Punctuation smoke answer was not accepted for ${currentItem?.id}.`);
-  assertNoForbiddenReadModelKeys(feedbackModel);
+  assertNoForbiddenPunctuationReadModelKeys(feedbackModel, 'punctuation.smart.feedbackModel');
 
   step = await subjectCommand({
     origin,
@@ -226,12 +179,104 @@ async function smokePunctuation({ origin, cookie, learnerId, revision }) {
   const summaryModel = step.payload.subjectReadModel;
   assert.equal(summaryModel?.phase, 'summary', 'Punctuation continue did not reach summary.');
   assert.equal(summaryModel?.summary?.total, 1, 'Punctuation summary did not record one answered item.');
-  assertNoForbiddenReadModelKeys(summaryModel);
+  assertNoForbiddenPunctuationReadModelKeys(summaryModel, 'punctuation.smart.summaryModel');
 
   return {
     revision,
     itemId: currentItem.id,
     summaryTotal: summaryModel.summary.total,
+  };
+}
+
+async function smokePunctuationGpsReview({ origin, cookie, learnerId, revision }) {
+  let step = await subjectCommand({
+    origin,
+    cookie,
+    subjectId: 'punctuation',
+    learnerId,
+    revision,
+    command: 'start-session',
+    payload: { mode: 'gps', roundLength: '1' },
+  });
+  revision = step.revision;
+  const startModel = step.payload.subjectReadModel;
+  assert.equal(startModel?.phase, 'active-item', 'Punctuation GPS did not start in active-item phase.');
+  assert.equal(startModel?.session?.mode, 'gps', 'Punctuation advanced smoke did not start GPS mode.');
+  assert.equal(startModel?.session?.serverAuthority, 'worker', 'Punctuation GPS session was not Worker-owned.');
+  assert.equal(startModel?.session?.gps?.delayedFeedback, true, 'Punctuation GPS did not enable delayed feedback.');
+  assert.equal(startModel?.feedback, null, 'Punctuation GPS exposed feedback before the test ended.');
+  assertNoForbiddenPunctuationReadModelKeys(startModel, 'punctuation.gps.startModel');
+
+  const currentItem = startModel.session?.currentItem;
+  const answer = punctuationAnswerFor(currentItem);
+  const expectedContext = punctuationExpectedContextFor(startModel.session);
+  step = await subjectCommand({
+    origin,
+    cookie,
+    subjectId: 'punctuation',
+    learnerId,
+    revision,
+    command: 'submit-answer',
+    payload: { ...answer, ...expectedContext },
+  });
+  revision = step.revision;
+  const summaryModel = step.payload.subjectReadModel;
+  assert.equal(summaryModel?.phase, 'summary', 'Punctuation GPS submit did not reach the delayed summary.');
+  assert.equal(summaryModel?.summary?.total, 1, 'Punctuation GPS summary did not record one answered item.');
+  assert.equal(summaryModel?.summary?.gps?.delayedFeedback, true, 'Punctuation GPS summary did not preserve delayed-feedback metadata.');
+  assert.equal(summaryModel?.summary?.gps?.reviewItems?.length, 1, 'Punctuation GPS summary did not include one review row.');
+  assert.equal(summaryModel.summary.gps.reviewItems[0]?.itemId, currentItem?.id, 'Punctuation GPS review row did not match the answered item.');
+  assertNoForbiddenPunctuationReadModelKeys(summaryModel, 'punctuation.gps.summaryModel');
+
+  return {
+    revision,
+    itemId: currentItem.id,
+    summaryTotal: summaryModel.summary.total,
+    reviewItems: summaryModel.summary.gps.reviewItems.length,
+  };
+}
+
+async function smokePunctuationParentEvidence({ origin, cookie, learnerId }) {
+  const result = await getJson(origin, `/api/hubs/parent?learnerId=${encodeURIComponent(learnerId)}`, { cookie });
+  assertOkResponse('Parent Hub Punctuation evidence', result);
+  const parentHub = result.payload?.parentHub;
+  assert.ok(parentHub, 'Parent Hub response did not include a parentHub payload.');
+  const evidence = parentHub.punctuationEvidence;
+  assert.equal(evidence?.hasEvidence, true, 'Parent Hub did not expose Punctuation evidence after the smoke attempts.');
+  assert.ok(
+    Number(evidence?.overview?.attempts) >= 2,
+    `Parent Hub Punctuation evidence recorded too few attempts: ${evidence?.overview?.attempts}`,
+  );
+  assert.equal(
+    parentHub.progressSnapshots?.some((snapshot) => snapshot?.subjectId === 'punctuation'),
+    true,
+    'Parent Hub progress snapshots did not include Punctuation.',
+  );
+  assertNoForbiddenPunctuationAdultEvidenceKeys(evidence, 'parentHub.punctuationEvidence');
+  assertNoForbiddenPunctuationAdultEvidenceKeys(parentHub.progressSnapshots, 'parentHub.progressSnapshots');
+  assertNoForbiddenPunctuationAdultEvidenceKeys(parentHub.misconceptionPatterns, 'parentHub.misconceptionPatterns');
+
+  return {
+    attempts: evidence.overview.attempts,
+    accuracyPercent: evidence.overview.accuracyPercent,
+    sessionModes: evidence.bySessionMode.map((entry) => entry.id),
+  };
+}
+
+async function smokePunctuation({ origin, cookie, learnerId, revision }) {
+  const smart = await smokePunctuationSmartRound({ origin, cookie, learnerId, revision });
+  const advanced = await smokePunctuationGpsReview({
+    origin,
+    cookie,
+    learnerId,
+    revision: smart.revision,
+  });
+  const parentHub = await smokePunctuationParentEvidence({ origin, cookie, learnerId });
+  return {
+    revision: advanced.revision,
+    smart,
+    advanced,
+    parentHub,
   };
 }
 
@@ -265,7 +310,7 @@ async function smokeSpelling({ origin, cookie, learnerId, revision }) {
 async function main() {
   const origin = configuredOrigin();
   const demo = await createDemoSession(origin);
-  const bootstrap = await loadBootstrap(origin, demo.cookie);
+  const bootstrap = await loadBootstrap(origin, demo.cookie, { expectedSession: demo.session });
   assert.equal(
     bootstrap.payload?.subjectExposureGates?.punctuationProduction,
     true,
@@ -291,8 +336,12 @@ async function main() {
     accountId: demo.session.accountId,
     learnerId: bootstrap.learnerId,
     punctuation: {
-      itemId: punctuation.itemId,
-      summaryTotal: punctuation.summaryTotal,
+      smartItemId: punctuation.smart.itemId,
+      smartSummaryTotal: punctuation.smart.summaryTotal,
+      advancedMode: 'gps',
+      advancedItemId: punctuation.advanced.itemId,
+      advancedReviewItems: punctuation.advanced.reviewItems,
+      parentHubAttempts: punctuation.parentHub.attempts,
     },
     spelling: {
       progressTotal: spelling.progressTotal,
@@ -301,7 +350,9 @@ async function main() {
   }, null, 2));
 }
 
-main().catch((error) => {
-  console.error(`[punctuation-production-smoke] ${error?.stack || error?.message || error}`);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    console.error(`[punctuation-production-smoke] ${error?.stack || error?.message || error}`);
+    process.exit(1);
+  });
+}

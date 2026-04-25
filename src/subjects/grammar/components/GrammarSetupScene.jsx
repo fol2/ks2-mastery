@@ -6,6 +6,15 @@ import {
   GRAMMAR_REGION_IMAGE_SMALL,
   groupedGrammarConcepts,
 } from '../metadata.js';
+import { normaliseGrammarSpeechRate } from '../speech.js';
+
+const SPEECH_RATE_OPTIONS = Object.freeze([
+  { value: 0.6, label: '0.6x slow' },
+  { value: 0.8, label: '0.8x steady' },
+  { value: 1, label: '1x normal' },
+  { value: 1.2, label: '1.2x quicker' },
+  { value: 1.4, label: '1.4x fast' },
+]);
 
 function Stat({ label, value, detail }) {
   return (
@@ -36,13 +45,21 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
   const counts = grammar.stats?.concepts || {};
   const templates = grammar.stats?.templates || {};
   const selectedMode = grammar.prefs?.mode || 'smart';
+  const selectedGoal = grammar.prefs?.goalType || 'questions';
+  const miniTestMode = selectedMode === 'satsset';
   const troubleMode = selectedMode === 'trouble';
   const surgeryMode = selectedMode === 'surgery';
-  const focusDisabled = troubleMode || surgeryMode;
+  const builderMode = selectedMode === 'builder';
+  const focusDisabled = troubleMode || surgeryMode || builderMode;
   const selectedFocus = focusDisabled ? '' : (grammar.prefs?.focusConceptId || '');
-  const focusPlaceholder = troubleMode ? 'Weakest concept' : (surgeryMode ? 'Surgery mix' : 'Smart mix');
+  const focusPlaceholder = troubleMode ? 'Weakest concept' : (surgeryMode ? 'Surgery mix' : (builderMode ? 'Builder mix' : 'Smart mix'));
   const groupedConcepts = groupedGrammarConcepts(grammar.analytics?.concepts || []);
   const setupDisabled = runtimeReadOnly || Boolean(grammar.pendingCommand);
+  const lengthOptions = miniTestMode ? [8, 12] : [3, 5, 8, 10, 15];
+  const selectedLength = miniTestMode
+    ? (Number(grammar.prefs?.roundLength) >= 10 ? 12 : 8)
+    : (Number(grammar.prefs?.roundLength) || 5);
+  const selectedSpeechRate = normaliseGrammarSpeechRate(grammar.prefs?.speechRate);
 
   return (
     <section className="grammar-setup" aria-labelledby="grammar-setup-title">
@@ -58,8 +75,8 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
           <div className="eyebrow">Clause Conservatory</div>
           <h2 id="grammar-setup-title">Grammar retrieval practice</h2>
           <p>
-            {learner?.name || 'This learner'} can start with the Stage 1 Worker-marked grammar engine,
-            while the full concept map stays visible for the larger product build.
+            {learner?.name || 'This learner'} can practise with Worker-marked grammar modes while the
+            full concept map stays visible for the larger product build.
           </p>
           <div className="grammar-hero-stats" aria-label="Grammar coverage">
             <Stat label="Concepts" value={counts.total || 18} detail="full map" />
@@ -73,7 +90,7 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
         <section className="card grammar-start-card" aria-labelledby="grammar-start-title">
           <div className="card-header">
             <div>
-              <div className="eyebrow">Stage 1 practice</div>
+              <div className="eyebrow">Worker-marked modes</div>
               <h3 className="section-title" id="grammar-start-title">Start a Grammar round</h3>
             </div>
             <span className="chip good">Worker marked</span>
@@ -117,15 +134,70 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
               </select>
             </label>
             <label className="field">
-              <span>Round length</span>
+              <span>{miniTestMode ? 'Mini-set size' : 'Round length'}</span>
               <select
                 className="input"
-                value={String(grammar.prefs?.roundLength || 5)}
+                value={String(selectedLength)}
                 disabled={setupDisabled}
                 onChange={(event) => actions.dispatch('grammar-set-round-length', { value: event.currentTarget.value })}
               >
-                {[3, 5, 8, 10, 15].map((length) => <option value={length} key={length}>{length}</option>)}
+                {lengthOptions.map((length) => <option value={length} key={length}>{length}</option>)}
               </select>
+            </label>
+            {!miniTestMode ? (
+              <label className="field">
+                <span>Session goal</span>
+                <select
+                  className="input"
+                  value={selectedGoal}
+                  disabled={setupDisabled}
+                  onChange={(event) => actions.dispatch('grammar-set-goal', { value: event.currentTarget.value })}
+                >
+                  <option value="questions">Question count</option>
+                  <option value="timed">Ten minutes</option>
+                  <option value="due">Clear due items</option>
+                </select>
+              </label>
+            ) : null}
+            <label className="field">
+              <span>Speech rate</span>
+              <select
+                className="input"
+                value={String(selectedSpeechRate)}
+                disabled={setupDisabled}
+                onChange={(event) => actions.dispatch('grammar-set-speech-rate', { value: event.currentTarget.value })}
+              >
+                {SPEECH_RATE_OPTIONS.map((option) => (
+                  <option value={option.value} key={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="grammar-settings-list" aria-label="Grammar practice settings">
+            <label className="grammar-setting-toggle">
+              <input
+                type="checkbox"
+                checked={grammar.prefs?.allowTeachingItems === true}
+                disabled={setupDisabled || selectedMode !== 'smart'}
+                onChange={(event) => actions.dispatch('grammar-set-practice-setting', {
+                  key: 'allowTeachingItems',
+                  value: event.currentTarget.checked,
+                })}
+              />
+              <span>Smart Review teaching items</span>
+            </label>
+            <label className="grammar-setting-toggle">
+              <input
+                type="checkbox"
+                checked={grammar.prefs?.showDomainBeforeAnswer !== false}
+                disabled={setupDisabled}
+                onChange={(event) => actions.dispatch('grammar-set-practice-setting', {
+                  key: 'showDomainBeforeAnswer',
+                  value: event.currentTarget.checked,
+                })}
+              />
+              <span>Show domain before answering</span>
             </label>
           </div>
 

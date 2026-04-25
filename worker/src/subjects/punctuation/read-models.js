@@ -43,8 +43,72 @@ function safeCurrentItem(item) {
   return safe;
 }
 
+function safeContentSkills() {
+  return PUNCTUATION_CONTENT_MANIFEST.skills
+    .filter((skill) => skill.published)
+    .map((skill) => ({
+      id: skill.id,
+      name: skill.name,
+      clusterId: skill.clusterId,
+    }));
+}
+
+function normaliseSupportLevel(value) {
+  const level = Number(value);
+  return Number.isInteger(level) && level > 0 ? level : 0;
+}
+
+function guidedTeachBox(skillId, supportLevel = 0) {
+  const skill = PUNCTUATION_CONTENT_MANIFEST.skills.find((entry) => entry.id === skillId && entry.published);
+  if (!skill) return null;
+  const level = normaliseSupportLevel(supportLevel);
+  if (level <= 0) return null;
+  const box = {
+    skillId: skill.id,
+    name: skill.name,
+    rule: skill.rule || '',
+    selfCheckPrompt: 'Check the rule, compare the examples, then try the item without looking for the answer pattern.',
+  };
+  if (level >= 2) {
+    box.workedExample = {
+      before: skill.workedBad || '',
+      after: skill.workedGood || '',
+    };
+    box.contrastExample = {
+      before: skill.contrastBad || '',
+      after: skill.contrastGood || '',
+    };
+  }
+  return box;
+}
+
+function safeWeakFocus(value) {
+  if (!isPlainObject(value)) return null;
+  return {
+    skillId: typeof value.skillId === 'string' ? value.skillId : '',
+    skillName: typeof value.skillName === 'string' ? value.skillName : '',
+    mode: typeof value.mode === 'string' ? value.mode : '',
+    clusterId: typeof value.clusterId === 'string' ? value.clusterId : null,
+    bucket: typeof value.bucket === 'string' ? value.bucket : '',
+    source: typeof value.source === 'string' ? value.source : '',
+  };
+}
+
+function safeGpsSession(session) {
+  if (session?.mode !== 'gps') return null;
+  const length = Number.isFinite(Number(session.length)) ? Number(session.length) : 0;
+  const answeredCount = Number.isFinite(Number(session.answeredCount)) ? Number(session.answeredCount) : 0;
+  return {
+    testLength: length,
+    answeredCount,
+    remainingCount: Math.max(0, length - answeredCount),
+    delayedFeedback: true,
+  };
+}
+
 function safeSession(session, phase) {
   if (!isPlainObject(session)) return null;
+  const hideGpsInterimResults = session.mode === 'gps';
   const safe = {
     id: typeof session.id === 'string' ? session.id : '',
     releaseId: typeof session.releaseId === 'string' ? session.releaseId : PUNCTUATION_RELEASE_ID,
@@ -53,10 +117,21 @@ function safeSession(session, phase) {
     phase: phase === 'feedback' ? 'feedback' : 'active-item',
     startedAt: Number.isFinite(Number(session.startedAt)) ? Number(session.startedAt) : 0,
     answeredCount: Number.isFinite(Number(session.answeredCount)) ? Number(session.answeredCount) : 0,
-    correctCount: Number.isFinite(Number(session.correctCount)) ? Number(session.correctCount) : 0,
+    correctCount: hideGpsInterimResults
+      ? 0
+      : (Number.isFinite(Number(session.correctCount)) ? Number(session.correctCount) : 0),
     currentItem: phase === 'active-item' || phase === 'feedback' ? safeCurrentItem(session.currentItem) : null,
     securedUnits: Array.isArray(session.securedUnits) ? session.securedUnits.filter((entry) => typeof entry === 'string') : [],
-    misconceptionTags: Array.isArray(session.misconceptionTags) ? session.misconceptionTags.filter((entry) => typeof entry === 'string') : [],
+    misconceptionTags: hideGpsInterimResults
+      ? []
+      : (Array.isArray(session.misconceptionTags) ? session.misconceptionTags.filter((entry) => typeof entry === 'string') : []),
+    guided: session.mode === 'guided' ? {
+      skillId: typeof session.guidedSkillId === 'string' ? session.guidedSkillId : null,
+      supportLevel: normaliseSupportLevel(session.guidedSupportLevel),
+      teachBox: guidedTeachBox(session.guidedSkillId, session.guidedSupportLevel),
+    } : null,
+    weakFocus: session.mode === 'weak' ? safeWeakFocus(session.weakFocus) : null,
+    gps: session.mode === 'gps' ? safeGpsSession(session) : null,
     serverAuthority: session.serverAuthority === 'worker' ? 'worker' : null,
   };
   return safe;
@@ -90,6 +165,22 @@ function safeSummary(summary) {
   return cloneSerialisable(summary);
 }
 
+function safeContextPackSummary(summary) {
+  if (!isPlainObject(summary)) return null;
+  return {
+    status: summary.status === 'ready' ? 'ready' : (summary.status === 'unavailable' ? 'unavailable' : 'not_requested'),
+    code: typeof summary.code === 'string' ? summary.code : null,
+    message: typeof summary.message === 'string' ? summary.message : '',
+    acceptedCount: Number.isFinite(Number(summary.acceptedCount)) ? Number(summary.acceptedCount) : 0,
+    rejectedCount: Number.isFinite(Number(summary.rejectedCount)) ? Number(summary.rejectedCount) : 0,
+    atomKinds: Array.isArray(summary.atomKinds) ? summary.atomKinds.filter((entry) => typeof entry === 'string') : [],
+    affectedGeneratorFamilies: Array.isArray(summary.affectedGeneratorFamilies)
+      ? summary.affectedGeneratorFamilies.filter((entry) => typeof entry === 'string')
+      : [],
+    generatedItemCount: Number.isFinite(Number(summary.generatedItemCount)) ? Number(summary.generatedItemCount) : 0,
+  };
+}
+
 function assertNoForbiddenItemFields(item) {
   if (!isPlainObject(item)) return;
   for (const key of Object.keys(item)) {
@@ -106,9 +197,11 @@ export function buildPunctuationReadModel({
   stats,
   analytics = null,
   content = null,
+  contextPack = null,
 } = {}) {
   const safeState = cloneSerialisable(state) || {};
   const phase = typeof safeState.phase === 'string' ? safeState.phase : 'setup';
+  const hideGpsInterimFeedback = safeState.session?.mode === 'gps' && phase !== 'summary';
   if (phase === 'active-item') assertNoForbiddenItemFields(safeState.session?.currentItem);
   return {
     subjectId: 'punctuation',
@@ -116,18 +209,20 @@ export function buildPunctuationReadModel({
     version: 1,
     phase,
     session: ['active-item', 'feedback'].includes(phase) ? safeSession(safeState.session, phase) : null,
-    feedback: phase === 'feedback' || phase === 'summary' ? safeFeedback(safeState.feedback) : null,
+    feedback: hideGpsInterimFeedback ? null : (phase === 'feedback' || phase === 'summary' ? safeFeedback(safeState.feedback) : null),
     summary: phase === 'summary' ? safeSummary(safeState.summary) : null,
     error: typeof safeState.error === 'string' ? safeState.error : '',
     availability: cloneSerialisable(safeState.availability) || { status: 'ready', code: null, message: '' },
     prefs: cloneSerialisable(prefs) || {},
     stats: cloneSerialisable(stats) || {},
     analytics: analytics ? cloneSerialisable(analytics) : null,
+    contextPack: safeContextPackSummary(contextPack),
     content: content ? cloneSerialisable(content) : {
       releaseId: PUNCTUATION_RELEASE_ID,
       releaseName: PUNCTUATION_CONTENT_MANIFEST.releaseName,
       fullSkillCount: PUNCTUATION_CONTENT_MANIFEST.fullSkillCount,
       publishedScopeCopy: PUNCTUATION_CONTENT_MANIFEST.publishedScopeCopy,
+      skills: safeContentSkills(),
     },
   };
 }

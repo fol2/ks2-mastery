@@ -174,12 +174,60 @@ async function sendPunctuationActionPayload(data) {
 }
 
 test('punctuation browser command action keeps choiceIndex parsing strict', async () => {
-  assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex: 0 }), { choiceIndex: 0 });
-  assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex: '0' }), { choiceIndex: 0 });
+  assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex: 0 }), {
+    choiceIndex: 0,
+    expectedSessionId: 'session-a',
+  });
+  assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex: '0' }), {
+    choiceIndex: 0,
+    expectedSessionId: 'session-a',
+  });
 
   for (const choiceIndex of [null, '', [0]]) {
-    assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex }), { typed: '' });
+    assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex }), {
+      typed: '',
+      expectedSessionId: 'session-a',
+    });
   }
+});
+
+test('punctuation browser command action binds submits to the visible item context', async () => {
+  const sent = [];
+  const handler = createSubjectCommandActionHandler({
+    subjectId: 'punctuation',
+    getState() {
+      return {
+        learners: { selectedId: 'learner-a' },
+        subjectUi: {
+          punctuation: {
+            session: {
+              id: 'session-gps',
+              releaseId: 'punctuation-release-1',
+              answeredCount: 1,
+              currentItem: { id: 'item-visible' },
+            },
+          },
+        },
+      };
+    },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        return Promise.resolve({ ok: true });
+      },
+    },
+    actions: punctuationSubjectCommandActions,
+  });
+
+  assert.equal(handler.handle('punctuation-submit-form', { typed: 'Answer.' }), true);
+  await flushPromises();
+  assert.deepEqual(sent[0].payload, {
+    typed: 'Answer.',
+    expectedSessionId: 'session-gps',
+    expectedItemId: 'item-visible',
+    expectedAnsweredCount: 1,
+    expectedReleaseId: 'punctuation-release-1',
+  });
 });
 
 test('punctuation start command action preserves explicit focus mode and round length', () => {
@@ -189,4 +237,56 @@ test('punctuation start command action preserves explicit focus mode and round l
   });
 
   assert.deepEqual(payload, { mode: 'structure', roundLength: '1' });
+});
+
+test('punctuation start command action passes guided skill only when present', () => {
+  const payload = punctuationSubjectCommandActions['punctuation-start'].payload({
+    data: { mode: 'guided', roundLength: '2', skillId: 'speech' },
+    state: baseState(),
+  });
+
+  assert.deepEqual(payload, { mode: 'guided', roundLength: '2', skillId: 'speech' });
+});
+
+test('punctuation context-pack action sends only safe request metadata', () => {
+  const action = punctuationSubjectCommandActions['punctuation-context-pack'];
+  const payload = action.payload({
+    data: { seed: 'context-seed', prompt: 'do not forward' },
+    state: baseState(),
+  });
+
+  assert.equal(action.command, 'request-context-pack');
+  assert.equal(action.mutates, false);
+  assert.deepEqual(payload, { seed: 'context-seed' });
+});
+
+test('punctuation context-pack action remains available while practice is read-only', async () => {
+  const sent = [];
+  const errors = [];
+  const handler = createSubjectCommandActionHandler({
+    subjectId: 'punctuation',
+    getState: baseState,
+    isReadOnly: () => true,
+    setSubjectError(message) {
+      errors.push(message);
+    },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        return Promise.resolve({ ok: false, contextPack: { status: 'unavailable' } });
+      },
+    },
+    actions: punctuationSubjectCommandActions,
+  });
+
+  assert.equal(handler.handle('punctuation-context-pack', { seed: 'read-only-seed' }), true);
+  await flushPromises();
+
+  assert.deepEqual(errors, []);
+  assert.deepEqual(sent, [{
+    subjectId: 'punctuation',
+    learnerId: 'learner-a',
+    command: 'request-context-pack',
+    payload: { seed: 'read-only-seed' },
+  }]);
 });
