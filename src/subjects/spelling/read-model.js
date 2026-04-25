@@ -1,10 +1,20 @@
 import { WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from './data/word-data.js';
-import { normaliseGuardianMap, normaliseYearFilter } from './service-contract.js';
+import {
+  GUARDIAN_SECURE_STAGE,
+  isGuardianEligibleSlug,
+  normaliseGuardianMap,
+  normaliseYearFilter,
+} from './service-contract.js';
 import { selectGuardianWords } from '../../../shared/spelling/service.js';
 import { normaliseBufferedGeminiVoice, normaliseTtsProvider } from './tts-providers.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const SECURE_STAGE = 4;
+// U2: single source of truth lives in service-contract.js. Re-using the
+// canonical export keeps this read-model aligned with the service layer
+// (selectGuardianWords, getPostMasteryState) and the view-model
+// (wordBankFilterMatchesStatus) — changing the constant in the contract
+// propagates to every surface that gates on Mega.
+const SECURE_STAGE = GUARDIAN_SECURE_STAGE;
 
 function asTs(value, fallback = 0) {
   const numeric = Number(value);
@@ -140,12 +150,18 @@ export function getSpellingPostMasteryState({
   }
   const allWordsMega = publishedCoreCount > 0 && secureCoreCount === publishedCoreCount;
 
+  // U2: orphan sanitiser — only entries whose slug is still a valid Guardian
+  // candidate (known in runtime, stage >= Mega, pool !== extra) contribute to
+  // the counts or the earliest-due calculation. Persisted orphan records are
+  // preserved in `data.guardian`; they simply stay out of the numbers until
+  // the content bundle re-publishes their slug at core-pool + stage >= Mega.
   const guardianEntries = Object.entries(guardianMap);
   let guardianDueCount = 0;
   let wobblingCount = 0;
   let nextGuardianDueDay = null;
-  for (const [, record] of guardianEntries) {
+  for (const [slug, record] of guardianEntries) {
     if (!record) continue;
+    if (!isGuardianEligibleSlug(slug, progressMap, runtime.bySlug)) continue;
     if (record.nextDueDay <= currentDay) guardianDueCount += 1;
     if (record.wobbling === true) wobblingCount += 1;
     if (nextGuardianDueDay === null || record.nextDueDay < nextGuardianDueDay) {

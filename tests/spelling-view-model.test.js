@@ -627,3 +627,176 @@ test('guardianSummaryCopy: help text covers "Optional practice", "schedule will 
   // Guardian Mega invariant must be named explicitly.
   assert.match(copy, /Mega/);
 });
+
+// ----- U2: Orphan sanitiser for Word Bank predicates --------------------------
+//
+// Content hot-swap: a slug that was in `guardianMap` can silently fall out
+// of the current runtime (`wordBySlug` drops it, or it gets demoted to
+// `spellingPool === 'extra'`, or its progress stage drops below
+// `GUARDIAN_SECURE_STAGE`). The `wobbling` and `guardianDue` chips must
+// never surface an orphan row, even when the persisted guardian record
+// still says `wobbling: true`.
+
+test('U2 view-model: wobbling filter rejects an orphan slug (wordBySlug missing entry)', () => {
+  const today = 20_000;
+  // Guardian record says wobbling, but wordBySlug does not know the slug.
+  assert.equal(
+    wordBankFilterMatchesStatus('wobbling', 'secure', {
+      guardian: { wobbling: true },
+      todayDay: today,
+      slug: 'ghostword',
+      progressMap: { ghostword: { stage: 4 } },
+      wordBySlug: {},
+    }),
+    false,
+    'orphan slug never matches the wobbling chip',
+  );
+});
+
+test('U2 view-model: wobbling filter rejects a slug demoted to spellingPool=extra', () => {
+  const today = 20_000;
+  assert.equal(
+    wordBankFilterMatchesStatus('wobbling', 'secure', {
+      guardian: { wobbling: true },
+      todayDay: today,
+      slug: 'demoted',
+      progressMap: { demoted: { stage: 4 } },
+      wordBySlug: { demoted: { slug: 'demoted', spellingPool: 'extra' } },
+    }),
+    false,
+    'pool-demoted slug never matches the wobbling chip',
+  );
+});
+
+test('U2 view-model: wobbling filter (R10 tightening) rejects a slug whose progress stage dropped below GUARDIAN_SECURE_STAGE', () => {
+  // Legacy pre-fix state: synthesised guardian record with wobbling: true +
+  // progress[slug].stage === 3. Post-hardening, this is an invariant
+  // impossibility, but the filter must still reject it defensively.
+  const today = 20_000;
+  assert.equal(
+    wordBankFilterMatchesStatus('wobbling', 'secure', {
+      guardian: { wobbling: true },
+      todayDay: today,
+      slug: 'legacy',
+      progressMap: { legacy: { stage: 3 } },
+      wordBySlug: { legacy: { slug: 'legacy', spellingPool: 'core' } },
+    }),
+    false,
+    'stage-3 slug never matches the wobbling chip (R10 invariant tightening)',
+  );
+});
+
+test('U2 view-model: wobbling filter accepts a known core stage-4 slug with guardian.wobbling=true', () => {
+  const today = 20_000;
+  assert.equal(
+    wordBankFilterMatchesStatus('wobbling', 'secure', {
+      guardian: { wobbling: true },
+      todayDay: today,
+      slug: 'possess',
+      progressMap: { possess: { stage: 4 } },
+      wordBySlug: { possess: { slug: 'possess', spellingPool: 'core' } },
+    }),
+    true,
+    'eligible slug with wobbling guardian still matches',
+  );
+});
+
+test('U2 view-model: wobbling filter preserves the legacy `status === "secure"` guard even with eligible slug', () => {
+  // R10: wobbling filter requires status === 'secure'. Even an eligible
+  // slug must not match if the row status has drifted away from 'secure'.
+  const today = 20_000;
+  assert.equal(
+    wordBankFilterMatchesStatus('wobbling', 'due', {
+      guardian: { wobbling: true },
+      todayDay: today,
+      slug: 'possess',
+      progressMap: { possess: { stage: 4 } },
+      wordBySlug: { possess: { slug: 'possess', spellingPool: 'core' } },
+    }),
+    false,
+    'non-secure status still blocks the wobbling chip regardless of eligibility',
+  );
+});
+
+test('U2 view-model: guardianDue filter rejects an orphan slug (wordBySlug missing entry)', () => {
+  const today = 20_000;
+  assert.equal(
+    wordBankFilterMatchesStatus('guardianDue', 'secure', {
+      guardian: { nextDueDay: today, wobbling: false },
+      todayDay: today,
+      slug: 'ghostword',
+      progressMap: { ghostword: { stage: 4 } },
+      wordBySlug: {},
+    }),
+    false,
+    'orphan slug never matches the guardianDue chip',
+  );
+});
+
+test('U2 view-model: guardianDue filter rejects a slug demoted to spellingPool=extra', () => {
+  const today = 20_000;
+  assert.equal(
+    wordBankFilterMatchesStatus('guardianDue', 'secure', {
+      guardian: { nextDueDay: today, wobbling: false },
+      todayDay: today,
+      slug: 'demoted',
+      progressMap: { demoted: { stage: 4 } },
+      wordBySlug: { demoted: { slug: 'demoted', spellingPool: 'extra' } },
+    }),
+    false,
+    'pool-demoted slug never matches the guardianDue chip',
+  );
+});
+
+test('U2 view-model: guardianDue filter rejects a slug whose progress stage dropped below GUARDIAN_SECURE_STAGE', () => {
+  const today = 20_000;
+  assert.equal(
+    wordBankFilterMatchesStatus('guardianDue', 'secure', {
+      guardian: { nextDueDay: today, wobbling: false },
+      todayDay: today,
+      slug: 'legacy',
+      progressMap: { legacy: { stage: 3 } },
+      wordBySlug: { legacy: { slug: 'legacy', spellingPool: 'core' } },
+    }),
+    false,
+    'stage-3 slug never matches the guardianDue chip',
+  );
+});
+
+test('U2 view-model: guardianDue filter accepts a known core stage-4 slug with nextDueDay <= today', () => {
+  const today = 20_000;
+  assert.equal(
+    wordBankFilterMatchesStatus('guardianDue', 'secure', {
+      guardian: { nextDueDay: today, wobbling: false },
+      todayDay: today,
+      slug: 'possess',
+      progressMap: { possess: { stage: 4 } },
+      wordBySlug: { possess: { slug: 'possess', spellingPool: 'core' } },
+    }),
+    true,
+    'eligible slug with due guardian still matches',
+  );
+});
+
+test('U2 view-model: orphan sanitiser options are opt-in — omitting slug/progressMap/wordBySlug keeps legacy behaviour', () => {
+  // Regression guard: the pre-U2 contract ({ guardian, todayDay } only) must
+  // still behave identically. Existing callers that have not been updated
+  // get exactly the pre-U2 result.
+  const today = 20_000;
+  assert.equal(
+    wordBankFilterMatchesStatus('wobbling', 'secure', {
+      guardian: { wobbling: true },
+      todayDay: today,
+    }),
+    true,
+    'legacy call shape (no orphan context) keeps pre-U2 behaviour',
+  );
+  assert.equal(
+    wordBankFilterMatchesStatus('guardianDue', 'secure', {
+      guardian: { nextDueDay: today, wobbling: false },
+      todayDay: today,
+    }),
+    true,
+    'legacy call shape (no orphan context) keeps pre-U2 behaviour',
+  );
+});

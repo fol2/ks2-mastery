@@ -21,9 +21,11 @@ import {
   GUARDIAN_MAX_REVIEW_LEVEL,
   GUARDIAN_MAX_ROUND_LENGTH,
   GUARDIAN_MIN_ROUND_LENGTH,
+  GUARDIAN_SECURE_STAGE,
   cloneSerialisable,
   createInitialSpellingState,
   defaultLearningStatus,
+  isGuardianEligibleSlug,
   normaliseBoolean,
   normaliseFeedback,
   normaliseGuardianMap,
@@ -44,10 +46,16 @@ import {
   SPELLING_SESSION_TYPES,
 } from '../../src/subjects/spelling/service-contract.js';
 
+// Re-export `isGuardianEligibleSlug` at the service layer so callers that
+// already import other helpers from `shared/spelling/service.js` do not
+// need to learn a new module boundary. The canonical definition lives in
+// `service-contract.js` to keep the Word Bank view-model's client bundle
+// free of the full word dataset (see audit-client-bundle.mjs).
+export { isGuardianEligibleSlug };
+
 const PREF_KEY = 'ks2-platform-v2.spelling-prefs';
 const GUARDIAN_PROGRESS_KEY_PREFIX = 'ks2-spell-guardian-';
 const PROGRESS_KEY_PREFIX = 'ks2-spell-progress-';
-const GUARDIAN_SECURE_STAGE = 4;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function createNoopStorage() {
@@ -181,6 +189,11 @@ function deterministicShuffle(items, random) {
  * learner's guardian map + progress map, prioritising wobbling-due → due →
  * lazy-create sample → top-up of non-due guardians.
  *
+ * Every bucket runs its candidates through `isGuardianEligibleSlug` so an
+ * orphan guardian record (content hot-swap removed the slug from the current
+ * bundle, or the learner's stage rolled back below Mega, or the slug was
+ * demoted from core to extra) never escapes into the session round.
+ *
  * @param {object} params
  * @param {object} params.guardianMap  slug -> normalised guardian record
  * @param {object} params.progressMap  slug -> legacy progress record
@@ -205,11 +218,15 @@ export function selectGuardianWords({
     ...record,
   }));
 
+  // U2: orphan sanitiser — applied to every due bucket so a guardianMap
+  // entry that the current content bundle no longer publishes never escapes.
   const wobblingDue = guardianEntries
     .filter((entry) => entry.wobbling === true && entry.nextDueDay <= safeToday)
+    .filter((entry) => isGuardianEligibleSlug(entry.slug, progressMap, wordBySlug))
     .sort(compareByDueDayThenSlug);
   const nonWobblingDue = guardianEntries
     .filter((entry) => entry.wobbling !== true && entry.nextDueDay <= safeToday)
+    .filter((entry) => isGuardianEligibleSlug(entry.slug, progressMap, wordBySlug))
     .sort(compareByDueDayThenSlug);
 
   const selected = [];
@@ -227,16 +244,14 @@ export function selectGuardianWords({
   if (selected.length < target) nonWobblingDue.forEach((entry) => push(entry.slug));
 
   // Lazy-create candidates: mega words (stage >= 4) that are NOT yet in the
-  // guardian map at all. Filter by known slugs in wordBySlug so we never return
-  // a slug the caller can't resolve.
+  // guardian map at all. `isGuardianEligibleSlug` generalises the prior
+  // unknown-slug guard by also rejecting extra-pool words — a content
+  // demotion from core to extra must not silently graduate into Guardian.
   if (selected.length < target) {
     const lazyCandidates = [];
-    for (const [slug, progress] of Object.entries(progressMap || {})) {
-      if (!slug || typeof slug !== 'string') continue;
-      if (!wordBySlug || !wordBySlug[slug]) continue;
+    for (const [slug] of Object.entries(progressMap || {})) {
       if (Object.prototype.hasOwnProperty.call(guardianMap || {}, slug)) continue;
-      const stage = Number(progress?.stage);
-      if (!(Number.isFinite(stage) && stage >= GUARDIAN_SECURE_STAGE)) continue;
+      if (!isGuardianEligibleSlug(slug, progressMap, wordBySlug)) continue;
       lazyCandidates.push(slug);
     }
     // Alphabetical baseline makes the shuffle deterministic under a seeded rng.
@@ -255,7 +270,8 @@ export function selectGuardianWords({
   // visible when scheduling placed it slightly in the future.
   if (selected.length < GUARDIAN_MIN_ROUND_LENGTH) {
     const nonDue = guardianEntries
-      .filter((entry) => entry.nextDueDay > safeToday && !selectedSet.has(entry.slug));
+      .filter((entry) => entry.nextDueDay > safeToday && !selectedSet.has(entry.slug))
+      .filter((entry) => isGuardianEligibleSlug(entry.slug, progressMap, wordBySlug));
     const wobblingNonDue = nonDue
       .filter((entry) => entry.wobbling === true)
       .sort(compareByLastReviewedThenSlug);
@@ -743,11 +759,16 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const today = currentTodayDay();
     const allWordsMega = isAllWordsMega(progressStore);
 
+    // U2: orphan sanitiser — count only entries whose slug is still a valid
+    // Guardian candidate (known in runtime, stage >= Mega, pool !== extra).
+    // Persisted orphan records stay intact; they simply drop out of counts
+    // and the earliest-due calculation.
     let guardianDueCount = 0;
     let wobblingCount = 0;
     let nextGuardianDueDay = null;
-    for (const record of Object.values(guardianMap)) {
+    for (const [slug, record] of Object.entries(guardianMap)) {
       if (!record) continue;
+      if (!isGuardianEligibleSlug(slug, progressStore, runtimeWordBySlug)) continue;
       if (record.nextDueDay <= today) guardianDueCount += 1;
       if (record.wobbling === true) wobblingCount += 1;
       if (nextGuardianDueDay === null || record.nextDueDay < nextGuardianDueDay) {
