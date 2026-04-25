@@ -203,8 +203,14 @@ test('Grammar surface runs KS2 mini-set mode with delayed feedback and end revie
   assert.equal(grammar.session.miniTest.questions.length, 8);
 
   html = harness.render();
-  assert.match(html, /KS2-style mini-test/);
+  // U3: the chip row is driven by `grammarSessionInfoChips` — mini-set
+  // surfaces the child-friendly `Mini Test` chip instead of the legacy
+  // `KS2-style mini-test` adult copy.
+  assert.match(html, /Mini Test/);
   assert.match(html, /Timed test/);
+  // U3: h2 title is now `grammarSessionProgressLabel` — mini-test uses the
+  // `Mini Test — Question X of N` pattern from U8.
+  assert.match(html, /Mini Test — Question 1 of 8/);
   assert.match(html, /Question 1 of 8/);
   assert.match(html, /Save response/);
   assert.match(html, /Finish mini-set/);
@@ -393,7 +399,7 @@ test('U4: strict mini-test timer expiry auto-finishes with deterministic marking
   assert.equal(grammar.summary.miniTestReview.questions.length, 8);
 });
 
-test('Grammar surface exposes in-session repair actions without local scoring', () => {
+test('Grammar surface exposes post-answer repair actions without local scoring', () => {
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });
   const sample = grammarOracleSample('fronted_adverbial_choose');
@@ -408,9 +414,14 @@ test('Grammar surface exposes in-session repair actions without local scoring', 
     },
   });
 
+  // U3: pre-answer path surfaces one task + one primary action — no
+  // faded/similar buttons visible before marking. The actions themselves
+  // remain wired and dispatchable (Worker owns authority), but the UI
+  // only reveals them after submission so children see a single primary
+  // action at a time.
   let html = harness.render();
-  assert.match(html, /Faded support/);
-  assert.match(html, /Similar problem/);
+  assert.doesNotMatch(html, /Faded support/);
+  assert.doesNotMatch(html, /Similar problem/);
 
   harness.dispatch('grammar-use-faded-support');
   html = harness.render();
@@ -446,7 +457,7 @@ test('Grammar surface exposes in-session repair actions without local scoring', 
   assert.equal(grammar.session.repair.similarProblems, 1);
 });
 
-test('Grammar session exposes non-scored AI enrichment triggers', () => {
+test('Grammar session exposes non-scored AI enrichment triggers after marking', () => {
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });
   const sample = grammarOracleSample('fronted_adverbial_choose');
@@ -460,8 +471,23 @@ test('Grammar session exposes non-scored AI enrichment triggers', () => {
     },
   });
 
+  // U3: pre-answer session hides every help surface — no AI trigger
+  // buttons visible until the learner has submitted an answer.
   let html = harness.render();
-  assert.match(html, /Explain this/);
+  assert.doesNotMatch(html, /Explain this/);
+  assert.doesNotMatch(html, /Explain another way/);
+  assert.doesNotMatch(html, /Revision cards/);
+
+  // Submit the correct response so the session enters feedback phase.
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData(sample.correctResponse),
+  });
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'feedback');
+
+  // U3: feedback phase relabels the existing AI enrichment trigger to
+  // `Explain another way`; the revision-card trigger keeps its label.
+  html = harness.render();
+  assert.match(html, /Explain another way/);
   assert.match(html, /Revision cards/);
 
   harness.dispatch('grammar-request-ai-enrichment', { kind: 'explanation' });
@@ -586,7 +612,14 @@ test('Grammar dashboard hides adult-diagnostic goal/teaching toggles but preserv
   assert.equal(grammar.session.supportLevel, 0);
 });
 
-test('Grammar show-domain setting affects display only before answer feedback', () => {
+test('Grammar show-domain preference persists and analytics still register attempts', () => {
+  // U3: the adult `domain` chip has been removed from the session surface.
+  // Setting `showDomainBeforeAnswer` no longer drives visible chip copy —
+  // `grammarSessionInfoChips` surfaces only child-friendly labels. The
+  // preference still lives on `grammar.prefs` for future reuse, but it
+  // must not gate scoring or analytics attempts. This test keeps the
+  // preference-plumbing guarantee and the analytics increment invariant
+  // that the original `show-domain` test protected.
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });
   const sample = grammarOracleSample('fronted_adverbial_choose');
@@ -601,15 +634,20 @@ test('Grammar show-domain setting affects display only before answer feedback', 
     },
   });
 
-  let html = harness.render();
+  const html = harness.render();
+  // Neither phase surfaces the adult `domain` chip any more.
   assert.doesNotMatch(html, />Adverbials<\/span>/);
 
   harness.dispatch('grammar-submit-form', {
     formData: grammarResponseFormData(sample.correctResponse),
   });
-  html = harness.render();
-  assert.match(html, />Adverbials<\/span>/);
-  assert.equal(harness.store.getState().subjectUi.grammar.analytics.concepts.find((concept) => concept.id === 'adverbials').attempts, 1);
+  // The preference still round-trips into the normalised read model.
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.showDomainBeforeAnswer, false);
+  // Analytics still records the attempt — U3 only touches surface chrome.
+  assert.equal(
+    harness.store.getState().subjectUi.grammar.analytics.concepts.find((concept) => concept.id === 'adverbials').attempts,
+    1,
+  );
 });
 
 test('Grammar monster progress rehydrates from persisted Codex state after reload normalisation', () => {
@@ -1943,4 +1981,161 @@ test('U2 follower: grammar-focus-concept remote path chains start-session after 
     }, 'learner-a'),
   });
   await Promise.resolve();
+});
+
+// --- U3 session redesign (one task, post-answer help only) -----------------
+//
+// These tests pin the visibility contract that `grammarSessionHelpVisibility`
+// (U8) ships to the JSX. They cover the three canonical states: pre-answer
+// session, post-answer correct, post-answer wrong. Every adult-facing string
+// removed by U3 (`Worker authority`, `Worker-marked question`) is asserted
+// absent, and the full `GRAMMAR_CHILD_FORBIDDEN_TERMS` fixture is iterated on
+// the session HTML so a future leak is caught automatically.
+
+function u3HarnessWithSample() {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 2,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  return { harness, sample };
+}
+
+function u3ScopeToSessionHtml(html) {
+  // `harness.render()` returns the whole app surface. The session scene is
+  // emitted as `<section class="grammar-session"...>` — we narrow the HTML
+  // so dashboard/analytics panels (which may legitimately hold adult
+  // strings behind a `Grown-up view` disclosure) are not swept by the
+  // forbidden-terms loop.
+  const match = html.match(/<section class="grammar-session"[\s\S]*?<\/section>/);
+  assert.ok(match, 'session scene was rendered');
+  return match[0];
+}
+
+test('U3: pre-answer session hides every help surface', () => {
+  const { harness } = u3HarnessWithSample();
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  // Silent-no-op hedge (Phase 2 U4): the worked-solution flag stays false
+  // pre-answer, so if a stray button ever slipped through the gate the
+  // state would betray the leak. Mirrors the faded-support assertion.
+  assert.equal(grammar.session.repair.workedSolutionShown, false);
+
+  const sessionHtml = u3ScopeToSessionHtml(harness.render());
+
+  // Help surfaces gated entirely pre-answer.
+  assert.doesNotMatch(sessionHtml, /Explain this/);
+  assert.doesNotMatch(sessionHtml, /Explain another way/);
+  assert.doesNotMatch(sessionHtml, /Revision cards/);
+  assert.doesNotMatch(sessionHtml, /Worked solution/);
+  assert.doesNotMatch(sessionHtml, /Similar problem/);
+  assert.doesNotMatch(sessionHtml, /Faded support/);
+
+  // Adult-facing copy removed by U3.
+  assert.doesNotMatch(sessionHtml, /Worker authority/i);
+  assert.doesNotMatch(sessionHtml, /Worker-marked question/i);
+
+  // Full forbidden-terms sweep on the session HTML. Any new forbidden
+  // term added to the fixture automatically gates this test.
+  for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+    assert.doesNotMatch(
+      sessionHtml,
+      new RegExp(escapeRegExp(term), 'i'),
+      `forbidden term leaked into session HTML: ${term}`,
+    );
+  }
+
+  // Single primary action remains: the answer input + Submit button.
+  // U3: the submit label is driven by `grammarSessionSubmitLabel(session,
+  // awaitingAdvance)` — practice/pre-answer resolves to `Submit` (no
+  // `answer` tail), matching the Spelling one-task layout.
+  assert.match(sessionHtml, /name="answer"/);
+  assert.match(sessionHtml, />Submit<\/button>/);
+});
+
+test('U3: post-answer correct shows Next question and hides repair', () => {
+  const { harness, sample } = u3HarnessWithSample();
+
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData(sample.correctResponse),
+  });
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'feedback');
+  assert.equal(grammar.feedback.result.correct, true);
+
+  const sessionHtml = u3ScopeToSessionHtml(harness.render());
+
+  // Primary continuation is the single `Next question` button.
+  assert.match(sessionHtml, /Next question/);
+  // Correct answers do not surface retry / show-a-step / show-answer.
+  assert.doesNotMatch(sessionHtml, /Retry/);
+  assert.doesNotMatch(sessionHtml, /Show a step/);
+  assert.doesNotMatch(sessionHtml, /Show answer/);
+  assert.doesNotMatch(sessionHtml, /Worker authority/i);
+  assert.doesNotMatch(sessionHtml, /Worker-marked question/i);
+});
+
+test('U3: post-answer wrong shows repair + relabelled AI explanation', () => {
+  const { harness, sample } = u3HarnessWithSample();
+  const wrongAnswer = sample.sample.inputSpec.options.find(
+    (option) => option.value !== sample.correctResponse.answer,
+  ).value;
+
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData({ answer: wrongAnswer }),
+  });
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'feedback');
+  assert.equal(grammar.feedback.result.correct, false);
+
+  const sessionHtml = u3ScopeToSessionHtml(harness.render());
+
+  // Post-answer wrong renders every repair / help surface.
+  assert.match(sessionHtml, /Retry/);
+  assert.match(sessionHtml, /Worked solution/);
+  assert.match(sessionHtml, /Similar problem/);
+  // AI enrichment trigger relabelled to child copy in the feedback phase.
+  assert.match(sessionHtml, /Explain another way/);
+  assert.doesNotMatch(sessionHtml, /Explain this/);
+  assert.match(sessionHtml, /Revision cards/);
+  // Adult-facing copy still absent.
+  assert.doesNotMatch(sessionHtml, /Worker authority/i);
+  assert.doesNotMatch(sessionHtml, /Worker-marked question/i);
+});
+
+test('U3: forbidden-terms sweep runs across the full session HTML in every phase', () => {
+  const { harness, sample } = u3HarnessWithSample();
+  const wrongAnswer = sample.sample.inputSpec.options.find(
+    (option) => option.value !== sample.correctResponse.answer,
+  ).value;
+
+  // Pre-answer
+  let sessionHtml = u3ScopeToSessionHtml(harness.render());
+  for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+    assert.doesNotMatch(
+      sessionHtml,
+      new RegExp(escapeRegExp(term), 'i'),
+      `pre-answer session leaked forbidden term: ${term}`,
+    );
+  }
+
+  // Post-answer wrong — the densest surface (repair + AI + worked solution).
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData({ answer: wrongAnswer }),
+  });
+  sessionHtml = u3ScopeToSessionHtml(harness.render());
+  for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+    assert.doesNotMatch(
+      sessionHtml,
+      new RegExp(escapeRegExp(term), 'i'),
+      `post-answer session leaked forbidden term: ${term}`,
+    );
+  }
 });
