@@ -70,6 +70,7 @@ import {
   run,
   scalar,
   sqlPlaceholders,
+  withCapacityCollector,
   withTransaction,
 } from './d1.js';
 
@@ -4838,8 +4839,14 @@ async function runSubjectCommandMutation(db, {
   return response;
 }
 
-export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
-  const db = requireDatabase(env);
+export function createWorkerRepository({ env = {}, now = Date.now, capacity = null } = {}) {
+  // U3: when a per-request `capacity` CapacityCollector is supplied, wrap
+  // the D1 handle so every .prepare()-backed call contributes row counts
+  // and durations to the collector. Absent collector → zero-overhead raw
+  // handle (tests, legacy call sites). See `worker/src/logger.js` for the
+  // constructor-injection rationale; we deliberately avoid
+  // AsyncLocalStorage per the Phase 2 plan.
+  const db = withCapacityCollector(requireDatabase(env), capacity);
   const nowFactory = () => asTs(now(), Date.now());
 
   return {
@@ -4852,7 +4859,14 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
       return first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
     },
     async bootstrap(accountId, options = {}) {
-      return bootstrapBundle(db, accountId, options);
+      const bundle = await bootstrapBundle(db, accountId, options);
+      // U3: stamp `bootstrapCapacity` on the collector when the bundle
+      // emitted one. The collector is mutated rather than returned —
+      // keeps repository call signatures stable across all callers.
+      if (capacity && bundle?.bootstrapCapacity != null) {
+        capacity.bootstrapCapacity = bundle.bootstrapCapacity;
+      }
+      return bundle;
     },
     async readSubjectRuntime(accountId, learnerId, subjectId = 'spelling') {
       return readSubjectRuntimeBundle(db, accountId, learnerId, subjectId);
