@@ -58,6 +58,8 @@ export const punctuationModule = {
         ...prefs,
         ...(data?.mode ? { mode: data.mode } : {}),
         ...(data?.roundLength ? { roundLength: data.roundLength } : {}),
+        ...(typeof data?.skillId === 'string' ? { skillId: data.skillId } : {}),
+        ...(typeof data?.guidedSkillId === 'string' ? { guidedSkillId: data.guidedSkillId } : {}),
       }));
     }
 
