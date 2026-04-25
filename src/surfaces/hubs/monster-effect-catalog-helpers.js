@@ -188,5 +188,36 @@ export function catalogEntryAllErrors(entry) {
   return errors;
 }
 
+// Per-field issue map for an entry's params. Two source modes:
+//   - 'descriptor' (catalog panel): each `entry.params[name]` is already a
+//     `{ type, default, min?, max? }` descriptor.
+//   - 'value' (bindings panel): each `entry.params[name]` is the raw
+//     stored value, so we adapt it into a synthetic descriptor before
+//     validating (`{ type: schema.type, default: value }`).
+//
+// Returns `{ [field]: issues[] }`, suitable for `MonsterEffectFieldControls`'
+// `errorsByField` prop.
+export function paramErrorsByField(entry, { catalog = null, source = 'descriptor' } = {}) {
+  if (!entry) return {};
+  const templateId = catalog ? catalog?.[entry.kind]?.template : entry.template;
+  const template = lookupTemplate(templateId);
+  const schema = template?.paramSchema || {};
+  const map = {};
+  for (const [name, raw] of Object.entries(entry.params || {})) {
+    const schemaForParam = schema[name];
+    if (!schemaForParam) continue;
+    const descriptor = source === 'value'
+      ? { type: schemaForParam.type, default: raw }
+      : raw;
+    const issues = catalogParamSchemaErrors({
+      paramName: name,
+      descriptor,
+      schema: schemaForParam,
+    });
+    if (issues.length > 0) map[name] = issues;
+  }
+  return map;
+}
+
 // Convenience: list of available template IDs for the New-entry dropdown.
 export const EFFECT_CATALOG_TEMPLATE_OPTIONS = EFFECT_TEMPLATE_IDS;

@@ -34,7 +34,7 @@ Entry format: one-line description + `(tracked in U?)` suffix when a hardening u
 Note: the bounded-bootstrap and command-projection work in PRs #126-#139 (see `docs/plans/2026-04-25-001-fix-bootstrap-cpu-capacity-plan.md`) addressed the large-payload / CPU-overrun surface that was the dominant pre-sprint server fault. The residual H1-H10 items from `docs/plans/james/cpuload/implementation-report.md` remain open.
 
 - H1. Post-merge production validation — no dated production smoke exists for the bootstrap/CPU bounding work. (tracked in U2)
-- H2. Capacity evidence artefacts — run output is terminal-only and not persisted. (tracked in U3)
+- H2. Capacity evidence artefacts — run output is terminal-only and not persisted. (tracked in U3; landed upstream via PR #155 capacity evidence + threshold gates — `--output`, `reports/capacity/`, schema v1/v2, `scripts/verify-capacity-evidence.mjs`)
 - H3. Threshold-based load failure — `scripts/classroom-load-test.mjs` reports but does not fail on violation, so it cannot gate a release. (tracked in U2)
 - H4. Production load safety guardrails — `--confirm-high-production-load` second-confirmation flag not yet wired. (tracked in U2)
 - H5. Real Worker integration load test — local load runs exercise the adapter but not the full Worker route handling path. (tracked in U2, U11)
@@ -42,7 +42,7 @@ Note: the bounded-bootstrap and command-projection work in PRs #126-#139 (see `d
 - H7. Consume `command.projection.v1` more directly — read-model direction of command projection is a refactor deferred to follow-up work. (not addressed this pass)
 - H8. Dense-history subject smoke coverage — no production/preview smoke exists for dense-history spelling starts beyond `/api/bootstrap`. (tracked in U11)
 - H9. Browser multi-tab validation — coordination lease behaviour is unit-tested but not validated end-to-end in a logged-in browser. (tracked in U10)
-- H10. Launch evidence table — `docs/operations/capacity.md` has no dated evidence rows. (tracked in U3)
+- H10. Launch evidence table — `docs/operations/capacity.md` has no dated evidence rows. (tracked in U3; Capacity Evidence table section exists at `docs/operations/capacity.md#capacity-evidence`, currently shows `_pending first run_`. First dated row requires an authenticated production or preview run by an operator with live credentials — `npm run capacity:classroom -- --production --origin https://ks2.eugnel.uk --confirm-production-load --confirm-high-production-load --demo-sessions --output reports/capacity/latest-production.json` — and is intentionally deferred to a post-merge operator step)
 
 ## Access / privacy faults
 
@@ -51,7 +51,7 @@ Note: the bounded-bootstrap and command-projection work in PRs #126-#139 (see `d
 - Answer-bearing fields regression risk — `/api/bootstrap` and subject read-model responses are redacted, but no matrix test enforces the invariant across platform role × membership role × route combinations. (tracked in U13, landed via `tests/redaction-access-matrix.test.js` + `scripts/production-bundle-audit.mjs` matrix demo check)
 - Demo-crossing-real-account regression risk — demo sessions are isolated by design, but no access-matrix oracle asserts that a demo session cannot read or mutate a real account's state via route enumeration. (tracked in U13, landed via `tests/redaction-access-matrix.test.js` cross-account probe)
 - Weak response headers — repo root `_headers` only sets `Cache-Control: no-store`; no CSP, no HSTS, no `X-Content-Type-Options`, no `Referrer-Policy`, no `Permissions-Policy`, no `frame-ancestors`, no cache split between HTML and hashed bundles. Worker-generated responses receive none of these headers. **This pass fixes.** (tracked in U6, U7, U8; **non-CSP header set + cache split + default-on Sec-Fetch-Site landed via U6**, **CSP Report-Only + /api/security/csp-report endpoint + build-time inline-script hash landed via U7**, **cache-policy split completed via U8 — manifest 1-hour, favicon 1-day, hashed bundles/app-icons/styles immutable, HTML and `/*` fallback no-store, with parser-level drift guard in `scripts/lib/headers-drift.mjs` and `HEAD` checks in `scripts/production-bundle-audit.mjs`** — see `worker/src/security-headers.js`, `worker/src/rate-limit.js`, `scripts/compute-inline-script-hash.mjs`, and the multi-group `_headers` file. CSP enforcement flip is a follow-up PR after the >=7-day Report-Only observation window documented in `docs/operations/capacity.md`.)
-- Logs containing private content regression risk — Worker log hygiene in `docs/full-lockdown-runtime.md` forbids answer-bearing payloads and child-identifying content, but no automated assertion enforces that capacity telemetry (`[ks2-capacity]` emission) stays within the bounded-metadata contract. (tracked in U4)
+- Logs containing private content regression risk — Worker log hygiene in `docs/full-lockdown-runtime.md` forbids answer-bearing payloads and child-identifying content. **This pass fixes.** (tracked in U4; **landed via `worker/src/capacity/telemetry.js` bounded-metadata collector, `d1.js` row-metric wrapping, and `tests/worker-capacity-telemetry.test.js` redaction scan covering `FORBIDDEN_KEYS_EVERYWHERE`, session cookies, learner-name sentinels, and private-prompt sentinels across a full bootstrap + subject-command + hub-read pass**.)
 
 ## Test gaps
 

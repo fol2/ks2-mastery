@@ -611,6 +611,70 @@ textarea:focus-visible {
   padding: 9px 10px;
 }
 
+.monster-effect-row {
+  border: 1px solid var(--surface-border, #ddd);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.monster-effect-row.has-error {
+  border-color: var(--bad, #c0392b);
+}
+.monster-effect-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.monster-effect-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.monster-effect-row-actions .btn.icon {
+  min-width: 32px;
+  padding: 4px 8px;
+}
+.monster-effect-bindings-section-divider {
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 16px 0 8px;
+  color: var(--muted, #6b7280);
+}
+.monster-effect-celebration-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+.monster-effect-celebration-tab {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--surface-border, #ddd);
+  background: var(--surface, #fff);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.monster-effect-celebration-tab.active {
+  background: var(--accent, #2f6fae);
+  color: #fff;
+  border-color: var(--accent, #2f6fae);
+}
+.monster-effect-celebration-preview {
+  border: 1px solid var(--surface-border, #ddd);
+  border-radius: 8px;
+  padding: 10px;
+  min-height: 80px;
+}
+.monster-visual-celebration-grid {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
 .hero-playground {
   position: absolute;
   right: 18px;

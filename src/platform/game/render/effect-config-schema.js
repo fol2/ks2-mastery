@@ -269,6 +269,21 @@ export function validateCelebrationTunables(row, { assetKey = '' } = {}) {
   return { ok: errors.length === 0, errors };
 }
 
+// Validates one tunable for a known kind. The closed-allowlist modifierClass
+// check fires unconditionally, so callers cannot bypass it via field-filter
+// trickery (defence-in-depth alongside the panel's <select>).
+export function validateSingleCelebrationTunable(tunable, kind, { assetKey = '' } = {}) {
+  if (!CELEBRATION_KINDS.includes(kind)) {
+    return {
+      ok: false,
+      errors: [issue('celebration_tunable_kind_invalid', `Unknown celebration kind "${kind}".`, { assetKey, kind, field: 'kind' })],
+    };
+  }
+  const errors = [];
+  validateCelebrationKind(assetKey, kind, tunable, errors);
+  return { ok: errors.length === 0, errors };
+}
+
 export function validateEffectConfig(config) {
   const errors = [];
   if (!isPlainObject(config)) {

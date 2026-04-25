@@ -4,10 +4,13 @@ import {
   MONSTER_VISUAL_CONTEXTS,
   validatePublishedConfigForPublish,
 } from '../../platform/game/monster-visual-config.js';
-import { EFFECT_CONFIG_CELEBRATION_KINDS } from '../../platform/game/render/effect-config-schema.js';
 import { MonsterVisualFieldControls } from './MonsterVisualFieldControls.jsx';
 import { MonsterVisualPreviewGrid } from './MonsterVisualPreviewGrid.jsx';
 import { MonsterEffectCatalogPanel } from './MonsterEffectCatalogPanel.jsx';
+import { MonsterEffectBindingsPanel } from './MonsterEffectBindingsPanel.jsx';
+import { MonsterEffectCelebrationPanel } from './MonsterEffectCelebrationPanel.jsx';
+import { assetBindingsAllReviewed } from './monster-effect-bindings-helpers.js';
+import { assetCelebrationAllReviewed } from './monster-effect-celebration-helpers.js';
 import { bundledEffectConfig } from '../../platform/game/render/effect-config-defaults.js';
 import { formatTimestamp } from './hub-utils.js';
 
@@ -16,6 +19,18 @@ const AUTOSAVE_PREFIX = 'ks2.monster-visual-config-draft';
 // the next time the admin opens the panel (the autosave key embeds it).
 const EFFECT_AUTOSAVE_SCHEMA_TAG = 'v1-effect';
 const STRING_CONTEXT_FIELDS = new Set(['path', 'motionProfile', 'filter']);
+
+let __tabNonceCounter = 0;
+function newTabNonce() {
+  // crypto.randomUUID is the production path; the counter fallback keeps the
+  // helper deterministic for tests (and Node versions without webcrypto).
+  const cryptoApi = typeof globalThis !== 'undefined' ? globalThis.crypto : null;
+  if (cryptoApi && typeof cryptoApi.randomUUID === 'function') {
+    return cryptoApi.randomUUID();
+  }
+  __tabNonceCounter += 1;
+  return `tab-${__tabNonceCounter}`;
+}
 
 function clone(value) {
   return value == null ? value : JSON.parse(JSON.stringify(value));
@@ -33,8 +48,8 @@ function storage() {
   }
 }
 
-function autosaveKey({ accountId, manifestHash, draftRevision }) {
-  return `${AUTOSAVE_PREFIX}:${accountId || 'account'}:${manifestHash || 'manifest'}:${Number(draftRevision) || 0}:${EFFECT_AUTOSAVE_SCHEMA_TAG}`;
+function autosaveKey({ accountId, manifestHash, draftRevision, tabNonce }) {
+  return `${AUTOSAVE_PREFIX}:${accountId || 'account'}:${manifestHash || 'manifest'}:${Number(draftRevision) || 0}:${EFFECT_AUTOSAVE_SCHEMA_TAG}:${tabNonce || 'tab-default'}`;
 }
 
 function readAutosave(key) {
@@ -107,26 +122,17 @@ function assetDiffersFromPublished(draft, published, assetKey) {
 }
 
 // `effect-incomplete`: an asset whose effect binding row OR celebration
-// tunables row has any entry that is not yet reviewed. Returns false when
-// the effect sub-document is absent — the visual `review` filter still
-// covers that case.
+// tunables row has any entry that is not yet reviewed OR fails the schema.
+// Returns false when the effect sub-document is absent — the visual
+// `review` filter still covers that case. Delegates to the helper modules
+// so the U7 panels and this queue filter share one source of truth; the
+// catalog is threaded through so a deleted-kind regression also surfaces
+// the asset in the queue.
 function assetEffectIncomplete(draft, assetKey) {
-  const bindings = draft?.effect?.bindings?.[assetKey];
-  const tunables = draft?.effect?.celebrationTunables?.[assetKey];
-  if (bindings && typeof bindings === 'object') {
-    for (const slot of ['persistent', 'continuous']) {
-      const list = Array.isArray(bindings[slot]) ? bindings[slot] : [];
-      for (const entry of list) {
-        if (entry && entry.reviewed !== true) return true;
-      }
-    }
-  }
-  if (tunables && typeof tunables === 'object') {
-    for (const kind of EFFECT_CONFIG_CELEBRATION_KINDS) {
-      if (tunables[kind] && tunables[kind].reviewed !== true) return true;
-    }
-  }
-  return false;
+  const effect = draft?.effect;
+  if (!effect) return false;
+  return !assetBindingsAllReviewed(effect, assetKey, { catalog: effect.catalog })
+    || !assetCelebrationAllReviewed(effect, assetKey);
 }
 
 // `effect-changed`: this asset's effect binding row OR celebration tunables
@@ -179,10 +185,16 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
   const published = visual?.published || null;
   const canManage = visual?.permissions?.canManageMonsterVisualConfig === true;
   const status = visual?.status || {};
+  // Per-mount tab nonce: prevents two open tabs from overwriting each
+  // other's autosave entries. `findStaleAutosave` still surfaces other
+  // tabs' unfinished work as a recovery banner.
+  const tabNonceRef = useRef('');
+  if (!tabNonceRef.current) tabNonceRef.current = newTabNonce();
   const activeKey = autosaveKey({
     accountId,
     manifestHash: status.manifestHash || cloudDraft?.manifestHash,
     draftRevision: status.draftRevision,
+    tabNonce: tabNonceRef.current,
   });
   const assetOrder = useMemo(() => MONSTER_ASSET_MANIFEST.assets.map((asset) => asset.key), []);
   const initialAssetKey = assetOrder.includes('vellhorn-b1-3') ? 'vellhorn-b1-3' : assetOrder[0];
@@ -527,6 +539,7 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
           <MonsterVisualPreviewGrid
             asset={selectedManifestAsset}
             draft={draft}
+            effectDraft={effectDraft}
             selectedContext={selectedContext}
             onSelectContext={setSelectedContext}
           />
@@ -540,6 +553,20 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
             onMarkReviewed={markReviewed}
             onResetContext={resetContext}
             reviewBlockingIssues={selectedReviewBlockingIssues}
+          />
+          <MonsterEffectBindingsPanel
+            asset={selectedManifestAsset}
+            draft={effectDraft}
+            canManage={canManage}
+            accountId={accountId}
+            onDraftChange={handleEffectDraftChange}
+          />
+          <MonsterEffectCelebrationPanel
+            asset={selectedManifestAsset}
+            draft={effectDraft}
+            canManage={canManage}
+            accountId={accountId}
+            onDraftChange={handleEffectDraftChange}
           />
         </div>
       </div>

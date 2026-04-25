@@ -2067,3 +2067,327 @@ test('U7 integration: resetLearner still uses saveGuardianMap (whole-map zero), 
   const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
   assert.deepEqual(finalMap, {}, 'guardian map zeroed after reset');
 });
+
+// -----------------------------------------------------------------------------
+// U4 (P1.5 hardening): "I don't know" replaces skip in Guardian sessions.
+// Route goes through advanceGuardianOnWrong, emits spelling.guardian.wobbled,
+// sets awaitingAdvance=true (mirrors submitGuardianAnswer wrong-path), and
+// never mutates progress.stage. Non-Guardian sessions keep legacy
+// engine.skipCurrent + enqueueLater semantics byte-identical.
+// -----------------------------------------------------------------------------
+
+test('U4 happy path: Guardian "I don\'t know" on a non-wobbling word emits one WOBBLED event, wobbling→true, nextDueDay=today+1, stage unchanged', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const firstSlug = started.state.session.currentCard.slug;
+
+  const skipped = service.skipWord('learner-a', started.state);
+
+  assert.equal(skipped.ok, true);
+  const wobbled = skipped.events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_WOBBLED);
+  assert.equal(wobbled.length, 1, 'exactly one WOBBLED event per "I don\'t know" click');
+  assert.equal(wobbled[0].wordSlug, firstSlug);
+  assert.equal(wobbled[0].lapses, 1, 'lapses incremented to 1 on first wobble');
+
+  // No RENEWED / RECOVERED / MISSION_COMPLETED emitted by a mid-round skip.
+  assert.equal(skipped.events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_RENEWED).length, 0);
+  assert.equal(skipped.events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_RECOVERED).length, 0);
+  assert.equal(skipped.events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED).length, 0);
+
+  // Guardian record advanced exactly like a wrong answer.
+  const postMastery = service.getPostMasteryState('learner-a');
+  const record = postMastery.guardianMap[firstSlug];
+  assert.equal(record.wobbling, true);
+  assert.equal(record.nextDueDay, today + 1);
+  assert.equal(record.lapses, 1);
+  assert.equal(record.correctStreak, 0);
+
+  // progress.stage preserved — Mega-never-revoked invariant.
+  const snapshot = service.getAnalyticsSnapshot('learner-a');
+  const row = snapshot.wordGroups.flatMap((g) => g.words).find((w) => w.slug === firstSlug);
+  assert.equal(row.progress.stage, 4);
+  assert.equal(row.progress.dueDay, today + 60, 'progress.dueDay preserved');
+  assert.equal(row.progress.lastDay, today - 7, 'progress.lastDay preserved');
+  assert.equal(row.progress.lastResult, 'correct', 'progress.lastResult preserved');
+  assert.equal(row.progress.wrong, 2, 'progress.wrong bumped by 1 (seed was 1)');
+
+  // Skip matches submitGuardianAnswer shape: awaitingAdvance=true, user clicks
+  // Continue to advance. Session still points at the skipped slug until then.
+  assert.equal(skipped.state.awaitingAdvance, true, 'skip leaves session awaitingAdvance like wrong-answer submit');
+  const postSession = skipped.state.session;
+  assert.ok(postSession, 'session continues');
+  assert.equal(postSession.currentSlug, firstSlug, 'currentSlug stays on skipped slug until continueSession fires');
+  assert.equal(Array.isArray(postSession.queue) && postSession.queue.includes(firstSlug), false, 'queue no longer contains the skipped slug');
+
+  // Continue advances past the skipped slug (FIFO) — no re-queue.
+  const advanced = service.continueSession('learner-a', skipped.state);
+  assert.equal(advanced.state.awaitingAdvance, false);
+  assert.notEqual(advanced.state.session.currentSlug, firstSlug, 'continueSession advances past the skipped slug');
+});
+
+test('U4 happy path: Guardian "I don\'t know" on an already-wobbling word re-emits WOBBLED, lapses +1, nextDueDay resets to today+1', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  // Seed 'possess' as already wobbling — it wins the wobbling-due bucket.
+  seedGuardianMap(repositories, 'learner-a', {
+    possess: {
+      reviewLevel: 2,
+      lastReviewedDay: today - 5,
+      nextDueDay: today - 1,
+      correctStreak: 0,
+      lapses: 1,
+      renewals: 0,
+      wobbling: true,
+    },
+  });
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  assert.equal(started.state.session.currentCard.slug, 'possess');
+  const skipped = service.skipWord('learner-a', started.state);
+
+  const wobbled = skipped.events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_WOBBLED);
+  assert.equal(wobbled.length, 1);
+  assert.equal(wobbled[0].wordSlug, 'possess');
+  assert.equal(wobbled[0].lapses, 2, 'lapses incremented on repeat wobble');
+
+  const postMastery = service.getPostMasteryState('learner-a');
+  const record = postMastery.guardianMap.possess;
+  assert.equal(record.wobbling, true, 'stays wobbling');
+  assert.equal(record.lapses, 2);
+  assert.equal(record.nextDueDay, today + 1, 'nextDueDay resets to today+1');
+
+  const snapshot = service.getAnalyticsSnapshot('learner-a');
+  const row = snapshot.wordGroups.flatMap((g) => g.words).find((w) => w.slug === 'possess');
+  assert.equal(row.progress.stage, 4, 'stage preserved on repeat wobble');
+});
+
+test('U4 happy path: "I don\'t know" adds skipped word to summary.mistakes for the practice-only drill pickup (R3 dependency)', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const firstSlug = started.state.session.currentCard.slug;
+
+  // Skip the first word (I don't know), answer the rest correctly.
+  const skipped = service.skipWord('learner-a', started.state);
+  let current = skipped.state;
+  // continue the session (may already be on next card; answer the remainder correctly)
+  while (current.phase === 'session') {
+    if (current.awaitingAdvance) {
+      current = service.continueSession('learner-a', current).state;
+      continue;
+    }
+    const answer = current.session.currentCard.word.word;
+    current = service.submitAnswer('learner-a', current, answer).state;
+  }
+  assert.equal(current.phase, 'summary');
+  const mistakeSlugs = current.summary.mistakes.map((m) => m.slug);
+  assert.ok(mistakeSlugs.includes(firstSlug), '"I don\'t know" slug appears in summary.mistakes');
+  assert.equal(current.summary.mistakes.length, 1, 'only the skipped word fell into mistakes; correct answers did not');
+});
+
+test('U4 edge: "I don\'t know" when awaitingAdvance===true is a no-op (no duplicate event, no state mutation)', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const firstSlug = started.state.session.currentCard.slug;
+  // First correct answer: leaves awaitingAdvance=true.
+  const submitted = service.submitAnswer('learner-a', started.state, started.state.session.currentCard.word.word);
+  assert.equal(submitted.state.awaitingAdvance, true);
+
+  const skipped = service.skipWord('learner-a', submitted.state);
+  assert.equal(skipped.changed, false, 'skipWord no-ops while awaitingAdvance');
+  assert.equal(skipped.events.length, 0, 'no events on no-op skip');
+  // Guardian record from the correct answer is unchanged by the no-op skip.
+  const postMastery = service.getPostMasteryState('learner-a');
+  const record = postMastery.guardianMap[firstSlug];
+  assert.equal(record.wobbling, false, 'record stays as correct-answer result, not wobbling');
+});
+
+test('U4 edge: "I don\'t know" double-click is a no-op on the second call (awaitingAdvance guard)', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const firstSlug = started.state.session.currentCard.slug;
+
+  const first = service.skipWord('learner-a', started.state);
+  // First click: awaitingAdvance becomes true; exactly one WOBBLED event.
+  assert.equal(first.state.awaitingAdvance, true);
+  const firstWobbled = first.events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_WOBBLED);
+  assert.equal(firstWobbled.length, 1, 'first click wobbles once');
+
+  // Second click on the same state: the early awaitingAdvance guard in
+  // skipWord returns changed:false with no events.
+  const second = service.skipWord('learner-a', first.state);
+  assert.equal(second.changed, false, 'second click is a no-op while awaitingAdvance');
+  assert.equal(second.events.length, 0, 'second click emits no events');
+
+  const postMastery = service.getPostMasteryState('learner-a');
+  assert.equal(postMastery.guardianMap[firstSlug].lapses, 1, 'first slug lapses counted once, not twice');
+});
+
+test('U4 integration (wobbledCount correctness): round with 2 wrong answers + 1 "I don\'t know" emits wobbledCount === 3 on mission-completed', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const totalWords = started.state.session.uniqueWords.length;
+
+  let current = started.state;
+  const events = [];
+  let cardCount = 0;
+  while (current.phase === 'session') {
+    if (current.awaitingAdvance) {
+      const advanced = service.continueSession('learner-a', current);
+      events.push(...advanced.events);
+      current = advanced.state;
+      continue;
+    }
+    cardCount += 1;
+    let transition;
+    if (cardCount === 1) {
+      // First card: "I don't know"
+      transition = service.skipWord('learner-a', current);
+    } else if (cardCount <= 3) {
+      // Cards 2 and 3: wrong answer
+      transition = service.submitAnswer('learner-a', current, 'definitely-wrong');
+    } else {
+      // Rest: correct
+      transition = service.submitAnswer('learner-a', current, current.session.currentCard.word.word);
+    }
+    events.push(...transition.events);
+    current = transition.state;
+  }
+
+  assert.equal(current.phase, 'summary');
+  const mission = events.find((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED);
+  assert.ok(mission, 'mission-completed event emitted');
+  assert.equal(mission.wobbledCount, 3, 'wobbledCount aggregates 2 wrong + 1 "I don\'t know"');
+  assert.equal(mission.renewalCount, totalWords - 3);
+  assert.equal(mission.recoveredCount, 0);
+
+  // Per-word WOBBLED events: exactly 3 across the round.
+  const wobbledEvents = events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_WOBBLED);
+  assert.equal(wobbledEvents.length, 3, 'one WOBBLED event per wobbled slug, no duplicates');
+});
+
+test('U4 integration: non-Guardian learning session skip still calls engine.skipCurrent → enqueueLater, slug re-appears in queue, no guardian events', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const { service } = makeServiceWithSeed({ now, random: () => 0.5 });
+  // Learning mode (not guardian). Use seeded words to get a round with a
+  // predictable first slug.
+  const started = service.startSession('learner-a', {
+    mode: 'single',
+    words: ['possess', 'believe', 'imagine', 'decide'],
+    length: 4,
+  });
+  assert.equal(started.state.session.mode, 'single');
+  assert.notEqual(started.state.session.mode, 'guardian');
+  const firstSlug = started.state.session.currentSlug;
+  const queueBefore = started.state.session.queue.slice();
+
+  const skipped = service.skipWord('learner-a', started.state);
+
+  // No guardian events from a non-Guardian skip.
+  assert.equal(skipped.events.filter((e) => e.type?.startsWith?.('spelling.guardian.')).length, 0);
+  // Session advances to a different slug.
+  assert.notEqual(skipped.state.session.currentSlug, firstSlug, 'skip advanced past the first slug');
+  // Legacy enqueueLater: the skipped slug is still reachable in the round
+  // (queue + currentSlug). Either in queue, or it will be picked up later.
+  const queueAfter = skipped.state.session.queue;
+  const reachable = [skipped.state.session.currentSlug, ...queueAfter];
+  assert.ok(reachable.includes(firstSlug), 'legacy skip re-queues slug (reachable later in round)');
+  // Sanity: the legacy info feedback headline is still the non-Guardian one.
+  assert.equal(skipped.state.feedback?.headline, 'Skipped for now.');
+});
+
+test('U4 edge: FIFO-consistent queue after Guardian "I don\'t know" — skipped slug never re-queued (continueSession advances to next)', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const initialSlugs = started.state.session.uniqueWords.slice();
+  const firstSlug = started.state.session.currentSlug;
+
+  const skipped = service.skipWord('learner-a', started.state);
+  // After skip, queue has the skipped slug removed. Continue to move on.
+  assert.equal(Array.isArray(skipped.state.session.queue) && skipped.state.session.queue.includes(firstSlug), false, 'queue does not contain the skipped slug');
+  const advanced = service.continueSession('learner-a', skipped.state);
+  const post = advanced.state.session;
+  const reachable = [post.currentSlug, ...post.queue].filter(Boolean);
+  for (const slug of initialSlugs) {
+    if (slug === firstSlug) {
+      assert.equal(reachable.includes(slug), false, `${slug} must not be re-queued after Guardian skip`);
+    } else {
+      // Each remaining slug appears exactly once on the reachable path
+      // (current + queue), preserving FIFO.
+      assert.equal(reachable.filter((s) => s === slug).length, 1, `${slug} appears exactly once on the FIFO path`);
+    }
+  }
+});
+
+test('U4 edge: Guardian "I don\'t know" sets session.guardianResults[slug] to "wobbled" for mission-completed aggregation', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const firstSlug = started.state.session.currentCard.slug;
+  const skipped = service.skipWord('learner-a', started.state);
+
+  assert.equal(skipped.state.session.guardianResults[firstSlug], 'wobbled');
+});
+
+test('U4 edge: Guardian "I don\'t know" surfaces a "Wobbling" feedback so the user knows the click registered', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const skipped = service.skipWord('learner-a', started.state);
+
+  // Feedback mirrors the wrong-answer Guardian body so the UI shows the
+  // correct answer via feedback.answer (like submitGuardianAnswer does for
+  // wrong answers).
+  assert.equal(skipped.state.feedback?.kind, 'warn');
+  assert.equal(skipped.state.feedback?.headline, 'Wobbling.');
+  assert.match(skipped.state.feedback?.body || '', /will return tomorrow/);
+  assert.ok(skipped.state.feedback?.answer, 'feedback.answer present so Cloze can reveal the word after skip');
+});
+
+test('U4 edge: continueSession after Guardian skip plays the audio cue for the next card', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const skipped = service.skipWord('learner-a', started.state);
+  const advanced = service.continueSession('learner-a', skipped.state);
+
+  // continueSession's non-done branch returns an audio cue — same as the
+  // correct-answer Guardian flow. Without this, the learner would see the
+  // next card's prompt without hearing it.
+  assert.ok(advanced.audio, 'continueSession returns an audio cue for the freshly-advanced card');
+});
