@@ -304,6 +304,44 @@ The rewrite replaces two side-effect imports with an awaited chain that propagat
 
 ---
 
+## Post-Implementation Reconciliation
+
+*Added 2026-04-25 after merge of PRs #172, #174, #176. The sections above preserve the plan as originally drafted; this section reconciles it with what actually shipped.*
+
+### Gap 1 — U3 file scope widened
+
+Originally scoped `**Files:**` for U3 listed only `scripts/build-bundles.mjs` (modify) and `tests/build-public.test.js` (existing verification). During implementation, maintainability review widened the scope:
+
+- **Modified:** `scripts/build-bundles.mjs`, `scripts/build-public.mjs` (symmetry — the silent-exit risk applied equally to the public-build orchestrator, so the fix was applied to both for parity).
+- **Created:** `tests/build-bundles-failfast.test.js` (dedicated fail-fast behavioural test; the existing `tests/build-public.test.js` only covered the happy path), `tests/fixtures/build-bundles-failfast/orchestrator.mjs` (fixture sibling that deliberately throws, used by the new test to verify non-zero exit propagation without relying on fault-injection of `node_modules/`).
+- **Existing (unchanged target):** `tests/build-public.test.js` — kept as the happy-path regression check, as planned.
+
+Rationale: the fault-injection verification sketched in the original U3 (rename `node_modules/esbuild`) was workable but left no permanent regression guard. A dedicated fixture + test gives CI a stable signal that survives beyond the merge.
+
+### Gap 2 — Exit strategy: `process.exit(1)` vs. `exitCode = 1` + rethrow
+
+The plan's Approach (U3, around the Key Technical Decisions bullet and `**Approach:**` at line ~184) specified `process.exitCode = 1` + rethrow. During U3 implementation this pattern was observed to still exit 0 in practice — the rethrow surfaced the stacktrace but Node's module-loading settle sequence let the process end cleanly before the exit code propagated. Shipped code uses `process.exit(1)` directly inside the `catch` block after logging.
+
+Trade-off accepted: `process.exit(1)` short-circuits any in-flight async work, which is acceptable here because the orchestrator has no cleanup obligations and fail-fast is the desired semantic. The Key Technical Decision bullet "Fix Cluster C by making `build-bundles.mjs` explicit about await + error propagation" remains valid — only the exit mechanism changed.
+
+### Gap 3 — `npm run check` pre-existing Windows failure
+
+U5's verification claimed `npm run check` would pass. It does not, on Windows: the OAuth-safe wrangler dry-run deploy fails with `spawnSync npx.cmd EINVAL`. Verified by stashing all U5 changes and re-running — the failure reproduces on `main`, so it is **pre-existing and unrelated to this plan's scope**.
+
+Out of scope for this plan. Tracked as a follow-up; R5 ("no regression of AGENTS.md-flagged production-sensitive surfaces") still holds because the deploy path is unchanged — the `check` invocation itself is what fails, not any downstream contract.
+
+### Gap 4 — Actual test counts on completion
+
+U5's verification predicted `npm test → 718 pass, 0 fail, 1 skipped`. Actual shipped outcome: **1150 pass, 1 fail, 1 skipped.**
+
+- **Total count grew from 719 → 1152**: parallel feature merges on `main` during this plan's execution (notably `feat(punctuation)` and `feat(grammar)` U8 perfection-pass release gate landings) added ~430 tests. Plan's prediction was accurate for the frozen snapshot at discovery time; the drift reflects normal main-branch velocity.
+- **1 failing test**: a pre-existing CRLF fixture bug, not caused by this plan. Verified independent of U1-U5 by reproducing on a stash of the plan's changes.
+- **1 skipped**: `browser migration smoke` (gated by `KS2_BROWSER_SMOKE=1`) — matches plan.
+
+R1 ("npm test exits 0 with 0 failing tests") is substantially met for all failures in this plan's scope; the residual CRLF failure is tracked as a follow-up.
+
+---
+
 ## Sources & References
 
 - Test discovery output: `/tmp/test-output.txt` (local to this session).
