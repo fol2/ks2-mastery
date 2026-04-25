@@ -89,7 +89,13 @@ export function applySecurityHeaders(response, { path: pathname = '' } = {}) {
   // Path-specific cache rules. Order matters: bundle immutable takes
   // precedence over any existing `Cache-Control` because ASSETS responses
   // arrive with `no-store` from the `_headers` `/*` rule.
-  if (isImmutableBundlePath(pathname)) {
+  //
+  // Security residual (review security-residual-1): the immutable cache must
+  // only bind to 2xx responses. A 404 or 5xx under `/src/bundles/<unknown>.js`
+  // would otherwise poison client caches for a year. Non-2xx bundle responses
+  // fall through to the normal preservation/fallback logic below.
+  const isSuccess = response.status >= 200 && response.status < 300;
+  if (isImmutableBundlePath(pathname) && isSuccess) {
     headers.set('Cache-Control', IMMUTABLE_CACHE_CONTROL);
   } else if (isTtsBinaryResponse(response)) {
     // TTS preserves its existing Cache-Control; do nothing.

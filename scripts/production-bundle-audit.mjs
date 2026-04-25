@@ -187,10 +187,16 @@ async function auditProduction(origin) {
   //   - `/src/bundles/app.bundle.js` — run_worker_first path that flows
   //     through applySecurityHeaders with explicit immutable cache.
   //   - `/manifest.webmanifest` — ASSETS direct with `_headers` manifest rule.
+  //   - `/api/auth/logout` — Worker-produced 4xx/2xx that must carry
+  //     Clear-Site-Data plus the full security set (review testing-gap-4).
+  //   - `/api/tts` — Worker-produced 401 without auth; verifies the security
+  //     set is present on errored TTS responses (review testing-gap-4).
   const SECURITY_HEADER_CHECKS = [
     { path: '/', label: 'root index' },
     { path: '/src/bundles/app.bundle.js', label: 'Worker-routed bundle' },
     { path: '/manifest.webmanifest', label: 'manifest' },
+    { path: '/api/auth/logout', label: 'logout', expectClearSiteData: true, allowAnyStatus: true },
+    { path: '/api/tts', label: 'tts probe', allowAnyStatus: true },
   ];
   const REQUIRED_SECURITY_HEADER_NAMES = [
     'strict-transport-security',
@@ -206,7 +212,7 @@ async function auditProduction(origin) {
     const target = new URL(check.path, base);
     try {
       const response = await fetch(target.href, { method: 'HEAD' });
-      if (response.status < 200 || response.status >= 400) {
+      if (!check.allowAnyStatus && (response.status < 200 || response.status >= 400)) {
         failures.push(`Security header HEAD check failed (${response.status}): ${target.href}`);
         continue;
       }
@@ -225,6 +231,17 @@ async function auditProduction(origin) {
           `Security header HEAD check found HSTS preload on ${check.label}; preload is deferred (F-03).`,
         );
         continue;
+      }
+      if (check.expectClearSiteData) {
+        const clearSiteData = response.headers.get('clear-site-data') || '';
+        const missingMarkers = ['"cache"', '"cookies"', '"storage"']
+          .filter((marker) => !clearSiteData.includes(marker));
+        if (missingMarkers.length) {
+          failures.push(
+            `Security header HEAD check missing Clear-Site-Data markers on ${check.label}: ${missingMarkers.join(', ')} (got: ${clearSiteData || 'absent'})`,
+          );
+          continue;
+        }
       }
       headerChecksPassed += 1;
     } catch (error) {

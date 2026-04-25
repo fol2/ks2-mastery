@@ -9,6 +9,8 @@ import {
   applySecurityHeaders,
   serialiseHeadersBlock,
 } from '../worker/src/security-headers.js';
+import { applySecurityHeadersSafely } from '../worker/src/index.js';
+import { assertHeadersBlockIsFresh } from '../scripts/lib/headers-drift.mjs';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -386,56 +388,207 @@ test('_headers repo file contains expected security header block', async () => {
 });
 
 test('assert:build-public logic rejects a drifted _headers that lacks the security block', async () => {
-  // We avoid calling the real `scripts/assert-build-public.mjs` here because
-  // it reads `dist/public/` via `process.cwd()` and the broader test runner
-  // concurrently rebuilds that directory. Instead we re-apply the drift
-  // assertion logic against an intentionally-drifted in-memory string so the
-  // contract (security-header block presence, no preload, immutable cache
-  // rule) is locked in without a shared-file race.
-  const driftedContent = '/*\n  Cache-Control: no-store\n';
-  const requiredLines = [
-    'Strict-Transport-Security: max-age=63072000; includeSubDomains',
-    'X-Content-Type-Options: nosniff',
-    'Referrer-Policy: strict-origin-when-cross-origin',
-    'X-Frame-Options: DENY',
-    'Cross-Origin-Opener-Policy: same-origin-allow-popups',
-    'Cross-Origin-Resource-Policy: same-site',
-  ];
-  const missing = requiredLines.filter((line) => !driftedContent.includes(line));
+  // Execution-based drift verification (review testing-gap-3): we import the
+  // pure `assertHeadersBlockIsFresh` contract and drive it with a correct
+  // fixture (must not throw), then with three distinct drift mutations (each
+  // must throw with a pointed message). This replaces the earlier substring
+  // inspection of `scripts/assert-build-public.mjs`, which a future refactor
+  // could silently pass by leaving dead-code tokens behind.
+  const freshContent = await readFile(path.join(REPO_ROOT, '_headers'), 'utf8');
+  assert.doesNotThrow(
+    () => assertHeadersBlockIsFresh(freshContent),
+    'The checked-in repo-root _headers must pass the drift contract.',
+  );
+
+  // Drift 1: the security block is wiped entirely.
+  const driftedMissingBlock = '/*\n  Cache-Control: no-store\n';
+  assert.throws(
+    () => assertHeadersBlockIsFresh(driftedMissingBlock),
+    /missing required security-header line: Strict-Transport-Security/,
+    'must reject a _headers without the HSTS line',
+  );
+
+  // Drift 2: HSTS silently gains `preload` (F-03 regression).
+  const driftedPreload = freshContent.replace(
+    'max-age=63072000; includeSubDomains',
+    'max-age=63072000; includeSubDomains; preload',
+  );
+  assert.throws(
+    () => assertHeadersBlockIsFresh(driftedPreload),
+    /must not carry HSTS preload/,
+    'must reject a _headers that reintroduces HSTS preload',
+  );
+
+  // Drift 3: immutable cache rule is removed (bundle cache hygiene lost).
+  const driftedNoImmutable = freshContent.replace(/public, max-age=31536000, immutable/g, 'no-store');
+  assert.throws(
+    () => assertHeadersBlockIsFresh(driftedNoImmutable),
+    /immutable cache rule for hashed bundles/,
+    'must reject a _headers without the immutable cache rule',
+  );
+
+  // Type guard: non-string input is rejected cleanly.
+  assert.throws(
+    () => assertHeadersBlockIsFresh(null),
+    /headersContent must be a string/,
+    'must reject non-string input',
+  );
+});
+
+test('applySecurityHeaders does NOT apply immutable cache to non-2xx bundle responses (security-residual-1)', () => {
+  // A 404 served under `/src/bundles/<unknown>.js` must NOT carry the
+  // immutable cache. Otherwise a bad deploy would poison client caches for
+  // one year via the hashed-bundle path match.
+  const notFound = new Response('not found', {
+    status: 404,
+    headers: { 'content-type': 'text/plain; charset=utf-8' },
+  });
+  const wrapped404 = applySecurityHeaders(notFound, { path: '/src/bundles/does-not-exist.js' });
+  assertHasAllSecurityHeaders(wrapped404);
+  assert.notEqual(
+    wrapped404.headers.get('cache-control'),
+    'public, max-age=31536000, immutable',
+    'Non-2xx bundle responses must not carry the immutable cache-control.',
+  );
+  // Fall-through path has no existing Cache-Control, so the fallback kicks in.
+  assert.equal(
+    wrapped404.headers.get('cache-control'),
+    'no-store',
+    'Non-2xx bundle 404 falls through to the no-store fallback.',
+  );
+
+  // 5xx bundle response similarly must not poison caches.
+  const serverError = new Response('boom', {
+    status: 500,
+    headers: {
+      'content-type': 'text/plain; charset=utf-8',
+      'cache-control': 'private, max-age=30',
+    },
+  });
+  const wrapped500 = applySecurityHeaders(serverError, { path: '/src/bundles/app.bundle.js' });
+  assertHasAllSecurityHeaders(wrapped500);
+  assert.equal(
+    wrapped500.headers.get('cache-control'),
+    'private, max-age=30',
+    'Non-2xx bundle response with existing Cache-Control preserves it rather than swapping in immutable.',
+  );
+
+  // 304 Not Modified is 3xx (outside the 200-299 success window), so it
+  // falls through to the no-store fallback rather than the immutable cache.
+  // In practice ASSETS.fetch rarely returns 304 for hashed bundles because
+  // their content-hash URL changes when the body changes; the conservative
+  // no-store behaviour is preferred over accidentally pinning a mid-deploy
+  // 304 for a year.
+  const notModified = new Response(null, {
+    status: 304,
+    headers: {},
+  });
+  const wrapped304 = applySecurityHeaders(notModified, { path: '/src/bundles/app.bundle.js' });
+  assert.notEqual(
+    wrapped304.headers.get('cache-control'),
+    'public, max-age=31536000, immutable',
+    '304 responses are outside 200-299 and must not carry the immutable cache.',
+  );
+});
+
+test('applySecurityHeadersSafely returns the raw response when the wrapper throws (reliability-1)', () => {
+  // Stub `applySecurityHeaders` with a throwing function. The safe wrapper
+  // must swallow the error and surface the underlying Response so the Worker
+  // never emits a 1101 purely because header composition failed.
+  const originalConsoleError = console.error;
+  const calls = [];
+  console.error = (...args) => {
+    calls.push(args);
+  };
+  try {
+    const raw = new Response('payload', {
+      status: 200,
+      headers: { 'content-type': 'text/plain' },
+    });
+    const result = applySecurityHeadersSafely(
+      raw,
+      { path: '/api/bootstrap' },
+      () => {
+        throw new Error('simulated-header-failure');
+      },
+    );
+    // The safe wrapper must return the exact raw Response instance.
+    assert.equal(result, raw, 'safe wrapper returns the underlying response on throw');
+    assert.equal(result.status, 200);
+    // The failure must be logged for observability.
+    assert.ok(
+      calls.some((call) => String(call[0]).includes('[ks2-security-headers] wrapper failed')),
+      `expected a console.error log, got calls: ${JSON.stringify(calls)}`,
+    );
+  } finally {
+    console.error = originalConsoleError;
+  }
+});
+
+test('applySecurityHeadersSafely delegates to the real wrapper when it does not throw', () => {
+  const response = new Response('{"ok":true}', {
+    status: 200,
+    headers: { 'content-type': 'application/json' },
+  });
+  const wrapped = applySecurityHeadersSafely(response, { path: '/api/bootstrap' });
+  assertHasAllSecurityHeaders(wrapped);
+});
+
+test('OAuth callback 302 error redirect carries all seven security headers (testing-gap-4)', async () => {
+  // We drive the callback with intentionally-malformed query (invalid state,
+  // missing code) so `completeSocialLogin` throws a BadRequestError and the
+  // app produces a 302 `callbackErrorRedirect`. This exercises the OAuth
+  // callback lane of the Worker without calling real Google OAuth.
+  const server = createWorkerRepositoryServer({
+    env: {
+      AUTH_MODE: 'production',
+      ENVIRONMENT: 'production',
+      APP_HOSTNAME: 'repo.test',
+      GOOGLE_CLIENT_ID: 'test-client-id',
+      GOOGLE_CLIENT_SECRET: 'test-client-secret',
+    },
+  });
+  const response = await server.fetchRaw(
+    'https://repo.test/api/auth/google/callback?state=invalid&code=missing',
+    {
+      method: 'GET',
+      headers: {
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-dest': 'document',
+      },
+    },
+  );
+  // The callback error redirect is a 302 regardless of the underlying
+  // BadRequestError — what we care about is that security headers attach.
+  assert.equal(response.status, 302, `expected 302 redirect, got ${response.status}`);
+  assertHasAllSecurityHeaders(response);
+  server.close();
+});
+
+test('/api/auth/logout response carries all seven security headers plus Clear-Site-Data (testing-gap-4)', async () => {
+  // A dedicated assertion that the logout surface carries the full 7-header
+  // set alongside the Clear-Site-Data directive. The existing logout test
+  // only asserted Clear-Site-Data + all headers together; this scenario
+  // makes the joint contract explicit for future grep-based audits.
+  const server = createWorkerRepositoryServer({
+    env: {
+      AUTH_MODE: 'production',
+      ENVIRONMENT: 'production',
+      APP_HOSTNAME: 'repo.test',
+    },
+  });
+  const response = await server.fetchRaw('https://repo.test/api/auth/logout', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      origin: 'https://repo.test',
+    },
+  });
+  assertHasAllSecurityHeaders(response);
+  const clearSiteData = response.headers.get('clear-site-data') || '';
   assert.ok(
-    missing.length >= 6,
-    `drift simulation must be missing every security line, got: ${missing.join(', ')}`,
+    clearSiteData.includes('"cache"') && clearSiteData.includes('"cookies"') && clearSiteData.includes('"storage"'),
+    `logout must carry Clear-Site-Data with cache, cookies, storage — got ${clearSiteData}`,
   );
-  // The actual script reads dist/public/_headers at build time. Verify that
-  // the script file itself contains the assertion code (grep-style contract
-  // check that prevents silent removal of the drift guard).
-  const assertBuildPublic = await readFile(
-    path.join(REPO_ROOT, 'scripts', 'assert-build-public.mjs'),
-    'utf8',
-  );
-  assert.match(
-    assertBuildPublic,
-    /Strict-Transport-Security: max-age=63072000; includeSubDomains/,
-    'assert-build-public.mjs must check for HSTS header presence',
-  );
-  assert.match(
-    assertBuildPublic,
-    /X-Frame-Options: DENY/,
-    'assert-build-public.mjs must check for XFO header presence',
-  );
-  assert.match(
-    assertBuildPublic,
-    /Permissions-Policy.*microphone=\\\(\\\)/,
-    'assert-build-public.mjs must guard microphone deny-by-default',
-  );
-  assert.match(
-    assertBuildPublic,
-    /preload/,
-    'assert-build-public.mjs must fail the build when HSTS carries preload',
-  );
-  assert.match(
-    assertBuildPublic,
-    /public, max-age=31536000, immutable/,
-    'assert-build-public.mjs must enforce an immutable cache rule',
-  );
+  server.close();
 });

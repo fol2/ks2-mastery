@@ -1,6 +1,7 @@
 import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { assertHeadersBlockIsFresh } from './lib/headers-drift.mjs';
 
 const rootDir = process.cwd();
 const publicDir = path.join(rootDir, 'dist', 'public');
@@ -134,29 +135,13 @@ if (rawAssetPngs.length) {
 // full security-header block. Prevents silent drift between the repo-root
 // `_headers` (single source of truth) and `dist/public/_headers` that ships
 // with the deploy artefact.
+//
+// The assertion lives in `scripts/lib/headers-drift.mjs` so the drift test
+// (tests/security-headers.test.js) can call the pure function directly with
+// drifted strings — execution-based verification rather than substring
+// inspection of this file (review testing-gap-3).
 const publishedHeadersContent = await readFile(path.join(publicDir, '_headers'), 'utf8');
-const REQUIRED_SECURITY_HEADER_LINES = [
-  'Strict-Transport-Security: max-age=63072000; includeSubDomains',
-  'X-Content-Type-Options: nosniff',
-  'Referrer-Policy: strict-origin-when-cross-origin',
-  'X-Frame-Options: DENY',
-  'Cross-Origin-Opener-Policy: same-origin-allow-popups',
-  'Cross-Origin-Resource-Policy: same-site',
-];
-for (const line of REQUIRED_SECURITY_HEADER_LINES) {
-  if (!publishedHeadersContent.includes(line)) {
-    throw new Error(`Published _headers is missing required security-header line: ${line}`);
-  }
-}
-if (!/Permissions-Policy:[^\n]*microphone=\(\)/.test(publishedHeadersContent)) {
-  throw new Error('Published _headers is missing Permissions-Policy with microphone=() (F-09 deny-by-default).');
-}
-if (/preload/.test(publishedHeadersContent)) {
-  throw new Error('Published _headers must not carry HSTS preload in this pass (F-03 deferred).');
-}
-if (!/public, max-age=31536000, immutable/.test(publishedHeadersContent)) {
-  throw new Error('Published _headers must carry an immutable cache rule for hashed bundles.');
-}
+assertHeadersBlockIsFresh(publishedHeadersContent);
 
 const indexHtml = await readFile(path.join(publicDir, 'index.html'), 'utf8');
 if (!indexHtml.includes('/manifest.webmanifest')) {
