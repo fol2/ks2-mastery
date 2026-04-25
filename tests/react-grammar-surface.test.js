@@ -1109,3 +1109,39 @@ test('Grammar setup can start faded guidance mode with lower support', () => {
   assert.match(harness.render(), /Faded guidance/);
   assert.match(harness.render(), /Near miss/);
 });
+
+// U0 follower. The helper `normaliseGrammarRewardState` already has direct
+// coverage in `tests/grammar-monster-roster.test.js`, but without a JSX-level
+// assertion nothing in the suite turns red if a future refactor unwires the
+// call from `GrammarPracticeSurface.resolveGrammarRewardState`. This test
+// feeds a retired-id-only persisted state through the real SSR harness and
+// asserts Concordium's Codex count reflects the unioned view — which only
+// holds when the resolver routes through the normaliser before reading the
+// reward state.
+test('Grammar surface routes persisted retired-id state through the normaliser before rendering', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const preFlipKey = grammarMasteryKey('noun_phrases');
+
+  // Persist *only* a retired-id entry (`glossbloom`). No `bracehart`, no
+  // `concordium` on disk. If `resolveGrammarRewardState` stopped calling the
+  // normaliser, Concordium would render `0/18 Codex` and Bracehart would
+  // render `0/6 Codex` because no active direct has any mastered keys.
+  harness.repositories.gameState.write(learnerId, 'monster-codex', {
+    glossbloom: {
+      branch: 'b1',
+      caught: true,
+      mastered: [preFlipKey],
+      stage: 1,
+    },
+  });
+  harness.store.updateSubjectUi('grammar', normaliseGrammarReadModel({}, learnerId));
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+
+  const html = harness.render();
+
+  // Concordium surfaces the unioned retired-id progress.
+  assert.match(html, /Concordium/);
+  assert.match(html, /1\/18 Codex/);
+});
