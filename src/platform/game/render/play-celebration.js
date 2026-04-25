@@ -10,10 +10,7 @@
 
 import { lookupEffect } from './registry.js';
 import { warnOnce } from './composition.js';
-
-function isPlainObject(value) {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
+import { isPlainObject } from '../../core/utils.js';
 
 function nonEmptyString(value) {
   return typeof value === 'string' && value.length > 0;

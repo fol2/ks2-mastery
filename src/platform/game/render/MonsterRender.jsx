@@ -1,15 +1,7 @@
-// Declarative monster renderer: composes registered effects via U1 and
-// layers the result around <BaseSprite>. Trigger-agnostic — the caller
-// decides which effects to mount; this component never reads mastery
-// state or RNG. Transient (queue-shaped) effects belong in
-// <CelebrationLayer>, not here, so we drop them with a dev-warn.
-
+import { Fragment, useMemo } from 'react';
 import { composeEffects, prefersReducedMotion, warnOnce } from './composition.js';
 import { BaseSprite } from './BaseSprite.jsx';
 
-// Numeric transform shorthands that callers may emit. We map each to its
-// CSS form and assemble a `transform` string so multiple base effects can
-// stack without each having to know about CSS variables.
 const TRANSFORM_KEYS = new Set([
   'translateX', 'translateY', 'translateZ',
   'rotate', 'rotateX', 'rotateY', 'rotateZ',
@@ -25,23 +17,19 @@ function formatTransformPiece(key, value) {
     const unit = typeof value === 'number' ? 'deg' : '';
     return `${key}(${value}${unit})`;
   }
-  // translate*
   const unit = typeof value === 'number' ? 'px' : '';
   return `${key}(${value}${unit})`;
 }
 
 function mergeTransformStyle(baseEffects, monster, context) {
+  if (baseEffects.length === 0) return undefined;
   const style = {};
   const transformPieces = [];
   for (const effect of baseEffects) {
     if (typeof effect.applyTransform !== 'function') continue;
     let result;
     try {
-      result = effect.applyTransform({
-        params: effect.params,
-        monster,
-        context,
-      });
+      result = effect.applyTransform({ params: effect.params, monster, context });
     } catch (_err) {
       warnOnce(
         `apply-transform-throw:${effect.kind}`,
@@ -55,34 +43,61 @@ function mergeTransformStyle(baseEffects, monster, context) {
       if (TRANSFORM_KEYS.has(key)) {
         transformPieces.push(formatTransformPiece(key, value));
       } else {
-        // CSS-variable strings, arbitrary style props, or full strings
-        // (e.g. `transform: 'translateY(2px) scale(1.01)'`) flow through
-        // unchanged. Conflict resolution is "last in array wins" because
-        // we just overwrite the same key.
+        // CSS-variable strings and full transform strings flow through
+        // unchanged; numeric pieces are reassembled below.
         style[key] = value;
       }
     }
   }
   if (transformPieces.length > 0) {
-    // Numeric pieces win over an inline `transform` string from a single
-    // effect — but only if both arrived; with one source we keep its
-    // value above. That's expected because we composed the pieces here.
     style.transform = transformPieces.join(' ');
   }
-  return style;
+  return Object.keys(style).length > 0 ? style : undefined;
+}
+
+function dropTransient(entries, layerName) {
+  let needsFilter = false;
+  for (const effect of entries) {
+    if (effect.lifecycle === 'transient') {
+      warnOnce(
+        `transient-in-monster-render:${effect.kind}`,
+        `MonsterRender: dropping transient effect "${effect.kind}" from ${layerName}; `
+        + 'use <CelebrationLayer>',
+      );
+      needsFilter = true;
+    }
+  }
+  return needsFilter ? entries.filter((e) => e.lifecycle !== 'transient') : entries;
 }
 
 export function MonsterRender({
   monster,
-  stage: _stage,
   context = 'card',
   effects = [],
   sizes,
   reducedMotion,
 }) {
+  const motionPreferred = typeof reducedMotion === 'boolean'
+    ? reducedMotion
+    : prefersReducedMotion();
+
+  // Hot path: codex renders 16+ tiles. We memoise on the inputs that change
+  // output — the monster object identity is stable per tile; .id and
+  // .displayState cover the cases where a parent swaps which monster a tile
+  // shows or transitions egg → monster.
+  const composed = useMemo(
+    () => composeEffects({ effects, monster: monster || {}, context, reducedMotion: motionPreferred }),
+    [effects, monster?.id, monster?.displayState, context, motionPreferred],
+  );
+  const base = useMemo(() => dropTransient(composed.base, 'base'), [composed.base]);
+  const overlay = useMemo(() => dropTransient(composed.overlay, 'overlay'), [composed.overlay]);
+  const baseStyle = useMemo(
+    () => mergeTransformStyle(base, monster, context),
+    [base, monster?.id, context],
+  );
+
   if (!monster) return null;
 
-  // Fresh = uncaught placeholder; effects do not apply.
   if (monster.displayState === 'fresh') {
     return (
       <span className="codex-unknown" role="img" aria-label={monster.imageAlt}>
@@ -91,41 +106,9 @@ export function MonsterRender({
     );
   }
 
-  const motionPreferred = typeof reducedMotion === 'boolean'
-    ? reducedMotion
-    : prefersReducedMotion();
-
-  const composed = composeEffects({
-    effects,
-    monster,
-    context,
-    reducedMotion: motionPreferred,
-  });
-
-  // Transient effects belong in <CelebrationLayer>. We drop after
-  // composeEffects resolves descriptors so the real-world case — caller
-  // passes only `{ kind }` — is caught using the registered lifecycle.
-  const dropTransient = (entries, layerName) => entries.filter((effect) => {
-    if (effect.lifecycle !== 'transient') return true;
-    warnOnce(
-      `transient-in-monster-render:${effect.kind}`,
-      `MonsterRender: dropping transient effect "${effect.kind}" from ${layerName}; `
-      + 'use <CelebrationLayer>',
-    );
-    return false;
-  });
-  const base = dropTransient(composed.base, 'base');
-  const overlay = dropTransient(composed.overlay, 'overlay');
-
-  const baseStyle = mergeTransformStyle(base, monster, context);
-
   return (
     <>
-      <BaseSprite
-        monster={monster}
-        sizes={sizes}
-        style={Object.keys(baseStyle).length > 0 ? baseStyle : undefined}
-      />
+      <BaseSprite monster={monster} sizes={sizes} style={baseStyle} />
       {overlay.map((effect) => {
         if (typeof effect.render !== 'function') return null;
         let node;
@@ -134,9 +117,6 @@ export function MonsterRender({
             params: effect.params,
             monster,
             context,
-            // composeEffects() flags entries with `simplified: true` when
-            // reducedMotion === 'simplify'. Effects use this to swap
-            // animations for static fallbacks.
             simplified: effect.simplified === true,
           });
         } catch (_err) {
@@ -147,15 +127,8 @@ export function MonsterRender({
           return null;
         }
         if (node == null) return null;
-        // Stable key keeps reconciliation happy when overlays change order.
-        return <Wrap key={effect.kind}>{node}</Wrap>;
+        return <Fragment key={effect.kind}>{node}</Fragment>;
       })}
     </>
   );
-}
-
-// Tiny wrapper so the overlay node reuses its own root. We do not inject
-// extra DOM — the effect's returned JSX is the entire overlay.
-function Wrap({ children }) {
-  return children;
 }

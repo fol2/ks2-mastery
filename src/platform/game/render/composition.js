@@ -53,9 +53,7 @@ export function prefersReducedMotion(injectedWindow) {
   }
 }
 
-function isPlainObject(value) {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
+import { isPlainObject } from '../../core/utils.js';
 
 function normaliseEntry(entry) {
   if (!isPlainObject(entry)) return null;

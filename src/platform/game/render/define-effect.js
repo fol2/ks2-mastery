@@ -7,12 +7,10 @@ const ALLOWED_LAYERS = new Set(['base', 'overlay']);
 const ALLOWED_REDUCED_MOTION = new Set(['omit', 'simplify', 'asis']);
 const ALLOWED_PARAM_TYPES = new Set(['number', 'string', 'enum', 'boolean']);
 
+import { isPlainObject } from '../../core/utils.js';
+
 function fail(message) {
   throw new Error(`defineEffect: ${message}`);
-}
-
-function isPlainObject(value) {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 function validateParamsSchema(params, kind) {
