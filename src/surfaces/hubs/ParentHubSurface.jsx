@@ -147,6 +147,135 @@ function HubLedgerCard({ title, items, emptyText, tone }) {
   );
 }
 
+function uniqueEvidenceRows(rows) {
+  const seen = new Set();
+  const output = [];
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const key = row?.id || row?.itemId || row?.templateId || row?.label;
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    output.push(row);
+  }
+  return output;
+}
+
+function conceptStatusLabel(status) {
+  if (status === 'weak') return 'weak';
+  if (status === 'due') return 'due';
+  if (status === 'secured') return 'secured';
+  if (status === 'learning') return 'learning';
+  return 'new';
+}
+
+function GrammarConceptEvidence({ evidence }) {
+  const priorityRows = uniqueEvidenceRows([
+    ...(Array.isArray(evidence?.weakConcepts) ? evidence.weakConcepts : []),
+    ...(Array.isArray(evidence?.dueConcepts) ? evidence.dueConcepts : []),
+  ]);
+  const fallbackRows = uniqueEvidenceRows((Array.isArray(evidence?.conceptStatus) ? evidence.conceptStatus : [])
+    .filter((entry) => Number(entry.attempts) > 0));
+  const rows = (priorityRows.length ? priorityRows : fallbackRows).slice(0, 6);
+  return (
+    <article className="card parent-hub-card">
+      <div className="parent-hub-card-head">
+        <p className="eyebrow">Concept status</p>
+        <h3 className="parent-hub-card-title">Grammar concepts needing attention</h3>
+      </div>
+      {rows.length ? (
+        <ul className="parent-hub-ledger-list">
+          {rows.map((entry) => (
+            <li className="parent-hub-ledger-row" key={entry.id || entry.name}>
+              <div className="parent-hub-ledger-main">
+                <strong>{entry.name || entry.id}</strong>
+                <span className="parent-hub-row-detail">{entry.domain || 'Grammar'}</span>
+              </div>
+              <span className="parent-hub-ledger-figure is-warn">{String(entry.attempts ?? 0)}</span>
+              <span className="parent-hub-row-meta">
+                {conceptStatusLabel(entry.status)}
+                {entry.accuracyPercent == null ? '' : ` · ${entry.accuracyPercent}%`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="parent-hub-empty small muted">No Grammar concept evidence has been recorded yet.</p>}
+    </article>
+  );
+}
+
+function GrammarActivityEvidence({ evidence }) {
+  const questionTypes = Array.isArray(evidence?.questionTypeSummary) ? evidence.questionTypeSummary.slice(0, 4) : [];
+  const activity = Array.isArray(evidence?.recentActivity) ? evidence.recentActivity.slice(0, 4) : [];
+  const draft = evidence?.parentSummaryDraft || null;
+  return (
+    <article className="card parent-hub-card">
+      <div className="parent-hub-card-head">
+        <p className="eyebrow">Question-type evidence</p>
+        <h3 className="parent-hub-card-title">How recent Grammar answers break down</h3>
+      </div>
+      {questionTypes.length ? (
+        <ul className="parent-hub-ledger-list">
+          {questionTypes.map((entry) => (
+            <li className="parent-hub-ledger-row" key={entry.id || entry.label}>
+              <div className="parent-hub-ledger-main">
+                <strong>{entry.label || entry.id}</strong>
+                <span className="parent-hub-row-detail">{`${entry.correct ?? 0}/${entry.attempts ?? 0} correct`}</span>
+              </div>
+              <span className="parent-hub-ledger-figure is-warn">{String(entry.wrong ?? 0)}</span>
+              <span className="parent-hub-row-meta">{conceptStatusLabel(entry.status)}</span>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="parent-hub-empty small muted">No question-type weakness has surfaced yet.</p>}
+
+      <div className="parent-hub-focus" style={{ marginTop: 18 }}>
+        <p className="eyebrow">Recent Grammar activity</p>
+        {activity.length ? (
+          <ol className="parent-hub-focus-list">
+            {activity.map((entry, index) => (
+              <li className="parent-hub-focus-item" key={entry.itemId || entry.templateId || index}>
+                <span className="parent-hub-focus-marker" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                <div className="parent-hub-focus-body">
+                  <strong>{entry.label || 'Grammar answer'}</strong>
+                  <span className="parent-hub-focus-detail">
+                    {entry.correct ? 'Correct' : 'Review needed'} · {String(entry.score ?? 0)}/{String(entry.maxScore ?? 1)} · {formatTimestamp(entry.createdAt)}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ol>
+        ) : <p className="parent-hub-empty small muted">No recent Grammar attempts are stored yet.</p>}
+      </div>
+
+      {draft ? (
+        <div className="feedback good" style={{ marginTop: 18 }}>
+          <strong>{draft.title || 'Parent summary draft'}</strong>
+          {draft.body ? <div style={{ marginTop: 8 }}>{draft.body}</div> : null}
+          {Array.isArray(draft.nextSteps) && draft.nextSteps.length ? (
+            <ul style={{ margin: '10px 0 0 18px' }}>
+              {draft.nextSteps.map((step) => <li key={step}>{step}</li>)}
+            </ul>
+          ) : null}
+        </div>
+      ) : <p className="parent-hub-empty small muted" style={{ marginTop: 18 }}>No parent summary draft has been generated yet.</p>}
+    </article>
+  );
+}
+
+function GrammarEvidencePanel({ evidence }) {
+  return (
+    <>
+      <SectionHead
+        title="Grammar evidence"
+        note="Concept status, question-type weakness, recent Grammar activity, and adult-facing summary drafts."
+      />
+      <section className="two-col parent-hub-grid parent-hub-grammar-evidence">
+        <GrammarConceptEvidence evidence={evidence} />
+        <GrammarActivityEvidence evidence={evidence} />
+      </section>
+    </>
+  );
+}
+
 function SectionHead({ title, note }) {
   return (
     <div className="home-section-head parent-hub-section-head">
@@ -198,6 +327,7 @@ export function ParentHubSurface({ appState, model, hubState = {}, accessContext
   const weaknesses = Array.isArray(model.weaknesses) ? model.weaknesses : [];
   const patterns = Array.isArray(model.misconceptionPatterns) ? model.misconceptionPatterns : [];
   const progressSnapshots = Array.isArray(model.progressSnapshots) ? model.progressSnapshots : [];
+  const grammarEvidence = model.grammarEvidence || {};
   const grammarDueConcepts = Number(overview.dueGrammarConcepts) || 0;
   const grammarWeakConcepts = Number(overview.weakGrammarConcepts) || 0;
   const grammarReviewConcepts = grammarDueConcepts + grammarWeakConcepts;
@@ -300,6 +430,8 @@ export function ParentHubSurface({ appState, model, hubState = {}, accessContext
           </div>
         </article>
       </section>
+
+      <GrammarEvidencePanel evidence={grammarEvidence} />
 
       <SectionHead
         title="Evidence stream"

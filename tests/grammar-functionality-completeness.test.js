@@ -94,7 +94,9 @@ test('Grammar completeness baseline pins legacy mode coverage separately from be
   assert.ok(capabilityById(baseline, 'ai-visible-triggers')?.evidence.includes('worker/src/subjects/grammar/ai-enrichment.js'));
   assert.equal(capabilityById(baseline, 'read-aloud-and-speech-rate')?.status, 'completed');
   assert.ok(capabilityById(baseline, 'read-aloud-and-speech-rate')?.evidence.includes('src/subjects/grammar/speech.js'));
-  assert.equal(capabilityById(baseline, 'adult-data-replacement-parity')?.ownerUnit, 'U7');
+  assert.equal(capabilityById(baseline, 'adult-data-replacement-parity')?.status, 'completed');
+  assert.ok(capabilityById(baseline, 'adult-data-replacement-parity')?.evidence.includes('src/platform/hubs/parent-read-model.js'));
+  assert.ok(capabilityById(baseline, 'adult-data-replacement-parity')?.evidence.includes('tests/persistence.test.js'));
   assert.equal(capabilityById(baseline, 'functionality-completeness-release-gate')?.ownerUnit, 'U8');
 });
 

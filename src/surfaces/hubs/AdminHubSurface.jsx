@@ -133,6 +133,7 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
   const accessibleLearners = Array.isArray(model.learnerSupport?.accessibleLearners) ? model.learnerSupport.accessibleLearners : [];
   const auditEntries = Array.isArray(model.auditLogLookup?.entries) ? model.auditLogLookup.entries : [];
   const selectedLearnerId = model.learnerSupport?.selectedLearnerId || selectedDiagnostics?.learnerId || '';
+  const selectedGrammarEvidence = selectedDiagnostics?.grammarEvidence || {};
   const notice = hubState.notice || accessContext.adultSurfaceNotice || '';
   const writableLearner = selectedWritableLearner(appState);
 
@@ -233,6 +234,9 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
               </div>
               <div className="small muted">Focus: {entry.currentFocus?.label || '—'}</div>
               <div>{String(entry.overview?.dueWords ?? 0)} due</div>
+              <div className="small muted">
+                Grammar: {String(entry.grammarEvidence?.progressSnapshot?.dueConcepts ?? entry.overview?.dueGrammarConcepts ?? 0)} due / {String(entry.grammarEvidence?.progressSnapshot?.weakConcepts ?? entry.overview?.weakGrammarConcepts ?? 0)} weak
+              </div>
               <div><button className="btn ghost" type="button" onClick={() => actions.dispatch('adult-surface-learner-select', { value: entry.learnerId })}>Select</button></div>
             </div>
           )) : <p className="small muted">No learner diagnostics are accessible from this account scope yet.</p>}
@@ -242,6 +246,14 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
               <div style={{ marginTop: 8 }}>
                 Secure: {String(selectedDiagnostics.overview?.secureWords ?? 0)} · Due: {String(selectedDiagnostics.overview?.dueWords ?? 0)} · Trouble: {String(selectedDiagnostics.overview?.troubleWords ?? 0)}
               </div>
+              <div style={{ marginTop: 8 }}>
+                <strong>Grammar diagnostics</strong>: secured {String(selectedGrammarEvidence.progressSnapshot?.securedConcepts ?? selectedDiagnostics.overview?.secureGrammarConcepts ?? 0)} · due {String(selectedGrammarEvidence.progressSnapshot?.dueConcepts ?? selectedDiagnostics.overview?.dueGrammarConcepts ?? 0)} · weak {String(selectedGrammarEvidence.progressSnapshot?.weakConcepts ?? selectedDiagnostics.overview?.weakGrammarConcepts ?? 0)}
+              </div>
+              {selectedGrammarEvidence.questionTypeSummary?.[0] ? (
+                <div className="small muted" style={{ marginTop: 8 }}>
+                  Question-type focus: {selectedGrammarEvidence.questionTypeSummary[0].label || selectedGrammarEvidence.questionTypeSummary[0].id}
+                </div>
+              ) : null}
               <div className="small muted" style={{ marginTop: 8 }}>{selectedDiagnostics.currentFocus?.detail || 'No current focus surfaced.'}</div>
             </div>
           )}

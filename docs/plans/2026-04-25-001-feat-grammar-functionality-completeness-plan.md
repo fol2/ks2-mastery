@@ -466,7 +466,7 @@ flowchart TB
 
 ---
 
-- U7. **Complete Adult Reporting and Data-Replacement Parity**
+- [x] U7. **Complete Adult Reporting and Data-Replacement Parity**
 
 **Goal:** Close the gap between legacy Profiles/Data/Settings and the current platform by exposing the right Grammar evidence and explicitly documenting replaced behaviours.
 
@@ -507,6 +507,7 @@ flowchart TB
 
 **Verification:**
 - Adult-facing Grammar evidence is complete enough to replace the legacy Profiles/Data tab without restoring legacy localStorage authority.
+- Completed with Parent/Admin Hub Grammar evidence models, concept/due/weak/question-type/recent-activity/parent-summary rendering, safe malformed-restore handling, and platform export/import coverage for Grammar state, preferences, recent evidence, and adult summary drafts.
 
 ---
 

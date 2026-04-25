@@ -32,6 +32,24 @@ function orderDueWork(entries = []) {
     .sort((a, b) => Number(isActionableFocus(b)) - Number(isActionableFocus(a)));
 }
 
+function grammarEvidenceFromReadModel(grammar = {}) {
+  return {
+    subjectId: 'grammar',
+    hasEvidence: Boolean(grammar.hasEvidence),
+    progressSnapshot: grammar.progressSnapshot || null,
+    overview: grammar.overview || null,
+    currentFocus: grammar.currentFocus || null,
+    conceptStatus: Array.isArray(grammar.conceptStatus) ? grammar.conceptStatus : [],
+    dueConcepts: Array.isArray(grammar.dueConcepts) ? grammar.dueConcepts : [],
+    weakConcepts: Array.isArray(grammar.weakConcepts) ? grammar.weakConcepts : [],
+    questionTypeSummary: Array.isArray(grammar.questionTypeSummary) ? grammar.questionTypeSummary : [],
+    misconceptionPatterns: Array.isArray(grammar.misconceptionPatterns) ? grammar.misconceptionPatterns : [],
+    recentActivity: Array.isArray(grammar.recentActivity) ? grammar.recentActivity : [],
+    recentSessions: Array.isArray(grammar.recentSessions) ? grammar.recentSessions : [],
+    parentSummaryDraft: grammar.parentSummaryDraft || null,
+  };
+}
+
 function normaliseAccessibleLearnerEntry(rawValue) {
   const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
   const learner = raw.learner && typeof raw.learner === 'object' && !Array.isArray(raw.learner) ? raw.learner : {};
@@ -78,6 +96,7 @@ export function buildParentHubReadModel({
     eventLog,
     now,
   });
+  const grammarEvidence = grammarEvidenceFromReadModel(grammar);
   const activeSubjectCount = [
     spelling.progressSnapshot.trackedWords > 0,
     grammar.hasEvidence,
@@ -154,6 +173,7 @@ export function buildParentHubReadModel({
       spelling.progressSnapshot,
       ...(grammar.hasEvidence ? [grammar.progressSnapshot] : []),
     ],
+    grammarEvidence,
     exportEntryPoints: [
       {
         kind: 'learner',

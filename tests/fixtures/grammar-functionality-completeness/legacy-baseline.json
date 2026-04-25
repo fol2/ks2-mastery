@@ -216,9 +216,19 @@
     {
       "id": "adult-data-replacement-parity",
       "legacyCapability": "Profile/data/settings workflows are clearly replaced by platform persistence and adult evidence surfaces",
-      "status": "planned",
+      "status": "completed",
       "ownerUnit": "U7",
-      "reason": "Current platform has adult Grammar evidence, but the replacement boundary is not yet complete or documented."
+      "evidence": [
+        "src/subjects/grammar/read-model.js",
+        "src/platform/hubs/parent-read-model.js",
+        "src/platform/hubs/admin-read-model.js",
+        "src/surfaces/hubs/ParentHubSurface.jsx",
+        "src/surfaces/hubs/AdminHubSurface.jsx",
+        "src/platform/core/data-transfer.js",
+        "tests/hub-read-models.test.js",
+        "tests/react-hub-surfaces.test.js",
+        "tests/persistence.test.js"
+      ]
     },
     {
       "id": "functionality-completeness-release-gate",
@@ -234,7 +244,9 @@
       "replacement": "Platform learner management, persistence, import/export and remote sync remain authoritative.",
       "evidence": [
         "src/platform/core/repositories/persistence.js",
-        "src/surfaces/hubs/ParentHubSurface.jsx"
+        "src/platform/core/data-transfer.js",
+        "src/surfaces/hubs/ParentHubSurface.jsx",
+        "tests/persistence.test.js"
       ]
     },
     {
