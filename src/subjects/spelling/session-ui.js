@@ -2,9 +2,24 @@ function isLearningSession(session) {
   return Boolean(session) && session.type !== 'test';
 }
 
+// Boss Dictation session helper branches.
+// U5 defines these Boss strings so U9's `submitBossAnswer` tests can assert
+// against them before the Boss service path lands. The guardrail is that a
+// Boss session (`session.mode === 'boss'`) is `type: 'test'`-shaped yet must
+// NEVER leak SATs copy like "SATs one-shot" or "SATs mode uses audio only"
+// — those belong to the statutory SATs Test surface, not Boss.
+function isBossSession(session) {
+  return Boolean(session) && session.mode === 'boss';
+}
+
+function isGuardianSession(session) {
+  return Boolean(session) && session.mode === 'guardian';
+}
+
 export function spellingSessionSubmitLabel(session, awaitingAdvance = false) {
   if (!session) return 'Submit';
   if (awaitingAdvance) return 'Saved';
+  if (isBossSession(session)) return 'Lock it in';
   if (session.type === 'test') return 'Save and next';
   if (session.phase === 'retry') return 'Try again';
   if (session.phase === 'correction') return 'Lock it in';
@@ -13,6 +28,7 @@ export function spellingSessionSubmitLabel(session, awaitingAdvance = false) {
 
 export function spellingSessionInputPlaceholder(session) {
   if (!session) return 'Type the spelling here';
+  if (isBossSession(session)) return 'Type the Mega word';
   if (session.type === 'test') return 'Type the spelling and move on';
   if (session.phase === 'retry') return 'Try once more from memory';
   if (session.phase === 'correction') return 'Type the correct spelling once';
@@ -21,6 +37,8 @@ export function spellingSessionInputPlaceholder(session) {
 
 export function spellingSessionContextNote(session) {
   if (!session) return 'Family hidden during live recall.';
+  if (isBossSession(session)) return 'Boss round. Mega words only.';
+  if (isGuardianSession(session)) return 'Spell the word from memory. One clean attempt.';
   if (session.type === 'test') return 'SATs mode uses audio only. Press Replay to hear the dictation again.';
   return 'Family hidden during live recall.';
 }
@@ -38,6 +56,7 @@ export function spellingSessionFooterNote(session) {
 
 export function spellingSessionProgressLabel(session) {
   if (!session) return '';
+  if (isBossSession(session)) return 'Boss round';
   if (session.type === 'test') return 'SATs one-shot';
   if (session.practiceOnly) return 'Practice only';
   return `Phase: ${session.phase}`;
@@ -48,6 +67,8 @@ export function spellingSessionInfoChips(session) {
   const chips = [];
   if (session.currentCard?.word?.yearLabel) chips.push(session.currentCard.word.yearLabel);
   if (session.practiceOnly) chips.push('Practice only');
+  if (isGuardianSession(session)) chips.push('Guardian');
+  if (isBossSession(session)) chips.push('Boss');
   return chips;
 }
 

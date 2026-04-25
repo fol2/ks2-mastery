@@ -58,7 +58,14 @@ export function SpellingSessionScene({
     );
   }
 
-  const showCloze = prefs.showCloze && session.type !== 'test';
+  // U5 / R5: Guardian sessions never surface the cloze hint even when the
+  // learner's `prefs.showCloze` is true. The hint is a scaffolding
+  // affordance for learning — Guardian is a retrieval check on Mega words
+  // that already live in the Vault, so a hint would leak the very answer
+  // the round is supposed to prove. `session.type === 'test'` already
+  // covers SATs Test (and Boss via its `type: 'test'` override in U9), so
+  // the only new branch here is `session.mode === 'guardian'`.
+  const showCloze = prefs.showCloze && session.type !== 'test' && session.mode !== 'guardian';
   const awaitingAdvance = Boolean(ui.awaitingAdvance);
   const pendingCommand = ui.pendingCommand || '';
   const pending = Boolean(pendingCommand);

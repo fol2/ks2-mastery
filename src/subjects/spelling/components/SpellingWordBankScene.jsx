@@ -5,6 +5,8 @@ import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { SpellingWordDetailModal } from './SpellingWordDetailModal.jsx';
 import {
   WORD_BANK_FILTER_IDS,
+  WORD_BANK_GUARDIAN_CHIP_LABELS,
+  WORD_BANK_GUARDIAN_FILTER_HINTS,
   WORD_BANK_GUARDIAN_FILTER_IDS,
   WORD_BANK_GUARDIAN_FILTER_ID_SET,
   WORD_BANK_YEAR_FILTER_IDS,
@@ -32,23 +34,12 @@ import {
   wordStatusLabel,
 } from './spelling-view-model.js';
 
-// Guardian chip copy is deliberately grounded and specific — no "Great work!"
-// slop, no zero-celebration. Labels pair with a short hint that renders
-// above the chip row when any guardian filter is active so learners aren't
-// confronted with e.g. "170 never-renewed" rows without context.
-const GUARDIAN_CHIP_LABELS = Object.freeze({
-  guardianDue: 'Guardian due',
-  wobbling: 'Wobbling',
-  renewedRecently: 'Renewed (7d)',
-  neverRenewed: 'Untouched',
-});
+// Guardian chip copy and hints live in the view-model so the SSR scene, any
+// test harness, and any future surface read from a single source of truth.
+// See `WORD_BANK_GUARDIAN_CHIP_LABELS` in `spelling-view-model.js` for the
+// U5 copy polish rationale (R10). The `GUARDIAN_CHIP_ORDER` alias here keeps
+// the existing local variable name stable for the rest of the scene.
 const GUARDIAN_CHIP_ORDER = WORD_BANK_GUARDIAN_FILTER_IDS;
-const GUARDIAN_FILTER_HINTS = Object.freeze({
-  guardianDue: 'Secure words the Vault wants you to recheck today.',
-  wobbling: 'Secure words that slipped last time — one more pass clears them.',
-  renewedRecently: 'Secure words you renewed in the last seven days.',
-  neverRenewed: 'Secure words the Guardian has not inspected yet — nothing is wrong, just untouched.',
-});
 
 function FilterChips({ counts, activeFilter, actions }) {
   const chips = [
@@ -109,7 +100,7 @@ function GuardianFilterChips({ counts, activeFilter, actions }) {
             onClick={(event) => renderAction(actions, event, 'spelling-analytics-status-filter', { value: id })}
           >
             <span className="wb-chip-guardian-mark" aria-hidden="true" />
-            <span className="wb-chip-label">{GUARDIAN_CHIP_LABELS[id]}</span>
+            <span className="wb-chip-label">{WORD_BANK_GUARDIAN_CHIP_LABELS[id]}</span>
             <CountUpValue className="wb-chip-count" value={counts[id] ?? 0} />
           </button>
         );
@@ -330,7 +321,7 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
 
         {showGuardianFilters && WORD_BANK_GUARDIAN_FILTER_ID_SET.has(activeFilter) ? (
           <p className="wb-guardian-hint" role="status">
-            {GUARDIAN_FILTER_HINTS[activeFilter]}
+            {WORD_BANK_GUARDIAN_FILTER_HINTS[activeFilter]}
           </p>
         ) : null}
 

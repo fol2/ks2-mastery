@@ -5,6 +5,8 @@ import {
   MODE_CARDS,
   POST_MEGA_MODE_CARDS,
   WORD_BANK_FILTER_IDS,
+  WORD_BANK_GUARDIAN_CHIP_LABELS,
+  WORD_BANK_GUARDIAN_FILTER_HINTS,
   WORD_BANK_GUARDIAN_FILTER_IDS,
   guardianLabel,
   guardianSummaryCards,
@@ -514,4 +516,87 @@ test('spellingSessionSkipLabel falls back to "Skip for now" when session is null
   assert.equal(spellingSessionSkipLabel(null), 'Skip for now');
   assert.equal(spellingSessionSkipLabel(undefined), 'Skip for now');
   assert.equal(spellingSessionSkipLabel({}), 'Skip for now');
+});
+
+// ----- U5: Word Bank chip copy polish (R10) -----------------------------------
+//
+// The four Guardian filter IDs are rendered via a label map that used to read
+// "Guardian due / Wobbling / Renewed (7d) / Untouched". U5 rewords them to
+// "Due for check / Wobbling words / Guarded this week / Not guarded yet" so
+// the child-facing copy sounds consistent with the rest of the Guardian
+// dashboard. The rename is a single-source-of-truth swap in
+// `spelling-view-model.js::WORD_BANK_GUARDIAN_CHIP_LABELS` (moved out of the
+// JSX scene in U5 so both the SSR component and the Node tests read from the
+// same place).
+
+test('WORD_BANK_GUARDIAN_CHIP_LABELS uses the U5 child-friendly phrases', () => {
+  assert.equal(WORD_BANK_GUARDIAN_CHIP_LABELS.guardianDue, 'Due for check');
+  assert.equal(WORD_BANK_GUARDIAN_CHIP_LABELS.wobbling, 'Wobbling words');
+  assert.equal(WORD_BANK_GUARDIAN_CHIP_LABELS.renewedRecently, 'Guarded this week');
+  assert.equal(WORD_BANK_GUARDIAN_CHIP_LABELS.neverRenewed, 'Not guarded yet');
+});
+
+test('WORD_BANK_GUARDIAN_CHIP_LABELS covers every Guardian filter ID so no chip can render "undefined"', () => {
+  const ids = [...WORD_BANK_GUARDIAN_FILTER_IDS];
+  for (const id of ids) {
+    assert.ok(
+      Object.prototype.hasOwnProperty.call(WORD_BANK_GUARDIAN_CHIP_LABELS, id),
+      `${id} is missing a Guardian chip label`,
+    );
+    assert.equal(typeof WORD_BANK_GUARDIAN_CHIP_LABELS[id], 'string');
+    assert.ok(WORD_BANK_GUARDIAN_CHIP_LABELS[id].length > 0);
+  }
+});
+
+test('WORD_BANK_GUARDIAN_FILTER_HINTS still covers every Guardian filter ID (hint map parity)', () => {
+  for (const id of [...WORD_BANK_GUARDIAN_FILTER_IDS]) {
+    assert.ok(
+      Object.prototype.hasOwnProperty.call(WORD_BANK_GUARDIAN_FILTER_HINTS, id),
+      `${id} is missing a Guardian filter hint`,
+    );
+    assert.equal(typeof WORD_BANK_GUARDIAN_FILTER_HINTS[id], 'string');
+  }
+});
+
+test('WORD_BANK_GUARDIAN_CHIP_LABELS and WORD_BANK_GUARDIAN_FILTER_HINTS are frozen', () => {
+  assert.equal(Object.isFrozen(WORD_BANK_GUARDIAN_CHIP_LABELS), true);
+  assert.equal(Object.isFrozen(WORD_BANK_GUARDIAN_FILTER_HINTS), true);
+});
+
+// ----- U5: wobbling filter status guard (R10 tightening) ----------------------
+
+test('wordBankFilterMatchesStatus: wobbling requires status === "secure" (R10 tightening)', () => {
+  // Plan spec, U5 edge case:
+  //   Synthesised guardian record with wobbling: true + progress[slug].stage === 3
+  //   (legacy pre-fix state). Filter returns FALSE after R10 tightening.
+  // A stage-3 word has status 'learning' / 'trouble' / 'due', not 'secure';
+  // if a pre-hardening bug left a wobbling flag on such a record, the Word
+  // Bank should not flip that into a Guardian chip because the word is no
+  // longer in the Vault. This keeps the wobbling chip honest: its count
+  // matches exactly the secure+wobbling set.
+  const wobblingRecord = { wobbling: true };
+  assert.equal(
+    wordBankFilterMatchesStatus('wobbling', 'learning', { guardian: wobblingRecord }),
+    false,
+    'non-secure + wobbling → false',
+  );
+  assert.equal(
+    wordBankFilterMatchesStatus('wobbling', 'trouble', { guardian: wobblingRecord }),
+    false,
+  );
+  assert.equal(
+    wordBankFilterMatchesStatus('wobbling', 'due', { guardian: wobblingRecord }),
+    false,
+  );
+  assert.equal(
+    wordBankFilterMatchesStatus('wobbling', 'new', { guardian: wobblingRecord }),
+    false,
+  );
+  // Secure + wobbling still holds (this is the happy path the chip was
+  // designed for); regression guard for the baseline assertion above.
+  assert.equal(
+    wordBankFilterMatchesStatus('wobbling', 'secure', { guardian: wobblingRecord }),
+    true,
+    'secure + wobbling still → true',
+  );
 });
