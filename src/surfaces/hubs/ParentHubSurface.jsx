@@ -194,6 +194,9 @@ export function ParentHubSurface({ appState, model, hubState = {}, accessContext
   const overview = model.learnerOverview || {};
   const dueWork = Array.isArray(model.dueWork) ? model.dueWork : [];
   const recentSessions = Array.isArray(model.recentSessions) ? model.recentSessions : [];
+  const recentSessionsError = hubState.recentSessionsStatus === 'error'
+    ? (hubState.recentSessionsError || 'Recent sessions could not be loaded.')
+    : '';
   const strengths = Array.isArray(model.strengths) ? model.strengths : [];
   const weaknesses = Array.isArray(model.weaknesses) ? model.weaknesses : [];
   const patterns = Array.isArray(model.misconceptionPatterns) ? model.misconceptionPatterns : [];
@@ -311,6 +314,7 @@ export function ParentHubSurface({ appState, model, hubState = {}, accessContext
             <p className="eyebrow">Recent sessions</p>
             <h3 className="parent-hub-card-title">Latest durable session records</h3>
           </div>
+          {recentSessionsError ? <div className="feedback warn">{recentSessionsError}</div> : null}
           <RecentSessionList sessions={recentSessions} />
         </article>
         <article className="card parent-hub-card">

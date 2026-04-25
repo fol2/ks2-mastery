@@ -701,6 +701,8 @@ function buildSignedInHubModels(appState) {
     learnerId: adultSurfaceState.parentHub.learnerId || '',
     error: adultSurfaceState.parentHub.error || '',
     notice: adultSurfaceState.notice || '',
+    recentSessionsStatus: adultSurfaceState.parentHub.payload?.parentHistory?.recentSessions?.status || '',
+    recentSessionsError: adultSurfaceState.parentHub.payload?.parentHistory?.recentSessions?.error || '',
   };
   const adminHubState = {
     status: adultSurfaceState.adminHub.status,

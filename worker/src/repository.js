@@ -1137,6 +1137,187 @@ async function loadLearnerReadBundle(db, learnerId) {
   };
 }
 
+function normaliseHistoryLimit(value, { fallback = 10, max = 50 } = {}) {
+  if (value == null || value === '') return fallback;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new BadRequestError('History limit must be a positive integer.', {
+      code: 'history_limit_invalid',
+      limit: value,
+    });
+  }
+  return Math.min(parsed, max);
+}
+
+function encodeHistoryCursor(row, timestampField) {
+  const timestamp = Number(row?.[timestampField]) || 0;
+  const id = encodeURIComponent(String(row?.id || ''));
+  return `${timestamp}:${id}`;
+}
+
+function decodeHistoryCursor(rawCursor) {
+  if (!rawCursor) return null;
+  const separator = String(rawCursor).indexOf(':');
+  if (separator <= 0) {
+    throw new BadRequestError('History cursor is invalid.', {
+      code: 'history_cursor_invalid',
+    });
+  }
+  const timestamp = Number(String(rawCursor).slice(0, separator));
+  const id = decodeURIComponent(String(rawCursor).slice(separator + 1));
+  if (!Number.isFinite(timestamp) || timestamp < 0 || !id) {
+    throw new BadRequestError('History cursor is invalid.', {
+      code: 'history_cursor_invalid',
+    });
+  }
+  return { timestamp, id };
+}
+
+function pageFromRows(rows, limit, timestampField) {
+  const pageRows = rows.slice(0, limit);
+  const hasMore = rows.length > limit;
+  return {
+    rows: pageRows,
+    page: {
+      limit,
+      nextCursor: hasMore && pageRows.length
+        ? encodeHistoryCursor(pageRows[pageRows.length - 1], timestampField)
+        : null,
+      hasMore,
+    },
+  };
+}
+
+function publicHistoryPracticeSessionRowToRecord(row) {
+  return normalisePracticeSessionRecord({
+    ...publicPracticeSessionRowToRecord(row),
+    sessionState: null,
+  });
+}
+
+function recentSessionLabel(record) {
+  if (record?.summary?.label) return record.summary.label;
+  if (record?.subjectId === 'grammar') return `Grammar ${record.sessionKind || 'practice'}`;
+  if (record?.subjectId === 'punctuation') return `Punctuation ${record.sessionKind || 'practice'}`;
+  if (record?.sessionKind === 'test') return 'SATs 20 test';
+  return 'Smart Review';
+}
+
+function recentSessionHeadline(record) {
+  const summary = record?.summary || {};
+  const cards = Array.isArray(summary.cards) ? summary.cards : [];
+  const correctCard = cards.find((card) => String(card?.label || '').toLowerCase().includes('correct'));
+  if (correctCard?.value != null) return String(correctCard.value);
+  const answered = Number(summary.answered);
+  const correct = Number(summary.correct);
+  if (Number.isFinite(answered) && answered > 0 && Number.isFinite(correct)) {
+    return `${correct}/${answered}`;
+  }
+  return '';
+}
+
+function parentRecentSessionFromRecord(record) {
+  return {
+    id: record.id,
+    subjectId: record.subjectId,
+    status: record.status,
+    sessionKind: record.sessionKind,
+    label: recentSessionLabel(record),
+    updatedAt: Number(record.updatedAt) || Number(record.createdAt) || 0,
+    mistakeCount: Array.isArray(record?.summary?.mistakes)
+      ? record.summary.mistakes.length
+      : Math.max(0, (Number(record?.summary?.answered) || 0) - (Number(record?.summary?.correct) || 0)),
+    headline: recentSessionHeadline(record),
+  };
+}
+
+async function resolveParentHistoryAccess(db, accountId, requestedLearnerId = null) {
+  const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role, account_type FROM adult_accounts WHERE id = ?', [accountId]);
+  const readableMemberships = await listMembershipRows(db, accountId, { writableOnly: false });
+  const defaultLearnerId = account?.selected_learner_id && readableMemberships.some((membership) => membership.id === account.selected_learner_id)
+    ? account.selected_learner_id
+    : (readableMemberships[0]?.id || null);
+  const learnerId = requestedLearnerId || defaultLearnerId;
+  if (!learnerId) {
+    throw new NotFoundError('No learner is selected for this parent view.', {
+      code: 'parent_hub_missing_learner',
+    });
+  }
+  const membership = await requireLearnerReadAccess(db, accountId, learnerId);
+  requireParentHubAccess(account, membership);
+  return {
+    account,
+    readableMemberships,
+    learnerId,
+    membership,
+  };
+}
+
+async function readParentRecentSessions(db, accountId, {
+  learnerId = null,
+  limit = null,
+  cursor = null,
+} = {}) {
+  const access = await resolveParentHistoryAccess(db, accountId, learnerId);
+  const resolvedLimit = normaliseHistoryLimit(limit);
+  const decodedCursor = decodeHistoryCursor(cursor);
+  const cursorClause = decodedCursor
+    ? 'AND (updated_at < ? OR (updated_at = ? AND id < ?))'
+    : '';
+  const cursorParams = decodedCursor
+    ? [decodedCursor.timestamp, decodedCursor.timestamp, decodedCursor.id]
+    : [];
+  const rows = await all(db, `
+    SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+    FROM practice_sessions
+    WHERE learner_id = ?
+      ${cursorClause}
+    ORDER BY updated_at DESC, id DESC
+    LIMIT ?
+  `, [access.learnerId, ...cursorParams, resolvedLimit + 1]);
+  const page = pageFromRows(rows, resolvedLimit, 'updated_at');
+  const sessions = page.rows.map(publicHistoryPracticeSessionRowToRecord);
+  return {
+    learnerId: access.learnerId,
+    sessions,
+    recentSessions: sessions.map(parentRecentSessionFromRecord),
+    page: page.page,
+  };
+}
+
+async function readParentActivity(db, accountId, {
+  learnerId = null,
+  limit = null,
+  cursor = null,
+} = {}) {
+  const access = await resolveParentHistoryAccess(db, accountId, learnerId);
+  const resolvedLimit = normaliseHistoryLimit(limit);
+  const decodedCursor = decodeHistoryCursor(cursor);
+  const eventTypes = [...PUBLIC_EVENT_TYPES];
+  const eventTypePlaceholders = sqlPlaceholders(eventTypes.length);
+  const cursorClause = decodedCursor
+    ? 'AND (created_at < ? OR (created_at = ? AND id < ?))'
+    : '';
+  const cursorParams = decodedCursor
+    ? [decodedCursor.timestamp, decodedCursor.timestamp, decodedCursor.id]
+    : [];
+  const rows = await all(db, `
+    SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+    FROM event_log
+    WHERE learner_id = ?
+      AND event_type IN (${eventTypePlaceholders})
+      ${cursorClause}
+    ORDER BY created_at DESC, id DESC
+    LIMIT ?
+  `, [access.learnerId, ...eventTypes, ...cursorParams, resolvedLimit + 1]);
+  const page = pageFromRows(rows, resolvedLimit, 'created_at');
+  return {
+    learnerId: access.learnerId,
+    activity: page.rows.map(publicEventRowToRecord).filter(Boolean),
+    page: page.page,
+  };
+}
+
 async function listMutationReceiptRows(db, accountId, { requestId = null, scopeId = null, limit = 20 } = {}) {
   const clauses = ['account_id = ?'];
   const params = [accountId];
@@ -3392,6 +3573,12 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
     async readSpellingWordBank(accountId, learnerId, filters = {}) {
       return readSpellingWordBankBundle(db, accountId, learnerId, filters, nowFactory());
     },
+    async readParentRecentSessions(accountId, options = {}) {
+      return readParentRecentSessions(db, accountId, options);
+    },
+    async readParentActivity(accountId, options = {}) {
+      return readParentActivity(db, accountId, options);
+    },
     async writeSubjectContent(accountId, subjectId = 'spelling', rawContent, mutation = {}) {
       const nowTs = nowFactory();
       const account = await first(db, 'SELECT id, platform_role FROM adult_accounts WHERE id = ?', [accountId]);
@@ -3450,19 +3637,12 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
       });
     },
     async readParentHub(accountId, learnerId = null) {
-      const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role, account_type FROM adult_accounts WHERE id = ?', [accountId]);
-      const readableMemberships = await listMembershipRows(db, accountId, { writableOnly: false });
-      const defaultLearnerId = account?.selected_learner_id && readableMemberships.some((membership) => membership.id === account.selected_learner_id)
-        ? account.selected_learner_id
-        : (readableMemberships[0]?.id || null);
-      const resolvedLearnerId = learnerId || defaultLearnerId;
-      if (!resolvedLearnerId) {
-        throw new NotFoundError('No learner is selected for this parent view.', {
-          code: 'parent_hub_missing_learner',
-        });
-      }
-      const membership = await requireLearnerReadAccess(db, accountId, resolvedLearnerId);
-      requireParentHubAccess(account, membership);
+      const {
+        account,
+        readableMemberships,
+        learnerId: resolvedLearnerId,
+        membership,
+      } = await resolveParentHistoryAccess(db, accountId, learnerId);
       const learnerRow = await first(db, `
         SELECT l.id, l.name, l.year_group, l.avatar_color, l.goal, l.daily_minutes, l.created_at, l.updated_at
         FROM learner_profiles l
