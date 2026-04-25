@@ -108,6 +108,8 @@ export function renderMonsterRenderFixture({
   sizes,
   registrations = '',
   effectModules = [],
+  effectConfigValue = undefined,
+  omitEffectsProp = false,
 } = {}) {
   // `registrations` is a JS source snippet that runs before render so
   // tests can register inline test-only effects (with custom render /
@@ -115,6 +117,11 @@ export function renderMonsterRenderFixture({
   // for functions. `effectModules` is an array of { path, exports[] }
   // entries — each named export from `path` is rebound and passed to
   // registerEffect() after the registry reset.
+  //
+  // `effectConfigValue` (when set) wraps the render in
+  // `<MonsterEffectConfigProvider value=...>` so tests can stamp bindings /
+  // celebrationTunables. `omitEffectsProp=true` skips passing the `effects`
+  // prop to <MonsterRender>, exercising the U4 context-resolution path.
   const moduleImports = effectModules
     .map((mod, idx) => `import * as __mod${idx} from ${JSON.stringify(absoluteSpecifier(mod.path))};`)
     .join('\n    ');
@@ -123,6 +130,7 @@ export function renderMonsterRenderFixture({
       .map((name) => `registerEffect(__mod${idx}[${JSON.stringify(name)}]);`)
       .join('\n    '))
     .join('\n    ');
+  const useProvider = effectConfigValue !== undefined;
   return renderFixture(`
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
@@ -130,6 +138,7 @@ export function renderMonsterRenderFixture({
     import { defineEffect } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/define-effect.js'))};
     import { registerEffect, resetRegistry } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/registry.js'))};
     import { resetWarnOnce, setDevMode, __setWarnSink } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/composition.js'))};
+    ${useProvider ? `import { MonsterEffectConfigProvider } from ${JSON.stringify(absoluteSpecifier('src/platform/game/MonsterEffectConfigContext.jsx'))};` : ''}
     ${moduleImports}
 
     resetRegistry();
@@ -145,15 +154,19 @@ export function renderMonsterRenderFixture({
     const effects = ${JSON.stringify(effects)};
     const sizes = ${JSON.stringify(sizes != null ? sizes : null)};
     const reducedMotion = ${reducedMotion ? 'true' : 'false'};
-    const html = renderToStaticMarkup(
-      <MonsterRender
-        monster={monster}
-        context=${JSON.stringify(context)}
-        effects={effects}
-        reducedMotion={reducedMotion}
-        sizes={sizes}
-      />
-    );
+    const omitEffectsProp = ${omitEffectsProp ? 'true' : 'false'};
+    const renderProps = {
+      monster,
+      context: ${JSON.stringify(context)},
+      reducedMotion,
+      sizes,
+    };
+    if (!omitEffectsProp) renderProps.effects = effects;
+    const __mrTree = React.createElement(MonsterRender, renderProps);
+    ${useProvider
+      ? `const __mrWrapped = React.createElement(MonsterEffectConfigProvider, { value: ${JSON.stringify(effectConfigValue)} }, __mrTree);`
+      : 'const __mrWrapped = __mrTree;'}
+    const html = renderToStaticMarkup(__mrWrapped);
     // Emit a structured payload so tests can assert on dev-warns alongside
     // the rendered HTML in a single execFile round-trip.
     process.stdout.write(JSON.stringify({ html, warnings: __warnings }));
@@ -164,12 +177,17 @@ export function renderCelebrationLayerFixture({
   registrations = '',
   setup = '',
   context = 'lesson',
+  effectConfigValue = undefined,
 } = {}) {
   // Run the full integration in-process so we can drive the store via the
   // existing API and assert on store state, ack storage, and rendered HTML
   // in one round-trip. `setup` is a JS source snippet executed after the
   // store is built; it can call playCelebration / store.pushMonsterCelebrations
   // / etc. The result is a JSON payload with everything tests need.
+  //
+  // `effectConfigValue`, when supplied, wraps the rendered <CelebrationLayer>
+  // in <MonsterEffectConfigProvider value=...> so tests can stamp tunables.
+  const useProvider = effectConfigValue !== undefined;
   return renderFixture(`
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
@@ -183,6 +201,7 @@ export function renderCelebrationLayerFixture({
     import { SUBJECTS } from ${JSON.stringify(absoluteSpecifier('src/platform/core/subject-registry.js'))};
     import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
     import { acknowledgedMonsterCelebrationIds } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monster-celebration-acks.js'))};
+    ${useProvider ? `import { MonsterEffectConfigProvider } from ${JSON.stringify(absoluteSpecifier('src/platform/game/MonsterEffectConfigContext.jsx'))};` : ''}
 
     installMemoryStorage();
     resetRegistry();
@@ -210,7 +229,11 @@ export function renderCelebrationLayerFixture({
     }
 
     const __before = snapshot();
-    const html = renderToStaticMarkup(<CelebrationLayer store={store} context=${JSON.stringify(context)} />);
+    const __layerNode = React.createElement(CelebrationLayer, { store, context: ${JSON.stringify(context)} });
+    ${useProvider
+      ? `const __layerWrapped = React.createElement(MonsterEffectConfigProvider, { value: ${JSON.stringify(effectConfigValue)} }, __layerNode);`
+      : 'const __layerWrapped = __layerNode;'}
+    const html = renderToStaticMarkup(__layerWrapped);
     const __after = snapshot();
 
     process.stdout.write(JSON.stringify({
@@ -441,6 +464,33 @@ export function renderProfileSurfaceFixture({ demo = false, persistenceMode = 'r
     };
     const html = renderToStaticMarkup(
       <ProfileSettingsSurface appState={appState} chrome={chrome} actions={actions} subjectCount={3} liveSubjectCount={1} />
+    );
+    console.log(html);
+  `);
+}
+
+export function renderMonsterEffectCatalogPanelFixture({ canManage = true } = {}) {
+  // SSR fixture for the U6 catalog panel. We feed it the bundled effect
+  // config as the draft + published state so the listing covers all eight
+  // bundled-default kinds. The `canManage` flag mirrors the role-based gate
+  // the visual panel uses (admin vs operations read-only).
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { MonsterEffectCatalogPanel } from ${JSON.stringify(absoluteSpecifier('src/surfaces/hubs/MonsterEffectCatalogPanel.jsx'))};
+    import { bundledEffectConfig } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/effect-config-defaults.js'))};
+
+    const draft = bundledEffectConfig();
+    const published = bundledEffectConfig();
+    const canManage = ${canManage ? 'true' : 'false'};
+    const onChange = () => {};
+    const html = renderToStaticMarkup(
+      <MonsterEffectCatalogPanel
+        draft={draft}
+        published={published}
+        canManage={canManage}
+        onDraftChange={onChange}
+      />
     );
     console.log(html);
   `);

@@ -2,13 +2,19 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MONSTER_ASSET_MANIFEST } from '../../platform/game/monster-asset-manifest.js';
 import {
   MONSTER_VISUAL_CONTEXTS,
-  validateMonsterVisualConfigForPublish,
+  validatePublishedConfigForPublish,
 } from '../../platform/game/monster-visual-config.js';
+import { EFFECT_CONFIG_CELEBRATION_KINDS } from '../../platform/game/render/effect-config-schema.js';
 import { MonsterVisualFieldControls } from './MonsterVisualFieldControls.jsx';
 import { MonsterVisualPreviewGrid } from './MonsterVisualPreviewGrid.jsx';
+import { MonsterEffectCatalogPanel } from './MonsterEffectCatalogPanel.jsx';
+import { bundledEffectConfig } from '../../platform/game/render/effect-config-defaults.js';
 import { formatTimestamp } from './hub-utils.js';
 
 const AUTOSAVE_PREFIX = 'ks2.monster-visual-config-draft';
+// `effect` schema version. Bump invalidates stale local autosave buffers
+// the next time the admin opens the panel (the autosave key embeds it).
+const EFFECT_AUTOSAVE_SCHEMA_TAG = 'v1-effect';
 const STRING_CONTEXT_FIELDS = new Set(['path', 'motionProfile', 'filter']);
 
 function clone(value) {
@@ -28,7 +34,7 @@ function storage() {
 }
 
 function autosaveKey({ accountId, manifestHash, draftRevision }) {
-  return `${AUTOSAVE_PREFIX}:${accountId || 'account'}:${manifestHash || 'manifest'}:${Number(draftRevision) || 0}`;
+  return `${AUTOSAVE_PREFIX}:${accountId || 'account'}:${manifestHash || 'manifest'}:${Number(draftRevision) || 0}:${EFFECT_AUTOSAVE_SCHEMA_TAG}`;
 }
 
 function readAutosave(key) {
@@ -100,6 +106,53 @@ function assetDiffersFromPublished(draft, published, assetKey) {
   return jsonStable(draft?.assets?.[assetKey]) !== jsonStable(published?.assets?.[assetKey]);
 }
 
+// `effect-incomplete`: an asset whose effect binding row OR celebration
+// tunables row has any entry that is not yet reviewed. Returns false when
+// the effect sub-document is absent — the visual `review` filter still
+// covers that case.
+function assetEffectIncomplete(draft, assetKey) {
+  const bindings = draft?.effect?.bindings?.[assetKey];
+  const tunables = draft?.effect?.celebrationTunables?.[assetKey];
+  if (bindings && typeof bindings === 'object') {
+    for (const slot of ['persistent', 'continuous']) {
+      const list = Array.isArray(bindings[slot]) ? bindings[slot] : [];
+      for (const entry of list) {
+        if (entry && entry.reviewed !== true) return true;
+      }
+    }
+  }
+  if (tunables && typeof tunables === 'object') {
+    for (const kind of EFFECT_CONFIG_CELEBRATION_KINDS) {
+      if (tunables[kind] && tunables[kind].reviewed !== true) return true;
+    }
+  }
+  return false;
+}
+
+// `effect-changed`: this asset's effect binding row OR celebration tunables
+// row has been edited locally vs the cloud draft (the existing visual
+// `changed` filter compares against `published`; we keep the same
+// semantics for effect rows).
+function assetEffectChanged(draft, published, assetKey) {
+  const draftBindings = draft?.effect?.bindings?.[assetKey];
+  const publishedBindings = published?.effect?.bindings?.[assetKey];
+  const draftTunables = draft?.effect?.celebrationTunables?.[assetKey];
+  const publishedTunables = published?.effect?.celebrationTunables?.[assetKey];
+  return jsonStable(draftBindings) !== jsonStable(publishedBindings)
+    || jsonStable(draftTunables) !== jsonStable(publishedTunables);
+}
+
+// `effect-published-mismatch`: a stronger filter used by ops to spot
+// assets whose effect rows differ from the live published config — sister
+// of `assetEffectChanged` but only true when the asset HAS a published
+// row to compare against (so freshly added assets do not count).
+function assetEffectPublishedMismatch(draft, published, assetKey) {
+  const publishedBindings = published?.effect?.bindings?.[assetKey];
+  const publishedTunables = published?.effect?.celebrationTunables?.[assetKey];
+  if (publishedBindings == null && publishedTunables == null) return false;
+  return assetEffectChanged(draft, published, assetKey);
+}
+
 function firstIssueLabel(validation) {
   const issue = validation.errors?.[0];
   if (!issue) return '';
@@ -167,7 +220,15 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
     });
   }, [activeKey, dirty, draft, status.draftRevision, status.manifestHash]);
 
-  const validation = useMemo(() => validateMonsterVisualConfigForPublish(draft), [draft]);
+  // Use the combined validator so the chip reflects the same gate the worker
+  // applies on publish. The draft already carries `effect`; for the legacy
+  // visual-only path we split-and-recombine (visual sub-document + effect)
+  // so the orchestrator sees the same envelope shape the worker handler
+  // produces from its retained published row.
+  const validation = useMemo(() => {
+    const { effect, ...visualOnly } = draft || {};
+    return validatePublishedConfigForPublish({ visual: visualOnly, effect });
+  }, [draft]);
   const selectedManifestAsset = useMemo(
     () => MONSTER_ASSET_MANIFEST.assets.find((asset) => asset.key === selectedAssetKey) || MONSTER_ASSET_MANIFEST.assets[0],
     [selectedAssetKey],
@@ -185,6 +246,9 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
       if (queueFilter === 'review' && !assetNeedsReview(entry)) return false;
       if (queueFilter === 'issues' && assetIssueCount(validation, asset.key) === 0) return false;
       if (queueFilter === 'changed' && !assetDiffersFromPublished(draft, published, asset.key)) return false;
+      if (queueFilter === 'effect-incomplete' && !assetEffectIncomplete(draft, asset.key)) return false;
+      if (queueFilter === 'effect-changed' && !assetEffectChanged(draft, published, asset.key)) return false;
+      if (queueFilter === 'effect-published-mismatch' && !assetEffectPublishedMismatch(draft, published, asset.key)) return false;
       if (!text) return true;
       return `${asset.key} ${asset.monsterId} ${asset.branch} ${asset.stage}`.toLowerCase().includes(text);
     });
@@ -258,6 +322,23 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
       entry.review.contexts[context] = clone(cloudEntry.review?.contexts?.[context] || { reviewed: false });
     });
   }, [cloudDraft, selectedManifestAsset?.key, updateSelectedEntry]);
+
+  // Catalog panel shares the same draft buffer + autosave key. The catalog
+  // panel emits a fresh `effect` sub-document; we splice it back into the
+  // merged draft so the existing autosave + save-draft path round-trips it
+  // unchanged.
+  const handleEffectDraftChange = useCallback((nextEffect) => {
+    if (!canManage) return;
+    setDraft((current) => {
+      if (!current) return current;
+      const next = clone(current);
+      next.effect = nextEffect || bundledEffectConfig();
+      return next;
+    });
+  }, [canManage]);
+
+  const effectDraft = useMemo(() => draft?.effect || bundledEffectConfig(), [draft]);
+  const effectPublished = useMemo(() => published?.effect || null, [published]);
 
   const moveAsset = useCallback((direction) => {
     const assets = filteredAssets.length ? filteredAssets : MONSTER_ASSET_MANIFEST.assets;
@@ -395,6 +476,9 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
                 <option value="review">Needs review</option>
                 <option value="changed">Changed</option>
                 <option value="issues">Blockers</option>
+                <option value="effect-incomplete">Effect incomplete</option>
+                <option value="effect-changed">Effect changed</option>
+                <option value="effect-published-mismatch">Effect published mismatch</option>
               </select>
             </label>
             <label className="field">
@@ -459,6 +543,14 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
           />
         </div>
       </div>
+
+      <MonsterEffectCatalogPanel
+        draft={effectDraft}
+        published={effectPublished}
+        canManage={canManage}
+        accountId={accountId}
+        onDraftChange={handleEffectDraftChange}
+      />
     </section>
   );
 }

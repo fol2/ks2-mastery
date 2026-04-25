@@ -14,11 +14,17 @@ import { normaliseMonsterCelebrationEvent } from '../src/platform/game/monster-c
 import { installMemoryStorage } from './helpers/memory-storage.js';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const EVOLVE_PATH = path.join(rootDir, 'src/platform/game/render/effects/evolve.js');
 
+// `evolve` registers through the `particles-burst` template via
+// `runtimeRegistration`. The pre-registration of celebration JSX templates
+// mirrors the production bootstrap path.
 const REGISTER_EVOLVE = `
-  import * as __evolveMod from ${JSON.stringify(EVOLVE_PATH)};
-  registerEffect(__evolveMod.evolveEffect);
+  import { runtimeRegistration } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/runtime-registration.js'))};
+  import { __registerCelebrationTemplates } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/index.js'))};
+  import particlesBurst from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/particles-burst.js'))};
+  import shineStreak from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/shine-streak.js'))};
+  __registerCelebrationTemplates({ particlesBurst, shineStreak });
+  runtimeRegistration({ catalog: undefined });
 `;
 
 function makeMonster(overrides = {}) {
@@ -121,8 +127,14 @@ test('evolve effect: dismissal — onComplete drains the queue and persists an a
   const eventTemplate = makeEvolveEvent({ id: 'reward.monster:dismissal:evolve:inklet' });
   const out = await renderCelebrationLayerFixture({
     registrations: `
-      import * as __evolveMod from ${JSON.stringify(EVOLVE_PATH)};
-      const __original = __evolveMod.evolveEffect;
+      import { runtimeRegistration } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/runtime-registration.js'))};
+      import { __registerCelebrationTemplates } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/index.js'))};
+      import particlesBurst from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/particles-burst.js'))};
+      import shineStreak from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/shine-streak.js'))};
+      import { lookupEffect } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/registry.js'))};
+      __registerCelebrationTemplates({ particlesBurst, shineStreak });
+      runtimeRegistration({ catalog: undefined });
+      const __original = lookupEffect('evolve');
       registerEffect(defineEffect({
         kind: 'evolve',
         lifecycle: 'transient',
@@ -152,6 +164,60 @@ test('evolve effect: dismissal — onComplete drains the queue and persists an a
     result.after.ackedIds.includes('reward.monster:dismissal:evolve:inklet'),
     `expected dismissed event to be acked; got ${JSON.stringify(result.after.ackedIds)}`,
   );
+});
+
+test('evolve effect: regression — bundled tunables (modifierClass="") preserve egg-crack at stage 0→1', async () => {
+  // The bundled celebration tunables ship with `modifierClass: ''` (empty
+  // string) for every asset's evolve kind. Before the `??` → `||` fix in
+  // celebration-shell, that empty string would override the runtime-computed
+  // `egg-crack` modifier for stage 0→1 transitions. This test guards the
+  // fix: passing the bundled tunables through must NOT erase egg-crack.
+  const event = makeEvolveEvent({
+    previous: { mastered: 0, stage: 0, level: 0, caught: true, branch: 'b1' },
+    next: { mastered: 10, stage: 1, level: 2, caught: true, branch: 'b1' },
+  });
+  const out = await renderCelebrationLayerFixture({
+    effectConfigValue: {
+      celebrationTunables: {
+        'inklet-b1-1': {
+          // Bundled-shape tunables: empty modifierClass + falsy flags.
+          evolve: { showParticles: false, showShine: false, modifierClass: '', reviewed: true },
+        },
+      },
+    },
+    registrations: REGISTER_EVOLVE,
+    setup: `
+      store.pushMonsterCelebrations([${JSON.stringify(event)}]);
+    `,
+  });
+  const { html } = JSON.parse(out);
+
+  assert.match(html, /class="monster-celebration-overlay evolve egg-crack"/);
+});
+
+test('evolve effect: U4 — tunables.modifierClass="egg-crack" overrides default empty modifier', async () => {
+  // Stage 2 → 3 evolve has empty modifier by default. Tunables force
+  // `egg-crack` so the overlay class includes the modifier.
+  const event = makeEvolveEvent({
+    previous: { mastered: 40, stage: 2, level: 5, caught: true, branch: 'b1' },
+    next: { mastered: 60, stage: 3, level: 7, caught: true, branch: 'b1' },
+  });
+  const out = await renderCelebrationLayerFixture({
+    effectConfigValue: {
+      celebrationTunables: {
+        'inklet-b1-3': {
+          evolve: { showParticles: false, showShine: false, modifierClass: 'egg-crack' },
+        },
+      },
+    },
+    registrations: REGISTER_EVOLVE,
+    setup: `
+      store.pushMonsterCelebrations([${JSON.stringify(event)}]);
+    `,
+  });
+  const { html } = JSON.parse(out);
+
+  assert.match(html, /class="monster-celebration-overlay evolve egg-crack"/);
 });
 
 test('evolve effect: integration — controller dispatch advances queue and persists ack', () => {
