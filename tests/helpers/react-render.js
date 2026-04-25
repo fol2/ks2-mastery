@@ -157,6 +157,19 @@ export function renderMonsterVisualRendererFixture() {
             }}
             sizes="160px"
           />
+          <CodexCreatureVisual
+            entry={{
+              id: 'phaeton',
+              branch: 'b1',
+              stage: 4,
+              displayState: 'monster',
+              imageAlt: 'Phaeton',
+              img: '',
+              srcSet: '',
+            }}
+            context="feature"
+            sizes="(max-width: 820px) 76vw, 700px"
+          />
           <MonsterMeadow
             monsters={[{
               id: 'vellhorn-caught',

@@ -62,7 +62,7 @@ function CodexFeature({ entry, onPreviewCreature }) {
       <CodexCreatureTrigger
         entry={entry}
         context="feature"
-        sizes="(max-width: 820px) 52vw, 260px"
+        sizes="(max-width: 820px) 76vw, 700px"
         onPreview={onPreviewCreature}
       />
       <div className="codex-feature-meta">
