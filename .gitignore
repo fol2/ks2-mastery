@@ -21,3 +21,4 @@ assets/**/*.png
 .gstack/
 .remember/
 .claude/worktrees/
+.worktrees/
