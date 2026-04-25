@@ -83,6 +83,9 @@ const PUBLIC_EVENT_TYPES = new Set([
   'reward.monster',
   'platform.practice-streak-hit',
 ]);
+const PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER = 5;
+const PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER = 50;
+const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 1;
 const PUBLIC_MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
 const PUBLIC_MONSTER_IDS = new Set(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']);
 const PUBLIC_DIRECT_SPELLING_MONSTER_IDS = ['inklet', 'glimmerbug', 'vellhorn'];
@@ -2050,6 +2053,111 @@ async function releaseMembershipOrDeleteLearner(db, accountId, learnerId, role, 
   return 'membership_removed';
 }
 
+function rowKey(row, fields = ['id']) {
+  return fields.map((field) => String(row?.[field] ?? '')).join('::');
+}
+
+function sortSessionRows(rows) {
+  return [...rows].sort((a, b) => {
+    const updatedDiff = (Number(b.updated_at) || 0) - (Number(a.updated_at) || 0);
+    if (updatedDiff !== 0) return updatedDiff;
+    return String(b.id || '').localeCompare(String(a.id || ''));
+  });
+}
+
+function sortEventRowsAscending(rows) {
+  return [...rows].sort((a, b) => {
+    const createdDiff = (Number(a.created_at) || 0) - (Number(b.created_at) || 0);
+    if (createdDiff !== 0) return createdDiff;
+    return String(a.id || '').localeCompare(String(b.id || ''));
+  });
+}
+
+async function listPublicBootstrapSessionRows(db, learnerIds) {
+  if (!learnerIds.length) return [];
+  const rowsById = new Map();
+  const placeholders = sqlPlaceholders(learnerIds.length);
+  const activeRows = await all(db, `
+    SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+    FROM practice_sessions
+    WHERE learner_id IN (${placeholders})
+      AND status = 'active'
+    ORDER BY updated_at DESC, id DESC
+  `, learnerIds);
+
+  for (const row of activeRows) {
+    rowsById.set(rowKey(row), row);
+  }
+
+  for (const learnerId of learnerIds) {
+    const recentRows = await all(db, `
+      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+      FROM practice_sessions
+      WHERE learner_id = ?
+      ORDER BY updated_at DESC, id DESC
+      LIMIT ?
+    `, [learnerId, PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER]);
+    for (const row of recentRows) {
+      rowsById.set(rowKey(row), row);
+    }
+  }
+
+  return sortSessionRows([...rowsById.values()]);
+}
+
+async function listPublicBootstrapEventRows(db, learnerIds) {
+  if (!learnerIds.length) return [];
+  const eventTypes = [...PUBLIC_EVENT_TYPES];
+  if (!eventTypes.length) return [];
+  const eventTypePlaceholders = sqlPlaceholders(eventTypes.length);
+  const rows = [];
+
+  for (const learnerId of learnerIds) {
+    rows.push(...await all(db, `
+      SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+      FROM event_log
+      WHERE learner_id = ?
+        AND event_type IN (${eventTypePlaceholders})
+      ORDER BY created_at DESC, id DESC
+      LIMIT ?
+    `, [learnerId, ...eventTypes, PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER]));
+  }
+
+  return sortEventRowsAscending(rows);
+}
+
+function bootstrapCapacityMeta({
+  publicReadModels,
+  learnerCount,
+  sessionRows,
+  eventRows,
+}) {
+  if (!publicReadModels) return null;
+  const sessionRecentLimit = learnerCount * PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER;
+  const eventRecentLimit = learnerCount * PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER;
+  return {
+    version: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
+    mode: 'public-bounded',
+    limits: {
+      recentSessionsPerLearner: PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER,
+      recentEventsPerLearner: PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER,
+    },
+    learners: {
+      returned: learnerCount,
+    },
+    practiceSessions: {
+      returned: sessionRows.length,
+      bounded: true,
+      atOrAboveRecentLimit: learnerCount > 0 && sessionRows.length >= sessionRecentLimit,
+    },
+    eventLog: {
+      returned: eventRows.length,
+      bounded: true,
+      atOrAboveRecentLimit: learnerCount > 0 && eventRows.length >= eventRecentLimit,
+    },
+  };
+}
+
 async function bootstrapBundle(db, accountId, { publicReadModels = false } = {}) {
   const account = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
   const monsterVisualConfig = await readBootstrapMonsterVisualRuntimeConfig(db, Date.now());
@@ -2090,6 +2198,14 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
         learnerRevisions: {},
       },
       monsterVisualConfig,
+      ...(publicReadModels ? {
+        bootstrapCapacity: bootstrapCapacityMeta({
+          publicReadModels,
+          learnerCount: 0,
+          sessionRows: [],
+          eventRows: [],
+        }),
+      } : {}),
     };
   }
 
@@ -2099,23 +2215,27 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
     FROM child_subject_state
     WHERE learner_id IN (${placeholders})
   `, learnerIds);
-  const sessionRows = await all(db, `
-    SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
-    FROM practice_sessions
-    WHERE learner_id IN (${placeholders})
-    ORDER BY updated_at DESC, id DESC
-  `, learnerIds);
+  const sessionRows = publicReadModels
+    ? await listPublicBootstrapSessionRows(db, learnerIds)
+    : await all(db, `
+      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+      FROM practice_sessions
+      WHERE learner_id IN (${placeholders})
+      ORDER BY updated_at DESC, id DESC
+    `, learnerIds);
   const gameRows = await all(db, `
     SELECT learner_id, system_id, state_json, updated_at
     FROM child_game_state
     WHERE learner_id IN (${placeholders})
   `, learnerIds);
-  const eventRows = await all(db, `
-    SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
-    FROM event_log
-    WHERE learner_id IN (${placeholders})
-    ORDER BY created_at ASC, id ASC
-  `, learnerIds);
+  const eventRows = publicReadModels
+    ? await listPublicBootstrapEventRows(db, learnerIds)
+    : await all(db, `
+      SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+      FROM event_log
+      WHERE learner_id IN (${placeholders})
+      ORDER BY created_at ASC, id ASC
+    `, learnerIds);
   const publicSpellingContent = publicReadModels && subjectRows.some((row) => row.subject_id === 'spelling')
     ? await readSpellingRuntimeContentBundle(db, accountId, 'spelling')
     : null;
@@ -2166,6 +2286,14 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
       learnerRevisions,
     },
     monsterVisualConfig,
+    ...(publicReadModels ? {
+      bootstrapCapacity: bootstrapCapacityMeta({
+        publicReadModels,
+        learnerCount: learnerIds.length,
+        sessionRows,
+        eventRows,
+      }),
+    } : {}),
   };
 }
 

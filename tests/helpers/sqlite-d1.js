@@ -8,8 +8,10 @@ function rootDir() {
 }
 
 class SqliteD1Statement {
-  constructor(statement) {
+  constructor(statement, { sql = '', recordQuery = null } = {}) {
     this.statement = statement;
+    this.sql = sql;
+    this.recordQuery = recordQuery;
     this.params = [];
   }
 
@@ -20,6 +22,12 @@ class SqliteD1Statement {
 
   async first(columnName = undefined) {
     const row = this.statement.get(...this.params);
+    this.recordQuery?.({
+      operation: 'first',
+      sql: this.sql,
+      params: this.params,
+      rowCount: row ? 1 : 0,
+    });
     if (!row) return null;
     if (typeof columnName === 'string' && columnName) return row[columnName] ?? null;
     return { ...row };
@@ -27,30 +35,60 @@ class SqliteD1Statement {
 
   async run() {
     const meta = this.statement.run(...this.params);
+    this.recordQuery?.({
+      operation: 'run',
+      sql: this.sql,
+      params: this.params,
+      changes: meta.changes,
+      rowCount: meta.changes,
+    });
     return {
       success: true,
       meta: {
         changes: meta.changes,
         last_row_id: Number(meta.lastInsertRowid || 0),
+        rows_read: 0,
+        rows_written: Math.max(0, Number(meta.changes) || 0),
       },
     };
   }
 
   async all() {
     const rows = this.statement.all(...this.params).map((row) => ({ ...row }));
-    return { results: rows };
+    this.recordQuery?.({
+      operation: 'all',
+      sql: this.sql,
+      params: this.params,
+      rowCount: rows.length,
+    });
+    return {
+      results: rows,
+      meta: {
+        rows_read: rows.length,
+        rows_written: 0,
+      },
+    };
   }
 }
 
 export class SqliteD1Database {
   constructor(filename = ':memory:') {
     this.db = new DatabaseSync(filename);
+    this.queryLog = [];
     this.supportsSqlTransactions = true;
     this.db.exec('PRAGMA foreign_keys = ON;');
   }
 
   prepare(sql) {
-    return new SqliteD1Statement(this.db.prepare(sql));
+    return new SqliteD1Statement(this.db.prepare(sql), {
+      sql,
+      recordQuery: (entry) => {
+        this.queryLog.push({
+          ...entry,
+          params: Array.isArray(entry.params) ? [...entry.params] : [],
+        });
+      },
+    });
   }
 
   async exec(sql) {
@@ -77,6 +115,16 @@ export class SqliteD1Database {
 
   close() {
     this.db.close();
+  }
+
+  clearQueryLog() {
+    this.queryLog = [];
+  }
+
+  takeQueryLog() {
+    const output = this.queryLog;
+    this.clearQueryLog();
+    return output;
   }
 }
 
