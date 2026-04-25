@@ -2,6 +2,7 @@ import React from 'react';
 import {
   GRAMMAR_REGION_IMAGE,
   GRAMMAR_REGION_IMAGE_SMALL,
+  grammarMonsterAsset,
 } from '../metadata.js';
 import { normaliseGrammarSpeechRate } from '../speech.js';
 import {
@@ -53,9 +54,11 @@ function TodayCard({ card }) {
 }
 
 function PrimaryModeCard({ card, selected, disabled, actions }) {
+  const featured = card.featured === true;
   const classes = ['grammar-primary-mode'];
   if (selected) classes.push('selected');
   if (disabled) classes.push('is-disabled');
+  if (featured) classes.push('is-recommended');
   const action = card.id === 'bank' ? 'grammar-open-concept-bank' : 'grammar-set-mode';
   return (
     <button
@@ -63,6 +66,7 @@ function PrimaryModeCard({ card, selected, disabled, actions }) {
       className={classes.join(' ')}
       data-mode-id={card.id}
       data-action={action}
+      data-featured={featured ? 'true' : 'false'}
       aria-pressed={selected ? 'true' : 'false'}
       disabled={disabled}
       onClick={() => {
@@ -74,6 +78,7 @@ function PrimaryModeCard({ card, selected, disabled, actions }) {
         actions.dispatch('grammar-set-mode', { value: card.id });
       }}
     >
+      {featured ? <span className="grammar-primary-mode-eyebrow">Recommended</span> : null}
       <h4 className="grammar-primary-mode-title">{card.title}</h4>
       <p className="grammar-primary-mode-desc">{card.desc}</p>
     </button>
@@ -136,13 +141,25 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
       </div>
 
       <section className="grammar-today" aria-label="Today at a glance">
-        <div className="grammar-today-grid">
-          {dashboard.todayCards.map((card) => (
-            <TodayCard card={card} key={card.id} />
-          ))}
-        </div>
+        {dashboard.isEmpty ? (
+          <div className="grammar-today-empty" data-testid="grammar-today-empty">
+            Start your first round to see your scores here.
+          </div>
+        ) : (
+          <div className="grammar-today-grid">
+            {dashboard.todayCards.map((card) => (
+              <TodayCard card={card} key={card.id} />
+            ))}
+          </div>
+        )}
         <div className="grammar-concordium-progress" data-testid="grammar-concordium-progress">
-          <span className="grammar-concordium-label">Concordium progress</span>
+          <img
+            className="grammar-concordium-image"
+            src={grammarMonsterAsset('concordium', 320)}
+            alt=""
+            aria-hidden="true"
+          />
+          <span className="grammar-concordium-label">Grow Concordium</span>
           <strong className="grammar-concordium-value">{`${concordium.mastered}/${concordium.total}`}</strong>
         </div>
       </section>

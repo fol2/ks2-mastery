@@ -31,21 +31,25 @@ export const GRAMMAR_PRIMARY_MODE_CARDS = Object.freeze([
     id: 'smart',
     title: 'Smart Practice',
     desc: 'Due · weak · one fresh concept.',
+    featured: true,
   }),
   Object.freeze({
     id: 'trouble',
     title: 'Fix Trouble Spots',
     desc: 'Only the concepts you usually miss.',
+    featured: false,
   }),
   Object.freeze({
     id: 'satsset',
     title: 'Mini Test',
     desc: 'Short timed set. Marks at the end.',
+    featured: false,
   }),
   Object.freeze({
     id: 'bank',
     title: 'Grammar Bank',
     desc: 'Browse every concept with child-friendly statuses.',
+    featured: false,
   }),
 ]);
 
@@ -304,6 +308,7 @@ function concordiumProgressFromReward(rewardState) {
  *   {
  *     modeCards:     Frozen copy of GRAMMAR_PRIMARY_MODE_CARDS,
  *     todayCards:    Array<{ id, label, value, detail }>,
+ *     isEmpty:       boolean, // true when all four Today counts are zero
  *     concordiumProgress: { mastered: number, total: number },
  *     primaryMode:   string,  // grammar.prefs.mode
  *     moreModes:     Frozen copy of GRAMMAR_MORE_PRACTICE_MODES,
@@ -336,9 +341,15 @@ export function buildGrammarDashboardModel(grammar, _learner, rewardState) {
     ? safeGrammar.prefs.mode
     : 'smart';
 
+  // Brand-new learner: all four Today counts are zero. The dashboard swaps
+  // the four zero-tiles for a single friendly callout so the first view does
+  // not read as a bleak status board.
+  const isEmpty = (dueCount + troubleCount + secureCount + streakCount) === 0;
+
   return {
     modeCards: GRAMMAR_PRIMARY_MODE_CARDS,
     todayCards: Object.freeze(todayCards),
+    isEmpty,
     concordiumProgress: concordiumProgressFromReward(rewardState),
     primaryMode,
     moreModes: GRAMMAR_MORE_PRACTICE_MODES,

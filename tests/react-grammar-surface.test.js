@@ -14,6 +14,7 @@ import {
   GRAMMAR_TRANSFER_GENERIC_ERROR_COPY,
   translateGrammarTransferError,
 } from '../src/subjects/grammar/module.js';
+import { GRAMMAR_CHILD_FORBIDDEN_TERMS } from '../src/subjects/grammar/components/grammar-view-model.js';
 import { normaliseGrammarReadModel } from '../src/subjects/grammar/metadata.js';
 import { grammarMasteryKey } from '../src/platform/game/monster-system.js';
 import { getSubject, SUBJECTS } from '../src/platform/core/subject-registry.js';
@@ -41,13 +42,15 @@ test('Grammar opens as the child-facing Grammar Garden dashboard', () => {
   assert.match(html, /Fix Trouble Spots/);
   assert.match(html, /Mini Test/);
   assert.match(html, /Grammar Bank/);
-  // Today cards.
-  assert.match(html, /Due/);
-  assert.match(html, /Trouble spots/);
-  assert.match(html, /Secure/);
-  assert.match(html, /Streak/);
-  // Concordium progress string.
-  assert.match(html, /Concordium progress/);
+  // Brand-new learner: Today section renders the empty-state callout
+  // instead of the four zero tiles (U1 follower, empty_returning_states).
+  assert.match(html, /Start your first round to see your scores here\./);
+  // Smart Practice is marked featured/recommended (U1 follower, cta_hierarchy).
+  assert.match(html, /data-mode-id="smart"[^>]*data-featured="true"/);
+  assert.match(html, /class="grammar-primary-mode[^"]*is-recommended[^"]*"[^>]*data-mode-id="smart"/);
+  assert.match(html, /Recommended/);
+  // Concordium progress string (U1 follower: renamed "Grow Concordium").
+  assert.match(html, /Grow Concordium/);
   assert.match(html, /\d+\/18/);
   // More practice disclosure is present and closed by default.
   assert.match(html, /<details class="grammar-more-practice"><summary>More practice<\/summary>/);
@@ -72,12 +75,17 @@ test('Grammar dashboard omits adult-diagnostic copy and reserved monster names',
   assert.ok(dashboardMatch, 'dashboard section was rendered');
   const dashboardHtml = dashboardMatch[0];
 
-  assert.doesNotMatch(dashboardHtml, /Worker-marked/i);
-  assert.doesNotMatch(dashboardHtml, /Worker authority/i);
-  assert.doesNotMatch(dashboardHtml, /Worker marked/i);
-  assert.doesNotMatch(dashboardHtml, /Worker-held/i);
-  assert.doesNotMatch(dashboardHtml, /full map/i);
-  assert.doesNotMatch(dashboardHtml, /Evidence snapshot/i);
+  // U1 follower: iterate every entry in the fixture list rather than
+  // hard-coding a subset. Any new forbidden term appears here automatically.
+  for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    assert.doesNotMatch(dashboardHtml, new RegExp(escaped, 'i'), `forbidden term leaked: ${term}`);
+  }
+  // Whole-word `Worker` catch-all: the bare noun is adult-facing. The
+  // `\b` boundary keeps legitimate tokens like `workbook` or `homework`
+  // from tripping the guard; the fixture-driven loop above covers every
+  // compound form (`Worker-marked`, `Worker authority`, ...).
+  assert.doesNotMatch(dashboardHtml, /\bWorker\b/i);
   // Reserved Grammar monsters never appear in the dashboard.
   assert.doesNotMatch(dashboardHtml, /Glossbloom|Loomrill|Mirrane/i);
 });
@@ -531,8 +539,9 @@ test('Grammar dashboard disables mode cards, controls, and Begin button while a 
   }));
 
   const html = harness.render();
-  // Primary mode cards carry `disabled` when setup is pending.
-  assert.match(html, /<button type="button" class="grammar-primary-mode selected is-disabled" data-mode-id="smart" data-action="grammar-set-mode" aria-pressed="true" disabled="">/);
+  // Primary mode cards carry `disabled` when setup is pending. Smart card
+  // also carries `is-recommended` + `data-featured="true"` (U1 follower).
+  assert.match(html, /<button type="button" class="grammar-primary-mode selected is-disabled is-recommended" data-mode-id="smart" data-action="grammar-set-mode" data-featured="true" aria-pressed="true" disabled="">/);
   // Round length select is disabled and shows the default 5 value selected.
   assert.match(html, /<select class="input" disabled=""[^>]*><option value="3">3<\/option><option value="5" selected="">5<\/option>/);
   // Begin button renders the pending label.
@@ -708,6 +717,75 @@ test('Grammar dashboard placeholder dispatchers are no-ops while a command is pe
   assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');
   harness.dispatch('grammar-open-transfer');
   assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');
+});
+
+// U1 follower: mid-session guard. `grammar-open-concept-bank` and
+// `grammar-open-transfer` must be no-ops while phase is `session` or
+// `feedback` — otherwise navigating away mid-question would wipe the
+// active session state. Covers `module.js` lines 281-282 and 292-293.
+test('U1 follower: grammar-open-concept-bank is a no-op mid-session', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample();
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: { roundLength: 1, templateId: sample.id, seed: sample.sample.seed },
+  });
+  const beforeSession = harness.store.getState().subjectUi.grammar.session;
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'session');
+
+  harness.dispatch('grammar-open-concept-bank');
+  const afterGrammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(afterGrammar.phase, 'session', 'phase must stay session');
+  assert.equal(afterGrammar.session, beforeSession, 'session object must be untouched');
+});
+
+test('U1 follower: grammar-open-transfer is a no-op mid-session', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample();
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: { roundLength: 1, templateId: sample.id, seed: sample.sample.seed },
+  });
+  const beforeSession = harness.store.getState().subjectUi.grammar.session;
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'session');
+
+  harness.dispatch('grammar-open-transfer');
+  const afterGrammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(afterGrammar.phase, 'session', 'phase must stay session');
+  assert.equal(afterGrammar.session, beforeSession, 'session object must be untouched');
+});
+
+test('U1 follower: grammar-open-concept-bank and grammar-open-transfer are no-ops during feedback', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample();
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: { roundLength: 2, templateId: sample.id, seed: sample.sample.seed },
+  });
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData(sample.correctResponse),
+  });
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'feedback');
+  const beforeSession = harness.store.getState().subjectUi.grammar.session;
+  const beforeFeedback = harness.store.getState().subjectUi.grammar.feedback;
+
+  harness.dispatch('grammar-open-concept-bank');
+  let grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'feedback', 'phase stays feedback after concept-bank');
+  assert.equal(grammar.session, beforeSession, 'session untouched after concept-bank');
+  assert.equal(grammar.feedback, beforeFeedback, 'feedback untouched after concept-bank');
+
+  harness.dispatch('grammar-open-transfer');
+  grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'feedback', 'phase stays feedback after open-transfer');
+  assert.equal(grammar.session, beforeSession, 'session untouched after open-transfer');
+  assert.equal(grammar.feedback, beforeFeedback, 'feedback untouched after open-transfer');
 });
 
 test('Punctuation remains separately registered from Grammar Bellstorm bridge copy', () => {
