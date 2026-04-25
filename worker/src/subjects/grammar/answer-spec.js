@@ -17,7 +17,7 @@
 // load — making it automatic would break the migration-window shape where
 // `markStringAnswer` carries its own accepted array.
 
-const ANSWER_SPEC_KINDS = Object.freeze([
+export const ANSWER_SPEC_KINDS = Object.freeze([
   'exact',
   'normalisedText',
   'acceptedSet',
@@ -25,6 +25,8 @@ const ANSWER_SPEC_KINDS = Object.freeze([
   'multiField',
   'manualReviewOnly',
 ]);
+
+export const DEFAULT_MINIMAL_HINT = 'Check the sentence structure and the instruction again.';
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -79,7 +81,7 @@ function comparePunctuationPattern(response, accepted, { optionalCommas = false 
 }
 
 function mkMarkResult({ correct, score, maxScore, misconception, feedbackShort, feedbackLong, answerText, minimalHint }) {
-  const result = {
+  return {
     correct: Boolean(correct),
     score: Number.isFinite(Number(score)) ? Number(score) : 0,
     maxScore: Number.isFinite(Number(maxScore)) ? Number(maxScore) : 1,
@@ -87,9 +89,12 @@ function mkMarkResult({ correct, score, maxScore, misconception, feedbackShort, 
     feedbackShort: feedbackShort || (correct ? 'Correct.' : 'Not quite.'),
     feedbackLong: feedbackLong || '',
     answerText: safeString(answerText),
+    // Default hint so direct callers (U7 transfer lane, future content-release
+    // templates with declarative answerSpec) inherit the same shape the
+    // legacy content.js mkResult guarantees. Adapter paths can still inject
+    // a concept-specific hint via content.js markStringAnswer.
+    minimalHint: minimalHint ?? DEFAULT_MINIMAL_HINT,
   };
-  if (minimalHint !== undefined) result.minimalHint = minimalHint;
-  return result;
 }
 
 function markExact(spec, response) {
@@ -187,7 +192,17 @@ function markPunctuationPattern(spec, response) {
 }
 
 function markMultiField(spec, response) {
-  const fields = isPlainObject(spec.params?.fields) ? spec.params.fields : {};
+  const fields = isPlainObject(spec.params?.fields) ? spec.params.fields : null;
+  if (!fields || Object.keys(fields).length === 0) {
+    return mkMarkResult({
+      correct: false,
+      score: 0,
+      maxScore: spec.maxScore || 1,
+      misconception: 'marking_unavailable',
+      feedbackLong: 'multiField answer spec requires params.fields with at least one entry.',
+      answerText: '',
+    });
+  }
   const responses = isPlainObject(response) ? response : {};
   let subtotal = 0;
   let max = 0;
@@ -303,4 +318,3 @@ export function validateAnswerSpec(spec, { requireGolden = true, requireNearMiss
   return true;
 }
 
-export { ANSWER_SPEC_KINDS };
