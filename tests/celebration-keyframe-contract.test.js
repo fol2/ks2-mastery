@@ -197,27 +197,49 @@ test('entrance choreography: every entrance keyframe contains at least one trans
 });
 
 test('art keyframe enumeration is complete: every .monster-celebration-art animation reference is in ART_KEYFRAMES', () => {
-  // Scan every CSS rule whose selector mentions .monster-celebration-art
-  // (with or without .before/.after/.egg-crack qualifiers) and extract the
-  // first @keyframes name from its animation: declaration. Every extracted
-  // name must appear in ART_KEYFRAMES — so a future overlay kind (e.g. a
-  // hypothetical `legendary` variant) that adds a new art keyframe fails
-  // this test loudly instead of silently escaping the contract.
-  const ruleRegex = /([^{}]*\.monster-celebration-art[^{}]*)\{([^}]*)\}/g;
+  // Scan every CSS rule whose selector mentions `.monster-celebration-art`
+  // as a whole class (not a substring of a sibling class like
+  // `.monster-celebration-art-caption`) and extract each @keyframes name
+  // from its animation: declaration. Every extracted name must appear in
+  // ART_KEYFRAMES — so a future overlay kind adding a new art keyframe
+  // fails this test loudly instead of silently escaping the contract.
+  //
+  // The rule regex uses a negative lookahead after `-art` to require a
+  // word boundary — `.monster-celebration-art-wrapper` would not match.
+  // The animation extraction splits on top-level commas so comma-separated
+  // animation shorthand (`animation: a 1s, b 2s;`) surfaces both names.
+  const ruleRegex = /([^{}]*\.monster-celebration-art(?![A-Za-z0-9_-])[^{}]*)\{([^}]*)\}/g;
   const referencedKeyframes = new Set();
+  const varDrivenRules = [];
   let match;
   while ((match = ruleRegex.exec(css)) !== null) {
     const body = match[2];
-    const animationRegex = /animation\s*:\s*([A-Za-z_-][A-Za-z0-9_-]*)/g;
-    let animationMatch;
-    while ((animationMatch = animationRegex.exec(body)) !== null) {
-      const name = animationMatch[1];
-      if (name.startsWith('monster-celebration-')) {
-        referencedKeyframes.add(name);
+    const selector = match[1].trim();
+    const animationDeclRegex = /animation\s*:\s*([^;]+);?/g;
+    let declMatch;
+    while ((declMatch = animationDeclRegex.exec(body)) !== null) {
+      const declValue = declMatch[1];
+      const segments = declValue.split(',').map((s) => s.trim()).filter(Boolean);
+      for (const segment of segments) {
+        if (/^var\s*\(/.test(segment)) {
+          varDrivenRules.push({ selector, segment });
+          continue;
+        }
+        const nameMatch = segment.match(/^([A-Za-z_-][A-Za-z0-9_-]*)/);
+        if (!nameMatch) continue;
+        const name = nameMatch[1];
+        if (name.startsWith('monster-celebration-')) {
+          referencedKeyframes.add(name);
+        }
       }
     }
   }
   assert.ok(referencedKeyframes.size > 0, 'expected at least one .monster-celebration-art rule to reference a monster-celebration-* animation — the scanner may be broken');
+  assert.deepEqual(
+    varDrivenRules,
+    [],
+    `.monster-celebration-art rules must not use CSS custom properties as animation names: ${JSON.stringify(varDrivenRules)}. A var()-driven name is opaque to this contract test — the referenced keyframe could contain translate(-50%, …) without being caught. If you need a var-driven animation name for this element, extend this test to resolve the var's declared value before enforcing the contract.`,
+  );
   const listed = new Set(ART_KEYFRAMES);
   const missing = [...referencedKeyframes].filter((name) => !listed.has(name));
   assert.deepEqual(

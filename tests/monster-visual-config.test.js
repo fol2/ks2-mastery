@@ -190,6 +190,46 @@ test('publish validation rejects unsupported visual enum values', () => {
   )).length, 2);
 });
 
+test('publish validation locks celebrationOverlay anchors at defaults until animation-pivot propagation follow-up lands', () => {
+  // The .monster-celebration-art keyframes + .egg-crack rules hard-pin
+  // transform-origin at centre / 50% 80%. A non-default celebrationOverlay
+  // anchor would diverge the wrapper pivot from the art pivot and shift
+  // the sprite off-axis mid-animation. Publish validation rejects the
+  // non-default until the CSS propagation fix lands (tracked in
+  // docs/plans/2026-04-25-002-fix-celebration-sprite-centring-plan.md).
+  const broken = reviewedConfig();
+  broken.assets['vellhorn-b1-3'].contexts.celebrationOverlay.anchorX = 0.35;
+  broken.assets['vellhorn-b1-3'].contexts.celebrationOverlay.anchorY = 0.7;
+
+  const validation = validateMonsterVisualConfigForPublish(broken);
+
+  assert.equal(validation.ok, false);
+  assert.ok(validation.errors.some((issue) => (
+    issue.code === 'monster_visual_celebration_anchor_locked'
+    && issue.assetKey === 'vellhorn-b1-3'
+    && issue.context === 'celebrationOverlay'
+    && issue.field === 'anchorX'
+  )), `expected anchorX lock error, got: ${JSON.stringify(validation.errors)}`);
+  assert.ok(validation.errors.some((issue) => (
+    issue.code === 'monster_visual_celebration_anchor_locked'
+    && issue.assetKey === 'vellhorn-b1-3'
+    && issue.context === 'celebrationOverlay'
+    && issue.field === 'anchorY'
+  )), `expected anchorY lock error, got: ${JSON.stringify(validation.errors)}`);
+});
+
+test('publish validation accepts default celebrationOverlay anchors (0.5 / 1)', () => {
+  // Defensive positive test — guards that the celebrationOverlay lock
+  // above does not accidentally reject the bundled/default case.
+  const fine = reviewedConfig();
+  // Bundled defaults already set anchorX=0.5 / anchorY=1; the assertion
+  // is that the validation layer emits NO anchor-lock errors for them.
+  const validation = validateMonsterVisualConfigForPublish(fine);
+
+  const anchorLockErrors = validation.errors.filter((issue) => issue.code === 'monster_visual_celebration_anchor_locked');
+  assert.deepEqual(anchorLockErrors, [], `expected no anchor-lock errors for bundled defaults, got: ${JSON.stringify(anchorLockErrors)}`);
+});
+
 test('asset source helper preserves existing image path convention', () => {
   const sources = monsterVisualAssetSources(buildMonsterAssetKey('inklet', 'b1', 0), {
     preferredSize: 640,
