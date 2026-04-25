@@ -103,5 +103,18 @@ export function playCelebration(spec, { store } = {}) {
     createdAt: Date.now(),
   };
 
-  return store.pushMonsterCelebrations([event]);
+  const pushed = store.pushMonsterCelebrations([event]);
+  if (!pushed) {
+    // monster-celebrations.js gates inserts on a hardcoded OVERLAY_KINDS set
+    // (caught/evolve/mega). A new transient `kind` registered via the library
+    // will pass our local validation but be silently dropped here — surface
+    // it instead of failing quietly.
+    warnOnce(
+      `play-celebration-pushed-false:${kind}`,
+      `playCelebration: store.pushMonsterCelebrations dropped kind "${kind}" `
+      + '(likely not in monster-celebrations.js OVERLAY_KINDS); '
+      + 'extend OVERLAY_KINDS or use a different push path',
+    );
+  }
+  return pushed;
 }

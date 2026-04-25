@@ -36,9 +36,9 @@ export function countMastered(state, monsterId) {
   return masteredCount(state?.[monsterId]);
 }
 
-export function isPlainObject(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
+import { isPlainObject } from '../../core/utils.js';
+
+export { isPlainObject };
 
 export function masteredList(entry) {
   return Array.isArray(entry?.mastered) ? entry.mastered.filter((slug) => typeof slug === 'string' && slug) : [];

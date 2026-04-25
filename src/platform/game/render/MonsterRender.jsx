@@ -91,9 +91,21 @@ export function MonsterRender({
   );
   const base = useMemo(() => dropTransient(composed.base, 'base'), [composed.base]);
   const overlay = useMemo(() => dropTransient(composed.overlay, 'overlay'), [composed.overlay]);
+  // applyTransform reads stage/species/branch/variant for FNV seeding and
+  // stage-tier profile lookup, so all four belong in the deps. id alone is
+  // not enough — already-caught monsters keep displayState='monster' across
+  // every stage transition, so the cache would otherwise hold stale motion.
   const baseStyle = useMemo(
     () => mergeTransformStyle(base, monster, context),
-    [base, monster?.id, context],
+    [
+      base,
+      monster?.id,
+      monster?.stage,
+      monster?.species,
+      monster?.branch,
+      monster?.variant,
+      context,
+    ],
   );
 
   if (!monster) return null;
