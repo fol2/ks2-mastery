@@ -107,3 +107,187 @@ test('subject command client retries transient server failures with the same req
   assert.deepEqual(commandBodies.map((body) => body.expectedLearnerRevision), [7, 7]);
   assert.equal(revision, 8);
 });
+
+test('subject command client freezes expected revision across transport retries', async () => {
+  let revision = 12;
+  const commandBodies = [];
+  const retryDelays = [];
+  const fetch = async (input, init = {}) => {
+    const body = JSON.parse(init.body);
+    commandBodies.push(body);
+    if (commandBodies.length === 1) {
+      return new Response(JSON.stringify({
+        ok: false,
+        code: 'backend_unavailable',
+        message: 'D1 was temporarily unavailable.',
+      }), { status: 503, headers: { 'content-type': 'application/json' } });
+    }
+    return new Response(JSON.stringify({
+      ok: true,
+      mutation: {
+        appliedRevision: body.expectedLearnerRevision + 1,
+      },
+    }), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  const commands = createSubjectCommandClient({
+    fetch,
+    getLearnerRevision: () => revision,
+    retryDelayMs: 50,
+    retryJitterMs: 0,
+    sleep: async (delayMs) => {
+      retryDelays.push(delayMs);
+      revision = 13;
+    },
+  });
+
+  await commands.send({
+    subjectId: 'spelling',
+    learnerId: 'learner-a',
+    command: 'submit-answer',
+    payload: { typed: 'answer' },
+    requestId: 'cmd-frozen-503',
+  });
+
+  assert.deepEqual(retryDelays, [50]);
+  assert.deepEqual(commandBodies.map((body) => body.requestId), ['cmd-frozen-503', 'cmd-frozen-503']);
+  assert.deepEqual(commandBodies.map((body) => body.expectedLearnerRevision), [12, 12]);
+});
+
+test('subject command client freezes payload across transport retries', async () => {
+  const payload = { typed: 'first', context: { promptId: 'prompt-a' } };
+  const commandBodies = [];
+  const fetch = async (input, init = {}) => {
+    const body = JSON.parse(init.body);
+    commandBodies.push(body);
+    if (commandBodies.length === 1) {
+      return new Response(JSON.stringify({
+        ok: false,
+        code: 'backend_unavailable',
+        message: 'D1 was temporarily unavailable.',
+      }), { status: 503, headers: { 'content-type': 'application/json' } });
+    }
+    return new Response(JSON.stringify({
+      ok: true,
+      mutation: {
+        appliedRevision: body.expectedLearnerRevision + 1,
+      },
+    }), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  const commands = createSubjectCommandClient({
+    fetch,
+    getLearnerRevision: () => 4,
+    retryDelayMs: 50,
+    retryJitterMs: 0,
+    sleep: async () => {
+      payload.typed = 'second';
+      payload.context.promptId = 'prompt-b';
+    },
+  });
+
+  await commands.send({
+    subjectId: 'spelling',
+    learnerId: 'learner-a',
+    command: 'submit-answer',
+    payload,
+    requestId: 'cmd-frozen-payload-503',
+  });
+
+  assert.deepEqual(commandBodies.map((body) => body.requestId), ['cmd-frozen-payload-503', 'cmd-frozen-payload-503']);
+  assert.deepEqual(commandBodies.map((body) => body.payload), [
+    { typed: 'first', context: { promptId: 'prompt-a' } },
+    { typed: 'first', context: { promptId: 'prompt-a' } },
+  ]);
+});
+
+test('subject command client refreshes expected revision only after stale-write recovery', async () => {
+  let revision = 12;
+  const payload = { typed: 'first' };
+  const commandBodies = [];
+  const fetch = async (input, init = {}) => {
+    const body = JSON.parse(init.body);
+    commandBodies.push(body);
+    if (commandBodies.length === 1) {
+      return new Response(JSON.stringify({
+        ok: false,
+        code: 'stale_write',
+        message: 'Mutation rejected because this state changed in another tab or device.',
+      }), { status: 409, headers: { 'content-type': 'application/json' } });
+    }
+    return new Response(JSON.stringify({
+      ok: true,
+      mutation: {
+        appliedRevision: body.expectedLearnerRevision + 1,
+      },
+    }), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  const commands = createSubjectCommandClient({
+    fetch,
+    getLearnerRevision: () => revision,
+    retryDelayMs: 0,
+    onStaleWrite: async ({ payload: stalePayload }) => {
+      revision = 13;
+      stalePayload.typed = 'handler-mutated-copy';
+      payload.typed = 'second';
+    },
+  });
+
+  await commands.send({
+    subjectId: 'spelling',
+    learnerId: 'learner-a',
+    command: 'submit-answer',
+    payload,
+    requestId: 'cmd-stale-revision-refresh',
+  });
+
+  assert.deepEqual(commandBodies.map((body) => body.requestId), ['cmd-stale-revision-refresh', 'cmd-stale-revision-refresh']);
+  assert.deepEqual(commandBodies.map((body) => body.expectedLearnerRevision), [12, 13]);
+  assert.deepEqual(commandBodies.map((body) => body.payload), [{ typed: 'first' }, { typed: 'first' }]);
+});
+
+test('subject command client jitters bounded retry delays for transient command failures', async () => {
+  const commandBodies = [];
+  const retryDelays = [];
+  const randomValues = [0.5, 1];
+  const fetch = async (input, init = {}) => {
+    const body = JSON.parse(init.body);
+    commandBodies.push(body);
+    if (commandBodies.length <= 2) {
+      return new Response(JSON.stringify({
+        ok: false,
+        code: 'backend_unavailable',
+        message: 'D1 was temporarily unavailable.',
+      }), { status: 503, headers: { 'content-type': 'application/json' } });
+    }
+    return new Response(JSON.stringify({
+      ok: true,
+      mutation: {
+        appliedRevision: body.expectedLearnerRevision + 1,
+      },
+    }), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  const commands = createSubjectCommandClient({
+    fetch,
+    getLearnerRevision: () => 12,
+    retryAttempts: 2,
+    retryDelayMs: 100,
+    retryJitterMs: 40,
+    retryMaxDelayMs: 220,
+    random: () => randomValues.shift() ?? 0,
+    sleep: async (delayMs) => {
+      retryDelays.push(delayMs);
+    },
+  });
+
+  await commands.send({
+    subjectId: 'spelling',
+    learnerId: 'learner-a',
+    command: 'submit-answer',
+    payload: { typed: 'answer' },
+    requestId: 'cmd-jitter-503',
+  });
+
+  assert.equal(commandBodies.length, 3);
+  assert.deepEqual(commandBodies.map((body) => body.requestId), ['cmd-jitter-503', 'cmd-jitter-503', 'cmd-jitter-503']);
+  assert.deepEqual(commandBodies.map((body) => body.expectedLearnerRevision), [12, 12, 12]);
+  assert.deepEqual(retryDelays, [120, 220]);
+});
