@@ -700,6 +700,39 @@ export function guardianSummaryCards({ summary, nextGuardianDueDay, todayDay }) 
   ];
 }
 
+/**
+ * Canonical label for the Guardian-origin summary "Practice wobbling words"
+ * button (U3). Lives in the view-model so the scene, telemetry, and future
+ * automated-tour copy all read the same string. Every deviation weakens the
+ * identity separation between Guardian's single-attempt contract and the
+ * optional practice-only drill — see the plan's Key Technical Decisions entry
+ * on the practice-button identity trade-off.
+ *
+ * @returns {string} The exact button label. Always call this helper rather
+ *   than hard-coding the string, so a future rename (e.g. for i18n) stays a
+ *   one-line change.
+ */
+export function guardianPracticeActionLabel() {
+  return 'Practice wobbling words';
+}
+
+/**
+ * Canonical help-text copy rendered below the Practice button on a Guardian
+ * summary (U3). Holds the Mega-never-revoked invariant ("schedule will not
+ * change") + the Guardian identity guardrail ("Official recovery check
+ * returns tomorrow"). Same single-source-of-truth rationale as
+ * `guardianPracticeActionLabel()` — telemetry copy, scene copy, and test
+ * fixtures all read this string.
+ *
+ * @returns {string} The exact help copy. Treat as append-only for phrasing
+ *   tweaks; do not drop the "schedule will not change" or "tomorrow" clauses
+ *   — they carry product intent that the separation between practice + real
+ *   Guardian rounds depends on.
+ */
+export function guardianSummaryCopy() {
+  return 'Optional practice. Mega and Guardian schedule will not change. Official recovery check returns tomorrow.';
+}
+
 export function summaryHeadline(summary) {
   if (summary?.totalWords > 0 && typeof summary.correct === 'number') {
     return `${summary.correct} of ${summary.totalWords} words landed.`;

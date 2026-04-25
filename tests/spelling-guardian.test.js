@@ -1956,3 +1956,257 @@ test('U4 edge: continueSession after Guardian skip plays the audio cue for the n
   // next card's prompt without hearing it.
   assert.ok(advanced.audio, 'continueSession returns an audio cue for the freshly-advanced card');
 });
+
+// -----------------------------------------------------------------------------
+// U3 action-routing: Guardian-safe summary drill. The `spelling-drill-all` and
+// `spelling-drill-single` handlers branch on `ui.summary?.mode === 'guardian'`
+// to force `practiceOnly: true` on the dispatched session, which short-circuits
+// at `legacy-engine.js:763` before `applyLearningOutcome` can ever touch
+// `progress.stage`. Guardian origin never demotes Mega; non-Guardian origin is
+// byte-identical to the legacy path (characterisation coverage below).
+// -----------------------------------------------------------------------------
+
+function submitForm(harness, typed) {
+  const formData = new FormData();
+  formData.set('typed', typed);
+  harness.dispatch('spelling-submit-form', { formData });
+}
+
+function runLegacyLearningRoundWithOneWrongWord(harness) {
+  // Cycle the first word through retry → correction → correct so the word
+  // ends up in `summary.mistakes` but the round actually finalises (correction
+  // requires a matching answer before we can advance). The remaining words
+  // (if any in a multi-word round) are answered correctly on the first try.
+  const firstAnswer = harness.store.getState().subjectUi.spelling.session.currentCard.word.word;
+  submitForm(harness, 'zzzwrong-question');
+  submitForm(harness, 'zzzwrong-retry');
+  submitForm(harness, firstAnswer);
+  for (let guard = 0; guard < 40; guard += 1) {
+    const ui = harness.store.getState().subjectUi.spelling;
+    if (ui.phase !== 'session') break;
+    if (ui.awaitingAdvance) {
+      harness.dispatch('spelling-continue');
+      continue;
+    }
+    submitForm(harness, ui.session.currentCard.word.word);
+  }
+}
+
+function runGuardianRoundAllWrong(harness) {
+  // Guardian sessions are single-attempt — one wrong answer is enough to
+  // push the word into `summary.mistakes`. Loop through until phase flips
+  // off 'session'.
+  for (let guard = 0; guard < 40; guard += 1) {
+    const ui = harness.store.getState().subjectUi.spelling;
+    if (ui.phase !== 'session') break;
+    if (ui.awaitingAdvance) {
+      harness.dispatch('spelling-continue');
+      continue;
+    }
+    submitForm(harness, 'zzzwrongguardian');
+  }
+}
+
+function runPracticeOnlyRoundAllWrong(harness) {
+  // Practice-only drill uses the legacy learning surface (retry → correction
+  // → next), but `practiceOnly: true` short-circuits `applyLearningOutcome`
+  // at `legacy-engine.js:763`. We must still type the correct answer in
+  // correction phase to advance, otherwise the session stalls — this is a
+  // fixture constraint, not a product assertion.
+  for (let guard = 0; guard < 200; guard += 1) {
+    const ui = harness.store.getState().subjectUi.spelling;
+    if (ui.phase !== 'session') break;
+    if (ui.awaitingAdvance) {
+      harness.dispatch('spelling-continue');
+      continue;
+    }
+    const sessionPhase = ui.session?.phase;
+    if (sessionPhase === 'correction') {
+      // Type the correct answer to escape the correction phase without
+      // demoting (practiceOnly gates the demotion regardless of whether we
+      // type correct here).
+      submitForm(harness, ui.session.currentCard.word.word);
+    } else {
+      submitForm(harness, 'zzzwrongpractice');
+    }
+  }
+}
+
+test('U3 characterisation: legacy Smart Review summary drill keeps mode="trouble" + practiceOnly=false', async () => {
+  // Baseline that must survive the U3 change: a Smart Review summary
+  // dispatching `spelling-drill-all` starts a `mode: 'trouble'` session with
+  // `practiceOnly` left unset (defaults to false inside `startSession`).
+  // We assert on session shape — the public contract is that session
+  // carries `mode: 'trouble'` and does NOT carry `practiceOnly: true`.
+  const createAppHarness = await importAppHarness();
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-start');
+
+  runLegacyLearningRoundWithOneWrongWord(harness);
+  const summary = harness.store.getState().subjectUi.spelling.summary;
+  assert.equal(summary.mode, 'smart', 'sanity: smart-review origin');
+  assert.ok(summary.mistakes.length >= 1, 'at least one mistake expected');
+
+  harness.dispatch('spelling-drill-all');
+
+  const session = harness.store.getState().subjectUi.spelling.session;
+  assert.equal(session.mode, 'trouble', 'Smart-origin drill routes into mode=trouble');
+  assert.notEqual(session.practiceOnly, true, 'Smart-origin drill must NOT set practiceOnly (legacy behaviour)');
+});
+
+test('U3 characterisation: legacy Smart Review summary drill-single keeps mode="single" + practiceOnly=false', async () => {
+  // Complement: `spelling-drill-single` must also stay on legacy behaviour
+  // for non-Guardian origins (the existing chip path that Smart Review
+  // learners tap one word at a time).
+  const createAppHarness = await importAppHarness();
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-start');
+
+  runLegacyLearningRoundWithOneWrongWord(harness);
+  const summary = harness.store.getState().subjectUi.spelling.summary;
+  const mistakeSlug = summary.mistakes[0]?.slug;
+  assert.ok(mistakeSlug, 'at least one mistake with a slug expected');
+
+  harness.dispatch('spelling-drill-single', { slug: mistakeSlug });
+
+  const session = harness.store.getState().subjectUi.spelling.session;
+  assert.equal(session.mode, 'single', 'Smart-origin drill-single stays on mode=single');
+  assert.notEqual(session.practiceOnly, true, 'Smart-origin drill-single must NOT set practiceOnly');
+});
+
+test('U3 happy path: Guardian summary drill-all dispatch starts mode=trouble + practiceOnly=true', async () => {
+  const createAppHarness = await importAppHarness();
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const today = Math.floor(Date.now() / DAY_MS_TS);
+
+  seedAllCoreMega(harness.repositories, learnerId, today);
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-shortcut-start', { mode: 'guardian' });
+  assert.equal(harness.store.getState().subjectUi.spelling.phase, 'session');
+  assert.equal(harness.store.getState().subjectUi.spelling.session.mode, 'guardian');
+
+  runGuardianRoundAllWrong(harness);
+  const summary = harness.store.getState().subjectUi.spelling.summary;
+  assert.equal(summary.mode, 'guardian', 'sanity: guardian-origin summary');
+  assert.ok(summary.mistakes.length >= 1, 'guardian round of all-wrong must yield at least one mistake');
+
+  harness.dispatch('spelling-drill-all');
+
+  const session = harness.store.getState().subjectUi.spelling.session;
+  assert.equal(session.mode, 'trouble', 'Guardian-origin drill-all routes into mode=trouble (not a new mode)');
+  assert.equal(session.practiceOnly, true, 'Guardian-origin drill-all must set practiceOnly=true to short-circuit demotion');
+  // The session words must match the mistake slugs — not a fresh selection.
+  const mistakeSlugs = new Set(summary.mistakes.map((m) => m.slug));
+  for (const slug of session.uniqueWords) {
+    assert.ok(mistakeSlugs.has(slug), `session word ${slug} must come from summary.mistakes`);
+  }
+});
+
+test('U3 error path: practice-only drill after Guardian leaves progress.stage/dueDay/lastDay unchanged on wrong', async () => {
+  // The big invariant: a wrong answer during the practice-only drill must
+  // NEVER demote a Mega word. `practiceOnly: true` short-circuits at
+  // `legacy-engine.js:763` before `applyLearningOutcome` runs. We assert on
+  // the `progress` snapshot before / after the drill — stage/dueDay/lastDay/
+  // lastResult are byte-identical, only attempts/correct/wrong bump.
+  const createAppHarness = await importAppHarness();
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const today = Math.floor(Date.now() / DAY_MS_TS);
+
+  seedAllCoreMega(harness.repositories, learnerId, today);
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-shortcut-start', { mode: 'guardian' });
+
+  runGuardianRoundAllWrong(harness);
+
+  const summary = harness.store.getState().subjectUi.spelling.summary;
+  const drillSlug = summary.mistakes[0]?.slug;
+  assert.ok(drillSlug, 'Guardian all-wrong round must produce at least one mistake');
+
+  // Snapshot the progress record + guardian record before the drill.
+  const snapshotBefore = structuredClone(
+    harness.services.spelling.getAnalyticsSnapshot(learnerId).wordGroups
+      .flatMap((g) => g.words)
+      .find((r) => r.slug === drillSlug),
+  );
+  const guardianBefore = structuredClone(
+    harness.services.spelling.getPostMasteryState(learnerId).guardianMap[drillSlug] || null,
+  );
+
+  // Dispatch the Practice button path.
+  harness.dispatch('spelling-drill-all');
+  assert.equal(harness.store.getState().subjectUi.spelling.phase, 'session');
+  assert.equal(harness.store.getState().subjectUi.spelling.session.practiceOnly, true);
+
+  // Answer the practice-only round — correction-phase requires a valid
+  // answer to advance (fixture plumbing, not a product gate).
+  runPracticeOnlyRoundAllWrong(harness);
+
+  const snapshotAfter = harness.services.spelling.getAnalyticsSnapshot(learnerId).wordGroups
+    .flatMap((g) => g.words)
+    .find((r) => r.slug === drillSlug);
+  const guardianAfter = harness.services.spelling.getPostMasteryState(learnerId).guardianMap[drillSlug] || null;
+
+  // progress.stage must NOT have moved — the Mega invariant.
+  assert.equal(snapshotAfter.progress.stage, snapshotBefore.progress.stage, `${drillSlug} stage must stay at Mega (4)`);
+  assert.equal(snapshotAfter.progress.stage, 4, `${drillSlug} stage should be Mega (4)`);
+  // dueDay / lastDay / lastResult must also stay pinned — the whole point of
+  // practiceOnly is not just stage but the full scheduling snapshot.
+  assert.equal(snapshotAfter.progress.dueDay, snapshotBefore.progress.dueDay, `${drillSlug} dueDay unchanged`);
+  assert.equal(snapshotAfter.progress.lastDay, snapshotBefore.progress.lastDay, `${drillSlug} lastDay unchanged`);
+  assert.equal(snapshotAfter.progress.lastResult, snapshotBefore.progress.lastResult, `${drillSlug} lastResult unchanged`);
+
+  // guardian.wobbling / nextDueDay must be byte-identical to pre-drill.
+  if (guardianBefore) {
+    assert.equal(guardianAfter.wobbling, guardianBefore.wobbling, `${drillSlug} guardian.wobbling unchanged`);
+    assert.equal(guardianAfter.nextDueDay, guardianBefore.nextDueDay, `${drillSlug} guardian.nextDueDay unchanged`);
+    assert.equal(guardianAfter.reviewLevel, guardianBefore.reviewLevel, `${drillSlug} guardian.reviewLevel unchanged`);
+    assert.equal(guardianAfter.lapses, guardianBefore.lapses, `${drillSlug} guardian.lapses unchanged`);
+  }
+});
+
+test('U3 integration: practice-only drill summary renders without guardian-specific cards', async () => {
+  // The practice-only drill uses `mode: 'trouble'`, so when it finalises the
+  // summary scene must NOT render Guardian-specific cards. This is the
+  // "edge case" scenario in the plan — practice rounds complete but do not
+  // mint `mission-completed` events or decorate the summary with Vault copy.
+  const createAppHarness = await importAppHarness();
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const today = Math.floor(Date.now() / DAY_MS_TS);
+
+  seedAllCoreMega(harness.repositories, learnerId, today);
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-shortcut-start', { mode: 'guardian' });
+
+  runGuardianRoundAllWrong(harness);
+  harness.dispatch('spelling-drill-all');
+  // Finish the practice round by submitting correct answers.
+  for (let guard = 0; guard < 200; guard += 1) {
+    const ui = harness.store.getState().subjectUi.spelling;
+    if (ui.phase !== 'session') break;
+    if (ui.awaitingAdvance) {
+      harness.dispatch('spelling-continue');
+      continue;
+    }
+    submitForm(harness, ui.session.currentCard.word.word);
+  }
+
+  const summary = harness.store.getState().subjectUi.spelling.summary;
+  assert.equal(summary.mode, 'trouble', 'practice-only summary inherits mode=trouble, not guardian');
+});

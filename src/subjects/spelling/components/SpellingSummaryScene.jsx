@@ -3,7 +3,9 @@ import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { AnimatedPromptCard, PathProgress, Ribbon } from './SpellingCommon.jsx';
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import {
+  guardianPracticeActionLabel,
   guardianSummaryCards,
+  guardianSummaryCopy,
   heroBgForSession,
   heroBgStyle,
   renderAction,
@@ -101,36 +103,72 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
           {isGuardianSummary ? <SummaryGuardianBand cards={guardianCards} /> : null}
 
           {summary.mistakes.length ? (
-            <div className="summary-drill">
-              <div className="summary-drill-head">
-                <h4>Words that need another go</h4>
-                <span className="small muted">A quick drill cycles each of these again before you close the round.</span>
-              </div>
-              <div className="summary-drill-chips">
-                {summary.mistakes.map((word) => (
+            isGuardianSummary ? (
+              // U3: Guardian summaries replace the legacy "Drill all" + per-word
+              // "Drill" chip cluster with a single Practice button. The
+              // dispatched action is still `spelling-drill-all` (the module
+              // handler branches on `ui.summary.mode === 'guardian'` to force
+              // `practiceOnly: true`); hiding the per-word chips stops a child
+              // from starting a single-word drill that would bypass the
+              // Guardian-origin practiceOnly gating.
+              //
+              // Copy sourced from `guardianPracticeActionLabel()` +
+              // `guardianSummaryCopy()` — see view-model notes on the
+              // identity-separation rationale. Every string here lives in one
+              // place, so a rename is a one-file change across scene, test
+              // fixtures, and telemetry.
+              <div className="summary-drill summary-drill--guardian">
+                <div className="summary-drill-head">
+                  <h4>Words that wobbled today</h4>
+                  <span className="small muted">{guardianSummaryCopy()}</span>
+                </div>
+                <div className="summary-drill-chips">
+                  {summary.mistakes.map((word) => (
+                    <span className="fchip fchip--static" key={word.slug}>{word.word}</span>
+                  ))}
                   <button
                     type="button"
-                    className="fchip"
-                    data-action="spelling-drill-single"
-                    data-slug={word.slug}
-                    key={word.slug}
+                    className="btn primary sm"
+                    data-action="spelling-drill-all"
                     disabled={runtimeReadOnly || pending}
-                    onClick={(event) => renderAction(actions, event, 'spelling-drill-single', { slug: word.slug })}
+                    onClick={(event) => renderAction(actions, event, 'spelling-drill-all')}
                   >
-                    {word.word}
+                    {guardianPracticeActionLabel()} <ArrowRightIcon />
                   </button>
-                ))}
-                <button
-                  type="button"
-                  className="btn primary sm"
-                  data-action="spelling-drill-all"
-                  disabled={runtimeReadOnly || pending}
-                  onClick={(event) => renderAction(actions, event, 'spelling-drill-all')}
-                >
-                  Drill all {summary.mistakes.length} <ArrowRightIcon />
-                </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="summary-drill">
+                <div className="summary-drill-head">
+                  <h4>Words that need another go</h4>
+                  <span className="small muted">A quick drill cycles each of these again before you close the round.</span>
+                </div>
+                <div className="summary-drill-chips">
+                  {summary.mistakes.map((word) => (
+                    <button
+                      type="button"
+                      className="fchip"
+                      data-action="spelling-drill-single"
+                      data-slug={word.slug}
+                      key={word.slug}
+                      disabled={runtimeReadOnly || pending}
+                      onClick={(event) => renderAction(actions, event, 'spelling-drill-single', { slug: word.slug })}
+                    >
+                      {word.word}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="btn primary sm"
+                    data-action="spelling-drill-all"
+                    disabled={runtimeReadOnly || pending}
+                    onClick={(event) => renderAction(actions, event, 'spelling-drill-all')}
+                  >
+                    Drill all {summary.mistakes.length} <ArrowRightIcon />
+                  </button>
+                </div>
+              </div>
+            )
           ) : null}
 
           <div className="summary-actions">

@@ -279,11 +279,20 @@ export const spellingModule = {
     if (action === 'spelling-drill-all') {
       if (!ui.summary?.mistakes?.length) return true;
       tts.stop();
+      // U3: when the origin summary is a Guardian round, force practiceOnly so
+      // the dispatched `mode: 'trouble'` session short-circuits at
+      // `legacy-engine.js:763` and leaves `progress.stage/dueDay/lastDay/
+      // lastResult` + the guardian record untouched. Source of truth is
+      // `ui.summary?.mode` (not a payload flag): summary-phase persistence
+      // across refresh is out of scope today; refactors that change this
+      // must re-validate the practiceOnly path.
+      const originMode = ui.summary?.mode;
       return applySpellingTransition(context, service.startSession(learnerId, {
         mode: 'trouble',
         words: ui.summary.mistakes.map((word) => word.slug),
         yearFilter: 'all',
         length: ui.summary.mistakes.length,
+        practiceOnly: originMode === 'guardian',
       }));
     }
 
@@ -291,11 +300,18 @@ export const spellingModule = {
       const slug = data.slug;
       if (!slug) return true;
       tts.stop();
+      // U3: mirror of drill-all — Guardian origin must never demote Mega. We
+      // keep the per-word drill using `mode: 'single'` here for legacy
+      // behaviour, then gate `practiceOnly` by `summary.mode === 'guardian'`.
+      // Note that the Guardian scene hides per-word drill chips (U3), so this
+      // branch only fires defensively if a future surface re-exposes them.
+      const originMode = ui.summary?.mode;
       return applySpellingTransition(context, service.startSession(learnerId, {
         mode: 'single',
         words: [slug],
         yearFilter: 'all',
         length: 1,
+        practiceOnly: originMode === 'guardian',
       }));
     }
 

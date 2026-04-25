@@ -426,6 +426,50 @@ test('U4 parity: Guardian session renders "I don\'t know" button label', () => {
   assert.doesNotMatch(html, /Skip for now/);
 });
 
+// U3 characterisation: legacy Smart Review summary -> spelling-drill-all dispatch
+// must remain byte-identical — `mode: 'trouble'`, `practiceOnly: false`. This
+// test exists as a regression guard because U3 adds a Guardian branch to the
+// same handler. If a future refactor accidentally sets practiceOnly=true on
+// non-Guardian origins, this fails loudly.
+test('legacy Smart Review drill-all path starts mode=trouble with practiceOnly unset', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-start');
+
+  // Cycle the word through retry → correction (two wrong + one copy of the
+  // real answer). Legacy learning phases require a successful correction
+  // before the round can finalise, so we never loop indefinitely.
+  const realAnswer = harness.store.getState().subjectUi.spelling.session.currentCard.word.word;
+  harness.dispatch('spelling-submit-form', { formData: typedFormData('zzzwrong-question') });
+  harness.dispatch('spelling-submit-form', { formData: typedFormData('zzzwrong-retry') });
+  harness.dispatch('spelling-submit-form', { formData: typedFormData(realAnswer) });
+  // Drain any follow-up advance steps until we land on the summary phase.
+  for (let guard = 0; guard < 20; guard += 1) {
+    const ui = harness.store.getState().subjectUi.spelling;
+    if (ui.phase !== 'session') break;
+    if (ui.awaitingAdvance) {
+      harness.dispatch('spelling-continue');
+      continue;
+    }
+    harness.dispatch('spelling-submit-form', { formData: typedFormData(ui.session.currentCard.word.word) });
+  }
+
+  const summary = harness.store.getState().subjectUi.spelling.summary;
+  assert.equal(summary.mode, 'smart', 'sanity: Smart Review origin summary');
+  assert.ok(summary.mistakes.length >= 1, 'at least one mistake to drill');
+
+  harness.dispatch('spelling-drill-all');
+
+  const session = harness.store.getState().subjectUi.spelling.session;
+  assert.equal(session.mode, 'trouble', 'legacy drill-all stays on mode=trouble');
+  // practiceOnly is normalised to false by default inside startSession — the
+  // assertion is that it is *not true*, preserving legacy demotion behaviour.
+  assert.notEqual(session.practiceOnly, true, 'legacy Smart Review drill-all must not set practiceOnly=true');
+});
+
 test('restored completed spelling card caps progress and resumes auto-advance', () => {
   const storage = installMemoryStorage();
   const scheduler = createManualScheduler();
