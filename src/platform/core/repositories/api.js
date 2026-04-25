@@ -40,6 +40,7 @@ const SUBJECT_STATE_MERGE_STRATEGIES = new Set(['merge', 'ui', 'data', 'replace'
 const BOOTSTRAP_BACKOFF_BASE_MS = 2_000;
 const BOOTSTRAP_BACKOFF_MAX_MS = 30_000;
 const BOOTSTRAP_BACKOFF_JITTER_MS = 250;
+const BOOTSTRAP_COORDINATION_LEASE_MS = BOOTSTRAP_BACKOFF_MAX_MS;
 const LEGACY_RUNTIME_WRITES_ENABLED = typeof process === 'object'
   && process?.env?.NODE_ENV !== 'production';
 const LEGACY_RUNTIME_OPERATION_KINDS = new Set([
@@ -59,6 +60,10 @@ const LEGACY_RUNTIME_OPERATION_KINDS = new Set([
 
 function apiCacheStorageKey(scope = 'default') {
   return `ks2-platform-v2.api-cache-state:${scope}`;
+}
+
+function bootstrapCoordinationStorageKey(storageKey) {
+  return `${storageKey}:bootstrap-coordination`;
 }
 
 function createNoopStorage() {
@@ -538,6 +543,54 @@ function persistCachedState(storage, storageKey, bundle, pendingOperations, sync
   }
 }
 
+function readBootstrapCoordination(storage, storageKey, now) {
+  let raw;
+  try {
+    raw = storage?.getItem?.(storageKey);
+  } catch {
+    return null;
+  }
+  if (!raw) return null;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+
+  const ownerId = typeof parsed?.ownerId === 'string' && parsed.ownerId ? parsed.ownerId : '';
+  const expiresAt = Number(parsed?.expiresAt);
+  const startedAt = Number(parsed?.startedAt);
+  if (!ownerId || !Number.isFinite(expiresAt) || expiresAt <= now) return null;
+
+  return {
+    ownerId,
+    startedAt: Number.isFinite(startedAt) ? startedAt : 0,
+    expiresAt,
+    remainingMs: Math.max(0, expiresAt - now),
+  };
+}
+
+function writeBootstrapCoordination(storage, storageKey, lease) {
+  try {
+    storage?.setItem?.(storageKey, JSON.stringify(lease));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function clearBootstrapCoordination(storage, storageKey, ownerId, now) {
+  const active = readBootstrapCoordination(storage, storageKey, now);
+  if (active && active.ownerId !== ownerId) return;
+  try {
+    storage?.removeItem?.(storageKey);
+  } catch {
+    // Coordination is best-effort; stale leases expire quickly.
+  }
+}
+
 function upsertPracticeSession(records, record) {
   const next = normalisePracticeSessionRecord(record);
   if (!next.id || !next.learnerId || !next.subjectId) return filterSessions(records);
@@ -982,6 +1035,8 @@ export function createApiPlatformRepositories({
     ? cacheScopeKey
     : repositoryAuthCacheScopeKey(authSession);
   const storageKey = apiCacheStorageKey(resolvedCacheScopeKey);
+  const bootstrapCoordinationKey = bootstrapCoordinationStorageKey(storageKey);
+  const bootstrapCoordinationOwnerId = uid('bootstrap-tab');
   const cachedState = loadCachedState(resolvedStorage, storageKey);
   const cache = normaliseRepositoryBundle(cachedState.bundle);
   let pendingOperations = normalisePendingOperations(cachedState.pendingOperations)
@@ -1031,8 +1086,65 @@ export function createApiPlatformRepositories({
     return bootstrapBackoff;
   }
 
+  function createBootstrapCoordinationBackoff(activeCoordination) {
+    const retryAfterMs = Math.min(
+      BOOTSTRAP_BACKOFF_BASE_MS,
+      Math.max(0, Number(activeCoordination?.remainingMs) || 0),
+    );
+    return {
+      attempt: Math.max(1, Number(bootstrapBackoff?.attempt || 0) + 1),
+      retryAfterMs,
+      retryAt: currentTime() + retryAfterMs,
+      reason: {
+        code: 'bootstrap_in_flight',
+        status: 0,
+        message: 'Another browser tab is already refreshing bootstrap state. Cached data remains available until this tab retries.',
+      },
+    };
+  }
+
+  function backOffForBootstrapCoordination(activeCoordination) {
+    const coordinationBackoff = createBootstrapCoordinationBackoff(activeCoordination);
+    markRemoteFailure(createBootstrapBackoffError(coordinationBackoff, '/api/bootstrap'));
+  }
+
+  async function confirmBootstrapCoordinationBeforeFetch(lease) {
+    if (!lease) return true;
+    await Promise.resolve();
+    const active = readBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, currentTime());
+    if (!active || active.ownerId === bootstrapCoordinationOwnerId) return true;
+    backOffForBootstrapCoordination(active);
+    return false;
+  }
+
   function clearBootstrapBackoff() {
     bootstrapBackoff = null;
+  }
+
+  function activeBootstrapCoordination() {
+    const active = readBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, currentTime());
+    if (!active || active.ownerId === bootstrapCoordinationOwnerId) return null;
+    return active;
+  }
+
+  function acquireBootstrapCoordination() {
+    const now = currentTime();
+    const active = readBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, now);
+    if (active && active.ownerId !== bootstrapCoordinationOwnerId) return null;
+
+    const lease = {
+      ownerId: bootstrapCoordinationOwnerId,
+      startedAt: now,
+      expiresAt: now + BOOTSTRAP_COORDINATION_LEASE_MS,
+    };
+    if (!writeBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, lease)) return null;
+    const confirmed = readBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, now);
+    return confirmed?.ownerId === bootstrapCoordinationOwnerId ? lease : null;
+  }
+
+  function releaseBootstrapCoordination(lease) {
+    if (!lease) return;
+    clearBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, bootstrapCoordinationOwnerId, currentTime());
   }
 
   function createBootstrapBackoffError(backoff, scope = '/api/bootstrap') {
@@ -1084,6 +1196,33 @@ export function createApiPlatformRepositories({
       pendingOperations,
       syncState,
       monsterVisualConfig,
+      bootstrapBackoff,
+    );
+    if (error) {
+      lastCacheError = createPersistenceError({
+        phase: 'cache-write',
+        scope,
+        code: 'cache_write_failed',
+        message: error.message || String(error),
+        retryable: true,
+        resolution: 'retry-sync',
+      });
+    } else {
+      lastCacheError = null;
+    }
+    recomputePersistence();
+    return !error;
+  }
+
+  function persistBootstrapBackoff(scope = 'bootstrap-backoff') {
+    const sharedState = loadCachedState(resolvedStorage, storageKey);
+    const error = persistCachedState(
+      resolvedStorage,
+      storageKey,
+      sharedState.bundle,
+      sharedState.pendingOperations,
+      sharedState.syncState,
+      sharedState.monsterVisualConfig,
       bootstrapBackoff,
     );
     if (error) {
@@ -1464,13 +1603,31 @@ export function createApiPlatformRepositories({
 
   async function hydrateRemoteState({ rebasePending = false, rebasePayloads = false, cacheScope = 'bootstrap' } = {}) {
     const fallbackAvailable = hasCacheFallback(cache, pendingOperations);
+    let bootstrapLease = null;
     if (fallbackAvailable) {
       const activeBackoff = activeBootstrapBackoff();
       if (activeBackoff) {
         markRemoteFailure(createBootstrapBackoffError(activeBackoff, '/api/bootstrap'));
-        persistLocalCache(cacheScope);
         return null;
       }
+
+      const activeCoordination = activeBootstrapCoordination();
+      if (activeCoordination) {
+        backOffForBootstrapCoordination(activeCoordination);
+        return null;
+      }
+
+      bootstrapLease = acquireBootstrapCoordination();
+      if (!bootstrapLease) {
+        const lostCoordinationRace = activeBootstrapCoordination();
+        if (lostCoordinationRace) {
+          backOffForBootstrapCoordination(lostCoordinationRace);
+          return null;
+        }
+      }
+
+      const confirmedBootstrapLease = await confirmBootstrapCoordinationBeforeFetch(bootstrapLease);
+      if (!confirmedBootstrapLease) return null;
     }
 
     try {
@@ -1499,10 +1656,12 @@ export function createApiPlatformRepositories({
         : classifyError(error, '/api/bootstrap');
       markRemoteFailure(persistenceError);
       if (fallbackAvailable) {
-        persistLocalCache(cacheScope);
+        if (backoff) persistBootstrapBackoff(cacheScope);
         return null;
       }
       throw error;
+    } finally {
+      releaseBootstrapCoordination(bootstrapLease);
     }
   }
 
