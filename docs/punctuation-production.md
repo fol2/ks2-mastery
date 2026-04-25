@@ -197,9 +197,11 @@ The Punctuation release gate includes:
 - Worker command tests for start, submit, continue, stale transitions, redaction, and idempotent reward projection
 - React scene tests for setup, active, feedback, summary, and hidden-field absence
 - subject expansion conformance and golden-path smoke coverage
-- deterministic demo release smoke proving default hidden exposure and gated Worker command execution
+- deterministic demo release smoke proving default hidden exposure, Smart review, GPS delayed review, Parent Hub evidence, gated Worker command execution, and English Spelling startup
 - asset tests for Bellstorm Coast scenes and Punctuation monster artwork
-- bundle/public-output audits proving engine/content source is not shipped to the browser
+- bundle/public-output audits proving engine/content source and raw source paths are not shipped to the browser
+- performance coverage for bounded scheduling across fixed items, generated items, sentence combining, and paragraph repair
+- local release smoke coverage for Admin Hub Punctuation evidence redaction; live production smoke does not require an admin session
 
 Production exposure is controlled by the `PUNCTUATION_SUBJECT_ENABLED` Worker env var, which feeds the browser `punctuationProduction` subject exposure gate. The release-smoke gate now covers both sides of the rollout: `false` keeps the Worker command route, dashboard card, and direct subject route unavailable; `true` exposes the subject only after the Worker-backed demo path has been verified.
 
@@ -218,7 +220,7 @@ For repeatable HTTP evidence after a Punctuation deploy, run:
 npm run smoke:production:punctuation
 ```
 
-The smoke creates an isolated demo session on production, confirms `punctuationProduction` is enabled, completes one Worker-backed Punctuation item through summary, and starts a Worker-backed English Spelling session with a redacted prompt token. This keeps the Punctuation rollout gate tied to the live subject command boundary while also proving the reference Spelling subject still starts correctly.
+The smoke creates an isolated demo session on production, confirms `punctuationProduction` is enabled, completes one Worker-backed Smart review item through summary, completes one GPS test item through delayed review, checks Parent Hub Punctuation evidence for hidden-field redaction, and starts a Worker-backed English Spelling session with a redacted prompt token. This keeps the Punctuation rollout gate tied to the live subject command boundary while also proving the reference Spelling subject still starts correctly.
 
 ## Expansion Path
 
@@ -228,7 +230,7 @@ Do not expose planned clusters just because monster assets exist. Bellstorm Coas
 
 ## Legacy Parity Baseline
 
-Full legacy HTML parity is tracked separately from the current production claim.
+Full legacy HTML learner-facing parity is now claimed against the repo-local baseline. This means the legacy modes and item behaviours are available through the production Worker-owned subject, not that the old single-file architecture has been copied.
 
 The baseline fixture lives at:
 
@@ -244,9 +246,8 @@ shared/punctuation/legacy-parity.js
 
 The baseline currently classifies legacy behaviour as:
 
-- Ported: the 14-skill map, Worker command runtime, Smart review, guided learning, dedicated weak spots, GPS test mode, `choose`, `insert`, `fix`, `transfer`, `combine`, `paragraph`, reward-unit analytics, skill rows, and recent mistakes.
-- Planned: richer transfer validators, safe context-pack compilation, and deeper Parent/Admin evidence.
-- Replaced: legacy standalone `choose`, `insert`, `fix`, `transfer`, sentence-combining, and paragraph-repair session buttons are represented by production item modes inside Smart review, weak spots, and focused cluster sessions.
-- Rejected: the legacy single-file production route, localStorage source of truth, browser-owned marking, and browser-stored AI provider keys.
+- Ported: the 14-skill map, Worker command runtime, Smart review, guided learning, dedicated weak spots, GPS test mode, `choose`, `insert`, `fix`, `transfer`, `combine`, `paragraph`, deterministic transfer validators, safe context-pack compilation, reward-unit analytics, session-mode and item-mode analytics, weakest facets, daily goal, streak, recent mistakes, and Parent/Admin evidence.
+- Replaced: legacy standalone `choose`, `insert`, `fix`, `transfer`, sentence-combining, and paragraph-repair session buttons are represented by production item modes inside Smart review, weak spots, guided practice, GPS, and focused cluster sessions. The legacy browser AI lane is represented by a server-side context-pack compiler that can only contribute sanitised atoms to deterministic generators.
+- Rejected: the legacy single-file production route, localStorage source of truth, browser-owned marking, browser-stored AI provider keys, browser-direct provider calls, unconstrained free-writing auto-scoring, and AI-authored score-bearing items or marking decisions.
 
 This baseline is deliberately a guardrail, not a demand to copy the legacy architecture. New parity slices should update the fixture status only when the replacement Worker-owned implementation, redacted read model, tests, and release gate exist.

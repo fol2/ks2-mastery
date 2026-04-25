@@ -3,12 +3,14 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 import { SUBJECT_EXPOSURE_GATES } from '../src/platform/core/subject-availability.js';
-import { createPunctuationContentIndexes } from '../shared/punctuation/content.js';
-import { createPunctuationRuntimeManifest } from '../shared/punctuation/generators.js';
+import {
+  assertNoForbiddenPunctuationAdultEvidenceKeys,
+  assertNoForbiddenPunctuationReadModelKeys,
+  punctuationAnswerFor,
+  punctuationExpectedContextFor,
+} from '../scripts/punctuation-production-smoke.mjs';
+import { createSession } from '../worker/src/auth.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
-
-const RUNTIME_PUNCTUATION_ITEMS = createPunctuationContentIndexes(createPunctuationRuntimeManifest()).itemById;
-const SERVER_ONLY_READ_MODEL_FIELDS = /accepted|correctIndex|rubric|validator|hiddenQueue|generator/;
 
 async function readWranglerVars() {
   const source = await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
@@ -83,10 +85,6 @@ function punctuationMutationCounts(server, { accountId, learnerId, requestId = '
   };
 }
 
-function assertPunctuationReadModelRedacted(readModel) {
-  assert.doesNotMatch(JSON.stringify(readModel), SERVER_ONLY_READ_MODEL_FIELDS);
-}
-
 async function postJson(server, path, body = {}, headers = {}) {
   return server.fetchRaw(`https://repo.test${path}`, {
     method: 'POST',
@@ -120,8 +118,8 @@ async function startDemo(server) {
   };
 }
 
-async function postPunctuationCommand(server, { cookie, learnerId, revision, command, payload = {}, requestId }) {
-  const response = await postJson(server, '/api/subjects/punctuation/command', {
+async function postSubjectCommand(server, subjectId, { cookie, learnerId, revision, command, payload = {}, requestId }) {
+  const response = await postJson(server, `/api/subjects/${subjectId}/command`, {
     command,
     learnerId,
     requestId,
@@ -137,17 +135,30 @@ async function postPunctuationCommand(server, { cookie, learnerId, revision, com
   };
 }
 
-function learnerAnswerFor(item = {}) {
-  const sourceItem = RUNTIME_PUNCTUATION_ITEMS.get(item.id);
-  assert.ok(sourceItem, `Expected a runtime punctuation item for ${item.id || 'unknown item'}`);
-  if (item.inputKind === 'choice') {
-    assert.ok(Number.isInteger(sourceItem.correctIndex), `Expected a correct choice index for ${item.id}`);
-    return { choiceIndex: sourceItem.correctIndex };
-  }
-  const acceptedAnswer = Array.isArray(sourceItem.accepted) ? sourceItem.accepted.find(Boolean) : '';
-  const typed = sourceItem.model || acceptedAnswer;
-  assert.ok(typed, `Expected a model answer for ${item.id}`);
-  return { typed };
+async function postPunctuationCommand(server, args) {
+  return postSubjectCommand(server, 'punctuation', args);
+}
+
+async function postSpellingCommand(server, args) {
+  return postSubjectCommand(server, 'spelling', args);
+}
+
+async function adminCookieForLearner(server, learnerId) {
+  const now = Date.now();
+  const accountId = 'punctuation-release-admin';
+  server.DB.db.prepare(`
+    INSERT INTO adult_accounts (
+      id, email, display_name, platform_role, selected_learner_id,
+      created_at, updated_at, repo_revision, account_type
+    )
+    VALUES (?, ?, ?, 'admin', ?, ?, ?, 0, 'real')
+  `).run(accountId, 'punctuation-release-admin@example.test', 'Punctuation Release Admin', learnerId, now, now);
+  server.DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES (?, ?, 'owner', 0, ?, ?)
+  `).run(accountId, learnerId, now, now);
+  const session = await createSession(server.env, accountId, 'email', now, { sessionKind: 'real' });
+  return `ks2_session=${session.token}`;
 }
 
 test('Punctuation release smoke keeps demo exposure blocked by default', async () => {
@@ -212,9 +223,12 @@ test('Punctuation release smoke completes a gated demo action through Worker com
     assert.equal(start.response.status, 200, JSON.stringify(start.body));
     assert.equal(start.body.subjectReadModel.phase, 'active-item');
     assert.equal(start.body.subjectReadModel.session.serverAuthority, 'worker');
-    assertPunctuationReadModelRedacted(start.body.subjectReadModel);
+    assertNoForbiddenPunctuationReadModelKeys(start.body.subjectReadModel, 'releaseSmoke.smart.start');
 
-    const submitPayload = learnerAnswerFor(start.body.subjectReadModel.session.currentItem);
+    const submitPayload = {
+      ...punctuationAnswerFor(start.body.subjectReadModel.session.currentItem),
+      ...punctuationExpectedContextFor(start.body.subjectReadModel.session),
+    };
     const submit = await postPunctuationCommand(server, {
       cookie: demo.cookie,
       learnerId: demo.learnerId,
@@ -226,7 +240,7 @@ test('Punctuation release smoke completes a gated demo action through Worker com
     assert.equal(submit.response.status, 200, JSON.stringify(submit.body));
     assert.equal(submit.body.subjectReadModel.phase, 'feedback');
     assert.equal(submit.body.subjectReadModel.feedback.kind, 'success');
-    assertPunctuationReadModelRedacted(submit.body.subjectReadModel);
+    assertNoForbiddenPunctuationReadModelKeys(submit.body.subjectReadModel, 'releaseSmoke.smart.feedback');
     assert.equal(submit.body.domainEvents.some((event) => (
       event.type === 'punctuation.item-attempted' && event.correct === true
     )), true);
@@ -243,7 +257,7 @@ test('Punctuation release smoke completes a gated demo action through Worker com
     assert.equal(done.body.subjectReadModel.summary.total, 1);
     assert.equal(done.body.subjectReadModel.summary.correct, 1);
     assert.equal(done.body.subjectReadModel.summary.accuracy, 100);
-    assertPunctuationReadModelRedacted(done.body.subjectReadModel);
+    assertNoForbiddenPunctuationReadModelKeys(done.body.subjectReadModel, 'releaseSmoke.smart.summary');
 
     assert.equal(server.DB.db.prepare(`
       SELECT COUNT(*) AS count
@@ -294,6 +308,82 @@ test('Punctuation release smoke completes a gated demo action through Worker com
       ...demo,
       requestId: staleRequestId,
     }), beforeStaleCounts);
+
+    const gpsStart = await postPunctuationCommand(server, {
+      cookie: demo.cookie,
+      learnerId: demo.learnerId,
+      revision: done.body.mutation.appliedRevision,
+      command: 'start-session',
+      requestId: 'punctuation-release-smoke-gps-start',
+      payload: { mode: 'gps', roundLength: '1' },
+    });
+    assert.equal(gpsStart.response.status, 200, JSON.stringify(gpsStart.body));
+    assert.equal(gpsStart.body.subjectReadModel.phase, 'active-item');
+    assert.equal(gpsStart.body.subjectReadModel.session.mode, 'gps');
+    assert.equal(gpsStart.body.subjectReadModel.session.gps.delayedFeedback, true);
+    assert.equal(gpsStart.body.subjectReadModel.feedback, null);
+    assertNoForbiddenPunctuationReadModelKeys(gpsStart.body.subjectReadModel, 'releaseSmoke.gps.start');
+
+    const gpsSubmit = await postPunctuationCommand(server, {
+      cookie: demo.cookie,
+      learnerId: demo.learnerId,
+      revision: gpsStart.body.mutation.appliedRevision,
+      command: 'submit-answer',
+      requestId: 'punctuation-release-smoke-gps-submit',
+      payload: {
+        ...punctuationAnswerFor(gpsStart.body.subjectReadModel.session.currentItem),
+        ...punctuationExpectedContextFor(gpsStart.body.subjectReadModel.session),
+      },
+    });
+    assert.equal(gpsSubmit.response.status, 200, JSON.stringify(gpsSubmit.body));
+    assert.equal(gpsSubmit.body.subjectReadModel.phase, 'summary');
+    assert.equal(gpsSubmit.body.subjectReadModel.summary.total, 1);
+    assert.equal(gpsSubmit.body.subjectReadModel.summary.gps.delayedFeedback, true);
+    assert.equal(gpsSubmit.body.subjectReadModel.summary.gps.reviewItems.length, 1);
+    assertNoForbiddenPunctuationReadModelKeys(gpsSubmit.body.subjectReadModel, 'releaseSmoke.gps.summary');
+
+    const parentHub = await server.fetchRaw(`https://repo.test/api/hubs/parent?learnerId=${demo.learnerId}`, {
+      headers: { cookie: demo.cookie },
+    });
+    const parentBody = await parentHub.json();
+    assert.equal(parentHub.status, 200, JSON.stringify(parentBody));
+    assert.equal(parentBody.parentHub.punctuationEvidence.hasEvidence, true);
+    assert.ok(parentBody.parentHub.punctuationEvidence.overview.attempts >= 2);
+    assert.equal(
+      parentBody.parentHub.progressSnapshots.some((snapshot) => snapshot.subjectId === 'punctuation'),
+      true,
+    );
+    assertNoForbiddenPunctuationAdultEvidenceKeys(parentBody.parentHub.punctuationEvidence, 'releaseSmoke.parentHub.punctuationEvidence');
+    assertNoForbiddenPunctuationAdultEvidenceKeys(parentBody.parentHub.progressSnapshots, 'releaseSmoke.parentHub.progressSnapshots');
+
+    const adminCookie = await adminCookieForLearner(server, demo.learnerId);
+    const adminHub = await server.fetchRaw(`https://repo.test/api/hubs/admin?learnerId=${demo.learnerId}&auditLimit=5`, {
+      headers: { cookie: adminCookie },
+    });
+    const adminBody = await adminHub.json();
+    assert.equal(adminHub.status, 200, JSON.stringify(adminBody));
+    const selectedDiagnostics = adminBody.adminHub.learnerSupport.selectedDiagnostics;
+    assert.equal(selectedDiagnostics.learnerId, demo.learnerId);
+    assert.equal(selectedDiagnostics.punctuationEvidence.hasEvidence, true);
+    assertNoForbiddenPunctuationAdultEvidenceKeys(selectedDiagnostics.punctuationEvidence, 'releaseSmoke.adminHub.selectedDiagnostics.punctuationEvidence');
+    assertNoForbiddenPunctuationAdultEvidenceKeys(adminBody.adminHub.learnerSupport.punctuationReleaseDiagnostics, 'releaseSmoke.adminHub.punctuationReleaseDiagnostics');
+
+    const spelling = await postSpellingCommand(server, {
+      cookie: demo.cookie,
+      learnerId: demo.learnerId,
+      revision: gpsSubmit.body.mutation.appliedRevision,
+      command: 'start-session',
+      requestId: 'punctuation-release-smoke-spelling-start',
+      payload: { mode: 'single', slug: 'early', length: 1 },
+    });
+    assert.equal(spelling.response.status, 200, JSON.stringify(spelling.body));
+    assert.equal(spelling.body.subjectReadModel.phase, 'session');
+    assert.equal(spelling.body.subjectReadModel.session.serverAuthority, 'worker');
+    assert.equal(spelling.body.subjectReadModel.session.progress.total, 1);
+    assert.equal(spelling.body.subjectReadModel.session.currentCard.word, undefined);
+    assert.equal(spelling.body.subjectReadModel.session.currentCard.prompt.sentence, undefined);
+    assert.ok(spelling.body.subjectReadModel.session.currentCard.prompt.cloze);
+    assert.ok(spelling.body.subjectReadModel.audio.promptToken);
   } finally {
     server.close();
   }

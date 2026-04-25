@@ -335,6 +335,51 @@ test('production bundle audit fails source paths served by SPA fallback', async 
   }
 });
 
+test('production bundle audit denies the Punctuation hub read-model source path', async () => {
+  const server = createServer((request, response) => {
+    if (request.url === '/assets/app.js') {
+      response.writeHead(200, { 'content-type': 'application/javascript' });
+      response.end('console.log("ok");');
+      return;
+    }
+    if (request.url === '/src/subjects/punctuation/read-model.js') {
+      response.writeHead(200, { 'content-type': 'application/javascript' });
+      response.end('export function buildPunctuationLearnerReadModel() { return {}; }');
+      return;
+    }
+    if (request.url === '/') {
+      response.writeHead(200, { 'content-type': 'text/html' });
+      response.end('<!doctype html><script src="/assets/app.js"></script>');
+      return;
+    }
+    response.writeHead(404, { 'content-type': 'text/plain' });
+    response.end('not found');
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 5000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Direct URL should be denied with a 4xx response, got 200: \/src\/subjects\/punctuation\/read-model\.js/);
+      assert.match(error.stderr, /Direct URL unexpectedly served raw source-like JavaScript: \/src\/subjects\/punctuation\/read-model\.js/);
+      return true;
+    });
+  } finally {
+    server.closeAllConnections?.();
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+  }
+});
+
 test('production bundle audit fails on deployed Punctuation context-pack source and provider tokens', async () => {
   const server = createServer((request, response) => {
     if (request.url === '/assets/app.js') {

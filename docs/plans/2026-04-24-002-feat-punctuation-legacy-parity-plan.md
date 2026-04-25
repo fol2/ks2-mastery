@@ -469,7 +469,7 @@ tests/
 
 ---
 
-- [ ] U10. **Update Production Smoke, Documentation, And Release Gate**
+- [x] U10. **Update Production Smoke, Documentation, And Release Gate**
 
 **Goal:** Make full legacy parity independently verifiable before claiming it is deployed.
 

@@ -81,10 +81,27 @@ test('browser migration smoke covers the React app root, Grammar completeness co
       ['wait', '[data-punctuation-start]'],
       ['text'],
       ['click', '[data-punctuation-start]'],
-      ['wait', '[data-punctuation-submit]'],
-      ['js', "const choice = document.querySelector('input[name=\"choiceIndex\"]'); if (choice) choice.click(); 'picked punctuation option';"],
+      ['wait', 'input[name="choiceIndex"]'],
+      ['click', 'input[name="choiceIndex"]'],
       ['click', '[data-punctuation-submit]'],
       ['wait', '[data-punctuation-continue]'],
+      ['click', '[data-punctuation-continue]'],
+      ['wait', 'textarea[name="typed"]'],
+      ['fill', 'textarea[name="typed"]', 'where is the library'],
+      ['click', '[data-punctuation-submit]'],
+      ['wait', '[data-punctuation-continue]'],
+      ['click', '[data-punctuation-continue]'],
+      ['wait', 'textarea[name="typed"]'],
+      ['fill', 'textarea[name="typed"]', 'the pupils packed pencils rubbers and rulers'],
+      ['click', '[data-punctuation-submit]'],
+      ['wait', '[data-punctuation-continue]'],
+      ['click', '[data-punctuation-continue]'],
+      ['wait', 'textarea[name="typed"]'],
+      ['fill', 'textarea[name="typed"]', 'After lunch, the class checked their work.'],
+      ['click', '[data-punctuation-submit]'],
+      ['wait', '[data-punctuation-continue]'],
+      ['click', '[data-punctuation-continue]'],
+      ['wait', '[data-punctuation-summary]'],
       ['text'],
       ['js', "const punctuationHome = document.querySelector('.profile-brand-button[data-action=\"navigate-home\"]'); if (!punctuationHome) throw new Error('missing punctuation brand home button'); punctuationHome.click(); 'back from punctuation';"],
       ['wait', '.subject-grid'],
@@ -142,7 +159,7 @@ test('browser migration smoke covers the React app root, Grammar completeness co
     assert.match(output, /Your subjects/);
     assert.doesNotMatch(output, /data-home-mount/);
     assert.match(output, /Punctuation practice/);
-    assert.match(output, /Feedback/);
+    assert.match(output, /Punctuation session summary/);
     assert.match(output, /Grammar retrieval practice/);
     assert.match(output, /KS2-style mini-test/);
     assert.match(output, /Timed test/);
