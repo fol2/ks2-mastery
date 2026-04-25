@@ -252,7 +252,7 @@ tests/
 
 ---
 
-- [ ] U4. **Add Sentence Combining / Rewrite Mode**
+- [x] U4. **Add Sentence Combining / Rewrite Mode**
 
 **Goal:** Port legacy `combine` tasks for sentence combining and rewrite practice.
 

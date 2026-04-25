@@ -39,12 +39,17 @@ test('punctuation legacy parity baseline preserves the 14 legacy skill ids', () 
 test('punctuation legacy parity records shipped item modes and open mode gaps', () => {
   const report = createPunctuationLegacyParityReport({ legacyBaseline });
 
-  assert.deepEqual(report.productionItemModes, ['choose', 'fix', 'insert', 'transfer']);
-  for (const mode of ['choose', 'insert', 'fix', 'transfer']) {
+  assert.deepEqual(report.productionItemModes, ['choose', 'combine', 'fix', 'insert', 'transfer']);
+  for (const mode of ['choose', 'insert', 'fix', 'transfer', 'combine']) {
     const row = report.rows.find((entry) => entry.section === 'itemModes' && entry.id === mode);
     assert.equal(row?.status, 'ported', `${mode} should be marked ported`);
     assert.equal(row?.present, true, `${mode} should exist in production item modes`);
   }
+
+  const combineSession = report.rows.find((entry) => entry.section === 'sessionModes' && entry.id === 'combine');
+  assert.equal(combineSession?.status, 'replaced');
+  assert.equal(combineSession?.ownerUnit, 'U4');
+  assert.equal(combineSession?.present, false);
 
   const guided = report.rows.find((entry) => entry.section === 'sessionModes' && entry.id === 'guided');
   assert.equal(guided?.status, 'ported');
@@ -57,7 +62,6 @@ test('punctuation legacy parity records shipped item modes and open mode gaps', 
   assert.equal(weak?.present, true);
 
   for (const [id, ownerUnit] of [
-    ['combine', 'U4'],
     ['paragraph', 'U5'],
     ['gps', 'U6'],
   ]) {
