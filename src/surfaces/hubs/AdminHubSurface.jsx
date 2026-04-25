@@ -4,6 +4,7 @@ import { AdultLearnerSelect } from './AdultLearnerSelect.jsx';
 import { MonsterVisualConfigPanel } from './MonsterVisualConfigPanel.jsx';
 import { ReadOnlyLearnerNotice } from './ReadOnlyLearnerNotice.jsx';
 import { AccessDeniedCard, formatTimestamp, isBlocked, selectedWritableLearner } from './hub-utils.js';
+import { PanelHeader } from './admin-panel-header.jsx';
 
 function AdminAccountRoles({ model, directory = {}, actions }) {
   const isAdmin = model?.permissions?.platformRole === 'admin';
@@ -123,16 +124,13 @@ function DashboardKpiPanel({ model, actions }) {
   ];
   return (
     <section className="card" style={{ marginBottom: 20 }}>
-      <div className="card-header">
-        <div>
-          <div className="eyebrow">Dashboard KPI</div>
-          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Dashboard overview</h3>
-        </div>
-        <div className="actions">
-          <span className="chip">Generated {formatTimestamp(kpis.generatedAt)}</span>
-          <button className="btn secondary" type="button" onClick={() => actions.dispatch('admin-ops-kpi-refresh')}>Refresh</button>
-        </div>
-      </div>
+      <PanelHeader
+        eyebrow="Dashboard KPI"
+        title="Dashboard overview"
+        generatedAt={kpis.generatedAt}
+        refreshError={kpis.refreshError || null}
+        onRefresh={() => actions.dispatch('admin-ops-kpi-refresh')}
+      />
       <div className="skill-list">
         {items.map(([label, value]) => (
           <div className="skill-row" key={label}>
@@ -150,17 +148,14 @@ function RecentActivityStreamPanel({ model, actions }) {
   const entries = Array.isArray(stream.entries) ? stream.entries : [];
   return (
     <section className="card" style={{ marginBottom: 20 }}>
-      <div className="card-header">
-        <div>
-          <div className="eyebrow">Ops activity</div>
-          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Recent operations activity</h3>
-          <p className="small muted">Latest mutation receipts across accounts. Learner scope ids pre-masked to last 8 characters; account scope ids to last 6.</p>
-        </div>
-        <div className="actions">
-          <span className="chip">Generated {formatTimestamp(stream.generatedAt)}</span>
-          <button className="btn secondary" type="button" onClick={() => actions.dispatch('admin-ops-activity-refresh')}>Refresh</button>
-        </div>
-      </div>
+      <PanelHeader
+        eyebrow="Ops activity"
+        title="Recent operations activity"
+        subtitle="Latest mutation receipts across accounts. Learner scope ids pre-masked to last 8 characters; account scope ids to last 6."
+        generatedAt={stream.generatedAt}
+        refreshError={stream.refreshError || null}
+        onRefresh={() => actions.dispatch('admin-ops-activity-refresh')}
+      />
       {entries.length ? entries.map((entry) => (
         <div className="skill-row" key={entry.requestId || `${entry.mutationKind}-${entry.appliedAt}`}>
           <div><strong>{entry.mutationKind || 'mutation'}</strong></div>
@@ -317,17 +312,14 @@ function AccountOpsMetadataPanel({ model, actions }) {
   const savingAccountId = directory.savingAccountId || '';
   return (
     <section className="card" style={{ marginBottom: 20 }}>
-      <div className="card-header">
-        <div>
-          <div className="eyebrow">Account ops</div>
-          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Account ops metadata</h3>
-          <p className="small muted">GM-facing labels, plans, tags, and notes per account. Admin accounts can edit; ops-role accounts can view.</p>
-        </div>
-        <div className="actions">
-          <span className="chip">Generated {formatTimestamp(directory.generatedAt)}</span>
-          <button className="btn secondary" type="button" onClick={() => actions.dispatch('account-ops-metadata-refresh')}>Refresh</button>
-        </div>
-      </div>
+      <PanelHeader
+        eyebrow="Account ops"
+        title="Account ops metadata"
+        subtitle="GM-facing labels, plans, tags, and notes per account. Admin accounts can edit; ops-role accounts can view."
+        generatedAt={directory.generatedAt}
+        refreshError={directory.refreshError || null}
+        onRefresh={() => actions.dispatch('account-ops-metadata-refresh')}
+      />
       {accounts.length ? accounts.map((account) => (
         <AccountOpsMetadataRow
           key={account.accountId}
@@ -351,36 +343,38 @@ function ErrorLogCentrePanel({ model, actions }) {
   // R10: status transitions are admin-only. Ops-role viewers keep the chip.
   const canManage = model?.permissions?.platformRole === 'admin';
   const savingEventId = summary.savingEventId || '';
+  const headerExtras = (
+    <>
+      <div className="chip-row" style={{ marginTop: 8 }}>
+        <span className="chip">{String(Number(totals.open) || 0)} open</span>
+        <span className="chip">{String(Number(totals.investigating) || 0)} investigating</span>
+        <span className="chip">{String(Number(totals.resolved) || 0)} resolved</span>
+        <span className="chip">{String(Number(totals.ignored) || 0)} ignored</span>
+      </div>
+      <div className="chip-row" style={{ marginTop: 8 }}>
+        {statusFilters.map((status) => (
+          <button
+            className="btn ghost"
+            type="button"
+            key={status}
+            onClick={() => actions.dispatch('admin-ops-error-events-refresh', { status })}
+          >
+            Show {status}
+          </button>
+        ))}
+      </div>
+    </>
+  );
   return (
     <section className="card" style={{ marginBottom: 20 }}>
-      <div className="card-header">
-        <div>
-          <div className="eyebrow">Error log</div>
-          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Error log centre</h3>
-          <div className="chip-row" style={{ marginTop: 8 }}>
-            <span className="chip">{String(Number(totals.open) || 0)} open</span>
-            <span className="chip">{String(Number(totals.investigating) || 0)} investigating</span>
-            <span className="chip">{String(Number(totals.resolved) || 0)} resolved</span>
-            <span className="chip">{String(Number(totals.ignored) || 0)} ignored</span>
-          </div>
-          <div className="chip-row" style={{ marginTop: 8 }}>
-            {statusFilters.map((status) => (
-              <button
-                className="btn ghost"
-                type="button"
-                key={status}
-                onClick={() => actions.dispatch('admin-ops-error-events-refresh', { status })}
-              >
-                Show {status}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="actions">
-          <span className="chip">Generated {formatTimestamp(summary.generatedAt)}</span>
-          <button className="btn secondary" type="button" onClick={() => actions.dispatch('admin-ops-error-events-refresh', { status: null })}>Refresh</button>
-        </div>
-      </div>
+      <PanelHeader
+        eyebrow="Error log"
+        title="Error log centre"
+        generatedAt={summary.generatedAt}
+        refreshError={summary.refreshError || null}
+        onRefresh={() => actions.dispatch('admin-ops-error-events-refresh', { status: null })}
+        headerExtras={headerExtras}
+      />
       {entries.length ? entries.map((entry) => {
         const isSaving = savingEventId === entry.id;
         return (

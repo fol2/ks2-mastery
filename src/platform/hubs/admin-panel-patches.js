@@ -13,6 +13,16 @@
 // triggering the forbidden-module audit in `scripts/audit-client-bundle.mjs`
 // (the bundle audit disallows `admin-read-model.js` because it transitively
 // imports the full spelling content dataset for server-side hub build).
+//
+// P1.5 Phase A (U1): each panel now also carries a `refreshedAt` timestamp
+// (server-produced `generatedAt` copied in on successful refresh) and a
+// `refreshError` sibling ({ code, message, at, correlationId? } | null). The
+// latter is set by the four refresh helpers in main.js when the narrow
+// fetch rejects, and cleared on the next successful refresh. The patch
+// helpers below preserve these two siblings across refreshes so a successful
+// patch clears the error without dropping the saving scalars, and so a
+// failing patch can overwrite them without stomping the latest server data
+// that was already applied.
 
 function isPlainObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value);
@@ -34,12 +44,44 @@ function stripOkEnvelope(value) {
   return value;
 }
 
+// P1.5 Phase A (U1): compose the new sibling with preserved `refreshedAt`
+// / `refreshError` envelope values. The caller supplies the new payload and
+// the previous sibling (which may be absent on first load). Rules:
+//
+// - `refreshedAt` always updates to the new server `generatedAt` on success
+//   because the caller passes the fresh payload. We mirror it via the patch
+//   helpers to keep a single source of truth ("the value rendered beside the
+//   Refresh button is exactly the timestamp of the last successful fetch").
+// - `refreshError` is cleared on success (the user just saw a green refresh,
+//   there is no error to surface). Failures set it via the refreshError
+//   setters in main.js before ever calling the patch helper, so this path
+//   only sees the success case.
+// - Any extra sibling scalars the caller wants to preserve (savingAccountId,
+//   savingEventId) are merged via the third argument.
+function composeSuccess(previousSibling, nextPayload, preserveKeys = []) {
+  const prev = isPlainObject(previousSibling) ? previousSibling : {};
+  const generatedAt = Number.isFinite(Number(nextPayload?.generatedAt))
+    ? Number(nextPayload.generatedAt)
+    : 0;
+  const preserved = {};
+  for (const key of preserveKeys) {
+    if (typeof prev[key] === 'string' && prev[key]) preserved[key] = prev[key];
+  }
+  return {
+    ...nextPayload,
+    ...preserved,
+    refreshedAt: generatedAt,
+    refreshError: null,
+  };
+}
+
 export function applyAdminHubDashboardKpisPatch(adminHub, rawKpis) {
   const hub = coerceAdminHub(adminHub);
   if (!hub) return adminHub;
   const next = stripOkEnvelope(rawKpis);
   if (!isPlainObject(next)) return hub;
-  return { ...hub, dashboardKpis: next };
+  const previous = isPlainObject(hub.dashboardKpis) ? hub.dashboardKpis : null;
+  return { ...hub, dashboardKpis: composeSuccess(previous, next) };
 }
 
 export function applyAdminHubOpsActivityPatch(adminHub, rawActivity) {
@@ -47,7 +89,8 @@ export function applyAdminHubOpsActivityPatch(adminHub, rawActivity) {
   if (!hub) return adminHub;
   const next = stripOkEnvelope(rawActivity);
   if (!isPlainObject(next)) return hub;
-  return { ...hub, opsActivityStream: next };
+  const previous = isPlainObject(hub.opsActivityStream) ? hub.opsActivityStream : null;
+  return { ...hub, opsActivityStream: composeSuccess(previous, next) };
 }
 
 export function applyAdminHubErrorLogSummaryPatch(adminHub, rawSummary) {
@@ -57,11 +100,10 @@ export function applyAdminHubErrorLogSummaryPatch(adminHub, rawSummary) {
   if (!isPlainObject(next)) return hub;
   // Preserve the per-panel in-flight scalar so a narrow refresh that fires
   // during a pending status transition does not wipe the saving guard.
-  const previous = isPlainObject(hub.errorLogSummary) ? hub.errorLogSummary : {};
-  const savingEventId = typeof previous.savingEventId === 'string' ? previous.savingEventId : '';
+  const previous = isPlainObject(hub.errorLogSummary) ? hub.errorLogSummary : null;
   return {
     ...hub,
-    errorLogSummary: savingEventId ? { ...next, savingEventId } : next,
+    errorLogSummary: composeSuccess(previous, next, ['savingEventId']),
   };
 }
 
@@ -72,10 +114,43 @@ export function applyAdminHubAccountOpsMetadataPatch(adminHub, rawDirectory) {
   if (!isPlainObject(next)) return hub;
   // Preserve the per-panel in-flight scalar (U5 follow-up Finding 1) so a
   // narrow refresh mid-save does not unmask the row while a PUT is pending.
-  const previous = isPlainObject(hub.accountOpsMetadata) ? hub.accountOpsMetadata : {};
-  const savingAccountId = typeof previous.savingAccountId === 'string' ? previous.savingAccountId : '';
+  const previous = isPlainObject(hub.accountOpsMetadata) ? hub.accountOpsMetadata : null;
   return {
     ...hub,
-    accountOpsMetadata: savingAccountId ? { ...next, savingAccountId } : next,
+    accountOpsMetadata: composeSuccess(previous, next, ['savingAccountId']),
+  };
+}
+
+// P1.5 Phase A (U1): failure-case patch — record the refresh error on the
+// target panel without touching any other sibling. The refreshedAt scalar
+// is preserved verbatim (whatever timestamp the UI was displaying from the
+// last successful refresh stays put), so the header continues to show "last
+// refreshed <N> ago" alongside the new error banner.
+const PANEL_KEYS = Object.freeze({
+  dashboardKpis: 'dashboardKpis',
+  opsActivityStream: 'opsActivityStream',
+  errorLogSummary: 'errorLogSummary',
+  accountOpsMetadata: 'accountOpsMetadata',
+});
+
+export function applyAdminHubPanelRefreshError(adminHub, panelKey, refreshError) {
+  const hub = coerceAdminHub(adminHub);
+  if (!hub) return adminHub;
+  const key = PANEL_KEYS[panelKey];
+  if (!key) return hub;
+  const previous = isPlainObject(hub[key]) ? hub[key] : { generatedAt: 0 };
+  const nextError = refreshError && typeof refreshError === 'object'
+    ? { ...refreshError }
+    : null;
+  return {
+    ...hub,
+    [key]: {
+      ...previous,
+      refreshError: nextError,
+      // `refreshedAt` is only updated on success — on failure we keep whatever
+      // timestamp was already rendered so the user can see "last refreshed
+      // at X; current attempt failed".
+      refreshedAt: Number(previous.refreshedAt) || Number(previous.generatedAt) || 0,
+    },
   };
 }

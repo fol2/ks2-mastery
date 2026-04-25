@@ -22,7 +22,9 @@ import {
   applyAdminHubDashboardKpisPatch,
   applyAdminHubErrorLogSummaryPatch,
   applyAdminHubOpsActivityPatch,
+  applyAdminHubPanelRefreshError,
 } from './platform/hubs/admin-panel-patches.js';
+import { routeAdminRefreshError } from './platform/hubs/admin-refresh-error-text.js';
 import {
   buildAdminHubAccessContext,
   buildParentHubAccessContext,
@@ -754,43 +756,123 @@ function applyAdminHubPanelPatch(patchFn) {
   });
 }
 
+// P1.5 Phase A (U1): each narrow refresh carries its own sequence token so a
+// slow-in-flight request whose result arrives after a newer one does not
+// overwrite the fresher panel state. We only apply results whose token is
+// still the latest scheduled one for that panel. The tokens live at module
+// scope because the helpers are module-scope (not closures), and a Map keeps
+// the four panels independent.
+const adminOpsRefreshTokens = new Map();
+let adminOpsRefreshTokenCounter = 0;
+function beginAdminOpsRefreshToken(panelKey) {
+  adminOpsRefreshTokenCounter += 1;
+  const token = adminOpsRefreshTokenCounter;
+  adminOpsRefreshTokens.set(panelKey, token);
+  return token;
+}
+function isAdminOpsRefreshTokenLatest(panelKey, token) {
+  return adminOpsRefreshTokens.get(panelKey) === token;
+}
+
+// P1.5 Phase A (U1): derive the refreshError envelope the `<PanelHeader>`
+// consumes from a thrown hub-api error (see platform/hubs/api.js). `code` is
+// taken verbatim from the Worker payload when present; `network` is the
+// fallback for fetch rejections / malformed envelopes.
+function buildRefreshErrorEnvelope(error) {
+  const code = typeof error?.code === 'string' && error.code ? error.code : 'network';
+  const message = typeof error?.message === 'string' ? error.message : '';
+  const correlationId = error?.payload?.correlationId || error?.correlationId || null;
+  return {
+    code,
+    message,
+    correlationId,
+    at: Date.now(),
+  };
+}
+
+// P1.5 Phase A (U1): when the router hands off to a global handler (session
+// invalidated, account suspended), the panel-level banner is skipped — we
+// emit a structured notice the shell can observe via adultSurfaceState.notice
+// for now. Later phases (U14 for session_invalidated, U13 for account
+// _suspended) will replace this with a dedicated shell transition.
+function maybeRouteToGlobalHandler(envelope) {
+  const routed = routeAdminRefreshError(envelope.code, {
+    correlationId: envelope.correlationId,
+  });
+  if (routed.globalHandler) {
+    setAdultSurfaceNotice(
+      routed.globalHandler === 'global.account-suspended'
+        ? 'This account is suspended. Please contact ops.'
+        : 'Your session has expired. Please sign in again.',
+    );
+    return true;
+  }
+  return false;
+}
+
+function applyAdminOpsRefreshError(panelKey, error) {
+  const envelope = buildRefreshErrorEnvelope(error);
+  if (maybeRouteToGlobalHandler(envelope)) return;
+  applyAdminHubPanelPatch((adminHub) => applyAdminHubPanelRefreshError(adminHub, panelKey, envelope));
+}
+
 async function refreshAdminOpsKpi() {
-  if (!hubApi) return;
+  if (!hubApi) return { ok: false, reason: 'no-hub' };
+  const token = beginAdminOpsRefreshToken('dashboardKpis');
   try {
     const payload = await hubApi.readAdminOpsKpi();
+    if (!isAdminOpsRefreshTokenLatest('dashboardKpis', token)) return { ok: false, reason: 'superseded' };
     applyAdminHubPanelPatch((adminHub) => applyAdminHubDashboardKpisPatch(adminHub, payload));
+    return { ok: true };
   } catch (error) {
-    console.error('admin-ops-kpi-refresh failed:', error?.message || error);
+    if (!isAdminOpsRefreshTokenLatest('dashboardKpis', token)) return { ok: false, reason: 'superseded' };
+    applyAdminOpsRefreshError('dashboardKpis', error);
+    return { ok: false, reason: 'error', error };
   }
 }
 
 async function refreshAdminOpsActivity({ limit = 50 } = {}) {
-  if (!hubApi) return;
+  if (!hubApi) return { ok: false, reason: 'no-hub' };
+  const token = beginAdminOpsRefreshToken('opsActivityStream');
   try {
     const payload = await hubApi.readAdminOpsActivity({ limit });
+    if (!isAdminOpsRefreshTokenLatest('opsActivityStream', token)) return { ok: false, reason: 'superseded' };
     applyAdminHubPanelPatch((adminHub) => applyAdminHubOpsActivityPatch(adminHub, payload));
+    return { ok: true };
   } catch (error) {
-    console.error('admin-ops-activity-refresh failed:', error?.message || error);
+    if (!isAdminOpsRefreshTokenLatest('opsActivityStream', token)) return { ok: false, reason: 'superseded' };
+    applyAdminOpsRefreshError('opsActivityStream', error);
+    return { ok: false, reason: 'error', error };
   }
 }
 
 async function refreshAdminOpsErrorEvents({ status = null, limit = 50 } = {}) {
-  if (!hubApi) return;
+  if (!hubApi) return { ok: false, reason: 'no-hub' };
+  const token = beginAdminOpsRefreshToken('errorLogSummary');
   try {
     const payload = await hubApi.readAdminOpsErrorEvents({ status, limit });
+    if (!isAdminOpsRefreshTokenLatest('errorLogSummary', token)) return { ok: false, reason: 'superseded' };
     applyAdminHubPanelPatch((adminHub) => applyAdminHubErrorLogSummaryPatch(adminHub, payload));
+    return { ok: true };
   } catch (error) {
-    console.error('admin-ops-error-events-refresh failed:', error?.message || error);
+    if (!isAdminOpsRefreshTokenLatest('errorLogSummary', token)) return { ok: false, reason: 'superseded' };
+    applyAdminOpsRefreshError('errorLogSummary', error);
+    return { ok: false, reason: 'error', error };
   }
 }
 
 async function refreshAdminOpsAccountsMetadata() {
-  if (!hubApi) return;
+  if (!hubApi) return { ok: false, reason: 'no-hub' };
+  const token = beginAdminOpsRefreshToken('accountOpsMetadata');
   try {
     const payload = await hubApi.readAdminOpsAccountsMetadata();
+    if (!isAdminOpsRefreshTokenLatest('accountOpsMetadata', token)) return { ok: false, reason: 'superseded' };
     applyAdminHubPanelPatch((adminHub) => applyAdminHubAccountOpsMetadataPatch(adminHub, payload));
+    return { ok: true };
   } catch (error) {
-    console.error('account-ops-metadata-refresh failed:', error?.message || error);
+    if (!isAdminOpsRefreshTokenLatest('accountOpsMetadata', token)) return { ok: false, reason: 'superseded' };
+    applyAdminOpsRefreshError('accountOpsMetadata', error);
+    return { ok: false, reason: 'error', error };
   }
 }
 
