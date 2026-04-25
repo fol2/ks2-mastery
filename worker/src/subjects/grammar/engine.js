@@ -81,6 +81,53 @@ function cappedString(value, limit = SHORT_RESPONSE_TEXT_LIMIT) {
   return text.length > limit ? text.slice(0, limit) : text;
 }
 
+function safeAiText(value, limit = SHORT_RESPONSE_TEXT_LIMIT) {
+  return cappedString(value, limit)
+    .replace(/[\u0000-\u001f\u007f]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function safeAiTextList(value, limit = 4, textLimit = 180) {
+  return (Array.isArray(value) ? value : [])
+    .map((entry) => safeAiText(entry, textLimit))
+    .filter(Boolean)
+    .slice(0, limit);
+}
+
+function normalisePersistentAiEnrichment(raw) {
+  if (!isPlainObject(raw)) return null;
+  if (raw.kind !== 'parent-summary' || raw.status !== 'ready' || raw.nonScored === false) return null;
+  const summary = isPlainObject(raw.parentSummary) ? raw.parentSummary : null;
+  if (!summary) return null;
+  const title = safeAiText(summary.title || 'Parent summary draft', 90);
+  const body = safeAiText(summary.body || summary.summary, 520);
+  const nextSteps = safeAiTextList(summary.nextSteps, 4, 160);
+  if (!body && !title && !nextSteps.length) return null;
+  const output = {
+    kind: 'parent-summary',
+    status: 'ready',
+    nonScored: true,
+    generatedAt: timestamp(raw.generatedAt || 0),
+    parentSummary: {
+      title: title || 'Parent summary draft',
+      body,
+      nextSteps,
+    },
+  };
+  if (raw.source === 'server-validated-ai') output.source = raw.source;
+  if (isPlainObject(raw.concept)) {
+    output.concept = {
+      id: safeAiText(raw.concept.id, 80),
+      name: safeAiText(raw.concept.name, 120),
+      domain: safeAiText(raw.concept.domain, 80),
+    };
+  }
+  const notices = safeAiTextList(raw.notices, 4, 180);
+  if (notices.length) output.notices = notices;
+  return output;
+}
+
 function optionValue(option) {
   if (Array.isArray(option)) return cappedString(option[0]);
   if (isPlainObject(option)) return cappedString(option.value);
@@ -258,6 +305,7 @@ export function normaliseServerGrammarData(rawValue) {
       : [],
     misconceptions: isPlainObject(raw.misconceptions) ? cloneSerialisable(raw.misconceptions) : {},
     recentAttempts: Array.isArray(raw.recentAttempts) ? raw.recentAttempts.slice(-80).map(cloneSerialisable) : [],
+    aiEnrichment: normalisePersistentAiEnrichment(raw.aiEnrichment),
   };
 }
 
@@ -293,6 +341,7 @@ export function createInitialGrammarState(data = {}) {
     retryQueue: normalisedData.retryQueue,
     misconceptions: normalisedData.misconceptions,
     recentAttempts: normalisedData.recentAttempts,
+    aiEnrichment: normalisedData.aiEnrichment,
     session: null,
     feedback: null,
     summary: null,
@@ -311,6 +360,7 @@ function normaliseGrammarState(rawState, data = {}) {
     retryQueue: rawState.retryQueue || data.retryQueue,
     misconceptions: rawState.misconceptions || data.misconceptions,
     recentAttempts: rawState.recentAttempts || data.recentAttempts,
+    aiEnrichment: rawState.aiEnrichment || data.aiEnrichment,
   });
   return {
     ...fallback,
@@ -334,6 +384,7 @@ function normaliseGrammarState(rawState, data = {}) {
     retryQueue: normalisedData.retryQueue,
     misconceptions: normalisedData.misconceptions,
     recentAttempts: normalisedData.recentAttempts,
+    aiEnrichment: normalisedData.aiEnrichment,
     session: isPlainObject(rawState.session) ? cloneSerialisable(rawState.session) : null,
     feedback: isPlainObject(rawState.feedback) ? cloneSerialisable(rawState.feedback) : null,
     summary: isPlainObject(rawState.summary) ? cloneSerialisable(rawState.summary) : null,
@@ -350,6 +401,7 @@ function stateData(state) {
     retryQueue: cloneSerialisable(state.retryQueue) || [],
     misconceptions: cloneSerialisable(state.misconceptions) || {},
     recentAttempts: cloneSerialisable(state.recentAttempts) || [],
+    ...(state.aiEnrichment ? { aiEnrichment: cloneSerialisable(state.aiEnrichment) } : {}),
   };
 }
 
@@ -1681,7 +1733,11 @@ export function createServerGrammarEngine({ now = Date.now } = {}) {
         events = startSimilarProblem(state, nowTs);
       } else if (command === 'request-ai-enrichment') {
         aiEnrichment = requestAiEnrichment(state, payload, nowTs);
-        changed = false;
+        const persistentAiEnrichment = normalisePersistentAiEnrichment(aiEnrichment);
+        if (persistentAiEnrichment) {
+          state.aiEnrichment = persistentAiEnrichment;
+        }
+        changed = Boolean(persistentAiEnrichment);
       } else if (command === 'reset-learner') {
         state = createInitialGrammarState();
       } else {

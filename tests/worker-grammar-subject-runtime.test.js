@@ -1104,6 +1104,75 @@ test('Grammar AI enrichment returns non-scored deterministic drill suggestions w
   DB.close();
 });
 
+test('Grammar parent-summary AI enrichment persists a non-scored adult draft', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const enrichment = await postCommand(app, DB, {
+    command: 'request-ai-enrichment',
+    learnerId: 'learner-a',
+    requestId: 'grammar-ai-parent-summary',
+    expectedLearnerRevision: 0,
+    payload: {
+      kind: 'parent-summary',
+      aiResponse: {
+        title: 'Grammar parent summary',
+        explanation: 'Non-scored adult summary draft.',
+        parentSummary: {
+          title: 'Parent summary draft',
+          body: 'Learner A should revisit fronted adverbials before the next mixed review.',
+          nextSteps: ['Practise two fronted adverbial choices', 'Check comma placement after the opener'],
+        },
+      },
+    },
+  });
+
+  assert.equal(enrichment.response.status, 200, JSON.stringify(enrichment.body));
+  assert.equal(enrichment.body.changed, true);
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.kind, 'parent-summary');
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.status, 'ready');
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.nonScored, true);
+  assert.match(enrichment.body.subjectReadModel.aiEnrichment.parentSummary.body, /fronted adverbials/i);
+  assert.equal(enrichment.body.mutation.appliedRevision, 1);
+  assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 1);
+  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM child_subject_state WHERE subject_id = 'grammar'").get().count, 1);
+  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM event_log WHERE subject_id = 'grammar'").get().count, 0);
+
+  const stored = DB.db.prepare(`
+    SELECT ui_json, data_json
+    FROM child_subject_state
+    WHERE learner_id = 'learner-a'
+      AND subject_id = 'grammar'
+  `).get();
+  const storedUi = JSON.parse(stored.ui_json);
+  const storedData = JSON.parse(stored.data_json);
+  assert.equal(storedUi.aiEnrichment.kind, 'parent-summary');
+  assert.equal(storedData.aiEnrichment.kind, 'parent-summary');
+  assert.equal(storedData.aiEnrichment.nonScored, true);
+  assert.equal(storedData.aiEnrichment.revisionDrills, undefined);
+
+  const parentResponse = await app.fetch(new Request('https://repo.test/api/hubs/parent?learnerId=learner-a', {
+    headers: {
+      origin: 'https://repo.test',
+      'x-ks2-dev-account-id': 'adult-a',
+    },
+  }), {
+    DB,
+    AUTH_MODE: 'development-stub',
+    ENVIRONMENT: 'test',
+  }, {});
+  const parentBody = await parentResponse.json();
+  assert.equal(parentResponse.status, 200, JSON.stringify(parentBody));
+  assert.match(parentBody.parentHub.grammarEvidence.parentSummaryDraft.body, /fronted adverbials/i);
+  assert.deepEqual(parentBody.parentHub.grammarEvidence.parentSummaryDraft.nextSteps, [
+    'Practise two fronted adverbial choices',
+    'Check comma placement after the opener',
+  ]);
+
+  DB.close();
+});
+
 test('Grammar AI enrichment uses deterministic fallback content when no provider response is available', async () => {
   const DB = createMigratedSqliteD1Database();
   const app = createWorkerApp({ now: () => 1_777_000_000_000 });

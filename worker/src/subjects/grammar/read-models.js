@@ -678,7 +678,7 @@ export function buildGrammarReadModel({
       recentActivity: recentActivityFromAttempts(recentAttempts),
     },
     capabilities: capabilityMetadata(),
-    aiEnrichment: safeAiEnrichment(aiEnrichment),
+    aiEnrichment: safeAiEnrichment(aiEnrichment || safeState.aiEnrichment),
     projections: projections ? cloneSerialisable(projections) : null,
     error: typeof safeState.error === 'string' ? safeState.error : '',
   };

@@ -41,3 +41,8 @@ This document tracks Grammar-only functionality completeness against the reviewe
 - Plan: `docs/plans/2026-04-25-001-feat-grammar-functionality-completeness-plan.md`
 - Baseline fixture: `tests/fixtures/grammar-functionality-completeness/legacy-baseline.json`
 - Guardrail test: `tests/grammar-functionality-completeness.test.js`
+
+## Release Gate Note
+
+- `npm run smoke:production:grammar` remains a manual post-deploy release gate because it depends on the live production origin and demo-session/auth behaviour.
+- `npm run check` and local dry-run scripts must stay network/auth independent; production smoke evidence belongs in the PR/deploy notes for Grammar-facing changes.

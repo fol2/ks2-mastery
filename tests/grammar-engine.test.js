@@ -936,7 +936,25 @@ test('Grammar worked solution and retry repair do not double-count unsubmitted p
   assert.equal(correct.state.recentAttempts.length, 2);
   assert.equal(correct.state.recentAttempts.at(-1).supportLevel, 2);
   assert.equal(correct.state.recentAttempts.at(-1).attempts, 2);
+  assert.equal(correct.state.feedback.result.correct, true);
+  assert.equal(correct.state.feedback.result.score, 1);
   assert.equal(correct.state.session.answered, 1);
+  assert.equal(correct.state.session.correct, 0);
+  assert.equal(correct.state.session.totalScore, 0);
+
+  const done = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: correct.state, data: correct.data },
+    latestSession: correct.practiceSession,
+    command: 'end-session',
+    requestId: 'finish-worked-repair',
+    payload: {},
+  });
+  assert.equal(done.state.phase, 'summary');
+  assert.equal(done.state.summary.answered, 1);
+  assert.equal(done.state.summary.correct, 0);
+  assert.equal(done.state.summary.totalScore, 0);
+  assert.equal(done.state.summary.totalMarks, 1);
 });
 
 test('Grammar similar problem repair creates a deterministic built-in variant', () => {
