@@ -15,6 +15,7 @@
     "check": "node ./scripts/wrangler-oauth.mjs deploy --dry-run",
     "check:oauth": "npm run check",
     "capacity:classroom": "node ./scripts/classroom-load-test.mjs",
+    "capacity:verify-evidence": "node ./scripts/verify-capacity-evidence.mjs",
     "content:seed": "node scripts/seed-spelling-content-from-legacy.mjs",
     "content:enrich": "node scripts/enrich-spelling-vocabulary.mjs",
     "content:validate": "node scripts/validate-spelling-content.mjs",
@@ -40,7 +41,7 @@
     "smoke:production:punctuation": "node ./scripts/punctuation-production-smoke.mjs",
     "test": "node --test",
     "test:migration:browser": "KS2_BROWSER_SMOKE=1 node --test tests/browser-react-migration-smoke.test.js",
-    "verify": "npm test && npm run check"
+    "verify": "npm test && npm run check && npm run capacity:verify-evidence"
   },
   "devDependencies": {
     "esbuild": "^0.28.0",

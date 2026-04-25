@@ -38,6 +38,7 @@ export function parseProbeArgs(argv = process.argv.slice(2)) {
     maxSessions: null,
     maxEvents: null,
     forbiddenTokens: [],
+    output: '',
     help: false,
   };
 
@@ -68,6 +69,9 @@ export function parseProbeArgs(argv = process.argv.slice(2)) {
       index += 1;
     } else if (arg === '--forbidden-token') {
       options.forbiddenTokens.push(readOptionValue(argv, index, arg));
+      index += 1;
+    } else if (arg === '--output') {
+      options.output = readOptionValue(argv, index, arg);
       index += 1;
     } else {
       throw new Error(`Unknown option: ${arg}`);
@@ -274,6 +278,7 @@ export function usage() {
     '  --max-sessions <number>    Maximum allowed practiceSessions length',
     '  --max-events <number>      Maximum allowed eventLog length',
     '  --forbidden-token <text>   Token that must not appear in the JSON payload, repeatable',
+    '  --output <path>            Persist probe evidence JSON to <path> with reportMeta',
   ].join('\n');
 }
 
@@ -285,6 +290,21 @@ export async function runProbe(argv = process.argv.slice(2)) {
   }
 
   const summary = await probeProductionBootstrap(options);
+  if (options.output) {
+    const { persistEvidenceFile, buildReportMeta } = await import('./lib/capacity-evidence.mjs');
+    const payload = {
+      ...summary,
+      reportMeta: buildReportMeta({
+        mode: 'production',
+        origin: options.url,
+        cookie: options.cookie,
+        bearer: options.bearer,
+        headers: options.headers,
+        environment: 'production',
+      }, { startedAt: summary.startedAt, finishedAt: summary.finishedAt }),
+    };
+    persistEvidenceFile(options.output, payload);
+  }
   console.log(JSON.stringify(summary, null, 2));
   return summary.ok ? 0 : 1;
 }
