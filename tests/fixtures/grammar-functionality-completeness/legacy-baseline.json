@@ -1,0 +1,216 @@
+{
+  "id": "grammar-functionality-completeness",
+  "source": "reviewed legacy Grammar HTML functionality audit",
+  "contentReleaseId": "grammar-legacy-reviewed-2026-04-24",
+  "contentBaseline": {
+    "conceptCount": 18,
+    "templateCount": 51,
+    "selectedResponseCount": 31,
+    "constructedResponseCount": 20,
+    "questionTypes": [
+      "build",
+      "choose",
+      "classify",
+      "explain",
+      "fill",
+      "fix",
+      "identify",
+      "rewrite"
+    ]
+  },
+  "legacyModes": [
+    "learn",
+    "smart",
+    "trouble",
+    "surgery",
+    "builder",
+    "worked",
+    "faded",
+    "satsset"
+  ],
+  "legacySessionGoals": [
+    "10m",
+    "15q",
+    "due"
+  ],
+  "legacyMiniTest": {
+    "mode": "satsset",
+    "setSizes": [
+      8,
+      12
+    ],
+    "minimumTimeLimitMs": 360000,
+    "timeLimitMsPerMark": 54000,
+    "delayedFeedback": true,
+    "navigation": true,
+    "finishAction": true,
+    "endReview": true
+  },
+  "legacyRepairActions": [
+    "retry-current-question",
+    "show-worked-solution",
+    "use-faded-support",
+    "built-in-similar-problem"
+  ],
+  "legacyAiActions": [
+    "ai-explain-this",
+    "ai-revision-set",
+    "ai-parent-summary"
+  ],
+  "legacySettings": [
+    "allow-teaching-items-in-smart-review",
+    "speech-rate",
+    "show-domain-before-answer"
+  ],
+  "capabilities": [
+    {
+      "id": "content-denominator",
+      "legacyCapability": "18 concepts, 51 deterministic templates and reviewed question-type split",
+      "status": "completed",
+      "evidence": [
+        "worker/src/subjects/grammar/content.js",
+        "tests/fixtures/grammar-legacy-oracle/legacy-baseline.json",
+        "tests/grammar-engine.test.js"
+      ]
+    },
+    {
+      "id": "worker-owned-scoring",
+      "legacyCapability": "Scored Grammar practice uses deterministic generators and marking",
+      "status": "completed",
+      "evidence": [
+        "worker/src/subjects/grammar/engine.js",
+        "worker/src/subjects/grammar/commands.js",
+        "tests/worker-grammar-subject-runtime.test.js"
+      ]
+    },
+    {
+      "id": "legacy-mode-ids-enabled",
+      "legacyCapability": "All eight legacy mode ids are visible and enabled",
+      "status": "completed",
+      "evidence": [
+        "src/subjects/grammar/metadata.js",
+        "tests/react-grammar-surface.test.js"
+      ]
+    },
+    {
+      "id": "concept-analytics",
+      "legacyCapability": "Concept status, misconception patterns, question-type evidence and recent activity",
+      "status": "completed",
+      "evidence": [
+        "worker/src/subjects/grammar/read-models.js",
+        "src/subjects/grammar/components/GrammarAnalyticsScene.jsx"
+      ]
+    },
+    {
+      "id": "derived-grammar-rewards",
+      "legacyCapability": "Grammar creature progress derives from secured learning evidence",
+      "status": "completed",
+      "evidence": [
+        "src/subjects/grammar/event-hooks.js",
+        "tests/grammar-rewards.test.js"
+      ]
+    },
+    {
+      "id": "ai-safe-lane-validator",
+      "legacyCapability": "AI stays in a non-scored enrichment lane",
+      "status": "completed",
+      "evidence": [
+        "worker/src/subjects/grammar/ai-enrichment.js",
+        "tests/worker-grammar-subject-runtime.test.js"
+      ]
+    },
+    {
+      "id": "transfer-and-bellstorm-placeholders",
+      "legacyCapability": "Grammar shows future transfer roadmap without collapsing Punctuation identity",
+      "status": "completed",
+      "evidence": [
+        "src/subjects/grammar/components/GrammarPracticeSurface.jsx",
+        "src/subjects/grammar/components/GrammarAnalyticsScene.jsx"
+      ]
+    },
+    {
+      "id": "strict-mini-test-flow",
+      "legacyCapability": "KS2-style mini-test has fixed set size, timer, navigation, delayed feedback and end review",
+      "status": "planned",
+      "ownerUnit": "U2",
+      "reason": "Current satsset mode uses the generic per-item feedback loop."
+    },
+    {
+      "id": "session-goals",
+      "legacyCapability": "Session goal supports ten minutes, fifteen questions and clear due items",
+      "status": "planned",
+      "ownerUnit": "U3",
+      "reason": "Current Grammar setup exposes round length only."
+    },
+    {
+      "id": "practice-settings",
+      "legacyCapability": "Smart Review teaching items and show-domain-before-answer are learner preferences",
+      "status": "planned",
+      "ownerUnit": "U3",
+      "reason": "Current Grammar prefs only cover mode, focus and round length."
+    },
+    {
+      "id": "in-session-repair-loop",
+      "legacyCapability": "Learners can retry, show worked solution, request faded support and load a similar built-in problem",
+      "status": "planned",
+      "ownerUnit": "U4",
+      "reason": "Current UI exposes worked/faded as modes but not as in-session repair actions."
+    },
+    {
+      "id": "ai-visible-triggers",
+      "legacyCapability": "Learners and adults can request explanation, revision cards and parent summary drafts",
+      "status": "planned",
+      "ownerUnit": "U5",
+      "reason": "Current safe lane can render enrichment but lacks visible trigger workflows."
+    },
+    {
+      "id": "read-aloud-and-speech-rate",
+      "legacyCapability": "Grammar prompt, visible options and feedback can be read aloud at a learner-selected rate",
+      "status": "planned",
+      "ownerUnit": "U6",
+      "reason": "Current Grammar UI has no speech synthesis affordance."
+    },
+    {
+      "id": "adult-data-replacement-parity",
+      "legacyCapability": "Profile/data/settings workflows are clearly replaced by platform persistence and adult evidence surfaces",
+      "status": "planned",
+      "ownerUnit": "U7",
+      "reason": "Current platform has adult Grammar evidence, but the replacement boundary is not yet complete or documented."
+    },
+    {
+      "id": "functionality-completeness-release-gate",
+      "legacyCapability": "Completeness claim is protected by tests, smoke coverage and documentation",
+      "status": "planned",
+      "ownerUnit": "U8",
+      "reason": "Current tests prove the shipped Worker slice, not the full legacy functionality matrix."
+    },
+    {
+      "id": "platform-learner-management",
+      "legacyCapability": "Create, rename, delete, import, export and reset learner data inside the single HTML file",
+      "status": "replaced",
+      "replacement": "Platform learner management, persistence, import/export and remote sync remain authoritative.",
+      "evidence": [
+        "src/platform/core/repositories/persistence.js",
+        "src/surfaces/hubs/ParentHubSurface.jsx"
+      ]
+    },
+    {
+      "id": "browser-local-scoring",
+      "legacyCapability": "Single-file browser code owns scored Grammar state",
+      "status": "rejected",
+      "rationale": "Production Grammar scoring, scheduling and mastery mutation must remain Worker-owned."
+    },
+    {
+      "id": "browser-held-ai-keys",
+      "legacyCapability": "Learner enters and optionally stores provider API keys in the browser",
+      "status": "rejected",
+      "rationale": "AI provider access must stay server-side; browser-held keys are not a production parity target."
+    },
+    {
+      "id": "single-file-html-route",
+      "legacyCapability": "The legacy HTML file can be opened directly as the product",
+      "status": "rejected",
+      "rationale": "Production Grammar must run through the React subject surface and Worker command boundary."
+    }
+  ]
+}
