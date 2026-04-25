@@ -2,6 +2,10 @@ import { WORDS as DEFAULT_WORDS, WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from '..
 import { createLegacySpellingEngine } from './legacy-engine.js';
 import {
   SPELLING_MASTERY_MILESTONES,
+  createSpellingGuardianMissionCompletedEvent,
+  createSpellingGuardianRecoveredEvent,
+  createSpellingGuardianRenewedEvent,
+  createSpellingGuardianWobbledEvent,
   createSpellingMasteryMilestoneEvent,
   createSpellingRetryClearedEvent,
   createSpellingSessionCompletedEvent,
@@ -12,11 +16,18 @@ import {
   normaliseTtsProvider,
 } from '../../src/subjects/spelling/tts-providers.js';
 import {
+  GUARDIAN_DEFAULT_ROUND_LENGTH,
+  GUARDIAN_INTERVALS,
+  GUARDIAN_MAX_REVIEW_LEVEL,
+  GUARDIAN_MAX_ROUND_LENGTH,
+  GUARDIAN_MIN_ROUND_LENGTH,
   cloneSerialisable,
   createInitialSpellingState,
   defaultLearningStatus,
   normaliseBoolean,
   normaliseFeedback,
+  normaliseGuardianMap,
+  normaliseGuardianRecord,
   normaliseMode,
   normaliseNonNegativeInteger,
   normaliseOptionalString,
@@ -34,6 +45,10 @@ import {
 } from '../../src/subjects/spelling/service-contract.js';
 
 const PREF_KEY = 'ks2-platform-v2.spelling-prefs';
+const GUARDIAN_PROGRESS_KEY_PREFIX = 'ks2-spell-guardian-';
+const PROGRESS_KEY_PREFIX = 'ks2-spell-progress-';
+const GUARDIAN_SECURE_STAGE = 4;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function createNoopStorage() {
   return {
@@ -47,6 +62,206 @@ function createNoopStorage() {
 
 function prefsKey(learnerId) {
   return `${PREF_KEY}.${learnerId || 'default'}`;
+}
+
+function guardianMapKey(learnerId) {
+  return `${GUARDIAN_PROGRESS_KEY_PREFIX}${learnerId || 'default'}`;
+}
+
+function progressMapKey(learnerId) {
+  return `${PROGRESS_KEY_PREFIX}${learnerId || 'default'}`;
+}
+
+function intervalForLevel(level) {
+  const index = Math.max(0, Math.min(GUARDIAN_MAX_REVIEW_LEVEL, Math.floor(Number(level) || 0)));
+  return GUARDIAN_INTERVALS[index];
+}
+
+/**
+ * Pure scheduler helpers — advance* functions never mutate their input record,
+ * they return a new record. Day arithmetic is integer-only (Math.floor(ts/DAY_MS))
+ * per the plan; no ISO strings anywhere in the guardian path.
+ */
+
+export function advanceGuardianOnCorrect(record, todayDay) {
+  const safeToday = Number.isFinite(Number(todayDay)) ? Math.floor(Number(todayDay)) : 0;
+  const source = normaliseGuardianRecord(record, safeToday);
+
+  if (source.wobbling) {
+    // Recovery path — clear wobbling, bump renewals, preserve reviewLevel.
+    // Schedule resumes using the existing reviewLevel (does NOT advance).
+    // The interval is indexed by the current (preserved) reviewLevel so the
+    // learner picks up their spaced-practice ladder rather than starting over.
+    return {
+      ...source,
+      wobbling: false,
+      renewals: source.renewals + 1,
+      correctStreak: source.correctStreak + 1,
+      lastReviewedDay: safeToday,
+      nextDueDay: safeToday + intervalForLevel(source.reviewLevel),
+    };
+  }
+
+  // Non-wobbling success — bump reviewLevel (capped) and correctStreak. Interval
+  // is indexed by the CURRENT (pre-advance) reviewLevel so the first success at
+  // level 0 schedules +3 days; at cap (level 5) it stays +90.
+  const nextLevel = Math.min(GUARDIAN_MAX_REVIEW_LEVEL, source.reviewLevel + 1);
+  return {
+    ...source,
+    reviewLevel: nextLevel,
+    correctStreak: source.correctStreak + 1,
+    lastReviewedDay: safeToday,
+    nextDueDay: safeToday + intervalForLevel(source.reviewLevel),
+  };
+}
+
+export function advanceGuardianOnWrong(record, todayDay) {
+  const safeToday = Number.isFinite(Number(todayDay)) ? Math.floor(Number(todayDay)) : 0;
+  const source = normaliseGuardianRecord(record, safeToday);
+  return {
+    ...source,
+    wobbling: true,
+    lapses: source.lapses + 1,
+    correctStreak: 0,
+    lastReviewedDay: safeToday,
+    nextDueDay: safeToday + 1,
+  };
+}
+
+export function ensureGuardianRecord(guardianMap, slug, todayDay) {
+  if (!slug || typeof slug !== 'string') return null;
+  const map = guardianMap && typeof guardianMap === 'object' && !Array.isArray(guardianMap) ? guardianMap : {};
+  if (Object.prototype.hasOwnProperty.call(map, slug) && map[slug]) {
+    return map[slug];
+  }
+  const safeToday = Number.isFinite(Number(todayDay)) ? Math.floor(Number(todayDay)) : 0;
+  const fresh = normaliseGuardianRecord({}, safeToday);
+  map[slug] = fresh;
+  return fresh;
+}
+
+function clampSelectionLength(length) {
+  const parsed = Number(length);
+  const base = Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : GUARDIAN_DEFAULT_ROUND_LENGTH;
+  if (base < GUARDIAN_MIN_ROUND_LENGTH) return GUARDIAN_MIN_ROUND_LENGTH;
+  if (base > GUARDIAN_MAX_ROUND_LENGTH) return GUARDIAN_MAX_ROUND_LENGTH;
+  return base;
+}
+
+function compareByDueDayThenSlug(a, b) {
+  if (a.nextDueDay !== b.nextDueDay) return a.nextDueDay - b.nextDueDay;
+  if (a.slug < b.slug) return -1;
+  if (a.slug > b.slug) return 1;
+  return 0;
+}
+
+function compareByLastReviewedThenSlug(a, b) {
+  const aLast = a.lastReviewedDay != null ? a.lastReviewedDay : -1;
+  const bLast = b.lastReviewedDay != null ? b.lastReviewedDay : -1;
+  if (aLast !== bLast) return aLast - bLast;
+  if (a.slug < b.slug) return -1;
+  if (a.slug > b.slug) return 1;
+  return 0;
+}
+
+function deterministicShuffle(items, random) {
+  const output = items.slice();
+  const rng = typeof random === 'function' ? random : Math.random;
+  for (let i = output.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    const tmp = output[i];
+    output[i] = output[j];
+    output[j] = tmp;
+  }
+  return output;
+}
+
+/**
+ * Pure selection function. Picks 5-8 slugs (clamped by length input) from the
+ * learner's guardian map + progress map, prioritising wobbling-due → due →
+ * lazy-create sample → top-up of non-due guardians.
+ *
+ * @param {object} params
+ * @param {object} params.guardianMap  slug -> normalised guardian record
+ * @param {object} params.progressMap  slug -> legacy progress record
+ * @param {object} params.wordBySlug   slug -> word metadata (spellingPool, etc.)
+ * @param {number} params.todayDay     integer day (Math.floor(ts/DAY_MS))
+ * @param {number} params.length       desired round length (clamped 5..8)
+ * @param {Function} params.random     injected random; used for lazy-create shuffle
+ * @returns {string[]} selected slugs (array of strings)
+ */
+export function selectGuardianWords({
+  guardianMap = {},
+  progressMap = {},
+  wordBySlug = {},
+  todayDay = 0,
+  length = GUARDIAN_DEFAULT_ROUND_LENGTH,
+  random = Math.random,
+} = {}) {
+  const target = clampSelectionLength(length);
+  const safeToday = Number.isFinite(Number(todayDay)) ? Math.floor(Number(todayDay)) : 0;
+  const guardianEntries = Object.entries(guardianMap || {}).map(([slug, record]) => ({
+    slug,
+    ...record,
+  }));
+
+  const wobblingDue = guardianEntries
+    .filter((entry) => entry.wobbling === true && entry.nextDueDay <= safeToday)
+    .sort(compareByDueDayThenSlug);
+  const nonWobblingDue = guardianEntries
+    .filter((entry) => entry.wobbling !== true && entry.nextDueDay <= safeToday)
+    .sort(compareByDueDayThenSlug);
+
+  const selected = [];
+  const selectedSet = new Set();
+
+  function push(slug) {
+    if (!slug || typeof slug !== 'string') return;
+    if (selectedSet.has(slug)) return;
+    if (selected.length >= target) return;
+    selected.push(slug);
+    selectedSet.add(slug);
+  }
+
+  wobblingDue.forEach((entry) => push(entry.slug));
+  if (selected.length < target) nonWobblingDue.forEach((entry) => push(entry.slug));
+
+  // Lazy-create candidates: mega words (stage >= 4) that are NOT yet in the
+  // guardian map at all. Filter by known slugs in wordBySlug so we never return
+  // a slug the caller can't resolve.
+  if (selected.length < target) {
+    const lazyCandidates = [];
+    for (const [slug, progress] of Object.entries(progressMap || {})) {
+      if (!slug || typeof slug !== 'string') continue;
+      if (!wordBySlug || !wordBySlug[slug]) continue;
+      if (Object.prototype.hasOwnProperty.call(guardianMap || {}, slug)) continue;
+      const stage = Number(progress?.stage);
+      if (!(Number.isFinite(stage) && stage >= GUARDIAN_SECURE_STAGE)) continue;
+      lazyCandidates.push(slug);
+    }
+    // Alphabetical baseline makes the shuffle deterministic under a seeded rng.
+    lazyCandidates.sort();
+    const shuffled = deterministicShuffle(lazyCandidates, random);
+    for (const slug of shuffled) {
+      if (selected.length >= target) break;
+      push(slug);
+    }
+  }
+
+  // Top-up from non-due guardians (sorted by oldest lastReviewedDay first). Only
+  // engages if we're still below the minimum round length — matches the plan
+  // ("if still under min length (5), top up").
+  if (selected.length < GUARDIAN_MIN_ROUND_LENGTH) {
+    const nonDue = guardianEntries
+      .filter((entry) => entry.nextDueDay > safeToday && !selectedSet.has(entry.slug))
+      .sort(compareByLastReviewedThenSlug);
+    for (const entry of nonDue) {
+      if (selected.length >= target) break;
+      push(entry.slug);
+    }
+  }
+
+  return selected;
 }
 
 function loadJson(storage, key, fallback) {
@@ -144,6 +359,7 @@ function defaultLabelForMode(mode) {
   if (mode === 'trouble') return 'Trouble drill';
   if (mode === 'single') return 'Single-word drill';
   if (mode === 'test') return 'SATs 20 test';
+  if (mode === 'guardian') return 'Guardian Mission';
   return 'Smart review';
 }
 
@@ -417,6 +633,76 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return analyticsWordRow(learnerId, runtimeWordBySlug[slug], progressSnapshot(learnerId));
   }
 
+  function currentTodayDay() {
+    return Math.floor(clock() / DAY_MS);
+  }
+
+  /**
+   * Strict FIFO card advance for Guardian Mission rounds. The legacy
+   * advanceCard uses weighted selection over the queue window, which
+   * randomises the per-round word order in ways the Guardian selection
+   * contract explicitly wants to own. We bypass that and just shift the
+   * queue head, rebuilding the currentPrompt via the existing helper.
+   */
+  function advanceGuardianCard(session) {
+    if (!session) return { done: true };
+    while (Array.isArray(session.queue) && session.queue.length) {
+      const nextSlug = session.queue.shift();
+      if (!nextSlug || !runtimeWordBySlug[nextSlug]) continue;
+      if (session.status?.[nextSlug]?.done) continue;
+      session.currentSlug = nextSlug;
+      session.currentPrompt = buildPrompt(engine, session, nextSlug, runtimeWordBySlug);
+      session.lastFamily = runtimeWordBySlug[nextSlug]?.family || null;
+      session.lastYear = runtimeWordBySlug[nextSlug]?.year || null;
+      return { done: false, slug: nextSlug, prompt: session.currentPrompt };
+    }
+    session.currentSlug = null;
+    session.currentPrompt = null;
+    return { done: true };
+  }
+
+  // Guardian state persists through the same storage proxy as prefs and progress
+  // via the ks2-spell-guardian-<learnerId> key. Both the client repository and
+  // the Worker engine recognise this prefix and route it through data.guardian
+  // in the subject-state record (normalised by U1's normaliseGuardianMap).
+  function loadGuardianMap(learnerId) {
+    const raw = loadJson(resolvedStorage, guardianMapKey(learnerId), {});
+    return normaliseGuardianMap(raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}, currentTodayDay());
+  }
+
+  function saveGuardianMap(learnerId, map) {
+    saveJson(resolvedStorage, guardianMapKey(learnerId), map || {});
+  }
+
+  function loadProgressFromStorage(learnerId) {
+    const raw = loadJson(resolvedStorage, progressMapKey(learnerId), {});
+    return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  }
+
+  function saveProgressToStorage(learnerId, map) {
+    saveJson(resolvedStorage, progressMapKey(learnerId), map || {});
+  }
+
+  function coreWordCount() {
+    return runtimeWords.filter((word) => (word?.spellingPool === 'extra' ? 'extra' : 'core') === 'core').length;
+  }
+
+  function secureCoreCount(progressStore) {
+    let count = 0;
+    for (const word of runtimeWords) {
+      if ((word.spellingPool === 'extra' ? 'extra' : 'core') !== 'core') continue;
+      const progress = progressStore?.[word.slug];
+      if (progress && Number(progress.stage) >= GUARDIAN_SECURE_STAGE) count += 1;
+    }
+    return count;
+  }
+
+  function isAllWordsMega(progressStore) {
+    const total = coreWordCount();
+    if (!total) return false;
+    return secureCoreCount(progressStore) === total;
+  }
+
   function getAnalyticsSnapshot(learnerId) {
     const progressStore = progressSnapshot(learnerId);
     return {
@@ -479,6 +765,9 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       lastFamily: normaliseOptionalString(raw.lastFamily),
       lastYear: normaliseOptionalString(raw.lastYear),
       startedAt: normaliseTimestamp(raw.startedAt, clock()),
+      guardianResults: mode === 'guardian' && raw.guardianResults && typeof raw.guardianResults === 'object' && !Array.isArray(raw.guardianResults)
+        ? { ...raw.guardianResults }
+        : (mode === 'guardian' ? {} : undefined),
     };
 
     if (currentSlug && !session.currentPrompt) {
@@ -515,7 +804,9 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     }
 
     if (!session.currentSlug) {
-      const next = engine.advanceCard(session, learnerId);
+      const next = session.mode === 'guardian'
+        ? advanceGuardianCard(session)
+        : engine.advanceCard(session, learnerId);
       if (next.done) {
         return {
           session: null,
@@ -634,8 +925,104 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     };
   }
 
+  function startGuardianSession(learnerId, options = {}) {
+    const progressStore = progressSnapshot(learnerId) || {};
+    if (!isAllWordsMega(progressStore)) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        feedback: {
+          kind: 'warn',
+          headline: 'Guardian Mission unlocks after every core word is secure',
+          body: 'Keep reviewing Smart Review and Trouble Drill until every core word is secure — then Guardian Mission opens.',
+        },
+      }, { ok: false });
+    }
+
+    const today = currentTodayDay();
+    const guardianMap = loadGuardianMap(learnerId);
+    const desiredLength = options.length === 'all'
+      ? GUARDIAN_MAX_ROUND_LENGTH
+      : clampSelectionLength(Number(options.length) || GUARDIAN_DEFAULT_ROUND_LENGTH);
+
+    const selectedSlugs = selectGuardianWords({
+      guardianMap,
+      progressMap: progressStore,
+      wordBySlug: runtimeWordBySlug,
+      todayDay: today,
+      length: desiredLength,
+      random: randomFn,
+    });
+
+    if (!selectedSlugs.length) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        feedback: {
+          kind: 'info',
+          headline: 'No Guardian duties today',
+          body: 'Every guarded word is still holding — come back tomorrow for the next Guardian Mission.',
+        },
+      }, { ok: false });
+    }
+
+    const selectedWords = selectedSlugs.map((slug) => runtimeWordBySlug[slug]).filter(Boolean);
+    if (!selectedWords.length) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        error: 'Guardian Mission could not resolve any words.',
+      }, { ok: false });
+    }
+
+    const created = engine.createSession({
+      profileId: learnerId,
+      mode: 'guardian',
+      yearFilter: 'core',
+      length: selectedWords.length,
+      words: selectedWords,
+      practiceOnly: false,
+      extraWordFamilies: false,
+    });
+
+    if (!created.ok) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        error: created.reason || 'Could not start a Guardian Mission.',
+      }, { ok: false });
+    }
+
+    // Legacy createSession labels 'guardian' as 'Smart review' via fallthrough.
+    // Stamp the Guardian Mission label + mission-scoped bookkeeping here.
+    created.session.mode = 'guardian';
+    created.session.label = 'Guardian Mission';
+    created.session.guardianResults = {};
+
+    const firstCard = advanceGuardianCard(created.session);
+    if (firstCard.done) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        error: 'Guardian Mission could not prepare the first card.',
+      }, { ok: false });
+    }
+
+    const session = decorateSession(engine, learnerId, created.session, runtimeWordBySlug, created.progressStore);
+    const nextState = {
+      version: SPELLING_SERVICE_STATE_VERSION,
+      phase: 'session',
+      session,
+      feedback: null,
+      summary: null,
+      error: '',
+      awaitingAdvance: false,
+    };
+
+    persistence.syncPracticeSession(learnerId, nextState);
+    return buildTransition(nextState, { audio: activeAudioCue(learnerId, nextState) });
+  }
+
   function startSession(learnerId, options = {}) {
     const mode = normaliseMode(options.mode, 'smart');
+    if (mode === 'guardian') {
+      return startGuardianSession(learnerId, options);
+    }
     const yearFilter = mode === 'test'
       ? 'core'
       : normaliseYearFilter(options.yearFilter, 'core');
@@ -712,6 +1099,147 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     }, { ok: false });
   }
 
+  function submitGuardianAnswer(learnerId, current, rawTyped) {
+    const session = cloneSerialisable(current.session);
+    const currentSlug = session.currentSlug;
+    const baseWord = runtimeWordBySlug[currentSlug];
+    if (!baseWord) {
+      return invalidSessionTransition('This Guardian Mission card is missing its word metadata.');
+    }
+    const promptWord = wordForPrompt(baseWord, session.currentPrompt);
+    const graded = engine.grade(promptWord, rawTyped);
+    const correct = Boolean(graded.correct);
+
+    // Session bookkeeping — single attempt per word, no retry/correction phase.
+    const statusEntry = session.status?.[currentSlug] || {
+      attempts: 0,
+      successes: 0,
+      needed: 1,
+      hadWrong: false,
+      wrongAnswers: [],
+      done: false,
+      applied: false,
+    };
+    statusEntry.attempts += 1;
+    statusEntry.done = true;
+    statusEntry.applied = true;
+    if (correct) {
+      statusEntry.successes = (statusEntry.successes || 0) + 1;
+    } else {
+      statusEntry.hadWrong = true;
+      statusEntry.wrongAnswers = [...(statusEntry.wrongAnswers || []), rawTyped];
+    }
+    session.status = session.status || {};
+    session.status[currentSlug] = statusEntry;
+    session.promptCount = (session.promptCount || 0) + 1;
+    session.phase = 'question';
+
+    // Remove this slug from the queue (legacy engine pre-shifts on advanceCard,
+    // but we also clean up defensively in case the queue still has the slug).
+    if (Array.isArray(session.queue)) {
+      session.queue = session.queue.filter((slug) => slug !== currentSlug);
+    }
+
+    // Update progress.attempts / correct / wrong only. Stage/dueDay/lastDay/
+    // lastResult are preserved — Guardian never demotes Mega.
+    const progressMap = loadProgressFromStorage(learnerId);
+    const existingProgress = progressMap[currentSlug] && typeof progressMap[currentSlug] === 'object'
+      ? progressMap[currentSlug]
+      : { stage: 0, attempts: 0, correct: 0, wrong: 0, dueDay: 0, lastDay: null, lastResult: null };
+    const nextProgress = { ...existingProgress };
+    nextProgress.attempts = (nextProgress.attempts || 0) + 1;
+    if (correct) nextProgress.correct = (nextProgress.correct || 0) + 1;
+    else nextProgress.wrong = (nextProgress.wrong || 0) + 1;
+    progressMap[currentSlug] = nextProgress;
+    saveProgressToStorage(learnerId, progressMap);
+
+    // Advance the guardian record. Lazy-create if this is the first Guardian
+    // touch for the slug. ensureGuardianRecord mutates the map, so load a
+    // mutable copy first, advance, then save the whole thing.
+    const todayDay = currentTodayDay();
+    const guardianMap = loadGuardianMap(learnerId);
+    const beforeRecord = ensureGuardianRecord(guardianMap, currentSlug, todayDay);
+    const wasWobbling = beforeRecord.wobbling === true;
+    const updatedRecord = correct
+      ? advanceGuardianOnCorrect(beforeRecord, todayDay)
+      : advanceGuardianOnWrong(beforeRecord, todayDay);
+    guardianMap[currentSlug] = updatedRecord;
+    saveGuardianMap(learnerId, guardianMap);
+
+    // Record the per-word outcome so the finalisation step can emit the
+    // mission-completed event with accurate aggregate counts.
+    const outcomeKind = !correct
+      ? 'wobbled'
+      : wasWobbling
+        ? 'recovered'
+        : 'renewed';
+    session.guardianResults = session.guardianResults || {};
+    session.guardianResults[currentSlug] = outcomeKind;
+
+    const eventTime = clock();
+    const events = [];
+    if (outcomeKind === 'renewed') {
+      events.push(createSpellingGuardianRenewedEvent({
+        learnerId,
+        session,
+        slug: currentSlug,
+        reviewLevel: updatedRecord.reviewLevel,
+        nextDueDay: updatedRecord.nextDueDay,
+        createdAt: eventTime,
+        wordMeta: runtimeWordBySlug,
+      }));
+    } else if (outcomeKind === 'wobbled') {
+      events.push(createSpellingGuardianWobbledEvent({
+        learnerId,
+        session,
+        slug: currentSlug,
+        lapses: updatedRecord.lapses,
+        createdAt: eventTime,
+        wordMeta: runtimeWordBySlug,
+      }));
+    } else {
+      events.push(createSpellingGuardianRecoveredEvent({
+        learnerId,
+        session,
+        slug: currentSlug,
+        renewals: updatedRecord.renewals,
+        reviewLevel: updatedRecord.reviewLevel,
+        createdAt: eventTime,
+        wordMeta: runtimeWordBySlug,
+      }));
+    }
+
+    const feedback = correct
+      ? {
+          kind: wasWobbling ? 'success' : 'info',
+          headline: wasWobbling ? 'Recovered.' : 'Guardian strong.',
+          answer: promptWord.word,
+          body: wasWobbling
+            ? 'This word is back under your guard. Next check will follow the schedule.'
+            : `This word stays secure. Next Guardian check in ${intervalForLevel(updatedRecord.reviewLevel)} day${intervalForLevel(updatedRecord.reviewLevel) === 1 ? '' : 's'}.`,
+        }
+      : {
+          kind: 'warn',
+          headline: 'Wobbling.',
+          answer: promptWord.word,
+          body: 'Mega stays, but this word will return tomorrow for a Guardian check.',
+          attemptedAnswer: rawTyped,
+        };
+
+    const nextState = {
+      version: SPELLING_SERVICE_STATE_VERSION,
+      phase: 'session',
+      session: decorateSession(engine, learnerId, session, runtimeWordBySlug),
+      feedback: normaliseFeedback(feedback),
+      summary: null,
+      error: '',
+      awaitingAdvance: true,
+    };
+
+    persistence.syncPracticeSession(learnerId, nextState);
+    return buildTransition(nextState, { events });
+  }
+
   function submitAnswer(learnerId, rawState, typed) {
     const current = initState(rawState, learnerId);
     if (current.phase !== 'session' || !current.session) {
@@ -722,8 +1250,6 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       return buildTransition(current, { changed: false });
     }
 
-    const session = cloneSerialisable(current.session);
-    const entryPhase = session.phase;
     const rawTyped = normaliseString(typed).trim();
     if (!rawTyped) {
       return buildTransition({
@@ -738,6 +1264,12 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       });
     }
 
+    if (current.session.mode === 'guardian') {
+      return submitGuardianAnswer(learnerId, current, rawTyped);
+    }
+
+    const session = cloneSerialisable(current.session);
+    const entryPhase = session.phase;
     const currentSlug = session.currentSlug;
     const result = session.type === 'test'
       ? engine.submitTest(session, learnerId, rawTyped)
@@ -817,6 +1349,38 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return buildTransition(nextState, { events, audio });
   }
 
+  function guardianMissionEventsForSession(learnerId, session, summary, createdAt) {
+    if (session?.mode !== 'guardian') return [];
+    const results = session.guardianResults && typeof session.guardianResults === 'object' && !Array.isArray(session.guardianResults)
+      ? session.guardianResults
+      : {};
+    let renewalCount = 0;
+    let wobbledCount = 0;
+    let recoveredCount = 0;
+    for (const outcome of Object.values(results)) {
+      if (outcome === 'renewed') renewalCount += 1;
+      else if (outcome === 'wobbled') wobbledCount += 1;
+      else if (outcome === 'recovered') recoveredCount += 1;
+    }
+    const events = [];
+    const sessionCompleted = createSpellingSessionCompletedEvent({
+      learnerId,
+      session,
+      summary,
+      createdAt,
+    });
+    if (sessionCompleted) events.push(sessionCompleted);
+    events.push(createSpellingGuardianMissionCompletedEvent({
+      learnerId,
+      session,
+      renewalCount,
+      wobbledCount,
+      recoveredCount,
+      createdAt,
+    }));
+    return events;
+  }
+
   function continueSession(learnerId, rawState) {
     const current = initState(rawState, learnerId);
     if (current.phase !== 'session' || !current.session) {
@@ -828,7 +1392,9 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     }
 
     const session = cloneSerialisable(current.session);
-    const advanced = engine.advanceCard(session, learnerId);
+    const advanced = session.mode === 'guardian'
+      ? advanceGuardianCard(session)
+      : engine.advanceCard(session, learnerId);
 
     if (advanced.done) {
       const summary = normaliseSummary(engine.finalise(session), isRuntimeKnownSlug);
@@ -842,9 +1408,11 @@ export function createSpellingService({ repository, storage, tts, now, random, c
         awaitingAdvance: false,
       };
       persistence.syncPracticeSession(learnerId, nextState);
-      return buildTransition(nextState, {
-        events: sessionCompletedEvents({ learnerId, session, summary, createdAt: clock() }),
-      });
+      const createdAt = clock();
+      const events = session.mode === 'guardian'
+        ? guardianMissionEventsForSession(learnerId, session, summary, createdAt)
+        : sessionCompletedEvents({ learnerId, session, summary, createdAt });
+      return buildTransition(nextState, { events });
     }
 
     const nextState = {
