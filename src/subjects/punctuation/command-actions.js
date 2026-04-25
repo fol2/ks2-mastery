@@ -74,6 +74,15 @@ export const punctuationSubjectCommandActions = Object.freeze({
       return withCommandExpectation({}, state);
     },
   },
+  'punctuation-context-pack': {
+    mutates: false,
+    command: 'request-context-pack',
+    payload({ data }) {
+      return {
+        seed: data?.seed || '',
+      };
+    },
+  },
   'punctuation-set-mode': {
     command: 'save-prefs',
     payload({ data }) {

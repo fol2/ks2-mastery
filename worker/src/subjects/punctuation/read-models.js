@@ -165,6 +165,22 @@ function safeSummary(summary) {
   return cloneSerialisable(summary);
 }
 
+function safeContextPackSummary(summary) {
+  if (!isPlainObject(summary)) return null;
+  return {
+    status: summary.status === 'ready' ? 'ready' : (summary.status === 'unavailable' ? 'unavailable' : 'not_requested'),
+    code: typeof summary.code === 'string' ? summary.code : null,
+    message: typeof summary.message === 'string' ? summary.message : '',
+    acceptedCount: Number.isFinite(Number(summary.acceptedCount)) ? Number(summary.acceptedCount) : 0,
+    rejectedCount: Number.isFinite(Number(summary.rejectedCount)) ? Number(summary.rejectedCount) : 0,
+    atomKinds: Array.isArray(summary.atomKinds) ? summary.atomKinds.filter((entry) => typeof entry === 'string') : [],
+    affectedGeneratorFamilies: Array.isArray(summary.affectedGeneratorFamilies)
+      ? summary.affectedGeneratorFamilies.filter((entry) => typeof entry === 'string')
+      : [],
+    generatedItemCount: Number.isFinite(Number(summary.generatedItemCount)) ? Number(summary.generatedItemCount) : 0,
+  };
+}
+
 function assertNoForbiddenItemFields(item) {
   if (!isPlainObject(item)) return;
   for (const key of Object.keys(item)) {
@@ -181,6 +197,7 @@ export function buildPunctuationReadModel({
   stats,
   analytics = null,
   content = null,
+  contextPack = null,
 } = {}) {
   const safeState = cloneSerialisable(state) || {};
   const phase = typeof safeState.phase === 'string' ? safeState.phase : 'setup';
@@ -199,6 +216,7 @@ export function buildPunctuationReadModel({
     prefs: cloneSerialisable(prefs) || {},
     stats: cloneSerialisable(stats) || {},
     analytics: analytics ? cloneSerialisable(analytics) : null,
+    contextPack: safeContextPackSummary(contextPack),
     content: content ? cloneSerialisable(content) : {
       releaseId: PUNCTUATION_RELEASE_ID,
       releaseName: PUNCTUATION_CONTENT_MANIFEST.releaseName,

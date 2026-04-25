@@ -395,7 +395,7 @@ tests/
 
 ---
 
-- [ ] U8. **Add Safe AI Context Pack Compiler**
+- [x] U8. **Add Safe AI Context Pack Compiler**
 
 **Goal:** Replace the legacy browser AI lane with a production-safe enrichment path that can help generate vocabulary/context atoms while deterministic code remains the authority.
 
