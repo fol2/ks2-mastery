@@ -1,4 +1,5 @@
 import { BackendUnavailableError } from './errors.js';
+import { readCollectorFromEnv, wrapDatabaseForTelemetry } from './capacity/telemetry.js';
 
 function cloneRow(row) {
   if (!row || typeof row !== 'object') return row;
@@ -9,7 +10,17 @@ export function requireDatabase(env = {}) {
   if (!env.DB || typeof env.DB.prepare !== 'function') {
     throw new BackendUnavailableError('D1 binding DB is required for repository routes.');
   }
-  return env.DB;
+  // U4: when a request-local capacity collector is attached to env, wrap
+  // the D1 binding so every prepare().bind().first/run/all() call feeds
+  // row-metric telemetry. The wrapper preserves result shape exactly, so
+  // no downstream caller needs to change. Already-wrapped bindings are
+  // returned as-is to keep the wrap idempotent across nested calls
+  // (requireDatabase may be invoked from auth.js, repository.js, and
+  // demo/sessions.js in a single request).
+  const collector = readCollectorFromEnv(env);
+  if (!collector) return env.DB;
+  if (env.DB.__ks2CapacityWrapped) return env.DB;
+  return wrapDatabaseForTelemetry(env.DB, collector);
 }
 
 export function bindStatement(db, sql, params = []) {

@@ -170,7 +170,122 @@ Do not claim classroom or school readiness from Free-tier limits alone.
 
 The endpoint is manual-refresh only (no polling). Current KS2 scale keeps per-refresh cost well under the D1 Free-tier 10ms CPU budget. Re-evaluate if `event_log` exceeds ~500K rows — at that point consider a pre-aggregated `admin_kpi_metrics`-style counter for the windowed totals in place of live COUNTs.
 
-**Telemetry (follow-up):** `capacity.admin_ops_kpi` timing + rows-read telemetry is not yet wired; adding it is a deferred operational hardening task.
+`[ks2-capacity]` telemetry (U4) covers `/api/admin/ops/kpi` alongside every
+other Worker route; the admin console KPI endpoint inherits the generic
+emission path and does not require bespoke wiring.
+
+## `[ks2-capacity]` structured telemetry (U4)
+
+Every Worker response now emits (subject to the emission-level sampler)
+a single `[ks2-capacity]` JSON log line carrying bounded metadata for
+capacity attribution. This lets ops decide whether a failure came from
+CPU, D1 rows, D1 duration, queueing, or payload size without log
+archaeology.
+
+### Shape
+
+```json
+[ks2-capacity] {
+  "endpoint": "/api/bootstrap",
+  "route": "GET /api/bootstrap",
+  "method": "GET",
+  "status": 200,
+  "wallTimeMs": 123.4,
+  "responseBytes": 12345,
+  "boundedCounts": { "sessions": 10, "events": 50, "learners": 2 },
+  "d1": { "queryCount": 3, "rowsRead": 42, "rowsWritten": 0 },
+  "failureCategory": "ok",
+  "requestId": "ks2-req-<cf-ray-or-random>"
+}
+```
+
+### Redaction contract
+
+Only bounded metadata is recorded: endpoint, route template, method,
+HTTP status, wall time, response bytes, bounded array-length counts
+(`sessions` / `events` / `learners` / `items`), D1 query count,
+`rows_read` / `rows_written`, the failure category, and a derived
+request ID. The telemetry path NEVER records any of:
+
+- answer-bearing payloads or private spelling prompts;
+- child-identifying content (learner names, emails, UUID-embedded
+  strings);
+- session cookie values (`ks2_session=...`);
+- any key from `tests/helpers/forbidden-keys.mjs::FORBIDDEN_KEYS_EVERYWHERE`.
+
+`tests/worker-capacity-telemetry.test.js` exercises a full bootstrap +
+parent-hub read + recent-sessions read with sentinel tokens seeded
+into the fixture data and asserts that every emitted
+`[ks2-capacity]` line is free of those sentinels, forbidden keys, and
+cookie values.
+
+### Failure-category taxonomy
+
+| Category               | Triggered by                                                            |
+| ---------------------- | ----------------------------------------------------------------------- |
+| `ok`                   | HTTP 2xx/3xx                                                            |
+| `exceededCpu`          | HTTP 1102 or message matches `exceeded_cpu` / `worker cpu` / `error 1102` |
+| `d1Overloaded`         | error code `d1_overloaded` or message matches `d1.*overloaded`          |
+| `d1DailyLimit`         | error code `d1_daily_limit` or message matches `daily.*limit` / `quota` |
+| `staleWrite`           | error code `stale_write` (mutation CAS rejection)                       |
+| `idempotencyReuse`     | error code `idempotency_reuse`                                          |
+| `authFailure`          | HTTP 401 / 403 or error code `unauthenticated` / `forbidden`            |
+| `rateLimited`          | HTTP 429 or error code `ops_error_rate_limited`                         |
+| `redactionFailure`     | error code `redaction_failure`                                          |
+| `badRequest`           | HTTP 400 or error code `bad_request`                                    |
+| `notFound`             | HTTP 404 or error code `not_found`                                      |
+| `backendUnavailable`   | HTTP 503 or error code `backend_unavailable`                            |
+| `server5xx`            | HTTP 5xx not matched above                                              |
+
+### Sampling
+
+- Happy-path rows (`failureCategory === 'ok'`) emit at 10 % — the
+  constant is `CAPACITY_TELEMETRY_SAMPLE_RATE = 0.1` in
+  `worker/src/capacity/telemetry.js`.
+- Failure rows (`failureCategory !== 'ok'`) **bypass** the sampler
+  and emit at 100 %. This keeps every capacity-relevant failure
+  attributable without being buried in happy-path noise.
+- `head_sampling_rate: 1` in `wrangler.jsonc` is a
+  Cloudflare-observability-level knob that remains enabled and is
+  orthogonal to the emission-level sampler — the two filters compose.
+- Scaling the emission rate up from 10 % happens only after a week of
+  production data shows quota headroom. Production first, tuning
+  second.
+
+### D1 row metrics
+
+`requireDatabase(env)` returns a telemetry-aware wrapper when a
+request-local capacity collector is attached to `env`. The wrapper
+intercepts `.prepare().bind().first/run/all()` terminal calls, reads
+`meta.rows_read` / `meta.rows_written` when D1 surfaces them, and
+accumulates per-request counts into the collector. The wrapper is
+idempotent: nested `requireDatabase(env)` calls from `auth.js`,
+`repository.js`, and `demo/sessions.js` all share the same collector
+without double-counting.
+
+For tests, `tests/helpers/sqlite-d1.js` simulates `meta.rows_read` /
+`meta.rows_written` on the local SQLite double so the telemetry
+contract can be asserted without a live D1 binding. The local helper
+is **shape-only** — the absolute numbers are approximations; production
+D1 remains the source of truth for performance claims.
+
+### Tailing telemetry in production
+
+```sh
+npm run ops:tail -- --search "[ks2-capacity]"
+```
+
+Correlate a failing `npm run smoke:production:bootstrap --output ...`
+run with the Worker log by grepping for the `requestId` (the probe
+also prints its `cf-ray` in `--output` mode once U3 lands).
+
+### Emission failure handling
+
+JSON serialisation of the snapshot is wrapped in a try/catch so a
+cyclic or exotic object in the collector state cannot crash the user
+response. On failure the Worker logs `[ks2-capacity-telemetry-error]`
+with the error message and the request ID, then silently drops the
+telemetry line. The user response is unaffected.
 
 ## Evidence Verification Escape Hatches
 
