@@ -181,6 +181,74 @@ async function auditProduction(origin) {
     failures.push(`Production demo bootstrap probe failed: ${error?.message || error}`);
   }
 
+  // U6 (sys-hardening p1): HEAD-check the security header set on the live
+  // origin. We hit paths that cover each response-construction lane:
+  //   - `/` — static HTML served by ASSETS (`_headers` `/` group).
+  //   - `/src/bundles/app.bundle.js` — run_worker_first path that flows
+  //     through applySecurityHeaders with explicit immutable cache.
+  //   - `/manifest.webmanifest` — ASSETS direct with `_headers` manifest rule.
+  //   - `/api/auth/logout` — Worker-produced 4xx/2xx that must carry
+  //     Clear-Site-Data plus the full security set (review testing-gap-4).
+  //   - `/api/tts` — Worker-produced 401 without auth; verifies the security
+  //     set is present on errored TTS responses (review testing-gap-4).
+  const SECURITY_HEADER_CHECKS = [
+    { path: '/', label: 'root index' },
+    { path: '/src/bundles/app.bundle.js', label: 'Worker-routed bundle' },
+    { path: '/manifest.webmanifest', label: 'manifest' },
+    { path: '/api/auth/logout', label: 'logout', expectClearSiteData: true, allowAnyStatus: true },
+    { path: '/api/tts', label: 'tts probe', allowAnyStatus: true },
+  ];
+  const REQUIRED_SECURITY_HEADER_NAMES = [
+    'strict-transport-security',
+    'x-content-type-options',
+    'referrer-policy',
+    'permissions-policy',
+    'x-frame-options',
+    'cross-origin-opener-policy',
+    'cross-origin-resource-policy',
+  ];
+  let headerChecksPassed = 0;
+  for (const check of SECURITY_HEADER_CHECKS) {
+    const target = new URL(check.path, base);
+    try {
+      const response = await fetch(target.href, { method: 'HEAD' });
+      if (!check.allowAnyStatus && (response.status < 200 || response.status >= 400)) {
+        failures.push(`Security header HEAD check failed (${response.status}): ${target.href}`);
+        continue;
+      }
+      const missing = [];
+      for (const name of REQUIRED_SECURITY_HEADER_NAMES) {
+        if (!response.headers.get(name)) missing.push(name);
+      }
+      if (missing.length) {
+        failures.push(
+          `Security header HEAD check missing headers on ${check.label} (${target.href}): ${missing.join(', ')}`,
+        );
+        continue;
+      }
+      if (/preload/i.test(response.headers.get('strict-transport-security') || '')) {
+        failures.push(
+          `Security header HEAD check found HSTS preload on ${check.label}; preload is deferred (F-03).`,
+        );
+        continue;
+      }
+      if (check.expectClearSiteData) {
+        const clearSiteData = response.headers.get('clear-site-data') || '';
+        const missingMarkers = ['"cache"', '"cookies"', '"storage"']
+          .filter((marker) => !clearSiteData.includes(marker));
+        if (missingMarkers.length) {
+          failures.push(
+            `Security header HEAD check missing Clear-Site-Data markers on ${check.label}: ${missingMarkers.join(', ')} (got: ${clearSiteData || 'absent'})`,
+          );
+          continue;
+        }
+      }
+      headerChecksPassed += 1;
+    } catch (error) {
+      failures.push(`Security header HEAD check errored on ${check.label}: ${error?.message || error}`);
+    }
+  }
+
   return {
     ok: failures.length === 0,
     failures,
@@ -189,6 +257,8 @@ async function auditProduction(origin) {
       scriptCount: scripts.length,
       directPathCount: DIRECT_DENIAL_PATHS.length,
       matrixDemoChecked: demoChecked,
+      securityHeaderChecksPassed: headerChecksPassed,
+      securityHeaderChecksTotal: SECURITY_HEADER_CHECKS.length,
     },
   };
 }
@@ -219,4 +289,10 @@ if (!result?.ok) {
   console.error(result?.failures?.join('\n') || 'Production bundle audit failed.');
   process.exit(1);
 }
-console.log(`Production bundle audit passed for ${result.checked.origin} (${result.checked.scriptCount} bundle(s), ${result.checked.directPathCount} direct paths, matrix demo check: ${result.checked.matrixDemoChecked ? 'ok' : 'skipped'}).`);
+console.log(
+  `Production bundle audit passed for ${result.checked.origin} `
+  + `(${result.checked.scriptCount} bundle(s), `
+  + `${result.checked.directPathCount} direct paths, `
+  + `matrix demo check: ${result.checked.matrixDemoChecked ? 'ok' : 'skipped'}, `
+  + `security-header checks: ${result.checked.securityHeaderChecksPassed}/${result.checked.securityHeaderChecksTotal}).`
+);

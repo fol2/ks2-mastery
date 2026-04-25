@@ -142,3 +142,37 @@ Use evidence-tied language:
 - "Not certified for a full-class simultaneous reload" when those measurements are missing.
 
 Do not claim classroom or school readiness from Free-tier limits alone.
+
+## Security headers post-deploy check
+
+After any production deploy that touches `worker/src/security-headers.js`, `_headers`, or
+`worker/src/index.js`, confirm the live origin advertises the U6 header set before closing the
+deploy ticket. `npm run audit:production -- --url https://ks2.eugnel.uk` now issues HEAD checks
+against `/`, `/src/bundles/app.bundle.js`, and `/manifest.webmanifest` and fails the audit if any
+path is missing the full set.
+
+Manual spot-check (use when the audit script is unavailable):
+
+```bash
+curl -sI https://ks2.eugnel.uk/ | grep -iE 'strict-transport-security|x-content-type-options|referrer-policy|permissions-policy|x-frame-options|cross-origin-opener-policy|cross-origin-resource-policy'
+curl -sI https://ks2.eugnel.uk/src/bundles/app.bundle.js | grep -iE 'cache-control|strict-transport-security'
+curl -sI https://ks2.eugnel.uk/manifest.webmanifest | grep -iE 'cache-control|strict-transport-security'
+```
+
+Expected values on every path:
+
+- `Strict-Transport-Security: max-age=63072000; includeSubDomains` (no `preload` until the subdomain
+  audit lands in a follow-up PR — F-03 deferral).
+- `X-Content-Type-Options: nosniff`.
+- `Referrer-Policy: strict-origin-when-cross-origin`.
+- `Permissions-Policy: ...; microphone=(); ...` (deny-by-default, F-09).
+- `X-Frame-Options: DENY`.
+- `Cross-Origin-Opener-Policy: same-origin-allow-popups`.
+- `Cross-Origin-Resource-Policy: same-site`.
+
+Path-specific cache expectations:
+
+- `/src/bundles/app.bundle.js` — `Cache-Control: public, max-age=31536000, immutable` (Worker
+  wrapper explicitly overrides the `no-store` that ASSETS applies from the `_headers` `/*` group).
+- `/manifest.webmanifest` — `Cache-Control: public, max-age=86400`.
+- `/` and `/index.html` — `Cache-Control: no-store`.

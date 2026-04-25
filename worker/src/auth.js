@@ -14,6 +14,7 @@ import {
   scalar,
   withTransaction,
 } from './d1.js';
+import { requireSameOrigin } from './request-origin.js';
 
 const SESSION_COOKIE_NAME = 'ks2_session';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -1186,6 +1187,14 @@ export function createSessionAuthBoundary({ env = {}, sessionProvider } = {}) {
     async requireSession(request) {
       const session = await provider.getSession(request, env);
       if (!session) throw new UnauthenticatedError();
+      // U6 (plan KTD F-07): default-on Sec-Fetch-Site check for every
+      // authenticated route. Running it here means any route that calls
+      // `auth.requireSession()` inherits the same-origin enforcement without
+      // a per-route opt-in. We run in `sec-fetch-only` mode so the default
+      // path relies on the Sec-Fetch-Site signal and does not double-enforce
+      // the Origin header check (mutation routes keep the explicit strict
+      // `requireSameOrigin(request, env)` calls at the app.js boundary).
+      requireSameOrigin(request, env, { mode: 'sec-fetch-only' });
       return session;
     },
   };

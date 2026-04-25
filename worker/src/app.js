@@ -333,7 +333,12 @@ export function createWorkerApp({
           try {
             await deleteCurrentSession(env, request);
           } finally {
-            return withCookies(json({ ok: true }), [clearSessionCookie(request)]);
+            // U6 (plan KTD F-08): full browsing-state cleanup on logout.
+            // Shared school and family devices are an expected deployment
+            // context, so we clear cache, cookies, and storage.
+            const response = withCookies(json({ ok: true }), [clearSessionCookie(request)]);
+            response.headers.set('Clear-Site-Data', '"cache", "cookies", "storage"');
+            return response;
           }
         }
 
