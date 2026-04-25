@@ -46,3 +46,4 @@ This document tracks Grammar-only functionality completeness against the reviewe
 
 - `npm run smoke:production:grammar` remains a manual post-deploy release gate because it depends on the live production origin and demo-session/auth behaviour.
 - `npm run check` and local dry-run scripts must stay network/auth independent; production smoke evidence belongs in the PR/deploy notes for Grammar-facing changes.
+- External PR checks, including Cloudflare Workers Builds, are part of the PR fix loop. A failing external check must be investigated, fixed in the branch when branch-caused, or documented with deterministic local evidence before merge when it is external infrastructure drift.

@@ -536,6 +536,7 @@ flowchart TB
 - Extend production smoke to exercise representative strict mini-test, support/repair, AI enrichment, and redaction paths without depending on hidden local answers.
 - Keep bundle/public-output audit strict: no Worker Grammar engine/content authority, oracle extraction helpers, hidden answers, or fixture-only donor material in the browser bundle.
 - Update Grammar documentation and the live checklist only when verification evidence supports the completeness claim.
+- Treat external PR checks as part of the fix loop: investigate Cloudflare Workers Builds or other external CI failures, fix branch-caused failures in the PR, and record deterministic local evidence before merge when a failure is infrastructure-only.
 - Preserve production UI/manual verification expectations for user-facing flows.
 
 **Patterns to follow:**
@@ -580,6 +581,7 @@ flowchart TB
 | Read aloud accidentally reads hidden answers | Low | Medium | U6 reads only visible read-model text and tests strict mini-test phases. |
 | Platform replacement for legacy data surfaces is ambiguous | Medium | Medium | U7 documents replaced/rejected behaviours and adds persistence/hub tests. |
 | Release-gate drift after multiple small PRs | Medium | High | U8 turns the gap matrix into a durable completeness gate. |
+| External PR CI fails outside local package gates | Medium | High | Treat external CI investigation as a PR fix task; reproduce with package scripts where possible, fix branch issues, and document infrastructure-only failures with local evidence before merge. |
 
 ---
 
@@ -589,6 +591,7 @@ flowchart TB
 - Update `docs/grammar-functionality-completeness.md` as the source for what is completed, replaced, rejected, or deferred.
 - Update the existing Grammar live checklist only when a completed unit has landed and verification evidence exists.
 - Production deployment remains behind the existing package-script gates and logged-in or demo-backed production UI verification.
+- PR merge readiness includes external CI status or documented external-CI diagnosis alongside local `npm test`, `npm run check`, smoke, and reviewer evidence.
 - Do not add raw Wrangler commands or browser-held AI key workflows.
 
 ---

@@ -303,7 +303,7 @@ function useMiniTestRemaining(miniTest) {
   return Math.max(0, expiresAt - now);
 }
 
-function MiniTestStatus({ miniTest, pending, runtimeReadOnly }) {
+function MiniTestStatus({ miniTest, pending, runtimeReadOnly, answerFormId }) {
   if (!miniTest) return null;
   const questions = Array.isArray(miniTest.questions) ? miniTest.questions : [];
   const currentIndex = Number(miniTest.currentIndex) || 0;
@@ -323,6 +323,7 @@ function MiniTestStatus({ miniTest, pending, runtimeReadOnly }) {
           <button
             className={`grammar-mini-test-nav-button${question.current ? ' current' : ''}${question.answered ? ' answered' : ''}`}
             type="submit"
+            form={answerFormId}
             name="_action"
             value="move"
             data-index={index}
@@ -453,6 +454,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
   const submitDisabled = runtimeReadOnly || pending || (!isMiniTest && isFeedback);
   const currentResponse = isMiniTest ? (miniTestCurrent?.response || {}) : {};
   const showDomainChip = item.domain && (grammar.prefs?.showDomainBeforeAnswer !== false || isFeedback);
+  const answerFormId = `grammar-answer-form-${String(session.id || 'current').replace(/[^A-Za-z0-9_-]/g, '-')}`;
 
   return (
     <section className="grammar-session" aria-labelledby="grammar-session-title">
@@ -480,6 +482,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
             miniTest={miniTest}
             pending={pending}
             runtimeReadOnly={runtimeReadOnly}
+            answerFormId={answerFormId}
           />
         ) : null}
         <p className="grammar-prompt">{item.promptText || 'Loading the next Grammar item...'}</p>
@@ -495,6 +498,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
         {!isMiniTest ? <AiEnrichmentPanel enrichment={grammar.aiEnrichment} /> : null}
 
         <form
+          id={answerFormId}
           className="grammar-answer-form"
           key={`${session.id || 'grammar'}-${session.currentIndex || 0}`}
           onSubmit={(event) => {

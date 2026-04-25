@@ -17,6 +17,10 @@ function grammarOracleSample(templateId = 'question_mark_select') {
   return readGrammarLegacyOracle().templates.find((template) => template.id === templateId);
 }
 
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 test('Grammar opens as a real Clause Conservatory subject surface', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
@@ -105,6 +109,11 @@ test('Grammar surface runs KS2 mini-set mode with delayed feedback and end revie
   assert.match(html, /Question 1 of 8/);
   assert.match(html, /Save response/);
   assert.match(html, /Finish mini-set/);
+  const navButton = html.match(/<button[^>]*class="grammar-mini-test-nav-button current"[^>]*>/)?.[0];
+  assert.ok(navButton, 'mini-test question navigation renders a current question button');
+  const navFormId = navButton.match(/form="([^"]+)"/)?.[1];
+  assert.ok(navFormId, 'mini-test question navigation button is associated with the answer form');
+  assert.match(html, new RegExp(`<form id="${escapeRegExp(navFormId)}" class="grammar-answer-form"`));
   assert.doesNotMatch(html, /Correct\./);
   assert.doesNotMatch(html, /Non-scored/);
 
