@@ -43,7 +43,7 @@ function SetupView({ learner, stats, ui, actions }) {
         <div>
           <div className="eyebrow">Bellstorm Coast</div>
           <h2 className="section-title">Punctuation practice</h2>
-          <p className="subtitle">{content.publishedScopeCopy || 'This Punctuation release covers all 14 KS2 punctuation skills.'}</p>
+          <p className="subtitle">{content.publishedScopeCopy || 'Punctuation covers the 14-skill KS2 progression with Smart Review, Guided focus, Weak Spots, GPS tests, sentence combining, paragraph repair, and transfer practice.'}</p>
         </div>
       </div>
       <div className="stat-grid" style={{ marginTop: 16 }}>
@@ -95,6 +95,8 @@ function SetupView({ learner, stats, ui, actions }) {
         >
           GPS test
         </button>
+        <button className="btn secondary" type="button" disabled={isDisabled} data-punctuation-endmarks-start onClick={() => actions.dispatch('punctuation-start', { mode: 'endmarks' })}>Endmarks focus</button>
+        <button className="btn secondary" type="button" disabled={isDisabled} data-punctuation-apostrophe-start onClick={() => actions.dispatch('punctuation-start', { mode: 'apostrophe' })}>Apostrophe focus</button>
         <button className="btn secondary" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-start', { mode: 'speech' })}>Speech focus</button>
         <button className="btn secondary" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-start', { mode: 'comma_flow' })}>Comma focus</button>
         <button className="btn secondary" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-start', { mode: 'boundary' })}>Boundary focus</button>

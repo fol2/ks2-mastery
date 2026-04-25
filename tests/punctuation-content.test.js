@@ -48,7 +48,12 @@ test('published punctuation release includes the hidden full 14-skill Structure 
   ]);
   assert.equal(indexes.publishedRewardUnits.length, 14);
   assert.equal(PUNCTUATION_CONTENT_MANIFEST.fullSkillCount, 14);
-  assert.match(PUNCTUATION_CONTENT_MANIFEST.publishedScopeCopy, /all 14 KS2 punctuation skills/);
+  // Phase 2 scope copy is honest about mode breadth rather than claiming
+  // "all 14 KS2 punctuation skills" as complete mastery. The 14-skill
+  // progression claim survives, but is framed alongside the practice modes
+  // the behavioural smoke matrix proves.
+  assert.match(PUNCTUATION_CONTENT_MANIFEST.publishedScopeCopy, /14-skill KS2 progression/);
+  assert.match(PUNCTUATION_CONTENT_MANIFEST.publishedScopeCopy, /Smart Review/);
 });
 
 test('published reward mastery keys are release-scoped and stable when generator families expand', () => {

@@ -1931,10 +1931,16 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
 export const PUNCTUATION_CONTENT_MANIFEST = Object.freeze({
   subjectId: PUNCTUATION_SUBJECT_ID,
   releaseId: PUNCTUATION_RELEASE_ID,
-  releaseName: 'Full 14-skill Punctuation learner-engine slice',
+  releaseName: 'Punctuation 14-skill production release',
   partialReleaseLabel: 'Published Punctuation release',
   fullSkillCount: PUNCTUATION_SKILLS.length,
-  publishedScopeCopy: 'This Punctuation release covers all 14 KS2 punctuation skills across Endmarks, Apostrophe, Speech, Comma / Flow, Boundary and Structure.',
+  // Honest scope copy post-Phase-2. The learner engine covers the full
+  // 14-skill progression through Smart Review, Guided focus, Weak Spots,
+  // GPS, sentence combining, paragraph repair, and transfer validators —
+  // which the behavioural smoke matrix (U9 + U10) proves end-to-end. The
+  // phrasing deliberately avoids "complete KS2 Punctuation mastery" so
+  // learners are not misled when content expansion lands in future releases.
+  publishedScopeCopy: 'Punctuation covers the 14-skill KS2 progression with Smart Review, Guided focus, Weak Spots, GPS tests, sentence combining, paragraph repair, and transfer practice.',
   skills: PUNCTUATION_SKILLS,
   clusters: PUNCTUATION_CLUSTERS,
   grandMonster: PUNCTUATION_GRAND_MONSTER,

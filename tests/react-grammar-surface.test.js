@@ -664,7 +664,8 @@ test('Punctuation remains separately registered from Grammar Bellstorm bridge co
   assert.notEqual(grammarSubject, punctuationSubject);
   assert.equal(punctuationSubject.name, 'Punctuation');
   assert.equal(punctuationSubject.available, true);
-  assert.match(punctuationSubject.blurb, /full KS2 punctuation map/);
+  // Phase 2 blurb framed by practice modes rather than claiming "full KS2 punctuation map".
+  assert.match(punctuationSubject.blurb, /KS2 punctuation progression/);
   assert.equal(SUBJECTS.filter((subject) => subject.id === 'punctuation').length, 1);
 });
 
