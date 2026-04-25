@@ -1,12 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { TopNav } from '../shell/TopNav.jsx';
-import { CodexCard } from './CodexCard.jsx';
 import { CodexCreatureLightbox } from './CodexCreatureLightbox.jsx';
 import { CodexHero } from './CodexHero.jsx';
+import { CodexSubjectSection } from './CodexSubjectSection.jsx';
 import {
   buildCodexEntries,
+  buildCodexSubjectGroups,
+  formatSubjectList,
   pickFeaturedCodexEntry,
   randomHeroBackground,
+  subjectName,
 } from './data.js';
 import { codexTotals } from './codex-view-model.js';
 
@@ -14,14 +17,20 @@ export function CodexSurface({ model, actions }) {
   const [previewEntry, setPreviewEntry] = useState(null);
   const heroBg = useMemo(() => randomHeroBackground(), [model.learner?.id]);
   const entries = useMemo(() => buildCodexEntries(model.monsterSummary || []), [model.monsterSummary]);
+  const subjectGroups = useMemo(() => buildCodexSubjectGroups(entries), [entries]);
+  const presentSubjectIds = useMemo(
+    () => subjectGroups.map((group) => group.subjectId),
+    [subjectGroups],
+  );
+  const presentSubjects = useMemo(
+    () => subjectGroups.map((group) => group.subjectName),
+    [subjectGroups],
+  );
   const totals = useMemo(() => codexTotals(entries), [entries]);
   const featured = useMemo(() => pickFeaturedCodexEntry(entries), [entries]);
-  const hasPunctuation = entries.some((entry) => entry.subjectId === 'punctuation');
   const primaryPracticeSubjectId = featured?.subjectId || 'spelling';
   const openPractice = (subjectId = primaryPracticeSubjectId) => actions.openSubject(subjectId || 'spelling');
-  const primaryPracticeLabel = primaryPracticeSubjectId === 'punctuation'
-    ? 'Punctuation practice →'
-    : 'Spelling practice →';
+  const primaryPracticeLabel = `${subjectName(primaryPracticeSubjectId)} practice →`;
 
   useEffect(() => {
     if (!previewEntry) return undefined;
@@ -53,7 +62,7 @@ export function CodexSurface({ model, actions }) {
         <CodexHero
           featured={featured}
           heroBg={heroBg}
-          hasPunctuation={hasPunctuation}
+          presentSubjectIds={presentSubjectIds}
           learnerName={model.learner?.name || ''}
           onNavigateHome={actions.navigateHome}
           onPreviewCreature={setPreviewEntry}
@@ -64,9 +73,7 @@ export function CodexSurface({ model, actions }) {
           <div>
             <h2 className="section-title">Monster roster</h2>
             <p className="codex-section-note">
-              {hasPunctuation
-                ? 'Each creature reflects a different part of English Spelling or Punctuation progress.'
-                : 'Each creature reflects a different part of English Spelling progress.'}
+              {describeRosterNote(presentSubjects)}
             </p>
           </div>
           <button type="button" className="home-section-link" onClick={() => openPractice(primaryPracticeSubjectId)}>
@@ -74,16 +81,16 @@ export function CodexSurface({ model, actions }) {
           </button>
         </div>
 
-        <section className="codex-roster" aria-label="Monster roster">
-          {entries.map((entry) => (
-            <CodexCard
-              key={entry.id}
-              entry={entry}
+        <div className="codex-subject-stack">
+          {subjectGroups.map((group) => (
+            <CodexSubjectSection
+              key={group.subjectId}
+              group={group}
               onPractice={openPractice}
               onPreview={setPreviewEntry}
             />
           ))}
-        </section>
+        </div>
       </main>
 
       {previewEntry && (
@@ -91,4 +98,14 @@ export function CodexSurface({ model, actions }) {
       )}
     </div>
   );
+}
+
+function describeRosterNote(presentSubjects) {
+  if (!presentSubjects.length) {
+    return 'Each creature reflects a different strand of learning progress.';
+  }
+  if (presentSubjects.length === 1) {
+    return `Each creature reflects a different part of English ${presentSubjects[0]} progress.`;
+  }
+  return `Each creature reflects a different part of ${formatSubjectList(presentSubjects)} progress.`;
 }

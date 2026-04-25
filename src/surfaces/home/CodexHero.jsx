@@ -5,11 +5,12 @@ import {
   codexEntryStateClassName,
   codexFeatureStyle,
 } from './codex-view-model.js';
+import { formatSubjectList, subjectMonsterNoun } from './data.js';
 
 export function CodexHero({
   featured,
   heroBg,
-  hasPunctuation,
+  presentSubjectIds = [],
   learnerName,
   onNavigateHome,
   onPreviewCreature,
@@ -26,11 +27,7 @@ export function CodexHero({
         <h1 className="codex-title">
           {learnerName ? `${learnerName}'s codex journal` : 'Codex journal'}
         </h1>
-        <p className="codex-lede">
-          {hasPunctuation
-            ? 'Track the creatures awakened by secure spelling words and punctuation units, from first catch through each evolution.'
-            : 'Track the creatures awakened by secure spellings, from first catch through each evolution.'}
-        </p>
+        <p className="codex-lede">{describeCodexLede(presentSubjectIds)}</p>
         <div className="hero-cta-row">
           <button type="button" className="btn ghost xl" onClick={onNavigateHome}>
             Back to dashboard
@@ -80,4 +77,12 @@ function CodexStat({ value, label }) {
       <span>{label}</span>
     </span>
   );
+}
+
+function describeCodexLede(presentSubjectIds) {
+  if (!presentSubjectIds.length) {
+    return 'Track the creatures awakened by secure learning, from first catch through each evolution.';
+  }
+  const list = formatSubjectList(presentSubjectIds.map(subjectMonsterNoun));
+  return `Track the creatures awakened by secure ${list}, from first catch through each evolution.`;
 }
