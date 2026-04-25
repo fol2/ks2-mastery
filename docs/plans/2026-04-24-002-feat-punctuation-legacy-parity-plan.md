@@ -290,7 +290,7 @@ tests/
 
 ---
 
-- [ ] U5. **Add Paragraph Repair Mode**
+- [x] U5. **Add Paragraph Repair Mode**
 
 **Goal:** Port legacy short-passage proofreading where one item can exercise several punctuation skills together.
 

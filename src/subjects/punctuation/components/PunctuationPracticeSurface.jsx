@@ -162,7 +162,7 @@ function TextItem({ item, disabled, onSubmit }) {
           className="input"
           name="typed"
           value={typed}
-          rows={4}
+          rows={item.mode === 'paragraph' ? 6 : 4}
           data-autofocus="true"
           onChange={(event) => setTyped(event.target.value)}
         />

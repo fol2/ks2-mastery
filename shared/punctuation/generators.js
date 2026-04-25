@@ -87,6 +87,48 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       readiness: ['insertion', 'misconception', 'negative_test'],
     },
   ]),
+  gen_apostrophe_mix_paragraph: Object.freeze([
+    {
+      prompt: 'Repair the apostrophes in the short passage.',
+      stem: 'We wont move the childrens paintings. The teachers notes are ready.',
+      model: "We won't move the children's paintings. The teachers' notes are ready.",
+      skillIds: ['apostrophe_contractions', 'apostrophe_possession'],
+      clusterId: 'apostrophe',
+      validator: {
+        type: 'paragraphRepair',
+        checks: [
+          {
+            type: 'requiresApostropheForms',
+            tokens: ["won't", "children's", "teachers' notes"],
+            forbidden: ['wont', 'childrens', 'teachers notes'],
+            misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing', 'apostrophe.possession_number'],
+          },
+        ],
+      },
+      misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing', 'apostrophe.possession_number'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Repair the apostrophes in the short passage.',
+      stem: 'I cant find the mens boots. The boys jackets are drying.',
+      model: "I can't find the men's boots. The boys' jackets are drying.",
+      skillIds: ['apostrophe_contractions', 'apostrophe_possession'],
+      clusterId: 'apostrophe',
+      validator: {
+        type: 'paragraphRepair',
+        checks: [
+          {
+            type: 'requiresApostropheForms',
+            tokens: ["can't", "men's", "boys' jackets"],
+            forbidden: ['cant', 'mens', 'boys jackets'],
+            misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing', 'apostrophe.possession_number'],
+          },
+        ],
+      },
+      misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing', 'apostrophe.possession_number'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+  ]),
   gen_speech_insert: Object.freeze([
     {
       prompt: 'Add the direct-speech punctuation.',
@@ -215,6 +257,58 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       readiness: ['constrained_transfer', 'misconception', 'negative_test'],
     },
   ]),
+  gen_fronted_speech_paragraph: Object.freeze([
+    {
+      prompt: 'Repair the punctuation in the short passage.',
+      stem: 'Before lunch Zara asked can we start now',
+      model: 'Before lunch, Zara asked, "Can we start now?"',
+      skillIds: ['fronted_adverbial', 'speech'],
+      clusterId: 'speech',
+      validator: {
+        type: 'paragraphRepair',
+        checks: [
+          {
+            type: 'startsWithPhraseComma',
+            phrase: 'Before lunch',
+            misconceptionTags: ['comma.fronted_adverbial_missing'],
+          },
+          {
+            type: 'speechWithWords',
+            words: 'can we start now',
+            requiredTerminal: '?',
+            misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
+          },
+        ],
+      },
+      misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Repair the punctuation in the short passage.',
+      stem: 'After rehearsal Omar said the props are packed',
+      model: 'After rehearsal, Omar said, "The props are packed."',
+      skillIds: ['fronted_adverbial', 'speech'],
+      clusterId: 'speech',
+      validator: {
+        type: 'paragraphRepair',
+        checks: [
+          {
+            type: 'startsWithPhraseComma',
+            phrase: 'After rehearsal',
+            misconceptionTags: ['comma.fronted_adverbial_missing'],
+          },
+          {
+            type: 'speechWithWords',
+            words: 'the props are packed',
+            requiredTerminal: '.',
+            misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
+          },
+        ],
+      },
+      misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+  ]),
   gen_comma_clarity_insert: Object.freeze([
     {
       prompt: 'Add the comma that makes the meaning clear.',
@@ -292,6 +386,64 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
         mark: ';',
       },
       misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_colon_semicolon_paragraph: Object.freeze([
+    {
+      prompt: 'Repair the punctuation in the short passage.',
+      stem: 'We needed three tools, a lantern, a compass and a notebook. The tide rose, the group moved inland.',
+      model: 'We needed three tools: a lantern, a compass and a notebook. The tide rose; the group moved inland.',
+      skillIds: ['colon_list', 'semicolon'],
+      clusterId: 'boundary',
+      validator: {
+        type: 'paragraphRepair',
+        checks: [
+          {
+            type: 'requiresColonBeforeList',
+            opening: 'We needed three tools',
+            items: ['a lantern', 'a compass', 'a notebook'],
+            allowTrailingText: true,
+            misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
+          },
+          {
+            type: 'requiresBoundaryBetweenClauses',
+            mark: ';',
+            left: 'The tide rose',
+            right: 'the group moved inland',
+            misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
+          },
+        ],
+      },
+      misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing', 'boundary.comma_splice', 'boundary.semicolon_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Repair the punctuation in the short passage.',
+      stem: 'The kit held three things, a torch, a rope and a map. The rain stopped, the match continued.',
+      model: 'The kit held three things: a torch, a rope and a map. The rain stopped; the match continued.',
+      skillIds: ['colon_list', 'semicolon'],
+      clusterId: 'boundary',
+      validator: {
+        type: 'paragraphRepair',
+        checks: [
+          {
+            type: 'requiresColonBeforeList',
+            opening: 'The kit held three things',
+            items: ['a torch', 'a rope', 'a map'],
+            allowTrailingText: true,
+            misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
+          },
+          {
+            type: 'requiresBoundaryBetweenClauses',
+            mark: ';',
+            left: 'The rain stopped',
+            right: 'the match continued',
+            misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
+          },
+        ],
+      },
+      misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing', 'boundary.comma_splice', 'boundary.semicolon_missing'],
       readiness: ['constrained_transfer', 'misconception', 'negative_test'],
     },
   ]),
@@ -431,6 +583,62 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       readiness: ['constrained_transfer', 'misconception', 'negative_test'],
     },
   ]),
+  gen_parenthesis_speech_paragraph: Object.freeze([
+    {
+      prompt: 'Repair the punctuation in the short passage.',
+      stem: 'The harbour an old fishing port was busy. Ravi said the bell is ringing',
+      model: 'The harbour, an old fishing port, was busy. Ravi said, "The bell is ringing."',
+      skillIds: ['parenthesis', 'speech'],
+      clusterId: 'structure',
+      validator: {
+        type: 'paragraphRepair',
+        checks: [
+          {
+            type: 'requiresParentheticalPhrase',
+            before: 'The harbour',
+            phrase: 'an old fishing port',
+            after: 'was busy',
+            misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
+          },
+          {
+            type: 'speechWithWords',
+            words: 'the bell is ringing',
+            requiredTerminal: '.',
+            misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
+          },
+        ],
+      },
+      misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'speech.quote_missing', 'speech.reporting_comma_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Repair the punctuation in the short passage.',
+      stem: 'The tower a useful lookout stood above the bay. Mia asked where are the boats',
+      model: 'The tower, a useful lookout, stood above the bay. Mia asked, "Where are the boats?"',
+      skillIds: ['parenthesis', 'speech'],
+      clusterId: 'structure',
+      validator: {
+        type: 'paragraphRepair',
+        checks: [
+          {
+            type: 'requiresParentheticalPhrase',
+            before: 'The tower',
+            phrase: 'a useful lookout',
+            after: 'stood above the bay',
+            misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
+          },
+          {
+            type: 'speechWithWords',
+            words: 'where are the boats',
+            requiredTerminal: '?',
+            misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
+          },
+        ],
+      },
+      misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'speech.quote_missing', 'speech.reporting_comma_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+  ]),
   gen_colon_list_insert: Object.freeze([
     {
       prompt: 'Add the colon before the list.',
@@ -533,16 +741,66 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       readiness: ['proofreading', 'misconception', 'negative_test'],
     },
   ]),
+  gen_bullet_points_paragraph: Object.freeze([
+    {
+      prompt: 'Repair the bullet-list punctuation.',
+      stem: 'Pack\n- pencils\n- rulers.\n- glue sticks',
+      model: 'Pack:\n- pencils\n- rulers\n- glue sticks',
+      accepted: [
+        'Pack:\n- pencils.\n- rulers.\n- glue sticks.',
+      ],
+      skillIds: ['bullet_points'],
+      clusterId: 'structure',
+      validator: {
+        type: 'paragraphRepair',
+        checks: [
+          {
+            type: 'requiresBulletStemAndItems',
+            stem: 'Pack',
+            items: ['pencils', 'rulers', 'glue sticks'],
+            misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
+          },
+        ],
+      },
+      misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Repair the bullet-list punctuation.',
+      stem: 'Bring\n- a coat.\n- a torch\n- a notebook.',
+      model: 'Bring:\n- a coat\n- a torch\n- a notebook',
+      accepted: [
+        'Bring:\n- a coat.\n- a torch.\n- a notebook.',
+      ],
+      skillIds: ['bullet_points'],
+      clusterId: 'structure',
+      validator: {
+        type: 'paragraphRepair',
+        checks: [
+          {
+            type: 'requiresBulletStemAndItems',
+            stem: 'Bring',
+            items: ['a coat', 'a torch', 'a notebook'],
+            misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
+          },
+        ],
+      },
+      misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+  ]),
 });
 
 function buildGeneratedItem({ family, skill, template, seed, variantIndex }) {
   const idSeed = `${seed}:${family.id}:${variantIndex}`;
   const model = typeof template.model === 'string' ? template.model : '';
+  const templateSkillIds = uniqueStrings(template.skillIds);
+  const skillIds = templateSkillIds.length ? templateSkillIds : [family.skillId];
   return {
     id: `${family.id}_${shortHash(idSeed)}_${variantIndex + 1}`,
     mode: family.mode,
-    skillIds: [family.skillId],
-    clusterId: skill.clusterId,
+    skillIds,
+    clusterId: template.clusterId || skill.clusterId,
     rewardUnitId: family.rewardUnitId,
     prompt: template.prompt || 'Practise this punctuation pattern.',
     stem: template.stem || '',

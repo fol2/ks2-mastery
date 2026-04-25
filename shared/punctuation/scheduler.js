@@ -3,7 +3,7 @@ import { PUNCTUATION_CONTENT_INDEXES } from './content.js';
 export const DAY_MS = 24 * 60 * 60 * 1000;
 export const MIN_MS = 60 * 1000;
 
-const SMART_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix', 'transfer', 'combine']);
+const SMART_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix', 'transfer', 'combine', 'paragraph']);
 const GUIDED_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix']);
 const CLUSTER_MODE = Object.freeze({
   endmarks: 'endmarks',
@@ -382,14 +382,28 @@ export function selectPunctuationItem({
     };
   }
 
-  const recent = new Set(Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : []);
+  const recentIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : [];
+  const recent = new Set(recentIds);
+  const previousItemId = typeof session?.currentItemId === 'string' && session.currentItemId
+    ? session.currentItemId
+    : recentIds.at(-1) || null;
+  const previousItemMode = previousItemId ? indexes.itemById.get(previousItemId)?.mode : null;
   const modeRows = targetModeOptions(session, prefs)
-    .map((candidateMode) => ({
-      mode: candidateMode,
-      candidates: candidateItems(indexes, { mode: candidateMode, clusterId, skillId: guidedSkillId }),
-    }));
-  const selectedMode = modeRows.find((row) => row.candidates.length) || { mode, candidates: [] };
-  const candidates = selectedMode.candidates;
+    .map((candidateMode) => {
+      const modeSuppressed = previousItemMode === 'paragraph' && candidateMode === 'paragraph';
+      const candidates = modeSuppressed
+        ? []
+        : candidateItems(indexes, { mode: candidateMode, clusterId, skillId: guidedSkillId });
+      return {
+        mode: candidateMode,
+        candidates,
+        nonRepeatCandidates: candidates.filter((item) => item.id !== previousItemId),
+      };
+    });
+  const selectedMode = modeRows.find((row) => row.nonRepeatCandidates.length)
+    || modeRows.find((row) => row.candidates.length)
+    || { mode, candidates: [], nonRepeatCandidates: [] };
+  const candidates = selectedMode.nonRepeatCandidates.length ? selectedMode.nonRepeatCandidates : selectedMode.candidates;
   const windowed = candidates.slice(0, maxWindow);
   const rows = windowed.map((item) => {
     const snap = memorySnapshot(progressForItem(progress, item.id), now);

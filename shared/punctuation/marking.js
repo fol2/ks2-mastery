@@ -8,6 +8,7 @@ const FACET_LABELS = Object.freeze({
   reporting_clause: 'Reporting-clause comma',
   capitalisation: 'Capital letters',
   preservation: 'Target words preserved',
+  apostrophe_forms: 'Apostrophe forms',
   comma_placement: 'Comma placement',
   boundary_mark: 'Boundary mark',
   hyphenated_phrase: 'Hyphenated phrase',
@@ -264,6 +265,10 @@ function itemTags(item) {
   return Array.isArray(item?.misconceptionTags) ? [...item.misconceptionTags] : [];
 }
 
+function uniqueStrings(values = []) {
+  return [...new Set(values.filter((entry) => typeof entry === 'string' && entry))];
+}
+
 function primaryCommaTag(item, fallback) {
   return itemTags(item).find((tag) => tag.startsWith('comma.')) || fallback;
 }
@@ -329,8 +334,11 @@ function colonBeforeList(text, validator = {}) {
   const afterOpening = wordsOk ? clean.slice(opening.length) : '';
   const colonOk = /^\s*:\s*/.test(afterOpening);
   const expectedList = listCommaShapePattern(items);
+  const tailPattern = validator.allowTrailingText === true
+    ? '[.?!](?:\\s+\\S.*)?$'
+    : '[.?!]?["\']?$';
   const listOk = Boolean(expectedList) && new RegExp(
-    `^\\s*${escapeRegExp(opening)}\\s*:\\s*${expectedList}\\s*[.?!]?["']?$`,
+    `^\\s*${escapeRegExp(opening)}\\s*:\\s*${expectedList}\\s*${tailPattern}`,
     'i',
   ).test(clean);
   const { hasFinalComma } = listCommaOk(clean, items);
@@ -767,6 +775,99 @@ function markTransfer(item, answer) {
   return null;
 }
 
+function paragraphCheckItem(item, check = {}) {
+  return {
+    ...item,
+    validator: check,
+    misconceptionTags: uniqueStrings([
+      ...(Array.isArray(check.misconceptionTags) ? check.misconceptionTags : []),
+      ...itemTags(item),
+    ]),
+  };
+}
+
+function markRequiredApostropheForms(check = {}, rawText = '') {
+  const clean = normaliseAnswerText(rawText)
+    .replace(/[‘’]/g, "'")
+    .replace(/\s+([,.;:?!])/g, '$1')
+    .toLowerCase();
+  const required = Array.isArray(check.tokens) ? check.tokens : [];
+  const forbidden = Array.isArray(check.forbidden) ? check.forbidden : [];
+  const missing = required.filter((token) => !clean.includes(String(token).toLowerCase()));
+  const unrepaired = forbidden.filter((token) => clean.includes(String(token).toLowerCase()));
+  const correct = missing.length === 0 && unrepaired.length === 0;
+  const tags = [];
+  if (missing.length) tags.push('apostrophe.required_forms_missing');
+  if (unrepaired.length) tags.push('apostrophe.unrepaired_forms');
+  return {
+    correct,
+    expected: '',
+    note: correct ? 'The apostrophe forms are repaired.' : 'Repair every required apostrophe form and remove the unpunctuated forms.',
+    misconceptionTags: correct ? [] : uniqueStrings([
+      ...tags,
+      ...(Array.isArray(check.misconceptionTags) ? check.misconceptionTags : []),
+    ]),
+    facets: [
+      facet('apostrophe_forms', correct),
+    ],
+  };
+}
+
+function markParagraphPassageShape(item, rawText = '') {
+  const expectedWords = stripPunctuation(item.model || acceptedAnswers(item)[0] || '');
+  const typedWords = stripPunctuation(rawText);
+  const correct = Boolean(expectedWords) && typedWords === expectedWords;
+  return {
+    correct,
+    expected: item.model || '',
+    note: correct ? 'The passage wording is preserved.' : 'Keep the whole passage wording and do not add extra sentences.',
+    misconceptionTags: correct ? [] : ['paragraph.words_changed'],
+    facets: [
+      facet('preservation', correct),
+    ],
+  };
+}
+
+function aggregateParagraphFacets(results = []) {
+  const facets = new Map();
+  for (const result of results) {
+    for (const entry of Array.isArray(result.facets) ? result.facets : []) {
+      if (!entry?.id) continue;
+      const current = facets.get(entry.id);
+      facets.set(entry.id, {
+        id: entry.id,
+        ok: current ? current.ok && entry.ok === true : entry.ok === true,
+        label: entry.label || current?.label || entry.id,
+      });
+    }
+  }
+  return [...facets.values()];
+}
+
+function markParagraph(item, answer) {
+  if (item.validator?.type !== 'paragraphRepair') return null;
+  const rawText = isPlainObject(answer) ? answer.typed ?? answer.answer : answer;
+  const checks = Array.isArray(item.validator?.checks) ? item.validator.checks : [];
+  if (!checks.length) return null;
+  const results = [
+    markParagraphPassageShape(item, rawText),
+    ...checks.map((check) => {
+      if (check?.type === 'requiresApostropheForms') return markRequiredApostropheForms(check, rawText);
+      return markTransfer(paragraphCheckItem(item, check), { typed: rawText });
+    }),
+  ].filter(Boolean);
+  if (!results.length) return null;
+
+  const correct = results.every((result) => result.correct);
+  return {
+    correct,
+    expected: item.model || '',
+    note: correct ? (item.explanation || 'The passage has been repaired.') : 'Repair every punctuation pattern in the passage.',
+    misconceptionTags: correct ? [] : uniqueStrings(results.flatMap((result) => result.correct ? [] : result.misconceptionTags || [])),
+    facets: aggregateParagraphFacets(results),
+  };
+}
+
 function markCombine(item, answer) {
   const rawText = isPlainObject(answer) ? answer.typed ?? answer.answer : answer;
   const text = normaliseAnswerText(rawText);
@@ -947,6 +1048,10 @@ export function markPunctuationAnswer({ item, answer } = {}) {
   }
 
   if (item.mode === 'choose') return markChoose(item, answer);
+  if (item.mode === 'paragraph') {
+    const paragraph = markParagraph(item, answer);
+    if (paragraph) return paragraph;
+  }
   if (item.mode === 'combine') {
     const combine = markCombine(item, answer);
     if (combine) return combine;

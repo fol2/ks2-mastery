@@ -39,8 +39,8 @@ test('punctuation legacy parity baseline preserves the 14 legacy skill ids', () 
 test('punctuation legacy parity records shipped item modes and open mode gaps', () => {
   const report = createPunctuationLegacyParityReport({ legacyBaseline });
 
-  assert.deepEqual(report.productionItemModes, ['choose', 'combine', 'fix', 'insert', 'transfer']);
-  for (const mode of ['choose', 'insert', 'fix', 'transfer', 'combine']) {
+  assert.deepEqual(report.productionItemModes, ['choose', 'combine', 'fix', 'insert', 'paragraph', 'transfer']);
+  for (const mode of ['choose', 'insert', 'fix', 'transfer', 'combine', 'paragraph']) {
     const row = report.rows.find((entry) => entry.section === 'itemModes' && entry.id === mode);
     assert.equal(row?.status, 'ported', `${mode} should be marked ported`);
     assert.equal(row?.present, true, `${mode} should exist in production item modes`);
@@ -61,8 +61,12 @@ test('punctuation legacy parity records shipped item modes and open mode gaps', 
   assert.equal(weak?.ownerUnit, 'U3');
   assert.equal(weak?.present, true);
 
+  const paragraphSession = report.rows.find((entry) => entry.section === 'sessionModes' && entry.id === 'paragraph');
+  assert.equal(paragraphSession?.status, 'replaced');
+  assert.equal(paragraphSession?.ownerUnit, 'U5');
+  assert.equal(paragraphSession?.present, false);
+
   for (const [id, ownerUnit] of [
-    ['paragraph', 'U5'],
     ['gps', 'U6'],
   ]) {
     const row = report.rows.find((entry) => entry.id === id);

@@ -234,7 +234,8 @@ test('smart, weak, and focused scheduling can select combine at controlled frequ
     now: 0,
     random: () => 0,
   });
-  assert.equal(speechFallback.targetMode, 'choose');
+  assert.equal(speechFallback.targetMode, 'paragraph');
+  assert.equal(speechFallback.item.mode, 'paragraph');
   assert.equal(speechFallback.item.clusterId, 'speech');
 
   const weakFacet = updateMemoryState(createMemoryState(), false, 0);

@@ -65,9 +65,9 @@
     {
       "id": "paragraph",
       "legacyLabel": "Paragraph repair",
-      "status": "planned",
+      "status": "replaced",
       "ownerUnit": "U5",
-      "notes": "Needs mixed-passage proofreading items, multiline marking, scheduler weighting, and review UI."
+      "notes": "Production models paragraph repair as the score-bearing paragraph item mode inside smart, weak, and focused sessions instead of a separate browser-owned session mode."
     },
     {
       "id": "weak",
@@ -125,8 +125,9 @@
     },
     {
       "id": "paragraph",
-      "status": "planned",
-      "ownerUnit": "U5"
+      "status": "ported",
+      "ownerUnit": "U5",
+      "assertPresent": true
     }
   ],
   "settingsSurface": [

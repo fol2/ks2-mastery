@@ -75,10 +75,13 @@ Published practice modes include:
 - fix: proofread and repair a sentence
 - transfer: write or repair a constrained sentence against explicit facets
 - combine: join notes, clauses, or extra detail into one score-bearing punctuated sentence
+- paragraph: proofread a short passage where several punctuation skills can be exercised together
 
 Generated practice now runs through a deterministic compiler. Each published generator family can add extra practice items to the runtime manifest under a fixed release seed, so the Worker can broaden practice without using browser-owned random generation or changing the published reward denominator. Generated items carry `source: generated` internally, but the browser still receives only the redacted live-item read model.
 
 Sentence-combining practice is now ported as a Worker-owned item mode rather than a separate browser session. Smart review and focused cluster sessions include `combine` at controlled frequency, weak spots can target weak `skill::combine` facets, and unsupported clusters fall back to their available item modes instead of exposing an empty queue.
+
+Paragraph-repair practice is also ported as a Worker-owned item mode rather than a separate browser session. Smart review and focused cluster sessions include `paragraph` after the combine slot, weak spots can target weak `skill::paragraph` facets, and the browser receives only the short passage prompt/stem rather than accepted answers or validators.
 
 The first Speech rubric is deliberately strict:
 
@@ -116,6 +119,14 @@ Combine marking adds stricter one-sentence validators for the first legacy-shape
 - colon-list combinations after a complete opening clause
 - semi-colon clause combinations that reject comma splices
 - spaced-dash clause combinations that reject unpunctuated joins
+
+Paragraph marking composes the deterministic validators across a short passage for the first legacy-shaped proofreading families:
+
+- fronted adverbial plus direct speech
+- parenthesis plus direct speech
+- colon before a list plus semi-colon between clauses
+- colon-led bullet lists with consistent line-based punctuation
+- mixed apostrophe contractions and possession
 
 ## Worker Runtime
 
@@ -233,9 +244,9 @@ shared/punctuation/legacy-parity.js
 
 The baseline currently classifies legacy behaviour as:
 
-- Ported: the 14-skill map, Worker command runtime, Smart review, guided learning, dedicated weak spots, `choose`, `insert`, `fix`, `transfer`, `combine`, reward-unit analytics, skill rows, and recent mistakes.
-- Planned: paragraph repair, GPS test mode, richer transfer validators, safe context-pack compilation, and deeper Parent/Admin evidence.
-- Replaced: legacy standalone `choose`, `insert`, `fix`, `transfer`, and sentence-combining session buttons are represented by production item modes inside Smart review, weak spots, and focused cluster sessions.
+- Ported: the 14-skill map, Worker command runtime, Smart review, guided learning, dedicated weak spots, `choose`, `insert`, `fix`, `transfer`, `combine`, `paragraph`, reward-unit analytics, skill rows, and recent mistakes.
+- Planned: GPS test mode, richer transfer validators, safe context-pack compilation, and deeper Parent/Admin evidence.
+- Replaced: legacy standalone `choose`, `insert`, `fix`, `transfer`, sentence-combining, and paragraph-repair session buttons are represented by production item modes inside Smart review, weak spots, and focused cluster sessions.
 - Rejected: the legacy single-file production route, localStorage source of truth, browser-owned marking, and browser-stored AI provider keys.
 
 This baseline is deliberately a guardrail, not a demand to copy the legacy architecture. New parity slices should update the fixture status only when the replacement Worker-owned implementation, redacted read model, tests, and release gate exist.

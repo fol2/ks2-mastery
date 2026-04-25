@@ -100,7 +100,11 @@ test('manifest validation rejects duplicate reward mastery keys and missing read
 
   const missingTransfer = {
     ...PUNCTUATION_CONTENT_MANIFEST,
-    items: PUNCTUATION_CONTENT_MANIFEST.items.filter((item) => item.id !== 'sp_transfer_question'),
+    items: PUNCTUATION_CONTENT_MANIFEST.items.filter((item) => ![
+      'sp_transfer_question',
+      'pg_fronted_speech',
+      'pg_parenthesis_speech',
+    ].includes(item.id)),
   };
   assert.equal(validatePunctuationManifest(missingTransfer).ok, false);
   assert.match(validatePunctuationManifest(missingTransfer).errors.join('\n'), /Published skill speech is missing readiness row constrained_transfer/);
