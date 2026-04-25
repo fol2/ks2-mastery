@@ -48,6 +48,46 @@ npm run check
 npm run deploy
 ```
 
+## Threshold-Run Procedure
+
+The classroom load driver and production bootstrap probe both support hard threshold gates so a CI step can fail purely on threshold violation. No threshold flag is set by default — absent flags preserve the existing reporting behaviour exactly.
+
+### Classroom load driver flags
+
+Add any combination of the following to `npm run capacity:classroom`. Each flag is an optional hard gate; if absent the gate is not enforced. When any gate is violated the script exits non-zero and prints a `thresholds.violations` block in the JSON report.
+
+- `--max-5xx <count>` — fail if total HTTP 5xx responses exceed `<count>`.
+- `--max-network-failures <count>` — fail if network-level failures exceed `<count>`.
+- `--max-bootstrap-p95-ms <ms>` — fail if `/api/bootstrap` P95 wall time exceeds `<ms>`.
+- `--max-command-p95-ms <ms>` — fail if subject-command P95 wall time exceeds `<ms>`.
+- `--max-response-bytes <bytes>` — fail if any endpoint's maximum response bytes exceed `<bytes>`.
+- `--require-zero-signals` — fail if any `exceededCpu`, `d1Overloaded`, `d1DailyLimit`, `rateLimited`, `networkFailure`, or `server5xx` signal is observed.
+- `--confirm-high-production-load` — additional acknowledgement for larger production load shapes; required by operators before running at classroom or stretch scale.
+
+The `capacity:classroom:release-gate` package script bakes the recommended defaults:
+
+```sh
+npm run capacity:classroom:release-gate -- --production --origin https://ks2.eugnel.uk --confirm-production-load --confirm-high-production-load --demo-sessions --learners 30 --bootstrap-burst 20 --rounds 1
+```
+
+The release-gate script is equivalent to `capacity:classroom` with `--max-5xx 0 --max-network-failures 0 --max-bootstrap-p95-ms 1000 --max-command-p95-ms 750 --max-response-bytes 600000 --require-zero-signals` prepended. Any additional arguments you supply on the command line layer on top.
+
+### Probe bootstrap flags
+
+`npm run smoke:production:bootstrap` supports three hard gates:
+
+- `--max-bytes <bytes>` — fail when the response body exceeds `<bytes>` (default 600 000).
+- `--max-sessions <count>` — fail when `practiceSessions` length exceeds `<count>`.
+- `--max-events <count>` — fail when `eventLog` length exceeds `<count>`.
+
+A threshold violation emits a `thresholdViolations` entry in the JSON report alongside the legacy `failures` list, and exits non-zero. Raw response bodies are never surfaced in the output even when a threshold trips — only the measured size, count, and the configured limit.
+
+### Recommended CI wiring
+
+1. Run `npm run capacity:classroom:release-gate -- --dry-run` as a deterministic smoke on every pull request. The dry-run still reports the `thresholds` block so the JSON shape is stable.
+2. For production release gates, invoke the same script with `--production --origin <origin> --confirm-production-load --confirm-high-production-load --demo-sessions` so isolated demo sessions carry the load.
+3. Record the resulting `thresholds.violations` array, plan summary, and commit SHA alongside the run, per the `Evidence To Record` checklist.
+
 ## Evidence To Record
 
 For each capacity run, record:

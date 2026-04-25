@@ -142,6 +142,7 @@ export function analyseBootstrapPayload(payload, {
   forbiddenTokens = [],
 } = {}) {
   const failures = [];
+  const thresholdViolations = [];
   const warnings = [];
   const practiceSessionCount = arrayCount(payload, 'practiceSessions');
   const eventCount = arrayCount(payload, 'eventLog');
@@ -151,6 +152,7 @@ export function analyseBootstrapPayload(payload, {
     return {
       ok: false,
       failures: ['Response body is not a JSON object.'],
+      thresholdViolations: [],
       warnings,
       responseBytes: responseSize,
       counts: {
@@ -165,13 +167,34 @@ export function analyseBootstrapPayload(payload, {
     failures.push('Bootstrap payload does not report ok=true.');
   }
   if (responseSize > maxBytes) {
-    failures.push(`Bootstrap response is ${responseSize} bytes, above ${maxBytes}.`);
+    const message = `Bootstrap response is ${responseSize} bytes, above ${maxBytes}.`;
+    failures.push(message);
+    thresholdViolations.push({
+      threshold: 'max-bytes',
+      limit: maxBytes,
+      observed: responseSize,
+      message,
+    });
   }
   if (maxSessions != null && practiceSessionCount > maxSessions) {
-    failures.push(`Bootstrap returned ${practiceSessionCount} practice sessions, above ${maxSessions}.`);
+    const message = `Bootstrap returned ${practiceSessionCount} practice sessions, above ${maxSessions}.`;
+    failures.push(message);
+    thresholdViolations.push({
+      threshold: 'max-sessions',
+      limit: maxSessions,
+      observed: practiceSessionCount,
+      message,
+    });
   }
   if (maxEvents != null && eventCount > maxEvents) {
-    failures.push(`Bootstrap returned ${eventCount} events, above ${maxEvents}.`);
+    const message = `Bootstrap returned ${eventCount} events, above ${maxEvents}.`;
+    failures.push(message);
+    thresholdViolations.push({
+      threshold: 'max-events',
+      limit: maxEvents,
+      observed: eventCount,
+      message,
+    });
   }
 
   const capacity = payload.bootstrapCapacity || null;
@@ -211,6 +234,7 @@ export function analyseBootstrapPayload(payload, {
   return {
     ok: failures.length === 0,
     failures,
+    thresholdViolations,
     warnings,
     responseBytes: responseSize,
     counts: {
@@ -270,10 +294,12 @@ export function usage() {
     '  --cookie <cookie>          Cookie header value from a logged-in browser session',
     '  --bearer <token>           Bearer token for Authorization',
     '  --header "name: value"     Extra request header, repeatable',
-    '  --max-bytes <number>       Maximum allowed response bytes',
+    '  --forbidden-token <text>   Token that must not appear in the JSON payload, repeatable',
+    '',
+    'Hard threshold gates (non-zero exit on violation):',
+    '  --max-bytes <number>       Maximum allowed response bytes (default 600000)',
     '  --max-sessions <number>    Maximum allowed practiceSessions length',
     '  --max-events <number>      Maximum allowed eventLog length',
-    '  --forbidden-token <text>   Token that must not appear in the JSON payload, repeatable',
   ].join('\n');
 }
 

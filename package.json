@@ -15,6 +15,7 @@
     "check": "node ./scripts/wrangler-oauth.mjs deploy --dry-run",
     "check:oauth": "npm run check",
     "capacity:classroom": "node ./scripts/classroom-load-test.mjs",
+    "capacity:classroom:release-gate": "node ./scripts/classroom-load-test.mjs --max-5xx 0 --max-network-failures 0 --max-bootstrap-p95-ms 1000 --max-command-p95-ms 750 --max-response-bytes 600000 --require-zero-signals",
     "content:seed": "node scripts/seed-spelling-content-from-legacy.mjs",
     "content:enrich": "node scripts/enrich-spelling-vocabulary.mjs",
     "content:validate": "node scripts/validate-spelling-content.mjs",

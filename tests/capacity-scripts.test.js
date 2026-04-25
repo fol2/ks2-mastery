@@ -57,6 +57,11 @@ test('classroom load script dry-run reports the planned scenarios without networ
     assert.equal(report.plan.scenarios[1].rounds, 2);
     assert.equal(report.plan.expectedRequests, 36);
     assert.equal(report.summary.totalRequests, 0);
+    // Back-compat: absent threshold flags do not change the exit contract;
+    // the block is reported but has zero configured limits and zero
+    // violations so a script running with the old invocation keeps exiting 0.
+    assert.equal(report.thresholds.configured, false);
+    assert.deepEqual(report.thresholds.violations, []);
   } finally {
     globalThis.fetch = previousFetch;
   }
