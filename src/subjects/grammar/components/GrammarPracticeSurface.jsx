@@ -4,15 +4,16 @@ import { GrammarConceptBankScene } from './GrammarConceptBankScene.jsx';
 import { GrammarSessionScene } from './GrammarSessionScene.jsx';
 import { GrammarSetupScene } from './GrammarSetupScene.jsx';
 import { GrammarSummaryScene } from './GrammarSummaryScene.jsx';
+import { GrammarTransferScene } from './GrammarTransferScene.jsx';
 import { GRAMMAR_MONSTER_ROUTES, GRAMMAR_SUBJECT_ID, normaliseGrammarReadModel } from '../metadata.js';
 import { normaliseGrammarRewardState } from '../../../platform/game/monster-system.js';
 
 const MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
 
 // Phase 3 U2 replaces the Grammar Bank placeholder stub with the real
-// `GrammarConceptBankScene`. The Writing Try scene (`GrammarTransferScene`)
-// still ships as a placeholder until U6b lands; until then, U1's stub
-// holds the phase transition safe with a way back to the dashboard.
+// `GrammarConceptBankScene`. Phase 3 U6b replaces the Writing Try
+// placeholder with `GrammarTransferScene` — the non-scored writing
+// surface consuming the Worker `transferLane` read model.
 
 function selectedLearner(appState) {
   const learnerId = appState?.learners?.selectedId || '';
@@ -55,24 +56,6 @@ function resolveGrammarRewardState({ grammar, learner, repositories }) {
   const normalisedPersisted = normaliseGrammarRewardState(persistedState);
   if (hasGrammarRewardProgress(normalisedPersisted)) return normalisedPersisted;
   return Object.keys(normalisedProjected).length ? normalisedProjected : normalisedPersisted;
-}
-
-function GrammarTransferPlaceholderScene({ actions }) {
-  // U1 wires the "Writing Try" secondary button; U6b ships the real scene.
-  return (
-    <section className="grammar-transfer-placeholder" aria-labelledby="grammar-transfer-placeholder-title">
-      <h2 id="grammar-transfer-placeholder-title">Writing Try</h2>
-      <p>Non-scored writing practice is opening up soon. Nothing you write here will change your Grammar scores.</p>
-      <button
-        type="button"
-        className="btn primary"
-        data-action="grammar-back"
-        onClick={() => actions.dispatch('grammar-back')}
-      >
-        Back to Grammar Garden
-      </button>
-    </section>
-  );
 }
 
 export function GrammarPracticeSurface({
@@ -136,7 +119,7 @@ export function GrammarPracticeSurface({
   if (grammar.phase === 'transfer') {
     return (
       <div className="grammar-surface">
-        <GrammarTransferPlaceholderScene {...shared} />
+        <GrammarTransferScene {...shared} />
       </div>
     );
   }
