@@ -61,18 +61,15 @@ test('punctuation legacy parity records shipped item modes and open mode gaps', 
   assert.equal(weak?.ownerUnit, 'U3');
   assert.equal(weak?.present, true);
 
+  const gps = report.rows.find((entry) => entry.section === 'sessionModes' && entry.id === 'gps');
+  assert.equal(gps?.status, 'ported');
+  assert.equal(gps?.ownerUnit, 'U6');
+  assert.equal(gps?.present, true);
+
   const paragraphSession = report.rows.find((entry) => entry.section === 'sessionModes' && entry.id === 'paragraph');
   assert.equal(paragraphSession?.status, 'replaced');
   assert.equal(paragraphSession?.ownerUnit, 'U5');
   assert.equal(paragraphSession?.present, false);
-
-  for (const [id, ownerUnit] of [
-    ['gps', 'U6'],
-  ]) {
-    const row = report.rows.find((entry) => entry.id === id);
-    assert.equal(row?.status, 'planned', `${id} should remain planned`);
-    assert.equal(row?.ownerUnit, ownerUnit, `${id} should be owned by ${ownerUnit}`);
-  }
 });
 
 test('punctuation legacy parity rejects unsafe legacy authority instead of planning it', () => {

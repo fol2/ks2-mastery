@@ -328,7 +328,7 @@ tests/
 
 ---
 
-- [ ] U6. **Add True GPS Test Mode**
+- [x] U6. **Add True GPS Test Mode**
 
 **Goal:** Port legacy GPS-style test behaviour with delayed feedback and end-of-test review.
 
