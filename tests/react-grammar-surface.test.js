@@ -11,6 +11,7 @@ import { installMemoryStorage } from './helpers/memory-storage.js';
 import { grammarModule } from '../src/subjects/grammar/module.js';
 import { normaliseGrammarReadModel } from '../src/subjects/grammar/metadata.js';
 import { grammarMasteryKey } from '../src/platform/game/monster-system.js';
+import { getSubject, SUBJECTS } from '../src/platform/core/subject-registry.js';
 
 function grammarOracleSample(templateId = 'question_mark_select') {
   return readGrammarLegacyOracle().templates.find((template) => template.id === templateId);
@@ -167,6 +168,60 @@ test('Grammar analytics renders evidence before reward progress', () => {
   assert.match(html, /Fronted Adverbial pattern/);
   assert.match(html, /Question-type evidence/);
   assert.match(html, /Choose the correct sentence/);
+});
+
+test('Grammar renders transfer and Bellstorm bridge placeholders as locked future capabilities', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  const html = harness.render();
+
+  assert.match(html, /Writing application roadmap/);
+  assert.match(html, /Paragraph transfer/);
+  assert.match(html, /Richer writing tasks/);
+  assert.match(html, /Teacher review and paragraph marking are not promised/);
+  assert.match(html, /Worker-marked Grammar remains the only score-bearing authority/);
+  assert.match(html, /Bellstorm bridge/);
+  assert.match(html, /Punctuation-for-grammar stays in Grammar/);
+  assert.match(html, /Bellstorm Coast remains the separate Punctuation subject/);
+});
+
+test('Grammar locked transfer placeholders do not expose scoring commands', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  const html = harness.render();
+
+  assert.match(html, /<button(?=[^>]*data-grammar-transfer-placeholder="paragraph-transfer")(?=[^>]*disabled="")[^>]*>Coming next/);
+  assert.match(html, /<button(?=[^>]*data-grammar-transfer-placeholder="writing-application")(?=[^>]*disabled="")[^>]*>Coming next/);
+  assert.doesNotMatch(html, /data-grammar-transfer-submit/);
+  assert.doesNotMatch(html, /name="transfer-answer"/);
+
+  assert.equal(grammarModule.handleAction('grammar-transfer-submit', {
+    appState: harness.store.getState(),
+    data: { formData: new FormData() },
+    store: harness.store,
+    subjectCommands: {
+      send() {
+        throw new Error('Locked transfer placeholder must not submit a command.');
+      },
+    },
+  }), false);
+});
+
+test('Punctuation remains separately registered from Grammar Bellstorm bridge copy', () => {
+  const grammarSubject = getSubject('grammar');
+  const punctuationSubject = getSubject('punctuation');
+
+  assert.equal(grammarSubject.id, 'grammar');
+  assert.equal(punctuationSubject.id, 'punctuation');
+  assert.notEqual(grammarSubject, punctuationSubject);
+  assert.equal(punctuationSubject.name, 'Punctuation');
+  assert.equal(punctuationSubject.available, true);
+  assert.match(punctuationSubject.blurb, /full KS2 punctuation map/);
+  assert.equal(SUBJECTS.filter((subject) => subject.id === 'punctuation').length, 1);
 });
 
 test('Grammar analytics renders normalised recent activity before raw attempts', () => {
@@ -440,7 +495,7 @@ test('Grammar legacy modes render available without locked placeholders', () => 
   assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Worked examples/);
   assert.match(html, /<button class="grammar-mode" type="button">[\s\S]*Faded guidance/);
   assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Faded guidance/);
-  assert.doesNotMatch(html, /Coming next/);
+  assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">/);
 });
 
 test('Grammar setup can start trouble drill mode', () => {

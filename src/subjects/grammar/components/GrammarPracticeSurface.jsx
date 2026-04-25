@@ -7,6 +7,29 @@ import { GRAMMAR_MONSTER_ROUTES, GRAMMAR_SUBJECT_ID, normaliseGrammarReadModel }
 
 const MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
 
+const GRAMMAR_TRANSFER_PLACEHOLDERS = Object.freeze([
+  {
+    id: 'paragraph-transfer',
+    eyebrow: 'Non-scored transfer',
+    title: 'Paragraph transfer',
+    copy: 'Coming next: short paragraph application that asks the learner to use Grammar choices in a wider piece of writing.',
+    bullets: [
+      'No score is recorded from this placeholder.',
+      'Teacher review and paragraph marking are not promised in this release.',
+    ],
+  },
+  {
+    id: 'writing-application',
+    eyebrow: 'Future writing application',
+    title: 'Richer writing tasks',
+    copy: 'Reserved for sentence-to-writing practice once the deterministic Grammar evidence and reporting path are stable.',
+    bullets: [
+      'Worker-marked Grammar remains the only score-bearing authority.',
+      'Any future writing workflow will ship as its own reviewed capability.',
+    ],
+  },
+]);
+
 function selectedLearner(appState) {
   const learnerId = appState?.learners?.selectedId || '';
   return learnerId ? appState.learners?.byId?.[learnerId] || null : null;
@@ -43,6 +66,40 @@ function resolveGrammarRewardState({ grammar, learner, repositories }) {
   return Object.keys(projectedState).length ? projectedState : persistedState;
 }
 
+function GrammarTransferPlaceholders() {
+  return (
+    <section className="card grammar-transfer-placeholders" aria-labelledby="grammar-transfer-title">
+      <div className="card-header">
+        <div>
+          <div className="eyebrow">Transfer bridge</div>
+          <h3 className="section-title" id="grammar-transfer-title">Writing application roadmap</h3>
+        </div>
+        <span className="chip">Coming next</span>
+      </div>
+      <div className="grammar-transfer-grid">
+        {GRAMMAR_TRANSFER_PLACEHOLDERS.map((entry) => (
+          <article className="grammar-transfer-card" key={entry.id}>
+            <div className="eyebrow">{entry.eyebrow}</div>
+            <h4>{entry.title}</h4>
+            <p>{entry.copy}</p>
+            <ul>
+              {entry.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}
+            </ul>
+            <button
+              className="btn secondary"
+              type="button"
+              disabled
+              data-grammar-transfer-placeholder={entry.id}
+            >
+              Coming next
+            </button>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function GrammarPracticeSurface({
   appState,
   subject,
@@ -74,6 +131,7 @@ export function GrammarPracticeSurface({
     <div className="grammar-surface">
       <GrammarSetupScene {...shared} />
       <GrammarAnalyticsScene {...shared} />
+      <GrammarTransferPlaceholders />
     </div>
   );
 }

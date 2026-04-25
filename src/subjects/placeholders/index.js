@@ -33,11 +33,13 @@ export const grammarModule = createPlaceholderSubject({
 export const punctuationModule = createPlaceholderSubject({
   id: 'punctuation',
   name: 'Punctuation',
-  blurb: 'Commas, apostrophes, speech marks and more.',
+  blurb: 'Bellstorm Coast remains the separate path for commas, apostrophes, speech marks and punctuation progression.',
   accent: '#B8873F',
   accentSoft: '#F0E1C4',
   accentTint: '#F7EEDC',
   icon: 'quote',
+  region: 'Bellstorm Coast',
+  roadmapStage: 'separate-subject',
 });
 
 export const readingModule = createPlaceholderSubject({
