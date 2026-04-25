@@ -27,4 +27,5 @@
 ## Verification
 
 - Before deployment, run `npm test` and `npm run check`.
+- When working from a fresh git worktree, run `npm install` once before `npm test` or `npm run check`. Git worktrees do not share `node_modules` with the primary checkout; the `pretest` preflight will flag this clearly if missed.
 - After deployment, verify the production UI on `https://ks2.eugnel.uk` with a logged-in browser session when the change affects user-facing flows.
