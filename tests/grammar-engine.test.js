@@ -818,6 +818,181 @@ test('Grammar practice settings keep Smart Review teaching support score-aware',
   assert.ok(submit.state.mastery.concepts.adverbials.strength < 0.38);
 });
 
+test('Grammar faded support action marks the next answer as supported', () => {
+  const oracle = readGrammarLegacyOracle();
+  const sample = oracle.templates.find((template) => template.id === 'fronted_adverbial_choose');
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'start-faded-repair',
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  assert.equal(start.state.session.supportLevel, 0);
+
+  const faded = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: start.state, data: start.data },
+    latestSession: start.practiceSession,
+    command: 'use-faded-support',
+    requestId: 'use-faded-repair',
+    payload: {},
+  });
+  assert.equal(faded.state.session.supportLevel, 1);
+  assert.equal(faded.events.length, 0);
+
+  const submit = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: faded.state, data: faded.data },
+    latestSession: faded.practiceSession,
+    command: 'submit-answer',
+    requestId: 'submit-faded-repair',
+    payload: { response: sample.correctResponse },
+  });
+  assert.equal(submit.state.recentAttempts.at(-1).supportLevel, 1);
+});
+
+test('Grammar worked solution and retry repair do not double-count unsubmitted progress', () => {
+  const oracle = readGrammarLegacyOracle();
+  const sample = oracle.templates.find((template) => template.id === 'fronted_adverbial_choose');
+  const question = createGrammarQuestion({ templateId: sample.id, seed: sample.sample.seed });
+  const wrongAnswer = question.inputSpec.options.find((option) => !evaluateGrammarQuestion(question, { answer: option.value }).correct).value;
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'start-worked-repair',
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  const wrong = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: start.state, data: start.data },
+    latestSession: start.practiceSession,
+    command: 'submit-answer',
+    requestId: 'submit-worked-repair-wrong',
+    payload: { response: { answer: wrongAnswer } },
+  });
+  assert.equal(wrong.state.session.answered, 1);
+  assert.equal(wrong.state.recentAttempts.length, 1);
+
+  const worked = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: wrong.state, data: wrong.data },
+    latestSession: wrong.practiceSession,
+    command: 'show-worked-solution',
+    requestId: 'show-worked-repair',
+    payload: {},
+  });
+  assert.ok(worked.state.feedback.workedSolution.answerText);
+  assert.equal(worked.state.session.supportLevel, 2);
+
+  const retry = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: worked.state, data: worked.data },
+    latestSession: worked.practiceSession,
+    command: 'retry-current-question',
+    requestId: 'retry-worked-repair',
+    payload: {},
+  });
+  assert.equal(retry.state.phase, 'session');
+  assert.equal(retry.state.session.answered, 1);
+  assert.equal(retry.state.recentAttempts.length, 1);
+
+  const correct = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: retry.state, data: retry.data },
+    latestSession: retry.practiceSession,
+    command: 'submit-answer',
+    requestId: 'submit-worked-repair-correct',
+    payload: { response: sample.correctResponse },
+  });
+  assert.equal(correct.state.recentAttempts.length, 2);
+  assert.equal(correct.state.recentAttempts.at(-1).supportLevel, 2);
+  assert.equal(correct.state.recentAttempts.at(-1).attempts, 2);
+  assert.equal(correct.state.session.answered, 1);
+});
+
+test('Grammar similar problem repair creates a deterministic built-in variant', () => {
+  const oracle = readGrammarLegacyOracle();
+  const sample = oracle.templates.find((template) => template.id === 'fronted_adverbial_choose');
+  const question = createGrammarQuestion({ templateId: sample.id, seed: sample.sample.seed });
+  const wrongAnswer = question.inputSpec.options.find((option) => !evaluateGrammarQuestion(question, { answer: option.value }).correct).value;
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'start-similar-repair',
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  const wrong = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: start.state, data: start.data },
+    latestSession: start.practiceSession,
+    command: 'submit-answer',
+    requestId: 'submit-similar-repair-wrong',
+    payload: { response: { answer: wrongAnswer } },
+  });
+  const similar = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: wrong.state, data: wrong.data },
+    latestSession: wrong.practiceSession,
+    command: 'start-similar-problem',
+    requestId: 'start-similar-repair-next',
+    payload: {},
+  });
+
+  assert.equal(similar.state.phase, 'session');
+  assert.equal(similar.state.session.currentItem.templateId, sample.id);
+  assert.notEqual(similar.state.session.currentItem.seed, sample.sample.seed);
+  assert.equal(similar.state.session.targetCount, 2);
+  assert.equal(similar.state.session.repair.similarProblems, 1);
+});
+
+test('Grammar repair actions fail closed during unfinished strict mini-tests', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'start-mini-repair-reject',
+    payload: {
+      mode: 'satsset',
+      roundLength: 8,
+      seed: 10,
+    },
+  });
+
+  assert.throws(() => engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: start.state, data: start.data },
+    latestSession: start.practiceSession,
+    command: 'use-faded-support',
+    requestId: 'mini-repair-reject',
+    payload: {},
+  }), (error) => error?.extra?.code === 'grammar_repair_unavailable_for_mode');
+});
+
 test('Grammar save-prefs clears completed summary state', () => {
   const oracle = readGrammarLegacyOracle();
   const sample = oracle.templates.find((template) => template.id === 'question_mark_select');

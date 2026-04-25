@@ -172,9 +172,17 @@
     {
       "id": "in-session-repair-loop",
       "legacyCapability": "Learners can retry, show worked solution, request faded support and load a similar built-in problem",
-      "status": "planned",
-      "ownerUnit": "U4",
-      "reason": "Current UI exposes worked/faded as modes but not as in-session repair actions."
+      "status": "completed",
+      "evidence": [
+        "worker/src/subjects/grammar/engine.js",
+        "worker/src/subjects/grammar/commands.js",
+        "worker/src/subjects/grammar/read-models.js",
+        "src/subjects/grammar/module.js",
+        "src/subjects/grammar/components/GrammarSessionScene.jsx",
+        "tests/grammar-engine.test.js",
+        "tests/worker-grammar-subject-runtime.test.js",
+        "tests/react-grammar-surface.test.js"
+      ]
     },
     {
       "id": "ai-visible-triggers",

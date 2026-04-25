@@ -358,6 +358,75 @@ test('Grammar command route persists session goals and practice settings', async
   DB.close();
 });
 
+test('Grammar command route persists repair actions through Worker commands', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'fronted_adverbial_choose');
+  const wrongAnswer = sample.sample.inputSpec.options.find((option) => option.value !== sample.correctResponse.answer).value;
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-repair-route-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+
+  const faded = await postCommand(app, DB, {
+    command: 'use-faded-support',
+    learnerId: 'learner-a',
+    requestId: 'grammar-repair-route-faded',
+    expectedLearnerRevision: 1,
+    payload: {},
+  });
+  assert.equal(faded.response.status, 200, JSON.stringify(faded.body));
+  assert.equal(faded.body.subjectReadModel.session.supportLevel, 1);
+  assert.equal(faded.body.subjectReadModel.session.supportGuidance.kind, 'faded');
+
+  const submit = await postCommand(app, DB, {
+    command: 'submit-answer',
+    learnerId: 'learner-a',
+    requestId: 'grammar-repair-route-submit',
+    expectedLearnerRevision: 2,
+    payload: { response: { answer: wrongAnswer } },
+  });
+  assert.equal(submit.response.status, 200, JSON.stringify(submit.body));
+  assert.equal(submit.body.subjectReadModel.phase, 'feedback');
+  assert.equal(submit.body.subjectReadModel.feedback.result.correct, false);
+
+  const worked = await postCommand(app, DB, {
+    command: 'show-worked-solution',
+    learnerId: 'learner-a',
+    requestId: 'grammar-repair-route-worked',
+    expectedLearnerRevision: 3,
+    payload: {},
+  });
+  assert.equal(worked.response.status, 200, JSON.stringify(worked.body));
+  assert.ok(worked.body.subjectReadModel.feedback.workedSolution.answerText);
+  assert.equal(worked.body.subjectReadModel.session.supportLevel, 2);
+
+  const retry = await postCommand(app, DB, {
+    command: 'retry-current-question',
+    learnerId: 'learner-a',
+    requestId: 'grammar-repair-route-retry',
+    expectedLearnerRevision: 4,
+    payload: {},
+  });
+  assert.equal(retry.response.status, 200, JSON.stringify(retry.body));
+  assert.equal(retry.body.subjectReadModel.phase, 'session');
+  assert.equal(retry.body.subjectReadModel.session.answered, 1);
+  assert.equal(retry.body.subjectReadModel.session.repair.retryingCurrent, true);
+
+  DB.close();
+});
+
 test('Grammar command route accepts sentence surgery mode', async () => {
   const DB = createMigratedSqliteD1Database();
   const app = createWorkerApp({ now: () => 1_777_000_000_000 });

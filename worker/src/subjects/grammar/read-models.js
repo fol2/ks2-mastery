@@ -362,6 +362,14 @@ function safeSession(session, now = Date.now()) {
     currentItem: safeCurrentItem(session.currentItem),
     goal: safeGoal(session.goal, now),
     miniTest: safeMiniTest(session.miniTest, now),
+    repair: isPlainObject(session.repair)
+      ? {
+        retryingCurrent: Boolean(session.repair.retryingCurrent),
+        similarProblems: Number.isFinite(Number(session.repair.similarProblems)) ? Number(session.repair.similarProblems) : 0,
+        requestedFadedSupport: Boolean(session.repair.requestedFadedSupport),
+        workedSolutionShown: Boolean(session.repair.workedSolutionShown),
+      }
+      : null,
     supportLevel: Number.isFinite(Number(session.supportLevel)) ? Math.max(0, Number(session.supportLevel)) : 0,
     supportGuidance: supportGuidanceForSession(session),
     serverAuthority: session.serverAuthority === GRAMMAR_SERVER_AUTHORITY ? GRAMMAR_SERVER_AUTHORITY : null,

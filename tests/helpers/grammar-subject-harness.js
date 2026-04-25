@@ -102,6 +102,18 @@ export function createGrammarTestService({ repositories, now = Date.now } = {}) 
     finishMiniTest(learnerId, payload = {}) {
       return apply(learnerId, 'finish-mini-test', payload);
     },
+    retryCurrentQuestion(learnerId) {
+      return apply(learnerId, 'retry-current-question');
+    },
+    useFadedSupport(learnerId) {
+      return apply(learnerId, 'use-faded-support');
+    },
+    showWorkedSolution(learnerId) {
+      return apply(learnerId, 'show-worked-solution');
+    },
+    startSimilarProblem(learnerId) {
+      return apply(learnerId, 'start-similar-problem');
+    },
     continueSession(learnerId) {
       return apply(learnerId, 'continue-session');
     },

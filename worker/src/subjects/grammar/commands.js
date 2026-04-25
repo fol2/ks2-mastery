@@ -14,6 +14,10 @@ const GRAMMAR_COMMANDS = Object.freeze([
   'continue-session',
   'end-session',
   'save-prefs',
+  'retry-current-question',
+  'use-faded-support',
+  'show-worked-solution',
+  'start-similar-problem',
   'request-ai-enrichment',
   'reset-learner',
 ]);

@@ -6785,6 +6785,37 @@ textarea:focus-visible {
   color: var(--ink);
 }
 
+.grammar-worked-solution {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid #c5d9cf;
+  border-radius: 8px;
+  background: #f4faf6;
+  color: var(--ink);
+}
+
+.grammar-worked-solution p {
+  margin: 0;
+  line-height: 1.48;
+}
+
+.grammar-worked-solution span {
+  display: inline-block;
+  min-width: 74px;
+  margin-right: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.grammar-repair-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .grammar-guidance.faded {
   border-color: #d9caa7;
   background: #fff8eb;

@@ -884,6 +884,10 @@ function startSession(state, payload, nowTs, learnerId) {
       attemptsForCurrent: 0,
       supportLevel: 0,
       goal: sessionGoal,
+      repair: {
+        retryingCurrent: false,
+        similarProblems: 0,
+      },
       miniTest: {
         setSize: questions.length,
         startedAt: nowTs,
@@ -935,6 +939,10 @@ function startSession(state, payload, nowTs, learnerId) {
     attemptsForCurrent: 0,
     supportLevel: supportLevelForSession(mode, state.prefs),
     goal: sessionGoal,
+    repair: {
+      retryingCurrent: false,
+      similarProblems: 0,
+    },
     serverAuthority: SERVER_AUTHORITY,
   };
   return [];
@@ -1202,6 +1210,116 @@ function finishMiniTestCommand(state, payload, command, nowTs) {
   return finishMiniTest(state, nowTs, command, { timedOut: miniTestExpired(state.session, nowTs) });
 }
 
+function ensureRepairState(session) {
+  if (!isPlainObject(session.repair)) {
+    session.repair = {
+      retryingCurrent: false,
+      similarProblems: 0,
+    };
+  }
+  session.repair.similarProblems = Math.max(0, Math.floor(Number(session.repair.similarProblems) || 0));
+  return session.repair;
+}
+
+function assertRepairableSession(state) {
+  const session = state.session;
+  if (!session || !session.currentItem || !['session', 'feedback'].includes(state.phase)) {
+    throw new BadRequestError('This Grammar session is no longer active.', {
+      code: 'grammar_session_stale',
+      subjectId: SUBJECT_ID,
+    });
+  }
+  if (session.type === 'mini-set') {
+    throw new BadRequestError('Repair actions are unavailable during a strict Grammar mini-test.', {
+      code: 'grammar_repair_unavailable_for_mode',
+      subjectId: SUBJECT_ID,
+      mode: session.mode,
+    });
+  }
+  return session;
+}
+
+function retryCurrentQuestion(state) {
+  const session = assertRepairableSession(state);
+  if (!state.awaitingAdvance || state.phase !== 'feedback') {
+    throw new BadRequestError('Retry is available after an answer has been marked.', {
+      code: 'grammar_repair_not_ready',
+      subjectId: SUBJECT_ID,
+    });
+  }
+  const repair = ensureRepairState(session);
+  repair.retryingCurrent = true;
+  state.phase = 'session';
+  state.awaitingAdvance = false;
+  state.feedback = null;
+  state.error = '';
+  return [];
+}
+
+function useFadedSupport(state) {
+  const session = assertRepairableSession(state);
+  if (state.phase !== 'session' || state.awaitingAdvance) {
+    throw new BadRequestError('Faded support is available before submitting an answer.', {
+      code: 'grammar_repair_not_ready',
+      subjectId: SUBJECT_ID,
+    });
+  }
+  session.supportLevel = Math.max(Number(session.supportLevel) || 0, 1);
+  ensureRepairState(session).requestedFadedSupport = true;
+  state.error = '';
+  return [];
+}
+
+function showWorkedSolution(state) {
+  const session = assertRepairableSession(state);
+  if (state.phase !== 'feedback' || !state.feedback?.result) {
+    throw new BadRequestError('Worked solution is available after an answer has been marked.', {
+      code: 'grammar_repair_not_ready',
+      subjectId: SUBJECT_ID,
+    });
+  }
+  const result = state.feedback.result || {};
+  state.feedback.workedSolution = {
+    answerText: typeof result.answerText === 'string' ? result.answerText : '',
+    explanation: typeof result.feedbackLong === 'string' ? result.feedbackLong : '',
+    check: typeof result.minimalHint === 'string' ? result.minimalHint : '',
+  };
+  session.supportLevel = Math.max(Number(session.supportLevel) || 0, 2);
+  ensureRepairState(session).workedSolutionShown = true;
+  state.error = '';
+  return [];
+}
+
+function startSimilarProblem(state, nowTs) {
+  const session = assertRepairableSession(state);
+  const repair = ensureRepairState(session);
+  const baseItem = session.currentItem;
+  const nextSimilarIndex = repair.similarProblems + 1;
+  const seed = (Number(baseItem.seed) + nextSimilarIndex * 2654435761) >>> 0;
+  const item = nextItem(state, {
+    mode: session.mode,
+    focusConceptId: session.focusConceptId,
+    seed,
+    templateId: baseItem.templateId,
+    nowTs,
+  });
+  repair.similarProblems = nextSimilarIndex;
+  repair.retryingCurrent = false;
+  session.currentIndex = Number(session.currentIndex) + 1;
+  session.currentItem = item;
+  session.attemptsForCurrent = 0;
+  session.supportLevel = supportLevelForSession(session.mode, state.prefs);
+  session.targetCount = Math.max(Number(session.targetCount) || 0, Number(session.answered) + 1);
+  if (isPlainObject(session.goal) && session.goal.type === 'questions') {
+    session.goal.targetCount = session.targetCount;
+  }
+  state.phase = 'session';
+  state.awaitingAdvance = false;
+  state.feedback = null;
+  state.error = '';
+  return [];
+}
+
 function continueSession(state, nowTs) {
   const session = state.session;
   if (!session || !['session', 'feedback'].includes(state.phase)) {
@@ -1397,6 +1515,8 @@ function submitAnswer(state, payload, command, nowTs) {
       mode: session.mode,
     });
   }
+  const repair = ensureRepairState(session);
+  const retryingCurrent = Boolean(repair.retryingCurrent);
   session.attemptsForCurrent = Number(session.attemptsForCurrent || 0) + 1;
   const applied = applyGrammarAttemptToState(state, {
     learnerId: command.learnerId,
@@ -1407,10 +1527,13 @@ function submitAnswer(state, payload, command, nowTs) {
     requestId: command.requestId,
     now: nowTs,
   });
-  session.answered += 1;
-  session.correct += applied.result.correct ? 1 : 0;
-  session.totalScore += Number(applied.result.score) || 0;
-  session.totalMarks += Number(applied.result.maxScore) || Number(session.currentItem.marks) || 1;
+  if (!retryingCurrent) {
+    session.answered += 1;
+    session.correct += applied.result.correct ? 1 : 0;
+    session.totalScore += Number(applied.result.score) || 0;
+    session.totalMarks += Number(applied.result.maxScore) || Number(session.currentItem.marks) || 1;
+  }
+  repair.retryingCurrent = false;
   state.phase = 'feedback';
   state.awaitingAdvance = true;
   state.feedback = {
@@ -1533,6 +1656,14 @@ export function createServerGrammarEngine({ now = Date.now } = {}) {
         events = completeSession(state, nowTs, commandContext);
       } else if (command === 'save-prefs') {
         events = savePrefs(state, payload);
+      } else if (command === 'retry-current-question') {
+        events = retryCurrentQuestion(state);
+      } else if (command === 'use-faded-support') {
+        events = useFadedSupport(state);
+      } else if (command === 'show-worked-solution') {
+        events = showWorkedSolution(state);
+      } else if (command === 'start-similar-problem') {
+        events = startSimilarProblem(state, nowTs);
       } else if (command === 'request-ai-enrichment') {
         aiEnrichment = requestAiEnrichment(state, payload, nowTs);
         changed = false;

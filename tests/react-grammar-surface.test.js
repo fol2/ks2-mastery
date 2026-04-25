@@ -133,6 +133,59 @@ test('Grammar surface runs KS2 mini-set mode with delayed feedback and end revie
   assert.match(html, /Q2/);
 });
 
+test('Grammar surface exposes in-session repair actions without local scoring', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+  const wrongAnswer = sample.sample.inputSpec.options.find((option) => option.value !== sample.correctResponse.answer).value;
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  let html = harness.render();
+  assert.match(html, /Faded support/);
+  assert.match(html, /Similar problem/);
+
+  harness.dispatch('grammar-use-faded-support');
+  html = harness.render();
+  assert.match(html, /Faded guidance/);
+  assert.equal(harness.store.getState().subjectUi.grammar.session.supportLevel, 1);
+
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData({ answer: wrongAnswer }),
+  });
+  html = harness.render();
+  assert.match(html, /Retry/);
+  assert.match(html, /Worked solution/);
+  assert.match(html, /Similar problem/);
+
+  harness.dispatch('grammar-show-worked-solution');
+  html = harness.render();
+  assert.match(html, /Worked solution/);
+  assert.match(html, /Answer/);
+  assert.equal(harness.store.getState().subjectUi.grammar.session.supportLevel, 2);
+
+  harness.dispatch('grammar-retry-current-question');
+  let grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.answered, 1);
+  assert.equal(grammar.session.repair.retryingCurrent, true);
+  assert.match(harness.render(), /Worked example/);
+
+  harness.dispatch('grammar-start-similar-problem');
+  grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.currentItem.templateId, sample.id);
+  assert.notEqual(grammar.session.currentItem.seed, sample.sample.seed);
+  assert.equal(grammar.session.repair.similarProblems, 1);
+});
+
 test('Grammar submit requires an answer before recording an attempt', () => {
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });

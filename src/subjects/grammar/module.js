@@ -344,6 +344,26 @@ export const grammarModule = {
       return sendGrammarCommand(context, 'finish-mini-test', payload);
     }
 
+    if (action === 'grammar-retry-current-question') {
+      if (service?.retryCurrentQuestion) return applyLocalTransition(context, service.retryCurrentQuestion(learnerId));
+      return sendGrammarCommand(context, 'retry-current-question');
+    }
+
+    if (action === 'grammar-use-faded-support') {
+      if (service?.useFadedSupport) return applyLocalTransition(context, service.useFadedSupport(learnerId));
+      return sendGrammarCommand(context, 'use-faded-support');
+    }
+
+    if (action === 'grammar-show-worked-solution') {
+      if (service?.showWorkedSolution) return applyLocalTransition(context, service.showWorkedSolution(learnerId));
+      return sendGrammarCommand(context, 'show-worked-solution');
+    }
+
+    if (action === 'grammar-start-similar-problem') {
+      if (service?.startSimilarProblem) return applyLocalTransition(context, service.startSimilarProblem(learnerId));
+      return sendGrammarCommand(context, 'start-similar-problem');
+    }
+
     if (action === 'grammar-continue') {
       if (service?.continueSession) return applyLocalTransition(context, service.continueSession(learnerId, ui));
       return sendGrammarCommand(context, 'continue-session');

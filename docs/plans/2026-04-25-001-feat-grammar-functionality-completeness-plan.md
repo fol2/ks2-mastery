@@ -329,7 +329,7 @@ flowchart TB
 
 ---
 
-- U4. **Restore the In-Session Repair Loop**
+- [x] U4. **Restore the In-Session Repair Loop**
 
 **Goal:** Restore the legacy learner repair affordances inside a session while preserving no-leak and support-aware mastery rules.
 

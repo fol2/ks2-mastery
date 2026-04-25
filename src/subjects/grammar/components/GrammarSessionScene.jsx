@@ -164,6 +164,20 @@ function FeedbackPanel({ feedback }) {
   );
 }
 
+function WorkedSolutionPanel({ solution }) {
+  if (!solution) return null;
+  return (
+    <aside className="grammar-worked-solution" aria-label="Worked solution">
+      <div className="grammar-guidance-head">
+        <span className="chip good">Worked solution</span>
+      </div>
+      {solution.answerText ? <p><span>Answer</span>{solution.answerText}</p> : null}
+      {solution.explanation ? <p><span>Why</span>{solution.explanation}</p> : null}
+      {solution.check ? <p><span>Check</span>{solution.check}</p> : null}
+    </aside>
+  );
+}
+
 function GuidancePanel({ support }) {
   if (!support) return null;
   const worked = support.kind === 'worked';
@@ -333,6 +347,37 @@ function SessionGoalChip({ goal }) {
   return null;
 }
 
+function RepairActions({ isMiniTest, isFeedback, session, pending, runtimeReadOnly, actions }) {
+  if (isMiniTest) return null;
+  const disabled = runtimeReadOnly || pending;
+  if (isFeedback) {
+    return (
+      <div className="grammar-repair-actions" aria-label="Grammar repair actions">
+        <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-retry-current-question')}>
+          Retry
+        </button>
+        <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-show-worked-solution')}>
+          Worked solution
+        </button>
+        <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-start-similar-problem')}>
+          Similar problem
+        </button>
+      </div>
+    );
+  }
+  if ((Number(session?.supportLevel) || 0) > 0) return null;
+  return (
+    <div className="grammar-repair-actions" aria-label="Grammar support actions">
+      <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-use-faded-support')}>
+        Faded support
+      </button>
+      <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-start-similar-problem')}>
+        Similar problem
+      </button>
+    </div>
+  );
+}
+
 export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
   const session = grammar.session || {};
   const miniTest = session.type === 'mini-set' ? session.miniTest : null;
@@ -413,6 +458,15 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
         >
           <GrammarInput inputSpec={item.inputSpec || { type: 'text' }} required={!isMiniTest} response={currentResponse} />
           {!isMiniTest ? <FeedbackPanel feedback={grammar.feedback} /> : null}
+          {!isMiniTest ? <WorkedSolutionPanel solution={grammar.feedback?.workedSolution} /> : null}
+          <RepairActions
+            isMiniTest={isMiniTest}
+            isFeedback={isFeedback}
+            session={session}
+            pending={pending}
+            runtimeReadOnly={runtimeReadOnly}
+            actions={actions}
+          />
           {grammar.error ? (
             <div className="feedback bad" role="alert">
               <strong>Grammar command failed</strong>
