@@ -220,8 +220,28 @@ Path-specific cache expectations:
 
 - `/src/bundles/app.bundle.js` — `Cache-Control: public, max-age=31536000, immutable` (Worker
   wrapper explicitly overrides the `no-store` that ASSETS applies from the `_headers` `/*` group).
-- `/manifest.webmanifest` — `Cache-Control: public, max-age=86400`.
+- `/manifest.webmanifest` — `Cache-Control: public, max-age=3600` (1-hour cache updated in U8
+  so app-manifest churn is visible to installed PWAs within the hour).
+- `/favicon.ico` — `Cache-Control: public, max-age=86400`.
 - `/` and `/index.html` — `Cache-Control: no-store`.
+
+### Cache-split post-deploy check (U8)
+
+`scripts/production-bundle-audit.mjs` also issues HEAD checks against the cache lanes after
+U8; run `npm run audit:production -- --url https://ks2.eugnel.uk` to verify the split is live
+before closing a deploy ticket. The script fails with a pointed message if any path returns
+an unexpected `Cache-Control` value (for example, a rewrite that flips `/manifest.webmanifest`
+to `no-store` or drops `immutable` from the hashed-bundle rule).
+
+Manual spot-check (use when the audit script is unavailable):
+
+```bash
+curl -sI https://ks2.eugnel.uk/                                  | grep -i cache-control   # expect: no-store
+curl -sI https://ks2.eugnel.uk/src/bundles/app.bundle.js         | grep -i cache-control   # expect: public, max-age=31536000, immutable
+curl -sI https://ks2.eugnel.uk/assets/app-icons/favicon-32.png   | grep -i cache-control   # expect: public, max-age=31536000, immutable
+curl -sI https://ks2.eugnel.uk/api/bootstrap                     | grep -i cache-control   # expect: no-store
+curl -sI https://ks2.eugnel.uk/manifest.webmanifest              | grep -i cache-control   # expect: public, max-age=3600
+```
 
 ## CSP Report-Only rollout
 
