@@ -306,6 +306,8 @@ export const GRAMMAR_CHILD_FORBIDDEN_TERMS = Object.freeze([
   'reward route',
   'projection',
   'retrieval practice',
+  'Delayed feedback',
+  'Mini-set review',
 ]);
 
 /**

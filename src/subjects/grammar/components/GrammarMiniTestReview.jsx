@@ -140,8 +140,8 @@ export function GrammarMiniTestReview({ review, actions, runtimeReadOnly, pendin
     <section className="card grammar-mini-review" aria-labelledby="grammar-mini-review-title">
       <div className="card-header">
         <div>
-          <div className="eyebrow">Delayed feedback</div>
-          <h3 className="section-title" id="grammar-mini-review-title">Mini-set review</h3>
+          <div className="eyebrow">Your results</div>
+          <h3 className="section-title" id="grammar-mini-review-title">Mini Test results</h3>
         </div>
         <span className="chip">{total} questions</span>
       </div>

@@ -242,8 +242,8 @@ test('Grammar surface runs KS2 mini-set mode with delayed feedback and end revie
   assert.equal(grammar.summary.answered, 1);
   assert.equal(grammar.summary.miniTestReview.questions.length, 8);
   html = harness.render();
-  assert.match(html, /Mini-set review/);
-  assert.match(html, /Delayed feedback/);
+  assert.match(html, /Mini Test results/i);
+  assert.match(html, /Your results/);
   assert.match(html, /No answer saved/);
   assert.match(html, /Q1/);
   assert.match(html, /Q2/);
@@ -537,8 +537,8 @@ test('U4 Phase 3: post-finish review renders score card + expandable per-questio
   const reviewHtml = u4ScopeToReviewHtml(harness.render());
 
   // Score card: `X of N correct` + percentage caption.
-  assert.match(reviewHtml, /Mini-set review/);
-  assert.match(reviewHtml, /Delayed feedback/);
+  assert.match(reviewHtml, /Mini Test results/i);
+  assert.match(reviewHtml, /Your results/);
   assert.match(reviewHtml, /1 of 8 correct/);
   assert.match(reviewHtml, /13% accuracy/);
 
