@@ -13,6 +13,10 @@ import {
   grammarTemplateById,
   serialiseGrammarQuestion,
 } from './content.js';
+import {
+  buildGrammarMiniPack,
+  buildGrammarPracticeQueue,
+} from './selection.js';
 
 const SUBJECT_ID = 'grammar';
 const SERVER_AUTHORITY = 'worker';
@@ -523,28 +527,17 @@ function templateFits(template, { mode, focusConceptId } = {}) {
 }
 
 function weightedTemplatePick(state, { mode, focusConceptId, seed, nowTs = Date.now() }) {
-  const rng = seededRandom(seed);
-  const modeCandidates = GRAMMAR_TEMPLATE_METADATA.filter((template) => templateFitsMode(template, mode));
-  const candidates = modeCandidates.filter((template) => templateFits(template, { mode, focusConceptId }));
-  const pool = candidates.length ? candidates : (modeCandidates.length ? modeCandidates : GRAMMAR_TEMPLATE_METADATA);
-  const weighted = pool.map((template) => {
-    const conceptNodes = template.skillIds.map((id) => state.mastery.concepts[id] || defaultMasteryNode());
-    const averageStrength = conceptNodes.reduce((sum, node) => sum + (Number(node.strength) || 0.25), 0) / Math.max(1, conceptNodes.length);
-    const statuses = conceptNodes.map((node) => grammarConceptStatus(node, nowTs));
-    let weight = 1 + (1 - averageStrength) * 4;
-    if (statuses.includes('new')) weight += 1.5;
-    if (statuses.includes('weak')) weight += 2;
-    if (statuses.includes('due')) weight += 1.4;
-    if (focusConceptId && template.skillIds.includes(focusConceptId)) weight *= 1.8;
-    if (template.generative) weight *= 1.15;
-    return [template, Math.max(0.05, weight)];
+  const [entry] = buildGrammarPracticeQueue({
+    mode,
+    focusConceptId,
+    mastery: state.mastery,
+    recentAttempts: state.recentAttempts || [],
+    seed,
+    size: 1,
+    now: nowTs,
   });
-  let roll = rng() * weighted.reduce((sum, item) => sum + item[1], 0);
-  for (const [template, weight] of weighted) {
-    roll -= weight;
-    if (roll <= 0) return grammarTemplateById(template.id);
-  }
-  return grammarTemplateById(weighted.at(-1)?.[0]?.id || GRAMMAR_TEMPLATE_METADATA[0].id);
+  if (!entry) return grammarTemplateById(GRAMMAR_TEMPLATE_METADATA[0].id);
+  return grammarTemplateById(entry.templateId);
 }
 
 function takeDueRetry(state, { mode, focusConceptId, nowTs }) {
@@ -807,20 +800,32 @@ function miniSetSeeds(baseSeed, size) {
 
 export function buildGrammarMiniSet({ size = DEFAULT_MINI_SET_LENGTH, focusConceptId = '', seed = 1 } = {}) {
   const length = clamp(Math.floor(Number(size) || DEFAULT_MINI_SET_LENGTH), 1, 20);
-  const state = createInitialGrammarState();
-  return miniSetSeeds(Number(seed) || 1, length).map((itemSeed, index) => {
-    const template = weightedTemplatePick(state, {
-      mode: 'satsset',
-      focusConceptId,
-      seed: itemSeed + index,
-    });
-    return itemFromTemplate(template, itemSeed + index);
+  const pack = buildGrammarMiniPack({
+    size: length,
+    focusConceptId,
+    mastery: null,
+    recentAttempts: [],
+    seed: Number(seed) || 1,
+  });
+  const seeds = miniSetSeeds(Number(seed) || 1, length);
+  return pack.map((entry, index) => {
+    const template = grammarTemplateById(entry.templateId);
+    return itemFromTemplate(template, seeds[index] + index);
   });
 }
 
 function buildStrictMiniTestItems(state, { size, focusConceptId, seed, templateId = '', nowTs } = {}) {
   const length = miniSetSizeFor({ setSize: size });
-  return miniSetSeeds(Number(seed) || 1, length).map((itemSeed, index) => {
+  const seeds = miniSetSeeds(Number(seed) || 1, length);
+  const pack = buildGrammarMiniPack({
+    size: length,
+    focusConceptId,
+    mastery: state?.mastery || null,
+    recentAttempts: state?.recentAttempts || [],
+    seed: Number(seed) || 1,
+    now: nowTs,
+  });
+  return pack.map((entry, index) => {
     if (index === 0 && templateId) {
       const template = grammarTemplateById(templateId);
       if (!template) {
@@ -839,15 +844,10 @@ function buildStrictMiniTestItems(state, { size, focusConceptId, seed, templateI
           templateId,
         });
       }
-      return itemFromTemplate(template, itemSeed + index);
+      return itemFromTemplate(template, seeds[index] + index);
     }
-    const template = weightedTemplatePick(state, {
-      mode: 'satsset',
-      focusConceptId,
-      seed: itemSeed + index,
-      nowTs,
-    });
-    return itemFromTemplate(template, itemSeed + index);
+    const template = grammarTemplateById(entry.templateId);
+    return itemFromTemplate(template, seeds[index] + index);
   });
 }
 
