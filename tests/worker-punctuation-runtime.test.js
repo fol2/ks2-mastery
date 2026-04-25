@@ -206,6 +206,35 @@ test('punctuation guided mode fades visible support with the recorded support le
   }
 });
 
+test('punctuation command route starts weak spots with safe focus metadata', async () => {
+  const harness = createHarness();
+  try {
+    await harness.command('start-session', { mode: 'speech', roundLength: '4' });
+    const insert = await harness.command('skip-item');
+    assert.equal(insert.body.subjectReadModel.session.currentItem.id, 'sp_insert_question');
+    await harness.command('submit-answer', { typed: 'Ella asked can we start now' });
+
+    const weak = await harness.command('start-session', { mode: 'weak', roundLength: '1' });
+
+    assert.equal(weak.body.subjectReadModel.phase, 'active-item');
+    assert.equal(weak.body.subjectReadModel.session.mode, 'weak');
+    assert.equal(weak.body.subjectReadModel.session.currentItem.id, 'sp_insert_question');
+    assert.equal(weak.body.subjectReadModel.session.weakFocus.skillId, 'speech');
+    assert.equal(weak.body.subjectReadModel.session.weakFocus.source, 'weak_facet');
+    assert.deepEqual(Object.keys(weak.body.subjectReadModel.session.weakFocus).sort(), [
+      'bucket',
+      'clusterId',
+      'mode',
+      'skillId',
+      'skillName',
+      'source',
+    ]);
+    assert.doesNotMatch(payloadText(weak.body.subjectReadModel), /accepted|correctIndex|rubric|validator|hiddenQueue|generator/);
+  } finally {
+    harness.close();
+  }
+});
+
 test('punctuation command route stays unavailable until the rollout gate is enabled', async () => {
   const harness = createHarness({ punctuationEnabled: false });
   try {

@@ -58,12 +58,34 @@ function SetupView({ learner, stats, ui, actions }) {
         >
           Guided learn
         </button>
+        <button
+          className="btn secondary"
+          type="button"
+          data-punctuation-weak-start
+          onClick={() => actions.dispatch('punctuation-start', { mode: 'weak' })}
+        >
+          Weak spots
+        </button>
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'speech' })}>Speech focus</button>
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'comma_flow' })}>Comma focus</button>
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'boundary' })}>Boundary focus</button>
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'structure' })}>Structure focus</button>
       </div>
     </section>
+  );
+}
+
+function WeakFocusChips({ focus }) {
+  if (!focus) return null;
+  const label = focus.bucket === 'weak'
+    ? 'Weak focus'
+    : (focus.bucket === 'due' ? 'Due review' : 'Mixed review');
+  return (
+    <div className="chip-row" style={{ marginTop: 14 }}>
+      <span className={`chip ${focus.bucket === 'weak' ? 'warn' : ''}`}>{label}</span>
+      {focus.skillName ? <span className="chip">{focus.skillName}</span> : null}
+      {focus.mode ? <span className="chip">{focus.mode}</span> : null}
+    </div>
   );
 }
 
@@ -169,6 +191,7 @@ function ActiveItemView({ ui, actions }) {
           <p className="subtitle">{currentItemInstruction(item)}</p>
         </div>
       </div>
+      <WeakFocusChips focus={ui.session?.weakFocus} />
       <GuidedTeachBox guided={ui.session?.guided} />
       {item.stem ? <div className="callout" style={{ marginTop: 14, ...newlineTextStyle(item.stem) }}>{item.stem}</div> : null}
       <div className="progress" style={{ marginTop: 14 }}><span style={{ width: `${progress}%` }} /></div>

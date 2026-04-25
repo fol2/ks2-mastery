@@ -72,9 +72,10 @@
     {
       "id": "weak",
       "legacyLabel": "Weak spots drill",
-      "status": "planned",
+      "status": "ported",
       "ownerUnit": "U3",
-      "notes": "Needs an explicit drill targeting weak skill-by-mode facets."
+      "assertPresent": true,
+      "notes": "Explicit weak drill targets weak and due item memory plus weak skill-by-mode facets with safe focus metadata."
     },
     {
       "id": "transfer",

@@ -229,6 +229,18 @@ function guidedSessionReadModel(skillId, supportLevel) {
   };
 }
 
+function normaliseWeakFocus(value) {
+  if (!isPlainObject(value)) return null;
+  return {
+    skillId: typeof value.skillId === 'string' ? value.skillId : '',
+    skillName: typeof value.skillName === 'string' ? value.skillName : '',
+    mode: typeof value.mode === 'string' ? value.mode : '',
+    clusterId: typeof value.clusterId === 'string' ? value.clusterId : null,
+    bucket: typeof value.bucket === 'string' ? value.bucket : '',
+    source: typeof value.source === 'string' ? value.source : '',
+  };
+}
+
 function normaliseSession(value) {
   if (!isPlainObject(value)) return null;
   const guidedSkillId = typeof value.guidedSkillId === 'string' ? value.guidedSkillId : null;
@@ -253,6 +265,7 @@ function normaliseSession(value) {
     guided: value.mode === 'guided'
       ? (isPlainObject(value.guided) ? cloneSerialisable(value.guided) : guidedSessionReadModel(guidedSkillId, guidedSupportLevel))
       : null,
+    weakFocus: value.mode === 'weak' ? normaliseWeakFocus(value.weakFocus) : null,
     serverAuthority: value.serverAuthority === SERVER_AUTHORITY ? SERVER_AUTHORITY : null,
   };
 }
@@ -500,6 +513,7 @@ function nextActiveState({ learnerId, session, data, indexes, prefs, now, random
     currentItemId: selection.item.id,
     currentItem: normaliseItemForState(selection.item),
     recentItemIds: [...(session.recentItemIds || []), selection.item.id].slice(-10),
+    weakFocus: session.mode === 'weak' ? normaliseWeakFocus(selection.weakFocus) : null,
   };
   return {
     version: PUNCTUATION_SERVICE_STATE_VERSION,
@@ -620,6 +634,7 @@ export function createPunctuationService({
         guidedSkillId,
         guidedSupportLevel: guidedSkillId ? 2 : 0,
         guided: guidedSkillId ? guidedSessionReadModel(guidedSkillId, 2) : null,
+        weakFocus: null,
       };
       const state = nextActiveState({ learnerId, session, data: current, indexes, prefs, now: clock, random });
       syncPracticeSession(repository, learnerId, state, clock);

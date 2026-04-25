@@ -141,6 +141,14 @@ function progressForItem(progress, itemId) {
   return normaliseMemoryState(progress?.items?.[itemId]);
 }
 
+function progressForFacet(progress, skillId, mode) {
+  return normaliseMemoryState(progress?.facets?.[`${skillId}::${mode}`]);
+}
+
+function skillName(indexes, skillId) {
+  return indexes.skillById.get(skillId)?.name || skillId;
+}
+
 function targetMode(session, prefs = {}) {
   const mode = session?.mode || prefs.mode || 'smart';
   if (mode === 'guided') {
@@ -191,6 +199,150 @@ function weightedPick(rows, random = Math.random) {
   return rows[rows.length - 1].item;
 }
 
+function recentMissForItem(progress, item) {
+  const attempts = Array.isArray(progress?.attempts) ? progress.attempts : [];
+  return attempts.slice(-12).reverse().find((attempt) => {
+    if (!attempt || attempt.correct === true) return false;
+    if (attempt.itemId === item.id) return true;
+    if (attempt.mode !== item.mode) return false;
+    const attemptSkills = Array.isArray(attempt.skillIds) ? attempt.skillIds : [];
+    return item.skillIds?.some((skillId) => attemptSkills.includes(skillId));
+  }) || null;
+}
+
+function strongestFacet(indexes, progress, item, now) {
+  return (item.skillIds || [])
+    .map((skillId) => {
+      const snap = memorySnapshot(progressForFacet(progress, skillId, item.mode), now);
+      const bucketRank = snap.bucket === 'weak' ? 4 : snap.bucket === 'due' ? 3 : snap.bucket === 'learning' ? 2 : snap.bucket === 'new' ? 1 : 0;
+      return {
+        skillId,
+        skillName: skillName(indexes, skillId),
+        mode: item.mode,
+        clusterId: item.clusterId || null,
+        bucket: snap.bucket,
+        mastery: snap.mastery,
+        rank: bucketRank,
+      };
+    })
+    .sort((a, b) => b.rank - a.rank || a.mastery - b.mastery || a.skillId.localeCompare(b.skillId))[0] || null;
+}
+
+function weakCandidateRow(indexes, progress, item, now, order, recent) {
+  const itemSnap = memorySnapshot(progressForItem(progress, item.id), now);
+  const facet = strongestFacet(indexes, progress, item, now);
+  const recentMiss = recentMissForItem(progress, item);
+  let priority = 10;
+  let source = 'fallback';
+  let bucket = itemSnap.bucket;
+
+  if (facet?.bucket === 'weak') {
+    priority = 90;
+    source = 'weak_facet';
+    bucket = 'weak';
+  } else if (itemSnap.bucket === 'weak') {
+    priority = 82;
+    source = 'weak_item';
+    bucket = 'weak';
+  } else if (recentMiss) {
+    priority = 74;
+    source = 'recent_miss';
+    bucket = 'weak';
+  } else if (facet?.bucket === 'due') {
+    priority = 62;
+    source = 'due_facet';
+    bucket = 'due';
+  } else if (itemSnap.bucket === 'due') {
+    priority = 54;
+    source = 'due_item';
+    bucket = 'due';
+  } else if (itemSnap.bucket === 'new' || facet?.bucket === 'new') {
+    priority = 24;
+    source = 'fallback';
+    bucket = 'new';
+  } else if (itemSnap.bucket === 'secure') {
+    priority = 4;
+    source = 'fallback';
+    bucket = 'secure';
+  }
+
+  if (recent.has(item.id)) priority *= 0.08;
+
+  const focusSkillId = facet?.skillId || item.skillIds?.[0] || '';
+  return {
+    item,
+    order,
+    priority,
+    weight: Math.max(0.1, priority),
+    weakFocus: {
+      skillId: focusSkillId,
+      skillName: skillName(indexes, focusSkillId),
+      mode: item.mode,
+      clusterId: item.clusterId || null,
+      bucket,
+      source,
+    },
+  };
+}
+
+function publishedItem(indexes, item) {
+  if (!item) return false;
+  const skill = indexes.skillById.get(item.skillIds?.[0]);
+  return Boolean(skill?.published);
+}
+
+function facetEvidenceRows(progress, now, bucket) {
+  const facets = isPlainObject(progress?.facets) ? progress.facets : {};
+  return Object.entries(facets)
+    .map(([key, value]) => {
+      const [skillId, mode] = key.split('::');
+      const snap = memorySnapshot(value, now);
+      return { skillId, mode, snap };
+    })
+    .filter((entry) => entry.skillId && entry.mode && entry.snap.bucket === bucket)
+    .sort((a, b) => a.snap.mastery - b.snap.mastery || a.skillId.localeCompare(b.skillId) || a.mode.localeCompare(b.mode));
+}
+
+function itemEvidenceRows(progress, now, bucket) {
+  const items = isPlainObject(progress?.items) ? progress.items : {};
+  return Object.entries(items)
+    .map(([itemId, value]) => ({ itemId, snap: memorySnapshot(value, now) }))
+    .filter((entry) => entry.itemId && entry.snap.bucket === bucket)
+    .sort((a, b) => a.snap.mastery - b.snap.mastery || a.itemId.localeCompare(b.itemId));
+}
+
+function weakRows(indexes, progress, session, now, maxWindow) {
+  const recent = new Set(Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : []);
+  const rows = [];
+  const seen = new Set();
+  const limit = Math.max(1, maxWindow);
+  const addItem = (item) => {
+    if (rows.length >= limit || !publishedItem(indexes, item) || seen.has(item.id)) return;
+    seen.add(item.id);
+    rows.push(weakCandidateRow(indexes, progress, item, now, rows.length, recent));
+  };
+  const addFacet = ({ skillId, mode }) => {
+    for (const item of indexes.itemsByMode.get(mode) || []) {
+      if (item.skillIds?.includes(skillId)) addItem(item);
+      if (rows.length >= limit) return;
+    }
+  };
+
+  for (const entry of facetEvidenceRows(progress, now, 'weak')) addFacet(entry);
+  for (const entry of itemEvidenceRows(progress, now, 'weak')) addItem(indexes.itemById.get(entry.itemId));
+  for (const attempt of (Array.isArray(progress?.attempts) ? progress.attempts.slice(-12).reverse() : [])) {
+    if (attempt?.correct === false) addItem(indexes.itemById.get(attempt.itemId));
+  }
+  for (const entry of facetEvidenceRows(progress, now, 'due')) addFacet(entry);
+  for (const entry of itemEvidenceRows(progress, now, 'due')) addItem(indexes.itemById.get(entry.itemId));
+  for (const item of indexes.items) {
+    addItem(item);
+    if (rows.length >= limit) break;
+  }
+
+  return rows.sort((a, b) => b.priority - a.priority || a.order - b.order);
+}
+
 export function selectPunctuationItem({
   indexes = PUNCTUATION_CONTENT_INDEXES,
   progress = {},
@@ -200,14 +352,30 @@ export function selectPunctuationItem({
   random = Math.random,
   candidateWindow = 32,
 } = {}) {
-  const mode = targetMode(session, prefs);
+  const sessionMode = session?.mode || prefs.mode || 'smart';
+  const mode = sessionMode === 'weak' ? null : targetMode(session, prefs);
   const clusterId = targetCluster(prefs, session);
   const guidedSkillId = (session?.mode || prefs.mode) === 'guided'
     ? (session?.guidedSkillId || prefs.guidedSkillId || null)
     : null;
+  const maxWindow = Math.max(1, candidateWindow);
+  if (sessionMode === 'weak') {
+    const rows = weakRows(indexes, progress, session, now, maxWindow);
+    const picked = weightedPick(rows, random) || rows[0]?.item || null;
+    const pickedRow = rows.find((row) => row.item.id === picked?.id) || null;
+    return {
+      item: picked ? clone(picked) : null,
+      targetMode: picked?.mode || null,
+      targetClusterId: picked?.clusterId || null,
+      weakFocus: pickedRow ? clone(pickedRow.weakFocus) : null,
+      inspectedCount: rows.length,
+      candidateCount: indexes.items.length,
+    };
+  }
+
   const recent = new Set(Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : []);
   const candidates = candidateItems(indexes, { mode, clusterId, skillId: guidedSkillId });
-  const windowed = candidates.slice(0, Math.max(1, candidateWindow));
+  const windowed = candidates.slice(0, maxWindow);
   const rows = windowed.map((item) => {
     const snap = memorySnapshot(progressForItem(progress, item.id), now);
     let weight = 1;
@@ -224,6 +392,7 @@ export function selectPunctuationItem({
     item: item ? clone(item) : null,
     targetMode: mode,
     targetClusterId: clusterId,
+    weakFocus: null,
     inspectedCount: windowed.length,
     candidateCount: candidates.length,
   };
