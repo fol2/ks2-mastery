@@ -17,6 +17,7 @@ import {
   isProductionRuntime,
   protectDemoParentHubRead,
   protectDemoSubjectCommand,
+  requireActiveDemoAccount,
   requireSameOrigin,
   resetDemoAccount,
 } from './demo/sessions.js';
@@ -389,6 +390,9 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/bootstrap' && request.method === 'GET') {
+          if (session?.demo) {
+            await requireActiveDemoAccount(requireDatabase(env), session.accountId, now());
+          }
           const bundle = await repository.bootstrap(session.accountId, {
             publicReadModels: shouldUsePublicReadModels(request, env),
           });

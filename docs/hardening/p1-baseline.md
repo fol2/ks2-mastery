@@ -47,9 +47,9 @@ Note: the bounded-bootstrap and command-projection work in PRs #126-#139 (see `d
 ## Access / privacy faults
 
 - Raw source exposure regression risk — `/src/*` is routed through `run_worker_first` and the production bundle audit (`scripts/production-bundle-audit.mjs`) enforces forbidden-token denial, but no extension exists for new source-path shapes introduced by future refactors. (tracked in U8)
-- Over-broad hub payloads regression risk — Parent Hub and Admin Hub payload shapes are asserted by a combination of `tests/hub-api.test.js`, `tests/hub-read-models.test.js`, `tests/hub-shell-access.test.js`, and `tests/react-hub-surfaces.test.js`, but no single access-matrix oracle enforces that viewer membership learners do not appear in writable routes. (tracked in U13)
-- Answer-bearing fields regression risk — `/api/bootstrap` and subject read-model responses are redacted, but no matrix test enforces the invariant across platform role × membership role × route combinations. (tracked in U13)
-- Demo-crossing-real-account regression risk — demo sessions are isolated by design, but no access-matrix oracle asserts that a demo session cannot read or mutate a real account's state via route enumeration. (tracked in U13)
+- Over-broad hub payloads regression risk — Parent Hub and Admin Hub payload shapes are asserted by a combination of `tests/hub-api.test.js`, `tests/hub-read-models.test.js`, `tests/hub-shell-access.test.js`, and `tests/react-hub-surfaces.test.js`, but no single access-matrix oracle enforces that viewer membership learners do not appear in writable routes. (tracked in U13, landed via `tests/redaction-access-matrix.test.js`)
+- Answer-bearing fields regression risk — `/api/bootstrap` and subject read-model responses are redacted, but no matrix test enforces the invariant across platform role × membership role × route combinations. (tracked in U13, landed via `tests/redaction-access-matrix.test.js` + `scripts/production-bundle-audit.mjs` matrix demo check)
+- Demo-crossing-real-account regression risk — demo sessions are isolated by design, but no access-matrix oracle asserts that a demo session cannot read or mutate a real account's state via route enumeration. (tracked in U13, landed via `tests/redaction-access-matrix.test.js` cross-account probe)
 - Weak response headers — repo root `_headers` only sets `Cache-Control: no-store`; no CSP, no HSTS, no `X-Content-Type-Options`, no `Referrer-Policy`, no `Permissions-Policy`, no `frame-ancestors`, no cache split between HTML and hashed bundles. Worker-generated responses receive none of these headers. **This pass fixes.** (tracked in U6, U7, U8)
 - Logs containing private content regression risk — Worker log hygiene in `docs/full-lockdown-runtime.md` forbids answer-bearing payloads and child-identifying content, but no automated assertion enforces that capacity telemetry (`[ks2-capacity]` emission) stays within the bounded-metadata contract. (tracked in U4)
 
@@ -66,6 +66,38 @@ Note: the bounded-bootstrap and command-projection work in PRs #126-#139 (see `d
 - No dense-history Spelling smoke beyond bootstrap — `scripts/punctuation-production-smoke.mjs` and `scripts/grammar-production-smoke.mjs` cover those subjects, but dense-history Spelling Smart Review starts have no smoke equivalent. (tracked in U11)
 - No access-matrix test driver — platform role × membership role × route × payload-shape combinations are documented in `docs/ownership-access.md` and `docs/operating-surfaces.md` but not machine-enforced. (tracked in U13)
 - No security-header production HEAD audit — no script or test fetches production URLs with `HEAD` and asserts the expected header set. (tracked in U6, U8)
+
+---
+
+## U13 access-matrix coverage baseline
+
+The redaction access-matrix lock at `tests/redaction-access-matrix.test.js` is the single oracle for platform role x membership role x session variant x route x payload-shape combinations. This section records the baseline coverage at the time U13 landed.
+
+Routes currently exercised by the matrix (unauthenticated, demo-active, demo-expired-with-valid-cookie, parent/admin/ops combinations as applicable):
+
+- `/api/health` — unauthenticated OK, no learner signal leaked.
+- `/api/auth/session` — unauthenticated returns `session: null`, no account-existence signal.
+- `/api/bootstrap` — 401 unauth, parent-owner writable learners only, parent-viewer writable-empty, cross-account probe denies learner-b to account A, demo-active ok, demo-expired-with-valid-cookie fails closed (F-10 regression driver), dev-stub expired-demo documented gap.
+- `/api/hubs/parent` — 401 unauth, parent-viewer read-only membership view, demo-expired fails closed.
+- `/api/hubs/parent/recent-sessions` — 401 unauth.
+- `/api/hubs/parent/activity` — 401 unauth.
+- `/api/hubs/admin` — 401 unauth, parent denied, admin allowed, ops allowed.
+- `/api/admin/accounts/role` — ops denied (preserves last-admin safety rule gate).
+- `/api/tts` — 401 unauth.
+- `/api/demo/reset` — 401 unauth, demo-expired fails closed.
+- `/api/auth/google/start` — cross-origin denied via `requireSameOrigin`.
+- `/api/auth/google/callback` — invalid-state handled without payload leak.
+
+Forbidden-key oracle shared between `tests/redaction-access-matrix.test.js` (FORBIDDEN_KEYS_EVERYWHERE) and `scripts/production-bundle-audit.mjs` (MATRIX_FORBIDDEN_KEYS):
+
+- `solutionLines`, `correctResponse`, `correctResponses`, `accepted`, `answers`, `evaluate`, `generator`, `templates`, `passwordHash`, `password_hash`, `sessionHash`, `session_hash`.
+
+Not yet covered (intentional deferrals):
+
+- `/api/security/csp-report` — endpoint ships in U7; the matrix is extended when that route lands.
+- Full authenticated Admin Hub payload coverage for every learner-ownership permutation — current coverage proves platform-role gating; exhaustive membership-role coverage against Admin Hub diagnostics remains a follow-up when richer ops fixtures land.
+
+Tripwire: the final test `matrix: coverage summary` asserts that at least 19 matrix combinations exist and that every listed route is hit. Any refactor that shrinks the matrix silently fails this test.
 
 ---
 
