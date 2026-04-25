@@ -21,6 +21,7 @@ const baselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-co
 const livePlanPath = path.join(rootDir, 'docs/plans/2026-04-24-001-feat-grammar-mastery-region-plan.md');
 const completenessPlanPath = path.join(rootDir, 'docs/plans/2026-04-25-001-feat-grammar-functionality-completeness-plan.md');
 const completenessDocPath = path.join(rootDir, 'docs/grammar-functionality-completeness.md');
+const transferDecisionPath = path.join(rootDir, 'docs/grammar-transfer-decision.md');
 
 function readBaseline() {
   return JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
@@ -125,9 +126,15 @@ test('Grammar completeness documentation and live checklist point at the active 
   const livePlan = fs.readFileSync(livePlanPath, 'utf8');
   const completenessPlan = fs.readFileSync(completenessPlanPath, 'utf8');
   const completenessDoc = fs.readFileSync(completenessDocPath, 'utf8');
+  const transferDecision = fs.readFileSync(transferDecisionPath, 'utf8');
 
   assert.match(livePlan, /2026-04-25-001-feat-grammar-functionality-completeness-plan\.md/);
+  assert.match(livePlan, /docs\/grammar-transfer-decision\.md/);
+  assert.doesNotMatch(livePlan, /Decide later whether paragraph-level transfer becomes/);
   assert.match(completenessPlan, /## Implementation Units/);
   assert.match(completenessDoc, /strict mini-test/i);
   assert.match(completenessDoc, /browser-held AI keys/i);
+  assert.match(transferDecision, /non-scored transfer lane first/);
+  assert.match(transferDecision, /must not mark paragraph writing, mutate mastery, schedule retries, unlock monsters, or count towards Concordium/);
+  assert.match(transferDecision, /AI-marked paragraph scoring is rejected/);
 });

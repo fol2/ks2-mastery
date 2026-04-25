@@ -424,7 +424,9 @@ test('Grammar renders transfer and Bellstorm bridge placeholders as locked futur
   assert.match(html, /Writing application roadmap/);
   assert.match(html, /Paragraph transfer/);
   assert.match(html, /Richer writing tasks/);
-  assert.match(html, /Teacher review and paragraph marking are not promised/);
+  assert.match(html, /Decision: this will be non-scored paragraph application first/);
+  assert.match(html, /No score, retry, reward, or Concordium progress/);
+  assert.match(html, /Teacher review and deterministic paragraph scoring are separate future decisions/);
   assert.match(html, /Worker-marked Grammar remains the only score-bearing authority/);
   assert.match(html, /Bellstorm bridge/);
   assert.match(html, /Punctuation-for-grammar stays in Grammar/);

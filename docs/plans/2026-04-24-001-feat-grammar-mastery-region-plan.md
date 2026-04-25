@@ -40,7 +40,7 @@ Open Grammar follow-up scope:
 
 - [x] Track remaining legacy functionality completeness in `docs/plans/2026-04-25-001-feat-grammar-functionality-completeness-plan.md`: strict mini-test, session goals/settings, in-session repair, visible AI triggers, read aloud, adult/data replacement parity, and release gates are complete.
 - [x] Add transfer and Bellstorm bridge placeholders without collapsing Grammar and Punctuation product identities.
-- [ ] Decide later whether paragraph-level transfer becomes non-scored, teacher-reviewed, or a separate deterministic workflow.
+- [x] Decide paragraph-level transfer direction: `docs/grammar-transfer-decision.md` sets the first transfer lane as non-scored writing application, with teacher-reviewed or deterministic paragraph scoring deferred to separate reviewed plans.
 - [ ] Decide whether to connect a live AI provider to the safe lane; provider keys must stay server-side and output must pass the existing validator.
 - [ ] Continue to run `npm test`, `npm run check`, and Grammar production/UI smoke for each shipped Grammar slice.
 
