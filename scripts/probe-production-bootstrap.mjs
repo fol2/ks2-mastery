@@ -227,6 +227,7 @@ export function analyseBootstrapPayload(payload, {
 
 export async function probeProductionBootstrap(options = {}) {
   const url = new URL('/api/bootstrap', options.url || DEFAULT_URL);
+  const startedAt = new Date().toISOString();
   const response = await fetch(url, {
     method: 'GET',
     headers: buildProbeHeaders(options),
@@ -261,6 +262,8 @@ export async function probeProductionBootstrap(options = {}) {
     ok: analysis.failures.length === 0,
     url: url.toString(),
     status: response.status,
+    startedAt,
+    finishedAt: new Date().toISOString(),
     ...analysis,
   };
 }
@@ -292,16 +295,30 @@ export async function runProbe(argv = process.argv.slice(2)) {
   const summary = await probeProductionBootstrap(options);
   if (options.output) {
     const { persistEvidenceFile, buildReportMeta } = await import('./lib/capacity-evidence.mjs');
+    // Shape the probe evidence into the same envelope verify-capacity-evidence
+    // expects (ok, reportMeta, summary, failures, thresholds, safety). The
+    // probe does not run thresholded load, so `thresholds` is an empty object
+    // and `safety` reflects probe invocation. `summary` carries the bootstrap
+    // analysis verbatim.
+    const reportMeta = buildReportMeta({
+      mode: 'production',
+      origin: options.url,
+      cookie: options.cookie,
+      bearer: options.bearer,
+      headers: options.headers,
+      environment: 'production',
+    }, { startedAt: summary.startedAt, finishedAt: summary.finishedAt });
     const payload = {
-      ...summary,
-      reportMeta: buildReportMeta({
-        mode: 'production',
-        origin: options.url,
-        cookie: options.cookie,
-        bearer: options.bearer,
-        headers: options.headers,
-        environment: 'production',
-      }, { startedAt: summary.startedAt, finishedAt: summary.finishedAt }),
+      ok: summary.ok,
+      reportMeta,
+      summary,
+      failures: summary.failures || [],
+      thresholds: {},
+      safety: {
+        mode: 'production-probe',
+        origin: summary.url,
+        authMode: reportMeta.authMode,
+      },
     };
     persistEvidenceFile(options.output, payload);
   }

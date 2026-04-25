@@ -1,8 +1,31 @@
 import { execSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 export const EVIDENCE_SCHEMA_VERSION = 1;
+
+// Request-sample cap per endpoint when --include-request-samples is enabled.
+// Plan says 100 + 100 (first N and last N); this preserves post-mortem utility
+// without letting classroom-tier runs produce multi-MB evidence files.
+export const REQUEST_SAMPLES_HEAD_LIMIT = 100;
+export const REQUEST_SAMPLES_TAIL_LIMIT = 100;
+
+// Known keys for threshold config files. `validateThresholdConfigKeys` rejects
+// unknown keys so typos like `maxFivexx` cannot silently disable a gate.
+const KNOWN_THRESHOLD_KEYS = new Set([
+  'max5xx',
+  'maxNetworkFailures',
+  'maxBootstrapP95Ms',
+  'maxCommandP95Ms',
+  'maxResponseBytes',
+  'requireZeroSignals',
+  'requireBootstrapCapacity',
+]);
+
+export function validateThresholdConfigKeys(thresholds = {}) {
+  const unknown = Object.keys(thresholds).filter((key) => !KNOWN_THRESHOLD_KEYS.has(key));
+  return unknown;
+}
 
 /**
  * Builds the evidence-JSON `reportMeta` block. Values that cannot be resolved
@@ -28,9 +51,12 @@ function resolveCommitSha() {
   const envSha = process.env.GITHUB_SHA || process.env.KS2_CAPACITY_COMMIT_SHA;
   if (envSha && /^[0-9a-f]{7,40}$/i.test(envSha)) return envSha;
   try {
-    const sha = execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
-      .toString()
-      .trim();
+    // Hard timeout so a wedged git call (network fs, frozen filesystem) cannot
+    // hang a capacity run; degrade to `unknown` instead.
+    const sha = execSync('git rev-parse HEAD', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 2000,
+    }).toString().trim();
     return /^[0-9a-f]{7,40}$/i.test(sha) ? sha : 'unknown';
   } catch {
     return 'unknown';
@@ -128,11 +154,17 @@ export function evaluateThresholds(summary = {}, thresholds = {}, { dryRun = fal
     };
   }
   if (thresholds.requireBootstrapCapacity) {
+    // The full assertion (bootstrapCapacity metadata present in responses)
+    // requires U3's `meta.capacity` telemetry. Until U3 ships, record the
+    // gate as explicitly deferred: passed=true so it does not fail runs that
+    // correctly reference it in tier configs, but observed='deferred-to-U3'
+    // so evidence readers can see the gate is not yet enforced. U3 replaces
+    // this with the real bootstrapCapacity check.
     evaluated.requireBootstrapCapacity = {
       configured: true,
-      observed: null,
-      passed: null,
-      note: 'bootstrapCapacity metadata assertion lives in the probe script and U3 meta.capacity once shipped',
+      observed: 'deferred-to-U3',
+      passed: true,
+      note: 'full check requires U3 meta.capacity telemetry; tracked by evidenceSchemaVersion',
     };
   }
 
@@ -143,7 +175,10 @@ export function evaluateThresholds(summary = {}, thresholds = {}, { dryRun = fal
   return { thresholds: evaluated, failures };
 }
 
-function gateCount(configured, observed, dryRun = false) {
+// Both count-based gates (5xx, network failures, bytes) and latency gates
+// (bootstrap/command P95) share the same semantics: "observed must not exceed
+// configured". Unified under a single helper.
+function gateUpperBound(configured, observed, dryRun = false) {
   const parsed = Number(configured);
   if (!Number.isFinite(parsed) || parsed < 0) {
     return { configured, observed, passed: false, error: 'invalid threshold value' };
@@ -154,16 +189,9 @@ function gateCount(configured, observed, dryRun = false) {
   return { configured: parsed, observed, passed: observed <= parsed };
 }
 
-function gateLatency(configured, observed, dryRun = false) {
-  const parsed = Number(configured);
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    return { configured, observed, passed: false, error: 'invalid threshold value' };
-  }
-  if (observed === null || observed === undefined) {
-    return { configured: parsed, observed: null, passed: dryRun };
-  }
-  return { configured: parsed, observed, passed: observed <= parsed };
-}
+// Aliases kept for readability at call sites; both resolve to gateUpperBound.
+const gateCount = gateUpperBound;
+const gateLatency = gateUpperBound;
 
 /**
  * Compose an evidence payload from a load-test report. Mutates nothing;
@@ -212,18 +240,64 @@ function describeConfirmations(options = {}) {
  * Persist the evidence JSON to `outputPath`, creating parent directories as
  * needed. Raw failure bodies, cookies, and payloads are non-enumerable on the
  * existing measurement objects, so `JSON.stringify` skips them automatically.
- * If `includeRequestSamples` is false (default), measurements are stripped
- * entirely to keep the file bounded.
+ *
+ * - If `includeRequestSamples` is false (default), `measurements` is stripped
+ *   entirely to keep the file bounded.
+ * - If true, the array is capped at the first REQUEST_SAMPLES_HEAD_LIMIT and
+ *   last REQUEST_SAMPLES_TAIL_LIMIT entries per endpoint. Larger sets would
+ *   produce multi-MB files on classroom-tier runs without post-mortem value.
+ *
+ * Writes go through tempfile-then-rename so an interrupted run cannot destroy
+ * the previous good `latest-<env>.json` and block `npm run verify`.
  */
 export function persistEvidenceFile(outputPath, payload, { includeRequestSamples = false } = {}) {
   if (!outputPath) throw new Error('persistEvidenceFile requires an output path.');
   const absolutePath = resolve(process.cwd(), outputPath);
   mkdirSync(dirname(absolutePath), { recursive: true });
+
   const scrubbed = includeRequestSamples
-    ? payload
+    ? { ...payload, measurements: capRequestSamples(payload.measurements) }
     : { ...payload, measurements: undefined };
-  writeFileSync(absolutePath, JSON.stringify(scrubbed, null, 2));
+
+  const tempPath = `${absolutePath}.tmp-${process.pid}-${Date.now()}`;
+  try {
+    writeFileSync(tempPath, JSON.stringify(scrubbed, null, 2));
+    renameSync(tempPath, absolutePath);
+  } catch (error) {
+    try {
+      unlinkSync(tempPath);
+    } catch {
+      // Ignore cleanup failure; original error takes priority.
+    }
+    throw error;
+  }
   return absolutePath;
+}
+
+function capRequestSamples(measurements) {
+  if (!Array.isArray(measurements)) return measurements;
+  const totalCap = REQUEST_SAMPLES_HEAD_LIMIT + REQUEST_SAMPLES_TAIL_LIMIT;
+  if (measurements.length <= totalCap) return measurements;
+
+  // Group by endpoint to preserve coverage of every endpoint seen, then cap
+  // head/tail within each group. This matches the plan's "first 100 + last 100
+  // per endpoint" spec more faithfully than a single global cap.
+  const groups = new Map();
+  for (const entry of measurements) {
+    const key = entry?.endpoint || 'unknown';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(entry);
+  }
+  const capped = [];
+  for (const [, entries] of groups) {
+    if (entries.length <= totalCap) {
+      capped.push(...entries);
+      continue;
+    }
+    capped.push(...entries.slice(0, REQUEST_SAMPLES_HEAD_LIMIT));
+    capped.push(...entries.slice(-REQUEST_SAMPLES_TAIL_LIMIT));
+  }
+  return capped;
 }
 
 export function autoNameEvidencePath({ environment = 'local', commit = 'unknown' } = {}) {

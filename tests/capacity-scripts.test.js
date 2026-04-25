@@ -613,3 +613,103 @@ test('classroom load --output auto-names when no path given but flag requires va
   assert.throws(() => parseClassroomLoadArgs(['--output']), /--output requires a value/);
 });
 
+test('classroom load without --output does not persist evidence (no always-on write)', async () => {
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error('dry-run should not fetch'); };
+  try {
+    const report = await runClassroomLoadTest(['--dry-run', '--learners', '2']);
+    assert.equal(report.evidencePath, undefined);
+    // The report itself still carries the evidence envelope fields so that
+    // callers can persist it manually if they wish — persistence is opt-in.
+    assert.ok(report.reportMeta);
+    assert.ok(report.thresholds);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test('classroom load config-only max5xx is validated against maxNetworkFailures', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-capacity-'));
+  const configPath = join(tempDir, 'bad-config.json');
+  const { writeFileSync } = await import('node:fs');
+  // max5xx set, maxNetworkFailures deliberately missing.
+  writeFileSync(configPath, JSON.stringify({
+    tier: 'small-pilot-provisional',
+    thresholds: { max5xx: 0 },
+  }));
+  try {
+    await assert.rejects(
+      runClassroomLoadTest(['--dry-run', '--config', configPath]),
+      /--max-5xx requires --max-network-failures/,
+    );
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('classroom load --config rejects unknown threshold keys', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-capacity-'));
+  const configPath = join(tempDir, 'typo-config.json');
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(configPath, JSON.stringify({
+    tier: 'small-pilot-provisional',
+    thresholds: { maxFivexx: 0, maxNetworkFailures: 0 },  // typo
+  }));
+  try {
+    await assert.rejects(
+      runClassroomLoadTest(['--dry-run', '--config', configPath]),
+      /unknown keys: maxFivexx/,
+    );
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('classroom load --config rejects missing file with clear error', async () => {
+  await assert.rejects(
+    runClassroomLoadTest(['--dry-run', '--config', '/nonexistent/path/config.json']),
+    /Failed to read threshold config/,
+  );
+});
+
+test('classroom load --config rejects invalid JSON with clear error', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-capacity-'));
+  const configPath = join(tempDir, 'bad.json');
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(configPath, 'not valid json {');
+  try {
+    await assert.rejects(
+      runClassroomLoadTest(['--dry-run', '--config', configPath]),
+      /is not valid JSON/,
+    );
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('classroom load CLI threshold override beats config value (CLI precedence)', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-capacity-'));
+  const configPath = join(tempDir, 'config.json');
+  const outputPath = join(tempDir, 'ev.json');
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(configPath, JSON.stringify({
+    tier: 'small-pilot-provisional',
+    thresholds: { max5xx: 5, maxNetworkFailures: 5, maxBootstrapP95Ms: 2000 },
+  }));
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error('dry-run should not fetch'); };
+  try {
+    const report = await runClassroomLoadTest([
+      '--dry-run',
+      '--config', configPath,
+      '--max-bootstrap-p95-ms', '500',
+      '--output', outputPath,
+    ]);
+    assert.equal(report.thresholds.maxBootstrapP95Ms.configured, 500);
+    assert.equal(report.thresholds.max5xx.configured, 5);
+  } finally {
+    globalThis.fetch = previousFetch;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+

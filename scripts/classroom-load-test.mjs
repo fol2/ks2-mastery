@@ -10,6 +10,7 @@ import {
   autoNameEvidencePath,
   buildEvidencePayload,
   persistEvidenceFile,
+  validateThresholdConfigKeys,
 } from './lib/capacity-evidence.mjs';
 
 const DEFAULT_PRODUCTION_ORIGIN = 'https://ks2.eugnel.uk';
@@ -244,7 +245,7 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     includeMeasurements: true,
     includeRequestSamples: false,
     help: false,
-    output: '',
+    output: undefined,
     configPath: '',
     thresholds: {},
   };
@@ -658,8 +659,19 @@ function loadThresholdConfig(configPath) {
   } catch (error) {
     throw new Error(`Threshold config "${configPath}" is not valid JSON: ${error.message}`);
   }
+  const thresholds = parsed.thresholds || {};
+  // Unknown config keys (typos like `maxFivexx`, unsupported keys) must fail
+  // loudly: a silently-dropped key is indistinguishable from a configured
+  // gate that always passes.
+  const unknown = validateThresholdConfigKeys(thresholds);
+  if (unknown.length) {
+    throw new Error(
+      `Threshold config "${configPath}" contains unknown keys: ${unknown.join(', ')}. `
+      + 'Check for typos or use a CLI flag for one-off overrides.',
+    );
+  }
   return {
-    thresholds: parsed.thresholds || {},
+    thresholds,
     tier: parsed.tier || null,
     minEvidenceSchemaVersion: parsed.minEvidenceSchemaVersion || null,
   };
@@ -681,9 +693,12 @@ export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
   if (options.help) {
     return { ok: true, help: true, usage: usage() };
   }
-  validateClassroomLoadOptions(options);
+  // Load config first so validateClassroomLoadOptions can see the merged
+  // threshold set: a config-only `max5xx` must still trip the
+  // `--max-network-failures` pairing rule.
   const config = loadThresholdConfig(options.configPath);
   const thresholds = mergeThresholds(config.thresholds, options.thresholds);
+  validateClassroomLoadOptions({ ...options, thresholds });
   const plan = buildClassroomLoadPlan(options);
 
   const startedAt = new Date().toISOString();
@@ -735,21 +750,18 @@ export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
     ok: evidence.ok,
   };
 
-  if (options.output !== undefined) {
-    const outputPath = options.output
-      || autoNameEvidencePath({
-        environment: finalReport.reportMeta.environment,
-        commit: finalReport.reportMeta.commit,
+  // Only persist when --output was explicitly passed. `parseClassroomLoadArgs`
+  // sets `options.output` to `undefined` by default and `readOptionValue`
+  // rejects an empty value, so truthiness correctly distinguishes "caller asked
+  // for evidence" from "no --output flag present".
+  if (options.output) {
+    try {
+      persistEvidenceFile(options.output, finalReport, {
+        includeRequestSamples: options.includeRequestSamples,
       });
-    if (outputPath) {
-      try {
-        persistEvidenceFile(outputPath, finalReport, {
-          includeRequestSamples: options.includeRequestSamples,
-        });
-        finalReport.evidencePath = outputPath;
-      } catch (error) {
-        throw new Error(`Failed to persist evidence to "${outputPath}": ${error.message}`);
-      }
+      finalReport.evidencePath = options.output;
+    } catch (error) {
+      throw new Error(`Failed to persist evidence to "${options.output}": ${error.message}`);
     }
   }
 

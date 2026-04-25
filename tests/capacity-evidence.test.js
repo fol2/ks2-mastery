@@ -1,16 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import {
   EVIDENCE_SCHEMA_VERSION,
+  REQUEST_SAMPLES_HEAD_LIMIT,
+  REQUEST_SAMPLES_TAIL_LIMIT,
   autoNameEvidencePath,
   buildEvidencePayload,
   buildReportMeta,
   evaluateThresholds,
   persistEvidenceFile,
+  validateThresholdConfigKeys,
 } from '../scripts/lib/capacity-evidence.mjs';
 
 function makeSummary(overrides = {}) {
@@ -267,4 +270,112 @@ test('persistEvidenceFile non-enumerable fields on measurements never serialise'
 test('autoNameEvidencePath produces reports/capacity/<timestamp>-<sha>-<env>.json', () => {
   const path = autoNameEvidencePath({ environment: 'local', commit: 'abc1234xyz' });
   assert.match(path, /^reports\/capacity\/\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d+Z-abc1234-local\.json$/);
+});
+
+test('validateThresholdConfigKeys rejects unknown keys', () => {
+  const unknown = validateThresholdConfigKeys({
+    max5xx: 0,
+    maxNetworkFailures: 0,
+    maxFivexx: 0,  // typo
+    bogusKey: 1,
+  });
+  assert.deepEqual(new Set(unknown), new Set(['maxFivexx', 'bogusKey']));
+});
+
+test('validateThresholdConfigKeys accepts all known keys', () => {
+  const unknown = validateThresholdConfigKeys({
+    max5xx: 0,
+    maxNetworkFailures: 0,
+    maxBootstrapP95Ms: 1000,
+    maxCommandP95Ms: 750,
+    maxResponseBytes: 600000,
+    requireZeroSignals: true,
+    requireBootstrapCapacity: true,
+  });
+  assert.deepEqual(unknown, []);
+});
+
+test('REQUEST_SAMPLES_HEAD_LIMIT and TAIL_LIMIT match plan spec (100 + 100)', () => {
+  assert.equal(REQUEST_SAMPLES_HEAD_LIMIT, 100);
+  assert.equal(REQUEST_SAMPLES_TAIL_LIMIT, 100);
+});
+
+test('persistEvidenceFile caps measurements to head+tail per endpoint when includeRequestSamples is true', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-capacity-'));
+  const outputPath = join(tempDir, 'ev.json');
+  try {
+    const totalPerEndpoint = 300;
+    const measurements = [];
+    for (let i = 0; i < totalPerEndpoint; i += 1) {
+      measurements.push({ endpoint: '/api/bootstrap', index: i });
+    }
+    for (let i = 0; i < totalPerEndpoint; i += 1) {
+      measurements.push({ endpoint: '/api/subjects/grammar/command', index: i });
+    }
+    persistEvidenceFile(outputPath, { ok: true, measurements }, { includeRequestSamples: true });
+    const written = JSON.parse(readFileSync(outputPath, 'utf8'));
+    // 200 per endpoint (100 head + 100 tail) x 2 endpoints = 400.
+    assert.equal(written.measurements.length, 400);
+    // Head of bootstrap endpoint includes index 0.
+    assert.ok(written.measurements.some((m) => m.endpoint === '/api/bootstrap' && m.index === 0));
+    // Tail of bootstrap endpoint includes index 299.
+    assert.ok(written.measurements.some((m) => m.endpoint === '/api/bootstrap' && m.index === 299));
+    // Middle slice (index 150) is NOT included — it was capped out.
+    assert.ok(!written.measurements.some((m) => m.endpoint === '/api/bootstrap' && m.index === 150));
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('persistEvidenceFile small measurement sets are kept in full', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-capacity-'));
+  const outputPath = join(tempDir, 'ev.json');
+  try {
+    const measurements = [
+      { endpoint: '/api/bootstrap', index: 0 },
+      { endpoint: '/api/bootstrap', index: 1 },
+    ];
+    persistEvidenceFile(outputPath, { ok: true, measurements }, { includeRequestSamples: true });
+    const written = JSON.parse(readFileSync(outputPath, 'utf8'));
+    assert.equal(written.measurements.length, 2);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('persistEvidenceFile uses tempfile-then-rename so partial writes never replace latest-*.json', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-capacity-'));
+  const outputPath = join(tempDir, 'latest-local.json');
+  try {
+    // Write a "good" file first.
+    persistEvidenceFile(outputPath, { ok: true, reportMeta: { evidenceSchemaVersion: 1, version: 'good' } });
+    const before = readFileSync(outputPath, 'utf8');
+
+    // Simulate a failure by introducing a circular reference so JSON.stringify
+    // throws. The atomic-write path must leave the original file intact and
+    // remove the tempfile.
+    assert.throws(() => {
+      persistEvidenceFile(outputPath, (() => {
+        const obj = { ok: true };
+        // Force JSON.stringify to throw by introducing a circular reference.
+        obj.self = obj;
+        return obj;
+      })());
+    });
+    const after = readFileSync(outputPath, 'utf8');
+    assert.equal(after, before, 'the original evidence file must be untouched after a failed write');
+    // No stray *.tmp-* files remain.
+    const tempFiles = readdirSync(tempDir).filter((name) => name.includes('.tmp-'));
+    assert.deepEqual(tempFiles, []);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('requireBootstrapCapacity gate is explicitly deferred to U3 with passed:true', () => {
+  const summary = { ok: true, totalRequests: 1, endpoints: {}, signals: {} };
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, true);
+  assert.equal(result.thresholds.requireBootstrapCapacity.observed, 'deferred-to-U3');
+  assert.deepEqual(result.failures, []);
 });
