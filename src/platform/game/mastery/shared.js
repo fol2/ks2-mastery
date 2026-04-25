@@ -21,6 +21,12 @@ export const PUNCTUATION_RESERVED_MONSTER_IDS = Object.freeze(
 export const GRAMMAR_MONSTER_IDS = Object.freeze(
   (MONSTERS_BY_SUBJECT.grammar || []).filter((monsterId) => MONSTERS[monsterId]),
 );
+// Reserved Grammar ids (Phase 3 U0) mirror `PUNCTUATION_RESERVED_MONSTER_IDS`.
+// Glossbloom / Loomrill / Mirrane remain in MONSTERS for asset tooling and
+// Admin review but are filtered out of every active learner-facing summary.
+export const GRAMMAR_RESERVED_MONSTER_IDS = Object.freeze(
+  (MONSTERS_BY_SUBJECT.grammarReserve || []).filter((monsterId) => MONSTERS[monsterId]),
+);
 export const DIRECT_SPELLING_MONSTER_IDS = Object.freeze(
   SPELLING_MONSTER_IDS.filter((monsterId) => monsterId !== 'phaeton'),
 );

@@ -4,6 +4,7 @@ import { GrammarSessionScene } from './GrammarSessionScene.jsx';
 import { GrammarSetupScene } from './GrammarSetupScene.jsx';
 import { GrammarSummaryScene } from './GrammarSummaryScene.jsx';
 import { GRAMMAR_MONSTER_ROUTES, GRAMMAR_SUBJECT_ID, normaliseGrammarReadModel } from '../metadata.js';
+import { normaliseGrammarRewardState } from '../../../platform/game/monster-system.js';
 
 const MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
 
@@ -61,9 +62,16 @@ function resolveGrammarRewardState({ grammar, learner, repositories }) {
     : {};
   const persistedState = readPersistedRewardState(repositories, learner?.id || '');
 
-  if (hasGrammarRewardProgress(projectedState)) return projectedState;
-  if (hasGrammarRewardProgress(persistedState)) return persistedState;
-  return Object.keys(projectedState).length ? projectedState : persistedState;
+  // Route through `normaliseGrammarRewardState` before `hasGrammarRewardProgress`
+  // so a pre-flip learner whose only evidence is under a retired id (e.g.
+  // `glossbloom.mastered: [...]`) is detected as a returning learner via the
+  // unioned Concordium view. Without the union, `GRAMMAR_MONSTER_ROUTES` now
+  // only includes 4 entries and retired-id progress would read as "fresh".
+  const normalisedProjected = normaliseGrammarRewardState(projectedState);
+  if (hasGrammarRewardProgress(normalisedProjected)) return normalisedProjected;
+  const normalisedPersisted = normaliseGrammarRewardState(persistedState);
+  if (hasGrammarRewardProgress(normalisedPersisted)) return normalisedPersisted;
+  return Object.keys(normalisedProjected).length ? normalisedProjected : normalisedPersisted;
 }
 
 function GrammarTransferPlaceholders() {

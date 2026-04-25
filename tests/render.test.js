@@ -403,10 +403,18 @@ test('codex synthesises uncaught entries for every registered subject monster', 
   ]);
 
   const ids = entries.map((entry) => entry.id);
-  assert.equal(entries.length, 18, 'expected full 18-card roster: 4 spelling + 7 punctuation + 7 grammar');
+  // Phase 3 U0 roster: 4 spelling + 4 punctuation (Pealark, Claspin, Curlune,
+  // Quoral; Colisk/Hyphang/Carillon reserved) + 4 grammar (Bracehart,
+  // Chronalyx, Couronnail, Concordium; Glossbloom/Loomrill/Mirrane reserved)
+  // = 12 active cards. Reserved entries must never surface here.
+  assert.equal(entries.length, 12, 'expected active 12-card roster: 4 spelling + 4 punctuation + 4 grammar');
   assert.ok(ids.includes('bracehart'), 'grammar lead synthesised');
   assert.ok(ids.includes('concordium'), 'grammar legendary synthesised');
   assert.ok(ids.includes('pealark'), 'punctuation lead synthesised');
+  // Reserved Grammar ids never enter the Codex pipeline.
+  for (const reservedId of ['glossbloom', 'loomrill', 'mirrane']) {
+    assert.equal(ids.includes(reservedId), false, `reserved Grammar id ${reservedId} must not leak into Codex entries`);
+  }
 
   const grammarEgg = entries.find((entry) => entry.id === 'bracehart');
   assert.equal(grammarEgg.caught, false);
@@ -438,7 +446,10 @@ test('codex subject groups arrive in spelling → punctuation → grammar order 
   assert.equal(spelling.status, 'in-progress');
 
   const grammar = groups.find((group) => group.subjectId === 'grammar');
-  assert.equal(grammar.entries.length, 7);
+  // Phase 3 U0: active Grammar roster is 4 (Bracehart, Chronalyx, Couronnail,
+  // Concordium). Glossbloom / Loomrill / Mirrane are reserved and never enter
+  // the Codex pipeline.
+  assert.equal(grammar.entries.length, 4);
   assert.equal(grammar.totals.caught, 0);
   assert.equal(grammar.status, 'unstarted');
 });

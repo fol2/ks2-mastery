@@ -146,42 +146,46 @@ export const GRAMMAR_ENABLED_MODES = Object.freeze([
 
 export const GRAMMAR_LOCKED_MODES = Object.freeze([]);
 
+// Phase 3 U0 cluster remap. The active Grammar roster collapses to 3 direct
+// cluster monsters (Bracehart, Chronalyx, Couronnail) plus Concordium's
+// whole-Grammar aggregate. Bracehart absorbs Sentence structure and Phrases;
+// Chronalyx absorbs Flow / Linkage; Couronnail absorbs Word classes. The
+// retired directs (Glossbloom, Loomrill, Mirrane) remain in MONSTERS for
+// asset tooling but no longer appear in this route list.
 export const GRAMMAR_MONSTER_ROUTES = Object.freeze([
   {
     id: 'bracehart',
     name: 'Bracehart',
-    route: 'Sentences and clauses',
-    conceptIds: ['sentence_functions', 'clauses', 'relative_clauses'],
-  },
-  {
-    id: 'glossbloom',
-    name: 'Glossbloom',
-    route: 'Words and phrases',
-    conceptIds: ['word_classes', 'noun_phrases'],
-  },
-  {
-    id: 'loomrill',
-    name: 'Loomrill',
-    route: 'Adverbials and cohesion',
-    conceptIds: ['adverbials', 'pronouns_cohesion'],
+    route: 'Sentences, clauses and phrases',
+    conceptIds: [
+      'sentence_functions',
+      'clauses',
+      'relative_clauses',
+      'noun_phrases',
+      'active_passive',
+      'subject_object',
+    ],
   },
   {
     id: 'chronalyx',
     name: 'Chronalyx',
-    route: 'Verb forms',
-    conceptIds: ['tense_aspect', 'modal_verbs'],
+    route: 'Verb forms and cohesion',
+    conceptIds: [
+      'tense_aspect',
+      'modal_verbs',
+      'adverbials',
+      'pronouns_cohesion',
+    ],
   },
   {
     id: 'couronnail',
     name: 'Couronnail',
-    route: 'Standard English and register',
-    conceptIds: ['standard_english', 'formality'],
-  },
-  {
-    id: 'mirrane',
-    name: 'Mirrane',
-    route: 'Sentence voice',
-    conceptIds: ['active_passive', 'subject_object'],
+    route: 'Word classes, Standard English and register',
+    conceptIds: [
+      'word_classes',
+      'standard_english',
+      'formality',
+    ],
   },
   {
     id: 'concordium',

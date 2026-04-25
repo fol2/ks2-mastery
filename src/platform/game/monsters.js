@@ -191,7 +191,15 @@ export const MONSTERS_BY_SUBJECT = {
   // and future activation but are no longer part of the learner-facing set.
   punctuation: ['pealark', 'curlune', 'claspin', 'quoral'],
   punctuationReserve: ['colisk', 'hyphang', 'carillon'],
-  grammar: ['bracehart', 'glossbloom', 'loomrill', 'chronalyx', 'couronnail', 'mirrane', 'concordium'],
+  // Active Grammar roster (Phase 3 U0): 3 direct cluster creatures (Bracehart,
+  // Chronalyx, Couronnail) + the grand legendary (Concordium) that aggregates
+  // all 18 Grammar concepts. Glossbloom / Loomrill / Mirrane move to reserve:
+  // their assets stay in MONSTERS for asset tooling and future activation but
+  // they no longer appear in any active learner-facing summary. Pre-flip
+  // reward state is preserved by `normaliseGrammarRewardState` in
+  // `src/platform/game/mastery/grammar.js`.
+  grammar: ['bracehart', 'chronalyx', 'couronnail', 'concordium'],
+  grammarReserve: ['glossbloom', 'loomrill', 'mirrane'],
 };
 
 export const MONSTER_BRANCHES = Object.freeze(['b1', 'b2']);
