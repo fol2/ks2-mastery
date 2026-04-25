@@ -504,6 +504,10 @@ function recentActivityFromAttempts(attempts = []) {
     .reverse()
     .map((attempt) => {
       const result = isPlainObject(attempt?.result) ? attempt.result : {};
+      const supportUsed = typeof attempt?.supportUsed === 'string' ? attempt.supportUsed : 'none';
+      const supportLevelAtScoring = Number.isFinite(Number(attempt?.supportLevelAtScoring))
+        ? Math.max(0, Math.min(2, Number(attempt.supportLevelAtScoring)))
+        : Math.max(0, Math.min(2, Number(attempt?.supportLevel) || 0));
       return {
         subjectId: 'grammar',
         templateId: typeof attempt?.templateId === 'string' ? attempt.templateId : '',
@@ -515,6 +519,11 @@ function recentActivityFromAttempts(attempts = []) {
         score: Number(result.score) || 0,
         maxScore: Number(result.maxScore) || 1,
         misconception: typeof result.misconception === 'string' ? result.misconception : '',
+        // U3 item-level support attribution. Older attempts have been
+        // normalised at load time so these fields are always present.
+        firstAttemptIndependent: Boolean(attempt?.firstAttemptIndependent),
+        supportUsed,
+        supportLevelAtScoring,
         createdAt: asTs(attempt?.createdAt, 0),
       };
     });

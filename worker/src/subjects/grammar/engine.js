@@ -5,6 +5,13 @@ import {
 import { BadRequestError, NotFoundError } from '../../errors.js';
 import { compileGrammarAiEnrichment } from './ai-enrichment.js';
 import {
+  composeAttemptSupport,
+  deriveAttemptSupport,
+  normaliseStoredAttempt,
+  SUPPORT_CONTRACT_VERSION,
+  supportLevelForSessionWithContract,
+} from './attempt-support.js';
+import {
   createGrammarQuestion,
   evaluateGrammarQuestion,
   GRAMMAR_CONCEPTS,
@@ -308,7 +315,12 @@ export function normaliseServerGrammarData(rawValue) {
       }))
       : [],
     misconceptions: isPlainObject(raw.misconceptions) ? cloneSerialisable(raw.misconceptions) : {},
-    recentAttempts: Array.isArray(raw.recentAttempts) ? raw.recentAttempts.slice(-80).map(cloneSerialisable) : [],
+    // Normalise older attempts on load so the U3 item-level fields
+    // (firstAttemptIndependent / supportUsed / supportLevelAtScoring) are
+    // always present downstream, even for pre-U3 stored state.
+    recentAttempts: Array.isArray(raw.recentAttempts)
+      ? raw.recentAttempts.slice(-80).map((entry) => normaliseStoredAttempt(cloneSerialisable(entry)))
+      : [],
     aiEnrichment: normalisePersistentAiEnrichment(raw.aiEnrichment),
   };
 }
@@ -465,9 +477,14 @@ function supportLevelForMode(mode) {
   return 0;
 }
 
-function supportLevelForSession(mode, prefs = {}) {
-  if (mode === 'smart' && normaliseBoolean(prefs.allowTeachingItems, false)) return 1;
-  return supportLevelForMode(mode);
+function supportLevelForSession(mode, prefs = {}, session = null) {
+  // Under contract v2 (the new default) Smart + allowTeachingItems no longer
+  // forces session support level 1. Sessions started before U3 shipped keep
+  // contract v1 semantics via their stamped `supportContractVersion` so that
+  // mid-flight submissions honour the contract their UI opened under.
+  const contractVersion = (session && Number(session.supportContractVersion))
+    || SUPPORT_CONTRACT_VERSION;
+  return supportLevelForSessionWithContract({ mode, prefs, contractVersion });
 }
 
 function sessionTypeForMode(mode) {
@@ -1002,6 +1019,7 @@ function startSession(state, payload, nowTs, learnerId) {
     currentItem: firstItem,
     attemptsForCurrent: 0,
     supportLevel: supportLevelForSession(mode, state.prefs),
+    supportContractVersion: SUPPORT_CONTRACT_VERSION,
     goal: sessionGoal,
     repair: {
       retryingCurrent: false,
@@ -1372,7 +1390,7 @@ function startSimilarProblem(state, nowTs) {
   session.currentIndex = Number(session.currentIndex) + 1;
   session.currentItem = item;
   session.attemptsForCurrent = 0;
-  session.supportLevel = supportLevelForSession(session.mode, state.prefs);
+  session.supportLevel = supportLevelForSession(session.mode, state.prefs, session);
   session.targetCount = Math.max(Number(session.targetCount) || 0, Number(session.answered) + 1);
   if (isPlainObject(session.goal) && session.goal.type === 'questions') {
     session.goal.targetCount = session.targetCount;
@@ -1411,7 +1429,7 @@ function continueSession(state, nowTs) {
     nowTs,
   });
   session.attemptsForCurrent = 0;
-  session.supportLevel = supportLevelForSession(session.mode, state.prefs);
+  session.supportLevel = supportLevelForSession(session.mode, state.prefs, session);
   state.phase = 'session';
   state.awaitingAdvance = false;
   state.feedback = null;
@@ -1426,6 +1444,9 @@ export function applyGrammarAttemptToState(state, {
   attempts = 1,
   requestId = 'attempt',
   now = Date.now(),
+  mode = '',
+  supportUsed = null,
+  postMarkingEnrichment = false,
 } = {}) {
   if (!item || item.contentReleaseId !== GRAMMAR_CONTENT_RELEASE_ID) {
     throw new BadRequestError('Grammar content release does not match this attempt.', {
@@ -1458,7 +1479,22 @@ export function applyGrammarAttemptToState(state, {
     });
   }
   const nowTs = timestamp(now);
-  const quality = answerQuality(result, { supportLevel, attempts });
+  // Compose item-level support fields. Under contract v2, post-marking AI
+  // enrichment never reduces mastery gain, and `supportUsed` takes precedence
+  // over the session-derived level when the command layer names it.
+  const attemptSupport = composeAttemptSupport({
+    mode,
+    sessionSupportLevel: supportLevel,
+    attempts,
+    supportUsed,
+    postMarkingEnrichment,
+  });
+  // answerQuality still uses `supportLevelAtScoring` to compute the gain.
+  // Dual-write: keep legacy `supportLevel` for backcompat readers.
+  const quality = answerQuality(result, {
+    supportLevel: attemptSupport.supportLevelAtScoring,
+    attempts,
+  });
   const conceptIds = (question.skillIds || []).slice();
   const statusesBefore = new Map(conceptIds.map((conceptId) => [
     conceptId,
@@ -1484,8 +1520,14 @@ export function applyGrammarAttemptToState(state, {
     conceptIds,
     response: cloneSerialisable(normalisedResponse) || {},
     result: cloneSerialisable(result) || {},
-    supportLevel,
+    // Legacy fields (kept for one release for event-log / backcompat readers).
+    supportLevel: attemptSupport.supportLevelAtScoring,
     attempts,
+    // U3 item-level fields (new authoritative shape).
+    firstAttemptIndependent: attemptSupport.firstAttemptIndependent,
+    supportUsed: attemptSupport.supportUsed,
+    supportLevelAtScoring: attemptSupport.supportLevelAtScoring,
+    mode: typeof mode === 'string' ? mode : '',
     createdAt: nowTs,
   };
   state.recentAttempts = [...(state.recentAttempts || []), attempt].slice(-80);
@@ -1505,8 +1547,15 @@ export function applyGrammarAttemptToState(state, {
     maxScore: result.maxScore,
     correct: Boolean(result.correct),
     misconception: result.misconception || null,
-    supportLevel,
+    // Dual-write: legacy `supportLevel` plus the new U3 item-level fields so
+    // pre-U3 and post-U3 event-log readers both see consistent projections.
+    supportLevel: attemptSupport.supportLevelAtScoring,
     attempts,
+    firstAttemptIndependent: attemptSupport.firstAttemptIndependent,
+    supportUsed: attemptSupport.supportUsed,
+    supportLevelAtScoring: attemptSupport.supportLevelAtScoring,
+    mode: typeof mode === 'string' ? mode : '',
+    supportContractVersion: SUPPORT_CONTRACT_VERSION,
     createdAt: nowTs,
   }];
   if (result.misconception) {
@@ -1570,7 +1619,7 @@ function submitAnswer(state, payload, command, nowTs) {
   }
   if (sessionGoalExpired(session, nowTs)) return completeSession(state, nowTs, command);
   const response = isPlainObject(payload.response) ? payload.response : (isPlainObject(payload.answer) ? payload.answer : { answer: payload.answer ?? '' });
-  const modeSupportLevel = Math.max(0, Number(session.supportLevel) || supportLevelForSession(session.mode, state.prefs));
+  const modeSupportLevel = Math.max(0, Number(session.supportLevel) || supportLevelForSession(session.mode, state.prefs, session));
   const requestedSupportLevel = Number(payload.supportLevel ?? modeSupportLevel) || 0;
   if (requestedSupportLevel > modeSupportLevel) {
     throw new BadRequestError('This Grammar mode does not allow pre-answer support.', {
@@ -1590,6 +1639,7 @@ function submitAnswer(state, payload, command, nowTs) {
     attempts: session.attemptsForCurrent,
     requestId: command.requestId,
     now: nowTs,
+    mode: session.mode,
   });
   if (!retryingCurrent) {
     session.answered += 1;

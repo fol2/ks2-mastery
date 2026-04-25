@@ -354,8 +354,10 @@ test('Grammar command route persists session goals and practice settings', async
   assert.equal(start.response.status, 200, JSON.stringify(start.body));
   assert.equal(start.body.subjectReadModel.session.goal.type, 'timed');
   assert.equal(start.body.subjectReadModel.session.goal.timeLimitMs, 10 * 60_000);
-  assert.equal(start.body.subjectReadModel.session.supportLevel, 1);
-  assert.equal(start.body.subjectReadModel.session.supportGuidance.kind, 'faded');
+  // U3 contract v2: Smart Review + allowTeachingItems no longer forces session-level
+  // support promotion; independent first-attempt correct gets full mastery gain.
+  assert.equal(start.body.subjectReadModel.session.supportLevel, 0);
+  assert.equal(start.body.subjectReadModel.session.supportGuidance, null);
 
   DB.close();
 });

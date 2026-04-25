@@ -781,7 +781,7 @@ test('Grammar clear-due goal uses due retry evidence before falling back', () =>
   assert.equal(done.state.summary.answered, 1);
 });
 
-test('Grammar practice settings keep Smart Review teaching support score-aware', () => {
+test('Grammar practice settings: Smart Review teaching items no longer demote independent correctness (U3 contract v2)', () => {
   const oracle = readGrammarLegacyOracle();
   const sample = oracle.templates.find((template) => template.id === 'fronted_adverbial_choose');
   const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
@@ -816,7 +816,9 @@ test('Grammar practice settings keep Smart Review teaching support score-aware',
   assert.equal(start.state.prefs.allowTeachingItems, true);
   assert.equal(start.state.prefs.showDomainBeforeAnswer, false);
   assert.equal(start.state.prefs.speechRate, 1.4);
-  assert.equal(start.state.session.supportLevel, 1);
+  // Under contract v2, Smart + allowTeachingItems no longer forces session support level.
+  assert.equal(start.state.session.supportLevel, 0);
+  assert.equal(start.state.session.supportContractVersion, 2);
 
   const submit = engine.apply({
     learnerId: 'learner-a',
@@ -827,8 +829,17 @@ test('Grammar practice settings keep Smart Review teaching support score-aware',
     payload: { response: sample.correctResponse },
   });
 
-  assert.equal(submit.state.recentAttempts.at(-1).supportLevel, 1);
-  assert.ok(submit.state.mastery.concepts.adverbials.strength < 0.38);
+  const latestAttempt = submit.state.recentAttempts.at(-1);
+  // Independent first-attempt correct in Smart Review: full credit.
+  assert.equal(latestAttempt.supportLevelAtScoring, 0);
+  assert.equal(latestAttempt.supportUsed, 'none');
+  assert.equal(latestAttempt.firstAttemptIndependent, true);
+  // Mastery strength should reflect quality 5 gain (independent correct: +0.13 from 0.25 baseline).
+  assert.equal(
+    submit.state.mastery.concepts.adverbials.strength,
+    0.38,
+    'Smart Review independent correct applies quality-5 +0.13 strength gain (0.25 → 0.38); supported quality would yield 0.29.',
+  );
 });
 
 test('Grammar faded support action marks the next answer as supported', () => {
