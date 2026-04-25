@@ -429,6 +429,198 @@ test('CelebrationLayer fallback: ack-storage failure surfaces via warnOnce, queu
   }
 });
 
+test('CelebrationLayer: U4 — provider with showParticles=false threads tunables into render (no particles)', async () => {
+  // The bundled `caught` defaults render particles. Provider supplies
+  // celebrationTunables with showParticles=false; the layer must thread
+  // that into render so the particles container is omitted.
+  const out = await renderCelebrationLayerFixture({
+    effectConfigValue: {
+      celebrationTunables: {
+        'inklet-b1-3': {
+          caught: { showParticles: false, showShine: false, modifierClass: '' },
+        },
+      },
+    },
+    registrations: `
+      // Effect render reflects whatever tunables it receives; we forward
+      // them as data attributes so the test can inspect them directly.
+      registerEffect(defineEffect({
+        kind: 'caught',
+        lifecycle: 'transient',
+        layer: 'overlay',
+        surfaces: ['lesson', 'home', 'codex'],
+        reducedMotion: 'asis',
+        render: ({ tunables }) => {
+          const hasTunables = tunables ? '1' : '0';
+          const showParticles = tunables ? String(tunables.showParticles) : '';
+          return (
+            <div data-effect="caught" data-has-tunables={hasTunables} data-show-particles={showParticles}>
+              caught with tunables
+            </div>
+          );
+        },
+      }));
+    `,
+    setup: `
+      const monster = {
+        id: 'inklet',
+        name: 'Inklet',
+        accent: '#3E6FA8',
+        secondary: '#FFE9A8',
+        pale: '#F8F4EA',
+        nameByStage: ['Inklet egg', 'Inklet'],
+        masteredMax: 100,
+      };
+      playCelebration({
+        kind: 'caught',
+        monster,
+        surface: 'lesson',
+        params: { previous: { branch: 'b1', stage: 3 }, next: { branch: 'b1', stage: 3 } },
+        learnerId: store.getState().learners.selectedId,
+      }, { store });
+    `,
+  });
+  const { html } = JSON.parse(out);
+
+  assert.match(html, /data-effect="caught"/);
+  assert.match(html, /data-has-tunables="1"/);
+  assert.match(html, /data-show-particles="false"/);
+});
+
+test('CelebrationLayer: U4 — provider with showShine=true is threaded into render', async () => {
+  const out = await renderCelebrationLayerFixture({
+    effectConfigValue: {
+      celebrationTunables: {
+        'inklet-b1-3': {
+          caught: { showParticles: false, showShine: true, modifierClass: '' },
+        },
+      },
+    },
+    registrations: `
+      registerEffect(defineEffect({
+        kind: 'caught',
+        lifecycle: 'transient',
+        layer: 'overlay',
+        surfaces: ['lesson', 'home', 'codex'],
+        reducedMotion: 'asis',
+        render: ({ tunables }) => {
+          const showShine = tunables ? String(tunables.showShine) : '';
+          return <div data-effect="caught" data-show-shine={showShine}>caught</div>;
+        },
+      }));
+    `,
+    setup: `
+      const monster = {
+        id: 'inklet',
+        name: 'Inklet',
+        accent: '#3E6FA8',
+        secondary: '#FFE9A8',
+        pale: '#F8F4EA',
+        nameByStage: ['Inklet egg', 'Inklet'],
+        masteredMax: 100,
+      };
+      playCelebration({
+        kind: 'caught',
+        monster,
+        surface: 'lesson',
+        params: { previous: { branch: 'b1', stage: 3 }, next: { branch: 'b1', stage: 3 } },
+        learnerId: store.getState().learners.selectedId,
+      }, { store });
+    `,
+  });
+  const { html } = JSON.parse(out);
+
+  assert.match(html, /data-show-shine="true"/);
+});
+
+test('CelebrationLayer: U4 — no provider omits tunables, render falls back to kind defaults', async () => {
+  const out = await renderCelebrationLayerFixture({
+    registrations: `
+      registerEffect(defineEffect({
+        kind: 'caught',
+        lifecycle: 'transient',
+        layer: 'overlay',
+        surfaces: ['lesson', 'home', 'codex'],
+        reducedMotion: 'asis',
+        render: ({ tunables }) => {
+          const has = tunables ? '1' : '0';
+          return <div data-effect="caught" data-has-tunables={has}>caught</div>;
+        },
+      }));
+    `,
+    setup: `
+      const monster = {
+        id: 'inklet',
+        name: 'Inklet',
+        accent: '#3E6FA8',
+        secondary: '#FFE9A8',
+        pale: '#F8F4EA',
+        nameByStage: ['Inklet egg', 'Inklet'],
+        masteredMax: 100,
+      };
+      playCelebration({
+        kind: 'caught',
+        monster,
+        surface: 'lesson',
+        params: { previous: { branch: 'b1', stage: 0 }, next: { branch: 'b1', stage: 0 } },
+        learnerId: store.getState().learners.selectedId,
+      }, { store });
+    `,
+  });
+  const { html } = JSON.parse(out);
+
+  assert.match(html, /data-has-tunables="0"/);
+});
+
+test('CelebrationLayer: U4 — provider lacking the (asset, kind) row omits tunables', async () => {
+  // Provider mounted but no celebrationTunables row for inklet-b1-3 caught.
+  // Layer should not synthesise tunables — the render uses kind defaults.
+  const out = await renderCelebrationLayerFixture({
+    effectConfigValue: {
+      celebrationTunables: {
+        // Tunables only for some other asset; no inklet entry.
+        'someone-else-b1-3': {
+          caught: { showParticles: false, showShine: false, modifierClass: '' },
+        },
+      },
+    },
+    registrations: `
+      registerEffect(defineEffect({
+        kind: 'caught',
+        lifecycle: 'transient',
+        layer: 'overlay',
+        surfaces: ['lesson', 'home', 'codex'],
+        reducedMotion: 'asis',
+        render: ({ tunables }) => {
+          const has = tunables ? '1' : '0';
+          return <div data-effect="caught" data-has-tunables={has}>caught</div>;
+        },
+      }));
+    `,
+    setup: `
+      const monster = {
+        id: 'inklet',
+        name: 'Inklet',
+        accent: '#3E6FA8',
+        secondary: '#FFE9A8',
+        pale: '#F8F4EA',
+        nameByStage: ['Inklet egg', 'Inklet'],
+        masteredMax: 100,
+      };
+      playCelebration({
+        kind: 'caught',
+        monster,
+        surface: 'lesson',
+        params: { previous: { branch: 'b1', stage: 3 }, next: { branch: 'b1', stage: 3 } },
+        learnerId: store.getState().learners.selectedId,
+      }, { store });
+    `,
+  });
+  const { html } = JSON.parse(out);
+
+  assert.match(html, /data-has-tunables="0"/);
+});
+
 test('integration: monster-celebration-dismiss action through controller acks and advances queue', () => {
   setupCapture();
   try {

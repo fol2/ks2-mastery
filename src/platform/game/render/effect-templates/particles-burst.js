@@ -17,7 +17,7 @@ function eyebrowForEvolve(fromStage, toStage) {
   return 'Evolved';
 }
 
-function renderCaught({ event, onComplete }) {
+function renderCaught({ event, onComplete, tunables }) {
   return (
     <CelebrationShell
       kind="caught"
@@ -28,11 +28,12 @@ function renderCaught({ event, onComplete }) {
       eyebrow="New friend"
       body="You caught a new friend!"
       onComplete={onComplete}
+      tunables={tunables}
     />
   );
 }
 
-function renderEvolve({ event, onComplete }) {
+function renderEvolve({ event, onComplete, tunables }) {
   const monster = event.monster || {};
   const fromStage = clampStage(event.previous?.stage);
   const toStage = clampStage(event.next?.stage);
@@ -49,6 +50,7 @@ function renderEvolve({ event, onComplete }) {
       eyebrow={eyebrowForEvolve(fromStage, toStage)}
       body={`${monster.name || 'A monster'} evolved into ${stageName(monster, toStage)}.`}
       onComplete={onComplete}
+      tunables={tunables}
     />
   );
 }
@@ -81,10 +83,10 @@ export default {
       zIndex: typeof zIndex === 'number' ? zIndex : 0,
       exclusiveGroup: exclusiveGroup ?? null,
       params: params || {},
-      render({ params: liveParams, onComplete }) {
+      render({ params: liveParams, onComplete, tunables }) {
         const event = liveParams || {};
-        if (kind === 'evolve') return renderEvolve({ event, onComplete });
-        return renderCaught({ event, onComplete });
+        if (kind === 'evolve') return renderEvolve({ event, onComplete, tunables });
+        return renderCaught({ event, onComplete, tunables });
       },
     };
   },

@@ -154,6 +154,31 @@ test('evolve effect: dismissal — onComplete drains the queue and persists an a
   );
 });
 
+test('evolve effect: U4 — tunables.modifierClass="egg-crack" overrides default empty modifier', async () => {
+  // Stage 2 → 3 evolve has empty modifier by default. Tunables force
+  // `egg-crack` so the overlay class includes the modifier.
+  const event = makeEvolveEvent({
+    previous: { mastered: 40, stage: 2, level: 5, caught: true, branch: 'b1' },
+    next: { mastered: 60, stage: 3, level: 7, caught: true, branch: 'b1' },
+  });
+  const out = await renderCelebrationLayerFixture({
+    effectConfigValue: {
+      celebrationTunables: {
+        'inklet-b1-3': {
+          evolve: { showParticles: false, showShine: false, modifierClass: 'egg-crack' },
+        },
+      },
+    },
+    registrations: REGISTER_EVOLVE,
+    setup: `
+      store.pushMonsterCelebrations([${JSON.stringify(event)}]);
+    `,
+  });
+  const { html } = JSON.parse(out);
+
+  assert.match(html, /class="monster-celebration-overlay evolve egg-crack"/);
+});
+
 test('evolve effect: integration — controller dispatch advances queue and persists ack', () => {
   installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage: globalThis.localStorage });

@@ -70,11 +70,19 @@ export function CelebrationShell({
   eyebrow,
   body,
   onComplete,
+  tunables,
 }) {
   const monsterVisualConfig = useMonsterVisualConfig();
   const config = monsterVisualConfig?.config;
 
-  const className = `monster-celebration-overlay ${kind}${modifierClass ? ` ${modifierClass}` : ''}`;
+  // Per-monster admin tunables override the kind-hardcoded props when
+  // present. Absent fields fall through so callers without tunables see
+  // exactly today's behaviour.
+  const resolvedShowParticles = tunables?.showParticles ?? showParticles;
+  const resolvedShowShine = tunables?.showShine ?? showShine;
+  const resolvedModifierClass = tunables?.modifierClass ?? modifierClass;
+
+  const className = `monster-celebration-overlay ${kind}${resolvedModifierClass ? ` ${resolvedModifierClass}` : ''}`;
   const palette = {
     primary: monster?.accent || PALETTE_DEFAULTS.primary,
     secondary: monster?.secondary || PALETTE_DEFAULTS.secondary,
@@ -114,9 +122,9 @@ export function CelebrationShell({
       }}
     >
       <div className="monster-celebration-stage" aria-hidden="true">
-        {showParticles && <CelebrationParticles />}
+        {resolvedShowParticles && <CelebrationParticles />}
         <div className="monster-celebration-halo" />
-        {showShine && <div className="monster-celebration-shine" />}
+        {resolvedShowShine && <div className="monster-celebration-shine" />}
         {showBefore && (
           <CelebrationVisual className="before" stage={fromStage} visual={beforeVisual} />
         )}

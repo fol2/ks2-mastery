@@ -7,7 +7,7 @@ export const caughtEffect = defineEffect({
   layer: 'overlay',
   surfaces: ['lesson', 'home', 'codex'],
   reducedMotion: 'simplify',
-  render({ params, onComplete }) {
+  render({ params, onComplete, tunables }) {
     const event = params || {};
     return (
       <CelebrationShell
@@ -19,6 +19,7 @@ export const caughtEffect = defineEffect({
         eyebrow="New friend"
         body="You caught a new friend!"
         onComplete={onComplete}
+        tunables={tunables}
       />
     );
   },

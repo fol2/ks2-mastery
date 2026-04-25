@@ -349,7 +349,7 @@ on app boot OR config change:
 
 ---
 
-- [ ] U4. **MonsterRender + CelebrationLayer consume config**
+- [x] U4. **MonsterRender + CelebrationLayer consume config**
 
 **Goal:** Threads the published `bindings` and `celebrationTunables` into the runtime renderers. `<MonsterRender>` reads its monster's bindings from context, falls back to a per-`displayState` default when no binding row exists. `<CelebrationLayer>` resolves the matching `(monster, kind)` tunables and passes them to the celebration shell.
 

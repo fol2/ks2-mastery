@@ -7,7 +7,7 @@ export const megaEffect = defineEffect({
   layer: 'overlay',
   surfaces: ['lesson', 'home', 'codex'],
   reducedMotion: 'simplify',
-  render({ params, onComplete }) {
+  render({ params, onComplete, tunables }) {
     const event = params || {};
     const monster = event.monster || {};
     const fromStage = clampStage(event.previous?.stage);
@@ -26,6 +26,7 @@ export const megaEffect = defineEffect({
         eyebrow="Final form"
         body={`${monster.name || 'A monster'} reached its mega form: ${stageName(monster, toStage)}.`}
         onComplete={onComplete}
+        tunables={tunables}
       />
     );
   },

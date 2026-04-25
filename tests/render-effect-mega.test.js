@@ -141,6 +141,32 @@ test('mega effect: dismissal — onComplete drains the queue and persists an ack
   );
 });
 
+test('mega effect: U4 — tunables.showShine=false hides the shine streak element', async () => {
+  // Default mega renders showShine=true. Tunables force showShine=false
+  // so the `.monster-celebration-shine` element is absent.
+  const event = makeMegaEvent({
+    previous: { stage: 3, branch: 'b1' },
+    next: { stage: 4, branch: 'b1' },
+  });
+  const out = await renderCelebrationLayerFixture({
+    effectConfigValue: {
+      celebrationTunables: {
+        'inklet-b1-4': {
+          mega: { showParticles: true, showShine: false, modifierClass: '' },
+        },
+      },
+    },
+    registrations: REGISTER_MEGA,
+    setup: `
+      store.pushMonsterCelebrations([${JSON.stringify(event)}]);
+    `,
+  });
+  const { html } = JSON.parse(out);
+
+  assert.match(html, /class="monster-celebration-overlay mega"/);
+  assert.equal(html.includes('class="monster-celebration-shine"'), false);
+});
+
 test('mega effect: integration — controller dispatch advances queue and persists ack', () => {
   installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage: globalThis.localStorage });

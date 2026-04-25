@@ -26,7 +26,7 @@ export default {
       zIndex: typeof zIndex === 'number' ? zIndex : 0,
       exclusiveGroup: exclusiveGroup ?? null,
       params: params || {},
-      render({ params: liveParams, onComplete }) {
+      render({ params: liveParams, onComplete, tunables }) {
         const event = liveParams || {};
         const monster = event.monster || {};
         const fromStage = clampStage(event.previous?.stage);
@@ -44,6 +44,7 @@ export default {
             eyebrow="Final form"
             body={`${monster.name || 'A monster'} reached its mega form: ${stageName(monster, toStage)}.`}
             onComplete={onComplete}
+            tunables={tunables}
           />
         );
       },

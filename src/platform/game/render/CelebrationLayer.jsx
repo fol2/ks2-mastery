@@ -15,6 +15,23 @@ import { useSyncExternalStore } from 'react';
 import { lookupEffect } from './registry.js';
 import { warnOnce } from './composition.js';
 import { acknowledgeMonsterCelebrationEvents } from '../monster-celebration-acks.js';
+import { useMonsterEffectConfig } from '../MonsterEffectConfigContext.jsx';
+
+function resolveCelebrationTunables(effectConfig, event) {
+  // Per the plan: assetKey = monsterId + (next.branch ?? previous.branch) + next.stage.
+  // Returns the tunables row for the (asset, kind) pair, or null when any
+  // step is missing — callers omit `tunables` when this returns null.
+  if (!effectConfig || !effectConfig.celebrationTunables) return null;
+  const monsterId = event?.monster?.id;
+  const branch = event?.next?.branch || event?.previous?.branch;
+  const stage = event?.next?.stage;
+  if (!monsterId || !branch || stage == null) return null;
+  const assetKey = `${monsterId}-${branch}-${stage}`;
+  const row = effectConfig.celebrationTunables[assetKey];
+  if (!row) return null;
+  const tunables = row[event.kind];
+  return tunables || null;
+}
 
 function getQueue(store) {
   const state = store?.getState?.();
@@ -56,6 +73,7 @@ export function CelebrationLayer({ store, controller, context = 'lesson' }) {
   const getSnapshot = () => (store ? store.getState() : null);
   // SSR-safe: matches getSnapshot when there is no window.
   useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const effectConfig = useMonsterEffectConfig();
 
   if (!store) return null;
 
@@ -93,6 +111,7 @@ export function CelebrationLayer({ store, controller, context = 'lesson' }) {
   }
 
   const onComplete = buildOnComplete(store, controller, event);
+  const tunables = resolveCelebrationTunables(effectConfig, event);
 
   // The transient effect owns its visuals (scrim, particles, copy). The
   // layer adds no chrome of its own — that's the whole point of the
@@ -101,12 +120,16 @@ export function CelebrationLayer({ store, controller, context = 'lesson' }) {
 
   let node;
   try {
-    node = effect.render({
+    const renderArgs = {
       params: event,
       monster: event.monster,
       context,
       onComplete,
-    });
+    };
+    // Only attach `tunables` when present so existing callers / fallbacks
+    // see exactly today's argument shape.
+    if (tunables) renderArgs.tunables = tunables;
+    node = effect.render(renderArgs);
   } catch (err) {
     warnOnce(
       `celebration-layer:render-throw:${event.kind}`,

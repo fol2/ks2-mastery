@@ -179,6 +179,34 @@ test('caught effect: integration — controller dispatch advances queue and pers
   );
 });
 
+test('caught effect: U4 — tunables override hardcoded showParticles=true so particles are absent', async () => {
+  // The bundled `caught` defaults render particles. With
+  // tunables.showParticles=false, the celebration shell must skip the
+  // `monster-celebration-parts` container.
+  const event = makeRewardEvent({
+    previous: { mastered: 0, stage: 0, level: 0, caught: false, branch: 'b1' },
+    next: { mastered: 1, stage: 0, level: 0, caught: true, branch: 'b1' },
+  });
+  const out = await renderCelebrationLayerFixture({
+    effectConfigValue: {
+      celebrationTunables: {
+        'inklet-b1-0': {
+          caught: { showParticles: false, showShine: false, modifierClass: '' },
+        },
+      },
+    },
+    registrations: REGISTER_CAUGHT,
+    setup: `
+      store.pushMonsterCelebrations([${JSON.stringify(event)}]);
+    `,
+  });
+  const { html } = JSON.parse(out);
+
+  assert.match(html, /class="monster-celebration-overlay caught"/);
+  // Particles container present in default render — must be absent here.
+  assert.equal(html.includes('class="monster-celebration-parts"'), false);
+});
+
 test('caught effect: legacy event shape (normalised by monster-celebrations.js) renders correctly', async () => {
   // Existing pending/queue events in storage take this normalised shape;
   // the new layer reads queue[0] and looks up by `kind`. This guards the

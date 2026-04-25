@@ -13,7 +13,7 @@ export const evolveEffect = defineEffect({
   layer: 'overlay',
   surfaces: ['lesson', 'home', 'codex'],
   reducedMotion: 'simplify',
-  render({ params, onComplete }) {
+  render({ params, onComplete, tunables }) {
     const event = params || {};
     const monster = event.monster || {};
     const fromStage = clampStage(event.previous?.stage);
@@ -32,6 +32,7 @@ export const evolveEffect = defineEffect({
         eyebrow={eyebrowFor(fromStage, toStage)}
         body={`${monster.name || 'A monster'} evolved into ${stageName(monster, toStage)}.`}
         onComplete={onComplete}
+        tunables={tunables}
       />
     );
   },
