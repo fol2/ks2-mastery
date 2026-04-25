@@ -54,3 +54,14 @@ export function spellingSessionInfoChips(session) {
 export function spellingSessionVoiceNote() {
   return 'AI-generated dictation voice';
 }
+
+/**
+ * Skip-button label. Guardian Mission sessions use "I don't know" to signal
+ * that the click routes through the Guardian wobble path (not the legacy
+ * enqueue-later skip). Non-Guardian sessions keep the legacy "Skip for now".
+ * See U4 in docs/plans/2026-04-25-005-feat-post-mega-spelling-guardian-hardening-plan.md.
+ */
+export function spellingSessionSkipLabel(session) {
+  if (session && session.mode === 'guardian') return "I don't know";
+  return 'Skip for now';
+}

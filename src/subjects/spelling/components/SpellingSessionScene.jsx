@@ -3,6 +3,7 @@ import {
   spellingSessionContextNote,
   spellingSessionInfoChips,
   spellingSessionInputPlaceholder,
+  spellingSessionSkipLabel,
   spellingSessionSubmitLabel,
   spellingSessionVoiceNote,
 } from '../session-ui.js';
@@ -66,6 +67,7 @@ export function SpellingSessionScene({
   const inputPlaceholder = spellingSessionInputPlaceholder(session);
   const contextNote = spellingSessionContextNote(session);
   const voiceNote = spellingSessionVoiceNote();
+  const skipLabel = spellingSessionSkipLabel(session);
   const infoChips = spellingSessionInfoChips(session);
   const progressTotal = session.progress.total;
   const done = session.progress.done;
@@ -194,7 +196,7 @@ export function SpellingSessionScene({
                   disabled={runtimeReadOnly || pending}
                   onClick={(event) => renderAction(actions, event, 'spelling-skip')}
                 >
-                  Skip for now
+                  {skipLabel}
                 </button>
               ) : null}
             </div>

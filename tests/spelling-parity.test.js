@@ -355,6 +355,58 @@ test('legacy auto-advance can move a one-word learning round on without a manual
   assert.equal(harness.store.getState().subjectUi.spelling.session.currentCard.slug, firstSlug);
 });
 
+test('U4 parity: non-Guardian learning skip still renders "Skip for now" button and legacy feedback', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '5' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-start');
+
+  // Non-Guardian learning session: label is "Skip for now".
+  const startHtml = harness.render();
+  assert.match(startHtml, /Skip for now/);
+  assert.doesNotMatch(startHtml, /I don.t know/, 'non-Guardian session never shows "I don\'t know"');
+
+  // Clicking skip uses legacy feedback text.
+  harness.dispatch('spelling-skip');
+  const afterSkipHtml = harness.render();
+  assert.match(afterSkipHtml, /Skipped for now\./);
+});
+
+test('U4 parity: Guardian session renders "I don\'t know" button label', () => {
+  const storage = installMemoryStorage();
+  const nowRef = { value: Date.UTC(2026, 0, 10) };
+  const harness = createAppHarness({ storage, now: () => nowRef.value });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  // Seed all-core-mega via the subjectStates repository.
+  const today = Math.floor(nowRef.value / DAY_MS);
+  const progress = Object.fromEntries(
+    Object.keys(WORD_BY_SLUG)
+      .filter((slug) => WORD_BY_SLUG[slug].spellingPool !== 'extra')
+      .map((slug) => [slug, {
+        stage: 4,
+        attempts: 6,
+        correct: 5,
+        wrong: 1,
+        dueDay: today + 60,
+        lastDay: today - 7,
+        lastResult: 'correct',
+      }]),
+  );
+  harness.repositories.subjectStates.writeData(learnerId, 'spelling', { progress });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-shortcut-start', { mode: 'guardian' });
+
+  const html = harness.render();
+  assert.equal(harness.store.getState().subjectUi.spelling.session.mode, 'guardian');
+  // React escapes the apostrophe to &#x27; in rendered HTML.
+  assert.match(html, /I don&#x27;t know/);
+  assert.doesNotMatch(html, /Skip for now/);
+});
+
 test('restored completed spelling card caps progress and resumes auto-advance', () => {
   const storage = installMemoryStorage();
   const scheduler = createManualScheduler();
