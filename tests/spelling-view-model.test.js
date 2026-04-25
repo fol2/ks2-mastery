@@ -14,6 +14,7 @@ import {
   wordBankAggregateStats,
   wordBankFilterMatchesStatus,
 } from '../src/subjects/spelling/components/spelling-view-model.js';
+import { spellingSessionSkipLabel } from '../src/subjects/spelling/session-ui.js';
 
 function createEventStub() {
   return {
@@ -493,4 +494,24 @@ test('guardianSummaryCards: clamps wobbled to totalWords when summary.mistakes i
   const cards = guardianSummaryCards({ summary, nextGuardianDueDay: null, todayDay: 20_000 });
   assert.equal(cards[0].value, 0, 'renewed never goes negative');
   assert.equal(cards[1].value, 2, 'wobbled clamps to totalWords');
+});
+
+// -----------------------------------------------------------------------------
+// U4 (P1.5 hardening): skip button label helper branches on session.mode.
+// -----------------------------------------------------------------------------
+
+test('spellingSessionSkipLabel returns "I don\'t know" for Guardian sessions', () => {
+  assert.equal(spellingSessionSkipLabel({ mode: 'guardian', type: 'learning' }), "I don't know");
+});
+
+test('spellingSessionSkipLabel returns "Skip for now" for non-Guardian learning sessions', () => {
+  assert.equal(spellingSessionSkipLabel({ mode: 'smart', type: 'learning' }), 'Skip for now');
+  assert.equal(spellingSessionSkipLabel({ mode: 'trouble', type: 'learning' }), 'Skip for now');
+  assert.equal(spellingSessionSkipLabel({ mode: 'single', type: 'learning' }), 'Skip for now');
+});
+
+test('spellingSessionSkipLabel falls back to "Skip for now" when session is null or missing mode', () => {
+  assert.equal(spellingSessionSkipLabel(null), 'Skip for now');
+  assert.equal(spellingSessionSkipLabel(undefined), 'Skip for now');
+  assert.equal(spellingSessionSkipLabel({}), 'Skip for now');
 });
