@@ -10,6 +10,12 @@ import {
 import { requireDatabase } from './d1.js';
 import { errorResponse } from './errors.js';
 import { json, readForm, readJson, readJsonBounded } from './http.js';
+import {
+  CapacityCollector,
+  capacityRequest,
+  generateRequestId,
+  validateRequestId,
+} from './logger.js';
 import { createWorkerRepository } from './repository.js';
 import { handleTextToSpeechRequest } from './tts.js';
 import {
@@ -77,7 +83,7 @@ function mutationFromRequest(body, request) {
   };
 }
 
-async function sessionPayload({ session, auth, env, now }) {
+async function sessionPayload({ session, auth, env, now, capacity = null }) {
   if (!session) {
     return {
       ok: true,
@@ -88,7 +94,7 @@ async function sessionPayload({ session, auth, env, now }) {
     };
   }
 
-  const repository = createWorkerRepository({ env, now });
+  const repository = createWorkerRepository({ env, now, capacity });
   const account = await repository.ensureAccount(session);
   const learnerIds = await repository.accessibleLearnerIds(session.accountId);
   return {
@@ -128,8 +134,8 @@ async function sessionPayload({ session, auth, env, now }) {
   };
 }
 
-async function existingDemoSessionPayload({ session, env, now }) {
-  const repository = createWorkerRepository({ env, now });
+async function existingDemoSessionPayload({ session, env, now, capacity = null }) {
+  const repository = createWorkerRepository({ env, now, capacity });
   const account = await repository.ensureAccount(session);
   const learnerIds = await repository.accessibleLearnerIds(session.accountId);
   return {
@@ -228,6 +234,68 @@ const OPS_ERROR_EVENT_MAX_BODY_BYTES = 8 * 1024;
 const OPS_ERROR_EVENT_RATE_LIMIT = 60;
 const OPS_ERROR_EVENT_RATE_WINDOW_MS = 10 * 60 * 1000;
 
+// U3: endpoints on which `meta.capacity` is rendered on successful JSON
+// responses. Everything else is explicitly OFF the capacity surface to
+// keep the public attack + bundle-size blast radius bounded.
+const CAPACITY_RELEVANT_PATH_PATTERNS = [
+  /^\/api\/bootstrap$/,
+  /^\/api\/subjects\/[^/]+\/command$/,
+  /^\/api\/hubs\/parent(\/.*)?$/,
+  /^\/api\/classroom(\/.*)?$/,
+];
+
+function isCapacityRelevantPath(pathname) {
+  return CAPACITY_RELEVANT_PATH_PATTERNS.some((re) => re.test(pathname || ''));
+}
+
+async function readResponseBytesAndBody(response) {
+  if (!response) return { bytes: 0, text: '', contentType: '' };
+  const contentType = response.headers.get('content-type') || '';
+  // Only non-streaming, JSON-shaped bodies are instrumented — TTS audio
+  // and ASSETS passthroughs never get meta.capacity attached (they are
+  // not capacity-relevant anyway).
+  try {
+    const text = await response.clone().text();
+    return { bytes: Buffer.byteLength(text, 'utf8'), text, contentType };
+  } catch {
+    return { bytes: 0, text: '', contentType };
+  }
+}
+
+function attachCapacityToJsonBody(text, capacityJson) {
+  try {
+    const parsed = JSON.parse(text || '{}');
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return text;
+    const nextMeta = parsed.meta && typeof parsed.meta === 'object' && !Array.isArray(parsed.meta)
+      ? { ...parsed.meta, capacity: capacityJson }
+      : { capacity: capacityJson };
+    return JSON.stringify({ ...parsed, meta: nextMeta });
+  } catch {
+    return text;
+  }
+}
+
+function decorateResponse(response, { capacity, attachBody, requestId }) {
+  if (!response) return response;
+  const headers = new Headers(response.headers);
+  if (requestId) headers.set('x-ks2-request-id', requestId);
+  if (!attachBody) {
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+  }
+  // attachBody path: rebuild the JSON body so meta.capacity lands alongside
+  // the original payload. We have already read the body to measure bytes;
+  // reuse that text to avoid a second body read.
+  return new Response(attachBody, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export function createWorkerApp({
   now = Date.now,
   fetchFn = (...args) => fetch(...args),
@@ -238,7 +306,26 @@ export function createWorkerApp({
       const url = new URL(request.url);
       const auth = createSessionAuthBoundary({ env });
 
-      try {
+      // U3: validate incoming x-ks2-request-id ingress; reject non-matching
+      // values silently and generate fresh ids so client-log-forging and
+      // CRLF-injection attempts cannot reach the structured log or the
+      // response headers.
+      const validatedRequestId = validateRequestId(request.headers.get('x-ks2-request-id'))
+        || generateRequestId();
+
+      const capacityStartedAt = typeof performance?.now === 'function'
+        ? performance.now()
+        : Date.now();
+      const capacity = new CapacityCollector({
+        requestId: validatedRequestId,
+        endpoint: url.pathname,
+        method: request.method,
+        startedAt: capacityStartedAt,
+      });
+
+      let response;
+      let errorCaught = null;
+      const runHandler = async () => {
         if (isPublicSourceLockdownPath(url.pathname)) {
           return publicSourceAssetResponse(request, env);
         }
@@ -280,6 +367,7 @@ export function createWorkerApp({
               session: currentSession,
               env,
               now,
+              capacity,
             }));
           }
           const result = await createDemoSession({
@@ -320,6 +408,7 @@ export function createWorkerApp({
             auth,
             env,
             now,
+            capacity,
           }));
         }
 
@@ -329,6 +418,7 @@ export function createWorkerApp({
             auth,
             env,
             now,
+            capacity,
           }));
         }
 
@@ -420,7 +510,7 @@ export function createWorkerApp({
           if (!rateLimit.allowed) {
             // Best-effort counter bump — swallow table-missing / transient
             // write errors so the rate-limit response is unaffected.
-            const limiterRepository = createWorkerRepository({ env, now });
+            const limiterRepository = createWorkerRepository({ env, now, capacity });
             try {
               await limiterRepository.bumpAdminKpiMetric('ops_error_events.rate_limited', 1);
             } catch {
@@ -479,7 +569,7 @@ export function createWorkerApp({
             // Anonymous is fine — proceed without attribution.
           }
 
-          const repository = createWorkerRepository({ env, now });
+          const repository = createWorkerRepository({ env, now, capacity });
           try {
             const result = await repository.recordClientErrorEvent({
               clientEvent,
@@ -505,7 +595,7 @@ export function createWorkerApp({
           }
         }
 
-        const repository = createWorkerRepository({ env, now });
+        const repository = createWorkerRepository({ env, now, capacity });
         const session = await auth.requireSession(request);
         const account = await repository.ensureAccount(session);
 
@@ -919,9 +1009,107 @@ export function createWorkerApp({
         }
 
         return json({ ok: false, message: 'Not found.' }, 404);
+      };
+
+      try {
+        response = await runHandler();
       } catch (error) {
-        return errorResponse(error);
+        errorCaught = error;
+        response = errorResponse(error);
       }
+
+      // U3: capacity telemetry emit. All paths land here — including
+      // unauthenticated pre-route 401s from auth.requireSession() thrown
+      // before any route matched. That path is marked `phase: 'pre-route'`
+      // so operators can distinguish it from a handled 401 further down
+      // the pipeline. meta.capacity is NEVER attached to pre-route 401s
+      // (the body is a terse auth-failure payload; adding capacity would
+      // fan out PII attack surface on unauthenticated responses).
+      return finaliseTelemetry({
+        response,
+        errorCaught,
+        url,
+        capacity,
+        capacityStartedAt,
+        validatedRequestId,
+        env,
+      });
     },
   };
+}
+
+async function finaliseTelemetry({
+  response,
+  errorCaught,
+  url,
+  capacity,
+  capacityStartedAt,
+  validatedRequestId,
+  env,
+}) {
+  const wallMs = typeof performance?.now === 'function'
+    ? Math.max(0, performance.now() - capacityStartedAt)
+    : 0;
+  const outgoing = response || new Response(JSON.stringify({ ok: false, message: 'No response produced.' }), {
+    status: 500,
+    headers: { 'content-type': 'application/json; charset=utf-8' },
+  });
+
+  // Detect pre-route 401 (no handler matched before auth.requireSession
+  // threw). An UnauthenticatedError raised by `auth.requireSession(request)`
+  // flows through `errorResponse()` as a 401 with `code: 'unauthenticated'`.
+  // Because the auth boundary is the first guarded call before any route
+  // handler, we can flag the whole 401 surface as pre-route for operators.
+  const isPreRouteAuthFail = Boolean(
+    errorCaught
+    && outgoing.status === 401
+    && String(errorCaught?.extra?.code || errorCaught?.code || '') === 'unauthenticated',
+  );
+
+  const capacityRelevant = !isPreRouteAuthFail && isCapacityRelevantPath(url.pathname);
+  const contentType = outgoing.headers.get('content-type') || '';
+  const isJson = contentType.includes('application/json');
+
+  let attachText = null;
+  let responseBytes = 0;
+
+  if (isJson) {
+    const { bytes, text } = await readResponseBytesAndBody(outgoing);
+    responseBytes = bytes;
+    if (capacityRelevant) {
+      // Render meta.capacity only on JSON responses for capacity-relevant
+      // endpoints — not on 4xx/5xx error envelopes (body still flows
+      // untouched; downstream middleware still sees the error shape).
+      if (outgoing.status >= 200 && outgoing.status < 400) {
+        capacity.setFinal({
+          wallMs,
+          responseBytes: bytes,
+          status: outgoing.status,
+        });
+        const publicJson = capacity.toPublicJSON();
+        const rewritten = attachCapacityToJsonBody(text, publicJson);
+        attachText = rewritten;
+        responseBytes = Buffer.byteLength(rewritten, 'utf8');
+      } else {
+        attachText = text;
+      }
+    } else {
+      attachText = text;
+    }
+  }
+
+  capacity.setFinal({
+    wallMs,
+    responseBytes,
+    status: outgoing.status,
+    phase: isPreRouteAuthFail ? 'pre-route' : null,
+  });
+
+  capacityRequest(capacity, { env });
+
+  return decorateResponse(outgoing, {
+    capacity,
+    attachBody: attachText,
+    requestId: validatedRequestId,
+  });
 }

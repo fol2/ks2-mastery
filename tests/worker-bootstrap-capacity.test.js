@@ -272,6 +272,25 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   assert.ok(eventReads.length >= learnerCount);
   assert.equal(eventReads.every((entry) => entry.rowCount <= RECENT_EVENT_LIMIT_PER_LEARNER), true);
 
+  // U3: meta.capacity surface is attached to production bootstrap and
+  // carries the bootstrapCapacity projection stamped by the collector
+  // via createWorkerRepository({ env, now, capacity }). The public
+  // allowlist shape must match the in-body bootstrapCapacity metadata.
+  assert.ok(payload.meta, 'Bootstrap response must carry meta.');
+  assert.ok(payload.meta.capacity, 'meta.capacity must be present for /api/bootstrap (U3).');
+  assert.ok(
+    typeof payload.meta.capacity.requestId === 'string'
+    && payload.meta.capacity.requestId.startsWith('ks2_req_'),
+    'meta.capacity.requestId must be a ks2_req_ prefixed id.',
+  );
+  assert.ok(payload.meta.capacity.queryCount > 0, 'meta.capacity.queryCount must reflect D1 work.');
+  assert.ok(payload.meta.capacity.d1RowsRead >= 0);
+  // bootstrapCapacity on the public shape mirrors the bundle's
+  // bootstrapCapacity (stamped on the collector inside bootstrap()).
+  assert.ok(payload.meta.capacity.bootstrapCapacity, 'bootstrapCapacity must be stamped on collector for public bootstrap.');
+  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 1);
+  assert.equal(payload.meta.capacity.bootstrapCapacity.mode, 'public-bounded');
+
   server.close();
 });
 
