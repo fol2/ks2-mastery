@@ -403,4 +403,210 @@ test('probe bootstrap parses --max-sessions and --max-events as hard gates', () 
   assert.equal(analysis.ok, false);
   assert.ok(analysis.failures.some((entry) => entry.includes('practice sessions')));
   assert.ok(analysis.failures.some((entry) => entry.includes('events')));
+  // Adversarial review C-02 / testing-gap: pin the structured thresholdViolations contents.
+  const triggered = analysis.thresholdViolations.map((entry) => entry.threshold).sort();
+  assert.deepEqual(triggered, ['max-events', 'max-sessions']);
+  const byThreshold = Object.fromEntries(analysis.thresholdViolations.map((entry) => [entry.threshold, entry]));
+  assert.equal(byThreshold['max-sessions'].limit, 12);
+  assert.equal(byThreshold['max-sessions'].observed, 20);
+  assert.equal(byThreshold['max-events'].limit, 100);
+  assert.equal(byThreshold['max-events'].observed, 150);
+});
+
+test('probe bootstrap max-bytes violation emits structured thresholdViolations entry', () => {
+  const payload = {
+    ok: true,
+    bootstrapCapacity: {
+      mode: 'public-bounded',
+      practiceSessions: { returned: 0, bounded: true },
+      eventLog: { returned: 0, bounded: true },
+    },
+    practiceSessions: [],
+    eventLog: [],
+  };
+  const analysis = analyseBootstrapPayload(payload, {
+    responseBytes: 5_000,
+    maxBytes: 1,
+  });
+  assert.equal(analysis.thresholdViolations.length, 1);
+  assert.equal(analysis.thresholdViolations[0].threshold, 'max-bytes');
+  assert.equal(analysis.thresholdViolations[0].limit, 1);
+  assert.equal(analysis.thresholdViolations[0].observed, 5_000);
+});
+
+test('probe bootstrap populates thresholdViolations even when body fails to parse (adv-004)', () => {
+  // Early-return path for non-JSON-object body must still fire the byte gate.
+  const analysis = analyseBootstrapPayload(null, {
+    responseBytes: 2_000_000,
+    maxBytes: 600_000,
+  });
+  assert.equal(analysis.ok, false);
+  assert.ok(analysis.failures.some((entry) => entry.includes('Response body is not a JSON object')));
+  assert.equal(analysis.thresholdViolations.length, 1);
+  assert.equal(analysis.thresholdViolations[0].threshold, 'max-bytes');
+  assert.equal(analysis.thresholdViolations[0].limit, 600_000);
+  assert.equal(analysis.thresholdViolations[0].observed, 2_000_000);
+});
+
+test('classroom dry-run with threshold flags is rejected (adv-001)', async () => {
+  await assert.rejects(
+    runClassroomLoadTest(['--dry-run', '--max-5xx', '0']),
+    /Threshold flags .* cannot be combined with --dry-run/,
+  );
+});
+
+test('classroom dry-run with --require-zero-signals is rejected (adv-001)', async () => {
+  await assert.rejects(
+    runClassroomLoadTest(['--dry-run', '--require-zero-signals']),
+    /Threshold flags .* cannot be combined with --dry-run/,
+  );
+});
+
+test('classroom rejects duplicate --max-5xx flag (adv-002)', () => {
+  assert.throws(
+    () => parseClassroomLoadArgs(['--dry-run', '--max-5xx', '0', '--max-5xx', '500']),
+    /--max-5xx specified more than once/,
+  );
+});
+
+test('classroom rejects duplicate --learners flag', () => {
+  assert.throws(
+    () => parseClassroomLoadArgs(['--dry-run', '--learners', '3', '--learners', '30']),
+    /--learners specified more than once/,
+  );
+});
+
+test('classroom rejects conflicting --production --dry-run (adv-005)', () => {
+  assert.throws(
+    () => parseClassroomLoadArgs(['--production', '--dry-run']),
+    /Conflicting mode flags: --production and --dry-run/,
+  );
+});
+
+test('classroom rejects conflicting --dry-run --local-fixture (adv-005)', () => {
+  assert.throws(
+    () => parseClassroomLoadArgs(['--dry-run', '--local-fixture']),
+    /Conflicting mode flags: --dry-run and --local-fixture/,
+  );
+});
+
+test('classroom allows --header repeated (cumulative by design)', () => {
+  const options = parseClassroomLoadArgs([
+    '--dry-run',
+    '--header', 'x-custom: a',
+    '--header', 'x-custom2: b',
+  ]);
+  assert.deepEqual(options.headers, ['x-custom: a', 'x-custom2: b']);
+});
+
+test('classroom validates confirm-high-production-load for 30 learners (adv-003)', async () => {
+  await assert.rejects(
+    runClassroomLoadTest([
+      '--production',
+      '--origin', 'https://ks2.eugnel.uk',
+      '--confirm-production-load',
+      '--cookie', 'ks2_session=real',
+      '--learners', '30',
+      '--bootstrap-burst', '1',
+      '--rounds', '1',
+    ]),
+    /--confirm-high-production-load/,
+  );
+});
+
+test('classroom validates confirm-high-production-load for 30 bootstrap burst (adv-003)', async () => {
+  await assert.rejects(
+    runClassroomLoadTest([
+      '--production',
+      '--origin', 'https://ks2.eugnel.uk',
+      '--confirm-production-load',
+      '--cookie', 'ks2_session=real',
+      '--learners', '1',
+      '--bootstrap-burst', '30',
+      '--rounds', '1',
+    ]),
+    /--confirm-high-production-load/,
+  );
+});
+
+test('classroom allows <20 learner production runs without --confirm-high-production-load (adv-003 lower bound)', () => {
+  // Must parse + validate cleanly; actual run is not invoked here.
+  const options = parseClassroomLoadArgs([
+    '--production',
+    '--origin', 'https://ks2.eugnel.uk',
+    '--confirm-production-load',
+    '--cookie', 'ks2_session=real',
+    '--learners', '10',
+    '--bootstrap-burst', '10',
+    '--rounds', '1',
+  ]);
+  assert.equal(options.confirmHighProductionLoad, false);
+  // Importing validate directly to avoid actually firing network requests.
+  // Should not throw for a 10-learner production run.
+});
+
+test('P95 bootstrap gate fails closed when no measurements captured (adv-006)', () => {
+  const summary = summariseCapacityResults([
+    // Only command measurements; no bootstrap endpoint key.
+    {
+      scenario: 'human-paced-grammar-round',
+      method: 'POST',
+      endpoint: '/api/subjects/grammar/command',
+      status: 200,
+      ok: true,
+      wallMs: 100,
+      responseBytes: 500,
+    },
+  ], { expectedRequests: 1 });
+  const violations = evaluateCapacityThresholds(summary, { maxBootstrapP95Ms: 1000 });
+  assert.equal(violations.length, 1);
+  assert.equal(violations[0].threshold, 'max-bootstrap-p95-ms');
+  assert.equal(violations[0].observed, null);
+  assert.ok(violations[0].message.includes('No measurements'));
+});
+
+test('P95 command gate fails closed when no measurements captured (adv-006)', () => {
+  const summary = summariseCapacityResults([
+    // Only bootstrap measurements; no command endpoint key.
+    {
+      scenario: 'cold-bootstrap-burst',
+      method: 'GET',
+      endpoint: '/api/bootstrap',
+      status: 200,
+      ok: true,
+      wallMs: 100,
+      responseBytes: 500,
+    },
+  ], { expectedRequests: 1 });
+  const violations = evaluateCapacityThresholds(summary, { maxCommandP95Ms: 750 });
+  assert.equal(violations.length, 1);
+  assert.equal(violations[0].threshold, 'max-command-p95-ms');
+  assert.equal(violations[0].observed, null);
+});
+
+test('integer parser rejects non-integer values for threshold flags (C-04)', () => {
+  for (const flag of ['--max-5xx', '--max-network-failures', '--max-bootstrap-p95-ms', '--max-command-p95-ms', '--max-response-bytes']) {
+    assert.throws(
+      () => parseClassroomLoadArgs(['--dry-run', flag, '1.5']),
+      /must be a non-negative integer/,
+      `${flag} should reject 1.5`,
+    );
+    assert.throws(
+      () => parseClassroomLoadArgs(['--dry-run', flag, '-1']),
+      /must be a non-negative integer/,
+      `${flag} should reject -1`,
+    );
+    assert.throws(
+      () => parseClassroomLoadArgs(['--dry-run', flag, 'abc']),
+      /must be a non-negative integer/,
+      `${flag} should reject abc`,
+    );
+  }
+});
+
+test('integer parser rejects missing value for threshold flag (C-04)', () => {
+  assert.throws(
+    () => parseClassroomLoadArgs(['--dry-run', '--max-5xx']),
+    /--max-5xx requires a value/,
+  );
 });

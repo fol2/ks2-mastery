@@ -148,11 +148,30 @@ export function analyseBootstrapPayload(payload, {
   const eventCount = arrayCount(payload, 'eventLog');
   const responseSize = Number(responseBytes) || 0;
 
+  // Adversarial review adv-004: evaluate the responseBytes gate before the
+  // early-return. A non-JSON body can still carry oversize bytes, and CI
+  // that filters on thresholdViolations needs the gate to fire regardless
+  // of parse success.
+  const evaluateByteGate = () => {
+    if (responseSize > maxBytes) {
+      const message = `Bootstrap response is ${responseSize} bytes, above ${maxBytes}.`;
+      failures.push(message);
+      thresholdViolations.push({
+        threshold: 'max-bytes',
+        limit: maxBytes,
+        observed: responseSize,
+        message,
+      });
+    }
+  };
+
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    evaluateByteGate();
+    failures.unshift('Response body is not a JSON object.');
     return {
       ok: false,
-      failures: ['Response body is not a JSON object.'],
-      thresholdViolations: [],
+      failures,
+      thresholdViolations,
       warnings,
       responseBytes: responseSize,
       counts: {
@@ -166,16 +185,7 @@ export function analyseBootstrapPayload(payload, {
   if (payload.ok !== true) {
     failures.push('Bootstrap payload does not report ok=true.');
   }
-  if (responseSize > maxBytes) {
-    const message = `Bootstrap response is ${responseSize} bytes, above ${maxBytes}.`;
-    failures.push(message);
-    thresholdViolations.push({
-      threshold: 'max-bytes',
-      limit: maxBytes,
-      observed: responseSize,
-      message,
-    });
-  }
+  evaluateByteGate();
   if (maxSessions != null && practiceSessionCount > maxSessions) {
     const message = `Bootstrap returned ${practiceSessionCount} practice sessions, above ${maxSessions}.`;
     failures.push(message);
@@ -277,11 +287,15 @@ export async function probeProductionBootstrap(options = {}) {
     analysis.failures.unshift(`Bootstrap response is not valid JSON: ${parseError.message}`);
   }
 
+  // Correctness residual C-R1: put the spread before the explicit `ok`
+  // so that a valid-looking JSON body with HTTP 5xx (which unshifts a
+  // failure above) cannot leak `analysis.ok === true` into the outer
+  // return value.
   return {
+    ...analysis,
     ok: analysis.failures.length === 0,
     url: url.toString(),
     status: response.status,
-    ...analysis,
   };
 }
 

@@ -62,7 +62,13 @@ Add any combination of the following to `npm run capacity:classroom`. Each flag 
 - `--max-command-p95-ms <ms>` — fail if subject-command P95 wall time exceeds `<ms>`.
 - `--max-response-bytes <bytes>` — fail if any endpoint's maximum response bytes exceed `<bytes>`.
 - `--require-zero-signals` — fail if any `exceededCpu`, `d1Overloaded`, `d1DailyLimit`, `rateLimited`, `networkFailure`, or `server5xx` signal is observed.
-- `--confirm-high-production-load` — additional acknowledgement for larger production load shapes; required by operators before running at classroom or stretch scale.
+- `--confirm-high-production-load` — required by operators before running `--production` at classroom or stretch scale (learners ≥ 20 or bootstrap-burst ≥ 20). Enforced by `validateClassroomLoadOptions`: a production run that exceeds the high-load threshold and omits this flag is rejected with a clear error.
+
+**Important safety interactions**
+
+- **Threshold flags are incompatible with `--dry-run`.** Dry-run has no measurements, so every threshold would always pass silently. The script rejects the combination with a clear error; CI gates must choose `--local-fixture` or `--production`.
+- **Mode flags are mutually exclusive.** Specifying more than one of `--dry-run`, `--local-fixture`, `--production` is rejected. The prior last-wins behaviour silently downgraded a `--production` run to `--dry-run` when both appeared.
+- **Duplicate threshold flags are rejected.** Specifying `--max-5xx` twice (or any other threshold) is rejected. This prevents a release-gate wrapper from being silently weakened by a later argument repeating the flag with a looser value.
 
 The `capacity:classroom:release-gate` package script bakes the recommended defaults:
 
@@ -70,7 +76,7 @@ The `capacity:classroom:release-gate` package script bakes the recommended defau
 npm run capacity:classroom:release-gate -- --production --origin https://ks2.eugnel.uk --confirm-production-load --confirm-high-production-load --demo-sessions --learners 30 --bootstrap-burst 20 --rounds 1
 ```
 
-The release-gate script is equivalent to `capacity:classroom` with `--max-5xx 0 --max-network-failures 0 --max-bootstrap-p95-ms 1000 --max-command-p95-ms 750 --max-response-bytes 600000 --require-zero-signals` prepended. Any additional arguments you supply on the command line layer on top.
+The release-gate script is equivalent to `capacity:classroom` with `--max-5xx 0 --max-network-failures 0 --max-bootstrap-p95-ms 1000 --max-command-p95-ms 750 --max-response-bytes 600000 --require-zero-signals` prepended. Any additional arguments you supply on the command line layer on top — but they cannot repeat a threshold already baked in (duplicate-flag rejection), and they cannot choose `--dry-run` (threshold-vs-dry-run rejection).
 
 ### Probe bootstrap flags
 
@@ -84,8 +90,8 @@ A threshold violation emits a `thresholdViolations` entry in the JSON report alo
 
 ### Recommended CI wiring
 
-1. Run `npm run capacity:classroom:release-gate -- --dry-run` as a deterministic smoke on every pull request. The dry-run still reports the `thresholds` block so the JSON shape is stable.
-2. For production release gates, invoke the same script with `--production --origin <origin> --confirm-production-load --confirm-high-production-load --demo-sessions` so isolated demo sessions carry the load.
+1. On every pull request, run `npm run capacity:classroom -- --dry-run --learners 30 --bootstrap-burst 20 --rounds 1` (no threshold flags — dry-run cannot meaningfully evaluate thresholds). This validates the plan shape and argument parsing without network traffic.
+2. For the production release gate, invoke `npm run capacity:classroom:release-gate -- --production --origin <origin> --confirm-production-load --confirm-high-production-load --demo-sessions --learners 30 --bootstrap-burst 20 --rounds 1` so isolated demo sessions carry the load and thresholds fire against real measurements.
 3. Record the resulting `thresholds.violations` array, plan summary, and commit SHA alongside the run, per the `Evidence To Record` checklist.
 
 ## Evidence To Record

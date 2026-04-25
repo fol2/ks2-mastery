@@ -246,41 +246,66 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     help: false,
   };
 
+  let modeFlag = null;
+  const assignedFlags = new Set();
+  const assignOnce = (flag) => {
+    if (assignedFlags.has(flag)) {
+      throw new Error(`${flag} specified more than once; refusing to let later value silently override the earlier one.`);
+    }
+    assignedFlags.add(flag);
+  };
+  const setMode = (flag, nextMode) => {
+    if (modeFlag && modeFlag !== flag) {
+      throw new Error(`Conflicting mode flags: ${modeFlag} and ${flag}. Specify exactly one of --dry-run, --local-fixture, --production.`);
+    }
+    modeFlag = flag;
+    options.mode = nextMode;
+  };
+
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--help' || arg === '-h') {
       options.help = true;
     } else if (arg === '--dry-run') {
-      options.mode = 'dry-run';
+      setMode(arg, 'dry-run');
     } else if (arg === '--local-fixture') {
-      options.mode = 'local-fixture';
+      setMode(arg, 'local-fixture');
     } else if (arg === '--production') {
-      options.mode = 'production';
+      setMode(arg, 'production');
     } else if (arg === '--origin' || arg === '--url') {
+      assignOnce('--origin/--url');
       options.origin = normaliseOrigin(readOptionValue(argv, index, arg));
       index += 1;
     } else if (arg === '--learners') {
+      assignOnce(arg);
       options.learners = positiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--bootstrap-burst') {
+      assignOnce(arg);
       options.bootstrapBurst = positiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--rounds') {
+      assignOnce(arg);
       options.rounds = positiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--pacing-ms') {
+      assignOnce(arg);
       options.pacingMs = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--timeout-ms') {
+      assignOnce(arg);
       options.timeoutMs = positiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--cookie') {
+      assignOnce(arg);
       options.cookie = readOptionValue(argv, index, arg);
       index += 1;
     } else if (arg === '--bearer') {
+      assignOnce(arg);
       options.bearer = readOptionValue(argv, index, arg);
       index += 1;
     } else if (arg === '--header') {
+      // Headers are cumulative by design (repeatable per docs); no assignOnce.
       options.headers.push(readOptionValue(argv, index, arg));
       index += 1;
     } else if (arg === '--demo-sessions') {
@@ -292,18 +317,23 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     } else if (arg === '--summary-only') {
       options.includeMeasurements = false;
     } else if (arg === '--max-5xx') {
+      assignOnce(arg);
       options.max5xx = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--max-network-failures') {
+      assignOnce(arg);
       options.maxNetworkFailures = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--max-bootstrap-p95-ms') {
+      assignOnce(arg);
       options.maxBootstrapP95Ms = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--max-command-p95-ms') {
+      assignOnce(arg);
       options.maxCommandP95Ms = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--max-response-bytes') {
+      assignOnce(arg);
       options.maxResponseBytes = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--require-zero-signals') {
@@ -315,6 +345,8 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
 
   return options;
 }
+
+const HIGH_PRODUCTION_LOAD_THRESHOLD = 20;
 
 export function buildClassroomLoadPlan(options = {}) {
   const mode = options.mode || 'dry-run';
@@ -358,7 +390,16 @@ export function buildClassroomLoadPlan(options = {}) {
 }
 
 export function validateClassroomLoadOptions(options = {}) {
-  if (options.help || options.mode === 'dry-run') return;
+  if (options.help) return;
+  if (options.mode === 'dry-run') {
+    // Dry-run has no measurements, so threshold gates cannot meaningfully evaluate.
+    // If thresholds are set, fail closed so CI cannot accidentally ship a permanent
+    // silent-green gate via --dry-run + --max-* flags. Adversarial review finding adv-001.
+    if (hasThresholdFlags(options)) {
+      throw new Error('Threshold flags (--max-*, --require-zero-signals) cannot be combined with --dry-run; dry-run has no measurements and would always pass. Use --local-fixture or --production.');
+    }
+    return;
+  }
   if (!options.origin) {
     throw new Error(`${options.mode} load requires --origin.`);
   }
@@ -375,6 +416,17 @@ export function validateClassroomLoadOptions(options = {}) {
     const hasAuth = hasExplicitAuthConfig(options);
     if (!options.confirmProductionLoad || !hasAuth) {
       throw new Error('production load requires --confirm-production-load and explicit auth configuration (--cookie, --bearer, --header, or --demo-sessions).');
+    }
+    // H4 enforcement per docs/hardening/p1-baseline.md and docs/operations/capacity.md.
+    // Classroom-scale production loads (>=20 learners or >=20 bootstrap burst) must carry
+    // the second confirmation, otherwise the documented safety rail is a no-op.
+    // Adversarial review finding adv-003.
+    const highLoad = Number(options.learners) >= HIGH_PRODUCTION_LOAD_THRESHOLD
+      || Number(options.bootstrapBurst) >= HIGH_PRODUCTION_LOAD_THRESHOLD;
+    if (highLoad && !options.confirmHighProductionLoad) {
+      throw new Error(
+        `production load at classroom scale (learners >= ${HIGH_PRODUCTION_LOAD_THRESHOLD} or bootstrap-burst >= ${HIGH_PRODUCTION_LOAD_THRESHOLD}) requires --confirm-high-production-load in addition to --confirm-production-load.`,
+      );
     }
   }
 }
@@ -437,6 +489,14 @@ function highestP95(summary, endpointList) {
   return peak;
 }
 
+function gatedEndpointsHaveMeasurements(summary, endpointList) {
+  for (const key of endpointList) {
+    const metrics = summary.endpoints?.[key];
+    if (metrics && Number(metrics.count) > 0) return true;
+  }
+  return false;
+}
+
 function maxResponseBytesAcross(summary) {
   let peak = 0;
   for (const metrics of Object.values(summary.endpoints || {})) {
@@ -473,26 +533,49 @@ export function evaluateCapacityThresholds(summary = {}, options = {}) {
   }
 
   if (options.maxBootstrapP95Ms != null) {
-    const observed = highestP95(summary, BOOTSTRAP_P95_ENDPOINTS);
-    if (observed > options.maxBootstrapP95Ms) {
+    if (!gatedEndpointsHaveMeasurements(summary, BOOTSTRAP_P95_ENDPOINTS)) {
+      // Adversarial review adv-006: fail closed when the gated endpoint set
+      // produced no measurements. Otherwise an unrelated bug (missed scenario,
+      // endpoint path drift) silently deactivates the gate.
       violations.push({
         threshold: 'max-bootstrap-p95-ms',
         limit: options.maxBootstrapP95Ms,
-        observed,
-        message: `Bootstrap P95 wall time ${observed} ms exceeds ${options.maxBootstrapP95Ms} ms.`,
+        observed: null,
+        gatedEndpoints: [...BOOTSTRAP_P95_ENDPOINTS],
+        message: `No measurements captured for bootstrap gated endpoints (${BOOTSTRAP_P95_ENDPOINTS.join(', ')}); threshold cannot be evaluated safely.`,
       });
+    } else {
+      const observed = highestP95(summary, BOOTSTRAP_P95_ENDPOINTS);
+      if (observed > options.maxBootstrapP95Ms) {
+        violations.push({
+          threshold: 'max-bootstrap-p95-ms',
+          limit: options.maxBootstrapP95Ms,
+          observed,
+          message: `Bootstrap P95 wall time ${observed} ms exceeds ${options.maxBootstrapP95Ms} ms.`,
+        });
+      }
     }
   }
 
   if (options.maxCommandP95Ms != null) {
-    const observed = highestP95(summary, COMMAND_P95_ENDPOINTS);
-    if (observed > options.maxCommandP95Ms) {
+    if (!gatedEndpointsHaveMeasurements(summary, COMMAND_P95_ENDPOINTS)) {
       violations.push({
         threshold: 'max-command-p95-ms',
         limit: options.maxCommandP95Ms,
-        observed,
-        message: `Subject-command P95 wall time ${observed} ms exceeds ${options.maxCommandP95Ms} ms.`,
+        observed: null,
+        gatedEndpoints: [...COMMAND_P95_ENDPOINTS],
+        message: `No measurements captured for command gated endpoints (${COMMAND_P95_ENDPOINTS.join(', ')}); threshold cannot be evaluated safely.`,
       });
+    } else {
+      const observed = highestP95(summary, COMMAND_P95_ENDPOINTS);
+      if (observed > options.maxCommandP95Ms) {
+        violations.push({
+          threshold: 'max-command-p95-ms',
+          limit: options.maxCommandP95Ms,
+          observed,
+          message: `Subject-command P95 wall time ${observed} ms exceeds ${options.maxCommandP95Ms} ms.`,
+        });
+      }
     }
   }
 
