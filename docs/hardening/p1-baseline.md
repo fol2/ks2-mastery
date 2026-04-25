@@ -55,6 +55,7 @@ Note: the bounded-bootstrap and command-projection work in PRs #126-#139 (see `d
 
 ## Test gaps
 
+- **Pre-existing Windows-only bundle-audit test harness failure.** 15 tests in `tests/bundle-audit.test.js` fail on Windows because `scripts/audit-client-bundle.mjs:208` uses `import.meta.url === \`file://${process.argv[1]}\`` for entry-point detection. On Windows, `process.argv[1]` has backslash-separated paths while `import.meta.url` uses `file:///C:/...`, so the main-entry check returns false and the script loads as a library — exiting 0 where the test expects non-zero. Observed identically on commits `a7f9c10` (main pre-U1) and `08f0332` (post-U1). Not caused by any hardening unit; tracked here as a pre-existing environment issue. (not addressed this pass — fix via `process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href` in a separate PR)
 - No `*.playwright.test.*` files exist despite `playwright.config.mjs` configuration (five viewports wired: 360 / 390 / 768 / 1024 / 1440). `@playwright/test` is not installed as a devDependency. (tracked in U5)
 - No CSP regression lock — neither the `_headers` file string nor the Worker response wrapper has a parser-level contract test asserting the policy shape. (tracked in U6, U7)
 - No `_headers` content assertion — `scripts/assert-build-public.mjs` verifies the file is copied but does not verify its security-header block. (tracked in U6, U8)
