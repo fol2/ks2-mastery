@@ -53,10 +53,17 @@ test('defaultBindingRow seeds params from catalog entry paramSchema defaults', (
   assert.equal(row.params.palette, SPARKLE_DEFAULTS.palette.default);
 });
 
-test('defaultBindingRow with unknown lifecycle falls back to persistent', () => {
+test('defaultBindingRow with unknown lifecycle falls back to catalog lifecycle (then persistent)', () => {
   const draft = bundledEffectConfig();
-  const row = defaultBindingRow({ kind: 'shiny', lifecycle: 'transient', catalog: draft.catalog });
-  assert.equal(row.lifecycle, 'persistent');
+  // Shiny is catalog-lifecycle=persistent; transient input falls through.
+  const persistentRow = defaultBindingRow({
+    kind: 'shiny', lifecycle: 'transient', catalog: draft.catalog,
+  });
+  assert.equal(persistentRow.lifecycle, 'persistent');
+  // egg-breathe is catalog-lifecycle=continuous; the helper picks it up
+  // when lifecycle is omitted (L5).
+  const continuousRow = defaultBindingRow({ kind: 'egg-breathe', catalog: draft.catalog });
+  assert.equal(continuousRow.lifecycle, 'continuous');
 });
 
 test('bindingRowAllErrors flags missing kind', () => {

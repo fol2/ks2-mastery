@@ -70,11 +70,9 @@ export function MonsterEffectBindingsPanel({
 
   const handleAddBinding = useCallback((kind) => {
     if (!canManage || !kind || !assetKey) return;
-    const entry = catalog[kind];
-    const lifecycle = entry?.lifecycle === 'continuous' ? 'continuous' : 'persistent';
     writeDraft((next) => {
-      const created = defaultBindingRow({ kind, lifecycle, catalog });
-      next.bindings[assetKey][lifecycle].push(created);
+      const created = defaultBindingRow({ kind, catalog });
+      next.bindings[assetKey][created.lifecycle].push(created);
     });
   }, [canManage, assetKey, catalog, writeDraft]);
 

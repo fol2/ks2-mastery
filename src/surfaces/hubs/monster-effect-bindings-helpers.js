@@ -20,8 +20,11 @@ function clone(value) {
 }
 
 // Seeds a binding row from the catalog entry's paramSchema defaults so the
-// admin sees sensible starter values rather than an empty object.
-export function defaultBindingRow({ kind, lifecycle = 'persistent', catalog = {} } = {}) {
+// admin sees sensible starter values rather than an empty object. When the
+// caller omits `lifecycle`, we derive it from the catalog entry — keeps
+// callers from re-doing the `entry?.lifecycle === 'continuous' ? ...` dance
+// externally.
+export function defaultBindingRow({ kind, lifecycle, catalog = {} } = {}) {
   const entry = catalog?.[kind] || null;
   const template = entry ? lookupTemplate(entry.template) : null;
   const paramSchema = template?.paramSchema || {};
@@ -32,9 +35,12 @@ export function defaultBindingRow({ kind, lifecycle = 'persistent', catalog = {}
       params[name] = clone(schema.default);
     }
   }
+  const resolvedLifecycle = BINDING_LIFECYCLES.includes(lifecycle)
+    ? lifecycle
+    : (entry?.lifecycle === 'continuous' ? 'continuous' : 'persistent');
   return {
     kind: typeof kind === 'string' ? kind : '',
-    lifecycle: BINDING_LIFECYCLES.includes(lifecycle) ? lifecycle : 'persistent',
+    lifecycle: resolvedLifecycle,
     enabled: true,
     params,
     reviewed: false,
