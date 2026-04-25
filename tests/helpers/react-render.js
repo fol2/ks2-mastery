@@ -100,6 +100,109 @@ export function renderSharedSurfaceFixture() {
   `);
 }
 
+export function renderMonsterVisualRendererFixture() {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { MonsterVisualConfigProvider } from ${JSON.stringify(absoluteSpecifier('src/platform/game/MonsterVisualConfigContext.jsx'))};
+    import { BUNDLED_MONSTER_VISUAL_CONFIG } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monster-visual-config.js'))};
+    import { CodexCreatureVisual } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/CodexCreature.jsx'))};
+    import { MonsterMeadow } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/MonsterMeadow.jsx'))};
+    import { SetupMeadow } from ${JSON.stringify(absoluteSpecifier('src/subjects/spelling/components/SpellingSetupScene.jsx'))};
+    import { MonsterCelebrationOverlay } from ${JSON.stringify(absoluteSpecifier('src/surfaces/shell/MonsterCelebrationOverlay.jsx'))};
+    import { ToastShelf } from ${JSON.stringify(absoluteSpecifier('src/surfaces/shell/ToastShelf.jsx'))};
+    import { MONSTERS } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monsters.js'))};
+
+    const config = structuredClone(BUNDLED_MONSTER_VISUAL_CONFIG);
+    config.assets['vellhorn-b1-3'].baseline.facing = 'right';
+    config.assets['vellhorn-b1-3'].baseline.opacity = 0.82;
+    config.assets['vellhorn-b1-3'].baseline.anchorX = 0.25;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.offsetX = 12;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.offsetY = -6;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.scale = 1.18;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.anchorX = 0.25;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.anchorY = 0.72;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.filter = 'brightness(1.1)';
+    config.assets['vellhorn-b1-3'].contexts.codexCard.cropX = 0.05;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.cropY = 0.10;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.cropWidth = 0.80;
+    config.assets['vellhorn-b1-3'].contexts.codexCard.cropHeight = 0.85;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.offsetX = 18;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.offsetY = -14;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.scale = 1.12;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.anchorX = 0.42;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.anchorY = 0.78;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.shadowX = 7;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.shadowY = 9;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.shadowScale = 1.35;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.shadowOpacity = 0.34;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.duration = 6.25;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.delay = 0.40;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.bob = 5;
+    config.assets['vellhorn-b1-3'].contexts.celebrationOverlay.tilt = 3;
+    config.assets['inklet-b1-1'].contexts.toastPortrait.scale = 1.25;
+
+    const html = renderToStaticMarkup(
+      <MonsterVisualConfigProvider value={{ config }}>
+        <>
+          <CodexCreatureVisual
+            entry={{
+              id: 'vellhorn',
+              branch: 'b1',
+              stage: 3,
+              displayState: 'monster',
+              imageAlt: 'Vellhorn',
+              img: '',
+              srcSet: '',
+            }}
+            sizes="160px"
+          />
+          <MonsterMeadow
+            monsters={[{
+              id: 'vellhorn-caught',
+              species: 'vellhorn',
+              variant: 'b1',
+              stage: 3,
+              x: '50%',
+              footY: '80%',
+              size: 160,
+              path: 'walk',
+              lane: 'ground',
+              footPct: 80,
+            }]}
+          />
+          <SetupMeadow
+            codex={[{
+              monster: { id: 'vellhorn', name: 'Vellhorn' },
+              progress: { branch: 'b1', stage: 3, caught: true },
+            }]}
+          />
+          <MonsterCelebrationOverlay
+            queue={[{
+              kind: 'caught',
+              monster: MONSTERS.vellhorn,
+              previous: null,
+              next: { stage: 3, branch: 'b1' },
+            }]}
+            onDismiss={() => {}}
+          />
+          <ToastShelf
+            toasts={[{
+              id: 'toast-a',
+              type: 'reward.monster',
+              kind: 'caught',
+              monster: { id: 'inklet', name: 'Inklet' },
+              next: { stage: 1, branch: 'b1' },
+            }]}
+            onDismiss={() => {}}
+          />
+        </>
+      </MonsterVisualConfigProvider>
+    );
+    console.log(html);
+  `);
+}
+
 export function renderMonsterCelebrationOverlayFixture() {
   return renderFixture(`
     import React from 'react';
@@ -190,6 +293,7 @@ export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
     import { renderToStaticMarkup } from 'react-dom/server';
     import { ParentHubSurface } from ${JSON.stringify(absoluteSpecifier('src/surfaces/hubs/ParentHubSurface.jsx'))};
     import { AdminHubSurface } from ${JSON.stringify(absoluteSpecifier('src/surfaces/hubs/AdminHubSurface.jsx'))};
+    import { BUNDLED_MONSTER_VISUAL_CONFIG } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monster-visual-config.js'))};
 
     const appState = {
       learners: {
@@ -233,8 +337,23 @@ export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
       permissions: { canViewParentHub: true, canMutateLearnerData: false, platformRoleLabel: 'Parent', membershipRoleLabel: 'Viewer', accessModeLabel: 'Read-only learner' },
     };
     const adminModel = {
-      account: { repoRevision: 5, selectedLearnerId: 'learner-a' },
-      permissions: { canViewAdminHub: true, platformRole: 'admin', platformRoleLabel: 'Admin' },
+      account: { id: 'adult-a', repoRevision: 5, selectedLearnerId: 'learner-a' },
+      permissions: { canViewAdminHub: true, platformRole: 'admin', platformRoleLabel: 'Admin', canManageMonsterVisualConfig: true },
+      monsterVisualConfig: {
+        permissions: { canManageMonsterVisualConfig: true, canViewMonsterVisualConfig: true },
+        status: {
+          schemaVersion: 1,
+          manifestHash: BUNDLED_MONSTER_VISUAL_CONFIG.manifestHash,
+          draftRevision: 0,
+          publishedVersion: 1,
+          publishedAt: Date.UTC(2026, 3, 22, 12, 0),
+          validation: { ok: true, errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+        },
+        draft: BUNDLED_MONSTER_VISUAL_CONFIG,
+        published: BUNDLED_MONSTER_VISUAL_CONFIG,
+        versions: [{ version: 1, manifestHash: BUNDLED_MONSTER_VISUAL_CONFIG.manifestHash, schemaVersion: 1, publishedAt: Date.UTC(2026, 3, 22, 12, 0), publishedByAccountId: 'system' }],
+        mutation: { policyVersion: 1, scopeType: 'platform', scopeId: 'monster-visual-config', draftRevision: 0 },
+      },
       contentReleaseStatus: { publishedVersion: 3, publishedReleaseId: 'release-3', runtimeWordCount: 213, runtimeSentenceCount: 213, currentDraftId: 'draft', currentDraftVersion: 4, draftUpdatedAt: Date.UTC(2026, 3, 22, 12, 0) },
       importValidationStatus: { ok: true, errorCount: 0, warningCount: 1, source: 'seeded', importedAt: Date.UTC(2026, 3, 22, 12, 0), errors: [] },
       auditLogLookup: { available: true, note: 'Recent mutations', entries: [{ requestId: 'req-1', mutationKind: 'learners.write', scopeType: 'account', scopeId: 'adult-a', appliedAt: Date.UTC(2026, 3, 22, 12, 0) }] },

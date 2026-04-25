@@ -519,6 +519,35 @@ export function createWorkerApp({
           return json({ ok: true, ...result });
         }
 
+        if (url.pathname === '/api/admin/monster-visual-config/draft' && request.method === 'PUT') {
+          requireSameOrigin(request, env);
+          const body = await readJson(request);
+          const result = await repository.saveMonsterVisualConfigDraft(session.accountId, {
+            draft: body.draft || body.config,
+            mutation: mutationFromRequest(body, request),
+          });
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/admin/monster-visual-config/publish' && request.method === 'POST') {
+          requireSameOrigin(request, env);
+          const body = await readJson(request);
+          const result = await repository.publishMonsterVisualConfig(session.accountId, {
+            mutation: mutationFromRequest(body, request),
+          });
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/admin/monster-visual-config/restore' && request.method === 'POST') {
+          requireSameOrigin(request, env);
+          const body = await readJson(request);
+          const result = await repository.restoreMonsterVisualConfigVersion(session.accountId, {
+            version: body.version,
+            mutation: mutationFromRequest(body, request),
+          });
+          return json({ ok: true, ...result });
+        }
+
         if (url.pathname === '/api/content/spelling' && request.method === 'PUT') {
           requireSameOrigin(request, env);
           const body = await readJson(request);

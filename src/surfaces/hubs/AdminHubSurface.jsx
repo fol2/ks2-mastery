@@ -1,6 +1,7 @@
 import React from 'react';
 import { platformRoleLabel } from '../../platform/access/roles.js';
 import { AdultLearnerSelect } from './AdultLearnerSelect.jsx';
+import { MonsterVisualConfigPanel } from './MonsterVisualConfigPanel.jsx';
 import { ReadOnlyLearnerNotice } from './ReadOnlyLearnerNotice.jsx';
 import { AccessDeniedCard, formatTimestamp, isBlocked, selectedWritableLearner } from './hub-utils.js';
 
@@ -163,6 +164,7 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
         <ReadOnlyLearnerNotice access={accessContext.activeAdultLearnerContext} writableLearner={writableLearner} />
       </section>
 
+      <MonsterVisualConfigPanel model={model} accountId={model.account?.id || ''} actions={actions} />
       <AdminAccountRoles model={model} directory={accountDirectory} actions={actions} />
       <DemoOperationsSummary summary={model.demoOperations} />
 

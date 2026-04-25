@@ -1,10 +1,23 @@
 import React from 'react';
-import { monsterAsset, monsterAssetSrcSet } from '../../platform/game/monsters.js';
+import { useMonsterVisualConfig } from '../../platform/game/MonsterVisualConfigContext.jsx';
+import { resolveMonsterVisual } from '../../platform/game/monster-visual-config.js';
 
-function imageSources(monsterId, stage, branch) {
+function imageVisual(monsterId, stage, branch, config) {
+  return resolveMonsterVisual({
+    monsterId,
+    branch,
+    stage,
+    context: 'toastPortrait',
+    config,
+    preferredSize: 320,
+  });
+}
+
+function portraitStyle(visual) {
   return {
-    src: monsterAsset(monsterId, stage, 320, branch),
-    srcSet: monsterAssetSrcSet(monsterId, stage, branch),
+    transform: `translate(${Number(visual.offsetX) || 0}px, ${Number(visual.offsetY) || 0}px) scaleX(${Number(visual.faceSign) || 1}) scale(${Number(visual.scale) || 1})`,
+    opacity: Number.isFinite(Number(visual.opacity)) ? Math.max(0, Math.min(1, Number(visual.opacity))) : 1,
+    filter: visual.filter && visual.filter !== 'none' ? visual.filter : undefined,
   };
 }
 
@@ -27,14 +40,21 @@ function toastBody(toast) {
 }
 
 function ToastContent({ toast }) {
+  const monsterVisualConfig = useMonsterVisualConfig();
   if (toast?.type === 'reward.monster' && toast.monster?.id) {
     const stage = Math.max(0, Math.min(4, Number(toast.next?.stage) || 0));
     const branch = toast.next?.branch || toast.previous?.branch;
-    const sources = imageSources(toast.monster.id, stage, branch);
+    const visual = imageVisual(toast.monster.id, stage, branch, monsterVisualConfig?.config);
     return (
       <>
         <div className="cm-port" aria-hidden="true">
-          <img alt={`${toast.monster.name || 'Monster'} portrait`} {...sources} sizes="56px" />
+          <img
+            alt={`${toast.monster.name || 'Monster'} portrait`}
+            src={visual.src}
+            srcSet={visual.srcSet}
+            sizes="56px"
+            style={portraitStyle(visual)}
+          />
         </div>
         <div className="cm-copy">
           <div className="cm-title">{toastTitle(toast)}</div>

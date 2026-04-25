@@ -22,6 +22,10 @@ test('React Admin Operations surface renders content, audit, account roles, and 
   const html = await renderHubSurfaceFixture({ surface: 'admin' });
 
   assert.match(html, /Admin \/ operations skeleton/);
+  assert.match(html, /Monster visuals/);
+  assert.match(html, /vellhorn-b1-3/);
+  assert.match(html, /Save draft/);
+  assert.match(html, /Publish/);
   assert.match(html, /Production platform access/);
   assert.match(html, /Published spelling snapshot/);
   assert.match(html, /Mutation receipt stream/);

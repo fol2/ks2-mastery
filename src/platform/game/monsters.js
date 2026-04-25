@@ -193,7 +193,7 @@ export const PHAETON_STAGE_THRESHOLDS = Object.freeze([3, 25, 95, 145, 213]);
 
 const DEFAULT_MONSTER_BRANCH = 'b1';
 const MONSTER_ASSET_SIZES = Object.freeze([320, 640, 1280]);
-const MONSTER_ASSET_VERSION = '20260421-branches';
+export const MONSTER_ASSET_VERSION = '20260421-branches';
 
 export function normaliseMonsterBranch(value, fallback = DEFAULT_MONSTER_BRANCH) {
   return MONSTER_BRANCHES.includes(value) ? value : fallback;

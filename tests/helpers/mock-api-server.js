@@ -45,6 +45,7 @@ export function createMockRepositoryServer(initial = {}) {
     practiceSessions: initial.practiceSessions || [],
     gameState: initial.gameState || {},
     eventLog: initial.eventLog || [],
+    monsterVisualConfig: initial.monsterVisualConfig || null,
   };
   const failures = new Map();
   const requests = [];
@@ -92,6 +93,7 @@ export function createMockRepositoryServer(initial = {}) {
           practiceSessions: store.practiceSessions,
           gameState: store.gameState,
           eventLog: store.eventLog,
+          monsterVisualConfig: store.monsterVisualConfig,
         });
       }
 

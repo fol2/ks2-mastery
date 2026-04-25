@@ -1,4 +1,5 @@
 import React from 'react';
+import { useMonsterVisualConfig } from '../../platform/game/MonsterVisualConfigContext.jsx';
 import { CodexCreatureVisual } from './CodexCreature.jsx';
 import {
   codexEntryStateClassName,
@@ -6,6 +7,7 @@ import {
 } from './codex-view-model.js';
 
 export function CodexCreatureLightbox({ entry, onClose }) {
+  const monsterVisualConfig = useMonsterVisualConfig();
   return (
     <div
       className="codex-lightbox"
@@ -19,7 +21,7 @@ export function CodexCreatureLightbox({ entry, onClose }) {
       </button>
       <div
         className={codexEntryStateClassName('codex-lightbox-stage', entry)}
-        style={codexLightboxStyle(entry)}
+        style={codexLightboxStyle(entry, monsterVisualConfig?.config)}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="codex-lightbox-figure">

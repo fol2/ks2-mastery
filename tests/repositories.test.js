@@ -7,6 +7,7 @@ import {
   createApiPlatformRepositories,
   createLocalPlatformRepositories,
 } from '../src/platform/core/repositories/index.js';
+import { BUNDLED_MONSTER_VISUAL_CONFIG } from '../src/platform/game/monster-visual-config.js';
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
 import { createEventRuntime, createPracticeStreakSubscriber } from '../src/platform/events/index.js';
@@ -173,6 +174,30 @@ test('api repositories hydrate and flush the same generic contract against a moc
   assert.equal(freshClient.practiceSessions.latest('learner-a', 'spelling').id, 'sess-a');
   assert.ok(freshClient.gameState.read('learner-a', 'monster-codex').inklet.mastered.includes('possess'));
   assert.equal(freshClient.eventLog.list('learner-a').length, 1);
+});
+
+test('api repositories expose published monster visual config from bootstrap', async () => {
+  const config = structuredClone(BUNDLED_MONSTER_VISUAL_CONFIG);
+  config.assets['vellhorn-b1-3'].baseline.facing = 'right';
+  const server = createMockRepositoryServer({
+    monsterVisualConfig: {
+      schemaVersion: 1,
+      manifestHash: config.manifestHash,
+      publishedVersion: 2,
+      publishedAt: 1234,
+      config,
+    },
+  });
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+  });
+
+  await repositories.hydrate();
+
+  const runtimeConfig = repositories.monsterVisualConfig.read();
+  assert.equal(runtimeConfig.publishedVersion, 2);
+  assert.equal(runtimeConfig.config.assets['vellhorn-b1-3'].baseline.facing, 'right');
 });
 
 test('the reference spelling flow works unchanged against local repositories', async () => {
