@@ -13,13 +13,21 @@ export const SPELLING_MONSTER_IDS = Object.freeze(
 export const PUNCTUATION_MONSTER_IDS = Object.freeze(
   (MONSTERS_BY_SUBJECT.punctuation || []).filter((monsterId) => MONSTERS[monsterId]),
 );
+// Reserved ids stay in the monster manifest for asset tooling and Admin
+// review, but are filtered out of every active learner-facing summary.
+export const PUNCTUATION_RESERVED_MONSTER_IDS = Object.freeze(
+  (MONSTERS_BY_SUBJECT.punctuationReserve || []).filter((monsterId) => MONSTERS[monsterId]),
+);
 export const GRAMMAR_MONSTER_IDS = Object.freeze(
   (MONSTERS_BY_SUBJECT.grammar || []).filter((monsterId) => MONSTERS[monsterId]),
 );
 export const DIRECT_SPELLING_MONSTER_IDS = Object.freeze(
   SPELLING_MONSTER_IDS.filter((monsterId) => monsterId !== 'phaeton'),
 );
-export const PUNCTUATION_GRAND_MONSTER_ID = 'carillon';
+// Quoral becomes the grand aggregate; Carillon moves to reserved. The U6
+// normaliser preserves any pre-flip Carillon evidence by unioning it into
+// the Quoral view at read time.
+export const PUNCTUATION_GRAND_MONSTER_ID = 'quoral';
 export const GRAMMAR_GRAND_MONSTER_ID = 'concordium';
 
 export function readGameState(gameStateRepository, learnerId, systemId = DEFAULT_SYSTEM_ID) {

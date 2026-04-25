@@ -20,6 +20,12 @@ import {
 } from '../../platform/game/monster-visual-config.js';
 
 const MONSTER_VARIANTS = ['b1', 'b2'];
+// Higher number = higher feature weight in pickFeaturedCodexEntry. The grand
+// creatures (Phaeton, Quoral, Concordium) outrank their direct siblings so
+// they win tie-breaks when a learner catches the grand. Reserved Punctuation
+// creatures are pushed to the top numerically only as a tombstone — they are
+// filtered out of active surfaces before ranking applies, so the high rank
+// never reaches the learner-facing sort path.
 const CODEX_POWER_RANK = Object.freeze({
   inklet: 1,
   glimmerbug: 2,
@@ -27,11 +33,11 @@ const CODEX_POWER_RANK = Object.freeze({
   vellhorn: 4,
   pealark: 5,
   claspin: 6,
-  quoral: 7,
-  curlune: 8,
-  colisk: 9,
-  hyphang: 10,
-  carillon: 11,
+  curlune: 7,
+  quoral: 11,
+  colisk: 8,
+  hyphang: 9,
+  carillon: 10,
   bracehart: 12,
   glossbloom: 13,
   loomrill: 14,
@@ -632,8 +638,13 @@ function withSynthesisedUncaughtMonsters(summary = []) {
   return [...summary, ...synthesised];
 }
 
+// Subject groups rendered in Codex. Reserved / non-learner-facing groupings
+// inside MONSTERS_BY_SUBJECT (e.g. `punctuationReserve`) are excluded so the
+// Codex keeps the spelling -> punctuation -> grammar ordering learners expect.
+const CODEX_SUBJECT_GROUP_IDS = Object.freeze(['spelling', 'punctuation', 'grammar']);
+
 export function buildCodexSubjectGroups(entries = []) {
-  return Object.keys(MONSTERS_BY_SUBJECT)
+  return CODEX_SUBJECT_GROUP_IDS
     .map((subjectId) => {
       const subjectEntries = entries.filter((entry) => entry.subjectId === subjectId);
       if (!subjectEntries.length) return null;
@@ -680,7 +691,11 @@ function deriveSubjectStatus(entries) {
 }
 
 export function pickFeaturedCodexEntry(entries = []) {
+  // Reserved creatures (Colisk, Hyphang, Carillon under the Phase 2 roster)
+  // stay in MONSTERS for asset tooling but must never be featured on the
+  // learner Codex hero. Filter them out before ranking.
   return entries
+    .filter((entry) => entry?.subjectId !== 'punctuationReserve')
     .slice()
     .sort((left, right) => {
       if (left.caught !== right.caught) return left.caught ? -1 : 1;
@@ -705,10 +720,13 @@ function codexPowerRank(monsterId) {
   return CODEX_POWER_RANK[monsterId] || 0;
 }
 
-// Lower index = earlier on-ramp; mirrors the curriculum order encoded by
-// MONSTERS_BY_SUBJECT declaration order in src/platform/game/monsters.js.
+// Lower index = earlier on-ramp. Mirrors the curriculum order a learner
+// would progress through, deliberately excluding non-learner-facing groupings
+// (reserved monsters) that otherwise appear as extra entries in
+// Object.keys(MONSTERS_BY_SUBJECT).
+const SUBJECT_PRIORITY_ORDER = Object.freeze(['spelling', 'punctuation', 'grammar']);
 function subjectPriority(subjectId) {
-  const idx = Object.keys(MONSTERS_BY_SUBJECT).indexOf(subjectId);
+  const idx = SUBJECT_PRIORITY_ORDER.indexOf(subjectId);
   return idx === -1 ? 999 : idx;
 }
 
@@ -749,13 +767,15 @@ function nextCodexMilestone(monsterId, mastered, { subjectId = 'spelling', max =
 
 function codexWordBand(monsterId, subjectId = 'spelling') {
   if (subjectId === 'punctuation') {
-    if (monsterId === 'pealark') return 'Endmarks';
+    if (monsterId === 'pealark') return 'Endmarks, speech and boundary';
     if (monsterId === 'claspin') return 'Apostrophe';
-    if (monsterId === 'quoral') return 'Speech punctuation';
-    if (monsterId === 'curlune') return 'Comma and flow';
-    if (monsterId === 'colisk') return 'List and structure';
-    if (monsterId === 'hyphang') return 'Boundary punctuation';
-    if (monsterId === 'carillon') return 'Published punctuation release';
+    if (monsterId === 'curlune') return 'Comma, flow and structure';
+    if (monsterId === 'quoral') return 'Published punctuation release';
+    // Reserved monsters retain descriptive copy for Admin / asset tooling
+    // even though they are filtered out of active learner summaries.
+    if (monsterId === 'colisk') return 'Reserved: future list and structure';
+    if (monsterId === 'hyphang') return 'Reserved: future boundary expansion';
+    if (monsterId === 'carillon') return 'Reserved: future aggregate legendary';
     return 'Punctuation codex';
   }
   if (subjectId === 'grammar') {
