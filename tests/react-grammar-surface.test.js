@@ -8,7 +8,12 @@ import {
 } from './helpers/grammar-subject-harness.js';
 import { readGrammarLegacyOracle } from './helpers/grammar-legacy-oracle.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
-import { grammarModule } from '../src/subjects/grammar/module.js';
+import {
+  grammarModule,
+  GRAMMAR_TRANSFER_ERROR_COPY,
+  GRAMMAR_TRANSFER_GENERIC_ERROR_COPY,
+  translateGrammarTransferError,
+} from '../src/subjects/grammar/module.js';
 import { normaliseGrammarReadModel } from '../src/subjects/grammar/metadata.js';
 import { grammarMasteryKey } from '../src/platform/game/monster-system.js';
 import { getSubject, SUBJECTS } from '../src/platform/core/subject-registry.js';
@@ -1144,4 +1149,246 @@ test('Grammar surface routes persisted retired-id state through the normaliser b
   // Concordium surfaces the unioned retired-id progress.
   assert.match(html, /Concordium/);
   assert.match(html, /1\/18 Codex/);
+});
+
+// ----------------------------------------------------------------------------
+// U6a: module-level `grammar-save-transfer-evidence` dispatcher + error map.
+// ----------------------------------------------------------------------------
+function buildGrammarTransferDispatchContext({
+  pendingCommand = '',
+  sendImpl,
+  initialTransferLane,
+} = {}) {
+  const toasts = [];
+  const celebrations = [];
+  const initialUi = normaliseGrammarReadModel({
+    transferLane: initialTransferLane,
+    pendingCommand,
+  }, 'learner-a');
+  const context = {
+    appState: {
+      learners: { selectedId: 'learner-a' },
+      subjectUi: { grammar: initialUi },
+    },
+    runtimeReadOnly: false,
+    subjectCommands: {
+      send: sendImpl,
+    },
+    store: {
+      getState() {
+        return context.appState;
+      },
+      updateSubjectUi(subjectId, updater) {
+        const previous = context.appState.subjectUi[subjectId] || {};
+        const next = typeof updater === 'function' ? updater(previous) : { ...previous, ...updater };
+        context.appState = {
+          ...context.appState,
+          subjectUi: { ...context.appState.subjectUi, [subjectId]: next },
+        };
+      },
+      updateSubjectUiForLearner(learnerId, subjectId, updater) {
+        if (learnerId !== 'learner-a') return false;
+        context.store.updateSubjectUi(subjectId, updater);
+        return true;
+      },
+      pushToasts(events) { toasts.push(...events); },
+      pushMonsterCelebrations(events) { celebrations.push(...events); },
+      reloadFromRepositories() {},
+    },
+    toasts,
+    celebrations,
+  };
+  return context;
+}
+
+test('U6a: grammar-save-transfer-evidence dispatches Worker save-transfer-evidence with exact payload (no checklist alias)', async () => {
+  const observed = { request: null };
+  let resolveCommand;
+  const context = buildGrammarTransferDispatchContext({
+    sendImpl(request) {
+      observed.request = request;
+      return new Promise((resolve) => { resolveCommand = resolve; });
+    },
+  });
+
+  const handled = grammarModule.handleAction('grammar-save-transfer-evidence', {
+    ...context,
+    data: {
+      payload: {
+        promptId: 'storm-scene',
+        writing: 'Suddenly, the storm broke. Lightning, which split the sky, lit the fields.',
+        selfAssessment: [{ key: 'fronted-adverbial', checked: true }, { key: 'parenthesis-commas', checked: false }],
+      },
+    },
+  });
+  assert.equal(handled, true);
+
+  // Worker command boundary receives exact shape; no `checklist` alias.
+  assert.ok(observed.request, 'subjectCommands.send must be called');
+  assert.equal(observed.request.subjectId, 'grammar');
+  assert.equal(observed.request.learnerId, 'learner-a');
+  assert.equal(observed.request.command, 'save-transfer-evidence');
+  assert.deepEqual(Object.keys(observed.request.payload).sort(), ['promptId', 'selfAssessment', 'writing']);
+  assert.equal(observed.request.payload.promptId, 'storm-scene');
+  assert.equal(observed.request.payload.writing.startsWith('Suddenly'), true);
+  assert.deepEqual(observed.request.payload.selfAssessment, [
+    { key: 'fronted-adverbial', checked: true },
+    { key: 'parenthesis-commas', checked: false },
+  ]);
+  // No checklist alias sneaking into the payload
+  assert.equal(Object.prototype.hasOwnProperty.call(observed.request.payload, 'checklist'), false);
+
+  // Worker returns a read model with the new evidence; mastery stays untouched.
+  const masteryBefore = context.appState.subjectUi.grammar.analytics;
+  resolveCommand({
+    subjectReadModel: normaliseGrammarReadModel({
+      learnerId: 'learner-a',
+      phase: 'dashboard',
+      transferLane: {
+        mode: 'non-scored',
+        prompts: [{ id: 'storm-scene', title: 'Storm scene', brief: 'Describe a storm.', grammarTargets: ['adverbials'], checklist: ['fronted-adverbial'] }],
+        limits: { maxPrompts: 20, historyPerPrompt: 5, writingCapChars: 2000 },
+        evidence: [{
+          promptId: 'storm-scene',
+          latest: {
+            writing: 'Suddenly, the storm broke. Lightning, which split the sky, lit the fields.',
+            selfAssessment: [{ key: 'fronted-adverbial', checked: true }, { key: 'parenthesis-commas', checked: false }],
+            savedAt: 1_777_000_000_000,
+            source: 'transfer-lane',
+          },
+          history: [],
+          updatedAt: 1_777_000_000_000,
+        }],
+      },
+    }, 'learner-a'),
+    projections: { rewards: { toastEvents: [], events: [] } },
+  });
+  await Promise.resolve();
+  await Promise.resolve();
+
+  const grammar = context.appState.subjectUi.grammar;
+  const evidence = grammar.transferLane.evidence.find((entry) => entry.promptId === 'storm-scene');
+  assert.ok(evidence, 'transferLane.evidence must update after save');
+  assert.equal(evidence.latest.writing.startsWith('Suddenly'), true);
+  // Mastery node unchanged (object-identity-ish — same keys/values)
+  assert.equal(JSON.stringify(grammar.analytics), JSON.stringify(masteryBefore));
+  // No reward events fired
+  assert.equal(context.toasts.length, 0);
+  assert.equal(context.celebrations.length, 0);
+});
+
+test('U6a: grammar-save-transfer-evidence short-circuits when pendingCommand is in flight', () => {
+  let sendCalled = false;
+  const context = buildGrammarTransferDispatchContext({
+    pendingCommand: 'save-transfer-evidence',
+    sendImpl() {
+      sendCalled = true;
+      return Promise.resolve({});
+    },
+  });
+
+  grammarModule.handleAction('grammar-save-transfer-evidence', {
+    ...context,
+    data: { payload: { promptId: 'p1', writing: 'draft', selfAssessment: [] } },
+  });
+
+  assert.equal(sendCalled, false, 'pendingCommand short-circuit must prevent double-dispatch');
+});
+
+test('U6a: GRAMMAR_TRANSFER_ERROR_COPY maps every known Worker error code to UK-English child copy', () => {
+  const codes = [
+    'grammar_transfer_unavailable_during_mini_test',
+    'grammar_transfer_prompt_not_found',
+    'grammar_transfer_writing_required',
+    'grammar_transfer_quota_exceeded',
+  ];
+  for (const code of codes) {
+    assert.ok(GRAMMAR_TRANSFER_ERROR_COPY[code], `copy for ${code} must be defined`);
+    assert.equal(typeof GRAMMAR_TRANSFER_ERROR_COPY[code], 'string');
+    assert.ok(GRAMMAR_TRANSFER_ERROR_COPY[code].length > 0);
+  }
+  assert.equal(GRAMMAR_TRANSFER_ERROR_COPY.grammar_transfer_unavailable_during_mini_test, 'You cannot save writing during a mini test.');
+  assert.equal(GRAMMAR_TRANSFER_ERROR_COPY.grammar_transfer_prompt_not_found, 'That writing prompt is not available.');
+  assert.equal(GRAMMAR_TRANSFER_ERROR_COPY.grammar_transfer_writing_required, 'Write at least a few words before saving.');
+  assert.equal(GRAMMAR_TRANSFER_ERROR_COPY.grammar_transfer_quota_exceeded, 'You have too many saved writings. Delete one to save more.');
+});
+
+test('U6a: translateGrammarTransferError routes the four Worker error codes through child copy', async () => {
+  const cases = [
+    { code: 'grammar_transfer_unavailable_during_mini_test' },
+    { code: 'grammar_transfer_prompt_not_found' },
+    { code: 'grammar_transfer_writing_required' },
+    { code: 'grammar_transfer_quota_exceeded' },
+  ];
+  for (const { code } of cases) {
+    // err.extra.code is the canonical location (see engine.js:1740)
+    const withExtra = { message: 'raw', extra: { code } };
+    // err.payload.code is the transport shape seen by the client command helper
+    const withPayload = { message: 'raw', payload: { code } };
+    assert.equal(translateGrammarTransferError(withExtra), GRAMMAR_TRANSFER_ERROR_COPY[code]);
+    assert.equal(translateGrammarTransferError(withPayload), GRAMMAR_TRANSFER_ERROR_COPY[code]);
+  }
+  assert.equal(translateGrammarTransferError({ message: 'something' }), GRAMMAR_TRANSFER_GENERIC_ERROR_COPY);
+  assert.equal(translateGrammarTransferError(null), GRAMMAR_TRANSFER_GENERIC_ERROR_COPY);
+});
+
+test('U6a: grammar-save-transfer-evidence routes Worker errors through child copy into rm.error', async () => {
+  const errorCodes = [
+    'grammar_transfer_unavailable_during_mini_test',
+    'grammar_transfer_prompt_not_found',
+    'grammar_transfer_writing_required',
+    'grammar_transfer_quota_exceeded',
+  ];
+  for (const code of errorCodes) {
+    const error = Object.assign(new Error('raw worker message'), { payload: { code } });
+    const context = buildGrammarTransferDispatchContext({
+      sendImpl() { return Promise.reject(error); },
+    });
+
+    grammarModule.handleAction('grammar-save-transfer-evidence', {
+      ...context,
+      data: { payload: { promptId: 'p1', writing: 'draft', selfAssessment: [] } },
+    });
+    // Let the rejected promise resolve through the micro-task queue.
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const grammar = context.appState.subjectUi.grammar;
+    assert.equal(grammar.error, GRAMMAR_TRANSFER_ERROR_COPY[code], `error copy for ${code}`);
+    assert.equal(grammar.pendingCommand, '', 'pendingCommand clears after error');
+  }
+});
+
+test('U6a: grammar-save-transfer-evidence dispatch drops non-object selfAssessment entries silently', () => {
+  const observed = { request: null };
+  const context = buildGrammarTransferDispatchContext({
+    sendImpl(request) {
+      observed.request = request;
+      return new Promise(() => {}); // never resolve
+    },
+  });
+
+  grammarModule.handleAction('grammar-save-transfer-evidence', {
+    ...context,
+    data: {
+      payload: {
+        promptId: 'p1',
+        writing: 'draft',
+        selfAssessment: [
+          { key: 'ok', checked: true },
+          null,
+          'string-entry',
+          { key: '', checked: true }, // empty key dropped
+          { key: 'ok2', checked: false },
+        ],
+      },
+    },
+  });
+
+  assert.ok(observed.request);
+  assert.deepEqual(observed.request.payload.selfAssessment, [
+    { key: 'ok', checked: true },
+    { key: 'ok2', checked: false },
+  ]);
 });
