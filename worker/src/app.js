@@ -578,6 +578,27 @@ export function createWorkerApp({
           return json({ ok: true, ...result });
         }
 
+        if (url.pathname === '/api/admin/ops/kpi' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const result = await repository.readAdminOpsKpi(session.accountId);
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/admin/ops/activity' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const limit = Number(url.searchParams.get('limit')) || undefined;
+          const result = await repository.listAdminOpsActivity(session.accountId, { limit });
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/admin/ops/error-events' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const status = url.searchParams.get('status') || null;
+          const limit = Number(url.searchParams.get('limit')) || undefined;
+          const result = await repository.readAdminOpsErrorEvents(session.accountId, { status, limit });
+          return json({ ok: true, ...result });
+        }
+
         if (url.pathname === '/api/content/spelling' && request.method === 'PUT') {
           requireSameOrigin(request, env);
           const body = await readJson(request);

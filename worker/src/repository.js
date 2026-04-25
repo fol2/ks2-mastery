@@ -1634,6 +1634,411 @@ async function readDemoOperationSummary(db, nowTs) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Admin ops console read helpers (plan: admin-ops-console-extensions, U2).
+// Every helper calls requireAdminHubAccess(account) before any DB query. Reads
+// of admin_kpi_metrics / account_ops_metadata / ops_error_events are wrapped
+// in isMissingTableError soft-fail per R19 so the admin hub loads cleanly on a
+// pre-migration-0010 deploy.
+// ---------------------------------------------------------------------------
+
+const OPS_ERROR_STATUSES = Object.freeze(['open', 'investigating', 'resolved', 'ignored']);
+const OPS_ACTIVITY_STREAM_DEFAULT_LIMIT = 50;
+const OPS_ACTIVITY_STREAM_MAX_LIMIT = 50;
+const OPS_ERROR_EVENTS_DEFAULT_LIMIT = 50;
+const OPS_ERROR_EVENTS_MAX_LIMIT = 50;
+const OPS_ACCOUNT_DIRECTORY_LIMIT = 200;
+const ACCOUNT_ID_MASK_LAST_N = 6;
+const LEARNER_SCOPE_ID_MASK_LAST_N = 8;
+const KPI_WINDOW_7D_MS = 7 * 24 * 60 * 60 * 1000;
+const KPI_WINDOW_30D_MS = 30 * 24 * 60 * 60 * 1000;
+const KPI_ERROR_STATUS_METRIC_PREFIX = 'ops_error_events.status.';
+const KPI_ACCOUNT_OPS_UPDATES_METRIC_KEY = 'account_ops_metadata.updates';
+
+function maskAccountIdLastN(accountId, lastN = ACCOUNT_ID_MASK_LAST_N) {
+  const value = typeof accountId === 'string' ? accountId : '';
+  if (!value) return '';
+  return value.length <= lastN ? value : value.slice(-lastN);
+}
+
+function maskMutationReceiptScopeId(scopeType, scopeId) {
+  const value = typeof scopeId === 'string' ? scopeId : '';
+  if (!value) return '';
+  // R26: learner-scoped receipts leak learner UUIDs to ops-role viewers when
+  // combined with the masked account id; truncate to last 8 chars.
+  if (scopeType === 'learner') {
+    return value.length <= LEARNER_SCOPE_ID_MASK_LAST_N
+      ? value
+      : value.slice(-LEARNER_SCOPE_ID_MASK_LAST_N);
+  }
+  // R26: account-scoped receipts already mask to last 6 chars (same rule as
+  // the directory display). Platform-scoped identifiers (e.g. ops-error-event:<id>)
+  // are stable plan-local identifiers, not PII, so pass through unchanged.
+  if (scopeType === 'account') {
+    return maskAccountIdLastN(value, ACCOUNT_ID_MASK_LAST_N);
+  }
+  return value;
+}
+
+async function assertAdminHubActor(db, actorAccountId) {
+  const actor = await first(
+    db,
+    'SELECT id, email, display_name, platform_role, repo_revision, account_type FROM adult_accounts WHERE id = ?',
+    [actorAccountId],
+  );
+  requireAdminHubAccess(actor);
+  return actor;
+}
+
+function emptyDashboardKpis(generatedAt) {
+  return {
+    generatedAt,
+    accounts: { total: 0 },
+    learners: { total: 0 },
+    demos: { active: 0 },
+    practiceSessions: { last7d: 0, last30d: 0 },
+    eventLog: { last7d: 0 },
+    mutationReceipts: { last7d: 0 },
+    errorEvents: {
+      byStatus: {
+        open: 0,
+        investigating: 0,
+        resolved: 0,
+        ignored: 0,
+      },
+    },
+    accountOpsUpdates: { total: 0 },
+  };
+}
+
+async function scalarCountSafe(db, sql, params, tableName) {
+  try {
+    const value = await scalar(db, sql, params);
+    return Math.max(0, Number(value) || 0);
+  } catch (error) {
+    if (tableName && isMissingTableError(error, tableName)) return 0;
+    throw error;
+  }
+}
+
+async function readDashboardKpis(db, { now, actorAccountId } = {}) {
+  await assertAdminHubActor(db, actorAccountId);
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const cutoff7d = nowTs - KPI_WINDOW_7D_MS;
+  const cutoff30d = nowTs - KPI_WINDOW_30D_MS;
+
+  const [
+    accountsTotal,
+    learnersTotal,
+    demosActive,
+    practice7d,
+    practice30d,
+    eventLog7d,
+    receipts7d,
+  ] = await Promise.all([
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM adult_accounts
+      WHERE COALESCE(account_type, 'real') <> 'demo'
+    `, []),
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM learner_profiles
+    `, []),
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM adult_accounts
+      WHERE account_type = 'demo'
+        AND demo_expires_at > ?
+    `, [nowTs]),
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM practice_sessions
+      WHERE updated_at > ?
+    `, [cutoff7d]),
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM practice_sessions
+      WHERE updated_at > ?
+    `, [cutoff30d]),
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM event_log
+      WHERE created_at > ?
+    `, [cutoff7d]),
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM mutation_receipts
+      WHERE applied_at > ?
+    `, [cutoff7d]),
+  ]);
+
+  const errorByStatus = {
+    open: 0,
+    investigating: 0,
+    resolved: 0,
+    ignored: 0,
+  };
+  let accountOpsUpdatesTotal = 0;
+
+  try {
+    const statusRows = await all(db, `
+      SELECT metric_key, metric_count
+      FROM admin_kpi_metrics
+      WHERE metric_key LIKE ?
+    `, [`${KPI_ERROR_STATUS_METRIC_PREFIX}%`]);
+    for (const row of statusRows) {
+      const key = typeof row?.metric_key === 'string' ? row.metric_key : '';
+      if (!key.startsWith(KPI_ERROR_STATUS_METRIC_PREFIX)) continue;
+      const status = key.slice(KPI_ERROR_STATUS_METRIC_PREFIX.length);
+      if (!OPS_ERROR_STATUSES.includes(status)) continue;
+      errorByStatus[status] = Math.max(0, Number(row?.metric_count) || 0);
+    }
+    const updatesRow = await first(db, `
+      SELECT metric_count
+      FROM admin_kpi_metrics
+      WHERE metric_key = ?
+    `, [KPI_ACCOUNT_OPS_UPDATES_METRIC_KEY]);
+    accountOpsUpdatesTotal = Math.max(0, Number(updatesRow?.metric_count) || 0);
+  } catch (error) {
+    if (!isMissingTableError(error, 'admin_kpi_metrics')) throw error;
+    // Soft-fail: counters stay at zero. The admin hub still loads before the
+    // migration lands in remote D1.
+  }
+
+  return {
+    generatedAt: nowTs,
+    accounts: { total: accountsTotal },
+    learners: { total: learnersTotal },
+    demos: { active: demosActive },
+    practiceSessions: { last7d: practice7d, last30d: practice30d },
+    eventLog: { last7d: eventLog7d },
+    mutationReceipts: { last7d: receipts7d },
+    errorEvents: { byStatus: errorByStatus },
+    accountOpsUpdates: { total: accountOpsUpdatesTotal },
+  };
+}
+
+async function listRecentMutationReceipts(db, { now, actorAccountId, limit = OPS_ACTIVITY_STREAM_DEFAULT_LIMIT } = {}) {
+  await assertAdminHubActor(db, actorAccountId);
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const safeLimit = Math.max(1, Math.min(OPS_ACTIVITY_STREAM_MAX_LIMIT, Number(limit) || OPS_ACTIVITY_STREAM_DEFAULT_LIMIT));
+  const rows = await all(db, `
+    SELECT account_id, request_id, scope_type, scope_id, mutation_kind, status_code, correlation_id, applied_at
+    FROM mutation_receipts
+    ORDER BY applied_at DESC, request_id DESC
+    LIMIT ?
+  `, [safeLimit]);
+  return {
+    generatedAt: nowTs,
+    entries: rows.map((row) => ({
+      requestId: typeof row?.request_id === 'string' ? row.request_id : '',
+      accountIdMasked: maskAccountIdLastN(row?.account_id),
+      mutationKind: typeof row?.mutation_kind === 'string' ? row.mutation_kind : '',
+      scopeType: typeof row?.scope_type === 'string' ? row.scope_type : '',
+      scopeId: maskMutationReceiptScopeId(row?.scope_type, row?.scope_id),
+      correlationId: typeof row?.correlation_id === 'string' ? row.correlation_id : '',
+      statusCode: Number(row?.status_code) || 0,
+      appliedAt: Number(row?.applied_at) || 0,
+    })),
+  };
+}
+
+function normaliseTagsJson(tagsJson) {
+  if (tagsJson == null || tagsJson === '') return [];
+  try {
+    const parsed = JSON.parse(tagsJson);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((tag) => (typeof tag === 'string' ? tag : ''))
+      .filter((tag) => tag.length > 0);
+  } catch {
+    return [];
+  }
+}
+
+async function readAccountOpsMetadataDirectory(db, { now, actorAccountId, actorPlatformRole = null } = {}) {
+  const actor = await assertAdminHubActor(db, actorAccountId);
+  const resolvedPlatformRole = normalisePlatformRole(actorPlatformRole || actor?.platform_role);
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  let rows = [];
+  try {
+    rows = await all(db, `
+      SELECT
+        a.id AS account_id,
+        a.email AS email,
+        a.display_name AS display_name,
+        a.platform_role AS platform_role,
+        COALESCE(om.ops_status, 'active') AS ops_status,
+        om.plan_label AS plan_label,
+        COALESCE(om.tags_json, '[]') AS tags_json,
+        om.internal_notes AS internal_notes,
+        COALESCE(om.updated_at, a.updated_at) AS updated_at,
+        om.updated_by_account_id AS updated_by_account_id
+      FROM adult_accounts a
+      LEFT JOIN account_ops_metadata om ON om.account_id = a.id
+      WHERE COALESCE(a.account_type, 'real') <> 'demo'
+      ORDER BY COALESCE(om.updated_at, a.updated_at) DESC, a.id ASC
+      LIMIT ?
+    `, [OPS_ACCOUNT_DIRECTORY_LIMIT]);
+  } catch (error) {
+    if (!isMissingTableError(error, 'account_ops_metadata')) throw error;
+    // Soft-fail: fall back to the core account list with defaulted metadata.
+    rows = await all(db, `
+      SELECT
+        id AS account_id,
+        email AS email,
+        display_name AS display_name,
+        platform_role AS platform_role,
+        'active' AS ops_status,
+        NULL AS plan_label,
+        '[]' AS tags_json,
+        NULL AS internal_notes,
+        updated_at AS updated_at,
+        NULL AS updated_by_account_id
+      FROM adult_accounts
+      WHERE COALESCE(account_type, 'real') <> 'demo'
+      ORDER BY updated_at DESC, id ASC
+      LIMIT ?
+    `, [OPS_ACCOUNT_DIRECTORY_LIMIT]);
+  }
+
+  // R25: internal_notes is admin-only; ops-role readers see null.
+  const includeNotes = resolvedPlatformRole === 'admin';
+
+  return {
+    generatedAt: nowTs,
+    accounts: rows.map((row) => ({
+      accountId: typeof row?.account_id === 'string' ? row.account_id : '',
+      email: typeof row?.email === 'string' ? row.email : null,
+      displayName: typeof row?.display_name === 'string' ? row.display_name : null,
+      platformRole: normalisePlatformRole(row?.platform_role),
+      opsStatus: typeof row?.ops_status === 'string' ? row.ops_status : 'active',
+      planLabel: typeof row?.plan_label === 'string' ? row.plan_label : null,
+      tags: normaliseTagsJson(row?.tags_json),
+      internalNotes: includeNotes
+        ? (typeof row?.internal_notes === 'string' ? row.internal_notes : null)
+        : null,
+      updatedAt: Number(row?.updated_at) || 0,
+      updatedByAccountId: typeof row?.updated_by_account_id === 'string' ? row.updated_by_account_id : null,
+    })),
+  };
+}
+
+function emptyOpsErrorEventSummary(generatedAt) {
+  return {
+    generatedAt,
+    totals: {
+      open: 0,
+      investigating: 0,
+      resolved: 0,
+      ignored: 0,
+      all: 0,
+    },
+    entries: [],
+  };
+}
+
+async function readOpsErrorEventSummary(db, { now, actorAccountId, status = null, limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT } = {}) {
+  await assertAdminHubActor(db, actorAccountId);
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const safeLimit = Math.max(1, Math.min(OPS_ERROR_EVENTS_MAX_LIMIT, Number(limit) || OPS_ERROR_EVENTS_DEFAULT_LIMIT));
+  const statusFilter = typeof status === 'string' && OPS_ERROR_STATUSES.includes(status) ? status : null;
+
+  try {
+    const totalsRows = await all(db, `
+      SELECT status, COUNT(*) AS value
+      FROM ops_error_events
+      GROUP BY status
+    `);
+    const totals = {
+      open: 0,
+      investigating: 0,
+      resolved: 0,
+      ignored: 0,
+      all: 0,
+    };
+    for (const row of totalsRows) {
+      const rawStatus = typeof row?.status === 'string' ? row.status : '';
+      const count = Math.max(0, Number(row?.value) || 0);
+      if (OPS_ERROR_STATUSES.includes(rawStatus)) {
+        totals[rawStatus] = count;
+      }
+      totals.all += count;
+    }
+
+    const entryRows = statusFilter
+      ? await all(db, `
+        SELECT id, error_kind, message_first_line, first_frame, route_name, user_agent,
+               account_id, occurrence_count, first_seen, last_seen, status
+        FROM ops_error_events
+        WHERE status = ?
+        ORDER BY last_seen DESC, id DESC
+        LIMIT ?
+      `, [statusFilter, safeLimit])
+      : await all(db, `
+        SELECT id, error_kind, message_first_line, first_frame, route_name, user_agent,
+               account_id, occurrence_count, first_seen, last_seen, status
+        FROM ops_error_events
+        ORDER BY last_seen DESC, id DESC
+        LIMIT ?
+      `, [safeLimit]);
+
+    return {
+      generatedAt: nowTs,
+      totals,
+      entries: entryRows.map((row) => ({
+        id: typeof row?.id === 'string' ? row.id : '',
+        errorKind: typeof row?.error_kind === 'string' ? row.error_kind : '',
+        messageFirstLine: typeof row?.message_first_line === 'string' ? row.message_first_line : '',
+        firstFrame: typeof row?.first_frame === 'string' ? row.first_frame : null,
+        routeName: typeof row?.route_name === 'string' ? row.route_name : null,
+        userAgent: typeof row?.user_agent === 'string' ? row.user_agent : null,
+        accountIdMasked: row?.account_id ? maskAccountIdLastN(row.account_id) : null,
+        occurrenceCount: Math.max(0, Number(row?.occurrence_count) || 0),
+        firstSeen: Number(row?.first_seen) || 0,
+        lastSeen: Number(row?.last_seen) || 0,
+        status: typeof row?.status === 'string' ? row.status : 'open',
+      })),
+    };
+  } catch (error) {
+    if (!isMissingTableError(error, 'ops_error_events')) throw error;
+    return emptyOpsErrorEventSummary(nowTs);
+  }
+}
+
+async function bumpAdminKpiMetric(db, key, nowTs, delta = 1) {
+  if (!(typeof key === 'string' && key)) return;
+  const resolvedDelta = Number.isFinite(Number(delta)) ? Number(delta) : 1;
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const seedCount = Math.max(0, resolvedDelta);
+  try {
+    await run(db, `
+      INSERT INTO admin_kpi_metrics (metric_key, metric_count, updated_at)
+      VALUES (?, ?, ?)
+      ON CONFLICT(metric_key) DO UPDATE SET
+        metric_count = MAX(0, admin_kpi_metrics.metric_count + ?),
+        updated_at = ?
+    `, [key, seedCount, ts, resolvedDelta, ts]);
+  } catch (error) {
+    if (isMissingTableError(error, 'admin_kpi_metrics')) return;
+    throw error;
+  }
+}
+
+function bumpAdminKpiMetricStatement(db, key, nowTs, delta = 1) {
+  const resolvedDelta = Number.isFinite(Number(delta)) ? Number(delta) : 1;
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const seedCount = Math.max(0, resolvedDelta);
+  return bindStatement(db, `
+    INSERT INTO admin_kpi_metrics (metric_key, metric_count, updated_at)
+    VALUES (?, ?, ?)
+    ON CONFLICT(metric_key) DO UPDATE SET
+      metric_count = MAX(0, admin_kpi_metrics.metric_count + ?),
+      updated_at = ?
+  `, [key, seedCount, ts, resolvedDelta, ts]);
+}
+
 function seededMonsterVisualConfig({ source = 'published', version = 1 } = {}) {
   return {
     ...cloneSerialisable(BUNDLED_MONSTER_VISUAL_CONFIG),
@@ -4065,8 +4470,25 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         requestId,
         limit: auditLimit,
       });
-      const demoOperations = await readDemoOperationSummary(db, nowFactory());
-      const monsterVisualConfig = await readMonsterVisualConfigState(db, nowFactory());
+      const nowTs = nowFactory();
+      const demoOperations = await readDemoOperationSummary(db, nowTs);
+      const monsterVisualConfig = await readMonsterVisualConfigState(db, nowTs);
+      const dashboardKpis = await readDashboardKpis(db, { now: nowTs, actorAccountId: accountId });
+      const opsActivityStream = await listRecentMutationReceipts(db, {
+        now: nowTs,
+        actorAccountId: accountId,
+        limit: OPS_ACTIVITY_STREAM_DEFAULT_LIMIT,
+      });
+      const accountOpsMetadata = await readAccountOpsMetadataDirectory(db, {
+        now: nowTs,
+        actorAccountId: accountId,
+        actorPlatformRole: accountPlatformRole(account),
+      });
+      const errorLogSummary = await readOpsErrorEventSummary(db, {
+        now: nowTs,
+        actorAccountId: accountId,
+        limit: OPS_ERROR_EVENTS_DEFAULT_LIMIT,
+      });
       const model = buildAdminHubReadModel({
         account: {
           id: accountId,
@@ -4095,8 +4517,38 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         now: nowFactory,
       });
       return {
-        adminHub: model,
+        adminHub: {
+          ...model,
+          dashboardKpis,
+          opsActivityStream,
+          accountOpsMetadata,
+          errorLogSummary,
+        },
       };
+    },
+    async readAdminOpsKpi(accountId) {
+      return readDashboardKpis(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
+      });
+    },
+    async listAdminOpsActivity(accountId, { limit = OPS_ACTIVITY_STREAM_DEFAULT_LIMIT } = {}) {
+      return listRecentMutationReceipts(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
+        limit,
+      });
+    },
+    async readAdminOpsErrorEvents(accountId, { status = null, limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT } = {}) {
+      return readOpsErrorEventSummary(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
+        status,
+        limit,
+      });
+    },
+    async bumpAdminKpiMetric(key, delta = 1) {
+      return bumpAdminKpiMetric(db, key, nowFactory(), delta);
     },
     async listAdminAccounts(accountId) {
       return listAccountDirectory(db, accountId);
