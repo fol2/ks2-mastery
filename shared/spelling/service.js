@@ -683,16 +683,26 @@ export function createSpellingService({ repository, storage, tts, now, random, c
 
   // U7 merge-save: per-slug guardian writer.
   //
-  // Shrinks the client-local last-writer-wins race window on `guardianMap`
-  // writes. Instead of "load the whole map into memory, mutate in-place, save
-  // the whole map" (which loses any cross-tab writes that landed between the
-  // load and the save), this helper reloads the latest persisted map, merges
-  // in a single slug's record, then saves.
+  // Narrows the read-to-write window WITHIN A SINGLE SERVICE INSTANCE that
+  // shares one `repositories` object. Instead of "load the whole map into
+  // memory, mutate in-place, save the whole map" (which loses any write that
+  // landed on a different slug inside the same service between the load and
+  // the save), this helper reloads the latest persisted map, merges in a
+  // single slug's record, then saves.
   //
   // Stays synchronous on purpose: no `navigator.locks`, no `await`, no Promise.
-  // This does NOT provide cross-tab compare-and-swap guarantees — same-slug
-  // concurrent writes still last-writer-wins locally. Full CAS is deferred to
-  // the `post-mega-spelling-storage-cas` plan.
+  //
+  // This does NOT provide cross-tab protection. In production, each tab calls
+  // `createLocalPlatformRepositories` independently, and each instance holds
+  // its OWN per-tab `collections` cache keyed on subject-state (see
+  // `src/platform/core/repositories/local.js`). There is no `storage` event
+  // listener invalidating that cache, so reads inside tab A never see writes
+  // performed by tab B until tab A restarts. Closing that cross-tab race is
+  // deferred to the `post-mega-spelling-storage-cas` plan (navigator.locks +
+  // BroadcastChannel + writeVersion CAS + lockout banner).
+  //
+  // Same-slug concurrent writes inside one service instance still
+  // last-writer-wins.
   //
   // `saveGuardianMap` stays on the API because `resetLearner` (U6) zeros the
   // whole map in one go; that single-write is the only caller that should NOT
@@ -700,10 +710,11 @@ export function createSpellingService({ repository, storage, tts, now, random, c
   function saveGuardianRecord(learnerId, slug, record) {
     const safeSlug = typeof slug === 'string' ? slug : '';
     if (!safeSlug) return;
-    // Reload from storage so any write performed by another tab between our
-    // caller's `loadGuardianMap` and this call is preserved.
+    // Reload from storage so any write performed earlier on this same service
+    // instance (possibly via a DIFFERENT slug) is preserved through the merge.
     const latest = loadGuardianMap(learnerId);
-    latest[safeSlug] = record;
+    // Normalise on write so malformed records don't leak past one load cycle.
+    latest[safeSlug] = normaliseGuardianRecord(record, currentTodayDay());
     saveGuardianMap(learnerId, latest);
   }
 
@@ -1228,15 +1239,30 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     // Advance the guardian record. Lazy-create if this is the first Guardian
     // touch for the slug. We load a mutable copy for the read-side
     // (`ensureGuardianRecord` plus the wobbling inspection), then commit via
-    // the per-slug `saveGuardianRecord` helper so a concurrent write on a
-    // DIFFERENT slug from another tab is preserved through the merge-save
-    // reload (U7).
+    // the per-slug `saveGuardianRecord` helper.
+    //
+    // U7 scope: this narrows the read-to-write window within a SINGLE service
+    // instance. Two tabs each hold their own per-tab `repositories` cache, so
+    // `saveGuardianRecord`'s reload only sees writes made through the same
+    // cache — not writes from another tab. Closing the cross-tab race
+    // requires the deferred `post-mega-spelling-storage-cas` plan
+    // (navigator.locks + BroadcastChannel + writeVersion CAS).
+    //
+    // Composition note (U7-02, accepted limitation): `beforeRecord` is
+    // captured here and used below to compute `wasWobbling` for the outcome
+    // event. If another service instance concurrently writes the same slug
+    // between this load and `saveGuardianRecord`'s internal reload, the event
+    // still reports the outcome of THIS submission (renewed / recovered /
+    // wobbled) against the state we observed — which matches user
+    // expectations for the tab that actually produced the answer. The map on
+    // storage ends last-writer-wins per slug. Full same-slug CAS is deferred
+    // with the cross-tab work.
     //
     // Note: when U4's "I don't know" branch lands in `skipWord`, it must also
     // use `saveGuardianRecord` instead of the whole-map writer, otherwise the
-    // "I don't know" wobble and a concurrent correct/wrong submit on another
-    // tab can stomp each other. That wiring is owned by U4 itself; this comment
-    // is left here so the follow-up is obvious.
+    // "I don't know" wobble and a concurrent correct/wrong submit on the same
+    // service instance can stomp each other. That wiring is owned by U4
+    // itself; this comment is left here so the follow-up is obvious.
     const todayDay = currentTodayDay();
     const guardianMap = loadGuardianMap(learnerId);
     const beforeRecord = ensureGuardianRecord(guardianMap, currentSlug, todayDay);

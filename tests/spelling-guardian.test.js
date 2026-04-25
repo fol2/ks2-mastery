@@ -1730,60 +1730,66 @@ test('U7 saveGuardianRecord: exists on the service API as a synchronous function
   assert.equal(typeof result?.then, 'undefined', 'saveGuardianRecord return value is not a Promise');
 });
 
-test('U7 saveGuardianRecord: two instances sharing storage, different slugs — both advances survive', () => {
-  // Two-tab race: tab A and tab B both load the guardian map, then each writes
-  // a different slug via saveGuardianRecord. Because saveGuardianRecord does a
-  // fresh load-then-merge-single-slug-then-save, the second writer sees the
-  // first writer's contribution and preserves it.
+test('U7 saveGuardianRecord: merge-save preserves existing entries when different slugs advance in sequence', () => {
+  // Narrow same-process race: two service instances share the same raw
+  // `storage` proxy (bypassing the per-tab repository cache). Sequential
+  // writes on different slugs both survive because saveGuardianRecord does a
+  // fresh load-then-merge-single-slug-then-save. This is NOT a cross-tab
+  // race — production tabs each build their own `createLocalPlatformRepositories`
+  // with an independent in-memory cache, so writes through the real
+  // persistence layer are not visible to each other until restart. See the
+  // "known limitation" test below for the production cross-tab gap.
   const now = () => Date.UTC(2026, 0, 10);
   const today = Math.floor(now() / DAY_MS_TS);
   const storage = installMemoryStorage();
 
-  // Both services share the same storage directly — simulating two tabs on the
-  // same learner sharing localStorage. Bypass the repositories layer so both
-  // services read/write the guardian key through the same raw Map.
-  const tabA = makeRawService({ now, random: () => 0.5, storage });
-  const tabB = makeRawService({ now, random: () => 0.5, storage });
+  // Both services share the same storage directly. This bypasses the
+  // repositories layer so the raw guardian key round-trips cleanly.
+  const serviceOne = makeRawService({ now, random: () => 0.5, storage });
+  const serviceTwo = makeRawService({ now, random: () => 0.5, storage });
 
   const slugX = 'possess';
   const slugY = 'believe';
   const recordX = freshGuardianRecord(today);
   const recordY = { ...freshGuardianRecord(today), reviewLevel: 2, correctStreak: 3 };
 
-  // Interleaved sequence: tab B writes first, then tab A writes. Under pre-U7
-  // whole-map semantics, tab A (holding a stale snapshot of the guardian map
-  // loaded before B's write) would stomp B's X. Under U7 merge-save, tab A's
-  // write re-loads the guardian map fresh, merges its Y into the current
-  // storage contents, and saves — so both X and Y persist.
-  tabB.saveGuardianRecord('learner-a', slugX, recordX);
-  tabA.saveGuardianRecord('learner-a', slugY, recordY);
+  // Interleaved sequence: serviceTwo writes X first, then serviceOne writes
+  // Y. Under pre-U7 whole-map semantics, serviceOne (holding a stale snapshot
+  // of the guardian map loaded before serviceTwo's write) would stomp X.
+  // Under U7 merge-save, serviceOne's write re-loads the guardian map fresh,
+  // merges its Y into the current storage contents, and saves — so both X
+  // and Y persist.
+  serviceTwo.saveGuardianRecord('learner-a', slugX, recordX);
+  serviceOne.saveGuardianRecord('learner-a', slugY, recordY);
 
   const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
   assert.ok(finalMap && typeof finalMap === 'object', 'final map persisted');
-  assert.ok(finalMap[slugX], `tab B's slug ${slugX} survived in final map`);
-  assert.ok(finalMap[slugY], `tab A's slug ${slugY} survived in final map`);
+  assert.ok(finalMap[slugX], `serviceTwo's slug ${slugX} survived in final map`);
+  assert.ok(finalMap[slugY], `serviceOne's slug ${slugY} survived in final map`);
   // Records round-trip (fields preserved by normaliseGuardianMap).
   assert.equal(finalMap[slugX].reviewLevel, recordX.reviewLevel);
   assert.equal(finalMap[slugY].reviewLevel, recordY.reviewLevel);
   assert.equal(finalMap[slugY].correctStreak, recordY.correctStreak);
 });
 
-test('U7 saveGuardianRecord: two instances sharing storage, SAME slug — last-writer-wins on that slug (accepted current behaviour)', () => {
-  // Documents that U7 does NOT promise same-slug CAS — same-slug concurrent
-  // writes still last-writer-wins locally. Cross-tab CAS is deferred.
+test('U7 saveGuardianRecord: same-slug merge-save overwrites without merging record fields (last-writer-wins)', () => {
+  // Documents that U7 does NOT promise same-slug CAS — two same-slug writes
+  // through saveGuardianRecord last-writer-wins on that slug even within one
+  // process. Cross-tab CAS on any slug is deferred to the
+  // `post-mega-spelling-storage-cas` plan.
   const now = () => Date.UTC(2026, 0, 10);
   const today = Math.floor(now() / DAY_MS_TS);
   const storage = installMemoryStorage();
 
-  const tabA = makeRawService({ now, random: () => 0.5, storage });
-  const tabB = makeRawService({ now, random: () => 0.5, storage });
+  const serviceOne = makeRawService({ now, random: () => 0.5, storage });
+  const serviceTwo = makeRawService({ now, random: () => 0.5, storage });
 
   const slug = 'possess';
   const firstRecord = { ...freshGuardianRecord(today), reviewLevel: 1, correctStreak: 1 };
   const secondRecord = { ...freshGuardianRecord(today), reviewLevel: 3, correctStreak: 5 };
 
-  tabB.saveGuardianRecord('learner-a', slug, firstRecord);
-  tabA.saveGuardianRecord('learner-a', slug, secondRecord);
+  serviceTwo.saveGuardianRecord('learner-a', slug, firstRecord);
+  serviceOne.saveGuardianRecord('learner-a', slug, secondRecord);
 
   const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
   assert.ok(finalMap[slug], 'slug is still present');
@@ -1952,6 +1958,90 @@ test('U7 integration: saveGuardianRecord ignores empty/non-string slug — no co
 
   const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
   assert.deepEqual(Object.keys(finalMap), ['possess'], 'only the valid slug persists');
+});
+
+test('U7 known limitation: cross-tab writes are not visible without the deferred storage-CAS plan', () => {
+  // Production shape of the cross-tab gap. Two independent calls to
+  // `createLocalPlatformRepositories` sharing ONE raw `storage` object model
+  // the two-tab scenario faithfully: each tab gets its own in-memory
+  // `collections` cache keyed on subject-state (see
+  // `src/platform/core/repositories/local.js`). Writes flush to storage via
+  // `persistAll`, but reads NEVER re-hydrate from storage — there is no
+  // `storage` event listener invalidating the cache.
+  //
+  // This test documents the gap as an accepted limitation. U7's merge-save
+  // cannot close this race because `loadGuardianMap` inside the service
+  // ultimately reads through `repositories.subjectStates.read`, which serves
+  // from the per-tab cache. Closing the gap requires the deferred
+  // `post-mega-spelling-storage-cas` plan (navigator.locks +
+  // BroadcastChannel + writeVersion CAS + lockout banner).
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const storage = installMemoryStorage();
+
+  // Tab A is constructed first, on empty storage.
+  const reposTabA = createLocalPlatformRepositories({ storage });
+  const serviceTabA = createSpellingService({
+    repository: createSpellingPersistence({ repositories: reposTabA, now }),
+    now,
+    random: () => 0.5,
+    tts: { speak() {}, stop() {}, warmup() {} },
+  });
+
+  const slugX = 'possess';
+  const slugY = 'believe';
+
+  // Tab A writes slug X first. This primes tab A's cache with the X-only
+  // guardian map and persists to raw storage.
+  serviceTabA.saveGuardianRecord('learner-a', slugX, freshGuardianRecord(today));
+
+  // Tab B is constructed AFTER tab A's write. Its startup hydration reads
+  // the current storage contents, so tab B's cache contains slug X.
+  const reposTabB = createLocalPlatformRepositories({ storage });
+  const serviceTabB = createSpellingService({
+    repository: createSpellingPersistence({ repositories: reposTabB, now }),
+    now,
+    random: () => 0.5,
+    tts: { speak() {}, stop() {}, warmup() {} },
+  });
+
+  // Tab B writes slug Y. Because Tab B saw X at startup, its merge-save
+  // combines X + Y and persists { X, Y } to storage.
+  serviceTabB.saveGuardianRecord('learner-a', slugY, freshGuardianRecord(today));
+
+  // Storage now physically contains { X, Y }. But tab A's in-memory cache
+  // (its own `collections.subjectStates`) was populated at construction and
+  // when it wrote X. It has no `storage` event listener and no rehydration
+  // path, so reads still see only X — tab B's write is invisible to tab A.
+  const tabAView = readGuardianMapViaRepos(reposTabA, 'learner-a');
+  assert.ok(tabAView[slugX], 'tab A still sees its own slug X');
+  assert.equal(
+    tabAView[slugY],
+    undefined,
+    'tab A does NOT see tab B\'s slug Y — this is the production cross-tab gap',
+  );
+
+  // Now tab A writes slug X again (e.g. an updated record from a Guardian
+  // submission). saveGuardianRecord's merge-save reloads through tab A's
+  // own stale cache, so its snapshot is still { X }. The write produces
+  // { X_updated } — losing tab B's Y from storage.
+  serviceTabA.saveGuardianRecord('learner-a', slugX, {
+    ...freshGuardianRecord(today),
+    reviewLevel: 3,
+  });
+
+  // Observe raw storage directly (NOT through any repositories cache) to
+  // confirm the data-loss shape. This is the exact race the deferred
+  // `post-mega-spelling-storage-cas` plan will close.
+  const finalRaw = JSON.parse(storage.getItem('ks2-platform-v2.repo.child-subject-state') || '{}');
+  const finalSpellingRecord = finalRaw['learner-a::spelling'] || {};
+  const finalGuardian = (finalSpellingRecord.data && finalSpellingRecord.data.guardian) || {};
+  assert.ok(finalGuardian[slugX], 'tab A\'s slug X write landed');
+  assert.equal(
+    finalGuardian[slugY],
+    undefined,
+    'tab B\'s slug Y was overwritten — cross-tab race is real, fix in `post-mega-spelling-storage-cas`',
+  );
 });
 
 test('U7 integration: resetLearner still uses saveGuardianMap (whole-map zero), NOT saveGuardianRecord', () => {
