@@ -1239,6 +1239,21 @@ export function createApiPlatformRepositories({
     }
   }
 
+  function applyLearnerRevisionHint(learnerId, revision) {
+    const cleanLearnerId = String(learnerId || '').trim();
+    if (revision == null || (typeof revision === 'string' && !revision.trim())) return false;
+    const hintedRevision = Number(revision);
+    if (!cleanLearnerId || !Number.isFinite(hintedRevision) || hintedRevision < 0) return false;
+
+    const current = normaliseSyncState(syncState);
+    const currentRevision = Math.max(0, Number(current.learnerRevisions?.[cleanLearnerId]) || 0);
+    if (hintedRevision < currentRevision) return false;
+
+    syncState = setScopeRevision(syncState, 'learner', cleanLearnerId, hintedRevision);
+    persistLocalCache('subject-command:stale-revision-hint');
+    return true;
+  }
+
   function applyCommandResultToCache({ learnerId, subjectId, response } = {}) {
     if (!response || typeof response !== 'object' || Array.isArray(response)) return null;
     const readModel = response.subjectReadModel || null;
@@ -1792,6 +1807,9 @@ export function createApiPlatformRepositories({
       readLearnerRevision(learnerId) {
         const current = normaliseSyncState(syncState);
         return Math.max(0, Number(current.learnerRevisions?.[learnerId]) || 0);
+      },
+      applyLearnerRevisionHint(learnerId, revision) {
+        return applyLearnerRevisionHint(learnerId, revision);
       },
       applySubjectCommandResult({ learnerId, subjectId, response } = {}) {
         return applyCommandResultToCache({ learnerId, subjectId, response });

@@ -424,12 +424,47 @@ tts.subscribe((event) => {
 
 const readModels = createReadModelClient({ baseUrl: '', fetch: credentialFetch });
 const spellingContent = createSpellingContentApi({ fetch: credentialFetch });
+
+function staleWriteCurrentRevision(error) {
+  const payload = error?.payload;
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
+
+  const expectedCandidates = [
+    payload.expectedRevision,
+    payload.mutation?.expectedRevision,
+  ];
+  let expectedRevision = null;
+  for (const candidate of expectedCandidates) {
+    const revision = Number(candidate);
+    if (Number.isFinite(revision) && revision >= 0) {
+      expectedRevision = revision;
+      break;
+    }
+  }
+
+  const currentCandidates = [
+    payload.currentRevision,
+    payload.mutation?.currentRevision,
+  ];
+  for (const candidate of currentCandidates) {
+    const revision = Number(candidate);
+    if (!Number.isFinite(revision) || revision < 0) continue;
+    if (expectedRevision !== null && revision <= expectedRevision) continue;
+    return revision;
+  }
+  return null;
+}
+
 const subjectCommands = createSubjectCommandClient({
   baseUrl: '',
   fetch: credentialFetch,
   getLearnerRevision: (learnerId) => repositories.runtime?.readLearnerRevision?.(learnerId) || 0,
-  onStaleWrite: async () => {
-    await repositories.hydrate({ cacheScope: 'subject-command-stale-write' });
+  onStaleWrite: async ({ error, learnerId }) => {
+    const refreshed = repositories.runtime?.applyLearnerRevisionHint?.(
+      learnerId,
+      staleWriteCurrentRevision(error),
+    ) === true;
+    if (!refreshed) await repositories.hydrate({ cacheScope: 'subject-command-stale-write' });
   },
   onCommandApplied: ({ learnerId, subjectId, response }) => {
     repositories.runtime?.applySubjectCommandResult?.({ learnerId, subjectId, response });
