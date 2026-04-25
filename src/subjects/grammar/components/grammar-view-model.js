@@ -99,6 +99,158 @@ export const GRAMMAR_DASHBOARD_HERO = Object.freeze({
   subtitle: "One short round. Fix tricky sentences. Grow your Grammar creatures.",
 });
 
+// Hero copy for the Grammar Bank scene. Child-facing only — kept frozen so
+// U10's absence sweep iterates a single source of truth. Every concept card
+// that renders here carries one short example sentence drawn from
+// `GRAMMAR_CONCEPT_EXAMPLES` below.
+export const GRAMMAR_BANK_HERO = Object.freeze({
+  title: 'Grammar Bank',
+  subtitle: 'Browse every concept. Tap a card to see examples or practise five questions.',
+  empty: 'No concepts match your filters. Try another status or cluster.',
+});
+
+// Frozen map of child-facing labels for each Grammar Bank status filter. The
+// scene iterates `GRAMMAR_BANK_STATUS_CHIPS` so the order stays stable across
+// renders and matches the plan ordering: All · Due · Trouble · Learning ·
+// Nearly secure · Secure · New.
+export const GRAMMAR_BANK_STATUS_CHIPS = Object.freeze([
+  Object.freeze({ id: 'all', label: 'All', tone: 'all' }),
+  Object.freeze({ id: 'due', label: 'Due', tone: 'due' }),
+  Object.freeze({ id: 'trouble', label: 'Trouble', tone: 'trouble' }),
+  Object.freeze({ id: 'learning', label: 'Learning', tone: 'learning' }),
+  Object.freeze({ id: 'nearly-secure', label: 'Nearly secure', tone: 'nearly-secure' }),
+  Object.freeze({ id: 'secure', label: 'Secure', tone: 'secure' }),
+  Object.freeze({ id: 'new', label: 'New', tone: 'new' }),
+]);
+
+// Frozen map of cluster filter chips. Order matches the plan: All ·
+// Bracehart · Chronalyx · Couronnail · Concordium. Child-facing copy only —
+// reserved monster ids (Glossbloom / Loomrill / Mirrane) never appear here.
+export const GRAMMAR_BANK_CLUSTER_CHIPS = Object.freeze([
+  Object.freeze({ id: 'all', label: 'All clusters' }),
+  Object.freeze({ id: 'bracehart', label: 'Bracehart' }),
+  Object.freeze({ id: 'chronalyx', label: 'Chronalyx' }),
+  Object.freeze({ id: 'couronnail', label: 'Couronnail' }),
+  Object.freeze({ id: 'concordium', label: 'Concordium' }),
+]);
+
+// Child-facing display names for the active Grammar clusters. Used by the
+// concept card badge. Reserved monsters are intentionally absent so a rogue
+// concept→cluster mapping cannot surface a retired name as a badge.
+export const GRAMMAR_CLUSTER_DISPLAY_NAMES = Object.freeze({
+  bracehart: 'Bracehart',
+  chronalyx: 'Chronalyx',
+  couronnail: 'Couronnail',
+  concordium: 'Concordium',
+});
+
+// One short KS2-appropriate example sentence per Grammar concept. The bank
+// card surfaces the first example; the detail modal surfaces up to two.
+// Examples are written as full sentences so a learner can read them aloud.
+// Keep sentences short, concrete, and free of adult-diagnostic language.
+export const GRAMMAR_CONCEPT_EXAMPLES = Object.freeze({
+  sentence_functions: Object.freeze([
+    'Have you finished your homework?',
+    'Shut the gate before the dog escapes!',
+  ]),
+  word_classes: Object.freeze([
+    'The small fox ran quickly across the field.',
+    'She quietly opened the ancient wooden box.',
+  ]),
+  noun_phrases: Object.freeze([
+    'A tall tree with silver bark stood by the lake.',
+    'The excited children on the beach built a sandcastle.',
+  ]),
+  adverbials: Object.freeze([
+    'After lunch, we walked to the park.',
+    'Suddenly, the lights went out.',
+  ]),
+  clauses: Object.freeze([
+    'We stayed inside because the rain was heavy.',
+    'Although it was late, Ben kept reading.',
+  ]),
+  relative_clauses: Object.freeze([
+    'The dog, which was muddy, ran inside.',
+    'My friend who plays the piano lives next door.',
+  ]),
+  tense_aspect: Object.freeze([
+    'I have finished my book.',
+    'They were playing football when the bell rang.',
+  ]),
+  standard_english: Object.freeze([
+    'We were late for the bus.',
+    'She did her homework before tea.',
+  ]),
+  pronouns_cohesion: Object.freeze([
+    'Maya picked up the kitten and stroked it gently.',
+    'The children waved at the bus driver, who waved back.',
+  ]),
+  formality: Object.freeze([
+    'May I leave the room, please?',
+    'I would be grateful if you could reply soon.',
+  ]),
+  active_passive: Object.freeze([
+    'The chef baked the cake. (active)',
+    'The cake was baked by the chef. (passive)',
+  ]),
+  subject_object: Object.freeze([
+    'The cat chased the mouse.',
+    'Jamal kicked the ball into the net.',
+  ]),
+  modal_verbs: Object.freeze([
+    'You should wear a coat.',
+    'We might visit Gran on Saturday.',
+  ]),
+  parenthesis_commas: Object.freeze([
+    'The garden, full of roses, smelled sweet.',
+    'Our teacher (who is very kind) helped us tidy up.',
+  ]),
+  speech_punctuation: Object.freeze([
+    '"Where are my shoes?" asked Leo.',
+    'Sara said, "I will meet you at the gate."',
+  ]),
+  apostrophes_possession: Object.freeze([
+    "The girls' coats were on the hooks.",
+    "Tom's bag fell off the chair.",
+  ]),
+  boundary_punctuation: Object.freeze([
+    'Bring these items: a pen, a ruler and a book.',
+    'The sky turned dark; the storm was close.',
+  ]),
+  hyphen_ambiguity: Object.freeze([
+    'Please resign the letter and send it back.',
+    'The man-eating shark circled the boat.',
+  ]),
+});
+
+// Returns the first example sentence for a concept, or an empty string if no
+// example exists. Safe on unknown ids.
+export function grammarConceptPrimaryExample(conceptId) {
+  if (typeof conceptId !== 'string' || !conceptId) return '';
+  const entries = GRAMMAR_CONCEPT_EXAMPLES[conceptId];
+  return Array.isArray(entries) && entries.length ? entries[0] : '';
+}
+
+// Returns the full example list for a concept (up to two sentences) or an
+// empty array. Used by the detail modal.
+export function grammarConceptExamples(conceptId) {
+  if (typeof conceptId !== 'string' || !conceptId) return [];
+  const entries = GRAMMAR_CONCEPT_EXAMPLES[conceptId];
+  return Array.isArray(entries) ? entries.slice(0, 2) : [];
+}
+
+// Child-facing copy for concept attempt evidence. Returns a single short
+// sentence like "You've answered 3 of these. 2 were correct." Hides raw
+// percentages — learners see whole-number tallies only.
+export function grammarConceptEvidenceLine({ attempts = 0, correct = 0 } = {}) {
+  const safeAttempts = Number.isFinite(Number(attempts)) && Number(attempts) > 0 ? Math.floor(Number(attempts)) : 0;
+  const safeCorrect = Number.isFinite(Number(correct)) && Number(correct) > 0 ? Math.floor(Number(correct)) : 0;
+  if (safeAttempts === 0) return 'You have not answered any of these yet.';
+  const noun = safeAttempts === 1 ? 'answer' : 'answers';
+  const correctWord = safeCorrect === 1 ? 'was correct' : 'were correct';
+  return `You have ${safeAttempts} ${noun} on this concept. ${safeCorrect} ${correctWord}.`;
+}
+
 // Frozen order of child-facing Grammar monsters. Post-U0 the active roster
 // is Bracehart, Chronalyx, Couronnail (3 direct clusters) plus Concordium
 // (whole-Grammar aggregate). Retired ids Glossbloom / Loomrill / Mirrane
@@ -383,6 +535,8 @@ function defaultConceptMetadata(conceptId) {
 function buildBankCard(concept) {
   const metadata = defaultConceptMetadata(concept?.id || '');
   const label = childLabelForConcept(concept);
+  const cluster = grammarMonsterClusterForConcept(metadata.id);
+  const examples = grammarConceptExamples(metadata.id);
   return {
     id: metadata.id,
     name: concept?.name || metadata.name,
@@ -391,7 +545,10 @@ function buildBankCard(concept) {
     label,
     childLabel: grammarChildConfidenceLabel({ label }),
     tone: grammarChildConfidenceTone(label),
-    cluster: grammarMonsterClusterForConcept(metadata.id),
+    cluster,
+    clusterName: GRAMMAR_CLUSTER_DISPLAY_NAMES[cluster] || '',
+    example: examples[0] || '',
+    examples,
     attempts: safeNumber(concept?.attempts, 0),
     correct: safeNumber(concept?.correct, 0),
     wrong: safeNumber(concept?.wrong, 0),
@@ -433,6 +590,23 @@ function bankCountsFromCards(cards) {
 }
 
 /**
+ * Builds the Grammar Bank aggregate summary cards (Answered totals across
+ * every concept, broken out by status). Counts are whole integers — no
+ * percentages — so a learner sees plain tallies.
+ */
+export function grammarBankAggregateCards(counts = {}) {
+  const safe = counts && typeof counts === 'object' && !Array.isArray(counts) ? counts : {};
+  return Object.freeze([
+    Object.freeze({ id: 'total', label: 'Total', value: safeNumber(safe.all, 0), sub: 'Grammar concepts tracked' }),
+    Object.freeze({ id: 'secure', label: 'Secure', value: safeNumber(safe.secure, 0), sub: 'You own these' }),
+    Object.freeze({ id: 'nearly-secure', label: 'Nearly secure', value: safeNumber(safe['nearly-secure'], 0), sub: 'Almost there' }),
+    Object.freeze({ id: 'trouble', label: 'Trouble', value: safeNumber(safe.trouble, 0), sub: 'Fix these next' }),
+    Object.freeze({ id: 'learning', label: 'Learning', value: safeNumber(safe.learning, 0), sub: 'Building up' }),
+    Object.freeze({ id: 'new', label: 'New', value: safeNumber(safe.new, 0), sub: 'Not yet introduced' }),
+  ]);
+}
+
+/**
  * Builds the Grammar Bank view-model. Filters by `statusFilter` and
  * `clusterFilter`, narrows by `query` (searches concept name, summary,
  * domain, example). Always returns the full 18 concepts when
@@ -454,15 +628,33 @@ export function buildGrammarBankModel(grammar, { statusFilter = 'all', clusterFi
   });
 
   const normalisedQuery = normaliseSearchText(query);
+  const clusterScopedCards = allCards.filter((card) => {
+    if (!clusterFilter || clusterFilter === 'all') return true;
+    if (clusterFilter === 'concordium') return true;
+    return card.cluster === clusterFilter;
+  });
   const filteredCards = allCards.filter((card) => bankCardMatchesFilter(card, {
     statusFilter,
     clusterFilter,
     query: normalisedQuery,
   }));
 
+  // Status-chip counts reflect the currently selected cluster scope so the
+  // numbers next to each chip match what clicking the chip would reveal.
+  // Cluster-chip counts reflect the full concept list so switching clusters
+  // always shows the total for that cluster.
+  const clusterCounts = {
+    all: allCards.length,
+    bracehart: allCards.filter((card) => card.cluster === 'bracehart').length,
+    chronalyx: allCards.filter((card) => card.cluster === 'chronalyx').length,
+    couronnail: allCards.filter((card) => card.cluster === 'couronnail').length,
+    concordium: allCards.length, // aggregate view shows every concept
+  };
+
   return {
     cards: filteredCards,
-    counts: bankCountsFromCards(allCards),
+    counts: bankCountsFromCards(clusterScopedCards),
+    clusterCounts,
     total: allCards.length,
   };
 }

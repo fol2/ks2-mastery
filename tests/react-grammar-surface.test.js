@@ -1529,3 +1529,250 @@ test('U6a: grammar-save-transfer-evidence dispatch drops non-object selfAssessme
     { key: 'ok2', checked: false },
   ]);
 });
+
+// ----------------------------------------------------------------------------
+// U2: Grammar Bank scene + concept detail modal.
+//
+// SSR limits — documented here so readers know what is (and is not) asserted:
+//   * Focus management beyond the SSR-visible `data-focus-return-id`
+//     attribute cannot be asserted here. The attribute sits on the
+//     triggering card; the modal restores focus to it on close via a
+//     runtime effect. That effect is a browser side-effect and is
+//     covered by manual QA, not the SSR harness.
+//   * Escape-key closes the modal via a document-level keydown listener.
+//     The SSR harness does not simulate document-level events, so we
+//     assert the dispatcher exists via the data-action attribute + a
+//     direct dispatch of `grammar-concept-detail-close` through the
+//     action bus.
+//   * `createPortal` targets `document.body` at runtime, but the SSR
+//     renderer returns the JSX tree inline when no document is present
+//     (see `GrammarConceptDetailModal.jsx`) so the rendered HTML still
+//     contains the modal markup for assertions.
+// ----------------------------------------------------------------------------
+
+function openGrammarBankHarness() {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-open-concept-bank');
+  return harness;
+}
+
+test('U2: Grammar Bank renders 18 concept cards when filters are all/all', () => {
+  const harness = openGrammarBankHarness();
+  const html = harness.render();
+  assert.match(html, /class="grammar-bank-scene"/);
+  assert.match(html, /Grammar Bank/);
+  assert.match(html, /Back to Grammar Garden/);
+  // Exactly 18 concept cards render in the default all/all view.
+  const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
+  assert.equal(cards.length, 18, 'bank renders 18 concept cards in default view');
+  // Aggregate summary row exposes a Total card for accessibility.
+  assert.match(html, /data-aggregate-id="total"/);
+});
+
+test('U2: Grammar Bank status filter "trouble" narrows to needs-repair concepts', () => {
+  const harness = openGrammarBankHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  // Seed one concept with needs-repair confidence so the trouble filter has
+  // at least one match; every other concept should be excluded.
+  harness.store.updateSubjectUi('grammar', (current) => {
+    const normalised = normaliseGrammarReadModel(current, learnerId);
+    const concepts = normalised.analytics.concepts.map((concept) => (
+      concept.id === 'relative_clauses'
+        ? { ...concept, confidenceLabel: 'needs-repair', attempts: 4, correct: 1, wrong: 3 }
+        : concept
+    ));
+    return {
+      ...normalised,
+      analytics: { ...normalised.analytics, concepts },
+    };
+  });
+
+  harness.dispatch('grammar-concept-bank-filter', { value: 'trouble' });
+  const html = harness.render();
+  // The chip toggles aria-pressed; the grid narrows to the seeded concept.
+  // Attribute order in the rendered HTML is aria-pressed first, then
+  // data-value, so we assert both attrs appear on the same <button> element.
+  assert.match(html, /aria-pressed="true"[^>]*data-value="trouble"/);
+  const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"[^>]*data-concept-id="([^"]+)"/g) || [];
+  assert.equal(cards.length, 1, 'only the needs-repair concept matches the trouble filter');
+  assert.match(cards[0], /data-concept-id="relative_clauses"/);
+  // Status chip on the card surfaces child copy, not internal labels.
+  assert.match(html, /Trouble spot/);
+});
+
+test('U2: Grammar Bank cluster filter "bracehart" narrows to exactly 6 concepts', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'bracehart' });
+  const html = harness.render();
+  const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
+  assert.equal(cards.length, 6, 'bracehart cluster contains exactly 6 concepts');
+  // Cluster chip toggles aria-pressed.
+  assert.match(html, /aria-pressed="true"[^>]*data-value="bracehart"/);
+  // Every rendered card carries the bracehart cluster badge.
+  const badges = html.match(/grammar-bank-card-cluster-badge"[^>]*data-cluster-id="bracehart"/g) || [];
+  assert.equal(badges.length, 6);
+});
+
+test('U2: Grammar Bank cluster filter "concordium" shows all 18 concepts', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'concordium' });
+  const html = harness.render();
+  const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
+  assert.equal(cards.length, 18, 'concordium (aggregate) shows every concept');
+});
+
+test('U2: Grammar Bank search "clause" narrows case-insensitively', () => {
+  const harness = openGrammarBankHarness();
+  // Simulate a committed search (input commit path goes through the action).
+  harness.dispatch('grammar-concept-bank-search', { value: 'Clause' });
+  const html = harness.render();
+  const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"[^>]*data-concept-id="([^"]+)"/g) || [];
+  assert.ok(cards.length >= 2, 'search for "clause" matches at least two concepts');
+  assert.ok(cards.some((markup) => /data-concept-id="clauses"/.test(markup)));
+  assert.ok(cards.some((markup) => /data-concept-id="relative_clauses"/.test(markup)));
+  // Non-matching concepts are absent.
+  assert.ok(!cards.some((markup) => /data-concept-id="modal_verbs"/.test(markup)));
+});
+
+test('U2: Grammar Bank "Practise 5" button dispatches grammar-focus-concept with concept id', () => {
+  // Use the full grammar harness so the server engine service is available;
+  // `grammar-focus-concept` routes through `service.savePrefs` +
+  // `service.startSession` so it needs a real engine.
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-open-concept-bank');
+  // Assert the button markup carries the action + concept id so the
+  // keyboard / click handler both route the same id.
+  const html = harness.render();
+  assert.match(html, /data-action="grammar-focus-concept"[^>]*data-concept-id="word_classes"/);
+
+  // Dispatch the action directly and verify the prefs + phase transition.
+  harness.dispatch('grammar-focus-concept', { conceptId: 'word_classes' });
+  const grammar = harness.store.getState().subjectUi.grammar;
+  // focusConceptId persists on the prefs so subsequent rounds keep the focus.
+  assert.equal(grammar.prefs.focusConceptId, 'word_classes');
+  // The focus mode is a focus-using mode (smart/learn/worked/faded — NOT
+  // trouble/surgery/builder which drop focus).
+  assert.ok(['smart', 'learn', 'worked', 'faded'].includes(grammar.prefs.mode));
+  // The start-session transition flips the phase out of `bank`.
+  assert.notEqual(grammar.phase, 'bank');
+  // The session carries the focus concept id so the first question targets it.
+  assert.equal(grammar.session?.focusConceptId, 'word_classes');
+});
+
+test('U2: Grammar Bank detail modal opens with role="dialog" and aria-modal="true"', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-detail-open', { conceptId: 'relative_clauses' });
+  const html = harness.render();
+  assert.match(html, /role="dialog"/);
+  assert.match(html, /aria-modal="true"/);
+  assert.match(html, /aria-labelledby="grammar-concept-detail-title-relative_clauses"/);
+  // Modal body carries the concept name + example + close button.
+  assert.match(html, /Relative clauses/);
+  assert.match(html, /data-action="grammar-concept-detail-close"/);
+  // At least one example sentence for the concept renders inside the modal.
+  assert.match(html, /The dog, which was muddy, ran inside\./);
+});
+
+test('U2: Grammar Bank detail modal exposes focus-return marker on the triggering card', () => {
+  const harness = openGrammarBankHarness();
+  const html = harness.render();
+  // Every concept card carries a `data-focus-return-id` marker on its
+  // `See example` button so the modal close hook can restore focus.
+  assert.match(html, /data-focus-return-id="grammar-bank-concept-card-relative_clauses"/);
+});
+
+test('U2: Grammar Bank empty state renders "No concepts match" when filters exclude everything', () => {
+  const harness = openGrammarBankHarness();
+  // A search that matches no concept name / summary / example / domain.
+  harness.dispatch('grammar-concept-bank-search', { value: 'zzz-unreachable-token' });
+  const html = harness.render();
+  const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
+  assert.equal(cards.length, 0, 'no concept cards render when the search excludes everything');
+  assert.match(html, /No concepts match your filters\. Try another status or cluster\./);
+});
+
+test('U2: Grammar Bank HTML contains none of GRAMMAR_CHILD_FORBIDDEN_TERMS', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-detail-open', { conceptId: 'clauses' });
+  const html = harness.render();
+  // Narrow to the bank scene markup to avoid sweeping the adult analytics
+  // disclosure (which lives behind a sibling `<details>`).
+  const sceneMatch = html.match(/<section class="grammar-bank-scene"[\s\S]*?<\/section>/);
+  assert.ok(sceneMatch, 'Grammar Bank scene renders');
+  const sceneHtml = sceneMatch[0];
+  for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    assert.doesNotMatch(sceneHtml, new RegExp(escaped, 'i'), `forbidden term leaked: ${term}`);
+  }
+  // Reserved monsters must never appear as cluster badges in the bank.
+  assert.doesNotMatch(sceneHtml, /Glossbloom|Loomrill|Mirrane/i);
+});
+
+test('U2: Grammar Bank concept cards never render raw percentages', () => {
+  const harness = openGrammarBankHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  // Seed a non-trivial attempts count so any accidental percentage render
+  // would surface in the card markup.
+  harness.store.updateSubjectUi('grammar', (current) => {
+    const normalised = normaliseGrammarReadModel(current, learnerId);
+    const concepts = normalised.analytics.concepts.map((concept) => (
+      concept.id === 'noun_phrases'
+        ? { ...concept, attempts: 10, correct: 7, wrong: 3 }
+        : concept
+    ));
+    return {
+      ...normalised,
+      analytics: { ...normalised.analytics, concepts },
+    };
+  });
+  const html = harness.render();
+  const cardsHtml = (html.match(/<article[^>]*class="grammar-bank-card[^"]*"[\s\S]*?<\/article>/g) || []).join('\n');
+  assert.ok(cardsHtml.length > 0, 'bank cards render');
+  assert.doesNotMatch(cardsHtml, /\d+%/, 'percentage characters must not appear in concept cards');
+});
+
+test('U2: Grammar Bank close action returns the learner to the dashboard', () => {
+  const harness = openGrammarBankHarness();
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'bank');
+  harness.dispatch('grammar-close-concept-bank');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');
+  const html = harness.render();
+  assert.match(html, /Grammar Garden/);
+});
+
+test('U2: Grammar Bank detail-close clears the detailConceptId slice', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-detail-open', { conceptId: 'word_classes' });
+  assert.equal(harness.store.getState().subjectUi.grammar.bank.detailConceptId, 'word_classes');
+  harness.dispatch('grammar-concept-detail-close');
+  assert.equal(harness.store.getState().subjectUi.grammar.bank.detailConceptId, '');
+});
+
+test('U2: Grammar Bank filter + search round-trip through the normaliser without stomping unrelated state', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-bank-filter', { value: 'learning' });
+  harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'chronalyx' });
+  harness.dispatch('grammar-concept-bank-search', { value: 'verb' });
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.bank.statusFilter, 'learning');
+  assert.equal(grammar.bank.clusterFilter, 'chronalyx');
+  assert.equal(grammar.bank.query, 'verb');
+  // Session, summary, feedback untouched.
+  assert.equal(grammar.phase, 'bank');
+  assert.equal(grammar.session, null);
+  assert.equal(grammar.summary, null);
+  assert.equal(grammar.feedback, null);
+});
+
+test('U2: Grammar Bank rejects invalid filter ids via the normaliser', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-bank-filter', { value: 'bogus-status' });
+  assert.equal(harness.store.getState().subjectUi.grammar.bank.statusFilter, 'all');
+  harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'glossbloom' });
+  assert.equal(harness.store.getState().subjectUi.grammar.bank.clusterFilter, 'all');
+});

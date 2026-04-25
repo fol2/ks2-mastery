@@ -1,5 +1,6 @@
 import React from 'react';
 import { GrammarAnalyticsScene } from './GrammarAnalyticsScene.jsx';
+import { GrammarConceptBankScene } from './GrammarConceptBankScene.jsx';
 import { GrammarSessionScene } from './GrammarSessionScene.jsx';
 import { GrammarSetupScene } from './GrammarSetupScene.jsx';
 import { GrammarSummaryScene } from './GrammarSummaryScene.jsx';
@@ -8,11 +9,10 @@ import { normaliseGrammarRewardState } from '../../../platform/game/monster-syst
 
 const MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
 
-// Phase 3 U1 removes the adult-diagnostic roadmap placeholders. The
-// U6b Writing Try scene and U2 Grammar Bank scene take over the slots
-// with real child-facing scenes. Until those ship, U1 routes their
-// phase transitions through a minimal stub below so the state machine
-// remains safe and a "return" button lets the learner back out.
+// Phase 3 U2 replaces the Grammar Bank placeholder stub with the real
+// `GrammarConceptBankScene`. The Writing Try scene (`GrammarTransferScene`)
+// still ships as a placeholder until U6b lands; until then, U1's stub
+// holds the phase transition safe with a way back to the dashboard.
 
 function selectedLearner(appState) {
   const learnerId = appState?.learners?.selectedId || '';
@@ -55,26 +55,6 @@ function resolveGrammarRewardState({ grammar, learner, repositories }) {
   const normalisedPersisted = normaliseGrammarRewardState(persistedState);
   if (hasGrammarRewardProgress(normalisedPersisted)) return normalisedPersisted;
   return Object.keys(normalisedProjected).length ? normalisedProjected : normalisedPersisted;
-}
-
-function GrammarBankPlaceholderScene({ actions }) {
-  // U1 wires the "Grammar Bank" primary mode card; U2 ships the real scene.
-  // Until then, this stub honours the state transition and offers a way back
-  // so the learner is never stuck.
-  return (
-    <section className="grammar-bank-placeholder" aria-labelledby="grammar-bank-placeholder-title">
-      <h2 id="grammar-bank-placeholder-title">Grammar Bank</h2>
-      <p>Your full concept bank lands here soon — browse all 18 grammar concepts with child-friendly statuses.</p>
-      <button
-        type="button"
-        className="btn primary"
-        data-action="grammar-back"
-        onClick={() => actions.dispatch('grammar-back')}
-      >
-        Back to Grammar Garden
-      </button>
-    </section>
-  );
 }
 
 function GrammarTransferPlaceholderScene({ actions }) {
@@ -125,7 +105,7 @@ export function GrammarPracticeSurface({
   if (grammar.phase === 'bank') {
     return (
       <div className="grammar-surface">
-        <GrammarBankPlaceholderScene {...shared} />
+        <GrammarConceptBankScene {...shared} />
       </div>
     );
   }
