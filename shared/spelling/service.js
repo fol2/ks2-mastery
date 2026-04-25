@@ -681,6 +681,32 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     saveJson(resolvedStorage, guardianMapKey(learnerId), map || {});
   }
 
+  // U7 merge-save: per-slug guardian writer.
+  //
+  // Shrinks the client-local last-writer-wins race window on `guardianMap`
+  // writes. Instead of "load the whole map into memory, mutate in-place, save
+  // the whole map" (which loses any cross-tab writes that landed between the
+  // load and the save), this helper reloads the latest persisted map, merges
+  // in a single slug's record, then saves.
+  //
+  // Stays synchronous on purpose: no `navigator.locks`, no `await`, no Promise.
+  // This does NOT provide cross-tab compare-and-swap guarantees — same-slug
+  // concurrent writes still last-writer-wins locally. Full CAS is deferred to
+  // the `post-mega-spelling-storage-cas` plan.
+  //
+  // `saveGuardianMap` stays on the API because `resetLearner` (U6) zeros the
+  // whole map in one go; that single-write is the only caller that should NOT
+  // go through the merge-save path.
+  function saveGuardianRecord(learnerId, slug, record) {
+    const safeSlug = typeof slug === 'string' ? slug : '';
+    if (!safeSlug) return;
+    // Reload from storage so any write performed by another tab between our
+    // caller's `loadGuardianMap` and this call is preserved.
+    const latest = loadGuardianMap(learnerId);
+    latest[safeSlug] = record;
+    saveGuardianMap(learnerId, latest);
+  }
+
   function loadProgressFromStorage(learnerId) {
     const raw = loadJson(resolvedStorage, progressMapKey(learnerId), {});
     return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
@@ -1200,8 +1226,17 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     saveProgressToStorage(learnerId, progressMap);
 
     // Advance the guardian record. Lazy-create if this is the first Guardian
-    // touch for the slug. ensureGuardianRecord mutates the map, so load a
-    // mutable copy first, advance, then save the whole thing.
+    // touch for the slug. We load a mutable copy for the read-side
+    // (`ensureGuardianRecord` plus the wobbling inspection), then commit via
+    // the per-slug `saveGuardianRecord` helper so a concurrent write on a
+    // DIFFERENT slug from another tab is preserved through the merge-save
+    // reload (U7).
+    //
+    // Note: when U4's "I don't know" branch lands in `skipWord`, it must also
+    // use `saveGuardianRecord` instead of the whole-map writer, otherwise the
+    // "I don't know" wobble and a concurrent correct/wrong submit on another
+    // tab can stomp each other. That wiring is owned by U4 itself; this comment
+    // is left here so the follow-up is obvious.
     const todayDay = currentTodayDay();
     const guardianMap = loadGuardianMap(learnerId);
     const beforeRecord = ensureGuardianRecord(guardianMap, currentSlug, todayDay);
@@ -1209,8 +1244,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const updatedRecord = correct
       ? advanceGuardianOnCorrect(beforeRecord, todayDay)
       : advanceGuardianOnWrong(beforeRecord, todayDay);
-    guardianMap[currentSlug] = updatedRecord;
-    saveGuardianMap(learnerId, guardianMap);
+    saveGuardianRecord(learnerId, currentSlug, updatedRecord);
 
     // Record the per-word outcome so the finalisation step can emit the
     // mission-completed event with accurate aggregate counts.
@@ -1578,5 +1612,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     endSession,
     stageLabel,
     resetLearner,
+    // U7: synchronous per-slug guardian-map writer. Exposed on the service API
+    // so (a) tests can assert the merge-save contract, and (b) future guardian
+    // write sites (e.g. U4's "I don't know" branch) can call it directly
+    // instead of going through a whole-map load/mutate/save.
+    saveGuardianRecord,
   };
 }

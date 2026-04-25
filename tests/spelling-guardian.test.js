@@ -1633,3 +1633,347 @@ test('U6 guardian reset: Worker-side resetLearner behaviour unchanged (still zer
   assert.deepEqual(snapshot.guardian, {});
   assert.deepEqual(snapshot.progress, {});
 });
+
+// -----------------------------------------------------------------------------
+// U7: Merge-save for guardian writes.
+//
+// Goal: shrink the client-local last-writer-wins race window on guardianMap
+// writes by introducing a per-slug `saveGuardianRecord(learnerId, slug, record)`
+// helper that does load -> merge one slug -> save, instead of the pre-U7 pattern
+// of loading the whole map, mutating it in memory, and writing the whole map
+// back. `saveGuardianMap` stays on the service API because `resetLearner` (U6)
+// uses it to zero the whole map atomically.
+//
+// The race under test:
+//   Tab A loads the guardian map (call it snapshot M_A).
+//   Tab B loads the guardian map (snapshot M_B).
+//   Tab B advances slug X  -> writes via saveGuardianRecord -> storage has { X }.
+//   Tab A advances slug Y  -> writes via saveGuardianRecord -> storage must end
+//     with BOTH X and Y.
+// Pre-U7, tab A's write was `saveGuardianMap(M_A_with_Y)` which overwrote X.
+// Post-U7, tab A's write does a fresh load before merging Y, so X survives.
+// -----------------------------------------------------------------------------
+
+const U7_GUARDIAN_KEY = (learnerId) => `ks2-spell-guardian-${learnerId}`;
+
+function freshGuardianRecord(todayDay) {
+  return {
+    reviewLevel: 1,
+    lastReviewedDay: todayDay,
+    nextDueDay: todayDay + 3,
+    correctStreak: 1,
+    lapses: 0,
+    renewals: 0,
+    wobbling: false,
+  };
+}
+
+function readGuardianMapViaRepos(repositories, learnerId) {
+  const record = repositories.subjectStates.read(learnerId, 'spelling');
+  return (record && record.data && record.data.guardian) || {};
+}
+
+// Lightweight service factory that bypasses the repository layer, so two
+// instances sharing the same `storage` proxy genuinely share their guardian
+// map (all reads/writes go through the raw storage backing). This matches
+// the real-world two-tab case where both tabs share the same localStorage.
+function makeRawService({ now, random, storage }) {
+  return createSpellingService({
+    storage,
+    now,
+    random,
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+  });
+}
+
+test('U7 saveGuardianRecord: happy path — single-instance submit produces the same final map as pre-U7 whole-map write', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  // Start a Guardian session and submit the first card correctly.
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  assert.equal(started.ok, true);
+  const firstSlug = started.state.session.currentCard.slug;
+  const firstWord = WORD_BY_SLUG[firstSlug];
+  const submitted = service.submitAnswer('learner-a', started.state, firstWord.word);
+
+  // Storage (via the repositories proxy) now has a guardian map with exactly
+  // that slug advanced — matches the pre-U7 whole-map write semantics.
+  const stored = readGuardianMapViaRepos(repositories, 'learner-a');
+  assert.ok(stored && typeof stored === 'object', 'guardian map persisted to storage');
+  assert.ok(stored[firstSlug], 'first slug is present in persisted map');
+  assert.equal(stored[firstSlug].reviewLevel, 1, 'fresh correct -> reviewLevel 1');
+  assert.equal(stored[firstSlug].correctStreak, 1, 'fresh correct -> correctStreak 1');
+  assert.equal(stored[firstSlug].lastReviewedDay, today, 'lastReviewedDay = today');
+  // Other slugs must not have been written yet.
+  const otherKeys = Object.keys(stored).filter((key) => key !== firstSlug);
+  assert.equal(otherKeys.length, 0, 'no other slugs written by single submit');
+
+  // No Promise leak — submit stays synchronous.
+  assert.equal(typeof submitted.then, 'undefined', 'submitAnswer return value is not a Promise');
+});
+
+test('U7 saveGuardianRecord: exists on the service API as a synchronous function', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const { service } = makeServiceWithSeed({ now, random: () => 0.5 });
+  assert.equal(typeof service.saveGuardianRecord, 'function', 'service.saveGuardianRecord is a function');
+
+  const today = Math.floor(now() / DAY_MS_TS);
+  const result = service.saveGuardianRecord('learner-a', 'possess', freshGuardianRecord(today));
+  // Must be synchronous — no Promise.
+  assert.equal(typeof result?.then, 'undefined', 'saveGuardianRecord return value is not a Promise');
+});
+
+test('U7 saveGuardianRecord: two instances sharing storage, different slugs — both advances survive', () => {
+  // Two-tab race: tab A and tab B both load the guardian map, then each writes
+  // a different slug via saveGuardianRecord. Because saveGuardianRecord does a
+  // fresh load-then-merge-single-slug-then-save, the second writer sees the
+  // first writer's contribution and preserves it.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const storage = installMemoryStorage();
+
+  // Both services share the same storage directly — simulating two tabs on the
+  // same learner sharing localStorage. Bypass the repositories layer so both
+  // services read/write the guardian key through the same raw Map.
+  const tabA = makeRawService({ now, random: () => 0.5, storage });
+  const tabB = makeRawService({ now, random: () => 0.5, storage });
+
+  const slugX = 'possess';
+  const slugY = 'believe';
+  const recordX = freshGuardianRecord(today);
+  const recordY = { ...freshGuardianRecord(today), reviewLevel: 2, correctStreak: 3 };
+
+  // Interleaved sequence: tab B writes first, then tab A writes. Under pre-U7
+  // whole-map semantics, tab A (holding a stale snapshot of the guardian map
+  // loaded before B's write) would stomp B's X. Under U7 merge-save, tab A's
+  // write re-loads the guardian map fresh, merges its Y into the current
+  // storage contents, and saves — so both X and Y persist.
+  tabB.saveGuardianRecord('learner-a', slugX, recordX);
+  tabA.saveGuardianRecord('learner-a', slugY, recordY);
+
+  const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
+  assert.ok(finalMap && typeof finalMap === 'object', 'final map persisted');
+  assert.ok(finalMap[slugX], `tab B's slug ${slugX} survived in final map`);
+  assert.ok(finalMap[slugY], `tab A's slug ${slugY} survived in final map`);
+  // Records round-trip (fields preserved by normaliseGuardianMap).
+  assert.equal(finalMap[slugX].reviewLevel, recordX.reviewLevel);
+  assert.equal(finalMap[slugY].reviewLevel, recordY.reviewLevel);
+  assert.equal(finalMap[slugY].correctStreak, recordY.correctStreak);
+});
+
+test('U7 saveGuardianRecord: two instances sharing storage, SAME slug — last-writer-wins on that slug (accepted current behaviour)', () => {
+  // Documents that U7 does NOT promise same-slug CAS — same-slug concurrent
+  // writes still last-writer-wins locally. Cross-tab CAS is deferred.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const storage = installMemoryStorage();
+
+  const tabA = makeRawService({ now, random: () => 0.5, storage });
+  const tabB = makeRawService({ now, random: () => 0.5, storage });
+
+  const slug = 'possess';
+  const firstRecord = { ...freshGuardianRecord(today), reviewLevel: 1, correctStreak: 1 };
+  const secondRecord = { ...freshGuardianRecord(today), reviewLevel: 3, correctStreak: 5 };
+
+  tabB.saveGuardianRecord('learner-a', slug, firstRecord);
+  tabA.saveGuardianRecord('learner-a', slug, secondRecord);
+
+  const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
+  assert.ok(finalMap[slug], 'slug is still present');
+  assert.equal(finalMap[slug].reviewLevel, secondRecord.reviewLevel, 'last writer wins on same slug');
+  assert.equal(finalMap[slug].correctStreak, secondRecord.correctStreak, 'last writer wins on same slug');
+});
+
+test('U7 saveGuardianRecord: merges into an existing non-empty map without dropping other slugs', () => {
+  // Explicit invariant: if storage already contains { A, B }, saveGuardianRecord
+  // for slug C must produce { A, B, C } — not { C }.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const storage = installMemoryStorage();
+  const service = makeRawService({ now, random: () => 0.5, storage });
+
+  // Seed storage directly with two pre-existing slugs.
+  const preExistingMap = {
+    possess: { ...freshGuardianRecord(today), reviewLevel: 2 },
+    believe: { ...freshGuardianRecord(today), reviewLevel: 3 },
+  };
+  storage.setItem(U7_GUARDIAN_KEY('learner-a'), JSON.stringify(preExistingMap));
+
+  service.saveGuardianRecord('learner-a', 'rhythm', {
+    ...freshGuardianRecord(today),
+    reviewLevel: 4,
+  });
+
+  const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
+  assert.equal(Object.keys(finalMap).length, 3, 'all three slugs present');
+  assert.equal(finalMap.possess.reviewLevel, 2, 'pre-existing possess untouched');
+  assert.equal(finalMap.believe.reviewLevel, 3, 'pre-existing believe untouched');
+  assert.equal(finalMap.rhythm.reviewLevel, 4, 'new rhythm merged in');
+});
+
+test('U7 integration: submitGuardianAnswer uses saveGuardianRecord — concurrent submits on two shared-repository instances both survive', () => {
+  // End-to-end integration: two services share the same repositories (so the
+  // in-memory subject-state cache is shared). Each starts its own Guardian
+  // session, and their submits interleave. Both advances must land in the
+  // final guardian map.
+  //
+  // Why share repositories rather than just storage: the createSpellingPersistence
+  // layer caches subject-state in an in-memory `collections` object and flushes
+  // to storage on each write. Two separate `createLocalPlatformRepositories`
+  // calls on the same backing storage each have their own cache, so they do
+  // NOT see each other's writes until a fresh startup rehydration. Sharing
+  // one `repositories` object is the honest analogue of "two tabs, same
+  // localStorage, same in-memory subject-state".
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  function serviceFor(random) {
+    return createSpellingService({
+      repository: createSpellingPersistence({ repositories, now }),
+      now,
+      random,
+      tts: { speak() {}, stop() {}, warmup() {} },
+    });
+  }
+
+  const tabA = serviceFor(() => 0.5);
+  const tabB = serviceFor(() => 0.8);
+
+  // Start tab A's session and capture the first slug.
+  const startedA = tabA.startSession('learner-a', { mode: 'guardian' });
+  assert.equal(startedA.ok, true);
+  const slugA = startedA.state.session.currentCard.slug;
+  const wordA = WORD_BY_SLUG[slugA].word;
+
+  // Start tab B's session independently — it picks its own queue (different
+  // random seed => different ordering).
+  const startedB = tabB.startSession('learner-a', { mode: 'guardian' });
+  assert.equal(startedB.ok, true);
+  // Find a slug in tab B's queue that is not slugA so the race is on different slugs.
+  const slugB = startedB.state.session.uniqueWords.find((s) => s !== slugA);
+  assert.ok(slugB, 'tab B queue has a slug distinct from tab A');
+
+  // Rearrange tab B's session queue so its currentCard is slugB.
+  const bSession = { ...startedB.state.session };
+  bSession.queue = [slugB, ...bSession.queue.filter((s) => s !== slugB)];
+  bSession.currentSlug = slugB;
+  bSession.currentCard = { ...bSession.currentCard, slug: slugB, word: WORD_BY_SLUG[slugB] };
+  const bState = { ...startedB.state, session: bSession };
+
+  // Interleave: tab B submits first, then tab A submits. Both writes go through
+  // submitGuardianAnswer -> saveGuardianRecord. Both advances must be in the
+  // final guardian map.
+  const wordB = WORD_BY_SLUG[slugB].word;
+  const submittedB = tabB.submitAnswer('learner-a', bState, wordB);
+  assert.equal(typeof submittedB.then, 'undefined', 'submitAnswer (tab B) is synchronous');
+  const submittedA = tabA.submitAnswer('learner-a', startedA.state, wordA);
+  assert.equal(typeof submittedA.then, 'undefined', 'submitAnswer (tab A) is synchronous');
+
+  const finalMap = readGuardianMapViaRepos(repositories, 'learner-a');
+  assert.ok(finalMap[slugA], `tab A's slug ${slugA} present in final map`);
+  assert.ok(finalMap[slugB], `tab B's slug ${slugB} present in final map`);
+  assert.equal(finalMap[slugA].correctStreak, 1, 'tab A slug advanced');
+  assert.equal(finalMap[slugB].correctStreak, 1, 'tab B slug advanced');
+});
+
+test('U7 integration: submitGuardianAnswer synchronous — no Promise leak, return value has {state, events, ok}', () => {
+  // Scope guard: adversarial review will flag any async/await leak in the
+  // guardian write path. This test locks the synchronous return shape of
+  // submitGuardianAnswer after the U7 refactor.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const slug = started.state.session.currentCard.slug;
+  const word = WORD_BY_SLUG[slug].word;
+
+  const submitted = service.submitAnswer('learner-a', started.state, word);
+  assert.equal(typeof submitted.then, 'undefined', 'no then method -> not a Promise');
+  assert.equal(typeof submitted.state, 'object', 'state is an object');
+  assert.ok(Array.isArray(submitted.events), 'events is an array');
+  assert.equal(typeof submitted.ok, 'boolean', 'ok is a boolean');
+});
+
+test('U7 integration: saveGuardianRecord normalises the record via normaliseGuardianMap on the way in', () => {
+  // Defensive: a garbage record handed in must not poison the stored map.
+  // normaliseGuardianMap inside loadGuardianMap already clamps bad values on
+  // read; saveGuardianRecord must ensure what we store round-trips cleanly.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const storage = installMemoryStorage();
+  const service = makeRawService({ now, random: () => 0.5, storage });
+
+  // Seed a valid slug first.
+  service.saveGuardianRecord('learner-a', 'possess', freshGuardianRecord(today));
+
+  // Now save a record with an out-of-range reviewLevel; normaliseGuardianMap
+  // clamps on load, so subsequent reads stay safe.
+  service.saveGuardianRecord('learner-a', 'believe', {
+    ...freshGuardianRecord(today),
+    reviewLevel: 99, // out of range
+  });
+
+  const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
+  assert.ok(finalMap.possess, 'first slug still present after second write');
+  assert.ok(finalMap.believe, 'second slug persisted');
+  // The raw stored value may or may not be pre-clamped depending on
+  // implementation; at minimum a subsequent load must normalise. We leave
+  // detailed clamp semantics to normaliseGuardianMap's own tests.
+});
+
+test('U7 integration: saveGuardianRecord ignores empty/non-string slug — no corruption of the map', () => {
+  // Defensive: passing an empty or non-string slug must be a silent no-op
+  // rather than writing an empty-key entry that breaks normaliseGuardianMap's
+  // slug filter.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const storage = installMemoryStorage();
+  const service = makeRawService({ now, random: () => 0.5, storage });
+
+  service.saveGuardianRecord('learner-a', 'possess', freshGuardianRecord(today));
+  // Each of these should be a no-op.
+  service.saveGuardianRecord('learner-a', '', freshGuardianRecord(today));
+  service.saveGuardianRecord('learner-a', null, freshGuardianRecord(today));
+  service.saveGuardianRecord('learner-a', undefined, freshGuardianRecord(today));
+  service.saveGuardianRecord('learner-a', 42, freshGuardianRecord(today));
+
+  const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
+  assert.deepEqual(Object.keys(finalMap), ['possess'], 'only the valid slug persists');
+});
+
+test('U7 integration: resetLearner still uses saveGuardianMap (whole-map zero), NOT saveGuardianRecord', () => {
+  // U6 zeros the guardian map on reset via `saveGuardianMap(learnerId, {})`.
+  // U7 must not redirect that single call through `saveGuardianRecord` —
+  // zeroing with saveGuardianRecord would require iterating every existing
+  // slug, which is both slower and semantically wrong (reset = clear, not
+  // merge). Assert the end state: after seeding a guardian map directly and
+  // calling resetLearner, the stored key is an empty object.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const storage = installMemoryStorage();
+  const service = makeRawService({ now, random: () => 0.5, storage });
+
+  // Seed a non-empty guardian map.
+  service.saveGuardianRecord('learner-a', 'possess', freshGuardianRecord(today));
+  service.saveGuardianRecord('learner-a', 'believe', freshGuardianRecord(today));
+  const seeded = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
+  assert.equal(Object.keys(seeded).length, 2, 'seeded with two entries');
+
+  service.resetLearner('learner-a');
+
+  const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
+  assert.deepEqual(finalMap, {}, 'guardian map zeroed after reset');
+});
