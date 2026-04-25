@@ -89,7 +89,12 @@ function evidenceEnvelope(overrides = {}) {
     },
     summary: summaryOverride || {
       ok: true,
-      totalRequests: 1,
+      // Arithmetic identity: totalRequests must equal sum(endpoint.count) so
+      // checkStructuralCoherence stays silent in baseline tests. Individual
+      // tests exercise the arithmetic check by overriding `summary` entirely.
+      totalRequests: 20,
+      startedAt: '2026-04-25T00:00:00Z',
+      finishedAt: '2026-04-25T00:00:30Z',
       endpoints: {
         'GET /api/bootstrap': { count: 10, p50WallMs: 100, p95WallMs: 320, maxResponseBytes: 81000 },
         'POST /api/subjects/grammar/command': { count: 10, p50WallMs: 90, p95WallMs: 180, maxResponseBytes: 5000 },
@@ -173,9 +178,13 @@ test('small-pilot tier row with pinned config + matching learners passes (U1 cur
   mkdirSync(configsDir, { recursive: true });
   const evidencePath = join(evidenceDir, 'latest-preview.json');
   const configPath = join(configsDir, 'small-pilot.json');
+  // Round 5 Finding 3 requires small-pilot-provisional configs to declare at
+  // minimum max5xx, maxBootstrapP95Ms, and maxCommandP95Ms. The happy-path
+  // fixture updates to reflect that minimum so the test exercises a valid
+  // production-shaped config.
   writeFileSync(configPath, JSON.stringify({
     tier: 'small-pilot-provisional',
-    thresholds: { max5xx: 0, maxNetworkFailures: 0 },
+    thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750 },
   }));
   writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
     reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
@@ -187,7 +196,8 @@ test('small-pilot tier row with pinned config + matching learners passes (U1 cur
     // Evidence thresholds must match the committed config thresholds exactly.
     thresholds: {
       max5xx: { configured: 0, observed: 0, passed: true },
-      maxNetworkFailures: { configured: 0, observed: 0, passed: true },
+      maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+      maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
     },
   })));
   writeFileSync(docPath, makeDoc([
@@ -873,6 +883,399 @@ test('runVerify empty tier object does not satisfy tier cross-check', () => {
     assert.ok(result.report.some((line) => line.includes('missing tier.tier')));
   } finally {
     process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// Round 5 Finding 1 [High]: dryRun:true cannot back a cert-tier decision.
+// Trigger: operator sets payload.dryRun=true, nulls latency fields, then claims
+// a tier above smoke-pass. gateUpperBound gives passed:true on null observed in
+// dry-run, which is correct semantics for true dry-run previews but must not
+// launder a real certification claim. Verify rejects.
+test('dryRun:true cannot back a decision above smoke-pass (adv-r5-f1)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+  writeFileSync(configPath, JSON.stringify({
+    tier: 'small-pilot-provisional',
+    thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750 },
+  }));
+  // Evidence: dryRun:true, null latency observed. recomputeFailures would
+  // otherwise accept this because dryRun:true makes null-observed pass.
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    dryRun: true,
+    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    tier: {
+      tier: 'small-pilot-provisional',
+      configPath: 'reports/capacity/configs/small-pilot.json',
+    },
+    thresholds: {
+      max5xx: { configured: 0, observed: 0, passed: true },
+      maxBootstrapP95Ms: { configured: 1000, observed: null, passed: true },
+      maxCommandP95Ms: { configured: 750, observed: null, passed: true },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '—', '—', '81000', '0', 'none', 'small-pilot-provisional', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('dryRun:true cannot back')),
+      `expected dryRun rejection message; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('dryRun:true on smoke-pass row still allowed (dryRun preview legitimate)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    dryRun: true,
+    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, true, `smoke-pass dryRun row should still pass; got: ${JSON.stringify(result.report)}`);
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// Round 5 Finding 2 [Medium]: structural coherence.
+// totalRequests must equal the sum of perEndpoint.sampleCount across endpoints,
+// and timings must be monotonic. If coherence fails we short-circuit and emit a
+// failure rather than blindly trusting the fabricated summary.
+test('inconsistent totalRequests vs endpoint sampleCount fails (adv-r5-f2a)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    summary: {
+      ok: true,
+      totalRequests: 999,  // claims 999 but endpoints sum to 20
+      endpoints: {
+        'GET /api/bootstrap': { count: 10, sampleCount: 10, p50WallMs: 100, p95WallMs: 320, maxResponseBytes: 81000 },
+        'POST /api/subjects/grammar/command': { count: 10, sampleCount: 10, p50WallMs: 90, p95WallMs: 180, maxResponseBytes: 5000 },
+      },
+      startedAt: '2026-04-25T00:00:00Z',
+      finishedAt: '2026-04-25T00:00:30Z',
+      signals: {},
+      failures: [],
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('totalRequests')),
+      `expected totalRequests coherence message; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('non-ISO timestamps in summary fail structural coherence (adv-r5-f2b)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    summary: {
+      ok: true,
+      totalRequests: 20,
+      endpoints: {
+        'GET /api/bootstrap': { count: 10, sampleCount: 10, p50WallMs: 100, p95WallMs: 320, maxResponseBytes: 81000 },
+        'POST /api/subjects/grammar/command': { count: 10, sampleCount: 10, p50WallMs: 90, p95WallMs: 180, maxResponseBytes: 5000 },
+      },
+      startedAt: 'not-a-timestamp',
+      finishedAt: '2026-04-25T00:00:30Z',
+      signals: {},
+      failures: [],
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('startedAt') || line.includes('ISO timestamp')),
+      `expected timestamp parse failure; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('finishedAt earlier than startedAt fails structural coherence (adv-r5-f2c)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    summary: {
+      ok: true,
+      totalRequests: 20,
+      endpoints: {
+        'GET /api/bootstrap': { count: 10, sampleCount: 10, p50WallMs: 100, p95WallMs: 320, maxResponseBytes: 81000 },
+        'POST /api/subjects/grammar/command': { count: 10, sampleCount: 10, p50WallMs: 90, p95WallMs: 180, maxResponseBytes: 5000 },
+      },
+      startedAt: '2026-04-25T00:00:30Z',
+      finishedAt: '2026-04-25T00:00:00Z',  // before startedAt
+      signals: {},
+      failures: [],
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('finishedAt') && line.includes('startedAt')),
+      `expected timing ordering failure; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// Round 5 Finding 3 [Medium]: minimum threshold keys per tier.
+// A committed config with tier small-pilot-provisional must declare at minimum
+// max5xx, p95BootstrapMs, p95CommandMs (here: max5xx, maxBootstrapP95Ms,
+// maxCommandP95Ms). Empty thresholds:{} no longer passes.
+test('small-pilot-provisional config with empty thresholds:{} fails verify (adv-r5-f3)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+  writeFileSync(configPath, JSON.stringify({
+    tier: 'small-pilot-provisional',
+    thresholds: {},  // empty — now invalid per plan's minimum-thresholds rule
+  }));
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    tier: {
+      tier: 'small-pilot-provisional',
+      configPath: 'reports/capacity/configs/small-pilot.json',
+    },
+    thresholds: {},
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'small-pilot-provisional', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('minimum threshold')
+        || line.includes('required threshold')
+        || line.includes('must declare')),
+      `expected minimum-threshold failure; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('30-learner-beta config requires maxBootstrapBytes in addition to base 3 (adv-r5-f3b)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-production.json');
+  const configPath = join(configsDir, '30-learner-beta.json');
+  // Missing the bytes cap that classroom-tier rules mandate.
+  writeFileSync(configPath, JSON.stringify({
+    tier: '30-learner-beta-certified',
+    thresholds: {
+      max5xx: 0,
+      maxBootstrapP95Ms: 1000,
+      maxCommandP95Ms: 750,
+    },
+  }));
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    // Schema v1 here because the tool ceiling is v1; the schemaVersion>=2
+    // gate for classroom tiers fires separately and is not what this test
+    // is exercising. The minimum-threshold-keys check must run BEFORE the
+    // schema-version check in verifyEvidenceRow so the message is emitted.
+    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 30, bootstrapBurst: 30, rounds: 3 },
+    tier: {
+      tier: '30-learner-beta-certified',
+      configPath: 'reports/capacity/configs/30-learner-beta.json',
+    },
+    thresholds: {
+      max5xx: { configured: 0, observed: 0, passed: true },
+      maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+      maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-27', 'abc1234', 'prod', 'Free', '30', '30', '3', '320', '180', '81000', '0', 'none', '30-learner-beta-certified', 'reports/capacity/latest-production.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('maxResponseBytes')
+        || line.includes('maxBootstrapBytes')
+        || line.includes('bytes')),
+      `expected bytes-threshold failure for classroom tier; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// Round 5 Finding 4 [Low]: git ancestry check on committed config.
+// The default env.CAPACITY_VERIFY_SKIP_ANCESTRY guard is not set, so the check
+// runs; but in the test repo we cannot fabricate a non-ancestor relationship
+// without mutating the git tree. We therefore exercise two branches:
+// (a) env skip honoured → passes cleanly (no warning)
+// (b) git failure path (unknown commit SHA in evidence) → WARNING emitted but
+//     verification does not fail ok:false only on the ancestry issue; this
+//     keeps CI-without-history safe.
+test('CAPACITY_VERIFY_SKIP_ANCESTRY=1 skips ancestry check (adv-r5-f4a)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+  writeFileSync(configPath, JSON.stringify({
+    tier: 'small-pilot-provisional',
+    thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750 },
+  }));
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    tier: {
+      tier: 'small-pilot-provisional',
+      configPath: 'reports/capacity/configs/small-pilot.json',
+    },
+    thresholds: {
+      max5xx: { configured: 0, observed: 0, passed: true },
+      maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+      maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'small-pilot-provisional', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  const previousSkip = process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = '1';
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    // With the escape hatch set, the ancestry check never fires and the rest
+    // of the checks pass cleanly.
+    assert.equal(result.ok, true, `skip-ancestry path should pass; got: ${JSON.stringify(result.report)}`);
+  } finally {
+    process.chdir(cwd);
+    if (previousSkip === undefined) delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+    else process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = previousSkip;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('ancestry check on git-less tempdir degrades to warning, not failure (adv-r5-f4b)', () => {
+  // tempdir is not a git repo, so `git log` fails. The ancestry helper must
+  // emit a WARNING rather than fail verification. ok should still be true for
+  // the otherwise-clean payload.
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+  writeFileSync(configPath, JSON.stringify({
+    tier: 'small-pilot-provisional',
+    thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750 },
+  }));
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    tier: {
+      tier: 'small-pilot-provisional',
+      configPath: 'reports/capacity/configs/small-pilot.json',
+    },
+    thresholds: {
+      max5xx: { configured: 0, observed: 0, passed: true },
+      maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+      maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'small-pilot-provisional', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  const previousSkip = process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    // Git cannot resolve in a non-repo tempdir — helper degrades to warning.
+    // Verification stays ok:true because the other checks all pass.
+    assert.equal(result.ok, true, `git-less dir should stay ok:true via warning path; got: ${JSON.stringify(result.report)}`);
+  } finally {
+    process.chdir(cwd);
+    if (previousSkip === undefined) delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+    else process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = previousSkip;
     rmSync(tempDir, { recursive: true, force: true });
   }
 });

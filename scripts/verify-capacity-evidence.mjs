@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { execSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { relative, resolve } from 'node:path';
@@ -27,6 +28,27 @@ const TIERS_ABOVE_SMALL_PILOT = new Set([
   '30-learner-beta-certified',
   '60-learner-stretch-certified',
   '100-plus-certified',
+]);
+
+// Round 5 Finding 1 (High): dryRun:true is a legitimate preview mode for
+// smoke-pass rows but must not launder certification-tier claims. When the
+// decision belongs to this set the payload cannot set `dryRun: true`.
+const TIERS_ABOVE_SMOKE_PASS = new Set([
+  'small-pilot-provisional',
+  '30-learner-beta-certified',
+  '60-learner-stretch-certified',
+  '100-plus-certified',
+]);
+
+// Round 5 Finding 3 (Medium): the minimum threshold keys a committed config
+// MUST declare per tier. An empty `thresholds: {}` previously passed silently.
+// Keys map onto capacity-evidence.mjs's KNOWN_THRESHOLD_KEYS; `maxResponseBytes`
+// is the "maxBootstrapBytes" gate the plan mandates for classroom tiers.
+const REQUIRED_THRESHOLD_KEYS_PER_TIER = new Map([
+  ['small-pilot-provisional', ['max5xx', 'maxBootstrapP95Ms', 'maxCommandP95Ms']],
+  ['30-learner-beta-certified', ['max5xx', 'maxBootstrapP95Ms', 'maxCommandP95Ms', 'maxResponseBytes']],
+  ['60-learner-stretch-certified', ['max5xx', 'maxBootstrapP95Ms', 'maxCommandP95Ms', 'maxResponseBytes']],
+  ['100-plus-certified', ['max5xx', 'maxBootstrapP95Ms', 'maxCommandP95Ms', 'maxResponseBytes']],
 ]);
 
 // Exposed sentinel string for the placeholder row. Future authors rewording the
@@ -107,6 +129,177 @@ function extractEvidencePath(evidenceCell) {
   const pathMatch = evidenceCell.match(/(reports\/capacity\/\S+)/);
   if (pathMatch) return pathMatch[1];
   return null;
+}
+
+/**
+ * Round 5 Finding 2 (Medium): structural coherence checks on the payload
+ * summary before we trust any of its values. This is a cheap defence against
+ * full-payload fabrication where the summary is internally consistent with
+ * itself (thresholds and failures agreeing) but inconsistent with its own
+ * arithmetic (totalRequests not matching endpoint sample counts, or timings
+ * flipped). Full cryptographic signing remains a future mitigation; this
+ * catches the low-effort hand-authoring routes.
+ *
+ * Returns an array of failure messages. If the array is non-empty, callers
+ * should short-circuit downstream recomputation because the summary is
+ * untrustworthy.
+ */
+function checkStructuralCoherence(payload) {
+  const messages = [];
+  const summary = payload.summary || {};
+
+  // Arithmetic identity: totalRequests must equal the sum of perEndpoint
+  // sampleCount. `sampleCount` is the canonical field the load-test records;
+  // `count` is a legacy alias and is consulted as a fallback so pre-existing
+  // evidence stays compatible.
+  const topTotal = Number(
+    payload.totalRequests !== undefined ? payload.totalRequests : summary.totalRequests,
+  );
+  if (Number.isFinite(topTotal)) {
+    const endpoints = summary.endpoints || {};
+    const endpointKeys = Object.keys(endpoints);
+    if (endpointKeys.length > 0) {
+      let sum = 0;
+      let haveCount = false;
+      for (const key of endpointKeys) {
+        const entry = endpoints[key] || {};
+        const n = Number(
+          entry.sampleCount !== undefined ? entry.sampleCount : entry.count,
+        );
+        if (Number.isFinite(n)) {
+          sum += n;
+          haveCount = true;
+        }
+      }
+      if (haveCount && sum !== topTotal) {
+        messages.push(
+          `summary.totalRequests=${topTotal} does not match sum(endpoint.sampleCount)=${sum}. `
+          + 'The arithmetic identity is broken; evidence must be produced by the load-test, not hand-authored.',
+        );
+      }
+    }
+  }
+
+  // Timing ordering: both startedAt and finishedAt must be ISO timestamps and
+  // finishedAt must not precede startedAt. A run where the clock went
+  // backwards is a red flag. Missing timings are advisory and do not fail
+  // here — the load-test always records them, so missing values would show up
+  // as a separate class of drift.
+  const startedAt = summary.startedAt ?? payload.reportMeta?.startedAt;
+  const finishedAt = summary.finishedAt ?? payload.reportMeta?.finishedAt;
+  if (startedAt !== undefined && startedAt !== null) {
+    const startedMs = Date.parse(String(startedAt));
+    if (!Number.isFinite(startedMs)) {
+      messages.push(
+        `summary.startedAt "${startedAt}" is not a parseable ISO timestamp.`,
+      );
+    } else if (finishedAt !== undefined && finishedAt !== null) {
+      const finishedMs = Date.parse(String(finishedAt));
+      if (!Number.isFinite(finishedMs)) {
+        messages.push(
+          `summary.finishedAt "${finishedAt}" is not a parseable ISO timestamp.`,
+        );
+      } else if (finishedMs < startedMs) {
+        messages.push(
+          `summary.finishedAt "${finishedAt}" is before summary.startedAt "${startedAt}". `
+          + 'Timings must be monotonic.',
+        );
+      }
+    }
+  } else if (finishedAt !== undefined && finishedAt !== null) {
+    // finishedAt supplied without startedAt is itself a structural break; parse
+    // to surface typos.
+    const finishedMs = Date.parse(String(finishedAt));
+    if (!Number.isFinite(finishedMs)) {
+      messages.push(
+        `summary.finishedAt "${finishedAt}" is not a parseable ISO timestamp.`,
+      );
+    }
+  }
+
+  return messages;
+}
+
+/**
+ * Round 5 Finding 4 (Low): confirm the committed tier config commit is an
+ * ancestor of the evidence commit. Catches the rebase-race route where a
+ * config-loosening PR merges between an evidence run and its row commit: the
+ * evidence cites the pre-merge SHA but the committed config would be the
+ * post-merge loosened one.
+ *
+ * Degrades gracefully: git failures (missing history, unknown SHA, not in a
+ * repo) produce a WARNING string on stderr and do not fail verification;
+ * CI-without-history shards keep working. The documented env escape hatch
+ * CAPACITY_VERIFY_SKIP_ANCESTRY=1 disables the check entirely.
+ *
+ * Returns an object `{ failures: string[], warnings: string[] }`. Callers push
+ * failures into the row's message list; warnings are printed via console.warn
+ * and surfaced in the JSON envelope so they are visible but non-fatal.
+ */
+function requireConfigAncestry(configRelativePath, evidenceCommit) {
+  if (process.env.CAPACITY_VERIFY_SKIP_ANCESTRY === '1') {
+    return { failures: [], warnings: [] };
+  }
+  if (!evidenceCommit || evidenceCommit === 'unknown') {
+    return {
+      failures: [],
+      warnings: [
+        `ancestry check skipped: evidence commit is "${evidenceCommit || 'missing'}". `
+        + 'Set CAPACITY_VERIFY_SKIP_ANCESTRY=1 to silence this warning.',
+      ],
+    };
+  }
+  let configCommit;
+  try {
+    configCommit = execSync(`git log -n 1 --format=%H -- ${JSON.stringify(configRelativePath)}`, {
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 2000,
+    }).toString().trim();
+  } catch {
+    return {
+      failures: [],
+      warnings: [
+        `ancestry check skipped: git log failed for ${configRelativePath} (no history or not in a repo). `
+        + 'Set CAPACITY_VERIFY_SKIP_ANCESTRY=1 to silence this warning.',
+      ],
+    };
+  }
+  if (!configCommit || !/^[0-9a-f]{7,40}$/i.test(configCommit)) {
+    return {
+      failures: [],
+      warnings: [
+        `ancestry check skipped: git log returned no commit for ${configRelativePath}.`,
+      ],
+    };
+  }
+  try {
+    // --is-ancestor exits 0 if the first SHA is an ancestor of the second, 1
+    // otherwise. execSync throws on non-zero exit; we distinguish the
+    // "definitely not an ancestor" outcome from the "git error" outcome by
+    // checking the thrown `status` field.
+    execSync(`git merge-base --is-ancestor ${configCommit} ${evidenceCommit}`, {
+      stdio: ['ignore', 'ignore', 'pipe'],
+      timeout: 2000,
+    });
+    return { failures: [], warnings: [] };
+  } catch (error) {
+    if (error && error.status === 1) {
+      return {
+        failures: [
+          `config ${configRelativePath} was modified after evidence commit; possible rebase-race. `
+          + `config commit ${configCommit.slice(0, 10)} is not an ancestor of evidence commit ${evidenceCommit.slice(0, 10)}.`,
+        ],
+        warnings: [],
+      };
+    }
+    return {
+      failures: [],
+      warnings: [
+        `ancestry check could not resolve ${evidenceCommit.slice(0, 10)} in the local repo: ${error?.message || 'unknown git error'}. `
+        + 'Set CAPACITY_VERIFY_SKIP_ANCESTRY=1 to silence this warning.',
+      ],
+    };
+  }
 }
 
 /**
@@ -205,6 +398,22 @@ function compareConfigAgainstEvidence(absoluteConfigPath, payload, rowDecision) 
       messages.push(
         `tier config declares minEvidenceSchemaVersion ${declaredMin}; `
         + `evidence has v${evidenceSchema}. Regenerate the evidence with a tool at the required schema.`,
+      );
+    }
+  }
+
+  // Round 5 Finding 3 (Medium): enforce the plan's minimum threshold keys per
+  // tier. An empty `thresholds: {}` previously passed silently because the
+  // union-of-keys loop above is a no-op when both sides are empty. The tier
+  // promise (5xx=0, latency bounds, bytes cap) must be codified by the
+  // committed config, not by run-time CLI flags that leave no audit trail.
+  const requiredKeys = REQUIRED_THRESHOLD_KEYS_PER_TIER.get(rowDecision);
+  if (requiredKeys) {
+    const missingRequired = requiredKeys.filter((key) => !(key in configThresholds));
+    if (missingRequired.length) {
+      messages.push(
+        `tier config "${absoluteConfigPath}" for tier "${rowDecision}" is missing required threshold key(s): ${missingRequired.join(', ')}. `
+        + `Tier "${rowDecision}" must declare at minimum: ${requiredKeys.join(', ')}.`,
       );
     }
   }
@@ -325,20 +534,22 @@ function checkNumericDrift(row, payload) {
 
 /**
  * Verify a single evidence row against its persisted JSON file.
- * Returns `{ ok, messages: string[] }` where `ok: false` means the row fails
- * the cross-check.
+ * Returns `{ ok, messages: string[], warnings: string[] }` where `ok: false`
+ * means the row fails the cross-check. `warnings` surface non-fatal concerns
+ * (e.g. git ancestry check could not resolve) so CI still completes.
  */
 export function verifyEvidenceRow(row) {
   const messages = [];
+  const warnings = [];
   if (isPlaceholderRow(row)) {
-    return { ok: true, messages: ['placeholder row — skipped'] };
+    return { ok: true, messages: ['placeholder row — skipped'], warnings };
   }
 
   if (!DECISION_TIERS.has(row.decision)) {
     messages.push(
       `decision "${row.decision}" is not one of: ${[...DECISION_TIERS].join(', ')}`,
     );
-    return { ok: false, messages };
+    return { ok: false, messages, warnings };
   }
 
   // A row should always have 14 cells. Short rows point at markdown drift
@@ -346,25 +557,25 @@ export function verifyEvidenceRow(row) {
   // be used to smuggle a row through by dropping columns.
   if (row.cellCount < 14) {
     messages.push(`row has ${row.cellCount} cells; expected 14 (Date..Evidence)`);
-    return { ok: false, messages };
+    return { ok: false, messages, warnings };
   }
 
   // `fail` decisions are not backed by evidence files and do not support a
   // claim: they record a failed run for audit. Skip the remaining checks.
   if (row.decision === 'fail') {
-    return { ok: true, messages: [] };
+    return { ok: true, messages: [], warnings };
   }
 
   const evidencePath = extractEvidencePath(row.evidence);
   if (!evidencePath) {
     messages.push(`missing evidence path; Evidence cell: "${row.evidence}"`);
-    return { ok: false, messages };
+    return { ok: false, messages, warnings };
   }
 
   const absolute = resolve(process.cwd(), evidencePath);
   if (!existsSync(absolute)) {
     messages.push(`evidence file not found: ${evidencePath}`);
-    return { ok: false, messages };
+    return { ok: false, messages, warnings };
   }
 
   let payload;
@@ -372,7 +583,7 @@ export function verifyEvidenceRow(row) {
     payload = JSON.parse(readFileSync(absolute, 'utf8'));
   } catch (error) {
     messages.push(`evidence file is not valid JSON: ${error.message}`);
-    return { ok: false, messages };
+    return { ok: false, messages, warnings };
   }
 
   // Shape guard: a hand-written fabrication missing any of these keys is
@@ -390,6 +601,19 @@ export function verifyEvidenceRow(row) {
 
   if (payload.ok !== true) {
     messages.push(`evidence file report.ok is not true (found ${payload.ok})`);
+  }
+
+  // Round 5 Finding 1 (High): dryRun:true must not back any decision above
+  // smoke-pass. A true dry-run produces no observed latency, so gateUpperBound
+  // reports passed=true for null latency — legitimate for previewing a pinned
+  // config, illegitimate for any tier that promises measured behaviour. Any
+  // of small-pilot-provisional and the three classroom tiers must be backed
+  // by a real run.
+  if (payload.dryRun === true && TIERS_ABOVE_SMOKE_PASS.has(row.decision)) {
+    messages.push(
+      `dryRun:true cannot back a non-smoke-pass decision ("${row.decision}"). `
+      + 'Dry-run previews are only valid for smoke-pass rows; certification tiers require a real run.',
+    );
   }
 
   const evidenceCommitRaw = String(payload.reportMeta?.commit || '');
@@ -482,7 +706,31 @@ export function verifyEvidenceRow(row) {
         row.decision,
       );
       if (configCrossCheck.length) messages.push(...configCrossCheck);
+
+      // Round 5 Finding 4 (Low): ancestry check — the config commit that
+      // last modified this file must be an ancestor of the evidence commit.
+      // Uses the normalised relative path so `git log -- <path>` matches
+      // the committed tree regardless of OS path separator.
+      const ancestry = requireConfigAncestry(
+        normalisedConfigPath,
+        String(payload.reportMeta?.commit || ''),
+      );
+      if (ancestry.failures.length) messages.push(...ancestry.failures);
+      if (ancestry.warnings.length) {
+        for (const warning of ancestry.warnings) {
+          warnings.push(warning);
+          console.warn(`[capacity-verify] ${warning}`);
+        }
+      }
     }
+  }
+
+  // Round 5 Finding 2 (Medium): structural coherence BEFORE recomputation.
+  // If summary arithmetic does not hold, recomputation would be re-deriving
+  // threshold outcomes from fabricated inputs, so short-circuit that step.
+  const coherenceFailures = checkStructuralCoherence(payload);
+  if (coherenceFailures.length) {
+    messages.push(...coherenceFailures);
   }
 
   // Cross-check numeric cells in the capacity.md row against evidence
@@ -510,28 +758,39 @@ export function verifyEvidenceRow(row) {
   // the committed-config cross-check would still accept values that match
   // the config — because it's the config vs evidence, not the summary vs
   // evidence. This closes that laundering route.
-  messages.push(...recomputeFailures(payload));
+  //
+  // Skip recomputation when structural coherence already failed; the summary
+  // is untrustworthy so re-deriving from it would produce misleading output.
+  if (!coherenceFailures.length) {
+    messages.push(...recomputeFailures(payload));
+  }
 
-  return { ok: messages.length === 0, messages };
+  return { ok: messages.length === 0, messages, warnings };
 }
 
 export function verifyCapacityDoc(docPath = CAPACITY_DOC_PATH) {
   const absolute = resolve(process.cwd(), docPath);
   if (!existsSync(absolute)) {
-    return { ok: false, report: [`Capacity doc not found at ${docPath}`] };
+    return { ok: false, report: [`Capacity doc not found at ${docPath}`], warnings: [] };
   }
   const markdown = readFileSync(absolute, 'utf8');
   const rows = parseEvidenceTable(markdown);
   const report = [];
+  const warnings = [];
   let ok = true;
 
   if (!rows.length) {
     report.push('No Capacity Evidence table rows found — doc may have drifted.');
-    return { ok: false, report, rowCount: 0 };
+    return { ok: false, report, rowCount: 0, warnings };
   }
 
   for (const [index, row] of rows.entries()) {
     const result = verifyEvidenceRow(row);
+    if (result.warnings && result.warnings.length) {
+      for (const warning of result.warnings) {
+        warnings.push(`[row ${index + 1}] ${warning}`);
+      }
+    }
     if (!result.ok) {
       ok = false;
       for (const message of result.messages) {
@@ -540,7 +799,7 @@ export function verifyCapacityDoc(docPath = CAPACITY_DOC_PATH) {
       }
     }
   }
-  return { ok, report, rowCount: rows.length };
+  return { ok, report, rowCount: rows.length, warnings };
 }
 
 function usage() {
@@ -582,10 +841,10 @@ export function runVerify(argv = process.argv.slice(2)) {
     docPath = arg;
   }
 
-  const { ok, report, rowCount } = verifyCapacityDoc(docPath);
+  const { ok, report, rowCount, warnings } = verifyCapacityDoc(docPath);
 
   if (emitJson) {
-    console.log(JSON.stringify({ ok, rowCount, messages: report }, null, 2));
+    console.log(JSON.stringify({ ok, rowCount, messages: report, warnings: warnings || [] }, null, 2));
   }
 
   if (!ok) {
