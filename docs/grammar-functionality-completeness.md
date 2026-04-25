@@ -41,19 +41,21 @@ This document tracks Grammar-only functionality completeness against the reviewe
 
 Legacy functionality is complete, but a subsequent review (`docs/plans/james/grammar/grammar-phase2.md`) identified fairness, depth, and behavioural-proof gaps that are not covered by the legacy-HTML completeness audit above. These are tracked in a separate baseline so legacy parity does not silently absorb fairness regressions.
 
-| Review issue | Status | Owner unit | Notes |
-|---|---|---|---|
-| I1. Docs overclaim completeness vs behaviour tests | Planned | U1 | Perfection-pass baseline fixture and test enforce resolution status per issue. |
-| I2. Adaptive selection lacks recent-repeat penalty and question-type weakness weighting | Planned | U2 | Extract `buildGrammarPracticeQueue` as a seeded pure function; add `buildGrammarMiniPack` for quota-aware mini-test balancing. |
-| I3. Support scoring may be session-level | Planned | U3 | Rename to item-level fields (`firstAttemptIndependent`, `supportUsed`, `supportLevelAtScoring`); three-layer migration; remove Smart + teaching-items session promotion. |
-| I4. Legacy content gaps (thin explain/vocabulary/formality pools) | Deferred | - | Deferred to a separate reviewed content-release plan. This plan pins the current per-question-type and per-concept floors so erosion is detectable. |
-| I5. Transfer writing placeholder-only | Planned | U7 | Non-scored transfer writing lane with paragraph prompts, grammar-target checklist, per-promptId evidence storage. |
-| I6. Strict mini-test needs behaviour-level QA | Planned | U4 | Extend SSR harness in `tests/react-grammar-surface.test.js`. Playwright intentionally not added. |
-| I7. Mode focus behaviour unclear | Already fixed | - | `NO_STORED_FOCUS_MODES` / `NO_SESSION_FOCUS_MODES` already encode the intended mode/focus table; covered by `tests/grammar-engine.test.js`. No reimplementation. |
-| I8. Analytics show strength without confidence context | Planned | U6 | Five-label taxonomy: `emerging`, `building`, `consolidating`, `secure`, `needs-repair`. |
-| I9. Accepted-answer registry | Planned | U5 | Declarative per-template `answerSpec`; `markByAnswerSpec` replaces `markStringAnswer` call sites; `contentReleaseId` bump policy codified. |
+**Status as of 2026-04-25: complete.** All eight perfection-pass units (U1-U8) have landed. Seven of the nine review issues are resolved by this pass, one was already-fixed, and one is deferred to a separate content-release plan.
 
-Perfection-pass release gate is U8.
+| Review issue | Status | Owner unit | Landed in |
+|---|---|---|---|
+| I1. Docs overclaim completeness vs behaviour tests | Completed | U1 | PR #144 |
+| I2. Adaptive selection lacks recent-repeat penalty and question-type weakness weighting | Completed | U2 | PR #146 |
+| I3. Support scoring may be session-level | Completed | U3 | PR #148 |
+| I4. Legacy content gaps (thin explain/vocabulary/formality pools) | Deferred | - | Separate reviewed content-release plan. Per-question-type and per-concept floors pinned so erosion is detectable. |
+| I5. Transfer writing placeholder-only | Completed | U7 | PR #158 (Worker-side; React scene UI in a follow-up) |
+| I6. Strict mini-test needs behaviour-level QA | Completed | U4 | PR #150 (SSR harness; Playwright intentionally not added) |
+| I7. Mode focus behaviour unclear | Already fixed | - | `NO_STORED_FOCUS_MODES` / `NO_SESSION_FOCUS_MODES` already encode the intended table; covered by `tests/grammar-engine.test.js`. No reimplementation. |
+| I8. Analytics show strength without confidence context | Completed | U6 | PR #156 |
+| I9. Accepted-answer registry | Completed | U5 | PR #153 (declarative machinery; per-template declarations follow in content-release PR) |
+
+Perfection-pass release gate (U8) — this PR. The perfection-pass baseline fixture (`tests/fixtures/grammar-functionality-completeness/perfection-pass-baseline.json`) records `landedIn`, `evidence`, and `ownerUnit` per row; the completeness test enforces that every completed row cites real evidence files and that no row remains `planned` at gate time.
 
 ## Source of Truth
 

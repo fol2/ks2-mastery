@@ -3,29 +3,42 @@
   "source": "docs/plans/james/grammar/grammar-phase2.md review routed through docs/plans/2026-04-25-002-feat-grammar-perfection-pass-plan.md",
   "contentReleaseId": "grammar-legacy-reviewed-2026-04-24",
   "ownerPlan": "docs/plans/2026-04-25-002-feat-grammar-perfection-pass-plan.md",
+  "status": "completed",
+  "completedAt": "2026-04-25",
   "reviewIssues": [
     {
       "id": "I1",
       "label": "Docs overclaim completeness vs behaviour tests",
-      "status": "planned",
+      "status": "completed",
       "ownerUnit": "U1",
       "reason": "Baseline + owner-unit table in this fixture prevents silent drift of 'complete' claims away from review-issue resolution.",
+      "landedIn": "PR #144 (U1)",
       "ownerUnitAllowedByTest": true
     },
     {
       "id": "I2",
       "label": "Adaptive selection lacks recent-repeat penalty and question-type weakness weighting",
-      "status": "planned",
+      "status": "completed",
       "ownerUnit": "U2",
-      "reason": "Template selection is extracted into buildGrammarPracticeQueue pure function with explicit weights for due, weak, recent-miss, question-type weakness, template/concept freshness, and focus matching. buildGrammarMiniPack adds quota-aware mini-test balancing.",
+      "reason": "Template selection extracted into buildGrammarPracticeQueue pure function with explicit weights for due, weak, recent-miss, question-type weakness, template/concept freshness, and focus matching. buildGrammarMiniPack adds quota-aware mini-test balancing.",
+      "landedIn": "PR #146 (U2)",
+      "evidence": [
+        "worker/src/subjects/grammar/selection.js",
+        "tests/grammar-selection.test.js"
+      ],
       "ownerUnitAllowedByTest": true
     },
     {
       "id": "I3",
       "label": "Support scoring may be session-level; Smart + allowTeachingItems downgrades independent correctness",
-      "status": "planned",
+      "status": "completed",
       "ownerUnit": "U3",
-      "reason": "Rename to firstAttemptIndependent / supportUsed / supportLevelAtScoring with three-layer migration (state reload, event dual-write, in-flight session version stamping). Session-level promotion removed for Smart + allowTeachingItems under supportContractVersion 2.",
+      "reason": "Renamed to firstAttemptIndependent / supportUsed / supportLevelAtScoring with three-layer migration (state reload, event dual-write, in-flight session version stamping). Session-level promotion removed for Smart + allowTeachingItems under supportContractVersion 2.",
+      "landedIn": "PR #148 (U3)",
+      "evidence": [
+        "worker/src/subjects/grammar/attempt-support.js",
+        "tests/grammar-attempt-support.test.js"
+      ],
       "ownerUnitAllowedByTest": true
     },
     {
@@ -38,17 +51,26 @@
     {
       "id": "I5",
       "label": "Transfer writing placeholder-only; no live non-scored writing lane",
-      "status": "planned",
+      "status": "completed",
       "ownerUnit": "U7",
-      "reason": "Non-scored transfer writing lane with paragraph prompts, grammar-target checklist, per-promptId evidence storage (5 slots per prompt, 20 prompts max), and adult-review copy. Does not touch mastery, retry, reward projection, or Concordium progress. Aligned with docs/grammar-transfer-decision.md.",
+      "reason": "Non-scored transfer writing lane with 5 seed paragraph prompts, grammar-target checklist, per-promptId evidence storage (5 slots per prompt, 20 prompts max), and adult-review copy. Does not touch mastery, retry, reward projection, or Concordium progress. Aligned with docs/grammar-transfer-decision.md. React scene UI ships in a follow-up.",
+      "landedIn": "PR #158 (U7)",
+      "evidence": [
+        "worker/src/subjects/grammar/transfer-prompts.js",
+        "tests/grammar-transfer-lane.test.js"
+      ],
       "ownerUnitAllowedByTest": true
     },
     {
       "id": "I6",
       "label": "Strict mini-test needs behaviour-level QA (navigation, timer expiry, unanswered handling)",
-      "status": "planned",
+      "status": "completed",
       "ownerUnit": "U4",
-      "reason": "SSR harness in tests/react-grammar-surface.test.js is extended to cover answer preservation across navigation, timer expiry, unanswered handling, end-review gating, and repair/AI command fail-closed during active mini-test. Playwright is intentionally not added; SSR matches repo convention.",
+      "reason": "SSR harness in tests/react-grammar-surface.test.js extended to cover answer preservation across navigation, timer expiry auto-finish, unanswered handling (no invented correctness), and repair/AI/similar-problem commands failing closed during an active mini-test. Playwright intentionally not added; SSR matches repo convention.",
+      "landedIn": "PR #150 (U4)",
+      "evidence": [
+        "tests/react-grammar-surface.test.js"
+      ],
       "ownerUnitAllowedByTest": true
     },
     {
@@ -69,23 +91,40 @@
     {
       "id": "I8",
       "label": "Analytics show strength without confidence or sample-size context",
-      "status": "planned",
+      "status": "completed",
       "ownerUnit": "U6",
-      "reason": "Read model exposes a derived confidence field with label taxonomy (emerging, building, consolidating, secure, needs-repair), sample size, interval days, and distinct templates. Scene renders the label alongside the number.",
+      "reason": "Read model exposes a derived confidence field with five-label taxonomy (emerging, building, consolidating, secure, needs-repair), sample size, interval days, and distinct templates. Consolidating closes the heavy-same-week-practice edge case. Derived projection; never mutates state.",
+      "landedIn": "PR #156 (U6)",
+      "evidence": [
+        "worker/src/subjects/grammar/read-models.js",
+        "tests/grammar-confidence.test.js"
+      ],
       "ownerUnitAllowedByTest": true
     },
     {
       "id": "I9",
       "label": "Accepted-answer handling relies on inline arrays, not a declarative registry",
-      "status": "planned",
+      "status": "completed",
       "ownerUnit": "U5",
-      "reason": "Every constructed-response template carries a declarative answerSpec (kind: exact / normalisedText / acceptedSet / punctuationPattern / multiField / manualReviewOnly) with golden and near-miss examples. markByAnswerSpec replaces direct markStringAnswer call sites. contentReleaseId bump policy codified; any bump pairs with tests/fixtures/grammar-legacy-oracle/release-notes.md entry.",
+      "reason": "Declarative answerSpec registry with six kinds (exact, normalisedText, acceptedSet, punctuationPattern, multiField, manualReviewOnly). markByAnswerSpec is the single marking entry point. content.js markStringAnswer is a thin adapter for the migration window; per-template answerSpec declarations land in a follow-up content-release PR. No contentReleaseId bump required.",
+      "landedIn": "PR #153 (U5)",
+      "evidence": [
+        "worker/src/subjects/grammar/answer-spec.js",
+        "tests/grammar-answer-spec.test.js"
+      ],
       "ownerUnitAllowedByTest": true
     }
   ],
   "perfectionPassReleaseGate": {
     "ownerUnit": "U8",
-    "description": "Perfection-pass release gate: extends production smoke, refreshes bundle audit, flips baseline rows to completed, and updates mastery-region live checklist."
+    "status": "completed",
+    "description": "Perfection-pass release gate: baseline rows flipped to completed, bundle audit strengthened with named Worker-only tokens, mastery-region live checklist updated.",
+    "evidence": [
+      "docs/plans/2026-04-24-001-feat-grammar-mastery-region-plan.md",
+      "docs/grammar-functionality-completeness.md",
+      "scripts/audit-client-bundle.mjs",
+      "tests/grammar-functionality-completeness.test.js"
+    ]
   },
   "contentFloor": {
     "note": "Per-question-type floor pins the current denominator so content expansion plans can only grow, not erode, the distribution.",
