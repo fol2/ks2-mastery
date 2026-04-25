@@ -132,6 +132,48 @@ function FeedbackPanel({ feedback }) {
   );
 }
 
+function GuidancePanel({ support }) {
+  if (!support) return null;
+  const worked = support.kind === 'worked';
+  const concepts = Array.isArray(support.concepts) ? support.concepts : [];
+  const notices = Array.isArray(support.notices) ? support.notices.filter(Boolean) : [];
+  const example = support.workedExample || {};
+  const contrast = support.contrast || {};
+
+  return (
+    <aside className={`grammar-guidance ${worked ? 'worked' : 'faded'}`} aria-label={support.title || 'Grammar guidance'}>
+      <div className="grammar-guidance-head">
+        <span className="chip good">{support.title || (worked ? 'Worked example' : 'Faded guidance')}</span>
+        {concepts[0]?.name ? <strong>{concepts[0].name}</strong> : null}
+      </div>
+
+      {worked && (example.prompt || example.exampleResponse || example.why) ? (
+        <div className="grammar-guidance-example">
+          {example.prompt ? <p><span>Prompt</span>{example.prompt}</p> : null}
+          {example.exampleResponse ? <p><span>Model</span>{example.exampleResponse}</p> : null}
+          {example.why ? <p><span>Why</span>{example.why}</p> : null}
+        </div>
+      ) : null}
+
+      {!worked && support.summary ? <p className="grammar-guidance-summary">{support.summary}</p> : null}
+
+      {!worked && (contrast.secureExample || contrast.nearMiss || contrast.why) ? (
+        <div className="grammar-guidance-contrast">
+          {contrast.secureExample ? <p><span>Secure</span>{contrast.secureExample}</p> : null}
+          {contrast.nearMiss ? <p><span>Near miss</span>{contrast.nearMiss}</p> : null}
+          {contrast.why ? <p><span>Check</span>{contrast.why}</p> : null}
+        </div>
+      ) : null}
+
+      {notices.length ? (
+        <ul className="grammar-guidance-notices">
+          {notices.map((notice) => <li key={notice}>{notice}</li>)}
+        </ul>
+      ) : null}
+    </aside>
+  );
+}
+
 export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
   const session = grammar.session || {};
   const item = session.currentItem || {};
@@ -162,6 +204,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
         </div>
         <p className="grammar-prompt">{item.promptText || 'Loading the next Grammar item...'}</p>
         {item.checkLine ? <p className="grammar-check-line">{item.checkLine}</p> : null}
+        <GuidancePanel support={session.supportGuidance} />
 
         <form
           className="grammar-answer-form"

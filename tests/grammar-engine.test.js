@@ -505,6 +505,85 @@ test('Grammar sentence builder rejects explicit non-builder templates', () => {
   }), (error) => error?.extra?.code === 'grammar_template_unavailable_for_mode');
 });
 
+test('Grammar worked and faded modes apply supported scoring levels', () => {
+  const oracle = readGrammarLegacyOracle();
+  const sample = oracle.templates.find((template) => template.id === 'fronted_adverbial_choose');
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+
+  const worked = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'start-worked',
+    payload: {
+      mode: 'worked',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  assert.equal(worked.state.session.mode, 'worked');
+  assert.equal(worked.state.session.type, 'worked-example');
+  assert.equal(worked.state.session.supportLevel, 2);
+
+  const workedSubmit = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: worked.state, data: worked.data },
+    latestSession: worked.practiceSession,
+    command: 'submit-answer',
+    requestId: 'submit-worked',
+    payload: { response: sample.correctResponse },
+  });
+  assert.equal(workedSubmit.state.recentAttempts.at(-1).supportLevel, 2);
+
+  const faded = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'start-faded',
+    payload: {
+      mode: 'faded',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  assert.equal(faded.state.session.mode, 'faded');
+  assert.equal(faded.state.session.type, 'faded-guidance');
+  assert.equal(faded.state.session.supportLevel, 1);
+});
+
+test('Grammar strict mini-set rejects pre-answer support payloads', () => {
+  const oracle = readGrammarLegacyOracle();
+  const sample = oracle.templates.find((template) => template.id === 'fronted_adverbial_choose');
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'start-strict-support',
+    payload: {
+      mode: 'satsset',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  assert.throws(() => engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: start.state, data: start.data },
+    latestSession: start.practiceSession,
+    command: 'submit-answer',
+    requestId: 'submit-strict-support',
+    payload: {
+      response: sample.correctResponse,
+      supportLevel: 1,
+    },
+  }), (error) => error?.extra?.code === 'grammar_support_unavailable_for_mode');
+});
+
 test('Grammar save-prefs clears completed summary state', () => {
   const oracle = readGrammarLegacyOracle();
   const sample = oracle.templates.find((template) => template.id === 'question_mark_select');

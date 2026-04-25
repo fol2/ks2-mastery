@@ -20,8 +20,8 @@ const DEFAULT_MINI_SET_LENGTH = 8;
 const SHORT_RESPONSE_TEXT_LIMIT = 512;
 const LONG_RESPONSE_TEXT_LIMIT = 2000;
 const LIST_RESPONSE_LIMIT = 40;
-const ENABLED_MODES = new Set(['learn', 'smart', 'satsset', 'trouble', 'surgery', 'builder']);
-const LOCKED_MODES = Object.freeze(['worked', 'faded']);
+const ENABLED_MODES = new Set(['learn', 'smart', 'satsset', 'trouble', 'surgery', 'builder', 'worked', 'faded']);
+const LOCKED_MODES = Object.freeze([]);
 const NO_STORED_FOCUS_MODES = new Set(['trouble', 'surgery', 'builder']);
 const NO_SESSION_FOCUS_MODES = new Set(['surgery', 'builder']);
 const GRAMMAR_CONCEPT_IDS = new Set(GRAMMAR_CONCEPTS.map((concept) => concept.id));
@@ -366,6 +366,22 @@ function answerQuality(result, attempt = {}) {
   return 0;
 }
 
+function supportLevelForMode(mode) {
+  if (mode === 'worked') return 2;
+  if (mode === 'faded') return 1;
+  return 0;
+}
+
+function sessionTypeForMode(mode) {
+  if (mode === 'satsset') return 'mini-set';
+  if (mode === 'trouble') return 'trouble-drill';
+  if (mode === 'surgery') return 'sentence-surgery';
+  if (mode === 'builder') return 'sentence-builder';
+  if (mode === 'worked') return 'worked-example';
+  if (mode === 'faded') return 'faded-guidance';
+  return 'practice';
+}
+
 function bumpMisconception(state, tag, nowTs) {
   if (!tag) return;
   const current = isPlainObject(state.misconceptions[tag]) ? state.misconceptions[tag] : { count: 0, lastSeenAt: null };
@@ -510,6 +526,8 @@ function normaliseMode(value) {
   if (mode === 'mini-set' || mode === 'mini' || mode === 'test') return 'satsset';
   if (mode === 'sentence-surgery') return 'surgery';
   if (mode === 'sentence-builder') return 'builder';
+  if (mode === 'worked-example' || mode === 'worked-examples') return 'worked';
+  if (mode === 'faded-support' || mode === 'faded-guidance') return 'faded';
   return mode || 'smart';
 }
 
@@ -641,11 +659,7 @@ function startSession(state, payload, nowTs, learnerId) {
   };
   state.session = {
     id: sessionId,
-    type: mode === 'satsset'
-      ? 'mini-set'
-      : (mode === 'trouble'
-        ? 'trouble-drill'
-        : (mode === 'surgery' ? 'sentence-surgery' : (mode === 'builder' ? 'sentence-builder' : 'practice'))),
+    type: sessionTypeForMode(mode),
     mode,
     focusConceptId: sessionFocusConceptId,
     startedAt: nowTs,
@@ -658,7 +672,7 @@ function startSession(state, payload, nowTs, learnerId) {
     currentIndex: 0,
     currentItem: firstItem,
     attemptsForCurrent: 0,
-    supportLevel: 0,
+    supportLevel: supportLevelForMode(mode),
     serverAuthority: SERVER_AUTHORITY,
   };
   return [];
@@ -733,7 +747,7 @@ function continueSession(state, nowTs) {
     nowTs,
   });
   session.attemptsForCurrent = 0;
-  session.supportLevel = 0;
+  session.supportLevel = supportLevelForMode(session.mode);
   state.phase = 'session';
   state.awaitingAdvance = false;
   state.feedback = null;
@@ -877,12 +891,21 @@ function submitAnswer(state, payload, command, nowTs) {
     });
   }
   const response = isPlainObject(payload.response) ? payload.response : (isPlainObject(payload.answer) ? payload.answer : { answer: payload.answer ?? '' });
+  const modeSupportLevel = supportLevelForMode(session.mode);
+  const requestedSupportLevel = Number(payload.supportLevel ?? modeSupportLevel) || 0;
+  if (requestedSupportLevel > modeSupportLevel) {
+    throw new BadRequestError('This Grammar mode does not allow pre-answer support.', {
+      code: 'grammar_support_unavailable_for_mode',
+      subjectId: SUBJECT_ID,
+      mode: session.mode,
+    });
+  }
   session.attemptsForCurrent = Number(session.attemptsForCurrent || 0) + 1;
   const applied = applyGrammarAttemptToState(state, {
     learnerId: command.learnerId,
     item: session.currentItem,
     response,
-    supportLevel: Number(payload.supportLevel ?? session.supportLevel) || 0,
+    supportLevel: modeSupportLevel,
     attempts: session.attemptsForCurrent,
     requestId: command.requestId,
     now: nowTs,

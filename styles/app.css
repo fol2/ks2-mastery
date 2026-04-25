@@ -6475,6 +6475,65 @@ textarea:focus-visible {
   line-height: 1.5;
 }
 
+.grammar-guidance {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #c5d9cf;
+  border-radius: 8px;
+  background: #f4faf6;
+  color: var(--ink);
+}
+
+.grammar-guidance.faded {
+  border-color: #d9caa7;
+  background: #fff8eb;
+}
+
+.grammar-guidance-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.grammar-guidance-head strong {
+  font-size: 0.96rem;
+}
+
+.grammar-guidance-example,
+.grammar-guidance-contrast {
+  display: grid;
+  gap: 8px;
+}
+
+.grammar-guidance-example p,
+.grammar-guidance-contrast p,
+.grammar-guidance-summary {
+  margin: 0;
+  line-height: 1.48;
+}
+
+.grammar-guidance-example span,
+.grammar-guidance-contrast span {
+  display: inline-block;
+  min-width: 74px;
+  margin-right: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.grammar-guidance-notices {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+
 .grammar-answer-form {
   display: grid;
   gap: 16px;

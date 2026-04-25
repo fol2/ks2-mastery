@@ -1,8 +1,9 @@
 ---
 title: "feat: Full Grammar Mastery Region"
 type: feat
-status: active
+status: live-checklist
 date: 2026-04-24
+last_checked: 2026-04-24
 origin: docs/brainstorms/2026-04-24-grammar-mastery-region-requirements.md
 deepened: 2026-04-24
 ---
@@ -16,6 +17,29 @@ Build The Clause Conservatory as the full Grammar region, delivered in stages. S
 The full target is the legacy Grammar mastery model: 18 KS2 Grammar / GPS concepts, 51 deterministic templates, misconception-aware feedback, spaced review, KS2-style mini-tests, and seven Grammar monsters. The game layer derives from secured learning evidence only. It must never influence marking, scheduling, retry queues, or mastery status.
 
 This plan assumes the full-lockdown runtime direction continues: React renders UI and submitted form state, while production scored session creation, marking, scheduling, persistence, domain events, reward projection, and read models are Worker-owned.
+
+## Live Checklist Snapshot
+
+This plan is now a live checklist for the Grammar line. The original plan text below preserves the implementation rationale and staged sequencing, while this snapshot reflects the current branch target after the Grammar production-smoke and sentence-builder work has landed.
+
+Current Grammar state:
+
+- [x] Grammar is a Worker-owned production subject behind `POST /api/subjects/grammar/command`.
+- [x] The Clause Conservatory surface is live as the real Grammar subject route, not the placeholder.
+- [x] Current content release id is `grammar-legacy-reviewed-2026-04-24`.
+- [x] The full denominator is represented: 18 KS2 Grammar / GPS concepts and 51 deterministic templates.
+- [x] Analytics read models expose concept status, misconception patterns, question-type weakness, recent activity, and evidence summaries.
+- [x] All seven Grammar monsters are wired as derived reward progress from secured Grammar evidence.
+- [x] Enabled Grammar modes cover learn, smart mixed review, KS2-style mini-set, weak concepts drill, sentence surgery, sentence builder, worked examples, and faded guidance.
+- [x] Strict KS2-style mini-set mode remains unsupported by pre-answer worked/faded guidance.
+- [x] Production smoke exists as `npm run smoke:production:grammar`.
+
+Open Grammar follow-up scope:
+
+- [ ] Add the optional AI enrichment safe lane for explanations, revision cards, and parent-summary drafts; AI must remain non-scored and server-side.
+- [ ] Add transfer and Bellstorm bridge placeholders without collapsing Grammar and Punctuation product identities.
+- [ ] Decide later whether paragraph-level transfer becomes non-scored, teacher-reviewed, or a separate deterministic workflow.
+- [ ] Continue to run `npm test`, `npm run check`, and Grammar production/UI smoke for each shipped Grammar slice.
 
 ---
 
@@ -587,7 +611,7 @@ sequenceDiagram
 **Verification:**
 - Grammar rewards are derived, subject-aware, asset-backed, and non-regressive for existing spelling rewards.
 
-- [ ] U6. **Add Stage 1 Analytics And Parent Evidence Read Models**
+- [x] U6. **Add Stage 1 Analytics And Parent Evidence Read Models**
 
 **Goal:** Provide educational evidence first and reward progress second for learner and adult-facing Grammar surfaces.
 
@@ -624,7 +648,7 @@ sequenceDiagram
 **Verification:**
 - Grammar progress can be explained without the game layer, and the game layer remains visibly secondary.
 
-- [ ] U7. **Add Full Legacy Practice Modes**
+- [x] U7. **Add Full Legacy Practice Modes**
 
 **Goal:** Complete the legacy practice experience beyond Stage 1 core modes.
 
@@ -732,7 +756,7 @@ sequenceDiagram
 **Verification:**
 - Full roadmap is visible in product UI without creating fake functionality or collapsing subject identities.
 
-- [ ] U10. **Release Gate And Production Verification**
+- [x] U10. **Release Gate And Production Verification**
 
 **Goal:** Treat Grammar as production-sensitive and verify it without weakening Spelling, bundle lockdown, or deployment safety.
 

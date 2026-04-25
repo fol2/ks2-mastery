@@ -17,7 +17,10 @@ function selectedGrammarUi(context) {
 function grammarModeKey(value) {
   const mode = String(value || '').trim().toLowerCase().replace(/[\s_]+/g, '-');
   if (mode === 'sentence-builder') return 'builder';
-  return mode === 'sentence-surgery' ? 'surgery' : mode;
+  if (mode === 'sentence-surgery') return 'surgery';
+  if (mode === 'worked-example' || mode === 'worked-examples') return 'worked';
+  if (mode === 'faded-support' || mode === 'faded-guidance') return 'faded';
+  return mode;
 }
 
 function grammarModeUsesFocus(value) {

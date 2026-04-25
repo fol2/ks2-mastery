@@ -85,10 +85,14 @@ test('worker subject runtime registers Grammar command handlers', async () => {
     'trouble',
     'surgery',
     'builder',
+    'worked',
+    'faded',
   ]);
   assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
   assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'surgery'), false);
   assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'builder'), false);
+  assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'worked'), false);
+  assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'faded'), false);
 });
 
 test('worker subject runtime starts Grammar trouble drills against weak concepts', async () => {
@@ -342,6 +346,127 @@ test('Grammar command route accepts sentence builder mode', async () => {
   assert.equal(start.body.subjectReadModel.session.focusConceptId, '');
   assert.match(start.body.subjectReadModel.session.currentItem.questionType, /^(build|rewrite)$/);
   assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'builder'), false);
+
+  DB.close();
+});
+
+test('Grammar command route accepts worked example mode with concept guidance', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-worked-route-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'worked',
+      roundLength: 1,
+      seed: 120,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  assert.equal(start.body.subjectReadModel.session.mode, 'worked');
+  assert.equal(start.body.subjectReadModel.session.type, 'worked-example');
+  assert.equal(start.body.subjectReadModel.session.supportLevel, 2);
+  assert.equal(start.body.subjectReadModel.session.supportGuidance.kind, 'worked');
+  assert.ok(start.body.subjectReadModel.session.supportGuidance.workedExample.exampleResponse);
+  assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'worked'), false);
+
+  DB.close();
+});
+
+test('Grammar command route accepts faded guidance mode without current-answer leakage', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-faded-route-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'faded',
+      roundLength: 1,
+      seed: 120,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  assert.equal(start.body.subjectReadModel.session.mode, 'faded');
+  assert.equal(start.body.subjectReadModel.session.type, 'faded-guidance');
+  assert.equal(start.body.subjectReadModel.session.supportLevel, 1);
+  assert.equal(start.body.subjectReadModel.session.supportGuidance.kind, 'faded');
+  assert.equal(start.body.subjectReadModel.session.currentItem.solutionLines, undefined);
+  assert.equal(start.body.subjectReadModel.session.supportGuidance.workedExample, undefined);
+  assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'faded'), false);
+
+  DB.close();
+});
+
+test('Grammar faded guidance omits contrast examples that match current options', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-faded-formality-leakage',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'faded',
+      roundLength: 1,
+      templateId: 'proc2_formality_choice',
+      seed: 1,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  const session = start.body.subjectReadModel.session;
+  const optionLabels = session.currentItem.inputSpec.options.map((option) => option.label);
+  assert.ok(optionLabels.includes('The club was established last year.'));
+  assert.ok(optionLabels.includes('The club got set up last year.'));
+  assert.equal(session.supportGuidance.kind, 'faded');
+  assert.equal(session.supportGuidance.contrast.secureExample, undefined);
+  assert.equal(session.supportGuidance.contrast.nearMiss, undefined);
+  assert.equal(session.supportGuidance.contrast.why, 'The first is more formal.');
+  assert.equal(JSON.stringify(session.supportGuidance).includes('The club was established last year.'), false);
+  assert.equal(JSON.stringify(session.supportGuidance).includes('The club got set up last year.'), false);
+
+  DB.close();
+});
+
+test('Grammar worked guidance omits model answers that match current table rows', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-worked-row-leakage',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'worked',
+      roundLength: 1,
+      templateId: 'sentence_type_table',
+      seed: 4,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  const session = start.body.subjectReadModel.session;
+  const rowLabels = session.currentItem.inputSpec.rows.map((row) => row.label);
+  assert.ok(rowLabels.includes('Close the gate before the dog escapes.'));
+  assert.equal(session.supportGuidance.kind, 'worked');
+  assert.equal(session.supportGuidance.workedExample.prompt, 'Which sentence is a command?');
+  assert.equal(session.supportGuidance.workedExample.exampleResponse, undefined);
+  assert.equal(session.supportGuidance.workedExample.why, 'It tells someone to do something.');
+  assert.equal(JSON.stringify(session.supportGuidance).includes('Close the gate before the dog escapes.'), false);
 
   DB.close();
 });
