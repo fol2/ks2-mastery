@@ -1,6 +1,7 @@
 import React from 'react';
 import { GrammarMiniTestReview } from './GrammarMiniTestReview.jsx';
 import { grammarSummaryCards } from './grammar-view-model.js';
+import { grammarMissedConceptFromUi } from '../module.js';
 
 // Phase 3 U5: child-friendly round-end surface. Regular practice renders
 // the five summary cards (Answered / Correct / Trouble spots found / New
@@ -149,14 +150,32 @@ export function GrammarSummaryScene({ grammar, rewardState, actions, learner, ru
   const miniTest = isMiniTestSummary(summary);
   const cards = grammarSummaryCards(summary, effectiveRewardState);
   const handleGrownUp = () => actions.dispatch('grammar-open-analytics');
+  // U5 follower: regular-practice `Practise missed` is a silent no-op
+  // when there is no actionable missed / weak / due concept. Compute the
+  // same concept id that `grammar-practise-missed` would resolve inside
+  // the module, then gate the button via `disabled` so the child sees a
+  // muted state instead of a deceptive tap target. Mirrors the mini-test
+  // branch's `missedConceptId` pattern.
+  const regularMissedConceptId = miniTest ? '' : grammarMissedConceptFromUi(grammar);
 
   if (miniTest) {
     const missedConceptId = firstMissedMiniTestConceptId(summary);
+    // U5 follower: `Fix missed concepts` is the product-suggested next
+    // step after a Mini Test, so it takes the primary variant and leads
+    // the row. `Review answers` is a lower-stakes scroll affordance and
+    // drops to secondary. Order mirrors the hierarchy: primary first.
     const buttons = [
+      {
+        action: 'grammar-practise-missed',
+        label: 'Fix missed concepts',
+        variant: 'primary',
+        disabled: !missedConceptId,
+        onClick: () => actions.dispatch('grammar-practise-missed'),
+      },
       {
         action: 'grammar-review-mini-test',
         label: 'Review answers',
-        variant: 'primary',
+        variant: 'secondary',
         onClick: () => {
           if (typeof globalThis?.document?.getElementById === 'function') {
             const node = globalThis.document.getElementById('grammar-mini-review-title');
@@ -165,13 +184,6 @@ export function GrammarSummaryScene({ grammar, rewardState, actions, learner, ru
             }
           }
         },
-      },
-      {
-        action: 'grammar-practise-missed',
-        label: 'Fix missed concepts',
-        variant: 'secondary',
-        disabled: !missedConceptId,
-        onClick: () => actions.dispatch('grammar-practise-missed'),
       },
     ];
     return (
@@ -201,6 +213,7 @@ export function GrammarSummaryScene({ grammar, rewardState, actions, learner, ru
       action: 'grammar-practise-missed',
       label: 'Practise missed',
       variant: 'primary',
+      disabled: !regularMissedConceptId,
       onClick: () => actions.dispatch('grammar-practise-missed'),
     },
     {

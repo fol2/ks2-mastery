@@ -249,7 +249,7 @@ function responseHasAnswer(response) {
 // fallback) wins. Regular practice has no per-question review, so we fall
 // back to the analytics concept list and pick the first `weak` / `due`
 // concept. Returns `''` when nothing is actionable so the caller can no-op.
-function grammarMissedConceptFromUi(ui) {
+export function grammarMissedConceptFromUi(ui) {
   const summary = ui?.summary && typeof ui.summary === 'object' ? ui.summary : {};
   const questions = Array.isArray(summary.miniTestReview?.questions)
     ? summary.miniTestReview.questions

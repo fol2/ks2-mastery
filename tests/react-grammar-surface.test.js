@@ -2741,3 +2741,167 @@ test('U5: grammar-open-analytics is a no-op mid-session so the active round is n
   // mid-session or mid-feedback.
   assert.equal(harness.store.getState().subjectUi.grammar.phase, 'session');
 });
+
+// ---------------------------------------------------------------------------
+// U5 follower coverage: mini-test `Fix missed concepts` variant flip, regular-
+// practice `Practise missed` disabled state, analytics close-fallback, and
+// weak-vs-due precedence when resolving the missed concept id.
+// ---------------------------------------------------------------------------
+
+test('U5 follower T1: regular-practice grammar-practise-missed prefers a weak analytics concept over a due one', () => {
+  const { harness } = u5RunRegularToSummary();
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  // Seed analytics.concepts so the missed-concept helper has something to
+  // act on (regular-practice summaries have no `miniTestReview`, so the
+  // helper falls straight through to analytics). `word_classes` is weak,
+  // `clauses` is due -- weak must win.
+  harness.store.updateSubjectUi('grammar', (current) => {
+    const normalised = normaliseGrammarReadModel(current, learnerId);
+    return {
+      ...normalised,
+      analytics: {
+        ...normalised.analytics,
+        concepts: [
+          { id: 'clauses', status: 'due' },
+          { id: 'word_classes', status: 'weak' },
+        ],
+      },
+    };
+  });
+
+  let grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'summary', 'setup left learner on summary');
+  assert.equal(grammar.prefs.focusConceptId, '', 'focus preference clean before dispatch');
+
+  harness.dispatch('grammar-practise-missed');
+  grammar = harness.store.getState().subjectUi.grammar;
+
+  // weak beats due -- `word_classes` wins and routes into a focused round.
+  assert.equal(grammar.prefs.focusConceptId, 'word_classes');
+  assert.notEqual(grammar.phase, 'summary');
+});
+
+test('U5 follower T2: grammar-practise-missed is a silent no-op when the round has no missed or weak / due concept', () => {
+  const { harness } = u5RunRegularToSummary();
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  // Wipe analytics.concepts so no weak / due concept is present. Regular
+  // practice summaries carry no miniTestReview, so the helper has nothing
+  // to act on -- the handler must return early without mutating phase or
+  // prefs.
+  harness.store.updateSubjectUi('grammar', (current) => {
+    const normalised = normaliseGrammarReadModel(current, learnerId);
+    return {
+      ...normalised,
+      analytics: { ...normalised.analytics, concepts: [] },
+    };
+  });
+
+  const before = harness.store.getState().subjectUi.grammar;
+  assert.equal(before.phase, 'summary');
+  const focusBefore = before.prefs.focusConceptId;
+
+  harness.dispatch('grammar-practise-missed');
+  const after = harness.store.getState().subjectUi.grammar;
+
+  assert.equal(after.phase, 'summary', 'phase unchanged when nothing to practise');
+  assert.equal(after.prefs.focusConceptId, focusBefore, 'focus preference unchanged');
+});
+
+test('U5 follower T3: grammar-close-analytics falls back to dashboard when summary has been cleared', () => {
+  const { harness } = u5RunRegularToSummary();
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.dispatch('grammar-open-analytics');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'analytics');
+
+  // Simulate the summary being cleared (e.g. server eviction or a follow-up
+  // dispatch that reset the round). The close-analytics fallback must route
+  // to dashboard, never leave the learner stranded on a phase with nothing
+  // to render.
+  harness.store.updateSubjectUi('grammar', (current) => {
+    const normalised = normaliseGrammarReadModel(current, learnerId);
+    return { ...normalised, summary: null, phase: 'analytics' };
+  });
+
+  harness.dispatch('grammar-close-analytics');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');
+});
+
+test('U5 follower T4: mini-test Fix missed concepts button renders disabled when every question is correct', () => {
+  const { harness } = u4HarnessWithMiniSet();
+  harness.dispatch('grammar-finish-mini-test');
+
+  const learnerId = harness.store.getState().learners.selectedId;
+  const beforeGrammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(beforeGrammar.phase, 'summary');
+  assert.ok(Array.isArray(beforeGrammar.summary?.miniTestReview?.questions));
+
+  // Force every review question to be marked correct so the first-missed
+  // resolver returns ''. analytics.concepts also wiped so the module-side
+  // fallback does not resurrect a concept id from weak / due analytics.
+  harness.store.updateSubjectUi('grammar', (current) => {
+    const normalised = normaliseGrammarReadModel(current, learnerId);
+    const questions = normalised.summary.miniTestReview.questions.map((question) => ({
+      ...question,
+      answered: true,
+      marked: {
+        ...(question.marked || {}),
+        result: { ...(question.marked?.result || {}), correct: true },
+      },
+    }));
+    return {
+      ...normalised,
+      summary: {
+        ...normalised.summary,
+        miniTestReview: { ...normalised.summary.miniTestReview, questions },
+      },
+      analytics: { ...normalised.analytics, concepts: [] },
+    };
+  });
+
+  const html = harness.render();
+  const primaryRow = html.match(
+    /<div class="grammar-summary-primary-actions"[^>]*>[\s\S]*?<\/div>/,
+  )?.[0];
+  assert.ok(primaryRow, 'mini-test primary actions row rendered');
+
+  const fixButton = primaryRow.match(
+    /<button[^>]*data-action="grammar-practise-missed"[^>]*>[^<]*<\/button>/,
+  )?.[0];
+  assert.ok(fixButton, 'Fix missed concepts button rendered');
+  assert.match(fixButton, /disabled/, 'Fix missed concepts button carries the disabled attribute when no misses');
+});
+
+test('U5 follower T5: mini-test primary row puts Fix missed concepts first with the primary variant and Review answers second as secondary', () => {
+  const { harness } = u4HarnessWithMiniSet();
+  // Leave every question Blank so the resolver finds a missed concept id
+  // and the primary button is enabled.
+  harness.dispatch('grammar-finish-mini-test');
+
+  const html = harness.render();
+  const primaryRow = html.match(
+    /<div class="grammar-summary-primary-actions"[^>]*>[\s\S]*?<\/div>/,
+  )?.[0];
+  assert.ok(primaryRow, 'mini-test primary actions row rendered');
+
+  // Button order -- Fix missed concepts must appear before Review answers.
+  const fixIndex = primaryRow.indexOf('>Fix missed concepts<');
+  const reviewIndex = primaryRow.indexOf('>Review answers<');
+  assert.ok(fixIndex >= 0 && reviewIndex >= 0, 'both mini-test primary buttons rendered');
+  assert.ok(fixIndex < reviewIndex, 'Fix missed concepts renders before Review answers');
+
+  // Variants -- Fix missed concepts carries `btn primary`, Review answers
+  // carries `btn secondary`.
+  assert.match(
+    primaryRow,
+    /<button[^>]*class="btn primary"[^>]*data-action="grammar-practise-missed"[^>]*>Fix missed concepts</,
+    'Fix missed concepts is the primary variant',
+  );
+  assert.match(
+    primaryRow,
+    /<button[^>]*class="btn secondary"[^>]*data-action="grammar-review-mini-test"[^>]*>Review answers</,
+    'Review answers is the secondary variant',
+  );
+});
