@@ -28,10 +28,13 @@ const CSS_PATH = path.join(rootDir, 'styles', 'app.css');
 
 // Load-bearing enumeration: if a new .monster-celebration-art keyframe is
 // ever added (e.g. a stage-4-only variant or a new overlay kind), its name
-// MUST be appended here. Auto-discovery via regex is intentionally avoided —
-// the six names are known today, a seventh does not exist, and a dynamic
-// scan would be speculative complexity that hides omissions as "we'll find
-// it next time".
+// MUST be appended here. We do not auto-discover every `@keyframes
+// monster-celebration-*` block because that namespace also covers the
+// opposite-contract self-centred halo/white/burst keyframes. Instead, a
+// separate enumeration-completeness test below scans every CSS rule that
+// references `.monster-celebration-art` and verifies the keyframe name it
+// drives is present in this list — so adding a new overlay kind with a
+// self-centring translate will fail a test, not silently pass.
 const ART_KEYFRAMES = Object.freeze([
   'monster-celebration-before',
   'monster-celebration-after',
@@ -39,6 +42,18 @@ const ART_KEYFRAMES = Object.freeze([
   'monster-celebration-monster-pop',
   'monster-celebration-mega-before',
   'monster-celebration-mega-after',
+]);
+
+// Entrance keyframes — these carry a drop-from-above choreography beat
+// via `translateY(Npx)` at 0%. Pinned separately so that a silent removal
+// of the entrance delta (which would make sprites appear to pop in from
+// their resting position rather than drift down into it) triggers a
+// regression rather than sliding through.
+const ENTRANCE_KEYFRAMES = Object.freeze([
+  'monster-celebration-before',
+  'monster-celebration-egg-wobble',
+  'monster-celebration-monster-pop',
+  'monster-celebration-mega-before',
 ]);
 
 // Self-centred elements whose keyframes must continue to carry
@@ -126,6 +141,113 @@ test('self-centred overlay elements: halo / white-flash / burst-halo keyframes s
     assert.ok(
       transforms.some((value) => value.includes('translate(-50%, -50%)')),
       `@keyframes ${name} must continue to contain translate(-50%, -50%) in at least one frame — these elements live at top:50%;left:50% and their self-centring contract is deliberately the opposite of the art layer's.`,
+    );
+  }
+});
+
+test('art base rule premise: .monster-celebration-art stays position:absolute; inset:0 — the precondition that makes dropping translate(-50%, …) correct', () => {
+  // Match the base .monster-celebration-art rule specifically — not variant
+  // selectors like `.monster-celebration-art.before` or `.egg-crack .monster-celebration-art.before`.
+  // The base rule is the sole owner of the layout premise. If a future
+  // refactor re-homes the <img> at top:50%;left:50% and re-introduces a
+  // self-centring wrapper translate (the pre-PR-119 DOM shape), the
+  // art-keyframe contract above would pass while re-admitting the bug —
+  // because the premise "inner img is inset:0 inside a var-driven wrapper"
+  // would have silently changed.
+  const baseRuleMatch = css.match(/^\.monster-celebration-art\s*\{[^}]*\}/m);
+  assert.ok(baseRuleMatch, 'expected a base .monster-celebration-art rule in styles/app.css at the start of a line (no leading selectors)');
+  const rule = baseRuleMatch[0];
+  assert.ok(
+    /position\s*:\s*absolute/.test(rule),
+    'base .monster-celebration-art rule must declare position: absolute — this is load-bearing for the inset:0 layout premise. If the DOM has legitimately moved to a centred-img model, update this assertion deliberately and revisit the keyframe contract.',
+  );
+  assert.ok(
+    /inset\s*:\s*0/.test(rule),
+    'base .monster-celebration-art rule must declare inset: 0 — this is what makes dropping translate(-50%, …) from the art keyframes correct. Without inset:0, the img is not aligned to the wrapper and the keyframes would need to re-centre it.',
+  );
+});
+
+test('egg-crack pivot contract: .egg-crack .monster-celebration-art.before/.after carry transform-origin: 50% 80%', () => {
+  // The wobble and pop choreography pivots on the egg base, not the img
+  // centre. That pivot is declared at rule level (outside the keyframes),
+  // so it is not caught by the per-keyframe transform assertions above.
+  // If a future refactor drops or moves these declarations, the wobble
+  // silently switches to a centre pivot and the choreography breaks.
+  const wobbleRule = css.match(/\.monster-celebration-overlay\.egg-crack\s+\.monster-celebration-art\.before\s*\{[^}]*\}/);
+  const popRule = css.match(/\.monster-celebration-overlay\.egg-crack\s+\.monster-celebration-art\.after\s*\{[^}]*\}/);
+  assert.ok(wobbleRule, 'expected a .egg-crack .monster-celebration-art.before rule in styles/app.css');
+  assert.ok(popRule, 'expected a .egg-crack .monster-celebration-art.after rule in styles/app.css');
+  for (const [label, rule] of [['egg-wobble', wobbleRule[0]], ['monster-pop', popRule[0]]]) {
+    assert.ok(
+      /transform-origin\s*:\s*50%\s+80%/.test(rule),
+      `${label} rule must declare transform-origin: 50% 80% — the wobble/pop choreography pivots on the egg base, not the img centre. If the pivot has legitimately moved, update this assertion deliberately.`,
+    );
+  }
+});
+
+test('entrance choreography: every entrance keyframe contains at least one translateY(...) — preserves the drop-in beat', () => {
+  for (const name of ENTRANCE_KEYFRAMES) {
+    const block = extractKeyframeBlock(css, name);
+    const transforms = transformValues(block);
+    assert.ok(
+      transforms.some((value) => /translateY\(/.test(value)),
+      `@keyframes ${name} must contain at least one translateY(...) frame — the entrance beat drops the sprite from above into its resting position. If the drop-in has intentionally been removed, update ENTRANCE_KEYFRAMES.`,
+    );
+  }
+});
+
+test('art keyframe enumeration is complete: every .monster-celebration-art animation reference is in ART_KEYFRAMES', () => {
+  // Scan every CSS rule whose selector mentions .monster-celebration-art
+  // (with or without .before/.after/.egg-crack qualifiers) and extract the
+  // first @keyframes name from its animation: declaration. Every extracted
+  // name must appear in ART_KEYFRAMES — so a future overlay kind (e.g. a
+  // hypothetical `legendary` variant) that adds a new art keyframe fails
+  // this test loudly instead of silently escaping the contract.
+  const ruleRegex = /([^{}]*\.monster-celebration-art[^{}]*)\{([^}]*)\}/g;
+  const referencedKeyframes = new Set();
+  let match;
+  while ((match = ruleRegex.exec(css)) !== null) {
+    const body = match[2];
+    const animationRegex = /animation\s*:\s*([A-Za-z_-][A-Za-z0-9_-]*)/g;
+    let animationMatch;
+    while ((animationMatch = animationRegex.exec(body)) !== null) {
+      const name = animationMatch[1];
+      if (name.startsWith('monster-celebration-')) {
+        referencedKeyframes.add(name);
+      }
+    }
+  }
+  assert.ok(referencedKeyframes.size > 0, 'expected at least one .monster-celebration-art rule to reference a monster-celebration-* animation — the scanner may be broken');
+  const listed = new Set(ART_KEYFRAMES);
+  const missing = [...referencedKeyframes].filter((name) => !listed.has(name));
+  assert.deepEqual(
+    missing,
+    [],
+    `.monster-celebration-art rules reference keyframe(s) not present in ART_KEYFRAMES: ${JSON.stringify(missing)}. Add each missing name to ART_KEYFRAMES (and, if it is an entrance keyframe that drops in from above, to ENTRANCE_KEYFRAMES) so the self-centring-translate contract covers them too.`,
+  );
+});
+
+test('parser sanity: extractKeyframeBlock + transformValues surface the expected number of transform frames per art keyframe', () => {
+  // If a future edit to extractKeyframeBlock or transformValues silently
+  // breaks extraction (returns empty strings or loses brace tracking),
+  // the "no translate(-50%" assertion above becomes vacuously true. Pin
+  // the expected frame counts so a parser regression fails instead of
+  // passing green.
+  const expectedTransformCount = Object.freeze({
+    'monster-celebration-before': 7,       // 0, 14, 28, 42, 50, 56, 62 — the 100% frame is opacity-only
+    'monster-celebration-after': 5,        // 0/58, 64, 74, 86, 100
+    'monster-celebration-egg-wobble': 12,  // 0, 8, 18, 22, 26, 29, 32, 35, 37, 38, 44, 48 — 100% is opacity-only
+    'monster-celebration-monster-pop': 8,  // 0/40, 44, 50, 56, 64, 72, 82, 100
+    'monster-celebration-mega-before': 8,  // 0, 10, 24, 36, 46, 52, 58, 64 — 100% is opacity-only
+    'monster-celebration-mega-after': 5,   // 0/60, 66, 78, 90, 100
+  });
+  for (const name of ART_KEYFRAMES) {
+    const block = extractKeyframeBlock(css, name);
+    const transforms = transformValues(block);
+    assert.equal(
+      transforms.length,
+      expectedTransformCount[name],
+      `@keyframes ${name} expected ${expectedTransformCount[name]} transform frames, got ${transforms.length}. Either the choreography has been intentionally restructured (update expectedTransformCount above) or the parser has regressed (debug extractKeyframeBlock / transformValues).`,
     );
   }
 });

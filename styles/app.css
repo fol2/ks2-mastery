@@ -1554,7 +1554,18 @@ textarea:focus-visible {
 
 /* Egg — wobble building tension, then break apart at 38%.
    Pivot at base so rocking reads as "trying to escape"; brief
-   expand at the crack moment sells the burst. */
+   expand at the crack moment sells the burst.
+
+   Latent-break note: this pivot is hard-pinned at 50% 80% rather
+   than following the wrapper's var(--visual-anchor-*) vars. All
+   current celebrationOverlay configs use the default centre
+   anchor so the wrapper and art pivots agree — but once the
+   admin visual-config centre publishes a non-default anchorY for
+   a stage-0 asset, the wrapper and art pivots diverge and the
+   wobble will appear off-axis during the CRACK peak. The
+   deferred follow-up is to propagate the wrapper's anchor vars
+   onto this rule. See the "Deferred to Follow-Up Work" section
+   of docs/plans/2026-04-25-002-fix-celebration-sprite-centring-plan.md. */
 .monster-celebration-overlay.egg-crack .monster-celebration-art.before {
   transform-origin: 50% 80%;
   animation: monster-celebration-egg-wobble var(--mc-duration) linear var(--mc-art-delay, 0s) forwards;
@@ -1583,7 +1594,12 @@ textarea:focus-visible {
 /* New monster — squash-and-stretch pop emerging from the cracked
    shell. Pivot at base so it lands like a tiny creature plopping
    onto solid ground. The bounce-then-settle sequence borrows from
-   the classic 12 principles of animation. */
+   the classic 12 principles of animation.
+
+   Same latent-break note as .egg-crack .monster-celebration-art.before
+   above: this hard-pinned 50% 80% pivot does not follow the
+   wrapper's var(--visual-anchor-*) vars. Safe today; a non-default
+   celebrationOverlay anchor will expose the mismatch. */
 .monster-celebration-overlay.egg-crack .monster-celebration-art.after {
   transform-origin: 50% 80%;
   animation: monster-celebration-monster-pop var(--mc-duration) linear var(--mc-art-delay, 0s) forwards;
