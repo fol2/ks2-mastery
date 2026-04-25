@@ -839,3 +839,92 @@ test('Guardian round does not mutate progress.stage/dueDay/lastDay/lastResult ev
     assert.equal(row.progress.wrong, 2, `${slug} progress.wrong bumped`);
   }
 });
+
+// ----- U3 review follow-up: CORR-1 regression + ADV-1 top-up priority ---------
+
+test('Guardian feedback body shows the correct number of days until the next check (CORR-1 regression)', () => {
+  // After a correct answer on a fresh record (reviewLevel 0->1), the schedule
+  // sets nextDueDay = today + GUARDIAN_INTERVALS[0] = today + 3. The feedback
+  // body must read "3 days", not "7" (the old bug indexed with updatedRecord.reviewLevel).
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.2 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const firstSlug = started.state.session.currentCard.slug;
+  const word = WORD_BY_SLUG[firstSlug];
+  const submitted = service.submitAnswer('learner-a', started.state, word.word);
+
+  assert.equal(submitted.state.feedback.kind, 'info');
+  assert.match(submitted.state.feedback.body, /Next Guardian check in 3 days\b/);
+});
+
+test('Guardian feedback body matches days-until-due for a recovered word (CORR-1 regression)', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+  // Seed a wobbling record at reviewLevel=2 so the recovery schedule uses
+  // GUARDIAN_INTERVALS[2] = 14 days.
+  seedGuardianMap(repositories, 'learner-a', {
+    possess: {
+      reviewLevel: 2,
+      lastReviewedDay: today - 5,
+      nextDueDay: today - 1,
+      correctStreak: 0,
+      lapses: 1,
+      renewals: 0,
+      wobbling: true,
+    },
+  });
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  assert.equal(started.state.session.currentCard.slug, 'possess');
+  const submitted = service.submitAnswer('learner-a', started.state, 'possess');
+
+  assert.equal(submitted.state.feedback.headline, 'Recovered.');
+  assert.match(submitted.state.feedback.body, /Next Guardian check in 14 days\b/);
+});
+
+test('selectGuardianWords top-up prefers wobbling non-due over non-wobbling non-due (ADV-1 regression)', () => {
+  const guardianMap = {
+    // Two non-due guardians: one wobbling (W), one stable (S). W should surface
+    // first during top-up even though both have nextDueDay > today, because
+    // wobbling status must not be demoted by the scheduler pushing nextDueDay
+    // one day forward after a miss.
+    believe: {
+      reviewLevel: 1,
+      lastReviewedDay: TODAY - 30, // older last review
+      nextDueDay: TODAY + 5,        // not due yet
+      correctStreak: 1,
+      lapses: 0,
+      renewals: 0,
+      wobbling: false,
+    },
+    possess: {
+      reviewLevel: 0,
+      lastReviewedDay: TODAY - 1,
+      nextDueDay: TODAY + 1,        // not due yet (wobbling set to +1 after miss)
+      correctStreak: 0,
+      lapses: 1,
+      renewals: 0,
+      wobbling: true,
+    },
+  };
+  const progressMap = {
+    believe: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+    possess: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+  };
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap,
+    wordBySlug: WORD_BY_SLUG,
+    todayDay: TODAY,
+    length: 2,
+    random: () => 0.5,
+  });
+  // length=2 is below GUARDIAN_MIN_ROUND_LENGTH=5 after due is empty and no
+  // lazy candidates — top-up fills both slots; wobbling must land first.
+  assert.deepEqual(selected, ['possess', 'believe']);
+});

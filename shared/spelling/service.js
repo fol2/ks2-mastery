@@ -250,12 +250,19 @@ export function selectGuardianWords({
 
   // Top-up from non-due guardians (sorted by oldest lastReviewedDay first). Only
   // engages if we're still below the minimum round length — matches the plan
-  // ("if still under min length (5), top up").
+  // ("if still under min length (5), top up"). Wobbling non-due entries still
+  // keep priority over non-wobbling non-due entries so a recent wobble stays
+  // visible when scheduling placed it slightly in the future.
   if (selected.length < GUARDIAN_MIN_ROUND_LENGTH) {
     const nonDue = guardianEntries
-      .filter((entry) => entry.nextDueDay > safeToday && !selectedSet.has(entry.slug))
+      .filter((entry) => entry.nextDueDay > safeToday && !selectedSet.has(entry.slug));
+    const wobblingNonDue = nonDue
+      .filter((entry) => entry.wobbling === true)
       .sort(compareByLastReviewedThenSlug);
-    for (const entry of nonDue) {
+    const stableNonDue = nonDue
+      .filter((entry) => entry.wobbling !== true)
+      .sort(compareByLastReviewedThenSlug);
+    for (const entry of [...wobblingNonDue, ...stableNonDue]) {
       if (selected.length >= target) break;
       push(entry.slug);
     }
@@ -1209,14 +1216,15 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       }));
     }
 
+    const daysUntilNextCheck = Math.max(0, updatedRecord.nextDueDay - todayDay);
     const feedback = correct
       ? {
           kind: wasWobbling ? 'success' : 'info',
           headline: wasWobbling ? 'Recovered.' : 'Guardian strong.',
           answer: promptWord.word,
           body: wasWobbling
-            ? 'This word is back under your guard. Next check will follow the schedule.'
-            : `This word stays secure. Next Guardian check in ${intervalForLevel(updatedRecord.reviewLevel)} day${intervalForLevel(updatedRecord.reviewLevel) === 1 ? '' : 's'}.`,
+            ? `This word is back under your guard. Next Guardian check in ${daysUntilNextCheck} day${daysUntilNextCheck === 1 ? '' : 's'}.`
+            : `This word stays secure. Next Guardian check in ${daysUntilNextCheck} day${daysUntilNextCheck === 1 ? '' : 's'}.`,
         }
       : {
           kind: 'warn',
