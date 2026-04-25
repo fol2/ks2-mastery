@@ -24,6 +24,13 @@ import {
   buildGrammarMiniPack,
   buildGrammarPracticeQueue,
 } from './selection.js';
+import {
+  GRAMMAR_TRANSFER_HISTORY_PER_PROMPT,
+  GRAMMAR_TRANSFER_MAX_PROMPTS,
+  GRAMMAR_TRANSFER_WRITING_CAP,
+  GRAMMAR_TRANSFER_CHECKLIST_CAP,
+  grammarTransferPromptById,
+} from './transfer-prompts.js';
 
 const SUBJECT_ID = 'grammar';
 const SERVER_AUTHORITY = 'worker';
@@ -321,6 +328,8 @@ export function normaliseServerGrammarData(rawValue) {
     recentAttempts: Array.isArray(raw.recentAttempts)
       ? raw.recentAttempts.slice(-80).map((entry) => normaliseStoredAttempt(cloneSerialisable(entry)))
       : [],
+    // U7 non-scored transfer evidence. Stored per promptId with capped history.
+    transferEvidence: isPlainObject(raw.transferEvidence) ? cloneSerialisable(raw.transferEvidence) : {},
     aiEnrichment: normalisePersistentAiEnrichment(raw.aiEnrichment),
   };
 }
@@ -357,6 +366,7 @@ export function createInitialGrammarState(data = {}) {
     retryQueue: normalisedData.retryQueue,
     misconceptions: normalisedData.misconceptions,
     recentAttempts: normalisedData.recentAttempts,
+    transferEvidence: normalisedData.transferEvidence || {},
     aiEnrichment: normalisedData.aiEnrichment,
     session: null,
     feedback: null,
@@ -376,6 +386,7 @@ function normaliseGrammarState(rawState, data = {}) {
     retryQueue: rawState.retryQueue || data.retryQueue,
     misconceptions: rawState.misconceptions || data.misconceptions,
     recentAttempts: rawState.recentAttempts || data.recentAttempts,
+    transferEvidence: rawState.transferEvidence || data.transferEvidence,
     aiEnrichment: rawState.aiEnrichment || data.aiEnrichment,
   });
   return {
@@ -400,6 +411,7 @@ function normaliseGrammarState(rawState, data = {}) {
     retryQueue: normalisedData.retryQueue,
     misconceptions: normalisedData.misconceptions,
     recentAttempts: normalisedData.recentAttempts,
+    transferEvidence: normalisedData.transferEvidence || {},
     aiEnrichment: normalisedData.aiEnrichment,
     session: isPlainObject(rawState.session) ? cloneSerialisable(rawState.session) : null,
     feedback: isPlainObject(rawState.feedback) ? cloneSerialisable(rawState.feedback) : null,
@@ -417,6 +429,9 @@ function stateData(state) {
     retryQueue: cloneSerialisable(state.retryQueue) || [],
     misconceptions: cloneSerialisable(state.misconceptions) || {},
     recentAttempts: cloneSerialisable(state.recentAttempts) || [],
+    ...(isPlainObject(state.transferEvidence) && Object.keys(state.transferEvidence).length
+      ? { transferEvidence: cloneSerialisable(state.transferEvidence) }
+      : {}),
     ...(state.aiEnrichment ? { aiEnrichment: cloneSerialisable(state.aiEnrichment) } : {}),
   };
 }
@@ -1700,6 +1715,88 @@ function savePrefs(state, payload) {
   return [];
 }
 
+// U7 non-scored transfer writing lane. This command is isolated from every
+// scored path: it never touches state.mastery, state.retryQueue, reward
+// projection, or Concordium progress. Saved evidence is stored under a
+// dedicated `transferEvidence` slot, keyed per promptId, with per-prompt
+// history capped at GRAMMAR_TRANSFER_HISTORY_PER_PROMPT and a global cap of
+// GRAMMAR_TRANSFER_MAX_PROMPTS distinct prompts.
+function saveTransferEvidence(state, payload, command, nowTs) {
+  if (isActiveMiniTestSession(state)) {
+    throw new BadRequestError('Transfer evidence cannot be saved during a strict mini-test.', {
+      code: 'grammar_transfer_unavailable_during_mini_test',
+      subjectId: SUBJECT_ID,
+    });
+  }
+  const promptId = typeof payload?.promptId === 'string' ? payload.promptId : '';
+  const prompt = grammarTransferPromptById(promptId);
+  if (!prompt) {
+    throw new NotFoundError('Grammar transfer prompt is not available.', {
+      code: 'grammar_transfer_prompt_not_found',
+      subjectId: SUBJECT_ID,
+      promptId,
+    });
+  }
+  const writingRaw = typeof payload?.writing === 'string' ? payload.writing : '';
+  const writing = writingRaw.slice(0, GRAMMAR_TRANSFER_WRITING_CAP).trim();
+  if (!writing) {
+    throw new BadRequestError('Transfer writing is required before saving.', {
+      code: 'grammar_transfer_writing_required',
+      subjectId: SUBJECT_ID,
+      promptId,
+    });
+  }
+  const selfAssessment = (Array.isArray(payload?.selfAssessment) ? payload.selfAssessment : [])
+    .slice(0, GRAMMAR_TRANSFER_CHECKLIST_CAP)
+    .map((entry) => ({
+      key: typeof entry?.key === 'string' ? entry.key.slice(0, 80) : '',
+      checked: Boolean(entry?.checked),
+    }))
+    .filter((entry) => entry.key);
+  if (!isPlainObject(state.transferEvidence)) state.transferEvidence = {};
+  const existingPromptIds = Object.keys(state.transferEvidence);
+  if (!state.transferEvidence[promptId] && existingPromptIds.length >= GRAMMAR_TRANSFER_MAX_PROMPTS) {
+    throw new BadRequestError('Grammar transfer evidence quota reached. Revisit an existing prompt instead.', {
+      code: 'grammar_transfer_quota_exceeded',
+      subjectId: SUBJECT_ID,
+      promptId,
+      max: GRAMMAR_TRANSFER_MAX_PROMPTS,
+    });
+  }
+  const snapshot = {
+    source: 'transfer-lane',
+    writing,
+    selfAssessment,
+    savedAt: nowTs,
+    requestId: command?.requestId || null,
+  };
+  const prior = isPlainObject(state.transferEvidence[promptId])
+    ? state.transferEvidence[promptId]
+    : { promptId, latest: null, history: [] };
+  const previousLatest = prior.latest;
+  const history = Array.isArray(prior.history) ? prior.history.slice() : [];
+  if (previousLatest) history.unshift(previousLatest);
+  // Keep the latest save plus up to (history-cap - 1) prior snapshots.
+  while (history.length >= GRAMMAR_TRANSFER_HISTORY_PER_PROMPT) history.pop();
+  state.transferEvidence[promptId] = {
+    promptId,
+    latest: snapshot,
+    history,
+    updatedAt: nowTs,
+  };
+  return [{
+    id: `grammar.transfer-evidence-saved.${command?.learnerId || 'learner'}.${command?.requestId || 'req'}.${promptId}`,
+    type: 'grammar.transfer-evidence-saved',
+    subjectId: SUBJECT_ID,
+    learnerId: command?.learnerId || '',
+    contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
+    promptId,
+    savedAt: nowTs,
+    nonScored: true,
+    createdAt: nowTs,
+  }];
+}
+
 function requestAiEnrichment(state, payload, nowTs) {
   if (isActiveMiniTestSession(state)) {
     throw new BadRequestError('Grammar enrichment is unavailable until the mini-test is complete.', {
@@ -1790,6 +1887,9 @@ export function createServerGrammarEngine({ now = Date.now } = {}) {
           state.aiEnrichment = persistentAiEnrichment;
         }
         changed = Boolean(persistentAiEnrichment);
+      } else if (command === 'save-transfer-evidence') {
+        events = saveTransferEvidence(state, payload, commandContext, nowTs);
+        changed = true;
       } else if (command === 'reset-learner') {
         state = createInitialGrammarState();
       } else {
