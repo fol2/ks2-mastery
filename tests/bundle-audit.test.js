@@ -38,7 +38,7 @@ test('client bundle audit fails on forbidden engine, content, and local-mode tok
   }, /Forbidden production-client/);
 });
 
-test('client bundle audit fails when Grammar server engine or content enters the client bundle', async () => {
+test('client bundle audit fails when Grammar server runtime, engine, content, or enrichment enters the client bundle', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
   const bundle = path.join(dir, 'app.bundle.js');
   const metafile = path.join(dir, 'app.bundle.meta.json');
@@ -65,7 +65,7 @@ test('client bundle audit fails when Grammar server engine or content enters the
       cwd: process.cwd(),
       stdio: 'pipe',
     });
-  }, /server-authoritative Grammar engine\/content/);
+  }, /server-authoritative Grammar runtime, engine, content, and enrichment code/);
 });
 
 test('client bundle audit fails on browser-side AI provider key tokens', async () => {

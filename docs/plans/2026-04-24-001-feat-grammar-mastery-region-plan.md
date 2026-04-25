@@ -3,7 +3,7 @@ title: "feat: Full Grammar Mastery Region"
 type: feat
 status: live-checklist
 date: 2026-04-24
-last_checked: 2026-04-24
+last_checked: 2026-04-25
 origin: docs/brainstorms/2026-04-24-grammar-mastery-region-requirements.md
 deepened: 2026-04-24
 ---
@@ -41,7 +41,7 @@ Open Grammar follow-up scope:
 - [x] Track remaining legacy functionality completeness in `docs/plans/2026-04-25-001-feat-grammar-functionality-completeness-plan.md`: strict mini-test, session goals/settings, in-session repair, visible AI triggers, read aloud, adult/data replacement parity, and release gates are complete.
 - [x] Add transfer and Bellstorm bridge placeholders without collapsing Grammar and Punctuation product identities.
 - [x] Decide paragraph-level transfer direction: `docs/grammar-transfer-decision.md` sets the first transfer lane as non-scored writing application, with teacher-reviewed or deterministic paragraph scoring deferred to separate reviewed plans.
-- [ ] Decide whether to connect a live AI provider to the safe lane; provider keys must stay server-side and output must pass the existing validator.
+- [x] Decide live AI provider direction: `docs/grammar-ai-provider-decision.md` keeps live provider integration deferred; deterministic fallback remains the production contract until a separate reviewed server-side provider plan lands.
 - [ ] Continue to run `npm test`, `npm run check`, and Grammar production/UI smoke for each shipped Grammar slice.
 
 ---
