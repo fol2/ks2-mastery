@@ -1,6 +1,10 @@
 import { randomToken, sessionCookie, sha256, createSession } from '../auth.js';
 import { BadRequestError, ForbiddenError, UnauthenticatedError } from '../errors.js';
 import { all, batch, bindStatement, first, requireDatabase, run, sqlPlaceholders } from '../d1.js';
+import {
+  isProductionRuntime as requestOriginIsProductionRuntime,
+  requireSameOrigin as requestRequireSameOrigin,
+} from '../request-origin.js';
 import { DEMO_TEMPLATE_ID, demoLearnerTemplate } from './template.js';
 
 export const DEMO_TTL_MS = 24 * 60 * 60 * 1000;
@@ -41,52 +45,13 @@ function currentWindowStart(timestamp, windowMs) {
   return Math.floor(timestamp / windowMs) * windowMs;
 }
 
-export function isProductionRuntime(env = {}) {
-  const authMode = cleanText(env.AUTH_MODE).toLowerCase();
-  const stage = cleanText(env.ENVIRONMENT || env.NODE_ENV).toLowerCase();
-  if (authMode === 'development-stub') return false;
-  if (authMode === 'production') return true;
-  if (stage === 'test' || stage === 'development' || stage === 'dev') return false;
-  return stage === 'production' || Boolean(authMode);
-}
-
-function requestOrigin(request) {
-  const url = new URL(request.url);
-  return `${url.protocol}//${url.host}`;
-}
-
-function explicitAppOrigin(env = {}) {
-  const configured = cleanText(env.APP_ORIGIN);
-  return configured ? configured.replace(/\/$/, '') : '';
-}
-
-function appOrigins(env = {}, request) {
-  const explicit = explicitAppOrigin(env);
-  if (explicit) return new Set([explicit]);
-  const origin = requestOrigin(request);
-  const hostname = cleanText(env.APP_HOSTNAME);
-  return new Set([
-    hostname ? `https://${hostname}` : '',
-    origin,
-  ].filter(Boolean));
-}
-
-export function requireSameOrigin(request, env = {}, { allowMissingOrigin = false } = {}) {
-  const origin = cleanText(request.headers.get('origin'));
-  if (!origin) {
-    if (!allowMissingOrigin && isProductionRuntime(env)) {
-      throw new ForbiddenError('This request must come from the KS2 Mastery app origin.', {
-        code: 'same_origin_required',
-      });
-    }
-    return;
-  }
-  if (!appOrigins(env, request).has(origin)) {
-    throw new ForbiddenError('This request must come from the KS2 Mastery app origin.', {
-      code: 'same_origin_required',
-    });
-  }
-}
+// U6 (sys-hardening p1): these helpers moved to `worker/src/request-origin.js`
+// so `auth.requireSession()` can call `requireSameOrigin()` without creating a
+// circular import between `auth.js` and `demo/sessions.js`. The re-exports
+// below keep every existing caller in `worker/src/app.js` and
+// `worker/src/demo/sessions.js` working without a rename.
+export const isProductionRuntime = requestOriginIsProductionRuntime;
+export const requireSameOrigin = requestRequireSameOrigin;
 
 export async function consumeRateLimit(db, { bucket, identifier, limit, windowMs, now }) {
   if (!bucket || !identifier || !limit || !windowMs) return { allowed: true, retryAfterSeconds: 0 };

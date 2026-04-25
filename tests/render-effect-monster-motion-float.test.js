@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import {
-  computeMonsterMotionStyle,
-  monsterMotionFloatEffect,
-} from '../src/platform/game/render/effects/monster-motion-float.js';
+import { computeMonsterMotionStyle } from '../src/platform/game/render/effects/monster-motion-float.js';
+import { runtimeRegistration } from '../src/platform/game/render/runtime-registration.js';
+import { lookupEffect, resetRegistry } from '../src/platform/game/render/registry.js';
+import { resetWarnOnce } from '../src/platform/game/render/composition.js';
 
 // Fixtures captured from the original `monsterMotionStyle` helper before
 // the port. Byte-identity proves stage profiles + hash seeding survive.
@@ -255,20 +255,41 @@ test('monster-motion-float: edge case — stage falsy (0/null/undefined) clamps 
   }
 });
 
-test('monster-motion-float: descriptor metadata matches contract', () => {
-  assert.equal(monsterMotionFloatEffect.kind, 'monster-motion-float');
-  assert.equal(monsterMotionFloatEffect.lifecycle, 'continuous');
-  assert.equal(monsterMotionFloatEffect.layer, 'base');
-  assert.deepEqual([...monsterMotionFloatEffect.surfaces], ['*']);
-  assert.equal(monsterMotionFloatEffect.reducedMotion, 'simplify');
+// The `monster-motion-float` EffectSpec is produced by the `motion` template
+// during `runtimeRegistration`; assertions read the registered descriptor.
+function withRuntimeRegistration(fn) {
+  resetRegistry();
+  resetWarnOnce();
+  try {
+    runtimeRegistration({ catalog: undefined });
+    fn();
+  } finally {
+    resetRegistry();
+    resetWarnOnce();
+  }
+}
+
+test('monster-motion-float: descriptor metadata matches contract (via runtimeRegistration)', () => {
+  withRuntimeRegistration(() => {
+    const monsterMotionFloatEffect = lookupEffect('monster-motion-float');
+    assert.ok(monsterMotionFloatEffect, 'runtimeRegistration must register monster-motion-float');
+    assert.equal(monsterMotionFloatEffect.kind, 'monster-motion-float');
+    assert.equal(monsterMotionFloatEffect.lifecycle, 'continuous');
+    assert.equal(monsterMotionFloatEffect.layer, 'base');
+    assert.deepEqual([...monsterMotionFloatEffect.surfaces], ['*']);
+    assert.equal(monsterMotionFloatEffect.reducedMotion, 'simplify');
+  });
 });
 
-test('monster-motion-float: applyTransform delegates to the same compute function', () => {
-  const fixture = MOTION_FIXTURES[3];
-  const viaApply = monsterMotionFloatEffect.applyTransform({
-    params: {},
-    monster: fixture.seed,
-    context: fixture.context,
+test('monster-motion-float: applyTransform delegates to the same compute function (via runtimeRegistration)', () => {
+  withRuntimeRegistration(() => {
+    const monsterMotionFloatEffect = lookupEffect('monster-motion-float');
+    const fixture = MOTION_FIXTURES[3];
+    const viaApply = monsterMotionFloatEffect.applyTransform({
+      params: {},
+      monster: fixture.seed,
+      context: fixture.context,
+    });
+    assert.deepEqual(viaApply, fixture.expected);
   });
-  assert.deepEqual(viaApply, fixture.expected);
 });

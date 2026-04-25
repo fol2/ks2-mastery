@@ -108,6 +108,8 @@ export function renderMonsterRenderFixture({
   sizes,
   registrations = '',
   effectModules = [],
+  effectConfigValue = undefined,
+  omitEffectsProp = false,
 } = {}) {
   // `registrations` is a JS source snippet that runs before render so
   // tests can register inline test-only effects (with custom render /
@@ -115,6 +117,11 @@ export function renderMonsterRenderFixture({
   // for functions. `effectModules` is an array of { path, exports[] }
   // entries — each named export from `path` is rebound and passed to
   // registerEffect() after the registry reset.
+  //
+  // `effectConfigValue` (when set) wraps the render in
+  // `<MonsterEffectConfigProvider value=...>` so tests can stamp bindings /
+  // celebrationTunables. `omitEffectsProp=true` skips passing the `effects`
+  // prop to <MonsterRender>, exercising the U4 context-resolution path.
   const moduleImports = effectModules
     .map((mod, idx) => `import * as __mod${idx} from ${JSON.stringify(absoluteSpecifier(mod.path))};`)
     .join('\n    ');
@@ -123,6 +130,7 @@ export function renderMonsterRenderFixture({
       .map((name) => `registerEffect(__mod${idx}[${JSON.stringify(name)}]);`)
       .join('\n    '))
     .join('\n    ');
+  const useProvider = effectConfigValue !== undefined;
   return renderFixture(`
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
@@ -130,6 +138,7 @@ export function renderMonsterRenderFixture({
     import { defineEffect } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/define-effect.js'))};
     import { registerEffect, resetRegistry } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/registry.js'))};
     import { resetWarnOnce, setDevMode, __setWarnSink } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/composition.js'))};
+    ${useProvider ? `import { MonsterEffectConfigProvider } from ${JSON.stringify(absoluteSpecifier('src/platform/game/MonsterEffectConfigContext.jsx'))};` : ''}
     ${moduleImports}
 
     resetRegistry();
@@ -145,15 +154,19 @@ export function renderMonsterRenderFixture({
     const effects = ${JSON.stringify(effects)};
     const sizes = ${JSON.stringify(sizes != null ? sizes : null)};
     const reducedMotion = ${reducedMotion ? 'true' : 'false'};
-    const html = renderToStaticMarkup(
-      <MonsterRender
-        monster={monster}
-        context=${JSON.stringify(context)}
-        effects={effects}
-        reducedMotion={reducedMotion}
-        sizes={sizes}
-      />
-    );
+    const omitEffectsProp = ${omitEffectsProp ? 'true' : 'false'};
+    const renderProps = {
+      monster,
+      context: ${JSON.stringify(context)},
+      reducedMotion,
+      sizes,
+    };
+    if (!omitEffectsProp) renderProps.effects = effects;
+    const __mrTree = React.createElement(MonsterRender, renderProps);
+    ${useProvider
+      ? `const __mrWrapped = React.createElement(MonsterEffectConfigProvider, { value: ${JSON.stringify(effectConfigValue)} }, __mrTree);`
+      : 'const __mrWrapped = __mrTree;'}
+    const html = renderToStaticMarkup(__mrWrapped);
     // Emit a structured payload so tests can assert on dev-warns alongside
     // the rendered HTML in a single execFile round-trip.
     process.stdout.write(JSON.stringify({ html, warnings: __warnings }));
@@ -164,12 +177,17 @@ export function renderCelebrationLayerFixture({
   registrations = '',
   setup = '',
   context = 'lesson',
+  effectConfigValue = undefined,
 } = {}) {
   // Run the full integration in-process so we can drive the store via the
   // existing API and assert on store state, ack storage, and rendered HTML
   // in one round-trip. `setup` is a JS source snippet executed after the
   // store is built; it can call playCelebration / store.pushMonsterCelebrations
   // / etc. The result is a JSON payload with everything tests need.
+  //
+  // `effectConfigValue`, when supplied, wraps the rendered <CelebrationLayer>
+  // in <MonsterEffectConfigProvider value=...> so tests can stamp tunables.
+  const useProvider = effectConfigValue !== undefined;
   return renderFixture(`
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
@@ -183,6 +201,7 @@ export function renderCelebrationLayerFixture({
     import { SUBJECTS } from ${JSON.stringify(absoluteSpecifier('src/platform/core/subject-registry.js'))};
     import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
     import { acknowledgedMonsterCelebrationIds } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monster-celebration-acks.js'))};
+    ${useProvider ? `import { MonsterEffectConfigProvider } from ${JSON.stringify(absoluteSpecifier('src/platform/game/MonsterEffectConfigContext.jsx'))};` : ''}
 
     installMemoryStorage();
     resetRegistry();
@@ -210,7 +229,11 @@ export function renderCelebrationLayerFixture({
     }
 
     const __before = snapshot();
-    const html = renderToStaticMarkup(<CelebrationLayer store={store} context=${JSON.stringify(context)} />);
+    const __layerNode = React.createElement(CelebrationLayer, { store, context: ${JSON.stringify(context)} });
+    ${useProvider
+      ? `const __layerWrapped = React.createElement(MonsterEffectConfigProvider, { value: ${JSON.stringify(effectConfigValue)} }, __layerNode);`
+      : 'const __layerWrapped = __layerNode;'}
+    const html = renderToStaticMarkup(__layerWrapped);
     const __after = snapshot();
 
     process.stdout.write(JSON.stringify({
@@ -446,6 +469,33 @@ export function renderProfileSurfaceFixture({ demo = false, persistenceMode = 'r
   `);
 }
 
+export function renderMonsterEffectCatalogPanelFixture({ canManage = true } = {}) {
+  // SSR fixture for the U6 catalog panel. We feed it the bundled effect
+  // config as the draft + published state so the listing covers all eight
+  // bundled-default kinds. The `canManage` flag mirrors the role-based gate
+  // the visual panel uses (admin vs operations read-only).
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { MonsterEffectCatalogPanel } from ${JSON.stringify(absoluteSpecifier('src/surfaces/hubs/MonsterEffectCatalogPanel.jsx'))};
+    import { bundledEffectConfig } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/effect-config-defaults.js'))};
+
+    const draft = bundledEffectConfig();
+    const published = bundledEffectConfig();
+    const canManage = ${canManage ? 'true' : 'false'};
+    const onChange = () => {};
+    const html = renderToStaticMarkup(
+      <MonsterEffectCatalogPanel
+        draft={draft}
+        published={published}
+        canManage={canManage}
+        onDraftChange={onChange}
+      />
+    );
+    console.log(html);
+  `);
+}
+
 export function renderHubSurfaceFixture({ surface = 'parent', platformRole = 'admin' } = {}) {
   return renderFixture(`
     import React from 'react';
@@ -675,18 +725,57 @@ export function renderSubjectRouteFixture({ subject = 'placeholder' } = {}) {
   `);
 }
 
-export function renderSpellingSurfaceFixture({ phase = 'setup', pendingCommand = '' } = {}) {
+export function renderSpellingSurfaceFixture({
+  phase = 'setup',
+  pendingCommand = '',
+  // postMega: {} → force allWordsMega via seeded progress + optional guardian
+  // records. Omit to render the legacy setup dashboard.
+  postMega = null,
+} = {}) {
   return renderFixture(`
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
     import { SubjectRoute } from ${JSON.stringify(absoluteSpecifier('src/surfaces/subject/SubjectRoute.jsx'))};
     import { createLocalAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-local-app-controller.js'))};
     import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
+    import { WORDS } from ${JSON.stringify(absoluteSpecifier('src/subjects/spelling/data/word-data.js'))};
 
     installMemoryStorage();
     const controller = createLocalAppController();
     const selectedPhase = ${JSON.stringify(phase)};
     const learnerId = controller.store.getState().learners.selectedId;
+    const postMega = ${JSON.stringify(postMega)};
+    if (postMega) {
+      // Seed all core words as stage-4 secure, then optionally drop a guardian
+      // record map on top. The spelling persistence layer proxies the
+      // ks2-spell-progress-/ks2-spell-guardian- keys through the subject-state
+      // repository, so we can write via its storage proxy (or the
+      // repositories.subjectStates.writeData helper) and be picked up on the
+      // next getStats / getPostMasteryState call.
+      const nowDay = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+      const progress = {};
+      for (const word of WORDS) {
+        if ((word.spellingPool === 'extra' ? 'extra' : 'core') !== 'core') continue;
+        progress[word.slug] = {
+          stage: 4,
+          attempts: 6,
+          correct: 5,
+          wrong: 1,
+          dueDay: nowDay + 60,
+          lastDay: nowDay - 7,
+          lastResult: true,
+        };
+      }
+      const guardian = postMega.guardian && typeof postMega.guardian === 'object'
+        ? postMega.guardian
+        : {};
+      const existing = controller.repositories.subjectStates.read(learnerId, 'spelling').data || {};
+      controller.repositories.subjectStates.writeData(learnerId, 'spelling', {
+        ...existing,
+        progress,
+        guardian,
+      });
+    }
     controller.dispatch('open-subject', { subjectId: 'spelling' });
     if (selectedPhase === 'session' || selectedPhase === 'summary') {
       controller.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
@@ -721,6 +810,87 @@ export function renderSpellingSurfaceFixture({ phase = 'setup', pendingCommand =
         },
       }));
     }
+    const appState = controller.store.getState();
+    const context = controller.contextFor('spelling');
+    const actions = {
+      dispatch(action, data) { controller.dispatch(action, data); },
+      navigateHome() { controller.dispatch('navigate-home'); },
+      openParentHub() { controller.dispatch('open-parent-hub'); },
+      openAdminHub() { controller.dispatch('open-admin-hub'); },
+    };
+    const html = renderToStaticMarkup(<SubjectRoute appState={appState} context={context} actions={actions} />);
+    console.log(html);
+  `);
+}
+
+/**
+ * Render the Spelling summary scene after a Guardian Mission round ends.
+ *
+ * We can't replay the standard setup -> session -> summary path in one
+ * fixture run because Guardian rounds pull words from the runtime guardian
+ * map, and `renderSpellingSurfaceFixture` does not know how to run a full
+ * round from inside its generated entry script. Instead we:
+ *   1. Seed the learner as fully post-mega with an empty guardian map.
+ *   2. Start a Guardian session (lazy-creates a record for the first word).
+ *   3. Submit one answer (correct or incorrect per `opts.correct`).
+ *   4. Render the resulting summary phase.
+ *
+ * The output is the same SubjectRoute markup the surface test harness
+ * returns, so caller tests can assert on Guardian-specific copy + CSS hooks.
+ */
+export function renderSpellingGuardianSummaryFixture({ correct = true } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { SubjectRoute } from ${JSON.stringify(absoluteSpecifier('src/surfaces/subject/SubjectRoute.jsx'))};
+    import { createLocalAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-local-app-controller.js'))};
+    import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
+    import { WORDS } from ${JSON.stringify(absoluteSpecifier('src/subjects/spelling/data/word-data.js'))};
+
+    installMemoryStorage();
+    const controller = createLocalAppController();
+    const learnerId = controller.store.getState().learners.selectedId;
+
+    // Seed every core-pool word as stage-4 secure so allWordsMega === true.
+    const nowDay = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+    const progress = {};
+    for (const word of WORDS) {
+      if ((word.spellingPool === 'extra' ? 'extra' : 'core') !== 'core') continue;
+      progress[word.slug] = {
+        stage: 4,
+        attempts: 6,
+        correct: 5,
+        wrong: 1,
+        dueDay: nowDay + 60,
+        lastDay: nowDay - 7,
+        lastResult: true,
+      };
+    }
+    const existing = controller.repositories.subjectStates.read(learnerId, 'spelling').data || {};
+    controller.repositories.subjectStates.writeData(learnerId, 'spelling', {
+      ...existing,
+      progress,
+      guardian: {},
+    });
+
+    controller.dispatch('open-subject', { subjectId: 'spelling' });
+    controller.services.spelling.savePrefs(learnerId, { mode: 'guardian', roundLength: '1' });
+    // A round-length=1 Guardian session lets us finish in a single submit.
+    controller.dispatch('spelling-shortcut-start', { mode: 'guardian' });
+    while (controller.store.getState().subjectUi.spelling.phase === 'session') {
+      const ui = controller.store.getState().subjectUi.spelling;
+      const formData = new FormData();
+      const card = ui.session.currentCard;
+      formData.set('typed', ${JSON.stringify(correct)} ? card.word.word : 'zzzobviouslywrong');
+      controller.dispatch('spelling-submit-form', { formData });
+      // Guardian sessions retain the awaiting-advance step on wrong answers
+      // so we continue here to get to the next card / summary.
+      const after = controller.store.getState().subjectUi.spelling;
+      if (after.phase === 'session' && after.awaitingAdvance) {
+        controller.dispatch('spelling-continue');
+      }
+    }
+
     const appState = controller.store.getState();
     const context = controller.contextFor('spelling');
     const actions = {

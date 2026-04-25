@@ -1,5 +1,7 @@
 # KS2 Mastery Capacity Operations
 
+> **Related:** For hardening charter and baseline audit, see [`docs/hardening/charter.md`](../hardening/charter.md) and [`docs/hardening/p1-baseline.md`](../hardening/p1-baseline.md).
+
 This runbook records how capacity is certified for `/api/bootstrap`, subject commands, D1-backed read models, and client recovery paths. Capacity claims must be based on dated measurements from this repository, not planning estimates.
 
 ## Current Certification Status
@@ -45,6 +47,52 @@ npm test
 npm run check
 npm run deploy
 ```
+
+## Threshold-Run Procedure
+
+The classroom load driver and production bootstrap probe both support hard threshold gates so a CI step can fail purely on threshold violation. No threshold flag is set by default — absent flags preserve the existing reporting behaviour exactly.
+
+### Classroom load driver flags
+
+Add any combination of the following to `npm run capacity:classroom`. Each flag is an optional hard gate; if absent the gate is not enforced. When any gate is violated the script exits non-zero and prints a `thresholds.violations` block in the JSON report.
+
+- `--max-5xx <count>` — fail if total HTTP 5xx responses exceed `<count>`.
+- `--max-network-failures <count>` — fail if network-level failures exceed `<count>`.
+- `--max-bootstrap-p95-ms <ms>` — fail if `/api/bootstrap` P95 wall time exceeds `<ms>`.
+- `--max-command-p95-ms <ms>` — fail if subject-command P95 wall time exceeds `<ms>`.
+- `--max-response-bytes <bytes>` — fail if any endpoint's maximum response bytes exceed `<bytes>`.
+- `--require-zero-signals` — fail if any `exceededCpu`, `d1Overloaded`, `d1DailyLimit`, `rateLimited`, `networkFailure`, or `server5xx` signal is observed.
+- `--confirm-high-production-load` — required by operators before running `--production` at classroom or stretch scale (learners ≥ 20 or bootstrap-burst ≥ 20). Enforced by `validateClassroomLoadOptions`: a production run that exceeds the high-load threshold and omits this flag is rejected with a clear error.
+
+**Important safety interactions**
+
+- **Threshold flags are incompatible with `--dry-run`.** Dry-run has no measurements, so every threshold would always pass silently. The script rejects the combination with a clear error; CI gates must choose `--local-fixture` or `--production`.
+- **Mode flags are mutually exclusive.** Specifying more than one of `--dry-run`, `--local-fixture`, `--production` is rejected. The prior last-wins behaviour silently downgraded a `--production` run to `--dry-run` when both appeared.
+- **Duplicate threshold flags are rejected.** Specifying `--max-5xx` twice (or any other threshold) is rejected. This prevents a release-gate wrapper from being silently weakened by a later argument repeating the flag with a looser value.
+
+The `capacity:classroom:release-gate` package script bakes the recommended defaults:
+
+```sh
+npm run capacity:classroom:release-gate -- --production --origin https://ks2.eugnel.uk --confirm-production-load --confirm-high-production-load --demo-sessions --learners 30 --bootstrap-burst 20 --rounds 1
+```
+
+The release-gate script is equivalent to `capacity:classroom` with `--max-5xx 0 --max-network-failures 0 --max-bootstrap-p95-ms 1000 --max-command-p95-ms 750 --max-response-bytes 600000 --require-zero-signals` prepended. Any additional arguments you supply on the command line layer on top — but they cannot repeat a threshold already baked in (duplicate-flag rejection), and they cannot choose `--dry-run` (threshold-vs-dry-run rejection).
+
+### Probe bootstrap flags
+
+`npm run smoke:production:bootstrap` supports three hard gates:
+
+- `--max-bytes <bytes>` — fail when the response body exceeds `<bytes>` (default 600 000).
+- `--max-sessions <count>` — fail when `practiceSessions` length exceeds `<count>`.
+- `--max-events <count>` — fail when `eventLog` length exceeds `<count>`.
+
+A threshold violation emits a `thresholdViolations` entry in the JSON report alongside the legacy `failures` list, and exits non-zero. Raw response bodies are never surfaced in the output even when a threshold trips — only the measured size, count, and the configured limit.
+
+### Recommended CI wiring
+
+1. On every pull request, run `npm run capacity:classroom -- --dry-run --learners 30 --bootstrap-burst 20 --rounds 1` (no threshold flags — dry-run cannot meaningfully evaluate thresholds). This validates the plan shape and argument parsing without network traffic.
+2. For the production release gate, invoke `npm run capacity:classroom:release-gate -- --production --origin <origin> --confirm-production-load --confirm-high-production-load --demo-sessions --learners 30 --bootstrap-burst 20 --rounds 1` so isolated demo sessions carry the load and thresholds fire against real measurements.
+3. Record the resulting `thresholds.violations` array, plan summary, and commit SHA alongside the run, per the `Evidence To Record` checklist.
 
 ## Evidence To Record
 
@@ -94,3 +142,37 @@ Use evidence-tied language:
 - "Not certified for a full-class simultaneous reload" when those measurements are missing.
 
 Do not claim classroom or school readiness from Free-tier limits alone.
+
+## Security headers post-deploy check
+
+After any production deploy that touches `worker/src/security-headers.js`, `_headers`, or
+`worker/src/index.js`, confirm the live origin advertises the U6 header set before closing the
+deploy ticket. `npm run audit:production -- --url https://ks2.eugnel.uk` now issues HEAD checks
+against `/`, `/src/bundles/app.bundle.js`, and `/manifest.webmanifest` and fails the audit if any
+path is missing the full set.
+
+Manual spot-check (use when the audit script is unavailable):
+
+```bash
+curl -sI https://ks2.eugnel.uk/ | grep -iE 'strict-transport-security|x-content-type-options|referrer-policy|permissions-policy|x-frame-options|cross-origin-opener-policy|cross-origin-resource-policy'
+curl -sI https://ks2.eugnel.uk/src/bundles/app.bundle.js | grep -iE 'cache-control|strict-transport-security'
+curl -sI https://ks2.eugnel.uk/manifest.webmanifest | grep -iE 'cache-control|strict-transport-security'
+```
+
+Expected values on every path:
+
+- `Strict-Transport-Security: max-age=63072000; includeSubDomains` (no `preload` until the subdomain
+  audit lands in a follow-up PR — F-03 deferral).
+- `X-Content-Type-Options: nosniff`.
+- `Referrer-Policy: strict-origin-when-cross-origin`.
+- `Permissions-Policy: ...; microphone=(); ...` (deny-by-default, F-09).
+- `X-Frame-Options: DENY`.
+- `Cross-Origin-Opener-Policy: same-origin-allow-popups`.
+- `Cross-Origin-Resource-Policy: same-site`.
+
+Path-specific cache expectations:
+
+- `/src/bundles/app.bundle.js` — `Cache-Control: public, max-age=31536000, immutable` (Worker
+  wrapper explicitly overrides the `no-store` that ASSETS applies from the `_headers` `/*` group).
+- `/manifest.webmanifest` — `Cache-Control: public, max-age=86400`.
+- `/` and `/index.html` — `Cache-Control: no-store`.

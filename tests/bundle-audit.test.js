@@ -246,6 +246,93 @@ test('client bundle audit fails on punctuation engine and content imports', asyn
   }, /punctuation/);
 });
 
+// Phase 2 U10: verify the browser-local re-export path at
+// `src/subjects/punctuation/service.js` cannot smuggle the shared engine
+// into a production bundle. The audit must catch this via the existing
+// shared/punctuation/service.js forbidden-module rule even when the
+// metafile only lists the re-export wrapper.
+test('client bundle audit fails on punctuation browser-local service re-export', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
+  const bundle = path.join(dir, 'app.bundle.js');
+  const metafile = path.join(dir, 'app.bundle.meta.json');
+  const publicDir = path.join(dir, 'public');
+  await mkdir(publicDir, { recursive: true });
+  await writeFile(bundle, 'console.log("createPunctuationService");\n');
+  // Bundle traces the re-export back to the shared service regardless of
+  // whether the wrapper at src/subjects/punctuation/service.js surfaces in
+  // the metafile. The audit must fail whether the path appears as the
+  // wrapper or the upstream module.
+  await writeFile(metafile, JSON.stringify({
+    inputs: {
+      'src/subjects/punctuation/service.js': { bytes: 1 },
+      'shared/punctuation/service.js': { bytes: 1 },
+    },
+  }));
+
+  assert.throws(() => {
+    execFileSync(process.execPath, [
+      './scripts/audit-client-bundle.mjs',
+      '--bundle',
+      bundle,
+      '--metafile',
+      metafile,
+      '--public-dir',
+      publicDir,
+    ], {
+      cwd: process.cwd(),
+      stdio: 'pipe',
+    });
+  }, /shared\/punctuation\/service\.js|punctuation/);
+});
+
+// Per-module regression. Any new audit rule drift must not silently allow
+// a previously-forbidden module to slip through. Each module is tested
+// individually so a future regex change that drops one of them surfaces
+// a targeted failure rather than a generic "punctuation" pass.
+const FORBIDDEN_SHARED_PUNCTUATION_MODULES = [
+  'shared/punctuation/content.js',
+  'shared/punctuation/generators.js',
+  'shared/punctuation/marking.js',
+  'shared/punctuation/scheduler.js',
+  'shared/punctuation/service.js',
+];
+
+for (const forbiddenModule of FORBIDDEN_SHARED_PUNCTUATION_MODULES) {
+  test(`client bundle audit fails when ${forbiddenModule} is in the metafile`, async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
+    const bundle = path.join(dir, 'app.bundle.js');
+    const metafile = path.join(dir, 'app.bundle.meta.json');
+    const publicDir = path.join(dir, 'public');
+    await mkdir(publicDir, { recursive: true });
+    await writeFile(bundle, 'console.log("ok");\n');
+    await writeFile(metafile, JSON.stringify({
+      inputs: {
+        [forbiddenModule]: { bytes: 1 },
+      },
+    }));
+
+    assert.throws(() => {
+      execFileSync(process.execPath, [
+        './scripts/audit-client-bundle.mjs',
+        '--bundle',
+        bundle,
+        '--metafile',
+        metafile,
+        '--public-dir',
+        publicDir,
+      ], {
+        cwd: process.cwd(),
+        stdio: 'pipe',
+      });
+      // Path-specific assertion rather than a generic /punctuation/ match:
+      // a regex change that accidentally drops any one module would pass a
+      // loose /punctuation/ check via the shared `reason` string. Pinning
+      // on the literal path forces the failure message to actually name
+      // the module under test.
+    }, new RegExp(forbiddenModule.replace(/[.]/g, '\\.').replace(/\//g, '\\/')), `${forbiddenModule} should fail the audit with its own path in the error`);
+  });
+}
+
 test('client bundle audit fails when public output exposes shared punctuation source', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
   const bundle = path.join(dir, 'app.bundle.js');

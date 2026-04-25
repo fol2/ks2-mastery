@@ -986,7 +986,7 @@ test('subject command responses update the api cache without queuing broad runti
         subjectReadModel: {
           subjectId: 'spelling',
           learnerId: body.learnerId,
-          version: 1,
+          version: 2,
           phase: 'session',
           session: {
             id: 'server-session',
@@ -1098,7 +1098,7 @@ test('subject commands refresh stale learner revision without a second bootstrap
         subjectReadModel: {
           subjectId: 'spelling',
           learnerId: body.learnerId,
-          version: 1,
+          version: 2,
           phase: 'session',
           session: {
             id: 'server-session',

@@ -42,12 +42,13 @@ export const MONSTERS = {
   pealark: {
     id: 'pealark',
     name: 'Pealark',
-    blurb: 'Rises as sentence endings become secure.',
+    blurb: 'Rises with sentence endings, speech and sentence boundaries.',
     accent: '#B8873F',
     secondary: '#E8C66F',
     pale: '#F7EEDC',
     nameByStage: ['Pealark Egg', 'Pealark', 'Chimewing', 'Bellcrest', 'Mega Bellcrest'],
-    masteredMax: 1,
+    // Endmarks (1) + Speech (1) + Boundary (3) = 5 reward units post-remap.
+    masteredMax: 5,
   },
   claspin: {
     id: 'claspin',
@@ -62,27 +63,28 @@ export const MONSTERS = {
   quoral: {
     id: 'quoral',
     name: 'Quoral',
-    blurb: 'Finds its voice through direct speech punctuation.',
+    blurb: 'The grand Bellstorm Coast creature for full Punctuation mastery.',
     accent: '#2E8479',
     secondary: '#8FD6C7',
     pale: '#E5F3EF',
-    nameByStage: ['Quoral Egg', 'Quoral', 'Voiceling', 'Quotecrest', 'Mega Quotecrest'],
-    masteredMax: 1,
+    nameByStage: ['Quoral Egg', 'Quoral', 'Voiceling', 'Choruscrest', 'Grand Quoral'],
+    masteredMax: 14,
   },
   curlune: {
     id: 'curlune',
     name: 'Curlune',
-    blurb: 'Will grow with commas, flow and clarity.',
+    blurb: 'Grows with commas, flow, lists and structural punctuation.',
     accent: '#4B7A4A',
     secondary: '#AACF93',
     pale: '#E8F0E6',
     nameByStage: ['Curlune Egg', 'Curlune', 'Commasprig', 'Flowhorn', 'Mega Flowhorn'],
-    masteredMax: 3,
+    // Comma / Flow (3) + Structure (4) = 7 reward units post-remap.
+    masteredMax: 7,
   },
   colisk: {
     id: 'colisk',
     name: 'Colisk',
-    blurb: 'Will strengthen through lists and sentence structure.',
+    blurb: 'Reserved future Punctuation creature; not active in this release.',
     accent: '#C06B3E',
     secondary: '#EAB08A',
     pale: '#FBEEE4',
@@ -92,7 +94,7 @@ export const MONSTERS = {
   hyphang: {
     id: 'hyphang',
     name: 'Hyphang',
-    blurb: 'Will sharpen with boundaries, dashes and hyphens.',
+    blurb: 'Reserved future Punctuation creature; not active in this release.',
     accent: '#8A5A9D',
     secondary: '#CDAFE1',
     pale: '#F1E9F4',
@@ -102,7 +104,7 @@ export const MONSTERS = {
   carillon: {
     id: 'carillon',
     name: 'Carillon',
-    blurb: 'The aggregate creature for the currently published Punctuation release.',
+    blurb: 'Reserved future Punctuation creature; not active in this release.',
     accent: '#D08A2C',
     secondary: '#E8C45A',
     pale: '#F6EED7',
@@ -183,8 +185,21 @@ export const MONSTERS = {
 
 export const MONSTERS_BY_SUBJECT = {
   spelling: ['inklet', 'glimmerbug', 'phaeton', 'vellhorn'],
-  punctuation: ['pealark', 'claspin', 'quoral', 'curlune', 'colisk', 'hyphang', 'carillon'],
-  grammar: ['bracehart', 'glossbloom', 'loomrill', 'chronalyx', 'couronnail', 'mirrane', 'concordium'],
+  // Active Punctuation roster: 3 direct cluster creatures (Pealark, Curlune,
+  // Claspin) + the grand legendary (Quoral) that aggregates all 14 reward
+  // units. Colisk / Hyphang / Carillon remain in MONSTERS for asset tooling
+  // and future activation but are no longer part of the learner-facing set.
+  punctuation: ['pealark', 'curlune', 'claspin', 'quoral'],
+  punctuationReserve: ['colisk', 'hyphang', 'carillon'],
+  // Active Grammar roster (Phase 3 U0): 3 direct cluster creatures (Bracehart,
+  // Chronalyx, Couronnail) + the grand legendary (Concordium) that aggregates
+  // all 18 Grammar concepts. Glossbloom / Loomrill / Mirrane move to reserve:
+  // their assets stay in MONSTERS for asset tooling and future activation but
+  // they no longer appear in any active learner-facing summary. Pre-flip
+  // reward state is preserved by `normaliseGrammarRewardState` in
+  // `src/platform/game/mastery/grammar.js`.
+  grammar: ['bracehart', 'chronalyx', 'couronnail', 'concordium'],
+  grammarReserve: ['glossbloom', 'loomrill', 'mirrane'],
 };
 
 export const MONSTER_BRANCHES = Object.freeze(['b1', 'b2']);

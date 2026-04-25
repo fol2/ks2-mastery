@@ -51,8 +51,10 @@ import {
   BUNDLED_MONSTER_VISUAL_CONFIG,
   MONSTER_VISUAL_SCHEMA_VERSION,
   validateMonsterVisualConfigForPublish,
+  validatePublishedConfigForPublish,
 } from '../../src/platform/game/monster-visual-config.js';
 import { MONSTER_ASSET_MANIFEST } from '../../src/platform/game/monster-asset-manifest.js';
+import { bundledEffectConfig } from '../../src/platform/game/render/effect-config-defaults.js';
 import {
   BadRequestError,
   ConflictError,
@@ -2879,6 +2881,11 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
   }
 }
 
+// The merged config envelope today lives at the top level of `draft_json`
+// (and `published_json` / `versions.config_json`): visual fields stay at
+// the root, the effect sub-document hangs off `effect`. Existing visual-only
+// rows continue to load — readers tolerate `effect == null` and surface the
+// bundled defaults.
 function seededMonsterVisualConfig({ source = 'published', version = 1 } = {}) {
   return {
     ...cloneSerialisable(BUNDLED_MONSTER_VISUAL_CONFIG),
@@ -2886,6 +2893,7 @@ function seededMonsterVisualConfig({ source = 'published', version = 1 } = {}) {
     manifestHash: MONSTER_ASSET_MANIFEST.manifestHash,
     source,
     version,
+    effect: bundledEffectConfig(),
   };
 }
 
@@ -2895,11 +2903,17 @@ function normaliseMonsterVisualDraft(rawDraft) {
       code: 'monster_visual_draft_required',
     });
   }
+  // Thread `effect` through verbatim: the strict-publish validator runs
+  // server-side at publish time, so we don't gate save behind it. We DO
+  // backfill bundled defaults when the client omits effect, so first-time
+  // migrations (visual-only callers in existing tests) keep functioning.
+  const cloned = cloneSerialisable(rawDraft);
   return {
-    ...cloneSerialisable(rawDraft),
+    ...cloned,
     schemaVersion: Number(rawDraft.schemaVersion) || MONSTER_VISUAL_SCHEMA_VERSION,
     manifestHash: rawDraft.manifestHash || MONSTER_ASSET_MANIFEST.manifestHash,
     source: 'draft',
+    effect: isPlainObject(cloned.effect) ? cloned.effect : bundledEffectConfig(),
   };
 }
 
@@ -3052,7 +3066,17 @@ async function listMonsterVisualVersionRows(db) {
 function monsterVisualConfigStateFromRow(row, versions = []) {
   const draft = safeJsonParse(row?.draft_json, seededMonsterVisualConfig({ source: 'draft', version: Number(row?.published_version) || 1 }));
   const published = safeJsonParse(row?.published_json, seededMonsterVisualConfig({ source: 'published', version: Number(row?.published_version) || 1 }));
-  const validation = validateMonsterVisualConfigForPublish(draft);
+  // Strict combined gate so the admin UI surfaces visual + effect blockers
+  // in the same feedback list. Existing visual-only rows still validate
+  // (effect bundled defaults are reviewed); the bundled draft fails as
+  // before due to unreviewed visual assets.
+  const visualForCheck = isPlainObject(draft) ? { ...cloneSerialisable(draft) } : null;
+  const effectForCheck = visualForCheck ? visualForCheck.effect : null;
+  if (visualForCheck) delete visualForCheck.effect;
+  const validation = validatePublishedConfigForPublish({
+    visual: visualForCheck,
+    effect: effectForCheck,
+  });
   return {
     status: {
       schemaVersion: MONSTER_VISUAL_SCHEMA_VERSION,
@@ -3348,7 +3372,18 @@ async function publishMonsterVisualConfig(db, actorAccountId, mutation, nowTs) {
       receipt,
     }) => {
       const draft = safeJsonParse(row.draft_json, null);
-      const validation = validateMonsterVisualConfigForPublish(draft);
+      // Strict combined gate: visual + effect must both validate. The
+      // permissive envelope tolerates a missing effect; publish does not.
+      // Existing rows that pre-date the effect sub-document still validate
+      // because `normaliseMonsterVisualDraft` and `seededMonsterVisualConfig`
+      // now backfill the bundled defaults at save time.
+      const visualForPublish = isPlainObject(draft) ? { ...cloneSerialisable(draft) } : null;
+      const effectForPublish = visualForPublish ? visualForPublish.effect : null;
+      if (visualForPublish) delete visualForPublish.effect;
+      const validation = validatePublishedConfigForPublish({
+        visual: visualForPublish,
+        effect: effectForPublish,
+      });
       if (!validation.ok) {
         throw new BadRequestError('Monster visual config is not ready to publish.', {
           code: 'monster_visual_publish_blocked',

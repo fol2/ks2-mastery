@@ -15,6 +15,7 @@
     "check": "node ./scripts/wrangler-oauth.mjs deploy --dry-run",
     "check:oauth": "npm run check",
     "capacity:classroom": "node ./scripts/classroom-load-test.mjs",
+    "capacity:classroom:release-gate": "node ./scripts/classroom-load-test.mjs --max-5xx 0 --max-network-failures 0 --max-bootstrap-p95-ms 1000 --max-command-p95-ms 750 --max-response-bytes 600000 --require-zero-signals",
     "content:seed": "node scripts/seed-spelling-content-from-legacy.mjs",
     "content:enrich": "node scripts/enrich-spelling-vocabulary.mjs",
     "content:validate": "node scripts/validate-spelling-content.mjs",
@@ -38,6 +39,7 @@
     "smoke:production:bootstrap": "node ./scripts/probe-production-bootstrap.mjs",
     "smoke:production:grammar": "node ./scripts/grammar-production-smoke.mjs",
     "smoke:production:punctuation": "node ./scripts/punctuation-production-smoke.mjs",
+    "pretest": "node ./scripts/preflight-test.mjs",
     "test": "node --test",
     "test:migration:browser": "KS2_BROWSER_SMOKE=1 node --test tests/browser-react-migration-smoke.test.js",
     "verify": "npm test && npm run check"

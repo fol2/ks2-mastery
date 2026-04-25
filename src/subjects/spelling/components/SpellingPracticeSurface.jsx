@@ -138,6 +138,7 @@ export function SpellingPracticeSurface(props) {
         learner={spelling.learner}
         analytics={spelling.analytics}
         accent={spelling.accent}
+        postMastery={spelling.postMastery}
         previousHeroBg={previousHeroBg}
         actions={actions}
         runtimeReadOnly={runtimeReadOnly}

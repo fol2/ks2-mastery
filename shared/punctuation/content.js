@@ -197,6 +197,14 @@ export const PUNCTUATION_SKILLS = Object.freeze([
   },
 ]);
 
+// Active Punctuation cluster -> direct monster mapping for the Phase 2
+// roster reduction. Learning clusters stay the same six groupings; only
+// reward projection collapses to 3 direct creatures + 1 grand.
+//   Pealark  : endmarks, speech, boundary
+//   Claspin  : apostrophe
+//   Curlune  : comma_flow, structure
+//   Quoral   : grand aggregate across all 14 reward units (see
+//              PUNCTUATION_GRAND_MONSTER below)
 export const PUNCTUATION_CLUSTERS = Object.freeze([
   {
     id: 'endmarks',
@@ -215,7 +223,7 @@ export const PUNCTUATION_CLUSTERS = Object.freeze([
   {
     id: 'speech',
     name: 'Speech',
-    monsterId: 'quoral',
+    monsterId: 'pealark',
     published: true,
     skillIds: ['speech'],
   },
@@ -229,14 +237,14 @@ export const PUNCTUATION_CLUSTERS = Object.freeze([
   {
     id: 'structure',
     name: 'List / Structure',
-    monsterId: 'colisk',
+    monsterId: 'curlune',
     published: true,
     skillIds: ['parenthesis', 'colon_list', 'semicolon_list', 'bullet_points'],
   },
   {
     id: 'boundary',
     name: 'Boundary',
-    monsterId: 'hyphang',
+    monsterId: 'pealark',
     published: true,
     skillIds: ['semicolon', 'dash_clause', 'hyphen'],
   },
@@ -245,7 +253,7 @@ export const PUNCTUATION_CLUSTERS = Object.freeze([
 export const PUNCTUATION_GRAND_MONSTER = Object.freeze({
   id: 'published_release',
   name: 'Published Punctuation release',
-  monsterId: 'carillon',
+  monsterId: 'quoral',
 });
 
 export function createPunctuationMasteryKey({
@@ -1923,10 +1931,16 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
 export const PUNCTUATION_CONTENT_MANIFEST = Object.freeze({
   subjectId: PUNCTUATION_SUBJECT_ID,
   releaseId: PUNCTUATION_RELEASE_ID,
-  releaseName: 'Full 14-skill Punctuation learner-engine slice',
+  releaseName: 'Punctuation 14-skill production release',
   partialReleaseLabel: 'Published Punctuation release',
   fullSkillCount: PUNCTUATION_SKILLS.length,
-  publishedScopeCopy: 'This Punctuation release covers all 14 KS2 punctuation skills across Endmarks, Apostrophe, Speech, Comma / Flow, Boundary and Structure.',
+  // Honest scope copy post-Phase-2. The learner engine covers the full
+  // 14-skill progression through Smart Review, Guided focus, Weak Spots,
+  // GPS, sentence combining, paragraph repair, and transfer validators —
+  // which the behavioural smoke matrix (U9 + U10) proves end-to-end. The
+  // phrasing deliberately avoids "complete KS2 Punctuation mastery" so
+  // learners are not misled when content expansion lands in future releases.
+  publishedScopeCopy: 'Punctuation covers the 14-skill KS2 progression with Smart Review, Guided focus, Weak Spots, GPS tests, sentence combining, paragraph repair, and transfer practice.',
   skills: PUNCTUATION_SKILLS,
   clusters: PUNCTUATION_CLUSTERS,
   grandMonster: PUNCTUATION_GRAND_MONSTER,

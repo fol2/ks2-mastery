@@ -146,42 +146,46 @@ export const GRAMMAR_ENABLED_MODES = Object.freeze([
 
 export const GRAMMAR_LOCKED_MODES = Object.freeze([]);
 
+// Phase 3 U0 cluster remap. The active Grammar roster collapses to 3 direct
+// cluster monsters (Bracehart, Chronalyx, Couronnail) plus Concordium's
+// whole-Grammar aggregate. Bracehart absorbs Sentence structure and Phrases;
+// Chronalyx absorbs Flow / Linkage; Couronnail absorbs Word classes. The
+// retired directs (Glossbloom, Loomrill, Mirrane) remain in MONSTERS for
+// asset tooling but no longer appear in this route list.
 export const GRAMMAR_MONSTER_ROUTES = Object.freeze([
   {
     id: 'bracehart',
     name: 'Bracehart',
-    route: 'Sentences and clauses',
-    conceptIds: ['sentence_functions', 'clauses', 'relative_clauses'],
-  },
-  {
-    id: 'glossbloom',
-    name: 'Glossbloom',
-    route: 'Words and phrases',
-    conceptIds: ['word_classes', 'noun_phrases'],
-  },
-  {
-    id: 'loomrill',
-    name: 'Loomrill',
-    route: 'Adverbials and cohesion',
-    conceptIds: ['adverbials', 'pronouns_cohesion'],
+    route: 'Sentences, clauses and phrases',
+    conceptIds: [
+      'sentence_functions',
+      'clauses',
+      'relative_clauses',
+      'noun_phrases',
+      'active_passive',
+      'subject_object',
+    ],
   },
   {
     id: 'chronalyx',
     name: 'Chronalyx',
-    route: 'Verb forms',
-    conceptIds: ['tense_aspect', 'modal_verbs'],
+    route: 'Verb forms and cohesion',
+    conceptIds: [
+      'tense_aspect',
+      'modal_verbs',
+      'adverbials',
+      'pronouns_cohesion',
+    ],
   },
   {
     id: 'couronnail',
     name: 'Couronnail',
-    route: 'Standard English and register',
-    conceptIds: ['standard_english', 'formality'],
-  },
-  {
-    id: 'mirrane',
-    name: 'Mirrane',
-    route: 'Sentence voice',
-    conceptIds: ['active_passive', 'subject_object'],
+    route: 'Word classes, Standard English and register',
+    conceptIds: [
+      'word_classes',
+      'standard_english',
+      'formality',
+    ],
   },
   {
     id: 'concordium',
@@ -260,6 +264,111 @@ function statsFromConcepts(concepts) {
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+// U6a: Defensive mirror of Worker's transferLane read-model (source of truth:
+// worker/src/subjects/grammar/read-models.js:840-874 and
+// worker/src/subjects/grammar/transfer-prompts.js:95-104). The client never
+// trusts Worker-side keys to be present, but also does not silently discard
+// them: unknown top-level keys round-trip, malformed arrays coerce to [], and
+// a missing transferLane returns a shape-stable zero-value object.
+//
+// The Worker deliberately asymmetrically omits `selfAssessment` from archived
+// `history[*]` snapshots while including it on `latest`. Do NOT "repair" this
+// asymmetry on the client — historical ticks are intentionally not surfaced.
+//
+// The Worker already redacts `reviewCopy` (adult-only) from each prompt
+// summary and `requestId` from evidence snapshots. Client normaliser must NOT
+// re-introduce either field. Tests assert both absent anywhere under
+// `rm.transferLane` via a recursive scan.
+//
+// Evidence is server-sorted by `updatedAt` descending
+// (worker/src/subjects/grammar/read-models.js:872). Client preserves insertion
+// order from the Worker payload and never re-sorts.
+const EMPTY_TRANSFER_LANE = Object.freeze({
+  mode: '',
+  prompts: Object.freeze([]),
+  limits: Object.freeze({ maxPrompts: 0, historyPerPrompt: 0, writingCapChars: 0 }),
+  evidence: Object.freeze([]),
+});
+
+function normaliseGrammarTransferPrompt(raw) {
+  const prompt = isPlainObject(raw) ? raw : {};
+  return {
+    id: typeof prompt.id === 'string' ? prompt.id : '',
+    title: typeof prompt.title === 'string' ? prompt.title : '',
+    brief: typeof prompt.brief === 'string' ? prompt.brief : '',
+    grammarTargets: Array.isArray(prompt.grammarTargets)
+      ? prompt.grammarTargets.filter((entry) => typeof entry === 'string')
+      : [],
+    checklist: Array.isArray(prompt.checklist)
+      ? prompt.checklist.filter((entry) => typeof entry === 'string')
+      : [],
+  };
+}
+
+function normaliseGrammarTransferSelfAssessment(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter(isPlainObject)
+    .map((entry) => ({
+      key: typeof entry.key === 'string' ? entry.key : '',
+      checked: Boolean(entry.checked),
+    }))
+    .filter((entry) => entry.key);
+}
+
+function normaliseGrammarTransferLatest(raw) {
+  if (!isPlainObject(raw)) return null;
+  return {
+    writing: typeof raw.writing === 'string' ? raw.writing : '',
+    selfAssessment: normaliseGrammarTransferSelfAssessment(raw.selfAssessment),
+    savedAt: asTimestamp(raw.savedAt, 0),
+    source: typeof raw.source === 'string' ? raw.source : '',
+  };
+}
+
+function normaliseGrammarTransferHistoryEntry(raw) {
+  const entry = isPlainObject(raw) ? raw : {};
+  return {
+    writing: typeof entry.writing === 'string' ? entry.writing : '',
+    savedAt: asTimestamp(entry.savedAt, 0),
+    source: typeof entry.source === 'string' ? entry.source : '',
+  };
+}
+
+function normaliseGrammarTransferEvidenceEntry(raw) {
+  const entry = isPlainObject(raw) ? raw : {};
+  return {
+    promptId: typeof entry.promptId === 'string' ? entry.promptId : '',
+    latest: normaliseGrammarTransferLatest(entry.latest),
+    history: Array.isArray(entry.history)
+      ? entry.history.map(normaliseGrammarTransferHistoryEntry)
+      : [],
+    updatedAt: asTimestamp(entry.updatedAt, 0),
+  };
+}
+
+function normaliseGrammarTransferLane(raw) {
+  if (!isPlainObject(raw)) {
+    return {
+      mode: '',
+      prompts: [],
+      limits: { maxPrompts: 0, historyPerPrompt: 0, writingCapChars: 0 },
+      evidence: [],
+    };
+  }
+  const limits = isPlainObject(raw.limits) ? raw.limits : {};
+  return {
+    mode: typeof raw.mode === 'string' ? raw.mode : '',
+    prompts: Array.isArray(raw.prompts) ? raw.prompts.map(normaliseGrammarTransferPrompt) : [],
+    limits: {
+      maxPrompts: Number(limits.maxPrompts) || 0,
+      historyPerPrompt: Number(limits.historyPerPrompt) || 0,
+      writingCapChars: Number(limits.writingCapChars) || 0,
+    },
+    evidence: Array.isArray(raw.evidence) ? raw.evidence.map(normaliseGrammarTransferEvidenceEntry) : [],
+  };
 }
 
 function humanLabel(id) {
@@ -413,7 +522,12 @@ export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
       templates: { ...statsFromConcepts(concepts).templates, ...(raw.stats.templates || {}) },
     }
     : statsFromConcepts(concepts);
-  const phase = ['dashboard', 'session', 'feedback', 'summary'].includes(raw.phase)
+  // Phase 3 U1 widens the whitelist to accept `'bank'` and `'transfer'` so
+  // that the U1 dashboard can dispatch `grammar-open-concept-bank` /
+  // `grammar-open-transfer` before U2 + U6b land. The downstream scene files
+  // ship in later units; today the surface renders a lightweight stub for
+  // either phase so the state transition is safe.
+  const phase = ['dashboard', 'bank', 'transfer', 'session', 'feedback', 'summary'].includes(raw.phase)
     ? raw.phase
     : 'dashboard';
   const rawAnalytics = isPlainObject(raw.analytics) ? raw.analytics : {};
@@ -468,11 +582,14 @@ export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
       },
     },
     aiEnrichment: normaliseAiEnrichment(raw.aiEnrichment),
+    transferLane: normaliseGrammarTransferLane(raw.transferLane),
     projections: raw.projections || null,
     pendingCommand: raw.pendingCommand || '',
     error: typeof raw.error === 'string' ? raw.error : '',
   };
 }
+
+export { EMPTY_TRANSFER_LANE, normaliseGrammarTransferLane };
 
 export function groupedGrammarConcepts(concepts = []) {
   const groups = new Map();

@@ -211,6 +211,19 @@ export const spellingModule = {
     if (action === 'spelling-shortcut-start') {
       const mode = data.mode;
       if (!mode) return true;
+      // Guardian Mission is gated on allWordsMega. The Alt+4 keybinding fires
+      // this action unconditionally (so the shortcut resolver stays dumb and
+      // symmetric with Alt+1/2/3) — the runtime check lives here so the
+      // shortcut is a no-op instead of accidentally starting a stale Smart
+      // Review round. `service.getPostMasteryState` is defined on the canonical
+      // spelling service; the client-read-model facade returns a conservative
+      // `allWordsMega: false` shape so the gate fails safe under remote-sync.
+      if (mode === 'guardian') {
+        const postMastery = typeof service.getPostMasteryState === 'function'
+          ? service.getPostMasteryState(learnerId)
+          : null;
+        if (!postMastery?.allWordsMega) return true;
+      }
       if (ui.phase === 'session') {
         const confirmed = globalThis.confirm?.('End the current spelling session and switch?');
         if (confirmed === false) return true;

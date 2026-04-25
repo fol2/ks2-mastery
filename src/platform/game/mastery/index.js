@@ -23,11 +23,15 @@ export {
 } from './punctuation.js';
 export {
   GRAMMAR_AGGREGATE_CONCEPTS,
+  GRAMMAR_CONCEPT_TO_MONSTER,
   GRAMMAR_MONSTER_CONCEPTS,
   GRAMMAR_REWARD_RELEASE_ID,
+  activeGrammarMonsterSummaryFromState,
+  grammarConceptIdFromMasteryKey,
   grammarMasteryKey,
   grammarMonsterSummaryFromState,
   monsterIdForGrammarConcept,
+  normaliseGrammarRewardState,
   progressForGrammarMonster,
   recordGrammarConceptMastery,
 } from './grammar.js';

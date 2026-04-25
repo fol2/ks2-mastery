@@ -175,6 +175,132 @@ test('MonsterRender: edge case — displayState "fresh" renders placeholder span
   assert.equal(html.includes('data-effect="leak"'), false);
 });
 
+test('MonsterRender: U4 — no effects prop + provider with binding renders the bound shiny overlay', async () => {
+  // No `effects` prop is passed; <MonsterRender> must read bindings from
+  // <MonsterEffectConfigProvider> and synthesise [...continuous, ...persistent].
+  const { html } = await run({
+    monster: makeMonster({ id: 'inklet', branch: 'b1', stage: 3, displayState: 'monster' }),
+    context: 'codex',
+    omitEffectsProp: true,
+    effectConfigValue: {
+      bindings: {
+        'inklet-b1-3': {
+          persistent: [{ kind: 'shiny', params: { intensity: 0.8 } }],
+          continuous: [],
+        },
+      },
+    },
+    registrations: `
+      registerEffect(defineEffect({
+        kind: 'shiny',
+        lifecycle: 'persistent',
+        layer: 'overlay',
+        surfaces: ['codex'],
+        reducedMotion: 'simplify',
+        zIndex: 10,
+        exclusiveGroup: 'rarity',
+        params: {
+          intensity: { type: 'number', default: 0.6, min: 0, max: 1 },
+        },
+        render: ({ params }) => (
+          <span data-effect="shiny" data-intensity={String(params.intensity)} aria-hidden="true">shiny</span>
+        ),
+      }));
+    `,
+  });
+
+  // Bound shiny overlay rendered with the binding's intensity 0.8.
+  assert.match(html, /data-effect="shiny"/);
+  assert.match(html, /data-intensity="0\.8"/);
+});
+
+test('MonsterRender: U4 — no effects prop + provider without matching binding falls back to displayState default', async () => {
+  // The binding row for inklet-b1-3 does NOT exist in the provider, so
+  // MonsterRender falls back to the per-displayState default
+  // (`monster-motion-float` for stage 3 caught monster).
+  const { html } = await run({
+    monster: makeMonster({ id: 'inklet', branch: 'b1', stage: 3, displayState: 'monster' }),
+    context: 'codex',
+    omitEffectsProp: true,
+    effectConfigValue: {
+      bindings: {
+        'someone-else-b1-3': {
+          persistent: [],
+          continuous: [{ kind: 'monster-motion-float', params: {} }],
+        },
+      },
+    },
+    registrations: `
+      registerEffect(defineEffect({
+        kind: 'monster-motion-float',
+        lifecycle: 'continuous',
+        layer: 'base',
+        surfaces: ['*'],
+        reducedMotion: 'asis',
+        applyTransform: () => ({ '--monster-float-marker': 'fallback' }),
+      }));
+    `,
+  });
+
+  // Fallback default emitted the marker CSS variable.
+  assert.match(html, /--monster-float-marker:\s*fallback/);
+});
+
+test('MonsterRender: U4 — no effects prop + no provider falls back to displayState default (today\'s behaviour)', async () => {
+  const { html } = await run({
+    monster: makeMonster({ id: 'inklet', branch: 'b1', stage: 3, displayState: 'monster' }),
+    context: 'codex',
+    omitEffectsProp: true,
+    registrations: `
+      registerEffect(defineEffect({
+        kind: 'monster-motion-float',
+        lifecycle: 'continuous',
+        layer: 'base',
+        surfaces: ['*'],
+        reducedMotion: 'asis',
+        applyTransform: () => ({ '--monster-float-marker': 'no-provider' }),
+      }));
+    `,
+  });
+
+  assert.match(html, /--monster-float-marker:\s*no-provider/);
+});
+
+test('MonsterRender: U4 — explicit effects prop wins over provider bindings', async () => {
+  // Caller passes effects=[]; provider says "render shiny". Explicit prop
+  // must win — provider read is gated on the prop being undefined.
+  const { html } = await run({
+    monster: makeMonster({ id: 'inklet', branch: 'b1', stage: 3, displayState: 'monster' }),
+    context: 'codex',
+    effects: [],
+    effectConfigValue: {
+      bindings: {
+        'inklet-b1-3': {
+          persistent: [{ kind: 'shiny', params: { intensity: 0.8 } }],
+          continuous: [],
+        },
+      },
+    },
+    registrations: `
+      registerEffect(defineEffect({
+        kind: 'shiny',
+        lifecycle: 'persistent',
+        layer: 'overlay',
+        surfaces: ['codex'],
+        reducedMotion: 'simplify',
+        zIndex: 10,
+        params: { intensity: { type: 'number', default: 0.6, min: 0, max: 1 } },
+        render: ({ params }) => (
+          <span data-effect="shiny" data-intensity={String(params.intensity)} aria-hidden="true">shiny</span>
+        ),
+      }));
+    `,
+  });
+
+  // The explicit empty effects prop should suppress the bound shiny overlay.
+  assert.equal(html.includes('data-effect="shiny"'), false);
+});
+
 test('MonsterRender: integration — reducedMotion=true drops effect with reducedMotion: "omit"', async () => {
   const { html } = await run({
     monster: makeMonster(),

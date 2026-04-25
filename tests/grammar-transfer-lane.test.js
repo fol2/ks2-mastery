@@ -15,6 +15,7 @@ import {
   createServerGrammarEngine,
 } from '../worker/src/subjects/grammar/engine.js';
 import { buildGrammarReadModel } from '../worker/src/subjects/grammar/read-models.js';
+import { normaliseGrammarReadModel } from '../src/subjects/grammar/metadata.js';
 
 test('U7: transfer-prompts catalogue contains at least 4 seed prompts with grammar targets', () => {
   assert.ok(GRAMMAR_TRANSFER_PROMPTS.length >= 4);
@@ -297,4 +298,211 @@ test('U7: save for an existing prompt at the cap succeeds (quota only trips on N
   assert.equal(result.state.transferEvidence[realPromptId].latest.writing, 'updated draft');
   // Quota unchanged
   assert.equal(Object.keys(result.state.transferEvidence).length, GRAMMAR_TRANSFER_MAX_PROMPTS);
+});
+
+// ----------------------------------------------------------------------------
+// U6a: client-side transferLane plumbing drift-detection tests.
+// ----------------------------------------------------------------------------
+function collectKeyPaths(value, pathPrefix = '', acc = new Set()) {
+  if (value === null || typeof value !== 'object') return acc;
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => collectKeyPaths(entry, `${pathPrefix}[${index}]`, acc));
+    return acc;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    const nextPath = pathPrefix ? `${pathPrefix}.${key}` : key;
+    acc.add(nextPath);
+    collectKeyPaths(child, nextPath, acc);
+  }
+  return acc;
+}
+
+function assertNoForbiddenReadModelKeys(value, forbidden) {
+  const forbiddenSet = new Set(forbidden);
+  const visit = (node, pathPrefix) => {
+    if (node === null || typeof node !== 'object') return;
+    if (Array.isArray(node)) {
+      node.forEach((entry, index) => visit(entry, `${pathPrefix}[${index}]`));
+      return;
+    }
+    for (const [key, child] of Object.entries(node)) {
+      const nextPath = pathPrefix ? `${pathPrefix}.${key}` : key;
+      if (forbiddenSet.has(key)) {
+        assert.fail(`Forbidden key "${key}" found at ${nextPath}`);
+      }
+      visit(child, nextPath);
+    }
+  };
+  visit(value, '');
+}
+
+test('U6a: client normaliseGrammarReadModel exposes transferLane with full Worker shape', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const promptId = GRAMMAR_TRANSFER_PROMPT_IDS[0];
+
+  const saved = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'save-transfer-evidence',
+    requestId: 'tx-u6a-drift',
+    payload: {
+      promptId,
+      writing: 'Suddenly, lightning split the sky. The storm, which roared overhead, pressed on.',
+      selfAssessment: [
+        { key: 'fronted-adverbial', checked: true },
+        { key: 'parenthesis-commas', checked: true },
+      ],
+    },
+  });
+
+  const workerRm = buildGrammarReadModel({ learnerId: 'learner-a', state: saved.state, now: 1_777_000_000_000 });
+  assert.ok(workerRm.transferLane, 'Worker read model must include transferLane');
+
+  const clientRm = normaliseGrammarReadModel(workerRm, 'learner-a');
+  assert.ok(clientRm.transferLane, 'client normaliser must expose transferLane');
+
+  // Every key path the Worker emits under transferLane must be reachable after
+  // normalisation. Missing keys indicate silent drift.
+  const workerPaths = collectKeyPaths(workerRm.transferLane);
+  const clientPaths = collectKeyPaths(clientRm.transferLane);
+  const missing = [...workerPaths].filter((path) => !clientPaths.has(path));
+  assert.deepEqual(missing, [], `client dropped transferLane keys: ${missing.join(', ')}`);
+
+  // Spot-check the nested Worker contract explicitly.
+  assert.equal(clientRm.transferLane.mode, 'non-scored');
+  assert.ok(clientRm.transferLane.prompts.length >= 4);
+  const firstPrompt = clientRm.transferLane.prompts[0];
+  assert.equal(typeof firstPrompt.id, 'string');
+  assert.equal(typeof firstPrompt.title, 'string');
+  assert.equal(typeof firstPrompt.brief, 'string');
+  assert.ok(Array.isArray(firstPrompt.grammarTargets));
+  assert.ok(Array.isArray(firstPrompt.checklist));
+
+  assert.equal(typeof clientRm.transferLane.limits.maxPrompts, 'number');
+  assert.equal(typeof clientRm.transferLane.limits.historyPerPrompt, 'number');
+  assert.equal(typeof clientRm.transferLane.limits.writingCapChars, 'number');
+
+  const evidence = clientRm.transferLane.evidence.find((entry) => entry.promptId === promptId);
+  assert.ok(evidence, 'evidence entry for saved promptId must round-trip');
+  assert.equal(evidence.latest.source, 'transfer-lane');
+  assert.ok(evidence.latest.writing.startsWith('Suddenly'));
+  assert.equal(evidence.latest.selfAssessment.length, 2);
+  assert.equal(evidence.latest.selfAssessment[0].key, 'fronted-adverbial');
+  assert.equal(evidence.latest.selfAssessment[0].checked, true);
+});
+
+test('U6a: normaliseGrammarReadModel omits reviewCopy and requestId anywhere under transferLane', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const promptId = GRAMMAR_TRANSFER_PROMPT_IDS[0];
+
+  const saved = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'save-transfer-evidence',
+    requestId: 'tx-redaction',
+    payload: { promptId, writing: 'Short evidence sample.' },
+  });
+  const workerRm = buildGrammarReadModel({ learnerId: 'learner-a', state: saved.state, now: 1_777_000_000_000 });
+  const clientRm = normaliseGrammarReadModel(workerRm, 'learner-a');
+
+  assertNoForbiddenReadModelKeys(clientRm.transferLane, ['reviewCopy', 'requestId']);
+});
+
+test('U6a: evidence preserves Worker-side updatedAt descending sort (no client re-sort)', () => {
+  const workerRm = {
+    transferLane: {
+      mode: 'non-scored',
+      prompts: [
+        { id: 'a', title: 'A', brief: 'b', grammarTargets: [], checklist: [] },
+      ],
+      limits: { maxPrompts: 20, historyPerPrompt: 5, writingCapChars: 2000 },
+      evidence: [
+        { promptId: 'p3', latest: { writing: 'x', selfAssessment: [], savedAt: 300, source: 'transfer-lane' }, history: [], updatedAt: 300 },
+        { promptId: 'p2', latest: { writing: 'x', selfAssessment: [], savedAt: 200, source: 'transfer-lane' }, history: [], updatedAt: 200 },
+        { promptId: 'p1', latest: { writing: 'x', selfAssessment: [], savedAt: 100, source: 'transfer-lane' }, history: [], updatedAt: 100 },
+      ],
+    },
+  };
+  const clientRm = normaliseGrammarReadModel(workerRm, 'learner-a');
+  assert.deepEqual(
+    clientRm.transferLane.evidence.map((entry) => entry.promptId),
+    ['p3', 'p2', 'p1'],
+    'client must preserve Worker-side updatedAt descending order',
+  );
+});
+
+test('U6a: missing transferLane returns shape-stable zero values', () => {
+  const clientRm = normaliseGrammarReadModel({}, 'learner-a');
+  assert.deepEqual(clientRm.transferLane, {
+    mode: '',
+    prompts: [],
+    limits: { maxPrompts: 0, historyPerPrompt: 0, writingCapChars: 0 },
+    evidence: [],
+  });
+});
+
+test('U6a: malformed transferLane.prompts coerces to []', () => {
+  const clientRm = normaliseGrammarReadModel({
+    transferLane: {
+      mode: 'non-scored',
+      prompts: 'not-an-array',
+      limits: { maxPrompts: 20, historyPerPrompt: 5, writingCapChars: 2000 },
+      evidence: [],
+    },
+  }, 'learner-a');
+  assert.deepEqual(clientRm.transferLane.prompts, []);
+  assert.equal(clientRm.transferLane.mode, 'non-scored');
+});
+
+test('U6a: malformed evidence[0].latest.selfAssessment coerces to []', () => {
+  const clientRm = normaliseGrammarReadModel({
+    transferLane: {
+      mode: 'non-scored',
+      prompts: [],
+      limits: { maxPrompts: 20, historyPerPrompt: 5, writingCapChars: 2000 },
+      evidence: [{
+        promptId: 'p1',
+        latest: { writing: 'hi', selfAssessment: undefined, savedAt: 0, source: 'transfer-lane' },
+        history: [],
+        updatedAt: 0,
+      }],
+    },
+  }, 'learner-a');
+  assert.deepEqual(clientRm.transferLane.evidence[0].latest.selfAssessment, []);
+});
+
+test('U6a: orphaned evidence (promptId not in prompts catalogue) passes through untouched', () => {
+  const workerRm = {
+    transferLane: {
+      mode: 'non-scored',
+      prompts: [
+        { id: 'real-prompt', title: 'Real', brief: 'b', grammarTargets: [], checklist: [] },
+      ],
+      limits: { maxPrompts: 20, historyPerPrompt: 5, writingCapChars: 2000 },
+      evidence: [{
+        promptId: 'retired-prompt',
+        latest: { writing: 'orphaned draft', selfAssessment: [], savedAt: 123, source: 'transfer-lane' },
+        history: [],
+        updatedAt: 123,
+      }],
+    },
+  };
+  const clientRm = normaliseGrammarReadModel(workerRm, 'learner-a');
+  const orphan = clientRm.transferLane.evidence.find((entry) => entry.promptId === 'retired-prompt');
+  assert.ok(orphan, 'orphaned evidence must pass through the normaliser untouched');
+  assert.equal(orphan.latest.writing, 'orphaned draft');
+  assert.equal(orphan.latest.source, 'transfer-lane');
+  // Catalogue still reachable
+  assert.equal(clientRm.transferLane.prompts.length, 1);
+  assert.equal(clientRm.transferLane.prompts[0].id, 'real-prompt');
+});
+
+test('U1: the dashboard rewrite expands the phase allowlist to accept "transfer" so the Writing Try button routes safely', () => {
+  // U6a was plumbing only; U1 (the dashboard rewrite) legitimately wires the
+  // Writing Try secondary button and needs the `'transfer'` phase as a stub
+  // target until U6b ships the real scene. Assert the normaliser now accepts
+  // `'transfer'` as an allowed phase (and does NOT silently downgrade it to
+  // `'dashboard'`), so clicking "Writing Try" actually transitions.
+  const clientRm = normaliseGrammarReadModel({ phase: 'transfer' }, 'learner-a');
+  assert.equal(clientRm.phase, 'transfer');
 });

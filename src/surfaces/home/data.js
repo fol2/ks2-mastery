@@ -20,24 +20,36 @@ import {
 } from '../../platform/game/monster-visual-config.js';
 
 const MONSTER_VARIANTS = ['b1', 'b2'];
+// Higher number = higher feature weight in pickFeaturedCodexEntry. The grand
+// creatures (Phaeton, Quoral, Concordium) outrank their direct siblings so
+// they win tie-breaks when a learner catches the grand. Reserved Punctuation
+// and Grammar creatures sit below their active direct siblings and far below
+// the grand — they are filtered out of active surfaces before ranking
+// applies, so the rank position is belt-and-braces against fallback paths
+// that bypass the filter.
 const CODEX_POWER_RANK = Object.freeze({
   inklet: 1,
   glimmerbug: 2,
   phaeton: 3,
   vellhorn: 4,
-  pealark: 5,
-  claspin: 6,
-  quoral: 7,
-  curlune: 8,
-  colisk: 9,
-  hyphang: 10,
-  carillon: 11,
-  bracehart: 12,
-  glossbloom: 13,
-  loomrill: 14,
-  chronalyx: 15,
-  couronnail: 16,
-  mirrane: 17,
+  // Reserved Punctuation ranks sit below active directs (Pealark / Claspin /
+  // Curlune) and far below the grand (Quoral).
+  colisk: 5,
+  hyphang: 6,
+  carillon: 7,
+  pealark: 8,
+  claspin: 9,
+  curlune: 10,
+  quoral: 11,
+  // Reserved Grammar ranks (Phase 3 U0) mirror Punctuation's treatment:
+  // Glossbloom / Loomrill / Mirrane sit below active directs (Bracehart /
+  // Chronalyx / Couronnail) and far below Concordium.
+  glossbloom: 12,
+  loomrill: 13,
+  mirrane: 14,
+  bracehart: 15,
+  chronalyx: 16,
+  couronnail: 17,
   concordium: 18,
 });
 
@@ -617,7 +629,12 @@ function withSynthesisedUncaughtMonsters(summary = []) {
     summary.map(({ monster }) => monster?.id).filter(Boolean),
   );
   const synthesised = [];
-  for (const [subjectId, monsterIds] of Object.entries(MONSTERS_BY_SUBJECT)) {
+  // Scope iteration to `CODEX_SUBJECT_GROUP_IDS` (defined below) so reserved
+  // subject buckets (`punctuationReserve`, `grammarReserve`) never enter the
+  // Codex pipeline. Without this guard, every uncaught reserved monster would
+  // surface as a "not caught" Codex card, leaking the retired roster.
+  for (const subjectId of CODEX_SUBJECT_GROUP_IDS) {
+    const monsterIds = MONSTERS_BY_SUBJECT[subjectId] || [];
     for (const monsterId of monsterIds) {
       if (presentIds.has(monsterId)) continue;
       const monster = MONSTERS[monsterId];
@@ -632,8 +649,13 @@ function withSynthesisedUncaughtMonsters(summary = []) {
   return [...summary, ...synthesised];
 }
 
+// Subject groups rendered in Codex. Reserved / non-learner-facing groupings
+// inside MONSTERS_BY_SUBJECT (e.g. `punctuationReserve`) are excluded so the
+// Codex keeps the spelling -> punctuation -> grammar ordering learners expect.
+const CODEX_SUBJECT_GROUP_IDS = Object.freeze(['spelling', 'punctuation', 'grammar']);
+
 export function buildCodexSubjectGroups(entries = []) {
-  return Object.keys(MONSTERS_BY_SUBJECT)
+  return CODEX_SUBJECT_GROUP_IDS
     .map((subjectId) => {
       const subjectEntries = entries.filter((entry) => entry.subjectId === subjectId);
       if (!subjectEntries.length) return null;
@@ -680,7 +702,15 @@ function deriveSubjectStatus(entries) {
 }
 
 export function pickFeaturedCodexEntry(entries = []) {
+  // Reserved creatures stay in MONSTERS for asset tooling but must never be
+  // featured on the learner Codex hero. Filter them out before ranking.
+  // Phase 2 covered Colisk / Hyphang / Carillon via `punctuationReserve`.
+  // Phase 3 U0 extends this to `grammarReserve` (Glossbloom / Loomrill /
+  // Mirrane). Without this second filter, a pre-flip learner's
+  // `glossbloom.caught: true` state would surface a retired creature on the
+  // featured hero.
   return entries
+    .filter((entry) => entry?.subjectId !== 'punctuationReserve' && entry?.subjectId !== 'grammarReserve')
     .slice()
     .sort((left, right) => {
       if (left.caught !== right.caught) return left.caught ? -1 : 1;
@@ -705,10 +735,13 @@ function codexPowerRank(monsterId) {
   return CODEX_POWER_RANK[monsterId] || 0;
 }
 
-// Lower index = earlier on-ramp; mirrors the curriculum order encoded by
-// MONSTERS_BY_SUBJECT declaration order in src/platform/game/monsters.js.
+// Lower index = earlier on-ramp. Mirrors the curriculum order a learner
+// would progress through, deliberately excluding non-learner-facing groupings
+// (reserved monsters) that otherwise appear as extra entries in
+// Object.keys(MONSTERS_BY_SUBJECT).
+const SUBJECT_PRIORITY_ORDER = Object.freeze(['spelling', 'punctuation', 'grammar']);
 function subjectPriority(subjectId) {
-  const idx = Object.keys(MONSTERS_BY_SUBJECT).indexOf(subjectId);
+  const idx = SUBJECT_PRIORITY_ORDER.indexOf(subjectId);
   return idx === -1 ? 999 : idx;
 }
 
@@ -749,13 +782,15 @@ function nextCodexMilestone(monsterId, mastered, { subjectId = 'spelling', max =
 
 function codexWordBand(monsterId, subjectId = 'spelling') {
   if (subjectId === 'punctuation') {
-    if (monsterId === 'pealark') return 'Endmarks';
+    if (monsterId === 'pealark') return 'Endmarks, speech and boundary';
     if (monsterId === 'claspin') return 'Apostrophe';
-    if (monsterId === 'quoral') return 'Speech punctuation';
-    if (monsterId === 'curlune') return 'Comma and flow';
-    if (monsterId === 'colisk') return 'List and structure';
-    if (monsterId === 'hyphang') return 'Boundary punctuation';
-    if (monsterId === 'carillon') return 'Published punctuation release';
+    if (monsterId === 'curlune') return 'Comma, flow and structure';
+    if (monsterId === 'quoral') return 'Published punctuation release';
+    // Reserved monsters retain descriptive copy for Admin / asset tooling
+    // even though they are filtered out of active learner summaries.
+    if (monsterId === 'colisk') return 'Reserved: future list and structure';
+    if (monsterId === 'hyphang') return 'Reserved: future boundary expansion';
+    if (monsterId === 'carillon') return 'Reserved: future aggregate legendary';
     return 'Punctuation codex';
   }
   if (subjectId === 'grammar') {

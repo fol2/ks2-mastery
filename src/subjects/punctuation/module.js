@@ -19,7 +19,7 @@ function currentUi(context, learnerId) {
 export const punctuationModule = {
   id: 'punctuation',
   name: 'Punctuation',
-  blurb: 'Practise the full KS2 punctuation map across sentence endings, apostrophes, speech, commas, boundaries and structure.',
+  blurb: 'Practise the KS2 punctuation progression: Smart Review, Guided focus, Weak Spots, GPS tests, sentence combining, paragraph repair, and transfer.',
   accent: '#B8873F',
   accentSoft: '#F0E1C4',
   accentTint: '#F7EEDC',
@@ -37,7 +37,7 @@ export const punctuationModule = {
       pct: stats.publishedRewardUnits ? Math.round(((stats.securedRewardUnits || 0) / stats.publishedRewardUnits) * 100) : 0,
       due: stats.due || 0,
       streak: stats.securedRewardUnits || 0,
-      nextUp: stats.weak ? 'Repair weak punctuation' : stats.due ? 'Due review' : 'Full 14-skill punctuation map',
+      nextUp: stats.weak ? 'Repair weak punctuation' : stats.due ? 'Due review' : 'Smart Review',
     };
   },
   handleAction(action, context) {

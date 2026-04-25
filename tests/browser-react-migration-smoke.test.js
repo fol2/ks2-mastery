@@ -107,19 +107,19 @@ test('browser migration smoke covers the React app root, Grammar completeness co
       ['wait', '.subject-grid'],
       ['js', "try { Object.defineProperty(window, 'speechSynthesis', { value: undefined, configurable: true }); Object.defineProperty(window, 'SpeechSynthesisUtterance', { value: undefined, configurable: true }); } catch (_) { window.speechSynthesis = undefined; window.SpeechSynthesisUtterance = undefined; } 'speech synthesis disabled';"],
       ['js', "document.querySelector('[data-action=\"open-subject\"][data-subject-id=\"grammar\"]')?.click(); 'opened grammar';"],
-      ['wait', '.grammar-setup'],
+      ['wait', '.grammar-dashboard'],
       ['text'],
-      ['js', "Array.from(document.querySelectorAll('.grammar-mode')).find((button) => button.textContent?.includes('KS2-style mini-test'))?.click(); 'selected mini-test';"],
-      ['js', "document.querySelector('.grammar-start-card .btn.primary')?.click(); 'started grammar mini-test';"],
+      ['js', "Array.from(document.querySelectorAll('.grammar-primary-mode')).find((button) => button.textContent?.includes('Mini Test'))?.click(); 'selected mini-test';"],
+      ['js', "Array.from(document.querySelectorAll('.grammar-dashboard .btn.primary')).find((button) => button.textContent?.includes('Begin round'))?.click(); 'started grammar mini-test';"],
       ['wait', '.grammar-mini-test-panel'],
       ['text'],
       ['js', "Array.from(document.querySelectorAll('button')).find((button) => button.textContent?.includes('Finish mini-set'))?.click(); 'finished grammar mini-test';"],
       ['wait', '.grammar-summary-shell'],
       ['text'],
       ['js', "Array.from(document.querySelectorAll('button')).find((button) => button.textContent?.includes('Back to Grammar setup'))?.click(); 'back to grammar setup';"],
-      ['wait', '.grammar-setup'],
-      ['js', "Array.from(document.querySelectorAll('.grammar-mode')).find((button) => button.textContent?.includes('Smart mixed review'))?.click(); 'selected smart grammar';"],
-      ['js', "document.querySelector('.grammar-start-card .btn.primary')?.click(); 'started grammar smart';"],
+      ['wait', '.grammar-dashboard'],
+      ['js', "Array.from(document.querySelectorAll('.grammar-primary-mode')).find((button) => button.textContent?.includes('Smart Practice'))?.click(); 'selected smart grammar';"],
+      ['js', "Array.from(document.querySelectorAll('.grammar-dashboard .btn.primary')).find((button) => button.textContent?.includes('Begin round'))?.click(); 'started grammar smart';"],
       ['wait', '.grammar-session'],
       ['text'],
       ['js', "Array.from(document.querySelectorAll('button')).find((button) => button.textContent?.includes('Faded support'))?.click(); 'requested faded support';"],
@@ -160,8 +160,9 @@ test('browser migration smoke covers the React app root, Grammar completeness co
     assert.doesNotMatch(output, /data-home-mount/);
     assert.match(output, /Punctuation practice/);
     assert.match(output, /Punctuation session summary/);
-    assert.match(output, /Grammar retrieval practice/);
-    assert.match(output, /KS2-style mini-test/);
+    assert.match(output, /Grammar Garden/);
+    assert.match(output, /Mini Test/);
+    assert.match(output, /Smart Practice/);
     assert.match(output, /Timed test/);
     assert.match(output, /Mini-set review/);
     assert.match(output, /Faded guidance/);

@@ -50,14 +50,16 @@ test('Codex entries describe Punctuation as secure units rather than spelling wo
     clusterId: 'endmarks',
     rewardUnitId: 'sentence-endings-core',
   });
+  // Phase 2 roster: Pealark's publishedTotal is 5 (endmarks + speech + boundary).
+  // Quoral is the grand aggregate with 14 units.
   const summary = punctuationMonsterSummaryFromState({
     pealark: {
       mastered: [masteryKey],
-      publishedTotal: 1,
+      publishedTotal: 5,
       caught: true,
       branch: 'b1',
     },
-    carillon: {
+    quoral: {
       mastered: [masteryKey],
       publishedTotal: 14,
       caught: true,
@@ -66,18 +68,18 @@ test('Codex entries describe Punctuation as secure units rather than spelling wo
   }, { aggregateTotal: 14 });
   const entries = buildCodexEntries(summary);
   const pealark = entries.find((entry) => entry.id === 'pealark');
-  const carillon = entries.find((entry) => entry.id === 'carillon');
+  const quoral = entries.find((entry) => entry.id === 'quoral');
 
   assert.equal(pealark.subjectId, 'punctuation');
   assert.equal(pealark.secureLabel, '1 secure unit');
-  assert.equal(pealark.wordBand, 'Endmarks');
-  assert.equal(pealark.nextGoal, 'Fully evolved');
-  assert.match(pealark.img, /assets\/monsters\/pealark\/b1\/pealark-b1-4\.640\.webp/);
+  assert.equal(pealark.wordBand, 'Endmarks, speech and boundary');
+  // 1 of 5 secured = stage 1 (one-fifth of the way).
+  assert.equal(pealark.progressPct, 20);
 
-  assert.equal(carillon.subjectId, 'punctuation');
-  assert.equal(carillon.secureLabel, '1 secure unit');
-  assert.equal(carillon.wordBand, 'Published punctuation release');
-  assert.equal(carillon.progressPct, 7);
+  assert.equal(quoral.subjectId, 'punctuation');
+  assert.equal(quoral.secureLabel, '1 secure unit');
+  assert.equal(quoral.wordBand, 'Published punctuation release');
+  assert.equal(quoral.progressPct, 7);
 });
 
 test('Codex entry defaults remain spelling-compatible', () => {

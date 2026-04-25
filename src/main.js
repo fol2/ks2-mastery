@@ -45,6 +45,7 @@ import {
   monsterSummary,
   monsterSummaryFromSpellingAnalytics,
 } from './platform/game/monster-system.js';
+import { createMonsterEffectConfigGetter } from './platform/game/monster-effect-runtime.js';
 import {
   acknowledgeMonsterCelebrationEvents,
   clearAllMonsterCelebrationAcknowledgements,
@@ -1904,6 +1905,14 @@ function extractHeroBgUrl(styleAttr) {
 const appRuntime = {
   contextFor,
   monsterVisualConfig: () => repositories.monsterVisualConfig?.read?.() || null,
+  // Returns the published `effect` sub-document from the loaded
+  // monsterVisualConfig row. The combined publish envelope from PR #157
+  // stores `{ visual, effect }` together — we surface the `effect` slice so
+  // <MonsterEffectConfigProvider> receives it without re-reading. The factory
+  // memoises by serialised content so repeat calls with structurally
+  // identical data return the same reference, keeping App.jsx's
+  // `[monsterEffectConfig?.catalog]` useEffect dep stable across renders.
+  monsterEffectConfig: createMonsterEffectConfigGetter(repositories),
   buildHomeModel,
   buildCodexModel,
   buildSurfaceChromeModel,

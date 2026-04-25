@@ -42,7 +42,7 @@ Open Grammar follow-up scope:
 - [x] Add transfer and Bellstorm bridge placeholders without collapsing Grammar and Punctuation product identities.
 - [x] Decide paragraph-level transfer direction: `docs/grammar-transfer-decision.md` sets the first transfer lane as non-scored writing application, with teacher-reviewed or deterministic paragraph scoring deferred to separate reviewed plans.
 - [x] Decide live AI provider direction: `docs/grammar-ai-provider-decision.md` keeps live provider integration deferred; deterministic fallback remains the production contract until a separate reviewed server-side provider plan lands.
-- [ ] Harden fidelity, fairness, and behavioural proof per `docs/plans/2026-04-25-002-feat-grammar-perfection-pass-plan.md` (Phase 2 review fallout: adaptive selection extraction, item-level support scoring, strict mini-test SSR QA, answer-spec registry, analytics confidence, non-scored transfer lane).
+- [x] Harden fidelity, fairness, and behavioural proof per `docs/plans/2026-04-25-002-feat-grammar-perfection-pass-plan.md` (Phase 2 review fallout: adaptive selection extraction, item-level support scoring, strict mini-test SSR QA, answer-spec registry, analytics confidence, non-scored transfer lane, release gate). All 8 units landed across PRs #144, #146, #148, #150, #153, #156, #158, and U8.
 - [ ] Continue to run `npm test`, `npm run check`, and Grammar production/UI smoke for each shipped Grammar slice.
 
 ---

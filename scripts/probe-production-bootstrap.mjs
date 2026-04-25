@@ -41,32 +41,52 @@ export function parseProbeArgs(argv = process.argv.slice(2)) {
     help: false,
   };
 
+  // Adversarial residual adv-residual-1: reject duplicate non-cumulative
+  // flags so a release-gate wrapper cannot be silently weakened by a
+  // later user-supplied threshold. Mirrors the classroom parser's
+  // assignOnce hardening.
+  const assignedFlags = new Set();
+  const assignOnce = (flag) => {
+    if (assignedFlags.has(flag)) {
+      throw new Error(`${flag} specified more than once; refusing to let later value silently override the earlier one.`);
+    }
+    assignedFlags.add(flag);
+  };
+
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--help' || arg === '-h') {
       options.help = true;
     } else if (arg === '--url') {
+      assignOnce(arg);
       options.url = readOptionValue(argv, index, arg);
       index += 1;
     } else if (arg === '--cookie') {
+      assignOnce(arg);
       options.cookie = readOptionValue(argv, index, arg);
       index += 1;
     } else if (arg === '--bearer') {
+      assignOnce(arg);
       options.bearer = readOptionValue(argv, index, arg);
       index += 1;
     } else if (arg === '--header') {
+      // Cumulative by design (repeatable per docs).
       options.headers.push(readOptionValue(argv, index, arg));
       index += 1;
     } else if (arg === '--max-bytes') {
+      assignOnce(arg);
       options.maxBytes = toPositiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--max-sessions') {
+      assignOnce(arg);
       options.maxSessions = toPositiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--max-events') {
+      assignOnce(arg);
       options.maxEvents = toPositiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--forbidden-token') {
+      // Cumulative by design (repeatable per docs).
       options.forbiddenTokens.push(readOptionValue(argv, index, arg));
       index += 1;
     } else {
@@ -142,15 +162,36 @@ export function analyseBootstrapPayload(payload, {
   forbiddenTokens = [],
 } = {}) {
   const failures = [];
+  const thresholdViolations = [];
   const warnings = [];
   const practiceSessionCount = arrayCount(payload, 'practiceSessions');
   const eventCount = arrayCount(payload, 'eventLog');
   const responseSize = Number(responseBytes) || 0;
 
+  // Adversarial review adv-004: evaluate the responseBytes gate before the
+  // early-return. A non-JSON body can still carry oversize bytes, and CI
+  // that filters on thresholdViolations needs the gate to fire regardless
+  // of parse success.
+  const evaluateByteGate = () => {
+    if (responseSize > maxBytes) {
+      const message = `Bootstrap response is ${responseSize} bytes, above ${maxBytes}.`;
+      failures.push(message);
+      thresholdViolations.push({
+        threshold: 'max-bytes',
+        limit: maxBytes,
+        observed: responseSize,
+        message,
+      });
+    }
+  };
+
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    evaluateByteGate();
+    failures.unshift('Response body is not a JSON object.');
     return {
       ok: false,
-      failures: ['Response body is not a JSON object.'],
+      failures,
+      thresholdViolations,
       warnings,
       responseBytes: responseSize,
       counts: {
@@ -164,14 +205,26 @@ export function analyseBootstrapPayload(payload, {
   if (payload.ok !== true) {
     failures.push('Bootstrap payload does not report ok=true.');
   }
-  if (responseSize > maxBytes) {
-    failures.push(`Bootstrap response is ${responseSize} bytes, above ${maxBytes}.`);
-  }
+  evaluateByteGate();
   if (maxSessions != null && practiceSessionCount > maxSessions) {
-    failures.push(`Bootstrap returned ${practiceSessionCount} practice sessions, above ${maxSessions}.`);
+    const message = `Bootstrap returned ${practiceSessionCount} practice sessions, above ${maxSessions}.`;
+    failures.push(message);
+    thresholdViolations.push({
+      threshold: 'max-sessions',
+      limit: maxSessions,
+      observed: practiceSessionCount,
+      message,
+    });
   }
   if (maxEvents != null && eventCount > maxEvents) {
-    failures.push(`Bootstrap returned ${eventCount} events, above ${maxEvents}.`);
+    const message = `Bootstrap returned ${eventCount} events, above ${maxEvents}.`;
+    failures.push(message);
+    thresholdViolations.push({
+      threshold: 'max-events',
+      limit: maxEvents,
+      observed: eventCount,
+      message,
+    });
   }
 
   const capacity = payload.bootstrapCapacity || null;
@@ -211,6 +264,7 @@ export function analyseBootstrapPayload(payload, {
   return {
     ok: failures.length === 0,
     failures,
+    thresholdViolations,
     warnings,
     responseBytes: responseSize,
     counts: {
@@ -253,11 +307,15 @@ export async function probeProductionBootstrap(options = {}) {
     analysis.failures.unshift(`Bootstrap response is not valid JSON: ${parseError.message}`);
   }
 
+  // Correctness residual C-R1: put the spread before the explicit `ok`
+  // so that a valid-looking JSON body with HTTP 5xx (which unshifts a
+  // failure above) cannot leak `analysis.ok === true` into the outer
+  // return value.
   return {
+    ...analysis,
     ok: analysis.failures.length === 0,
     url: url.toString(),
     status: response.status,
-    ...analysis,
   };
 }
 
@@ -270,10 +328,12 @@ export function usage() {
     '  --cookie <cookie>          Cookie header value from a logged-in browser session',
     '  --bearer <token>           Bearer token for Authorization',
     '  --header "name: value"     Extra request header, repeatable',
-    '  --max-bytes <number>       Maximum allowed response bytes',
+    '  --forbidden-token <text>   Token that must not appear in the JSON payload, repeatable',
+    '',
+    'Hard threshold gates (non-zero exit on violation):',
+    '  --max-bytes <number>       Maximum allowed response bytes (default 600000)',
     '  --max-sessions <number>    Maximum allowed practiceSessions length',
     '  --max-events <number>      Maximum allowed eventLog length',
-    '  --forbidden-token <text>   Token that must not appear in the JSON payload, repeatable',
   ].join('\n');
 }
 

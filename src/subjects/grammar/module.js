@@ -5,6 +5,31 @@ import {
 } from './metadata.js';
 import { normaliseGrammarSpeechRate } from './speech.js';
 
+// U6a: Child-facing copy for the four known `save-transfer-evidence` error
+// codes emitted by the Worker (worker/src/subjects/grammar/engine.js:1723-1803,
+// all surface through `err.extra.code`). Unknown codes fall back to a generic
+// message; the UI must render `rm.error` with role="alert" whenever it is
+// non-empty. UK English copy throughout.
+export const GRAMMAR_TRANSFER_ERROR_COPY = Object.freeze({
+  grammar_transfer_unavailable_during_mini_test: 'You cannot save writing during a mini test.',
+  grammar_transfer_prompt_not_found: 'That writing prompt is not available.',
+  grammar_transfer_writing_required: 'Write at least a few words before saving.',
+  grammar_transfer_quota_exceeded: 'You have too many saved writings. Delete one to save more.',
+});
+
+export const GRAMMAR_TRANSFER_GENERIC_ERROR_COPY = 'That did not save. Try again.';
+
+export function translateGrammarTransferError(error) {
+  const code = error?.payload?.code
+    || error?.extra?.code
+    || error?.code
+    || '';
+  if (code && Object.prototype.hasOwnProperty.call(GRAMMAR_TRANSFER_ERROR_COPY, code)) {
+    return GRAMMAR_TRANSFER_ERROR_COPY[code];
+  }
+  return GRAMMAR_TRANSFER_GENERIC_ERROR_COPY;
+}
+
 function selectedLearnerId(context) {
   return (context?.store?.getState?.() || context?.appState || {})?.learners?.selectedId || '';
 }
@@ -70,7 +95,7 @@ function applyRemoteReadModel(context, response, { learnerId } = {}) {
   context.store.reloadFromRepositories?.({ preserveRoute: true });
 }
 
-function sendGrammarCommand(context, command, payload = {}) {
+function sendGrammarCommand(context, command, payload = {}, { translateError } = {}) {
   const learnerId = selectedLearnerId(context);
   if (!learnerId) return true;
   const ui = selectedGrammarUi(context);
@@ -100,7 +125,9 @@ function sendGrammarCommand(context, command, payload = {}) {
     applyRemoteReadModel(context, response, { learnerId });
   }).catch((error) => {
     globalThis.console?.warn?.('Grammar command failed.', error);
-    setGrammarError(context, error?.payload?.message || error?.message || 'The Grammar command could not be completed.', { learnerId });
+    const fallback = error?.payload?.message || error?.message || 'The Grammar command could not be completed.';
+    const message = typeof translateError === 'function' ? translateError(error) || fallback : fallback;
+    setGrammarError(context, message, { learnerId });
   });
 
   return true;
@@ -244,6 +271,34 @@ export const grammarModule = {
       return resetToDashboard(context);
     }
 
+    // Phase 3 U1: register the two dashboard routing placeholders. U2 ships
+    // the real Grammar Bank scene and U6b ships the Writing Try scene; until
+    // then these dispatchers flip the phase to a stub rendered by
+    // `GrammarPracticeSurface`. Both are no-op safe when the learner is
+    // already in a transient phase (pendingCommand in flight, or session
+    // active — we never stomp an in-flight session).
+    if (action === 'grammar-open-concept-bank') {
+      if (ui.pendingCommand) return true;
+      if (ui.phase === 'session' || ui.phase === 'feedback') return true;
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => ({
+        ...normaliseGrammarReadModel(current, learnerId),
+        phase: 'bank',
+        error: '',
+      }));
+      return true;
+    }
+
+    if (action === 'grammar-open-transfer') {
+      if (ui.pendingCommand) return true;
+      if (ui.phase === 'session' || ui.phase === 'feedback') return true;
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => ({
+        ...normaliseGrammarReadModel(current, learnerId),
+        phase: 'transfer',
+        error: '',
+      }));
+      return true;
+    }
+
     if (action === 'grammar-set-mode') {
       const mode = context.data?.value || DEFAULT_GRAMMAR_PREFS.mode;
       const patch = grammarModeUsesFocus(mode) ? { mode } : { mode, focusConceptId: '' };
@@ -385,6 +440,35 @@ export const grammarModule = {
         : { kind: context.data?.kind || 'explanation' };
       if (service?.requestAiEnrichment) return applyLocalTransition(context, service.requestAiEnrichment(learnerId, payload));
       return sendGrammarCommand(context, 'request-ai-enrichment', payload);
+    }
+
+    if (action === 'grammar-save-transfer-evidence') {
+      // U6a: dispatch the Worker's `save-transfer-evidence` command with the
+      // exact contract: { promptId, writing, selfAssessment: [{key, checked}] }.
+      // The Worker's payload key is `selfAssessment`; sending `checklist`
+      // silently drops the learner's ticks. See
+      // worker/src/subjects/grammar/engine.js:1754-1760. The existing
+      // `pendingCommand` short-circuit in `sendGrammarCommand` prevents
+      // double-dispatch on rapid taps.
+      const source = context.data?.payload && typeof context.data.payload === 'object' && !Array.isArray(context.data.payload)
+        ? context.data.payload
+        : (context.data && typeof context.data === 'object' ? context.data : {});
+      const payload = {
+        promptId: typeof source.promptId === 'string' ? source.promptId : '',
+        writing: typeof source.writing === 'string' ? source.writing : '',
+        selfAssessment: Array.isArray(source.selfAssessment)
+          ? source.selfAssessment
+            .filter((entry) => entry && typeof entry === 'object' && !Array.isArray(entry))
+            .map((entry) => ({
+              key: typeof entry.key === 'string' ? entry.key : '',
+              checked: Boolean(entry.checked),
+            }))
+            .filter((entry) => entry.key)
+          : [],
+      };
+      return sendGrammarCommand(context, 'save-transfer-evidence', payload, {
+        translateError: translateGrammarTransferError,
+      });
     }
 
     if (action === 'grammar-end-early') {

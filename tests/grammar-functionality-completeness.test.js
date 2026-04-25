@@ -162,7 +162,7 @@ test('Grammar completeness documentation and live checklist point at the active 
 
 test('Grammar perfection-pass baseline is internally owned and well-formed', () => {
   const baseline = readPerfectionPassBaseline();
-  const validStatuses = new Set(['planned', 'already-fixed', 'deferred']);
+  const validStatuses = new Set(['planned', 'completed', 'already-fixed', 'deferred']);
   const seenIds = new Set();
 
   assert.equal(baseline.id, 'grammar-perfection-pass');
@@ -183,6 +183,24 @@ test('Grammar perfection-pass baseline is internally owned and well-formed', () 
       assert.ok(issue.reason, `${issue.id} needs a planning reason.`);
       assert.equal(issue.ownerUnitAllowedByTest, true, `${issue.id} is planned; ownerUnitAllowedByTest must be true so the owner-unit cross-reference test covers it.`);
     }
+    if (issue.status === 'completed') {
+      assert.match(issue.ownerUnit || '', /^U[1-8]$/, `${issue.id} is completed but needs a valid owner unit U1-U8.`);
+      assert.ok(issue.reason, `${issue.id} needs a planning reason.`);
+      assert.ok(typeof issue.landedIn === 'string' && issue.landedIn.length > 0,
+        `${issue.id} is completed; landedIn must reference the merged PR (e.g. "PR #123 (U2)").`);
+      if (issue.ownerUnit !== 'U1') {
+        // U1 is self-referential (the baseline) so evidence is intrinsic;
+        // every other unit must cite at least one landed engine or test file.
+        assert.ok(Array.isArray(issue.evidence) && issue.evidence.length > 0,
+          `${issue.id} is completed; evidence[] must cite at least one landed file.`);
+        for (const evidencePath of issue.evidence) {
+          assert.ok(fs.existsSync(path.join(rootDir, evidencePath)),
+            `${issue.id} cites missing evidence file ${evidencePath}`);
+        }
+      }
+      assert.equal(issue.ownerUnitAllowedByTest, true,
+        `${issue.id} is completed (owner unit landed); ownerUnitAllowedByTest must stay true so the cross-reference keeps pointing at the plan.`);
+    }
     if (issue.status === 'already-fixed') {
       assert.ok(Array.isArray(issue.resolvedBy) && issue.resolvedBy.length > 0, `${issue.id} needs at least one resolvedBy reference.`);
       assert.ok(Array.isArray(issue.supportingTests) && issue.supportingTests.length > 0, `${issue.id} needs at least one supporting test.`);
@@ -198,13 +216,13 @@ test('Grammar perfection-pass baseline is internally owned and well-formed', () 
   }
 });
 
-test('Grammar perfection-pass planned issues each reference their owner unit in the plan file', () => {
+test('Grammar perfection-pass owner-unit cross-reference: every planned or completed issue references its unit in the plan file', () => {
   const baseline = readPerfectionPassBaseline();
   const planText = fs.readFileSync(perfectionPassPlanPath, 'utf8');
-  const plannedIssues = baseline.reviewIssues.filter((issue) => issue.status === 'planned');
+  const trackedIssues = baseline.reviewIssues.filter((issue) => issue.status === 'planned' || issue.status === 'completed');
   const ownerUnits = new Map();
 
-  for (const issue of plannedIssues) {
+  for (const issue of trackedIssues) {
     const existing = ownerUnits.get(issue.ownerUnit) || [];
     existing.push(issue.id);
     ownerUnits.set(issue.ownerUnit, existing);
@@ -267,4 +285,20 @@ test('Grammar perfection-pass plan is linked from the completeness doc and maste
   assert.match(completenessDoc, /## Perfection Pass/);
   assert.match(completenessDoc, /perfection-pass-baseline\.json/);
   assert.match(livePlan, /2026-04-25-002-feat-grammar-perfection-pass-plan\.md/);
+});
+
+test('Grammar perfection-pass release gate is recorded and no issue rows remain planned', () => {
+  const baseline = readPerfectionPassBaseline();
+  const planned = baseline.reviewIssues.filter((issue) => issue.status === 'planned');
+  assert.equal(planned.length, 0,
+    `All issue rows must be completed, already-fixed, or deferred at release-gate time; ${planned.length} still planned: ${planned.map((i) => i.id).join(', ')}.`);
+
+  const gate = baseline.perfectionPassReleaseGate;
+  assert.equal(gate.ownerUnit, 'U8');
+  assert.equal(gate.status, 'completed');
+  assert.ok(Array.isArray(gate.evidence) && gate.evidence.length > 0, 'release-gate evidence must cite the landed files');
+  for (const evidencePath of gate.evidence) {
+    assert.ok(fs.existsSync(path.join(rootDir, evidencePath)),
+      `release gate cites missing evidence file ${evidencePath}`);
+  }
 });
