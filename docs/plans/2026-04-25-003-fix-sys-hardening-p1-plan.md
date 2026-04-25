@@ -87,7 +87,7 @@ The product need is simple: the app must feel boringly reliable to a Year 5/6 le
 - `AGENTS.md` — Cantonese in chat, UK English in code/docs, OAuth deploy path via package scripts, SOLID/DRY/YAGNI, Spelling parity guardrail, post-deploy verification on `https://ks2.eugnel.uk` with a logged-in browser session.
 - `wrangler.jsonc` — `compatibility_date: "2026-04-20"`, `assets.directory: "./dist/public"`, `assets.binding: "ASSETS"`, `not_found_handling: "single-page-application"`, `run_worker_first` array covers `/api/*`, `/demo`, `/src/*`, `/shared/*`, `/worker/*`, `/tests/*`, `/docs/*`, `/legacy/*`, `/migration-plan.md`.
 - `_headers` — currently at repo root (`/*  Cache-Control: no-store`). `scripts/build-public.mjs` copies it to `./dist/public/_headers`, so Cloudflare Workers Assets does honour it; but it does not apply to Worker-generated responses or to paths matched by `run_worker_first`.
-- `index.html` — contains an inline theme-flash `<script>` (lines 25-34), preloads `fonts.googleapis.com` + `fonts.gstatic.com`, and loads `./src/bundles/app.bundle.js` which matches `run_worker_first: ["/src/*"]` and therefore bypasses `_headers` cache rules.
+- `index.html` — contains an inline theme-flash `<script>` (lines 25-34), preconnects to `fonts.googleapis.com` + `fonts.gstatic.com`, and loads `./src/bundles/app.bundle.js` which matches `run_worker_first: ["/src/*"]` and therefore bypasses `_headers` cache rules.
 - `worker/src/index.js` — default `fetch` handler directly delegates to `app.fetch(...)` with no security-header wrapper and no Response mutation pass.
 - `worker/src/http.js` — `json()` sets only `content-type` + `cache-control: no-store`.
 - `worker/src/app.js` — central route switch; already reads `sec-fetch-mode` / `sec-fetch-dest` via `requireSameOrigin()`.
@@ -234,7 +234,7 @@ H4 and H7 are partially deferred:
 - **Should `requireSameOrigin()` be default-on or per-route opt-in?** Resolved: default-on, called inside `auth.requireSession()` so every session-requiring route inherits the Sec-Fetch-Site check.
 - **Should capacity telemetry emit at 100% or sampled?** Resolved: start at 10% for `ok` rows, 100% for failure rows. Ramp after baseline data.
 - **Should multi-tab Playwright use `browser.newContext()` or `browser.newPage()`?** Resolved: `browser.newPage()` inside a single context — `newContext()` creates isolated `localStorage` and would prevent the coordination lease from being visible across tabs.
-- **Is the existing `consumeRateLimit` helper exported for reuse?** Resolved: no — it is module-private in `worker/src/auth.js` and duplicated in `worker/src/demo/sessions.js`. U7 extracts a shared `worker/src/rate-limit.js` first, then the CSP report endpoint imports it.
+- **Is the existing `consumeRateLimit` helper exported for reuse?** Resolved: no — it is module-private in `worker/src/auth.js` and duplicated in both `worker/src/demo/sessions.js` and `worker/src/tts.js` (three copies total). U7 extracts a shared `worker/src/rate-limit.js` first, then the CSP report endpoint imports it alongside the three existing call sites.
 - **Does `playwright.config.mjs` webServer command currently expose `/api/*`?** Resolved: no — the existing command does not pass `--with-worker-api`. U5 updates the config to enable the flag.
 
 ### Deferred to Implementation
@@ -632,9 +632,10 @@ flowchart TB
 - Modify: `worker/src/security-headers.js` (add CSP policy string builder; hash-based `script-src`, accept `style-src 'unsafe-inline'`)
 - Create: `scripts/compute-inline-script-hash.mjs`
 - Modify: `scripts/build-public.mjs` (compute inline theme-script SHA-256 and inject into CSP string during build — this is the preferred site because `_headers` and `index.html` are both copied here; `scripts/build-bundles.mjs` runs esbuild only and is the wrong slot)
-- Create: `worker/src/rate-limit.js` (extract shared `consumeRateLimit` from `worker/src/auth.js` — currently non-exported — so the CSP report endpoint and existing demo/auth paths can share the helper. Feasibility F-06 prompted this extraction)
+- Create: `worker/src/rate-limit.js` (extract shared `consumeRateLimit` from `worker/src/auth.js` — currently non-exported — so the CSP report endpoint and existing demo/auth/tts paths can share the helper. Feasibility F-06 prompted this extraction. Adversarial review surfaced a third duplicate in `worker/src/tts.js` that the original review missed.)
 - Modify: `worker/src/auth.js` (import `consumeRateLimit` from new shared module)
 - Modify: `worker/src/demo/sessions.js` (import `consumeRateLimit` from shared module; collapse the near-duplicate local copy at line 91)
+- Modify: `worker/src/tts.js` (import `consumeRateLimit` from shared module; remove the third local duplicate at line 61 — TTS currently maintains its own copy with the same shape)
 - Modify: `worker/src/app.js` (add `POST /api/security/csp-report` endpoint, parse `application/csp-report` + `application/reports+json`)
 - Create: `tests/csp-policy.test.js`
 - Create: `tests/csp-report-endpoint.test.js`
