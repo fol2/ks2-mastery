@@ -235,6 +235,33 @@ test('punctuation command route starts weak spots with safe focus metadata', asy
   }
 });
 
+test('punctuation command route serves combine items through redacted text-entry read models', async () => {
+  const harness = createHarness();
+  try {
+    await harness.command('start-session', { mode: 'boundary', roundLength: '5' });
+    await harness.command('skip-item');
+    await harness.command('skip-item');
+    await harness.command('skip-item');
+    const combine = await harness.command('skip-item');
+
+    assert.equal(combine.body.subjectReadModel.phase, 'active-item');
+    assert.equal(combine.body.subjectReadModel.session.currentItem.id, 'sc_combine_rain_pitch');
+    assert.equal(combine.body.subjectReadModel.session.currentItem.mode, 'combine');
+    assert.equal(combine.body.subjectReadModel.session.currentItem.inputKind, 'text');
+    assert.match(combine.body.subjectReadModel.session.currentItem.prompt, /Combine the two related clauses/i);
+    assert.match(combine.body.subjectReadModel.session.currentItem.stem, /The rain had stopped/);
+    assert.doesNotMatch(payloadText(combine.body.subjectReadModel), /accepted|correctIndex|rubric|validator|hiddenQueue|generator/);
+
+    const submit = await harness.command('submit-answer', {
+      typed: 'The rain had stopped; the pitch was still slippery.',
+    });
+    assert.equal(submit.body.subjectReadModel.feedback.kind, 'success');
+    assert.equal(submit.body.domainEvents.some((event) => event.type === 'punctuation.item-attempted'), true);
+  } finally {
+    harness.close();
+  }
+});
+
 test('punctuation command route stays unavailable until the rollout gate is enabled', async () => {
   const harness = createHarness({ punctuationEnabled: false });
   try {

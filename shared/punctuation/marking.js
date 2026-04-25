@@ -17,6 +17,7 @@ const FACET_LABELS = Object.freeze({
   bullet_markers: 'Bullet markers',
   bullet_punctuation: 'Bullet punctuation',
   terminal_punctuation: 'Terminal punctuation',
+  single_sentence: 'One combined sentence',
   unwanted_punctuation: 'No duplicated punctuation outside the quote',
 });
 
@@ -206,6 +207,23 @@ function wordSequencePreserved(text, words = []) {
   return true;
 }
 
+function terminalMarkFromModel(item, fallback = '.') {
+  const clean = canonicalPunctuationText(item?.model || acceptedAnswers(item)[0] || '');
+  return clean.match(/([.?!])["']?$/)?.[1] || fallback;
+}
+
+function terminalSuffixPattern(requiredTerminal = null) {
+  const mark = requiredTerminal ? escapeRegExp(requiredTerminal) : '[.?!]';
+  return `\\s*${mark}["']?$`;
+}
+
+function singleSentenceOk(text, requiredTerminal = null) {
+  const clean = canonicalPunctuationText(text);
+  if (!sentenceEnds(clean, requiredTerminal)) return false;
+  const body = clean.replace(/[.?!]["']?$/, '').trim();
+  return !/[.?!]/.test(body);
+}
+
 function listCommaPattern(words = [], { finalComma = false } = {}) {
   const items = words.map((word) => normaliseAnswerText(word).toLowerCase()).filter(Boolean);
   if (items.length < 2) return null;
@@ -376,6 +394,70 @@ function bulletStemAndItems(text, validator = {}) {
   const allowedEndings = new Set(['', '.']);
   const punctuationOk = bulletMarkersOk && endings.every((ending) => allowedEndings.has(ending)) && new Set(endings).size <= 1;
   return { stemOk, colonOk, itemsOk, bulletMarkersOk, punctuationOk };
+}
+
+function anchoredListSentence(text, validator = {}, requiredTerminal = null) {
+  const clean = canonicalPunctuationText(text);
+  const opening = canonicalPunctuationText(validator.opening || '');
+  const items = (Array.isArray(validator.items) ? validator.items : [])
+    .map((entry) => canonicalPunctuationText(entry))
+    .filter(Boolean);
+  const expectedList = listCommaShapePattern(items);
+  const wordsOk = Boolean(opening && expectedList) && wordSequencePreserved(clean, [opening, ...items]);
+  const sentenceOk = singleSentenceOk(clean, requiredTerminal);
+  const listOk = Boolean(opening && expectedList) && new RegExp(
+    `^${escapeRegExp(opening)}\\s+${expectedList}${terminalSuffixPattern(requiredTerminal)}`,
+    'i',
+  ).test(clean);
+  const { hasFinalComma } = listCommaOk(clean, items);
+  return { wordsOk, listOk, sentenceOk, hasFinalComma };
+}
+
+function anchoredFrontedAdverbial(text, validator = {}, requiredTerminal = null) {
+  const clean = canonicalPunctuationText(text);
+  const phrase = canonicalPunctuationText(validator.phrase || '');
+  const mainClause = canonicalPunctuationText(validator.mainClause || '');
+  const lower = clean.toLowerCase();
+  const phraseOk = Boolean(phrase) && lower.startsWith(phrase.toLowerCase());
+  const wordsOk = phraseOk && Boolean(mainClause) && wordSequencePreserved(clean, [phrase, mainClause]);
+  const commaOk = Boolean(phrase && mainClause) && new RegExp(
+    `^${escapeRegExp(phrase)},\\s*${escapeRegExp(mainClause)}${terminalSuffixPattern(requiredTerminal)}`,
+    'i',
+  ).test(clean);
+  return { wordsOk, phraseOk, commaOk, sentenceOk: singleSentenceOk(clean, requiredTerminal) };
+}
+
+function anchoredParentheticalPhrase(text, validator = {}, requiredTerminal = null) {
+  const clean = canonicalPunctuationText(text);
+  const before = canonicalPunctuationText(validator.before || '');
+  const phrase = canonicalPunctuationText(validator.phrase || '');
+  const after = canonicalPunctuationText(validator.after || '');
+  const wordsOk = Boolean(before && phrase && after) && wordSequencePreserved(clean, [before, phrase, after]);
+  const loose = parentheticalPhrase(clean, validator);
+  const terminal = terminalSuffixPattern(requiredTerminal);
+  const commaPattern = `^${escapeRegExp(before)}\\s*,\\s*${escapeRegExp(phrase)}\\s*,\\s*${escapeRegExp(after)}${terminal}`;
+  const bracketPattern = `^${escapeRegExp(before)}\\s*\\(\\s*${escapeRegExp(phrase)}\\s*\\)\\s*${escapeRegExp(after)}${terminal}`;
+  const dashPattern = `^${escapeRegExp(before)}\\s+[-–—]\\s+${escapeRegExp(phrase)}\\s+[-–—]\\s+${escapeRegExp(after)}${terminal}`;
+  const punctuationOk = Boolean(before && phrase && after) && [commaPattern, bracketPattern, dashPattern]
+    .some((pattern) => new RegExp(pattern, 'i').test(clean));
+  return { wordsOk, openOk: loose.openOk, closeOk: loose.closeOk, punctuationOk, sentenceOk: singleSentenceOk(clean, requiredTerminal) };
+}
+
+function anchoredBoundarySentence(text, validator = {}, requiredTerminal = null) {
+  const clean = canonicalPunctuationText(text);
+  const left = canonicalPunctuationText(validator.left || '');
+  const right = canonicalPunctuationText(validator.right || '');
+  const mark = String(validator.mark || ';').trim();
+  const wordsOk = Boolean(left && right)
+    && clean.toLowerCase().startsWith(left.toLowerCase())
+    && wordSequencePreserved(clean, [left, right]);
+  const markPattern = mark === ';' ? '\\s*;\\s*' : '\\s+-\\s+';
+  const markOk = Boolean(left && right) && new RegExp(
+    `^${escapeRegExp(left)}${markPattern}${escapeRegExp(right)}${terminalSuffixPattern(requiredTerminal)}`,
+    'i',
+  ).test(clean);
+  const loose = boundaryBetweenClauses(clean, validator);
+  return { wordsOk, markOk, between: loose.between, mark, sentenceOk: singleSentenceOk(clean, requiredTerminal) };
 }
 
 export function evaluateSpeechRubric(answer, rubric = {}) {
@@ -685,6 +767,145 @@ function markTransfer(item, answer) {
   return null;
 }
 
+function markCombine(item, answer) {
+  const rawText = isPlainObject(answer) ? answer.typed ?? answer.answer : answer;
+  const text = normaliseAnswerText(rawText);
+  const validator = item.validator || {};
+  const capitalOk = sentenceStartsWithCapital(text);
+  const requiredTerminal = terminalMarkFromModel(item);
+  const terminalOk = sentenceEnds(text, requiredTerminal);
+  const expected = item.model || '';
+
+  if (validator.type === 'combineListSentence') {
+    const { wordsOk, listOk, sentenceOk, hasFinalComma } = anchoredListSentence(text, validator, requiredTerminal);
+    const correct = wordsOk && listOk && capitalOk && terminalOk && sentenceOk;
+    const tags = [];
+    if (!wordsOk) tags.push('comma.list_words_changed');
+    if (wordsOk && !listOk) tags.push(hasFinalComma ? 'comma.unnecessary_final_comma' : 'comma.list_separator_missing');
+    if (!capitalOk) tags.push('comma.capitalisation_missing');
+    if (!terminalOk) tags.push('comma.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('combine.extra_sentence');
+    return {
+      correct,
+      expected,
+      note: correct ? 'The notes have been combined into one clear list sentence.' : 'Keep the list words in order and separate the list with the expected comma.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('comma_placement', listOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+        facet('single_sentence', sentenceOk),
+      ],
+    };
+  }
+
+  if (validator.type === 'combineFrontedAdverbial') {
+    const { wordsOk, phraseOk, commaOk, sentenceOk } = anchoredFrontedAdverbial(text, validator, requiredTerminal);
+    const correct = wordsOk && commaOk && capitalOk && terminalOk && sentenceOk;
+    const tags = [];
+    if (!phraseOk || !wordsOk) tags.push('comma.opening_phrase_changed');
+    if (phraseOk && !commaOk) tags.push(primaryCommaTag(item, 'comma.fronted_adverbial_missing'));
+    if (!capitalOk) tags.push('comma.capitalisation_missing');
+    if (!terminalOk) tags.push('comma.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('combine.extra_sentence');
+    return {
+      correct,
+      expected,
+      note: correct ? 'The fronted adverbial is combined with a comma after it.' : 'Keep the phrase first, add the comma, and combine it with the main clause.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('comma_placement', commaOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+        facet('single_sentence', sentenceOk),
+      ],
+    };
+  }
+
+  if (validator.type === 'combineParentheticalPhrase') {
+    const { wordsOk, openOk, closeOk, punctuationOk, sentenceOk } = anchoredParentheticalPhrase(text, validator, requiredTerminal);
+    const correct = wordsOk && punctuationOk && capitalOk && terminalOk && sentenceOk;
+    const tags = [];
+    if (!wordsOk) tags.push('structure.words_changed');
+    if (wordsOk && !punctuationOk) tags.push(openOk || closeOk ? 'structure.parenthesis_unbalanced' : 'structure.parenthesis_missing');
+    if (!capitalOk) tags.push('structure.capitalisation_missing');
+    if (!terminalOk) tags.push('structure.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('combine.extra_sentence');
+    return {
+      correct,
+      expected,
+      note: correct ? 'The extra detail is combined as clear parenthesis.' : 'Keep the sentence parts in order and mark both sides of the parenthesis.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('parenthetical_phrase', punctuationOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+        facet('single_sentence', sentenceOk),
+      ],
+    };
+  }
+
+  if (validator.type === 'combineColonList') {
+    const { wordsOk, colonOk, listOk, hasFinalComma } = colonBeforeList(text, validator);
+    const sentenceOk = singleSentenceOk(text, requiredTerminal);
+    const correct = wordsOk && colonOk && listOk && capitalOk && terminalOk && sentenceOk;
+    const tags = [];
+    if (!wordsOk) tags.push('structure.list_words_changed');
+    if (wordsOk && !colonOk) tags.push('structure.colon_missing');
+    if (wordsOk && !listOk) tags.push(hasFinalComma ? 'comma.unnecessary_final_comma' : 'structure.list_separator_missing');
+    if (!capitalOk) tags.push('structure.capitalisation_missing');
+    if (!terminalOk) tags.push('structure.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('combine.extra_sentence');
+    return {
+      correct,
+      expected,
+      note: correct ? 'The opening clause and list are combined with a colon.' : 'Use the colon after the opening clause and keep the list items in order.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('colon_boundary', colonOk),
+        facet('list_separators', listOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+        facet('single_sentence', sentenceOk),
+      ],
+    };
+  }
+
+  if (validator.type === 'combineBoundaryBetweenClauses') {
+    const { wordsOk, markOk, between, mark, sentenceOk } = anchoredBoundarySentence(text, validator, requiredTerminal);
+    const isSemicolon = mark === ';';
+    const correct = wordsOk && markOk && capitalOk && terminalOk && sentenceOk;
+    const tags = [];
+    if (!wordsOk) tags.push('boundary.words_changed');
+    if (wordsOk && !markOk) {
+      if (isSemicolon && /,/.test(between)) tags.push('boundary.comma_splice');
+      else tags.push(isSemicolon ? 'boundary.semicolon_missing' : 'boundary.dash_missing');
+    }
+    if (!capitalOk) tags.push('boundary.capitalisation_missing');
+    if (!terminalOk) tags.push('boundary.terminal_missing');
+    if (terminalOk && !sentenceOk) tags.push('combine.extra_sentence');
+    return {
+      correct,
+      expected,
+      note: correct ? 'The related clauses are combined into one punctuated sentence.' : 'Keep both clauses in order and put the target boundary mark between them.',
+      misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
+      facets: [
+        facet('preservation', wordsOk),
+        facet('boundary_mark', markOk),
+        facet('capitalisation', capitalOk),
+        facet('terminal_punctuation', terminalOk),
+        facet('single_sentence', sentenceOk),
+      ],
+    };
+  }
+
+  return null;
+}
+
 function itemRequiresLineBullets(item) {
   return Array.isArray(item?.skillIds) && item.skillIds.includes('bullet_points');
 }
@@ -726,6 +947,10 @@ export function markPunctuationAnswer({ item, answer } = {}) {
   }
 
   if (item.mode === 'choose') return markChoose(item, answer);
+  if (item.mode === 'combine') {
+    const combine = markCombine(item, answer);
+    if (combine) return combine;
+  }
   if (item.validator) {
     const transfer = markTransfer(item, answer);
     if (transfer) return transfer;

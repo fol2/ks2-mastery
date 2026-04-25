@@ -180,6 +180,34 @@ test('punctuation text input remounts when the current text item changes', async
   assert.match(source, /<TextItem key=\{item\.id \|\| item\.prompt\}/);
 });
 
+test('punctuation React surface renders combine tasks as text-entry rewrites', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'combine-ui',
+      mode: 'smart',
+      length: 1,
+      answeredCount: 0,
+      currentItem: {
+        id: 'sc_combine_rain_pitch',
+        mode: 'combine',
+        inputKind: 'text',
+        prompt: 'Combine the two related clauses into one sentence with a semi-colon.',
+        stem: 'The rain had stopped.\nThe pitch was still slippery.',
+      },
+    },
+  });
+
+  const html = harness.render();
+  assert.match(html, /Combine the two related clauses/);
+  assert.match(html, /Combine the parts into one punctuated sentence/);
+  assert.match(html, /textarea/);
+  assert.match(html, /The rain had stopped\.\nThe pitch was still slippery\./);
+  assert.doesNotMatch(html, /accepted|correctIndex|rubric|validator|generator|hiddenQueue/);
+});
+
 test('punctuation React surface preserves newline-sensitive bullet text', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });

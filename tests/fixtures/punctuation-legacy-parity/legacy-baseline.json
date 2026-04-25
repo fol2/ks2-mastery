@@ -58,9 +58,9 @@
     {
       "id": "combine",
       "legacyLabel": "Sentence combining / rewrite",
-      "status": "planned",
+      "status": "replaced",
       "ownerUnit": "U4",
-      "notes": "Needs score-bearing combine items, generators, validators, and UI copy."
+      "notes": "Production models sentence combining as the score-bearing combine item mode inside smart, weak, and focused sessions instead of a separate browser-owned session mode."
     },
     {
       "id": "paragraph",
@@ -119,8 +119,9 @@
     },
     {
       "id": "combine",
-      "status": "planned",
-      "ownerUnit": "U4"
+      "status": "ported",
+      "ownerUnit": "U4",
+      "assertPresent": true
     },
     {
       "id": "paragraph",

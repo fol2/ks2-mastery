@@ -139,6 +139,32 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       readiness: ['insertion', 'misconception', 'negative_test'],
     },
   ]),
+  gen_list_commas_combine: Object.freeze([
+    {
+      prompt: 'Combine the notes into one correctly punctuated sentence.',
+      stem: 'The tray held\n- shells\n- feathers\n- pebbles',
+      model: 'The tray held shells, feathers and pebbles.',
+      validator: {
+        type: 'combineListSentence',
+        opening: 'The tray held',
+        items: ['shells', 'feathers', 'pebbles'],
+      },
+      misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Combine the notes into one correctly punctuated sentence.',
+      stem: 'We collected\n- leaves\n- twigs\n- acorns',
+      model: 'We collected leaves, twigs and acorns.',
+      validator: {
+        type: 'combineListSentence',
+        opening: 'We collected',
+        items: ['leaves', 'twigs', 'acorns'],
+      },
+      misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+  ]),
   gen_fronted_adverbial_fix: Object.freeze([
     {
       prompt: 'Correct the comma after the fronted adverbial.',
@@ -161,6 +187,32 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       },
       misconceptionTags: ['comma.fronted_adverbial_missing'],
       readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_fronted_adverbial_combine: Object.freeze([
+    {
+      prompt: 'Combine the adverbial and main clause into one sentence.',
+      stem: 'Before sunrise\nThe crew checked the ropes.',
+      model: 'Before sunrise, the crew checked the ropes.',
+      validator: {
+        type: 'combineFrontedAdverbial',
+        phrase: 'Before sunrise',
+        mainClause: 'the crew checked the ropes',
+      },
+      misconceptionTags: ['comma.fronted_adverbial_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Combine the adverbial and main clause into one sentence.',
+      stem: 'After the rehearsal\nThe cast packed away the props.',
+      model: 'After the rehearsal, the cast packed away the props.',
+      validator: {
+        type: 'combineFrontedAdverbial',
+        phrase: 'After the rehearsal',
+        mainClause: 'the cast packed away the props',
+      },
+      misconceptionTags: ['comma.fronted_adverbial_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
     },
   ]),
   gen_comma_clarity_insert: Object.freeze([
@@ -215,6 +267,34 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       readiness: ['proofreading', 'misconception', 'negative_test'],
     },
   ]),
+  gen_semicolon_combine: Object.freeze([
+    {
+      prompt: 'Combine the two related clauses into one sentence with a semi-colon.',
+      stem: 'The lighthouse was bright.\nThe boats still waited.',
+      model: 'The lighthouse was bright; the boats still waited.',
+      validator: {
+        type: 'combineBoundaryBetweenClauses',
+        left: 'The lighthouse was bright',
+        right: 'the boats still waited',
+        mark: ';',
+      },
+      misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Combine the two related clauses into one sentence with a semi-colon.',
+      stem: 'The rain eased.\nThe match could continue.',
+      model: 'The rain eased; the match could continue.',
+      validator: {
+        type: 'combineBoundaryBetweenClauses',
+        left: 'The rain eased',
+        right: 'the match could continue',
+        mark: ';',
+      },
+      misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+  ]),
   gen_dash_clause_fix: Object.freeze([
     {
       prompt: 'Add a dash between the related clauses.',
@@ -241,6 +321,34 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       },
       misconceptionTags: ['boundary.dash_missing'],
       readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_dash_clause_combine: Object.freeze([
+    {
+      prompt: 'Combine the two related clauses into one sentence with a dash.',
+      stem: 'The gate was stuck.\nWe found another path.',
+      model: 'The gate was stuck - we found another path.',
+      validator: {
+        type: 'combineBoundaryBetweenClauses',
+        left: 'The gate was stuck',
+        right: 'we found another path',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Combine the two related clauses into one sentence with a dash.',
+      stem: 'The bell rang.\nEveryone hurried inside.',
+      model: 'The bell rang - everyone hurried inside.',
+      validator: {
+        type: 'combineBoundaryBetweenClauses',
+        left: 'The bell rang',
+        right: 'everyone hurried inside',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
     },
   ]),
   gen_hyphen_insert: Object.freeze([
@@ -295,6 +403,34 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       readiness: ['proofreading', 'misconception', 'negative_test'],
     },
   ]),
+  gen_parenthesis_combine: Object.freeze([
+    {
+      prompt: 'Combine the sentence and extra detail using parenthesis.',
+      stem: 'The harbour was busy.\nExtra detail: an old fishing port',
+      model: 'The harbour, an old fishing port, was busy.',
+      validator: {
+        type: 'combineParentheticalPhrase',
+        before: 'The harbour',
+        phrase: 'an old fishing port',
+        after: 'was busy',
+      },
+      misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Combine the sentence and extra detail using parenthesis.',
+      stem: 'The tower stood above the bay.\nExtra detail: a useful lookout',
+      model: 'The tower, a useful lookout, stood above the bay.',
+      validator: {
+        type: 'combineParentheticalPhrase',
+        before: 'The tower',
+        phrase: 'a useful lookout',
+        after: 'stood above the bay',
+      },
+      misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+  ]),
   gen_colon_list_insert: Object.freeze([
     {
       prompt: 'Add the colon before the list.',
@@ -319,6 +455,32 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       },
       misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
       readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+  ]),
+  gen_colon_list_combine: Object.freeze([
+    {
+      prompt: 'Combine the opening clause and list using a colon.',
+      stem: 'We needed three tools\na torch / a rope / a map',
+      model: 'We needed three tools: a torch, a rope and a map.',
+      validator: {
+        type: 'combineColonList',
+        opening: 'We needed three tools',
+        items: ['a torch', 'a rope', 'a map'],
+      },
+      misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Combine the opening clause and list using a colon.',
+      stem: 'The kit included three things\na lantern / a compass / a notebook',
+      model: 'The kit included three things: a lantern, a compass and a notebook.',
+      validator: {
+        type: 'combineColonList',
+        opening: 'The kit included three things',
+        items: ['a lantern', 'a compass', 'a notebook'],
+      },
+      misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
     },
   ]),
   gen_semicolon_list_fix: Object.freeze([

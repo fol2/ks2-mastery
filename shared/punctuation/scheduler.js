@@ -3,7 +3,7 @@ import { PUNCTUATION_CONTENT_INDEXES } from './content.js';
 export const DAY_MS = 24 * 60 * 60 * 1000;
 export const MIN_MS = 60 * 1000;
 
-const SMART_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix', 'transfer']);
+const SMART_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix', 'transfer', 'combine']);
 const GUIDED_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix']);
 const CLUSTER_MODE = Object.freeze({
   endmarks: 'endmarks',
@@ -150,14 +150,23 @@ function skillName(indexes, skillId) {
 }
 
 function targetMode(session, prefs = {}) {
+  return targetModeOptions(session, prefs)[0] || 'choose';
+}
+
+function targetModeOptions(session, prefs = {}) {
   const mode = session?.mode || prefs.mode || 'smart';
+  const answeredCount = Number(session?.answeredCount) || 0;
+  const rotate = (cycle) => {
+    const start = answeredCount % cycle.length;
+    return [...cycle.slice(start), ...cycle.slice(0, start)];
+  };
   if (mode === 'guided') {
-    return GUIDED_MODE_CYCLE[(Number(session?.answeredCount) || 0) % GUIDED_MODE_CYCLE.length];
+    return rotate(GUIDED_MODE_CYCLE);
   }
   if (mode === 'endmarks' || mode === 'apostrophe' || mode === 'speech' || mode === 'comma_flow' || mode === 'boundary' || mode === 'structure') {
-    return SMART_MODE_CYCLE[(Number(session?.answeredCount) || 0) % SMART_MODE_CYCLE.length];
+    return rotate(SMART_MODE_CYCLE);
   }
-  return SMART_MODE_CYCLE[(Number(session?.answeredCount) || 0) % SMART_MODE_CYCLE.length];
+  return rotate(SMART_MODE_CYCLE);
 }
 
 function targetCluster(prefs = {}, session = {}) {
@@ -374,7 +383,13 @@ export function selectPunctuationItem({
   }
 
   const recent = new Set(Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : []);
-  const candidates = candidateItems(indexes, { mode, clusterId, skillId: guidedSkillId });
+  const modeRows = targetModeOptions(session, prefs)
+    .map((candidateMode) => ({
+      mode: candidateMode,
+      candidates: candidateItems(indexes, { mode: candidateMode, clusterId, skillId: guidedSkillId }),
+    }));
+  const selectedMode = modeRows.find((row) => row.candidates.length) || { mode, candidates: [] };
+  const candidates = selectedMode.candidates;
   const windowed = candidates.slice(0, maxWindow);
   const rows = windowed.map((item) => {
     const snap = memorySnapshot(progressForItem(progress, item.id), now);
@@ -390,7 +405,7 @@ export function selectPunctuationItem({
   const item = weightedPick(rows, random) || windowed[0] || null;
   return {
     item: item ? clone(item) : null,
-    targetMode: mode,
+    targetMode: selectedMode.mode,
     targetClusterId: clusterId,
     weakFocus: null,
     inspectedCount: windowed.length,
