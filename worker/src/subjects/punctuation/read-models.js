@@ -82,6 +82,18 @@ function guidedTeachBox(skillId, supportLevel = 0) {
   return box;
 }
 
+function safeWeakFocus(value) {
+  if (!isPlainObject(value)) return null;
+  return {
+    skillId: typeof value.skillId === 'string' ? value.skillId : '',
+    skillName: typeof value.skillName === 'string' ? value.skillName : '',
+    mode: typeof value.mode === 'string' ? value.mode : '',
+    clusterId: typeof value.clusterId === 'string' ? value.clusterId : null,
+    bucket: typeof value.bucket === 'string' ? value.bucket : '',
+    source: typeof value.source === 'string' ? value.source : '',
+  };
+}
+
 function safeSession(session, phase) {
   if (!isPlainObject(session)) return null;
   const safe = {
@@ -101,6 +113,7 @@ function safeSession(session, phase) {
       supportLevel: normaliseSupportLevel(session.guidedSupportLevel),
       teachBox: guidedTeachBox(session.guidedSkillId, session.guidedSupportLevel),
     } : null,
+    weakFocus: session.mode === 'weak' ? safeWeakFocus(session.weakFocus) : null,
     serverAuthority: session.serverAuthority === 'worker' ? 'worker' : null,
   };
   return safe;

@@ -174,7 +174,7 @@ tests/
 
 - `tests/punctuation-legacy-parity.test.js` confirms all 14 legacy skill ids remain present in `shared/punctuation/content.js`.
 - It confirms current production has the shipped `choose`, `insert`, `fix`, and `transfer` item modes.
-- It confirms `weak`, `combine`, `paragraph`, and `gps` are tracked as open parity rows, while `guided` is marked ported after U2.
+- It confirms `combine`, `paragraph`, and `gps` are tracked as open parity rows, while `guided` and `weak` are marked ported after U2/U3.
 - It confirms browser API-key AI and localStorage authority are marked `rejected`, not accidentally planned.
 - It fails if a parity row has no owner unit.
 
@@ -218,7 +218,7 @@ tests/
 
 ---
 
-- [ ] U3. **Add Dedicated Weak Spots Drill**
+- [x] U3. **Add Dedicated Weak Spots Drill**
 
 **Goal:** Port the legacy `weak` mode as an explicit drill that targets fragile skill-by-mode facets and due items.
 

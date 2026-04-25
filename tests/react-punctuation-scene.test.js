@@ -92,6 +92,8 @@ test('punctuation React surface renders guided setup controls and teach boxes', 
   assert.match(setupHtml, /Guided skill/);
   assert.match(setupHtml, /Guided learn/);
   assert.match(setupHtml, /data-punctuation-guided-start/);
+  assert.match(setupHtml, /Weak spots/);
+  assert.match(setupHtml, /data-punctuation-weak-start/);
 
   harness.store.updateSubjectUi('punctuation', {
     phase: 'active-item',
@@ -132,6 +134,41 @@ test('punctuation React surface renders guided setup controls and teach boxes', 
   assert.match(activeHtml, /Worked example/);
   assert.match(activeHtml, /Common mistake/);
   assert.doesNotMatch(activeHtml, /accepted|correctIndex|rubric|validator|generator|hiddenQueue/);
+});
+
+test('punctuation React surface renders weak focus chips safely', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'weak-ui',
+      mode: 'weak',
+      length: 1,
+      answeredCount: 0,
+      weakFocus: {
+        skillId: 'speech',
+        skillName: 'Inverted commas and speech punctuation',
+        mode: 'insert',
+        clusterId: 'speech',
+        bucket: 'weak',
+        source: 'weak_facet',
+      },
+      currentItem: {
+        id: 'sp_insert_question',
+        mode: 'insert',
+        inputKind: 'text',
+        prompt: 'Add the direct-speech punctuation.',
+        stem: 'Ella asked, can we start now?',
+      },
+    },
+  });
+
+  const html = harness.render();
+  assert.match(html, /Weak focus/);
+  assert.match(html, /Inverted commas and speech punctuation/);
+  assert.match(html, /insert/);
+  assert.doesNotMatch(html, /accepted|correctIndex|rubric|validator|generator|hiddenQueue/);
 });
 
 test('punctuation text input remounts when the current text item changes', async () => {

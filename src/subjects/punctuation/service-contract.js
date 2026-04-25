@@ -13,6 +13,7 @@ export const PUNCTUATION_PHASES = Object.freeze([
 export const PUNCTUATION_MODES = Object.freeze([
   'smart',
   'guided',
+  'weak',
   'endmarks',
   'apostrophe',
   'speech',

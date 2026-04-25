@@ -51,8 +51,12 @@ test('punctuation legacy parity records shipped item modes and open mode gaps', 
   assert.equal(guided?.ownerUnit, 'U2');
   assert.equal(guided?.present, true);
 
+  const weak = report.rows.find((entry) => entry.section === 'sessionModes' && entry.id === 'weak');
+  assert.equal(weak?.status, 'ported');
+  assert.equal(weak?.ownerUnit, 'U3');
+  assert.equal(weak?.present, true);
+
   for (const [id, ownerUnit] of [
-    ['weak', 'U3'],
     ['combine', 'U4'],
     ['paragraph', 'U5'],
     ['gps', 'U6'],
