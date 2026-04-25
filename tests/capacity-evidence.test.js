@@ -115,7 +115,7 @@ test('evaluateThresholds distinguishes threshold 0 (strict) from undefined (not 
   assert.deepEqual(notGated.failures, []);
 });
 
-test('evaluateThresholds handles empty measurements with null observed values', () => {
+test('evaluateThresholds handles empty measurements with null observed values (real run fails)', () => {
   const summary = {
     ok: true,
     totalRequests: 0,
@@ -130,6 +130,17 @@ test('evaluateThresholds handles empty measurements with null observed values', 
   assert.equal(result.thresholds.max5xx.passed, true);
   assert.equal(result.thresholds.maxBootstrapP95Ms.observed, null);
   assert.equal(result.thresholds.maxBootstrapP95Ms.passed, false);
+});
+
+test('evaluateThresholds dry-run skips latency gates on null observed (passes)', () => {
+  const summary = { ok: true, totalRequests: 0, endpoints: {}, signals: {} };
+  const result = evaluateThresholds(summary, {
+    max5xx: 0,
+    maxBootstrapP95Ms: 1000,
+  }, { dryRun: true });
+  assert.equal(result.thresholds.maxBootstrapP95Ms.observed, null);
+  assert.equal(result.thresholds.maxBootstrapP95Ms.passed, true);
+  assert.deepEqual(result.failures, []);
 });
 
 test('evaluateThresholds honours requireZeroSignals gate across all signal kinds', () => {

@@ -1,10 +1,16 @@
 #!/usr/bin/env node
 
 import { Buffer } from 'node:buffer';
+import { readFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 import { pathToFileURL } from 'node:url';
 
 import { correctResponseFor } from './grammar-production-smoke.mjs';
+import {
+  autoNameEvidencePath,
+  buildEvidencePayload,
+  persistEvidenceFile,
+} from './lib/capacity-evidence.mjs';
 
 const DEFAULT_PRODUCTION_ORIGIN = 'https://ks2.eugnel.uk';
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -236,7 +242,11 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     demoSessions: false,
     confirmProductionLoad: false,
     includeMeasurements: true,
+    includeRequestSamples: false,
     help: false,
+    output: '',
+    configPath: '',
+    thresholds: {},
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -282,6 +292,33 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
       options.confirmProductionLoad = true;
     } else if (arg === '--summary-only') {
       options.includeMeasurements = false;
+    } else if (arg === '--include-request-samples') {
+      options.includeRequestSamples = true;
+    } else if (arg === '--output') {
+      options.output = readOptionValue(argv, index, arg);
+      index += 1;
+    } else if (arg === '--config') {
+      options.configPath = readOptionValue(argv, index, arg);
+      index += 1;
+    } else if (arg === '--max-5xx') {
+      options.thresholds.max5xx = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      index += 1;
+    } else if (arg === '--max-network-failures') {
+      options.thresholds.maxNetworkFailures = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      index += 1;
+    } else if (arg === '--max-bootstrap-p95-ms') {
+      options.thresholds.maxBootstrapP95Ms = positiveInteger(readOptionValue(argv, index, arg), arg);
+      index += 1;
+    } else if (arg === '--max-command-p95-ms') {
+      options.thresholds.maxCommandP95Ms = positiveInteger(readOptionValue(argv, index, arg), arg);
+      index += 1;
+    } else if (arg === '--max-response-bytes') {
+      options.thresholds.maxResponseBytes = positiveInteger(readOptionValue(argv, index, arg), arg);
+      index += 1;
+    } else if (arg === '--require-zero-signals') {
+      options.thresholds.requireZeroSignals = true;
+    } else if (arg === '--require-bootstrap-capacity') {
+      options.thresholds.requireBootstrapCapacity = true;
     } else {
       throw new Error(`Unknown option: ${arg}`);
     }
@@ -332,6 +369,10 @@ export function buildClassroomLoadPlan(options = {}) {
 }
 
 export function validateClassroomLoadOptions(options = {}) {
+  const thresholds = options.thresholds || {};
+  if (thresholds.max5xx !== undefined && thresholds.maxNetworkFailures === undefined) {
+    throw new Error('--max-5xx requires --max-network-failures to avoid a silent success on total network failure.');
+  }
   if (options.help || options.mode === 'dry-run') return;
   if (!options.origin) {
     throw new Error(`${options.mode} load requires --origin.`);
@@ -603,42 +644,116 @@ async function runHumanPacedRounds(origin, options, contexts, plan) {
   return measurements;
 }
 
+function loadThresholdConfig(configPath) {
+  if (!configPath) return { thresholds: {}, tier: null, minEvidenceSchemaVersion: null };
+  let raw;
+  try {
+    raw = readFileSync(configPath, 'utf8');
+  } catch (error) {
+    throw new Error(`Failed to read threshold config "${configPath}": ${error.message}`);
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`Threshold config "${configPath}" is not valid JSON: ${error.message}`);
+  }
+  return {
+    thresholds: parsed.thresholds || {},
+    tier: parsed.tier || null,
+    minEvidenceSchemaVersion: parsed.minEvidenceSchemaVersion || null,
+  };
+}
+
+function mergeThresholds(configThresholds = {}, cliThresholds = {}) {
+  // CLI thresholds override config values when both are present. An explicit
+  // CLI value of 0 is retained as strict; undefined means "inherit from config
+  // or leave ungated". requireZero* booleans follow the same rule.
+  const merged = { ...configThresholds };
+  for (const [key, value] of Object.entries(cliThresholds)) {
+    if (value !== undefined) merged[key] = value;
+  }
+  return merged;
+}
+
 export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
   const options = parseClassroomLoadArgs(argv);
   if (options.help) {
     return { ok: true, help: true, usage: usage() };
   }
   validateClassroomLoadOptions(options);
+  const config = loadThresholdConfig(options.configPath);
+  const thresholds = mergeThresholds(config.thresholds, options.thresholds);
   const plan = buildClassroomLoadPlan(options);
+
+  const startedAt = new Date().toISOString();
+  let report;
   if (options.mode === 'dry-run') {
-    return {
+    report = {
       ok: true,
       dryRun: true,
       plan,
       summary: summariseCapacityResults([], plan),
     };
+  } else {
+    const origin = options.origin;
+    const measurements = [];
+    const prepared = await prepareContexts(origin, options, plan);
+    measurements.push(...prepared.measurements);
+    measurements.push(...await runColdBootstrapBurst(origin, options, prepared.contexts, plan));
+    measurements.push(...await runHumanPacedRounds(origin, options, prepared.contexts, plan));
+    const summary = summariseCapacityResults(measurements, { ...plan });
+    report = {
+      ok: summary.ok,
+      dryRun: false,
+      plan,
+      summary,
+      ...(options.includeMeasurements ? { measurements } : {}),
+    };
   }
 
-  const origin = options.origin;
-  const startedAt = new Date().toISOString();
-  const measurements = [];
-  const prepared = await prepareContexts(origin, options, plan);
-  measurements.push(...prepared.measurements);
-  measurements.push(...await runColdBootstrapBurst(origin, options, prepared.contexts, plan));
-  measurements.push(...await runHumanPacedRounds(origin, options, prepared.contexts, plan));
-  const summary = summariseCapacityResults(measurements, {
-    ...plan,
+  const finishedAt = new Date().toISOString();
+  const evidence = buildEvidencePayload({
+    report,
+    thresholds,
+    options,
+    timings: { startedAt, finishedAt },
   });
 
-  return {
-    ok: summary.ok,
-    dryRun: false,
+  const evidenceTier = config.tier
+    ? { tier: config.tier, minEvidenceSchemaVersion: config.minEvidenceSchemaVersion }
+    : null;
+  const finalReport = {
+    ...report,
     startedAt,
-    finishedAt: new Date().toISOString(),
-    plan,
-    summary,
-    ...(options.includeMeasurements ? { measurements } : {}),
+    finishedAt,
+    thresholds: evidence.thresholds,
+    failures: evidence.failures,
+    safety: evidence.safety,
+    reportMeta: evidence.reportMeta,
+    ...(evidenceTier ? { tier: evidenceTier } : {}),
+    ok: evidence.ok,
   };
+
+  if (options.output !== undefined) {
+    const outputPath = options.output
+      || autoNameEvidencePath({
+        environment: finalReport.reportMeta.environment,
+        commit: finalReport.reportMeta.commit,
+      });
+    if (outputPath) {
+      try {
+        persistEvidenceFile(outputPath, finalReport, {
+          includeRequestSamples: options.includeRequestSamples,
+        });
+        finalReport.evidencePath = outputPath;
+      } catch (error) {
+        throw new Error(`Failed to persist evidence to "${outputPath}": ${error.message}`);
+      }
+    }
+  }
+
+  return finalReport;
 }
 
 export function usage() {
@@ -663,6 +778,18 @@ export function usage() {
     '  --demo-sessions            Create one isolated demo session per virtual learner',
     '  --confirm-production-load  Required before --production sends requests',
     '  --summary-only             Omit per-request measurements from JSON output',
+    '  --include-request-samples  Include per-request measurements in --output evidence (default off)',
+    '',
+    'Evidence and thresholds:',
+    '  --output <path>            Persist evidence JSON to <path>; auto-names when flag is set without value',
+    '  --config <path>            Load pinned thresholds from JSON file (CLI flags override)',
+    '  --max-5xx <n>              Fail run when 5xx count exceeds n (requires --max-network-failures)',
+    '  --max-network-failures <n> Fail run when network-failure count exceeds n',
+    '  --max-bootstrap-p95-ms <n> Fail run when P95 bootstrap wall time exceeds n ms',
+    '  --max-command-p95-ms <n>   Fail run when P95 subject command wall time exceeds n ms',
+    '  --max-response-bytes <n>   Fail run when any endpoint response exceeds n bytes',
+    '  --require-zero-signals     Fail run when any operational signal fires',
+    '  --require-bootstrap-capacity  Assert meta.capacity.bootstrapCapacity is present (U3)',
   ].join('\n');
 }
 

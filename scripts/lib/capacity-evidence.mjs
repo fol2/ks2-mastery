@@ -67,8 +67,13 @@ function resolveAuthMode(options) {
  * threshold and a separate `failures: [name]` list naming only failing
  * thresholds. A threshold flag of `null`/`undefined` means "not gated" and is
  * omitted from the output; a threshold flag of `0` is still evaluated (strict).
+ *
+ * When `dryRun` is true, thresholds that have no observed value (e.g. latency
+ * gates on an empty measurement set) are recorded with `observed: null,
+ * passed: true` to reflect "not applicable in dry-run". This lets operators
+ * preview pinned threshold configs without a spurious red verdict.
  */
-export function evaluateThresholds(summary = {}, thresholds = {}) {
+export function evaluateThresholds(summary = {}, thresholds = {}, { dryRun = false } = {}) {
   const evaluated = {};
   const failures = [];
 
@@ -80,24 +85,27 @@ export function evaluateThresholds(summary = {}, thresholds = {}) {
   const commandMetrics = commandKey ? endpoints[commandKey] : null;
 
   if (thresholds.max5xx !== undefined && thresholds.max5xx !== null) {
-    evaluated.max5xx = gateCount(thresholds.max5xx, signals.server5xx || 0);
+    evaluated.max5xx = gateCount(thresholds.max5xx, signals.server5xx || 0, dryRun);
   }
   if (thresholds.maxNetworkFailures !== undefined && thresholds.maxNetworkFailures !== null) {
     evaluated.maxNetworkFailures = gateCount(
       thresholds.maxNetworkFailures,
       signals.networkFailure || 0,
+      dryRun,
     );
   }
   if (thresholds.maxBootstrapP95Ms !== undefined && thresholds.maxBootstrapP95Ms !== null) {
     evaluated.maxBootstrapP95Ms = gateLatency(
       thresholds.maxBootstrapP95Ms,
       bootstrapMetrics ? bootstrapMetrics.p95WallMs : null,
+      dryRun,
     );
   }
   if (thresholds.maxCommandP95Ms !== undefined && thresholds.maxCommandP95Ms !== null) {
     evaluated.maxCommandP95Ms = gateLatency(
       thresholds.maxCommandP95Ms,
       commandMetrics ? commandMetrics.p95WallMs : null,
+      dryRun,
     );
   }
   if (thresholds.maxResponseBytes !== undefined && thresholds.maxResponseBytes !== null) {
@@ -108,6 +116,7 @@ export function evaluateThresholds(summary = {}, thresholds = {}) {
     evaluated.maxResponseBytes = gateCount(
       thresholds.maxResponseBytes,
       Object.keys(endpoints).length ? maxObserved : null,
+      dryRun,
     );
   }
   if (thresholds.requireZeroSignals) {
@@ -134,24 +143,24 @@ export function evaluateThresholds(summary = {}, thresholds = {}) {
   return { thresholds: evaluated, failures };
 }
 
-function gateCount(configured, observed) {
+function gateCount(configured, observed, dryRun = false) {
   const parsed = Number(configured);
   if (!Number.isFinite(parsed) || parsed < 0) {
     return { configured, observed, passed: false, error: 'invalid threshold value' };
   }
   if (observed === null || observed === undefined) {
-    return { configured: parsed, observed: null, passed: false };
+    return { configured: parsed, observed: null, passed: dryRun };
   }
   return { configured: parsed, observed, passed: observed <= parsed };
 }
 
-function gateLatency(configured, observed) {
+function gateLatency(configured, observed, dryRun = false) {
   const parsed = Number(configured);
   if (!Number.isFinite(parsed) || parsed < 0) {
     return { configured, observed, passed: false, error: 'invalid threshold value' };
   }
   if (observed === null || observed === undefined) {
-    return { configured: parsed, observed: null, passed: false };
+    return { configured: parsed, observed: null, passed: dryRun };
   }
   return { configured: parsed, observed, passed: observed <= parsed };
 }
@@ -162,7 +171,8 @@ function gateLatency(configured, observed) {
  */
 export function buildEvidencePayload({ report, thresholds, options, timings }) {
   const summary = report.summary || {};
-  const { thresholds: evaluated, failures } = evaluateThresholds(summary, thresholds);
+  const dryRun = Boolean(report.dryRun);
+  const { thresholds: evaluated, failures } = evaluateThresholds(summary, thresholds, { dryRun });
   const thresholdsFailed = failures.length > 0;
   const safety = buildSafetyBlock(options);
 

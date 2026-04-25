@@ -1,9 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import {
+  parseClassroomLoadArgs,
   runClassroomLoadTest,
   summariseCapacityResults,
+  validateClassroomLoadOptions,
 } from '../scripts/classroom-load-test.mjs';
 import { createGrammarQuestion } from '../worker/src/subjects/grammar/content.js';
 
@@ -418,3 +423,193 @@ test('classroom load summary detects Worker 1102 from non-json failure text with
     globalThis.fetch = previousFetch;
   }
 });
+
+test('parseClassroomLoadArgs collects threshold flags into options.thresholds', () => {
+  const options = parseClassroomLoadArgs([
+    '--dry-run',
+    '--max-5xx', '0',
+    '--max-network-failures', '0',
+    '--max-bootstrap-p95-ms', '1000',
+    '--max-command-p95-ms', '750',
+    '--max-response-bytes', '600000',
+    '--require-zero-signals',
+    '--require-bootstrap-capacity',
+    '--output', 'tmp/evidence.json',
+    '--include-request-samples',
+  ]);
+  assert.equal(options.thresholds.max5xx, 0);
+  assert.equal(options.thresholds.maxNetworkFailures, 0);
+  assert.equal(options.thresholds.maxBootstrapP95Ms, 1000);
+  assert.equal(options.thresholds.maxCommandP95Ms, 750);
+  assert.equal(options.thresholds.maxResponseBytes, 600000);
+  assert.equal(options.thresholds.requireZeroSignals, true);
+  assert.equal(options.thresholds.requireBootstrapCapacity, true);
+  assert.equal(options.output, 'tmp/evidence.json');
+  assert.equal(options.includeRequestSamples, true);
+});
+
+test('parseClassroomLoadArgs rejects negative or non-integer threshold values', () => {
+  assert.throws(() => parseClassroomLoadArgs(['--max-5xx', '-1']), /non-negative integer/);
+  assert.throws(() => parseClassroomLoadArgs(['--max-bootstrap-p95-ms', '0']), /greater than zero/);
+  assert.throws(() => parseClassroomLoadArgs(['--max-5xx', 'abc']), /non-negative integer/);
+});
+
+test('validateClassroomLoadOptions rejects --max-5xx without --max-network-failures', () => {
+  assert.throws(
+    () => validateClassroomLoadOptions({ mode: 'dry-run', thresholds: { max5xx: 0 } }),
+    /--max-5xx requires --max-network-failures/,
+  );
+  assert.doesNotThrow(
+    () => validateClassroomLoadOptions({ mode: 'dry-run', thresholds: { max5xx: 0, maxNetworkFailures: 0 } }),
+  );
+});
+
+test('classroom load happy-path test with all network-failure-paired thresholds passes and writes evidence', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-capacity-'));
+  const outputPath = join(tempDir, 'evidence.json');
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    throw new Error('dry-run should not fetch');
+  };
+  try {
+    const report = await runClassroomLoadTest([
+      '--dry-run',
+      '--learners', '2',
+      '--bootstrap-burst', '4',
+      '--rounds', '1',
+      '--max-5xx', '0',
+      '--max-network-failures', '0',
+      '--max-bootstrap-p95-ms', '1000',
+      '--output', outputPath,
+    ]);
+    assert.equal(report.ok, true);
+    assert.equal(report.failures.length, 0);
+    assert.equal(report.thresholds.max5xx.passed, true);
+    assert.equal(report.thresholds.maxBootstrapP95Ms.configured, 1000);
+    assert.equal(report.reportMeta.evidenceSchemaVersion, 1);
+    assert.equal(report.evidencePath, outputPath);
+
+    const written = JSON.parse(readFileSync(outputPath, 'utf8'));
+    assert.equal(written.ok, true);
+    assert.equal(written.reportMeta.environment, 'dry-run');
+    assert.equal(written.thresholds.max5xx.configured, 0);
+    assert.equal(written.thresholds.max5xx.observed, 0);
+    assert.equal(written.thresholds.max5xx.passed, true);
+  } finally {
+    globalThis.fetch = previousFetch;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('classroom load threshold-failing run exits ok=false and lists failing thresholds', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-capacity-'));
+  const outputPath = join(tempDir, 'evidence.json');
+  const previousFetch = globalThis.fetch;
+
+  globalThis.fetch = async (url, init = {}) => {
+    const parsed = new URL(String(url));
+    if (parsed.pathname === '/api/demo/session') {
+      return {
+        ok: true,
+        status: 200,
+        headers: {
+          get(name) {
+            if (String(name).toLowerCase() === 'content-type') return 'application/json';
+            if (String(name).toLowerCase() === 'set-cookie') return 'ks2_session=fake; Path=/';
+            return null;
+          },
+          getSetCookie() { return ['ks2_session=fake; Path=/']; },
+        },
+        async text() {
+          return JSON.stringify({ session: { learnerId: 'l1', accountId: 'a1' } });
+        },
+      };
+    }
+    if (parsed.pathname === '/api/bootstrap') {
+      return {
+        ok: false,
+        status: 500,
+        headers: {
+          get() { return 'application/json'; },
+          getSetCookie() { return []; },
+        },
+        async text() { return JSON.stringify({ error: 'server error' }); },
+      };
+    }
+    return {
+      ok: false,
+      status: 500,
+      headers: {
+        get() { return 'application/json'; },
+        getSetCookie() { return []; },
+      },
+      async text() { return JSON.stringify({ error: 'server error' }); },
+    };
+  };
+
+  try {
+    const report = await runClassroomLoadTest([
+      '--local-fixture',
+      '--origin', 'http://localhost:8787',
+      '--demo-sessions',
+      '--learners', '1',
+      '--bootstrap-burst', '1',
+      '--rounds', '1',
+      '--max-5xx', '0',
+      '--max-network-failures', '0',
+      '--output', outputPath,
+    ]);
+    assert.equal(report.ok, false);
+    assert.ok(report.failures.includes('max5xx'));
+    assert.equal(report.thresholds.max5xx.passed, false);
+    const written = JSON.parse(readFileSync(outputPath, 'utf8'));
+    assert.equal(written.ok, false);
+    assert.ok(written.failures.includes('max5xx'));
+  } finally {
+    globalThis.fetch = previousFetch;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('classroom load loads pinned threshold config via --config', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-capacity-'));
+  const configPath = join(tempDir, 'test-config.json');
+  const outputPath = join(tempDir, 'evidence.json');
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error('dry-run should not fetch'); };
+
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(configPath, JSON.stringify({
+    tier: 'small-pilot-provisional',
+    minEvidenceSchemaVersion: 1,
+    thresholds: {
+      max5xx: 0,
+      maxNetworkFailures: 0,
+      maxBootstrapP95Ms: 1000,
+    },
+  }));
+
+  try {
+    const report = await runClassroomLoadTest([
+      '--dry-run',
+      '--config', configPath,
+      '--output', outputPath,
+    ]);
+    assert.equal(report.ok, true);
+    assert.equal(report.thresholds.max5xx.configured, 0);
+    assert.equal(report.thresholds.maxBootstrapP95Ms.configured, 1000);
+    assert.equal(report.tier.tier, 'small-pilot-provisional');
+    assert.equal(report.tier.minEvidenceSchemaVersion, 1);
+  } finally {
+    globalThis.fetch = previousFetch;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('classroom load --output auto-names when no path given but flag requires value', () => {
+  // The flag contract: --output requires a value. Auto-naming only happens in
+  // a caller that chooses to pass an empty string explicitly. This test
+  // documents the parse-level requirement.
+  assert.throws(() => parseClassroomLoadArgs(['--output']), /--output requires a value/);
+});
+
