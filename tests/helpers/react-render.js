@@ -469,6 +469,33 @@ export function renderProfileSurfaceFixture({ demo = false, persistenceMode = 'r
   `);
 }
 
+export function renderMonsterEffectCatalogPanelFixture({ canManage = true } = {}) {
+  // SSR fixture for the U6 catalog panel. We feed it the bundled effect
+  // config as the draft + published state so the listing covers all eight
+  // bundled-default kinds. The `canManage` flag mirrors the role-based gate
+  // the visual panel uses (admin vs operations read-only).
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { MonsterEffectCatalogPanel } from ${JSON.stringify(absoluteSpecifier('src/surfaces/hubs/MonsterEffectCatalogPanel.jsx'))};
+    import { bundledEffectConfig } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/effect-config-defaults.js'))};
+
+    const draft = bundledEffectConfig();
+    const published = bundledEffectConfig();
+    const canManage = ${canManage ? 'true' : 'false'};
+    const onChange = () => {};
+    const html = renderToStaticMarkup(
+      <MonsterEffectCatalogPanel
+        draft={draft}
+        published={published}
+        canManage={canManage}
+        onDraftChange={onChange}
+      />
+    );
+    console.log(html);
+  `);
+}
+
 export function renderHubSurfaceFixture({ surface = 'parent' } = {}) {
   return renderFixture(`
     import React from 'react';

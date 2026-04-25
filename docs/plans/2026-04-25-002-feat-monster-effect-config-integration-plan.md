@@ -432,7 +432,7 @@ on app boot OR config change:
 
 ---
 
-- [ ] U6. **Admin UI: catalog editor**
+- [x] U6. **Admin UI: catalog editor**
 
 **Goal:** A new section in `MonsterVisualConfigPanel` (or a sibling panel in the same hub surface) where admin can list catalog entries, create a new entry from a template, edit params + metadata, and mark each entry reviewed. Read-only for Operations.
 

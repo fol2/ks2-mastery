@@ -7,6 +7,8 @@ import {
 import { EFFECT_CONFIG_CELEBRATION_KINDS } from '../../platform/game/render/effect-config-schema.js';
 import { MonsterVisualFieldControls } from './MonsterVisualFieldControls.jsx';
 import { MonsterVisualPreviewGrid } from './MonsterVisualPreviewGrid.jsx';
+import { MonsterEffectCatalogPanel } from './MonsterEffectCatalogPanel.jsx';
+import { bundledEffectConfig } from '../../platform/game/render/effect-config-defaults.js';
 import { formatTimestamp } from './hub-utils.js';
 
 const AUTOSAVE_PREFIX = 'ks2.monster-visual-config-draft';
@@ -313,6 +315,23 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
     });
   }, [cloudDraft, selectedManifestAsset?.key, updateSelectedEntry]);
 
+  // Catalog panel shares the same draft buffer + autosave key. The catalog
+  // panel emits a fresh `effect` sub-document; we splice it back into the
+  // merged draft so the existing autosave + save-draft path round-trips it
+  // unchanged.
+  const handleEffectDraftChange = useCallback((nextEffect) => {
+    if (!canManage) return;
+    setDraft((current) => {
+      if (!current) return current;
+      const next = clone(current);
+      next.effect = nextEffect || bundledEffectConfig();
+      return next;
+    });
+  }, [canManage]);
+
+  const effectDraft = useMemo(() => draft?.effect || bundledEffectConfig(), [draft]);
+  const effectPublished = useMemo(() => published?.effect || null, [published]);
+
   const moveAsset = useCallback((direction) => {
     const assets = filteredAssets.length ? filteredAssets : MONSTER_ASSET_MANIFEST.assets;
     const index = Math.max(0, assets.findIndex((asset) => asset.key === selectedManifestAsset?.key));
@@ -516,6 +535,14 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
           />
         </div>
       </div>
+
+      <MonsterEffectCatalogPanel
+        draft={effectDraft}
+        published={effectPublished}
+        canManage={canManage}
+        accountId={accountId}
+        onDraftChange={handleEffectDraftChange}
+      />
     </section>
   );
 }
