@@ -101,6 +101,40 @@ export const WORD_BANK_GUARDIAN_FILTER_IDS = Object.freeze([
 export const WORD_BANK_GUARDIAN_FILTER_ID_SET = new Set(WORD_BANK_GUARDIAN_FILTER_IDS);
 export const WORD_BANK_YEAR_FILTER_IDS = new Set(['all', 'y3-4', 'y5-6', 'extra']);
 
+/* U5: Word Bank Guardian chip copy polish (R10).
+ *
+ * The chip-label map lives in the view-model (not the JSX scene) so there is
+ * a single source of truth for display text; the scene imports from here.
+ * Labels are deliberately grounded and child-specific — no "Great work!"
+ * slop, no zero-celebration — and matched by ARIA labels at render time so
+ * screen-reader users hear the same phrase. The hint map mirrors the chip
+ * IDs so an accidental label/hint divergence fails the parity tests.
+ *
+ * Previous copy (pre-U5, kept in comments for historical reference):
+ *   guardianDue     → 'Guardian due'
+ *   wobbling        → 'Wobbling'
+ *   renewedRecently → 'Renewed (7d)'
+ *   neverRenewed    → 'Untouched'
+ *
+ * New copy (post-U5, ships on R10):
+ *   guardianDue     → 'Due for check'
+ *   wobbling        → 'Wobbling words'
+ *   renewedRecently → 'Guarded this week'
+ *   neverRenewed    → 'Not guarded yet'
+ */
+export const WORD_BANK_GUARDIAN_CHIP_LABELS = Object.freeze({
+  guardianDue: 'Due for check',
+  wobbling: 'Wobbling words',
+  renewedRecently: 'Guarded this week',
+  neverRenewed: 'Not guarded yet',
+});
+export const WORD_BANK_GUARDIAN_FILTER_HINTS = Object.freeze({
+  guardianDue: 'Secure words the Vault wants you to recheck today.',
+  wobbling: 'Secure words that slipped last time — one more pass clears them.',
+  renewedRecently: 'Secure words you renewed in the last seven days.',
+  neverRenewed: 'Secure words the Guardian has not inspected yet — nothing is wrong, just untouched.',
+});
+
 // How many days after lastReviewedDay still counts as "renewed recently" for
 // the Word Bank filter. Seven days mirrors the shortest Guardian interval
 // (reviewLevel 1 = 7 days) — anything inside that window is still fresh.
@@ -322,6 +356,14 @@ export function wordBankFilterMatchesStatus(filter, status, options = {}) {
   }
 
   if (filter === 'wobbling') {
+    // U5 / R10 tightening: wobbling must imply secure. A stage < 4 word that
+    // still carries a `wobbling: true` flag (from a pre-hardening bug, or a
+    // rehydrated legacy record) is no longer in the Vault — it should show
+    // under the legacy `due` / `trouble` / `learning` chips, not here. The
+    // guard keeps the wobbling count honest: it equals exactly the
+    // secure + wobbling intersection, matching the mega-never-revoked
+    // invariant proved by U8b.
+    if (status !== 'secure') return false;
     return Boolean(hasGuardian && guardian.wobbling === true);
   }
 
