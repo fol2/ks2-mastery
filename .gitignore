@@ -20,3 +20,4 @@ assets/**/*.png
 !assets/app-icons/*.png
 .gstack/
 .remember/
+.claude/worktrees/
