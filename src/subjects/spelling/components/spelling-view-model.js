@@ -2,6 +2,7 @@ import { monsterSummaryFromSpellingAnalytics } from '../../../platform/game/mons
 import { resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
 import { monsterVisualFrameStyle } from '../../../platform/game/monster-visual-style.js';
 import { formatElapsedMinutes } from '../../../platform/core/utils.js';
+import { isGuardianEligibleSlug } from '../service-contract.js';
 
 export const SPELLING_ACCENT = '#3E6FA8';
 export const DAY_MS = 24 * 60 * 60 * 1000;
@@ -324,12 +325,27 @@ export function normaliseSearchText(value) {
  * record for the slug so "renewed recently" isn't guessed from `progress`
  * alone.
  *
+ * U2: `guardianDue` and `wobbling` additionally run the row through
+ * `isGuardianEligibleSlug` when the caller supplies the orphan-sanitiser
+ * context (`slug`, `progressMap`, `wordBySlug`). A slug that the runtime no
+ * longer publishes, has demoted to the extra pool, or whose progress stage
+ * dropped below `GUARDIAN_SECURE_STAGE` must not surface under these chips,
+ * even when the persisted guardian record still claims `wobbling: true` or
+ * has a due date in the past. Omitting the context preserves the pre-U2
+ * behaviour so existing two-arg callers stay byte-compatible.
+ *
  * @param {string} filter Active filter id from `WORD_BANK_FILTER_IDS`.
  * @param {string} status Status string on the word-bank row.
  * @param {object} [options]
  * @param {object|null} [options.guardian] Normalised guardian record for the
  *   slug (from `data.guardian[slug]`), or `null`/`undefined` when absent.
  * @param {number} [options.todayDay] Integer day (Math.floor(ts / DAY_MS)).
+ * @param {string} [options.slug] Row slug. Required (with progressMap +
+ *   wordBySlug) to engage the U2 orphan sanitiser.
+ * @param {object} [options.progressMap] slug -> legacy progress record. When
+ *   provided alongside `slug` + `wordBySlug`, engages the U2 orphan sanitiser.
+ * @param {object} [options.wordBySlug] slug -> published word metadata. When
+ *   provided alongside `slug` + `progressMap`, engages the U2 orphan sanitiser.
  */
 export function wordBankFilterMatchesStatus(filter, status, options = {}) {
   if (filter === 'all') return true;
@@ -340,33 +356,54 @@ export function wordBankFilterMatchesStatus(filter, status, options = {}) {
     return filter === status;
   }
 
-  const guardian = options && typeof options === 'object' ? options.guardian : null;
-  const todayRaw = options && typeof options === 'object' ? options.todayDay : undefined;
+  const opts = options && typeof options === 'object' ? options : {};
+  const guardian = opts.guardian || null;
+  const todayRaw = opts.todayDay;
   const todayDay = Number.isFinite(Number(todayRaw)) ? Math.floor(Number(todayRaw)) : 0;
   const hasGuardian = guardian && typeof guardian === 'object' && !Array.isArray(guardian);
+  // U2 orphan sanitiser only engages when the caller supplies the full
+  // context triple. Legacy two-arg / guardian+todayDay callers remain
+  // byte-identical to the pre-U2 behaviour.
+  const hasOrphanContext = typeof opts.slug === 'string'
+    && opts.slug.length > 0
+    && opts.progressMap && typeof opts.progressMap === 'object'
+    && opts.wordBySlug && typeof opts.wordBySlug === 'object';
+  const isEligible = hasOrphanContext
+    ? isGuardianEligibleSlug(opts.slug, opts.progressMap, opts.wordBySlug)
+    : true;
 
   if (filter === 'guardianDue') {
     // Guardian Due is defined as: guardian record exists AND nextDueDay has
     // arrived. We also require `status === 'secure'` because a word can
     // drop out of `secure` (e.g. dueDay rolls over) while still owning a
     // guardian record from a previous Guardian round — those should show
-    // under the legacy `due` chip, not here.
+    // under the legacy `due` chip, not here. U2: orphan slugs (not in
+    // runtime, extra-pool, or below Mega stage) never match.
     if (!hasGuardian) return false;
     if (status !== 'secure') return false;
+    if (!isEligible) return false;
     const nextDue = Number.isFinite(Number(guardian.nextDueDay)) ? Math.floor(Number(guardian.nextDueDay)) : Infinity;
     return nextDue <= todayDay;
   }
 
   if (filter === 'wobbling') {
-    // U5 / R10 tightening: wobbling must imply secure. A stage < 4 word that
-    // still carries a `wobbling: true` flag (from a pre-hardening bug, or a
-    // rehydrated legacy record) is no longer in the Vault — it should show
-    // under the legacy `due` / `trouble` / `learning` chips, not here. The
-    // guard keeps the wobbling count honest: it equals exactly the
+    // U5 + U2 / R10 tightening: wobbling must imply secure AND the slug be
+    // Guardian-eligible. A stage < Mega word that still carries a
+    // `wobbling: true` flag (from a pre-hardening bug, or a rehydrated
+    // legacy record) is no longer in the Vault — it should show under the
+    // legacy `due` / `trouble` / `learning` chips, not here. The guard
+    // keeps the wobbling count honest: it equals exactly the
     // secure + wobbling intersection, matching the mega-never-revoked
-    // invariant proved by U8b.
+    // invariant proved by U8b. U2: orphan slugs (not in runtime, extra-
+    // pool, or below Mega stage) never match — post-hardening, a
+    // wobbling + stage<Mega record is an invariant impossibility, but the
+    // filter rejects it defensively so a legacy pre-fix state never
+    // surfaces under this chip.
+    if (!hasGuardian) return false;
+    if (guardian.wobbling !== true) return false;
     if (status !== 'secure') return false;
-    return Boolean(hasGuardian && guardian.wobbling === true);
+    if (!isEligible) return false;
+    return true;
   }
 
   if (filter === 'renewedRecently') {
@@ -769,10 +806,17 @@ export function countWordBankExtra(words) {
  * their existing shape; Guardian-aware consumers also read the four new
  * fields without a second reducer pass.
  *
+ * U2: pass `{ progressMap, wordBySlug }` alongside `{ guardianMap, todayDay }`
+ * to engage the orphan sanitiser for `guardianDue` and `wobbling` counts.
+ * Omitting the sanitiser context keeps the pre-U2 behaviour, so existing
+ * two-field callers stay byte-compatible.
+ *
  * @param {Array} words Word-bank rows (each has `slug`, `status`).
  * @param {object} [options]
  * @param {object} [options.guardianMap] slug -> guardian record.
  * @param {number} [options.todayDay] Integer day (Math.floor(ts / DAY_MS)).
+ * @param {object} [options.progressMap] slug -> legacy progress record (U2).
+ * @param {object} [options.wordBySlug] slug -> published word metadata (U2).
  */
 export function wordBankAggregateStats(words, options = {}) {
   const stats = {
@@ -795,6 +839,12 @@ export function wordBankAggregateStats(words, options = {}) {
   const guardianMap = hasGuardianContext ? options.guardianMap : null;
   const todayRaw = hasGuardianContext ? options.todayDay : undefined;
   const todayDay = Number.isFinite(Number(todayRaw)) ? Math.floor(Number(todayRaw)) : 0;
+  const progressMap = options && typeof options === 'object' && options.progressMap && typeof options.progressMap === 'object'
+    ? options.progressMap
+    : null;
+  const wordBySlug = options && typeof options === 'object' && options.wordBySlug && typeof options.wordBySlug === 'object'
+    ? options.wordBySlug
+    : null;
 
   for (const word of Array.isArray(words) ? words : []) {
     stats.total += 1;
@@ -806,10 +856,14 @@ export function wordBankAggregateStats(words, options = {}) {
 
     if (!hasGuardianContext) continue;
     const guardian = word && word.slug ? guardianMap[word.slug] : null;
-    if (wordBankFilterMatchesStatus('guardianDue', word.status, { guardian, todayDay })) stats.guardianDue += 1;
-    if (wordBankFilterMatchesStatus('wobbling', word.status, { guardian, todayDay })) stats.wobbling += 1;
-    if (wordBankFilterMatchesStatus('renewedRecently', word.status, { guardian, todayDay })) stats.renewedRecently += 1;
-    if (wordBankFilterMatchesStatus('neverRenewed', word.status, { guardian, todayDay })) stats.neverRenewed += 1;
+    // U2: pass orphan context through so `guardianDue` / `wobbling` counts
+    // track the visible-row count exactly even when a content hot-swap
+    // leaves a stale guardianMap entry behind.
+    const sanitiserOptions = { guardian, todayDay, slug: word && word.slug, progressMap, wordBySlug };
+    if (wordBankFilterMatchesStatus('guardianDue', word.status, sanitiserOptions)) stats.guardianDue += 1;
+    if (wordBankFilterMatchesStatus('wobbling', word.status, sanitiserOptions)) stats.wobbling += 1;
+    if (wordBankFilterMatchesStatus('renewedRecently', word.status, sanitiserOptions)) stats.renewedRecently += 1;
+    if (wordBankFilterMatchesStatus('neverRenewed', word.status, sanitiserOptions)) stats.neverRenewed += 1;
   }
   return stats;
 }

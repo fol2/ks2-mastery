@@ -25,8 +25,10 @@ import {
   advanceGuardianOnCorrect,
   advanceGuardianOnWrong,
   ensureGuardianRecord,
+  isGuardianEligibleSlug,
   selectGuardianWords,
 } from '../shared/spelling/service.js';
+import { GUARDIAN_SECURE_STAGE } from '../src/subjects/spelling/service-contract.js';
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
@@ -482,8 +484,16 @@ test('selectGuardianWords prioritises wobbling-due, then non-wobbling due, then 
     // non-due — top-up only kicks in when selection is below GUARDIAN_MIN_ROUND_LENGTH (5).
     build: { reviewLevel: 3, lastReviewedDay: TODAY - 1, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
   };
-  // Lazy candidates: mega words not in the guardian map yet.
+  // U2: every slug in guardianMap must also have a Mega progress record for
+  // `isGuardianEligibleSlug` to clear it. Lazy-create candidates remain
+  // slugs NOT in guardianMap with their own Mega stage.
   const progressMap = {
+    accommodate: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
+    address: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
+    believe: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
+    bicycle: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
+    breath: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
+    build: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
     possess: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
     busy: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
     // stage < 4 - not a lazy candidate
@@ -530,7 +540,15 @@ test('selectGuardianWords tops up with non-due guardians only when below GUARDIA
   };
   const selected = selectGuardianWords({
     guardianMap,
-    progressMap: {}, // no lazy candidates
+    // U2: every slug in guardianMap needs a Mega progress record to clear
+    // the orphan sanitiser. Lazy-create pool stays empty — no extra slugs.
+    progressMap: {
+      address: { stage: 4 },
+      believe: { stage: 4 },
+      bicycle: { stage: 4 },
+      breath: { stage: 4 },
+      build: { stage: 4 },
+    },
     wordBySlug: WORD_BY_SLUG,
     todayDay: TODAY,
     length: 5,
@@ -551,7 +569,14 @@ test('selectGuardianWords with length=5 clamps at 5 and prefers wobbling-due', (
   };
   const selected = selectGuardianWords({
     guardianMap,
-    progressMap: {},
+    // U2: every slug in guardianMap must also be Mega in progress.
+    progressMap: {
+      accommodate: { stage: 4 },
+      address: { stage: 4 },
+      believe: { stage: 4 },
+      bicycle: { stage: 4 },
+      breath: { stage: 4 },
+    },
     wordBySlug: WORD_BY_SLUG,
     todayDay: TODAY,
     length: 5,
@@ -2644,4 +2669,316 @@ test('U3 integration: practice-only drill summary renders without guardian-speci
 
   const summary = harness.store.getState().subjectUi.spelling.summary;
   assert.equal(summary.mode, 'trouble', 'practice-only summary inherits mode=trouble, not guardian');
+});
+
+// ----- U2: Orphan sanitiser (selector + read-model) --------------------------
+//
+// Content hot-swap can leave `guardianMap[slug]` / `progressMap[slug]` pointing
+// at a slug the current content bundle no longer publishes (removed from the
+// statutory list) or has demoted from core to extra. The orphan sanitiser
+// keeps the read-side filters and the selector in lockstep — persisted
+// storage is untouched (no delete) so a content rollback that re-introduces
+// the slug finds its record intact.
+
+test('U2: GUARDIAN_SECURE_STAGE is re-exported from service-contract (single source of truth)', () => {
+  assert.equal(GUARDIAN_SECURE_STAGE, 4);
+});
+
+test('U2: isGuardianEligibleSlug returns true for a known core stage-4 slug', () => {
+  const progressMap = { possess: { stage: 4 } };
+  const wordBySlug = { possess: { slug: 'possess', spellingPool: 'core' } };
+  assert.equal(isGuardianEligibleSlug('possess', progressMap, wordBySlug), true);
+});
+
+test('U2: isGuardianEligibleSlug returns false for an unknown slug (content hot-swap removal)', () => {
+  const progressMap = { ghostword: { stage: 4 } };
+  const wordBySlug = {};
+  assert.equal(isGuardianEligibleSlug('ghostword', progressMap, wordBySlug), false);
+});
+
+test('U2: isGuardianEligibleSlug returns false when word has been demoted to spellingPool=extra', () => {
+  const progressMap = { demoted: { stage: 4 } };
+  const wordBySlug = { demoted: { slug: 'demoted', spellingPool: 'extra' } };
+  assert.equal(isGuardianEligibleSlug('demoted', progressMap, wordBySlug), false);
+});
+
+test('U2: isGuardianEligibleSlug returns false when progress stage is below GUARDIAN_SECURE_STAGE', () => {
+  const wordBySlug = { weak: { slug: 'weak', spellingPool: 'core' } };
+  assert.equal(isGuardianEligibleSlug('weak', { weak: { stage: 3 } }, wordBySlug), false);
+  assert.equal(isGuardianEligibleSlug('weak', { weak: { stage: 0 } }, wordBySlug), false);
+  assert.equal(isGuardianEligibleSlug('weak', { weak: {} }, wordBySlug), false, 'missing stage treated as 0');
+  assert.equal(isGuardianEligibleSlug('weak', {}, wordBySlug), false, 'missing record treated as 0');
+});
+
+test('U2: isGuardianEligibleSlug tolerates null / garbage inputs without throwing', () => {
+  assert.equal(isGuardianEligibleSlug('', {}, {}), false);
+  assert.equal(isGuardianEligibleSlug(null, null, null), false);
+  assert.equal(isGuardianEligibleSlug(undefined, undefined, undefined), false);
+  assert.equal(isGuardianEligibleSlug('slug', null, { slug: { spellingPool: 'core' } }), false);
+  assert.equal(isGuardianEligibleSlug('slug', { slug: { stage: 4 } }, null), false);
+});
+
+test('U2 selector bucket 1 (wobbling-due): orphan slug skipped', () => {
+  // An orphan wobbling-due entry sits alongside a known one. The known slug
+  // is surfaced; the orphan never appears in the selection.
+  const guardianMap = {
+    accommodate: { reviewLevel: 1, lastReviewedDay: TODAY - 2, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+    ghostword: { reviewLevel: 1, lastReviewedDay: TODAY - 2, nextDueDay: TODAY - 2, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+  };
+  const progressMap = {
+    accommodate: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+    ghostword: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+  };
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap,
+    wordBySlug: WORD_BY_SLUG, // runtime does NOT know 'ghostword'
+    todayDay: TODAY,
+    length: 8,
+    random: () => 0.5,
+  });
+  assert.equal(selected.includes('ghostword'), false, 'orphan never appears in bucket 1');
+  assert.equal(selected.includes('accommodate'), true);
+});
+
+test('U2 selector bucket 2 (non-wobbling-due): orphan slug skipped', () => {
+  const guardianMap = {
+    believe: { reviewLevel: 2, lastReviewedDay: TODAY - 14, nextDueDay: TODAY - 1, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+    ghostword: { reviewLevel: 2, lastReviewedDay: TODAY - 14, nextDueDay: TODAY - 2, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+  };
+  const progressMap = {
+    believe: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+    ghostword: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+  };
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap,
+    wordBySlug: WORD_BY_SLUG,
+    todayDay: TODAY,
+    length: 8,
+    random: () => 0.5,
+  });
+  assert.equal(selected.includes('ghostword'), false, 'orphan never appears in bucket 2');
+  assert.equal(selected.includes('believe'), true);
+});
+
+test('U2 selector bucket 4 (non-due top-up): orphan slug skipped', () => {
+  // Only one due non-wobbling + several non-due guardians. Selector below
+  // GUARDIAN_MIN_ROUND_LENGTH=5, so the top-up engages. The orphan non-due
+  // slug must be skipped even inside the top-up pool.
+  const guardianMap = {
+    address: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 3, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+    believe: { reviewLevel: 2, lastReviewedDay: TODAY - 14, nextDueDay: TODAY - 1, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+    bicycle: { reviewLevel: 3, lastReviewedDay: TODAY - 20, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+    breath: { reviewLevel: 3, lastReviewedDay: TODAY - 5, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+    ghostword: { reviewLevel: 3, lastReviewedDay: TODAY - 80, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+  };
+  const progressMap = {
+    address: { stage: 4 },
+    believe: { stage: 4 },
+    bicycle: { stage: 4 },
+    breath: { stage: 4 },
+    ghostword: { stage: 4 },
+  };
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap,
+    wordBySlug: WORD_BY_SLUG,
+    todayDay: TODAY,
+    length: 5,
+    random: () => 0.5,
+  });
+  assert.equal(selected.includes('ghostword'), false, 'orphan never surfaces through the top-up bucket');
+});
+
+test('U2 selector bucket 3 (lazy-create) existing guard: extra-pool words are not lazy-created', () => {
+  // The pre-U2 guard already rejects unknown slugs. U2 tightens the lazy-create
+  // candidate filter so pool=extra words are also rejected (they must never
+  // graduate into Guardian protection).
+  const wordBySlug = {
+    ...WORD_BY_SLUG,
+    // Synthesise an 'extra' mega word — pool=extra must NOT qualify for lazy-create.
+    fakeextra: { slug: 'fakeextra', spellingPool: 'extra' },
+  };
+  const progressMap = {
+    fakeextra: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+    possess: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+  };
+  const selected = selectGuardianWords({
+    guardianMap: {},
+    progressMap,
+    wordBySlug,
+    todayDay: TODAY,
+    length: 8,
+    random: () => 0.5,
+  });
+  assert.equal(selected.includes('fakeextra'), false, 'extra-pool slug must not be lazy-created');
+  assert.equal(selected.includes('possess'), true, 'core-pool stage-4 still lazy-creates');
+});
+
+test('U2 selector: orphan slug with wobbling: true + nextDueDay <= today still skipped', () => {
+  // Edge: the orphan slug is maximally appealing (wobbling + overdue), but
+  // wordBySlug does not know it. The selector must still skip.
+  const guardianMap = {
+    ghostword: { reviewLevel: 0, lastReviewedDay: TODAY - 10, nextDueDay: TODAY - 5, correctStreak: 0, lapses: 3, renewals: 0, wobbling: true },
+  };
+  const progressMap = { ghostword: { stage: 4 } };
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap,
+    wordBySlug: {},
+    todayDay: TODAY,
+    length: 5,
+    random: () => 0.5,
+  });
+  assert.deepEqual(selected, [], 'no orphan surfaces even when wobbling + due');
+});
+
+test('U2 selector: 10 known + 2 orphan entries all due → picks up to 8 known, zero orphan', () => {
+  // Mirror the plan "happy path" scenario: 10 known + 2 orphan entries, all due.
+  // Use real WORD_BY_SLUG slugs so wordBySlug lookups succeed.
+  const knownSlugs = WORDS.filter((w) => w.spellingPool !== 'extra').slice(0, 10).map((w) => w.slug);
+  const guardianMap = {};
+  const progressMap = {};
+  for (let i = 0; i < knownSlugs.length; i += 1) {
+    guardianMap[knownSlugs[i]] = {
+      reviewLevel: 1,
+      lastReviewedDay: TODAY - (i + 1),
+      nextDueDay: TODAY - 1,
+      correctStreak: 1,
+      lapses: 0,
+      renewals: 0,
+      wobbling: false,
+    };
+    progressMap[knownSlugs[i]] = { stage: 4 };
+  }
+  // Add two orphan guardian records for slugs NOT in WORD_BY_SLUG.
+  guardianMap.ghostword1 = {
+    reviewLevel: 0, lastReviewedDay: TODAY - 2, nextDueDay: TODAY - 2, correctStreak: 0, lapses: 0, renewals: 0, wobbling: false,
+  };
+  guardianMap.ghostword2 = {
+    reviewLevel: 0, lastReviewedDay: TODAY - 2, nextDueDay: TODAY - 2, correctStreak: 0, lapses: 0, renewals: 0, wobbling: true,
+  };
+  progressMap.ghostword1 = { stage: 4 };
+  progressMap.ghostword2 = { stage: 4 };
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap,
+    wordBySlug: WORD_BY_SLUG,
+    todayDay: TODAY,
+    length: 8,
+    random: () => 0.5,
+  });
+  assert.equal(selected.length, 8, 'selector hits its 8-word target using known slugs only');
+  assert.equal(selected.includes('ghostword1'), false);
+  assert.equal(selected.includes('ghostword2'), false);
+  for (const slug of selected) {
+    assert.equal(knownSlugs.includes(slug), true, `selected slug ${slug} must be one of the 10 known candidates`);
+  }
+});
+
+// ----- U2 read-model: getSpellingPostMasteryState counts respect orphan filter ----
+
+test('U2 read-model: guardianDueCount ignores orphan slugs', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const [w0, w1, w2] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: {
+      ...secureProgressEntries(runtimeSnapshot.coreWords),
+      ghostword: { stage: 4, attempts: 6, correct: 5, wrong: 1, dueDay: TODAY + 30, lastDay: TODAY - 7, lastResult: true },
+    },
+    guardian: {
+      [w0.slug]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: false },
+      [w1.slug]: { reviewLevel: 2, lastReviewedDay: TODAY - 2, nextDueDay: TODAY, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+      [w2.slug]: { reviewLevel: 1, lastReviewedDay: TODAY - 1, nextDueDay: TODAY + 30, correctStreak: 1, lapses: 0, renewals: 0, wobbling: false },
+      // Orphan: not in runtimeSnapshot.wordBySlug, but due today.
+      ghostword: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: false },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.guardianDueCount, 2, 'orphan ghostword excluded from due count');
+});
+
+test('U2 read-model: wobblingCount ignores orphan slugs', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const [w0, w1] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: {
+      ...secureProgressEntries(runtimeSnapshot.coreWords),
+      ghostword: { stage: 4, attempts: 6, correct: 5, wrong: 1, dueDay: TODAY + 30, lastDay: TODAY - 7, lastResult: true },
+    },
+    guardian: {
+      [w0.slug]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+      [w1.slug]: { reviewLevel: 2, lastReviewedDay: TODAY - 2, nextDueDay: TODAY, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+      ghostword: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 5, renewals: 0, wobbling: true },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.wobblingCount, 1, 'orphan ghostword excluded from wobbling count');
+});
+
+test('U2 read-model: nextGuardianDueDay ignores orphan slugs even when orphan has the earliest dueDay', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const [w0, w1] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: {
+      ...secureProgressEntries(runtimeSnapshot.coreWords),
+      ghostword: { stage: 4, attempts: 6, correct: 5, wrong: 1, dueDay: TODAY + 30, lastDay: TODAY - 7, lastResult: true },
+    },
+    guardian: {
+      [w0.slug]: { reviewLevel: 2, lastReviewedDay: TODAY - 2, nextDueDay: TODAY + 14, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+      [w1.slug]: { reviewLevel: 1, lastReviewedDay: TODAY - 1, nextDueDay: TODAY + 7, correctStreak: 1, lapses: 0, renewals: 0, wobbling: false },
+      // Orphan's dueDay is earliest of all — must still be ignored.
+      ghostword: { reviewLevel: 0, lastReviewedDay: TODAY - 1, nextDueDay: TODAY + 1, correctStreak: 0, lapses: 0, renewals: 0, wobbling: false },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.nextGuardianDueDay, TODAY + 7, 'ghostword (today+1) not considered for earliest-due');
+});
+
+test('U2 read-model: pool-demoted slug (core → extra) excluded from guardianDueCount and wobblingCount', () => {
+  // Content bundle release demotes a previously-core word to extra. Guardian
+  // counts must drop the slug; persistence still carries the record.
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  // Force one of the runtime words to become 'extra' for this test only.
+  const demotedSlug = runtimeSnapshot.coreWords[0].slug;
+  const demotedRuntime = {
+    words: runtimeSnapshot.words.map((w) => (w.slug === demotedSlug ? { ...w, spellingPool: 'extra', year: 'extra', yearLabel: 'Extra' } : w)),
+    wordBySlug: {
+      ...runtimeSnapshot.wordBySlug,
+      [demotedSlug]: { ...runtimeSnapshot.wordBySlug[demotedSlug], spellingPool: 'extra', year: 'extra', yearLabel: 'Extra' },
+    },
+    coreWords: runtimeSnapshot.coreWords.slice(1),
+    extraWords: [{ ...runtimeSnapshot.coreWords[0], spellingPool: 'extra', year: 'extra', yearLabel: 'Extra' }],
+  };
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: {
+      ...secureProgressEntries(demotedRuntime.coreWords),
+      [demotedSlug]: { stage: 4, attempts: 6, correct: 5, wrong: 1, dueDay: TODAY + 30, lastDay: TODAY - 7, lastResult: true },
+    },
+    guardian: {
+      [demotedSlug]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 2, renewals: 0, wobbling: true },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot: demotedRuntime, now: U4_NOW_MS });
+  assert.equal(state.guardianDueCount, 0, 'demoted-to-extra slug not counted as guardian-due');
+  assert.equal(state.wobblingCount, 0, 'demoted-to-extra slug not counted as wobbling');
+});
+
+test('U2 read-model: legacy-demoted slug (stage < GUARDIAN_SECURE_STAGE) excluded from counts', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const [w0, w1] = runtimeSnapshot.coreWords;
+  const progress = secureProgressEntries(runtimeSnapshot.coreWords);
+  // Force w0's stage down to 3 (legacy-engine wrong answer path).
+  progress[w0.slug] = { ...progress[w0.slug], stage: 3 };
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress,
+    guardian: {
+      [w0.slug]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 2, renewals: 0, wobbling: true },
+      [w1.slug]: { reviewLevel: 2, lastReviewedDay: TODAY - 2, nextDueDay: TODAY, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.guardianDueCount, 1, 'stage-3 record excluded; only w1 remains');
+  assert.equal(state.wobblingCount, 0, 'stage-3 record excluded from wobbling count');
 });
