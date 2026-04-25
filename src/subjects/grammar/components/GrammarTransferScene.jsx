@@ -156,6 +156,9 @@ function ChecklistField({ items, ticks, disabled, onToggle }) {
   return (
     <fieldset className="grammar-transfer-checklist" disabled={disabled}>
       <legend className="grammar-transfer-checklist-legend">Self-check</legend>
+      <p className="grammar-transfer-checklist-hint">
+        Tick what you tried — it is just a reminder for you. Nothing is marked.
+      </p>
       <ul className="grammar-transfer-checklist-list">
         {items.map((item, index) => {
           const key = `check-${index}`;
@@ -229,6 +232,7 @@ function WriteMode({
           aria-describedby="grammar-transfer-counter"
           placeholder="Write 3-5 sentences here. Nothing you write is scored."
           value={draft}
+          disabled={pending}
           onChange={(event) => onDraftChange(event.currentTarget.value)}
         />
       </label>
@@ -267,6 +271,7 @@ function WriteMode({
           className="btn ghost"
           data-action="grammar-select-transfer-prompt"
           data-prompt-id=""
+          disabled={pending}
           onClick={onChangePrompt}
         >
           Change prompt
@@ -276,7 +281,19 @@ function WriteMode({
   );
 }
 
-function SavedHistory({ evidence }) {
+function labelForTick(tick, checklist) {
+  const key = typeof tick?.key === 'string' ? tick.key : '';
+  const match = /^check-(\d+)$/.exec(key);
+  if (!match) return key;
+  const index = Number(match[1]);
+  const items = Array.isArray(checklist) ? checklist : [];
+  if (Number.isInteger(index) && index >= 0 && typeof items[index] === 'string' && items[index]) {
+    return items[index];
+  }
+  return Number.isInteger(index) && index >= 0 ? `Check ${index + 1}` : key;
+}
+
+function SavedHistory({ evidence, checklist }) {
   if (!evidence) return null;
   const latest = evidence.latest;
   const history = Array.isArray(evidence.history)
@@ -303,7 +320,7 @@ function SavedHistory({ evidence }) {
                   key={tick.key || `tick-${index}`}
                 >
                   <span className="grammar-transfer-saved-tick-icon" aria-hidden="true">{tick.checked ? '[x]' : '[ ]'}</span>
-                  <span className="grammar-transfer-saved-tick-key">{tick.key}</span>
+                  <span className="grammar-transfer-saved-tick-label">{labelForTick(tick, checklist)}</span>
                 </li>
               ))}
             </ul>
@@ -466,7 +483,7 @@ export function GrammarTransferScene({ grammar, actions }) {
             onSave={handleSave}
             onChangePrompt={handleChangePrompt}
           />
-          <SavedHistory evidence={selectedEvidence} />
+          <SavedHistory evidence={selectedEvidence} checklist={activePrompt?.checklist} />
         </>
       ) : (
         <PickPromptMode

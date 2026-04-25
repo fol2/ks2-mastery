@@ -18,6 +18,7 @@ import { installMemoryStorage } from './helpers/memory-storage.js';
 import {
   grammarModule,
   GRAMMAR_TRANSFER_ERROR_COPY,
+  translateGrammarTransferError,
 } from '../src/subjects/grammar/module.js';
 import { normaliseGrammarReadModel } from '../src/subjects/grammar/metadata.js';
 import { GRAMMAR_CHILD_FORBIDDEN_TERMS } from '../src/subjects/grammar/components/grammar-view-model.js';
@@ -238,6 +239,21 @@ test('U6b: pending save disables the Save button and the label flips to "Saving.
   assert.match(html, /data-action="grammar-save-transfer-evidence"[^>]*disabled[^>]*>Saving\.\.\./);
 });
 
+test('U6b: pending save disables textarea, Change prompt button, and checklist fieldset (prevents mid-save races)', () => {
+  const harness = openTransferHarness({
+    transferLane: defaultTransferLane(),
+    transferUi: { selectedPromptId: 'storm-scene', draft: 'Draft in flight.' },
+    pendingCommand: 'save-transfer-evidence',
+  });
+  const html = harness.render();
+  // Textarea is disabled so the learner cannot mutate the draft mid-save.
+  assert.match(html, /<textarea[^>]*name="grammarTransferDraft"[^>]*disabled/);
+  // Change prompt is disabled so a mid-save prompt-switch race cannot occur.
+  assert.match(html, /data-action="grammar-select-transfer-prompt"[^>]*data-prompt-id=""[^>]*disabled[^>]*>Change prompt</);
+  // Checklist fieldset is disabled (existing behaviour, re-asserted for completeness).
+  assert.match(html, /<fieldset[^>]*class="grammar-transfer-checklist"[^>]*disabled/);
+});
+
 // ----------------------------------------------------------------------------
 // Save dispatch contract
 // ----------------------------------------------------------------------------
@@ -366,6 +382,12 @@ test('U6b: saved-history shows latest (with selfAssessment ticks) plus up to 4 h
   // selfAssessment ticks render on the latest card only.
   assert.match(html, /data-check-key="check-0"[^>]*data-checked="true"/);
   assert.match(html, /data-check-key="check-2"[^>]*data-checked="true"/);
+  // Tick labels render the original checklist prompt text, not the raw key
+  // (child-facing copy; `check-0` would read as marking to a KS2 learner).
+  assert.match(html, /Use at least one fronted adverbial\./);
+  assert.match(html, /Use a pair of commas for parenthesis\./);
+  assert.match(html, /Use one relative clause\./);
+  assert.doesNotMatch(html, /grammar-transfer-saved-tick-label[^>]*>check-0</);
   // Only 4 of the 6 history entries render.
   const historyMatches = html.match(/data-saved-kind="history"/g) || [];
   assert.equal(historyMatches.length, 4, 'history is limited to 4 entries');
@@ -373,6 +395,50 @@ test('U6b: saved-history shows latest (with selfAssessment ticks) plus up to 4 h
   assert.doesNotMatch(html, /Earlier draft 1\./);
   assert.doesNotMatch(html, /Earlier draft 2\./);
   assert.match(html, /Earlier draft 6\./);
+});
+
+test('U6b: saved tick label falls back to "Check N" when checklist item is missing (orphan safety)', () => {
+  // Simulate an orphaned evidence shape where the Worker emits ticks whose
+  // index exceeds the current prompt's checklist (e.g., the prompt was
+  // shortened after the evidence was saved). The UI must not regress to the
+  // raw `check-N` key; it should humanise to `Check N+1` instead.
+  const harness = openTransferHarness({
+    transferLane: defaultTransferLane({
+      evidence: [{
+        promptId: 'storm-scene',
+        latest: {
+          writing: 'Draft with stale ticks.',
+          selfAssessment: [
+            { key: 'check-0', checked: true },
+            { key: 'check-9', checked: true },
+          ],
+          savedAt: 1_777_000_000_000,
+          source: 'transfer-lane',
+        },
+        history: [],
+        updatedAt: 1_777_000_000_000,
+      }],
+    }),
+    transferUi: { selectedPromptId: 'storm-scene' },
+  });
+  const html = harness.render();
+  // check-0 resolves to the real checklist item text.
+  assert.match(html, /Use at least one fronted adverbial\./);
+  // check-9 overflows the 3-item checklist and falls back to human-readable.
+  assert.match(html, /grammar-transfer-saved-tick-label[^>]*>Check 10</);
+  // No raw check-N keys leak into the label span.
+  assert.doesNotMatch(html, /grammar-transfer-saved-tick-label[^>]*>check-9</);
+});
+
+test('U6b: Self-check fieldset renders the child-friendly explanation hint', () => {
+  const harness = openTransferHarness({
+    transferLane: defaultTransferLane(),
+    transferUi: { selectedPromptId: 'storm-scene' },
+  });
+  const html = harness.render();
+  // Legend must be followed by the "it is just a reminder" explanation so a
+  // KS2 child does not read Self-check as marking.
+  assert.match(html, /<legend[^>]*>Self-check<\/legend>[\s\S]*?Tick what you tried[\s\S]*?Nothing is marked\./);
 });
 
 test('U6b: orphaned evidence renders as a "Retired prompts" card (no Start writing button)', () => {
@@ -419,14 +485,20 @@ test('U6b: each of the four Worker error codes surfaces its child copy in role="
       transferLane: defaultTransferLane(),
       transferUi: { selectedPromptId: 'storm-scene', draft: 'A draft', ticks: {} },
     });
-    // Set rm.error directly to the translated child copy (module.js path
-    // is already covered in the U6a tests).
+    // Route the raw Worker error-code shape through the real translator so
+    // this test proves the code -> child-copy mapping, not just the render
+    // of a pre-translated string. Shape mirrors `sendGrammarCommand`'s
+    // `err.extra.code` path (see src/subjects/grammar/module.js:25-34).
+    const rawWorkerError = { extra: { code } };
+    const translated = translateGrammarTransferError(rawWorkerError);
+    assert.equal(translated, GRAMMAR_TRANSFER_ERROR_COPY[code],
+      `translator maps ${code} to the expected child copy`);
     harness.store.updateSubjectUi('grammar', (current) => ({
       ...normaliseGrammarReadModel(current, learnerId),
-      error: GRAMMAR_TRANSFER_ERROR_COPY[code],
+      error: translated,
     }));
     const html = harness.render();
-    const expected = GRAMMAR_TRANSFER_ERROR_COPY[code].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const expected = translated.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     assert.match(html, new RegExp(`role="alert"[\\s\\S]*?${expected}`),
       `expected child copy for ${code} to render in role=alert`);
   }
@@ -506,11 +578,36 @@ function assertNoForbiddenReadModelKeys(value, forbidden) {
   visit(value, '');
 }
 
+// Strip known-changing fields (transferEvidence + timestamp-like keys) from a
+// grammar-state snapshot so the save-transfer-evidence round-trip can be deep
+// -equalled for a true non-scored invariant. Timestamp keys listed explicitly
+// rather than heuristic to avoid false negatives on future shape changes.
+const GRAMMAR_STATE_CHANGING_TOP_LEVEL_KEYS = new Set([
+  'transferEvidence',
+  'updatedAt',
+  'lastWriteAt',
+  'lastUpdatedAt',
+  'lastSavedAt',
+  'savedAt',
+]);
+function snapshotNonScoredGrammarState(state) {
+  const stripped = {};
+  for (const [key, value] of Object.entries(state)) {
+    if (GRAMMAR_STATE_CHANGING_TOP_LEVEL_KEYS.has(key)) continue;
+    stripped[key] = value;
+  }
+  return JSON.parse(JSON.stringify(stripped));
+}
+
 test('U6b: full Worker round-trip — save-transfer-evidence leaves mastery unchanged, positive evidence delta, no reward toast', () => {
   const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
   const initial = createInitialGrammarState();
   const beforeMastery = JSON.stringify(initial.mastery);
   const beforeRetry = JSON.stringify(initial.retryQueue);
+  // Full-state snapshot (excluding transferEvidence + timestamps) so we can
+  // assert that nothing beyond the intended evidence delta mutates across the
+  // save. Broader than the mastery/retry-only JSON.stringify checks below.
+  const beforeFullState = snapshotNonScoredGrammarState(initial);
 
   const result = engine.apply({
     learnerId: 'learner-a',
@@ -531,6 +628,13 @@ test('U6b: full Worker round-trip — save-transfer-evidence leaves mastery unch
   // Mastery / retry unchanged across the save.
   assert.equal(JSON.stringify(result.state.mastery), beforeMastery);
   assert.equal(JSON.stringify(result.state.retryQueue), beforeRetry);
+
+  // Full-state invariant: every other top-level slot is identical before and
+  // after the save. Prevents silent regressions that sneak scoring fields in
+  // through new keys (e.g., `streaks`, `summary`, `aiEnrichment` deltas).
+  const afterFullState = snapshotNonScoredGrammarState(result.state);
+  assert.deepEqual(afterFullState, beforeFullState,
+    'non-scored save must leave every slot except transferEvidence and timestamps untouched');
 
   // Positive evidence delta.
   const entry = result.state.transferEvidence[GRAMMAR_TRANSFER_PROMPT_IDS[0]];
