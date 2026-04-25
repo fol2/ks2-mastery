@@ -63,7 +63,7 @@ function codexVisualContext(context) {
 }
 
 function preferredMonsterImageSize(context) {
-  if (context === 'feature' || context === 'preview') return 1280;
+  if (context === 'card' || context === 'feature' || context === 'preview') return 1280;
   return 640;
 }
 

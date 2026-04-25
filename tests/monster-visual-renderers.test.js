@@ -17,10 +17,13 @@ test('monster visual renderers use published config for meadow and reward toast'
   assert.match(html, /opacity:0\.82/);
   assert.match(html, /filter:brightness\(1\.1\)/);
   assert.match(html, /clip-path:inset\(10\.0% 15\.0% 5\.0% 5\.0%\)/);
+  assert.match(html, /src="\.\/assets\/monsters\/vellhorn\/b1\/vellhorn-b1-3\.1280\.webp\?v=20260421-branches"/);
   assert.match(html, /class="ss-meadow-visual" style="--visual-offset-x:12\.00px/);
   assert.match(html, /class="monster-celebration-visual after" data-stage="3" style="--visual-offset-x:18\.00px/);
   assert.match(html, /src="\.\/assets\/monsters\/phaeton\/b1\/phaeton-b1-4\.1280\.webp\?v=20260421-branches"/);
   assert.match(html, /sizes="\(max-width: 820px\) 76vw, 700px"/);
+  assert.match(html, /src="\.\/assets\/monsters\/glimmerbug\/b1\/glimmerbug-b1-4\.1280\.webp\?v=20260421-branches"/);
+  assert.match(html, /sizes="\(max-width: 820px\) 72vw, 360px"/);
   assert.match(html, /--visual-shadow-x:7\.00px/);
   assert.match(html, /--visual-shadow-scale:1\.350/);
   assert.match(html, /--visual-shadow-opacity:0\.340/);
