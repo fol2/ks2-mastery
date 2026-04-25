@@ -1,10 +1,17 @@
 #!/usr/bin/env node
 
 import { Buffer } from 'node:buffer';
+import { readFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 import { pathToFileURL } from 'node:url';
 
 import { correctResponseFor } from './grammar-production-smoke.mjs';
+import {
+  autoNameEvidencePath,
+  buildEvidencePayload,
+  persistEvidenceFile,
+  validateThresholdConfigKeys,
+} from './lib/capacity-evidence.mjs';
 
 const DEFAULT_PRODUCTION_ORIGIN = 'https://ks2.eugnel.uk';
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -237,13 +244,20 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     confirmProductionLoad: false,
     confirmHighProductionLoad: false,
     includeMeasurements: true,
+    includeRequestSamples: false,
+    help: false,
+    output: undefined,
+    configPath: '',
+    thresholds: {},
+    // Flat mirrors of nested thresholds for back-compat with PR #177 test
+    // harnesses that read options.max5xx directly. Both shapes are kept in
+    // sync by the threshold-parsing branches below.
     max5xx: null,
     maxNetworkFailures: null,
     maxBootstrapP95Ms: null,
     maxCommandP95Ms: null,
     maxResponseBytes: null,
     requireZeroSignals: false,
-    help: false,
   };
 
   let modeFlag = null;
@@ -316,28 +330,46 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
       options.confirmHighProductionLoad = true;
     } else if (arg === '--summary-only') {
       options.includeMeasurements = false;
+    } else if (arg === '--include-request-samples') {
+      options.includeRequestSamples = true;
+    } else if (arg === '--output') {
+      assignOnce(arg);
+      options.output = readOptionValue(argv, index, arg);
+      index += 1;
+    } else if (arg === '--config') {
+      assignOnce(arg);
+      options.configPath = readOptionValue(argv, index, arg);
+      index += 1;
     } else if (arg === '--max-5xx') {
       assignOnce(arg);
-      options.max5xx = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      options.thresholds.max5xx = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      options.max5xx = options.thresholds.max5xx;
       index += 1;
     } else if (arg === '--max-network-failures') {
       assignOnce(arg);
-      options.maxNetworkFailures = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      options.thresholds.maxNetworkFailures = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      options.maxNetworkFailures = options.thresholds.maxNetworkFailures;
       index += 1;
     } else if (arg === '--max-bootstrap-p95-ms') {
       assignOnce(arg);
-      options.maxBootstrapP95Ms = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      options.thresholds.maxBootstrapP95Ms = positiveInteger(readOptionValue(argv, index, arg), arg);
+      options.maxBootstrapP95Ms = options.thresholds.maxBootstrapP95Ms;
       index += 1;
     } else if (arg === '--max-command-p95-ms') {
       assignOnce(arg);
-      options.maxCommandP95Ms = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      options.thresholds.maxCommandP95Ms = positiveInteger(readOptionValue(argv, index, arg), arg);
+      options.maxCommandP95Ms = options.thresholds.maxCommandP95Ms;
       index += 1;
     } else if (arg === '--max-response-bytes') {
       assignOnce(arg);
-      options.maxResponseBytes = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      options.thresholds.maxResponseBytes = positiveInteger(readOptionValue(argv, index, arg), arg);
+      options.maxResponseBytes = options.thresholds.maxResponseBytes;
       index += 1;
     } else if (arg === '--require-zero-signals') {
+      options.thresholds.requireZeroSignals = true;
       options.requireZeroSignals = true;
+    } else if (arg === '--require-bootstrap-capacity') {
+      options.thresholds.requireBootstrapCapacity = true;
     } else {
       throw new Error(`Unknown option: ${arg}`);
     }
@@ -395,10 +427,16 @@ export function validateClassroomLoadOptions(options = {}) {
     // Dry-run has no measurements, so threshold gates cannot meaningfully evaluate.
     // If thresholds are set, fail closed so CI cannot accidentally ship a permanent
     // silent-green gate via --dry-run + --max-* flags. Adversarial review finding adv-001.
+    // This check runs before the pairing rule so the clearer adv-001 error is
+    // surfaced first; a dry-run consumer cannot meaningfully pair thresholds.
     if (hasThresholdFlags(options)) {
       throw new Error('Threshold flags (--max-*, --require-zero-signals) cannot be combined with --dry-run; dry-run has no measurements and would always pass. Use --local-fixture or --production.');
     }
     return;
+  }
+  const thresholds = options.thresholds || {};
+  if (thresholds.max5xx !== undefined && thresholds.maxNetworkFailures === undefined) {
+    throw new Error('--max-5xx requires --max-network-failures to avoid a silent success on total network failure.');
   }
   if (!options.origin) {
     throw new Error(`${options.mode} load requires --origin.`);
@@ -505,93 +543,120 @@ function maxResponseBytesAcross(summary) {
   return peak;
 }
 
+/**
+ * Normalise threshold config so either shape works:
+ *   { max5xx: 0, maxNetworkFailures: 0, ... }           (PR #177 flat)
+ *   { thresholds: { max5xx: 0, maxNetworkFailures: 0 }} (U1 nested, supports --config loading)
+ * Flat keys on the top-level override nested values so ad-hoc invocations
+ * (test harnesses, single-file consumers) still work against the canonical
+ * implementation that the CLI drives via nested `options.thresholds`.
+ */
+function normaliseThresholdView(options = {}) {
+  const nested = options.thresholds || {};
+  const flatKeys = [
+    'max5xx',
+    'maxNetworkFailures',
+    'maxBootstrapP95Ms',
+    'maxCommandP95Ms',
+    'maxResponseBytes',
+    'requireZeroSignals',
+    'requireBootstrapCapacity',
+  ];
+  const view = { ...nested };
+  for (const key of flatKeys) {
+    if (options[key] != null) view[key] = options[key];
+  }
+  return view;
+}
+
 export function evaluateCapacityThresholds(summary = {}, options = {}) {
+  const thresholds = normaliseThresholdView(options);
   const violations = [];
 
-  if (options.max5xx != null) {
+  if (thresholds.max5xx != null) {
     const observed = Number(summary.signals?.server5xx || 0);
-    if (observed > options.max5xx) {
+    if (observed > thresholds.max5xx) {
       violations.push({
         threshold: 'max-5xx',
-        limit: options.max5xx,
+        limit: thresholds.max5xx,
         observed,
-        message: `Observed ${observed} 5xx response(s); limit is ${options.max5xx}.`,
+        message: `Observed ${observed} 5xx response(s); limit is ${thresholds.max5xx}.`,
       });
     }
   }
 
-  if (options.maxNetworkFailures != null) {
+  if (thresholds.maxNetworkFailures != null) {
     const observed = Number(summary.signals?.networkFailure || 0);
-    if (observed > options.maxNetworkFailures) {
+    if (observed > thresholds.maxNetworkFailures) {
       violations.push({
         threshold: 'max-network-failures',
-        limit: options.maxNetworkFailures,
+        limit: thresholds.maxNetworkFailures,
         observed,
-        message: `Observed ${observed} network failure(s); limit is ${options.maxNetworkFailures}.`,
+        message: `Observed ${observed} network failure(s); limit is ${thresholds.maxNetworkFailures}.`,
       });
     }
   }
 
-  if (options.maxBootstrapP95Ms != null) {
+  if (thresholds.maxBootstrapP95Ms != null) {
     if (!gatedEndpointsHaveMeasurements(summary, BOOTSTRAP_P95_ENDPOINTS)) {
       // Adversarial review adv-006: fail closed when the gated endpoint set
       // produced no measurements. Otherwise an unrelated bug (missed scenario,
       // endpoint path drift) silently deactivates the gate.
       violations.push({
         threshold: 'max-bootstrap-p95-ms',
-        limit: options.maxBootstrapP95Ms,
+        limit: thresholds.maxBootstrapP95Ms,
         observed: null,
         gatedEndpoints: [...BOOTSTRAP_P95_ENDPOINTS],
         message: `No measurements captured for bootstrap gated endpoints (${BOOTSTRAP_P95_ENDPOINTS.join(', ')}); threshold cannot be evaluated safely.`,
       });
     } else {
       const observed = highestP95(summary, BOOTSTRAP_P95_ENDPOINTS);
-      if (observed > options.maxBootstrapP95Ms) {
+      if (observed > thresholds.maxBootstrapP95Ms) {
         violations.push({
           threshold: 'max-bootstrap-p95-ms',
-          limit: options.maxBootstrapP95Ms,
+          limit: thresholds.maxBootstrapP95Ms,
           observed,
-          message: `Bootstrap P95 wall time ${observed} ms exceeds ${options.maxBootstrapP95Ms} ms.`,
+          message: `Bootstrap P95 wall time ${observed} ms exceeds ${thresholds.maxBootstrapP95Ms} ms.`,
         });
       }
     }
   }
 
-  if (options.maxCommandP95Ms != null) {
+  if (thresholds.maxCommandP95Ms != null) {
     if (!gatedEndpointsHaveMeasurements(summary, COMMAND_P95_ENDPOINTS)) {
       violations.push({
         threshold: 'max-command-p95-ms',
-        limit: options.maxCommandP95Ms,
+        limit: thresholds.maxCommandP95Ms,
         observed: null,
         gatedEndpoints: [...COMMAND_P95_ENDPOINTS],
         message: `No measurements captured for command gated endpoints (${COMMAND_P95_ENDPOINTS.join(', ')}); threshold cannot be evaluated safely.`,
       });
     } else {
       const observed = highestP95(summary, COMMAND_P95_ENDPOINTS);
-      if (observed > options.maxCommandP95Ms) {
+      if (observed > thresholds.maxCommandP95Ms) {
         violations.push({
           threshold: 'max-command-p95-ms',
-          limit: options.maxCommandP95Ms,
+          limit: thresholds.maxCommandP95Ms,
           observed,
-          message: `Subject-command P95 wall time ${observed} ms exceeds ${options.maxCommandP95Ms} ms.`,
+          message: `Subject-command P95 wall time ${observed} ms exceeds ${thresholds.maxCommandP95Ms} ms.`,
         });
       }
     }
   }
 
-  if (options.maxResponseBytes != null) {
+  if (thresholds.maxResponseBytes != null) {
     const observed = maxResponseBytesAcross(summary);
-    if (observed > options.maxResponseBytes) {
+    if (observed > thresholds.maxResponseBytes) {
       violations.push({
         threshold: 'max-response-bytes',
-        limit: options.maxResponseBytes,
+        limit: thresholds.maxResponseBytes,
         observed,
-        message: `Response bytes ${observed} exceeded cap ${options.maxResponseBytes}.`,
+        message: `Response bytes ${observed} exceeded cap ${thresholds.maxResponseBytes}.`,
       });
     }
   }
 
-  if (options.requireZeroSignals) {
+  if (thresholds.requireZeroSignals) {
     const signals = collectObservedSignals(summary.signals || {});
     if (signals.length) {
       violations.push({
@@ -608,13 +673,15 @@ export function evaluateCapacityThresholds(summary = {}, options = {}) {
 }
 
 export function hasThresholdFlags(options = {}) {
+  const thresholds = normaliseThresholdView(options);
   return (
-    options.max5xx != null
-    || options.maxNetworkFailures != null
-    || options.maxBootstrapP95Ms != null
-    || options.maxCommandP95Ms != null
-    || options.maxResponseBytes != null
-    || options.requireZeroSignals === true
+    thresholds.max5xx != null
+    || thresholds.maxNetworkFailures != null
+    || thresholds.maxBootstrapP95Ms != null
+    || thresholds.maxCommandP95Ms != null
+    || thresholds.maxResponseBytes != null
+    || thresholds.requireZeroSignals === true
+    || thresholds.requireBootstrapCapacity === true
   );
 }
 
@@ -844,64 +911,170 @@ async function runHumanPacedRounds(origin, options, contexts, plan) {
   return measurements;
 }
 
+function loadThresholdConfig(configPath) {
+  if (!configPath) return { thresholds: {}, tier: null, minEvidenceSchemaVersion: null };
+  let raw;
+  try {
+    raw = readFileSync(configPath, 'utf8');
+  } catch (error) {
+    throw new Error(`Failed to read threshold config "${configPath}": ${error.message}`);
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`Threshold config "${configPath}" is not valid JSON: ${error.message}`);
+  }
+  const thresholds = parsed.thresholds || {};
+  // Unknown config keys (typos like `maxFivexx`, unsupported keys) must fail
+  // loudly: a silently-dropped key is indistinguishable from a configured
+  // gate that always passes.
+  const unknown = validateThresholdConfigKeys(thresholds);
+  if (unknown.length) {
+    throw new Error(
+      `Threshold config "${configPath}" contains unknown keys: ${unknown.join(', ')}. `
+      + 'Check for typos or use a CLI flag for one-off overrides.',
+    );
+  }
+  return {
+    thresholds,
+    tier: parsed.tier || null,
+    minEvidenceSchemaVersion: parsed.minEvidenceSchemaVersion || null,
+  };
+}
+
+function mergeThresholds(configThresholds = {}, cliThresholds = {}) {
+  // CLI thresholds override config values when both are present. An explicit
+  // CLI value of 0 is retained as strict; undefined means "inherit from config
+  // or leave ungated". requireZero* booleans follow the same rule.
+  const merged = { ...configThresholds };
+  for (const [key, value] of Object.entries(cliThresholds)) {
+    if (value !== undefined) merged[key] = value;
+  }
+  return merged;
+}
+
 function buildThresholdsBlock(options, summary) {
+  const thresholds = normaliseThresholdView(options);
   const configured = hasThresholdFlags(options);
   const violations = configured ? evaluateCapacityThresholds(summary, options) : [];
   return {
     configured,
     limits: {
-      max5xx: options.max5xx,
-      maxNetworkFailures: options.maxNetworkFailures,
-      maxBootstrapP95Ms: options.maxBootstrapP95Ms,
-      maxCommandP95Ms: options.maxCommandP95Ms,
-      maxResponseBytes: options.maxResponseBytes,
-      requireZeroSignals: options.requireZeroSignals,
+      max5xx: thresholds.max5xx ?? null,
+      maxNetworkFailures: thresholds.maxNetworkFailures ?? null,
+      maxBootstrapP95Ms: thresholds.maxBootstrapP95Ms ?? null,
+      maxCommandP95Ms: thresholds.maxCommandP95Ms ?? null,
+      maxResponseBytes: thresholds.maxResponseBytes ?? null,
+      requireZeroSignals: thresholds.requireZeroSignals === true,
     },
     violations,
   };
 }
+
 
 export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
   const options = parseClassroomLoadArgs(argv);
   if (options.help) {
     return { ok: true, help: true, usage: usage() };
   }
-  validateClassroomLoadOptions(options);
+  // Load config first so validateClassroomLoadOptions can see the merged
+  // threshold set: a config-only `max5xx` must still trip the
+  // `--max-network-failures` pairing rule.
+  const config = loadThresholdConfig(options.configPath);
+  const mergedThresholds = mergeThresholds(config.thresholds, options.thresholds);
+  const optionsWithMergedThresholds = { ...options, thresholds: mergedThresholds };
+  validateClassroomLoadOptions(optionsWithMergedThresholds);
   const plan = buildClassroomLoadPlan(options);
+
+  const startedAt = new Date().toISOString();
+  let report;
+  let summary;
   if (options.mode === 'dry-run') {
-    const summary = summariseCapacityResults([], plan);
-    const thresholds = buildThresholdsBlock(options, summary);
-    return {
-      ok: thresholds.violations.length === 0,
+    summary = summariseCapacityResults([], plan);
+    report = {
+      ok: true,
       dryRun: true,
       plan,
       summary,
-      thresholds,
+    };
+  } else {
+    const origin = options.origin;
+    const measurements = [];
+    const prepared = await prepareContexts(origin, options, plan);
+    measurements.push(...prepared.measurements);
+    measurements.push(...await runColdBootstrapBurst(origin, options, prepared.contexts, plan));
+    measurements.push(...await runHumanPacedRounds(origin, options, prepared.contexts, plan));
+    summary = summariseCapacityResults(measurements, { ...plan });
+    report = {
+      ok: summary.ok,
+      dryRun: false,
+      plan,
+      summary,
+      ...(options.includeMeasurements ? { measurements } : {}),
     };
   }
 
-  const origin = options.origin;
-  const startedAt = new Date().toISOString();
-  const measurements = [];
-  const prepared = await prepareContexts(origin, options, plan);
-  measurements.push(...prepared.measurements);
-  measurements.push(...await runColdBootstrapBurst(origin, options, prepared.contexts, plan));
-  measurements.push(...await runHumanPacedRounds(origin, options, prepared.contexts, plan));
-  const summary = summariseCapacityResults(measurements, {
-    ...plan,
+  const finishedAt = new Date().toISOString();
+  const thresholdsBlock = buildThresholdsBlock(optionsWithMergedThresholds, summary);
+  const evidence = buildEvidencePayload({
+    report,
+    thresholds: mergedThresholds,
+    options: optionsWithMergedThresholds,
+    timings: { startedAt, finishedAt },
   });
-  const thresholds = buildThresholdsBlock(options, summary);
 
-  return {
-    ok: summary.ok && thresholds.violations.length === 0,
-    dryRun: false,
-    startedAt,
-    finishedAt: new Date().toISOString(),
-    plan,
-    summary,
-    thresholds,
-    ...(options.includeMeasurements ? { measurements } : {}),
+  // Record the config source path alongside tier metadata so verify can
+  // confirm the thresholds that backed this run were PR-reviewed.
+  // Path is recorded exactly as the operator supplied it; verify normalises
+  // to a repo-relative form before checking it is under
+  // reports/capacity/configs/.
+  const evidenceTier = config.tier
+    ? {
+      tier: config.tier,
+      minEvidenceSchemaVersion: config.minEvidenceSchemaVersion,
+      configPath: options.configPath || null,
+    }
+    : null;
+  // Merge per-key evidence thresholds (U1) with PR #177 threshold block shape
+  // ({configured, violations, limits}). Both test harnesses probe distinct
+  // keys: U1 reads `report.thresholds.max5xx.passed`, PR #177 reads
+  // `report.thresholds.configured` / `.violations`. Using a flat spread keeps
+  // both lookup patterns live without a breaking rename.
+  const mergedThresholdsReport = {
+    ...(evidence.thresholds || {}),
+    configured: thresholdsBlock.configured,
+    violations: thresholdsBlock.violations,
+    limits: thresholdsBlock.limits,
   };
+  const finalReport = {
+    ...report,
+    startedAt,
+    finishedAt,
+    thresholds: mergedThresholdsReport,
+    failures: evidence.failures,
+    safety: evidence.safety,
+    reportMeta: evidence.reportMeta,
+    ...(evidenceTier ? { tier: evidenceTier } : {}),
+    ok: evidence.ok && thresholdsBlock.violations.length === 0,
+  };
+
+  // Only persist when --output was explicitly passed. `parseClassroomLoadArgs`
+  // sets `options.output` to `undefined` by default and `readOptionValue`
+  // rejects an empty value, so truthiness correctly distinguishes "caller asked
+  // for evidence" from "no --output flag present".
+  if (options.output) {
+    try {
+      persistEvidenceFile(options.output, finalReport, {
+        includeRequestSamples: options.includeRequestSamples,
+      });
+      finalReport.evidencePath = options.output;
+    } catch (error) {
+      throw new Error(`Failed to persist evidence to "${options.output}": ${error.message}`);
+    }
+  }
+
+  return finalReport;
 }
 
 export function usage() {
@@ -927,15 +1100,21 @@ export function usage() {
     '  --confirm-production-load         Required before --production sends requests',
     '  --confirm-high-production-load    Additional acknowledgement for larger production load shapes',
     '  --summary-only                    Omit per-request measurements from JSON output',
+    '  --include-request-samples         Include per-request measurements in --output evidence (default off)',
+    '',
+    'Evidence and thresholds:',
+    '  --output <path>                   Persist evidence JSON to <path>',
+    '  --config <path>                   Load pinned thresholds from JSON file (CLI flags override)',
     '',
     'Threshold gates (release-gate mode; non-zero exit on any violation):',
-    '  --max-5xx <count>                 Maximum tolerated HTTP 5xx responses',
+    '  --max-5xx <count>                 Maximum tolerated HTTP 5xx responses (requires --max-network-failures)',
     '  --max-network-failures <count>    Maximum tolerated network failures',
     '  --max-bootstrap-p95-ms <ms>       Maximum tolerated /api/bootstrap P95 wall time',
     '  --max-command-p95-ms <ms>         Maximum tolerated subject-command P95 wall time',
     '  --max-response-bytes <bytes>      Maximum tolerated response bytes across endpoints',
     '  --require-zero-signals            Fail on any exceededCpu / d1Overloaded / d1DailyLimit /',
     '                                    rateLimited / networkFailure / server5xx signal',
+    '  --require-bootstrap-capacity      Assert meta.capacity.bootstrapCapacity is present (U3)',
   ].join('\n');
 }
 

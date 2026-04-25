@@ -1,6 +1,9 @@
 import {
   DEFAULT_GRAMMAR_PREFS,
+  EMPTY_GRAMMAR_BANK_UI,
   GRAMMAR_SUBJECT_ID,
+  VALID_GRAMMAR_BANK_CLUSTER_FILTERS,
+  VALID_GRAMMAR_BANK_STATUS_FILTERS,
   normaliseGrammarReadModel,
 } from './metadata.js';
 import { normaliseGrammarSpeechRate } from './speech.js';
@@ -28,6 +31,52 @@ export function translateGrammarTransferError(error) {
     return GRAMMAR_TRANSFER_ERROR_COPY[code];
   }
   return GRAMMAR_TRANSFER_GENERIC_ERROR_COPY;
+}
+
+// U3 follower: child-copy translation for non-transfer Grammar session errors.
+// The generic fallback is the Phase 3 plan copy (`That did not save. Try again.`,
+// plan §U3 line 596). Known Worker codes that surface during an active session
+// (submit, repair, advance, enrichment) are mapped to child-friendly strings;
+// anything else — including stringified raw Worker messages routed through
+// `setGrammarError` — collapses to the generic fallback so no raw engine copy
+// ever reaches the learner. `GrammarSessionScene.jsx` renders only the return
+// value of this helper inside the `role="alert"` banner.
+export const GRAMMAR_SESSION_ERROR_COPY = Object.freeze({
+  grammar_session_stale: 'That round has ended. Start a new round to keep practising.',
+  grammar_answer_required: 'Choose or type an answer before submitting.',
+  grammar_answer_invalid: 'That answer looks off. Check it and try again.',
+  grammar_advance_not_ready: 'Wait for the feedback before moving on.',
+  grammar_repair_not_ready: 'That help is not ready yet. Try again in a moment.',
+  grammar_repair_unavailable_for_mode: 'That help is not available in this mode.',
+  grammar_support_unavailable_for_mode: 'That support is not available in this mode.',
+  grammar_ai_unavailable_for_mini_test: 'Explanations are hidden until the mini test is finished.',
+});
+
+export const GRAMMAR_SESSION_GENERIC_ERROR_COPY = 'That did not save. Try again.';
+
+// Copy used verbatim by `module.js` for client-side pre-submit validation and
+// other known session-surface strings that are already child-safe. If the
+// helper sees one of these incoming verbatim (no error code attached, just a
+// string in `grammar.error`), it preserves the string instead of collapsing
+// to the generic fallback.
+const GRAMMAR_SESSION_KNOWN_CHILD_MESSAGES = new Set([
+  'Choose or type an answer before submitting.',
+]);
+
+export function translateGrammarSessionError(error) {
+  if (error === null || error === undefined) return GRAMMAR_SESSION_GENERIC_ERROR_COPY;
+  if (typeof error === 'string') {
+    if (GRAMMAR_SESSION_KNOWN_CHILD_MESSAGES.has(error)) return error;
+    return GRAMMAR_SESSION_GENERIC_ERROR_COPY;
+  }
+  const code = error?.payload?.code
+    || error?.extra?.code
+    || error?.code
+    || '';
+  if (code && Object.prototype.hasOwnProperty.call(GRAMMAR_SESSION_ERROR_COPY, code)) {
+    return GRAMMAR_SESSION_ERROR_COPY[code];
+  }
+  return GRAMMAR_SESSION_GENERIC_ERROR_COPY;
 }
 
 function selectedLearnerId(context) {
@@ -95,7 +144,7 @@ function applyRemoteReadModel(context, response, { learnerId } = {}) {
   context.store.reloadFromRepositories?.({ preserveRoute: true });
 }
 
-function sendGrammarCommand(context, command, payload = {}, { translateError } = {}) {
+function sendGrammarCommand(context, command, payload = {}, { translateError, onResolved } = {}) {
   const learnerId = selectedLearnerId(context);
   if (!learnerId) return true;
   const ui = selectedGrammarUi(context);
@@ -123,6 +172,11 @@ function sendGrammarCommand(context, command, payload = {}, { translateError } =
     payload,
   }).then((response) => {
     applyRemoteReadModel(context, response, { learnerId });
+    if (typeof onResolved === 'function') {
+      try { onResolved(response); } catch (callbackError) {
+        globalThis.console?.warn?.('Grammar command onResolved failed.', callbackError);
+      }
+    }
   }).catch((error) => {
     globalThis.console?.warn?.('Grammar command failed.', error);
     const fallback = error?.payload?.message || error?.message || 'The Grammar command could not be completed.';
@@ -280,12 +334,156 @@ export const grammarModule = {
     if (action === 'grammar-open-concept-bank') {
       if (ui.pendingCommand) return true;
       if (ui.phase === 'session' || ui.phase === 'feedback') return true;
-      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => ({
-        ...normaliseGrammarReadModel(current, learnerId),
-        phase: 'bank',
-        error: '',
-      }));
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+        const normalised = normaliseGrammarReadModel(current, learnerId);
+        return {
+          ...normalised,
+          phase: 'bank',
+          // Clear any stale detail modal id from the previous bank visit so
+          // reopening never auto-pops the modal.
+          bank: { ...normalised.bank, detailConceptId: '' },
+          error: '',
+        };
+      });
       return true;
+    }
+
+    // Phase 3 U2: Grammar Bank dispatchers. All four mutate the `bank` UI
+    // slice only — never the session, feedback, summary, or mastery state —
+    // so they are safe to fire without a pendingCommand guard. The
+    // normaliser re-validates the filter / cluster ids on every round-trip.
+
+    if (action === 'grammar-close-concept-bank') {
+      return resetToDashboard(context);
+    }
+
+    if (action === 'grammar-concept-bank-filter') {
+      const raw = String(context.data?.value || 'all');
+      const next = VALID_GRAMMAR_BANK_STATUS_FILTERS.has(raw) ? raw : 'all';
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+        const normalised = normaliseGrammarReadModel(current, learnerId);
+        return {
+          ...normalised,
+          bank: { ...normalised.bank, statusFilter: next },
+        };
+      });
+      return true;
+    }
+
+    if (action === 'grammar-concept-bank-cluster-filter') {
+      const raw = String(context.data?.value || 'all');
+      const next = VALID_GRAMMAR_BANK_CLUSTER_FILTERS.has(raw) ? raw : 'all';
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+        const normalised = normaliseGrammarReadModel(current, learnerId);
+        return {
+          ...normalised,
+          bank: { ...normalised.bank, clusterFilter: next },
+        };
+      });
+      return true;
+    }
+
+    if (action === 'grammar-concept-bank-search') {
+      const raw = String(context.data?.value ?? '').slice(0, 80);
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+        const normalised = normaliseGrammarReadModel(current, learnerId);
+        return {
+          ...normalised,
+          bank: { ...normalised.bank, query: raw },
+        };
+      });
+      return true;
+    }
+
+    if (action === 'grammar-concept-detail-open') {
+      const raw = String(context.data?.conceptId || context.data?.value || '').slice(0, 64);
+      if (!raw) return true;
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+        const normalised = normaliseGrammarReadModel(current, learnerId);
+        return {
+          ...normalised,
+          bank: { ...normalised.bank, detailConceptId: raw },
+        };
+      });
+      return true;
+    }
+
+    if (action === 'grammar-concept-detail-close') {
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+        const normalised = normaliseGrammarReadModel(current, learnerId);
+        return {
+          ...normalised,
+          bank: { ...normalised.bank, detailConceptId: '' },
+        };
+      });
+      return true;
+    }
+
+    if (action === 'grammar-focus-concept') {
+      // Dispatched from bank concept cards + detail modal. Routes into a
+      // focused practice round by mirroring the existing `grammar-set-focus`
+      // + `grammar-start` combination (with a `learn` mode fallback so
+      // `grammarModeUsesFocus` picks up the focusConceptId on start). The
+      // `pendingCommand` guard prevents double-tap races.
+      if (ui.pendingCommand) return true;
+      const conceptId = String(context.data?.conceptId || context.data?.value || '').slice(0, 64);
+      if (!conceptId) return true;
+
+      // Persist the focus preference; fall back to `learn` mode so the start
+      // payload carries the focusConceptId (smart / mini-set modes drop
+      // focus via `grammarModeUsesFocus`). The bank UI slice is cleared so
+      // reopening the bank does not re-apply stale filter state from the
+      // previous visit.
+      const existingMode = ui.prefs?.mode || DEFAULT_GRAMMAR_PREFS.mode;
+      const targetMode = grammarModeUsesFocus(existingMode) ? existingMode : 'learn';
+      const prefsPatch = { mode: targetMode, focusConceptId: conceptId };
+      const payload = {
+        mode: targetMode,
+        focusConceptId: conceptId,
+        roundLength: ui.prefs?.roundLength || DEFAULT_GRAMMAR_PREFS.roundLength,
+        goalType: ui.prefs?.goalType || DEFAULT_GRAMMAR_PREFS.goalType,
+        allowTeachingItems: ui.prefs?.allowTeachingItems === true,
+        showDomainBeforeAnswer: ui.prefs?.showDomainBeforeAnswer !== false,
+      };
+      if (service?.savePrefs) {
+        const nextPrefs = service.savePrefs(learnerId, prefsPatch);
+        context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+          const normalised = normaliseGrammarReadModel(current, learnerId);
+          return {
+            ...normalised,
+            prefs: { ...normalised.prefs, ...(nextPrefs || prefsPatch) },
+            bank: { ...EMPTY_GRAMMAR_BANK_UI },
+            phase: 'dashboard',
+            pendingCommand: '',
+            error: '',
+          };
+        });
+        if (service?.startSession) return applyLocalTransition(context, service.startSession(learnerId, payload));
+        return sendGrammarCommand(context, 'start-session', payload);
+      }
+
+      // Remote-save path: close the bank first, then fire save-prefs and chain
+      // start-session inside its resolve callback. The earlier version fell
+      // through to a second sendGrammarCommand call that was silently no-op'd
+      // by the `pendingCommand` guard at the top of `sendGrammarCommand`.
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+        const normalised = normaliseGrammarReadModel(current, learnerId);
+        return {
+          ...normalised,
+          bank: { ...EMPTY_GRAMMAR_BANK_UI },
+          phase: 'dashboard',
+          error: '',
+        };
+      });
+      return sendGrammarCommand(context, 'save-prefs', { prefs: prefsPatch }, {
+        onResolved: () => {
+          if (service?.startSession) {
+            applyLocalTransition(context, service.startSession(learnerId, payload));
+            return;
+          }
+          sendGrammarCommand(context, 'start-session', payload);
+        },
+      });
     }
 
     if (action === 'grammar-open-transfer') {

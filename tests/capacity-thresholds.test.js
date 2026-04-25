@@ -251,7 +251,10 @@ test('classroom load fails when --max-5xx is violated by a 500 response', async 
       '--learners', '1',
       '--bootstrap-burst', '1',
       '--rounds', '1',
+      // U1 pairing rule requires --max-network-failures alongside --max-5xx
+      // so a silent success on total network failure is impossible.
       '--max-5xx', '0',
+      '--max-network-failures', '0',
     ]);
     assert.equal(report.ok, false);
     assert.equal(report.thresholds.configured, true);

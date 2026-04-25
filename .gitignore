@@ -22,3 +22,15 @@ assets/**/*.png
 .remember/
 .claude/worktrees/
 .worktrees/
+.context/
+
+# Capacity run artefacts: track latest-per-env snapshots and quarterly
+# archives; ignore intermediate runs. See reports/capacity/.gitignore.
+reports/capacity/*
+!reports/capacity/.gitignore
+!reports/capacity/latest-*.json
+!reports/capacity/snapshots/
+!reports/capacity/snapshots/**
+!reports/capacity/configs/
+!reports/capacity/configs/**
+!reports/capacity/README.md

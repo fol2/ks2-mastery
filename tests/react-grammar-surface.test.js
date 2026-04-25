@@ -203,8 +203,14 @@ test('Grammar surface runs KS2 mini-set mode with delayed feedback and end revie
   assert.equal(grammar.session.miniTest.questions.length, 8);
 
   html = harness.render();
-  assert.match(html, /KS2-style mini-test/);
+  // U3: the chip row is driven by `grammarSessionInfoChips` — mini-set
+  // surfaces the child-friendly `Mini Test` chip instead of the legacy
+  // `KS2-style mini-test` adult copy.
+  assert.match(html, /Mini Test/);
   assert.match(html, /Timed test/);
+  // U3: h2 title is now `grammarSessionProgressLabel` — mini-test uses the
+  // `Mini Test — Question X of N` pattern from U8.
+  assert.match(html, /Mini Test — Question 1 of 8/);
   assert.match(html, /Question 1 of 8/);
   assert.match(html, /Save response/);
   assert.match(html, /Finish mini-set/);
@@ -393,7 +399,7 @@ test('U4: strict mini-test timer expiry auto-finishes with deterministic marking
   assert.equal(grammar.summary.miniTestReview.questions.length, 8);
 });
 
-test('Grammar surface exposes in-session repair actions without local scoring', () => {
+test('Grammar surface exposes post-answer repair actions without local scoring', () => {
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });
   const sample = grammarOracleSample('fronted_adverbial_choose');
@@ -408,9 +414,14 @@ test('Grammar surface exposes in-session repair actions without local scoring', 
     },
   });
 
+  // U3: pre-answer path surfaces one task + one primary action — no
+  // faded/similar buttons visible before marking. The actions themselves
+  // remain wired and dispatchable (Worker owns authority), but the UI
+  // only reveals them after submission so children see a single primary
+  // action at a time.
   let html = harness.render();
-  assert.match(html, /Faded support/);
-  assert.match(html, /Similar problem/);
+  assert.doesNotMatch(html, /Faded support/);
+  assert.doesNotMatch(html, /Similar problem/);
 
   harness.dispatch('grammar-use-faded-support');
   html = harness.render();
@@ -446,7 +457,7 @@ test('Grammar surface exposes in-session repair actions without local scoring', 
   assert.equal(grammar.session.repair.similarProblems, 1);
 });
 
-test('Grammar session exposes non-scored AI enrichment triggers', () => {
+test('Grammar session exposes non-scored AI enrichment triggers after marking', () => {
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });
   const sample = grammarOracleSample('fronted_adverbial_choose');
@@ -460,8 +471,28 @@ test('Grammar session exposes non-scored AI enrichment triggers', () => {
     },
   });
 
+  // U3: pre-answer session hides every help surface — no AI trigger
+  // buttons visible until the learner has submitted an answer.
   let html = harness.render();
-  assert.match(html, /Explain this/);
+  assert.doesNotMatch(html, /Explain this/);
+  assert.doesNotMatch(html, /Explain another way/);
+  assert.doesNotMatch(html, /Revision cards/);
+
+  // U3 follower: the AI enrichment triggers surface in the wrong-answer
+  // branch of feedback (correct answers resolve with a single-line
+  // explanation + Next question only, per plan §U3 lines 592-593).
+  const wrongAnswer = sample.sample.inputSpec.options.find(
+    (option) => option.value !== sample.correctResponse.answer,
+  ).value;
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData({ answer: wrongAnswer }),
+  });
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'feedback');
+
+  // U3: feedback phase relabels the existing AI enrichment trigger to
+  // `Explain another way`; the revision-card trigger keeps its label.
+  html = harness.render();
+  assert.match(html, /Explain another way/);
   assert.match(html, /Revision cards/);
 
   harness.dispatch('grammar-request-ai-enrichment', { kind: 'explanation' });
@@ -586,7 +617,14 @@ test('Grammar dashboard hides adult-diagnostic goal/teaching toggles but preserv
   assert.equal(grammar.session.supportLevel, 0);
 });
 
-test('Grammar show-domain setting affects display only before answer feedback', () => {
+test('Grammar show-domain preference persists and analytics still register attempts', () => {
+  // U3: the adult `domain` chip has been removed from the session surface.
+  // Setting `showDomainBeforeAnswer` no longer drives visible chip copy —
+  // `grammarSessionInfoChips` surfaces only child-friendly labels. The
+  // preference still lives on `grammar.prefs` for future reuse, but it
+  // must not gate scoring or analytics attempts. This test keeps the
+  // preference-plumbing guarantee and the analytics increment invariant
+  // that the original `show-domain` test protected.
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });
   const sample = grammarOracleSample('fronted_adverbial_choose');
@@ -601,15 +639,20 @@ test('Grammar show-domain setting affects display only before answer feedback', 
     },
   });
 
-  let html = harness.render();
+  const html = harness.render();
+  // Neither phase surfaces the adult `domain` chip any more.
   assert.doesNotMatch(html, />Adverbials<\/span>/);
 
   harness.dispatch('grammar-submit-form', {
     formData: grammarResponseFormData(sample.correctResponse),
   });
-  html = harness.render();
-  assert.match(html, />Adverbials<\/span>/);
-  assert.equal(harness.store.getState().subjectUi.grammar.analytics.concepts.find((concept) => concept.id === 'adverbials').attempts, 1);
+  // The preference still round-trips into the normalised read model.
+  assert.equal(harness.store.getState().subjectUi.grammar.prefs.showDomainBeforeAnswer, false);
+  // Analytics still records the attempt — U3 only touches surface chrome.
+  assert.equal(
+    harness.store.getState().subjectUi.grammar.analytics.concepts.find((concept) => concept.id === 'adverbials').attempts,
+    1,
+  );
 });
 
 test('Grammar monster progress rehydrates from persisted Codex state after reload normalisation', () => {
@@ -1528,4 +1571,639 @@ test('U6a: grammar-save-transfer-evidence dispatch drops non-object selfAssessme
     { key: 'ok', checked: true },
     { key: 'ok2', checked: false },
   ]);
+});
+
+// ----------------------------------------------------------------------------
+// U2: Grammar Bank scene + concept detail modal.
+//
+// SSR limits — documented here so readers know what is (and is not) asserted:
+//   * Focus management beyond the SSR-visible `data-focus-return-id`
+//     attribute cannot be asserted here. The attribute sits on the
+//     triggering card; the modal restores focus to it on close via a
+//     runtime effect. That effect is a browser side-effect and is
+//     covered by manual QA, not the SSR harness.
+//   * Escape-key closes the modal via a document-level keydown listener.
+//     The SSR harness does not simulate document-level events, so we
+//     assert the dispatcher exists via the data-action attribute + a
+//     direct dispatch of `grammar-concept-detail-close` through the
+//     action bus.
+//   * `createPortal` targets `document.body` at runtime, but the SSR
+//     renderer returns the JSX tree inline when no document is present
+//     (see `GrammarConceptDetailModal.jsx`) so the rendered HTML still
+//     contains the modal markup for assertions.
+// ----------------------------------------------------------------------------
+
+function openGrammarBankHarness() {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-open-concept-bank');
+  return harness;
+}
+
+test('U2: Grammar Bank renders 18 concept cards when filters are all/all', () => {
+  const harness = openGrammarBankHarness();
+  const html = harness.render();
+  assert.match(html, /class="grammar-bank-scene"/);
+  assert.match(html, /Grammar Bank/);
+  assert.match(html, /Back to Grammar Garden/);
+  // Exactly 18 concept cards render in the default all/all view.
+  const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
+  assert.equal(cards.length, 18, 'bank renders 18 concept cards in default view');
+  // Aggregate summary row exposes a Total card for accessibility.
+  assert.match(html, /data-aggregate-id="total"/);
+});
+
+test('U2: Grammar Bank status filter "trouble" narrows to needs-repair concepts', () => {
+  const harness = openGrammarBankHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  // Seed one concept with needs-repair confidence so the trouble filter has
+  // at least one match; every other concept should be excluded.
+  harness.store.updateSubjectUi('grammar', (current) => {
+    const normalised = normaliseGrammarReadModel(current, learnerId);
+    const concepts = normalised.analytics.concepts.map((concept) => (
+      concept.id === 'relative_clauses'
+        ? { ...concept, confidenceLabel: 'needs-repair', attempts: 4, correct: 1, wrong: 3 }
+        : concept
+    ));
+    return {
+      ...normalised,
+      analytics: { ...normalised.analytics, concepts },
+    };
+  });
+
+  harness.dispatch('grammar-concept-bank-filter', { value: 'trouble' });
+  const html = harness.render();
+  // The chip toggles aria-pressed; the grid narrows to the seeded concept.
+  // Attribute order in the rendered HTML is aria-pressed first, then
+  // data-value, so we assert both attrs appear on the same <button> element.
+  assert.match(html, /aria-pressed="true"[^>]*data-value="trouble"/);
+  const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"[^>]*data-concept-id="([^"]+)"/g) || [];
+  assert.equal(cards.length, 1, 'only the needs-repair concept matches the trouble filter');
+  assert.match(cards[0], /data-concept-id="relative_clauses"/);
+  // Status chip on the card surfaces child copy, not internal labels.
+  assert.match(html, /Trouble spot/);
+});
+
+test('U2: Grammar Bank cluster filter "bracehart" narrows to exactly 6 concepts', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'bracehart' });
+  const html = harness.render();
+  const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
+  assert.equal(cards.length, 6, 'bracehart cluster contains exactly 6 concepts');
+  // Cluster chip toggles aria-pressed.
+  assert.match(html, /aria-pressed="true"[^>]*data-value="bracehart"/);
+  // Every rendered card carries the bracehart cluster badge.
+  const badges = html.match(/grammar-bank-card-cluster-badge"[^>]*data-cluster-id="bracehart"/g) || [];
+  assert.equal(badges.length, 6);
+});
+
+test('U2: Grammar Bank cluster filter "concordium" shows all 18 concepts', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'concordium' });
+  const html = harness.render();
+  const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
+  assert.equal(cards.length, 18, 'concordium (aggregate) shows every concept');
+});
+
+test('U2: Grammar Bank search "clause" narrows case-insensitively', () => {
+  const harness = openGrammarBankHarness();
+  // Simulate a committed search (input commit path goes through the action).
+  harness.dispatch('grammar-concept-bank-search', { value: 'Clause' });
+  const html = harness.render();
+  const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"[^>]*data-concept-id="([^"]+)"/g) || [];
+  assert.ok(cards.length >= 2, 'search for "clause" matches at least two concepts');
+  assert.ok(cards.some((markup) => /data-concept-id="clauses"/.test(markup)));
+  assert.ok(cards.some((markup) => /data-concept-id="relative_clauses"/.test(markup)));
+  // Non-matching concepts are absent.
+  assert.ok(!cards.some((markup) => /data-concept-id="modal_verbs"/.test(markup)));
+});
+
+test('U2: Grammar Bank "Practise 5" button dispatches grammar-focus-concept with concept id', () => {
+  // Use the full grammar harness so the server engine service is available;
+  // `grammar-focus-concept` routes through `service.savePrefs` +
+  // `service.startSession` so it needs a real engine.
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-open-concept-bank');
+  // Assert the button markup carries the action + concept id so the
+  // keyboard / click handler both route the same id.
+  const html = harness.render();
+  assert.match(html, /data-action="grammar-focus-concept"[^>]*data-concept-id="word_classes"/);
+
+  // Dispatch the action directly and verify the prefs + phase transition.
+  harness.dispatch('grammar-focus-concept', { conceptId: 'word_classes' });
+  const grammar = harness.store.getState().subjectUi.grammar;
+  // focusConceptId persists on the prefs so subsequent rounds keep the focus.
+  assert.equal(grammar.prefs.focusConceptId, 'word_classes');
+  // The focus mode is a focus-using mode (smart/learn/worked/faded — NOT
+  // trouble/surgery/builder which drop focus).
+  assert.ok(['smart', 'learn', 'worked', 'faded'].includes(grammar.prefs.mode));
+  // The start-session transition flips the phase out of `bank`.
+  assert.notEqual(grammar.phase, 'bank');
+  // The session carries the focus concept id so the first question targets it.
+  assert.equal(grammar.session?.focusConceptId, 'word_classes');
+});
+
+test('U2: Grammar Bank detail modal opens with role="dialog" and aria-modal="true"', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-detail-open', { conceptId: 'relative_clauses' });
+  const html = harness.render();
+  assert.match(html, /role="dialog"/);
+  assert.match(html, /aria-modal="true"/);
+  assert.match(html, /aria-labelledby="grammar-concept-detail-title-relative_clauses"/);
+  // Modal body carries the concept name + example + close button.
+  assert.match(html, /Relative clauses/);
+  assert.match(html, /data-action="grammar-concept-detail-close"/);
+  // At least one example sentence for the concept renders inside the modal.
+  assert.match(html, /The dog, which was muddy, ran inside\./);
+});
+
+test('U2: Grammar Bank detail modal exposes focus-return marker on the triggering card', () => {
+  const harness = openGrammarBankHarness();
+  const html = harness.render();
+  // Every concept card carries a `data-focus-return-id` marker on its
+  // `See example` button so the modal close hook can restore focus.
+  assert.match(html, /data-focus-return-id="grammar-bank-concept-card-relative_clauses"/);
+});
+
+test('U2: Grammar Bank empty state renders "No concepts match" when filters exclude everything', () => {
+  const harness = openGrammarBankHarness();
+  // A search that matches no concept name / summary / example / domain.
+  // U2 follower: when the search query is non-empty, the empty state swaps
+  // to the search-aware copy. The filter-only empty copy is covered by a
+  // dedicated follower test further down.
+  harness.dispatch('grammar-concept-bank-search', { value: 'zzz-unreachable-token' });
+  const html = harness.render();
+  const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
+  assert.equal(cards.length, 0, 'no concept cards render when the search excludes everything');
+  assert.match(html, /No concepts match\. Try clearing your search or changing the filters\./);
+});
+
+test('U2: Grammar Bank HTML contains none of GRAMMAR_CHILD_FORBIDDEN_TERMS', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-detail-open', { conceptId: 'clauses' });
+  const html = harness.render();
+  // Narrow to the bank scene markup to avoid sweeping the adult analytics
+  // disclosure (which lives behind a sibling `<details>`).
+  const sceneMatch = html.match(/<section class="grammar-bank-scene"[\s\S]*?<\/section>/);
+  assert.ok(sceneMatch, 'Grammar Bank scene renders');
+  const sceneHtml = sceneMatch[0];
+  for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    assert.doesNotMatch(sceneHtml, new RegExp(escaped, 'i'), `forbidden term leaked: ${term}`);
+  }
+  // Reserved monsters must never appear as cluster badges in the bank.
+  assert.doesNotMatch(sceneHtml, /Glossbloom|Loomrill|Mirrane/i);
+});
+
+test('U2: Grammar Bank concept cards never render raw percentages', () => {
+  const harness = openGrammarBankHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  // Seed a non-trivial attempts count so any accidental percentage render
+  // would surface in the card markup.
+  harness.store.updateSubjectUi('grammar', (current) => {
+    const normalised = normaliseGrammarReadModel(current, learnerId);
+    const concepts = normalised.analytics.concepts.map((concept) => (
+      concept.id === 'noun_phrases'
+        ? { ...concept, attempts: 10, correct: 7, wrong: 3 }
+        : concept
+    ));
+    return {
+      ...normalised,
+      analytics: { ...normalised.analytics, concepts },
+    };
+  });
+  const html = harness.render();
+  const cardsHtml = (html.match(/<article[^>]*class="grammar-bank-card[^"]*"[\s\S]*?<\/article>/g) || []).join('\n');
+  assert.ok(cardsHtml.length > 0, 'bank cards render');
+  assert.doesNotMatch(cardsHtml, /\d+%/, 'percentage characters must not appear in concept cards');
+});
+
+test('U2: Grammar Bank close action returns the learner to the dashboard', () => {
+  const harness = openGrammarBankHarness();
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'bank');
+  harness.dispatch('grammar-close-concept-bank');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');
+  const html = harness.render();
+  assert.match(html, /Grammar Garden/);
+});
+
+test('U2: Grammar Bank detail-close clears the detailConceptId slice', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-detail-open', { conceptId: 'word_classes' });
+  assert.equal(harness.store.getState().subjectUi.grammar.bank.detailConceptId, 'word_classes');
+  harness.dispatch('grammar-concept-detail-close');
+  assert.equal(harness.store.getState().subjectUi.grammar.bank.detailConceptId, '');
+});
+
+test('U2: Grammar Bank filter + search round-trip through the normaliser without stomping unrelated state', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-bank-filter', { value: 'learning' });
+  harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'chronalyx' });
+  harness.dispatch('grammar-concept-bank-search', { value: 'verb' });
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.bank.statusFilter, 'learning');
+  assert.equal(grammar.bank.clusterFilter, 'chronalyx');
+  assert.equal(grammar.bank.query, 'verb');
+  // Session, summary, feedback untouched.
+  assert.equal(grammar.phase, 'bank');
+  assert.equal(grammar.session, null);
+  assert.equal(grammar.summary, null);
+  assert.equal(grammar.feedback, null);
+});
+
+test('U2: Grammar Bank rejects invalid filter ids via the normaliser', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-bank-filter', { value: 'bogus-status' });
+  assert.equal(harness.store.getState().subjectUi.grammar.bank.statusFilter, 'all');
+  harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'glossbloom' });
+  assert.equal(harness.store.getState().subjectUi.grammar.bank.clusterFilter, 'all');
+});
+
+// ----------------------------------------------------------------------------
+// U2 follower: hyphen example swap, search-aware empty state, remote
+// focus-concept chain, stale modal clear, cluster-total sublabel.
+// ----------------------------------------------------------------------------
+
+test('U2 follower: Grammar Bank empty state swaps copy when search query is non-empty', () => {
+  const harness = openGrammarBankHarness();
+  // Filter-only empty (no search) — existing copy.
+  harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'bracehart' });
+  harness.dispatch('grammar-concept-bank-filter', { value: 'secure' });
+  let html = harness.render();
+  let cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
+  assert.equal(cards.length, 0, 'filter-only empty state renders');
+  assert.match(html, /No concepts match your filters\. Try another status or cluster\./);
+  assert.doesNotMatch(html, /Try clearing your search/);
+
+  // Search-present empty — new copy.
+  harness.dispatch('grammar-concept-bank-filter', { value: 'all' });
+  harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'all' });
+  harness.dispatch('grammar-concept-bank-search', { value: 'zzz-unreachable-token' });
+  html = harness.render();
+  cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
+  assert.equal(cards.length, 0, 'search-present empty state renders');
+  assert.match(html, /No concepts match\. Try clearing your search or changing the filters\./);
+  assert.doesNotMatch(html, /Try another status or cluster/);
+});
+
+test('U2 follower: Grammar Bank hyphen_ambiguity card primary example is the man-eating shark', () => {
+  const harness = openGrammarBankHarness();
+  const html = harness.render();
+  // The card blockquote surfaces `example` (examples[0]) from the view-model.
+  // After the swap, the clear positive example must be the one on-card.
+  const cardMatch = html.match(/data-concept-id="hyphen_ambiguity"[\s\S]*?<\/article>/);
+  assert.ok(cardMatch, 'hyphen_ambiguity card renders');
+  assert.match(cardMatch[0], /The man-eating shark circled the boat\./);
+  assert.doesNotMatch(cardMatch[0], /Please resign the letter/);
+});
+
+test('U2 follower: reopening Grammar Bank after closing detail modal does not auto-show the modal', () => {
+  const harness = openGrammarBankHarness();
+  // Open the detail modal.
+  harness.dispatch('grammar-concept-detail-open', { conceptId: 'word_classes' });
+  assert.equal(harness.store.getState().subjectUi.grammar.bank.detailConceptId, 'word_classes');
+  let html = harness.render();
+  assert.match(html, /role="dialog"/);
+
+  // Close the bank (returns to dashboard — the legacy resetToDashboard path
+  // does not touch the bank slice, so detailConceptId remained stale).
+  harness.dispatch('grammar-close-concept-bank');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');
+
+  // Reopen the bank. With the follower fix, `grammar-open-concept-bank`
+  // clears `bank.detailConceptId`, so the modal must NOT auto-appear.
+  harness.dispatch('grammar-open-concept-bank');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'bank');
+  assert.equal(
+    harness.store.getState().subjectUi.grammar.bank.detailConceptId,
+    '',
+    'detailConceptId cleared on reopen',
+  );
+  html = harness.render();
+  assert.doesNotMatch(html, /role="dialog"/, 'detail modal must not auto-pop on bank reopen');
+});
+
+test('U2 follower: Grammar Bank aggregate "Total" card stays at 18 under a cluster filter', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'bracehart' });
+  const html = harness.render();
+  // Grid narrows to the bracehart cluster's 6 cards.
+  const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
+  assert.equal(cards.length, 6);
+  // Total aggregate card still shows the global 18 so the sub-label
+  // "Grammar concepts tracked" stays truthful under narrower filters.
+  const totalCard = html.match(/data-aggregate-id="total"[\s\S]*?<\/div><\/div>/);
+  assert.ok(totalCard, 'total aggregate card renders');
+  assert.match(totalCard[0], />18<\/div>/);
+  assert.match(totalCard[0], /Grammar concepts tracked/);
+});
+
+test('U2 follower: grammar-focus-concept remote path chains start-session after save-prefs resolves', async () => {
+  // Build a context WITHOUT `service.savePrefs` / `service.startSession` so
+  // the remote path runs. Observe that `save-prefs` goes first and
+  // `start-session` only dispatches after the save-prefs promise resolves.
+  const sent = [];
+  let resolveSavePrefs;
+  let resolveStartSession;
+  const context = {
+    appState: {
+      learners: { selectedId: 'learner-a' },
+      subjectUi: { grammar: normaliseGrammarReadModel({ phase: 'bank' }, 'learner-a') },
+    },
+    runtimeReadOnly: false,
+    subjectCommands: {
+      send(request) {
+        sent.push({ command: request.command, payload: request.payload });
+        if (request.command === 'save-prefs') {
+          return new Promise((resolve) => { resolveSavePrefs = resolve; });
+        }
+        if (request.command === 'start-session') {
+          return new Promise((resolve) => { resolveStartSession = resolve; });
+        }
+        return Promise.resolve({});
+      },
+    },
+    store: {
+      getState() { return context.appState; },
+      updateSubjectUi(subjectId, updater) {
+        const previous = context.appState.subjectUi[subjectId] || {};
+        const next = typeof updater === 'function' ? updater(previous) : { ...previous, ...updater };
+        context.appState = {
+          ...context.appState,
+          subjectUi: { ...context.appState.subjectUi, [subjectId]: next },
+        };
+      },
+      updateSubjectUiForLearner(learnerId, subjectId, updater) {
+        if (learnerId !== 'learner-a') return false;
+        context.store.updateSubjectUi(subjectId, updater);
+        return true;
+      },
+      pushToasts() {},
+      pushMonsterCelebrations() {},
+      reloadFromRepositories() {},
+    },
+    data: { conceptId: 'relative_clauses' },
+  };
+
+  const handled = grammarModule.handleAction('grammar-focus-concept', context);
+  assert.equal(handled, true);
+
+  // Only save-prefs has gone so far; start-session must wait for the resolve.
+  assert.equal(sent.length, 1, 'only save-prefs dispatched before save resolves');
+  assert.equal(sent[0].command, 'save-prefs');
+  assert.equal(sent[0].payload.prefs.focusConceptId, 'relative_clauses');
+
+  // Resolve save-prefs with a valid read model.
+  resolveSavePrefs({
+    subjectReadModel: normaliseGrammarReadModel({
+      learnerId: 'learner-a',
+      phase: 'dashboard',
+      prefs: { mode: 'learn', focusConceptId: 'relative_clauses' },
+    }, 'learner-a'),
+  });
+  // Flush microtasks.
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+
+  // Now start-session must have dispatched via the onResolved callback.
+  assert.equal(sent.length, 2, 'start-session dispatched after save-prefs resolved');
+  assert.equal(sent[1].command, 'start-session');
+  assert.equal(sent[1].payload.focusConceptId, 'relative_clauses');
+  // `smart` is a focus-using mode (only trouble/surgery/builder drop focus),
+  // so the target mode stays `smart` rather than falling back to `learn`.
+  assert.equal(sent[1].payload.mode, 'smart');
+
+  // Resolve start-session so any trailing handlers run cleanly.
+  resolveStartSession({
+    subjectReadModel: normaliseGrammarReadModel({
+      learnerId: 'learner-a',
+      phase: 'session',
+    }, 'learner-a'),
+  });
+  await Promise.resolve();
+});
+
+// --- U3 session redesign (one task, post-answer help only) -----------------
+//
+// These tests pin the visibility contract that `grammarSessionHelpVisibility`
+// (U8) ships to the JSX. They cover the three canonical states: pre-answer
+// session, post-answer correct, post-answer wrong. Every adult-facing string
+// removed by U3 (`Worker authority`, `Worker-marked question`) is asserted
+// absent, and the full `GRAMMAR_CHILD_FORBIDDEN_TERMS` fixture is iterated on
+// the session HTML so a future leak is caught automatically.
+
+function u3HarnessWithSample() {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 2,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  return { harness, sample };
+}
+
+function u3ScopeToSessionHtml(html) {
+  // `harness.render()` returns the whole app surface. The session scene is
+  // emitted as `<section class="grammar-session"...>` — we narrow the HTML
+  // so dashboard/analytics panels (which may legitimately hold adult
+  // strings behind a `Grown-up view` disclosure) are not swept by the
+  // forbidden-terms loop.
+  const match = html.match(/<section class="grammar-session"[\s\S]*?<\/section>/);
+  assert.ok(match, 'session scene was rendered');
+  return match[0];
+}
+
+test('U3: pre-answer session hides every help surface', () => {
+  const { harness } = u3HarnessWithSample();
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  // Silent-no-op hedge (Phase 2 U4): the worked-solution flag stays false
+  // pre-answer, so if a stray button ever slipped through the gate the
+  // state would betray the leak. Mirrors the faded-support assertion.
+  assert.equal(grammar.session.repair.workedSolutionShown, false);
+
+  const sessionHtml = u3ScopeToSessionHtml(harness.render());
+
+  // Help surfaces gated entirely pre-answer.
+  assert.doesNotMatch(sessionHtml, /Explain this/);
+  assert.doesNotMatch(sessionHtml, /Explain another way/);
+  assert.doesNotMatch(sessionHtml, /Revision cards/);
+  assert.doesNotMatch(sessionHtml, /Worked solution/);
+  assert.doesNotMatch(sessionHtml, /Similar problem/);
+  assert.doesNotMatch(sessionHtml, /Faded support/);
+
+  // Adult-facing copy removed by U3.
+  assert.doesNotMatch(sessionHtml, /Worker authority/i);
+  assert.doesNotMatch(sessionHtml, /Worker-marked question/i);
+
+  // Full forbidden-terms sweep on the session HTML. Any new forbidden
+  // term added to the fixture automatically gates this test.
+  for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+    assert.doesNotMatch(
+      sessionHtml,
+      new RegExp(escapeRegExp(term), 'i'),
+      `forbidden term leaked into session HTML: ${term}`,
+    );
+  }
+
+  // Single primary action remains: the answer input + Submit button.
+  // U3: the submit label is driven by `grammarSessionSubmitLabel(session,
+  // awaitingAdvance)` — practice/pre-answer resolves to `Submit` (no
+  // `answer` tail), matching the Spelling one-task layout.
+  assert.match(sessionHtml, /name="answer"/);
+  assert.match(sessionHtml, />Submit<\/button>/);
+});
+
+test('U3: post-answer correct shows Next question and hides repair', () => {
+  const { harness, sample } = u3HarnessWithSample();
+
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData(sample.correctResponse),
+  });
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'feedback');
+  assert.equal(grammar.feedback.result.correct, true);
+
+  const sessionHtml = u3ScopeToSessionHtml(harness.render());
+
+  // Primary continuation is the single `Next question` button.
+  assert.match(sessionHtml, /Next question/);
+  // Correct answers do not surface retry / show-a-step / show-answer.
+  assert.doesNotMatch(sessionHtml, /Retry/);
+  assert.doesNotMatch(sessionHtml, /Show a step/);
+  assert.doesNotMatch(sessionHtml, /Show answer/);
+  // U3 follower: correct answers also suppress every remediation surface.
+  // `Worked solution`, `Similar problem`, `Faded support`, and the AI
+  // enrichment relabel (`Explain another way`) are post-answer-wrong
+  // affordances only — never surfaced when the learner is correct.
+  assert.doesNotMatch(sessionHtml, /Worked solution/i);
+  assert.doesNotMatch(sessionHtml, /Similar problem/i);
+  assert.doesNotMatch(sessionHtml, /Faded support/i);
+  assert.doesNotMatch(sessionHtml, /Explain another way/i);
+  assert.doesNotMatch(sessionHtml, /Worker authority/i);
+  assert.doesNotMatch(sessionHtml, /Worker-marked question/i);
+});
+
+test('U3: post-answer wrong shows repair + relabelled AI explanation', () => {
+  const { harness, sample } = u3HarnessWithSample();
+  const wrongAnswer = sample.sample.inputSpec.options.find(
+    (option) => option.value !== sample.correctResponse.answer,
+  ).value;
+
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData({ answer: wrongAnswer }),
+  });
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'feedback');
+  assert.equal(grammar.feedback.result.correct, false);
+
+  const sessionHtml = u3ScopeToSessionHtml(harness.render());
+
+  // Post-answer wrong renders every repair / help surface.
+  assert.match(sessionHtml, /Retry/);
+  assert.match(sessionHtml, /Worked solution/);
+  assert.match(sessionHtml, /Similar problem/);
+  // AI enrichment trigger relabelled to child copy in the feedback phase.
+  assert.match(sessionHtml, /Explain another way/);
+  assert.doesNotMatch(sessionHtml, /Explain this/);
+  assert.match(sessionHtml, /Revision cards/);
+  // Adult-facing copy still absent.
+  assert.doesNotMatch(sessionHtml, /Worker authority/i);
+  assert.doesNotMatch(sessionHtml, /Worker-marked question/i);
+});
+
+test('U3: forbidden-terms sweep runs across the full session HTML in every phase', () => {
+  const { harness, sample } = u3HarnessWithSample();
+  const wrongAnswer = sample.sample.inputSpec.options.find(
+    (option) => option.value !== sample.correctResponse.answer,
+  ).value;
+
+  // Pre-answer
+  let sessionHtml = u3ScopeToSessionHtml(harness.render());
+  for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+    assert.doesNotMatch(
+      sessionHtml,
+      new RegExp(escapeRegExp(term), 'i'),
+      `pre-answer session leaked forbidden term: ${term}`,
+    );
+  }
+
+  // Post-answer wrong — the densest surface (repair + AI + worked solution).
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData({ answer: wrongAnswer }),
+  });
+  sessionHtml = u3ScopeToSessionHtml(harness.render());
+  for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+    assert.doesNotMatch(
+      sessionHtml,
+      new RegExp(escapeRegExp(term), 'i'),
+      `post-answer session leaked forbidden term: ${term}`,
+    );
+  }
+
+  // U3 follower: post-answer correct — sparser surface but still needs the
+  // forbidden-terms sweep so a future regression (e.g., a progress summary
+  // leaking `Worker authority` into the correct-answer feedback) is caught.
+  const { harness: harness2, sample: sample2 } = u3HarnessWithSample();
+  harness2.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData(sample2.correctResponse),
+  });
+  sessionHtml = u3ScopeToSessionHtml(harness2.render());
+  for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+    assert.doesNotMatch(
+      sessionHtml,
+      new RegExp(escapeRegExp(term), 'i'),
+      `post-answer-correct session leaked forbidden term: ${term}`,
+    );
+  }
+});
+
+// U3 follower: the error banner is rendered via `translateGrammarSessionError`
+// so raw Worker strings never leak to children. The pre-submit validation
+// path (dispatching `grammar-submit-form` with no response) writes a
+// known child-copy string to `grammar.error`; the banner must render that
+// copy and carry `role="alert"` for assistive tech. This test pins both.
+test('U3 follower: error banner renders child copy with role="alert"', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 2,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  // Invalid submit: FormData carries no `answer`, triggering the client-side
+  // `setGrammarError(context, 'Choose or type an answer before submitting.')`
+  // branch in `module.js`.
+  harness.dispatch('grammar-submit-form', { formData: new FormData() });
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.match(grammar.error, /Choose or type an answer/);
+
+  const sessionHtml = u3ScopeToSessionHtml(harness.render());
+  // Banner preserves `role="alert"` (assistive tech contract).
+  assert.match(sessionHtml, /<div class="feedback bad" role="alert">/);
+  // Banner renders the child-copy translation, NOT the adult-diagnostic
+  // `Grammar command failed` title the pre-follower JSX used.
+  assert.doesNotMatch(sessionHtml, /Grammar command failed/);
+  assert.match(sessionHtml, /Something went wrong/);
+  // In this validation path, the translator preserves the already-child
+  // copy string verbatim — so the banner body shows it.
+  assert.match(sessionHtml, /Choose or type an answer before submitting\./);
 });
