@@ -14,6 +14,34 @@ import {
 
 const REQUIRED_CATALOG_KINDS = Object.freeze(Object.keys(BUNDLED_EFFECT_CATALOG));
 
+export const EXIT_OK = 0;
+export const EXIT_VALIDATION = 1;
+export const EXIT_USAGE = 2;
+export const EXIT_TRANSPORT = 3;
+
+const HELP_BANNER = `Usage: node scripts/effect-config-production-smoke.mjs [--origin <url>]
+
+Asserts the production effect-config publish covers all bundled kinds
+and is structurally valid. Reads the same /api/bootstrap payload the
+browser consumes via monsterVisualConfig.config.effect.
+
+Flags:
+  --origin <url>, --url <url>   Origin to probe (default https://ks2.eugnel.uk).
+  --timeout-ms <ms>             Per-request timeout (default 15000).
+  --help, -h                    Show this banner.
+
+Env vars:
+  KS2_SMOKE_ORIGIN              Equivalent to --origin.
+  KS2_SMOKE_TIMEOUT_MS          Equivalent to --timeout-ms.
+
+Exit codes:
+  0  ok
+  1  validation failure (collectFailures non-empty)
+  2  usage error (bad --origin)
+  3  transport failure (fetch/bootstrap unreachable)
+
+Output: a single JSON envelope on stdout with { ok, origin, exit_code, ... }.`;
+
 async function fetchPublishedEffectConfig(origin) {
   // The published effect config reaches the browser as a sub-document under
   // `monsterVisualConfig.config.effect` on `/api/bootstrap`. Demo session is
@@ -73,14 +101,36 @@ export function collectFailures(effectConfig) {
   return failures;
 }
 
+function emit(envelope) {
+  console.log(JSON.stringify(envelope, null, 2));
+}
+
 async function main() {
-  const origin = configuredOrigin();
-  const effectConfig = await fetchPublishedEffectConfig(origin);
+  if (process.argv.includes('--help') || process.argv.includes('-h')) {
+    console.log(HELP_BANNER);
+    return EXIT_OK;
+  }
+
+  let origin;
+  try {
+    origin = configuredOrigin();
+  } catch (error) {
+    emit({ ok: false, exit_code: EXIT_USAGE, failures: [error?.message || String(error)] });
+    return EXIT_USAGE;
+  }
+
+  let effectConfig;
+  try {
+    effectConfig = await fetchPublishedEffectConfig(origin);
+  } catch (error) {
+    emit({ ok: false, origin, exit_code: EXIT_TRANSPORT, failures: [error?.message || String(error)] });
+    return EXIT_TRANSPORT;
+  }
+
   const failures = collectFailures(effectConfig);
   if (failures.length > 0) {
-    console.log(JSON.stringify({ ok: false, origin, failures }, null, 2));
-    process.exit(1);
-    return;
+    emit({ ok: false, origin, exit_code: EXIT_VALIDATION, failures });
+    return EXIT_VALIDATION;
   }
 
   const catalogKinds = Object.keys(effectConfig.catalog).sort();
@@ -89,17 +139,24 @@ async function main() {
     ...Object.keys(effectConfig.celebrationTunables || {}),
   ]).size;
 
-  console.log(JSON.stringify({
+  emit({
     ok: true,
     origin,
+    exit_code: EXIT_OK,
     catalog_kinds: catalogKinds,
     asset_count: assetCount,
-  }, null, 2));
+  });
+  return EXIT_OK;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main().catch((error) => {
-    console.error(`[effect-config-production-smoke] ${error?.stack || error?.message || error}`);
-    process.exit(1);
-  });
+  main()
+    .then((code) => process.exit(code))
+    .catch((error) => {
+      // Fallback: any uncaught path still emits a JSON envelope on stdout
+      // before exiting, so callers parsing stdout do not have to special-case
+      // the unknown-failure mode.
+      emit({ ok: false, exit_code: EXIT_TRANSPORT, failures: [error?.message || String(error)] });
+      process.exit(EXIT_TRANSPORT);
+    });
 }
