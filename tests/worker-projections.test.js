@@ -6,6 +6,7 @@ import { MONSTER_CELEBRATION_REPLAY_REQUEST_TYPE } from '../worker/src/projectio
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const PROJECTION_RECENT_EVENT_LIMIT = 200;
 
 function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a' } = {}) {
   const now = Date.UTC(2026, 0, 1);
@@ -107,6 +108,11 @@ function insertProjectionWindowFillerEvents(DB, { learnerId = 'learner-a', count
   }
 }
 
+function eventLogReads(DB) {
+  return DB.takeQueryLog()
+    .filter((entry) => entry.operation === 'all' && /\bFROM event_log\b/i.test(entry.sql));
+}
+
 async function completePossessRound(harness) {
   let latest = await harness.command('start-session', {
     mode: 'single',
@@ -164,6 +170,17 @@ test('spelling command projection applies monster rewards and returns celebratio
       WHERE learner_id = 'learner-a' AND event_type = 'reward.monster'
     `).get().count;
     assert.equal(rewardCount, 1);
+    const readModelRow = harness.DB.db.prepare(`
+      SELECT model_json, source_revision
+      FROM learner_read_models
+      WHERE learner_id = 'learner-a'
+        AND model_key = 'command.projection.v1'
+    `).get();
+    assert.ok(readModelRow);
+    const readModel = JSON.parse(readModelRow.model_json);
+    assert.equal(readModel.rewards.systemId, 'monster-codex');
+    assert.ok(readModel.rewards.state.inklet.mastered.includes('possess'));
+    assert.ok(readModelRow.source_revision >= secureSubmit.body.mutation.appliedRevision);
 
     const replay = await harness.postRaw(secureSubmit.requestBody);
     assert.equal(replay.response.status, 200);
@@ -226,7 +243,10 @@ test('spelling command projection emits requested monster celebration replays on
       createdAt: Date.UTC(2026, 3, 24, 18, 0, 0),
     });
 
+    harness.DB.clearQueryLog();
     const firstCompletion = await completePossessRound(harness);
+    const firstEventReads = eventLogReads(harness.DB);
+    assert.equal(firstEventReads.every((entry) => entry.rowCount <= PROJECTION_RECENT_EVENT_LIMIT), true);
     const firstReplayEvents = firstCompletion.latest.body.projections.rewards.events
       .filter((event) => event.replayRequestId === replayRequestId);
 
@@ -250,6 +270,36 @@ test('spelling command projection emits requested monster celebration replays on
         .some((event) => event.replayRequestId === replayRequestId),
       false,
     );
+  } finally {
+    harness.close();
+  }
+});
+
+test('no-op spelling command avoids historical projection reads and learner writes', async () => {
+  const harness = createCommandHarness();
+
+  try {
+    insertProjectionWindowFillerEvents(harness.DB, {
+      count: 1005,
+      startAt: Date.UTC(2026, 3, 24, 17, 30, 0),
+    });
+
+    harness.DB.clearQueryLog();
+    const result = await harness.command('check-word-bank-drill', {
+      slug: 'possess',
+      typed: 'possess',
+    });
+    const reads = eventLogReads(harness.DB);
+
+    assert.equal(result.body.changed, false);
+    assert.equal(result.body.mutation.appliedRevision, 0);
+    assert.equal(reads.length, 0);
+    const readModelCount = harness.DB.db.prepare(`
+      SELECT COUNT(*) AS count
+      FROM learner_read_models
+      WHERE learner_id = 'learner-a'
+    `).get().count;
+    assert.equal(readModelCount, 0);
   } finally {
     harness.close();
   }

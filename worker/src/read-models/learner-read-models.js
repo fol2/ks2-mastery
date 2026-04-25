@@ -2,6 +2,7 @@ import { cloneSerialisable } from '../../../src/platform/core/repositories/helpe
 
 export const LEARNER_SUMMARY_MODEL_KEY = 'learner.summary.v1';
 export const PARENT_SUMMARY_MODEL_KEY = 'parent.summary.v1';
+export const COMMAND_PROJECTION_MODEL_KEY = 'command.projection.v1';
 export const PUBLIC_ACTIVITY_TYPES = new Set([
   'spelling.retry-cleared',
   'spelling.word-secured',

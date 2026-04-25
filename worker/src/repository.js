@@ -34,6 +34,7 @@ import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system
 import { buildSpellingProgressPools, buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
 import {
   activityFeedRowFromEventRow,
+  COMMAND_PROJECTION_MODEL_KEY,
   emptyLearnerReadModel,
   normaliseActivityFeedRow,
   normaliseLearnerReadModelRow,
@@ -96,6 +97,8 @@ const PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LOOKUP_LIMIT_PER_LEARNER = 5;
 const PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER = 50;
 const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 1;
 const PUBLIC_MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
+const PROJECTION_RECENT_EVENT_LIMIT = 200;
+const COMMAND_PROJECTION_READ_MODEL_VERSION = 1;
 const PUBLIC_MONSTER_IDS = new Set(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']);
 const PUBLIC_DIRECT_SPELLING_MONSTER_IDS = ['inklet', 'glimmerbug', 'vellhorn'];
 const PUBLIC_MONSTER_BRANCHES = new Set(['b1', 'b2']);
@@ -1319,6 +1322,33 @@ async function upsertLearnerReadModel(db, learnerId, modelKey, model, {
   return readLearnerReadModel(db, learnerId, key);
 }
 
+function bindLearnerReadModelUpsertStatement(db, learnerId, modelKey, model, {
+  sourceRevision = 0,
+  generatedAt = Date.now(),
+  updatedAt = generatedAt,
+  guard = null,
+} = {}) {
+  const key = normaliseReadModelKey(modelKey);
+  const timestamp = Math.max(0, Number(updatedAt) || Date.now());
+  const params = [
+    learnerId,
+    key,
+    JSON.stringify(cloneSerialisable(model) || {}),
+    Math.max(0, Number(sourceRevision) || 0),
+    Math.max(0, Number(generatedAt) || timestamp),
+    timestamp,
+  ];
+  return bindStatement(db, `
+    INSERT INTO learner_read_models (learner_id, model_key, model_json, source_revision, generated_at, updated_at)
+    ${guardedValueSource(params.length, guard)}
+    ON CONFLICT(learner_id, model_key) DO UPDATE SET
+      model_json = excluded.model_json,
+      source_revision = excluded.source_revision,
+      generated_at = excluded.generated_at,
+      updated_at = excluded.updated_at
+  `, guardedParams(params, guard));
+}
+
 async function readLearnerReadModel(db, learnerId, modelKey) {
   const key = normaliseReadModelKey(modelKey);
   const row = await first(db, `
@@ -1410,6 +1440,27 @@ function bindLearnerActivityFeedUpsertStatement(db, row, { guard = null } = {}) 
       created_at = excluded.created_at,
       updated_at = excluded.updated_at
   `, guardedParams(params, guard));
+}
+
+function commandProjectionReadModelFromRuntime(runtime, events, nowTs) {
+  const gameState = runtime?.gameState && typeof runtime.gameState === 'object' && !Array.isArray(runtime.gameState)
+    ? runtime.gameState
+    : {};
+  const rewardState = cloneSerialisable(gameState[PUBLIC_MONSTER_CODEX_SYSTEM_ID]) || {};
+  const eventList = Array.isArray(events) ? events : [];
+  return {
+    version: COMMAND_PROJECTION_READ_MODEL_VERSION,
+    generatedAt: Math.max(0, Number(nowTs) || Date.now()),
+    rewards: {
+      systemId: PUBLIC_MONSTER_CODEX_SYSTEM_ID,
+      state: rewardState,
+    },
+    eventCounts: {
+      written: eventList.length,
+      domain: eventList.filter((event) => typeof event?.type === 'string' && !event.type.startsWith('reward.')).length,
+      reactions: eventList.filter((event) => typeof event?.type === 'string' && event.type.startsWith('reward.')).length,
+    },
+  };
 }
 
 async function readLearnerActivityFeed(db, learnerId, {
@@ -2740,12 +2791,17 @@ async function readLearnerProjectionBundle(db, accountId, learnerId) {
     SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
     FROM event_log
     WHERE learner_id = ?
-    ORDER BY created_at ASC, id ASC
-  `, [learnerId]);
+    ORDER BY created_at DESC, id DESC
+    LIMIT ?
+  `, [learnerId, PROJECTION_RECENT_EVENT_LIMIT]);
+  const commandProjectionReadModel = await readLearnerReadModel(db, learnerId, COMMAND_PROJECTION_MODEL_KEY);
 
   return {
     gameState: Object.fromEntries(gameRows.map((row) => [row.system_id, gameStateRowToRecord(row)])),
-    events: normaliseEventLog(eventRows.map(eventRowToRecord).filter(Boolean)),
+    events: normaliseEventLog(sortEventRowsAscending(eventRows).map(eventRowToRecord).filter(Boolean)),
+    readModels: {
+      commandProjection: commandProjectionReadModel,
+    },
   };
 }
 
@@ -2969,6 +3025,21 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
     });
     const activityStatement = bindLearnerActivityFeedUpsertStatement(db, activityRow, { guard });
     if (activityStatement) statements.push(activityStatement);
+  }
+  if (Object.prototype.hasOwnProperty.call(gameState, PUBLIC_MONSTER_CODEX_SYSTEM_ID)) {
+    const commandProjectionReadModel = commandProjectionReadModelFromRuntime(runtime, persistedEvents, nowTs);
+    statements.push(bindLearnerReadModelUpsertStatement(
+      db,
+      learnerId,
+      COMMAND_PROJECTION_MODEL_KEY,
+      commandProjectionReadModel,
+      {
+        sourceRevision: guard ? guard.expectedRevision + 1 : 0,
+        generatedAt: nowTs,
+        updatedAt: nowTs,
+        guard,
+      },
+    ));
   }
 
   const summary = {
