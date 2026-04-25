@@ -1,0 +1,15 @@
+{
+  "tier": "60-learner-stretch-certified",
+  "description": "60-learner stretch certification. Bootstrap burst 30-50, 3-5 rounds, repeated on two separate days or deployments.",
+  "minEvidenceSchemaVersion": 2,
+  "thresholds": {
+    "max5xx": 0,
+    "maxNetworkFailures": 0,
+    "maxBootstrapP95Ms": 750,
+    "maxCommandP95Ms": 400,
+    "maxResponseBytes": 600000,
+    "requireZeroSignals": true,
+    "requireBootstrapCapacity": true
+  },
+  "notes": "Preferred latency caps are tighter than the absolute hard caps; sustained failure below the hard cap still fails the run."
+}

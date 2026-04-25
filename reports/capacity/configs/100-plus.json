@@ -1,0 +1,15 @@
+{
+  "tier": "100-plus-certified",
+  "description": "100+ learner school-ready certification. Bootstrap burst 50+, mixed subject commands, Parent Hub lazy endpoints included.",
+  "minEvidenceSchemaVersion": 2,
+  "thresholds": {
+    "max5xx": 0,
+    "maxNetworkFailures": 0,
+    "maxBootstrapP95Ms": 750,
+    "maxCommandP95Ms": 400,
+    "maxResponseBytes": 600000,
+    "requireZeroSignals": true,
+    "requireBootstrapCapacity": true
+  },
+  "notes": "Requires D1 row metrics review, Worker tail evidence, and a rollback/degrade drill before the decision is recorded."
+}

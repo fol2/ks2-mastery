@@ -1,0 +1,15 @@
+{
+  "tier": "small-pilot-provisional",
+  "description": "Small-pilot provisional certification. Up to 10 learners, cold-bootstrap burst of 10, 1 round. Production demo sessions.",
+  "minEvidenceSchemaVersion": 1,
+  "thresholds": {
+    "max5xx": 0,
+    "maxNetworkFailures": 0,
+    "maxBootstrapP95Ms": 1000,
+    "maxCommandP95Ms": 750,
+    "maxResponseBytes": 600000,
+    "requireZeroSignals": true,
+    "requireBootstrapCapacity": true
+  },
+  "notes": "These thresholds match the operational threshold list in docs/operations/capacity.md. Any change requires PR review."
+}

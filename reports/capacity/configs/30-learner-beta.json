@@ -1,0 +1,15 @@
+{
+  "tier": "30-learner-beta-certified",
+  "description": "30-learner classroom beta. Bootstrap burst 20-30, 3 rounds, repeated 3 times on preview or production-safe demo sessions.",
+  "minEvidenceSchemaVersion": 2,
+  "thresholds": {
+    "max5xx": 0,
+    "maxNetworkFailures": 0,
+    "maxBootstrapP95Ms": 1000,
+    "maxCommandP95Ms": 750,
+    "maxResponseBytes": 600000,
+    "requireZeroSignals": true,
+    "requireBootstrapCapacity": true
+  },
+  "notes": "Requires U3 telemetry (meta.capacity.queryCount, d1RowsRead) for evidence completeness. Schema v2 or later."
+}
