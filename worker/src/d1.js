@@ -12,6 +12,26 @@ export function requireDatabase(env = {}) {
   return env.DB;
 }
 
+/**
+ * Acquire the D1 handle and — when a capacity collector is supplied —
+ * wrap it so every `prepare()` statement records row counts and duration
+ * on the collector. When `capacity` is absent, returns the raw handle
+ * untouched (zero overhead for fixture paths that do not emit
+ * `capacity.request`). U3 round 1 (P1 #03): threading this helper
+ * through `accountSessionFromToken`, demo rate-limit protection, and the
+ * demo bootstrap guard closes the proxy bypass where session-lookup and
+ * 5-per-command rate-limit queries were not counted by the collector.
+ *
+ * @param {object} env
+ * @param {object|null} capacity
+ * @returns {object}
+ */
+export function requireDatabaseWithCapacity(env = {}, capacity = null) {
+  const db = requireDatabase(env);
+  if (!capacity) return db;
+  return withCapacityCollector(db, capacity);
+}
+
 function nowMs() {
   return typeof performance?.now === 'function' ? performance.now() : Date.now();
 }

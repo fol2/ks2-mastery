@@ -4863,8 +4863,11 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       // U3: stamp `bootstrapCapacity` on the collector when the bundle
       // emitted one. The collector is mutated rather than returned —
       // keeps repository call signatures stable across all callers.
-      if (capacity && bundle?.bootstrapCapacity != null) {
-        capacity.bootstrapCapacity = bundle.bootstrapCapacity;
+      // U3 round 1 (P1 #05): route through `setBootstrapCapacity()` so
+      // only allowlisted keys flow to public JSON; any future bundle
+      // fields need an explicit allowlist amendment in logger.js.
+      if (capacity && bundle?.bootstrapCapacity != null && typeof capacity.setBootstrapCapacity === 'function') {
+        capacity.setBootstrapCapacity(bundle.bootstrapCapacity);
       }
       return bundle;
     },

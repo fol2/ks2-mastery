@@ -1,6 +1,15 @@
 import { randomToken, sessionCookie, sha256, createSession } from '../auth.js';
 import { BadRequestError, ForbiddenError, UnauthenticatedError } from '../errors.js';
-import { all, batch, bindStatement, first, requireDatabase, run, sqlPlaceholders } from '../d1.js';
+import {
+  all,
+  batch,
+  bindStatement,
+  first,
+  requireDatabase,
+  requireDatabaseWithCapacity,
+  run,
+  sqlPlaceholders,
+} from '../d1.js';
 import {
   isProductionRuntime as requestOriginIsProductionRuntime,
   requireSameOrigin as requestRequireSameOrigin,
@@ -142,9 +151,12 @@ function demoSessionIdentifier(session = {}) {
   return cleanText(session.sessionId || session.sessionHash || session.accountId) || 'unknown-demo-session';
 }
 
-export async function protectDemoSubjectCommand({ env, request, session, command, now = Date.now() } = {}) {
+export async function protectDemoSubjectCommand({ env, request, session, command, now = Date.now(), capacity = null } = {}) {
   if (!session?.demo) return;
-  const db = requireDatabase(env);
+  // U3 round 1 (P1 #03): wrap the D1 handle when a capacity collector
+  // is supplied so every rate-limit query and the demo-active guard are
+  // counted. Previously 5+ queries per command bypassed the proxy.
+  const db = requireDatabaseWithCapacity(env, capacity);
   await requireActiveDemoAccount(db, session.accountId, now);
   const commandType = cleanText(`${command?.subjectId || 'subject'}:${command?.command || 'unknown'}`);
   await enforceDemoRateLimit(db, [
@@ -171,9 +183,9 @@ export async function protectDemoSubjectCommand({ env, request, session, command
   ], now, 'Too many demo practice requests. Please wait a few minutes and try again.');
 }
 
-export async function protectDemoParentHubRead({ env, request, session, now = Date.now() } = {}) {
+export async function protectDemoParentHubRead({ env, request, session, now = Date.now(), capacity = null } = {}) {
   if (!session?.demo) return;
-  const db = requireDatabase(env);
+  const db = requireDatabaseWithCapacity(env, capacity);
   await requireActiveDemoAccount(db, session.accountId, now);
   await enforceDemoRateLimit(db, [
     {
@@ -194,9 +206,9 @@ export async function protectDemoParentHubRead({ env, request, session, now = Da
   ], now, 'Too many demo Parent Hub requests. Please wait a few minutes and try again.');
 }
 
-export async function protectDemoTtsFallback({ env, request, session, payload = {}, now = Date.now() } = {}) {
+export async function protectDemoTtsFallback({ env, request, session, payload = {}, now = Date.now(), capacity = null } = {}) {
   if (!session?.demo) return;
-  const db = requireDatabase(env);
+  const db = requireDatabaseWithCapacity(env, capacity);
   await requireActiveDemoAccount(db, session.accountId, now);
   const scope = cleanText(payload.scope) || 'session';
   const provider = cleanText(payload.provider) || 'remote';
@@ -226,9 +238,9 @@ export async function protectDemoTtsFallback({ env, request, session, payload = 
   ], now, 'Too many demo dictation audio requests. Please wait a few minutes and try again.');
 }
 
-export async function protectDemoTtsLookup({ env, request, session, now = Date.now() } = {}) {
+export async function protectDemoTtsLookup({ env, request, session, now = Date.now(), capacity = null } = {}) {
   if (!session?.demo) return;
-  const db = requireDatabase(env);
+  const db = requireDatabaseWithCapacity(env, capacity);
   await requireActiveDemoAccount(db, session.accountId, now);
   await enforceDemoRateLimit(db, [
     {
@@ -337,8 +349,8 @@ async function insertDemoLearner(db, accountId, learnerId, now) {
   return learner;
 }
 
-export async function createDemoSession({ env, request, now = Date.now(), allowMissingOrigin = false } = {}) {
-  const db = requireDatabase(env);
+export async function createDemoSession({ env, request, now = Date.now(), allowMissingOrigin = false, capacity = null } = {}) {
+  const db = requireDatabaseWithCapacity(env, capacity);
   requireSameOrigin(request, env, { allowMissingOrigin });
   await protectDemoCreate(db, request, now);
   await cleanupExpiredDemoAccounts(db, now);
@@ -391,8 +403,8 @@ export async function requireActiveDemoAccount(db, accountId, now = Date.now()) 
   return account;
 }
 
-export async function resetDemoAccount({ env, request, session, now = Date.now() } = {}) {
-  const db = requireDatabase(env);
+export async function resetDemoAccount({ env, request, session, now = Date.now(), capacity = null } = {}) {
+  const db = requireDatabaseWithCapacity(env, capacity);
   requireSameOrigin(request, env);
   await requireActiveDemoAccount(db, session.accountId, now);
   await protectDemoReset(db, session.accountId, now);
