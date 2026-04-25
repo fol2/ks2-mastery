@@ -4,6 +4,20 @@ import assert from 'node:assert/strict';
 import { analyseBootstrapPayload } from '../scripts/probe-production-bootstrap.mjs';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
+function captureLogs(fn) {
+  const captured = [];
+  const originalLog = console.log;
+  console.log = (...args) => {
+    captured.push(args.map((arg) => (typeof arg === 'string' ? arg : JSON.stringify(arg))).join(' '));
+  };
+  return Promise.resolve()
+    .then(fn)
+    .then((value) => ({ value, captured }))
+    .finally(() => {
+      console.log = originalLog;
+    });
+}
+
 const BASE_URL = 'https://repo.test';
 const NOW = Date.UTC(2026, 0, 1);
 const RECENT_SESSION_LIMIT_PER_LEARNER = 5;
@@ -282,6 +296,36 @@ test('production bootstrap still requires an authenticated session before capaci
 
   assert.equal(response.status, 401);
   assert.equal(payload.code, 'unauthenticated');
+
+  server.close();
+});
+
+// U4 characterization lock: pins the `[ks2-capacity]` structured telemetry
+// line that the Worker now emits on an unauthenticated bootstrap. Failure
+// rows (`failureCategory !== 'ok'`) bypass the 10 % sampler and always
+// emit, so an unauthenticated 401 response is a deterministic witness for
+// the telemetry contract without needing to stub Math.random.
+test('U4 characterization — unauthenticated bootstrap emits [ks2-capacity] with authFailure category', async () => {
+  const server = createProductionServer();
+  const { captured, value: response } = await captureLogs(() => server.fetchRaw(`${BASE_URL}/api/bootstrap`));
+  assert.equal(response.status, 401);
+  const capacityLines = captured.filter((line) => line.startsWith('[ks2-capacity] '));
+  assert.equal(capacityLines.length, 1, `expected exactly one [ks2-capacity] line, got ${capacityLines.length}: ${JSON.stringify(capacityLines)}`);
+  const payload = JSON.parse(capacityLines[0].slice('[ks2-capacity] '.length));
+  // Shape contract — keys present, values bounded.
+  assert.equal(payload.endpoint, '/api/bootstrap');
+  assert.equal(payload.route, 'GET /api/bootstrap');
+  assert.equal(payload.method, 'GET');
+  assert.equal(payload.status, 401);
+  assert.equal(payload.failureCategory, 'authFailure');
+  assert.ok(typeof payload.wallTimeMs === 'number' && payload.wallTimeMs >= 0);
+  assert.ok(typeof payload.responseBytes === 'number' && payload.responseBytes > 0);
+  assert.deepEqual(payload.boundedCounts, {});
+  assert.ok(payload.d1 && typeof payload.d1 === 'object');
+  assert.ok(typeof payload.d1.queryCount === 'number');
+  assert.ok(typeof payload.d1.rowsRead === 'number');
+  assert.ok(typeof payload.d1.rowsWritten === 'number');
+  assert.ok(typeof payload.requestId === 'string' && payload.requestId.startsWith('ks2-req-'));
 
   server.close();
 });
