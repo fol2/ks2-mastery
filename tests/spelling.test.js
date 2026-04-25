@@ -150,6 +150,48 @@ test('Smart Review can be scoped to the Extra spelling pool', () => {
   assert.ok(words.every((word) => word.year === 'extra'));
 });
 
+test('Smart Review reuses one progress snapshot when starting from dense learner history', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / (24 * 60 * 60 * 1000));
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const progress = Object.fromEntries(WORDS
+    .filter((word) => word.spellingPool === 'core')
+    .map((word, index) => [word.slug, {
+      stage: index % 6,
+      attempts: 4 + (index % 5),
+      correct: 3 + (index % 5),
+      wrong: index % 3,
+      dueDay: today - (index % 7),
+      lastDay: today - 1,
+      lastResult: index % 3 === 0 ? 'correct' : 'wrong',
+    }]));
+  repositories.subjectStates.writeData('learner-a', 'spelling', { progress });
+  const persistence = createSpellingPersistence({ repositories, now });
+  const reads = countStorageReads(persistence.storage);
+  const service = createSpellingService({
+    repository: persistence,
+    now,
+    random: makeSeededRandom(17),
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+  });
+
+  const transition = service.startSession('learner-a', {
+    mode: 'smart',
+    yearFilter: 'core',
+    length: 10,
+  });
+
+  assert.equal(transition.ok, true);
+  assert.equal(transition.state.phase, 'session');
+  assert.equal(transition.state.session.uniqueWords.length, 10);
+  assert.equal(reads.get('ks2-spell-progress-learner-a'), 1);
+});
+
 test('Smart Review keeps secured Extra words with old mistakes behind active learning', () => {
   const now = () => Date.UTC(2026, 0, 10);
   const today = Math.floor(now() / (24 * 60 * 60 * 1000));

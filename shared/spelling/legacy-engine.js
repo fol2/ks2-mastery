@@ -212,8 +212,12 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         return Object.assign({}, defaultProgress(), existing || {});
       }
 
+      function getProgressFromStore(profileId, slug, progressStore) {
+        return progressForSlug(progressStore || loadProgress(profileId), slug);
+      }
+
       function getProgress(profileId, slug) {
-        return progressForSlug(loadProgress(profileId), slug);
+        return getProgressFromStore(profileId, slug);
       }
 
       function setProgress(profileId, slug, record) {
@@ -234,8 +238,8 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         return POOLS.core.slice();
       }
 
-      function scoreForSmart(profileId, word) {
-        var p = getProgress(profileId, word.slug);
+      function scoreForSmart(profileId, word, progressStore) {
+        var p = getProgressFromStore(profileId, word.slug, progressStore);
         var today = todayDay();
         var total = p.correct + p.wrong;
         var score = 0;
@@ -248,8 +252,8 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         return score;
       }
 
-      function scoreForTrouble(profileId, word) {
-        var p = getProgress(profileId, word.slug);
+      function scoreForTrouble(profileId, word, progressStore) {
+        var p = getProgressFromStore(profileId, word.slug, progressStore);
         var total = p.correct + p.wrong;
         var score = 10;
         if (p.wrong > 0) score += p.wrong * 24;
@@ -260,8 +264,8 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         return score;
       }
 
-      function smartBucket(profileId, word) {
-        var p = getProgress(profileId, word.slug);
+      function smartBucket(profileId, word, progressStore) {
+        var p = getProgressFromStore(profileId, word.slug, progressStore);
         var today = todayDay();
         if (p.wrong > 0 && p.dueDay <= today) return "urgent";
         if (p.attempts > 0 && p.dueDay <= today) return "due";
@@ -303,9 +307,10 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         return weight;
       }
 
-      function chooseSmartWords(profileId, opts) {
+      function chooseSmartWords(profileId, opts, progressStore) {
         opts = opts || {};
         var available = filteredWords(opts.yearFilter).slice();
+        var store = progressStore || loadProgress(profileId);
         var length = typeof opts.length === "number" ? opts.length : Infinity;
         var target = Math.min(length, available.length);
         var bucketWeights = { urgent: 7, fragile: 5, due: 4, new: 3, growing: 2, secure: 0.7 };
@@ -314,16 +319,16 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         while (selected.length < target && available.length) {
           var bucketChoices = Object.keys(bucketWeights).map(function (name) {
             var baseWeight = bucketWeights[name];
-            var words = available.filter(function (word) { return smartBucket(profileId, word) === name; });
+            var words = available.filter(function (word) { return smartBucket(profileId, word, store) === name; });
             if (!words.length) return null;
-            var recentBuckets = selected.slice(-3).map(function (item) { return smartBucket(profileId, item); });
+            var recentBuckets = selected.slice(-3).map(function (item) { return smartBucket(profileId, item, store); });
             var repeatPenalty = recentBuckets.filter(function (bucket) { return bucket === name; }).length >= 2 ? 0.5 : 1;
             return { name: name, words: words, weight: baseWeight * repeatPenalty };
           }).filter(Boolean);
 
           var chosenBucket = weightedPick(bucketChoices, function (bucket) { return bucket.weight; });
           if (!chosenBucket) break;
-          var chosenWord = weightedPick(chosenBucket.words, function (word) { return selectionWeight(word, selected, scoreForSmart(profileId, word)); });
+          var chosenWord = weightedPick(chosenBucket.words, function (word) { return selectionWeight(word, selected, scoreForSmart(profileId, word, store)); });
           if (!chosenWord) break;
           selected.push(chosenWord);
           var idx = available.findIndex(function (word) { return word.slug === chosenWord.slug; });
@@ -332,16 +337,17 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         return selected;
       }
 
-      function chooseTroubleWords(profileId, opts) {
+      function chooseTroubleWords(profileId, opts, progressStore) {
         opts = opts || {};
         var today = todayDay();
+        var store = progressStore || loadProgress(profileId);
         var candidates = filteredWords(opts.yearFilter).filter(function (word) {
-          var p = getProgress(profileId, word.slug);
+          var p = getProgressFromStore(profileId, word.slug, store);
           return isTroubleProgress(p, today);
         });
 
         if (!candidates.length) {
-          return { words: chooseSmartWords(profileId, opts), fallback: true };
+          return { words: chooseSmartWords(profileId, opts, store), fallback: true };
         }
 
         var length = typeof opts.length === "number" ? opts.length : Infinity;
@@ -349,7 +355,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         var available = candidates.slice();
         var selected = [];
         while (selected.length < target && available.length) {
-          var chosenWord = weightedPick(available, function (word) { return selectionWeight(word, selected, scoreForTrouble(profileId, word)); });
+          var chosenWord = weightedPick(available, function (word) { return selectionWeight(word, selected, scoreForTrouble(profileId, word, store)); });
           if (!chosenWord) break;
           selected.push(chosenWord);
           var idx = available.findIndex(function (word) { return word.slug === chosenWord.slug; });
@@ -434,6 +440,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         var mode = options.mode || MODES.SMART;
         var yearFilter = mode === MODES.TEST ? "core" : normaliseFilter(options.yearFilter);
         var length = typeof options.length === "number" ? options.length : 20;
+        var progressStore = mode === MODES.TEST ? null : loadProgress(profileId);
 
         var selected = [];
         var actualMode = mode;
@@ -443,14 +450,14 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           selected = options.words.slice();
           actualMode = options.mode || MODES.SINGLE;
         } else if (mode === MODES.TROUBLE) {
-          var choice = chooseTroubleWords(profileId, { yearFilter: yearFilter, length: length });
+          var choice = chooseTroubleWords(profileId, { yearFilter: yearFilter, length: length }, progressStore);
           selected = choice.words;
           fallback = choice.fallback;
           if (fallback) actualMode = MODES.SMART;
         } else if (mode === MODES.TEST) {
           selected = chooseTestWords(profileId, { yearFilter: yearFilter, length: length });
         } else {
-          selected = chooseSmartWords(profileId, { yearFilter: yearFilter, length: length });
+          selected = chooseSmartWords(profileId, { yearFilter: yearFilter, length: length }, progressStore);
         }
 
         if (!selected.length) {
@@ -461,7 +468,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         if (actualMode !== MODES.TEST) {
           for (var k = 0; k < selected.length; k++) {
             var word = selected[k];
-            var progress = getProgress(profileId, word.slug);
+            var progress = getProgressFromStore(profileId, word.slug, progressStore);
             status[word.slug] = {
               attempts: 0,
               successes: 0,
@@ -504,12 +511,12 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
           startedAt: Date.now(),
         };
 
-        return { ok: true, session: session, fallback: fallback };
+        return { ok: true, session: session, fallback: fallback, progressStore: progressStore };
       }
 
-      function candidateWeightForQueueSlug(session, profileId, slug, index) {
+      function candidateWeightForQueueSlug(session, profileId, slug, index, progressStore) {
         var word = WORD_BY_SLUG[slug];
-        var progress = getProgress(profileId, slug);
+        var progress = getProgressFromStore(profileId, slug, progressStore);
         var info = session.status[slug];
         var weight = Math.max(1, 10 - index);
         if (progress.dueDay <= todayDay()) weight += 14;
@@ -521,11 +528,11 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         return Math.max(0.2, weight);
       }
 
-      function chooseNextQueueSlug(session, profileId) {
+      function chooseNextQueueSlug(session, profileId, progressStore) {
         if (!session || !session.queue.length) return null;
         var windowSize = Math.min(8, session.queue.length);
         var candidates = session.queue.slice(0, windowSize).map(function (slug, index) {
-          return { slug: slug, index: index, weight: candidateWeightForQueueSlug(session, profileId, slug, index) };
+          return { slug: slug, index: index, weight: candidateWeightForQueueSlug(session, profileId, slug, index, progressStore) };
         });
         var picked = weightedPick(candidates, function (item) { return item.weight; });
         if (!picked) return session.queue.shift();
@@ -573,7 +580,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
       // { done: false, word, prompt } if a card is ready; or { done: true } if
       // the queue is exhausted. Only valid while phase === 'question' (the caller
       // should not call this during retry/correction).
-      function advanceCard(session, profileId) {
+      function advanceCard(session, profileId, progressStore) {
         if (!session) return { done: true };
         if (session.type === "test") {
           if (!session.queue.length) return { done: true };
@@ -583,7 +590,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         }
 
         while (session.queue.length) {
-          var nextSlug = chooseNextQueueSlug(session, profileId);
+          var nextSlug = chooseNextQueueSlug(session, profileId, progressStore);
           if (!nextSlug) break;
           if (!session.status[nextSlug].done) {
             setCurrentPrompt(session, nextSlug);
