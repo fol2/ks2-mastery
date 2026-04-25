@@ -987,7 +987,7 @@ test('Grammar analytics renders evidence before reward progress', () => {
   assert.match(html, /Choose the correct sentence/);
 });
 
-test('Grammar dashboard Writing Try dispatches grammar-open-transfer to the Writing Try placeholder scene', () => {
+test('Grammar dashboard Writing Try dispatches grammar-open-transfer to the Writing Try scene', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
 
@@ -999,8 +999,12 @@ test('Grammar dashboard Writing Try dispatches grammar-open-transfer to the Writ
   harness.dispatch('grammar-open-transfer');
   assert.equal(harness.store.getState().subjectUi.grammar.phase, 'transfer');
   const transferHtml = harness.render();
+  // Phase 3 U6b replaces the placeholder stub with the real scene. The
+  // hero copy reinforces that the surface is non-scored without leaking
+  // adult-diagnostic terms.
   assert.match(transferHtml, /Writing Try/);
-  assert.match(transferHtml, /Non-scored writing/);
+  assert.match(transferHtml, /Nothing you write here is scored/);
+  assert.match(transferHtml, /class="grammar-transfer-scene"/);
   // Back action returns the learner safely to the dashboard.
   harness.dispatch('grammar-back');
   assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');

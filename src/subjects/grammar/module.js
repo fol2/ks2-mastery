@@ -570,11 +570,84 @@ export const grammarModule = {
     if (action === 'grammar-open-transfer') {
       if (ui.pendingCommand) return true;
       if (ui.phase === 'session' || ui.phase === 'feedback') return true;
-      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => ({
-        ...normaliseGrammarReadModel(current, learnerId),
-        phase: 'transfer',
-        error: '',
-      }));
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+        const normalised = normaliseGrammarReadModel(current, learnerId);
+        // Clear any stale Writing Try transient state so reopening the
+        // scene never auto-picks the last prompt or restores a half-typed
+        // draft from a previous visit (matches the Grammar Bank detail
+        // modal reset in `grammar-open-concept-bank`).
+        return {
+          ...normalised,
+          phase: 'transfer',
+          ui: { ...normalised.ui, transfer: { selectedPromptId: '', draft: '', ticks: {} } },
+          error: '',
+        };
+      });
+      return true;
+    }
+
+    // Phase 3 U6b: Writing Try transient-state dispatchers. All four mutate
+    // only the `ui.transfer` slice — no session, feedback, summary, or
+    // mastery side-effects — so they are safe to fire without a
+    // pendingCommand guard. The normaliser re-validates every value on
+    // round-trip, so a malformed client-side patch cannot persist.
+
+    if (action === 'grammar-close-transfer') {
+      return resetToDashboard(context);
+    }
+
+    if (action === 'grammar-select-transfer-prompt') {
+      const raw = String(context.data?.promptId || context.data?.value || '').slice(0, 64);
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+        const normalised = normaliseGrammarReadModel(current, learnerId);
+        // Switching prompts clears the draft + ticks so a learner never
+        // submits a previous prompt's writing under the wrong promptId.
+        return {
+          ...normalised,
+          ui: { ...normalised.ui, transfer: { selectedPromptId: raw, draft: '', ticks: {} } },
+          error: '',
+        };
+      });
+      return true;
+    }
+
+    if (action === 'grammar-update-transfer-draft') {
+      // U6b: do NOT truncate at the Worker writing cap (2000) here — the
+      // UI needs to detect over-cap drafts to render the child-copy
+      // warning and disable Save. The normaliser applies a much larger
+      // hard cap to prevent unbounded growth while still preserving the
+      // over-cap signal for the scene.
+      const raw = String(context.data?.writing ?? context.data?.value ?? '');
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+        const normalised = normaliseGrammarReadModel(current, learnerId);
+        return {
+          ...normalised,
+          ui: {
+            ...normalised.ui,
+            transfer: { ...normalised.ui.transfer, draft: raw },
+          },
+        };
+      });
+      return true;
+    }
+
+    if (action === 'grammar-toggle-transfer-check') {
+      const key = String(context.data?.key || '').slice(0, 64);
+      if (!key) return true;
+      const checked = Boolean(context.data?.checked);
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+        const normalised = normaliseGrammarReadModel(current, learnerId);
+        return {
+          ...normalised,
+          ui: {
+            ...normalised.ui,
+            transfer: {
+              ...normalised.ui.transfer,
+              ticks: { ...normalised.ui.transfer.ticks, [key]: checked },
+            },
+          },
+        };
+      });
       return true;
     }
 
@@ -745,8 +818,35 @@ export const grammarModule = {
             .filter((entry) => entry.key)
           : [],
       };
+      // U6b: capture the selectedPromptId before dispatch so the resolve
+      // callback can restore it AFTER `applyRemoteReadModel` clobbers the
+      // client `ui.transfer` slot with the Worker's response (the Worker
+      // response never carries the client-side UI slot, so the default
+      // empty shape overwrites selectedPromptId otherwise).
+      const selectedPromptIdBefore = payload.promptId;
       return sendGrammarCommand(context, 'save-transfer-evidence', payload, {
         translateError: translateGrammarTransferError,
+        // U6b: after a successful save, clear the draft + ticks so the
+        // textarea returns to an empty state while leaving
+        // `selectedPromptId` so the learner still sees the saved-history
+        // for the same prompt. The Worker response has already merged the
+        // fresh `transferLane.evidence` through `applyRemoteReadModel`.
+        onResolved: () => {
+          updateGrammarUiForLearner(context, learnerId, (current) => {
+            const normalised = normaliseGrammarReadModel(current, learnerId);
+            return {
+              ...normalised,
+              ui: {
+                ...normalised.ui,
+                transfer: {
+                  selectedPromptId: selectedPromptIdBefore || normalised.ui.transfer.selectedPromptId,
+                  draft: '',
+                  ticks: {},
+                },
+              },
+            };
+          });
+        },
       });
     }
 
