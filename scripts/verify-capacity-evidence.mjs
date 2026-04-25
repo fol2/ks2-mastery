@@ -867,10 +867,20 @@ export function verifyEvidenceRow(row) {
   // Previously this check lived inside `requireConfigAncestry`, which was
   // only called when `configPath` was set. Smoke-pass rows therefore skipped
   // the existence probe and accepted any well-formed 40-char hex SHA.
-  // Runs only when (a) the format gate passed and (b) the operator has not
-  // opted out via CAPACITY_VERIFY_SKIP_ANCESTRY, mirroring the escape hatch
-  // documented in docs/operations/capacity.md.
-  if (evidenceCommitFormatValid && process.env.CAPACITY_VERIFY_SKIP_ANCESTRY !== '1') {
+  //
+  // Round 8 Finding 1 (P1): the existence probe MUST NOT honour
+  // CAPACITY_VERIFY_SKIP_ANCESTRY. That env var was originally the shallow-
+  // clone escape hatch for the merge-base rebase-race ancestry check; r7
+  // inadvertently also gated the fabricated-SHA detector behind it, so
+  // `CAPACITY_VERIFY_SKIP_ANCESTRY=1` silently disabled the detector on full
+  // clones and let a forged 40-char hex SHA through with no warnings. The
+  // existence probe is now gated ONLY by its own shallow-clone detection
+  // (see `probeEvidenceCommitPresence` → `isShallowClone()`): shallow clones
+  // degrade to a warning, full clones fail closed unconditionally. The env
+  // var's remaining scope is the merge-base check inside
+  // `requireConfigAncestry`, which is the only place it has ever truly
+  // needed to live.
+  if (evidenceCommitFormatValid) {
     const presence = probeEvidenceCommitPresence(evidenceCommitString);
     if (presence.failures.length) messages.push(...presence.failures);
     if (presence.warnings.length) {

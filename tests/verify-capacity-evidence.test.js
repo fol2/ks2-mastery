@@ -1806,3 +1806,174 @@ test('docs anchor: CAPACITY_VERIFY_SKIP_ANCESTRY is documented inside the Escape
     'Escape Hatches section body must name CAPACITY_VERIFY_SKIP_ANCESTRY so reviewers see it in context.',
   );
 });
+
+// ===========================================================================
+// Round 8 adversarial findings
+// ---------------------------------------------------------------------------
+// One P1 blocker: the r7 hoist placed `probeEvidenceCommitPresence` behind the
+// same `CAPACITY_VERIFY_SKIP_ANCESTRY` env gate that originally scoped ONLY
+// the merge-base rebase-race check. Setting the env var therefore now also
+// disables the fabricated-SHA detector — a full-clone CI job can silently
+// accept a forged 40-char hex SHA by setting the env var. See
+// .context/compound-engineering/ce-code-review/round8/probes/probe-d-env-bypass.mjs
+// for the reproduction.
+//
+// Fix scope (narrow): the existence probe is gated ONLY by `isShallowClone()`.
+// `requireConfigAncestry` continues to honour the env var for its merge-base
+// check (and continues to emit its audit warning when the env var is set AND
+// a configPath is present).
+// ===========================================================================
+
+// r8-01 T1 (P1 primary): smoke-pass row with a forged 40-char hex commit on a
+// FULL clone must fail closed EVEN WHEN `CAPACITY_VERIFY_SKIP_ANCESTRY=1` is
+// set. The env var was originally the shallow-clone escape hatch for the
+// merge-base ancestry check only; after r7 it incidentally also disabled the
+// fabricated-SHA detector. This test pins the new, narrowed semantics.
+test('smoke-pass + forged SHA + SKIP_ANCESTRY=1 + full clone fails closed (r8-01 T1)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-r8-01-full-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+
+  // Full (non-shallow) git repo so the shallow-detection branch stays false.
+  execSync('git init -q', { cwd: tempDir });
+  execSync('git config user.email r8probe@example.test', { cwd: tempDir });
+  execSync('git config user.name R8Probe', { cwd: tempDir });
+  execSync('git commit -q --allow-empty -m "initial"', { cwd: tempDir });
+
+  const forgedSha = 'f00dbabe1234567890abcdef1234567890abcdef';
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: { commit: forgedSha, evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    // smoke-pass deliberately has no tier.configPath.
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', forgedSha.slice(0, 7), 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+
+  const cwd = process.cwd();
+  const previousSkip = process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = '1';
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(
+      result.ok,
+      false,
+      `smoke-pass + forged SHA + SKIP_ANCESTRY on full clone must fail; got ok:true report=${JSON.stringify(result.report)}`,
+    );
+    assert.ok(
+      result.report.some((line) => line.includes('does not exist')),
+      `expected "does not exist" failure even with SKIP_ANCESTRY=1; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    if (previousSkip === undefined) delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+    else process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = previousSkip;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// r8-01 T2 (P1 shallow tolerance): smoke-pass row with a forged 40-char hex
+// commit on a SHALLOW clone with `CAPACITY_VERIFY_SKIP_ANCESTRY=1` set must
+// still pass with a warning. The existence probe degrades to a warning on a
+// shallow clone (legitimate depth-limit), so the escape hatch for shallow CI
+// shards is preserved.
+test('smoke-pass + forged SHA + SKIP_ANCESTRY=1 + shallow clone warns but passes (r8-01 T2)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-r8-01-shallow-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+
+  execSync('git init -q', { cwd: tempDir });
+  execSync('git config user.email r8probe@example.test', { cwd: tempDir });
+  execSync('git config user.name R8Probe', { cwd: tempDir });
+  execSync('git commit -q --allow-empty -m "initial"', { cwd: tempDir });
+  // Mark the repo shallow via the `.git/shallow` sentinel file. Git treats any
+  // non-empty `.git/shallow` as the shallow-repo marker, which is what
+  // `git rev-parse --is-shallow-repository` reads.
+  const gitDir = execSync('git rev-parse --git-dir', { cwd: tempDir }).toString().trim();
+  const absoluteGitDir = resolve(tempDir, gitDir);
+  writeFileSync(join(absoluteGitDir, 'shallow'), 'deadbeef1234567890abcdef1234567890abcdef\n');
+
+  const forgedSha = 'f00dbabe1234567890abcdef1234567890abcdef';
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: { commit: forgedSha, evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', forgedSha.slice(0, 7), 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+
+  const cwd = process.cwd();
+  const previousSkip = process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = '1';
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(
+      result.ok,
+      true,
+      `shallow clone + SKIP_ANCESTRY must tolerate unknown SHA via warning; got ok:false report=${JSON.stringify(result.report)}`,
+    );
+    assert.ok(
+      Array.isArray(result.warnings) && result.warnings.length > 0,
+      'shallow-clone path must emit at least one warning about the unknown evidence commit.',
+    );
+  } finally {
+    process.chdir(cwd);
+    if (previousSkip === undefined) delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+    else process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = previousSkip;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// r8-01 T3 (P1 tier symmetry): small-pilot row (configPath present) with a
+// forged 40-char hex commit on a FULL clone with `CAPACITY_VERIFY_SKIP_ANCESTRY=1`
+// must fail closed via the existence probe, even though the merge-base skip
+// is active inside `requireConfigAncestry`. Symmetry check: SKIP_ANCESTRY
+// stops ONLY the merge-base ancestry check regardless of tier; the existence
+// probe fires for every tier that passes the format gate.
+test('small-pilot + forged SHA + SKIP_ANCESTRY=1 + full clone fails closed (r8-01 T3)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-r8-01-smallpilot-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+  writeSmallPilotConfig(configPath);
+
+  execSync('git init -q', { cwd: tempDir });
+  execSync('git config user.email r8probe@example.test', { cwd: tempDir });
+  execSync('git config user.name R8Probe', { cwd: tempDir });
+  execSync('git add reports/capacity/configs/small-pilot.json', { cwd: tempDir });
+  execSync('git commit -q -m "initial config"', { cwd: tempDir });
+
+  const forgedSha = 'f00dbabe1234567890abcdef1234567890abcdef';
+  writeSmallPilotEvidence(evidencePath, forgedSha);
+  writeSmallPilotDoc(docPath, forgedSha.slice(0, 7));
+
+  const cwd = process.cwd();
+  const previousSkip = process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+  process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = '1';
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(
+      result.ok,
+      false,
+      `small-pilot + forged SHA + SKIP_ANCESTRY on full clone must fail via existence probe; got ok:true report=${JSON.stringify(result.report)}`,
+    );
+    assert.ok(
+      result.report.some((line) => line.includes('does not exist')),
+      `expected "does not exist" failure from existence probe; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    if (previousSkip === undefined) delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+    else process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = previousSkip;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
