@@ -1,4 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import { BUNDLED_CELEBRATION_TUNABLES } from '../../platform/game/render/effect-config-defaults.js';
 import { EFFECT_CONFIG_MODIFIER_CLASSES } from '../../platform/game/render/effect-config-schema.js';
 import {
   CELEBRATION_KINDS,
@@ -8,13 +9,12 @@ import {
   defaultCelebrationTunables,
 } from './monster-effect-celebration-helpers.js';
 
-export {
-  CELEBRATION_KINDS,
-  assetCelebrationAllReviewed,
-  celebrationTunableFromDraft,
-  celebrationTunablesAllErrors,
-  defaultCelebrationTunables,
-};
+function bundledTunableForKind(kind) {
+  for (const row of Object.values(BUNDLED_CELEBRATION_TUNABLES)) {
+    if (row?.[kind]) return row[kind];
+  }
+  return null;
+}
 
 const KIND_LABEL = {
   caught: 'Caught',
@@ -26,33 +26,31 @@ function clone(value) {
   return value == null ? value : JSON.parse(JSON.stringify(value));
 }
 
-function fieldErrors(errors, field) {
-  return (errors || []).filter((issue) => issue.field === field);
-}
-
 export function MonsterEffectCelebrationPanel({
   asset,
   draft,
-  published,
   canManage = false,
   onDraftChange = () => {},
   accountId = '',
 } = {}) {
   const assetKey = asset?.key || '';
   const [activeKind, setActiveKind] = useState(CELEBRATION_KINDS[0]);
-  const reviewedAll = useMemo(() => assetCelebrationAllReviewed(draft, assetKey), [draft, assetKey]);
+  const reviewedAll = assetCelebrationAllReviewed(draft, assetKey);
 
   const writeDraft = useCallback((mutator) => {
     if (!canManage) return;
     const next = clone(draft) || { catalog: {}, bindings: {}, celebrationTunables: {} };
     next.celebrationTunables = next.celebrationTunables || {};
     if (!next.celebrationTunables[assetKey] || typeof next.celebrationTunables[assetKey] !== 'object') {
-      // Seed every kind so the row validator doesn't trip on a missing kind
-      // entry; review flags carry over from the bundled defaults (true) so
-      // the seed itself doesn't appear "incomplete".
+      // Seed every kind so the row validator doesn't trip on a missing kind.
+      // Carry the bundled `reviewed` flag (true) through so the seed itself
+      // does not appear "incomplete" before any admin edit; `updateTunable`
+      // resets reviewed=false on the kind the admin actually edits.
       next.celebrationTunables[assetKey] = {};
       for (const kind of CELEBRATION_KINDS) {
-        next.celebrationTunables[assetKey][kind] = defaultCelebrationTunables(kind);
+        const seeded = defaultCelebrationTunables(kind);
+        seeded.reviewed = bundledTunableForKind(kind)?.reviewed === true;
+        next.celebrationTunables[assetKey][kind] = seeded;
       }
     }
     mutator(next);
@@ -99,7 +97,7 @@ export function MonsterEffectCelebrationPanel({
 
   const tunable = celebrationTunableFromDraft(draft, assetKey, activeKind);
   const errors = celebrationTunablesAllErrors(tunable, { kind: activeKind });
-  const modifierIssues = fieldErrors(errors, 'modifierClass');
+  const modifierIssues = errors.filter((issue) => issue.field === 'modifierClass');
   const reviewable = errors.length === 0 && tunable.reviewed !== true;
 
   return (

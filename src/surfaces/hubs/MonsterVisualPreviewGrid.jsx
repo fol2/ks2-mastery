@@ -121,16 +121,7 @@ export function MonsterVisualPreviewGrid({
       ? ` celebration-shell--${tunable.modifierClass}`
       : '';
     return (
-      <div
-        className={`monster-effect-celebration-preview${modifier}`}
-        key={kind}
-        style={{
-          border: '1px solid var(--surface-border, #ddd)',
-          borderRadius: 8,
-          padding: 10,
-          minHeight: 80,
-        }}
-      >
+      <div className={`monster-effect-celebration-preview${modifier}`} key={kind}>
         <span className="monster-visual-preview-meta">
           <span>Celebration: {kind}</span>
         </span>
@@ -149,7 +140,7 @@ export function MonsterVisualPreviewGrid({
       <div className="monster-visual-preview-grid">
         {monsterRenderTiles}
       </div>
-      <div className="monster-visual-celebration-grid" style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+      <div className="monster-visual-celebration-grid">
         {celebrationTiles}
       </div>
     </MonsterEffectConfigProvider>

@@ -20,6 +20,18 @@ const AUTOSAVE_PREFIX = 'ks2.monster-visual-config-draft';
 const EFFECT_AUTOSAVE_SCHEMA_TAG = 'v1-effect';
 const STRING_CONTEXT_FIELDS = new Set(['path', 'motionProfile', 'filter']);
 
+let __tabNonceCounter = 0;
+function newTabNonce() {
+  // crypto.randomUUID is the production path; the counter fallback keeps the
+  // helper deterministic for tests (and Node versions without webcrypto).
+  const cryptoApi = typeof globalThis !== 'undefined' ? globalThis.crypto : null;
+  if (cryptoApi && typeof cryptoApi.randomUUID === 'function') {
+    return cryptoApi.randomUUID();
+  }
+  __tabNonceCounter += 1;
+  return `tab-${__tabNonceCounter}`;
+}
+
 function clone(value) {
   return value == null ? value : JSON.parse(JSON.stringify(value));
 }
@@ -36,8 +48,8 @@ function storage() {
   }
 }
 
-function autosaveKey({ accountId, manifestHash, draftRevision }) {
-  return `${AUTOSAVE_PREFIX}:${accountId || 'account'}:${manifestHash || 'manifest'}:${Number(draftRevision) || 0}:${EFFECT_AUTOSAVE_SCHEMA_TAG}`;
+function autosaveKey({ accountId, manifestHash, draftRevision, tabNonce }) {
+  return `${AUTOSAVE_PREFIX}:${accountId || 'account'}:${manifestHash || 'manifest'}:${Number(draftRevision) || 0}:${EFFECT_AUTOSAVE_SCHEMA_TAG}:${tabNonce || 'tab-default'}`;
 }
 
 function readAutosave(key) {
@@ -110,14 +122,16 @@ function assetDiffersFromPublished(draft, published, assetKey) {
 }
 
 // `effect-incomplete`: an asset whose effect binding row OR celebration
-// tunables row has any entry that is not yet reviewed. Returns false when
-// the effect sub-document is absent — the visual `review` filter still
-// covers that case. Delegates to the helper modules so the U7 panels and
-// this queue filter share one source of truth.
+// tunables row has any entry that is not yet reviewed OR fails the schema.
+// Returns false when the effect sub-document is absent — the visual
+// `review` filter still covers that case. Delegates to the helper modules
+// so the U7 panels and this queue filter share one source of truth; the
+// catalog is threaded through so a deleted-kind regression also surfaces
+// the asset in the queue.
 function assetEffectIncomplete(draft, assetKey) {
   const effect = draft?.effect;
   if (!effect) return false;
-  return !assetBindingsAllReviewed(effect, assetKey)
+  return !assetBindingsAllReviewed(effect, assetKey, { catalog: effect.catalog })
     || !assetCelebrationAllReviewed(effect, assetKey);
 }
 
@@ -171,10 +185,16 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
   const published = visual?.published || null;
   const canManage = visual?.permissions?.canManageMonsterVisualConfig === true;
   const status = visual?.status || {};
+  // Per-mount tab nonce: prevents two open tabs from overwriting each
+  // other's autosave entries. `findStaleAutosave` still surfaces other
+  // tabs' unfinished work as a recovery banner.
+  const tabNonceRef = useRef('');
+  if (!tabNonceRef.current) tabNonceRef.current = newTabNonce();
   const activeKey = autosaveKey({
     accountId,
     manifestHash: status.manifestHash || cloudDraft?.manifestHash,
     draftRevision: status.draftRevision,
+    tabNonce: tabNonceRef.current,
   });
   const assetOrder = useMemo(() => MONSTER_ASSET_MANIFEST.assets.map((asset) => asset.key), []);
   const initialAssetKey = assetOrder.includes('vellhorn-b1-3') ? 'vellhorn-b1-3' : assetOrder[0];
@@ -537,7 +557,6 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
           <MonsterEffectBindingsPanel
             asset={selectedManifestAsset}
             draft={effectDraft}
-            published={effectPublished}
             canManage={canManage}
             accountId={accountId}
             onDraftChange={handleEffectDraftChange}
@@ -545,7 +564,6 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
           <MonsterEffectCelebrationPanel
             asset={selectedManifestAsset}
             draft={effectDraft}
-            published={effectPublished}
             canManage={canManage}
             accountId={accountId}
             onDraftChange={handleEffectDraftChange}

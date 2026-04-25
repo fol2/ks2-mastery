@@ -10,6 +10,7 @@ import {
   catalogEntryIsBundled,
   catalogEntryNeedsReview,
   catalogParamSchemaErrors,
+  paramErrorsByField,
   EFFECT_CATALOG_BUNDLED_KINDS,
   EFFECT_CATALOG_TEMPLATE_OPTIONS,
 } from './monster-effect-catalog-helpers.js';
@@ -52,24 +53,6 @@ function errorsByField(entry) {
     if (!issue?.field) continue;
     if (!map[issue.field]) map[issue.field] = [];
     map[issue.field].push(issue);
-  }
-  return map;
-}
-
-// Internal: produces the `errorsByField` shape the field controls expect for
-// per-param schema errors only (not the full entry validation).
-function paramErrorsByField(entry) {
-  if (!entry) return {};
-  const template = lookupTemplate(entry.template);
-  const schema = template?.paramSchema || {};
-  const map = {};
-  for (const [name, descriptor] of Object.entries(entry.params || {})) {
-    const issues = catalogParamSchemaErrors({
-      paramName: name,
-      descriptor,
-      schema: schema[name],
-    });
-    if (issues.length > 0) map[name] = issues;
   }
   return map;
 }

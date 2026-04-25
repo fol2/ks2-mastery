@@ -1,9 +1,9 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { lookupTemplate } from '../../platform/game/render/effect-templates/index.js';
 import { MonsterEffectFieldControls } from './MonsterEffectFieldControls.jsx';
 import {
   catalogEntryNeedsReview,
-  catalogParamSchemaErrors,
+  paramErrorsByField,
 } from './monster-effect-catalog-helpers.js';
 import {
   assetBindingsAllReviewed,
@@ -13,15 +13,6 @@ import {
   exclusiveGroupCollisions,
   BINDING_LIFECYCLES,
 } from './monster-effect-bindings-helpers.js';
-
-export {
-  assetBindingsAllReviewed,
-  bindingRowAllErrors,
-  bindingsRowsForAsset,
-  defaultBindingRow,
-  exclusiveGroupCollisions,
-  BINDING_LIFECYCLES,
-};
 
 const SLOT_LABELS = {
   persistent: 'Persistent overlays',
@@ -39,58 +30,23 @@ function ensureBindingRow(draftRow) {
   };
 }
 
-function paramErrorsByField(row, catalog) {
-  if (!row || !catalog?.[row.kind]) return {};
-  const template = lookupTemplate(catalog[row.kind].template);
-  const schema = template?.paramSchema || {};
-  const map = {};
-  for (const [name, value] of Object.entries(row.params || {})) {
-    const schemaForParam = schema[name];
-    if (!schemaForParam) continue;
-    const issues = catalogParamSchemaErrors({
-      paramName: name,
-      descriptor: { type: schemaForParam.type, default: value },
-      schema: schemaForParam,
-    });
-    if (issues.length > 0) map[name] = issues;
-  }
-  return map;
-}
-
-function topLevelError(errors) {
-  if (!errors || errors.length === 0) return '';
-  const top = errors.find((issue) => issue.field === 'kind' || issue.field === 'row');
-  return (top || errors[0]).message;
-}
-
-function pickerOptionLabel(kind, catalog) {
-  const entry = catalog?.[kind];
-  const lifecycle = entry?.lifecycle === 'continuous' ? 'continuous' : 'persistent';
-  const group = entry?.exclusiveGroup ? ` · group: ${entry.exclusiveGroup}` : '';
-  return `[${lifecycle}] ${kind}${group}`;
-}
-
 export function MonsterEffectBindingsPanel({
   asset,
   draft,
-  published,
   canManage = false,
   onDraftChange = () => {},
   accountId = '',
 } = {}) {
   const assetKey = asset?.key || '';
   const catalog = draft?.catalog || {};
-  const rows = useMemo(() => bindingsRowsForAsset(draft, assetKey), [draft, assetKey]);
-  const collisions = useMemo(() => exclusiveGroupCollisions(rows, catalog), [rows, catalog]);
-  const reviewedAll = useMemo(() => assetBindingsAllReviewed(draft, assetKey), [draft, assetKey]);
-  const catalogKinds = useMemo(() => Object.keys(catalog).sort(), [catalog]);
-  const rowsBySlot = useMemo(() => {
-    const byslot = { persistent: [], continuous: [] };
-    for (const row of rows) {
-      if (byslot[row.slot]) byslot[row.slot].push(row);
-    }
-    return byslot;
-  }, [rows]);
+  const rows = bindingsRowsForAsset(draft, assetKey);
+  const collisions = exclusiveGroupCollisions(rows, catalog);
+  const reviewedAll = assetBindingsAllReviewed(draft, assetKey, { catalog });
+  const catalogKinds = Object.keys(catalog).sort();
+  const rowsBySlot = { persistent: [], continuous: [] };
+  for (const row of rows) {
+    if (rowsBySlot[row.slot]) rowsBySlot[row.slot].push(row);
+  }
 
   const writeDraft = useCallback((mutator) => {
     if (!canManage) return;
@@ -104,8 +60,7 @@ export function MonsterEffectBindingsPanel({
   const updateBindingAt = useCallback((slot, index, mutator) => {
     if (!canManage || !assetKey) return;
     writeDraft((next) => {
-      const list = Array.isArray(next.bindings[assetKey][slot]) ? next.bindings[assetKey][slot] : [];
-      const entry = list[index];
+      const entry = next.bindings[assetKey][slot][index];
       if (!entry) return;
       mutator(entry);
       // Any edit resets `reviewed=false` — admin must re-confirm.
@@ -160,13 +115,15 @@ export function MonsterEffectBindingsPanel({
     writeDraft((next) => {
       const entry = next.bindings[assetKey][slot]?.[index];
       if (!entry) return;
-      const errors = bindingRowAllErrors(entry, { catalog });
+      // Validate against the freshly cloned catalog so a concurrent catalog
+      // edit in the same draft is reflected in the gate.
+      const errors = bindingRowAllErrors(entry, { catalog: next.catalog || {} });
       if (errors.length > 0) return;
       entry.reviewed = true;
       entry.reviewedAt = Date.now();
       entry.reviewedBy = accountId || 'admin';
     });
-  }, [accountId, canManage, assetKey, catalog, writeDraft]);
+  }, [accountId, canManage, assetKey, writeDraft]);
 
   if (!asset || !draft) return null;
 
@@ -174,13 +131,14 @@ export function MonsterEffectBindingsPanel({
     const catalogEntry = catalog[entry.kind] || null;
     const template = catalogEntry ? lookupTemplate(catalogEntry.template) : null;
     const errors = bindingRowAllErrors(entry, { catalog });
-    const paramErrors = paramErrorsByField(entry, catalog);
+    const paramErrors = paramErrorsByField(entry, { catalog, source: 'value' });
     const missingCatalog = !catalogEntry;
     const reviewable = errors.length === 0 && entry.reviewed !== true;
     const rowKey = `${slot}-${index}-${entry.kind}`;
     const list = rowsBySlot[slot] || [];
     const canMoveUp = index > 0;
     const canMoveDown = index < list.length - 1;
+    const topError = errors.find((issue) => issue.field === 'kind' || issue.field === 'row') || errors[0];
     return (
       <div
         className={`monster-effect-row ${missingCatalog ? 'has-error' : ''}`}
@@ -239,7 +197,7 @@ export function MonsterEffectBindingsPanel({
 
         {errors.length > 0 ? (
           <div className="feedback bad" style={{ marginBottom: 8 }} role="alert">
-            {topLevelError(errors)}
+            {topError.message}
           </div>
         ) : null}
 
@@ -322,7 +280,10 @@ export function MonsterEffectBindingsPanel({
               >
                 <option value="">Select catalog kind…</option>
                 {catalogKinds.map((kind) => {
-                  const unreviewed = catalogEntryNeedsReview(catalog[kind]);
+                  const entry = catalog[kind];
+                  const unreviewed = catalogEntryNeedsReview(entry);
+                  const lifecycle = entry?.lifecycle === 'continuous' ? 'continuous' : 'persistent';
+                  const group = entry?.exclusiveGroup ? ` · group: ${entry.exclusiveGroup}` : '';
                   return (
                     <option
                       value={kind}
@@ -330,7 +291,7 @@ export function MonsterEffectBindingsPanel({
                       disabled={unreviewed}
                       title={unreviewed ? 'Unreviewed catalog entry' : ''}
                     >
-                      {pickerOptionLabel(kind, catalog)}{unreviewed ? ' (unreviewed)' : ''}
+                      {`[${lifecycle}] ${kind}${group}`}{unreviewed ? ' (unreviewed)' : ''}
                     </option>
                   );
                 })}

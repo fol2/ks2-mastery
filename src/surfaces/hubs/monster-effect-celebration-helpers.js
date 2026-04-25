@@ -7,36 +7,43 @@ import {
 } from '../../platform/game/render/effect-config-defaults.js';
 import {
   EFFECT_CONFIG_CELEBRATION_KINDS,
-  EFFECT_CONFIG_MODIFIER_CLASSES,
-  validateCelebrationTunables,
+  validateSingleCelebrationTunable,
 } from '../../platform/game/render/effect-config-schema.js';
 
 export const CELEBRATION_KINDS = EFFECT_CONFIG_CELEBRATION_KINDS;
-export const CELEBRATION_MODIFIER_CLASSES = EFFECT_CONFIG_MODIFIER_CLASSES;
 
 function clone(value) {
   return value == null ? value : JSON.parse(JSON.stringify(value));
+}
+
+// First bundled asset that actually carries this kind. The bundled map is
+// invariant in production but iterating defends against a future asset
+// whose first slot omits a kind — we never want to fall through to a
+// hard-coded shape that could drift from the runtime baseline.
+function sampleForKind(kind) {
+  for (const row of Object.values(BUNDLED_CELEBRATION_TUNABLES)) {
+    if (row?.[kind]) return row[kind];
+  }
+  return null;
 }
 
 // Seeds a tunable for a given kind from the bundled defaults so a freshly
 // added tunable starts at parity with the runtime fallback. The seed is
 // always unreviewed: any edit must be confirmed by the admin before publish.
 export function defaultCelebrationTunables(kind) {
-  // Use any asset's bundled default — they all carry the same per-kind shell
-  // baseline. Falling back to a hard-coded shape if the bundled map is empty.
-  const fallback = {
-    showParticles: true,
-    showShine: false,
-    modifierClass: '',
-    reviewed: false,
-  };
-  const sample = Object.values(BUNDLED_CELEBRATION_TUNABLES)[0];
-  const sampleForKind = sample?.[kind];
-  if (!sampleForKind) return fallback;
+  const sample = sampleForKind(kind);
+  if (!sample) {
+    return {
+      showParticles: true,
+      showShine: false,
+      modifierClass: '',
+      reviewed: false,
+    };
+  }
   return {
-    showParticles: sampleForKind.showParticles === true,
-    showShine: sampleForKind.showShine === true,
-    modifierClass: typeof sampleForKind.modifierClass === 'string' ? sampleForKind.modifierClass : '',
+    showParticles: sample.showParticles === true,
+    showShine: sample.showShine === true,
+    modifierClass: typeof sample.modifierClass === 'string' ? sample.modifierClass : '',
     reviewed: false,
   };
 }
@@ -52,41 +59,27 @@ export function celebrationTunableFromDraft(draft, assetKey, kind) {
   return defaultCelebrationTunables(kind);
 }
 
-// Validates a single tunable against the schema validator. We adapt the
-// shared `validateCelebrationTunables` (which expects the full row shape)
-// by feeding it a row that contains every required kind, with the
-// non-target kinds filled in from defaults — keeps validation centralised.
+// Validates a single tunable directly via the shared schema validator —
+// a non-object tunable, a kind outside the closed allowlist, or a
+// modifierClass outside the closed allowlist all surface as errors,
+// regardless of how they reached the draft (UI, autosave deserialisation,
+// programmatic injection).
 export function celebrationTunablesAllErrors(tunable, { kind } = {}) {
-  if (!CELEBRATION_KINDS.includes(kind)) {
-    return [{
-      code: 'celebration_tunable_kind_invalid',
-      message: `Unknown celebration kind "${kind}".`,
-      field: 'kind',
-    }];
-  }
-  const row = {};
-  for (const candidateKind of CELEBRATION_KINDS) {
-    row[candidateKind] = candidateKind === kind
-      ? clone(tunable) || {}
-      : { showParticles: true, showShine: false, modifierClass: '', reviewed: true };
-  }
-  const result = validateCelebrationTunables(row);
-  if (result.ok) return [];
-  // Filter to errors scoped to the kind we care about — the schema validator
-  // surfaces issues from every kind in the row, but the panel only cares
-  // about the one being edited right now.
-  return result.errors.filter((issue) => issue.kind === kind || issue.field === kind);
+  const result = validateSingleCelebrationTunable(tunable, kind);
+  return result.ok ? [] : result.errors;
 }
 
-// Whether every celebration tunable for a given asset is marked reviewed.
-// Mirrors `assetBindingsAllReviewed` — used by the queue's
-// `effect-incomplete` filter and the panel's per-asset review chip.
+// Whether every celebration tunable for a given asset is marked reviewed
+// AND validates clean. Validating clean catches the deleted-kind regression
+// where reviewed=true but the tunable now fails (e.g. modifierClass turned
+// into an invalid string by a stale draft).
 export function assetCelebrationAllReviewed(draft, assetKey) {
   const row = draft?.celebrationTunables?.[assetKey];
   if (!row || typeof row !== 'object') return true;
   for (const kind of CELEBRATION_KINDS) {
     const tunable = row[kind];
-    if (tunable && tunable.reviewed !== true) return false;
+    if (!tunable || tunable.reviewed !== true) return false;
+    if (celebrationTunablesAllErrors(tunable, { kind }).length > 0) return false;
   }
   return true;
 }

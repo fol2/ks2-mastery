@@ -663,6 +663,17 @@ textarea:focus-visible {
   color: #fff;
   border-color: var(--accent, #2f6fae);
 }
+.monster-effect-celebration-preview {
+  border: 1px solid var(--surface-border, #ddd);
+  border-radius: 8px;
+  padding: 10px;
+  min-height: 80px;
+}
+.monster-visual-celebration-grid {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
 
 .hero-playground {
   position: absolute;

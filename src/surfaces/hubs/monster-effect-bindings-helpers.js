@@ -19,10 +19,6 @@ function clone(value) {
   return value == null ? value : JSON.parse(JSON.stringify(value));
 }
 
-export function bindingRowKey(assetKey, bindingId) {
-  return `${assetKey || ''}::${bindingId || ''}`;
-}
-
 // Seeds a binding row from the catalog entry's paramSchema defaults so the
 // admin sees sensible starter values rather than an empty object.
 export function defaultBindingRow({ kind, lifecycle = 'persistent', catalog = {} } = {}) {
@@ -150,16 +146,24 @@ export function exclusiveGroupCollisions(rows, catalog = {}) {
   return collisions;
 }
 
-// Whether every binding row for a given asset is marked reviewed. Used by
-// the admin queue's incomplete filter and the panel's per-asset review
-// chip. Returns `true` when there are no rows at all (vacuously reviewed).
-export function assetBindingsAllReviewed(draft, assetKey) {
+// Whether every binding row for a given asset is marked reviewed AND
+// validates clean. Validating clean closes the deleted-kind regression:
+// when a catalog kind is removed after a row was reviewed, the row's
+// errors flip non-empty and `assetBindingsAllReviewed` correctly returns
+// false — surfacing the asset in the queue's incomplete filter.
+//
+// Vacuously true when the asset has no row at all (no bindings authored).
+// `catalog` defaults to the draft's own catalog so callers that already
+// pass the full draft do not need to thread it again.
+export function assetBindingsAllReviewed(draft, assetKey, { catalog } = {}) {
   const row = draft?.bindings?.[assetKey];
   if (!row || typeof row !== 'object') return true;
+  const resolvedCatalog = catalog || draft?.catalog || {};
   for (const slot of BINDING_LIFECYCLES) {
     const list = Array.isArray(row[slot]) ? row[slot] : [];
     for (const entry of list) {
-      if (entry && entry.reviewed !== true) return false;
+      if (!entry || entry.reviewed !== true) return false;
+      if (bindingRowAllErrors(entry, { catalog: resolvedCatalog }).length > 0) return false;
     }
   }
   return true;
