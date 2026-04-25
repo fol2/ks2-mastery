@@ -6754,6 +6754,96 @@ textarea:focus-visible {
   border-color: #edd9ae;
 }
 
+.grammar-bellstorm-bridge {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.18fr);
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid #e1c995;
+  border-radius: 8px;
+  background: #fff9ec;
+}
+
+.grammar-bellstorm-bridge h4,
+.grammar-transfer-card h4 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.grammar-bellstorm-bridge p,
+.grammar-transfer-card p {
+  margin: 6px 0 0;
+  color: var(--ink-2);
+  line-height: 1.48;
+}
+
+.grammar-bridge-counts {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #e5d3a8;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  text-align: center;
+}
+
+.grammar-bridge-counts strong {
+  color: #8f5f16;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.grammar-bridge-counts span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.grammar-bridge-concepts {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.grammar-transfer-placeholders {
+  border-top: 4px solid #b8873f;
+}
+
+.grammar-transfer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.grammar-transfer-card {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.grammar-transfer-card ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ink-2);
+  line-height: 1.42;
+}
+
+.grammar-transfer-card .btn {
+  justify-self: start;
+}
+
 .grammar-analytics-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
@@ -6879,6 +6969,8 @@ textarea:focus-visible {
 @media (max-width: 980px) {
   .grammar-setup-grid,
   .grammar-analytics-grid,
+  .grammar-bellstorm-bridge,
+  .grammar-transfer-grid,
   .grammar-evidence-panels {
     grid-template-columns: 1fr;
   }

@@ -33,11 +33,12 @@ Current Grammar state:
 - [x] Enabled Grammar modes cover learn, smart mixed review, KS2-style mini-set, weak concepts drill, sentence surgery, sentence builder, worked examples, and faded guidance.
 - [x] Strict KS2-style mini-set mode remains unsupported by pre-answer worked/faded guidance.
 - [x] AI enrichment now has a non-scored Worker safe lane that validates server-side enrichment output and only permits reviewed deterministic drill ids.
+- [x] Transfer and Bellstorm bridge placeholders now show the non-scored writing roadmap while keeping Bellstorm Coast as a separate Punctuation subject.
 - [x] Production smoke exists as `npm run smoke:production:grammar`.
 
 Open Grammar follow-up scope:
 
-- [ ] Add transfer and Bellstorm bridge placeholders without collapsing Grammar and Punctuation product identities.
+- [x] Add transfer and Bellstorm bridge placeholders without collapsing Grammar and Punctuation product identities.
 - [ ] Decide later whether paragraph-level transfer becomes non-scored, teacher-reviewed, or a separate deterministic workflow.
 - [ ] Decide whether to connect a live AI provider to the safe lane; provider keys must stay server-side and output must pass the existing validator.
 - [ ] Continue to run `npm test`, `npm run check`, and Grammar production/UI smoke for each shipped Grammar slice.
@@ -725,7 +726,7 @@ sequenceDiagram
 **Verification:**
 - AI improves explanation and reporting only; deterministic engine remains the sole score-bearing authority.
 
-- [ ] U9. **Add Transfer And Bellstorm Bridge Placeholders**
+- [x] U9. **Add Transfer And Bellstorm Bridge Placeholders**
 
 **Goal:** Make the full product path explicit without overbuilding paragraph writing or the future Punctuation region in the initial stages.
 
