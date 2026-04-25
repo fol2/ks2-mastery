@@ -8,6 +8,15 @@ import { access } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import path from 'node:path';
 
+// Sentinel set, not exhaustive. Pick devDependencies that (a) are imported
+// during `npm test` (directly or transitively via a bundler step) and (b)
+// have zero same-repo fallbacks -- so a missing install produces an
+// actionable, non-cryptic failure instead of a deep stacktrace. Adding more
+// packages here is cheap (one `access` call each); keep the list small
+// enough that a contributor can eyeball it against package.json. Iterating
+// devDependencies dynamically was considered and rejected: it couples this
+// script to package.json parsing and would flag pure build-only deps that
+// `npm test` does not need.
 const REQUIRED_PACKAGES = ['react', 'esbuild'];
 
 async function isInstalled(packageName) {
