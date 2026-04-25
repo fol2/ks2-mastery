@@ -27,29 +27,58 @@ const MONSTER_VARIANTS = ['b1', 'b2'];
 // the grand — they are filtered out of active surfaces before ranking
 // applies, so the rank position is belt-and-braces against fallback paths
 // that bypass the filter.
+//
+// RESERVED TOMBSTONES (Phase 3 U9): Colisk / Hyphang / Carillon (Punctuation)
+// and Glossbloom / Loomrill / Mirrane (Grammar) are retained ranks, not active
+// learner-facing creatures. They are kept in this active map (rather than a
+// separate RESERVED_CODEX_POWER_RANK constant) for two reasons:
+//   1. `codexPowerRank()` returns `CODEX_POWER_RANK[id] || 0`; a reserved id
+//      missing from the map would rank 0, losing the "reserved below directs"
+//      ordering that Phase 2 U5 baked in. Keeping them in-map preserves that
+//      ordering even if a reserved id escapes the upstream subject filter.
+//   2. `meadowEntriesByPower()` sorts by `codexPowerRank` without a filter of
+//      its own. If a pre-flip learner's stored state ever bypasses
+//      `pickFeaturedCodexEntry`'s `punctuationReserve` / `grammarReserve`
+//      filter (e.g. via a historical monster asset path), the reserved
+//      creature still sorts below its active siblings rather than floating to
+//      the top of the meadow next to Phaeton.
+// Do not renumber these ranks without auditing both guards. The Phase 2 U5
+// invariant — reserved < active directs < grand — must survive any roster
+// change.
 const CODEX_POWER_RANK = Object.freeze({
   inklet: 1,
   glimmerbug: 2,
   phaeton: 3,
   vellhorn: 4,
-  // Reserved Punctuation ranks sit below active directs (Pealark / Claspin /
-  // Curlune) and far below the grand (Quoral).
+  // Reserved-only Punctuation ranks (tombstones). See comment block above —
+  // these sit below active directs per the Phase 2 U5 invariant. They are
+  // filtered out of active learner surfaces before ranking applies; this
+  // placement is belt-and-braces against fallback paths that bypass the
+  // `punctuationReserve` subject filter.
   colisk: 5,
   hyphang: 6,
   carillon: 7,
+  // Active Punctuation directs.
   pealark: 8,
   claspin: 9,
   curlune: 10,
+  // Quoral is the Punctuation grand creature. Must remain strictly above every
+  // active direct (Pealark / Claspin / Curlune) — Phase 2 U5 landmine. Do not
+  // lower this rank when adding more direct creatures; raise it instead.
   quoral: 11,
-  // Reserved Grammar ranks (Phase 3 U0) mirror Punctuation's treatment:
-  // Glossbloom / Loomrill / Mirrane sit below active directs (Bracehart /
-  // Chronalyx / Couronnail) and far below Concordium.
+  // Reserved-only Grammar ranks (Phase 3 U0 tombstones). Same treatment as
+  // Punctuation: below active directs, filtered out before ranking, retained
+  // here to preserve fallback ordering.
   glossbloom: 12,
   loomrill: 13,
   mirrane: 14,
+  // Active Grammar directs.
   bracehart: 15,
   chronalyx: 16,
   couronnail: 17,
+  // Concordium is the Grammar grand creature. Mirrors Quoral's placement:
+  // strictly above every active Grammar direct. See `grammar-monster-roster`
+  // test "Codex landmine #2" which locks this invariant.
   concordium: 18,
 });
 
