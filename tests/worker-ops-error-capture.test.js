@@ -422,3 +422,193 @@ test('POST /api/ops/error-event is reachable without any auth (public endpoint)'
     server.close();
   }
 });
+
+// U6 review follow-up (Finding 1): server-side redaction parity on firstFrame.
+test('POST /api/ops/error-event redacts all-caps spelling words in firstFrame (Finding 1)', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const response = await postErrorEvent(server, {
+      errorKind: 'TypeError',
+      messageFirstLine: 'boom',
+      firstFrame: 'PRINCIPAL token detected at handler',
+      routeName: '/dashboard',
+    });
+    await response.json();
+
+    const rows = selectAllErrorRows(server);
+    assert.equal(rows.length, 1);
+    const row = rows[0];
+    assert.ok(!/PRINCIPAL/.test(row.first_frame), `leaked PRINCIPAL in first_frame: ${row.first_frame}`);
+    assert.ok(!/HANDLER/i.test(row.first_frame) || /\[word\]/.test(row.first_frame), `expected [word] replacement: ${row.first_frame}`);
+    assert.match(row.first_frame, /\[word\]/);
+  } finally {
+    server.close();
+  }
+});
+
+test('POST /api/ops/error-event redacts all-caps spelling words in routeName (Finding 1)', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const response = await postErrorEvent(server, {
+      errorKind: 'Error',
+      messageFirstLine: 'boom',
+      routeName: '/word/PRINCIPAL',
+    });
+    await response.json();
+
+    const rows = selectAllErrorRows(server);
+    assert.equal(rows.length, 1);
+    assert.ok(!/PRINCIPAL/.test(rows[0].route_name), `leaked PRINCIPAL in route_name: ${rows[0].route_name}`);
+    assert.match(rows[0].route_name, /\[word\]/);
+  } finally {
+    server.close();
+  }
+});
+
+// U6 review follow-up (Finding 2): rate-limit ordering — oversized bodies
+// must still bump the rate-limit counter so a flood of 9KB+ requests from
+// the same IP eventually trips 429.
+test('POST /api/ops/error-event bumps rate-limit BEFORE body-cap check (Finding 2)', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    // Seed the IP bucket to 60 so the 61st request (oversized or not) is
+    // over the limit. If the reorder fix is correct, an oversized body
+    // will return 429 — not 400 — because the rate-limit fires first.
+    await seedRateLimit(server, 'ops-error-capture-ip', 'unknown', 60);
+
+    const bigBody = JSON.stringify({
+      errorKind: 'Error',
+      messageFirstLine: 'x'.repeat(10 * 1024), // > 8KB cap
+    });
+    const response = await server.fetchRaw('https://repo.test/api/ops/error-event', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: bigBody,
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 429, 'oversized body must be rejected by rate-limit first');
+    assert.equal(payload.code, 'ops_error_rate_limited');
+  } finally {
+    server.close();
+  }
+});
+
+test('POST /api/ops/error-event: oversized bodies still bump the rate-limit counter (Finding 2)', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    // First oversized body: rate-limit counter is zero so the request
+    // passes the limit check, hits the body-cap, returns 400.
+    const bigBody = JSON.stringify({
+      errorKind: 'Error',
+      messageFirstLine: 'x'.repeat(10 * 1024),
+    });
+    const first = await server.fetchRaw('https://repo.test/api/ops/error-event', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: bigBody,
+    });
+    const firstPayload = await first.json();
+    assert.equal(first.status, 400);
+    assert.equal(firstPayload.code, 'ops_error_payload_too_large');
+
+    // With the Finding 2 fix, that first oversized body incremented the
+    // rate-limit bucket. Confirm by reading the limiter row directly.
+    const windowMs = 10 * 60 * 1000;
+    const windowStartedAt = Math.floor(Date.now() / windowMs) * windowMs;
+    const hashedKey = server.DB.db.prepare(`
+      SELECT request_count FROM request_limits
+      WHERE limiter_key LIKE 'ops-error-capture-ip:%'
+        AND window_started_at = ?
+    `).get(windowStartedAt);
+    assert.ok(hashedKey && Number(hashedKey.request_count) >= 1, 'rate-limit counter must advance on oversized body');
+  } finally {
+    server.close();
+  }
+});
+
+// U6 review follow-up (Finding 5): concurrent fresh-insert race — the
+// losing invocation must NOT double-bump the status.open counter.
+// Simulated by driving the second call through the ON CONFLICT DO NOTHING
+// branch: the dedup preflight misses (because we clear the preflight
+// index temporarily) but the fingerprint UNIQUE already has the row.
+test('recordClientErrorEvent: concurrent fresh-insert race does not drift the counter (Finding 5)', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const db = server.DB;
+    const { createWorkerRepository } = await import('../worker/src/repository.js');
+    const repository = createWorkerRepository({ env: { DB: db } });
+
+    // First call: genuine fresh insert.
+    const first = await repository.recordClientErrorEvent({
+      clientEvent: {
+        errorKind: 'RaceError',
+        messageFirstLine: 'race A',
+        firstFrame: 'at A (race.js:1)',
+      },
+    });
+    assert.equal(first.deduped, false);
+    assert.ok(first.eventId);
+
+    // To simulate a concurrent race where two invocations both reach the
+    // fresh-insert branch before either commits, we need the preflight
+    // to miss while the fingerprint-UNIQUE already holds a row. We
+    // simulate that by wrapping the D1 prepare call for the preflight
+    // SELECT tuple so that its first result returns null. The INSERT
+    // then runs, hits the UNIQUE-on-fingerprint, returns changes=0, and
+    // the Finding 5 fallback executes a tuple lookup (not the preflight)
+    // which DOES see the row.
+    const originalPrepare = db.prepare.bind(db);
+    let preflightBypass = true;
+    db.prepare = function patchedPrepare(sql) {
+      const statement = originalPrepare(sql);
+      // Only patch the preflight SELECT with the tuple (matched by the
+      // specific column list). Every other prepare passes straight through.
+      if (preflightBypass
+        && typeof sql === 'string'
+        && /SELECT id, first_seen, occurrence_count, status\s+FROM ops_error_events/.test(sql)
+        && /WHERE error_kind = \?/.test(sql)) {
+        preflightBypass = false; // only suppress the first match
+        return {
+          ...statement,
+          bind(...params) {
+            const bound = statement.bind(...params);
+            return {
+              ...bound,
+              async first() { return null; }, // force the caller onto the fresh-insert branch
+              async all() { return bound.all(); },
+              async run() { return bound.run(); },
+            };
+          },
+        };
+      }
+      return statement;
+    };
+
+    try {
+      const second = await repository.recordClientErrorEvent({
+        clientEvent: {
+          errorKind: 'RaceError',
+          messageFirstLine: 'race A',
+          firstFrame: 'at A (race.js:1)',
+        },
+      });
+      // Finding 5: the ON CONFLICT fires, changes=0, fallback tuple lookup
+      // hits the winner, UPDATE bumps occurrence_count, counter not
+      // double-bumped.
+      assert.equal(second.deduped, true, 'lost-race call must downgrade to dedup path');
+      assert.equal(second.eventId, first.eventId, 'dedup must return the winning row id');
+    } finally {
+      db.prepare = originalPrepare;
+    }
+
+    const rows = selectAllErrorRows(server);
+    assert.equal(rows.length, 1, 'only one row should exist');
+    assert.equal(rows[0].occurrence_count, 2, 'occurrence_count must advance to 2');
+
+    // Crucial assertion: counter is 1 (from the first genuine insert), NOT 2.
+    const counter = kpiRow(server, 'ops_error_events.status.open');
+    assert.equal(counter?.metric_count, 1, 'status.open counter must not drift under concurrent race');
+  } finally {
+    server.close();
+  }
+});

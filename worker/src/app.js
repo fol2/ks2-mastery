@@ -375,20 +375,26 @@ export function createWorkerApp({
         // limit, server-side redaction, attribution gate.
         if (url.pathname === '/api/ops/error-event' && request.method === 'POST') {
           const nowTs = now();
-          let clientEvent;
-          try {
-            clientEvent = await readJsonBounded(request, OPS_ERROR_EVENT_MAX_BODY_BYTES);
-          } catch (error) {
-            if (error?.code === 'ops_error_payload_too_large') {
-              return json({
-                ok: false,
-                code: 'ops_error_payload_too_large',
-                message: 'Error event payload exceeds the 8KB limit.',
-              }, 400);
-            }
-            throw error;
-          }
 
+          // U6 review follow-up (Finding 2): consume the IP rate limit
+          // BEFORE reading the request body. Otherwise an attacker can
+          // flood the endpoint with 9KB+ bodies; each forces an
+          // `arrayBuffer()` read that returns a 400 oversized-body
+          // response before the rate-limit bucket is ever touched, so
+          // the per-IP abuse counter never increments. With this order,
+          // the rate limit is bumped first and 61+ abusive calls from
+          // the same IP all collapse to 429.
+          //
+          // U6 review follow-up (Finding 6 — deferred): the per-IP
+          // budget is vulnerable to IPv6 /64 source rotation. The
+          // `resolveClientIp` helper uses the full address as-is, so a
+          // single attacker on an IPv6 /64 can rotate the low 64 bits
+          // and evade the limit. The full mitigation is either (a)
+          // IPv6 /64 prefix truncation in `resolveClientIp`, or (b) a
+          // global token bucket across all IPs. Both touch every
+          // public-endpoint rate-limit call site, so this is deferred
+          // to a dedicated follow-up rather than being lumped into the
+          // ops-error hot path fix.
           const db = requireDatabase(env);
           const rateLimit = await consumeRateLimit(db, {
             bucket: 'ops-error-capture-ip',
@@ -412,6 +418,23 @@ export function createWorkerApp({
               message: 'Too many client error events from this connection.',
               retryAfterSeconds: Number(rateLimit.retryAfterSeconds) || 0,
             }, 429);
+          }
+
+          // Rate-limit has cleared — now safe to read the body. Reading the
+          // body earlier would let oversized-body 400s short-circuit before
+          // the rate-limit bucket ever fires (see Finding 2 comment above).
+          let clientEvent;
+          try {
+            clientEvent = await readJsonBounded(request, OPS_ERROR_EVENT_MAX_BODY_BYTES);
+          } catch (error) {
+            if (error?.code === 'ops_error_payload_too_large') {
+              return json({
+                ok: false,
+                code: 'ops_error_payload_too_large',
+                message: 'Error event payload exceeds the 8KB limit.',
+              }, 400);
+            }
+            throw error;
           }
 
           // R15-safe attribution: attach account_id ONLY when a real (non-demo)

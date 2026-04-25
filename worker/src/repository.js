@@ -2598,7 +2598,14 @@ async function updateOpsErrorEventStatus(db, {
 // ---------------------------------------------------------------------------
 
 const SERVER_SENSITIVE_REGEX = /(answer_raw|prompt|learner_name|email|password|session|cookie|token|spelling_word|punctuation_answer|grammar_concept|prompt_token|learner_id)/gi;
-const SERVER_ALL_CAPS_REGEX = /\b[A-Z]{4,}\b/g;
+// U6 review follow-up (Finding 1): broaden the all-caps match to cross
+// underscore boundaries. `\b` in JS regex treats `_` as a word character,
+// so the previous `\b[A-Z]{4,}\b` was a no-op on `PRINCIPAL_HANDLER`
+// (a single long `\w+` token). The lookaround pair matches a run of 4+
+// upper-case letters with any non-letter (including `_`) on either side,
+// so snake_case identifiers containing spelling words are scrubbed. The
+// 3-letter acronym exemption (URL, TTS, API) still holds.
+const SERVER_ALL_CAPS_REGEX = /(?<![A-Za-z])[A-Z]{4,}(?![A-Za-z])/g;
 const SERVER_UUID_SEGMENT_REGEX = /^[0-9a-f-]{32,36}$/i;
 const SERVER_LEARNER_ID_SEGMENT_REGEX = /^learner-[a-z0-9-]+$/i;
 const OPS_ERROR_MESSAGE_MAX_CHARS = 500;
@@ -2629,7 +2636,11 @@ function normaliseRouteNameServer(raw) {
     if (SERVER_UUID_SEGMENT_REGEX.test(segment) || SERVER_LEARNER_ID_SEGMENT_REGEX.test(segment)) return '[id]';
     return segment;
   });
-  return scrubSensitiveServer(segments.join('/'));
+  // U6 review follow-up (Finding 1): apply the all-caps scrub to the
+  // route name as well. KS2 spelling words routed as path segments
+  // (e.g. `/word/PRINCIPAL`) previously passed through unredacted.
+  // This mirrors the client-side fix so defence-in-depth stays intact.
+  return scrubAllCapsServer(scrubSensitiveServer(segments.join('/')));
 }
 
 function serverRedactClientEvent(raw) {
@@ -2649,8 +2660,12 @@ function serverRedactClientEvent(raw) {
   const firstFrameRaw = typeof source.firstFrame === 'string'
     ? source.firstFrame
     : (typeof source.stack === 'string' ? source.stack : '');
-  const firstFrame = scrubSensitiveServer(
-    firstLineServer(firstFrameRaw).slice(0, OPS_ERROR_FIRST_FRAME_MAX_CHARS),
+  // U6 review follow-up (Finding 1): apply the all-caps scrub to the
+  // first-frame too. Stack frames like `at PRINCIPAL_HANDLER (x.js:1)`
+  // previously reached the DB unredacted because only messageFirstLine
+  // ran the 4+ letter all-caps rule. Parity with the client-side fix.
+  const firstFrame = scrubAllCapsServer(
+    scrubSensitiveServer(firstLineServer(firstFrameRaw).slice(0, OPS_ERROR_FIRST_FRAME_MAX_CHARS)),
   );
 
   const routeName = normaliseRouteNameServer(source.routeName);
@@ -2748,50 +2763,107 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
       };
     }
 
-    // Fresh insert. Batch the INSERT with the status-open counter bump so both
-    // commit together (R21). Use ON CONFLICT(fingerprint) DO NOTHING to absorb
-    // the theoretical SHA-256 collision case — the preflight above already
-    // owned the legitimate dedup path, so a conflict here can only be a
-    // pathological collision (or a concurrent insert racing us).
+    // Fresh insert path. U6 review follow-up (Finding 5): split the INSERT
+    // from the `.status.open` counter bump so that a concurrent Worker
+    // invocation that lost the INSERT race does NOT also fire the counter
+    // bump. The previous implementation batched the INSERT and the bump
+    // together; when two invocations both reached this branch before either
+    // committed, the first INSERT succeeded + bumped, and the second's
+    // `INSERT ... ON CONFLICT DO NOTHING` silently no-opped — but its
+    // batched counter-bump statement fired unconditionally, drifting the
+    // counter +2 for a single row.
+    //
+    // Trade-off: R21 (single-batch atomicity) is relaxed for this specific
+    // insert. A rare tail window exists between the INSERT commit and the
+    // counter bump where a crash could leave the row without the
+    // .status.open increment. That one-missing-bump drift is strictly
+    // better than one-extra-bump-per-race drift, which compounds under
+    // sustained concurrent reports of the same error. The dedup UPDATE
+    // path (the common case) is untouched and still commits atomically.
     const eventId = generateOpsErrorEventId(ts);
-    await batch(db, [
-      bindStatement(db, `
-        INSERT INTO ops_error_events (
-          id,
-          fingerprint,
-          error_kind,
-          message_first_line,
-          first_frame,
-          route_name,
-          user_agent,
-          account_id,
-          first_seen,
-          last_seen,
-          occurrence_count,
-          status
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'open')
-        ON CONFLICT(fingerprint) DO NOTHING
-      `, [
-        eventId,
+    const insertResult = await run(db, `
+      INSERT INTO ops_error_events (
+        id,
         fingerprint,
-        redacted.errorKind,
-        redacted.messageFirstLine,
-        redacted.firstFrame || '',
-        redacted.routeName || '',
-        redacted.userAgent || '',
-        attributedAccountId,
-        ts,
-        ts,
-      ]),
-      bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}open`, ts, 1),
-    ]);
-
-    // If the ON CONFLICT fired, the insert is a no-op and the counter still
-    // bumped. That's acceptable — the row exists elsewhere and admins will
-    // see a small, self-healing counter drift only under SHA-256 collision.
-    return {
+        error_kind,
+        message_first_line,
+        first_frame,
+        route_name,
+        user_agent,
+        account_id,
+        first_seen,
+        last_seen,
+        occurrence_count,
+        status
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'open')
+      ON CONFLICT(fingerprint) DO NOTHING
+    `, [
       eventId,
+      fingerprint,
+      redacted.errorKind,
+      redacted.messageFirstLine,
+      redacted.firstFrame || '',
+      redacted.routeName || '',
+      redacted.userAgent || '',
+      attributedAccountId,
+      ts,
+      ts,
+    ]);
+    const insertChanges = Number(insertResult?.meta?.changes) || 0;
+
+    if (insertChanges === 1) {
+      // Row is genuinely fresh — bump the status.open counter. Running
+      // the prepared statement directly (rather than wrapping in a new
+      // batch) keeps the non-atomic window between INSERT and bump as
+      // small as possible.
+      await bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}open`, ts, 1).run();
+      return {
+        eventId,
+        deduped: false,
+        unavailable: false,
+      };
+    }
+
+    // Lost the race to a concurrent insert of the same fingerprint (or a
+    // pathological SHA-256 collision). Fall through to the dedup UPDATE
+    // path on the winning row — bump occurrence_count + last_seen, skip
+    // the counter bump. Preserves R24 tuple-authoritative dedup semantics
+    // because the winning row has the identical (errorKind, messageFirstLine,
+    // firstFrame) tuple (by construction: the fingerprint derives from the
+    // same three fields, and the ON CONFLICT key is the fingerprint UNIQUE
+    // index).
+    const winner = await first(db, `
+      SELECT id, first_seen, occurrence_count, status
+      FROM ops_error_events
+      WHERE error_kind = ?
+        AND message_first_line = ?
+        AND first_frame = ?
+      ORDER BY first_seen ASC, id ASC
+      LIMIT 1
+    `, [redacted.errorKind, redacted.messageFirstLine, redacted.firstFrame || '']);
+
+    if (winner && typeof winner.id === 'string' && winner.id) {
+      await run(db, `
+        UPDATE ops_error_events
+        SET last_seen = ?,
+            occurrence_count = occurrence_count + 1
+        WHERE id = ?
+      `, [ts, winner.id]);
+      return {
+        eventId: winner.id,
+        deduped: true,
+        unavailable: false,
+      };
+    }
+
+    // Extreme edge case: insert no-opped but no row satisfies the tuple
+    // lookup (possible only under SHA-256 fingerprint collision with a
+    // different tuple). Surface the degradation so the route returns 200
+    // without drift; admins lose visibility of this report, which is the
+    // safer failure mode than double-counting.
+    return {
+      eventId: null,
       deduped: false,
       unavailable: false,
     };

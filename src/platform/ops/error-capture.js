@@ -31,7 +31,13 @@
 const SENSITIVE_REGEX = /(answer_raw|prompt|learner_name|email|password|session|cookie|token|spelling_word|punctuation_answer|grammar_concept|prompt_token|learner_id)/gi;
 const UUID_SEGMENT_REGEX = /^[0-9a-f-]{32,36}$/i;
 const LEARNER_ID_SEGMENT_REGEX = /^learner-[a-z0-9-]+$/i;
-const ALL_CAPS_WORD_REGEX = /\b[A-Z]{4,}\b/g;
+// U6 review follow-up (Finding 1): broaden the all-caps match to cross
+// underscore boundaries. `\b` in JS regex treats `_` as a word character,
+// so the previous `\b[A-Z]{4,}\b` was a no-op on `PRINCIPAL_HANDLER`
+// (one long `\w+` token). The lookaround pair matches a run of 4+ upper-
+// case letters with any non-letter (including `_`) on either side, so
+// snake_case identifiers containing spelling words are scrubbed correctly.
+const ALL_CAPS_WORD_REGEX = /(?<![A-Za-z])[A-Z]{4,}(?![A-Za-z])/g;
 
 const MESSAGE_MAX_CHARS = 500;
 const FIRST_FRAME_MAX_CHARS = 300;
@@ -42,7 +48,17 @@ const ERROR_KIND_MAX_CHARS = 128;
 const MAX_QUEUE = 10;
 const BACKOFF_BASE_MS = 1000;
 const BACKOFF_MAX_MS = 60_000;
-const BACKOFF_JITTER = 0.25;
+// U6 review follow-up (Finding 4): ±25% two-sided jitter. The previous
+// implementation used `1 + Math.random() * 0.25`, which produced [1.00, 1.25]
+// — only positive jitter, no real thundering-herd mitigation on retries.
+const BACKOFF_JITTER = 0.5; // multiplied by (Math.random() - 0.5): ±25%.
+// U6 review follow-up (Finding 4): cap the doubling exponent so the base
+// cannot overflow. 2^10 * 1000 ms = ~17min which the 60s ceiling clamps anyway,
+// but the explicit cap keeps the computation stable under pathological retry storms.
+const BACKOFF_MAX_EXPONENT = 10;
+// U6 review follow-up (Finding 3): abort a hung POST after 10s so a stuck
+// network connection cannot park the drain loop with `_inFlight=true` forever.
+const FETCH_TIMEOUT_MS = 10_000;
 
 function scrubSensitive(value) {
   return String(value || '').replace(SENSITIVE_REGEX, '[redacted]');
@@ -68,7 +84,11 @@ function normaliseRouteName(raw) {
     if (UUID_SEGMENT_REGEX.test(segment) || LEARNER_ID_SEGMENT_REGEX.test(segment)) return '[id]';
     return segment;
   });
-  return scrubSensitive(segments.join('/'));
+  // U6 review follow-up (Finding 1): apply the all-caps scrub to the
+  // route name as well. KS2 spelling words routed as path segments
+  // (e.g. `/word/PRINCIPAL`) were previously passing through unredacted
+  // because only `messageFirstLine` ran the 4+ letter all-caps rule.
+  return scrubAllCaps(scrubSensitive(segments.join('/')));
 }
 
 export function redactClientErrorEvent(raw) {
@@ -85,7 +105,11 @@ export function redactClientErrorEvent(raw) {
   const rawStack = typeof source.stack === 'string'
     ? source.stack
     : (typeof source.firstFrame === 'string' ? source.firstFrame : '');
-  const firstFrame = scrubSensitive(firstLine(rawStack).slice(0, FIRST_FRAME_MAX_CHARS));
+  // U6 review follow-up (Finding 1): apply the all-caps scrub to the
+  // first-frame too. Stack frames like `at PRINCIPAL_HANDLER (x.js:1)`
+  // leak KS2 spelling words when a function name mirrors the word being
+  // tested. Matches the redaction parity on messageFirstLine.
+  const firstFrame = scrubAllCaps(scrubSensitive(firstLine(rawStack).slice(0, FIRST_FRAME_MAX_CHARS)));
 
   const routeName = normaliseRouteName(source.routeName);
 
@@ -113,6 +137,11 @@ let _inFlight = false;
 let _backoffUntil = 0;
 let _installedCredentialFetch = null;
 let _globalListenersInstalled = false;
+// U6 review follow-up (Finding 4): consecutive-failure counter powers the
+// exponential backoff. Reset to 0 on 2xx success or 4xx drop; incremented on
+// 5xx / network / AbortError. Module-scope (not per-event) so a queue of 10
+// retries does not reset the exponent to 0 mid-storm.
+let _consecutiveFailures = 0;
 
 function scheduleDrain(credentialFetch, delayMs = 0) {
   if (typeof globalThis.setTimeout !== 'function') return;
@@ -124,8 +153,19 @@ function scheduleDrain(credentialFetch, delayMs = 0) {
 }
 
 function nextBackoffDelay() {
-  const jitter = 1 + (Math.random() * BACKOFF_JITTER);
-  return Math.min(BACKOFF_MAX_MS, Math.round(BACKOFF_BASE_MS * jitter));
+  // U6 review follow-up (Finding 4): exponential backoff driven by the
+  // module-scoped consecutive-failure counter with two-sided ±25% jitter.
+  // Old formula (`1 + Math.random() * 0.25`) produced [1.00, 1.25] only —
+  // so the 60s ceiling was never reachable on transient 5xx storms, and
+  // jitter was one-sided (not real anti-herd). New formula:
+  //   base = BACKOFF_BASE_MS * 2^min(failures, 10)
+  //   jittered = base * (1 + (Math.random() - 0.5) * 0.5)   // ±25%
+  //   clamped to [BACKOFF_BASE_MS, BACKOFF_MAX_MS]
+  const attempt = Math.min(Math.max(0, _consecutiveFailures), BACKOFF_MAX_EXPONENT);
+  const base = BACKOFF_BASE_MS * Math.pow(2, attempt);
+  const jittered = base * (1 + (Math.random() - 0.5) * BACKOFF_JITTER);
+  const clamped = Math.min(BACKOFF_MAX_MS, Math.max(BACKOFF_BASE_MS, jittered));
+  return Math.round(clamped);
 }
 
 async function drainQueue(credentialFetch) {
@@ -142,24 +182,42 @@ async function drainQueue(credentialFetch) {
   const event = _queue[0];
   _inFlight = true;
   try {
-    const response = await credentialFetch('/api/ops/error-event', {
+    // U6 review follow-up (Finding 3): wrap the POST in an AbortSignal with
+    // a 10s deadline. Without this, a hung server (dropped connection, DNS
+    // stall, TLS handshake stuck) would block `_inFlight = true` forever
+    // and the queue would freeze indefinitely. On abort, the catch block
+    // treats the outcome as a transient error and backs off.
+    const init = {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(event),
-    });
+    };
+    if (typeof globalThis.AbortSignal?.timeout === 'function') {
+      init.signal = globalThis.AbortSignal.timeout(FETCH_TIMEOUT_MS);
+    }
+    const response = await credentialFetch('/api/ops/error-event', init);
     if (response && response.ok) {
       _queue.shift();
       _backoffUntil = 0;
+      // U6 review follow-up (Finding 4): reset the consecutive-failure
+      // counter on any 2xx so the next outage starts from a 1-second base.
+      _consecutiveFailures = 0;
     } else if (response && response.status >= 400 && response.status < 500) {
       // Non-retryable: drop and continue. 4xx means the server rejected the
       // payload shape / rate-limited / etc.; a retry would repeat the outcome.
       _queue.shift();
       _backoffUntil = 0;
+      // 4xx is treated as a clean drop — no exponential escalation from
+      // client-side validation failures.
+      _consecutiveFailures = 0;
     } else {
-      // 5xx / transient — back off with jitter and retry later.
+      // 5xx / transient — escalate backoff and retry later.
+      _consecutiveFailures += 1;
       _backoffUntil = Date.now() + nextBackoffDelay();
     }
   } catch {
+    // Network error, AbortError (10s timeout), or other fetch-layer failure.
+    _consecutiveFailures += 1;
     _backoffUntil = Date.now() + nextBackoffDelay();
   } finally {
     _inFlight = false;
@@ -261,10 +319,25 @@ export function _resetErrorCaptureState() {
   _backoffUntil = 0;
   _installedCredentialFetch = null;
   _globalListenersInstalled = false;
+  // U6 review follow-up (Finding 4): reset the failure counter so tests
+  // running back-to-back do not inherit backoff escalation from a
+  // previous scenario.
+  _consecutiveFailures = 0;
 }
 
 // Test-only helper — returns a shallow copy so tests can observe queue length
 // without racing the private array.
 export function _peekErrorCaptureQueue() {
   return _queue.slice();
+}
+
+// Test-only helper — exposes the internal backoff/failure counters so the
+// exponential-backoff + abort-timeout tests can assert on escalation behaviour
+// without reaching into the module-scoped `let` bindings directly.
+export function _peekErrorCaptureBackoffState() {
+  return {
+    backoffUntil: _backoffUntil,
+    consecutiveFailures: _consecutiveFailures,
+    inFlight: _inFlight,
+  };
 }
