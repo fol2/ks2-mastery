@@ -373,6 +373,7 @@ export const grammarModule = {
       const payload = context.data?.payload && typeof context.data.payload === 'object' && !Array.isArray(context.data.payload)
         ? context.data.payload
         : { kind: context.data?.kind || 'explanation' };
+      if (service?.requestAiEnrichment) return applyLocalTransition(context, service.requestAiEnrichment(learnerId, payload));
       return sendGrammarCommand(context, 'request-ai-enrichment', payload);
     }
 

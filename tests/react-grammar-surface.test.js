@@ -186,6 +186,64 @@ test('Grammar surface exposes in-session repair actions without local scoring', 
   assert.equal(grammar.session.repair.similarProblems, 1);
 });
 
+test('Grammar session exposes non-scored AI enrichment triggers', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  let html = harness.render();
+  assert.match(html, /Explain this/);
+  assert.match(html, /Revision cards/);
+
+  harness.dispatch('grammar-request-ai-enrichment', { kind: 'explanation' });
+  let grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.aiEnrichment.status, 'ready');
+  assert.equal(grammar.aiEnrichment.nonScored, true);
+  assert.equal(grammar.aiEnrichment.concept.id, 'adverbials');
+  html = harness.render();
+  assert.match(html, /Non-scored/);
+  assert.match(html, /Adverbials and fronted adverbials explanation/);
+  assert.match(html, /Fronted adverbials come first/);
+
+  harness.dispatch('grammar-request-ai-enrichment', { kind: 'revision-card' });
+  grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.aiEnrichment.kind, 'revision-card');
+  assert.ok(grammar.aiEnrichment.revisionCards.length >= 1);
+  assert.ok(grammar.aiEnrichment.revisionDrills.every((drill) => drill.deterministic === true));
+  html = harness.render();
+  assert.match(html, /Concept check/);
+  assert.match(html, /Spot the fronted adverbial/);
+});
+
+test('Grammar analytics exposes parent summary draft enrichment', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  let html = harness.render();
+  assert.match(html, /Parent summary draft/);
+
+  harness.dispatch('grammar-request-ai-enrichment', { kind: 'parent-summary' });
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.aiEnrichment.status, 'ready');
+  assert.equal(grammar.aiEnrichment.kind, 'parent-summary');
+  assert.match(grammar.aiEnrichment.parentSummary.body, /Worker-marked evidence/);
+  html = harness.render();
+  assert.match(html, /Grammar parent summary draft/);
+  assert.match(html, /Non-scored/);
+  assert.match(html, /Current focus/);
+  assert.doesNotMatch(html, /correctAnswer/);
+});
+
 test('Grammar submit requires an answer before recording an attempt', () => {
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });

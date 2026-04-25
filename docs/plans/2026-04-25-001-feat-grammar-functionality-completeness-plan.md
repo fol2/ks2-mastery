@@ -373,7 +373,7 @@ flowchart TB
 
 ---
 
-- U5. **Expose AI Enrichment Triggers and Parent Summary Drafts**
+- [x] U5. **Expose AI Enrichment Triggers and Parent Summary Drafts**
 
 **Goal:** Make the existing AI safe lane usable from the Grammar product while keeping all AI output non-scored and server-validated.
 
@@ -418,6 +418,7 @@ flowchart TB
 
 **Verification:**
 - AI is visible and useful again, but remains enrichment-only and cannot become scoring authority.
+- Completed with deterministic server fallback enrichment, session explanation/revision-card triggers, analytics parent summary draft trigger, Worker route coverage, and React surface coverage.
 
 ---
 

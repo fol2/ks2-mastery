@@ -114,6 +114,9 @@ export function createGrammarTestService({ repositories, now = Date.now } = {}) 
     startSimilarProblem(learnerId) {
       return apply(learnerId, 'start-similar-problem');
     },
+    requestAiEnrichment(learnerId, payload = {}) {
+      return apply(learnerId, 'request-ai-enrichment', payload);
+    },
     continueSession(learnerId) {
       return apply(learnerId, 'continue-session');
     },

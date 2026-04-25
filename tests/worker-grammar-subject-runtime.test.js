@@ -1102,6 +1102,52 @@ test('Grammar AI enrichment returns non-scored deterministic drill suggestions w
   DB.close();
 });
 
+test('Grammar AI enrichment uses deterministic fallback content when no provider response is available', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'fronted_adverbial_choose');
+  seedAccountLearner(DB);
+
+  const started = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-ai-fallback-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  assert.equal(started.response.status, 200, JSON.stringify(started.body));
+
+  const enrichment = await postCommand(app, DB, {
+    command: 'request-ai-enrichment',
+    learnerId: 'learner-a',
+    requestId: 'grammar-ai-fallback-revision-cards',
+    expectedLearnerRevision: 1,
+    payload: {
+      kind: 'revision-card',
+    },
+  });
+
+  assert.equal(enrichment.response.status, 200, JSON.stringify(enrichment.body));
+  assert.equal(enrichment.body.changed, false);
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.status, 'ready');
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.kind, 'revision-card');
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.nonScored, true);
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.concept.id, 'adverbials');
+  assert.ok(enrichment.body.subjectReadModel.aiEnrichment.revisionCards.length >= 1);
+  assert.ok(enrichment.body.subjectReadModel.aiEnrichment.revisionDrills.length >= 1);
+  assert.ok(enrichment.body.subjectReadModel.aiEnrichment.revisionDrills.every((drill) => drill.deterministic === true));
+  assert.equal(enrichment.body.mutation.appliedRevision, 1);
+  assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 1);
+  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM child_subject_state WHERE subject_id = 'grammar'").get().count, 1);
+
+  DB.close();
+});
+
 test('Grammar AI enrichment contains malformed output as a non-mutating read-model failure', async () => {
   const DB = createMigratedSqliteD1Database();
   const app = createWorkerApp({ now: () => 1_777_000_000_000 });

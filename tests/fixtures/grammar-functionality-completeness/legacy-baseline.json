@@ -187,9 +187,15 @@
     {
       "id": "ai-visible-triggers",
       "legacyCapability": "Learners and adults can request explanation, revision cards and parent summary drafts",
-      "status": "planned",
-      "ownerUnit": "U5",
-      "reason": "Current safe lane can render enrichment but lacks visible trigger workflows."
+      "status": "completed",
+      "evidence": [
+        "worker/src/subjects/grammar/ai-enrichment.js",
+        "src/subjects/grammar/module.js",
+        "src/subjects/grammar/components/GrammarSessionScene.jsx",
+        "src/subjects/grammar/components/GrammarAnalyticsScene.jsx",
+        "tests/worker-grammar-subject-runtime.test.js",
+        "tests/react-grammar-surface.test.js"
+      ]
     },
     {
       "id": "read-aloud-and-speech-rate",

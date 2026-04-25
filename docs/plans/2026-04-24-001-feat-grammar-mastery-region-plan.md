@@ -38,7 +38,7 @@ Current Grammar state:
 
 Open Grammar follow-up scope:
 
-- [ ] Track remaining legacy functionality completeness in `docs/plans/2026-04-25-001-feat-grammar-functionality-completeness-plan.md`: strict mini-test, session goals/settings, and in-session repair are complete; visible AI triggers, read aloud, adult/data replacement parity, and release gates remain.
+- [ ] Track remaining legacy functionality completeness in `docs/plans/2026-04-25-001-feat-grammar-functionality-completeness-plan.md`: strict mini-test, session goals/settings, in-session repair, and visible AI triggers are complete; read aloud, adult/data replacement parity, and release gates remain.
 - [x] Add transfer and Bellstorm bridge placeholders without collapsing Grammar and Punctuation product identities.
 - [ ] Decide later whether paragraph-level transfer becomes non-scored, teacher-reviewed, or a separate deterministic workflow.
 - [ ] Decide whether to connect a live AI provider to the safe lane; provider keys must stay server-side and output must pass the existing validator.

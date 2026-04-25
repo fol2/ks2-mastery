@@ -61,7 +61,32 @@ function punctuationGrammarConcepts(concepts = []) {
   return concepts.filter((concept) => concept.punctuationForGrammar === true);
 }
 
-export function GrammarAnalyticsScene({ grammar, rewardState: providedRewardState = null }) {
+function ParentSummaryDraft({ enrichment }) {
+  const summary = enrichment?.parentSummary;
+  if (!summary?.body) return null;
+  const nextSteps = Array.isArray(summary.nextSteps) ? summary.nextSteps.filter(Boolean) : [];
+  return (
+    <aside className="grammar-parent-summary-draft" aria-label="Parent summary draft">
+      <div className="grammar-ai-head">
+        <span className="chip good">Non-scored</span>
+        <strong>{summary.title || 'Parent summary draft'}</strong>
+      </div>
+      <p>{summary.body}</p>
+      {nextSteps.length ? (
+        <ol>
+          {nextSteps.map((step) => <li key={step}>{step}</li>)}
+        </ol>
+      ) : null}
+    </aside>
+  );
+}
+
+export function GrammarAnalyticsScene({
+  grammar,
+  rewardState: providedRewardState = null,
+  actions = null,
+  runtimeReadOnly = false,
+}) {
   const concepts = grammar.analytics?.concepts || [];
   const counts = grammar.stats?.concepts || {};
   const progressSnapshot = grammar.analytics?.progressSnapshot || {};
@@ -82,7 +107,19 @@ export function GrammarAnalyticsScene({ grammar, rewardState: providedRewardStat
           <div className="eyebrow">Evidence snapshot</div>
           <h3 className="section-title" id="grammar-analytics-title">Grammar analytics</h3>
         </div>
-        <span className="chip">Stage 1</span>
+        <div className="grammar-analytics-actions">
+          <span className="chip">Stage 1</span>
+          {actions?.dispatch ? (
+            <button
+              className="btn secondary"
+              type="button"
+              disabled={runtimeReadOnly || Boolean(grammar.pendingCommand)}
+              onClick={() => actions.dispatch('grammar-request-ai-enrichment', { kind: 'parent-summary' })}
+            >
+              Parent summary draft
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="grammar-status-strip" aria-label="Concept status counts">
@@ -92,6 +129,8 @@ export function GrammarAnalyticsScene({ grammar, rewardState: providedRewardStat
         <StatusCount label="due" value={counts.due || 0} className="due" />
         <StatusCount label="secured" value={counts.secured || 0} className="secured" />
       </div>
+
+      <ParentSummaryDraft enrichment={grammar.aiEnrichment} />
 
       <div className="grammar-bellstorm-bridge" aria-label="Grammar and Bellstorm Coast bridge">
         <div>

@@ -90,7 +90,8 @@ test('Grammar completeness baseline pins legacy mode coverage separately from be
   assert.equal(capabilityById(baseline, 'session-goals')?.status, 'completed');
   assert.equal(capabilityById(baseline, 'practice-settings')?.status, 'completed');
   assert.equal(capabilityById(baseline, 'in-session-repair-loop')?.status, 'completed');
-  assert.equal(capabilityById(baseline, 'ai-visible-triggers')?.ownerUnit, 'U5');
+  assert.equal(capabilityById(baseline, 'ai-visible-triggers')?.status, 'completed');
+  assert.ok(capabilityById(baseline, 'ai-visible-triggers')?.evidence.includes('worker/src/subjects/grammar/ai-enrichment.js'));
   assert.equal(capabilityById(baseline, 'read-aloud-and-speech-rate')?.ownerUnit, 'U6');
   assert.equal(capabilityById(baseline, 'adult-data-replacement-parity')?.ownerUnit, 'U7');
   assert.equal(capabilityById(baseline, 'functionality-completeness-release-gate')?.ownerUnit, 'U8');

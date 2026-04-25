@@ -378,6 +378,31 @@ function RepairActions({ isMiniTest, isFeedback, session, pending, runtimeReadOn
   );
 }
 
+function AiEnrichmentActions({ isMiniTest, pending, runtimeReadOnly, actions }) {
+  if (isMiniTest) return null;
+  const disabled = runtimeReadOnly || pending;
+  return (
+    <div className="grammar-ai-actions" aria-label="Grammar enrichment actions">
+      <button
+        className="btn secondary"
+        type="button"
+        disabled={disabled}
+        onClick={() => actions.dispatch('grammar-request-ai-enrichment', { kind: 'explanation' })}
+      >
+        Explain this
+      </button>
+      <button
+        className="btn secondary"
+        type="button"
+        disabled={disabled}
+        onClick={() => actions.dispatch('grammar-request-ai-enrichment', { kind: 'revision-card' })}
+      >
+        Revision cards
+      </button>
+    </div>
+  );
+}
+
 export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
   const session = grammar.session || {};
   const miniTest = session.type === 'mini-set' ? session.miniTest : null;
@@ -430,6 +455,12 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
         <p className="grammar-prompt">{item.promptText || 'Loading the next Grammar item...'}</p>
         {item.checkLine ? <p className="grammar-check-line">{item.checkLine}</p> : null}
         {!isMiniTest ? <GuidancePanel support={session.supportGuidance} /> : null}
+        <AiEnrichmentActions
+          isMiniTest={isMiniTest}
+          pending={pending}
+          runtimeReadOnly={runtimeReadOnly}
+          actions={actions}
+        />
         {!isMiniTest ? <AiEnrichmentPanel enrichment={grammar.aiEnrichment} /> : null}
 
         <form
