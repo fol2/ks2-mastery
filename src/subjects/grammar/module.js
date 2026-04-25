@@ -243,6 +243,34 @@ function responseHasAnswer(response) {
   return Object.entries(response).some(([, value]) => hasGrammarResponseValue(value));
 }
 
+// Phase 3 U5: picks the first concept id that the learner should revisit
+// after a round. Mini-test summaries carry a marked `miniTestReview` — the
+// first incorrect or blank question's `skillIds[0]` (or `replay.conceptIds`
+// fallback) wins. Regular practice has no per-question review, so we fall
+// back to the analytics concept list and pick the first `weak` / `due`
+// concept. Returns `''` when nothing is actionable so the caller can no-op.
+export function grammarMissedConceptFromUi(ui) {
+  const summary = ui?.summary && typeof ui.summary === 'object' ? ui.summary : {};
+  const questions = Array.isArray(summary.miniTestReview?.questions)
+    ? summary.miniTestReview.questions
+    : [];
+  for (const question of questions) {
+    const correct = question?.marked?.result?.correct === true;
+    if (correct) continue;
+    const item = question?.item || {};
+    const skillIds = Array.isArray(item.skillIds) ? item.skillIds : [];
+    const replayIds = Array.isArray(item.replay?.conceptIds) ? item.replay.conceptIds : [];
+    const candidate = skillIds.find((id) => typeof id === 'string' && id)
+      || replayIds.find((id) => typeof id === 'string' && id)
+      || '';
+    if (candidate) return String(candidate).slice(0, 64);
+  }
+  const concepts = Array.isArray(ui?.analytics?.concepts) ? ui.analytics.concepts : [];
+  const weakFirst = concepts.find((concept) => concept?.status === 'weak')
+    || concepts.find((concept) => concept?.status === 'due');
+  return weakFirst?.id ? String(weakFirst.id).slice(0, 64) : '';
+}
+
 function resetToDashboard(context) {
   const learnerId = selectedLearnerId(context);
   context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => ({
@@ -483,6 +511,59 @@ export const grammarModule = {
           }
           sendGrammarCommand(context, 'start-session', payload);
         },
+      });
+    }
+
+    // Phase 3 U5: `grammar-open-analytics` flips the phase to `'analytics'`
+    // so the adult Analytics Scene renders in place of the summary. U7
+    // scopes the adult/child content split more thoroughly; here we just
+    // gate the surface behind the new phase. `grammar-close-analytics`
+    // returns to the summary without clearing it so the five summary cards
+    // are still visible when the adult closes the adult view.
+    if (action === 'grammar-open-analytics') {
+      if (ui.pendingCommand) return true;
+      if (ui.phase === 'session' || ui.phase === 'feedback') return true;
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => ({
+        ...normaliseGrammarReadModel(current, learnerId),
+        phase: 'analytics',
+        error: '',
+      }));
+      return true;
+    }
+
+    if (action === 'grammar-close-analytics') {
+      if (ui.pendingCommand) return true;
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+        const normalised = normaliseGrammarReadModel(current, learnerId);
+        const targetPhase = normalised.summary ? 'summary' : 'dashboard';
+        return {
+          ...normalised,
+          phase: targetPhase,
+          error: '',
+        };
+      });
+      return true;
+    }
+
+    // Phase 3 U5: `grammar-practise-missed` is the "Practise missed" /
+    // "Fix missed concepts" primary action on the summary. It iterates the
+    // mini-test review (if present) to find the first incorrect question,
+    // falls back to the analytics snapshot for `weak` / `due` concepts in
+    // regular practice, then chains `grammar-focus-concept` so the learner
+    // drops into a focused round on that concept id. No-op when no missed
+    // concept can be found (e.g. perfect round — the button was disabled
+    // in the mini-test branch, and still no-op for regular practice).
+    if (action === 'grammar-practise-missed') {
+      if (ui.pendingCommand) return true;
+      const conceptId = grammarMissedConceptFromUi(ui);
+      if (!conceptId) return true;
+      // Reuse the existing `grammar-focus-concept` code path so the prefs +
+      // phase transitions stay in one place. We pass the conceptId as
+      // `context.data.conceptId` which is exactly what the focus branch
+      // expects. The return value bubbles up untouched.
+      return grammarModule.handleAction('grammar-focus-concept', {
+        ...context,
+        data: { conceptId },
       });
     }
 

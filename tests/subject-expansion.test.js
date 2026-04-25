@@ -190,7 +190,10 @@ const grammarSpec = {
   // to the child-facing `GRAMMAR_DASHBOARD_HERO.title` ("Grammar Garden").
   practiceMatcher: /Grammar Garden/,
   sessionMatcher: /Grammar practice|question marks/i,
-  summaryMatcher: /Grammar session summary/,
+  // Phase 3 U5 replaces the adult `Grammar session summary` eyebrow with the
+  // child-facing `Nice work — round complete` headline on the redesigned
+  // summary scene.
+  summaryMatcher: /Nice work — round complete/,
   getUiState(harness) {
     return harness.store.getState().subjectUi.grammar;
   },

@@ -102,6 +102,29 @@ export function GrammarPracticeSurface({
     return <GrammarSummaryScene {...shared} />;
   }
 
+  // Phase 3 U5: `Grown-up view` on the summary dispatches
+  // `grammar-open-analytics`, flipping phase to `'analytics'`. The scene
+  // renders full-surface here (not inside a `<details>`) with a back
+  // affordance so the adult can return to the summary. U7 scopes the
+  // deeper child/adult split; here we only plumb the phase transition.
+  if (grammar.phase === 'analytics') {
+    return (
+      <div className="grammar-surface grammar-surface--analytics">
+        <div className="grammar-analytics-back-row">
+          <button
+            type="button"
+            className="btn ghost"
+            data-action="grammar-close-analytics"
+            onClick={() => actions.dispatch('grammar-close-analytics')}
+          >
+            Back to round summary
+          </button>
+        </div>
+        <GrammarAnalyticsScene {...shared} />
+      </div>
+    );
+  }
+
   if (grammar.phase === 'bank') {
     return (
       <div className="grammar-surface">
