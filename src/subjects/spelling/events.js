@@ -133,7 +133,7 @@ export function createSpellingGuardianRenewedEvent({
     ),
     ...word,
     reviewLevel: Number.isInteger(reviewLevel) && reviewLevel >= 0 ? reviewLevel : 0,
-    nextDueDay: Number.isFinite(Number(nextDueDay)) && Number(nextDueDay) >= 0 ? Math.floor(Number(nextDueDay)) : null,
+    nextDueDay: Number.isInteger(nextDueDay) && nextDueDay >= 0 ? nextDueDay : null,
   };
 }
 

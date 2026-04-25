@@ -341,7 +341,7 @@ test('createSpellingGuardianMissionCompletedEvent returns null when session.id i
   assert.equal(createSpellingGuardianMissionCompletedEvent({ learnerId: 'a', session: { id: '' } }), null);
 });
 
-test('createSpellingGuardianMissionCompletedEvent clamps negative counts to 0', () => {
+test('createSpellingGuardianMissionCompletedEvent rejects non-integer and negative counts to 0', () => {
   const event = createSpellingGuardianMissionCompletedEvent({
     learnerId: 'a',
     session: GUARDIAN_SESSION,
