@@ -144,6 +144,156 @@ test('Grammar surface runs KS2 mini-set mode with delayed feedback and end revie
   assert.match(html, /Q2/);
 });
 
+// U4 strict mini-test SSR coverage — known limits (documented in plan):
+// the SSR harness cannot observe pointer-capture, focus management, CSS
+// overflow, scroll-into-view, or IME behaviour. The tests below exercise
+// state transitions and rendered-HTML invariants; browser-visual regressions
+// must be caught by production UI verification, not this file.
+
+test('U4: strict mini-test preserves answers across navigation', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: { mode: 'satsset', roundLength: 8, templateId: sample.id, seed: sample.sample.seed },
+  });
+
+  // Answer Q1, navigate forward, navigate back, confirm Q1 answer preserved.
+  let grammar = harness.store.getState().subjectUi.grammar;
+  const q1Value = grammar.session.miniTest.questions[0].item.inputSpec.options[0].value;
+  harness.dispatch('grammar-save-mini-test-response', {
+    formData: grammarResponseFormData({ answer: q1Value }),
+    advance: true,
+  });
+
+  grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.session.currentIndex, 1, 'advance moved to Q2');
+
+  // Go back to Q1
+  harness.dispatch('grammar-move-mini-test', { index: 0 });
+  grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.session.currentIndex, 0, 'navigation returned to Q1');
+
+  // Q1's saved response must still be present in the mini-test state
+  const q1Saved = grammar.session.miniTest.questions[0];
+  assert.equal(q1Saved.answered, true, 'Q1 still marked answered after navigation');
+  assert.equal(q1Saved.response.answer, q1Value, 'Q1 answer value preserved across navigation');
+
+  // No feedback rendered before finish (no early marking leak)
+  const html = harness.render();
+  assert.doesNotMatch(html, /Correct\./, 'no early feedback before finish');
+  assert.doesNotMatch(html, /Worked solution/i, 'no worked guidance before finish');
+});
+
+test('U4: strict mini-test unanswered questions render as unanswered without inventing responses', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: { mode: 'satsset', roundLength: 8, templateId: sample.id, seed: sample.sample.seed },
+  });
+
+  // Answer only Q1, then finish — leaves 7 unanswered.
+  let grammar = harness.store.getState().subjectUi.grammar;
+  const q1Value = grammar.session.miniTest.questions[0].item.inputSpec.options[0].value;
+  harness.dispatch('grammar-save-mini-test-response', {
+    formData: grammarResponseFormData({ answer: q1Value }),
+    advance: false,
+  });
+  harness.dispatch('grammar-finish-mini-test');
+
+  grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'summary');
+  const review = grammar.summary.miniTestReview;
+  assert.equal(review.questions.length, 8);
+  const answered = review.questions.filter((q) => q.answered).length;
+  const unanswered = review.questions.filter((q) => !q.answered).length;
+  assert.equal(answered, 1);
+  assert.equal(unanswered, 7);
+  // Unanswered questions must not be marked or have a score
+  for (const q of review.questions.filter((q) => !q.answered)) {
+    assert.ok(!q.result || q.result.correct !== true, 'unanswered question must not be marked correct');
+  }
+  const html = harness.render();
+  assert.match(html, /No answer saved/, 'unanswered state is rendered');
+});
+
+test('U4: strict mini-test blocks worked/faded/AI/similar-problem commands while unfinished', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: { mode: 'satsset', roundLength: 8, templateId: sample.id, seed: sample.sample.seed },
+  });
+
+  // Snapshot mastery before any repair attempts
+  const masteryBefore = JSON.stringify(harness.store.getState().subjectUi.grammar.analytics);
+
+  harness.dispatch('grammar-use-faded-support');
+  harness.dispatch('grammar-show-worked-solution');
+  harness.dispatch('grammar-start-similar-problem');
+  harness.dispatch('grammar-request-ai-enrichment', { kind: 'explanation' });
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  // Mini-test is still active and unfinished
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.type, 'mini-set');
+  // Mastery unchanged — these commands must fail closed
+  const masteryAfter = JSON.stringify(grammar.analytics);
+  assert.equal(masteryAfter, masteryBefore, 'mastery must not change from failed repair commands during active mini-test');
+  // Feedback must remain absent (no leaked guidance)
+  assert.equal(grammar.feedback, null, 'no feedback leaked during active mini-test');
+  // Repair state must not record worked/faded escalation — the commands most
+  // visibly mutate session.repair outside mini-tests, so a passing test without
+  // this assertion could miss a silent-no-op bug.
+  const repair = grammar.session.repair || {};
+  assert.ok(!repair.workedSolutionShown, 'worked-solution repair must not be marked during active mini-test');
+  assert.ok(!repair.requestedFadedSupport, 'faded-support repair must not be marked during active mini-test');
+});
+
+test('U4: strict mini-test timer expiry auto-finishes with deterministic marking', () => {
+  const storage = installMemoryStorage();
+  let currentNow = 1_777_000_000_000;
+  const harness = createGrammarHarness({ storage, now: () => currentNow });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: { mode: 'satsset', roundLength: 8, templateId: sample.id, seed: sample.sample.seed },
+  });
+
+  // Save Q1 response
+  let grammar = harness.store.getState().subjectUi.grammar;
+  const q1Value = grammar.session.miniTest.questions[0].item.inputSpec.options[0].value;
+  harness.dispatch('grammar-save-mini-test-response', {
+    formData: grammarResponseFormData({ answer: q1Value }),
+    advance: false,
+  });
+
+  // Advance the clock past the timer expiry. Timer is `expiresAt` on the session.
+  grammar = harness.store.getState().subjectUi.grammar;
+  const expiresAt = grammar.session.miniTest.expiresAt;
+  currentNow = Number(expiresAt) + 1000;
+
+  // Submit/save after expiry should trigger auto-finish via the Worker command path.
+  harness.dispatch('grammar-save-mini-test-response', {
+    formData: grammarResponseFormData({ answer: q1Value }),
+    advance: true,
+  });
+
+  grammar = harness.store.getState().subjectUi.grammar;
+  // Finish must have been triggered; phase is summary.
+  assert.equal(grammar.phase, 'summary', 'timer expiry auto-finishes the mini-test');
+  assert.ok(grammar.summary, 'summary is populated after timer expiry');
+  assert.equal(grammar.summary.miniTestReview.questions.length, 8);
+});
+
 test('Grammar surface exposes in-session repair actions without local scoring', () => {
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });
@@ -325,10 +475,12 @@ test('Grammar setup exposes session goals and Smart Review teaching settings', (
   assert.equal(grammar.session.goal.type, 'timed');
   assert.equal(grammar.session.goal.timeLimitMs, 10 * 60_000);
   assert.equal(grammar.prefs.speechRate, 1.4);
-  assert.equal(grammar.session.supportLevel, 1);
+  // U3 contract v2: Smart Review + allowTeachingItems no longer force session support level 1.
+  // Independent first-attempt correct gets full credit. In-session faded escalation still available
+  // if the learner requests it via grammar-use-faded-support.
+  assert.equal(grammar.session.supportLevel, 0);
   html = harness.render();
   assert.match(html, /Ten minutes/);
-  assert.match(html, /Faded guidance/);
 });
 
 test('Grammar show-domain setting affects display only before answer feedback', () => {
