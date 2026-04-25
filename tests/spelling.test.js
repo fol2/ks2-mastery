@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { installMemoryStorage } from './helpers/memory-storage.js';
+import { installMemoryStorage, MemoryStorage } from './helpers/memory-storage.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
@@ -10,6 +10,7 @@ import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js'
 import { rewardEventsFromSpellingEvents } from '../src/subjects/spelling/event-hooks.js';
 import { monsterSummaryFromSpellingAnalytics } from '../src/platform/game/monster-system.js';
 import { getOverallSpellingStats, spellingModule } from '../src/subjects/spelling/module.js';
+import { createLegacySpellingEngine } from '../shared/spelling/legacy-engine.js';
 
 function makeSeededRandom(seed = 1) {
   let value = seed >>> 0;
@@ -727,4 +728,36 @@ test('malformed persisted session state falls back safely instead of crashing', 
 
   assert.equal(restored.phase, 'dashboard');
   assert.match(restored.error, /could not|missing|valid words/i);
+});
+
+// Pins the legacy smartBucket priority restored by PR #145 (reverts #87). A word
+// with stage >= SECURE_STAGE AND wrong > 0 MUST bucket as `fragile`, not
+// `secure`. Exercised through chooseSmartWords because smartBucket is internal.
+test('smartBucket routes secure-stage words with historical wrongs to fragile before secure', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / (24 * 60 * 60 * 1000));
+  const storage = new MemoryStorage();
+  const profileId = 'learner-guard';
+  const fragileSlug = 'fragile-secure';
+  const freshSlug = 'fresh-new';
+  const minimalWords = [
+    { slug: fragileSlug, word: fragileSlug, year: '3-4', family: 'f1', spellingPool: 'core', accepted: [fragileSlug], sentence: '', sentences: [] },
+    { slug: freshSlug, word: freshSlug, year: '3-4', family: 'f2', spellingPool: 'core', accepted: [freshSlug], sentence: '', sentences: [] },
+  ];
+  // Secure stage + historical wrong + not due today → pre-revert this was `secure`,
+  // post-revert this is `fragile`.
+  storage.setItem(`ks2-spell-progress-${profileId}`, JSON.stringify({
+    [fragileSlug]: { stage: 5, attempts: 6, correct: 4, wrong: 2, dueDay: today + 30, lastDay: today - 1, lastResult: 'correct' },
+  }));
+  // Sequence: bucket-pick roll * total(fragile=5 + new=3 = 8) = 0.8 → picks fragile;
+  // scoreForSmart random; word-pick roll. Fallback 0.5 covers any trailing draws.
+  const randomValues = [0.1, 0.5, 0.5];
+  let index = 0;
+  const random = () => (index < randomValues.length ? randomValues[index++] : 0.5);
+
+  const engine = createLegacySpellingEngine({ words: minimalWords, storage, now, random });
+  const result = engine.createSession({ profileId, mode: 'smart', yearFilter: 'core', length: 1 });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.session.uniqueWords, [fragileSlug]);
 });
