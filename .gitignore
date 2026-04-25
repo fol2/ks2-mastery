@@ -10,7 +10,6 @@ screenshots/
 test-results/
 src/generated/
 src/bundles/
-worker/src/generated-csp-hash.js
 backups/
 .wrangler/
 .env

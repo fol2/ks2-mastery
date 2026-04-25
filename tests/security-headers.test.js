@@ -609,11 +609,17 @@ test('/api/auth/logout response carries all seven security headers plus Clear-Si
 // U7: Content-Security-Policy-Report-Only coverage.
 // ---------------------------------------------------------------------------
 
-test('CSP_INLINE_SCRIPT_HASH is a well-formed sha256 CSP token', () => {
-  assert.match(
-    CSP_INLINE_SCRIPT_HASH,
-    /^sha256-[A-Za-z0-9+/]+=*$/,
-    'The generated hash must be a CSP-compliant sha256-<base64> token.',
+test('CSP_INLINE_SCRIPT_HASH is a well-formed sha256 CSP token or the pre-build placeholder', () => {
+  // After `npm run build` the value is a real CSP-compliant sha256-<base64>
+  // token. Before the first build (fresh clone running `npm test` without
+  // building), the committed module ships with a sentinel placeholder so
+  // the import resolves and tests can run. See correctness-blocker-1 fix
+  // in `worker/src/generated-csp-hash.js`.
+  const placeholder = 'sha256-PLACEHOLDER_PRE_BUILD_HASH=';
+  const wellFormed = /^sha256-[A-Za-z0-9+/]+=*$/.test(CSP_INLINE_SCRIPT_HASH);
+  assert.ok(
+    wellFormed || CSP_INLINE_SCRIPT_HASH === placeholder,
+    `Expected sha256-<base64> token or the pre-build placeholder, got: ${CSP_INLINE_SCRIPT_HASH}`,
   );
 });
 

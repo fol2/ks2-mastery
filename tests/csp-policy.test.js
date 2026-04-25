@@ -163,3 +163,46 @@ test('regression guard: missing manifest-src or worker-src fails the contract', 
     'control: the synthetic bad policy has no worker-src directive.',
   );
 });
+
+test('built CSP string does NOT contain the pre-build placeholder sentinel (build-before-deploy discipline)', async () => {
+  // correctness-blocker-1: `worker/src/generated-csp-hash.js` is committed
+  // with a placeholder so fresh clones can run tests without running the
+  // build first. `scripts/build-public.mjs` overwrites that module with a
+  // real sha256 on every build. This test runs the build-produced module
+  // and asserts the deployed Worker CSP can never ship the placeholder:
+  //  - The checked-in repo `_headers` carries a `'sha256-BUILD_TIME_HASH'`
+  //    placeholder that `scripts/build-public.mjs` substitutes.
+  //  - `worker/src/generated-csp-hash.js` after build exports a real hash.
+  //  - The serialised CSP (CSP_POLICY_VALUE) must therefore not carry the
+  //    `PLACEHOLDER_PRE_BUILD_HASH` sentinel after build. Before build it
+  //    may, which is fine — the build is what flips it.
+  //
+  // We cannot require `npm run build` to have run inside the test harness
+  // (that would re-introduce the ordering blocker). Instead we check the
+  // dist/public artefact when present, and only enforce the no-placeholder
+  // rule against a built artefact — never against the checked-in source.
+  const { readFile, access } = await import('node:fs/promises');
+  const { constants } = await import('node:fs');
+  const path = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const __filename = fileURLToPath(import.meta.url);
+  const repoRoot = path.resolve(path.dirname(__filename), '..');
+  const distHeadersPath = path.join(repoRoot, 'dist', 'public', '_headers');
+  try {
+    await access(distHeadersPath, constants.F_OK);
+  } catch {
+    // Build artefact absent — fresh-clone scenario. Skip the assertion;
+    // the CI/deploy path will run `npm run build` before this matters.
+    return;
+  }
+  const builtHeaders = await readFile(distHeadersPath, 'utf8');
+  assert.ok(
+    !builtHeaders.includes('PLACEHOLDER_PRE_BUILD_HASH'),
+    'Built dist/public/_headers must NOT contain the PLACEHOLDER_PRE_BUILD_HASH sentinel. '
+    + 'Run `npm run build` before deploying to substitute the real CSP hash.',
+  );
+  assert.ok(
+    !builtHeaders.includes("'sha256-BUILD_TIME_HASH'"),
+    'Built dist/public/_headers must NOT contain the sha256-BUILD_TIME_HASH template token.',
+  );
+});

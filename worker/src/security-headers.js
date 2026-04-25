@@ -17,6 +17,26 @@
 
 import { CSP_INLINE_SCRIPT_HASH } from './generated-csp-hash.js';
 
+// Placeholder hash shipped with `worker/src/generated-csp-hash.js` before
+// the first build. `scripts/build-public.mjs` overwrites the module with
+// the real sha256 of the inline theme-bootstrap script. A deployment that
+// still carries the placeholder would emit a CSP that cannot validate the
+// inline script; we surface that loudly at request-time so an operator
+// catches the missed build before violation reports pile up.
+const CSP_PLACEHOLDER_HASH = 'sha256-PLACEHOLDER_PRE_BUILD_HASH=';
+let cspPlaceholderWarningEmitted = false;
+
+function warnOnPlaceholderHashOnce() {
+  if (cspPlaceholderWarningEmitted) return;
+  if (CSP_INLINE_SCRIPT_HASH !== CSP_PLACEHOLDER_HASH) return;
+  cspPlaceholderWarningEmitted = true;
+  // eslint-disable-next-line no-console
+  console.error(
+    '[ks2-security-headers] CSP hash is still the pre-build placeholder; '
+    + 'run npm run build to inject the real hash',
+  );
+}
+
 export const HSTS_VALUE = 'max-age=63072000; includeSubDomains';
 
 export const PERMISSIONS_POLICY = [
@@ -127,6 +147,11 @@ function isTtsBinaryResponse(response) {
  * @returns {Response}
  */
 export function applySecurityHeaders(response, { path: pathname = '' } = {}) {
+  // One-shot log if the generated CSP hash module is still the committed
+  // placeholder (i.e. `npm run build` never ran). Do NOT throw: tests and
+  // fresh-clone boot paths must keep working.
+  warnOnPlaceholderHashOnce();
+
   const headers = new Headers(response.headers);
 
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {

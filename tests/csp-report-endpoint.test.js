@@ -234,3 +234,181 @@ test('POST /api/security/csp-report with empty body returns 400 (no payload to c
   assert.equal(response.status, 400);
   server.close();
 });
+
+// ---------------------------------------------------------------------------
+// correctness-low-1: size-limited stream reader. A caller who omits or
+// understates `Content-Length` must still hit the 8 KB cap via the streamed
+// body reader — not by buffering the whole body first.
+// ---------------------------------------------------------------------------
+
+test('POST /api/security/csp-report enforces 8 KB cap via streamed body (no Content-Length)', async () => {
+  const server = createWorkerRepositoryServer();
+  // Build an oversized (~16 KB) streaming body with NO Content-Length so
+  // the fast-path guard is skipped and the streamed cap must trip.
+  const encoder = new TextEncoder();
+  const oversizeText = JSON.stringify({
+    'csp-report': { 'blocked-uri': 'x'.repeat(16384), 'document-uri': 'y' },
+  });
+  const encoded = encoder.encode(oversizeText);
+  assert.ok(encoded.byteLength > 8192, 'test precondition: body must exceed 8 KB');
+  // Emit the body in 1 KB slices so the reader loop actually iterates.
+  const stream = new ReadableStream({
+    start(controller) {
+      const chunkSize = 1024;
+      for (let i = 0; i < encoded.byteLength; i += chunkSize) {
+        controller.enqueue(encoded.slice(i, Math.min(i + chunkSize, encoded.byteLength)));
+      }
+      controller.close();
+    },
+  });
+  const response = await server.fetchRaw(
+    'https://repo.test/api/security/csp-report',
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/csp-report' },
+      body: stream,
+      // Node's undici requires this flag to send a streaming body.
+      duplex: 'half',
+    },
+  );
+  assert.equal(
+    response.status,
+    413,
+    'streamed oversized body without Content-Length must be rejected with 413',
+  );
+  server.close();
+});
+
+test('POST /api/security/csp-report enforces cap even when Content-Length understates the body', async () => {
+  const server = createWorkerRepositoryServer();
+  // Build a 12 KB body but lie with content-length=100 so the fast-path
+  // preflight passes. The stream reader must still cap at 8 KB.
+  const encoder = new TextEncoder();
+  const oversizeText = JSON.stringify({
+    'csp-report': { 'blocked-uri': 'x'.repeat(12288), 'document-uri': 'y' },
+  });
+  const encoded = encoder.encode(oversizeText);
+  const stream = new ReadableStream({
+    start(controller) {
+      const chunkSize = 1024;
+      for (let i = 0; i < encoded.byteLength; i += chunkSize) {
+        controller.enqueue(encoded.slice(i, Math.min(i + chunkSize, encoded.byteLength)));
+      }
+      controller.close();
+    },
+  });
+  const response = await server.fetchRaw(
+    'https://repo.test/api/security/csp-report',
+    {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/csp-report',
+        'content-length': '100',
+      },
+      body: stream,
+      duplex: 'half',
+    },
+  );
+  assert.equal(
+    response.status,
+    413,
+    'understated Content-Length must not bypass the streamed cap',
+  );
+  server.close();
+});
+
+// ---------------------------------------------------------------------------
+// testing-gap-1: the handler must not log any request header values
+// (cookie, referer, x-forwarded-for). If an operator ever decides to add
+// "for debugging" they will trip this regression lock.
+// ---------------------------------------------------------------------------
+
+test('POST /api/security/csp-report does NOT log request headers (cookie, referer, x-forwarded-for)', async () => {
+  const server = createWorkerRepositoryServer();
+  const body = JSON.stringify(sampleLegacyReport());
+  const sentinels = {
+    cookie: 'ks2_session=SENTINEL_COOKIE_ABC123',
+    referer: 'https://sentinel.example/',
+    'x-forwarded-for': '198.51.100.SENTINEL',
+  };
+  // Capture both stdout (console.log) and stderr (console.error/warn) so
+  // any accidental logging path is caught, regardless of which channel the
+  // handler chose.
+  const captured = [];
+  const originalLog = console.log;
+  const originalError = console.error;
+  const originalWarn = console.warn;
+  console.log = (...args) => { captured.push(args.map(String).join(' ')); };
+  console.error = (...args) => { captured.push(args.map(String).join(' ')); };
+  console.warn = (...args) => { captured.push(args.map(String).join(' ')); };
+  try {
+    const response = await server.fetchRaw(
+      'https://repo.test/api/security/csp-report',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/csp-report',
+          ...sentinels,
+        },
+        body,
+      },
+    );
+    assert.equal(response.status, 204);
+  } finally {
+    console.log = originalLog;
+    console.error = originalError;
+    console.warn = originalWarn;
+  }
+  const combined = captured.join('\n');
+  assert.ok(
+    !combined.includes('SENTINEL_COOKIE_ABC123'),
+    `logs must not contain the cookie sentinel — captured: ${JSON.stringify(captured)}`,
+  );
+  assert.ok(
+    !combined.includes('sentinel.example'),
+    `logs must not contain the referer sentinel — captured: ${JSON.stringify(captured)}`,
+  );
+  assert.ok(
+    !combined.includes('198.51.100.SENTINEL'),
+    `logs must not contain the x-forwarded-for sentinel — captured: ${JSON.stringify(captured)}`,
+  );
+  server.close();
+});
+
+// ---------------------------------------------------------------------------
+// testing-gap-2: a well-formed JSON body that does NOT match any CSP shape
+// (legacy `csp-report` wrapper, Reporting API v2 array) must be rejected
+// with 400 — otherwise the handler would log an all-empty report line.
+// ---------------------------------------------------------------------------
+
+test('POST /api/security/csp-report rejects well-formed JSON that does not match a CSP shape', async () => {
+  const server = createWorkerRepositoryServer();
+  const response = await server.fetchRaw(
+    'https://repo.test/api/security/csp-report',
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/csp-report' },
+      body: JSON.stringify({ arbitrary: 'object' }),
+    },
+  );
+  assert.equal(
+    response.status,
+    400,
+    'non-CSP JSON payloads must 400 so operators never see a blank log entry',
+  );
+  server.close();
+});
+
+test('POST /api/security/csp-report also rejects non-CSP JSON under application/json', async () => {
+  const server = createWorkerRepositoryServer();
+  const response = await server.fetchRaw(
+    'https://repo.test/api/security/csp-report',
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ hello: 'world' }),
+    },
+  );
+  assert.equal(response.status, 400);
+  server.close();
+});
