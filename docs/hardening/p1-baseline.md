@@ -34,7 +34,7 @@ Entry format: one-line description + `(tracked in U?)` suffix when a hardening u
 Note: the bounded-bootstrap and command-projection work in PRs #126-#139 (see `docs/plans/2026-04-25-001-fix-bootstrap-cpu-capacity-plan.md`) addressed the large-payload / CPU-overrun surface that was the dominant pre-sprint server fault. The residual H1-H10 items from `docs/plans/james/cpuload/implementation-report.md` remain open.
 
 - H1. Post-merge production validation — no dated production smoke exists for the bootstrap/CPU bounding work. (tracked in U2)
-- H2. Capacity evidence artefacts — run output is terminal-only and not persisted. (tracked in U3)
+- H2. Capacity evidence artefacts — run output is terminal-only and not persisted. (tracked in U3; landed upstream via PR #155 capacity evidence + threshold gates — `--output`, `reports/capacity/`, schema v1/v2, `scripts/verify-capacity-evidence.mjs`)
 - H3. Threshold-based load failure — `scripts/classroom-load-test.mjs` reports but does not fail on violation, so it cannot gate a release. (tracked in U2)
 - H4. Production load safety guardrails — `--confirm-high-production-load` second-confirmation flag not yet wired. (tracked in U2)
 - H5. Real Worker integration load test — local load runs exercise the adapter but not the full Worker route handling path. (tracked in U2, U11)
@@ -42,7 +42,7 @@ Note: the bounded-bootstrap and command-projection work in PRs #126-#139 (see `d
 - H7. Consume `command.projection.v1` more directly — read-model direction of command projection is a refactor deferred to follow-up work. (not addressed this pass)
 - H8. Dense-history subject smoke coverage — no production/preview smoke exists for dense-history spelling starts beyond `/api/bootstrap`. (tracked in U11)
 - H9. Browser multi-tab validation — coordination lease behaviour is unit-tested but not validated end-to-end in a logged-in browser. (tracked in U10)
-- H10. Launch evidence table — `docs/operations/capacity.md` has no dated evidence rows. (tracked in U3)
+- H10. Launch evidence table — `docs/operations/capacity.md` has no dated evidence rows. (tracked in U3; Capacity Evidence table section exists at `docs/operations/capacity.md#capacity-evidence`, currently shows `_pending first run_`. First dated row requires an authenticated production or preview run by an operator with live credentials — `npm run capacity:classroom -- --production --origin https://ks2.eugnel.uk --confirm-production-load --confirm-high-production-load --demo-sessions --output reports/capacity/latest-production.json` — and is intentionally deferred to a post-merge operator step)
 
 ## Access / privacy faults
 
