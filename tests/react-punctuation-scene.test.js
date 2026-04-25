@@ -400,6 +400,36 @@ test('punctuation text-item controls disable when runtime is degraded', () => {
   assert.match(html, /<button[^>]*disabled[^>]*data-punctuation-submit/);
 });
 
+test('punctuation setup view disables Start practice when availability is degraded', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'setup',
+    availability: { status: 'degraded', code: 'runtime_degraded', message: 'paused' },
+  });
+  const html = harness.render();
+  assert.match(html, /<button[^>]*disabled[^>]*data-punctuation-start/);
+});
+
+test('punctuation feedback view disables Continue while a command is pending', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'feedback',
+    pendingCommand: 'punctuation-continue',
+    session: {
+      id: 'feedback-pending',
+      mode: 'smart',
+      length: 2,
+      answeredCount: 1,
+      currentItem: { id: 'x', mode: 'insert', inputKind: 'text', prompt: 'p', stem: '' },
+    },
+    feedback: { kind: 'success', headline: 'Nice.', body: 'Punctuation correct.' },
+  });
+  const html = harness.render();
+  assert.match(html, /<button[^>]*disabled[^>]*data-punctuation-continue/);
+});
+
 test('punctuation text-item submit remains enabled in the idle state', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });

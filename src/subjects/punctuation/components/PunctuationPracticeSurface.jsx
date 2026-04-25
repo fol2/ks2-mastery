@@ -13,12 +13,29 @@ function newlineTextStyle(value) {
   return String(value || '').includes('\n') ? { whiteSpace: 'pre-wrap' } : undefined;
 }
 
+// Composite disable signal shared across Setup, ActiveItem, and Feedback
+// views. Mutation controls (start, submit, continue, skip, end) must pause
+// whenever a command is in flight, the runtime is degraded/unavailable, or
+// the platform has flipped the subject read-only. The adapter layer
+// (subject-command-client) is the authoritative dedupe; the UI signal is
+// the visual echo.
+function composeIsDisabled(ui) {
+  const availabilityStatus = ui?.availability?.status || 'ready';
+  const runtimeReadOnly = Boolean(ui?.runtime?.readOnly);
+  const pending = Boolean(ui?.pendingCommand);
+  return pending
+    || runtimeReadOnly
+    || availabilityStatus === 'degraded'
+    || availabilityStatus === 'unavailable';
+}
+
 function SetupView({ learner, stats, ui, actions }) {
   const scene = bellstormSceneForPhase('setup');
   const content = ui.content || {};
   const guidedSkills = Array.isArray(content.skills) ? content.skills : [];
   const [guidedSkillId, setGuidedSkillId] = useState(guidedSkills[0]?.id || '');
   const selectedGuidedSkillId = guidedSkillId || guidedSkills[0]?.id || '';
+  const isDisabled = composeIsDisabled(ui);
   return (
     <section className="card border-top punctuation-surface" style={{ borderTopColor: '#B8873F' }}>
       <div className="punctuation-hero">
@@ -35,13 +52,14 @@ function SetupView({ learner, stats, ui, actions }) {
         <div className="stat"><div className="stat-label">Due</div><div className="stat-value">{stats.due || 0}</div><div className="stat-sub">Review items</div></div>
       </div>
       <div className="actions" style={{ marginTop: 16 }}>
-        <button className="btn primary" type="button" data-punctuation-start onClick={() => actions.dispatch('punctuation-start')}>Start practice</button>
+        <button className="btn primary" type="button" disabled={isDisabled} data-punctuation-start onClick={() => actions.dispatch('punctuation-start')}>Start practice</button>
         {guidedSkills.length ? (
           <label className="field" style={{ minWidth: 220 }}>
             <span>Guided skill</span>
             <select
               className="input"
               value={selectedGuidedSkillId}
+              disabled={isDisabled}
               onChange={(event) => setGuidedSkillId(event.target.value)}
             >
               {guidedSkills.map((skill) => (
@@ -53,6 +71,7 @@ function SetupView({ learner, stats, ui, actions }) {
         <button
           className="btn secondary"
           type="button"
+          disabled={isDisabled}
           data-punctuation-guided-start
           onClick={() => actions.dispatch('punctuation-start', { mode: 'guided', skillId: selectedGuidedSkillId || undefined })}
         >
@@ -61,6 +80,7 @@ function SetupView({ learner, stats, ui, actions }) {
         <button
           className="btn secondary"
           type="button"
+          disabled={isDisabled}
           data-punctuation-weak-start
           onClick={() => actions.dispatch('punctuation-start', { mode: 'weak' })}
         >
@@ -69,15 +89,16 @@ function SetupView({ learner, stats, ui, actions }) {
         <button
           className="btn secondary"
           type="button"
+          disabled={isDisabled}
           data-punctuation-gps-start
           onClick={() => actions.dispatch('punctuation-start', { mode: 'gps', roundLength: '8' })}
         >
           GPS test
         </button>
-        <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'speech' })}>Speech focus</button>
-        <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'comma_flow' })}>Comma focus</button>
-        <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'boundary' })}>Boundary focus</button>
-        <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'structure' })}>Structure focus</button>
+        <button className="btn secondary" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-start', { mode: 'speech' })}>Speech focus</button>
+        <button className="btn secondary" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-start', { mode: 'comma_flow' })}>Comma focus</button>
+        <button className="btn secondary" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-start', { mode: 'boundary' })}>Boundary focus</button>
+        <button className="btn secondary" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-start', { mode: 'structure' })}>Structure focus</button>
       </div>
     </section>
   );
@@ -189,17 +210,7 @@ function ActiveItemView({ ui, actions }) {
   const progress = ui.session?.length ? Math.round(((ui.session.answeredCount || 0) / ui.session.length) * 100) : 0;
   const submit = (payload) => actions.dispatch('punctuation-submit-form', payload);
   const isGps = ui.session?.mode === 'gps';
-  // Composite disable signal: mutation controls freeze whenever a command is
-  // in flight, the runtime is degraded/unavailable, or the platform has
-  // flipped the subject read-only. UI state is the visual echo; the adapter
-  // layer (subject-command-client) is the authoritative dedupe gate.
-  const availabilityStatus = ui.availability?.status || 'ready';
-  const runtimeReadOnly = Boolean(ui.runtime?.readOnly);
-  const pending = Boolean(ui.pendingCommand);
-  const isDisabled = pending
-    || runtimeReadOnly
-    || availabilityStatus === 'degraded'
-    || availabilityStatus === 'unavailable';
+  const isDisabled = composeIsDisabled(ui);
 
   return (
     <section className="card border-top punctuation-surface" style={{ borderTopColor: '#B8873F' }}>
@@ -238,6 +249,7 @@ function ActiveItemView({ ui, actions }) {
 function FeedbackView({ ui, actions }) {
   const feedback = ui.feedback || {};
   const scene = bellstormSceneForPhase('feedback');
+  const isDisabled = composeIsDisabled(ui);
   return (
     <section className="card border-top punctuation-surface" style={{ borderTopColor: feedback.kind === 'success' ? '#2E8479' : '#B8873F' }}>
       <div className="punctuation-strip">
@@ -260,8 +272,8 @@ function FeedbackView({ ui, actions }) {
         </div>
       ) : null}
       <div className="actions" style={{ marginTop: 16 }}>
-        <button className="btn primary" type="button" data-punctuation-continue onClick={() => actions.dispatch('punctuation-continue')}>Continue</button>
-        <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-end-early')}>Finish now</button>
+        <button className="btn primary" type="button" disabled={isDisabled} data-punctuation-continue onClick={() => actions.dispatch('punctuation-continue')}>Continue</button>
+        <button className="btn secondary" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-end-early')}>Finish now</button>
       </div>
     </section>
   );
