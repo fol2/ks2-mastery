@@ -1799,8 +1799,12 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
           AND aa.account_type = 'demo'
       )
     `, []),
+    // I2 reviewer fix: use COUNT(DISTINCT lp.id) so a learner with multiple
+    // demo-owner memberships (tests guard this case) is counted once, not
+    // per-membership. Same applies to the two practice-session demo queries
+    // below.
     scalarCountSafe(db, `
-      SELECT COUNT(*) AS value
+      SELECT COUNT(DISTINCT lp.id) AS value
       FROM learner_profiles lp
       INNER JOIN account_learner_memberships alm ON alm.learner_id = lp.id
       INNER JOIN adult_accounts aa ON aa.id = alm.account_id
@@ -1829,8 +1833,11 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
             AND aa.account_type = 'demo'
         )
     `, [cutoff7d]),
+    // I2 reviewer fix: DISTINCT ps.id so a session whose learner has
+    // multiple demo-owner memberships is counted once per session, not per
+    // membership.
     scalarCountSafe(db, `
-      SELECT COUNT(*) AS value
+      SELECT COUNT(DISTINCT ps.id) AS value
       FROM practice_sessions ps
       INNER JOIN account_learner_memberships alm ON alm.learner_id = ps.learner_id
       INNER JOIN adult_accounts aa ON aa.id = alm.account_id
@@ -1850,8 +1857,9 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
             AND aa.account_type = 'demo'
         )
     `, [cutoff30d]),
+    // I2 reviewer fix: DISTINCT ps.id (see 7d twin above).
     scalarCountSafe(db, `
-      SELECT COUNT(*) AS value
+      SELECT COUNT(DISTINCT ps.id) AS value
       FROM practice_sessions ps
       INNER JOIN account_learner_memberships alm ON alm.learner_id = ps.learner_id
       INNER JOIN adult_accounts aa ON aa.id = alm.account_id
@@ -1878,15 +1886,21 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
       WHERE mr.applied_at > ?
         AND aa.account_type = 'demo'
     `, [cutoff7d]),
+    // I5 reviewer fix: SQLite `LIKE` is case-sensitive by default. Apply
+    // `lower()` on both sides so a route logged with uppercase letters
+    // (e.g. `/API/admin/foo` from a legacy beacon) does not silently
+    // misclassify as client-origin. The client-side query below keeps the
+    // `IS NULL OR NOT LIKE` invariant so the two sides remain strictly
+    // exclusive.
     scalarCountSafe(db, `
       SELECT COUNT(*) AS value
       FROM ops_error_events
-      WHERE route_name IS NULL OR route_name NOT LIKE '/api/%'
+      WHERE route_name IS NULL OR lower(route_name) NOT LIKE '/api/%'
     `, [], 'ops_error_events'),
     scalarCountSafe(db, `
       SELECT COUNT(*) AS value
       FROM ops_error_events
-      WHERE route_name LIKE '/api/%'
+      WHERE lower(route_name) LIKE '/api/%'
     `, [], 'ops_error_events'),
   ]);
 

@@ -62,12 +62,9 @@ function normaliseRealDemoScalar(raw) {
   return toNonNegativeInt(raw.demo);
 }
 
-function normaliseRealDemoWindow(raw, windowKey) {
-  if (!isPlainObject(raw)) return undefined;
-  const windowValue = raw[windowKey];
-  if (windowValue == null) return undefined;
-  return toNonNegativeInt(windowValue);
-}
+// M3 reviewer fix: `normaliseRealDemoWindow` was the sole caller of a dead
+// ternary whose both branches evaluated to `{}`. Removed; the practice-
+// session demo sibling is now conditional on `practiceDemo != null` only.
 
 export function normaliseDashboardKpis(rawValue) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
@@ -113,11 +110,7 @@ export function normaliseDashboardKpis(rawValue) {
           last7d: toNonNegativeInt(practiceDemo.last7d),
           last30d: toNonNegativeInt(practiceDemo.last30d),
         },
-      } : {
-        // Expose per-window demo placeholders (undefined) so the UI
-        // distinguishes "missing" from 0.
-        ...(normaliseRealDemoWindow(practiceSessions, 'last7d') != null ? {} : {}),
-      }),
+      } : {}),
     },
     eventLog: { last7d: toNonNegativeInt(eventLog.last7d) },
     mutationReceipts: {

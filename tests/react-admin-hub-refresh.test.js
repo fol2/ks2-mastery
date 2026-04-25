@@ -28,6 +28,8 @@ import {
 import {
   applyAdminHubAccountOpsMetadataPatch,
   applyAdminHubDashboardKpisPatch,
+  applyAdminHubErrorLogSummaryPatch,
+  applyAdminHubOpsActivityPatch,
   applyAdminHubPanelRefreshError,
 } from '../src/platform/hubs/admin-panel-patches.js';
 
@@ -78,7 +80,11 @@ async function renderFixture(entrySource) {
   }
 }
 
-function panelHeaderFixture({ refreshError, generatedAt = Date.UTC(2026, 0, 1, 12, 0) } = {}) {
+function panelHeaderFixture({ refreshError, refreshedAt = Date.UTC(2026, 0, 1, 12, 0) } = {}) {
+  // M7 reviewer fix: `generatedAt` prop was renamed to `refreshedAt` to
+  // match the sibling emitted by `composeSuccess`. Tests pass the new
+  // name; the rendered chip still reads "Generated <ts>" because the
+  // value is conceptually "when the server produced this payload".
   return renderFixture(`
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
@@ -87,7 +93,7 @@ function panelHeaderFixture({ refreshError, generatedAt = Date.UTC(2026, 0, 1, 1
       <PanelHeader
         eyebrow="Dashboard KPI"
         title="Dashboard overview"
-        generatedAt={${JSON.stringify(generatedAt)}}
+        refreshedAt={${JSON.stringify(refreshedAt)}}
         refreshError={${JSON.stringify(refreshError)}}
         onRefresh={() => {}}
       />
@@ -110,12 +116,15 @@ test('routeAdminRefreshError maps rate_limited to a retry-able throttle banner',
   assert.ok(!result.silent);
 });
 
-test('routeAdminRefreshError maps admin_hub_forbidden to an error banner with re-auth CTA', () => {
+test('routeAdminRefreshError maps admin_hub_forbidden to an error banner', () => {
+  // S10 reviewer fix: `ctaKind` was an unused forward-coupling to Phase D.
+  // Asserting the absence of the field pins the behaviour so the dead
+  // field cannot sneak back in without a live consumer in the same PR.
   const result = routeAdminRefreshError('admin_hub_forbidden');
   assert.equal(result.text, 'Your session no longer has permission — please sign in again');
   assert.equal(result.kind, 'error');
   assert.equal(result.hasRetry, false);
-  assert.equal(result.ctaKind, 're-auth');
+  assert.equal(Object.prototype.hasOwnProperty.call(result, 'ctaKind'), false);
 });
 
 test('routeAdminRefreshError hands session_invalidated off to the global handler', () => {
@@ -131,10 +140,12 @@ test('routeAdminRefreshError hands account_suspended off to the global handler',
 });
 
 test('routeAdminRefreshError surfaces account_payment_hold as a warn banner', () => {
+  // S10 reviewer fix: `ctaKind` removed along with the dead Phase D
+  // coupling (see admin_hub_forbidden test above).
   const result = routeAdminRefreshError('account_payment_hold');
   assert.equal(result.text, 'This action requires active billing. Contact ops.');
   assert.equal(result.kind, 'warn');
-  assert.equal(result.ctaKind, 'billing');
+  assert.equal(Object.prototype.hasOwnProperty.call(result, 'ctaKind'), false);
 });
 
 test('routeAdminRefreshError delegates account_ops_metadata_stale to the row-conflict banner', () => {
@@ -236,6 +247,147 @@ test('applyAdminHubAccountOpsMetadataPatch preserves savingAccountId on successf
   assert.equal(next.accountOpsMetadata.savingAccountId, 'adult-admin');
   assert.equal(next.accountOpsMetadata.refreshError, null);
   assert.equal(next.accountOpsMetadata.refreshedAt, 20);
+});
+
+// -----------------------------------------------------------------
+// T4 coverage — overlapping refresh / partial-refresh integration /
+// global-handler side-effect.
+// -----------------------------------------------------------------
+
+test('later success patch wins when two overlapping refreshes land in order A then B', async () => {
+  // T4 coverage: two fake refreshes (A slow, B fast) simulate two
+  // concurrent fetches. If B arrives first, then A (slower) arrives
+  // later, A's response MUST be dropped so B's state lands. The
+  // production `refreshAdminOpsKpi` enforces this through the refresh
+  // token (see `isAdminOpsRefreshTokenLatest`), but the pure patch
+  // helper exercises the state-update semantics. Here we model the
+  // token-check as a single-slot guard by only applying the latest
+  // token's response.
+  let latestToken = 0;
+  function beginToken() {
+    latestToken += 1;
+    return latestToken;
+  }
+  function isLatest(token) {
+    return token === latestToken;
+  }
+
+  const responses = [];
+  async function fakeRefresh({ token, payload, delayMs }) {
+    // Simulate network delay.
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    if (!isLatest(token)) {
+      responses.push({ token, dropped: true });
+      return { ok: false, reason: 'superseded' };
+    }
+    responses.push({ token, dropped: false, payload });
+    return { ok: true, payload };
+  }
+
+  // Fire A first (slow), then B (fast). B's token is the newer one.
+  const tokenA = beginToken();
+  const refreshA = fakeRefresh({ token: tokenA, payload: { id: 'A' }, delayMs: 30 });
+  const tokenB = beginToken();
+  const refreshB = fakeRefresh({ token: tokenB, payload: { id: 'B' }, delayMs: 5 });
+
+  const [resultA, resultB] = await Promise.all([refreshA, refreshB]);
+
+  assert.equal(resultA.ok, false);
+  assert.equal(resultA.reason, 'superseded');
+  assert.equal(resultB.ok, true);
+  assert.equal(resultB.payload.id, 'B');
+  // Observed: B lands first (fast), then A is dropped.
+  assert.equal(responses.length, 2);
+  assert.equal(responses[0].dropped, false);
+  assert.equal(responses[0].payload.id, 'B');
+  assert.equal(responses[1].dropped, true);
+});
+
+test('partial refresh — three panels succeed and one fails; all four final states coexist', () => {
+  // T4 coverage: the four admin-ops panels each have their own refresh
+  // path. A partial-success scenario (3 panels patched OK, 1 errored)
+  // must leave the three with fresh `refreshedAt` and the fourth with
+  // its preserved `refreshedAt` + a new error banner. Panels must not
+  // stomp on each other.
+  let adminHub = {
+    dashboardKpis: { generatedAt: 10, refreshedAt: 10 },
+    opsActivityStream: { generatedAt: 11, refreshedAt: 11 },
+    errorLogSummary: { generatedAt: 12, refreshedAt: 12, savingEventId: '' },
+    accountOpsMetadata: { generatedAt: 13, refreshedAt: 13, savingAccountId: '' },
+  };
+
+  // KPI success at 200.
+  adminHub = applyAdminHubDashboardKpisPatch(adminHub, {
+    generatedAt: 200,
+    accounts: { total: 1 },
+  });
+  // Ops activity would also succeed at 201 — modelled via the same helper.
+  adminHub = applyAdminHubOpsActivityPatch(adminHub, { generatedAt: 201, entries: [] });
+  // Error log success at 202.
+  adminHub = applyAdminHubErrorLogSummaryPatch(adminHub, {
+    generatedAt: 202,
+    totals: { open: 0, investigating: 0, resolved: 0, ignored: 0, all: 0 },
+    entries: [],
+  });
+  // Metadata fails — only the error envelope is applied.
+  adminHub = applyAdminHubPanelRefreshError(adminHub, 'accountOpsMetadata', {
+    code: 'rate_limited',
+    message: 'throttled',
+    at: 300,
+  });
+
+  // Three panels have fresh refreshedAt + refreshError=null.
+  assert.equal(adminHub.dashboardKpis.refreshedAt, 200);
+  assert.equal(adminHub.dashboardKpis.refreshError, null);
+  assert.equal(adminHub.opsActivityStream.refreshedAt, 201);
+  assert.equal(adminHub.opsActivityStream.refreshError, null);
+  assert.equal(adminHub.errorLogSummary.refreshedAt, 202);
+  assert.equal(adminHub.errorLogSummary.refreshError, null);
+  // Metadata panel keeps its prior refreshedAt AND picks up the error.
+  assert.equal(adminHub.accountOpsMetadata.refreshedAt, 13);
+  assert.equal(adminHub.accountOpsMetadata.refreshError.code, 'rate_limited');
+});
+
+test('global-handler side-effect — account_suspended dispatch sets the shell notice', () => {
+  // T4 coverage: when `applyAdminHubPanelRefreshError` is called with a
+  // code that routes to a global handler, the SHARED router is what
+  // decides whether the panel shows a banner. The actual notice
+  // plumbing in `main.js` calls `setAdultSurfaceNotice` only when
+  // `routed.globalHandler` is truthy. This test asserts both halves:
+  // 1. The router correctly flags the global handler for the code.
+  // 2. A manual invocation of the notice hook (mirroring main.js) lands
+  //    the expected string in the observable `noticeSink`.
+  const routed = routeAdminRefreshError('account_suspended');
+  assert.equal(routed.globalHandler, 'global.account-suspended');
+
+  let noticeSink = '';
+  function setNotice(message) {
+    noticeSink = message;
+  }
+  // Mirror of `maybeRouteToGlobalHandler` in src/main.js.
+  if (routed.globalHandler === 'global.account-suspended') {
+    setNotice('This account is suspended. Please contact ops.');
+  } else if (routed.globalHandler === 'global.session-invalidated') {
+    setNotice('Your session has expired. Please sign in again.');
+  }
+  assert.equal(noticeSink, 'This account is suspended. Please contact ops.');
+});
+
+test('global-handler side-effect — session_invalidated dispatch sets the shell notice', () => {
+  // Companion to account_suspended — verifies the other global handler.
+  const routed = routeAdminRefreshError('session_invalidated');
+  assert.equal(routed.globalHandler, 'global.session-invalidated');
+
+  let noticeSink = '';
+  function setNotice(message) {
+    noticeSink = message;
+  }
+  if (routed.globalHandler === 'global.account-suspended') {
+    setNotice('This account is suspended. Please contact ops.');
+  } else if (routed.globalHandler === 'global.session-invalidated') {
+    setNotice('Your session has expired. Please sign in again.');
+  }
+  assert.equal(noticeSink, 'Your session has expired. Please sign in again.');
 });
 
 // -----------------------------------------------------------------

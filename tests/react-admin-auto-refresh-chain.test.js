@@ -114,3 +114,24 @@ test('cascade tolerates a missing refreshErrorEvents when includeErrorEvents is 
   });
   assert.equal(result.ok, true);
 });
+
+test('cascade never invokes a refreshAccountsMetadata hook even if present in the config object', async () => {
+  // T4 coverage: the metadata panel is deliberately excluded from the
+  // mutation-success cascade because its own state is already current
+  // from the optimistic in-row patch (or the flush-on-clean suppression
+  // rule picks up any missed refresh). Asserting structural absence
+  // guards against a later refactor silently wiring metadata into the
+  // cascade and re-opening the ghost-refresh bug that U2 addressed.
+  const calls = [];
+  const result = await runAdminOpsRefreshCascade({
+    refreshKpi: async () => { calls.push('kpi'); return { ok: true }; },
+    refreshActivity: async () => { calls.push('activity'); return { ok: true }; },
+    // Attached defensively even though the helper should not see it —
+    // `runAdminOpsRefreshCascade` pulls only the three documented
+    // keys. A future helper addition of a metadata step must land with
+    // its own explicit opt-in switch; this test pins the contract.
+    refreshAccountsMetadata: async () => { calls.push('accounts-metadata'); return { ok: true }; },
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(calls, ['kpi', 'activity']);
+});

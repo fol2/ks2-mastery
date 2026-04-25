@@ -5,6 +5,7 @@ import { MonsterVisualConfigPanel } from './MonsterVisualConfigPanel.jsx';
 import { ReadOnlyLearnerNotice } from './ReadOnlyLearnerNotice.jsx';
 import { AccessDeniedCard, formatTimestamp, isBlocked, selectedWritableLearner } from './hub-utils.js';
 import { PanelHeader } from './admin-panel-header.jsx';
+import { decideDirtyResetOnServerUpdate } from '../../platform/hubs/admin-metadata-dirty-registry.js';
 
 function AdminAccountRoles({ model, directory = {}, actions }) {
   const isAdmin = model?.permissions?.platformRole === 'admin';
@@ -151,7 +152,7 @@ function DashboardKpiPanel({ model, actions }) {
       <PanelHeader
         eyebrow="Dashboard KPI"
         title="Dashboard overview"
-        generatedAt={kpis.generatedAt}
+        refreshedAt={kpis.refreshedAt ?? kpis.generatedAt}
         refreshError={kpis.refreshError || null}
         onRefresh={() => actions.dispatch('admin-ops-kpi-refresh')}
       />
@@ -177,7 +178,7 @@ function RecentActivityStreamPanel({ model, actions }) {
         eyebrow="Ops activity"
         title="Recent operations activity"
         subtitle="Latest mutation receipts across accounts. Learner scope ids pre-masked to last 8 characters; account scope ids to last 6."
-        generatedAt={stream.generatedAt}
+        refreshedAt={stream.refreshedAt ?? stream.generatedAt}
         refreshError={stream.refreshError || null}
         onRefresh={() => actions.dispatch('admin-ops-activity-refresh')}
       />
@@ -213,8 +214,17 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
   // metadata panel's own narrow refresh). We register the flag with the
   // module-scope registry via `actions.registerAccountOpsMetadataRowDirty`
   // every time it flips so the suppression-and-flush bookkeeping stays in
-  // one place. The dispatcher clears the ref on save success.
+  // one place.
+  //
+  // B1 reviewer fix: the dispatcher clears the registry entry on save
+  // success, but clearing the module-scope Set alone is not enough — the
+  // component's own `dirtyRef.current` would stay `true` forever, so the
+  // four prop-sync useEffects below would silently drop every subsequent
+  // server prop. We observe the save's server acknowledgement via
+  // `account.updatedAt` and reset `dirtyRef.current` the moment we see a
+  // bumped timestamp, so the next prop change applies exactly once.
   const dirtyRef = React.useRef(false);
+  const savedAtRef = React.useRef(Number(account.updatedAt) || 0);
   const registerDirty = actions?.registerAccountOpsMetadataRowDirty
     || (() => {});
   const markDirty = React.useCallback(() => {
@@ -223,12 +233,35 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
     registerDirty(accountId, true);
   }, [accountId, registerDirty]);
 
+  // B1 reviewer fix: whenever the server-acknowledged `updatedAt` advances
+  // past our last-observed save timestamp, reset `dirtyRef.current` and
+  // record the new baseline. The prop-sync hooks below then re-apply
+  // freshly-arrived server values (the new internal notes, ops status,
+  // etc.) because the dirty guard is no longer held. This effect must run
+  // BEFORE the prop-sync hooks in render order — React fires useEffect in
+  // declaration order within a component, so we place this first.
+  //
+  // The decision logic lives in `decideDirtyResetOnServerUpdate` so it
+  // can be unit-tested without a DOM; see
+  // `tests/react-admin-metadata-row-dirty.test.js` for the coverage.
+  React.useEffect(() => {
+    const decision = decideDirtyResetOnServerUpdate({
+      incomingUpdatedAt: account.updatedAt,
+      savedAt: savedAtRef.current,
+    });
+    if (decision.reset) {
+      savedAtRef.current = decision.nextSavedAt;
+      dirtyRef.current = false;
+    }
+  }, [account.updatedAt]);
+
   // P1.5 Phase A (U2): rehydrate local input state from server props ONLY
   // when the row is not dirty. Each of the four useEffect hooks below
   // guards on `dirtyRef.current` so a mid-edit textarea is not wiped by an
-  // auto-refresh arriving seconds later. On save success the dispatcher
-  // calls registerDirty(accountId, false), which both clears the ref
-  // (next refresh applies) and fires the suppression-flush if applicable.
+  // auto-refresh arriving seconds later. On save success the B1 effect
+  // above clears the ref BEFORE these fire for the bumped-updatedAt
+  // render, so the new server value wins on the save-acknowledgement
+  // render.
   React.useEffect(() => {
     if (!dirtyRef.current) setOpsStatus(account.opsStatus || 'active');
   }, [account.opsStatus]);
@@ -368,7 +401,7 @@ function AccountOpsMetadataPanel({ model, actions }) {
         eyebrow="Account ops"
         title="Account ops metadata"
         subtitle="GM-facing labels, plans, tags, and notes per account. Admin accounts can edit; ops-role accounts can view."
-        generatedAt={directory.generatedAt}
+        refreshedAt={directory.refreshedAt ?? directory.generatedAt}
         refreshError={directory.refreshError || null}
         onRefresh={() => actions.dispatch('account-ops-metadata-refresh')}
       />
@@ -422,7 +455,7 @@ function ErrorLogCentrePanel({ model, actions }) {
       <PanelHeader
         eyebrow="Error log"
         title="Error log centre"
-        generatedAt={summary.generatedAt}
+        refreshedAt={summary.refreshedAt ?? summary.generatedAt}
         refreshError={summary.refreshError || null}
         onRefresh={() => actions.dispatch('admin-ops-error-events-refresh', { status: null })}
         headerExtras={headerExtras}

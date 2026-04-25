@@ -10,21 +10,24 @@ import { routeAdminRefreshError } from '../../platform/hubs/admin-refresh-error-
 //
 // Inputs:
 // - eyebrow / title / subtitle — static panel copy.
-// - generatedAt                — server-produced timestamp (number).
+// - refreshedAt                — server-produced timestamp (number) from the
+//                                last successful refresh. Named `refreshedAt`
+//                                (M7 reviewer fix) to match the sibling
+//                                maintained by `composeSuccess`; the display
+//                                label remains "Generated <ts>" because the
+//                                value conceptually represents "when the
+//                                server produced this payload".
 // - refreshError               — { code, message, at, correlationId? } | null
 //                                as produced by the four refresh helpers in
 //                                src/main.js. `null` means no active error.
 // - onRefresh                  — click handler for the Refresh button.
-// - extraChipRow               — optional array of nodes rendered between
-//                                the Generated chip and the Refresh button;
-//                                the Ops activity / error log panels use it
-//                                to show inline filter controls.
-// - actionExtras               — optional extra nodes rendered to the right
-//                                of the Refresh button (e.g. secondary
-//                                actions). Reserved for later phases.
 // - headerExtras               — optional nodes rendered inside the left
 //                                column, below the subtitle; used by the
 //                                error log centre for its chip totals.
+//
+// M6 reviewer fix: `refreshLabel`, `actionExtras`, and `ctaKind` were
+// unused by every call-site and are removed. If a later phase needs them
+// back, they should be reintroduced with a live consumer in the same PR.
 //
 // The R27 non-enforcement callout still lives inside `AccountOpsMetadataRow`
 // — this header is purely the card-header shell plus the error banner.
@@ -32,11 +35,9 @@ export function PanelHeader({
   eyebrow,
   title,
   subtitle,
-  generatedAt,
+  refreshedAt,
   refreshError,
   onRefresh,
-  refreshLabel = 'Refresh',
-  actionExtras = null,
   headerExtras = null,
 }) {
   const routed = refreshError && typeof refreshError === 'object'
@@ -70,13 +71,12 @@ export function PanelHeader({
           {headerExtras}
         </div>
         <div className="actions">
-          <span className="chip">Generated {formatTimestamp(generatedAt)}</span>
+          <span className="chip">Generated {formatTimestamp(refreshedAt)}</span>
           {onRefresh ? (
             <button className="btn secondary" type="button" onClick={onRefresh}>
-              {refreshLabel}
+              Refresh
             </button>
           ) : null}
-          {actionExtras}
         </div>
       </div>
       {showBanner ? (

@@ -8,6 +8,12 @@
 //
 // Keeping this separate from main.js lets us unit-test the suppression +
 // flush bookkeeping without spinning up the whole app controller.
+//
+// M8 reviewer fix: the suppression counter is module-private — no external
+// consumer reads it. `recordSuppressedRefresh` returns void (no leaky
+// return value) and `getSuppressedRefreshCount` is removed. Tests assert
+// observable behaviour (flush fires once on dirty→clean) rather than the
+// internal counter value.
 
 export function createAccountOpsMetadataDirtyRegistry({ onFlushRequested } = {}) {
   const dirtyAccounts = new Set();
@@ -33,11 +39,6 @@ export function createAccountOpsMetadataDirtyRegistry({ onFlushRequested } = {})
 
   function recordSuppressedRefresh() {
     suppressedRefreshCount += 1;
-    return suppressedRefreshCount;
-  }
-
-  function getSuppressedRefreshCount() {
-    return suppressedRefreshCount;
   }
 
   function clear() {
@@ -49,7 +50,31 @@ export function createAccountOpsMetadataDirtyRegistry({ onFlushRequested } = {})
     setDirty,
     anyDirty,
     recordSuppressedRefresh,
-    getSuppressedRefreshCount,
     clear,
   };
+}
+
+// B1 reviewer fix: pure helper that decides whether a server prop bump
+// should reset the row's dirty flag + savedAt baseline. Extracted so we
+// can unit-test the save-acknowledgement lifecycle without a DOM; the
+// React component wires this into a `useEffect([account.updatedAt])` and
+// mutates its `dirtyRef.current` / `savedAtRef.current` accordingly.
+//
+// Inputs:
+//  - `incomingUpdatedAt` — the `account.updatedAt` from the latest server
+//                          prop (may be 0 / undefined before first save).
+//  - `savedAt`           — the component's `savedAtRef.current`.
+//
+// Returns:
+//  - { reset: true, nextSavedAt } when the server timestamp has advanced,
+//    signalling that the component should clear its dirty flag and
+//    update `savedAtRef.current` to `nextSavedAt`.
+//  - { reset: false } when the server timestamp is unchanged or stale.
+export function decideDirtyResetOnServerUpdate({ incomingUpdatedAt, savedAt }) {
+  const next = Number(incomingUpdatedAt) || 0;
+  const previous = Number(savedAt) || 0;
+  if (next > previous) {
+    return { reset: true, nextSavedAt: next };
+  }
+  return { reset: false };
 }

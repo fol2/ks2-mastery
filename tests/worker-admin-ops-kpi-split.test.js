@@ -211,3 +211,118 @@ test('readDashboardKpis splits ops_error_events by route origin (client vs serve
     server.close();
   }
 });
+
+// -----------------------------------------------------------------
+// I2 reviewer fix: multi-owner demo learner must count once (DISTINCT).
+// -----------------------------------------------------------------
+
+test('readDashboardKpis counts a learner with multiple demo-owner memberships once (DISTINCT)', async () => {
+  // I2 coverage: before the DISTINCT fix, `COUNT(*)` on the INNER JOIN
+  // returned one row per membership, so a learner co-owned by two demo
+  // accounts was tallied as 2 demo learners instead of 1. The same
+  // over-count affected practice-session demo windows. This test seeds a
+  // learner with two demo-owner memberships and one demo-session, then
+  // asserts both counters stay at 1.
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedAdultAccount(server, { id: 'adult-admin', email: 'admin@example.com', displayName: 'Admin', platformRole: 'admin', now });
+    seedAdultAccount(server, { id: 'demo-1', accountType: 'demo', demoExpiresAt: now + 60_000, now });
+    seedAdultAccount(server, { id: 'demo-2', accountType: 'demo', demoExpiresAt: now + 60_000, now });
+    seedLearner(server, { id: 'learner-shared', now });
+    // Two demo-owner memberships for the same learner.
+    seedOwnerMembership(server, { accountId: 'demo-1', learnerId: 'learner-shared', now });
+    seedOwnerMembership(server, { accountId: 'demo-2', learnerId: 'learner-shared', now });
+    // One session for that learner within the 7d window.
+    seedPracticeSession(server, { id: 'ps-shared-1', learnerId: 'learner-shared', updatedAt: now - 1_000 });
+
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/ops/kpi', {}, {
+      'x-ks2-dev-platform-role': 'admin',
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+    // Before the fix this returned 2 (one row per membership). After
+    // DISTINCT it is 1.
+    assert.equal(payload.learners.demo, 1);
+    // Same story for practice-session demo windows.
+    assert.equal(payload.practiceSessions.demo.last7d, 1);
+    assert.equal(payload.practiceSessions.demo.last30d, 1);
+  } finally {
+    server.close();
+  }
+});
+
+// -----------------------------------------------------------------
+// Malformed account_type must fall into "real" via COALESCE.
+// -----------------------------------------------------------------
+
+test('readDashboardKpis counts a legacy malformed account_type as real via COALESCE', async () => {
+  // Coverage: the 0007 migration adds `account_type TEXT NOT NULL DEFAULT
+  // 'real'` with no CHECK constraint, so a raw INSERT can produce a
+  // non-canonical value like `'weird-legacy-value'`. Our real-side filter
+  // uses `COALESCE(account_type, 'real') <> 'demo'`, so anything not
+  // equal to the literal string `'demo'` falls into real. This test
+  // seeds one such row and asserts the count.
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedAdultAccount(server, { id: 'adult-admin', email: 'admin@example.com', displayName: 'Admin', platformRole: 'admin', now });
+    // Directly INSERT a row with a non-canonical account_type — no
+    // CHECK constraint, so SQLite accepts it.
+    server.DB.db.prepare(`
+      INSERT INTO adult_accounts (
+        id, email, display_name, platform_role, selected_learner_id,
+        created_at, updated_at, repo_revision, account_type, demo_expires_at
+      )
+      VALUES ('legacy-weird', NULL, 'Legacy', 'parent', NULL, ?, ?, 0, 'weird-legacy-value', NULL)
+    `).run(now, now);
+
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/ops/kpi', {}, {
+      'x-ks2-dev-platform-role': 'admin',
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+    // Admin + the legacy weird-typed row = 2 real, 0 demo.
+    assert.equal(payload.accounts.real, 2);
+    assert.equal(payload.accounts.demo, 0);
+  } finally {
+    server.close();
+  }
+});
+
+// -----------------------------------------------------------------
+// I5 reviewer fix: `lower(route_name) LIKE '/api/%'` handles uppercase
+// routes uniformly.
+// -----------------------------------------------------------------
+
+test('readDashboardKpis classifies uppercase /API/ routes as server-origin (case-insensitive LIKE)', async () => {
+  // I5 coverage: SQLite `LIKE` is case-sensitive by default, so a route
+  // logged as `/API/admin/foo` (uppercase, e.g. a legacy beacon) would
+  // incorrectly land in the client-origin bucket. After the `lower()`
+  // fix the two sides partition correctly regardless of casing. This
+  // test mixes lowercase / uppercase / mixed-case routes and checks
+  // that every '/api/'-prefixed route (case-insensitive) is counted as
+  // server-origin.
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedAdultAccount(server, { id: 'adult-admin', email: 'admin@example.com', displayName: 'Admin', platformRole: 'admin', now });
+
+    // Three server-origin routes (lowercase, uppercase, mixed-case).
+    seedOpsErrorEvent(server, { id: 'e1', fingerprint: 'fp1', routeName: '/api/admin/foo', firstSeen: now - 2000, lastSeen: now - 1000 });
+    seedOpsErrorEvent(server, { id: 'e2', fingerprint: 'fp2', routeName: '/API/admin/bar', firstSeen: now - 3000, lastSeen: now - 2500 });
+    seedOpsErrorEvent(server, { id: 'e3', fingerprint: 'fp3', routeName: '/Api/hubs/parent', firstSeen: now - 1500, lastSeen: now - 1000 });
+    // One client-origin route.
+    seedOpsErrorEvent(server, { id: 'e4', fingerprint: 'fp4', routeName: '/subject/spelling', firstSeen: now - 1000, lastSeen: now - 500 });
+
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/ops/kpi', {}, {
+      'x-ks2-dev-platform-role': 'admin',
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(payload.errorEvents.byOrigin.server, 3);
+    assert.equal(payload.errorEvents.byOrigin.client, 1);
+  } finally {
+    server.close();
+  }
+});

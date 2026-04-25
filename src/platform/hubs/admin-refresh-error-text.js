@@ -21,6 +21,12 @@
 //  - `silent`      — true → the triggering action's own UI owns the 400
 //                    message (e.g. form field validation). No refresh banner.
 //
+// S10 reviewer fix: a prior iteration emitted a `ctaKind` string on the
+// `admin_hub_forbidden` / `account_payment_hold` entries, intended to
+// drive a forward-coupled UI in Phase D. M6 stripped the consumer, so
+// `ctaKind` is provably dead and has been removed. When Phase D lands the
+// consumer, it should re-introduce the field AND the consumer atomically.
+//
 // The map below is load-bearing: tests assert the exact text strings, and
 // later phases rely on the globalHandler / delegate / silent flags to
 // compose their own UX without touching this file.
@@ -38,7 +44,6 @@ const CODE_ENTRIES = Object.freeze({
     text: 'Your session no longer has permission — please sign in again',
     kind: 'error',
     hasRetry: false,
-    ctaKind: 're-auth',
   },
   session_invalidated: {
     // Global handler: the app shell catches this on ANY fetch (refresh or
@@ -60,7 +65,6 @@ const CODE_ENTRIES = Object.freeze({
     text: 'This action requires active billing. Contact ops.',
     kind: 'warn',
     hasRetry: false,
-    ctaKind: 'billing',
   },
   self_suspend_forbidden: {
     text: 'You cannot change your own account status',
@@ -121,7 +125,6 @@ function defaultNetworkEntry(correlationId) {
  *   globalHandler?: string,
  *   delegate?: string,
  *   silent?: boolean,
- *   ctaKind?: string,
  * }}
  */
 export function routeAdminRefreshError(code, { correlationId = null } = {}) {

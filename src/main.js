@@ -797,6 +797,23 @@ function buildRefreshErrorEnvelope(error) {
 // emit a structured notice the shell can observe via adultSurfaceState.notice
 // for now. Later phases (U14 for session_invalidated, U13 for account
 // _suspended) will replace this with a dedicated shell transition.
+//
+// M4 reviewer fix: `setAdultSurfaceNotice` routes through the
+// `patchAdultSurfaceState` helper that owns the shared adult-surface slice
+// and triggers a re-render via `store.patch`. It is NOT a raw mutation of
+// `adultSurfaceState.notice` — the patch helper replaces the entire slice
+// object, so parallel-source-of-truth concerns do not apply. The remaining
+// follow-up is to replace the string-typed notice payload with a structured
+// `{ kind, handler, correlationId? }` record once the app shell gains a
+// dedicated global-handler surface. Tracked in the plan's Open Questions
+// under "replace shell-notice side-channel with dispatched action" and
+// shipped with Phase D U14 (session_invalidated) / U13 (account_suspended).
+//
+// TODO(Phase D U14): replace the string notice side-channel with a
+// dispatched action so the reducer is the single source of truth for
+// global-handler transitions. See docs/plans/2026-04-25-005-refactor-admin-
+// ops-console-p1-5-hardening-plan.md § "Open Questions — shell global
+// handler plumbing".
 function maybeRouteToGlobalHandler(envelope) {
   const routed = routeAdminRefreshError(envelope.code, {
     correlationId: envelope.correlationId,
@@ -877,6 +894,18 @@ const accountOpsMetadataDirtyRegistry = createAccountOpsMetadataDirtyRegistry({
     // the registry's counter indicates at least one suppressed refresh.
     // The hub API may not exist yet on first boot, so the helper below
     // short-circuits with its own guard in that case.
+    //
+    // I3 reviewer fix: the unmount-clean path inside
+    // `AccountOpsMetadataRow` calls `setDirty(accountId, false)` when a
+    // dirty row unmounts. If the user had navigated off the admin hub
+    // before the last dirty row flipped clean, the suppression counter
+    // would trigger a flush against a now-off-route state and the live
+    // GET would land against a surface that no longer owns the patch.
+    // Gate the refresh on the current route being admin-hub. The refresh
+    // runs lazily anyway — the next admin-hub mount re-reads through
+    // `loadAdminHub` — so skipping here is safe.
+    const appState = store?.getState?.();
+    if (appState?.route?.screen !== 'admin-hub') return;
     refreshAdminOpsAccountsMetadata();
   },
 });

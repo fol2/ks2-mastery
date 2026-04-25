@@ -22,7 +22,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 
-import { createAccountOpsMetadataDirtyRegistry } from '../src/platform/hubs/admin-metadata-dirty-registry.js';
+import {
+  createAccountOpsMetadataDirtyRegistry,
+  decideDirtyResetOnServerUpdate,
+} from '../src/platform/hubs/admin-metadata-dirty-registry.js';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -85,21 +88,23 @@ test('createAccountOpsMetadataDirtyRegistry tracks dirty rows independently', ()
 });
 
 test('createAccountOpsMetadataDirtyRegistry flushes exactly once on the dirty→clean transition', () => {
+  // M8 reviewer fix: assert observable flush behaviour rather than the
+  // internal suppression counter. `recordSuppressedRefresh` is void and
+  // `getSuppressedRefreshCount` has been removed.
   let flushCount = 0;
   const registry = createAccountOpsMetadataDirtyRegistry({
     onFlushRequested: () => { flushCount += 1; },
   });
   registry.setDirty('a', true);
-  // Suppressed refresh while dirty — the counter should increment.
-  assert.equal(registry.recordSuppressedRefresh(), 1);
-  assert.equal(registry.recordSuppressedRefresh(), 2);
+  // Suppressed refreshes while dirty — no flush fires until we transition.
+  registry.recordSuppressedRefresh();
+  registry.recordSuppressedRefresh();
   assert.equal(flushCount, 0, 'no flush fires while any row is dirty');
-  // Dirty → clean transition with suppressedRefreshCount > 0 should flush.
+  // Dirty → clean transition with at least one suppressed refresh should flush.
   registry.setDirty('a', false);
   assert.equal(flushCount, 1);
-  // Counter resets.
-  assert.equal(registry.getSuppressedRefreshCount(), 0);
-  // A subsequent dirty → clean with no suppressed refreshes should NOT flush.
+  // A subsequent dirty → clean with no suppressed refreshes should NOT flush
+  // (counter is reset by the transition; next dirty cycle starts at zero).
   registry.setDirty('b', true);
   registry.setDirty('b', false);
   assert.equal(flushCount, 1);
@@ -129,6 +134,85 @@ test('createAccountOpsMetadataDirtyRegistry ignores spurious clean-of-clean', ()
   registry.recordSuppressedRefresh();
   registry.setDirty('a', false);
   assert.equal(flushCount, 0, 'no flush fires when the row was never dirty');
+});
+
+test('createAccountOpsMetadataDirtyRegistry unmount-clean with suppressedCount fires one flush', () => {
+  // T4 coverage (registry portion): a dirty row that unmounts calls
+  // `setDirty(accountId, false)`. If a suppressed refresh had been
+  // recorded while the row was dirty, the transition must flush exactly
+  // once even though the caller was a cleanup effect rather than a save.
+  let flushCount = 0;
+  const registry = createAccountOpsMetadataDirtyRegistry({
+    onFlushRequested: () => { flushCount += 1; },
+  });
+  registry.setDirty('a', true);
+  registry.recordSuppressedRefresh();
+  // Simulate unmount-clean.
+  registry.setDirty('a', false);
+  assert.equal(registry.anyDirty(), false);
+  assert.equal(flushCount, 1);
+});
+
+test('createAccountOpsMetadataDirtyRegistry — single flush after a suppressed refresh + clean', () => {
+  // T4 coverage: `recordSuppressedRefresh()` while dirty, then one
+  // `setDirty(id, false)` fires exactly ONE flush (not two / zero).
+  let flushCount = 0;
+  const registry = createAccountOpsMetadataDirtyRegistry({
+    onFlushRequested: () => { flushCount += 1; },
+  });
+  registry.setDirty('a', true);
+  registry.recordSuppressedRefresh();
+  registry.setDirty('a', false);
+  assert.equal(flushCount, 1);
+});
+
+// -----------------------------------------------------------------
+// 1b. B1 dirty-reset helper — save-acknowledgement lifecycle.
+// -----------------------------------------------------------------
+
+test('decideDirtyResetOnServerUpdate resets when server updatedAt advances', () => {
+  // B1 coverage: user types → server bumps updatedAt → helper signals
+  // reset so the row re-hydrates from the new server value.
+  const decision = decideDirtyResetOnServerUpdate({
+    incomingUpdatedAt: 200,
+    savedAt: 100,
+  });
+  assert.equal(decision.reset, true);
+  assert.equal(decision.nextSavedAt, 200);
+});
+
+test('decideDirtyResetOnServerUpdate holds when server updatedAt is unchanged', () => {
+  // B1 coverage: an auto-refresh that returns the same `updatedAt`
+  // (legitimate, no save acknowledged) must NOT reset the dirty flag,
+  // or a mid-edit textarea would be wiped by a fresh fetch.
+  const decision = decideDirtyResetOnServerUpdate({
+    incomingUpdatedAt: 100,
+    savedAt: 100,
+  });
+  assert.equal(decision.reset, false);
+});
+
+test('decideDirtyResetOnServerUpdate tolerates initial undefined savedAt', () => {
+  // B1 coverage: on mount, `savedAtRef.current` starts at 0 (default for
+  // a new row with `account.updatedAt = 0`). A non-zero incoming value
+  // must flip the reset signal so the first server-acknowledged save
+  // lands even though savedAt was never explicitly set.
+  const decision = decideDirtyResetOnServerUpdate({
+    incomingUpdatedAt: 50,
+    savedAt: undefined,
+  });
+  assert.equal(decision.reset, true);
+  assert.equal(decision.nextSavedAt, 50);
+});
+
+test('decideDirtyResetOnServerUpdate treats stale server updatedAt as no-op', () => {
+  // B1 edge: a misordered response that reports an older `updatedAt`
+  // than what the component already saw must NOT flip the reset signal.
+  const decision = decideDirtyResetOnServerUpdate({
+    incomingUpdatedAt: 50,
+    savedAt: 100,
+  });
+  assert.equal(decision.reset, false);
 });
 
 // -----------------------------------------------------------------
