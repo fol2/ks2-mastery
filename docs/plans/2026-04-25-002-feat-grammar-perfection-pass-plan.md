@@ -24,7 +24,7 @@ Gap matrix after research verification:
 | 1. Docs overclaim completeness vs behaviour tests | `docs/grammar-functionality-completeness.md` lists U2-U8 "Completed" with no perfection-pass caveat; behaviour tests exist but are coarse. | U1 baseline: record known gaps and mark review issues as planned / already-fixed / deferred. |
 | 2. Adaptive selection thin (no recent-repeat penalty, no QT weakness) | `weightedTemplatePick` is internal; weights `strength`, `new/weak/due`, focus, generative only. `state.mastery.questionTypes` exists but is not read by selection. | U2 pure `buildGrammarPracticeQueue` extraction. |
 | 3. Support scoring may be session-level | Already item-level: `supportLevel` + `attempts` persist per attempt in `state.recentAttempts`; Smart + `allowTeachingItems` still promotes session-wide support level via `supportLevelForSession`. | U3 rename + contract: `firstAttemptIndependent` / `supportUsed` / `supportLevelAtScoring`, fix session-vs-item regression for Smart + `allowTeachingItems`. |
-| 4. Content gaps (2 explain templates, thin pools) | Counted per question-type: `classify`(1), `identify`(6), `choose`(16), `fill`(3), `fix`(11), `rewrite`(6), `build`(4), `explain`(2). | **Deferred to follow-up content-release plan.** U1 records per-question-type and per-concept floors as baseline. |
+| 4. Content gaps (2 explain templates, thin pools) | Counted per question-type against live content: `classify`(1), `identify`(7), `choose`(17), `fill`(3), `fix`(11), `rewrite`(6), `build`(4), `explain`(2) = 51. | **Deferred to follow-up content-release plan.** U1 records per-question-type and per-concept floors as baseline. |
 | 5. Transfer writing placeholder-only | `docs/grammar-transfer-decision.md` commits to non-scored lane first; no `transfer` mode exists. | U7 non-scored transfer lane. |
 | 6. Strict mini-test needs harsher QA | Engine timer/unanswered/preservation behaviour exists and is unit-tested; no Playwright / cross-navigation-viewport coverage. | U4 strict mini-test SSR QA against `tests/react-grammar-surface.test.js`. |
 | 7. Mode focus behaviour unclear | Already encoded: `NO_STORED_FOCUS_MODES` / `NO_SESSION_FOCUS_MODES`; trouble picks weakest via `weakestConceptIdForTrouble`; explicit payload focus still honoured. | **Verify-only** in U1; no reimplementation. |
@@ -95,7 +95,7 @@ The plan preserves the current production boundary: React renders controls and f
 - `docs/grammar-ai-provider-decision.md` — AI provider still deferred, deterministic fallback is the production contract.
 - `docs/grammar-transfer-decision.md` — non-scored transfer lane first; teacher-reviewed scoring deferred.
 - `worker/src/subjects/grammar/engine.js` — scoring, `answerQuality`, `supportLevelForSession` (line 464), `weightedTemplatePick` (line 525), `takeDueRetry`, `buildGrammarMiniSet` (line 808), attempt persistence (line 1478-1491), mini-test state (line 1079+).
-- `worker/src/subjects/grammar/content.js` — 51 templates; per-question-type counts: classify 1, identify 6, choose 16, fill 3, fix 11, rewrite 6, build 4, explain 2; inline `accepted` arrays at e.g. lines 703, 719, 735.
+- `worker/src/subjects/grammar/content.js` — 51 templates; per-question-type counts (verified against live metadata during U1): classify 1, identify 7, choose 17, fill 3, fix 11, rewrite 6, build 4, explain 2; inline `accepted` arrays at e.g. lines 703, 719, 735.
 - `worker/src/subjects/grammar/read-models.js` — `questionTypeSummaryFromState` (line 471-499), `recentActivityFromAttempts` (line 501+), concept status projection.
 - `src/subjects/grammar/module.js` — React dispatch, focus-concept guards (`NO_STORED_FOCUS_MODES` mirror around line 27-30).
 - `src/subjects/grammar/components/GrammarSessionScene.jsx` — strict mini-test UI, timer, navigation, repair controls.
@@ -237,7 +237,7 @@ flowchart LR
 
 **Approach:**
 - Add a "Perfection Pass" section to the completeness doc with one row per review issue, owner unit or "already-fixed" / "deferred to content-release" / "deferred to test-runner decision".
-- Encode per-question-type minimum counts for current content (classify 1, identify 6, choose 16, fill 3, fix 11, rewrite 6, build 4, explain 2) as a floor; any drop fails the test.
+- Encode per-question-type minimum counts for current content (classify 1, identify 7, choose 17, fill 3, fix 11, rewrite 6, build 4, explain 2 = 51 total) as a floor; any drop fails the test.
 - Record the Issue 7 "verify-only" finding with a direct reference to `NO_STORED_FOCUS_MODES` / `NO_SESSION_FOCUS_MODES` and the test names that cover it.
 - Update the mastery plan's live checklist with a pointer to this plan.
 

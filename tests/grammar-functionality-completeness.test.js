@@ -181,6 +181,7 @@ test('Grammar perfection-pass baseline is internally owned and well-formed', () 
     if (issue.status === 'planned') {
       assert.match(issue.ownerUnit || '', /^U[1-8]$/, `${issue.id} needs a valid owner unit U1-U8.`);
       assert.ok(issue.reason, `${issue.id} needs a planning reason.`);
+      assert.equal(issue.ownerUnitAllowedByTest, true, `${issue.id} is planned; ownerUnitAllowedByTest must be true so the owner-unit cross-reference test covers it.`);
     }
     if (issue.status === 'already-fixed') {
       assert.ok(Array.isArray(issue.resolvedBy) && issue.resolvedBy.length > 0, `${issue.id} needs at least one resolvedBy reference.`);
@@ -188,9 +189,11 @@ test('Grammar perfection-pass baseline is internally owned and well-formed', () 
       for (const testRef of issue.supportingTests) {
         assert.ok(fs.existsSync(path.join(rootDir, testRef)), `${issue.id} cites missing test file ${testRef}`);
       }
+      assert.equal(issue.ownerUnitAllowedByTest, false, `${issue.id} is already-fixed; ownerUnitAllowedByTest must be false so the flag cannot drift into a false 'planned' status without a status flip.`);
     }
     if (issue.status === 'deferred') {
       assert.ok(issue.deferral, `${issue.id} needs a deferral justification.`);
+      assert.equal(issue.ownerUnitAllowedByTest, false, `${issue.id} is deferred; ownerUnitAllowedByTest must be false.`);
     }
   }
 });
