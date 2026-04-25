@@ -6552,9 +6552,36 @@ textarea:focus-visible {
 
 .grammar-controls {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(120px, 0.6fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
   margin: 16px 0;
+}
+
+.grammar-settings-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.grammar-setting-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.grammar-setting-toggle input {
+  flex: 0 0 auto;
+}
+
+.grammar-setting-toggle:has(input:disabled) {
+  opacity: 0.62;
 }
 
 .grammar-domain-list,

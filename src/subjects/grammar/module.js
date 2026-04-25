@@ -117,6 +117,9 @@ function grammarStartPayload(ui, data = {}) {
   const request = {
     mode,
     roundLength: data.roundLength || prefs.roundLength || DEFAULT_GRAMMAR_PREFS.roundLength,
+    goalType: data.goalType || prefs.goalType || DEFAULT_GRAMMAR_PREFS.goalType,
+    allowTeachingItems: prefs.allowTeachingItems === true,
+    showDomainBeforeAnswer: prefs.showDomainBeforeAnswer !== false,
   };
   if (Object.prototype.hasOwnProperty.call(data, 'focusConceptId')) {
     request.focusConceptId = data.focusConceptId;
@@ -257,6 +260,26 @@ export const grammarModule = {
         return resetToDashboardWithPrefs(context, prefs);
       }
       return sendGrammarCommand(context, 'save-prefs', { prefs: { roundLength } });
+    }
+
+    if (action === 'grammar-set-goal') {
+      const goalType = context.data?.value || DEFAULT_GRAMMAR_PREFS.goalType;
+      if (service?.savePrefs) {
+        const prefs = service.savePrefs(learnerId, { goalType });
+        return resetToDashboardWithPrefs(context, prefs);
+      }
+      return sendGrammarCommand(context, 'save-prefs', { prefs: { goalType } });
+    }
+
+    if (action === 'grammar-set-practice-setting') {
+      const key = context.data?.key;
+      if (!['allowTeachingItems', 'showDomainBeforeAnswer'].includes(key)) return true;
+      const patch = { [key]: Boolean(context.data?.value) };
+      if (service?.savePrefs) {
+        const prefs = service.savePrefs(learnerId, patch);
+        return resetToDashboardWithPrefs(context, prefs);
+      }
+      return sendGrammarCommand(context, 'save-prefs', { prefs: patch });
     }
 
     if (action === 'grammar-set-focus') {

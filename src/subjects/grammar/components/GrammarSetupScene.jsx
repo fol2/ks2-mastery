@@ -36,6 +36,7 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
   const counts = grammar.stats?.concepts || {};
   const templates = grammar.stats?.templates || {};
   const selectedMode = grammar.prefs?.mode || 'smart';
+  const selectedGoal = grammar.prefs?.goalType || 'questions';
   const miniTestMode = selectedMode === 'satsset';
   const troubleMode = selectedMode === 'trouble';
   const surgeryMode = selectedMode === 'surgery';
@@ -132,6 +133,48 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
               >
                 {lengthOptions.map((length) => <option value={length} key={length}>{length}</option>)}
               </select>
+            </label>
+            {!miniTestMode ? (
+              <label className="field">
+                <span>Session goal</span>
+                <select
+                  className="input"
+                  value={selectedGoal}
+                  disabled={setupDisabled}
+                  onChange={(event) => actions.dispatch('grammar-set-goal', { value: event.currentTarget.value })}
+                >
+                  <option value="questions">Question count</option>
+                  <option value="timed">Ten minutes</option>
+                  <option value="due">Clear due items</option>
+                </select>
+              </label>
+            ) : null}
+          </div>
+
+          <div className="grammar-settings-list" aria-label="Grammar practice settings">
+            <label className="grammar-setting-toggle">
+              <input
+                type="checkbox"
+                checked={grammar.prefs?.allowTeachingItems === true}
+                disabled={setupDisabled || selectedMode !== 'smart'}
+                onChange={(event) => actions.dispatch('grammar-set-practice-setting', {
+                  key: 'allowTeachingItems',
+                  value: event.currentTarget.checked,
+                })}
+              />
+              <span>Smart Review teaching items</span>
+            </label>
+            <label className="grammar-setting-toggle">
+              <input
+                type="checkbox"
+                checked={grammar.prefs?.showDomainBeforeAnswer !== false}
+                disabled={setupDisabled}
+                onChange={(event) => actions.dispatch('grammar-set-practice-setting', {
+                  key: 'showDomainBeforeAnswer',
+                  value: event.currentTarget.checked,
+                })}
+              />
+              <span>Show domain before answering</span>
             </label>
           </div>
 

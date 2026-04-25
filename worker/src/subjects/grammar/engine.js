@@ -18,6 +18,9 @@ const SUBJECT_ID = 'grammar';
 const SERVER_AUTHORITY = 'worker';
 const DEFAULT_ROUND_LENGTH = 5;
 const DEFAULT_MINI_SET_LENGTH = 8;
+const DEFAULT_GOAL_TYPE = 'questions';
+const TIMED_GOAL_LIMIT_MS = 10 * 60000;
+const CLEAR_DUE_GOAL_CAP = 15;
 const MINI_SET_LENGTHS = Object.freeze([8, 12]);
 const MINI_SET_MIN_TIME_LIMIT_MS = 6 * 60000;
 const MINI_SET_MS_PER_MARK = 54000;
@@ -29,6 +32,7 @@ const LOCKED_MODES = Object.freeze([]);
 const NO_STORED_FOCUS_MODES = new Set(['trouble', 'surgery', 'builder']);
 const NO_SESSION_FOCUS_MODES = new Set(['surgery', 'builder']);
 const GRAMMAR_CONCEPT_IDS = new Set(GRAMMAR_CONCEPTS.map((concept) => concept.id));
+const GOAL_TYPES = new Set(['questions', 'timed', 'due']);
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -49,6 +53,17 @@ function isGrammarConceptId(value) {
 
 function normaliseStoredFocusConceptId(value) {
   return isGrammarConceptId(value) ? value : '';
+}
+
+function normaliseBoolean(value, fallback = false) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const text = value.trim().toLowerCase();
+    if (['true', '1', 'yes', 'on'].includes(text)) return true;
+    if (['false', '0', 'no', 'off'].includes(text)) return false;
+  }
+  if (typeof value === 'number') return value !== 0;
+  return fallback;
 }
 
 function cappedString(value, limit = SHORT_RESPONSE_TEXT_LIMIT) {
@@ -259,6 +274,9 @@ export function createInitialGrammarState(data = {}) {
       mode: normalisedData.prefs.mode || 'smart',
       roundLength: Number(normalisedData.prefs.roundLength) || DEFAULT_ROUND_LENGTH,
       focusConceptId: normalisedData.prefs.focusConceptId || '',
+      goalType: normaliseGoalType(normalisedData.prefs.goalType),
+      allowTeachingItems: normaliseBoolean(normalisedData.prefs.allowTeachingItems, false),
+      showDomainBeforeAnswer: normaliseBoolean(normalisedData.prefs.showDomainBeforeAnswer, true),
     },
     mastery: normalisedData.mastery,
     retryQueue: normalisedData.retryQueue,
@@ -293,6 +311,9 @@ function normaliseGrammarState(rawState, data = {}) {
     prefs: {
       ...fallback.prefs,
       ...rawPrefs,
+      goalType: normaliseGoalType(rawPrefs.goalType || fallback.prefs.goalType),
+      allowTeachingItems: normaliseBoolean(rawPrefs.allowTeachingItems, fallback.prefs.allowTeachingItems),
+      showDomainBeforeAnswer: normaliseBoolean(rawPrefs.showDomainBeforeAnswer, fallback.prefs.showDomainBeforeAnswer),
       focusConceptId: Object.prototype.hasOwnProperty.call(rawPrefs, 'focusConceptId')
         ? normaliseStoredFocusConceptId(rawPrefs.focusConceptId)
         : fallback.prefs.focusConceptId,
@@ -374,6 +395,11 @@ function supportLevelForMode(mode) {
   if (mode === 'worked') return 2;
   if (mode === 'faded') return 1;
   return 0;
+}
+
+function supportLevelForSession(mode, prefs = {}) {
+  if (mode === 'smart' && normaliseBoolean(prefs.allowTeachingItems, false)) return 1;
+  return supportLevelForMode(mode);
 }
 
 function sessionTypeForMode(mode) {
@@ -535,6 +561,14 @@ function normaliseMode(value) {
   return mode || 'smart';
 }
 
+function normaliseGoalType(value) {
+  const goal = String(value || DEFAULT_GOAL_TYPE).trim().toLowerCase().replace(/[\s_]+/g, '-');
+  if (goal === '10m' || goal === '10-minutes' || goal === 'time' || goal === 'timed-practice') return 'timed';
+  if (goal === '15q' || goal === 'fixed' || goal === 'fixed-questions' || goal === 'question-count') return 'questions';
+  if (goal === 'clear-due' || goal === 'due-review') return 'due';
+  return GOAL_TYPES.has(goal) ? goal : DEFAULT_GOAL_TYPE;
+}
+
 function supportedModeOrThrow(mode) {
   if (ENABLED_MODES.has(mode)) return mode;
   throw new BadRequestError('This Grammar mode is not enabled yet.', {
@@ -562,6 +596,106 @@ function miniSetTimeLimitMs(items = []) {
   const totalMarks = (Array.isArray(items) ? items : [])
     .reduce((sum, item) => sum + (Number(item?.marks) || 1), 0);
   return Math.max(MINI_SET_MIN_TIME_LIMIT_MS, Math.round(totalMarks * MINI_SET_MS_PER_MARK));
+}
+
+function dueRetryCount(state, { mode, focusConceptId, nowTs }) {
+  return (Array.isArray(state.retryQueue) ? state.retryQueue : []).filter((entry) => {
+    if (Number(entry?.dueAt) > nowTs) return false;
+    const template = grammarTemplateById(entry.templateId);
+    return templateFits(template, { mode, focusConceptId });
+  }).length;
+}
+
+function dueConceptCount(state, { focusConceptId, nowTs }) {
+  return GRAMMAR_CONCEPTS.filter((concept) => {
+    if (focusConceptId && concept.id !== focusConceptId) return false;
+    const status = grammarConceptStatus(state.mastery.concepts[concept.id] || defaultMasteryNode(), nowTs);
+    return status === 'due' || status === 'weak';
+  }).length;
+}
+
+function clearDueReviewCount(state, { mode, focusConceptId, nowTs, fallback }) {
+  const initialDueCount = dueRetryCount(state, { mode, focusConceptId, nowTs })
+    + dueConceptCount(state, { focusConceptId, nowTs });
+  return {
+    initialDueCount,
+    targetCount: clamp(initialDueCount || fallback, 1, CLEAR_DUE_GOAL_CAP),
+  };
+}
+
+function sessionGoalFor(state, {
+  mode,
+  payload = {},
+  prefs = {},
+  roundLength,
+  focusConceptId = '',
+  nowTs,
+} = {}) {
+  const goalType = mode === 'satsset'
+    ? 'questions'
+    : normaliseGoalType(payload.goalType ?? payload.goal ?? prefs.goalType);
+  if (goalType === 'timed') {
+    const targetCount = clamp(Number(payload.targetCount ?? payload.roundLength ?? roundLength) || CLEAR_DUE_GOAL_CAP, 1, CLEAR_DUE_GOAL_CAP);
+    return {
+      type: 'timed',
+      targetCount,
+      startedAt: nowTs,
+      timeLimitMs: TIMED_GOAL_LIMIT_MS,
+      expiresAt: nowTs + TIMED_GOAL_LIMIT_MS,
+    };
+  }
+  if (goalType === 'due') {
+    const due = clearDueReviewCount(state, {
+      mode,
+      focusConceptId,
+      nowTs,
+      fallback: roundLength,
+    });
+    return {
+      type: 'due',
+      targetCount: due.targetCount,
+      initialDueCount: due.initialDueCount,
+      startedAt: nowTs,
+    };
+  }
+  return {
+    type: 'questions',
+    targetCount: roundLength,
+    startedAt: nowTs,
+  };
+}
+
+function sessionGoalExpired(session, nowTs) {
+  return session?.goal?.type === 'timed'
+    && Number(session.goal.expiresAt) > 0
+    && nowTs >= Number(session.goal.expiresAt);
+}
+
+function dueReviewAvailable(state, session, nowTs) {
+  if (!session) return false;
+  return dueRetryCount(state, {
+    mode: session.mode,
+    focusConceptId: session.focusConceptId,
+    nowTs,
+  }) > 0 || dueConceptCount(state, {
+    focusConceptId: session.focusConceptId,
+    nowTs,
+  }) > 0;
+}
+
+function sessionReadyToComplete(state, session, nowTs) {
+  if (!session) return false;
+  if (sessionGoalExpired(session, nowTs)) return true;
+  if (Number(session.answered) >= Number(session.targetCount)) return true;
+  if (
+    session.goal?.type === 'due'
+    && Number(session.goal.initialDueCount) > 0
+    && Number(session.answered) > 0
+    && !dueReviewAvailable(state, session, nowTs)
+  ) {
+    return true;
+  }
+  return false;
 }
 
 function serverSessionId(learnerId, { requestId = '', nowTs, baseSeed, mode, focusConceptId = '' }) {
@@ -701,6 +835,14 @@ function startSession(state, payload, nowTs, learnerId) {
     mode,
     focusConceptId: sessionFocusConceptId,
   });
+  const sessionGoal = sessionGoalFor(state, {
+    mode,
+    payload,
+    prefs: state.prefs,
+    roundLength,
+    focusConceptId: sessionFocusConceptId,
+    nowTs,
+  });
   if (mode === 'satsset') {
     const items = buildStrictMiniTestItems(state, {
       size: roundLength,
@@ -720,6 +862,9 @@ function startSession(state, payload, nowTs, learnerId) {
       ...state.prefs,
       mode,
       roundLength,
+      goalType: normaliseGoalType(payload.goalType ?? payload.goal ?? state.prefs.goalType),
+      allowTeachingItems: normaliseBoolean(payload.allowTeachingItems ?? state.prefs.allowTeachingItems, false),
+      showDomainBeforeAnswer: normaliseBoolean(payload.showDomainBeforeAnswer ?? state.prefs.showDomainBeforeAnswer, true),
       focusConceptId: prefsFocusConceptId,
     };
     state.session = {
@@ -738,6 +883,7 @@ function startSession(state, payload, nowTs, learnerId) {
       currentItem: questions[0]?.item || null,
       attemptsForCurrent: 0,
       supportLevel: 0,
+      goal: sessionGoal,
       miniTest: {
         setSize: questions.length,
         startedAt: nowTs,
@@ -767,6 +913,9 @@ function startSession(state, payload, nowTs, learnerId) {
     ...state.prefs,
     mode,
     roundLength,
+    goalType: sessionGoal.type,
+    allowTeachingItems: normaliseBoolean(payload.allowTeachingItems ?? state.prefs.allowTeachingItems, false),
+    showDomainBeforeAnswer: normaliseBoolean(payload.showDomainBeforeAnswer ?? state.prefs.showDomainBeforeAnswer, true),
     focusConceptId: prefsFocusConceptId,
   };
   state.session = {
@@ -775,7 +924,7 @@ function startSession(state, payload, nowTs, learnerId) {
     mode,
     focusConceptId: sessionFocusConceptId,
     startedAt: nowTs,
-    targetCount: roundLength,
+    targetCount: sessionGoal.targetCount,
     answered: 0,
     correct: 0,
     totalScore: 0,
@@ -784,7 +933,8 @@ function startSession(state, payload, nowTs, learnerId) {
     currentIndex: 0,
     currentItem: firstItem,
     attemptsForCurrent: 0,
-    supportLevel: supportLevelForMode(mode),
+    supportLevel: supportLevelForSession(mode, state.prefs),
+    goal: sessionGoal,
     serverAuthority: SERVER_AUTHORITY,
   };
   return [];
@@ -802,6 +952,8 @@ function completionSummary(state, nowTs) {
     totalScore: Number(session.totalScore) || 0,
     totalMarks: Number(session.totalMarks) || 0,
     targetCount: Number(session.targetCount) || 0,
+    goal: isPlainObject(session.goal) ? cloneSerialisable(session.goal) : { type: 'questions' },
+    timedOut: sessionGoalExpired(session, nowTs),
   };
 }
 
@@ -1058,6 +1210,7 @@ function continueSession(state, nowTs) {
       subjectId: SUBJECT_ID,
     });
   }
+  if (sessionReadyToComplete(state, session, nowTs)) return null;
   if (!state.awaitingAdvance) {
     if (isActiveMiniTestSession(state)) return moveMiniTest(state, { delta: 1 }, nowTs);
     throw new BadRequestError('This Grammar item is not awaiting the next question.', {
@@ -1076,7 +1229,7 @@ function continueSession(state, nowTs) {
     nowTs,
   });
   session.attemptsForCurrent = 0;
-  session.supportLevel = supportLevelForMode(session.mode);
+  session.supportLevel = supportLevelForSession(session.mode, state.prefs);
   state.phase = 'session';
   state.awaitingAdvance = false;
   state.feedback = null;
@@ -1233,8 +1386,9 @@ function submitAnswer(state, payload, command, nowTs) {
     if (payload.advance) moveMiniTest(state, { delta: 1 }, nowTs);
     return [];
   }
+  if (sessionGoalExpired(session, nowTs)) return completeSession(state, nowTs, command);
   const response = isPlainObject(payload.response) ? payload.response : (isPlainObject(payload.answer) ? payload.answer : { answer: payload.answer ?? '' });
-  const modeSupportLevel = supportLevelForMode(session.mode);
+  const modeSupportLevel = Math.max(0, Number(session.supportLevel) || supportLevelForSession(session.mode, state.prefs));
   const requestedSupportLevel = Number(payload.supportLevel ?? modeSupportLevel) || 0;
   if (requestedSupportLevel > modeSupportLevel) {
     throw new BadRequestError('This Grammar mode does not allow pre-answer support.', {
@@ -1264,7 +1418,7 @@ function submitAnswer(state, payload, command, nowTs) {
     templateId: session.currentItem.templateId,
     result: cloneSerialisable(applied.result),
     response: cloneSerialisable(applied.response) || {},
-    canContinue: session.answered < session.targetCount,
+    canContinue: !sessionReadyToComplete(state, session, nowTs),
   };
   return applied.events;
 }
@@ -1272,6 +1426,9 @@ function submitAnswer(state, payload, command, nowTs) {
 function savePrefs(state, payload) {
   const prefs = isPlainObject(payload.prefs) ? payload.prefs : payload;
   const nextMode = prefs.mode ? normaliseMode(prefs.mode) : state.prefs.mode;
+  const nextGoalType = Object.prototype.hasOwnProperty.call(prefs, 'goalType') || Object.prototype.hasOwnProperty.call(prefs, 'goal')
+    ? normaliseGoalType(prefs.goalType ?? prefs.goal)
+    : normaliseGoalType(state.prefs.goalType);
   const hasFocusConcept = Object.prototype.hasOwnProperty.call(prefs, 'focusConceptId');
   const nextFocusConceptId = NO_STORED_FOCUS_MODES.has(nextMode)
     ? ''
@@ -1282,6 +1439,13 @@ function savePrefs(state, payload) {
     ...state.prefs,
     mode: ENABLED_MODES.has(nextMode) ? nextMode : state.prefs.mode,
     roundLength: roundLengthFor(nextMode, prefs, state.prefs),
+    goalType: nextGoalType,
+    allowTeachingItems: Object.prototype.hasOwnProperty.call(prefs, 'allowTeachingItems')
+      ? normaliseBoolean(prefs.allowTeachingItems, state.prefs.allowTeachingItems)
+      : normaliseBoolean(state.prefs.allowTeachingItems, false),
+    showDomainBeforeAnswer: Object.prototype.hasOwnProperty.call(prefs, 'showDomainBeforeAnswer')
+      ? normaliseBoolean(prefs.showDomainBeforeAnswer, state.prefs.showDomainBeforeAnswer)
+      : normaliseBoolean(state.prefs.showDomainBeforeAnswer, true),
     focusConceptId: nextFocusConceptId,
   };
   if (state.phase === 'summary') {

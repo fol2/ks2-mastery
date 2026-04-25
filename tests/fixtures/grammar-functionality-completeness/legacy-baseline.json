@@ -146,16 +146,28 @@
     {
       "id": "session-goals",
       "legacyCapability": "Session goal supports ten minutes, fifteen questions and clear due items",
-      "status": "planned",
-      "ownerUnit": "U3",
-      "reason": "Current Grammar setup exposes round length only."
+      "status": "completed",
+      "evidence": [
+        "worker/src/subjects/grammar/engine.js",
+        "worker/src/subjects/grammar/read-models.js",
+        "src/subjects/grammar/components/GrammarSetupScene.jsx",
+        "tests/grammar-engine.test.js",
+        "tests/worker-grammar-subject-runtime.test.js",
+        "tests/react-grammar-surface.test.js"
+      ]
     },
     {
       "id": "practice-settings",
       "legacyCapability": "Smart Review teaching items and show-domain-before-answer are learner preferences",
-      "status": "planned",
-      "ownerUnit": "U3",
-      "reason": "Current Grammar prefs only cover mode, focus and round length."
+      "status": "completed",
+      "evidence": [
+        "worker/src/subjects/grammar/engine.js",
+        "src/subjects/grammar/module.js",
+        "src/subjects/grammar/components/GrammarSetupScene.jsx",
+        "src/subjects/grammar/components/GrammarSessionScene.jsx",
+        "tests/grammar-engine.test.js",
+        "tests/react-grammar-surface.test.js"
+      ]
     },
     {
       "id": "in-session-repair-loop",

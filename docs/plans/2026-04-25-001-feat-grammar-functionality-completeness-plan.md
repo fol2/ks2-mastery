@@ -285,7 +285,7 @@ flowchart TB
 
 ---
 
-- U3. **Restore Session Goals and Practice Settings**
+- [x] U3. **Restore Session Goals and Practice Settings**
 
 **Goal:** Restore legacy goal semantics and safe Grammar-specific practice settings without returning to browser-local authority.
 

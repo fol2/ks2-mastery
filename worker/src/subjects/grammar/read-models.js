@@ -136,6 +136,27 @@ function safeMiniTestReview(review) {
   };
 }
 
+function safeGoal(goal, now = Date.now()) {
+  if (!isPlainObject(goal)) return { type: 'questions' };
+  const type = ['questions', 'timed', 'due'].includes(goal.type) ? goal.type : 'questions';
+  const expiresAt = asTs(goal.expiresAt, 0);
+  const nowTs = asTs(now, Date.now());
+  const output = {
+    type,
+    targetCount: Number.isFinite(Number(goal.targetCount)) ? Number(goal.targetCount) : 0,
+    startedAt: asTs(goal.startedAt, 0),
+  };
+  if (type === 'timed') {
+    output.timeLimitMs = Number.isFinite(Number(goal.timeLimitMs)) ? Number(goal.timeLimitMs) : 0;
+    output.expiresAt = expiresAt;
+    output.remainingMs = expiresAt ? Math.max(0, expiresAt - nowTs) : 0;
+  }
+  if (type === 'due') {
+    output.initialDueCount = Number.isFinite(Number(goal.initialDueCount)) ? Number(goal.initialDueCount) : 0;
+  }
+  return output;
+}
+
 function safeSummary(summary) {
   if (!isPlainObject(summary)) return null;
   const output = {
@@ -148,6 +169,7 @@ function safeSummary(summary) {
     totalScore: Number.isFinite(Number(summary.totalScore)) ? Number(summary.totalScore) : 0,
     totalMarks: Number.isFinite(Number(summary.totalMarks)) ? Number(summary.totalMarks) : 0,
     targetCount: Number.isFinite(Number(summary.targetCount)) ? Number(summary.targetCount) : 0,
+    goal: safeGoal(summary.goal, summary.completedAt),
   };
   if (Object.prototype.hasOwnProperty.call(summary, 'timedOut')) {
     output.timedOut = Boolean(summary.timedOut);
@@ -338,6 +360,7 @@ function safeSession(session, now = Date.now()) {
     totalMarks: Number.isFinite(Number(session.totalMarks)) ? Number(session.totalMarks) : 0,
     currentIndex: Number.isFinite(Number(session.currentIndex)) ? Number(session.currentIndex) : 0,
     currentItem: safeCurrentItem(session.currentItem),
+    goal: safeGoal(session.goal, now),
     miniTest: safeMiniTest(session.miniTest, now),
     supportLevel: Number.isFinite(Number(session.supportLevel)) ? Math.max(0, Number(session.supportLevel)) : 0,
     supportGuidance: supportGuidanceForSession(session),

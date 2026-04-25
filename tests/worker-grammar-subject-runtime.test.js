@@ -315,6 +315,49 @@ test('Grammar command route runs strict mini-test save, navigation, and finish c
   DB.close();
 });
 
+test('Grammar command route persists session goals and practice settings', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const prefs = await postCommand(app, DB, {
+    command: 'save-prefs',
+    learnerId: 'learner-a',
+    requestId: 'grammar-goal-settings-prefs',
+    expectedLearnerRevision: 0,
+    payload: {
+      prefs: {
+        goalType: 'timed',
+        allowTeachingItems: true,
+        showDomainBeforeAnswer: false,
+      },
+    },
+  });
+  assert.equal(prefs.response.status, 200, JSON.stringify(prefs.body));
+  assert.equal(prefs.body.subjectReadModel.prefs.goalType, 'timed');
+  assert.equal(prefs.body.subjectReadModel.prefs.allowTeachingItems, true);
+  assert.equal(prefs.body.subjectReadModel.prefs.showDomainBeforeAnswer, false);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-goal-settings-start',
+    expectedLearnerRevision: 1,
+    payload: {
+      mode: 'smart',
+      roundLength: 15,
+      seed: 321,
+    },
+  });
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  assert.equal(start.body.subjectReadModel.session.goal.type, 'timed');
+  assert.equal(start.body.subjectReadModel.session.goal.timeLimitMs, 10 * 60_000);
+  assert.equal(start.body.subjectReadModel.session.supportLevel, 1);
+  assert.equal(start.body.subjectReadModel.session.supportGuidance.kind, 'faded');
+
+  DB.close();
+});
+
 test('Grammar command route accepts sentence surgery mode', async () => {
   const DB = createMigratedSqliteD1Database();
   const app = createWorkerApp({ now: () => 1_777_000_000_000 });

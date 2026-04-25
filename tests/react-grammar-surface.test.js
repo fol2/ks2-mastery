@@ -174,6 +174,64 @@ test('Grammar setup controls are disabled while a command is pending', () => {
   assert.match(html, /<button class="btn primary xl" type="button" disabled="">Starting\.\.\.<\/button>/);
 });
 
+test('Grammar setup exposes session goals and Smart Review teaching settings', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  let html = harness.render();
+  assert.match(html, /Session goal/);
+  assert.match(html, /Ten minutes/);
+  assert.match(html, /Clear due items/);
+  assert.match(html, /Smart Review teaching items/);
+  assert.match(html, /Show domain before answering/);
+
+  harness.dispatch('grammar-set-goal', { value: 'timed' });
+  harness.dispatch('grammar-set-practice-setting', { key: 'allowTeachingItems', value: true });
+  harness.dispatch('grammar-start', {
+    payload: {
+      mode: 'smart',
+      roundLength: 15,
+      seed: 123,
+    },
+  });
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.goal.type, 'timed');
+  assert.equal(grammar.session.goal.timeLimitMs, 10 * 60_000);
+  assert.equal(grammar.session.supportLevel, 1);
+  html = harness.render();
+  assert.match(html, /Ten minutes/);
+  assert.match(html, /Faded guidance/);
+});
+
+test('Grammar show-domain setting affects display only before answer feedback', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-set-practice-setting', { key: 'showDomainBeforeAnswer', value: false });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  let html = harness.render();
+  assert.doesNotMatch(html, />Adverbials<\/span>/);
+
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData(sample.correctResponse),
+  });
+  html = harness.render();
+  assert.match(html, />Adverbials<\/span>/);
+  assert.equal(harness.store.getState().subjectUi.grammar.analytics.concepts.find((concept) => concept.id === 'adverbials').attempts, 1);
+});
+
 test('Grammar monster progress rehydrates from persisted Codex state after reload normalisation', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });

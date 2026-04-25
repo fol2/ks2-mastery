@@ -319,6 +319,20 @@ function MiniTestStatus({ miniTest, pending, runtimeReadOnly }) {
   );
 }
 
+function SessionGoalChip({ goal }) {
+  if (!goal?.type) return null;
+  if (goal.type === 'questions') {
+    return <span className="chip">Goal {Number(goal?.targetCount) || 0} questions</span>;
+  }
+  if (goal.type === 'timed') {
+    return <span className="chip">Ten minutes · {formatMiniTestTime(goal.remainingMs)} left</span>;
+  }
+  if (goal.type === 'due') {
+    return <span className="chip">Clear due items</span>;
+  }
+  return null;
+}
+
 export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
   const session = grammar.session || {};
   const miniTest = session.type === 'mini-set' ? session.miniTest : null;
@@ -338,6 +352,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
   const pending = Boolean(grammar.pendingCommand);
   const submitDisabled = runtimeReadOnly || pending || (!isMiniTest && isFeedback);
   const currentResponse = isMiniTest ? (miniTestCurrent?.response || {}) : {};
+  const showDomainChip = item.domain && (grammar.prefs?.showDomainBeforeAnswer !== false || isFeedback);
 
   return (
     <section className="grammar-session" aria-labelledby="grammar-session-title">
@@ -355,7 +370,8 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
       <div className="grammar-prompt-card">
         <div className="chip-row">
           {isMiniTest ? <span className="chip good">KS2-style mini-test</span> : null}
-          {item.domain ? <span className="chip">{item.domain}</span> : null}
+          {!isMiniTest ? <SessionGoalChip goal={session.goal} /> : null}
+          {showDomainChip ? <span className="chip">{item.domain}</span> : null}
           {item.questionType ? <span className="chip">{item.questionType}</span> : null}
           {session.serverAuthority ? <span className="chip good">Worker authority</span> : null}
         </div>

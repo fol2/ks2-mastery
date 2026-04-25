@@ -193,6 +193,9 @@ export const DEFAULT_GRAMMAR_PREFS = Object.freeze({
   mode: 'smart',
   roundLength: 5,
   focusConceptId: '',
+  goalType: 'questions',
+  allowTeachingItems: false,
+  showDomainBeforeAnswer: true,
 });
 
 export function grammarMonsterAsset(id, size = 320) {
