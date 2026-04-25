@@ -152,5 +152,49 @@ export function createHubApi({
         body: JSON.stringify({ version, mutation }),
       }, authSession);
     },
+    async readAdminOpsKpi() {
+      const url = buildRequestUrl(baseUrl, '/api/admin/ops/kpi');
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    },
+    async readAdminOpsActivity({ limit = 50 } = {}) {
+      const url = buildRequestUrl(baseUrl, '/api/admin/ops/activity', { limit });
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    },
+    async readAdminOpsErrorEvents({ status = null, limit = 50 } = {}) {
+      const url = buildRequestUrl(baseUrl, '/api/admin/ops/error-events', { status, limit });
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    },
+    async updateAccountOpsMetadata({ accountId, patch, mutation } = {}) {
+      const url = buildRequestUrl(
+        baseUrl,
+        `/api/admin/accounts/${encodeURIComponent(accountId)}/ops-metadata`,
+      );
+      return fetchHubJson(fetch, url, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ patch, mutation }),
+      }, authSession);
+    },
+    async updateOpsErrorEventStatus({ eventId, status, mutation } = {}) {
+      const url = buildRequestUrl(
+        baseUrl,
+        `/api/admin/ops/error-events/${encodeURIComponent(eventId)}/status`,
+      );
+      return fetchHubJson(fetch, url, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ status, mutation }),
+      }, authSession);
+    },
+    async postClientErrorEvent(event) {
+      const url = buildRequestUrl(baseUrl, '/api/ops/error-event');
+      // R11/R15: public endpoint — must NOT reuse the admin auth session.
+      const publicSession = createNoopRepositoryAuthSession();
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(event ?? {}),
+      }, publicSession);
+    },
   };
 }

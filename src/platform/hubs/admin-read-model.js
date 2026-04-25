@@ -43,6 +43,157 @@ export function normaliseDemoOperations(rawValue) {
   };
 }
 
+function toNonNegativeInt(value) {
+  return Math.max(0, Number(value) || 0);
+}
+
+function isPlainObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value);
+}
+
+export function normaliseDashboardKpis(rawValue) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const accounts = isPlainObject(raw.accounts) ? raw.accounts : {};
+  const learners = isPlainObject(raw.learners) ? raw.learners : {};
+  const demos = isPlainObject(raw.demos) ? raw.demos : {};
+  const practiceSessions = isPlainObject(raw.practiceSessions) ? raw.practiceSessions : {};
+  const eventLog = isPlainObject(raw.eventLog) ? raw.eventLog : {};
+  const mutationReceipts = isPlainObject(raw.mutationReceipts) ? raw.mutationReceipts : {};
+  const errorEvents = isPlainObject(raw.errorEvents) ? raw.errorEvents : {};
+  const byStatus = isPlainObject(errorEvents.byStatus) ? errorEvents.byStatus : {};
+  const accountOpsUpdates = isPlainObject(raw.accountOpsUpdates) ? raw.accountOpsUpdates : {};
+
+  return {
+    generatedAt: asTs(raw.generatedAt, 0),
+    accounts: { total: toNonNegativeInt(accounts.total) },
+    learners: { total: toNonNegativeInt(learners.total) },
+    demos: { active: toNonNegativeInt(demos.active) },
+    practiceSessions: {
+      last7d: toNonNegativeInt(practiceSessions.last7d),
+      last30d: toNonNegativeInt(practiceSessions.last30d),
+    },
+    eventLog: { last7d: toNonNegativeInt(eventLog.last7d) },
+    mutationReceipts: { last7d: toNonNegativeInt(mutationReceipts.last7d) },
+    errorEvents: {
+      byStatus: {
+        open: toNonNegativeInt(byStatus.open),
+        investigating: toNonNegativeInt(byStatus.investigating),
+        resolved: toNonNegativeInt(byStatus.resolved),
+        ignored: toNonNegativeInt(byStatus.ignored),
+      },
+    },
+    accountOpsUpdates: { total: toNonNegativeInt(accountOpsUpdates.total) },
+  };
+}
+
+function normaliseOpsActivityEntry(rawEntry) {
+  const raw = isPlainObject(rawEntry) ? rawEntry : {};
+  return {
+    requestId: typeof raw.requestId === 'string' ? raw.requestId : '',
+    accountIdMasked: typeof raw.accountIdMasked === 'string' ? raw.accountIdMasked : '',
+    mutationKind: typeof raw.mutationKind === 'string' ? raw.mutationKind : '',
+    scopeType: typeof raw.scopeType === 'string' ? raw.scopeType : '',
+    // R26: server pre-masks learner/account scope ids; client renders verbatim.
+    scopeId: typeof raw.scopeId === 'string' ? raw.scopeId : '',
+    correlationId: typeof raw.correlationId === 'string' ? raw.correlationId : '',
+    statusCode: toNonNegativeInt(raw.statusCode),
+    appliedAt: asTs(raw.appliedAt, 0),
+  };
+}
+
+export function normaliseOpsActivityStream(rawValue) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const entries = Array.isArray(raw.entries) ? raw.entries.map(normaliseOpsActivityEntry) : [];
+  return {
+    generatedAt: asTs(raw.generatedAt, 0),
+    entries,
+  };
+}
+
+function normaliseAccountOpsMetadataTags(rawTags, rawTagsJson) {
+  if (Array.isArray(rawTags)) {
+    return rawTags
+      .map((tag) => (typeof tag === 'string' ? tag : ''))
+      .filter((tag) => tag.length > 0);
+  }
+  if (typeof rawTagsJson === 'string' && rawTagsJson.length > 0) {
+    try {
+      const parsed = JSON.parse(rawTagsJson);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .map((tag) => (typeof tag === 'string' ? tag : ''))
+        .filter((tag) => tag.length > 0);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function normaliseAccountOpsMetadataEntry(rawEntry) {
+  const raw = isPlainObject(rawEntry) ? rawEntry : {};
+  // R25: internalNotes may be null for ops-role readers; preserve null verbatim.
+  let internalNotes = null;
+  if (typeof raw.internalNotes === 'string') {
+    internalNotes = raw.internalNotes;
+  }
+  return {
+    accountId: typeof raw.accountId === 'string' ? raw.accountId : '',
+    email: typeof raw.email === 'string' ? raw.email : '',
+    displayName: typeof raw.displayName === 'string' ? raw.displayName : '',
+    platformRole: typeof raw.platformRole === 'string' ? raw.platformRole : '',
+    opsStatus: typeof raw.opsStatus === 'string' ? raw.opsStatus : '',
+    planLabel: typeof raw.planLabel === 'string' ? raw.planLabel : '',
+    tags: normaliseAccountOpsMetadataTags(raw.tags, raw.tagsJson),
+    internalNotes,
+    updatedAt: asTs(raw.updatedAt, 0),
+    updatedByAccountId: typeof raw.updatedByAccountId === 'string' ? raw.updatedByAccountId : '',
+  };
+}
+
+export function normaliseAccountOpsMetadataDirectory(rawValue) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const accounts = Array.isArray(raw.accounts) ? raw.accounts.map(normaliseAccountOpsMetadataEntry) : [];
+  return {
+    generatedAt: asTs(raw.generatedAt, 0),
+    accounts,
+  };
+}
+
+function normaliseErrorEventEntry(rawEntry) {
+  const raw = isPlainObject(rawEntry) ? rawEntry : {};
+  return {
+    id: typeof raw.id === 'string' ? raw.id : '',
+    errorKind: typeof raw.errorKind === 'string' ? raw.errorKind : '',
+    messageFirstLine: typeof raw.messageFirstLine === 'string' ? raw.messageFirstLine : '',
+    firstFrame: typeof raw.firstFrame === 'string' ? raw.firstFrame : '',
+    routeName: typeof raw.routeName === 'string' ? raw.routeName : '',
+    userAgent: typeof raw.userAgent === 'string' ? raw.userAgent : '',
+    accountIdMasked: typeof raw.accountIdMasked === 'string' ? raw.accountIdMasked : '',
+    occurrenceCount: toNonNegativeInt(raw.occurrenceCount),
+    firstSeen: asTs(raw.firstSeen, 0),
+    lastSeen: asTs(raw.lastSeen, 0),
+    status: typeof raw.status === 'string' ? raw.status : '',
+  };
+}
+
+export function normaliseErrorEventSummary(rawValue) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const totalsRaw = isPlainObject(raw.totals) ? raw.totals : {};
+  const entries = Array.isArray(raw.entries) ? raw.entries.map(normaliseErrorEventEntry) : [];
+  return {
+    generatedAt: asTs(raw.generatedAt, 0),
+    totals: {
+      open: toNonNegativeInt(totalsRaw.open),
+      investigating: toNonNegativeInt(totalsRaw.investigating),
+      resolved: toNonNegativeInt(totalsRaw.resolved),
+      ignored: toNonNegativeInt(totalsRaw.ignored),
+      all: toNonNegativeInt(totalsRaw.all),
+    },
+    entries,
+  };
+}
+
 export function normaliseMonsterVisualConfigAdminModel(rawValue, platformRole = 'parent') {
   const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
   const status = raw.status && typeof raw.status === 'object' && !Array.isArray(raw.status) ? raw.status : {};
@@ -91,6 +242,10 @@ export function buildAdminHubReadModel({
   auditEntries = [],
   auditAvailable = false,
   selectedLearnerId = null,
+  dashboardKpis = null,
+  opsActivityStream = null,
+  accountOpsMetadata = null,
+  errorLogSummary = null,
   now = Date.now,
 } = {}) {
   const resolvedPlatformRole = normalisePlatformRole(platformRole || account?.platformRole);
@@ -184,6 +339,10 @@ export function buildAdminHubReadModel({
     },
     demoOperations: normaliseDemoOperations(demoOperations),
     monsterVisualConfig: normaliseMonsterVisualConfigAdminModel(monsterVisualConfig, resolvedPlatformRole),
+    dashboardKpis: normaliseDashboardKpis(dashboardKpis),
+    opsActivityStream: normaliseOpsActivityStream(opsActivityStream),
+    accountOpsMetadata: normaliseAccountOpsMetadataDirectory(accountOpsMetadata),
+    errorLogSummary: normaliseErrorEventSummary(errorLogSummary),
     learnerSupport: {
       diagnosticsCount: diagnosticsEntries.length,
       selectedLearnerId: selectedDiagnostics?.learnerId || '',
