@@ -110,22 +110,91 @@ function extractEvidencePath(evidenceCell) {
 }
 
 /**
+ * Cross-check the committed tier config file against evidence.thresholds and
+ * evidence.tier.tier. Closes the "local-tamper-don't-push" fabrication route:
+ * an operator who locally edits the config to weaken thresholds, runs, and
+ * commits only the evidence would otherwise pass the existing path check.
+ *
+ * Returns an array of failure messages; empty on a clean cross-check.
+ */
+function compareConfigAgainstEvidence(absoluteConfigPath, payload, rowDecision) {
+  const messages = [];
+  let config;
+  try {
+    config = JSON.parse(readFileSync(absoluteConfigPath, 'utf8'));
+  } catch (error) {
+    messages.push(`tier config file is not valid JSON: ${error.message}`);
+    return messages;
+  }
+
+  if (config.tier && config.tier !== rowDecision) {
+    messages.push(
+      `tier config "${absoluteConfigPath}" declares tier "${config.tier}"; `
+      + `row claims "${rowDecision}".`,
+    );
+  }
+
+  const configThresholds = config.thresholds || {};
+  const evidenceThresholds = payload.thresholds || {};
+  for (const [key, configValue] of Object.entries(configThresholds)) {
+    const evidenceEntry = evidenceThresholds[key];
+    if (!evidenceEntry) {
+      messages.push(
+        `tier config declares threshold "${key}" but evidence omits it. `
+        + 'Evidence must have been produced with the config currently committed.',
+      );
+      continue;
+    }
+    const configured = evidenceEntry.configured;
+    // Boolean config values (requireZeroSignals, requireBootstrapCapacity)
+    // are recorded in evidence.thresholds.<name>.configured as `true`.
+    if (typeof configValue === 'boolean') {
+      if (configValue !== Boolean(configured)) {
+        messages.push(
+          `tier config "${key}" = ${configValue} but evidence.thresholds.${key}.configured = ${configured}. `
+          + 'The config committed to git must match the thresholds the evidence was gated against.',
+        );
+      }
+      continue;
+    }
+    if (Number(configValue) !== Number(configured)) {
+      messages.push(
+        `tier config "${key}" = ${configValue} but evidence.thresholds.${key}.configured = ${configured}. `
+        + 'This is the local-tamper-without-pushing fabrication route — '
+        + 'evidence must be produced against the committed config values.',
+      );
+    }
+  }
+  return messages;
+}
+
+/**
  * Cross-check the numeric cells in a capacity.md row against the evidence
  * payload. An operator who writes a tier row with nice-looking metrics but
  * points at an unrelated evidence file will trip this check.
  *
- * Cells compared: learners, bootstrapBurst, rounds (from reportMeta); 5xx
- * count (from summary.signals.server5xx).
+ * Cells compared:
+ * - learners, bootstrapBurst, rounds (from reportMeta)
+ * - 5xx count (from summary.signals.server5xx)
+ * - P95 bootstrap, P95 command (from summary.endpoints)
+ * - Max response bytes (from summary.endpoints — max across all endpoints)
  *
- * Cells NOT compared here (left to the evidence-envelope shape check): P95
- * latencies and byte counts — these vary between runs and would produce
- * flaky false positives if the cell value must match to the millisecond.
+ * Latency and bytes use exact equality because capacity.md cells are copied
+ * from the evidence at row-authoring time; a mismatch means either the row
+ * was written against a different evidence file or the numbers were
+ * fabricated. Per-millisecond flakiness across different runs is not a
+ * concern — each tier row cites one specific run.
  */
 function checkNumericDrift(row, payload) {
   const messages = [];
   const meta = payload.reportMeta || {};
   const summary = payload.summary || {};
   const signals = summary.signals || {};
+  const endpoints = summary.endpoints || {};
+  const bootstrapKey = Object.keys(endpoints).find((key) => key.endsWith('/api/bootstrap'));
+  const commandKey = Object.keys(endpoints).find((key) => /subjects\/.*\/command/.test(key));
+  const bootstrap = bootstrapKey ? endpoints[bootstrapKey] : null;
+  const command = commandKey ? endpoints[commandKey] : null;
 
   const compare = (rowValue, evidenceValue, label) => {
     if (!rowValue || rowValue === '—') return;
@@ -147,6 +216,13 @@ function checkNumericDrift(row, payload) {
   compare(row.burst, meta.bootstrapBurst, 'bootstrapBurst');
   compare(row.rounds, meta.rounds, 'rounds');
   compare(row.count5xx, signals.server5xx || 0, 'server5xx');
+  compare(row.p95Bootstrap, bootstrap?.p95WallMs, 'p95Bootstrap');
+  compare(row.p95Command, command?.p95WallMs, 'p95Command');
+  if (row.maxBytes && row.maxBytes !== '—') {
+    const allBytes = Object.values(endpoints).map((e) => Number(e.maxResponseBytes) || 0);
+    const evidenceMaxBytes = allBytes.length ? Math.max(...allBytes) : null;
+    compare(row.maxBytes, evidenceMaxBytes, 'maxBytes');
+  }
 
   return messages;
 }
@@ -264,7 +340,7 @@ export function verifyEvidenceRow(row) {
   // Cross-check decision against tier metadata when present. Every
   // certification-tier run (learners >= 20) MUST be invoked with
   // `--config reports/capacity/configs/<tier>.json`, which writes
-  // `payload.tier.tier` into the evidence file.
+  // `payload.tier.tier` and `payload.tier.configPath` into the evidence file.
   if (TIERS_ABOVE_SMALL_PILOT.has(row.decision)) {
     const evidenceTier = payload.tier?.tier;
     if (!evidenceTier) {
@@ -277,29 +353,39 @@ export function verifyEvidenceRow(row) {
         `tier mismatch: row claims "${row.decision}" but evidence tier.tier is "${evidenceTier}".`,
       );
     }
-    // Guard against a loose `--config` path: evidence must cite a tier config
-    // path under reports/capacity/configs/ so the thresholds that backed the
-    // claim are PR-reviewed, not ad-hoc. A missing tier.configPath field
-    // indicates a hand-edited evidence file or an older classroom-load-test
-    // that did not record provenance.
-    const configPath = payload.tier?.configPath;
-    if (!configPath) {
+    if (!payload.tier?.configPath) {
       messages.push(
         `tier "${row.decision}" requires evidence to record tier.configPath. `
         + 'Re-run with --config reports/capacity/configs/<tier>.json.',
       );
+    }
+  }
+
+  // Config path + content cross-checks run whenever evidence records a
+  // tier.configPath (applies to both small-pilot rows that opted into
+  // --config and classroom-tier rows that are required to use --config).
+  // Guards against a loose --config path and the "local-tamper-don't-push"
+  // fabrication route where an operator relaxes a committed config locally,
+  // runs, and commits only the evidence.
+  const configPath = payload.tier?.configPath;
+  if (configPath) {
+    const normalisedConfigPath = relative(process.cwd(), resolve(process.cwd(), configPath)).replaceAll('\\', '/');
+    if (!normalisedConfigPath.startsWith(`${TIER_CONFIG_DIR}/`)) {
+      messages.push(
+        `tier config path "${configPath}" is outside ${TIER_CONFIG_DIR}/. `
+        + 'Certification-tier runs must cite a PR-reviewed config.',
+      );
+    } else if (!existsSync(resolve(process.cwd(), configPath))) {
+      messages.push(
+        `tier config file referenced by evidence does not exist at ${configPath}.`,
+      );
     } else {
-      const normalisedConfigPath = relative(process.cwd(), resolve(process.cwd(), configPath)).replaceAll('\\', '/');
-      if (!normalisedConfigPath.startsWith(`${TIER_CONFIG_DIR}/`)) {
-        messages.push(
-          `tier config path "${configPath}" is outside ${TIER_CONFIG_DIR}/. `
-          + 'Certification-tier runs must cite a PR-reviewed config.',
-        );
-      } else if (!existsSync(resolve(process.cwd(), configPath))) {
-        messages.push(
-          `tier config file referenced by evidence does not exist at ${configPath}.`,
-        );
-      }
+      const configCrossCheck = compareConfigAgainstEvidence(
+        resolve(process.cwd(), configPath),
+        payload,
+        row.decision,
+      );
+      if (configCrossCheck.length) messages.push(...configCrossCheck);
     }
   }
 

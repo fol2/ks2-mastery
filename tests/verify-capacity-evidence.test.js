@@ -73,8 +73,10 @@ test('non-fail decision without backing JSON fails verification', () => {
 // Produces a canonical evidence-envelope body; individual tests override fields.
 // reportMeta defaults include the 10-learner/10-burst/1-round shape the
 // small-pilot test rows claim, so numeric-drift cross-check passes by default.
+// summary.endpoints include canonical p95 and max-byte values matching the
+// row fixtures below (320 / 180 / 81000).
 function evidenceEnvelope(overrides = {}) {
-  const { reportMeta: reportMetaOverride, ...rest } = overrides;
+  const { reportMeta: reportMetaOverride, summary: summaryOverride, ...rest } = overrides;
   return {
     ok: true,
     reportMeta: {
@@ -85,7 +87,16 @@ function evidenceEnvelope(overrides = {}) {
       rounds: 1,
       ...(reportMetaOverride || {}),
     },
-    summary: { ok: true, totalRequests: 1, endpoints: {}, signals: {}, failures: [] },
+    summary: summaryOverride || {
+      ok: true,
+      totalRequests: 1,
+      endpoints: {
+        'GET /api/bootstrap': { count: 10, p50WallMs: 100, p95WallMs: 320, maxResponseBytes: 81000 },
+        'POST /api/subjects/grammar/command': { count: 10, p50WallMs: 90, p95WallMs: 180, maxResponseBytes: 5000 },
+      },
+      signals: {},
+      failures: [],
+    },
     failures: [],
     thresholds: {},
     safety: { mode: 'production', origin: 'https://example.test', authMode: 'cookie' },
@@ -172,6 +183,11 @@ test('small-pilot tier row with pinned config + matching learners passes (U1 cur
       tier: 'small-pilot-provisional',
       minEvidenceSchemaVersion: 1,
       configPath: 'reports/capacity/configs/small-pilot.json',
+    },
+    // Evidence thresholds must match the committed config thresholds exactly.
+    thresholds: {
+      max5xx: { configured: 0, observed: 0, passed: true },
+      maxNetworkFailures: { configured: 0, observed: 0, passed: true },
     },
   })));
   writeFileSync(docPath, makeDoc([
@@ -554,6 +570,122 @@ test('runVerify --json emits machine-readable JSON on failure', () => {
   } finally {
     console.log = previousLog;
     console.error = previousError;
+  }
+});
+
+test('committed tier config threshold tampering is caught (local-tamper-don\'t-push adversarial route)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+
+  // Committed config has strict thresholds.
+  writeFileSync(configPath, JSON.stringify({
+    tier: 'small-pilot-provisional',
+    thresholds: { max5xx: 0, maxNetworkFailures: 0, maxBootstrapP95Ms: 1000 },
+  }));
+
+  // Evidence records LOOSE thresholds (simulates operator locally relaxing
+  // the config, running, then committing only the evidence file without the
+  // tampered config).
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    tier: {
+      tier: 'small-pilot-provisional',
+      configPath: 'reports/capacity/configs/small-pilot.json',
+    },
+    thresholds: {
+      max5xx: { configured: 999, observed: 0, passed: true },  // LOOSE
+      maxNetworkFailures: { configured: 999, observed: 0, passed: true },
+      maxBootstrapP95Ms: { configured: 99999, observed: 320, passed: true },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'small-pilot-provisional', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('local-tamper-without-pushing')),
+      `expected local-tamper message; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('committed config tier mismatch with row decision is caught', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, '100-plus.json');
+
+  // Committed config is for the 100-plus tier.
+  writeFileSync(configPath, JSON.stringify({
+    tier: '100-plus-certified',
+    thresholds: {},
+  }));
+
+  // Evidence points to the 100-plus config but claims small-pilot tier.
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    tier: {
+      tier: 'small-pilot-provisional',
+      configPath: 'reports/capacity/configs/100-plus.json',
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'small-pilot-provisional', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('declares tier') && line.includes('100-plus-certified')),
+      `expected tier mismatch message; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('P95 and maxBytes cells in row must match evidence.summary.endpoints', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+
+  // Evidence records realistic values.
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope()));
+  // Row lies about P95 bootstrap (claims 250, evidence says 320).
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '250', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(result.report.some((line) => line.includes('p95Bootstrap mismatch')));
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
   }
 });
 
