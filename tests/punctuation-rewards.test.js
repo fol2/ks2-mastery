@@ -279,3 +279,129 @@ test('generated-template expansion does not change release-scoped mastery keys',
   assert.ok(first.length >= 1);
   assert.deepEqual(second, []);
 });
+
+// --------------- U7: projection-layer dedupe across roster flip -----------
+
+import {
+  combineCommandEvents,
+  terminalRewardToken,
+} from '../worker/src/projections/events.js';
+
+test('terminalRewardToken uses (learnerId, monsterId, kind, releaseId)', () => {
+  const token = terminalRewardToken({
+    type: 'reward.monster',
+    kind: 'caught',
+    learnerId: 'learner-a',
+    monsterId: 'quoral',
+    releaseId: 'punctuation-r4-full-14-skill-structure',
+  });
+  assert.equal(token, 'reward.monster.terminal:learner-a:quoral:caught:punctuation-r4-full-14-skill-structure');
+});
+
+test('terminalRewardToken returns null for non-terminal transitions', () => {
+  assert.equal(terminalRewardToken({ type: 'reward.monster', kind: 'levelup', learnerId: 'a', monsterId: 'quoral' }), null);
+  assert.equal(terminalRewardToken({ type: 'reward.monster', kind: 'evolve', learnerId: 'a', monsterId: 'quoral' }), null);
+  assert.equal(terminalRewardToken({ type: 'punctuation.unit-secured', learnerId: 'a' }), null);
+  assert.equal(terminalRewardToken(null), null);
+});
+
+test('cross-flip caught events dedupe to one terminal transition per (learner, monster, release)', () => {
+  // Simulate pre-flip + post-flip caught events for the same learner and
+  // monster within the same release. The id-based dedupe keeps both (the
+  // cluster segment differs), but the terminal token collapses them.
+  const preFlip = {
+    id: 'reward.monster:learner-a:punctuation:r4:speech:speech-core:quoral:caught',
+    type: 'reward.monster',
+    kind: 'caught',
+    learnerId: 'learner-a',
+    monsterId: 'quoral',
+    releaseId: 'punctuation-r4-full-14-skill-structure',
+    clusterId: 'speech',
+  };
+  const postFlip = {
+    id: 'reward.monster:learner-a:punctuation:r4:published_release:speech-core:quoral:caught',
+    type: 'reward.monster',
+    kind: 'caught',
+    learnerId: 'learner-a',
+    monsterId: 'quoral',
+    releaseId: 'punctuation-r4-full-14-skill-structure',
+    clusterId: 'published_release',
+  };
+  // Case A: pre-flip is already persisted; post-flip arrives fresh.
+  const combined = combineCommandEvents({
+    domainEvents: [postFlip],
+    existingEvents: [preFlip],
+  });
+  assert.equal(combined.events.length, 0, 'post-flip duplicate collapses against existing pre-flip row');
+
+  // Case B: both arrive together as new events.
+  const fresh = combineCommandEvents({
+    domainEvents: [preFlip, postFlip],
+  });
+  assert.equal(fresh.events.length, 1, 'batch of pre + post emits only one terminal');
+  assert.equal(fresh.events[0].clusterId, 'speech', 'first-in-wins (pre-flip id retained)');
+});
+
+test('cross-release caught events remain distinct — future release re-emits', () => {
+  const r4 = {
+    id: 'reward.monster:learner-a:punctuation:r4:published_release:speech-core:quoral:caught',
+    type: 'reward.monster',
+    kind: 'caught',
+    learnerId: 'learner-a',
+    monsterId: 'quoral',
+    releaseId: 'punctuation-r4-full-14-skill-structure',
+  };
+  const r5 = {
+    ...r4,
+    id: 'reward.monster:learner-a:punctuation:r5:published_release:speech-core:quoral:caught',
+    releaseId: 'punctuation-r5-future',
+  };
+  const combined = combineCommandEvents({
+    domainEvents: [r5],
+    existingEvents: [r4],
+  });
+  assert.equal(combined.events.length, 1, 'new release must still emit a terminal transition');
+  assert.equal(combined.events[0].releaseId, 'punctuation-r5-future');
+});
+
+test('mega across flip also dedupes by terminal token', () => {
+  const preFlipMega = {
+    id: 'reward.monster:learner-a:punctuation:r4:speech:speech-core:quoral:mega',
+    type: 'reward.monster',
+    kind: 'mega',
+    learnerId: 'learner-a',
+    monsterId: 'quoral',
+    releaseId: 'punctuation-r4-full-14-skill-structure',
+  };
+  const postFlipMega = {
+    ...preFlipMega,
+    id: 'reward.monster:learner-a:punctuation:r4:published_release:bullet-points-core:quoral:mega',
+  };
+  const combined = combineCommandEvents({
+    domainEvents: [postFlipMega],
+    existingEvents: [preFlipMega],
+  });
+  assert.equal(combined.events.length, 0, 'mega dedupes by (learner, monster, kind, release)');
+});
+
+test('levelup and evolve are unaffected by terminal dedupe', () => {
+  const existing = {
+    id: 'reward.monster:learner-a:punctuation:r4:speech:speech-core:quoral:levelup',
+    type: 'reward.monster',
+    kind: 'levelup',
+    learnerId: 'learner-a',
+    monsterId: 'quoral',
+    releaseId: 'punctuation-r4-full-14-skill-structure',
+  };
+  const next = {
+    ...existing,
+    id: 'reward.monster:learner-a:punctuation:r4:published_release:speech-core:quoral:levelup',
+  };
+  const combined = combineCommandEvents({
+    domainEvents: [next],
+    existingEvents: [existing],
+  });
+  // levelup / evolve are id-deduped only (different ids -> both survive).
+  // This is deliberate: only caught / mega represent terminal milestones.
+  assert.equal(combined.events.length, 1);
+});
