@@ -13,6 +13,13 @@ import {
   normaliseGuardianRecord,
   normaliseMode,
 } from '../src/subjects/spelling/service-contract.js';
+import {
+  SPELLING_EVENT_TYPES,
+  createSpellingGuardianMissionCompletedEvent,
+  createSpellingGuardianRecoveredEvent,
+  createSpellingGuardianRenewedEvent,
+  createSpellingGuardianWobbledEvent,
+} from '../src/subjects/spelling/events.js';
 import { normaliseServerSpellingData } from '../worker/src/subjects/spelling/engine.js';
 
 const TODAY = 18_000;
@@ -188,4 +195,173 @@ test('Worker normaliseServerSpellingData defaults nowTs to Date.now() when not s
   // (guardian is {} so there are no records to check). Just confirm it returns the expected keys.
   assert.deepEqual(Object.keys(result).sort(), ['guardian', 'prefs', 'progress']);
   assert.deepEqual(result.guardian, {});
+});
+
+// ----- U2: guardian domain event factories ------------------------------------
+
+const GUARDIAN_SESSION = Object.freeze({
+  id: 'session-guardian-1',
+  mode: 'guardian',
+  type: 'learning',
+  uniqueWords: ['possess', 'accommodate', 'believe'],
+});
+
+test('SPELLING_EVENT_TYPES gains exactly four guardian event types with kebab-case values', () => {
+  assert.equal(SPELLING_EVENT_TYPES.GUARDIAN_RENEWED, 'spelling.guardian.renewed');
+  assert.equal(SPELLING_EVENT_TYPES.GUARDIAN_WOBBLED, 'spelling.guardian.wobbled');
+  assert.equal(SPELLING_EVENT_TYPES.GUARDIAN_RECOVERED, 'spelling.guardian.recovered');
+  assert.equal(SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED, 'spelling.guardian.mission-completed');
+  const values = Object.values(SPELLING_EVENT_TYPES);
+  assert.equal(values.length, 8, 'exactly 8 event types after U2');
+  assert.equal(new Set(values).size, values.length, 'all event types unique');
+});
+
+test('createSpellingGuardianRenewedEvent returns a well-formed event', () => {
+  const event = createSpellingGuardianRenewedEvent({
+    learnerId: 'learner-a',
+    session: GUARDIAN_SESSION,
+    slug: 'possess',
+    reviewLevel: 2,
+    nextDueDay: 18_014,
+    createdAt: 1_780_000_000_000,
+  });
+  assert.equal(event.type, SPELLING_EVENT_TYPES.GUARDIAN_RENEWED);
+  assert.equal(event.subjectId, 'spelling');
+  assert.equal(event.learnerId, 'learner-a');
+  assert.equal(event.sessionId, 'session-guardian-1');
+  assert.equal(event.mode, 'guardian');
+  assert.equal(event.createdAt, 1_780_000_000_000);
+  assert.equal(event.wordSlug, 'possess');
+  assert.equal(event.word, 'possess');
+  assert.equal(event.spellingPool, 'core');
+  assert.equal(event.reviewLevel, 2);
+  assert.equal(event.nextDueDay, 18_014);
+});
+
+test('createSpellingGuardianRenewedEvent returns null on missing/unknown slug', () => {
+  assert.equal(createSpellingGuardianRenewedEvent({ learnerId: 'a', session: GUARDIAN_SESSION }), null);
+  assert.equal(createSpellingGuardianRenewedEvent({ learnerId: 'a', session: GUARDIAN_SESSION, slug: '__unknown__' }), null);
+});
+
+test('createSpellingGuardianRenewedEvent falls back to Date.now() when createdAt is invalid', () => {
+  const before = Date.now();
+  const event = createSpellingGuardianRenewedEvent({
+    learnerId: 'a',
+    session: GUARDIAN_SESSION,
+    slug: 'possess',
+    reviewLevel: 0,
+    createdAt: -1,
+  });
+  const after = Date.now();
+  assert.ok(event.createdAt >= before && event.createdAt <= after);
+});
+
+test('createSpellingGuardianRenewedEvent clamps invalid reviewLevel / nextDueDay to safe defaults', () => {
+  const event = createSpellingGuardianRenewedEvent({
+    learnerId: 'a',
+    session: GUARDIAN_SESSION,
+    slug: 'possess',
+    reviewLevel: 'garbage',
+    nextDueDay: 'also-garbage',
+    createdAt: 1,
+  });
+  assert.equal(event.reviewLevel, 0);
+  assert.equal(event.nextDueDay, null);
+});
+
+test('createSpellingGuardianRenewedEvent produces a stable dedupe id for identical inputs', () => {
+  const input = {
+    learnerId: 'learner-a',
+    session: GUARDIAN_SESSION,
+    slug: 'possess',
+    reviewLevel: 1,
+    nextDueDay: 18_003,
+    createdAt: 1_780_000_000_000,
+  };
+  assert.equal(createSpellingGuardianRenewedEvent(input).id, createSpellingGuardianRenewedEvent(input).id);
+});
+
+test('createSpellingGuardianWobbledEvent carries lapse count and word metadata', () => {
+  const event = createSpellingGuardianWobbledEvent({
+    learnerId: 'learner-a',
+    session: GUARDIAN_SESSION,
+    slug: 'accommodate',
+    lapses: 2,
+    createdAt: 1_780_000_001_000,
+  });
+  assert.equal(event.type, SPELLING_EVENT_TYPES.GUARDIAN_WOBBLED);
+  assert.equal(event.wordSlug, 'accommodate');
+  assert.equal(event.lapses, 2);
+});
+
+test('createSpellingGuardianWobbledEvent returns null on missing slug', () => {
+  assert.equal(createSpellingGuardianWobbledEvent({ learnerId: 'a', session: GUARDIAN_SESSION }), null);
+  assert.equal(createSpellingGuardianWobbledEvent({ learnerId: 'a', session: GUARDIAN_SESSION, slug: 'not-a-word' }), null);
+});
+
+test('createSpellingGuardianRecoveredEvent carries renewals + unchanged reviewLevel', () => {
+  const event = createSpellingGuardianRecoveredEvent({
+    learnerId: 'learner-a',
+    session: GUARDIAN_SESSION,
+    slug: 'believe',
+    renewals: 1,
+    reviewLevel: 3,
+    createdAt: 1_780_000_002_000,
+  });
+  assert.equal(event.type, SPELLING_EVENT_TYPES.GUARDIAN_RECOVERED);
+  assert.equal(event.wordSlug, 'believe');
+  assert.equal(event.renewals, 1);
+  assert.equal(event.reviewLevel, 3);
+});
+
+test('createSpellingGuardianRecoveredEvent returns null on missing slug', () => {
+  assert.equal(createSpellingGuardianRecoveredEvent({ learnerId: 'a', session: GUARDIAN_SESSION }), null);
+  assert.equal(createSpellingGuardianRecoveredEvent({ learnerId: 'a', session: GUARDIAN_SESSION, slug: 'unknown' }), null);
+});
+
+test('createSpellingGuardianMissionCompletedEvent carries session and mission counts', () => {
+  const event = createSpellingGuardianMissionCompletedEvent({
+    learnerId: 'learner-a',
+    session: GUARDIAN_SESSION,
+    renewalCount: 4,
+    wobbledCount: 1,
+    recoveredCount: 1,
+    createdAt: 1_780_000_003_000,
+  });
+  assert.equal(event.type, SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED);
+  assert.equal(event.sessionId, 'session-guardian-1');
+  assert.equal(event.totalWords, 3);
+  assert.equal(event.renewalCount, 4);
+  assert.equal(event.wobbledCount, 1);
+  assert.equal(event.recoveredCount, 1);
+});
+
+test('createSpellingGuardianMissionCompletedEvent returns null when session.id is missing', () => {
+  assert.equal(createSpellingGuardianMissionCompletedEvent({ learnerId: 'a' }), null);
+  assert.equal(createSpellingGuardianMissionCompletedEvent({ learnerId: 'a', session: { id: '' } }), null);
+});
+
+test('createSpellingGuardianMissionCompletedEvent clamps negative counts to 0', () => {
+  const event = createSpellingGuardianMissionCompletedEvent({
+    learnerId: 'a',
+    session: GUARDIAN_SESSION,
+    renewalCount: -1,
+    wobbledCount: 'nope',
+    recoveredCount: 1.5,
+  });
+  assert.equal(event.renewalCount, 0);
+  assert.equal(event.wobbledCount, 0);
+  assert.equal(event.recoveredCount, 0);
+});
+
+test('all guardian event factories produce deterministic id collisions when inputs match', () => {
+  const learnerId = 'learner-a';
+  const createdAt = 1_780_000_000_000;
+  const renewed1 = createSpellingGuardianRenewedEvent({ learnerId, session: GUARDIAN_SESSION, slug: 'possess', reviewLevel: 1, createdAt });
+  const renewed2 = createSpellingGuardianRenewedEvent({ learnerId, session: GUARDIAN_SESSION, slug: 'possess', reviewLevel: 1, createdAt });
+  const wobbled1 = createSpellingGuardianWobbledEvent({ learnerId, session: GUARDIAN_SESSION, slug: 'possess', lapses: 0, createdAt });
+  const wobbled2 = createSpellingGuardianWobbledEvent({ learnerId, session: GUARDIAN_SESSION, slug: 'possess', lapses: 0, createdAt });
+  assert.equal(renewed1.id, renewed2.id);
+  assert.equal(wobbled1.id, wobbled2.id);
+  assert.notEqual(renewed1.id, wobbled1.id, 'different event types produce different ids even for same slug');
 });

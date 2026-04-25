@@ -5,6 +5,10 @@ export const SPELLING_EVENT_TYPES = Object.freeze({
   WORD_SECURED: 'spelling.word-secured',
   MASTERY_MILESTONE: 'spelling.mastery-milestone',
   SESSION_COMPLETED: 'spelling.session-completed',
+  GUARDIAN_RENEWED: 'spelling.guardian.renewed',
+  GUARDIAN_WOBBLED: 'spelling.guardian.wobbled',
+  GUARDIAN_RECOVERED: 'spelling.guardian.recovered',
+  GUARDIAN_MISSION_COMPLETED: 'spelling.guardian.mission-completed',
 });
 
 export const SPELLING_MASTERY_MILESTONES = Object.freeze([1, 5, 10, 25, 50, 100, 150, 200]);
@@ -101,5 +105,118 @@ export function createSpellingSessionCompletedEvent({ learnerId, session, summar
     sessionType: session.type,
     totalWords: Array.isArray(session.uniqueWords) ? session.uniqueWords.length : 0,
     mistakeCount: Array.isArray(summary?.mistakes) ? summary.mistakes.length : 0,
+  };
+}
+
+/**
+ * Emitted when a word in a Guardian Mission is answered correctly and its
+ * review interval advances to the next schedule step. Carries the resulting
+ * reviewLevel and nextDueDay so reward subscribers (landing later) can show
+ * "next check in N days" toasts without re-computing the schedule.
+ */
+export function createSpellingGuardianRenewedEvent({
+  learnerId,
+  session,
+  slug,
+  reviewLevel = 0,
+  nextDueDay = null,
+  createdAt,
+  wordMeta,
+} = {}) {
+  const word = wordFields(slug, wordMeta);
+  if (!word) return null;
+  return {
+    ...baseSpellingEvent(
+      SPELLING_EVENT_TYPES.GUARDIAN_RENEWED,
+      { learnerId, session, createdAt },
+      [learnerId || 'default', session?.id || 'session', slug, Number.isInteger(reviewLevel) ? reviewLevel : 'na'],
+    ),
+    ...word,
+    reviewLevel: Number.isInteger(reviewLevel) && reviewLevel >= 0 ? reviewLevel : 0,
+    nextDueDay: Number.isFinite(Number(nextDueDay)) && Number(nextDueDay) >= 0 ? Math.floor(Number(nextDueDay)) : null,
+  };
+}
+
+/**
+ * Emitted when a Guardian Mission word is answered wrongly and enters the
+ * "wobbling" maintenance state. Mega stays intact; wobbling is a flag on the
+ * guardian sibling record, not a demotion of progress.stage. Carries the
+ * lapses count so reward subscribers can react to repeated wobbles.
+ */
+export function createSpellingGuardianWobbledEvent({
+  learnerId,
+  session,
+  slug,
+  lapses = 0,
+  createdAt,
+  wordMeta,
+} = {}) {
+  const word = wordFields(slug, wordMeta);
+  if (!word) return null;
+  return {
+    ...baseSpellingEvent(
+      SPELLING_EVENT_TYPES.GUARDIAN_WOBBLED,
+      { learnerId, session, createdAt },
+      [learnerId || 'default', session?.id || 'session', slug, Number.isInteger(lapses) ? lapses : 'na'],
+    ),
+    ...word,
+    lapses: Number.isInteger(lapses) && lapses >= 0 ? lapses : 0,
+  };
+}
+
+/**
+ * Emitted when a previously-wobbling word is answered correctly and clears
+ * its wobbling flag. Renewal count is the lifetime total of wobbling->clear
+ * transitions for this word. reviewLevel is unchanged on recovery (preserves
+ * the spaced schedule rather than restarting from 0).
+ */
+export function createSpellingGuardianRecoveredEvent({
+  learnerId,
+  session,
+  slug,
+  renewals = 0,
+  reviewLevel = 0,
+  createdAt,
+  wordMeta,
+} = {}) {
+  const word = wordFields(slug, wordMeta);
+  if (!word) return null;
+  return {
+    ...baseSpellingEvent(
+      SPELLING_EVENT_TYPES.GUARDIAN_RECOVERED,
+      { learnerId, session, createdAt },
+      [learnerId || 'default', session?.id || 'session', slug, Number.isInteger(renewals) ? renewals : 'na'],
+    ),
+    ...word,
+    renewals: Number.isInteger(renewals) && renewals >= 0 ? renewals : 0,
+    reviewLevel: Number.isInteger(reviewLevel) && reviewLevel >= 0 ? reviewLevel : 0,
+  };
+}
+
+/**
+ * Emitted when a Guardian Mission round finalises to summary. Mirrors
+ * createSpellingSessionCompletedEvent's shape but carries guardian-specific
+ * counts so reward subscribers (and later dashboards) don't have to walk the
+ * per-word event stream.
+ */
+export function createSpellingGuardianMissionCompletedEvent({
+  learnerId,
+  session,
+  renewalCount = 0,
+  wobbledCount = 0,
+  recoveredCount = 0,
+  createdAt,
+} = {}) {
+  if (!session?.id) return null;
+  return {
+    ...baseSpellingEvent(
+      SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED,
+      { learnerId, session, createdAt },
+      [learnerId || 'default', session.id],
+    ),
+    totalWords: Array.isArray(session.uniqueWords) ? session.uniqueWords.length : 0,
+    renewalCount: Number.isInteger(renewalCount) && renewalCount >= 0 ? renewalCount : 0,
+    wobbledCount: Number.isInteger(wobbledCount) && wobbledCount >= 0 ? wobbledCount : 0,
+    recoveredCount: Number.isInteger(recoveredCount) && recoveredCount >= 0 ? recoveredCount : 0,
   };
 }
