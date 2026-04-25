@@ -206,12 +206,15 @@ test('golden: Weak Spots with seeded weak evidence selects a weak facet first', 
   assert.equal(state.session.mode, 'weak');
   const item = state.session.currentItem;
   assert.ok(item, 'weak session must yield an item');
-  // Positive signal: the session or current item references the weak skill.
+  // Positive signal: the scheduler's weakFocus surfaces the seeded skill
+  // authoritatively. Tightened from a disjunctive check on item.skillIds to
+  // require weakFocus specifically so a regression that serves the right
+  // skill for the wrong reason cannot slip through.
   const weakFocus = state.session.weakFocus;
-  assert.ok(
-    weakFocus?.skillId === 'apostrophe_possession'
-      || (item.skillIds || []).includes('apostrophe_possession'),
-    'weak session should target seeded weak skill',
+  assert.equal(
+    weakFocus?.skillId,
+    'apostrophe_possession',
+    'weak session should target seeded weak skill via weakFocus',
   );
   assertNoForbiddenKeys(state);
 });
@@ -276,6 +279,13 @@ test('golden: choose / insert / fix / combine / paragraph / transfer item modes 
       state = after.state;
     }
   }
-  // Positive signal: Smart Review covers multiple item modes over a session.
+  // Positive signal: Smart Review surfaces a known item-mode string that
+  // the forbidden-key scan has already cleared. The item-mode is a safe
+  // read-model field (not a forbidden one), so its presence proves the
+  // scheduler serialised it correctly through the deterministic path.
   assert.ok(observedModes.size >= 1, 'Smart Review must serve at least one item-mode variant');
+  const allValidModes = ['choose', 'insert', 'fix', 'combine', 'paragraph', 'transfer'];
+  for (const observed of observedModes) {
+    assert.ok(allValidModes.includes(observed), `Smart Review produced an unexpected item mode: ${observed}`);
+  }
 });
