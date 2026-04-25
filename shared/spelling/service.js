@@ -1556,6 +1556,11 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       ttsProvider: currentPrefs.ttsProvider,
       bufferedGeminiVoice: currentPrefs.bufferedGeminiVoice,
     });
+    // U6: explicitly zero the Guardian map on the storage proxy, so hosts
+    // that wire a persistence adapter without `resetLearner` (or a raw
+    // storage-only host) do not leak a non-empty ks2-spell-guardian-*
+    // record across a learner reset. Idempotent on an already-empty map.
+    saveGuardianMap(learnerId, {});
   }
 
   return {

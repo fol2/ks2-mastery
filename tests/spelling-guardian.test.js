@@ -1466,3 +1466,170 @@ test('U6 action routing: unknown filter IDs still fall back to "all"', async () 
   harness.dispatch('spelling-analytics-status-filter', { value: 'not-a-real-filter' });
   assert.equal(harness.store.getState().transientUi.spellingAnalyticsStatusFilter, 'all');
 });
+
+// -----------------------------------------------------------------------------
+// U6 (Post-Mega Spelling Guardian Hardening): resetLearner must zero the
+// `ks2-spell-guardian-<learnerId>` storage key even when the host wires a
+// persistence adapter that lacks a `resetLearner` method. The canonical
+// client persistence already wipes the subject-state record; the service
+// must not rely on that being present. AE-R7.
+// -----------------------------------------------------------------------------
+
+const GUARDIAN_KEY_PREFIX = 'ks2-spell-guardian-';
+function guardianKeyFor(learnerId) {
+  return `${GUARDIAN_KEY_PREFIX}${learnerId}`;
+}
+
+function seedGuardianKeyDirect(storage, learnerId, map) {
+  storage.setItem(guardianKeyFor(learnerId), JSON.stringify(map));
+}
+
+function readGuardianKeyDirect(storage, learnerId) {
+  const raw = storage.getItem(guardianKeyFor(learnerId));
+  if (raw === null || raw === undefined) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+test('U6 guardian reset: resetLearner zeros the guardian key when persistence has no resetLearner adapter (AE-R7)', () => {
+  // Host uses the raw storage proxy with no persistence.resetLearner hook —
+  // e.g. a minimal host that only supplies `storage` to createSpellingService.
+  // Before U6 this left ks2-spell-guardian-<learnerId> untouched. Now the
+  // service must zero it explicitly.
+  const storage = installMemoryStorage();
+  const service = createSpellingService({ storage });
+  const learnerId = 'learner-u6-no-adapter';
+
+  // Seed a non-empty guardian map directly in storage (bypassing the service).
+  seedGuardianKeyDirect(storage, learnerId, {
+    possess: {
+      reviewLevel: 2,
+      lastReviewedDay: 17_995,
+      nextDueDay: 18_002,
+      correctStreak: 1,
+      lapses: 0,
+      renewals: 0,
+      wobbling: false,
+    },
+  });
+  // Sanity: the seed is visible through the raw storage path.
+  assert.deepEqual(readGuardianKeyDirect(storage, learnerId), {
+    possess: {
+      reviewLevel: 2,
+      lastReviewedDay: 17_995,
+      nextDueDay: 18_002,
+      correctStreak: 1,
+      lapses: 0,
+      renewals: 0,
+      wobbling: false,
+    },
+  });
+
+  service.resetLearner(learnerId);
+
+  // After reset, the storage key must be present AND contain an empty map.
+  const afterReset = readGuardianKeyDirect(storage, learnerId);
+  assert.deepEqual(afterReset, {}, 'guardian storage key zeroed to {} after reset');
+});
+
+test('U6 guardian reset: resetLearner with canonical persistence.resetLearner still leaves guardian key as {}', () => {
+  // Happy path — the canonical client persistence does wipe subject-state
+  // (which covers the guardian slot) and the new U6 explicit save is a
+  // redundant but idempotent no-op. End state is still {}.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  const learnerId = 'learner-u6-canonical';
+  seedAllCoreMega(repositories, learnerId, today);
+  // Seed a wobbling guardian record through the canonical repository path.
+  seedGuardianMap(repositories, learnerId, {
+    possess: {
+      reviewLevel: 2,
+      lastReviewedDay: today - 5,
+      nextDueDay: today - 1,
+      correctStreak: 0,
+      lapses: 1,
+      renewals: 0,
+      wobbling: true,
+    },
+  });
+  // Sanity: guardian map is non-empty before reset.
+  const preReset = service.getPostMasteryState(learnerId);
+  assert.equal(Object.keys(preReset.guardianMap).length, 1);
+
+  service.resetLearner(learnerId);
+
+  // Through the canonical persistence, reading the subject-state's
+  // guardian slot now yields {} — both the adapter's subject-state wipe
+  // and the U6 explicit save arrive at the same zeroed value.
+  const data = repositories.subjectStates.read(learnerId, 'spelling').data || {};
+  assert.deepEqual(data.guardian || {}, {}, 'guardian slot zeroed through canonical adapter + U6 explicit save');
+  // Service-facing snapshot confirms the user-visible end state.
+  const postReset = service.getPostMasteryState(learnerId);
+  assert.deepEqual(postReset.guardianMap, {}, 'service view of guardian map is empty after reset');
+});
+
+test('U6 guardian reset: resetLearner on a learner with no existing guardian key writes {} without crash', () => {
+  // Edge case — cold-start learner with nothing in storage. The new
+  // saveGuardianMap(learnerId, {}) is a no-op from the learner's point of
+  // view, must not throw, and must leave the storage key set to {}.
+  const storage = installMemoryStorage();
+  const service = createSpellingService({ storage });
+  const learnerId = 'learner-u6-cold';
+  assert.equal(
+    storage.getItem(guardianKeyFor(learnerId)),
+    null,
+    'no guardian key before reset',
+  );
+
+  // Must not throw.
+  service.resetLearner(learnerId);
+
+  assert.deepEqual(
+    readGuardianKeyDirect(storage, learnerId),
+    {},
+    'guardian storage key written as {} even on cold-start learner',
+  );
+});
+
+test('U6 guardian reset: post-reset getPostMasteryState returns zeroed aggregates', () => {
+  // Integration — after reset, the live post-mastery snapshot must show
+  // no words mega, no due guardians, no wobbling, and no next due day.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  const learnerId = 'learner-u6-post-reset';
+  seedAllCoreMega(repositories, learnerId, today);
+  seedGuardianMap(repositories, learnerId, {
+    possess: {
+      reviewLevel: 1,
+      lastReviewedDay: today - 2,
+      nextDueDay: today - 1,
+      correctStreak: 0,
+      lapses: 1,
+      renewals: 0,
+      wobbling: true,
+    },
+  });
+
+  service.resetLearner(learnerId);
+
+  const state = service.getPostMasteryState(learnerId);
+  assert.equal(state.allWordsMega, false);
+  assert.equal(state.guardianDueCount, 0);
+  assert.equal(state.wobblingCount, 0);
+  assert.equal(state.nextGuardianDueDay, null);
+});
+
+test('U6 guardian reset: Worker-side resetLearner behaviour unchanged (still zeros via normaliseServerSpellingData)', () => {
+  // Worker persistence.resetLearner already zeros guardian via
+  // normaliseServerSpellingData({}). U6 touches only the shared-service
+  // path; the worker contract must be unaffected. Assert the snapshot
+  // returned by normaliseServerSpellingData({}) contains guardian === {}.
+  const snapshot = normaliseServerSpellingData({}, TODAY * DAY_MS);
+  assert.deepEqual(snapshot.guardian, {});
+  assert.deepEqual(snapshot.progress, {});
+});
