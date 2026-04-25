@@ -384,6 +384,28 @@ test('mega across flip also dedupes by terminal token', () => {
   assert.equal(combined.events.length, 0, 'mega dedupes by (learner, monster, kind, release)');
 });
 
+test('caught and mega coexist for the same (learner, monster, release)', () => {
+  // Terminal dedupe keys on `kind`, so caught and mega with identical
+  // (learner, monster, release) must both survive — they are separate
+  // milestones a learner is entitled to celebrate.
+  const caught = {
+    id: 'reward.monster:learner-a:punctuation:r4:speech:speech-core:quoral:caught',
+    type: 'reward.monster',
+    kind: 'caught',
+    learnerId: 'learner-a',
+    monsterId: 'quoral',
+    releaseId: 'punctuation-r4-full-14-skill-structure',
+  };
+  const mega = {
+    ...caught,
+    id: 'reward.monster:learner-a:punctuation:r4:published_release:bullet-points-core:quoral:mega',
+    kind: 'mega',
+  };
+  const combined = combineCommandEvents({ domainEvents: [caught, mega] });
+  assert.equal(combined.events.length, 2, 'caught and mega are distinct milestones');
+  assert.deepEqual(combined.events.map((event) => event.kind).sort(), ['caught', 'mega']);
+});
+
 test('levelup and evolve are unaffected by terminal dedupe', () => {
   const existing = {
     id: 'reward.monster:learner-a:punctuation:r4:speech:speech-core:quoral:levelup',

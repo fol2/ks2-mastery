@@ -44,6 +44,12 @@ export function terminalRewardToken(event) {
   return ['reward.monster.terminal', event.learnerId || '', event.monsterId || '', event.kind, releaseId].join(':');
 }
 
+// seenTokens dedupes by the id-based `eventToken` (the default contract).
+// seenTerminalTokens dedupes by `terminalRewardToken` and is scoped to
+// caught/mega transitions on reward.monster events. Both sets are
+// threaded through combineCommandEvents so a reward that was already
+// persisted in existingEvents can still block a re-emission from fresh
+// domain or reaction events.
 export function dedupeEvents(events, seenTokens = new Set(), seenTerminalTokens = new Set()) {
   const output = [];
   for (const event of asEvents(events)) {
