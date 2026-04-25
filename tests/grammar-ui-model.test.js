@@ -764,6 +764,33 @@ test('U2 view-model: grammarBankAggregateCards returns frozen cards in the expec
   assert.equal(cards[2].value, 3);
 });
 
+test('U2 follower: grammarBankAggregateCards Total card uses override total when counts narrow to a cluster', async () => {
+  const { grammarBankAggregateCards } = await import('../src/subjects/grammar/components/grammar-view-model.js');
+  // Cluster-scoped counts: only 6 concepts in view, but the global total is 18.
+  const counts = { all: 6, secure: 1, 'nearly-secure': 1, trouble: 1, learning: 1, new: 2, due: 2 };
+  const cards = grammarBankAggregateCards(counts, { total: 18 });
+  // Total stays globally stable; the other tallies still reflect the scope.
+  assert.equal(cards[0].value, 18);
+  assert.equal(cards[0].sub, 'Grammar concepts tracked');
+  assert.equal(cards[1].value, 1);
+});
+
+test('U2 follower: GRAMMAR_CONCEPT_EXAMPLES.hyphen_ambiguity primary example is the clear positive case', async () => {
+  const { GRAMMAR_CONCEPT_EXAMPLES, grammarConceptPrimaryExample } = await import('../src/subjects/grammar/components/grammar-view-model.js');
+  // [0] must be the clear positive "man-eating shark" example, [1] the re-sign one.
+  assert.equal(GRAMMAR_CONCEPT_EXAMPLES.hyphen_ambiguity[0], 'The man-eating shark circled the boat.');
+  assert.equal(GRAMMAR_CONCEPT_EXAMPLES.hyphen_ambiguity[1], 'Please re-sign the letter and send it back.');
+  assert.equal(grammarConceptPrimaryExample('hyphen_ambiguity'), 'The man-eating shark circled the boat.');
+});
+
+test('U2 follower: GRAMMAR_BANK_HERO exposes a search-aware emptyWithSearch copy', async () => {
+  const { GRAMMAR_BANK_HERO } = await import('../src/subjects/grammar/components/grammar-view-model.js');
+  assert.equal(typeof GRAMMAR_BANK_HERO.emptyWithSearch, 'string');
+  assert.ok(GRAMMAR_BANK_HERO.emptyWithSearch.length > 0);
+  assert.match(GRAMMAR_BANK_HERO.emptyWithSearch, /search/i);
+  assert.notEqual(GRAMMAR_BANK_HERO.emptyWithSearch, GRAMMAR_BANK_HERO.empty);
+});
+
 test('U2 view-model: buildGrammarBankModel exposes clusterCounts for chip badges', async () => {
   const { buildGrammarBankModel } = await import('../src/subjects/grammar/components/grammar-view-model.js');
   const model = buildGrammarBankModel({}, { statusFilter: 'all', clusterFilter: 'all', query: '' });

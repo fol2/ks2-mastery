@@ -98,7 +98,7 @@ function applyRemoteReadModel(context, response, { learnerId } = {}) {
   context.store.reloadFromRepositories?.({ preserveRoute: true });
 }
 
-function sendGrammarCommand(context, command, payload = {}, { translateError } = {}) {
+function sendGrammarCommand(context, command, payload = {}, { translateError, onResolved } = {}) {
   const learnerId = selectedLearnerId(context);
   if (!learnerId) return true;
   const ui = selectedGrammarUi(context);
@@ -126,6 +126,11 @@ function sendGrammarCommand(context, command, payload = {}, { translateError } =
     payload,
   }).then((response) => {
     applyRemoteReadModel(context, response, { learnerId });
+    if (typeof onResolved === 'function') {
+      try { onResolved(response); } catch (callbackError) {
+        globalThis.console?.warn?.('Grammar command onResolved failed.', callbackError);
+      }
+    }
   }).catch((error) => {
     globalThis.console?.warn?.('Grammar command failed.', error);
     const fallback = error?.payload?.message || error?.message || 'The Grammar command could not be completed.';
@@ -283,11 +288,17 @@ export const grammarModule = {
     if (action === 'grammar-open-concept-bank') {
       if (ui.pendingCommand) return true;
       if (ui.phase === 'session' || ui.phase === 'feedback') return true;
-      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => ({
-        ...normaliseGrammarReadModel(current, learnerId),
-        phase: 'bank',
-        error: '',
-      }));
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+        const normalised = normaliseGrammarReadModel(current, learnerId);
+        return {
+          ...normalised,
+          phase: 'bank',
+          // Clear any stale detail modal id from the previous bank visit so
+          // reopening never auto-pops the modal.
+          bank: { ...normalised.bank, detailConceptId: '' },
+          error: '',
+        };
+      });
       return true;
     }
 
@@ -380,6 +391,14 @@ export const grammarModule = {
       const existingMode = ui.prefs?.mode || DEFAULT_GRAMMAR_PREFS.mode;
       const targetMode = grammarModeUsesFocus(existingMode) ? existingMode : 'learn';
       const prefsPatch = { mode: targetMode, focusConceptId: conceptId };
+      const payload = {
+        mode: targetMode,
+        focusConceptId: conceptId,
+        roundLength: ui.prefs?.roundLength || DEFAULT_GRAMMAR_PREFS.roundLength,
+        goalType: ui.prefs?.goalType || DEFAULT_GRAMMAR_PREFS.goalType,
+        allowTeachingItems: ui.prefs?.allowTeachingItems === true,
+        showDomainBeforeAnswer: ui.prefs?.showDomainBeforeAnswer !== false,
+      };
       if (service?.savePrefs) {
         const nextPrefs = service.savePrefs(learnerId, prefsPatch);
         context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
@@ -393,31 +412,32 @@ export const grammarModule = {
             error: '',
           };
         });
-      } else {
-        // Remote-save path: close the bank first, then fire save-prefs. The
-        // follow-up start-session fires after the prefs round-trip lands.
-        context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
-          const normalised = normaliseGrammarReadModel(current, learnerId);
-          return {
-            ...normalised,
-            bank: { ...EMPTY_GRAMMAR_BANK_UI },
-            phase: 'dashboard',
-            error: '',
-          };
-        });
-        sendGrammarCommand(context, 'save-prefs', { prefs: prefsPatch });
+        if (service?.startSession) return applyLocalTransition(context, service.startSession(learnerId, payload));
+        return sendGrammarCommand(context, 'start-session', payload);
       }
 
-      const payload = {
-        mode: targetMode,
-        focusConceptId: conceptId,
-        roundLength: ui.prefs?.roundLength || DEFAULT_GRAMMAR_PREFS.roundLength,
-        goalType: ui.prefs?.goalType || DEFAULT_GRAMMAR_PREFS.goalType,
-        allowTeachingItems: ui.prefs?.allowTeachingItems === true,
-        showDomainBeforeAnswer: ui.prefs?.showDomainBeforeAnswer !== false,
-      };
-      if (service?.startSession) return applyLocalTransition(context, service.startSession(learnerId, payload));
-      return sendGrammarCommand(context, 'start-session', payload);
+      // Remote-save path: close the bank first, then fire save-prefs and chain
+      // start-session inside its resolve callback. The earlier version fell
+      // through to a second sendGrammarCommand call that was silently no-op'd
+      // by the `pendingCommand` guard at the top of `sendGrammarCommand`.
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+        const normalised = normaliseGrammarReadModel(current, learnerId);
+        return {
+          ...normalised,
+          bank: { ...EMPTY_GRAMMAR_BANK_UI },
+          phase: 'dashboard',
+          error: '',
+        };
+      });
+      return sendGrammarCommand(context, 'save-prefs', { prefs: prefsPatch }, {
+        onResolved: () => {
+          if (service?.startSession) {
+            applyLocalTransition(context, service.startSession(learnerId, payload));
+            return;
+          }
+          sendGrammarCommand(context, 'start-session', payload);
+        },
+      });
     }
 
     if (action === 'grammar-open-transfer') {

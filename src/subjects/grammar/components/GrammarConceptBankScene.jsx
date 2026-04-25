@@ -23,8 +23,8 @@ import {
 // the Spelling Word Bank pattern so typing does not force every
 // keystroke through the store.
 
-function AggregateCards({ counts }) {
-  const cards = grammarBankAggregateCards(counts);
+function AggregateCards({ counts, total }) {
+  const cards = grammarBankAggregateCards(counts, { total });
   return (
     <div className="grammar-bank-aggregates" role="list">
       {cards.map((card) => (
@@ -202,7 +202,7 @@ export function GrammarConceptBankScene({ grammar, actions }) {
         </div>
       </header>
 
-      <AggregateCards counts={bankModel.counts} />
+      <AggregateCards counts={bankModel.counts} total={bankModel.total} />
 
       <div className="grammar-bank-toolbar">
         <label className="grammar-bank-search">
@@ -251,7 +251,9 @@ export function GrammarConceptBankScene({ grammar, actions }) {
             />
           ))
           : (
-            <div className="grammar-bank-empty" role="status">{GRAMMAR_BANK_HERO.empty}</div>
+            <div className="grammar-bank-empty" role="status">
+              {draftQuery ? GRAMMAR_BANK_HERO.emptyWithSearch : GRAMMAR_BANK_HERO.empty}
+            </div>
           )
         }
       </div>

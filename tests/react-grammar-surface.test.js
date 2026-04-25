@@ -1689,11 +1689,14 @@ test('U2: Grammar Bank detail modal exposes focus-return marker on the triggerin
 test('U2: Grammar Bank empty state renders "No concepts match" when filters exclude everything', () => {
   const harness = openGrammarBankHarness();
   // A search that matches no concept name / summary / example / domain.
+  // U2 follower: when the search query is non-empty, the empty state swaps
+  // to the search-aware copy. The filter-only empty copy is covered by a
+  // dedicated follower test further down.
   harness.dispatch('grammar-concept-bank-search', { value: 'zzz-unreachable-token' });
   const html = harness.render();
   const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
   assert.equal(cards.length, 0, 'no concept cards render when the search excludes everything');
-  assert.match(html, /No concepts match your filters\. Try another status or cluster\./);
+  assert.match(html, /No concepts match\. Try clearing your search or changing the filters\./);
 });
 
 test('U2: Grammar Bank HTML contains none of GRAMMAR_CHILD_FORBIDDEN_TERMS', () => {
@@ -1775,4 +1778,169 @@ test('U2: Grammar Bank rejects invalid filter ids via the normaliser', () => {
   assert.equal(harness.store.getState().subjectUi.grammar.bank.statusFilter, 'all');
   harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'glossbloom' });
   assert.equal(harness.store.getState().subjectUi.grammar.bank.clusterFilter, 'all');
+});
+
+// ----------------------------------------------------------------------------
+// U2 follower: hyphen example swap, search-aware empty state, remote
+// focus-concept chain, stale modal clear, cluster-total sublabel.
+// ----------------------------------------------------------------------------
+
+test('U2 follower: Grammar Bank empty state swaps copy when search query is non-empty', () => {
+  const harness = openGrammarBankHarness();
+  // Filter-only empty (no search) — existing copy.
+  harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'bracehart' });
+  harness.dispatch('grammar-concept-bank-filter', { value: 'secure' });
+  let html = harness.render();
+  let cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
+  assert.equal(cards.length, 0, 'filter-only empty state renders');
+  assert.match(html, /No concepts match your filters\. Try another status or cluster\./);
+  assert.doesNotMatch(html, /Try clearing your search/);
+
+  // Search-present empty — new copy.
+  harness.dispatch('grammar-concept-bank-filter', { value: 'all' });
+  harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'all' });
+  harness.dispatch('grammar-concept-bank-search', { value: 'zzz-unreachable-token' });
+  html = harness.render();
+  cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
+  assert.equal(cards.length, 0, 'search-present empty state renders');
+  assert.match(html, /No concepts match\. Try clearing your search or changing the filters\./);
+  assert.doesNotMatch(html, /Try another status or cluster/);
+});
+
+test('U2 follower: Grammar Bank hyphen_ambiguity card primary example is the man-eating shark', () => {
+  const harness = openGrammarBankHarness();
+  const html = harness.render();
+  // The card blockquote surfaces `example` (examples[0]) from the view-model.
+  // After the swap, the clear positive example must be the one on-card.
+  const cardMatch = html.match(/data-concept-id="hyphen_ambiguity"[\s\S]*?<\/article>/);
+  assert.ok(cardMatch, 'hyphen_ambiguity card renders');
+  assert.match(cardMatch[0], /The man-eating shark circled the boat\./);
+  assert.doesNotMatch(cardMatch[0], /Please resign the letter/);
+});
+
+test('U2 follower: reopening Grammar Bank after closing detail modal does not auto-show the modal', () => {
+  const harness = openGrammarBankHarness();
+  // Open the detail modal.
+  harness.dispatch('grammar-concept-detail-open', { conceptId: 'word_classes' });
+  assert.equal(harness.store.getState().subjectUi.grammar.bank.detailConceptId, 'word_classes');
+  let html = harness.render();
+  assert.match(html, /role="dialog"/);
+
+  // Close the bank (returns to dashboard — the legacy resetToDashboard path
+  // does not touch the bank slice, so detailConceptId remained stale).
+  harness.dispatch('grammar-close-concept-bank');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');
+
+  // Reopen the bank. With the follower fix, `grammar-open-concept-bank`
+  // clears `bank.detailConceptId`, so the modal must NOT auto-appear.
+  harness.dispatch('grammar-open-concept-bank');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'bank');
+  assert.equal(
+    harness.store.getState().subjectUi.grammar.bank.detailConceptId,
+    '',
+    'detailConceptId cleared on reopen',
+  );
+  html = harness.render();
+  assert.doesNotMatch(html, /role="dialog"/, 'detail modal must not auto-pop on bank reopen');
+});
+
+test('U2 follower: Grammar Bank aggregate "Total" card stays at 18 under a cluster filter', () => {
+  const harness = openGrammarBankHarness();
+  harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'bracehart' });
+  const html = harness.render();
+  // Grid narrows to the bracehart cluster's 6 cards.
+  const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
+  assert.equal(cards.length, 6);
+  // Total aggregate card still shows the global 18 so the sub-label
+  // "Grammar concepts tracked" stays truthful under narrower filters.
+  const totalCard = html.match(/data-aggregate-id="total"[\s\S]*?<\/div><\/div>/);
+  assert.ok(totalCard, 'total aggregate card renders');
+  assert.match(totalCard[0], />18<\/div>/);
+  assert.match(totalCard[0], /Grammar concepts tracked/);
+});
+
+test('U2 follower: grammar-focus-concept remote path chains start-session after save-prefs resolves', async () => {
+  // Build a context WITHOUT `service.savePrefs` / `service.startSession` so
+  // the remote path runs. Observe that `save-prefs` goes first and
+  // `start-session` only dispatches after the save-prefs promise resolves.
+  const sent = [];
+  let resolveSavePrefs;
+  let resolveStartSession;
+  const context = {
+    appState: {
+      learners: { selectedId: 'learner-a' },
+      subjectUi: { grammar: normaliseGrammarReadModel({ phase: 'bank' }, 'learner-a') },
+    },
+    runtimeReadOnly: false,
+    subjectCommands: {
+      send(request) {
+        sent.push({ command: request.command, payload: request.payload });
+        if (request.command === 'save-prefs') {
+          return new Promise((resolve) => { resolveSavePrefs = resolve; });
+        }
+        if (request.command === 'start-session') {
+          return new Promise((resolve) => { resolveStartSession = resolve; });
+        }
+        return Promise.resolve({});
+      },
+    },
+    store: {
+      getState() { return context.appState; },
+      updateSubjectUi(subjectId, updater) {
+        const previous = context.appState.subjectUi[subjectId] || {};
+        const next = typeof updater === 'function' ? updater(previous) : { ...previous, ...updater };
+        context.appState = {
+          ...context.appState,
+          subjectUi: { ...context.appState.subjectUi, [subjectId]: next },
+        };
+      },
+      updateSubjectUiForLearner(learnerId, subjectId, updater) {
+        if (learnerId !== 'learner-a') return false;
+        context.store.updateSubjectUi(subjectId, updater);
+        return true;
+      },
+      pushToasts() {},
+      pushMonsterCelebrations() {},
+      reloadFromRepositories() {},
+    },
+    data: { conceptId: 'relative_clauses' },
+  };
+
+  const handled = grammarModule.handleAction('grammar-focus-concept', context);
+  assert.equal(handled, true);
+
+  // Only save-prefs has gone so far; start-session must wait for the resolve.
+  assert.equal(sent.length, 1, 'only save-prefs dispatched before save resolves');
+  assert.equal(sent[0].command, 'save-prefs');
+  assert.equal(sent[0].payload.prefs.focusConceptId, 'relative_clauses');
+
+  // Resolve save-prefs with a valid read model.
+  resolveSavePrefs({
+    subjectReadModel: normaliseGrammarReadModel({
+      learnerId: 'learner-a',
+      phase: 'dashboard',
+      prefs: { mode: 'learn', focusConceptId: 'relative_clauses' },
+    }, 'learner-a'),
+  });
+  // Flush microtasks.
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+
+  // Now start-session must have dispatched via the onResolved callback.
+  assert.equal(sent.length, 2, 'start-session dispatched after save-prefs resolved');
+  assert.equal(sent[1].command, 'start-session');
+  assert.equal(sent[1].payload.focusConceptId, 'relative_clauses');
+  // `smart` is a focus-using mode (only trouble/surgery/builder drop focus),
+  // so the target mode stays `smart` rather than falling back to `learn`.
+  assert.equal(sent[1].payload.mode, 'smart');
+
+  // Resolve start-session so any trailing handlers run cleanly.
+  resolveStartSession({
+    subjectReadModel: normaliseGrammarReadModel({
+      learnerId: 'learner-a',
+      phase: 'session',
+    }, 'learner-a'),
+  });
+  await Promise.resolve();
 });

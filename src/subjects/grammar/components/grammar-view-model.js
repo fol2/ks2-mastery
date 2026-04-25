@@ -107,6 +107,7 @@ export const GRAMMAR_BANK_HERO = Object.freeze({
   title: 'Grammar Bank',
   subtitle: 'Browse every concept. Tap a card to see examples or practise five questions.',
   empty: 'No concepts match your filters. Try another status or cluster.',
+  emptyWithSearch: 'No concepts match. Try clearing your search or changing the filters.',
 });
 
 // Frozen map of child-facing labels for each Grammar Bank status filter. The
@@ -218,8 +219,8 @@ export const GRAMMAR_CONCEPT_EXAMPLES = Object.freeze({
     'The sky turned dark; the storm was close.',
   ]),
   hyphen_ambiguity: Object.freeze([
-    'Please resign the letter and send it back.',
     'The man-eating shark circled the boat.',
+    'Please re-sign the letter and send it back.',
   ]),
 });
 
@@ -592,12 +593,18 @@ function bankCountsFromCards(cards) {
 /**
  * Builds the Grammar Bank aggregate summary cards (Answered totals across
  * every concept, broken out by status). Counts are whole integers — no
- * percentages — so a learner sees plain tallies.
+ * percentages — so a learner sees plain tallies. `total` is the globally
+ * stable concept count (always 18 for the KS2 roster); the scene passes the
+ * `total` from `buildGrammarBankModel` so the Total card stays stable even
+ * when a cluster filter narrows the other tallies.
  */
-export function grammarBankAggregateCards(counts = {}) {
+export function grammarBankAggregateCards(counts = {}, { total } = {}) {
   const safe = counts && typeof counts === 'object' && !Array.isArray(counts) ? counts : {};
+  const totalValue = Number.isFinite(Number(total)) && Number(total) >= 0
+    ? Math.floor(Number(total))
+    : safeNumber(safe.all, 0);
   return Object.freeze([
-    Object.freeze({ id: 'total', label: 'Total', value: safeNumber(safe.all, 0), sub: 'Grammar concepts tracked' }),
+    Object.freeze({ id: 'total', label: 'Total', value: totalValue, sub: 'Grammar concepts tracked' }),
     Object.freeze({ id: 'secure', label: 'Secure', value: safeNumber(safe.secure, 0), sub: 'You own these' }),
     Object.freeze({ id: 'nearly-secure', label: 'Nearly secure', value: safeNumber(safe['nearly-secure'], 0), sub: 'Almost there' }),
     Object.freeze({ id: 'trouble', label: 'Trouble', value: safeNumber(safe.trouble, 0), sub: 'Fix these next' }),
