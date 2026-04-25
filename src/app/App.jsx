@@ -10,6 +10,7 @@ import { AdminHubSurface } from '../surfaces/hubs/AdminHubSurface.jsx';
 import { SubjectRoute } from '../surfaces/subject/SubjectRoute.jsx';
 import { MonsterVisualConfigProvider } from '../platform/game/MonsterVisualConfigContext.jsx';
 import { ErrorBoundary } from '../platform/react/ErrorBoundary.jsx';
+import { captureClientError } from '../platform/ops/error-capture.js';
 import { usePlatformStore } from '../platform/react/use-platform-store.js';
 import { CelebrationLayer } from '../platform/game/render/CelebrationLayer.jsx';
 // Transient overlay effects register themselves at module load. Importing
@@ -62,6 +63,18 @@ function SubjectTopNav({ chrome, actions }) {
       persistenceLabel={chrome.persistence?.label || ''}
     />
   );
+}
+
+// U6: React ErrorBoundary capture hook. The boundary fires this on every
+// componentDidCatch; captureClientError is idempotent, bounded, and never
+// throws. credentialFetch is intentionally omitted — error-capture.js reuses
+// the fetch installed by `installGlobalErrorCapture` in src/main.js.
+function handleBoundaryError(error, info) {
+  captureClientError({
+    source: 'react-error-boundary',
+    error,
+    info,
+  });
 }
 
 function UnknownRouteSurface({ screen, actions }) {
@@ -142,7 +155,7 @@ export function App({ controller, runtime }) {
 
   return (
     <MonsterVisualConfigProvider value={monsterVisualConfig}>
-      <ErrorBoundary>
+      <ErrorBoundary onError={handleBoundaryError}>
       {screen === 'dashboard' && (
         <>
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />

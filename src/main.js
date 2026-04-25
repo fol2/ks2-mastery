@@ -57,6 +57,7 @@ import {
   LEGACY_SPELLING_EXPORT_KIND,
   PLATFORM_EXPORT_KIND_LEARNER,
 } from './platform/core/data-transfer.js';
+import { installGlobalErrorCapture } from './platform/ops/error-capture.js';
 
 const root = document.getElementById('app');
 const credentialFetch = createCredentialFetch();
@@ -2422,3 +2423,8 @@ globalThis.addEventListener?.('keydown', (event) => {
   if (!shortcut.action) return;
   dispatchAction(shortcut.action, shortcut.data || {});
 });
+
+// U6: global window.error + unhandledrejection capture. Installed once alongside
+// the existing global listeners; the helper is idempotent and will swallow any
+// failure internally so a broken capture path never breaks the app.
+installGlobalErrorCapture({ credentialFetch });

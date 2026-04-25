@@ -2503,6 +2503,239 @@ async function updateOpsErrorEventStatus(db, {
   return response;
 }
 
+// ---------------------------------------------------------------------------
+// U6: public client error capture ingest.
+//
+// recordClientErrorEvent persists a client-reported error into
+// ops_error_events with tuple-authoritative dedup (R24). The Worker route in
+// app.js owns the byte-cap, rate-limit, attribution, and same-regex server-
+// side redaction pass; this helper owns the dedup + fingerprint + counter
+// bump logic. Behaviour:
+//
+//   - Re-run expanded redaction (R12 + R28 + R29) defensively: never trust
+//     that the client hit the identical regex set.
+//   - Compute fingerprint = sha256(errorKind + '|' + messageFirstLine + '|'
+//     + firstFrame) server-side; the client-supplied value is ignored.
+//   - Preflight by (error_kind, message_first_line, first_frame) tuple (R24).
+//     If matched, UPDATE last_seen + increment occurrence_count. The
+//     `.status.open` counter is NOT bumped on a dedup hit.
+//   - On fresh insert, batch the INSERT (with ON CONFLICT(fingerprint)
+//     DO NOTHING to absorb theoretical fingerprint collisions) together with
+//     the `.status.open` counter bump.
+//   - Missing table (pre-migration deploy) returns `{unavailable: true}` so
+//     the route can respond 200 and the client keeps working.
+// ---------------------------------------------------------------------------
+
+const SERVER_SENSITIVE_REGEX = /(answer_raw|prompt|learner_name|email|password|session|cookie|token|spelling_word|punctuation_answer|grammar_concept|prompt_token|learner_id)/gi;
+const SERVER_ALL_CAPS_REGEX = /\b[A-Z]{4,}\b/g;
+const SERVER_UUID_SEGMENT_REGEX = /^[0-9a-f-]{32,36}$/i;
+const SERVER_LEARNER_ID_SEGMENT_REGEX = /^learner-[a-z0-9-]+$/i;
+const OPS_ERROR_MESSAGE_MAX_CHARS = 500;
+const OPS_ERROR_FIRST_FRAME_MAX_CHARS = 300;
+const OPS_ERROR_ROUTE_MAX_CHARS = 128;
+const OPS_ERROR_USER_AGENT_MAX_CHARS = 256;
+const OPS_ERROR_KIND_MAX_CHARS = 128;
+
+function scrubSensitiveServer(value) {
+  return String(value || '').replace(SERVER_SENSITIVE_REGEX, '[redacted]');
+}
+
+function scrubAllCapsServer(value) {
+  return String(value || '').replace(SERVER_ALL_CAPS_REGEX, '[word]');
+}
+
+function firstLineServer(value) {
+  return String(value || '').split('\n', 1)[0] || '';
+}
+
+function normaliseRouteNameServer(raw) {
+  const base = typeof raw === 'string' ? raw : '';
+  if (!base) return '';
+  const withoutQueryHash = base.split(/[?#]/, 1)[0] || '';
+  const capped = withoutQueryHash.slice(0, OPS_ERROR_ROUTE_MAX_CHARS);
+  const segments = capped.split('/').map((segment) => {
+    if (!segment) return segment;
+    if (SERVER_UUID_SEGMENT_REGEX.test(segment) || SERVER_LEARNER_ID_SEGMENT_REGEX.test(segment)) return '[id]';
+    return segment;
+  });
+  return scrubSensitiveServer(segments.join('/'));
+}
+
+function serverRedactClientEvent(raw) {
+  const source = isPlainObject(raw) ? raw : {};
+  const errorKindRaw = typeof source.errorKind === 'string' && source.errorKind
+    ? source.errorKind
+    : 'Error';
+  const errorKind = errorKindRaw.slice(0, OPS_ERROR_KIND_MAX_CHARS);
+
+  const messageRaw = typeof source.messageFirstLine === 'string'
+    ? source.messageFirstLine
+    : (typeof source.message === 'string' ? source.message : '');
+  const messageFirstLine = scrubAllCapsServer(
+    scrubSensitiveServer(firstLineServer(messageRaw).slice(0, OPS_ERROR_MESSAGE_MAX_CHARS)),
+  );
+
+  const firstFrameRaw = typeof source.firstFrame === 'string'
+    ? source.firstFrame
+    : (typeof source.stack === 'string' ? source.stack : '');
+  const firstFrame = scrubSensitiveServer(
+    firstLineServer(firstFrameRaw).slice(0, OPS_ERROR_FIRST_FRAME_MAX_CHARS),
+  );
+
+  const routeName = normaliseRouteNameServer(source.routeName);
+
+  const userAgentRaw = typeof source.userAgent === 'string' ? source.userAgent : '';
+  const userAgent = userAgentRaw.slice(0, OPS_ERROR_USER_AGENT_MAX_CHARS);
+
+  return {
+    errorKind,
+    messageFirstLine,
+    firstFrame,
+    routeName,
+    userAgent,
+  };
+}
+
+async function sha256HexOpsError(text) {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(String(text || ''));
+  if (!globalThis.crypto?.subtle?.digest) {
+    // Extremely unusual runtime — fall back to a deterministic low-quality hash
+    // so the fingerprint column never goes NULL. The (error_kind, message,
+    // frame) tuple is still the authoritative dedup key per R24, so this is a
+    // degradation only for the UNIQUE index cache.
+    let hash = 0;
+    for (let i = 0; i < bytes.length; i += 1) {
+      hash = ((hash << 5) - hash + bytes[i]) | 0;
+    }
+    return `legacy_${(hash >>> 0).toString(16)}`;
+  }
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+  const bytesOut = new Uint8Array(digest);
+  let hex = '';
+  for (let i = 0; i < bytesOut.length; i += 1) {
+    hex += bytesOut[i].toString(16).padStart(2, '0');
+  }
+  return hex;
+}
+
+function generateOpsErrorEventId(nowTs) {
+  const random = globalThis.crypto?.randomUUID?.();
+  if (typeof random === 'string' && random) return `ops-error-${random}`;
+  // Fallback for runtimes without crypto.randomUUID (older mocks).
+  const stamp = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const entropy = Math.random().toString(36).slice(2, 10);
+  return `ops-error-${stamp.toString(36)}-${entropy}`;
+}
+
+async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null, nowTs } = {}) {
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const redacted = serverRedactClientEvent(clientEvent);
+
+  // Basic shape validation — empty errorKind / messageFirstLine after redaction
+  // points to a malformed client call. Keep the error code stable for tests.
+  if (!redacted.errorKind || !redacted.messageFirstLine) {
+    throw new BadRequestError('Error event is missing errorKind or messageFirstLine.', {
+      code: 'validation_failed',
+      field: !redacted.errorKind ? 'errorKind' : 'messageFirstLine',
+    });
+  }
+
+  const fingerprintSource = `${redacted.errorKind}|${redacted.messageFirstLine}|${redacted.firstFrame || ''}`;
+  const fingerprint = await sha256HexOpsError(fingerprintSource);
+  const attributedAccountId = typeof sessionAccountId === 'string' && sessionAccountId
+    ? sessionAccountId
+    : null;
+
+  try {
+    // R24: dedup authoritative key is the (errorKind, messageFirstLine,
+    // firstFrame) tuple. Fingerprint is a UNIQUE index cache only.
+    const existing = await first(db, `
+      SELECT id, first_seen, occurrence_count, status
+      FROM ops_error_events
+      WHERE error_kind = ?
+        AND message_first_line = ?
+        AND first_frame = ?
+      ORDER BY first_seen ASC, id ASC
+      LIMIT 1
+    `, [redacted.errorKind, redacted.messageFirstLine, redacted.firstFrame || '']);
+
+    if (existing && typeof existing.id === 'string' && existing.id) {
+      // Dedup hit — UPDATE last_seen and bump occurrence_count. Do NOT
+      // touch admin_kpi_metrics.ops_error_events.status.open (R22): that
+      // counter tracks fresh inserts, not replay-induced bumps.
+      await run(db, `
+        UPDATE ops_error_events
+        SET last_seen = ?,
+            occurrence_count = occurrence_count + 1
+        WHERE id = ?
+      `, [ts, existing.id]);
+      return {
+        eventId: existing.id,
+        deduped: true,
+        unavailable: false,
+      };
+    }
+
+    // Fresh insert. Batch the INSERT with the status-open counter bump so both
+    // commit together (R21). Use ON CONFLICT(fingerprint) DO NOTHING to absorb
+    // the theoretical SHA-256 collision case — the preflight above already
+    // owned the legitimate dedup path, so a conflict here can only be a
+    // pathological collision (or a concurrent insert racing us).
+    const eventId = generateOpsErrorEventId(ts);
+    await batch(db, [
+      bindStatement(db, `
+        INSERT INTO ops_error_events (
+          id,
+          fingerprint,
+          error_kind,
+          message_first_line,
+          first_frame,
+          route_name,
+          user_agent,
+          account_id,
+          first_seen,
+          last_seen,
+          occurrence_count,
+          status
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'open')
+        ON CONFLICT(fingerprint) DO NOTHING
+      `, [
+        eventId,
+        fingerprint,
+        redacted.errorKind,
+        redacted.messageFirstLine,
+        redacted.firstFrame || '',
+        redacted.routeName || '',
+        redacted.userAgent || '',
+        attributedAccountId,
+        ts,
+        ts,
+      ]),
+      bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}open`, ts, 1),
+    ]);
+
+    // If the ON CONFLICT fired, the insert is a no-op and the counter still
+    // bumped. That's acceptable — the row exists elsewhere and admins will
+    // see a small, self-healing counter drift only under SHA-256 collision.
+    return {
+      eventId,
+      deduped: false,
+      unavailable: false,
+    };
+  } catch (error) {
+    if (isMissingTableError(error, 'ops_error_events') || isMissingTableError(error, 'admin_kpi_metrics')) {
+      return {
+        eventId: null,
+        deduped: false,
+        unavailable: true,
+      };
+    }
+    throw error;
+  }
+}
+
 function seededMonsterVisualConfig({ source = 'published', version = 1 } = {}) {
   return {
     ...cloneSerialisable(BUNDLED_MONSTER_VISUAL_CONFIG),
@@ -5042,6 +5275,13 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         eventId,
         status,
         mutation,
+        nowTs: nowFactory(),
+      });
+    },
+    async recordClientErrorEvent({ clientEvent, sessionAccountId = null } = {}) {
+      return recordClientErrorEvent(db, {
+        clientEvent,
+        sessionAccountId,
         nowTs: nowFactory(),
       });
     },

@@ -9,10 +9,11 @@ import {
 } from './auth.js';
 import { requireDatabase } from './d1.js';
 import { errorResponse } from './errors.js';
-import { json, readForm, readJson } from './http.js';
+import { json, readForm, readJson, readJsonBounded } from './http.js';
 import { createWorkerRepository } from './repository.js';
 import { handleTextToSpeechRequest } from './tts.js';
 import {
+  consumeRateLimit,
   createDemoSession,
   isProductionRuntime,
   protectDemoParentHubRead,
@@ -201,6 +202,23 @@ function isPublicSourceLockdownPath(pathname) {
     || pathname === '/migration-plan.md';
 }
 
+// Local copy of the clientIp helper so the public ops route can key its IP
+// rate-limit bucket without pulling auth.js internals. Mirrors the canonical
+// resolution order used by demo/sessions.js (cf-connecting-ip → x-forwarded-for
+// first entry → x-real-ip → 'unknown').
+function resolveClientIp(request) {
+  const raw = request.headers.get('cf-connecting-ip')
+    || request.headers.get('x-forwarded-for')?.split(',')[0]
+    || request.headers.get('x-real-ip')
+    || '';
+  const trimmed = typeof raw === 'string' ? raw.trim() : '';
+  return trimmed || 'unknown';
+}
+
+const OPS_ERROR_EVENT_MAX_BODY_BYTES = 8 * 1024;
+const OPS_ERROR_EVENT_RATE_LIMIT = 60;
+const OPS_ERROR_EVENT_RATE_WINDOW_MS = 10 * 60 * 1000;
+
 export function createWorkerApp({
   now = Date.now,
   fetchFn = (...args) => fetch(...args),
@@ -346,6 +364,107 @@ export function createWorkerApp({
             return redirect(`${url.origin}/?auth=success`, 302, result.cookies);
           } catch (error) {
             return callbackErrorRedirect(request, error?.message);
+          }
+        }
+
+        // Public client-error ingest. Placed BEFORE auth.requireSession per
+        // R13/R15: errors in demo, signed-out, or session-expired states must
+        // still land. Does NOT call requireSameOrigin — Origin headers are
+        // unreliable from error contexts (file://, extensions, mid-navigation).
+        // Defence stack per the plan: byte-level body cap (R23), IP rate-
+        // limit, server-side redaction, attribution gate.
+        if (url.pathname === '/api/ops/error-event' && request.method === 'POST') {
+          const nowTs = now();
+          let clientEvent;
+          try {
+            clientEvent = await readJsonBounded(request, OPS_ERROR_EVENT_MAX_BODY_BYTES);
+          } catch (error) {
+            if (error?.code === 'ops_error_payload_too_large') {
+              return json({
+                ok: false,
+                code: 'ops_error_payload_too_large',
+                message: 'Error event payload exceeds the 8KB limit.',
+              }, 400);
+            }
+            throw error;
+          }
+
+          const db = requireDatabase(env);
+          const rateLimit = await consumeRateLimit(db, {
+            bucket: 'ops-error-capture-ip',
+            identifier: resolveClientIp(request),
+            limit: OPS_ERROR_EVENT_RATE_LIMIT,
+            windowMs: OPS_ERROR_EVENT_RATE_WINDOW_MS,
+            now: nowTs,
+          });
+          if (!rateLimit.allowed) {
+            // Best-effort counter bump — swallow table-missing / transient
+            // write errors so the rate-limit response is unaffected.
+            const limiterRepository = createWorkerRepository({ env, now });
+            try {
+              await limiterRepository.bumpAdminKpiMetric('ops_error_events.rate_limited', 1);
+            } catch {
+              // Swallow — the rate-limit path must never re-enter error ingest.
+            }
+            return json({
+              ok: false,
+              code: 'ops_error_rate_limited',
+              message: 'Too many client error events from this connection.',
+              retryAfterSeconds: Number(rateLimit.retryAfterSeconds) || 0,
+            }, 429);
+          }
+
+          // R15-safe attribution: attach account_id ONLY when a real (non-demo)
+          // session is present AND the route is not a /demo/ path. Prevents
+          // leaking admin-signed-in correlations while they are debugging the
+          // demo surface. The session claim alone is not sufficient — the
+          // development-stub provider omits `.demo`, so cross-check the DB
+          // account_type column to catch demo accounts regardless of how the
+          // session was issued.
+          let sessionAccountId = null;
+          try {
+            const maybeSession = await auth.getSession(request);
+            if (maybeSession && !maybeSession.demo && maybeSession.accountType !== 'demo') {
+              const accountRow = await db.prepare(
+                'SELECT account_type FROM adult_accounts WHERE id = ?',
+              ).bind(maybeSession.accountId).first();
+              const accountType = typeof accountRow?.account_type === 'string'
+                ? accountRow.account_type
+                : 'real';
+              if (accountType !== 'demo') {
+                const rawRoute = typeof clientEvent?.routeName === 'string' ? clientEvent.routeName : '';
+                if (!rawRoute.startsWith('/demo/')) {
+                  sessionAccountId = maybeSession.accountId || null;
+                }
+              }
+            }
+          } catch {
+            // Anonymous is fine — proceed without attribution.
+          }
+
+          const repository = createWorkerRepository({ env, now });
+          try {
+            const result = await repository.recordClientErrorEvent({
+              clientEvent,
+              sessionAccountId,
+            });
+            if (result.unavailable) {
+              return json({
+                ok: true,
+                eventId: null,
+                deduped: false,
+                unavailable: true,
+              });
+            }
+            return json({
+              ok: true,
+              eventId: result.eventId,
+              deduped: Boolean(result.deduped),
+            });
+          } catch (error) {
+            // BadRequestError (validation_failed) falls through to errorResponse
+            // so the client receives a structured 400.
+            throw error;
           }
         }
 
