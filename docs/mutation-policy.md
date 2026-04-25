@@ -57,6 +57,15 @@ The command payload carries `learnerId`, `requestId`, `correlationId`, and `expe
 
 For Spelling, one command response can include updated subject UI/data, active or completed practice-session state, appended events, reward projections, and a read model for React. The browser should treat that returned read model as authoritative rather than recomputing scoring, queue selection, progress mutation, or reward state.
 
+### Admin ops console mutations
+
+Two new `mutation_kind` values land in receipts from the Admin / Operations console:
+
+- `admin.account_ops_metadata.update` — scope `account` + target account ID. Does NOT bump `adult_accounts.repo_revision` because ops metadata is GM-facing and should not invalidate client-side account state.
+- `admin.ops_error_event.status-set` — scope `platform` + composite scope ID `ops-error-event:<event-id>`. Uses CAS on the expected previous status (`expectedPreviousStatus` in the mutation envelope) to prevent silent race drift between two admins transitioning the same event.
+
+The `ops-error-event:<id>` scope-id prefix is reserved and distinctive; any future platform-scoped mutation must use a different prefix.
+
 ## Mutation envelope
 
 Every write route now requires mutation metadata.
