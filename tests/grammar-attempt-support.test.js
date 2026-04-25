@@ -287,39 +287,49 @@ test('normaliseServerGrammarData: pre-U3 stored attempts get normalised on load'
   assert.equal(attempt.firstAttemptIndependent, false);
 });
 
-test('event-log replay: pre-U3 events project consistently with post-U3 events', () => {
-  // Pre-U3 event: only `supportLevel` + `attempts` + `mode`
-  const preU3Event = {
-    type: 'grammar.answer-submitted',
-    supportLevel: 1,
+test('event-log replay: pre-U3 and post-U3 stored attempts project identically after normalisation', () => {
+  // Construct two attempt records representing the same semantic case:
+  //   (1) a pre-U3 record missing the new fields entirely, and
+  //   (2) a post-U3 record with both legacy and new fields dual-written.
+  // After running both through normaliseServerGrammarData (which calls
+  // normaliseStoredAttempt), they must project to identical shapes when
+  // consumed by downstream readers. This proves the "state + event" parity
+  // the plan calls for: a replayer cannot observe drift between the two.
+  const baseAttempt = {
+    contentReleaseId: 'grammar-legacy-reviewed-2026-04-24',
+    templateId: 'fronted_adverbial_choose',
+    itemId: 'fronted_adverbial_choose::100',
+    seed: 100,
+    questionType: 'choose',
+    conceptIds: ['adverbials'],
+    response: { answer: 'x' },
+    result: { correct: true, score: 1, maxScore: 1 },
     attempts: 1,
     mode: 'smart',
+    createdAt: 1_700_000_000_000,
   };
-  // Post-U3 event: both shapes dual-written
-  const postU3Event = {
-    type: 'grammar.answer-submitted',
+  const preU3Attempt = { ...baseAttempt, supportLevel: 1 };
+  const postU3Attempt = {
+    ...baseAttempt,
     supportLevel: 1,
-    attempts: 1,
-    mode: 'smart',
     firstAttemptIndependent: false,
     supportUsed: 'faded',
     supportLevelAtScoring: 1,
-    supportContractVersion: 2,
   };
 
-  // A replayer-side projection would use deriveAttemptSupport on the legacy event
-  // and read the new fields directly from the post-U3 event.
-  const preU3Projected = deriveAttemptSupport({
-    mode: preU3Event.mode,
-    supportLevel: preU3Event.supportLevel,
-    attempts: preU3Event.attempts,
-  });
-  const postU3Projected = {
-    firstAttemptIndependent: postU3Event.firstAttemptIndependent,
-    supportUsed: postU3Event.supportUsed,
-    supportLevelAtScoring: postU3Event.supportLevelAtScoring,
-  };
+  const preU3Normalised = normaliseServerGrammarData({
+    contentReleaseId: baseAttempt.contentReleaseId,
+    recentAttempts: [preU3Attempt],
+  }).recentAttempts[0];
+  const postU3Normalised = normaliseServerGrammarData({
+    contentReleaseId: baseAttempt.contentReleaseId,
+    recentAttempts: [postU3Attempt],
+  }).recentAttempts[0];
 
-  assert.deepEqual(preU3Projected, postU3Projected,
-    'Pre-U3 and post-U3 events must project to identical new-field triples for the same semantic case.');
+  // The three U3 authoritative fields must agree.
+  assert.equal(preU3Normalised.firstAttemptIndependent, postU3Normalised.firstAttemptIndependent);
+  assert.equal(preU3Normalised.supportUsed, postU3Normalised.supportUsed);
+  assert.equal(preU3Normalised.supportLevelAtScoring, postU3Normalised.supportLevelAtScoring);
+  assert.equal(preU3Normalised.supportUsed, 'faded');
+  assert.equal(preU3Normalised.supportLevelAtScoring, 1);
 });

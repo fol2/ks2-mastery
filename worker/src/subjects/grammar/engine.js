@@ -964,6 +964,7 @@ function startSession(state, payload, nowTs, learnerId) {
       currentItem: questions[0]?.item || null,
       attemptsForCurrent: 0,
       supportLevel: 0,
+      supportContractVersion: SUPPORT_CONTRACT_VERSION,
       goal: sessionGoal,
       repair: {
         retryingCurrent: false,
@@ -1189,6 +1190,7 @@ function finishMiniTest(state, nowTs, command, { timedOut = false } = {}) {
         attempts: 1,
         requestId: `${command.requestId || 'mini-test'}.${index + 1}`,
         now: nowTs,
+        mode: state?.session?.mode || 'satsset',
       });
       entry.marked = {
         response: cloneSerialisable(applied.response) || {},
