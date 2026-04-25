@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   bellstormSceneForPhase,
+  composeIsDisabled,
   currentItemInstruction,
   punctuationPhaseLabel,
 } from './punctuation-view-model.js';
@@ -11,22 +12,6 @@ function learnerName(appState, learnerId) {
 
 function newlineTextStyle(value) {
   return String(value || '').includes('\n') ? { whiteSpace: 'pre-wrap' } : undefined;
-}
-
-// Composite disable signal shared across Setup, ActiveItem, and Feedback
-// views. Mutation controls (start, submit, continue, skip, end) must pause
-// whenever a command is in flight, the runtime is degraded/unavailable, or
-// the platform has flipped the subject read-only. The adapter layer
-// (subject-command-client) is the authoritative dedupe; the UI signal is
-// the visual echo.
-function composeIsDisabled(ui) {
-  const availabilityStatus = ui?.availability?.status || 'ready';
-  const runtimeReadOnly = Boolean(ui?.runtime?.readOnly);
-  const pending = Boolean(ui?.pendingCommand);
-  return pending
-    || runtimeReadOnly
-    || availabilityStatus === 'degraded'
-    || availabilityStatus === 'unavailable';
 }
 
 function SetupView({ learner, stats, ui, actions }) {
