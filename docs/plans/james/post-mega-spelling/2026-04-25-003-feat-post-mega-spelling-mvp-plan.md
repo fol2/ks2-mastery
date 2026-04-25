@@ -34,11 +34,11 @@ Science rationale carried from origin: retrieval practice (Learning Scientists) 
 - R2. A new read-model selector `getSpellingPostMasteryState` exposes `allWordsMega`, `guardianDueCount`, `wobblingCount`, `recommendedWords`, `nextGuardianDueDay` — computed from the current `data.progress` + `data.guardian` maps, never replayed from events. (See origin: "Phase 1")
 - R3. Each secured word has a **sibling `guardian` record** alongside its `progress` record, with schedule fields: `reviewLevel` (0-5), `lastReviewedDay`, `nextDueDay`, `correctStreak`, `lapses`, `renewals`, `wobbling`. Guardian records are created lazily the first time a word crosses into `stage >= 4`. (See origin: "Phase 2")
 - R4. A new spelling mode `guardian` is available in `SPELLING_MODES`. Round selection prioritises wobbling-due → oldest-due → small random long-not-seen Mega word. Round size is 5-8 words (10-12 when boss mission lands in P2). (See origin: "Phase 3")
-- R5. Four new domain events are emitted by the spelling service: `spelling.guardian.renewed`, `spelling.guardian.wobbled`, `spelling.guardian.recovered`, `spelling.guardian.missionCompleted`. Guardian events travel through the existing platform runtime and are available to reward subscribers without coupling the spelling service to reward code. (See origin: "Phase 4")
+- R5. Four new domain events are emitted by the spelling service: `spelling.guardian.renewed`, `spelling.guardian.wobbled`, `spelling.guardian.recovered`, `spelling.guardian.mission-completed`. Guardian events travel through the existing platform runtime and are available to reward subscribers without coupling the spelling service to reward code. (See origin: "Phase 4")
 - R6. The spelling summary scene shows Guardian-specific cards when the completed round had `mode === 'guardian'`: words renewed, words wobbling, next Guardian check (relative day). Regular-mode summaries are unchanged. (See origin: "Phase 5")
 - R7. The Word Bank gains four new filter IDs: `guardianDue`, `wobbling`, `renewedRecently`, `neverRenewed`. Existing filters (`all` / `due` / `weak` / `learning` / `secure` / `unseen`) remain behaviourally unchanged. (See origin: "Phase 6")
 - R8. Guardian scheduling is: first success → due in **3 days**, then 7 → 14 → 30 → 60 → 90 days. A miss marks `wobbling: true` and sets `nextDueDay = todayDay() + 1`; a second consecutive miss keeps wobbling and returns in 1 day. Guardian never mutates `progress.stage` or `progress.dueDay`. (See origin: "Phase 2")
-- R9. Guardian Mission is a **regular** (non-practiceOnly) session: it emits `SPELLING_EVENT_TYPES.SESSION_COMPLETED` for streak/analytics parity, *and* emits `spelling.guardian.missionCompleted` with Guardian-specific metadata. (Resolved during planning — see Open Questions.)
+- R9. Guardian Mission is a **regular** (non-practiceOnly) session: it emits `SPELLING_EVENT_TYPES.SESSION_COMPLETED` for streak/analytics parity, *and* emits `spelling.guardian.mission-completed` with Guardian-specific metadata. (Resolved during planning — see Open Questions.)
 - R10. A new keyboard shortcut **Alt+4** starts a Guardian Mission when `allWordsMega === true` (gated). Alt+1/2/3 continue to map to smart/trouble/test. (Resolved during planning — see Open Questions.)
 
 **Origin actors:** no A-IDs in origin; implied actors — `Learner` (post-Mega KS2 child), `Parent/Teacher` (reads summaries/codex), `Reward Subscriber` (monster system, toast overlay).
@@ -188,7 +188,7 @@ sequenceDiagram
     Module->>Events: publish events
     loop last card
         Service->>Service: finalise summary (mode=guardian)
-        Service-->>Module: { events: [session-completed, guardian.missionCompleted] }
+        Service-->>Module: { events: [session-completed, guardian.mission-completed] }
     end
     Module->>Repo: persist { prefs, progress, guardian }
     Repo-->>Engine: next command reads updated guardian map
@@ -289,7 +289,7 @@ data.guardian[slug] = {
   - `GUARDIAN_RENEWED: 'spelling.guardian.renewed'`
   - `GUARDIAN_WOBBLED: 'spelling.guardian.wobbled'`
   - `GUARDIAN_RECOVERED: 'spelling.guardian.recovered'`
-  - `GUARDIAN_MISSION_COMPLETED: 'spelling.guardian.missionCompleted'`
+  - `GUARDIAN_MISSION_COMPLETED: 'spelling.guardian.mission-completed'`
 - Add 4 factory functions mirroring `createSpellingWordSecuredEvent`. Each enriches with `wordFields(slug, wordMeta)` + `baseSpellingEvent` (session, learnerId, createdAt, dedupe id parts).
 - Mission-completed factory does not carry a slug — its id parts are `[learnerId, sessionId]` + a `renewalCount` / `wobbledCount` payload.
 
@@ -313,7 +313,7 @@ data.guardian[slug] = {
 
 - U3. **Guardian selection + scheduler in shared service**
 
-**Goal:** Pure logic that picks the 5-8 words for a Guardian round and updates a guardian record after each answer. No UI, no events wiring yet — those come in U4.
+**Goal:** Pure logic that picks the 5-8 words for a Guardian round and updates a guardian record after each answer. Events are emitted by this unit (service-level); no UI surfaces or reward subscribers are wired here — those come in U5/U6 and are explicitly deferred to `post-mega-spelling-p2+` respectively.
 
 **Requirements:** R3, R4, R8
 
