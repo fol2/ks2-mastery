@@ -364,7 +364,7 @@ tests/
 
 ---
 
-- [ ] U7. **Expand Transfer Validators And Evidence**
+- [x] U7. **Expand Transfer Validators And Evidence**
 
 **Goal:** Bring the current constrained transfer work closer to the legacy breadth without pretending to judge unconstrained writing.
 
