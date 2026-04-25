@@ -107,21 +107,45 @@ function DashboardKpiPanel({ model, actions }) {
   const mutationReceipts = kpis.mutationReceipts || {};
   const errorEvents = kpis.errorEvents || {};
   const byStatus = errorEvents.byStatus || {};
+  const byOrigin = errorEvents.byOrigin || {};
   const accountOpsUpdates = kpis.accountOpsUpdates || {};
-  const items = [
-    ['Adult accounts', accounts.total],
-    ['Learners', learners.total],
+
+  // P1.5 Phase A (U3): real vs demo split — each counter that can be split
+  // by account type renders both sides with a neutral "Real / Demo"
+  // grouping. A `—` placeholder appears where the demo field is absent
+  // from the payload so the distinction between "0 demos" (known zero)
+  // and "demo field not emitted by this server" stays readable. Additive
+  // contract: `accounts.total` remains the legacy real-account count so
+  // older clients keep working; the new `accounts.real` / `accounts.demo`
+  // siblings are strictly additive.
+  const realDemoRows = [
+    ['Adult accounts (real)', accounts.real ?? accounts.total, accounts.demo],
+    ['Learners', learners.real ?? learners.total, learners.demo],
+    ['Practice sessions (7d)', practiceSessions.real?.last7d ?? practiceSessions.last7d, practiceSessions.demo?.last7d],
+    ['Practice sessions (30d)', practiceSessions.real?.last30d ?? practiceSessions.last30d, practiceSessions.demo?.last30d],
+    ['Mutation receipts (7d)', mutationReceipts.real?.last7d ?? mutationReceipts.last7d, mutationReceipts.demo?.last7d],
+  ];
+  const otherRows = [
     ['Active demo accounts', demos.active],
-    ['Practice sessions (7d)', practiceSessions.last7d],
-    ['Practice sessions (30d)', practiceSessions.last30d],
     ['Event log (7d)', eventLog.last7d],
-    ['Mutation receipts (7d)', mutationReceipts.last7d],
     ['Errors: open', byStatus.open],
     ['Errors: investigating', byStatus.investigating],
     ['Errors: resolved', byStatus.resolved],
     ['Errors: ignored', byStatus.ignored],
+    ['Errors: client-origin', byOrigin.client],
+    ['Errors: server-origin', byOrigin.server],
     ['Account ops updates', accountOpsUpdates.total],
   ];
+  const renderRealDemo = (label, realValue, demoValue) => (
+    <div className="skill-row" key={label}>
+      <div><strong>{label}</strong></div>
+      <div>
+        <span data-kpi-role="real">{String(Number(realValue) || 0)}</span>
+        {' / '}
+        <span data-kpi-role="demo">{demoValue == null ? '—' : String(Number(demoValue) || 0)}</span>
+      </div>
+    </div>
+  );
   return (
     <section className="card" style={{ marginBottom: 20 }}>
       <PanelHeader
@@ -132,10 +156,11 @@ function DashboardKpiPanel({ model, actions }) {
         onRefresh={() => actions.dispatch('admin-ops-kpi-refresh')}
       />
       <div className="skill-list">
-        {items.map(([label, value]) => (
+        {realDemoRows.map(([label, realValue, demoValue]) => renderRealDemo(label, realValue, demoValue))}
+        {otherRows.map(([label, value]) => (
           <div className="skill-row" key={label}>
             <div><strong>{label}</strong></div>
-            <div>{String(Number(value) || 0)}</div>
+            <div>{value == null ? '—' : String(Number(value) || 0)}</div>
           </div>
         ))}
       </div>
