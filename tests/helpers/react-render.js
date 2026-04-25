@@ -92,6 +92,53 @@ export function renderSharedSurfaceFixture() {
   `);
 }
 
+export function renderMonsterRenderFixture({
+  monster,
+  context = 'card',
+  effects = [],
+  reducedMotion = false,
+  sizes,
+  registrations = '',
+} = {}) {
+  // `registrations` is a JS source snippet that runs before render so
+  // tests can register inline test-only effects (with custom render /
+  // applyTransform) without us having to invent a serialisation format
+  // for functions.
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { MonsterRender } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/MonsterRender.jsx'))};
+    import { defineEffect } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/define-effect.js'))};
+    import { registerEffect, resetRegistry } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/registry.js'))};
+    import { resetWarnOnce, setDevMode, __setWarnSink } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/composition.js'))};
+
+    resetRegistry();
+    resetWarnOnce();
+    setDevMode(true);
+    const __warnings = [];
+    __setWarnSink((key, message) => { __warnings.push({ key, message }); });
+
+    ${registrations}
+
+    const monster = ${JSON.stringify(monster)};
+    const effects = ${JSON.stringify(effects)};
+    const sizes = ${JSON.stringify(sizes != null ? sizes : null)};
+    const reducedMotion = ${reducedMotion ? 'true' : 'false'};
+    const html = renderToStaticMarkup(
+      <MonsterRender
+        monster={monster}
+        context=${JSON.stringify(context)}
+        effects={effects}
+        reducedMotion={reducedMotion}
+        sizes={sizes}
+      />
+    );
+    // Emit a structured payload so tests can assert on dev-warns alongside
+    // the rendered HTML in a single execFile round-trip.
+    process.stdout.write(JSON.stringify({ html, warnings: __warnings }));
+  `);
+}
+
 export function renderMonsterCelebrationOverlayFixture() {
   return renderFixture(`
     import React from 'react';

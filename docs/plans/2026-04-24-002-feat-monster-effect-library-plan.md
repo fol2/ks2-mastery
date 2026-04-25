@@ -217,7 +217,7 @@ playCelebration(spec) -> store.pushCelebration(spec)
 
 ---
 
-- [ ] U2. **`<MonsterRender>` declarative React component**
+- [x] U2. **`<MonsterRender>` declarative React component**
 
 **Goal:** A single React component that consumes the composition pipeline and renders a monster with its persistent + continuous effects layered correctly. No mastery logic; no event subscription.
 
