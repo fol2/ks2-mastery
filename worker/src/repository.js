@@ -32,6 +32,12 @@ import { buildAdminHubReadModel } from '../../src/platform/hubs/admin-read-model
 import { buildParentHubReadModel } from '../../src/platform/hubs/parent-read-model.js';
 import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system.js';
 import { buildSpellingProgressPools, buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
+import {
+  emptyLearnerReadModel,
+  normaliseActivityFeedRow,
+  normaliseLearnerReadModelRow,
+  normaliseReadModelKey,
+} from './read-models/learner-read-models.js';
 import { buildSpellingAudioCue } from './subjects/spelling/audio.js';
 import { buildPunctuationReadModel } from './subjects/punctuation/read-models.js';
 import { createPunctuationService } from '../../shared/punctuation/service.js';
@@ -1285,6 +1291,106 @@ async function readParentRecentSessions(db, accountId, {
   };
 }
 
+async function upsertLearnerReadModel(db, learnerId, modelKey, model, {
+  sourceRevision = 0,
+  generatedAt = Date.now(),
+} = {}) {
+  const key = normaliseReadModelKey(modelKey);
+  const timestamp = Math.max(0, Number(generatedAt) || Date.now());
+  await run(db, `
+    INSERT INTO learner_read_models (learner_id, model_key, model_json, source_revision, generated_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(learner_id, model_key) DO UPDATE SET
+      model_json = excluded.model_json,
+      source_revision = excluded.source_revision,
+      generated_at = excluded.generated_at,
+      updated_at = excluded.updated_at
+  `, [
+    learnerId,
+    key,
+    JSON.stringify(cloneSerialisable(model) || {}),
+    Math.max(0, Number(sourceRevision) || 0),
+    timestamp,
+    timestamp,
+  ]);
+  return readLearnerReadModel(db, learnerId, key);
+}
+
+async function readLearnerReadModel(db, learnerId, modelKey) {
+  const key = normaliseReadModelKey(modelKey);
+  const row = await first(db, `
+    SELECT learner_id, model_key, model_json, source_revision, generated_at, updated_at
+    FROM learner_read_models
+    WHERE learner_id = ? AND model_key = ?
+  `, [learnerId, key]);
+  return row ? normaliseLearnerReadModelRow(row, key) : emptyLearnerReadModel(key);
+}
+
+async function upsertLearnerActivityFeedRows(db, activityRows = []) {
+  let written = 0;
+  for (const row of activityRows) {
+    if (!row?.id || !row?.learnerId || !row?.activityType || !row?.activity) continue;
+    const result = await run(db, `
+      INSERT INTO learner_activity_feed (
+        id, learner_id, subject_id, activity_type, activity_json,
+        source_event_id, created_at, updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        learner_id = excluded.learner_id,
+        subject_id = excluded.subject_id,
+        activity_type = excluded.activity_type,
+        activity_json = excluded.activity_json,
+        source_event_id = excluded.source_event_id,
+        created_at = excluded.created_at,
+        updated_at = excluded.updated_at
+    `, [
+      row.id,
+      row.learnerId,
+      row.subjectId || null,
+      row.activityType,
+      JSON.stringify(cloneSerialisable(row.activity) || {}),
+      row.sourceEventId || null,
+      Math.max(0, Number(row.createdAt) || 0),
+      Math.max(0, Number(row.updatedAt) || Date.now()),
+    ]);
+    written += Math.max(0, Number(result?.meta?.rows_written ?? result?.meta?.changes) || 0);
+  }
+  return { count: written };
+}
+
+async function readLearnerActivityFeed(db, learnerId, {
+  limit = null,
+  cursor = null,
+} = {}) {
+  const resolvedLimit = normaliseHistoryLimit(limit);
+  const decodedCursor = decodeHistoryCursor(cursor);
+  const cursorClause = decodedCursor
+    ? 'AND (created_at < ? OR (created_at = ? AND id < ?))'
+    : '';
+  const cursorParams = decodedCursor
+    ? [decodedCursor.timestamp, decodedCursor.timestamp, decodedCursor.id]
+    : [];
+  const rows = await all(db, `
+    SELECT id, learner_id, subject_id, activity_type, activity_json, source_event_id, created_at, updated_at
+    FROM learner_activity_feed
+    WHERE learner_id = ?
+      ${cursorClause}
+    ORDER BY created_at DESC, id DESC
+    LIMIT ?
+  `, [learnerId, ...cursorParams, resolvedLimit + 1]);
+  const page = pageFromRows(rows, resolvedLimit, 'created_at');
+  const feedRowCount = rows.length
+    ? rows.length
+    : Number(await scalar(db, 'SELECT COUNT(*) AS count FROM learner_activity_feed WHERE learner_id = ?', [learnerId], 'count') || 0);
+  return {
+    learnerId,
+    activities: page.rows.map(normaliseActivityFeedRow).filter(Boolean),
+    page: page.page,
+    hasFeedRows: feedRowCount > 0,
+  };
+}
+
 async function readParentActivity(db, accountId, {
   learnerId = null,
   limit = null,
@@ -1292,6 +1398,19 @@ async function readParentActivity(db, accountId, {
 } = {}) {
   const access = await resolveParentHistoryAccess(db, accountId, learnerId);
   const resolvedLimit = normaliseHistoryLimit(limit);
+  const feed = await readLearnerActivityFeed(db, access.learnerId, {
+    limit: resolvedLimit,
+    cursor,
+  });
+  if (feed.hasFeedRows) {
+    return {
+      learnerId: access.learnerId,
+      activity: feed.activities.map((entry) => entry.activity),
+      page: feed.page,
+      source: 'learner_activity_feed',
+    };
+  }
+
   const decodedCursor = decodeHistoryCursor(cursor);
   const eventTypes = [...PUBLIC_EVENT_TYPES];
   const eventTypePlaceholders = sqlPlaceholders(eventTypes.length);
@@ -1315,6 +1434,7 @@ async function readParentActivity(db, accountId, {
     learnerId: access.learnerId,
     activity: page.rows.map(publicEventRowToRecord).filter(Boolean),
     page: page.page,
+    source: 'event_log',
   };
 }
 
@@ -3578,6 +3698,18 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
     },
     async readParentActivity(accountId, options = {}) {
       return readParentActivity(db, accountId, options);
+    },
+    async upsertLearnerReadModel(learnerId, modelKey, model, options = {}) {
+      return upsertLearnerReadModel(db, learnerId, modelKey, model, options);
+    },
+    async readLearnerReadModel(learnerId, modelKey) {
+      return readLearnerReadModel(db, learnerId, modelKey);
+    },
+    async upsertLearnerActivityFeedRows(rows = []) {
+      return upsertLearnerActivityFeedRows(db, rows);
+    },
+    async readLearnerActivityFeed(learnerId, options = {}) {
+      return readLearnerActivityFeed(db, learnerId, options);
     },
     async writeSubjectContent(accountId, subjectId = 'spelling', rawContent, mutation = {}) {
       const nowTs = nowFactory();

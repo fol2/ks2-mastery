@@ -142,15 +142,26 @@ test('parent activity route returns public event rows only', async () => {
 
   const response = await server.fetchAs(
     'adult-parent',
-    `${BASE_URL}/api/hubs/parent/activity?learnerId=learner-history&limit=5`,
+    `${BASE_URL}/api/hubs/parent/activity?learnerId=learner-history&limit=1`,
   );
   const payload = await response.json();
 
   assert.equal(response.status, 200);
-  assert.deepEqual(payload.activity.map((event) => event.type), ['spelling.word-secured', 'spelling.word-secured']);
+  assert.equal(payload.source, 'event_log');
+  assert.deepEqual(payload.activity.map((event) => event.createdAt), [NOW + 3]);
   assert.equal(payload.activity.some((event) => event.id === 'event-private'), false);
   assert.equal(JSON.stringify(payload).includes('secret-prompt-sentence'), false);
-  assert.equal(payload.page.hasMore, false);
+  assert.equal(payload.page.hasMore, true);
+
+  const secondResponse = await server.fetchAs(
+    'adult-parent',
+    `${BASE_URL}/api/hubs/parent/activity?learnerId=learner-history&limit=1&cursor=${encodeURIComponent(payload.page.nextCursor)}`,
+  );
+  const secondPayload = await secondResponse.json();
+
+  assert.equal(secondResponse.status, 200);
+  assert.equal(secondPayload.source, 'event_log');
+  assert.deepEqual(secondPayload.activity.map((event) => event.createdAt), [NOW + 1]);
 
   server.close();
 });
