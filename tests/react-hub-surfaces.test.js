@@ -46,4 +46,34 @@ test('React Admin Operations surface renders content, audit, account roles, and 
   assert.match(html, /punctuation-r4-full-14-skill-structure/);
   assert.match(html, /Open Punctuation analytics/);
   assert.match(html, /Choose the correct sentence/);
+
+  // U4: Dashboard KPI panel
+  assert.match(html, /Dashboard overview/);
+  assert.match(html, /Adult accounts/);
+  assert.match(html, /Practice sessions \(7d\)/);
+
+  // U4: Recent operations activity panel
+  assert.match(html, /Recent operations activity/);
+  assert.match(html, /admin\.account\.role-set/);
+
+  // U4: Account ops metadata panel (read-only)
+  assert.match(html, /Account ops metadata/);
+  assert.match(html, /ops-meta@example\.com/);
+  assert.match(html, /demo notes/);
+
+  // U4: Error log centre panel (read-only)
+  assert.match(html, /Error log centre/);
+  assert.match(html, /TypeError/);
+  assert.match(html, /x is undefined/);
+
+  // U4: no mutation controls in account ops metadata panel (edit inputs land in U5).
+  // Assert the panel region does not carry known U5 mutation-surface form tags.
+  const opsMetaStart = html.indexOf('Account ops metadata');
+  assert.ok(opsMetaStart >= 0, 'Account ops metadata panel must render');
+  const opsMetaEnd = html.indexOf('Error log centre', opsMetaStart);
+  assert.ok(opsMetaEnd > opsMetaStart, 'Error log centre panel must render after account ops metadata');
+  const opsMetaRegion = html.slice(opsMetaStart, opsMetaEnd);
+  assert.doesNotMatch(opsMetaRegion, /<input\b/);
+  assert.doesNotMatch(opsMetaRegion, /<select\b/);
+  assert.doesNotMatch(opsMetaRegion, /<textarea\b/);
 });
