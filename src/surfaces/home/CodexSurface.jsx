@@ -18,6 +18,10 @@ export function CodexSurface({ model, actions }) {
   const heroBg = useMemo(() => randomHeroBackground(), [model.learner?.id]);
   const entries = useMemo(() => buildCodexEntries(model.monsterSummary || []), [model.monsterSummary]);
   const subjectGroups = useMemo(() => buildCodexSubjectGroups(entries), [entries]);
+  const presentSubjectIds = useMemo(
+    () => subjectGroups.map((group) => group.subjectId),
+    [subjectGroups],
+  );
   const presentSubjects = useMemo(
     () => subjectGroups.map((group) => group.subjectName),
     [subjectGroups],
@@ -58,7 +62,7 @@ export function CodexSurface({ model, actions }) {
         <CodexHero
           featured={featured}
           heroBg={heroBg}
-          presentSubjects={presentSubjects}
+          presentSubjectIds={presentSubjectIds}
           learnerName={model.learner?.name || ''}
           onNavigateHome={actions.navigateHome}
           onPreviewCreature={setPreviewEntry}

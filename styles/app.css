@@ -3423,9 +3423,6 @@ textarea:focus-visible {
   display: grid;
   gap: 16px;
 }
-.codex-subject-section.is-mastered .codex-subject-glyph::before {
-  opacity: 1;
-}
 .codex-subject-head {
   margin: 0;
   font-weight: inherit;

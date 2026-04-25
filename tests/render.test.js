@@ -388,9 +388,69 @@ test('codex hero uses the highest-priority unknown creature for a fresh profile'
   ]);
   const featured = pickFeaturedCodexEntry(entries);
 
-  // After uncaught synthesis includes Punctuation + Grammar rosters, the highest-rank
-  // legendary across all subjects becomes Concordium (Grammar grand) at power 18.
-  assert.equal(featured.id, 'concordium');
+  // Synthesised punctuation/grammar entries also land in the roster, but
+  // pickFeaturedCodexEntry tie-breaks by subject priority for uncaught learners
+  // so spelling stays the on-ramp; vellhorn wins as highest spelling rank.
+  assert.equal(featured.id, 'vellhorn');
   assert.equal(featured.displayState, 'fresh');
   assert.equal(featured.placeholder, '?');
+});
+
+test('codex synthesises uncaught entries for every registered subject monster', async () => {
+  const { buildCodexEntries } = await import('../src/surfaces/home/data.js');
+  const entries = buildCodexEntries([
+    { monster: MONSTERS.inklet, progress: { caught: true, mastered: 4, stage: 0, level: 0, branch: 'b1' } },
+  ]);
+
+  const ids = entries.map((entry) => entry.id);
+  assert.equal(entries.length, 18, 'expected full 4 spelling + 7 punctuation + 7 grammar roster');
+  assert.ok(ids.includes('bracehart'), 'grammar lead synthesised');
+  assert.ok(ids.includes('concordium'), 'grammar legendary synthesised');
+  assert.ok(ids.includes('pealark'), 'punctuation lead synthesised');
+
+  const grammarEgg = entries.find((entry) => entry.id === 'bracehart');
+  assert.equal(grammarEgg.caught, false);
+  assert.equal(grammarEgg.displayState, 'fresh');
+  assert.equal(grammarEgg.subjectId, 'grammar');
+  assert.equal(grammarEgg.secureLabel, 'No secure units yet');
+  assert.equal(grammarEgg.wordBand, 'Sentence and clause');
+  assert.equal(grammarEgg.nextGoal, 'Secure grammar units to catch this creature');
+});
+
+test('codex subject groups arrive in spelling → punctuation → grammar order with totals', async () => {
+  const { buildCodexEntries, buildCodexSubjectGroups } = await import('../src/surfaces/home/data.js');
+  const entries = buildCodexEntries([
+    { monster: MONSTERS.inklet, progress: { caught: true, mastered: 4, stage: 1, level: 1, branch: 'b1' } },
+    { monster: MONSTERS.glimmerbug, progress: { caught: true, mastered: 1, stage: 0, level: 0, branch: 'b2' } },
+  ]);
+  const groups = buildCodexSubjectGroups(entries);
+
+  assert.deepEqual(
+    groups.map((group) => group.subjectId),
+    ['spelling', 'punctuation', 'grammar'],
+  );
+
+  const spelling = groups.find((group) => group.subjectId === 'spelling');
+  assert.equal(spelling.subjectName, 'Spelling');
+  assert.equal(spelling.entries.length, 4);
+  assert.equal(spelling.totals.caught, 2);
+  assert.equal(spelling.totals.total, 4);
+  assert.equal(spelling.status, 'in-progress');
+
+  const grammar = groups.find((group) => group.subjectId === 'grammar');
+  assert.equal(grammar.entries.length, 7);
+  assert.equal(grammar.totals.caught, 0);
+  assert.equal(grammar.status, 'unstarted');
+});
+
+test('formatSubjectList honours Oxford comma for three or more items', async () => {
+  const { formatSubjectList } = await import('../src/surfaces/home/data.js');
+
+  assert.equal(formatSubjectList([]), '');
+  assert.equal(formatSubjectList(['Spelling']), 'Spelling');
+  assert.equal(formatSubjectList(['Spelling', 'Punctuation']), 'Spelling and Punctuation');
+  assert.equal(
+    formatSubjectList(['Spelling', 'Punctuation', 'Grammar']),
+    'Spelling, Punctuation, and Grammar',
+  );
 });

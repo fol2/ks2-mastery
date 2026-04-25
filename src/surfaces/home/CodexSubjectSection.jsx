@@ -49,7 +49,7 @@ export function CodexSubjectSection({ group, onPractice, onPreview, defaultOpen 
       <div
         id={contentId}
         className="codex-subject-content"
-        aria-hidden={!open}
+        {...(open ? {} : { inert: '' })}
       >
         <div className="codex-subject-content-inner">
           <div className="codex-roster" aria-label={`${subjectName} monster roster`}>

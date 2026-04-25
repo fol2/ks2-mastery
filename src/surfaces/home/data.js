@@ -47,6 +47,15 @@ const SUBJECT_NAMES = Object.freeze({
   reading: 'Reading',
 });
 
+const SUBJECT_MONSTER_NOUNS = Object.freeze({
+  spelling: 'spellings',
+  punctuation: 'punctuation units',
+  grammar: 'grammar units',
+  reading: 'reading evidence',
+  arithmetic: 'arithmetic units',
+  reasoning: 'reasoning units',
+});
+
 export const REGION_BACKGROUND_URLS = Object.freeze([
   '/assets/regions/the-scribe-downs/the-scribe-downs-a1.1280.webp',
   '/assets/regions/the-scribe-downs/the-scribe-downs-a2.1280.webp',
@@ -718,6 +727,10 @@ export function subjectName(subjectId) {
   return SUBJECT_NAMES[subjectId] || subjectId;
 }
 
+export function subjectMonsterNoun(subjectId) {
+  return SUBJECT_MONSTER_NOUNS[subjectId] || subjectName(subjectId).toLowerCase();
+}
+
 export function formatSubjectList(names = []) {
   if (!names.length) return '';
   if (names.length === 1) return names[0];
@@ -747,6 +760,13 @@ export function pickFeaturedCodexEntry(entries = []) {
       if (left.caught !== right.caught) return left.caught ? -1 : 1;
       if (left.level !== right.level) return right.level - left.level;
 
+      // Fresh learners (nothing caught) deserve a familiar on-ramp before they
+      // see grammar/punctuation legendaries. Use subject priority first.
+      if (!left.caught) {
+        const subjectDifference = subjectPriority(left.subjectId) - subjectPriority(right.subjectId);
+        if (subjectDifference) return subjectDifference;
+      }
+
       const powerDifference = codexPowerRank(right.id) - codexPowerRank(left.id);
       if (powerDifference) return powerDifference;
 
@@ -757,6 +777,11 @@ export function pickFeaturedCodexEntry(entries = []) {
 
 function codexPowerRank(monsterId) {
   return CODEX_POWER_RANK[monsterId] || 0;
+}
+
+function subjectPriority(subjectId) {
+  const idx = Object.keys(MONSTERS_BY_SUBJECT).indexOf(subjectId);
+  return idx === -1 ? 999 : idx;
 }
 
 function secureProgressLabel(subjectId, mastered) {
