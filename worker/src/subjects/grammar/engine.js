@@ -3,6 +3,7 @@ import {
   normalisePracticeSessionRecord,
 } from '../../../../src/platform/core/repositories/helpers.js';
 import { BadRequestError, NotFoundError } from '../../errors.js';
+import { compileGrammarAiEnrichment } from './ai-enrichment.js';
 import {
   createGrammarQuestion,
   evaluateGrammarQuestion,
@@ -951,6 +952,14 @@ function savePrefs(state, payload) {
   return [];
 }
 
+function requestAiEnrichment(state, payload, nowTs) {
+  return compileGrammarAiEnrichment({
+    payload,
+    state,
+    now: nowTs,
+  });
+}
+
 function transition(state, { events = [], changed = true } = {}) {
   return {
     ok: true,
@@ -986,6 +995,8 @@ export function createServerGrammarEngine({ now = Date.now } = {}) {
         || subjectRecord.ui?.session?.serverAuthority === SERVER_AUTHORITY;
       const commandContext = { learnerId, requestId };
       let events = [];
+      let changed = true;
+      let aiEnrichment = null;
 
       if (command === 'start-session') {
         events = startSession(state, { ...payload, requestId }, nowTs, learnerId);
@@ -1003,6 +1014,9 @@ export function createServerGrammarEngine({ now = Date.now } = {}) {
         events = completeSession(state, nowTs, commandContext);
       } else if (command === 'save-prefs') {
         events = savePrefs(state, payload);
+      } else if (command === 'request-ai-enrichment') {
+        aiEnrichment = requestAiEnrichment(state, payload, nowTs);
+        changed = false;
       } else if (command === 'reset-learner') {
         state = createInitialGrammarState();
       } else {
@@ -1016,8 +1030,9 @@ export function createServerGrammarEngine({ now = Date.now } = {}) {
       state.serverAuthority = SERVER_AUTHORITY;
       if (state.session) state.session.serverAuthority = SERVER_AUTHORITY;
       return {
-        ...transition(state, { events }),
-        practiceSession: practiceSessionRecord(learnerId, state, latestSession, nowTs),
+        ...transition(state, { events, changed }),
+        aiEnrichment,
+        practiceSession: changed ? practiceSessionRecord(learnerId, state, latestSession, nowTs) : null,
       };
     },
   };

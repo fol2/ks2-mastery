@@ -6534,6 +6534,81 @@ textarea:focus-visible {
   line-height: 1.45;
 }
 
+.grammar-ai-enrichment {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #c9d4df;
+  border-radius: 8px;
+  background: #f6f9fc;
+  color: var(--ink);
+}
+
+.grammar-ai-enrichment.failed {
+  border-color: #e2b4a8;
+  background: #fff5f2;
+}
+
+.grammar-ai-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.grammar-ai-head strong {
+  font-size: 0.96rem;
+}
+
+.grammar-ai-enrichment p {
+  margin: 0;
+  line-height: 1.48;
+}
+
+.grammar-ai-points,
+.grammar-ai-notices {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.45;
+}
+
+.grammar-ai-notices {
+  color: var(--ink-2);
+}
+
+.grammar-ai-cards {
+  display: grid;
+  gap: 8px;
+}
+
+.grammar-ai-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(40, 54, 62, 0.12);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.grammar-ai-card span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.grammar-ai-card strong {
+  font-size: 0.95rem;
+}
+
+.grammar-ai-drills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .grammar-answer-form {
   display: grid;
   gap: 16px;

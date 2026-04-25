@@ -25,6 +25,7 @@ function readRuntime(repositories, learnerId) {
 }
 
 function writeRuntime(repositories, learnerId, result) {
+  if (result?.changed === false) return;
   if (result?.data) repositories.subjectStates.writeData(learnerId, SUBJECT_ID, result.data);
   if (result?.practiceSession) repositories.practiceSessions.write(result.practiceSession);
 }
@@ -37,6 +38,7 @@ function transitionFromResult(result, learnerId, now) {
       learnerId,
       state: result.state,
       now: timestamp(now),
+      aiEnrichment: result.aiEnrichment,
     }),
     events: Array.isArray(result?.events) ? result.events : [],
     audio: null,

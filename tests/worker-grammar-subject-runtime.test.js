@@ -858,6 +858,129 @@ test('Grammar command replay is idempotent and does not double-apply events', as
   DB.close();
 });
 
+test('Grammar AI enrichment returns non-scored deterministic drill suggestions without mutating mastery', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const enrichment = await postCommand(app, DB, {
+    command: 'request-ai-enrichment',
+    learnerId: 'learner-a',
+    requestId: 'grammar-ai-enrichment-valid',
+    expectedLearnerRevision: 0,
+    payload: {
+      kind: 'explanation',
+      conceptId: 'adverbials',
+      aiResponse: JSON.stringify({
+        title: 'Fronted adverbials',
+        explanation: 'A fronted adverbial comes before the main clause and usually takes a comma in KS2 writing.',
+        keyPoints: [
+          'Find the opener before the main clause.',
+          'Check whether the comma separates the opener cleanly.',
+        ],
+        revisionCards: [{
+          title: 'Comma check',
+          front: 'Find the fronted adverbial.',
+          back: 'Look before the first comma and test whether it tells when, where or how.',
+        }],
+        drills: [{ templateId: 'fronted_adverbial_choose' }],
+      }),
+    },
+  });
+
+  assert.equal(enrichment.response.status, 200, JSON.stringify(enrichment.body));
+  assert.equal(enrichment.body.changed, false);
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.status, 'ready');
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.nonScored, true);
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.concept.id, 'adverbials');
+  assert.deepEqual(enrichment.body.subjectReadModel.aiEnrichment.revisionDrills.map((drill) => drill.templateId), [
+    'fronted_adverbial_choose',
+  ]);
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.revisionDrills[0].deterministic, true);
+  assert.equal(enrichment.body.mutation.appliedRevision, 0);
+  assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 0);
+  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM child_subject_state WHERE subject_id = 'grammar'").get().count, 0);
+  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM event_log WHERE subject_id = 'grammar'").get().count, 0);
+
+  DB.close();
+});
+
+test('Grammar AI enrichment contains malformed output as a non-mutating read-model failure', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const enrichment = await postCommand(app, DB, {
+    command: 'request-ai-enrichment',
+    learnerId: 'learner-a',
+    requestId: 'grammar-ai-enrichment-malformed',
+    expectedLearnerRevision: 0,
+    payload: {
+      kind: 'revision-card',
+      aiResponse: '{"title":',
+    },
+  });
+
+  assert.equal(enrichment.response.status, 200, JSON.stringify(enrichment.body));
+  assert.equal(enrichment.body.changed, false);
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.status, 'failed');
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.error.code, 'grammar_ai_enrichment_malformed');
+  assert.equal(enrichment.body.mutation.appliedRevision, 0);
+  assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 0);
+  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM child_subject_state WHERE subject_id = 'grammar'").get().count, 0);
+
+  DB.close();
+});
+
+test('Grammar AI enrichment rejects score-bearing fields and unknown drill templates without mutation', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const scored = await postCommand(app, DB, {
+    command: 'request-ai-enrichment',
+    learnerId: 'learner-a',
+    requestId: 'grammar-ai-enrichment-scored',
+    expectedLearnerRevision: 0,
+    payload: {
+      kind: 'explanation',
+      aiResponse: {
+        title: 'Unsafe question',
+        questionText: 'Choose the correct adverbial.',
+        correctAnswer: 'After lunch,',
+      },
+    },
+  });
+
+  assert.equal(scored.response.status, 200, JSON.stringify(scored.body));
+  assert.equal(scored.body.changed, false);
+  assert.equal(scored.body.subjectReadModel.aiEnrichment.status, 'failed');
+  assert.equal(scored.body.subjectReadModel.aiEnrichment.error.code, 'grammar_ai_enrichment_score_bearing');
+
+  const invalidTemplate = await postCommand(app, DB, {
+    command: 'request-ai-enrichment',
+    learnerId: 'learner-a',
+    requestId: 'grammar-ai-enrichment-invalid-template',
+    expectedLearnerRevision: 0,
+    payload: {
+      kind: 'explanation',
+      aiResponse: {
+        explanation: 'Revise fronted adverbials with a reviewed deterministic drill.',
+        drills: [{ templateId: 'ai_authored_fronted_adverbial_question' }],
+      },
+    },
+  });
+
+  assert.equal(invalidTemplate.response.status, 200, JSON.stringify(invalidTemplate.body));
+  assert.equal(invalidTemplate.body.changed, false);
+  assert.equal(invalidTemplate.body.subjectReadModel.aiEnrichment.status, 'failed');
+  assert.equal(invalidTemplate.body.subjectReadModel.aiEnrichment.error.code, 'grammar_ai_enrichment_invalid_template');
+  assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 0);
+  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM child_subject_state WHERE subject_id = 'grammar'").get().count, 0);
+
+  DB.close();
+});
+
 test('Grammar unknown commands and future AI scoring commands fail closed', async () => {
   const DB = createMigratedSqliteD1Database();
   const app = createWorkerApp();

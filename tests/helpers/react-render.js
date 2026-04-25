@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -6,6 +7,13 @@ import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+
+function nodePaths() {
+  return [
+    path.join(rootDir, 'node_modules'),
+    ...String(process.env.NODE_PATH || '').split(path.delimiter),
+  ].filter((entry) => entry && existsSync(entry));
+}
 
 async function renderFixture(entrySource) {
   const tmpDir = await mkdtemp(path.join(tmpdir(), 'ks2-react-render-'));
@@ -24,7 +32,7 @@ async function renderFixture(entrySource) {
       jsx: 'automatic',
       jsxImportSource: 'react',
       loader: { '.js': 'jsx' },
-      nodePaths: [path.join(rootDir, 'node_modules')],
+      nodePaths: nodePaths(),
       logLevel: 'silent',
     });
     return execFileSync(process.execPath, [bundlePath], {

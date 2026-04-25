@@ -32,13 +32,14 @@ Current Grammar state:
 - [x] All seven Grammar monsters are wired as derived reward progress from secured Grammar evidence.
 - [x] Enabled Grammar modes cover learn, smart mixed review, KS2-style mini-set, weak concepts drill, sentence surgery, sentence builder, worked examples, and faded guidance.
 - [x] Strict KS2-style mini-set mode remains unsupported by pre-answer worked/faded guidance.
+- [x] AI enrichment now has a non-scored Worker safe lane that validates server-side enrichment output and only permits reviewed deterministic drill ids.
 - [x] Production smoke exists as `npm run smoke:production:grammar`.
 
 Open Grammar follow-up scope:
 
-- [ ] Add the optional AI enrichment safe lane for explanations, revision cards, and parent-summary drafts; AI must remain non-scored and server-side.
 - [ ] Add transfer and Bellstorm bridge placeholders without collapsing Grammar and Punctuation product identities.
 - [ ] Decide later whether paragraph-level transfer becomes non-scored, teacher-reviewed, or a separate deterministic workflow.
+- [ ] Decide whether to connect a live AI provider to the safe lane; provider keys must stay server-side and output must pass the existing validator.
 - [ ] Continue to run `npm test`, `npm run check`, and Grammar production/UI smoke for each shipped Grammar slice.
 
 ---
@@ -689,7 +690,7 @@ sequenceDiagram
 **Verification:**
 - Full legacy practice modes are available through Worker-owned Grammar commands and covered by deterministic tests.
 
-- [ ] U8. **Add AI Enrichment Safe Lane**
+- [x] U8. **Add AI Enrichment Safe Lane**
 
 **Goal:** Restore the useful legacy AI lane without allowing AI to score, author production items, or bypass deterministic templates.
 

@@ -296,6 +296,13 @@ export const grammarModule = {
       return sendGrammarCommand(context, 'continue-session');
     }
 
+    if (action === 'grammar-request-ai-enrichment') {
+      const payload = context.data?.payload && typeof context.data.payload === 'object' && !Array.isArray(context.data.payload)
+        ? context.data.payload
+        : { kind: context.data?.kind || 'explanation' };
+      return sendGrammarCommand(context, 'request-ai-enrichment', payload);
+    }
+
     if (action === 'grammar-end-early') {
       if (context.data?.skipConfirm !== true && globalThis.confirm?.('End this Grammar session now?') === false) return true;
       if (service?.endSession) return applyLocalTransition(context, service.endSession(learnerId, ui));
