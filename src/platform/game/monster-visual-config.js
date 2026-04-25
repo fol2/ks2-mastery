@@ -1,5 +1,6 @@
 import { MONSTER_ASSET_MANIFEST } from './monster-asset-manifest.js';
 import { MONSTER_ASSET_VERSION } from './monsters.js';
+import { validateEffectConfig } from './render/effect-config-schema.js';
 
 export const MONSTER_VISUAL_SCHEMA_VERSION = 1;
 export const MONSTER_VISUAL_CONTEXTS = Object.freeze([
@@ -518,3 +519,37 @@ export function resolveMonsterVisual({
     sizes: sources.sizes,
   };
 }
+
+// Combined publish envelope: { visual, effect }. Existing visual-only
+// callers continue to use `validateMonsterVisualConfigForPublish`; this
+// orchestrator runs both validators and aggregates errors. A missing
+// `effect` is tolerated with a warning so the publish gate can run before
+// U5 lands the strict effect publish path.
+export function validatePublishedConfigEnvelope(envelope, options = {}) {
+  if (!isPlainObject(envelope)) {
+    return {
+      ok: false,
+      errors: [issue('published_config_envelope_required', 'Published config envelope is required.')],
+      warnings: [],
+    };
+  }
+  const visualResult = validateMonsterVisualConfigForPublish(envelope.visual, options);
+  const errors = [...visualResult.errors];
+  const warnings = [...(visualResult.warnings || [])];
+
+  if (envelope.effect == null) {
+    warnings.push(issue('published_config_effect_missing', 'Effect sub-document is missing — falling back to bundled defaults.', { field: 'effect' }));
+  } else {
+    const effectResult = validateEffectConfig(envelope.effect);
+    if (!effectResult.ok) {
+      errors.push(...effectResult.errors);
+    }
+  }
+
+  return {
+    ok: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+

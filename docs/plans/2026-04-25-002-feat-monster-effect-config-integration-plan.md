@@ -224,7 +224,7 @@ on app boot OR config change:
 
 ## Implementation Units
 
-- [ ] U1. **Effect config schema + bundled-defaults source**
+- [x] U1. **Effect config schema + bundled-defaults source**
 
 **Goal:** Define the `effect.catalog`, `effect.bindings`, and `effect.celebrationTunables` schemas as siblings to the existing visual schema, plus a bundled-defaults exporter that reads the eight code-registered effects and produces the seed catalog + a default bindings map matching today's automatic effects.
 
