@@ -325,6 +325,31 @@ function validateContext(assetKey, context, values, errors) {
   for (const field of ['anchorX', 'anchorY', 'cropX', 'cropY', 'cropWidth', 'cropHeight']) {
     validateUnitField(assetKey, context, field, values[field], errors);
   }
+
+  // Gate: the celebrationOverlay anchor is not yet propagated onto the
+  // inner `.monster-celebration-art` transform-origin. The egg-crack
+  // wobble and pop rules hard-pin `transform-origin: 50% 80%`, so any
+  // non-default anchor on this context would diverge the wrapper pivot
+  // from the art pivot and shift the sprite off-axis during the CRACK
+  // peak. Reject non-default anchors until the propagation follow-up
+  // lands. See docs/plans/2026-04-25-002-fix-celebration-sprite-centring-plan.md
+  // (Deferred to Follow-Up Work).
+  if (context === 'celebrationOverlay') {
+    if ('anchorX' in values && Number.isFinite(Number(values.anchorX)) && Number(values.anchorX) !== 0.5) {
+      errors.push(issue(
+        'monster_visual_celebration_anchor_locked',
+        'celebrationOverlay.anchorX must stay at 0.5 until the animation pivot propagation follow-up lands (see docs/plans/2026-04-25-002-fix-celebration-sprite-centring-plan.md).',
+        { assetKey, context, field: 'anchorX' },
+      ));
+    }
+    if ('anchorY' in values && Number.isFinite(Number(values.anchorY)) && Number(values.anchorY) !== 1) {
+      errors.push(issue(
+        'monster_visual_celebration_anchor_locked',
+        'celebrationOverlay.anchorY must stay at 1 until the animation pivot propagation follow-up lands (see docs/plans/2026-04-25-002-fix-celebration-sprite-centring-plan.md).',
+        { assetKey, context, field: 'anchorY' },
+      ));
+    }
+  }
 }
 
 function validateAllowedField(assetKey, context, field, value, allowedValues, errors) {
