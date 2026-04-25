@@ -256,7 +256,7 @@ playCelebration(spec) -> store.pushCelebration(spec)
 
 ---
 
-- [ ] U3. **`<CelebrationLayer>` and `playCelebration()` queue API**
+- [x] U3. **`<CelebrationLayer>` and `playCelebration()` queue API**
 
 **Goal:** A single overlay layer mounted at app root that subscribes to a celebration queue in the store and renders `transient` effect modules one at a time. `playCelebration(spec)` is the imperative push API.
 
