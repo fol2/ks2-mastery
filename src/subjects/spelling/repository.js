@@ -1,8 +1,17 @@
 import { cloneSerialisable, normalisePracticeSessionRecord } from '../../platform/core/repositories/helpers.js';
+import { normaliseGuardianMap } from './service-contract.js';
 
 const SUBJECT_ID = 'spelling';
 const PREF_STORAGE_PREFIX = 'ks2-platform-v2.spelling-prefs.';
 const PROGRESS_STORAGE_PREFIX = 'ks2-spell-progress-';
+const GUARDIAN_STORAGE_PREFIX = 'ks2-spell-guardian-';
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function todayDayForNow(now) {
+  const ts = typeof now === 'function' ? Number(now()) : (now == null ? Date.now() : Number(now));
+  if (!Number.isFinite(ts) || ts < 0) return 0;
+  return Math.floor(ts / DAY_MS);
+}
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -21,10 +30,17 @@ function prefsKey(learnerId) {
   return `${PREF_STORAGE_PREFIX}${learnerId || 'default'}`;
 }
 
+function guardianKey(learnerId) {
+  return `${GUARDIAN_STORAGE_PREFIX}${learnerId || 'default'}`;
+}
+
 function parseStorageKey(key) {
   if (typeof key !== 'string') return null;
   if (key.startsWith(PREF_STORAGE_PREFIX)) {
     return { type: 'prefs', learnerId: key.slice(PREF_STORAGE_PREFIX.length) || 'default' };
+  }
+  if (key.startsWith(GUARDIAN_STORAGE_PREFIX)) {
+    return { type: 'guardian', learnerId: key.slice(GUARDIAN_STORAGE_PREFIX.length) || 'default' };
   }
   if (key.startsWith(PROGRESS_STORAGE_PREFIX)) {
     return { type: 'progress', learnerId: key.slice(PROGRESS_STORAGE_PREFIX.length) || 'default' };
@@ -50,21 +66,23 @@ function normaliseProgressMap(rawValue) {
   return output;
 }
 
-export function normaliseSpellingSubjectData(rawValue) {
+export function normaliseSpellingSubjectData(rawValue, todayDay = 0) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   return {
     prefs: isPlainObject(raw.prefs) ? cloneSerialisable(raw.prefs) : {},
     progress: normaliseProgressMap(raw.progress),
+    guardian: normaliseGuardianMap(raw.guardian, todayDay),
   };
 }
 
-function readSpellingData(repositories, learnerId) {
-  return normaliseSpellingSubjectData(repositories.subjectStates.read(learnerId, SUBJECT_ID).data || {});
+function readSpellingData(repositories, learnerId, todayDay = 0) {
+  return normaliseSpellingSubjectData(repositories.subjectStates.read(learnerId, SUBJECT_ID).data || {}, todayDay);
 }
 
-function writeSpellingData(repositories, learnerId, nextData) {
+function writeSpellingData(repositories, learnerId, nextData, todayDay = 0) {
   return normaliseSpellingSubjectData(
-    repositories.subjectStates.writeData(learnerId, SUBJECT_ID, normaliseSpellingSubjectData(nextData)).data,
+    repositories.subjectStates.writeData(learnerId, SUBJECT_ID, normaliseSpellingSubjectData(nextData, todayDay)).data,
+    todayDay,
   );
 }
 
@@ -106,47 +124,55 @@ export function createSpellingPersistence({ repositories, now } = {}) {
     throw new TypeError('Spelling persistence requires platform repositories.');
   }
 
+  const currentDay = () => todayDayForNow(now);
+
   const storage = {
     getItem(key) {
       const parsed = parseStorageKey(key);
       if (!parsed) return null;
-      const data = readSpellingData(repositories, parsed.learnerId);
+      const data = readSpellingData(repositories, parsed.learnerId, currentDay());
       if (parsed.type === 'prefs') return JSON.stringify(data.prefs || {});
       if (parsed.type === 'progress') return JSON.stringify(data.progress || {});
+      if (parsed.type === 'guardian') return JSON.stringify(data.guardian || {});
       return null;
     },
     setItem(key, value) {
       const parsed = parseStorageKey(key);
       if (!parsed) return;
-      const current = readSpellingData(repositories, parsed.learnerId);
+      const day = currentDay();
+      const current = readSpellingData(repositories, parsed.learnerId, day);
       if (parsed.type === 'prefs') {
         writeSpellingData(repositories, parsed.learnerId, {
           ...current,
           prefs: parseStoredJson(value, {}),
-        });
+        }, day);
       }
       if (parsed.type === 'progress') {
         writeSpellingData(repositories, parsed.learnerId, {
           ...current,
           progress: parseStoredJson(value, {}),
-        });
+        }, day);
+      }
+      if (parsed.type === 'guardian') {
+        writeSpellingData(repositories, parsed.learnerId, {
+          ...current,
+          guardian: parseStoredJson(value, {}),
+        }, day);
       }
     },
     removeItem(key) {
       const parsed = parseStorageKey(key);
       if (!parsed) return;
-      const current = readSpellingData(repositories, parsed.learnerId);
+      const day = currentDay();
+      const current = readSpellingData(repositories, parsed.learnerId, day);
       if (parsed.type === 'prefs') {
-        writeSpellingData(repositories, parsed.learnerId, {
-          ...current,
-          prefs: {},
-        });
+        writeSpellingData(repositories, parsed.learnerId, { ...current, prefs: {} }, day);
       }
       if (parsed.type === 'progress') {
-        writeSpellingData(repositories, parsed.learnerId, {
-          ...current,
-          progress: {},
-        });
+        writeSpellingData(repositories, parsed.learnerId, { ...current, progress: {} }, day);
+      }
+      if (parsed.type === 'guardian') {
+        writeSpellingData(repositories, parsed.learnerId, { ...current, guardian: {} }, day);
       }
     },
   };
@@ -155,6 +181,7 @@ export function createSpellingPersistence({ repositories, now } = {}) {
     storage,
     progressKey,
     prefsKey,
+    guardianKey,
     syncPracticeSession(learnerId, state) {
       if (state?.phase === 'session') {
         const record = buildActiveRecord(learnerId, state, now);
@@ -182,7 +209,7 @@ export function createSpellingPersistence({ repositories, now } = {}) {
       return next;
     },
     resetLearner(learnerId) {
-      writeSpellingData(repositories, learnerId, {});
+      writeSpellingData(repositories, learnerId, {}, currentDay());
       repositories.practiceSessions.clear(learnerId, SUBJECT_ID);
     },
   };

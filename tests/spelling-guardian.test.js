@@ -21,6 +21,17 @@ import {
   createSpellingGuardianWobbledEvent,
 } from '../src/subjects/spelling/events.js';
 import { normaliseServerSpellingData } from '../worker/src/subjects/spelling/engine.js';
+import {
+  advanceGuardianOnCorrect,
+  advanceGuardianOnWrong,
+  ensureGuardianRecord,
+  selectGuardianWords,
+} from '../shared/spelling/service.js';
+import { createSpellingService } from '../src/subjects/spelling/service.js';
+import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
+import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
+import { installMemoryStorage } from './helpers/memory-storage.js';
+import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
 
 const TODAY = 18_000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -364,4 +375,556 @@ test('all guardian event factories produce deterministic id collisions when inpu
   assert.equal(renewed1.id, renewed2.id);
   assert.equal(wobbled1.id, wobbled2.id);
   assert.notEqual(renewed1.id, wobbled1.id, 'different event types produce different ids even for same slug');
+});
+
+// ----- U3: pure scheduler helpers ----------------------------------------------
+
+test('advanceGuardianOnCorrect: fresh record bumps reviewLevel to 1 and schedules +3 days', () => {
+  const record = normaliseGuardianRecord({}, TODAY);
+  const next = advanceGuardianOnCorrect(record, TODAY);
+  assert.equal(next.reviewLevel, 1);
+  assert.equal(next.correctStreak, 1);
+  assert.equal(next.lastReviewedDay, TODAY);
+  assert.equal(next.nextDueDay, TODAY + 3);
+  assert.equal(next.wobbling, false);
+  // input must not mutate
+  assert.equal(record.reviewLevel, 0);
+  assert.equal(record.correctStreak, 0);
+});
+
+test('advanceGuardianOnCorrect at max reviewLevel stays capped at GUARDIAN_MAX_REVIEW_LEVEL with +90 days', () => {
+  const record = normaliseGuardianRecord({ reviewLevel: GUARDIAN_MAX_REVIEW_LEVEL, correctStreak: 9 }, TODAY);
+  const next = advanceGuardianOnCorrect(record, TODAY);
+  assert.equal(next.reviewLevel, GUARDIAN_MAX_REVIEW_LEVEL);
+  assert.equal(next.correctStreak, 10);
+  assert.equal(next.nextDueDay, TODAY + 90);
+});
+
+test('advanceGuardianOnCorrect on a wobbling record clears wobbling, bumps renewals, preserves reviewLevel', () => {
+  const record = normaliseGuardianRecord({
+    reviewLevel: 2,
+    lastReviewedDay: TODAY - 5,
+    nextDueDay: TODAY - 1,
+    correctStreak: 0,
+    lapses: 2,
+    renewals: 1,
+    wobbling: true,
+  }, TODAY);
+  const next = advanceGuardianOnCorrect(record, TODAY);
+  assert.equal(next.wobbling, false, 'wobbling cleared');
+  assert.equal(next.reviewLevel, 2, 'reviewLevel unchanged on recovery');
+  assert.equal(next.renewals, 2, 'renewals bumped');
+  assert.equal(next.correctStreak, 1);
+  assert.equal(next.lastReviewedDay, TODAY);
+  // Schedule resumes using the preserved reviewLevel's interval. Anchor is
+  // today (new lastReviewedDay), so nextDueDay = today + GUARDIAN_INTERVALS[2].
+  assert.equal(next.nextDueDay, TODAY + GUARDIAN_INTERVALS[2]);
+  // input untouched
+  assert.equal(record.wobbling, true);
+  assert.equal(record.renewals, 1);
+});
+
+test('advanceGuardianOnWrong sets wobbling, increments lapses, resets streak, schedules +1 day', () => {
+  const record = normaliseGuardianRecord({
+    reviewLevel: 3,
+    lastReviewedDay: TODAY - 14,
+    nextDueDay: TODAY,
+    correctStreak: 4,
+    lapses: 0,
+    renewals: 0,
+    wobbling: false,
+  }, TODAY);
+  const next = advanceGuardianOnWrong(record, TODAY);
+  assert.equal(next.wobbling, true);
+  assert.equal(next.lapses, 1);
+  assert.equal(next.correctStreak, 0);
+  assert.equal(next.lastReviewedDay, TODAY);
+  assert.equal(next.nextDueDay, TODAY + 1);
+  assert.equal(next.reviewLevel, 3, 'reviewLevel unchanged on wrong');
+  // input untouched
+  assert.equal(record.correctStreak, 4);
+  assert.equal(record.wobbling, false);
+});
+
+test('advanceGuardianOnWrong applied twice stays wobbling with lapses=2 and nextDueDay=today+1', () => {
+  let record = normaliseGuardianRecord({}, TODAY);
+  record = advanceGuardianOnWrong(record, TODAY);
+  record = advanceGuardianOnWrong(record, TODAY);
+  assert.equal(record.wobbling, true);
+  assert.equal(record.lapses, 2);
+  assert.equal(record.correctStreak, 0);
+  assert.equal(record.nextDueDay, TODAY + 1);
+});
+
+test('ensureGuardianRecord is idempotent — second call returns the same record instance', () => {
+  const map = {};
+  const first = ensureGuardianRecord(map, 'possess', TODAY);
+  assert.equal(first.reviewLevel, 0);
+  assert.equal(first.nextDueDay, TODAY);
+  const second = ensureGuardianRecord(map, 'possess', TODAY);
+  assert.equal(second, first, 'identical object returned on second call');
+  // Map key was created exactly once
+  assert.deepEqual(Object.keys(map), ['possess']);
+});
+
+test('selectGuardianWords prioritises wobbling-due, then non-wobbling due, then lazy-create', () => {
+  // Build a guardian map with 2 wobbling-due, 3 non-wobbling-due, 1 non-due guardian.
+  const guardianMap = {
+    accommodate: { reviewLevel: 1, lastReviewedDay: TODAY - 2, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+    address: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 3, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+    believe: { reviewLevel: 2, lastReviewedDay: TODAY - 14, nextDueDay: TODAY - 1, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+    bicycle: { reviewLevel: 1, lastReviewedDay: TODAY - 3, nextDueDay: TODAY, correctStreak: 1, lapses: 0, renewals: 0, wobbling: false },
+    breath: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY, correctStreak: 0, lapses: 0, renewals: 0, wobbling: false },
+    // non-due — top-up only kicks in when selection is below GUARDIAN_MIN_ROUND_LENGTH (5).
+    build: { reviewLevel: 3, lastReviewedDay: TODAY - 1, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+  };
+  // Lazy candidates: mega words not in the guardian map yet.
+  const progressMap = {
+    possess: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
+    busy: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
+    // stage < 4 - not a lazy candidate
+    circle: { stage: 2, attempts: 4, correct: 2, wrong: 2 },
+  };
+
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap,
+    wordBySlug: WORD_BY_SLUG,
+    todayDay: TODAY,
+    length: 8,
+    random: () => 0.5,
+  });
+
+  // Wobbling due first (oldest-due, alphabetical tie-break within same dueDay).
+  assert.equal(selected[0], 'address', 'oldest wobbling-due first');
+  assert.equal(selected[1], 'accommodate');
+  // Non-wobbling due next, oldest-due first. believe dueDay=TODAY-1; bicycle/breath dueDay=TODAY (alphabetical).
+  assert.equal(selected[2], 'believe');
+  assert.equal(selected[3], 'bicycle');
+  assert.equal(selected[4], 'breath');
+  // Then lazy-create sample - 'busy' and 'possess' (both mega and not in guardianMap).
+  // rng=0.5 fisher-yates on ['busy','possess']: i=1, j=floor(0.5*2)=1 → no swap → ['busy','possess']
+  assert.equal(selected[5], 'busy');
+  assert.equal(selected[6], 'possess');
+  // Total length is 7 — above GUARDIAN_MIN_ROUND_LENGTH, so top-up stays off and
+  // the non-due 'build' is NOT pulled in.
+  assert.equal(selected.length, 7);
+  assert.equal(selected.includes('build'), false, 'non-due guardian not top-upped above min length');
+});
+
+test('selectGuardianWords tops up with non-due guardians only when below GUARDIAN_MIN_ROUND_LENGTH', () => {
+  // Only 2 due guardians → below min length 5 after due+lazy picks. Top-up
+  // activates and drains from the non-due guardian pool (oldest lastReviewedDay
+  // first).
+  const guardianMap = {
+    address: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 3, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+    believe: { reviewLevel: 2, lastReviewedDay: TODAY - 14, nextDueDay: TODAY - 1, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+    // non-due guardians for top-up, varying lastReviewedDay
+    bicycle: { reviewLevel: 3, lastReviewedDay: TODAY - 20, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+    breath: { reviewLevel: 3, lastReviewedDay: TODAY - 5, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+    build: { reviewLevel: 3, lastReviewedDay: TODAY - 50, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+  };
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap: {}, // no lazy candidates
+    wordBySlug: WORD_BY_SLUG,
+    todayDay: TODAY,
+    length: 5,
+    random: () => 0.5,
+  });
+  // Order: due wobbling, due non-wobbling, then non-due by oldest lastReviewedDay.
+  // build (-50) < bicycle (-20) < breath (-5).
+  assert.deepEqual(selected, ['address', 'believe', 'build', 'bicycle', 'breath']);
+});
+
+test('selectGuardianWords with length=5 clamps at 5 and prefers wobbling-due', () => {
+  const guardianMap = {
+    accommodate: { reviewLevel: 1, lastReviewedDay: TODAY - 2, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+    address: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 3, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+    believe: { reviewLevel: 2, lastReviewedDay: TODAY - 14, nextDueDay: TODAY - 1, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+    bicycle: { reviewLevel: 1, lastReviewedDay: TODAY - 3, nextDueDay: TODAY, correctStreak: 1, lapses: 0, renewals: 0, wobbling: false },
+    breath: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY, correctStreak: 0, lapses: 0, renewals: 0, wobbling: false },
+  };
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap: {},
+    wordBySlug: WORD_BY_SLUG,
+    todayDay: TODAY,
+    length: 5,
+  });
+  assert.equal(selected.length, 5);
+  assert.deepEqual(selected, ['address', 'accommodate', 'believe', 'bicycle', 'breath']);
+});
+
+test('selectGuardianWords with empty input returns an empty array', () => {
+  const selected = selectGuardianWords({
+    guardianMap: {},
+    progressMap: {},
+    wordBySlug: WORD_BY_SLUG,
+    todayDay: TODAY,
+  });
+  assert.deepEqual(selected, []);
+});
+
+test('selectGuardianWords clamps length above 8 back to GUARDIAN_MAX_ROUND_LENGTH', () => {
+  const guardianMap = {};
+  const progressMap = {};
+  for (let i = 0; i < 20; i += 1) {
+    const slug = WORDS.filter((w) => w.spellingPool !== 'extra')[i].slug;
+    progressMap[slug] = { stage: 4, attempts: 8, correct: 7, wrong: 1 };
+  }
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap,
+    wordBySlug: WORD_BY_SLUG,
+    todayDay: TODAY,
+    length: 50,
+    random: () => 0.5,
+  });
+  assert.equal(selected.length, GUARDIAN_MAX_ROUND_LENGTH);
+});
+
+// ----- U3: session wiring via the real service ---------------------------------
+
+const DAY_MS_TS = 24 * 60 * 60 * 1000;
+
+function makeServiceWithSeed({ now, random, storage = installMemoryStorage() } = {}) {
+  const repositories = createLocalPlatformRepositories({ storage });
+  const spoken = [];
+  const service = createSpellingService({
+    repository: createSpellingPersistence({ repositories, now }),
+    now,
+    random,
+    tts: {
+      speak(payload) {
+        spoken.push(payload);
+      },
+      stop() {},
+      warmup() {},
+    },
+  });
+  return { storage, repositories, service, spoken };
+}
+
+function seedAllCoreMega(repositories, learnerId, todayDay) {
+  const progress = Object.fromEntries(
+    WORDS.filter((word) => word.spellingPool !== 'extra').map((word, index) => [word.slug, {
+      stage: 4,
+      attempts: 6 + (index % 4),
+      correct: 5 + (index % 4),
+      wrong: 1,
+      dueDay: todayDay + 60,
+      lastDay: todayDay - 7,
+      lastResult: 'correct',
+    }]),
+  );
+  repositories.subjectStates.writeData(learnerId, 'spelling', { progress });
+}
+
+function seedGuardianMap(repositories, learnerId, map) {
+  const current = repositories.subjectStates.read(learnerId, 'spelling').data || {};
+  repositories.subjectStates.writeData(learnerId, 'spelling', {
+    ...current,
+    guardian: map,
+  });
+}
+
+function runGuardianRoundUntilSummary(service, learnerId, state, getAnswerForSlug) {
+  const events = [];
+  const seenSlugs = [];
+  let current = state;
+  while (current.phase === 'session') {
+    const slug = current.session.currentCard.slug;
+    seenSlugs.push(slug);
+    const typed = getAnswerForSlug(slug, current);
+    const submitted = service.submitAnswer(learnerId, current, typed);
+    events.push(...submitted.events);
+    current = submitted.state;
+    assert.equal(current.awaitingAdvance, true, `awaitingAdvance after ${slug}`);
+    const continued = service.continueSession(learnerId, current);
+    events.push(...continued.events);
+    current = continued.state;
+  }
+  return { state: current, events, seenSlugs };
+}
+
+test('startSession({mode: guardian}) returns ok:false with warn feedback when allWordsMega is false', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const { service } = makeServiceWithSeed({ now, random: () => 0.5 });
+  const transition = service.startSession('learner-a', { mode: 'guardian' });
+  assert.equal(transition.ok, false);
+  assert.equal(transition.state.phase, 'dashboard');
+  assert.equal(transition.state.session, null);
+  assert.equal(transition.state.feedback?.kind, 'warn');
+  assert.match(transition.state.feedback.headline, /Guardian Mission unlocks/);
+});
+
+test('startSession({mode: guardian}) with allWordsMega starts a guardian session of length 5..8', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+  const transition = service.startSession('learner-a', { mode: 'guardian' });
+  assert.equal(transition.ok, true);
+  assert.equal(transition.state.phase, 'session');
+  assert.equal(transition.state.session.mode, 'guardian');
+  assert.equal(transition.state.session.type, 'learning');
+  assert.equal(transition.state.session.label, 'Guardian Mission');
+  assert.ok(transition.state.session.uniqueWords.length >= GUARDIAN_MIN_ROUND_LENGTH);
+  assert.ok(transition.state.session.uniqueWords.length <= GUARDIAN_MAX_ROUND_LENGTH);
+  // All picked slugs must be core
+  const pickedWords = transition.state.session.uniqueWords.map((slug) => WORD_BY_SLUG[slug]);
+  assert.ok(pickedWords.every((w) => w.spellingPool !== 'extra'));
+});
+
+test('Full guardian round with all-correct answers emits N RENEWED + SESSION_COMPLETED + MISSION_COMPLETED', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const initialSlugs = started.state.session.uniqueWords.slice();
+  const totalWords = initialSlugs.length;
+
+  const { state: summaryState, events, seenSlugs } = runGuardianRoundUntilSummary(
+    service,
+    'learner-a',
+    started.state,
+    (slug, state) => state.session.currentCard.word.word,
+  );
+
+  assert.equal(summaryState.phase, 'summary');
+  const renewed = events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_RENEWED);
+  const wobbled = events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_WOBBLED);
+  const recovered = events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_RECOVERED);
+  const sessionCompleted = events.filter((e) => e.type === SPELLING_EVENT_TYPES.SESSION_COMPLETED);
+  const missionCompleted = events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED);
+
+  assert.equal(renewed.length, totalWords, `one RENEWED per word (got ${renewed.length} for ${totalWords} words)`);
+  assert.equal(wobbled.length, 0);
+  assert.equal(recovered.length, 0);
+  assert.equal(sessionCompleted.length, 1);
+  assert.equal(missionCompleted.length, 1);
+
+  // MISSION_COMPLETED count fields match
+  const mission = missionCompleted[0];
+  assert.equal(mission.renewalCount, totalWords);
+  assert.equal(mission.wobbledCount, 0);
+  assert.equal(mission.recoveredCount, 0);
+  assert.equal(mission.totalWords, totalWords);
+
+  // Emission order: RENEWED events before SESSION_COMPLETED before MISSION_COMPLETED
+  const sessionCompletedIndex = events.findIndex((e) => e.type === SPELLING_EVENT_TYPES.SESSION_COMPLETED);
+  const missionCompletedIndex = events.findIndex((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED);
+  const lastRenewedIndex = events.map((e) => e.type).lastIndexOf(SPELLING_EVENT_TYPES.GUARDIAN_RENEWED);
+  assert.ok(lastRenewedIndex < sessionCompletedIndex, 'all RENEWED events emitted before SESSION_COMPLETED');
+  assert.ok(sessionCompletedIndex < missionCompletedIndex, 'SESSION_COMPLETED before MISSION_COMPLETED');
+
+  // progress.stage untouched for every Guardian word.
+  const snapshot = service.getAnalyticsSnapshot('learner-a');
+  const rowsBySlug = new Map(snapshot.wordGroups.flatMap((g) => g.words).map((row) => [row.slug, row]));
+  for (const slug of seenSlugs) {
+    const row = rowsBySlug.get(slug);
+    assert.equal(row.progress.stage, 4, `${slug} stage stays at 4`);
+  }
+  // progress.correct advanced by exactly 1 for each seen slug.
+  // (seed had correct = 5 + (index % 4) so exact values differ per slug; just assert the delta is 1)
+  for (const slug of seenSlugs) {
+    const row = rowsBySlug.get(slug);
+    const originalWord = WORDS.find((w) => w.slug === slug);
+    const originalIndex = WORDS.filter((w) => w.spellingPool !== 'extra').indexOf(originalWord);
+    const expectedCorrect = (5 + (originalIndex % 4)) + 1;
+    assert.equal(row.progress.correct, expectedCorrect, `${slug} progress.correct bumped once`);
+  }
+});
+
+test('Guardian round with a pre-wobbling word emits GUARDIAN_RECOVERED on correct, not RENEWED', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const storage = installMemoryStorage();
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5, storage });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  // Seed a wobbling guardian record for 'possess' so it gets picked first.
+  // With wobbling=true + nextDueDay<=today it wins the wobbling-due bucket.
+  seedGuardianMap(repositories, 'learner-a', {
+    possess: {
+      reviewLevel: 2,
+      lastReviewedDay: today - 5,
+      nextDueDay: today - 1,
+      correctStreak: 0,
+      lapses: 1,
+      renewals: 0,
+      wobbling: true,
+    },
+  });
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  assert.equal(started.ok, true);
+  // possess should appear first in the queue (wobbling-due).
+  assert.equal(started.state.session.uniqueWords[0], 'possess');
+  assert.equal(started.state.session.currentCard.slug, 'possess');
+
+  // Answer possess correctly.
+  const submitted = service.submitAnswer('learner-a', started.state, 'possess');
+  const recoveredEvents = submitted.events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_RECOVERED);
+  const renewedEvents = submitted.events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_RENEWED);
+  assert.equal(recoveredEvents.length, 1, 'RECOVERED emitted for wobbling->correct');
+  assert.equal(renewedEvents.length, 0, 'no RENEWED emitted on recovery');
+  assert.equal(recoveredEvents[0].wordSlug, 'possess');
+  assert.equal(recoveredEvents[0].reviewLevel, 2, 'reviewLevel preserved on recovery');
+  assert.equal(recoveredEvents[0].renewals, 1);
+});
+
+test('Guardian round with a mix of correct and wrong emits correct RENEWED + WOBBLED counts', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const totalWords = started.state.session.uniqueWords.length;
+
+  // Answer the first two wrong, the rest correct.
+  let cardCount = 0;
+  const { state: summaryState, events } = runGuardianRoundUntilSummary(
+    service,
+    'learner-a',
+    started.state,
+    (slug, state) => {
+      cardCount += 1;
+      if (cardCount <= 2) return 'definitely-wrong';
+      return state.session.currentCard.word.word;
+    },
+  );
+
+  assert.equal(summaryState.phase, 'summary');
+  const renewed = events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_RENEWED);
+  const wobbled = events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_WOBBLED);
+  const recovered = events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_RECOVERED);
+  const mission = events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED);
+
+  assert.equal(wobbled.length, 2, 'two wrong answers emit two WOBBLED events');
+  assert.equal(renewed.length, totalWords - 2);
+  assert.equal(recovered.length, 0);
+  assert.equal(mission.length, 1);
+  assert.equal(mission[0].renewalCount, totalWords - 2);
+  assert.equal(mission[0].wobbledCount, 2);
+  assert.equal(mission[0].recoveredCount, 0);
+  assert.equal(mission[0].totalWords, totalWords);
+});
+
+test('Guardian round does not mutate progress.stage/dueDay/lastDay/lastResult even on wrong answers', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const initialSlugs = started.state.session.uniqueWords.slice();
+
+  // Answer everything wrong.
+  runGuardianRoundUntilSummary(service, 'learner-a', started.state, () => 'definitely-wrong');
+
+  const snapshot = service.getAnalyticsSnapshot('learner-a');
+  const rowsBySlug = new Map(snapshot.wordGroups.flatMap((g) => g.words).map((row) => [row.slug, row]));
+  for (const slug of initialSlugs) {
+    const row = rowsBySlug.get(slug);
+    assert.equal(row.progress.stage, 4, `${slug} stage unchanged after Guardian wrong`);
+    assert.equal(row.progress.dueDay, today + 60, `${slug} dueDay unchanged`);
+    assert.equal(row.progress.lastDay, today - 7, `${slug} lastDay unchanged`);
+    assert.equal(row.progress.lastResult, 'correct', `${slug} lastResult unchanged`);
+    // progress.attempts bumped and progress.wrong bumped by 1
+    assert.equal(row.progress.wrong, 2, `${slug} progress.wrong bumped`);
+  }
+});
+
+// ----- U3 review follow-up: CORR-1 regression + ADV-1 top-up priority ---------
+
+test('Guardian feedback body shows the correct number of days until the next check (CORR-1 regression)', () => {
+  // After a correct answer on a fresh record (reviewLevel 0->1), the schedule
+  // sets nextDueDay = today + GUARDIAN_INTERVALS[0] = today + 3. The feedback
+  // body must read "3 days", not "7" (the old bug indexed with updatedRecord.reviewLevel).
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.2 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const firstSlug = started.state.session.currentCard.slug;
+  const word = WORD_BY_SLUG[firstSlug];
+  const submitted = service.submitAnswer('learner-a', started.state, word.word);
+
+  assert.equal(submitted.state.feedback.kind, 'info');
+  assert.match(submitted.state.feedback.body, /Next Guardian check in 3 days\b/);
+});
+
+test('Guardian feedback body matches days-until-due for a recovered word (CORR-1 regression)', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+  // Seed a wobbling record at reviewLevel=2 so the recovery schedule uses
+  // GUARDIAN_INTERVALS[2] = 14 days.
+  seedGuardianMap(repositories, 'learner-a', {
+    possess: {
+      reviewLevel: 2,
+      lastReviewedDay: today - 5,
+      nextDueDay: today - 1,
+      correctStreak: 0,
+      lapses: 1,
+      renewals: 0,
+      wobbling: true,
+    },
+  });
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  assert.equal(started.state.session.currentCard.slug, 'possess');
+  const submitted = service.submitAnswer('learner-a', started.state, 'possess');
+
+  assert.equal(submitted.state.feedback.headline, 'Recovered.');
+  assert.match(submitted.state.feedback.body, /Next Guardian check in 14 days\b/);
+});
+
+test('selectGuardianWords top-up prefers wobbling non-due over non-wobbling non-due (ADV-1 regression)', () => {
+  const guardianMap = {
+    // Two non-due guardians: one wobbling (W), one stable (S). W should surface
+    // first during top-up even though both have nextDueDay > today, because
+    // wobbling status must not be demoted by the scheduler pushing nextDueDay
+    // one day forward after a miss.
+    believe: {
+      reviewLevel: 1,
+      lastReviewedDay: TODAY - 30, // older last review
+      nextDueDay: TODAY + 5,        // not due yet
+      correctStreak: 1,
+      lapses: 0,
+      renewals: 0,
+      wobbling: false,
+    },
+    possess: {
+      reviewLevel: 0,
+      lastReviewedDay: TODAY - 1,
+      nextDueDay: TODAY + 1,        // not due yet (wobbling set to +1 after miss)
+      correctStreak: 0,
+      lapses: 1,
+      renewals: 0,
+      wobbling: true,
+    },
+  };
+  const progressMap = {
+    believe: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+    possess: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+  };
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap,
+    wordBySlug: WORD_BY_SLUG,
+    todayDay: TODAY,
+    length: 2,
+    random: () => 0.5,
+  });
+  // length=2 is below GUARDIAN_MIN_ROUND_LENGTH=5 after due is empty and no
+  // lazy candidates — top-up fills both slots; wobbling must land first.
+  assert.deepEqual(selected, ['possess', 'believe']);
 });

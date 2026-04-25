@@ -15,6 +15,7 @@ const SUBJECT_ID = 'spelling';
 const SERVER_AUTHORITY = 'worker';
 const PREF_STORAGE_PREFIX = 'ks2-platform-v2.spelling-prefs.';
 const PROGRESS_STORAGE_PREFIX = 'ks2-spell-progress-';
+const GUARDIAN_STORAGE_PREFIX = 'ks2-spell-guardian-';
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -49,6 +50,9 @@ function parseStorageKey(key) {
   if (typeof key !== 'string') return null;
   if (key.startsWith(PREF_STORAGE_PREFIX)) {
     return { type: 'prefs', learnerId: key.slice(PREF_STORAGE_PREFIX.length) || 'default' };
+  }
+  if (key.startsWith(GUARDIAN_STORAGE_PREFIX)) {
+    return { type: 'guardian', learnerId: key.slice(GUARDIAN_STORAGE_PREFIX.length) || 'default' };
   }
   if (key.startsWith(PROGRESS_STORAGE_PREFIX)) {
     return { type: 'progress', learnerId: key.slice(PROGRESS_STORAGE_PREFIX.length) || 'default' };
@@ -121,12 +125,13 @@ function isServerOwnedRawUi(rawUi) {
 }
 
 function createServerPersistence({ learnerId, data, latestSession, now }) {
-  let nextData = normaliseServerSpellingData(data);
+  const resolveNow = () => (typeof now === 'function' ? now() : now);
+  let nextData = normaliseServerSpellingData(data, resolveNow());
   let practiceSession = null;
 
   function readDataFor(parsed) {
     if (parsed.learnerId && parsed.learnerId !== learnerId) {
-      return normaliseServerSpellingData({});
+      return normaliseServerSpellingData({}, resolveNow());
     }
     return nextData;
   }
@@ -139,6 +144,7 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
         const current = readDataFor(parsed);
         if (parsed.type === 'prefs') return JSON.stringify(current.prefs || {});
         if (parsed.type === 'progress') return JSON.stringify(current.progress || {});
+        if (parsed.type === 'guardian') return JSON.stringify(current.guardian || {});
         return null;
       },
       setItem(key, value) {
@@ -148,20 +154,27 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
           nextData = normaliseServerSpellingData({
             ...nextData,
             prefs: parseStoredJson(value, {}),
-          });
+          }, resolveNow());
         }
         if (parsed.type === 'progress') {
           nextData = normaliseServerSpellingData({
             ...nextData,
             progress: parseStoredJson(value, {}),
-          });
+          }, resolveNow());
+        }
+        if (parsed.type === 'guardian') {
+          nextData = normaliseServerSpellingData({
+            ...nextData,
+            guardian: parseStoredJson(value, {}),
+          }, resolveNow());
         }
       },
       removeItem(key) {
         const parsed = parseStorageKey(key);
         if (!parsed || (parsed.learnerId && parsed.learnerId !== learnerId)) return;
-        if (parsed.type === 'prefs') nextData = normaliseServerSpellingData({ ...nextData, prefs: {} });
-        if (parsed.type === 'progress') nextData = normaliseServerSpellingData({ ...nextData, progress: {} });
+        if (parsed.type === 'prefs') nextData = normaliseServerSpellingData({ ...nextData, prefs: {} }, resolveNow());
+        if (parsed.type === 'progress') nextData = normaliseServerSpellingData({ ...nextData, progress: {} }, resolveNow());
+        if (parsed.type === 'guardian') nextData = normaliseServerSpellingData({ ...nextData, guardian: {} }, resolveNow());
       },
     },
     syncPracticeSession(nextLearnerId, state) {
@@ -184,11 +197,11 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
     },
     resetLearner(nextLearnerId) {
       if (nextLearnerId !== learnerId) return;
-      nextData = normaliseServerSpellingData({});
+      nextData = normaliseServerSpellingData({}, resolveNow());
       practiceSession = null;
     },
     snapshot() {
-      return normaliseServerSpellingData(nextData);
+      return normaliseServerSpellingData(nextData, resolveNow());
     },
     practiceSession() {
       return practiceSession ? cloneSerialisable(practiceSession) : null;
