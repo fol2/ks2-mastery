@@ -1305,15 +1305,20 @@ textarea:focus-visible {
   animation: monster-celebration-before var(--mc-duration) linear var(--mc-art-delay, 0s) forwards;
 }
 
+/* Art keyframes animate only scale (and, where choreography needs
+   it, a small translateY). The wrapper .monster-celebration-visual
+   owns centring + per-monster offset/anchor/scale via CSS variables;
+   the art is position:absolute; inset:0, so any translate(-50%, …)
+   here would shift the image out of the wrapper. */
 @keyframes monster-celebration-before {
-  0%   { opacity: 0; transform: translate(-50%, calc(-50% + 24px)) scale(0.9); }
-  14%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  0%   { opacity: 0; transform: translateY(24px) scale(0.9); }
+  14%  { opacity: 1; transform: scale(1); }
   /* Hold-with-breathing from 14% to 55% — the anticipation beat. */
-  28%  { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
-  42%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  50%  { opacity: 1; transform: translate(-50%, -50%) scale(1.03); }
-  56%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
-  62%  { opacity: 0; transform: translate(-50%, -50%) scale(1.14); }
+  28%  { opacity: 1; transform: scale(1.02); }
+  42%  { opacity: 1; transform: scale(1); }
+  50%  { opacity: 1; transform: scale(1.03); }
+  56%  { opacity: 1; transform: scale(1.08); }
+  62%  { opacity: 0; transform: scale(1.14); }
   100% { opacity: 0; }
 }
 
@@ -1324,11 +1329,11 @@ textarea:focus-visible {
 }
 
 @keyframes monster-celebration-after {
-  0%, 58% { opacity: 0; transform: translate(-50%, -50%) scale(1.14); }
-  64%     { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-  74%     { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
-  86%     { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  100%    { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  0%, 58% { opacity: 0; transform: scale(1.14); }
+  64%     { opacity: 1; transform: scale(1.1); }
+  74%     { opacity: 1; transform: scale(1.04); }
+  86%     { opacity: 1; transform: scale(1); }
+  100%    { opacity: 1; transform: scale(1); }
 }
 
 /* Halo — soft white bloom. Begins charging quietly during the
@@ -1556,22 +1561,22 @@ textarea:focus-visible {
 }
 
 @keyframes monster-celebration-egg-wobble {
-  0%   { opacity: 0; transform: translate(-50%, calc(-50% + 18px)) rotate(0deg) scale(0.9); }
-  8%   { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(1); }
-  18%  { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+  0%   { opacity: 0; transform: translateY(18px) rotate(0deg) scale(0.9); }
+  8%   { opacity: 1; transform: rotate(0deg) scale(1); }
+  18%  { opacity: 1; transform: rotate(0deg) scale(1); }
   /* Micro-wobble — barely there, attention-grabbing without alarm. */
-  22%  { transform: translate(-50%, -50%) rotate(-3deg) scale(1.02); }
-  26%  { transform: translate(-50%, -50%) rotate(3deg)  scale(1.02); }
+  22%  { transform: rotate(-3deg) scale(1.02); }
+  26%  { transform: rotate(3deg)  scale(1.02); }
   /* Growing — the egg really wants out now. */
-  29%  { transform: translate(-50%, -50%) rotate(-6deg) scale(1.04); }
-  32%  { transform: translate(-50%, -50%) rotate(6deg)  scale(1.04); }
+  29%  { transform: rotate(-6deg) scale(1.04); }
+  32%  { transform: rotate(6deg)  scale(1.04); }
   /* Tension peak — biggest tilt, slight stretch up. */
-  35%  { transform: translate(-50%, -50%) rotate(-10deg) scale(1.06); }
-  37%  { transform: translate(-50%, -50%) rotate(10deg)  scale(1.10); }
+  35%  { transform: rotate(-10deg) scale(1.06); }
+  37%  { transform: rotate(10deg)  scale(1.10); }
   /* CRACK — brief expand to sell the burst, then dissolves. */
-  38%  { opacity: 1;   transform: translate(-50%, -50%) rotate(0deg) scale(1.20); }
-  44%  { opacity: 0.4; transform: translate(-50%, -50%) rotate(0deg) scale(1.05); }
-  48%  { opacity: 0;   transform: translate(-50%, calc(-50% + 8px)) rotate(0deg) scale(0.9); }
+  38%  { opacity: 1;   transform: rotate(0deg) scale(1.20); }
+  44%  { opacity: 0.4; transform: rotate(0deg) scale(1.05); }
+  48%  { opacity: 0;   transform: translateY(8px) rotate(0deg) scale(0.9); }
   100% { opacity: 0; }
 }
 
@@ -1585,19 +1590,19 @@ textarea:focus-visible {
 }
 
 @keyframes monster-celebration-monster-pop {
-  0%, 40% { opacity: 0; transform: translate(-50%, calc(-50% + 30px)) scale(0.3, 0.3); }
+  0%, 40% { opacity: 0; transform: translateY(30px) scale(0.3, 0.3); }
   /* Pop emerges — small and squashed, like compressed by the shell. */
-  44%  { opacity: 1; transform: translate(-50%, calc(-50% + 10px)) scale(0.7, 0.55); }
+  44%  { opacity: 1; transform: translateY(10px) scale(0.7, 0.55); }
   /* Stretch tall — anticipation rebound from the squash. */
-  50%  { opacity: 1; transform: translate(-50%, calc(-50% - 12px)) scale(0.95, 1.18); }
+  50%  { opacity: 1; transform: translateY(-12px) scale(0.95, 1.18); }
   /* Squash on landing — wider than tall. */
-  56%  { opacity: 1; transform: translate(-50%, -50%) scale(1.14, 0.90); }
+  56%  { opacity: 1; transform: scale(1.14, 0.90); }
   /* Stretch back — smaller bounce. */
-  64%  { opacity: 1; transform: translate(-50%, -50%) scale(0.96, 1.06); }
+  64%  { opacity: 1; transform: scale(0.96, 1.06); }
   /* Tiny squash — final settle. */
-  72%  { opacity: 1; transform: translate(-50%, -50%) scale(1.03, 0.98); }
-  82%  { opacity: 1; transform: translate(-50%, -50%) scale(1, 1); }
-  100% { opacity: 1; transform: translate(-50%, -50%) scale(1, 1); }
+  72%  { opacity: 1; transform: scale(1.03, 0.98); }
+  82%  { opacity: 1; transform: scale(1, 1); }
+  100% { opacity: 1; transform: scale(1, 1); }
 }
 
 /* Halo — short and sharp, peaks at CRACK (38%). */
@@ -1672,15 +1677,15 @@ textarea:focus-visible {
 }
 
 @keyframes monster-celebration-mega-before {
-  0%   { opacity: 0; transform: translate(-50%, calc(-50% + 32px)) scale(0.86); }
-  10%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  0%   { opacity: 0; transform: translateY(32px) scale(0.86); }
+  10%  { opacity: 1; transform: scale(1); }
   /* Behold hold 10-52% — long, breathing, gathering power. */
-  24%  { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
-  36%  { opacity: 1; transform: translate(-50%, -50%) scale(1.005); }
-  46%  { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
-  52%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
-  58%  { opacity: 1; transform: translate(-50%, -50%) scale(1.14); }
-  64%  { opacity: 0; transform: translate(-50%, -50%) scale(1.2); }
+  24%  { opacity: 1; transform: scale(1.02); }
+  36%  { opacity: 1; transform: scale(1.005); }
+  46%  { opacity: 1; transform: scale(1.04); }
+  52%  { opacity: 1; transform: scale(1.08); }
+  58%  { opacity: 1; transform: scale(1.14); }
+  64%  { opacity: 0; transform: scale(1.2); }
   100% { opacity: 0; }
 }
 
@@ -1693,11 +1698,11 @@ textarea:focus-visible {
 }
 
 @keyframes monster-celebration-mega-after {
-  0%, 60%  { opacity: 0; transform: translate(-50%, -50%) scale(1.08); }
-  66%      { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
-  78%      { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
-  90%      { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  100%     { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  0%, 60%  { opacity: 0; transform: scale(1.08); }
+  66%      { opacity: 1; transform: scale(1.06); }
+  78%      { opacity: 1; transform: scale(1.02); }
+  90%      { opacity: 1; transform: scale(1); }
+  100%     { opacity: 1; transform: scale(1); }
 }
 
 /* Bigger, subtle-gold-ringed white flash for mega. The final
