@@ -5422,6 +5422,19 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         limit,
       });
     },
+    // PR #188 H1: dedicated narrow read that mirrors the other three admin
+    // ops GETs. Calls into the shared `readAccountOpsMetadataDirectory`
+    // helper so R25 (ops-role internalNotes redaction) is enforced identically
+    // whether the caller is the full hub bundle or the narrow per-panel route.
+    async readAdminOpsAccountsMetadata(accountId) {
+      const actor = await assertAdminHubActor(db, accountId);
+      const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
+      return readAccountOpsMetadataDirectory(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
+        actorPlatformRole,
+      });
+    },
     async bumpAdminKpiMetric(key, delta = 1) {
       return bumpAdminKpiMetric(db, key, nowFactory(), delta);
     },

@@ -18,6 +18,12 @@ import { safeParseInt, uid } from './platform/core/utils.js';
 import { normalisePlatformRole } from './platform/access/roles.js';
 import { createHubApi } from './platform/hubs/api.js';
 import {
+  applyAdminHubAccountOpsMetadataPatch,
+  applyAdminHubDashboardKpisPatch,
+  applyAdminHubErrorLogSummaryPatch,
+  applyAdminHubOpsActivityPatch,
+} from './platform/hubs/admin-panel-patches.js';
+import {
   buildAdminHubAccessContext,
   buildParentHubAccessContext,
   readOnlyLearnerActionBlockReason,
@@ -713,6 +719,78 @@ async function loadAdminHub({ learnerId = null, force = false, auditLimit = 20 }
       },
     }));
     return null;
+  }
+}
+
+// PR #188 H1: narrow per-panel refresh loaders. Each loader fetches a single
+// admin ops panel via its dedicated GET, then patches the local
+// `adultSurfaceState.payload.adminHub` sibling field using the pure helpers
+// in `admin-read-model.js`. All other siblings — including the U5 saving
+// scalars (`savingAccountId` / `savingEventId`) tracked on the directory /
+// summary objects themselves — are preserved by the patch helpers.
+//
+// R18 + plan note: kpi / activity / error-events / accounts-metadata are each
+// their own narrow GET so clicking Refresh on one panel does not re-fetch the
+// entire admin hub bundle. The `admin-refresh` / `loadAdminHub` full-reload
+// path is kept for initial load and for broad invalidation (role flips, etc.).
+function applyAdminHubPanelPatch(patchFn) {
+  patchAdultSurfaceState((state) => {
+    const payload = state.adminHub.payload || {};
+    const adminHub = payload.adminHub || {};
+    const nextAdminHub = patchFn(adminHub);
+    if (nextAdminHub === adminHub) return state;
+    return {
+      ...state,
+      adminHub: {
+        ...state.adminHub,
+        status: 'loaded',
+        payload: {
+          ...payload,
+          adminHub: nextAdminHub,
+        },
+        error: '',
+      },
+    };
+  });
+}
+
+async function refreshAdminOpsKpi() {
+  if (!hubApi) return;
+  try {
+    const payload = await hubApi.readAdminOpsKpi();
+    applyAdminHubPanelPatch((adminHub) => applyAdminHubDashboardKpisPatch(adminHub, payload));
+  } catch (error) {
+    console.error('admin-ops-kpi-refresh failed:', error?.message || error);
+  }
+}
+
+async function refreshAdminOpsActivity({ limit = 50 } = {}) {
+  if (!hubApi) return;
+  try {
+    const payload = await hubApi.readAdminOpsActivity({ limit });
+    applyAdminHubPanelPatch((adminHub) => applyAdminHubOpsActivityPatch(adminHub, payload));
+  } catch (error) {
+    console.error('admin-ops-activity-refresh failed:', error?.message || error);
+  }
+}
+
+async function refreshAdminOpsErrorEvents({ status = null, limit = 50 } = {}) {
+  if (!hubApi) return;
+  try {
+    const payload = await hubApi.readAdminOpsErrorEvents({ status, limit });
+    applyAdminHubPanelPatch((adminHub) => applyAdminHubErrorLogSummaryPatch(adminHub, payload));
+  } catch (error) {
+    console.error('admin-ops-error-events-refresh failed:', error?.message || error);
+  }
+}
+
+async function refreshAdminOpsAccountsMetadata() {
+  if (!hubApi) return;
+  try {
+    const payload = await hubApi.readAdminOpsAccountsMetadata();
+    applyAdminHubPanelPatch((adminHub) => applyAdminHubAccountOpsMetadataPatch(adminHub, payload));
+  } catch (error) {
+    console.error('account-ops-metadata-refresh failed:', error?.message || error);
   }
 }
 
@@ -2045,16 +2123,35 @@ function handleGlobalAction(action, data) {
     return true;
   }
 
-  if (
-    action === 'admin-ops-kpi-refresh'
-    || action === 'admin-ops-activity-refresh'
-    || action === 'admin-ops-error-events-refresh'
-    || action === 'account-ops-metadata-refresh'
-  ) {
-    // Each per-panel Refresh button reloads the full admin hub bundle. The
-    // plan (R18) prefers narrow per-panel GETs, but U5 scope defers that
-    // optimisation; for now a forced hub reload keeps every panel fresh.
-    if (boot.session.signedIn) loadAdminHub({ force: true });
+  // PR #188 H1: each per-panel Refresh button now issues a narrow GET and
+  // patches only its sibling field on the local adminHub model. This honours
+  // R18 (dedicated per-panel GETs) and fixes the visible bug where clicking
+  // "Show open" in the error log centre re-loaded every status because the
+  // handler ignored the `{ status }` payload and invoked the full hub reload.
+  if (action === 'admin-ops-kpi-refresh') {
+    if (boot.session.signedIn) refreshAdminOpsKpi();
+    return true;
+  }
+
+  if (action === 'admin-ops-activity-refresh') {
+    if (boot.session.signedIn) {
+      const limit = Number(data?.limit) > 0 ? Number(data.limit) : undefined;
+      refreshAdminOpsActivity(limit ? { limit } : {});
+    }
+    return true;
+  }
+
+  if (action === 'admin-ops-error-events-refresh') {
+    if (boot.session.signedIn) {
+      const status = typeof data?.status === 'string' && data.status ? data.status : null;
+      const limit = Number(data?.limit) > 0 ? Number(data.limit) : 50;
+      refreshAdminOpsErrorEvents({ status, limit });
+    }
+    return true;
+  }
+
+  if (action === 'account-ops-metadata-refresh') {
+    if (boot.session.signedIn) refreshAdminOpsAccountsMetadata();
     return true;
   }
 

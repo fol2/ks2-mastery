@@ -758,9 +758,18 @@ export function createWorkerApp({
           return json({ ok: true, ...result });
         }
 
+        // PR #188 H1: dedicated narrow GET for the account-ops-metadata panel.
+        // Mirrors the three sibling /api/admin/ops/* reads so each of the four
+        // admin ops panels can refresh independently (R18 extended to 4 panels).
+        if (url.pathname === '/api/admin/ops/accounts-metadata' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const result = await repository.readAdminOpsAccountsMetadata(session.accountId);
+          return json({ ok: true, ...result });
+        }
+
         // R31: regex dispatch for parameterised admin ops mutations. Placed
         // AFTER literal /api/admin/accounts and /api/admin/accounts/role so
-        // those take priority, and AFTER the three /api/admin/ops/* GET
+        // those take priority, and AFTER the four /api/admin/ops/* GET
         // routes above.
         const accountOpsMetadataMatch = /^\/api\/admin\/accounts\/([^/]+)\/ops-metadata$/.exec(url.pathname);
         if (accountOpsMetadataMatch && request.method === 'PUT') {

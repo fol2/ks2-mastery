@@ -221,6 +221,28 @@ test('hub api client reads admin ops activity stream with limit query param', as
   assert.equal(calls[0].init.headers['x-test-auth'], 'adult-ops');
 });
 
+test('hub api client reads admin ops accounts metadata via dedicated narrow GET (PR #188 H1)', async () => {
+  const calls = [];
+  const api = createHubApi({
+    baseUrl: '',
+    fetch: async (url, init = {}) => {
+      calls.push({ url: String(url), init });
+      return jsonResponse({ ok: true, accounts: [] });
+    },
+    authSession: createStaticHeaderRepositoryAuthSession({
+      cacheScopeKey: 'account:adult-admin',
+      headers: { 'x-test-auth': 'adult-admin' },
+    }),
+  });
+
+  await api.readAdminOpsAccountsMetadata();
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, '/api/admin/ops/accounts-metadata');
+  assert.equal(calls[0].init.method, 'GET');
+  assert.equal(calls[0].init.headers['x-test-auth'], 'adult-admin');
+});
+
 test('hub api client reads admin ops error events with status and limit query params', async () => {
   const calls = [];
   const api = createHubApi({

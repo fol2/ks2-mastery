@@ -587,3 +587,92 @@ test('GET /api/admin/ops/kpi rejects mismatched Origin even in non-production', 
   }
 });
 
+// PR #188 H1: dedicated narrow GET for the accounts-metadata panel so all four
+// admin ops panels can refresh independently. Mirrors /api/admin/ops/kpi etc.
+test('GET /api/admin/ops/accounts-metadata returns the non-demo directory for admin role', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedAdminAndOps(server, now);
+    insertAccountOpsMetadata(server, {
+      accountId: 'adult-parent',
+      opsStatus: 'suspended',
+      planLabel: 'Trial',
+      tagsJson: JSON.stringify(['priority']),
+      internalNotes: 'admin-only note',
+      updatedAt: now,
+      updatedByAccountId: 'adult-admin',
+    });
+
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/ops/accounts-metadata', {}, {
+      'x-ks2-dev-platform-role': 'admin',
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(payload.ok, true);
+    assert.ok(Array.isArray(payload.accounts));
+    const parentRow = payload.accounts.find((row) => row.accountId === 'adult-parent');
+    assert.ok(parentRow);
+    assert.equal(parentRow.opsStatus, 'suspended');
+    assert.equal(parentRow.planLabel, 'Trial');
+    assert.deepEqual(parentRow.tags, ['priority']);
+    assert.equal(parentRow.internalNotes, 'admin-only note');
+  } finally {
+    server.close();
+  }
+});
+
+test('GET /api/admin/ops/accounts-metadata redacts internalNotes for ops-role (R25)', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedAdminAndOps(server, now);
+    insertAccountOpsMetadata(server, {
+      accountId: 'adult-parent',
+      opsStatus: 'suspended',
+      internalNotes: 'private admin note',
+      updatedAt: now,
+      updatedByAccountId: 'adult-admin',
+    });
+
+    const response = await server.fetchAs('adult-ops', 'https://repo.test/api/admin/ops/accounts-metadata', {}, {
+      'x-ks2-dev-platform-role': 'ops',
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+    const parentRow = payload.accounts.find((row) => row.accountId === 'adult-parent');
+    assert.ok(parentRow);
+    assert.equal(parentRow.internalNotes, null);
+  } finally {
+    server.close();
+  }
+});
+
+test('GET /api/admin/ops/accounts-metadata as parent role returns 403', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedAdminAndOps(server, now);
+    const response = await server.fetchAs('adult-parent', 'https://repo.test/api/admin/ops/accounts-metadata', {}, {
+      'x-ks2-dev-platform-role': 'parent',
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 403);
+    assert.equal(payload.code, 'admin_hub_forbidden');
+  } finally {
+    server.close();
+  }
+});
+
+test('GET /api/admin/ops/accounts-metadata without session returns 401', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const response = await server.fetchRaw('https://repo.test/api/admin/ops/accounts-metadata');
+    const payload = await response.json();
+    assert.equal(response.status, 401);
+    assert.equal(payload.code, 'unauthenticated');
+  } finally {
+    server.close();
+  }
+});
+

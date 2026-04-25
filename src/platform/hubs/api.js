@@ -164,6 +164,14 @@ export function createHubApi({
       const url = buildRequestUrl(baseUrl, '/api/admin/ops/error-events', { status, limit });
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
+    // PR #188 H1: dedicated narrow GET for the account-ops-metadata panel
+    // so all four admin ops panels share a uniform refresh contract. Mirrors
+    // the other three /api/admin/ops/* read routes (kpi, activity,
+    // error-events). Worker implementation at /api/admin/ops/accounts-metadata.
+    async readAdminOpsAccountsMetadata() {
+      const url = buildRequestUrl(baseUrl, '/api/admin/ops/accounts-metadata');
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    },
     async updateAccountOpsMetadata({ accountId, patch, mutation } = {}) {
       const url = buildRequestUrl(
         baseUrl,
