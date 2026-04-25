@@ -271,6 +271,34 @@ export const grammarModule = {
       return resetToDashboard(context);
     }
 
+    // Phase 3 U1: register the two dashboard routing placeholders. U2 ships
+    // the real Grammar Bank scene and U6b ships the Writing Try scene; until
+    // then these dispatchers flip the phase to a stub rendered by
+    // `GrammarPracticeSurface`. Both are no-op safe when the learner is
+    // already in a transient phase (pendingCommand in flight, or session
+    // active — we never stomp an in-flight session).
+    if (action === 'grammar-open-concept-bank') {
+      if (ui.pendingCommand) return true;
+      if (ui.phase === 'session' || ui.phase === 'feedback') return true;
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => ({
+        ...normaliseGrammarReadModel(current, learnerId),
+        phase: 'bank',
+        error: '',
+      }));
+      return true;
+    }
+
+    if (action === 'grammar-open-transfer') {
+      if (ui.pendingCommand) return true;
+      if (ui.phase === 'session' || ui.phase === 'feedback') return true;
+      context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => ({
+        ...normaliseGrammarReadModel(current, learnerId),
+        phase: 'transfer',
+        error: '',
+      }));
+      return true;
+    }
+
     if (action === 'grammar-set-mode') {
       const mode = context.data?.value || DEFAULT_GRAMMAR_PREFS.mode;
       const patch = grammarModeUsesFocus(mode) ? { mode } : { mode, focusConceptId: '' };

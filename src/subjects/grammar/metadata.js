@@ -522,7 +522,12 @@ export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
       templates: { ...statsFromConcepts(concepts).templates, ...(raw.stats.templates || {}) },
     }
     : statsFromConcepts(concepts);
-  const phase = ['dashboard', 'session', 'feedback', 'summary'].includes(raw.phase)
+  // Phase 3 U1 widens the whitelist to accept `'bank'` and `'transfer'` so
+  // that the U1 dashboard can dispatch `grammar-open-concept-bank` /
+  // `grammar-open-transfer` before U2 + U6b land. The downstream scene files
+  // ship in later units; today the surface renders a lightweight stub for
+  // either phase so the state transition is safe.
+  const phase = ['dashboard', 'bank', 'transfer', 'session', 'feedback', 'summary'].includes(raw.phase)
     ? raw.phase
     : 'dashboard';
   const rawAnalytics = isPlainObject(raw.analytics) ? raw.analytics : {};

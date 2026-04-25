@@ -26,20 +26,60 @@ function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-test('Grammar opens as a real Clause Conservatory subject surface', () => {
+test('Grammar opens as the child-facing Grammar Garden dashboard', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
 
   harness.dispatch('open-subject', { subjectId: 'grammar' });
   const html = harness.render();
 
-  assert.match(html, /Clause Conservatory/);
-  assert.match(html, /Grammar retrieval practice/);
-  assert.match(html, /All 18 Grammar concepts/);
-  assert.match(html, /Start practice/);
-  assert.match(html, /Bracehart/);
-  assert.match(html, /Concordium/);
+  // Phase 3 U1: hero copy comes from `GRAMMAR_DASHBOARD_HERO`.
+  assert.match(html, /Grammar Garden/);
+  assert.match(html, /Grow your Grammar creatures/);
+  // Four primary mode cards are present exactly.
+  assert.match(html, /Smart Practice/);
+  assert.match(html, /Fix Trouble Spots/);
+  assert.match(html, /Mini Test/);
+  assert.match(html, /Grammar Bank/);
+  // Today cards.
+  assert.match(html, /Due/);
+  assert.match(html, /Trouble spots/);
+  assert.match(html, /Secure/);
+  assert.match(html, /Streak/);
+  // Concordium progress string.
+  assert.match(html, /Concordium progress/);
+  assert.match(html, /\d+\/18/);
+  // More practice disclosure is present and closed by default.
+  assert.match(html, /<details class="grammar-more-practice"><summary>More practice<\/summary>/);
+  // Writing Try secondary entry.
+  assert.match(html, /data-action="grammar-open-transfer"/);
+  assert.match(html, /Writing Try/);
+  // Primary Begin round CTA.
+  assert.match(html, /Begin round/);
   assert.doesNotMatch(html, /Future subject module/);
+});
+
+test('Grammar dashboard omits adult-diagnostic copy and reserved monster names', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  const html = harness.render();
+  // Narrow the absence check to the dashboard panel. The adult-only
+  // analytics surface lives behind a sibling `<details class="grammar-grown-up-view">`
+  // disclosure, so we scope to the dashboard section alone.
+  const dashboardMatch = html.match(/<section class="grammar-dashboard"[\s\S]*?<\/section><details class="grammar-grown-up-view">/);
+  assert.ok(dashboardMatch, 'dashboard section was rendered');
+  const dashboardHtml = dashboardMatch[0];
+
+  assert.doesNotMatch(dashboardHtml, /Worker-marked/i);
+  assert.doesNotMatch(dashboardHtml, /Worker authority/i);
+  assert.doesNotMatch(dashboardHtml, /Worker marked/i);
+  assert.doesNotMatch(dashboardHtml, /Worker-held/i);
+  assert.doesNotMatch(dashboardHtml, /full map/i);
+  assert.doesNotMatch(dashboardHtml, /Evidence snapshot/i);
+  // Reserved Grammar monsters never appear in the dashboard.
+  assert.doesNotMatch(dashboardHtml, /Glossbloom|Loomrill|Mirrane/i);
 });
 
 test('Grammar surface runs from setup to Worker-style feedback and summary', () => {
@@ -80,7 +120,7 @@ test('Grammar surface runs from setup to Worker-style feedback and summary', () 
 
   harness.dispatch('grammar-back');
   assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');
-  assert.match(harness.render(), /Grammar retrieval practice/);
+  assert.match(harness.render(), /Grammar Garden/);
 });
 
 test('Grammar Enter key advances from feedback to the next question', () => {
@@ -479,7 +519,7 @@ test('Grammar submit requires an answer before recording an attempt', () => {
   assert.equal(grammar.analytics.concepts.some((concept) => concept.attempts > 0), false);
 });
 
-test('Grammar setup controls are disabled while a command is pending', () => {
+test('Grammar dashboard disables mode cards, controls, and Begin button while a command is pending', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
   const learnerId = harness.store.getState().learners.selectedId;
@@ -491,25 +531,30 @@ test('Grammar setup controls are disabled while a command is pending', () => {
   }));
 
   const html = harness.render();
-  assert.match(html, /<button class="grammar-mode selected" type="button" disabled="">/);
-  assert.match(html, /<select class="input" disabled=""[^>]*><option value="" selected="">Smart mix<\/option>/);
+  // Primary mode cards carry `disabled` when setup is pending.
+  assert.match(html, /<button type="button" class="grammar-primary-mode selected is-disabled" data-mode-id="smart" data-action="grammar-set-mode" aria-pressed="true" disabled="">/);
+  // Round length select is disabled and shows the default 5 value selected.
   assert.match(html, /<select class="input" disabled=""[^>]*><option value="3">3<\/option><option value="5" selected="">5<\/option>/);
+  // Begin button renders the pending label.
   assert.match(html, /<button class="btn primary xl" type="button" disabled="">Starting\.\.\.<\/button>/);
 });
 
-test('Grammar setup exposes session goals and Smart Review teaching settings', () => {
+test('Grammar dashboard hides adult-diagnostic goal/teaching toggles but preserves the preference round-trip', () => {
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });
 
   harness.dispatch('open-subject', { subjectId: 'grammar' });
   let html = harness.render();
-  assert.match(html, /Session goal/);
-  assert.match(html, /Ten minutes/);
-  assert.match(html, /Clear due items/);
+  // Child dashboard surfaces Speech rate only; adult-diagnostic toggles
+  // move out of the primary dashboard as of U1.
   assert.match(html, /Speech rate/);
-  assert.match(html, /Smart Review teaching items/);
-  assert.match(html, /Show domain before answering/);
+  assert.doesNotMatch(html, /Smart Review teaching items/);
+  assert.doesNotMatch(html, /Show domain before answering/);
+  assert.doesNotMatch(html, /Session goal/);
 
+  // Preference dispatchers still round-trip through the module, so a
+  // later scene can surface them. The session start payload derives the
+  // goal/teaching settings as before.
   harness.dispatch('grammar-set-goal', { value: 'timed' });
   harness.dispatch('grammar-set-speech-rate', { value: '1.4' });
   harness.dispatch('grammar-set-practice-setting', { key: 'allowTeachingItems', value: true });
@@ -530,8 +575,6 @@ test('Grammar setup exposes session goals and Smart Review teaching settings', (
   // Independent first-attempt correct gets full credit. In-session faded escalation still available
   // if the learner requests it via grammar-use-faded-support.
   assert.equal(grammar.session.supportLevel, 0);
-  html = harness.render();
-  assert.match(html, /Ten minutes/);
 });
 
 test('Grammar show-domain setting affects display only before answer feedback', () => {
@@ -617,47 +660,54 @@ test('Grammar analytics renders evidence before reward progress', () => {
   assert.match(html, /Choose the correct sentence/);
 });
 
-test('Grammar renders transfer and Bellstorm bridge placeholders as locked future capabilities', () => {
+test('Grammar dashboard Writing Try dispatches grammar-open-transfer to the Writing Try placeholder scene', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
 
   harness.dispatch('open-subject', { subjectId: 'grammar' });
-  const html = harness.render();
+  const dashboardHtml = harness.render();
+  assert.match(dashboardHtml, /data-action="grammar-open-transfer"/);
+  assert.match(dashboardHtml, /Writing Try/);
 
-  assert.match(html, /Writing application roadmap/);
-  assert.match(html, /Paragraph transfer/);
-  assert.match(html, /Richer writing tasks/);
-  assert.match(html, /Decision: this will be non-scored paragraph application first/);
-  assert.match(html, /No score, retry, reward, or Concordium progress/);
-  assert.match(html, /Teacher review and deterministic paragraph scoring are separate future decisions/);
-  assert.match(html, /Worker-marked Grammar remains the only score-bearing authority/);
-  assert.match(html, /Bellstorm bridge/);
-  assert.match(html, /Punctuation-for-grammar stays in Grammar/);
-  assert.match(html, /Bellstorm Coast remains the separate Punctuation subject/);
+  harness.dispatch('grammar-open-transfer');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'transfer');
+  const transferHtml = harness.render();
+  assert.match(transferHtml, /Writing Try/);
+  assert.match(transferHtml, /Non-scored writing/);
+  // Back action returns the learner safely to the dashboard.
+  harness.dispatch('grammar-back');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');
 });
 
-test('Grammar locked transfer placeholders do not expose scoring commands', () => {
+test('Grammar dashboard Grammar Bank card dispatches grammar-open-concept-bank to the stub scene', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
 
   harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-open-concept-bank');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'bank');
   const html = harness.render();
+  assert.match(html, /Grammar Bank/);
+  assert.match(html, /Back to Grammar Garden/);
+  harness.dispatch('grammar-back');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');
+});
 
-  assert.match(html, /<button(?=[^>]*data-grammar-transfer-placeholder="paragraph-transfer")(?=[^>]*disabled="")[^>]*>Coming next/);
-  assert.match(html, /<button(?=[^>]*data-grammar-transfer-placeholder="writing-application")(?=[^>]*disabled="")[^>]*>Coming next/);
-  assert.doesNotMatch(html, /data-grammar-transfer-submit/);
-  assert.doesNotMatch(html, /name="transfer-answer"/);
+test('Grammar dashboard placeholder dispatchers are no-ops while a command is pending', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
 
-  assert.equal(grammarModule.handleAction('grammar-transfer-submit', {
-    appState: harness.store.getState(),
-    data: { formData: new FormData() },
-    store: harness.store,
-    subjectCommands: {
-      send() {
-        throw new Error('Locked transfer placeholder must not submit a command.');
-      },
-    },
-  }), false);
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.store.updateSubjectUi('grammar', (current) => ({
+    ...normaliseGrammarReadModel(current, learnerId),
+    pendingCommand: 'start-session',
+  }));
+
+  harness.dispatch('grammar-open-concept-bank');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');
+  harness.dispatch('grammar-open-transfer');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');
 });
 
 test('Punctuation remains separately registered from Grammar Bellstorm bridge copy', () => {
@@ -928,24 +978,28 @@ test('Grammar normaliser upgrades stale persisted mode capabilities', () => {
   }
 });
 
-test('Grammar legacy modes render available without locked placeholders', () => {
+test('Grammar "More practice" disclosure exposes secondary modes without locked placeholders', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
 
   harness.dispatch('open-subject', { subjectId: 'grammar' });
   const html = harness.render();
 
-  assert.match(html, /<button class="grammar-mode" type="button">[\s\S]*Weak concepts drill/);
-  assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Weak concepts drill/);
-  assert.match(html, /<button class="grammar-mode" type="button">[\s\S]*Sentence surgery/);
-  assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Sentence surgery/);
-  assert.match(html, /<button class="grammar-mode" type="button">[\s\S]*Sentence builder/);
-  assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Sentence builder/);
-  assert.match(html, /<button class="grammar-mode" type="button">[\s\S]*Worked examples/);
-  assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Worked examples/);
-  assert.match(html, /<button class="grammar-mode" type="button">[\s\S]*Faded guidance/);
-  assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">[\s\S]*Faded guidance/);
-  assert.doesNotMatch(html, /<button class="grammar-mode locked" type="button" disabled="">/);
+  // Secondary modes from `GRAMMAR_MORE_PRACTICE_MODES` render inside the
+  // `<details class="grammar-more-practice">` disclosure as active cards.
+  assert.match(html, /<details class="grammar-more-practice"><summary>More practice<\/summary>/);
+  assert.match(html, /data-mode-id="learn"/);
+  assert.match(html, /Learn a concept/);
+  assert.match(html, /data-mode-id="surgery"/);
+  assert.match(html, /Sentence Surgery/);
+  assert.match(html, /data-mode-id="builder"/);
+  assert.match(html, /Sentence Builder/);
+  assert.match(html, /data-mode-id="worked"/);
+  assert.match(html, /Worked Examples/);
+  assert.match(html, /data-mode-id="faded"/);
+  assert.match(html, /Faded Guidance/);
+  // No locked / disabled-due-to-lock markup on the secondary grid.
+  assert.doesNotMatch(html, /<button[^>]*class="grammar-secondary-mode[^"]* is-disabled"[^>]*disabled=""/);
 });
 
 test('Grammar setup can start trouble drill mode', () => {
@@ -959,7 +1013,10 @@ test('Grammar setup can start trouble drill mode', () => {
   harness.dispatch('grammar-set-mode', { value: 'trouble' });
   assert.equal(harness.store.getState().subjectUi.grammar.prefs.mode, 'trouble');
   assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
-  assert.match(harness.render(), /<select class="input" disabled=""><option value="" selected="">Weakest concept<\/option>/);
+
+  // U1 dashboard: `Fix Trouble Spots` card reflects the selected mode.
+  const html = harness.render();
+  assert.match(html, /<button type="button" class="grammar-primary-mode selected" data-mode-id="trouble"/);
 
   harness.dispatch('grammar-set-focus', { value: 'word_classes' });
   assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
@@ -988,7 +1045,8 @@ test('Grammar setup can start sentence surgery mode', () => {
   harness.dispatch('grammar-set-mode', { value: 'surgery' });
   assert.equal(harness.store.getState().subjectUi.grammar.prefs.mode, 'surgery');
   assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
-  assert.match(harness.render(), /<select class="input" disabled=""><option value="" selected="">Surgery mix<\/option>/);
+  // U1 dashboard: surgery is a "More practice" secondary mode, selected.
+  assert.match(harness.render(), /<button type="button" class="grammar-secondary-mode selected" data-mode-id="surgery"/);
 
   harness.dispatch('grammar-set-focus', { value: 'word_classes' });
   assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
@@ -1043,7 +1101,8 @@ test('Grammar setup can start sentence builder mode', () => {
   harness.dispatch('grammar-set-mode', { value: 'builder' });
   assert.equal(harness.store.getState().subjectUi.grammar.prefs.mode, 'builder');
   assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
-  assert.match(harness.render(), /<select class="input" disabled=""><option value="" selected="">Builder mix<\/option>/);
+  // U1 dashboard: builder is a "More practice" secondary mode, selected.
+  assert.match(harness.render(), /<button type="button" class="grammar-secondary-mode selected" data-mode-id="builder"/);
 
   harness.dispatch('grammar-set-focus', { value: 'word_classes' });
   assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
