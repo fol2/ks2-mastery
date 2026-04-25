@@ -162,6 +162,10 @@ test('bundledEffectConfig: serialised output matches frozen fixture', () => {
     existsSync(FIXTURE_PATH),
     `Fixture missing at ${FIXTURE_PATH}. Run with UPDATE_EFFECT_CONFIG_FIXTURE=1 to create it.`,
   );
-  const expected = readFileSync(FIXTURE_PATH, 'utf8').replace(/\n$/, '');
+  // Normalise CRLF -> LF before comparing: on Windows with
+  // `core.autocrlf=true`, the LF-committed fixture is CRLF in the working
+  // copy, while stableStringify produces LF in memory. The golden's
+  // semantic content is LF; CRLF is a checkout-time artefact.
+  const expected = readFileSync(FIXTURE_PATH, 'utf8').replace(/\r\n/g, '\n').replace(/\n$/, '');
   assert.equal(serialised, expected);
 });
