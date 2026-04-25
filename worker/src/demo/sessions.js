@@ -53,7 +53,7 @@ function currentWindowStart(timestamp, windowMs) {
 export const isProductionRuntime = requestOriginIsProductionRuntime;
 export const requireSameOrigin = requestRequireSameOrigin;
 
-async function consumeRateLimit(db, { bucket, identifier, limit, windowMs, now }) {
+export async function consumeRateLimit(db, { bucket, identifier, limit, windowMs, now }) {
   if (!bucket || !identifier || !limit || !windowMs) return { allowed: true, retryAfterSeconds: 0 };
   const windowStartedAt = currentWindowStart(now, windowMs);
   const limiterKey = `${bucket}:${await sha256(identifier)}`;

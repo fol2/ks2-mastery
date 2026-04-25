@@ -18,6 +18,12 @@ import { safeParseInt, uid } from './platform/core/utils.js';
 import { normalisePlatformRole } from './platform/access/roles.js';
 import { createHubApi } from './platform/hubs/api.js';
 import {
+  applyAdminHubAccountOpsMetadataPatch,
+  applyAdminHubDashboardKpisPatch,
+  applyAdminHubErrorLogSummaryPatch,
+  applyAdminHubOpsActivityPatch,
+} from './platform/hubs/admin-panel-patches.js';
+import {
   buildAdminHubAccessContext,
   buildParentHubAccessContext,
   readOnlyLearnerActionBlockReason,
@@ -58,6 +64,7 @@ import {
   LEGACY_SPELLING_EXPORT_KIND,
   PLATFORM_EXPORT_KIND_LEARNER,
 } from './platform/core/data-transfer.js';
+import { installGlobalErrorCapture } from './platform/ops/error-capture.js';
 
 const root = document.getElementById('app');
 const credentialFetch = createCredentialFetch();
@@ -715,6 +722,78 @@ async function loadAdminHub({ learnerId = null, force = false, auditLimit = 20 }
   }
 }
 
+// PR #188 H1: narrow per-panel refresh loaders. Each loader fetches a single
+// admin ops panel via its dedicated GET, then patches the local
+// `adultSurfaceState.payload.adminHub` sibling field using the pure helpers
+// in `admin-read-model.js`. All other siblings — including the U5 saving
+// scalars (`savingAccountId` / `savingEventId`) tracked on the directory /
+// summary objects themselves — are preserved by the patch helpers.
+//
+// R18 + plan note: kpi / activity / error-events / accounts-metadata are each
+// their own narrow GET so clicking Refresh on one panel does not re-fetch the
+// entire admin hub bundle. The `admin-refresh` / `loadAdminHub` full-reload
+// path is kept for initial load and for broad invalidation (role flips, etc.).
+function applyAdminHubPanelPatch(patchFn) {
+  patchAdultSurfaceState((state) => {
+    const payload = state.adminHub.payload || {};
+    const adminHub = payload.adminHub || {};
+    const nextAdminHub = patchFn(adminHub);
+    if (nextAdminHub === adminHub) return state;
+    return {
+      ...state,
+      adminHub: {
+        ...state.adminHub,
+        status: 'loaded',
+        payload: {
+          ...payload,
+          adminHub: nextAdminHub,
+        },
+        error: '',
+      },
+    };
+  });
+}
+
+async function refreshAdminOpsKpi() {
+  if (!hubApi) return;
+  try {
+    const payload = await hubApi.readAdminOpsKpi();
+    applyAdminHubPanelPatch((adminHub) => applyAdminHubDashboardKpisPatch(adminHub, payload));
+  } catch (error) {
+    console.error('admin-ops-kpi-refresh failed:', error?.message || error);
+  }
+}
+
+async function refreshAdminOpsActivity({ limit = 50 } = {}) {
+  if (!hubApi) return;
+  try {
+    const payload = await hubApi.readAdminOpsActivity({ limit });
+    applyAdminHubPanelPatch((adminHub) => applyAdminHubOpsActivityPatch(adminHub, payload));
+  } catch (error) {
+    console.error('admin-ops-activity-refresh failed:', error?.message || error);
+  }
+}
+
+async function refreshAdminOpsErrorEvents({ status = null, limit = 50 } = {}) {
+  if (!hubApi) return;
+  try {
+    const payload = await hubApi.readAdminOpsErrorEvents({ status, limit });
+    applyAdminHubPanelPatch((adminHub) => applyAdminHubErrorLogSummaryPatch(adminHub, payload));
+  } catch (error) {
+    console.error('admin-ops-error-events-refresh failed:', error?.message || error);
+  }
+}
+
+async function refreshAdminOpsAccountsMetadata() {
+  if (!hubApi) return;
+  try {
+    const payload = await hubApi.readAdminOpsAccountsMetadata();
+    applyAdminHubPanelPatch((adminHub) => applyAdminHubAccountOpsMetadataPatch(adminHub, payload));
+  } catch (error) {
+    console.error('account-ops-metadata-refresh failed:', error?.message || error);
+  }
+}
+
 function rebuildSpellingService() {
   services.spelling = createSpellingReadModelService({
     getState: () => store?.getState?.() || null,
@@ -1312,6 +1391,283 @@ async function restoreMonsterVisualConfigVersion({ version, expectedDraftRevisio
   }
 }
 
+function patchAdminHubAccountOpsMetadataEntry(updater, notice = '') {
+  patchAdultSurfaceState((state) => {
+    const payload = state.adminHub.payload || {};
+    const adminHub = payload.adminHub || {};
+    const directory = adminHub.accountOpsMetadata || { generatedAt: 0, accounts: [] };
+    const accounts = Array.isArray(directory.accounts) ? directory.accounts : [];
+    const nextAccounts = accounts.map((entry) => updater(entry) || entry);
+    return {
+      ...state,
+      notice,
+      adminHub: {
+        ...state.adminHub,
+        status: 'loaded',
+        payload: {
+          ...payload,
+          adminHub: {
+            ...adminHub,
+            accountOpsMetadata: {
+              ...directory,
+              accounts: nextAccounts,
+            },
+          },
+        },
+        error: '',
+      },
+    };
+  });
+}
+
+// U5 review follow-up: patch the adminHub.accountOpsMetadata.savingAccountId
+// field so the AdminHubSurface can gate inputs/selects/Save buttons for the
+// in-flight row and refuse double-click dispatches. Kept separate from the
+// per-entry updater helper so we can toggle the sibling directory scalar
+// without a no-op rewrite of every account row.
+function patchAdminHubAccountOpsMetadataSaving(savingAccountId) {
+  patchAdultSurfaceState((state) => {
+    const payload = state.adminHub.payload || {};
+    const adminHub = payload.adminHub || {};
+    const directory = adminHub.accountOpsMetadata || { generatedAt: 0, accounts: [] };
+    return {
+      ...state,
+      adminHub: {
+        ...state.adminHub,
+        status: 'loaded',
+        payload: {
+          ...payload,
+          adminHub: {
+            ...adminHub,
+            accountOpsMetadata: {
+              ...directory,
+              savingAccountId: savingAccountId || '',
+            },
+          },
+        },
+        error: '',
+      },
+    };
+  });
+}
+
+function readAdminHubAccountOpsMetadataSaving() {
+  const payload = adultSurfaceState.adminHub?.payload || {};
+  const directory = payload.adminHub?.accountOpsMetadata || {};
+  return typeof directory.savingAccountId === 'string' ? directory.savingAccountId : '';
+}
+
+function patchAdminHubErrorEventEntry(updater, notice = '') {
+  patchAdultSurfaceState((state) => {
+    const payload = state.adminHub.payload || {};
+    const adminHub = payload.adminHub || {};
+    const summary = adminHub.errorLogSummary || { generatedAt: 0, totals: {}, entries: [] };
+    const entries = Array.isArray(summary.entries) ? summary.entries : [];
+    const nextEntries = entries.map((entry) => updater(entry) || entry);
+    return {
+      ...state,
+      notice,
+      adminHub: {
+        ...state.adminHub,
+        status: 'loaded',
+        payload: {
+          ...payload,
+          adminHub: {
+            ...adminHub,
+            errorLogSummary: {
+              ...summary,
+              entries: nextEntries,
+            },
+          },
+        },
+        error: '',
+      },
+    };
+  });
+}
+
+// U5 review follow-up: patch the adminHub.errorLogSummary.savingEventId scalar
+// so the ErrorLogCentrePanel can disable the select while a transition is
+// in-flight and refuse concurrent dispatches.
+function patchAdminHubErrorLogSummarySaving(savingEventId) {
+  patchAdultSurfaceState((state) => {
+    const payload = state.adminHub.payload || {};
+    const adminHub = payload.adminHub || {};
+    const summary = adminHub.errorLogSummary || { generatedAt: 0, totals: {}, entries: [] };
+    return {
+      ...state,
+      adminHub: {
+        ...state.adminHub,
+        status: 'loaded',
+        payload: {
+          ...payload,
+          adminHub: {
+            ...adminHub,
+            errorLogSummary: {
+              ...summary,
+              savingEventId: savingEventId || '',
+            },
+          },
+        },
+        error: '',
+      },
+    };
+  });
+}
+
+function readAdminHubErrorLogSummarySaving() {
+  const payload = adultSurfaceState.adminHub?.payload || {};
+  const summary = payload.adminHub?.errorLogSummary || {};
+  return typeof summary.savingEventId === 'string' ? summary.savingEventId : '';
+}
+
+// R7, R8, R21: admin-only account ops metadata mutation with optimistic update
+// and rollback. Mirrors the updateAdminAccountRole pattern at lines 1145-1202.
+//
+// U5 review follow-up (Finding 1): wire savingAccountId BEFORE the fetch so the
+// UI disables inputs/selects/Save for the in-flight row, and refuse re-entry
+// while any row is mid-flight to defeat double-click parallel PUTs that would
+// otherwise double-commit and double-bump counters.
+//
+// TODO (follow-up): the in-flight guard (readAdminHubAccountOpsMetadataSaving
+// + readAdminHubErrorLogSummarySaving) is client-only defence-in-depth and is
+// NOT exercised server-side. The existing React fixture harness
+// (tests/helpers/react-render.js) renders static markup only — there is no
+// natural test hook for re-entrancy of these private handlers. The server
+// CAS guard (worker/src/repository.js, Finding 2) is the authoritative
+// double-commit defence; the client guard just avoids unnecessary 409s.
+async function updateAccountOpsMetadata({ accountId, patch }) {
+  if (!hubApi) return;
+  if (!(typeof accountId === 'string' && accountId)) return;
+  if (!patch || typeof patch !== 'object') return;
+
+  // In-flight guard: refuse dispatch while any ops-metadata save is mid-flight.
+  // Double-click protection BEFORE a new requestId is minted.
+  if (readAdminHubAccountOpsMetadataSaving()) return;
+
+  const requestId = uid('account-ops-metadata');
+  const mutation = { requestId, correlationId: requestId };
+
+  // Mark the row as saving BEFORE the fetch is issued.
+  patchAdminHubAccountOpsMetadataSaving(accountId);
+
+  // Snapshot the pre-optimistic entry so we can roll back on failure.
+  let snapshot = null;
+  patchAdminHubAccountOpsMetadataEntry((entry) => {
+    if (entry.accountId !== accountId) return entry;
+    if (!snapshot) snapshot = { ...entry, tags: [...(entry.tags || [])] };
+    return {
+      ...entry,
+      ...(Object.prototype.hasOwnProperty.call(patch, 'opsStatus') ? { opsStatus: patch.opsStatus } : {}),
+      ...(Object.prototype.hasOwnProperty.call(patch, 'planLabel') ? { planLabel: patch.planLabel } : {}),
+      ...(Object.prototype.hasOwnProperty.call(patch, 'tags') ? { tags: patch.tags } : {}),
+      ...(Object.prototype.hasOwnProperty.call(patch, 'internalNotes') ? { internalNotes: patch.internalNotes } : {}),
+    };
+  }, 'Saving account ops metadata...');
+
+  try {
+    const payload = await hubApi.updateAccountOpsMetadata({
+      accountId,
+      patch,
+      mutation,
+    });
+    const entry = payload?.accountOpsMetadataEntry || null;
+    if (entry) {
+      patchAdminHubAccountOpsMetadataEntry((row) => {
+        if (row.accountId !== accountId) return row;
+        return {
+          ...row,
+          opsStatus: entry.opsStatus ?? row.opsStatus,
+          planLabel: entry.planLabel ?? row.planLabel,
+          tags: Array.isArray(entry.tags) ? entry.tags : row.tags,
+          internalNotes: entry.internalNotes ?? row.internalNotes,
+          updatedAt: entry.updatedAt ?? row.updatedAt,
+          updatedByAccountId: entry.updatedByAccountId ?? row.updatedByAccountId,
+        };
+      }, 'Account ops metadata saved.');
+    }
+  } catch (error) {
+    // Roll back to the snapshot.
+    if (snapshot) {
+      patchAdminHubAccountOpsMetadataEntry((row) => (
+        row.accountId === accountId ? snapshot : row
+      ), '');
+    }
+    globalThis.alert?.(`Account ops metadata save failed: ${error?.message || 'Unknown error.'}`);
+  } finally {
+    // Always clear the saving flag, whether success or failure, so the UI
+    // re-enables the row's inputs and the next dispatch can proceed.
+    patchAdminHubAccountOpsMetadataSaving('');
+  }
+}
+
+// R10, R21: admin-only error event status mutation with optimistic update + rollback.
+//
+// U5 review follow-up (Finding 1): wire savingEventId BEFORE the fetch so the
+// UI disables the status select on the in-flight row, and refuse re-entry
+// while any event is mid-flight to defeat double-click parallel PUTs.
+async function updateOpsErrorEventStatus({ eventId, status }) {
+  if (!hubApi) return;
+  if (!(typeof eventId === 'string' && eventId)) return;
+  if (!(typeof status === 'string' && status)) return;
+
+  // In-flight guard: refuse dispatch while any error-event status transition is
+  // mid-flight. Prevents double-click parallel PUTs that would race the CAS.
+  if (readAdminHubErrorLogSummarySaving()) return;
+
+  const requestId = uid('ops-error-event-status');
+  const mutation = { requestId, correlationId: requestId };
+
+  // Mark the event as saving BEFORE the fetch is issued.
+  patchAdminHubErrorLogSummarySaving(eventId);
+
+  let snapshot = null;
+  patchAdminHubErrorEventEntry((entry) => {
+    if (entry.id !== eventId) return entry;
+    if (!snapshot) snapshot = { ...entry };
+    return { ...entry, status };
+  }, 'Updating error event status...');
+
+  // U5 review follow-up (Finding 2): capture the UI's pre-click status as the
+  // CAS pre-image and forward it as `expectedPreviousStatus`. The Worker
+  // rejects the dispatch with 409 `ops_error_event_status_stale` if another
+  // admin raced ahead, so the counter swap never lands twice.
+  const expectedPreviousStatus = typeof snapshot?.status === 'string' && snapshot.status
+    ? snapshot.status
+    : null;
+
+  try {
+    const payload = await hubApi.updateOpsErrorEventStatus({
+      eventId,
+      status,
+      expectedPreviousStatus,
+      mutation,
+    });
+    const event = payload?.opsErrorEvent || null;
+    if (event) {
+      patchAdminHubErrorEventEntry((row) => {
+        if (row.id !== eventId) return row;
+        return {
+          ...row,
+          status: event.status ?? row.status,
+          lastSeen: event.lastSeen ?? row.lastSeen,
+        };
+      }, payload?.noop ? '' : 'Error event status updated.');
+    }
+  } catch (error) {
+    if (snapshot) {
+      patchAdminHubErrorEventEntry((row) => (
+        row.id === eventId ? snapshot : row
+      ), '');
+    }
+    globalThis.alert?.(`Error event status update failed: ${error?.message || 'Unknown error.'}`);
+  } finally {
+    // Always clear the saving flag so the UI re-enables the select and the
+    // next dispatch can proceed.
+    patchAdminHubErrorLogSummarySaving('');
+  }
+}
+
 function ensureSpellingAutoAdvanceFromCurrentState() {
   return controller.ensureSpellingAutoAdvanceFromCurrentState();
 }
@@ -1764,6 +2120,54 @@ function handleGlobalAction(action, data) {
 
   if (action === 'monster-visual-config-restore') {
     restoreMonsterVisualConfigVersion(data);
+    return true;
+  }
+
+  // PR #188 H1: each per-panel Refresh button now issues a narrow GET and
+  // patches only its sibling field on the local adminHub model. This honours
+  // R18 (dedicated per-panel GETs) and fixes the visible bug where clicking
+  // "Show open" in the error log centre re-loaded every status because the
+  // handler ignored the `{ status }` payload and invoked the full hub reload.
+  if (action === 'admin-ops-kpi-refresh') {
+    if (boot.session.signedIn) refreshAdminOpsKpi();
+    return true;
+  }
+
+  if (action === 'admin-ops-activity-refresh') {
+    if (boot.session.signedIn) {
+      const limit = Number(data?.limit) > 0 ? Number(data.limit) : undefined;
+      refreshAdminOpsActivity(limit ? { limit } : {});
+    }
+    return true;
+  }
+
+  if (action === 'admin-ops-error-events-refresh') {
+    if (boot.session.signedIn) {
+      const status = typeof data?.status === 'string' && data.status ? data.status : null;
+      const limit = Number(data?.limit) > 0 ? Number(data.limit) : 50;
+      refreshAdminOpsErrorEvents({ status, limit });
+    }
+    return true;
+  }
+
+  if (action === 'account-ops-metadata-refresh') {
+    if (boot.session.signedIn) refreshAdminOpsAccountsMetadata();
+    return true;
+  }
+
+  if (action === 'account-ops-metadata-save') {
+    updateAccountOpsMetadata({
+      accountId: data?.accountId,
+      patch: data?.patch,
+    });
+    return true;
+  }
+
+  if (action === 'ops-error-event-status-set') {
+    updateOpsErrorEventStatus({
+      eventId: data?.eventId,
+      status: data?.status,
+    });
     return true;
   }
 
@@ -2249,3 +2653,8 @@ globalThis.addEventListener?.('keydown', (event) => {
   if (!shortcut.action) return;
   dispatchAction(shortcut.action, shortcut.data || {});
 });
+
+// U6: global window.error + unhandledrejection capture. Installed once alongside
+// the existing global listeners; the helper is idempotent and will swallow any
+// failure internally so a broken capture path never breaks the app.
+installGlobalErrorCapture({ credentialFetch });

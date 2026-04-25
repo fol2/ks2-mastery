@@ -144,6 +144,26 @@ Monster visual config management is admin-only:
 - restore changes draft only; it does not change the live published version until a later publish
 - the latest 20 published versions are retained for rollback-to-draft
 
+## Admin ops console P1 extensions
+
+The Admin / Operations surface carries four additional panels on top of the existing thin operator skeleton:
+
+- **Dashboard overview** — on-demand KPI counters (accounts, learners, demos, practice sessions 7d/30d, event log 7d, mutation receipts 7d, error events by status, account-ops updates). Computed via live `COUNT(*)` with dedicated indexes on `event_log.created_at`, `practice_sessions.updated_at`, `mutation_receipts.applied_at`; state-derived counters sourced from `admin_kpi_metrics`.
+- **Recent operations activity** — last 50 `mutation_receipts` across all accounts, manual refresh only. Account IDs masked to last 6 characters; learner-scoped `scope_id` masked to last 8 characters; platform-scoped IDs shown in full.
+- **Account ops metadata** — admin-only edits to `ops_status` (active / suspended / payment_hold), `plan_label`, `tags_json`, `internal_notes`. GM-facing only; **not wired into sign-in enforcement** in P1. A persistent UI callout reflects the deferred enforcement status.
+- **Error log centre** — last 50 `ops_error_events`, filterable by status. Admin can transition status among open / investigating / resolved / ignored.
+
+### Public error-capture endpoint
+
+`POST /api/ops/error-event` ingests client-side runtime errors from any surface (adult / learner / demo / signed-out). Unauthenticated, rate-limited per source IP (60 / 10 min via `request_limits`), byte-capped at 8KB via `request.arrayBuffer()` length check, redacted on both sides via closed allowlist + all-caps word scrubbing. Fingerprint dedup authoritative on `(error_kind, message_first_line, first_frame)` tuple; fingerprint SHA-256 is cache-only.
+
+### Permission rules
+
+- KPI / activity / error-log read: admin + ops.
+- Account ops metadata view: admin + ops; `internal_notes` redacted to `null` for ops-role readers.
+- Account ops metadata edit: admin only.
+- Error-event status transition: admin only.
+
 ## Local reference build versus Worker API
 
 There are two ways these surfaces currently appear.
@@ -237,6 +257,7 @@ The hub read models consume durable records after the fact.
 - no worker-backed audit search UI beyond basic lookup output
 - no invite flow, organisation model, or rich admin account management beyond basic platform-role assignment
 - no viewer learner promotion into the writable subject shell yet
+- no `ops_status` enforcement in auth (sign-in still succeeds for suspended / payment-hold accounts in P1; enforcement deferred)
 
 ## Why this pass stops here
 

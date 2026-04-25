@@ -96,6 +96,330 @@ function DemoOperationsSummary({ summary = {} }) {
   );
 }
 
+function DashboardKpiPanel({ model, actions }) {
+  const kpis = model?.dashboardKpis || {};
+  const accounts = kpis.accounts || {};
+  const learners = kpis.learners || {};
+  const demos = kpis.demos || {};
+  const practiceSessions = kpis.practiceSessions || {};
+  const eventLog = kpis.eventLog || {};
+  const mutationReceipts = kpis.mutationReceipts || {};
+  const errorEvents = kpis.errorEvents || {};
+  const byStatus = errorEvents.byStatus || {};
+  const accountOpsUpdates = kpis.accountOpsUpdates || {};
+  const items = [
+    ['Adult accounts', accounts.total],
+    ['Learners', learners.total],
+    ['Active demo accounts', demos.active],
+    ['Practice sessions (7d)', practiceSessions.last7d],
+    ['Practice sessions (30d)', practiceSessions.last30d],
+    ['Event log (7d)', eventLog.last7d],
+    ['Mutation receipts (7d)', mutationReceipts.last7d],
+    ['Errors: open', byStatus.open],
+    ['Errors: investigating', byStatus.investigating],
+    ['Errors: resolved', byStatus.resolved],
+    ['Errors: ignored', byStatus.ignored],
+    ['Account ops updates', accountOpsUpdates.total],
+  ];
+  return (
+    <section className="card" style={{ marginBottom: 20 }}>
+      <div className="card-header">
+        <div>
+          <div className="eyebrow">Dashboard KPI</div>
+          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Dashboard overview</h3>
+        </div>
+        <div className="actions">
+          <span className="chip">Generated {formatTimestamp(kpis.generatedAt)}</span>
+          <button className="btn secondary" type="button" onClick={() => actions.dispatch('admin-ops-kpi-refresh')}>Refresh</button>
+        </div>
+      </div>
+      <div className="skill-list">
+        {items.map(([label, value]) => (
+          <div className="skill-row" key={label}>
+            <div><strong>{label}</strong></div>
+            <div>{String(Number(value) || 0)}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RecentActivityStreamPanel({ model, actions }) {
+  const stream = model?.opsActivityStream || {};
+  const entries = Array.isArray(stream.entries) ? stream.entries : [];
+  return (
+    <section className="card" style={{ marginBottom: 20 }}>
+      <div className="card-header">
+        <div>
+          <div className="eyebrow">Ops activity</div>
+          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Recent operations activity</h3>
+          <p className="small muted">Latest mutation receipts across accounts. Learner scope ids pre-masked to last 8 characters; account scope ids to last 6.</p>
+        </div>
+        <div className="actions">
+          <span className="chip">Generated {formatTimestamp(stream.generatedAt)}</span>
+          <button className="btn secondary" type="button" onClick={() => actions.dispatch('admin-ops-activity-refresh')}>Refresh</button>
+        </div>
+      </div>
+      {entries.length ? entries.map((entry) => (
+        <div className="skill-row" key={entry.requestId || `${entry.mutationKind}-${entry.appliedAt}`}>
+          <div><strong>{entry.mutationKind || 'mutation'}</strong></div>
+          <div className="small muted">{entry.scopeType || ''} · {entry.scopeId || 'account'}</div>
+          <div>{entry.accountIdMasked || ''}</div>
+          <div className="small muted">{formatTimestamp(entry.appliedAt)}</div>
+        </div>
+      )) : <p className="small muted">No recent operations activity.</p>}
+    </section>
+  );
+}
+
+const OPS_STATUS_OPTIONS = ['active', 'suspended', 'payment_hold'];
+// R27: prominent, UK-English non-enforcement notice rendered beside the
+// ops_status control. Do NOT reword — the string is asserted verbatim.
+const ACCOUNT_OPS_R27_CALLOUT = 'Status labels are informational only. Suspension, payment-hold, and deactivation are not currently enforced by sign-in. Enforcement is planned for a later release.';
+
+function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions }) {
+  const accountId = account.accountId;
+  const isSaving = savingAccountId === accountId;
+  const [opsStatus, setOpsStatus] = React.useState(account.opsStatus || 'active');
+  const [planLabel, setPlanLabel] = React.useState(account.planLabel || '');
+  const [tagsText, setTagsText] = React.useState((account.tags || []).join(', '));
+  const [internalNotes, setInternalNotes] = React.useState(account.internalNotes || '');
+
+  // Rehydrate local input state when the underlying row changes (optimistic
+  // patch or server refresh) to keep the inputs in sync without wiping
+  // in-progress edits the user is actively typing.
+  React.useEffect(() => {
+    setOpsStatus(account.opsStatus || 'active');
+  }, [account.opsStatus]);
+  React.useEffect(() => {
+    setPlanLabel(account.planLabel || '');
+  }, [account.planLabel]);
+  React.useEffect(() => {
+    setTagsText((account.tags || []).join(', '));
+  }, [account.tags]);
+  React.useEffect(() => {
+    setInternalNotes(account.internalNotes || '');
+  }, [account.internalNotes]);
+
+  const handleSave = () => {
+    const parsedTags = tagsText
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0)
+      .slice(0, 10);
+    actions.dispatch('account-ops-metadata-save', {
+      accountId,
+      patch: {
+        opsStatus,
+        planLabel: planLabel.trim() === '' ? null : planLabel.trim(),
+        tags: parsedTags,
+        internalNotes: internalNotes.trim() === '' ? null : internalNotes,
+      },
+    });
+  };
+
+  if (!canManage) {
+    // Read-only render preserved verbatim from U4. Ops-role viewers also see
+    // the R27 callout so they understand the informational nature of the flag.
+    return (
+      <div className="skill-row" key={accountId}>
+        <div>
+          <strong>{account.email || accountId}</strong>
+          <div className="small muted">{account.displayName || 'No display name'} · {account.platformRole || 'parent'}</div>
+        </div>
+        <div>
+          <span className="chip">{account.opsStatus || 'active'}</span>
+          <div className="callout warn small" style={{ marginTop: 6 }}>{ACCOUNT_OPS_R27_CALLOUT}</div>
+        </div>
+        <div className="small muted">{account.planLabel || '—'}</div>
+        <div className="small muted">{(account.tags || []).join(', ') || '—'}</div>
+        <div className="small muted">{account.internalNotes ?? '—'}</div>
+        <div className="small muted">Updated {formatTimestamp(account.updatedAt)}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="skill-row" key={accountId}>
+      <div>
+        <strong>{account.email || accountId}</strong>
+        <div className="small muted">{account.displayName || 'No display name'} · {account.platformRole || 'parent'}</div>
+      </div>
+      <div>
+        <label className="field" style={{ minWidth: 140 }}>
+          <span>Ops status</span>
+          <select
+            className="select"
+            name="opsStatus"
+            value={opsStatus}
+            disabled={isSaving}
+            onChange={(event) => setOpsStatus(event.target.value)}
+          >
+            {OPS_STATUS_OPTIONS.map((option) => (
+              <option value={option} key={option}>{option}</option>
+            ))}
+          </select>
+        </label>
+        <div className="callout warn small" style={{ marginTop: 6 }}>{ACCOUNT_OPS_R27_CALLOUT}</div>
+      </div>
+      <label className="field" style={{ minWidth: 140 }}>
+        <span>Plan label</span>
+        <input
+          className="input"
+          type="text"
+          name="planLabel"
+          value={planLabel}
+          maxLength={64}
+          disabled={isSaving}
+          onChange={(event) => setPlanLabel(event.target.value)}
+        />
+      </label>
+      <label className="field" style={{ minWidth: 160 }}>
+        <span>Tags (comma separated)</span>
+        <input
+          className="input"
+          type="text"
+          name="tags"
+          value={tagsText}
+          disabled={isSaving}
+          onChange={(event) => setTagsText(event.target.value)}
+        />
+      </label>
+      <label className="field" style={{ minWidth: 200 }}>
+        <span>Internal notes</span>
+        <textarea
+          className="input"
+          name="internalNotes"
+          value={internalNotes}
+          maxLength={2000}
+          rows={3}
+          disabled={isSaving}
+          onChange={(event) => setInternalNotes(event.target.value)}
+        />
+      </label>
+      <div>
+        <button className="btn secondary" type="button" disabled={isSaving} onClick={handleSave}>
+          {isSaving ? 'Saving...' : 'Save'}
+        </button>
+        <div className="small muted" style={{ marginTop: 4 }}>Updated {formatTimestamp(account.updatedAt)}</div>
+      </div>
+    </div>
+  );
+}
+
+function AccountOpsMetadataPanel({ model, actions }) {
+  const directory = model?.accountOpsMetadata || {};
+  const accounts = Array.isArray(directory.accounts) ? directory.accounts : [];
+  // R27/R2: admin-only edit controls; ops-role users see read-only rows but
+  // still get the non-enforcement callout.
+  const canManage = model?.permissions?.platformRole === 'admin';
+  const savingAccountId = directory.savingAccountId || '';
+  return (
+    <section className="card" style={{ marginBottom: 20 }}>
+      <div className="card-header">
+        <div>
+          <div className="eyebrow">Account ops</div>
+          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Account ops metadata</h3>
+          <p className="small muted">GM-facing labels, plans, tags, and notes per account. Admin accounts can edit; ops-role accounts can view.</p>
+        </div>
+        <div className="actions">
+          <span className="chip">Generated {formatTimestamp(directory.generatedAt)}</span>
+          <button className="btn secondary" type="button" onClick={() => actions.dispatch('account-ops-metadata-refresh')}>Refresh</button>
+        </div>
+      </div>
+      {accounts.length ? accounts.map((account) => (
+        <AccountOpsMetadataRow
+          key={account.accountId}
+          account={account}
+          canManage={canManage}
+          savingAccountId={savingAccountId}
+          actions={actions}
+        />
+      )) : <p className="small muted">No account ops metadata to show.</p>}
+    </section>
+  );
+}
+
+const ERROR_EVENT_STATUS_OPTIONS = ['open', 'investigating', 'resolved', 'ignored'];
+
+function ErrorLogCentrePanel({ model, actions }) {
+  const summary = model?.errorLogSummary || {};
+  const totals = summary.totals || {};
+  const entries = Array.isArray(summary.entries) ? summary.entries : [];
+  const statusFilters = ERROR_EVENT_STATUS_OPTIONS;
+  // R10: status transitions are admin-only. Ops-role viewers keep the chip.
+  const canManage = model?.permissions?.platformRole === 'admin';
+  const savingEventId = summary.savingEventId || '';
+  return (
+    <section className="card" style={{ marginBottom: 20 }}>
+      <div className="card-header">
+        <div>
+          <div className="eyebrow">Error log</div>
+          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Error log centre</h3>
+          <div className="chip-row" style={{ marginTop: 8 }}>
+            <span className="chip">{String(Number(totals.open) || 0)} open</span>
+            <span className="chip">{String(Number(totals.investigating) || 0)} investigating</span>
+            <span className="chip">{String(Number(totals.resolved) || 0)} resolved</span>
+            <span className="chip">{String(Number(totals.ignored) || 0)} ignored</span>
+          </div>
+          <div className="chip-row" style={{ marginTop: 8 }}>
+            {statusFilters.map((status) => (
+              <button
+                className="btn ghost"
+                type="button"
+                key={status}
+                onClick={() => actions.dispatch('admin-ops-error-events-refresh', { status })}
+              >
+                Show {status}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="actions">
+          <span className="chip">Generated {formatTimestamp(summary.generatedAt)}</span>
+          <button className="btn secondary" type="button" onClick={() => actions.dispatch('admin-ops-error-events-refresh', { status: null })}>Refresh</button>
+        </div>
+      </div>
+      {entries.length ? entries.map((entry) => {
+        const isSaving = savingEventId === entry.id;
+        return (
+          <div className="skill-row" key={entry.id}>
+            <div>
+              <strong>{entry.errorKind || 'Error'}</strong>
+              <div className="small muted">{entry.messageFirstLine || ''}</div>
+            </div>
+            <div className="small muted">{entry.routeName || ''}</div>
+            <div>×{Number(entry.occurrenceCount) || 1}</div>
+            <div className="small muted">First {formatTimestamp(entry.firstSeen)}</div>
+            <div className="small muted">Last {formatTimestamp(entry.lastSeen)}</div>
+            <div>
+              {canManage ? (
+                <label className="field" style={{ minWidth: 150 }}>
+                  <span>Status</span>
+                  <select
+                    className="select"
+                    name="errorEventStatus"
+                    value={entry.status || 'open'}
+                    disabled={isSaving}
+                    onChange={(event) => actions.dispatch('ops-error-event-status-set', { eventId: entry.id, status: event.target.value })}
+                  >
+                    {ERROR_EVENT_STATUS_OPTIONS.map((option) => (
+                      <option value={option} key={option}>{option}</option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <span className="chip">{entry.status || 'open'}</span>
+              )}
+            </div>
+          </div>
+        );
+      }) : <p className="small muted">No error events recorded.</p>}
+    </section>
+  );
+}
+
 export function AdminHubSurface({ appState, model, hubState = {}, accountDirectory = {}, accessContext = {}, actions }) {
   const loadingRemote = accessContext?.shellAccess?.source === 'worker-session' && hubState.status === 'loading' && !model;
   if (loadingRemote) {
@@ -171,6 +495,8 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
 
       <MonsterVisualConfigPanel model={model} accountId={model.account?.id || ''} actions={actions} />
       <AdminAccountRoles model={model} directory={accountDirectory} actions={actions} />
+      <DashboardKpiPanel model={model} actions={actions} />
+      <RecentActivityStreamPanel model={model} actions={actions} />
       <DemoOperationsSummary summary={model.demoOperations} />
 
       <section className="two-col" style={{ marginBottom: 20 }}>
@@ -210,6 +536,9 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
           ) : null}
         </article>
       </section>
+
+      <AccountOpsMetadataPanel model={model} actions={actions} />
+      <ErrorLogCentrePanel model={model} actions={actions} />
 
       <section className="two-col" style={{ marginBottom: 20 }}>
         <article className="card">

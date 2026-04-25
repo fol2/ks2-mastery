@@ -9,10 +9,11 @@ import {
 } from './auth.js';
 import { requireDatabase } from './d1.js';
 import { errorResponse } from './errors.js';
-import { json, readForm, readJson } from './http.js';
+import { json, readForm, readJson, readJsonBounded } from './http.js';
 import { createWorkerRepository } from './repository.js';
 import { handleTextToSpeechRequest } from './tts.js';
 import {
+  consumeRateLimit,
   createDemoSession,
   isProductionRuntime,
   protectDemoParentHubRead,
@@ -210,6 +211,23 @@ function isPublicSourceLockdownPath(pathname) {
     || pathname === '/migration-plan.md';
 }
 
+// Local copy of the clientIp helper so the public ops route can key its IP
+// rate-limit bucket without pulling auth.js internals. Mirrors the canonical
+// resolution order used by demo/sessions.js (cf-connecting-ip → x-forwarded-for
+// first entry → x-real-ip → 'unknown').
+function resolveClientIp(request) {
+  const raw = request.headers.get('cf-connecting-ip')
+    || request.headers.get('x-forwarded-for')?.split(',')[0]
+    || request.headers.get('x-real-ip')
+    || '';
+  const trimmed = typeof raw === 'string' ? raw.trim() : '';
+  return trimmed || 'unknown';
+}
+
+const OPS_ERROR_EVENT_MAX_BODY_BYTES = 8 * 1024;
+const OPS_ERROR_EVENT_RATE_LIMIT = 60;
+const OPS_ERROR_EVENT_RATE_WINDOW_MS = 10 * 60 * 1000;
+
 export function createWorkerApp({
   now = Date.now,
   fetchFn = (...args) => fetch(...args),
@@ -360,6 +378,130 @@ export function createWorkerApp({
             return redirect(`${url.origin}/?auth=success`, 302, result.cookies);
           } catch (error) {
             return callbackErrorRedirect(request, error?.message);
+          }
+        }
+
+        // Public client-error ingest. Placed BEFORE auth.requireSession per
+        // R13/R15: errors in demo, signed-out, or session-expired states must
+        // still land. Does NOT call requireSameOrigin — Origin headers are
+        // unreliable from error contexts (file://, extensions, mid-navigation).
+        // Defence stack per the plan: byte-level body cap (R23), IP rate-
+        // limit, server-side redaction, attribution gate.
+        if (url.pathname === '/api/ops/error-event' && request.method === 'POST') {
+          const nowTs = now();
+
+          // U6 review follow-up (Finding 2): consume the IP rate limit
+          // BEFORE reading the request body. Otherwise an attacker can
+          // flood the endpoint with 9KB+ bodies; each forces an
+          // `arrayBuffer()` read that returns a 400 oversized-body
+          // response before the rate-limit bucket is ever touched, so
+          // the per-IP abuse counter never increments. With this order,
+          // the rate limit is bumped first and 61+ abusive calls from
+          // the same IP all collapse to 429.
+          //
+          // U6 review follow-up (Finding 6 — deferred): the per-IP
+          // budget is vulnerable to IPv6 /64 source rotation. The
+          // `resolveClientIp` helper uses the full address as-is, so a
+          // single attacker on an IPv6 /64 can rotate the low 64 bits
+          // and evade the limit. The full mitigation is either (a)
+          // IPv6 /64 prefix truncation in `resolveClientIp`, or (b) a
+          // global token bucket across all IPs. Both touch every
+          // public-endpoint rate-limit call site, so this is deferred
+          // to a dedicated follow-up rather than being lumped into the
+          // ops-error hot path fix.
+          const db = requireDatabase(env);
+          const rateLimit = await consumeRateLimit(db, {
+            bucket: 'ops-error-capture-ip',
+            identifier: resolveClientIp(request),
+            limit: OPS_ERROR_EVENT_RATE_LIMIT,
+            windowMs: OPS_ERROR_EVENT_RATE_WINDOW_MS,
+            now: nowTs,
+          });
+          if (!rateLimit.allowed) {
+            // Best-effort counter bump — swallow table-missing / transient
+            // write errors so the rate-limit response is unaffected.
+            const limiterRepository = createWorkerRepository({ env, now });
+            try {
+              await limiterRepository.bumpAdminKpiMetric('ops_error_events.rate_limited', 1);
+            } catch {
+              // Swallow — the rate-limit path must never re-enter error ingest.
+            }
+            return json({
+              ok: false,
+              code: 'ops_error_rate_limited',
+              message: 'Too many client error events from this connection.',
+              retryAfterSeconds: Number(rateLimit.retryAfterSeconds) || 0,
+            }, 429);
+          }
+
+          // Rate-limit has cleared — now safe to read the body. Reading the
+          // body earlier would let oversized-body 400s short-circuit before
+          // the rate-limit bucket ever fires (see Finding 2 comment above).
+          let clientEvent;
+          try {
+            clientEvent = await readJsonBounded(request, OPS_ERROR_EVENT_MAX_BODY_BYTES);
+          } catch (error) {
+            if (error?.code === 'ops_error_payload_too_large') {
+              return json({
+                ok: false,
+                code: 'ops_error_payload_too_large',
+                message: 'Error event payload exceeds the 8KB limit.',
+              }, 400);
+            }
+            throw error;
+          }
+
+          // R15-safe attribution: attach account_id ONLY when a real (non-demo)
+          // session is present AND the route is not a /demo/ path. Prevents
+          // leaking admin-signed-in correlations while they are debugging the
+          // demo surface. The session claim alone is not sufficient — the
+          // development-stub provider omits `.demo`, so cross-check the DB
+          // account_type column to catch demo accounts regardless of how the
+          // session was issued.
+          let sessionAccountId = null;
+          try {
+            const maybeSession = await auth.getSession(request);
+            if (maybeSession && !maybeSession.demo && maybeSession.accountType !== 'demo') {
+              const accountRow = await db.prepare(
+                'SELECT account_type FROM adult_accounts WHERE id = ?',
+              ).bind(maybeSession.accountId).first();
+              const accountType = typeof accountRow?.account_type === 'string'
+                ? accountRow.account_type
+                : 'real';
+              if (accountType !== 'demo') {
+                const rawRoute = typeof clientEvent?.routeName === 'string' ? clientEvent.routeName : '';
+                if (!rawRoute.startsWith('/demo/')) {
+                  sessionAccountId = maybeSession.accountId || null;
+                }
+              }
+            }
+          } catch {
+            // Anonymous is fine — proceed without attribution.
+          }
+
+          const repository = createWorkerRepository({ env, now });
+          try {
+            const result = await repository.recordClientErrorEvent({
+              clientEvent,
+              sessionAccountId,
+            });
+            if (result.unavailable) {
+              return json({
+                ok: true,
+                eventId: null,
+                deduped: false,
+                unavailable: true,
+              });
+            }
+            return json({
+              ok: true,
+              eventId: result.eventId,
+              deduped: Boolean(result.deduped),
+            });
+          } catch (error) {
+            // BadRequestError (validation_failed) falls through to errorResponse
+            // so the client receives a structured 400.
+            throw error;
           }
         }
 
@@ -590,6 +732,73 @@ export function createWorkerApp({
           const body = await readJson(request);
           const result = await repository.restoreMonsterVisualConfigVersion(session.accountId, {
             version: body.version,
+            mutation: mutationFromRequest(body, request),
+          });
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/admin/ops/kpi' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const result = await repository.readAdminOpsKpi(session.accountId);
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/admin/ops/activity' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const limit = Number(url.searchParams.get('limit')) || undefined;
+          const result = await repository.listAdminOpsActivity(session.accountId, { limit });
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/admin/ops/error-events' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const status = url.searchParams.get('status') || null;
+          const limit = Number(url.searchParams.get('limit')) || undefined;
+          const result = await repository.readAdminOpsErrorEvents(session.accountId, { status, limit });
+          return json({ ok: true, ...result });
+        }
+
+        // PR #188 H1: dedicated narrow GET for the account-ops-metadata panel.
+        // Mirrors the three sibling /api/admin/ops/* reads so each of the four
+        // admin ops panels can refresh independently (R18 extended to 4 panels).
+        if (url.pathname === '/api/admin/ops/accounts-metadata' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const result = await repository.readAdminOpsAccountsMetadata(session.accountId);
+          return json({ ok: true, ...result });
+        }
+
+        // R31: regex dispatch for parameterised admin ops mutations. Placed
+        // AFTER literal /api/admin/accounts and /api/admin/accounts/role so
+        // those take priority, and AFTER the four /api/admin/ops/* GET
+        // routes above.
+        const accountOpsMetadataMatch = /^\/api\/admin\/accounts\/([^/]+)\/ops-metadata$/.exec(url.pathname);
+        if (accountOpsMetadataMatch && request.method === 'PUT') {
+          requireSameOrigin(request, env);
+          const targetAccountId = decodeURIComponent(accountOpsMetadataMatch[1]);
+          const body = await readJson(request);
+          const result = await repository.updateAccountOpsMetadata(session.accountId, {
+            targetAccountId,
+            patch: body?.patch,
+            mutation: mutationFromRequest(body, request),
+          });
+          return json({ ok: true, ...result });
+        }
+
+        const opsErrorEventStatusMatch = /^\/api\/admin\/ops\/error-events\/([^/]+)\/status$/.exec(url.pathname);
+        if (opsErrorEventStatusMatch && request.method === 'PUT') {
+          requireSameOrigin(request, env);
+          const eventId = decodeURIComponent(opsErrorEventStatusMatch[1]);
+          const body = await readJson(request);
+          // U5 review follow-up (Finding 2): forward the optional
+          // `expectedPreviousStatus` CAS pre-image from the client so the
+          // repository can reject stale dispatches (two admins racing with
+          // the same pre-read state) with a 409 before the batch runs.
+          const result = await repository.updateOpsErrorEventStatus(session.accountId, {
+            eventId,
+            status: body?.status,
+            expectedPreviousStatus: typeof body?.expectedPreviousStatus === 'string'
+              ? body.expectedPreviousStatus
+              : null,
             mutation: mutationFromRequest(body, request),
           });
           return json({ ok: true, ...result });
