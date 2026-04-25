@@ -106,6 +106,7 @@ export function renderMonsterVisualRendererFixture() {
     import { renderToStaticMarkup } from 'react-dom/server';
     import { MonsterVisualConfigProvider } from ${JSON.stringify(absoluteSpecifier('src/platform/game/MonsterVisualConfigContext.jsx'))};
     import { BUNDLED_MONSTER_VISUAL_CONFIG } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monster-visual-config.js'))};
+    import { CodexCard } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/CodexCard.jsx'))};
     import { CodexCreatureVisual } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/CodexCreature.jsx'))};
     import { MonsterMeadow } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/MonsterMeadow.jsx'))};
     import { SetupMeadow } from ${JSON.stringify(absoluteSpecifier('src/subjects/spelling/components/SpellingSetupScene.jsx'))};
@@ -169,6 +170,29 @@ export function renderMonsterVisualRendererFixture() {
             }}
             context="feature"
             sizes="(max-width: 820px) 76vw, 700px"
+          />
+          <CodexCard
+            entry={{
+              id: 'glimmerbug',
+              subjectId: 'spelling',
+              name: 'Mega Lanternwing',
+              speciesName: 'Glimmerbug',
+              blurb: 'Review card fixture.',
+              caught: true,
+              stage: 4,
+              mastered: 100,
+              progressPct: 100,
+              colour: '#B43CD9',
+              soft: '#F8E7F1',
+              branch: 'b1',
+              displayState: 'monster',
+              imageAlt: 'Mega Lanternwing',
+              stageLabel: 'Stage 4',
+              secureLabel: '100 secure words',
+              wordBand: 'Year 5-6 spellings',
+            }}
+            onPractice={() => {}}
+            onPreview={() => {}}
           />
           <MonsterMeadow
             monsters={[{
