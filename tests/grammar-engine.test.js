@@ -786,15 +786,27 @@ test('Grammar practice settings keep Smart Review teaching support score-aware',
   const sample = oracle.templates.find((template) => template.id === 'fronted_adverbial_choose');
   const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
 
-  const start = engine.apply({
+  const prefs = engine.apply({
     learnerId: 'learner-a',
     subjectRecord: {},
+    command: 'save-prefs',
+    requestId: 'prefs-smart-teaching',
+    payload: {
+      prefs: {
+        allowTeachingItems: true,
+        showDomainBeforeAnswer: false,
+        speechRate: 9,
+      },
+    },
+  });
+
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: prefs.state, data: prefs.data },
     command: 'start-session',
     requestId: 'start-smart-teaching',
     payload: {
       mode: 'smart',
-      allowTeachingItems: true,
-      showDomainBeforeAnswer: false,
       roundLength: 1,
       templateId: sample.id,
       seed: sample.sample.seed,
@@ -803,6 +815,7 @@ test('Grammar practice settings keep Smart Review teaching support score-aware',
 
   assert.equal(start.state.prefs.allowTeachingItems, true);
   assert.equal(start.state.prefs.showDomainBeforeAnswer, false);
+  assert.equal(start.state.prefs.speechRate, 1.4);
   assert.equal(start.state.session.supportLevel, 1);
 
   const submit = engine.apply({

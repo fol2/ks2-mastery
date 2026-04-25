@@ -3,6 +3,7 @@ import {
   GRAMMAR_SUBJECT_ID,
   normaliseGrammarReadModel,
 } from './metadata.js';
+import { normaliseGrammarSpeechRate } from './speech.js';
 
 function selectedLearnerId(context) {
   return (context?.store?.getState?.() || context?.appState || {})?.learners?.selectedId || '';
@@ -280,6 +281,15 @@ export const grammarModule = {
         return resetToDashboardWithPrefs(context, prefs);
       }
       return sendGrammarCommand(context, 'save-prefs', { prefs: patch });
+    }
+
+    if (action === 'grammar-set-speech-rate') {
+      const speechRate = normaliseGrammarSpeechRate(context.data?.value, ui.prefs?.speechRate);
+      if (service?.savePrefs) {
+        const prefs = service.savePrefs(learnerId, { speechRate });
+        return resetToDashboardWithPrefs(context, prefs);
+      }
+      return sendGrammarCommand(context, 'save-prefs', { prefs: { speechRate } });
     }
 
     if (action === 'grammar-set-focus') {

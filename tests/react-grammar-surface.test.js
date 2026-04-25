@@ -51,6 +51,8 @@ test('Grammar surface runs from setup to Worker-style feedback and summary', () 
   let html = harness.render();
   assert.match(html, /Grammar practice/);
   assert.match(html, /question mark/i);
+  assert.match(html, /Read aloud/);
+  assert.match(html, /Speech synthesis unavailable/);
 
   harness.dispatch('grammar-submit-form', {
     formData: grammarResponseFormData(sample.correctResponse),
@@ -294,10 +296,12 @@ test('Grammar setup exposes session goals and Smart Review teaching settings', (
   assert.match(html, /Session goal/);
   assert.match(html, /Ten minutes/);
   assert.match(html, /Clear due items/);
+  assert.match(html, /Speech rate/);
   assert.match(html, /Smart Review teaching items/);
   assert.match(html, /Show domain before answering/);
 
   harness.dispatch('grammar-set-goal', { value: 'timed' });
+  harness.dispatch('grammar-set-speech-rate', { value: '1.4' });
   harness.dispatch('grammar-set-practice-setting', { key: 'allowTeachingItems', value: true });
   harness.dispatch('grammar-start', {
     payload: {
@@ -311,6 +315,7 @@ test('Grammar setup exposes session goals and Smart Review teaching settings', (
   assert.equal(grammar.phase, 'session');
   assert.equal(grammar.session.goal.type, 'timed');
   assert.equal(grammar.session.goal.timeLimitMs, 10 * 60_000);
+  assert.equal(grammar.prefs.speechRate, 1.4);
   assert.equal(grammar.session.supportLevel, 1);
   html = harness.render();
   assert.match(html, /Ten minutes/);

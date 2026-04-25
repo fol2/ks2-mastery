@@ -422,7 +422,7 @@ flowchart TB
 
 ---
 
-- U6. **Add Grammar Read Aloud and Speech Preference**
+- [x] U6. **Add Grammar Read Aloud and Speech Preference**
 
 **Goal:** Restore the legacy read-aloud affordance as a safe client-side accessibility feature.
 
@@ -462,6 +462,7 @@ flowchart TB
 
 **Verification:**
 - Grammar read aloud is restored as an accessibility affordance without changing any learning evidence.
+- Completed with client-side visible-text extraction, browser speech synthesis support, contained unavailable state, clamped `0.6`-`1.4` speech-rate preference, strict mini-test hidden-feedback guardrails, and focused helper/engine/Worker/React coverage.
 
 ---
 

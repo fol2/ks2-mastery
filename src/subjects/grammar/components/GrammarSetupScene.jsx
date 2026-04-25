@@ -6,6 +6,15 @@ import {
   GRAMMAR_REGION_IMAGE_SMALL,
   groupedGrammarConcepts,
 } from '../metadata.js';
+import { normaliseGrammarSpeechRate } from '../speech.js';
+
+const SPEECH_RATE_OPTIONS = Object.freeze([
+  { value: 0.6, label: '0.6x slow' },
+  { value: 0.8, label: '0.8x steady' },
+  { value: 1, label: '1x normal' },
+  { value: 1.2, label: '1.2x quicker' },
+  { value: 1.4, label: '1.4x fast' },
+]);
 
 function Stat({ label, value, detail }) {
   return (
@@ -50,6 +59,7 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
   const selectedLength = miniTestMode
     ? (Number(grammar.prefs?.roundLength) >= 10 ? 12 : 8)
     : (Number(grammar.prefs?.roundLength) || 5);
+  const selectedSpeechRate = normaliseGrammarSpeechRate(grammar.prefs?.speechRate);
 
   return (
     <section className="grammar-setup" aria-labelledby="grammar-setup-title">
@@ -149,6 +159,19 @@ export function GrammarSetupScene({ learner, grammar, actions, runtimeReadOnly }
                 </select>
               </label>
             ) : null}
+            <label className="field">
+              <span>Speech rate</span>
+              <select
+                className="input"
+                value={String(selectedSpeechRate)}
+                disabled={setupDisabled}
+                onChange={(event) => actions.dispatch('grammar-set-speech-rate', { value: event.currentTarget.value })}
+              >
+                {SPEECH_RATE_OPTIONS.map((option) => (
+                  <option value={option.value} key={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
           </div>
 
           <div className="grammar-settings-list" aria-label="Grammar practice settings">

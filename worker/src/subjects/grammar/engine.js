@@ -21,6 +21,9 @@ const DEFAULT_MINI_SET_LENGTH = 8;
 const DEFAULT_GOAL_TYPE = 'questions';
 const TIMED_GOAL_LIMIT_MS = 10 * 60000;
 const CLEAR_DUE_GOAL_CAP = 15;
+const DEFAULT_SPEECH_RATE = 1;
+const MIN_SPEECH_RATE = 0.6;
+const MAX_SPEECH_RATE = 1.4;
 const MINI_SET_LENGTHS = Object.freeze([8, 12]);
 const MINI_SET_MIN_TIME_LIMIT_MS = 6 * 60000;
 const MINI_SET_MS_PER_MARK = 54000;
@@ -45,6 +48,13 @@ function timestamp(now = Date.now) {
 
 function clamp(number, min, max) {
   return Math.min(max, Math.max(min, number));
+}
+
+function normaliseSpeechRate(value, fallback = DEFAULT_SPEECH_RATE) {
+  const numeric = Number(value);
+  const base = Number.isFinite(numeric) ? numeric : Number(fallback);
+  const safe = Number.isFinite(base) ? base : DEFAULT_SPEECH_RATE;
+  return Math.round(clamp(safe, MIN_SPEECH_RATE, MAX_SPEECH_RATE) * 100) / 100;
 }
 
 function isGrammarConceptId(value) {
@@ -277,6 +287,7 @@ export function createInitialGrammarState(data = {}) {
       goalType: normaliseGoalType(normalisedData.prefs.goalType),
       allowTeachingItems: normaliseBoolean(normalisedData.prefs.allowTeachingItems, false),
       showDomainBeforeAnswer: normaliseBoolean(normalisedData.prefs.showDomainBeforeAnswer, true),
+      speechRate: normaliseSpeechRate(normalisedData.prefs.speechRate),
     },
     mastery: normalisedData.mastery,
     retryQueue: normalisedData.retryQueue,
@@ -314,6 +325,7 @@ function normaliseGrammarState(rawState, data = {}) {
       goalType: normaliseGoalType(rawPrefs.goalType || fallback.prefs.goalType),
       allowTeachingItems: normaliseBoolean(rawPrefs.allowTeachingItems, fallback.prefs.allowTeachingItems),
       showDomainBeforeAnswer: normaliseBoolean(rawPrefs.showDomainBeforeAnswer, fallback.prefs.showDomainBeforeAnswer),
+      speechRate: normaliseSpeechRate(rawPrefs.speechRate, fallback.prefs.speechRate),
       focusConceptId: Object.prototype.hasOwnProperty.call(rawPrefs, 'focusConceptId')
         ? normaliseStoredFocusConceptId(rawPrefs.focusConceptId)
         : fallback.prefs.focusConceptId,
@@ -1569,6 +1581,9 @@ function savePrefs(state, payload) {
     showDomainBeforeAnswer: Object.prototype.hasOwnProperty.call(prefs, 'showDomainBeforeAnswer')
       ? normaliseBoolean(prefs.showDomainBeforeAnswer, state.prefs.showDomainBeforeAnswer)
       : normaliseBoolean(state.prefs.showDomainBeforeAnswer, true),
+    speechRate: Object.prototype.hasOwnProperty.call(prefs, 'speechRate')
+      ? normaliseSpeechRate(prefs.speechRate, state.prefs.speechRate)
+      : normaliseSpeechRate(state.prefs.speechRate),
     focusConceptId: nextFocusConceptId,
   };
   if (state.phase === 'summary') {

@@ -19,7 +19,7 @@ This document tracks Grammar-only functionality completeness against the reviewe
 | Practice settings: Smart Review teaching items and show-domain-before-answer | Completed | U3 |
 | In-session repair: retry, worked solution, faded support, and built-in similar problem | Completed | U4 |
 | Visible AI triggers: explanation, revision cards, safe drill suggestions, and parent summary drafts | Completed | U5 |
-| Read aloud and speech-rate preference | Planned | U6 |
+| Read aloud and speech-rate preference | Completed | U6 |
 | Adult/data replacement parity for legacy Profiles/Data/Settings | Planned | U7 |
 | Functionality completeness tests and production smoke coverage | Planned | U8 |
 

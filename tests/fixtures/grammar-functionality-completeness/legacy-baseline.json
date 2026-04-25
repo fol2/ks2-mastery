@@ -200,9 +200,18 @@
     {
       "id": "read-aloud-and-speech-rate",
       "legacyCapability": "Grammar prompt, visible options and feedback can be read aloud at a learner-selected rate",
-      "status": "planned",
-      "ownerUnit": "U6",
-      "reason": "Current Grammar UI has no speech synthesis affordance."
+      "status": "completed",
+      "evidence": [
+        "src/subjects/grammar/speech.js",
+        "src/subjects/grammar/components/GrammarSessionScene.jsx",
+        "src/subjects/grammar/components/GrammarSetupScene.jsx",
+        "src/subjects/grammar/module.js",
+        "worker/src/subjects/grammar/engine.js",
+        "tests/grammar-speech.test.js",
+        "tests/grammar-engine.test.js",
+        "tests/worker-grammar-subject-runtime.test.js",
+        "tests/react-grammar-surface.test.js"
+      ]
     },
     {
       "id": "adult-data-replacement-parity",

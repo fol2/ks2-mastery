@@ -1,4 +1,9 @@
 import React from 'react';
+import {
+  buildGrammarSpeechText,
+  isGrammarSpeechAvailable,
+  speakGrammarReadModel,
+} from '../speech.js';
 
 function optionLabel(option) {
   if (Array.isArray(option)) return String(option[1] ?? option[0] ?? '');
@@ -403,6 +408,31 @@ function AiEnrichmentActions({ isMiniTest, pending, runtimeReadOnly, actions }) 
   );
 }
 
+function ReadAloudControls({ grammar }) {
+  const [status, setStatus] = React.useState('');
+  const canRead = Boolean(buildGrammarSpeechText(grammar));
+  const speechAvailable = isGrammarSpeechAvailable();
+  const disabled = !canRead || !speechAvailable;
+
+  return (
+    <div className="grammar-read-aloud" aria-label="Grammar read aloud">
+      <button
+        className="btn secondary"
+        type="button"
+        disabled={disabled}
+        onClick={() => {
+          const result = speakGrammarReadModel(grammar, { rate: grammar.prefs?.speechRate });
+          setStatus(result.ok ? `Reading aloud at ${result.rate}x.` : result.message);
+        }}
+      >
+        Read aloud
+      </button>
+      {!speechAvailable ? <span className="small muted">Speech synthesis unavailable</span> : null}
+      {status ? <span className="small muted" role="status">{status}</span> : null}
+    </div>
+  );
+}
+
 export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
   const session = grammar.session || {};
   const miniTest = session.type === 'mini-set' ? session.miniTest : null;
@@ -454,6 +484,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
         ) : null}
         <p className="grammar-prompt">{item.promptText || 'Loading the next Grammar item...'}</p>
         {item.checkLine ? <p className="grammar-check-line">{item.checkLine}</p> : null}
+        <ReadAloudControls grammar={grammar} />
         {!isMiniTest ? <GuidancePanel support={session.supportGuidance} /> : null}
         <AiEnrichmentActions
           isMiniTest={isMiniTest}

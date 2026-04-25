@@ -6812,7 +6812,8 @@ textarea:focus-visible {
 
 .grammar-repair-actions,
 .grammar-ai-actions,
-.grammar-analytics-actions {
+.grammar-analytics-actions,
+.grammar-read-aloud {
   display: flex;
   flex-wrap: wrap;
   align-items: center;

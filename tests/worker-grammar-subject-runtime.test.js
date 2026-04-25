@@ -330,6 +330,7 @@ test('Grammar command route persists session goals and practice settings', async
         goalType: 'timed',
         allowTeachingItems: true,
         showDomainBeforeAnswer: false,
+        speechRate: 0.2,
       },
     },
   });
@@ -337,6 +338,7 @@ test('Grammar command route persists session goals and practice settings', async
   assert.equal(prefs.body.subjectReadModel.prefs.goalType, 'timed');
   assert.equal(prefs.body.subjectReadModel.prefs.allowTeachingItems, true);
   assert.equal(prefs.body.subjectReadModel.prefs.showDomainBeforeAnswer, false);
+  assert.equal(prefs.body.subjectReadModel.prefs.speechRate, 0.6);
 
   const start = await postCommand(app, DB, {
     command: 'start-session',
