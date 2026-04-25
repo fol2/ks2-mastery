@@ -779,6 +779,8 @@ function codexPowerRank(monsterId) {
   return CODEX_POWER_RANK[monsterId] || 0;
 }
 
+// Lower index = earlier on-ramp; mirrors the curriculum order encoded by
+// MONSTERS_BY_SUBJECT declaration order in src/platform/game/monsters.js.
 function subjectPriority(subjectId) {
   const idx = Object.keys(MONSTERS_BY_SUBJECT).indexOf(subjectId);
   return idx === -1 ? 999 : idx;

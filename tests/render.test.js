@@ -403,7 +403,7 @@ test('codex synthesises uncaught entries for every registered subject monster', 
   ]);
 
   const ids = entries.map((entry) => entry.id);
-  assert.equal(entries.length, 18, 'expected full 4 spelling + 7 punctuation + 7 grammar roster');
+  assert.equal(entries.length, 18, 'expected full 18-card roster: 4 spelling + 7 punctuation + 7 grammar');
   assert.ok(ids.includes('bracehart'), 'grammar lead synthesised');
   assert.ok(ids.includes('concordium'), 'grammar legendary synthesised');
   assert.ok(ids.includes('pealark'), 'punctuation lead synthesised');
