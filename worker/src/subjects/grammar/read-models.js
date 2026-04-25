@@ -376,23 +376,115 @@ function safeSession(session, now = Date.now()) {
   };
 }
 
+// U6 confidence taxonomy — five labels driven by strength, streak, recent
+// misses, and spacing. Derived read-model projection; never mutates state.
+//
+//   emerging     <= 2 attempts (thin evidence, show as "Emerging")
+//   needs-repair weak status OR >= 2 recent misses
+//   secure       strength >= 0.82 AND correctStreak >= 3 AND intervalDays >= 7
+//   consolidating strength >= 0.82 AND correctStreak >= 3 AND intervalDays < 7
+//                (heavy same-week practice, not yet spaced)
+//   building     everything else
+export const GRAMMAR_CONFIDENCE_LABELS = Object.freeze([
+  'emerging',
+  'building',
+  'consolidating',
+  'secure',
+  'needs-repair',
+]);
+
+function intervalDaysFromNode(node) {
+  if (!node) return 0;
+  if (Number.isFinite(Number(node.intervalDays))) return Number(node.intervalDays);
+  return 0;
+}
+
+function recentMissCountForConcept(recentAttempts, conceptId) {
+  if (!Array.isArray(recentAttempts) || !conceptId) return 0;
+  let count = 0;
+  for (const attempt of recentAttempts.slice(-12)) {
+    const conceptIds = Array.isArray(attempt?.conceptIds) ? attempt.conceptIds : [];
+    const result = isPlainObject(attempt?.result) ? attempt.result : {};
+    if (conceptIds.includes(conceptId) && result.correct === false) count += 1;
+  }
+  return count;
+}
+
+function recentMissCountForQuestionType(recentAttempts, questionType) {
+  if (!Array.isArray(recentAttempts) || !questionType) return 0;
+  let count = 0;
+  for (const attempt of recentAttempts.slice(-12)) {
+    const result = isPlainObject(attempt?.result) ? attempt.result : {};
+    if (attempt?.questionType === questionType && result.correct === false) count += 1;
+  }
+  return count;
+}
+
+function distinctTemplatesFor(recentAttempts, matcher) {
+  if (!Array.isArray(recentAttempts)) return 0;
+  const seen = new Set();
+  for (const attempt of recentAttempts) {
+    if (matcher(attempt) && typeof attempt?.templateId === 'string' && attempt.templateId) {
+      seen.add(attempt.templateId);
+    }
+  }
+  return seen.size;
+}
+
+export function deriveGrammarConfidence(raw) {
+  const input = isPlainObject(raw) ? raw : {};
+  const { status, attempts, strength, correctStreak, intervalDays, recentMisses } = input;
+  const attemptCount = Math.max(0, Number(attempts) || 0);
+  const strengthValue = Number.isFinite(Number(strength)) ? Number(strength) : 0.25;
+  const streak = Math.max(0, Number(correctStreak) || 0);
+  const spacingDays = Math.max(0, Number(intervalDays) || 0);
+  const misses = Math.max(0, Number(recentMisses) || 0);
+
+  if (attemptCount <= 2) return 'emerging';
+  if (status === 'weak' || misses >= 2) return 'needs-repair';
+  if (strengthValue >= 0.82 && streak >= 3 && spacingDays >= 7) return 'secure';
+  if (strengthValue >= 0.82 && streak >= 3 && spacingDays < 7) return 'consolidating';
+  return 'building';
+}
+
 function conceptMap(state, now) {
   const mastery = isPlainObject(state?.mastery?.concepts) ? state.mastery.concepts : {};
+  const recentAttempts = Array.isArray(state?.recentAttempts) ? state.recentAttempts : [];
   return GRAMMAR_CONCEPTS.map((concept) => {
     const node = mastery[concept.id] || null;
+    const status = grammarConceptStatus(node, now);
+    const attempts = Number(node?.attempts) || 0;
+    const strength = Number.isFinite(Number(node?.strength)) ? Number(node.strength) : 0.25;
+    const correctStreak = Number(node?.correctStreak) || 0;
+    const intervalDays = intervalDaysFromNode(node);
+    const recentMisses = recentMissCountForConcept(recentAttempts, concept.id);
+    const distinctTemplates = distinctTemplatesFor(recentAttempts, (attempt) =>
+      Array.isArray(attempt?.conceptIds) && attempt.conceptIds.includes(concept.id));
+    const confidenceLabel = deriveGrammarConfidence({
+      status, attempts, strength, correctStreak, intervalDays, recentMisses,
+    });
     return {
       id: concept.id,
       name: concept.name,
       domain: concept.domain,
       summary: concept.summary,
       punctuationForGrammar: Boolean(concept.punctuationForGrammar),
-      status: grammarConceptStatus(node, now),
-      attempts: Number(node?.attempts) || 0,
+      status,
+      attempts,
       correct: Number(node?.correct) || 0,
       wrong: Number(node?.wrong) || 0,
-      strength: Number.isFinite(Number(node?.strength)) ? Number(node.strength) : 0.25,
+      strength,
       dueAt: Number(node?.dueAt) || 0,
-      correctStreak: Number(node?.correctStreak) || 0,
+      correctStreak,
+      intervalDays,
+      // U6 confidence projection — never mutated into state; derived per read.
+      confidence: {
+        label: confidenceLabel,
+        sampleSize: attempts,
+        intervalDays,
+        distinctTemplates,
+        recentMisses,
+      },
     };
   });
 }
@@ -470,23 +562,41 @@ function misconceptionPatternsFromState(state) {
 
 function questionTypeSummaryFromState(state, now) {
   const questionTypes = isPlainObject(state?.mastery?.questionTypes) ? state.mastery.questionTypes : {};
+  const recentAttempts = Array.isArray(state?.recentAttempts) ? state.recentAttempts : [];
   return Object.entries(questionTypes)
     .map(([id, rawNode]) => {
       const node = rawNode || {};
       const correct = Number(node.correct) || 0;
       const wrong = Number(node.wrong) || 0;
       const attempts = Number(node.attempts) || 0;
+      const status = grammarConceptStatus(node, now);
+      const strength = Number.isFinite(Number(node.strength)) ? Number(node.strength) : 0.25;
+      const correctStreak = Number(node.correctStreak) || 0;
+      const intervalDays = intervalDaysFromNode(node);
+      const recentMisses = recentMissCountForQuestionType(recentAttempts, id);
+      const distinctTemplates = distinctTemplatesFor(recentAttempts, (attempt) => attempt?.questionType === id);
+      const confidenceLabel = deriveGrammarConfidence({
+        status, attempts, strength, correctStreak, intervalDays, recentMisses,
+      });
       return {
         subjectId: 'grammar',
         id,
         label: GRAMMAR_QUESTION_TYPES[id] || humanLabel(id),
-        status: grammarConceptStatus(node, now),
+        status,
         attempts,
         correct,
         wrong,
         accuracyPercent: accuracyPercent(correct, wrong),
-        strength: Number.isFinite(Number(node.strength)) ? Number(node.strength) : 0.25,
+        strength,
         dueAt: asTs(node.dueAt, 0),
+        intervalDays,
+        confidence: {
+          label: confidenceLabel,
+          sampleSize: attempts,
+          intervalDays,
+          distinctTemplates,
+          recentMisses,
+        },
       };
     })
     .filter((entry) => entry.attempts > 0)
