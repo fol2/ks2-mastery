@@ -1,25 +1,14 @@
 import { runClientBundleAudit } from './audit-client-bundle.mjs';
 import { createDemoSession, loadBootstrap } from './lib/production-smoke.mjs';
+import { FORBIDDEN_KEYS_EVERYWHERE } from '../tests/helpers/forbidden-keys.mjs';
 
 const DEFAULT_ORIGIN = 'https://ks2.eugnel.uk';
 
 // U13 redaction matrix forbidden-key check: these keys must never appear in any
-// authenticated response surface reached via the demo session. Kept in sync with
-// the oracle in tests/redaction-access-matrix.test.js (FORBIDDEN_KEYS_EVERYWHERE).
-const MATRIX_FORBIDDEN_KEYS = Object.freeze([
-  'solutionLines',
-  'correctResponse',
-  'correctResponses',
-  'accepted',
-  'answers',
-  'evaluate',
-  'generator',
-  'templates',
-  'passwordHash',
-  'password_hash',
-  'sessionHash',
-  'session_hash',
-]);
+// authenticated response surface reached via the demo session. The set is
+// imported from tests/helpers/forbidden-keys.mjs so the matrix oracle, the
+// production audit, and the subject-level smokes cannot drift.
+const MATRIX_FORBIDDEN_KEYS = FORBIDDEN_KEYS_EVERYWHERE;
 
 function collectAllKeys(value, bucket = new Set()) {
   if (value == null) return bucket;

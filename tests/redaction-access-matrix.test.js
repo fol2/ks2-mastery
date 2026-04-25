@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 import { createApiPlatformRepositories } from '../src/platform/core/repositories/index.js';
+import { FORBIDDEN_KEYS_EVERYWHERE as SHARED_FORBIDDEN_KEYS_EVERYWHERE } from './helpers/forbidden-keys.mjs';
 
 // U13 — Child-Data Redaction Access-Matrix Lock
 //
@@ -131,22 +132,15 @@ function collectAllKeys(value, bucket = new Set()) {
 }
 
 // Answer-bearing, PII, and internal-only keys that must never appear in any
-// authenticated response surface. Kept in sync with the grammar-production
-// smoke FORBIDDEN_GRAMMAR_READ_MODEL_KEYS list.
-const FORBIDDEN_KEYS_EVERYWHERE = Object.freeze([
-  'solutionLines',
-  'correctResponse',
-  'correctResponses',
-  'accepted',
-  'answers',
-  'evaluate',
-  'generator',
-  'templates',
-  'passwordHash',
-  'password_hash',
-  'sessionHash',
-  'session_hash',
-]);
+// authenticated response surface. The universal floor is imported from
+// tests/helpers/forbidden-keys.mjs so the matrix, the production bundle audit,
+// and the grammar/punctuation smokes cannot drift apart (P3 oracle-drift
+// regression lock). The universal floor is a STRICT SUBSET of the grammar
+// read-model set (grammar adds subject-private keys). Punctuation's set
+// overlaps but is not a superset — its internal vocabulary is disjoint from
+// grammar's by design; shared concerns ('accepted', 'answers', 'generator')
+// do appear in both.
+const FORBIDDEN_KEYS_EVERYWHERE = SHARED_FORBIDDEN_KEYS_EVERYWHERE;
 
 function assertNoForbiddenKeys(label, payload, forbiddenKeys = FORBIDDEN_KEYS_EVERYWHERE) {
   const allKeys = collectAllKeys(payload);
@@ -204,6 +198,63 @@ test('matrix: /api/auth/session returns null session when unauthenticated withou
   assert.equal(payload.account, null, 'Unauthenticated /api/auth/session must return null account.');
   assert.equal(payload.learnerCount, 0, 'Unauthenticated /api/auth/session must report zero learners.');
   assertNoForbiddenKeys('/api/auth/session (unauth)', payload);
+
+  server.close();
+});
+
+test('matrix: /api/auth/session authenticated response never exposes sessionHash / sessionId (P1-A regression lock)', async () => {
+  // P1-A from the PR #183 review: the old sessionPayload() used a `...session`
+  // spread that leaked `sessionHash` and `sessionId` (database-lookup keys —
+  // credential-adjacent) into both /api/session and /api/auth/session response
+  // bodies. This row drives an explicit allowlist on the response and proves
+  // the leak cannot reappear — FORBIDDEN_KEYS_EVERYWHERE now includes both
+  // `sessionHash` and `sessionId`.
+  const server = createWorkerRepositoryServer();
+  seedAdultAccount(server, { id: 'adult-auth-session', email: 'auth@example.com', displayName: 'Auth', platformRole: 'parent' });
+  coverage.noteCombination('parent + real-auth + /api/auth/session (authenticated allowlist)');
+
+  const response = await server.fetchAs('adult-auth-session', `${ORIGIN}/api/auth/session`, {}, {
+    'x-ks2-dev-platform-role': 'parent',
+  });
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.ok, true);
+  assert.ok(payload.session, '/api/auth/session must include a session object when authenticated.');
+  assert.equal(payload.session.accountId, 'adult-auth-session');
+  // Explicit sanity asserts on top of the forbidden-key oracle below: the
+  // allowlist covers accountId/provider/platformRole/accountType/demo/
+  // demoExpiresAt/email/displayName; every other key is not allowed.
+  assert.equal(payload.session.sessionHash, undefined, '/api/auth/session must not expose sessionHash.');
+  assert.equal(payload.session.sessionId, undefined, '/api/auth/session must not expose sessionId.');
+  assert.equal(payload.session.session_hash, undefined, '/api/auth/session must not expose session_hash.');
+  assert.equal(payload.session.session_id, undefined, '/api/auth/session must not expose session_id.');
+  assertNoForbiddenKeys('/api/auth/session (authenticated)', payload);
+
+  server.close();
+});
+
+test('matrix: /api/session authenticated response never exposes sessionHash / sessionId (P1-A regression lock)', async () => {
+  // P1-A sibling of the test above. /api/session differs from /api/auth/session
+  // only in that it requires an authenticated session (401 when unauth) — the
+  // response body shape is identical, so the allowlist must apply identically.
+  const server = createWorkerRepositoryServer();
+  seedAdultAccount(server, { id: 'adult-session', email: 'session@example.com', displayName: 'Session', platformRole: 'parent' });
+  coverage.noteRoute('/api/session');
+  coverage.noteCombination('parent + real-auth + /api/session (authenticated allowlist)');
+
+  const response = await server.fetchAs('adult-session', `${ORIGIN}/api/session`, {}, {
+    'x-ks2-dev-platform-role': 'parent',
+  });
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.ok, true);
+  assert.ok(payload.session, '/api/session must include a session object.');
+  assert.equal(payload.session.accountId, 'adult-session');
+  assert.equal(payload.session.sessionHash, undefined, '/api/session must not expose sessionHash.');
+  assert.equal(payload.session.sessionId, undefined, '/api/session must not expose sessionId.');
+  assert.equal(payload.session.session_hash, undefined, '/api/session must not expose session_hash.');
+  assert.equal(payload.session.session_id, undefined, '/api/session must not expose session_id.');
+  assertNoForbiddenKeys('/api/session (authenticated)', payload);
 
   server.close();
 });
@@ -365,12 +416,19 @@ test('matrix: /api/bootstrap demo-expired-with-valid-cookie fails closed (F-10 r
   server.close();
 });
 
-test('matrix: /api/bootstrap demo-expired in development-stub mode is also blocked by requireActiveDemoAccount', async () => {
-  // This is the dev-stub regression driver: the session provider does not auto-expire demo
-  // accounts, so the bootstrap handler must explicitly call requireActiveDemoAccount.
+test('matrix: /api/bootstrap dev-stub F-10 drive — x-ks2-dev-demo=1 + expired demo account is blocked by requireActiveDemoAccount', async () => {
+  // P1-B drive test. The dev-stub session provider now honours `x-ks2-dev-demo=1`
+  // so tests can force `session.demo = true` without spinning up a production
+  // cookie + D1 demo template. Combined with an expired `demo_expires_at` in the
+  // adult_accounts row, this is the ONLY combination that reaches the bootstrap
+  // handler's `requireActiveDemoAccount` guard in worker/src/app.js:393-395 —
+  // production auth already SQL-filters expired demos out at session lookup.
+  //
+  // If the guard is reverted (app.js:393-395 hunk removed), this test MUST fail:
+  // bootstrap would succeed with learner data for an expired demo account.
   const server = createWorkerRepositoryServer();
-  const accountId = 'adult-demo-stub';
-  const learnerId = 'learner-demo-stub';
+  const accountId = 'adult-demo-stub-expired';
+  const learnerId = 'learner-demo-stub-expired';
   const now = Date.now();
 
   server.DB.db.prepare(`
@@ -392,17 +450,62 @@ test('matrix: /api/bootstrap demo-expired in development-stub mode is also block
     headers: {
       'x-ks2-dev-account-id': accountId,
       'x-ks2-dev-platform-role': 'parent',
+      // TEST-ONLY headers — see createDevelopmentSessionProvider in worker/src/auth.js.
+      // Together they force dev-stub to emit `session.demo = true`, which is what
+      // drives the bootstrap handler's requireActiveDemoAccount guard.
       'x-ks2-dev-demo': '1',
+      'x-ks2-dev-demo-expires-at': String(now - 60_000),
     },
   });
-  // In dev-stub the session provider does not know about demo expiry, but the bootstrap
-  // handler does because we explicitly check session.demo. Since dev-stub does not mark
-  // session.demo = true, the expired account still resolves the bootstrap normally.
-  // To drive the fix, we simulate the production session shape: dev-stub session shape
-  // does not include demo flag, so the guard never triggers. The real drive test is the
-  // production-mode demo-expired case above; this one documents the dev-stub gap.
-  assert.equal(response.status, 200, 'Dev-stub does not carry demo flag; bootstrap succeeds but caller must not trust the data.');
-  coverage.noteCombination('dev-stub demo-expired (documented gap) + /api/bootstrap');
+  const payload = await response.json();
+  assert.equal(response.status, 401, `Expected 401 demo_session_expired, got ${response.status}: ${JSON.stringify(payload)}`);
+  assert.equal(payload.code, 'demo_session_expired', 'F-10 guard must surface demo_session_expired.');
+  assert.equal(payload.learners, undefined, 'Expired demo must not expose learner data.');
+  assertNoForbiddenKeys('/api/bootstrap (dev-stub demo-expired F-10 drive)', payload);
+  coverage.noteCombination('dev-stub demo-expired (F-10 drive) + /api/bootstrap');
+
+  server.close();
+});
+
+test('matrix: documents dev-stub gap — requireActiveDemoAccount is not reachable when session.demo is unset', async () => {
+  // Correctness finding from the PR #183 review: the old test at this location
+  // was named "dev-stub mode is also blocked by requireActiveDemoAccount", which
+  // was misleading because dev-stub without the new `x-ks2-dev-demo` header does
+  // NOT set `session.demo = true` and therefore never triggers the guard. This
+  // renamed test exercises that path explicitly so the gap is visible in the
+  // matrix coverage log rather than hidden behind a test name that contradicts
+  // what it asserts. The F-10 drive test above is the one that covers the guard.
+  const server = createWorkerRepositoryServer();
+  const accountId = 'adult-demo-stub-gap';
+  const learnerId = 'learner-demo-stub-gap';
+  const now = Date.now();
+
+  server.DB.db.prepare(`
+    INSERT INTO adult_accounts (
+      id, email, display_name, platform_role, selected_learner_id,
+      created_at, updated_at, account_type, demo_expires_at
+    ) VALUES (?, NULL, 'Demo Visitor', 'parent', NULL, ?, ?, 'demo', ?)
+  `).run(accountId, now, now, now - 60_000);
+  server.DB.db.prepare(`
+    INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+    VALUES (?, 'Demo Learner', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run(learnerId, now, now);
+  server.DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES (?, ?, 'owner', 0, ?, ?)
+  `).run(accountId, learnerId, now, now);
+
+  const response = await server.fetchRaw(`${ORIGIN}/api/bootstrap`, {
+    headers: {
+      'x-ks2-dev-account-id': accountId,
+      'x-ks2-dev-platform-role': 'parent',
+      // Intentionally NO x-ks2-dev-demo header. The dev-stub provider therefore
+      // emits session.demo = false, so app.js's `if (session?.demo)` guard is
+      // skipped and the expired demo account loads as if it were a real one.
+    },
+  });
+  assert.equal(response.status, 200, 'Dev-stub without x-ks2-dev-demo does not reach the F-10 guard.');
+  coverage.noteCombination('dev-stub demo-expired (documented gap, no dev-demo header) + /api/bootstrap');
 
   server.close();
 });
@@ -463,6 +566,102 @@ test('matrix: /api/hubs/parent demo-expired-with-valid-cookie fails closed', asy
   assert.ok([401, 403].includes(response.status), `Expected 401/403, got ${response.status}: ${JSON.stringify(payload)}`);
   assert.equal(payload.parentHub, undefined, 'Expired demo must not receive parent hub data.');
   assertNoForbiddenKeys('/api/hubs/parent (demo-expired)', payload);
+
+  server.close();
+});
+
+// -------------------- P2: cross-account foreign learnerId probe --------------------
+// These rows prove that passing another account's learner ID via `?learnerId=...`
+// does not let account A peek at account B's data. Every parent-scoped read
+// route (parent hub, recent sessions, activity, spelling word bank) must refuse
+// with 403/404 when the caller has no membership row for the requested learner.
+
+async function seedTwoAccountsCrossProbe() {
+  const server = createWorkerRepositoryServer();
+  seedAdultAccount(server, { id: 'adult-a', email: 'a@example.com', displayName: 'A', platformRole: 'parent' });
+  seedAdultAccount(server, { id: 'adult-b', email: 'b@example.com', displayName: 'B', platformRole: 'parent' });
+  await seedLearnerViaOwner(server, 'adult-a', {
+    id: 'learner-a',
+    name: 'Ava',
+    yearGroup: 'Y5',
+    goal: 'sats',
+    dailyMinutes: 15,
+    avatarColor: '#3E6FA8',
+    createdAt: 1,
+  });
+  await seedLearnerViaOwner(server, 'adult-b', {
+    id: 'learner-b',
+    name: 'Ben',
+    yearGroup: 'Y6',
+    goal: 'confidence',
+    dailyMinutes: 10,
+    avatarColor: '#335577',
+    createdAt: 2,
+  });
+  return server;
+}
+
+test('matrix: /api/hubs/parent?learnerId=<foreign> — account A cannot probe account B\'s learner', async () => {
+  const server = await seedTwoAccountsCrossProbe();
+  coverage.noteCombination('parent + cross-account-foreign-learnerId + /api/hubs/parent');
+
+  const response = await server.fetchAs('adult-a', `${ORIGIN}/api/hubs/parent?learnerId=learner-b`, {}, {
+    'x-ks2-dev-platform-role': 'parent',
+  });
+  const payload = await response.json();
+  assert.ok([403, 404].includes(response.status), `Expected 403/404 for foreign learnerId probe, got ${response.status}: ${JSON.stringify(payload)}`);
+  assert.notEqual(payload.ok, true, 'Foreign learnerId probe must not return ok=true.');
+  assert.equal(payload.parentHub, undefined, 'Foreign learnerId probe must not leak parent hub data.');
+  assertNoForbiddenKeys('/api/hubs/parent (foreign learnerId)', payload);
+
+  server.close();
+});
+
+test('matrix: /api/hubs/parent/recent-sessions?learnerId=<foreign> — account A cannot probe account B\'s learner', async () => {
+  const server = await seedTwoAccountsCrossProbe();
+  coverage.noteCombination('parent + cross-account-foreign-learnerId + /api/hubs/parent/recent-sessions');
+
+  const response = await server.fetchAs('adult-a', `${ORIGIN}/api/hubs/parent/recent-sessions?learnerId=learner-b`, {}, {
+    'x-ks2-dev-platform-role': 'parent',
+  });
+  const payload = await response.json();
+  assert.ok([403, 404].includes(response.status), `Expected 403/404 for foreign learnerId probe, got ${response.status}: ${JSON.stringify(payload)}`);
+  assert.notEqual(payload.ok, true, 'Foreign learnerId recent-sessions probe must not return ok=true.');
+  assert.equal(payload.recentSessions, undefined, 'Foreign learnerId probe must not leak session data.');
+  assertNoForbiddenKeys('/api/hubs/parent/recent-sessions (foreign learnerId)', payload);
+
+  server.close();
+});
+
+test('matrix: /api/hubs/parent/activity?learnerId=<foreign> — account A cannot probe account B\'s learner', async () => {
+  const server = await seedTwoAccountsCrossProbe();
+  coverage.noteCombination('parent + cross-account-foreign-learnerId + /api/hubs/parent/activity');
+
+  const response = await server.fetchAs('adult-a', `${ORIGIN}/api/hubs/parent/activity?learnerId=learner-b`, {}, {
+    'x-ks2-dev-platform-role': 'parent',
+  });
+  const payload = await response.json();
+  assert.ok([403, 404].includes(response.status), `Expected 403/404 for foreign learnerId probe, got ${response.status}: ${JSON.stringify(payload)}`);
+  assert.notEqual(payload.ok, true, 'Foreign learnerId activity probe must not return ok=true.');
+  assert.equal(payload.activity, undefined, 'Foreign learnerId probe must not leak activity data.');
+  assertNoForbiddenKeys('/api/hubs/parent/activity (foreign learnerId)', payload);
+
+  server.close();
+});
+
+test('matrix: /api/subjects/spelling/word-bank?learnerId=<foreign> — account A cannot probe account B\'s learner', async () => {
+  const server = await seedTwoAccountsCrossProbe();
+  coverage.noteRoute('/api/subjects/spelling/word-bank');
+  coverage.noteCombination('parent + cross-account-foreign-learnerId + /api/subjects/spelling/word-bank');
+
+  const response = await server.fetchAs('adult-a', `${ORIGIN}/api/subjects/spelling/word-bank?learnerId=learner-b`, {}, {
+    'x-ks2-dev-platform-role': 'parent',
+  });
+  const payload = await response.json();
+  assert.ok([403, 404].includes(response.status), `Expected 403/404 for foreign learnerId probe, got ${response.status}: ${JSON.stringify(payload)}`);
+  assert.notEqual(payload.ok, true, 'Foreign learnerId word-bank probe must not return ok=true.');
+  assert.equal(payload.wordBank, undefined, 'Foreign learnerId probe must not leak word-bank data.');
+  assertNoForbiddenKeys('/api/subjects/spelling/word-bank (foreign learnerId)', payload);
 
   server.close();
 });
@@ -538,6 +737,39 @@ test('matrix: /api/hubs/admin admin platform role is allowed', async () => {
   const payload = await response.json();
   assert.ok(payload.adminHub, 'Admin hub payload must be present for admin platform role.');
   assertNoForbiddenKeys('/api/hubs/admin (admin)', payload);
+
+  server.close();
+});
+
+test('matrix: /api/hubs/admin demo account with forced admin platform_role is still denied (P2 regression lock)', async () => {
+  // P2 from the PR #183 review: a demo account must not reach the admin hub
+  // even if its platform_role is admin. requireAdminHubAccess in
+  // worker/src/repository.js:931-938 checks both `account_type === 'demo'`
+  // AND the platform role; this test pins the demo-account half of that
+  // predicate so it cannot be loosened.
+  const server = createWorkerRepositoryServer();
+  const accountId = 'adult-demo-admin';
+  const now = Date.now();
+  // Seed a demo account with admin platform_role — a combination that should
+  // never be reachable through the demo signup flow but which a privilege
+  // escalation bug could produce. The admin hub must still refuse.
+  server.DB.db.prepare(`
+    INSERT INTO adult_accounts (
+      id, email, display_name, platform_role, selected_learner_id,
+      created_at, updated_at, account_type, demo_expires_at
+    ) VALUES (?, NULL, 'Demo Admin', 'admin', NULL, ?, ?, 'demo', ?)
+  `).run(accountId, now, now, now + 60 * 60 * 1000);
+  coverage.noteCombination('demo + admin platform-role + /api/hubs/admin (forced combination)');
+
+  const response = await server.fetchAs(accountId, `${ORIGIN}/api/hubs/admin`, {}, {
+    'x-ks2-dev-platform-role': 'admin',
+    'x-ks2-dev-demo': '1',
+    'x-ks2-dev-demo-expires-at': String(now + 60 * 60 * 1000),
+  });
+  assert.equal(response.status, 403);
+  const payload = await response.json();
+  assert.equal(payload.code, 'admin_hub_forbidden');
+  assertNoForbiddenKeys('/api/hubs/admin (demo + admin platform-role)', payload);
 
   server.close();
 });
@@ -689,12 +921,14 @@ test('matrix: coverage summary — every authenticated route is exercised at lea
   const requiredRoutes = [
     '/api/health',
     '/api/auth/session',
+    '/api/session',
     '/api/bootstrap',
     '/api/hubs/parent',
     '/api/hubs/parent/recent-sessions',
     '/api/hubs/parent/activity',
     '/api/hubs/admin',
     '/api/admin/accounts/role',
+    '/api/subjects/spelling/word-bank',
     '/api/tts',
     '/api/demo/reset',
     '/api/auth/*/start',
@@ -708,10 +942,12 @@ test('matrix: coverage summary — every authenticated route is exercised at lea
     );
   }
   // Combination count is a tripwire: if the matrix shrinks without ceremony,
-  // this assertion fails. Baseline is set to current count — raise it when
-  // adding new rows.
+  // this assertion fails. Baseline reflects the U13 review-follower additions
+  // (P1-A /api/session + /api/auth/session allowlist rows, P1-B F-10 drive
+  // test, P2 cross-account foreign-learnerId probes, P2 demo+admin
+  // combination). Raise it when adding new rows.
   assert.ok(
-    coverage.combinationsCovered.length >= 19,
-    `Expected at least 19 matrix combinations, got ${coverage.combinationsCovered.length}: ${coverage.combinationsCovered.join(' | ')}`,
+    coverage.combinationsCovered.length >= 28,
+    `Expected at least 28 matrix combinations, got ${coverage.combinationsCovered.length}: ${coverage.combinationsCovered.join(' | ')}`,
   );
 });
