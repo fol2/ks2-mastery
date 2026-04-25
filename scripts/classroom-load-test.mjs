@@ -235,8 +235,31 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     headers: [],
     demoSessions: false,
     confirmProductionLoad: false,
+    confirmHighProductionLoad: false,
     includeMeasurements: true,
+    max5xx: null,
+    maxNetworkFailures: null,
+    maxBootstrapP95Ms: null,
+    maxCommandP95Ms: null,
+    maxResponseBytes: null,
+    requireZeroSignals: false,
     help: false,
+  };
+
+  let modeFlag = null;
+  const assignedFlags = new Set();
+  const assignOnce = (flag) => {
+    if (assignedFlags.has(flag)) {
+      throw new Error(`${flag} specified more than once; refusing to let later value silently override the earlier one.`);
+    }
+    assignedFlags.add(flag);
+  };
+  const setMode = (flag, nextMode) => {
+    if (modeFlag && modeFlag !== flag) {
+      throw new Error(`Conflicting mode flags: ${modeFlag} and ${flag}. Specify exactly one of --dry-run, --local-fixture, --production.`);
+    }
+    modeFlag = flag;
+    options.mode = nextMode;
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -244,44 +267,77 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     if (arg === '--help' || arg === '-h') {
       options.help = true;
     } else if (arg === '--dry-run') {
-      options.mode = 'dry-run';
+      setMode(arg, 'dry-run');
     } else if (arg === '--local-fixture') {
-      options.mode = 'local-fixture';
+      setMode(arg, 'local-fixture');
     } else if (arg === '--production') {
-      options.mode = 'production';
+      setMode(arg, 'production');
     } else if (arg === '--origin' || arg === '--url') {
+      assignOnce('--origin/--url');
       options.origin = normaliseOrigin(readOptionValue(argv, index, arg));
       index += 1;
     } else if (arg === '--learners') {
+      assignOnce(arg);
       options.learners = positiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--bootstrap-burst') {
+      assignOnce(arg);
       options.bootstrapBurst = positiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--rounds') {
+      assignOnce(arg);
       options.rounds = positiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--pacing-ms') {
+      assignOnce(arg);
       options.pacingMs = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--timeout-ms') {
+      assignOnce(arg);
       options.timeoutMs = positiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--cookie') {
+      assignOnce(arg);
       options.cookie = readOptionValue(argv, index, arg);
       index += 1;
     } else if (arg === '--bearer') {
+      assignOnce(arg);
       options.bearer = readOptionValue(argv, index, arg);
       index += 1;
     } else if (arg === '--header') {
+      // Headers are cumulative by design (repeatable per docs); no assignOnce.
       options.headers.push(readOptionValue(argv, index, arg));
       index += 1;
     } else if (arg === '--demo-sessions') {
       options.demoSessions = true;
     } else if (arg === '--confirm-production-load') {
       options.confirmProductionLoad = true;
+    } else if (arg === '--confirm-high-production-load') {
+      options.confirmHighProductionLoad = true;
     } else if (arg === '--summary-only') {
       options.includeMeasurements = false;
+    } else if (arg === '--max-5xx') {
+      assignOnce(arg);
+      options.max5xx = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      index += 1;
+    } else if (arg === '--max-network-failures') {
+      assignOnce(arg);
+      options.maxNetworkFailures = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      index += 1;
+    } else if (arg === '--max-bootstrap-p95-ms') {
+      assignOnce(arg);
+      options.maxBootstrapP95Ms = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      index += 1;
+    } else if (arg === '--max-command-p95-ms') {
+      assignOnce(arg);
+      options.maxCommandP95Ms = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      index += 1;
+    } else if (arg === '--max-response-bytes') {
+      assignOnce(arg);
+      options.maxResponseBytes = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      index += 1;
+    } else if (arg === '--require-zero-signals') {
+      options.requireZeroSignals = true;
     } else {
       throw new Error(`Unknown option: ${arg}`);
     }
@@ -289,6 +345,8 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
 
   return options;
 }
+
+const HIGH_PRODUCTION_LOAD_THRESHOLD = 20;
 
 export function buildClassroomLoadPlan(options = {}) {
   const mode = options.mode || 'dry-run';
@@ -332,7 +390,16 @@ export function buildClassroomLoadPlan(options = {}) {
 }
 
 export function validateClassroomLoadOptions(options = {}) {
-  if (options.help || options.mode === 'dry-run') return;
+  if (options.help) return;
+  if (options.mode === 'dry-run') {
+    // Dry-run has no measurements, so threshold gates cannot meaningfully evaluate.
+    // If thresholds are set, fail closed so CI cannot accidentally ship a permanent
+    // silent-green gate via --dry-run + --max-* flags. Adversarial review finding adv-001.
+    if (hasThresholdFlags(options)) {
+      throw new Error('Threshold flags (--max-*, --require-zero-signals) cannot be combined with --dry-run; dry-run has no measurements and would always pass. Use --local-fixture or --production.');
+    }
+    return;
+  }
   if (!options.origin) {
     throw new Error(`${options.mode} load requires --origin.`);
   }
@@ -349,6 +416,17 @@ export function validateClassroomLoadOptions(options = {}) {
     const hasAuth = hasExplicitAuthConfig(options);
     if (!options.confirmProductionLoad || !hasAuth) {
       throw new Error('production load requires --confirm-production-load and explicit auth configuration (--cookie, --bearer, --header, or --demo-sessions).');
+    }
+    // H4 enforcement per docs/hardening/p1-baseline.md and docs/operations/capacity.md.
+    // Classroom-scale production loads (>=20 learners or >=20 bootstrap burst) must carry
+    // the second confirmation, otherwise the documented safety rail is a no-op.
+    // Adversarial review finding adv-003.
+    const highLoad = Number(options.learners) >= HIGH_PRODUCTION_LOAD_THRESHOLD
+      || Number(options.bootstrapBurst) >= HIGH_PRODUCTION_LOAD_THRESHOLD;
+    if (highLoad && !options.confirmHighProductionLoad) {
+      throw new Error(
+        `production load at classroom scale (learners >= ${HIGH_PRODUCTION_LOAD_THRESHOLD} or bootstrap-burst >= ${HIGH_PRODUCTION_LOAD_THRESHOLD}) requires --confirm-high-production-load in addition to --confirm-production-load.`,
+      );
     }
   }
 }
@@ -375,6 +453,169 @@ function signalFor(entry) {
   if (entry.status === 429) return 'rateLimited';
   if (!entry.status) return 'networkFailure';
   return null;
+}
+
+const OPERATIONAL_SIGNAL_KEYS = Object.freeze([
+  'exceededCpu',
+  'd1Overloaded',
+  'd1DailyLimit',
+  'rateLimited',
+  'networkFailure',
+  'server5xx',
+]);
+
+const BOOTSTRAP_P95_ENDPOINTS = Object.freeze([
+  'GET /api/bootstrap',
+]);
+
+const COMMAND_P95_ENDPOINTS = Object.freeze([
+  'POST /api/subjects/grammar/command',
+]);
+
+function collectObservedSignals(signals = {}) {
+  const observed = [];
+  for (const key of OPERATIONAL_SIGNAL_KEYS) {
+    if (Number(signals[key]) > 0) observed.push(key);
+  }
+  return observed;
+}
+
+function highestP95(summary, endpointList) {
+  let peak = 0;
+  for (const key of endpointList) {
+    const metrics = summary.endpoints?.[key];
+    if (metrics && Number(metrics.p95WallMs) > peak) peak = Number(metrics.p95WallMs);
+  }
+  return peak;
+}
+
+function gatedEndpointsHaveMeasurements(summary, endpointList) {
+  for (const key of endpointList) {
+    const metrics = summary.endpoints?.[key];
+    if (metrics && Number(metrics.count) > 0) return true;
+  }
+  return false;
+}
+
+function maxResponseBytesAcross(summary) {
+  let peak = 0;
+  for (const metrics of Object.values(summary.endpoints || {})) {
+    if (metrics && Number(metrics.maxResponseBytes) > peak) peak = Number(metrics.maxResponseBytes);
+  }
+  return peak;
+}
+
+export function evaluateCapacityThresholds(summary = {}, options = {}) {
+  const violations = [];
+
+  if (options.max5xx != null) {
+    const observed = Number(summary.signals?.server5xx || 0);
+    if (observed > options.max5xx) {
+      violations.push({
+        threshold: 'max-5xx',
+        limit: options.max5xx,
+        observed,
+        message: `Observed ${observed} 5xx response(s); limit is ${options.max5xx}.`,
+      });
+    }
+  }
+
+  if (options.maxNetworkFailures != null) {
+    const observed = Number(summary.signals?.networkFailure || 0);
+    if (observed > options.maxNetworkFailures) {
+      violations.push({
+        threshold: 'max-network-failures',
+        limit: options.maxNetworkFailures,
+        observed,
+        message: `Observed ${observed} network failure(s); limit is ${options.maxNetworkFailures}.`,
+      });
+    }
+  }
+
+  if (options.maxBootstrapP95Ms != null) {
+    if (!gatedEndpointsHaveMeasurements(summary, BOOTSTRAP_P95_ENDPOINTS)) {
+      // Adversarial review adv-006: fail closed when the gated endpoint set
+      // produced no measurements. Otherwise an unrelated bug (missed scenario,
+      // endpoint path drift) silently deactivates the gate.
+      violations.push({
+        threshold: 'max-bootstrap-p95-ms',
+        limit: options.maxBootstrapP95Ms,
+        observed: null,
+        gatedEndpoints: [...BOOTSTRAP_P95_ENDPOINTS],
+        message: `No measurements captured for bootstrap gated endpoints (${BOOTSTRAP_P95_ENDPOINTS.join(', ')}); threshold cannot be evaluated safely.`,
+      });
+    } else {
+      const observed = highestP95(summary, BOOTSTRAP_P95_ENDPOINTS);
+      if (observed > options.maxBootstrapP95Ms) {
+        violations.push({
+          threshold: 'max-bootstrap-p95-ms',
+          limit: options.maxBootstrapP95Ms,
+          observed,
+          message: `Bootstrap P95 wall time ${observed} ms exceeds ${options.maxBootstrapP95Ms} ms.`,
+        });
+      }
+    }
+  }
+
+  if (options.maxCommandP95Ms != null) {
+    if (!gatedEndpointsHaveMeasurements(summary, COMMAND_P95_ENDPOINTS)) {
+      violations.push({
+        threshold: 'max-command-p95-ms',
+        limit: options.maxCommandP95Ms,
+        observed: null,
+        gatedEndpoints: [...COMMAND_P95_ENDPOINTS],
+        message: `No measurements captured for command gated endpoints (${COMMAND_P95_ENDPOINTS.join(', ')}); threshold cannot be evaluated safely.`,
+      });
+    } else {
+      const observed = highestP95(summary, COMMAND_P95_ENDPOINTS);
+      if (observed > options.maxCommandP95Ms) {
+        violations.push({
+          threshold: 'max-command-p95-ms',
+          limit: options.maxCommandP95Ms,
+          observed,
+          message: `Subject-command P95 wall time ${observed} ms exceeds ${options.maxCommandP95Ms} ms.`,
+        });
+      }
+    }
+  }
+
+  if (options.maxResponseBytes != null) {
+    const observed = maxResponseBytesAcross(summary);
+    if (observed > options.maxResponseBytes) {
+      violations.push({
+        threshold: 'max-response-bytes',
+        limit: options.maxResponseBytes,
+        observed,
+        message: `Response bytes ${observed} exceeded cap ${options.maxResponseBytes}.`,
+      });
+    }
+  }
+
+  if (options.requireZeroSignals) {
+    const signals = collectObservedSignals(summary.signals || {});
+    if (signals.length) {
+      violations.push({
+        threshold: 'require-zero-signals',
+        limit: 0,
+        observed: signals.length,
+        signals,
+        message: `Observed operational signal(s): ${signals.join(', ')}.`,
+      });
+    }
+  }
+
+  return violations;
+}
+
+export function hasThresholdFlags(options = {}) {
+  return (
+    options.max5xx != null
+    || options.maxNetworkFailures != null
+    || options.maxBootstrapP95Ms != null
+    || options.maxCommandP95Ms != null
+    || options.maxResponseBytes != null
+    || options.requireZeroSignals === true
+  );
 }
 
 export function summariseCapacityResults(measurements = [], plan = {}) {
@@ -603,6 +844,23 @@ async function runHumanPacedRounds(origin, options, contexts, plan) {
   return measurements;
 }
 
+function buildThresholdsBlock(options, summary) {
+  const configured = hasThresholdFlags(options);
+  const violations = configured ? evaluateCapacityThresholds(summary, options) : [];
+  return {
+    configured,
+    limits: {
+      max5xx: options.max5xx,
+      maxNetworkFailures: options.maxNetworkFailures,
+      maxBootstrapP95Ms: options.maxBootstrapP95Ms,
+      maxCommandP95Ms: options.maxCommandP95Ms,
+      maxResponseBytes: options.maxResponseBytes,
+      requireZeroSignals: options.requireZeroSignals,
+    },
+    violations,
+  };
+}
+
 export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
   const options = parseClassroomLoadArgs(argv);
   if (options.help) {
@@ -611,11 +869,14 @@ export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
   validateClassroomLoadOptions(options);
   const plan = buildClassroomLoadPlan(options);
   if (options.mode === 'dry-run') {
+    const summary = summariseCapacityResults([], plan);
+    const thresholds = buildThresholdsBlock(options, summary);
     return {
-      ok: true,
+      ok: thresholds.violations.length === 0,
       dryRun: true,
       plan,
-      summary: summariseCapacityResults([], plan),
+      summary,
+      thresholds,
     };
   }
 
@@ -629,14 +890,16 @@ export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
   const summary = summariseCapacityResults(measurements, {
     ...plan,
   });
+  const thresholds = buildThresholdsBlock(options, summary);
 
   return {
-    ok: summary.ok,
+    ok: summary.ok && thresholds.violations.length === 0,
     dryRun: false,
     startedAt,
     finishedAt: new Date().toISOString(),
     plan,
     summary,
+    thresholds,
     ...(options.includeMeasurements ? { measurements } : {}),
   };
 }
@@ -646,23 +909,33 @@ export function usage() {
     'Usage: node ./scripts/classroom-load-test.mjs [options]',
     '',
     'Modes:',
-    '  --dry-run                  Print the planned capacity run without network requests (default)',
-    '  --local-fixture            Run against a local/loopback origin using demo sessions',
-    '  --production               Run against a production or preview origin; requires explicit confirmation and auth',
+    '  --dry-run                         Print the planned capacity run without network requests (default)',
+    '  --local-fixture                   Run against a local/loopback origin using demo sessions',
+    '  --production                      Run against a production or preview origin; requires explicit confirmation and auth',
     '',
     'Options:',
-    '  --origin <url>             Target origin for local-fixture or production runs',
-    '  --learners <number>        Virtual learner count, default 3',
-    '  --bootstrap-burst <number> Concurrent cold bootstrap requests, default 6',
-    '  --rounds <number>          Human-paced Grammar rounds per learner, default 1',
-    '  --pacing-ms <number>       Delay between learner command groups, default 0',
-    '  --timeout-ms <number>      Per-request timeout, default 15000',
-    '  --cookie <cookie>          Cookie header for an existing authenticated run',
-    '  --bearer <token>           Authorization bearer token',
-    '  --header "name: value"     Extra request header, repeatable',
-    '  --demo-sessions            Create one isolated demo session per virtual learner',
-    '  --confirm-production-load  Required before --production sends requests',
-    '  --summary-only             Omit per-request measurements from JSON output',
+    '  --origin <url>                    Target origin for local-fixture or production runs',
+    '  --learners <number>               Virtual learner count, default 3',
+    '  --bootstrap-burst <number>        Concurrent cold bootstrap requests, default 6',
+    '  --rounds <number>                 Human-paced Grammar rounds per learner, default 1',
+    '  --pacing-ms <number>              Delay between learner command groups, default 0',
+    '  --timeout-ms <number>             Per-request timeout, default 15000',
+    '  --cookie <cookie>                 Cookie header for an existing authenticated run',
+    '  --bearer <token>                  Authorization bearer token',
+    '  --header "name: value"            Extra request header, repeatable',
+    '  --demo-sessions                   Create one isolated demo session per virtual learner',
+    '  --confirm-production-load         Required before --production sends requests',
+    '  --confirm-high-production-load    Additional acknowledgement for larger production load shapes',
+    '  --summary-only                    Omit per-request measurements from JSON output',
+    '',
+    'Threshold gates (release-gate mode; non-zero exit on any violation):',
+    '  --max-5xx <count>                 Maximum tolerated HTTP 5xx responses',
+    '  --max-network-failures <count>    Maximum tolerated network failures',
+    '  --max-bootstrap-p95-ms <ms>       Maximum tolerated /api/bootstrap P95 wall time',
+    '  --max-command-p95-ms <ms>         Maximum tolerated subject-command P95 wall time',
+    '  --max-response-bytes <bytes>      Maximum tolerated response bytes across endpoints',
+    '  --require-zero-signals            Fail on any exceededCpu / d1Overloaded / d1DailyLimit /',
+    '                                    rateLimited / networkFailure / server5xx signal',
   ].join('\n');
 }
 
