@@ -349,6 +349,36 @@ function normaliseGrammarTransferEvidenceEntry(raw) {
   };
 }
 
+// Phase 3 U2: the Grammar Bank scene carries transient UI state — active
+// status filter, active cluster filter, search query, currently open concept
+// detail modal id. We keep it inside the Grammar read model (rather than the
+// platform-level `transientUi`) because every other Grammar UI slice already
+// lives here; mixing locations would make the dispatcher asymmetric. Valid
+// filter ids are enforced by the U8 frozen sets; unknown ids collapse to
+// `all`. The search query is capped at 80 characters to mirror Spelling.
+const VALID_GRAMMAR_BANK_STATUS_FILTERS = new Set(['all', 'due', 'trouble', 'learning', 'nearly-secure', 'secure', 'new']);
+const VALID_GRAMMAR_BANK_CLUSTER_FILTERS = new Set(['all', 'bracehart', 'chronalyx', 'couronnail', 'concordium']);
+const EMPTY_GRAMMAR_BANK_UI = Object.freeze({
+  statusFilter: 'all',
+  clusterFilter: 'all',
+  query: '',
+  detailConceptId: '',
+});
+
+function normaliseGrammarBankUi(raw) {
+  if (!isPlainObject(raw)) return { ...EMPTY_GRAMMAR_BANK_UI };
+  const rawStatus = typeof raw.statusFilter === 'string' ? raw.statusFilter : 'all';
+  const rawCluster = typeof raw.clusterFilter === 'string' ? raw.clusterFilter : 'all';
+  const rawQuery = typeof raw.query === 'string' ? raw.query : '';
+  const rawDetail = typeof raw.detailConceptId === 'string' ? raw.detailConceptId : '';
+  return {
+    statusFilter: VALID_GRAMMAR_BANK_STATUS_FILTERS.has(rawStatus) ? rawStatus : 'all',
+    clusterFilter: VALID_GRAMMAR_BANK_CLUSTER_FILTERS.has(rawCluster) ? rawCluster : 'all',
+    query: rawQuery.slice(0, 80),
+    detailConceptId: rawDetail.slice(0, 64),
+  };
+}
+
 function normaliseGrammarTransferLane(raw) {
   if (!isPlainObject(raw)) {
     return {
@@ -583,6 +613,10 @@ export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
     },
     aiEnrichment: normaliseAiEnrichment(raw.aiEnrichment),
     transferLane: normaliseGrammarTransferLane(raw.transferLane),
+    // Phase 3 U2: persist the Grammar Bank filter + search state inside the
+    // read model so filter selections survive StrictMode double-renders and
+    // round-trip through the normaliser without stomping unrelated fields.
+    bank: normaliseGrammarBankUi(raw.bank),
     projections: raw.projections || null,
     pendingCommand: raw.pendingCommand || '',
     error: typeof raw.error === 'string' ? raw.error : '',
@@ -590,6 +624,12 @@ export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
 }
 
 export { EMPTY_TRANSFER_LANE, normaliseGrammarTransferLane };
+export {
+  EMPTY_GRAMMAR_BANK_UI,
+  VALID_GRAMMAR_BANK_STATUS_FILTERS,
+  VALID_GRAMMAR_BANK_CLUSTER_FILTERS,
+  normaliseGrammarBankUi,
+};
 
 export function groupedGrammarConcepts(concepts = []) {
   const groups = new Map();

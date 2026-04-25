@@ -683,3 +683,120 @@ test('U8 safety: grammar-view-model.js does not import react', async () => {
   assert.equal(/from ['"]react['"]/i.test(source), false);
   assert.equal(/require\(['"]react['"]\)/i.test(source), false);
 });
+
+// -----------------------------------------------------------------------------
+// U2: GRAMMAR_CONCEPT_EXAMPLES + helpers — one example per concept, short
+// sentences, no forbidden terms. Tests for the Grammar Bank scene's view-model
+// surface: chip orderings, aggregate cards, cluster counts, evidence copy.
+// -----------------------------------------------------------------------------
+
+test('U2 view-model: GRAMMAR_CONCEPT_EXAMPLES covers all 18 concepts', async () => {
+  const {
+    GRAMMAR_CONCEPT_EXAMPLES,
+    grammarConceptPrimaryExample,
+    grammarConceptExamples,
+  } = await import('../src/subjects/grammar/components/grammar-view-model.js');
+  const { GRAMMAR_CLIENT_CONCEPTS } = await import('../src/subjects/grammar/metadata.js');
+  assert.equal(Object.keys(GRAMMAR_CONCEPT_EXAMPLES).length, 18);
+  for (const concept of GRAMMAR_CLIENT_CONCEPTS) {
+    const examples = GRAMMAR_CONCEPT_EXAMPLES[concept.id];
+    assert.ok(Array.isArray(examples), `${concept.id} has examples`);
+    assert.ok(examples.length >= 1, `${concept.id} has at least one example`);
+    assert.equal(typeof grammarConceptPrimaryExample(concept.id), 'string');
+    assert.ok(grammarConceptPrimaryExample(concept.id).length > 0);
+    assert.equal(grammarConceptExamples(concept.id).length, examples.length);
+  }
+});
+
+test('U2 view-model: GRAMMAR_CONCEPT_EXAMPLES are KS2-appropriate short sentences', async () => {
+  const { GRAMMAR_CONCEPT_EXAMPLES } = await import('../src/subjects/grammar/components/grammar-view-model.js');
+  for (const [conceptId, entries] of Object.entries(GRAMMAR_CONCEPT_EXAMPLES)) {
+    for (const sentence of entries) {
+      assert.ok(sentence.length <= 100, `${conceptId} example too long: ${sentence}`);
+      assert.ok(sentence.length >= 3, `${conceptId} example too short`);
+    }
+  }
+});
+
+test('U2 view-model: grammarConceptPrimaryExample safe on unknown ids', async () => {
+  const { grammarConceptPrimaryExample, grammarConceptExamples } = await import('../src/subjects/grammar/components/grammar-view-model.js');
+  assert.equal(grammarConceptPrimaryExample(''), '');
+  assert.equal(grammarConceptPrimaryExample(null), '');
+  assert.equal(grammarConceptPrimaryExample('bogus-id'), '');
+  assert.deepEqual(grammarConceptExamples(null), []);
+  assert.deepEqual(grammarConceptExamples('bogus-id'), []);
+});
+
+test('U2 view-model: grammarConceptEvidenceLine produces child copy tallies (no percentages)', async () => {
+  const { grammarConceptEvidenceLine } = await import('../src/subjects/grammar/components/grammar-view-model.js');
+  assert.equal(grammarConceptEvidenceLine({ attempts: 0, correct: 0 }), 'You have not answered any of these yet.');
+  assert.equal(grammarConceptEvidenceLine({ attempts: 3, correct: 2 }), 'You have 3 answers on this concept. 2 were correct.');
+  assert.equal(grammarConceptEvidenceLine({ attempts: 1, correct: 1 }), 'You have 1 answer on this concept. 1 was correct.');
+  assert.equal(grammarConceptEvidenceLine({ attempts: 5, correct: 0 }), 'You have 5 answers on this concept. 0 were correct.');
+  // No raw percentage in the output
+  assert.doesNotMatch(grammarConceptEvidenceLine({ attempts: 10, correct: 7 }), /\d+%/);
+});
+
+test('U2 view-model: GRAMMAR_BANK_STATUS_CHIPS ordering matches filter ids', async () => {
+  const { GRAMMAR_BANK_STATUS_CHIPS, GRAMMAR_BANK_STATUS_FILTER_IDS: filterIds } = await import('../src/subjects/grammar/components/grammar-view-model.js');
+  assert.equal(GRAMMAR_BANK_STATUS_CHIPS.length, filterIds.size);
+  for (const chip of GRAMMAR_BANK_STATUS_CHIPS) {
+    assert.ok(filterIds.has(chip.id), `chip ${chip.id} must be a valid filter id`);
+    assert.ok(typeof chip.label === 'string');
+    assert.ok(chip.label.length > 0);
+  }
+});
+
+test('U2 view-model: GRAMMAR_BANK_CLUSTER_CHIPS never includes reserved monster ids', async () => {
+  const { GRAMMAR_BANK_CLUSTER_CHIPS } = await import('../src/subjects/grammar/components/grammar-view-model.js');
+  for (const chip of GRAMMAR_BANK_CLUSTER_CHIPS) {
+    assert.ok(!['glossbloom', 'loomrill', 'mirrane'].includes(chip.id), `reserved id leaked: ${chip.id}`);
+  }
+});
+
+test('U2 view-model: grammarBankAggregateCards returns frozen cards in the expected order', async () => {
+  const { grammarBankAggregateCards } = await import('../src/subjects/grammar/components/grammar-view-model.js');
+  const counts = { all: 18, secure: 2, 'nearly-secure': 3, trouble: 5, learning: 4, new: 4, due: 10 };
+  const cards = grammarBankAggregateCards(counts);
+  assert.equal(cards.length, 6);
+  assert.deepEqual(cards.map((c) => c.id), ['total', 'secure', 'nearly-secure', 'trouble', 'learning', 'new']);
+  assert.equal(cards[0].value, 18);
+  assert.equal(cards[2].value, 3);
+});
+
+test('U2 follower: grammarBankAggregateCards Total card uses override total when counts narrow to a cluster', async () => {
+  const { grammarBankAggregateCards } = await import('../src/subjects/grammar/components/grammar-view-model.js');
+  // Cluster-scoped counts: only 6 concepts in view, but the global total is 18.
+  const counts = { all: 6, secure: 1, 'nearly-secure': 1, trouble: 1, learning: 1, new: 2, due: 2 };
+  const cards = grammarBankAggregateCards(counts, { total: 18 });
+  // Total stays globally stable; the other tallies still reflect the scope.
+  assert.equal(cards[0].value, 18);
+  assert.equal(cards[0].sub, 'Grammar concepts tracked');
+  assert.equal(cards[1].value, 1);
+});
+
+test('U2 follower: GRAMMAR_CONCEPT_EXAMPLES.hyphen_ambiguity primary example is the clear positive case', async () => {
+  const { GRAMMAR_CONCEPT_EXAMPLES, grammarConceptPrimaryExample } = await import('../src/subjects/grammar/components/grammar-view-model.js');
+  // [0] must be the clear positive "man-eating shark" example, [1] the re-sign one.
+  assert.equal(GRAMMAR_CONCEPT_EXAMPLES.hyphen_ambiguity[0], 'The man-eating shark circled the boat.');
+  assert.equal(GRAMMAR_CONCEPT_EXAMPLES.hyphen_ambiguity[1], 'Please re-sign the letter and send it back.');
+  assert.equal(grammarConceptPrimaryExample('hyphen_ambiguity'), 'The man-eating shark circled the boat.');
+});
+
+test('U2 follower: GRAMMAR_BANK_HERO exposes a search-aware emptyWithSearch copy', async () => {
+  const { GRAMMAR_BANK_HERO } = await import('../src/subjects/grammar/components/grammar-view-model.js');
+  assert.equal(typeof GRAMMAR_BANK_HERO.emptyWithSearch, 'string');
+  assert.ok(GRAMMAR_BANK_HERO.emptyWithSearch.length > 0);
+  assert.match(GRAMMAR_BANK_HERO.emptyWithSearch, /search/i);
+  assert.notEqual(GRAMMAR_BANK_HERO.emptyWithSearch, GRAMMAR_BANK_HERO.empty);
+});
+
+test('U2 view-model: buildGrammarBankModel exposes clusterCounts for chip badges', async () => {
+  const { buildGrammarBankModel } = await import('../src/subjects/grammar/components/grammar-view-model.js');
+  const model = buildGrammarBankModel({}, { statusFilter: 'all', clusterFilter: 'all', query: '' });
+  assert.equal(model.clusterCounts.all, 18);
+  assert.equal(model.clusterCounts.bracehart, 6);
+  assert.equal(model.clusterCounts.chronalyx, 4);
+  assert.equal(model.clusterCounts.couronnail, 3);
+  assert.equal(model.clusterCounts.concordium, 18);
+});
