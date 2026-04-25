@@ -18,8 +18,10 @@ import {
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const baselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/legacy-baseline.json');
+const perfectionPassBaselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/perfection-pass-baseline.json');
 const livePlanPath = path.join(rootDir, 'docs/plans/2026-04-24-001-feat-grammar-mastery-region-plan.md');
 const completenessPlanPath = path.join(rootDir, 'docs/plans/2026-04-25-001-feat-grammar-functionality-completeness-plan.md');
+const perfectionPassPlanPath = path.join(rootDir, 'docs/plans/2026-04-25-002-feat-grammar-perfection-pass-plan.md');
 const completenessDocPath = path.join(rootDir, 'docs/grammar-functionality-completeness.md');
 const transferDecisionPath = path.join(rootDir, 'docs/grammar-transfer-decision.md');
 const aiProviderDecisionPath = path.join(rootDir, 'docs/grammar-ai-provider-decision.md');
@@ -28,8 +30,16 @@ function readBaseline() {
   return JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
 }
 
+function readPerfectionPassBaseline() {
+  return JSON.parse(fs.readFileSync(perfectionPassBaselinePath, 'utf8'));
+}
+
 function capabilityById(baseline, id) {
   return baseline.capabilities.find((capability) => capability.id === id) || null;
+}
+
+function issueById(baseline, id) {
+  return baseline.reviewIssues.find((issue) => issue.id === id) || null;
 }
 
 test('Grammar functionality completeness baseline is internally owned', () => {
@@ -148,4 +158,113 @@ test('Grammar completeness documentation and live checklist point at the active 
   assert.match(aiProviderDecision, /Browser-held keys and React provider calls remain rejected behaviours/);
   assert.match(aiProviderDecision, /existing Grammar AI enrichment validator/);
   assert.match(aiProviderDecision, /separate reviewed plan before implementation/);
+});
+
+test('Grammar perfection-pass baseline is internally owned and well-formed', () => {
+  const baseline = readPerfectionPassBaseline();
+  const validStatuses = new Set(['planned', 'already-fixed', 'deferred']);
+  const seenIds = new Set();
+
+  assert.equal(baseline.id, 'grammar-perfection-pass');
+  assert.equal(baseline.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
+  assert.equal(baseline.ownerPlan, 'docs/plans/2026-04-25-002-feat-grammar-perfection-pass-plan.md');
+  assert.ok(Array.isArray(baseline.reviewIssues));
+  assert.equal(baseline.reviewIssues.length, 9, 'The Phase 2 review defines nine issues (I1-I9).');
+
+  for (const issue of baseline.reviewIssues) {
+    assert.match(issue.id, /^I[1-9]$/, `${issue.id} is not a valid Phase 2 issue id.`);
+    assert.equal(seenIds.has(issue.id), false, `Duplicate issue id: ${issue.id}`);
+    seenIds.add(issue.id);
+    assert.ok(issue.label, `${issue.id} needs a label.`);
+    assert.ok(validStatuses.has(issue.status), `${issue.id} has unsupported status ${issue.status}`);
+
+    if (issue.status === 'planned') {
+      assert.match(issue.ownerUnit || '', /^U[1-8]$/, `${issue.id} needs a valid owner unit U1-U8.`);
+      assert.ok(issue.reason, `${issue.id} needs a planning reason.`);
+      assert.equal(issue.ownerUnitAllowedByTest, true, `${issue.id} is planned; ownerUnitAllowedByTest must be true so the owner-unit cross-reference test covers it.`);
+    }
+    if (issue.status === 'already-fixed') {
+      assert.ok(Array.isArray(issue.resolvedBy) && issue.resolvedBy.length > 0, `${issue.id} needs at least one resolvedBy reference.`);
+      assert.ok(Array.isArray(issue.supportingTests) && issue.supportingTests.length > 0, `${issue.id} needs at least one supporting test.`);
+      for (const testRef of issue.supportingTests) {
+        assert.ok(fs.existsSync(path.join(rootDir, testRef)), `${issue.id} cites missing test file ${testRef}`);
+      }
+      assert.equal(issue.ownerUnitAllowedByTest, false, `${issue.id} is already-fixed; ownerUnitAllowedByTest must be false so the flag cannot drift into a false 'planned' status without a status flip.`);
+    }
+    if (issue.status === 'deferred') {
+      assert.ok(issue.deferral, `${issue.id} needs a deferral justification.`);
+      assert.equal(issue.ownerUnitAllowedByTest, false, `${issue.id} is deferred; ownerUnitAllowedByTest must be false.`);
+    }
+  }
+});
+
+test('Grammar perfection-pass planned issues each reference their owner unit in the plan file', () => {
+  const baseline = readPerfectionPassBaseline();
+  const planText = fs.readFileSync(perfectionPassPlanPath, 'utf8');
+  const plannedIssues = baseline.reviewIssues.filter((issue) => issue.status === 'planned');
+  const ownerUnits = new Map();
+
+  for (const issue of plannedIssues) {
+    const existing = ownerUnits.get(issue.ownerUnit) || [];
+    existing.push(issue.id);
+    ownerUnits.set(issue.ownerUnit, existing);
+  }
+
+  for (const [unit, issues] of ownerUnits.entries()) {
+    const headingPattern = new RegExp(`- ${unit}\\. \\*\\*`);
+    assert.match(planText, headingPattern, `Owner unit ${unit} (referenced by ${issues.join(', ')}) is missing from the perfection-pass plan.`);
+  }
+
+  assert.equal(issueById(baseline, 'I7')?.status, 'already-fixed');
+  assert.equal(issueById(baseline, 'I4')?.status, 'deferred');
+  assert.equal(capabilityById(readBaseline(), 'I7'), null, 'Perfection-pass issue ids do not leak into the legacy capability fixture.');
+});
+
+test('Grammar perfection-pass content floor matches the shipped content distribution', () => {
+  const baseline = readPerfectionPassBaseline();
+  const floor = baseline.contentFloor;
+  const actualPerQT = {};
+  const actualPerConcept = {};
+
+  for (const template of GRAMMAR_TEMPLATE_METADATA) {
+    actualPerQT[template.questionType] = (actualPerQT[template.questionType] || 0) + 1;
+    for (const conceptId of (template.skillIds || [])) {
+      actualPerConcept[conceptId] = (actualPerConcept[conceptId] || 0) + 1;
+    }
+  }
+
+  assert.equal(floor.templateCount, GRAMMAR_TEMPLATE_METADATA.length, 'Floor templateCount must match live content.');
+
+  const registeredQuestionTypes = Object.keys(GRAMMAR_QUESTION_TYPES);
+  for (const questionType of registeredQuestionTypes) {
+    const declaredFloor = floor.perQuestionType[questionType];
+    assert.equal(typeof declaredFloor, 'number', `Floor missing entry for question type ${questionType}.`);
+    assert.ok(
+      (actualPerQT[questionType] || 0) >= declaredFloor,
+      `Question type ${questionType} dropped below floor ${declaredFloor}; actual ${actualPerQT[questionType] || 0}.`,
+    );
+  }
+
+  for (const concept of GRAMMAR_CONCEPTS) {
+    const declaredFloor = floor.perConcept[concept.id];
+    assert.equal(typeof declaredFloor, 'number', `Floor missing entry for concept ${concept.id}.`);
+    assert.ok(
+      (actualPerConcept[concept.id] || 0) >= declaredFloor,
+      `Concept ${concept.id} dropped below floor ${declaredFloor}; actual ${actualPerConcept[concept.id] || 0}.`,
+    );
+    assert.ok(
+      declaredFloor >= floor.perConceptMinimum,
+      `Concept ${concept.id} floor ${declaredFloor} is below the documented minimum ${floor.perConceptMinimum}.`,
+    );
+  }
+});
+
+test('Grammar perfection-pass plan is linked from the completeness doc and mastery live checklist', () => {
+  const completenessDoc = fs.readFileSync(completenessDocPath, 'utf8');
+  const livePlan = fs.readFileSync(livePlanPath, 'utf8');
+
+  assert.match(completenessDoc, /2026-04-25-002-feat-grammar-perfection-pass-plan\.md/);
+  assert.match(completenessDoc, /## Perfection Pass/);
+  assert.match(completenessDoc, /perfection-pass-baseline\.json/);
+  assert.match(livePlan, /2026-04-25-002-feat-grammar-perfection-pass-plan\.md/);
 });

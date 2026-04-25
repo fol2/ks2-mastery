@@ -50,6 +50,26 @@ Publishing is Worker-enforced. A draft must include:
 
 Editing baseline values resets review state for all contexts on that asset. Editing a context resets that context only. Mark it reviewed again after checking the Admin preview.
 
+## Celebration overlay nested-wrapper contract
+
+The `celebrationOverlay` context renders through a two-element structure in `src/platform/game/render/effects/celebration-shell.js` and `src/surfaces/shell/MonsterCelebrationOverlay.jsx`:
+
+```
+<span class="monster-celebration-visual ..." style="--visual-offset-x, --visual-scale, --visual-anchor-x, ...">
+  <span class="monster-celebration-shadow" />
+  <img  class="monster-celebration-art ..." />
+</span>
+```
+
+Division of responsibility:
+
+- The outer `.monster-celebration-visual` is positioned at the stage centre (`top: 50%; left: 50%`) and carries the var-driven transform that applies per-monster `offsetX`, `offsetY`, `scale`, and `anchorX / anchorY` from monster-visual-config.
+- The inner `.monster-celebration-art` is `position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain` inside the wrapper. Its keyframes animate only `scale` (and, where the choreography needs it, a small `translateY` or `rotate`). They must **never** contain `translate(-50%, …)` — the img is already aligned to the wrapper via `inset: 0`, so a self-centring translate would shift it out of the wrapper and stomp on the wrapper's per-monster offset/anchor/scale.
+
+Self-centred peripheral elements (`.monster-celebration-halo`, `.monster-celebration-white`, `.monster-celebration-shine`, and their variant keyframes) are the opposite shape: their base rule places them at `top: 50%; left: 50%` and their keyframes deliberately carry `translate(-50%, -50%)` to stay centred as they scale.
+
+`tests/celebration-keyframe-contract.test.js` pins both invariants. See `docs/plans/2026-04-25-002-fix-celebration-sprite-centring-plan.md` for the regression history (introduced in PR #119, partial fix in PR #141).
+
 ## Runtime fallback
 
 Learner rendering receives only the published runtime payload from `/api/bootstrap`.

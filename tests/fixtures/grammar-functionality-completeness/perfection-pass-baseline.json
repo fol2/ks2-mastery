@@ -1,0 +1,125 @@
+{
+  "id": "grammar-perfection-pass",
+  "source": "docs/plans/james/grammar/grammar-phase2.md review routed through docs/plans/2026-04-25-002-feat-grammar-perfection-pass-plan.md",
+  "contentReleaseId": "grammar-legacy-reviewed-2026-04-24",
+  "ownerPlan": "docs/plans/2026-04-25-002-feat-grammar-perfection-pass-plan.md",
+  "reviewIssues": [
+    {
+      "id": "I1",
+      "label": "Docs overclaim completeness vs behaviour tests",
+      "status": "planned",
+      "ownerUnit": "U1",
+      "reason": "Baseline + owner-unit table in this fixture prevents silent drift of 'complete' claims away from review-issue resolution.",
+      "ownerUnitAllowedByTest": true
+    },
+    {
+      "id": "I2",
+      "label": "Adaptive selection lacks recent-repeat penalty and question-type weakness weighting",
+      "status": "planned",
+      "ownerUnit": "U2",
+      "reason": "Template selection is extracted into buildGrammarPracticeQueue pure function with explicit weights for due, weak, recent-miss, question-type weakness, template/concept freshness, and focus matching. buildGrammarMiniPack adds quota-aware mini-test balancing.",
+      "ownerUnitAllowedByTest": true
+    },
+    {
+      "id": "I3",
+      "label": "Support scoring may be session-level; Smart + allowTeachingItems downgrades independent correctness",
+      "status": "planned",
+      "ownerUnit": "U3",
+      "reason": "Rename to firstAttemptIndependent / supportUsed / supportLevelAtScoring with three-layer migration (state reload, event dual-write, in-flight session version stamping). Session-level promotion removed for Smart + allowTeachingItems under supportContractVersion 2.",
+      "ownerUnitAllowedByTest": true
+    },
+    {
+      "id": "I4",
+      "label": "Legacy content gaps (thin explain/vocabulary/formality pools, narrow concept pools)",
+      "status": "deferred",
+      "deferral": "Separate reviewed content-release plan after the perfection-pass engine is stable. This plan pins the current per-question-type and per-concept floors so content erosion is detectable.",
+      "ownerUnitAllowedByTest": false
+    },
+    {
+      "id": "I5",
+      "label": "Transfer writing placeholder-only; no live non-scored writing lane",
+      "status": "planned",
+      "ownerUnit": "U7",
+      "reason": "Non-scored transfer writing lane with paragraph prompts, grammar-target checklist, per-promptId evidence storage (5 slots per prompt, 20 prompts max), and adult-review copy. Does not touch mastery, retry, reward projection, or Concordium progress. Aligned with docs/grammar-transfer-decision.md.",
+      "ownerUnitAllowedByTest": true
+    },
+    {
+      "id": "I6",
+      "label": "Strict mini-test needs behaviour-level QA (navigation, timer expiry, unanswered handling)",
+      "status": "planned",
+      "ownerUnit": "U4",
+      "reason": "SSR harness in tests/react-grammar-surface.test.js is extended to cover answer preservation across navigation, timer expiry, unanswered handling, end-review gating, and repair/AI command fail-closed during active mini-test. Playwright is intentionally not added; SSR matches repo convention.",
+      "ownerUnitAllowedByTest": true
+    },
+    {
+      "id": "I7",
+      "label": "Mode focus behaviour unclear for trouble/surgery/builder",
+      "status": "already-fixed",
+      "resolvedBy": [
+        "worker/src/subjects/grammar/engine.js NO_STORED_FOCUS_MODES",
+        "worker/src/subjects/grammar/engine.js NO_SESSION_FOCUS_MODES",
+        "worker/src/subjects/grammar/engine.js weakestConceptIdForTrouble"
+      ],
+      "supportingTests": [
+        "tests/grammar-engine.test.js"
+      ],
+      "note": "Review agent did not run tests; existing NO_STORED_FOCUS_MODES / NO_SESSION_FOCUS_MODES already encode the intended table, and grammar-engine.test.js covers trouble/surgery/builder focus handling. No reimplementation needed.",
+      "ownerUnitAllowedByTest": false
+    },
+    {
+      "id": "I8",
+      "label": "Analytics show strength without confidence or sample-size context",
+      "status": "planned",
+      "ownerUnit": "U6",
+      "reason": "Read model exposes a derived confidence field with label taxonomy (emerging, building, consolidating, secure, needs-repair), sample size, interval days, and distinct templates. Scene renders the label alongside the number.",
+      "ownerUnitAllowedByTest": true
+    },
+    {
+      "id": "I9",
+      "label": "Accepted-answer handling relies on inline arrays, not a declarative registry",
+      "status": "planned",
+      "ownerUnit": "U5",
+      "reason": "Every constructed-response template carries a declarative answerSpec (kind: exact / normalisedText / acceptedSet / punctuationPattern / multiField / manualReviewOnly) with golden and near-miss examples. markByAnswerSpec replaces direct markStringAnswer call sites. contentReleaseId bump policy codified; any bump pairs with tests/fixtures/grammar-legacy-oracle/release-notes.md entry.",
+      "ownerUnitAllowedByTest": true
+    }
+  ],
+  "perfectionPassReleaseGate": {
+    "ownerUnit": "U8",
+    "description": "Perfection-pass release gate: extends production smoke, refreshes bundle audit, flips baseline rows to completed, and updates mastery-region live checklist."
+  },
+  "contentFloor": {
+    "note": "Per-question-type floor pins the current denominator so content expansion plans can only grow, not erode, the distribution.",
+    "templateCount": 51,
+    "perQuestionType": {
+      "classify": 1,
+      "identify": 7,
+      "choose": 17,
+      "fill": 3,
+      "fix": 11,
+      "rewrite": 6,
+      "build": 4,
+      "explain": 2
+    },
+    "perConceptMinimum": 2,
+    "perConcept": {
+      "sentence_functions": 3,
+      "word_classes": 3,
+      "noun_phrases": 3,
+      "adverbials": 5,
+      "clauses": 3,
+      "relative_clauses": 3,
+      "tense_aspect": 3,
+      "standard_english": 5,
+      "pronouns_cohesion": 2,
+      "formality": 2,
+      "active_passive": 2,
+      "subject_object": 2,
+      "modal_verbs": 2,
+      "parenthesis_commas": 3,
+      "speech_punctuation": 3,
+      "apostrophes_possession": 3,
+      "boundary_punctuation": 4,
+      "hyphen_ambiguity": 2
+    }
+  }
+}

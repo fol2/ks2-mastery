@@ -5,6 +5,13 @@ import {
 import { BadRequestError, NotFoundError } from '../../errors.js';
 import { compileGrammarAiEnrichment } from './ai-enrichment.js';
 import {
+  composeAttemptSupport,
+  deriveAttemptSupport,
+  normaliseStoredAttempt,
+  SUPPORT_CONTRACT_VERSION,
+  supportLevelForSessionWithContract,
+} from './attempt-support.js';
+import {
   createGrammarQuestion,
   evaluateGrammarQuestion,
   GRAMMAR_CONCEPTS,
@@ -13,6 +20,10 @@ import {
   grammarTemplateById,
   serialiseGrammarQuestion,
 } from './content.js';
+import {
+  buildGrammarMiniPack,
+  buildGrammarPracticeQueue,
+} from './selection.js';
 
 const SUBJECT_ID = 'grammar';
 const SERVER_AUTHORITY = 'worker';
@@ -304,7 +315,12 @@ export function normaliseServerGrammarData(rawValue) {
       }))
       : [],
     misconceptions: isPlainObject(raw.misconceptions) ? cloneSerialisable(raw.misconceptions) : {},
-    recentAttempts: Array.isArray(raw.recentAttempts) ? raw.recentAttempts.slice(-80).map(cloneSerialisable) : [],
+    // Normalise older attempts on load so the U3 item-level fields
+    // (firstAttemptIndependent / supportUsed / supportLevelAtScoring) are
+    // always present downstream, even for pre-U3 stored state.
+    recentAttempts: Array.isArray(raw.recentAttempts)
+      ? raw.recentAttempts.slice(-80).map((entry) => normaliseStoredAttempt(cloneSerialisable(entry)))
+      : [],
     aiEnrichment: normalisePersistentAiEnrichment(raw.aiEnrichment),
   };
 }
@@ -461,9 +477,14 @@ function supportLevelForMode(mode) {
   return 0;
 }
 
-function supportLevelForSession(mode, prefs = {}) {
-  if (mode === 'smart' && normaliseBoolean(prefs.allowTeachingItems, false)) return 1;
-  return supportLevelForMode(mode);
+function supportLevelForSession(mode, prefs = {}, session = null) {
+  // Under contract v2 (the new default) Smart + allowTeachingItems no longer
+  // forces session support level 1. Sessions started before U3 shipped keep
+  // contract v1 semantics via their stamped `supportContractVersion` so that
+  // mid-flight submissions honour the contract their UI opened under.
+  const contractVersion = (session && Number(session.supportContractVersion))
+    || SUPPORT_CONTRACT_VERSION;
+  return supportLevelForSessionWithContract({ mode, prefs, contractVersion });
 }
 
 function sessionTypeForMode(mode) {
@@ -523,28 +544,17 @@ function templateFits(template, { mode, focusConceptId } = {}) {
 }
 
 function weightedTemplatePick(state, { mode, focusConceptId, seed, nowTs = Date.now() }) {
-  const rng = seededRandom(seed);
-  const modeCandidates = GRAMMAR_TEMPLATE_METADATA.filter((template) => templateFitsMode(template, mode));
-  const candidates = modeCandidates.filter((template) => templateFits(template, { mode, focusConceptId }));
-  const pool = candidates.length ? candidates : (modeCandidates.length ? modeCandidates : GRAMMAR_TEMPLATE_METADATA);
-  const weighted = pool.map((template) => {
-    const conceptNodes = template.skillIds.map((id) => state.mastery.concepts[id] || defaultMasteryNode());
-    const averageStrength = conceptNodes.reduce((sum, node) => sum + (Number(node.strength) || 0.25), 0) / Math.max(1, conceptNodes.length);
-    const statuses = conceptNodes.map((node) => grammarConceptStatus(node, nowTs));
-    let weight = 1 + (1 - averageStrength) * 4;
-    if (statuses.includes('new')) weight += 1.5;
-    if (statuses.includes('weak')) weight += 2;
-    if (statuses.includes('due')) weight += 1.4;
-    if (focusConceptId && template.skillIds.includes(focusConceptId)) weight *= 1.8;
-    if (template.generative) weight *= 1.15;
-    return [template, Math.max(0.05, weight)];
+  const [entry] = buildGrammarPracticeQueue({
+    mode,
+    focusConceptId,
+    mastery: state.mastery,
+    recentAttempts: state.recentAttempts || [],
+    seed,
+    size: 1,
+    now: nowTs,
   });
-  let roll = rng() * weighted.reduce((sum, item) => sum + item[1], 0);
-  for (const [template, weight] of weighted) {
-    roll -= weight;
-    if (roll <= 0) return grammarTemplateById(template.id);
-  }
-  return grammarTemplateById(weighted.at(-1)?.[0]?.id || GRAMMAR_TEMPLATE_METADATA[0].id);
+  if (!entry) return grammarTemplateById(GRAMMAR_TEMPLATE_METADATA[0].id);
+  return grammarTemplateById(entry.templateId);
 }
 
 function takeDueRetry(state, { mode, focusConceptId, nowTs }) {
@@ -807,20 +817,32 @@ function miniSetSeeds(baseSeed, size) {
 
 export function buildGrammarMiniSet({ size = DEFAULT_MINI_SET_LENGTH, focusConceptId = '', seed = 1 } = {}) {
   const length = clamp(Math.floor(Number(size) || DEFAULT_MINI_SET_LENGTH), 1, 20);
-  const state = createInitialGrammarState();
-  return miniSetSeeds(Number(seed) || 1, length).map((itemSeed, index) => {
-    const template = weightedTemplatePick(state, {
-      mode: 'satsset',
-      focusConceptId,
-      seed: itemSeed + index,
-    });
-    return itemFromTemplate(template, itemSeed + index);
+  const pack = buildGrammarMiniPack({
+    size: length,
+    focusConceptId,
+    mastery: null,
+    recentAttempts: [],
+    seed: Number(seed) || 1,
+  });
+  const seeds = miniSetSeeds(Number(seed) || 1, length);
+  return pack.map((entry, index) => {
+    const template = grammarTemplateById(entry.templateId);
+    return itemFromTemplate(template, seeds[index] + index);
   });
 }
 
 function buildStrictMiniTestItems(state, { size, focusConceptId, seed, templateId = '', nowTs } = {}) {
   const length = miniSetSizeFor({ setSize: size });
-  return miniSetSeeds(Number(seed) || 1, length).map((itemSeed, index) => {
+  const seeds = miniSetSeeds(Number(seed) || 1, length);
+  const pack = buildGrammarMiniPack({
+    size: length,
+    focusConceptId,
+    mastery: state?.mastery || null,
+    recentAttempts: state?.recentAttempts || [],
+    seed: Number(seed) || 1,
+    now: nowTs,
+  });
+  return pack.map((entry, index) => {
     if (index === 0 && templateId) {
       const template = grammarTemplateById(templateId);
       if (!template) {
@@ -839,15 +861,10 @@ function buildStrictMiniTestItems(state, { size, focusConceptId, seed, templateI
           templateId,
         });
       }
-      return itemFromTemplate(template, itemSeed + index);
+      return itemFromTemplate(template, seeds[index] + index);
     }
-    const template = weightedTemplatePick(state, {
-      mode: 'satsset',
-      focusConceptId,
-      seed: itemSeed + index,
-      nowTs,
-    });
-    return itemFromTemplate(template, itemSeed + index);
+    const template = grammarTemplateById(entry.templateId);
+    return itemFromTemplate(template, seeds[index] + index);
   });
 }
 
@@ -947,6 +964,7 @@ function startSession(state, payload, nowTs, learnerId) {
       currentItem: questions[0]?.item || null,
       attemptsForCurrent: 0,
       supportLevel: 0,
+      supportContractVersion: SUPPORT_CONTRACT_VERSION,
       goal: sessionGoal,
       repair: {
         retryingCurrent: false,
@@ -1002,6 +1020,7 @@ function startSession(state, payload, nowTs, learnerId) {
     currentItem: firstItem,
     attemptsForCurrent: 0,
     supportLevel: supportLevelForSession(mode, state.prefs),
+    supportContractVersion: SUPPORT_CONTRACT_VERSION,
     goal: sessionGoal,
     repair: {
       retryingCurrent: false,
@@ -1171,6 +1190,7 @@ function finishMiniTest(state, nowTs, command, { timedOut = false } = {}) {
         attempts: 1,
         requestId: `${command.requestId || 'mini-test'}.${index + 1}`,
         now: nowTs,
+        mode: state?.session?.mode || 'satsset',
       });
       entry.marked = {
         response: cloneSerialisable(applied.response) || {},
@@ -1372,7 +1392,7 @@ function startSimilarProblem(state, nowTs) {
   session.currentIndex = Number(session.currentIndex) + 1;
   session.currentItem = item;
   session.attemptsForCurrent = 0;
-  session.supportLevel = supportLevelForSession(session.mode, state.prefs);
+  session.supportLevel = supportLevelForSession(session.mode, state.prefs, session);
   session.targetCount = Math.max(Number(session.targetCount) || 0, Number(session.answered) + 1);
   if (isPlainObject(session.goal) && session.goal.type === 'questions') {
     session.goal.targetCount = session.targetCount;
@@ -1411,7 +1431,7 @@ function continueSession(state, nowTs) {
     nowTs,
   });
   session.attemptsForCurrent = 0;
-  session.supportLevel = supportLevelForSession(session.mode, state.prefs);
+  session.supportLevel = supportLevelForSession(session.mode, state.prefs, session);
   state.phase = 'session';
   state.awaitingAdvance = false;
   state.feedback = null;
@@ -1426,6 +1446,9 @@ export function applyGrammarAttemptToState(state, {
   attempts = 1,
   requestId = 'attempt',
   now = Date.now(),
+  mode = '',
+  supportUsed = null,
+  postMarkingEnrichment = false,
 } = {}) {
   if (!item || item.contentReleaseId !== GRAMMAR_CONTENT_RELEASE_ID) {
     throw new BadRequestError('Grammar content release does not match this attempt.', {
@@ -1458,7 +1481,22 @@ export function applyGrammarAttemptToState(state, {
     });
   }
   const nowTs = timestamp(now);
-  const quality = answerQuality(result, { supportLevel, attempts });
+  // Compose item-level support fields. Under contract v2, post-marking AI
+  // enrichment never reduces mastery gain, and `supportUsed` takes precedence
+  // over the session-derived level when the command layer names it.
+  const attemptSupport = composeAttemptSupport({
+    mode,
+    sessionSupportLevel: supportLevel,
+    attempts,
+    supportUsed,
+    postMarkingEnrichment,
+  });
+  // answerQuality still uses `supportLevelAtScoring` to compute the gain.
+  // Dual-write: keep legacy `supportLevel` for backcompat readers.
+  const quality = answerQuality(result, {
+    supportLevel: attemptSupport.supportLevelAtScoring,
+    attempts,
+  });
   const conceptIds = (question.skillIds || []).slice();
   const statusesBefore = new Map(conceptIds.map((conceptId) => [
     conceptId,
@@ -1484,8 +1522,14 @@ export function applyGrammarAttemptToState(state, {
     conceptIds,
     response: cloneSerialisable(normalisedResponse) || {},
     result: cloneSerialisable(result) || {},
-    supportLevel,
+    // Legacy fields (kept for one release for event-log / backcompat readers).
+    supportLevel: attemptSupport.supportLevelAtScoring,
     attempts,
+    // U3 item-level fields (new authoritative shape).
+    firstAttemptIndependent: attemptSupport.firstAttemptIndependent,
+    supportUsed: attemptSupport.supportUsed,
+    supportLevelAtScoring: attemptSupport.supportLevelAtScoring,
+    mode: typeof mode === 'string' ? mode : '',
     createdAt: nowTs,
   };
   state.recentAttempts = [...(state.recentAttempts || []), attempt].slice(-80);
@@ -1505,8 +1549,15 @@ export function applyGrammarAttemptToState(state, {
     maxScore: result.maxScore,
     correct: Boolean(result.correct),
     misconception: result.misconception || null,
-    supportLevel,
+    // Dual-write: legacy `supportLevel` plus the new U3 item-level fields so
+    // pre-U3 and post-U3 event-log readers both see consistent projections.
+    supportLevel: attemptSupport.supportLevelAtScoring,
     attempts,
+    firstAttemptIndependent: attemptSupport.firstAttemptIndependent,
+    supportUsed: attemptSupport.supportUsed,
+    supportLevelAtScoring: attemptSupport.supportLevelAtScoring,
+    mode: typeof mode === 'string' ? mode : '',
+    supportContractVersion: SUPPORT_CONTRACT_VERSION,
     createdAt: nowTs,
   }];
   if (result.misconception) {
@@ -1570,7 +1621,7 @@ function submitAnswer(state, payload, command, nowTs) {
   }
   if (sessionGoalExpired(session, nowTs)) return completeSession(state, nowTs, command);
   const response = isPlainObject(payload.response) ? payload.response : (isPlainObject(payload.answer) ? payload.answer : { answer: payload.answer ?? '' });
-  const modeSupportLevel = Math.max(0, Number(session.supportLevel) || supportLevelForSession(session.mode, state.prefs));
+  const modeSupportLevel = Math.max(0, Number(session.supportLevel) || supportLevelForSession(session.mode, state.prefs, session));
   const requestedSupportLevel = Number(payload.supportLevel ?? modeSupportLevel) || 0;
   if (requestedSupportLevel > modeSupportLevel) {
     throw new BadRequestError('This Grammar mode does not allow pre-answer support.', {
@@ -1590,6 +1641,7 @@ function submitAnswer(state, payload, command, nowTs) {
     attempts: session.attemptsForCurrent,
     requestId: command.requestId,
     now: nowTs,
+    mode: session.mode,
   });
   if (!retryingCurrent) {
     session.answered += 1;
