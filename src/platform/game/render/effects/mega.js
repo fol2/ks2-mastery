@@ -1,5 +1,4 @@
 import { defineEffect } from '../define-effect.js';
-import { registerEffect } from '../registry.js';
 import { CelebrationShell, clampStage, stageName } from './celebration-shell.js';
 
 export const megaEffect = defineEffect({
@@ -31,5 +30,3 @@ export const megaEffect = defineEffect({
     );
   },
 });
-
-registerEffect(megaEffect);

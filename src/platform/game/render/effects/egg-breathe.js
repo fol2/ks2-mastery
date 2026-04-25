@@ -4,7 +4,6 @@
 // the same `--egg-breathe-*` CSS variables.
 
 import { defineEffect } from '../define-effect.js';
-import { registerEffect } from '../registry.js';
 import { hashString, valueBetween } from '../seed.js';
 
 // Pure compute: kept exported so the legacy `eggBreatheStyle` shim in
@@ -47,5 +46,3 @@ export const eggBreatheEffect = defineEffect({
     return computeEggBreatheStyle(monster, context);
   },
 });
-
-registerEffect(eggBreatheEffect);

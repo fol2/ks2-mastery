@@ -2,7 +2,6 @@
 // No exclusiveGroup — composes freely with shiny / rare-glow.
 
 import { defineEffect } from '../define-effect.js';
-import { registerEffect } from '../registry.js';
 
 export const megaAuraEffect = defineEffect({
   kind: 'mega-aura',
@@ -31,5 +30,3 @@ export const megaAuraEffect = defineEffect({
     );
   },
 });
-
-registerEffect(megaAuraEffect);

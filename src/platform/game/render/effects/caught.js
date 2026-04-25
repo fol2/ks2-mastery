@@ -1,5 +1,4 @@
 import { defineEffect } from '../define-effect.js';
-import { registerEffect } from '../registry.js';
 import { CelebrationShell, clampStage } from './celebration-shell.js';
 
 export const caughtEffect = defineEffect({
@@ -24,5 +23,3 @@ export const caughtEffect = defineEffect({
     );
   },
 });
-
-registerEffect(caughtEffect);

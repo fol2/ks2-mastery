@@ -1,5 +1,4 @@
 import { defineEffect } from '../define-effect.js';
-import { registerEffect } from '../registry.js';
 import { resolveMonsterColour } from './palette.js';
 
 export const shinyEffect = defineEffect({
@@ -27,5 +26,3 @@ export const shinyEffect = defineEffect({
     );
   },
 });
-
-registerEffect(shinyEffect);

@@ -4,7 +4,6 @@
 // slowly while younger ones bob with sharper energy.
 
 import { defineEffect } from '../define-effect.js';
-import { registerEffect } from '../registry.js';
 import { hashString, valueBetween } from '../seed.js';
 
 const STAGE_PROFILES = Object.freeze({
@@ -66,5 +65,3 @@ export const monsterMotionFloatEffect = defineEffect({
     return computeMonsterMotionStyle(monster, context);
   },
 });
-
-registerEffect(monsterMotionFloatEffect);

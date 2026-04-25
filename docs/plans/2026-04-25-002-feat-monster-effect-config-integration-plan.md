@@ -310,7 +310,7 @@ on app boot OR config change:
 
 ---
 
-- [ ] U3. **Hybrid runtime registry**
+- [x] U3. **Hybrid runtime registry**
 
 **Goal:** At app boot (and on config change), reset the registry, register the eight code-defined effects as bundled fallback, then iterate the published `effect.catalog` and re-register through `defineEffect()`. Config wins on `kind` collision. Without a published config, code-defined effects remain.
 
