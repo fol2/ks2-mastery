@@ -4,6 +4,13 @@ import {
   isGrammarSpeechAvailable,
   speakGrammarReadModel,
 } from '../speech.js';
+import {
+  grammarSessionHelpVisibility,
+  grammarSessionSubmitLabel,
+  grammarSessionProgressLabel,
+  grammarSessionInfoChips,
+} from '../session-ui.js';
+import { translateGrammarSessionError } from '../module.js';
 
 function optionLabel(option) {
   if (Array.isArray(option)) return String(option[1] ?? option[0] ?? '');
@@ -329,6 +336,7 @@ function MiniTestStatus({ miniTest, pending, runtimeReadOnly, answerFormId }) {
             data-index={index}
             disabled={runtimeReadOnly || pending || question.current}
             aria-current={question.current ? 'step' : undefined}
+            aria-pressed={question.answered ? 'true' : 'false'}
             key={`${question.itemId || question.templateId}-${index}`}
           >
             <span>{index + 1}</span>
@@ -353,25 +361,38 @@ function SessionGoalChip({ goal }) {
   return null;
 }
 
-function RepairActions({ isMiniTest, isFeedback, session, pending, runtimeReadOnly, actions }) {
+function RepairActions({ isMiniTest, isFeedback, help, feedback, pending, runtimeReadOnly, actions }) {
   if (isMiniTest) return null;
   const disabled = runtimeReadOnly || pending;
+  // Post-answer (feedback) branch: only render repair controls for a wrong
+  // answer. A correct answer funnels the learner to the single `Next question`
+  // primary action — no retry / worked solution / similar problem clutter.
   if (isFeedback) {
+    if (!help?.showRepairActions) return null;
+    const isCorrect = Boolean(feedback?.result?.correct);
+    if (isCorrect) return null;
     return (
       <div className="grammar-repair-actions" aria-label="Grammar repair actions">
         <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-retry-current-question')}>
           Retry
         </button>
-        <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-show-worked-solution')}>
-          Worked solution
-        </button>
-        <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-start-similar-problem')}>
-          Similar problem
-        </button>
+        {help.showWorkedSolution ? (
+          <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-show-worked-solution')}>
+            Worked solution
+          </button>
+        ) : null}
+        {help.showSimilarProblem ? (
+          <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-start-similar-problem')}>
+            Similar problem
+          </button>
+        ) : null}
       </div>
     );
   }
-  if ((Number(session?.supportLevel) || 0) > 0) return null;
+  // Pre-answer branch: gated entirely by the U8 visibility table. For
+  // independent practice in the `session` phase every flag is `false`, so
+  // the learner sees exactly one task + Submit with no support chrome.
+  if (!help?.showFadedSupport || !help?.showSimilarProblem) return null;
   return (
     <div className="grammar-repair-actions" aria-label="Grammar support actions">
       <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-use-faded-support')}>
@@ -384,9 +405,15 @@ function RepairActions({ isMiniTest, isFeedback, session, pending, runtimeReadOn
   );
 }
 
-function AiEnrichmentActions({ isMiniTest, pending, runtimeReadOnly, actions }) {
+function AiEnrichmentActions({ isMiniTest, isFeedback, pending, runtimeReadOnly, actions }) {
   if (isMiniTest) return null;
   const disabled = runtimeReadOnly || pending;
+  // Post-answer child copy relabels the existing AI enrichment triggers to
+  // `Explain another way` / `Revision cards` — the Worker action behind the
+  // buttons is unchanged; only the visible label adapts to the feedback
+  // phase. Pre-answer renders are gated by `help.showAiActions` upstream so
+  // children only see a single primary Submit before marking.
+  const explanationLabel = isFeedback ? 'Explain another way' : 'Explain this';
   return (
     <div className="grammar-ai-actions" aria-label="Grammar enrichment actions">
       <button
@@ -395,7 +422,7 @@ function AiEnrichmentActions({ isMiniTest, pending, runtimeReadOnly, actions }) 
         disabled={disabled}
         onClick={() => actions.dispatch('grammar-request-ai-enrichment', { kind: 'explanation' })}
       >
-        Explain this
+        {explanationLabel}
       </button>
       <button
         className="btn secondary"
@@ -453,15 +480,24 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
   const pending = Boolean(grammar.pendingCommand);
   const submitDisabled = runtimeReadOnly || pending || (!isMiniTest && isFeedback);
   const currentResponse = isMiniTest ? (miniTestCurrent?.response || {}) : {};
-  const showDomainChip = item.domain && (grammar.prefs?.showDomainBeforeAnswer !== false || isFeedback);
   const answerFormId = `grammar-answer-form-${String(session.id || 'current').replace(/[^A-Za-z0-9_-]/g, '-')}`;
+  // Single source of truth for every help surface (AI triggers, worked
+  // solution preview, faded support, similar problem) — the JSX calls the
+  // U8 helper once and threads the resulting flags down. Mini-test (before
+  // finish) and independent practice pre-answer both collapse to all-false,
+  // so the learner sees one task and one primary action.
+  const help = grammarSessionHelpVisibility(session, grammar.phase);
+  const progressLabel = grammarSessionProgressLabel(session);
+  const sessionTitle = progressLabel || 'Grammar practice';
+  const infoChips = grammarSessionInfoChips(session);
+  const submitLabel = grammarSessionSubmitLabel(session, grammar.awaitingAdvance);
 
   return (
     <section className="grammar-session" aria-labelledby="grammar-session-title">
       <div className="grammar-session-head">
         <div>
           <div className="eyebrow">Grammar practice</div>
-          <h2 id="grammar-session-title">{item.templateLabel || 'Worker-marked question'}</h2>
+          <h2 id="grammar-session-title">{sessionTitle}</h2>
         </div>
         <div className="grammar-progress" aria-label="Round progress">
           <span>{progressDone}</span>
@@ -471,11 +507,10 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
 
       <div className="grammar-prompt-card">
         <div className="chip-row">
-          {isMiniTest ? <span className="chip good">KS2-style mini-test</span> : null}
+          {infoChips.map((chip) => (
+            <span className="chip" key={chip}>{chip}</span>
+          ))}
           {!isMiniTest ? <SessionGoalChip goal={session.goal} /> : null}
-          {showDomainChip ? <span className="chip">{item.domain}</span> : null}
-          {item.questionType ? <span className="chip">{item.questionType}</span> : null}
-          {session.serverAuthority ? <span className="chip good">Worker authority</span> : null}
         </div>
         {isMiniTest ? (
           <MiniTestStatus
@@ -489,12 +524,15 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
         {item.checkLine ? <p className="grammar-check-line">{item.checkLine}</p> : null}
         <ReadAloudControls grammar={grammar} />
         {!isMiniTest ? <GuidancePanel support={session.supportGuidance} /> : null}
-        <AiEnrichmentActions
-          isMiniTest={isMiniTest}
-          pending={pending}
-          runtimeReadOnly={runtimeReadOnly}
-          actions={actions}
-        />
+        {help.showAiActions && !(isFeedback && grammar.feedback?.result?.correct === true) ? (
+          <AiEnrichmentActions
+            isMiniTest={isMiniTest}
+            isFeedback={isFeedback}
+            pending={pending}
+            runtimeReadOnly={runtimeReadOnly}
+            actions={actions}
+          />
+        ) : null}
         {!isMiniTest ? <AiEnrichmentPanel enrichment={grammar.aiEnrichment} /> : null}
 
         <form
@@ -524,19 +562,22 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
         >
           <GrammarInput inputSpec={item.inputSpec || { type: 'text' }} required={!isMiniTest} response={currentResponse} />
           {!isMiniTest ? <FeedbackPanel feedback={grammar.feedback} /> : null}
-          {!isMiniTest ? <WorkedSolutionPanel solution={grammar.feedback?.workedSolution} /> : null}
+          {!isMiniTest && help.showWorkedSolution ? (
+            <WorkedSolutionPanel solution={grammar.feedback?.workedSolution} />
+          ) : null}
           <RepairActions
             isMiniTest={isMiniTest}
             isFeedback={isFeedback}
-            session={session}
+            help={help}
+            feedback={grammar.feedback}
             pending={pending}
             runtimeReadOnly={runtimeReadOnly}
             actions={actions}
           />
           {grammar.error ? (
             <div className="feedback bad" role="alert">
-              <strong>Grammar command failed</strong>
-              <div>{grammar.error}</div>
+              <strong>Something went wrong</strong>
+              <div>{translateGrammarSessionError(grammar.error)}</div>
             </div>
           ) : null}
           <div className="actions">
@@ -554,7 +595,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
               </>
             ) : (
               <button className="btn primary" type="submit" disabled={submitDisabled}>
-                {pending && grammar.pendingCommand === 'submit-answer' ? 'Checking...' : 'Submit answer'}
+                {pending && grammar.pendingCommand === 'submit-answer' ? 'Checking...' : submitLabel}
               </button>
             )}
             {!isMiniTest && isFeedback ? (

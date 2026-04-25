@@ -14,6 +14,7 @@ import {
   isProductionRuntime as requestOriginIsProductionRuntime,
   requireSameOrigin as requestRequireSameOrigin,
 } from '../request-origin.js';
+import { consumeRateLimit } from '../rate-limit.js';
 import { DEMO_TEMPLATE_ID, demoLearnerTemplate } from './template.js';
 
 export const DEMO_TTL_MS = 24 * 60 * 60 * 1000;
@@ -50,10 +51,6 @@ function clientIp(request) {
   ) || 'unknown';
 }
 
-function currentWindowStart(timestamp, windowMs) {
-  return Math.floor(timestamp / windowMs) * windowMs;
-}
-
 // U6 (sys-hardening p1): these helpers moved to `worker/src/request-origin.js`
 // so `auth.requireSession()` can call `requireSameOrigin()` without creating a
 // circular import between `auth.js` and `demo/sessions.js`. The re-exports
@@ -62,30 +59,11 @@ function currentWindowStart(timestamp, windowMs) {
 export const isProductionRuntime = requestOriginIsProductionRuntime;
 export const requireSameOrigin = requestRequireSameOrigin;
 
-export async function consumeRateLimit(db, { bucket, identifier, limit, windowMs, now }) {
-  if (!bucket || !identifier || !limit || !windowMs) return { allowed: true, retryAfterSeconds: 0 };
-  const windowStartedAt = currentWindowStart(now, windowMs);
-  const limiterKey = `${bucket}:${await sha256(identifier)}`;
-  const row = await first(db, `
-    INSERT INTO request_limits (limiter_key, window_started_at, request_count, updated_at)
-    VALUES (?, ?, 1, ?)
-    ON CONFLICT(limiter_key) DO UPDATE SET
-      request_count = CASE
-        WHEN request_limits.window_started_at = excluded.window_started_at
-          THEN request_limits.request_count + 1
-        ELSE 1
-      END,
-      window_started_at = excluded.window_started_at,
-      updated_at = excluded.updated_at
-    RETURNING request_count, window_started_at
-  `, [limiterKey, windowStartedAt, now]);
-  const count = Number(row?.request_count || 1);
-  const storedWindow = Number(row?.window_started_at || windowStartedAt);
-  return {
-    allowed: count <= limit,
-    retryAfterSeconds: Math.max(1, Math.ceil(((storedWindow + windowMs) - now) / 1000)),
-  };
-}
+// U7: the previous local `consumeRateLimit(db, ...)` helper is now the
+// shared `consumeRateLimit(envOrDb, ...)` in `worker/src/rate-limit.js`.
+// The shared version accepts either a D1 database or an env-like object,
+// so every existing call site in this file keeps the `(db, options)`
+// shape without change (feasibility F-06).
 
 export async function recordDemoMetric(db, key, now) {
   await run(db, `

@@ -1466,3 +1466,747 @@ test('U6 action routing: unknown filter IDs still fall back to "all"', async () 
   harness.dispatch('spelling-analytics-status-filter', { value: 'not-a-real-filter' });
   assert.equal(harness.store.getState().transientUi.spellingAnalyticsStatusFilter, 'all');
 });
+
+// U6 (Post-Mega Spelling Guardian Hardening): resetLearner must zero the
+// `ks2-spell-guardian-<learnerId>` storage key even when the host wires a
+// persistence adapter that lacks a `resetLearner` method. The canonical
+// client persistence already wipes the subject-state record; the service
+// must not rely on that being present. AE-R7.
+// -----------------------------------------------------------------------------
+
+const GUARDIAN_KEY_PREFIX = 'ks2-spell-guardian-';
+function guardianKeyFor(learnerId) {
+  return `${GUARDIAN_KEY_PREFIX}${learnerId}`;
+}
+
+function seedGuardianKeyDirect(storage, learnerId, map) {
+  storage.setItem(guardianKeyFor(learnerId), JSON.stringify(map));
+}
+
+function readGuardianKeyDirect(storage, learnerId) {
+  const raw = storage.getItem(guardianKeyFor(learnerId));
+  if (raw === null || raw === undefined) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+test('U6 guardian reset: resetLearner zeros the guardian key when persistence has no resetLearner adapter (AE-R7)', () => {
+  // Host uses the raw storage proxy with no persistence.resetLearner hook —
+  // e.g. a minimal host that only supplies `storage` to createSpellingService.
+  // Before U6 this left ks2-spell-guardian-<learnerId> untouched. Now the
+  // service must zero it explicitly.
+  const storage = installMemoryStorage();
+  const service = createSpellingService({ storage });
+  const learnerId = 'learner-u6-no-adapter';
+
+  // Seed a non-empty guardian map directly in storage (bypassing the service).
+  seedGuardianKeyDirect(storage, learnerId, {
+    possess: {
+      reviewLevel: 2,
+      lastReviewedDay: 17_995,
+      nextDueDay: 18_002,
+      correctStreak: 1,
+      lapses: 0,
+      renewals: 0,
+      wobbling: false,
+    },
+  });
+  // Sanity: the seed is visible through the raw storage path.
+  assert.deepEqual(readGuardianKeyDirect(storage, learnerId), {
+    possess: {
+      reviewLevel: 2,
+      lastReviewedDay: 17_995,
+      nextDueDay: 18_002,
+      correctStreak: 1,
+      lapses: 0,
+      renewals: 0,
+      wobbling: false,
+    },
+  });
+
+  service.resetLearner(learnerId);
+
+  // After reset, the storage key must be present AND contain an empty map.
+  const afterReset = readGuardianKeyDirect(storage, learnerId);
+  assert.deepEqual(afterReset, {}, 'guardian storage key zeroed to {} after reset');
+});
+
+test('U6 guardian reset: resetLearner with canonical persistence.resetLearner still leaves guardian key as {}', () => {
+  // Happy path — the canonical client persistence does wipe subject-state
+  // (which covers the guardian slot) and the new U6 explicit save is a
+  // redundant but idempotent no-op. End state is still {}.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  const learnerId = 'learner-u6-canonical';
+  seedAllCoreMega(repositories, learnerId, today);
+  // Seed a wobbling guardian record through the canonical repository path.
+  seedGuardianMap(repositories, learnerId, {
+    possess: {
+      reviewLevel: 2,
+      lastReviewedDay: today - 5,
+      nextDueDay: today - 1,
+      correctStreak: 0,
+      lapses: 1,
+      renewals: 0,
+      wobbling: true,
+    },
+  });
+  // Sanity: guardian map is non-empty before reset.
+  const preReset = service.getPostMasteryState(learnerId);
+  assert.equal(Object.keys(preReset.guardianMap).length, 1);
+
+  service.resetLearner(learnerId);
+
+  // Through the canonical persistence, reading the subject-state's
+  // guardian slot now yields {} — both the adapter's subject-state wipe
+  // and the U6 explicit save arrive at the same zeroed value.
+  const data = repositories.subjectStates.read(learnerId, 'spelling').data || {};
+  assert.deepEqual(data.guardian || {}, {}, 'guardian slot zeroed through canonical adapter + U6 explicit save');
+  // Service-facing snapshot confirms the user-visible end state.
+  const postReset = service.getPostMasteryState(learnerId);
+  assert.deepEqual(postReset.guardianMap, {}, 'service view of guardian map is empty after reset');
+});
+
+test('U6 guardian reset: resetLearner on a learner with no existing guardian key writes {} without crash', () => {
+  // Edge case — cold-start learner with nothing in storage. The new
+  // saveGuardianMap(learnerId, {}) is a no-op from the learner's point of
+  // view, must not throw, and must leave the storage key set to {}.
+  const storage = installMemoryStorage();
+  const service = createSpellingService({ storage });
+  const learnerId = 'learner-u6-cold';
+  assert.equal(
+    storage.getItem(guardianKeyFor(learnerId)),
+    null,
+    'no guardian key before reset',
+  );
+
+  // Must not throw.
+  service.resetLearner(learnerId);
+
+  assert.deepEqual(
+    readGuardianKeyDirect(storage, learnerId),
+    {},
+    'guardian storage key written as {} even on cold-start learner',
+  );
+});
+
+test('U6 guardian reset: post-reset getPostMasteryState returns zeroed aggregates', () => {
+  // Integration — after reset, the live post-mastery snapshot must show
+  // no words mega, no due guardians, no wobbling, and no next due day.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  const learnerId = 'learner-u6-post-reset';
+  seedAllCoreMega(repositories, learnerId, today);
+  seedGuardianMap(repositories, learnerId, {
+    possess: {
+      reviewLevel: 1,
+      lastReviewedDay: today - 2,
+      nextDueDay: today - 1,
+      correctStreak: 0,
+      lapses: 1,
+      renewals: 0,
+      wobbling: true,
+    },
+  });
+
+  service.resetLearner(learnerId);
+
+  const state = service.getPostMasteryState(learnerId);
+  assert.equal(state.allWordsMega, false);
+  assert.equal(state.guardianDueCount, 0);
+  assert.equal(state.wobblingCount, 0);
+  assert.equal(state.nextGuardianDueDay, null);
+});
+
+test('U6 guardian reset: Worker-side resetLearner behaviour unchanged (still zeros via normaliseServerSpellingData)', () => {
+  // Worker persistence.resetLearner already zeros guardian via
+  // normaliseServerSpellingData({}). U6 touches only the shared-service
+  // path; the worker contract must be unaffected. Assert the snapshot
+  // returned by normaliseServerSpellingData({}) contains guardian === {}.
+  const snapshot = normaliseServerSpellingData({}, TODAY * DAY_MS);
+  assert.deepEqual(snapshot.guardian, {});
+  assert.deepEqual(snapshot.progress, {});
+});
+
+// -----------------------------------------------------------------------------
+// U4 (P1.5 hardening): "I don't know" replaces skip in Guardian sessions.
+// Route goes through advanceGuardianOnWrong, emits spelling.guardian.wobbled,
+// sets awaitingAdvance=true (mirrors submitGuardianAnswer wrong-path), and
+// never mutates progress.stage. Non-Guardian sessions keep legacy
+// engine.skipCurrent + enqueueLater semantics byte-identical.
+// -----------------------------------------------------------------------------
+
+test('U4 happy path: Guardian "I don\'t know" on a non-wobbling word emits one WOBBLED event, wobbling→true, nextDueDay=today+1, stage unchanged', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const firstSlug = started.state.session.currentCard.slug;
+
+  const skipped = service.skipWord('learner-a', started.state);
+
+  assert.equal(skipped.ok, true);
+  const wobbled = skipped.events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_WOBBLED);
+  assert.equal(wobbled.length, 1, 'exactly one WOBBLED event per "I don\'t know" click');
+  assert.equal(wobbled[0].wordSlug, firstSlug);
+  assert.equal(wobbled[0].lapses, 1, 'lapses incremented to 1 on first wobble');
+
+  // No RENEWED / RECOVERED / MISSION_COMPLETED emitted by a mid-round skip.
+  assert.equal(skipped.events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_RENEWED).length, 0);
+  assert.equal(skipped.events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_RECOVERED).length, 0);
+  assert.equal(skipped.events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED).length, 0);
+
+  // Guardian record advanced exactly like a wrong answer.
+  const postMastery = service.getPostMasteryState('learner-a');
+  const record = postMastery.guardianMap[firstSlug];
+  assert.equal(record.wobbling, true);
+  assert.equal(record.nextDueDay, today + 1);
+  assert.equal(record.lapses, 1);
+  assert.equal(record.correctStreak, 0);
+
+  // progress.stage preserved — Mega-never-revoked invariant.
+  const snapshot = service.getAnalyticsSnapshot('learner-a');
+  const row = snapshot.wordGroups.flatMap((g) => g.words).find((w) => w.slug === firstSlug);
+  assert.equal(row.progress.stage, 4);
+  assert.equal(row.progress.dueDay, today + 60, 'progress.dueDay preserved');
+  assert.equal(row.progress.lastDay, today - 7, 'progress.lastDay preserved');
+  assert.equal(row.progress.lastResult, 'correct', 'progress.lastResult preserved');
+  assert.equal(row.progress.wrong, 2, 'progress.wrong bumped by 1 (seed was 1)');
+
+  // Skip matches submitGuardianAnswer shape: awaitingAdvance=true, user clicks
+  // Continue to advance. Session still points at the skipped slug until then.
+  assert.equal(skipped.state.awaitingAdvance, true, 'skip leaves session awaitingAdvance like wrong-answer submit');
+  const postSession = skipped.state.session;
+  assert.ok(postSession, 'session continues');
+  assert.equal(postSession.currentSlug, firstSlug, 'currentSlug stays on skipped slug until continueSession fires');
+  assert.equal(Array.isArray(postSession.queue) && postSession.queue.includes(firstSlug), false, 'queue no longer contains the skipped slug');
+
+  // Continue advances past the skipped slug (FIFO) — no re-queue.
+  const advanced = service.continueSession('learner-a', skipped.state);
+  assert.equal(advanced.state.awaitingAdvance, false);
+  assert.notEqual(advanced.state.session.currentSlug, firstSlug, 'continueSession advances past the skipped slug');
+});
+
+test('U4 happy path: Guardian "I don\'t know" on an already-wobbling word re-emits WOBBLED, lapses +1, nextDueDay resets to today+1', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  // Seed 'possess' as already wobbling — it wins the wobbling-due bucket.
+  seedGuardianMap(repositories, 'learner-a', {
+    possess: {
+      reviewLevel: 2,
+      lastReviewedDay: today - 5,
+      nextDueDay: today - 1,
+      correctStreak: 0,
+      lapses: 1,
+      renewals: 0,
+      wobbling: true,
+    },
+  });
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  assert.equal(started.state.session.currentCard.slug, 'possess');
+  const skipped = service.skipWord('learner-a', started.state);
+
+  const wobbled = skipped.events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_WOBBLED);
+  assert.equal(wobbled.length, 1);
+  assert.equal(wobbled[0].wordSlug, 'possess');
+  assert.equal(wobbled[0].lapses, 2, 'lapses incremented on repeat wobble');
+
+  const postMastery = service.getPostMasteryState('learner-a');
+  const record = postMastery.guardianMap.possess;
+  assert.equal(record.wobbling, true, 'stays wobbling');
+  assert.equal(record.lapses, 2);
+  assert.equal(record.nextDueDay, today + 1, 'nextDueDay resets to today+1');
+
+  const snapshot = service.getAnalyticsSnapshot('learner-a');
+  const row = snapshot.wordGroups.flatMap((g) => g.words).find((w) => w.slug === 'possess');
+  assert.equal(row.progress.stage, 4, 'stage preserved on repeat wobble');
+});
+
+test('U4 happy path: "I don\'t know" adds skipped word to summary.mistakes for the practice-only drill pickup (R3 dependency)', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const firstSlug = started.state.session.currentCard.slug;
+
+  // Skip the first word (I don't know), answer the rest correctly.
+  const skipped = service.skipWord('learner-a', started.state);
+  let current = skipped.state;
+  // continue the session (may already be on next card; answer the remainder correctly)
+  while (current.phase === 'session') {
+    if (current.awaitingAdvance) {
+      current = service.continueSession('learner-a', current).state;
+      continue;
+    }
+    const answer = current.session.currentCard.word.word;
+    current = service.submitAnswer('learner-a', current, answer).state;
+  }
+  assert.equal(current.phase, 'summary');
+  const mistakeSlugs = current.summary.mistakes.map((m) => m.slug);
+  assert.ok(mistakeSlugs.includes(firstSlug), '"I don\'t know" slug appears in summary.mistakes');
+  assert.equal(current.summary.mistakes.length, 1, 'only the skipped word fell into mistakes; correct answers did not');
+});
+
+test('U4 edge: "I don\'t know" when awaitingAdvance===true is a no-op (no duplicate event, no state mutation)', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const firstSlug = started.state.session.currentCard.slug;
+  // First correct answer: leaves awaitingAdvance=true.
+  const submitted = service.submitAnswer('learner-a', started.state, started.state.session.currentCard.word.word);
+  assert.equal(submitted.state.awaitingAdvance, true);
+
+  const skipped = service.skipWord('learner-a', submitted.state);
+  assert.equal(skipped.changed, false, 'skipWord no-ops while awaitingAdvance');
+  assert.equal(skipped.events.length, 0, 'no events on no-op skip');
+  // Guardian record from the correct answer is unchanged by the no-op skip.
+  const postMastery = service.getPostMasteryState('learner-a');
+  const record = postMastery.guardianMap[firstSlug];
+  assert.equal(record.wobbling, false, 'record stays as correct-answer result, not wobbling');
+});
+
+test('U4 edge: "I don\'t know" double-click is a no-op on the second call (awaitingAdvance guard)', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const firstSlug = started.state.session.currentCard.slug;
+
+  const first = service.skipWord('learner-a', started.state);
+  // First click: awaitingAdvance becomes true; exactly one WOBBLED event.
+  assert.equal(first.state.awaitingAdvance, true);
+  const firstWobbled = first.events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_WOBBLED);
+  assert.equal(firstWobbled.length, 1, 'first click wobbles once');
+
+  // Second click on the same state: the early awaitingAdvance guard in
+  // skipWord returns changed:false with no events.
+  const second = service.skipWord('learner-a', first.state);
+  assert.equal(second.changed, false, 'second click is a no-op while awaitingAdvance');
+  assert.equal(second.events.length, 0, 'second click emits no events');
+
+  const postMastery = service.getPostMasteryState('learner-a');
+  assert.equal(postMastery.guardianMap[firstSlug].lapses, 1, 'first slug lapses counted once, not twice');
+});
+
+test('U4 integration (wobbledCount correctness): round with 2 wrong answers + 1 "I don\'t know" emits wobbledCount === 3 on mission-completed', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const totalWords = started.state.session.uniqueWords.length;
+
+  let current = started.state;
+  const events = [];
+  let cardCount = 0;
+  while (current.phase === 'session') {
+    if (current.awaitingAdvance) {
+      const advanced = service.continueSession('learner-a', current);
+      events.push(...advanced.events);
+      current = advanced.state;
+      continue;
+    }
+    cardCount += 1;
+    let transition;
+    if (cardCount === 1) {
+      // First card: "I don't know"
+      transition = service.skipWord('learner-a', current);
+    } else if (cardCount <= 3) {
+      // Cards 2 and 3: wrong answer
+      transition = service.submitAnswer('learner-a', current, 'definitely-wrong');
+    } else {
+      // Rest: correct
+      transition = service.submitAnswer('learner-a', current, current.session.currentCard.word.word);
+    }
+    events.push(...transition.events);
+    current = transition.state;
+  }
+
+  assert.equal(current.phase, 'summary');
+  const mission = events.find((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED);
+  assert.ok(mission, 'mission-completed event emitted');
+  assert.equal(mission.wobbledCount, 3, 'wobbledCount aggregates 2 wrong + 1 "I don\'t know"');
+  assert.equal(mission.renewalCount, totalWords - 3);
+  assert.equal(mission.recoveredCount, 0);
+
+  // Per-word WOBBLED events: exactly 3 across the round.
+  const wobbledEvents = events.filter((e) => e.type === SPELLING_EVENT_TYPES.GUARDIAN_WOBBLED);
+  assert.equal(wobbledEvents.length, 3, 'one WOBBLED event per wobbled slug, no duplicates');
+});
+
+test('U4 integration: non-Guardian learning session skip still calls engine.skipCurrent → enqueueLater, slug re-appears in queue, no guardian events', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const { service } = makeServiceWithSeed({ now, random: () => 0.5 });
+  // Learning mode (not guardian). Use seeded words to get a round with a
+  // predictable first slug.
+  const started = service.startSession('learner-a', {
+    mode: 'single',
+    words: ['possess', 'believe', 'imagine', 'decide'],
+    length: 4,
+  });
+  assert.equal(started.state.session.mode, 'single');
+  assert.notEqual(started.state.session.mode, 'guardian');
+  const firstSlug = started.state.session.currentSlug;
+  const queueBefore = started.state.session.queue.slice();
+
+  const skipped = service.skipWord('learner-a', started.state);
+
+  // No guardian events from a non-Guardian skip.
+  assert.equal(skipped.events.filter((e) => e.type?.startsWith?.('spelling.guardian.')).length, 0);
+  // Session advances to a different slug.
+  assert.notEqual(skipped.state.session.currentSlug, firstSlug, 'skip advanced past the first slug');
+  // Legacy enqueueLater: the skipped slug is still reachable in the round
+  // (queue + currentSlug). Either in queue, or it will be picked up later.
+  const queueAfter = skipped.state.session.queue;
+  const reachable = [skipped.state.session.currentSlug, ...queueAfter];
+  assert.ok(reachable.includes(firstSlug), 'legacy skip re-queues slug (reachable later in round)');
+  // Sanity: the legacy info feedback headline is still the non-Guardian one.
+  assert.equal(skipped.state.feedback?.headline, 'Skipped for now.');
+});
+
+test('U4 edge: FIFO-consistent queue after Guardian "I don\'t know" — skipped slug never re-queued (continueSession advances to next)', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const initialSlugs = started.state.session.uniqueWords.slice();
+  const firstSlug = started.state.session.currentSlug;
+
+  const skipped = service.skipWord('learner-a', started.state);
+  // After skip, queue has the skipped slug removed. Continue to move on.
+  assert.equal(Array.isArray(skipped.state.session.queue) && skipped.state.session.queue.includes(firstSlug), false, 'queue does not contain the skipped slug');
+  const advanced = service.continueSession('learner-a', skipped.state);
+  const post = advanced.state.session;
+  const reachable = [post.currentSlug, ...post.queue].filter(Boolean);
+  for (const slug of initialSlugs) {
+    if (slug === firstSlug) {
+      assert.equal(reachable.includes(slug), false, `${slug} must not be re-queued after Guardian skip`);
+    } else {
+      // Each remaining slug appears exactly once on the reachable path
+      // (current + queue), preserving FIFO.
+      assert.equal(reachable.filter((s) => s === slug).length, 1, `${slug} appears exactly once on the FIFO path`);
+    }
+  }
+});
+
+test('U4 edge: Guardian "I don\'t know" sets session.guardianResults[slug] to "wobbled" for mission-completed aggregation', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const firstSlug = started.state.session.currentCard.slug;
+  const skipped = service.skipWord('learner-a', started.state);
+
+  assert.equal(skipped.state.session.guardianResults[firstSlug], 'wobbled');
+});
+
+test('U4 edge: Guardian "I don\'t know" surfaces a "Wobbling" feedback so the user knows the click registered', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const skipped = service.skipWord('learner-a', started.state);
+
+  // Feedback mirrors the wrong-answer Guardian body so the UI shows the
+  // correct answer via feedback.answer (like submitGuardianAnswer does for
+  // wrong answers).
+  assert.equal(skipped.state.feedback?.kind, 'warn');
+  assert.equal(skipped.state.feedback?.headline, 'Wobbling.');
+  assert.match(skipped.state.feedback?.body || '', /will return tomorrow/);
+  assert.ok(skipped.state.feedback?.answer, 'feedback.answer present so Cloze can reveal the word after skip');
+});
+
+test('U4 edge: continueSession after Guardian skip plays the audio cue for the next card', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const skipped = service.skipWord('learner-a', started.state);
+  const advanced = service.continueSession('learner-a', skipped.state);
+
+  // continueSession's non-done branch returns an audio cue — same as the
+  // correct-answer Guardian flow. Without this, the learner would see the
+  // next card's prompt without hearing it.
+  assert.ok(advanced.audio, 'continueSession returns an audio cue for the freshly-advanced card');
+});
+
+// -----------------------------------------------------------------------------
+// U3 action-routing: Guardian-safe summary drill. The `spelling-drill-all` and
+// `spelling-drill-single` handlers branch on `ui.summary?.mode === 'guardian'`
+// to force `practiceOnly: true` on the dispatched session, which short-circuits
+// at `legacy-engine.js:763` before `applyLearningOutcome` can ever touch
+// `progress.stage`. Guardian origin never demotes Mega; non-Guardian origin is
+// byte-identical to the legacy path (characterisation coverage below).
+// -----------------------------------------------------------------------------
+
+function submitForm(harness, typed) {
+  const formData = new FormData();
+  formData.set('typed', typed);
+  harness.dispatch('spelling-submit-form', { formData });
+}
+
+function runLegacyLearningRoundWithOneWrongWord(harness) {
+  // Cycle the first word through retry → correction → correct so the word
+  // ends up in `summary.mistakes` but the round actually finalises (correction
+  // requires a matching answer before we can advance). The remaining words
+  // (if any in a multi-word round) are answered correctly on the first try.
+  const firstAnswer = harness.store.getState().subjectUi.spelling.session.currentCard.word.word;
+  submitForm(harness, 'zzzwrong-question');
+  submitForm(harness, 'zzzwrong-retry');
+  submitForm(harness, firstAnswer);
+  for (let guard = 0; guard < 40; guard += 1) {
+    const ui = harness.store.getState().subjectUi.spelling;
+    if (ui.phase !== 'session') break;
+    if (ui.awaitingAdvance) {
+      harness.dispatch('spelling-continue');
+      continue;
+    }
+    submitForm(harness, ui.session.currentCard.word.word);
+  }
+}
+
+function runGuardianRoundAllWrong(harness) {
+  // Guardian sessions are single-attempt — one wrong answer is enough to
+  // push the word into `summary.mistakes`. Loop through until phase flips
+  // off 'session'.
+  for (let guard = 0; guard < 40; guard += 1) {
+    const ui = harness.store.getState().subjectUi.spelling;
+    if (ui.phase !== 'session') break;
+    if (ui.awaitingAdvance) {
+      harness.dispatch('spelling-continue');
+      continue;
+    }
+    submitForm(harness, 'zzzwrongguardian');
+  }
+}
+
+function runPracticeOnlyRoundAllWrong(harness) {
+  // Practice-only drill uses the legacy learning surface (retry → correction
+  // → next), but `practiceOnly: true` short-circuits `applyLearningOutcome`
+  // at `legacy-engine.js:763`. We must still type the correct answer in
+  // correction phase to advance, otherwise the session stalls — this is a
+  // fixture constraint, not a product assertion.
+  for (let guard = 0; guard < 200; guard += 1) {
+    const ui = harness.store.getState().subjectUi.spelling;
+    if (ui.phase !== 'session') break;
+    if (ui.awaitingAdvance) {
+      harness.dispatch('spelling-continue');
+      continue;
+    }
+    const sessionPhase = ui.session?.phase;
+    if (sessionPhase === 'correction') {
+      // Type the correct answer to escape the correction phase without
+      // demoting (practiceOnly gates the demotion regardless of whether we
+      // type correct here).
+      submitForm(harness, ui.session.currentCard.word.word);
+    } else {
+      submitForm(harness, 'zzzwrongpractice');
+    }
+  }
+}
+
+test('U3 characterisation: legacy Smart Review summary drill keeps mode="trouble" + practiceOnly=false', async () => {
+  // Baseline that must survive the U3 change: a Smart Review summary
+  // dispatching `spelling-drill-all` starts a `mode: 'trouble'` session with
+  // `practiceOnly` left unset (defaults to false inside `startSession`).
+  // We assert on session shape — the public contract is that session
+  // carries `mode: 'trouble'` and does NOT carry `practiceOnly: true`.
+  const createAppHarness = await importAppHarness();
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-start');
+
+  runLegacyLearningRoundWithOneWrongWord(harness);
+  const summary = harness.store.getState().subjectUi.spelling.summary;
+  assert.equal(summary.mode, 'smart', 'sanity: smart-review origin');
+  assert.ok(summary.mistakes.length >= 1, 'at least one mistake expected');
+
+  harness.dispatch('spelling-drill-all');
+
+  const session = harness.store.getState().subjectUi.spelling.session;
+  assert.equal(session.mode, 'trouble', 'Smart-origin drill routes into mode=trouble');
+  assert.notEqual(session.practiceOnly, true, 'Smart-origin drill must NOT set practiceOnly (legacy behaviour)');
+});
+
+test('U3 characterisation: legacy Smart Review summary drill-single keeps mode="single" + practiceOnly=false', async () => {
+  // Complement: `spelling-drill-single` must also stay on legacy behaviour
+  // for non-Guardian origins (the existing chip path that Smart Review
+  // learners tap one word at a time).
+  const createAppHarness = await importAppHarness();
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-start');
+
+  runLegacyLearningRoundWithOneWrongWord(harness);
+  const summary = harness.store.getState().subjectUi.spelling.summary;
+  const mistakeSlug = summary.mistakes[0]?.slug;
+  assert.ok(mistakeSlug, 'at least one mistake with a slug expected');
+
+  harness.dispatch('spelling-drill-single', { slug: mistakeSlug });
+
+  const session = harness.store.getState().subjectUi.spelling.session;
+  assert.equal(session.mode, 'single', 'Smart-origin drill-single stays on mode=single');
+  assert.notEqual(session.practiceOnly, true, 'Smart-origin drill-single must NOT set practiceOnly');
+});
+
+test('U3 happy path: Guardian summary drill-all dispatch starts mode=trouble + practiceOnly=true', async () => {
+  const createAppHarness = await importAppHarness();
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const today = Math.floor(Date.now() / DAY_MS_TS);
+
+  seedAllCoreMega(harness.repositories, learnerId, today);
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-shortcut-start', { mode: 'guardian' });
+  assert.equal(harness.store.getState().subjectUi.spelling.phase, 'session');
+  assert.equal(harness.store.getState().subjectUi.spelling.session.mode, 'guardian');
+
+  runGuardianRoundAllWrong(harness);
+  const summary = harness.store.getState().subjectUi.spelling.summary;
+  assert.equal(summary.mode, 'guardian', 'sanity: guardian-origin summary');
+  assert.ok(summary.mistakes.length >= 1, 'guardian round of all-wrong must yield at least one mistake');
+
+  harness.dispatch('spelling-drill-all');
+
+  const session = harness.store.getState().subjectUi.spelling.session;
+  assert.equal(session.mode, 'trouble', 'Guardian-origin drill-all routes into mode=trouble (not a new mode)');
+  assert.equal(session.practiceOnly, true, 'Guardian-origin drill-all must set practiceOnly=true to short-circuit demotion');
+  // The session words must match the mistake slugs — not a fresh selection.
+  const mistakeSlugs = new Set(summary.mistakes.map((m) => m.slug));
+  for (const slug of session.uniqueWords) {
+    assert.ok(mistakeSlugs.has(slug), `session word ${slug} must come from summary.mistakes`);
+  }
+});
+
+test('U3 error path: practice-only drill after Guardian leaves progress.stage/dueDay/lastDay unchanged on wrong', async () => {
+  // The big invariant: a wrong answer during the practice-only drill must
+  // NEVER demote a Mega word. `practiceOnly: true` short-circuits at
+  // `legacy-engine.js:763` before `applyLearningOutcome` runs. We assert on
+  // the `progress` snapshot before / after the drill — stage/dueDay/lastDay/
+  // lastResult are byte-identical, only attempts/correct/wrong bump.
+  const createAppHarness = await importAppHarness();
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const today = Math.floor(Date.now() / DAY_MS_TS);
+
+  seedAllCoreMega(harness.repositories, learnerId, today);
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-shortcut-start', { mode: 'guardian' });
+
+  runGuardianRoundAllWrong(harness);
+
+  const summary = harness.store.getState().subjectUi.spelling.summary;
+  const drillSlug = summary.mistakes[0]?.slug;
+  assert.ok(drillSlug, 'Guardian all-wrong round must produce at least one mistake');
+
+  // Snapshot the progress record + guardian record before the drill.
+  const snapshotBefore = structuredClone(
+    harness.services.spelling.getAnalyticsSnapshot(learnerId).wordGroups
+      .flatMap((g) => g.words)
+      .find((r) => r.slug === drillSlug),
+  );
+  const guardianBefore = structuredClone(
+    harness.services.spelling.getPostMasteryState(learnerId).guardianMap[drillSlug] || null,
+  );
+
+  // Dispatch the Practice button path.
+  harness.dispatch('spelling-drill-all');
+  assert.equal(harness.store.getState().subjectUi.spelling.phase, 'session');
+  assert.equal(harness.store.getState().subjectUi.spelling.session.practiceOnly, true);
+
+  // Answer the practice-only round — correction-phase requires a valid
+  // answer to advance (fixture plumbing, not a product gate).
+  runPracticeOnlyRoundAllWrong(harness);
+
+  const snapshotAfter = harness.services.spelling.getAnalyticsSnapshot(learnerId).wordGroups
+    .flatMap((g) => g.words)
+    .find((r) => r.slug === drillSlug);
+  const guardianAfter = harness.services.spelling.getPostMasteryState(learnerId).guardianMap[drillSlug] || null;
+
+  // progress.stage must NOT have moved — the Mega invariant.
+  assert.equal(snapshotAfter.progress.stage, snapshotBefore.progress.stage, `${drillSlug} stage must stay at Mega (4)`);
+  assert.equal(snapshotAfter.progress.stage, 4, `${drillSlug} stage should be Mega (4)`);
+  // dueDay / lastDay / lastResult must also stay pinned — the whole point of
+  // practiceOnly is not just stage but the full scheduling snapshot.
+  assert.equal(snapshotAfter.progress.dueDay, snapshotBefore.progress.dueDay, `${drillSlug} dueDay unchanged`);
+  assert.equal(snapshotAfter.progress.lastDay, snapshotBefore.progress.lastDay, `${drillSlug} lastDay unchanged`);
+  assert.equal(snapshotAfter.progress.lastResult, snapshotBefore.progress.lastResult, `${drillSlug} lastResult unchanged`);
+
+  // guardian.wobbling / nextDueDay must be byte-identical to pre-drill.
+  if (guardianBefore) {
+    assert.equal(guardianAfter.wobbling, guardianBefore.wobbling, `${drillSlug} guardian.wobbling unchanged`);
+    assert.equal(guardianAfter.nextDueDay, guardianBefore.nextDueDay, `${drillSlug} guardian.nextDueDay unchanged`);
+    assert.equal(guardianAfter.reviewLevel, guardianBefore.reviewLevel, `${drillSlug} guardian.reviewLevel unchanged`);
+    assert.equal(guardianAfter.lapses, guardianBefore.lapses, `${drillSlug} guardian.lapses unchanged`);
+  }
+});
+
+test('U3 integration: practice-only drill summary renders without guardian-specific cards', async () => {
+  // The practice-only drill uses `mode: 'trouble'`, so when it finalises the
+  // summary scene must NOT render Guardian-specific cards. This is the
+  // "edge case" scenario in the plan — practice rounds complete but do not
+  // mint `mission-completed` events or decorate the summary with Vault copy.
+  const createAppHarness = await importAppHarness();
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const today = Math.floor(Date.now() / DAY_MS_TS);
+
+  seedAllCoreMega(harness.repositories, learnerId, today);
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-shortcut-start', { mode: 'guardian' });
+
+  runGuardianRoundAllWrong(harness);
+  harness.dispatch('spelling-drill-all');
+  // Finish the practice round by submitting correct answers.
+  for (let guard = 0; guard < 200; guard += 1) {
+    const ui = harness.store.getState().subjectUi.spelling;
+    if (ui.phase !== 'session') break;
+    if (ui.awaitingAdvance) {
+      harness.dispatch('spelling-continue');
+      continue;
+    }
+    submitForm(harness, ui.session.currentCard.word.word);
+  }
+
+  const summary = harness.store.getState().subjectUi.spelling.summary;
+  assert.equal(summary.mode, 'trouble', 'practice-only summary inherits mode=trouble, not guardian');
+});

@@ -4,6 +4,20 @@ import assert from 'node:assert/strict';
 import { analyseBootstrapPayload } from '../scripts/probe-production-bootstrap.mjs';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
+function captureLogs(fn) {
+  const captured = [];
+  const originalLog = console.log;
+  console.log = (...args) => {
+    captured.push(args.map((arg) => (typeof arg === 'string' ? arg : JSON.stringify(arg))).join(' '));
+  };
+  return Promise.resolve()
+    .then(fn)
+    .then((value) => ({ value, captured }))
+    .finally(() => {
+      console.log = originalLog;
+    });
+}
+
 const BASE_URL = 'https://repo.test';
 const NOW = Date.UTC(2026, 0, 1);
 const RECENT_SESSION_LIMIT_PER_LEARNER = 5;
@@ -301,6 +315,46 @@ test('production bootstrap still requires an authenticated session before capaci
 
   assert.equal(response.status, 401);
   assert.equal(payload.code, 'unauthenticated');
+
+  server.close();
+});
+
+// U3 characterization lock: pins the `[ks2-worker] {event: "capacity.request", ...}`
+// structured telemetry line the Worker emits on an unauthenticated bootstrap.
+// Pre-route 401s are force-logged (round 1 P0 #01 fix), so an unauthenticated
+// bootstrap is a deterministic witness for the telemetry contract without
+// needing to stub Math.random. Rewritten on 2026-04-26 during Option B merge
+// (PR #201) to use our `[ks2-worker] event: capacity.request` prefix in
+// place of PR #207's `[ks2-capacity]`.
+test('U3 characterization — unauthenticated bootstrap emits capacity.request log with pre-route phase', async () => {
+  const server = createProductionServer();
+  const { captured, value: response } = await captureLogs(() => server.fetchRaw(`${BASE_URL}/api/bootstrap`));
+  assert.equal(response.status, 401);
+  const capacityLines = captured.filter((line) => line.startsWith('[ks2-worker] '));
+  // Parse each candidate and retain only capacity.request events.
+  const payloads = capacityLines
+    .map((line) => {
+      try {
+        return JSON.parse(line.slice('[ks2-worker] '.length));
+      } catch {
+        return null;
+      }
+    })
+    .filter((entry) => entry && entry.event === 'capacity.request');
+  assert.equal(payloads.length, 1, `expected exactly one capacity.request line, got ${payloads.length}: ${JSON.stringify(capacityLines)}`);
+  const payload = payloads[0];
+  // Shape contract — keys present, values bounded.
+  assert.equal(payload.endpoint, '/api/bootstrap');
+  assert.equal(payload.method, 'GET');
+  assert.equal(payload.status, 401);
+  assert.equal(payload.phase, 'pre-route');
+  assert.ok(typeof payload.wallMs === 'number' && payload.wallMs >= 0);
+  assert.ok(typeof payload.responseBytes === 'number' && payload.responseBytes > 0);
+  assert.ok(typeof payload.queryCount === 'number');
+  assert.ok(typeof payload.d1RowsRead === 'number');
+  assert.ok(typeof payload.d1RowsWritten === 'number');
+  assert.ok(Array.isArray(payload.statements));
+  assert.ok(typeof payload.requestId === 'string' && payload.requestId.startsWith('ks2_req_'));
 
   server.close();
 });

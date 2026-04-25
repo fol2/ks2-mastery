@@ -31,6 +31,21 @@ const MAX_REQUEST_ID_LENGTH = 48;
 // rejected (match the existing "non-string ignored" pattern) and the
 // internal `signalsRejected` counter is incremented so misuse is visible
 // to tests and, if ever needed, ad-hoc logs — but NEVER to public JSON.
+//
+// Provenance:
+//   - `exceededCpu`, `d1Overloaded`, `d1DailyLimit`, `rateLimited`,
+//     `networkFailure`, `server5xx`, `bootstrapFallback`,
+//     `projectionFallback`, `derivedWriteSkipped`, `breakerTransition`
+//     landed via U3 round 1 P0 #01.
+//   - `redactionFailure`, `staleWrite`, `idempotencyReuse` absorbed from
+//     PR #207's `CAPACITY_FAILURE_CATEGORIES` closed enum during the
+//     Option B merge (2026-04-26). Each captures a dimension the HTTP
+//     status cannot: `redactionFailure` is a silent-fail mode (no status
+//     change), `staleWrite` is distinct from arbitrary 409s, and
+//     `idempotencyReuse` is a 200-OK replay. Tokens that would duplicate
+//     HTTP status (`authFailure` → 401/403, `badRequest` → 400,
+//     `notFound` → 404, `backendUnavailable` → 503) were deliberately
+//     NOT absorbed because they are already observable via `status`.
 const SIGNAL_ALLOWED_TOKENS = new Set([
   'exceededCpu',
   'd1Overloaded',
@@ -42,6 +57,9 @@ const SIGNAL_ALLOWED_TOKENS = new Set([
   'projectionFallback',
   'derivedWriteSkipped',
   'breakerTransition',
+  'redactionFailure',
+  'staleWrite',
+  'idempotencyReuse',
 ]);
 
 // U3 round 1 (P1 #05): closed allowlist of `bootstrapCapacity` keys that

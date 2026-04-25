@@ -101,6 +101,42 @@ export const WORD_BANK_GUARDIAN_FILTER_IDS = Object.freeze([
 export const WORD_BANK_GUARDIAN_FILTER_ID_SET = new Set(WORD_BANK_GUARDIAN_FILTER_IDS);
 export const WORD_BANK_YEAR_FILTER_IDS = new Set(['all', 'y3-4', 'y5-6', 'extra']);
 
+/* U5: Word Bank Guardian chip copy polish (R10).
+ *
+ * The chip-label map lives in the view-model (not the JSX scene) so there is
+ * a single source of truth for display text; the scene imports from here.
+ * Labels are deliberately grounded and child-specific — no "Great work!"
+ * slop, no zero-celebration — and because each chip button's visible label
+ * span doubles as its accessible name (no explicit aria-label on the chip
+ * button), renaming the label here automatically updates the screen-reader
+ * text too. The hint map mirrors the chip IDs so an accidental label/hint
+ * divergence fails the parity tests.
+ *
+ * Previous copy (pre-U5, kept in comments for historical reference):
+ *   guardianDue     → 'Guardian due'
+ *   wobbling        → 'Wobbling'
+ *   renewedRecently → 'Renewed (7d)'
+ *   neverRenewed    → 'Untouched'
+ *
+ * New copy (post-U5, ships on R10):
+ *   guardianDue     → 'Due for check'
+ *   wobbling        → 'Wobbling words'
+ *   renewedRecently → 'Guarded this week'
+ *   neverRenewed    → 'Not guarded yet'
+ */
+export const WORD_BANK_GUARDIAN_CHIP_LABELS = Object.freeze({
+  guardianDue: 'Due for check',
+  wobbling: 'Wobbling words',
+  renewedRecently: 'Guarded this week',
+  neverRenewed: 'Not guarded yet',
+});
+export const WORD_BANK_GUARDIAN_FILTER_HINTS = Object.freeze({
+  guardianDue: 'Secure words the Vault wants you to recheck today.',
+  wobbling: 'Secure words that slipped last time — one more pass clears them.',
+  renewedRecently: 'Secure words you renewed in the last seven days.',
+  neverRenewed: 'Secure words the Guardian has not inspected yet — nothing is wrong, just untouched.',
+});
+
 // How many days after lastReviewedDay still counts as "renewed recently" for
 // the Word Bank filter. Seven days mirrors the shortest Guardian interval
 // (reviewLevel 1 = 7 days) — anything inside that window is still fresh.
@@ -322,6 +358,14 @@ export function wordBankFilterMatchesStatus(filter, status, options = {}) {
   }
 
   if (filter === 'wobbling') {
+    // U5 / R10 tightening: wobbling must imply secure. A stage < 4 word that
+    // still carries a `wobbling: true` flag (from a pre-hardening bug, or a
+    // rehydrated legacy record) is no longer in the Vault — it should show
+    // under the legacy `due` / `trouble` / `learning` chips, not here. The
+    // guard keeps the wobbling count honest: it equals exactly the
+    // secure + wobbling intersection, matching the mega-never-revoked
+    // invariant proved by U8b.
+    if (status !== 'secure') return false;
     return Boolean(hasGuardian && guardian.wobbling === true);
   }
 
@@ -654,6 +698,39 @@ export function guardianSummaryCards({ summary, nextGuardianDueDay, todayDay }) 
       sub: nextCheckSub,
     },
   ];
+}
+
+/**
+ * Canonical label for the Guardian-origin summary "Practice wobbling words"
+ * button (U3). Lives in the view-model so the scene, telemetry, and future
+ * automated-tour copy all read the same string. Every deviation weakens the
+ * identity separation between Guardian's single-attempt contract and the
+ * optional practice-only drill — see the plan's Key Technical Decisions entry
+ * on the practice-button identity trade-off.
+ *
+ * @returns {string} The exact button label. Always call this helper rather
+ *   than hard-coding the string, so a future rename (e.g. for i18n) stays a
+ *   one-line change.
+ */
+export function guardianPracticeActionLabel() {
+  return 'Practice wobbling words';
+}
+
+/**
+ * Canonical help-text copy rendered below the Practice button on a Guardian
+ * summary (U3). Holds the Mega-never-revoked invariant ("schedule will not
+ * change") + the Guardian identity guardrail ("Official recovery check
+ * returns tomorrow"). Same single-source-of-truth rationale as
+ * `guardianPracticeActionLabel()` — telemetry copy, scene copy, and test
+ * fixtures all read this string.
+ *
+ * @returns {string} The exact help copy. Treat as append-only for phrasing
+ *   tweaks; do not drop the "schedule will not change" or "tomorrow" clauses
+ *   — they carry product intent that the separation between practice + real
+ *   Guardian rounds depends on.
+ */
+export function guardianSummaryCopy() {
+  return 'Optional practice. Mega and Guardian schedule will not change. Official recovery check returns tomorrow.';
 }
 
 export function summaryHeadline(summary) {

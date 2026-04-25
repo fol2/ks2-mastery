@@ -3,11 +3,22 @@ import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { promisify } from 'node:util';
 
+import {
+  CACHE_SPLIT_RULES,
+  assertCacheSplitRules,
+  parseHeadersBlocks,
+} from '../scripts/lib/headers-drift.mjs';
+
 const execFileAsync = promisify(execFile);
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const REPO_ROOT = path.resolve(__dirname, '..');
 
 test('client bundle audit fails on forbidden engine, content, and local-mode tokens', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
@@ -507,6 +518,270 @@ test('production bundle audit fails on deployed Punctuation context-pack source 
       assert.match(error.stderr, /Direct URL should be denied with a 4xx response, got 200: \/shared\/punctuation\/context-packs\.js/);
       assert.match(error.stderr, /forbidden deployed token: PUNCTUATION_CONTEXT_PACK_LIMITS/);
       assert.match(error.stderr, /forbidden deployed token: normalisePunctuationContextPack/);
+      return true;
+    });
+  } finally {
+    server.closeAllConnections?.();
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+  }
+});
+
+// ---------------------------------------------------------------------------
+// U8 (sys-hardening p1): cache-split contract coverage.
+// Parser-level assertions against the checked-in `_headers` confirm every
+// path group lands the expected Cache-Control value; a runtime scenario
+// drives `scripts/production-bundle-audit.mjs` against a stub origin that
+// advertises a bad manifest cache policy to prove the new HEAD check fails.
+// ---------------------------------------------------------------------------
+
+function normaliseCacheControl(value) {
+  return String(value || '').replace(/\s+/gu, ' ').replace(/,\s*/gu, ', ').trim();
+}
+
+test('_headers carries the U8 cache-split rule set for every path group', async () => {
+  const content = await readFile(path.join(REPO_ROOT, '_headers'), 'utf8');
+  // The pure contract must not throw on the checked-in _headers.
+  assert.doesNotThrow(() => assertCacheSplitRules(content));
+
+  // Parser-level readback: every exported rule must resolve to a path block
+  // whose final Cache-Control line matches the expected value. This proves
+  // the rule set is grounded in the file rather than just an internal echo.
+  const blocks = parseHeadersBlocks(content);
+  const byPath = new Map(blocks.map((block) => [block.path, block]));
+  for (const rule of CACHE_SPLIT_RULES) {
+    const block = byPath.get(rule.path);
+    assert.ok(block, `_headers missing block for ${rule.path}`);
+    const cacheLines = block.body.match(/^\s*Cache-Control:\s*(.+)$/gmu) || [];
+    assert.ok(cacheLines.length > 0, `_headers block ${rule.path} missing Cache-Control line`);
+    const last = cacheLines[cacheLines.length - 1].replace(/^\s*Cache-Control:\s*/u, '').trim();
+    assert.equal(
+      normaliseCacheControl(last),
+      normaliseCacheControl(rule.cacheControl),
+      `_headers block ${rule.path} Cache-Control mismatch`,
+    );
+  }
+});
+
+test('assertCacheSplitRules rejects a drifted _headers per path group', async () => {
+  const content = await readFile(path.join(REPO_ROOT, '_headers'), 'utf8');
+
+  // Drift 1: manifest rule is flipped to immutable — must fail with a
+  // pointed message naming the path and the observed value.
+  const driftedManifest = content.replace(
+    /\/manifest\.webmanifest[\s\S]*?Cache-Control: public, max-age=3600/m,
+    (block) => block.replace('Cache-Control: public, max-age=3600', 'Cache-Control: public, max-age=31536000, immutable'),
+  );
+  assert.throws(
+    () => assertCacheSplitRules(driftedManifest),
+    /\/manifest\.webmanifest/,
+    'drifted manifest rule must fail the cache-split contract',
+  );
+
+  // Drift 2: bundle rule drops the `immutable` qualifier.
+  const driftedBundle = content.replace(
+    /(\/assets\/bundles\/\*[\s\S]*?Cache-Control: )public, max-age=31536000, immutable/,
+    '$1public, max-age=31536000',
+  );
+  assert.throws(
+    () => assertCacheSplitRules(driftedBundle),
+    /\/assets\/bundles\/\*/,
+    'drifted bundle rule must fail the cache-split contract',
+  );
+
+  // Drift 3: `/index.html` silently gains a cache — HTML must never cache.
+  // The `/index.html` group is a distinct, uniquely-named block at the end
+  // of the file; scoping the rewrite to its block avoids the ambiguity of
+  // the bare `/` group which is nested between `/manifest.webmanifest` and
+  // `/index.html` in the file.
+  const driftedIndex = content.replace(
+    /(\/index\.html[\s\S]*?Cache-Control: )no-store/,
+    '$1public, max-age=60',
+  );
+  assert.throws(
+    () => assertCacheSplitRules(driftedIndex),
+    /Cache-Control: public, max-age=60/,
+    'drifted /index.html rule must fail the cache-split contract',
+  );
+
+  // Drift 4: a group vanishes entirely (remove the `/favicon.ico` block).
+  // Use `\r?\n` so the test passes regardless of the host line-ending style.
+  const driftedMissing = content.replace(
+    /\/favicon\.ico[\s\S]*?Cache-Control: public, max-age=86400\r?\n/,
+    '',
+  );
+  assert.throws(
+    () => assertCacheSplitRules(driftedMissing),
+    /missing path group: \/favicon\.ico/,
+    'missing path group must fail the cache-split contract',
+  );
+
+  // Type guard: non-string input surfaces the contract's own error path.
+  assert.throws(
+    () => assertCacheSplitRules(null),
+    /headersContent must be a string/,
+  );
+});
+
+test('assertCacheSplitRules rejects duplicate path groups (adv-2)', () => {
+  const duplicateManifest = [
+    '/*',
+    '  X-Content-Type-Options: nosniff',
+    '  Cache-Control: no-store',
+    '',
+    '/manifest.webmanifest',
+    '  Cache-Control: public, max-age=3600',
+    '',
+    '/manifest.webmanifest',
+    '  Cache-Control: no-store',
+    '',
+    '/favicon.ico',
+    '  Cache-Control: public, max-age=86400',
+    '',
+    '/',
+    '  Cache-Control: no-store',
+    '',
+    '/index.html',
+    '  Cache-Control: no-store',
+    '',
+    '/assets/bundles/*',
+    '  Cache-Control: public, max-age=31536000, immutable',
+    '',
+    '/assets/app-icons/*',
+    '  Cache-Control: public, max-age=31536000, immutable',
+    '',
+    '/styles/*',
+    '  Cache-Control: public, max-age=31536000, immutable',
+    '',
+  ].join('\n');
+  assert.throws(
+    () => assertCacheSplitRules(duplicateManifest),
+    /duplicate path group: \/manifest\.webmanifest/,
+  );
+});
+
+test('assertCacheSplitRules rejects multiple Cache-Control lines in one block (adv-3)', () => {
+  const doubleCacheManifest = [
+    '/*',
+    '  X-Content-Type-Options: nosniff',
+    '  Cache-Control: no-store',
+    '',
+    '/manifest.webmanifest',
+    '  Cache-Control: public, max-age=3600',
+    '  Cache-Control: no-store',
+    '',
+    '/favicon.ico',
+    '  Cache-Control: public, max-age=86400',
+    '',
+    '/',
+    '  Cache-Control: no-store',
+    '',
+    '/index.html',
+    '  Cache-Control: no-store',
+    '',
+    '/assets/bundles/*',
+    '  Cache-Control: public, max-age=31536000, immutable',
+    '',
+    '/assets/app-icons/*',
+    '  Cache-Control: public, max-age=31536000, immutable',
+    '',
+    '/styles/*',
+    '  Cache-Control: public, max-age=31536000, immutable',
+    '',
+  ].join('\n');
+  assert.throws(
+    () => assertCacheSplitRules(doubleCacheManifest),
+    /has 2 Cache-Control lines; expected exactly one/,
+  );
+});
+
+test('parseHeadersBlocks segments a `_headers` file into path/body pairs', () => {
+  const sample = [
+    '/*',
+    '  X-Content-Type-Options: nosniff',
+    '  Cache-Control: no-store',
+    '',
+    '/favicon.ico',
+    '  Cache-Control: public, max-age=86400',
+  ].join('\n');
+  const blocks = parseHeadersBlocks(sample);
+  assert.equal(blocks.length, 2);
+  assert.equal(blocks[0].path, '/*');
+  assert.match(blocks[0].body, /X-Content-Type-Options: nosniff/);
+  assert.match(blocks[0].body, /Cache-Control: no-store/);
+  assert.equal(blocks[1].path, '/favicon.ico');
+  assert.match(blocks[1].body, /Cache-Control: public, max-age=86400/);
+});
+
+test('production bundle audit fails when live manifest Cache-Control drifts off 1-hour', async () => {
+  // Stand up a stub origin that serves a sane HTML index + app bundle +
+  // manifest, but advertises the *wrong* Cache-Control on the manifest
+  // (no-store instead of 1-hour). The cache-split HEAD check must flag it.
+  const server = createServer((request, response) => {
+    const url = request.url || '/';
+    if (url === '/' || url === '/index.html') {
+      response.writeHead(200, { 'content-type': 'text/html', 'cache-control': 'no-store' });
+      response.end('<!doctype html><script src="/assets/app.js"></script>');
+      return;
+    }
+    if (url === '/assets/app.js') {
+      response.writeHead(200, {
+        'content-type': 'application/javascript',
+        'cache-control': 'public, max-age=31536000, immutable',
+      });
+      response.end('console.log("ok");');
+      return;
+    }
+    if (url === '/src/bundles/app.bundle.js') {
+      response.writeHead(200, {
+        'content-type': 'application/javascript',
+        'cache-control': 'public, max-age=31536000, immutable',
+      });
+      response.end('console.log("ok");');
+      return;
+    }
+    if (url === '/assets/app-icons/favicon-32.png') {
+      response.writeHead(200, {
+        'content-type': 'image/png',
+        'cache-control': 'public, max-age=31536000, immutable',
+      });
+      response.end('');
+      return;
+    }
+    if (url === '/api/bootstrap') {
+      response.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+      response.end('{}');
+      return;
+    }
+    if (url === '/manifest.webmanifest') {
+      // Drift: manifest must advertise `public, max-age=3600` but this
+      // stub serves `no-store` — the HEAD check should fail loudly.
+      response.writeHead(200, { 'content-type': 'application/manifest+json', 'cache-control': 'no-store' });
+      response.end('{}');
+      return;
+    }
+    response.writeHead(404, { 'content-type': 'text/plain' });
+    response.end('not found');
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(
+        error.stderr,
+        /Cache-split HEAD check on web app manifest.*expected Cache-Control: public, max-age=3600, got: no-store/,
+        'audit must name the drifted path and expected value',
+      );
       return true;
     });
   } finally {

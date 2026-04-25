@@ -164,7 +164,7 @@ test('browser migration smoke covers the React app root, Grammar completeness co
     assert.match(output, /Mini Test/);
     assert.match(output, /Smart Practice/);
     assert.match(output, /Timed test/);
-    assert.match(output, /Mini-set review/);
+    assert.match(output, /Mini Test results/i);
     assert.match(output, /Faded guidance/);
     assert.match(output, /Non-scored/);
     assert.match(output, /Read aloud/);

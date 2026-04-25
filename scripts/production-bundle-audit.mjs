@@ -206,6 +206,12 @@ async function auditProduction(origin) {
     'x-frame-options',
     'cross-origin-opener-policy',
     'cross-origin-resource-policy',
+    // U7: Content-Security-Policy-Report-Only + the two reporting
+    // headers must reach every production response lane before we
+    // flip CSP to enforcing.
+    'content-security-policy-report-only',
+    'report-to',
+    'reporting-endpoints',
   ];
   let headerChecksPassed = 0;
   for (const check of SECURITY_HEADER_CHECKS) {
@@ -232,6 +238,29 @@ async function auditProduction(origin) {
         );
         continue;
       }
+      // U7: CSP Report-Only must carry the substituted theme-script
+      // hash and the strict-dynamic / report-uri directives. A silent
+      // regression (lost hash, dropped report-uri) would otherwise
+      // ship to production.
+      const cspValue = response.headers.get('content-security-policy-report-only') || '';
+      if (!/sha256-[A-Za-z0-9+/]+=*/.test(cspValue)) {
+        failures.push(
+          `Security header HEAD check on ${check.label}: CSP-Report-Only is missing a sha256-<base64> hash (got: ${cspValue.slice(0, 120) || 'absent'}).`,
+        );
+        continue;
+      }
+      if (!/'strict-dynamic'/.test(cspValue)) {
+        failures.push(
+          `Security header HEAD check on ${check.label}: CSP-Report-Only is missing 'strict-dynamic'.`,
+        );
+        continue;
+      }
+      if (!/report-uri \/api\/security\/csp-report/.test(cspValue)) {
+        failures.push(
+          `Security header HEAD check on ${check.label}: CSP-Report-Only is missing report-uri /api/security/csp-report.`,
+        );
+        continue;
+      }
       if (check.expectClearSiteData) {
         const clearSiteData = response.headers.get('clear-site-data') || '';
         const missingMarkers = ['"cache"', '"cookies"', '"storage"']
@@ -249,6 +278,51 @@ async function auditProduction(origin) {
     }
   }
 
+  // U8 (sys-hardening p1): HEAD-check the cache-policy split on the live
+  // origin. Covers one representative per cache lane so a regression in
+  // `_headers` or the Worker wrapper surfaces immediately:
+  //   - `/` — HTML must never be cached (no-store).
+  //   - `/src/bundles/app.bundle.js` — Worker-wrapped hashed bundle (immutable).
+  //   - `/assets/app-icons/favicon-32.png` — ASSETS-direct hashed asset (immutable).
+  //   - `/manifest.webmanifest` — intentional 1-hour short cache (neither
+  //     immutable nor no-store).
+  //
+  // `/api/bootstrap` intentionally NOT probed: HEAD requests fall through
+  // to the json() 404-fallback which hardcodes no-store, so the probe
+  // would always pass against the fallback path rather than the real GET
+  // handler. `json()`'s hardcoded cache-control already makes the GET
+  // endpoint no-store by construction (adv-1).
+  const CACHE_SPLIT_CHECKS = [
+    { path: '/', label: 'root index', expected: 'no-store' },
+    { path: '/src/bundles/app.bundle.js', label: 'Worker-wrapped bundle', expected: 'public, max-age=31536000, immutable' },
+    { path: '/assets/app-icons/favicon-32.png', label: 'ASSETS app icon', expected: 'public, max-age=31536000, immutable' },
+    { path: '/manifest.webmanifest', label: 'web app manifest', expected: 'public, max-age=3600' },
+  ];
+  let cacheChecksPassed = 0;
+  for (const check of CACHE_SPLIT_CHECKS) {
+    const target = new URL(check.path, base);
+    try {
+      const response = await fetch(target.href, { method: 'HEAD' });
+      if (!check.allowAnyStatus && (response.status < 200 || response.status >= 400)) {
+        failures.push(`Cache-split HEAD check failed (${response.status}): ${target.href}`);
+        continue;
+      }
+      const observed = (response.headers.get('cache-control') || '').trim();
+      // Normalise whitespace so a `public,max-age=...` variant does not
+      // false-fail against the canonical `public, max-age=...` form.
+      const normalise = (value) => value.replace(/\s+/gu, ' ').replace(/,\s*/gu, ', ').trim();
+      if (normalise(observed) !== normalise(check.expected)) {
+        failures.push(
+          `Cache-split HEAD check on ${check.label} (${target.href}) expected Cache-Control: ${check.expected}, got: ${observed || 'absent'}`,
+        );
+        continue;
+      }
+      cacheChecksPassed += 1;
+    } catch (error) {
+      failures.push(`Cache-split HEAD check errored on ${check.label}: ${error?.message || error}`);
+    }
+  }
+
   return {
     ok: failures.length === 0,
     failures,
@@ -259,6 +333,8 @@ async function auditProduction(origin) {
       matrixDemoChecked: demoChecked,
       securityHeaderChecksPassed: headerChecksPassed,
       securityHeaderChecksTotal: SECURITY_HEADER_CHECKS.length,
+      cacheSplitChecksPassed: cacheChecksPassed,
+      cacheSplitChecksTotal: CACHE_SPLIT_CHECKS.length,
     },
   };
 }
@@ -294,5 +370,6 @@ console.log(
   + `(${result.checked.scriptCount} bundle(s), `
   + `${result.checked.directPathCount} direct paths, `
   + `matrix demo check: ${result.checked.matrixDemoChecked ? 'ok' : 'skipped'}, `
-  + `security-header checks: ${result.checked.securityHeaderChecksPassed}/${result.checked.securityHeaderChecksTotal}).`
+  + `security-header checks: ${result.checked.securityHeaderChecksPassed}/${result.checked.securityHeaderChecksTotal}, `
+  + `cache-split checks: ${result.checked.cacheSplitChecksPassed}/${result.checked.cacheSplitChecksTotal}).`
 );

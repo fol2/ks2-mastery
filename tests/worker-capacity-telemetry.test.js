@@ -486,3 +486,64 @@ test('handler throwing still emits capacity.request log with status 500', async 
     DB.close();
   }
 });
+
+// absorbed from PR #207: sentinel-token redaction probe. Seeds the fixture
+// with learner-name and private-prompt sentinels, drives bootstrap +
+// parent-hub reads, and asserts those tokens never appear in any
+// [ks2-worker] capacity.request log line. Stronger than a header-only
+// poison check because it exercises fields that actually flow through
+// repositories.
+test('absorbed from PR #207 — sentinel tokens seeded into D1 never appear in capacity logs', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const learnerName = 'sentinel-learner-name-DO-NOT-LEAK';
+  const privatePrompt = 'private-prompt-sentinel-DO-NOT-LEAK';
+  DB.db.prepare(`
+    INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+    VALUES ('learner-a', ?, 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run(learnerName, NOW, NOW);
+  DB.db.prepare(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES ('adult-a', 'adult-a@example.test', 'Adult A', 'parent', 'learner-a', ?, ?, 0)
+  `).run(NOW, NOW);
+  DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES ('adult-a', 'learner-a', 'owner', 0, ?, ?)
+  `).run(NOW, NOW);
+  DB.db.prepare(`
+    INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
+    VALUES ('sentinel-event-1', 'learner-a', 'spelling', 'spelling', 'spelling.word-secured', ?, ?, 'adult-a')
+  `).run(JSON.stringify({
+    id: 'sentinel-event-1',
+    type: 'spelling.word-secured',
+    learnerId: 'learner-a',
+    privatePrompt,
+  }), NOW);
+
+  const app = createWorkerApp({ now: () => NOW });
+  const env = { DB, AUTH_MODE: 'development-stub', ENVIRONMENT: 'test' };
+  const captured = [];
+  const originalLog = console.log;
+  console.log = (...args) => { captured.push(args); };
+
+  try {
+    await app.fetch(new Request(`${BASE_URL}/api/bootstrap`, {
+      headers: { 'x-ks2-dev-account-id': 'adult-a' },
+    }), env, {});
+    await app.fetch(new Request(`${BASE_URL}/api/hubs/parent`, {
+      headers: { 'x-ks2-dev-account-id': 'adult-a' },
+    }), env, {});
+
+    const lines = captured
+      .filter(([prefix, payload]) => prefix === '[ks2-worker]' && typeof payload === 'string')
+      .map(([, payload]) => payload);
+    assert.ok(lines.length >= 2, `expected at least two capacity logs, got ${lines.length}`);
+    const joined = lines.join('\n');
+    assert.equal(joined.includes(privatePrompt), false, 'private prompt sentinel leaked into capacity logs.');
+    assert.equal(joined.includes(learnerName), false, 'learner name sentinel leaked into capacity logs.');
+    // Cookie values must never appear either.
+    assert.equal(/ks2_session=/i.test(joined), false, 'session cookie leaked into capacity logs.');
+  } finally {
+    console.log = originalLog;
+    DB.close();
+  }
+});

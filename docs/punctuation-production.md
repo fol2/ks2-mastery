@@ -4,7 +4,7 @@ Punctuation is now a production subject slice for KS2 Mastery, built from the le
 
 The release deliberately keeps the learner engine first. Monsters and Codex rewards are projections from secured learning evidence; they are not the primary game loop and they do not drive scoring.
 
-## First Release Scope
+## Current Release Scope
 
 Release id:
 
@@ -229,7 +229,7 @@ Worker-first asset routing also denies `/shared/*`, `/worker/*`, `/tests/*`, `/d
 
 The Punctuation release gate includes:
 
-- manifest validation for the 14-skill map, first-release scope, readiness rows, and stable reward keys
+- manifest validation for the 14-skill map, current release scope, readiness rows, and stable reward keys
 - marking tests for exact answers, Speech variants, and misconception tags
 - scheduler and service tests for spaced secure thresholds and transition errors
 - Worker command tests for start, submit, continue, stale transitions, redaction, and idempotent reward projection
@@ -289,3 +289,28 @@ The baseline currently classifies legacy behaviour as:
 - Rejected: the legacy single-file production route, localStorage source of truth, browser-owned marking, browser-stored AI provider keys, browser-direct provider calls, unconstrained free-writing auto-scoring, and AI-authored score-bearing items or marking decisions.
 
 This baseline is deliberately a guardrail, not a demand to copy the legacy architecture. New parity slices should update the fixture status only when the replacement Worker-owned implementation, redacted read model, tests, and release gate exist.
+
+## Operational Telemetry (aspirational)
+
+Phase 2 shipped a set of structured warning codes emitted via the existing `logMutation('warn', …)` path. The codes below are stable so a future observability work item can consume them. The repo does not currently have a dashboard or alerting pipeline that ingests these codes — the thresholds quoted here are **aspirational**, not enforced. Until the pipeline lands, operators reviewing Worker logs after a release should watch for:
+
+- `punctuation-redaction-unknown-key-strip` — expected zero. Any non-zero count indicates an upstream field addition that did not update the allowlist. Investigate immediately.
+- `punctuation-normaliser-malformed-key` — expected low baseline. Sustained activity indicates stale or malformed stored mastery keys that the deferred repair script should address.
+- `punctuation-command-stale-response-drop` — expected low. Spikes indicate client/server revision drift or flaky network.
+- `punctuation-command-dedupe-reject` — expected non-zero for real double-submit cases. Spikes indicate UI regression on the disable state machine.
+- "Stuck-at-1" learner count — a diagnostic query on `child_game_state.punctuation.quoral.publishedTotal < 14` run manually from the D1 console during release week. Expected non-zero initially, trending down as learners practise. A non-draining tail should escalate to the deferred repair script.
+
+These codes and queries are not currently wired to a consumer; the acceptance criteria for graduating them from aspirational to enforced are listed below under "Phase 4 follow-up candidates".
+
+## Phase 4 follow-up candidates
+
+Items deliberately deferred from earlier phases and scheduled for a future Phase 4 (or a dedicated observability work item):
+
+- **Wire the Operational Telemetry warning codes to a consumer.** Concrete acceptance criteria for each code:
+  - Query surface: Cloudflare Workers Analytics Engine, Logpush to an ingesting store, or a Grafana / Loki query pane fed by the Worker log stream. Any one of these is acceptable — the choice is a platform decision, not a code decision.
+  - Metric names (stable; match the warning code verbatim to avoid rename drift): `punctuation-redaction-unknown-key-strip`, `punctuation-normaliser-malformed-key`, `punctuation-command-stale-response-drop`, `punctuation-command-dedupe-reject`, `punctuation-quoral-stuck-at-1`.
+  - Thresholds: `*-unknown-key-strip` must alert on any non-zero 24h window; `*-malformed-key` must alert on > 10 / 24h sustained for 3 consecutive days; `*-stale-response-drop` must alert on > 50 / 24h; `*-dedupe-reject` must alert on a 7-day-over-7-day increase of > 3x; `*-stuck-at-1` must alert only if the count fails to decrease week-over-week for two consecutive weeks post-release.
+  - Consumer: an on-call operations rotation (TBD — likely the same consumer as the Admin Ops Console alert feed once that exists). The default is that this lands as a companion PR alongside whichever phase adds the dashboards.
+- **AI context-pack learner surface.** Phase 2 deferred this deliberately (`safeContextPackSummary` allowlist is already fail-closed). Phase 3 U8 strips it from the default child read model. A Phase 4 decision is required: either productise it as a Parent / Admin-only "Why this question?" surface, or retire the Worker plumbing entirely. The `punctuation-context-pack` client action remains in place as a stub so either path is reachable without a command-surface rewrite.
+
+These items are tracked here (rather than in a GitHub issue) so the doc stays the single source of truth for Punctuation production concerns. When a Phase 4 work item starts, copy the relevant bullet into a tracking issue and link it back to this section.

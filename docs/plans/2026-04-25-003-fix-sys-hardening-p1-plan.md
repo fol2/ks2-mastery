@@ -9,6 +9,23 @@ deepened: 2026-04-25
 
 # fix: System Hardening Pass 1
 
+> **Post-merge note (2026-04-26, Option B merge).** U4 capacity telemetry
+> originally landed via PR #207 with a `[ks2-capacity]` log prefix,
+> `worker/src/capacity/telemetry.js` module, `createCapacityCollector`
+> factory, `wrapDatabaseForTelemetry` D1 proxy, `attachCollectorToEnv`
+> env-attach pattern, and a hard-coded 0.1 sample rate. PR #201 (Option
+> B decision) consolidated that implementation into the 9-round-hardened
+> architecture in `worker/src/logger.js::CapacityCollector` +
+> `worker/src/d1.js::withCapacityCollector` + the `meta.capacity` response
+> surface, emitting `[ks2-worker] {event: "capacity.request", ...}`
+> structured logs under the `CAPACITY_LOG_SAMPLE_RATE` env var with a
+> closed `SIGNAL_ALLOWED_TOKENS` allowlist and constructor injection of
+> the collector through `createWorkerRepository({env, now, capacity})`.
+> References to `[ks2-capacity]`, `worker/src/capacity/telemetry.js`,
+> `createCapacityCollector`, and the hard-coded 0.1 sampler below are
+> retained as the original plan text; the final landed implementation
+> lives under U3 rather than U4.
+
 ## Overview
 
 A stabilisation pass for KS2 Mastery: no new product features, no new subjects, no new reward mechanics. The goal is fewer crashes, fewer visual glitches, bounded and verified production behaviour, safer response headers, faster reloads for returning users, clearer failure states, and regression locks on the bugs fixed along the way.

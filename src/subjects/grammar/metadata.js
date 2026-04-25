@@ -556,8 +556,11 @@ export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
   // that the U1 dashboard can dispatch `grammar-open-concept-bank` /
   // `grammar-open-transfer` before U2 + U6b land. The downstream scene files
   // ship in later units; today the surface renders a lightweight stub for
-  // either phase so the state transition is safe.
-  const phase = ['dashboard', 'bank', 'transfer', 'session', 'feedback', 'summary'].includes(raw.phase)
+  // either phase so the state transition is safe. Phase 3 U5 adds
+  // `'analytics'` so the summary's `Grown-up view` button can flip to the
+  // adult analytics surface (previously mounted unconditionally below the
+  // dashboard `<details>`).
+  const phase = ['dashboard', 'bank', 'transfer', 'session', 'feedback', 'summary', 'analytics'].includes(raw.phase)
     ? raw.phase
     : 'dashboard';
   const rawAnalytics = isPlainObject(raw.analytics) ? raw.analytics : {};

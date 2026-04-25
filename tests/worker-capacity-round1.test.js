@@ -102,10 +102,49 @@ test('P0#01 addSignal accepts every documented allowlist token', () => {
     'projectionFallback',
     'derivedWriteSkipped',
     'breakerTransition',
+    // absorbed from PR #207 during Option B merge (2026-04-26).
+    'redactionFailure',
+    'staleWrite',
+    'idempotencyReuse',
   ];
   for (const token of allowed) collector.addSignal(token);
   assert.equal(collector.signals.length, allowed.length);
   assert.equal(collector.signalsRejected, 0);
+});
+
+// absorbed from PR #207: regression lock for the failure-taxonomy tokens
+// that joined the allowlist during the Option B merge. Each surfaces a
+// dimension the HTTP status cannot:
+//   - redactionFailure: silent-fail mode (no status change).
+//   - staleWrite:       distinct from arbitrary 409s.
+//   - idempotencyReuse: a 200-OK replay.
+// Tokens deliberately NOT absorbed (authFailure, badRequest, notFound,
+// backendUnavailable) would duplicate HTTP status and are tested below as
+// rejected — they must not creep into the allowlist without justification.
+test('absorbed from PR #207 — redactionFailure/staleWrite/idempotencyReuse are allowlisted', () => {
+  const collector = new CapacityCollector({ requestId: VALID_REQUEST_ID });
+  for (const token of ['redactionFailure', 'staleWrite', 'idempotencyReuse']) {
+    collector.addSignal(token);
+  }
+  assert.deepEqual(
+    collector.signals,
+    ['redactionFailure', 'staleWrite', 'idempotencyReuse'],
+    'newly absorbed failure-taxonomy tokens must survive addSignal.',
+  );
+  assert.equal(collector.signalsRejected, 0);
+});
+
+test('absorbed from PR #207 — status-duplicating tokens stay rejected', () => {
+  const collector = new CapacityCollector({ requestId: VALID_REQUEST_ID });
+  for (const token of ['authFailure', 'badRequest', 'notFound', 'backendUnavailable']) {
+    collector.addSignal(token);
+  }
+  assert.deepEqual(
+    collector.signals,
+    [],
+    'tokens that would duplicate HTTP status must remain outside the allowlist.',
+  );
+  assert.equal(collector.signalsRejected, 4);
 });
 
 //

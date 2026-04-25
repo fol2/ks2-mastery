@@ -187,7 +187,163 @@ Do not claim classroom or school readiness from Free-tier limits alone.
 
 The endpoint is manual-refresh only (no polling). Current KS2 scale keeps per-refresh cost well under the D1 Free-tier 10ms CPU budget. Re-evaluate if `event_log` exceeds ~500K rows — at that point consider a pre-aggregated `admin_kpi_metrics`-style counter for the windowed totals in place of live COUNTs.
 
-**Telemetry (follow-up):** `capacity.admin_ops_kpi` timing + rows-read telemetry is not yet wired; adding it is a deferred operational hardening task.
+`[ks2-worker] {event: "capacity.request", ...}` telemetry (U3) covers
+`/api/admin/ops/kpi` alongside every other Worker route; the admin
+console KPI endpoint inherits the generic emission path and does not
+require bespoke wiring.
+
+## `[ks2-worker] event: capacity.request` structured telemetry (U3)
+
+Every Worker response now emits (subject to the emission-level sampler)
+a single `[ks2-worker]` JSON log line carrying bounded metadata for
+capacity attribution. The line shares the `[ks2-worker]` prefix with
+`logMutation()` in `worker/src/repository.js` so existing log
+aggregators treat every Worker-emitted event line identically — the
+discriminator is the `event` field on the JSON payload.
+
+### Shape
+
+```json
+[ks2-worker] {
+  "event": "capacity.request",
+  "requestId": "ks2_req_<uuid-v4>",
+  "endpoint": "/api/bootstrap",
+  "method": "GET",
+  "status": 200,
+  "phase": null,
+  "queryCount": 3,
+  "d1RowsRead": 42,
+  "d1RowsWritten": 0,
+  "d1DurationMs": 4.1,
+  "wallMs": 123.4,
+  "responseBytes": 12345,
+  "statements": [ { "name": "selectLearners", "rowsRead": 2, "rowsWritten": null, "durationMs": 1.2 } ],
+  "statementsTruncated": false,
+  "bootstrapCapacity": { "version": 12, "mode": "rehydrated" },
+  "projectionFallback": false,
+  "derivedWriteSkipped": false,
+  "bootstrapMode": "rehydrated",
+  "signals": [],
+  "at": "2026-04-25T23:40:00.000Z"
+}
+```
+
+The `meta.capacity` surface returned to clients on
+`/api/bootstrap`, `/api/subjects/:subject/command`, `/api/hubs/parent/*`,
+and `/api/classroom/*` is a narrower closed allowlist (`requestId`,
+`queryCount`, `d1RowsRead`, `d1RowsWritten`, `wallMs`, `responseBytes`,
+plus the optional bootstrap/projection/derived-write/mode fields and
+`signals`). Per-statement breakdown is NEVER returned to clients.
+
+### Redaction contract
+
+Only bounded metadata is recorded: request ID, endpoint, method, HTTP
+status, phase (`pre-route` on unauthenticated path), per-statement
+short names (derived from SQL keyword only, never the full query text),
+per-request D1 query count, `rows_read` / `rows_written`,
+`bootstrapCapacity` shape (closed allowlist of keys), and the
+`signals[]` closed-allowlist set. The telemetry path NEVER records any
+of:
+
+- answer-bearing payloads or private spelling prompts;
+- child-identifying content (learner names, emails, UUID-embedded
+  strings);
+- session cookie values (`ks2_session=...`);
+- any key from `tests/helpers/forbidden-keys.mjs::FORBIDDEN_KEYS_EVERYWHERE`.
+
+`tests/worker-capacity-telemetry.test.js` exercises a full bootstrap +
+parent-hub read with sentinel tokens seeded into the fixture data and
+asserts that every emitted `[ks2-worker] event: capacity.request`
+line is free of those sentinels, forbidden keys, and cookie values.
+
+### Signals closed allowlist
+
+Signals are short-lived, bounded tokens appended to `meta.capacity.signals[]`
+and the structured log. Tokens outside the closed allowlist are silently
+rejected and counted via the internal `signalsRejected` counter — raw
+error messages, learner names, and any free-form string CANNOT reach the
+public surface.
+
+| Token                  | Dimension captured                                                   |
+| ---------------------- | -------------------------------------------------------------------- |
+| `exceededCpu`          | HTTP 1102 / Worker CPU budget exhaustion                             |
+| `d1Overloaded`         | D1 overload (transient backend pressure)                             |
+| `d1DailyLimit`         | D1 daily quota exhaustion                                            |
+| `rateLimited`          | Rate-limit bucket trip                                               |
+| `networkFailure`       | Transport failure between Worker and dependency                      |
+| `server5xx`            | Uncategorised 5xx                                                    |
+| `bootstrapFallback`    | Bootstrap took the fallback path                                     |
+| `projectionFallback`   | Projection read fell back from public read-model to live query       |
+| `derivedWriteSkipped`  | Derived-write path skipped a projection update                       |
+| `breakerTransition`    | Circuit-breaker state change                                         |
+| `redactionFailure`     | Redaction pipeline emitted a silent-fail (no status change)          |
+| `staleWrite`           | Mutation CAS rejected a stale write (distinct from arbitrary 409)    |
+| `idempotencyReuse`     | 200-OK replay served from the request-receipt cache                  |
+
+HTTP status already carries `authFailure` (401/403), `badRequest` (400),
+`notFound` (404), and `backendUnavailable` (503); those dimensions are
+NOT duplicated as signal tokens.
+
+### Sampling
+
+- `CAPACITY_LOG_SAMPLE_RATE` env var (float in `[0, 1]`, default 1.0)
+  controls the happy-path emission rate. Local and preview keep the
+  default 1.0 so every request is observable during development;
+  production sets `CAPACITY_LOG_SAMPLE_RATE = 0.1` so 10 % of happy-path
+  rows emit.
+- Failure rows with `status >= 500` **bypass** the sampler and emit at
+  100 %.
+- Pre-route 401s (the `phase: "pre-route"` marker — credential-stuffing
+  bursts before any route handler ran) also **bypass** the sampler and
+  emit at 100 %, so auth-storm observability survives a low sample rate
+  in production.
+- `head_sampling_rate: 1` in `wrangler.jsonc` is a
+  Cloudflare-observability-level knob that remains enabled and is
+  orthogonal to the emission-level sampler — the two filters compose.
+- Scaling the emission rate up from 0.1 happens only after a week of
+  production data shows quota headroom. Production first, tuning
+  second.
+
+### D1 row metrics
+
+`requireDatabaseWithCapacity(env, capacity)` returns a
+telemetry-aware wrapper that routes `.prepare().bind().first/run/all()`
+terminal calls through `withCapacityCollector(db, collector)` in
+`worker/src/d1.js`. The proxy reads `meta.rows_read` /
+`meta.rows_written` when D1 surfaces them and accumulates per-request
+counts on the collector. Constructor injection rather than env-attach:
+the collector is threaded explicitly through `createWorkerRepository({
+env, now, capacity })`, the auth boundary
+(`createSessionAuthBoundary({ env, capacity })`), the demo protect
+helpers, and the ops-error-event rate-limit query. Threading is
+explicit so cross-request collector leakage is architecturally
+impossible.
+
+For tests, `tests/helpers/sqlite-d1.js` simulates `meta.rows_read` /
+`meta.rows_written` on the local SQLite double so the telemetry
+contract can be asserted without a live D1 binding. The local helper
+is **shape-only** — the absolute numbers are approximations; production
+D1 remains the source of truth for performance claims.
+
+### Tailing telemetry in production
+
+```sh
+npm run ops:tail -- --search '"event":"capacity.request"'
+```
+
+Correlate a failing `npm run smoke:production:bootstrap --output ...`
+run with the Worker log by grepping for the `requestId`. The probe
+also echoes its `x-ks2-request-id` in `--output` mode so the same
+identifier lands in the structured log, the response body (`meta.capacity.requestId`),
+and the evidence snapshot.
+
+### Emission failure handling
+
+JSON serialisation of the structured log is wrapped in a try/catch so
+a cyclic or exotic object in the collector state cannot crash the user
+response. On failure the Worker falls back to a non-stringified
+`console.log(prefix, payload)` emission so the line is still
+discoverable in Workers tail; the user response is unaffected.
 
 ## Evidence Verification Escape Hatches
 
@@ -237,5 +393,88 @@ Path-specific cache expectations:
 
 - `/src/bundles/app.bundle.js` — `Cache-Control: public, max-age=31536000, immutable` (Worker
   wrapper explicitly overrides the `no-store` that ASSETS applies from the `_headers` `/*` group).
-- `/manifest.webmanifest` — `Cache-Control: public, max-age=86400`.
+- `/manifest.webmanifest` — `Cache-Control: public, max-age=3600` (1-hour cache updated in U8
+  so app-manifest churn is visible to installed PWAs within the hour).
+- `/favicon.ico` — `Cache-Control: public, max-age=86400`.
 - `/` and `/index.html` — `Cache-Control: no-store`.
+
+### Cache-split post-deploy check (U8)
+
+`scripts/production-bundle-audit.mjs` also issues HEAD checks against the cache lanes after
+U8; run `npm run audit:production -- --url https://ks2.eugnel.uk` to verify the split is live
+before closing a deploy ticket. The script fails with a pointed message if any path returns
+an unexpected `Cache-Control` value (for example, a rewrite that flips `/manifest.webmanifest`
+to `no-store` or drops `immutable` from the hashed-bundle rule).
+
+Manual spot-check (use when the audit script is unavailable):
+
+```bash
+curl -sI https://ks2.eugnel.uk/                                  | grep -i cache-control   # expect: no-store
+curl -sI https://ks2.eugnel.uk/src/bundles/app.bundle.js         | grep -i cache-control   # expect: public, max-age=31536000, immutable
+curl -sI https://ks2.eugnel.uk/assets/app-icons/favicon-32.png   | grep -i cache-control   # expect: public, max-age=31536000, immutable
+curl -sI https://ks2.eugnel.uk/api/bootstrap                     | grep -i cache-control   # expect: no-store
+curl -sI https://ks2.eugnel.uk/manifest.webmanifest              | grep -i cache-control   # expect: public, max-age=3600
+```
+
+## CSP Report-Only rollout
+
+U7 ships a strict Content-Security-Policy as `Content-Security-Policy-Report-Only` so the
+browser reports violations without blocking the page. Enforcement (flipping to
+`Content-Security-Policy`) is a follow-up PR that lands only after a >= 7-day observation
+window with zero blocking violations.
+
+Start date: record the production deploy SHA below on the day the U7 PR merges. The
+7-day observation window is measured from that date.
+
+| Rollout milestone | Date | Commit SHA | Notes |
+| --- | --- | --- | --- |
+| U7 Report-Only shipped | TBD on merge | TBD on merge | Baseline violations expected from Google Fonts, Turnstile. |
+| Midpoint check-in (day 3-4) | TBD | TBD | Tail recent violations; triage any unexpected origins. |
+| Enforcement decision gate (day 7+) | TBD | TBD | Zero unexpected origins => open enforcement-flip PR. |
+
+### Monitoring
+
+Tail CSP violations with Workers observability:
+
+```sh
+npm run ops:tail -- --search "[ks2-csp-report]"
+```
+
+Each log line is a structured JSON object carrying the sanitised `blockedUri`,
+`documentUri`, `sourceFile`, `violatedDirective`, `lineNumber`, and `statusCode`. Fields
+are stripped of newline/control characters before emission to prevent log-line spoofing
+(security F-02).
+
+During the observation window, expect violations from:
+
+- Google Fonts connect/style (allowed in the policy but browsers sometimes double-fire).
+- Turnstile iframe (only if a future sign-in page loads the widget before the policy caches).
+- Browser extensions injecting inline scripts or styles on the page.
+
+### When to flip to enforcing
+
+Open the enforcement-flip PR only when all of the following are true:
+
+1. 7+ days have elapsed since U7 merge, with production traffic throughout.
+2. No blocking violations from origins the policy does not already allowlist.
+3. `[ks2-csp-report]` volume is steady (no new directives spiking after app changes).
+4. `scripts/production-bundle-audit.mjs` HEAD check on `/` still shows
+   `Content-Security-Policy-Report-Only` with the current inline-script hash.
+
+The flip PR swaps the header name from `Content-Security-Policy-Report-Only` to
+`Content-Security-Policy` in `worker/src/security-headers.js` and `_headers`, and bumps
+the corresponding tests. No policy directives change between the two passes.
+
+### CSP inline-script hash refresh
+
+The inline theme-bootstrap script at `index.html:25-34` is pinned to the CSP via its
+SHA-256 hash. Any byte-level change to the script (including whitespace) invalidates the
+deployed hash; the build step (`scripts/build-public.mjs`) recomputes the hash on every
+build so a change to the script body automatically propagates to
+`worker/src/generated-csp-hash.js` and `dist/public/_headers`.
+
+To inspect the current hash without deploying:
+
+```sh
+node ./scripts/compute-inline-script-hash.mjs
+```
