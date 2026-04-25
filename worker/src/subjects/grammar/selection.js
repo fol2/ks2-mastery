@@ -186,13 +186,6 @@ function weightFor(template, context) {
   return Math.max(0.05, weight);
 }
 
-function candidatePool(mode, focusConceptId) {
-  const modeCandidates = GRAMMAR_TEMPLATE_METADATA.filter((template) => templateFitsMode(template, mode));
-  if (modeCandidates.length === 0) return GRAMMAR_TEMPLATE_METADATA.slice();
-  if (!focusConceptId) return modeCandidates;
-  return modeCandidates;
-}
-
 // Focus-aware pool rebuilder: when a focus concept is set, the focused subset
 // is returned, but if the focused subset is smaller than the requested queue
 // size we broaden to mode candidates so the queue still reaches the target
@@ -325,7 +318,10 @@ export function buildGrammarMiniPack({
     // the distinct-template set whenever it exhausts the pool.
     if (usedTemplateIds.size >= pool.length) usedTemplateIds.clear();
     const distinctAvailable = pool.filter((t) => !usedTemplateIds.has(t.id));
-    // Question-type quota: cap same type at ceil(size/3) unless pool forces it
+    // Question-type quota: cap same type at ceil(size/3) unless pool forces it.
+    // Contract: mini-packs assume size >= 6. For sizes < 6 the floor of 2
+    // matches or exceeds the pack size so the quota is effectively inert —
+    // that is the intended degenerate behaviour for very small packs.
     const qtCap = Math.max(2, Math.ceil(safeSize / 3));
     const quotaFiltered = distinctAvailable.filter((t) => (usedQuestionTypes.get(t.questionType) || 0) < qtCap);
 
