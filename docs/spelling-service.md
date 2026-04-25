@@ -143,6 +143,14 @@ The service now emits:
   - Fired when total secure-word count hits a milestone such as 1, 5, 10 or 25
 - `spelling.session-completed`
   - Fired when a round finalises to a summary
+- `spelling.guardian.renewed`
+  - Fired in a Guardian Mission when a non-wobbling word is answered correctly, advancing its `reviewLevel` along the `[3, 7, 14, 30, 60, 90]` day ladder
+- `spelling.guardian.wobbled`
+  - Fired when a Guardian Mission word is answered wrongly; marks `wobbling: true` on the per-word guardian record but never mutates `progress.stage` (Mega is preserved)
+- `spelling.guardian.recovered`
+  - Fired when a previously-wobbling word is answered correctly; clears wobbling, bumps `renewals`, preserves the existing `reviewLevel`
+- `spelling.guardian.mission-completed`
+  - Fired when a Guardian Mission round finalises to summary; carries `renewalCount`, `wobbledCount`, `recoveredCount`, `totalWords`
 
 The platform runtime may then derive additional platform-wide events such as `platform.practice-streak-hit` from those subject events.
 The spelling reward subscriber translates `spelling.word-secured` into monster/codex reaction events and persisted reward history.
