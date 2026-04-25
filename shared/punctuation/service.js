@@ -10,6 +10,7 @@ import {
   createPunctuationUnitSecuredEvent,
 } from './events.js';
 import { createPunctuationRuntimeManifest } from './generators.js';
+import { parseChoiceIndex } from './choice-index.js';
 import { markPunctuationAnswer, normaliseAnswerText } from './marking.js';
 import {
   memorySnapshot,
@@ -35,6 +36,7 @@ import {
 const SUBJECT_ID = 'punctuation';
 const SERVER_AUTHORITY = 'worker';
 const GENERATED_ITEMS_PER_FAMILY = 1;
+const MAX_GPS_QUEUE_LENGTH = 12;
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -153,6 +155,7 @@ export function normalisePunctuationData(value) {
               skillIds: normaliseStringArray(attempt.skillIds),
               rewardUnitId: typeof attempt.rewardUnitId === 'string' ? attempt.rewardUnitId : '',
               sessionMode: typeof attempt.sessionMode === 'string' ? attempt.sessionMode : '',
+              testMode: attempt.testMode === 'gps' ? 'gps' : null,
               supportLevel: normaliseNonNegativeInteger(attempt.supportLevel, 0),
               correct: attempt.correct === true,
               misconceptionTags: normaliseStringArray(attempt.misconceptionTags),
@@ -194,6 +197,54 @@ function normaliseItemForState(item) {
       : [];
   }
   return safe;
+}
+
+function normaliseFacetForReview(value) {
+  if (!isPlainObject(value)) return null;
+  const id = typeof value.id === 'string' ? value.id : '';
+  if (!id) return null;
+  return {
+    id,
+    ok: value.ok === true,
+    label: typeof value.label === 'string' ? value.label : '',
+  };
+}
+
+function normaliseGpsResponse(value) {
+  if (!isPlainObject(value)) return null;
+  const itemId = typeof value.itemId === 'string' ? value.itemId : '';
+  if (!itemId) return null;
+  return {
+    itemId,
+    mode: typeof value.mode === 'string' ? value.mode : '',
+    skillIds: normaliseStringArray(value.skillIds),
+    rewardUnitId: typeof value.rewardUnitId === 'string' ? value.rewardUnitId : '',
+    prompt: typeof value.prompt === 'string' ? value.prompt : '',
+    stem: typeof value.stem === 'string' ? value.stem : '',
+    attemptedAnswer: typeof value.attemptedAnswer === 'string' ? value.attemptedAnswer.slice(0, 500) : '',
+    displayCorrection: typeof value.displayCorrection === 'string' ? value.displayCorrection : '',
+    explanation: typeof value.explanation === 'string' ? value.explanation : '',
+    correct: value.correct === true,
+    misconceptionTags: normaliseStringArray(value.misconceptionTags),
+    facets: Array.isArray(value.facets) ? value.facets.map(normaliseFacetForReview).filter(Boolean) : [],
+  };
+}
+
+function normaliseGpsSession(value) {
+  if (!isPlainObject(value)) {
+    return {
+      queueItemIds: [],
+      responses: [],
+      delayedFeedback: true,
+    };
+  }
+  return {
+    queueItemIds: normaliseStringArray(value.queueItemIds).slice(0, MAX_GPS_QUEUE_LENGTH),
+    responses: Array.isArray(value.responses)
+      ? value.responses.map(normaliseGpsResponse).filter(Boolean).slice(0, MAX_GPS_QUEUE_LENGTH)
+      : [],
+    delayedFeedback: true,
+  };
 }
 
 function guidedTeachBoxForSkill(skillId, supportLevel = 0) {
@@ -245,10 +296,11 @@ function normaliseSession(value) {
   if (!isPlainObject(value)) return null;
   const guidedSkillId = typeof value.guidedSkillId === 'string' ? value.guidedSkillId : null;
   const guidedSupportLevel = normaliseNonNegativeInteger(value.guidedSupportLevel, 0);
+  const mode = normalisePunctuationMode(value.mode);
   return {
     id: typeof value.id === 'string' && value.id ? value.id : '',
     releaseId: typeof value.releaseId === 'string' ? value.releaseId : PUNCTUATION_RELEASE_ID,
-    mode: normalisePunctuationMode(value.mode),
+    mode,
     length: Math.max(1, normaliseNonNegativeInteger(value.length, 4)),
     phase: value.phase === 'feedback' ? 'feedback' : 'active-item',
     startedAt: normaliseTimestamp(value.startedAt, 0),
@@ -262,10 +314,11 @@ function normaliseSession(value) {
     misconceptionTags: normaliseStringArray(value.misconceptionTags),
     guidedSkillId,
     guidedSupportLevel,
-    guided: value.mode === 'guided'
+    guided: mode === 'guided'
       ? (isPlainObject(value.guided) ? cloneSerialisable(value.guided) : guidedSessionReadModel(guidedSkillId, guidedSupportLevel))
       : null,
-    weakFocus: value.mode === 'weak' ? normaliseWeakFocus(value.weakFocus) : null,
+    weakFocus: mode === 'weak' ? normaliseWeakFocus(value.weakFocus) : null,
+    gps: mode === 'gps' ? normaliseGpsSession(value.gps) : null,
     serverAuthority: value.serverAuthority === SERVER_AUTHORITY ? SERVER_AUTHORITY : null,
   };
 }
@@ -464,6 +517,13 @@ function roundLengthFromPrefs(prefs = {}) {
   return Math.max(1, Number.parseInt(value, 10) || 4);
 }
 
+function roundLengthForSession(prefs = {}, options = {}) {
+  if (prefs.mode !== 'gps') return roundLengthFromPrefs(prefs);
+  const value = normalisePunctuationRoundLength(options.testLength ?? options.roundLength ?? options.length ?? prefs.roundLength);
+  if (value === 'all') return 8;
+  return Math.min(MAX_GPS_QUEUE_LENGTH, Math.max(1, Number.parseInt(value, 10) || 4));
+}
+
 function prefsForSession(session = {}, fallback = {}) {
   return normalisePunctuationPrefs({
     ...fallback,
@@ -472,12 +532,164 @@ function prefsForSession(session = {}, fallback = {}) {
   });
 }
 
+function answerDisplayText(item, answer = {}) {
+  if (item?.mode === 'choose') {
+    const index = parseChoiceIndex(answer.choiceIndex ?? answer.value ?? answer.typed);
+    const option = index != null && Array.isArray(item.options)
+      ? item.options.find((entry, fallbackIndex) => {
+          if (isPlainObject(entry)) return Number(entry.index) === index;
+          return fallbackIndex === index;
+        })
+      : null;
+    if (isPlainObject(option)) return normaliseAnswerText(option.text);
+    if (typeof option === 'string') return normaliseAnswerText(option);
+    return index != null ? `Choice ${index + 1}` : '';
+  }
+  return normaliseAnswerText(answer.typed ?? answer.answer ?? '');
+}
+
+function reviewItemFromResult({ item, answer, result }) {
+  return {
+    itemId: item.id,
+    mode: item.mode,
+    skillIds: Array.isArray(item.skillIds) ? [...item.skillIds] : [],
+    rewardUnitId: item.rewardUnitId || '',
+    prompt: item.prompt || '',
+    stem: item.stem || '',
+    attemptedAnswer: answerDisplayText(item, answer),
+    displayCorrection: result.expected || item.model || '',
+    explanation: item.explanation || result.note || '',
+    correct: result.correct === true,
+    misconceptionTags: Array.isArray(result.misconceptionTags) ? [...result.misconceptionTags] : [],
+    facets: Array.isArray(result.facets) ? result.facets.map(normaliseFacetForReview).filter(Boolean) : [],
+  };
+}
+
+function resultFromReviewResponse(response = {}) {
+  return {
+    correct: response.correct === true,
+    expected: response.displayCorrection || '',
+    note: response.explanation || '',
+    misconceptionTags: normaliseStringArray(response.misconceptionTags),
+    facets: Array.isArray(response.facets) ? response.facets.map(normaliseFacetForReview).filter(Boolean) : [],
+  };
+}
+
+function applyMarkedAttemptToProgress({
+  data,
+  indexes,
+  session,
+  item,
+  result,
+  nowValue,
+  supportLevel = 0,
+} = {}) {
+  const guidedSupport = supportLevel > 0;
+  const rewardUnit = rewardUnitForItem(indexes, item);
+
+  data.progress.items[item.id] = updateMemoryState(data.progress.items[item.id], result.correct, nowValue, {
+    supported: guidedSupport,
+  });
+  for (const skillId of item.skillIds || []) {
+    data.progress.facets[facetKey(skillId, item.mode)] = updateMemoryState(
+      data.progress.facets[facetKey(skillId, item.mode)],
+      result.correct,
+      nowValue,
+      { supported: guidedSupport },
+    );
+  }
+
+  const nextItemSnap = memorySnapshot(data.progress.items[item.id], nowValue);
+  const securedRows = [];
+  if (rewardUnit && nextItemSnap.secure && !data.progress.rewardUnits[rewardUnit.masteryKey]) {
+    data.progress.rewardUnits[rewardUnit.masteryKey] = {
+      masteryKey: rewardUnit.masteryKey,
+      releaseId: rewardUnit.releaseId,
+      clusterId: rewardUnit.clusterId,
+      rewardUnitId: rewardUnit.rewardUnitId,
+      securedAt: nowValue,
+    };
+    securedRows.push({ masteryKey: rewardUnit.masteryKey, item, rewardUnit });
+  }
+
+  data.progress.attempts.push({
+    ts: nowValue,
+    sessionId: session.id,
+    itemId: item.id,
+    mode: item.mode,
+    skillIds: item.skillIds || [],
+    rewardUnitId: item.rewardUnitId || '',
+    sessionMode: session.mode || '',
+    testMode: session.mode === 'gps' ? 'gps' : null,
+    supportLevel,
+    correct: result.correct,
+    misconceptionTags: result.misconceptionTags || [],
+  });
+  data.progress.attempts = data.progress.attempts.slice(-1000);
+
+  return { securedRows };
+}
+
+function attemptEventsForReviewResponses({ learnerId, session, responses, indexes, createdAt }) {
+  const events = [];
+  for (const [index, response] of responses.entries()) {
+    const item = itemForId(indexes, response.itemId);
+    if (!item) continue;
+    const eventSession = {
+      ...session,
+      answeredCount: index,
+    };
+    const result = resultFromReviewResponse(response);
+    events.push(createPunctuationItemAttemptedEvent({
+      learnerId,
+      session: eventSession,
+      item,
+      result,
+      answer: response.attemptedAnswer || '',
+      createdAt,
+    }));
+    events.push(...createPunctuationMisconceptionObservedEvents({
+      learnerId,
+      session: eventSession,
+      item,
+      result,
+      createdAt,
+    }));
+  }
+  return events;
+}
+
+function unitEventsForSecuredRows({ learnerId, session, securedRows, createdAt }) {
+  return securedRows.map(({ masteryKey, item, rewardUnit }) => createPunctuationUnitSecuredEvent({
+    learnerId,
+    session,
+    item,
+    rewardUnit,
+    masteryKey,
+    createdAt,
+  }));
+}
+
+function gpsRecommendedMode(responses = []) {
+  const missed = responses.filter((entry) => entry && entry.correct !== true);
+  if (missed.length) {
+    return {
+      recommendedMode: 'weak',
+      recommendedLabel: 'Weak spots',
+    };
+  }
+  return {
+    recommendedMode: 'smart',
+    recommendedLabel: 'Smart review',
+  };
+}
+
 function sessionSummary(session, data, indexes, now = Date.now) {
   const total = Number(session?.answeredCount) || 0;
   const correct = Number(session?.correctCount) || 0;
-  return {
+  const summary = {
     label: 'Punctuation session summary',
-    message: total ? 'Session complete.' : 'Session ended.',
+    message: session?.mode === 'gps' && total ? 'GPS test complete.' : (total ? 'Session complete.' : 'Session ended.'),
     total,
     correct,
     accuracy: total ? Math.round((correct / total) * 100) : 0,
@@ -492,10 +704,74 @@ function sessionSummary(session, data, indexes, now = Date.now) {
       published: indexes.publishedRewardUnits.length,
     },
   };
+  if (session?.mode === 'gps') {
+    const reviewItems = Array.isArray(session.gps?.responses)
+      ? session.gps.responses.map((entry, index) => ({
+          index: index + 1,
+          ...normaliseGpsResponse(entry),
+        })).filter((entry) => entry.itemId)
+      : [];
+    summary.label = 'Punctuation GPS test summary';
+    summary.gps = {
+      delayedFeedback: true,
+      ...gpsRecommendedMode(reviewItems),
+      reviewItems,
+    };
+  }
+  return summary;
 }
 
-function nextActiveState({ learnerId, session, data, indexes, prefs, now, random }) {
-  const selection = selectPunctuationItem({
+function buildGpsQueue({ session, data, indexes, prefs, now, random }) {
+  const length = Math.min(MAX_GPS_QUEUE_LENGTH, Math.max(1, Number(session.length) || 4));
+  const queue = [];
+  let draftSession = {
+    ...session,
+    recentItemIds: [],
+    currentItemId: '',
+    answeredCount: 0,
+  };
+  for (let index = 0; index < length; index += 1) {
+    const selection = selectPunctuationItem({
+      indexes,
+      progress: data.progress,
+      session: { ...draftSession, answeredCount: index },
+      prefs,
+      now,
+      random,
+    });
+    if (!selection.item) break;
+    queue.push(selection.item.id);
+    draftSession = {
+      ...draftSession,
+      currentItemId: selection.item.id,
+      recentItemIds: [...draftSession.recentItemIds, selection.item.id].slice(-10),
+    };
+  }
+  return queue;
+}
+
+function selectionForSession({ session, data, indexes, prefs, now, random }) {
+  if (session.mode === 'gps') {
+    const queueItemIds = Array.isArray(session.gps?.queueItemIds) ? session.gps.queueItemIds : [];
+    const nextItemId = queueItemIds[session.answeredCount] || '';
+    const item = itemForId(indexes, nextItemId);
+    if (item) {
+      return {
+        item,
+        weakFocus: null,
+      };
+    }
+    throw serviceError(
+      'punctuation_gps_queue_stale',
+      'The fixed Punctuation GPS queue no longer matches the active content release.',
+      {
+        itemId: nextItemId,
+        answeredCount: session.answeredCount,
+        queueLength: queueItemIds.length,
+      },
+    );
+  }
+  return selectPunctuationItem({
     indexes,
     progress: data.progress,
     session,
@@ -503,6 +779,10 @@ function nextActiveState({ learnerId, session, data, indexes, prefs, now, random
     now,
     random,
   });
+}
+
+function nextActiveState({ learnerId, session, data, indexes, prefs, now, random }) {
+  const selection = selectionForSession({ session, data, indexes, prefs, now, random });
   if (!selection.item) {
     throw serviceError('punctuation_content_unavailable', 'No published Punctuation content is available.');
   }
@@ -560,6 +840,78 @@ export function createPunctuationService({
   indexes = createPunctuationContentIndexes(manifest),
 } = {}) {
   const clock = () => timestamp(now);
+  const activeReleaseId = manifest.releaseId || PUNCTUATION_RELEASE_ID;
+
+  function assertGpsReleaseCurrent(session, command) {
+    if (session?.mode !== 'gps') return;
+    const sessionReleaseId = typeof session.releaseId === 'string' && session.releaseId
+      ? session.releaseId
+      : PUNCTUATION_RELEASE_ID;
+    if (sessionReleaseId === activeReleaseId) return;
+    throw serviceError(
+      'punctuation_gps_release_stale',
+      'The active Punctuation GPS test was started against an older content release.',
+      {
+        command,
+        sessionId: typeof session.id === 'string' ? session.id : '',
+        sessionReleaseId,
+        releaseId: activeReleaseId,
+      },
+    );
+  }
+
+  function assertExpectedSessionContext(session, expectedContext, command) {
+    if (!session) return;
+    const context = isPlainObject(expectedContext) ? expectedContext : {};
+    const expectedSessionId = typeof context.expectedSessionId === 'string' && context.expectedSessionId
+      ? context.expectedSessionId
+      : null;
+    const expectedItemId = typeof context.expectedItemId === 'string' && context.expectedItemId
+      ? context.expectedItemId
+      : null;
+    const expectedReleaseId = typeof context.expectedReleaseId === 'string' && context.expectedReleaseId
+      ? context.expectedReleaseId
+      : null;
+    const rawExpectedAnsweredCount = context.expectedAnsweredCount;
+    const hasExpectedAnsweredCount = (
+      (typeof rawExpectedAnsweredCount === 'number' || typeof rawExpectedAnsweredCount === 'string')
+      && rawExpectedAnsweredCount !== ''
+      && Number.isFinite(Number(rawExpectedAnsweredCount))
+    );
+    const expectedAnsweredCount = hasExpectedAnsweredCount ? Number(rawExpectedAnsweredCount) : null;
+    const requiresExpectedContext = session.mode === 'gps';
+    const missingRequiredContext = requiresExpectedContext && (
+      !expectedSessionId
+      || !expectedItemId
+      || !expectedReleaseId
+      || !hasExpectedAnsweredCount
+    );
+
+    if (
+      missingRequiredContext
+      || (expectedSessionId && expectedSessionId !== session.id)
+      || (expectedItemId && expectedItemId !== session.currentItemId)
+      || (expectedReleaseId && expectedReleaseId !== session.releaseId)
+      || (hasExpectedAnsweredCount && expectedAnsweredCount !== session.answeredCount)
+    ) {
+      throw serviceError(
+        'punctuation_command_stale',
+        'The Punctuation command no longer matches the active session item.',
+        {
+          command,
+          expectedSessionId,
+          sessionId: session.id || '',
+          expectedItemId,
+          itemId: session.currentItemId || '',
+          expectedAnsweredCount,
+          answeredCount: session.answeredCount,
+          expectedReleaseId,
+          releaseId: session.releaseId || '',
+          missingExpectedContext: missingRequiredContext,
+        },
+      );
+    }
+  }
 
   function requireActiveItem(ui, command = 'submit-answer') {
     const state = normaliseState(ui);
@@ -569,6 +921,7 @@ export function createPunctuationService({
         phase: state.phase,
       });
     }
+    assertGpsReleaseCurrent(state.session, command);
     return state;
   }
 
@@ -581,6 +934,76 @@ export function createPunctuationService({
       });
     }
     return state;
+  }
+
+  function finaliseGpsSession({ learnerId, state, data, session, responses, nowValue }) {
+    assertGpsReleaseCurrent(session, 'finalise-gps');
+    const securedRows = [];
+    const resolvedResponses = responses.map((response, index) => {
+      const responseItem = itemForId(indexes, response.itemId);
+      if (!responseItem) {
+        throw serviceError(
+          'punctuation_gps_response_stale',
+          'A completed Punctuation GPS response no longer matches the active content release.',
+          {
+            itemId: response.itemId,
+            responseIndex: index,
+            sessionId: session.id,
+          },
+        );
+      }
+      return { index, response, responseItem };
+    });
+    for (const { index, response, responseItem } of resolvedResponses) {
+      const applied = applyMarkedAttemptToProgress({
+        data,
+        indexes,
+        session: { ...session, answeredCount: index },
+        item: responseItem,
+        result: resultFromReviewResponse(response),
+        nowValue,
+        supportLevel: 0,
+      });
+      securedRows.push(...applied.securedRows);
+    }
+    const nextSession = {
+      ...session,
+      securedUnits: [...new Set([
+        ...(session.securedUnits || []),
+        ...securedRows.map((entry) => entry.masteryKey),
+      ])],
+    };
+    data.progress.sessionsCompleted += responses.length > 0 ? 1 : 0;
+    writeData(repository, learnerId, data);
+    const summary = sessionSummary(nextSession, data, indexes, clock);
+    const nextState = {
+      ...state,
+      phase: 'summary',
+      session: nextSession,
+      feedback: null,
+      summary,
+      error: '',
+    };
+    syncPracticeSession(repository, learnerId, nextState, clock);
+    const events = responses.length > 0
+      ? [
+          ...attemptEventsForReviewResponses({
+            learnerId,
+            session: nextSession,
+            responses,
+            indexes,
+            createdAt: nowValue,
+          }),
+          ...unitEventsForSecuredRows({
+            learnerId,
+            session: nextSession,
+            securedRows,
+            createdAt: nowValue,
+          }),
+          createPunctuationSessionCompletedEvent({ learnerId, session: nextSession, summary, createdAt: nowValue }),
+        ]
+      : [];
+    return stateTransition(nextState, { events });
   }
 
   const service = {
@@ -618,9 +1041,9 @@ export function createPunctuationService({
         : null;
       const session = {
         id: uid('punctuation-session', clock, random),
-        releaseId: manifest.releaseId || PUNCTUATION_RELEASE_ID,
+        releaseId: activeReleaseId,
         mode: prefs.mode,
-        length: roundLengthFromPrefs(prefs),
+        length: roundLengthForSession(prefs, options),
         phase: 'active-item',
         startedAt: clock(),
         updatedAt: clock(),
@@ -635,13 +1058,26 @@ export function createPunctuationService({
         guidedSupportLevel: guidedSkillId ? 2 : 0,
         guided: guidedSkillId ? guidedSessionReadModel(guidedSkillId, 2) : null,
         weakFocus: null,
+        gps: prefs.mode === 'gps' ? { queueItemIds: [], responses: [], delayedFeedback: true } : null,
       };
+      if (session.mode === 'gps') {
+        session.gps.queueItemIds = buildGpsQueue({
+          session,
+          data: current,
+          indexes,
+          prefs,
+          now: clock,
+          random,
+        });
+        session.length = session.gps.queueItemIds.length || session.length;
+      }
       const state = nextActiveState({ learnerId, session, data: current, indexes, prefs, now: clock, random });
       syncPracticeSession(repository, learnerId, state, clock);
       return stateTransition(state);
     },
-    submitAnswer(learnerId, uiState, rawAnswer = '') {
+    submitAnswer(learnerId, uiState, rawAnswer = '', expectedContext = {}) {
       const state = requireActiveItem(uiState, 'submit-answer');
+      assertExpectedSessionContext(state.session, expectedContext, 'submit-answer');
       const data = readData(repository, learnerId);
       const item = itemForId(indexes, state.session.currentItemId);
       if (!item) {
@@ -657,49 +1093,61 @@ export function createPunctuationService({
       const supportLevel = state.session.mode === 'guided'
         ? normaliseNonNegativeInteger(state.session.guidedSupportLevel, 0)
         : 0;
-      const guidedSupport = supportLevel > 0;
-      const rewardUnit = rewardUnitForItem(indexes, item);
-      const previousUnitSnap = rewardUnit
-        ? memorySnapshot(data.progress.rewardUnits[rewardUnit.masteryKey] ? { attempts: 3, correct: 3, streak: 3, firstCorrectAt: 0, lastCorrectAt: 8 * 24 * 60 * 60 * 1000 } : data.progress.items[item.id], nowValue)
-        : null;
-
-      data.progress.items[item.id] = updateMemoryState(data.progress.items[item.id], result.correct, nowValue, {
-        supported: guidedSupport,
-      });
-      for (const skillId of item.skillIds || []) {
-        data.progress.facets[facetKey(skillId, item.mode)] = updateMemoryState(
-          data.progress.facets[facetKey(skillId, item.mode)],
-          result.correct,
-          nowValue,
-          { supported: guidedSupport },
-        );
-      }
-      const nextItemSnap = memorySnapshot(data.progress.items[item.id], nowValue);
-      const securedUnits = [];
-      if (rewardUnit && nextItemSnap.secure && !data.progress.rewardUnits[rewardUnit.masteryKey]) {
-        data.progress.rewardUnits[rewardUnit.masteryKey] = {
-          masteryKey: rewardUnit.masteryKey,
-          releaseId: rewardUnit.releaseId,
-          clusterId: rewardUnit.clusterId,
-          rewardUnitId: rewardUnit.rewardUnitId,
-          securedAt: nowValue,
+      const reviewResponse = reviewItemFromResult({ item, answer, result });
+      if (state.session.mode === 'gps') {
+        const gps = normaliseGpsSession(state.session.gps);
+        const nextResponses = [...gps.responses, reviewResponse].slice(0, MAX_GPS_QUEUE_LENGTH);
+        const nextSession = {
+          ...state.session,
+          phase: 'active-item',
+          answeredCount: state.session.answeredCount + 1,
+          correctCount: state.session.correctCount + (result.correct ? 1 : 0),
+          updatedAt: nowValue,
+          securedUnits: normaliseStringArray(state.session.securedUnits),
+          misconceptionTags: [...new Set([...(state.session.misconceptionTags || []), ...(result.misconceptionTags || [])])],
+          guided: null,
+          guidedSupportLevel: 0,
+          gps: {
+            ...gps,
+            responses: nextResponses,
+            delayedFeedback: true,
+          },
         };
-        securedUnits.push(rewardUnit.masteryKey);
+
+        if (nextSession.answeredCount >= nextSession.length) {
+          return finaliseGpsSession({
+            learnerId,
+            state,
+            data,
+            session: nextSession,
+            responses: nextResponses,
+            nowValue,
+          });
+        }
+
+        const nextState = nextActiveState({
+          learnerId,
+          session: nextSession,
+          data,
+          indexes,
+          prefs: prefsForSession(nextSession, data.prefs),
+          now: clock,
+          random,
+        });
+        syncPracticeSession(repository, learnerId, nextState, clock);
+        return stateTransition(nextState, { events: [] });
       }
 
-      data.progress.attempts.push({
-        ts: nowValue,
-        sessionId: state.session.id,
-        itemId: item.id,
-        mode: item.mode,
-        skillIds: item.skillIds || [],
-        rewardUnitId: item.rewardUnitId || '',
-        sessionMode: state.session.mode || '',
+      const { securedRows } = applyMarkedAttemptToProgress({
+        data,
+        indexes,
+        session: state.session,
+        item,
+        result,
+        nowValue,
         supportLevel,
-        correct: result.correct,
-        misconceptionTags: result.misconceptionTags || [],
       });
-      data.progress.attempts = data.progress.attempts.slice(-1000);
+      const securedUnits = securedRows.map((entry) => entry.masteryKey);
       writeData(repository, learnerId, data);
 
       const nextSession = {
@@ -721,7 +1169,7 @@ export function createPunctuationService({
         kind: result.correct ? 'success' : 'error',
         headline: result.correct ? 'Correct.' : 'Not quite.',
         body: result.note || item.explanation || '',
-        attemptedAnswer: normaliseAnswerText(answer.typed ?? answer.answer ?? answer.choiceIndex ?? ''),
+        attemptedAnswer: answerDisplayText(item, answer),
         displayCorrection: result.expected || item.model || '',
         explanation: item.explanation || '',
         misconceptionTags: result.misconceptionTags || [],
@@ -752,18 +1200,15 @@ export function createPunctuationService({
         result,
         createdAt: nowValue,
       });
-      const unitEvents = securedUnits.map((masteryKey) => createPunctuationUnitSecuredEvent({
+      const unitEvents = unitEventsForSecuredRows({
         learnerId,
         session: state.session,
-        item,
-        rewardUnit,
-        masteryKey,
+        securedRows,
         createdAt: nowValue,
-      }));
+      });
 
       return stateTransition(nextState, {
         events: [attemptEvent, ...misconceptionEvents, ...unitEvents],
-        changed: !previousUnitSnap || true,
       });
     },
     continueSession(learnerId, uiState) {
@@ -797,8 +1242,14 @@ export function createPunctuationService({
       syncPracticeSession(repository, learnerId, nextState, clock);
       return stateTransition(nextState);
     },
-    skipItem(learnerId, uiState) {
+    skipItem(learnerId, uiState, expectedContext = {}) {
       const state = requireActiveItem(uiState, 'skip-item');
+      assertExpectedSessionContext(state.session, expectedContext, 'skip-item');
+      if (state.session.mode === 'gps') {
+        return service.submitAnswer(learnerId, state, state.session.currentItem?.inputKind === 'choice'
+          ? { choiceIndex: null }
+          : { typed: '' }, expectedContext);
+      }
       const data = readData(repository, learnerId);
       const nextSession = {
         ...state.session,
@@ -833,10 +1284,37 @@ export function createPunctuationService({
       syncPracticeSession(repository, learnerId, nextState, clock);
       return stateTransition(nextState);
     },
-    endSession(learnerId, uiState) {
+    endSession(learnerId, uiState, expectedContext = {}) {
       const state = normaliseState(uiState);
       if (!state.session) return stateTransition(createInitialPunctuationState());
+      if (state.phase === 'summary') return stateTransition(state, { changed: false });
+      assertGpsReleaseCurrent(state.session, state.session.mode === 'gps' ? 'finalise-gps' : 'end-session');
+      assertExpectedSessionContext(state.session, expectedContext, 'end-session');
       const data = readData(repository, learnerId);
+      if (state.session.mode === 'gps') {
+        const nowValue = clock();
+        const gps = normaliseGpsSession(state.session.gps);
+        const responses = gps.responses;
+        const nextSession = {
+          ...state.session,
+          answeredCount: responses.length,
+          correctCount: responses.filter((response) => response.correct).length,
+          gps: {
+            ...gps,
+            responses,
+            delayedFeedback: true,
+          },
+          misconceptionTags: [...new Set(responses.flatMap((response) => response.misconceptionTags || []))],
+        };
+        return finaliseGpsSession({
+          learnerId,
+          state,
+          data,
+          session: nextSession,
+          responses,
+          nowValue,
+        });
+      }
       data.progress.sessionsCompleted += state.session.answeredCount > 0 ? 1 : 0;
       writeData(repository, learnerId, data);
       const summary = sessionSummary(state.session, data, indexes, clock);

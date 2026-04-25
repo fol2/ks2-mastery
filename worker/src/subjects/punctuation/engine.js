@@ -77,6 +77,29 @@ function typedAnswerFromPayload(payload = {}) {
   return '';
 }
 
+function expectedSessionContextFromPayload(payload = {}) {
+  if (!isPlainObject(payload)) return {};
+  const expected = {};
+  if (typeof payload.expectedSessionId === 'string' && payload.expectedSessionId) {
+    expected.expectedSessionId = payload.expectedSessionId;
+  }
+  if (typeof payload.expectedItemId === 'string' && payload.expectedItemId) {
+    expected.expectedItemId = payload.expectedItemId;
+  }
+  const rawExpectedAnsweredCount = payload.expectedAnsweredCount;
+  if (
+    (typeof rawExpectedAnsweredCount === 'number' || typeof rawExpectedAnsweredCount === 'string')
+    && rawExpectedAnsweredCount !== ''
+    && Number.isFinite(Number(rawExpectedAnsweredCount))
+  ) {
+    expected.expectedAnsweredCount = Number(rawExpectedAnsweredCount);
+  }
+  if (typeof payload.expectedReleaseId === 'string' && payload.expectedReleaseId) {
+    expected.expectedReleaseId = payload.expectedReleaseId;
+  }
+  return expected;
+}
+
 function translatePunctuationError(error) {
   if (!(error instanceof PunctuationServiceError)) throw error;
   if (error.code === 'punctuation_content_unavailable') {
@@ -126,13 +149,18 @@ export function createServerPunctuationEngine({ now = Date.now, random = Math.ra
         if (command === 'start-session') {
           transition = service.startSession(learnerId, payload);
         } else if (command === 'submit-answer') {
-          transition = service.submitAnswer(learnerId, currentState, typedAnswerFromPayload(payload));
+          transition = service.submitAnswer(
+            learnerId,
+            currentState,
+            typedAnswerFromPayload(payload),
+            expectedSessionContextFromPayload(payload),
+          );
         } else if (command === 'continue-session') {
           transition = service.continueSession(learnerId, currentState);
         } else if (command === 'skip-item') {
-          transition = service.skipItem(learnerId, currentState);
+          transition = service.skipItem(learnerId, currentState, expectedSessionContextFromPayload(payload));
         } else if (command === 'end-session') {
-          transition = service.endSession(learnerId, currentState);
+          transition = service.endSession(learnerId, currentState, expectedSessionContextFromPayload(payload));
         } else if (command === 'save-prefs') {
           const prefs = service.savePrefs(learnerId, payload.prefs || payload);
           transition = {

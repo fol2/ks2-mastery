@@ -33,6 +33,12 @@ import { buildParentHubReadModel } from '../../src/platform/hubs/parent-read-mod
 import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system.js';
 import { buildSpellingProgressPools, buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
 import { buildSpellingAudioCue } from './subjects/spelling/audio.js';
+import { buildPunctuationReadModel } from './subjects/punctuation/read-models.js';
+import { createPunctuationService } from '../../shared/punctuation/service.js';
+import {
+  createInitialPunctuationState,
+  normalisePunctuationSummary,
+} from '../../src/subjects/punctuation/service-contract.js';
 import {
   BUNDLED_MONSTER_VISUAL_CONFIG,
   MONSTER_VISUAL_SCHEMA_VERSION,
@@ -239,8 +245,43 @@ function redactSpellingUiForClient(ui, data = {}, learnerId = '', {
   };
 }
 
+function createPunctuationReadModelService(data, now) {
+  return createPunctuationService({
+    repository: {
+      readData() {
+        return cloneSerialisable(data) || {};
+      },
+    },
+    now: () => now,
+    random: () => 0,
+  });
+}
+
+function redactPunctuationUiForClient(ui, data = {}, learnerId = '', { now = Date.now() } = {}) {
+  const service = createPunctuationReadModelService(data, now);
+  const state = service.initState(ui || createInitialPunctuationState());
+  const readModel = buildPunctuationReadModel({
+    learnerId,
+    state,
+    prefs: service.getPrefs(learnerId),
+    stats: service.getStats(learnerId),
+    analytics: service.getAnalyticsSnapshot(learnerId),
+  });
+  if (readModel.summary?.gps) {
+    readModel.summary = publicPunctuationPracticeSessionSummary(readModel.summary);
+  }
+  return readModel;
+}
+
 async function publicSubjectStateRowToRecord(row, { spellingContentSnapshot = null, now = Date.now() } = {}) {
   const record = subjectStateRowToRecord(row);
+  if (row.subject_id === 'punctuation') {
+    return normaliseSubjectStateRecord({
+      ui: redactPunctuationUiForClient(record.ui, record.data, row.learner_id, { now }),
+      data: {},
+      updatedAt: record.updatedAt,
+    });
+  }
   if (row.subject_id !== 'spelling') return record;
   const audio = await buildSpellingAudioCue({
     learnerId: row.learner_id,
@@ -394,12 +435,21 @@ function practiceSessionRowToRecord(row) {
 
 function publicPracticeSessionRowToRecord(row) {
   const record = practiceSessionRowToRecord(row);
-  if (record.subjectId !== 'spelling') return record;
-  return normalisePracticeSessionRecord({
-    ...record,
-    sessionState: null,
-    summary: publicPracticeSessionSummary(record.summary, record.sessionKind),
-  });
+  if (record.subjectId === 'spelling') {
+    return normalisePracticeSessionRecord({
+      ...record,
+      sessionState: null,
+      summary: publicPracticeSessionSummary(record.summary, record.sessionKind),
+    });
+  }
+  if (record.subjectId === 'punctuation') {
+    return normalisePracticeSessionRecord({
+      ...record,
+      sessionState: null,
+      summary: publicPunctuationPracticeSessionSummary(record.summary),
+    });
+  }
+  return record;
 }
 
 function eventRowToRecord(row) {
@@ -453,6 +503,22 @@ function publicPracticeSessionSummary(summary, sessionKind) {
     mistakes: Array.isArray(raw.mistakes)
       ? raw.mistakes.map(publicMistakeSummary)
       : [],
+  };
+}
+
+function publicPunctuationPracticeSessionSummary(summary) {
+  const safe = normalisePunctuationSummary(summary);
+  if (!safe) return null;
+  return {
+    ...safe,
+    gps: safe.gps
+      ? {
+        delayedFeedback: safe.gps.delayedFeedback,
+        recommendedMode: safe.gps.recommendedMode,
+        recommendedLabel: safe.gps.recommendedLabel,
+        reviewItems: [],
+      }
+      : null,
   };
 }
 

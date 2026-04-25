@@ -66,6 +66,14 @@ function SetupView({ learner, stats, ui, actions }) {
         >
           Weak spots
         </button>
+        <button
+          className="btn secondary"
+          type="button"
+          data-punctuation-gps-start
+          onClick={() => actions.dispatch('punctuation-start', { mode: 'gps', roundLength: '8' })}
+        >
+          GPS test
+        </button>
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'speech' })}>Speech focus</button>
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'comma_flow' })}>Comma focus</button>
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-start', { mode: 'boundary' })}>Boundary focus</button>
@@ -180,6 +188,7 @@ function ActiveItemView({ ui, actions }) {
   const scene = bellstormSceneForPhase('active-item');
   const progress = ui.session?.length ? Math.round(((ui.session.answeredCount || 0) / ui.session.length) * 100) : 0;
   const submit = (payload) => actions.dispatch('punctuation-submit-form', payload);
+  const isGps = ui.session?.mode === 'gps';
 
   return (
     <section className="card border-top punctuation-surface" style={{ borderTopColor: '#B8873F' }}>
@@ -192,6 +201,13 @@ function ActiveItemView({ ui, actions }) {
         </div>
       </div>
       <WeakFocusChips focus={ui.session?.weakFocus} />
+      {isGps ? (
+        <div className="chip-row" style={{ marginTop: 14 }}>
+          <span className="chip">GPS test</span>
+          <span className="chip">Delayed feedback</span>
+          <span className="chip">{(ui.session?.answeredCount || 0) + 1} of {ui.session?.length || 0}</span>
+        </div>
+      ) : null}
       <GuidedTeachBox guided={ui.session?.guided} />
       {item.stem ? <div className="callout" style={{ marginTop: 14, ...newlineTextStyle(item.stem) }}>{item.stem}</div> : null}
       <div className="progress" style={{ marginTop: 14 }}><span style={{ width: `${progress}%` }} /></div>
@@ -243,6 +259,7 @@ function FeedbackView({ ui, actions }) {
 function SummaryView({ ui, actions }) {
   const summary = ui.summary || {};
   const scene = bellstormSceneForPhase('summary');
+  const gpsReview = Array.isArray(summary.gps?.reviewItems) ? summary.gps.reviewItems : [];
   return (
     <section className="card border-top punctuation-surface" style={{ borderTopColor: '#2E8479' }}>
       <div className="punctuation-strip">
@@ -258,6 +275,33 @@ function SummaryView({ ui, actions }) {
         <div className="stat"><div className="stat-label">Correct</div><div className="stat-value">{summary.correct || 0}</div><div className="stat-sub">Clean attempts</div></div>
         <div className="stat"><div className="stat-label">Accuracy</div><div className="stat-value">{summary.accuracy || 0}%</div><div className="stat-sub">Session score</div></div>
       </div>
+      {gpsReview.length ? (
+        <div className="callout punctuation-gps-review" style={{ marginTop: 16 }}>
+          <strong>GPS review</strong>
+          <div className="small muted" style={{ marginTop: 6 }}>
+            Next: {summary.gps?.recommendedLabel || 'Smart review'}
+          </div>
+          <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
+            {gpsReview.map((entry) => (
+              <div key={`${entry.index}-${entry.itemId}`} className={`feedback ${entry.correct ? 'good' : 'warn'}`}>
+                <strong>{entry.index}. {entry.correct ? 'Correct' : 'Review'}</strong>
+                <div style={{ marginTop: 6 }}>{entry.prompt}</div>
+                {entry.attemptedAnswer ? <div className="small" style={{ marginTop: 6 }}>Answer: {entry.attemptedAnswer}</div> : null}
+                {entry.displayCorrection ? (
+                  <div className="small" style={{ marginTop: 6, ...newlineTextStyle(entry.displayCorrection) }}>
+                    Model: {entry.displayCorrection}
+                  </div>
+                ) : null}
+                {entry.misconceptionTags?.length ? (
+                  <div className="chip-row" style={{ marginTop: 8 }}>
+                    {entry.misconceptionTags.map((tag) => <span className="chip warn" key={`${entry.itemId}-${tag}`}>{tag}</span>)}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <div className="actions" style={{ marginTop: 16 }}>
         <button className="btn primary" type="button" onClick={() => actions.dispatch('punctuation-start-again')}>Start again</button>
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('punctuation-back')}>Back to dashboard</button>

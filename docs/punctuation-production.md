@@ -244,8 +244,8 @@ shared/punctuation/legacy-parity.js
 
 The baseline currently classifies legacy behaviour as:
 
-- Ported: the 14-skill map, Worker command runtime, Smart review, guided learning, dedicated weak spots, `choose`, `insert`, `fix`, `transfer`, `combine`, `paragraph`, reward-unit analytics, skill rows, and recent mistakes.
-- Planned: GPS test mode, richer transfer validators, safe context-pack compilation, and deeper Parent/Admin evidence.
+- Ported: the 14-skill map, Worker command runtime, Smart review, guided learning, dedicated weak spots, GPS test mode, `choose`, `insert`, `fix`, `transfer`, `combine`, `paragraph`, reward-unit analytics, skill rows, and recent mistakes.
+- Planned: richer transfer validators, safe context-pack compilation, and deeper Parent/Admin evidence.
 - Replaced: legacy standalone `choose`, `insert`, `fix`, `transfer`, sentence-combining, and paragraph-repair session buttons are represented by production item modes inside Smart review, weak spots, and focused cluster sessions.
 - Rejected: the legacy single-file production route, localStorage source of truth, browser-owned marking, and browser-stored AI provider keys.
 

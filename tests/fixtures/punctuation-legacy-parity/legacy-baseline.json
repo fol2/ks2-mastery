@@ -87,9 +87,10 @@
     {
       "id": "gps",
       "legacyLabel": "True GPS test mode",
-      "status": "planned",
+      "status": "ported",
       "ownerUnit": "U6",
-      "notes": "Needs fixed test length, delayed feedback, score summary, and review model."
+      "assertPresent": true,
+      "notes": "Production GPS mode locks a server-owned queue, suppresses item feedback during the test, and releases a safe score/review model at completion."
     }
   ],
   "itemModes": [

@@ -59,6 +59,18 @@ function createHarness({ punctuationEnabled = true, random = () => 0 } = {}) {
     return { response, body: await response.json(), requestBody: body };
   }
 
+  async function bootstrap(headers = {}) {
+    const response = await app.fetch(new Request('https://repo.test/api/bootstrap', {
+      method: 'GET',
+      headers: {
+        origin: 'https://repo.test',
+        'x-ks2-dev-account-id': 'adult-a',
+        ...headers,
+      },
+    }), env, {});
+    return { response, body: await response.json() };
+  }
+
   async function command(commandName, payload = {}) {
     sequence += 1;
     const result = await postRaw({
@@ -79,6 +91,7 @@ function createHarness({ punctuationEnabled = true, random = () => 0 } = {}) {
     env,
     nowRef,
     postRaw,
+    bootstrap,
     command,
     close() {
       DB.close();
@@ -98,6 +111,26 @@ function correctAnswerFor(readItem) {
   assert.ok(source, `Expected source item for ${readItem.id}`);
   if (readItem.inputKind === 'choice') return { choiceIndex: source.correctIndex };
   return { typed: source.model };
+}
+
+function wrongAnswerFor(readItem) {
+  return readItem.inputKind === 'choice' ? { choiceIndex: 99 } : { typed: 'not sure' };
+}
+
+function expectedContextForSession(session) {
+  return {
+    expectedSessionId: session.id,
+    expectedItemId: session.currentItem?.id || '',
+    expectedAnsweredCount: session.answeredCount,
+    expectedReleaseId: session.releaseId,
+  };
+}
+
+function answerPayloadForSession(session, answer) {
+  return {
+    ...answer,
+    ...expectedContextForSession(session),
+  };
 }
 
 test('Worker runtime registers punctuation command handlers', async () => {
@@ -285,6 +318,204 @@ test('punctuation command route serves paragraph items through redacted multilin
     });
     assert.equal(submit.body.subjectReadModel.feedback.kind, 'success');
     assert.equal(submit.body.domainEvents.some((event) => event.type === 'punctuation.item-attempted'), true);
+  } finally {
+    harness.close();
+  }
+});
+
+test('punctuation command route runs GPS mode with delayed feedback and final review', async () => {
+  const harness = createHarness();
+  try {
+    let step = await harness.command('start-session', { mode: 'gps', roundLength: '3' });
+
+    assert.equal(step.body.subjectReadModel.phase, 'active-item');
+    assert.equal(step.body.subjectReadModel.session.mode, 'gps');
+    assert.equal(step.body.subjectReadModel.session.length, 3);
+    assert.deepEqual(step.body.subjectReadModel.session.gps, {
+      testLength: 3,
+      answeredCount: 0,
+      remainingCount: 3,
+      delayedFeedback: true,
+    });
+    assert.equal(step.body.subjectReadModel.session.guided, null);
+    assert.doesNotMatch(payloadText(step.body.subjectReadModel), /accepted|correctIndex|rubric|validator|hiddenQueue|queueItemIds|responses|generator|model|displayCorrection/);
+
+    step = await harness.command(
+      'submit-answer',
+      answerPayloadForSession(step.body.subjectReadModel.session, wrongAnswerFor(step.body.subjectReadModel.session.currentItem)),
+    );
+    assert.equal(step.body.subjectReadModel.phase, 'active-item');
+    assert.equal(step.body.subjectReadModel.feedback, null);
+    assert.equal(step.body.subjectReadModel.session.correctCount, 0);
+    assert.deepEqual(step.body.subjectReadModel.session.misconceptionTags, []);
+    assert.equal(step.body.subjectReadModel.session.gps.answeredCount, 1);
+    assert.equal(step.body.subjectReadModel.stats.attempts, 0);
+    assert.equal(step.body.subjectReadModel.stats.correct, 0);
+    assert.deepEqual(step.body.domainEvents, []);
+    assert.deepEqual(step.body.reactionEvents, []);
+    assert.doesNotMatch(payloadText(step.body.subjectReadModel), /accepted|correctIndex|rubric|validator|hiddenQueue|queueItemIds|responses|generator|model|displayCorrection/);
+
+    step = await harness.command(
+      'submit-answer',
+      answerPayloadForSession(step.body.subjectReadModel.session, correctAnswerFor(step.body.subjectReadModel.session.currentItem)),
+    );
+    const final = await harness.command(
+      'submit-answer',
+      answerPayloadForSession(step.body.subjectReadModel.session, correctAnswerFor(step.body.subjectReadModel.session.currentItem)),
+    );
+
+    assert.equal(final.body.subjectReadModel.phase, 'summary');
+    assert.equal(final.body.subjectReadModel.summary.label, 'Punctuation GPS test summary');
+    assert.equal(final.body.subjectReadModel.summary.total, 3);
+    assert.equal(final.body.subjectReadModel.summary.correct, 2);
+    assert.equal(final.body.subjectReadModel.summary.gps.reviewItems.length, 3);
+    assert.equal(final.body.subjectReadModel.summary.gps.recommendedMode, 'weak');
+    assert.equal(final.body.domainEvents.filter((event) => event.type === 'punctuation.item-attempted').length, 3);
+    assert.equal(final.body.domainEvents.some((event) => event.type === 'punctuation.session-completed'), true);
+
+    const publicBootstrap = await harness.bootstrap({ 'x-ks2-public-read-models': '1' });
+    assert.equal(publicBootstrap.response.status, 200, JSON.stringify(publicBootstrap.body));
+    const publicState = publicBootstrap.body.subjectStates['learner-a::punctuation'];
+    const publicSession = publicBootstrap.body.practiceSessions.find((session) => session.subjectId === 'punctuation');
+    assert.deepEqual(publicState.ui.summary.gps.reviewItems, []);
+    assert.deepEqual(publicSession.summary.gps.reviewItems, []);
+    assert.doesNotMatch(payloadText({ publicState, publicSession }), /attemptedAnswer|displayCorrection|explanation|prompt|stem/);
+
+    const itemAttemptRows = harness.DB.db.prepare(`
+      SELECT COUNT(*) AS count
+      FROM event_log
+      WHERE learner_id = 'learner-a' AND event_type = 'punctuation.item-attempted'
+    `).get().count;
+    const replay = await harness.postRaw(final.requestBody);
+    assert.equal(replay.response.status, 200);
+    assert.equal(replay.body.mutation.replayed, true);
+    assert.equal(harness.DB.db.prepare(`
+      SELECT COUNT(*) AS count
+      FROM event_log
+      WHERE learner_id = 'learner-a' AND event_type = 'punctuation.item-attempted'
+    `).get().count, itemAttemptRows);
+  } finally {
+    harness.close();
+  }
+});
+
+test('punctuation GPS submit rejects stale retries bound to the previous item', async () => {
+  const harness = createHarness();
+  try {
+    const start = await harness.command('start-session', { mode: 'gps', roundLength: '2' });
+    const firstSession = start.body.subjectReadModel.session;
+    const firstItem = firstSession.currentItem;
+    const staleContext = expectedContextForSession(firstSession);
+    const stalePayload = {
+      ...wrongAnswerFor(firstItem),
+      ...staleContext,
+    };
+
+    await harness.command('submit-answer', answerPayloadForSession(firstSession, correctAnswerFor(firstItem)));
+    const currentRevision = harness.revision;
+    const staleRetry = await harness.postRaw({
+      command: 'submit-answer',
+      learnerId: 'learner-a',
+      requestId: 'punctuation-gps-stale-retry',
+      expectedLearnerRevision: currentRevision,
+      payload: stalePayload,
+    });
+
+    assert.equal(staleRetry.response.status, 400, JSON.stringify(staleRetry.body));
+    assert.equal(staleRetry.body.code, 'punctuation_command_stale');
+    assert.equal(staleRetry.body.expectedItemId, firstItem.id);
+    assert.notEqual(staleRetry.body.itemId, firstItem.id);
+
+    for (const command of ['skip-item', 'end-session']) {
+      const staleCommand = await harness.postRaw({
+        command,
+        learnerId: 'learner-a',
+        requestId: `punctuation-gps-stale-${command}`,
+        expectedLearnerRevision: currentRevision,
+        payload: staleContext,
+      });
+      assert.equal(staleCommand.response.status, 400, JSON.stringify(staleCommand.body));
+      assert.equal(staleCommand.body.code, 'punctuation_command_stale');
+      assert.equal(staleCommand.body.expectedItemId, firstItem.id);
+      assert.notEqual(staleCommand.body.itemId, firstItem.id);
+    }
+    assert.equal(harness.DB.db.prepare(`
+      SELECT COUNT(*) AS count
+      FROM event_log
+      WHERE learner_id = 'learner-a' AND event_type = 'punctuation.item-attempted'
+    `).get().count, 0);
+  } finally {
+    harness.close();
+  }
+});
+
+test('punctuation GPS commands reject missing visible item context', async () => {
+  const harness = createHarness();
+  try {
+    const start = await harness.command('start-session', { mode: 'gps', roundLength: '2' });
+    const firstSession = start.body.subjectReadModel.session;
+
+    for (const [command, payload] of [
+      ['submit-answer', correctAnswerFor(firstSession.currentItem)],
+      ['skip-item', {}],
+      ['end-session', {}],
+    ]) {
+      const result = await harness.postRaw({
+        command,
+        learnerId: 'learner-a',
+        requestId: `punctuation-gps-missing-context-${command}`,
+        expectedLearnerRevision: harness.revision,
+        payload,
+      });
+      assert.equal(result.response.status, 400, JSON.stringify(result.body));
+      assert.equal(result.body.code, 'punctuation_command_stale');
+      assert.equal(result.body.missingExpectedContext, true);
+      assert.equal(result.body.sessionId, firstSession.id);
+      assert.equal(result.body.itemId, firstSession.currentItem.id);
+    }
+    assert.equal(harness.DB.db.prepare(`
+      SELECT COUNT(*) AS count
+      FROM event_log
+      WHERE learner_id = 'learner-a' AND event_type = 'punctuation.item-attempted'
+    `).get().count, 0);
+  } finally {
+    harness.close();
+  }
+});
+
+test('public bootstrap redacts active Punctuation GPS queue and delayed answers', async () => {
+  const harness = createHarness();
+  try {
+    let step = await harness.command('start-session', { mode: 'gps', roundLength: '3' });
+    step = await harness.command(
+      'submit-answer',
+      answerPayloadForSession(step.body.subjectReadModel.session, wrongAnswerFor(step.body.subjectReadModel.session.currentItem)),
+    );
+
+    const publicBootstrap = await harness.bootstrap({ 'x-ks2-public-read-models': '1' });
+    assert.equal(publicBootstrap.response.status, 200, JSON.stringify(publicBootstrap.body));
+
+    const publicState = publicBootstrap.body.subjectStates['learner-a::punctuation'];
+    const publicReadModel = publicState.ui;
+    const publicSession = publicBootstrap.body.practiceSessions.find((session) => session.subjectId === 'punctuation');
+    const publicRuntimeText = payloadText({ publicState, publicSession });
+
+    assert.deepEqual(publicState.data, {});
+    assert.equal(publicReadModel.subjectId, 'punctuation');
+    assert.equal(publicReadModel.phase, 'active-item');
+    assert.equal(publicReadModel.session.mode, 'gps');
+    assert.equal(publicReadModel.session.correctCount, 0);
+    assert.deepEqual(publicReadModel.session.misconceptionTags, []);
+    assert.deepEqual(publicReadModel.session.gps, {
+      testLength: 3,
+      answeredCount: 1,
+      remainingCount: 2,
+      delayedFeedback: true,
+    });
+    assert.equal(publicReadModel.feedback, null);
+    assert.equal(publicSession.sessionState, null);
+    assert.equal(publicSession.summary, null);
+    assert.doesNotMatch(publicRuntimeText, /accepted|correctIndex|rubric|validator|hiddenQueue|queueItemIds|responses|generator|model|displayCorrection/);
   } finally {
     harness.close();
   }

@@ -94,8 +94,21 @@ function safeWeakFocus(value) {
   };
 }
 
+function safeGpsSession(session) {
+  if (session?.mode !== 'gps') return null;
+  const length = Number.isFinite(Number(session.length)) ? Number(session.length) : 0;
+  const answeredCount = Number.isFinite(Number(session.answeredCount)) ? Number(session.answeredCount) : 0;
+  return {
+    testLength: length,
+    answeredCount,
+    remainingCount: Math.max(0, length - answeredCount),
+    delayedFeedback: true,
+  };
+}
+
 function safeSession(session, phase) {
   if (!isPlainObject(session)) return null;
+  const hideGpsInterimResults = session.mode === 'gps';
   const safe = {
     id: typeof session.id === 'string' ? session.id : '',
     releaseId: typeof session.releaseId === 'string' ? session.releaseId : PUNCTUATION_RELEASE_ID,
@@ -104,16 +117,21 @@ function safeSession(session, phase) {
     phase: phase === 'feedback' ? 'feedback' : 'active-item',
     startedAt: Number.isFinite(Number(session.startedAt)) ? Number(session.startedAt) : 0,
     answeredCount: Number.isFinite(Number(session.answeredCount)) ? Number(session.answeredCount) : 0,
-    correctCount: Number.isFinite(Number(session.correctCount)) ? Number(session.correctCount) : 0,
+    correctCount: hideGpsInterimResults
+      ? 0
+      : (Number.isFinite(Number(session.correctCount)) ? Number(session.correctCount) : 0),
     currentItem: phase === 'active-item' || phase === 'feedback' ? safeCurrentItem(session.currentItem) : null,
     securedUnits: Array.isArray(session.securedUnits) ? session.securedUnits.filter((entry) => typeof entry === 'string') : [],
-    misconceptionTags: Array.isArray(session.misconceptionTags) ? session.misconceptionTags.filter((entry) => typeof entry === 'string') : [],
+    misconceptionTags: hideGpsInterimResults
+      ? []
+      : (Array.isArray(session.misconceptionTags) ? session.misconceptionTags.filter((entry) => typeof entry === 'string') : []),
     guided: session.mode === 'guided' ? {
       skillId: typeof session.guidedSkillId === 'string' ? session.guidedSkillId : null,
       supportLevel: normaliseSupportLevel(session.guidedSupportLevel),
       teachBox: guidedTeachBox(session.guidedSkillId, session.guidedSupportLevel),
     } : null,
     weakFocus: session.mode === 'weak' ? safeWeakFocus(session.weakFocus) : null,
+    gps: session.mode === 'gps' ? safeGpsSession(session) : null,
     serverAuthority: session.serverAuthority === 'worker' ? 'worker' : null,
   };
   return safe;
@@ -166,6 +184,7 @@ export function buildPunctuationReadModel({
 } = {}) {
   const safeState = cloneSerialisable(state) || {};
   const phase = typeof safeState.phase === 'string' ? safeState.phase : 'setup';
+  const hideGpsInterimFeedback = safeState.session?.mode === 'gps' && phase !== 'summary';
   if (phase === 'active-item') assertNoForbiddenItemFields(safeState.session?.currentItem);
   return {
     subjectId: 'punctuation',
@@ -173,7 +192,7 @@ export function buildPunctuationReadModel({
     version: 1,
     phase,
     session: ['active-item', 'feedback'].includes(phase) ? safeSession(safeState.session, phase) : null,
-    feedback: phase === 'feedback' || phase === 'summary' ? safeFeedback(safeState.feedback) : null,
+    feedback: hideGpsInterimFeedback ? null : (phase === 'feedback' || phase === 'summary' ? safeFeedback(safeState.feedback) : null),
     summary: phase === 'summary' ? safeSummary(safeState.summary) : null,
     error: typeof safeState.error === 'string' ? safeState.error : '',
     availability: cloneSerialisable(safeState.availability) || { status: 'ready', code: null, message: '' },

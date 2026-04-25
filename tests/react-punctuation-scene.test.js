@@ -94,6 +94,8 @@ test('punctuation React surface renders guided setup controls and teach boxes', 
   assert.match(setupHtml, /data-punctuation-guided-start/);
   assert.match(setupHtml, /Weak spots/);
   assert.match(setupHtml, /data-punctuation-weak-start/);
+  assert.match(setupHtml, /GPS test/);
+  assert.match(setupHtml, /data-punctuation-gps-start/);
 
   harness.store.updateSubjectUi('punctuation', {
     phase: 'active-item',
@@ -169,6 +171,85 @@ test('punctuation React surface renders weak focus chips safely', () => {
   assert.match(html, /Inverted commas and speech punctuation/);
   assert.match(html, /insert/);
   assert.doesNotMatch(html, /accepted|correctIndex|rubric|validator|generator|hiddenQueue/);
+});
+
+test('punctuation React surface renders GPS active progress and final review', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'gps-ui',
+      mode: 'gps',
+      length: 3,
+      answeredCount: 1,
+      gps: {
+        testLength: 3,
+        answeredCount: 1,
+        remainingCount: 2,
+        delayedFeedback: true,
+      },
+      guided: null,
+      currentItem: {
+        id: 'se_insert_capital',
+        mode: 'insert',
+        inputKind: 'text',
+        prompt: 'Add the missing capital letter and full stop.',
+        stem: 'the boat reached the harbour',
+      },
+    },
+  });
+
+  const activeHtml = harness.render();
+  assert.match(activeHtml, /GPS test/);
+  assert.match(activeHtml, /Delayed feedback/);
+  assert.match(activeHtml, /2 of 3/);
+  assert.doesNotMatch(activeHtml, /Worked example|Common mistake|displayCorrection|accepted|correctIndex|rubric|validator|generator|hiddenQueue|queueItemIds|responses/);
+
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'summary',
+    summary: {
+      label: 'Punctuation GPS test summary',
+      message: 'GPS test complete.',
+      total: 2,
+      correct: 1,
+      accuracy: 50,
+      gps: {
+        delayedFeedback: true,
+        recommendedMode: 'weak',
+        recommendedLabel: 'Weak spots',
+        reviewItems: [
+          {
+            index: 1,
+            itemId: 'se_insert_capital',
+            mode: 'insert',
+            prompt: 'Add the missing capital letter and full stop.',
+            attemptedAnswer: 'The boat reached the harbour.',
+            displayCorrection: 'The boat reached the harbour.',
+            correct: true,
+            misconceptionTags: [],
+          },
+          {
+            index: 2,
+            itemId: 'sp_insert_question',
+            mode: 'insert',
+            prompt: 'Add the direct-speech punctuation.',
+            attemptedAnswer: 'Ella asked can we start now',
+            displayCorrection: 'Ella asked, "Can we start now?"',
+            correct: false,
+            misconceptionTags: ['speech.quote_missing'],
+          },
+        ],
+      },
+    },
+  });
+
+  const summaryHtml = harness.render();
+  assert.match(summaryHtml, /GPS review/);
+  assert.match(summaryHtml, /Next: Weak spots/);
+  assert.match(summaryHtml, /1\. Correct/);
+  assert.match(summaryHtml, /2\. Review/);
+  assert.match(summaryHtml, /speech\.quote_missing/);
 });
 
 test('punctuation text input remounts when the current text item changes', async () => {

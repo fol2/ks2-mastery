@@ -174,12 +174,60 @@ async function sendPunctuationActionPayload(data) {
 }
 
 test('punctuation browser command action keeps choiceIndex parsing strict', async () => {
-  assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex: 0 }), { choiceIndex: 0 });
-  assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex: '0' }), { choiceIndex: 0 });
+  assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex: 0 }), {
+    choiceIndex: 0,
+    expectedSessionId: 'session-a',
+  });
+  assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex: '0' }), {
+    choiceIndex: 0,
+    expectedSessionId: 'session-a',
+  });
 
   for (const choiceIndex of [null, '', [0]]) {
-    assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex }), { typed: '' });
+    assert.deepEqual(await sendPunctuationActionPayload({ choiceIndex }), {
+      typed: '',
+      expectedSessionId: 'session-a',
+    });
   }
+});
+
+test('punctuation browser command action binds submits to the visible item context', async () => {
+  const sent = [];
+  const handler = createSubjectCommandActionHandler({
+    subjectId: 'punctuation',
+    getState() {
+      return {
+        learners: { selectedId: 'learner-a' },
+        subjectUi: {
+          punctuation: {
+            session: {
+              id: 'session-gps',
+              releaseId: 'punctuation-release-1',
+              answeredCount: 1,
+              currentItem: { id: 'item-visible' },
+            },
+          },
+        },
+      };
+    },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        return Promise.resolve({ ok: true });
+      },
+    },
+    actions: punctuationSubjectCommandActions,
+  });
+
+  assert.equal(handler.handle('punctuation-submit-form', { typed: 'Answer.' }), true);
+  await flushPromises();
+  assert.deepEqual(sent[0].payload, {
+    typed: 'Answer.',
+    expectedSessionId: 'session-gps',
+    expectedItemId: 'item-visible',
+    expectedAnsweredCount: 1,
+    expectedReleaseId: 'punctuation-release-1',
+  });
 });
 
 test('punctuation start command action preserves explicit focus mode and round length', () => {
