@@ -791,6 +791,87 @@ export function renderSpellingSurfaceFixture({
   `);
 }
 
+/**
+ * Render the Spelling summary scene after a Guardian Mission round ends.
+ *
+ * We can't replay the standard setup -> session -> summary path in one
+ * fixture run because Guardian rounds pull words from the runtime guardian
+ * map, and `renderSpellingSurfaceFixture` does not know how to run a full
+ * round from inside its generated entry script. Instead we:
+ *   1. Seed the learner as fully post-mega with an empty guardian map.
+ *   2. Start a Guardian session (lazy-creates a record for the first word).
+ *   3. Submit one answer (correct or incorrect per `opts.correct`).
+ *   4. Render the resulting summary phase.
+ *
+ * The output is the same SubjectRoute markup the surface test harness
+ * returns, so caller tests can assert on Guardian-specific copy + CSS hooks.
+ */
+export function renderSpellingGuardianSummaryFixture({ correct = true } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { SubjectRoute } from ${JSON.stringify(absoluteSpecifier('src/surfaces/subject/SubjectRoute.jsx'))};
+    import { createLocalAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-local-app-controller.js'))};
+    import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
+    import { WORDS } from ${JSON.stringify(absoluteSpecifier('src/subjects/spelling/data/word-data.js'))};
+
+    installMemoryStorage();
+    const controller = createLocalAppController();
+    const learnerId = controller.store.getState().learners.selectedId;
+
+    // Seed every core-pool word as stage-4 secure so allWordsMega === true.
+    const nowDay = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+    const progress = {};
+    for (const word of WORDS) {
+      if ((word.spellingPool === 'extra' ? 'extra' : 'core') !== 'core') continue;
+      progress[word.slug] = {
+        stage: 4,
+        attempts: 6,
+        correct: 5,
+        wrong: 1,
+        dueDay: nowDay + 60,
+        lastDay: nowDay - 7,
+        lastResult: true,
+      };
+    }
+    const existing = controller.repositories.subjectStates.read(learnerId, 'spelling').data || {};
+    controller.repositories.subjectStates.writeData(learnerId, 'spelling', {
+      ...existing,
+      progress,
+      guardian: {},
+    });
+
+    controller.dispatch('open-subject', { subjectId: 'spelling' });
+    controller.services.spelling.savePrefs(learnerId, { mode: 'guardian', roundLength: '1' });
+    // A round-length=1 Guardian session lets us finish in a single submit.
+    controller.dispatch('spelling-shortcut-start', { mode: 'guardian' });
+    while (controller.store.getState().subjectUi.spelling.phase === 'session') {
+      const ui = controller.store.getState().subjectUi.spelling;
+      const formData = new FormData();
+      const card = ui.session.currentCard;
+      formData.set('typed', ${JSON.stringify(correct)} ? card.word.word : 'zzzobviouslywrong');
+      controller.dispatch('spelling-submit-form', { formData });
+      // Guardian sessions retain the awaiting-advance step on wrong answers
+      // so we continue here to get to the next card / summary.
+      const after = controller.store.getState().subjectUi.spelling;
+      if (after.phase === 'session' && after.awaitingAdvance) {
+        controller.dispatch('spelling-continue');
+      }
+    }
+
+    const appState = controller.store.getState();
+    const context = controller.contextFor('spelling');
+    const actions = {
+      dispatch(action, data) { controller.dispatch(action, data); },
+      navigateHome() { controller.dispatch('navigate-home'); },
+      openParentHub() { controller.dispatch('open-parent-hub'); },
+      openAdminHub() { controller.dispatch('open-admin-hub'); },
+    };
+    const html = renderToStaticMarkup(<SubjectRoute appState={appState} context={context} actions={actions} />);
+    console.log(html);
+  `);
+}
+
 export function renderSpellingClozeFixture({ sentence, answer = '', revealAnswer = false } = {}) {
   return renderFixture(`
     import React from 'react';
