@@ -122,6 +122,14 @@ It verifies a production demo session, a fixed Worker-owned Grammar start-submit
 
 This Grammar smoke is intentionally a manual post-deploy release gate. Do not wire it into `npm run check` or another dry-run script because it requires the deployed production origin and live demo-session/auth behaviour.
 
+When monster visual or effect config is the deployed change, run:
+
+```bash
+npm run smoke:production:effect
+```
+
+It verifies the merged effect-config sub-document on `/api/bootstrap` parses, the catalog includes all eight bundled kinds, and every covered asset has bindings or celebration tunables defined. See `docs/monster-visual-config.md` for CLI flags and exit-code semantics.
+
 ## Operations
 
 Wrangler observability is enabled, but production should still alert on the signals that would indicate the lockdown boundary is under stress:

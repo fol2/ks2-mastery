@@ -136,13 +136,13 @@ Account role management inside Operations is narrower:
 - role changes are written to `adult_accounts.platform_role`
 - role changes are recorded in `mutation_receipts`
 
-Monster visual config management is admin-only:
+Monster visual + effect config management is admin-only:
 
 - `admin` can edit the browser-local draft buffer, save the shared cloud draft, publish, and restore a retained version into draft
 - `ops` can inspect previews, validation state, changed assets, and blockers, but cannot mutate the config
-- publish is blocked unless every manifest asset and every renderer context has complete reviewed values
-- restore changes draft only; it does not change the live published version until a later publish
 - the latest 20 published versions are retained for rollback-to-draft
+
+See `docs/monster-visual-config.md` for the authoritative publish-blocker list, authoring workflow, bundled-fallback coverage, and the `npm run smoke:production:effect` post-deploy probe.
 
 ## Admin ops console P1 extensions
 
