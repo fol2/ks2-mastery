@@ -489,7 +489,7 @@ export function buildPunctuationLearnerReadModel({
     };
   }
 
-  const hasEvidence = attempts.length > 0 || itemSnapshots.length > 0 || publishedRewardUnits.length > 0 || sessions.length > 0;
+  const hasEvidence = attempts.length > 0 || sessions.length > 0;
   const accuracy = percent(correct, attempts.length);
   return {
     subjectId: 'punctuation',
