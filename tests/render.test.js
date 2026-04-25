@@ -388,7 +388,9 @@ test('codex hero uses the highest-priority unknown creature for a fresh profile'
   ]);
   const featured = pickFeaturedCodexEntry(entries);
 
-  assert.equal(featured.id, 'vellhorn');
+  // After uncaught synthesis includes Punctuation + Grammar rosters, the highest-rank
+  // legendary across all subjects becomes Concordium (Grammar grand) at power 18.
+  assert.equal(featured.id, 'concordium');
   assert.equal(featured.displayState, 'fresh');
   assert.equal(featured.placeholder, '?');
 });

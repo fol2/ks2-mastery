@@ -3412,6 +3412,187 @@ textarea:focus-visible {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
 }
+
+/* Codex subject sections — collapsible chapter dividers */
+.codex-subject-stack {
+  display: grid;
+  gap: 28px;
+}
+.codex-subject-section {
+  --subject-accent: linear-gradient(135deg, var(--brand), color-mix(in oklab, var(--brand) 60%, var(--ink)));
+  display: grid;
+  gap: 16px;
+}
+.codex-subject-section.is-mastered .codex-subject-glyph::before {
+  opacity: 1;
+}
+.codex-subject-head {
+  margin: 0;
+  font-weight: inherit;
+}
+.codex-subject-toggle {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  padding: 14px 18px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--panel) 0%, color-mix(in oklab, var(--panel-soft) 50%, var(--panel)) 100%);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 200ms ease, box-shadow 200ms ease, transform 220ms var(--ease-out);
+  position: relative;
+}
+.codex-subject-toggle::after {
+  content: '';
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 8px;
+  height: 1px;
+  background: var(--subject-accent);
+  opacity: 0.22;
+  border-radius: 1px;
+  pointer-events: none;
+}
+.codex-subject-toggle:hover {
+  border-color: color-mix(in oklab, var(--ink) 18%, var(--line));
+  box-shadow: var(--shadow-xs);
+}
+.codex-subject-toggle:focus-visible {
+  outline: 2px solid var(--ring, currentColor);
+  outline-offset: 2px;
+}
+.codex-subject-glyph {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: color-mix(in oklab, transparent 88%, var(--ink));
+  font-family: var(--font-display, 'Fraunces', serif);
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--ink);
+  isolation: isolate;
+}
+.codex-subject-glyph::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--subject-accent);
+  opacity: 0.14;
+  z-index: -1;
+}
+.codex-subject-titles {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.codex-subject-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.codex-subject-name {
+  font-family: var(--font-display, 'Fraunces', serif);
+  font-size: clamp(1.6rem, 1rem + 1.4vw, 2.1rem);
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.codex-subject-meta {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 12px;
+}
+.codex-subject-count {
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.codex-subject-bar {
+  position: relative;
+  display: block;
+  width: 96px;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in oklab, transparent 92%, var(--ink));
+  overflow: hidden;
+}
+.codex-subject-bar > span {
+  display: block;
+  width: calc(var(--p, 0) * 1%);
+  height: 100%;
+  background: var(--subject-accent);
+  border-radius: inherit;
+  transition: width 360ms var(--ease-out);
+}
+.codex-subject-chevron {
+  position: relative;
+  display: block;
+  width: 14px;
+  height: 14px;
+  transition: transform 240ms var(--ease-out);
+}
+.codex-subject-chevron::before,
+.codex-subject-chevron::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 9px;
+  height: 1.6px;
+  border-radius: 1px;
+  background: var(--ink);
+  transform-origin: center;
+}
+.codex-subject-chevron::before {
+  left: 0;
+  transform: translateY(-50%) rotate(45deg);
+}
+.codex-subject-chevron::after {
+  right: 0;
+  transform: translateY(-50%) rotate(-45deg);
+}
+.codex-subject-section.is-open .codex-subject-chevron {
+  transform: rotate(180deg);
+}
+.codex-subject-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 320ms var(--ease-out), opacity 240ms ease;
+}
+.codex-subject-section.is-open .codex-subject-content {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.codex-subject-content-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+.codex-subject-section .codex-roster {
+  margin-top: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .codex-subject-content,
+  .codex-subject-chevron,
+  .codex-subject-bar > span,
+  .codex-subject-toggle {
+    transition: none;
+  }
+}
+
 .codex-card {
   --monster-colour: var(--brand);
   --monster-soft: var(--brand-soft);
@@ -3986,6 +4167,25 @@ textarea:focus-visible {
   }
   .codex-card-top {
     min-height: 190px;
+  }
+  .codex-subject-toggle {
+    grid-template-columns: auto 1fr auto;
+    gap: 14px;
+    padding: 14px 16px 18px;
+  }
+  .codex-subject-glyph {
+    width: 48px;
+    height: 48px;
+    font-size: 1.4rem;
+  }
+  .codex-subject-meta {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr auto;
+    margin-top: 6px;
+    padding-left: 62px;
+  }
+  .codex-subject-bar {
+    width: 80px;
   }
 }
 

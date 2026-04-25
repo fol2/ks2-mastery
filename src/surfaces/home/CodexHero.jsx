@@ -5,11 +5,12 @@ import {
   codexEntryStateClassName,
   codexFeatureStyle,
 } from './codex-view-model.js';
+import { formatSubjectList } from './data.js';
 
 export function CodexHero({
   featured,
   heroBg,
-  hasPunctuation,
+  presentSubjects = [],
   learnerName,
   onNavigateHome,
   onPreviewCreature,
@@ -26,11 +27,7 @@ export function CodexHero({
         <h1 className="codex-title">
           {learnerName ? `${learnerName}'s codex journal` : 'Codex journal'}
         </h1>
-        <p className="codex-lede">
-          {hasPunctuation
-            ? 'Track the creatures awakened by secure spelling words and punctuation units, from first catch through each evolution.'
-            : 'Track the creatures awakened by secure spellings, from first catch through each evolution.'}
-        </p>
+        <p className="codex-lede">{describeCodexLede(presentSubjects)}</p>
         <div className="hero-cta-row">
           <button type="button" className="btn ghost xl" onClick={onNavigateHome}>
             Back to dashboard
@@ -80,4 +77,26 @@ function CodexStat({ value, label }) {
       <span>{label}</span>
     </span>
   );
+}
+
+function describeCodexLede(presentSubjects) {
+  if (!presentSubjects.length) {
+    return 'Track the creatures awakened by secure learning, from first catch through each evolution.';
+  }
+  const onlySpelling = presentSubjects.length === 1 && presentSubjects[0] === 'Spelling';
+  if (onlySpelling) {
+    return 'Track the creatures awakened by secure spellings, from first catch through each evolution.';
+  }
+  const list = formatSubjectList(presentSubjects.map(toLowerNoun));
+  return `Track the creatures awakened by secure ${list}, from first catch through each evolution.`;
+}
+
+function toLowerNoun(subjectName) {
+  if (subjectName === 'Spelling') return 'spellings';
+  if (subjectName === 'Punctuation') return 'punctuation units';
+  if (subjectName === 'Grammar') return 'grammar units';
+  if (subjectName === 'Reading') return 'reading evidence';
+  if (subjectName === 'Arithmetic') return 'arithmetic units';
+  if (subjectName === 'Reasoning') return 'reasoning units';
+  return subjectName.toLowerCase();
 }

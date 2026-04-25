@@ -4,6 +4,8 @@ import {
 } from './codex-visual-scale.js';
 import {
   DIRECT_STAGE_THRESHOLDS,
+  MONSTERS,
+  MONSTERS_BY_SUBJECT,
   PHAETON_STAGE_THRESHOLDS,
 } from '../../platform/game/monsters.js';
 import {
@@ -27,6 +29,22 @@ const CODEX_POWER_RANK = Object.freeze({
   colisk: 9,
   hyphang: 10,
   carillon: 11,
+  bracehart: 12,
+  glossbloom: 13,
+  loomrill: 14,
+  chronalyx: 15,
+  couronnail: 16,
+  mirrane: 17,
+  concordium: 18,
+});
+
+const SUBJECT_NAMES = Object.freeze({
+  spelling: 'Spelling',
+  arithmetic: 'Arithmetic',
+  reasoning: 'Reasoning',
+  grammar: 'Grammar',
+  punctuation: 'Punctuation',
+  reading: 'Reading',
 });
 
 export const REGION_BACKGROUND_URLS = Object.freeze([
@@ -610,10 +628,11 @@ export function buildSubjectCards(subjects = [], dashboardStats = {}) {
 }
 
 export function buildCodexEntries(summary = []) {
-  return summary.map(({ monster, progress, subjectId = 'spelling' }) => {
+  return withSynthesisedUncaughtMonsters(summary).map(({ monster, progress, subjectId = 'spelling' }) => {
     const resolvedSubjectId = subjectId || progress?.subjectId || 'spelling';
     const mastered = Math.max(0, Number(progress?.mastered) || 0);
-    const max = resolvedSubjectId === 'punctuation'
+    const isUnitSubject = resolvedSubjectId === 'punctuation' || resolvedSubjectId === 'grammar';
+    const max = isUnitSubject
       ? Math.max(1, Number(progress?.publishedTotal) || Number(monster?.masteredMax) || 1)
       : Math.max(1, Number(monster?.masteredMax) || (monster?.id === 'phaeton' ? 213 : 100));
     const stage = Math.max(0, Math.min(4, Number(progress?.stage) || 0));
@@ -658,6 +677,69 @@ export function buildCodexEntries(summary = []) {
   });
 }
 
+function withSynthesisedUncaughtMonsters(summary = []) {
+  const presentIds = new Set(
+    summary.map(({ monster }) => monster?.id).filter(Boolean),
+  );
+  const synthesised = [];
+  for (const [subjectId, monsterIds] of Object.entries(MONSTERS_BY_SUBJECT)) {
+    for (const monsterId of monsterIds) {
+      if (presentIds.has(monsterId)) continue;
+      const monster = MONSTERS[monsterId];
+      if (!monster) continue;
+      synthesised.push({
+        subjectId,
+        monster,
+        progress: { caught: false, mastered: 0, stage: 0, level: 0 },
+      });
+    }
+  }
+  return [...summary, ...synthesised];
+}
+
+export function buildCodexSubjectGroups(entries = []) {
+  return Object.keys(MONSTERS_BY_SUBJECT)
+    .map((subjectId) => {
+      const subjectEntries = entries.filter((entry) => entry.subjectId === subjectId);
+      if (!subjectEntries.length) return null;
+      return {
+        subjectId,
+        decor: subjectDecor(subjectId),
+        subjectName: subjectName(subjectId),
+        entries: subjectEntries,
+        totals: codexSubjectTotals(subjectEntries),
+        status: deriveSubjectStatus(subjectEntries),
+      };
+    })
+    .filter(Boolean);
+}
+
+export function subjectName(subjectId) {
+  return SUBJECT_NAMES[subjectId] || subjectId;
+}
+
+export function formatSubjectList(names = []) {
+  if (!names.length) return '';
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+}
+
+function codexSubjectTotals(entries) {
+  const caught = entries.filter((entry) => entry.caught).length;
+  const total = entries.length;
+  const progressPct = total
+    ? Math.round(entries.reduce((sum, entry) => sum + (entry.progressPct || 0), 0) / total)
+    : 0;
+  return { caught, total, progressPct };
+}
+
+function deriveSubjectStatus(entries) {
+  if (!entries.some((entry) => entry.caught)) return 'unstarted';
+  if (entries.every((entry) => entry.caught && entry.stage >= 4)) return 'mastered';
+  return 'in-progress';
+}
+
 export function pickFeaturedCodexEntry(entries = []) {
   return entries
     .slice()
@@ -679,7 +761,7 @@ function codexPowerRank(monsterId) {
 
 function secureProgressLabel(subjectId, mastered) {
   const count = Math.max(0, Number(mastered) || 0);
-  if (subjectId === 'punctuation') {
+  if (subjectId === 'punctuation' || subjectId === 'grammar') {
     if (count === 1) return '1 secure unit';
     if (count > 1) return `${count} secure units`;
     return 'No secure units yet';
@@ -692,17 +774,19 @@ function secureProgressLabel(subjectId, mastered) {
 function codexNextGoal({ subjectId, caught, nextMilestone }) {
   if (!caught && nextMilestone) {
     if (subjectId === 'punctuation') return 'Secure punctuation units to catch this creature';
+    if (subjectId === 'grammar') return 'Secure grammar units to catch this creature';
     return 'Secure words to catch this creature';
   }
   if (nextMilestone) {
     if (subjectId === 'punctuation') return 'Keep securing punctuation units for the next change';
+    if (subjectId === 'grammar') return 'Keep securing grammar units for the next change';
     return 'Keep securing words for the next change';
   }
   return 'Fully evolved';
 }
 
 function nextCodexMilestone(monsterId, mastered, { subjectId = 'spelling', max = null } = {}) {
-  if (subjectId === 'punctuation') {
+  if (subjectId === 'punctuation' || subjectId === 'grammar') {
     const limit = Math.max(1, Number(max) || 1);
     return mastered < limit ? mastered + 1 : null;
   }
@@ -720,6 +804,16 @@ function codexWordBand(monsterId, subjectId = 'spelling') {
     if (monsterId === 'hyphang') return 'Boundary punctuation';
     if (monsterId === 'carillon') return 'Published punctuation release';
     return 'Punctuation codex';
+  }
+  if (subjectId === 'grammar') {
+    if (monsterId === 'bracehart') return 'Sentence and clause';
+    if (monsterId === 'glossbloom') return 'Word class and noun phrase';
+    if (monsterId === 'loomrill') return 'Flow and cohesion';
+    if (monsterId === 'chronalyx') return 'Verb tense and modal';
+    if (monsterId === 'couronnail') return 'Standard English';
+    if (monsterId === 'mirrane') return 'Voice and role';
+    if (monsterId === 'concordium') return 'Whole grammar codex';
+    return 'Grammar codex';
   }
   if (monsterId === 'inklet') return 'Years 3-4 spellings';
   if (monsterId === 'glimmerbug') return 'Years 5-6 spellings';
