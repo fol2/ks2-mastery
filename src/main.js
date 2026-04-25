@@ -25,6 +25,8 @@ import {
   applyAdminHubPanelRefreshError,
 } from './platform/hubs/admin-panel-patches.js';
 import { routeAdminRefreshError } from './platform/hubs/admin-refresh-error-text.js';
+import { createAccountOpsMetadataDirtyRegistry } from './platform/hubs/admin-metadata-dirty-registry.js';
+import { runAdminOpsRefreshCascade } from './platform/hubs/admin-refresh-cascade.js';
 import {
   buildAdminHubAccessContext,
   buildParentHubAccessContext,
@@ -861,8 +863,38 @@ async function refreshAdminOpsErrorEvents({ status = null, limit = 50 } = {}) {
   }
 }
 
+// P1.5 Phase A (U2): dirty-row registry for the account-ops-metadata panel.
+// Rows register themselves via `actions.registerAccountOpsMetadataRowDirty`
+// whenever their local dirtyRef flips, which is wired through the top-level
+// `actions` object built in buildSurfaceActions(). The registry reports
+// `anyDirty()` to the narrow-refresh helper and records suppressed refresh
+// attempts so the first dirty→clean transition flushes a single follow-up
+// refresh (closes the ghost-change UX where a dirty edit silently diverges
+// from server state while all refresh attempts are dropped).
+const accountOpsMetadataDirtyRegistry = createAccountOpsMetadataDirtyRegistry({
+  onFlushRequested: () => {
+    // We only need a flush on the dirty → clean transition, and only when
+    // the registry's counter indicates at least one suppressed refresh.
+    // The hub API may not exist yet on first boot, so the helper below
+    // short-circuits with its own guard in that case.
+    refreshAdminOpsAccountsMetadata();
+  },
+});
+
+function registerAccountOpsMetadataRowDirty(accountId, isDirty) {
+  accountOpsMetadataDirtyRegistry.setDirty(accountId, Boolean(isDirty));
+}
+
 async function refreshAdminOpsAccountsMetadata() {
   if (!hubApi) return { ok: false, reason: 'no-hub' };
+  // P1.5 Phase A (U2): if any row in the metadata panel is mid-edit we must
+  // not let a refresh clobber the local draft — instead we record that a
+  // refresh would have happened, and the dirty→clean transition in the
+  // registry flushes a single follow-up refresh.
+  if (accountOpsMetadataDirtyRegistry.anyDirty()) {
+    accountOpsMetadataDirtyRegistry.recordSuppressedRefresh();
+    return { ok: false, reason: 'suppressed-dirty' };
+  }
   const token = beginAdminOpsRefreshToken('accountOpsMetadata');
   try {
     const payload = await hubApi.readAdminOpsAccountsMetadata();
@@ -874,6 +906,23 @@ async function refreshAdminOpsAccountsMetadata() {
     applyAdminOpsRefreshError('accountOpsMetadata', error);
     return { ok: false, reason: 'error', error };
   }
+}
+
+// P1.5 Phase A (U2): cascade a successful admin-ops mutation into narrow
+// refreshes of its dependent panels via the shared
+// `runAdminOpsRefreshCascade` helper. Sequential + fail-fast — if an
+// earlier step fails the later steps are suppressed so the refresh-error
+// banner from U1 correlates the user-facing failure with the first broken
+// step. The metadata panel itself is only refreshed when no row is dirty;
+// when it is dirty, the suppression counter in
+// refreshAdminOpsAccountsMetadata tracks the skipped refresh and the
+// dirty→clean transition flushes one follow-up refresh.
+function cascadeAdminOpsRefreshAfterMutation({ includeErrorEvents = false } = {}) {
+  return runAdminOpsRefreshCascade({
+    refreshKpi: refreshAdminOpsKpi,
+    refreshActivity: refreshAdminOpsActivity,
+    refreshErrorEvents: refreshAdminOpsErrorEvents,
+  }, { includeErrorEvents });
 }
 
 function rebuildSpellingService() {
@@ -1667,7 +1716,19 @@ async function updateAccountOpsMetadata({ accountId, patch }) {
           updatedByAccountId: entry.updatedByAccountId ?? row.updatedByAccountId,
         };
       }, 'Account ops metadata saved.');
+      // P1.5 Phase A (U2): clear the dirty flag for this row now that the
+      // server state has been accepted. Any external refresh that arrives
+      // after this point can safely re-hydrate the row; the flush-on-clean
+      // rule in registerAccountOpsMetadataRowDirty fires one follow-up
+      // metadata-panel refresh when the last dirty row becomes clean.
+      registerAccountOpsMetadataRowDirty(accountId, false);
     }
+    // P1.5 Phase A (U2): cascade dependent-panel refresh. KPI first, then
+    // activity (fail-fast — see cascadeAdminOpsRefreshAfterMutation). The
+    // metadata panel itself is already up to date from the optimistic
+    // patch above, and the dirty registry decides whether to skip the
+    // metadata-panel auto-refresh.
+    cascadeAdminOpsRefreshAfterMutation();
   } catch (error) {
     // Roll back to the snapshot.
     if (snapshot) {
@@ -1736,6 +1797,11 @@ async function updateOpsErrorEventStatus({ eventId, status }) {
         };
       }, payload?.noop ? '' : 'Error event status updated.');
     }
+    // P1.5 Phase A (U2): cascade dependent-panel refresh on successful
+    // status transition — error-events totals bucket first (so the chips
+    // update), then KPI, then activity. The sequential chain is fail-fast
+    // per cascadeAdminOpsRefreshAfterMutation's contract.
+    cascadeAdminOpsRefreshAfterMutation({ includeErrorEvents: true });
   } catch (error) {
     if (snapshot) {
       patchAdminHubErrorEventEntry((row) => (
@@ -1909,6 +1975,12 @@ function buildSurfaceActions() {
     openAdminHub: () => dispatchAction('open-admin-hub'),
     logout: () => dispatchAction('platform-logout'),
     retryPersistence: () => dispatchAction('persistence-retry'),
+    // P1.5 Phase A (U2): expose dirty-row registration to the admin surface
+    // so the AccountOpsMetadataRow can flip its dirtyRef through a stable
+    // actions handle. The registry is module-scope (see
+    // registerAccountOpsMetadataRowDirty above) so callers don't need to
+    // thread extra state through the component tree.
+    registerAccountOpsMetadataRowDirty,
   };
 }
 

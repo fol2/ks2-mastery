@@ -181,21 +181,48 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
   const [tagsText, setTagsText] = React.useState((account.tags || []).join(', '));
   const [internalNotes, setInternalNotes] = React.useState(account.internalNotes || '');
 
-  // Rehydrate local input state when the underlying row changes (optimistic
-  // patch or server refresh) to keep the inputs in sync without wiping
-  // in-progress edits the user is actively typing.
+  // P1.5 Phase A (U2): a `useRef`-gated dirty flag blocks the prop-to-state
+  // re-sync below whenever the user is mid-edit. The flag is authoritative
+  // per row; the parent panel and cascade dispatcher only need to know
+  // whether ANY row is dirty (so they can decide whether to suppress the
+  // metadata panel's own narrow refresh). We register the flag with the
+  // module-scope registry via `actions.registerAccountOpsMetadataRowDirty`
+  // every time it flips so the suppression-and-flush bookkeeping stays in
+  // one place. The dispatcher clears the ref on save success.
+  const dirtyRef = React.useRef(false);
+  const registerDirty = actions?.registerAccountOpsMetadataRowDirty
+    || (() => {});
+  const markDirty = React.useCallback(() => {
+    if (dirtyRef.current) return;
+    dirtyRef.current = true;
+    registerDirty(accountId, true);
+  }, [accountId, registerDirty]);
+
+  // P1.5 Phase A (U2): rehydrate local input state from server props ONLY
+  // when the row is not dirty. Each of the four useEffect hooks below
+  // guards on `dirtyRef.current` so a mid-edit textarea is not wiped by an
+  // auto-refresh arriving seconds later. On save success the dispatcher
+  // calls registerDirty(accountId, false), which both clears the ref
+  // (next refresh applies) and fires the suppression-flush if applicable.
   React.useEffect(() => {
-    setOpsStatus(account.opsStatus || 'active');
+    if (!dirtyRef.current) setOpsStatus(account.opsStatus || 'active');
   }, [account.opsStatus]);
   React.useEffect(() => {
-    setPlanLabel(account.planLabel || '');
+    if (!dirtyRef.current) setPlanLabel(account.planLabel || '');
   }, [account.planLabel]);
   React.useEffect(() => {
-    setTagsText((account.tags || []).join(', '));
+    if (!dirtyRef.current) setTagsText((account.tags || []).join(', '));
   }, [account.tags]);
   React.useEffect(() => {
-    setInternalNotes(account.internalNotes || '');
+    if (!dirtyRef.current) setInternalNotes(account.internalNotes || '');
   }, [account.internalNotes]);
+
+  // Unmount-clean: if a dirty row unmounts (learner switch, panel collapse)
+  // we drop its entry from the module-scope registry so a still-dirty row
+  // that no longer exists does not block future metadata-panel refreshes.
+  React.useEffect(() => () => {
+    if (dirtyRef.current) registerDirty(accountId, false);
+  }, [accountId, registerDirty]);
 
   const handleSave = () => {
     const parsedTags = tagsText
@@ -249,7 +276,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
             name="opsStatus"
             value={opsStatus}
             disabled={isSaving}
-            onChange={(event) => setOpsStatus(event.target.value)}
+            onChange={(event) => { markDirty(); setOpsStatus(event.target.value); }}
           >
             {OPS_STATUS_OPTIONS.map((option) => (
               <option value={option} key={option}>{option}</option>
@@ -267,7 +294,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
           value={planLabel}
           maxLength={64}
           disabled={isSaving}
-          onChange={(event) => setPlanLabel(event.target.value)}
+          onChange={(event) => { markDirty(); setPlanLabel(event.target.value); }}
         />
       </label>
       <label className="field" style={{ minWidth: 160 }}>
@@ -278,7 +305,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
           name="tags"
           value={tagsText}
           disabled={isSaving}
-          onChange={(event) => setTagsText(event.target.value)}
+          onChange={(event) => { markDirty(); setTagsText(event.target.value); }}
         />
       </label>
       <label className="field" style={{ minWidth: 200 }}>
@@ -290,7 +317,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
           maxLength={2000}
           rows={3}
           disabled={isSaving}
-          onChange={(event) => setInternalNotes(event.target.value)}
+          onChange={(event) => { markDirty(); setInternalNotes(event.target.value); }}
         />
       </label>
       <div>
