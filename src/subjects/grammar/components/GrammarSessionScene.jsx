@@ -336,6 +336,7 @@ function MiniTestStatus({ miniTest, pending, runtimeReadOnly, answerFormId }) {
             data-index={index}
             disabled={runtimeReadOnly || pending || question.current}
             aria-current={question.current ? 'step' : undefined}
+            aria-pressed={question.answered ? 'true' : 'false'}
             key={`${question.itemId || question.templateId}-${index}`}
           >
             <span>{index + 1}</span>
