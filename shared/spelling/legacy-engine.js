@@ -268,11 +268,11 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         var p = getProgressFromStore(profileId, word.slug, progressStore);
         var today = todayDay();
         if (p.wrong > 0 && p.dueDay <= today) return "urgent";
+        if (p.wrong > 0) return "fragile";
         if (p.attempts > 0 && p.dueDay <= today) return "due";
         if (p.attempts === 0) return "new";
-        if (p.stage >= SECURE_STAGE) return "secure";
-        if (p.wrong > 0) return "fragile";
-        return "growing";
+        if (p.stage < SECURE_STAGE) return "growing";
+        return "secure";
       }
 
       function isTroubleProgress(progress, today) {
