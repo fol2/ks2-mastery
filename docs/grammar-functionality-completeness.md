@@ -9,6 +9,7 @@ This document tracks Grammar-only functionality completeness against the reviewe
 - The reviewed denominator is present: 18 concepts, 51 templates, 31 selected-response templates, and 20 constructed-response templates.
 - All eight legacy mode ids are enabled: `learn`, `smart`, `trouble`, `surgery`, `builder`, `worked`, `faded`, and `satsset`.
 - Analytics, misconception evidence, question-type evidence, recent activity, Grammar rewards, Bellstorm bridge copy, non-scored AI enrichment validation/triggers, adult Grammar evidence surfaces, production smoke, and browser/bundle guardrails already exist.
+- Grammar AI enrichment keeps deterministic fallback as the production contract until a separate reviewed server-side provider plan lands.
 
 ## Remaining Completeness Work
 
@@ -39,6 +40,7 @@ This document tracks Grammar-only functionality completeness against the reviewe
 ## Source of Truth
 
 - Plan: `docs/plans/2026-04-25-001-feat-grammar-functionality-completeness-plan.md`
+- AI provider decision: `docs/grammar-ai-provider-decision.md`
 - Baseline fixture: `tests/fixtures/grammar-functionality-completeness/legacy-baseline.json`
 - Guardrail test: `tests/grammar-functionality-completeness.test.js`
 

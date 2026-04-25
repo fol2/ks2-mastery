@@ -22,6 +22,7 @@ const livePlanPath = path.join(rootDir, 'docs/plans/2026-04-24-001-feat-grammar-
 const completenessPlanPath = path.join(rootDir, 'docs/plans/2026-04-25-001-feat-grammar-functionality-completeness-plan.md');
 const completenessDocPath = path.join(rootDir, 'docs/grammar-functionality-completeness.md');
 const transferDecisionPath = path.join(rootDir, 'docs/grammar-transfer-decision.md');
+const aiProviderDecisionPath = path.join(rootDir, 'docs/grammar-ai-provider-decision.md');
 
 function readBaseline() {
   return JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
@@ -127,14 +128,24 @@ test('Grammar completeness documentation and live checklist point at the active 
   const completenessPlan = fs.readFileSync(completenessPlanPath, 'utf8');
   const completenessDoc = fs.readFileSync(completenessDocPath, 'utf8');
   const transferDecision = fs.readFileSync(transferDecisionPath, 'utf8');
+  const aiProviderDecision = fs.readFileSync(aiProviderDecisionPath, 'utf8');
 
   assert.match(livePlan, /2026-04-25-001-feat-grammar-functionality-completeness-plan\.md/);
   assert.match(livePlan, /docs\/grammar-transfer-decision\.md/);
+  assert.match(livePlan, /docs\/grammar-ai-provider-decision\.md/);
   assert.doesNotMatch(livePlan, /Decide later whether paragraph-level transfer becomes/);
+  assert.doesNotMatch(livePlan, /Decide whether to connect a live AI provider/);
   assert.match(completenessPlan, /## Implementation Units/);
   assert.match(completenessDoc, /strict mini-test/i);
   assert.match(completenessDoc, /browser-held AI keys/i);
+  assert.match(completenessDoc, /deterministic fallback as the production contract/);
   assert.match(transferDecision, /non-scored transfer lane first/);
   assert.match(transferDecision, /must not mark paragraph writing, mutate mastery, schedule retries, unlock monsters, or count towards Concordium/);
   assert.match(transferDecision, /AI-marked paragraph scoring is rejected/);
+  assert.match(aiProviderDecision, /Do not connect a live third-party AI provider to Grammar in this slice/);
+  assert.match(aiProviderDecision, /deterministic fallback remains the production contract/);
+  assert.match(aiProviderDecision, /Provider keys must stay server-side/);
+  assert.match(aiProviderDecision, /Browser-held keys and React provider calls remain rejected behaviours/);
+  assert.match(aiProviderDecision, /existing Grammar AI enrichment validator/);
+  assert.match(aiProviderDecision, /separate reviewed plan before implementation/);
 });
