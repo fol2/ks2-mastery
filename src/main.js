@@ -40,6 +40,7 @@ import {
 import { createSpellingReadModelService } from './subjects/spelling/client-read-models.js';
 import { getOverallSpellingStats } from './subjects/spelling/module.js';
 import { resolveSpellingShortcut } from './subjects/spelling/shortcuts.js';
+import { resolveGrammarShortcut } from './subjects/grammar/shortcuts.js';
 import {
   monsterSummary,
   monsterSummaryFromSpellingAnalytics,
@@ -2223,7 +2224,9 @@ document.addEventListener('keydown', (event) => {
 }, true);
 
 globalThis.addEventListener?.('keydown', (event) => {
-  const shortcut = resolveSpellingShortcut(event, store.getState());
+  const appState = store.getState();
+  const shortcut = resolveSpellingShortcut(event, appState)
+    || resolveGrammarShortcut(event, appState);
   if (!shortcut) return;
   if (shortcut.preventDefault) event.preventDefault();
   if (shortcut.focusSelector) {

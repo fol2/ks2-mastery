@@ -78,6 +78,52 @@ test('Grammar surface runs from setup to Worker-style feedback and summary', () 
   assert.match(harness.render(), /Grammar retrieval practice/);
 });
 
+test('Grammar Enter key advances from feedback to the next question', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample();
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 2,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData(sample.correctResponse),
+  });
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'feedback');
+
+  assert.equal(harness.keydown({ key: 'Enter', target: { tagName: 'BODY' } }), true);
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'session');
+});
+
+test('Grammar Enter key is ignored while focus is inside a typing element', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample();
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 2,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData(sample.correctResponse),
+  });
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'feedback');
+
+  harness.keydown({ key: 'Enter', target: { tagName: 'TEXTAREA' } });
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'feedback');
+});
+
 test('Grammar surface runs KS2 mini-set mode with delayed feedback and end review', () => {
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });
