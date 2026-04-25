@@ -1,4 +1,9 @@
 import React from 'react';
+import {
+  MONSTER_VISUAL_FILTER_OPTIONS,
+  MONSTER_VISUAL_MOTION_PROFILE_OPTIONS,
+  MONSTER_VISUAL_PATH_OPTIONS,
+} from '../../platform/game/monster-visual-config.js';
 
 const BASELINE_NUMERIC_FIELDS = Object.freeze([
   'scale',
@@ -34,9 +39,6 @@ const CONTEXT_NUMERIC_FIELDS = Object.freeze([
   'cropWidth',
   'cropHeight',
 ]);
-
-const PATH_OPTIONS = Object.freeze(['none', 'walk', 'walk-b', 'fly-a', 'fly-b']);
-const MOTION_OPTIONS = Object.freeze(['still', 'egg-breathe', 'walk', 'walk-b', 'fly-a', 'fly-b']);
 
 function labelFor(field) {
   return String(field || '')
@@ -106,6 +108,17 @@ export function MonsterVisualFieldControls({
               <option value="right">Right</option>
             </select>
           </label>
+          <label className="field monster-visual-field">
+            <span>Filter</span>
+            <select
+              className="select"
+              value={assetEntry.baseline?.filter || 'none'}
+              disabled={disabled}
+              onChange={(event) => onBaselineChange('filter', event.target.value)}
+            >
+              {MONSTER_VISUAL_FILTER_OPTIONS.map((value) => <option value={value} key={value}>{value}</option>)}
+            </select>
+          </label>
           {BASELINE_NUMERIC_FIELDS.map((field) => (
             <NumberField
               field={field}
@@ -132,7 +145,7 @@ export function MonsterVisualFieldControls({
               disabled={disabled}
               onChange={(event) => onContextChange('path', event.target.value)}
             >
-              {PATH_OPTIONS.map((value) => <option value={value} key={value}>{value}</option>)}
+              {MONSTER_VISUAL_PATH_OPTIONS.map((value) => <option value={value} key={value}>{value}</option>)}
             </select>
           </label>
           <label className="field monster-visual-field">
@@ -143,7 +156,18 @@ export function MonsterVisualFieldControls({
               disabled={disabled}
               onChange={(event) => onContextChange('motionProfile', event.target.value)}
             >
-              {MOTION_OPTIONS.map((value) => <option value={value} key={value}>{value}</option>)}
+              {MONSTER_VISUAL_MOTION_PROFILE_OPTIONS.map((value) => <option value={value} key={value}>{value}</option>)}
+            </select>
+          </label>
+          <label className="field monster-visual-field">
+            <span>Filter</span>
+            <select
+              className="select"
+              value={contextEntry.filter || 'none'}
+              disabled={disabled}
+              onChange={(event) => onContextChange('filter', event.target.value)}
+            >
+              {MONSTER_VISUAL_FILTER_OPTIONS.map((value) => <option value={value} key={value}>{value}</option>)}
             </select>
           </label>
           {CONTEXT_NUMERIC_FIELDS.map((field) => (

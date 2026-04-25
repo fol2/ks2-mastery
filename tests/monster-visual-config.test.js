@@ -5,12 +5,31 @@ import { MONSTER_ASSET_MANIFEST } from '../src/platform/game/monster-asset-manif
 import {
   BUNDLED_MONSTER_VISUAL_CONFIG,
   MONSTER_VISUAL_CONTEXTS,
+  MONSTER_VISUAL_FILTER_OPTIONS,
+  MONSTER_VISUAL_MOTION_PROFILE_OPTIONS,
+  MONSTER_VISUAL_PATH_OPTIONS,
   buildMonsterAssetKey,
   monsterVisualAssetSources,
   normaliseMonsterVisualRuntimeConfig,
   resolveMonsterVisual,
   validateMonsterVisualConfigForPublish,
 } from '../src/platform/game/monster-visual-config.js';
+
+function reviewedConfig(config = BUNDLED_MONSTER_VISUAL_CONFIG) {
+  const reviewed = structuredClone(config);
+  for (const entry of Object.values(reviewed.assets || {})) {
+    entry.review = entry.review || { contexts: {} };
+    entry.review.contexts = entry.review.contexts || {};
+    for (const context of MONSTER_VISUAL_CONTEXTS) {
+      entry.review.contexts[context] = {
+        reviewed: true,
+        reviewedAt: Date.UTC(2026, 3, 24, 12, 0),
+        reviewedBy: 'test-admin',
+      };
+    }
+  }
+  return reviewed;
+}
 
 test('monster asset manifest covers every current monster asset folder deterministically', () => {
   const monsterIds = MONSTER_ASSET_MANIFEST.monsters.map((monster) => monster.id);
@@ -52,7 +71,7 @@ test('bundled monster visual config preserves current tuned defaults', () => {
 });
 
 test('bundled config has complete context values for every manifest asset', () => {
-  const validation = validateMonsterVisualConfigForPublish(BUNDLED_MONSTER_VISUAL_CONFIG);
+  const validation = validateMonsterVisualConfigForPublish(reviewedConfig());
 
   assert.equal(validation.ok, true);
   assert.deepEqual(validation.errors, []);
@@ -66,8 +85,38 @@ test('bundled config has complete context values for every manifest asset', () =
   }
 });
 
+test('generated neutral defaults start unreviewed so publish has a review backlog', () => {
+  const generatedAssets = MONSTER_ASSET_MANIFEST.assets.filter((asset) => (
+    BUNDLED_MONSTER_VISUAL_CONFIG.assets[asset.key]?.provenance === 'generated-neutral-default'
+  ));
+  const tunedAssets = MONSTER_ASSET_MANIFEST.assets.filter((asset) => (
+    BUNDLED_MONSTER_VISUAL_CONFIG.assets[asset.key]?.provenance === 'current-tuned-default'
+  ));
+
+  assert.equal(generatedAssets.length, 140);
+  assert.equal(tunedAssets.length, 40);
+  assert.ok(generatedAssets.every((asset) => (
+    MONSTER_VISUAL_CONTEXTS.every((context) => (
+      BUNDLED_MONSTER_VISUAL_CONFIG.assets[asset.key].review.contexts[context].reviewed === false
+    ))
+  )));
+  assert.ok(tunedAssets.every((asset) => (
+    MONSTER_VISUAL_CONTEXTS.every((context) => (
+      BUNDLED_MONSTER_VISUAL_CONFIG.assets[asset.key].review.contexts[context].reviewed === true
+    ))
+  )));
+
+  const validation = validateMonsterVisualConfigForPublish(BUNDLED_MONSTER_VISUAL_CONFIG);
+  assert.equal(validation.ok, false);
+  assert.ok(validation.errors.some((issue) => (
+    issue.code === 'monster_visual_review_required'
+    && issue.assetKey === generatedAssets[0].key
+    && issue.context === 'meadow'
+  )));
+});
+
 test('publish validation blocks missing contexts while render resolution falls back', () => {
-  const broken = structuredClone(BUNDLED_MONSTER_VISUAL_CONFIG);
+  const broken = reviewedConfig();
   delete broken.assets['vellhorn-b1-3'].contexts.codexFeature;
 
   const validation = validateMonsterVisualConfigForPublish(broken);
@@ -91,7 +140,7 @@ test('publish validation blocks missing contexts while render resolution falls b
 });
 
 test('publish validation reports out-of-range visual fields', () => {
-  const broken = structuredClone(BUNDLED_MONSTER_VISUAL_CONFIG);
+  const broken = reviewedConfig();
   broken.assets['vellhorn-b1-3'].baseline.opacity = 1.2;
   broken.assets['vellhorn-b1-3'].contexts.toastPortrait.scale = 0;
 
@@ -109,6 +158,36 @@ test('publish validation reports out-of-range visual fields', () => {
     && issue.context === 'toastPortrait'
     && issue.field === 'scale'
   )));
+});
+
+test('publish validation rejects unsupported visual enum values', () => {
+  const broken = reviewedConfig();
+  broken.assets['vellhorn-b1-3'].baseline.filter = 'url(#monster-filter)';
+  broken.assets['vellhorn-b1-3'].contexts.meadow.path = 'teleport';
+  broken.assets['vellhorn-b1-3'].contexts.meadow.motionProfile = 'teleport';
+  broken.assets['vellhorn-b1-3'].contexts.meadow.filter = 'drop-shadow(0 0 4px red)';
+
+  const validation = validateMonsterVisualConfigForPublish(broken);
+
+  assert.equal(validation.ok, false);
+  assert.ok(MONSTER_VISUAL_PATH_OPTIONS.includes('walk-b'));
+  assert.ok(MONSTER_VISUAL_MOTION_PROFILE_OPTIONS.includes('egg-breathe'));
+  assert.ok(MONSTER_VISUAL_FILTER_OPTIONS.includes('brightness(1.1)'));
+  assert.ok(validation.errors.some((issue) => (
+    issue.code === 'monster_visual_field_invalid'
+    && issue.assetKey === 'vellhorn-b1-3'
+    && issue.field === 'path'
+  )));
+  assert.ok(validation.errors.some((issue) => (
+    issue.code === 'monster_visual_field_invalid'
+    && issue.assetKey === 'vellhorn-b1-3'
+    && issue.field === 'motionProfile'
+  )));
+  assert.equal(validation.errors.filter((issue) => (
+    issue.code === 'monster_visual_field_invalid'
+    && issue.assetKey === 'vellhorn-b1-3'
+    && issue.field === 'filter'
+  )).length, 2);
 });
 
 test('asset source helper preserves existing image path convention', () => {

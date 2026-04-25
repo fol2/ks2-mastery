@@ -51,6 +51,10 @@ export const MONSTER_VISUAL_CONTEXT_FIELDS = Object.freeze([
   'filter',
 ]);
 
+export const MONSTER_VISUAL_PATH_OPTIONS = Object.freeze(['none', 'walk', 'walk-b', 'fly-a', 'fly-b']);
+export const MONSTER_VISUAL_MOTION_PROFILE_OPTIONS = Object.freeze(['still', 'egg-breathe', 'walk', 'walk-b', 'fly-a', 'fly-b']);
+export const MONSTER_VISUAL_FILTER_OPTIONS = Object.freeze(['none', 'brightness(1.1)']);
+
 const FACING_BY_ASSET = Object.freeze({
   'inklet-b1-0': 'left',     'inklet-b1-1': 'left',     'inklet-b1-2': 'left',
   'inklet-b1-3': 'left',     'inklet-b1-4': 'left',
@@ -206,14 +210,15 @@ function contextForAsset(asset, context) {
   };
 }
 
-function reviewStateForAsset() {
+function reviewStateForAsset(provenance) {
+  const reviewed = provenance !== 'generated-neutral-default';
   return {
     contexts: Object.fromEntries(MONSTER_VISUAL_CONTEXTS.map((context) => [
       context,
       {
-        reviewed: true,
+        reviewed,
         reviewedAt: 0,
-        reviewedBy: 'system',
+        reviewedBy: reviewed ? 'system' : '',
       },
     ])),
   };
@@ -225,24 +230,27 @@ export function buildBundledMonsterVisualConfig(manifest = MONSTER_ASSET_MANIFES
     manifestHash: manifest.manifestHash,
     source: 'bundled',
     version: 0,
-    assets: Object.fromEntries(manifest.assets.map((asset) => [
-      asset.key,
-      {
-        assetKey: asset.key,
-        monsterId: asset.monsterId,
-        branch: asset.branch,
-        stage: asset.stage,
-        provenance: FACING_BY_ASSET[asset.key] || CODEX_FEATURE_FOOT_PAD_BY_ASSET[asset.monsterId]
-          ? 'current-tuned-default'
-          : 'generated-neutral-default',
-        baseline: baselineForAsset(asset),
-        contexts: Object.fromEntries(MONSTER_VISUAL_CONTEXTS.map((context) => [
-          context,
-          contextForAsset(asset, context),
-        ])),
-        review: reviewStateForAsset(),
-      },
-    ])),
+    assets: Object.fromEntries(manifest.assets.map((asset) => {
+      const provenance = (FACING_BY_ASSET[asset.key] || CODEX_FEATURE_FOOT_PAD_BY_ASSET[asset.monsterId])
+        ? 'current-tuned-default'
+        : 'generated-neutral-default';
+      return [
+        asset.key,
+        {
+          assetKey: asset.key,
+          monsterId: asset.monsterId,
+          branch: asset.branch,
+          stage: asset.stage,
+          provenance,
+          baseline: baselineForAsset(asset),
+          contexts: Object.fromEntries(MONSTER_VISUAL_CONTEXTS.map((context) => [
+            context,
+            contextForAsset(asset, context),
+          ])),
+          review: reviewStateForAsset(provenance),
+        },
+      ];
+    })),
   };
 }
 
@@ -272,6 +280,9 @@ function validateBaseline(assetKey, baseline, errors) {
   if ('facing' in baseline && !['left', 'right'].includes(baseline.facing)) {
     errors.push(issue('monster_visual_field_invalid', 'Facing must be left or right.', { assetKey, field: 'facing' }));
   }
+  if ('filter' in baseline) {
+    validateAllowedField(assetKey, '', 'filter', baseline.filter, MONSTER_VISUAL_FILTER_OPTIONS, errors);
+  }
   for (const field of MONSTER_VISUAL_BASELINE_FIELDS.filter((name) => name !== 'facing' && name !== 'filter')) {
     if (field in baseline && !Number.isFinite(Number(baseline[field]))) {
       errors.push(issue('monster_visual_field_invalid', `Baseline field ${field} must be numeric.`, { assetKey, field }));
@@ -299,12 +310,26 @@ function validateContext(assetKey, context, values, errors) {
       errors.push(issue('monster_visual_field_invalid', `Context field ${field} must be numeric.`, { assetKey, context, field }));
     }
   }
+  if ('path' in values) {
+    validateAllowedField(assetKey, context, 'path', values.path, MONSTER_VISUAL_PATH_OPTIONS, errors);
+  }
+  if ('motionProfile' in values) {
+    validateAllowedField(assetKey, context, 'motionProfile', values.motionProfile, MONSTER_VISUAL_MOTION_PROFILE_OPTIONS, errors);
+  }
+  if ('filter' in values) {
+    validateAllowedField(assetKey, context, 'filter', values.filter, MONSTER_VISUAL_FILTER_OPTIONS, errors);
+  }
   validateUnitField(assetKey, context, 'shadowOpacity', values.shadowOpacity, errors);
   validatePositiveField(assetKey, context, 'scale', values.scale, errors);
   validatePositiveField(assetKey, context, 'shadowScale', values.shadowScale, errors);
   for (const field of ['anchorX', 'anchorY', 'cropX', 'cropY', 'cropWidth', 'cropHeight']) {
     validateUnitField(assetKey, context, field, values[field], errors);
   }
+}
+
+function validateAllowedField(assetKey, context, field, value, allowedValues, errors) {
+  if (allowedValues.includes(value)) return;
+  errors.push(issue('monster_visual_field_invalid', `${field} has an unsupported value.`, { assetKey, context, field }));
 }
 
 function validateUnitField(assetKey, context, field, value, errors) {

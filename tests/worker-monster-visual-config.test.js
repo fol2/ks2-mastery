@@ -12,6 +12,22 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function reviewedConfig(config = BUNDLED_MONSTER_VISUAL_CONFIG) {
+  const reviewed = clone(config);
+  for (const entry of Object.values(reviewed.assets || {})) {
+    entry.review = entry.review || { contexts: {} };
+    entry.review.contexts = entry.review.contexts || {};
+    for (const context of Object.keys(entry.contexts || {})) {
+      entry.review.contexts[context] = {
+        reviewed: true,
+        reviewedAt: Date.UTC(2026, 3, 24, 12, 0),
+        reviewedBy: 'test-admin',
+      };
+    }
+  }
+  return reviewed;
+}
+
 function raceBeforeStatementRun(db, predicate, onBeforeRun) {
   let triggered = false;
   return {
@@ -137,7 +153,12 @@ test('admin hub exposes seeded global monster visual config state', async () => 
     assert.equal(visual.permissions.canManageMonsterVisualConfig, true);
     assert.equal(visual.status.publishedVersion, 1);
     assert.equal(visual.status.draftRevision, 0);
-    assert.equal(visual.status.validation.ok, true);
+    assert.equal(visual.status.validation.ok, false);
+    assert.ok(visual.status.validation.errors.some((issue) => (
+      issue.code === 'monster_visual_review_required'
+      && issue.assetKey === 'bracehart-b1-0'
+      && issue.context === 'meadow'
+    )));
     assert.equal(visual.draft.assets['vellhorn-b1-3'].baseline.facing, 'left');
     assert.equal(visual.published.assets['vellhorn-b1-3'].baseline.facing, 'left');
     assert.equal(visual.versions.length, 1);
@@ -266,7 +287,7 @@ test('admin saves, publishes, and restores global monster visual config with rec
   const server = createWorkerRepositoryServer();
   try {
     const initial = (await adminHub(server)).adminHub.monsterVisualConfig;
-    const draft = clone(initial.draft);
+    const draft = reviewedConfig(initial.draft);
     draft.assets['vellhorn-b1-3'].baseline.facing = 'right';
 
     const saveResponse = await fetchAdmin(server, '/api/admin/monster-visual-config/draft', {
@@ -366,7 +387,7 @@ test('publish blocks incomplete review state without changing the live published
   const server = createWorkerRepositoryServer();
   try {
     const initial = (await adminHub(server)).adminHub.monsterVisualConfig;
-    const draft = clone(BUNDLED_MONSTER_VISUAL_CONFIG);
+    const draft = reviewedConfig(BUNDLED_MONSTER_VISUAL_CONFIG);
     draft.reviewedAt = 0;
     draft.assets['vellhorn-b1-3'].review.contexts.codexFeature.reviewed = false;
 
@@ -407,6 +428,70 @@ test('publish blocks incomplete review state without changing the live published
     const after = (await adminHub(server)).adminHub.monsterVisualConfig;
     assert.equal(after.status.publishedVersion, 1);
     assert.equal(after.published.assets['vellhorn-b1-3'].baseline.facing, 'left');
+  } finally {
+    server.close();
+  }
+});
+
+test('publish rejects unsupported monster visual enum values', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const initial = (await adminHub(server)).adminHub.monsterVisualConfig;
+    const draft = reviewedConfig(BUNDLED_MONSTER_VISUAL_CONFIG);
+    draft.assets['vellhorn-b1-3'].contexts.meadow.path = 'teleport';
+    draft.assets['vellhorn-b1-3'].contexts.meadow.motionProfile = 'teleport';
+    draft.assets['vellhorn-b1-3'].contexts.meadow.filter = 'drop-shadow(0 0 4px red)';
+
+    const saveResponse = await fetchAdmin(server, '/api/admin/monster-visual-config/draft', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        draft,
+        mutation: {
+          requestId: 'visual-invalid-enum-save',
+          expectedDraftRevision: initial.status.draftRevision,
+        },
+      }),
+    });
+    const savePayload = await json(saveResponse);
+    assert.equal(saveResponse.status, 200);
+
+    const publishResponse = await fetchAdmin(server, '/api/admin/monster-visual-config/publish', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        mutation: {
+          requestId: 'visual-invalid-enum-publish',
+          expectedDraftRevision: savePayload.monsterVisualConfig.status.draftRevision,
+        },
+      }),
+    });
+    const publishPayload = await json(publishResponse);
+
+    assert.equal(publishResponse.status, 400);
+    assert.equal(publishPayload.code, 'monster_visual_publish_blocked');
+    assert.ok(publishPayload.validation.errors.some((issue) => (
+      issue.code === 'monster_visual_field_invalid'
+      && issue.assetKey === 'vellhorn-b1-3'
+      && issue.context === 'meadow'
+      && issue.field === 'path'
+    )));
+    assert.ok(publishPayload.validation.errors.some((issue) => (
+      issue.code === 'monster_visual_field_invalid'
+      && issue.assetKey === 'vellhorn-b1-3'
+      && issue.context === 'meadow'
+      && issue.field === 'motionProfile'
+    )));
+    assert.ok(publishPayload.validation.errors.some((issue) => (
+      issue.code === 'monster_visual_field_invalid'
+      && issue.assetKey === 'vellhorn-b1-3'
+      && issue.context === 'meadow'
+      && issue.field === 'filter'
+    )));
+
+    const after = (await adminHub(server)).adminHub.monsterVisualConfig;
+    assert.equal(after.status.publishedVersion, 1);
+    assert.equal(after.published.assets['vellhorn-b1-3'].contexts.meadow.path, 'walk-b');
   } finally {
     server.close();
   }
@@ -507,7 +592,7 @@ test('publish keeps live state and version history atomic without a transaction 
   const server = createWorkerRepositoryServer();
   try {
     const initial = (await adminHub(server)).adminHub.monsterVisualConfig;
-    const requestedDraft = clone(initial.draft);
+    const requestedDraft = reviewedConfig(initial.draft);
     requestedDraft.assets['vellhorn-b1-3'].baseline.facing = 'right';
 
     const saveResponse = await fetchAdmin(server, '/api/admin/monster-visual-config/draft', {
