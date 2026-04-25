@@ -324,7 +324,12 @@ for (const forbiddenModule of FORBIDDEN_SHARED_PUNCTUATION_MODULES) {
         cwd: process.cwd(),
         stdio: 'pipe',
       });
-    }, /punctuation|forbidden/i, `${forbiddenModule} should fail the audit`);
+      // Path-specific assertion rather than a generic /punctuation/ match:
+      // a regex change that accidentally drops any one module would pass a
+      // loose /punctuation/ check via the shared `reason` string. Pinning
+      // on the literal path forces the failure message to actually name
+      // the module under test.
+    }, new RegExp(forbiddenModule.replace(/[.]/g, '\\.').replace(/\//g, '\\/')), `${forbiddenModule} should fail the audit with its own path in the error`);
   });
 }
 
