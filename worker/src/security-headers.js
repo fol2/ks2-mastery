@@ -1,15 +1,41 @@
 // U6 (sys-hardening p1): single source of truth for response security headers.
+// U7 (sys-hardening p1): extended with a Content-Security-Policy (Report-Only)
+// builder that carries the build-time hash of the inline theme-bootstrap
+// script in `index.html`. Enforcement flip is a follow-up PR per charter.
 //
 // Decisions encoded here (see docs/plans/2026-04-25-003-fix-sys-hardening-p1-plan.md):
 // - HSTS ships without `preload` (security F-03); preload flip is a separate PR.
 // - Permissions-Policy is deny-by-default, including `microphone=()` (F-09).
 // - `Cross-Origin-Embedder-Policy: require-corp` is intentionally absent so
 //   Google Fonts / future Turnstile iframes do not break.
-// - CSP is NOT included in this unit. CSP report-only lands in U7 and extends
-//   this module.
+// - CSP is shipped as `Content-Security-Policy-Report-Only` (U7). After a
+//   >=7-day observation window with zero blocking violations we flip to the
+//   enforcing `Content-Security-Policy` header.
 // - The wrapper is called from `worker/src/index.js` ONLY (single wrap site
 //   per F-01). It uses `headers.set()` to force path-specific cache rules on
 //   bundles that arrive from `env.ASSETS.fetch` with `no-store` applied.
+
+import { CSP_INLINE_SCRIPT_HASH } from './generated-csp-hash.js';
+
+// Placeholder hash shipped with `worker/src/generated-csp-hash.js` before
+// the first build. `scripts/build-public.mjs` overwrites the module with
+// the real sha256 of the inline theme-bootstrap script. A deployment that
+// still carries the placeholder would emit a CSP that cannot validate the
+// inline script; we surface that loudly at request-time so an operator
+// catches the missed build before violation reports pile up.
+const CSP_PLACEHOLDER_HASH = 'sha256-PLACEHOLDER_PRE_BUILD_HASH=';
+let cspPlaceholderWarningEmitted = false;
+
+function warnOnPlaceholderHashOnce() {
+  if (cspPlaceholderWarningEmitted) return;
+  if (CSP_INLINE_SCRIPT_HASH !== CSP_PLACEHOLDER_HASH) return;
+  cspPlaceholderWarningEmitted = true;
+  // eslint-disable-next-line no-console
+  console.error(
+    '[ks2-security-headers] CSP hash is still the pre-build placeholder; '
+    + 'run npm run build to inject the real hash',
+  );
+}
 
 export const HSTS_VALUE = 'max-age=63072000; includeSubDomains';
 
@@ -34,6 +60,45 @@ export const PERMISSIONS_POLICY = [
   'browsing-topics=()',
 ].join(', ');
 
+// U7: CSP policy. Each directive lives on its own line so reviewers can
+// diff the policy without string-concat churn. The runtime joins with `; `
+// to produce the header value.
+const CSP_DIRECTIVES = Object.freeze([
+  "default-src 'none'",
+  `script-src 'self' '${CSP_INLINE_SCRIPT_HASH}' 'strict-dynamic' https://challenges.cloudflare.com`,
+  `script-src-elem 'self' '${CSP_INLINE_SCRIPT_HASH}' https://challenges.cloudflare.com`,
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: blob:",
+  "font-src 'self' https://fonts.gstatic.com",
+  "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
+  "media-src 'self' blob:",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  'frame-src https://challenges.cloudflare.com',
+  "base-uri 'none'",
+  "object-src 'none'",
+  "manifest-src 'self'",
+  "worker-src 'none'",
+  'upgrade-insecure-requests',
+  'report-uri /api/security/csp-report',
+  'report-to csp-endpoint',
+]);
+
+export const CSP_POLICY_VALUE = CSP_DIRECTIVES.join('; ');
+
+export const REPORT_TO_VALUE = JSON.stringify({
+  group: 'csp-endpoint',
+  max_age: 10886400,
+  endpoints: [{ url: '/api/security/csp-report' }],
+});
+
+export const REPORTING_ENDPOINTS_VALUE = 'csp-endpoint="/api/security/csp-report"';
+
+// Export the CSP hash so tests can assert the same value is substituted
+// into `_headers` by the build step.
+export { CSP_INLINE_SCRIPT_HASH };
+
 export const SECURITY_HEADERS = Object.freeze({
   'Strict-Transport-Security': HSTS_VALUE,
   'X-Content-Type-Options': 'nosniff',
@@ -42,6 +107,9 @@ export const SECURITY_HEADERS = Object.freeze({
   'X-Frame-Options': 'DENY',
   'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
   'Cross-Origin-Resource-Policy': 'same-site',
+  'Content-Security-Policy-Report-Only': CSP_POLICY_VALUE,
+  'Report-To': REPORT_TO_VALUE,
+  'Reporting-Endpoints': REPORTING_ENDPOINTS_VALUE,
 });
 
 // Path segments that receive the hashed-bundle immutable cache policy.
@@ -79,6 +147,11 @@ function isTtsBinaryResponse(response) {
  * @returns {Response}
  */
 export function applySecurityHeaders(response, { path: pathname = '' } = {}) {
+  // One-shot log if the generated CSP hash module is still the committed
+  // placeholder (i.e. `npm run build` never ran). Do NOT throw: tests and
+  // fresh-clone boot paths must keep working.
+  warnOnPlaceholderHashOnce();
+
   const headers = new Headers(response.headers);
 
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {

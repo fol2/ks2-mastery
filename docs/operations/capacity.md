@@ -222,3 +222,66 @@ Path-specific cache expectations:
   wrapper explicitly overrides the `no-store` that ASSETS applies from the `_headers` `/*` group).
 - `/manifest.webmanifest` — `Cache-Control: public, max-age=86400`.
 - `/` and `/index.html` — `Cache-Control: no-store`.
+
+## CSP Report-Only rollout
+
+U7 ships a strict Content-Security-Policy as `Content-Security-Policy-Report-Only` so the
+browser reports violations without blocking the page. Enforcement (flipping to
+`Content-Security-Policy`) is a follow-up PR that lands only after a >= 7-day observation
+window with zero blocking violations.
+
+Start date: record the production deploy SHA below on the day the U7 PR merges. The
+7-day observation window is measured from that date.
+
+| Rollout milestone | Date | Commit SHA | Notes |
+| --- | --- | --- | --- |
+| U7 Report-Only shipped | TBD on merge | TBD on merge | Baseline violations expected from Google Fonts, Turnstile. |
+| Midpoint check-in (day 3-4) | TBD | TBD | Tail recent violations; triage any unexpected origins. |
+| Enforcement decision gate (day 7+) | TBD | TBD | Zero unexpected origins => open enforcement-flip PR. |
+
+### Monitoring
+
+Tail CSP violations with Workers observability:
+
+```sh
+npm run ops:tail -- --search "[ks2-csp-report]"
+```
+
+Each log line is a structured JSON object carrying the sanitised `blockedUri`,
+`documentUri`, `sourceFile`, `violatedDirective`, `lineNumber`, and `statusCode`. Fields
+are stripped of newline/control characters before emission to prevent log-line spoofing
+(security F-02).
+
+During the observation window, expect violations from:
+
+- Google Fonts connect/style (allowed in the policy but browsers sometimes double-fire).
+- Turnstile iframe (only if a future sign-in page loads the widget before the policy caches).
+- Browser extensions injecting inline scripts or styles on the page.
+
+### When to flip to enforcing
+
+Open the enforcement-flip PR only when all of the following are true:
+
+1. 7+ days have elapsed since U7 merge, with production traffic throughout.
+2. No blocking violations from origins the policy does not already allowlist.
+3. `[ks2-csp-report]` volume is steady (no new directives spiking after app changes).
+4. `scripts/production-bundle-audit.mjs` HEAD check on `/` still shows
+   `Content-Security-Policy-Report-Only` with the current inline-script hash.
+
+The flip PR swaps the header name from `Content-Security-Policy-Report-Only` to
+`Content-Security-Policy` in `worker/src/security-headers.js` and `_headers`, and bumps
+the corresponding tests. No policy directives change between the two passes.
+
+### CSP inline-script hash refresh
+
+The inline theme-bootstrap script at `index.html:25-34` is pinned to the CSP via its
+SHA-256 hash. Any byte-level change to the script (including whitespace) invalidates the
+deployed hash; the build step (`scripts/build-public.mjs`) recomputes the hash on every
+build so a change to the script body automatically propagates to
+`worker/src/generated-csp-hash.js` and `dist/public/_headers`.
+
+To inspect the current hash without deploying:
+
+```sh
+node ./scripts/compute-inline-script-hash.mjs
+```

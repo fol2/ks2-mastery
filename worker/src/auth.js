@@ -15,6 +15,7 @@ import {
   withTransaction,
 } from './d1.js';
 import { requireSameOrigin } from './request-origin.js';
+import { consumeRateLimit } from './rate-limit.js';
 
 const SESSION_COOKIE_NAME = 'ks2_session';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -346,35 +347,9 @@ function clientIp(request) {
   ) || '';
 }
 
-function currentWindowStart(timestamp, windowMs) {
-  return Math.floor(timestamp / windowMs) * windowMs;
-}
-
-async function consumeRateLimit(env, { bucket, identifier, limit, windowMs, now = Date.now() }) {
-  if (!bucket || !identifier || !limit || !windowMs) return { allowed: true, retryAfterSeconds: 0 };
-  const db = requireDatabase(env);
-  const windowStartedAt = currentWindowStart(now, windowMs);
-  const limiterKey = `${bucket}:${await sha256(identifier)}`;
-  const row = await first(db, `
-    INSERT INTO request_limits (limiter_key, window_started_at, request_count, updated_at)
-    VALUES (?, ?, 1, ?)
-    ON CONFLICT(limiter_key) DO UPDATE SET
-      request_count = CASE
-        WHEN request_limits.window_started_at = excluded.window_started_at
-          THEN request_limits.request_count + 1
-        ELSE 1
-      END,
-      window_started_at = excluded.window_started_at,
-      updated_at = excluded.updated_at
-    RETURNING request_count, window_started_at
-  `, [limiterKey, windowStartedAt, now]);
-  const count = Number(row?.request_count || 1);
-  const storedWindow = Number(row?.window_started_at || windowStartedAt);
-  return {
-    allowed: count <= limit,
-    retryAfterSeconds: Math.max(1, Math.ceil(((storedWindow + windowMs) - now) / 1000)),
-  };
-}
+// U7: `currentWindowStart` + `consumeRateLimit` extracted to
+// `worker/src/rate-limit.js` so the CSP report endpoint, demo/auth, and
+// TTS all share one limiter implementation (feasibility F-06).
 
 function turnstileEnabled(env = {}) {
   return Boolean(cleanText(env.TURNSTILE_SITE_KEY || env.TURNSTILE_SITEKEY) && cleanText(env.TURNSTILE_SECRET_KEY || env.TURNSTILE_SECRET));
