@@ -1,5 +1,6 @@
 import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const rootDir = process.cwd();
 
@@ -205,7 +206,7 @@ export async function runClientBundleAudit({
   };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const result = await runClientBundleAudit({
     bundlePath: argValue('--bundle', DEFAULT_BUNDLE),
     metafilePath: argValue('--metafile', DEFAULT_METAFILE),
