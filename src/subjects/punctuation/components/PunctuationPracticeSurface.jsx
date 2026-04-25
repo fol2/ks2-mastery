@@ -189,6 +189,17 @@ function ActiveItemView({ ui, actions }) {
   const progress = ui.session?.length ? Math.round(((ui.session.answeredCount || 0) / ui.session.length) * 100) : 0;
   const submit = (payload) => actions.dispatch('punctuation-submit-form', payload);
   const isGps = ui.session?.mode === 'gps';
+  // Composite disable signal: mutation controls freeze whenever a command is
+  // in flight, the runtime is degraded/unavailable, or the platform has
+  // flipped the subject read-only. UI state is the visual echo; the adapter
+  // layer (subject-command-client) is the authoritative dedupe gate.
+  const availabilityStatus = ui.availability?.status || 'ready';
+  const runtimeReadOnly = Boolean(ui.runtime?.readOnly);
+  const pending = Boolean(ui.pendingCommand);
+  const isDisabled = pending
+    || runtimeReadOnly
+    || availabilityStatus === 'degraded'
+    || availabilityStatus === 'unavailable';
 
   return (
     <section className="card border-top punctuation-surface" style={{ borderTopColor: '#B8873F' }}>
@@ -213,12 +224,12 @@ function ActiveItemView({ ui, actions }) {
       <div className="progress" style={{ marginTop: 14 }}><span style={{ width: `${progress}%` }} /></div>
       <div style={{ marginTop: 16 }}>
         {item.inputKind === 'choice'
-          ? <ChoiceItem item={item} disabled={false} onSubmit={submit} />
-          : <TextItem key={item.id || item.prompt} item={item} disabled={false} onSubmit={submit} />}
+          ? <ChoiceItem item={item} disabled={isDisabled} onSubmit={submit} />
+          : <TextItem key={item.id || item.prompt} item={item} disabled={isDisabled} onSubmit={submit} />}
       </div>
       <div className="actions" style={{ marginTop: 16 }}>
-        <button className="btn ghost" type="button" onClick={() => actions.dispatch('punctuation-skip')}>Skip</button>
-        <button className="btn ghost" type="button" onClick={() => actions.dispatch('punctuation-end-early')}>End session</button>
+        <button className="btn ghost" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-skip')}>Skip</button>
+        <button className="btn ghost" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-end-early')}>End session</button>
       </div>
     </section>
   );
