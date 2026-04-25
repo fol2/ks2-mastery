@@ -134,6 +134,10 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
   const auditEntries = Array.isArray(model.auditLogLookup?.entries) ? model.auditLogLookup.entries : [];
   const selectedLearnerId = model.learnerSupport?.selectedLearnerId || selectedDiagnostics?.learnerId || '';
   const selectedGrammarEvidence = selectedDiagnostics?.grammarEvidence || {};
+  const selectedPunctuationEvidence = selectedDiagnostics?.punctuationEvidence || {};
+  const selectedPunctuationRelease = selectedPunctuationEvidence.releaseDiagnostics
+    || model.learnerSupport?.punctuationReleaseDiagnostics
+    || {};
   const notice = hubState.notice || accessContext.adultSurfaceNotice || '';
   const writableLearner = selectedWritableLearner(appState);
 
@@ -237,6 +241,9 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
               <div className="small muted">
                 Grammar: {String(entry.grammarEvidence?.progressSnapshot?.dueConcepts ?? entry.overview?.dueGrammarConcepts ?? 0)} due / {String(entry.grammarEvidence?.progressSnapshot?.weakConcepts ?? entry.overview?.weakGrammarConcepts ?? 0)} weak
               </div>
+              <div className="small muted">
+                Punctuation: {String(entry.punctuationEvidence?.progressSnapshot?.dueItems ?? entry.overview?.duePunctuationItems ?? 0)} due / {String(entry.punctuationEvidence?.progressSnapshot?.weakItems ?? entry.overview?.weakPunctuationItems ?? 0)} weak
+              </div>
               <div><button className="btn ghost" type="button" onClick={() => actions.dispatch('adult-surface-learner-select', { value: entry.learnerId })}>Select</button></div>
             </div>
           )) : <p className="small muted">No learner diagnostics are accessible from this account scope yet.</p>}
@@ -249,9 +256,20 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
               <div style={{ marginTop: 8 }}>
                 <strong>Grammar diagnostics</strong>: secured {String(selectedGrammarEvidence.progressSnapshot?.securedConcepts ?? selectedDiagnostics.overview?.secureGrammarConcepts ?? 0)} · due {String(selectedGrammarEvidence.progressSnapshot?.dueConcepts ?? selectedDiagnostics.overview?.dueGrammarConcepts ?? 0)} · weak {String(selectedGrammarEvidence.progressSnapshot?.weakConcepts ?? selectedDiagnostics.overview?.weakGrammarConcepts ?? 0)}
               </div>
+              <div style={{ marginTop: 8 }}>
+                <strong>Punctuation diagnostics</strong>: secured {String(selectedPunctuationEvidence.progressSnapshot?.securedRewardUnits ?? selectedDiagnostics.overview?.securePunctuationUnits ?? 0)} · due {String(selectedPunctuationEvidence.progressSnapshot?.dueItems ?? selectedDiagnostics.overview?.duePunctuationItems ?? 0)} · weak {String(selectedPunctuationEvidence.progressSnapshot?.weakItems ?? selectedDiagnostics.overview?.weakPunctuationItems ?? 0)}
+              </div>
+              <div className="small muted" style={{ marginTop: 8 }}>
+                Punctuation release: {selectedPunctuationRelease.releaseId || 'unknown'} · tracked units {String(selectedPunctuationRelease.trackedRewardUnitCount ?? 0)} · sessions {String(selectedPunctuationRelease.sessionCount ?? 0)} · weak patterns {String(selectedPunctuationRelease.weakPatternCount ?? 0)} · exposure {selectedPunctuationRelease.productionExposureStatus || 'unknown'}
+              </div>
               {selectedGrammarEvidence.questionTypeSummary?.[0] ? (
                 <div className="small muted" style={{ marginTop: 8 }}>
                   Question-type focus: {selectedGrammarEvidence.questionTypeSummary[0].label || selectedGrammarEvidence.questionTypeSummary[0].id}
+                </div>
+              ) : null}
+              {selectedPunctuationEvidence.weakestFacets?.[0] ? (
+                <div className="small muted" style={{ marginTop: 8 }}>
+                  Punctuation focus: {selectedPunctuationEvidence.weakestFacets[0].label || selectedPunctuationEvidence.weakestFacets[0].id}
                 </div>
               ) : null}
               <div className="small muted" style={{ marginTop: 8 }}>{selectedDiagnostics.currentFocus?.detail || 'No current focus surfaced.'}</div>

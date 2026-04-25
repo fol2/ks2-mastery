@@ -5,6 +5,7 @@ import { AccessDeniedCard, formatTimestamp, isBlocked, selectedWritableLearner }
 
 function snapshotSubjectId(snapshot = {}) {
   if (snapshot.subjectId) return snapshot.subjectId;
+  if (snapshot.totalRewardUnits != null || snapshot.trackedRewardUnits != null) return 'punctuation';
   return snapshot.totalConcepts != null || snapshot.trackedConcepts != null ? 'grammar' : 'spelling';
 }
 
@@ -12,6 +13,9 @@ function snapshotChipLabel(snapshot = {}) {
   const subjectId = snapshotSubjectId(snapshot);
   if (subjectId === 'grammar') {
     return `Grammar: ${snapshot.trackedConcepts ?? 0}/${snapshot.totalConcepts ?? 0} concepts`;
+  }
+  if (subjectId === 'punctuation') {
+    return `Punctuation: ${snapshot.securedRewardUnits ?? 0}/${snapshot.totalRewardUnits ?? 0} units`;
   }
   return `Spelling: ${snapshot.trackedWords ?? 0}/${snapshot.totalPublishedWords ?? 0} words`;
 }
@@ -25,7 +29,15 @@ function HeadlineFigure({ label, value, tone }) {
   );
 }
 
-function StatGrid({ overview, grammarReviewConcepts, grammarDueConcepts, grammarWeakConcepts }) {
+function StatGrid({
+  overview,
+  grammarReviewConcepts,
+  grammarDueConcepts,
+  grammarWeakConcepts,
+  punctuationReviewItems,
+  punctuationDueItems,
+  punctuationWeakItems,
+}) {
   const cells = [
     { label: 'Secure words', value: overview.secureWords ?? 0, sub: 'Spelling snapshot' },
     { label: 'Due words', value: overview.dueWords ?? 0, sub: 'Spelling return', tone: 'warn' },
@@ -34,6 +46,9 @@ function StatGrid({ overview, grammarReviewConcepts, grammarDueConcepts, grammar
     { label: 'Grammar secured', value: overview.secureGrammarConcepts ?? 0, sub: 'Concepts secure' },
     { label: 'Grammar review', value: grammarReviewConcepts, sub: `${grammarDueConcepts} due · ${grammarWeakConcepts} weak`, tone: 'warn' },
     { label: 'Grammar accuracy', value: overview.grammarAccuracyPercent == null ? '—' : `${overview.grammarAccuracyPercent}%`, sub: 'Concept evidence' },
+    { label: 'Punctuation secured', value: overview.securePunctuationUnits ?? 0, sub: 'Reward units secure' },
+    { label: 'Punctuation review', value: punctuationReviewItems, sub: `${punctuationDueItems} due · ${punctuationWeakItems} weak`, tone: 'warn' },
+    { label: 'Punctuation accuracy', value: overview.punctuationAccuracyPercent == null ? '—' : `${overview.punctuationAccuracyPercent}%`, sub: 'Skill evidence' },
   ];
   return (
     <div className="parent-hub-statgrid">
@@ -276,6 +291,104 @@ function GrammarEvidencePanel({ evidence }) {
   );
 }
 
+function PunctuationFacetEvidence({ evidence }) {
+  const rows = uniqueEvidenceRows(Array.isArray(evidence?.weakestFacets) ? evidence.weakestFacets : []).slice(0, 6);
+  return (
+    <article className="card parent-hub-card">
+      <div className="parent-hub-card-head">
+        <p className="eyebrow">Facet evidence</p>
+        <h3 className="parent-hub-card-title">Punctuation skills needing attention</h3>
+      </div>
+      {rows.length ? (
+        <ul className="parent-hub-ledger-list">
+          {rows.map((entry) => (
+            <li className="parent-hub-ledger-row" key={entry.id || entry.label}>
+              <div className="parent-hub-ledger-main">
+                <strong>{entry.label || entry.skillName || 'Punctuation facet'}</strong>
+                <span className="parent-hub-row-detail">{`${entry.correct ?? 0}/${entry.attempts ?? 0} correct`}</span>
+              </div>
+              <span className="parent-hub-ledger-figure is-warn">{String(entry.wrong ?? 0)}</span>
+              <span className="parent-hub-row-meta">
+                {entry.status || 'learning'}
+                {entry.accuracy == null ? '' : ` · ${entry.accuracy}%`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="parent-hub-empty small muted">No Punctuation facet weakness has surfaced yet.</p>}
+    </article>
+  );
+}
+
+function PunctuationActivityEvidence({ evidence }) {
+  const sessionModes = Array.isArray(evidence?.bySessionMode) ? evidence.bySessionMode.slice(0, 4) : [];
+  const itemModes = Array.isArray(evidence?.byItemMode) ? evidence.byItemMode.slice(0, 4) : [];
+  const mistakes = Array.isArray(evidence?.recentMistakes) ? evidence.recentMistakes.slice(0, 4) : [];
+  const dailyGoal = evidence?.dailyGoal || null;
+  const streak = evidence?.streak || null;
+  return (
+    <article className="card parent-hub-card">
+      <div className="parent-hub-card-head">
+        <p className="eyebrow">Mode evidence</p>
+        <h3 className="parent-hub-card-title">How recent Punctuation practice breaks down</h3>
+      </div>
+      {sessionModes.length || itemModes.length ? (
+        <ul className="parent-hub-ledger-list">
+          {[...sessionModes, ...itemModes].map((entry) => (
+            <li className="parent-hub-ledger-row" key={`${entry.id || entry.label}-${entry.subjectId || 'punctuation'}`}>
+              <div className="parent-hub-ledger-main">
+                <strong>{entry.label || entry.id}</strong>
+                <span className="parent-hub-row-detail">{`${entry.correct ?? 0}/${entry.attempts ?? 0} correct`}</span>
+              </div>
+              <span className="parent-hub-ledger-figure is-warn">{String(entry.wrong ?? 0)}</span>
+              <span className="parent-hub-row-meta">{entry.accuracy == null ? 'new' : `${entry.accuracy}%`}</span>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="parent-hub-empty small muted">No Punctuation mode evidence has surfaced yet.</p>}
+
+      <div className="parent-hub-focus" style={{ marginTop: 18 }}>
+        <p className="eyebrow">Recent Punctuation mistakes</p>
+        {mistakes.length ? (
+          <ol className="parent-hub-focus-list">
+            {mistakes.map((entry, index) => (
+              <li className="parent-hub-focus-item" key={entry.itemId || `${entry.label}-${index}`}>
+                <span className="parent-hub-focus-marker" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                <div className="parent-hub-focus-body">
+                  <strong>{entry.label || 'Punctuation attempt'}</strong>
+                  <span className="parent-hub-focus-detail">
+                    {entry.sessionModeLabel || entry.sessionMode || 'Practice'} · {formatTimestamp(entry.createdAt)}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ol>
+        ) : <p className="parent-hub-empty small muted">No recent Punctuation mistakes are stored yet.</p>}
+      </div>
+
+      <div className="chip-row" style={{ marginTop: 18 }}>
+        {dailyGoal ? <span className="chip">{`Daily goal: ${dailyGoal.attemptsToday ?? 0}/${dailyGoal.targetAttempts ?? 0}`}</span> : null}
+        {streak ? <span className="chip">{`Punctuation streak: ${streak.currentDays ?? 0} day${Number(streak.currentDays) === 1 ? '' : 's'}`}</span> : null}
+      </div>
+    </article>
+  );
+}
+
+function PunctuationEvidencePanel({ evidence }) {
+  return (
+    <>
+      <SectionHead
+        title="Punctuation evidence"
+        note="Skill facets, session modes, item modes, recent mistakes, daily goal, and streak drawn from safe analytics metadata."
+      />
+      <section className="two-col parent-hub-grid parent-hub-punctuation-evidence">
+        <PunctuationFacetEvidence evidence={evidence} />
+        <PunctuationActivityEvidence evidence={evidence} />
+      </section>
+    </>
+  );
+}
+
 function SectionHead({ title, note }) {
   return (
     <div className="home-section-head parent-hub-section-head">
@@ -331,9 +444,13 @@ export function ParentHubSurface({ appState, model, hubState = {}, accessContext
   const patterns = Array.isArray(model.misconceptionPatterns) ? model.misconceptionPatterns : [];
   const progressSnapshots = Array.isArray(model.progressSnapshots) ? model.progressSnapshots : [];
   const grammarEvidence = model.grammarEvidence || {};
+  const punctuationEvidence = model.punctuationEvidence || {};
   const grammarDueConcepts = Number(overview.dueGrammarConcepts) || 0;
   const grammarWeakConcepts = Number(overview.weakGrammarConcepts) || 0;
   const grammarReviewConcepts = grammarDueConcepts + grammarWeakConcepts;
+  const punctuationDueItems = Number(overview.duePunctuationItems) || 0;
+  const punctuationWeakItems = Number(overview.weakPunctuationItems) || 0;
+  const punctuationReviewItems = punctuationDueItems + punctuationWeakItems;
   const accessibleLearners = Array.isArray(model.accessibleLearners) ? model.accessibleLearners : [];
   const selectedLearnerId = model.selectedLearnerId || model.learner?.id || '';
   const notice = hubState.notice || accessContext.adultSurfaceNotice || '';
@@ -387,7 +504,7 @@ export function ParentHubSurface({ appState, model, hubState = {}, accessContext
 
       <SectionHead
         title="Learner overview"
-        note={`Spelling and grammar at a glance for ${firstName}, with the focus parent surfaces are surfacing right now.`}
+        note={`Spelling, grammar, and punctuation at a glance for ${firstName}, with the focus parent surfaces are surfacing right now.`}
       />
       <section className="two-col parent-hub-grid">
         <article className="card parent-hub-card parent-hub-card--overview">
@@ -400,6 +517,9 @@ export function ParentHubSurface({ appState, model, hubState = {}, accessContext
             grammarReviewConcepts={grammarReviewConcepts}
             grammarDueConcepts={grammarDueConcepts}
             grammarWeakConcepts={grammarWeakConcepts}
+            punctuationReviewItems={punctuationReviewItems}
+            punctuationDueItems={punctuationDueItems}
+            punctuationWeakItems={punctuationWeakItems}
           />
           <CurrentFocus items={dueWork} />
         </article>
@@ -435,6 +555,7 @@ export function ParentHubSurface({ appState, model, hubState = {}, accessContext
       </section>
 
       <GrammarEvidencePanel evidence={grammarEvidence} />
+      <PunctuationEvidencePanel evidence={punctuationEvidence} />
 
       <SectionHead
         title="Evidence stream"
