@@ -266,7 +266,7 @@ on app boot OR config change:
 
 ---
 
-- [ ] U2. **Effect template registry**
+- [x] U2. **Effect template registry**
 
 **Goal:** Implement the closed set of visual templates (`motion`, `glow`, `sparkle`, `aura`, `particles-burst`, `shine-streak`, `pulse-halo`) with code-owned `buildEffectSpec()` functions and typed param schemas. Each template covers one of the visual treatments today's eight code-registered effects use.
 
