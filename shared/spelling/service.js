@@ -1476,30 +1476,20 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return buildTransition(nextState, { audio: activeAudioCue(learnerId, nextState) });
   }
 
-  // U4: Guardian-native "I don't know" path. Routes through advanceGuardianOnWrong
-  // + advanceGuardianCard (FIFO), emits spelling.guardian.wobbled, records
-  // guardianResults[slug] = 'wobbled' so mission-completed aggregates the count,
-  // and never mutates progress.stage/dueDay/lastDay/lastResult. Mirrors the
-  // wrong-answer branch of submitGuardianAnswer. See
+  // U4: Guardian-native "I don't know" path. Routes through advanceGuardianOnWrong,
+  // emits spelling.guardian.wobbled, records guardianResults[slug] = 'wobbled' so
+  // mission-completed aggregates the count, and never mutates progress.stage /
+  // dueDay / lastDay / lastResult. Mirrors the wrong-answer branch of
+  // submitGuardianAnswer end-to-end: both set awaitingAdvance=true and let
+  // continueSession handle the queue advance, so a double-tap on the button
+  // no-ops on the second call (continueSession owns the Continue → next-card
+  // transition, including the audio cue). See
   // docs/plans/2026-04-25-005-feat-post-mega-spelling-guardian-hardening-plan.md (U4).
   function skipGuardianWord(learnerId, current) {
     const session = cloneSerialisable(current.session);
     const currentSlug = session.currentSlug;
     const baseWord = currentSlug ? runtimeWordBySlug[currentSlug] : null;
-    if (!baseWord) {
-      return buildTransition({
-        ...current,
-        feedback: {
-          kind: 'warn',
-          headline: 'This word cannot be skipped right now.',
-          body: 'Finish the retry or correction step first.',
-        },
-        error: '',
-      });
-    }
-
-    // Same gate legacy skipCurrent uses: must be on question phase.
-    if (session.phase !== 'question') {
+    if (!baseWord || session.phase !== 'question') {
       return buildTransition({
         ...current,
         feedback: {
@@ -1529,9 +1519,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     session.status = session.status || {};
     session.status[currentSlug] = statusEntry;
     session.promptCount = (session.promptCount || 0) + 1;
+    session.phase = 'question';
 
     // FIFO-clean: remove the skipped slug from the queue, never re-queue (unlike
-    // legacy enqueueLater).
+    // legacy enqueueLater). submitGuardianAnswer does the same defensively.
     if (Array.isArray(session.queue)) {
       session.queue = session.queue.filter((slug) => slug !== currentSlug);
     }
@@ -1573,37 +1564,24 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     });
     if (wobbledEvent) events.push(wobbledEvent);
 
-    // Advance the Guardian FIFO queue directly (never engine.advanceCard —
-    // legacy weighted selection would reorder the round).
-    const advanced = advanceGuardianCard(session);
-    if (advanced.done) {
-      const summary = normaliseSummary(engine.finalise(session), isRuntimeKnownSlug);
-      const nextState = {
-        version: SPELLING_SERVICE_STATE_VERSION,
-        phase: 'summary',
-        session: null,
-        feedback: null,
-        summary,
-        error: '',
-        awaitingAdvance: false,
-      };
-      persistence.syncPracticeSession(learnerId, nextState);
-      events.push(...guardianMissionEventsForSession(learnerId, session, summary, eventTime));
-      return buildTransition(nextState, { events });
-    }
-
+    // Set awaitingAdvance=true so continueSession handles the FIFO advance
+    // (including activeAudioCue for the next card). This matches
+    // submitGuardianAnswer exactly — double-taps on the button no-op because
+    // the skipWord entry check already returns changed:false when
+    // awaitingAdvance is set.
     const nextState = {
       version: SPELLING_SERVICE_STATE_VERSION,
       phase: 'session',
       session: decorateSession(engine, learnerId, session, runtimeWordBySlug),
-      feedback: {
-        kind: 'info',
-        headline: "Marked as \"I don't know\".",
-        body: 'This word will return tomorrow for a Guardian check.',
-      },
+      feedback: normaliseFeedback({
+        kind: 'warn',
+        headline: 'Wobbling.',
+        answer: baseWord.word,
+        body: 'Mega stays, but this word will return tomorrow for a Guardian check.',
+      }),
       summary: null,
       error: '',
-      awaitingAdvance: false,
+      awaitingAdvance: true,
     };
     persistence.syncPracticeSession(learnerId, nextState);
     return buildTransition(nextState, { events });
