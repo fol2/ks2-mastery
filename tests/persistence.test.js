@@ -3,8 +3,13 @@ import assert from 'node:assert/strict';
 
 import {
   createApiPlatformRepositories,
+  createLocalPlatformRepositories,
   createStaticHeaderRepositoryAuthSession,
 } from '../src/platform/core/repositories/index.js';
+import {
+  exportPlatformSnapshot,
+  importPlatformSnapshot,
+} from '../src/platform/core/data-transfer.js';
 import { createSubjectCommandClient } from '../src/platform/runtime/subject-command-client.js';
 import { createAppHarness } from './helpers/app-harness.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
@@ -38,6 +43,74 @@ function learnerSnapshot() {
     selectedId: 'learner-a',
   };
 }
+
+test('platform export and import preserve Grammar state, preferences, and adult summary drafts', () => {
+  const source = createLocalPlatformRepositories({ storage: installMemoryStorage() });
+  source.learners.write(learnerSnapshot());
+  source.subjectStates.writeRecord('learner-a', 'grammar', {
+    ui: {
+      phase: 'dashboard',
+      prefs: { mode: 'smart', roundLength: 5, speechRate: 1.4 },
+      aiEnrichment: {
+        kind: 'parent-summary',
+        status: 'ready',
+        nonScored: true,
+        generatedAt: 1_777_000_010_000,
+        parentSummary: {
+          title: 'Parent summary draft',
+          body: 'Ava is ready to revisit fronted adverbials.',
+          nextSteps: ['Practise fronted adverbial choices'],
+        },
+      },
+    },
+    data: {
+      prefs: { mode: 'smart', roundLength: 5, speechRate: 1.4, showDomainBeforeAnswer: true },
+      mastery: {
+        concepts: {
+          adverbials: {
+            attempts: 1,
+            correct: 0,
+            wrong: 1,
+            strength: 0.1,
+            dueAt: 1,
+            lastSeenAt: '2026-04-24T10:00:00.000Z',
+          },
+        },
+        questionTypes: {
+          choose: {
+            attempts: 1,
+            correct: 0,
+            wrong: 1,
+            strength: 0.1,
+            dueAt: 1,
+          },
+        },
+      },
+      recentAttempts: [{
+        templateId: 'fronted-adverbial-choice',
+        itemId: 'fronted-adverbial-choice:101',
+        questionType: 'choose',
+        conceptIds: ['adverbials'],
+        result: { correct: false, score: 0, maxScore: 1 },
+        createdAt: 1_777_000_000_000,
+      }],
+    },
+    updatedAt: 1_777_000_010_000,
+  });
+
+  const exported = exportPlatformSnapshot(source);
+  const target = createLocalPlatformRepositories({ storage: installMemoryStorage() });
+  const result = importPlatformSnapshot(target, exported);
+  const restored = target.subjectStates.read('learner-a', 'grammar');
+
+  assert.equal(result.kind, 'app');
+  assert.equal(restored.ui.prefs.speechRate, 1.4);
+  assert.equal(restored.ui.aiEnrichment.parentSummary.body, 'Ava is ready to revisit fronted adverbials.');
+  assert.equal(restored.data.prefs.showDomainBeforeAnswer, true);
+  assert.equal(restored.data.mastery.concepts.adverbials.attempts, 1);
+  assert.equal(restored.data.mastery.questionTypes.choose.wrong, 1);
+  assert.equal(restored.data.recentAttempts[0].itemId, 'fronted-adverbial-choice:101');
+});
 
 test('retired legacy runtime pending writes are discarded once remote bootstrap succeeds', async () => {
   const storage = installMemoryStorage();

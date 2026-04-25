@@ -17,6 +17,10 @@ function grammarOracleSample(templateId = 'question_mark_select') {
   return readGrammarLegacyOracle().templates.find((template) => template.id === templateId);
 }
 
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 test('Grammar opens as a real Clause Conservatory subject surface', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
@@ -51,6 +55,8 @@ test('Grammar surface runs from setup to Worker-style feedback and summary', () 
   let html = harness.render();
   assert.match(html, /Grammar practice/);
   assert.match(html, /question mark/i);
+  assert.match(html, /Read aloud/);
+  assert.match(html, /Speech synthesis unavailable/);
 
   harness.dispatch('grammar-submit-form', {
     formData: grammarResponseFormData(sample.correctResponse),
@@ -70,6 +76,183 @@ test('Grammar surface runs from setup to Worker-style feedback and summary', () 
   harness.dispatch('grammar-back');
   assert.equal(harness.store.getState().subjectUi.grammar.phase, 'dashboard');
   assert.match(harness.render(), /Grammar retrieval practice/);
+});
+
+test('Grammar surface runs KS2 mini-set mode with delayed feedback and end review', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-set-mode', { value: 'satsset' });
+  let html = harness.render();
+  assert.match(html, /Mini-set size/);
+  assert.match(html, /<option value="8" selected="">8<\/option><option value="12">12<\/option>/);
+
+  harness.dispatch('grammar-start', {
+    payload: {
+      mode: 'satsset',
+      roundLength: 8,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  let grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.type, 'mini-set');
+  assert.equal(grammar.session.miniTest.questions.length, 8);
+
+  html = harness.render();
+  assert.match(html, /KS2-style mini-test/);
+  assert.match(html, /Timed test/);
+  assert.match(html, /Question 1 of 8/);
+  assert.match(html, /Save response/);
+  assert.match(html, /Finish mini-set/);
+  const navButton = html.match(/<button[^>]*class="grammar-mini-test-nav-button current"[^>]*>/)?.[0];
+  assert.ok(navButton, 'mini-test question navigation renders a current question button');
+  const navFormId = navButton.match(/form="([^"]+)"/)?.[1];
+  assert.ok(navFormId, 'mini-test question navigation button is associated with the answer form');
+  assert.match(html, new RegExp(`<form id="${escapeRegExp(navFormId)}" class="grammar-answer-form"`));
+  assert.doesNotMatch(html, /Correct\./);
+  assert.doesNotMatch(html, /Non-scored/);
+
+  harness.dispatch('grammar-save-mini-test-response', {
+    formData: grammarResponseFormData(sample.correctResponse),
+    advance: true,
+  });
+
+  grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.feedback, null);
+  assert.equal(grammar.session.answered, 1);
+  assert.equal(grammar.session.currentIndex, 1);
+  assert.equal(grammar.analytics.concepts.some((concept) => concept.attempts > 0), false);
+  assert.match(harness.render(), /Question 2 of 8/);
+
+  harness.dispatch('grammar-finish-mini-test');
+
+  grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'summary');
+  assert.equal(grammar.summary.answered, 1);
+  assert.equal(grammar.summary.miniTestReview.questions.length, 8);
+  html = harness.render();
+  assert.match(html, /Mini-set review/);
+  assert.match(html, /Delayed feedback/);
+  assert.match(html, /No answer saved/);
+  assert.match(html, /Q1/);
+  assert.match(html, /Q2/);
+});
+
+test('Grammar surface exposes in-session repair actions without local scoring', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+  const wrongAnswer = sample.sample.inputSpec.options.find((option) => option.value !== sample.correctResponse.answer).value;
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  let html = harness.render();
+  assert.match(html, /Faded support/);
+  assert.match(html, /Similar problem/);
+
+  harness.dispatch('grammar-use-faded-support');
+  html = harness.render();
+  assert.match(html, /Faded guidance/);
+  assert.equal(harness.store.getState().subjectUi.grammar.session.supportLevel, 1);
+
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData({ answer: wrongAnswer }),
+  });
+  html = harness.render();
+  assert.match(html, /Retry/);
+  assert.match(html, /Worked solution/);
+  assert.match(html, /Similar problem/);
+
+  harness.dispatch('grammar-show-worked-solution');
+  html = harness.render();
+  assert.match(html, /Worked solution/);
+  assert.match(html, /Answer/);
+  assert.equal(harness.store.getState().subjectUi.grammar.session.supportLevel, 2);
+
+  harness.dispatch('grammar-retry-current-question');
+  let grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.answered, 1);
+  assert.equal(grammar.session.repair.retryingCurrent, true);
+  assert.match(harness.render(), /Worked example/);
+
+  harness.dispatch('grammar-start-similar-problem');
+  grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.currentItem.templateId, sample.id);
+  assert.notEqual(grammar.session.currentItem.seed, sample.sample.seed);
+  assert.equal(grammar.session.repair.similarProblems, 1);
+});
+
+test('Grammar session exposes non-scored AI enrichment triggers', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  let html = harness.render();
+  assert.match(html, /Explain this/);
+  assert.match(html, /Revision cards/);
+
+  harness.dispatch('grammar-request-ai-enrichment', { kind: 'explanation' });
+  let grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.aiEnrichment.status, 'ready');
+  assert.equal(grammar.aiEnrichment.nonScored, true);
+  assert.equal(grammar.aiEnrichment.concept.id, 'adverbials');
+  html = harness.render();
+  assert.match(html, /Non-scored/);
+  assert.match(html, /Adverbials and fronted adverbials explanation/);
+  assert.match(html, /Fronted adverbials come first/);
+
+  harness.dispatch('grammar-request-ai-enrichment', { kind: 'revision-card' });
+  grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.aiEnrichment.kind, 'revision-card');
+  assert.ok(grammar.aiEnrichment.revisionCards.length >= 1);
+  assert.ok(grammar.aiEnrichment.revisionDrills.every((drill) => drill.deterministic === true));
+  html = harness.render();
+  assert.match(html, /Concept check/);
+  assert.match(html, /Spot the fronted adverbial/);
+});
+
+test('Grammar analytics exposes parent summary draft enrichment', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  let html = harness.render();
+  assert.match(html, /Parent summary draft/);
+
+  harness.dispatch('grammar-request-ai-enrichment', { kind: 'parent-summary' });
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.aiEnrichment.status, 'ready');
+  assert.equal(grammar.aiEnrichment.kind, 'parent-summary');
+  assert.match(grammar.aiEnrichment.parentSummary.body, /Worker-marked evidence/);
+  html = harness.render();
+  assert.match(html, /Grammar parent summary draft/);
+  assert.match(html, /Non-scored/);
+  assert.match(html, /Current focus/);
+  assert.doesNotMatch(html, /correctAnswer/);
 });
 
 test('Grammar submit requires an answer before recording an attempt', () => {
@@ -111,6 +294,67 @@ test('Grammar setup controls are disabled while a command is pending', () => {
   assert.match(html, /<select class="input" disabled=""[^>]*><option value="" selected="">Smart mix<\/option>/);
   assert.match(html, /<select class="input" disabled=""[^>]*><option value="3">3<\/option><option value="5" selected="">5<\/option>/);
   assert.match(html, /<button class="btn primary xl" type="button" disabled="">Starting\.\.\.<\/button>/);
+});
+
+test('Grammar setup exposes session goals and Smart Review teaching settings', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  let html = harness.render();
+  assert.match(html, /Session goal/);
+  assert.match(html, /Ten minutes/);
+  assert.match(html, /Clear due items/);
+  assert.match(html, /Speech rate/);
+  assert.match(html, /Smart Review teaching items/);
+  assert.match(html, /Show domain before answering/);
+
+  harness.dispatch('grammar-set-goal', { value: 'timed' });
+  harness.dispatch('grammar-set-speech-rate', { value: '1.4' });
+  harness.dispatch('grammar-set-practice-setting', { key: 'allowTeachingItems', value: true });
+  harness.dispatch('grammar-start', {
+    payload: {
+      mode: 'smart',
+      roundLength: 15,
+      seed: 123,
+    },
+  });
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.goal.type, 'timed');
+  assert.equal(grammar.session.goal.timeLimitMs, 10 * 60_000);
+  assert.equal(grammar.prefs.speechRate, 1.4);
+  assert.equal(grammar.session.supportLevel, 1);
+  html = harness.render();
+  assert.match(html, /Ten minutes/);
+  assert.match(html, /Faded guidance/);
+});
+
+test('Grammar show-domain setting affects display only before answer feedback', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-set-practice-setting', { key: 'showDomainBeforeAnswer', value: false });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  let html = harness.render();
+  assert.doesNotMatch(html, />Adverbials<\/span>/);
+
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData(sample.correctResponse),
+  });
+  html = harness.render();
+  assert.match(html, />Adverbials<\/span>/);
+  assert.equal(harness.store.getState().subjectUi.grammar.analytics.concepts.find((concept) => concept.id === 'adverbials').attempts, 1);
 });
 
 test('Grammar monster progress rehydrates from persisted Codex state after reload normalisation', () => {

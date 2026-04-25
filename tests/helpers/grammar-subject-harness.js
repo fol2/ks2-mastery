@@ -90,6 +90,33 @@ export function createGrammarTestService({ repositories, now = Date.now } = {}) 
     submitAnswer(learnerId, _uiState, response = {}) {
       return apply(learnerId, 'submit-answer', { response });
     },
+    saveMiniTestResponse(learnerId, response = {}, options = false) {
+      const payload = options && typeof options === 'object' && !Array.isArray(options)
+        ? { ...options, response }
+        : { response, advance: Boolean(options) };
+      return apply(learnerId, 'save-mini-test-response', payload);
+    },
+    moveMiniTest(learnerId, payload = {}) {
+      return apply(learnerId, 'move-mini-test', payload);
+    },
+    finishMiniTest(learnerId, payload = {}) {
+      return apply(learnerId, 'finish-mini-test', payload);
+    },
+    retryCurrentQuestion(learnerId) {
+      return apply(learnerId, 'retry-current-question');
+    },
+    useFadedSupport(learnerId) {
+      return apply(learnerId, 'use-faded-support');
+    },
+    showWorkedSolution(learnerId) {
+      return apply(learnerId, 'show-worked-solution');
+    },
+    startSimilarProblem(learnerId) {
+      return apply(learnerId, 'start-similar-problem');
+    },
+    requestAiEnrichment(learnerId, payload = {}) {
+      return apply(learnerId, 'request-ai-enrichment', payload);
+    },
     continueSession(learnerId) {
       return apply(learnerId, 'continue-session');
     },

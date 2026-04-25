@@ -88,6 +88,148 @@ function conceptForPayload(payload, state) {
   return GRAMMAR_CONCEPTS.find((concept) => concept.id === id) || null;
 }
 
+function conceptById(id) {
+  const conceptId = cleanText(id, 80);
+  return GRAMMAR_CONCEPTS.find((concept) => concept.id === conceptId) || null;
+}
+
+function masteryNodeFor(state, conceptId) {
+  const node = state?.mastery?.concepts?.[conceptId];
+  return isPlainObject(node) ? node : {};
+}
+
+function conceptPriority(state, concept, now) {
+  const node = masteryNodeFor(state, concept.id);
+  const attempts = Math.max(0, Number(node.attempts) || 0);
+  const correct = Math.max(0, Number(node.correct) || 0);
+  const wrong = Math.max(0, Number(node.wrong) || 0);
+  const strength = Number.isFinite(Number(node.strength)) ? Number(node.strength) : 0.5;
+  const dueAt = Math.max(0, Number(node.dueAt) || 0);
+  if (!attempts) return 70;
+  if (strength < 0.42 || wrong > correct + 1) return 100;
+  if (dueAt && dueAt <= now) return 90;
+  if (strength < 0.7) return 60;
+  return 20;
+}
+
+function fallbackConceptForPayload(payload, state, now) {
+  const explicit = conceptForPayload(payload, state);
+  if (explicit) return explicit;
+  const focused = conceptById(state?.prefs?.focusConceptId);
+  if (focused) return focused;
+
+  const ranked = GRAMMAR_CONCEPTS
+    .map((concept, index) => ({
+      concept,
+      index,
+      priority: conceptPriority(state, concept, now),
+    }))
+    .sort((a, b) => (b.priority - a.priority) || (a.index - b.index));
+  return ranked[0]?.concept || GRAMMAR_CONCEPTS[0] || null;
+}
+
+function templatesForConcept(concept, limit = 3) {
+  if (!concept) return [];
+  return GRAMMAR_TEMPLATE_METADATA
+    .filter((template) => Array.isArray(template.skillIds) && template.skillIds.includes(concept.id))
+    .slice(0, limit)
+    .map((template) => ({
+      templateId: template.id,
+      label: template.label,
+    }));
+}
+
+function parentSummaryConcepts(state, now) {
+  return GRAMMAR_CONCEPTS
+    .map((concept, index) => {
+      const node = masteryNodeFor(state, concept.id);
+      const attempts = Math.max(0, Number(node.attempts) || 0);
+      const correct = Math.max(0, Number(node.correct) || 0);
+      const wrong = Math.max(0, Number(node.wrong) || 0);
+      let status = 'new';
+      if (attempts) {
+        const strength = Number.isFinite(Number(node.strength)) ? Number(node.strength) : 0.5;
+        const dueAt = Math.max(0, Number(node.dueAt) || 0);
+        if (strength < 0.42 || wrong > correct + 1) status = 'needs repair';
+        else if (dueAt && dueAt <= now) status = 'due for review';
+        else if (strength >= 0.82 && Math.max(0, Number(node.intervalDays) || 0) >= 7 && Math.max(0, Number(node.correctStreak) || 0) >= 3) status = 'secure';
+        else status = 'building';
+      }
+      return {
+        concept,
+        index,
+        status,
+        attempts,
+        priority: conceptPriority(state, concept, now),
+      };
+    })
+    .sort((a, b) => (b.priority - a.priority) || (b.attempts - a.attempts) || (a.index - b.index))
+    .slice(0, 3);
+}
+
+function buildFallbackResponse({ kind, payload, state, now }) {
+  const concept = fallbackConceptForPayload(payload, state, now);
+  const conceptName = concept?.name || 'Grammar';
+  const summary = concept?.summary || 'Practise one reviewed Grammar idea at a time, then use deterministic questions for scored progress.';
+  const notices = safeTextList(concept?.notices, 3, 180);
+  const drills = templatesForConcept(concept, kind === 'revision-card' ? 3 : 2);
+
+  if (kind === 'parent-summary') {
+    const focus = parentSummaryConcepts(state, now);
+    const focusText = focus.length
+      ? focus.map((entry) => `${entry.concept.name}: ${entry.status}`).join('; ')
+      : `${conceptName}: ready for practice`;
+    return {
+      title: 'Grammar parent summary draft',
+      explanation: summary,
+      parentSummary: {
+        title: 'Grammar parent summary draft',
+        body: `Grammar practice is tracking the KS2 concept map through Worker-marked evidence. Current focus: ${focusText}.`,
+        nextSteps: [
+          `Review ${focus[0]?.concept?.name || conceptName} with one short deterministic practice round.`,
+          'Use support or retry actions for repair, then keep scored progress in normal Grammar practice.',
+          'Treat AI content as a draft summary only; learning evidence still comes from marked Grammar items.',
+        ],
+      },
+      drills,
+    };
+  }
+
+  if (kind === 'revision-card') {
+    return {
+      title: `${conceptName} revision cards`,
+      explanation: summary,
+      keyPoints: notices,
+      revisionCards: [
+        {
+          title: 'Concept check',
+          front: `What should I remember about ${conceptName}?`,
+          back: summary,
+        },
+        notices[0]
+          ? {
+            title: 'Watch for',
+            front: notices[0],
+            back: notices[1] || 'Use a reviewed Grammar item to check the idea in context.',
+          }
+          : null,
+      ].filter(Boolean),
+      drills,
+    };
+  }
+
+  return {
+    title: `${conceptName} explanation`,
+    explanation: summary,
+    keyPoints: notices.length ? notices : [
+      'Use the visible prompt and options only.',
+      'Scored progress comes from deterministic Grammar questions.',
+    ],
+    revisionCards: [],
+    drills,
+  };
+}
+
 function safeTextList(value, limit = 5, textLimit = 180) {
   return (Array.isArray(value) ? value : [])
     .map((entry) => cleanText(entry, textLimit))
@@ -200,8 +342,12 @@ export function compileGrammarAiEnrichment({
   now = Date.now(),
 } = {}) {
   const kind = normaliseKind(payload.kind || payload.type || payload.mode);
+  const hasProviderResponse = ['aiResponse', 'response', 'enrichment']
+    .some((key) => Object.prototype.hasOwnProperty.call(payload, key));
   try {
-    const response = parseAiResponse(payload.aiResponse || payload.response || payload.enrichment);
+    const response = hasProviderResponse
+      ? parseAiResponse(payload.aiResponse ?? payload.response ?? payload.enrichment)
+      : buildFallbackResponse({ kind, payload, state, now });
     return compilePayload({ kind, payload, response, state, now });
   } catch (_error) {
     return failure(kind, 'grammar_ai_enrichment_malformed', 'AI enrichment response was not valid JSON.', now);

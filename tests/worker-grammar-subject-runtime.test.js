@@ -230,6 +230,205 @@ test('Grammar command route accepts trouble drill mode', async () => {
   DB.close();
 });
 
+test('Grammar command route runs strict mini-test save, navigation, and finish commands', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'fronted_adverbial_choose');
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-mini-route-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'satsset',
+      roundLength: 8,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  assert.equal(start.body.subjectReadModel.phase, 'session');
+  assert.equal(start.body.subjectReadModel.session.type, 'mini-set');
+  assert.equal(start.body.subjectReadModel.session.miniTest.questions.length, 8);
+  assert.equal(start.body.subjectReadModel.feedback, null);
+
+  const ai = await postCommand(app, DB, {
+    command: 'request-ai-enrichment',
+    learnerId: 'learner-a',
+    requestId: 'grammar-mini-route-ai',
+    expectedLearnerRevision: 1,
+    payload: { kind: 'explanation' },
+  });
+  assert.equal(ai.response.status, 400, JSON.stringify(ai.body));
+  assert.equal(ai.body.code, 'grammar_ai_unavailable_for_mini_test');
+
+  const save = await postCommand(app, DB, {
+    command: 'save-mini-test-response',
+    learnerId: 'learner-a',
+    requestId: 'grammar-mini-route-save',
+    expectedLearnerRevision: 1,
+    payload: {
+      response: sample.correctResponse,
+      advance: true,
+    },
+  });
+  assert.equal(save.response.status, 200, JSON.stringify(save.body));
+  assert.equal(save.body.subjectReadModel.phase, 'session');
+  assert.equal(save.body.subjectReadModel.session.currentIndex, 1);
+  assert.equal(save.body.subjectReadModel.session.answered, 1);
+  assert.equal(save.body.subjectReadModel.feedback, null);
+  assert.equal(save.body.domainEvents.some((event) => event.type === 'grammar.answer-submitted'), false);
+  assert.equal(save.body.mutation.appliedRevision, 2);
+
+  const move = await postCommand(app, DB, {
+    command: 'move-mini-test',
+    learnerId: 'learner-a',
+    requestId: 'grammar-mini-route-move',
+    expectedLearnerRevision: 2,
+    payload: {
+      index: 0,
+    },
+  });
+  assert.equal(move.response.status, 200, JSON.stringify(move.body));
+  assert.equal(move.body.subjectReadModel.session.currentIndex, 0);
+  assert.equal(move.body.subjectReadModel.session.miniTest.questions[0].answered, true);
+
+  const finish = await postCommand(app, DB, {
+    command: 'finish-mini-test',
+    learnerId: 'learner-a',
+    requestId: 'grammar-mini-route-finish',
+    expectedLearnerRevision: 3,
+    payload: {
+      saveCurrent: false,
+    },
+  });
+  assert.equal(finish.response.status, 200, JSON.stringify(finish.body));
+  assert.equal(finish.body.subjectReadModel.phase, 'summary');
+  assert.equal(finish.body.subjectReadModel.summary.answered, 1);
+  assert.equal(finish.body.subjectReadModel.summary.miniTestReview.questions.length, 8);
+  assert.equal(finish.body.domainEvents.filter((event) => event.type === 'grammar.answer-submitted').length, 1);
+  assert.equal(finish.body.domainEvents.some((event) => event.type === 'grammar.session-completed'), true);
+
+  DB.close();
+});
+
+test('Grammar command route persists session goals and practice settings', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const prefs = await postCommand(app, DB, {
+    command: 'save-prefs',
+    learnerId: 'learner-a',
+    requestId: 'grammar-goal-settings-prefs',
+    expectedLearnerRevision: 0,
+    payload: {
+      prefs: {
+        goalType: 'timed',
+        allowTeachingItems: true,
+        showDomainBeforeAnswer: false,
+        speechRate: 0.2,
+      },
+    },
+  });
+  assert.equal(prefs.response.status, 200, JSON.stringify(prefs.body));
+  assert.equal(prefs.body.subjectReadModel.prefs.goalType, 'timed');
+  assert.equal(prefs.body.subjectReadModel.prefs.allowTeachingItems, true);
+  assert.equal(prefs.body.subjectReadModel.prefs.showDomainBeforeAnswer, false);
+  assert.equal(prefs.body.subjectReadModel.prefs.speechRate, 0.6);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-goal-settings-start',
+    expectedLearnerRevision: 1,
+    payload: {
+      mode: 'smart',
+      roundLength: 15,
+      seed: 321,
+    },
+  });
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  assert.equal(start.body.subjectReadModel.session.goal.type, 'timed');
+  assert.equal(start.body.subjectReadModel.session.goal.timeLimitMs, 10 * 60_000);
+  assert.equal(start.body.subjectReadModel.session.supportLevel, 1);
+  assert.equal(start.body.subjectReadModel.session.supportGuidance.kind, 'faded');
+
+  DB.close();
+});
+
+test('Grammar command route persists repair actions through Worker commands', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'fronted_adverbial_choose');
+  const wrongAnswer = sample.sample.inputSpec.options.find((option) => option.value !== sample.correctResponse.answer).value;
+  seedAccountLearner(DB);
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-repair-route-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+
+  const faded = await postCommand(app, DB, {
+    command: 'use-faded-support',
+    learnerId: 'learner-a',
+    requestId: 'grammar-repair-route-faded',
+    expectedLearnerRevision: 1,
+    payload: {},
+  });
+  assert.equal(faded.response.status, 200, JSON.stringify(faded.body));
+  assert.equal(faded.body.subjectReadModel.session.supportLevel, 1);
+  assert.equal(faded.body.subjectReadModel.session.supportGuidance.kind, 'faded');
+
+  const submit = await postCommand(app, DB, {
+    command: 'submit-answer',
+    learnerId: 'learner-a',
+    requestId: 'grammar-repair-route-submit',
+    expectedLearnerRevision: 2,
+    payload: { response: { answer: wrongAnswer } },
+  });
+  assert.equal(submit.response.status, 200, JSON.stringify(submit.body));
+  assert.equal(submit.body.subjectReadModel.phase, 'feedback');
+  assert.equal(submit.body.subjectReadModel.feedback.result.correct, false);
+
+  const worked = await postCommand(app, DB, {
+    command: 'show-worked-solution',
+    learnerId: 'learner-a',
+    requestId: 'grammar-repair-route-worked',
+    expectedLearnerRevision: 3,
+    payload: {},
+  });
+  assert.equal(worked.response.status, 200, JSON.stringify(worked.body));
+  assert.ok(worked.body.subjectReadModel.feedback.workedSolution.answerText);
+  assert.equal(worked.body.subjectReadModel.session.supportLevel, 2);
+
+  const retry = await postCommand(app, DB, {
+    command: 'retry-current-question',
+    learnerId: 'learner-a',
+    requestId: 'grammar-repair-route-retry',
+    expectedLearnerRevision: 4,
+    payload: {},
+  });
+  assert.equal(retry.response.status, 200, JSON.stringify(retry.body));
+  assert.equal(retry.body.subjectReadModel.phase, 'session');
+  assert.equal(retry.body.subjectReadModel.session.answered, 1);
+  assert.equal(retry.body.subjectReadModel.session.repair.retryingCurrent, true);
+
+  DB.close();
+});
+
 test('Grammar command route accepts sentence surgery mode', async () => {
   const DB = createMigratedSqliteD1Database();
   const app = createWorkerApp({ now: () => 1_777_000_000_000 });
@@ -901,6 +1100,121 @@ test('Grammar AI enrichment returns non-scored deterministic drill suggestions w
   assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 0);
   assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM child_subject_state WHERE subject_id = 'grammar'").get().count, 0);
   assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM event_log WHERE subject_id = 'grammar'").get().count, 0);
+
+  DB.close();
+});
+
+test('Grammar parent-summary AI enrichment persists a non-scored adult draft', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const enrichment = await postCommand(app, DB, {
+    command: 'request-ai-enrichment',
+    learnerId: 'learner-a',
+    requestId: 'grammar-ai-parent-summary',
+    expectedLearnerRevision: 0,
+    payload: {
+      kind: 'parent-summary',
+      aiResponse: {
+        title: 'Grammar parent summary',
+        explanation: 'Non-scored adult summary draft.',
+        parentSummary: {
+          title: 'Parent summary draft',
+          body: 'Learner A should revisit fronted adverbials before the next mixed review.',
+          nextSteps: ['Practise two fronted adverbial choices', 'Check comma placement after the opener'],
+        },
+      },
+    },
+  });
+
+  assert.equal(enrichment.response.status, 200, JSON.stringify(enrichment.body));
+  assert.equal(enrichment.body.changed, true);
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.kind, 'parent-summary');
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.status, 'ready');
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.nonScored, true);
+  assert.match(enrichment.body.subjectReadModel.aiEnrichment.parentSummary.body, /fronted adverbials/i);
+  assert.equal(enrichment.body.mutation.appliedRevision, 1);
+  assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 1);
+  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM child_subject_state WHERE subject_id = 'grammar'").get().count, 1);
+  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM event_log WHERE subject_id = 'grammar'").get().count, 0);
+
+  const stored = DB.db.prepare(`
+    SELECT ui_json, data_json
+    FROM child_subject_state
+    WHERE learner_id = 'learner-a'
+      AND subject_id = 'grammar'
+  `).get();
+  const storedUi = JSON.parse(stored.ui_json);
+  const storedData = JSON.parse(stored.data_json);
+  assert.equal(storedUi.aiEnrichment.kind, 'parent-summary');
+  assert.equal(storedData.aiEnrichment.kind, 'parent-summary');
+  assert.equal(storedData.aiEnrichment.nonScored, true);
+  assert.equal(storedData.aiEnrichment.revisionDrills, undefined);
+
+  const parentResponse = await app.fetch(new Request('https://repo.test/api/hubs/parent?learnerId=learner-a', {
+    headers: {
+      origin: 'https://repo.test',
+      'x-ks2-dev-account-id': 'adult-a',
+    },
+  }), {
+    DB,
+    AUTH_MODE: 'development-stub',
+    ENVIRONMENT: 'test',
+  }, {});
+  const parentBody = await parentResponse.json();
+  assert.equal(parentResponse.status, 200, JSON.stringify(parentBody));
+  assert.match(parentBody.parentHub.grammarEvidence.parentSummaryDraft.body, /fronted adverbials/i);
+  assert.deepEqual(parentBody.parentHub.grammarEvidence.parentSummaryDraft.nextSteps, [
+    'Practise two fronted adverbial choices',
+    'Check comma placement after the opener',
+  ]);
+
+  DB.close();
+});
+
+test('Grammar AI enrichment uses deterministic fallback content when no provider response is available', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'fronted_adverbial_choose');
+  seedAccountLearner(DB);
+
+  const started = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-ai-fallback-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  assert.equal(started.response.status, 200, JSON.stringify(started.body));
+
+  const enrichment = await postCommand(app, DB, {
+    command: 'request-ai-enrichment',
+    learnerId: 'learner-a',
+    requestId: 'grammar-ai-fallback-revision-cards',
+    expectedLearnerRevision: 1,
+    payload: {
+      kind: 'revision-card',
+    },
+  });
+
+  assert.equal(enrichment.response.status, 200, JSON.stringify(enrichment.body));
+  assert.equal(enrichment.body.changed, false);
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.status, 'ready');
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.kind, 'revision-card');
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.nonScored, true);
+  assert.equal(enrichment.body.subjectReadModel.aiEnrichment.concept.id, 'adverbials');
+  assert.ok(enrichment.body.subjectReadModel.aiEnrichment.revisionCards.length >= 1);
+  assert.ok(enrichment.body.subjectReadModel.aiEnrichment.revisionDrills.length >= 1);
+  assert.ok(enrichment.body.subjectReadModel.aiEnrichment.revisionDrills.every((drill) => drill.deterministic === true));
+  assert.equal(enrichment.body.mutation.appliedRevision, 1);
+  assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 1);
+  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM child_subject_state WHERE subject_id = 'grammar'").get().count, 1);
 
   DB.close();
 });

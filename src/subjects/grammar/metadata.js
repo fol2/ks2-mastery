@@ -1,3 +1,5 @@
+import { normaliseGrammarSpeechRate } from './speech.js';
+
 export const GRAMMAR_SUBJECT_ID = 'grammar';
 export const GRAMMAR_REGION_IMAGE = '/assets/regions/the-clause-conservatory/the-clause-conservatory-cover.1280.webp';
 export const GRAMMAR_REGION_IMAGE_SMALL = '/assets/regions/the-clause-conservatory/the-clause-conservatory-cover.640.webp';
@@ -193,6 +195,10 @@ export const DEFAULT_GRAMMAR_PREFS = Object.freeze({
   mode: 'smart',
   roundLength: 5,
   focusConceptId: '',
+  goalType: 'questions',
+  allowTeachingItems: false,
+  showDomainBeforeAnswer: true,
+  speechRate: 1,
 });
 
 export function grammarMonsterAsset(id, size = 320) {
@@ -435,6 +441,7 @@ export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
     prefs: {
       ...DEFAULT_GRAMMAR_PREFS,
       ...(raw.prefs && typeof raw.prefs === 'object' && !Array.isArray(raw.prefs) ? raw.prefs : {}),
+      speechRate: normaliseGrammarSpeechRate(raw.prefs?.speechRate, DEFAULT_GRAMMAR_PREFS.speechRate),
     },
     stats,
     analytics: {

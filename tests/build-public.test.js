@@ -30,4 +30,6 @@ test('public build emits the React app bundle entrypoint', () => {
   assert.doesNotMatch(appBundle, /__ks2(HomeSurface|CodexSurface|SubjectTopNavSurface)/);
   assert.doesNotMatch(appBundle, /data-home-mount|data-subject-topnav-mount/);
   assert.doesNotMatch(appBundle, /SEEDED_SPELLING_CONTENT_BUNDLE|Legacy vendor seed for Pass 11 content model/);
+  assert.doesNotMatch(appBundle, /createGrammarQuestion|evaluateGrammarQuestion|GRAMMAR_TEMPLATES/);
+  assert.doesNotMatch(appBundle, /correctResponse|grammar-legacy-oracle|extract-grammar-legacy-oracle/);
 });

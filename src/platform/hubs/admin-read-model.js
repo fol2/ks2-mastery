@@ -125,6 +125,7 @@ export function buildAdminHubReadModel({
       accessModeLabel: writable ? 'Writable learner' : 'Read-only learner',
       overview: parentHub.learnerOverview,
       currentFocus: parentHub.dueWork[0] || null,
+      grammarEvidence: parentHub.grammarEvidence || null,
     };
   });
 

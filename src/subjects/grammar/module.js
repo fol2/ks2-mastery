@@ -3,6 +3,7 @@ import {
   GRAMMAR_SUBJECT_ID,
   normaliseGrammarReadModel,
 } from './metadata.js';
+import { normaliseGrammarSpeechRate } from './speech.js';
 
 function selectedLearnerId(context) {
   return (context?.store?.getState?.() || context?.appState || {})?.learners?.selectedId || '';
@@ -117,6 +118,9 @@ function grammarStartPayload(ui, data = {}) {
   const request = {
     mode,
     roundLength: data.roundLength || prefs.roundLength || DEFAULT_GRAMMAR_PREFS.roundLength,
+    goalType: data.goalType || prefs.goalType || DEFAULT_GRAMMAR_PREFS.goalType,
+    allowTeachingItems: prefs.allowTeachingItems === true,
+    showDomainBeforeAnswer: prefs.showDomainBeforeAnswer !== false,
   };
   if (Object.prototype.hasOwnProperty.call(data, 'focusConceptId')) {
     request.focusConceptId = data.focusConceptId;
@@ -259,6 +263,35 @@ export const grammarModule = {
       return sendGrammarCommand(context, 'save-prefs', { prefs: { roundLength } });
     }
 
+    if (action === 'grammar-set-goal') {
+      const goalType = context.data?.value || DEFAULT_GRAMMAR_PREFS.goalType;
+      if (service?.savePrefs) {
+        const prefs = service.savePrefs(learnerId, { goalType });
+        return resetToDashboardWithPrefs(context, prefs);
+      }
+      return sendGrammarCommand(context, 'save-prefs', { prefs: { goalType } });
+    }
+
+    if (action === 'grammar-set-practice-setting') {
+      const key = context.data?.key;
+      if (!['allowTeachingItems', 'showDomainBeforeAnswer'].includes(key)) return true;
+      const patch = { [key]: Boolean(context.data?.value) };
+      if (service?.savePrefs) {
+        const prefs = service.savePrefs(learnerId, patch);
+        return resetToDashboardWithPrefs(context, prefs);
+      }
+      return sendGrammarCommand(context, 'save-prefs', { prefs: patch });
+    }
+
+    if (action === 'grammar-set-speech-rate') {
+      const speechRate = normaliseGrammarSpeechRate(context.data?.value, ui.prefs?.speechRate);
+      if (service?.savePrefs) {
+        const prefs = service.savePrefs(learnerId, { speechRate });
+        return resetToDashboardWithPrefs(context, prefs);
+      }
+      return sendGrammarCommand(context, 'save-prefs', { prefs: { speechRate } });
+    }
+
     if (action === 'grammar-set-focus') {
       const focusConceptId = context.data?.value || '';
       if (!grammarModeUsesFocus(ui.prefs?.mode)) {
@@ -283,12 +316,62 @@ export const grammarModule = {
 
     if (action === 'grammar-submit-form') {
       const response = responseFromFormData(context.data?.formData);
+      if (ui.session?.type === 'mini-set') {
+        const payload = { response, advance: Boolean(context.data?.advance) };
+        if (service?.saveMiniTestResponse) return applyLocalTransition(context, service.saveMiniTestResponse(learnerId, response, payload.advance));
+        return sendGrammarCommand(context, 'save-mini-test-response', payload);
+      }
       if (!responseHasAnswer(response)) {
         setGrammarError(context, 'Choose or type an answer before submitting.', { learnerId });
         return true;
       }
       if (service?.submitAnswer) return applyLocalTransition(context, service.submitAnswer(learnerId, ui, response));
       return sendGrammarCommand(context, 'submit-answer', { response });
+    }
+
+    if (action === 'grammar-save-mini-test-response') {
+      const response = responseFromFormData(context.data?.formData);
+      const payload = { response, advance: Boolean(context.data?.advance) };
+      if (context.data?.index !== undefined) payload.index = Number(context.data.index);
+      if (service?.saveMiniTestResponse) return applyLocalTransition(context, service.saveMiniTestResponse(learnerId, response, payload));
+      return sendGrammarCommand(context, 'save-mini-test-response', payload);
+    }
+
+    if (action === 'grammar-move-mini-test') {
+      const payload = {};
+      if (Object.prototype.hasOwnProperty.call(context.data || {}, 'index')) payload.index = Number(context.data.index);
+      if (Object.prototype.hasOwnProperty.call(context.data || {}, 'delta')) payload.delta = Number(context.data.delta);
+      if (service?.moveMiniTest) return applyLocalTransition(context, service.moveMiniTest(learnerId, payload));
+      return sendGrammarCommand(context, 'move-mini-test', payload);
+    }
+
+    if (action === 'grammar-finish-mini-test') {
+      const hasFormData = Boolean(context.data?.formData?.entries);
+      const payload = hasFormData
+        ? { response: responseFromFormData(context.data.formData) }
+        : { saveCurrent: false };
+      if (service?.finishMiniTest) return applyLocalTransition(context, service.finishMiniTest(learnerId, payload));
+      return sendGrammarCommand(context, 'finish-mini-test', payload);
+    }
+
+    if (action === 'grammar-retry-current-question') {
+      if (service?.retryCurrentQuestion) return applyLocalTransition(context, service.retryCurrentQuestion(learnerId));
+      return sendGrammarCommand(context, 'retry-current-question');
+    }
+
+    if (action === 'grammar-use-faded-support') {
+      if (service?.useFadedSupport) return applyLocalTransition(context, service.useFadedSupport(learnerId));
+      return sendGrammarCommand(context, 'use-faded-support');
+    }
+
+    if (action === 'grammar-show-worked-solution') {
+      if (service?.showWorkedSolution) return applyLocalTransition(context, service.showWorkedSolution(learnerId));
+      return sendGrammarCommand(context, 'show-worked-solution');
+    }
+
+    if (action === 'grammar-start-similar-problem') {
+      if (service?.startSimilarProblem) return applyLocalTransition(context, service.startSimilarProblem(learnerId));
+      return sendGrammarCommand(context, 'start-similar-problem');
     }
 
     if (action === 'grammar-continue') {
@@ -300,6 +383,7 @@ export const grammarModule = {
       const payload = context.data?.payload && typeof context.data.payload === 'object' && !Array.isArray(context.data.payload)
         ? context.data.payload
         : { kind: context.data?.kind || 'explanation' };
+      if (service?.requestAiEnrichment) return applyLocalTransition(context, service.requestAiEnrichment(learnerId, payload));
       return sendGrammarCommand(context, 'request-ai-enrichment', payload);
     }
 

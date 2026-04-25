@@ -167,6 +167,37 @@ test('parent hub read model includes Grammar evidence without replacing Spelling
               lastSeenAt: '2026-04-24T10:00:00.000Z',
             },
           },
+          recentAttempts: [{
+            templateId: 'fronted-adverbial-choice',
+            itemId: 'fronted-adverbial-choice:101',
+            seed: 101,
+            questionType: 'choose',
+            conceptIds: ['adverbials'],
+            response: { answer: 'After lunch, we played outside.' },
+            result: {
+              correct: false,
+              score: 0,
+              maxScore: 1,
+              answerText: 'After lunch, we played outside.',
+              misconception: 'fronted_adverbial_confusion',
+            },
+            supportLevel: 0,
+            attempts: 1,
+            createdAt: 1_777_000_000_000,
+          }],
+        },
+        ui: {
+          aiEnrichment: {
+            kind: 'parent-summary',
+            status: 'ready',
+            nonScored: true,
+            generatedAt: 1_777_000_010_000,
+            parentSummary: {
+              title: 'Parent summary draft',
+              body: 'Ava should revisit fronted adverbials before the next mixed review.',
+              nextSteps: ['Practise two fronted adverbial choices', 'Check comma placement after the opener'],
+            },
+          },
         },
         updatedAt: 5000,
       },
@@ -195,8 +226,44 @@ test('parent hub read model includes Grammar evidence without replacing Spelling
   assert.ok(grammarDueWork);
   assert.match(grammarDueWork.label, /Grammar/);
   assert.equal(grammarDueWork.recommendedMode, 'trouble');
+  assert.equal(model.grammarEvidence.weakConcepts[0].id, 'adverbials');
+  assert.equal(model.grammarEvidence.questionTypeSummary[0].id, 'choose');
+  assert.equal(model.grammarEvidence.recentActivity[0].itemId, 'fronted-adverbial-choice:101');
+  assert.equal(model.grammarEvidence.recentActivity[0].score, 0);
+  assert.equal(Object.hasOwn(model.grammarEvidence.recentActivity[0], 'response'), false);
+  assert.equal(Object.hasOwn(model.grammarEvidence.recentActivity[0], 'result'), false);
+  assert.match(model.grammarEvidence.parentSummaryDraft.body, /fronted adverbials/i);
   assert.ok(model.misconceptionPatterns.some((entry) => entry.subjectId === 'grammar' && /Fronted Adverbial/.test(entry.label)));
   assert.ok(model.recentSessions.some((entry) => entry.subjectId === 'grammar' && entry.headline === '0/1'));
+});
+
+test('parent hub read model normalises malformed restored Grammar state safely', () => {
+  const learner = makeLearner();
+  const model = buildParentHubReadModel({
+    learner,
+    platformRole: 'parent',
+    membershipRole: 'owner',
+    subjectStates: {
+      grammar: {
+        data: { mastery: 'not-a-mastery-map' },
+        ui: {
+          aiEnrichment: {
+            kind: 'parent-summary',
+            status: 'ready',
+            parentSummary: { body: 5 },
+          },
+        },
+      },
+    },
+    practiceSessions: [],
+    eventLog: [],
+    now: () => 1_777_000_000_000,
+  });
+
+  assert.equal(model.grammarEvidence.progressSnapshot.totalConcepts, 18);
+  assert.equal(model.grammarEvidence.progressSnapshot.trackedConcepts, 0);
+  assert.equal(model.grammarEvidence.parentSummaryDraft, null);
+  assert.equal(model.grammarEvidence.recentActivity.length, 0);
 });
 
 test('admin hub diagnostics use actionable Grammar focus before empty Spelling fallback', () => {
@@ -246,6 +313,7 @@ test('admin hub diagnostics use actionable Grammar focus before empty Spelling f
 
   assert.equal(model.learnerSupport.selectedDiagnostics.currentFocus.subjectId, 'grammar');
   assert.match(model.learnerSupport.selectedDiagnostics.currentFocus.label, /Grammar/);
+  assert.equal(model.learnerSupport.selectedDiagnostics.grammarEvidence.weakConcepts[0].id, 'adverbials');
 });
 
 test('admin hub read model reports published release status, validation state, audit stream, and learner diagnostics', () => {

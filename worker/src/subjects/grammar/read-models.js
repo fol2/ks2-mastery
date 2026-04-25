@@ -63,6 +63,122 @@ function safeCurrentItem(item) {
   };
 }
 
+function safeMiniTestQuestion(entry, index, currentIndex, { includeItem = false, includeMarked = false } = {}) {
+  const item = safeCurrentItem(entry?.item);
+  const output = {
+    index: Number.isFinite(Number(entry?.index)) ? Number(entry.index) : index,
+    itemId: item?.itemId || '',
+    templateId: item?.templateId || '',
+    templateLabel: item?.templateLabel || '',
+    questionType: item?.questionType || '',
+    marks: Number.isFinite(Number(item?.marks)) ? Number(item.marks) : 1,
+    answered: Boolean(entry?.answered),
+    current: index === currentIndex,
+    response: isPlainObject(entry?.response) ? cloneSerialisable(entry.response) : {},
+    savedAt: Number.isFinite(Number(entry?.savedAt)) ? Number(entry.savedAt) : 0,
+  };
+  if (includeItem) output.item = item;
+  if (includeMarked && isPlainObject(entry?.marked)) {
+    const result = isPlainObject(entry.marked.result) ? entry.marked.result : {};
+    output.marked = {
+      response: isPlainObject(entry.marked.response) ? cloneSerialisable(entry.marked.response) : {},
+      result: {
+        correct: Boolean(result.correct),
+        score: Number.isFinite(Number(result.score)) ? Number(result.score) : 0,
+        maxScore: Number.isFinite(Number(result.maxScore)) ? Number(result.maxScore) : output.marks,
+        misconception: typeof result.misconception === 'string' ? result.misconception : null,
+        feedbackShort: typeof result.feedbackShort === 'string' ? result.feedbackShort : '',
+        feedbackLong: typeof result.feedbackLong === 'string' ? result.feedbackLong : '',
+        answerText: typeof result.answerText === 'string' ? result.answerText : '',
+        minimalHint: typeof result.minimalHint === 'string' ? result.minimalHint : '',
+      },
+    };
+  }
+  return output;
+}
+
+function safeMiniTest(miniTest, now = Date.now()) {
+  if (!isPlainObject(miniTest)) return null;
+  const questions = Array.isArray(miniTest.questions) ? miniTest.questions : [];
+  const currentIndex = Math.min(
+    Math.max(0, Math.floor(Number(miniTest.currentIndex) || 0)),
+    Math.max(0, questions.length - 1),
+  );
+  const expiresAt = Number.isFinite(Number(miniTest.expiresAt)) ? Number(miniTest.expiresAt) : 0;
+  const nowTs = asTs(now, Date.now());
+  return {
+    setSize: Number.isFinite(Number(miniTest.setSize)) ? Number(miniTest.setSize) : questions.length,
+    startedAt: asTs(miniTest.startedAt, 0),
+    timeLimitMs: Number.isFinite(Number(miniTest.timeLimitMs)) ? Number(miniTest.timeLimitMs) : 0,
+    expiresAt,
+    remainingMs: expiresAt ? Math.max(0, expiresAt - nowTs) : 0,
+    currentIndex,
+    finished: Boolean(miniTest.finished),
+    timedOut: Boolean(miniTest.timedOut),
+    questions: questions.map((entry, index) => safeMiniTestQuestion(entry, index, currentIndex, {
+      includeItem: true,
+    })),
+  };
+}
+
+function safeMiniTestReview(review) {
+  if (!isPlainObject(review)) return null;
+  const questions = Array.isArray(review.questions) ? review.questions : [];
+  return {
+    setSize: Number.isFinite(Number(review.setSize)) ? Number(review.setSize) : questions.length,
+    timeLimitMs: Number.isFinite(Number(review.timeLimitMs)) ? Number(review.timeLimitMs) : 0,
+    startedAt: asTs(review.startedAt, 0),
+    finishedAt: asTs(review.finishedAt, 0),
+    questions: questions.map((entry, index) => safeMiniTestQuestion(entry, index, -1, {
+      includeItem: true,
+      includeMarked: true,
+    })),
+  };
+}
+
+function safeGoal(goal, now = Date.now()) {
+  if (!isPlainObject(goal)) return { type: 'questions' };
+  const type = ['questions', 'timed', 'due'].includes(goal.type) ? goal.type : 'questions';
+  const expiresAt = asTs(goal.expiresAt, 0);
+  const nowTs = asTs(now, Date.now());
+  const output = {
+    type,
+    targetCount: Number.isFinite(Number(goal.targetCount)) ? Number(goal.targetCount) : 0,
+    startedAt: asTs(goal.startedAt, 0),
+  };
+  if (type === 'timed') {
+    output.timeLimitMs = Number.isFinite(Number(goal.timeLimitMs)) ? Number(goal.timeLimitMs) : 0;
+    output.expiresAt = expiresAt;
+    output.remainingMs = expiresAt ? Math.max(0, expiresAt - nowTs) : 0;
+  }
+  if (type === 'due') {
+    output.initialDueCount = Number.isFinite(Number(goal.initialDueCount)) ? Number(goal.initialDueCount) : 0;
+  }
+  return output;
+}
+
+function safeSummary(summary) {
+  if (!isPlainObject(summary)) return null;
+  const output = {
+    sessionId: typeof summary.sessionId === 'string' ? summary.sessionId : '',
+    mode: typeof summary.mode === 'string' ? summary.mode : 'smart',
+    startedAt: asTs(summary.startedAt, 0),
+    completedAt: asTs(summary.completedAt, 0),
+    answered: Number.isFinite(Number(summary.answered)) ? Number(summary.answered) : 0,
+    correct: Number.isFinite(Number(summary.correct)) ? Number(summary.correct) : 0,
+    totalScore: Number.isFinite(Number(summary.totalScore)) ? Number(summary.totalScore) : 0,
+    totalMarks: Number.isFinite(Number(summary.totalMarks)) ? Number(summary.totalMarks) : 0,
+    targetCount: Number.isFinite(Number(summary.targetCount)) ? Number(summary.targetCount) : 0,
+    goal: safeGoal(summary.goal, summary.completedAt),
+  };
+  if (Object.prototype.hasOwnProperty.call(summary, 'timedOut')) {
+    output.timedOut = Boolean(summary.timedOut);
+  }
+  const miniTestReview = safeMiniTestReview(summary.miniTestReview);
+  if (miniTestReview) output.miniTestReview = miniTestReview;
+  return output;
+}
+
 function conceptById(conceptId) {
   return GRAMMAR_CONCEPTS.find((concept) => concept.id === conceptId) || null;
 }
@@ -229,7 +345,7 @@ function supportGuidanceForSession(session) {
   };
 }
 
-function safeSession(session) {
+function safeSession(session, now = Date.now()) {
   if (!isPlainObject(session)) return null;
   return {
     id: typeof session.id === 'string' ? session.id : '',
@@ -244,6 +360,16 @@ function safeSession(session) {
     totalMarks: Number.isFinite(Number(session.totalMarks)) ? Number(session.totalMarks) : 0,
     currentIndex: Number.isFinite(Number(session.currentIndex)) ? Number(session.currentIndex) : 0,
     currentItem: safeCurrentItem(session.currentItem),
+    goal: safeGoal(session.goal, now),
+    miniTest: safeMiniTest(session.miniTest, now),
+    repair: isPlainObject(session.repair)
+      ? {
+        retryingCurrent: Boolean(session.repair.retryingCurrent),
+        similarProblems: Number.isFinite(Number(session.repair.similarProblems)) ? Number(session.repair.similarProblems) : 0,
+        requestedFadedSupport: Boolean(session.repair.requestedFadedSupport),
+        workedSolutionShown: Boolean(session.repair.workedSolutionShown),
+      }
+      : null,
     supportLevel: Number.isFinite(Number(session.supportLevel)) ? Math.max(0, Number(session.supportLevel)) : 0,
     supportGuidance: supportGuidanceForSession(session),
     serverAuthority: session.serverAuthority === GRAMMAR_SERVER_AUTHORITY ? GRAMMAR_SERVER_AUTHORITY : null,
@@ -536,9 +662,9 @@ export function buildGrammarReadModel({
     },
     phase: typeof safeState.phase === 'string' ? safeState.phase : 'dashboard',
     awaitingAdvance: Boolean(safeState.awaitingAdvance),
-    session: safeSession(safeState.session),
+    session: safeSession(safeState.session, now),
     feedback: isPlainObject(safeState.feedback) ? cloneSerialisable(safeState.feedback) : null,
-    summary: isPlainObject(safeState.summary) ? cloneSerialisable(safeState.summary) : null,
+    summary: safeSummary(safeState.summary),
     prefs: isPlainObject(safeState.prefs) ? cloneSerialisable(safeState.prefs) : {},
     stats: statsFromConcepts(concepts),
     analytics: {
@@ -552,7 +678,7 @@ export function buildGrammarReadModel({
       recentActivity: recentActivityFromAttempts(recentAttempts),
     },
     capabilities: capabilityMetadata(),
-    aiEnrichment: safeAiEnrichment(aiEnrichment),
+    aiEnrichment: safeAiEnrichment(aiEnrichment || safeState.aiEnrichment),
     projections: projections ? cloneSerialisable(projections) : null,
     error: typeof safeState.error === 'string' ? safeState.error : '',
   };
