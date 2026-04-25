@@ -299,7 +299,7 @@ playCelebration(spec) -> store.pushCelebration(spec)
 
 ---
 
-- [ ] U4. **Port existing motion (`egg-breathe`, `monster-motion-float`) as the first two effects**
+- [x] U4. **Port existing motion (`egg-breathe`, `monster-motion-float`) as the first two effects**
 
 **Goal:** Move today's `eggBreatheStyle` and `monsterMotionStyle` (in `src/surfaces/home/data.js`) into effect modules so existing motion runs through the new pipeline. This proves the contract against real, deterministic, well-tested behaviour.
 
