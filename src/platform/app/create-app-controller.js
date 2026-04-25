@@ -3,6 +3,7 @@ import { createSubjectRuntimeBoundary } from '../core/subject-runtime.js';
 import { createEventRuntime, createPracticeStreakSubscriber } from '../events/index.js';
 import { createSpellingAutoAdvanceController } from '../../subjects/spelling/auto-advance.js';
 import { resolveSpellingShortcut } from '../../subjects/spelling/shortcuts.js';
+import { resolveGrammarShortcut } from '../../subjects/grammar/shortcuts.js';
 import {
   normaliseBufferedGeminiVoice,
   normaliseTtsProvider,
@@ -457,7 +458,9 @@ export function createAppController({
   }
 
   function keydown(eventLike = {}) {
-    const shortcut = resolveSpellingShortcut(eventLike, store.getState());
+    const appState = store.getState();
+    const shortcut = resolveSpellingShortcut(eventLike, appState)
+      || resolveGrammarShortcut(eventLike, appState);
     if (!shortcut) return false;
     if (shortcut.action) {
       dispatch(shortcut.action, shortcut.data || {});
