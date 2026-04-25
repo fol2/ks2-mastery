@@ -6,6 +6,7 @@ import {
   evaluateCapacityThresholds,
   runClassroomLoadTest,
   summariseCapacityResults,
+  validateClassroomLoadOptions,
 } from '../scripts/classroom-load-test.mjs';
 import {
   analyseBootstrapPayload,
@@ -541,8 +542,34 @@ test('classroom allows <20 learner production runs without --confirm-high-produc
     '--rounds', '1',
   ]);
   assert.equal(options.confirmHighProductionLoad, false);
-  // Importing validate directly to avoid actually firing network requests.
-  // Should not throw for a 10-learner production run.
+  // Validate must pass for a 10-learner production run without the flag.
+  // C-T1 testing-gap: previously only parsed without asserting validation outcome.
+  assert.doesNotThrow(() => validateClassroomLoadOptions(options));
+});
+
+test('classroom production validation fires at exactly 20 learners (adv-003 boundary)', () => {
+  // Boundary pinned: >= 20 enforces the flag, < 20 does not.
+  const options20 = parseClassroomLoadArgs([
+    '--production',
+    '--origin', 'https://ks2.eugnel.uk',
+    '--confirm-production-load',
+    '--cookie', 'ks2_session=real',
+    '--learners', '20',
+    '--bootstrap-burst', '1',
+    '--rounds', '1',
+  ]);
+  assert.throws(() => validateClassroomLoadOptions(options20), /--confirm-high-production-load/);
+
+  const options19 = parseClassroomLoadArgs([
+    '--production',
+    '--origin', 'https://ks2.eugnel.uk',
+    '--confirm-production-load',
+    '--cookie', 'ks2_session=real',
+    '--learners', '19',
+    '--bootstrap-burst', '19',
+    '--rounds', '1',
+  ]);
+  assert.doesNotThrow(() => validateClassroomLoadOptions(options19));
 });
 
 test('P95 bootstrap gate fails closed when no measurements captured (adv-006)', () => {
@@ -609,4 +636,29 @@ test('integer parser rejects missing value for threshold flag (C-04)', () => {
     () => parseClassroomLoadArgs(['--dry-run', '--max-5xx']),
     /--max-5xx requires a value/,
   );
+});
+
+test('probe parser rejects duplicate --max-bytes (adv-residual-1)', () => {
+  assert.throws(
+    () => parseProbeArgs(['--max-bytes', '500000', '--max-bytes', '1000000']),
+    /--max-bytes specified more than once/,
+  );
+});
+
+test('probe parser rejects duplicate --max-sessions', () => {
+  assert.throws(
+    () => parseProbeArgs(['--max-sessions', '10', '--max-sessions', '1000']),
+    /--max-sessions specified more than once/,
+  );
+});
+
+test('probe parser allows --header and --forbidden-token repeated (cumulative)', () => {
+  const options = parseProbeArgs([
+    '--header', 'x-a: 1',
+    '--header', 'x-b: 2',
+    '--forbidden-token', 'alpha',
+    '--forbidden-token', 'beta',
+  ]);
+  assert.deepEqual(options.headers, ['x-a: 1', 'x-b: 2']);
+  assert.deepEqual(options.forbiddenTokens, ['alpha', 'beta']);
 });

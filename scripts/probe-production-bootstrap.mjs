@@ -41,32 +41,52 @@ export function parseProbeArgs(argv = process.argv.slice(2)) {
     help: false,
   };
 
+  // Adversarial residual adv-residual-1: reject duplicate non-cumulative
+  // flags so a release-gate wrapper cannot be silently weakened by a
+  // later user-supplied threshold. Mirrors the classroom parser's
+  // assignOnce hardening.
+  const assignedFlags = new Set();
+  const assignOnce = (flag) => {
+    if (assignedFlags.has(flag)) {
+      throw new Error(`${flag} specified more than once; refusing to let later value silently override the earlier one.`);
+    }
+    assignedFlags.add(flag);
+  };
+
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--help' || arg === '-h') {
       options.help = true;
     } else if (arg === '--url') {
+      assignOnce(arg);
       options.url = readOptionValue(argv, index, arg);
       index += 1;
     } else if (arg === '--cookie') {
+      assignOnce(arg);
       options.cookie = readOptionValue(argv, index, arg);
       index += 1;
     } else if (arg === '--bearer') {
+      assignOnce(arg);
       options.bearer = readOptionValue(argv, index, arg);
       index += 1;
     } else if (arg === '--header') {
+      // Cumulative by design (repeatable per docs).
       options.headers.push(readOptionValue(argv, index, arg));
       index += 1;
     } else if (arg === '--max-bytes') {
+      assignOnce(arg);
       options.maxBytes = toPositiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--max-sessions') {
+      assignOnce(arg);
       options.maxSessions = toPositiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--max-events') {
+      assignOnce(arg);
       options.maxEvents = toPositiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--forbidden-token') {
+      // Cumulative by design (repeatable per docs).
       options.forbiddenTokens.push(readOptionValue(argv, index, arg));
       index += 1;
     } else {
