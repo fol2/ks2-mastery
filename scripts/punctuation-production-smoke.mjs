@@ -18,6 +18,10 @@ import {
   subjectCommand,
 } from './lib/production-smoke.mjs';
 
+// Kept aligned with worker/src/subjects/punctuation/read-models.js
+// FORBIDDEN_READ_MODEL_KEYS. Any new forbidden key must be added in both
+// places — the Worker enforces the contract at build time, the smoke scans
+// enforce it at deploy time.
 const FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS = new Set([
   'accepted',
   'answers',

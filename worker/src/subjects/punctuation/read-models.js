@@ -16,6 +16,17 @@ const FORBIDDEN_ITEM_FIELDS = new Set([
   'unpublished',
 ]);
 
+// Extends FORBIDDEN_ITEM_FIELDS with keys that could leak through summary,
+// feedback, analytics, context-pack, or availability payloads. Kept aligned
+// with scripts/punctuation-production-smoke.mjs:FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS
+// so smoke-side and Worker-side guards share one contract.
+const FORBIDDEN_READ_MODEL_KEYS = new Set([
+  ...FORBIDDEN_ITEM_FIELDS,
+  'rawGenerator',
+  'queueItemIds',
+  'responses',
+]);
+
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
@@ -162,6 +173,10 @@ function safeFeedback(feedback) {
 
 function safeSummary(summary) {
   if (!isPlainObject(summary)) return null;
+  // cloneSerialisable strips non-JSON values; the subsequent recursive scan
+  // at payload assembly time enforces the forbidden-field contract. Summary
+  // shape is intentionally permissive so new harmless fields can be added
+  // without a code change — only forbidden keys trip the guard.
   return cloneSerialisable(summary);
 }
 
@@ -190,6 +205,22 @@ function assertNoForbiddenItemFields(item) {
   }
 }
 
+function assertNoForbiddenReadModelKeys(value, path = 'punctuation') {
+  if (value == null || typeof value !== 'object') return;
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index += 1) {
+      assertNoForbiddenReadModelKeys(value[index], `${path}[${index}]`);
+    }
+    return;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    if (FORBIDDEN_READ_MODEL_KEYS.has(key)) {
+      throw new Error(`Punctuation read model attempted to expose server-only ${path}.${key} field: ${key}`);
+    }
+    assertNoForbiddenReadModelKeys(child, `${path}.${key}`);
+  }
+}
+
 export function buildPunctuationReadModel({
   learnerId,
   state,
@@ -203,7 +234,7 @@ export function buildPunctuationReadModel({
   const phase = typeof safeState.phase === 'string' ? safeState.phase : 'setup';
   const hideGpsInterimFeedback = safeState.session?.mode === 'gps' && phase !== 'summary';
   if (phase === 'active-item') assertNoForbiddenItemFields(safeState.session?.currentItem);
-  return {
+  const payload = {
     subjectId: 'punctuation',
     learnerId,
     version: 1,
@@ -225,4 +256,13 @@ export function buildPunctuationReadModel({
       skills: safeContentSkills(),
     },
   };
+  // Recursive fail-closed scan across every branch of the payload. Catches
+  // leaked keys introduced by upstream service-state changes that bypass the
+  // per-phase allowlists (e.g. new validator field added inside a review row,
+  // hiddenQueue carried on a nested summary branch, rubric nested inside
+  // analytics). Throws rather than silently stripping so tests and dev runs
+  // surface the leak; production operators monitor via the command route's
+  // error telemetry.
+  assertNoForbiddenReadModelKeys(payload);
+  return payload;
 }
