@@ -16,7 +16,9 @@ const FORBIDDEN_MODULES = [
   { pattern: /^shared\/punctuation\/(content|generators|marking|scheduler|service)\.js$/, reason: 'server-side punctuation engine and content' },
   { pattern: /^worker\/src\/subjects\/punctuation\//, reason: 'server-side punctuation command runtime' },
   { pattern: /^src\/subjects\/punctuation\/(service|repository)\.js$/, reason: 'browser-side import of punctuation runtime service' },
-  { pattern: /^worker\/src\/subjects\/grammar\/(engine|content)\.js$/, reason: 'server-authoritative Grammar engine/content' },
+  { pattern: /^worker\/src\/subjects\/grammar\//, reason: 'server-authoritative Grammar runtime, engine, content, and enrichment code' },
+  { pattern: /^scripts\/extract-grammar-legacy-oracle\.mjs$/, reason: 'Grammar legacy oracle extraction helper' },
+  { pattern: /^tests\/fixtures\/grammar-(legacy-oracle|functionality-completeness)\//, reason: 'Grammar donor or completeness fixtures' },
   { pattern: /^src\/platform\/core\/local-review-profile\.js$/, reason: 'local review runtime profile' },
   { pattern: /^src\/platform\/core\/repositories\/local\.js$/, reason: 'browser-local production repository' },
   { pattern: /^src\/platform\/hubs\/(admin|parent)-read-model\.js$/, reason: 'client-side hub read-model aggregation' },
@@ -48,6 +50,12 @@ const FORBIDDEN_TEXT = [
   { token: 'data-home-mount', reason: 'retired legacy renderer mount' },
   { token: 'data-subject-mount', reason: 'retired legacy subject renderer mount' },
   { token: 'home.bundle.js', reason: 'retired home island bundle' },
+  { token: 'createGrammarQuestion', reason: 'server-authoritative Grammar item generation' },
+  { token: 'evaluateGrammarQuestion', reason: 'server-authoritative Grammar marking' },
+  { token: 'GRAMMAR_TEMPLATES', reason: 'server-authoritative Grammar template dataset' },
+  { token: 'correctResponse', reason: 'Grammar hidden answer oracle field' },
+  { token: 'grammar-legacy-oracle', reason: 'Grammar legacy oracle fixture path' },
+  { token: 'extract-grammar-legacy-oracle', reason: 'Grammar legacy oracle extraction helper' },
 ];
 
 const REVIEW_ALLOWLIST = [

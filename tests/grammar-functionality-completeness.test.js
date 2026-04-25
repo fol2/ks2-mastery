@@ -97,7 +97,9 @@ test('Grammar completeness baseline pins legacy mode coverage separately from be
   assert.equal(capabilityById(baseline, 'adult-data-replacement-parity')?.status, 'completed');
   assert.ok(capabilityById(baseline, 'adult-data-replacement-parity')?.evidence.includes('src/platform/hubs/parent-read-model.js'));
   assert.ok(capabilityById(baseline, 'adult-data-replacement-parity')?.evidence.includes('tests/persistence.test.js'));
-  assert.equal(capabilityById(baseline, 'functionality-completeness-release-gate')?.ownerUnit, 'U8');
+  assert.equal(capabilityById(baseline, 'functionality-completeness-release-gate')?.status, 'completed');
+  assert.ok(capabilityById(baseline, 'functionality-completeness-release-gate')?.evidence.includes('scripts/grammar-production-smoke.mjs'));
+  assert.ok(capabilityById(baseline, 'functionality-completeness-release-gate')?.evidence.includes('tests/build-public.test.js'));
 });
 
 test('Grammar completeness baseline preserves legacy strict mini-test and repair targets', () => {

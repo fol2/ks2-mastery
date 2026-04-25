@@ -233,9 +233,16 @@
     {
       "id": "functionality-completeness-release-gate",
       "legacyCapability": "Completeness claim is protected by tests, smoke coverage and documentation",
-      "status": "planned",
+      "status": "completed",
       "ownerUnit": "U8",
-      "reason": "Current tests prove the shipped Worker slice, not the full legacy functionality matrix."
+      "evidence": [
+        "scripts/grammar-production-smoke.mjs",
+        "scripts/audit-client-bundle.mjs",
+        "tests/grammar-production-smoke.test.js",
+        "tests/browser-react-migration-smoke.test.js",
+        "tests/build-public.test.js",
+        "tests/grammar-functionality-completeness.test.js"
+      ]
     },
     {
       "id": "platform-learner-management",

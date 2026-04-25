@@ -8,7 +8,7 @@ This document tracks Grammar-only functionality completeness against the reviewe
 - The content release is `grammar-legacy-reviewed-2026-04-24`.
 - The reviewed denominator is present: 18 concepts, 51 templates, 31 selected-response templates, and 20 constructed-response templates.
 - All eight legacy mode ids are enabled: `learn`, `smart`, `trouble`, `surgery`, `builder`, `worked`, `faded`, and `satsset`.
-- Analytics, misconception evidence, question-type evidence, recent activity, Grammar rewards, Bellstorm bridge copy, non-scored AI enrichment validation/triggers, and adult Grammar evidence surfaces already exist.
+- Analytics, misconception evidence, question-type evidence, recent activity, Grammar rewards, Bellstorm bridge copy, non-scored AI enrichment validation/triggers, adult Grammar evidence surfaces, production smoke, and browser/bundle guardrails already exist.
 
 ## Remaining Completeness Work
 
@@ -21,7 +21,7 @@ This document tracks Grammar-only functionality completeness against the reviewe
 | Visible AI triggers: explanation, revision cards, safe drill suggestions, and parent summary drafts | Completed | U5 |
 | Read aloud and speech-rate preference | Completed | U6 |
 | Adult/data replacement parity for legacy Profiles/Data/Settings | Completed | U7 |
-| Functionality completeness tests and production smoke coverage | Planned | U8 |
+| Functionality completeness tests and production smoke coverage | Completed | U8 |
 
 ## Replaced Legacy Behaviours
 

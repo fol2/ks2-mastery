@@ -511,7 +511,7 @@ flowchart TB
 
 ---
 
-- U8. **Add Functionality Completeness Release Gate**
+- [x] U8. **Add Functionality Completeness Release Gate**
 
 **Goal:** Make the completed Grammar functionality independently verifiable before claiming the product is legacy-complete.
 
@@ -554,6 +554,7 @@ flowchart TB
 
 **Verification:**
 - Grammar can be labelled functionality-complete only when the baseline, focused tests, bundle audit, and production smoke agree.
+- Completed with expanded production smoke for normal Grammar, strict mini-test, repair/support, and non-scored AI enrichment; browser smoke coverage for Grammar setup/session/adult evidence; public bundle audit guardrails for Worker Grammar runtime and legacy oracle/fixture material; and the completed baseline gate.
 
 ---
 
