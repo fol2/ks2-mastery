@@ -3,7 +3,7 @@ const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
 const TOTAL_REWARD_UNITS = 14;
 const DAILY_TARGET_ATTEMPTS = 4;
 
-const PUNCTUATION_CLIENT_SKILLS = Object.freeze([
+export const PUNCTUATION_CLIENT_SKILLS = Object.freeze([
   { id: 'sentence_endings', name: 'Capital letters and sentence endings', clusterId: 'endmarks' },
   { id: 'list_commas', name: 'Commas in lists', clusterId: 'comma_flow' },
   { id: 'apostrophe_contractions', name: 'Apostrophes for contraction', clusterId: 'apostrophe' },

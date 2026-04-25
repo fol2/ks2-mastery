@@ -1,3 +1,8 @@
+import {
+  PUNCTUATION_MAP_MONSTER_FILTER_IDS,
+  PUNCTUATION_MAP_STATUS_FILTER_IDS,
+} from './components/punctuation-view-model.js';
+
 export const PUNCTUATION_SERVICE_STATE_VERSION = 1;
 export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
 
@@ -8,6 +13,12 @@ export const PUNCTUATION_PHASES = Object.freeze([
   'summary',
   'unavailable',
   'error',
+  // U5: Punctuation Map is a browsing phase — a learner taps the Map link from
+  // Setup, filters the 14 skills by status / monster, and (in U6) opens a
+  // skill detail modal. The phase carries ephemeral UI state via `mapUi`
+  // (see `normalisePunctuationMapUi`) — no Worker command is issued when
+  // entering or leaving the phase.
+  'map',
 ]);
 
 export const PUNCTUATION_MODES = Object.freeze([
@@ -88,6 +99,39 @@ export function normalisePunctuationPrefs(value = {}) {
     mode,
     roundLength: normalisePunctuationRoundLength(raw.roundLength ?? raw.length),
   };
+}
+
+// U5: Punctuation Map UI-state shape. Ephemeral; lives on the in-memory store
+// only, never persisted. Validated against the view-model's frozen filter
+// lists so a rogue payload cannot smuggle a reserved monster id into the
+// Map's monster filter. Invalid inputs fall back to the defaults listed
+// below — never throws.
+//
+// Defaults when the Map phase first opens:
+//   { statusFilter: 'all', monsterFilter: 'all', detailOpenSkillId: null,
+//     detailTab: 'learn' }
+//
+// `detailOpenSkillId` is either a non-empty string (the currently-open skill
+// detail in U6's modal) or `null`. `detailTab` is either `'learn'` or
+// `'practise'`; invalid input falls back to `'learn'`.
+const PUNCTUATION_MAP_DETAIL_TABS = Object.freeze(new Set(['learn', 'practise']));
+
+export function normalisePunctuationMapUi(value = {}) {
+  const raw = isPlainObject(value) ? value : {};
+  const rawStatusFilter = typeof raw.statusFilter === 'string' ? raw.statusFilter : 'all';
+  const statusFilter = PUNCTUATION_MAP_STATUS_FILTER_IDS.includes(rawStatusFilter)
+    ? rawStatusFilter
+    : 'all';
+  const rawMonsterFilter = typeof raw.monsterFilter === 'string' ? raw.monsterFilter : 'all';
+  const monsterFilter = PUNCTUATION_MAP_MONSTER_FILTER_IDS.includes(rawMonsterFilter)
+    ? rawMonsterFilter
+    : 'all';
+  const detailOpenSkillId = typeof raw.detailOpenSkillId === 'string' && raw.detailOpenSkillId
+    ? raw.detailOpenSkillId
+    : null;
+  const rawDetailTab = typeof raw.detailTab === 'string' ? raw.detailTab : 'learn';
+  const detailTab = PUNCTUATION_MAP_DETAIL_TABS.has(rawDetailTab) ? rawDetailTab : 'learn';
+  return { statusFilter, monsterFilter, detailOpenSkillId, detailTab };
 }
 
 export function createInitialPunctuationState() {
