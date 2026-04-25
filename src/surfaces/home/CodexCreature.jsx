@@ -36,7 +36,7 @@ export function CodexCreatureVisual({ entry, sizes, context = 'card' }) {
     stage: entry.stage,
     context: codexVisualContext(context),
     config: monsterVisualConfig?.config,
-    preferredSize: context === 'preview' ? 1280 : 640,
+    preferredSize: preferredMonsterImageSize(context),
   });
 
   return (
@@ -60,6 +60,11 @@ function codexVisualContext(context) {
   if (context === 'feature') return 'codexFeature';
   if (context === 'preview') return 'lightbox';
   return 'codexCard';
+}
+
+function preferredMonsterImageSize(context) {
+  if (context === 'feature' || context === 'preview') return 1280;
+  return 640;
 }
 
 function creatureMotionStyle(entry, context) {
