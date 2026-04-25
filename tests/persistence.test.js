@@ -481,6 +481,141 @@ test('api cache is scoped by auth session so degraded fallback does not leak bet
   await assert.rejects(() => repoB.hydrate(), /bootstrap unavailable/i);
 });
 
+test('bootstrap 503 with a usable cache degrades once and backs off immediate full-bootstrap retries', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({ learners: learnerSnapshot() });
+  let now = 1_000;
+  const commonOptions = {
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    storage,
+    now: () => now,
+    random: () => 0,
+  };
+  const bootstrapRequestCount = () => server.requests
+    .filter((request) => request.method === 'GET' && request.path === '/api/bootstrap')
+    .length;
+
+  const warmRepositories = createApiPlatformRepositories(commonOptions);
+  await warmRepositories.hydrate();
+  assert.equal(bootstrapRequestCount(), 1);
+
+  server.setFailure('GET', '/api/bootstrap', {
+    status: 503,
+    body: {
+      ok: false,
+      code: 'exceeded_cpu',
+      message: 'Worker CPU limit exceeded during bootstrap.',
+    },
+  });
+
+  const restoredRepositories = createApiPlatformRepositories(commonOptions);
+  await restoredRepositories.hydrate();
+
+  const degraded = restoredRepositories.persistence.read();
+  assert.equal(bootstrapRequestCount(), 2);
+  assert.equal(degraded.mode, 'degraded');
+  assert.equal(degraded.trustedState, 'local-cache');
+  assert.equal(degraded.cacheState, 'stale-copy');
+  assert.equal(degraded.pendingWriteCount, 0);
+  assert.equal(degraded.lastError.code, 'exceeded_cpu');
+  assert.equal(degraded.lastError.details.bootstrapBackoff.attempt, 1);
+  assert.equal(degraded.lastError.details.bootstrapBackoff.retryAfterMs, 2_000);
+  assert.equal(restoredRepositories.learners.read().selectedId, 'learner-a');
+  assert.equal(JSON.parse(storage.getItem(DEFAULT_API_CACHE_STORAGE_KEY)).bootstrapBackoff.retryAt, 3_000);
+
+  await assert.rejects(
+    () => restoredRepositories.persistence.retry(),
+    /backing off/i,
+  );
+
+  const throttled = restoredRepositories.persistence.read();
+  assert.equal(bootstrapRequestCount(), 2);
+  assert.equal(throttled.mode, 'degraded');
+  assert.equal(throttled.lastError.code, 'bootstrap_retry_backoff');
+  assert.equal(throttled.lastError.details.retryAfterMs, 2_000);
+
+  const reloadedDuringBackoff = createApiPlatformRepositories(commonOptions);
+  await reloadedDuringBackoff.hydrate();
+  assert.equal(bootstrapRequestCount(), 2);
+  assert.equal(reloadedDuringBackoff.persistence.read().lastError.code, 'bootstrap_retry_backoff');
+
+  server.clearFailure('GET', '/api/bootstrap');
+  now = 3_000;
+  const recovered = await reloadedDuringBackoff.persistence.retry();
+
+  assert.equal(bootstrapRequestCount(), 3);
+  assert.equal(recovered.mode, 'remote-sync');
+  assert.equal(recovered.lastError, null);
+});
+
+test('bootstrap backoff blocks retry flush from masking pending-write recovery state', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer();
+  let now = 5_000;
+  const commonOptions = {
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    storage,
+    now: () => now,
+    random: () => 0,
+  };
+  const bootstrapRequestCount = () => server.requests
+    .filter((request) => request.method === 'GET' && request.path === '/api/bootstrap')
+    .length;
+  const learnerWriteCount = () => server.requests
+    .filter((request) => request.method === 'PUT' && request.path === '/api/learners')
+    .length;
+
+  const repositories = createApiPlatformRepositories(commonOptions);
+  await repositories.hydrate();
+  server.failNext('PUT', '/api/learners', {
+    status: 503,
+    body: { ok: false, message: 'write temporarily unavailable' },
+  });
+  repositories.learners.write(learnerSnapshot());
+  await waitForPersistenceIdle(repositories);
+  assert.equal(repositories.persistence.read().pendingWriteCount, 1);
+  assert.equal(server.store.learners.selectedId, null);
+  assert.equal(learnerWriteCount(), 1);
+
+  server.setFailure('GET', '/api/bootstrap', {
+    status: 503,
+    body: {
+      ok: false,
+      code: 'exceeded_cpu',
+      message: 'Worker CPU limit exceeded during bootstrap.',
+    },
+  });
+  const restoredRepositories = createApiPlatformRepositories(commonOptions);
+  await restoredRepositories.hydrate();
+  assert.equal(bootstrapRequestCount(), 2);
+  assert.equal(restoredRepositories.persistence.read().lastError.code, 'exceeded_cpu');
+
+  await assert.rejects(
+    () => restoredRepositories.persistence.retry(),
+    /backing off/i,
+  );
+
+  const backedOff = restoredRepositories.persistence.read();
+  assert.equal(bootstrapRequestCount(), 2);
+  assert.equal(learnerWriteCount(), 1);
+  assert.equal(backedOff.mode, 'degraded');
+  assert.equal(backedOff.pendingWriteCount, 1);
+  assert.equal(backedOff.lastError.code, 'bootstrap_retry_backoff');
+  assert.equal(server.store.learners.selectedId, null);
+
+  server.clearFailure('GET', '/api/bootstrap');
+  now = 7_000;
+  const recovered = await restoredRepositories.persistence.retry();
+
+  assert.equal(bootstrapRequestCount(), 3);
+  assert.equal(learnerWriteCount(), 2);
+  assert.equal(recovered.mode, 'remote-sync');
+  assert.equal(recovered.pendingWriteCount, 0);
+  assert.equal(server.store.learners.selectedId, 'learner-a');
+});
+
 test('subject command responses update the api cache without queuing broad runtime writes', async () => {
   const storage = installMemoryStorage();
   const server = createMockRepositoryServer({

@@ -37,6 +37,9 @@ const MUTATION_POLICY_VERSION = 1;
 const OPERATION_STATUS_PENDING = 'pending';
 const OPERATION_STATUS_BLOCKED_STALE = 'blocked-stale';
 const SUBJECT_STATE_MERGE_STRATEGIES = new Set(['merge', 'ui', 'data', 'replace']);
+const BOOTSTRAP_BACKOFF_BASE_MS = 2_000;
+const BOOTSTRAP_BACKOFF_MAX_MS = 30_000;
+const BOOTSTRAP_BACKOFF_JITTER_MS = 250;
 const LEGACY_RUNTIME_WRITES_ENABLED = typeof process === 'object'
   && process?.env?.NODE_ENV !== 'production';
 const LEGACY_RUNTIME_OPERATION_KINDS = new Set([
@@ -478,6 +481,28 @@ function normalisePendingOperations(rawValue) {
   return input.map(normalisePendingOperation).filter(Boolean);
 }
 
+function normaliseBootstrapBackoff(rawValue) {
+  const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : null;
+  if (!raw) return null;
+  const retryAt = Number(raw.retryAt);
+  if (!Number.isFinite(retryAt) || retryAt <= 0) return null;
+  const attempt = Math.max(1, Math.floor(Number(raw.attempt) || 1));
+  const retryAfterMs = Math.max(0, Math.floor(Number(raw.retryAfterMs) || 0));
+  const reasonRaw = raw.reason && typeof raw.reason === 'object' && !Array.isArray(raw.reason)
+    ? raw.reason
+    : {};
+  return {
+    attempt,
+    retryAfterMs,
+    retryAt,
+    reason: {
+      code: typeof reasonRaw.code === 'string' && reasonRaw.code ? reasonRaw.code : null,
+      status: Number.isFinite(Number(reasonRaw.status)) ? Number(reasonRaw.status) : 0,
+      message: typeof reasonRaw.message === 'string' && reasonRaw.message ? reasonRaw.message : 'Bootstrap failed.',
+    },
+  };
+}
+
 function loadCachedState(storage, storageKey) {
   const raw = loadCollection(storage, storageKey, null);
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
@@ -486,6 +511,7 @@ function loadCachedState(storage, storageKey) {
       pendingOperations: normalisePendingOperations(raw.pendingOperations),
       syncState: normaliseSyncState(raw.syncState),
       monsterVisualConfig: normaliseMonsterVisualRuntimeConfig(raw.monsterVisualConfig),
+      bootstrapBackoff: normaliseBootstrapBackoff(raw.bootstrapBackoff),
     };
   }
   return {
@@ -493,16 +519,18 @@ function loadCachedState(storage, storageKey) {
     pendingOperations: [],
     syncState: emptySyncState(),
     monsterVisualConfig: null,
+    bootstrapBackoff: null,
   };
 }
 
-function persistCachedState(storage, storageKey, bundle, pendingOperations, syncState, monsterVisualConfig) {
+function persistCachedState(storage, storageKey, bundle, pendingOperations, syncState, monsterVisualConfig, bootstrapBackoff) {
   try {
     storage?.setItem?.(storageKey, JSON.stringify({
       bundle,
       pendingOperations,
       syncState,
       monsterVisualConfig,
+      bootstrapBackoff: normaliseBootstrapBackoff(bootstrapBackoff),
     }));
     return null;
   } catch (error) {
@@ -829,6 +857,57 @@ function classifyError(error, fallbackScope = 'remote-sync') {
   });
 }
 
+function hasCacheFallback(bundle, operations) {
+  const cache = normaliseRepositoryBundle(bundle);
+  return Boolean(
+    cache.learners.allIds.length
+    || Object.keys(cache.subjectStates).length
+    || filterSessions(cache.practiceSessions).length
+    || Object.keys(cache.gameState).length
+    || (Array.isArray(cache.eventLog) && cache.eventLog.length)
+    || countPending(operations),
+  );
+}
+
+function isBootstrapBackoffError(error) {
+  if (!(error instanceof RepositoryHttpError)) return false;
+  if (error.status >= 500) return true;
+
+  const signal = [
+    error.code,
+    error.payload?.code,
+    error.payload?.message,
+    error.text,
+    error.message,
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  return signal.includes('exceededcpu')
+    || signal.includes('exceeded cpu')
+    || signal.includes('cpu limit')
+    || signal.includes('error 1102')
+    || signal.includes('1102');
+}
+
+function boundedJitter(random) {
+  const raw = typeof random === 'function' ? Number(random()) : 0;
+  if (!Number.isFinite(raw)) return 0;
+  return Math.floor(Math.min(1, Math.max(0, raw)) * BOOTSTRAP_BACKOFF_JITTER_MS);
+}
+
+function bootstrapBackoffDelay(attempt, random) {
+  const exponent = Math.max(0, Math.min(8, Number(attempt) - 1));
+  const baseDelay = Math.min(BOOTSTRAP_BACKOFF_MAX_MS, BOOTSTRAP_BACKOFF_BASE_MS * (2 ** exponent));
+  return Math.min(BOOTSTRAP_BACKOFF_MAX_MS, baseDelay + boundedJitter(random));
+}
+
+function isBootstrapPersistenceError(error) {
+  if (!error || typeof error !== 'object' || Array.isArray(error)) return false;
+  return error.scope === '/api/bootstrap'
+    || error.code === 'bootstrap_retry_backoff'
+    || Boolean(error.details?.bootstrapBackoff)
+    || String(error.details?.url || '').endsWith('/api/bootstrap');
+}
+
 function countPending(operations) {
   return normalisePendingOperations(operations).length;
 }
@@ -889,6 +968,8 @@ export function createApiPlatformRepositories({
   authSession = createNoopRepositoryAuthSession(),
   cacheScopeKey = null,
   publicReadModels = false,
+  now = Date.now,
+  random = Math.random,
   legacyRuntimeWritesEnabled = LEGACY_RUNTIME_WRITES_ENABLED,
 } = {}) {
   if (typeof fetchFn !== 'function') {
@@ -914,6 +995,78 @@ export function createApiPlatformRepositories({
   let processingLoop = Promise.resolve();
   let processing = false;
   let syncScheduled = false;
+  let bootstrapBackoff = normaliseBootstrapBackoff(cachedState.bootstrapBackoff);
+
+  function currentTime() {
+    return nowTs(now);
+  }
+
+  function activeBootstrapBackoff() {
+    if (!bootstrapBackoff) return null;
+    const remainingMs = Math.max(0, bootstrapBackoff.retryAt - currentTime());
+    if (remainingMs <= 0) {
+      bootstrapBackoff = null;
+      return null;
+    }
+    return {
+      ...bootstrapBackoff,
+      remainingMs,
+    };
+  }
+
+  function scheduleBootstrapBackoff(error) {
+    const attempt = Math.max(1, Number(bootstrapBackoff?.attempt || 0) + 1);
+    const retryAfterMs = bootstrapBackoffDelay(attempt, random);
+    const retryAt = currentTime() + retryAfterMs;
+    bootstrapBackoff = {
+      attempt,
+      retryAfterMs,
+      retryAt,
+      reason: {
+        code: error?.code || null,
+        status: error instanceof RepositoryHttpError ? error.status : 0,
+        message: error?.payload?.message || error?.text || error?.message || 'Bootstrap failed.',
+      },
+    };
+    return bootstrapBackoff;
+  }
+
+  function clearBootstrapBackoff() {
+    bootstrapBackoff = null;
+  }
+
+  function createBootstrapBackoffError(backoff, scope = '/api/bootstrap') {
+    return createPersistenceError({
+      phase: 'remote-degraded',
+      scope,
+      code: 'bootstrap_retry_backoff',
+      message: 'Bootstrap retry is backing off after a retryable server failure. Cached data remains available until the next retry window.',
+      retryable: true,
+      resolution: 'retry-sync',
+      details: {
+        attempt: backoff.attempt,
+        retryAfterMs: backoff.remainingMs ?? backoff.retryAfterMs,
+        retryAt: backoff.retryAt,
+        reason: backoff.reason,
+      },
+      at: currentTime(),
+    });
+  }
+
+  function attachBootstrapBackoffDetails(persistenceError, backoff) {
+    return createPersistenceError({
+      ...persistenceError,
+      details: {
+        ...(persistenceError.details || {}),
+        bootstrapBackoff: {
+          attempt: backoff.attempt,
+          retryAfterMs: backoff.retryAfterMs,
+          retryAt: backoff.retryAt,
+        },
+      },
+      at: currentTime(),
+    });
+  }
 
   const persistenceChannel = createPersistenceChannel({
     ...defaultPersistenceSnapshot(PERSISTENCE_MODES.REMOTE_SYNC),
@@ -924,7 +1077,15 @@ export function createApiPlatformRepositories({
 
   function persistLocalCache(scope = 'api-cache') {
     cache.meta = currentRepositoryMeta();
-    const error = persistCachedState(resolvedStorage, storageKey, cache, pendingOperations, syncState, monsterVisualConfig);
+    const error = persistCachedState(
+      resolvedStorage,
+      storageKey,
+      cache,
+      pendingOperations,
+      syncState,
+      monsterVisualConfig,
+      bootstrapBackoff,
+    );
     if (error) {
       lastCacheError = createPersistenceError({
         phase: 'cache-write',
@@ -1001,9 +1162,12 @@ export function createApiPlatformRepositories({
     });
   }
 
-  function markRemoteSuccess() {
-    lastRemoteError = null;
-    lastSyncAt = nowTs();
+  function markRemoteSuccess({ bootstrap = false } = {}) {
+    if (bootstrap) clearBootstrapBackoff();
+    if (bootstrap || !isBootstrapPersistenceError(lastRemoteError)) {
+      lastRemoteError = null;
+    }
+    lastSyncAt = currentTime();
     recomputePersistence();
   }
 
@@ -1284,6 +1448,16 @@ export function createApiPlatformRepositories({
   }
 
   async function hydrateRemoteState({ rebasePending = false, rebasePayloads = false, cacheScope = 'bootstrap' } = {}) {
+    const fallbackAvailable = hasCacheFallback(cache, pendingOperations);
+    if (fallbackAvailable) {
+      const activeBackoff = activeBootstrapBackoff();
+      if (activeBackoff) {
+        markRemoteFailure(createBootstrapBackoffError(activeBackoff, '/api/bootstrap'));
+        persistLocalCache(cacheScope);
+        return null;
+      }
+    }
+
     try {
       const payload = await fetchJson(fetchFn, joinUrl(baseUrl, '/api/bootstrap'), {
         method: 'GET',
@@ -1298,21 +1472,21 @@ export function createApiPlatformRepositories({
         monsterVisualConfig = normaliseMonsterVisualRuntimeConfig(payload.monsterVisualConfig);
       }
       const rebase = applyHydratedState(remoteBundle, remoteSyncState, { rebasePending, rebasePayloads });
-      markRemoteSuccess();
+      markRemoteSuccess({ bootstrap: true });
       persistLocalCache(cacheScope);
       return rebase;
     } catch (error) {
-      const persistenceError = classifyError(error, '/api/bootstrap');
+      const backoff = fallbackAvailable && isBootstrapBackoffError(error)
+        ? scheduleBootstrapBackoff(error)
+        : null;
+      const persistenceError = backoff
+        ? attachBootstrapBackoffDetails(classifyError(error, '/api/bootstrap'), backoff)
+        : classifyError(error, '/api/bootstrap');
       markRemoteFailure(persistenceError);
-      const hasCacheFallback = Boolean(
-        cache.learners.allIds.length
-        || Object.keys(cache.subjectStates).length
-        || filterSessions(cache.practiceSessions).length
-        || Object.keys(cache.gameState).length
-        || (Array.isArray(cache.eventLog) && cache.eventLog.length)
-        || countPending(pendingOperations),
-      );
-      if (hasCacheFallback) return null;
+      if (fallbackAvailable) {
+        persistLocalCache(cacheScope);
+        return null;
+      }
       throw error;
     }
   }
@@ -1409,6 +1583,10 @@ export function createApiPlatformRepositories({
           rebasePending: countPending(pendingOperations) > 0,
           rebasePayloads: blocked,
         });
+        const afterHydrate = persistenceChannel.read();
+        if (afterHydrate.lastError?.code === 'bootstrap_retry_backoff') {
+          throw new Error(afterHydrate.lastError.message || 'Bootstrap retry is backing off.');
+        }
         await repositories.flush();
         const snapshot = persistenceChannel.read();
         if (snapshot.mode === PERSISTENCE_MODES.DEGRADED) {
