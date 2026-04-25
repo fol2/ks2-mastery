@@ -43,7 +43,7 @@ test('client spelling read model preserves word-family variant preference', () =
         spelling: {
           subjectId: 'spelling',
           learnerId: 'learner-a',
-          version: 1,
+          version: 2,
           phase: 'dashboard',
           prefs: {
             mode: 'smart',

@@ -1,7 +1,13 @@
-export const SPELLING_SERVICE_STATE_VERSION = 1;
+export const SPELLING_SERVICE_STATE_VERSION = 2;
 
 export const SPELLING_ROOT_PHASES = Object.freeze(['dashboard', 'session', 'summary', 'word-bank']);
-export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single']);
+export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single', 'guardian']);
+
+export const GUARDIAN_INTERVALS = Object.freeze([3, 7, 14, 30, 60, 90]);
+export const GUARDIAN_MAX_REVIEW_LEVEL = GUARDIAN_INTERVALS.length - 1;
+export const GUARDIAN_MIN_ROUND_LENGTH = 5;
+export const GUARDIAN_MAX_ROUND_LENGTH = 8;
+export const GUARDIAN_DEFAULT_ROUND_LENGTH = 8;
 export const SPELLING_YEAR_FILTERS = Object.freeze(['core', 'y3-4', 'y5-6', 'extra']);
 export const LEGACY_SPELLING_YEAR_FILTER_ALIASES = Object.freeze({
   all: 'core',
@@ -225,4 +231,60 @@ export function normaliseStats(value) {
 export function cloneSerialisable(value) {
   if (value == null) return value;
   return JSON.parse(JSON.stringify(value));
+}
+
+function clampReviewLevel(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+  if (parsed < 0) return 0;
+  if (parsed > GUARDIAN_MAX_REVIEW_LEVEL) return GUARDIAN_MAX_REVIEW_LEVEL;
+  return Math.floor(parsed);
+}
+
+function normaliseNullableDay(value) {
+  if (value === null) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : null;
+}
+
+function normaliseDay(value, fallback) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : fallback;
+}
+
+/**
+ * Normalise a per-word guardian record to the canonical shape. Garbage
+ * or missing input yields a safe default record. The default `nextDueDay`
+ * must be supplied by the caller (usually `todayDay()`), because this
+ * module must stay pure — it cannot call `Date.now()` directly without
+ * breaking deterministic tests in shared/spelling/service.js.
+ */
+export function normaliseGuardianRecord(rawValue, todayDay = 0) {
+  const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
+  const safeToday = Number.isFinite(Number(todayDay)) && Number(todayDay) >= 0 ? Math.floor(Number(todayDay)) : 0;
+  return {
+    reviewLevel: clampReviewLevel(raw.reviewLevel),
+    lastReviewedDay: normaliseNullableDay(raw.lastReviewedDay),
+    nextDueDay: normaliseDay(raw.nextDueDay, safeToday),
+    correctStreak: normaliseNonNegativeInteger(raw.correctStreak, 0),
+    lapses: normaliseNonNegativeInteger(raw.lapses, 0),
+    renewals: normaliseNonNegativeInteger(raw.renewals, 0),
+    wobbling: normaliseBoolean(raw.wobbling, false),
+  };
+}
+
+/**
+ * Normalise a slug -> guardian record map. Drops entries with empty/invalid
+ * slugs or with values that cannot be objects. Preserves valid slugs, with
+ * each record individually normalised.
+ */
+export function normaliseGuardianMap(rawValue, todayDay = 0) {
+  const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
+  const output = {};
+  for (const [slug, entry] of Object.entries(raw)) {
+    if (!slug || typeof slug !== 'string') continue;
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+    output[slug] = normaliseGuardianRecord(entry, todayDay);
+  }
+  return output;
 }

@@ -2,9 +2,14 @@ import {
   cloneSerialisable,
   normalisePracticeSessionRecord,
 } from '../../../../src/platform/core/repositories/helpers.js';
-import { createInitialSpellingState } from '../../../../src/subjects/spelling/service-contract.js';
+import {
+  createInitialSpellingState,
+  normaliseGuardianMap,
+} from '../../../../src/subjects/spelling/service-contract.js';
 import { createSpellingService } from '../../../../shared/spelling/service.js';
 import { BadRequestError } from '../../errors.js';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 const SUBJECT_ID = 'spelling';
 const SERVER_AUTHORITY = 'worker';
@@ -30,11 +35,13 @@ function normaliseProgressMap(rawValue) {
   return output;
 }
 
-export function normaliseServerSpellingData(rawValue) {
+export function normaliseServerSpellingData(rawValue, nowTs = Date.now()) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
+  const todayDay = Math.floor(Number(nowTs) / DAY_MS);
   return {
     prefs: isPlainObject(raw.prefs) ? cloneSerialisable(raw.prefs) : {},
     progress: normaliseProgressMap(raw.progress),
+    guardian: normaliseGuardianMap(raw.guardian, Number.isFinite(todayDay) && todayDay >= 0 ? todayDay : 0),
   };
 }
 
