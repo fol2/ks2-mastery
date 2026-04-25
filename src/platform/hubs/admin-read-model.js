@@ -51,6 +51,21 @@ function isPlainObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value);
 }
 
+// P1.5 Phase A (U3): `real` / `demo` pairs are surfaced on every counter
+// that can be split by account type. `demo` is optional on every field — a
+// legacy server that doesn't emit the new sibling still produces a valid
+// normalised read-model with `demo: undefined`, which the UI renders as `—`.
+// Using `undefined` instead of `null` / `0` preserves the "missing" signal.
+function normaliseRealDemoScalar(raw) {
+  if (!isPlainObject(raw)) return undefined;
+  if (raw.demo == null) return undefined;
+  return toNonNegativeInt(raw.demo);
+}
+
+// M3 reviewer fix: `normaliseRealDemoWindow` was the sole caller of a dead
+// ternary whose both branches evaluated to `{}`. Removed; the practice-
+// session demo sibling is now conditional on `practiceDemo != null` only.
+
 export function normaliseDashboardKpis(rawValue) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const accounts = isPlainObject(raw.accounts) ? raw.accounts : {};
@@ -61,19 +76,52 @@ export function normaliseDashboardKpis(rawValue) {
   const mutationReceipts = isPlainObject(raw.mutationReceipts) ? raw.mutationReceipts : {};
   const errorEvents = isPlainObject(raw.errorEvents) ? raw.errorEvents : {};
   const byStatus = isPlainObject(errorEvents.byStatus) ? errorEvents.byStatus : {};
+  const byOrigin = isPlainObject(errorEvents.byOrigin) ? errorEvents.byOrigin : {};
   const accountOpsUpdates = isPlainObject(raw.accountOpsUpdates) ? raw.accountOpsUpdates : {};
+  const practiceReal = isPlainObject(practiceSessions.real) ? practiceSessions.real : null;
+  const practiceDemo = isPlainObject(practiceSessions.demo) ? practiceSessions.demo : null;
+  const receiptsReal = isPlainObject(mutationReceipts.real) ? mutationReceipts.real : null;
+  const receiptsDemo = isPlainObject(mutationReceipts.demo) ? mutationReceipts.demo : null;
 
-  return {
+  const normalised = {
     generatedAt: asTs(raw.generatedAt, 0),
-    accounts: { total: toNonNegativeInt(accounts.total) },
-    learners: { total: toNonNegativeInt(learners.total) },
+    accounts: {
+      total: toNonNegativeInt(accounts.total),
+      real: accounts.real == null ? toNonNegativeInt(accounts.total) : toNonNegativeInt(accounts.real),
+      ...(normaliseRealDemoScalar(accounts) != null ? { demo: normaliseRealDemoScalar(accounts) } : {}),
+    },
+    learners: {
+      total: toNonNegativeInt(learners.total),
+      real: learners.real == null ? toNonNegativeInt(learners.total) : toNonNegativeInt(learners.real),
+      ...(normaliseRealDemoScalar(learners) != null ? { demo: normaliseRealDemoScalar(learners) } : {}),
+    },
     demos: { active: toNonNegativeInt(demos.active) },
     practiceSessions: {
       last7d: toNonNegativeInt(practiceSessions.last7d),
       last30d: toNonNegativeInt(practiceSessions.last30d),
+      ...(practiceReal != null ? {
+        real: {
+          last7d: toNonNegativeInt(practiceReal.last7d),
+          last30d: toNonNegativeInt(practiceReal.last30d),
+        },
+      } : {}),
+      ...(practiceDemo != null ? {
+        demo: {
+          last7d: toNonNegativeInt(practiceDemo.last7d),
+          last30d: toNonNegativeInt(practiceDemo.last30d),
+        },
+      } : {}),
     },
     eventLog: { last7d: toNonNegativeInt(eventLog.last7d) },
-    mutationReceipts: { last7d: toNonNegativeInt(mutationReceipts.last7d) },
+    mutationReceipts: {
+      last7d: toNonNegativeInt(mutationReceipts.last7d),
+      ...(receiptsReal != null ? {
+        real: { last7d: toNonNegativeInt(receiptsReal.last7d) },
+      } : {}),
+      ...(receiptsDemo != null ? {
+        demo: { last7d: toNonNegativeInt(receiptsDemo.last7d) },
+      } : {}),
+    },
     errorEvents: {
       byStatus: {
         open: toNonNegativeInt(byStatus.open),
@@ -81,9 +129,28 @@ export function normaliseDashboardKpis(rawValue) {
         resolved: toNonNegativeInt(byStatus.resolved),
         ignored: toNonNegativeInt(byStatus.ignored),
       },
+      ...(isPlainObject(errorEvents.byOrigin) ? {
+        byOrigin: {
+          client: toNonNegativeInt(byOrigin.client),
+          server: toNonNegativeInt(byOrigin.server),
+        },
+      } : {}),
     },
     accountOpsUpdates: { total: toNonNegativeInt(accountOpsUpdates.total) },
   };
+  // Preserve the P1.5 Phase A (U1) refresh envelope siblings when the caller
+  // re-normalises after a patch. They are not part of the server payload
+  // contract, but the normaliser must round-trip them so UI state survives
+  // a re-render following a dirty-clean transition or cascade refresh.
+  if (Number.isFinite(Number(raw.refreshedAt))) {
+    normalised.refreshedAt = Number(raw.refreshedAt);
+  }
+  if (raw.refreshError && typeof raw.refreshError === 'object') {
+    normalised.refreshError = raw.refreshError;
+  } else if (raw.refreshError === null) {
+    normalised.refreshError = null;
+  }
+  return normalised;
 }
 
 function normaliseOpsActivityEntry(rawEntry) {

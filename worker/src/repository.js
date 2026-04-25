@@ -1695,12 +1695,21 @@ async function assertAdminHubActor(db, actorAccountId) {
 function emptyDashboardKpis(generatedAt) {
   return {
     generatedAt,
-    accounts: { total: 0 },
-    learners: { total: 0 },
+    accounts: { total: 0, real: 0, demo: 0 },
+    learners: { total: 0, real: 0, demo: 0 },
     demos: { active: 0 },
-    practiceSessions: { last7d: 0, last30d: 0 },
+    practiceSessions: {
+      last7d: 0,
+      last30d: 0,
+      real: { last7d: 0, last30d: 0 },
+      demo: { last7d: 0, last30d: 0 },
+    },
     eventLog: { last7d: 0 },
-    mutationReceipts: { last7d: 0 },
+    mutationReceipts: {
+      last7d: 0,
+      real: { last7d: 0 },
+      demo: { last7d: 0 },
+    },
     errorEvents: {
       byStatus: {
         open: 0,
@@ -1708,6 +1717,7 @@ function emptyDashboardKpis(generatedAt) {
         resolved: 0,
         ignored: 0,
       },
+      byOrigin: { client: 0, server: 0 },
     },
     accountOpsUpdates: { total: 0 },
   };
@@ -1729,14 +1739,40 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
   const cutoff7d = nowTs - KPI_WINDOW_7D_MS;
   const cutoff30d = nowTs - KPI_WINDOW_30D_MS;
 
+  // P1.5 Phase A (U3): every counter that can be split by account type is
+  // now computed twice — once for real accounts (default, also preserves the
+  // legacy `*.total` contract), once for demo accounts. The filter rule is
+  // shared across all per-account counters: `COALESCE(account_type, 'real')
+  // <> 'demo'` is the real bucket (malformed / missing `account_type` values
+  // fall into real, matching the existing behaviour at line 1744), and
+  // `account_type = 'demo'` is the demo bucket. Learner / practice /
+  // mutation counters JOIN to adult_accounts to honour the split.
+  //
+  // `accounts.total` keeps its historical meaning (real only) so any legacy
+  // client that reads `.total` without `.real` still works.
+  //
+  // Error origin split rule (documented in the UI as "client-origin" vs
+  // "server-origin"): rows with a `route_name` starting with `/api/` are
+  // emitted from the Worker HTTP routing path (server-origin), including
+  // the admin hub's own endpoints; every other row is a SPA URL path like
+  // `/subject/spelling` captured by src/platform/ops/error-capture.js
+  // (client-origin). NULL `route_name` falls into client-origin because
+  // that is the majority case in today's data.
   const [
-    accountsTotal,
-    learnersTotal,
+    accountsReal,
+    accountsDemo,
+    learnersReal,
+    learnersDemo,
     demosActive,
-    practice7d,
-    practice30d,
+    practice7dReal,
+    practice7dDemo,
+    practice30dReal,
+    practice30dDemo,
     eventLog7d,
-    receipts7d,
+    receipts7dReal,
+    receipts7dDemo,
+    errorsClient,
+    errorsServer,
   ] = await Promise.all([
     scalarCountSafe(db, `
       SELECT COUNT(*) AS value
@@ -1745,7 +1781,35 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
     `, []),
     scalarCountSafe(db, `
       SELECT COUNT(*) AS value
-      FROM learner_profiles
+      FROM adult_accounts
+      WHERE account_type = 'demo'
+    `, []),
+    // learner_profiles has no account_id column — ownership is tracked in
+    // account_learner_memberships with role='owner'. A learner without an
+    // owner row (shouldn't happen in practice) is treated as real because
+    // the anti-join below drops only rows that DO match a demo owner.
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM learner_profiles lp
+      WHERE NOT EXISTS (
+        SELECT 1 FROM account_learner_memberships alm
+        INNER JOIN adult_accounts aa ON aa.id = alm.account_id
+        WHERE alm.learner_id = lp.id
+          AND alm.role = 'owner'
+          AND aa.account_type = 'demo'
+      )
+    `, []),
+    // I2 reviewer fix: use COUNT(DISTINCT lp.id) so a learner with multiple
+    // demo-owner memberships (tests guard this case) is counted once, not
+    // per-membership. Same applies to the two practice-session demo queries
+    // below.
+    scalarCountSafe(db, `
+      SELECT COUNT(DISTINCT lp.id) AS value
+      FROM learner_profiles lp
+      INNER JOIN account_learner_memberships alm ON alm.learner_id = lp.id
+      INNER JOIN adult_accounts aa ON aa.id = alm.account_id
+      WHERE alm.role = 'owner'
+        AND aa.account_type = 'demo'
     `, []),
     scalarCountSafe(db, `
       SELECT COUNT(*) AS value
@@ -1753,15 +1817,55 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
       WHERE account_type = 'demo'
         AND demo_expires_at > ?
     `, [nowTs]),
+    // practice_sessions.learner_id → account_learner_memberships (role='owner')
+    // → adult_accounts. Real is "NOT EXISTS a demo owner" so sessions with
+    // no owner row fall into real (defensive default matching the accounts
+    // filter convention).
     scalarCountSafe(db, `
       SELECT COUNT(*) AS value
-      FROM practice_sessions
-      WHERE updated_at > ?
+      FROM practice_sessions ps
+      WHERE ps.updated_at > ?
+        AND NOT EXISTS (
+          SELECT 1 FROM account_learner_memberships alm
+          INNER JOIN adult_accounts aa ON aa.id = alm.account_id
+          WHERE alm.learner_id = ps.learner_id
+            AND alm.role = 'owner'
+            AND aa.account_type = 'demo'
+        )
+    `, [cutoff7d]),
+    // I2 reviewer fix: DISTINCT ps.id so a session whose learner has
+    // multiple demo-owner memberships is counted once per session, not per
+    // membership.
+    scalarCountSafe(db, `
+      SELECT COUNT(DISTINCT ps.id) AS value
+      FROM practice_sessions ps
+      INNER JOIN account_learner_memberships alm ON alm.learner_id = ps.learner_id
+      INNER JOIN adult_accounts aa ON aa.id = alm.account_id
+      WHERE ps.updated_at > ?
+        AND alm.role = 'owner'
+        AND aa.account_type = 'demo'
     `, [cutoff7d]),
     scalarCountSafe(db, `
       SELECT COUNT(*) AS value
-      FROM practice_sessions
-      WHERE updated_at > ?
+      FROM practice_sessions ps
+      WHERE ps.updated_at > ?
+        AND NOT EXISTS (
+          SELECT 1 FROM account_learner_memberships alm
+          INNER JOIN adult_accounts aa ON aa.id = alm.account_id
+          WHERE alm.learner_id = ps.learner_id
+            AND alm.role = 'owner'
+            AND aa.account_type = 'demo'
+        )
+    `, [cutoff30d]),
+    // I2 reviewer fix: DISTINCT ps.id (see 7d twin above).
+    scalarCountSafe(db, `
+      SELECT COUNT(DISTINCT ps.id) AS value
+      FROM practice_sessions ps
+      INNER JOIN account_learner_memberships alm ON alm.learner_id = ps.learner_id
+      INNER JOIN adult_accounts aa ON aa.id = alm.account_id
+      WHERE ps.updated_at > ?
+        AND alm.role = 'owner'
+        AND aa.account_type = 'demo'
     `, [cutoff30d]),
     scalarCountSafe(db, `
       SELECT COUNT(*) AS value
@@ -1770,9 +1874,34 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
     `, [cutoff7d]),
     scalarCountSafe(db, `
       SELECT COUNT(*) AS value
-      FROM mutation_receipts
-      WHERE applied_at > ?
+      FROM mutation_receipts mr
+      INNER JOIN adult_accounts aa ON aa.id = mr.account_id
+      WHERE mr.applied_at > ?
+        AND COALESCE(aa.account_type, 'real') <> 'demo'
     `, [cutoff7d]),
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM mutation_receipts mr
+      INNER JOIN adult_accounts aa ON aa.id = mr.account_id
+      WHERE mr.applied_at > ?
+        AND aa.account_type = 'demo'
+    `, [cutoff7d]),
+    // I5 reviewer fix: SQLite `LIKE` is case-sensitive by default. Apply
+    // `lower()` on both sides so a route logged with uppercase letters
+    // (e.g. `/API/admin/foo` from a legacy beacon) does not silently
+    // misclassify as client-origin. The client-side query below keeps the
+    // `IS NULL OR NOT LIKE` invariant so the two sides remain strictly
+    // exclusive.
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM ops_error_events
+      WHERE route_name IS NULL OR lower(route_name) NOT LIKE '/api/%'
+    `, [], 'ops_error_events'),
+    scalarCountSafe(db, `
+      SELECT COUNT(*) AS value
+      FROM ops_error_events
+      WHERE lower(route_name) LIKE '/api/%'
+    `, [], 'ops_error_events'),
   ]);
 
   const errorByStatus = {
@@ -1810,13 +1939,33 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
 
   return {
     generatedAt: nowTs,
-    accounts: { total: accountsTotal },
-    learners: { total: learnersTotal },
+    accounts: {
+      total: accountsReal,
+      real: accountsReal,
+      demo: accountsDemo,
+    },
+    learners: {
+      total: learnersReal + learnersDemo,
+      real: learnersReal,
+      demo: learnersDemo,
+    },
     demos: { active: demosActive },
-    practiceSessions: { last7d: practice7d, last30d: practice30d },
+    practiceSessions: {
+      last7d: practice7dReal + practice7dDemo,
+      last30d: practice30dReal + practice30dDemo,
+      real: { last7d: practice7dReal, last30d: practice30dReal },
+      demo: { last7d: practice7dDemo, last30d: practice30dDemo },
+    },
     eventLog: { last7d: eventLog7d },
-    mutationReceipts: { last7d: receipts7d },
-    errorEvents: { byStatus: errorByStatus },
+    mutationReceipts: {
+      last7d: receipts7dReal + receipts7dDemo,
+      real: { last7d: receipts7dReal },
+      demo: { last7d: receipts7dDemo },
+    },
+    errorEvents: {
+      byStatus: errorByStatus,
+      byOrigin: { client: errorsClient, server: errorsServer },
+    },
     accountOpsUpdates: { total: accountOpsUpdatesTotal },
   };
 }

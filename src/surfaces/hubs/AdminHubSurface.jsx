@@ -4,6 +4,8 @@ import { AdultLearnerSelect } from './AdultLearnerSelect.jsx';
 import { MonsterVisualConfigPanel } from './MonsterVisualConfigPanel.jsx';
 import { ReadOnlyLearnerNotice } from './ReadOnlyLearnerNotice.jsx';
 import { AccessDeniedCard, formatTimestamp, isBlocked, selectedWritableLearner } from './hub-utils.js';
+import { PanelHeader } from './admin-panel-header.jsx';
+import { decideDirtyResetOnServerUpdate } from '../../platform/hubs/admin-metadata-dirty-registry.js';
 
 function AdminAccountRoles({ model, directory = {}, actions }) {
   const isAdmin = model?.permissions?.platformRole === 'admin';
@@ -106,38 +108,60 @@ function DashboardKpiPanel({ model, actions }) {
   const mutationReceipts = kpis.mutationReceipts || {};
   const errorEvents = kpis.errorEvents || {};
   const byStatus = errorEvents.byStatus || {};
+  const byOrigin = errorEvents.byOrigin || {};
   const accountOpsUpdates = kpis.accountOpsUpdates || {};
-  const items = [
-    ['Adult accounts', accounts.total],
-    ['Learners', learners.total],
+
+  // P1.5 Phase A (U3): real vs demo split — each counter that can be split
+  // by account type renders both sides with a neutral "Real / Demo"
+  // grouping. A `—` placeholder appears where the demo field is absent
+  // from the payload so the distinction between "0 demos" (known zero)
+  // and "demo field not emitted by this server" stays readable. Additive
+  // contract: `accounts.total` remains the legacy real-account count so
+  // older clients keep working; the new `accounts.real` / `accounts.demo`
+  // siblings are strictly additive.
+  const realDemoRows = [
+    ['Adult accounts (real)', accounts.real ?? accounts.total, accounts.demo],
+    ['Learners', learners.real ?? learners.total, learners.demo],
+    ['Practice sessions (7d)', practiceSessions.real?.last7d ?? practiceSessions.last7d, practiceSessions.demo?.last7d],
+    ['Practice sessions (30d)', practiceSessions.real?.last30d ?? practiceSessions.last30d, practiceSessions.demo?.last30d],
+    ['Mutation receipts (7d)', mutationReceipts.real?.last7d ?? mutationReceipts.last7d, mutationReceipts.demo?.last7d],
+  ];
+  const otherRows = [
     ['Active demo accounts', demos.active],
-    ['Practice sessions (7d)', practiceSessions.last7d],
-    ['Practice sessions (30d)', practiceSessions.last30d],
     ['Event log (7d)', eventLog.last7d],
-    ['Mutation receipts (7d)', mutationReceipts.last7d],
     ['Errors: open', byStatus.open],
     ['Errors: investigating', byStatus.investigating],
     ['Errors: resolved', byStatus.resolved],
     ['Errors: ignored', byStatus.ignored],
+    ['Errors: client-origin', byOrigin.client],
+    ['Errors: server-origin', byOrigin.server],
     ['Account ops updates', accountOpsUpdates.total],
   ];
+  const renderRealDemo = (label, realValue, demoValue) => (
+    <div className="skill-row" key={label}>
+      <div><strong>{label}</strong></div>
+      <div>
+        <span data-kpi-role="real">{String(Number(realValue) || 0)}</span>
+        {' / '}
+        <span data-kpi-role="demo">{demoValue == null ? '—' : String(Number(demoValue) || 0)}</span>
+      </div>
+    </div>
+  );
   return (
     <section className="card" style={{ marginBottom: 20 }}>
-      <div className="card-header">
-        <div>
-          <div className="eyebrow">Dashboard KPI</div>
-          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Dashboard overview</h3>
-        </div>
-        <div className="actions">
-          <span className="chip">Generated {formatTimestamp(kpis.generatedAt)}</span>
-          <button className="btn secondary" type="button" onClick={() => actions.dispatch('admin-ops-kpi-refresh')}>Refresh</button>
-        </div>
-      </div>
+      <PanelHeader
+        eyebrow="Dashboard KPI"
+        title="Dashboard overview"
+        refreshedAt={kpis.refreshedAt ?? kpis.generatedAt}
+        refreshError={kpis.refreshError || null}
+        onRefresh={() => actions.dispatch('admin-ops-kpi-refresh')}
+      />
       <div className="skill-list">
-        {items.map(([label, value]) => (
+        {realDemoRows.map(([label, realValue, demoValue]) => renderRealDemo(label, realValue, demoValue))}
+        {otherRows.map(([label, value]) => (
           <div className="skill-row" key={label}>
             <div><strong>{label}</strong></div>
-            <div>{String(Number(value) || 0)}</div>
+            <div>{value == null ? '—' : String(Number(value) || 0)}</div>
           </div>
         ))}
       </div>
@@ -150,17 +174,14 @@ function RecentActivityStreamPanel({ model, actions }) {
   const entries = Array.isArray(stream.entries) ? stream.entries : [];
   return (
     <section className="card" style={{ marginBottom: 20 }}>
-      <div className="card-header">
-        <div>
-          <div className="eyebrow">Ops activity</div>
-          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Recent operations activity</h3>
-          <p className="small muted">Latest mutation receipts across accounts. Learner scope ids pre-masked to last 8 characters; account scope ids to last 6.</p>
-        </div>
-        <div className="actions">
-          <span className="chip">Generated {formatTimestamp(stream.generatedAt)}</span>
-          <button className="btn secondary" type="button" onClick={() => actions.dispatch('admin-ops-activity-refresh')}>Refresh</button>
-        </div>
-      </div>
+      <PanelHeader
+        eyebrow="Ops activity"
+        title="Recent operations activity"
+        subtitle="Latest mutation receipts across accounts. Learner scope ids pre-masked to last 8 characters; account scope ids to last 6."
+        refreshedAt={stream.refreshedAt ?? stream.generatedAt}
+        refreshError={stream.refreshError || null}
+        onRefresh={() => actions.dispatch('admin-ops-activity-refresh')}
+      />
       {entries.length ? entries.map((entry) => (
         <div className="skill-row" key={entry.requestId || `${entry.mutationKind}-${entry.appliedAt}`}>
           <div><strong>{entry.mutationKind || 'mutation'}</strong></div>
@@ -186,21 +207,80 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
   const [tagsText, setTagsText] = React.useState((account.tags || []).join(', '));
   const [internalNotes, setInternalNotes] = React.useState(account.internalNotes || '');
 
-  // Rehydrate local input state when the underlying row changes (optimistic
-  // patch or server refresh) to keep the inputs in sync without wiping
-  // in-progress edits the user is actively typing.
+  // P1.5 Phase A (U2): a `useRef`-gated dirty flag blocks the prop-to-state
+  // re-sync below whenever the user is mid-edit. The flag is authoritative
+  // per row; the parent panel and cascade dispatcher only need to know
+  // whether ANY row is dirty (so they can decide whether to suppress the
+  // metadata panel's own narrow refresh). We register the flag with the
+  // module-scope registry via `actions.registerAccountOpsMetadataRowDirty`
+  // every time it flips so the suppression-and-flush bookkeeping stays in
+  // one place.
+  //
+  // B1 reviewer fix: the dispatcher clears the registry entry on save
+  // success, but clearing the module-scope Set alone is not enough — the
+  // component's own `dirtyRef.current` would stay `true` forever, so the
+  // four prop-sync useEffects below would silently drop every subsequent
+  // server prop. We observe the save's server acknowledgement via
+  // `account.updatedAt` and reset `dirtyRef.current` the moment we see a
+  // bumped timestamp, so the next prop change applies exactly once.
+  const dirtyRef = React.useRef(false);
+  const savedAtRef = React.useRef(Number(account.updatedAt) || 0);
+  const registerDirty = actions?.registerAccountOpsMetadataRowDirty
+    || (() => {});
+  const markDirty = React.useCallback(() => {
+    if (dirtyRef.current) return;
+    dirtyRef.current = true;
+    registerDirty(accountId, true);
+  }, [accountId, registerDirty]);
+
+  // B1 reviewer fix: whenever the server-acknowledged `updatedAt` advances
+  // past our last-observed save timestamp, reset `dirtyRef.current` and
+  // record the new baseline. The prop-sync hooks below then re-apply
+  // freshly-arrived server values (the new internal notes, ops status,
+  // etc.) because the dirty guard is no longer held. This effect must run
+  // BEFORE the prop-sync hooks in render order — React fires useEffect in
+  // declaration order within a component, so we place this first.
+  //
+  // The decision logic lives in `decideDirtyResetOnServerUpdate` so it
+  // can be unit-tested without a DOM; see
+  // `tests/react-admin-metadata-row-dirty.test.js` for the coverage.
   React.useEffect(() => {
-    setOpsStatus(account.opsStatus || 'active');
+    const decision = decideDirtyResetOnServerUpdate({
+      incomingUpdatedAt: account.updatedAt,
+      savedAt: savedAtRef.current,
+    });
+    if (decision.reset) {
+      savedAtRef.current = decision.nextSavedAt;
+      dirtyRef.current = false;
+    }
+  }, [account.updatedAt]);
+
+  // P1.5 Phase A (U2): rehydrate local input state from server props ONLY
+  // when the row is not dirty. Each of the four useEffect hooks below
+  // guards on `dirtyRef.current` so a mid-edit textarea is not wiped by an
+  // auto-refresh arriving seconds later. On save success the B1 effect
+  // above clears the ref BEFORE these fire for the bumped-updatedAt
+  // render, so the new server value wins on the save-acknowledgement
+  // render.
+  React.useEffect(() => {
+    if (!dirtyRef.current) setOpsStatus(account.opsStatus || 'active');
   }, [account.opsStatus]);
   React.useEffect(() => {
-    setPlanLabel(account.planLabel || '');
+    if (!dirtyRef.current) setPlanLabel(account.planLabel || '');
   }, [account.planLabel]);
   React.useEffect(() => {
-    setTagsText((account.tags || []).join(', '));
+    if (!dirtyRef.current) setTagsText((account.tags || []).join(', '));
   }, [account.tags]);
   React.useEffect(() => {
-    setInternalNotes(account.internalNotes || '');
+    if (!dirtyRef.current) setInternalNotes(account.internalNotes || '');
   }, [account.internalNotes]);
+
+  // Unmount-clean: if a dirty row unmounts (learner switch, panel collapse)
+  // we drop its entry from the module-scope registry so a still-dirty row
+  // that no longer exists does not block future metadata-panel refreshes.
+  React.useEffect(() => () => {
+    if (dirtyRef.current) registerDirty(accountId, false);
+  }, [accountId, registerDirty]);
 
   const handleSave = () => {
     const parsedTags = tagsText
@@ -254,7 +334,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
             name="opsStatus"
             value={opsStatus}
             disabled={isSaving}
-            onChange={(event) => setOpsStatus(event.target.value)}
+            onChange={(event) => { markDirty(); setOpsStatus(event.target.value); }}
           >
             {OPS_STATUS_OPTIONS.map((option) => (
               <option value={option} key={option}>{option}</option>
@@ -272,7 +352,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
           value={planLabel}
           maxLength={64}
           disabled={isSaving}
-          onChange={(event) => setPlanLabel(event.target.value)}
+          onChange={(event) => { markDirty(); setPlanLabel(event.target.value); }}
         />
       </label>
       <label className="field" style={{ minWidth: 160 }}>
@@ -283,7 +363,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
           name="tags"
           value={tagsText}
           disabled={isSaving}
-          onChange={(event) => setTagsText(event.target.value)}
+          onChange={(event) => { markDirty(); setTagsText(event.target.value); }}
         />
       </label>
       <label className="field" style={{ minWidth: 200 }}>
@@ -295,7 +375,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
           maxLength={2000}
           rows={3}
           disabled={isSaving}
-          onChange={(event) => setInternalNotes(event.target.value)}
+          onChange={(event) => { markDirty(); setInternalNotes(event.target.value); }}
         />
       </label>
       <div>
@@ -317,17 +397,14 @@ function AccountOpsMetadataPanel({ model, actions }) {
   const savingAccountId = directory.savingAccountId || '';
   return (
     <section className="card" style={{ marginBottom: 20 }}>
-      <div className="card-header">
-        <div>
-          <div className="eyebrow">Account ops</div>
-          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Account ops metadata</h3>
-          <p className="small muted">GM-facing labels, plans, tags, and notes per account. Admin accounts can edit; ops-role accounts can view.</p>
-        </div>
-        <div className="actions">
-          <span className="chip">Generated {formatTimestamp(directory.generatedAt)}</span>
-          <button className="btn secondary" type="button" onClick={() => actions.dispatch('account-ops-metadata-refresh')}>Refresh</button>
-        </div>
-      </div>
+      <PanelHeader
+        eyebrow="Account ops"
+        title="Account ops metadata"
+        subtitle="GM-facing labels, plans, tags, and notes per account. Admin accounts can edit; ops-role accounts can view."
+        refreshedAt={directory.refreshedAt ?? directory.generatedAt}
+        refreshError={directory.refreshError || null}
+        onRefresh={() => actions.dispatch('account-ops-metadata-refresh')}
+      />
       {accounts.length ? accounts.map((account) => (
         <AccountOpsMetadataRow
           key={account.accountId}
@@ -351,36 +428,38 @@ function ErrorLogCentrePanel({ model, actions }) {
   // R10: status transitions are admin-only. Ops-role viewers keep the chip.
   const canManage = model?.permissions?.platformRole === 'admin';
   const savingEventId = summary.savingEventId || '';
+  const headerExtras = (
+    <>
+      <div className="chip-row" style={{ marginTop: 8 }}>
+        <span className="chip">{String(Number(totals.open) || 0)} open</span>
+        <span className="chip">{String(Number(totals.investigating) || 0)} investigating</span>
+        <span className="chip">{String(Number(totals.resolved) || 0)} resolved</span>
+        <span className="chip">{String(Number(totals.ignored) || 0)} ignored</span>
+      </div>
+      <div className="chip-row" style={{ marginTop: 8 }}>
+        {statusFilters.map((status) => (
+          <button
+            className="btn ghost"
+            type="button"
+            key={status}
+            onClick={() => actions.dispatch('admin-ops-error-events-refresh', { status })}
+          >
+            Show {status}
+          </button>
+        ))}
+      </div>
+    </>
+  );
   return (
     <section className="card" style={{ marginBottom: 20 }}>
-      <div className="card-header">
-        <div>
-          <div className="eyebrow">Error log</div>
-          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Error log centre</h3>
-          <div className="chip-row" style={{ marginTop: 8 }}>
-            <span className="chip">{String(Number(totals.open) || 0)} open</span>
-            <span className="chip">{String(Number(totals.investigating) || 0)} investigating</span>
-            <span className="chip">{String(Number(totals.resolved) || 0)} resolved</span>
-            <span className="chip">{String(Number(totals.ignored) || 0)} ignored</span>
-          </div>
-          <div className="chip-row" style={{ marginTop: 8 }}>
-            {statusFilters.map((status) => (
-              <button
-                className="btn ghost"
-                type="button"
-                key={status}
-                onClick={() => actions.dispatch('admin-ops-error-events-refresh', { status })}
-              >
-                Show {status}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="actions">
-          <span className="chip">Generated {formatTimestamp(summary.generatedAt)}</span>
-          <button className="btn secondary" type="button" onClick={() => actions.dispatch('admin-ops-error-events-refresh', { status: null })}>Refresh</button>
-        </div>
-      </div>
+      <PanelHeader
+        eyebrow="Error log"
+        title="Error log centre"
+        refreshedAt={summary.refreshedAt ?? summary.generatedAt}
+        refreshError={summary.refreshError || null}
+        onRefresh={() => actions.dispatch('admin-ops-error-events-refresh', { status: null })}
+        headerExtras={headerExtras}
+      />
       {entries.length ? entries.map((entry) => {
         const isSaving = savingEventId === entry.id;
         return (
