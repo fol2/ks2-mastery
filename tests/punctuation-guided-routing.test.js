@@ -100,3 +100,40 @@ test('invalid skillId in guided mode falls back without throwing', () => {
   assert.doesNotThrow(() => punctuationModule.handleAction('punctuation-start', context));
   assert.equal(context.currentUi.session.mode, 'guided');
 });
+
+test('conflicting skillId and guidedSkillId — skillId wins (service precedence)', () => {
+  const repository = makeRepository();
+  const service = createPunctuationService({ repository, now: () => 0, random: () => 0 });
+  const context = makeContext({
+    service,
+    data: {
+      mode: 'guided',
+      skillId: 'speech',
+      guidedSkillId: 'apostrophe_contractions',
+    },
+  });
+  punctuationModule.handleAction('punctuation-start', context);
+  assert.equal(
+    context.currentUi.session.guidedSkillId,
+    'speech',
+    'service treats skillId as authoritative when both are provided',
+  );
+});
+
+test('cluster-id-as-skillId falls back to a valid published skill without throwing', () => {
+  // UI setups may pass the cluster id (e.g. 'endmarks') rather than an
+  // individual skill id. The service's chooseGuidedSkill must fall back to
+  // the weakest published skill rather than returning null, so the guided
+  // session starts with a valid skill even from the local-module path.
+  const repository = makeRepository();
+  const service = createPunctuationService({ repository, now: () => 0, random: () => 0 });
+  const context = makeContext({
+    service,
+    data: { mode: 'guided', skillId: 'endmarks' },
+  });
+  assert.doesNotThrow(() => punctuationModule.handleAction('punctuation-start', context));
+  assert.equal(context.currentUi.session.mode, 'guided');
+  const picked = context.currentUi.session.guidedSkillId;
+  assert.equal(typeof picked, 'string');
+  assert.notEqual(picked, 'endmarks', 'cluster id must not be used as a guided skill id');
+});
