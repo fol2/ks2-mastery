@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { relative, resolve } from 'node:path';
 
-import { EVIDENCE_SCHEMA_VERSION } from './lib/capacity-evidence.mjs';
+import { EVIDENCE_SCHEMA_VERSION, evaluateThresholds } from './lib/capacity-evidence.mjs';
 
 const CAPACITY_DOC_PATH = 'docs/operations/capacity.md';
 
@@ -127,7 +127,17 @@ function compareConfigAgainstEvidence(absoluteConfigPath, payload, rowDecision) 
     return messages;
   }
 
-  if (config.tier && config.tier !== rowDecision) {
+  // Committed tier configs MUST declare a tier value. A config without a
+  // declared tier would let an operator commit `{thresholds: {max5xx: 999}}`
+  // and cite it from any tier row — the cross-check would find matching
+  // thresholds but learn nothing about which tier those thresholds were
+  // reviewed for.
+  if (!config.tier) {
+    messages.push(
+      `tier config "${absoluteConfigPath}" is missing a top-level \`tier\` field. `
+      + 'Every config under reports/capacity/configs/ must declare the tier it backs.',
+    );
+  } else if (config.tier !== rowDecision) {
     messages.push(
       `tier config "${absoluteConfigPath}" declares tier "${config.tier}"; `
       + `row claims "${rowDecision}".`,
@@ -136,18 +146,37 @@ function compareConfigAgainstEvidence(absoluteConfigPath, payload, rowDecision) 
 
   const configThresholds = config.thresholds || {};
   const evidenceThresholds = payload.thresholds || {};
-  for (const [key, configValue] of Object.entries(configThresholds)) {
+
+  // Union of keys: iterate BOTH directions so a threshold that appears on
+  // one side but not the other is caught. A PR that deletes a key from the
+  // committed config while the evidence still references it (or vice versa)
+  // indicates config/evidence drift.
+  const allKeys = new Set([...Object.keys(configThresholds), ...Object.keys(evidenceThresholds)]);
+  for (const key of allKeys) {
+    const configValue = configThresholds[key];
     const evidenceEntry = evidenceThresholds[key];
-    if (!evidenceEntry) {
+    const configPresent = key in configThresholds;
+    const evidencePresent = key in evidenceThresholds;
+
+    if (configPresent && !evidencePresent) {
       messages.push(
         `tier config declares threshold "${key}" but evidence omits it. `
         + 'Evidence must have been produced with the config currently committed.',
       );
       continue;
     }
+    if (evidencePresent && !configPresent) {
+      // Evidence has a threshold the committed config does not. This can
+      // happen legitimately via CLI override; we still surface it so
+      // operators notice drift between intent (config) and runtime (CLI).
+      messages.push(
+        `evidence records threshold "${key}" but committed config omits it. `
+        + 'CLI overrides are permitted but should be codified in the tier config.',
+      );
+      continue;
+    }
+
     const configured = evidenceEntry.configured;
-    // Boolean config values (requireZeroSignals, requireBootstrapCapacity)
-    // are recorded in evidence.thresholds.<name>.configured as `true`.
     if (typeof configValue === 'boolean') {
       if (configValue !== Boolean(configured)) {
         messages.push(
@@ -164,6 +193,73 @@ function compareConfigAgainstEvidence(absoluteConfigPath, payload, rowDecision) 
         + 'evidence must be produced against the committed config values.',
       );
     }
+  }
+
+  // Honour config-declared minimum evidence schema version. Previously the
+  // hardcoded `schemaVersion < 2` only gated classroom-tier rows; a config
+  // that declares `minEvidenceSchemaVersion: 3` would have had no effect.
+  const declaredMin = Number(config.minEvidenceSchemaVersion);
+  if (Number.isFinite(declaredMin) && declaredMin > 0) {
+    const evidenceSchema = Number(payload.reportMeta?.evidenceSchemaVersion);
+    if (Number.isFinite(evidenceSchema) && evidenceSchema < declaredMin) {
+      messages.push(
+        `tier config declares minEvidenceSchemaVersion ${declaredMin}; `
+        + `evidence has v${evidenceSchema}. Regenerate the evidence with a tool at the required schema.`,
+      );
+    }
+  }
+  return messages;
+}
+
+/**
+ * Re-run threshold evaluation at verify time and assert the recomputed
+ * `failures` array matches the payload. Closes the "failures-array laundering"
+ * adversarial route: an operator who edits `evidence.failures` to empty and
+ * flips individual `thresholds[key].passed: true` would otherwise have the
+ * cross-check accept the evidence at face value.
+ *
+ * The re-evaluation uses the payload's own summary and reconstructs threshold
+ * config from the *configured* values recorded in evidence, then compares the
+ * recomputed outcome to the payload's claims.
+ */
+function recomputeFailures(payload) {
+  const messages = [];
+  const summary = payload.summary || {};
+  const thresholds = payload.thresholds || {};
+  // Reconstruct threshold input from evidence.thresholds.<name>.configured.
+  const reconstructed = {};
+  for (const [name, entry] of Object.entries(thresholds)) {
+    if (entry && entry.configured !== undefined && entry.configured !== null) {
+      reconstructed[name] = entry.configured;
+    }
+  }
+  const dryRun = Boolean(payload.dryRun);
+  const { thresholds: recomputed, failures: recomputedFailures } = evaluateThresholds(
+    summary,
+    reconstructed,
+    { dryRun },
+  );
+
+  // Compare recomputed pass/fail for each threshold to the payload's claims.
+  for (const [name, entry] of Object.entries(thresholds)) {
+    const recomputedEntry = recomputed[name];
+    if (!recomputedEntry) continue;
+    if (Boolean(recomputedEntry.passed) !== Boolean(entry.passed)) {
+      messages.push(
+        `threshold "${name}" claims passed=${entry.passed} but recomputation says passed=${recomputedEntry.passed}. `
+        + 'Evidence.thresholds.<name>.passed must reflect the observed data — hand-edits are rejected.',
+      );
+    }
+  }
+
+  // Compare the claimed failures list to the recomputed list.
+  const claimedFailures = Array.isArray(payload.failures) ? [...payload.failures].sort() : [];
+  const actualFailures = [...recomputedFailures].sort();
+  if (JSON.stringify(claimedFailures) !== JSON.stringify(actualFailures)) {
+    messages.push(
+      `evidence.failures claims [${claimedFailures.join(', ') || '<none>'}] but recomputation yields [${actualFailures.join(', ') || '<none>'}]. `
+      + 'The failures array was tampered with after the run.',
+    );
   }
   return messages;
 }
@@ -407,6 +503,14 @@ export function verifyEvidenceRow(row) {
       + 'Non-fail tier rows may only cite runs with failures: [].',
     );
   }
+
+  // Re-run threshold evaluation at verify time and reject hand-edits that
+  // empty `failures` or flip individual threshold `passed` flags. Without
+  // this check, an operator could produce a failing run, edit the JSON, and
+  // the committed-config cross-check would still accept values that match
+  // the config — because it's the config vs evidence, not the summary vs
+  // evidence. This closes that laundering route.
+  messages.push(...recomputeFailures(payload));
 
   return { ok: messages.length === 0, messages };
 }

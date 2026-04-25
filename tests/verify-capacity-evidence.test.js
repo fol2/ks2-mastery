@@ -689,6 +689,168 @@ test('P95 and maxBytes cells in row must match evidence.summary.endpoints', () =
   }
 });
 
+test('failures-array laundering is caught by recomputation (adv-4)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+
+  // Evidence summary shows server5xx=3 (a real failure).
+  // Threshold says max5xx=0, passed=true, failures=[] (hand-edited).
+  // Recomputation from summary + threshold.configured will yield failures=[max5xx].
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    summary: {
+      ok: false,
+      totalRequests: 10,
+      endpoints: { 'GET /api/bootstrap': { count: 10, p50WallMs: 100, p95WallMs: 320, maxResponseBytes: 81000 } },
+      signals: { server5xx: 3 },
+      failures: [],
+    },
+    failures: [],  // laundered
+    thresholds: {
+      max5xx: { configured: 0, observed: 3, passed: true },  // hand-flipped
+      maxNetworkFailures: { configured: 0, observed: 0, passed: true },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('tampered with') || line.includes('recomputation says passed=false')),
+      `expected recomputation to catch the lie; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('threshold in evidence not in committed config is flagged (adv-1 reverse direction)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+
+  // Committed config only has max5xx. Evidence has an extra maxNetworkFailures.
+  writeFileSync(configPath, JSON.stringify({
+    tier: 'small-pilot-provisional',
+    thresholds: { max5xx: 0 },
+  }));
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    tier: {
+      tier: 'small-pilot-provisional',
+      configPath: 'reports/capacity/configs/small-pilot.json',
+    },
+    thresholds: {
+      max5xx: { configured: 0, observed: 0, passed: true },
+      maxNetworkFailures: { configured: 0, observed: 0, passed: true },  // NOT in config
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'small-pilot-provisional', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(result.report.some((line) => line.includes('committed config omits it')));
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('minEvidenceSchemaVersion declared in config is honoured (adv-2)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+
+  // Config declares minEvidenceSchemaVersion: 2, but tool only knows v1 and
+  // evidence is v1. The cross-check must honour the config's declared minimum.
+  writeFileSync(configPath, JSON.stringify({
+    tier: 'small-pilot-provisional',
+    minEvidenceSchemaVersion: 2,
+    thresholds: {},
+  }));
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    tier: {
+      tier: 'small-pilot-provisional',
+      configPath: 'reports/capacity/configs/small-pilot.json',
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'small-pilot-provisional', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(result.report.some((line) => line.includes('minEvidenceSchemaVersion 2')));
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('config without top-level tier field is rejected (adv-3)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'pilot-override.json');
+
+  // Committed config has no `tier` field — would otherwise be usable from
+  // any tier row without a mismatch check firing.
+  writeFileSync(configPath, JSON.stringify({
+    thresholds: { max5xx: 999 },  // intentionally loose
+  }));
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: { commit: 'abc1234567890', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    tier: {
+      tier: 'small-pilot-provisional',
+      configPath: 'reports/capacity/configs/pilot-override.json',
+    },
+    thresholds: {
+      max5xx: { configured: 999, observed: 0, passed: true },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'small-pilot-provisional', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(result.report.some((line) => line.includes('missing a top-level `tier` field')));
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('runVerify empty tier object does not satisfy tier cross-check', () => {
   // tier: {} has no `tier` field — should behave identically to missing tier.
   const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
