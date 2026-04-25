@@ -2587,9 +2587,11 @@ test('U5: Grown-up view dispatches grammar-open-analytics and flips phase to ana
   const html = harness.render();
   // Analytics scene is rendered directly by the phase router. The adult
   // surface carries Misconception repair / Question-type evidence / etc.
+  // Phase 3 U7: the scene heading is now `Grown-up view` to match the
+  // summary button label.
   assert.match(html, /class="grammar-analytics-back-row"/);
   assert.match(html, /data-action="grammar-close-analytics"/);
-  assert.match(html, /Grammar analytics/);
+  assert.match(html, /id="grammar-analytics-title"[^>]*>Grown-up view</);
 
   // `grammar-close-analytics` returns to summary (because `grammar.summary`
   // is still populated).
@@ -2724,8 +2726,9 @@ test('U5: grammar-open-analytics renders GrammarAnalyticsScene via the phase rou
   assert.match(html, /class="grammar-surface grammar-surface--analytics"/);
   // Back affordance routes `grammar-close-analytics`.
   assert.match(html, /data-action="grammar-close-analytics"/);
-  // Canonical analytics content is present.
-  assert.match(html, /Grammar analytics/);
+  // Canonical analytics content is present. Phase 3 U7 renames the scene
+  // heading to `Grown-up view` to match the summary button label.
+  assert.match(html, /id="grammar-analytics-title"[^>]*>Grown-up view</);
   assert.match(html, /Evidence snapshot/);
 });
 
@@ -2907,5 +2910,287 @@ test('U5 follower T5: mini-test primary row puts Fix missed concepts first with 
     primaryRow,
     /<button[^>]*class="btn secondary"[^>]*data-action="grammar-review-mini-test"[^>]*>Review answers</,
     'Review answers is the secondary variant',
+  );
+});
+
+// ---------------------------------------------------------------------------
+// U7: Child/adult analytics split
+// ---------------------------------------------------------------------------
+// Finalises the gating U1 + U5 scaffolded. The adult analytics scene now
+// carries the `Grown-up view` heading + intro copy + internal confidence chips
+// (5-label taxonomy + sample size) + the "Draft for review" framing on the
+// parent summary draft. The dashboard `<details class="grammar-grown-up-view">`
+// is kept as a closed-by-default escape hatch so parents can reach progress
+// outside the post-session path; the canonical path is summary -> `Grown-up
+// view` button (phase: 'analytics').
+
+function u7OpenAnalyticsFromSummary() {
+  const { harness, sample } = u5RunRegularToSummary();
+  harness.dispatch('grammar-open-analytics');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'analytics');
+  return { harness, sample };
+}
+
+function u7SeedAnalyticsConfidence(harness) {
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.store.updateSubjectUi('grammar', (current) => {
+    const normalised = normaliseGrammarReadModel(current, learnerId);
+    // Seed mixed confidence levels across concept rows and a question-type row
+    // so the chip renders with at least two distinct labels. The Worker
+    // projects `confidence: {label, sampleSize, ...}` on both read-model
+    // shapes; we mirror that shape here.
+    const concepts = normalised.analytics.concepts.map((concept) => {
+      if (concept.id === 'relative_clauses') {
+        return {
+          ...concept,
+          status: 'weak',
+          attempts: 3,
+          confidence: { label: 'needs-repair', sampleSize: 3, intervalDays: 0, distinctTemplates: 1, recentMisses: 2 },
+        };
+      }
+      if (concept.id === 'word_classes') {
+        return {
+          ...concept,
+          status: 'learning',
+          attempts: 12,
+          confidence: { label: 'consolidating', sampleSize: 12, intervalDays: 3, distinctTemplates: 4, recentMisses: 1 },
+        };
+      }
+      return concept;
+    });
+    return {
+      ...normalised,
+      analytics: {
+        ...normalised.analytics,
+        concepts,
+        questionTypeSummary: [
+          {
+            id: 'select_one',
+            label: 'Select one',
+            status: 'learning',
+            attempts: 5,
+            correct: 2,
+            wrong: 3,
+            confidence: { label: 'needs-repair', sampleSize: 5, intervalDays: 0, distinctTemplates: 2, recentMisses: 2 },
+          },
+          {
+            id: 'construct',
+            label: 'Constructed response',
+            status: 'secured',
+            attempts: 20,
+            correct: 18,
+            wrong: 2,
+            confidence: { label: 'secure', sampleSize: 20, intervalDays: 14, distinctTemplates: 5, recentMisses: 0 },
+          },
+        ],
+      },
+    };
+  });
+}
+
+test('U7: analytics phase heading reads Grown-up view and carries the non-grade intro copy', () => {
+  const { harness } = u7OpenAnalyticsFromSummary();
+  const html = harness.render();
+  // Scene title matches the summary button label so the routing feels
+  // cohesive. `aria-labelledby` keeps pointing at `grammar-analytics-title`.
+  assert.match(html, /aria-labelledby="grammar-analytics-title"/);
+  assert.match(html, /id="grammar-analytics-title"[^>]*>Grown-up view</);
+  // Intro copy frames the scene as non-scored.
+  assert.match(html, /Detailed Grammar progress for parents and teachers\. Nothing here is a grade\./);
+});
+
+test('U7: analytics phase renders the back affordance dispatching grammar-close-analytics', () => {
+  const { harness } = u7OpenAnalyticsFromSummary();
+  const html = harness.render();
+  const backRow = html.match(/<div class="grammar-analytics-back-row"[^>]*>[\s\S]*?<\/div>/)?.[0];
+  assert.ok(backRow, 'back affordance row rendered');
+  assert.match(backRow, /data-action="grammar-close-analytics"/);
+  assert.match(backRow, />Back to round summary</);
+
+  // Dispatch round-trip: close returns to summary because grammar.summary is
+  // still populated.
+  harness.dispatch('grammar-close-analytics');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'summary');
+});
+
+test('U7: analytics phase retains the adult-only evidence vocabulary', () => {
+  const { harness } = u7OpenAnalyticsFromSummary();
+  const html = harness.render();
+  // These four phrases are explicitly allowed on the adult scene only.
+  assert.match(html, /Evidence snapshot/);
+  assert.match(html, /Stage 1/);
+  assert.match(html, /Bellstorm bridge/);
+  assert.match(html, /Reserved reward routes/);
+});
+
+test('U7: analytics phase renders adult confidence chips with the internal 5-label taxonomy + sample size', () => {
+  const { harness } = u7OpenAnalyticsFromSummary();
+  u7SeedAnalyticsConfidence(harness);
+  const html = harness.render();
+
+  // Concept row chips use Worker's `confidence.label` + `sampleSize`.
+  const relativeChip = html.match(
+    /<span class="grammar-adult-confidence needs-repair"[^>]*data-concept-id="relative_clauses"[\s\S]*?<\/span>/,
+  )?.[0] || html.match(
+    /data-concept-id="relative_clauses"[\s\S]*?<span class="grammar-adult-confidence needs-repair"[^>]*>[^<]*<\/span>/,
+  )?.[0];
+  assert.ok(relativeChip, 'needs-repair chip rendered on the relative_clauses concept row');
+  assert.match(relativeChip, /needs-repair/);
+  assert.match(relativeChip, /3 attempts/);
+
+  const wordClassesChip = html.match(
+    /data-concept-id="word_classes"[\s\S]*?<span class="grammar-adult-confidence consolidating"[^>]*>[^<]*<\/span>/,
+  )?.[0];
+  assert.ok(wordClassesChip, 'consolidating chip rendered on the word_classes concept row');
+  assert.match(wordClassesChip, /12 attempts/);
+
+  // Question-type row chips use the same shape.
+  const questionBlock = html.match(
+    /<div class="eyebrow">Question-type evidence<\/div>[\s\S]*?<\/ol>/,
+  )?.[0];
+  assert.ok(questionBlock, 'question-type evidence block rendered');
+  assert.match(questionBlock, /data-question-type-id="select_one"/);
+  assert.match(questionBlock, /grammar-adult-confidence needs-repair/);
+  assert.match(questionBlock, /5 attempts/);
+  assert.match(questionBlock, /data-question-type-id="construct"/);
+  assert.match(questionBlock, /grammar-adult-confidence secure/);
+  assert.match(questionBlock, /20 attempts/);
+});
+
+test('U7: adult confidence chip renders singular "attempt" copy for a single-attempt row', () => {
+  const { harness } = u7OpenAnalyticsFromSummary();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.store.updateSubjectUi('grammar', (current) => {
+    const normalised = normaliseGrammarReadModel(current, learnerId);
+    return {
+      ...normalised,
+      analytics: {
+        ...normalised.analytics,
+        questionTypeSummary: [{
+          id: 'solo',
+          label: 'Solo question type',
+          status: 'learning',
+          attempts: 1,
+          correct: 1,
+          wrong: 0,
+          confidence: { label: 'emerging', sampleSize: 1, intervalDays: 0, distinctTemplates: 1, recentMisses: 0 },
+        }],
+      },
+    };
+  });
+  const html = harness.render();
+  assert.match(html, /grammar-adult-confidence emerging[^"]*"[^>]*>[^<]*1 attempt</);
+});
+
+test('U7: parent summary draft carries the Draft for review framing when enrichment is present', () => {
+  const { harness } = u7OpenAnalyticsFromSummary();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.store.updateSubjectUi('grammar', (current) => {
+    const normalised = normaliseGrammarReadModel(current, learnerId);
+    return {
+      ...normalised,
+      aiEnrichment: {
+        ...(normalised.aiEnrichment || {}),
+        parentSummary: {
+          title: 'Parent summary',
+          body: 'Seed body for the draft aside.',
+          nextSteps: ['Keep practising relative clauses.'],
+        },
+      },
+    };
+  });
+  const html = harness.render();
+  const aside = html.match(/<aside class="grammar-parent-summary-draft"[\s\S]*?<\/aside>/)?.[0];
+  assert.ok(aside, 'parent summary draft aside rendered');
+  assert.match(aside, /Draft for review/);
+  assert.match(aside, /not a grade/);
+});
+
+test('U7: analytics phase empty state — no recent activity and no question types still renders without blank page', () => {
+  const { harness } = u7OpenAnalyticsFromSummary();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.store.updateSubjectUi('grammar', (current) => {
+    const normalised = normaliseGrammarReadModel(current, learnerId);
+    return {
+      ...normalised,
+      analytics: {
+        ...normalised.analytics,
+        recentActivity: [],
+        recentAttempts: [],
+        misconceptionPatterns: [],
+        questionTypeSummary: [],
+      },
+    };
+  });
+  const html = harness.render();
+  // Scene still carries its heading + intro + back affordance.
+  assert.match(html, /id="grammar-analytics-title"[^>]*>Grown-up view</);
+  assert.match(html, /data-action="grammar-close-analytics"/);
+  // Empty-state prose from the scene renders (not a blank page).
+  assert.match(html, /No Grammar attempts recorded yet\./);
+  assert.match(html, /No recurring misconception pattern recorded yet\./);
+  assert.match(html, /No question-type evidence recorded yet\./);
+});
+
+test('U7: dashboard <details class="grammar-grown-up-view"> stays as a closed-by-default escape hatch', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  const html = harness.render();
+
+  // The disclosure is present but closed — no `open` attribute. SSR cannot
+  // flip it programmatically; this assertion guards against drift that would
+  // render the disclosure open by default and leak adult copy into the child
+  // dashboard flow.
+  const details = html.match(/<details class="grammar-grown-up-view"[^>]*>/)?.[0];
+  assert.ok(details, 'grown-up view disclosure rendered on the dashboard');
+  assert.doesNotMatch(details, /\bopen\b/, 'grown-up view disclosure must NOT be open by default');
+});
+
+test('U7: default dashboard HTML carries no Grown-up intro copy outside the analytics phase', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  const html = harness.render();
+
+  // Narrow to the dashboard panel so we do not sweep the sibling `<details>`
+  // disclosure which legitimately holds adult copy ready for opening.
+  const dashboardMatch = html.match(/<section class="grammar-dashboard"[\s\S]*?<\/section><details class="grammar-grown-up-view">/);
+  assert.ok(dashboardMatch, 'dashboard section rendered');
+  const dashboardHtml = dashboardMatch[0];
+  assert.doesNotMatch(dashboardHtml, /Nothing here is a grade/i);
+  assert.doesNotMatch(dashboardHtml, /Draft for review/i);
+});
+
+test('U7: summary HTML does not render Grown-up intro copy or Draft for review framing', () => {
+  const { harness } = u5RunRegularToSummary();
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'summary');
+  const html = u5ScopeToSummaryHtml(harness.render());
+  assert.doesNotMatch(html, /Nothing here is a grade/i);
+  assert.doesNotMatch(html, /Draft for review/i);
+  // The button to open the analytics scene is still present on the summary.
+  assert.match(html, /data-action="grammar-open-analytics"/);
+});
+
+test('U7: integration — summary Grown-up view -> analytics -> back leaves summary intact', () => {
+  const { harness } = u5RunRegularToSummary();
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'summary');
+  const summaryBefore = harness.store.getState().subjectUi.grammar.summary;
+
+  harness.dispatch('grammar-open-analytics');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'analytics');
+  // The adult scene has fully replaced the summary render.
+  const analyticsHtml = harness.render();
+  assert.match(analyticsHtml, /class="grammar-surface grammar-surface--analytics"/);
+  assert.match(analyticsHtml, /id="grammar-analytics-title"[^>]*>Grown-up view</);
+
+  harness.dispatch('grammar-close-analytics');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'summary');
+  // Summary payload is preserved end-to-end — the round cards are still
+  // rendered when the learner returns.
+  assert.deepEqual(
+    harness.store.getState().subjectUi.grammar.summary,
+    summaryBefore,
+    'summary payload survives the analytics round-trip',
   );
 });
