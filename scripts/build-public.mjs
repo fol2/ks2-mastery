@@ -45,34 +45,44 @@ const filterPublicFiles = source => {
   return true;
 };
 
-await rm(tmpDir, { recursive: true, force: true });
-await mkdir(tmpDir, { recursive: true });
+// Wrap the public-mirror pipeline in try/catch + process.exit(1) for the
+// same reason as build-bundles.mjs: under certain Windows + execFileSync
+// stdio-ignore conditions, an unhandled async rejection from a chained
+// step can settle after the entry's sync body finishes and let Node exit 0,
+// hiding the failure from CI. The explicit guard keeps failures loud.
+try {
+  await rm(tmpDir, { recursive: true, force: true });
+  await mkdir(tmpDir, { recursive: true });
 
-for (const entry of entries) {
-  await cp(path.join(rootDir, entry), path.join(tmpDir, entry), {
-    recursive: true,
-    force: true,
-    filter: filterPublicFiles,
-  });
+  for (const entry of entries) {
+    await cp(path.join(rootDir, entry), path.join(tmpDir, entry), {
+      recursive: true,
+      force: true,
+      filter: filterPublicFiles,
+    });
+  }
+
+  await mkdir(path.join(tmpDir, 'src', 'bundles'), { recursive: true });
+  await cp(
+    path.join(rootDir, 'src', 'bundles', 'app.bundle.js'),
+    path.join(tmpDir, 'src', 'bundles', 'app.bundle.js'),
+    { force: true },
+  );
+
+  // Render-effect CSS lives next to its effect modules so visual + behaviour
+  // stay co-located. Mirror it into the public styles directory so the
+  // existing single-link pattern in index.html continues to work without a
+  // new module-aware loader.
+  await cp(
+    path.join(rootDir, 'src', 'platform', 'game', 'render', 'effects', 'effects.css'),
+    path.join(tmpDir, 'styles', 'effects.css'),
+    { force: true },
+  );
+
+  await rm(outputDir, { recursive: true, force: true });
+  await cp(tmpDir, outputDir, { recursive: true, force: true });
+  await rm(tmpDir, { recursive: true, force: true });
+} catch (error) {
+  console.error(error);
+  process.exit(1);
 }
-
-await mkdir(path.join(tmpDir, 'src', 'bundles'), { recursive: true });
-await cp(
-  path.join(rootDir, 'src', 'bundles', 'app.bundle.js'),
-  path.join(tmpDir, 'src', 'bundles', 'app.bundle.js'),
-  { force: true },
-);
-
-// Render-effect CSS lives next to its effect modules so visual + behaviour
-// stay co-located. Mirror it into the public styles directory so the
-// existing single-link pattern in index.html continues to work without a
-// new module-aware loader.
-await cp(
-  path.join(rootDir, 'src', 'platform', 'game', 'render', 'effects', 'effects.css'),
-  path.join(tmpDir, 'styles', 'effects.css'),
-  { force: true },
-);
-
-await rm(outputDir, { recursive: true, force: true });
-await cp(tmpDir, outputDir, { recursive: true, force: true });
-await rm(tmpDir, { recursive: true, force: true });
