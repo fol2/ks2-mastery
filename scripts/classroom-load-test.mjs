@@ -735,8 +735,17 @@ export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
     timings: { startedAt, finishedAt },
   });
 
+  // Record the config source path alongside tier metadata so verify can
+  // confirm the thresholds that backed this run were PR-reviewed.
+  // Path is recorded exactly as the operator supplied it; verify normalises
+  // to a repo-relative form before checking it is under
+  // reports/capacity/configs/.
   const evidenceTier = config.tier
-    ? { tier: config.tier, minEvidenceSchemaVersion: config.minEvidenceSchemaVersion }
+    ? {
+      tier: config.tier,
+      minEvidenceSchemaVersion: config.minEvidenceSchemaVersion,
+      configPath: options.configPath || null,
+    }
     : null;
   const finalReport = {
     ...report,

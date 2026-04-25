@@ -2,9 +2,17 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { resolve } from 'node:path';
+import { relative, resolve } from 'node:path';
+
+import { EVIDENCE_SCHEMA_VERSION } from './lib/capacity-evidence.mjs';
 
 const CAPACITY_DOC_PATH = 'docs/operations/capacity.md';
+
+// Tier configs live under this directory and are PR-reviewed. Evidence that
+// claims a tier must cite a config file committed here, not an ad-hoc
+// /tmp/loose.json. Without this check, an operator could supply relaxed
+// thresholds under deadline pressure and have the evidence cross-check pass.
+const TIER_CONFIG_DIR = 'reports/capacity/configs';
 
 const DECISION_TIERS = new Set([
   'fail',
@@ -102,6 +110,48 @@ function extractEvidencePath(evidenceCell) {
 }
 
 /**
+ * Cross-check the numeric cells in a capacity.md row against the evidence
+ * payload. An operator who writes a tier row with nice-looking metrics but
+ * points at an unrelated evidence file will trip this check.
+ *
+ * Cells compared: learners, bootstrapBurst, rounds (from reportMeta); 5xx
+ * count (from summary.signals.server5xx).
+ *
+ * Cells NOT compared here (left to the evidence-envelope shape check): P95
+ * latencies and byte counts — these vary between runs and would produce
+ * flaky false positives if the cell value must match to the millisecond.
+ */
+function checkNumericDrift(row, payload) {
+  const messages = [];
+  const meta = payload.reportMeta || {};
+  const summary = payload.summary || {};
+  const signals = summary.signals || {};
+
+  const compare = (rowValue, evidenceValue, label) => {
+    if (!rowValue || rowValue === '—') return;
+    const rowNum = Number(rowValue);
+    if (!Number.isFinite(rowNum)) return;
+    if (evidenceValue === null || evidenceValue === undefined) {
+      messages.push(`evidence missing ${label} while row declares ${rowNum}.`);
+      return;
+    }
+    const evidenceNum = Number(evidenceValue);
+    if (!Number.isFinite(evidenceNum) || evidenceNum !== rowNum) {
+      messages.push(
+        `${label} mismatch: row=${rowNum} evidence=${evidenceValue}.`,
+      );
+    }
+  };
+
+  compare(row.learners, meta.learners, 'learners');
+  compare(row.burst, meta.bootstrapBurst, 'bootstrapBurst');
+  compare(row.rounds, meta.rounds, 'rounds');
+  compare(row.count5xx, signals.server5xx || 0, 'server5xx');
+
+  return messages;
+}
+
+/**
  * Verify a single evidence row against its persisted JSON file.
  * Returns `{ ok, messages: string[] }` where `ok: false` means the row fails
  * the cross-check.
@@ -173,11 +223,15 @@ export function verifyEvidenceRow(row) {
   const evidenceCommitRaw = String(payload.reportMeta?.commit || '');
   const rowCommitRaw = String(row.commit || '').trim();
   if (rowCommitRaw && rowCommitRaw !== '—') {
-    // Strict prefix: row commit must be a prefix of the evidence commit (the
-    // evidence carries the full SHA; operators typically write the first 7
-    // chars). Equality is enforced up to the shorter length; wildcard/suffix
-    // matching is rejected.
-    if (!evidenceCommitRaw.startsWith(rowCommitRaw)) {
+    // Row commit must be a prefix of the evidence commit (the evidence carries
+    // the full SHA; operators typically write the first 7 chars). Very short
+    // prefixes (<7) are rejected separately because they'd accept too many
+    // unrelated commits.
+    if (rowCommitRaw.length < 7) {
+      messages.push(
+        `row commit "${rowCommitRaw}" is too short; use at least 7 hex chars.`,
+      );
+    } else if (!evidenceCommitRaw.startsWith(rowCommitRaw)) {
       messages.push(`commit mismatch: row=${rowCommitRaw} evidence=${evidenceCommitRaw || 'unknown'}`);
     }
   }
@@ -187,6 +241,17 @@ export function verifyEvidenceRow(row) {
     messages.push(
       `evidenceSchemaVersion is missing or invalid (found: ${JSON.stringify(payload.reportMeta?.evidenceSchemaVersion)}). `
       + 'Evidence must carry a numeric schema version (U1 = 1, U3+ = 2).',
+    );
+  }
+  // Reject a future-schema-version value we don't know how to verify; this
+  // prevents an operator from hand-editing `evidenceSchemaVersion: 2` into a
+  // U1 run to unlock classroom-tier claims before U3 actually ships the
+  // telemetry. The compiled-in `EVIDENCE_SCHEMA_VERSION` constant is the
+  // authoritative ceiling.
+  if (Number.isFinite(schemaVersion) && schemaVersion > EVIDENCE_SCHEMA_VERSION) {
+    messages.push(
+      `evidenceSchemaVersion ${schemaVersion} is higher than the current tool version (${EVIDENCE_SCHEMA_VERSION}). `
+      + 'Upgrade the verify script to the deploy that ships that schema, or regenerate the evidence.',
     );
   }
   if (TIERS_ABOVE_SMALL_PILOT.has(row.decision) && schemaVersion < 2) {
@@ -199,8 +264,7 @@ export function verifyEvidenceRow(row) {
   // Cross-check decision against tier metadata when present. Every
   // certification-tier run (learners >= 20) MUST be invoked with
   // `--config reports/capacity/configs/<tier>.json`, which writes
-  // `payload.tier.tier` into the evidence file. Reject rows claiming a tier
-  // the evidence does not declare.
+  // `payload.tier.tier` into the evidence file.
   if (TIERS_ABOVE_SMALL_PILOT.has(row.decision)) {
     const evidenceTier = payload.tier?.tier;
     if (!evidenceTier) {
@@ -213,6 +277,39 @@ export function verifyEvidenceRow(row) {
         `tier mismatch: row claims "${row.decision}" but evidence tier.tier is "${evidenceTier}".`,
       );
     }
+    // Guard against a loose `--config` path: evidence must cite a tier config
+    // path under reports/capacity/configs/ so the thresholds that backed the
+    // claim are PR-reviewed, not ad-hoc. A missing tier.configPath field
+    // indicates a hand-edited evidence file or an older classroom-load-test
+    // that did not record provenance.
+    const configPath = payload.tier?.configPath;
+    if (!configPath) {
+      messages.push(
+        `tier "${row.decision}" requires evidence to record tier.configPath. `
+        + 'Re-run with --config reports/capacity/configs/<tier>.json.',
+      );
+    } else {
+      const normalisedConfigPath = relative(process.cwd(), resolve(process.cwd(), configPath)).replaceAll('\\', '/');
+      if (!normalisedConfigPath.startsWith(`${TIER_CONFIG_DIR}/`)) {
+        messages.push(
+          `tier config path "${configPath}" is outside ${TIER_CONFIG_DIR}/. `
+          + 'Certification-tier runs must cite a PR-reviewed config.',
+        );
+      } else if (!existsSync(resolve(process.cwd(), configPath))) {
+        messages.push(
+          `tier config file referenced by evidence does not exist at ${configPath}.`,
+        );
+      }
+    }
+  }
+
+  // Cross-check numeric cells in the capacity.md row against evidence
+  // summary. This makes it harder for a hand-edited row to claim a
+  // tier-relevant metric (learners, burst, P95) that the backing evidence
+  // never observed.
+  const numericDrift = checkNumericDrift(row, payload);
+  if (numericDrift.length) {
+    messages.push(...numericDrift);
   }
 
   // Reject rows where the evidence reports any failed thresholds. A table
