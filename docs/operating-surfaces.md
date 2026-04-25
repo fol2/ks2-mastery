@@ -140,12 +140,9 @@ Monster visual + effect config management is admin-only:
 
 - `admin` can edit the browser-local draft buffer, save the shared cloud draft, publish, and restore a retained version into draft
 - `ops` can inspect previews, validation state, changed assets, and blockers, but cannot mutate the config
-- the same panel covers visual settings, the merged effect catalog, per-monster effect bindings, and per-monster celebration tunables; one save/publish/restore covers both sub-documents atomically
-- publish is blocked unless every manifest asset and every renderer context has complete reviewed values, every effect catalog entry is reviewed and template-conformant, and every asset carries reviewed effect bindings + celebration tunables
-- restore changes draft only; it does not change the live published version until a later publish
 - the latest 20 published versions are retained for rollback-to-draft
 
-See `docs/monster-visual-config.md` for authoring workflow, bundled-fallback coverage, and the `npm run smoke:production:effect` post-deploy probe.
+See `docs/monster-visual-config.md` for the authoritative publish-blocker list, authoring workflow, bundled-fallback coverage, and the `npm run smoke:production:effect` post-deploy probe.
 
 ## Admin ops console P1 extensions
 

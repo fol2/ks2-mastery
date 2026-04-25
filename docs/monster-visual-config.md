@@ -1,5 +1,10 @@
 # Monster visual + effect config centre
 
+> This doc was extended in place to cover the merged effect catalog and
+> per-monster effect bindings + celebration tunables. The filename is
+> retained so existing references in `docs/operating-surfaces.md`, plans,
+> and code remain valid.
+
 The monster visual + effect config centre is the admin workflow for changing monster facing, image source context, offsets, scale, crop, shadow, and review state — and, since PR #157, the merged effect catalog, per-monster effect bindings, and per-monster celebration tunables — without editing renderer or effect-module code.
 
 The centre publishes a single combined document. One save, one publish, one restore covers both visual and effect data.
@@ -35,40 +40,21 @@ Saving writes only the shared draft. It does not change learner-visible renderin
 
 Publishing copies the current draft into the published config, increments the published version, writes a retained version row, and prunes history to the latest 20 versions. Visual and effect sub-documents publish atomically — there is no half-published state.
 
-Restoring copies a retained version back into the draft only. It deliberately leaves the live published version unchanged until an admin publishes that restored draft. See **Rollback via restore** below.
+Restoring copies a retained version back into the draft only. The live published config does not change until that draft is published. The combined visual + effect blob restores atomically.
 
 All mutations require a request id and an expected draft revision. Concurrent stale saves are rejected with `409 stale_write`; the browser keeps the local draft buffer so the operator can refresh or reapply the change deliberately.
 
 ## Review gate
 
-Publishing is Worker-enforced. A draft must include:
+Publishing is Worker-enforced. A draft must include schema version `1`, the current generated manifest hash, every asset from `assets/monsters`, every baseline field, every renderer-context field, and reviewed state for every asset/context.
 
-- schema version `1`
-- the current generated manifest hash
-- every asset from `assets/monsters`
-- every baseline field
-- every field for `meadow`, `codexCard`, `codexFeature`, `lightbox`, `celebrationOverlay`, and `toastPortrait`
-- reviewed state for every asset/context
-
-For the effect sub-document, publish is additionally blocked unless:
-
-- every catalog entry is reviewed and conforms to its template's param schema
-- every asset has both an effect-bindings row and a celebration-tunables row
-- every binding entry references a known kind (catalog or bundled fallback) and is reviewed
-- every celebration tunable (`caught`, `evolve`, `mega`) is reviewed and uses `modifierClass` from the closed allowlist (`''`, `'egg-crack'`)
+Publish is blocked until every catalog entry, binding row, and celebration tunable is reviewed; the panel surfaces blockers inline.
 
 Editing baseline values resets review state for all contexts on that asset. Editing a context resets that context only. Mark it reviewed again after checking the Admin preview.
 
 ## Authoring a new catalog entry
 
-1. **Pick a template**. The catalog is constrained to seven templates: `motion`, `glow`, `sparkle`, `aura`, `particles-burst`, `shine-streak`, `pulse-halo`. Each owns its render body and CSS classes — admin cannot author new templates.
-2. **Set kind, lifecycle, layer, surfaces, reducedMotion**. `kind` is the unique identifier; `lifecycle ∈ {persistent, transient, continuous}`, `layer ∈ {base, overlay}`, `reducedMotion ∈ {omit, simplify, asis}`.
-3. **Fill template params**. The panel renders one field per param defined in `effect-templates/param-schemas.js` — number, string, enum, or boolean. Defaults must satisfy `min`/`max` and enum value lists.
-4. **Optional zIndex and exclusiveGroup**. `zIndex` orders overlay stacking. `exclusiveGroup` (e.g. `'rarity'`) ensures only one entry from the group binds to an asset at a time.
-5. **Review, then save the draft**. An entry is unreviewed by default; mark it reviewed after the panel preview confirms the look.
-6. **Publish** the combined draft when all visual + effect blockers are clear.
-
-New visual primitives still require a code change to add a template. The closed allowlist is the XSS boundary.
+Open the panel, choose a template, fill defaults, review, and save the draft. Publish when all visual + effect blockers are clear. The catalog is constrained to seven templates (`motion`, `glow`, `sparkle`, `aura`, `particles-burst`, `shine-streak`, `pulse-halo`) — adding a new template is a code change, never an admin input. The closed allowlist is the XSS boundary.
 
 ## Per-monster bindings
 
@@ -89,10 +75,6 @@ For each asset and each celebration kind in `{caught, evolve, mega}` the panel s
 
 Each kind tracks its own review state independently. Editing one tunable does not reset review on the others — operators can land `caught` changes without re-reviewing `mega`.
 
-## Rollback via restore
-
-Restoring is the safe rollback path for a botched publish. It copies a retained version into the draft only; the live published config does not change until that draft is published. The combined visual + effect blob restores atomically. See **Draft, publish, and restore** above for the storage shape.
-
 ## Bundled fallback coverage
 
 Runtime resolution is forgiving:
@@ -102,13 +84,11 @@ Runtime resolution is forgiving:
 - newly added assets use bundled fallback until a reviewed draft matching the new manifest is published
 - the eight code-registered effects (`egg-breathe`, `monster-motion-float`, `shiny`, `mega-aura`, `rare-glow`, `caught`, `evolve`, `mega`) always re-register first at boot so a broken catalog can never fully blank monster rendering
 
-Publish validation is stricter than render validation. That split keeps production visuals resilient while preventing partial or unreviewed config from becoming the next published version. Strict publish blocks unreviewed entries; bundled defaults stay available regardless.
+Publish validation is stricter than render validation. That split keeps production visuals resilient while preventing partial or unreviewed config from becoming the next published version.
 
 ## Concurrent admin tabs
 
-Each admin tab generates a `tabNonce` on mount, scoped into the autosave key alongside `accountId`, `manifestHash`, and `draftRevision`. Two tabs editing the same draft do not stomp each other's local autosave entries.
-
-`findStaleAutosave()` scans neighbouring keys at the same `manifestHash` + `draftRevision` and surfaces any other tab's autosave as a recovery banner so the operator can deliberately reapply the change rather than losing it silently.
+Two open tabs do not overwrite each other; if another tab has unfinished work, a recovery banner appears on mount.
 
 ## Rollout
 
@@ -120,7 +100,7 @@ Production smoke after deploy:
 npm run smoke:production:effect
 ```
 
-The probe hits the same `/api/bootstrap` payload the browser consumes (`monsterVisualConfig.config.effect`), asserts the merged shape parses, asserts the catalog includes all eight bundled kinds, and asserts every covered asset has bindings or celebration tunables defined. Retries with exponential backoff on 5xx. CLI flags: `--env=prod|preview|local`, `--url=<base>`, `--verbose`.
+The probe hits the same `/api/bootstrap` payload the browser consumes (`monsterVisualConfig.config.effect`), asserts the merged shape parses, asserts the catalog includes all eight bundled kinds, and asserts every covered asset has bindings or celebration tunables defined. CLI flags: `--origin <url>`, `--timeout-ms <ms>`, `--help`. Exit codes: `0` ok, `1` validation, `2` usage, `3` transport.
 
 If the smoke probe fails, restore the previous retained version into draft and re-publish.
 
