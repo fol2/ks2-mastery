@@ -1,8 +1,16 @@
 import React from 'react';
+import { MonsterRender } from '../../platform/game/render/MonsterRender.jsx';
+// Side-effect imports: each effect module calls registerEffect() at the
+// top level. We import them here so any consumer of <CodexCreatureVisual>
+// gets the registry populated without depending on data.js loading first.
+import '../../platform/game/render/effects/egg-breathe.js';
+import '../../platform/game/render/effects/monster-motion-float.js';
 import { useMonsterVisualConfig } from '../../platform/game/MonsterVisualConfigContext.jsx';
 import { resolveMonsterVisual } from '../../platform/game/monster-visual-config.js';
 import { monsterVisualFrameStyle, monsterVisualMotionStyle } from '../../platform/game/monster-visual-style.js';
-import { eggBreatheStyle, monsterMotionStyle } from './data.js';
+
+const EGG_EFFECTS = Object.freeze([{ kind: 'egg-breathe' }]);
+const MONSTER_EFFECTS = Object.freeze([{ kind: 'monster-motion-float' }]);
 
 export function CodexCreatureTrigger({ entry, sizes, context = 'card', onPreview }) {
   if (!entry.caught) {
@@ -23,6 +31,7 @@ export function CodexCreatureTrigger({ entry, sizes, context = 'card', onPreview
 
 export function CodexCreatureVisual({ entry, sizes, context = 'card' }) {
   const monsterVisualConfig = useMonsterVisualConfig();
+
   if (entry.displayState === 'fresh') {
     return (
       <span className="codex-unknown" role="img" aria-label={entry.imageAlt}>
@@ -30,6 +39,7 @@ export function CodexCreatureVisual({ entry, sizes, context = 'card' }) {
       </span>
     );
   }
+
   const visual = resolveMonsterVisual({
     monsterId: entry.id,
     branch: entry.branch,
@@ -39,21 +49,33 @@ export function CodexCreatureVisual({ entry, sizes, context = 'card' }) {
     preferredSize: preferredMonsterImageSize(context),
   });
 
+  // The resolved visual config picks a higher-resolution / variant-aware
+  // asset than the entry default; fold it back into the monster object so
+  // <BaseSprite> picks up src/srcSet without us forking its rendering.
+  const monsterForRender = visual.src || visual.srcSet
+    ? { ...entry, img: visual.src || entry.img, srcSet: visual.srcSet || entry.srcSet }
+    : entry;
+
   return (
     <span
       className="codex-creature-visual"
       style={monsterVisualFrameStyle(visual)}
     >
-      <img
-        className={`codex-creature-image is-${entry.displayState}`}
-        src={visual.src || entry.img}
-        srcSet={visual.srcSet || entry.srcSet}
+      <MonsterRender
+        monster={monsterForRender}
+        context={context}
+        effects={effectsForState(entry.displayState)}
         sizes={sizes}
-        style={mergedCreatureMotionStyle(entry, context, visual)}
-        alt={entry.imageAlt}
+        extraStyle={monsterVisualMotionStyle(visual)}
       />
     </span>
   );
+}
+
+function effectsForState(displayState) {
+  if (displayState === 'egg') return EGG_EFFECTS;
+  if (displayState === 'monster') return MONSTER_EFFECTS;
+  return [];
 }
 
 function codexVisualContext(context) {
@@ -65,21 +87,4 @@ function codexVisualContext(context) {
 function preferredMonsterImageSize(context) {
   if (context === 'card' || context === 'feature' || context === 'preview') return 1280;
   return 640;
-}
-
-function creatureMotionStyle(entry, context) {
-  if (entry.displayState === 'egg') return eggBreatheStyle(entry, context);
-  if (entry.displayState === 'monster') return monsterMotionStyle(entry, context);
-  return undefined;
-}
-
-function mergedCreatureMotionStyle(entry, context, visual) {
-  return {
-    ...(creatureMotionStyle(entry, context) || {}),
-    ...creatureContextMotionStyle(visual),
-  };
-}
-
-function creatureContextMotionStyle(visual) {
-  return monsterVisualMotionStyle(visual);
 }

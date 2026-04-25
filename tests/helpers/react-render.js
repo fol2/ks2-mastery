@@ -100,6 +100,128 @@ export function renderSharedSurfaceFixture() {
   `);
 }
 
+export function renderMonsterRenderFixture({
+  monster,
+  context = 'card',
+  effects = [],
+  reducedMotion = false,
+  sizes,
+  registrations = '',
+  effectModules = [],
+} = {}) {
+  // `registrations` is a JS source snippet that runs before render so
+  // tests can register inline test-only effects (with custom render /
+  // applyTransform) without us having to invent a serialisation format
+  // for functions. `effectModules` is an array of { path, exports[] }
+  // entries — each named export from `path` is rebound and passed to
+  // registerEffect() after the registry reset.
+  const moduleImports = effectModules
+    .map((mod, idx) => `import * as __mod${idx} from ${JSON.stringify(absoluteSpecifier(mod.path))};`)
+    .join('\n    ');
+  const moduleRegistrations = effectModules
+    .map((mod, idx) => mod.exports
+      .map((name) => `registerEffect(__mod${idx}[${JSON.stringify(name)}]);`)
+      .join('\n    '))
+    .join('\n    ');
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { MonsterRender } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/MonsterRender.jsx'))};
+    import { defineEffect } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/define-effect.js'))};
+    import { registerEffect, resetRegistry } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/registry.js'))};
+    import { resetWarnOnce, setDevMode, __setWarnSink } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/composition.js'))};
+    ${moduleImports}
+
+    resetRegistry();
+    ${moduleRegistrations}
+    resetWarnOnce();
+    setDevMode(true);
+    const __warnings = [];
+    __setWarnSink((key, message) => { __warnings.push({ key, message }); });
+
+    ${registrations}
+
+    const monster = ${JSON.stringify(monster)};
+    const effects = ${JSON.stringify(effects)};
+    const sizes = ${JSON.stringify(sizes != null ? sizes : null)};
+    const reducedMotion = ${reducedMotion ? 'true' : 'false'};
+    const html = renderToStaticMarkup(
+      <MonsterRender
+        monster={monster}
+        context=${JSON.stringify(context)}
+        effects={effects}
+        reducedMotion={reducedMotion}
+        sizes={sizes}
+      />
+    );
+    // Emit a structured payload so tests can assert on dev-warns alongside
+    // the rendered HTML in a single execFile round-trip.
+    process.stdout.write(JSON.stringify({ html, warnings: __warnings }));
+  `);
+}
+
+export function renderCelebrationLayerFixture({
+  registrations = '',
+  setup = '',
+  context = 'lesson',
+} = {}) {
+  // Run the full integration in-process so we can drive the store via the
+  // existing API and assert on store state, ack storage, and rendered HTML
+  // in one round-trip. `setup` is a JS source snippet executed after the
+  // store is built; it can call playCelebration / store.pushMonsterCelebrations
+  // / etc. The result is a JSON payload with everything tests need.
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { CelebrationLayer } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/CelebrationLayer.jsx'))};
+    import { playCelebration } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/play-celebration.js'))};
+    import { defineEffect } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/define-effect.js'))};
+    import { registerEffect, resetRegistry } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/registry.js'))};
+    import { resetWarnOnce, setDevMode, __setWarnSink } from ${JSON.stringify(absoluteSpecifier('src/platform/game/render/composition.js'))};
+    import { createStore } from ${JSON.stringify(absoluteSpecifier('src/platform/core/store.js'))};
+    import { createLocalPlatformRepositories } from ${JSON.stringify(absoluteSpecifier('src/platform/core/repositories/index.js'))};
+    import { SUBJECTS } from ${JSON.stringify(absoluteSpecifier('src/platform/core/subject-registry.js'))};
+    import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
+    import { acknowledgedMonsterCelebrationIds } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monster-celebration-acks.js'))};
+
+    installMemoryStorage();
+    resetRegistry();
+    resetWarnOnce();
+    setDevMode(true);
+    const __warnings = [];
+    __setWarnSink((key, message) => { __warnings.push({ key, message }); });
+
+    const __repositories = createLocalPlatformRepositories({ storage: globalThis.localStorage });
+    const store = createStore(SUBJECTS, { repositories: __repositories });
+
+    ${registrations}
+
+    ${setup}
+
+    function snapshot() {
+      const state = store.getState();
+      const learnerId = state.learners.selectedId;
+      return {
+        queue: state.monsterCelebrations.queue,
+        pending: state.monsterCelebrations.pending,
+        learnerId,
+        ackedIds: [...acknowledgedMonsterCelebrationIds(learnerId)],
+      };
+    }
+
+    const __before = snapshot();
+    const html = renderToStaticMarkup(<CelebrationLayer store={store} context=${JSON.stringify(context)} />);
+    const __after = snapshot();
+
+    process.stdout.write(JSON.stringify({
+      html,
+      warnings: __warnings,
+      before: __before,
+      after: __after,
+    }));
+  `);
+}
+
 export function renderMonsterVisualRendererFixture() {
   return renderFixture(`
     import React from 'react';
