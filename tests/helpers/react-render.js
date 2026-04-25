@@ -693,18 +693,57 @@ export function renderSubjectRouteFixture({ subject = 'placeholder' } = {}) {
   `);
 }
 
-export function renderSpellingSurfaceFixture({ phase = 'setup', pendingCommand = '' } = {}) {
+export function renderSpellingSurfaceFixture({
+  phase = 'setup',
+  pendingCommand = '',
+  // postMega: {} → force allWordsMega via seeded progress + optional guardian
+  // records. Omit to render the legacy setup dashboard.
+  postMega = null,
+} = {}) {
   return renderFixture(`
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
     import { SubjectRoute } from ${JSON.stringify(absoluteSpecifier('src/surfaces/subject/SubjectRoute.jsx'))};
     import { createLocalAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-local-app-controller.js'))};
     import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
+    import { WORDS } from ${JSON.stringify(absoluteSpecifier('src/subjects/spelling/data/word-data.js'))};
 
     installMemoryStorage();
     const controller = createLocalAppController();
     const selectedPhase = ${JSON.stringify(phase)};
     const learnerId = controller.store.getState().learners.selectedId;
+    const postMega = ${JSON.stringify(postMega)};
+    if (postMega) {
+      // Seed all core words as stage-4 secure, then optionally drop a guardian
+      // record map on top. The spelling persistence layer proxies the
+      // ks2-spell-progress-/ks2-spell-guardian- keys through the subject-state
+      // repository, so we can write via its storage proxy (or the
+      // repositories.subjectStates.writeData helper) and be picked up on the
+      // next getStats / getPostMasteryState call.
+      const nowDay = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+      const progress = {};
+      for (const word of WORDS) {
+        if ((word.spellingPool === 'extra' ? 'extra' : 'core') !== 'core') continue;
+        progress[word.slug] = {
+          stage: 4,
+          attempts: 6,
+          correct: 5,
+          wrong: 1,
+          dueDay: nowDay + 60,
+          lastDay: nowDay - 7,
+          lastResult: true,
+        };
+      }
+      const guardian = postMega.guardian && typeof postMega.guardian === 'object'
+        ? postMega.guardian
+        : {};
+      const existing = controller.repositories.subjectStates.read(learnerId, 'spelling').data || {};
+      controller.repositories.subjectStates.writeData(learnerId, 'spelling', {
+        ...existing,
+        progress,
+        guardian,
+      });
+    }
     controller.dispatch('open-subject', { subjectId: 'spelling' });
     if (selectedPhase === 'session' || selectedPhase === 'summary') {
       controller.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });

@@ -170,7 +170,7 @@ These were kept on purpose:
 - SATs test mode stays statutory core-only, even if the learner has selected Extra elsewhere
 - skipping only works in learning question phase and pushes the word later in the round
 - marked cards auto-advance after the preserved short delay instead of needing an extra manual confirmation step
-- the preserved shortcut loop remains available inside active Spelling practice (`Esc`, `Shift+Esc`, `Alt+1/2/3`, `Alt+S`, `Alt+K`) while still avoiding cross-subject collisions in the wider shell
+- the preserved shortcut loop remains available inside active Spelling practice (`Esc`, `Shift+Esc`, `Alt+1/2/3`, `Alt+S`, `Alt+K`) while still avoiding cross-subject collisions in the wider shell; `Alt+4` is an additive Guardian Mission quick-start that is gated at the module layer on `allWordsMega` (silent no-op when the learner has not graduated)
 - dictation audio honours the learner's selected profile provider: OpenAI, Gemini, or local browser speech
 - stage progression and due-day scheduling still come from the preserved legacy engine
 

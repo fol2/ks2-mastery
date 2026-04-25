@@ -26,6 +26,47 @@ export const MODE_CARDS = Object.freeze([
     desc: 'One-shot dictation, no retries.',
   },
 ]);
+
+/* Post-Mega dashboard cards. Guardian Mission is the only active card in MVP;
+ * Boss Dictation / Word Detective / Story Challenge are preview placeholders
+ * that set the P2+ roadmap without promising dates. Icons stay null because
+ * the Guardian / future-mode art has not been drawn yet — the component
+ * renders a typographic glyph placeholder in its place so we never ship an
+ * off-brand generic icon. */
+export const POST_MEGA_MODE_CARDS = Object.freeze([
+  {
+    id: 'guardian',
+    iconSrc: null,
+    glyph: 'G',
+    title: 'Guardian Mission',
+    desc: 'Protect the Word Vault. A short check on words you already own.',
+    disabled: false,
+  },
+  {
+    id: 'boss-dictation',
+    iconSrc: null,
+    glyph: 'B',
+    title: 'Boss Dictation',
+    desc: 'Coming soon — one-shot dictation challenges against a bigger boss.',
+    disabled: true,
+  },
+  {
+    id: 'word-detective',
+    iconSrc: null,
+    glyph: 'D',
+    title: 'Word Detective',
+    desc: 'Coming soon — spot what went wrong in tricky misspellings.',
+    disabled: true,
+  },
+  {
+    id: 'story-challenge',
+    iconSrc: null,
+    glyph: 'S',
+    title: 'Story Challenge',
+    desc: 'Coming soon — weave secure words into a story mission.',
+    disabled: true,
+  },
+]);
 export const ROUND_LENGTH_OPTIONS = Object.freeze(['10', '20', '40']);
 export const YEAR_FILTER_OPTIONS = Object.freeze([
   { value: 'core', label: 'Core' },
@@ -410,7 +451,39 @@ export function summaryModeLabel(mode) {
   if (mode === 'trouble') return 'Trouble Drill';
   if (mode === 'test') return 'SATs Test';
   if (mode === 'single') return 'Single-word Drill';
+  if (mode === 'guardian') return 'Guardian Mission';
   return 'Smart Review';
+}
+
+/**
+ * Human-readable microcopy for a single guardian record. Used on the
+ * post-Mega dashboard to explain why a word is in the Vault today.
+ *
+ * Rules:
+ *  - If the record is missing, report "Not guarded yet".
+ *  - If the record is wobbling, lead with "Wobbling" regardless of due day.
+ *  - Otherwise render the next-check delta (today / in 1 day / in N days).
+ *
+ * `todayDay` should be an integer day (Math.floor(ts / DAY_MS)), matching
+ * the convention used by the rest of the spelling read-model.
+ */
+export function guardianLabel(record, todayDay) {
+  if (!record || typeof record !== 'object' || Array.isArray(record)) {
+    return 'Not guarded yet';
+  }
+  const today = Number.isFinite(Number(todayDay)) ? Math.floor(Number(todayDay)) : 0;
+  const nextDue = Number.isFinite(Number(record.nextDueDay)) ? Math.floor(Number(record.nextDueDay)) : today;
+  const delta = nextDue - today;
+
+  if (record.wobbling === true) {
+    if (delta <= 0) return 'Wobbling — due today';
+    if (delta === 1) return 'Wobbling — due in 1 day';
+    return `Wobbling — due in ${delta} days`;
+  }
+
+  if (delta <= 0) return 'Due today';
+  if (delta === 1) return 'Next check in 1 day';
+  return `Next check in ${delta} days`;
 }
 
 export function summaryHeadline(summary) {
@@ -488,12 +561,27 @@ export function buildSpellingContext({ appState, service, repositories, subject 
   };
   const needsAnalytics = ui.phase === 'dashboard' || ui.phase === 'word-bank';
   const analytics = needsAnalytics ? service.getAnalyticsSnapshot(learner.id) : null;
+  // Post-mastery aggregates are only needed for the dashboard branch. On
+  // other phases we return a conservative default so downstream code never
+  // has to null-check the field. The service contract guarantees this shape
+  // after U5.
+  const postMastery = ui.phase === 'dashboard' && typeof service.getPostMasteryState === 'function'
+    ? service.getPostMasteryState(learner.id)
+    : {
+        allWordsMega: false,
+        guardianDueCount: 0,
+        wobblingCount: 0,
+        nextGuardianDueDay: null,
+        todayDay: Math.floor(Date.now() / DAY_MS),
+        guardianMap: {},
+      };
   return {
     learner,
     ui,
     accent: accentFor(subject),
     prefs: service.getPrefs(learner.id),
     analytics,
+    postMastery,
     codex: ui.phase === 'dashboard' && analytics
       ? monsterSummaryFromSpellingAnalytics(analytics, {
           learnerId: learner.id,

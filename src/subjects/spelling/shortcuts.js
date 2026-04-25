@@ -50,6 +50,13 @@ export function resolveSpellingShortcut(event, appState) {
   if (key === '3') {
     return { action: 'spelling-shortcut-start', data: { mode: 'test' }, preventDefault: true };
   }
+  // Alt+4 — Guardian Mission quick-start. The keybinding is additive; the
+  // allWordsMega gate lives in `module.js::spelling-shortcut-start` so a
+  // learner who hasn't graduated yet gets a silent no-op instead of a stale
+  // Smart Review round. Alt+1/2/3 mappings are preserved verbatim.
+  if (key === '4') {
+    return { action: 'spelling-shortcut-start', data: { mode: 'guardian' }, preventDefault: true };
+  }
   if (key === 's') {
     if (spellingUi?.phase === 'session' && spellingUi.session?.type !== 'test' && spellingUi.session?.phase === 'question' && !spellingUi.awaitingAdvance) {
       return { action: 'spelling-skip', preventDefault: true };
