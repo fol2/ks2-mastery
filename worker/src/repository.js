@@ -2353,6 +2353,7 @@ async function updateOpsErrorEventStatus(db, {
   actorAccountId,
   eventId,
   status: nextStatus,
+  expectedPreviousStatus = null,
   mutation,
   nowTs,
 } = {}) {
@@ -2369,6 +2370,22 @@ async function updateOpsErrorEventStatus(db, {
       allowed: OPS_ERROR_STATUSES,
     });
   }
+  // U5 review follow-up (Finding 2): optional client-driven CAS guard.
+  // When the client supplies `expectedPreviousStatus`, the handler uses that
+  // as the authoritative pre-image and rejects the transition with 409 if
+  // the on-disk row has moved off that value. Clients may omit this field
+  // for legacy compatibility; the handler then derives the pre-image from
+  // the DB row and still carries `AND status = ?` on the UPDATE as
+  // defence-in-depth against sub-millisecond races.
+  if (expectedPreviousStatus !== null && expectedPreviousStatus !== undefined) {
+    if (typeof expectedPreviousStatus !== 'string' || !OPS_ERROR_STATUSES.includes(expectedPreviousStatus)) {
+      throw new BadRequestError('Expected previous status is not a supported value.', {
+        code: 'validation_failed',
+        field: 'expectedPreviousStatus',
+        allowed: OPS_ERROR_STATUSES,
+      });
+    }
+  }
   const actor = await assertAdminHubActor(db, actorAccountId);
   requireAccountRoleManager(actor);
 
@@ -2377,9 +2394,13 @@ async function updateOpsErrorEventStatus(db, {
     scopeId: `ops-error-event:${eventId}`,
   });
   const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  // Include expectedPreviousStatus in the request hash so replays that target
+  // a different pre-image (e.g. client re-read after a 409 stale error) are
+  // treated as new payloads, not as idempotent duplicates.
   const requestHash = mutationPayloadHash(OPS_ERROR_EVENT_STATUS_MUTATION_KIND, {
     eventId,
     status: nextStatus,
+    expectedPreviousStatus: typeof expectedPreviousStatus === 'string' ? expectedPreviousStatus : null,
   });
   const scopeId = `ops-error-event:${eventId}`;
 
@@ -2419,7 +2440,24 @@ async function updateOpsErrorEventStatus(db, {
       eventId,
     });
   }
-  const oldStatus = typeof currentRow.status === 'string' ? currentRow.status : 'open';
+  const currentStatus = typeof currentRow.status === 'string' ? currentRow.status : 'open';
+  // U5 review follow-up (Finding 2): if the client supplied an
+  // expectedPreviousStatus, honour it as the authoritative CAS pre-image. A
+  // mismatch with the on-disk row means another admin raced ahead; reject
+  // immediately so the client re-reads before retrying. Counter bumps never
+  // fire in this path because the batch is not assembled.
+  if (typeof expectedPreviousStatus === 'string'
+    && expectedPreviousStatus !== currentStatus
+  ) {
+    throw new ConflictError('Error event status has changed since it was last read. Re-read and retry.', {
+      code: 'ops_error_event_status_stale',
+      retryable: true,
+      eventId,
+      expected: expectedPreviousStatus,
+      current: currentStatus,
+    });
+  }
+  const oldStatus = currentStatus;
 
   const buildEntry = (statusValue, lastSeenOverride = null) => ({
     id: typeof currentRow.id === 'string' ? currentRow.id : eventId,
@@ -2459,7 +2497,12 @@ async function updateOpsErrorEventStatus(db, {
     };
   }
 
-  const appliedEvent = buildEntry(nextStatus, ts);
+  // U5 review follow-up (Finding 3): drop `last_seen = ?` from the UPDATE.
+  // Status transitions must NOT rewrite the observation timestamp — the admin's
+  // resolution time is tracked via the mutation receipt's appliedAt column.
+  // Only U6's recordClientErrorEvent (the INSERT ON CONFLICT DO UPDATE path)
+  // bumps last_seen, preserving the `ORDER BY last_seen DESC` triage ordering.
+  const appliedEvent = buildEntry(nextStatus);
   const mutationMeta = {
     policyVersion: MUTATION_POLICY_VERSION,
     kind: OPS_ERROR_EVENT_STATUS_MUTATION_KIND,
@@ -2478,13 +2521,20 @@ async function updateOpsErrorEventStatus(db, {
   };
 
   // R21 batch atomicity: status UPDATE, receipt, and swap-counter bumps commit together.
+  // U5 review follow-up (Finding 2): UPDATE carries `AND status = ?` as a
+  // defence-in-depth CAS guard so that a sub-millisecond race between the
+  // line-2410 SELECT above and this batch still produces a no-op UPDATE
+  // (rather than overwriting another admin's write) — a post-batch verify
+  // SELECT catches that tail window and emits the same 409, accepting narrow
+  // counter-drift on the extreme-race path. The primary correctness check
+  // is the client-driven `expectedPreviousStatus` guard higher up the
+  // function, which rejects stale dispatches before the batch is composed.
   await batch(db, [
     bindStatement(db, `
       UPDATE ops_error_events
-      SET status = ?,
-          last_seen = ?
-      WHERE id = ?
-    `, [nextStatus, ts, eventId]),
+      SET status = ?
+      WHERE id = ? AND status = ?
+    `, [nextStatus, eventId, oldStatus]),
     storeMutationReceiptStatement(db, {
       accountId: actorAccountId,
       requestId,
@@ -2499,6 +2549,27 @@ async function updateOpsErrorEventStatus(db, {
     bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}${oldStatus}`, ts, -1),
     bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}${nextStatus}`, ts, 1),
   ]);
+
+  // Finding 2: post-batch verify to catch the sub-millisecond race window
+  // between the line-2410 SELECT and the batch commit. If the status did not
+  // land at nextStatus, a racing admin's write took the row first — emit a
+  // 409 so the client re-reads and retries. Counter deltas from this call
+  // already committed in that tail window (accepted drift in a
+  // single-operator context; the expectedPreviousStatus guard higher up
+  // prevents the common case).
+  const postBatchStatusRow = await first(db, `
+    SELECT status FROM ops_error_events WHERE id = ?
+  `, [eventId]);
+  const postBatchStatus = typeof postBatchStatusRow?.status === 'string' ? postBatchStatusRow.status : null;
+  if (postBatchStatus !== nextStatus) {
+    throw new ConflictError('Error event status transition lost to a concurrent write. Re-read and retry.', {
+      code: 'ops_error_event_status_stale',
+      retryable: true,
+      eventId,
+      expected: nextStatus,
+      current: postBatchStatus,
+    });
+  }
 
   return response;
 }
@@ -5269,11 +5340,17 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         nowTs: nowFactory(),
       });
     },
-    async updateOpsErrorEventStatus(accountId, { eventId, status, mutation = {} } = {}) {
+    async updateOpsErrorEventStatus(accountId, {
+      eventId,
+      status,
+      expectedPreviousStatus = null,
+      mutation = {},
+    } = {}) {
       return updateOpsErrorEventStatus(db, {
         actorAccountId: accountId,
         eventId,
         status,
+        expectedPreviousStatus,
         mutation,
         nowTs: nowFactory(),
       });

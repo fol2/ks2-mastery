@@ -133,7 +133,18 @@ async function putOpsMetadata(server, as, targetAccountId, { patch, mutation, ro
   });
 }
 
-async function putErrorEventStatus(server, as, eventId, { status, mutation, role = null }) {
+async function putErrorEventStatus(server, as, eventId, {
+  status,
+  mutation,
+  role = null,
+  expectedPreviousStatus = undefined,
+}) {
+  const body = { status, mutation };
+  // U5 review follow-up (Finding 2): forward the optional CAS pre-image so
+  // tests can exercise the stale-dispatch rejection path.
+  if (expectedPreviousStatus !== undefined) {
+    body.expectedPreviousStatus = expectedPreviousStatus;
+  }
   return server.fetchAs(as, `https://repo.test/api/admin/ops/error-events/${encodeURIComponent(eventId)}/status`, {
     method: 'PUT',
     headers: {
@@ -141,7 +152,7 @@ async function putErrorEventStatus(server, as, eventId, { status, mutation, role
       origin: 'https://repo.test',
       'x-ks2-dev-platform-role': role || 'admin',
     },
-    body: JSON.stringify({ status, mutation }),
+    body: JSON.stringify(body),
   });
 }
 
@@ -769,6 +780,167 @@ test('U5 integration — hub admin KPI counter reflects account ops update volum
     });
     const kpiPayload = await kpi.json();
     assert.equal(kpiPayload.accountOpsUpdates.total, 3);
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// U5 review follow-up coverage (Findings 2 + 3):
+//   - Concurrent status transition race: two admins both think the row is
+//     still `open`; first succeeds, second is rejected with 409
+//     `ops_error_event_status_stale` and the counter sum across statuses
+//     stays at exactly 1 (first admin's swap landed, second admin's did not).
+//   - `last_seen` preserved on status transition: the observation timestamp
+//     must NOT be rewritten to the admin's resolution time, because the
+//     error-log triage view orders by `last_seen DESC`.
+//   - In-flight client guard: noted as client-side defence-in-depth; there is
+//     no server-side hook suitable for this behaviour, so the test lives on
+//     the client side only (see `tests/react-hub-surfaces.test.js` if a
+//     natural harness exists; else a TODO is left in `src/main.js`).
+// ---------------------------------------------------------------------------
+
+test('U5 follow-up — concurrent status race: second admin with stale expectedPreviousStatus gets 409', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedCore(server, now);
+    insertOpsErrorEvent(server, {
+      id: 'evt-race',
+      fingerprint: 'fp-race',
+      errorKind: 'TypeError',
+      messageFirstLine: 'race scenario',
+      firstSeen: now - 10_000,
+      lastSeen: now - 1_000,
+      status: 'open',
+    });
+    insertAdminKpiMetric(server, {
+      metricKey: 'ops_error_events.status.open',
+      metricCount: 1,
+      updatedAt: now,
+    });
+
+    const sumStatuses = () => ['open', 'investigating', 'resolved', 'ignored']
+      .map((status) => kpiValue(server, `ops_error_events.status.${status}`))
+      .reduce((total, value) => total + value, 0);
+
+    // Admin A wins the race: transitions open → resolved using the pre-read
+    // status 'open' as the CAS pre-image. Counter swap lands.
+    const first = await putErrorEventStatus(server, 'adult-admin', 'evt-race', {
+      status: 'resolved',
+      expectedPreviousStatus: 'open',
+      mutation: { requestId: 'req-race-first' },
+    });
+    assert.equal(first.status, 200);
+    const firstPayload = await first.json();
+    assert.equal(firstPayload.opsErrorEvent.status, 'resolved');
+    assert.equal(kpiValue(server, 'ops_error_events.status.open'), 0);
+    assert.equal(kpiValue(server, 'ops_error_events.status.resolved'), 1);
+    assert.equal(sumStatuses(), 1);
+
+    // Admin B arrives second but still believes the row is 'open' — their
+    // pre-read CAS pre-image is now stale. The Worker rejects the dispatch
+    // with 409 ops_error_event_status_stale; counter deltas never fire so
+    // the sum across statuses stays at exactly 1 (not 2).
+    const second = await putErrorEventStatus(server, 'adult-admin', 'evt-race', {
+      status: 'ignored',
+      expectedPreviousStatus: 'open',
+      mutation: { requestId: 'req-race-second' },
+    });
+    assert.equal(second.status, 409);
+    const secondPayload = await second.json();
+    assert.equal(secondPayload.code, 'ops_error_event_status_stale');
+    assert.equal(secondPayload.expected, 'open');
+    assert.equal(secondPayload.current, 'resolved');
+    assert.equal(secondPayload.retryable, true);
+
+    // Row remains where admin A left it; counters remain pristine.
+    assert.equal(errorEventRow(server, 'evt-race').status, 'resolved');
+    assert.equal(kpiValue(server, 'ops_error_events.status.open'), 0);
+    assert.equal(kpiValue(server, 'ops_error_events.status.resolved'), 1);
+    assert.equal(kpiValue(server, 'ops_error_events.status.ignored'), 0);
+    assert.equal(sumStatuses(), 1);
+
+    // No receipt was stored for the stale dispatch — retry with a fresh
+    // pre-image must not be blocked by idempotency replay.
+    assert.equal(receiptRows(server, 'req-race-second').length, 0);
+
+    // Admin B retries with the fresh pre-image 'resolved' and the transition
+    // now lands cleanly.
+    const retry = await putErrorEventStatus(server, 'adult-admin', 'evt-race', {
+      status: 'ignored',
+      expectedPreviousStatus: 'resolved',
+      mutation: { requestId: 'req-race-retry' },
+    });
+    assert.equal(retry.status, 200);
+    assert.equal(errorEventRow(server, 'evt-race').status, 'ignored');
+    assert.equal(sumStatuses(), 1);
+  } finally {
+    server.close();
+  }
+});
+
+test('U5 follow-up — last_seen is preserved on status transition', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedCore(server, now);
+    // Seed an event with a fixed last_seen timestamp well in the past.
+    const observedAt = now - 30_000;
+    insertOpsErrorEvent(server, {
+      id: 'evt-last-seen',
+      fingerprint: 'fp-last-seen',
+      errorKind: 'TypeError',
+      messageFirstLine: 'last_seen scenario',
+      firstSeen: observedAt - 5_000,
+      lastSeen: observedAt,
+      status: 'open',
+    });
+
+    const response = await putErrorEventStatus(server, 'adult-admin', 'evt-last-seen', {
+      status: 'investigating',
+      mutation: { requestId: 'req-last-seen' },
+    });
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+
+    // The returned entry's lastSeen must be the original observation time,
+    // NOT the admin's resolution time. Triage ordering relies on this.
+    assert.equal(payload.opsErrorEvent.lastSeen, observedAt);
+
+    // DB row should also preserve the original last_seen.
+    const dbRow = errorEventRow(server, 'evt-last-seen');
+    assert.equal(dbRow.last_seen, observedAt);
+    assert.equal(dbRow.status, 'investigating');
+  } finally {
+    server.close();
+  }
+});
+
+test('U5 follow-up — expectedPreviousStatus validation rejects unknown value', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedCore(server, now);
+    insertOpsErrorEvent(server, {
+      id: 'evt-validation',
+      fingerprint: 'fp-validation',
+      errorKind: 'TypeError',
+      messageFirstLine: 'bad expectedPreviousStatus',
+      firstSeen: now,
+      lastSeen: now,
+      status: 'open',
+    });
+
+    const response = await putErrorEventStatus(server, 'adult-admin', 'evt-validation', {
+      status: 'resolved',
+      expectedPreviousStatus: 'bogus',
+      mutation: { requestId: 'req-bad-expected' },
+    });
+    assert.equal(response.status, 400);
+    const payload = await response.json();
+    assert.equal(payload.code, 'validation_failed');
+    assert.equal(payload.field, 'expectedPreviousStatus');
   } finally {
     server.close();
   }

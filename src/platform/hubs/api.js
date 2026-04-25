@@ -175,15 +175,30 @@ export function createHubApi({
         body: JSON.stringify({ patch, mutation }),
       }, authSession);
     },
-    async updateOpsErrorEventStatus({ eventId, status, mutation } = {}) {
+    async updateOpsErrorEventStatus({
+      eventId,
+      status,
+      expectedPreviousStatus = null,
+      mutation,
+    } = {}) {
       const url = buildRequestUrl(
         baseUrl,
         `/api/admin/ops/error-events/${encodeURIComponent(eventId)}/status`,
       );
+      // U5 review follow-up (Finding 2): forward the client-observed previous
+      // status as a CAS pre-image so the Worker can reject stale dispatches
+      // (two admins clicking from the same pre-read state) with a 409.
+      const body = {
+        status,
+        mutation,
+        ...(typeof expectedPreviousStatus === 'string' && expectedPreviousStatus
+          ? { expectedPreviousStatus }
+          : {}),
+      };
       return fetchHubJson(fetch, url, {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ status, mutation }),
+        body: JSON.stringify(body),
       }, authSession);
     },
     async postClientErrorEvent(event) {

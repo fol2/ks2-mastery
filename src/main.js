@@ -1341,6 +1341,43 @@ function patchAdminHubAccountOpsMetadataEntry(updater, notice = '') {
   });
 }
 
+// U5 review follow-up: patch the adminHub.accountOpsMetadata.savingAccountId
+// field so the AdminHubSurface can gate inputs/selects/Save buttons for the
+// in-flight row and refuse double-click dispatches. Kept separate from the
+// per-entry updater helper so we can toggle the sibling directory scalar
+// without a no-op rewrite of every account row.
+function patchAdminHubAccountOpsMetadataSaving(savingAccountId) {
+  patchAdultSurfaceState((state) => {
+    const payload = state.adminHub.payload || {};
+    const adminHub = payload.adminHub || {};
+    const directory = adminHub.accountOpsMetadata || { generatedAt: 0, accounts: [] };
+    return {
+      ...state,
+      adminHub: {
+        ...state.adminHub,
+        status: 'loaded',
+        payload: {
+          ...payload,
+          adminHub: {
+            ...adminHub,
+            accountOpsMetadata: {
+              ...directory,
+              savingAccountId: savingAccountId || '',
+            },
+          },
+        },
+        error: '',
+      },
+    };
+  });
+}
+
+function readAdminHubAccountOpsMetadataSaving() {
+  const payload = adultSurfaceState.adminHub?.payload || {};
+  const directory = payload.adminHub?.accountOpsMetadata || {};
+  return typeof directory.savingAccountId === 'string' ? directory.savingAccountId : '';
+}
+
 function patchAdminHubErrorEventEntry(updater, notice = '') {
   patchAdultSurfaceState((state) => {
     const payload = state.adminHub.payload || {};
@@ -1370,15 +1407,70 @@ function patchAdminHubErrorEventEntry(updater, notice = '') {
   });
 }
 
+// U5 review follow-up: patch the adminHub.errorLogSummary.savingEventId scalar
+// so the ErrorLogCentrePanel can disable the select while a transition is
+// in-flight and refuse concurrent dispatches.
+function patchAdminHubErrorLogSummarySaving(savingEventId) {
+  patchAdultSurfaceState((state) => {
+    const payload = state.adminHub.payload || {};
+    const adminHub = payload.adminHub || {};
+    const summary = adminHub.errorLogSummary || { generatedAt: 0, totals: {}, entries: [] };
+    return {
+      ...state,
+      adminHub: {
+        ...state.adminHub,
+        status: 'loaded',
+        payload: {
+          ...payload,
+          adminHub: {
+            ...adminHub,
+            errorLogSummary: {
+              ...summary,
+              savingEventId: savingEventId || '',
+            },
+          },
+        },
+        error: '',
+      },
+    };
+  });
+}
+
+function readAdminHubErrorLogSummarySaving() {
+  const payload = adultSurfaceState.adminHub?.payload || {};
+  const summary = payload.adminHub?.errorLogSummary || {};
+  return typeof summary.savingEventId === 'string' ? summary.savingEventId : '';
+}
+
 // R7, R8, R21: admin-only account ops metadata mutation with optimistic update
 // and rollback. Mirrors the updateAdminAccountRole pattern at lines 1145-1202.
+//
+// U5 review follow-up (Finding 1): wire savingAccountId BEFORE the fetch so the
+// UI disables inputs/selects/Save for the in-flight row, and refuse re-entry
+// while any row is mid-flight to defeat double-click parallel PUTs that would
+// otherwise double-commit and double-bump counters.
+//
+// TODO (follow-up): the in-flight guard (readAdminHubAccountOpsMetadataSaving
+// + readAdminHubErrorLogSummarySaving) is client-only defence-in-depth and is
+// NOT exercised server-side. The existing React fixture harness
+// (tests/helpers/react-render.js) renders static markup only — there is no
+// natural test hook for re-entrancy of these private handlers. The server
+// CAS guard (worker/src/repository.js, Finding 2) is the authoritative
+// double-commit defence; the client guard just avoids unnecessary 409s.
 async function updateAccountOpsMetadata({ accountId, patch }) {
   if (!hubApi) return;
   if (!(typeof accountId === 'string' && accountId)) return;
   if (!patch || typeof patch !== 'object') return;
 
+  // In-flight guard: refuse dispatch while any ops-metadata save is mid-flight.
+  // Double-click protection BEFORE a new requestId is minted.
+  if (readAdminHubAccountOpsMetadataSaving()) return;
+
   const requestId = uid('account-ops-metadata');
   const mutation = { requestId, correlationId: requestId };
+
+  // Mark the row as saving BEFORE the fetch is issued.
+  patchAdminHubAccountOpsMetadataSaving(accountId);
 
   // Snapshot the pre-optimistic entry so we can roll back on failure.
   let snapshot = null;
@@ -1423,17 +1515,32 @@ async function updateAccountOpsMetadata({ accountId, patch }) {
       ), '');
     }
     globalThis.alert?.(`Account ops metadata save failed: ${error?.message || 'Unknown error.'}`);
+  } finally {
+    // Always clear the saving flag, whether success or failure, so the UI
+    // re-enables the row's inputs and the next dispatch can proceed.
+    patchAdminHubAccountOpsMetadataSaving('');
   }
 }
 
 // R10, R21: admin-only error event status mutation with optimistic update + rollback.
+//
+// U5 review follow-up (Finding 1): wire savingEventId BEFORE the fetch so the
+// UI disables the status select on the in-flight row, and refuse re-entry
+// while any event is mid-flight to defeat double-click parallel PUTs.
 async function updateOpsErrorEventStatus({ eventId, status }) {
   if (!hubApi) return;
   if (!(typeof eventId === 'string' && eventId)) return;
   if (!(typeof status === 'string' && status)) return;
 
+  // In-flight guard: refuse dispatch while any error-event status transition is
+  // mid-flight. Prevents double-click parallel PUTs that would race the CAS.
+  if (readAdminHubErrorLogSummarySaving()) return;
+
   const requestId = uid('ops-error-event-status');
   const mutation = { requestId, correlationId: requestId };
+
+  // Mark the event as saving BEFORE the fetch is issued.
+  patchAdminHubErrorLogSummarySaving(eventId);
 
   let snapshot = null;
   patchAdminHubErrorEventEntry((entry) => {
@@ -1442,8 +1549,21 @@ async function updateOpsErrorEventStatus({ eventId, status }) {
     return { ...entry, status };
   }, 'Updating error event status...');
 
+  // U5 review follow-up (Finding 2): capture the UI's pre-click status as the
+  // CAS pre-image and forward it as `expectedPreviousStatus`. The Worker
+  // rejects the dispatch with 409 `ops_error_event_status_stale` if another
+  // admin raced ahead, so the counter swap never lands twice.
+  const expectedPreviousStatus = typeof snapshot?.status === 'string' && snapshot.status
+    ? snapshot.status
+    : null;
+
   try {
-    const payload = await hubApi.updateOpsErrorEventStatus({ eventId, status, mutation });
+    const payload = await hubApi.updateOpsErrorEventStatus({
+      eventId,
+      status,
+      expectedPreviousStatus,
+      mutation,
+    });
     const event = payload?.opsErrorEvent || null;
     if (event) {
       patchAdminHubErrorEventEntry((row) => {
@@ -1462,6 +1582,10 @@ async function updateOpsErrorEventStatus({ eventId, status }) {
       ), '');
     }
     globalThis.alert?.(`Error event status update failed: ${error?.message || 'Unknown error.'}`);
+  } finally {
+    // Always clear the saving flag so the UI re-enables the select and the
+    // next dispatch can proceed.
+    patchAdminHubErrorLogSummarySaving('');
   }
 }
 

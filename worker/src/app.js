@@ -740,9 +740,16 @@ export function createWorkerApp({
           requireSameOrigin(request, env);
           const eventId = decodeURIComponent(opsErrorEventStatusMatch[1]);
           const body = await readJson(request);
+          // U5 review follow-up (Finding 2): forward the optional
+          // `expectedPreviousStatus` CAS pre-image from the client so the
+          // repository can reject stale dispatches (two admins racing with
+          // the same pre-read state) with a 409 before the batch runs.
           const result = await repository.updateOpsErrorEventStatus(session.accountId, {
             eventId,
             status: body?.status,
+            expectedPreviousStatus: typeof body?.expectedPreviousStatus === 'string'
+              ? body.expectedPreviousStatus
+              : null,
             mutation: mutationFromRequest(body, request),
           });
           return json({ ok: true, ...result });
