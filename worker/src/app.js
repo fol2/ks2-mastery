@@ -481,6 +481,36 @@ export function createWorkerApp({
           return json({ ok: true, wordBank: result });
         }
 
+        if (url.pathname === '/api/hubs/parent/recent-sessions' && request.method === 'GET') {
+          await protectDemoParentHubRead({
+            env,
+            request,
+            session,
+            now: now(),
+          });
+          const result = await repository.readParentRecentSessions(session.accountId, {
+            learnerId: url.searchParams.get('learnerId') || null,
+            limit: url.searchParams.get('limit') || null,
+            cursor: url.searchParams.get('cursor') || null,
+          });
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/hubs/parent/activity' && request.method === 'GET') {
+          await protectDemoParentHubRead({
+            env,
+            request,
+            session,
+            now: now(),
+          });
+          const result = await repository.readParentActivity(session.accountId, {
+            learnerId: url.searchParams.get('learnerId') || null,
+            limit: url.searchParams.get('limit') || null,
+            cursor: url.searchParams.get('cursor') || null,
+          });
+          return json({ ok: true, ...result });
+        }
+
         if (url.pathname === '/api/hubs/parent' && request.method === 'GET') {
           await protectDemoParentHubRead({
             env,

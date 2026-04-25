@@ -32,6 +32,13 @@ import { buildAdminHubReadModel } from '../../src/platform/hubs/admin-read-model
 import { buildParentHubReadModel } from '../../src/platform/hubs/parent-read-model.js';
 import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system.js';
 import { buildSpellingProgressPools, buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
+import {
+  activityFeedRowFromEventRow,
+  emptyLearnerReadModel,
+  normaliseActivityFeedRow,
+  normaliseLearnerReadModelRow,
+  normaliseReadModelKey,
+} from './read-models/learner-read-models.js';
 import { buildSpellingAudioCue } from './subjects/spelling/audio.js';
 import { buildPunctuationReadModel } from './subjects/punctuation/read-models.js';
 import { createPunctuationService } from '../../shared/punctuation/service.js';
@@ -83,6 +90,11 @@ const PUBLIC_EVENT_TYPES = new Set([
   'reward.monster',
   'platform.practice-streak-hit',
 ]);
+const PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER = 5;
+const PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER = 1;
+const PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LOOKUP_LIMIT_PER_LEARNER = 5;
+const PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER = 50;
+const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 1;
 const PUBLIC_MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
 const PUBLIC_MONSTER_IDS = new Set(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']);
 const PUBLIC_DIRECT_SPELLING_MONSTER_IDS = ['inklet', 'glimmerbug', 'vellhorn'];
@@ -1134,6 +1146,351 @@ async function loadLearnerReadBundle(db, learnerId) {
   };
 }
 
+function normaliseHistoryLimit(value, { fallback = 10, max = 50 } = {}) {
+  if (value == null || value === '') return fallback;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new BadRequestError('History limit must be a positive integer.', {
+      code: 'history_limit_invalid',
+      limit: value,
+    });
+  }
+  return Math.min(parsed, max);
+}
+
+function encodeHistoryCursor(row, timestampField) {
+  const timestamp = Number(row?.[timestampField]) || 0;
+  const id = encodeURIComponent(String(row?.id || ''));
+  return `${timestamp}:${id}`;
+}
+
+function decodeHistoryCursor(rawCursor) {
+  if (!rawCursor) return null;
+  const separator = String(rawCursor).indexOf(':');
+  if (separator <= 0) {
+    throw new BadRequestError('History cursor is invalid.', {
+      code: 'history_cursor_invalid',
+    });
+  }
+  const timestamp = Number(String(rawCursor).slice(0, separator));
+  const id = decodeURIComponent(String(rawCursor).slice(separator + 1));
+  if (!Number.isFinite(timestamp) || timestamp < 0 || !id) {
+    throw new BadRequestError('History cursor is invalid.', {
+      code: 'history_cursor_invalid',
+    });
+  }
+  return { timestamp, id };
+}
+
+function pageFromRows(rows, limit, timestampField) {
+  const pageRows = rows.slice(0, limit);
+  const hasMore = rows.length > limit;
+  return {
+    rows: pageRows,
+    page: {
+      limit,
+      nextCursor: hasMore && pageRows.length
+        ? encodeHistoryCursor(pageRows[pageRows.length - 1], timestampField)
+        : null,
+      hasMore,
+    },
+  };
+}
+
+function publicHistoryPracticeSessionRowToRecord(row) {
+  return normalisePracticeSessionRecord({
+    ...publicPracticeSessionRowToRecord(row),
+    sessionState: null,
+  });
+}
+
+function recentSessionLabel(record) {
+  if (record?.summary?.label) return record.summary.label;
+  if (record?.subjectId === 'grammar') return `Grammar ${record.sessionKind || 'practice'}`;
+  if (record?.subjectId === 'punctuation') return `Punctuation ${record.sessionKind || 'practice'}`;
+  if (record?.sessionKind === 'test') return 'SATs 20 test';
+  return 'Smart Review';
+}
+
+function recentSessionHeadline(record) {
+  const summary = record?.summary || {};
+  const cards = Array.isArray(summary.cards) ? summary.cards : [];
+  const correctCard = cards.find((card) => String(card?.label || '').toLowerCase().includes('correct'));
+  if (correctCard?.value != null) return String(correctCard.value);
+  const answered = Number(summary.answered);
+  const correct = Number(summary.correct);
+  if (Number.isFinite(answered) && answered > 0 && Number.isFinite(correct)) {
+    return `${correct}/${answered}`;
+  }
+  return '';
+}
+
+function parentRecentSessionFromRecord(record) {
+  return {
+    id: record.id,
+    subjectId: record.subjectId,
+    status: record.status,
+    sessionKind: record.sessionKind,
+    label: recentSessionLabel(record),
+    updatedAt: Number(record.updatedAt) || Number(record.createdAt) || 0,
+    mistakeCount: Array.isArray(record?.summary?.mistakes)
+      ? record.summary.mistakes.length
+      : Math.max(0, (Number(record?.summary?.answered) || 0) - (Number(record?.summary?.correct) || 0)),
+    headline: recentSessionHeadline(record),
+  };
+}
+
+async function resolveParentHistoryAccess(db, accountId, requestedLearnerId = null) {
+  const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role, account_type FROM adult_accounts WHERE id = ?', [accountId]);
+  const readableMemberships = await listMembershipRows(db, accountId, { writableOnly: false });
+  const defaultLearnerId = account?.selected_learner_id && readableMemberships.some((membership) => membership.id === account.selected_learner_id)
+    ? account.selected_learner_id
+    : (readableMemberships[0]?.id || null);
+  const learnerId = requestedLearnerId || defaultLearnerId;
+  if (!learnerId) {
+    throw new NotFoundError('No learner is selected for this parent view.', {
+      code: 'parent_hub_missing_learner',
+    });
+  }
+  const membership = await requireLearnerReadAccess(db, accountId, learnerId);
+  requireParentHubAccess(account, membership);
+  return {
+    account,
+    readableMemberships,
+    learnerId,
+    membership,
+  };
+}
+
+async function readParentRecentSessions(db, accountId, {
+  learnerId = null,
+  limit = null,
+  cursor = null,
+} = {}) {
+  const access = await resolveParentHistoryAccess(db, accountId, learnerId);
+  const resolvedLimit = normaliseHistoryLimit(limit);
+  const decodedCursor = decodeHistoryCursor(cursor);
+  const cursorClause = decodedCursor
+    ? 'AND (updated_at < ? OR (updated_at = ? AND id < ?))'
+    : '';
+  const cursorParams = decodedCursor
+    ? [decodedCursor.timestamp, decodedCursor.timestamp, decodedCursor.id]
+    : [];
+  const rows = await all(db, `
+    SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+    FROM practice_sessions
+    WHERE learner_id = ?
+      ${cursorClause}
+    ORDER BY updated_at DESC, id DESC
+    LIMIT ?
+  `, [access.learnerId, ...cursorParams, resolvedLimit + 1]);
+  const page = pageFromRows(rows, resolvedLimit, 'updated_at');
+  const sessions = page.rows.map(publicHistoryPracticeSessionRowToRecord);
+  return {
+    learnerId: access.learnerId,
+    sessions,
+    recentSessions: sessions.map(parentRecentSessionFromRecord),
+    page: page.page,
+  };
+}
+
+async function upsertLearnerReadModel(db, learnerId, modelKey, model, {
+  sourceRevision = 0,
+  generatedAt = Date.now(),
+} = {}) {
+  const key = normaliseReadModelKey(modelKey);
+  const timestamp = Math.max(0, Number(generatedAt) || Date.now());
+  await run(db, `
+    INSERT INTO learner_read_models (learner_id, model_key, model_json, source_revision, generated_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(learner_id, model_key) DO UPDATE SET
+      model_json = excluded.model_json,
+      source_revision = excluded.source_revision,
+      generated_at = excluded.generated_at,
+      updated_at = excluded.updated_at
+  `, [
+    learnerId,
+    key,
+    JSON.stringify(cloneSerialisable(model) || {}),
+    Math.max(0, Number(sourceRevision) || 0),
+    timestamp,
+    timestamp,
+  ]);
+  return readLearnerReadModel(db, learnerId, key);
+}
+
+async function readLearnerReadModel(db, learnerId, modelKey) {
+  const key = normaliseReadModelKey(modelKey);
+  const row = await first(db, `
+    SELECT learner_id, model_key, model_json, source_revision, generated_at, updated_at
+    FROM learner_read_models
+    WHERE learner_id = ? AND model_key = ?
+  `, [learnerId, key]);
+  return row ? normaliseLearnerReadModelRow(row, key) : emptyLearnerReadModel(key);
+}
+
+async function upsertLearnerActivityFeedRows(db, activityRows = []) {
+  let written = 0;
+  for (const row of activityRows) {
+    if (!row?.id || !row?.learnerId || !row?.activityType || !row?.activity) continue;
+    const result = await run(db, `
+      INSERT INTO learner_activity_feed (
+        id, learner_id, subject_id, activity_type, activity_json,
+        source_event_id, created_at, updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        learner_id = excluded.learner_id,
+        subject_id = excluded.subject_id,
+        activity_type = excluded.activity_type,
+        activity_json = excluded.activity_json,
+        source_event_id = excluded.source_event_id,
+        created_at = excluded.created_at,
+        updated_at = excluded.updated_at
+    `, [
+      row.id,
+      row.learnerId,
+      row.subjectId || null,
+      row.activityType,
+      JSON.stringify(cloneSerialisable(row.activity) || {}),
+      row.sourceEventId || null,
+      Math.max(0, Number(row.createdAt) || 0),
+      Math.max(0, Number(row.updatedAt) || Date.now()),
+    ]);
+    written += Math.max(0, Number(result?.meta?.rows_written ?? result?.meta?.changes) || 0);
+  }
+  return { count: written };
+}
+
+function activityFeedRowFromEventRecord(event, {
+  id,
+  learnerId,
+  subjectId = null,
+  systemId = null,
+  eventType,
+  createdAt,
+  now = Date.now(),
+} = {}) {
+  if (!event || typeof event !== 'object' || Array.isArray(event)) return null;
+  return activityFeedRowFromEventRow({
+    id,
+    learner_id: learnerId,
+    subject_id: subjectId,
+    system_id: systemId,
+    event_type: eventType,
+    event_json: JSON.stringify(event),
+    created_at: createdAt,
+  }, { now });
+}
+
+function bindLearnerActivityFeedUpsertStatement(db, row, { guard = null } = {}) {
+  if (!row?.id || !row?.learnerId || !row?.activityType || !row?.activity) return null;
+  const params = [
+    row.id,
+    row.learnerId,
+    row.subjectId || null,
+    row.activityType,
+    JSON.stringify(cloneSerialisable(row.activity) || {}),
+    row.sourceEventId || null,
+    Math.max(0, Number(row.createdAt) || 0),
+    Math.max(0, Number(row.updatedAt) || Date.now()),
+  ];
+  return bindStatement(db, `
+    INSERT INTO learner_activity_feed (
+      id, learner_id, subject_id, activity_type, activity_json,
+      source_event_id, created_at, updated_at
+    )
+    ${guardedValueSource(params.length, guard)}
+    ON CONFLICT(id) DO UPDATE SET
+      learner_id = excluded.learner_id,
+      subject_id = excluded.subject_id,
+      activity_type = excluded.activity_type,
+      activity_json = excluded.activity_json,
+      source_event_id = excluded.source_event_id,
+      created_at = excluded.created_at,
+      updated_at = excluded.updated_at
+  `, guardedParams(params, guard));
+}
+
+async function readLearnerActivityFeed(db, learnerId, {
+  limit = null,
+  cursor = null,
+} = {}) {
+  const resolvedLimit = normaliseHistoryLimit(limit);
+  const decodedCursor = decodeHistoryCursor(cursor);
+  const cursorClause = decodedCursor
+    ? 'AND (created_at < ? OR (created_at = ? AND id < ?))'
+    : '';
+  const cursorParams = decodedCursor
+    ? [decodedCursor.timestamp, decodedCursor.timestamp, decodedCursor.id]
+    : [];
+  const rows = await all(db, `
+    SELECT id, learner_id, subject_id, activity_type, activity_json, source_event_id, created_at, updated_at
+    FROM learner_activity_feed
+    WHERE learner_id = ?
+      ${cursorClause}
+    ORDER BY created_at DESC, id DESC
+    LIMIT ?
+  `, [learnerId, ...cursorParams, resolvedLimit + 1]);
+  const page = pageFromRows(rows, resolvedLimit, 'created_at');
+  const feedRowCount = rows.length
+    ? rows.length
+    : Number(await scalar(db, 'SELECT COUNT(*) AS count FROM learner_activity_feed WHERE learner_id = ?', [learnerId], 'count') || 0);
+  return {
+    learnerId,
+    activities: page.rows.map(normaliseActivityFeedRow).filter(Boolean),
+    page: page.page,
+    hasFeedRows: feedRowCount > 0,
+  };
+}
+
+async function readParentActivity(db, accountId, {
+  learnerId = null,
+  limit = null,
+  cursor = null,
+} = {}) {
+  const access = await resolveParentHistoryAccess(db, accountId, learnerId);
+  const resolvedLimit = normaliseHistoryLimit(limit);
+  const feed = await readLearnerActivityFeed(db, access.learnerId, {
+    limit: resolvedLimit,
+    cursor,
+  });
+  if (feed.hasFeedRows) {
+    return {
+      learnerId: access.learnerId,
+      activity: feed.activities.map((entry) => entry.activity),
+      page: feed.page,
+      source: 'learner_activity_feed',
+    };
+  }
+
+  const decodedCursor = decodeHistoryCursor(cursor);
+  const eventTypes = [...PUBLIC_EVENT_TYPES];
+  const eventTypePlaceholders = sqlPlaceholders(eventTypes.length);
+  const cursorClause = decodedCursor
+    ? 'AND (created_at < ? OR (created_at = ? AND id < ?))'
+    : '';
+  const cursorParams = decodedCursor
+    ? [decodedCursor.timestamp, decodedCursor.timestamp, decodedCursor.id]
+    : [];
+  const rows = await all(db, `
+    SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+    FROM event_log
+    WHERE learner_id = ?
+      AND event_type IN (${eventTypePlaceholders})
+      ${cursorClause}
+    ORDER BY created_at DESC, id DESC
+    LIMIT ?
+  `, [access.learnerId, ...eventTypes, ...cursorParams, resolvedLimit + 1]);
+  const page = pageFromRows(rows, resolvedLimit, 'created_at');
+  return {
+    learnerId: access.learnerId,
+    activity: page.rows.map(publicEventRowToRecord).filter(Boolean),
+    page: page.page,
+    source: 'event_log',
+  };
+}
+
 async function listMutationReceiptRows(db, accountId, { requestId = null, scopeId = null, limit = 20 } = {}) {
   const clauses = ['account_id = ?'];
   const params = [accountId];
@@ -2050,6 +2407,152 @@ async function releaseMembershipOrDeleteLearner(db, accountId, learnerId, role, 
   return 'membership_removed';
 }
 
+function rowKey(row, fields = ['id']) {
+  return fields.map((field) => String(row?.[field] ?? '')).join('::');
+}
+
+function sortSessionRows(rows) {
+  return [...rows].sort((a, b) => {
+    const updatedDiff = (Number(b.updated_at) || 0) - (Number(a.updated_at) || 0);
+    if (updatedDiff !== 0) return updatedDiff;
+    return String(b.id || '').localeCompare(String(a.id || ''));
+  });
+}
+
+function sortEventRowsAscending(rows) {
+  return [...rows].sort((a, b) => {
+    const createdDiff = (Number(a.created_at) || 0) - (Number(b.created_at) || 0);
+    if (createdDiff !== 0) return createdDiff;
+    return String(a.id || '').localeCompare(String(b.id || ''));
+  });
+}
+
+function subjectStateActiveSessionId(row) {
+  const ui = safeJsonParse(row?.ui_json, {});
+  const sessionId = ui?.session?.id;
+  return typeof sessionId === 'string' && sessionId ? sessionId : null;
+}
+
+async function listPublicBootstrapActiveSessionIds(db, learnerIds) {
+  const ids = [];
+  for (const learnerId of learnerIds) {
+    const rows = await all(db, `
+      SELECT ui_json
+      FROM child_subject_state
+      WHERE learner_id = ?
+      ORDER BY updated_at DESC, subject_id ASC
+      LIMIT ?
+    `, [learnerId, PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LOOKUP_LIMIT_PER_LEARNER]);
+    const sessionIdsForLearner = new Set();
+    for (const row of rows) {
+      const sessionId = subjectStateActiveSessionId(row);
+      if (!sessionId || sessionIdsForLearner.has(sessionId)) continue;
+      sessionIdsForLearner.add(sessionId);
+      ids.push(sessionId);
+      if (sessionIdsForLearner.size >= PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER) break;
+    }
+  }
+  return ids;
+}
+
+async function listPublicBootstrapSessionRows(db, learnerIds) {
+  if (!learnerIds.length) return [];
+  const rowsById = new Map();
+  const placeholders = sqlPlaceholders(learnerIds.length);
+  const activeSessionIds = await listPublicBootstrapActiveSessionIds(db, learnerIds);
+  if (activeSessionIds.length) {
+    const activeRows = await all(db, `
+      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+      FROM practice_sessions
+      WHERE learner_id IN (${placeholders})
+        AND id IN (${sqlPlaceholders(activeSessionIds.length)})
+        AND status = 'active'
+      ORDER BY updated_at DESC, id DESC
+      LIMIT ?
+    `, [
+      ...learnerIds,
+      ...activeSessionIds,
+      learnerIds.length * PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER,
+    ]);
+
+    for (const row of activeRows) {
+      rowsById.set(rowKey(row), row);
+    }
+  }
+
+  for (const learnerId of learnerIds) {
+    const recentRows = await all(db, `
+      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+      FROM practice_sessions
+      WHERE learner_id = ?
+      ORDER BY updated_at DESC, id DESC
+      LIMIT ?
+    `, [learnerId, PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER]);
+    for (const row of recentRows) {
+      rowsById.set(rowKey(row), row);
+    }
+  }
+
+  return sortSessionRows([...rowsById.values()]);
+}
+
+async function listPublicBootstrapEventRows(db, learnerIds) {
+  if (!learnerIds.length) return [];
+  const eventTypes = [...PUBLIC_EVENT_TYPES];
+  if (!eventTypes.length) return [];
+  const eventTypePlaceholders = sqlPlaceholders(eventTypes.length);
+  const rows = [];
+
+  for (const learnerId of learnerIds) {
+    rows.push(...await all(db, `
+      SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+      FROM event_log
+      WHERE learner_id = ?
+        AND event_type IN (${eventTypePlaceholders})
+      ORDER BY created_at DESC, id DESC
+      LIMIT ?
+    `, [learnerId, ...eventTypes, PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER]));
+  }
+
+  return sortEventRowsAscending(rows);
+}
+
+function bootstrapCapacityMeta({
+  publicReadModels,
+  learnerCount,
+  sessionRows,
+  eventRows,
+}) {
+  if (!publicReadModels) return null;
+  const sessionActiveLimit = learnerCount * PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER;
+  const sessionRecentLimit = learnerCount * PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER;
+  const sessionLimit = sessionActiveLimit + sessionRecentLimit;
+  const eventRecentLimit = learnerCount * PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER;
+  return {
+    version: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
+    mode: 'public-bounded',
+    limits: {
+      activeSessionsPerLearner: PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER,
+      recentSessionsPerLearner: PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER,
+      recentEventsPerLearner: PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER,
+    },
+    learners: {
+      returned: learnerCount,
+    },
+    practiceSessions: {
+      returned: sessionRows.length,
+      bounded: true,
+      atOrAboveRecentLimit: learnerCount > 0 && sessionRows.length >= sessionRecentLimit,
+      atOrAboveMaximumLimit: learnerCount > 0 && sessionRows.length >= sessionLimit,
+    },
+    eventLog: {
+      returned: eventRows.length,
+      bounded: true,
+      atOrAboveRecentLimit: learnerCount > 0 && eventRows.length >= eventRecentLimit,
+    },
+  };
+}
+
 async function bootstrapBundle(db, accountId, { publicReadModels = false } = {}) {
   const account = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
   const monsterVisualConfig = await readBootstrapMonsterVisualRuntimeConfig(db, Date.now());
@@ -2090,6 +2593,14 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
         learnerRevisions: {},
       },
       monsterVisualConfig,
+      ...(publicReadModels ? {
+        bootstrapCapacity: bootstrapCapacityMeta({
+          publicReadModels,
+          learnerCount: 0,
+          sessionRows: [],
+          eventRows: [],
+        }),
+      } : {}),
     };
   }
 
@@ -2099,23 +2610,27 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
     FROM child_subject_state
     WHERE learner_id IN (${placeholders})
   `, learnerIds);
-  const sessionRows = await all(db, `
-    SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
-    FROM practice_sessions
-    WHERE learner_id IN (${placeholders})
-    ORDER BY updated_at DESC, id DESC
-  `, learnerIds);
+  const sessionRows = publicReadModels
+    ? await listPublicBootstrapSessionRows(db, learnerIds)
+    : await all(db, `
+      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+      FROM practice_sessions
+      WHERE learner_id IN (${placeholders})
+      ORDER BY updated_at DESC, id DESC
+    `, learnerIds);
   const gameRows = await all(db, `
     SELECT learner_id, system_id, state_json, updated_at
     FROM child_game_state
     WHERE learner_id IN (${placeholders})
   `, learnerIds);
-  const eventRows = await all(db, `
-    SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
-    FROM event_log
-    WHERE learner_id IN (${placeholders})
-    ORDER BY created_at ASC, id ASC
-  `, learnerIds);
+  const eventRows = publicReadModels
+    ? await listPublicBootstrapEventRows(db, learnerIds)
+    : await all(db, `
+      SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+      FROM event_log
+      WHERE learner_id IN (${placeholders})
+      ORDER BY created_at ASC, id ASC
+    `, learnerIds);
   const publicSpellingContent = publicReadModels && subjectRows.some((row) => row.subject_id === 'spelling')
     ? await readSpellingRuntimeContentBundle(db, accountId, 'spelling')
     : null;
@@ -2166,6 +2681,14 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
       learnerRevisions,
     },
     monsterVisualConfig,
+    ...(publicReadModels ? {
+      bootstrapCapacity: bootstrapCapacityMeta({
+        publicReadModels,
+        learnerCount: learnerIds.length,
+        sessionRows,
+        eventRows,
+      }),
+    } : {}),
   };
 }
 
@@ -2435,6 +2958,17 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
         created_at = excluded.created_at,
         actor_account_id = excluded.actor_account_id
     `, guardedParams(eventParams, guard)));
+    const activityRow = activityFeedRowFromEventRecord(event, {
+      id,
+      learnerId: event.learnerId,
+      subjectId: event.subjectId || null,
+      systemId: event.systemId || null,
+      eventType,
+      createdAt,
+      now: nowTs,
+    });
+    const activityStatement = bindLearnerActivityFeedUpsertStatement(db, activityRow, { guard });
+    if (activityStatement) statements.push(activityStatement);
   }
 
   const summary = {
@@ -3185,6 +3719,16 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
             createdAt,
             accountId,
           ]);
+          const activityRow = activityFeedRowFromEventRecord(next, {
+            id,
+            learnerId: next.learnerId,
+            subjectId: next.subjectId || null,
+            systemId: next.systemId || null,
+            eventType,
+            createdAt,
+            now: nowTs,
+          });
+          if (activityRow) await upsertLearnerActivityFeedRows(db, [activityRow]);
           return { count: next ? 1 : 0, event: next };
         },
       });
@@ -3199,7 +3743,11 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
         mutation,
         nowTs,
         apply: async () => {
-          await run(db, 'DELETE FROM event_log WHERE learner_id = ?', [learnerId]);
+          await batch(db, [
+            bindStatement(db, 'DELETE FROM event_log WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM learner_activity_feed WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM learner_read_models WHERE learner_id = ?', [learnerId]),
+          ]);
           return { learnerId, cleared: true };
         },
       });
@@ -3219,6 +3767,8 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
             bindStatement(db, 'DELETE FROM practice_sessions WHERE learner_id = ?', [learnerId]),
             bindStatement(db, 'DELETE FROM child_game_state WHERE learner_id = ?', [learnerId]),
             bindStatement(db, 'DELETE FROM event_log WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM learner_activity_feed WHERE learner_id = ?', [learnerId]),
+            bindStatement(db, 'DELETE FROM learner_read_models WHERE learner_id = ?', [learnerId]),
           ]);
           return {
             learnerId,
@@ -3263,6 +3813,24 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
     },
     async readSpellingWordBank(accountId, learnerId, filters = {}) {
       return readSpellingWordBankBundle(db, accountId, learnerId, filters, nowFactory());
+    },
+    async readParentRecentSessions(accountId, options = {}) {
+      return readParentRecentSessions(db, accountId, options);
+    },
+    async readParentActivity(accountId, options = {}) {
+      return readParentActivity(db, accountId, options);
+    },
+    async upsertLearnerReadModel(learnerId, modelKey, model, options = {}) {
+      return upsertLearnerReadModel(db, learnerId, modelKey, model, options);
+    },
+    async readLearnerReadModel(learnerId, modelKey) {
+      return readLearnerReadModel(db, learnerId, modelKey);
+    },
+    async upsertLearnerActivityFeedRows(rows = []) {
+      return upsertLearnerActivityFeedRows(db, rows);
+    },
+    async readLearnerActivityFeed(learnerId, options = {}) {
+      return readLearnerActivityFeed(db, learnerId, options);
     },
     async writeSubjectContent(accountId, subjectId = 'spelling', rawContent, mutation = {}) {
       const nowTs = nowFactory();
@@ -3322,19 +3890,12 @@ export function createWorkerRepository({ env = {}, now = Date.now } = {}) {
       });
     },
     async readParentHub(accountId, learnerId = null) {
-      const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role, account_type FROM adult_accounts WHERE id = ?', [accountId]);
-      const readableMemberships = await listMembershipRows(db, accountId, { writableOnly: false });
-      const defaultLearnerId = account?.selected_learner_id && readableMemberships.some((membership) => membership.id === account.selected_learner_id)
-        ? account.selected_learner_id
-        : (readableMemberships[0]?.id || null);
-      const resolvedLearnerId = learnerId || defaultLearnerId;
-      if (!resolvedLearnerId) {
-        throw new NotFoundError('No learner is selected for this parent view.', {
-          code: 'parent_hub_missing_learner',
-        });
-      }
-      const membership = await requireLearnerReadAccess(db, accountId, resolvedLearnerId);
-      requireParentHubAccess(account, membership);
+      const {
+        account,
+        readableMemberships,
+        learnerId: resolvedLearnerId,
+        membership,
+      } = await resolveParentHistoryAccess(db, accountId, learnerId);
       const learnerRow = await first(db, `
         SELECT l.id, l.name, l.year_group, l.avatar_color, l.goal, l.daily_minutes, l.created_at, l.updated_at
         FROM learner_profiles l

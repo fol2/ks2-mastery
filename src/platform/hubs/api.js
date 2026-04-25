@@ -62,11 +62,64 @@ export function createHubApi({
     throw new TypeError('Hub API requires a fetch implementation.');
   }
 
+  async function readParentRecentSessions({ learnerId = null, limit = 6, cursor = null } = {}) {
+    const url = buildRequestUrl(baseUrl, '/api/hubs/parent/recent-sessions', {
+      learnerId,
+      limit,
+      cursor,
+    });
+    return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+  }
+
+  async function readParentActivity({ learnerId = null, limit = 20, cursor = null } = {}) {
+    const url = buildRequestUrl(baseUrl, '/api/hubs/parent/activity', {
+      learnerId,
+      limit,
+      cursor,
+    });
+    return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+  }
+
   return {
     async readParentHub(learnerId = null) {
       const url = buildRequestUrl(baseUrl, '/api/hubs/parent', { learnerId });
-      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+      const payload = await fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+      const resolvedLearnerId = payload?.learnerId || learnerId || payload?.parentHub?.selectedLearnerId || '';
+      try {
+        const history = await readParentRecentSessions({
+          learnerId: resolvedLearnerId,
+          limit: 6,
+        });
+        if (Array.isArray(history?.recentSessions) && payload?.parentHub) {
+          return {
+            ...payload,
+            parentHub: {
+              ...payload.parentHub,
+              recentSessions: history.recentSessions,
+            },
+            parentHistory: {
+              recentSessions: {
+                status: 'loaded',
+                page: history.page || null,
+              },
+            },
+          };
+        }
+      } catch (error) {
+        return {
+          ...payload,
+          parentHistory: {
+            recentSessions: {
+              status: 'error',
+              error: error?.message || 'Recent sessions could not be loaded.',
+            },
+          },
+        };
+      }
+      return payload;
     },
+    readParentRecentSessions,
+    readParentActivity,
     async readAdminHub({ learnerId = null, requestId = null, auditLimit = 20 } = {}) {
       const url = buildRequestUrl(baseUrl, '/api/hubs/admin', {
         learnerId,

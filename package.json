@@ -33,6 +33,8 @@
     "deploy:oauth": "npm run deploy",
     "deploy:ci": "npm run deploy",
     "ops:tail": "node ./scripts/wrangler-oauth.mjs tail ks2-mastery --format pretty",
+    "read-models:backfill": "node ./scripts/backfill-learner-read-models.mjs",
+    "smoke:production:bootstrap": "node ./scripts/probe-production-bootstrap.mjs",
     "smoke:production:grammar": "node ./scripts/grammar-production-smoke.mjs",
     "smoke:production:punctuation": "node ./scripts/punctuation-production-smoke.mjs",
     "test": "node --test",
