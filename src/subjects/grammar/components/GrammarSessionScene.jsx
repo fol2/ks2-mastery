@@ -10,6 +10,7 @@ import {
   grammarSessionProgressLabel,
   grammarSessionInfoChips,
 } from '../session-ui.js';
+import { translateGrammarSessionError } from '../module.js';
 
 function optionLabel(option) {
   if (Array.isArray(option)) return String(option[1] ?? option[0] ?? '');
@@ -522,7 +523,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
         {item.checkLine ? <p className="grammar-check-line">{item.checkLine}</p> : null}
         <ReadAloudControls grammar={grammar} />
         {!isMiniTest ? <GuidancePanel support={session.supportGuidance} /> : null}
-        {help.showAiActions ? (
+        {help.showAiActions && !(isFeedback && grammar.feedback?.result?.correct === true) ? (
           <AiEnrichmentActions
             isMiniTest={isMiniTest}
             isFeedback={isFeedback}
@@ -574,8 +575,8 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
           />
           {grammar.error ? (
             <div className="feedback bad" role="alert">
-              <strong>Grammar command failed</strong>
-              <div>{grammar.error}</div>
+              <strong>Something went wrong</strong>
+              <div>{translateGrammarSessionError(grammar.error)}</div>
             </div>
           ) : null}
           <div className="actions">

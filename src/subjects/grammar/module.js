@@ -33,6 +33,52 @@ export function translateGrammarTransferError(error) {
   return GRAMMAR_TRANSFER_GENERIC_ERROR_COPY;
 }
 
+// U3 follower: child-copy translation for non-transfer Grammar session errors.
+// The generic fallback is the Phase 3 plan copy (`That did not save. Try again.`,
+// plan §U3 line 596). Known Worker codes that surface during an active session
+// (submit, repair, advance, enrichment) are mapped to child-friendly strings;
+// anything else — including stringified raw Worker messages routed through
+// `setGrammarError` — collapses to the generic fallback so no raw engine copy
+// ever reaches the learner. `GrammarSessionScene.jsx` renders only the return
+// value of this helper inside the `role="alert"` banner.
+export const GRAMMAR_SESSION_ERROR_COPY = Object.freeze({
+  grammar_session_stale: 'That round has ended. Start a new round to keep practising.',
+  grammar_answer_required: 'Choose or type an answer before submitting.',
+  grammar_answer_invalid: 'That answer looks off. Check it and try again.',
+  grammar_advance_not_ready: 'Wait for the feedback before moving on.',
+  grammar_repair_not_ready: 'That help is not ready yet. Try again in a moment.',
+  grammar_repair_unavailable_for_mode: 'That help is not available in this mode.',
+  grammar_support_unavailable_for_mode: 'That support is not available in this mode.',
+  grammar_ai_unavailable_for_mini_test: 'Explanations are hidden until the mini test is finished.',
+});
+
+export const GRAMMAR_SESSION_GENERIC_ERROR_COPY = 'That did not save. Try again.';
+
+// Copy used verbatim by `module.js` for client-side pre-submit validation and
+// other known session-surface strings that are already child-safe. If the
+// helper sees one of these incoming verbatim (no error code attached, just a
+// string in `grammar.error`), it preserves the string instead of collapsing
+// to the generic fallback.
+const GRAMMAR_SESSION_KNOWN_CHILD_MESSAGES = new Set([
+  'Choose or type an answer before submitting.',
+]);
+
+export function translateGrammarSessionError(error) {
+  if (error === null || error === undefined) return GRAMMAR_SESSION_GENERIC_ERROR_COPY;
+  if (typeof error === 'string') {
+    if (GRAMMAR_SESSION_KNOWN_CHILD_MESSAGES.has(error)) return error;
+    return GRAMMAR_SESSION_GENERIC_ERROR_COPY;
+  }
+  const code = error?.payload?.code
+    || error?.extra?.code
+    || error?.code
+    || '';
+  if (code && Object.prototype.hasOwnProperty.call(GRAMMAR_SESSION_ERROR_COPY, code)) {
+    return GRAMMAR_SESSION_ERROR_COPY[code];
+  }
+  return GRAMMAR_SESSION_GENERIC_ERROR_COPY;
+}
+
 function selectedLearnerId(context) {
   return (context?.store?.getState?.() || context?.appState || {})?.learners?.selectedId || '';
 }

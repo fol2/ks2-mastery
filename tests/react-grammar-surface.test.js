@@ -478,9 +478,14 @@ test('Grammar session exposes non-scored AI enrichment triggers after marking', 
   assert.doesNotMatch(html, /Explain another way/);
   assert.doesNotMatch(html, /Revision cards/);
 
-  // Submit the correct response so the session enters feedback phase.
+  // U3 follower: the AI enrichment triggers surface in the wrong-answer
+  // branch of feedback (correct answers resolve with a single-line
+  // explanation + Next question only, per plan §U3 lines 592-593).
+  const wrongAnswer = sample.sample.inputSpec.options.find(
+    (option) => option.value !== sample.correctResponse.answer,
+  ).value;
   harness.dispatch('grammar-submit-form', {
-    formData: grammarResponseFormData(sample.correctResponse),
+    formData: grammarResponseFormData({ answer: wrongAnswer }),
   });
   assert.equal(harness.store.getState().subjectUi.grammar.phase, 'feedback');
 
@@ -2078,6 +2083,14 @@ test('U3: post-answer correct shows Next question and hides repair', () => {
   assert.doesNotMatch(sessionHtml, /Retry/);
   assert.doesNotMatch(sessionHtml, /Show a step/);
   assert.doesNotMatch(sessionHtml, /Show answer/);
+  // U3 follower: correct answers also suppress every remediation surface.
+  // `Worked solution`, `Similar problem`, `Faded support`, and the AI
+  // enrichment relabel (`Explain another way`) are post-answer-wrong
+  // affordances only — never surfaced when the learner is correct.
+  assert.doesNotMatch(sessionHtml, /Worked solution/i);
+  assert.doesNotMatch(sessionHtml, /Similar problem/i);
+  assert.doesNotMatch(sessionHtml, /Faded support/i);
+  assert.doesNotMatch(sessionHtml, /Explain another way/i);
   assert.doesNotMatch(sessionHtml, /Worker authority/i);
   assert.doesNotMatch(sessionHtml, /Worker-marked question/i);
 });
@@ -2138,4 +2151,59 @@ test('U3: forbidden-terms sweep runs across the full session HTML in every phase
       `post-answer session leaked forbidden term: ${term}`,
     );
   }
+
+  // U3 follower: post-answer correct — sparser surface but still needs the
+  // forbidden-terms sweep so a future regression (e.g., a progress summary
+  // leaking `Worker authority` into the correct-answer feedback) is caught.
+  const { harness: harness2, sample: sample2 } = u3HarnessWithSample();
+  harness2.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData(sample2.correctResponse),
+  });
+  sessionHtml = u3ScopeToSessionHtml(harness2.render());
+  for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+    assert.doesNotMatch(
+      sessionHtml,
+      new RegExp(escapeRegExp(term), 'i'),
+      `post-answer-correct session leaked forbidden term: ${term}`,
+    );
+  }
+});
+
+// U3 follower: the error banner is rendered via `translateGrammarSessionError`
+// so raw Worker strings never leak to children. The pre-submit validation
+// path (dispatching `grammar-submit-form` with no response) writes a
+// known child-copy string to `grammar.error`; the banner must render that
+// copy and carry `role="alert"` for assistive tech. This test pins both.
+test('U3 follower: error banner renders child copy with role="alert"', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = grammarOracleSample('fronted_adverbial_choose');
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 2,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  // Invalid submit: FormData carries no `answer`, triggering the client-side
+  // `setGrammarError(context, 'Choose or type an answer before submitting.')`
+  // branch in `module.js`.
+  harness.dispatch('grammar-submit-form', { formData: new FormData() });
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.match(grammar.error, /Choose or type an answer/);
+
+  const sessionHtml = u3ScopeToSessionHtml(harness.render());
+  // Banner preserves `role="alert"` (assistive tech contract).
+  assert.match(sessionHtml, /<div class="feedback bad" role="alert">/);
+  // Banner renders the child-copy translation, NOT the adult-diagnostic
+  // `Grammar command failed` title the pre-follower JSX used.
+  assert.doesNotMatch(sessionHtml, /Grammar command failed/);
+  assert.match(sessionHtml, /Something went wrong/);
+  // In this validation path, the translator preserves the already-child
+  // copy string verbatim — so the banner body shows it.
+  assert.match(sessionHtml, /Choose or type an answer before submitting\./);
 });
