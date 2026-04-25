@@ -174,6 +174,59 @@ function GuidancePanel({ support }) {
   );
 }
 
+function AiEnrichmentPanel({ enrichment }) {
+  if (!enrichment) return null;
+  const ready = enrichment.status === 'ready';
+  const explanation = enrichment.explanation || {};
+  const cards = Array.isArray(enrichment.revisionCards) ? enrichment.revisionCards : [];
+  const drills = Array.isArray(enrichment.revisionDrills) ? enrichment.revisionDrills : [];
+  const notices = Array.isArray(enrichment.notices) ? enrichment.notices.filter(Boolean) : [];
+
+  return (
+    <aside className={`grammar-ai-enrichment ${ready ? 'ready' : 'failed'}`} aria-label="Grammar enrichment">
+      <div className="grammar-ai-head">
+        <span className="chip good">Non-scored</span>
+        <strong>{ready ? (explanation.title || 'Grammar explanation') : 'Enrichment unavailable'}</strong>
+      </div>
+
+      {ready && explanation.body ? <p>{explanation.body}</p> : null}
+      {!ready && enrichment.error?.message ? <p>{enrichment.error.message}</p> : null}
+
+      {ready && Array.isArray(explanation.keyPoints) && explanation.keyPoints.length ? (
+        <ul className="grammar-ai-points">
+          {explanation.keyPoints.map((point) => <li key={point}>{point}</li>)}
+        </ul>
+      ) : null}
+
+      {cards.length ? (
+        <div className="grammar-ai-cards">
+          {cards.map((card, index) => (
+            <div className="grammar-ai-card" key={`${card.front || card.back}-${index}`}>
+              {card.title ? <span>{card.title}</span> : null}
+              {card.front ? <strong>{card.front}</strong> : null}
+              {card.back ? <p>{card.back}</p> : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {drills.length ? (
+        <div className="grammar-ai-drills">
+          {drills.map((drill) => (
+            <span className="chip" key={drill.templateId}>{drill.label || drill.templateId}</span>
+          ))}
+        </div>
+      ) : null}
+
+      {notices.length ? (
+        <ul className="grammar-ai-notices">
+          {notices.map((notice) => <li key={notice}>{notice}</li>)}
+        </ul>
+      ) : null}
+    </aside>
+  );
+}
+
 export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
   const session = grammar.session || {};
   const item = session.currentItem || {};
@@ -205,6 +258,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
         <p className="grammar-prompt">{item.promptText || 'Loading the next Grammar item...'}</p>
         {item.checkLine ? <p className="grammar-check-line">{item.checkLine}</p> : null}
         <GuidancePanel support={session.supportGuidance} />
+        <AiEnrichmentPanel enrichment={grammar.aiEnrichment} />
 
         <form
           className="grammar-answer-form"

@@ -11,6 +11,7 @@ const GRAMMAR_COMMANDS = Object.freeze([
   'continue-session',
   'end-session',
   'save-prefs',
+  'request-ai-enrichment',
   'reset-learner',
 ]);
 
@@ -71,19 +72,22 @@ export function createGrammarCommandHandlers({ now, random } = {}) {
         state: result.state,
         projections,
         now: nowValue,
+        aiEnrichment: result.aiEnrichment,
       }),
       projections,
       events: projectedEvents.events,
       domainEvents: projectedEvents.domainEvents,
       reactionEvents: projectedEvents.reactionEvents,
       toastEvents: projectedEvents.toastEvents,
-      runtimeWrite: {
-        state: result.state,
-        data: result.data,
-        practiceSession: result.practiceSession,
-        gameState: projectedRewards.changedGameState,
-        events: projectedEvents.events,
-      },
+      runtimeWrite: result.changed === false
+        ? null
+        : {
+          state: result.state,
+          data: result.data,
+          practiceSession: result.practiceSession,
+          gameState: projectedRewards.changedGameState,
+          events: projectedEvents.events,
+        },
     };
   }
 

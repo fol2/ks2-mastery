@@ -68,6 +68,35 @@ test('client bundle audit fails when Grammar server engine or content enters the
   }, /server-authoritative Grammar engine\/content/);
 });
 
+test('client bundle audit fails on browser-side AI provider key tokens', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
+  const bundle = path.join(dir, 'app.bundle.js');
+  const metafile = path.join(dir, 'app.bundle.meta.json');
+  const publicDir = path.join(dir, 'public');
+  await mkdir(publicDir, { recursive: true });
+  await writeFile(bundle, 'window.localStorage.setItem("OPENAI_API_KEY", "browser-key");\n');
+  await writeFile(metafile, JSON.stringify({
+    inputs: {
+      'src/main.js': { bytes: 1 },
+    },
+  }));
+
+  assert.throws(() => {
+    execFileSync(process.execPath, [
+      './scripts/audit-client-bundle.mjs',
+      '--bundle',
+      bundle,
+      '--metafile',
+      metafile,
+      '--public-dir',
+      publicDir,
+    ], {
+      cwd: process.cwd(),
+      stdio: 'pipe',
+    });
+  }, /browser-side AI provider key flow/);
+});
+
 test('client bundle audit permits reviewed endpoint strings without content modules', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
   const bundle = path.join(dir, 'app.bundle.js');

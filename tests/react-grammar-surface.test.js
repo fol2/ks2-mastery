@@ -223,6 +223,69 @@ test('Grammar analytics falls back to legacy recent attempt result payloads', ()
   assert.doesNotMatch(html, /review · score 0\/1/);
 });
 
+test('Grammar session renders non-scored AI enrichment from the Worker read model', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.store.updateSubjectUi('grammar', normaliseGrammarReadModel({
+    phase: 'session',
+    session: {
+      id: 'grammar-ai-session',
+      mode: 'smart',
+      type: 'practice',
+      targetCount: 1,
+      answered: 0,
+      currentItem: {
+        templateLabel: 'Choose the correct sentence',
+        domain: 'Adverbials',
+        questionType: 'choose',
+        promptText: 'Choose the sentence with a correctly punctuated fronted adverbial.',
+        inputSpec: {
+          type: 'single_choice',
+          options: [
+            { value: 'a', label: 'After lunch, we revised grammar.' },
+            { value: 'b', label: 'After lunch we revised grammar.' },
+          ],
+        },
+      },
+      serverAuthority: 'worker',
+    },
+    aiEnrichment: {
+      kind: 'explanation',
+      status: 'ready',
+      nonScored: true,
+      source: 'server-validated-ai',
+      explanation: {
+        title: 'Fronted adverbials',
+        body: 'A fronted adverbial comes before the main clause and usually takes a comma.',
+        keyPoints: ['Find the opener before the main clause.'],
+      },
+      revisionCards: [{
+        title: 'Comma check',
+        front: 'Find the fronted adverbial.',
+        back: 'Check the comma after the opener.',
+      }],
+      revisionDrills: [{
+        templateId: 'fronted_adverbial_choose',
+        label: 'Reviewed adverbial drill',
+        deterministic: true,
+      }],
+      notices: ['This enrichment is non-scored.'],
+    },
+  }, learnerId));
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+
+  const html = harness.render();
+
+  assert.match(html, /Non-scored/);
+  assert.match(html, /Fronted adverbials/);
+  assert.match(html, /Find the opener before the main clause/);
+  assert.match(html, /Reviewed adverbial drill/);
+  assert.match(html, /This enrichment is non-scored/);
+  assert.doesNotMatch(html, /correctAnswer/);
+});
+
 test('Grammar command responses are pinned to the learner that sent them', async () => {
   let resolveCommand;
   const toasts = [];

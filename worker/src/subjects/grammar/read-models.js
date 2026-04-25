@@ -415,6 +415,79 @@ function evidenceSummary({ concepts, patterns }) {
   ];
 }
 
+function safeAiTextList(value, limit = 5) {
+  return (Array.isArray(value) ? value : [])
+    .map((entry) => String(entry || '').trim())
+    .filter(Boolean)
+    .slice(0, limit);
+}
+
+function safeAiEnrichment(raw) {
+  if (!isPlainObject(raw)) return null;
+  const kind = ['explanation', 'revision-card', 'parent-summary'].includes(raw.kind)
+    ? raw.kind
+    : 'explanation';
+  const status = raw.status === 'ready' ? 'ready' : 'failed';
+  const output = {
+    kind,
+    status,
+    nonScored: raw.nonScored !== false,
+    generatedAt: asTs(raw.generatedAt, 0),
+  };
+  if (raw.source === 'server-validated-ai') output.source = raw.source;
+  if (isPlainObject(raw.error)) {
+    output.error = {
+      code: typeof raw.error.code === 'string' ? raw.error.code : 'grammar_ai_enrichment_failed',
+      message: typeof raw.error.message === 'string' ? raw.error.message : 'Grammar enrichment is unavailable.',
+    };
+  }
+  if (isPlainObject(raw.concept)) {
+    output.concept = {
+      id: typeof raw.concept.id === 'string' ? raw.concept.id : '',
+      name: typeof raw.concept.name === 'string' ? raw.concept.name : '',
+      domain: typeof raw.concept.domain === 'string' ? raw.concept.domain : '',
+    };
+  } else {
+    output.concept = null;
+  }
+  if (isPlainObject(raw.explanation)) {
+    output.explanation = {
+      title: typeof raw.explanation.title === 'string' ? raw.explanation.title : '',
+      body: typeof raw.explanation.body === 'string' ? raw.explanation.body : '',
+      keyPoints: safeAiTextList(raw.explanation.keyPoints, 5),
+    };
+  }
+  output.revisionCards = (Array.isArray(raw.revisionCards) ? raw.revisionCards : [])
+    .filter(isPlainObject)
+    .map((card) => ({
+      title: typeof card.title === 'string' ? card.title : '',
+      front: typeof card.front === 'string' ? card.front : '',
+      back: typeof card.back === 'string' ? card.back : '',
+    }))
+    .filter((card) => card.front || card.back)
+    .slice(0, 4);
+  output.parentSummary = isPlainObject(raw.parentSummary)
+    ? {
+      title: typeof raw.parentSummary.title === 'string' ? raw.parentSummary.title : '',
+      body: typeof raw.parentSummary.body === 'string' ? raw.parentSummary.body : '',
+      nextSteps: safeAiTextList(raw.parentSummary.nextSteps, 4),
+    }
+    : null;
+  output.revisionDrills = (Array.isArray(raw.revisionDrills) ? raw.revisionDrills : [])
+    .filter(isPlainObject)
+    .map((drill) => ({
+      templateId: typeof drill.templateId === 'string' ? drill.templateId : '',
+      label: typeof drill.label === 'string' ? drill.label : '',
+      conceptIds: Array.isArray(drill.conceptIds) ? drill.conceptIds.filter(Boolean).map(String) : [],
+      questionType: typeof drill.questionType === 'string' ? drill.questionType : '',
+      deterministic: drill.deterministic !== false,
+    }))
+    .filter((drill) => drill.templateId)
+    .slice(0, 6);
+  output.notices = safeAiTextList(raw.notices, 4);
+  return output;
+}
+
 function capabilityMetadata() {
   const modes = {
     learn: { label: 'Learn a concept', detail: 'Focused retrieval on one concept at a time.' },
@@ -429,6 +502,11 @@ function capabilityMetadata() {
   return {
     enabledModes: Array.from(GRAMMAR_ENABLED_MODES).map((id) => ({ id, ...(modes[id] || { label: id }) })),
     lockedModes: Array.from(GRAMMAR_LOCKED_MODES).map((id) => ({ id, label: modes[id]?.label || id, reason: 'coming-next' })),
+    aiEnrichment: {
+      enabled: true,
+      nonScored: true,
+      kinds: ['explanation', 'revision-card', 'parent-summary'],
+    },
   };
 }
 
@@ -437,6 +515,7 @@ export function buildGrammarReadModel({
   state,
   projections = null,
   now = Date.now(),
+  aiEnrichment = null,
 } = {}) {
   const safeState = cloneSerialisable(state) || {};
   const concepts = conceptMap(safeState, now);
@@ -473,6 +552,7 @@ export function buildGrammarReadModel({
       recentActivity: recentActivityFromAttempts(recentAttempts),
     },
     capabilities: capabilityMetadata(),
+    aiEnrichment: safeAiEnrichment(aiEnrichment),
     projections: projections ? cloneSerialisable(projections) : null,
     error: typeof safeState.error === 'string' ? safeState.error : '',
   };
