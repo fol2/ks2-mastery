@@ -2,8 +2,11 @@
 // Output is byte-identical to the original `monsterMotionStyle` helper.
 // Stage-tier profiles select amplitude bands so older monsters drift more
 // slowly while younger ones bob with sharper energy.
+//
+// The registered EffectSpec for `monster-motion-float` now lives in the
+// `motion` effect template; this module hosts the pure compute helper the
+// template calls back into.
 
-import { defineEffect } from '../define-effect.js';
 import { hashString, valueBetween } from '../seed.js';
 
 const STAGE_PROFILES = Object.freeze({
@@ -54,14 +57,3 @@ export function computeMonsterMotionStyle(seed, context = 'card') {
     '--monster-float-tilt-b': `${tiltB.toFixed(2)}deg`,
   };
 }
-
-export const monsterMotionFloatEffect = defineEffect({
-  kind: 'monster-motion-float',
-  lifecycle: 'continuous',
-  layer: 'base',
-  surfaces: ['*'],
-  reducedMotion: 'simplify',
-  applyTransform({ monster, context }) {
-    return computeMonsterMotionStyle(monster, context);
-  },
-});

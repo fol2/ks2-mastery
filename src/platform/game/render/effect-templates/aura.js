@@ -3,12 +3,11 @@
 // the intensity + dual-colour CSS variables the existing stylesheet reads.
 
 import { createElement } from 'react';
+import { TEMPLATE_PARAM_SCHEMAS } from './param-schemas.js';
 
 export default {
   id: 'aura',
-  paramSchema: {
-    intensity: { type: 'number', default: 0.8, min: 0, max: 1 },
-  },
+  paramSchema: TEMPLATE_PARAM_SCHEMAS.aura,
   buildEffectSpec({
     kind,
     lifecycle,

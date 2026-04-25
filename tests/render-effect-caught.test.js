@@ -13,17 +13,20 @@ import {
 import { normaliseMonsterCelebrationEvent } from '../src/platform/game/monster-celebrations.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 
-// The fixture's bundler uses esbuild with `loader: { '.js': 'jsx' }` so the
-// effect module's JSX-in-.js render function compiles cleanly. Direct
-// `import { caughtEffect } from '...'` in node would fail because node
-// cannot parse JSX without a transform — so we feed the absolute path to
-// esbuild instead.
+// `caught` registers through the `particles-burst` template via
+// `runtimeRegistration`. The fixture's bundler compiles the JSX-bearing
+// celebration template cleanly; tests pre-register the JSX templates via
+// the synchronous `__registerCelebrationTemplates` seam (mirrors the
+// production bootstrap path in `src/app/App.jsx`).
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CAUGHT_PATH = path.join(rootDir, 'src/platform/game/render/effects/caught.js');
 
 const REGISTER_CAUGHT = `
-  import * as __caughtMod from ${JSON.stringify(CAUGHT_PATH)};
-  registerEffect(__caughtMod.caughtEffect);
+  import { runtimeRegistration } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/runtime-registration.js'))};
+  import { __registerCelebrationTemplates } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/index.js'))};
+  import particlesBurst from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/particles-burst.js'))};
+  import shineStreak from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/shine-streak.js'))};
+  __registerCelebrationTemplates({ particlesBurst, shineStreak });
+  runtimeRegistration({ catalog: undefined });
 `;
 
 function makeMonster(overrides = {}) {
@@ -88,8 +91,14 @@ test('caught effect: dismissal — onComplete drains the queue and persists an a
   const eventTemplate = makeRewardEvent({ id: 'reward.monster:dismissal:caught:inklet' });
   const out = await renderCelebrationLayerFixture({
     registrations: `
-      import * as __caughtMod from ${JSON.stringify(CAUGHT_PATH)};
-      const __originalCaught = __caughtMod.caughtEffect;
+      import { runtimeRegistration } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/runtime-registration.js'))};
+      import { __registerCelebrationTemplates } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/index.js'))};
+      import particlesBurst from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/particles-burst.js'))};
+      import shineStreak from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/shine-streak.js'))};
+      import { lookupEffect } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/registry.js'))};
+      __registerCelebrationTemplates({ particlesBurst, shineStreak });
+      runtimeRegistration({ catalog: undefined });
+      const __originalCaught = lookupEffect('caught');
       registerEffect(defineEffect({
         kind: 'caught',
         lifecycle: 'transient',

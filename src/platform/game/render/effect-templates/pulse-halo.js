@@ -3,13 +3,11 @@
 
 import { createElement } from 'react';
 import { resolveMonsterColour } from '../effects/palette.js';
+import { TEMPLATE_PARAM_SCHEMAS } from './param-schemas.js';
 
 export default {
   id: 'pulse-halo',
-  paramSchema: {
-    intensity: { type: 'number', default: 0.5, min: 0, max: 1 },
-    palette: { type: 'enum', default: 'pale', values: ['accent', 'secondary', 'pale'] },
-  },
+  paramSchema: TEMPLATE_PARAM_SCHEMAS['pulse-halo'],
   buildEffectSpec({
     kind,
     lifecycle,

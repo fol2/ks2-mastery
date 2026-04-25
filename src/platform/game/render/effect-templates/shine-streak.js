@@ -3,10 +3,11 @@
 // `mega.js` body verbatim.
 
 import { CelebrationShell, clampStage, stageName } from '../effects/celebration-shell.js';
+import { TEMPLATE_PARAM_SCHEMAS } from './param-schemas.js';
 
 export default {
   id: 'shine-streak',
-  paramSchema: {},
+  paramSchema: TEMPLATE_PARAM_SCHEMAS['shine-streak'],
   buildEffectSpec({
     kind,
     lifecycle,

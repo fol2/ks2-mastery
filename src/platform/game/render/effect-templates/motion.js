@@ -10,6 +10,7 @@ import {
 import {
   computeMonsterMotionStyle,
 } from '../effects/monster-motion-float.js';
+import { TEMPLATE_PARAM_SCHEMAS } from './param-schemas.js';
 
 const MOTION_KIND_HANDLERS = {
   'egg-breathe': computeEggBreatheStyle,
@@ -18,7 +19,7 @@ const MOTION_KIND_HANDLERS = {
 
 export default {
   id: 'motion',
-  paramSchema: {},
+  paramSchema: TEMPLATE_PARAM_SCHEMAS.motion,
   buildEffectSpec({
     kind,
     lifecycle,

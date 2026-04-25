@@ -184,6 +184,24 @@ test('validateEffectConfigForPublish: catalog entry with unknown template fails'
   assert.ok(result.errors.some((e) => /template/i.test(e.message) && /banana/.test(e.message)));
 });
 
+// 12a. Binding row with an unreviewed continuous entry fails — the slot
+//     name must surface in the error so the admin can find the row in the
+//     queue.
+test('validateEffectConfigForPublish: unreviewed continuous binding entry fails with slot named', () => {
+  const config = bundledEffectConfig();
+  const firstAsset = MONSTER_ASSET_MANIFEST.assets[0].key;
+  config.bindings[firstAsset].continuous[0].reviewed = false;
+  const result = validateEffectConfigForPublish(config, {
+    knownKinds: knownKindsFromCatalog(config.catalog),
+  });
+  assert.equal(result.ok, false);
+  const named = result.errors.find((e) => e.code === 'effect_binding_entry_unreviewed');
+  assert.ok(named, `expected effect_binding_entry_unreviewed error; got ${JSON.stringify(result.errors)}`);
+  assert.equal(named.assetKey, firstAsset);
+  assert.equal(named.field, 'continuous');
+  assert.match(named.message, /continuous\[0\]/);
+});
+
 // 13. Catalog entry with enum value not in declared values fails.
 test('validateEffectConfigForPublish: catalog enum default outside declared values fails', () => {
   const config = bundledEffectConfig();

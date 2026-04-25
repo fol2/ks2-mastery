@@ -317,6 +317,59 @@ test('worker rejects publish when the draft has no effect sub-document', async (
   }
 });
 
+test('worker rejects publish when the visual is valid but a catalog entry is unreviewed', async () => {
+  // Visual sub-document is fully reviewed. The effect catalog has a single
+  // entry flipped to `reviewed: false` — the strict-publish gate must aggregate
+  // both validators and surface the catalog issue to the admin.
+  const server = createWorkerRepositoryServer();
+  try {
+    // Read first so the row exists before we force-write a malformed draft —
+    // mirrors the missing-effect-publish test's bootstrap pattern.
+    await adminHubVisual(server);
+    const draft = reviewedMergedDraft();
+    // Pick any bundled catalog entry and unreview it.
+    draft.effect.catalog.shiny.reviewed = false;
+    server.DB.db.prepare(`
+      UPDATE platform_monster_visual_config
+      SET draft_json = ?,
+          draft_revision = ?,
+          draft_updated_at = ?,
+          draft_updated_by_account_id = ?
+      WHERE id = ?
+    `).run(
+      JSON.stringify(draft),
+      1,
+      Date.UTC(2026, 3, 24, 13, 0),
+      'adult-admin',
+      'global',
+    );
+
+    const publishResponse = await adminFetch(server, '/api/admin/monster-visual-config/publish', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        mutation: {
+          requestId: 'effect-unreviewed-publish',
+          expectedDraftRevision: 1,
+        },
+      }),
+    });
+    const publishPayload = await publishResponse.json();
+
+    assert.equal(publishResponse.status, 400);
+    assert.equal(publishPayload.code, 'monster_visual_publish_blocked');
+    assert.ok(
+      publishPayload.validation.errors.some((entry) => /reviewed/i.test(entry.message || '') && /shiny/.test(entry.message || '')),
+      `expected aggregated validation error naming the unreviewed catalog entry, got ${JSON.stringify(publishPayload.validation.errors)}`,
+    );
+
+    const after = await adminHubVisual(server);
+    assert.equal(after.status.publishedVersion, 1, 'live published config did not change');
+  } finally {
+    server.close();
+  }
+});
+
 test('worker restore returns merged visual + effect into the draft', async () => {
   const server = createWorkerRepositoryServer();
   try {

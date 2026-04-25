@@ -10,6 +10,7 @@
 // stay Node-loadable.
 
 import { CelebrationShell, clampStage, stageName } from '../effects/celebration-shell.js';
+import { TEMPLATE_PARAM_SCHEMAS } from './param-schemas.js';
 
 function eyebrowForEvolve(fromStage, toStage) {
   if (fromStage === 0 && toStage === 1) return 'Hatched';
@@ -57,13 +58,9 @@ function renderEvolve({ event, onComplete, tunables }) {
 
 export default {
   id: 'particles-burst',
-  paramSchema: {
-    // The runtime caller threads the canonical `reward.monster` event
-    // through `params`; the mode discriminator picks which celebration body
-    // to render. Tunables (`showParticles`, `showShine`, `modifierClass`)
-    // are applied per-kind below.
-    mode: { type: 'enum', values: ['caught', 'evolve'], required: true },
-  },
+  // The mode discriminator (caught | evolve) is the only authored param;
+  // the canonical `reward.monster` event flows through liveParams at render.
+  paramSchema: TEMPLATE_PARAM_SCHEMAS['particles-burst'],
   buildEffectSpec({
     kind,
     lifecycle,

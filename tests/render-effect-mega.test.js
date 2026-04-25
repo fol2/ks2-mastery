@@ -14,11 +14,17 @@ import { normaliseMonsterCelebrationEvent } from '../src/platform/game/monster-c
 import { installMemoryStorage } from './helpers/memory-storage.js';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const MEGA_PATH = path.join(rootDir, 'src/platform/game/render/effects/mega.js');
 
+// `mega` registers through the `shine-streak` template via
+// `runtimeRegistration`; pre-registering JSX templates mirrors the
+// production bootstrap path.
 const REGISTER_MEGA = `
-  import * as __megaMod from ${JSON.stringify(MEGA_PATH)};
-  registerEffect(__megaMod.megaEffect);
+  import { runtimeRegistration } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/runtime-registration.js'))};
+  import { __registerCelebrationTemplates } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/index.js'))};
+  import particlesBurst from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/particles-burst.js'))};
+  import shineStreak from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/shine-streak.js'))};
+  __registerCelebrationTemplates({ particlesBurst, shineStreak });
+  runtimeRegistration({ catalog: undefined });
 `;
 
 function makeMonster(overrides = {}) {
@@ -108,8 +114,14 @@ test('mega effect: dismissal — onComplete drains the queue and persists an ack
   const eventTemplate = makeMegaEvent({ id: 'reward.monster:dismissal:mega:inklet' });
   const out = await renderCelebrationLayerFixture({
     registrations: `
-      import * as __megaMod from ${JSON.stringify(MEGA_PATH)};
-      const __original = __megaMod.megaEffect;
+      import { runtimeRegistration } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/runtime-registration.js'))};
+      import { __registerCelebrationTemplates } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/index.js'))};
+      import particlesBurst from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/particles-burst.js'))};
+      import shineStreak from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/effect-templates/shine-streak.js'))};
+      import { lookupEffect } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/registry.js'))};
+      __registerCelebrationTemplates({ particlesBurst, shineStreak });
+      runtimeRegistration({ catalog: undefined });
+      const __original = lookupEffect('mega');
       registerEffect(defineEffect({
         kind: 'mega',
         lifecycle: 'transient',

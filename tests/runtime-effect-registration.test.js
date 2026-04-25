@@ -400,6 +400,56 @@ test('runtimeRegistration: catalog=null behaves the same as undefined', () => {
   }
 });
 
+// 11a. Edge case — calling twice with different catalogs has the second win.
+test('runtimeRegistration: second call replaces first catalog override (config-change refresh)', () => {
+  setupCapture();
+  try {
+    const firstCatalog = {
+      shiny: {
+        kind: 'shiny',
+        template: 'sparkle',
+        lifecycle: 'persistent',
+        layer: 'overlay',
+        surfaces: ['codex', 'lightbox', 'home'],
+        reducedMotion: 'simplify',
+        zIndex: 10,
+        exclusiveGroup: 'rarity',
+        params: {
+          intensity: { type: 'number', default: 0.3, min: 0, max: 1 },
+          palette: { type: 'enum', default: 'accent', values: ['accent', 'secondary', 'pale'] },
+        },
+        reviewed: true,
+      },
+    };
+    runtimeRegistration({ catalog: firstCatalog });
+    const after1 = lookupEffect('shiny');
+    assert.equal(after1.params.intensity?.default, 0.3, 'first catalog default applied');
+
+    const secondCatalog = {
+      shiny: {
+        kind: 'shiny',
+        template: 'sparkle',
+        lifecycle: 'persistent',
+        layer: 'overlay',
+        surfaces: ['codex', 'lightbox', 'home'],
+        reducedMotion: 'simplify',
+        zIndex: 10,
+        exclusiveGroup: 'rarity',
+        params: {
+          intensity: { type: 'number', default: 0.95, min: 0, max: 1 },
+          palette: { type: 'enum', default: 'accent', values: ['accent', 'secondary', 'pale'] },
+        },
+        reviewed: true,
+      },
+    };
+    runtimeRegistration({ catalog: secondCatalog });
+    const after2 = lookupEffect('shiny');
+    assert.equal(after2.params.intensity?.default, 0.95, 'second catalog must replace first');
+  } finally {
+    teardown();
+  }
+});
+
 // 11. Edge case — catalog === {} behaves like undefined.
 test('runtimeRegistration: catalog={} behaves the same as undefined', () => {
   setupCapture();

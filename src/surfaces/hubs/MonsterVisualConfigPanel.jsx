@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MONSTER_ASSET_MANIFEST } from '../../platform/game/monster-asset-manifest.js';
 import {
   MONSTER_VISUAL_CONTEXTS,
-  validateMonsterVisualConfigForPublish,
+  validatePublishedConfigForPublish,
 } from '../../platform/game/monster-visual-config.js';
 import { EFFECT_CONFIG_CELEBRATION_KINDS } from '../../platform/game/render/effect-config-schema.js';
 import { MonsterVisualFieldControls } from './MonsterVisualFieldControls.jsx';
@@ -220,7 +220,15 @@ export function MonsterVisualConfigPanel({ model, accountId = '', actions }) {
     });
   }, [activeKey, dirty, draft, status.draftRevision, status.manifestHash]);
 
-  const validation = useMemo(() => validateMonsterVisualConfigForPublish(draft), [draft]);
+  // Use the combined validator so the chip reflects the same gate the worker
+  // applies on publish. The draft already carries `effect`; for the legacy
+  // visual-only path we split-and-recombine (visual sub-document + effect)
+  // so the orchestrator sees the same envelope shape the worker handler
+  // produces from its retained published row.
+  const validation = useMemo(() => {
+    const { effect, ...visualOnly } = draft || {};
+    return validatePublishedConfigForPublish({ visual: visualOnly, effect });
+  }, [draft]);
   const selectedManifestAsset = useMemo(
     () => MONSTER_ASSET_MANIFEST.assets.find((asset) => asset.key === selectedAssetKey) || MONSTER_ASSET_MANIFEST.assets[0],
     [selectedAssetKey],

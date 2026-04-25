@@ -1625,6 +1625,17 @@ function extractHeroBgUrl(styleAttr) {
 const appRuntime = {
   contextFor,
   monsterVisualConfig: () => repositories.monsterVisualConfig?.read?.() || null,
+  // Returns the published `effect` sub-document from the loaded
+  // monsterVisualConfig row. The combined publish envelope from PR #157
+  // stores `{ visual, effect }` together — we surface the `effect` slice so
+  // <MonsterEffectConfigProvider> receives it without re-reading. Bundled
+  // defaults already register in `runtimeRegistration()`, so returning null
+  // here lets the provider stay null and the fallback path activates.
+  monsterEffectConfig: () => {
+    const runtimeConfig = repositories.monsterVisualConfig?.read?.();
+    const effect = runtimeConfig?.config?.effect;
+    return effect && typeof effect === 'object' ? effect : null;
+  },
   buildHomeModel,
   buildCodexModel,
   buildSurfaceChromeModel,

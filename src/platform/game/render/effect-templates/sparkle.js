@@ -9,13 +9,11 @@
 
 import { createElement } from 'react';
 import { resolveMonsterColour } from '../effects/palette.js';
+import { TEMPLATE_PARAM_SCHEMAS } from './param-schemas.js';
 
 export default {
   id: 'sparkle',
-  paramSchema: {
-    intensity: { type: 'number', default: 0.6, min: 0, max: 1 },
-    palette: { type: 'enum', default: 'accent', values: ['accent', 'secondary', 'pale'] },
-  },
+  paramSchema: TEMPLATE_PARAM_SCHEMAS.sparkle,
   buildEffectSpec({
     kind,
     lifecycle,

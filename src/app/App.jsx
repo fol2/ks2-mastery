@@ -105,6 +105,16 @@ export function App({ controller, runtime }) {
   const monsterVisualConfig = runtime.monsterVisualConfig?.() || null;
   const monsterEffectConfig = runtime.monsterEffectConfig?.() || null;
   const baseActions = useMemo(() => runtime.buildSurfaceActions(), [runtime]);
+
+  // Refresh the effect registry whenever the published catalog changes so a
+  // fresh admin publish lands in <MonsterRender>/<CelebrationLayer> without a
+  // page reload. The module-load `runtimeRegistration()` above already
+  // bootstrapped the bundled defaults; this effect re-runs it with the new
+  // catalog (config wins on `kind` collision per U3).
+  useEffect(() => {
+    runtimeRegistration({ catalog: monsterEffectConfig?.catalog });
+  }, [monsterEffectConfig?.catalog]);
+
   const [subjectExitPhase, setSubjectExitPhase] = useState('idle');
   const subjectExitTimer = useRef(null);
 

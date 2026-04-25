@@ -1,17 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { renderMonsterRenderFixture } from './helpers/react-render.js';
 
-const SHINY_MODULE = {
-  path: 'src/platform/game/render/effects/shiny.js',
-  exports: ['shinyEffect'],
-};
+// `shiny` and `rare-glow` are no longer code-defined effect modules — they
+// are catalog entries seeded by the bundled effect config. Tests now register
+// them through the same `runtimeRegistration` path production uses (which in
+// turn flows through the `sparkle` and `pulse-halo` templates).
 
-const RARE_GLOW_MODULE = {
-  path: 'src/platform/game/render/effects/rare-glow.js',
-  exports: ['rareGlowEffect'],
-};
+const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const REGISTER_VIA_RUNTIME = `
+  import { runtimeRegistration } from ${JSON.stringify(path.join(rootDir, 'src/platform/game/render/runtime-registration.js'))};
+  runtimeRegistration({ catalog: undefined });
+`;
 
 function makeMonster(overrides = {}) {
   return {
@@ -33,7 +37,10 @@ function makeMonster(overrides = {}) {
 }
 
 async function run(opts) {
-  const out = await renderMonsterRenderFixture(opts);
+  const out = await renderMonsterRenderFixture({
+    ...opts,
+    registrations: `${REGISTER_VIA_RUNTIME}\n${opts.registrations || ''}`,
+  });
   return JSON.parse(out);
 }
 
@@ -42,7 +49,6 @@ test('shiny: happy path — single overlay element with aria-hidden and accent p
     monster: makeMonster(),
     context: 'codex',
     effects: [{ kind: 'shiny' }],
-    effectModules: [SHINY_MODULE],
   });
 
   // Single overlay span carrying fx-shiny class and aria-hidden.
@@ -62,7 +68,6 @@ test('shiny: happy path — palette=secondary uses monster.secondary', async () 
     monster: makeMonster(),
     context: 'codex',
     effects: [{ kind: 'shiny', params: { palette: 'secondary' } }],
-    effectModules: [SHINY_MODULE],
   });
 
   assert.match(html, /--fx-shiny-color:\s*#FFE9A8/);
@@ -73,7 +78,6 @@ test('shiny: edge case — intensity out of range (1.5) clamps to 1', async () =
     monster: makeMonster(),
     context: 'codex',
     effects: [{ kind: 'shiny', params: { intensity: 1.5 } }],
-    effectModules: [SHINY_MODULE],
   });
 
   assert.match(html, /--fx-shiny-intensity:\s*1(?![\d.])/);
@@ -85,7 +89,6 @@ test('shiny: edge case — monster missing pale palette falls back to accent and
     monster: makeMonster({ pale: '' }),
     context: 'codex',
     effects: [{ kind: 'shiny', params: { palette: 'pale' } }],
-    effectModules: [SHINY_MODULE],
   });
 
   assert.match(html, /--fx-shiny-color:\s*#3E6FA8/);
@@ -100,7 +103,6 @@ test('shiny: edge case — surface "lesson" filtered out, no overlay rendered', 
     monster: makeMonster(),
     context: 'lesson',
     effects: [{ kind: 'shiny' }],
-    effectModules: [SHINY_MODULE],
   });
 
   assert.equal(html.includes('fx-shiny'), false);
@@ -116,7 +118,6 @@ test('shiny: integration — reducedMotion=true emits is-simplified class', asyn
     context: 'codex',
     effects: [{ kind: 'shiny' }],
     reducedMotion: true,
-    effectModules: [SHINY_MODULE],
   });
 
   assert.match(html, /class="fx fx-shiny is-simplified"/);
@@ -128,7 +129,6 @@ test('shiny: exclusiveGroup conflict — rare-glow (later) wins, shiny dropped w
     context: 'codex',
     // Both share exclusiveGroup 'rarity'; rare-glow appears later, so it wins.
     effects: [{ kind: 'shiny' }, { kind: 'rare-glow' }],
-    effectModules: [SHINY_MODULE, RARE_GLOW_MODULE],
   });
 
   // rare-glow renders, shiny does not.

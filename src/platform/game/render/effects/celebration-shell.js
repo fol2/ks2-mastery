@@ -77,10 +77,12 @@ export function CelebrationShell({
 
   // Per-monster admin tunables override the kind-hardcoded props when
   // present. Absent fields fall through so callers without tunables see
-  // exactly today's behaviour.
+  // exactly today's behaviour. `modifierClass` uses `||` (not `??`) so an
+  // empty-string tunable — the bundled default — does not stomp on the
+  // runtime-computed modifier (e.g. `egg-crack` for stage 0→1 evolve).
   const resolvedShowParticles = tunables?.showParticles ?? showParticles;
   const resolvedShowShine = tunables?.showShine ?? showShine;
-  const resolvedModifierClass = tunables?.modifierClass ?? modifierClass;
+  const resolvedModifierClass = tunables?.modifierClass || modifierClass;
 
   const className = `monster-celebration-overlay ${kind}${resolvedModifierClass ? ` ${resolvedModifierClass}` : ''}`;
   const palette = {

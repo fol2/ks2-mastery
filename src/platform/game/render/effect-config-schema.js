@@ -12,6 +12,7 @@
 //     `showShine`, `modifierClass`).
 
 import { MONSTER_ASSET_MANIFEST } from '../monster-asset-manifest.js';
+import { TEMPLATE_PARAM_SCHEMAS as SHARED_TEMPLATE_PARAM_SCHEMAS } from './effect-templates/param-schemas.js';
 
 const ALLOWED_TEMPLATES = Object.freeze([
   'motion',
@@ -24,33 +25,11 @@ const ALLOWED_TEMPLATES = Object.freeze([
 ]);
 
 // Strict-publish needs each catalog entry's params to validate against its
-// template's paramSchema. The schemas themselves live with the templates
-// (which import JSX-bearing celebration code) — we embed a static mirror
-// here so plain `node --test` paths can run the validator without forcing
-// the JSX modules into the import graph. Drift is kept honest by a
-// dedicated test (`tests/effect-templates-paramSchema-mirror.test.js` if
-// future authors need it; today the bundled-defaults regression already
-// exercises every shape).
-const TEMPLATE_PARAM_SCHEMAS = Object.freeze({
-  motion: Object.freeze({}),
-  glow: Object.freeze({
-    intensity: Object.freeze({ type: 'number', default: 0.6, min: 0, max: 1 }),
-    palette: Object.freeze({ type: 'enum', default: 'accent', values: Object.freeze(['accent', 'secondary', 'pale']) }),
-  }),
-  sparkle: Object.freeze({
-    intensity: Object.freeze({ type: 'number', default: 0.6, min: 0, max: 1 }),
-    palette: Object.freeze({ type: 'enum', default: 'accent', values: Object.freeze(['accent', 'secondary', 'pale']) }),
-  }),
-  aura: Object.freeze({
-    intensity: Object.freeze({ type: 'number', default: 0.8, min: 0, max: 1 }),
-  }),
-  'pulse-halo': Object.freeze({
-    intensity: Object.freeze({ type: 'number', default: 0.5, min: 0, max: 1 }),
-    palette: Object.freeze({ type: 'enum', default: 'pale', values: Object.freeze(['accent', 'secondary', 'pale']) }),
-  }),
-  'particles-burst': Object.freeze({}),
-  'shine-streak': Object.freeze({}),
-});
+// template's paramSchema. The schemas themselves are the source of truth in
+// `./effect-templates/param-schemas.js` (a JSX-free sibling so this node-only
+// validator can import them) and the templates re-export from there. No
+// drift possible — both consumers read the same module.
+const TEMPLATE_PARAM_SCHEMAS = SHARED_TEMPLATE_PARAM_SCHEMAS;
 
 const ALLOWED_LIFECYCLES = Object.freeze(['persistent', 'transient', 'continuous']);
 const ALLOWED_LAYERS = Object.freeze(['base', 'overlay']);

@@ -176,18 +176,31 @@ test('changing template resets params to the new template defaults', () => {
   assert.equal(next.params.intensity.default, aura.paramSchema.intensity.default);
 });
 
-// 11. Edge case — Operations users see the panel without edit / save /
-// delete buttons. SSR fixture lets us confirm the read-only output.
-test('Operations role: panel renders read-only — no edit, save, or delete controls', async () => {
+// 11. Edge case — Operations users see the panel without edit controls.
+// SSR fixture lets us confirm the read-only output. The panel does not
+// render a top-level "Save catalog" button (autosave + the parent visual
+// panel's save handle changes), so we assert against the controls the
+// panel DOES render under canManage=true and verify they are gone in
+// read-only mode: New entry, Delete, Mark reviewed, Revert.
+test('Operations role: panel renders read-only — no New entry / Delete / Mark reviewed / Revert controls', async () => {
   const html = await renderMonsterEffectCatalogPanelFixture({ canManage: false });
   // Listing still appears.
   for (const kind of Object.keys(BUNDLED_EFFECT_CATALOG)) {
     assert.match(html, new RegExp(kind));
   }
-  // No primary save / new / delete buttons are reachable for a read-only role.
-  assert.doesNotMatch(html, />\s*Save catalog\s*</);
+  // None of the editor controls are reachable for a read-only role.
   assert.doesNotMatch(html, />\s*New entry\s*</);
   assert.doesNotMatch(html, />\s*Delete\s*</);
+  assert.doesNotMatch(html, />\s*Mark reviewed\s*</);
+  assert.doesNotMatch(html, />\s*Revert\s*</);
+});
+
+// 11a. Sanity counterpart — under canManage=true the Mark reviewed / Revert
+// controls DO render, so the read-only assertion above isn't vacuous.
+test('Editor role: Mark reviewed and Revert controls render when canManage=true', async () => {
+  const html = await renderMonsterEffectCatalogPanelFixture({ canManage: true });
+  assert.match(html, /Mark reviewed/);
+  assert.match(html, /Revert/);
 });
 
 // 12. Integration — saving a draft with three new admin entries serialises
