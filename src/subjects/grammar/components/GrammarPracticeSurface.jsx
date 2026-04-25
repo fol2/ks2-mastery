@@ -12,20 +12,20 @@ const GRAMMAR_TRANSFER_PLACEHOLDERS = Object.freeze([
     id: 'paragraph-transfer',
     eyebrow: 'Non-scored transfer',
     title: 'Paragraph transfer',
-    copy: 'Coming next: short paragraph application that asks the learner to use Grammar choices in a wider piece of writing.',
+    copy: 'Decision: this will be non-scored paragraph application first, so learners can use Grammar choices in a wider piece of writing without changing mastery evidence.',
     bullets: [
-      'No score is recorded from this placeholder.',
-      'Teacher review and paragraph marking are not promised in this release.',
+      'No score, retry, reward, or Concordium progress is recorded from this transfer lane.',
+      'Teacher review and deterministic paragraph scoring are separate future decisions, not hidden promises.',
     ],
   },
   {
     id: 'writing-application',
     eyebrow: 'Future writing application',
     title: 'Richer writing tasks',
-    copy: 'Reserved for sentence-to-writing practice once the deterministic Grammar evidence and reporting path are stable.',
+    copy: 'Reserved for sentence-to-writing practice after the non-scored transfer lane proves the right evidence shape.',
     bullets: [
       'Worker-marked Grammar remains the only score-bearing authority.',
-      'Any future writing workflow will ship as its own reviewed capability.',
+      'Any future score-bearing writing workflow will ship as its own reviewed capability.',
     ],
   },
 ]);
