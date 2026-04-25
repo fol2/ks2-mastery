@@ -206,6 +206,9 @@ export async function runClientBundleAudit({
   };
 }
 
+// Cross-platform CLI detector. `pathToFileURL` normalises Windows argv
+// backslashes to the same `file:///C:/...` form that `import.meta.url`
+// produces, so a direct string comparison is safe across platforms.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const result = await runClientBundleAudit({
     bundlePath: argValue('--bundle', DEFAULT_BUNDLE),

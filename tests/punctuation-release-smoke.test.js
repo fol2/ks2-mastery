@@ -368,10 +368,107 @@ test('Punctuation release smoke completes a gated demo action through Worker com
     assertNoForbiddenPunctuationAdultEvidenceKeys(selectedDiagnostics.punctuationEvidence, 'releaseSmoke.adminHub.selectedDiagnostics.punctuationEvidence');
     assertNoForbiddenPunctuationAdultEvidenceKeys(adminBody.adminHub.learnerSupport.punctuationReleaseDiagnostics, 'releaseSmoke.adminHub.punctuationReleaseDiagnostics');
 
-    const spelling = await postSpellingCommand(server, {
+    // Phase 2 U10: extend the smoke matrix with behavioural starts for
+    // Guided, Weak Spots, and Endmarks / Apostrophe focus modes. Each
+    // entry asserts a mode-specific positive signal plus absence-of-leak
+    // invariants. We avoid submitting answers on these starts (the GPS
+    // test above already exercises the submit path) so the matrix stays
+    // under the smoke budget while proving the commands route through
+    // the Worker.
+    const guidedStart = await postPunctuationCommand(server, {
       cookie: demo.cookie,
       learnerId: demo.learnerId,
       revision: gpsSubmit.body.mutation.appliedRevision,
+      command: 'start-session',
+      requestId: 'punctuation-release-smoke-guided-start',
+      payload: { mode: 'guided', skillId: 'speech', roundLength: '1' },
+    });
+    assert.equal(guidedStart.response.status, 200, JSON.stringify(guidedStart.body));
+    assert.equal(guidedStart.body.subjectReadModel.session.mode, 'guided');
+    assert.equal(guidedStart.body.subjectReadModel.session.guided.skillId, 'speech');
+    assert.ok(
+      guidedStart.body.subjectReadModel.session.guided.supportLevel > 0,
+      'guided session must enter with support active',
+    );
+    assertNoForbiddenPunctuationReadModelKeys(guidedStart.body.subjectReadModel, 'releaseSmoke.guided.start');
+
+    const guidedEnd = await postPunctuationCommand(server, {
+      cookie: demo.cookie,
+      learnerId: demo.learnerId,
+      revision: guidedStart.body.mutation.appliedRevision,
+      command: 'end-session',
+      requestId: 'punctuation-release-smoke-guided-end',
+      payload: {},
+    });
+    assert.equal(guidedEnd.response.status, 200, JSON.stringify(guidedEnd.body));
+
+    const weakStart = await postPunctuationCommand(server, {
+      cookie: demo.cookie,
+      learnerId: demo.learnerId,
+      revision: guidedEnd.body.mutation.appliedRevision,
+      command: 'start-session',
+      requestId: 'punctuation-release-smoke-weak-start',
+      payload: { mode: 'weak', roundLength: '1' },
+    });
+    assert.equal(weakStart.response.status, 200, JSON.stringify(weakStart.body));
+    assert.equal(weakStart.body.subjectReadModel.session.mode, 'weak');
+    assertNoForbiddenPunctuationReadModelKeys(weakStart.body.subjectReadModel, 'releaseSmoke.weak.start');
+
+    const weakEnd = await postPunctuationCommand(server, {
+      cookie: demo.cookie,
+      learnerId: demo.learnerId,
+      revision: weakStart.body.mutation.appliedRevision,
+      command: 'end-session',
+      requestId: 'punctuation-release-smoke-weak-end',
+      payload: {},
+    });
+
+    const endmarksStart = await postPunctuationCommand(server, {
+      cookie: demo.cookie,
+      learnerId: demo.learnerId,
+      revision: weakEnd.body.mutation.appliedRevision,
+      command: 'start-session',
+      requestId: 'punctuation-release-smoke-endmarks-start',
+      payload: { mode: 'endmarks', roundLength: '1' },
+    });
+    assert.equal(endmarksStart.response.status, 200, JSON.stringify(endmarksStart.body));
+    assert.equal(endmarksStart.body.subjectReadModel.session.mode, 'endmarks');
+    assertNoForbiddenPunctuationReadModelKeys(endmarksStart.body.subjectReadModel, 'releaseSmoke.endmarks.start');
+
+    const endmarksEnd = await postPunctuationCommand(server, {
+      cookie: demo.cookie,
+      learnerId: demo.learnerId,
+      revision: endmarksStart.body.mutation.appliedRevision,
+      command: 'end-session',
+      requestId: 'punctuation-release-smoke-endmarks-end',
+      payload: {},
+    });
+
+    const apostropheStart = await postPunctuationCommand(server, {
+      cookie: demo.cookie,
+      learnerId: demo.learnerId,
+      revision: endmarksEnd.body.mutation.appliedRevision,
+      command: 'start-session',
+      requestId: 'punctuation-release-smoke-apostrophe-start',
+      payload: { mode: 'apostrophe', roundLength: '1' },
+    });
+    assert.equal(apostropheStart.response.status, 200, JSON.stringify(apostropheStart.body));
+    assert.equal(apostropheStart.body.subjectReadModel.session.mode, 'apostrophe');
+    assertNoForbiddenPunctuationReadModelKeys(apostropheStart.body.subjectReadModel, 'releaseSmoke.apostrophe.start');
+
+    const apostropheEnd = await postPunctuationCommand(server, {
+      cookie: demo.cookie,
+      learnerId: demo.learnerId,
+      revision: apostropheStart.body.mutation.appliedRevision,
+      command: 'end-session',
+      requestId: 'punctuation-release-smoke-apostrophe-end',
+      payload: {},
+    });
+
+    const spelling = await postSpellingCommand(server, {
+      cookie: demo.cookie,
+      learnerId: demo.learnerId,
+      revision: apostropheEnd.body.mutation.appliedRevision,
       command: 'start-session',
       requestId: 'punctuation-release-smoke-spelling-start',
       payload: { mode: 'single', slug: 'early', length: 1 },
