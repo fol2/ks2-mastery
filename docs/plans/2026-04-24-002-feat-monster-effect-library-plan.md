@@ -171,7 +171,7 @@ playCelebration(spec) -> store.pushCelebration(spec)
 
 ## Implementation Units
 
-- [ ] U1. **Effect contract, factory, registry, composition rules**
+- [x] U1. **Effect contract, factory, registry, composition rules**
 
 **Goal:** Define the `defineEffect()` factory, an in-memory registry, and the rules that govern stacking, exclusive groups, surface filtering, and reduced-motion behaviour. This is the spine the rest of the plan builds on.
 
