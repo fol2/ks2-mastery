@@ -283,6 +283,122 @@ function writeSpellingData(repositories, learnerId, nextData, todayDay = 0, opti
   });
 }
 
+// U1 follow-up (reviewer-blocker: ce-data-integrity-guardian HIGH): under a
+// CAS retry the `incoming` value is FROZEN at the original setItem call site;
+// only `current` is re-read on each retry. Two tabs concurrently completing
+// Guardian missions on different days both captured their freshly-computed
+// progress record BEFORE the race began — so the losing tab's `incoming`
+// sees the days it observed, but not the winning tab's day. A plain
+// accept-incoming therefore silently drops the winning tab's accumulated
+// day under the retry path. The union helper below merges set-shaped fields
+// (`days`, `slugs`) and the pattern-completions map pair-wise so both
+// tabs' accumulations survive the CAS replay. Scalar fields like `count`
+// use `Math.max` to preserve monotonicity for any future progress shapes
+// that carry counters.
+//
+// The union is deterministic: arrays sort ascending (numeric or
+// lexicographic) so repeated calls produce byte-identical output — the
+// composite invariant test (U8b) and storage goldens depend on this
+// stability.
+function unionSortedNumeric(a, b) {
+  const set = new Set();
+  if (Array.isArray(a)) for (const v of a) { const n = Number(v); if (Number.isFinite(n)) set.add(Math.floor(n)); }
+  if (Array.isArray(b)) for (const v of b) { const n = Number(v); if (Number.isFinite(n)) set.add(Math.floor(n)); }
+  return [...set].sort((x, y) => x - y);
+}
+
+function unionSortedStrings(a, b) {
+  const set = new Set();
+  if (Array.isArray(a)) for (const v of a) { if (typeof v === 'string' && v) set.add(v); }
+  if (Array.isArray(b)) for (const v of b) { if (typeof v === 'string' && v) set.add(v); }
+  return [...set].sort();
+}
+
+// Union the `_progress:pattern:completions.<patternId>` lists. Each entry is
+// `{ createdAt, correctCount, sessionId }`. We dedupe by the
+// `(sessionId|createdAt|correctCount)` tuple — the same completion replayed
+// under CAS retry must not double-count — then sort ascending by createdAt
+// and trim to the last PATTERN_MASTERY_STREAK_LENGTH (3) so the evaluator
+// sees the freshest streak window. Importing PATTERN_MASTERY_STREAK_LENGTH
+// from achievements.js would cycle imports at module load; we mirror the
+// constant locally (kept in sync by the composite invariant test which
+// exercises the 3-completion window end-to-end).
+const PATTERN_COMPLETION_STREAK_LENGTH = 3;
+function unionPatternCompletions(a, b) {
+  const safeA = a && typeof a === 'object' && !Array.isArray(a) ? a : {};
+  const safeB = b && typeof b === 'object' && !Array.isArray(b) ? b : {};
+  const patternIds = new Set([...Object.keys(safeA), ...Object.keys(safeB)]);
+  const merged = {};
+  for (const patternId of patternIds) {
+    const listA = Array.isArray(safeA[patternId]) ? safeA[patternId] : [];
+    const listB = Array.isArray(safeB[patternId]) ? safeB[patternId] : [];
+    const seen = new Set();
+    const combined = [];
+    for (const entry of [...listA, ...listB]) {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+      const createdAt = Number.isFinite(Number(entry.createdAt)) ? Number(entry.createdAt) : 0;
+      const correctCount = Number.isFinite(Number(entry.correctCount)) ? Number(entry.correctCount) : 0;
+      const sessionId = typeof entry.sessionId === 'string' ? entry.sessionId : '';
+      const key = `${sessionId}|${createdAt}|${correctCount}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      combined.push({ createdAt, correctCount, sessionId });
+    }
+    combined.sort((x, y) => Number(x.createdAt) - Number(y.createdAt));
+    while (combined.length > PATTERN_COMPLETION_STREAK_LENGTH) combined.shift();
+    merged[patternId] = combined;
+  }
+  return merged;
+}
+
+/**
+ * Pair-wise union of two `_progress:*` achievement records under a CAS retry.
+ *
+ * `existing` is the record persisted to disk (read fresh on each retry);
+ * `incoming` is the caller's captured record from the original setItem
+ * call site — potentially stale relative to `existing` because a sibling
+ * tab may have persisted its own progress between the caller computing
+ * `incoming` and the CAS commit attempt.
+ *
+ * Set-shaped fields union (days / slugs). The patternCompletions map
+ * unions per-patternId with tuple dedup + chronological trim. Unknown
+ * scalar fields take `Math.max` to remain monotonic. If neither side
+ * carries a recognised field, the result is an empty object (caller
+ * drops the row — matches normaliseProgressRecord's null-return shape).
+ *
+ * Pure: returns a fresh object, mutates nothing.
+ */
+function unionProgressRecords(existing, incoming) {
+  const safeExisting = existing && typeof existing === 'object' && !Array.isArray(existing) ? existing : {};
+  const safeIncoming = incoming && typeof incoming === 'object' && !Array.isArray(incoming) ? incoming : {};
+  const merged = {};
+  if (Array.isArray(safeExisting.days) || Array.isArray(safeIncoming.days)) {
+    merged.days = unionSortedNumeric(safeExisting.days, safeIncoming.days);
+  }
+  if (Array.isArray(safeExisting.slugs) || Array.isArray(safeIncoming.slugs)) {
+    merged.slugs = unionSortedStrings(safeExisting.slugs, safeIncoming.slugs);
+  }
+  if (
+    (safeExisting.completions && typeof safeExisting.completions === 'object' && !Array.isArray(safeExisting.completions))
+    || (safeIncoming.completions && typeof safeIncoming.completions === 'object' && !Array.isArray(safeIncoming.completions))
+  ) {
+    merged.completions = unionPatternCompletions(safeExisting.completions, safeIncoming.completions);
+  }
+  // Scalar monotonic counters — `count` is the canonical name; future
+  // progress shapes can follow the same convention and inherit this path.
+  const existingCount = Number(safeExisting.count);
+  const incomingCount = Number(safeIncoming.count);
+  const hasExistingCount = Number.isFinite(existingCount);
+  const hasIncomingCount = Number.isFinite(incomingCount);
+  if (hasExistingCount || hasIncomingCount) {
+    merged.count = Math.max(
+      hasExistingCount ? existingCount : 0,
+      hasIncomingCount ? incomingCount : 0,
+    );
+  }
+  return merged;
+}
+
 function buildActiveRecord(learnerId, state, now) {
   const session = state?.session;
   if (!session) return null;
@@ -442,73 +558,81 @@ export function createSpellingPersistence({ repositories, now } = {}) {
           if (current.postMega) return current;
           return { ...current, postMega: parseStoredJson(value, null) };
         }
+        if (parsed.type === 'pattern') {
+          // P2 U11: straight last-writer-wins for Pattern Quest wobble. Unlike
+          // postMega (sticky by contract), pattern.wobbling entries flip
+          // freely as the learner wobbles and recovers; same semantics as
+          // guardian.wobbling. The `parseStoredJson` default { wobbling: {} }
+          // keeps an absent body from collapsing the sibling into null.
+          return { ...current, pattern: parseStoredJson(value, { wobbling: {} }) };
+        }
+        if (parsed.type === 'persistenceWarning') {
+          // P2 U9: unlike `postMega`, the persistence-warning record IS
+          // overwrite-ful. A subsequent failure overwrites `reason` +
+          // `occurredAt` and resets `acknowledged: false`; an acknowledge
+          // dispatcher overwrites with `acknowledged: true`. We persist the
+          // parsed payload directly so the callers (service) own the shape.
+          return { ...current, persistenceWarning: parseStoredJson(value, null) };
+        }
+        if (parsed.type === 'achievements') {
+          // P2 U12 H4 mitigation — INSERT-OR-IGNORE for UNLOCK rows, UNION-
+          // MERGE for PROGRESS rows.
+          //
+          // Achievements-map entries are polymorphic:
+          //   1. Unlock rows (`achievement:...` ids) are STICKY: once
+          //      `unlockedAt` is set, it must never change. A concurrent
+          //      second-unlock dispatch with stale currentAchievements could
+          //      otherwise overwrite the original timestamp — we preserve the
+          //      existing row by skipping merge when one is already present.
+          //   2. Progress rows (`_progress:*` ids) are MONOTONIC aggregate
+          //      counters (days set, slugs set, pattern completions). U1
+          //      follow-up (reviewer blocker ce-data-integrity-guardian):
+          //      under a CAS retry, `incoming` is FROZEN at the original
+          //      setItem call site while `current` is re-read on every
+          //      attempt. Two tabs both completing Guardian missions on
+          //      different days each capture their own superset relative
+          //      to the PRE-race disk state, but NEITHER captures the
+          //      other tab's day. A plain accept-incoming therefore drops
+          //      the winning tab's day when the losing tab's retry
+          //      commits (disk: {days:[1,2,3]}; losing tab `incoming`:
+          //      {days:[1,2,4]} -> accept-incoming yields {days:[1,2,4]},
+          //      day 3 is LOST). We union the two records instead so both
+          //      tabs' accumulations survive (-> {days:[1,2,3,4]}). The
+          //      superset assumption held only for sequential single-tab
+          //      callers; CAS retry breaks it under multi-tab concurrency.
+          //
+          // The branch below distinguishes the two shapes and applies the
+          // correct merge semantics per row. U1 fix (Cluster A): this logic
+          // runs inside `projectForField` so `current` is freshly read on
+          // every CAS retry, matching the postMega sibling above.
+          const incoming = parseStoredJson(value, {});
+          const existing = current.achievements || {};
+          const merged = { ...incoming };
+          for (const [id, record] of Object.entries(existing)) {
+            if (typeof id !== 'string' || !id) continue;
+            if (id.startsWith('_progress:')) {
+              // Progress rows: union-merge `existing` with `incoming` so
+              // neither side's accumulation is dropped under CAS retry.
+              // `unionProgressRecords` handles days / slugs / completions
+              // pair-wise (see helper above).
+              merged[id] = unionProgressRecords(record, incoming[id]);
+              continue;
+            }
+            // Unlock rows: retain existing (sticky unlockedAt).
+            merged[id] = record;
+          }
+          return { ...current, achievements: merged };
+        }
         return current;
       };
-      if (parsed.type === 'prefs' || parsed.type === 'progress' || parsed.type === 'guardian' || parsed.type === 'postMega') {
-        writeSpellingData(repositories, parsed.learnerId, null, day, { project: projectForField });
-      }
-      if (parsed.type === 'pattern') {
-        // P2 U11: straight last-writer-wins for Pattern Quest wobble. Unlike
-        // postMega (sticky by contract), pattern.wobbling entries flip
-        // freely as the learner wobbles and recovers; same semantics as
-        // guardian.wobbling. The `parseStoredJson` default { wobbling: {} }
-        // keeps an absent body from collapsing the sibling into null.
-        writeSpellingData(repositories, parsed.learnerId, {
-          ...current,
-          pattern: parseStoredJson(value, { wobbling: {} }),
-        }, day);
-      }
-      if (parsed.type === 'persistenceWarning') {
-        // P2 U9: unlike `postMega`, the persistence-warning record IS
-        // overwrite-ful. A subsequent failure overwrites `reason` +
-        // `occurredAt` and resets `acknowledged: false`; an acknowledge
-        // dispatcher overwrites with `acknowledged: true`. We persist the
-        // parsed payload directly so the callers (service) own the shape.
-        writeSpellingData(repositories, parsed.learnerId, {
-          ...current,
-          persistenceWarning: parseStoredJson(value, null),
-        }, day);
-      }
-      if (parsed.type === 'achievements') {
-        // P2 U12 H4 mitigation — INSERT-OR-IGNORE for UNLOCK rows, MONOTONIC
-        // accept-incoming for PROGRESS rows.
-        //
-        // Achievements-map entries are polymorphic:
-        //   1. Unlock rows (`achievement:...` ids) are STICKY: once
-        //      `unlockedAt` is set, it must never change. A concurrent
-        //      second-unlock dispatch with stale currentAchievements could
-        //      otherwise overwrite the original timestamp — we preserve the
-        //      existing row by skipping merge when one is already present.
-        //   2. Progress rows (`_progress:*` ids) are MONOTONIC aggregate
-        //      counters (days set, slugs set, pattern completions). The
-        //      incoming value is the freshly computed superset of prior
-        //      state; retaining the existing value would drop every day
-        //      beyond the most recent and Guardian 7-day would NEVER fire
-        //      through `data.achievements` (reviewer reproduction: 8 missions
-        //      on 8 days -> persisted `{days: [lastDay]}` length 1).
-        //
-        // The branch below distinguishes the two shapes and applies the
-        // correct merge semantics per row.
-        const incoming = parseStoredJson(value, {});
-        const existing = current.achievements || {};
-        const merged = { ...incoming };
-        for (const [id, record] of Object.entries(existing)) {
-          if (typeof id !== 'string' || !id) continue;
-          if (id.startsWith('_progress:')) {
-            // Progress rows: accept incoming (freshly computed monotonic
-            // state is always a superset of prior state because the
-            // aggregate sets / arrays only ever add). Keep incoming; DO
-            // NOT overwrite with existing — that would lose accumulation.
-            continue;
-          }
-          // Unlock rows: retain existing (sticky unlockedAt).
-          merged[id] = record;
-        }
-        writeSpellingData(repositories, parsed.learnerId, {
-          ...current,
-          achievements: merged,
-        }, day);
-      }
+      // U1 fix (Cluster A): all sibling types now route through a single
+      // CAS-aware call. Previously pattern / persistenceWarning /
+      // achievements had inline writers referencing an out-of-scope
+      // `current` binding, which threw `ReferenceError` on every invocation.
+      // Folding them into `projectForField` re-reads `current` inside the
+      // callback on each retry, matching the shape already used by
+      // postMega.
+      writeSpellingData(repositories, parsed.learnerId, null, day, { project: projectForField });
       const afterError = readPersistenceError();
       if (errorSignatureChanged(beforeError, afterError)) {
         const message = afterError?.message || 'storage-setItem-failed';
@@ -530,38 +654,44 @@ export function createSpellingPersistence({ repositories, now } = {}) {
         if (parsed.type === 'prefs') return { ...current, prefs: {} };
         if (parsed.type === 'progress') return { ...current, progress: {} };
         if (parsed.type === 'guardian') return { ...current, guardian: {} };
+        // P2 U11: pattern sibling is clearable through removeItem so
+        // resetLearner and explicit clear paths work symmetrically with the
+        // guardian + progress siblings. (Unlike postMega, pattern.wobbling is
+        // not sticky.)
+        if (parsed.type === 'pattern') {
+          return { ...current, pattern: { wobbling: {} } };
+        }
+        // P2 U9: persistenceWarning can be removed via `resetLearner` (below)
+        // which clears the whole bundle. A direct removeItem on this key is
+        // also honoured — strip the sibling from the normalised bundle. No
+        // sticky-lock constraint applies (the record is overwritable anyway).
+        if (parsed.type === 'persistenceWarning') {
+          const next = { ...current };
+          delete next.persistenceWarning;
+          return next;
+        }
+        // P2 U12: achievements can ONLY be cleared through `resetLearner`
+        // (which goes through writeSpellingData with an empty bundle). A
+        // direct removeItem here is a deliberate reset signal (e.g. admin-ops
+        // tool) — strip the sibling. Unlocks are otherwise append-only; the
+        // setItem path above enforces INSERT-OR-IGNORE so no path outside of
+        // remove / reset can mutate an unlocked id.
+        if (parsed.type === 'achievements') {
+          const next = { ...current };
+          delete next.achievements;
+          return next;
+        }
         return current;
       };
-      if (parsed.type === 'prefs' || parsed.type === 'progress' || parsed.type === 'guardian') {
-        writeSpellingData(repositories, parsed.learnerId, null, day, { project: projectForFieldRemoval });
-      }
-      // P2 U11: pattern sibling is clearable through removeItem so
-      // resetLearner and explicit clear paths work symmetrically with the
-      // guardian + progress siblings. (Unlike postMega, pattern.wobbling is
-      // not sticky.)
-      if (parsed.type === 'pattern') {
-        writeSpellingData(repositories, parsed.learnerId, { ...current, pattern: { wobbling: {} } }, day);
-      }
-      // P2 U9: persistenceWarning can be removed via `resetLearner` (below)
-      // which clears the whole bundle. A direct removeItem on this key is
-      // also honoured — strip the sibling from the normalised bundle. No
-      // sticky-lock constraint applies (the record is overwritable anyway).
-      if (parsed.type === 'persistenceWarning') {
-        const next = { ...current };
-        delete next.persistenceWarning;
-        writeSpellingData(repositories, parsed.learnerId, next, day);
-      }
-      // P2 U12: achievements can ONLY be cleared through `resetLearner`
-      // (which goes through writeSpellingData with an empty bundle). A
-      // direct removeItem here is a deliberate reset signal (e.g. admin-ops
-      // tool) — strip the sibling. Unlocks are otherwise append-only; the
-      // setItem path above enforces INSERT-OR-IGNORE so no path outside of
-      // remove / reset can mutate an unlocked id.
-      if (parsed.type === 'achievements') {
-        const next = { ...current };
-        delete next.achievements;
-        writeSpellingData(repositories, parsed.learnerId, next, day);
-      }
+      // U1 fix (Cluster A): all removable sibling types now route through a
+      // single CAS-aware call. Previously pattern / persistenceWarning /
+      // achievements had inline writers referencing an out-of-scope
+      // `current` binding, which threw `ReferenceError` on every
+      // invocation. Folding them into `projectForFieldRemoval` re-reads
+      // `current` inside the callback on each retry. postMega is
+      // intentionally absent here — it is sticky by contract and can only
+      // be cleared via `resetLearner` below.
+      writeSpellingData(repositories, parsed.learnerId, null, day, { project: projectForFieldRemoval });
       // P2 U2: postMega cannot be removed through this path — sticky is
       // permanent by contract. `resetLearner` (below) is the only surface
       // that clears postMega, and it goes through writeSpellingData with an

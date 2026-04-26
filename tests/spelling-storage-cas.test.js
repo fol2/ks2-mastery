@@ -674,6 +674,101 @@ test('U5 repository: concurrent tab interleave — both writes survive CAS retry
   );
 });
 
+// -----------------------------------------------------------------------------
+// U1 follow-up (reviewer-blocker: ce-data-integrity-guardian HIGH) — CAS retry
+// must UNION `_progress:*` rows across concurrent-tab retries, not accept
+// the stale `incoming` value frozen at the original setItem call site.
+//
+// Reviewer scenario (two tabs, different days):
+//   Disk (pre-race):  {_progress:guardian:days: {days: [1, 2]}}
+//   Tab A enters setItem with value_A = {days:[1,2,3]} (adds day 3).
+//   Tab B enters setItem with value_B = {days:[1,2,4], Y:{unlockedAt:200}}
+//     (adds day 4 + unlock Y — captured before tab A committed).
+//   Tab A commits first. Disk now: {_progress:guardian:days: {days:[1,2,3]}}.
+//   Tab B's CAS retry re-reads `current` (sees tab A's day 3) but `incoming`
+//     stays frozen at value_B ({days:[1,2,4]}).
+//   Without the union fix, the `_progress:*` branch does `continue` (keep
+//     incoming) and merges to {days:[1,2,4]} — day 3 is LOST.
+//   With the union fix, `unionProgressRecords(existing, incoming)` merges
+//     to {days:[1,2,3,4]} and Y unlock lands — both tabs' accumulations
+//     survive.
+// -----------------------------------------------------------------------------
+test('U1 CAS race: _progress:guardian:days union merges across concurrent-tab retries', () => {
+  const storage = installMemoryStorage();
+  const now = () => Date.UTC(2026, 0, 10);
+
+  // Tab A: seed disk with `{days: [1, 2]}` via a normal setItem path so the
+  // subject-state record shape matches production (instead of hand-rolled
+  // JSON). This establishes the pre-race disk state.
+  const reposTabA = makeTabRepositories(storage);
+  const spellingTabA = createSpellingPersistence({ repositories: reposTabA, now });
+  const learnerId = 'learner-a';
+  const key = spellingTabA.achievementsKey(learnerId);
+  spellingTabA.storage.setItem(key, JSON.stringify({
+    '_progress:guardian:days': { days: [1, 2] },
+  }));
+
+  // Tab B is constructed now so its in-memory cache captures the pre-race
+  // state. Tab B's `value_B` — captured before tab A's next commit — is the
+  // superset over the `{days:[1,2]}` base that tab B observed: it adds
+  // `day 4` plus the unlock row for Y.
+  const reposTabB = makeTabRepositories(storage);
+  const spellingTabB = createSpellingPersistence({ repositories: reposTabB, now });
+  const unlockIdY = `achievement:spelling:recovery-expert:${learnerId}`;
+  const valueB = {
+    [unlockIdY]: { unlockedAt: 200 },
+    '_progress:guardian:days': { days: [1, 2, 4] },
+  };
+
+  // Tab A commits FIRST: persist `{days: [1, 2, 3]}` to disk. This models the
+  // "Tab A commits first" step in the reviewer scenario — tab A captured its
+  // own value_A (with day 3) and landed it before tab B's setItem fires.
+  spellingTabA.storage.setItem(key, JSON.stringify({
+    '_progress:guardian:days': { days: [1, 2, 3] },
+  }));
+
+  // Force a stale-leader race for tab B's setItem: its first writeData call
+  // throws WriteVersionStaleError so the repository's CAS retry loop re-
+  // invokes projectForField with a fresh `current` re-read. Before the retry,
+  // we intentionally do NOT mutate disk further — tab A's day 3 is already
+  // there, so the retry's projectForField reads `existing` = {days:[1,2,3]}
+  // and unions against incoming (value_B's {days:[1,2,4]}).
+  const originalWriteData = reposTabB.subjectStates.writeData;
+  let writeCallCount = 0;
+  reposTabB.subjectStates.writeData = function writeDataWithStaleRace(...args) {
+    writeCallCount += 1;
+    if (writeCallCount === 1) {
+      // Simulate the race: tab A just committed, bumping the disk
+      // writeVersion past tab B's captured expected version.
+      throw new WriteVersionStaleError({ expected: 1, actual: 99 });
+    }
+    return originalWriteData.apply(this, args);
+  };
+
+  // Tab B's setItem — triggers CAS retry (attempt #1 throws, attempt #2 commits).
+  spellingTabB.storage.setItem(key, JSON.stringify(valueB));
+
+  // Restore so test cleanup doesn't leave the repository half-broken.
+  reposTabB.subjectStates.writeData = originalWriteData;
+
+  assert.ok(writeCallCount >= 2, 'CAS retry engaged — writeData was called at least twice');
+
+  // Observe final disk state — the union fix must have preserved BOTH tabs'
+  // accumulations: days [1, 2, 3, 4] (sorted-unique) and unlock Y.
+  const finalRaw = JSON.parse(storage.getItem(REPO_STORAGE_KEYS.subjectStates) || '{}');
+  const finalRecord = finalRaw[`${learnerId}::spelling`] || {};
+  const finalAchievements = (finalRecord.data && finalRecord.data.achievements) || {};
+  const daysRow = finalAchievements['_progress:guardian:days'];
+  assert.ok(daysRow && Array.isArray(daysRow.days), 'progress row persisted with days array');
+  assert.deepEqual(
+    daysRow.days,
+    [1, 2, 3, 4],
+    `days union must include both tabs' accumulations; got ${JSON.stringify(daysRow.days)}. Regression: progress row accepted stale incoming instead of union-merging.`,
+  );
+  assert.ok(finalAchievements[unlockIdY], 'tab B\'s unlock row Y survived the retry');
+  assert.equal(finalAchievements[unlockIdY].unlockedAt, 200, 'unlock Y timestamp intact');
+});
+
 test('U5 banner copy: LOCKOUT_BANNER_COPY provides distinct strings for both lockout states', () => {
   const active = LOCKOUT_BANNER_COPY[LOCKOUT_STATES.OTHER_TAB_ACTIVE];
   assert.ok(active.message.length > 0);
