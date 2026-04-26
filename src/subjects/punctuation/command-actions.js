@@ -1,4 +1,5 @@
 import { parseChoiceIndex } from '../../../shared/punctuation/choice-index.js';
+import { sanitisePunctuationTelemetryPayload } from './telemetry.js';
 
 export function punctuationSubmitAnswerPayload(data = {}) {
   if (data?.formData?.get) return { typed: data.formData.get('typed') || '' };
@@ -130,6 +131,46 @@ export const punctuationSubjectCommandActions = Object.freeze({
     command: 'save-prefs',
     payload({ data }) {
       return { prefs: { mode: data?.value || data?.mode || 'smart' } };
+    },
+  },
+  // Phase 4 U4 — client-side telemetry emission hook.
+  //
+  // `mutates: false` is the same signal that `punctuation-context-pack`
+  // above uses (line ~120). It bypasses the read-only guard in
+  // `createSubjectCommandActionHandler` (so a degraded-sync learner can
+  // still emit observability signal) AND — by routing through the
+  // command-actions mapping rather than `punctuationModule.handleAction`
+  // — it keeps the dispatch off the `runPunctuationSessionCommand`
+  // pending-wrapper path (so telemetry emission never stalls the
+  // learner's active interaction).
+  //
+  // **Authz invariant (R10 / R11):** the `{ mutates: false }` flag is
+  // CLIENT-SIDE ONLY. The dispatch still routes through
+  // `subjectCommands.send(...)` → the `/api/subjects/punctuation/command`
+  // endpoint → `repository.runSubjectCommand` → `requireLearnerWriteAccess`
+  // at `worker/src/repository.js:4919`. When U9 lands the Worker
+  // `record-event` handler, that authz chain fires unchanged.
+  //
+  // Today (pre-U9), the Worker's `PUNCTUATION_COMMANDS` list at
+  // `worker/src/subjects/punctuation/commands.js:13` does NOT yet
+  // include `record-event`, so a real Worker round-trip returns
+  // `subject_command_not_found`. That failure is logged via
+  // `createPunctuationOnCommandError` but never propagates to the
+  // learner — telemetry is fire-and-forget by design.
+  'punctuation-record-event': {
+    mutates: false,
+    command: 'record-event',
+    payload({ data }) {
+      // Defence-in-depth: re-run the per-kind allowlist here even if the
+      // caller went through `emitPunctuationEvent`. A rogue dispatch that
+      // bypasses the emitter (direct `actions.dispatch(...)` with a raw
+      // payload) still gets stripped to the allowlisted shape before the
+      // Worker round-trip fires.
+      const { event, payload } = sanitisePunctuationTelemetryPayload(
+        data?.kind,
+        data?.payload,
+      );
+      return { event, payload };
     },
   },
 });
