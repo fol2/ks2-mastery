@@ -10,6 +10,7 @@ import {
   bindStatement,
   first,
   requireDatabase,
+  requireDatabaseWithCapacity,
   run,
   scalar,
   withTransaction,
@@ -453,9 +454,15 @@ export async function createSession(env, accountId, provider, now = Date.now(), 
   return { token, hash, sessionId, expiresAt, sessionKind };
 }
 
-async function accountSessionFromToken(env, token, now = Date.now()) {
+async function accountSessionFromToken(env, token, now = Date.now(), capacity = null) {
   if (!token) return null;
-  const db = requireDatabase(env);
+  // U3 round 1 (P1 #03): when a capacity collector is present, wrap the
+  // D1 handle so the session-lookup `first()` is counted. Production
+  // authenticated requests previously undercounted by 1 because the
+  // raw `requireDatabase(env)` call bypassed the proxy.
+  const db = capacity != null
+    ? requireDatabaseWithCapacity(env, capacity)
+    : requireDatabase(env);
   const hash = await sha256(token);
   const row = await first(db, `
     SELECT
@@ -1089,7 +1096,8 @@ function appOrigin(env, request) {
 export function createDevelopmentSessionProvider() {
   return {
     kind: 'development-stub',
-    async getSession(request) {
+    // eslint-disable-next-line no-unused-vars
+    async getSession(request, _env, _options = {}) {
       const accountId = cleanText(
         request.headers.get('x-ks2-dev-account-id')
         || request.headers.get('x-ks2-account-id'),
@@ -1122,8 +1130,10 @@ export function createDevelopmentSessionProvider() {
 export function createProductionSessionProvider() {
   return {
     kind: 'production',
-    async getSession(request, env) {
-      return accountSessionFromToken(env, readSessionToken(request));
+    async getSession(request, env, { capacity = null } = {}) {
+      // U3 round 1 (P1 #03): thread the per-request capacity collector
+      // so the session-lookup query is counted.
+      return accountSessionFromToken(env, readSessionToken(request), Date.now(), capacity);
     },
   };
 }
@@ -1144,7 +1154,7 @@ export function resolveSessionProvider(env = {}) {
   return createPlaceholderSessionProvider(mode);
 }
 
-export function createSessionAuthBoundary({ env = {}, sessionProvider } = {}) {
+export function createSessionAuthBoundary({ env = {}, sessionProvider, capacity = null } = {}) {
   const provider = sessionProvider || resolveSessionProvider(env);
 
   return {
@@ -1157,10 +1167,13 @@ export function createSessionAuthBoundary({ env = {}, sessionProvider } = {}) {
       };
     },
     async getSession(request) {
-      return provider.getSession(request, env);
+      // U3 round 1 (P1 #03): the production session provider uses this
+      // third argument to thread the capacity collector through to
+      // `accountSessionFromToken()`. Development stub ignores it.
+      return provider.getSession(request, env, { capacity });
     },
     async requireSession(request) {
-      const session = await provider.getSession(request, env);
+      const session = await provider.getSession(request, env, { capacity });
       if (!session) throw new UnauthenticatedError();
       // U6 (plan KTD F-07): default-on Sec-Fetch-Site check for every
       // authenticated route. Running it here means any route that calls

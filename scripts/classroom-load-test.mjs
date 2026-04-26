@@ -152,6 +152,13 @@ async function wait(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function generateClientRequestId() {
+  const randomUuid = typeof globalThis.crypto?.randomUUID === 'function'
+    ? globalThis.crypto.randomUUID()
+    : `${Date.now().toString(16)}-${Math.random().toString(16).slice(2, 18)}`;
+  return `ks2_req_${randomUuid}`;
+}
+
 async function timedJsonRequest({
   origin,
   path,
@@ -163,6 +170,13 @@ async function timedJsonRequest({
   timeoutMs,
 }) {
   const url = new URL(path, origin);
+  // U3: every outgoing load-test request must carry an `x-ks2-request-id`
+  // in the Worker's allowed shape so the server-side ingress validator
+  // accepts it verbatim and echoes it back. Capturing the echo lets
+  // evidence runs correlate client wall time with server structured logs.
+  const clientRequestId = headers['x-ks2-request-id'] || generateClientRequestId();
+  const outgoingHeaders = { ...headers, 'x-ks2-request-id': clientRequestId };
+
   const started = performance.now();
   let response;
   let text = '';
@@ -173,7 +187,7 @@ async function timedJsonRequest({
   try {
     response = await fetch(url, {
       method,
-      headers,
+      headers: outgoingHeaders,
       ...(body == null ? {} : { body: JSON.stringify(body) }),
       signal: timeoutSignal(timeoutMs),
     });
@@ -194,6 +208,10 @@ async function timedJsonRequest({
     ? String(text || payload?.message || networkError?.message || parseError?.message || '').slice(0, 2_000)
     : '';
   const ok = Boolean(response?.ok) && payload?.ok !== false && !parseError && !networkError;
+  const echoedRequestId = response?.headers?.get?.('x-ks2-request-id') || null;
+  const responseCapacity = payload?.meta?.capacity && typeof payload.meta.capacity === 'object'
+    ? payload.meta.capacity
+    : null;
 
   const measurement = {
     scenario,
@@ -207,6 +225,17 @@ async function timedJsonRequest({
     code: payload?.code || payload?.error || null,
     message: safeFailureMessage({ payload, networkError, parseError }),
     requestId: body?.requestId || null,
+    clientRequestId,
+    serverRequestId: echoedRequestId,
+    capacity: responseCapacity
+      ? {
+        queryCount: responseCapacity.queryCount ?? null,
+        d1RowsRead: responseCapacity.d1RowsRead ?? null,
+        d1RowsWritten: responseCapacity.d1RowsWritten ?? null,
+        serverWallMs: responseCapacity.wallMs ?? null,
+        responseBytes: responseCapacity.responseBytes ?? null,
+      }
+      : null,
   };
   Object.defineProperty(measurement, 'payload', {
     value: payload,

@@ -304,3 +304,36 @@ test('no-op spelling command avoids historical projection reads and learner writ
     harness.close();
   }
 });
+
+test('dense-history projection command keeps queryCount within the U3 soft budget (<= 15)', async () => {
+  // Soft budget per plan U3 test scenarios: while projection is still
+  // bounded-fallback-based (pre-U6), a common projection command on a
+  // dense-history learner must stay within 15 queries/request. U6 will
+  // tighten this to <= 12 once the read model becomes the hot-path input.
+  //
+  // We use /api/subjects/spelling/command because it is capacity-relevant
+  // (so meta.capacity is attached) and it drives the projection engine.
+  const harness = createCommandHarness();
+  try {
+    insertProjectionWindowFillerEvents(harness.DB, {
+      count: 500,
+      startAt: Date.UTC(2026, 3, 24, 17, 30, 0),
+    });
+
+    harness.DB.clearQueryLog();
+    const result = await harness.command('check-word-bank-drill', {
+      slug: 'possess',
+      typed: 'possess',
+    });
+
+    const capacity = result.body.meta?.capacity;
+    assert.ok(capacity, 'command response must carry meta.capacity (U3).');
+    assert.ok(typeof capacity.queryCount === 'number', 'meta.capacity.queryCount must be numeric.');
+    assert.ok(
+      capacity.queryCount <= 15,
+      `U3 soft budget: queryCount must be <= 15 on dense-history projection command; got ${capacity.queryCount}.`,
+    );
+  } finally {
+    harness.close();
+  }
+});

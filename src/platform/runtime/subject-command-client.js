@@ -120,6 +120,15 @@ export function createSubjectCommandClient({
   }
 
   async function sendOnce({ cleanSubjectId, requestId, body }) {
+    // U3 audit: the command client sends the mutation's `requestId` on
+    // the `x-ks2-request-id` header for legacy mutation-receipt
+    // correlation. If that id does not match the Worker's ingress
+    // validator (`ks2_req_` + UUID v4), the Worker rejects the header
+    // value and server-generates a fresh one for capacity telemetry.
+    // Mutation receipt idempotency is unaffected — that uses the body
+    // `requestId`, not the header. See `worker/src/logger.js` for the
+    // ingress-validator shape. U6 will add `isCommandBackendExhausted()`
+    // alongside this function — the audit here is U3-only.
     let response;
     try {
       response = await fetchFn(joinUrl(baseUrl, `/api/subjects/${encodeURIComponent(cleanSubjectId)}/command`), {

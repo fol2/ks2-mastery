@@ -136,7 +136,7 @@ test('POST /api/security/csp-report rejects declared Content-Length above 8 KB w
 test('POST /api/security/csp-report strips newline + control chars from logged values (F-02 log-line spoof guard)', async () => {
   const server = createWorkerRepositoryServer();
   const spoofBody = JSON.stringify(sampleLegacyReport({
-    blockedUri: 'https://evil.example/poison\n[ks2-capacity] ATTACKER_INJECTED',
+    blockedUri: 'https://evil.example/poison\n[ks2-worker] ATTACKER_INJECTED',
   }));
   const { value: response, captured } = await captureLogs(() => server.fetchRaw(
     'https://repo.test/api/security/csp-report',
@@ -152,7 +152,7 @@ test('POST /api/security/csp-report strips newline + control chars from logged v
   // The logged line must NOT contain the literal newline — the sanitiser
   // has to turn it into whitespace before JSON encoding.
   assert.ok(
-    !logLine.includes('\n[ks2-capacity]'),
+    !logLine.includes('\n[ks2-worker]'),
     `logged value must not carry an embedded newline — got: ${JSON.stringify(logLine)}`,
   );
   // The spoofed token must still appear (sanitiser does not wipe the

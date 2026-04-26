@@ -127,12 +127,41 @@ async function parseResponseBody(response) {
   };
 }
 
+function generateIngressRequestId() {
+  // U3 audit: every outgoing repository request must carry an
+  // `x-ks2-request-id` that matches the Worker's ingress validator
+  // (`ks2_req_` + UUID v4). The sync operation's internal `id` is kept
+  // intact for mutation-receipt idempotency; this header is a parallel
+  // telemetry correlation id that never leaks into mutation-receipt
+  // dedup keys. Missing `crypto.randomUUID` in very old runtimes falls
+  // back to a 48-char-safe synthesised token.
+  const uuid = typeof globalThis.crypto?.randomUUID === 'function'
+    ? globalThis.crypto.randomUUID()
+    : `${Date.now().toString(16).padStart(8, '0')}-${Math.random().toString(16).slice(2, 6)}-4${Math.random().toString(16).slice(2, 5)}-8${Math.random().toString(16).slice(2, 5)}-${Math.random().toString(16).slice(2, 14).padEnd(12, '0')}`;
+  return `ks2_req_${uuid}`;
+}
+
 async function fetchJson(fetchFn, url, init, authSession) {
   const resolvedInit = await applyRepositoryAuthSession(authSession, init);
   const method = String(resolvedInit?.method || 'GET').toUpperCase();
+
+  // U3: stamp a Worker-ingress-valid `x-ks2-request-id` on every outgoing
+  // call when the caller has not supplied one in the canonical shape.
+  // Callers that set their own (e.g. sync operations that use the
+  // mutation receipt id as the header value) are left untouched — the
+  // Worker rejects the malformed value at ingress and generates its own
+  // anyway. This preserves back-compat while hardening the default path.
+  const existingHeaders = resolvedInit?.headers || {};
+  const headersWithRequestId = new Headers(existingHeaders);
+  if (!headersWithRequestId.has('x-ks2-request-id')) {
+    headersWithRequestId.set('x-ks2-request-id', generateIngressRequestId());
+  }
+  const headersInit = Object.fromEntries(headersWithRequestId.entries());
+  const decoratedInit = { ...resolvedInit, headers: headersInit };
+
   let response;
   try {
-    response = await fetchFn(url, resolvedInit);
+    response = await fetchFn(url, decoratedInit);
   } catch (error) {
     const wrapped = new RepositoryHttpError({
       url,

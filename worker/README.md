@@ -256,6 +256,10 @@ The Worker provides repositories, account scope, and access checks.
 
 It must not become the place where subject pedagogy, subject rendering assumptions, reward presentation, or shell routing rules live.
 
+## Capacity telemetry: constructor injection, not AsyncLocalStorage
+
+Phase 2 U3 introduces a per-request `CapacityCollector` (see `worker/src/logger.js`) that records request id, endpoint, D1 query count, row read/write totals, wall time, and a bounded per-statement breakdown. The collector is passed explicitly through `createWorkerRepository({ env, now, capacity })` and the repository wraps the D1 handle so every `prepare()` call credits the collector. We deliberately avoid `AsyncLocalStorage` here: the Workers runtime requires `nodejs_compat` to enable it, and every async hop pays a non-trivial CPU cost contrary to the Phase 1 "bounded, small, boring" principle. The collector mutation surface is telemetry-only: `repository.js` stamps `bootstrapCapacity` (and, from U6 onward, `projectionFallback` / `derivedWriteSkipped`) on the collector, but mutation of non-telemetry state through the collector is not a sanctioned pattern. Both the response surface (`meta.capacity`) and the structured log (`[ks2-worker] {event: "capacity.request", ...}`) render the collector through a closed allowlist; adding a field requires a PR that updates both builders and an explicit regression test in `tests/worker-capacity-telemetry.test.js`.
+
 ## Conflict / coordination status
 
 This Worker currently relies on database compare-and-swap plus request receipts.

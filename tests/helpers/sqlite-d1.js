@@ -1,16 +1,18 @@
 // Local SQLite-backed D1 double used by the Worker test suite.
 //
-// U4 (sys-hardening p1) capacity-telemetry note: the synthetic
+// U3 (Phase 2) capacity-telemetry note: the synthetic
 // `meta.rows_read` / `meta.rows_written` values produced below mirror the
 // *shape* of the fields Cloudflare's production D1 exposes, not the exact
 // numbers. Production D1 is the source of truth for absolute row metrics
 // (indexes, internal page scans, transaction overhead) and the
-// `[ks2-capacity]` telemetry emitted by `worker/src/capacity/telemetry.js`
-// reads those production fields directly in the deployed Worker. Local
-// tests use this helper to assert that the telemetry *contract* records a
-// non-zero read attribution for row-returning reads and a non-zero write
-// attribution for row-modifying mutations. Do not treat a local assertion
-// on `rows_read === n` as a performance claim — it is a contract check.
+// `[ks2-worker] {event: 'capacity.request', ...}` telemetry emitted by
+// `worker/src/logger.js` (via the `withCapacityCollector` D1 proxy in
+// `worker/src/d1.js`) reads those production fields directly in the
+// deployed Worker. Local tests use this helper to assert that the
+// telemetry *contract* records a non-zero read attribution for
+// row-returning reads and a non-zero write attribution for row-modifying
+// mutations. Do not treat a local assertion on `rows_read === n` as a
+// performance claim — it is a contract check.
 
 import fs from 'node:fs';
 import path from 'node:path';

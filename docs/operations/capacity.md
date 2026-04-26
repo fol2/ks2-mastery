@@ -48,6 +48,23 @@ npm run check
 npm run deploy
 ```
 
+## Capacity Telemetry Environment Variables (Phase 2 U3)
+
+The Worker exposes per-request capacity telemetry on every response. Two surfaces render the same collector state: a `meta.capacity` block on capacity-relevant JSON responses (`/api/bootstrap`, `/api/subjects/:subject/command`, `/api/hubs/parent/*`, `/api/classroom/*`) and a structured `[ks2-worker] {event: "capacity.request", ...}` log line. Both shapes follow a closed allowlist; per-statement breakdown NEVER appears in `meta.capacity`.
+
+- `CAPACITY_LOG_SAMPLE_RATE` — numeric string in `[0, 1]`. Default `1.0` for local and preview environments, `0.1` recommended for production. Sampling applies to the structured log line only: `meta.capacity` is always present on responses regardless of the rate. Two classes of request are always logged at rate `1.0` regardless of the configured value so operational tails never go silent: requests that end with `status >= 500` (server errors) and pre-route 401s (`phase: "pre-route"` — auth-storm observability for credential-stuffing bursts).
+- `x-ks2-request-id` — every inbound request is checked against `/^ks2_req_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/` (prefix + UUID v4, max 48 chars). Non-matching, blank, or oversized values are rejected silently; the Worker generates a fresh id via `crypto.randomUUID()` and echoes that validated id on every response (including pre-route 401s). The rejected raw value never appears in logs, response headers, or response bodies.
+
+### Known telemetry drift (U3 round 1 — P2 #07)
+
+`responseBytes` values on the `meta.capacity` block (body) and the `capacity.request` structured log MAY differ by a small delta (typically <5 bytes). The body-embedded value is measured BEFORE the `meta.capacity` rewrite is stamped; the log value is measured AFTER the rewrite includes the capacity block. Operators comparing the two surfaces should expect the log value to be slightly larger. This drift is intentional — rewriting again to reconcile the two would force a double byte-encode per request at the cost of p95 latency. Capacity threshold gates read the LOG surface (post-rewrite) so the operator-facing gate remains honest.
+
+### Signal allowlist (U3 round 1 — P0 #01)
+
+`meta.capacity.signals[]` is bounded by a closed string allowlist — `addSignal(token)` on the server-side collector silently rejects any token outside the set. The allowed values today are: `exceededCpu`, `d1Overloaded`, `d1DailyLimit`, `rateLimited`, `networkFailure`, `server5xx`, `bootstrapFallback`, `projectionFallback`, `derivedWriteSkipped`, `breakerTransition`. Adding a new signal requires both a plan amendment and a corresponding allowlist edit in `worker/src/logger.js`.
+
+Operators correlate a load-driver wall-time sample with a server-side structured log by looking up the echoed `x-ks2-request-id` on the response headers. `scripts/classroom-load-test.mjs` and `scripts/probe-production-bootstrap.mjs` capture both the client-generated id and the server echo on every measurement.
+
 ## Threshold-Run Procedure
 
 The classroom load driver and production bootstrap probe both support hard threshold gates so a CI step can fail purely on threshold violation. No threshold flag is set by default — absent flags preserve the existing reporting behaviour exactly.
@@ -170,42 +187,63 @@ Do not claim classroom or school readiness from Free-tier limits alone.
 
 The endpoint is manual-refresh only (no polling). Current KS2 scale keeps per-refresh cost well under the D1 Free-tier 10ms CPU budget. Re-evaluate if `event_log` exceeds ~500K rows — at that point consider a pre-aggregated `admin_kpi_metrics`-style counter for the windowed totals in place of live COUNTs.
 
-`[ks2-capacity]` telemetry (U4) covers `/api/admin/ops/kpi` alongside every
-other Worker route; the admin console KPI endpoint inherits the generic
-emission path and does not require bespoke wiring.
+`[ks2-worker] {event: "capacity.request", ...}` telemetry (U3) covers
+`/api/admin/ops/kpi` alongside every other Worker route; the admin
+console KPI endpoint inherits the generic emission path and does not
+require bespoke wiring.
 
-## `[ks2-capacity]` structured telemetry (U4)
+## `[ks2-worker] event: capacity.request` structured telemetry (U3)
 
 Every Worker response now emits (subject to the emission-level sampler)
-a single `[ks2-capacity]` JSON log line carrying bounded metadata for
-capacity attribution. This lets ops decide whether a failure came from
-CPU, D1 rows, D1 duration, queueing, or payload size without log
-archaeology.
+a single `[ks2-worker]` JSON log line carrying bounded metadata for
+capacity attribution. The line shares the `[ks2-worker]` prefix with
+`logMutation()` in `worker/src/repository.js` so existing log
+aggregators treat every Worker-emitted event line identically — the
+discriminator is the `event` field on the JSON payload.
 
 ### Shape
 
 ```json
-[ks2-capacity] {
+[ks2-worker] {
+  "event": "capacity.request",
+  "requestId": "ks2_req_<uuid-v4>",
   "endpoint": "/api/bootstrap",
-  "route": "GET /api/bootstrap",
   "method": "GET",
   "status": 200,
-  "wallTimeMs": 123.4,
+  "phase": null,
+  "queryCount": 3,
+  "d1RowsRead": 42,
+  "d1RowsWritten": 0,
+  "d1DurationMs": 4.1,
+  "wallMs": 123.4,
   "responseBytes": 12345,
-  "boundedCounts": { "sessions": 10, "events": 50, "learners": 2 },
-  "d1": { "queryCount": 3, "rowsRead": 42, "rowsWritten": 0 },
-  "failureCategory": "ok",
-  "requestId": "ks2-req-<cf-ray-or-random>"
+  "statements": [ { "name": "selectLearners", "rowsRead": 2, "rowsWritten": null, "durationMs": 1.2 } ],
+  "statementsTruncated": false,
+  "bootstrapCapacity": { "version": 12, "mode": "rehydrated" },
+  "projectionFallback": false,
+  "derivedWriteSkipped": false,
+  "bootstrapMode": "rehydrated",
+  "signals": [],
+  "at": "2026-04-25T23:40:00.000Z"
 }
 ```
 
+The `meta.capacity` surface returned to clients on
+`/api/bootstrap`, `/api/subjects/:subject/command`, `/api/hubs/parent/*`,
+and `/api/classroom/*` is a narrower closed allowlist (`requestId`,
+`queryCount`, `d1RowsRead`, `d1RowsWritten`, `wallMs`, `responseBytes`,
+plus the optional bootstrap/projection/derived-write/mode fields and
+`signals`). Per-statement breakdown is NEVER returned to clients.
+
 ### Redaction contract
 
-Only bounded metadata is recorded: endpoint, route template, method,
-HTTP status, wall time, response bytes, bounded array-length counts
-(`sessions` / `events` / `learners` / `items`), D1 query count,
-`rows_read` / `rows_written`, the failure category, and a derived
-request ID. The telemetry path NEVER records any of:
+Only bounded metadata is recorded: request ID, endpoint, method, HTTP
+status, phase (`pre-route` on unauthenticated path), per-statement
+short names (derived from SQL keyword only, never the full query text),
+per-request D1 query count, `rows_read` / `rows_written`,
+`bootstrapCapacity` shape (closed allowlist of keys), and the
+`signals[]` closed-allowlist set. The telemetry path NEVER records any
+of:
 
 - answer-bearing payloads or private spelling prompts;
 - child-identifying content (learner names, emails, UUID-embedded
@@ -214,54 +252,72 @@ request ID. The telemetry path NEVER records any of:
 - any key from `tests/helpers/forbidden-keys.mjs::FORBIDDEN_KEYS_EVERYWHERE`.
 
 `tests/worker-capacity-telemetry.test.js` exercises a full bootstrap +
-parent-hub read + recent-sessions read with sentinel tokens seeded
-into the fixture data and asserts that every emitted
-`[ks2-capacity]` line is free of those sentinels, forbidden keys, and
-cookie values.
+parent-hub read with sentinel tokens seeded into the fixture data and
+asserts that every emitted `[ks2-worker] event: capacity.request`
+line is free of those sentinels, forbidden keys, and cookie values.
 
-### Failure-category taxonomy
+### Signals closed allowlist
 
-| Category               | Triggered by                                                            |
-| ---------------------- | ----------------------------------------------------------------------- |
-| `ok`                   | HTTP 2xx/3xx                                                            |
-| `exceededCpu`          | HTTP 1102 or message matches `exceeded_cpu` / `worker cpu` / `error 1102` |
-| `d1Overloaded`         | error code `d1_overloaded` or message matches `d1.*overloaded`          |
-| `d1DailyLimit`         | error code `d1_daily_limit` or message matches `daily.*limit` / `quota` |
-| `staleWrite`           | error code `stale_write` (mutation CAS rejection)                       |
-| `idempotencyReuse`     | error code `idempotency_reuse`                                          |
-| `authFailure`          | HTTP 401 / 403 or error code `unauthenticated` / `forbidden`            |
-| `rateLimited`          | HTTP 429 or error code `ops_error_rate_limited`                         |
-| `redactionFailure`     | error code `redaction_failure`                                          |
-| `badRequest`           | HTTP 400 or error code `bad_request`                                    |
-| `notFound`             | HTTP 404 or error code `not_found`                                      |
-| `backendUnavailable`   | HTTP 503 or error code `backend_unavailable`                            |
-| `server5xx`            | HTTP 5xx not matched above                                              |
+Signals are short-lived, bounded tokens appended to `meta.capacity.signals[]`
+and the structured log. Tokens outside the closed allowlist are silently
+rejected and counted via the internal `signalsRejected` counter — raw
+error messages, learner names, and any free-form string CANNOT reach the
+public surface.
+
+| Token                  | Dimension captured                                                   |
+| ---------------------- | -------------------------------------------------------------------- |
+| `exceededCpu`          | HTTP 1102 / Worker CPU budget exhaustion                             |
+| `d1Overloaded`         | D1 overload (transient backend pressure)                             |
+| `d1DailyLimit`         | D1 daily quota exhaustion                                            |
+| `rateLimited`          | Rate-limit bucket trip                                               |
+| `networkFailure`       | Transport failure between Worker and dependency                      |
+| `server5xx`            | Uncategorised 5xx                                                    |
+| `bootstrapFallback`    | Bootstrap took the fallback path                                     |
+| `projectionFallback`   | Projection read fell back from public read-model to live query       |
+| `derivedWriteSkipped`  | Derived-write path skipped a projection update                       |
+| `breakerTransition`    | Circuit-breaker state change                                         |
+| `redactionFailure`     | Redaction pipeline emitted a silent-fail (no status change)          |
+| `staleWrite`           | Mutation CAS rejected a stale write (distinct from arbitrary 409)    |
+| `idempotencyReuse`     | 200-OK replay served from the request-receipt cache                  |
+
+HTTP status already carries `authFailure` (401/403), `badRequest` (400),
+`notFound` (404), and `backendUnavailable` (503); those dimensions are
+NOT duplicated as signal tokens.
 
 ### Sampling
 
-- Happy-path rows (`failureCategory === 'ok'`) emit at 10 % — the
-  constant is `CAPACITY_TELEMETRY_SAMPLE_RATE = 0.1` in
-  `worker/src/capacity/telemetry.js`.
-- Failure rows (`failureCategory !== 'ok'`) **bypass** the sampler
-  and emit at 100 %. This keeps every capacity-relevant failure
-  attributable without being buried in happy-path noise.
+- `CAPACITY_LOG_SAMPLE_RATE` env var (float in `[0, 1]`, default 1.0)
+  controls the happy-path emission rate. Local and preview keep the
+  default 1.0 so every request is observable during development;
+  production sets `CAPACITY_LOG_SAMPLE_RATE = 0.1` so 10 % of happy-path
+  rows emit.
+- Failure rows with `status >= 500` **bypass** the sampler and emit at
+  100 %.
+- Pre-route 401s (the `phase: "pre-route"` marker — credential-stuffing
+  bursts before any route handler ran) also **bypass** the sampler and
+  emit at 100 %, so auth-storm observability survives a low sample rate
+  in production.
 - `head_sampling_rate: 1` in `wrangler.jsonc` is a
   Cloudflare-observability-level knob that remains enabled and is
   orthogonal to the emission-level sampler — the two filters compose.
-- Scaling the emission rate up from 10 % happens only after a week of
+- Scaling the emission rate up from 0.1 happens only after a week of
   production data shows quota headroom. Production first, tuning
   second.
 
 ### D1 row metrics
 
-`requireDatabase(env)` returns a telemetry-aware wrapper when a
-request-local capacity collector is attached to `env`. The wrapper
-intercepts `.prepare().bind().first/run/all()` terminal calls, reads
-`meta.rows_read` / `meta.rows_written` when D1 surfaces them, and
-accumulates per-request counts into the collector. The wrapper is
-idempotent: nested `requireDatabase(env)` calls from `auth.js`,
-`repository.js`, and `demo/sessions.js` all share the same collector
-without double-counting.
+`requireDatabaseWithCapacity(env, capacity)` returns a
+telemetry-aware wrapper that routes `.prepare().bind().first/run/all()`
+terminal calls through `withCapacityCollector(db, collector)` in
+`worker/src/d1.js`. The proxy reads `meta.rows_read` /
+`meta.rows_written` when D1 surfaces them and accumulates per-request
+counts on the collector. Constructor injection rather than env-attach:
+the collector is threaded explicitly through `createWorkerRepository({
+env, now, capacity })`, the auth boundary
+(`createSessionAuthBoundary({ env, capacity })`), the demo protect
+helpers, and the ops-error-event rate-limit query. Threading is
+explicit so cross-request collector leakage is architecturally
+impossible.
 
 For tests, `tests/helpers/sqlite-d1.js` simulates `meta.rows_read` /
 `meta.rows_written` on the local SQLite double so the telemetry
@@ -272,20 +328,22 @@ D1 remains the source of truth for performance claims.
 ### Tailing telemetry in production
 
 ```sh
-npm run ops:tail -- --search "[ks2-capacity]"
+npm run ops:tail -- --search '"event":"capacity.request"'
 ```
 
 Correlate a failing `npm run smoke:production:bootstrap --output ...`
-run with the Worker log by grepping for the `requestId` (the probe
-also prints its `cf-ray` in `--output` mode once U3 lands).
+run with the Worker log by grepping for the `requestId`. The probe
+also echoes its `x-ks2-request-id` in `--output` mode so the same
+identifier lands in the structured log, the response body (`meta.capacity.requestId`),
+and the evidence snapshot.
 
 ### Emission failure handling
 
-JSON serialisation of the snapshot is wrapped in a try/catch so a
-cyclic or exotic object in the collector state cannot crash the user
-response. On failure the Worker logs `[ks2-capacity-telemetry-error]`
-with the error message and the request ID, then silently drops the
-telemetry line. The user response is unaffected.
+JSON serialisation of the structured log is wrapped in a try/catch so
+a cyclic or exotic object in the collector state cannot crash the user
+response. On failure the Worker falls back to a non-stringified
+`console.log(prefix, payload)` emission so the line is still
+discoverable in Workers tail; the user response is unaffected.
 
 ## Evidence Verification Escape Hatches
 

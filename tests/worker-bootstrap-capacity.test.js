@@ -286,6 +286,25 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   assert.ok(eventReads.length >= learnerCount);
   assert.equal(eventReads.every((entry) => entry.rowCount <= RECENT_EVENT_LIMIT_PER_LEARNER), true);
 
+  // U3: meta.capacity surface is attached to production bootstrap and
+  // carries the bootstrapCapacity projection stamped by the collector
+  // via createWorkerRepository({ env, now, capacity }). The public
+  // allowlist shape must match the in-body bootstrapCapacity metadata.
+  assert.ok(payload.meta, 'Bootstrap response must carry meta.');
+  assert.ok(payload.meta.capacity, 'meta.capacity must be present for /api/bootstrap (U3).');
+  assert.ok(
+    typeof payload.meta.capacity.requestId === 'string'
+    && payload.meta.capacity.requestId.startsWith('ks2_req_'),
+    'meta.capacity.requestId must be a ks2_req_ prefixed id.',
+  );
+  assert.ok(payload.meta.capacity.queryCount > 0, 'meta.capacity.queryCount must reflect D1 work.');
+  assert.ok(payload.meta.capacity.d1RowsRead >= 0);
+  // bootstrapCapacity on the public shape mirrors the bundle's
+  // bootstrapCapacity (stamped on the collector inside bootstrap()).
+  assert.ok(payload.meta.capacity.bootstrapCapacity, 'bootstrapCapacity must be stamped on collector for public bootstrap.');
+  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 1);
+  assert.equal(payload.meta.capacity.bootstrapCapacity.mode, 'public-bounded');
+
   server.close();
 });
 
@@ -300,32 +319,42 @@ test('production bootstrap still requires an authenticated session before capaci
   server.close();
 });
 
-// U4 characterization lock: pins the `[ks2-capacity]` structured telemetry
-// line that the Worker now emits on an unauthenticated bootstrap. Failure
-// rows (`failureCategory !== 'ok'`) bypass the 10 % sampler and always
-// emit, so an unauthenticated 401 response is a deterministic witness for
-// the telemetry contract without needing to stub Math.random.
-test('U4 characterization — unauthenticated bootstrap emits [ks2-capacity] with authFailure category', async () => {
+// U3 characterization lock: pins the `[ks2-worker] {event: "capacity.request", ...}`
+// structured telemetry line the Worker emits on an unauthenticated bootstrap.
+// Pre-route 401s are force-logged (round 1 P0 #01 fix), so an unauthenticated
+// bootstrap is a deterministic witness for the telemetry contract without
+// needing to stub Math.random. Rewritten on 2026-04-26 during Option B merge
+// (PR #201) to use our `[ks2-worker] event: capacity.request` prefix in
+// place of PR #207's `[ks2-capacity]`.
+test('U3 characterization — unauthenticated bootstrap emits capacity.request log with pre-route phase', async () => {
   const server = createProductionServer();
   const { captured, value: response } = await captureLogs(() => server.fetchRaw(`${BASE_URL}/api/bootstrap`));
   assert.equal(response.status, 401);
-  const capacityLines = captured.filter((line) => line.startsWith('[ks2-capacity] '));
-  assert.equal(capacityLines.length, 1, `expected exactly one [ks2-capacity] line, got ${capacityLines.length}: ${JSON.stringify(capacityLines)}`);
-  const payload = JSON.parse(capacityLines[0].slice('[ks2-capacity] '.length));
+  const capacityLines = captured.filter((line) => line.startsWith('[ks2-worker] '));
+  // Parse each candidate and retain only capacity.request events.
+  const payloads = capacityLines
+    .map((line) => {
+      try {
+        return JSON.parse(line.slice('[ks2-worker] '.length));
+      } catch {
+        return null;
+      }
+    })
+    .filter((entry) => entry && entry.event === 'capacity.request');
+  assert.equal(payloads.length, 1, `expected exactly one capacity.request line, got ${payloads.length}: ${JSON.stringify(capacityLines)}`);
+  const payload = payloads[0];
   // Shape contract — keys present, values bounded.
   assert.equal(payload.endpoint, '/api/bootstrap');
-  assert.equal(payload.route, 'GET /api/bootstrap');
   assert.equal(payload.method, 'GET');
   assert.equal(payload.status, 401);
-  assert.equal(payload.failureCategory, 'authFailure');
-  assert.ok(typeof payload.wallTimeMs === 'number' && payload.wallTimeMs >= 0);
+  assert.equal(payload.phase, 'pre-route');
+  assert.ok(typeof payload.wallMs === 'number' && payload.wallMs >= 0);
   assert.ok(typeof payload.responseBytes === 'number' && payload.responseBytes > 0);
-  assert.deepEqual(payload.boundedCounts, {});
-  assert.ok(payload.d1 && typeof payload.d1 === 'object');
-  assert.ok(typeof payload.d1.queryCount === 'number');
-  assert.ok(typeof payload.d1.rowsRead === 'number');
-  assert.ok(typeof payload.d1.rowsWritten === 'number');
-  assert.ok(typeof payload.requestId === 'string' && payload.requestId.startsWith('ks2-req-'));
+  assert.ok(typeof payload.queryCount === 'number');
+  assert.ok(typeof payload.d1RowsRead === 'number');
+  assert.ok(typeof payload.d1RowsWritten === 'number');
+  assert.ok(Array.isArray(payload.statements));
+  assert.ok(typeof payload.requestId === 'string' && payload.requestId.startsWith('ks2_req_'));
 
   server.close();
 });
