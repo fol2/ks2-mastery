@@ -174,3 +174,123 @@ test('C4 ks2-cron actor bootstrap is idempotent — second run leaves role and r
     db.close();
   }
 });
+
+// ---------------------------------------------------------------------------
+// I9 plan-scenario coverage — cron retention orchestration + failure
+// telemetry paths (Phase C reviewer — test coverage gaps).
+// ---------------------------------------------------------------------------
+
+test('I9 retention orchestration — stale rows in three swept tables are purged by one scheduled run', async () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    const nowTs = 1_700_000_000_000;
+    const MS_IN_DAY = 24 * 60 * 60 * 1000;
+    // Seed admin + stale data in each table.
+    db.db.prepare(`
+      INSERT INTO adult_accounts (
+        id, email, display_name, platform_role, selected_learner_id,
+        created_at, updated_at, repo_revision, account_type, demo_expires_at
+      ) VALUES ('adult-admin', NULL, NULL, 'admin', NULL, 1, 1, 0, 'real', NULL)
+    `).run();
+    db.db.prepare(`
+      INSERT INTO account_ops_metadata (
+        account_id, ops_status, plan_label, tags_json, internal_notes,
+        updated_at, updated_by_account_id, row_version, status_revision
+      ) VALUES ('adult-admin', 'active', NULL, '[]', NULL, 1, NULL, 0, 5)
+    `).run();
+    // Stale non-admin mutation_receipt at 31 days (older than 30-day window).
+    db.db.prepare(`
+      INSERT INTO mutation_receipts (
+        account_id, request_id, scope_type, scope_id, mutation_kind,
+        request_hash, response_json, status_code, correlation_id, applied_at
+      ) VALUES ('adult-admin', 'req-old', 'learner', 'adult-admin', 'parent.learner.update',
+                'hash-x', '{}', 200, 'corr-x', ?)
+    `).run(nowTs - 31 * MS_IN_DAY);
+    // Stale request_limits entry (updated_at older than 24h).
+    db.db.prepare(`
+      INSERT INTO request_limits (limiter_key, window_started_at, request_count, updated_at)
+      VALUES ('old-bucket', ?, 0, ?)
+    `).run(nowTs - 1000, nowTs - 25 * 60 * 60 * 1000);
+    // Stale account_sessions row (expired + status_revision_at_issue=2 < current=5).
+    db.db.prepare(`
+      INSERT INTO account_sessions (
+        id, account_id, session_hash, provider, created_at, expires_at,
+        session_kind, status_revision_at_issue
+      ) VALUES ('sess-stale', 'adult-admin', 'hash-s', 'local', 1, ?, 'real', 2)
+    `).run(nowTs - 1000);
+
+    const env = { DB: db };
+    const result = await runScheduledHandler({}, env, {}, { now: () => nowTs });
+    assert.equal(result.ok, true);
+    assert.ok(result.retention, 'retention block present on result');
+    assert.ok(result.retention.totalDeleted >= 3, 'at least 3 rows deleted across three tables');
+
+    // Rows gone.
+    assert.equal(db.db.prepare('SELECT COUNT(*) AS c FROM mutation_receipts WHERE request_id = ?').get('req-old').c, 0);
+    assert.equal(db.db.prepare('SELECT COUNT(*) AS c FROM request_limits WHERE limiter_key = ?').get('old-bucket').c, 0);
+    assert.equal(db.db.prepare('SELECT COUNT(*) AS c FROM account_sessions WHERE id = ?').get('sess-stale').c, 0);
+  } finally {
+    db.close();
+  }
+});
+
+test('H1 retention failure — sweep throws but reconcile succeeds; RETENTION_LAST_FAILURE_AT is written and LAST_SUCCESS_AT is NOT', async () => {
+  // Synthesise a DB wrapper that lets the reconcile arm succeed but makes
+  // any retention DELETE throw. Verifies the H1 gating: LAST_SUCCESS_AT is
+  // only written when BOTH arms succeed; the retention-specific failure
+  // timestamp captures the sweep failure independently.
+  const db = createMigratedSqliteD1Database();
+  try {
+    const nowTs = 1_700_000_000_000;
+    db.db.prepare(`
+      INSERT INTO adult_accounts (
+        id, email, display_name, platform_role, selected_learner_id,
+        created_at, updated_at, repo_revision, account_type, demo_expires_at
+      ) VALUES ('adult-admin', NULL, NULL, 'admin', NULL, 1, 1, 0, 'real', NULL)
+    `).run();
+
+    // Wrap the DB so the first retention-DELETE throws. The prepare() wrap
+    // is narrow — it only intercepts DELETE FROM mutation_receipts and
+    // throws a synthetic error from the .run() invocation.
+    const envDb = new Proxy(db, {
+      get(target, prop, receiver) {
+        if (prop === 'prepare') {
+          return (sql) => {
+            if (/^\s*DELETE FROM mutation_receipts/i.test(sql)) {
+              return {
+                bind() { return this; },
+                async run() { throw new Error('synthetic retention sweep failure'); },
+                async first() { return null; },
+                async all() { return { results: [], meta: {} }; },
+              };
+            }
+            return target.prepare(sql);
+          };
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+    const env = { DB: envDb };
+    const result = await runScheduledHandler({}, env, {}, { now: () => nowTs });
+    // Reconcile succeeded → result.reconcile present; retention reports error.
+    assert.ok(result.reconcile, 'reconcile arm completed');
+    assert.ok(result.retention && typeof result.retention.error === 'string', 'retention reports error');
+    assert.match(result.retention.error, /synthetic retention sweep failure/);
+    assert.equal(result.ok, false, 'overall ok is false when retention fails (H1 gate)');
+
+    // LAST_SUCCESS_AT is NOT written (H1 gate — only both arms succeeding advances it).
+    const lastSuccess = db.db.prepare(`
+      SELECT metric_count FROM admin_kpi_metrics WHERE metric_key = ?
+    `).get(CRON_METRIC_LAST_SUCCESS_AT);
+    assert.equal(lastSuccess, undefined, 'LAST_SUCCESS_AT not bumped on retention failure');
+
+    // RETENTION_LAST_FAILURE_AT was written to mark the sweep failure.
+    const retentionFailureRow = db.db.prepare(`
+      SELECT metric_count FROM admin_kpi_metrics WHERE metric_key = ?
+    `).get('capacity.cron.retention.last_failure_at');
+    assert.ok(retentionFailureRow, 'RETENTION_LAST_FAILURE_AT metric is written');
+    assert.equal(Number(retentionFailureRow.metric_count), nowTs);
+  } finally {
+    db.close();
+  }
+});
