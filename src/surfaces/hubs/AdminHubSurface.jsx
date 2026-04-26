@@ -1369,6 +1369,12 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
   const accessibleLearners = Array.isArray(model.learnerSupport?.accessibleLearners) ? model.learnerSupport.accessibleLearners : [];
   const auditEntries = Array.isArray(model.auditLogLookup?.entries) ? model.auditLogLookup.entries : [];
   const selectedLearnerId = model.learnerSupport?.selectedLearnerId || selectedDiagnostics?.learnerId || '';
+  // U9 capacity: when the classroomSummary breaker is open, drop the
+  // learner roster into a "list-only" mode — hide per-learner Grammar/
+  // Punctuation summary stats but still show the learner list so the
+  // operator can navigate. Plan line 882.
+  const classroomSummaryDegraded = appState?.persistence?.breakersDegraded?.classroomSummary === true;
+  const bootstrapCapacityDegraded = appState?.persistence?.breakersDegraded?.bootstrapCapacity === true;
   const selectedGrammarEvidence = selectedDiagnostics?.grammarEvidence || {};
   const selectedPunctuationEvidence = selectedDiagnostics?.punctuationEvidence || {};
   const selectedPunctuationRelease = selectedPunctuationEvidence.releaseDiagnostics
@@ -1402,6 +1408,23 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
           </div>
         </div>
         {notice && <div className="feedback warn" style={{ marginTop: 16 }}>{notice}</div>}
+        {bootstrapCapacityDegraded ? (
+          <div
+            className="feedback bad"
+            style={{ marginTop: 16 }}
+            data-admin-hub-degraded="bootstrap-capacity"
+          >
+            <strong>Bootstrap capacity metadata missing</strong>
+            <div style={{ marginTop: 8 }}>
+              The client has received three consecutive bootstrap responses
+              without <code>meta.capacity.bootstrapCapacity</code>. Bootstrap
+              retries have stopped. Operator action is required: confirm the
+              Worker deploy and the capacity-telemetry emission path, then
+              restart the tab once the response includes the metadata again.
+              Student practice continues against the cached bundle.
+            </div>
+          </div>
+        ) : null}
         <ReadOnlyLearnerNotice access={accessContext.activeAdultLearnerContext} writableLearner={writableLearner} />
       </section>
 
@@ -1476,23 +1499,35 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
             )) : <p className="small muted">No audit entries matched the current lookup.</p>
           ) : <div className="callout warn" style={{ marginTop: 12 }}>The local reference build keeps this surface visible, but the live lookup itself is only wired on the Worker API path.</div>}
         </article>
-        <article className="card">
+        <article className="card" data-admin-hub-panel="classroom-summary">
           <div className="eyebrow">Learner support / diagnostics</div>
           <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Readable learners</h3>
+          {classroomSummaryDegraded ? (
+            <div className="feedback warn" data-admin-hub-degraded="classroom-summary">
+              <strong>Classroom summary temporarily unavailable</strong>
+              <div style={{ marginTop: 8 }}>
+                Per-learner Grammar and Punctuation summary stats are taking too long to load. The learner list remains available below — use Select to drill into an individual learner. Practice is unaffected.
+              </div>
+            </div>
+          ) : null}
           {accessibleLearners.length ? accessibleLearners.map((entry) => (
             <div className="skill-row" key={entry.learnerId}>
               <div>
                 <strong>{entry.learnerName}</strong>
                 <div className="small muted">{entry.yearGroup} · {entry.membershipRoleLabel} · {entry.accessModeLabel || (entry.writable ? 'Writable learner' : 'Read-only learner')}</div>
               </div>
-              <div className="small muted">Focus: {entry.currentFocus?.label || '—'}</div>
-              <div>{String(entry.overview?.dueWords ?? 0)} due</div>
-              <div className="small muted">
-                Grammar: {String(entry.grammarEvidence?.progressSnapshot?.dueConcepts ?? entry.overview?.dueGrammarConcepts ?? 0)} due / {String(entry.grammarEvidence?.progressSnapshot?.weakConcepts ?? entry.overview?.weakGrammarConcepts ?? 0)} weak
-              </div>
-              <div className="small muted">
-                Punctuation: {String(entry.punctuationEvidence?.progressSnapshot?.dueItems ?? entry.overview?.duePunctuationItems ?? 0)} due / {String(entry.punctuationEvidence?.progressSnapshot?.weakItems ?? entry.overview?.weakPunctuationItems ?? 0)} weak
-              </div>
+              {classroomSummaryDegraded ? null : (
+                <>
+                  <div className="small muted">Focus: {entry.currentFocus?.label || '—'}</div>
+                  <div>{String(entry.overview?.dueWords ?? 0)} due</div>
+                  <div className="small muted">
+                    Grammar: {String(entry.grammarEvidence?.progressSnapshot?.dueConcepts ?? entry.overview?.dueGrammarConcepts ?? 0)} due / {String(entry.grammarEvidence?.progressSnapshot?.weakConcepts ?? entry.overview?.weakGrammarConcepts ?? 0)} weak
+                  </div>
+                  <div className="small muted">
+                    Punctuation: {String(entry.punctuationEvidence?.progressSnapshot?.dueItems ?? entry.overview?.duePunctuationItems ?? 0)} due / {String(entry.punctuationEvidence?.progressSnapshot?.weakItems ?? entry.overview?.weakPunctuationItems ?? 0)} weak
+                  </div>
+                </>
+              )}
               <div><button className="btn ghost" type="button" onClick={() => actions.dispatch('adult-surface-learner-select', { value: entry.learnerId })}>Select</button></div>
             </div>
           )) : <p className="small muted">No learner diagnostics are accessible from this account scope yet.</p>}

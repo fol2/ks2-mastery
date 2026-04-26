@@ -660,6 +660,65 @@ test('U9 integration: server-side readModelDerivedWrite breaker open skips proje
   }
 });
 
+// ---------------------------------------------------------------------------
+// Client UX degradation: ParentHub + AdminHub render breaker-open panels.
+// ---------------------------------------------------------------------------
+
+test('U9 UX: Parent Hub renders "Recent history temporarily unavailable" when breakersDegraded.parentHub=true', async () => {
+  const { renderHubSurfaceFixture } = await import('./helpers/react-render.js');
+  const html = await renderHubSurfaceFixture({
+    surface: 'parent',
+    breakersDegraded: { parentHub: true, classroomSummary: false, derivedWrite: false, bootstrapCapacity: false },
+  });
+  assert.match(html, /Recent history temporarily unavailable/, 'degraded message on recent-sessions widget');
+  assert.match(html, /Activity feed temporarily unavailable/, 'degraded message on activity-feed widget');
+  assert.match(html, /data-parent-hub-degraded="recent-sessions"/);
+  // Student-facing practice surfaces unaffected — the hub still renders
+  // the learner overview chip row.
+  assert.match(html, /Current picture/);
+});
+
+test('U9 UX: Parent Hub shows normal recent-sessions list when breakersDegraded.parentHub=false', async () => {
+  const { renderHubSurfaceFixture } = await import('./helpers/react-render.js');
+  const html = await renderHubSurfaceFixture({ surface: 'parent' });
+  assert.doesNotMatch(html, /Recent history temporarily unavailable/);
+  assert.match(html, /Smart Review/, 'RecentSessionList renders its fixture data');
+});
+
+test('U9 UX: Admin Hub renders classroom-summary degraded banner and hides per-learner summary stats when classroomSummary=true', async () => {
+  const { renderHubSurfaceFixture } = await import('./helpers/react-render.js');
+  const html = await renderHubSurfaceFixture({
+    surface: 'admin',
+    breakersDegraded: { parentHub: false, classroomSummary: true, derivedWrite: false, bootstrapCapacity: false },
+  });
+  assert.match(html, /Classroom summary temporarily unavailable/);
+  assert.match(html, /data-admin-hub-degraded="classroom-summary"/);
+  // Roster list is still rendered.
+  assert.match(html, /Ava/);
+  // Per-learner Grammar / Punctuation stat rows MUST NOT render.
+  assert.doesNotMatch(html, /Grammar: 1 due/);
+  assert.doesNotMatch(html, /Punctuation: 1 due/);
+});
+
+test('U9 UX: Admin Hub renders bootstrap-capacity operator banner when bootstrapCapacity=true', async () => {
+  const { renderHubSurfaceFixture } = await import('./helpers/react-render.js');
+  const html = await renderHubSurfaceFixture({
+    surface: 'admin',
+    breakersDegraded: { parentHub: false, classroomSummary: false, derivedWrite: false, bootstrapCapacity: true },
+  });
+  assert.match(html, /Bootstrap capacity metadata missing/);
+  assert.match(html, /Operator action is required/);
+  assert.match(html, /data-admin-hub-degraded="bootstrap-capacity"/);
+});
+
+test('U9 UX: Admin Hub renders full per-learner stats when no breakers are open', async () => {
+  const { renderHubSurfaceFixture } = await import('./helpers/react-render.js');
+  const html = await renderHubSurfaceFixture({ surface: 'admin' });
+  assert.doesNotMatch(html, /Classroom summary temporarily unavailable/);
+  assert.doesNotMatch(html, /Bootstrap capacity metadata missing/);
+  assert.match(html, /Grammar: 1 due/, 'per-learner Grammar stats render when breakers closed');
+});
+
 test('U9 integration: a response with meta.capacity.bootstrapCapacity resets the consecutive-miss counter', async () => {
   const storage = installMemoryStorage();
   const server = createMockRepositoryServer({ learners: learnerSnapshot() });

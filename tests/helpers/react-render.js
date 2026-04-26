@@ -598,7 +598,14 @@ export function renderMonsterEffectCatalogPanelFixture({ canManage = true } = {}
   `);
 }
 
-export function renderHubSurfaceFixture({ surface = 'parent', platformRole = 'admin' } = {}) {
+export function renderHubSurfaceFixture({
+  surface = 'parent',
+  platformRole = 'admin',
+  // U9: optional override for `appState.persistence.breakersDegraded`
+  // so tests can verify the breaker-open UX branches in
+  // ParentHubSurface / AdminHubSurface.
+  breakersDegraded = null,
+} = {}) {
   return renderFixture(`
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
@@ -612,7 +619,15 @@ export function renderHubSurfaceFixture({ surface = 'parent', platformRole = 'ad
         byId: { 'learner-a': { id: 'learner-a', name: 'Ava', yearGroup: 'Y5' } },
         allIds: ['learner-a'],
       },
-      persistence: { mode: 'remote-sync' },
+      persistence: {
+        mode: 'remote-sync',
+        breakersDegraded: ${JSON.stringify(breakersDegraded || {
+          parentHub: false,
+          classroomSummary: false,
+          derivedWrite: false,
+          bootstrapCapacity: false,
+        })},
+      },
       toasts: [],
       monsterCelebrations: { queue: [] },
     };

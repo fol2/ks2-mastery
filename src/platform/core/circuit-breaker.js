@@ -59,11 +59,13 @@ function resolveNumericOption(value, fallback) {
 }
 
 function resolveStorage(storage) {
+  // The primitive REFUSES to touch the global `localStorage` directly.
+  // Callers pass an injected adapter (repositories resolve the real
+  // `globalThis.localStorage` once, via the lock-wrapped path, and
+  // hand it in). When absent, the primitive degrades to per-tab
+  // behaviour — documented residual per plan line 886.
   if (storage && typeof storage.setItem === 'function' && typeof storage.getItem === 'function') {
     return storage;
-  }
-  if (typeof globalThis !== 'undefined' && globalThis.localStorage && typeof globalThis.localStorage.setItem === 'function') {
-    return globalThis.localStorage;
   }
   return null;
 }

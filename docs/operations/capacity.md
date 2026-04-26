@@ -241,6 +241,61 @@ If subject commands show high latency or 5xx:
 3. Verify command projection is using read models or bounded recent windows rather than full `event_log` scans.
 4. Roll back the command-path change if progress preservation or idempotency is at risk.
 
+## Circuit Breakers (U9)
+
+The client-side repository keeps five named circuit breakers under
+`persistenceChannel.read().breakers.*` plus a minimal
+`breakersDegraded` boolean map for UI consumption. Breakers follow
+the standard `closed` → `open` → `half-open` → `closed`/`open`
+state machine with an exponential cooldown (500ms base, 2x, capped
+at 30s; `failureThreshold` default 3). The half-open probe is the
+NEXT normal request, not a dedicated health-check ping — this keeps
+the primitive bounded and boring.
+
+| Breaker | Protects | Open UX |
+| --- | --- | --- |
+| `parentHubRecentSessions` | Parent Hub "Recent sessions" widget | "Recent history temporarily unavailable" message; practice unaffected |
+| `parentHubActivity` | Parent Hub activity / misconceptions feed | Activity feed widget hidden; practice unaffected |
+| `classroomSummary` | Admin / Operations per-learner roster stats | Learner list renders, per-learner Grammar / Punctuation summary stats hidden |
+| `readModelDerivedWrite` | Server projection read-model write | Primary subject state still writes; derived projection skipped; `derivedWriteSkipped: {reason: 'breaker-open'}` emitted on `meta.capacity`; stale-catchup repairs on next command |
+| `bootstrapCapacityMetadata` | Three consecutive `/api/bootstrap` responses missing `meta.capacity.bootstrapCapacity` | Sticky — does NOT auto-recover. Operator banner appears in Admin Hub. Bootstrap retries stopped. |
+
+### Priority order (non-negotiable)
+
+Student answer write > reward / event projection > parent analytics. A
+failed write is NEVER surfaced as "synced" regardless of breaker
+state (`docs/mutation-policy.md`). When `readModelDerivedWrite` is
+open the primary state write still runs; only the projection update is
+skipped.
+
+### Telemetry
+
+Every breaker transition emits a `breakerTransition` signal token on
+`meta.capacity.signals[]` (closed enum per U3 allowlist — the breaker
+name is logged separately, not in the signal string). Operators grep
+worker logs for `"signals":["breakerTransition"]` to see transition
+bursts.
+
+### Multi-tab coordination
+
+Open transitions write a short-TTL `localStorage` hint
+`ks2-breaker:<name>:open:<until-ts>`. A sibling tab reading that hint
+inherits the `open` state immediately — no independent probe. When
+`localStorage` is unavailable (incognito / managed Chromebook) breakers
+degrade to per-tab behaviour; documented residual, deployment mitigation
+is site-scoped storage for `ks2.eugnel.uk`.
+
+### Operator action for `bootstrapCapacityMetadata`
+
+1. Confirm the Admin Hub banner "Bootstrap capacity metadata missing".
+2. Tail Worker logs for three consecutive `/api/bootstrap` responses
+   with `"bootstrapCapacity":null` in `capacity.request` entries.
+3. Verify the Worker deploy is the build that emits
+   `meta.capacity.bootstrapCapacity` (U7 regression-detection field).
+   Previous deploys without this field will keep the breaker open.
+4. Once a healthy response lands, reload the tab — breaker state does
+   not persist across reloads; fresh start resumes retries.
+
 ## Launch Language
 
 Use evidence-tied language:
