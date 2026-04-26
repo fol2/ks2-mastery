@@ -10003,6 +10003,22 @@ html { scroll-behavior: smooth; }
   background: var(--warn-soft, #fdf1db);
   color: #805614;
 }
+/* Phase 4 U3 — degraded-analytics state. Muted slate hint so it reads as
+   "waiting on evidence" rather than the warn/alert warmth of Due/Weak.
+   Distinct from the default New chip (no custom class) so a reviewer can
+   tell at a glance whether the Map is rendering an honest empty roster or
+   the unknown fallback. */
+.punctuation-map-skill-status--unknown {
+  background: var(--panel-soft, #eef0f3);
+  color: var(--muted, #4b5563);
+  border: 1px dashed var(--line, #c9ced6);
+}
+.punctuation-map-skill-unknown-helper {
+  margin: -2px 0 8px;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
 .punctuation-map-empty {
   padding: 14px 16px;
   border: 1px dashed var(--line);

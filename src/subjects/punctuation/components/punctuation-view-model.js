@@ -21,6 +21,7 @@
 
 import { resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
 import { MONSTERS_BY_SUBJECT } from '../../../platform/game/monsters.js';
+import { PUNCTUATION_CLIENT_SKILLS } from '../read-model.js';
 import {
   PUNCTUATION_MAP_DETAIL_TAB_IDS,
   PUNCTUATION_MAP_MONSTER_FILTER_IDS,
@@ -380,6 +381,11 @@ const PUNCTUATION_CHILD_STATUS_LABELS = Object.freeze({
   due: 'Due today',
   weak: 'Wobbly',
   secure: 'Secure',
+  // Phase 4 U3 — degraded-analytics state. Distinct from `'new'` (fresh
+  // learner) so a payload-failure does not masquerade as an empty-evidence
+  // Map. Paired with the 'We\'ll unlock this after your next round.' helper
+  // sub-line the Map scene renders under each unknown row.
+  unknown: 'Unknown',
 });
 
 /**
@@ -790,6 +796,53 @@ export function buildPunctuationDashboardModel(stats, learner, rewardState) {
 
 // --- Punctuation Map model builder -----------------------------------------
 
+/**
+ * Build the 14 skill-row inputs for `buildPunctuationMapModel`. Called
+ * once per Map render from `PunctuationMapScene`. When the analytics
+ * snapshot carries `skillRows`, each client-held skill (name + clusterId)
+ * is enriched with its per-skill status / attempts / accuracy / mastery
+ * row. Fresh learners fall back to `status: 'new'` per-skill (pre-U3
+ * behaviour preserved). A DEGRADED analytics state
+ * (`analytics.available === false`) now coerces every skill to
+ * `status: 'unknown'` — the Map no longer pretends a payload failure is
+ * an empty evidence roster (plan R4 / Phase 4 U3, origin R4).
+ *
+ * Pure function over plain data — no React, no SSR. Exported so
+ * `tests/react-punctuation-scene.test.js` can exercise the three
+ * branches (true / false / 'empty') directly without the full render
+ * cost, and so the scene file imports it as a plain helper.
+ */
+export function assembleSkillRows(ui) {
+  const analytics = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui.analytics : null;
+  // `available === false` means the Worker projection failed or was
+  // omitted entirely. Surface the degraded state honestly: every skill
+  // reads as `'unknown'` with the helper sub-line the SkillCard renders.
+  const degraded = analytics && analytics.available === false;
+  const snapshotRows = analytics && Array.isArray(analytics.skillRows) ? analytics.skillRows : [];
+  const snapshotById = new Map();
+  for (const row of snapshotRows) {
+    if (row && typeof row === 'object' && !Array.isArray(row) && typeof row.skillId === 'string') {
+      snapshotById.set(row.skillId, row);
+    }
+  }
+  return PUNCTUATION_CLIENT_SKILLS.map((skill) => {
+    const snap = snapshotById.get(skill.id) || null;
+    const rawStatus = degraded
+      ? 'unknown'
+      : (snap && typeof snap.status === 'string' ? snap.status : 'new');
+    return {
+      skillId: skill.id,
+      name: skill.name,
+      clusterId: skill.clusterId,
+      status: rawStatus,
+      attempts: Number(snap?.attempts) || 0,
+      accuracy: Number.isFinite(Number(snap?.accuracy)) ? Number(snap.accuracy) : null,
+      mastery: Number(snap?.mastery) || 0,
+      dueAt: Number(snap?.dueAt) || 0,
+    };
+  });
+}
+
 function normaliseSkillRow(row) {
   if (!row || typeof row !== 'object' || Array.isArray(row)) return null;
   const skillId = typeof row.skillId === 'string' ? row.skillId : '';
@@ -808,6 +861,11 @@ function normaliseSkillRow(row) {
 
 function deriveStatusForSkill(row) {
   if (!row) return 'new';
+  // Phase 4 U3: preserve the explicit `'unknown'` signal when the Map has
+  // coerced every skill to unknown because analytics is unavailable. The
+  // `attempts === 0` branch below would otherwise silently downgrade
+  // unknown rows to `'new'` and re-introduce the exact bug U3 fixes.
+  if (row.status === 'unknown') return 'unknown';
   if (row.attempts === 0) return 'new';
   return row.status;
 }

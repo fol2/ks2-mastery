@@ -27,13 +27,60 @@ function stripForbiddenChildScopeFields(state) {
   return rest;
 }
 
+// Phase 4 U3 (origin R4): derive the `analytics.available` signal from the
+// shape of the raw analytics payload the Worker projected (or didn't). The
+// Punctuation Map branches on this value to distinguish three states that
+// used to be indistinguishable in the UI:
+//
+//   - `true`    — the Worker projected a non-empty `skillRows` array. Real
+//                 evidence is available; the Map renders per-skill status.
+//   - `'empty'` — the projection ran and yielded zero rows (fresh learner,
+//                 legitimately no evidence yet). The Map renders every skill
+//                 as `'new'`, preserving the pre-U3 fresh-learner copy.
+//   - `false`   — the payload is missing or malformed (Worker timeout /
+//                 degraded state / serialiser failure). The Map renders every
+//                 skill as `'unknown'` with a child-friendly "We'll unlock
+//                 this after your next round." helper line.
+//
+// Plan R4 (line 538-539) pins the `'empty'` vs `false` distinction: an
+// honest empty-evidence state must read differently from a payload failure.
+// When the upstream projection already emits an explicit `available` value,
+// that value is authoritative — the derivation only fills the gap when the
+// signal hasn't been set upstream. This respects the plan's rule that the
+// availability signal ORIGINATES upstream and the client surface merely
+// surfaces it.
+export function deriveAnalyticsAvailability(analytics) {
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) return false;
+  if (analytics.available === true || analytics.available === false || analytics.available === 'empty') {
+    return analytics.available;
+  }
+  if (!Array.isArray(analytics.skillRows)) return false;
+  return analytics.skillRows.length === 0 ? 'empty' : true;
+}
+
+// Phase 4 U3: attach an `analytics.available` signal to the read-model so
+// the Map scene can branch on payload availability without re-inspecting
+// the raw snapshot shape at every render. The returned object is a shallow
+// copy so the caller never mutates a frozen input.
+function withAnalyticsAvailability(state) {
+  if (!state || typeof state !== 'object' || Array.isArray(state)) return state;
+  const rawAnalytics = state.analytics && typeof state.analytics === 'object' && !Array.isArray(state.analytics)
+    ? state.analytics
+    : null;
+  const available = deriveAnalyticsAvailability(rawAnalytics);
+  const nextAnalytics = rawAnalytics
+    ? { ...rawAnalytics, available }
+    : { available };
+  return { ...state, analytics: nextAnalytics };
+}
+
 export function createPunctuationReadModelService({ getState } = {}) {
   return {
     initState(rawState) {
       const base = rawState && typeof rawState === 'object' && !Array.isArray(rawState)
         ? { ...createInitialPunctuationState(), ...clone(rawState) }
         : createInitialPunctuationState();
-      return stripForbiddenChildScopeFields(base);
+      return withAnalyticsAvailability(stripForbiddenChildScopeFields(base));
     },
     getPrefs(learnerId) {
       return normalisePunctuationPrefs(currentUi(getState, learnerId).ui.prefs);
