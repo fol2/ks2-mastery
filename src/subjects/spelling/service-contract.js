@@ -1,13 +1,22 @@
 export const SPELLING_SERVICE_STATE_VERSION = 2;
 
 export const SPELLING_ROOT_PHASES = Object.freeze(['dashboard', 'session', 'summary', 'word-bank']);
-export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single', 'guardian']);
+export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single', 'guardian', 'boss']);
 
 export const GUARDIAN_INTERVALS = Object.freeze([3, 7, 14, 30, 60, 90]);
 export const GUARDIAN_MAX_REVIEW_LEVEL = GUARDIAN_INTERVALS.length - 1;
 export const GUARDIAN_MIN_ROUND_LENGTH = 5;
 export const GUARDIAN_MAX_ROUND_LENGTH = 8;
 export const GUARDIAN_DEFAULT_ROUND_LENGTH = 8;
+
+// Boss Dictation round bounds (U9). A Boss round draws a uniform random sample
+// from the learner's Mega core-pool slugs and rides as a `type: 'test'`-shaped
+// session (no retry, no cloze, no skip) with a dedicated `submitBossAnswer`
+// path that NEVER demotes `progress.stage` / `dueDay` / `lastDay` / `lastResult`.
+// See docs/plans/2026-04-25-005-feat-post-mega-spelling-guardian-hardening-plan.md (U9).
+export const BOSS_MIN_ROUND_LENGTH = 8;
+export const BOSS_MAX_ROUND_LENGTH = 12;
+export const BOSS_DEFAULT_ROUND_LENGTH = 10;
 
 /**
  * Canonical set of dashboard/selector-facing Guardian mission states. Order

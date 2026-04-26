@@ -2,6 +2,7 @@ import { WORDS as DEFAULT_WORDS, WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from '..
 import { createLegacySpellingEngine } from './legacy-engine.js';
 import {
   SPELLING_MASTERY_MILESTONES,
+  createSpellingBossCompletedEvent,
   createSpellingGuardianMissionCompletedEvent,
   createSpellingGuardianRecoveredEvent,
   createSpellingGuardianRenewedEvent,
@@ -16,6 +17,9 @@ import {
   normaliseTtsProvider,
 } from '../../src/subjects/spelling/tts-providers.js';
 import {
+  BOSS_DEFAULT_ROUND_LENGTH,
+  BOSS_MAX_ROUND_LENGTH,
+  BOSS_MIN_ROUND_LENGTH,
   GUARDIAN_DEFAULT_ROUND_LENGTH,
   GUARDIAN_INTERVALS,
   GUARDIAN_MAX_REVIEW_LEVEL,
@@ -372,6 +376,20 @@ function clampSelectionLength(length) {
   return base;
 }
 
+// Boss Dictation round-length clamp (U9). Defaults to
+// BOSS_DEFAULT_ROUND_LENGTH (10) when the caller omits a length or passes a
+// non-finite value. Otherwise clamped into [BOSS_MIN_ROUND_LENGTH,
+// BOSS_MAX_ROUND_LENGTH] = [8, 12]. The clamp lives here so both
+// `selectBossWords` and `startSession({ mode: 'boss' })` agree on the bounds
+// without duplicating the logic.
+function clampBossRoundLength(length) {
+  const parsed = Number(length);
+  const base = Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : BOSS_DEFAULT_ROUND_LENGTH;
+  if (base < BOSS_MIN_ROUND_LENGTH) return BOSS_MIN_ROUND_LENGTH;
+  if (base > BOSS_MAX_ROUND_LENGTH) return BOSS_MAX_ROUND_LENGTH;
+  return base;
+}
+
 function compareByDueDayThenSlug(a, b) {
   if (a.nextDueDay !== b.nextDueDay) return a.nextDueDay - b.nextDueDay;
   if (a.slug < b.slug) return -1;
@@ -503,6 +521,42 @@ export function selectGuardianWords({
   return selected;
 }
 
+/**
+ * Pure Boss Dictation word selector (U9). Draws a uniform random sample of
+ * core-pool Mega slugs from the learner's progress map. Extra-pool words are
+ * excluded (Mega is a core-pool concept — same rule as `selectGuardianWords`);
+ * slugs not published by the current content bundle are also excluded so an
+ * orphan progress record from a content hot-swap can never leak into a Boss
+ * round.
+ *
+ * @param {object} params
+ * @param {object} params.progressMap  slug -> legacy progress record
+ * @param {object} params.wordBySlug   slug -> word metadata (spellingPool, etc.)
+ * @param {number} params.length       desired round length (clamped 8..12)
+ * @param {Function} params.random     injected random; used for deterministic shuffle
+ * @returns {string[]} selected slugs (array of strings)
+ */
+export function selectBossWords({
+  progressMap = {},
+  wordBySlug = {},
+  length = BOSS_DEFAULT_ROUND_LENGTH,
+  random = Math.random,
+} = {}) {
+  const target = clampBossRoundLength(length);
+  // Candidate filter shares the Mega eligibility predicate with Guardian so
+  // extra-pool slugs and orphan content records drop out consistently.
+  const candidates = [];
+  for (const [slug] of Object.entries(progressMap || {})) {
+    if (!isGuardianEligibleSlug(slug, progressMap, wordBySlug)) continue;
+    candidates.push(slug);
+  }
+  if (!candidates.length) return [];
+  // Alphabetical baseline makes the shuffle deterministic under a seeded rng.
+  candidates.sort();
+  const shuffled = deterministicShuffle(candidates, random);
+  return shuffled.slice(0, Math.min(target, shuffled.length));
+}
+
 function loadJson(storage, key, fallback) {
   try {
     const raw = storage.getItem(key);
@@ -618,6 +672,7 @@ function defaultLabelForMode(mode) {
   if (mode === 'single') return 'Single-word drill';
   if (mode === 'test') return 'SATs 20 test';
   if (mode === 'guardian') return 'Guardian Mission';
+  if (mode === 'boss') return 'Boss Dictation';
   return 'Smart review';
 }
 
@@ -1420,10 +1475,129 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return buildTransition(nextState, { audio: activeAudioCue(learnerId, nextState) });
   }
 
+  // U9: Boss Dictation entry point. Mirrors `startGuardianSession` but the
+  // word-selection rule is "uniform random sample of core-pool Mega slugs" and
+  // the session is forcibly shaped as `type: 'test'` (single-attempt, no cloze,
+  // no skip). Round-length clamp lives in `clampBossRoundLength`.
+  //
+  // The critical bridge is `words: preSelectedWordObjects` on the
+  // `engine.createSession` call — without it the engine falls through to
+  // `chooseSmartWords` at `legacy-engine.js:461` and the Boss round becomes a
+  // Smart Review sample of due/weak words instead of a Mega-only round.
+  function startBossSession(learnerId, options = {}) {
+    const progressStore = progressSnapshot(learnerId) || {};
+    if (!isAllWordsMega(progressStore)) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        feedback: {
+          kind: 'warn',
+          headline: 'Boss Dictation unlocks after every core word is secure',
+          body: 'Keep reviewing Smart Review and Trouble Drill until every core word is secure — then Boss Dictation opens.',
+        },
+      }, { ok: false });
+    }
+
+    const desiredLength = options.length === 'all'
+      ? BOSS_MAX_ROUND_LENGTH
+      : clampBossRoundLength(options.length);
+
+    const selectedSlugs = selectBossWords({
+      progressMap: progressStore,
+      wordBySlug: runtimeWordBySlug,
+      length: desiredLength,
+      random: randomFn,
+    });
+
+    if (!selectedSlugs.length) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        error: 'Boss Dictation could not resolve any words.',
+      }, { ok: false });
+    }
+
+    const selectedWords = selectedSlugs.map((slug) => runtimeWordBySlug[slug]).filter(Boolean);
+    if (!selectedWords.length) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        error: 'Boss Dictation could not resolve any words.',
+      }, { ok: false });
+    }
+
+    const created = engine.createSession({
+      profileId: learnerId,
+      mode: 'boss',
+      yearFilter: 'core',
+      length: selectedWords.length,
+      words: selectedWords, // load-bearing: without this the engine falls through to chooseSmartWords
+      practiceOnly: false,
+      extraWordFamilies: false,
+    });
+
+    if (!created.ok) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        error: created.reason || 'Could not start Boss Dictation.',
+      }, { ok: false });
+    }
+
+    // Type override is mandatory. `legacy-engine.js:490` forces
+    // `type: 'learning'` for any non-TEST mode. Boss must explicitly overwrite
+    // `session.type = 'test'` so the session-UI helpers, engine.advanceCard
+    // (test-typed FIFO path), and engine.finalise (testSummary) all treat this
+    // as a test-shaped round. Mirrors Guardian's override at the same spot.
+    created.session.type = 'test';
+    created.session.mode = 'boss';
+    created.session.label = 'Boss Dictation';
+    // `session.results` is consumed by testSummary; initialise the array so
+    // `submitBossAnswer` can push per-answer results deterministically.
+    created.session.results = [];
+    // Seed-roster contract: uniqueWords is the roster for Boss. A Boss
+    // session is strict FIFO over selectBossWords — no card is ever
+    // re-queued (engine.advanceCard test-typed path at
+    // legacy-engine.js:586-591 just shifts the queue head), so
+    // uniqueWords is identical at start and at finalise-time. The
+    // BOSS_COMPLETED event factory reads session.uniqueWords.slice() as
+    // the seedSlugs payload; bossEventsForSession passes a fresh slice
+    // through. We deliberately do NOT stamp a separate `bossSeedSlugs`
+    // field on the session — buildResumeSession enumerates session
+    // fields explicitly and any unlisted field would be dropped on
+    // rehydration, so an orphan `bossSeedSlugs` would quietly disappear
+    // after an in-flight session resume and mask its own loss.
+
+    // For a test-typed session, engine.advanceCard shifts the queue head via
+    // strict FIFO (`legacy-engine.js:586-591`). Use that path — no custom
+    // advancer is needed because Boss's FIFO-over-presorted-queue contract
+    // matches the engine's test path exactly.
+    const firstCard = engine.advanceCard(created.session, learnerId, created.progressStore);
+    if (firstCard.done) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        error: 'Boss Dictation could not prepare the first card.',
+      }, { ok: false });
+    }
+
+    const session = decorateSession(engine, learnerId, created.session, runtimeWordBySlug, created.progressStore);
+    const nextState = {
+      version: SPELLING_SERVICE_STATE_VERSION,
+      phase: 'session',
+      session,
+      feedback: null,
+      summary: null,
+      error: '',
+      awaitingAdvance: false,
+    };
+
+    persistence.syncPracticeSession(learnerId, nextState);
+    return buildTransition(nextState, { audio: activeAudioCue(learnerId, nextState) });
+  }
+
   function startSession(learnerId, options = {}) {
     const mode = normaliseMode(options.mode, 'smart');
     if (mode === 'guardian') {
       return startGuardianSession(learnerId, options);
+    }
+    if (mode === 'boss') {
+      return startBossSession(learnerId, options);
     }
     const yearFilter = mode === 'test'
       ? 'core'
@@ -1698,6 +1872,85 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return buildTransition(nextState, { events });
   }
 
+  // U9: Boss Dictation submit path. Mirrors `submitGuardianAnswer` in shape
+  // but does NOT touch the guardian map, and does NOT touch
+  // `progress.stage` / `dueDay` / `lastDay` / `lastResult` — Boss's core
+  // contract is Mega-never-revoked, same invariant that Guardian enforces via
+  // its separate submit path.
+  //
+  // Critical routing rule: `submitAnswer` must call this BEFORE the
+  // `session.type === 'test'` check that routes legacy SATs submissions to
+  // `engine.submitTest → applyTestOutcome`. Because Boss sessions are
+  // `type: 'test'`-shaped, falling through to the legacy path would demote
+  // Mega on a wrong answer.
+  function submitBossAnswer(learnerId, current, rawTyped) {
+    const session = cloneSerialisable(current.session);
+    const currentSlug = session.currentSlug;
+    const baseWord = runtimeWordBySlug[currentSlug];
+    if (!baseWord) {
+      return invalidSessionTransition('This Boss Dictation card is missing its word metadata.');
+    }
+    const promptWord = wordForPrompt(baseWord, session.currentPrompt);
+    const graded = engine.grade(promptWord, rawTyped);
+    const correct = Boolean(graded.correct);
+
+    // Record the per-answer entry on the test-typed `session.results` array so
+    // the engine's `testSummary` renders the score card `correct/total` on
+    // round-end. The engine's native `submitTest` does this too; we mirror the
+    // shape exactly so the summary payload is indistinguishable from a SATs
+    // test (minus the demotion) at the UI layer.
+    session.results = Array.isArray(session.results) ? session.results : [];
+    session.results.push({ slug: currentSlug, answer: rawTyped, correct });
+
+    session.phase = 'question';
+    session.promptCount = (session.promptCount || 0) + 1;
+
+    // Update progress.attempts / correct / wrong only. Stage / dueDay /
+    // lastDay / lastResult are preserved — Boss never demotes Mega.
+    //
+    // Mega-never-revoked guard: if `progressMap[currentSlug]` is missing or
+    // malformed (e.g. a storage-clear race between selectBossWords and the
+    // first submit), we REFUSE the write rather than synthesise a fresh
+    // `{ stage: 0, ... }` seed. Writing stage:0 for a word that selectBossWords
+    // only offered because it was at Mega (stage:4) would silently demote
+    // Mega and contradict the invariant the summary copy and footer note
+    // already advertise. Return an error transition so the UI surfaces the
+    // inconsistency instead of masking it.
+    const progressMap = loadProgressFromStorage(learnerId);
+    const existingProgress = progressMap[currentSlug];
+    if (!existingProgress || typeof existingProgress !== 'object' || Array.isArray(existingProgress)) {
+      return invalidSessionTransition('This Boss Dictation word lost its Mega progress mid-round. The round was stopped to protect your Mega count.');
+    }
+    const nextProgress = { ...existingProgress };
+    nextProgress.attempts = (nextProgress.attempts || 0) + 1;
+    if (correct) nextProgress.correct = (nextProgress.correct || 0) + 1;
+    else nextProgress.wrong = (nextProgress.wrong || 0) + 1;
+    progressMap[currentSlug] = nextProgress;
+    saveProgressToStorage(learnerId, progressMap);
+
+    const events = [];
+    // Feedback mirrors the legacy test-mode "Saved." prompt so the Boss UI
+    // inherits the same "no retry, no correction" microcopy as SATs but the
+    // Boss context note + info chip (U5) already distinguish the surfaces for
+    // children. The one-shot contract is enforced by awaitingAdvance=true.
+    const feedback = correct
+      ? { kind: 'info', headline: 'Saved.', answer: promptWord.word, body: 'Moving to the next word.' }
+      : { kind: 'warn', headline: 'Saved.', answer: promptWord.word, body: 'Mega stays. Moving to the next word.', attemptedAnswer: rawTyped };
+
+    const nextState = {
+      version: SPELLING_SERVICE_STATE_VERSION,
+      phase: 'session',
+      session: decorateSession(engine, learnerId, session, runtimeWordBySlug),
+      feedback: normaliseFeedback(feedback),
+      summary: null,
+      error: '',
+      awaitingAdvance: true,
+    };
+
+    persistence.syncPracticeSession(learnerId, nextState);
+    return buildTransition(nextState, { events });
+  }
+
   function submitAnswer(learnerId, rawState, typed) {
     const current = initState(rawState, learnerId);
     if (current.phase !== 'session' || !current.session) {
@@ -1722,8 +1975,23 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       });
     }
 
+    // Dispatcher routing — ORDER IS CRITICAL.
+    //
+    //   mode === 'guardian' → submitGuardianAnswer (Mega-safe)
+    //   mode === 'boss'     → submitBossAnswer     (Mega-safe) — MUST come
+    //                                                before the type === 'test'
+    //                                                check; otherwise a wrong
+    //                                                answer routes to
+    //                                                engine.submitTest and
+    //                                                applyTestOutcome demotes
+    //                                                stage from 4 to 3.
+    //   type === 'test'     → engine.submitTest    (legacy SATs, demotion-aware)
+    //   otherwise           → engine.submitLearning
     if (current.session.mode === 'guardian') {
       return submitGuardianAnswer(learnerId, current, rawTyped);
+    }
+    if (current.session.mode === 'boss') {
+      return submitBossAnswer(learnerId, current, rawTyped);
     }
 
     const session = cloneSerialisable(current.session);
@@ -1881,6 +2149,93 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return events;
   }
 
+  // U9: Boss Dictation round-end event fan-out. Emits the standard
+  // SESSION_COMPLETED (so legacy consumers that watch for any spelling round
+  // still see the event) plus a Boss-specific `spelling.boss.completed` event
+  // carrying the per-round score and the exact ordered seed-slug list.
+  //
+  // Seed roster contract: `session.uniqueWords` IS the seed roster for Boss.
+  // Unlike SATs test sessions (where uniqueWords gets mutated by re-queueing
+  // of wrong answers), a Boss session is strict FIFO over the selectBossWords
+  // output — no card is ever re-queued (see submitBossAnswer + engine.advanceCard
+  // test-typed path at legacy-engine.js:586-591). That means uniqueWords at
+  // finalise-time is identical to the initial selection. We pass it through as
+  // seedSlugs so downstream consumers don't have to separately track a seed
+  // copy; the event factory also falls back to uniqueWords when seedSlugs is
+  // null/missing, so the invariant is double-locked.
+  function bossEventsForSession(learnerId, session, summary, createdAt) {
+    if (session?.mode !== 'boss') return [];
+    const results = Array.isArray(session.results) ? session.results : [];
+    let correct = 0;
+    let wrong = 0;
+    for (const entry of results) {
+      if (entry?.correct === true) correct += 1;
+      else wrong += 1;
+    }
+    const events = [];
+    const sessionCompleted = createSpellingSessionCompletedEvent({
+      learnerId,
+      session,
+      summary,
+      createdAt,
+    });
+    if (sessionCompleted) events.push(sessionCompleted);
+    const bossCompleted = createSpellingBossCompletedEvent({
+      learnerId,
+      session,
+      summary: { correct, wrong },
+      // uniqueWords is the seed roster for Boss (test-typed sessions don't
+      // mutate uniqueWords). Passing a fresh slice here keeps the event
+      // payload immutable with respect to later session mutations, even
+      // though Boss never mutates uniqueWords after start.
+      seedSlugs: Array.isArray(session.uniqueWords) ? session.uniqueWords.slice() : null,
+      createdAt,
+    });
+    if (bossCompleted) events.push(bossCompleted);
+    return events;
+  }
+
+  // U9 blocker fix: Override the `testSummary()` copy for Boss rounds. Boss
+  // rides as `session.type = 'test'` to reuse the single-attempt UI, so
+  // `engine.finalise()` routes to `testSummary()` which emits SATs-style
+  // demotion copy ("pushed back into the learner's due queue", "Marked due
+  // again today"). Both statements are FALSE for Boss — Boss is Mega-safe:
+  // wrong answers never demote stage and never schedule a word due-soon.
+  // We override the message and the "Needs more work" card's sub label so the
+  // summary matches the Mega-never-revoked invariant the footer note already
+  // advertises (session-ui.js spellingSessionFooterNote).
+  //
+  // Kept at the service layer (not in legacy-engine.js) per plan rule: Boss
+  // bypasses submitTest without modifying legacy.
+  function overrideBossSummary(summary) {
+    if (!summary || summary.mode !== 'boss') return summary;
+    const total = Number.isInteger(summary.totalWords) ? summary.totalWords : 0;
+    const correct = Number.isInteger(summary.correct) ? summary.correct : 0;
+    const bossMessage = correct === total
+      ? `Boss round complete — ${correct} of ${total} Mega words landed. Every Mega word stays Mega.`
+      : `Boss round complete — ${correct} of ${total} Mega words landed. Your Mega words stay Mega — review the missed ones on your own.`;
+    const cards = Array.isArray(summary.cards)
+      ? summary.cards.map((card) => {
+          if (card?.label === 'Needs more work') {
+            return { ...card, sub: 'Practice these on your own — Mega stays intact.' };
+          }
+          if (card?.label === 'Correct') {
+            // Keep "Correct" sub positive without implying SATs-style scheduling.
+            return { ...card, sub: 'Strong on the day' };
+          }
+          if (card?.label === 'Accuracy') {
+            return { ...card, sub: 'Single attempt per word' };
+          }
+          return card;
+        })
+      : summary.cards;
+    return {
+      ...summary,
+      message: bossMessage,
+      cards,
+    };
+  }
+
   function continueSession(learnerId, rawState) {
     const current = initState(rawState, learnerId);
     if (current.phase !== 'session' || !current.session) {
@@ -1897,7 +2252,11 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       : engine.advanceCard(session, learnerId);
 
     if (advanced.done) {
-      const summary = normaliseSummary(engine.finalise(session), isRuntimeKnownSlug);
+      const rawSummary = normaliseSummary(engine.finalise(session), isRuntimeKnownSlug);
+      // Boss rides as test-typed so engine.finalise routes to testSummary(),
+      // which emits SATs demotion copy. overrideBossSummary swaps in
+      // Mega-safe copy without modifying legacy-engine.js.
+      const summary = session.mode === 'boss' ? overrideBossSummary(rawSummary) : rawSummary;
       const nextState = {
         version: SPELLING_SERVICE_STATE_VERSION,
         phase: 'summary',
@@ -1909,9 +2268,14 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       };
       persistence.syncPracticeSession(learnerId, nextState);
       const createdAt = clock();
-      const events = session.mode === 'guardian'
-        ? guardianMissionEventsForSession(learnerId, session, summary, createdAt)
-        : sessionCompletedEvents({ learnerId, session, summary, createdAt });
+      let events;
+      if (session.mode === 'guardian') {
+        events = guardianMissionEventsForSession(learnerId, session, summary, createdAt);
+      } else if (session.mode === 'boss') {
+        events = bossEventsForSession(learnerId, session, summary, createdAt);
+      } else {
+        events = sessionCompletedEvents({ learnerId, session, summary, createdAt });
+      }
       return buildTransition(nextState, { events });
     }
 

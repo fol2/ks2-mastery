@@ -45,6 +45,14 @@ export function spellingSessionContextNote(session) {
 
 export function spellingSessionFooterNote(session) {
   if (!session) return '';
+  if (isBossSession(session)) {
+    // Boss Dictation is `type: 'test'`-shaped but NEVER demotes Mega, so the
+    // SATs footer ("Wrong answers are marked due again for this learner after
+    // the test") is incorrect for Boss. This branch lives before the generic
+    // `session.type === 'test'` check so a Boss session can never leak SATs
+    // demotion copy.
+    return 'Boss Dictation: one clean attempt per Mega word. Your Mega count never drops here. Esc replays, and Shift+Esc replays slowly.';
+  }
   if (session.type === 'test') {
     return 'The audio follows the KS2 pattern: the word, then the sentence, then the word again. Wrong answers are marked due again for this learner after the test. Esc replays, and Shift+Esc replays slowly.';
   }
