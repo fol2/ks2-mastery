@@ -9763,6 +9763,18 @@ html { scroll-behavior: smooth; }
   gap: 6px;
   flex-wrap: wrap;
 }
+/* KS2 touch-target floor for the round-length 4/8/12 toggle. Mirrors
+   the `.punctuation-skill-modal-close` 44×44 target. */
+.punctuation-length-toggle button {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px 14px;
+}
+.punctuation-length-toggle button:focus-visible {
+  outline: none;
+  border-color: #B8873F;
+  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+}
 
 /* --- Setup — active monster strip -------------------------------------- */
 .punctuation-monsters-section {
@@ -9906,6 +9918,20 @@ html { scroll-behavior: smooth; }
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+/* KS2 touch-target floor for the Map filter chips (status + monster
+   rows). The `.chip` base sets `padding: 6px 10px` which is below the
+   44×44 target; raise the button-only child selector to the KS2 floor
+   without disturbing other `.chip` consumers. Mirrors
+   `.punctuation-skill-modal-close`. */
+.punctuation-map-chips button {
+  min-height: 44px;
+  padding: 10px 14px;
+}
+.punctuation-map-chips button:focus-visible {
+  outline: none;
+  border-color: #B8873F;
+  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
 }
 .punctuation-map-summary {
   margin: 0;

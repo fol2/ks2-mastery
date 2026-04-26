@@ -117,8 +117,34 @@ test('U10: PUNCTUATION_CLIENT_SKILL_IDS has exactly 14 skills (drift guard)', ()
 // -----------------------------------------------------------------------------
 
 function renderSetupPhase() {
+  // Seed populated stats + reward state so the sweep exercises the
+  // populated Setup branches — the empty-state branch renders a single
+  // "Start your first round…" line which does NOT exercise the
+  // `todayCards` map, the active-monster strip, or the stats readout
+  // strings. Populating here keeps the empty-state fallback covered by
+  // the dedicated branch test in `react-punctuation-setup-scene.test.js`
+  // while expanding this copy sweep to every populated surface too.
+  //
+  // `rewardState` keys are monster ids with a `mastered` array — the
+  // same shape `progressForPunctuationMonster` reads. The monster ids
+  // here are the active roster (plan R10 — reserved monsters never
+  // surface even if their reward entries exist).
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    stats: {
+      due: 3,
+      weak: 2,
+      securedRewardUnits: 5,
+      accuracy: 82,
+    },
+    rewardState: {
+      pealark: { mastered: ['sentence-endings-core', 'sentence-endings-exclaim'] },
+      curlune: { mastered: ['comma-clarity-core'] },
+      claspin: { mastered: [] },
+      quoral: { mastered: ['speech-core'] },
+    },
+  });
   return harness;
 }
 
