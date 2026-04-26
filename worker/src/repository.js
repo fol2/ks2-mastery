@@ -96,6 +96,7 @@ import {
   sqlPlaceholders,
   withCapacityCollector,
 } from './d1.js';
+import { getReadModelDerivedWriteBreaker } from './circuit-breaker-server.js';
 
 const WRITABLE_MEMBERSHIP_ROLES = new Set(['owner', 'member']);
 const MEMBERSHIP_ROLES = new Set(['owner', 'member', 'viewer']);
@@ -8028,8 +8029,24 @@ async function runSubjectCommandMutation(db, {
   // re-apply a stale-input command against post-write state.
   const staleAtEntry = (Number(learner.state_revision) || 0) !== originalExpectedRevision;
 
+  // U9: server-side `readModelDerivedWrite` breaker. When open, skip
+  // the projection read-model write entirely and stamp
+  // `derivedWriteSkipped: {reason: 'breaker-open'}` on the collector
+  // (closed-union reuse per U6). The primary state write still runs
+  // (`docs/mutation-policy.md` — NEVER mask a failed write as synced;
+  // the primary write is the source of truth). A subsequent command
+  // will refill the projection via the existing stale-catchup path.
+  const derivedWriteBreaker = getReadModelDerivedWriteBreaker();
+  const breakerOpen = derivedWriteBreaker.shouldBlockCall();
+  if (breakerOpen && capacity && typeof capacity.setDerivedWriteSkipped === 'function') {
+    capacity.setDerivedWriteSkipped({ reason: 'breaker-open' });
+  }
+  if (breakerOpen && capacity && typeof capacity.addSignal === 'function') {
+    capacity.addSignal('breakerTransition');
+  }
+
   // --- Attempt 1: full batch at the client-declared expectedRevision.
-  const firstAttempt = await attemptMutation(originalExpectedRevision, { includeProjection: true });
+  const firstAttempt = await attemptMutation(originalExpectedRevision, { includeProjection: !breakerOpen });
   if (!firstAttempt.mutatesState) {
     logMutation('info', 'mutation.observed', {
       kind,

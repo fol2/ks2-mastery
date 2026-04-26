@@ -586,6 +586,80 @@ test('U9 worker collector: addSignal(breakerTransition) is a legal closed-enum t
 // Composition: U7 notModified success resets bootstrapCapacityMetadata counter.
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Server-side integration: readModelDerivedWrite breaker in runSubjectCommandMutation.
+// ---------------------------------------------------------------------------
+
+test('U9 integration: server-side readModelDerivedWrite breaker open skips projection write and stamps derivedWriteSkipped breaker-open', async () => {
+  const { createWorkerApp } = await import('../worker/src/app.js');
+  const { createMigratedSqliteD1Database } = await import('./helpers/sqlite-d1.js');
+  const {
+    getReadModelDerivedWriteBreaker,
+    resetReadModelDerivedWriteBreaker,
+  } = await import('../worker/src/circuit-breaker-server.js');
+
+  resetReadModelDerivedWriteBreaker();
+  try {
+    const DB = createMigratedSqliteD1Database();
+    const now = Date.UTC(2026, 0, 1);
+    DB.db.prepare(`
+      INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+      VALUES (?, 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+    `).run('learner-a', now, now);
+    DB.db.prepare(`
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+      VALUES (?, ?, ?, 'parent', ?, ?, ?, 0)
+    `).run('adult-a', 'adult@example.test', 'Adult A', 'learner-a', now, now);
+    DB.db.prepare(`
+      INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+      VALUES (?, ?, 'owner', 0, ?, ?)
+    `).run('adult-a', 'learner-a', now, now);
+
+    // Force the breaker open BEFORE the subject command fires.
+    const breaker = getReadModelDerivedWriteBreaker();
+    breaker.forceOpen();
+    assert.equal(breaker.state, BREAKER_STATES.OPEN);
+
+    const app = createWorkerApp({ now: () => now });
+    const env = { DB, AUTH_MODE: 'development-stub', ENVIRONMENT: 'test' };
+    const response = await app.fetch(new Request('https://repo.test/api/subjects/spelling/command', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-ks2-dev-account-id': 'adult-a',
+      },
+      body: JSON.stringify({
+        command: 'start-session',
+        learnerId: 'learner-a',
+        requestId: 'breaker-open-1',
+        expectedLearnerRevision: 0,
+        payload: { mode: 'single', slug: 'possess', length: 1 },
+      }),
+    }), env, {});
+    assert.equal(response.status, 200, 'primary write still succeeds when breaker open');
+    const body = await response.json();
+    assert.equal(
+      body?.meta?.capacity?.derivedWriteSkipped?.reason,
+      'breaker-open',
+      `derivedWriteSkipped.reason must be breaker-open, got ${JSON.stringify(body?.meta?.capacity?.derivedWriteSkipped)}`,
+    );
+    // The breakerTransition signal must appear on meta.capacity.signals.
+    assert.ok(
+      Array.isArray(body?.meta?.capacity?.signals)
+        && body.meta.capacity.signals.includes('breakerTransition'),
+      `breakerTransition signal must be emitted, got ${JSON.stringify(body?.meta?.capacity?.signals)}`,
+    );
+    // Primary state must have been written: the mutation receipt row is
+    // present and the learner revision bumped to 1.
+    const learner = DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a');
+    assert.equal(learner.state_revision, 1, 'primary state revision bumped');
+    DB.close();
+  } finally {
+    // Always clean up — module-scoped singleton bleeds across tests.
+    resetReadModelDerivedWriteBreaker();
+  }
+});
+
 test('U9 integration: a response with meta.capacity.bootstrapCapacity resets the consecutive-miss counter', async () => {
   const storage = installMemoryStorage();
   const server = createMockRepositoryServer({ learners: learnerSnapshot() });
