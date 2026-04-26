@@ -89,6 +89,13 @@ function MoreModeCard({ card, selected, disabled, actions }) {
   const classes = ['grammar-secondary-mode'];
   if (selected) classes.push('selected');
   if (disabled) classes.push('is-disabled');
+  // U5 Phase 4: Surgery and Builder cards carry a "Mixed practice" label
+  // from `GRAMMAR_MORE_PRACTICE_MODES` so the dashboard surfaces the
+  // child-facing truth that these modes do not honour a focused concept
+  // id. Label renders under the mode title with `data-mode-label` so
+  // tests and QA can scope by the mode id. The label is decorative and
+  // does not change mode behaviour.
+  const label = typeof card.label === 'string' && card.label ? card.label : '';
   return (
     <button
       type="button"
@@ -103,6 +110,9 @@ function MoreModeCard({ card, selected, disabled, actions }) {
       }}
     >
       <h5 className="grammar-secondary-mode-title">{card.title}</h5>
+      {label ? (
+        <span className="grammar-secondary-mode-label" data-mode-label={card.id}>{label}</span>
+      ) : null}
       <p className="grammar-secondary-mode-desc">{card.desc}</p>
     </button>
   );
