@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
+import { useTtsStatus } from '../../../platform/react/use-tts-status.js';
 import {
   spellingSessionContextNote,
   spellingSessionInfoChips,
@@ -48,7 +49,15 @@ export function SpellingSessionScene({
   // audit). A subsequent new failure overwrites `acknowledged: false` and
   // re-surfaces the banner.
   persistenceWarning = null,
+  // SH2-U4 (sys-hardening p2): TTS port for status subscription. Threaded
+  // through `routeContext` from `contextFor()`; falsy in unit tests that
+  // render the scene in isolation — the hook defaults to `'idle'` when
+  // absent so those tests keep working without extra scaffolding.
+  tts = null,
 }) {
+  // SH2-U4: status-channel subscription. `ttsStatus` drives the pending
+  // chip (`loading`) and failure banner (`failed`) below.
+  const ttsStatus = useTtsStatus(tts);
   const prefs = service.getPrefs(learner.id);
   const session = ui.session;
   const card = session?.currentCard;
@@ -242,7 +251,14 @@ export function SpellingSessionScene({
                 className="btn icon lg"
                 aria-label="Replay the dictated word"
                 data-action="spelling-replay"
-                disabled={runtimeReadOnly}
+                data-testid="spelling-replay"
+                // SH2-U4: disable replay buttons while a fetch is in
+                // flight so a fast second click cannot pile up a
+                // second overlapping playback. `playbackId` still
+                // guards the underlying pipeline; this visual lock
+                // makes the intent visible.
+                disabled={runtimeReadOnly || ttsStatus === 'loading'}
+                aria-busy={ttsStatus === 'loading'}
                 onClick={(event) => renderAction(actions, event, 'spelling-replay')}
               >
                 <SpeakerIcon />
@@ -252,12 +268,34 @@ export function SpellingSessionScene({
                 className="btn icon lg"
                 aria-label="Replay slowly"
                 data-action="spelling-replay-slow"
-                disabled={runtimeReadOnly}
+                data-testid="spelling-replay-slow"
+                disabled={runtimeReadOnly || ttsStatus === 'loading'}
+                aria-busy={ttsStatus === 'loading'}
                 onClick={(event) => renderAction(actions, event, 'spelling-replay-slow')}
               >
                 <SpeakerSlowIcon />
               </button>
+              {ttsStatus === 'loading' ? (
+                <span
+                  className="chip spelling-tts-pending-chip"
+                  role="status"
+                  aria-live="polite"
+                  data-testid="spelling-tts-pending-chip"
+                >
+                  …loading audio
+                </span>
+              ) : null}
             </div>
+            {ttsStatus === 'failed' ? (
+              <div
+                className="spelling-tts-failure-banner feedback warn"
+                role="alert"
+                aria-live="assertive"
+                data-testid="spelling-tts-failure-banner"
+              >
+                Audio unavailable. You can keep practising.
+              </div>
+            ) : null}
             <div className="action-row">
               <button className="btn primary lg" style={{ '--btn-accent': accent }} type="submit" disabled={awaitingAdvance || runtimeReadOnly || pending}>
                 {effectiveSubmitLabel}{awaitingAdvance || pending ? null : <> <ArrowRightIcon /></>}

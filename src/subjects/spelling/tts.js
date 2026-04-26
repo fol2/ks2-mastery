@@ -6,6 +6,53 @@ import {
   normaliseTtsProvider,
 } from './tts-providers.js';
 
+// SH2-U4 (sys-hardening p2): TTS status channel + watchdog + latency telemetry.
+//
+// The existing emitter is kept for back-compat (`start` / `loading` / `end`
+// events on `tts.subscribe()`). On top of that we surface a state-machine
+// status channel so UI consumers can reason about pending / failure UX:
+//
+//   Legal transitions:
+//     idle    -> loading  (fetch start)
+//     loading -> playing  (audio play)
+//     loading -> failed   (watchdog fires OR fetch rejects / non-ok)
+//     loading -> idle     (abortPending called)
+//     playing -> idle     (normal end / stop())
+//     playing -> loading  (replay during playback — `speak()` calls
+//                          `stop()` then re-enters loading; this emits the
+//                          transition)
+//     failed  -> loading  (user retries via speak())
+//     failed  -> idle     (route change / abortPending)
+//
+// Watchdog contract (KTD F-02 deepening — conservative 15s):
+//   Starts on transition to `loading`.
+//   Cleared on ANY transition out of `loading`.
+//   If it fires while still in `loading`, transitions to `failed`, calls
+//   `currentAbort?.abort?.()`, and emits a status event to subscribers.
+//
+// Latency telemetry: on transition to `playing` or `failed`, and on
+// `abortPending()` while in `loading`, emit a `[ks2-tts-latency]`
+// structured log line with `wallMs` + `status` (`completed | failed
+// | aborted`). `wallMs` is measured from the `loading` transition time.
+// Surfaced through `console.log` to match the existing `[ks2-` log
+// tokens (grep `[ks2-` across the repo).
+//
+// abortPending idempotency:
+//   - idle   : no-op (no throw, no telemetry emission).
+//   - loading: aborts fetch, transitions to `idle`, emits latency as
+//              `aborted`. Second consecutive call is a no-op.
+//   - playing: abortPending does NOT interfere — playing audio is
+//              cleaned up via `stop()`, not `abortPending()`.
+//   - failed : transitions to `idle` (clears error surface) without
+//              telemetry (the failed transition already emitted).
+//
+// The watchdog delay is 15_000ms by default; a `watchdogMs` factory
+// option allows tests to override it. Tests can also pass a
+// `setTimeoutFn` / `clearTimeoutFn` pair and a `now()` clock to keep
+// timing deterministic.
+
+export const TTS_WATCHDOG_MS = 15_000;
+
 export function buildDictationTranscript({ word, sentence } = {}) {
   const spokenWord = typeof word === 'string' ? word : word?.word;
   return sentence
@@ -102,6 +149,11 @@ export function createPlatformTts({
   remoteEnabled = shouldUseRemoteTts(),
   provider = DEFAULT_TTS_PROVIDER,
   bufferedVoice = DEFAULT_BUFFERED_GEMINI_VOICE,
+  watchdogMs = TTS_WATCHDOG_MS,
+  setTimeoutFn = (typeof globalThis.setTimeout === 'function' ? globalThis.setTimeout.bind(globalThis) : null),
+  clearTimeoutFn = (typeof globalThis.clearTimeout === 'function' ? globalThis.clearTimeout.bind(globalThis) : null),
+  now = () => Date.now(),
+  logger = (typeof globalThis.console?.log === 'function' ? globalThis.console.log.bind(globalThis.console) : null),
 } = {}) {
   let playbackId = 0;
   let currentAbort = null;
@@ -118,6 +170,100 @@ export function createPlatformTts({
     for (const l of listeners) {
       try { l(event); } catch { /* ignore listener errors */ }
     }
+  }
+
+  // SH2-U4: status state-machine + watchdog + telemetry.
+  let status = 'idle';
+  // `loadingStartedAt` is `null` when no load is in flight and a
+  // numeric timestamp (including 0 from tests with a fake clock) while
+  // loading. Do NOT use `0` as the sentinel — `clock.now()` legitimately
+  // returns 0 on the first frame of a deterministic clock, which would
+  // suppress telemetry emission on that case.
+  let loadingStartedAt = null;
+  let loadingKind = '';
+  let watchdogTimer = null;
+
+  function getStatus() {
+    return status;
+  }
+
+  function clearWatchdog() {
+    if (watchdogTimer !== null && typeof clearTimeoutFn === 'function') {
+      clearTimeoutFn(watchdogTimer);
+    }
+    watchdogTimer = null;
+  }
+
+  function emitLatencyLog(statusTag) {
+    if (typeof logger !== 'function') return;
+    if (loadingStartedAt === null) return;
+    const wallMs = Math.max(0, Math.round(now() - loadingStartedAt));
+    const kind = loadingKind || 'normal';
+    try {
+      logger(`[ks2-tts-latency] status=${statusTag} wallMs=${wallMs} kind=${kind}`);
+    } catch { /* swallow logger failure */ }
+  }
+
+  function setStatus(next, { telemetry = '' } = {}) {
+    if (status === next) return;
+    const previous = status;
+    status = next;
+
+    if (next === 'loading') {
+      loadingStartedAt = now();
+      clearWatchdog();
+      if (typeof setTimeoutFn === 'function' && watchdogMs > 0) {
+        watchdogTimer = setTimeoutFn(() => {
+          // Watchdog fires: only act if we're still in `loading`.
+          if (status !== 'loading') return;
+          try { currentAbort?.abort?.(); } catch { /* noop */ }
+          emitLatencyLog('failed');
+          status = 'failed';
+          watchdogTimer = null;
+          // After the failed transition the loading stamp has served
+          // its purpose; clearing it here prevents a subsequent
+          // `abortPending()` from `failed` state from re-using the
+          // old stamp should it ever log telemetry again.
+          loadingStartedAt = null;
+          loadingKind = '';
+          emit({ type: 'status', status: 'failed', previous: 'loading', reason: 'watchdog' });
+        }, watchdogMs);
+      }
+    } else if (previous === 'loading') {
+      // Any exit from loading clears the watchdog and (optionally) logs.
+      clearWatchdog();
+      if (telemetry === 'completed' || telemetry === 'failed' || telemetry === 'aborted') {
+        emitLatencyLog(telemetry);
+      }
+      if (next !== 'loading') {
+        // Reset loadingStartedAt only when we leave `loading` — nested
+        // transitions through `loading` (replay) compute a fresh wallMs.
+        if (telemetry) {
+          // keep loadingStartedAt reset so subsequent telemetry does not
+          // re-use a stale stamp.
+          loadingStartedAt = null;
+          loadingKind = '';
+        }
+      }
+    }
+
+    emit({ type: 'status', status: next, previous });
+  }
+
+  function abortPending() {
+    // Idempotent: only acts when a fetch is in flight.
+    if (status === 'loading') {
+      try { currentAbort?.abort?.(); } catch { /* noop */ }
+      setStatus('idle', { telemetry: 'aborted' });
+      return;
+    }
+    if (status === 'failed') {
+      // Dismiss the failed state — no extra telemetry (the transition to
+      // failed already emitted its own latency log).
+      setStatus('idle');
+      return;
+    }
+    // idle / playing: no-op.
   }
 
   function available() {
@@ -153,10 +299,21 @@ export function createPlatformTts({
 
   function stop() {
     playbackId += 1;
-    currentAbort?.abort?.();
+    try { currentAbort?.abort?.(); } catch { /* noop */ }
     cleanupAudio();
     resolvePending(false);
     stopBrowserSpeech();
+    // Reset the status machine. `stop()` subsumes a full abort of both
+    // playing audio AND any outstanding fetch. Transitions depend on
+    // where we were. We emit the status change BEFORE the `end` event
+    // so `end` stays the final observable signal on every playback
+    // (legacy tests assert `events.at(-1).type === 'end'`).
+    if (status === 'loading') {
+      // Same semantics as abortPending while loading.
+      setStatus('idle', { telemetry: 'aborted' });
+    } else if (status === 'playing' || status === 'failed') {
+      setStatus('idle');
+    }
     emit({ type: 'end' });
   }
 
@@ -172,13 +329,22 @@ export function createPlatformTts({
     utterance.rate = clamp(slow ? 0.9 : 1.02, 0.8, 1.2);
     return new Promise((resolve) => {
       utterance.onend = () => {
+        // Browser speech has no loading phase — transition straight back
+        // to idle from playing (if we reached playing). Status change
+        // fires BEFORE `end` per the legacy contract.
+        if (status === 'playing') setStatus('idle');
         emit({ type: 'end' });
         resolve(true);
       };
       utterance.onerror = () => {
+        if (status === 'playing' || status === 'loading') setStatus('idle');
         emit({ type: 'end' });
         resolve(false);
       };
+      // Browser path skips the loading phase — it's synchronous from the
+      // caller's perspective. Set status BEFORE emitting `start` so the
+      // observable order is `status(playing)`, then `start`.
+      setStatus('playing');
       emit({ type: 'start', kind: playbackKind({ kind, slow }) });
       window.speechSynthesis.speak(utterance);
     });
@@ -245,7 +411,11 @@ export function createPlatformTts({
 
     currentAbort = new AbortController();
     const kindId = playbackKind(payload);
-    if (emitLoading) emit({ type: 'loading', kind: kindId, provider: providerId });
+    if (emitLoading) {
+      emit({ type: 'loading', kind: kindId, provider: providerId });
+      loadingKind = kindId;
+      setStatus('loading');
+    }
     try {
       const response = await fetchFn(endpoint, {
         method: 'POST',
@@ -258,10 +428,12 @@ export function createPlatformTts({
         body: JSON.stringify(requestBody),
       });
       if (response.status === 204) {
+        if (emitLoading && token === playbackId && status === 'loading') setStatus('idle', { telemetry: 'completed' });
         if (emitMissEnd && token === playbackId) emit({ type: 'end' });
         return false;
       }
       if (!response.ok) {
+        if (emitLoading && token === playbackId && status === 'loading') setStatus('failed', { telemetry: 'failed' });
         if (emitMissEnd && token === playbackId) emit({ type: 'end' });
         return false;
       }
@@ -273,28 +445,38 @@ export function createPlatformTts({
       return await new Promise((resolve) => {
         pendingResolve = resolve;
         currentAudio.onended = () => {
+          // Emit the status transition BEFORE the `end` event so legacy
+          // consumers that only look at `end` (e.g. the existing
+          // spelling-tts test suite) still see `end` as the final event
+          // of the playback.
+          if (status === 'playing') setStatus('idle');
           emit({ type: 'end' });
           cleanupAudio();
           resolvePending(true);
         };
         currentAudio.onerror = () => {
+          if (status === 'playing' || status === 'loading') setStatus('idle');
           emit({ type: 'end' });
           cleanupAudio();
           resolvePending(false);
         };
         currentAudio.onabort = () => {
+          if (status === 'playing' || status === 'loading') setStatus('idle');
           emit({ type: 'end' });
           cleanupAudio();
           resolvePending(false);
         };
+        if (status === 'loading') setStatus('playing', { telemetry: 'completed' });
         emit({ type: 'start', kind: kindId });
         currentAudio.play().catch(() => {
+          if (status === 'playing' || status === 'loading') setStatus('idle');
           emit({ type: 'end' });
           cleanupAudio();
           resolvePending(false);
         });
       });
     } catch {
+      if (emitLoading && token === playbackId && status === 'loading') setStatus('failed', { telemetry: 'failed' });
       if (token === playbackId) emit({ type: 'end' });
       return false;
     } finally {
@@ -324,6 +506,9 @@ export function createPlatformTts({
     stop,
     subscribe,
     warmup() {},
+    // SH2-U4: status channel contract.
+    getStatus,
+    abortPending,
   };
 }
 
