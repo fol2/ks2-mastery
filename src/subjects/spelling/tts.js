@@ -14,13 +14,21 @@ import {
 //
 //   Legal transitions:
 //     idle    -> loading  (fetch start)
-//     loading -> playing  (audio play)
+//     idle    -> playing  (cache-hit fast path — `speakWithCachedBufferedAudio`
+//                          reuses the prefetched blob, so `emitLoading` is
+//                          skipped and the status jumps straight to
+//                          playing when audio.play() is invoked. No
+//                          `loading` latency telemetry emits on this path;
+//                          the completed telemetry fires at onended.)
+//     loading -> playing  (audio play after remote fetch)
 //     loading -> failed   (watchdog fires OR fetch rejects / non-ok)
 //     loading -> idle     (abortPending called)
 //     playing -> idle     (normal end / stop())
-//     playing -> loading  (replay during playback — `speak()` calls
-//                          `stop()` then re-enters loading; this emits the
-//                          transition)
+//     playing -> idle -> loading
+//                         (replay during playback — `speak()` calls
+//                          `stop()` which resets to `idle`, then a new
+//                          speak() enters `loading`. Subscribers observe
+//                          TWO status events (idle, loading), not one.)
 //     failed  -> loading  (user retries via speak())
 //     failed  -> idle     (route change / abortPending)
 //
@@ -466,7 +474,19 @@ export function createPlatformTts({
           cleanupAudio();
           resolvePending(false);
         };
+        // Transition to `playing` covers two paths:
+        //   1. loading -> playing: normal remote fetch where `emitLoading`
+        //      ran, so `status === 'loading'`. Emits `completed` latency
+        //      telemetry measured from the `loading` entry.
+        //   2. idle -> playing: cache-hit fast path via
+        //      `speakWithCachedBufferedAudio` where `emitLoading: false`
+        //      was passed, so no `loading` transition occurred. Audio is
+        //      playing immediately, so the audio-playing invariant
+        //      (`status === 'playing' when audio.play() runs`) must hold.
+        //      No latency telemetry emits on this path because there was
+        //      no `loading` timer to close out.
         if (status === 'loading') setStatus('playing', { telemetry: 'completed' });
+        else if (status === 'idle') setStatus('playing');
         emit({ type: 'start', kind: kindId });
         currentAudio.play().catch(() => {
           if (status === 'playing' || status === 'loading') setStatus('idle');

@@ -585,6 +585,7 @@ function syncWritableLearnerSelection(learnerId) {
   if (!appState.learners.byId[learnerId]) return false;
   if (appState.learners.selectedId === learnerId) return false;
   tts.stop();
+  tts.abortPending?.();
   runtimeBoundary.clearAll();
   store.selectLearner(learnerId);
   return true;
@@ -1301,6 +1302,7 @@ async function handleImportFileChange(input) {
     runtimeBoundary.clearAll();
     store.reloadFromRepositories();
     tts.stop();
+    tts.abortPending?.();
     if (result.kind === 'learner') {
       const message = result.renamed
         ? 'Learner imported as a copy because that learner id already existed.'
@@ -1326,6 +1328,7 @@ async function prepareForSpellingContentMutation() {
 
 async function refreshAfterSpellingContentMutation() {
   tts.stop();
+  tts.abortPending?.();
   await repositories.hydrate({
     cacheScope: 'spelling-content-mutation',
     rebasePending: true,
@@ -2399,7 +2402,14 @@ function handleGlobalAction(action, data) {
 
   if (action === 'navigate-home') {
     clearAdultSurfaceNotice();
+    // SH2-U4: every route-change site in this shadow handler calls
+    // `tts.stop()` AND `tts.abortPending()` explicitly, mirroring the
+    // controller path in `create-app-controller.js::handleGlobalAction`.
+    // The two calls are deliberately NOT hidden behind a helper so a
+    // reviewer sees both at every site and a grep for `tts.abortPending`
+    // returns the full set of route-exit handlers.
     tts.stop();
+    tts.abortPending?.();
     store.goHome();
     return true;
   }
@@ -2413,6 +2423,7 @@ function handleGlobalAction(action, data) {
       return true;
     }
     tts.stop();
+    tts.abortPending?.();
     store.openSubject(subject.id, data.tab || 'practice');
     return true;
   }
@@ -2420,6 +2431,7 @@ function handleGlobalAction(action, data) {
   if (action === 'open-codex') {
     clearAdultSurfaceNotice();
     tts.stop();
+    tts.abortPending?.();
     store.openCodex();
     return true;
   }
@@ -2427,6 +2439,7 @@ function handleGlobalAction(action, data) {
   if (action === 'open-parent-hub') {
     clearAdultSurfaceNotice();
     tts.stop();
+    tts.abortPending?.();
     store.openParentHub();
     if (boot.session.signedIn) loadParentHub({ force: true });
     return true;
@@ -2435,6 +2448,7 @@ function handleGlobalAction(action, data) {
   if (action === 'open-profile-settings') {
     clearAdultSurfaceNotice();
     tts.stop();
+    tts.abortPending?.();
     store.openProfileSettings();
     return true;
   }
@@ -2442,6 +2456,7 @@ function handleGlobalAction(action, data) {
   if (action === 'open-admin-hub') {
     clearAdultSurfaceNotice();
     tts.stop();
+    tts.abortPending?.();
     store.openAdminHub();
     if (boot.session.signedIn) loadAdminHub({ force: true });
     loadAdminAccounts();
@@ -2568,6 +2583,7 @@ function handleGlobalAction(action, data) {
     };
     if (appState.learners.byId[nextLearnerId] && appState.learners.selectedId !== nextLearnerId) {
       tts.stop();
+      tts.abortPending?.();
       runtimeBoundary.clearAll();
       store.selectLearner(nextLearnerId);
       remoteSpellingActions?.reapplyPendingOptimisticPrefs?.();
@@ -2586,6 +2602,7 @@ function handleGlobalAction(action, data) {
       selectedLearnerId: nextLearnerId,
     };
     tts.stop();
+    tts.abortPending?.();
     runtimeBoundary.clearAll();
     store.selectLearner(nextLearnerId);
     remoteSpellingActions?.reapplyPendingOptimisticPrefs?.();
@@ -2638,6 +2655,7 @@ function handleGlobalAction(action, data) {
       },
     });
     tts.stop();
+    tts.abortPending?.();
     store.updateLearner(learnerId, {
       name: String(formData.get('name') || 'Learner').trim() || 'Learner',
       yearGroup: String(formData.get('yearGroup') || 'Y5'),
@@ -2666,6 +2684,7 @@ function handleGlobalAction(action, data) {
     if (blockReadOnlyAdultAction(action)) return true;
     if (!globalThis.confirm('Warning: reset subject progress and codex rewards for the current learner?')) return true;
     tts.stop();
+    tts.abortPending?.();
     if (isServerSyncedRuntime()) {
       resetServerSyncedLearnerProgress(learnerId).catch((error) => {
         globalThis.alert?.(error?.message || 'Could not reset learner progress.');
@@ -2683,6 +2702,7 @@ function handleGlobalAction(action, data) {
     if (blockReadOnlyAdultAction(action)) return true;
     if (!globalThis.confirm('Reset all app data for every learner on this browser?')) return true;
     tts.stop();
+    tts.abortPending?.();
     runtimeBoundary.clearAll();
     clearAllMonsterCelebrationAcknowledgements();
     store.clearAllProgress();
@@ -2799,6 +2819,7 @@ function handleGlobalAction(action, data) {
     repositories.persistence.retry()
       .then(() => {
         tts.stop();
+        tts.abortPending?.();
         runtimeBoundary.clearAll();
         store.clearMonsterCelebrations();
         store.reloadFromRepositories({ preserveRoute: true });
@@ -2934,6 +2955,7 @@ function handleSubjectAction(action, data) {
     return Boolean(handled);
   } catch (error) {
     tts.stop();
+    tts.abortPending?.();
     runtimeBoundary.capture({
       learnerId,
       subject,

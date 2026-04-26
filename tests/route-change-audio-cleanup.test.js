@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import React from 'react';
 
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
@@ -71,19 +72,44 @@ function createTrackingTtsPort() {
   };
 }
 
-function createTrackingHarness() {
+function createTrackingHarness({ subjects = SUBJECTS, ports = {} } = {}) {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });
   const runtimeBoundary = createSubjectRuntimeBoundary();
   const tts = createTrackingTtsPort();
   const controller = createLocalAppController({
     repositories,
-    subjects: SUBJECTS,
+    subjects,
     now: () => Date.now(),
     runtimeBoundary,
     tts,
+    ports,
   });
   return { controller, tts, repositories };
+}
+
+// SH2-U4 follow-up: a deliberately broken subject for testing the
+// `handleSubjectAction` catch branch that also calls `tts.stop() +
+// tts.abortPending()`. Mirrors tests/app-controller.test.js::makeBrokenSubject.
+function makeBrokenSubject() {
+  return {
+    id: 'broken-action',
+    name: 'Broken Action',
+    blurb: 'Deliberately broken for route-change cleanup tests.',
+    accent: '#8B5CF6',
+    accentSoft: '#F3E8FF',
+    icon: 'quote',
+    available: true,
+    initState() { return { phase: 'dashboard', error: '' }; },
+    getDashboardStats() { return { pct: 0, due: 0, streak: 0, nextUp: '' }; },
+    PracticeComponent() {
+      return React.createElement('button', { type: 'button' }, 'x');
+    },
+    handleAction(action) {
+      if (action === 'broken-action-trigger') throw new Error('handleAction exploded');
+      return false;
+    },
+  };
 }
 
 test('route-change audio cleanup: navigate-home from a subject calls tts.stop()', () => {
@@ -244,5 +270,140 @@ test('route-change audio cleanup: learner-select fires BOTH stop + abortPending'
   assert.equal(
     tts.abortPendingCalls.length, 1,
     'learner-select: abortPending() must fire — a mid-prompt fetch for the leaving learner must not complete against the incoming learner.',
+  );
+});
+
+// SH2-U4 follow-up (reviewer NIT-8): the 7 tests above cover 7 of the 12
+// controller sites that pair `tts.stop()` with `tts.abortPending()`. The
+// remaining 5 sites are danger-zone flows (reset-progress, reset-all) and
+// internal transitions (applySubjectTransition, persistence-retry,
+// handleSubjectAction catch). These extra tests lock the contract at
+// every site so a future refactor that drops abortPending at any one
+// site fails immediately rather than leaking an in-flight fetch on a
+// danger-zone surface.
+//
+// A note on the production shadow path: `src/main.js::handleGlobalAction`
+// is a near-duplicate of the controller's `handleGlobalAction` and is
+// where real browser dispatches land first (see FIX-1). Those 16 sites
+// also pair `stop()` with `abortPending?.()`; the pairing is grep-checked
+// in the spelling-tts and boot tests. Driving main.js from a node test
+// requires a browser DOM fixture (the module sets up the full shell), so
+// we document the pairing here and lock the controller contract via the
+// harness below.
+
+test('route-change audio cleanup: applySubjectTransition stop-audio path calls BOTH stop + abortPending', () => {
+  // When a spelling submit produces a transition that leaves the
+  // `session` phase (or enters `awaitingAdvance`), `applySubjectTransition`
+  // must fan out `tts.stop()` AND `tts.abortPending()`. Without both
+  // calls, an in-flight cache miss that was racing the submit would
+  // resolve on the feedback surface and play over the feedback banner.
+  const { controller, tts } = createTrackingHarness();
+  const learnerId = controller.store.getState().learners.selectedId;
+  controller.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  controller.dispatch('open-subject', { subjectId: 'spelling' });
+  controller.dispatch('spelling-start');
+  tts.clear();
+
+  const answer = controller.store.getState().subjectUi.spelling.session.currentCard.word.word;
+  const formData = new FormData();
+  formData.set('typed', answer);
+  controller.dispatch('spelling-submit-form', { formData });
+
+  assert.equal(
+    tts.stopCalls.length, 1,
+    'spelling-submit-form transitioning to awaitingAdvance must invoke tts.stop() via applySubjectTransition.',
+  );
+  assert.equal(
+    tts.abortPendingCalls.length, 1,
+    'spelling-submit-form transitioning to awaitingAdvance must invoke tts.abortPending() via applySubjectTransition — a cache-miss fetch that outlives the submit must not resolve on the feedback surface.',
+  );
+});
+
+test('route-change audio cleanup: learner-reset-progress fires BOTH stop + abortPending', () => {
+  // Danger zone: reset-progress is a parent-initiated destructive action
+  // that clears all subject progress for the learner. The TTS cleanup
+  // guards against a mid-prompt fetch that resolves on a surface that
+  // has been reset to its initial state.
+  const { controller, tts } = createTrackingHarness({ ports: { confirm: () => true } });
+  controller.dispatch('open-subject', { subjectId: 'spelling' });
+  tts.clear();
+  controller.dispatch('learner-reset-progress');
+  assert.equal(
+    tts.stopCalls.length, 1,
+    'learner-reset-progress: stop() must fire so a playing prompt ends at the moment progress is wiped.',
+  );
+  assert.equal(
+    tts.abortPendingCalls.length, 1,
+    'learner-reset-progress: abortPending() must fire so a pending fetch does not resolve on the reset dashboard and replay a wiped word.',
+  );
+});
+
+test('route-change audio cleanup: platform-reset-all fires BOTH stop + abortPending', () => {
+  // Danger zone: platform-reset-all wipes data for EVERY learner on this
+  // browser and reloads the app. Even with the reload, the TTS cleanup
+  // still happens in-process first so the abort signal fires before the
+  // reload races it.
+  let reloadCalls = 0;
+  const { controller, tts } = createTrackingHarness({
+    ports: { confirm: () => true, reload: () => { reloadCalls += 1; } },
+  });
+  controller.dispatch('open-subject', { subjectId: 'spelling' });
+  tts.clear();
+  controller.dispatch('platform-reset-all');
+  assert.equal(
+    tts.stopCalls.length, 1,
+    'platform-reset-all: stop() must fire before reload() so the audio element is released.',
+  );
+  assert.equal(
+    tts.abortPendingCalls.length, 1,
+    'platform-reset-all: abortPending() must fire before reload() so the Gemini fetch sees the abort signal.',
+  );
+  assert.equal(reloadCalls, 1, 'platform-reset-all must still call reload() after the cleanup.');
+});
+
+test('route-change audio cleanup: persistence-retry success fires BOTH stop + abortPending', async () => {
+  // Persistence retry is a degraded-mode recovery path. On success it
+  // clears runtime boundaries, clears monster celebrations, and reloads
+  // app state from repositories. The TTS cleanup fires in the success
+  // branch (NOT the catch branch) because a reload-from-repositories
+  // rebuilds the subject surfaces and any in-flight fetch would resolve
+  // against stale state.
+  const { controller, tts } = createTrackingHarness();
+  controller.dispatch('open-subject', { subjectId: 'spelling' });
+  tts.clear();
+  controller.dispatch('persistence-retry');
+  // The retry resolves on a microtask; await once to let the .then fire.
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.equal(
+    tts.stopCalls.length, 1,
+    'persistence-retry success: stop() must fire after the retry resolves so the audio element is released before reloadFromRepositories runs.',
+  );
+  assert.equal(
+    tts.abortPendingCalls.length, 1,
+    'persistence-retry success: abortPending() must fire after the retry resolves so a pending fetch does not resolve against the freshly reloaded state.',
+  );
+});
+
+test('route-change audio cleanup: handleSubjectAction catch branch fires BOTH stop + abortPending', () => {
+  // When a subject's handleAction throws, the controller's
+  // `handleSubjectAction` catch branch stops audio + cancels pending
+  // fetches. Without this, a prompt that was already fetched while a
+  // later action crashed the subject would resolve on top of the
+  // runtime-error banner.
+  const brokenSubject = makeBrokenSubject();
+  const { controller, tts } = createTrackingHarness({
+    subjects: [...SUBJECTS, brokenSubject],
+  });
+  controller.dispatch('open-subject', { subjectId: brokenSubject.id });
+  tts.clear();
+  controller.dispatch('broken-action-trigger');
+  assert.equal(
+    tts.stopCalls.length, 1,
+    'handleSubjectAction catch: stop() must fire — a prompt playing when the subject throws must not keep playing over the runtime-error banner.',
+  );
+  assert.equal(
+    tts.abortPendingCalls.length, 1,
+    'handleSubjectAction catch: abortPending() must fire — a pending fetch that outlives the crashed action must not resolve on the runtime-error surface.',
   );
 });
