@@ -5,6 +5,7 @@ import {
   createApiPlatformRepositories,
 } from '../src/platform/core/repositories/index.js';
 import { cloneSerialisable } from '../src/platform/core/repositories/helpers.js';
+import { SPELLING_CONTENT_MODEL_VERSION } from '../src/subjects/spelling/content/model.js';
 import { createApiSpellingContentRepository } from '../src/subjects/spelling/content/repository.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
@@ -312,7 +313,10 @@ test('worker spelling content route backfills version-one core bundles without p
     const payload = await response.json();
 
     assert.equal(response.status, 200);
-    assert.equal(payload.content.modelVersion, 2);
+    // P2 U10: normaliser bumps any stored bundle with modelVersion < current
+    // to `SPELLING_CONTENT_MODEL_VERSION` (now 4, skipping 3 per H7 synthesis)
+    // so the UI never reads a stale shape.
+    assert.equal(payload.content.modelVersion, SPELLING_CONTENT_MODEL_VERSION);
     assert.equal(payload.content.draft.wordLists.every((list) => list.spellingPool === 'core'), true);
     assert.equal(payload.content.draft.words.every((word) => word.spellingPool === 'core'), true);
     assert.equal(payload.content.releases[0].snapshot.words.every((word) => word.spellingPool === 'core'), true);

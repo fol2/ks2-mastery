@@ -34,7 +34,9 @@ function addDraftOnlyWord(bundle) {
     family: 'draftonly',
     listId: 'statutory-y3-4',
     yearGroups: ['Y3', 'Y4'],
-    tags: ['draft-only'],
+    // P2 U10: `exception-word` tag satisfies the pattern-coverage validator
+    // for a made-up test word that does not fit any KS2 pattern.
+    tags: ['draft-only', 'exception-word'],
     accepted: ['draftonly'],
     explanation: 'Draftonly is a test spelling word used only by content tests.',
     sentenceEntryIds: ['draftonly__01'],
@@ -148,6 +150,7 @@ test('seeded spelling content validates and round-trips through the portable exp
   const validation = content.validate();
   assert.equal(validation.ok, true);
   assert.equal(validation.bundle.modelVersion, SPELLING_CONTENT_MODEL_VERSION);
+  assert.equal(SPELLING_CONTENT_MODEL_VERSION, 4, 'P2 U10: content-model version skips 3 per H7 synthesis.');
   assert.equal(validation.errors.length, 0);
   assert.equal(validation.bundle.releases.length, 4);
   assert.equal(validation.bundle.publication.publishedVersion, 4);
@@ -160,6 +163,21 @@ test('seeded spelling content validates and round-trips through the portable exp
   assert.ok(validation.bundle.releases[0].snapshot.words.every((word) => word.spellingPool === 'core'));
   assert.ok(validation.bundle.draft.words.every((word) => word.explanation));
   assert.ok(validation.bundle.releases.at(-1).snapshot.words.every((word) => word.explanation));
+
+  // P2 U10: every core word carries a patternIds field AND either at least
+  // one registered patternId OR the exception-word / statutory-exception tag.
+  const coreWords = validation.bundle.draft.words.filter((word) => word.spellingPool === 'core');
+  assert.ok(coreWords.length > 0);
+  assert.ok(coreWords.every((word) => Array.isArray(word.patternIds)));
+  assert.ok(coreWords.every((word) => {
+    const hasPatternId = word.patternIds.length > 0;
+    const exceptionTag = word.tags.includes('exception-word') || word.tags.includes('statutory-exception');
+    return hasPatternId || exceptionTag;
+  }));
+  // Runtime snapshot preserves patternIds so U11 selection can read them.
+  const runtimeCoreWords = validation.bundle.releases.at(-1).snapshot.words
+    .filter((word) => word.spellingPool === 'core');
+  assert.ok(runtimeCoreWords.every((word) => Array.isArray(word.patternIds)));
 
   const exported = content.exportPortable();
   const roundTripped = extractPortableSpellingContent(exported);
