@@ -51,6 +51,7 @@ import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
 import { WORDS } from '../src/subjects/spelling/data/word-data.js';
 import { SPELLING_EVENT_TYPES } from '../src/subjects/spelling/events.js';
+import { seedFullCoreMega as seedFullCoreMegaShared } from './helpers/post-mastery-seeds.js';
 
 // -----------------------------------------------------------------------------
 // Seeded PRNG — deterministic under a fixed seed. Mirrors the pattern at
@@ -99,24 +100,19 @@ const SEED_POST_MEGA = Object.freeze({
   unlockedBy: 'all-core-stage-4',
 });
 
+// P2 U3: delegates to `tests/helpers/post-mastery-seeds.js::seedFullCoreMega`
+// so the three previously-duplicated copies of this helper (mega-invariant,
+// guardian, boss) collapse into one canonical seeder. The composite suite
+// pins a SPECIFIC shape — no per-slug attempt variation, uniform `dueDay`
+// / `lastDay` / `lastResult` — so we pass `variation: false` + a frozen
+// `SEED_POST_MEGA` to keep the assertions byte-identical.
 function seedFullCoreMega(repositories, learnerId) {
-  const progress = Object.fromEntries(CORE_SLUGS.map((slug) => [slug, {
-    stage: SEED_STAGE,
-    attempts: 6,
-    correct: 5,
-    wrong: 1,
-    dueDay: SEED_DUE_DAY,
-    lastDay: SEED_LAST_DAY,
-    lastResult: SEED_LAST_RESULT,
-  }]));
-  repositories.subjectStates.writeData(learnerId, 'spelling', {
-    progress,
+  return seedFullCoreMegaShared(repositories, learnerId, {
+    today: TODAY_DAY,
     guardian: {},
-    // P2 U2: seed the sticky-graduation record so every composite sequence
-    // asserts `postMega` never reverts to null across its action trace.
     postMega: { ...SEED_POST_MEGA },
+    variation: false,
   });
-  return progress;
 }
 
 function makeHarness({ seed = 42, learnerId = 'learner-a' } = {}) {
