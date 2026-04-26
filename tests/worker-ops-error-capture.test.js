@@ -173,7 +173,7 @@ test('POST /api/ops/error-event returns 429 when the IP rate-limit is exhausted'
   const server = createWorkerRepositoryServer();
   try {
     // Seed the IP bucket past the 60-event limit.
-    await seedRateLimit(server, 'ops-error-capture-ip', 'unknown', 61);
+    await seedRateLimit(server, 'ops-error-capture-ip', 'unknown:missing', 61);
     const response = await postErrorEvent(server, {
       errorKind: 'Error',
       messageFirstLine: 'boom',
@@ -474,7 +474,7 @@ test('POST /api/ops/error-event bumps rate-limit BEFORE body-cap check (Finding 
     // Seed the IP bucket to 60 so the 61st request (oversized or not) is
     // over the limit. If the reorder fix is correct, an oversized body
     // will return 429 — not 400 — because the rate-limit fires first.
-    await seedRateLimit(server, 'ops-error-capture-ip', 'unknown', 60);
+    await seedRateLimit(server, 'ops-error-capture-ip', 'unknown:missing', 60);
 
     const bigBody = JSON.stringify({
       errorKind: 'Error',

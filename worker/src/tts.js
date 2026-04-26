@@ -2,7 +2,7 @@ import { sha256 } from './auth.js';
 import { requireDatabase } from './d1.js';
 import { BadRequestError, BackendUnavailableError } from './errors.js';
 import { readJson } from './http.js';
-import { consumeRateLimit } from './rate-limit.js';
+import { consumeRateLimit, rateLimitSubject } from './rate-limit.js';
 import { protectDemoTtsFallback, protectDemoTtsLookup, recordDemoMetric } from './demo/sessions.js';
 import { resolveSpellingAudioRequest } from './subjects/spelling/audio.js';
 import {
@@ -47,19 +47,18 @@ function positiveInteger(value, fallback, { min = 1, max = 30000 } = {}) {
   return Math.min(max, Math.max(min, Math.round(parsed)));
 }
 
-function clientIp(request) {
-  return cleanText(
-    request.headers.get('cf-connecting-ip')
-      || request.headers.get('x-forwarded-for')?.split(',')[0]
-      || request.headers.get('x-real-ip'),
-  ) || 'unknown';
-}
+// U5 (P1.5 Phase B): the former local `clientIp` helper is replaced by
+// `rateLimitSubject(request, env)` from `worker/src/rate-limit.js`.
+// The helper returns a tiered bucket key (v4:<addr> / v6/64:<prefix> /
+// unknown:<reason>) so a single attacker on an IPv6 /64 cannot rotate
+// low bits to evade the per-IP budget.
 
 // U7: `currentWindowStart` + `consumeRateLimit` extracted to
 // `worker/src/rate-limit.js`. TTS uses the shared helper with an
 // env-first signature, same shape as before (feasibility F-06).
 
 async function protectTts(env, request, session, now) {
+  const { bucketKey } = rateLimitSubject(request, env);
   const accountLimit = await consumeRateLimit(env, {
     bucket: 'tts-account',
     identifier: session.accountId,
@@ -69,7 +68,7 @@ async function protectTts(env, request, session, now) {
   });
   const ipLimit = await consumeRateLimit(env, {
     bucket: 'tts-ip',
-    identifier: clientIp(request),
+    identifier: bucketKey,
     limit: TTS_IP_LIMIT,
     windowMs: TTS_WINDOW_MS,
     now,
@@ -84,6 +83,7 @@ async function protectTts(env, request, session, now) {
 }
 
 async function protectTtsLookup(env, request, session, now) {
+  const { bucketKey } = rateLimitSubject(request, env);
   const accountLimit = await consumeRateLimit(env, {
     bucket: 'tts-lookup-account',
     identifier: session.accountId,
@@ -93,7 +93,7 @@ async function protectTtsLookup(env, request, session, now) {
   });
   const ipLimit = await consumeRateLimit(env, {
     bucket: 'tts-lookup-ip',
-    identifier: clientIp(request),
+    identifier: bucketKey,
     limit: TTS_LOOKUP_IP_LIMIT,
     windowMs: TTS_WINDOW_MS,
     now,
@@ -108,6 +108,7 @@ async function protectTtsLookup(env, request, session, now) {
 }
 
 async function allowTtsWarmup(env, request, session, now) {
+  const { bucketKey } = rateLimitSubject(request, env);
   const accountLimit = await consumeRateLimit(env, {
     bucket: 'tts-warmup-account',
     identifier: session.accountId,
@@ -117,7 +118,7 @@ async function allowTtsWarmup(env, request, session, now) {
   });
   const ipLimit = await consumeRateLimit(env, {
     bucket: 'tts-warmup-ip',
-    identifier: clientIp(request),
+    identifier: bucketKey,
     limit: TTS_WARMUP_IP_LIMIT,
     windowMs: TTS_WINDOW_MS,
     now,

@@ -2874,6 +2874,51 @@ function generateOpsErrorEventId(nowTs) {
   return `ops-error-${stamp.toString(36)}-${entropy}`;
 }
 
+// H2 (reviewer) — preflight dedup probe.
+//
+// `recordClientErrorEvent` performs the authoritative R24 3-tuple dedup
+// INSIDE the write transaction. The public ingest route needs the same
+// answer *before* the write so it can consume the fresh-insert bucket
+// only when the row would genuinely be new. Without this preflight,
+// `recordClientErrorEvent` writes first, returns `deduped: false` for
+// the 11th fresh fingerprint, and the route rolls back the bucket too
+// late — the row has already been persisted.
+//
+// This helper runs the identical redaction + tuple SELECT that
+// `recordClientErrorEvent` runs, so the "would be a dedup?" answer
+// here and the final write decision agree. The SELECT is read-only,
+// so calling it on every ingest is cheap (one indexed probe).
+//
+// Returns `{ wouldBeDedup: boolean, unavailable: boolean }`. Validation
+// failures mirror `recordClientErrorEvent` so the ingest route can
+// short-circuit consistently.
+async function isClientErrorFingerprintKnown(db, { clientEvent } = {}) {
+  const redacted = serverRedactClientEvent(clientEvent);
+  if (!redacted.errorKind || !redacted.messageFirstLine) {
+    throw new BadRequestError('Error event is missing errorKind or messageFirstLine.', {
+      code: 'validation_failed',
+      field: !redacted.errorKind ? 'errorKind' : 'messageFirstLine',
+    });
+  }
+  try {
+    const existing = await first(db, `
+      SELECT id
+      FROM ops_error_events
+      WHERE error_kind = ?
+        AND message_first_line = ?
+        AND first_frame = ?
+      ORDER BY first_seen ASC, id ASC
+      LIMIT 1
+    `, [redacted.errorKind, redacted.messageFirstLine, redacted.firstFrame || '']);
+    return { wouldBeDedup: Boolean(existing?.id), unavailable: false };
+  } catch (error) {
+    if (isMissingTableError(error, 'ops_error_events')) {
+      return { wouldBeDedup: false, unavailable: true };
+    }
+    throw error;
+  }
+}
+
 async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null, nowTs } = {}) {
   const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
   const redacted = serverRedactClientEvent(clientEvent);
@@ -5655,6 +5700,9 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         sessionAccountId,
         nowTs: nowFactory(),
       });
+    },
+    async isClientErrorFingerprintKnown({ clientEvent } = {}) {
+      return isClientErrorFingerprintKnown(db, { clientEvent });
     },
     async saveMonsterVisualConfigDraft(accountId, { draft, mutation = {} } = {}) {
       return saveMonsterVisualConfigDraft(db, accountId, draft, mutation, nowFactory());
