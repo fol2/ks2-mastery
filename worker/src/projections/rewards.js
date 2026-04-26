@@ -10,6 +10,14 @@ export function projectSpellingRewards({
   domainEvents = [],
   gameState = {},
   random = Math.random,
+  // P2 U12 MEDIUM (u12-corr-02): thread `existingEvents` + `repositories`
+  // through so the Worker-side subscriber sees the same boot-time event
+  // history + `data.achievements` sibling the client sees via
+  // `src/platform/events/runtime.js:69`. Without this, the Worker twin's
+  // achievement evaluator fires a 7-day unlock on the first mission of any
+  // command because prior-day events from the projection state are dropped.
+  existingEvents = [],
+  repositories = null,
 } = {}) {
   let codexState = cloneSerialisable(gameState?.[MONSTER_CODEX_SYSTEM_ID]) || {};
   let wroteCodexState = false;
@@ -29,6 +37,13 @@ export function projectSpellingRewards({
   const rewardEvents = rewardEventsFromSpellingEvents(domainEvents, {
     gameStateRepository: repository,
     random,
+    // Threaded through the createSpellingRewardSubscriber context so the U12
+    // subscriber's `processLearnerBatch` can filter existingEvents by the
+    // active learnerId AND prefer the durable `data.achievements` sibling
+    // over a rolling-log reconstruction. Matches the client behaviour in
+    // `src/platform/events/runtime.js:69`.
+    existingEvents: Array.isArray(existingEvents) ? existingEvents : [],
+    repositories,
   });
 
   return {

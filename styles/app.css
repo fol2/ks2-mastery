@@ -1129,6 +1129,17 @@ textarea:focus-visible {
   grid-template-columns: 1fr;
 }
 
+/* P2 U12 — Achievement unlock toast. Adult-chrome styling: subtle
+   accent without celebratory animation or badge art (MVP constraint;
+   text-only). Slightly warmer background than info so the toast reads
+   "accomplishment" at a glance without slipping into slot-machine
+   territory. Copy-only, so we drop the portrait column like info. */
+.toast.achievement {
+  grid-template-columns: 1fr;
+  border-left: 3px solid var(--accent, #8a6d3b);
+  background: var(--panel-accent, var(--panel-soft));
+}
+
 .toast .cm-port {
   width: 56px;
   height: 56px;
