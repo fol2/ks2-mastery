@@ -898,21 +898,74 @@ export function createRemoteSpellingActionHandler({
         await flushPendingPreferenceSave(learnerId);
         const current = visiblePrefsForLearner(learnerId, appState());
         const patch = optimisticSpellingPrefsPatchForAction('spelling-set-mode', { value: mode }, current);
+        // U10 blocker fix — mirror `module.js::spelling-shortcut-start`:
+        //   1. Apply the optimistic `{ mode }` locally so the dashboard
+        //      reflects the user's intent immediately.
+        //   2. Run `start-session` FIRST. A failed start must NOT leave
+        //      `prefs.mode` persisted as the new mode.
+        //   3. Only persist `save-prefs` AFTER the start succeeds.
+        //   4. On failure, rollback the optimistic patch by clearing the
+        //      recorded intent and reloading the persisted prefs via
+        //      `reapplyPendingOptimisticPrefs`.
+        //
+        // U10 blocker fix — Boss-length parity: the Begin button dispatches
+        // `{ mode: 'boss', length: BOSS_DEFAULT_ROUND_LENGTH }` and Alt+5's
+        // resolver now does the same. Honour `data.length` when supplied so
+        // a Boss round is always 10 cards regardless of `prefs.roundLength`
+        // (which could be '20' for a fresh learner, or SATs-set). When the
+        // caller does not supply a length we fall back to `prefs.roundLength`
+        // so Guardian (Alt+4) and legacy modes keep existing behaviour.
         const intent = recordPreferenceIntent(learnerId, patch);
         updateOptimisticPrefs(patch);
+        const prefsBeforeStart = visiblePrefsForLearner(learnerId, appState());
+        const shortcutLength = data.length != null ? data.length : prefsBeforeStart.roundLength;
+        let startResponse = null;
+        try {
+          startResponse = await sendCommand('start-session', {
+            mode: prefsBeforeStart.mode || mode,
+            yearFilter: prefsBeforeStart.yearFilter,
+            length: shortcutLength,
+            extraWordFamilies: prefsBeforeStart.extraWordFamilies,
+          }, { learnerId });
+        } catch (error) {
+          // Rollback: the optimistic prefs must not outlive a failed
+          // start-session. Drop the tracked intent and reload from the
+          // persisted prefs so the dashboard re-reflects ground truth.
+          const version = intent?.version || 0;
+          const latest = latestPreferenceIntents.get(learnerId);
+          if (latest && Number(latest.version) <= Number(version)) {
+            latestPreferenceIntents.delete(learnerId);
+          }
+          store.reloadFromRepositories({ preserveRoute: true });
+          reapplyPendingOptimisticPrefs();
+          throw error;
+        }
+        // Server may have rejected inline (ok === false or equivalent shape).
+        // Treat anything that leaves `phase !== 'session'` on the read model
+        // as a non-ok start and skip the prefs persistence step, mirroring
+        // the module.js `transition?.ok !== false` guard.
+        const nextPhase = startResponse?.subjectReadModel?.phase
+          || startResponse?.state?.phase
+          || appState().subjectUi?.spelling?.phase
+          || '';
+        if (startResponse?.ok === false || (nextPhase && nextPhase !== 'session')) {
+          // Start did not land on a session — rollback optimistic prefs so
+          // `prefs.mode` is not left pointing at the would-be mode.
+          const version = intent?.version || 0;
+          const latest = latestPreferenceIntents.get(learnerId);
+          if (latest && Number(latest.version) <= Number(version)) {
+            latestPreferenceIntents.delete(learnerId);
+          }
+          store.reloadFromRepositories({ preserveRoute: true });
+          reapplyPendingOptimisticPrefs();
+          return;
+        }
         try {
           await sendCommand('save-prefs', { prefs: patch }, { learnerId, preferenceVersion: intent?.version || 0 });
         } catch (error) {
           handlePreferenceSaveError(error, { learnerId, preferenceVersion: intent?.version || 0 });
           throw error;
         }
-        const prefs = visiblePrefsForLearner(learnerId, appState());
-        await sendCommand('start-session', {
-          mode: prefs.mode || mode,
-          yearFilter: prefs.yearFilter,
-          length: prefs.roundLength,
-          extraWordFamilies: prefs.extraWordFamilies,
-        }, { learnerId });
       })().catch((error) => {
         globalThis.console?.warn?.('Spelling shortcut command failed.', error);
         setRuntimeErrorForLearner(learnerId, commandErrorMessage(error, 'The spelling shortcut could not be completed.'));

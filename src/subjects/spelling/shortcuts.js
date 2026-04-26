@@ -1,3 +1,5 @@
+import { BOSS_DEFAULT_ROUND_LENGTH } from './service-contract.js';
+
 function isTypingElement(target) {
   if (!target) return false;
   if (target.isContentEditable) return true;
@@ -62,10 +64,23 @@ export function resolveSpellingShortcut(event, appState) {
   // and the gate lives downstream in `module.js::spelling-shortcut-start` /
   // `remote-actions.js::spelling-shortcut-start`. A non-graduated learner
   // therefore sees the same silent no-op as Alt+4 rather than a stale Smart
-  // Review fallback. Plan reference:
+  // Review fallback.
+  // The payload MUST carry `length: BOSS_DEFAULT_ROUND_LENGTH` so Alt+5 and
+  // the Begin button produce the same 10-card round. Without it, the module
+  // handler falls back to `prefs.roundLength` (default '20' for a fresh
+  // learner, or any SATs-set value) and the Boss service clamps it down to
+  // `BOSS_MAX_ROUND_LENGTH = 12` — a 12-card round instead of the
+  // spec-mandated 10. Guardian's Alt+4 does not supply a length because
+  // Guardian has no fixed plan-mandated length (it respects `prefs.roundLength`
+  // via the service clamp), so the two shortcuts diverge intentionally.
+  // Plan reference:
   // docs/plans/2026-04-25-005-feat-post-mega-spelling-guardian-hardening-plan.md (U10).
   if (key === '5') {
-    return { action: 'spelling-shortcut-start', data: { mode: 'boss' }, preventDefault: true };
+    return {
+      action: 'spelling-shortcut-start',
+      data: { mode: 'boss', length: BOSS_DEFAULT_ROUND_LENGTH },
+      preventDefault: true,
+    };
   }
   if (key === 's') {
     if (spellingUi?.phase === 'session' && spellingUi.session?.type !== 'test' && spellingUi.session?.phase === 'question' && !spellingUi.awaitingAdvance) {

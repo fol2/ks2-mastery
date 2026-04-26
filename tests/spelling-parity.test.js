@@ -10,6 +10,7 @@ import { createSpellingPersistence } from '../src/subjects/spelling/repository.j
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { resolveSpellingShortcut } from '../src/subjects/spelling/shortcuts.js';
 import { spellingAutoAdvanceDelay } from '../src/subjects/spelling/auto-advance.js';
+import { BOSS_DEFAULT_ROUND_LENGTH } from '../src/subjects/spelling/service-contract.js';
 import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
 
 function typedFormData(value) {
@@ -352,13 +353,16 @@ test('U10 resolver: Alt+2/3/4 preserved + Alt+5 resolves to boss without breakin
     preventDefault: true,
   });
 
-  // Alt+5 → boss (new in U10)
+  // Alt+5 → boss (new in U10). The resolver MUST emit the canonical Boss
+  // round length so Alt+5 and the Begin button produce identical payloads —
+  // otherwise the module handler falls back to `prefs.roundLength` (default
+  // '20') and the Boss service clamps down to 12, not the spec-mandated 10.
   assert.deepEqual(resolveSpellingShortcut({
     key: '5', altKey: true, shiftKey: false, ctrlKey: false, metaKey: false,
     target: { tagName: 'DIV' },
   }, appState), {
     action: 'spelling-shortcut-start',
-    data: { mode: 'boss' },
+    data: { mode: 'boss', length: BOSS_DEFAULT_ROUND_LENGTH },
     preventDefault: true,
   });
 

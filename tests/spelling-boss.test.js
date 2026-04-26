@@ -1124,3 +1124,145 @@ test('U10 gate: Alt+5 dispatch when allWordsMega === false is a no-op (module-le
   assert.equal(after.phase, beforePhase, 'phase unchanged — Boss did not start');
   assert.equal(after.session, null, 'no Boss session allocated');
 });
+
+// -----------------------------------------------------------------------------
+// U10 review blocker 1 — Alt+5 length propagation.
+// -----------------------------------------------------------------------------
+// The Alt+5 shortcut resolver MUST embed `length: BOSS_DEFAULT_ROUND_LENGTH`
+// in the dispatch payload. Without it the module handler falls back to
+// `currentPrefs.roundLength` which defaults to '20' for any fresh/SATs
+// learner, and the Boss service clamps that down to BOSS_MAX_ROUND_LENGTH
+// = 12 — producing a 12-card Boss round instead of the spec-mandated 10.
+// This test pair pins both halves of the contract:
+//   (a) resolver output shape includes the canonical length constant.
+//   (b) dispatching the resolver's exact output with prefs.roundLength = '20'
+//       lands on a 10-card Boss round, matching the Begin-button payload.
+// -----------------------------------------------------------------------------
+
+test('U10 blocker: Alt+5 resolver emits length === BOSS_DEFAULT_ROUND_LENGTH', async () => {
+  const { resolveSpellingShortcut } = await import('../src/subjects/spelling/shortcuts.js');
+  const appState = {
+    route: { subjectId: 'spelling', tab: 'practice' },
+    subjectUi: { spelling: { phase: 'dashboard', awaitingAdvance: false, session: null } },
+  };
+  const resolved = resolveSpellingShortcut({
+    key: '5',
+    altKey: true,
+    shiftKey: false,
+    ctrlKey: false,
+    metaKey: false,
+    target: { tagName: 'DIV' },
+  }, appState);
+  assert.deepEqual(resolved, {
+    action: 'spelling-shortcut-start',
+    data: { mode: 'boss', length: BOSS_DEFAULT_ROUND_LENGTH },
+    preventDefault: true,
+  }, 'Alt+5 resolver must emit the canonical Boss round length');
+  assert.equal(resolved.data.length, 10,
+    'BOSS_DEFAULT_ROUND_LENGTH constant must still be 10 (spec-mandated)');
+});
+
+test('U10 blocker: Alt+5 dispatch with prefs.roundLength = "20" yields a 10-card Boss round', async () => {
+  // Reproduces the Blocker 1 regression. Seeded prefs.roundLength is '20' —
+  // the fresh-learner default — so a naive Alt+5 dispatch that omits `length`
+  // would land on a 12-card round (prefs.roundLength='20' clamped down to
+  // BOSS_MAX_ROUND_LENGTH=12). The fixed resolver embeds
+  // `length: BOSS_DEFAULT_ROUND_LENGTH` so the session lands on exactly 10.
+  const { resolveSpellingShortcut } = await import('../src/subjects/spelling/shortcuts.js');
+  const storage = installMemoryStorage();
+  const nowRef = { value: Date.UTC(2026, 0, 10) };
+  const harness = createAppHarness({ storage, now: () => nowRef.value });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const todayDay = Math.floor(nowRef.value / DAY_MS);
+
+  u10SeedAllCoreMega(harness.repositories, learnerId, todayDay);
+  // Explicitly seed roundLength = '20' so we catch any regression where the
+  // dispatch payload silently falls back to prefs.
+  harness.services.spelling.savePrefs(learnerId, { roundLength: '20' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+
+  // Round-trip through the resolver so the test exercises the EXACT payload
+  // a keypress would produce — no hand-built length literal.
+  const appState = harness.store.getState();
+  // Stage the app state shape the resolver expects (phase/subjectUi snapshot).
+  const resolverState = {
+    route: { subjectId: 'spelling', tab: 'practice' },
+    subjectUi: { spelling: appState.subjectUi.spelling },
+  };
+  const resolved = resolveSpellingShortcut({
+    key: '5',
+    altKey: true,
+    shiftKey: false,
+    ctrlKey: false,
+    metaKey: false,
+    target: { tagName: 'DIV' },
+  }, resolverState);
+  assert.ok(resolved, 'Alt+5 resolver returned a dispatch descriptor');
+  harness.dispatch(resolved.action, resolved.data);
+
+  const session = harness.store.getState().subjectUi.spelling.session;
+  assert.ok(session, 'Boss session allocated');
+  assert.equal(session.mode, 'boss');
+  assert.equal(session.progress.total, BOSS_DEFAULT_ROUND_LENGTH,
+    'Alt+5 Boss round must be exactly BOSS_DEFAULT_ROUND_LENGTH cards, not the 12-card prefs clamp');
+  assert.equal(session.uniqueWords.length, BOSS_DEFAULT_ROUND_LENGTH,
+    'uniqueWords roster must match the Boss default length');
+});
+
+// -----------------------------------------------------------------------------
+// U10 advisory fix (low severity but bundled with the blocker fix):
+// -----------------------------------------------------------------------------
+// Text-level negative assertion for the Boss summary scene. The existing
+// selector-level guards (`data-action="spelling-drill-all"`, etc.) catch
+// the dispatch wiring, but a belt-and-braces text assertion catches accidental
+// copy leaks from legacy summary variants. "Drill all" is Guardian/legacy
+// summary copy and must NOT appear on a Boss summary.
+//
+// NOTE: The review request also asked for `doesNotMatch /data-action="spelling-start-again"/`.
+// That assertion was intentionally dropped here: SpellingSummaryScene.jsx's
+// primary "Start another round" CTA dispatches `spelling-start-again` for
+// ALL summary modes — including Boss — and that is the intended UX (the
+// Boss round is quick-start, but a learner landing on the summary should
+// be able to re-roll another Mega-safe Boss round without having to
+// navigate back to the dashboard). The session-mode prefs fork inside
+// `spelling-start` handles Boss correctly (startSession reads
+// `prefs.mode === 'boss'` → boss-start path → `submitBossAnswer`).
+// -----------------------------------------------------------------------------
+
+test('U10 advisory: Boss summary HTML contains no legacy "Drill all" copy (text-level guard)', () => {
+  const storage = installMemoryStorage();
+  const nowRef = { value: Date.UTC(2026, 0, 10) };
+  const scheduler = createManualScheduler();
+  const harness = createAppHarness({ storage, scheduler, now: () => nowRef.value });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const todayDay = Math.floor(nowRef.value / DAY_MS);
+
+  u10SeedAllCoreMega(harness.repositories, learnerId, todayDay);
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-shortcut-start', { mode: 'boss', length: BOSS_DEFAULT_ROUND_LENGTH });
+
+  // Drive enough submits to complete a full Boss round (10 cards). Miss some
+  // so the mistakes block would be rendered if the scene leaked Guardian
+  // "Drill all" copy.
+  for (let guard = 0; guard < 80; guard += 1) {
+    const ui = harness.store.getState().subjectUi.spelling;
+    if (ui.phase !== 'session') break;
+    if (ui.awaitingAdvance) {
+      scheduler.flushAll();
+      continue;
+    }
+    const answeredSoFar = Math.max(0, Number(ui.session?.progress?.done) || 0);
+    const real = ui.session.currentCard.word.word;
+    const typed = answeredSoFar < 3 ? 'definitely-wrong' : real;
+    const formData = new FormData();
+    formData.set('typed', typed);
+    harness.dispatch('spelling-submit-form', { formData });
+  }
+
+  const html = harness.render();
+  // Text-level negative: Boss summary copy must not advertise a "Drill all"
+  // Guardian/legacy flow even though drill-all/drill-single selectors are
+  // already gated elsewhere.
+  assert.doesNotMatch(html, /Drill all/i,
+    'Boss summary must not surface "Drill all" copy — it belongs to Guardian/legacy summaries.');
+});
