@@ -12,9 +12,46 @@ import {
 import { createSession } from '../worker/src/auth.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
+// wrangler.jsonc is JSONC, not JSON: it permits `//` line comments and
+// `/* ... */` block comments that the native JSON.parse rejects. We strip
+// comments here (string-aware so we do not eat `//` inside a quoted value)
+// rather than pulling in a dependency — Wrangler itself uses jsonc-parser
+// upstream, but this single test only needs to read the `vars` block.
+function stripJsonComments(source) {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+  for (let i = 0; i < source.length; i += 1) {
+    const c = source[i];
+    const n = source[i + 1];
+    if (inLineComment) {
+      if (c === '\n') { inLineComment = false; result += c; }
+      continue;
+    }
+    if (inBlockComment) {
+      if (c === '*' && n === '/') { inBlockComment = false; i += 1; }
+      continue;
+    }
+    if (inString) {
+      result += c;
+      if (escaped) { escaped = false; continue; }
+      if (c === '\\') { escaped = true; continue; }
+      if (c === '"') inString = false;
+      continue;
+    }
+    if (c === '"') { inString = true; result += c; continue; }
+    if (c === '/' && n === '/') { inLineComment = true; i += 1; continue; }
+    if (c === '/' && n === '*') { inBlockComment = true; i += 1; continue; }
+    result += c;
+  }
+  return result;
+}
+
 async function readWranglerVars() {
   const source = await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
-  return JSON.parse(source).vars || {};
+  return JSON.parse(stripJsonComments(source)).vars || {};
 }
 
 function productionServer({ punctuationEnabled = false } = {}) {
