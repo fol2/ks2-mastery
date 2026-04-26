@@ -167,6 +167,7 @@ body {
 }
 button, input, select, textarea { font: inherit; }
 a { color: inherit; }
+img { -webkit-user-drag: none; user-select: none; }
 input:focus, select:focus, textarea:focus, button:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
