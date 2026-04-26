@@ -9,7 +9,7 @@
 
 ## Overview
 
-Phase 1 (PR #202, SH-U6) shipped HSTS with `max-age=63072000; includeSubDomains` via `worker/src/security-headers.js` and the mirrored `_headers` file. The `preload` directive is deliberately absent. The charter's "HSTS `preload` deferral" note commits the preload flip to a separate PR that cites a signed `eugnel.uk` subdomain-tree audit.
+Phase 1 (PR #189, SH-U6) shipped HSTS with `max-age=63072000; includeSubDomains` via `worker/src/security-headers.js` and the mirrored `_headers` file. The `preload` directive is deliberately absent. The charter's "HSTS `preload` deferral" note commits the preload flip to a separate PR that cites a signed `eugnel.uk` subdomain-tree audit.
 
 This document is that audit skeleton. It enumerates the known subdomain surfaces, lists the `hstspreload.org` entry requirements, captures the rollback implications, records operator-gated unknowns as explicit `TBD-operator` cells, and either recommends preload submission or documents the specific reason for continued deferral.
 
@@ -115,7 +115,7 @@ Operator completes before the follow-up PR:
 - [ ] Operator has reviewed the in-scope follow-up PR that:
   - flips `HSTS_VALUE` in `worker/src/security-headers.js` to include `; preload`,
   - updates every `_headers` block to match,
-  - re-runs `npm run verify:header-drift` (or equivalent) to assert parity,
+  - asserts parity via a manual diff against the `_headers` file today; an automated `verify:header-drift` script is future work (no such npm script exists at time of writing — see `package.json`),
   - and is accompanied by an `https://hstspreload.org/` submission confirmation screenshot or ticket ID.
 
 ## Operator sign-off
