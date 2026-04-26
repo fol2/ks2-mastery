@@ -79,4 +79,72 @@ test.describe('punctuation golden path', () => {
     );
     await expect(reloadedMarker.first()).toBeVisible({ timeout: 15_000 });
   });
+
+  // SH2-U2 (R2): reload-on-summary scene. The Punctuation sanitiser
+  // (`sanitisePunctuationUiOnRehydrate` in
+  // `src/subjects/punctuation/service-contract.js`) must strip the
+  // persisted `summary` field on bootstrap so that a browser Back /
+  // Refresh on the summary screen does NOT re-render the completion
+  // surface with its "Start another round" CTA. After reload the
+  // learner must land on a clean setup-phase surface instead.
+  test('SH2-U2: reload on punctuation summary lands on clean setup phase, not summary screen', async ({ page }) => {
+    await createDemoSession(page);
+    await expect(page.locator('.subject-grid')).toBeVisible();
+    await openSubject(page, 'punctuation');
+
+    const startBtn = page.locator('[data-punctuation-start]');
+    await expect(startBtn).toBeVisible({ timeout: 15_000 });
+    await startBtn.click();
+
+    // Drive the session to summary. The deterministic path is: first
+    // active item → answer (any) → continue → if still in session,
+    // end via "Finish now".
+    await punctuationAnswer(page, {
+      typed: 'stub answer',
+      choiceIndex: 0,
+    });
+    await expect(page.locator('[data-punctuation-continue]')).toBeVisible({ timeout: 10_000 });
+    const finishNow = page.getByRole('button', { name: /Finish now/ });
+    if (await finishNow.count()) {
+      await finishNow.first().click();
+    } else {
+      await punctuationContinue(page);
+    }
+
+    // Wait for summary scene.
+    await expect(page.locator('[data-punctuation-summary]')).toBeVisible({ timeout: 15_000 });
+
+    // Reload -- this is the R2 hazard. After reload, the rehydrate
+    // sanitiser drops the persisted summary and coerces phase='summary'
+    // back to 'setup' so the UI CANNOT land on the summary completion
+    // surface.
+    await reload(page);
+
+    // Post-reload invariant: the summary surface must NOT be visible.
+    // A safe fallback is either the Punctuation setup (start button) or
+    // the home subject grid.
+    const safeMarker = page.locator(
+      '.subject-grid [data-action="open-subject"][data-subject-id="punctuation"], [data-punctuation-start]',
+    ).first();
+    await expect(safeMarker).toBeVisible({ timeout: 15_000 });
+
+    // The summary surface must NOT be visible on the rehydrated page
+    // (would indicate the summary survived through the sanitiser).
+    await expect(page.locator('[data-punctuation-summary]')).toHaveCount(0);
+
+    // adv-sh2u2-005 (zombie-phase proof): route resets to dashboard on
+    // bootstrap, so the summary surface is naturally gone. Re-open the
+    // Punctuation card -- this exercises the zombie-phase path. Without
+    // the phase coercion to 'setup', phase='summary' would still be
+    // persisted and PunctuationPracticeSurface (line 71) would mount
+    // SummaryScene with an active "Start another round" CTA. With the
+    // coercion the surface mounts the setup phase instead.
+    const onGrid = page.locator('.subject-grid [data-action="open-subject"][data-subject-id="punctuation"]');
+    if (await onGrid.count()) {
+      await onGrid.first().click();
+    }
+    await expect(page.locator('[data-punctuation-start]')).toBeVisible({ timeout: 15_000 });
+    // Summary surface MUST NOT reappear after re-opening Punctuation.
+    await expect(page.locator('[data-punctuation-summary]')).toHaveCount(0);
+  });
 });
