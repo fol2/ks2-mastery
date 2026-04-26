@@ -347,6 +347,13 @@ function DashboardKpiPanel({ model, actions }) {
   const byStatus = errorEvents.byStatus || {};
   const byOrigin = errorEvents.byOrigin || {};
   const accountOpsUpdates = kpis.accountOpsUpdates || {};
+  // U11: cron reconciliation telemetry. A warn banner fires when the
+  // last failure timestamp is newer than the last success timestamp so
+  // the operator knows automated reconciliation needs attention.
+  const cronReconcile = kpis.cronReconcile || {};
+  const cronLastSuccessAt = Number(cronReconcile.lastSuccessAt) || 0;
+  const cronLastFailureAt = Number(cronReconcile.lastFailureAt) || 0;
+  const cronFailing = cronLastFailureAt > 0 && cronLastFailureAt > cronLastSuccessAt;
 
   // P1.5 Phase A (U3): real vs demo split — each counter that can be split
   // by account type renders both sides with a neutral "Real / Demo"
@@ -393,6 +400,18 @@ function DashboardKpiPanel({ model, actions }) {
         refreshError={kpis.refreshError || null}
         onRefresh={() => actions.dispatch('admin-ops-kpi-refresh')}
       />
+      {cronFailing ? (
+        <div
+          className="callout warn small"
+          role="alert"
+          data-testid="dashboard-cron-failure-banner"
+          style={{ marginBottom: 12 }}
+        >
+          <strong>Automated reconciliation failed</strong> at {formatTimestamp(cronLastFailureAt)}.
+          {' '}Last success at {cronLastSuccessAt > 0 ? formatTimestamp(cronLastSuccessAt) : 'never'}.
+          {' '}Investigate or run <code>npm run admin:reconcile-kpis</code>.
+        </div>
+      ) : null}
       <div className="skill-list">
         {realDemoRows.map(([label, realValue, demoValue]) => renderRealDemo(label, realValue, demoValue))}
         {otherRows.map(([label, value]) => (

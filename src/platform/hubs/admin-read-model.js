@@ -88,6 +88,15 @@ function normaliseRealDemoScalar(raw) {
 // ternary whose both branches evaluated to `{}`. Removed; the practice-
 // session demo sibling is now conditional on `practiceDemo != null` only.
 
+function normaliseCronReconcile(rawValue) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  return {
+    lastSuccessAt: asTs(raw.lastSuccessAt, 0),
+    lastFailureAt: asTs(raw.lastFailureAt, 0),
+    successCount: toNonNegativeInt(raw.successCount),
+  };
+}
+
 export function normaliseDashboardKpis(rawValue) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const accounts = isPlainObject(raw.accounts) ? raw.accounts : {};
@@ -159,6 +168,10 @@ export function normaliseDashboardKpis(rawValue) {
       } : {}),
     },
     accountOpsUpdates: { total: toNonNegativeInt(accountOpsUpdates.total) },
+    // U11: cron-driven reconciliation telemetry. When `lastFailureAt`
+    // exceeds `lastSuccessAt` the dashboard renders a warn banner so
+    // operators can rerun the manual reconcile script.
+    cronReconcile: normaliseCronReconcile(raw.cronReconcile),
   };
   // Preserve the P1.5 Phase A (U1) refresh envelope siblings when the caller
   // re-normalises after a patch. They are not part of the server payload

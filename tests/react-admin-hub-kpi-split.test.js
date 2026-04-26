@@ -156,6 +156,50 @@ test('full KPI payload renders real and demo counters side by side', async () =>
   assert.match(html, /<strong>Errors: server-origin<\/strong><\/div><div>3<\/div>/);
 });
 
+test('U11 cronReconcile lastFailureAt > lastSuccessAt renders the dashboard warn banner', async () => {
+  const failingCronPayload = {
+    generatedAt: 1,
+    accounts: { total: 1, real: 1, demo: 0 },
+    learners: { total: 0, real: 0, demo: 0 },
+    demos: { active: 0 },
+    practiceSessions: { last7d: 0, last30d: 0 },
+    eventLog: { last7d: 0 },
+    mutationReceipts: { last7d: 0 },
+    errorEvents: { byStatus: { open: 0, investigating: 0, resolved: 0, ignored: 0 }, byOrigin: { client: 0, server: 0 } },
+    accountOpsUpdates: { total: 0 },
+    cronReconcile: {
+      lastSuccessAt: 1_700_000_000_000,
+      lastFailureAt: 1_700_000_100_000, // later than success
+      successCount: 3,
+    },
+  };
+  const html = await renderAdminSurface({ dashboardKpis: failingCronPayload });
+  assert.match(html, /data-testid="dashboard-cron-failure-banner"/);
+  assert.match(html, /Automated reconciliation failed/);
+  assert.match(html, /npm run admin:reconcile-kpis/);
+});
+
+test('U11 cronReconcile healthy (success ahead of failure) does NOT render the warn banner', async () => {
+  const healthyCronPayload = {
+    generatedAt: 1,
+    accounts: { total: 1, real: 1, demo: 0 },
+    learners: { total: 0, real: 0, demo: 0 },
+    demos: { active: 0 },
+    practiceSessions: { last7d: 0, last30d: 0 },
+    eventLog: { last7d: 0 },
+    mutationReceipts: { last7d: 0 },
+    errorEvents: { byStatus: { open: 0, investigating: 0, resolved: 0, ignored: 0 }, byOrigin: { client: 0, server: 0 } },
+    accountOpsUpdates: { total: 0 },
+    cronReconcile: {
+      lastSuccessAt: 1_700_000_100_000,
+      lastFailureAt: 1_700_000_000_000,
+      successCount: 3,
+    },
+  };
+  const html = await renderAdminSurface({ dashboardKpis: healthyCronPayload });
+  assert.doesNotMatch(html, /data-testid="dashboard-cron-failure-banner"/);
+});
+
 test('KPI payload with zero demos renders 0 explicitly (not the em-dash placeholder)', async () => {
   const zeroDemoPayload = {
     generatedAt: 1,

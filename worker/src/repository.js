@@ -1817,6 +1817,11 @@ function emptyDashboardKpis(generatedAt) {
       byOrigin: { client: 0, server: 0 },
     },
     accountOpsUpdates: { total: 0 },
+    cronReconcile: {
+      lastSuccessAt: 0,
+      lastFailureAt: 0,
+      successCount: 0,
+    },
   };
 }
 
@@ -2034,6 +2039,39 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
     // migration lands in remote D1.
   }
 
+  // U11: surface cron-driven reconciliation telemetry so the dashboard
+  // can warn when automated reconciliation has stalled. Metric keys live
+  // in `worker/src/index.js::runScheduledHandler`; we soft-fail if the
+  // table is missing so the hub keeps loading pre-migration.
+  let cronReconcile = {
+    lastSuccessAt: 0,
+    lastFailureAt: 0,
+    successCount: 0,
+  };
+  try {
+    const cronRows = await all(db, `
+      SELECT metric_key, metric_count, updated_at
+      FROM admin_kpi_metrics
+      WHERE metric_key IN (?, ?, ?)
+    `, [
+      'capacity.cron.reconcile.success',
+      'capacity.cron.reconcile.last_success_at',
+      'capacity.cron.reconcile.last_failure_at',
+    ]);
+    for (const row of cronRows) {
+      const key = typeof row?.metric_key === 'string' ? row.metric_key : '';
+      if (key === 'capacity.cron.reconcile.success') {
+        cronReconcile.successCount = Math.max(0, Number(row.metric_count) || 0);
+      } else if (key === 'capacity.cron.reconcile.last_success_at') {
+        cronReconcile.lastSuccessAt = Math.max(0, Number(row.metric_count) || 0);
+      } else if (key === 'capacity.cron.reconcile.last_failure_at') {
+        cronReconcile.lastFailureAt = Math.max(0, Number(row.metric_count) || 0);
+      }
+    }
+  } catch (error) {
+    if (!isMissingTableError(error, 'admin_kpi_metrics')) throw error;
+  }
+
   return {
     generatedAt: nowTs,
     accounts: {
@@ -2064,6 +2102,7 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
       byOrigin: { client: errorsClient, server: errorsServer },
     },
     accountOpsUpdates: { total: accountOpsUpdatesTotal },
+    cronReconcile,
   };
 }
 
