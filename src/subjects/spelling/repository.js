@@ -1,5 +1,10 @@
 import { cloneSerialisable, normalisePracticeSessionRecord } from '../../platform/core/repositories/helpers.js';
-import { normaliseGuardianMap, normalisePatternMap, normalisePostMegaRecord } from './service-contract.js';
+import {
+  normaliseDurablePersistenceWarning,
+  normaliseGuardianMap,
+  normalisePatternMap,
+  normalisePostMegaRecord,
+} from './service-contract.js';
 
 const SUBJECT_ID = 'spelling';
 const PREF_STORAGE_PREFIX = 'ks2-platform-v2.spelling-prefs.';
@@ -11,6 +16,13 @@ const POST_MEGA_STORAGE_PREFIX = 'ks2-spell-post-mega-';
 // P2 U11: Pattern Quest wobble sibling. Mirrors PATTERN_KEY_PREFIX in
 // shared/spelling/service.js — must stay byte-identical with that constant.
 const PATTERN_STORAGE_PREFIX = 'ks2-spell-pattern-';
+// P2 U9: durable persistence-warning sibling. Mirrors PERSISTENCE_WARNING_KEY_PREFIX
+// in shared/spelling/service.js — must stay byte-identical. The prefix
+// intentionally differs from the shorter `ks2-spell-` family used by the other
+// four siblings (prefs / progress / guardian / post-mega); we pick
+// `ks2-spell-persistence-warning-` so the `parseStorageKey` startsWith dispatch
+// cannot collide with `ks2-spell-progress-` or `ks2-spell-post-mega-`.
+const PERSISTENCE_WARNING_STORAGE_PREFIX = 'ks2-spell-persistence-warning-';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function todayDayForNow(now) {
@@ -48,6 +60,11 @@ function patternKey(learnerId) {
   return `${PATTERN_STORAGE_PREFIX}${learnerId || 'default'}`;
 }
 
+// P2 U9: durable persistence-warning sibling key.
+function persistenceWarningKey(learnerId) {
+  return `${PERSISTENCE_WARNING_STORAGE_PREFIX}${learnerId || 'default'}`;
+}
+
 function parseStorageKey(key) {
   if (typeof key !== 'string') return null;
   if (key.startsWith(PREF_STORAGE_PREFIX)) {
@@ -55,6 +72,12 @@ function parseStorageKey(key) {
   }
   if (key.startsWith(GUARDIAN_STORAGE_PREFIX)) {
     return { type: 'guardian', learnerId: key.slice(GUARDIAN_STORAGE_PREFIX.length) || 'default' };
+  }
+  // P2 U9: persistence-warning is checked before post-mega and progress
+  // because `ks2-spell-persistence-warning-` shares `ks2-spell-p` with both.
+  // The longer, unique second-segment keeps the prefixes disambiguated.
+  if (key.startsWith(PERSISTENCE_WARNING_STORAGE_PREFIX)) {
+    return { type: 'persistenceWarning', learnerId: key.slice(PERSISTENCE_WARNING_STORAGE_PREFIX.length) || 'default' };
   }
   // P2 U2: order matters — POST_MEGA_STORAGE_PREFIX must be checked BEFORE
   // PROGRESS_STORAGE_PREFIX because `ks2-spell-post-mega-` starts with
@@ -114,6 +137,13 @@ export function normaliseSpellingSubjectData(rawValue, todayDay = 0) {
   // bundle shape (no `pattern` key at all).
   const pattern = normalisePatternMap(raw.pattern);
   if (pattern && Object.keys(pattern.wobbling).length > 0) output.pattern = pattern;
+  // P2 U9: `persistenceWarning` is a durable sibling that survives tab close.
+  // It is written whenever a `saveJson` throws a `PersistenceSetItemError`
+  // and cleared on learner acknowledgement. Storage format:
+  // `data.persistenceWarning = { reason, occurredAt, acknowledged }`. Attach
+  // only when non-null so pre-failure bundles stay compact.
+  const persistenceWarning = normaliseDurablePersistenceWarning(raw.persistenceWarning);
+  if (persistenceWarning) output.persistenceWarning = persistenceWarning;
   return output;
 }
 
@@ -226,6 +256,12 @@ export function createSpellingPersistence({ repositories, now } = {}) {
       // the service reader can treat a missing record identically to an
       // empty record.
       if (parsed.type === 'pattern') return JSON.stringify(data.pattern || { wobbling: {} });
+      // P2 U9: persistenceWarning is null for learners who have never seen
+      // a save failure; the null-vs-object distinction matters so the
+      // service can use a missing record as the "no active warning" marker.
+      if (parsed.type === 'persistenceWarning') {
+        return data.persistenceWarning ? JSON.stringify(data.persistenceWarning) : 'null';
+      }
       return null;
     },
     setItem(key, value) {
@@ -280,6 +316,17 @@ export function createSpellingPersistence({ repositories, now } = {}) {
           pattern: parseStoredJson(value, { wobbling: {} }),
         }, day);
       }
+      if (parsed.type === 'persistenceWarning') {
+        // P2 U9: unlike `postMega`, the persistence-warning record IS
+        // overwrite-ful. A subsequent failure overwrites `reason` +
+        // `occurredAt` and resets `acknowledged: false`; an acknowledge
+        // dispatcher overwrites with `acknowledged: true`. We persist the
+        // parsed payload directly so the callers (service) own the shape.
+        writeSpellingData(repositories, parsed.learnerId, {
+          ...current,
+          persistenceWarning: parseStoredJson(value, null),
+        }, day);
+      }
       const afterError = readPersistenceError();
       if (errorSignatureChanged(beforeError, afterError)) {
         const message = afterError?.message || 'storage-setItem-failed';
@@ -310,6 +357,15 @@ export function createSpellingPersistence({ repositories, now } = {}) {
       if (parsed.type === 'pattern') {
         writeSpellingData(repositories, parsed.learnerId, { ...current, pattern: { wobbling: {} } }, day);
       }
+      // P2 U9: persistenceWarning can be removed via `resetLearner` (below)
+      // which clears the whole bundle. A direct removeItem on this key is
+      // also honoured — strip the sibling from the normalised bundle. No
+      // sticky-lock constraint applies (the record is overwritable anyway).
+      if (parsed.type === 'persistenceWarning') {
+        const next = { ...current };
+        delete next.persistenceWarning;
+        writeSpellingData(repositories, parsed.learnerId, next, day);
+      }
       // P2 U2: postMega cannot be removed through this path — sticky is
       // permanent by contract. `resetLearner` (below) is the only surface
       // that clears postMega, and it goes through writeSpellingData with an
@@ -324,6 +380,7 @@ export function createSpellingPersistence({ repositories, now } = {}) {
     guardianKey,
     postMegaKey,
     patternKey,
+    persistenceWarningKey,
     // U8 review fix: expose the platform persistence channel's `lastError`
     // signal so the spelling service can detect legacy-engine's silent-
     // swallow on Smart Review / SATs submits. Legacy-engine's

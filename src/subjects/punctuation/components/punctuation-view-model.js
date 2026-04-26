@@ -125,6 +125,22 @@ export function composeIsDisabled(ui) {
     || availabilityStatus === 'unavailable';
 }
 
+// Navigation controls (Summary Back to dashboard, Map top-bar Back, Skill
+// Detail modal close) must remain reachable under every mutation-side signal
+// that `composeIsDisabled` trips on. Trapping a child on a Summary /Map /
+// modal scene when `pendingCommand` hangs or availability flips is the exact
+// Phase 4 U6 failure mode this helper fixes (plan R7 / AE7). The only
+// structural guard is the null-`ui` fail-closed: if the UI shape is missing
+// entirely there is nothing to dispatch from, so the button renders disabled
+// rather than emitting an attention-free "enabled" affordance. Every call
+// site is the paired Back / close button on the Summary, Map, and Skill
+// Detail Modal surfaces — mutation buttons on the same scenes continue to
+// use `composeIsDisabled` unchanged.
+export function composeIsNavigationDisabled(ui) {
+  if (ui === null || ui === undefined) return true;
+  return false;
+}
+
 // --- Primary mode cards (Setup scene) --------------------------------------
 
 // The dashboard's three primary journey cards. `smart` sits first as the
@@ -224,6 +240,42 @@ const PUNCTUATION_ACTIVE_ROSTER_SOURCE = Object.freeze(
 );
 
 export const ACTIVE_PUNCTUATION_MONSTER_IDS = Object.freeze(PUNCTUATION_ACTIVE_ROSTER_SOURCE);
+
+// Phase 4 U5 review follow-on (FINDING F — maintainability MEDIUM): shared
+// Set over `ACTIVE_PUNCTUATION_MONSTER_IDS` for O(1) membership checks from
+// any consumer that needs to filter payloads against the active roster.
+// Previously the Summary scene kept a scene-local duplicate
+// (`ACTIVE_MONSTER_ID_SET`) which drifted from this view-model export whenever
+// the roster changed. Exporting here means U9's Worker-side telemetry
+// filters, U2's Home companion filter, and any future non-React consumer can
+// all read the same frozen value.
+export const ACTIVE_PUNCTUATION_MONSTER_ID_SET = new Set(ACTIVE_PUNCTUATION_MONSTER_IDS);
+
+// Phase 4 U5 review follow-on (FINDING F): detect an "advancing" stage delta
+// for the monster-progress teaser + `monster-progress-changed` telemetry.
+// Returns `{monsterId, stageFrom, stageTo}` only when:
+//   - `summary.monsterProgress` is a plain object with a string `monsterId`,
+//   - `monsterId` is on the active roster (reserved monsters Colisk /
+//     Hyphang / Carillon are filtered out here, not in the Worker producer —
+//     keeps the single active-roster source of truth on the client),
+//   - both `stageFrom` and `stageTo` are finite numbers,
+//   - `stageTo > stageFrom` (a zero-delta or regression is a no-op —
+//     teasers celebrate an advance, never a standstill).
+// Returns `null` in every other shape. Moved from `PunctuationSummaryScene.jsx`
+// so U9 Worker-side or any non-React consumer (Codex render, future parent
+// hub summary email) can share the same filter without a scene import.
+export function extractPunctuationMonsterProgress(summary) {
+  if (!summary || typeof summary !== 'object' || Array.isArray(summary)) return null;
+  const raw = summary.monsterProgress;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const monsterId = typeof raw.monsterId === 'string' ? raw.monsterId : '';
+  if (!monsterId || !ACTIVE_PUNCTUATION_MONSTER_ID_SET.has(monsterId)) return null;
+  const stageFrom = Number(raw.stageFrom);
+  const stageTo = Number(raw.stageTo);
+  if (!Number.isFinite(stageFrom) || !Number.isFinite(stageTo)) return null;
+  if (stageTo <= stageFrom) return null;
+  return { monsterId, stageFrom, stageTo };
+}
 
 // Child-facing display names for the active Punctuation monsters. Reserved
 // monsters are intentionally absent. Falls back to titlecase of the id for

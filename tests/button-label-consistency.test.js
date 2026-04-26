@@ -372,6 +372,10 @@ test('button labels: every statically extractable label is classified', () => {
     'Hide',
     'Save',
     'Save + next',
+    // P1.5 Phase C (U9): 409 conflict banner resolution buttons on the
+    // account-ops-metadata row.
+    'Keep mine',
+    'Use theirs',
     'Start Guardian mission',
     'Start the drill',
     'Back to Codex',
@@ -434,6 +438,19 @@ test('button labels: every statically extractable label is classified', () => {
     'Refresh',
     'Retry refresh',
     'Save learner profile',
+    // SH2-U3 DemoExpiryBanner: bespoke, S-04-compliant CTAs for the
+    // demo-expired UX branch. Both labels are intentional — "Sign in"
+    // sends the learner back to the generic AuthSurface and "Start new
+    // demo" posts to /demo. See src/surfaces/auth/DemoExpiryBanner.jsx.
+    'Sign in',
+    'Start new demo',
+    // SH2-U3 review TEST-BLOCKER-2 / TEST-BLOCKER-3: bespoke CTAs for
+    // the 403 friendly card and the 500 transient-error banner.
+    // "Return home" escapes the 403 without leaking which feature is
+    // restricted; "Try again" is the retry affordance on the transient
+    // banner. See src/surfaces/auth/AuthSurface.jsx.
+    'Return home',
+    'Try again',
   ]);
   // Additional unknowns: dump and fail with the full list so U12+ can
   // decide which to promote and which to allowlist. Do NOT add to

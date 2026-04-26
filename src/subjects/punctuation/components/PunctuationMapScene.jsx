@@ -50,6 +50,7 @@ import {
   bellstormSceneForPhase,
   buildPunctuationMapModel,
   composeIsDisabled,
+  composeIsNavigationDisabled,
   punctuationChildStatusLabel,
   punctuationChildUnknownHelperCopy,
   punctuationMonsterDisplayName,
@@ -250,7 +251,13 @@ function MonsterGroup({ monster, statusFilter, disabled, actions }) {
 
 export function PunctuationMapScene({ ui, actions }) {
   const scene = bellstormSceneForPhase('map');
+  // Phase 4 U6: `disabled` governs mutation controls (filter chips, Practise
+  // this). `navigationDisabled` governs the top-bar Back affordance so a
+  // stalled command / degraded availability never traps the child on the
+  // Map scene (plan R7). Mutation-vs-navigation divergence mirrors
+  // `PunctuationSummaryScene` (canonical example).
   const disabled = composeIsDisabled(ui);
+  const navigationDisabled = composeIsNavigationDisabled(ui);
   const mapUi = normalisePunctuationMapUi(ui?.mapUi);
   const rewardState = ui && typeof ui === 'object' && !Array.isArray(ui) && ui.rewardState
     && typeof ui.rewardState === 'object' && !Array.isArray(ui.rewardState)
@@ -317,7 +324,8 @@ export function PunctuationMapScene({ ui, actions }) {
         <button
           type="button"
           className="btn ghost sm"
-          disabled={disabled}
+          disabled={navigationDisabled}
+          aria-disabled={navigationDisabled ? 'true' : 'false'}
           data-action="punctuation-close-map"
           onClick={() => actions.dispatch('punctuation-close-map')}
         >

@@ -71,6 +71,9 @@ export function SpellingPracticeSurface(props) {
     // never renders; admin / ops adults see it and can jump into the admin
     // hub diagnostic panel.
     session = null,
+    // SH2-U4 (sys-hardening p2): TTS port from routeContext, forwarded to
+    // the session scene for its status-channel subscription.
+    tts = null,
   } = props;
   const platformRole = typeof session?.platformRole === 'string' ? session.platformRole : '';
   const spelling = buildSpellingContext({ appState, service, repositories, subject });
@@ -150,6 +153,7 @@ export function SpellingPracticeSurface(props) {
         service={service}
         actions={actions}
         runtimeReadOnly={runtimeReadOnly}
+        tts={tts}
       />
     );
   }

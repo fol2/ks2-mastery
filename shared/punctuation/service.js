@@ -926,6 +926,126 @@ function gpsRecommendedMode(responses = []) {
   };
 }
 
+// Phase 4 U5 review follow-on (FINDING A — scaffold-without-producer):
+// `skillsExercised` is the dedup-flat set of skillIds the learner touched
+// across every item surfaced this round. Derived from `session.recentItemIds`
+// via `indexes.itemById` so the producer reads the same source of truth as
+// `sessionFocus()` (which narrows to the wobbly subset). Empty when the
+// session has no recent items (e.g. an end-without-any-answer). Pre-fix, the
+// field was absent and the normaliser coerced it to `[]`, so `SkillsExercisedRow`
+// never rendered in production — three of U5's four marquee features were
+// dead UX (adversarial + correctness + testing converged finding).
+function sessionSkillsExercised(session = {}, indexes = PUNCTUATION_CONTENT_INDEXES) {
+  const recent = Array.isArray(session.recentItemIds) ? session.recentItemIds : [];
+  if (!recent.length) return [];
+  const seen = new Set();
+  const ordered = [];
+  for (const itemId of recent) {
+    const item = indexes.itemById.get(itemId);
+    if (!item) continue;
+    const skillIds = Array.isArray(item.skillIds) ? item.skillIds : [];
+    for (const skillId of skillIds) {
+      if (typeof skillId !== 'string' || !skillId || seen.has(skillId)) continue;
+      seen.add(skillId);
+      ordered.push(skillId);
+    }
+  }
+  return ordered;
+}
+
+// Phase 4 U5 review follow-on (FINDING A): reproduce the bucketed stage
+// function from `src/platform/game/mastery/punctuation.js:punctuationStageFor`
+// here as a tiny pure helper so the Worker-bundled service does NOT depend on
+// platform/game imports. The 0/1/2/3/4 bucket definition is the visible
+// contract every summary monster-progress teaser + every monster strip on
+// every subject surface reads — keeping it in lock-step is a parity
+// invariant, so the two definitions MUST stay identical. Any change must
+// land in both places simultaneously (drift test: a future dedicated parity
+// test belongs in `tests/punctuation-legacy-parity.test.js` scope; not added
+// here to avoid touching the oracle).
+function punctuationSessionSummaryStage(mastered, total) {
+  const denominator = Math.max(1, Number(total) || 1);
+  const ratio = Math.max(0, Math.min(1, (Number(mastered) || 0) / denominator));
+  if (ratio >= 1) return 4;
+  if (ratio >= 2 / 3) return 3;
+  if (ratio >= 1 / 3) return 2;
+  if (ratio > 0) return 1;
+  return 0;
+}
+
+// Phase 4 U5 review follow-on (FINDING A): derive a single stage delta for
+// the monster-progress teaser from the session's `securedUnits` (just-added
+// this round) + `data.progress.rewardUnits` (total after). Reconstructs the
+// before-round mastered count per monster and compares stages. Returns the
+// first advancing active-monster delta in roster order (never the grand
+// monster `quoral`, which aggregates and would double-up with a direct
+// monster advance — the scene's `extractMonsterProgress` filter would reject
+// reserved ids anyway; excluding `quoral` here keeps the scalar signal
+// monster-specific). Returns null when no active monster advanced — the
+// scene then renders no teaser and emits no telemetry, same as today's
+// fallback (fixture-only) path. Does NOT touch engine files (scheduler,
+// marking, generators, content): reads the already-tracked `session.securedUnits`
+// + `data.progress.rewardUnits` and consults `indexes.rewardUnitByKey` +
+// `indexes.clusterById` — indexes already built at service-init time.
+const PUNCTUATION_ACTIVE_MONSTER_ROSTER = Object.freeze(['pealark', 'claspin', 'curlune', 'quoral']);
+const PUNCTUATION_GRAND_ROSTER_MONSTER_ID = 'quoral';
+
+function monsterProgressForSession(session = {}, data = {}, indexes = PUNCTUATION_CONTENT_INDEXES) {
+  const securedThisRound = normaliseStringArray(session?.securedUnits);
+  if (!securedThisRound.length) return null;
+  const progressRewardUnits = (data && data.progress && isPlainObject(data.progress.rewardUnits))
+    ? data.progress.rewardUnits
+    : {};
+  const afterKeys = Object.keys(progressRewardUnits);
+  if (!afterKeys.length) return null;
+  const securedSet = new Set(securedThisRound);
+
+  // Published-reward-unit total per active monster (denominator). We only
+  // count published units on the active roster; the grand monster is
+  // excluded because it aggregates across all monsters and reporting an
+  // advance there would duplicate the direct monster signal.
+  const publishedPerMonster = new Map();
+  for (const unit of indexes.publishedRewardUnits || []) {
+    const cluster = indexes.clusterById.get(unit.clusterId);
+    const monsterId = cluster && typeof cluster.monsterId === 'string' ? cluster.monsterId : '';
+    if (!monsterId || monsterId === PUNCTUATION_GRAND_ROSTER_MONSTER_ID) continue;
+    publishedPerMonster.set(monsterId, (publishedPerMonster.get(monsterId) || 0) + 1);
+  }
+
+  // Count secured reward units per monster, before and after this round.
+  const afterPerMonster = new Map();
+  const beforePerMonster = new Map();
+  for (const masteryKey of afterKeys) {
+    const unit = indexes.rewardUnitByKey.get(masteryKey);
+    if (!unit) continue;
+    const cluster = indexes.clusterById.get(unit.clusterId);
+    const monsterId = cluster && typeof cluster.monsterId === 'string' ? cluster.monsterId : '';
+    if (!monsterId || monsterId === PUNCTUATION_GRAND_ROSTER_MONSTER_ID) continue;
+    afterPerMonster.set(monsterId, (afterPerMonster.get(monsterId) || 0) + 1);
+    if (!securedSet.has(masteryKey)) {
+      beforePerMonster.set(monsterId, (beforePerMonster.get(monsterId) || 0) + 1);
+    }
+  }
+
+  // First advancing active monster in roster order. Roster order is
+  // deterministic so multi-monster rounds (rare — a 4-item round would
+  // need to secure reward units spanning two monsters) report the same
+  // monster every time, making test fixtures and Admin replay stable.
+  for (const monsterId of PUNCTUATION_ACTIVE_MONSTER_ROSTER) {
+    if (monsterId === PUNCTUATION_GRAND_ROSTER_MONSTER_ID) continue;
+    const after = afterPerMonster.get(monsterId) || 0;
+    const before = beforePerMonster.get(monsterId) || 0;
+    if (after <= before) continue;
+    const publishedTotal = publishedPerMonster.get(monsterId) || 0;
+    const stageTo = punctuationSessionSummaryStage(after, publishedTotal);
+    const stageFrom = punctuationSessionSummaryStage(before, publishedTotal);
+    if (stageTo > stageFrom) {
+      return { monsterId, stageFrom, stageTo };
+    }
+  }
+  return null;
+}
+
 function sessionSummary(session, data, indexes, now = Date.now) {
   const total = Number(session?.answeredCount) || 0;
   const correct = Number(session?.correctCount) || 0;
@@ -938,6 +1058,14 @@ function sessionSummary(session, data, indexes, now = Date.now) {
     sessionId: session?.id || null,
     completedAt: timestamp(now),
     focus: sessionFocus(session, indexes),
+    // Phase 4 U5 review follow-on (FINDING A): wire producer so the Summary
+    // scene's SkillsExercisedRow + MonsterProgressTeaser + `monster-
+    // progress-changed` emit fire in production. Prior to this fix, these
+    // fields were absent from the payload and the normaliser's default
+    // coercion to `[]` / `null` meant three U5 marquee features were dead
+    // UX outside of tests that hand-seeded `extraSummary`.
+    skillsExercised: sessionSkillsExercised(session, indexes),
+    monsterProgress: monsterProgressForSession(session, data, indexes),
     securedUnits: normaliseStringArray(session?.securedUnits),
     misconceptionTags: normaliseStringArray(session?.misconceptionTags),
     publishedScope: PUNCTUATION_CONTENT_MANIFEST.publishedScopeCopy,

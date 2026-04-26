@@ -478,20 +478,44 @@ export const grammarModule = {
     if (action === 'grammar-focus-concept') {
       // Dispatched from bank concept cards + detail modal. Routes into a
       // focused practice round by mirroring the existing `grammar-set-focus`
-      // + `grammar-start` combination (with a `learn` mode fallback so
-      // `grammarModeUsesFocus` picks up the focusConceptId on start). The
-      // `pendingCommand` guard prevents double-tap races.
+      // + `grammar-start` combination. The `pendingCommand` guard prevents
+      // double-tap races.
       if (ui.pendingCommand) return true;
       const conceptId = String(context.data?.conceptId || context.data?.value || '').slice(0, 64);
       if (!conceptId) return true;
 
-      // Persist the focus preference; fall back to `learn` mode so the start
-      // payload carries the focusConceptId (smart / mini-set modes drop
-      // focus via `grammarModeUsesFocus`). The bank UI slice is cleared so
-      // reopening the bank does not re-apply stale filter state from the
-      // previous visit.
+      // U5 Phase 4: Grammar Bank focus dispatch is allowlisted to Smart +
+      // Learn only (`GRAMMAR_FOCUS_ALLOWED_MODES`). James's 2026-04-26
+      // decision: "No focused UI action silently becomes mixed practice."
+      //
+      // When the learner's current mode is Surgery, Builder, or Trouble
+      // (the three modes where `grammarModeUsesFocus` returns false —
+      // Worker's `NO_SESSION_FOCUS_MODES` drops focus for surgery/builder
+      // and `NO_STORED_FOCUS_MODES` drops it for trouble too) we silently
+      // override to `smart` so Practise 5 preserves the learner's intent:
+      // focused concept practice always lands in Smart Practice. The
+      // override is silent (no toast) because the dashboard already
+      // surfaces the "Mixed practice" label on the Surgery/Builder mode
+      // cards so the expectation of focus-carry is never set. The Worker's
+      // `NO_SESSION_FOCUS_MODES` + `NO_STORED_FOCUS_MODES` remain as the
+      // belt-and-braces safety net.
+      //
+      // Worked Examples and Faded Guidance are focus-using modes on Worker
+      // (`grammarModeUsesFocus` returns true) but not in the stricter
+      // client allowlist (`GRAMMAR_FOCUS_ALLOWED_MODES = {smart, learn}`).
+      // We preserve them here so a focused round still runs in the
+      // learner's preferred scaffold surface — they are not the "mixed
+      // practice" targets this unit guards against.
+      //
+      // Accepting a `mode` override in `context.data` lets callers (e.g.
+      // tests, future scene dispatches) request a specific target; the
+      // check runs against that requested mode so no caller can sneak
+      // Surgery/Builder in without being overridden to Smart.
       const existingMode = ui.prefs?.mode || DEFAULT_GRAMMAR_PREFS.mode;
-      const targetMode = grammarModeUsesFocus(existingMode) ? existingMode : 'learn';
+      const requestedMode = typeof context.data?.mode === 'string' && context.data.mode
+        ? context.data.mode
+        : existingMode;
+      const targetMode = grammarModeUsesFocus(requestedMode) ? requestedMode : 'smart';
       const prefsPatch = { mode: targetMode, focusConceptId: conceptId };
       const payload = {
         mode: targetMode,
