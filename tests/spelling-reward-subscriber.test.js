@@ -16,6 +16,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import './helpers/seed-spelling-events-default.js';
+
 import {
   SPELLING_EVENT_TYPES,
   createSpellingBossCompletedEvent,

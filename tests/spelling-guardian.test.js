@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import './helpers/seed-spelling-events-default.js';
+
 import {
   GUARDIAN_INTERVALS,
   GUARDIAN_MAX_REVIEW_LEVEL,
