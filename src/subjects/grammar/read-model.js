@@ -1,4 +1,8 @@
-import { grammarConceptStatus } from '../../../shared/grammar/confidence.js';
+import {
+  deriveGrammarConfidence,
+  GRAMMAR_RECENT_ATTEMPT_HORIZON,
+  grammarConceptStatus,
+} from '../../../shared/grammar/confidence.js';
 import { GRAMMAR_CLIENT_CONCEPTS } from './metadata.js';
 
 const QUESTION_TYPE_LABELS = Object.freeze({
@@ -84,12 +88,76 @@ function sortTop(entries, scoreFn, limit = 3) {
     .slice(0, limit);
 }
 
-function normaliseConceptRow(rawValue, concept, nowTs) {
+// Phase 4 U7: recent-window helpers mirror the Worker read-model
+// (`worker/src/subjects/grammar/read-models.js` recentMissCountForConcept +
+// distinctTemplatesFor). Aligned to GRAMMAR_RECENT_ATTEMPT_HORIZON so
+// `distinctTemplates` and `recentMisses` are directly comparable "recent"
+// signals — same contract as Worker.
+function recentAttemptsWindow(recentAttempts) {
+  return Array.isArray(recentAttempts)
+    ? recentAttempts.slice(-GRAMMAR_RECENT_ATTEMPT_HORIZON)
+    : [];
+}
+
+function recentMissCountForConceptId(recentAttempts, conceptId) {
+  if (!conceptId) return 0;
+  let count = 0;
+  for (const attempt of recentAttemptsWindow(recentAttempts)) {
+    const conceptIds = Array.isArray(attempt?.conceptIds) ? attempt.conceptIds : [];
+    const result = isPlainObject(attempt?.result) ? attempt.result : {};
+    if (conceptIds.includes(conceptId) && result.correct === false) count += 1;
+  }
+  return count;
+}
+
+function distinctTemplatesForConceptId(recentAttempts, conceptId) {
+  if (!conceptId) return 0;
+  const seen = new Set();
+  for (const attempt of recentAttemptsWindow(recentAttempts)) {
+    const conceptIds = Array.isArray(attempt?.conceptIds) ? attempt.conceptIds : [];
+    if (conceptIds.includes(conceptId) && typeof attempt?.templateId === 'string' && attempt.templateId) {
+      seen.add(attempt.templateId);
+    }
+  }
+  return seen.size;
+}
+
+function confidenceForConcept({
+  conceptId, status, attempts, strength, correctStreak, intervalDays, recentAttempts,
+}) {
+  const recentMisses = recentMissCountForConceptId(recentAttempts, conceptId);
+  const distinctTemplates = distinctTemplatesForConceptId(recentAttempts, conceptId);
+  const label = deriveGrammarConfidence({
+    status, attempts, strength, correctStreak, intervalDays, recentMisses,
+  });
+  return {
+    label,
+    sampleSize: attempts,
+    intervalDays,
+    distinctTemplates,
+    recentMisses,
+  };
+}
+
+function normaliseConceptRow(rawValue, concept, nowTs, recentAttempts = []) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const node = normaliseMasteryNode(raw);
   const status = VALID_CONCEPT_STATUSES.has(raw.status)
     ? raw.status
     : grammarConceptStatus(node, nowTs);
+  // Phase 4 U7: client read-model now emits per-concept `confidence` via the
+  // shared `deriveGrammarConfidence`. Parent Hub + Admin Hub read this field
+  // (they receive the client read-model, NOT the Worker payload). Without
+  // this extension adult hubs have no access to the confidence projection.
+  const confidence = confidenceForConcept({
+    conceptId: concept.id,
+    status,
+    attempts: node.attempts,
+    strength: node.strength,
+    correctStreak: node.correctStreak,
+    intervalDays: node.intervalDays,
+    recentAttempts,
+  });
   return {
     ...concept,
     subjectId: 'grammar',
@@ -103,6 +171,8 @@ function normaliseConceptRow(rawValue, concept, nowTs) {
     lastSeenAt: node.lastSeenAt,
     lastWrongAt: node.lastWrongAt,
     correctStreak: node.correctStreak,
+    intervalDays: node.intervalDays,
+    confidence,
   };
 }
 
@@ -113,18 +183,19 @@ function analyticsFromStateOrUi(state, ui) {
 }
 
 function conceptRowsFromState(state, nowTs, ui = null) {
+  const recentAttempts = Array.isArray(state?.recentAttempts) ? state.recentAttempts : [];
   const mastery = isPlainObject(state?.mastery?.concepts) ? state.mastery.concepts : null;
   if (mastery) {
-    return GRAMMAR_CLIENT_CONCEPTS.map((concept) => normaliseConceptRow(mastery[concept.id], concept, nowTs));
+    return GRAMMAR_CLIENT_CONCEPTS.map((concept) => normaliseConceptRow(mastery[concept.id], concept, nowTs, recentAttempts));
   }
   const analytics = analyticsFromStateOrUi(state, ui);
   if (Array.isArray(analytics.concepts) && analytics.concepts.length) {
     const rowsById = new Map(analytics.concepts
       .filter((entry) => typeof entry?.id === 'string')
       .map((entry) => [entry.id, entry]));
-    return GRAMMAR_CLIENT_CONCEPTS.map((concept) => normaliseConceptRow(rowsById.get(concept.id), concept, nowTs));
+    return GRAMMAR_CLIENT_CONCEPTS.map((concept) => normaliseConceptRow(rowsById.get(concept.id), concept, nowTs, recentAttempts));
   }
-  return GRAMMAR_CLIENT_CONCEPTS.map((concept) => normaliseConceptRow(null, concept, nowTs));
+  return GRAMMAR_CLIENT_CONCEPTS.map((concept) => normaliseConceptRow(null, concept, nowTs, recentAttempts));
 }
 
 function progressSnapshotFromConcepts(concepts) {

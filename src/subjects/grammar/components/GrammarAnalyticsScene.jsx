@@ -1,5 +1,5 @@
 import React from 'react';
-import { isGrammarConfidenceLabel } from '../../../../shared/grammar/confidence.js';
+import { AdultConfidenceChip, adultConfidenceFromRow } from './AdultConfidenceChip.jsx';
 import { progressForGrammarMonster } from '../../../platform/game/monster-system.js';
 import { monsterAsset, monsterAssetSrcSet } from '../../../platform/game/monsters.js';
 import {
@@ -85,42 +85,11 @@ function ParentSummaryDraft({ enrichment }) {
   );
 }
 
-// Phase 3 U7: confidence chips surface the Worker's internal 5-label taxonomy
-// (emerging / building / needs-repair / consolidating / secure) plus the
-// sample size. Adult copy only — child surfaces keep the friendly mapping in
-// `grammar-view-model.js`. Accepts either Worker's new `confidence: {label,
-// sampleSize}` shape or the older flat `confidenceLabel` that some fixtures
-// still seed; falls back to `status` if neither is present so the chip always
-// renders something diagnostic.
-//
-// The set of valid labels comes from `shared/grammar/confidence.js`
-// (U8) — this component only validates, never redefines.
-function adultConfidenceFromRow(row) {
-  if (!row || typeof row !== 'object') return null;
-  const confidence = isPlainObject(row.confidence) ? row.confidence : null;
-  const rawLabel = (typeof confidence?.label === 'string' && confidence.label)
-    || (typeof row.confidenceLabel === 'string' && row.confidenceLabel)
-    || '';
-  const label = isGrammarConfidenceLabel(rawLabel) ? rawLabel : '';
-  const rawSample = confidence?.sampleSize ?? row.attempts;
-  const sampleSize = Number.isFinite(Number(rawSample)) ? Number(rawSample) : 0;
-  if (!label && sampleSize <= 0) return null;
-  return { label: label || 'emerging', sampleSize };
-}
-
-function AdultConfidenceChip({ row }) {
-  const confidence = adultConfidenceFromRow(row);
-  if (!confidence) return null;
-  const suffix = confidence.sampleSize === 1 ? 'attempt' : 'attempts';
-  return (
-    <span
-      className={`grammar-adult-confidence ${confidence.label}`}
-      data-confidence-label={confidence.label}
-      data-sample-size={confidence.sampleSize}
-    >
-      {confidence.label} &middot; {confidence.sampleSize} {suffix}
-    </span>
-  );
+// Phase 3 U7: the adult confidence chip now lives in its own module at
+// `./AdultConfidenceChip.jsx` so Parent Hub + Admin Hub can import it too.
+// Scene-local helper keeps the existing evidence-row call sites unchanged.
+function SceneConfidenceChip({ row }) {
+  return <AdultConfidenceChip confidence={adultConfidenceFromRow(row)} />;
 }
 
 export function GrammarAnalyticsScene({
@@ -237,7 +206,7 @@ export function GrammarAnalyticsScene({
                     data-concept-id={concept.id}
                   >
                     <span className="grammar-mini-concept-name">{concept.name}</span>
-                    <AdultConfidenceChip row={concept} />
+                    <SceneConfidenceChip row={concept} />
                   </span>
                 ))}
               </div>
@@ -296,7 +265,7 @@ export function GrammarAnalyticsScene({
                 <li key={entry.id} data-question-type-id={entry.id}>
                   <strong>{entry.label}</strong>
                   <span>{entry.correct || 0}/{entry.attempts || 0} correct &middot; {entry.status || 'learning'}</span>
-                  <AdultConfidenceChip row={entry} />
+                  <SceneConfidenceChip row={entry} />
                 </li>
               ))}
             </ol>

@@ -3,6 +3,7 @@ import { AdultLearnerSelect } from './AdultLearnerSelect.jsx';
 import { ReadOnlyLearnerNotice } from './ReadOnlyLearnerNotice.jsx';
 import { AccessDeniedCard, formatTimestamp, isBlocked, selectedWritableLearner } from './hub-utils.js';
 import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
+import { AdultConfidenceChip } from '../../subjects/grammar/components/AdultConfidenceChip.jsx';
 
 function snapshotSubjectId(snapshot = {}) {
   if (snapshot.subjectId) return snapshot.subjectId;
@@ -277,6 +278,47 @@ function GrammarActivityEvidence({ evidence }) {
   );
 }
 
+// Phase 4 U7: "Grammar concepts" — per-concept confidence chips grid. The
+// client `buildGrammarLearnerReadModel` surfaces a `confidence` projection
+// on every row in `conceptStatus`; that is the single source the chips read
+// from. Parents see the headline label + sample context + recent-miss count;
+// `intervalDays` and `distinctTemplates` are reserved for the Admin Hub
+// surface (`showAdminExtras`) and are not rendered here.
+function GrammarConceptConfidenceGrid({ evidence, showAdminExtras = false }) {
+  const rows = Array.isArray(evidence?.conceptStatus) ? evidence.conceptStatus : [];
+  return (
+    <article className="card parent-hub-card parent-hub-grammar-concepts">
+      <div className="parent-hub-card-head">
+        <p className="eyebrow">Concept confidence</p>
+        <h3 className="parent-hub-card-title">Grammar concepts</h3>
+        <p className="parent-hub-card-lede small muted">
+          Adult-facing confidence label plus sample size for every tracked Grammar concept. Sample size is the number of answered attempts that fed the label.
+        </p>
+      </div>
+      {rows.length ? (
+        <ul className="parent-hub-grammar-confidence-list" aria-label="Grammar concept confidence chips">
+          {rows.map((row) => (
+            <li
+              className="parent-hub-grammar-confidence-row"
+              key={row.id || row.name}
+              data-concept-id={row.id || ''}
+            >
+              <div className="parent-hub-grammar-confidence-main">
+                <strong>{row.name || row.id}</strong>
+                <span className="parent-hub-row-detail">{row.domain || 'Grammar'}</span>
+              </div>
+              <AdultConfidenceChip
+                confidence={row.confidence || null}
+                showAdminExtras={showAdminExtras}
+              />
+            </li>
+          ))}
+        </ul>
+      ) : <p className="parent-hub-empty small muted">No Grammar concept evidence has been recorded yet.</p>}
+    </article>
+  );
+}
+
 function GrammarEvidencePanel({ evidence }) {
   return (
     <>
@@ -284,6 +326,9 @@ function GrammarEvidencePanel({ evidence }) {
         title="Grammar evidence"
         note="Concept status, question-type weakness, recent Grammar activity, and adult-facing summary drafts."
       />
+      <section className="parent-hub-grid parent-hub-grammar-evidence">
+        <GrammarConceptConfidenceGrid evidence={evidence} />
+      </section>
       <section className="two-col parent-hub-grid parent-hub-grammar-evidence">
         <GrammarConceptEvidence evidence={evidence} />
         <GrammarActivityEvidence evidence={evidence} />
