@@ -8001,9 +8001,32 @@ async function runSubjectCommandMutation(db, {
         AND state_revision = ?
     `, [nowTs, command.learnerId, effectiveExpectedRevision]));
 
-    const attemptResults = await batch(db, attemptStatements);
+    // U9 round 1 fix (adv-u9-r1-004): record D1 projection-write health against
+    // the server-side `readModelDerivedWrite` breaker. A batch() that throws is
+    // a genuine D1 fault (overloaded / disconnect / schema) — recordFailure so
+    // consecutive faults trip the breaker. A batch() that returns changes=1 is
+    // a healthy commit — recordSuccess so the breaker can leave HALF_OPEN.
+    // `changes=0` is a CAS contention signal (concurrent writer), NOT a
+    // backend failure — record NEITHER so concurrency does not poison the
+    // breaker health.
+    let attemptResults;
+    try {
+      attemptResults = await batch(db, attemptStatements);
+    } catch (err) {
+      // Only record failure for attempts that actually included the projection
+      // write (`includeProjection=true`). Projection-skipped attempts that still
+      // throw are exposing a different fault (primary-state path); that is out
+      // of scope for the derived-write breaker.
+      if (includeProjection) {
+        try { derivedWriteBreaker.recordFailure(); } catch { /* never let listener throw mask the D1 error */ }
+      }
+      throw err;
+    }
     const attemptCasResult = attemptResults[attemptResults.length - 1] || null;
     const attemptCasChanges = Number(attemptCasResult?.meta?.changes) || 0;
+    if (includeProjection && attemptCasChanges === 1) {
+      try { derivedWriteBreaker.recordSuccess(); } catch { /* listener */ }
+    }
     return {
       mutatesState: true,
       response: attemptResponse,
@@ -8089,7 +8112,16 @@ async function runSubjectCommandMutation(db, {
     });
   }
   const freshRevisionAfterFirst = await readFreshRevision();
-  const secondAttempt = await attemptMutation(freshRevisionAfterFirst, { includeProjection: true });
+  // U9 round 1 fix (adv-u9-r1-003): CAS-retry Attempt 2 must re-check the
+  // server-side `readModelDerivedWrite` breaker. Pre-fix the projection write
+  // was hardcoded `includeProjection: true`; a breaker that opened between
+  // Attempts 1 and 2 was silently violated. Re-read the breaker state and
+  // preserve the breaker-open reason stamp when the breaker is still open.
+  const breakerOpenOnAttempt2 = derivedWriteBreaker.shouldBlockCall();
+  if (breakerOpenOnAttempt2 && capacity && typeof capacity.setDerivedWriteSkipped === 'function') {
+    capacity.setDerivedWriteSkipped({ reason: 'breaker-open' });
+  }
+  const secondAttempt = await attemptMutation(freshRevisionAfterFirst, { includeProjection: !breakerOpenOnAttempt2 });
   if (secondAttempt.casChanges === 1) {
     logMutation('info', 'mutation.applied', {
       kind,
@@ -8100,6 +8132,7 @@ async function runSubjectCommandMutation(db, {
       expectedRevision: freshRevisionAfterFirst,
       appliedRevision: secondAttempt.appliedRevision,
       rebased: true,
+      projectionSkipped: breakerOpenOnAttempt2 ? 'breaker-open' : null,
     });
     return secondAttempt.response;
   }
@@ -8109,8 +8142,14 @@ async function runSubjectCommandMutation(db, {
   // without the projection write so a subsequent command can repair via
   // `stale-catchup`. If this final attempt also fails CAS, we honour the
   // client's stale-write contract.
+  // U9 round 1 fix (adv-u9-r1-003): preserve the earlier `breaker-open`
+  // stamp when the breaker has been open throughout the retry chain. The
+  // `concurrent-retry-exhausted` reason only applies when Attempts 2 and
+  // 3 actually ran the projection-write path and both lost CAS. When the
+  // breaker is open, Attempts 2 and 3 already skipped projection; the
+  // authoritative reason is breaker-open, not contention.
   const freshRevisionAfterSecond = await readFreshRevision();
-  if (capacity && typeof capacity.setDerivedWriteSkipped === 'function') {
+  if (capacity && typeof capacity.setDerivedWriteSkipped === 'function' && !breakerOpen && !breakerOpenOnAttempt2) {
     capacity.setDerivedWriteSkipped({
       reason: 'concurrent-retry-exhausted',
       baseRevision,
