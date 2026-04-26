@@ -1266,3 +1266,290 @@ test('U10 advisory: Boss summary HTML contains no legacy "Drill all" copy (text-
   assert.doesNotMatch(html, /Drill all/i,
     'Boss summary must not surface "Drill all" copy — it belongs to Guardian/legacy summaries.');
 });
+
+// =============================================================================
+// U7 (Post-Mega Spelling P2): Boss per-slug progress counter assertions.
+// -----------------------------------------------------------------------------
+// Characterization test — observes current shipped P1.5 behaviour.
+//
+// P1.5 §6.10 flagged a deferred need: existing Boss tests assert aggregate
+// `progress.wrong +3` and prove stage/dueDay/lastDay/lastResult do not demote,
+// but do NOT assert per-slug `attempts/correct/wrong` deltas across a full
+// 10-card round. U7 closes that gap.
+//
+// For every slug drawn by selectBossWords, after the round:
+//   - progress.attempts[slug] === seed.attempts + 1
+//   - progress.correct[slug]  === seed.correct + (answer was correct ? 1 : 0)
+//   - progress.wrong[slug]    === seed.wrong   + (answer was wrong   ? 1 : 0)
+//   - progress.stage[slug]      unchanged (4 → 4)
+//   - progress.dueDay[slug]     unchanged
+//   - progress.lastDay[slug]    unchanged
+//   - progress.lastResult[slug] unchanged
+//
+// Event-to-state parity: the `spelling.boss.completed` event aggregates
+// `correct` / `wrong` / `length` over the same 10 slugs. Current shipped
+// behaviour does NOT emit a per-slug map on the event itself; parity is
+// therefore proven aggregate-vs-state and derived-vs-state via
+// `session.results`, which is the per-answer source the event aggregates
+// from (see `bossEventsForSession` at shared/spelling/service.js:2166). Both
+// directions catch a regression: any drift between writer and event would
+// break either the aggregate count or the seedSlugs roster.
+//
+// Test-harness-vs-production trap (Punctuation P3 rule): the writer that
+// updates these counters lives in `submitBossAnswer` at
+// shared/spelling/service.js:1886-1929 (production path). There is NO
+// test-only writer for progress.attempts / correct / wrong — the tests below
+// go through the real `service.submitAnswer` dispatch, so any regression
+// where the writer is rerouted (e.g. through `engine.submitTest`) is caught
+// by both the aggregate and per-slug assertions here.
+// =============================================================================
+
+/**
+ * Snapshot the current progress map for the seed slugs before the round.
+ * Returns a Map keyed by slug so every per-slug before/after delta is
+ * deterministic and independent of the analytics-snapshot sort order.
+ */
+function snapshotProgressForSlugs(service, learnerId, slugs) {
+  const snapshot = service.getAnalyticsSnapshot(learnerId);
+  const rowsBySlug = new Map(
+    snapshot.wordGroups.flatMap((g) => g.words).map((row) => [row.slug, row]),
+  );
+  const map = new Map();
+  for (const slug of slugs) {
+    const row = rowsBySlug.get(slug);
+    assert.ok(row, `snapshot row must exist for seed slug ${slug}`);
+    map.set(slug, { ...row.progress });
+  }
+  return map;
+}
+
+test('U7: Boss 10-card round — all correct: per-slug attempts +1, correct +1, wrong +0', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: makeSeededRandom(42) });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'boss', length: 10 });
+  const seedSlugs = started.state.session.uniqueWords.slice();
+  assert.equal(seedSlugs.length, 10, 'Boss round is exactly 10 cards (U7 scope)');
+
+  const before = snapshotProgressForSlugs(service, 'learner-a', seedSlugs);
+
+  const { state: summaryState, events, seenSlugs } = runBossRoundUntilSummary(
+    service,
+    'learner-a',
+    started.state,
+    (slug, state) => state.session.currentCard.word.word,
+  );
+
+  assert.equal(summaryState.phase, 'summary');
+  assert.deepEqual(seenSlugs, seedSlugs, 'FIFO order preserved');
+
+  const after = snapshotProgressForSlugs(service, 'learner-a', seedSlugs);
+  for (const slug of seedSlugs) {
+    const b = before.get(slug);
+    const a = after.get(slug);
+    // Counter deltas.
+    assert.equal(a.attempts, b.attempts + 1, `${slug} attempts += 1`);
+    assert.equal(a.correct, b.correct + 1, `${slug} correct += 1 (all-correct round)`);
+    assert.equal(a.wrong, b.wrong, `${slug} wrong unchanged`);
+    // Mega-never-revoked guarantees — stage/dueDay/lastDay/lastResult frozen.
+    assert.equal(a.stage, b.stage, `${slug} stage unchanged (Mega)`);
+    assert.equal(a.stage, 4, `${slug} stage stays at 4`);
+    assert.equal(a.dueDay, b.dueDay, `${slug} dueDay unchanged`);
+    assert.equal(a.lastDay, b.lastDay, `${slug} lastDay unchanged`);
+    assert.equal(a.lastResult, b.lastResult, `${slug} lastResult unchanged`);
+  }
+
+  // Event-to-state aggregate parity.
+  const bossCompleted = events.find((e) => e.type === SPELLING_EVENT_TYPES.BOSS_COMPLETED);
+  assert.ok(bossCompleted, 'BOSS_COMPLETED fired');
+  assert.equal(bossCompleted.length, 10, 'event.length === round size');
+  assert.equal(bossCompleted.correct, 10, 'event.correct === sum of correct deltas');
+  assert.equal(bossCompleted.wrong, 0, 'event.wrong === sum of wrong deltas');
+  assert.deepEqual(bossCompleted.seedSlugs, seedSlugs,
+    'event.seedSlugs === persisted delta keys');
+});
+
+test('U7: Boss 10-card round — all wrong: per-slug attempts +1, correct +0, wrong +1; Mega invariant held', () => {
+  // All-wrong is the critical Mega-never-revoked stress: ten wrong answers on
+  // ten Mega slugs. Every single slug must keep stage/dueDay/lastDay/lastResult
+  // AND bump attempts + wrong by exactly 1. Any drift — e.g. a wrong Boss
+  // submit routed through `engine.submitTest → applyTestOutcome` — would
+  // demote `stage` to 3 and break the invariant AND the counter delta.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: makeSeededRandom(42) });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'boss', length: 10 });
+  const seedSlugs = started.state.session.uniqueWords.slice();
+  assert.equal(seedSlugs.length, 10);
+
+  const before = snapshotProgressForSlugs(service, 'learner-a', seedSlugs);
+
+  const { state: summaryState, events } = runBossRoundUntilSummary(
+    service,
+    'learner-a',
+    started.state,
+    () => 'definitely-wrong',
+  );
+
+  assert.equal(summaryState.phase, 'summary');
+
+  const after = snapshotProgressForSlugs(service, 'learner-a', seedSlugs);
+  for (const slug of seedSlugs) {
+    const b = before.get(slug);
+    const a = after.get(slug);
+    assert.equal(a.attempts, b.attempts + 1, `${slug} attempts += 1`);
+    assert.equal(a.correct, b.correct, `${slug} correct unchanged (all-wrong)`);
+    assert.equal(a.wrong, b.wrong + 1, `${slug} wrong += 1`);
+    // Mega invariant — no slug demotes despite a wrong answer.
+    assert.equal(a.stage, 4, `${slug} stage stays at 4 (Mega never revoked)`);
+    assert.equal(a.dueDay, b.dueDay, `${slug} dueDay unchanged`);
+    assert.equal(a.lastDay, b.lastDay, `${slug} lastDay unchanged`);
+    assert.equal(a.lastResult, b.lastResult, `${slug} lastResult unchanged`);
+  }
+
+  const bossCompleted = events.find((e) => e.type === SPELLING_EVENT_TYPES.BOSS_COMPLETED);
+  assert.ok(bossCompleted);
+  assert.equal(bossCompleted.correct, 0);
+  assert.equal(bossCompleted.wrong, 10);
+  assert.equal(bossCompleted.length, 10);
+});
+
+test('U7: Boss 10-card round — mixed 7 correct / 3 wrong: per-slug deltas match the deterministic answer pattern', () => {
+  // Critical case: per-slug attribution (not just aggregate). The first three
+  // slugs in FIFO order receive 'definitely-wrong'; the remaining seven
+  // receive the real answer. Per-slug deltas must exactly match that pattern,
+  // proving the writer credits the correct slug for each answer (no swap /
+  // no FIFO drift / no off-by-one).
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: makeSeededRandom(42) });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'boss', length: 10 });
+  const seedSlugs = started.state.session.uniqueWords.slice();
+  assert.equal(seedSlugs.length, 10);
+
+  const before = snapshotProgressForSlugs(service, 'learner-a', seedSlugs);
+
+  // Deterministic answer pattern: wrong on cards 1,2,3 (FIFO); correct on
+  // cards 4..10. The plan's "deterministic per-slug pattern" — per-slug
+  // outcomes follow the FIFO position of the slug in seedSlugs.
+  const WRONG_CARD_COUNT = 3;
+  const expectedOutcomeBySlug = new Map(
+    seedSlugs.map((slug, index) => [slug, index < WRONG_CARD_COUNT ? 'wrong' : 'correct']),
+  );
+
+  let cardCount = 0;
+  const { state: summaryState, events, seenSlugs } = runBossRoundUntilSummary(
+    service,
+    'learner-a',
+    started.state,
+    (slug, state) => {
+      cardCount += 1;
+      return cardCount <= WRONG_CARD_COUNT ? 'definitely-wrong' : state.session.currentCard.word.word;
+    },
+  );
+
+  assert.equal(summaryState.phase, 'summary');
+  assert.deepEqual(seenSlugs, seedSlugs,
+    'FIFO order preserved — expectedOutcomeBySlug keyed by position is load-bearing');
+
+  const after = snapshotProgressForSlugs(service, 'learner-a', seedSlugs);
+  let expectedCorrect = 0;
+  let expectedWrong = 0;
+  for (const slug of seedSlugs) {
+    const b = before.get(slug);
+    const a = after.get(slug);
+    const outcome = expectedOutcomeBySlug.get(slug);
+
+    // Universal — every slug got exactly one attempt.
+    assert.equal(a.attempts, b.attempts + 1, `${slug} attempts += 1 (exactly one answer)`);
+
+    if (outcome === 'correct') {
+      assert.equal(a.correct, b.correct + 1, `${slug} correct += 1 (answered right)`);
+      assert.equal(a.wrong, b.wrong, `${slug} wrong unchanged`);
+      expectedCorrect += 1;
+    } else {
+      assert.equal(a.correct, b.correct, `${slug} correct unchanged (answered wrong)`);
+      assert.equal(a.wrong, b.wrong + 1, `${slug} wrong += 1`);
+      expectedWrong += 1;
+    }
+
+    // Mega invariant — stage/dueDay/lastDay/lastResult never move in Boss.
+    assert.equal(a.stage, 4, `${slug} stage stays at 4`);
+    assert.equal(a.dueDay, b.dueDay, `${slug} dueDay unchanged`);
+    assert.equal(a.lastDay, b.lastDay, `${slug} lastDay unchanged`);
+    assert.equal(a.lastResult, b.lastResult, `${slug} lastResult unchanged`);
+  }
+  assert.equal(expectedCorrect, 7);
+  assert.equal(expectedWrong, 3);
+
+  // Event-to-state parity.
+  // -----------------------------------------------------------------------
+  // The shipped `createSpellingBossCompletedEvent` aggregates its
+  // correct/wrong totals from `session.results` (see
+  // `bossEventsForSession` at shared/spelling/service.js:2166-2196). Each
+  // `session.results[i]` is a per-answer entry `{ slug, answer, correct }`
+  // written in `submitBossAnswer` (the same writer that updates progress
+  // counters). So event-to-state parity splits into two derivations:
+  //   1. event.{correct,wrong} match sum-of-deltas across seedSlugs.
+  //   2. event.seedSlugs === uniqueWords (the roster the writer stepped
+  //      through). session.results (on summaryState.session) is the source
+  //      of truth that fed the event aggregation AND drove each per-slug
+  //      write; if the two ever disagree, one side is buggy.
+  const bossCompleted = events.find((e) => e.type === SPELLING_EVENT_TYPES.BOSS_COMPLETED);
+  assert.ok(bossCompleted, 'BOSS_COMPLETED fired');
+  assert.equal(bossCompleted.length, 10);
+  assert.equal(bossCompleted.correct, expectedCorrect,
+    'event.correct aggregate matches sum of per-slug correct deltas');
+  assert.equal(bossCompleted.wrong, expectedWrong,
+    'event.wrong aggregate matches sum of per-slug wrong deltas');
+  assert.deepEqual(bossCompleted.seedSlugs, seedSlugs,
+    'event.seedSlugs matches the roster the writer iterated over');
+
+  // Per-slug derived parity via summary.mistakes: every persisted wrong delta
+  // must correspond to a summary.mistakes entry, and every summary.mistakes
+  // entry must match a persisted wrong delta. summary.mistakes is the
+  // event-facing per-slug detail that Boss's test-typed finalise path derives
+  // from `session.results` (see `testSummary` at
+  // shared/spelling/legacy-engine.js:876-898). If the writer (submitBossAnswer)
+  // and the event-aggregation source ever disagree, this assertion catches it.
+  const summary = summaryState.summary;
+  assert.ok(summary, 'summary is populated on summary-phase state');
+  assert.equal(summary.mode, 'boss');
+  const mistakeSlugsFromEvent = new Set(
+    (summary.mistakes || []).map((word) => word?.slug).filter(Boolean),
+  );
+  assert.equal(mistakeSlugsFromEvent.size, expectedWrong,
+    'summary.mistakes carries exactly the expected wrong-answer count');
+  // Forward: every slug with a persisted wrong delta is in summary.mistakes.
+  // Reverse: every summary.mistakes entry has the matching wrong delta.
+  for (const slug of seedSlugs) {
+    const b = before.get(slug);
+    const a = after.get(slug);
+    const persistedWrongDelta = a.wrong - b.wrong;
+    const inSummaryMistakes = mistakeSlugsFromEvent.has(slug);
+    assert.equal(inSummaryMistakes, persistedWrongDelta === 1,
+      `${slug}: summary.mistakes membership === persisted wrong delta (event source → state parity)`);
+  }
+});
+
+test('U7: Boss round seedSlugs are FIFO-unique — no duplicate slug in a single round', () => {
+  // Defensive: selectBossWords samples without replacement, so a single
+  // seedSlugs roster cannot contain duplicates. If FIFO-unique selection ever
+  // regresses, per-slug delta math above would silently double-count a slug's
+  // attempts — this explicit test fails loudly first.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: makeSeededRandom(42) });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'boss', length: 10 });
+  const seedSlugs = started.state.session.uniqueWords;
+  assert.equal(new Set(seedSlugs).size, seedSlugs.length,
+    'seedSlugs are unique — no slug can earn two per-round deltas');
+});
