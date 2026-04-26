@@ -633,12 +633,20 @@ The scene asserts this via two independent signals:
    totals — `bootstrapLeaderAcquired`, `bootstrapFollowerWaited`,
    `bootstrapFollowerUsedCache`, `bootstrapFollowerTimedOut`,
    `bootstrapFallbackFullRefresh`, `staleCommandSmallRefresh`,
-   `staleCommandFullBootstrapFallback`. The counters are installed
+   `staleCommandFullBootstrapFallback`,
+   `bootstrapCoordinationStorageUnavailable`. The counters are installed
    only when `process.env.NODE_ENV !== 'production'`; esbuild's
    `define` block in `scripts/build-client.mjs` dead-code eliminates
    them in shipped bundles (verified by the
    `__ks2_capacityMeta__` entry in
    `scripts/audit-client-bundle.mjs` `FORBIDDEN_TEXT`).
+   `bootstrapCoordinationStorageUnavailable` fires when
+   `localStorage.setItem` throws during lease acquisition (quota
+   exhausted, Safari Private Browsing, managed-profile Chromebook with
+   site storage disabled); the tab falls through to independent
+   bootstrap without error. U9 circuit breakers should treat a
+   non-zero rate of this counter as the classroom-scale signal for
+   the coordination-bypass path.
 
 ### What failure means operationally
 

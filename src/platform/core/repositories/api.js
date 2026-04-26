@@ -88,6 +88,11 @@ if (process.env.NODE_ENV !== 'production') {
     'bootstrapFallbackFullRefresh',
     'staleCommandSmallRefresh',
     'staleCommandFullBootstrapFallback',
+    // U8 round 1 adv-u8-r1-002: coordination-bypass signal when the
+    // lease `localStorage.setItem` throws (quota exhausted, managed-
+    // profile Chromebook with site storage disabled). Classroom-scale
+    // metric for the U9 circuit breaker.
+    'bootstrapCoordinationStorageUnavailable',
   ];
   const existing = globalThis.__ks2_capacityMeta__;
   if (!existing || typeof existing.reset !== 'function') {
@@ -1262,7 +1267,7 @@ export function createApiPlatformRepositories({
     return active;
   }
 
-  function acquireBootstrapCoordination() {
+  function acquireBootstrapCoordination({ skipLeaderCounter = false } = {}) {
     const now = currentTime();
     const active = readBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, now);
     if (active && active.ownerId !== bootstrapCoordinationOwnerId) return null;
@@ -1284,13 +1289,32 @@ export function createApiPlatformRepositories({
       startedAt: now,
       expiresAt: now + BOOTSTRAP_COORDINATION_LEASE_MS,
     };
-    if (!writeBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, lease)) return null;
+    if (!writeBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, lease)) {
+      // U8 round 1 adv-u8-r1-002: localStorage write failed (quota
+      // exhausted, Safari Private Browsing, managed-profile Chromebook
+      // with site storage disabled). Surface the coordination-bypass
+      // path via a dedicated counter so U9 circuit breakers can tune
+      // against "storage unavailable" rates. Graceful degradation:
+      // the caller falls through to independent bootstrap.
+      bumpCapacityMeta('bootstrapCoordinationStorageUnavailable');
+      return null;
+    }
     const confirmed = readBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, now);
     if (confirmed?.ownerId === bootstrapCoordinationOwnerId) {
       // U8: leader path — this tab owns the fresh lease and will run
       // the real fetch. Increment once per successful acquisition so
       // the Playwright scene's "leader count" assertion holds.
-      bumpCapacityMeta('bootstrapLeaderAcquired');
+      //
+      // U8 round 1 adv-u8-r1-001: a cacheDivergence response triggers
+      // a recursive `hydrateRemoteState` call on the same tab. The
+      // outer lease is still held, so the inner `acquireBootstrapCoordination`
+      // reads its own lease and extends it; that is a lease EXTENSION,
+      // not a new acquisition, and must NOT re-bump the counter.
+      // `skipLeaderCounter` is the internal flag the recursive path
+      // threads in; normal call sites leave it false.
+      if (!skipLeaderCounter) {
+        bumpCapacityMeta('bootstrapLeaderAcquired');
+      }
       return lease;
     }
     return null;
@@ -1755,7 +1779,18 @@ export function createApiPlatformRepositories({
     recomputePersistence();
   }
 
-  async function hydrateRemoteState({ rebasePending = false, rebasePayloads = false, cacheScope = 'bootstrap' } = {}) {
+  async function hydrateRemoteState({
+    rebasePending = false,
+    rebasePayloads = false,
+    cacheScope = 'bootstrap',
+    // U8 round 1 adv-u8-r1-001: internal flag. When the cacheDivergence
+    // recovery path at line ~1855 recurses into `hydrateRemoteState`,
+    // the outer lease is still held. The recursive call must extend
+    // the lease without re-bumping the leader counter. Leading
+    // underscore signals this is an internal-only flag; no public
+    // caller should ever set it.
+    _hydrateRetrying = false,
+  } = {}) {
     const fallbackAvailable = hasCacheFallback(cache, pendingOperations);
     let bootstrapLease = null;
     if (fallbackAvailable) {
@@ -1776,7 +1811,7 @@ export function createApiPlatformRepositories({
         return null;
       }
 
-      bootstrapLease = acquireBootstrapCoordination();
+      bootstrapLease = acquireBootstrapCoordination({ skipLeaderCounter: _hydrateRetrying });
       if (!bootstrapLease) {
         const lostCoordinationRace = activeBootstrapCoordination();
         if (lostCoordinationRace) {
@@ -1851,8 +1886,20 @@ export function createApiPlatformRepositories({
           // Recursive retry without the lastKnownRevision triggers a
           // full GET. One-shot only — the function falls through on
           // subsequent invocations because the revision is cleared.
+          //
+          // U8 round 1 adv-u8-r1-001: set `_hydrateRetrying: true` so
+          // the recursive acquire extends the lease this tab still
+          // holds without re-bumping `bootstrapLeaderAcquired`. The
+          // outer `finally` releases the lease once; the inner
+          // `releaseBootstrapCoordination` no-ops on a lease that is
+          // no longer in storage.
           if (typeof fetchFn === 'function') {
-            return hydrateRemoteState({ rebasePending, rebasePayloads, cacheScope });
+            return hydrateRemoteState({
+              rebasePending,
+              rebasePayloads,
+              cacheScope,
+              _hydrateRetrying: true,
+            });
           }
         } else {
           lastKnownBootstrapRevision = revision.hash;

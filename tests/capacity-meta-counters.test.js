@@ -76,6 +76,7 @@ test('globalThis.__ks2_capacityMeta__ is installed in test builds with expected 
     'bootstrapFallbackFullRefresh',
     'staleCommandSmallRefresh',
     'staleCommandFullBootstrapFallback',
+    'bootstrapCoordinationStorageUnavailable',
   ];
   for (const key of expectedKeys) {
     assert.equal(
@@ -249,4 +250,147 @@ test('bootstrapFollowerTimedOut fires when a previously active foreign lease has
     1,
     'after timeout the follower must take over leadership once',
   );
+});
+
+// U8 round 1 adv-u8-r1-001 P2: the recursive `hydrateRemoteState` retry
+// that fires on a `notModified` response with a malformed revision
+// envelope (cacheDivergence) must NOT re-bump
+// `bootstrapLeaderAcquired`. A single tab session triggering
+// cacheDivergence performs exactly one leader acquisition even though
+// the code path re-enters itself internally.
+test('cacheDivergence recursive hydrate bumps bootstrapLeaderAcquired exactly once', async () => {
+  resetCapacityMeta();
+  const storage = installMemoryStorage();
+  const validRevision = {
+    accountRevision: 1,
+    accountLearnerListRevision: 1,
+    bootstrapCapacityVersion: 1,
+    hash: 'rev-warm',
+    selectedLearnerRevision: 1,
+  };
+  let now = 500_000;
+  // Hand-rolled fetch that drives the three-response sequence on a
+  // single repository instance:
+  //   1. first hydrate cold GET -> full bundle with a valid revision
+  //      envelope; this captures `lastKnownBootstrapRevision` in
+  //      memory for the second hydrate.
+  //   2. second hydrate POST probe -> `{ notModified: true, revision }`
+  //      where revision is structurally invalid (hash only, other
+  //      BOOTSTRAP_V2_REVISION_KEYS missing). This triggers the
+  //      recursive retry in api.js.
+  //   3. recursive GET retry -> full bundle with the valid envelope
+  //      again so the retry succeeds.
+  let call = 0;
+  const fetch = async (_url, init = {}) => {
+    call += 1;
+    const method = (init.method || 'GET').toUpperCase();
+    const bundle = {
+      ok: true,
+      learners: learnerSnapshot(),
+      subjectStates: {},
+      practiceSessions: [],
+      gameState: {},
+      eventLog: [],
+      meta: { capacity: { bootstrapCapacity: { requestsPerMinute: 10 } } },
+      revision: validRevision,
+    };
+    if (method === 'POST') {
+      return new Response(JSON.stringify({
+        ok: true,
+        notModified: true,
+        // Invalid revision envelope — only `hash` present.
+        revision: { hash: 'rev-warm' },
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    return new Response(JSON.stringify(bundle), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const options = {
+    baseUrl: 'https://repo.test',
+    fetch,
+    storage,
+    now: () => now,
+    random: () => 0,
+  };
+
+  // First hydrate warms the cache AND captures `lastKnownBootstrapRevision`
+  // in the repository closure so the second hydrate uses the POST probe.
+  const repositories = createApiPlatformRepositories(options);
+  await repositories.hydrate();
+  resetCapacityMeta();
+
+  // Second hydrate fires POST (cacheDivergence) -> recursive GET on
+  // the SAME repository instance. The lease lives across the
+  // recursion; without the retry guard the leader counter bumps twice.
+  await repositories.hydrate();
+
+  const meta = readCapacityMeta();
+  // Two network calls were observed — POST probe + recursive GET
+  // retry — so the test really did drive the cacheDivergence path.
+  assert.ok(call >= 3, `test should drive POST probe + recursive GET, saw ${call} fetches`);
+  assert.equal(
+    meta.bootstrapLeaderAcquired,
+    1,
+    `cacheDivergence recursive retry must not double-bump leader counter, got ${meta.bootstrapLeaderAcquired}`,
+  );
+});
+
+// U8 round 1 adv-u8-r1-002 P2: when `localStorage.setItem` throws on
+// the lease write (quota exceeded, managed-profile Chromebook with
+// site storage disabled), acquireBootstrapCoordination must bump the
+// new `bootstrapCoordinationStorageUnavailable` counter so operators
+// have visibility into the coordination-bypass path. The tab falls
+// through to independent bootstrap without throwing.
+test('bootstrapCoordinationStorageUnavailable fires when the lease write throws', async () => {
+  resetCapacityMeta();
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({ learners: learnerSnapshot() });
+  let now = 600_000;
+  const options = {
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    storage,
+    now: () => now,
+    random: () => 0,
+  };
+
+  // Warm the cache so the second hydrate has a fallback and actually
+  // exercises the coordination path (cold start bypasses the lease).
+  const warm = createApiPlatformRepositories(options);
+  await warm.hydrate();
+  resetCapacityMeta();
+
+  // Arm the storage to throw on the next lease write. The hydrate
+  // MUST still complete — graceful degradation is the contract.
+  storage.throwOnNextSet({ key: BOOTSTRAP_COORDINATION_KEY });
+
+  const degraded = createApiPlatformRepositories(options);
+  await degraded.hydrate();
+
+  const meta = readCapacityMeta();
+  assert.equal(
+    meta.bootstrapCoordinationStorageUnavailable,
+    1,
+    `storage-write failure during lease acquisition must bump bootstrapCoordinationStorageUnavailable, got ${meta.bootstrapCoordinationStorageUnavailable}`,
+  );
+  // The tab must NOT have claimed leadership (the write failed, no
+  // lease was held). It did proceed to bootstrap independently, which
+  // is the degraded path we are measuring.
+  assert.equal(
+    meta.bootstrapLeaderAcquired,
+    0,
+    'failed lease acquisition must not bump the leader counter',
+  );
+});
+
+// U8 round 1: `reset()` must zero every counter including the new
+// `bootstrapCoordinationStorageUnavailable` key so scenes start clean.
+test('reset() zeros bootstrapCoordinationStorageUnavailable alongside existing counters', () => {
+  const meta = readCapacityMeta();
+  meta.bootstrapCoordinationStorageUnavailable = 5;
+  meta.reset();
+  assert.equal(meta.bootstrapCoordinationStorageUnavailable, 0);
 });
