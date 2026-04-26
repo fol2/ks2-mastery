@@ -8,6 +8,12 @@
     "enabled": true,
     "head_sampling_rate": 1
   },
+  // U5 (sys-hardening p1): Cloudflare remote-build hosts run `npm install`
+  // as part of this command chain. `@playwright/test` is a devDependency but
+  // the deployed Worker never uses the Playwright browser, so the remote
+  // build host should export `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` before
+  // invoking the build to avoid fetching ~300 MB of Chromium per deploy.
+  // (See `docs/operations/capacity.md#playwright-test-suite`.)
   "build": {
     "command": "npm run build && npm run assert:build-public && npm run audit:client"
   },
