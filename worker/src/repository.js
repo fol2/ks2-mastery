@@ -84,7 +84,6 @@ import {
   scalar,
   sqlPlaceholders,
   withCapacityCollector,
-  withTransaction,
 } from './d1.js';
 
 const WRITABLE_MEMBERSHIP_ROLES = new Set(['owner', 'member']);
@@ -4196,7 +4195,14 @@ async function withMonsterVisualConfigMutation(db, {
   const nextMutation = normaliseMonsterVisualMutation(mutation);
   const requestHash = mutationPayloadHash(kind, payload);
 
-  return withTransaction(db, async () => {
+  // NOTE: non-atomic by design — (a) branching on intermediate read results
+  // (existingReceipt short-circuit, currentRevision CAS compare) plus (b) an
+  // `apply()` callback that runs its own `batch()`. `withTransaction` was
+  // removed in U12: on production D1 it was a silent no-op and hiding that
+  // behind a wrapper would have been misleading. Atomicity for the final
+  // commit lives inside `apply()`'s batch; pre-check races degrade to a
+  // stale-write 409 or to the R21 CAS guard on the UPDATE.
+  return (async () => {
     const actor = await first(db, 'SELECT id, platform_role, account_type FROM adult_accounts WHERE id = ?', [actorAccountId]);
     requireMonsterVisualConfigManager(actor);
 
@@ -4272,7 +4278,7 @@ async function withMonsterVisualConfigMutation(db, {
       monsterVisualMutation: mutationMeta,
     };
     return response;
-  });
+  })();
 }
 
 async function saveMonsterVisualConfigDraft(db, actorAccountId, rawDraft, mutation, nowTs) {
@@ -4626,7 +4632,13 @@ async function updateManagedAccountRole(db, {
     platformRole: nextRole,
   });
 
-  return withTransaction(db, async () => {
+  // NOTE: non-atomic by design — (a) branching on intermediate read results
+  // (existingReceipt short-circuit, target account lookup, last-admin-locked
+  // defence, role-change UPDATE guarded by a subquery). Each decision point
+  // depends on the outcome of the previous read; a pure `batch()` cannot
+  // express that control flow. `withTransaction` was removed in U12 (silent
+  // production no-op; preserving it would imply atomicity we do not have).
+  return (async () => {
     const actor = await first(db, 'SELECT id, email, display_name, platform_role, repo_revision, account_type FROM adult_accounts WHERE id = ?', [actorAccountId]);
     requireAccountRoleManager(actor);
 
@@ -4730,7 +4742,7 @@ async function updateManagedAccountRole(db, {
     });
 
     return response;
-  });
+  })();
 }
 
 async function ensureUniqueOrAccessibleLearnerId(db, accountId, learnerId) {
@@ -5694,7 +5706,12 @@ async function withAccountMutation(db, {
   const nextMutation = normaliseMutationInput(mutation, 'account');
   const requestHash = mutationPayloadHash(kind, payload);
 
-  return withTransaction(db, async () => {
+  // NOTE: non-atomic by design — (a) branching on intermediate read results
+  // (existingReceipt short-circuit, repo_revision CAS compare) plus (b) an
+  // `apply()` callback that runs its own write path. `withTransaction` was
+  // removed in U12 (production D1 no-op). The CAS UPDATE itself
+  // (`WHERE repo_revision = ?`) is the authoritative stale-write defence.
+  return (async () => {
     const existingReceipt = await loadMutationReceipt(db, accountId, nextMutation.requestId);
     if (existingReceipt) {
       if (existingReceipt.request_hash !== requestHash) {
@@ -5788,7 +5805,7 @@ async function withAccountMutation(db, {
       appliedRevision,
     });
     return response;
-  });
+  })();
 }
 
 async function withLearnerMutation(db, {
@@ -5807,7 +5824,12 @@ async function withLearnerMutation(db, {
   const nextMutation = normaliseMutationInput(mutation, 'learner');
   const requestHash = mutationPayloadHash(kind, payload);
 
-  return withTransaction(db, async () => {
+  // NOTE: non-atomic by design — (a) branching on intermediate read results
+  // (write-access check, existingReceipt short-circuit, state_revision CAS
+  // compare) plus (b) an `apply()` callback that runs its own write path.
+  // `withTransaction` was removed in U12 (silent production no-op). The
+  // CAS UPDATE (`WHERE state_revision = ?`) is the stale-write defence.
+  return (async () => {
     await requireLearnerWriteAccess(db, accountId, learnerId);
     const existingReceipt = await loadMutationReceipt(db, accountId, nextMutation.requestId);
     if (existingReceipt) {
@@ -5899,7 +5921,7 @@ async function withLearnerMutation(db, {
       appliedRevision,
     });
     return response;
-  });
+  })();
 }
 
 async function runSubjectCommandMutation(db, {

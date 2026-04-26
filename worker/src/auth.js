@@ -7,6 +7,7 @@ import {
 } from './errors.js';
 import { normalisePlatformRole } from '../../src/platform/access/roles.js';
 import {
+  batch,
   bindStatement,
   first,
   requireDatabase,
@@ -123,6 +124,11 @@ async function runDemoConversionBatch(db, statements) {
   const filtered = statements.filter(Boolean);
   if (!filtered.length) return [];
   if (typeof db?.batch === 'function') return db.batch(filtered);
+  // NOTE: kept by design — `withTransaction` here is the legacy-D1 fallback
+  // for a shim that lacks `batch()` but supports SAVEPOINT via `exec()`.
+  // The production path ALWAYS enters the `db.batch()` branch above; this
+  // wrapper only triggers inside test doubles that deliberately omit
+  // `batch`. Removing it would regress those tests.
   if (db?.supportsSqlTransactions === true && typeof db.exec === 'function') {
     return withTransaction(db, async () => {
       const results = [];
@@ -602,18 +608,25 @@ export async function registerWithEmail(env, request, payload = {}) {
       ]);
       requireDemoConversionApplied(results, { credentialIndex: 1 });
     } else {
-      await withTransaction(db, async () => {
-        await ensureAccountRow(db, {
-          accountId,
-          email,
-          displayName: cleanText(payload.displayName) || email,
-          now,
-        });
-        await run(db, `
+      // U12: converted from `withTransaction` (production no-op) to
+      // `batch()` so the account row + credentials row commit atomically.
+      // Pure SQL, no intermediate branching, no external I/O, no
+      // lastrowid dependency — rubric case 2 (genuinely recoverable).
+      const resolvedDisplayName = cleanText(payload.displayName) || email;
+      await batch(db, [
+        bindStatement(db, `
+          INSERT INTO adult_accounts (id, email, display_name, selected_learner_id, created_at, updated_at)
+          VALUES (?, ?, ?, NULL, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            email = COALESCE(excluded.email, adult_accounts.email),
+            display_name = COALESCE(excluded.display_name, adult_accounts.display_name),
+            updated_at = excluded.updated_at
+        `, [accountId, email, resolvedDisplayName, now, now]),
+        bindStatement(db, `
           INSERT INTO account_credentials (account_id, email, password_hash, password_salt, created_at, updated_at)
           VALUES (?, ?, ?, ?, ?, ?)
-        `, [accountId, email, credential.hash, credential.salt, now, now]);
-      });
+        `, [accountId, email, credential.hash, credential.salt, now, now]),
+      ]);
     }
   } catch (error) {
     if (error instanceof ConflictError) throw error;
@@ -957,18 +970,24 @@ async function findOrCreateAccountFromIdentity(env, {
     ? await findRegisteredEmailAccountId(db, email)
     : null;
   const accountId = emailAccountId || `adult-${randomToken(12)}`;
-  await withTransaction(db, async () => {
-    await ensureAccountRow(db, {
-      accountId,
-      email: email || null,
-      displayName: email || provider,
-      now,
-    });
-    await run(db, `
+  // U12: converted from `withTransaction` (production no-op) to `batch()`
+  // so the adult account row + identity row commit atomically. Pure SQL,
+  // no intermediate branching, no external I/O — rubric case 2.
+  const resolvedDisplayName = email || provider;
+  await batch(db, [
+    bindStatement(db, `
+      INSERT INTO adult_accounts (id, email, display_name, selected_learner_id, created_at, updated_at)
+      VALUES (?, ?, ?, NULL, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        email = COALESCE(excluded.email, adult_accounts.email),
+        display_name = COALESCE(excluded.display_name, adult_accounts.display_name),
+        updated_at = excluded.updated_at
+    `, [accountId, email || null, resolvedDisplayName, now, now]),
+    bindStatement(db, `
       INSERT INTO account_identities (id, account_id, provider, provider_subject, email, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [`identity-${randomToken(12)}`, accountId, provider, providerSubject, email || null, now, now]);
-  });
+    `, [`identity-${randomToken(12)}`, accountId, provider, providerSubject, email || null, now, now]),
+  ]);
   return accountId;
 }
 
