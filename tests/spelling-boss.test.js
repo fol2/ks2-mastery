@@ -1270,7 +1270,7 @@ test('U10 advisory: Boss summary HTML contains no legacy "Drill all" copy (text-
 // =============================================================================
 // U7 (Post-Mega Spelling P2): Boss per-slug progress counter assertions.
 // -----------------------------------------------------------------------------
-// Characterization test — observes current shipped P1.5 behaviour.
+// Characterisation test — observes current shipped P1.5 behaviour.
 //
 // P1.5 §6.10 flagged a deferred need: existing Boss tests assert aggregate
 // `progress.wrong +3` and prove stage/dueDay/lastDay/lastResult do not demote,
