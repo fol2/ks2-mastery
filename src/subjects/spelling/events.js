@@ -297,6 +297,7 @@ export function createSpellingPatternQuestCompletedEvent({
   learnerId,
   session,
   patternId,
+  patternTitle = '',
   slugs = [],
   correctCount = 0,
   wobbledSlugs = [],
@@ -313,6 +314,12 @@ export function createSpellingPatternQuestCompletedEvent({
   const safeCorrect = Number.isInteger(Number(correctCount)) && Number(correctCount) >= 0
     ? Number(correctCount)
     : 0;
+  // Fix 6: pattern title travels with the event so the reward-toast
+  // subscriber renders readable copy ("Pattern Quest: 3/5 on Words ending
+  // in -tion") without a separate registry lookup. Subscribers that
+  // receive a shipped event without patternTitle (legacy events persisted
+  // before Fix 6) fall back to patternId.
+  const safeTitle = typeof patternTitle === 'string' ? patternTitle : '';
   return {
     ...baseSpellingEvent(
       SPELLING_EVENT_TYPES.PATTERN_QUEST_COMPLETED,
@@ -320,6 +327,7 @@ export function createSpellingPatternQuestCompletedEvent({
       [learnerId || 'default', session.id, patternId],
     ),
     patternId,
+    patternTitle: safeTitle,
     slugs: safeSlugs,
     correctCount: safeCorrect,
     wobbledSlugs: safeWobbled,

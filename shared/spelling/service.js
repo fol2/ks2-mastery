@@ -703,12 +703,29 @@ export function selectPatternQuestCards({
   const shuffled = deterministicShuffle(eligibleSlugs, random);
   const [slugA, slugB, slugC, slugD] = shuffled;
 
-  const misspellingCandidates = Array.isArray(pattern.traps)
+  // U11 Fix 4: align the Card 4 misspelling with slugD. Previously the trap
+  // was sampled uniformly from `pattern.traps`, which meant the child could
+  // see a misspelling of a DIFFERENT word from the one at slot slugD — e.g.
+  // the card says `competishun` (trap for `competition`) but the target
+  // word is `position`. Typing the correct fix wobbled `position` for a
+  // trap that has nothing to do with it. Fix: filter traps by edit-distance
+  // ≤ 2 to the slugD target word so the displayed misspelling is always a
+  // plausible mis-spell of what we grade against. If no trap is within
+  // distance 2, fall back to a deterministic single-character swap of the
+  // target word.
+  const slugDWord = typeof wordBySlug[slugD]?.word === 'string' ? wordBySlug[slugD].word : '';
+  const rawTraps = Array.isArray(pattern.traps)
     ? pattern.traps.filter((trap) => typeof trap === 'string' && trap)
     : [];
-  const misspelling = misspellingCandidates.length
-    ? misspellingCandidates[Math.floor(random() * misspellingCandidates.length) % misspellingCandidates.length]
-    : null;
+  const nearbyMisspellings = slugDWord
+    ? rawTraps.filter((trap) => levenshteinWithinN(trap, slugDWord, 2) <= 2)
+    : [];
+  let misspelling = nearbyMisspellings.length
+    ? nearbyMisspellings[Math.floor(random() * nearbyMisspellings.length) % nearbyMisspellings.length]
+    : '';
+  if (!misspelling && slugDWord) {
+    misspelling = deterministicCharSwap(slugDWord, random);
+  }
 
   const cards = [
     { type: 'spell', slug: slugA, patternId },
@@ -718,7 +735,7 @@ export function selectPatternQuestCards({
       type: 'detect-error',
       slug: slugD,
       patternId,
-      misspelling: misspelling || wordBySlug[slugD]?.word || '',
+      misspelling: misspelling || slugDWord || '',
     },
     // Card 5 reuses slugA (mass-then-interleave: variety on card 5 is the
     // explain card-type, not a new slug). Deterministic under a seeded
@@ -727,6 +744,63 @@ export function selectPatternQuestCards({
   ];
 
   return cards;
+}
+
+/**
+ * U11 Fix 4 helper: Levenshtein distance capped at `cap`. Used to filter
+ * Pattern-Quest misspelling traps to those within edit-distance 2 of the
+ * target word so Card 4 always displays a plausible misspelling of the
+ * slug actually being graded.
+ */
+function levenshteinWithinN(a, b, cap = 2) {
+  const s = normalisePatternQuestInput(a).toLocaleLowerCase('en');
+  const t = normalisePatternQuestInput(b).toLocaleLowerCase('en');
+  if (s === t) return 0;
+  const la = s.length;
+  const lb = t.length;
+  if (Math.abs(la - lb) > cap) return cap + 1;
+  // Simple DP, bailing out once the minimum of the current row exceeds cap.
+  let prev = new Array(lb + 1);
+  let curr = new Array(lb + 1);
+  for (let j = 0; j <= lb; j += 1) prev[j] = j;
+  for (let i = 1; i <= la; i += 1) {
+    curr[0] = i;
+    let rowMin = curr[0];
+    for (let j = 1; j <= lb; j += 1) {
+      const cost = s[i - 1] === t[j - 1] ? 0 : 1;
+      curr[j] = Math.min(
+        curr[j - 1] + 1,
+        prev[j] + 1,
+        prev[j - 1] + cost,
+      );
+      if (curr[j] < rowMin) rowMin = curr[j];
+    }
+    if (rowMin > cap) return cap + 1;
+    const tmp = prev;
+    prev = curr;
+    curr = tmp;
+  }
+  return prev[lb];
+}
+
+/**
+ * U11 Fix 4 helper: deterministic single-character swap for a fallback
+ * misspelling when no trap is within distance 2 of the target. Picks a
+ * random position and replaces the character with a nearby one — edit
+ * distance exactly 1 against the target.
+ */
+function deterministicCharSwap(word, random) {
+  if (!word || typeof word !== 'string') return '';
+  const position = Math.floor((typeof random === 'function' ? random() : Math.random()) * word.length);
+  const safePosition = Math.max(0, Math.min(word.length - 1, position));
+  const original = word[safePosition];
+  // Pick a simple swap: if the char is a vowel, swap with a nearby vowel;
+  // otherwise swap with 'z' (conspicuously wrong). Avoids producing the
+  // same word back when word[safePosition] is already the swap target.
+  const vowelSwap = { a: 'e', e: 'a', i: 'o', o: 'u', u: 'i' };
+  const replacement = vowelSwap[original.toLowerCase()]
+    || (original.toLowerCase() === 'z' ? 'q' : 'z');
+  return `${word.slice(0, safePosition)}${replacement}${word.slice(safePosition + 1)}`;
 }
 
 function loadJson(storage, key, fallback) {
@@ -993,6 +1067,12 @@ function decorateSession(engine, learnerId, session, wordBySlug = DEFAULT_WORD_B
   // shape the UI renders — it never consults raw `patternQuestCards[cardIndex]`
   // directly because the card objects get frozen through structuredClone on
   // every transition.
+  //
+  // Fix 2 threads a deterministic per-card shuffle RNG into the decorator so
+  // classify / explain choices are shuffled (correct choice NOT always at
+  // position 0) while still being reproducible across re-decorations of the
+  // same card within a session. The RNG seed includes `session.id` so two
+  // sessions with the same patternId still get different orderings.
   if (session.mode === 'pattern-quest') {
     const cards = Array.isArray(session.patternQuestCards) ? session.patternQuestCards : [];
     const cardIndex = Number.isInteger(session.patternQuestCardIndex) ? session.patternQuestCardIndex : 0;
@@ -1000,7 +1080,16 @@ function decorateSession(engine, learnerId, session, wordBySlug = DEFAULT_WORD_B
     const patternId = typeof session.patternQuestPatternId === 'string' ? session.patternQuestPatternId : '';
     const patternDef = patternId && SPELLING_PATTERNS[patternId] ? SPELLING_PATTERNS[patternId] : null;
     if (card && patternDef) {
-      base.patternQuestCard = decoratePatternQuestCard(card, patternDef, wordBySlug, cardIndex, cards.length);
+      const cardShuffleRandom = deterministicCardSeedRandom({
+        patternId,
+        slug: card.slug,
+        cardIndex,
+        type: card.type,
+        // Blend the session id so repeated rounds of the same pattern show
+        // different choice orderings even if slug/cardIndex repeat.
+        extra: session.id || '',
+      });
+      base.patternQuestCard = decoratePatternQuestCard(card, patternDef, wordBySlug, cardIndex, cards.length, cardShuffleRandom);
     } else {
       base.patternQuestCard = null;
     }
@@ -1017,16 +1106,34 @@ function decorateSession(engine, learnerId, session, wordBySlug = DEFAULT_WORD_B
 
 /**
  * P2 U11: Build the UI-facing Pattern Quest card shape. Classify/explain
- * cards carry 3 deterministic choices with the correct option stamped
- * as `id: 'option-0'`. Detect-error cards carry the misspelling prompt
- * plus the target word. Spell cards inherit the standard session card
- * shape — no extra decoration beyond the base fields.
+ * cards carry 3 deterministic choices with the correct option flagged via
+ * `correct: true`; ids are re-assigned `option-${index}` AFTER a seeded
+ * shuffle so the correct choice is not always position 0 (U11 Fix 2 —
+ * reviewer finding: `id === 'option-0'` grading turned Pattern Quest into a
+ * "pick top" tell within 2 rounds). Detect-error cards carry the
+ * misspelling prompt plus the target word. Spell cards inherit the standard
+ * session card shape — no extra decoration beyond the base fields.
+ *
+ * Shuffle determinism: the `cardShuffleRandom` is derived from the session's
+ * seeded random (threaded through `decorateSession` → `decoratePatternQuestCard`)
+ * so a repeated decoration produces the same choice order on every call for
+ * the same seed + card index. Without a per-card derivation two calls on the
+ * same card from different lifecycle points (e.g. initial start + post-
+ * submit refresh) would produce different orders and the UI would re-shuffle
+ * mid-card. The caller threads a `cardShuffleRandom` that is deterministic
+ * per (patternId, slug, type, cardIndex) tuple — see the call site.
  */
-function decoratePatternQuestCard(card, patternDef, wordBySlug, cardIndex, totalCards) {
+function decoratePatternQuestCard(card, patternDef, wordBySlug, cardIndex, totalCards, cardShuffleRandom) {
   const type = typeof card?.type === 'string' ? card.type : '';
   const slug = typeof card?.slug === 'string' ? card.slug : '';
   const word = slug ? wordBySlug[slug] : null;
   const patternId = typeof card?.patternId === 'string' ? card.patternId : (patternDef?.id || '');
+  // Use the injected per-card shuffle RNG. Falling back to a deterministic
+  // per-(patternId, slug, cardIndex) stream when none is provided keeps tests
+  // that call `decoratePatternQuestCard` directly (rare) still deterministic.
+  const shuffleRandom = typeof cardShuffleRandom === 'function'
+    ? cardShuffleRandom
+    : deterministicCardSeedRandom({ patternId, slug, cardIndex, type });
 
   const base = {
     type,
@@ -1050,7 +1157,6 @@ function decoratePatternQuestCard(card, patternDef, wordBySlug, cardIndex, total
 
   if (type === 'classify') {
     const correctChoice = {
-      id: 'option-0',
       label: patternDef?.title || patternId,
       correct: true,
     };
@@ -1059,17 +1165,21 @@ function decoratePatternQuestCard(card, patternDef, wordBySlug, cardIndex, total
       if (distractors.length >= 2) break;
       if (id === patternId) continue;
       if (!Array.isArray(def.promptTypes) || def.promptTypes.length === 0) continue;
-      distractors.push({ id: `option-${distractors.length + 1}`, label: def.title, correct: false });
+      distractors.push({ label: def.title, correct: false });
     }
+    const combined = [correctChoice, ...distractors];
+    const shuffled = deterministicShuffle(combined, shuffleRandom).map((choice, index) => ({
+      ...choice,
+      id: `option-${index}`,
+    }));
     return {
       ...base,
-      choices: [correctChoice, ...distractors],
+      choices: shuffled,
     };
   }
 
   if (type === 'explain') {
     const correctChoice = {
-      id: 'option-0',
       label: patternDef?.rule || 'This pattern has its own rule.',
       correct: true,
     };
@@ -1079,15 +1189,46 @@ function decoratePatternQuestCard(card, patternDef, wordBySlug, cardIndex, total
       if (id === patternId) continue;
       if (!Array.isArray(def.promptTypes) || def.promptTypes.length === 0) continue;
       if (!def.rule) continue;
-      distractors.push({ id: `option-${distractors.length + 1}`, label: def.rule, correct: false });
+      distractors.push({ label: def.rule, correct: false });
     }
+    const combined = [correctChoice, ...distractors];
+    const shuffled = deterministicShuffle(combined, shuffleRandom).map((choice, index) => ({
+      ...choice,
+      id: `option-${index}`,
+    }));
     return {
       ...base,
-      choices: [correctChoice, ...distractors],
+      choices: shuffled,
     };
   }
 
   return base;
+}
+
+// U11 Fix 2: Deterministic per-card RNG for shuffling classify/explain
+// choices. Built from a simple djb2 hash of the card-identity tuple so two
+// calls to `decoratePatternQuestCard` for the same card produce the same
+// shuffled order — critical for correctness of the submit path (the UI
+// reads the id from the decorated session and sends it back; the service
+// re-decorates on submit and must agree on which id carries `correct:true`).
+//
+// The `extra` key (typically session.id) gives two rounds of the same
+// pattern different orderings so an "enumeration" test over 10 rounds
+// actually observes varying correct-option index rather than the same
+// deterministic shuffle repeating.
+function deterministicCardSeedRandom({ patternId, slug, cardIndex, type, extra } = {}) {
+  let hash = 5381;
+  const seedString = `${patternId || ''}|${slug || ''}|${cardIndex || 0}|${type || ''}|${extra || ''}`;
+  for (let i = 0; i < seedString.length; i += 1) {
+    hash = ((hash << 5) + hash + seedString.charCodeAt(i)) >>> 0;
+  }
+  let state = hash || 0x9E3779B1;
+  return function cardSeededRandom() {
+    state = (state + 0x6D2B79F5) >>> 0;
+    let result = Math.imul(state ^ (state >>> 15), 1 | state);
+    result ^= result + Math.imul(result ^ (result >>> 7), 61 | result);
+    return ((result ^ (result >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
 function buildTransition(state, { events = [], audio = null, changed = true, ok = true } = {}) {
@@ -2660,6 +2801,9 @@ export function createSpellingService({ repository, storage, tts, now, random, c
    * contract:
    *
    *   - NEVER writes `progress.stage` / `dueDay` / `lastDay` / `lastResult`.
+   *   - Updates `progress.attempts` / `correct` / `wrong` only, mirroring
+   *     Boss (U11 Fix 8). Stage / dueDay / lastDay / lastResult are
+   *     preserved — Pattern Quest never demotes Mega.
    *   - Writes to `data.pattern.wobbling[slug]` on wrong answers; clears on
    *     correct answers (same shape the Guardian wobble map uses).
    *   - Card 4 gets H5 hardening: empty submit → no-op; typed value that
@@ -2687,6 +2831,20 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const cardSlug = typeof currentCard.slug === 'string' ? currentCard.slug : '';
     const baseWord = cardSlug ? runtimeWordBySlug[cardSlug] : null;
 
+    // U11 Fix 3: orphan-slug guard. A content hot-swap between session
+    // start and submit can leave `patternQuestCards[i].slug` referencing a
+    // retired word. `submitPatternAnswer` then hit `baseWord.word` (via the
+    // feedback object and close-miss branch) without a null check — TypeError.
+    // Refuse the submit with a structured `invalidSessionTransition` mirroring
+    // Boss's guard at line ~2564 so the UI surfaces a gentle error instead of
+    // crashing the round. Mega is untouched because the guard short-circuits
+    // BEFORE any write to `data.pattern.wobbling` or `progress.*`.
+    if (!baseWord) {
+      return invalidSessionTransition(
+        'This Pattern Quest card lost its word metadata mid-round. The round was stopped to protect your Mega count.',
+      );
+    }
+
     // U11 card-type submission shapes:
     //   spell / detect-error  — rawTyped carries a typed string
     //   classify / explain    — rawTyped carries a choice-id (e.g. "option-0")
@@ -2711,14 +2869,16 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     let closeMiss = false;
 
     if (currentCard.type === 'spell') {
-      correct = baseWord ? isExactPatternMatch(trimmedTyped, baseWord.word) : false;
+      // Fix 3 guard above guarantees `baseWord` is non-null here, so we can
+      // read `baseWord.word` unconditionally in the feedback object.
+      correct = isExactPatternMatch(trimmedTyped, baseWord.word);
       wobbleSlug = cardSlug;
       feedback = correct
         ? { kind: 'success', headline: 'Correct!', answer: baseWord.word, body: 'Same pattern, next one.' }
         : { kind: 'warn', headline: 'Wobble.', answer: baseWord.word, body: 'Mega stays. This word will come back tomorrow.', attemptedAnswer: trimmedTyped };
     } else if (currentCard.type === 'detect-error') {
       const misspelling = typeof currentCard.misspelling === 'string' ? currentCard.misspelling : '';
-      const targetWord = baseWord?.word || '';
+      const targetWord = baseWord.word || '';
       const normalisedTyped = normalisePatternQuestInput(trimmedTyped).toLocaleLowerCase('en');
       const normalisedMisspelling = normalisePatternQuestInput(misspelling).toLocaleLowerCase('en');
       const normalisedTarget = normalisePatternQuestInput(targetWord).toLocaleLowerCase('en');
@@ -2755,11 +2915,36 @@ export function createSpellingService({ repository, storage, tts, now, random, c
         feedback = { kind: 'warn', headline: 'Wobble.', answer: targetWord, body: 'Mega stays. This word will come back tomorrow.', attemptedAnswer: trimmedTyped };
       }
     } else if (currentCard.type === 'classify' || currentCard.type === 'explain') {
-      // Multiple-choice: the current card carries a `choices` array on the
-      // decorated session. The correct choice always has `id === 'option-0'`
-      // because decoratePatternQuestCard stamps the correct option first.
+      // Multiple-choice: the current card's CHOICES array is rebuilt by
+      // `decoratePatternQuestCard` on every decorateSession call and
+      // seeded-shuffled via `deterministicCardSeedRandom` so the correct
+      // option is NOT always at position 0 (U11 Fix 2 — the prior
+      // `id === 'option-0'` shortcut turned Pattern Quest into a "pick top"
+      // tell for children). Re-decorate here with the same seed inputs the
+      // client saw to look up which id carries `correct: true`.
       const chosenId = trimmedTyped;
-      correct = chosenId === 'option-0';
+      const patternDef = patternId && SPELLING_PATTERNS[patternId] ? SPELLING_PATTERNS[patternId] : null;
+      let decoratedChoices = [];
+      if (patternDef) {
+        const cardShuffleRandom = deterministicCardSeedRandom({
+          patternId,
+          slug: cardSlug,
+          cardIndex,
+          type: currentCard.type,
+          extra: session.id || '',
+        });
+        const decoratedCard = decoratePatternQuestCard(
+          currentCard,
+          patternDef,
+          runtimeWordBySlug,
+          cardIndex,
+          cards.length,
+          cardShuffleRandom,
+        );
+        decoratedChoices = Array.isArray(decoratedCard?.choices) ? decoratedCard.choices : [];
+      }
+      const chosen = decoratedChoices.find((choice) => choice && choice.id === chosenId);
+      correct = Boolean(chosen && chosen.correct === true);
       wobbleSlug = cardSlug;
       feedback = correct
         ? { kind: 'success', headline: 'Correct!', body: currentCard.type === 'explain' ? 'That is the right reason.' : 'That is the right pattern.' }
@@ -2772,6 +2957,19 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     // CLEAR the wobble entry (mirrors Guardian's recovered path). Never
     // touches `progress.stage` / `dueDay` / `lastDay` / `lastResult` — the
     // Mega-never-revoked invariant is pinned here.
+    //
+    // U11 Fix 8 (reviewer feedback): mirror Boss's progress counter update so
+    // Pattern Quest attempts/correct/wrong diverge no longer from Boss +
+    // Guardian accounting. Updates only `attempts` / `correct` / `wrong` on
+    // the existing progress record — `stage` / `dueDay` / `lastDay` /
+    // `lastResult` are preserved explicitly because the Pattern Quest
+    // contract is Mega-never-revoked. Skipped when `remainInPlace` is true
+    // (H5 re-prompt) so typing the misspelling verbatim does NOT bump
+    // attempts. Also skipped when `existingProgress` is missing — Pattern
+    // Quest selection already filters by isPatternEligibleSlug, which
+    // requires the progress record, but if a racy hot-swap deleted the
+    // record between selection and submit we refuse to synthesize a fresh
+    // `stage: 0` seed (that would silently demote Mega).
     const patternMap = loadPatternFromStorage(learnerId);
     const todayDay = currentTodayDay();
     const beforeError = readPersistenceError();
@@ -2788,9 +2986,26 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       }
       persistenceSave = savePatternToStorage(learnerId, patternMap);
     }
+    // Fix 8: progress counter update. Runs AFTER the pattern-map write so a
+    // failure on the progress write does not leave the wobble map in a
+    // half-committed state (which is itself survivable; the guard emits a
+    // persistenceWarning via the unified save-failure signature below).
+    let progressSaveResult = { ok: true };
+    if (!remainInPlace && cardSlug) {
+      const progressMap = loadProgressFromStorage(learnerId);
+      const existingProgress = progressMap[cardSlug];
+      if (existingProgress && typeof existingProgress === 'object' && !Array.isArray(existingProgress)) {
+        const nextProgress = { ...existingProgress };
+        nextProgress.attempts = (nextProgress.attempts || 0) + 1;
+        if (correct) nextProgress.correct = (nextProgress.correct || 0) + 1;
+        else nextProgress.wrong = (nextProgress.wrong || 0) + 1;
+        progressMap[cardSlug] = nextProgress;
+        progressSaveResult = saveProgressToStorage(learnerId, progressMap);
+      }
+    }
     const afterError = readPersistenceError();
     const lastErrorChanged = persistenceErrorSignatureChanged(beforeError, afterError);
-    const persistenceWarning = (!persistenceSave?.ok || lastErrorChanged)
+    const persistenceWarning = (!persistenceSave?.ok || !progressSaveResult?.ok || lastErrorChanged)
       ? { reason: SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED }
       : null;
     if (persistenceWarning && feedback) feedback.persistenceWarning = persistenceWarning;
@@ -3262,10 +3477,17 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       createdAt,
     });
     if (sessionCompleted) events.push(sessionCompleted);
+    // U11 Fix 6: thread patternTitle through the event so the reward-toast
+    // subscriber renders readable copy without another registry lookup.
+    const patternDefForEvent = typeof session?.patternQuestPatternId === 'string'
+      && SPELLING_PATTERNS[session.patternQuestPatternId]
+      ? SPELLING_PATTERNS[session.patternQuestPatternId]
+      : null;
     const questCompleted = createSpellingPatternQuestCompletedEvent({
       learnerId,
       session,
       patternId: session.patternQuestPatternId,
+      patternTitle: patternDefForEvent?.title || '',
       slugs,
       correctCount,
       wobbledSlugs,

@@ -1,6 +1,6 @@
 import { monsterSummaryFromSpellingAnalytics } from '../../platform/game/monster-system.js';
 import { dropSessionEphemeralFields } from '../../platform/core/subject-contract.js';
-import { createInitialSpellingState, isPostMasteryMode } from './service-contract.js';
+import { createInitialSpellingState, isMegaSafeMode, isPostMasteryMode } from './service-contract.js';
 import {
   WORD_BANK_FILTER_IDS,
   WORD_BANK_YEAR_FILTER_IDS,
@@ -349,20 +349,21 @@ export const spellingModule = {
     if (action === 'spelling-drill-all') {
       if (!ui.summary?.mistakes?.length) return true;
       tts.stop();
-      // U3: when the origin summary is a Guardian round, force practiceOnly so
-      // the dispatched `mode: 'trouble'` session short-circuits at
-      // `legacy-engine.js:763` and leaves `progress.stage/dueDay/lastDay/
-      // lastResult` + the guardian record untouched. Source of truth is
-      // `ui.summary?.mode` (not a payload flag): summary-phase persistence
-      // across refresh is out of scope today; refactors that change this
-      // must re-validate the practiceOnly path.
+      // U3 / U11: when the origin summary is a Mega-safe mode (Guardian, Boss,
+      // Pattern Quest), force practiceOnly so the dispatched `mode: 'trouble'`
+      // session short-circuits at `legacy-engine.js:763` and leaves
+      // `progress.stage/dueDay/lastDay/lastResult` + the guardian/pattern
+      // records untouched. Using the shared `isMegaSafeMode` predicate keeps
+      // the list of Mega-safe origins in one place — the earlier
+      // `originMode === 'guardian'` check excluded Pattern Quest and would
+      // have demoted Mega via the drill path (U11 reviewer finding).
       const originMode = ui.summary?.mode;
       return applySpellingTransition(context, service.startSession(learnerId, {
         mode: 'trouble',
         words: ui.summary.mistakes.map((word) => word.slug),
         yearFilter: 'all',
         length: ui.summary.mistakes.length,
-        practiceOnly: originMode === 'guardian',
+        practiceOnly: isMegaSafeMode(originMode),
       }));
     }
 
@@ -370,18 +371,21 @@ export const spellingModule = {
       const slug = data.slug;
       if (!slug) return true;
       tts.stop();
-      // U3: mirror of drill-all — Guardian origin must never demote Mega. We
-      // keep the per-word drill using `mode: 'single'` here for legacy
-      // behaviour, then gate `practiceOnly` by `summary.mode === 'guardian'`.
-      // Note that the Guardian scene hides per-word drill chips (U3), so this
-      // branch only fires defensively if a future surface re-exposes them.
+      // U3 / U11: mirror of drill-all — Mega-safe origin (Guardian / Boss /
+      // Pattern Quest) must never demote Mega. We keep the per-word drill
+      // using `mode: 'single'` here for legacy behaviour, then gate
+      // `practiceOnly` by the shared `isMegaSafeMode` predicate. Note that
+      // the Guardian scene hides per-word drill chips (U3), Boss renders
+      // static chips (U10), and Pattern Quest now does the same (U11 Fix 1)
+      // so this branch only fires defensively if a future surface re-exposes
+      // them. The predicate fix is the belt; the scene guard is the braces.
       const originMode = ui.summary?.mode;
       return applySpellingTransition(context, service.startSession(learnerId, {
         mode: 'single',
         words: [slug],
         yearFilter: 'all',
         length: 1,
-        practiceOnly: originMode === 'guardian',
+        practiceOnly: isMegaSafeMode(originMode),
       }));
     }
 

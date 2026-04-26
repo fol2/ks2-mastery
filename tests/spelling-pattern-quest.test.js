@@ -85,6 +85,28 @@ function readPatternMap(harness) {
 // fresh all-core-Mega seed guarantees it lands above the threshold.
 const TEST_PATTERN_ID = 'suffix-tion';
 
+// U11 Fix 2: classify/explain choices are now shuffled by a seeded RNG so
+// the correct option is no longer always at position 0 (which had turned
+// Pattern Quest into a "pick top" cheat within two rounds). Tests that
+// need a correct choice id must look it up dynamically from the decorated
+// card's `choices` array using the `correct: true` flag. This helper
+// centralises the lookup so a future shape change is a one-file fix.
+function correctOptionIdForCard(card) {
+  if (!card || !Array.isArray(card.choices)) return 'option-0';
+  const correctChoice = card.choices.find((choice) => choice && choice.correct === true);
+  return correctChoice?.id || 'option-0';
+}
+
+// U11 Fix 2: a deterministic "wrong" choice id for classify/explain cards.
+// Picks the first `correct: false` choice so tests that expected 'option-1'
+// to always be wrong still work even when the shuffle puts the correct
+// option at index 1.
+function wrongOptionIdForCard(card) {
+  if (!card || !Array.isArray(card.choices)) return 'option-1';
+  const wrongChoice = card.choices.find((choice) => choice && choice.correct !== true);
+  return wrongChoice?.id || 'option-1';
+}
+
 // =============================================================================
 // Constants + event factory
 // =============================================================================
@@ -222,14 +244,15 @@ test('U11 Mega invariant: Pattern Quest round with all 5 wrong never demotes any
 
   let current = started.state;
   // Answer all 5 cards wrong. We dispatch a deliberately wrong typed string
-  // for spell/detect-error cards and an option-id that is NOT `option-0` for
-  // classify/explain cards. The contract: `progress.stage` / `dueDay` /
-  // `lastDay` / `lastResult` are preserved on every seeded slug after every
-  // submit.
+  // for spell/detect-error cards and a `correct: false` option-id for
+  // classify/explain cards (looked up dynamically via wrongOptionIdForCard —
+  // Fix 2 means the correct choice is no longer always at 'option-0'). The
+  // contract: `progress.stage` / `dueDay` / `lastDay` / `lastResult` are
+  // preserved on every seeded slug after every submit.
   for (let i = 0; i < 5; i += 1) {
     const cardType = current.session?.patternQuestCard?.type;
     const wrong = (cardType === 'classify' || cardType === 'explain')
-      ? 'option-1'
+      ? wrongOptionIdForCard(current.session?.patternQuestCard)
       : 'zzz-wrong-pattern';
     const submitted = harness.service.submitAnswer(harness.learnerId, current, wrong);
     current = submitted.state;
@@ -279,7 +302,7 @@ test('U11 happy path: Pattern Quest round answered correctly emits quest-complet
     if (card.type === 'spell') {
       typed = WORD_BY_SLUG[card.slug].word;
     } else if (card.type === 'classify' || card.type === 'explain') {
-      typed = 'option-0';
+      typed = correctOptionIdForCard(card);
     } else if (card.type === 'detect-error') {
       typed = WORD_BY_SLUG[card.slug].word;
     }
@@ -402,7 +425,7 @@ test('U11 Card 4 H5: typing the misspelling verbatim is a re-prompt, not a wobbl
   for (let i = 0; i < 3; i += 1) {
     const card = current.session.patternQuestCard;
     const typed = card.type === 'classify' || card.type === 'explain'
-      ? 'option-0'
+      ? correctOptionIdForCard(card)
       : WORD_BY_SLUG[card.slug].word;
     const step = harness.service.submitAnswer(harness.learnerId, current, typed);
     current = harness.service.continueSession(harness.learnerId, step.state).state;
@@ -430,7 +453,7 @@ test('U11 Card 4 H5: close-miss (Levenshtein 1) of target is accepted, no wobble
   for (let i = 0; i < 3; i += 1) {
     const card = current.session.patternQuestCard;
     const typed = card.type === 'classify' || card.type === 'explain'
-      ? 'option-0'
+      ? correctOptionIdForCard(card)
       : WORD_BY_SLUG[card.slug].word;
     const step = harness.service.submitAnswer(harness.learnerId, current, typed);
     current = harness.service.continueSession(harness.learnerId, step.state).state;
@@ -456,7 +479,7 @@ test('U11 Card 4 H5: empty submit is a no-op', () => {
   for (let i = 0; i < 3; i += 1) {
     const card = current.session.patternQuestCard;
     const typed = card.type === 'classify' || card.type === 'explain'
-      ? 'option-0'
+      ? correctOptionIdForCard(card)
       : WORD_BY_SLUG[card.slug].word;
     const step = harness.service.submitAnswer(harness.learnerId, current, typed);
     current = harness.service.continueSession(harness.learnerId, step.state).state;
@@ -563,12 +586,12 @@ test('U11 event: quest-completed emits AFTER the session finalises', () => {
       if (card.type === 'spell' || card.type === 'detect-error') {
         typed = WORD_BY_SLUG[card.slug].word;
       } else {
-        typed = 'option-0';
+        typed = correctOptionIdForCard(card);
       }
     } else if (card.type === 'spell' || card.type === 'detect-error') {
       typed = 'zzz-wrong';
     } else {
-      typed = 'option-1';
+      typed = wrongOptionIdForCard(card);
     }
     const step = harness.service.submitAnswer(harness.learnerId, current, typed);
     allEvents.push(...(step.events || []));
@@ -602,4 +625,426 @@ test('U11 Resume: persisted practice session carries sessionKind=pattern-quest',
   const latest = harness.repositories.practiceSessions.latest(harness.learnerId, 'spelling');
   assert.ok(latest, 'practice session persisted');
   assert.equal(latest.sessionKind, 'pattern-quest', 'sessionKind reflects pattern-quest mode');
+});
+
+// =============================================================================
+// U11 Fix 2: classify/explain choice shuffling — correct option NOT always 0
+// =============================================================================
+
+test('U11 Fix 2: classify/explain choices shuffle so the correct option is not always index 0', () => {
+  // Run 10 consecutive Pattern Quest rounds on the same pattern and collect
+  // the index of the correct choice on each classify card. The shuffle is
+  // seeded by (patternId, slug, cardIndex, type, session.id), so two rounds
+  // with different session ids must produce different orderings. The
+  // assertion: the correct-choice index is NOT always 0 across the 10
+  // rounds (i.e. actual shuffling happens). A regression that pinned
+  // `option-0` as the correct id would make this assertion fail.
+  const classifyCorrectIndexes = [];
+  const explainCorrectIndexes = [];
+  for (let round = 0; round < 10; round += 1) {
+    const harness = makeHarness({ seed: 100 + round, learnerId: `learner-shuffle-${round}` });
+    let current = harness.service.startSession(harness.learnerId, {
+      mode: 'pattern-quest',
+      patternId: TEST_PATTERN_ID,
+    }).state;
+    // Walk until we see classify + explain cards. Each round has one classify
+    // (index 2) and one explain (index 4) card.
+    for (let i = 0; i < 5; i += 1) {
+      const card = current.session.patternQuestCard;
+      if (card?.type === 'classify' && Array.isArray(card.choices)) {
+        const idx = card.choices.findIndex((choice) => choice && choice.correct === true);
+        if (idx >= 0) classifyCorrectIndexes.push(idx);
+      }
+      if (card?.type === 'explain' && Array.isArray(card.choices)) {
+        const idx = card.choices.findIndex((choice) => choice && choice.correct === true);
+        if (idx >= 0) explainCorrectIndexes.push(idx);
+      }
+      // Advance — send correct id to keep rolling.
+      const typed = card.type === 'spell' || card.type === 'detect-error'
+        ? WORD_BY_SLUG[card.slug].word
+        : correctOptionIdForCard(card);
+      const step = harness.service.submitAnswer(harness.learnerId, current, typed);
+      current = step.state;
+      if (current.awaitingAdvance) {
+        current = harness.service.continueSession(harness.learnerId, current).state;
+      }
+      if (current.phase !== 'session') break;
+    }
+  }
+  // At least one classify / explain card must have the correct option at a
+  // non-zero index — if the shuffle genuinely runs, the distribution
+  // across 10 rounds of 3-way shuffles is ~33% at each position.
+  const classifyHasVariety = classifyCorrectIndexes.some((idx) => idx !== 0);
+  const explainHasVariety = explainCorrectIndexes.some((idx) => idx !== 0);
+  assert.ok(
+    classifyHasVariety,
+    `Classify correct-option indexes should not all be 0 (got ${classifyCorrectIndexes.join(',')})`,
+  );
+  assert.ok(
+    explainHasVariety,
+    `Explain correct-option indexes should not all be 0 (got ${explainCorrectIndexes.join(',')})`,
+  );
+});
+
+test('U11 Fix 2: classify/explain grading works regardless of which option is correct', () => {
+  // Pick a round where the correct option is NOT at index 0, then submit
+  // the id from `correct: true` and verify the feedback reports success.
+  // A regression that graded via `chosenId === 'option-0'` would mark the
+  // round as wrong and wobble the slug.
+  const harness = makeHarness({ seed: 101, learnerId: 'learner-fix2-grading' });
+  let current = harness.service.startSession(harness.learnerId, {
+    mode: 'pattern-quest',
+    patternId: TEST_PATTERN_ID,
+  }).state;
+  // Walk to the classify card (index 2).
+  for (let i = 0; i < 2; i += 1) {
+    const card = current.session.patternQuestCard;
+    const typed = WORD_BY_SLUG[card.slug].word; // spell cards
+    const step = harness.service.submitAnswer(harness.learnerId, current, typed);
+    current = harness.service.continueSession(harness.learnerId, step.state).state;
+  }
+  assert.equal(current.session.patternQuestCard.type, 'classify');
+  const classifyCard = current.session.patternQuestCard;
+  const correctId = correctOptionIdForCard(classifyCard);
+  // Submit the correct id — regardless of whether it is option-0 or -1 or -2.
+  const submitted = harness.service.submitAnswer(harness.learnerId, current, correctId);
+  assert.equal(submitted.state.feedback?.kind, 'success', `classify grading for id=${correctId}`);
+  // No wobble written for the slug.
+  const patternMap = readPatternMap(harness);
+  assert.equal(patternMap.wobbling[classifyCard.slug], undefined, 'correct choice does not wobble');
+});
+
+// =============================================================================
+// U11 Fix 3: orphan-slug guard — retired slug mid-session
+// =============================================================================
+
+test('U11 Fix 3: submit with retired slug returns invalidSessionTransition (no TypeError)', () => {
+  // Rehydrate a Pattern Quest session where the card points to a slug that
+  // is NOT present in runtimeWordBySlug (e.g. removed by a content hot-swap
+  // between session persistence and submit). A regression where
+  // `baseWord.word` was read unconditionally would throw TypeError; the
+  // Fix 3 guard short-circuits with `invalidSessionTransition`.
+  const harness = makeHarness({ seed: 5, learnerId: 'learner-orphan' });
+  const started = harness.service.startSession(harness.learnerId, {
+    mode: 'pattern-quest',
+    patternId: TEST_PATTERN_ID,
+  });
+  assert.equal(started.state.phase, 'session');
+  // Mutate the session's current card to a retired slug. Rehydrate via
+  // initState so the service treats this as the persisted state.
+  const tampered = {
+    ...started.state,
+    session: {
+      ...started.state.session,
+      currentSlug: 'retired_slug_u11_fix3',
+      patternQuestCards: [
+        { type: 'spell', slug: 'retired_slug_u11_fix3', patternId: TEST_PATTERN_ID },
+        ...started.state.session.patternQuestCards.slice(1),
+      ],
+      patternQuestCardIndex: 0,
+      awaitingAdvance: false,
+    },
+    awaitingAdvance: false,
+  };
+  // This MUST NOT throw — the Fix 3 guard catches the missing word metadata.
+  let result;
+  assert.doesNotThrow(() => {
+    result = harness.service.submitAnswer(harness.learnerId, tampered, 'anything');
+  }, 'orphan-slug submit does not throw');
+  assert.equal(result.ok, false, 'orphan-slug submit returns ok:false');
+  assert.ok(
+    (result.state?.error || '').toLowerCase().includes('lost its word'),
+    `error message mentions lost word metadata (got "${result.state?.error}")`,
+  );
+});
+
+// =============================================================================
+// U11 Fix 4: Card 4 misspelling aligned with slugD target (Levenshtein <= 2)
+// =============================================================================
+
+test('U11 Fix 4: Card 4 misspelling is within Levenshtein 2 of the target word', () => {
+  // Enumerate every launched pattern and assert Card 4's misspelling is a
+  // plausible mis-spell of the actual slug being graded. The pre-fix
+  // behaviour sampled a trap uniformly from `pattern.traps`, which could
+  // place a misspelling of "competition" against a target of "position".
+  const harness = makeHarness({ seed: 42, learnerId: 'learner-fix4-lev' });
+  const progressMap = Object.fromEntries(
+    CORE_SLUGS.map((slug) => [slug, { stage: 4, attempts: 1, correct: 1, wrong: 0 }]),
+  );
+  // Small Levenshtein helper for the assertion.
+  function lev(a, b) {
+    const s = a.toLowerCase();
+    const t = b.toLowerCase();
+    const la = s.length;
+    const lb = t.length;
+    const dp = Array.from({ length: la + 1 }, () => new Array(lb + 1).fill(0));
+    for (let i = 0; i <= la; i += 1) dp[i][0] = i;
+    for (let j = 0; j <= lb; j += 1) dp[0][j] = j;
+    for (let i = 1; i <= la; i += 1) {
+      for (let j = 1; j <= lb; j += 1) {
+        const cost = s[i - 1] === t[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+      }
+    }
+    return dp[la][lb];
+  }
+  let enumeratedCount = 0;
+  for (const patternId of Object.keys(SPELLING_PATTERNS)) {
+    // Skip patterns that do not launch (< 4 eligible words).
+    const cards = selectPatternQuestCards({
+      patternId,
+      progressMap,
+      wordBySlug: WORD_BY_SLUG,
+      random: makeSeededRandom(1),
+    });
+    if (cards.length === 0) continue;
+    enumeratedCount += 1;
+    const detectCard = cards.find((c) => c.type === 'detect-error');
+    assert.ok(detectCard, `pattern ${patternId} has a detect-error card`);
+    const targetWord = WORD_BY_SLUG[detectCard.slug]?.word || '';
+    assert.ok(targetWord, `pattern ${patternId} slugD has a target word (slug=${detectCard.slug})`);
+    const misspelling = detectCard.misspelling;
+    assert.ok(misspelling, `pattern ${patternId} detect-error carries a misspelling`);
+    const distance = lev(misspelling, targetWord);
+    assert.ok(
+      distance <= 2,
+      `pattern ${patternId} misspelling "${misspelling}" must be within Lev 2 of "${targetWord}" (got ${distance})`,
+    );
+  }
+  assert.ok(enumeratedCount >= 3, `at least 3 patterns enumerated (got ${enumeratedCount})`);
+});
+
+// =============================================================================
+// U11 Fix 8: progress.attempts / correct / wrong bump on each Pattern Quest submit
+// =============================================================================
+
+test('U11 Fix 8: Pattern Quest submit bumps progress.attempts + correct/wrong without touching stage', () => {
+  const harness = makeHarness({ seed: 42, learnerId: 'learner-fix8-counters' });
+  const before = readProgress(harness);
+  const started = harness.service.startSession(harness.learnerId, {
+    mode: 'pattern-quest',
+    patternId: TEST_PATTERN_ID,
+  });
+  let current = started.state;
+  const firstSlug = current.session.patternQuestCard.slug;
+  // Submit correct first (spell card).
+  const correctSubmit = harness.service.submitAnswer(
+    harness.learnerId,
+    current,
+    WORD_BY_SLUG[firstSlug].word,
+  );
+  current = correctSubmit.state;
+  const progressAfterCorrect = readProgress(harness);
+  assert.equal(
+    progressAfterCorrect[firstSlug].attempts,
+    before[firstSlug].attempts + 1,
+    `attempts bumped by 1 for ${firstSlug} after correct submit`,
+  );
+  assert.equal(
+    progressAfterCorrect[firstSlug].correct,
+    before[firstSlug].correct + 1,
+    `correct bumped by 1 for ${firstSlug}`,
+  );
+  assert.equal(
+    progressAfterCorrect[firstSlug].wrong,
+    before[firstSlug].wrong,
+    `wrong unchanged for ${firstSlug} on correct submit`,
+  );
+  // Stage / dueDay / lastDay / lastResult preserved.
+  assert.equal(progressAfterCorrect[firstSlug].stage, before[firstSlug].stage, 'stage preserved');
+  assert.equal(progressAfterCorrect[firstSlug].dueDay, before[firstSlug].dueDay, 'dueDay preserved');
+  assert.equal(progressAfterCorrect[firstSlug].lastDay, before[firstSlug].lastDay, 'lastDay preserved');
+  assert.equal(
+    progressAfterCorrect[firstSlug].lastResult,
+    before[firstSlug].lastResult,
+    'lastResult preserved',
+  );
+  // Continue to next card, then submit wrong.
+  current = harness.service.continueSession(harness.learnerId, current).state;
+  const secondSlug = current.session.patternQuestCard.slug;
+  const wrongSubmit = harness.service.submitAnswer(harness.learnerId, current, 'zzz-wrong-pq');
+  current = wrongSubmit.state;
+  const progressAfterWrong = readProgress(harness);
+  assert.equal(
+    progressAfterWrong[secondSlug].wrong,
+    before[secondSlug].wrong + 1,
+    `wrong bumped by 1 for ${secondSlug} after wrong submit`,
+  );
+  assert.equal(progressAfterWrong[secondSlug].stage, before[secondSlug].stage, 'stage preserved on wrong');
+});
+
+test('U11 Fix 8: H5 re-prompt (remainInPlace) does NOT bump progress counters', () => {
+  // Typing the misspelling verbatim on Card 4 is a re-prompt (H5) and must
+  // NOT bump attempts — the submit is effectively un-recorded so the child
+  // can try again with a clean slate. A regression that fell through to the
+  // counter-update code would bump attempts for every keystroke-then-submit.
+  const harness = makeHarness({ seed: 2, learnerId: 'learner-fix8-h5' });
+  let current = harness.service.startSession(harness.learnerId, {
+    mode: 'pattern-quest',
+    patternId: TEST_PATTERN_ID,
+  }).state;
+  for (let i = 0; i < 3; i += 1) {
+    const card = current.session.patternQuestCard;
+    const typed = card.type === 'classify' || card.type === 'explain'
+      ? correctOptionIdForCard(card)
+      : WORD_BY_SLUG[card.slug].word;
+    const step = harness.service.submitAnswer(harness.learnerId, current, typed);
+    current = harness.service.continueSession(harness.learnerId, step.state).state;
+  }
+  assert.equal(current.session.patternQuestCard.type, 'detect-error');
+  const slug = current.session.patternQuestCard.slug;
+  const misspelling = current.session.patternQuestCard.misspelling;
+  const attemptsBefore = readProgress(harness)[slug]?.attempts || 0;
+  const submitted = harness.service.submitAnswer(harness.learnerId, current, misspelling);
+  assert.equal(submitted.state.awaitingAdvance, false, 'H5 remain-in-place');
+  const attemptsAfter = readProgress(harness)[slug]?.attempts || 0;
+  assert.equal(attemptsAfter, attemptsBefore, 'H5 re-prompt does NOT bump attempts');
+});
+
+// =============================================================================
+// U11 Fix 5: read-model sessionLabel + recommendedMode for pattern-quest
+// =============================================================================
+
+test('U11 Fix 5: Resume read-model recommendedMode for pattern-quest session', async () => {
+  const { computeCapacityFocus } = await import('../src/subjects/spelling/read-model.js');
+  // Build a minimal harness state: a persisted practice session with
+  // sessionKind === 'pattern-quest'. The read-model's capacity-focus path
+  // reads this and should produce `recommendedMode: 'pattern-quest'`
+  // (Fix 5). A regression that omitted the branch collapsed it to 'smart'.
+  // We just exercise the sessionLabel mapping directly via the exported
+  // function by routing through the module's branch.
+  // Smoke-test via a representative activeSession mock:
+  const activeSession = {
+    id: 'sess-pq',
+    subjectId: 'spelling',
+    sessionKind: 'pattern-quest',
+    sessionState: { currentSlug: 'nation' },
+  };
+  // The read-model only exports `computeCapacityFocus` if it is public; if
+  // the helper is internal, the check still holds via sessionLabel's
+  // branch. Either way, the sanity check is: sessionLabel('pattern-quest')
+  // includes the string 'Pattern Quest'. We access via dynamic import-local
+  // fallback.
+  // Fall back to the user-facing assertion on sessionLabel:
+  if (typeof computeCapacityFocus === 'function') {
+    // Not asserting on the computeCapacityFocus shape here — it depends on
+    // richer fixtures. The branch contract is covered by the sessionLabel
+    // grep below.
+    assert.ok(true, 'computeCapacityFocus present');
+  }
+  // Minimal direct check: the sessionLabel branch is invoked inside
+  // computeCapacityFocus when activeSession.sessionKind === 'pattern-quest'.
+  // We regress-check via a source-level grep guard.
+  const readModelSource = await import('node:fs').then((mod) =>
+    mod.readFileSync(new URL('../src/subjects/spelling/read-model.js', import.meta.url), 'utf8'),
+  );
+  assert.ok(
+    /kind === 'pattern-quest'\s*\?\s*'pattern-quest'/.test(readModelSource),
+    'recommendedMode branch includes pattern-quest mapping',
+  );
+  assert.ok(
+    /kind === 'pattern-quest'\) return 'Pattern Quest';/.test(readModelSource),
+    'sessionLabel branch returns Pattern Quest for pattern-quest kind',
+  );
+});
+
+// =============================================================================
+// U11 Fix 6: reward.toast emission for Pattern Quest completion
+// =============================================================================
+
+test('U11 Fix 6: Pattern Quest completion emits a reward.toast with correct + pattern', async () => {
+  const { createSpellingRewardSubscriber } = await import('../src/subjects/spelling/event-hooks.js');
+  const subscriber = createSpellingRewardSubscriber({ gameStateRepository: null });
+  const completedEvent = {
+    type: SPELLING_EVENT_TYPES.PATTERN_QUEST_COMPLETED,
+    learnerId: 'learner-a',
+    sessionId: 'sess-pq-toast',
+    id: 'spelling.pattern.quest-completed:learner-a:sess-pq-toast:suffix-tion',
+    patternId: 'suffix-tion',
+    patternTitle: 'Words ending in -tion',
+    correctCount: 3,
+    wobbledSlugs: ['nation', 'position'],
+    slugs: ['nation', 'position', 'competition', 'question'],
+    createdAt: 1_700_000_000_000,
+  };
+  const rewards = subscriber([completedEvent]);
+  const toasts = rewards.filter((r) => r.type === 'reward.toast' && r.kind === 'pattern-quest.completed');
+  assert.equal(toasts.length, 1, 'exactly one pattern-quest reward.toast emitted');
+  const toast = toasts[0];
+  assert.equal(toast.subjectId, 'spelling');
+  assert.equal(toast.toast.title, 'Quest complete.');
+  assert.match(toast.toast.body, /Pattern Quest: 3\/5 on Words ending in -tion/);
+});
+
+test('U11 Fix 6: Pattern Quest reward.toast falls back to patternId when patternTitle missing', async () => {
+  const { createSpellingRewardSubscriber } = await import('../src/subjects/spelling/event-hooks.js');
+  const subscriber = createSpellingRewardSubscriber({ gameStateRepository: null });
+  const completedEvent = {
+    type: SPELLING_EVENT_TYPES.PATTERN_QUEST_COMPLETED,
+    learnerId: 'learner-b',
+    sessionId: 'sess-legacy',
+    id: 'spelling.pattern.quest-completed:learner-b:sess-legacy:suffix-tion',
+    patternId: 'suffix-tion',
+    correctCount: 5,
+    slugs: [],
+    wobbledSlugs: [],
+    createdAt: 1_700_000_000_000,
+  };
+  const rewards = subscriber([completedEvent]);
+  const toast = rewards.find((r) => r.kind === 'pattern-quest.completed');
+  assert.ok(toast);
+  assert.match(toast.toast.body, /Pattern Quest: 5\/5 on suffix-tion/);
+});
+
+// =============================================================================
+// U11 Fix 7: SummaryScene renders Pattern Quest summary with back-to-dashboard
+// =============================================================================
+
+test('U11 Fix 7: Pattern Quest summary state exposes static mistake list (no drill CTA)', () => {
+  // The scene-level branch is covered by the React test surface; here we
+  // assert the service-produced summary for a pattern-quest round carries
+  // `mode: 'pattern-quest'` so the scene can branch on it. Without the mode
+  // sentinel, the default drill cluster would render.
+  const harness = makeHarness({ seed: 10, learnerId: 'learner-fix7-summary' });
+  let current = harness.service.startSession(harness.learnerId, {
+    mode: 'pattern-quest',
+    patternId: TEST_PATTERN_ID,
+  }).state;
+  for (let i = 0; i < 5; i += 1) {
+    const card = current.session.patternQuestCard;
+    const wrong = (card.type === 'classify' || card.type === 'explain')
+      ? wrongOptionIdForCard(card)
+      : 'zzz-wrong-fix7';
+    const step = harness.service.submitAnswer(harness.learnerId, current, wrong);
+    current = step.state;
+    if (current.awaitingAdvance) {
+      current = harness.service.continueSession(harness.learnerId, current).state;
+    }
+  }
+  assert.equal(current.phase, 'summary');
+  assert.equal(current.summary.mode, 'pattern-quest', 'summary.mode drives scene branching');
+  assert.ok(current.summary.mistakes.length > 0, 'mistakes populated');
+});
+
+// =============================================================================
+// U11 Fix 2 + 3 + 8: submitBossAnswer is unaffected (regression guard)
+// =============================================================================
+
+test('U11 refactor guard: Boss submit path still updates progress counters and guards orphan slug', async () => {
+  // The Fix 8 progress-counter logic mirrors Boss; a refactor that merged
+  // the two paths and regressed Boss would be caught here. We exercise Boss
+  // specifically (not pattern-quest) to confirm the Pattern Quest additions
+  // did not destabilise the shared helpers.
+  const harness = makeHarness({ seed: 11, learnerId: 'learner-guard-boss' });
+  const started = harness.service.startSession(harness.learnerId, { mode: 'boss', length: 10 });
+  assert.equal(started.state?.session?.mode, 'boss');
+  const slug = started.state.session.currentCard.slug;
+  const before = readProgress(harness)[slug];
+  const correctAnswer = started.state.session.currentCard.word.word;
+  const submitted = harness.service.submitAnswer(harness.learnerId, started.state, correctAnswer);
+  assert.equal(submitted.state?.feedback?.kind, 'info');
+  const after = readProgress(harness)[slug];
+  assert.equal(after.attempts, before.attempts + 1);
+  assert.equal(after.correct, before.correct + 1);
+  assert.equal(after.stage, before.stage, 'Boss preserves stage');
 });
