@@ -52,6 +52,7 @@ import {
   normalisePunctuationMapUi,
 } from '../service-contract.js';
 import { PUNCTUATION_CLIENT_SKILLS } from '../read-model.js';
+import { PunctuationSkillDetailModal } from './PunctuationSkillDetailModal.jsx';
 
 // Child-facing labels for the status filter chips. `'all'` is a literal
 // "All"; the other five ids reach for the shared child-copy mapping in
@@ -354,6 +355,20 @@ export function PunctuationMapScene({ ui, actions }) {
         // regression shows up in the DOM tree tests without blowing up the
         // learner experience.
         <div hidden data-punctuation-map-roster-drift="true" />
+      ) : null}
+
+      {/* U6 Skill Detail modal: rendered when `mapUi.detailOpenSkillId` points
+          at a published Punctuation skill id. The modal consumes
+          `mapUi.detailTab` for the Learn/Practise tab state and dispatches
+          `punctuation-start` `{ mode: 'guided', guidedSkillId, roundLength:
+          '4' }` from its "Practise this" button (plan R3). */}
+      {mapUi.detailOpenSkillId ? (
+        <PunctuationSkillDetailModal
+          skillId={mapUi.detailOpenSkillId}
+          detailTab={mapUi.detailTab}
+          ui={ui}
+          actions={actions}
+        />
       ) : null}
     </section>
   );
