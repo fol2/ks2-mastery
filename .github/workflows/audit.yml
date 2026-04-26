@@ -1,0 +1,45 @@
+# SH2-U11: client-bundle audit on every PR.
+#
+# Plan: docs/plans/2026-04-26-001-feat-sys-hardening-p2-plan.md (lines 747-799, R11).
+#
+# Runs `npm run audit:client` (invokes `scripts/audit-client-bundle.mjs`)
+# on every PR to catch forbidden imports / production-only leaks before
+# the build / deploy path sees them.
+#
+# Security posture (deepening S-02):
+#  - `permissions: contents: read` only.
+#  - NO `CLOUDFLARE_API_TOKEN` / `CF_*` environment variables — this
+#    workflow only exercises the static audit, which needs no secrets.
+
+name: Client Bundle Audit (PR)
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit-pr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: npm run audit:client
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run client-bundle audit
+        run: npm run audit:client

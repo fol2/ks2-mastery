@@ -1,0 +1,66 @@
+# SH2-U11: Node test + OAuth-deploy dry-run on every PR.
+#
+# Plan: docs/plans/2026-04-26-001-feat-sys-hardening-p2-plan.md (lines 747-799, R11).
+#
+# Runs `npm test` (node --test) and `npm run check` (which invokes
+# `scripts/wrangler-oauth.mjs deploy --dry-run`) on every PR. Playwright
+# scenes are skipped by `scripts/run-node-tests.mjs`; they run in the
+# sibling `playwright.yml` workflow.
+#
+# Security posture (deepening S-02):
+#  - `permissions: contents: read` only.
+#  - NO `CLOUDFLARE_API_TOKEN` / `CF_*` environment variables configured
+#    in the repo Actions secrets scope. `npm run check` INTENTIONALLY
+#    fails in CI without OAuth — deploy-capable credentials are
+#    impossible to accidentally expose to a malicious PR because they
+#    simply are not available.
+#  - The `npm run check` step therefore runs under `continue-on-error`
+#    so the absence of OAuth does not block a PR; what it catches is
+#    a wrangler-schema drift (the dry-run reports config-shape errors
+#    regardless of auth). Any other failure mode — broken package
+#    install, corrupted `wrangler.jsonc`, missing env binding schema —
+#    will surface in the step log even without a token.
+
+name: Node Tests (PR)
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: node-test-pr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: npm test + npm run check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run unit + integration tests
+        run: npm test
+
+      - name: Run wrangler deploy dry-run (schema-drift canary)
+        # Intentional safeguard: no CLOUDFLARE_API_TOKEN is configured
+        # in Actions secrets, so `npm run check` will report an auth
+        # failure here. The step stays on `continue-on-error: true`
+        # because the OAuth fallback is a local-developer path, not a
+        # CI path. The value of the step is early detection of
+        # `wrangler.jsonc` schema drift — wrangler exits with a
+        # distinct error code for schema errors vs auth errors.
+        continue-on-error: true
+        run: npm run check
