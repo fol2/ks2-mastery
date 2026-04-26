@@ -103,6 +103,35 @@ function SummaryBossMissList({ mistakes = [] }) {
   );
 }
 
+// U11 Fix 1 (belt-and-braces): Read-only miss-list for Pattern Quest summaries.
+// Pattern Quest is a Mega-safe mode — wrong answers wobble via
+// `data.pattern.wobbling` and never touch `progress.stage`. But a
+// Pattern-Quest summary previously rendered the default drill cluster
+// (`spelling-drill-single` / `spelling-drill-all`) with the `originMode`
+// check `=== 'guardian'`, which excluded Pattern Quest and sent the child
+// into a Mega-demoting drill session. Fix 1 in the dispatcher swaps to
+// `isMegaSafeMode` (covers Pattern Quest) and this scene branch removes the
+// drill buttons at the JSX layer too so the drill-single CTA never renders
+// on a Pattern Quest summary. Belt AND braces — a future dispatcher
+// regression cannot leak through, and a future scene regression cannot
+// either.
+function SummaryPatternQuestMissList({ mistakes = [] }) {
+  if (!mistakes.length) return null;
+  return (
+    <div className="summary-drill summary-drill--pattern-quest">
+      <div className="summary-drill-head">
+        <h4>Words that wobbled on this quest</h4>
+        <span className="small muted">Mega stays. They will come back for a Guardian check tomorrow.</span>
+      </div>
+      <div className="summary-drill-chips">
+        {mistakes.map((word) => (
+          <span className="fchip fchip--static" key={word.slug}>{word.word}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery = null, previousHeroBg = '', runtimeReadOnly = false }) {
   const summary = ui.summary;
   // SH2-U1: JSX-layer guard for non-destructive next-action buttons.
@@ -130,6 +159,21 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
   // the stat grid reads correctly; the scene-level branch adds the score
   // line band + read-only miss list alongside that.
   const isBossSummary = summary.mode === 'boss';
+  // U11 Fix 1 + Fix 7: Pattern Quest summaries render static chips (no drill
+  // CTA) and replace the Start-another-round button with Back-to-dashboard.
+  // Rationale:
+  //   - Drill CTA (Fix 1 belt): the `spelling-drill-single` and
+  //     `spelling-drill-all` paths swap in `mode: 'single' / 'trouble'` which
+  //     demotes Mega on wrong-then-correct (applyLearningOutcome). The
+  //     dispatcher already fixes `practiceOnly` via isMegaSafeMode, but
+  //     removing the CTA at the scene layer closes the loop so a future
+  //     dispatcher regression cannot surface the bug.
+  //   - Start-another-round (Fix 7): `spelling-start-again` fires the
+  //     standard start path which needs `{ mode, patternId }`; the summary
+  //     state does not thread the patternId today. Routing to
+  //     "Back to dashboard" keeps the Pattern Quest chooser-first UX until a
+  //     P2.5 iteration threads patternId through summary state.
+  const isPatternQuestSummary = summary.mode === 'pattern-quest';
   // When we exit a Guardian round the postMastery snapshot reflects the
   // post-advance state — so `nextGuardianDueDay` already tells us when the
   // learner should return. If postMastery is unavailable (e.g. SSR before
@@ -153,12 +197,14 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
               ? 'Guardian round complete'
               : isBossSummary
                 ? 'Boss round complete'
-                : 'Round complete'}
+                : isPatternQuestSummary
+                  ? 'Pattern Quest complete'
+                  : 'Round complete'}
           </span>
         </header>
 
         <AnimatedPromptCard
-          className={`summary-card${isGuardianSummary ? ' summary-card--guardian' : ''}${isBossSummary ? ' summary-card--boss' : ''}`}
+          className={`summary-card${isGuardianSummary ? ' summary-card--guardian' : ''}${isBossSummary ? ' summary-card--boss' : ''}${isPatternQuestSummary ? ' summary-card--pattern-quest' : ''}`}
           innerClassName="summary-card-inner"
         >
           <h3 className="summary-title sr-only">Session summary</h3>
@@ -176,6 +222,8 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
 
           {isBossSummary ? (
             <SummaryBossMissList mistakes={summary.mistakes} />
+          ) : isPatternQuestSummary ? (
+            <SummaryPatternQuestMissList mistakes={summary.mistakes} />
           ) : summary.mistakes.length ? (
             isGuardianSummary ? (
               // U3: Guardian summaries replace the legacy "Drill all" + per-word
@@ -252,26 +300,48 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
           ) : null}
 
           <div className="summary-actions">
-            <button
-              type="button"
-              className="btn ghost lg"
-              data-action="spelling-back"
-              onClick={(event) => renderAction(actions, event, 'spelling-back')}
-            >
-              Back to dashboard
-            </button>
-            <button
-              type="button"
-              className="btn primary lg"
-              style={{ '--btn-accent': accent }}
-              data-action="spelling-start-again"
-              disabled={runtimeReadOnly || pending || submitLock.locked}
-              onClick={(event) => {
-                submitLock.run(async () => renderAction(actions, event, 'spelling-start-again'));
-              }}
-            >
-              {pendingCommand === 'start-session' ? 'Starting...' : 'Start another round'} <ArrowRightIcon />
-            </button>
+            {isPatternQuestSummary ? (
+              // U11 Fix 7: Pattern Quest summaries only offer "Back to
+              // dashboard" as the primary action — the legacy
+              // `spelling-start-again` dispatch does NOT thread `patternId`,
+              // so re-starting from a Pattern Quest summary would either
+              // launch a different mode (pref default) or re-launch without
+              // a pattern id and refuse. Routing back to the dashboard keeps
+              // the chooser-first flow until summary state threads the
+              // patternId through for a P2.5 iteration.
+              <button
+                type="button"
+                className="btn primary lg"
+                style={{ '--btn-accent': accent }}
+                data-action="spelling-back"
+                onClick={(event) => renderAction(actions, event, 'spelling-back')}
+              >
+                Back to dashboard <ArrowRightIcon />
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="btn ghost lg"
+                  data-action="spelling-back"
+                  onClick={(event) => renderAction(actions, event, 'spelling-back')}
+                >
+                  Back to dashboard
+                </button>
+                <button
+                  type="button"
+                  className="btn primary lg"
+                  style={{ '--btn-accent': accent }}
+                  data-action="spelling-start-again"
+                  disabled={runtimeReadOnly || pending || submitLock.locked}
+                  onClick={(event) => {
+                    submitLock.run(async () => renderAction(actions, event, 'spelling-start-again'));
+                  }}
+                >
+                  {pendingCommand === 'start-session' ? 'Starting...' : 'Start another round'} <ArrowRightIcon />
+                </button>
+              </>
+            )}
             <button
               type="button"
               className="summary-bank-link"

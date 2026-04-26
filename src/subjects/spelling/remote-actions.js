@@ -14,7 +14,7 @@ import {
 import {
   unacknowledgedMonsterCelebrationEvents,
 } from '../../platform/game/monster-celebration-acks.js';
-import { isPostMasteryMode } from './service-contract.js';
+import { isMegaSafeMode, isPostMasteryMode } from './service-contract.js';
 
 const READ_ONLY_MESSAGE = 'Practice is read-only while sync is degraded. Retry sync before continuing.';
 const SETUP_PREF_SAVE_DEBOUNCE_MS = 120;
@@ -33,6 +33,10 @@ const SPELLING_COMMAND_ACTIONS = new Set([
   'spelling-end-early',
   'spelling-drill-all',
   'spelling-drill-single',
+  // P2 U9: durable persistence-warning acknowledge. Goes through the same
+  // command channel so remote-sync learners dismiss the banner via a
+  // Worker-side command, keeping server `data.persistenceWarning` in sync.
+  'spelling-acknowledge-persistence-warning',
 ]);
 
 const SPELLING_SETUP_PREF_ACTIONS = new Set([
@@ -48,6 +52,10 @@ const SPELLING_IN_FLIGHT_DEDUPE_COMMANDS = new Set([
   'continue-session',
   'skip-word',
   'end-session',
+  // P2 U9 reviewer-feedback fix (LOW): dedupe double-click on the
+  // "I understand" button. Without this, a fast double-click fires two
+  // acknowledge commands; the second is a no-op but still round-trips.
+  'acknowledge-persistence-warning',
 ]);
 
 const SPELLING_UI_LOCAL_ACTIONS = new Set([
@@ -86,6 +94,13 @@ function pendingCommandBlocksAction(action, appState = {}) {
   const pendingCommand = spellingPendingCommand(appState);
   if (!pendingCommand || !SPELLING_COMMAND_ACTIONS.has(action)) return false;
   if (pendingCommand === 'save-prefs' && SPELLING_SETUP_PREF_ACTIONS.has(action)) return false;
+  // P2 U9 reviewer-feedback fix (LOW): acknowledge writes to a different
+  // sibling (`data.persistenceWarning`) than submit-answer (`data.progress`
+  // + `data.guardian`), so structurally they do not conflict. Blocking the
+  // banner dismissal during an in-flight submit is unnecessary and degrades
+  // UX — the learner sees the banner linger until submit completes. Bypass
+  // the pending-command block specifically for the acknowledge action.
+  if (action === 'spelling-acknowledge-persistence-warning') return false;
   return true;
 }
 
@@ -634,6 +649,7 @@ export function createRemoteSpellingActionHandler({
     const {
       learnerId: requestedLearnerId = '',
       errorLearnerId = '',
+      errorMessage = '',
       beforeSend = null,
       onSuccess = null,
       onError = null,
@@ -652,9 +668,15 @@ export function createRemoteSpellingActionHandler({
     }).catch((error) => {
       onError?.(error);
       globalThis.console?.warn?.('Spelling command failed.', error);
+      // P2 U9 reviewer-feedback fix: `errorMessage` is a caller-provided
+      // override so specific commands (e.g. acknowledge-persistence-warning)
+      // can surface child-friendly copy instead of the generic fallback.
+      // Fall back to `commandErrorMessage` so existing callers keep the
+      // previous behaviour (no caller has to opt into the override).
+      const fallback = errorMessage || 'The spelling command could not be completed.';
       setRuntimeErrorForLearner(
         errorLearnerId || commandLearnerId,
-        commandErrorMessage(error, 'The spelling command could not be completed.'),
+        errorMessage || commandErrorMessage(error, fallback),
       );
     }).finally(() => {
       releasePendingCommand(command, pending.dedupeKey);
@@ -994,6 +1016,10 @@ export function createRemoteSpellingActionHandler({
         updateOptimisticPrefs(patch);
         const prefsBeforeStart = visiblePrefsForLearner(learnerId, appState());
         const shortcutLength = data.length != null ? data.length : prefsBeforeStart.roundLength;
+        // U11: Pattern Quest payload carries `patternId` so the Worker
+        // selector knows which 5-card quest to build. Guardian / Boss
+        // ignore it; the Worker's startSession branches on mode first.
+        const patternId = typeof data.patternId === 'string' ? data.patternId : '';
         let startResponse = null;
         try {
           startResponse = await sendCommand('start-session', {
@@ -1001,6 +1027,7 @@ export function createRemoteSpellingActionHandler({
             yearFilter: prefsBeforeStart.yearFilter,
             length: shortcutLength,
             extraWordFamilies: prefsBeforeStart.extraWordFamilies,
+            patternId,
           }, { learnerId });
         } catch (error) {
           // Rollback: the optimistic prefs must not outlive a failed
@@ -1077,21 +1104,23 @@ export function createRemoteSpellingActionHandler({
       const mistakes = Array.isArray(ui.summary?.mistakes) ? ui.summary.mistakes : [];
       if (!mistakes.length) return true;
       tts.stop();
-      // U3: mirror of `module.js` drill-all branch — Guardian-origin summary
-      // must never demote Mega via the Worker engine either. Worker's
-      // `legacy-engine.js:763` equivalent honours `practiceOnly` identically,
-      // so forwarding the flag on the remote start-session command keeps the
-      // Mega-never-revoked invariant under remote-sync. Source of truth is
-      // `ui.summary?.mode`; summary-phase persistence across refresh is out
-      // of scope today — refactors that change this must re-validate the
-      // practiceOnly path on both runtimes.
+      // U3 / U11: mirror of `module.js` drill-all branch — Mega-safe origin
+      // (Guardian, Boss, Pattern Quest) summary must never demote Mega via
+      // the Worker engine either. Worker's `legacy-engine.js:763` equivalent
+      // honours `practiceOnly` identically, so forwarding the flag on the
+      // remote start-session command keeps the Mega-never-revoked invariant
+      // under remote-sync. Uses the shared `isMegaSafeMode` predicate so
+      // Pattern Quest (U11) and future post-Mega modes are covered in one
+      // place — the earlier `originMode === 'guardian'` strict match
+      // excluded Pattern Quest and would have demoted Mega (U11 reviewer
+      // finding).
       const originMode = ui.summary?.mode;
       runCommand('start-session', {
         mode: 'trouble',
         words: mistakes.map((word) => word.slug).filter(Boolean),
         yearFilter: 'all',
         length: mistakes.length,
-        practiceOnly: originMode === 'guardian',
+        practiceOnly: isMegaSafeMode(originMode),
       });
       return true;
     }
@@ -1100,17 +1129,42 @@ export function createRemoteSpellingActionHandler({
       const slug = String(data.slug || '').trim();
       if (!slug) return true;
       tts.stop();
-      // U3: mirror of `module.js` drill-single branch. The Guardian scene
-      // hides per-word drill chips so this branch only fires defensively if
-      // a future surface re-exposes them — but the defensive guard is the
-      // whole point of a parity check between local and remote paths.
+      // U3 / U11: mirror of `module.js` drill-single branch. The Guardian
+      // scene hides per-word drill chips, Boss uses static chips, and
+      // Pattern Quest now does the same (U11 Fix 1 scene guard) so this
+      // branch only fires defensively if a future surface re-exposes them —
+      // but the defensive guard is the whole point of a parity check between
+      // local and remote paths. `isMegaSafeMode` keeps Guardian + Boss +
+      // Pattern Quest covered in one predicate.
       const originMode = ui.summary?.mode;
       runCommand('start-session', {
         mode: 'single',
         words: [slug],
         yearFilter: 'all',
         length: 1,
-        practiceOnly: originMode === 'guardian',
+        practiceOnly: isMegaSafeMode(originMode),
+      });
+      return true;
+    }
+
+    // P2 U9: remote-sync parity for the durable persistence-warning
+    // acknowledge. Mirrors the `module.js` dispatcher exactly — routes
+    // through the Worker command boundary so server-side
+    // `data.persistenceWarning.acknowledged` stays in sync with the client.
+    // The local service is also updated optimistically via the command
+    // response (Worker twin's `acknowledge-persistence-warning` command
+    // writes `acknowledged: true` and returns fresh `data`).
+    //
+    // Reviewer-feedback fix (PR #279 HIGH): if the Worker round-trip fails
+    // (network, 5xx, or degraded mode) `runCommand`'s default error handler
+    // would emit a generic "The spelling command could not be completed." —
+    // we override with child-friendly copy that matches the local-mode
+    // dispatcher in `module.js`, so the banner re-renders but the learner
+    // sees a clear "try again" message instead of a mystery.
+    if (action === 'spelling-acknowledge-persistence-warning') {
+      runCommand('acknowledge-persistence-warning', {}, {
+        errorLearnerId: learnerId,
+        errorMessage: 'Could not save — try again when storage is available.',
       });
       return true;
     }

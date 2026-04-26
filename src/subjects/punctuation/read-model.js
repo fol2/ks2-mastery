@@ -9,7 +9,12 @@ export const PUNCTUATION_CLIENT_SKILLS = Object.freeze([
   { id: 'apostrophe_contractions', name: 'Apostrophes for contraction', clusterId: 'apostrophe' },
   { id: 'apostrophe_possession', name: 'Apostrophes for possession', clusterId: 'apostrophe' },
   { id: 'speech', name: 'Inverted commas and speech punctuation', clusterId: 'speech' },
-  { id: 'fronted_adverbial', name: 'Commas after fronted adverbials', clusterId: 'comma_flow' },
+  // Phase 4 U7: child-register name. Prior "Commas after fronted
+  // adverbials" used adult grammar terminology; the new name matches
+  // the `punctuationChildRegisterOverride` table swap so the rendered
+  // surface is consistent whether the skill name is read from this
+  // client mirror or passed through the override helper.
+  { id: 'fronted_adverbial', name: 'Commas after starter phrases', clusterId: 'comma_flow' },
   { id: 'parenthesis', name: 'Parenthesis with commas, brackets or dashes', clusterId: 'structure' },
   { id: 'comma_clarity', name: 'Commas for clarity', clusterId: 'comma_flow' },
   { id: 'colon_list', name: 'Colon before a list', clusterId: 'structure' },

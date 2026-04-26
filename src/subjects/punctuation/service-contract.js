@@ -354,6 +354,24 @@ function normaliseGpsSummary(value) {
   };
 }
 
+// Phase 4 U5: preserve the client-side payload that the Punctuation
+// Summary scene renders as a monster-progress teaser. The Worker today
+// does NOT emit this field (teaser payloads originate client-side when
+// the reward subscriber observes a stage delta), but the normaliser is
+// kept defensive so a Worker that later adopts the shape passes through
+// untouched. Reserved monster ids are NOT filtered here — the scene's
+// `extractMonsterProgress` helper owns the active-roster gate so the
+// normaliser stays a pure shape check.
+function normalisePunctuationSummaryMonsterProgress(value) {
+  if (!isPlainObject(value)) return null;
+  const monsterId = normaliseOptionalString(value.monsterId);
+  if (!monsterId) return null;
+  const stageFrom = Number(value.stageFrom);
+  const stageTo = Number(value.stageTo);
+  if (!Number.isFinite(stageFrom) || !Number.isFinite(stageTo)) return null;
+  return { monsterId, stageFrom, stageTo };
+}
+
 export function normalisePunctuationSummary(value) {
   if (!isPlainObject(value)) return null;
   const total = normaliseNonNegativeInteger(value.total, 0);
@@ -368,6 +386,15 @@ export function normalisePunctuationSummary(value) {
     sessionId: normaliseOptionalString(value.sessionId),
     completedAt: normaliseTimestamp(value.completedAt, 0),
     focus: normaliseStringArray(value.focus),
+    // Phase 4 U5: skills the learner touched this round (NOT just wobbly).
+    // Separate from `focus` so the Summary scene can paint a chip per skill
+    // with a "needs practice" vs "secure" status based on membership in
+    // `focus`.
+    skillsExercised: normaliseStringArray(value.skillsExercised),
+    // Phase 4 U5: stage delta for the monster-progress teaser. Null when
+    // no stage advanced this round; the scene filters reserved ids before
+    // rendering.
+    monsterProgress: normalisePunctuationSummaryMonsterProgress(value.monsterProgress),
     securedUnits: normaliseStringArray(value.securedUnits),
     misconceptionTags: normaliseStringArray(value.misconceptionTags),
     gps: normaliseGpsSummary(value.gps),

@@ -7,6 +7,23 @@ import { AccessDeniedCard, formatTimestamp, isBlocked, selectedWritableLearner }
 import { PanelHeader } from './admin-panel-header.jsx';
 import { decideDirtyResetOnServerUpdate } from '../../platform/hubs/admin-metadata-dirty-registry.js';
 import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
+import { AdultConfidenceChip } from '../../subjects/grammar/components/AdultConfidenceChip.jsx';
+import { GRAMMAR_RECENT_ATTEMPT_HORIZON } from '../../../shared/grammar/confidence.js';
+// U9: 409 conflict banner diff helpers live as a plain-JS neighbour so
+// Node tests can import them without a JSX loader.
+import {
+  buildAccountOpsMetadataConflictDiff,
+  formatAccountOpsMetadataConflictValue,
+} from '../../platform/hubs/admin-metadata-conflict-diff.js';
+// C2/C3 (Phase C reviewer fix): the "Keep mine" and "Use theirs" click
+// handlers delegate to pure-function helpers so Node tests can exercise
+// the dispatch payload + state-transition logic without mounting React.
+import {
+  buildKeepMineDispatchPayload,
+  applyUseTheirsStateUpdate,
+} from '../../platform/hubs/admin-metadata-conflict-actions.js';
+export { buildAccountOpsMetadataConflictDiff };
+const formatConflictValue = formatAccountOpsMetadataConflictValue;
 
 function AdminAccountRoles({ model, directory = {}, actions }) {
   const isAdmin = model?.permissions?.platformRole === 'admin';
@@ -128,6 +145,132 @@ function PostMegaSpellingDebugPanel({ debug = null }) {
   );
 }
 
+// P2 U3: admin-only QA seed harness panel. Renders a shape dropdown +
+// learner picker + "Apply seed" button. The dropdown contents come from
+// `model.postMegaSeedHarness.shapes` (server-provided so a bundle-less local
+// fallback still gets the canonical list). Gated on platform-role = admin;
+// ops accounts see a read-only "Admin-only" notice so the panel's presence
+// in the read-model stays shape-stable.
+//
+// Accessibility: the `<label>` wraps the `<select>` so screen readers
+// announce the field name; the learner picker is a native `<select>` tied
+// by `htmlFor` via the `AdultLearnerSelect` helper used elsewhere on the
+// hub. The Apply button disables while no shape or learner is chosen.
+function PostMegaSeedHarnessPanel({ model, actions }) {
+  const isAdmin = model?.permissions?.platformRole === 'admin';
+  const shapes = Array.isArray(model?.postMegaSeedHarness?.shapes)
+    ? model.postMegaSeedHarness.shapes
+    : [];
+  const accessibleLearners = Array.isArray(model?.learnerSupport?.accessibleLearners)
+    ? model.learnerSupport.accessibleLearners
+    : [];
+  const defaultLearnerId = model?.learnerSupport?.selectedLearnerId || '';
+  const [shapeName, setShapeName] = React.useState(shapes[0] || '');
+  const [learnerId, setLearnerId] = React.useState(defaultLearnerId);
+  const [manualLearnerId, setManualLearnerId] = React.useState('');
+
+  React.useEffect(() => {
+    if (!shapeName && shapes.length) setShapeName(shapes[0]);
+  }, [shapes, shapeName]);
+  React.useEffect(() => {
+    if (!learnerId && defaultLearnerId) setLearnerId(defaultLearnerId);
+  }, [defaultLearnerId, learnerId]);
+
+  if (!isAdmin) {
+    return (
+      <section className="card" style={{ marginBottom: 20 }} data-panel="post-mega-seed-harness">
+        <div className="eyebrow">QA · post-Mega seed</div>
+        <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Admin-only seed harness</h3>
+        <div className="feedback warn">Only admin accounts can apply QA seed shapes. Ops-role viewers keep read-only access to the diagnostic panels.</div>
+      </section>
+    );
+  }
+
+  const effectiveLearnerId = manualLearnerId.trim() || learnerId;
+  const canApply = Boolean(effectiveLearnerId) && Boolean(shapeName);
+
+  return (
+    <section className="card" style={{ marginBottom: 20 }} data-panel="post-mega-seed-harness">
+      <div className="eyebrow">QA · post-Mega seed</div>
+      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Post-Mega learner seed harness</h3>
+      <p className="small muted">
+        Write a deterministic post-Mega learner state into the child subject
+        store. Useful for reproducing the 8 canonical fixtures without playing
+        a round. Seed overwrites existing state; the pre-image is captured in
+        the audit log for rollback.
+      </p>
+      <div className="skill-row">
+        <label className="field" style={{ minWidth: 220 }}>
+          <span>Seed shape</span>
+          <select
+            className="select"
+            name="postMegaSeedShape"
+            value={shapeName}
+            onChange={(event) => setShapeName(event.target.value)}
+          >
+            {shapes.map((shape) => (
+              <option value={shape} key={shape}>{shape}</option>
+            ))}
+          </select>
+        </label>
+        <label className="field" style={{ minWidth: 220 }}>
+          <span>Existing learner</span>
+          <select
+            className="select"
+            name="postMegaSeedLearnerId"
+            value={learnerId}
+            onChange={(event) => setLearnerId(event.target.value)}
+          >
+            <option value="">— choose learner —</option>
+            {accessibleLearners.map((entry) => (
+              <option value={entry.learnerId} key={entry.learnerId}>
+                {entry.learnerName} · {entry.yearGroup}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field" style={{ minWidth: 220 }}>
+          <span>…or new learner id</span>
+          <input
+            className="input"
+            type="text"
+            name="postMegaSeedManualLearnerId"
+            value={manualLearnerId}
+            maxLength={64}
+            // U3 reviewer follow-up (MEDIUM adversarial): browser-side
+            // validation mirrors the Worker + CLI regex so operators see the
+            // red ring immediately when they paste `alice\nbob` or similar.
+            // The pattern lives in an attribute so React still echoes the
+            // value unchanged; the Worker enforces it authoritatively.
+            pattern="[a-z0-9][a-z0-9-]{0,63}"
+            title="Lowercase letters, digits, and hyphens. Must start with a letter or digit. Maximum 64 characters."
+            onChange={(event) => setManualLearnerId(event.target.value)}
+            placeholder="seed-learner-2026-04-26"
+          />
+        </label>
+        <div>
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={!canApply}
+            onClick={() => actions.dispatch('post-mega-seed-apply', {
+              learnerId: effectiveLearnerId,
+              shapeName,
+            })}
+          >
+            Apply seed
+          </button>
+          <div className="small muted" style={{ marginTop: 6 }}>
+            {canApply
+              ? `Will write ${shapeName} → ${effectiveLearnerId}.`
+              : 'Choose a shape and learner to apply.'}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function DemoOperationsSummary({ summary = {} }) {
   const items = [
     ['Demo sessions created', summary.sessionsCreated],
@@ -158,6 +301,185 @@ function DemoOperationsSummary({ summary = {} }) {
   );
 }
 
+// Phase 4 U7: Admin Hub "Grammar concepts" confidence panel. Admins see the
+// full 5-field confidence projection — label, sample size, recent-miss
+// count, interval-days spacing, and distinct-template coverage — for every
+// tracked Grammar concept on the selected learner. Child surfaces MUST NOT
+// import `AdultConfidenceChip`; `tests/grammar-parent-hub-confidence.test.js`
+// greps the dashboard / bank / summary / transfer scene code to lock this.
+function GrammarConceptConfidencePanel({ evidence }) {
+  const rows = Array.isArray(evidence?.conceptStatus) ? evidence.conceptStatus : [];
+  return (
+    <section className="card" style={{ marginBottom: 20 }} data-panel="grammar-concept-confidence">
+      <div className="eyebrow">Grammar · concept confidence</div>
+      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Grammar concepts</h3>
+      <p className="small muted">
+        Adult-facing confidence label per concept for the selected learner, with the full evidence shape: sample size, recent misses, interval-days spacing, and distinct-template coverage over the last {GRAMMAR_RECENT_ATTEMPT_HORIZON} attempts.
+      </p>
+      {rows.length ? (
+        <ul className="admin-grammar-confidence-list" aria-label="Grammar concept confidence chips">
+          {rows.map((row) => (
+            <li
+              className="admin-grammar-confidence-row skill-row"
+              key={row.id || row.name}
+              data-concept-id={row.id || ''}
+            >
+              <div>
+                <strong>{row.name || row.id}</strong>
+                <div className="small muted">{row.domain || 'Grammar'}</div>
+              </div>
+              <div>
+                <AdultConfidenceChip
+                  confidence={row.confidence || null}
+                  showAdminExtras
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="small muted">No Grammar concept evidence has been recorded for this learner.</p>}
+    </section>
+  );
+}
+
+// U10: Grammar Writing Try admin panel. Renders the live + archived
+// transfer evidence for the selected learner with archive + two-step
+// delete controls. The controls dispatch to the `grammar-transfer-admin-*`
+// actions in main.js, which call the `/api/admin/learners/:id/grammar/
+// transfer-evidence/:promptId/{archive,delete}` routes guarded by
+// `requireAdminHubAccess`. Role is derived server-side; this component
+// never claims the admin role.
+//
+// UX:
+//   - Live evidence section: one row per saved prompt with "Archive" button.
+//   - Archive section (collapsible): rows for archived prompts with
+//     "Delete" button. Delete dispatches through a confirm dialog so a
+//     misclick cannot wipe writing irreversibly. The archive-before-delete
+//     invariant is enforced server-side; the button layout mirrors that
+//     contract by only offering Delete inside the Archive section.
+//   - Empty states: clear messaging when there's no evidence / archive yet.
+function GrammarWritingTryAdminPanel({ learnerId, transfer, actions }) {
+  const [archiveOpen, setArchiveOpen] = React.useState(false);
+  const liveEntries = Array.isArray(transfer?.evidence) ? transfer.evidence : [];
+  const archivedEntries = Array.isArray(transfer?.archive) ? transfer.archive : [];
+  if (!learnerId) {
+    return (
+      <section className="card" style={{ marginBottom: 20 }} data-panel="grammar-writing-try-admin">
+        <div className="eyebrow">Grammar · Writing Try admin</div>
+        <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Writing Try — archive and delete</h3>
+        <p className="small muted">Choose a learner to manage their saved Writing Try entries.</p>
+      </section>
+    );
+  }
+  return (
+    <section className="card" style={{ marginBottom: 20 }} data-panel="grammar-writing-try-admin">
+      <div className="eyebrow">Grammar · Writing Try admin</div>
+      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Writing Try — archive and delete</h3>
+      <p className="small muted">
+        Writing Try evidence is non-scored. Archive removes an entry from the learner's active list without deleting it. Delete is only allowed once an entry is archived.
+      </p>
+      <section aria-labelledby="grammar-writing-try-admin-live" style={{ marginTop: 16 }}>
+        <h4 id="grammar-writing-try-admin-live" className="small" style={{ fontWeight: 700, marginBottom: 8 }}>
+          Active entries
+        </h4>
+        {liveEntries.length ? (
+          <ul className="skill-list" aria-label="Active Writing Try entries">
+            {liveEntries.map((entry) => (
+              <li
+                className="skill-row"
+                key={`live-${entry.promptId}`}
+                data-prompt-id={entry.promptId}
+                data-entry-kind="live"
+              >
+                <div>
+                  <strong>{entry.promptId}</strong>
+                  <div className="small muted">
+                    Saved {formatTimestamp(entry.latest?.savedAt || entry.updatedAt)}
+                  </div>
+                </div>
+                <div>
+                  <button
+                    className="btn secondary"
+                    type="button"
+                    data-action="grammar-transfer-admin-archive"
+                    data-prompt-id={entry.promptId}
+                    onClick={() => actions.dispatch('grammar-transfer-admin-archive', {
+                      learnerId,
+                      promptId: entry.promptId,
+                    })}
+                  >
+                    Archive
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="small muted">No active Writing Try entries for this learner.</p>
+        )}
+      </section>
+      <section aria-labelledby="grammar-writing-try-admin-archive" style={{ marginTop: 20 }}>
+        <h4 id="grammar-writing-try-admin-archive" className="small" style={{ fontWeight: 700, marginBottom: 8 }}>
+          Archived entries
+        </h4>
+        <button
+          className="btn ghost sm"
+          type="button"
+          aria-expanded={archiveOpen ? 'true' : 'false'}
+          aria-controls="grammar-writing-try-admin-archive-list"
+          onClick={() => setArchiveOpen((open) => !open)}
+        >
+          {archiveOpen ? 'Hide archive' : `Show archive (${archivedEntries.length})`}
+        </button>
+        {archiveOpen ? (
+          archivedEntries.length ? (
+            <ul
+              id="grammar-writing-try-admin-archive-list"
+              className="skill-list"
+              style={{ marginTop: 12 }}
+              aria-label="Archived Writing Try entries"
+            >
+              {archivedEntries.map((entry) => (
+                <li
+                  className="skill-row"
+                  key={`archive-${entry.promptId}`}
+                  data-prompt-id={entry.promptId}
+                  data-entry-kind="archive"
+                >
+                  <div>
+                    <strong>{entry.promptId}</strong>
+                    <div className="small muted">
+                      Archived {formatTimestamp(entry.archivedAt || entry.updatedAt)}
+                    </div>
+                  </div>
+                  <div>
+                    <button
+                      className="btn warn"
+                      type="button"
+                      data-action="grammar-transfer-admin-delete"
+                      data-prompt-id={entry.promptId}
+                      onClick={() => actions.dispatch('grammar-transfer-admin-delete', {
+                        learnerId,
+                        promptId: entry.promptId,
+                      })}
+                    >
+                      Delete permanently
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="small muted" style={{ marginTop: 12 }}>
+              No archived Writing Try entries for this learner.
+            </p>
+          )
+        ) : null}
+      </section>
+    </section>
+  );
+}
+
 function DashboardKpiPanel({ model, actions }) {
   const kpis = model?.dashboardKpis || {};
   const accounts = kpis.accounts || {};
@@ -170,6 +492,26 @@ function DashboardKpiPanel({ model, actions }) {
   const byStatus = errorEvents.byStatus || {};
   const byOrigin = errorEvents.byOrigin || {};
   const accountOpsUpdates = kpis.accountOpsUpdates || {};
+  // U11: cron reconciliation telemetry. A warn banner fires when the
+  // last failure timestamp is newer than the last success timestamp so
+  // the operator knows automated reconciliation needs attention.
+  // I-RE-1 (re-review Important): the cron also runs a retention sweep;
+  // a retention-only failure must surface distinctly. `cronFailing`
+  // fires when EITHER reconcile OR retention has a fresher failure stamp
+  // than `lastSuccessAt`. The banner copy names which leg degraded.
+  const cronReconcile = kpis.cronReconcile || {};
+  const cronLastSuccessAt = Number(cronReconcile.lastSuccessAt) || 0;
+  const cronLastFailureAt = Number(cronReconcile.lastFailureAt) || 0;
+  const cronRetentionLastFailureAt = Number(cronReconcile.retentionLastFailureAt) || 0;
+  const reconcileFailing = cronLastFailureAt > 0 && cronLastFailureAt > cronLastSuccessAt;
+  const retentionFailing = cronRetentionLastFailureAt > 0 && cronRetentionLastFailureAt > cronLastSuccessAt;
+  const cronFailing = reconcileFailing || retentionFailing;
+  const cronFailureMostRecentAt = Math.max(cronLastFailureAt, cronRetentionLastFailureAt);
+  const cronFailureLegLabel = reconcileFailing && retentionFailing
+    ? 'Reconcile and retention sweeps'
+    : reconcileFailing
+      ? 'Automated reconciliation'
+      : 'Retention sweep';
 
   // P1.5 Phase A (U3): real vs demo split — each counter that can be split
   // by account type renders both sides with a neutral "Real / Demo"
@@ -216,6 +558,18 @@ function DashboardKpiPanel({ model, actions }) {
         refreshError={kpis.refreshError || null}
         onRefresh={() => actions.dispatch('admin-ops-kpi-refresh')}
       />
+      {cronFailing ? (
+        <div
+          className="callout warn small"
+          role="alert"
+          data-testid="dashboard-cron-failure-banner"
+          style={{ marginBottom: 12 }}
+        >
+          <strong>{cronFailureLegLabel} failed</strong> at {formatTimestamp(cronFailureMostRecentAt)}.
+          {' '}Last success at {cronLastSuccessAt > 0 ? formatTimestamp(cronLastSuccessAt) : 'never'}.
+          {' '}Investigate or run <code>npm run admin:reconcile-kpis</code>.
+        </div>
+      ) : null}
       <div className="skill-list">
         {realDemoRows.map(([label, realValue, demoValue]) => renderRealDemo(label, realValue, demoValue))}
         {otherRows.map(([label, value]) => (
@@ -258,6 +612,7 @@ const OPS_STATUS_OPTIONS = ['active', 'suspended', 'payment_hold'];
 // R27: prominent, UK-English non-enforcement notice rendered beside the
 // ops_status control. Do NOT reword — the string is asserted verbatim.
 const ACCOUNT_OPS_R27_CALLOUT = 'Status labels are informational only. Suspension, payment-hold, and deactivation are not currently enforced by sign-in. Enforcement is planned for a later release.';
+
 
 function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions }) {
   const accountId = account.accountId;
@@ -370,6 +725,66 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
     });
   };
 
+  // U9: row-level 409 conflict envelope stamped by the dispatcher. When
+  // present, we render an inline banner above the save button with the
+  // diff between the server's `currentState` and the user's live draft.
+  // The banner offers "Keep mine" (retry with fresh expectedRowVersion)
+  // and "Use theirs" (replace the draft with server state) buttons.
+  const conflict = account.conflict && typeof account.conflict === 'object' ? account.conflict : null;
+  const conflictCurrentState = conflict?.currentState && typeof conflict.currentState === 'object'
+    ? conflict.currentState
+    : null;
+  const liveDraftSnapshot = {
+    opsStatus,
+    planLabel: planLabel.trim() === '' ? null : planLabel.trim(),
+    tags: tagsText
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0)
+      .slice(0, 10),
+    internalNotes: internalNotes.trim() === '' ? null : internalNotes,
+  };
+  const conflictDiffRows = conflictCurrentState
+    ? buildAccountOpsMetadataConflictDiff(liveDraftSnapshot, conflictCurrentState)
+    : [];
+
+  const handleKeepMine = () => {
+    // U9 + C2/C3 (Phase C): delegate to the pure helper so the dispatch
+    // payload — including the fresh CAS pre-image harvested from the 409
+    // banner and the parsed-tag slice — is exercised by Node tests without
+    // the need to mount a React tree.
+    const payload = buildKeepMineDispatchPayload({
+      accountId,
+      currentState: conflictCurrentState,
+      opsStatus,
+      planLabel,
+      tagsText,
+      internalNotes,
+    });
+    if (!payload) return;
+    actions.dispatch(payload.action, payload.data);
+  };
+
+  const handleUseTheirs = () => {
+    // U9 + C2/C3 (Phase C): compute the next component state via the pure
+    // helper. React's `setState` still owns the actual update, but the
+    // decision logic (array normalisation, string defaults, R25 redaction
+    // edge case for ops-role viewers) is covered by the helper's tests.
+    const result = applyUseTheirsStateUpdate({
+      accountId,
+      currentState: conflictCurrentState,
+    });
+    if (!result) return;
+    const { nextState, dispatch } = result;
+    setOpsStatus(nextState.opsStatus);
+    setPlanLabel(nextState.planLabel);
+    setTagsText(nextState.tagsText);
+    setInternalNotes(nextState.internalNotes);
+    dirtyRef.current = false;
+    registerDirty(accountId, false);
+    actions.dispatch(dispatch.action, dispatch.data);
+  };
+
   if (!canManage) {
     // Read-only render preserved verbatim from U4. Ops-role viewers also see
     // the R27 callout so they understand the informational nature of the flag.
@@ -393,6 +808,52 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
 
   return (
     <div className="skill-row" key={accountId}>
+      {conflict && conflictCurrentState ? (
+        <div
+          className="callout warn small"
+          role="alert"
+          data-testid="account-ops-metadata-conflict-banner"
+          data-account-id={accountId}
+          style={{ gridColumn: '1 / -1', marginBottom: 8 }}
+        >
+          <div><strong>This account changed in another tab.</strong> Choose how to resolve the conflict.</div>
+          {conflictDiffRows.length > 0 ? (
+            <ul style={{ margin: '6px 0 8px 16px' }}>
+              {conflictDiffRows.map((row) => (
+                <li key={row.field} data-field={row.field}>
+                  <strong>{row.label}:</strong>{' '}
+                  <span>yours = {formatConflictValue(row.draftValue)}</span>{' · '}
+                  <span>theirs = {formatConflictValue(row.serverValue)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="small muted" style={{ margin: '6px 0 8px' }}>
+              No field-level differences surfaced. Pick a resolution to continue.
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className="btn secondary"
+              type="button"
+              data-action="account-ops-metadata-keep-mine"
+              onClick={handleKeepMine}
+              disabled={isSaving}
+            >
+              Keep mine
+            </button>
+            <button
+              className="btn secondary"
+              type="button"
+              data-action="account-ops-metadata-use-theirs"
+              onClick={handleUseTheirs}
+              disabled={isSaving}
+            >
+              Use theirs
+            </button>
+          </div>
+        </div>
+      ) : null}
       <div>
         <strong>{account.email || accountId}</strong>
         <div className="small muted">{account.displayName || 'No display name'} · {account.platformRole || 'parent'}</div>
@@ -695,6 +1156,13 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
       <AccountOpsMetadataPanel model={model} actions={actions} />
       <ErrorLogCentrePanel model={model} actions={actions} />
       <PostMegaSpellingDebugPanel debug={model.postMasteryDebug} />
+      <PostMegaSeedHarnessPanel model={model} actions={actions} />
+      <GrammarConceptConfidencePanel evidence={selectedGrammarEvidence} />
+      <GrammarWritingTryAdminPanel
+        learnerId={selectedLearnerId}
+        transfer={selectedDiagnostics?.grammarTransferAdmin || null}
+        actions={actions}
+      />
 
       <section className="two-col" style={{ marginBottom: 20 }}>
         <article className="card">

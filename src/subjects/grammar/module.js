@@ -478,20 +478,44 @@ export const grammarModule = {
     if (action === 'grammar-focus-concept') {
       // Dispatched from bank concept cards + detail modal. Routes into a
       // focused practice round by mirroring the existing `grammar-set-focus`
-      // + `grammar-start` combination (with a `learn` mode fallback so
-      // `grammarModeUsesFocus` picks up the focusConceptId on start). The
-      // `pendingCommand` guard prevents double-tap races.
+      // + `grammar-start` combination. The `pendingCommand` guard prevents
+      // double-tap races.
       if (ui.pendingCommand) return true;
       const conceptId = String(context.data?.conceptId || context.data?.value || '').slice(0, 64);
       if (!conceptId) return true;
 
-      // Persist the focus preference; fall back to `learn` mode so the start
-      // payload carries the focusConceptId (smart / mini-set modes drop
-      // focus via `grammarModeUsesFocus`). The bank UI slice is cleared so
-      // reopening the bank does not re-apply stale filter state from the
-      // previous visit.
+      // U5 Phase 4: Grammar Bank focus dispatch is allowlisted to Smart +
+      // Learn only (`GRAMMAR_FOCUS_ALLOWED_MODES`). James's 2026-04-26
+      // decision: "No focused UI action silently becomes mixed practice."
+      //
+      // When the learner's current mode is Surgery, Builder, or Trouble
+      // (the three modes where `grammarModeUsesFocus` returns false —
+      // Worker's `NO_SESSION_FOCUS_MODES` drops focus for surgery/builder
+      // and `NO_STORED_FOCUS_MODES` drops it for trouble too) we silently
+      // override to `smart` so Practise 5 preserves the learner's intent:
+      // focused concept practice always lands in Smart Practice. The
+      // override is silent (no toast) because the dashboard already
+      // surfaces the "Mixed practice" label on the Surgery/Builder mode
+      // cards so the expectation of focus-carry is never set. The Worker's
+      // `NO_SESSION_FOCUS_MODES` + `NO_STORED_FOCUS_MODES` remain as the
+      // belt-and-braces safety net.
+      //
+      // Worked Examples and Faded Guidance are focus-using modes on Worker
+      // (`grammarModeUsesFocus` returns true) but not in the stricter
+      // client allowlist (`GRAMMAR_FOCUS_ALLOWED_MODES = {smart, learn}`).
+      // We preserve them here so a focused round still runs in the
+      // learner's preferred scaffold surface — they are not the "mixed
+      // practice" targets this unit guards against.
+      //
+      // Accepting a `mode` override in `context.data` lets callers (e.g.
+      // tests, future scene dispatches) request a specific target; the
+      // check runs against that requested mode so no caller can sneak
+      // Surgery/Builder in without being overridden to Smart.
       const existingMode = ui.prefs?.mode || DEFAULT_GRAMMAR_PREFS.mode;
-      const targetMode = grammarModeUsesFocus(existingMode) ? existingMode : 'learn';
+      const requestedMode = typeof context.data?.mode === 'string' && context.data.mode
+        ? context.data.mode
+        : existingMode;
+      const targetMode = grammarModeUsesFocus(requestedMode) ? requestedMode : 'smart';
       const prefsPatch = { mode: targetMode, focusConceptId: conceptId };
       const payload = {
         mode: targetMode,
@@ -657,6 +681,57 @@ export const grammarModule = {
         };
       });
       return true;
+    }
+
+    // U10: "Hide from my list" toggle on an orphaned Writing Try entry.
+    // Evidence on the server is UNTOUCHED — the pref only controls the
+    // child-facing "Retired prompts" list so a learner can declutter their
+    // own view. When `hidden: true`, add the promptId to
+    // `prefs.transferHiddenPromptIds`; when `false`, remove it. The toggle
+    // routes through the standard `save-prefs` pipeline so the pref
+    // persists via the same Worker path as every other learner pref. When
+    // the service-shim has a local `savePrefs`, use it so the test-mode
+    // deterministic path matches production.
+    if (action === 'grammar-toggle-transfer-hidden') {
+      const promptId = typeof context.data?.promptId === 'string' ? context.data.promptId : '';
+      if (!promptId) return true;
+      const currentList = Array.isArray(ui.prefs?.transferHiddenPromptIds)
+        ? ui.prefs.transferHiddenPromptIds
+        : [];
+      const alreadyHidden = currentList.includes(promptId);
+      const hiddenNext = Object.prototype.hasOwnProperty.call(context.data || {}, 'hidden')
+        ? Boolean(context.data.hidden)
+        : !alreadyHidden;
+      // Build the next list — de-duplicated, and capped at the same 40-id
+      // ceiling the Worker enforces (see
+      // `GRAMMAR_TRANSFER_HIDDEN_PROMPTS_CAP` in the engine). The
+      // round-trip is idempotent: toggling hidden → hidden is a no-op.
+      let nextList;
+      if (hiddenNext) {
+        if (alreadyHidden) return true;
+        nextList = [...currentList, promptId].slice(0, 40);
+      } else {
+        if (!alreadyHidden) return true;
+        nextList = currentList.filter((entry) => entry !== promptId);
+      }
+      const patch = { transferHiddenPromptIds: nextList };
+      if (service?.savePrefs) {
+        // Local service shim (test-mode): apply the pref in-place so the
+        // Writing Try scene stays on-screen. `resetToDashboardWithPrefs`
+        // would navigate back to the dashboard — wrong UX for a hide
+        // toggle that happens inline on the Transfer surface.
+        const prefs = service.savePrefs(learnerId, patch);
+        context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+          const normalised = normaliseGrammarReadModel(current, learnerId);
+          return {
+            ...normalised,
+            prefs: { ...normalised.prefs, ...(prefs || patch) },
+            error: '',
+          };
+        });
+        return true;
+      }
+      return sendGrammarCommand(context, 'save-prefs', { prefs: patch });
     }
 
     if (action === 'grammar-toggle-transfer-check') {

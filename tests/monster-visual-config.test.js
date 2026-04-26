@@ -258,3 +258,40 @@ test('runtime visual config normaliser accepts published config and rejects inco
     config: BUNDLED_MONSTER_VISUAL_CONFIG,
   }), null);
 });
+
+// U7 adv-u7-r1-001: compact pointer preservation.
+// Before the fix, the server-emitted pointer envelope
+// ({schemaVersion, manifestHash, publishedVersion, publishedAt, compact: true})
+// had no `assets` map, so the normaliser returned null and destroyed any
+// cached full config on the next persist. The fix recognises the pointer
+// shape and returns a pointer-marker so the caller can preserve the cache
+// or trigger a lazy refetch.
+test('U7 adv-u7-r1-001: normaliser preserves compact pointer envelope as first-class state', () => {
+  const pointer = normaliseMonsterVisualRuntimeConfig({
+    schemaVersion: 1,
+    manifestHash: BUNDLED_MONSTER_VISUAL_CONFIG.manifestHash,
+    publishedVersion: 3,
+    publishedAt: 1740000000000,
+    compact: true,
+  });
+
+  assert.ok(pointer, 'pointer envelope must not be silently discarded');
+  assert.equal(pointer.compact, true, 'pointer-marker flag preserved');
+  assert.equal(pointer.schemaVersion, 1);
+  assert.equal(pointer.manifestHash, BUNDLED_MONSTER_VISUAL_CONFIG.manifestHash);
+  assert.equal(pointer.publishedVersion, 3);
+  assert.equal(pointer.publishedAt, 1740000000000);
+  // Pointer has no bundled config payload — consumers detect this via
+  // `config === null` and fall back to the cached full config or lazy
+  // fetch.
+  assert.equal(pointer.config, null, 'pointer has no config payload');
+});
+
+test('U7 adv-u7-r1-001: normaliser rejects pointer with incompatible schemaVersion', () => {
+  assert.equal(normaliseMonsterVisualRuntimeConfig({
+    schemaVersion: 999,
+    manifestHash: 'whatever',
+    publishedVersion: 1,
+    compact: true,
+  }), null, 'schema-mismatch pointer still rejected');
+});

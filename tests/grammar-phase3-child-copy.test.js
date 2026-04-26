@@ -136,3 +136,39 @@ test('U10: renderGrammarChildPhaseFixture throws on an unknown phase name', () =
     /unknown phase/,
   );
 });
+
+// -----------------------------------------------------------------------------
+// Phase 4 U4 follower — extend the 20-term sweep with adversarial render states
+//
+// The four render states below were added in `grammar-phase3-renders.js` so
+// the U4 learning-flow matrix can seed them. They are additionally iterated
+// here so the Phase 3 completeness gate's copy invariant protects these states
+// too — a forbidden term leaking into a pending-command banner or a mode-flip
+// scaffold would be caught by the same sweep that guards the nine base phases.
+// -----------------------------------------------------------------------------
+
+const GRAMMAR_PHASE4_U4_ADVERSARIAL_PHASES = Object.freeze([
+  'session-pre-pending',
+  'session-feedback-pending',
+  'session-retry',
+  'session-mode-flip-worked',
+]);
+
+for (const phase of GRAMMAR_PHASE4_U4_ADVERSARIAL_PHASES) {
+  test(`U4 follower: ${phase} HTML contains none of GRAMMAR_CHILD_FORBIDDEN_TERMS`, () => {
+    const { html } = renderGrammarChildPhaseFixture(phase);
+    for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+      assert.doesNotMatch(
+        html,
+        new RegExp(escapeRegExp(term), 'i'),
+        `forbidden term leaked into ${phase} HTML: ${term}`,
+      );
+    }
+  });
+
+  test(`U4 follower: ${phase} HTML contains no whole-word /\\bWorker\\b/i catch-all`, () => {
+    const { html } = renderGrammarChildPhaseFixture(phase);
+    assert.doesNotMatch(html, /\bWorker\b/i,
+      `bare Worker noun leaked into ${phase} HTML`);
+  });
+}

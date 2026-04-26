@@ -30,8 +30,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  archiveGrammarTransferEvidenceState,
   createInitialGrammarState,
   createServerGrammarEngine,
+  deleteGrammarTransferEvidenceState,
 } from '../worker/src/subjects/grammar/engine.js';
 import { GRAMMAR_TRANSFER_PROMPT_IDS } from '../worker/src/subjects/grammar/transfer-prompts.js';
 
@@ -247,4 +249,208 @@ test('U10 gate: a second save on the same prompt preserves the four non-scored s
   assert.equal(entry.latest.writing, 'Second draft, richer detail.');
   assert.ok(Array.isArray(entry.history));
   assert.ok(entry.history.length >= 1, 'history must record the first draft');
+});
+
+// -----------------------------------------------------------------------------
+// U10 extensions — admin archive + delete paths must preserve the
+// Writing-Try-is-non-scored invariant. Uses the `snapshotNonScoredGrammarState`
+// pattern from Phase 3 U6b: deep-clone state minus the two transfer slots
+// plus the timestamp keys that legitimately drift (updatedAt / savedAt /
+// archivedAt). Before / after archive + delete the scored slots MUST be
+// byte-equal; the audit events MUST carry `nonScored: true` and MUST NOT
+// include any of the forbidden reward / mastery / concept-secured /
+// misconception event types.
+// -----------------------------------------------------------------------------
+
+// U3 pattern: deep-clone state minus the two transfer slots + the well-known
+// timestamp keys that legitimately drift on every apply. Any other drift is
+// a regression — the Writing Try lane must be byte-isolated.
+const NON_SCORED_TRANSIENT_KEYS = new Set([
+  'transferEvidence',
+  'transferEvidenceArchive',
+  'updatedAt',
+  'lastSeenAt',
+  'lastWrongAt',
+  'lastActivityAt',
+  'createdAt',
+]);
+
+function snapshotNonScoredGrammarState(state) {
+  const clone = cloneDeep(state);
+  function scrub(value) {
+    if (Array.isArray(value)) return value.map(scrub);
+    if (value && typeof value === 'object') {
+      const out = {};
+      for (const [key, child] of Object.entries(value)) {
+        if (NON_SCORED_TRANSIENT_KEYS.has(key)) continue;
+        out[key] = scrub(child);
+      }
+      return out;
+    }
+    return value;
+  }
+  return scrub(clone);
+}
+
+function assertNoForbiddenEvents(events, label) {
+  const forbidden = new Set([
+    'reward.monster',
+    'grammar.answer-submitted',
+    'grammar.concept-secured',
+    'grammar.misconception-seen',
+  ]);
+  for (const event of Array.isArray(events) ? events : []) {
+    assert.equal(
+      forbidden.has(event?.type),
+      false,
+      `${label} emitted forbidden event type: ${event?.type}`,
+    );
+  }
+}
+
+test('U10 non-scored: archive preserves every scored slot byte-equal', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const seeded = seedLearnerState();
+  // Apply a no-op save-prefs to canonicalise the state, then a save-transfer
+  // so we have an entry to archive.
+  const baseline = engine.apply({
+    learnerId: 'learner-u10-archive',
+    subjectRecord: { ui: seeded, data: { ...seeded } },
+    command: 'save-prefs',
+    requestId: 'tx-u10-archive-seed',
+    payload: { prefs: {} },
+  });
+  const promptId = GRAMMAR_TRANSFER_PROMPT_IDS[0];
+  const withEvidence = engine.apply({
+    learnerId: 'learner-u10-archive',
+    subjectRecord: { ui: baseline.state, data: { ...baseline.state } },
+    command: 'save-transfer-evidence',
+    requestId: 'tx-u10-archive-save',
+    payload: {
+      promptId,
+      writing: 'Baseline paragraph for the archive invariant.',
+      selfAssessment: [{ key: 'check-0', checked: true }],
+    },
+  });
+  const beforeScored = JSON.stringify(snapshotNonScoredGrammarState(withEvidence.state));
+
+  const stateForArchive = cloneDeep(withEvidence.state);
+  const events = archiveGrammarTransferEvidenceState(stateForArchive, {
+    promptId,
+    learnerId: 'learner-u10-archive',
+    requestId: 'tx-u10-archive-fire',
+    now: 1_777_000_000_500,
+  });
+
+  const afterScored = JSON.stringify(snapshotNonScoredGrammarState(stateForArchive));
+  assert.equal(afterScored, beforeScored,
+    'archive must leave every scored slot byte-equal (minus transfer slots / timestamps)');
+
+  // Event assertions.
+  assertNoForbiddenEvents(events, 'archive');
+  assert.equal(events.length, 1);
+  assert.equal(events[0].type, 'grammar.transfer-evidence-archived');
+  assert.equal(events[0].nonScored, true);
+});
+
+test('U10 non-scored: delete preserves every scored slot byte-equal', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const seeded = seedLearnerState();
+  const baseline = engine.apply({
+    learnerId: 'learner-u10-delete',
+    subjectRecord: { ui: seeded, data: { ...seeded } },
+    command: 'save-prefs',
+    requestId: 'tx-u10-delete-seed',
+    payload: { prefs: {} },
+  });
+  const promptId = GRAMMAR_TRANSFER_PROMPT_IDS[0];
+  const withEvidence = engine.apply({
+    learnerId: 'learner-u10-delete',
+    subjectRecord: { ui: baseline.state, data: { ...baseline.state } },
+    command: 'save-transfer-evidence',
+    requestId: 'tx-u10-delete-save',
+    payload: {
+      promptId,
+      writing: 'Baseline paragraph for the delete invariant.',
+      selfAssessment: [{ key: 'check-0', checked: true }],
+    },
+  });
+  const stateForArchive = cloneDeep(withEvidence.state);
+  archiveGrammarTransferEvidenceState(stateForArchive, {
+    promptId,
+    learnerId: 'learner-u10-delete',
+    requestId: 'tx-u10-delete-archive',
+    now: 1_777_000_000_500,
+  });
+  const beforeScored = JSON.stringify(snapshotNonScoredGrammarState(stateForArchive));
+
+  const events = deleteGrammarTransferEvidenceState(stateForArchive, {
+    promptId,
+    learnerId: 'learner-u10-delete',
+    requestId: 'tx-u10-delete-fire',
+    now: 1_777_000_000_700,
+  });
+  const afterScored = JSON.stringify(snapshotNonScoredGrammarState(stateForArchive));
+  assert.equal(afterScored, beforeScored,
+    'delete must leave every scored slot byte-equal (minus transfer slots / timestamps)');
+
+  assertNoForbiddenEvents(events, 'delete');
+  assert.equal(events.length, 1);
+  assert.equal(events[0].type, 'grammar.transfer-evidence-deleted');
+  assert.equal(events[0].nonScored, true);
+});
+
+test('U10 non-scored: full archive + delete round-trip produces zero reward events and zero mastery drift', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const seeded = seedLearnerState();
+  const baseline = engine.apply({
+    learnerId: 'learner-u10-roundtrip',
+    subjectRecord: { ui: seeded, data: { ...seeded } },
+    command: 'save-prefs',
+    requestId: 'tx-u10-rt-seed',
+    payload: { prefs: {} },
+  });
+  const promptId = GRAMMAR_TRANSFER_PROMPT_IDS[0];
+  const withEvidence = engine.apply({
+    learnerId: 'learner-u10-roundtrip',
+    subjectRecord: { ui: baseline.state, data: { ...baseline.state } },
+    command: 'save-transfer-evidence',
+    requestId: 'tx-u10-rt-save',
+    payload: {
+      promptId,
+      writing: 'Round-trip paragraph.',
+      selfAssessment: [],
+    },
+  });
+  const beforeMastery = JSON.stringify(withEvidence.state.mastery);
+  const beforeRetryQueue = JSON.stringify(withEvidence.state.retryQueue);
+  const beforeMisconceptions = JSON.stringify(withEvidence.state.misconceptions);
+
+  const state = cloneDeep(withEvidence.state);
+  const archiveEvents = archiveGrammarTransferEvidenceState(state, {
+    promptId,
+    learnerId: 'learner-u10-roundtrip',
+    requestId: 'tx-u10-rt-archive',
+    now: 1_777_000_000_500,
+  });
+  const deleteEvents = deleteGrammarTransferEvidenceState(state, {
+    promptId,
+    learnerId: 'learner-u10-roundtrip',
+    requestId: 'tx-u10-rt-delete',
+    now: 1_777_000_000_700,
+  });
+
+  assert.equal(JSON.stringify(state.mastery), beforeMastery,
+    'mastery unchanged across archive + delete');
+  assert.equal(JSON.stringify(state.retryQueue), beforeRetryQueue,
+    'retryQueue unchanged across archive + delete');
+  assert.equal(JSON.stringify(state.misconceptions), beforeMisconceptions,
+    'misconceptions unchanged across archive + delete');
+
+  assertNoForbiddenEvents(archiveEvents, 'archive (round-trip)');
+  assertNoForbiddenEvents(deleteEvents, 'delete (round-trip)');
+  for (const event of [...archiveEvents, ...deleteEvents]) {
+    assert.equal(event.nonScored, true,
+      `event ${event.type} must carry nonScored: true`);
+  }
 });

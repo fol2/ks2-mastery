@@ -30,6 +30,7 @@ import {
   buildPunctuationDashboardModel,
   buildPunctuationMapModel,
   composeIsDisabled,
+  composeIsNavigationDisabled,
   currentItemInstruction,
   isPunctuationChildCopy,
   punctuationChildMisconceptionLabel,
@@ -77,6 +78,73 @@ test('U1 view-model: composeIsDisabled defaults availability status to ready whe
   assert.equal(composeIsDisabled({}), false);
   assert.equal(composeIsDisabled(null), false);
   assert.equal(composeIsDisabled(undefined), false);
+});
+
+// ---------------------------------------------------------------------------
+// composeIsNavigationDisabled (U6 / R7) — sibling helper to composeIsDisabled
+// that governs **navigation** affordances (Summary Back, Map Back, Skill
+// Detail close). Navigation must never be gated by `pendingCommand`,
+// `availability.status === 'degraded'`, `availability.status === 'unavailable'`,
+// or `runtime.readOnly` — those are mutation-surface signals, and trapping a
+// child on a broken scene is the exact failure mode U6 fixes. Only a missing
+// `ui` object fails closed (nothing to dispatch from).
+// ---------------------------------------------------------------------------
+
+test('U6 view-model: composeIsNavigationDisabled returns false when availability ready', () => {
+  assert.equal(composeIsNavigationDisabled({ availability: { status: 'ready' } }), false);
+});
+
+test('U6 view-model: composeIsNavigationDisabled returns false when availability degraded', () => {
+  // Phase 3's `composeIsDisabled` gates on `degraded`. Navigation does not —
+  // a child on a degraded Map scene must still be able to escape back to the
+  // dashboard, per plan R7.
+  assert.equal(composeIsNavigationDisabled({ availability: { status: 'degraded' } }), false);
+});
+
+test('U6 view-model: composeIsNavigationDisabled returns false when availability unavailable', () => {
+  // Even in the fully unavailable state, navigation remains enabled — the
+  // child must never be trapped on a subject whose runtime has fallen over.
+  assert.equal(composeIsNavigationDisabled({ availability: { status: 'unavailable' } }), false);
+});
+
+test('U6 view-model: composeIsNavigationDisabled returns false when pendingCommand set', () => {
+  // pendingCommand is the canonical "mutation in flight" signal and is
+  // exactly the failure mode that motivated U6: a Worker command can stall
+  // indefinitely, and the learner must not be trapped while it resolves.
+  assert.equal(composeIsNavigationDisabled({ pendingCommand: 'punctuation-submit-form' }), false);
+});
+
+test('U6 view-model: composeIsNavigationDisabled returns false when runtime.readOnly set', () => {
+  // Read-only runtime still permits navigation — it only blocks mutation.
+  assert.equal(composeIsNavigationDisabled({ runtime: { readOnly: true } }), false);
+});
+
+test('U6 view-model: composeIsNavigationDisabled fails closed for missing ui', () => {
+  // No `ui` object → no dispatch surface → navigation cannot be attempted.
+  // The helper fails closed so a degenerate render never emits an
+  // attention-free "enabled" state without a corresponding handler.
+  assert.equal(composeIsNavigationDisabled(null), true);
+  assert.equal(composeIsNavigationDisabled(undefined), true);
+});
+
+test('U6 view-model: composeIsNavigationDisabled returns false for a minimal well-formed ui', () => {
+  // A well-formed empty `ui` object (no session, no pending, no availability
+  // override) is the typical Setup-scene first-render shape — navigation
+  // remains enabled. The structural guard only trips on null/undefined.
+  assert.equal(composeIsNavigationDisabled({}), false);
+});
+
+test('U6 view-model: composeIsNavigationDisabled and composeIsDisabled diverge under pendingCommand + degraded', () => {
+  // Truth-table corner: the canonical "stalled command under degraded
+  // availability" UI shape. `composeIsDisabled` says "mutations off" —
+  // correct. `composeIsNavigationDisabled` says "nav still on" — also
+  // correct. This divergence is the entire point of U6.
+  const ui = {
+    pendingCommand: 'punctuation-submit-form',
+    availability: { status: 'degraded', code: 'runtime_degraded', message: 'paused' },
+  };
+  assert.equal(composeIsDisabled(ui), true, 'mutation helper must still disable under pendingCommand+degraded');
+  assert.equal(composeIsNavigationDisabled(ui), false, 'navigation helper must stay enabled');
 });
 
 // ---------------------------------------------------------------------------
@@ -979,4 +1047,71 @@ test('U4 follower: punctuationSummaryHeadline never emits forbidden child terms'
   for (const text of samples) {
     assert.equal(isPunctuationChildCopy(text), true, `headline ${JSON.stringify(text)} leaked forbidden term`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// U7 Summary copy helpers
+// ---------------------------------------------------------------------------
+// Copy register pass: route every Summary-card sub-line through a helper
+// so forbidden-term sweeps and future register changes have a single seam.
+
+test('U7 Summary copy: punctuationChildNextReviewCopy returns "more goes" when due > 0', async () => {
+  const { punctuationChildNextReviewCopy } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
+  const copy = punctuationChildNextReviewCopy({ due: 3 });
+  assert.match(copy, /more goes/i);
+  assert.equal(isPunctuationChildCopy(copy), true);
+});
+
+test('U7 Summary copy: punctuationChildNextReviewCopy returns "tomorrow" when due === 0', async () => {
+  const { punctuationChildNextReviewCopy } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
+  const copy = punctuationChildNextReviewCopy({ due: 0 });
+  assert.match(copy, /tomorrow/i);
+  assert.equal(isPunctuationChildCopy(copy), true);
+});
+
+test('U7 Summary copy: punctuationChildNextReviewCopy returns null for missing stats', async () => {
+  const { punctuationChildNextReviewCopy } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
+  assert.equal(punctuationChildNextReviewCopy(null), null);
+  assert.equal(punctuationChildNextReviewCopy(undefined), null);
+  assert.equal(punctuationChildNextReviewCopy({}), null);
+  assert.equal(punctuationChildNextReviewCopy({ due: 'not-a-number' }), null);
+});
+
+test('U7 Summary copy: punctuationChildTeaserSubLine references the monster name', async () => {
+  const { punctuationChildTeaserSubLine } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
+  const pealark = punctuationChildTeaserSubLine('Pealark');
+  assert.match(pealark, /Pealark/);
+  // Child-register — no adult SaaS wording.
+  assert.doesNotMatch(pealark, /unlock the next stage/i);
+  assert.equal(isPunctuationChildCopy(pealark), true);
+});
+
+test('U7 Summary copy: punctuationChildTeaserSubLine falls back when monster name is missing', async () => {
+  const { punctuationChildTeaserSubLine } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
+  // Null / empty string falls back to a monster-agnostic-but-still-child
+  // copy (never returns "Keep going to unlock the next stage.").
+  const fallback = punctuationChildTeaserSubLine(null);
+  assert.ok(typeof fallback === 'string' && fallback.length > 0);
+  assert.doesNotMatch(fallback, /unlock the next stage/i);
+  assert.equal(isPunctuationChildCopy(fallback), true);
+});
+
+test('U7 Summary copy: punctuationChildSkillBadgeLabel returns child-register text', async () => {
+  const { punctuationChildSkillBadgeLabel } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
+  const needs = punctuationChildSkillBadgeLabel('needs-practice');
+  const secure = punctuationChildSkillBadgeLabel('secure');
+  assert.match(needs, /needs more goes/i);
+  assert.match(secure, /nailed it/i);
+  assert.equal(isPunctuationChildCopy(needs), true);
+  assert.equal(isPunctuationChildCopy(secure), true);
+});
+
+test('U7 Summary copy: punctuationChildSkillBadgeLabel falls back safely on unknown status', async () => {
+  const { punctuationChildSkillBadgeLabel } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
+  // Unknown / null / undefined returns an empty string so the render
+  // drops the badge rather than leaking a raw status id.
+  assert.equal(punctuationChildSkillBadgeLabel(null), '');
+  assert.equal(punctuationChildSkillBadgeLabel(undefined), '');
+  assert.equal(punctuationChildSkillBadgeLabel(''), '');
+  assert.equal(punctuationChildSkillBadgeLabel('bogus-status'), '');
 });

@@ -11,6 +11,12 @@ import {
   GRAMMAR_PRIMARY_MODE_CARDS,
   buildGrammarDashboardModel,
 } from './grammar-view-model.js';
+// SH2-U5: fresh-learner `dashboard.isEmpty` branch surfaces the canonical
+// three-part copy through the shared primitive. The pre-U5 bespoke
+// `.grammar-today-empty` div kept a single sentence and no reassurance —
+// the primitive also preserves the existing `data-testid` so the
+// grammar-phase3-child-copy test continues to find the anchor.
+import { EmptyState } from '../../../platform/ui/EmptyState.jsx';
 
 // Phase 3 U1: Child-facing Grammar dashboard. Every label, mode id, and
 // card comes from the U8 view-model (`grammar-view-model.js`). The JSX
@@ -89,6 +95,13 @@ function MoreModeCard({ card, selected, disabled, actions }) {
   const classes = ['grammar-secondary-mode'];
   if (selected) classes.push('selected');
   if (disabled) classes.push('is-disabled');
+  // U5 Phase 4: Surgery and Builder cards carry a "Mixed practice" label
+  // from `GRAMMAR_MORE_PRACTICE_MODES` so the dashboard surfaces the
+  // child-facing truth that these modes do not honour a focused concept
+  // id. Label renders under the mode title with `data-mode-label` so
+  // tests and QA can scope by the mode id. The label is decorative and
+  // does not change mode behaviour.
+  const label = typeof card.label === 'string' && card.label ? card.label : '';
   return (
     <button
       type="button"
@@ -103,6 +116,9 @@ function MoreModeCard({ card, selected, disabled, actions }) {
       }}
     >
       <h5 className="grammar-secondary-mode-title">{card.title}</h5>
+      {label ? (
+        <span className="grammar-secondary-mode-label" data-mode-label={card.id}>{label}</span>
+      ) : null}
       <p className="grammar-secondary-mode-desc">{card.desc}</p>
     </button>
   );
@@ -147,7 +163,10 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
       <section className="grammar-today" aria-label="Today at a glance">
         {dashboard.isEmpty ? (
           <div className="grammar-today-empty" data-testid="grammar-today-empty">
-            Start your first round to see your scores here.
+            <EmptyState
+              title="No rounds yet"
+              body="No rounds yet. Progress is saved as you practise. Start your first round to see your scores here."
+            />
           </div>
         ) : (
           <div className="grammar-today-grid">

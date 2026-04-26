@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { SqliteD1Database, createMigratedSqliteD1Database, migrationSql } from './helpers/sqlite-d1.js';
 
@@ -44,11 +47,16 @@ test('migration 0010 creates account_ops_metadata with PK, FKs, and ops_status C
   try {
     assert.equal(tableExists(db, 'account_ops_metadata'), true);
     const columns = columnMap(db.db.prepare('PRAGMA table_info(account_ops_metadata)').all());
+    // 0010 base columns plus migration 0011 additives (row_version,
+    // status_revision). Phase C adds CAS + revision tracking; the 0010
+    // shape assertions below cover the fields 0010 itself established.
     assert.deepEqual(Object.keys(columns).sort(), [
       'account_id',
       'internal_notes',
       'ops_status',
       'plan_label',
+      'row_version',
+      'status_revision',
       'tags_json',
       'updated_at',
       'updated_by_account_id',
@@ -77,16 +85,24 @@ test('migration 0010 creates ops_error_events with expected columns, defaults, a
   try {
     assert.equal(tableExists(db, 'ops_error_events'), true);
     const columns = columnMap(db.db.prepare('PRAGMA table_info(ops_error_events)').all());
+    // 0010 base columns plus migration 0011 release-tracking additives
+    // (first_seen_release, last_seen_release, resolved_in_release,
+    // last_status_change_at). 0011's nullable columns are read by Phase D
+    // (U15) and Phase E (U16/U17).
     assert.deepEqual(Object.keys(columns).sort(), [
       'account_id',
       'error_kind',
       'fingerprint',
       'first_frame',
       'first_seen',
+      'first_seen_release',
       'id',
       'last_seen',
+      'last_seen_release',
+      'last_status_change_at',
       'message_first_line',
       'occurrence_count',
+      'resolved_in_release',
       'route_name',
       'status',
       'user_agent',
@@ -115,11 +131,17 @@ test('migration 0010 creates ops_error_events with expected columns, defaults, a
 test('migration 0010 is idempotent: re-applying 0010 emits no DDL error', () => {
   const db = createMigratedSqliteD1Database();
   try {
-    const sqls = migrationSql();
-    const latest = sqls[sqls.length - 1];
-    // Reapplying the final migration must not raise due to IF NOT EXISTS.
-    db.db.exec(latest);
-    db.db.exec(latest);
+    // 0010 itself is pure CREATE ... IF NOT EXISTS — safely re-apply-able.
+    // After migration 0011 landed, `migrationSql()` returns all migrations,
+    // and 0011's ALTER TABLE statements are NOT idempotent at the DDL level
+    // (they rely on Wrangler's d1_migrations tracker in production). So we
+    // explicitly target the 0010 file here, not "the last file in sequence".
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const migration0010Path = path.resolve(here, '..', 'worker', 'migrations', '0010_admin_ops_console.sql');
+    const sql0010 = fs.readFileSync(migration0010Path, 'utf8');
+    // Reapplying 0010 must not raise due to IF NOT EXISTS.
+    db.db.exec(sql0010);
+    db.db.exec(sql0010);
     assert.equal(tableExists(db, 'admin_kpi_metrics'), true);
     assert.equal(tableExists(db, 'account_ops_metadata'), true);
     assert.equal(tableExists(db, 'ops_error_events'), true);

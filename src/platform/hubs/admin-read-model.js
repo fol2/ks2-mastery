@@ -11,6 +11,7 @@ import {
 } from '../access/roles.js';
 import { buildSpellingContentSummary, validateSpellingContentBundle } from '../../subjects/spelling/content/model.js';
 import { getSpellingPostMasteryState } from '../../subjects/spelling/read-model.js';
+import { POST_MEGA_SEED_SHAPES } from '../../../shared/spelling/post-mastery-seed-shapes.js';
 import { buildParentHubReadModel } from './parent-read-model.js';
 
 // U1 (P2): neutral "empty" debug envelope for the admin hub when no
@@ -87,6 +88,22 @@ function normaliseRealDemoScalar(raw) {
 // ternary whose both branches evaluated to `{}`. Removed; the practice-
 // session demo sibling is now conditional on `practiceDemo != null` only.
 
+function normaliseCronReconcile(rawValue) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  return {
+    lastSuccessAt: asTs(raw.lastSuccessAt, 0),
+    lastFailureAt: asTs(raw.lastFailureAt, 0),
+    successCount: toNonNegativeInt(raw.successCount),
+    // I-RE-1 (re-review Important): retention-sweep failure timestamp. The
+    // cron runs reconcile + retention in the same trigger; retention
+    // failures alone (with reconcile healthy) previously left the banner
+    // silent. The DashboardKpiPanel predicate now fires when EITHER
+    // reconcile OR retention has a fresher failure stamp than
+    // lastSuccessAt.
+    retentionLastFailureAt: asTs(raw.retentionLastFailureAt, 0),
+  };
+}
+
 export function normaliseDashboardKpis(rawValue) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const accounts = isPlainObject(raw.accounts) ? raw.accounts : {};
@@ -158,6 +175,10 @@ export function normaliseDashboardKpis(rawValue) {
       } : {}),
     },
     accountOpsUpdates: { total: toNonNegativeInt(accountOpsUpdates.total) },
+    // U11: cron-driven reconciliation telemetry. When `lastFailureAt`
+    // exceeds `lastSuccessAt` the dashboard renders a warn banner so
+    // operators can rerun the manual reconcile script.
+    cronReconcile: normaliseCronReconcile(raw.cronReconcile),
   };
   // Preserve the P1.5 Phase A (U1) refresh envelope siblings when the caller
   // re-normalises after a patch. They are not part of the server payload
@@ -225,6 +246,10 @@ function normaliseAccountOpsMetadataEntry(rawEntry) {
   if (typeof raw.internalNotes === 'string') {
     internalNotes = raw.internalNotes;
   }
+  // U8 CAS: `rowVersion` is the monotonic CAS pre-image the row editor must
+  // round-trip back to the server. Server writes default to 0 for fresh rows.
+  const rowVersionRaw = Number(raw.rowVersion);
+  const rowVersion = Number.isInteger(rowVersionRaw) && rowVersionRaw >= 0 ? rowVersionRaw : 0;
   return {
     accountId: typeof raw.accountId === 'string' ? raw.accountId : '',
     email: typeof raw.email === 'string' ? raw.email : '',
@@ -236,6 +261,10 @@ function normaliseAccountOpsMetadataEntry(rawEntry) {
     internalNotes,
     updatedAt: asTs(raw.updatedAt, 0),
     updatedByAccountId: typeof raw.updatedByAccountId === 'string' ? raw.updatedByAccountId : '',
+    rowVersion,
+    // U9 UX: per-row conflict envelope carried by the dispatcher when 409
+    // fires. Null when no conflict; shape `{ currentState, at }` when set.
+    conflict: isPlainObject(raw.conflict) ? raw.conflict : null,
   };
 }
 
@@ -318,6 +347,86 @@ export function normaliseMonsterVisualConfigAdminModel(rawValue, platformRole = 
   };
 }
 
+// U10: Grammar Writing Try admin projection. Reads the learner's Grammar
+// subject state (data or ui) and surfaces the live `transferEvidence` +
+// the admin-only `transferEvidenceArchive` in a single admin-facing
+// shape. The shape mirrors `transferLane` on the learner side with an
+// added `archive` array. Learner surfaces never reach this projection —
+// the Admin Hub API loads the admin read-model behind
+// `requireAdminHubAccess`, so this helper assumes the caller is already
+// authorised. Falls back to an empty shape when the learner has no
+// Grammar state (a legal zero case — the admin UI renders an "empty"
+// placeholder).
+function grammarTransferAdminFromLearnerBundle(bundle) {
+  const emptyShape = {
+    subjectId: 'grammar',
+    hasEvidence: false,
+    hasArchive: false,
+    evidence: [],
+    archive: [],
+  };
+  if (!bundle || typeof bundle !== 'object' || Array.isArray(bundle)) return emptyShape;
+  const subjectStates = isPlainObject(bundle.subjectStates) ? bundle.subjectStates : {};
+  const grammar = isPlainObject(subjectStates.grammar) ? subjectStates.grammar : null;
+  if (!grammar) return emptyShape;
+  const data = isPlainObject(grammar.data) ? grammar.data : {};
+  const ui = isPlainObject(grammar.ui) ? grammar.ui : {};
+  const liveRaw = isPlainObject(data.transferEvidence)
+    ? data.transferEvidence
+    : (isPlainObject(ui.transferEvidence) ? ui.transferEvidence : {});
+  const archiveRaw = isPlainObject(data.transferEvidenceArchive)
+    ? data.transferEvidenceArchive
+    : (isPlainObject(ui.transferEvidenceArchive) ? ui.transferEvidenceArchive : {});
+  return {
+    subjectId: 'grammar',
+    hasEvidence: Object.keys(liveRaw).length > 0,
+    hasArchive: Object.keys(archiveRaw).length > 0,
+    // Evidence and archive are emitted as sorted arrays so the UI has a
+    // stable render order across admin sessions. Each entry surfaces
+    // promptId + latest + updatedAt (and archivedAt for archive entries)
+    // — the full history is intentionally omitted from the admin summary
+    // because the panel only needs "what was saved" to inform the
+    // archive + delete decision.
+    evidence: Object.entries(liveRaw)
+      .map(([promptId, entry]) => normaliseGrammarTransferAdminEntry(promptId, entry, { archived: false }))
+      .filter((entry) => entry.latest || (entry.history && entry.history.length > 0))
+      .sort((a, b) => b.updatedAt - a.updatedAt),
+    archive: Object.entries(archiveRaw)
+      .map(([promptId, entry]) => normaliseGrammarTransferAdminEntry(promptId, entry, { archived: true }))
+      .filter((entry) => entry.latest || (entry.history && entry.history.length > 0))
+      .sort((a, b) => b.archivedAt - a.archivedAt),
+  };
+}
+
+function normaliseGrammarTransferAdminEntry(promptId, rawEntry, { archived }) {
+  const entry = isPlainObject(rawEntry) ? rawEntry : {};
+  const latestRaw = isPlainObject(entry.latest) ? entry.latest : null;
+  const history = Array.isArray(entry.history) ? entry.history : [];
+  return {
+    promptId: String(promptId || ''),
+    latest: latestRaw ? {
+      writing: typeof latestRaw.writing === 'string' ? latestRaw.writing : '',
+      selfAssessment: Array.isArray(latestRaw.selfAssessment)
+        ? latestRaw.selfAssessment
+          .filter((tick) => tick && typeof tick === 'object' && !Array.isArray(tick))
+          .map((tick) => ({
+            key: typeof tick.key === 'string' ? tick.key : '',
+            checked: Boolean(tick.checked),
+          }))
+        : [],
+      savedAt: asTs(latestRaw.savedAt, 0),
+    } : null,
+    history: history
+      .filter((snapshot) => snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot))
+      .map((snapshot) => ({
+        writing: typeof snapshot.writing === 'string' ? snapshot.writing : '',
+        savedAt: asTs(snapshot.savedAt, 0),
+      })),
+    updatedAt: asTs(entry.updatedAt, 0),
+    archivedAt: archived ? asTs(entry.archivedAt, 0) : 0,
+  };
+}
+
 export function buildAdminHubReadModel({
   account = null,
   platformRole = 'parent',
@@ -370,6 +479,13 @@ export function buildAdminHubReadModel({
       currentFocus: parentHub.dueWork[0] || null,
       grammarEvidence: parentHub.grammarEvidence || null,
       punctuationEvidence: parentHub.punctuationEvidence || null,
+      // U10: Grammar Writing Try admin surface. Exposes live + archived
+      // evidence keyed per prompt so the Admin Hub can render archive +
+      // delete controls. Only populated when the admin can view the hub
+      // (the role gate is re-checked at the route; this projection is
+      // emitted regardless so the shape stays stable, but the React panel
+      // is hidden unless `canViewAdminHub === true`).
+      grammarTransferAdmin: grammarTransferAdminFromLearnerBundle(learnerBundles[learnerId] || null),
     };
   });
 
@@ -497,7 +613,16 @@ export function buildAdminHubReadModel({
       monsterVisualConfig: monsterVisualConfig ? 'real' : 'placeholder',
       learnerSupport: 'real',
       postMasteryDebug: adminCanViewDebug && selectedDiagnostics ? 'real' : 'placeholder',
+      postMegaSeedHarness: resolvedPlatformRole === 'admin' ? 'real' : 'placeholder',
     },
     postMasteryDebug,
+    // P2 U3: seed-harness dropdown contents. Emitted as a cloned array so
+    // mutating the returned payload cannot pollute the frozen source list.
+    // The UI gates the panel on `permissions.platformRole === 'admin'`; ops
+    // accounts receive the list (needed so their admin hub read model stays
+    // shape-stable) but the React surface suppresses the control.
+    postMegaSeedHarness: {
+      shapes: [...POST_MEGA_SEED_SHAPES],
+    },
   };
 }

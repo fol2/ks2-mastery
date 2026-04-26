@@ -193,10 +193,17 @@ async function startDemoSession() {
   globalThis.location.href = '/';
 }
 
-function renderAuthRoot({ error = '' } = {}) {
+function renderAuthRoot({ error = '', code = '' } = {}) {
+  // SH2-U3: pass `code` + `message` as a structured initialError when the
+  // bootstrap surfaces a recognised 401 code. Legacy callers still pass a
+  // plain string, and AuthSurface's `extractAuthErrorCode`/
+  // `extractAuthErrorMessage` helpers handle both shapes.
+  const initialError = code
+    ? { code, message: error || '' }
+    : error || '';
   createRoot(root).render(
     <AuthSurface
-      initialError={error}
+      initialError={initialError}
       onSubmit={submitAuthCredentials}
       onSocialStart={startSocialAuth}
       onDemoStart={startDemoSession}
@@ -215,7 +222,10 @@ async function createRepositoriesForCurrentRuntime() {
 
 const boot = await createRepositoriesForCurrentRuntime();
 if (!boot.repositories) {
-  renderAuthRoot({ error: boot.session?.error || '' });
+  renderAuthRoot({
+    error: boot.session?.error || '',
+    code: boot.session?.code || '',
+  });
   await new Promise(() => {});
 }
 const repositories = boot.repositories;
@@ -575,6 +585,7 @@ function syncWritableLearnerSelection(learnerId) {
   if (!appState.learners.byId[learnerId]) return false;
   if (appState.learners.selectedId === learnerId) return false;
   tts.stop();
+  tts.abortPending?.();
   runtimeBoundary.clearAll();
   store.selectLearner(learnerId);
   return true;
@@ -1291,6 +1302,7 @@ async function handleImportFileChange(input) {
     runtimeBoundary.clearAll();
     store.reloadFromRepositories();
     tts.stop();
+    tts.abortPending?.();
     if (result.kind === 'learner') {
       const message = result.renamed
         ? 'Learner imported as a copy because that learner id already existed.'
@@ -1316,6 +1328,7 @@ async function prepareForSpellingContentMutation() {
 
 async function refreshAfterSpellingContentMutation() {
   tts.stop();
+  tts.abortPending?.();
   await repositories.hydrate({
     cacheScope: 'spelling-content-mutation',
     rebasePending: true,
@@ -1728,7 +1741,7 @@ function readAdminHubErrorLogSummarySaving() {
 // natural test hook for re-entrancy of these private handlers. The server
 // CAS guard (worker/src/repository.js, Finding 2) is the authoritative
 // double-commit defence; the client guard just avoids unnecessary 409s.
-async function updateAccountOpsMetadata({ accountId, patch }) {
+async function updateAccountOpsMetadata({ accountId, patch, expectedRowVersion = null }) {
   if (!hubApi) return;
   if (!(typeof accountId === 'string' && accountId)) return;
   if (!patch || typeof patch !== 'object') return;
@@ -1736,6 +1749,14 @@ async function updateAccountOpsMetadata({ accountId, patch }) {
   // In-flight guard: refuse dispatch while any ops-metadata save is mid-flight.
   // Double-click protection BEFORE a new requestId is minted.
   if (readAdminHubAccountOpsMetadataSaving()) return;
+
+  // U8 CAS: resolve the expected pre-image. The caller may supply an explicit
+  // `expectedRowVersion` (e.g. the U9 "Keep mine" retry pathway) — otherwise
+  // read the latest value from the current store snapshot.
+  const snapshotEntry = readAccountOpsMetadataEntry(accountId);
+  const resolvedExpectedRowVersion = Number.isInteger(expectedRowVersion) && expectedRowVersion >= 0
+    ? expectedRowVersion
+    : (Number.isInteger(snapshotEntry?.rowVersion) ? snapshotEntry.rowVersion : 0);
 
   const requestId = uid('account-ops-metadata');
   const mutation = { requestId, correlationId: requestId };
@@ -1761,6 +1782,7 @@ async function updateAccountOpsMetadata({ accountId, patch }) {
     const payload = await hubApi.updateAccountOpsMetadata({
       accountId,
       patch,
+      expectedRowVersion: resolvedExpectedRowVersion,
       mutation,
     });
     const entry = payload?.accountOpsMetadataEntry || null;
@@ -1775,6 +1797,11 @@ async function updateAccountOpsMetadata({ accountId, patch }) {
           internalNotes: entry.internalNotes ?? row.internalNotes,
           updatedAt: entry.updatedAt ?? row.updatedAt,
           updatedByAccountId: entry.updatedByAccountId ?? row.updatedByAccountId,
+          // U8 CAS: adopt the server-side bumped row_version so the next
+          // save carries the correct pre-image.
+          rowVersion: Number.isInteger(entry.rowVersion) ? entry.rowVersion : row.rowVersion,
+          // U9: clear any pre-existing conflict banner on successful save.
+          conflict: null,
         };
       }, 'Account ops metadata saved.');
       // P1.5 Phase A (U2): clear the dirty flag for this row now that the
@@ -1791,18 +1818,79 @@ async function updateAccountOpsMetadata({ accountId, patch }) {
     // metadata-panel auto-refresh.
     cascadeAdminOpsRefreshAfterMutation();
   } catch (error) {
-    // Roll back to the snapshot.
-    if (snapshot) {
-      patchAdminHubAccountOpsMetadataEntry((row) => (
-        row.accountId === accountId ? snapshot : row
-      ), '');
+    // U9: 409 `account_ops_metadata_stale` surfaces a row-level conflict
+    // banner; do NOT roll back the draft (preserve the user's work), do NOT
+    // clear the dirty flag (phase A U2 suppression continues to guard the
+    // panel refresh), and do NOT alert. Roll back only on non-conflict
+    // errors so the UX does not discard a user's typing on a network blip.
+    const errorCode = typeof error?.code === 'string' ? error.code : (typeof error?.payload?.code === 'string' ? error.payload.code : '');
+    const currentState = (error?.payload && isPlainObject(error.payload.currentState))
+      ? error.payload.currentState
+      : (isPlainObject(error?.currentState) ? error.currentState : null);
+    if (errorCode === 'account_ops_metadata_stale' && currentState) {
+      patchAdminHubAccountOpsMetadataEntry((row) => {
+        if (row.accountId !== accountId) return row;
+        return {
+          ...row,
+          // Keep the user's draft intact (row values reflect the optimistic
+          // patch) but stamp the conflict envelope so AccountOpsMetadataRow
+          // can render the Keep mine / Use theirs banner.
+          conflict: { currentState, at: Date.now() },
+        };
+      }, 'Account ops metadata has changed — review and resolve.');
+    } else {
+      // Roll back to the snapshot on non-conflict failures.
+      if (snapshot) {
+        patchAdminHubAccountOpsMetadataEntry((row) => (
+          row.accountId === accountId ? snapshot : row
+        ), '');
+      }
+      globalThis.alert?.(`Account ops metadata save failed: ${error?.message || 'Unknown error.'}`);
     }
-    globalThis.alert?.(`Account ops metadata save failed: ${error?.message || 'Unknown error.'}`);
   } finally {
     // Always clear the saving flag, whether success or failure, so the UI
     // re-enables the row's inputs and the next dispatch can proceed.
     patchAdminHubAccountOpsMetadataSaving('');
   }
+}
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function readAccountOpsMetadataEntry(accountId) {
+  const state = store?.getState?.() || null;
+  const directory = state?.adminHub?.accountOpsMetadata || null;
+  const accounts = Array.isArray(directory?.accounts) ? directory.accounts : [];
+  return accounts.find((row) => row.accountId === accountId) || null;
+}
+
+function adoptAccountOpsMetadataServerState({ accountId, currentState }) {
+  if (!(typeof accountId === 'string' && accountId)) return;
+  if (!isPlainObject(currentState)) return;
+  patchAdminHubAccountOpsMetadataEntry((row) => {
+    if (row.accountId !== accountId) return row;
+    return {
+      ...row,
+      opsStatus: typeof currentState.opsStatus === 'string' ? currentState.opsStatus : row.opsStatus,
+      planLabel: typeof currentState.planLabel === 'string' ? currentState.planLabel : (currentState.planLabel === null ? '' : row.planLabel),
+      tags: Array.isArray(currentState.tags) ? currentState.tags : row.tags,
+      // R25: `currentState.internalNotes` is null for ops-role viewers — keep
+      // the row's existing value so we do not overwrite it with the redacted
+      // null. Admin viewers see the real value and we adopt it.
+      internalNotes: currentState.internalNotes === null
+        ? row.internalNotes
+        : (typeof currentState.internalNotes === 'string' ? currentState.internalNotes : row.internalNotes),
+      updatedAt: Number.isInteger(currentState.updatedAt) ? currentState.updatedAt : row.updatedAt,
+      updatedByAccountId: typeof currentState.updatedByAccountId === 'string'
+        ? currentState.updatedByAccountId
+        : row.updatedByAccountId,
+      rowVersion: Number.isInteger(currentState.rowVersion) ? currentState.rowVersion : row.rowVersion,
+      // Dismiss the banner envelope now that the draft has been replaced.
+      conflict: null,
+    };
+  }, 'Account ops metadata — server state adopted.');
+  registerAccountOpsMetadataRowDirty(accountId, false);
 }
 
 // R10, R21: admin-only error event status mutation with optimistic update + rollback.
@@ -1874,6 +1962,88 @@ async function updateOpsErrorEventStatus({ eventId, status }) {
     // Always clear the saving flag so the UI re-enables the select and the
     // next dispatch can proceed.
     patchAdminHubErrorLogSummarySaving('');
+  }
+}
+
+// P2 U3: admin-gated QA seed harness. Pipes through the Admin Ops P1
+// mutation-receipt path (`scopeType='platform'`, `scopeId='post-mega-seed:<learnerId>'`)
+// so cross-origin CSRF attempts fail at the receipt header check. No
+// optimistic patching — the seed's effect lives in child_subject_state, not
+// in the admin hub read-model, so the UI only shows a notice. After a
+// successful seed, the hub's learner diagnostics panel will reflect the new
+// state on its next refresh.
+async function applyPostMegaSeed({ learnerId, shapeName }) {
+  if (!hubApi) return;
+  if (!(typeof learnerId === 'string' && learnerId)) return;
+  if (!(typeof shapeName === 'string' && shapeName)) return;
+
+  const requestId = uid('post-mega-seed');
+  const mutation = { requestId, correlationId: requestId };
+  try {
+    const payload = await hubApi.seedPostMegaLearnerState({
+      learnerId,
+      shapeName,
+      mutation,
+    });
+    const summary = payload?.postMegaSeed || {};
+    const createdCopy = summary.createdLearner ? ' (learner created)' : '';
+    patchAdultSurfaceState((state) => ({
+      ...state,
+      notice: `Post-Mega seed applied: ${shapeName} → ${learnerId}${createdCopy}.`,
+    }));
+  } catch (error) {
+    globalThis.alert?.(`Post-Mega seed failed: ${error?.message || 'Unknown error.'}`);
+  }
+}
+
+// U10: admin archive a Grammar Writing Try entry. The role gate is
+// enforced server-side via `requireAdminHubAccess`; the client never
+// claims the admin role. After a successful archive, reload the Admin
+// Hub so the UI reflects the live / archive split without a full page
+// refresh. Errors surface through the standard alert + notice patching
+// used by other admin mutations (post-Mega seed, account ops metadata).
+async function archiveGrammarTransferEntry({ learnerId, promptId }) {
+  if (!hubApi) return;
+  if (!(typeof learnerId === 'string' && learnerId)) return;
+  if (!(typeof promptId === 'string' && promptId)) return;
+  const requestId = uid('grammar-transfer-archive');
+  const mutation = { requestId, correlationId: requestId };
+  try {
+    await hubApi.archiveGrammarTransferEvidence({ learnerId, promptId, mutation });
+    patchAdultSurfaceState((state) => ({
+      ...state,
+      notice: `Archived Writing Try entry for ${promptId} (learner ${learnerId}).`,
+    }));
+    loadAdminHub({ learnerId, force: true });
+  } catch (error) {
+    globalThis.alert?.(`Archive failed: ${error?.message || 'Unknown error.'}`);
+  }
+}
+
+// U10: admin hard-delete a Grammar Writing Try entry. Requires the entry
+// to have been archived first — the repository helper rejects a delete
+// against a live entry with `archive_required_before_delete`. The UI
+// gates the button behind an explicit confirm dialog so a misclick
+// cannot irreversibly wipe learner writing.
+async function deleteGrammarTransferEntry({ learnerId, promptId }) {
+  if (!hubApi) return;
+  if (!(typeof learnerId === 'string' && learnerId)) return;
+  if (!(typeof promptId === 'string' && promptId)) return;
+  const confirmed = typeof globalThis.confirm === 'function'
+    ? globalThis.confirm(`Permanently delete the archived Writing Try entry for ${promptId}? This cannot be undone.`)
+    : true;
+  if (!confirmed) return;
+  const requestId = uid('grammar-transfer-delete');
+  const mutation = { requestId, correlationId: requestId };
+  try {
+    await hubApi.deleteGrammarTransferEvidence({ learnerId, promptId, mutation });
+    patchAdultSurfaceState((state) => ({
+      ...state,
+      notice: `Deleted archived Writing Try entry for ${promptId} (learner ${learnerId}).`,
+    }));
+    loadAdminHub({ learnerId, force: true });
+  } catch (error) {
+    globalThis.alert?.(`Delete failed: ${error?.message || 'Unknown error.'}`);
   }
 }
 
@@ -2283,7 +2453,14 @@ function handleGlobalAction(action, data) {
 
   if (action === 'navigate-home') {
     clearAdultSurfaceNotice();
+    // SH2-U4: every route-change site in this shadow handler calls
+    // `tts.stop()` AND `tts.abortPending()` explicitly, mirroring the
+    // controller path in `create-app-controller.js::handleGlobalAction`.
+    // The two calls are deliberately NOT hidden behind a helper so a
+    // reviewer sees both at every site and a grep for `tts.abortPending`
+    // returns the full set of route-exit handlers.
     tts.stop();
+    tts.abortPending?.();
     store.goHome();
     return true;
   }
@@ -2297,6 +2474,7 @@ function handleGlobalAction(action, data) {
       return true;
     }
     tts.stop();
+    tts.abortPending?.();
     store.openSubject(subject.id, data.tab || 'practice');
     return true;
   }
@@ -2304,6 +2482,7 @@ function handleGlobalAction(action, data) {
   if (action === 'open-codex') {
     clearAdultSurfaceNotice();
     tts.stop();
+    tts.abortPending?.();
     store.openCodex();
     return true;
   }
@@ -2311,6 +2490,7 @@ function handleGlobalAction(action, data) {
   if (action === 'open-parent-hub') {
     clearAdultSurfaceNotice();
     tts.stop();
+    tts.abortPending?.();
     store.openParentHub();
     if (boot.session.signedIn) loadParentHub({ force: true });
     return true;
@@ -2319,6 +2499,7 @@ function handleGlobalAction(action, data) {
   if (action === 'open-profile-settings') {
     clearAdultSurfaceNotice();
     tts.stop();
+    tts.abortPending?.();
     store.openProfileSettings();
     return true;
   }
@@ -2326,6 +2507,7 @@ function handleGlobalAction(action, data) {
   if (action === 'open-admin-hub') {
     clearAdultSurfaceNotice();
     tts.stop();
+    tts.abortPending?.();
     store.openAdminHub();
     if (boot.session.signedIn) loadAdminHub({ force: true });
     loadAdminAccounts();
@@ -2393,6 +2575,22 @@ function handleGlobalAction(action, data) {
     updateAccountOpsMetadata({
       accountId: data?.accountId,
       patch: data?.patch,
+      expectedRowVersion: Number.isInteger(data?.expectedRowVersion) && data.expectedRowVersion >= 0
+        ? data.expectedRowVersion
+        : null,
+    });
+    return true;
+  }
+
+  if (action === 'account-ops-metadata-use-theirs') {
+    // U9: adopt the server's `currentState` from the 409 conflict envelope.
+    // The row has already updated its local inputs via setState; we mirror
+    // the adoption into the store so the dirty flag and conflict envelope
+    // are cleared, the row_version catches up to the server, and the
+    // banner dismisses on the next render.
+    adoptAccountOpsMetadataServerState({
+      accountId: data?.accountId,
+      currentState: data?.currentState,
     });
     return true;
   }
@@ -2401,6 +2599,30 @@ function handleGlobalAction(action, data) {
     updateOpsErrorEventStatus({
       eventId: data?.eventId,
       status: data?.status,
+    });
+    return true;
+  }
+
+  if (action === 'post-mega-seed-apply') {
+    applyPostMegaSeed({
+      learnerId: data?.learnerId,
+      shapeName: data?.shapeName,
+    });
+    return true;
+  }
+
+  if (action === 'grammar-transfer-admin-archive') {
+    archiveGrammarTransferEntry({
+      learnerId: data?.learnerId,
+      promptId: data?.promptId,
+    });
+    return true;
+  }
+
+  if (action === 'grammar-transfer-admin-delete') {
+    deleteGrammarTransferEntry({
+      learnerId: data?.learnerId,
+      promptId: data?.promptId,
     });
     return true;
   }
@@ -2428,6 +2650,7 @@ function handleGlobalAction(action, data) {
     };
     if (appState.learners.byId[nextLearnerId] && appState.learners.selectedId !== nextLearnerId) {
       tts.stop();
+      tts.abortPending?.();
       runtimeBoundary.clearAll();
       store.selectLearner(nextLearnerId);
       remoteSpellingActions?.reapplyPendingOptimisticPrefs?.();
@@ -2446,6 +2669,7 @@ function handleGlobalAction(action, data) {
       selectedLearnerId: nextLearnerId,
     };
     tts.stop();
+    tts.abortPending?.();
     runtimeBoundary.clearAll();
     store.selectLearner(nextLearnerId);
     remoteSpellingActions?.reapplyPendingOptimisticPrefs?.();
@@ -2498,6 +2722,7 @@ function handleGlobalAction(action, data) {
       },
     });
     tts.stop();
+    tts.abortPending?.();
     store.updateLearner(learnerId, {
       name: String(formData.get('name') || 'Learner').trim() || 'Learner',
       yearGroup: String(formData.get('yearGroup') || 'Y5'),
@@ -2526,6 +2751,7 @@ function handleGlobalAction(action, data) {
     if (blockReadOnlyAdultAction(action)) return true;
     if (!globalThis.confirm('Warning: reset subject progress and codex rewards for the current learner?')) return true;
     tts.stop();
+    tts.abortPending?.();
     if (isServerSyncedRuntime()) {
       resetServerSyncedLearnerProgress(learnerId).catch((error) => {
         globalThis.alert?.(error?.message || 'Could not reset learner progress.');
@@ -2543,6 +2769,7 @@ function handleGlobalAction(action, data) {
     if (blockReadOnlyAdultAction(action)) return true;
     if (!globalThis.confirm('Reset all app data for every learner on this browser?')) return true;
     tts.stop();
+    tts.abortPending?.();
     runtimeBoundary.clearAll();
     clearAllMonsterCelebrationAcknowledgements();
     store.clearAllProgress();
@@ -2659,6 +2886,7 @@ function handleGlobalAction(action, data) {
     repositories.persistence.retry()
       .then(() => {
         tts.stop();
+        tts.abortPending?.();
         runtimeBoundary.clearAll();
         store.clearMonsterCelebrations();
         store.reloadFromRepositories({ preserveRoute: true });
@@ -2794,6 +3022,7 @@ function handleSubjectAction(action, data) {
     return Boolean(handled);
   } catch (error) {
     tts.stop();
+    tts.abortPending?.();
     runtimeBoundary.capture({
       learnerId,
       subject,

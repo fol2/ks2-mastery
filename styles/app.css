@@ -2294,6 +2294,71 @@ textarea:focus-visible {
 }
 .persistence-banner-action:hover { background: color-mix(in oklab, var(--warn) 14%, transparent); }
 
+/* P2 U9: durable spelling persistence-warning banner — surfaces on both
+ * setup and session scenes, persists across tab close until the learner
+ * clicks "I understand". Uses the same warn palette as `.persistence-banner`
+ * so the two surfaces feel coordinated; prominent-but-not-alarming per the
+ * plan's UX direction. */
+.spelling-persistence-warning {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 0 0 16px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft);
+  border: 1px solid color-mix(in oklab, var(--warn) 45%, transparent);
+  color: var(--warn-strong);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+.spelling-persistence-warning-text {
+  flex: 1 1 240px;
+}
+.spelling-persistence-warning-ack {
+  appearance: none;
+  border: 1px solid color-mix(in oklab, var(--warn) 55%, transparent);
+  background: transparent;
+  color: var(--warn-strong);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.spelling-persistence-warning-ack:hover {
+  background: color-mix(in oklab, var(--warn) 14%, transparent);
+}
+.spelling-persistence-warning-ack:focus-visible {
+  outline: 2px solid var(--warn);
+  outline-offset: 2px;
+}
+
+/* SH2-U4 (sys-hardening p2): pending chip + failure banner for the
+ * spelling session audio lifecycle. The chip sits next to the replay
+ * buttons and surfaces "…loading audio" while the Gemini pipeline
+ * resolves; the banner replaces it when the 15s watchdog fires or a
+ * 500 lands. Copy is intentionally terse so it never crowds the
+ * practice surface. Reduced-motion consumers see no animation — these
+ * are static elements; the chip does not pulse. */
+.spelling-tts-pending-chip {
+  background: color-mix(in oklab, var(--accent-base, var(--good)) 18%, transparent);
+  color: color-mix(in oklab, var(--accent-base, var(--good)) 92%, black 8%);
+  border: 1px solid color-mix(in oklab, var(--accent-base, var(--good)) 45%, transparent);
+  font-size: 0.86rem;
+  padding: 4px 10px;
+}
+.spelling-tts-failure-banner {
+  margin-top: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
 /* ---------- Profile settings surface ---------- */
 .sr-only {
   position: absolute;
@@ -2895,6 +2960,16 @@ textarea:focus-visible {
   font-size: 0.96rem;
   padding: 0 24px;
   text-align: center;
+}
+/* SH2-U5: fresh-meadow empty-state wrapper. NOT based on `.monster-meadow`
+ * because that class is absolute-positioned + pointer-events: none for
+ * the decorative sprite layer. The empty-state wrapper sits in the hero's
+ * normal flow so the primitive's `role="status"` announcement lands and
+ * the CTA (when supplied) remains clickable. */
+.monster-meadow-empty {
+  position: relative;
+  margin: 12px 0 16px;
+  z-index: 1;
 }
 .meadow-monster {
   --meadow-render-size: var(--size, 64px);
@@ -10238,5 +10313,194 @@ html { scroll-behavior: smooth; }
   .punctuation-setup-scene {
     animation: none;
     transition: none;
+  }
+}
+
+/* --- SH2-U5: shared empty / loading / error state primitives ---------- */
+/* Three small surface templates that every visible panel reuses so loading
+ * / empty / error / read-only copy follows the same three-part pattern:
+ *   1. what happened (neutral),
+ *   2. is progress safe (reassurance),
+ *   3. what action is available (if any).
+ * Only colour tokens already in the palette (`--panel-soft`, `--line`,
+ * `--muted`, `--ink`, `--ink-2`, `--bad`, `--bad-soft`, `--bad-strong`,
+ * `--radius-sm`). No new hex values. Mobile-360 safe via box-sizing + no
+ * fixed widths + wrapping actions. Reduced-motion carve-out below cancels
+ * the skeleton shimmer so learners who asked for motion to stop never see
+ * a 1.4s pulse running underneath a placeholder card. */
+
+.empty-state {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px 22px;
+  margin: 0;
+  background: var(--panel-soft);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.empty-state-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  line-height: 0;
+}
+
+.empty-state-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.empty-state-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.empty-state-lede {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.empty-state-actions {
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 380px) {
+  .empty-state {
+    padding: 18px 16px;
+    gap: 10px;
+  }
+}
+
+/* --- Loading skeleton ------------------------------------------------- */
+
+.loading-skeleton {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 18px;
+  margin: 0;
+  background: var(--panel);
+  border-radius: var(--radius-sm);
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.loading-skeleton-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.loading-skeleton-row {
+  display: block;
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--panel-soft) 0%,
+    var(--line-soft) 50%,
+    var(--panel-soft) 100%
+  );
+  background-size: 200% 100%;
+  animation: loading-skeleton-shimmer 1.4s ease-in-out infinite;
+  max-width: 100%;
+}
+
+@keyframes loading-skeleton-shimmer {
+  0% { background-position: 150% 0; }
+  100% { background-position: -50% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-skeleton-row {
+    animation: none;
+    background: var(--line-soft);
+  }
+}
+
+@media (max-width: 380px) {
+  .loading-skeleton {
+    padding: 16px 14px;
+  }
+}
+
+/* --- Error card ------------------------------------------------------- */
+
+.error-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 22px 20px;
+  margin: 0;
+  background: color-mix(in oklab, var(--bad-soft) 55%, var(--panel));
+  border: 1px solid color-mix(in oklab, var(--bad) 28%, var(--line));
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.error-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bad-strong);
+  line-height: 0;
+}
+
+.error-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.error-card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--bad-strong);
+  line-height: 1.35;
+}
+
+.error-card-lede {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.error-card-actions {
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 380px) {
+  .error-card {
+    padding: 18px 16px;
+    gap: 10px;
   }
 }

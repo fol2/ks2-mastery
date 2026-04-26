@@ -108,6 +108,18 @@ export function buildBufferedSpeechPrompt({ wordText, sentence, slow }) {
   ].join('\n');
 }
 
+// U1: word-only prompt extracted from `worker/src/tts.js` `geminiPrompt()` so
+// Worker (live regen) and the batch pre-fill script share one source of truth.
+// Applies Worker's `cleanText` semantics verbatim — collapse any whitespace
+// run (NBSP, tab, double-space) to a single space, then trim — so callers
+// generate the same prompt string that `bufferedAudioMetadata` hashes for
+// the cache key. A bare `.trim()` would diverge from the Worker normalisation
+// and break R2 key parity.
+export function buildBufferedWordSpeechPrompt({ wordText } = {}) {
+  const cleanedWord = String(wordText || '').replace(/\s+/g, ' ').trim();
+  return `Read exactly this KS2 spelling word once in natural British English. Do not add any extra words:\n\n${cleanedWord}`;
+}
+
 export function buildAudioAssetKey({
   model = SPELLING_AUDIO_MODEL,
   voice,

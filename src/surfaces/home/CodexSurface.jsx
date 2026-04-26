@@ -12,6 +12,11 @@ import {
   subjectName,
 } from './data.js';
 import { codexTotals } from './codex-view-model.js';
+// SH2-U5: fresh-learner branch — when no codex entries exist we surface
+// the shared empty-state primitive instead of rendering the bare section
+// heading. Canonical copy: "Codex is empty. Progress is stored safely.
+// Complete a round to unlock your first entry."
+import { EmptyState } from '../../platform/ui/EmptyState.jsx';
 
 export function CodexSurface({ model, actions }) {
   const [previewEntry, setPreviewEntry] = useState(null);
@@ -82,14 +87,26 @@ export function CodexSurface({ model, actions }) {
         </div>
 
         <div className="codex-subject-stack">
-          {subjectGroups.map((group) => (
-            <CodexSubjectSection
-              key={group.subjectId}
-              group={group}
-              onPractice={openPractice}
-              onPreview={setPreviewEntry}
+          {subjectGroups.length ? (
+            subjectGroups.map((group) => (
+              <CodexSubjectSection
+                key={group.subjectId}
+                group={group}
+                onPractice={openPractice}
+                onPreview={setPreviewEntry}
+              />
+            ))
+          ) : (
+            <EmptyState
+              title="Codex is empty"
+              body="Codex is empty. Progress is stored safely. Complete a round to unlock your first entry."
+              action={{
+                label: `Start ${subjectName(primaryPracticeSubjectId)}`,
+                onClick: () => openPractice(primaryPracticeSubjectId),
+                dataAction: 'codex-start-fresh-round',
+              }}
             />
-          ))}
+          )}
         </div>
       </main>
 

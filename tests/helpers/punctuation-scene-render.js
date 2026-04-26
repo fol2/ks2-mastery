@@ -47,9 +47,36 @@ function loadRenderer() {
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
     import { PrimaryModeCard, PunctuationSetupScene } from ${JSON.stringify(path.join(rootDir, 'src/subjects/punctuation/components/PunctuationSetupScene.jsx'))};
+    import { PunctuationSummaryScene } from ${JSON.stringify(path.join(rootDir, 'src/subjects/punctuation/components/PunctuationSummaryScene.jsx'))};
+    import { PunctuationMapScene } from ${JSON.stringify(path.join(rootDir, 'src/subjects/punctuation/components/PunctuationMapScene.jsx'))};
+    import { PunctuationSessionScene } from ${JSON.stringify(path.join(rootDir, 'src/subjects/punctuation/components/PunctuationSessionScene.jsx'))};
 
     export function renderPunctuationSetupSceneStandalone(props) {
       return renderToStaticMarkup(React.createElement(PunctuationSetupScene, props));
+    }
+
+    // U6 review follow-on (FINDING B): standalone renderers for the scenes
+    // that carry a Back / close affordance. Lets tests pass \`ui={null}\` so
+    // \`composeIsNavigationDisabled\` flips \`true\` — the only code path
+    // under which the navigation helper hard-disables — without routing
+    // through the app-harness (which always seeds a non-null ui).
+    export function renderPunctuationSummarySceneStandalone(props) {
+      return renderToStaticMarkup(React.createElement(PunctuationSummaryScene, props));
+    }
+
+    export function renderPunctuationMapSceneStandalone(props) {
+      return renderToStaticMarkup(React.createElement(PunctuationMapScene, props));
+    }
+
+    // U6 review follow-on (FINDING C): standalone renderer for the session
+    // scene so the feedback-phase regression guard can assert that no Back
+    // affordance lives inside the feedback-phase JSX — mirroring the
+    // scope that R7 names ("the navigation guard applies to every scene's
+    // Back affordance — Map back button, Skill Detail close, Feedback
+    // back"). If a future unit adds one, the guard fails as a reminder to
+    // thread \`composeIsNavigationDisabled\` through it.
+    export function renderPunctuationSessionSceneStandalone(props) {
+      return renderToStaticMarkup(React.createElement(PunctuationSessionScene, props));
     }
 
     // Returns the raw React element for PrimaryModeCard so tests can
@@ -81,6 +108,18 @@ function loadRenderer() {
 
 export function renderPunctuationSetupSceneStandalone(props) {
   return loadRenderer().renderPunctuationSetupSceneStandalone(props);
+}
+
+export function renderPunctuationSummarySceneStandalone(props) {
+  return loadRenderer().renderPunctuationSummarySceneStandalone(props);
+}
+
+export function renderPunctuationMapSceneStandalone(props) {
+  return loadRenderer().renderPunctuationMapSceneStandalone(props);
+}
+
+export function renderPunctuationSessionSceneStandalone(props) {
+  return loadRenderer().renderPunctuationSessionSceneStandalone(props);
 }
 
 export function renderPrimaryModeCardElement(props) {

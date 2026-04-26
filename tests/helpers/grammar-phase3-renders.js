@@ -76,6 +76,13 @@ function defaultTransferLane(overrides = {}) {
 }
 
 // The explicit phase allowlist. Unknown names throw — see module header.
+// Phase 4 U4 follower: extended with four adversarial render states used by
+// `tests/grammar-learning-flow-matrix.test.js`:
+//   * `session-pre-pending`        — pre-answer with `pendingCommand` in flight.
+//   * `session-feedback-pending`   — feedback with `pendingCommand` in flight.
+//   * `session-retry`              — session re-entered via `retry-current-question`.
+//   * `session-mode-flip-worked`   — Worked mode started, then prefs flipped to Smart
+//                                    mid-round (in-flight attempt keeps Worked supportLevel).
 const PHASE_ALLOWLIST = Object.freeze([
   'dashboard',
   'session-pre',
@@ -87,6 +94,10 @@ const PHASE_ALLOWLIST = Object.freeze([
   'bank',
   'transfer',
   'analytics',
+  'session-pre-pending',
+  'session-feedback-pending',
+  'session-retry',
+  'session-mode-flip-worked',
 ]);
 
 export const GRAMMAR_PHASE3_CHILD_PHASES = Object.freeze([
@@ -236,6 +247,91 @@ function renderAnalytics() {
   return harness;
 }
 
+// --- Phase 4 U4 follower: adversarial-state renderers ---------------------
+//
+// The four helpers below seed the render states the U4 matrix needs. Each one
+// mutates the client-side subject UI through `store.updateSubjectUi` (or the
+// transition path) rather than fabricating a free-form fixture — that way the
+// matrix exercises the exact read-model shape the JSX consumes in production.
+
+function setGrammarUiPatch(harness, patch) {
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.store.updateSubjectUi('grammar', (current) => normaliseGrammarReadModel({
+    ...current,
+    ...patch,
+  }, learnerId));
+}
+
+function renderSessionPrePending() {
+  // Pre-answer focus return after autosave: `pendingCommand='save-prefs'` is
+  // set while the learner is still in the `'session'` phase. The JSX guard at
+  // `GrammarSessionScene.jsx:521` disables buttons but does not change
+  // help-visibility — the matrix asserts visibility stays all-false because
+  // `grammarPhase !== 'feedback'` before any answer has been submitted.
+  const harness = renderSessionPre();
+  setGrammarUiPatch(harness, { pendingCommand: 'save-prefs' });
+  return harness;
+}
+
+function renderSessionFeedbackPending() {
+  // Pending command race during feedback: the learner has answered and is in
+  // `'feedback'`, but the dispatcher fired `submit-answer` / `retry-current-
+  // question` and hasn't resolved yet. `pendingCommand` is truthy. The JSX
+  // disables buttons via `grammar.pendingCommand` — this is a no-op at the
+  // visibility selector level (the selector depends on session + phase only).
+  // The matrix pins that current contract so a future refactor that tried to
+  // "hide help until pending resolves" would fail loud.
+  const harness = renderSessionPostCorrect();
+  setGrammarUiPatch(harness, { pendingCommand: 'submit-answer' });
+  return harness;
+}
+
+function renderSessionRetry() {
+  // Show-answer / retry flow: the learner answered wrong, then tapped the
+  // repair `retry-current-question` action. The engine moves state back to
+  // `phase='session'`, flips `session.repair.retryingCurrent=true`, and the
+  // submit label becomes `Try again` (session.phase === 'retry' is reflected
+  // at the read-model level via the engine's `state.phase = 'session'` +
+  // `session.phase` left untouched). The UI visibility returns to all-false
+  // during the retry attempt — the first attempt that was scored already
+  // captured the scored record; the retry is not a second scored attempt.
+  const harness = renderSessionPostWrong();
+  harness.dispatch('grammar-retry-current-question');
+  return harness;
+}
+
+function renderSessionModeFlipWorked() {
+  // Mode flip Worked→Smart mid-round: start Worked mode, which stamps
+  // `session.mode='worked'` + `session.supportLevel=2`. The production
+  // `grammar-set-mode` dispatcher resets to dashboard, which is itself a
+  // correct behaviour (the plan's "in-flight attempt keeps supportLevel"
+  // language means that within a single attempt, a pref-change cannot
+  // retroactively strip support from the scored record). To model the
+  // narrow adversarial scenario — prefs drift out from under an in-flight
+  // session — we patch `prefs.mode='smart'` directly via the store updater
+  // while keeping `session.mode='worked'` + `session.supportLevel=2`. The
+  // matrix then asserts the session-scoped visibility reflects worked
+  // (in-flight), not smart (next-round).
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+  const sample = pickOracleSample();
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-set-mode', { value: 'worked' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 2,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  // Patch prefs.mode directly: the adversarial scenario is a stale prefs
+  // snapshot reaching the session scene after a mid-round pref mutation.
+  setGrammarUiPatch(harness, {
+    prefs: { ...harness.store.getState().subjectUi.grammar.prefs, mode: 'smart' },
+  });
+  return harness;
+}
+
 const PHASE_RENDERERS = Object.freeze({
   'dashboard': renderDashboard,
   'session-pre': renderSessionPre,
@@ -247,6 +343,11 @@ const PHASE_RENDERERS = Object.freeze({
   'bank': renderBank,
   'transfer': renderTransfer,
   'analytics': renderAnalytics,
+  // U4 follower adversarial-state renderers.
+  'session-pre-pending': renderSessionPrePending,
+  'session-feedback-pending': renderSessionFeedbackPending,
+  'session-retry': renderSessionRetry,
+  'session-mode-flip-worked': renderSessionModeFlipWorked,
 });
 
 // --- Per-phase HTML scope helpers ------------------------------------------
@@ -466,6 +567,12 @@ const PHASE_SCOPERS = Object.freeze({
   'bank': scopeBank,
   'transfer': scopeTransfer,
   'analytics': scopeAnalytics,
+  // U4 follower: the four adversarial states all render the session scene,
+  // so they reuse the `data-grammar-phase-root="session"` landmark scoper.
+  'session-pre-pending': scopeSession,
+  'session-feedback-pending': scopeSession,
+  'session-retry': scopeSession,
+  'session-mode-flip-worked': scopeSession,
 });
 
 /**

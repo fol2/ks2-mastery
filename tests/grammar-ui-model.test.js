@@ -29,6 +29,7 @@ import {
   GRAMMAR_BANK_CLUSTER_FILTER_IDS,
   GRAMMAR_DASHBOARD_HERO,
   GRAMMAR_CHILD_FORBIDDEN_TERMS,
+  GRAMMAR_FOCUS_ALLOWED_MODES,
   grammarChildConfidenceLabel,
   grammarChildConfidenceTone,
   grammarMonsterClusterForConcept,
@@ -37,6 +38,7 @@ import {
   buildGrammarBankModel,
   grammarSummaryCards,
   isGrammarChildCopy,
+  isGrammarFocusAllowedMode,
 } from '../src/subjects/grammar/components/grammar-view-model.js';
 
 // -----------------------------------------------------------------------------
@@ -303,6 +305,82 @@ test('U8 view-model: GRAMMAR_MORE_PRACTICE_MODES are frozen', () => {
   for (const mode of GRAMMAR_MORE_PRACTICE_MODES) {
     assert.equal(Object.isFrozen(mode), true);
   }
+});
+
+// -----------------------------------------------------------------------------
+// U5 Phase 4: Mixed practice labels + focus allowlist
+// -----------------------------------------------------------------------------
+
+test('U5 view-model: GRAMMAR_MORE_PRACTICE_MODES carries "Mixed practice" label on Surgery and Builder only', () => {
+  const byId = Object.fromEntries(GRAMMAR_MORE_PRACTICE_MODES.map((mode) => [mode.id, mode]));
+  // Surgery + Builder are the two legitimately global/mixed modes per
+  // Worker's `NO_SESSION_FOCUS_MODES` — they must surface the "Mixed
+  // practice" label so the child is told up front that focused concepts
+  // will not stick in these modes.
+  assert.equal(byId.surgery.label, 'Mixed practice');
+  assert.equal(byId.builder.label, 'Mixed practice');
+  // Learn / Worked / Faded all honour focus — no label required.
+  assert.equal(byId.learn.label ?? '', '', 'learn has no Mixed practice label');
+  assert.equal(byId.worked.label ?? '', '', 'worked has no Mixed practice label');
+  assert.equal(byId.faded.label ?? '', '', 'faded has no Mixed practice label');
+});
+
+test('U5 view-model: Mixed practice label stays ~12 chars to fit under the mode title', () => {
+  // Plan-specified wording ("Mixed practice") — 14 chars including space.
+  // Pinned so a later copy tweak that pushes this past ~20 chars (e.g.,
+  // "Mixed-mode practice round") would fail loudly rather than silently
+  // break the dashboard card layout.
+  for (const mode of GRAMMAR_MORE_PRACTICE_MODES) {
+    if (typeof mode.label !== 'string' || !mode.label) continue;
+    assert.ok(
+      mode.label.length <= 20,
+      `label "${mode.label}" on mode ${mode.id} exceeds 20 chars`,
+    );
+  }
+});
+
+test('U5 view-model: GRAMMAR_FOCUS_ALLOWED_MODES is a frozen Set of exactly {smart, learn}', () => {
+  assert.ok(GRAMMAR_FOCUS_ALLOWED_MODES instanceof Set);
+  assert.equal(GRAMMAR_FOCUS_ALLOWED_MODES.size, 2);
+  assert.equal(GRAMMAR_FOCUS_ALLOWED_MODES.has('smart'), true);
+  assert.equal(GRAMMAR_FOCUS_ALLOWED_MODES.has('learn'), true);
+  // Non-members — pinned to catch an accidental widening of the allowlist.
+  // Any new member here would silently contradict James's 2026-04-26
+  // decision that Practise 5 routes into Smart + Learn only.
+  for (const mode of ['surgery', 'builder', 'trouble', 'worked', 'faded', 'satsset', 'bank']) {
+    assert.equal(GRAMMAR_FOCUS_ALLOWED_MODES.has(mode), false, `${mode} must not be allowed`);
+  }
+  assert.equal(Object.isFrozen(GRAMMAR_FOCUS_ALLOWED_MODES), true);
+});
+
+test('U5 view-model: isGrammarFocusAllowedMode is a pure predicate over mode strings', () => {
+  assert.equal(isGrammarFocusAllowedMode('smart'), true);
+  assert.equal(isGrammarFocusAllowedMode('learn'), true);
+  for (const mode of ['surgery', 'builder', 'trouble', 'worked', 'faded', 'satsset', 'bank', 'unknown']) {
+    assert.equal(isGrammarFocusAllowedMode(mode), false, `${mode} must not be allowed`);
+  }
+  // Defensive inputs — never crash.
+  assert.equal(isGrammarFocusAllowedMode(''), false);
+  assert.equal(isGrammarFocusAllowedMode(null), false);
+  assert.equal(isGrammarFocusAllowedMode(undefined), false);
+  assert.equal(isGrammarFocusAllowedMode(123), false);
+  assert.equal(isGrammarFocusAllowedMode({}), false);
+  assert.equal(isGrammarFocusAllowedMode([]), false);
+});
+
+test('U5 view-model: allowlist intersects with GRAMMAR_PRIMARY_MODE_CARDS for Smart only', () => {
+  // Smart sits on the primary dashboard card row — allowlisted. Learn is
+  // a secondary "More practice" mode — allowlisted but not a primary card.
+  // This pinning asserts the narrow primary-card intersection.
+  const primaryIds = GRAMMAR_PRIMARY_MODE_CARDS.map((card) => card.id);
+  const primaryAllowlisted = primaryIds.filter((id) => GRAMMAR_FOCUS_ALLOWED_MODES.has(id));
+  assert.deepEqual(primaryAllowlisted, ['smart']);
+});
+
+test('U5 view-model: allowlist intersects with GRAMMAR_MORE_PRACTICE_MODES for Learn only', () => {
+  const moreIds = GRAMMAR_MORE_PRACTICE_MODES.map((mode) => mode.id);
+  const moreAllowlisted = moreIds.filter((id) => GRAMMAR_FOCUS_ALLOWED_MODES.has(id));
+  assert.deepEqual(moreAllowlisted, ['learn']);
 });
 
 // -----------------------------------------------------------------------------

@@ -109,14 +109,15 @@ test('spelling replay uses a server audio cue when the prompt word is redacted',
   assert.deepEqual(spoken, [{ ...audio, slow: true }]);
 });
 
-// ----- U8: persistenceWarning banner renders above the card --------------------
+// ----- P2 U9: durable persistenceWarning banner renders above the card ------
 //
-// Wires a happy-path session into the harness, then patches the spelling UI
-// state to inject `feedback.persistenceWarning`. The scene must render a
-// polite-live banner with the planned copy, and NOT render it on the
-// happy-path where persistenceWarning is absent.
+// Migrated from U8 (session-scoped `feedback.persistenceWarning`) to U9
+// (durable `data.persistenceWarning` sibling). The U9 scene reads the
+// warning from the persisted subject-state record via the service getter,
+// so these fixture tests seed `data.persistenceWarning` through the
+// repository rather than patching `subjectUi.spelling.feedback`.
 
-test('U8 session scene renders storage-failure banner when feedback.persistenceWarning is present', () => {
+test('P2 U9 session scene renders storage-failure banner when data.persistenceWarning is present', () => {
   const harness = createAppHarness({ storage: installMemoryStorage() });
   const learnerId = harness.store.getState().learners.selectedId;
 
@@ -124,45 +125,37 @@ test('U8 session scene renders storage-failure banner when feedback.persistenceW
   harness.dispatch('open-subject', { subjectId: 'spelling' });
   harness.dispatch('spelling-start');
 
-  // Happy path render: banner absent.
+  // Happy path render: banner absent (no data.persistenceWarning).
   const happyHtml = harness.render();
   assert.doesNotMatch(happyHtml, /spelling-persistence-warning/,
-    'banner absent when feedback has no persistenceWarning');
+    'banner absent when data.persistenceWarning is unset');
 
-  // Patch the spelling UI to inject a persistenceWarning on the current
-  // feedback. This simulates a state where U8's service code has set the
-  // warning after a storage throw.
-  harness.store.patch((current) => ({
-    subjectUi: {
-      ...current.subjectUi,
-      spelling: {
-        ...current.subjectUi.spelling,
-        feedback: {
-          kind: 'info',
-          headline: 'Guardian strong.',
-          answer: 'possess',
-          attemptedAnswer: '',
-          body: '',
-          footer: '',
-          familyWords: [],
-          persistenceWarning: { reason: 'storage-save-failed' },
-        },
-      },
+  // Seed the durable sibling through the repository — the service's
+  // `getPersistenceWarning` reads from the same storage path, so
+  // `buildSpellingContext` will pick it up on the next render.
+  const existing = harness.repositories.subjectStates.read(learnerId, 'spelling').data || {};
+  harness.repositories.subjectStates.writeData(learnerId, 'spelling', {
+    ...existing,
+    persistenceWarning: {
+      reason: 'storage-save-failed',
+      occurredAt: 19_500,
+      acknowledged: false,
     },
-  }));
+  });
 
   const warningHtml = harness.render();
   assert.match(warningHtml, /spelling-persistence-warning/,
-    'banner element renders when feedback.persistenceWarning is set');
-  // Review fix: banner copy now warns explicitly that the answer counted
-  // but may re-appear after a reload. Copy is sourced from
-  // SPELLING_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED.
-  assert.match(warningHtml, /could not save your progress on this device/,
+    'banner element renders when data.persistenceWarning is set');
+  // P2 U9 copy: prominent-but-not-alarming — the message tells the learner
+  // what happened and what to do without demoting Mega.
+  assert.match(warningHtml, /could not be saved on this device/,
     'banner copy matches the planned wording (opening phrase)');
-  assert.match(warningHtml, /Your answer counted for this round/,
-    'banner copy acknowledges that the in-memory answer was recorded');
-  assert.match(warningHtml, /see this word again after a reload/,
-    'banner copy warns about the partial-write re-ask');
+  assert.match(warningHtml, /Export your data or free up storage/,
+    'banner copy gives the learner two actionable options');
+  assert.match(warningHtml, /I understand/,
+    'banner includes the "I understand" acknowledge button');
+  assert.match(warningHtml, /data-action="spelling-acknowledge-persistence-warning"/,
+    'acknowledge button wires to the durable acknowledge dispatcher');
   assert.match(warningHtml, /role="status"/,
     'banner uses role="status" (ARIA live-polite)');
   assert.match(warningHtml, /aria-live="polite"/,
@@ -171,14 +164,7 @@ test('U8 session scene renders storage-failure banner when feedback.persistenceW
     'banner exposes a data-testid for downstream integration tests');
 });
 
-// ----- U8 review fix: banner unmounts when warning clears ----------------------
-//
-// The banner is conditionally rendered on `ui.feedback?.persistenceWarning`.
-// When the next submit produces feedback without the warning, the banner
-// element must disappear from the DOM. Advisory fix for the sev-60 test
-// finding that exercises the set → undefined unmount contract.
-
-test('U8 session scene unmounts persistenceWarning banner when feedback clears', () => {
+test('P2 U9 session scene hides banner when data.persistenceWarning.acknowledged is true', () => {
   const harness = createAppHarness({ storage: installMemoryStorage() });
   const learnerId = harness.store.getState().learners.selectedId;
 
@@ -186,63 +172,34 @@ test('U8 session scene unmounts persistenceWarning banner when feedback clears',
   harness.dispatch('open-subject', { subjectId: 'spelling' });
   harness.dispatch('spelling-start');
 
-  // Inject warning.
-  harness.store.patch((current) => ({
-    subjectUi: {
-      ...current.subjectUi,
-      spelling: {
-        ...current.subjectUi.spelling,
-        feedback: {
-          kind: 'info',
-          headline: 'Guardian strong.',
-          answer: 'possess',
-          attemptedAnswer: '',
-          body: '',
-          footer: '',
-          familyWords: [],
-          persistenceWarning: { reason: 'storage-save-failed' },
-        },
-      },
+  // Seed unacknowledged warning — banner should render.
+  const existing = harness.repositories.subjectStates.read(learnerId, 'spelling').data || {};
+  harness.repositories.subjectStates.writeData(learnerId, 'spelling', {
+    ...existing,
+    persistenceWarning: {
+      reason: 'storage-save-failed',
+      occurredAt: 19_500,
+      acknowledged: false,
     },
-  }));
+  });
   assert.match(harness.render(), /data-testid="spelling-persistence-warning"/,
-    'banner mounts on first inject');
+    'banner mounts for unacknowledged warning');
 
-  // Transition feedback to a warning-free shape — the service returns a new
-  // feedback object after the next successful submit.
-  harness.store.patch((current) => ({
-    subjectUi: {
-      ...current.subjectUi,
-      spelling: {
-        ...current.subjectUi.spelling,
-        feedback: {
-          kind: 'info',
-          headline: 'Guardian strong.',
-          answer: 'possess',
-          attemptedAnswer: '',
-          body: '',
-          footer: '',
-          familyWords: [],
-          // persistenceWarning intentionally absent.
-        },
-      },
+  // Flip acknowledged true — banner unmounts but record is retained for
+  // audit (the repository still holds the warning).
+  const current = harness.repositories.subjectStates.read(learnerId, 'spelling').data || {};
+  harness.repositories.subjectStates.writeData(learnerId, 'spelling', {
+    ...current,
+    persistenceWarning: {
+      ...current.persistenceWarning,
+      acknowledged: true,
     },
-  }));
+  });
   assert.doesNotMatch(harness.render(), /data-testid="spelling-persistence-warning"/,
-    'banner unmounts when feedback.persistenceWarning is cleared');
-
-  // Also verify feedback → null removes the banner.
-  harness.store.patch((current) => ({
-    subjectUi: {
-      ...current.subjectUi,
-      spelling: {
-        ...current.subjectUi.spelling,
-        feedback: null,
-      },
-    },
-  }));
-  assert.doesNotMatch(harness.render(), /data-testid="spelling-persistence-warning"/,
-    'banner unmounts when feedback itself is null');
+    'banner unmounts when acknowledged=true');
+  const afterAck = harness.repositories.subjectStates.read(learnerId, 'spelling').data || {};
+  assert.equal(afterAck.persistenceWarning?.acknowledged, true,
+    'record retained for audit after dismissal');
 });
 
 test('word-bank modal spike keeps drill isolated and Escape closes back to the word bank', () => {

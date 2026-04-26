@@ -3,6 +3,7 @@ import { SpellingSetupScene } from './SpellingSetupScene.jsx';
 import { SpellingSessionScene } from './SpellingSessionScene.jsx';
 import { SpellingSummaryScene } from './SpellingSummaryScene.jsx';
 import { SpellingWordBankScene } from './SpellingWordBankScene.jsx';
+import { PatternQuestScene } from './PatternQuestScene.jsx';
 import { preloadImages } from '../../../platform/ui/luminance.js';
 import {
   buildSpellingContext,
@@ -70,6 +71,9 @@ export function SpellingPracticeSurface(props) {
     // never renders; admin / ops adults see it and can jump into the admin
     // hub diagnostic panel.
     session = null,
+    // SH2-U4 (sys-hardening p2): TTS port from routeContext, forwarded to
+    // the session scene for its status-channel subscription.
+    tts = null,
   } = props;
   const platformRole = typeof session?.platformRole === 'string' ? session.platformRole : '';
   const spelling = buildSpellingContext({ appState, service, repositories, subject });
@@ -127,6 +131,21 @@ export function SpellingPracticeSurface(props) {
   }
 
   if (spelling.ui.phase === 'session') {
+    // P2 U11: Pattern Quest rides as its own scene because the card-type
+    // state machine (spell / classify / detect-error / explain) does not
+    // share the SpellingSessionScene's single-input shape. The scene
+    // reuses `.card` / `.feedback` styles so visual cohesion holds.
+    if (spelling.ui.session?.mode === 'pattern-quest') {
+      return (
+        <PatternQuestScene
+          {...spelling}
+          previousHeroBg={previousHeroBg}
+          service={service}
+          actions={actions}
+          runtimeReadOnly={runtimeReadOnly}
+        />
+      );
+    }
     return (
       <SpellingSessionScene
         {...spelling}
@@ -135,6 +154,7 @@ export function SpellingPracticeSurface(props) {
         repositories={repositories}
         actions={actions}
         runtimeReadOnly={runtimeReadOnly}
+        tts={tts}
       />
     );
   }

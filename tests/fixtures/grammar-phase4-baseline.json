@@ -1,0 +1,221 @@
+{
+  "id": "grammar-phase4-learning-hardening",
+  "source": "docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md",
+  "ownerPlan": "docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md",
+  "status": "completed",
+  "contentReleaseId": "grammar-legacy-reviewed-2026-04-24",
+  "phase4": [
+    {
+      "unit": "U0",
+      "topic": "Phase 4 invariants scope-lock",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U0",
+      "landedIn": "PR #256",
+      "supportingTests": [
+        "docs/plans/james/grammar/grammar-phase4-invariants.md",
+        "tests/grammar-concordium-invariant.test.js"
+      ],
+      "plannedReason": "Foundational invariants document (Concordium never revoked, 18-concept denominator freeze, non-scored Writing Try, release-id impact none, shared confidence taxonomy). Cited by every downstream P4 unit and by the concordium property test that enforces the scope lock."
+    },
+    {
+      "unit": "U1",
+      "topic": "Fix production-smoke stats.templates leak",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U1",
+      "landedIn": "PR #264",
+      "supportingTests": [
+        "tests/grammar-production-smoke.test.js",
+        "tests/grammar-stats-rename.test.js"
+      ],
+      "plannedReason": "Rename the legacy stats.templates field in the production-smoke contract to stats.templateTotals and strip the deprecated alias defensively on read so pre-P4 persisted state keeps parsing without a backfill migration. Regression-locks the rename against future drift."
+    },
+    {
+      "unit": "U2",
+      "topic": "Harden Phase 3 scopers — fail loud on DOM drift",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U2",
+      "landedIn": "PR #274",
+      "supportingTests": [
+        "tests/grammar-phase3-scopers.test.js",
+        "tests/helpers/grammar-phase3-renders.js"
+      ],
+      "plannedReason": "Replace silent-fallback scopers across nine Phase 3 render helpers with loud throws keyed on data-grammar-phase-root attributes, so any future DOM refactor that breaks a phase selector fails the test suite instead of silently reading the wrong subtree."
+    },
+    {
+      "unit": "U3",
+      "topic": "Concordium-never-revoked invariant + reward wiring tests",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U3",
+      "landedIn": "PR #281",
+      "supportingTests": [
+        "tests/grammar-concordium-invariant.test.js",
+        "tests/grammar-rewards.test.js",
+        "tests/grammar-monster-roster.test.js",
+        "tests/helpers/grammar-reward-invariant.js"
+      ],
+      "plannedReason": "Property-test suite covering every state writer end-to-end (engine, mastery, shared normaliser, projections). Locks GRAMMAR_AGGREGATE_CONCEPTS.length === 18 as the denominator floor and proves that no answer sequence can revoke a previously-awarded Concordium stage. Reward wiring tests verify monotonicity and self-heal behaviour."
+    },
+    {
+      "unit": "U4",
+      "topic": "Learning-flow test matrix",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U4",
+      "landedIn": "PR #285",
+      "supportingTests": [
+        "tests/grammar-learning-flow-matrix.test.js",
+        "tests/grammar-phase3-child-copy.test.js"
+      ],
+      "plannedReason": "Parametrised matrix across session-ui, grammar-view-model, GrammarSessionScene, GrammarMiniTestReview and engine commands — covers every pre-answer / post-answer-correct / post-answer-wrong transition plus mini-test strictness. Reuses the Phase 3 forbidden-term fixture for child-copy sweep across the expanded flow set."
+    },
+    {
+      "unit": "U5",
+      "topic": "Grammar Bank focus allowlist + Mixed practice label",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U5",
+      "landedIn": "PR #283",
+      "supportingTests": [
+        "tests/grammar-bank-focus-routing.test.js"
+      ],
+      "plannedReason": "Grammar Bank Practise-this routing honours an explicit focus-concept allowlist and relabels mixed rounds to avoid false-grade affordances. Refusal path routes through translateGrammarSessionError for child-friendly messaging. Regression-locked against silent override."
+    },
+    {
+      "unit": "U6",
+      "topic": "Seeded adaptive-selection simulation suite",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U6",
+      "landedIn": "PR #267",
+      "supportingTests": [
+        "tests/grammar-learning-integrity.test.js",
+        "tests/helpers/grammar-simulation.js"
+      ],
+      "plannedReason": "Deterministic-seed simulation harness exercises selection.js across 1000+ adaptive rounds, asserting due-outranks-new, template-diversity floors, and mini-test-vs-normal divergence. Surfaces selection-engine regressions before they reach learners."
+    },
+    {
+      "unit": "U7",
+      "topic": "Parent/Admin hub confidence chips + sample-size context",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U7",
+      "landedIn": "PR #282",
+      "supportingTests": [
+        "tests/react-parent-hub-grammar.test.js",
+        "tests/react-admin-hub-grammar.test.js",
+        "tests/grammar-parent-hub-confidence.test.js",
+        "tests/grammar-adult-confidence-chip.test.js"
+      ],
+      "plannedReason": "Extends client-side buildGrammarLearnerReadModel with a Worker-matching confidence projection so Parent Hub and Admin Hub render confidence chips alongside sample-size context. Regression-locked against existing concept-status, accuracy, and evidence fields to prevent drift."
+    },
+    {
+      "unit": "U8",
+      "topic": "Shared confidence module",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U8",
+      "landedIn": "PR #268",
+      "supportingTests": [
+        "tests/grammar-confidence-shared.test.js",
+        "tests/grammar-confidence.test.js",
+        "shared/grammar/confidence.js"
+      ],
+      "plannedReason": "Consolidates confidence-label derivation into a single shared/grammar/confidence.js module consumed by Worker emission, adult client read-model, and child view-model. Eliminates the threshold divergence between Worker engine.js and client read-model.js. One-time refactor, drift-free thereafter."
+    },
+    {
+      "unit": "U9",
+      "topic": "Playwright golden paths x 2 viewports",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U9",
+      "landedIn": "PR #294",
+      "supportingTests": [
+        "tests/playwright/grammar-golden-path.playwright.test.mjs",
+        "tests/playwright/shared.mjs"
+      ],
+      "plannedReason": "Deterministic-seed Playwright scenes cover cross-layer behaviour unit tests cannot (focus motion, timer drift, pointer capture, IME, scrollIntoView) across desktop and mobile viewports. Gates regression on every Grammar-touching PR."
+    },
+    {
+      "unit": "U10",
+      "topic": "Writing Try hide/archive/delete via admin HTTP routes",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U10",
+      "landedIn": "PR #291",
+      "supportingTests": [
+        "tests/grammar-transfer-hide.test.js",
+        "tests/grammar-transfer-admin.test.js",
+        "tests/grammar-transfer-admin-security.test.js"
+      ],
+      "plannedReason": "First admin-scoped subject-data HTTP routes in the repo: child hide (prefs.transferHiddenPromptIds), admin archive (state.transferEvidenceArchive), admin delete. Non-scored invariant preserved — zero mutations on mastery, rewards, retryQueue, misconceptions. Security-locked against non-admin callers."
+    },
+    {
+      "unit": "U11",
+      "topic": "Answer-spec migration audit (inventory)",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U11",
+      "landedIn": "PR #262",
+      "supportingTests": [
+        "docs/plans/james/grammar/grammar-answer-spec-audit.md",
+        "tests/grammar-answer-spec-audit.test.js"
+      ],
+      "plannedReason": "Inventory audit of every template's answer-spec declaration readiness ahead of Phase 5 migration. Doc-gate test asserts audit docs match content.js ground truth at commit time so drift between audit and live templates cannot go unnoticed."
+    },
+    {
+      "unit": "U12",
+      "topic": "Content-expansion audit (inventory)",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U12",
+      "landedIn": "PR #263",
+      "supportingTests": [
+        "docs/plans/james/grammar/grammar-content-expansion-audit.md",
+        "tests/grammar-content-expansion-audit.test.js"
+      ],
+      "plannedReason": "Phase 5 content-expansion backlog ordered by priority, with explicit callouts of the GRAMMAR_AGGREGATE_CONCEPTS denominator trap (any expansion to 19 concepts must pair with a stage-monotonicity shim). Doc-gate test preserves the release-id bump instruction for Phase 5."
+    }
+  ],
+  "invariants": [
+    {
+      "unit": "invariant",
+      "name": "concordium-never-revoked",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U3",
+      "landedIn": "PR #281",
+      "supportingTests": [
+        "tests/grammar-concordium-invariant.test.js"
+      ],
+      "plannedReason": "Property-test covering every writer (engine, mastery, shared, projections) proves no answer sequence revokes a previously-awarded Concordium stage. Denominator floor pinned at GRAMMAR_AGGREGATE_CONCEPTS.length === 18 to block silent revocation on future content expansion."
+    },
+    {
+      "unit": "invariant",
+      "name": "confidence-label-shared-module",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U8",
+      "landedIn": "PR #268",
+      "supportingTests": [
+        "shared/grammar/confidence.js",
+        "tests/grammar-confidence-shared.test.js"
+      ],
+      "plannedReason": "Single source of truth for Grammar confidence-label derivation consumed by Worker emission, adult client read-model, and child view-model. Eliminates the Worker-vs-client threshold divergence and regression-locks the shared module against future forks."
+    },
+    {
+      "unit": "invariant",
+      "name": "release-id-impact-none",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U0",
+      "landedIn": "PR #256",
+      "supportingTests": [
+        "tests/grammar-production-smoke.test.js",
+        "tests/grammar-engine.test.js",
+        "tests/grammar-functionality-completeness.test.js"
+      ],
+      "plannedReason": "Phase 4 must not bump GRAMMAR_CONTENT_RELEASE_ID. grammar-engine.test.js + grammar-functionality-completeness.test.js pin the id against the legacy oracle and completeness baseline; grammar-production-smoke.test.js pins it in the shipped smoke contract. Three independent anchors keep Phase 4 scope-locked."
+    }
+  ],
+  "phase4ReleaseGate": {
+    "ownerUnit": "U13",
+    "status": "completed",
+    "description": "Phase 4 completeness gate: every P4 unit row (U0-U12) and every cross-cutting invariant row recorded completed with landedIn PR and supporting test files existing on disk. Structurally refuses any future 'planned' row or missing-test regression.",
+    "evidence": [
+      "docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md",
+      "tests/fixtures/grammar-phase4-baseline.json",
+      "tests/grammar-functionality-completeness.test.js",
+      "tests/grammar-concordium-invariant.test.js",
+      "tests/grammar-learning-flow-matrix.test.js",
+      "tests/grammar-learning-integrity.test.js"
+    ]
+  }
+}

@@ -345,7 +345,63 @@ function SavedHistory({ evidence, checklist }) {
   );
 }
 
-function OrphanedEvidence({ entries }) {
+// U10 follower (HIGH 2): collapsed list of orphans that the child has
+// hidden. The details/summary element renders the count in the header
+// so the child can always see how many are tucked away. Each row has
+// its own "Show again" control, so unhiding is independent per entry —
+// a child is never forced to unhide everything at once. UK English
+// copy; KS2-friendly wording ("Show again", "Hidden from list"). Same
+// `data-action` attribute as the hide control so test-mode dispatchers
+// observe identical wiring.
+function HiddenOrphans({ entries, onShow }) {
+  if (!entries.length) return null;
+  return (
+    <section
+      className="grammar-transfer-orphaned grammar-transfer-orphaned-hidden"
+      aria-labelledby="grammar-transfer-orphaned-hidden-title"
+      data-section-id="hidden-retired-prompts"
+    >
+      <details>
+        <summary id="grammar-transfer-orphaned-hidden-title" className="grammar-transfer-orphaned-hidden-summary">
+          {`Hidden from list (${entries.length})`}
+        </summary>
+        <p className="grammar-transfer-orphaned-hint">
+          These retired prompts are hidden from your list. Your writing is still saved. Tap &quot;Show again&quot; to move a prompt back.
+        </p>
+        <ul className="grammar-transfer-orphaned-list">
+          {entries.map((entry) => (
+            <li
+              className="grammar-transfer-orphaned-entry"
+              data-prompt-id={entry.promptId}
+              data-hidden="true"
+              key={entry.promptId}
+            >
+              <header className="grammar-transfer-orphaned-head">
+                <strong className="grammar-transfer-orphaned-label">Hidden writing</strong>
+                <span className="grammar-transfer-orphaned-time">{relativeSavedAt(entry.latest?.savedAt || entry.updatedAt)}</span>
+              </header>
+              <p className="grammar-transfer-orphaned-writing">{truncate(entry.latest?.writing || '')}</p>
+              <div className="grammar-transfer-orphaned-actions">
+                <button
+                  type="button"
+                  className="btn ghost sm"
+                  data-action="grammar-toggle-transfer-hidden"
+                  data-prompt-id={entry.promptId}
+                  data-hidden-next="false"
+                  onClick={() => onShow(entry.promptId)}
+                >
+                  Show again
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </details>
+    </section>
+  );
+}
+
+function OrphanedEvidence({ entries, onHide }) {
   if (!entries.length) return null;
   return (
     <section
@@ -355,7 +411,7 @@ function OrphanedEvidence({ entries }) {
     >
       <h3 id="grammar-transfer-orphaned-title" className="grammar-transfer-orphaned-title">Retired prompts</h3>
       <p className="grammar-transfer-orphaned-hint">
-        These writings were saved for writing prompts that are no longer on the list. They are kept so a grown-up can still read them.
+        These writings were saved for writing prompts that are no longer on the list. They are kept so a grown-up can still read them. You can hide any of them from your list — your writing is still saved.
       </p>
       <ul className="grammar-transfer-orphaned-list">
         {entries.map((entry) => (
@@ -369,6 +425,17 @@ function OrphanedEvidence({ entries }) {
               <span className="grammar-transfer-orphaned-time">{relativeSavedAt(entry.latest?.savedAt || entry.updatedAt)}</span>
             </header>
             <p className="grammar-transfer-orphaned-writing">{truncate(entry.latest?.writing || '')}</p>
+            <div className="grammar-transfer-orphaned-actions">
+              <button
+                type="button"
+                className="btn ghost sm"
+                data-action="grammar-toggle-transfer-hidden"
+                data-prompt-id={entry.promptId}
+                onClick={() => onHide(entry.promptId)}
+              >
+                Hide from my list
+              </button>
+            </div>
           </li>
         ))}
       </ul>
@@ -400,7 +467,32 @@ export function GrammarTransferScene({ grammar, actions }) {
     : null;
 
   const promptIdSet = new Set(prompts.map((prompt) => prompt.id));
-  const orphanedEvidence = evidence.filter((entry) => entry.promptId && !promptIdSet.has(entry.promptId));
+  // U10: child-side "Hide from my list" filter. The pref is lazy-
+  // initialised empty; when the learner toggles Hide, the promptId is
+  // added to `prefs.transferHiddenPromptIds` via `save-prefs`. The
+  // filter applies ONLY to the orphan surface — evidence is otherwise
+  // untouched on the server, so a grown-up still sees every entry in
+  // the Admin Hub.
+  //
+  // U10 follower (HIGH 2): a child who hides an orphan still needs to
+  // be able to reverse that choice. `hiddenOrphanedEvidence` carries
+  // the evidence entries that are BOTH orphaned (absent from the live
+  // prompt catalogue) AND present in `prefs.transferHiddenPromptIds`.
+  // The section renders collapsed by default and exposes one "Show
+  // again" control per row — KS2-friendly copy, no destructive action.
+  const hiddenPromptIds = Array.isArray(grammar?.prefs?.transferHiddenPromptIds)
+    ? grammar.prefs.transferHiddenPromptIds
+    : [];
+  const hiddenSet = new Set(hiddenPromptIds);
+  const orphanedEvidence = evidence.filter(
+    (entry) => entry.promptId && !promptIdSet.has(entry.promptId) && !hiddenSet.has(entry.promptId),
+  );
+  // U10 follower (HIGH 2): entries that the child has hidden — kept in
+  // a collapsed section so they can tap "Show again" to reverse the
+  // hide. Admin-managed evidence on the server is untouched either way.
+  const hiddenOrphanedEvidence = evidence.filter(
+    (entry) => entry.promptId && !promptIdSet.has(entry.promptId) && hiddenSet.has(entry.promptId),
+  );
 
   const pendingSave = grammar?.pendingCommand === 'save-transfer-evidence';
   const overCap = draft.length > writingCap;
@@ -422,6 +514,18 @@ export function GrammarTransferScene({ grammar, actions }) {
   };
   const handleToggle = (key, checked) => {
     actions?.dispatch?.('grammar-toggle-transfer-check', { key, checked });
+  };
+  const handleHideOrphan = (promptId) => {
+    if (typeof promptId !== 'string' || !promptId) return;
+    actions?.dispatch?.('grammar-toggle-transfer-hidden', { promptId, hidden: true });
+  };
+  // U10 follower (HIGH 2): reverse-toggle. The `module.js:713` handler
+  // already supports `hidden: false`; this wire-up unlocks a "Show again"
+  // control on the collapsed Hidden section so a child can reverse their
+  // own hide without an admin intervention.
+  const handleShowOrphan = (promptId) => {
+    if (typeof promptId !== 'string' || !promptId) return;
+    actions?.dispatch?.('grammar-toggle-transfer-hidden', { promptId, hidden: false });
   };
   const handleSave = () => {
     if (!activePrompt) return;
@@ -499,7 +603,8 @@ export function GrammarTransferScene({ grammar, actions }) {
         />
       )}
 
-      <OrphanedEvidence entries={orphanedEvidence} />
+      <OrphanedEvidence entries={orphanedEvidence} onHide={handleHideOrphan} />
+      <HiddenOrphans entries={hiddenOrphanedEvidence} onShow={handleShowOrphan} />
     </section>
   );
 }

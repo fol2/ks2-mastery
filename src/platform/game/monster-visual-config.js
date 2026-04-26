@@ -428,14 +428,46 @@ export function validateMonsterVisualConfigForPublish(config, { manifest = MONST
   };
 }
 
+// U7 adv-u7-r1-001: the server emits a compact pointer envelope on the
+// selected-learner-bounded bootstrap path. The pointer shape is
+// `{schemaVersion, manifestHash, publishedVersion, publishedAt, compact: true}`
+// with NO `config.assets` map (the full config ships via the lazy
+// `/api/monster-visual-config` path). The pre-fix normaliser required
+// `assets` and therefore returned `null`, destroying any previously cached
+// full config — admin-published customisations would silently regress on
+// every bootstrap. We now recognise the pointer and preserve it as a
+// first-class state so callers can either retain their cache or trigger a
+// lazy refetch. The pointer carries `config: null` so consumers that read
+// `?.config?.assets?.[key]` fall through to the bundled default until a
+// full config lands.
 export function normaliseMonsterVisualRuntimeConfig(rawValue) {
   const raw = isPlainObject(rawValue) ? rawValue : null;
   if (!raw) return null;
 
   const rawConfig = isPlainObject(raw.config) ? raw.config : raw;
   const schemaVersion = Number(raw.schemaVersion ?? rawConfig.schemaVersion);
+  if (schemaVersion !== MONSTER_VISUAL_SCHEMA_VERSION) {
+    return null;
+  }
+
+  // Pointer-only envelope (no bundled `config.assets`).
+  if (raw.compact === true && !isPlainObject(rawConfig.assets)) {
+    const manifestHash = typeof raw.manifestHash === 'string' && raw.manifestHash
+      ? raw.manifestHash
+      : '';
+    return {
+      schemaVersion,
+      manifestHash,
+      manifestHashMismatch: Boolean(manifestHash && manifestHash !== MONSTER_ASSET_MANIFEST.manifestHash),
+      publishedVersion: Math.max(0, numberOrDefault(raw.publishedVersion, 0)),
+      publishedAt: Math.max(0, numberOrDefault(raw.publishedAt, 0)),
+      compact: true,
+      config: null,
+    };
+  }
+
   const configSchemaVersion = Number(rawConfig.schemaVersion ?? schemaVersion);
-  if (schemaVersion !== MONSTER_VISUAL_SCHEMA_VERSION || configSchemaVersion !== MONSTER_VISUAL_SCHEMA_VERSION) {
+  if (configSchemaVersion !== MONSTER_VISUAL_SCHEMA_VERSION) {
     return null;
   }
   if (!isPlainObject(rawConfig.assets)) return null;
@@ -457,6 +489,37 @@ export function normaliseMonsterVisualRuntimeConfig(rawValue) {
     publishedAt: Math.max(0, numberOrDefault(raw.publishedAt, 0)),
     config,
   };
+}
+
+// U7 adv-u7-r1-001: merge a server-emitted pointer with a previously cached
+// full config. Options:
+//  - server sends NO pointer (`normalised == null`): return the cached
+//    config (legacy/full-bundle path unchanged);
+//  - server sends a FULL config (`normalised.config` has assets): the
+//    server is authoritative, return the normalised value;
+//  - server sends a POINTER with the same `manifestHash` as the cached
+//    config: keep the cached config (nothing to refetch);
+//  - server sends a POINTER with a different `manifestHash`: the cached
+//    config is stale, return the pointer so a lazy refetch can pick up
+//    the new full config. Consumers that access `?.config?.assets` will
+//    fall through to the bundled default in the meantime (this matches
+//    the pre-U7 cold-start behaviour).
+export function resolveMonsterVisualConfigFromPointer(normalised, cachedConfig) {
+  if (!normalised) return cachedConfig || null;
+  // Full config path (non-pointer): server is authoritative.
+  if (!normalised.compact) return normalised;
+  // Pointer path: prefer cached full config when the hash still matches.
+  const cachedHash = cachedConfig && typeof cachedConfig.manifestHash === 'string'
+    ? cachedConfig.manifestHash
+    : '';
+  const hasCachedFull = cachedConfig
+    && !cachedConfig.compact
+    && isPlainObject(cachedConfig.config)
+    && isPlainObject(cachedConfig.config.assets);
+  if (hasCachedFull && cachedHash && cachedHash === normalised.manifestHash) {
+    return cachedConfig;
+  }
+  return normalised;
 }
 
 function entryRenderable(entry, context) {

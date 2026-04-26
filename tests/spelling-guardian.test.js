@@ -48,15 +48,17 @@ import {
   buildSpellingLearnerReadModel,
   getSpellingPostMasteryState,
 } from '../src/subjects/spelling/read-model.js';
+import { seedFullCoreMega as seedFullCoreMegaShared } from './helpers/post-mastery-seeds.js';
 
 const TODAY = 18_000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 test('SPELLING_MODES includes guardian alongside existing modes', () => {
-  // Post-U9 the list also contains 'boss'. Keep the guardian-specific assertions
-  // here focused on what U1/U3 cared about; Boss-specific mode coverage lives
-  // in spelling-boss.test.js.
-  assert.deepEqual(SPELLING_MODES, ['smart', 'trouble', 'test', 'single', 'guardian', 'boss']);
+  // Post-U9 the list also contains 'boss'; post-U11 (P2) it also contains
+  // 'pattern-quest'. Keep the guardian-specific assertions here focused
+  // on what U1/U3 cared about; Boss-specific mode coverage lives in
+  // spelling-boss.test.js, Pattern Quest in spelling-pattern-quest.test.js.
+  assert.deepEqual(SPELLING_MODES, ['smart', 'trouble', 'test', 'single', 'guardian', 'boss', 'pattern-quest']);
   assert.equal(normaliseMode('guardian'), 'guardian');
   assert.equal(normaliseMode('unknown-mode'), 'smart');
   assert.equal(normaliseMode('smart'), 'smart');
@@ -245,14 +247,15 @@ test('SPELLING_EVENT_TYPES gains exactly four guardian event types with kebab-ca
   assert.equal(SPELLING_EVENT_TYPES.GUARDIAN_RECOVERED, 'spelling.guardian.recovered');
   assert.equal(SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED, 'spelling.guardian.mission-completed');
   const values = Object.values(SPELLING_EVENT_TYPES);
-  // P2 U2 added POST_MEGA_UNLOCKED ('spelling.post-mega.unlocked'), bringing
-  // the total to 10. U9 added BOSS_COMPLETED ('spelling.boss.completed'), U2
-  // P1 added the four guardian types. Guardian-specific shape is still
-  // intact — the assertion below guards the kebab-case values and
-  // uniqueness rather than the Guardian count alone.
-  assert.equal(values.length, 10, 'exactly 10 event types after P2 U2 (U9 BOSS_COMPLETED + P2 U2 POST_MEGA_UNLOCKED)');
+  // P2 U2 added POST_MEGA_UNLOCKED, bringing the total to 10. P2 U11
+  // added PATTERN_QUEST_COMPLETED, bringing the total to 11. U9 added
+  // BOSS_COMPLETED; P1 U2 added the four guardian types. Guardian-specific
+  // shape is still intact — the assertion below guards the kebab-case
+  // values and uniqueness rather than the Guardian count alone.
+  assert.equal(values.length, 11, 'exactly 11 event types after P2 U11 (adds PATTERN_QUEST_COMPLETED to P2 U2 baseline)');
   assert.equal(new Set(values).size, values.length, 'all event types unique');
   assert.equal(SPELLING_EVENT_TYPES.POST_MEGA_UNLOCKED, 'spelling.post-mega.unlocked');
+  assert.equal(SPELLING_EVENT_TYPES.PATTERN_QUEST_COMPLETED, 'spelling.pattern.quest-completed');
 });
 
 test('createSpellingGuardianRenewedEvent returns a well-formed event', () => {
@@ -657,19 +660,21 @@ function makeServiceWithSeed({ now, random, storage = installMemoryStorage() } =
   return { storage, repositories, service, spoken };
 }
 
+// P2 U3: delegates to the shared seeder. The guardian suite historically
+// left `data.guardian` undefined (tests later overwrite via `seedGuardianMap`);
+// the shared helper writes `guardian: {}` which reads identically through
+// the `isPlainObject(guardian)` guard in the read model. `postMega: null` is
+// explicit so the guardian tests continue to exercise the pre-sticky path
+// (the backfill mint-an-in-memory-sticky branch of
+// `getSpellingPostMasteryState` keeps the dashboard lit without the
+// persisted record).
 function seedAllCoreMega(repositories, learnerId, todayDay) {
-  const progress = Object.fromEntries(
-    WORDS.filter((word) => word.spellingPool !== 'extra').map((word, index) => [word.slug, {
-      stage: 4,
-      attempts: 6 + (index % 4),
-      correct: 5 + (index % 4),
-      wrong: 1,
-      dueDay: todayDay + 60,
-      lastDay: todayDay - 7,
-      lastResult: 'correct',
-    }]),
-  );
-  repositories.subjectStates.writeData(learnerId, 'spelling', { progress });
+  return seedFullCoreMegaShared(repositories, learnerId, {
+    today: todayDay,
+    guardian: {},
+    postMega: null,
+    variation: true,
+  });
 }
 
 function seedGuardianMap(repositories, learnerId, map) {

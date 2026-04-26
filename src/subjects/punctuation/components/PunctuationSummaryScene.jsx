@@ -1,4 +1,10 @@
 // Phase 3 U4 — Punctuation Summary scene.
+// Phase 4 U5 — Visible child feedback rebuild (correct-count line, per-skill
+//              chips for skills exercised this round with status badges,
+//              next-review hint, monster-progress teaser) + telemetry emits
+//              (`summary-reached`, `feedback-rendered`, `monster-progress-
+//              changed`) fired once per mount via the useRef-gated render-
+//              time pattern landed in U4's Setup-mount precedent.
 //
 // Replaces the monolith's `SummaryView` with a standalone component. Summary
 // now reads as:
@@ -6,7 +12,22 @@
 //   - Bellstorm summary hero (eyebrow "Summary" + celebratory headline via
 //     `punctuationSummaryHeadline(summary)` — accuracy-bucketed child copy
 //     replaces the clinical `summary.label` default).
+//   - Correct-count copy line ("N out of M correct", U5) — skipped when
+//     `summary.total === 0` so a zero-round never renders the nonsense
+//     "0 out of 0 correct" string.
 //   - Score chip row: Answered / Correct / Accuracy (3 chips).
+//   - Per-skill chip row for skills exercised this round (U5). Each chip
+//     carries a child-register label from `PUNCTUATION_CLIENT_SKILLS.name`
+//     plus a status badge — "needs practice" when the skill appears in
+//     `summary.focus`, "secure" otherwise. The row renders only when
+//     `summary.skillsExercised` is a non-empty array.
+//   - Next-review hint (U5): derived from `ui.stats.due` — encouraging copy
+//     when more due work is ready today; otherwise a "Back tomorrow" nudge.
+//   - Monster-progress teaser (U5): fires only when `summary.monsterProgress`
+//     carries a stage delta AND the monsterId is on the active roster.
+//     Reserved monsters (Colisk / Hyphang / Carillon) never render a teaser
+//     even if an upstream payload smuggles one in — the filter mirrors U2's
+//     home-companion `MONSTERS_BY_SUBJECT[subjectId]` membership pattern.
 //   - Wobbly chips: `summary.focus` skillIds mapped through
 //     `PUNCTUATION_CLIENT_SKILLS` to produce child labels like
 //     "Speech punctuation needs another go" — NEVER raw skill ids. An empty
@@ -24,29 +45,38 @@
 //   - 4 next-action buttons (Practise wobbly / Open Map / Start again /
 //     Back to dashboard).
 //
-// Every mutation control threads `composeIsDisabled(ui)` — the 4 primary
-// buttons disable as a single bundle whenever availability flips to
-// degraded / unavailable, a command is in flight, or the runtime is
-// read-only (plan R11).
+// Mutation controls continue to thread `composeIsDisabled(ui)` — the 3
+// mutation buttons disable as a single bundle whenever availability flips
+// to degraded / unavailable, a command is in flight, or the runtime is
+// read-only (plan R11). The "Back to dashboard" navigation button threads
+// `composeIsNavigationDisabled(ui)` so a stalled command never traps the
+// child on this scene (plan R7 / U6).
 //
 // SSR blind spots (learning #6): pointer-capture, focus, and scroll-into-view
 // are NOT observable via node:test + SSR. Every feature that claims a
 // behavioural guarantee comes with a paired state-level or DOM-match
 // assertion (learning #7).
 
-import React from 'react';
+import React, { useRef } from 'react';
 
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
   bellstormSceneForPhase,
   composeIsDisabled,
+  composeIsNavigationDisabled,
+  extractPunctuationMonsterProgress,
   punctuationChildMisconceptionLabel,
+  punctuationChildNextReviewCopy,
+  punctuationChildRegisterOverrideString,
+  punctuationChildSkillBadgeLabel,
+  punctuationChildTeaserSubLine,
   punctuationMonsterDisplayName,
   punctuationSummaryHeadline,
 } from './punctuation-view-model.js';
 import { PUNCTUATION_CLIENT_SKILLS } from '../read-model.js';
 import { progressForPunctuationMonster } from '../../../platform/game/mastery/index.js';
+import { emitPunctuationEvent } from '../telemetry.js';
 
 // --- Local helpers ---------------------------------------------------------
 
@@ -85,6 +115,163 @@ function rewardStateForPunctuation(ui, propRewardState) {
   const fromUi = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui.rewardState : null;
   if (fromUi && typeof fromUi === 'object' && !Array.isArray(fromUi)) return fromUi;
   return {};
+}
+
+// U5 review follow-on (FINDING F): the scene-local `ACTIVE_MONSTER_ID_SET`
+// and `extractMonsterProgress` helper moved to `punctuation-view-model.js`.
+// Single source of truth for the active roster filter so U9 Worker-side or
+// any non-React consumer can share the same gate.
+
+// --- Correct-count copy line (U5) ------------------------------------------
+
+// A visible child-facing "N out of M correct" line alongside the accuracy
+// chip. The correct count duplicates the stat chip's number on purpose — the
+// chip row is a dashboard glance, this line is the sentence a child would
+// read aloud to a parent. A zero-total round renders nothing so the child
+// never sees the nonsense "0 out of 0 correct" string (e.g. an immediately
+// ended GPS test with zero answered items).
+function CorrectCountLine({ summary }) {
+  const total = Number(summary?.total) || 0;
+  if (total <= 0) return null;
+  const correct = Math.max(0, Math.min(total, Number(summary?.correct) || 0));
+  return (
+    <p
+      className="punctuation-summary-correct-count"
+      data-punctuation-summary-correct-count
+      style={{ marginTop: 12 }}
+    >
+      {`${correct} out of ${total} correct`}
+    </p>
+  );
+}
+
+// --- Per-skill chip row (U5) -----------------------------------------------
+
+// `summary.skillsExercised` is an array of skill ids covering every skill
+// the learner touched in the round (not just wobbly ones). Each chip reads
+// a child-register label from `PUNCTUATION_CLIENT_SKILLS.name`; the
+// status badge reads "needs practice" when the id is also in
+// `summary.focus`, "secure" otherwise. Legacy rounds that don't carry
+// `skillsExercised` render nothing — the existing Wobbly chip row still
+// surfaces their focus ids below.
+function SkillsExercisedRow({ summary }) {
+  const exercised = Array.isArray(summary?.skillsExercised)
+    ? summary.skillsExercised.filter((id) => typeof id === 'string' && id)
+    : [];
+  if (!exercised.length) return null;
+  const focus = Array.isArray(summary?.focus)
+    ? new Set(summary.focus.filter((id) => typeof id === 'string' && id))
+    : new Set();
+  const chips = [];
+  const seen = new Set();
+  for (const skillId of exercised) {
+    if (seen.has(skillId)) continue;
+    seen.add(skillId);
+    const name = summaryFocusSkillLabel(skillId);
+    if (!name) continue;
+    const status = focus.has(skillId) ? 'needs-practice' : 'secure';
+    chips.push({ id: skillId, name, status });
+  }
+  if (!chips.length) return null;
+  return (
+    <div
+      className="chip-row punctuation-summary-skills"
+      role="group"
+      aria-label="Skills you practised this round"
+      data-punctuation-summary-skill-row
+      style={{ marginTop: 14 }}
+    >
+      {chips.map((chip) => {
+        // U7 copy register pass: badge strings routed through
+        // `punctuationChildSkillBadgeLabel` so the sweep has a single
+        // governance layer for every status → label mapping.
+        const badgeText = punctuationChildSkillBadgeLabel(chip.status);
+        return (
+          <span
+            className={`chip ${chip.status === 'needs-practice' ? 'warn' : 'good'}`}
+            key={`skill-chip-${chip.id}`}
+            data-skill-chip-id={chip.id}
+            data-skill-status={chip.status}
+          >
+            {chip.name}
+            {badgeText ? (
+              <span className="punctuation-summary-skill-badge small muted" style={{ marginLeft: 6 }}>
+                {` — ${badgeText}`}
+              </span>
+            ) : null}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+// --- Next-review hint (U5) -------------------------------------------------
+
+// A short KS2-friendly line that tells the child when the next round is
+// ready. `ui.stats.due` is the canonical signal: > 0 means the scheduler has
+// more work waiting right now; 0 means every published unit has been
+// secured / not yet due, so the next round opens tomorrow. The helper
+// renders nothing when `stats` is absent so degraded-analytics states don't
+// fabricate a hint.
+function NextReviewHint({ ui }) {
+  const stats = ui && typeof ui === 'object' && !Array.isArray(ui) && ui.stats
+    && typeof ui.stats === 'object' && !Array.isArray(ui.stats)
+    ? ui.stats
+    : null;
+  if (!stats) return null;
+  // U7 copy register pass: routed through
+  // `punctuationChildNextReviewCopy` so the wording ships as child copy
+  // ("More goes ready — let's do another round." / "Brilliant — come
+  // back tomorrow for more.") and future register changes land in one
+  // seam rather than JSX literals. `null` return short-circuits the
+  // render so a malformed `stats.due` never fabricates a hint.
+  const copy = punctuationChildNextReviewCopy(stats);
+  if (!copy) return null;
+  return (
+    <p
+      className="punctuation-summary-review-hint muted"
+      data-punctuation-summary-review-hint
+      style={{ marginTop: 12 }}
+    >
+      {copy}
+    </p>
+  );
+}
+
+// --- Monster-progress teaser (U5) ------------------------------------------
+
+// Celebrates a stage advance on an active monster. Receives the already-
+// filtered `{monsterId, stageFrom, stageTo}` triple (null when there's no
+// advance to show, or when the monsterId points at a reserved roster).
+// The teaser intentionally names the monster in child register ("Pealark
+// levelled up!") — the stage delta is encoded as data-* attributes so
+// telemetry consumers and tests can read the exact from/to without parsing
+// the headline.
+function MonsterProgressTeaser({ progress }) {
+  if (!progress) return null;
+  const monsterName = punctuationMonsterDisplayName(progress.monsterId);
+  // U7 copy register pass: sub-line routed through
+  // `punctuationChildTeaserSubLine(monsterName)` so the Bellstorm frame
+  // stays intact for the KS2 reader (the prior "Keep going to unlock
+  // the next stage." read as generic SaaS gamification).
+  const subLine = punctuationChildTeaserSubLine(monsterName);
+  return (
+    <div
+      className="punctuation-summary-monster-teaser"
+      data-punctuation-summary-monster-teaser
+      data-teaser-monster-id={progress.monsterId}
+      data-teaser-stage-from={progress.stageFrom}
+      data-teaser-stage-to={progress.stageTo}
+      role="status"
+      style={{ marginTop: 16 }}
+    >
+      <strong>{`${monsterName} levelled up!`}</strong>
+      <p className="small muted" style={{ marginTop: 4 }}>
+        {subLine}
+      </p>
+    </div>
+  );
 }
 
 // --- Score chips -----------------------------------------------------------
@@ -253,7 +440,15 @@ function GpsReviewBlock({ gps }) {
               className={`feedback ${entry.correct ? 'good' : 'warn'}`}
             >
               <strong>{entry.index}. {entry.correct ? 'Correct' : 'Review'}</strong>
-              <div style={{ marginTop: 6 }}>{entry.prompt}</div>
+              <div style={{ marginTop: 6 }}>
+                {/*
+                  U7 child-register override: every Worker-sourced GPS
+                  review string passes through the display-time helper so
+                  adult grammar phrases from the engine are rewritten
+                  before reaching the learner.
+                */}
+                {punctuationChildRegisterOverrideString(entry.prompt)}
+              </div>
               {entry.attemptedAnswer ? (
                 <div className="small" style={{ marginTop: 6 }}>
                   Answer: {entry.attemptedAnswer}
@@ -264,7 +459,7 @@ function GpsReviewBlock({ gps }) {
                   className="small"
                   style={{ marginTop: 6, ...newlineTextStyle(entry.displayCorrection) }}
                 >
-                  Model: {entry.displayCorrection}
+                  Model: {punctuationChildRegisterOverrideString(entry.displayCorrection)}
                 </div>
               ) : null}
               {tagLabels.length ? (
@@ -290,13 +485,24 @@ function GpsReviewBlock({ gps }) {
 // --- Next-action buttons ---------------------------------------------------
 
 function NextActionRow({ ui, actions }) {
-  // SH2-U1: JSX-layer guard for all four non-destructive next-action
-  // buttons. Sharing one lock means a double-tap across the row (an
-  // unlikely but possible "thumb drift" pattern on narrow mobile
-  // viewports) early-returns the second dispatch — which is the right
-  // UX outcome since any of these actions unmounts the summary.
+  // Phase 4 U6: mutation controls keep `composeIsDisabled` — they pause while
+  // a command is in flight or the runtime is degraded / unavailable / read-
+  // only. Navigation ("Back to dashboard") threads the sibling
+  // `composeIsNavigationDisabled` so a stalled `pendingCommand` or a
+  // degraded runtime never traps the child on the Summary scene (plan R7 /
+  // AE7). The ghost-button divergence is the canonical example the Map
+  // top-bar and Skill Detail close mirror.
+  //
+  // SH2-U1 (from main): JSX-layer guard for all four non-destructive next-
+  // action buttons. Sharing one lock means a double-tap across the row (an
+  // unlikely but possible "thumb drift" pattern on narrow mobile viewports)
+  // early-returns the second dispatch — which is the right UX outcome
+  // since any of these actions unmounts the summary. The lock OR's into
+  // the mutation `isDisabled` only — navigation deliberately stays
+  // escape-hatch-live (a stuck lock must not trap the child on Summary).
   const submitLock = useSubmitLock();
   const isDisabled = composeIsDisabled(ui) || submitLock.locked;
+  const isNavigationDisabled = composeIsNavigationDisabled(ui);
   return (
     <div className="actions punctuation-summary-actions" style={{ marginTop: 16 }}>
       <button
@@ -331,7 +537,8 @@ function NextActionRow({ ui, actions }) {
       <button
         className="btn ghost"
         type="button"
-        disabled={isDisabled}
+        disabled={isNavigationDisabled}
+        aria-disabled={isNavigationDisabled ? 'true' : 'false'}
         data-action="punctuation-back"
         onClick={() => submitLock.run(async () => actions.dispatch('punctuation-back'))}
       >
@@ -369,6 +576,77 @@ export function PunctuationSummaryScene({
   const subtitle = typeof summary.message === 'string' && summary.message
     ? summary.message
     : 'Session complete.';
+
+  // U5: extract the monsterProgress triple once — drives both the
+  // teaser render AND the `monster-progress-changed` telemetry emit so
+  // the two call sites can never drift (teaser visible but no event
+  // fired, or event fired but no teaser rendered).
+  const monsterProgress = extractPunctuationMonsterProgress(summary);
+
+  // Phase 4 U5 — telemetry emission. Fire `summary-reached` + `feedback-
+  // rendered` exactly once per mount; fire `monster-progress-changed` on
+  // every genuine stage-delta transition.
+  //
+  // U5 review follow-on (FINDING E — medium correctness): three separate
+  // refs per event kind, NOT a single `telemetryRef`. A shared ref-guard
+  // drops a legitimate `monster-progress-changed` emit whenever
+  // `monsterProgress` arrives on a later render after first mount (e.g. a
+  // reward subscriber flush lands after the initial SSR pass). The signature-
+  // based monster-progress gate additionally protects against a
+  // stage 2→3→2→3 back-and-forth edge case: a genuine re-entry into a
+  // higher stage DOES fire a fresh event even if the same-signature event
+  // fired earlier, only because the signature comparison distinguishes the
+  // two transitions. `summary-reached` and `feedback-rendered` retain
+  // once-per-mount semantics (mounting is the event boundary for those).
+  //
+  // Pattern follows U4's Setup-mount precedent at
+  // `PunctuationSetupScene.jsx:292-299` — emit is fire-and-forget through
+  // `emitPunctuationEvent`; any downstream failure short-circuits inside
+  // `createPunctuationOnCommandError` so the learner never sees an error
+  // banner from a telemetry dispatch.
+  const summaryReachedRef = useRef(false);
+  const feedbackRenderedRef = useRef(false);
+  const monsterProgressSignatureRef = useRef(null);
+  const sessionId = typeof summary.sessionId === 'string' ? summary.sessionId : null;
+  const total = Number.isFinite(Number(summary.total)) ? Number(summary.total) : 0;
+  const correct = Number.isFinite(Number(summary.correct)) ? Number(summary.correct) : 0;
+  const accuracy = Number.isFinite(Number(summary.accuracy)) ? Number(summary.accuracy) : 0;
+  if (!summaryReachedRef.current) {
+    summaryReachedRef.current = true;
+    emitPunctuationEvent('summary-reached', {
+      sessionId,
+      total,
+      correct,
+      accuracy,
+    }, { actions });
+  }
+  if (!feedbackRenderedRef.current) {
+    feedbackRenderedRef.current = true;
+    // `feedback-rendered` uses itemId as a round-scoped marker — the Summary
+    // render is the terminal feedback surface for the whole round, so we
+    // emit with sessionId + a synthetic `summary` itemId so the event is
+    // distinguishable from per-item feedback renders a future Session-
+    // scene call site will emit. `correct` mirrors the round-level signal
+    // (non-zero correct → true) so a post-round dashboard can count rounds
+    // that produced any correct answer.
+    emitPunctuationEvent('feedback-rendered', {
+      sessionId,
+      itemId: 'summary',
+      correct: correct > 0,
+    }, { actions });
+  }
+  if (monsterProgress) {
+    const signature = `${monsterProgress.monsterId}:${monsterProgress.stageFrom}->${monsterProgress.stageTo}`;
+    if (monsterProgressSignatureRef.current !== signature) {
+      monsterProgressSignatureRef.current = signature;
+      emitPunctuationEvent('monster-progress-changed', {
+        monsterId: monsterProgress.monsterId,
+        stageFrom: monsterProgress.stageFrom,
+        stageTo: monsterProgress.stageTo,
+      }, { actions });
+    }
+  }
+
   return (
     <section
       className="card border-top punctuation-surface"
@@ -393,8 +671,30 @@ export function PunctuationSummaryScene({
           <p className="subtitle">{subtitle}</p>
         </div>
       </div>
+      <CorrectCountLine summary={summary} />
       <ScoreChipRow summary={summary} />
-      <WobblyChipRow focus={summary.focus} />
+      <SkillsExercisedRow summary={summary} />
+      {/*
+        U5 review follow-on (FINDING B — design-lens HIGH): when the per-skill
+        SkillsExercisedRow renders (i.e. `summary.skillsExercised` is non-
+        empty), it already surfaces each wobbly skill with a "· needs
+        practice" badge. The legacy WobblyChipRow below would then re-render
+        the same skills with "needs another go" labels — duplicated chips in
+        the same class ("warn") for a KS2 reader. Suppress WobblyChipRow in
+        that case. SkillsExercisedRow is the new authoritative display (one
+        chip per exercised skill, status encoded). WobblyChipRow stays as a
+        fallback ONLY when `skillsExercised` is empty — covers pre-U9
+        production rounds that haven't yet flowed through the producer
+        (defensive) and the degraded-payload branch where `skillsExercised`
+        is absent. The "Everything was secure this round!" empty-chip fallback
+        in WobblyChipRow still fires via this branch when a round had no
+        wobbly skills AND no `skillsExercised` (legacy rounds).
+      */}
+      {(Array.isArray(summary.skillsExercised) && summary.skillsExercised.length > 0)
+        ? null
+        : <WobblyChipRow focus={summary.focus} />}
+      <MonsterProgressTeaser progress={monsterProgress} />
+      <NextReviewHint ui={ui} />
       <MonsterProgressStrip ui={ui} rewardState={rewardState} />
       <GpsReviewBlock gps={summary.gps} />
       <NextActionRow ui={ui} actions={actions} />

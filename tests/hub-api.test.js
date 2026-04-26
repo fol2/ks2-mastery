@@ -277,6 +277,7 @@ test('hub api client writes account ops metadata PUT with JSON body', async () =
   await api.updateAccountOpsMetadata({
     accountId: 'acc1',
     patch: { opsStatus: 'suspended' },
+    expectedRowVersion: 7,
     mutation: { requestId: 'r1', correlationId: 'r1' },
   });
 
@@ -285,8 +286,11 @@ test('hub api client writes account ops metadata PUT with JSON body', async () =
   assert.equal(calls[0].init.method, 'PUT');
   assert.equal(calls[0].init.headers['content-type'], 'application/json');
   assert.equal(calls[0].init.headers['x-test-auth'], 'adult-admin');
+  // U8 CAS: hub API must forward the client-observed expectedRowVersion in
+  // the PUT body so the Worker helper can enforce CAS.
   assert.deepEqual(JSON.parse(calls[0].init.body), {
     patch: { opsStatus: 'suspended' },
+    expectedRowVersion: 7,
     mutation: { requestId: 'r1', correlationId: 'r1' },
   });
 });

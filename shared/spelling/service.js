@@ -8,6 +8,7 @@ import {
   createSpellingGuardianRenewedEvent,
   createSpellingGuardianWobbledEvent,
   createSpellingMasteryMilestoneEvent,
+  createSpellingPatternQuestCompletedEvent,
   createSpellingPostMegaUnlockedEvent,
   createSpellingRetryClearedEvent,
   createSpellingSessionCompletedEvent,
@@ -28,18 +29,24 @@ import {
   GUARDIAN_MIN_ROUND_LENGTH,
   GUARDIAN_MISSION_STATES,
   GUARDIAN_SECURE_STAGE,
+  PATTERN_QUEST_ROUND_LENGTH,
   SPELLING_CONTENT_RELEASE_ID,
+  SPELLING_PATTERNS,
   cloneSerialisable,
+  computeLaunchedPatternIds,
   createInitialSpellingState,
   defaultLearningStatus,
   isGuardianEligibleSlug,
+  isPatternEligibleSlug,
   normaliseBoolean,
+  normaliseDurablePersistenceWarning,
   normaliseFeedback,
   normaliseGuardianMap,
   normaliseGuardianRecord,
   normaliseMode,
   normaliseNonNegativeInteger,
   normaliseOptionalString,
+  normalisePatternMap,
   normalisePostMegaRecord,
   normaliseRoundLength,
   normaliseStats,
@@ -283,6 +290,14 @@ const PROGRESS_KEY_PREFIX = 'ks2-spell-progress-';
 // suffix convention as the other three siblings so `parseStorageKey` in the
 // repository can route the write through the subject-state bundle.
 const POST_MEGA_KEY_PREFIX = 'ks2-spell-post-mega-';
+// P2 U11: Pattern Quest wobble sibling key. Parallel to the Guardian map —
+// distinct prefix so the storage proxy can route writes to `data.pattern`.
+const PATTERN_KEY_PREFIX = 'ks2-spell-pattern-';
+// P2 U9: durable persistence-warning sibling key. Must stay byte-identical
+// with PERSISTENCE_WARNING_STORAGE_PREFIX in src/subjects/spelling/repository.js
+// and worker/src/subjects/spelling/engine.js — all three route reads/writes
+// under this key through the `data.persistenceWarning` sibling of the bundle.
+const PERSISTENCE_WARNING_KEY_PREFIX = 'ks2-spell-persistence-warning-';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function createNoopStorage() {
@@ -312,6 +327,18 @@ function progressMapKey(learnerId) {
 // `data.postMega` sibling of the subject-state bundle.
 function postMegaKey(learnerId) {
   return `${POST_MEGA_KEY_PREFIX}${learnerId || 'default'}`;
+}
+
+// P2 U11: storage key for the Pattern Quest wobble record.
+function patternKey(learnerId) {
+  return `${PATTERN_KEY_PREFIX}${learnerId || 'default'}`;
+}
+
+// P2 U9: storage key for the durable persistence-warning record. The client
+// and Worker storage proxies route reads/writes under this prefix through the
+// `data.persistenceWarning` sibling of the subject-state bundle.
+function persistenceWarningKey(learnerId) {
+  return `${PERSISTENCE_WARNING_KEY_PREFIX}${learnerId || 'default'}`;
 }
 
 function intervalForLevel(level) {
@@ -571,6 +598,224 @@ export function selectBossWords({
   return shuffled.slice(0, Math.min(target, shuffled.length));
 }
 
+/**
+ * P2 U11: Pattern Quest grading helpers.
+ *
+ * NFKC normalisation + typographic leniency are the two deterministic passes
+ * applied to learner input before an exact match. The same helpers feed the
+ * close-miss predicate (Levenshtein distance 1) for Card 4 (detect-error
+ * correction). None of this calls out to an LLM — grading is byte-for-byte
+ * reproducible under a seeded run.
+ */
+function normalisePatternQuestInput(raw) {
+  const text = typeof raw === 'string' ? raw : '';
+  // NFKC folds compatibility forms (e.g. the fi ligature into "fi") so a
+  // learner who pastes text with typographic characters is not penalised.
+  const nfkc = text.normalize('NFKC');
+  // Typographic leniency: smart quotes → straight, en/em dash → hyphen.
+  return nfkc
+    .replace(/[‘’‛′‵]/g, "'")
+    .replace(/[“”‟″‶]/g, '"')
+    .replace(/[–—−]/g, '-')
+    .trim();
+}
+
+/**
+ * Case-insensitive exact match after NFKC + typographic normalisation. The
+ * comparison is `.toLocaleLowerCase('en')` to give deterministic locale
+ * behaviour regardless of the host's default locale — a learner in TR locale
+ * would otherwise hit the Turkish-dotless-i edge case.
+ */
+function isExactPatternMatch(typed, target) {
+  const left = normalisePatternQuestInput(typed).toLocaleLowerCase('en');
+  const right = normalisePatternQuestInput(target).toLocaleLowerCase('en');
+  return Boolean(left && right && left === right);
+}
+
+/**
+ * Levenshtein distance capped at 2 — Pattern Quest only cares about
+ * distance 0 vs 1 vs "further", so the inner loop bails out as soon as it
+ * exceeds 1. A learner typing `competiton` where the target is
+ * `competition` is accepted as a typo of the correct word.
+ */
+function patternLevenshteinWithin1(a, b) {
+  const s = normalisePatternQuestInput(a).toLocaleLowerCase('en');
+  const t = normalisePatternQuestInput(b).toLocaleLowerCase('en');
+  if (s === t) return 0;
+  const la = s.length;
+  const lb = t.length;
+  if (Math.abs(la - lb) > 1) return 2;
+  let i = 0;
+  let j = 0;
+  let edits = 0;
+  while (i < la && j < lb) {
+    if (s[i] === t[j]) {
+      i += 1;
+      j += 1;
+      continue;
+    }
+    edits += 1;
+    if (edits > 1) return 2;
+    if (la > lb) {
+      i += 1;
+    } else if (lb > la) {
+      j += 1;
+    } else {
+      i += 1;
+      j += 1;
+    }
+  }
+  edits += (la - i) + (lb - j);
+  return edits > 1 ? 2 : edits;
+}
+
+/**
+ * Pure Pattern Quest card selector. Picks 5 cards in mass-then-interleave
+ * order:
+ *   Card 1: `spell` — prompt the target word, expect typed answer.
+ *   Card 2: `spell` — second word from the same pattern (massed encoding).
+ *   Card 3: `classify` — show a word, pick the pattern from 3 options.
+ *   Card 4: `detect-error` — show a misspelling, type the correct form.
+ *   Card 5: `explain` — multiple-choice rationale for "why does this word
+ *           end in -tion" etc.
+ *
+ * Selection is deterministic under a seeded `random`. If the pattern lacks
+ * ≥4 eligible core words we return an empty array so the caller can refuse
+ * to start.
+ *
+ * @param {object} params
+ * @param {string} params.patternId
+ * @param {object} params.progressMap  slug -> legacy progress record
+ * @param {object} params.wordBySlug   slug -> word metadata (incl. patternIds)
+ * @param {Function} params.random     injected random (Fisher-Yates shuffle)
+ * @returns {Array<{type: string, slug: string, ...}>}
+ */
+export function selectPatternQuestCards({
+  patternId,
+  progressMap = {},
+  wordBySlug = {},
+  random = Math.random,
+} = {}) {
+  if (typeof patternId !== 'string' || !patternId) return [];
+  if (!Object.prototype.hasOwnProperty.call(SPELLING_PATTERNS, patternId)) return [];
+  const pattern = SPELLING_PATTERNS[patternId];
+  if (!pattern || !Array.isArray(pattern.promptTypes) || pattern.promptTypes.length === 0) return [];
+
+  const eligibleSlugs = [];
+  for (const [slug] of Object.entries(progressMap || {})) {
+    if (!isPatternEligibleSlug(slug, patternId, wordBySlug)) continue;
+    eligibleSlugs.push(slug);
+  }
+  if (eligibleSlugs.length < PATTERN_QUEST_ROUND_LENGTH - 1) {
+    // Need at least 4 distinct core words per F10 launch threshold. One slug
+    // is re-used for Card 5 (explain) so 4 unique words suffice for a 5-card
+    // round.
+    return [];
+  }
+  eligibleSlugs.sort();
+  const shuffled = deterministicShuffle(eligibleSlugs, random);
+  const [slugA, slugB, slugC, slugD] = shuffled;
+
+  // U11 Fix 4: align the Card 4 misspelling with slugD. Previously the trap
+  // was sampled uniformly from `pattern.traps`, which meant the child could
+  // see a misspelling of a DIFFERENT word from the one at slot slugD — e.g.
+  // the card says `competishun` (trap for `competition`) but the target
+  // word is `position`. Typing the correct fix wobbled `position` for a
+  // trap that has nothing to do with it. Fix: filter traps by edit-distance
+  // ≤ 2 to the slugD target word so the displayed misspelling is always a
+  // plausible mis-spell of what we grade against. If no trap is within
+  // distance 2, fall back to a deterministic single-character swap of the
+  // target word.
+  const slugDWord = typeof wordBySlug[slugD]?.word === 'string' ? wordBySlug[slugD].word : '';
+  const rawTraps = Array.isArray(pattern.traps)
+    ? pattern.traps.filter((trap) => typeof trap === 'string' && trap)
+    : [];
+  const nearbyMisspellings = slugDWord
+    ? rawTraps.filter((trap) => levenshteinWithinN(trap, slugDWord, 2) <= 2)
+    : [];
+  let misspelling = nearbyMisspellings.length
+    ? nearbyMisspellings[Math.floor(random() * nearbyMisspellings.length) % nearbyMisspellings.length]
+    : '';
+  if (!misspelling && slugDWord) {
+    misspelling = deterministicCharSwap(slugDWord, random);
+  }
+
+  const cards = [
+    { type: 'spell', slug: slugA, patternId },
+    { type: 'spell', slug: slugB, patternId },
+    { type: 'classify', slug: slugC, patternId },
+    {
+      type: 'detect-error',
+      slug: slugD,
+      patternId,
+      misspelling: misspelling || slugDWord || '',
+    },
+    // Card 5 reuses slugA (mass-then-interleave: variety on card 5 is the
+    // explain card-type, not a new slug). Deterministic under a seeded
+    // shuffle — no second random draw.
+    { type: 'explain', slug: slugA, patternId },
+  ];
+
+  return cards;
+}
+
+/**
+ * U11 Fix 4 helper: Levenshtein distance capped at `cap`. Used to filter
+ * Pattern-Quest misspelling traps to those within edit-distance 2 of the
+ * target word so Card 4 always displays a plausible misspelling of the
+ * slug actually being graded.
+ */
+function levenshteinWithinN(a, b, cap = 2) {
+  const s = normalisePatternQuestInput(a).toLocaleLowerCase('en');
+  const t = normalisePatternQuestInput(b).toLocaleLowerCase('en');
+  if (s === t) return 0;
+  const la = s.length;
+  const lb = t.length;
+  if (Math.abs(la - lb) > cap) return cap + 1;
+  // Simple DP, bailing out once the minimum of the current row exceeds cap.
+  let prev = new Array(lb + 1);
+  let curr = new Array(lb + 1);
+  for (let j = 0; j <= lb; j += 1) prev[j] = j;
+  for (let i = 1; i <= la; i += 1) {
+    curr[0] = i;
+    let rowMin = curr[0];
+    for (let j = 1; j <= lb; j += 1) {
+      const cost = s[i - 1] === t[j - 1] ? 0 : 1;
+      curr[j] = Math.min(
+        curr[j - 1] + 1,
+        prev[j] + 1,
+        prev[j - 1] + cost,
+      );
+      if (curr[j] < rowMin) rowMin = curr[j];
+    }
+    if (rowMin > cap) return cap + 1;
+    const tmp = prev;
+    prev = curr;
+    curr = tmp;
+  }
+  return prev[lb];
+}
+
+/**
+ * U11 Fix 4 helper: deterministic single-character swap for a fallback
+ * misspelling when no trap is within distance 2 of the target. Picks a
+ * random position and replaces the character with a nearby one — edit
+ * distance exactly 1 against the target.
+ */
+function deterministicCharSwap(word, random) {
+  if (!word || typeof word !== 'string') return '';
+  const position = Math.floor((typeof random === 'function' ? random() : Math.random()) * word.length);
+  const safePosition = Math.max(0, Math.min(word.length - 1, position));
+  const original = word[safePosition];
+  // Pick a simple swap: if the char is a vowel, swap with a nearby vowel;
+  // otherwise swap with 'z' (conspicuously wrong). Avoids producing the
+  // same word back when word[safePosition] is already the swap target.
+  const vowelSwap = { a: 'e', e: 'a', i: 'o', o: 'u', u: 'i' };
+  const replacement = vowelSwap[original.toLowerCase()]
+    || (original.toLowerCase() === 'z' ? 'q' : 'z');
+  return `${word.slice(0, safePosition)}${replacement}${word.slice(safePosition + 1)}`;
+}
+
 function loadJson(storage, key, fallback) {
   try {
     const raw = storage.getItem(key);
@@ -687,6 +932,7 @@ function defaultLabelForMode(mode) {
   if (mode === 'test') return 'SATs 20 test';
   if (mode === 'guardian') return 'Guardian Mission';
   if (mode === 'boss') return 'Boss Dictation';
+  if (mode === 'pattern-quest') return 'Pattern Quest';
   return 'Smart review';
 }
 
@@ -821,13 +1067,180 @@ function decorateSession(engine, learnerId, session, wordBySlug = DEFAULT_WORD_B
       : engine.getProgress(learnerId, currentCard.slug))
     : null;
 
-  return {
+  const base = {
     ...session,
     version: SPELLING_SERVICE_STATE_VERSION,
     currentPrompt,
     currentCard,
     progress: buildProgressMeta(session),
     currentStage: currentProgress?.stage || 0,
+  };
+
+  // P2 U11: Pattern Quest decoration. `patternQuestCard` is the self-contained
+  // shape the UI renders — it never consults raw `patternQuestCards[cardIndex]`
+  // directly because the card objects get frozen through structuredClone on
+  // every transition.
+  //
+  // Fix 2 threads a deterministic per-card shuffle RNG into the decorator so
+  // classify / explain choices are shuffled (correct choice NOT always at
+  // position 0) while still being reproducible across re-decorations of the
+  // same card within a session. The RNG seed includes `session.id` so two
+  // sessions with the same patternId still get different orderings.
+  if (session.mode === 'pattern-quest') {
+    const cards = Array.isArray(session.patternQuestCards) ? session.patternQuestCards : [];
+    const cardIndex = Number.isInteger(session.patternQuestCardIndex) ? session.patternQuestCardIndex : 0;
+    const card = cards[cardIndex] || null;
+    const patternId = typeof session.patternQuestPatternId === 'string' ? session.patternQuestPatternId : '';
+    const patternDef = patternId && SPELLING_PATTERNS[patternId] ? SPELLING_PATTERNS[patternId] : null;
+    if (card && patternDef) {
+      const cardShuffleRandom = deterministicCardSeedRandom({
+        patternId,
+        slug: card.slug,
+        cardIndex,
+        type: card.type,
+        // Blend the session id so repeated rounds of the same pattern show
+        // different choice orderings even if slug/cardIndex repeat.
+        extra: session.id || '',
+      });
+      base.patternQuestCard = decoratePatternQuestCard(card, patternDef, wordBySlug, cardIndex, cards.length, cardShuffleRandom);
+    } else {
+      base.patternQuestCard = null;
+    }
+    base.patternQuestProgress = {
+      total: cards.length,
+      index: cardIndex,
+      patternId,
+      patternTitle: patternDef?.title || patternId,
+    };
+  }
+
+  return base;
+}
+
+/**
+ * P2 U11: Build the UI-facing Pattern Quest card shape. Classify/explain
+ * cards carry 3 deterministic choices with the correct option flagged via
+ * `correct: true`; ids are re-assigned `option-${index}` AFTER a seeded
+ * shuffle so the correct choice is not always position 0 (U11 Fix 2 —
+ * reviewer finding: `id === 'option-0'` grading turned Pattern Quest into a
+ * "pick top" tell within 2 rounds). Detect-error cards carry the
+ * misspelling prompt plus the target word. Spell cards inherit the standard
+ * session card shape — no extra decoration beyond the base fields.
+ *
+ * Shuffle determinism: the `cardShuffleRandom` is derived from the session's
+ * seeded random (threaded through `decorateSession` → `decoratePatternQuestCard`)
+ * so a repeated decoration produces the same choice order on every call for
+ * the same seed + card index. Without a per-card derivation two calls on the
+ * same card from different lifecycle points (e.g. initial start + post-
+ * submit refresh) would produce different orders and the UI would re-shuffle
+ * mid-card. The caller threads a `cardShuffleRandom` that is deterministic
+ * per (patternId, slug, type, cardIndex) tuple — see the call site.
+ */
+function decoratePatternQuestCard(card, patternDef, wordBySlug, cardIndex, totalCards, cardShuffleRandom) {
+  const type = typeof card?.type === 'string' ? card.type : '';
+  const slug = typeof card?.slug === 'string' ? card.slug : '';
+  const word = slug ? wordBySlug[slug] : null;
+  const patternId = typeof card?.patternId === 'string' ? card.patternId : (patternDef?.id || '');
+  // Use the injected per-card shuffle RNG. Falling back to a deterministic
+  // per-(patternId, slug, cardIndex) stream when none is provided keeps tests
+  // that call `decoratePatternQuestCard` directly (rare) still deterministic.
+  const shuffleRandom = typeof cardShuffleRandom === 'function'
+    ? cardShuffleRandom
+    : deterministicCardSeedRandom({ patternId, slug, cardIndex, type });
+
+  const base = {
+    type,
+    slug,
+    patternId,
+    patternTitle: patternDef?.title || patternId,
+    rule: patternDef?.rule || '',
+    index: cardIndex,
+    total: totalCards,
+    word: word?.word || '',
+    sentence: word?.sentence || '',
+  };
+
+  if (type === 'detect-error') {
+    return {
+      ...base,
+      misspelling: typeof card.misspelling === 'string' ? card.misspelling : '',
+      target: word?.word || '',
+    };
+  }
+
+  if (type === 'classify') {
+    const correctChoice = {
+      label: patternDef?.title || patternId,
+      correct: true,
+    };
+    const distractors = [];
+    for (const [id, def] of Object.entries(SPELLING_PATTERNS)) {
+      if (distractors.length >= 2) break;
+      if (id === patternId) continue;
+      if (!Array.isArray(def.promptTypes) || def.promptTypes.length === 0) continue;
+      distractors.push({ label: def.title, correct: false });
+    }
+    const combined = [correctChoice, ...distractors];
+    const shuffled = deterministicShuffle(combined, shuffleRandom).map((choice, index) => ({
+      ...choice,
+      id: `option-${index}`,
+    }));
+    return {
+      ...base,
+      choices: shuffled,
+    };
+  }
+
+  if (type === 'explain') {
+    const correctChoice = {
+      label: patternDef?.rule || 'This pattern has its own rule.',
+      correct: true,
+    };
+    const distractors = [];
+    for (const [id, def] of Object.entries(SPELLING_PATTERNS)) {
+      if (distractors.length >= 2) break;
+      if (id === patternId) continue;
+      if (!Array.isArray(def.promptTypes) || def.promptTypes.length === 0) continue;
+      if (!def.rule) continue;
+      distractors.push({ label: def.rule, correct: false });
+    }
+    const combined = [correctChoice, ...distractors];
+    const shuffled = deterministicShuffle(combined, shuffleRandom).map((choice, index) => ({
+      ...choice,
+      id: `option-${index}`,
+    }));
+    return {
+      ...base,
+      choices: shuffled,
+    };
+  }
+
+  return base;
+}
+
+// U11 Fix 2: Deterministic per-card RNG for shuffling classify/explain
+// choices. Built from a simple djb2 hash of the card-identity tuple so two
+// calls to `decoratePatternQuestCard` for the same card produce the same
+// shuffled order — critical for correctness of the submit path (the UI
+// reads the id from the decorated session and sends it back; the service
+// re-decorates on submit and must agree on which id carries `correct:true`).
+//
+// The `extra` key (typically session.id) gives two rounds of the same
+// pattern different orderings so an "enumeration" test over 10 rounds
+// actually observes varying correct-option index rather than the same
+// deterministic shuffle repeating.
+function deterministicCardSeedRandom({ patternId, slug, cardIndex, type, extra } = {}) {
+  let hash = 5381;
+  const seedString = `${patternId || ''}|${slug || ''}|${cardIndex || 0}|${type || ''}|${extra || ''}`;
+  for (let i = 0; i < seedString.length; i += 1) {
+    hash = ((hash << 5) + hash + seedString.charCodeAt(i)) >>> 0;
+  }
+  let state = hash || 0x9E3779B1;
+  return function cardSeededRandom() {
+    state = (state + 0x6D2B79F5) >>> 0;
+    let result = Math.imul(state ^ (state >>> 15), 1 | state);
+    result ^= result + Math.imul(result ^ (result >>> 7), 61 | result);
+    return ((result ^ (result >>> 14)) >>> 0) / 4294967296;
   };
 }
 
@@ -1106,6 +1519,133 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return saveJson(resolvedStorage, postMegaKey(learnerId), normalised);
   }
 
+  // P2 U11: Pattern Quest wobble-map load/save. Mirrors Guardian's
+  // load/saveGuardianMap so the sibling record stays parallel in shape:
+  // `{ wobbling: { [slug]: { wobbling, wobbledAt, patternId } } }`. When
+  // the persisted bundle has no `pattern` sibling the loader returns
+  // `{ wobbling: {} }` rather than null so callers can write directly
+  // without a null-guard branch on every submit.
+  function loadPatternFromStorage(learnerId) {
+    const raw = loadJson(resolvedStorage, patternKey(learnerId), { wobbling: {} });
+    return normalisePatternMap(raw) || { wobbling: {} };
+  }
+
+  function savePatternToStorage(learnerId, record) {
+    const normalised = normalisePatternMap(record) || { wobbling: {} };
+    return saveJson(resolvedStorage, patternKey(learnerId), normalised);
+  }
+
+  // P2 U9: load/save helpers for the durable `data.persistenceWarning` sibling.
+  // Uses the same `saveJson` contract as the other siblings so bare-storage
+  // hosts (no platform repositories) behave identically to a production host
+  // that wires `createSpellingPersistence`. Unlike `savePostMegaToStorage`,
+  // this helper is explicitly non-sticky — a second failure overwrites the
+  // previous `reason` + `occurredAt` and resets `acknowledged: false`.
+  function loadPersistenceWarningFromStorage(learnerId) {
+    const raw = loadJson(resolvedStorage, persistenceWarningKey(learnerId), null);
+    return normaliseDurablePersistenceWarning(raw);
+  }
+
+  function savePersistenceWarningToStorage(learnerId, record) {
+    const normalised = normaliseDurablePersistenceWarning(record);
+    if (!normalised) return { ok: true };
+    return saveJson(resolvedStorage, persistenceWarningKey(learnerId), normalised);
+  }
+
+  // P2 U9: durable-warning writer. Called from the submit paths whenever
+  // `feedback.persistenceWarning` surfaces on a round. The write itself is
+  // bounded-retry: if the FIRST attempt to persist the warning fails (because
+  // the underlying storage is the very thing that is broken), we make ONE
+  // retry attempt; if that also fails, we fall back to a `console.warn` so
+  // the app never crashes. This matches the P2 U9 plan requirement:
+  // "bounded retry ... never crash the app."
+  //
+  // The record shape is `{ reason, occurredAt: currentTodayDay(),
+  // acknowledged: false }`. A subsequent new failure overwrites `reason` +
+  // `occurredAt` and resets `acknowledged` to false (the plan invariant).
+  function writePersistenceWarning(learnerId, reason) {
+    const record = {
+      reason,
+      occurredAt: currentTodayDay(),
+      acknowledged: false,
+    };
+    const firstAttempt = savePersistenceWarningToStorage(learnerId, record);
+    if (firstAttempt.ok === true) return firstAttempt;
+    // Bounded retry once. If the first failure was transient (e.g. a race
+    // inside the persistence channel), a retry may succeed. If the retry
+    // also fails, swallow into console.warn so the host does not crash.
+    const retry = savePersistenceWarningToStorage(learnerId, record);
+    if (retry.ok === true) return retry;
+    try {
+      globalThis.console?.warn?.('Spelling persistence-warning write failed after retry.', {
+        learnerId,
+        reason,
+        firstError: firstAttempt?.error?.message,
+        retryError: retry?.error?.message,
+      });
+    } catch {
+      // A thrown console.warn (very unusual — some sandboxes wrap console)
+      // is not actionable for the learner; absorb silently so the submit
+      // path does not crash on a diagnostic side-effect.
+    }
+    return retry;
+  }
+
+  // P2 U9: acknowledge dispatcher. Sets `acknowledged: true` while
+  // preserving `reason` + `occurredAt` for audit. If no warning is
+  // currently persisted this is a silent no-op (no banner to dismiss).
+  // A subsequent new failure resets `acknowledged: false` via
+  // `writePersistenceWarning`.
+  //
+  // Reviewer-feedback fix (PR #279 HIGH): apply the same bounded-retry +
+  // console.warn fallback pattern that `writePersistenceWarning` uses. The
+  // whole point of the banner is to surface a broken-storage condition, so
+  // when the learner clicks "I understand" and storage is STILL broken, we
+  // must not silently no-op — the previous behaviour dropped the error and
+  // left the record at `acknowledged: false`, making the click feel like a
+  // black hole. The dispatchers surface `{ ok: false, reason: 'persist-failed' }`
+  // by setting a runtime error so the learner sees the click did not take
+  // effect.
+  function acknowledgePersistenceWarning(learnerId) {
+    const current = loadPersistenceWarningFromStorage(learnerId);
+    if (!current) return { ok: true };
+    const acknowledgedRecord = {
+      reason: current.reason,
+      occurredAt: current.occurredAt,
+      acknowledged: true,
+    };
+    const firstAttempt = savePersistenceWarningToStorage(learnerId, acknowledgedRecord);
+    if (firstAttempt.ok === true) return { ok: true };
+    // Bounded retry once. If the first failure was transient (e.g. a race
+    // inside the persistence channel), a retry may succeed.
+    const retryAttempt = savePersistenceWarningToStorage(learnerId, acknowledgedRecord);
+    if (retryAttempt.ok === true) return { ok: true };
+    // Double failure — warn and return ok:false. The banner will re-render
+    // on the next selector pass (storage still reports acknowledged=false),
+    // but that is honest: storage is still broken. The dispatcher surfaces
+    // a runtime error so the click is not silently dropped.
+    try {
+      globalThis.console?.warn?.('Spelling persistence-warning acknowledge failed after retry.', {
+        learnerId,
+        reason: acknowledgedRecord.reason,
+        firstError: firstAttempt?.error?.message,
+        retryError: retryAttempt?.error?.message,
+      });
+    } catch {
+      // A thrown console.warn (very unusual — some sandboxes wrap console)
+      // is not actionable for the learner; absorb silently so the ack path
+      // does not crash on a diagnostic side-effect.
+    }
+    return { ok: false, reason: 'persist-failed' };
+  }
+
+  // P2 U9: read-side helper for the UI. Returns the normalised record or
+  // null. Consumed by `buildSpellingContext` so setup + session scenes can
+  // branch on a single helper rather than re-running `loadJson` themselves.
+  function getPersistenceWarning(learnerId) {
+    return loadPersistenceWarningFromStorage(learnerId);
+  }
+
   // U8: returns `{ ok, reason? }` so submit paths can raise a
   // persistenceWarning. The non-Guardian Smart Review / SATs path writes
   // progress through the legacy engine's own setProgress (not this helper);
@@ -1285,6 +1825,8 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const allWordsMegaNow = isAllWordsMega(progressStore);
     // P2 U2: sticky-graduation record. Null when never graduated.
     const postMegaRecord = loadPostMegaFromStorage(learnerId);
+    // P2 U11: Pattern Quest wobble sibling.
+    const patternRecord = loadPatternFromStorage(learnerId);
     const publishedCoreCount = coreWordCount();
 
     // Shared derivation — same helper feeds `getSpellingPostMasteryState`
@@ -1317,6 +1859,19 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       ? Math.max(0, publishedCoreCount - unlockedPublishedCoreCount)
       : 0;
 
+    // P2 U11: compute `launchedPatternIds` from the live content snapshot
+    // so the UI can render only patterns that currently pass the ≥4
+    // threshold. Orphan pattern wobbles (slug retired mid-session) are
+    // preserved in the map but excluded here via `isPatternEligibleSlug`.
+    const patternIdsBySlug = {};
+    for (const slug of Object.keys(progressStore)) {
+      if (!isGuardianEligibleSlug(slug, progressStore, runtimeWordBySlug)) continue;
+      const word = runtimeWordBySlug[slug];
+      if (!word || !Array.isArray(word.patternIds)) continue;
+      patternIdsBySlug[slug] = word.patternIds.slice();
+    }
+    const launchedPatternIds = computeLaunchedPatternIds(patternIdsBySlug);
+
     return {
       // P2 U2 alias — kept for one release to avoid churning every gate
       // site at once. New consumers should gate on
@@ -1338,6 +1893,9 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       nextGuardianDueDay: aggregates.nextGuardianDueDay,
       todayDay: today,
       guardianMap,
+      // P2 U11: pattern-quest hydration.
+      patternMap: patternRecord,
+      launchedPatternIds,
     };
   }
 
@@ -1390,6 +1948,38 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       guardianResults: mode === 'guardian' && raw.guardianResults && typeof raw.guardianResults === 'object' && !Array.isArray(raw.guardianResults)
         ? { ...raw.guardianResults }
         : (mode === 'guardian' ? {} : undefined),
+      // P2 U11: Pattern Quest bookkeeping survives rehydrate only when the
+      // resumed session claims mode='pattern-quest'. All fields are shape-
+      // checked so a corrupt persisted blob cannot crash the resume.
+      patternQuestPatternId: mode === 'pattern-quest' && typeof raw.patternQuestPatternId === 'string'
+        ? raw.patternQuestPatternId
+        : (mode === 'pattern-quest' ? '' : undefined),
+      patternQuestCards: mode === 'pattern-quest' && Array.isArray(raw.patternQuestCards)
+        ? raw.patternQuestCards
+            .filter((card) => card && typeof card === 'object' && typeof card.type === 'string' && typeof card.slug === 'string')
+            .map((card) => cloneSerialisable(card))
+        : (mode === 'pattern-quest' ? [] : undefined),
+      patternQuestCardIndex: mode === 'pattern-quest'
+        ? normaliseNonNegativeInteger(raw.patternQuestCardIndex, 0)
+        : undefined,
+      patternQuestResults: mode === 'pattern-quest' && Array.isArray(raw.patternQuestResults)
+        ? raw.patternQuestResults
+            .filter((entry) => entry && typeof entry === 'object')
+            .map((entry) => ({
+              type: normaliseString(entry.type),
+              slug: normaliseString(entry.slug),
+              patternId: normaliseString(entry.patternId),
+              correct: entry.correct === true,
+              answer: normaliseString(entry.answer),
+              ...(entry.closeMiss === true ? { closeMiss: true } : {}),
+            }))
+        : (mode === 'pattern-quest' ? [] : undefined),
+      patternQuestWobbledSlugs: mode === 'pattern-quest' && Array.isArray(raw.patternQuestWobbledSlugs)
+        ? uniqueStrings(normaliseStringArray(raw.patternQuestWobbledSlugs))
+        : (mode === 'pattern-quest' ? [] : undefined),
+      patternQuestSeedSlugs: mode === 'pattern-quest' && Array.isArray(raw.patternQuestSeedSlugs)
+        ? uniqueStrings(normaliseStringArray(raw.patternQuestSeedSlugs))
+        : (mode === 'pattern-quest' ? uniqueWords.slice() : undefined),
     };
 
     if (currentSlug && !session.currentPrompt) {
@@ -1426,15 +2016,43 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     }
 
     if (!session.currentSlug) {
-      const next = session.mode === 'guardian'
-        ? advanceGuardianCard(session)
-        : engine.advanceCard(session, learnerId);
-      if (next.done) {
-        return {
-          session: null,
-          summary: normaliseSummary(engine.finalise(session), isRuntimeKnownSlug),
-          error: '',
-        };
+      // P2 U11: Pattern Quest resume — if there is still a card in-flight at
+      // `patternQuestCardIndex`, rebuild the prompt from that card. If the
+      // pointer has run off the end, finalise via buildPatternQuestSummary.
+      if (session.mode === 'pattern-quest') {
+        const cards = Array.isArray(session.patternQuestCards) ? session.patternQuestCards : [];
+        const idx = Number.isInteger(session.patternQuestCardIndex) ? session.patternQuestCardIndex : 0;
+        if (idx >= cards.length) {
+          return {
+            session: null,
+            summary: buildPatternQuestSummary(session),
+            error: '',
+          };
+        }
+        const card = cards[idx];
+        const word = runtimeWordBySlug[card.slug];
+        if (word) {
+          session.currentSlug = card.slug;
+          session.currentPrompt = {
+            slug: card.slug,
+            word: word.word,
+            accepted: acceptedForPrompt(word.accepted, word.word),
+            explanation: word.explanation || '',
+            sentence: word.sentence || '',
+            cloze: buildCloze(word.sentence || '', word.word),
+          };
+        }
+      } else {
+        const next = session.mode === 'guardian'
+          ? advanceGuardianCard(session)
+          : engine.advanceCard(session, learnerId);
+        if (next.done) {
+          return {
+            session: null,
+            summary: normaliseSummary(engine.finalise(session), isRuntimeKnownSlug),
+            error: '',
+          };
+        }
       }
     }
 
@@ -1756,6 +2374,132 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return buildTransition(nextState, { audio: activeAudioCue(learnerId, nextState) });
   }
 
+  // P2 U11: Pattern Quest session starter. Gated on allWordsMega (post-Mega
+  // surface) AND on the pattern id being a member of the registry AND having
+  // ≥ PATTERN_QUEST_ROUND_LENGTH - 1 eligible core words. Failing any check
+  // returns a warning transition identical in shape to Guardian / Boss.
+  function startPatternQuestSession(learnerId, options = {}) {
+    const progressStore = progressSnapshot(learnerId) || {};
+    if (!isAllWordsMega(progressStore)) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        feedback: {
+          kind: 'warn',
+          headline: 'Pattern Quest unlocks after every core word is secure',
+          body: 'Keep reviewing Smart Review and Trouble Drill until every core word is secure — then Pattern Quest opens.',
+        },
+      }, { ok: false });
+    }
+
+    const patternId = typeof options.patternId === 'string' ? options.patternId : '';
+    if (!patternId || !Object.prototype.hasOwnProperty.call(SPELLING_PATTERNS, patternId)) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        error: 'Pattern Quest could not find that pattern.',
+      }, { ok: false });
+    }
+
+    // U10 launch-threshold gate. If the pattern has fewer than 4 eligible
+    // core words, refuse to start so the UI can show "Not enough words in
+    // this pattern yet." without the service fabricating a short round.
+    const patternIdsBySlug = {};
+    for (const slug of Object.keys(progressStore)) {
+      if (!isGuardianEligibleSlug(slug, progressStore, runtimeWordBySlug)) continue;
+      const word = runtimeWordBySlug[slug];
+      if (!word || !Array.isArray(word.patternIds)) continue;
+      patternIdsBySlug[slug] = word.patternIds.slice();
+    }
+    const launched = computeLaunchedPatternIds(patternIdsBySlug);
+    if (!launched.includes(patternId)) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        feedback: {
+          kind: 'info',
+          headline: 'Not enough words in this pattern yet',
+          body: 'Pattern Quest needs at least 4 core words tagged with this pattern. Come back after more words graduate to Mega.',
+        },
+      }, { ok: false });
+    }
+
+    const cards = selectPatternQuestCards({
+      patternId,
+      progressMap: progressStore,
+      wordBySlug: runtimeWordBySlug,
+      random: randomFn,
+    });
+    if (!cards.length) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        feedback: {
+          kind: 'info',
+          headline: 'Not enough words in this pattern yet',
+          body: 'Pattern Quest needs at least 4 core words tagged with this pattern.',
+        },
+      }, { ok: false });
+    }
+
+    // Build the session shape manually — Pattern Quest does not ride on the
+    // legacy engine's queue/phase state machine. `type: 'learning'` keeps
+    // session-ui helpers that branch on `type === 'test'` from leaking SATs
+    // copy; the `mode === 'pattern-quest'` override steers every
+    // pattern-specific helper to the Pattern Quest shape.
+    const sessionId = `sess-${clock()}-${randomFn().toString(16).slice(2)}`;
+    const slugs = Array.from(new Set(cards.map((card) => card.slug).filter(Boolean)));
+    const firstCard = cards[0];
+    const firstWord = runtimeWordBySlug[firstCard.slug];
+    const session = {
+      version: SPELLING_SERVICE_STATE_VERSION,
+      id: sessionId,
+      type: 'learning',
+      mode: 'pattern-quest',
+      label: 'Pattern Quest',
+      practiceOnly: false,
+      fallbackToSmart: false,
+      extraWordFamilies: false,
+      profileId: learnerId || 'default',
+      uniqueWords: slugs,
+      queue: [],
+      status: {},
+      results: [],
+      sentenceHistory: {},
+      currentSlug: firstCard.slug,
+      currentPrompt: firstWord
+        ? {
+            slug: firstCard.slug,
+            word: firstWord.word,
+            accepted: acceptedForPrompt(firstWord.accepted, firstWord.word),
+            explanation: firstWord.explanation || '',
+            sentence: firstWord.sentence || '',
+            cloze: buildCloze(firstWord.sentence || '', firstWord.word),
+          }
+        : null,
+      phase: 'question',
+      promptCount: 0,
+      lastFamily: firstWord?.family || null,
+      lastYear: firstWord?.year || null,
+      startedAt: clock(),
+      patternQuestPatternId: patternId,
+      patternQuestCards: cards,
+      patternQuestCardIndex: 0,
+      patternQuestResults: [],
+      patternQuestWobbledSlugs: [],
+      patternQuestSeedSlugs: slugs,
+    };
+
+    const decorated = decorateSession(engine, learnerId, session, runtimeWordBySlug);
+    const nextState = {
+      version: SPELLING_SERVICE_STATE_VERSION,
+      phase: 'session',
+      session: decorated,
+      feedback: null,
+      summary: null,
+      error: '',
+      awaitingAdvance: false,
+    };
+    persistence.syncPracticeSession(learnerId, nextState);
+    return buildTransition(nextState, { audio: activeAudioCue(learnerId, nextState) });
+  }
+
   function startSession(learnerId, options = {}) {
     const mode = normaliseMode(options.mode, 'smart');
     if (mode === 'guardian') {
@@ -1763,6 +2507,9 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     }
     if (mode === 'boss') {
       return startBossSession(learnerId, options);
+    }
+    if (mode === 'pattern-quest') {
+      return startPatternQuestSession(learnerId, options);
     }
     const yearFilter = mode === 'test'
       ? 'core'
@@ -1965,6 +2712,14 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const persistenceWarning = (!progressSave?.ok || !guardianSave?.ok || lastErrorChanged)
       ? { reason: SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED }
       : null;
+    // P2 U9: mirror the session-scoped `feedback.persistenceWarning` into
+    // the durable `data.persistenceWarning` sibling so the banner survives
+    // tab close. Write is bounded-retry + console.warn fallback — the
+    // service path never crashes the submit even if the storage is
+    // fundamentally broken (the very condition we're warning about).
+    if (persistenceWarning) {
+      writePersistenceWarning(learnerId, persistenceWarning.reason);
+    }
 
     // Record the per-word outcome so the finalisation step can emit the
     // mission-completed event with accurate aggregate counts.
@@ -2174,6 +2929,282 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return buildTransition(nextState, { events });
   }
 
+  /**
+   * P2 U11: Pattern Quest submit path. Routes BEFORE `session.type === 'test'`
+   * check in `submitAnswer` so a Pattern Quest session (which rides as
+   * `type: 'learning'`-shaped with an overridden `mode = 'pattern-quest'`)
+   * can never leak into `engine.submitLearning` / `engine.submitTest`. The
+   * contract:
+   *
+   *   - NEVER writes `progress.stage` / `dueDay` / `lastDay` / `lastResult`.
+   *   - Updates `progress.attempts` / `correct` / `wrong` only, mirroring
+   *     Boss (U11 Fix 8). Stage / dueDay / lastDay / lastResult are
+   *     preserved — Pattern Quest never demotes Mega.
+   *   - Writes to `data.pattern.wobbling[slug]` on wrong answers; clears on
+   *     correct answers (same shape the Guardian wobble map uses).
+   *   - Card 4 gets H5 hardening: empty submit → no-op; typed value that
+   *     NFKC-normalises to the exact misspelling shown → gentle re-prompt
+   *     (NOT a wobble); within Levenshtein 1 of the target → accepted with
+   *     "close miss" feedback.
+   *
+   * Completion is driven by `patternQuestCardIndex` catching up with
+   * `patternQuestCards.length`; the final submit sets `awaitingAdvance=true`
+   * and the `continueSession` path finalises via `buildPatternQuestSummary`.
+   */
+  function submitPatternAnswer(learnerId, current, rawTyped) {
+    const session = cloneSerialisable(current.session);
+    const cards = Array.isArray(session.patternQuestCards) ? session.patternQuestCards : [];
+    const cardIndex = Number.isInteger(session.patternQuestCardIndex)
+      ? session.patternQuestCardIndex
+      : 0;
+    const currentCard = cards[cardIndex] || null;
+    if (!currentCard) {
+      return invalidSessionTransition('This Pattern Quest card is missing its metadata.');
+    }
+    const patternId = typeof session.patternQuestPatternId === 'string'
+      ? session.patternQuestPatternId
+      : '';
+    const cardSlug = typeof currentCard.slug === 'string' ? currentCard.slug : '';
+    const baseWord = cardSlug ? runtimeWordBySlug[cardSlug] : null;
+
+    // U11 Fix 3: orphan-slug guard. A content hot-swap between session
+    // start and submit can leave `patternQuestCards[i].slug` referencing a
+    // retired word. `submitPatternAnswer` then hit `baseWord.word` (via the
+    // feedback object and close-miss branch) without a null check — TypeError.
+    // Refuse the submit with a structured `invalidSessionTransition` mirroring
+    // Boss's guard at line ~2564 so the UI surfaces a gentle error instead of
+    // crashing the round. Mega is untouched because the guard short-circuits
+    // BEFORE any write to `data.pattern.wobbling` or `progress.*`.
+    if (!baseWord) {
+      return invalidSessionTransition(
+        'This Pattern Quest card lost its word metadata mid-round. The round was stopped to protect your Mega count.',
+      );
+    }
+
+    // U11 card-type submission shapes:
+    //   spell / detect-error  — rawTyped carries a typed string
+    //   classify / explain    — rawTyped carries a choice-id (e.g. "option-0")
+    const trimmedTyped = normaliseString(rawTyped).trim();
+    if (!trimmedTyped) {
+      return buildTransition({
+        ...current,
+        feedback: {
+          kind: 'warn',
+          headline: 'Answer first.',
+          body: 'No attempt was recorded.',
+        },
+        error: '',
+        awaitingAdvance: false,
+      });
+    }
+
+    let correct = false;
+    let wobbleSlug = '';
+    let feedback = null;
+    let remainInPlace = false;
+    let closeMiss = false;
+
+    if (currentCard.type === 'spell') {
+      // Fix 3 guard above guarantees `baseWord` is non-null here, so we can
+      // read `baseWord.word` unconditionally in the feedback object.
+      correct = isExactPatternMatch(trimmedTyped, baseWord.word);
+      wobbleSlug = cardSlug;
+      feedback = correct
+        ? { kind: 'success', headline: 'Correct!', answer: baseWord.word, body: 'Same pattern, next one.' }
+        : { kind: 'warn', headline: 'Wobble.', answer: baseWord.word, body: 'Mega stays. This word will come back tomorrow.', attemptedAnswer: trimmedTyped };
+    } else if (currentCard.type === 'detect-error') {
+      const misspelling = typeof currentCard.misspelling === 'string' ? currentCard.misspelling : '';
+      const targetWord = baseWord.word || '';
+      const normalisedTyped = normalisePatternQuestInput(trimmedTyped).toLocaleLowerCase('en');
+      const normalisedMisspelling = normalisePatternQuestInput(misspelling).toLocaleLowerCase('en');
+      const normalisedTarget = normalisePatternQuestInput(targetWord).toLocaleLowerCase('en');
+
+      if (normalisedTyped === normalisedMisspelling && normalisedMisspelling && normalisedMisspelling !== normalisedTarget) {
+        // H5: child typed the misspelling verbatim — gentle re-prompt, not a
+        // wobble. Stay on the same card (awaitingAdvance=false).
+        remainInPlace = true;
+        correct = false;
+        feedback = {
+          kind: 'warn',
+          headline: 'Looks like the misspelled version.',
+          body: 'Try typing the correct spelling.',
+        };
+      } else if (normalisedTyped === normalisedTarget) {
+        correct = true;
+        wobbleSlug = cardSlug;
+        feedback = { kind: 'success', headline: 'Nice spot!', answer: targetWord, body: 'You fixed it.' };
+      } else if (targetWord && patternLevenshteinWithin1(trimmedTyped, targetWord) <= 1) {
+        // H5 close-miss: within Levenshtein 1 of the target. Accept but note
+        // the typo. No wobble.
+        correct = true;
+        closeMiss = true;
+        wobbleSlug = cardSlug;
+        feedback = {
+          kind: 'success',
+          headline: 'Almost perfect.',
+          answer: targetWord,
+          body: `Close miss: you typed "${trimmedTyped}". The target was "${targetWord}".`,
+        };
+      } else {
+        correct = false;
+        wobbleSlug = cardSlug;
+        feedback = { kind: 'warn', headline: 'Wobble.', answer: targetWord, body: 'Mega stays. This word will come back tomorrow.', attemptedAnswer: trimmedTyped };
+      }
+    } else if (currentCard.type === 'classify' || currentCard.type === 'explain') {
+      // Multiple-choice: the current card's CHOICES array is rebuilt by
+      // `decoratePatternQuestCard` on every decorateSession call and
+      // seeded-shuffled via `deterministicCardSeedRandom` so the correct
+      // option is NOT always at position 0 (U11 Fix 2 — the prior
+      // `id === 'option-0'` shortcut turned Pattern Quest into a "pick top"
+      // tell for children). Re-decorate here with the same seed inputs the
+      // client saw to look up which id carries `correct: true`.
+      const chosenId = trimmedTyped;
+      const patternDef = patternId && SPELLING_PATTERNS[patternId] ? SPELLING_PATTERNS[patternId] : null;
+      let decoratedChoices = [];
+      if (patternDef) {
+        const cardShuffleRandom = deterministicCardSeedRandom({
+          patternId,
+          slug: cardSlug,
+          cardIndex,
+          type: currentCard.type,
+          extra: session.id || '',
+        });
+        const decoratedCard = decoratePatternQuestCard(
+          currentCard,
+          patternDef,
+          runtimeWordBySlug,
+          cardIndex,
+          cards.length,
+          cardShuffleRandom,
+        );
+        decoratedChoices = Array.isArray(decoratedCard?.choices) ? decoratedCard.choices : [];
+      }
+      const chosen = decoratedChoices.find((choice) => choice && choice.id === chosenId);
+      correct = Boolean(chosen && chosen.correct === true);
+      wobbleSlug = cardSlug;
+      feedback = correct
+        ? { kind: 'success', headline: 'Correct!', body: currentCard.type === 'explain' ? 'That is the right reason.' : 'That is the right pattern.' }
+        : { kind: 'warn', headline: 'Wobble.', body: currentCard.type === 'explain' ? 'Mega stays. The reason will come back tomorrow.' : 'Mega stays. This pattern will come back tomorrow.' };
+    } else {
+      return invalidSessionTransition('Unknown Pattern Quest card type.');
+    }
+
+    // Write `data.pattern.wobbling[slug]` for wrong answers. Correct answers
+    // CLEAR the wobble entry (mirrors Guardian's recovered path). Never
+    // touches `progress.stage` / `dueDay` / `lastDay` / `lastResult` — the
+    // Mega-never-revoked invariant is pinned here.
+    //
+    // U11 Fix 8 (reviewer feedback): mirror Boss's progress counter update so
+    // Pattern Quest attempts/correct/wrong diverge no longer from Boss +
+    // Guardian accounting. Updates only `attempts` / `correct` / `wrong` on
+    // the existing progress record — `stage` / `dueDay` / `lastDay` /
+    // `lastResult` are preserved explicitly because the Pattern Quest
+    // contract is Mega-never-revoked. Skipped when `remainInPlace` is true
+    // (H5 re-prompt) so typing the misspelling verbatim does NOT bump
+    // attempts. Also skipped when `existingProgress` is missing — Pattern
+    // Quest selection already filters by isPatternEligibleSlug, which
+    // requires the progress record, but if a racy hot-swap deleted the
+    // record between selection and submit we refuse to synthesize a fresh
+    // `stage: 0` seed (that would silently demote Mega).
+    const patternMap = loadPatternFromStorage(learnerId);
+    const todayDay = currentTodayDay();
+    const beforeError = readPersistenceError();
+    let persistenceSave = { ok: true };
+    if (!remainInPlace && wobbleSlug) {
+      if (correct) {
+        if (patternMap.wobbling[wobbleSlug]) delete patternMap.wobbling[wobbleSlug];
+      } else if (patternId) {
+        patternMap.wobbling[wobbleSlug] = {
+          wobbling: true,
+          wobbledAt: todayDay,
+          patternId,
+        };
+      }
+      persistenceSave = savePatternToStorage(learnerId, patternMap);
+    }
+    // Fix 8: progress counter update. Runs AFTER the pattern-map write so a
+    // failure on the progress write does not leave the wobble map in a
+    // half-committed state (which is itself survivable; the guard emits a
+    // persistenceWarning via the unified save-failure signature below).
+    let progressSaveResult = { ok: true };
+    if (!remainInPlace && cardSlug) {
+      const progressMap = loadProgressFromStorage(learnerId);
+      const existingProgress = progressMap[cardSlug];
+      if (existingProgress && typeof existingProgress === 'object' && !Array.isArray(existingProgress)) {
+        const nextProgress = { ...existingProgress };
+        nextProgress.attempts = (nextProgress.attempts || 0) + 1;
+        if (correct) nextProgress.correct = (nextProgress.correct || 0) + 1;
+        else nextProgress.wrong = (nextProgress.wrong || 0) + 1;
+        progressMap[cardSlug] = nextProgress;
+        progressSaveResult = saveProgressToStorage(learnerId, progressMap);
+      }
+    }
+    const afterError = readPersistenceError();
+    const lastErrorChanged = persistenceErrorSignatureChanged(beforeError, afterError);
+    const persistenceWarning = (!persistenceSave?.ok || !progressSaveResult?.ok || lastErrorChanged)
+      ? { reason: SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED }
+      : null;
+    if (persistenceWarning && feedback) feedback.persistenceWarning = persistenceWarning;
+
+    // Per-card outcome tracking — `finalisePatternQuest` reads these to count
+    // correctCount + build wobbledSlugs without re-driving the state machine.
+    const results = Array.isArray(session.patternQuestResults) ? session.patternQuestResults.slice() : [];
+    const wobbledList = Array.isArray(session.patternQuestWobbledSlugs)
+      ? session.patternQuestWobbledSlugs.slice()
+      : [];
+    if (!remainInPlace) {
+      results.push({
+        type: currentCard.type,
+        slug: cardSlug,
+        patternId,
+        correct,
+        answer: trimmedTyped,
+        ...(closeMiss ? { closeMiss: true } : {}),
+      });
+      if (!correct && wobbleSlug && !wobbledList.includes(wobbleSlug)) {
+        wobbledList.push(wobbleSlug);
+      }
+    }
+    session.patternQuestResults = results;
+    session.patternQuestWobbledSlugs = wobbledList;
+
+    // Advance the card pointer on a non-remainInPlace submit.
+    let awaitingAdvance = true;
+    if (remainInPlace) {
+      awaitingAdvance = false;
+    } else {
+      session.promptCount = (Number(session.promptCount) || 0) + 1;
+      session.patternQuestCardIndex = cardIndex + 1;
+      const nextCard = cards[cardIndex + 1] || null;
+      if (nextCard) {
+        const nextWord = runtimeWordBySlug[nextCard.slug];
+        session.currentSlug = nextCard.slug;
+        session.currentPrompt = nextWord
+          ? {
+              slug: nextCard.slug,
+              word: nextWord.word,
+              accepted: acceptedForPrompt(nextWord.accepted, nextWord.word),
+              explanation: nextWord.explanation || '',
+              sentence: nextWord.sentence || '',
+              cloze: buildCloze(nextWord.sentence || '', nextWord.word),
+            }
+          : null;
+      }
+    }
+
+    const nextState = {
+      version: SPELLING_SERVICE_STATE_VERSION,
+      phase: 'session',
+      session: decorateSession(engine, learnerId, session, runtimeWordBySlug),
+      feedback: normaliseFeedback(feedback),
+      summary: null,
+      error: '',
+      awaitingAdvance,
+    };
+    persistence.syncPracticeSession(learnerId, nextState);
+    return buildTransition(nextState, { events: [] });
+  }
+
   function submitAnswer(learnerId, rawState, typed) {
     const current = initState(rawState, learnerId);
     if (current.phase !== 'session' || !current.session) {
@@ -2200,21 +3231,32 @@ export function createSpellingService({ repository, storage, tts, now, random, c
 
     // Dispatcher routing — ORDER IS CRITICAL.
     //
-    //   mode === 'guardian' → submitGuardianAnswer (Mega-safe)
-    //   mode === 'boss'     → submitBossAnswer     (Mega-safe) — MUST come
+    //   mode === 'guardian'      → submitGuardianAnswer (Mega-safe)
+    //   mode === 'boss'          → submitBossAnswer     (Mega-safe) — MUST come
     //                                                before the type === 'test'
     //                                                check; otherwise a wrong
     //                                                answer routes to
     //                                                engine.submitTest and
     //                                                applyTestOutcome demotes
     //                                                stage from 4 to 3.
-    //   type === 'test'     → engine.submitTest    (legacy SATs, demotion-aware)
-    //   otherwise           → engine.submitLearning
+    //   mode === 'pattern-quest' → submitPatternAnswer  (Mega-safe) — MUST
+    //                                                come BEFORE the
+    //                                                type === 'test' check so
+    //                                                a Pattern Quest card
+    //                                                never drops into
+    //                                                engine.submitLearning
+    //                                                (which would touch
+    //                                                progress.stage).
+    //   type === 'test'          → engine.submitTest    (legacy SATs, demotion-aware)
+    //   otherwise                → engine.submitLearning
     if (current.session.mode === 'guardian') {
       return submitGuardianAnswer(learnerId, current, rawTyped);
     }
     if (current.session.mode === 'boss') {
       return submitBossAnswer(learnerId, current, rawTyped);
+    }
+    if (current.session.mode === 'pattern-quest') {
+      return submitPatternAnswer(learnerId, current, rawTyped);
     }
 
     const session = cloneSerialisable(current.session);
@@ -2288,6 +3330,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const persistenceWarning = (!probeSave?.ok || midErrorChanged)
       ? { reason: SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED }
       : null;
+    // P2 U9: durable mirror on the Smart Review / SATs submit path too.
+    if (persistenceWarning) {
+      writePersistenceWarning(learnerId, persistenceWarning.reason);
+    }
 
     const eventTime = clock();
     const events = [];
@@ -2492,6 +3538,105 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     };
   }
 
+  /**
+   * P2 U11: Pattern Quest summary builder. Mirrors the shape of
+   * `engine.finalise` / `normaliseSummary` so downstream UI (summary scene,
+   * view-model, ToastShelf subscribers) can read the usual `{ mode, label,
+   * cards, mistakes, elapsedMs, totalWords, correct, accuracy }` fields.
+   */
+  function buildPatternQuestSummary(session) {
+    const results = Array.isArray(session?.patternQuestResults) ? session.patternQuestResults : [];
+    const total = results.length;
+    const correct = results.filter((entry) => entry.correct === true).length;
+    const patternId = typeof session?.patternQuestPatternId === 'string'
+      ? session.patternQuestPatternId
+      : '';
+    const patternDef = patternId ? SPELLING_PATTERNS[patternId] : null;
+    const mistakes = [];
+    const seenMistakeSlugs = new Set();
+    for (const entry of results) {
+      if (entry.correct === true) continue;
+      const slug = typeof entry.slug === 'string' ? entry.slug : '';
+      if (!slug || seenMistakeSlugs.has(slug)) continue;
+      const word = runtimeWordBySlug[slug];
+      if (!word) continue;
+      mistakes.push({
+        slug,
+        word: word.word,
+        family: word.family,
+        year: word.year,
+        yearLabel: word.yearLabel,
+        familyWords: Array.isArray(word.familyWords) ? [...word.familyWords] : [],
+      });
+      seenMistakeSlugs.add(slug);
+    }
+    const wobbledCount = Array.isArray(session?.patternQuestWobbledSlugs)
+      ? session.patternQuestWobbledSlugs.length
+      : mistakes.length;
+    const accuracy = total > 0 ? Math.round((correct / total) * 100) : null;
+    const message = correct === total
+      ? `Pattern Quest complete — ${correct} of ${total} right on "${patternDef?.title || patternId}". Mega stays.`
+      : `Pattern Quest complete — ${correct} of ${total} right on "${patternDef?.title || patternId}". Mega stays; wobbling cards return tomorrow.`;
+    return {
+      mode: 'pattern-quest',
+      label: 'Pattern Quest',
+      message,
+      cards: [
+        { label: 'Score', value: `${correct}/${total}`, sub: patternDef?.title || patternId },
+        { label: 'Correct', value: correct, sub: 'Single attempt per card' },
+        { label: 'Wobbling', value: wobbledCount, sub: 'Comes back tomorrow' },
+        { label: 'Pattern', value: patternDef?.title || patternId, sub: 'Today\'s quest' },
+      ],
+      mistakes,
+      elapsedMs: Math.max(0, Number(clock()) - (Number(session?.startedAt) || Number(clock()))),
+      totalWords: total,
+      correct,
+      accuracy,
+    };
+  }
+
+  /**
+   * P2 U11: Pattern Quest event fan-out. Emits `spelling.session-completed`
+   * (so legacy consumers still see the round) plus
+   * `spelling.pattern.quest-completed` with pattern id, slug roster,
+   * correct count, and the distinct wobbled-slugs list.
+   */
+  function patternQuestEventsForSession(learnerId, session, summary, createdAt) {
+    if (session?.mode !== 'pattern-quest') return [];
+    const results = Array.isArray(session.patternQuestResults) ? session.patternQuestResults : [];
+    const correctCount = results.filter((entry) => entry.correct === true).length;
+    const slugs = Array.isArray(session.patternQuestSeedSlugs) ? session.patternQuestSeedSlugs.slice() : [];
+    const wobbledSlugs = Array.isArray(session.patternQuestWobbledSlugs)
+      ? session.patternQuestWobbledSlugs.slice()
+      : [];
+    const events = [];
+    const sessionCompleted = createSpellingSessionCompletedEvent({
+      learnerId,
+      session,
+      summary,
+      createdAt,
+    });
+    if (sessionCompleted) events.push(sessionCompleted);
+    // U11 Fix 6: thread patternTitle through the event so the reward-toast
+    // subscriber renders readable copy without another registry lookup.
+    const patternDefForEvent = typeof session?.patternQuestPatternId === 'string'
+      && SPELLING_PATTERNS[session.patternQuestPatternId]
+      ? SPELLING_PATTERNS[session.patternQuestPatternId]
+      : null;
+    const questCompleted = createSpellingPatternQuestCompletedEvent({
+      learnerId,
+      session,
+      patternId: session.patternQuestPatternId,
+      patternTitle: patternDefForEvent?.title || '',
+      slugs,
+      correctCount,
+      wobbledSlugs,
+      createdAt,
+    });
+    if (questCompleted) events.push(questCompleted);
+    return events;
+  }
+
   function continueSession(learnerId, rawState) {
     const current = initState(rawState, learnerId);
     if (current.phase !== 'session' || !current.session) {
@@ -2503,6 +3648,56 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     }
 
     const session = cloneSerialisable(current.session);
+    // P2 U11: Pattern Quest has its own advance — the card pointer is
+    // already bumped inside `submitPatternAnswer`, so `continueSession`
+    // either finalises (pointer >= cards.length) or rolls the session back
+    // to `awaitingAdvance=false` on the next card.
+    if (session.mode === 'pattern-quest') {
+      const cards = Array.isArray(session.patternQuestCards) ? session.patternQuestCards : [];
+      const cardIndex = Number.isInteger(session.patternQuestCardIndex)
+        ? session.patternQuestCardIndex
+        : 0;
+      if (cardIndex >= cards.length) {
+        const summary = buildPatternQuestSummary(session);
+        const nextState = {
+          version: SPELLING_SERVICE_STATE_VERSION,
+          phase: 'summary',
+          session: null,
+          feedback: null,
+          summary,
+          error: '',
+          awaitingAdvance: false,
+        };
+        persistence.syncPracticeSession(learnerId, nextState);
+        const events = patternQuestEventsForSession(learnerId, session, summary, clock());
+        return buildTransition(nextState, { events });
+      }
+      const nextCard = cards[cardIndex];
+      const nextWord = runtimeWordBySlug[nextCard.slug];
+      session.currentSlug = nextCard.slug;
+      session.currentPrompt = nextWord
+        ? {
+            slug: nextCard.slug,
+            word: nextWord.word,
+            accepted: acceptedForPrompt(nextWord.accepted, nextWord.word),
+            explanation: nextWord.explanation || '',
+            sentence: nextWord.sentence || '',
+            cloze: buildCloze(nextWord.sentence || '', nextWord.word),
+          }
+        : null;
+      const nextState = {
+        version: SPELLING_SERVICE_STATE_VERSION,
+        phase: 'session',
+        session: decorateSession(engine, learnerId, session, runtimeWordBySlug),
+        feedback: null,
+        summary: null,
+        error: '',
+        awaitingAdvance: false,
+      };
+      persistence.syncPracticeSession(learnerId, nextState);
+      return buildTransition(nextState, { audio: activeAudioCue(learnerId, nextState) });
+    }
+
     const advanced = session.mode === 'guardian'
       ? advanceGuardianCard(session)
       : engine.advanceCard(session, learnerId);
@@ -2630,6 +3825,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const persistenceWarning = (!progressSave?.ok || !guardianSave?.ok || lastErrorChanged)
       ? { reason: SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED }
       : null;
+    // P2 U9: durable mirror on the "I don't know" skipWord branch.
+    if (persistenceWarning) {
+      writePersistenceWarning(learnerId, persistenceWarning.reason);
+    }
 
     // Record the per-word outcome so guardianMissionEventsForSession counts
     // this as a wobble on the final mission-completed event.
@@ -2767,6 +3966,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     // storage-only host) do not leak a non-empty ks2-spell-guardian-*
     // record across a learner reset. Idempotent on an already-empty map.
     saveGuardianMap(learnerId, {});
+    // P2 U11: same idempotent-zero for the Pattern Quest wobble sibling so
+    // a bare-storage host (no `resetLearner` on the adapter) does not leak
+    // `ks2-spell-pattern-*` records across a learner reset.
+    savePatternToStorage(learnerId, { wobbling: {} });
     // P2 U2 (MEDIUM reviewer fix): belt-and-braces clear for bare-storage
     // hosts (no `repository` adapter, or a repository without
     // `resetLearner`). `savePostMegaToStorage(null)` is a silent no-op
@@ -2782,6 +3985,15 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       // Swallow — reset is best-effort on bare hosts, and the `resetLearner`
       // API on the persistence adapter above has already cleared the
       // production path via `writeSpellingData(repositories, learnerId, {})`.
+    }
+    // P2 U9: clear the durable persistence-warning too. A fresh learner
+    // should not inherit a previous learner's storage-failure banner after
+    // a reset. Same best-effort try/catch applies.
+    try {
+      resolvedStorage?.removeItem?.(persistenceWarningKey(learnerId));
+    } catch {
+      // Swallow — reset is best-effort; a stale warning is a minor UX
+      // inconvenience, not a data-loss hazard.
     }
   }
 
@@ -2805,5 +4017,15 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     // write sites (e.g. U4's "I don't know" branch) can call it directly
     // instead of going through a whole-map load/mutate/save.
     saveGuardianRecord,
+    // P2 U9: durable persistence-warning surface. `getPersistenceWarning`
+    // is the read-side helper for `buildSpellingContext` (setup + session
+    // scene banners). `acknowledgePersistenceWarning` is the dispatcher
+    // target for the "I understand" button — sets `acknowledged: true` and
+    // keeps the record for audit. `writePersistenceWarning` is internal
+    // (called from the submit paths) but exposed here so tests can drive
+    // it directly without constructing a full submit round.
+    getPersistenceWarning,
+    acknowledgePersistenceWarning,
+    writePersistenceWarning,
   };
 }
