@@ -438,6 +438,13 @@ test('button labels: every statically extractable label is classified', () => {
     'Refresh',
     'Retry refresh',
     'Save learner profile',
+    // P2 U1: admin / ops post-mega diagnostic link — bespoke debug affordance
+    // that opens the Admin Hub post-mega panel. Not a canonical verb.
+    'Why is Guardian locked?',
+    // P2 U5: soft-lockout banner "Use this tab anyway" action. Drives the
+    // `navigator.locks.request({ steal: true })` path to force ownership
+    // when a sibling tab holds the write lock.
+    'Use this tab anyway',
     // SH2-U3 DemoExpiryBanner: bespoke, S-04-compliant CTAs for the
     // demo-expired UX branch. Both labels are intentional — "Sign in"
     // sends the learner back to the generic AuthSurface and "Start new
@@ -467,12 +474,10 @@ test('button labels: every statically extractable label is classified', () => {
     'Delete permanently',
     // Pre-existing branch-base labels that the scanner now reports. They
     // predate U10 — "I understand" is the Post-Mega Spelling (P2)
-    // Guardian-unlock copy, "Why is Guardian locked?" is the paired
-    // help link, and "Apply seed" is the Post-Mega seed harness CTA
-    // (P2 U3). Added here as part of U10 so the test suite passes
-    // end-to-end; a follow-up polish unit can triage the wording.
+    // Guardian-unlock copy and "Apply seed" is the Post-Mega seed
+    // harness CTA (P2 U3). Added here as part of U10 so the test suite
+    // passes end-to-end; a follow-up polish unit can triage the wording.
     'I understand',
-    'Why is Guardian locked?',
     'Apply seed',
   ]);
   // Additional unknowns: dump and fail with the full list so U12+ can
