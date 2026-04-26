@@ -23,6 +23,14 @@
 // patch clears the error without dropping the saving scalars, and so a
 // failing patch can overwrite them without stomping the latest server data
 // that was already applied.
+//
+// P2 U1: `postMasteryDebug` is a new top-level admin-hub sibling populated
+// by the full hub bundle only — there is no narrow /api/admin/ops/*
+// refresh route for this field in P2 U1. The four patch helpers below use
+// object spread (`{ ...hub, <sibling>: next }`), which preserves every
+// other top-level sibling including `postMasteryDebug`. No additional
+// helper is required; a POST-based admin-only diagnostic refresh can be
+// added later without touching the four existing narrow-patch paths.
 
 function isPlainObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value);

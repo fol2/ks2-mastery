@@ -287,6 +287,20 @@ function SetupStatGrid({ stats }) {
   );
 }
 
+// P2 U1: admin / ops only affordance. When the learner's post-mega gate
+// is closed, adult operators need a one-click path into the Admin hub's
+// post-mega debug panel to see *why*. Child (`learner`) and parent
+// (`parent`) roles render absolutely nothing — the link is gated on the
+// platform role set. Keeping the whitelist explicit (not a generic
+// "non-learner" check) guards against future roles slipping past the
+// check; a brand-new role (e.g. 'demo') will render the link only after
+// an explicit code change here, matching the P2 plan's §U1 ICO posture.
+const POST_MASTERY_DEBUG_ROLES = new Set(['admin', 'ops']);
+
+function adultCanSeePostMasteryDebug(platformRole) {
+  return POST_MASTERY_DEBUG_ROLES.has(String(platformRole || ''));
+}
+
 export function SpellingSetupScene({
   learner,
   service,
@@ -301,6 +315,10 @@ export function SpellingSetupScene({
   setupHeroTone = '',
   previousHeroBg = '',
   runtimeReadOnly = false,
+  // P2 U1: threaded through from `SpellingPracticeSurface` -> `session.platformRole`.
+  // Defaults to empty string so a prop-less caller (tests, legacy shells)
+  // renders the child-safe view with the link absent.
+  platformRole = '',
 }) {
   const statsFilter = prefs.mode === 'test' ? 'core' : prefs.yearFilter;
   const stats = service.getStats(learner.id, statsFilter);
@@ -316,6 +334,13 @@ export function SpellingSetupScene({
   const isPostMega = Boolean(postMastery?.allWordsMega);
   const contentClasses = ['setup-content'];
   if (isPostMega) contentClasses.push('setup-content--post-mega');
+
+  // P2 U1: admin / ops adults see a "Why is Guardian locked?" diagnostic
+  // link right below the setup hero when Guardian Mission is NOT unlocked
+  // (i.e. `isPostMega === false`). Child / parent surfaces get `platformRole`
+  // empty (defaulted) or === 'parent' and the link never renders. Routed
+  // to the admin hub where the post-mega debug panel explains the counts.
+  const showPostMasteryDebugLink = adultCanSeePostMasteryDebug(platformRole) && !isPostMega;
 
   return (
     <div className="setup-grid" style={{ gridColumn: '1/-1' }}>
@@ -354,6 +379,21 @@ export function SpellingSetupScene({
               startDisabled={startDisabled}
             />
           )}
+          {showPostMasteryDebugLink ? (
+            <p className="small muted post-mastery-debug-link" data-adult-debug="post-mastery">
+              <button
+                type="button"
+                className="btn ghost"
+                data-action="open-admin-hub"
+                onClick={(event) => renderAction(actions, event, 'open-admin-hub')}
+              >
+                Why is Guardian locked?
+              </button>
+              <span className="small muted" style={{ marginLeft: 8 }}>
+                Adult-only diagnostic. Opens the Admin / Operations hub post-mega debug panel.
+              </span>
+            </p>
+          ) : null}
         </div>
       </section>
 
