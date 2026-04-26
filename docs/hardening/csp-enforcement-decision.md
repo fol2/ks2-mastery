@@ -14,7 +14,7 @@
 
 | Field | Value |
 | --- | --- |
-| Observation start | `<operator-fills-once-rollout-lands>` (placeholder — the 7-day clock starts at the first SH2-U8 production deploy that shipped after `worker/src/security-headers.js` was last modified at charter time) |
+| Observation start | `<operator-fills-once-rollout-lands>` (placeholder — the 7-day clock starts at the first production deploy AFTER this PR merges to `main`. The operator records that deploy's UTC timestamp here once SH2-U8 is live. This is NOT "the next time security-headers.js is modified" — it is specifically the first deploy containing the commits from this PR.) |
 | Observation end | `<observation-start + 7 days>` |
 | Report endpoint | `/api/security/csp-report` (already wired; see `worker/src/app.js` and `tests/csp-report-endpoint.test.js`) |
 | Log token | `[ks2-csp-report]` — operator grep the Worker tail for this prefix during the window |

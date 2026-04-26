@@ -53,12 +53,16 @@ test('post-migration total equals pre-migration minus SH2-U8 slice', () => {
   );
 });
 
-test('live grep count matches POST_MIGRATION_TOTAL (strict budget)', async () => {
+test('live grep count stays <= POST_MIGRATION_TOTAL (budget gate)', async () => {
+  // INTENT: this gate blocks regressions (increases) but lets benign
+  // decreases pass silently. A strict `assert.equal(total, total_committed)`
+  // would fail on decrease too, which invites developers to blindly lower
+  // POST_MIGRATION_TOTAL to unstick CI — defeating the budget over time.
+  // See header comment "LESS THAN OR EQUAL" for the stated intent.
   const { total } = await buildInventory();
-  assert.equal(
-    total,
-    POST_MIGRATION_TOTAL,
-    `inline-style budget regressed: expected ${POST_MIGRATION_TOTAL}, grep sees ${total}. `
+  assert.ok(
+    total <= POST_MIGRATION_TOTAL,
+    `inline-style budget regressed: live count ${total} > committed ${POST_MIGRATION_TOTAL}. `
       + 'Re-run scripts/inventory-inline-styles.mjs to inspect the diff; if the '
       + 'change is intentional, migrate the new site to a class OR update the '
       + 'PRE_MIGRATION_TOTAL / SITES_MIGRATED_THIS_PR constants AND the committed '

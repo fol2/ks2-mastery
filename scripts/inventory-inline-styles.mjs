@@ -244,6 +244,26 @@ Any NEW CSS-variable-driven inline style whose value flows from server data (mon
 
 SH2-U8 itself does NOT introduce any new site that triggers this contract: every site migrated in this PR drops an inline style in favour of a class (no new server-sourced CSS-variable bags). The contract is committed here so the next migration PR has the rule ready to cite. Existing \`dynamic-content-driven\` sites left for future work also inherit this contract; a PR that introduces a new such site without the sanitisation fails adversarial review.
 
+## Dark-mode classification
+
+When an inline \`style={}\` site carries a themed colour (e.g. the literal hex \`#3E6FA8\` which equals \`--brand\` in light mode but is \`#6E9ED6\` in dark mode), migrating it to \`.btn.primary\`'s default \`var(--btn-accent, var(--brand))\` is NOT pixel-identical in dark mode. This is an INTENTIONAL theme unification: the pre-migration inline hard-locked the light-mode hex across ALL themes (theme-blind), while the post-migration class follows theme.
+
+SH2-U8 treats this as a deliberate classification decision (NOT a visual regression). Four call sites are affected in this PR — the three \`.btn.primary\` sign-in / retry / return buttons in \`src/surfaces/auth/AuthSurface.jsx\` and the sign-in button in \`src/surfaces/auth/DemoExpiryBanner.jsx\`. Inline code comments at those sites cite this section.
+
+The SH2-U6 visual-baseline suite (\`tests/playwright/visual-baselines.playwright.test.mjs\`) currently captures only the light-mode rendering; the dark-mode render intentionally diverges. A future SH2 slice may extend the baseline suite with a dark-mode capture for \`auth-standard\` / \`auth-forbidden\` / \`auth-transient-error\` / \`demo-expiry-banner\` scenes to pin the theme-aware rendering; this is tracked for the next inventory PR (see "Next slice selection guidance" below).
+
+Future migration PRs that drop an inline themed colour MUST either (a) add an inline comment citing this section and note the intentional theme unification in the PR body, or (b) replace the inline with a BYTE-identical CSS rule (e.g. \`background: #3E6FA8\` in a class) that preserves theme-blindness.
+
+## Next slice selection guidance
+
+Future migration PRs should:
+
+1. Pick the highest-count \`shared-pattern-available\` files first (cheapest ROI).
+   - Current top target: \`src/surfaces/hubs/AdminHubSurface.jsx\` (85 sites) — WARNING: complex hub surface. The next slice MUST regenerate visual baselines AND add narrow visual-regression scenes for any migrated admin panel before merge.
+   - Second tier: \`src/surfaces/hubs/MonsterEffectCatalogPanel.jsx\` (19), \`src/surfaces/hubs/MonsterEffectBindingsPanel.jsx\` (12), \`src/surfaces/hubs/MonsterEffectCelebrationPanel.jsx\` (7), \`src/surfaces/hubs/ParentHubSurface.jsx\` (8). These are smaller, hub-adjacent migrations that also require hub-baseline coverage.
+2. Defer \`dynamic-content-driven\` sites until CSS-variable sanitisation helpers are in place (see S-06 contract above). Every new such site must satisfy numeric-clamp, allowlist, OR \`CSS.escape\` — no exceptions.
+3. Each migration PR should migrate >=20 sites (F-03 threshold) and target pixel-identity via SH2-U6 baselines. If the migration carries a themed colour (see "Dark-mode classification" above), ADD a dark-mode baseline capture in the same PR OR document the intentional theme unification in the PR body.
+
 ## Total site counts
 
 | Category | Count |

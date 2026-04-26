@@ -55,9 +55,13 @@ function ForbiddenNotice({ onSignIn }) {
           This account is not permitted to view the page you asked for. Return home to continue.
         </p>
         {/* SH2-U8: inline style props migrated to `.auth-panel-actions`; the
-            `#3E6FA8` inline background is dropped because it equals `--brand`
-            which `.btn.primary` already uses via `var(--btn-accent, var(--brand))`.
-            See docs/hardening/csp-inline-style-inventory.md. */}
+            `#3E6FA8` inline background is dropped in favour of `.btn.primary`'s
+            default `var(--btn-accent, var(--brand))`. In LIGHT mode `--brand`
+            is `#3E6FA8` (pixel-identical to the removed inline). In DARK mode
+            `--brand` is `#6E9ED6` — this is an INTENTIONAL theme unification:
+            the previous inline hard-locked the light hex in every theme, which
+            was theme-blind. Post-U8, the button now follows theme. See
+            docs/hardening/csp-inline-style-inventory.md "Dark-mode classification". */}
         <div className="actions auth-panel-actions">
           <button
             className="btn primary lg"
@@ -99,8 +103,12 @@ function AuthTransientErrorNotice({ onRetry }) {
           We couldn&apos;t reach the sign-in service just now. Please try again in a moment.
         </p>
         {/* SH2-U8: inline style props migrated to `.auth-panel-actions`; the
-            `#3E6FA8` inline background is dropped (identical to `--brand` which
-            `.btn.primary` already uses). See docs/hardening/csp-inline-style-inventory.md. */}
+            `#3E6FA8` inline background is dropped in favour of `.btn.primary`'s
+            default `var(--btn-accent, var(--brand))`. Light-mode `--brand` is
+            `#3E6FA8` (pixel-identical); dark-mode `--brand` is `#6E9ED6` —
+            INTENTIONAL theme unification (the inline previously hard-locked
+            the light hex across all themes). See
+            docs/hardening/csp-inline-style-inventory.md "Dark-mode classification". */}
         <div className="actions auth-panel-actions">
           <button
             className="btn primary lg"
@@ -234,9 +242,12 @@ function AuthSurfaceStandard({ initialMode = 'login', initialError = '', onSubmi
               disabled={busy}
             />
           </label>
-          {/* SH2-U8: `#3E6FA8` inline background dropped; `.btn.primary` already
-              uses `var(--btn-accent, var(--brand))` and `--brand` is `#3E6FA8`.
-              See docs/hardening/csp-inline-style-inventory.md. */}
+          {/* SH2-U8: `#3E6FA8` inline background dropped; `.btn.primary` uses
+              `var(--btn-accent, var(--brand))` — pixel-identical in light mode
+              (`--brand: #3E6FA8`) and INTENTIONALLY theme-aware in dark mode
+              (`--brand: #6E9ED6`). The previous inline hard-locked the light
+              hex across both themes. See
+              docs/hardening/csp-inline-style-inventory.md "Dark-mode classification". */}
           <button className="btn primary lg" type="submit" disabled={busy}>
             {isRegister ? 'Create account' : 'Sign in'}
           </button>

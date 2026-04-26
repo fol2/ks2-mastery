@@ -74,9 +74,12 @@ export function DemoExpiryBanner({ onSignIn, onStartDemo }) {
         </p>
         {/* SH2-U8: inline style props migrated — `.auth-panel-actions` carries the
             flex + gap + margin-top + wrap layout; the "#3E6FA8" inline background
-            is removed because it is identical to `--brand` which `.btn.primary`
-            already uses by default via `background: var(--btn-accent, var(--brand))`.
-            See docs/hardening/csp-inline-style-inventory.md. */}
+            is removed in favour of `.btn.primary`'s default
+            `background: var(--btn-accent, var(--brand))`. Light-mode `--brand`
+            is `#3E6FA8` (pixel-identical to the removed inline); dark-mode
+            `--brand` is `#6E9ED6` — INTENTIONAL theme unification (the inline
+            previously hard-locked the light hex in dark mode too). See
+            docs/hardening/csp-inline-style-inventory.md "Dark-mode classification". */}
         <div className="actions auth-panel-actions">
           <button
             className="btn primary lg"
