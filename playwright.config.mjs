@@ -50,6 +50,14 @@ export default {
     },
   },
   webServer: {
+    // U8: `KS2_BUILD_MODE=test` swaps the esbuild `NODE_ENV` define
+    // from `"production"` to `"test"` so the
+    // `globalThis.__ks2_capacityMeta__` counters survive dead-code
+    // elimination and the Playwright scene can read them. Production
+    // builds keep the counter object stripped (verified by
+    // `scripts/audit-client-bundle.mjs`). The env var is set via the
+    // `env:` block below; Playwright propagates it into the spawned
+    // shell, which then passes it down to `scripts/build-client.mjs`.
     command: 'node ./scripts/build-bundles.mjs && node ./scripts/build-public.mjs && node ./tests/helpers/browser-app-server.js --serve-only --port 4173 --with-worker-api',
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: !process.env.CI,
@@ -68,6 +76,10 @@ export default {
     // get their plans honoured.
     env: {
       KS2_TEST_HARNESS: '1',
+      // U8: propagate build mode so the child `build-client.mjs`
+      // esbuild invocation skips the `NODE_ENV=production` define and
+      // the capacity-meta counter object lives in the served bundle.
+      KS2_BUILD_MODE: 'test',
     },
   },
   use: {

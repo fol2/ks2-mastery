@@ -490,6 +490,26 @@ const subjectCommands = createSubjectCommandClient({
       learnerId,
       staleWriteCurrentRevision(error),
     ) === true;
+    // U8 (capacity release gates + telemetry): observability for the
+    // "stale command recovery" split. `applyLearnerRevisionHint` is the
+    // cheap in-memory revision bump — count that as the small-refresh
+    // path. The `hydrate()` fallback fires the full bootstrap cost and
+    // is the load signal U9 circuit breakers will gate on.
+    //
+    // Tree-shake contract (see `src/platform/core/repositories/api.js`
+    // for the full explanation): the literal expression
+    // `process.env.NODE_ENV !== 'production'` is replaced with `false`
+    // in the production build via esbuild's `define` block, so both
+    // the counter read and the counter writes below are dead-code
+    // eliminated. The production bundle audit rejects
+    // `__ks2_capacityMeta__` if the guard ever regresses.
+    if (process.env.NODE_ENV !== 'production') {
+      const meta = globalThis.__ks2_capacityMeta__;
+      if (meta) {
+        if (refreshed) meta.staleCommandSmallRefresh = (Number(meta.staleCommandSmallRefresh) || 0) + 1;
+        else meta.staleCommandFullBootstrapFallback = (Number(meta.staleCommandFullBootstrapFallback) || 0) + 1;
+      }
+    }
     if (!refreshed) await repositories.hydrate({ cacheScope: 'subject-command-stale-write' });
   },
   onCommandApplied: ({ learnerId, subjectId, response }) => {

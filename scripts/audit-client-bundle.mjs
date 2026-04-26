@@ -69,6 +69,16 @@ const FORBIDDEN_TEXT = [
   // bundle and the audit fails. Security F-11 prompted explicit token
   // specification rather than relying on a path-based FORBIDDEN_MODULES rule.
   { token: '__ks2_injectFault_TESTS_ONLY__', reason: 'fault-injection middleware must never ship in the production client bundle (U9)' },
+  // U8 (capacity release gates + telemetry): multi-tab coordination
+  // counters live on `globalThis.__ks2_capacityMeta__` in dev/test
+  // builds only. The identifier is gated by
+  // `process.env.NODE_ENV !== 'production'` in `src/platform/core/
+  // repositories/api.js` and `src/main.js`; esbuild's `define` block
+  // inlines the string `"production"` at build time so the counter
+  // object, its install side-effect, and the increment calls are
+  // dead-code eliminated. If a future regression drops the guard and
+  // the token leaks into the shipped bundle, this audit fails.
+  { token: '__ks2_capacityMeta__', reason: 'multi-tab bootstrap coordination counters must never ship in the production client bundle (U8)' },
 ];
 
 const REVIEW_ALLOWLIST = [

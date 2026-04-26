@@ -41,9 +41,21 @@ function resolveBuildHash({ execSync = nodeExecSync } = {}) {
   }
 }
 
+// U8 (capacity release gates + telemetry): when the caller opts in
+// via `KS2_BUILD_MODE=test` the bundle is produced WITHOUT the
+// `process.env.NODE_ENV = 'production'` define. That keeps the
+// multi-tab coordination counters (`globalThis.__ks2_capacityMeta__`)
+// alive in the Playwright-served bundle so the scene can read them.
+// Production builds (no env var) keep the existing dead-code-elimination
+// contract — see `src/platform/core/repositories/api.js`. The bundle
+// audit (`scripts/audit-client-bundle.mjs`) still runs against the
+// production bundle only, so the test-mode variant does not relax any
+// shipped-bundle invariants.
 export async function runBuildClient({ buildHash } = {}) {
   await mkdir(outputDir, { recursive: true });
   const resolvedHash = buildHash !== undefined ? buildHash : resolveBuildHash();
+  const mode = String(process.env.KS2_BUILD_MODE || 'production').toLowerCase();
+  const isTestBuild = mode === 'test';
 
   const result = await build({
     entryPoints: [path.join(rootDir, 'src/app/entry.jsx')],
@@ -58,7 +70,11 @@ export async function runBuildClient({ buildHash } = {}) {
     sourcemap: false,
     metafile: true,
     define: {
-      'process.env.NODE_ENV': '"production"',
+      // U8 test-mode preserves the capacity-meta counters by skipping
+      // the `"production"` DCE signal; U16 `__BUILD_HASH__` stamping
+      // applies unconditionally so test bundles still satisfy the
+      // runtime `typeof __BUILD_HASH__ === 'string'` guard.
+      'process.env.NODE_ENV': isTestBuild ? '"test"' : '"production"',
       // JSON.stringify gives us either `"abcdef0"` or `null` — the client
       // guards with `typeof __BUILD_HASH__ === 'string'`.
       __BUILD_HASH__: JSON.stringify(resolvedHash),
