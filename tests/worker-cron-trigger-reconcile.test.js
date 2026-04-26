@@ -101,16 +101,60 @@ test('U11 scheduled handler logs collision without bumping failure telemetry', a
   }
 });
 
-test('U11 scheduled handler writes failure telemetry when DB throws inside reconciliation', async () => {
-  // Synthesise a broken DB proxy that fails the required table lookup.
-  const nowTs = 1_700_000_000_000;
-  const failingDb = {
-    prepare() { throw new Error('synthetic DB failure for test'); },
-  };
-  const env = { DB: failingDb };
-  const result = await runScheduledHandler({}, env, {}, { now: () => nowTs });
-  assert.equal(result.ok, false);
-  assert.match(String(result.reason || ''), /synthetic DB failure/);
+// I-RE-3 (re-review Important): the previous version of this test used a
+// "fail every prepare()" DB proxy that also caused the failure-telemetry
+// write to throw — so the `CRON_METRIC_LAST_FAILURE_AT` metric never
+// landed and the test was silently asserting a reason string instead of
+// the invariant we actually care about ("failure telemetry is written on
+// reconciliation failure"). The fix is a selective Proxy that fails ONLY
+// the reconcile SELECT paths but lets telemetry writes (plain UPSERTs
+// against admin_kpi_metrics) and bootstrap writes succeed.
+function makeReconcileFailOnlyDb(realDb) {
+  return new Proxy(realDb, {
+    get(target, prop, receiver) {
+      if (prop !== 'prepare') return Reflect.get(target, prop, receiver);
+      return (sql) => {
+        // Fail the authoritative reconcile aggregation SELECT inside
+        // `recomputeReconcilableCounters` — the GROUP BY COUNT over
+        // ops_error_events is the first SQL path inside the reconcile
+        // body (after the lock acquisition), so this fires the
+        // reconcile-failure branch reliably. Telemetry writes go
+        // through plain INSERT INTO admin_kpi_metrics ... ON CONFLICT
+        // statements and are NOT matched by this regex, so they
+        // succeed and land in the D1 shim.
+        if (/SELECT\s+status,\s+COUNT\(\*\)[\s\S]+FROM\s+ops_error_events/i.test(sql)) {
+          throw new Error('synthetic reconcile SELECT failure');
+        }
+        return target.prepare(sql);
+      };
+    },
+  });
+}
+
+test('U11 scheduled handler writes failure telemetry when reconciliation SELECT throws', async () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    seedAdultAccount(db, { id: 'adult-admin', platformRole: 'admin' });
+    const nowTs = 1_700_000_000_000;
+    const envDb = makeReconcileFailOnlyDb(db);
+    const env = { DB: envDb };
+    const result = await runScheduledHandler({}, env, {}, { now: () => nowTs });
+    assert.equal(result.ok, false, 'reconcile failure surfaces as ok=false');
+    assert.match(String(result.reason || ''), /synthetic reconcile SELECT failure/);
+
+    // The core invariant the old test missed: CRON_METRIC_LAST_FAILURE_AT
+    // was written. Before the selective-proxy fix, the fail-every-prepare
+    // proxy also broke `writeCronMetricTimestamp`, so the failure timestamp
+    // never landed and this assertion would silently fail.
+    const failureRow = metric(db, CRON_METRIC_LAST_FAILURE_AT);
+    assert.ok(failureRow, 'CRON_METRIC_LAST_FAILURE_AT metric must land on reconcile failure');
+    assert.equal(Number(failureRow.metric_count), nowTs);
+
+    // And LAST_SUCCESS_AT must NOT be written — the reconcile arm failed.
+    assert.equal(metric(db, CRON_METRIC_LAST_SUCCESS_AT), null, 'LAST_SUCCESS_AT must not land on reconcile failure');
+  } finally {
+    db.close();
+  }
 });
 
 test('U11 scheduled handler is a no-op when env.DB is missing', async () => {

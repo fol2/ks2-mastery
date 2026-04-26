@@ -200,6 +200,82 @@ test('U11 cronReconcile healthy (success ahead of failure) does NOT render the w
   assert.doesNotMatch(html, /data-testid="dashboard-cron-failure-banner"/);
 });
 
+test('I-RE-1 retention-only failure renders banner with retention-specific message', async () => {
+  // Reconcile healthy (lastFailureAt = 0), but retention swept failed after
+  // the last success. The banner must fire with a "Retention sweep" label,
+  // not the default "Automated reconciliation" label.
+  const retentionFailingPayload = {
+    generatedAt: 1,
+    accounts: { total: 1, real: 1, demo: 0 },
+    learners: { total: 0, real: 0, demo: 0 },
+    demos: { active: 0 },
+    practiceSessions: { last7d: 0, last30d: 0 },
+    eventLog: { last7d: 0 },
+    mutationReceipts: { last7d: 0 },
+    errorEvents: { byStatus: { open: 0, investigating: 0, resolved: 0, ignored: 0 }, byOrigin: { client: 0, server: 0 } },
+    accountOpsUpdates: { total: 0 },
+    cronReconcile: {
+      lastSuccessAt: 1_700_000_000_000,
+      lastFailureAt: 0,
+      retentionLastFailureAt: 1_700_000_100_000, // newer than success
+      successCount: 3,
+    },
+  };
+  const html = await renderAdminSurface({ dashboardKpis: retentionFailingPayload });
+  assert.match(html, /data-testid="dashboard-cron-failure-banner"/);
+  assert.match(html, /Retention sweep failed/);
+  assert.doesNotMatch(html, /Reconcile and retention sweeps failed/);
+  assert.doesNotMatch(html, /Automated reconciliation failed/);
+});
+
+test('I-RE-1 reconcile + retention both failing renders combined banner label', async () => {
+  // Both lastFailureAt and retentionLastFailureAt are newer than
+  // lastSuccessAt. The banner should say "Reconcile and retention sweeps
+  // failed" so the operator knows both legs need attention.
+  const bothFailingPayload = {
+    generatedAt: 1,
+    accounts: { total: 1, real: 1, demo: 0 },
+    learners: { total: 0, real: 0, demo: 0 },
+    demos: { active: 0 },
+    practiceSessions: { last7d: 0, last30d: 0 },
+    eventLog: { last7d: 0 },
+    mutationReceipts: { last7d: 0 },
+    errorEvents: { byStatus: { open: 0, investigating: 0, resolved: 0, ignored: 0 }, byOrigin: { client: 0, server: 0 } },
+    accountOpsUpdates: { total: 0 },
+    cronReconcile: {
+      lastSuccessAt: 1_700_000_000_000,
+      lastFailureAt: 1_700_000_050_000,
+      retentionLastFailureAt: 1_700_000_100_000,
+      successCount: 3,
+    },
+  };
+  const html = await renderAdminSurface({ dashboardKpis: bothFailingPayload });
+  assert.match(html, /data-testid="dashboard-cron-failure-banner"/);
+  assert.match(html, /Reconcile and retention sweeps failed/);
+});
+
+test('I-RE-1 retention-older-than-success does NOT render banner', async () => {
+  const healthyRetentionPayload = {
+    generatedAt: 1,
+    accounts: { total: 1, real: 1, demo: 0 },
+    learners: { total: 0, real: 0, demo: 0 },
+    demos: { active: 0 },
+    practiceSessions: { last7d: 0, last30d: 0 },
+    eventLog: { last7d: 0 },
+    mutationReceipts: { last7d: 0 },
+    errorEvents: { byStatus: { open: 0, investigating: 0, resolved: 0, ignored: 0 }, byOrigin: { client: 0, server: 0 } },
+    accountOpsUpdates: { total: 0 },
+    cronReconcile: {
+      lastSuccessAt: 1_700_000_100_000,
+      lastFailureAt: 0,
+      retentionLastFailureAt: 1_700_000_000_000, // older than success
+      successCount: 3,
+    },
+  };
+  const html = await renderAdminSurface({ dashboardKpis: healthyRetentionPayload });
+  assert.doesNotMatch(html, /data-testid="dashboard-cron-failure-banner"/);
+});
+
 test('KPI payload with zero demos renders 0 explicitly (not the em-dash placeholder)', async () => {
   const zeroDemoPayload = {
     generatedAt: 1,

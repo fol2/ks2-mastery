@@ -94,6 +94,13 @@ function normaliseCronReconcile(rawValue) {
     lastSuccessAt: asTs(raw.lastSuccessAt, 0),
     lastFailureAt: asTs(raw.lastFailureAt, 0),
     successCount: toNonNegativeInt(raw.successCount),
+    // I-RE-1 (re-review Important): retention-sweep failure timestamp. The
+    // cron runs reconcile + retention in the same trigger; retention
+    // failures alone (with reconcile healthy) previously left the banner
+    // silent. The DashboardKpiPanel predicate now fires when EITHER
+    // reconcile OR retention has a fresher failure stamp than
+    // lastSuccessAt.
+    retentionLastFailureAt: asTs(raw.retentionLastFailureAt, 0),
   };
 }
 

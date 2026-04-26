@@ -357,10 +357,23 @@ function DashboardKpiPanel({ model, actions }) {
   // U11: cron reconciliation telemetry. A warn banner fires when the
   // last failure timestamp is newer than the last success timestamp so
   // the operator knows automated reconciliation needs attention.
+  // I-RE-1 (re-review Important): the cron also runs a retention sweep;
+  // a retention-only failure must surface distinctly. `cronFailing`
+  // fires when EITHER reconcile OR retention has a fresher failure stamp
+  // than `lastSuccessAt`. The banner copy names which leg degraded.
   const cronReconcile = kpis.cronReconcile || {};
   const cronLastSuccessAt = Number(cronReconcile.lastSuccessAt) || 0;
   const cronLastFailureAt = Number(cronReconcile.lastFailureAt) || 0;
-  const cronFailing = cronLastFailureAt > 0 && cronLastFailureAt > cronLastSuccessAt;
+  const cronRetentionLastFailureAt = Number(cronReconcile.retentionLastFailureAt) || 0;
+  const reconcileFailing = cronLastFailureAt > 0 && cronLastFailureAt > cronLastSuccessAt;
+  const retentionFailing = cronRetentionLastFailureAt > 0 && cronRetentionLastFailureAt > cronLastSuccessAt;
+  const cronFailing = reconcileFailing || retentionFailing;
+  const cronFailureMostRecentAt = Math.max(cronLastFailureAt, cronRetentionLastFailureAt);
+  const cronFailureLegLabel = reconcileFailing && retentionFailing
+    ? 'Reconcile and retention sweeps'
+    : reconcileFailing
+      ? 'Automated reconciliation'
+      : 'Retention sweep';
 
   // P1.5 Phase A (U3): real vs demo split — each counter that can be split
   // by account type renders both sides with a neutral "Real / Demo"
@@ -414,7 +427,7 @@ function DashboardKpiPanel({ model, actions }) {
           data-testid="dashboard-cron-failure-banner"
           style={{ marginBottom: 12 }}
         >
-          <strong>Automated reconciliation failed</strong> at {formatTimestamp(cronLastFailureAt)}.
+          <strong>{cronFailureLegLabel} failed</strong> at {formatTimestamp(cronFailureMostRecentAt)}.
           {' '}Last success at {cronLastSuccessAt > 0 ? formatTimestamp(cronLastSuccessAt) : 'never'}.
           {' '}Investigate or run <code>npm run admin:reconcile-kpis</code>.
         </div>

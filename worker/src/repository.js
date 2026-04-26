@@ -2042,20 +2042,27 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
   // can warn when automated reconciliation has stalled. Metric keys live
   // in `worker/src/index.js::runScheduledHandler`; we soft-fail if the
   // table is missing so the hub keeps loading pre-migration.
+  // I-RE-1 (re-review Important): the cron also runs a retention sweep on
+  // request_limits + sessions + receipts. A retention failure alone
+  // doesn't trip the reconcile failure timestamp, so the dashboard was
+  // silent when retention alone degraded. Surface the retention
+  // last-failure-at so the banner predicate can fire on either failure.
   let cronReconcile = {
     lastSuccessAt: 0,
     lastFailureAt: 0,
     successCount: 0,
+    retentionLastFailureAt: 0,
   };
   try {
     const cronRows = await all(db, `
       SELECT metric_key, metric_count, updated_at
       FROM admin_kpi_metrics
-      WHERE metric_key IN (?, ?, ?)
+      WHERE metric_key IN (?, ?, ?, ?)
     `, [
       'capacity.cron.reconcile.success',
       'capacity.cron.reconcile.last_success_at',
       'capacity.cron.reconcile.last_failure_at',
+      'capacity.cron.retention.last_failure_at',
     ]);
     for (const row of cronRows) {
       const key = typeof row?.metric_key === 'string' ? row.metric_key : '';
@@ -2065,6 +2072,8 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
         cronReconcile.lastSuccessAt = Math.max(0, Number(row.metric_count) || 0);
       } else if (key === 'capacity.cron.reconcile.last_failure_at') {
         cronReconcile.lastFailureAt = Math.max(0, Number(row.metric_count) || 0);
+      } else if (key === 'capacity.cron.retention.last_failure_at') {
+        cronReconcile.retentionLastFailureAt = Math.max(0, Number(row.metric_count) || 0);
       }
     }
   } catch (error) {

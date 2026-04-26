@@ -1216,3 +1216,13 @@ export function createSessionAuthBoundary({ env = {}, sessionProvider, capacity 
     },
   };
 }
+
+// I-RE-4 (re-review Important): test-only named export of
+// `findOrCreateAccountFromIdentity` so the U12 batch-atomicity test can
+// drive the exact production call site with a forced mid-batch failure,
+// rather than falling through to a synthetic shim probe whose behaviour
+// diverges from the production path. Matches the pattern established by
+// `__resetTrustXffWarningForTests` in worker/src/rate-limit.js. The
+// leading underscores signal "internal-only" to callers and keep this out
+// of grep results for the public surface.
+export const __findOrCreateAccountFromIdentityForTests = findOrCreateAccountFromIdentity;

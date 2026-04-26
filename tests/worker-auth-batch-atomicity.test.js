@@ -127,65 +127,55 @@ test('I9 findOrCreateAccountFromIdentity batch atomicity — identity INSERT fai
     assert.equal(accountsCount(server.DB), 0);
     assert.equal(identitiesCount(server.DB), 0);
 
-    // Patch the Google OAuth provider config and env so the callback
-    // reaches the database path. The existing auth.js test harness routes
-    // through a shared server; we drive the path via a direct call to
-    // the exported helper when the OAuth state round-trip is heavy.
-    //
-    // Simpler approach: call the exported `findOrCreateAccountFromIdentity`
-    // through the repository seam and verify atomicity directly.
-    //
-    // The function is not exported — so we drive it via the OAuth
-    // conversion route shape by directly inserting via the DB and
-    // asserting the second-statement failure rolls back. See
-    // alternate path below.
-
-    // Monkey-patch batch so identity INSERT (statement index 1) throws.
-    server.DB.batch = makeBatchWithFailingStatement(server.DB, 1);
-
-    // Drive via the `auth` module — import the internal helper through the
-    // `authModuleForTests` export if available, otherwise fall back to a
-    // direct batch() probe.
+    // I-RE-4 (re-review Important): drive the production call site
+    // directly via the `__findOrCreateAccountFromIdentityForTests` export
+    // (added in auth.js). The prior version of this test had a fallback
+    // path that exercised a synthetic shim with the same SQL shape — a
+    // test-vs-production gap that silently accepted a missing export and
+    // proved atomicity only for a hand-rolled probe. With the export in
+    // place the shim fallback is removed; the test now covers the exact
+    // production function.
     const authModule = await import('../worker/src/auth.js');
     const run = authModule.__findOrCreateAccountFromIdentityForTests;
-    if (typeof run === 'function') {
-      let errored = false;
-      try {
-        await run({ DB: server.DB }, { provider: 'google', providerSubject: 'sub-1', email: 'id@example.test' });
-      } catch {
-        errored = true;
-      }
-      assert.equal(errored, true, 'batch-statement failure must surface');
-      // Atomicity: neither row landed.
-      assert.equal(accountsCount(server.DB), 0);
-      assert.equal(identitiesCount(server.DB), 0);
-    } else {
-      // Fallback direct batch probe — use the same SQL shape the auth.js
-      // site uses to demonstrate atomicity of the shim.
-      const { bindStatement, batch } = await import('../worker/src/d1.js');
-      const now = Date.now();
-      let errored = false;
-      try {
-        await batch(server.DB, [
-          bindStatement(server.DB, `
-            INSERT INTO adult_accounts (id, email, display_name, selected_learner_id, created_at, updated_at)
-            VALUES (?, ?, ?, NULL, ?, ?)
-          `, ['adult-atomic', 'id@example.test', 'id-user', now, now]),
-          // This statement is the one the makeBatchWithFailingStatement will
-          // replace; it errors at index 1.
-          bindStatement(server.DB, `
-            INSERT INTO account_identities (id, account_id, provider, provider_subject, email, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-          `, ['identity-atomic', 'adult-atomic', 'google', 'sub-1', 'id@example.test', now, now]),
-        ]);
-      } catch {
-        errored = true;
-      }
-      assert.equal(errored, true);
-      // Atomicity confirmed: adult_accounts row did NOT land.
-      assert.equal(accountsCount(server.DB), 0);
-      assert.equal(identitiesCount(server.DB), 0);
+    assert.equal(typeof run, 'function', '__findOrCreateAccountFromIdentityForTests must be exported from auth.js');
+
+    // Monkey-patch batch so identity INSERT (statement index 1) throws.
+    // The production function composes `[adult_accounts INSERT,
+    // account_identities INSERT]` — failing index 1 exercises the exact
+    // atomicity invariant we care about.
+    server.DB.batch = makeBatchWithFailingStatement(server.DB, 1);
+
+    let errored = false;
+    try {
+      await run({ DB: server.DB }, { provider: 'google', providerSubject: 'sub-1', email: 'id@example.test' });
+    } catch {
+      errored = true;
     }
+    assert.equal(errored, true, 'batch-statement failure must surface');
+    // Atomicity: neither row landed.
+    assert.equal(accountsCount(server.DB), 0, 'adult_accounts row must not land when identity INSERT fails');
+    assert.equal(identitiesCount(server.DB), 0, 'account_identities row is absent as expected');
+  } finally {
+    server.close();
+  }
+});
+
+test('I-RE-4 findOrCreateAccountFromIdentity happy path — both rows land together when batch succeeds', async () => {
+  // Regression sanity: with no monkey-patching, the production call site
+  // lands both rows together. Keeps the atomicity test honest by proving
+  // the shim is wiring up real batch() semantics, not a no-op mock.
+  const server = productionServer();
+  try {
+    const authModule = await import('../worker/src/auth.js');
+    const run = authModule.__findOrCreateAccountFromIdentityForTests;
+    const accountId = await run({ DB: server.DB }, {
+      provider: 'google',
+      providerSubject: 'sub-happy',
+      email: 'happy@example.test',
+    });
+    assert.ok(typeof accountId === 'string' && accountId.length > 0);
+    assert.equal(accountsCount(server.DB), 1);
+    assert.equal(identitiesCount(server.DB), 1);
   } finally {
     server.close();
   }
