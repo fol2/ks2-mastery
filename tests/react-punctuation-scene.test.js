@@ -258,10 +258,16 @@ test('punctuation React surface renders GPS active progress and final review', (
 
   const summaryHtml = harness.render();
   assert.match(summaryHtml, /GPS review/);
-  assert.match(summaryHtml, /Next: Weak spots/);
+  // Phase 3 U4 simplification: "Next:" diagnostic framing becomes
+  // "Next up:" child copy.
+  assert.match(summaryHtml, /Next up: Weak spots/);
   assert.match(summaryHtml, /1\. Correct/);
   assert.match(summaryHtml, /2\. Review/);
-  assert.match(summaryHtml, /speech\.quote_missing/);
+  // Phase 3 U4 R15: raw dotted misconception ids must no longer leak into
+  // the summary SSR — they pipe through punctuationChildMisconceptionLabel
+  // and render as the child label ("Speech punctuation").
+  assert.doesNotMatch(summaryHtml, /speech\.quote_missing/);
+  assert.match(summaryHtml, /Speech punctuation/);
 });
 
 test('punctuation text input remounts when the current text item changes', async () => {
@@ -1857,6 +1863,358 @@ test('design-lens HIGH: combine/transfer source blockquote carries aria-label an
     /Read the text above, then write your answer below\./,
     'combine source must be followed by a visible bridging paragraph',
   );
+});
+
+// ---------------------------------------------------------------------------
+// Phase 3 U4 — Punctuation Summary scene.
+//
+// `phase === 'summary'` now routes through the standalone
+// `PunctuationSummaryScene` (not the pre-U4 inline `SummaryView`). Assertions
+// cover score chip row, wobbly chip child labels, active-only monster strip,
+// GPS review cards with misconception-label piping, 4 next-action buttons
+// with paired state-level dispatch verification, composeIsDisabled threading,
+// and the Grown-up view link.
+//
+// SSR blind spots (learning #6): every behavioural assertion is paired with
+// either a state-level post-dispatch check or a DOM-match regex so a silent
+// no-op can't pass (learning #7).
+// ---------------------------------------------------------------------------
+
+function openSummaryScene(harness, extraSummary = {}) {
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'summary',
+    summary: {
+      label: 'Punctuation session summary',
+      message: 'Session complete.',
+      total: 4,
+      correct: 3,
+      accuracy: 75,
+      focus: [],
+      ...extraSummary,
+    },
+  });
+}
+
+test('Punctuation summary scene: score chip row renders Answered / Correct / Accuracy', () => {
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness, { total: 6, correct: 4, accuracy: 67 });
+  const html = harness.render();
+  // Score labels live on dedicated stat blocks so each chip surfaces the
+  // right count. Assertions co-locate label and value to guard against a
+  // future regression that swaps the order of the three stats.
+  assert.match(html, /Answered/);
+  assert.match(html, /Correct/);
+  assert.match(html, /Accuracy/);
+  assert.match(html, /stat-value">6<\/div>/);
+  assert.match(html, /stat-value">4<\/div>/);
+  assert.match(html, /stat-value">67%<\/div>/);
+});
+
+test('Punctuation summary scene: wobbly chips use child skill labels, not raw skill IDs', () => {
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness, {
+    focus: ['speech', 'comma_clarity'],
+  });
+  const html = harness.render();
+  // Child-facing chip copy — derived from PUNCTUATION_CLIENT_SKILLS.name.
+  assert.match(html, /Inverted commas and speech punctuation needs another go/);
+  assert.match(html, /Commas for clarity needs another go/);
+  // Raw skill ids must not leak (plan R15 / learning #9).
+  assert.doesNotMatch(html, /data-skill-id="speech"[^>]*>speech</);
+  assert.doesNotMatch(html, />speech<\/span>/);
+  assert.doesNotMatch(html, />comma_clarity<\/span>/);
+});
+
+test('Punctuation summary scene: unknown skill ids are dropped rather than rendered raw', () => {
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness, { focus: ['speech', 'unknown_skill_xyz'] });
+  const html = harness.render();
+  // Known id surfaces; unknown id is silently hidden.
+  assert.match(html, /Inverted commas and speech punctuation needs another go/);
+  assert.doesNotMatch(html, /unknown_skill_xyz/);
+});
+
+test('Punctuation summary scene: empty focus renders no wobbly chip row', () => {
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness, { focus: [] });
+  const html = harness.render();
+  // The wobbly chip group must not render when there's nothing to show.
+  assert.doesNotMatch(html, /aria-label="Skills that need another go"/);
+  assert.doesNotMatch(html, /needs another go/);
+});
+
+test('Punctuation summary scene: active monster strip renders 4 monsters, no reserved trio', () => {
+  const harness = createPunctuationHarness();
+  // Craft state that intentionally contains reserved monster entries so a
+  // shallow-iteration bug would surface them.
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'summary',
+    summary: { total: 0, correct: 0, accuracy: 0, focus: [] },
+    rewards: {
+      monsters: {
+        punctuation: {
+          pealark: { mastered: ['m1'], caught: true },
+          claspin: { mastered: [], caught: false },
+          curlune: { mastered: [], caught: false },
+          quoral: { mastered: [], caught: false },
+          // Reserved — must NEVER surface in the strip.
+          colisk: { mastered: ['leak-1'], caught: true },
+          hyphang: { mastered: ['leak-2'], caught: true },
+          carillon: { mastered: ['leak-3'], caught: true },
+        },
+      },
+    },
+  });
+  const html = harness.render();
+  // Active monsters render.
+  assert.match(html, /data-monster-id="pealark"/);
+  assert.match(html, /data-monster-id="claspin"/);
+  assert.match(html, /data-monster-id="curlune"/);
+  assert.match(html, /data-monster-id="quoral"/);
+  // Reserved monsters must never reach the DOM.
+  assert.doesNotMatch(html, /data-monster-id="colisk"/);
+  assert.doesNotMatch(html, /data-monster-id="hyphang"/);
+  assert.doesNotMatch(html, /data-monster-id="carillon"/);
+});
+
+test('Punctuation summary scene: GPS review cards render with preserved Phase 2 contract', () => {
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness, {
+    label: 'Punctuation GPS test summary',
+    message: 'GPS test complete.',
+    total: 2,
+    correct: 1,
+    accuracy: 50,
+    gps: {
+      delayedFeedback: true,
+      recommendedMode: 'weak',
+      recommendedLabel: 'Wobbly spots',
+      reviewItems: [
+        {
+          index: 1,
+          itemId: 'se_insert_capital',
+          mode: 'insert',
+          prompt: 'Add the missing capital letter and full stop.',
+          attemptedAnswer: 'The boat reached the harbour.',
+          displayCorrection: 'The boat reached the harbour.',
+          correct: true,
+          misconceptionTags: [],
+        },
+        {
+          index: 2,
+          itemId: 'sp_insert_question',
+          mode: 'insert',
+          prompt: 'Add the direct-speech punctuation.',
+          attemptedAnswer: 'Ella asked can we start now',
+          displayCorrection: 'Ella asked, "Can we start now?"',
+          correct: false,
+          misconceptionTags: ['speech.quote_missing'],
+        },
+      ],
+    },
+  });
+  const html = harness.render();
+  assert.match(html, /GPS review/);
+  // Child-facing "Next up" copy uses `recommendedLabel`, not `recommendedMode`.
+  assert.match(html, /Next up: Wobbly spots/);
+  assert.match(html, /1\. Correct/);
+  assert.match(html, /2\. Review/);
+  assert.match(html, /Ella asked, &quot;Can we start now\?&quot;/);
+});
+
+test('Punctuation summary scene: misconception tags pipe through child label map, null tags hidden', () => {
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness, {
+    gps: {
+      delayedFeedback: true,
+      recommendedMode: 'smart',
+      recommendedLabel: 'Smart review',
+      reviewItems: [
+        {
+          index: 1,
+          itemId: 'sp_insert_question',
+          mode: 'insert',
+          prompt: 'Add the direct-speech punctuation.',
+          attemptedAnswer: '',
+          displayCorrection: '',
+          correct: false,
+          // speech.quote_missing → "Speech punctuation" (mapped).
+          // never.heard.of.this → null (dropped).
+          misconceptionTags: ['speech.quote_missing', 'never.heard.of.this'],
+        },
+      ],
+    },
+  });
+  const html = harness.render();
+  // Child label surfaces.
+  assert.match(html, /Speech punctuation</);
+  // Raw dotted id must not leak — part of PUNCTUATION_CHILD_FORBIDDEN_TERMS.
+  assert.doesNotMatch(html, /speech\.quote_missing/);
+  assert.doesNotMatch(html, /never\.heard\.of\.this/);
+});
+
+test('Punctuation summary scene: GPS card dedupes misconception labels to a single chip per label', () => {
+  // A single GPS item can carry multiple sub-tags that all map to the same
+  // child label (e.g. speech.quote_missing + speech.quote_unmatched both
+  // → "Speech punctuation"). The chip row must render one chip per unique
+  // label, not one per raw tag.
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness, {
+    gps: {
+      delayedFeedback: true,
+      recommendedMode: 'weak',
+      recommendedLabel: 'Wobbly spots',
+      reviewItems: [
+        {
+          index: 1,
+          itemId: 'sp_dupes',
+          mode: 'insert',
+          prompt: 'Add the direct-speech punctuation.',
+          attemptedAnswer: '',
+          displayCorrection: '',
+          correct: false,
+          misconceptionTags: ['speech.quote_missing', 'speech.quote_unmatched'],
+        },
+      ],
+    },
+  });
+  const html = harness.render();
+  const matches = html.match(/>Speech punctuation</g) || [];
+  assert.equal(matches.length, 1, 'should render exactly one "Speech punctuation" chip');
+});
+
+test('Punctuation summary scene: renders 4 next-action buttons', () => {
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness);
+  const html = harness.render();
+  assert.match(html, /<button[^>]*data-action="punctuation-start"[^>]*data-value="weak"[^>]*>Practise wobbly spots<\/button>/);
+  assert.match(html, /<button[^>]*data-action="punctuation-open-map"[^>]*>Open Punctuation Map<\/button>/);
+  assert.match(html, /<button[^>]*data-action="punctuation-start-again"[^>]*>Start again<\/button>/);
+  assert.match(html, /<button[^>]*data-action="punctuation-back"[^>]*>Back to dashboard<\/button>/);
+});
+
+test('Punctuation summary scene: Practise wobbly spots dispatch results in session.mode === `weak`', () => {
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness);
+  harness.dispatch('punctuation-start', { mode: 'weak' });
+  const state = harness.store.getState().subjectUi.punctuation;
+  // Paired state-level assertion per learning #7: a silent no-op would
+  // leave `session.mode` unchanged, so explicit equality catches it.
+  assert.equal(state.session?.mode, 'weak');
+});
+
+test('Punctuation summary scene: Open Punctuation Map dispatch transitions phase to map', () => {
+  // U5's `punctuation-open-map` handler allowlists `summary` as a source
+  // phase (service-contract PUNCTUATION_OPEN_MAP_ALLOWED_PHASES = ['setup',
+  // 'summary']). If that allowlist ever regressed, this test fails.
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness);
+  harness.dispatch('punctuation-open-map');
+  const state = harness.store.getState().subjectUi.punctuation;
+  assert.equal(state.phase, 'map');
+  assert.equal(state.mapUi?.statusFilter, 'all');
+  assert.equal(state.mapUi?.monsterFilter, 'all');
+});
+
+test('Punctuation summary scene: Start again dispatch triggers a fresh session', () => {
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness);
+  // Seed a prefs mode so start-again has a mode to resume.
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '4' });
+  harness.dispatch('punctuation-start-again');
+  const state = harness.store.getState().subjectUi.punctuation;
+  // The service transitions phase to `active-item` once the session starts.
+  assert.ok(
+    state.phase === 'active-item' || state.phase === 'summary',
+    `phase should resume a session, saw ${state.phase}`,
+  );
+  if (state.phase === 'active-item') {
+    assert.ok(state.session, 'active-item phase must have a session');
+  }
+});
+
+test('Punctuation summary scene: Back to dashboard dispatch returns phase to setup', () => {
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness);
+  harness.dispatch('punctuation-back');
+  const state = harness.store.getState().subjectUi.punctuation;
+  assert.equal(state.phase, 'setup');
+});
+
+test('Punctuation summary scene: composeIsDisabled=true disables Start again and Practise wobbly spots', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'summary',
+    pendingCommand: 'punctuation-continue',
+    summary: { total: 4, correct: 3, accuracy: 75, focus: [] },
+  });
+  const html = harness.render();
+  // Every next-action button renders with `disabled` when composeIsDisabled.
+  assert.match(
+    html,
+    /<button[^>]*disabled[^>]*data-action="punctuation-start"[^>]*data-value="weak"|<button[^>]*data-action="punctuation-start"[^>]*data-value="weak"[^>]*disabled/,
+    'Practise wobbly spots must be disabled under pendingCommand',
+  );
+  assert.match(
+    html,
+    /<button[^>]*disabled[^>]*data-action="punctuation-start-again"|<button[^>]*data-action="punctuation-start-again"[^>]*disabled/,
+    'Start again must be disabled under pendingCommand',
+  );
+  assert.match(
+    html,
+    /<button[^>]*disabled[^>]*data-action="punctuation-open-map"|<button[^>]*data-action="punctuation-open-map"[^>]*disabled/,
+    'Open Punctuation Map must be disabled under pendingCommand',
+  );
+  assert.match(
+    html,
+    /<button[^>]*disabled[^>]*data-action="punctuation-back"|<button[^>]*data-action="punctuation-back"[^>]*disabled/,
+    'Back to dashboard must be disabled under pendingCommand',
+  );
+});
+
+test('Punctuation summary scene: Grown-up view link renders with future-hook data-action', () => {
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness);
+  const html = harness.render();
+  // The Grown-up view link is a future Parent Hub hook. The button renders
+  // today with `data-action="punctuation-open-adult-view"`; dispatching that
+  // action is a no-op until the adult surface lands, and the test asserts
+  // the SSR shape only so the hook is discoverable.
+  assert.match(
+    html,
+    /<button[^>]*data-action="punctuation-open-adult-view"[^>]*>Grown-up view<\/button>/,
+  );
+});
+
+test('Punctuation summary scene: SSR HTML contains no forbidden child terms', () => {
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness, {
+    focus: ['speech', 'comma_clarity'],
+    gps: {
+      delayedFeedback: true,
+      recommendedMode: 'weak',
+      recommendedLabel: 'Wobbly spots',
+      reviewItems: [
+        {
+          index: 1,
+          itemId: 'sp1',
+          mode: 'insert',
+          prompt: 'Add the direct-speech punctuation.',
+          attemptedAnswer: 'Ella asked',
+          displayCorrection: 'Ella asked, can we start?',
+          correct: false,
+          misconceptionTags: ['speech.quote_missing'],
+        },
+      ],
+    },
+  });
+  const html = harness.render();
+  const leaks = forbiddenTermsInHtml(html);
+  assert.deepEqual(leaks, [], `forbidden term leak in summary SSR: ${leaks.join(', ')}`);
 });
 
 test('design-lens HIGH: every item mode passes the PUNCTUATION_CHILD_FORBIDDEN_TERMS sweep in the session scene', () => {
