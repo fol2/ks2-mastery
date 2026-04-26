@@ -129,6 +129,45 @@ export function isGuardianEligibleSlug(slug, progressMap, wordBySlug) {
   if (!Number.isFinite(stage) || stage < GUARDIAN_SECURE_STAGE) return false;
   return true;
 }
+
+/**
+ * Shared mode predicates (U6). Three shapes:
+ *   - `isPostMasteryMode` — requires graduation (gates shortcut-start).
+ *   - `isMegaSafeMode` — cannot demote `progress.stage` / `dueDay` /
+ *     `lastDay` / `lastResult`; includes trouble+practiceOnly.
+ *   - `isSingleAttemptMegaSafeMode` — runs one submit per card, no retry.
+ *
+ * Contract: add a new post-Mega mode here and it applies everywhere that
+ * gates shortcut-start.
+ *
+ * @param {string} mode
+ * @returns {boolean}
+ */
+export function isPostMasteryMode(mode) {
+  return mode === 'guardian' || mode === 'boss';
+}
+
+/**
+ * @param {string} mode
+ * @param {object} [options]
+ * @param {boolean} [options.practiceOnly]  Strict boolean; trouble+practiceOnly
+ *   is Mega-safe (never demote).
+ * @returns {boolean}
+ */
+export function isMegaSafeMode(mode, options = {}) {
+  if (isPostMasteryMode(mode)) return true;
+  if (mode !== 'trouble') return false;
+  if (!options || typeof options !== 'object') return false;
+  return options.practiceOnly === true;
+}
+
+/**
+ * @param {string} mode
+ * @returns {boolean}
+ */
+export function isSingleAttemptMegaSafeMode(mode) {
+  return isPostMasteryMode(mode);
+}
 export const SPELLING_YEAR_FILTERS = Object.freeze(['core', 'y3-4', 'y5-6', 'extra']);
 export const LEGACY_SPELLING_YEAR_FILTER_ALIASES = Object.freeze({
   all: 'core',

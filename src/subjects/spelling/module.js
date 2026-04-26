@@ -1,5 +1,5 @@
 import { monsterSummaryFromSpellingAnalytics } from '../../platform/game/monster-system.js';
-import { createInitialSpellingState } from './service-contract.js';
+import { createInitialSpellingState, isPostMasteryMode } from './service-contract.js';
 import {
   WORD_BANK_FILTER_IDS,
   WORD_BANK_YEAR_FILTER_IDS,
@@ -222,7 +222,11 @@ export const spellingModule = {
       // Plan: docs/plans/2026-04-25-005-feat-post-mega-spelling-guardian-hardening-plan.md (U9, U10).
       // Remote-sync parity for this gate lives in remote-actions.js — both
       // branches must move together when the rule changes.
-      if (mode === 'guardian' || mode === 'boss') {
+      // U6: the `'guardian' || 'boss'` literal is now the single-source
+      // `isPostMasteryMode` predicate in service-contract.js so U11's
+      // Pattern Quest (and future post-Mega modes) extend this gate in
+      // one place, not two.
+      if (isPostMasteryMode(mode)) {
         const postMastery = typeof service.getPostMasteryState === 'function'
           ? service.getPostMasteryState(learnerId)
           : null;
