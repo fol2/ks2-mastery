@@ -4474,6 +4474,47 @@ function normaliseRouteNameServer(raw) {
   return scrubAllCapsServer(scrubSensitiveServer(segments.join('/')));
 }
 
+// U16: release-field regex is a strict lowercase-hex 6-40 chars match. No
+// case-insensitive flag, no dots/dashes/underscores — anything not SHA-shaped
+// (e.g. `principal`, `PRINCIPAL`, `2026.04.25`, `v5-beta`) is rejected. This
+// tightening is the Phase B adversarial follow-up: a relaxed `/i` flag would
+// let KS2 spelling words (`principal` happens to be all lowercase hex-
+// adjacent) smuggle through as a release stamp and leak to the ops-role view.
+//
+// Exposed for tests + U17 to share the identical guard the ingest route
+// applies so auto-reopen condition 3 (incoming `release IS NOT NULL AND SHA-
+// shaped`) can trust the stored value without re-validating. Exporting the
+// compiled regex object rather than a recomputed literal avoids accidental
+// drift between the two sites.
+export const OPS_ERROR_RELEASE_REGEX = /^[a-f0-9]{6,40}$/;
+
+function validateOpsErrorRelease(rawRelease) {
+  // Accept three shapes: null / undefined / missing / explicit null literal.
+  // Everything else must match the strict regex — we reject malformed
+  // eagerly so a client posting `release: 'PRINCIPAL'` surfaces a 400 before
+  // the repository attempts a dedup SELECT.
+  if (rawRelease === null || rawRelease === undefined) return null;
+  if (typeof rawRelease !== 'string') {
+    throw new BadRequestError('Error event release must be a string or null.', {
+      code: 'validation_failed',
+      field: 'release',
+    });
+  }
+  if (!rawRelease) return null;
+  // Defence-in-depth: still run the redaction pipeline even though the regex
+  // excludes anything the redactors would match. Cheap; future-proofs against
+  // accidental regex widening when semver / tagged releases ship.
+  const scrubbed = scrubAllCapsServer(scrubSensitiveServer(rawRelease));
+  if (!OPS_ERROR_RELEASE_REGEX.test(scrubbed)) {
+    throw new BadRequestError('Error event release is not a SHA-shaped hex string (6-40 lowercase hex).', {
+      code: 'validation_failed',
+      field: 'release',
+      expected: OPS_ERROR_RELEASE_REGEX.source,
+    });
+  }
+  return scrubbed;
+}
+
 function serverRedactClientEvent(raw) {
   const source = isPlainObject(raw) ? raw : {};
   const errorKindRaw = typeof source.errorKind === 'string' && source.errorKind
@@ -4504,12 +4545,20 @@ function serverRedactClientEvent(raw) {
   const userAgentRaw = typeof source.userAgent === 'string' ? source.userAgent : '';
   const userAgent = userAgentRaw.slice(0, OPS_ERROR_USER_AGENT_MAX_CHARS);
 
+  // U16: validate + normalise the release field. Throws BadRequestError on
+  // non-hex / oversized input so the public ingest route maps it to 400
+  // `validation_failed`. Missing / null release is accepted and returned as
+  // null so fresh-INSERT writes NULL (which the U17 auto-reopen rule reads
+  // as "skip reopen on this event").
+  const release = validateOpsErrorRelease(source.release);
+
   return {
     errorKind,
     messageFirstLine,
     firstFrame,
     routeName,
     userAgent,
+    release,
   };
 }
 
@@ -4626,12 +4675,20 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
       // Dedup hit — UPDATE last_seen and bump occurrence_count. Do NOT
       // touch admin_kpi_metrics.ops_error_events.status.open (R22): that
       // counter tracks fresh inserts, not replay-induced bumps.
+      //
+      // U16: always overwrite `last_seen_release` (even with NULL — a null
+      // release legitimately means "this event came from a dirty-tree build
+      // or pre-injection client"). `first_seen_release` is preserved: it
+      // records the release that FIRST surfaced this fingerprint and is
+      // never rewritten on dedup.
+      const storedReleaseValue = redacted.release || null;
       await run(db, `
         UPDATE ops_error_events
         SET last_seen = ?,
-            occurrence_count = occurrence_count + 1
+            occurrence_count = occurrence_count + 1,
+            last_seen_release = ?
         WHERE id = ?
-      `, [ts, existing.id]);
+      `, [ts, storedReleaseValue, existing.id]);
       return {
         eventId: existing.id,
         deduped: true,
@@ -4657,6 +4714,13 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
     // sustained concurrent reports of the same error. The dedup UPDATE
     // path (the common case) is untouched and still commits atomically.
     const eventId = generateOpsErrorEventId(ts);
+    // U16: stamp both `first_seen_release` and `last_seen_release` with the
+    // incoming release on a fresh insert. NULL is a valid value (dirty-tree
+    // build, pre-injection client) — U17's auto-reopen rule reads NULL on
+    // `resolved_in_release` as "never auto-reopen", which is the documented
+    // opt-out. Writing both columns together keeps the invariant "fresh row
+    // has first_seen_release == last_seen_release".
+    const freshReleaseValue = redacted.release || null;
     const insertResult = await run(db, `
       INSERT INTO ops_error_events (
         id,
@@ -4670,9 +4734,11 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
         first_seen,
         last_seen,
         occurrence_count,
-        status
+        status,
+        first_seen_release,
+        last_seen_release
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'open')
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'open', ?, ?)
       ON CONFLICT(fingerprint) DO NOTHING
     `, [
       eventId,
@@ -4685,6 +4751,8 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
       attributedAccountId,
       ts,
       ts,
+      freshReleaseValue,
+      freshReleaseValue,
     ]);
     const insertChanges = Number(insertResult?.meta?.changes) || 0;
 
@@ -4720,12 +4788,17 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
     `, [redacted.errorKind, redacted.messageFirstLine, redacted.firstFrame || '']);
 
     if (winner && typeof winner.id === 'string' && winner.id) {
+      // U16: race-loser path mirrors the dedup UPDATE — overwrite
+      // `last_seen_release` with the incoming (possibly-null) release so
+      // the column tracks the most recent observation, even when two
+      // concurrent workers raced the same fingerprint.
       await run(db, `
         UPDATE ops_error_events
         SET last_seen = ?,
-            occurrence_count = occurrence_count + 1
+            occurrence_count = occurrence_count + 1,
+            last_seen_release = ?
         WHERE id = ?
-      `, [ts, winner.id]);
+      `, [ts, redacted.release || null, winner.id]);
       return {
         eventId: winner.id,
         deduped: true,
