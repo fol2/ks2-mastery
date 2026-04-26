@@ -186,13 +186,20 @@ const PUNCTUATION_SKILL_RULE_ONE_LINERS = Object.freeze({
   apostrophe_contractions: "Slot the mark in where the missing letters belong.",
   apostrophe_possession: "Add 's to show belonging; a plural ending in s takes one mark.",
   speech: 'Speech marks wrap the spoken words; the end mark sits inside.',
-  // Phase 4 U7: rule one-liners rewritten in child register. "main
-  // clause" → "whole sentence", "complete clause" → "whole sentence".
-  fronted_adverbial: 'Put a comma after the opener when it comes before the whole sentence.',
+  // Phase 4 U7 (review follow-on FINDING B): rule one-liners rewritten in
+  // child register. The prior "whole sentence" substitute was
+  // pedagogically wrong for semicolon / dash contexts — calling the
+  // joined parts "whole sentences" reinforces the comma-splicing
+  // misconception those rules teach children to AVOID ("whole sentence"
+  // in child speech means "complete standalone sentence ending in a full
+  // stop"). Replaced with "idea" / "closely-related ideas", which is
+  // safer across every context (semicolon, colon_list, fronted_adverbial)
+  // without re-invoking "sentence".
+  fronted_adverbial: 'Put a comma after the opener when it comes before the rest of the sentence.',
   parenthesis: 'Mark an extra idea with two commas, two brackets, or two dashes — one pair only.',
   comma_clarity: 'Add a comma when it stops the sentence from being misread.',
-  colon_list: 'Use a colon to introduce a list after a whole sentence.',
-  semicolon: 'Use a semi-colon to link two closely-related whole sentences.',
+  colon_list: 'Use a colon to introduce a list after a complete opening idea.',
+  semicolon: 'Use a semi-colon to link two closely-related ideas.',
   dash_clause: 'Use a pair of dashes to break off a side thought.',
   semicolon_list: 'Use semi-colons between long list items that already contain commas.',
   bullet_points: 'Keep bullet punctuation consistent across every item in the list.',
@@ -509,16 +516,29 @@ export function punctuationChildUnknownHelperCopy() {
 // stable. Case is preserved — a capitalised input produces a
 // capitalised replacement.
 
-// Ordered longest-to-shortest so the longest-match pass is correct.
+// Raw entries — authored in any order for maintenance clarity. The
+// helper below sorts them longest-to-shortest at module load so the
+// longest-match pass is CORRECT regardless of authoring order (review
+// follow-on FINDING D: manual ordering was comment-enforced; now it is
+// computed, so a future author inserting "clause" above "main clause"
+// cannot silently break the longest-match invariant).
+//
 // Each entry: [adultPhrase, childPhrase]. Lower-case keys; the helper
-// handles case preservation.
-const PUNCTUATION_CHILD_REGISTER_OVERRIDE_ENTRIES = [
+// preserves capitalisation on the matched source.
+//
+// FINDING B (pedagogy): "main clause" / "complete clause" → "idea"
+// rather than "whole sentence". "Whole sentence" in KS2 speech means
+// "complete standalone sentence ending in a full stop" — exactly the
+// mental model that semicolon / dash / comma-join rules teach children
+// to AVOID. "idea" carries the right semantics ("two ideas joined with
+// a semi-colon") without re-invoking the word children confuse.
+const RAW_PUNCTUATION_CHILD_REGISTER_OVERRIDE_ENTRIES = [
   ['fronted adverbials', 'starter phrases'],
   ['fronted adverbial', 'starter phrase'],
-  ['main clauses', 'whole sentences'],
-  ['main clause', 'whole sentence'],
-  ['complete clauses', 'whole sentences'],
-  ['complete clause', 'whole sentence'],
+  ['main clauses', 'ideas'],
+  ['main clause', 'idea'],
+  ['complete clauses', 'whole ideas'],
+  ['complete clause', 'whole idea'],
   ['subordinate clauses', 'added ideas'],
   ['subordinate clause', 'added idea'],
   ['complex sentences', 'sentences with an added idea'],
@@ -529,6 +549,17 @@ const PUNCTUATION_CHILD_REGISTER_OVERRIDE_ENTRIES = [
   ['opening clause', 'opening phrase'],
   ['subordinate', 'added idea'],
 ];
+
+// Sorted longest-to-shortest at module load. The sort is stable under
+// Array.prototype.sort for equal-length entries, so "fronted adverbials"
+// (plural) always precedes "fronted adverbial" (singular) when the pair
+// appears adjacent — but equal-length adjacency is irrelevant here
+// because the plural/singular entries differ by an `s`.
+const PUNCTUATION_CHILD_REGISTER_OVERRIDE_ENTRIES = Object.freeze(
+  [...RAW_PUNCTUATION_CHILD_REGISTER_OVERRIDE_ENTRIES]
+    .sort((a, b) => b[0].length - a[0].length)
+    .map((pair) => Object.freeze([...pair])),
+);
 
 // Frozen public view — consumers assert the mapping via `Object.keys`
 // / `Object.entries`. The internal entries array above stays ordered
@@ -571,7 +602,14 @@ export function punctuationChildRegisterOverrideString(text) {
   for (const [adult, child] of PUNCTUATION_CHILD_REGISTER_OVERRIDE_ENTRIES) {
     // Case-insensitive global match so every occurrence is swapped.
     // `adult` entries are guaranteed to be regex-safe (letters + spaces only).
-    const pattern = new RegExp(adult.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    //
+    // FINDING F (correctness): wrap the adult phrase in `\b` word
+    // boundaries so `subordinate` does not swallow `insubordinate`
+    // (which would have become "inadded idea" — a latent trap). The
+    // boundary also guards against future single-word entries matching
+    // inside compound words.
+    const escaped = adult.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp(`\\b${escaped}\\b`, 'gi');
     out = out.replace(pattern, (match) => matchCase(match, child));
   }
   return out;
@@ -583,7 +621,11 @@ export function punctuationChildRegisterOverrideString(text) {
 // `name` field is included because the guided teach-box carries the
 // skill's human-readable name ("Commas after fronted adverbials") from
 // `shared/punctuation/content.js` via `skill.name`.
-const PUNCTUATION_ATOM_OVERRIDE_FIELDS = Object.freeze([
+//
+// Exported (review follow-on, agent-native access): a downstream
+// consumer (test harness, tooling, future Parent Hub mirror) can
+// iterate the canonical field list without re-declaring it.
+export const PUNCTUATION_ATOM_OVERRIDE_FIELDS = Object.freeze([
   'name',
   'rule',
   'note',
@@ -594,25 +636,69 @@ const PUNCTUATION_ATOM_OVERRIDE_FIELDS = Object.freeze([
   'explanation',
 ]);
 
-function overrideAtomFields(atom) {
-  const out = { ...atom };
-  for (const field of PUNCTUATION_ATOM_OVERRIDE_FIELDS) {
-    if (typeof out[field] === 'string' && out[field]) {
-      out[field] = punctuationChildRegisterOverrideString(out[field]);
+// Nested sub-objects that carry string children we also need to walk.
+// `workedExample` and `contrastExample` each carry `{ before, after }`
+// string fields emitted by the guided-mode Worker payload (see
+// `renderActiveItemPhase` in `tests/react-punctuation-child-copy.test.js`
+// for the shape). Review follow-on FINDING G — the original walker only
+// covered `teachBox`, leaving example sub-objects untouched so a raw
+// adult term in `workedExample.before` would have leaked unmodified.
+//
+// Walk depth: ONE level into each listed sub-object, walking only string
+// children. We deliberately do not recurse further to keep the override
+// scope scoped and predictable — sub-sub-objects stay untouched.
+export const PUNCTUATION_ATOM_OVERRIDE_SUB_OBJECTS = Object.freeze([
+  'teachBox',
+  'workedExample',
+  'contrastExample',
+]);
+
+// Example sub-objects (`workedExample`, `contrastExample`) carry
+// `before` + `after` string fields rather than the teach-box field set.
+// Listed separately so the walker can pick the correct field list per
+// sub-object without over-walking.
+const PUNCTUATION_EXAMPLE_SUB_FIELDS = Object.freeze(['before', 'after']);
+
+function overrideStringFields(source, fields) {
+  const copy = { ...source };
+  for (const field of fields) {
+    if (typeof copy[field] === 'string' && copy[field]) {
+      copy[field] = punctuationChildRegisterOverrideString(copy[field]);
     }
   }
-  // TeachBox sub-object carries its own rule string — walk one level
-  // deeper so guided-mode Worker payloads (Session guided teachBox) are
-  // covered. We only touch string fields; sub-objects not listed here
-  // pass through untouched.
+  return copy;
+}
+
+function overrideAtomFields(atom) {
+  let out = overrideStringFields(atom, PUNCTUATION_ATOM_OVERRIDE_FIELDS);
+  // TeachBox sub-object carries the atom-field set (name / rule /
+  // prompt / note / …) — walk with the same field list as the outer
+  // atom. Worker guided-mode teachBox payloads also carry nested
+  // workedExample / contrastExample sub-objects; walk those too.
   if (out.teachBox && typeof out.teachBox === 'object' && !Array.isArray(out.teachBox)) {
-    const teachBoxCopy = { ...out.teachBox };
-    for (const field of PUNCTUATION_ATOM_OVERRIDE_FIELDS) {
-      if (typeof teachBoxCopy[field] === 'string' && teachBoxCopy[field]) {
-        teachBoxCopy[field] = punctuationChildRegisterOverrideString(teachBoxCopy[field]);
-      }
+    let teachBoxCopy = overrideStringFields(out.teachBox, PUNCTUATION_ATOM_OVERRIDE_FIELDS);
+    if (teachBoxCopy.workedExample && typeof teachBoxCopy.workedExample === 'object' && !Array.isArray(teachBoxCopy.workedExample)) {
+      teachBoxCopy = {
+        ...teachBoxCopy,
+        workedExample: overrideStringFields(teachBoxCopy.workedExample, PUNCTUATION_EXAMPLE_SUB_FIELDS),
+      };
     }
-    out.teachBox = teachBoxCopy;
+    if (teachBoxCopy.contrastExample && typeof teachBoxCopy.contrastExample === 'object' && !Array.isArray(teachBoxCopy.contrastExample)) {
+      teachBoxCopy = {
+        ...teachBoxCopy,
+        contrastExample: overrideStringFields(teachBoxCopy.contrastExample, PUNCTUATION_EXAMPLE_SUB_FIELDS),
+      };
+    }
+    out = { ...out, teachBox: teachBoxCopy };
+  }
+  // Top-level workedExample / contrastExample sub-objects (outside the
+  // teachBox wrapper — e.g. a feedback payload carrying a direct
+  // example object). Walk the same `{before, after}` field pair.
+  if (out.workedExample && typeof out.workedExample === 'object' && !Array.isArray(out.workedExample)) {
+    out = { ...out, workedExample: overrideStringFields(out.workedExample, PUNCTUATION_EXAMPLE_SUB_FIELDS) };
+  }
+  if (out.contrastExample && typeof out.contrastExample === 'object' && !Array.isArray(out.contrastExample)) {
+    out = { ...out, contrastExample: overrideStringFields(out.contrastExample, PUNCTUATION_EXAMPLE_SUB_FIELDS) };
   }
   return out;
 }
@@ -667,7 +753,11 @@ export function punctuationChildNextReviewCopy(stats) {
  */
 export function punctuationChildTeaserSubLine(monsterName) {
   if (typeof monsterName === 'string' && monsterName.trim()) {
-    return `Keep training with ${monsterName.trim()} to grow their next stage.`;
+    const name = monsterName.trim();
+    // Review follow-on (design-lens MEDIUM): the prior "their" pronoun
+    // ambiguously back-referenced either the learner or the monster.
+    // Using the monster's name twice makes the growth-target explicit.
+    return `Keep training with ${name} to help ${name} grow.`;
   }
   return 'Keep training to grow your monster’s next stage.';
 }
@@ -936,13 +1026,16 @@ export const PUNCTUATION_SKILL_MODAL_CONTENT = Object.freeze({
     contrastBad: 'We needed: three things a torch, a map and a whistle.',
   }),
   semicolon: Object.freeze({
-    rule: 'A semicolon joins two short sentences that go together.',
+    // Review follow-on FINDING B: "short sentences" re-invoked the
+    // comma-splicing confusion. "Closely related ideas" carries the
+    // right semantics without the pedagogically lossy framing.
+    rule: 'A semicolon joins two closely related ideas.',
     workedGood: 'The bell rang; the class fell silent.',
     contrastGood: 'The bell rang; the class fell silent.',
     contrastBad: 'The rain had stopped; and the pitch was still slippery.',
   }),
   dash_clause: Object.freeze({
-    rule: 'A dash shows a sharp pause between two short sentences.',
+    rule: 'A dash shows a sharp pause between two closely related ideas.',
     workedGood: 'The bus was late - we walked instead.',
     contrastGood: 'The bus was late - we walked instead.',
     contrastBad: 'The path was flooded -and we took the longer route.',

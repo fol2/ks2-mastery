@@ -650,7 +650,7 @@ onClick={() => actions.dispatch('punctuation-start', {
 **Goal:** The learner never sees adult grammar terminology (`fronted adverbial`, `main clause`, `subordinate`, `complete clause`) in any Punctuation scene, **including text sourced from the Worker**. Because `shared/punctuation/marking.js` and `shared/punctuation/generators.js` are engine files scope-locked by `tests/punctuation-legacy-parity.test.js` oracle replay, the fix is **two-layered**:
 
 1. **Content-rule sweep (engine-safe):** `shared/punctuation/content.js`'s top-level `rule` fields on each skill (lines 83-88, 140, 153, …) are human-readable strings not consumed by the marking engine — they can be edited without perturbing oracle output. Audit + rewrite to child-register.
-2. **Client-side override layer:** For adult-register text that the engine generates at runtime (marking `note` strings at `marking.js:771,1090`; generator `prompt` strings at `generators.js:215,226,239,251`), add a view-model helper `punctuationChildRegisterOverride(atom, context)` that maps known adult phrases to child-register equivalents at display time in SessionScene's guided teach-box and Feedback display. The override map is a frozen table in `punctuation-view-model.js`.
+2. **Client-side override layer:** For adult-register text that the engine generates at runtime (marking `note` strings at `marking.js:771,1090`; generator `prompt` strings at `generators.js:215,226,239,251`), add a view-model helper `punctuationChildRegisterOverride(atom)` that maps known adult phrases to child-register equivalents at display time in SessionScene's guided teach-box and Feedback display. The override map is a frozen table in `punctuation-view-model.js`.
 
 **Requirements:** R8
 
@@ -658,7 +658,7 @@ onClick={() => actions.dispatch('punctuation-start', {
 
 **Files:**
 - Modify: `shared/punctuation/content.js` (rule-field rewrites on affected skills; lines identified by grep baseline at `shared/punctuation/content.js:83,88,140,153,680,707,…`)
-- Modify: `src/subjects/punctuation/components/punctuation-view-model.js` (add `PUNCTUATION_CHILD_REGISTER_OVERRIDES` frozen table; add `punctuationChildRegisterOverride(atom, context)` pure helper; extend `PUNCTUATION_CHILD_FORBIDDEN_TERMS` if new forbidden terms emerge)
+- Modify: `src/subjects/punctuation/components/punctuation-view-model.js` (add `PUNCTUATION_CHILD_REGISTER_OVERRIDES` frozen table; add `punctuationChildRegisterOverride(atom)` pure helper; extend `PUNCTUATION_CHILD_FORBIDDEN_TERMS` if new forbidden terms emerge)
 - Modify: `src/subjects/punctuation/components/PunctuationSessionScene.jsx` (thread override through guided teach-box display)
 - Modify: `src/subjects/punctuation/components/PunctuationPracticeSurface.jsx` or wherever Feedback scene lives (thread override through feedback-note display)
 - Modify: `src/subjects/punctuation/components/PunctuationSkillDetailModal.jsx` (thread override through modal's teach content — overlap with U4's copy sweep; both land additively)
@@ -670,7 +670,7 @@ onClick={() => actions.dispatch('punctuation-start', {
 **Approach:**
 - Baseline grep: identify every occurrence of forbidden terms across `shared/punctuation/*.js` files. Classify each as **edit-safe (content.js rule fields, non-engine strings)** or **engine-locked (marking.js note strings, generators.js prompt strings)**. Baseline report goes in U7 PR body.
 - Edit-safe pass: rewrite each `rule` field to child-register (e.g. "Put a comma after a fronted adverbial" → "Put a comma after a starter phrase like 'At last' or 'Before lunch.'"). Final wording design-lens-reviewed.
-- Override-layer pass: Build `PUNCTUATION_CHILD_REGISTER_OVERRIDES` as `Map<adultPhrase, childPhrase>` covering: `fronted adverbial` → `starter phrase`, `main clause` → `whole sentence`, `subordinate clause` → `added idea`, `complete clause` → `full thought`, `complex sentence` → `sentence with an added idea`, `compound sentence` → `joined sentence`. `punctuationChildRegisterOverride(atom, context)` does a longest-match replacement on the atom's text, case-preserving. Empty/null input passes through unchanged.
+- Override-layer pass: Build `PUNCTUATION_CHILD_REGISTER_OVERRIDES` as `Map<adultPhrase, childPhrase>` covering: `fronted adverbial` → `starter phrase`, `main clause` → `idea` (review follow-on FINDING B: prior mapping to `whole sentence` was pedagogically wrong — re-invoked the comma-splicing misconception), `subordinate clause` → `added idea`, `complete clause` → `whole idea`, `complex sentence` → `sentence with an added idea`, `compound sentence` → `joined sentence`. `punctuationChildRegisterOverride(atom)` does a longest-match replacement on the atom's text, case-preserving, with `\b` word boundaries. Empty/null input passes through unchanged.
 - Display-time integration: guided teach-box (SessionScene), feedback note, skill detail modal teach tab all thread the override through their text render. Every call site imports the helper from `punctuation-view-model.js`.
 - Cross-boundary display sweep test: iterate every published skill's generator output + every marking feedback variant (drawn from fixtures already used by `tests/punctuation-marking.test.js`). Render each through the override. Assert zero `PUNCTUATION_CHILD_FORBIDDEN_TERMS` entries in the rendered output.
 
