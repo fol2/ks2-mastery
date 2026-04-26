@@ -1129,3 +1129,56 @@ test('H3 role idempotency — same requestId replays cached receipt', async () =
     server.close();
   }
 });
+
+// ---------------------------------------------------------------------------
+// I3 (Phase C reviewer): per-session rate limit on admin-ops mutation
+// routes. 60 requests per minute per authenticated session is generous
+// for a legit dashboard workflow but stops a runaway loop / scripted
+// spam from saturating the CAS + batch write path. Bucket key is
+// `admin-ops-mutation` scoped to session.accountId so the same admin
+// hitting three different routes shares one budget.
+// ---------------------------------------------------------------------------
+test('I3 rate limit — 61st /ops-metadata PUT from same session hits 429', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedCore(server, now);
+
+    // Seed a row so the rest of the requests share a cheap row_version
+    // merge path. Body carries `expectedRowVersion` the test helper
+    // auto-resolves on every call.
+    const seed = await putOpsMetadata(server, 'adult-admin', 'adult-parent', {
+      patch: { opsStatus: 'active' },
+      mutation: { requestId: 'req-seed-rate' },
+    });
+    assert.equal(seed.status, 200);
+
+    // Fire 60 requests which should all pass. Then the 61st hits 429.
+    let last200Count = 1; // counting seed
+    for (let i = 0; i < 59; i += 1) {
+      const response = await putOpsMetadata(server, 'adult-admin', 'adult-parent', {
+        patch: { planLabel: `Plan-${i}` },
+        mutation: { requestId: `req-rate-${i}` },
+      });
+      if (response.status === 200) {
+        last200Count += 1;
+      } else if (response.status === 429) {
+        break;
+      }
+    }
+    assert.equal(last200Count, 60, 'first 60 requests allowed through rate limit');
+
+    // 61st — should be throttled.
+    const throttled = await putOpsMetadata(server, 'adult-admin', 'adult-parent', {
+      patch: { planLabel: 'Plan-throttle' },
+      mutation: { requestId: 'req-rate-throttle' },
+    });
+    assert.equal(throttled.status, 429);
+    const payload = await throttled.json();
+    assert.equal(payload.code, 'admin_ops_mutation_rate_limited');
+    assert.ok(Number.isFinite(payload.retryAfterSeconds));
+    assert.ok(payload.retryAfterSeconds >= 0);
+  } finally {
+    server.close();
+  }
+});

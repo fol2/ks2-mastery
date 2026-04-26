@@ -7,6 +7,14 @@
 -- nullable (or default-zero), and partial-apply-safe per plan section
 -- "Phase C — Data integrity".
 --
+-- Recovery runbook (I1 Phase C reviewer): if this migration stops part-
+-- way through (mid-ALTER deploy failure, wrangler crash, d1_migrations
+-- out of sync with the live schema), the documented recovery procedure
+-- is at docs/operations/migration-0011-recovery.md. The procedure uses
+-- PRAGMA table_info / PRAGMA index_list to identify which columns +
+-- indexes are already present and hand-runs the missing ALTER / CREATE
+-- INDEX statements before marking d1_migrations complete.
+--
 -- Columns added (7):
 --   account_ops_metadata.row_version         INTEGER NOT NULL DEFAULT 0  -- Phase C U8 CAS
 --   account_ops_metadata.status_revision     INTEGER NOT NULL DEFAULT 0  -- Phase D U15 bump

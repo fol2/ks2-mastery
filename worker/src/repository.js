@@ -2333,10 +2333,21 @@ function bumpAdminKpiMetricStatement(db, key, nowTs, delta = 1) {
 // ---------------------------------------------------------------------------
 // U10: KPI reconciliation.
 //
-// Computes the authoritative per-status counts for `ops_error_events` and
-// the fresh-insert count for `account_ops_metadata.updates`, compares
-// against the values reported by the client script (for forensic-audit
-// diffing), and writes the server-side values to `admin_kpi_metrics`.
+// Computes the authoritative per-status counts for `ops_error_events`,
+// compares against the values reported by the client script (for
+// forensic-audit diffing), and writes the server-side values to
+// `admin_kpi_metrics`.
+//
+// I8 (Phase C reviewer): `account_ops_metadata.updates` is NOT in the
+// reconcilable set. It is a monotonic event counter incremented on
+// every ops-metadata write and deliberately not recomputed from
+// `mutation_receipts` — the receipts table is pruned on a 30-day
+// retention window (or 365 for `admin.*` kinds), so a recompute would
+// drift downward as old receipts age out. The counter is the
+// cumulative-lifetime count of ops-metadata writes and is preserved
+// across retention sweeps by keeping it out of `RECONCILABLE_METRIC_KEYS`.
+// Earlier doc comments mistakenly described this counter as
+// "reconciled"; that was incorrect and is corrected here.
 //
 // Single-flight lock semantics (adv-9 hardening):
 //   - `admin_kpi_metrics.metric_key = 'reconcile_pending:lock'` holds the
@@ -2367,17 +2378,51 @@ const RECONCILABLE_METRIC_KEYS = Object.freeze([
 ]);
 
 export function reconcileLockHashForRequestId(requestId) {
-  // Deterministic 32-bit int derived from the caller's `requestId`. The CAS
+  // Deterministic integer derived from the caller's `requestId`. The CAS
   // takeover UPDATE matches against the existing-lock hash exactly so two
   // concurrent takeover attempts cannot both succeed.
+  //
+  // I6 (Phase C reviewer): the earlier implementation was a single FNV-1a
+  // 32-bit hash. 32 bits gives a collision probability of ~1 in 4.3×10^9
+  // per distinct requestId pair — too low for a long-lived production
+  // workload where billions of request IDs accumulate over months. The
+  // upgraded implementation composes **two independent FNV-1a 32-bit
+  // passes** (forward and reverse seeds) into a 52-bit Number. 52 bits
+  // is the largest field that fits safely inside `Number.MAX_SAFE_INTEGER`
+  // (JS numbers are IEEE 754 doubles with 53-bit mantissas; using the full
+  // 53 bits would sometimes produce values that don't round-trip through
+  // JSON or SQLite INTEGER exactly). Collision probability at 52 bits is
+  // ~1 in 4.5×10^15 per pair — astronomically safe for any realistic
+  // reconciliation cadence.
+  //
+  // Return shape: a non-negative integer between 0 and 2^52 - 1. The
+  // reserved value 0 signals "empty/invalid input" and is still emitted
+  // for backwards compatibility with tests that assert `hash(null) === 0`.
   if (typeof requestId !== 'string' || !requestId) return 0;
-  let hash = 2166136261; // FNV-1a 32-bit offset basis
+  // Forward pass — FNV-1a 32-bit.
+  let fwd = 2166136261;
   for (let i = 0; i < requestId.length; i += 1) {
-    hash ^= requestId.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
+    fwd ^= requestId.charCodeAt(i);
+    fwd = Math.imul(fwd, 16777619);
   }
-  // Shift to unsigned 32-bit positive space so SQLite INTEGER never wraps.
-  return hash >>> 0;
+  fwd = fwd >>> 0;
+  // Reverse pass — different offset basis so the two hashes are
+  // independent. Iterating in reverse forces a different prefix-sensitive
+  // hash path.
+  let rev = 2654435761; // Knuth's multiplicative constant (non-FNV offset)
+  for (let i = requestId.length - 1; i >= 0; i -= 1) {
+    rev ^= requestId.charCodeAt(i);
+    rev = Math.imul(rev, 16777619);
+  }
+  rev = rev >>> 0;
+  // Pack into a 52-bit number: (fwd as high 20 bits) * 2^32 + (rev).
+  // High 20 bits come from fwd >>> 12 so we are not wasting entropy on
+  // low-order bits already represented in the other pass.
+  const high = (fwd >>> 12) & 0xfffff; // 20 bits
+  // Result fits in 52 bits: 20 + 32 = 52.
+  // Use multiplication rather than bit shift because `<<` operates on
+  // 32-bit ints in JS; the multiplication stays in double-precision.
+  return high * 0x1_0000_0000 + rev;
 }
 
 async function readReconcileLockRow(db) {
