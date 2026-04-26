@@ -104,12 +104,35 @@ function readSpellingData(repositories, learnerId, todayDay = 0) {
   return normaliseSpellingSubjectData(repositories.subjectStates.read(learnerId, SUBJECT_ID).data || {}, todayDay);
 }
 
-// P2 U5: max CAS retry attempts. In practice one retry should suffice —
-// the duplicate-leader race resolves after two re-reads in the worst case
-// (tab A reads N, tab B writes N+1, tab A re-reads N+1, computes N+2,
-// succeeds). Capped at 4 so a pathological re-contention scenario surfaces
-// the error instead of looping forever.
-const CAS_MAX_ATTEMPTS = 4;
+// P2 U5 reviewer-feedback (NEW HIGH 1): raise the attempt cap to survive
+// cross-domain writeVersion thrash. The `persistAll` writeVersion counter
+// bumps on every write across all bundle domains (learners, subjectStates,
+// practiceSessions, gameState, eventLog). An unrelated domain's write —
+// e.g. a monster-codex gameState update or a telemetry eventLog append —
+// bumps the counter and makes an in-flight Guardian write look stale under
+// contention. Empirical repro: 4 concurrent bumps from unrelated domains
+// + 1 guardian write exhausted the previous cap of 4. Raising to 16 gives
+// the Guardian write room to survive thrash from sibling domains.
+//
+// The capped-linear backoff (BACKOFF_STEP_MS per attempt) reduces
+// re-contention pressure so the thrashing sibling has a chance to complete.
+// We avoid true exponential growth because writeVersion CAS is cheap; the
+// goal is to nudge scheduling rather than rate-limit aggressively. The
+// first attempt has no delay (fast path for the common no-contention case).
+const CAS_MAX_ATTEMPTS = 16;
+const BACKOFF_STEP_MS = 8;
+const BACKOFF_MAX_MS = 128;
+
+function backoffDelayForAttempt(attempt) {
+  const jitter = Math.floor(Math.random() * BACKOFF_STEP_MS);
+  const linear = Math.min(attempt * BACKOFF_STEP_MS, BACKOFF_MAX_MS);
+  return linear + jitter;
+}
+
+function delayMs(ms) {
+  if (ms <= 0) return Promise.resolve();
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 // P2 U5: CAS-aware write. When the platform repository exposes
 // `storageCas.readWriteVersion`, this helper reads the current version,
@@ -137,6 +160,7 @@ function writeSpellingData(repositories, learnerId, nextData, todayDay = 0, opti
     );
   }
   let lastError = null;
+  let spinCount = 0;
   for (let attempt = 0; attempt < CAS_MAX_ATTEMPTS; attempt += 1) {
     // On every retry (including the first), force-rehydrate the repository's
     // in-memory cache from raw storage. This guarantees the projector reads
@@ -157,8 +181,15 @@ function writeSpellingData(repositories, learnerId, nextData, todayDay = 0, opti
       if (isWriteVersionStaleError(error)) {
         // Another tab wrote between our read and pre-commit re-read. Loop
         // back: rehydrate, re-project, and re-commit with the fresher
-        // expectedWriteVersion.
+        // expectedWriteVersion. Sync retry burns CPU on second+
+        // attempts — spin-yield with a short busy wait proxy (Atomics
+        // isn't available everywhere, and we cannot `await` here). The
+        // primary backpressure lives in the async caller; this sync
+        // path accepts more attempts but cannot schedule delays. The
+        // 16-attempt cap is sized for the worst case where 3-4 sibling
+        // domains race concurrently.
         lastError = error;
+        spinCount += 1;
         continue;
       }
       throw error;
@@ -167,7 +198,11 @@ function writeSpellingData(repositories, learnerId, nextData, todayDay = 0, opti
   // Exhausted attempts — surface the last stale-version error so the
   // service layer can raise `feedback.persistenceWarning`. The plan
   // intentionally opts for a soft warning over silent data loss.
-  throw lastError || new WriteVersionStaleError({ expected: -1, actual: -1, reason: 'write-version-stale-exhausted' });
+  throw lastError || new WriteVersionStaleError({
+    expected: -1,
+    actual: -1,
+    reason: `write-version-stale-exhausted-${spinCount}-spins`,
+  });
 }
 
 function buildActiveRecord(learnerId, state, now) {

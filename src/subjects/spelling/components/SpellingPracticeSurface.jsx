@@ -132,6 +132,7 @@ export function SpellingPracticeSurface(props) {
         {...spelling}
         previousHeroBg={previousHeroBg}
         service={service}
+        repositories={repositories}
         actions={actions}
         runtimeReadOnly={runtimeReadOnly}
       />

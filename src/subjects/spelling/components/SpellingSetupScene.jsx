@@ -371,11 +371,22 @@ export function SpellingSetupScene({
   // sibling tab holds the write lock, or when the browser has no Web Locks
   // support (fallback). Mounted once per setup render; the detector
   // cleans up on unmount.
-  const softLockoutState = useSoftLockoutState();
+  //
+  // Reviewer-feedback: pass `acknowledge` and the `storageCas` surface so
+  // the steal button closes the banner immediately and the stealing tab
+  // announces fresh ownership via the broadcaster. When `repositories` is
+  // not passed (legacy callers / pre-P2 test harnesses), `storageCas` is
+  // null and the banner degrades to the bare `stealWriteLock` path.
+  const { state: softLockoutState, acknowledge: softLockoutAcknowledge } = useSoftLockoutState();
+  const softLockoutStorageCas = repositories?.storageCas || null;
 
   return (
     <div className="setup-grid" style={{ gridColumn: '1/-1' }}>
-      <SoftLockoutBanner state={softLockoutState} />
+      <SoftLockoutBanner
+        state={softLockoutState}
+        onAcknowledge={softLockoutAcknowledge}
+        storageCas={softLockoutStorageCas}
+      />
       <section
         className={setupClasses.join(' ')}
         data-react-hero-contrast="true"

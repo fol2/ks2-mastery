@@ -37,6 +37,11 @@ import {
 export function SpellingSessionScene({
   learner,
   service,
+  // P2 U5 reviewer-feedback: threaded from SpellingPracticeSurface so the
+  // soft-lockout banner can inject `storageCas` into its steal handler.
+  // Defaults to null so legacy callers / tests rendering SessionScene
+  // directly fall back to the bare steal behaviour.
+  repositories = null,
   ui,
   accent,
   actions,
@@ -158,7 +163,13 @@ export function SpellingSessionScene({
   // SINGLE_TAB_FALLBACK. In THIS_TAB_OWNS the banner is null. Detection
   // runs in a React effect so SSR / test harnesses that render without
   // useEffect see the default owned state.
-  const softLockoutState = useSoftLockoutState();
+  //
+  // Reviewer-feedback: `useSoftLockoutState` now returns `{ state, acknowledge }`
+  // so the steal button can flip the detector back to owned without
+  // waiting for the next poll tick. We pass `acknowledge` as
+  // `onAcknowledge` to the banner.
+  const { state: softLockoutState, acknowledge: softLockoutAcknowledge } = useSoftLockoutState();
+  const softLockoutStorageCas = repositories?.storageCas || null;
 
   return (
     <div className={sessionClasses.join(' ')} style={{ gridColumn: '1/-1', ...heroBgStyle(heroBg) }}>
@@ -180,7 +191,11 @@ export function SpellingSessionScene({
           </div>
         ) : null}
 
-        <SoftLockoutBanner state={softLockoutState} />
+        <SoftLockoutBanner
+          state={softLockoutState}
+          onAcknowledge={softLockoutAcknowledge}
+          storageCas={softLockoutStorageCas}
+        />
 
 
         <AnimatedPromptCard heightKey={questionLayoutKey} lockHeightToKey>

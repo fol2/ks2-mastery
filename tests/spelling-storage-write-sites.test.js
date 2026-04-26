@@ -59,6 +59,14 @@ function walkJs(root) {
   return results;
 }
 
+// P2 U5 reviewer-feedback: broadened regex covers all raw storage-mutation
+// sites — dot notation (`localStorage.setItem`), bracket notation
+// (`localStorage['setItem']`, `sessionStorage["removeItem"]`), and both
+// storage globals. Adds `removeItem` and `clear` so a contributor cannot
+// sidestep the inventory by picking an under-matched verb. The previous
+// regex missed both sessionStorage and bracket-notation access.
+const RAW_WRITE_PATTERN = /\b(localStorage|sessionStorage)\s*(?:\.\s*(setItem|removeItem|clear)|\[\s*["'](setItem|removeItem|clear)["']\s*\])|\bsaveJson\s*\(/;
+
 function findWriteSiteHits() {
   const hits = [];
   for (const root of SEARCH_ROOTS) {
@@ -70,10 +78,11 @@ function findWriteSiteHits() {
     }
     for (const path of walkJs(absolute)) {
       const text = readFileSync(path, 'utf8');
-      // saveJson or localStorage.setItem (raw). `storage.setItem` on a
-      // method of an injected adapter is fine — only the raw global counts.
-      const pattern = /(localStorage\.setItem|\bsaveJson\()/;
-      if (!pattern.test(text)) continue;
+      // Raw storage writes: `.setItem` / `.removeItem` / `.clear` on
+      // `localStorage` / `sessionStorage` (dot or bracket), or `saveJson`.
+      // `storage.setItem` on an injected adapter remains fine — only the
+      // raw global counts.
+      if (!RAW_WRITE_PATTERN.test(text)) continue;
       hits.push(normalise(path));
     }
   }
@@ -96,4 +105,48 @@ test('U5 write-site inventory: no raw localStorage.setItem / saveJson outside th
     'Route new writes through the lock-wrapped entry point (src/platform/core/repositories/local.js::writeData) ' +
     'or update the ALLOWED_PATHS list in this test if the new site is intentionally bare-storage.',
   );
+});
+
+// P2 U5 reviewer-feedback: self-test the lint regex so a future edit that
+// accidentally narrows the pattern is caught immediately. We run the
+// RAW_WRITE_PATTERN against a fixture of known-bad and known-good sources
+// and assert each matches / doesn't match as expected.
+test('U5 write-site inventory: lint pattern self-test catches common bypass attempts', () => {
+  const badFixtures = [
+    'localStorage.setItem("k", "v")',
+    'localStorage.removeItem("k")',
+    'localStorage.clear()',
+    'sessionStorage.setItem("k", "v")',
+    'sessionStorage.removeItem("k")',
+    'sessionStorage.clear()',
+    "localStorage['setItem']('k', 'v')",
+    'localStorage["removeItem"]("k")',
+    'sessionStorage[\'clear\']()',
+    'saveJson(storage, key, value)',
+  ];
+  for (const fixture of badFixtures) {
+    assert.ok(
+      RAW_WRITE_PATTERN.test(fixture),
+      `RAW_WRITE_PATTERN should flag: ${fixture}`,
+    );
+  }
+  const goodFixtures = [
+    // Adapter-style access is fine: `storage.setItem` on an injected adapter
+    // that routes through the lock-wrapped proxy.
+    'storage.setItem(key, value)',
+    'spellingStorage.setItem(key, value)',
+    'this.storage.setItem(key, value)',
+    // Reads and other non-mutation access are fine.
+    'localStorage.getItem(key)',
+    'localStorage.key(0)',
+    'localStorage.length',
+    'sessionStorage.getItem(key)',
+  ];
+  for (const fixture of goodFixtures) {
+    assert.equal(
+      RAW_WRITE_PATTERN.test(fixture),
+      false,
+      `RAW_WRITE_PATTERN should NOT flag: ${fixture}`,
+    );
+  }
 });
