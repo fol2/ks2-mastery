@@ -158,12 +158,20 @@ export function normalisePunctuationPrefs(value = {}) {
 //
 // Defaults when the Map phase first opens:
 //   { statusFilter: 'all', monsterFilter: 'all', detailOpenSkillId: null,
-//     detailTab: 'learn' }
+//     detailTab: 'learn', returnTo: 'setup' }
 //
 // `detailOpenSkillId` is either a published skill id (currently one of 14)
 // or `null`. `detailTab` is either `'learn'` or `'practise'`; invalid input
 // falls back to `'learn'`.
+//
+// U4 follower (adv-238-003): `returnTo` remembers the source phase so
+// `punctuation-close-map` can route the learner back to the Summary scene
+// instead of always collapsing to Setup. Only `'setup'` and `'summary'` are
+// accepted values — any other input falls back to `'setup'` so a rogue
+// payload never strands the learner on a dead phase. `punctuation-open-map`
+// seeds this from the current phase before flipping to `phase: 'map'`.
 const PUNCTUATION_MAP_DETAIL_TABS = new Set(PUNCTUATION_MAP_DETAIL_TAB_IDS);
+const PUNCTUATION_MAP_RETURN_PHASES = Object.freeze(['setup', 'summary']);
 
 export function normalisePunctuationMapUi(value = {}) {
   const raw = isPlainObject(value) ? value : {};
@@ -182,7 +190,9 @@ export function normalisePunctuationMapUi(value = {}) {
     : null;
   const rawDetailTab = typeof raw.detailTab === 'string' ? raw.detailTab : 'learn';
   const detailTab = PUNCTUATION_MAP_DETAIL_TABS.has(rawDetailTab) ? rawDetailTab : 'learn';
-  return { statusFilter, monsterFilter, detailOpenSkillId, detailTab };
+  const rawReturnTo = typeof raw.returnTo === 'string' ? raw.returnTo : 'setup';
+  const returnTo = PUNCTUATION_MAP_RETURN_PHASES.includes(rawReturnTo) ? rawReturnTo : 'setup';
+  return { statusFilter, monsterFilter, detailOpenSkillId, detailTab, returnTo };
 }
 
 // U5: Rehydrate-time sanitiser for `subjectUi.punctuation`. Called exactly

@@ -250,6 +250,14 @@ export const punctuationModule = {
       if (!PUNCTUATION_OPEN_MAP_ALLOWED_PHASES.includes(ui.phase)) {
         return false;
       }
+      // U4 follower (adv-238-003): seed `mapUi.returnTo` with the source
+      // phase so `punctuation-close-map` routes the learner back to the
+      // same scene they opened Map from. Without this, closing the Map
+      // always collapses to Setup and the learner loses the Summary
+      // completion screen after a Map detour. Only 'setup' and 'summary'
+      // are valid source phases (per PUNCTUATION_OPEN_MAP_ALLOWED_PHASES),
+      // and `normalisePunctuationMapUi` rejects anything else.
+      const mapUi = normalisePunctuationMapUi({ returnTo: ui.phase });
       store.updateSubjectUi('punctuation', {
         phase: 'map',
         error: '',
@@ -258,7 +266,7 @@ export const punctuationModule = {
         // belt-and-braces reset here means no open-map path ever lands on
         // a feedback payload from an earlier session.
         feedback: null,
-        mapUi: normalisePunctuationMapUi(),
+        mapUi,
       });
       return true;
     }
@@ -279,12 +287,21 @@ export const punctuationModule = {
       // otherwise clear). Refuse from non-map phases so the caller treats
       // the dispatch as a miss rather than a silent success (learning #7).
       if (ui.phase !== 'map') return false;
-      const nextMapUi = {
-        ...normalisePunctuationMapUi(ui.mapUi),
-        detailOpenSkillId: null,
-      };
+      const currentMapUi = normalisePunctuationMapUi(ui.mapUi);
+      const nextMapUi = { ...currentMapUi, detailOpenSkillId: null };
+      // U4 follower (adv-238-003): route back to the phase recorded when
+      // the Map was opened. `returnTo` only accepts 'setup' or 'summary'
+      // (validated in normalisePunctuationMapUi), so a learner who opened
+      // the Map from the Summary scene lands back on Summary with their
+      // completion screen intact. A 'summary' return-to path requires a
+      // non-null summary payload under ui.summary; otherwise fall back to
+      // Setup so the learner never strands on an empty Summary (no
+      // session to summarise post-reload).
+      const canReturnToSummary = currentMapUi.returnTo === 'summary'
+        && ui.summary && typeof ui.summary === 'object' && !Array.isArray(ui.summary);
+      const nextPhase = canReturnToSummary ? 'summary' : 'setup';
       store.updateSubjectUi('punctuation', {
-        phase: 'setup',
+        phase: nextPhase,
         error: '',
         mapUi: nextMapUi,
       });

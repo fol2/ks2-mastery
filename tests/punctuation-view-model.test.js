@@ -42,6 +42,7 @@ import {
   punctuationSkillHasMultiSkillItems,
   punctuationSkillModalContent,
   punctuationSkillModalPreferredExample,
+  punctuationSummaryHeadline,
 } from '../src/subjects/punctuation/components/punctuation-view-model.js';
 import { MONSTERS_BY_SUBJECT } from '../src/platform/game/monsters.js';
 import { PUNCTUATION_CLUSTERS, PUNCTUATION_ITEMS, PUNCTUATION_SKILLS } from '../shared/punctuation/content.js';
@@ -921,4 +922,58 @@ test('U6: punctuationSkillHasMultiSkillItems returns false for non-string / empt
   assert.strictEqual(punctuationSkillHasMultiSkillItems(null), false);
   assert.strictEqual(punctuationSkillHasMultiSkillItems(undefined), false);
   assert.strictEqual(punctuationSkillHasMultiSkillItems('not_a_skill'), false);
+});
+
+// ---------------------------------------------------------------------------
+// U4 follower — accuracy-bucketed celebration headline (design-lens HIGH 2).
+// Replaces the clinical `summary.label` default with child-facing copy that
+// matches the round's emotional register.
+// ---------------------------------------------------------------------------
+
+test('U4 follower: punctuationSummaryHeadline returns celebratory copy for accuracy >= 80', () => {
+  assert.equal(punctuationSummaryHeadline({ accuracy: 80 }), 'Great round!');
+  assert.equal(punctuationSummaryHeadline({ accuracy: 95 }), 'Great round!');
+  assert.equal(punctuationSummaryHeadline({ accuracy: 100 }), 'Great round!');
+});
+
+test('U4 follower: punctuationSummaryHeadline returns encouraging copy for 50 <= accuracy < 80', () => {
+  assert.equal(punctuationSummaryHeadline({ accuracy: 50 }), "Good try! Here's what you got.");
+  assert.equal(punctuationSummaryHeadline({ accuracy: 75 }), "Good try! Here's what you got.");
+  assert.equal(punctuationSummaryHeadline({ accuracy: 79 }), "Good try! Here's what you got.");
+});
+
+test('U4 follower: punctuationSummaryHeadline returns supportive copy for accuracy < 50', () => {
+  assert.equal(punctuationSummaryHeadline({ accuracy: 0 }), 'Keep going — every round helps.');
+  assert.equal(punctuationSummaryHeadline({ accuracy: 25 }), 'Keep going — every round helps.');
+  assert.equal(punctuationSummaryHeadline({ accuracy: 49 }), 'Keep going — every round helps.');
+});
+
+test('U4 follower: punctuationSummaryHeadline returns null for missing / malformed summary', () => {
+  // A null return is the caller's signal to fall back to `summary.label`.
+  assert.equal(punctuationSummaryHeadline(null), null);
+  assert.equal(punctuationSummaryHeadline(undefined), null);
+  assert.equal(punctuationSummaryHeadline([]), null);
+  assert.equal(punctuationSummaryHeadline({}), null);
+  assert.equal(punctuationSummaryHeadline({ accuracy: 'not-a-number' }), null);
+  assert.equal(punctuationSummaryHeadline({ accuracy: NaN }), null);
+});
+
+test('U4 follower: punctuationSummaryHeadline clamps out-of-range accuracy to [0, 100]', () => {
+  // Defensive — if a broken projection ever emits 150% or -10%, the helper
+  // still produces child-friendly copy rather than propagating the outlier.
+  assert.equal(punctuationSummaryHeadline({ accuracy: 150 }), 'Great round!');
+  assert.equal(punctuationSummaryHeadline({ accuracy: -10 }), 'Keep going — every round helps.');
+});
+
+test('U4 follower: punctuationSummaryHeadline never emits forbidden child terms', () => {
+  // Every bucket's output must pass U10's forbidden-term sweep so a scene
+  // regression cannot slip an adult / Worker term into the headline.
+  const samples = [
+    punctuationSummaryHeadline({ accuracy: 95 }),
+    punctuationSummaryHeadline({ accuracy: 60 }),
+    punctuationSummaryHeadline({ accuracy: 10 }),
+  ];
+  for (const text of samples) {
+    assert.equal(isPunctuationChildCopy(text), true, `headline ${JSON.stringify(text)} leaked forbidden term`);
+  }
 });
