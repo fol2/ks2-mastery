@@ -8,6 +8,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './app/App.jsx';
 import { AuthSurface } from './surfaces/auth/AuthSurface.jsx';
 import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
+import { VALID_ADMIN_SECTIONS } from './platform/core/store.js';
 import {
   exposedSubjects,
   isSubjectExposed,
@@ -2453,6 +2454,39 @@ const appRuntime = {
   afterRender: afterReactRender,
 };
 
+/* U2: SPA boot — detect `/admin` pathname and dispatch `open-admin-hub` with
+   the hash-derived section BEFORE the first React render so the initial paint
+   lands on the admin hub rather than flashing the dashboard. Cloudflare's
+   `not_found_handling: "single-page-application"` already serves `index.html`
+   for `/admin`, so no Worker changes are needed. */
+{
+  const bootPath = (globalThis.location?.pathname || '').replace(/\/+$/, '').toLowerCase();
+  if (bootPath === '/admin') {
+    const bootSection = parseAdminSectionFromHash(globalThis.location?.hash);
+    store.openAdminHub({ adminSection: bootSection });
+    if (boot.session.signedIn) loadAdminHub({ force: true });
+    loadAdminAccounts();
+  }
+}
+
+/* U2: hashchange listener — when the user is on admin-hub, changing the hash
+   updates the active section in state. The `_programmaticHashUpdate` guard
+   prevents feedback loops from tab-click hash writes. */
+globalThis.addEventListener('hashchange', () => {
+  if (_programmaticHashUpdate) {
+    _programmaticHashUpdate = false;
+    return;
+  }
+  const appState = store.getState();
+  if (appState.route.screen !== 'admin-hub') return;
+  const section = parseAdminSectionFromHash(globalThis.location?.hash);
+  if (section !== null) {
+    store.patch((current) => ({
+      route: { ...current.route, adminSection: section },
+    }));
+  }
+});
+
 createRoot(root).render(
   <App
     controller={controller}
@@ -2496,6 +2530,25 @@ function scheduleToastAutoDismissals() {
 
 store.subscribe(scheduleToastAutoDismissals);
 scheduleToastAutoDismissals();
+
+/* U2: SPA boot URL routing — hash-based admin section navigation.
+   `_programmaticHashUpdate` guards against hashchange feedback loops:
+   set to `true` before writing `location.hash` from code, then the
+   hashchange listener checks and clears it, skipping the redundant
+   state update. */
+let _programmaticHashUpdate = false;
+
+function parseAdminSectionFromHash(hash) {
+  if (!hash || typeof hash !== 'string') return null;
+  const raw = hash.replace(/^#/, '');
+  if (!raw) return null;
+  // Parse `section=debug` format
+  const match = raw.match(/(?:^|&)section=([^&]*)/);
+  if (!match) return null;
+  const value = decodeURIComponent(match[1]).toLowerCase();
+  if (!value) return null;
+  return VALID_ADMIN_SECTIONS.has(value) ? value : 'overview';
+}
 
 function handleGlobalAction(action, data) {
   const appState = store.getState();
@@ -2559,9 +2612,22 @@ function handleGlobalAction(action, data) {
     clearAdultSurfaceNotice();
     tts.stop();
     tts.abortPending?.();
-    store.openAdminHub();
+    store.openAdminHub({ adminSection: data?.section });
     if (boot.session.signedIn) loadAdminHub({ force: true });
     loadAdminAccounts();
+    return true;
+  }
+
+  if (action === 'admin-section-change') {
+    const section = typeof data?.section === 'string' && VALID_ADMIN_SECTIONS.has(data.section)
+      ? data.section
+      : 'overview';
+    store.patch((current) => ({
+      route: { ...current.route, adminSection: section },
+    }));
+    // Write hash with programmatic guard to prevent hashchange feedback loop
+    _programmaticHashUpdate = true;
+    globalThis.location.hash = `section=${section}`;
     return true;
   }
 
