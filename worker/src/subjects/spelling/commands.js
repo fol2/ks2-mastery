@@ -196,6 +196,11 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         audio: replayAudioCue,
         content: contentMeta(contentResult, snapshot),
       }),
+      // P2 U4: additive — client `applyCommandResponse` merges this into
+      // `subjectUi.spelling.postMastery`, keeping the Setup scene post-Mega
+      // gate in lockstep with the worker. Old clients that never read this
+      // field continue to work.
+      postMastery: result.postMastery,
       projections,
       events: projectedEvents.events,
       domainEvents: projectedEvents.domainEvents,

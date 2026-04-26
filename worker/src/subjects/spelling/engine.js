@@ -7,6 +7,7 @@ import {
   normaliseGuardianMap,
   normalisePostMegaRecord,
 } from '../../../../src/subjects/spelling/service-contract.js';
+import { getSpellingPostMasteryState } from '../../../../src/subjects/spelling/read-model.js';
 import { createSpellingService } from '../../../../shared/spelling/service.js';
 import { BadRequestError } from '../../errors.js';
 
@@ -364,11 +365,26 @@ export function createServerSpellingEngine({
       }
 
       const nextState = markServerOwnedState(transition.state);
+      // P2 U4: emit a canonical `postMastery` block on every command
+      // response so the client can hydrate `subjectUi.spelling.postMastery`
+      // without a second round-trip. Additive by design — old clients that
+      // never read the field continue to work. Fed by `getSpellingPostMasteryState`
+      // from the read-model (same derivation as every other post-mastery
+      // consumer) so Worker and client cannot drift. `sourceHint: 'worker'`
+      // flows into `postMasteryDebug.source` so the Admin hub can tell a
+      // worker-hydrated snapshot apart from a client-only locked-fallback.
+      const finalSnapshot = persistence.snapshot();
+      const postMastery = getSpellingPostMasteryState({
+        subjectStateRecord: { data: finalSnapshot },
+        runtimeSnapshot: contentSnapshot,
+        now: clock,
+        sourceHint: 'worker',
+      });
       return {
         ok: transition.ok !== false,
         changed: transition.changed !== false,
         state: nextState,
-        data: persistence.snapshot(),
+        data: finalSnapshot,
         practiceSession: persistence.practiceSession(),
         events: transition.events || [],
         audio: transition.audio || null,
@@ -381,6 +397,7 @@ export function createServerSpellingEngine({
           extra: service.getStats(learnerId, 'extra'),
         },
         analytics: service.getAnalyticsSnapshot(learnerId),
+        postMastery,
       };
     },
   };

@@ -282,6 +282,23 @@ export function createRemoteSpellingActionHandler({
     if (targetLearnerId) scopedRuntimeErrors.delete(targetLearnerId);
   }
 
+  // P2 U4: merge `response.postMastery` into `subjectUi.spelling.postMastery`
+  // so the Setup scene, summary scene and Alt+4 / Alt+5 gate read a worker-
+  // authoritative snapshot instead of the client-only locked-fallback. Only
+  // fires for the selected learner — a background-learner response would
+  // otherwise clobber the visible dashboard's cached snapshot.
+  function hydrateWorkerPostMastery(response, { learnerId, isSelected } = {}) {
+    if (!response || typeof response !== 'object') return;
+    if (!isSelected) return;
+    const incoming = response.postMastery;
+    if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) return;
+    patchSpellingSubjectUiLocally((current) => ({
+      ...current,
+      learnerId: current?.learnerId || learnerId || '',
+      postMastery: incoming,
+    }));
+  }
+
   function applyCommandResponse(response, {
     command = '',
     learnerId: requestedLearnerId = '',
@@ -303,6 +320,15 @@ export function createRemoteSpellingActionHandler({
     clearRuntimeErrorForLearner(learnerId);
     reconcilePreferenceSaveResponse({ command, learnerId, preferenceVersion });
     reapplyPendingOptimisticPrefs();
+    // P2 U4: hydrate the post-mastery snapshot from the worker response into
+    // `subjectUi.spelling.postMastery` so subsequent reads via
+    // `createSpellingReadModelService.getPostMasteryState(learnerId)` see the
+    // worker-authoritative values instead of the client-only
+    // locked-fallback. Additive contract — an older worker that omits the
+    // field leaves whatever is already cached in place (including the first-
+    // load absence, where the read-model service reverts to locked-fallback
+    // on demand).
+    hydrateWorkerPostMastery(response, { learnerId, isSelected: wasSelectedLearner });
     const nextState = appState();
     const nextSubjectUi = response?.subjectReadModel || response?.state || nextState.subjectUi?.spelling || null;
     const isSelectedLearner = !learnerId || nextState.learners?.selectedId === learnerId;

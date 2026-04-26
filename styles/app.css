@@ -4812,6 +4812,80 @@ textarea:focus-visible {
   margin-left: 4px;
 }
 
+/* P2 U4: "Checking Word Vault..." skeleton scene for the ~500ms hydration
+ * window on a fresh-device bootstrap. Mirrors the post-Mega silhouette
+ * (eyebrow, title, lede, stat ribbon, single mode card) so the eventual
+ * worker response does not shift page content. Softly pulses the title
+ * + card fills so kids read it as a deliberate system state rather than
+ * a broken dashboard. No loading spinners — the existing typography tokens
+ * carry the wait. Sticky-bit short-circuit (H6) hides this skeleton for
+ * returning graduated learners, so it is only visible on first load of a
+ * new device (the one acceptable flicker window per the P2 plan).
+ */
+.post-mega-hydration-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 420px;
+}
+.post-mega-hydration-skeleton__title {
+  position: relative;
+  overflow: hidden;
+}
+.post-mega-hydration-skeleton__title-fill {
+  display: inline-block;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--panel) 34%, transparent) 0%,
+    color-mix(in oklab, var(--brand-soft) 56%, transparent) 50%,
+    color-mix(in oklab, var(--panel) 34%, transparent) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: postMegaHydrationSweep 1400ms ease-in-out infinite;
+}
+.post-mega-hydration-skeleton__lede {
+  color: color-mix(in oklab, var(--mode-card-copy, var(--muted)) 80%, transparent);
+  font-style: italic;
+}
+.post-mega-hydration-skeleton__ribbon {
+  opacity: 0.76;
+  pointer-events: none;
+}
+.post-mega-hydration-skeleton__stat dd {
+  color: color-mix(in oklab, var(--mode-card-title, var(--ink)) 48%, transparent);
+}
+.post-mega-hydration-skeleton__row {
+  margin-top: 8px;
+}
+.post-mega-hydration-skeleton__card {
+  border: 1.25px dashed color-mix(in oklab, var(--brand) 32%, var(--line));
+  background:
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--brand-soft) 22%, transparent) 0%,
+      color-mix(in oklab, var(--panel) 38%, transparent) 100%);
+  opacity: 0.92;
+  animation: postMegaHydrationPulse 1600ms ease-in-out infinite;
+}
+.post-mega-hydration-skeleton__badge {
+  background: color-mix(in oklab, var(--panel) 52%, transparent);
+  color: color-mix(in oklab, var(--mode-card-title, var(--ink)) 64%, transparent);
+  letter-spacing: 0.12em;
+}
+@keyframes postMegaHydrationSweep {
+  0%, 100% { background-position: 180% 50%; }
+  50% { background-position: -40% 50%; }
+}
+@keyframes postMegaHydrationPulse {
+  0%, 100% { opacity: 0.78; }
+  50% { opacity: 0.98; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .post-mega-hydration-skeleton__title-fill { animation: none; background-position: 50% 50%; }
+  .post-mega-hydration-skeleton__card { animation: none; opacity: 0.9; }
+}
+
 .setup-control-stack {
   min-height: 196px;
   margin-top: 20px;

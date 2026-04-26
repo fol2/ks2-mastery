@@ -93,10 +93,64 @@ function asReadModel(rawValue, learnerId) {
   };
 }
 
-export function createSpellingReadModelService({ getState = () => null } = {}) {
+// P2 U4: hydration window before we flip the fallback label from
+// 'checking' to 'locked-fallback'. 500ms is short enough that a fresh
+// bootstrap response (observed ~100-300ms over LAN) lands well before the
+// flip, and long enough that a slow network still sees a deliberate
+// "Checking Word Vault..." placeholder rather than a pre-emptive "locked"
+// copy. If the worker response never arrives (offline, degraded sync)
+// the UI falls through to the legacy locked dashboard after the timeout.
+export const POST_MASTERY_HYDRATION_WINDOW_MS = 500;
+
+function buildLockedFallback({ source, todayDay }) {
+  return {
+    ...createLockedPostMasteryState(),
+    todayDay,
+    postMasteryDebug: {
+      source,
+      publishedCoreCount: 0,
+      secureCoreCount: 0,
+      blockingCoreCount: 0,
+      blockingCoreSlugsPreview: [],
+      extraWordsIgnoredCount: 0,
+      guardianMapCount: 0,
+      contentReleaseId: null,
+      allWordsMega: false,
+      stickyUnlocked: false,
+    },
+  };
+}
+
+export function createSpellingReadModelService({
+  getState = () => null,
+  now = () => Date.now(),
+  hydrationWindowMs = POST_MASTERY_HYDRATION_WINDOW_MS,
+} = {}) {
+  // Per-learner hydration window timestamp. A learner that has never seen a
+  // worker hydration event gets `source: 'checking'` for the first
+  // `hydrationWindowMs` of their session; afterwards the source falls
+  // through to 'locked-fallback' so the legacy dashboard renders rather
+  // than a stuck "Checking Word Vault..." placeholder.
+  const hydrationStart = new Map();
+
   function readModel(learnerId) {
     const appState = getState() || {};
     return asReadModel(appState.subjectUi?.spelling, learnerId || appState.learners?.selectedId || '');
+  }
+
+  function sourceFallbackForLearner(learnerId) {
+    const key = String(learnerId || '');
+    const ts = typeof now === 'function' ? Number(now()) : Number(now);
+    const safeTs = Number.isFinite(ts) ? ts : Date.now();
+    const window = Number(hydrationWindowMs);
+    const safeWindow = Number.isFinite(window) && window >= 0 ? window : POST_MASTERY_HYDRATION_WINDOW_MS;
+    if (!hydrationStart.has(key)) {
+      hydrationStart.set(key, safeTs);
+      return safeWindow > 0 ? 'checking' : 'locked-fallback';
+    }
+    const startedAt = Number(hydrationStart.get(key));
+    const elapsed = safeTs - startedAt;
+    return elapsed < safeWindow ? 'checking' : 'locked-fallback';
   }
 
   return {
@@ -141,26 +195,29 @@ export function createSpellingReadModelService({ getState = () => null } = {}) {
       // zero / false because the client shell has no guardian data to reason
       // about — if the admin sees this on production it's a strong signal
       // the Worker hydration hasn't completed yet for the selected learner.
+      //
+      // U4 (P2): the no-cache fallback now stamps `source: 'checking'`
+      // for the first 500ms of a learner session (hydration window). The
+      // SpellingSetupScene renders a "Checking Word Vault..." skeleton while
+      // the source reads 'checking'; if the worker round-trip has not
+      // landed within the window, the source falls through to the legacy
+      // 'locked-fallback' so the dashboard degrades to the legacy Smart
+      // Review setup rather than a stuck loading state. A graduated
+      // learner with a LOCAL sticky-bit short-circuits this entire path
+      // because the client's service-authoritative getPostMasteryState
+      // returns `postMegaDashboardAvailable: true` synchronously — the
+      // checking placeholder is NOT visible in the happy path for
+      // returning graduated learners.
       const cached = readModel(learnerId).postMastery;
       if (cached && typeof cached === 'object' && !Array.isArray(cached)) {
         return cloneSerialisable(cached);
       }
-      return {
-        ...createLockedPostMasteryState(),
-        todayDay: Math.floor(Date.now() / (24 * 60 * 60 * 1000)),
-        postMasteryDebug: {
-          source: 'locked-fallback',
-          publishedCoreCount: 0,
-          secureCoreCount: 0,
-          blockingCoreCount: 0,
-          blockingCoreSlugsPreview: [],
-          extraWordsIgnoredCount: 0,
-          guardianMapCount: 0,
-          contentReleaseId: null,
-          allWordsMega: false,
-          stickyUnlocked: false,
-        },
-      };
+      const tsNow = typeof now === 'function' ? Number(now()) : Number(now);
+      const safeTs = Number.isFinite(tsNow) ? tsNow : Date.now();
+      return buildLockedFallback({
+        source: sourceFallbackForLearner(learnerId),
+        todayDay: Math.floor(safeTs / (24 * 60 * 60 * 1000)),
+      });
     },
     getAudioCue(learnerId) {
       return cloneSerialisable(readModel(learnerId).audio || null);
