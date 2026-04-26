@@ -291,11 +291,17 @@ export const spellingModule = {
       // `currentPrefs.roundLength`, preserving legacy behaviour there.
       const shortcutLength = data.length != null ? data.length : currentPrefs.roundLength;
       tts.stop();
+      // U11: Pattern Quest takes an extra `patternId` in the dispatch
+      // payload so the service selector knows which 5-card quest to build.
+      // Guardian / Boss ignore the field; the service's `startSession`
+      // already branches on `mode` before reading it.
+      const patternId = typeof data.patternId === 'string' ? data.patternId : '';
       const transition = service.startSession(learnerId, {
         mode,
         yearFilter: currentPrefs.yearFilter,
         length: shortcutLength,
         extraWordFamilies: currentPrefs.extraWordFamilies,
+        patternId,
       });
       if (transition?.ok !== false) {
         service.savePrefs(learnerId, { mode });

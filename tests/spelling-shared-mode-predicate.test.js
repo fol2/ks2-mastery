@@ -47,12 +47,12 @@ test('U6 isPostMasteryMode: legacy modes are NOT post-mastery', () => {
   assert.equal(isPostMasteryMode('single'), false);
 });
 
-test('U6 isPostMasteryMode: pattern-quest is reserved for U11 (returns false pre-U11)', () => {
-  // Per U6 plan: the helper ships with 'guardian' || 'boss' only. U11 later
-  // extends to include 'pattern-quest'. Pre-U11 the helper MUST return false
-  // so no dispatcher accidentally dispatches a 'pattern-quest' mode that the
-  // service layer does not yet understand.
-  assert.equal(isPostMasteryMode('pattern-quest'), false);
+test('U11 isPostMasteryMode: pattern-quest joins guardian + boss as post-mastery', () => {
+  // U11 extends the helper to include `pattern-quest`. Without this the
+  // module.js + remote-actions.js shortcut-start gate would let a
+  // non-graduated learner launch a Pattern Quest, which cannot legally
+  // start before all-core-Mega.
+  assert.equal(isPostMasteryMode('pattern-quest'), true);
 });
 
 test('U6 isPostMasteryMode: tolerates garbage input without throwing', () => {
@@ -69,6 +69,10 @@ test('U6 isMegaSafeMode: guardian + boss are Mega-safe regardless of options', (
   assert.equal(isMegaSafeMode('boss'), true);
   assert.equal(isMegaSafeMode('guardian', { practiceOnly: false }), true);
   assert.equal(isMegaSafeMode('boss', { practiceOnly: true }), true);
+  // U11: pattern-quest is Mega-safe — wobble lives in data.pattern, never
+  // touches progress.stage / dueDay / lastDay / lastResult.
+  assert.equal(isMegaSafeMode('pattern-quest'), true);
+  assert.equal(isMegaSafeMode('pattern-quest', { practiceOnly: true }), true);
 });
 
 test('U6 isMegaSafeMode: trouble with practiceOnly=true is Mega-safe', () => {
@@ -97,9 +101,12 @@ test('U6 isMegaSafeMode: tolerates garbage input and missing options', () => {
   assert.equal(isMegaSafeMode('trouble', undefined), false);
 });
 
-test('U6 isSingleAttemptMegaSafeMode: only guardian + boss', () => {
+test('U6 isSingleAttemptMegaSafeMode: only guardian + boss + pattern-quest', () => {
   assert.equal(isSingleAttemptMegaSafeMode('guardian'), true);
   assert.equal(isSingleAttemptMegaSafeMode('boss'), true);
+  // U11: pattern-quest is single-attempt Mega-safe — each card gets one
+  // submit and no card demotes progress.stage.
+  assert.equal(isSingleAttemptMegaSafeMode('pattern-quest'), true);
   assert.equal(isSingleAttemptMegaSafeMode('trouble'), false);
   assert.equal(isSingleAttemptMegaSafeMode('smart'), false);
   assert.equal(isSingleAttemptMegaSafeMode('test'), false);

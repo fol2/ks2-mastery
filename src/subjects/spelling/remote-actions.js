@@ -994,6 +994,10 @@ export function createRemoteSpellingActionHandler({
         updateOptimisticPrefs(patch);
         const prefsBeforeStart = visiblePrefsForLearner(learnerId, appState());
         const shortcutLength = data.length != null ? data.length : prefsBeforeStart.roundLength;
+        // U11: Pattern Quest payload carries `patternId` so the Worker
+        // selector knows which 5-card quest to build. Guardian / Boss
+        // ignore it; the Worker's startSession branches on mode first.
+        const patternId = typeof data.patternId === 'string' ? data.patternId : '';
         let startResponse = null;
         try {
           startResponse = await sendCommand('start-session', {
@@ -1001,6 +1005,7 @@ export function createRemoteSpellingActionHandler({
             yearFilter: prefsBeforeStart.yearFilter,
             length: shortcutLength,
             extraWordFamilies: prefsBeforeStart.extraWordFamilies,
+            patternId,
           }, { learnerId });
         } catch (error) {
           // Rollback: the optimistic prefs must not outlive a failed

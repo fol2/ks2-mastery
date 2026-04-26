@@ -49,7 +49,7 @@ import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
-import { WORDS } from '../src/subjects/spelling/data/word-data.js';
+import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
 import { SPELLING_EVENT_TYPES } from '../src/subjects/spelling/events.js';
 import { seedFullCoreMega as seedFullCoreMegaShared } from './helpers/post-mastery-seeds.js';
 
@@ -254,6 +254,11 @@ const ACTION_SET = Object.freeze([
   'boss-wrong',
   'content-hotswap',
   'storage-quota-failure',
+  // P2 U11: Pattern Quest sequences. The composite invariant must hold
+  // across every wrong answer on a Pattern Quest card — wobble writes to
+  // data.pattern.wobbling, never to progress.stage.
+  'patternquest-correct',
+  'patternquest-wrong',
 ]);
 
 function ensurePracticeOnlySession(harness, state) {
@@ -387,6 +392,46 @@ function applyBossAnswer(harness, state, { correct }) {
   return { state: submitted.state, events: submitted.events || [] };
 }
 
+// P2 U11: Pattern Quest answer action. Wrong answers must never demote
+// progress.stage; the assertion runs after every action.
+function applyPatternQuestAnswer(harness, state, { correct }) {
+  let s = state;
+  if (s?.phase === 'session' && s.session?.mode !== 'pattern-quest') {
+    s = harness.service.initState(null, harness.learnerId);
+  }
+  if (!s || s.phase !== 'session' || s.session?.mode !== 'pattern-quest') {
+    const started = harness.service.startSession(harness.learnerId, {
+      mode: 'pattern-quest',
+      patternId: 'suffix-tion',
+    });
+    if (!started.ok) {
+      return { state: s || harness.service.initState(null, harness.learnerId), events: [] };
+    }
+    s = started.state;
+  }
+  s = completeAwaitingAdvance(harness, s);
+  if (s.phase !== 'session' || !s.session?.patternQuestCard) {
+    return { state: s, events: [] };
+  }
+  const card = s.session.patternQuestCard;
+  let typed;
+  if (correct) {
+    if (card.type === 'classify' || card.type === 'explain') {
+      typed = 'option-0';
+    } else if (card.type === 'spell' || card.type === 'detect-error') {
+      typed = WORD_BY_SLUG[card.slug]?.word || '';
+    } else {
+      typed = 'option-0';
+    }
+  } else if (card.type === 'classify' || card.type === 'explain') {
+    typed = 'option-1';
+  } else {
+    typed = 'zzz-wrong-pattern';
+  }
+  const submitted = harness.service.submitAnswer(harness.learnerId, s, typed);
+  return { state: submitted.state, events: submitted.events || [] };
+}
+
 function applyContentHotswap(harness, state) {
   // Simulate a content hot-swap by injecting an orphan progress record for
   // a slug NOT present in WORD_BY_SLUG, plus an orphan guardianMap entry.
@@ -459,6 +504,8 @@ function applyAction(harness, state, action) {
     case 'boss-wrong':           return applyBossAnswer(harness, state, { correct: false });
     case 'content-hotswap':      return applyContentHotswap(harness, state);
     case 'storage-quota-failure': return applyStorageQuotaFailure(harness, state);
+    case 'patternquest-correct': return applyPatternQuestAnswer(harness, state, { correct: true });
+    case 'patternquest-wrong':   return applyPatternQuestAnswer(harness, state, { correct: false });
     default: throw new Error(`Unknown action: ${action}`);
   }
 }
@@ -815,6 +862,34 @@ test('U8b shape: "I don\'t know" double-press emits exactly one wobble per disti
 // storage-quota-failure (refresh-mid-finalise).
 // Regression class: catches F9 double-emit regressions and catches U8's
 // warning surface accidentally clearing awaitingAdvance.
+
+// ----- Shape 7: Pattern Quest all-wrong never demotes Mega --------------------
+//
+// Length 12, alternating patternquest-wrong with other surfaces. The
+// composite invariant's per-action assert already proves the Pattern Quest
+// submit path cannot demote progress.stage — this shape pins the assertion
+// at the shape level so a regression that cut Pattern Quest out of the
+// dispatcher (e.g. pattern-quest falling through to engine.submitLearning)
+// trips here within the first few actions.
+
+test('U8b shape: Pattern Quest wrong-burst interleaved with Guardian + Boss never demotes Mega', () => {
+  const harness = makeHarness({ seed: 42, learnerId: 'learner-patternquest-burst' });
+  const actions = [
+    'patternquest-wrong', 'guardian-correct',
+    'patternquest-wrong', 'boss-correct',
+    'patternquest-wrong', 'guardian-wrong',
+    'patternquest-wrong', 'boss-wrong',
+    'patternquest-wrong', 'guardian-dontknow',
+    'patternquest-wrong', 'patternquest-correct',
+  ];
+  runSequence(harness, actions, { label: 'patternquest-burst' });
+  const progress = readProgressMap(harness);
+  for (const slug of CORE_SLUGS) {
+    if (progress[slug]) {
+      assert.equal(progress[slug].stage, 4, `${slug} stays Mega after Pattern Quest wrong-burst`);
+    }
+  }
+});
 
 test('U8b shape: Mission-completed idempotency — Guardian finalise followed by storage failure emits mission exactly once', () => {
   const harness = makeHarness({ seed: 42, learnerId: 'learner-mission-idempotent' });

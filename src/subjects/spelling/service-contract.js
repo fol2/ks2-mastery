@@ -37,7 +37,16 @@ export {
 } from './content/patterns.js';
 
 export const SPELLING_ROOT_PHASES = Object.freeze(['dashboard', 'session', 'summary', 'word-bank']);
-export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single', 'guardian', 'boss']);
+export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single', 'guardian', 'boss', 'pattern-quest']);
+
+/**
+ * P2 U11: Pattern Quest round length. A quest is a fixed-size 5-card round
+ * (mass-then-interleave: cards 1-3 massed encoding on the same pattern,
+ * cards 4-5 interleaved variety within the pattern). The constant lives
+ * here so the selector, the service, and the UI share a single authoritative
+ * value — changing the length in one place flows through every consumer.
+ */
+export const PATTERN_QUEST_ROUND_LENGTH = 5;
 
 export const GUARDIAN_INTERVALS = Object.freeze([3, 7, 14, 30, 60, 90]);
 export const GUARDIAN_MAX_REVIEW_LEVEL = GUARDIAN_INTERVALS.length - 1;
@@ -216,7 +225,7 @@ export function isGuardianEligibleSlug(slug, progressMap, wordBySlug) {
  * @returns {boolean}
  */
 export function isPostMasteryMode(mode) {
-  return mode === 'guardian' || mode === 'boss';
+  return mode === 'guardian' || mode === 'boss' || mode === 'pattern-quest';
 }
 
 /**
@@ -425,7 +434,7 @@ function deriveSummaryTotals(mode, cards, mistakes) {
   // Number.parseInt → 7, which would lead to `totalWords = 7` and
   // `correct = 7 - mistakes.length = 4`. That would surface as a Boss summary
   // claiming only 7 words landed when 10 were played.
-  if (mode === 'test' || mode === 'boss') {
+  if (mode === 'test' || mode === 'boss' || mode === 'pattern-quest') {
     const scoreCard = cards.find((card) => card.label === 'Score');
     if (scoreCard && typeof scoreCard.value === 'string') {
       const match = /^(\d+)\s*\/\s*(\d+)$/.exec(scoreCard.value);
@@ -580,4 +589,53 @@ export function normaliseGuardianMap(rawValue, todayDay = 0) {
     output[slug] = normaliseGuardianRecord(entry, todayDay);
   }
   return output;
+}
+
+/**
+ * P2 U11: Normalise a single pattern-wobble record. The canonical shape is
+ * `{ wobbling: boolean, wobbledAt: integerDay, patternId: string }`. Garbage
+ * inputs collapse to `null` rather than throwing so a partially-corrupt
+ * persisted blob cannot crash the read path.
+ *
+ * @param {*} rawValue
+ * @returns {{wobbling: boolean, wobbledAt: number, patternId: string}|null}
+ */
+export function normalisePatternWobbleRecord(rawValue) {
+  if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) return null;
+  const wobbling = rawValue.wobbling === true;
+  const wobbledAt = Number(rawValue.wobbledAt);
+  const patternId = typeof rawValue.patternId === 'string' ? rawValue.patternId : '';
+  if (!patternId) return null;
+  if (!Number.isFinite(wobbledAt) || wobbledAt < 0) return null;
+  return {
+    wobbling,
+    wobbledAt: Math.floor(wobbledAt),
+    patternId,
+  };
+}
+
+/**
+ * P2 U11: Normalise `data.pattern`. Shape:
+ *   { wobbling: { [slug]: { wobbling, wobbledAt, patternId } } }
+ * This is the parallel-sibling map to `data.guardian.wobbling` — Pattern
+ * Quest wrong answers write here, never to `data.progress` / `data.guardian`.
+ *
+ * Garbage input collapses to `null` so pre-U11 persisted bundles (no
+ * `data.pattern` sibling) skip the field entirely when normalising.
+ *
+ * @param {*} rawValue
+ * @returns {{wobbling: Record<string, object>}|null}
+ */
+export function normalisePatternMap(rawValue) {
+  if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) return null;
+  const rawWobbling = rawValue.wobbling && typeof rawValue.wobbling === 'object' && !Array.isArray(rawValue.wobbling)
+    ? rawValue.wobbling
+    : {};
+  const wobbling = {};
+  for (const [slug, entry] of Object.entries(rawWobbling)) {
+    if (!slug || typeof slug !== 'string') continue;
+    const record = normalisePatternWobbleRecord(entry);
+    if (record) wobbling[slug] = record;
+  }
+  return { wobbling };
 }

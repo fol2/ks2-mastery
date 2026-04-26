@@ -11,6 +11,7 @@ export const SPELLING_EVENT_TYPES = Object.freeze({
   GUARDIAN_MISSION_COMPLETED: 'spelling.guardian.mission-completed',
   BOSS_COMPLETED: 'spelling.boss.completed',
   POST_MEGA_UNLOCKED: 'spelling.post-mega.unlocked',
+  PATTERN_QUEST_COMPLETED: 'spelling.pattern.quest-completed',
 });
 
 export const SPELLING_MASTERY_MILESTONES = Object.freeze([1, 5, 10, 25, 50, 100, 150, 200]);
@@ -277,6 +278,54 @@ export function createSpellingBossCompletedEvent({
  * guard fails on any subsequent Mega-producing submit (stage was already
  * at 4 pre-submit).
  */
+/**
+ * P2 U11: Emitted when a Pattern Quest round finalises. Carries the pattern
+ * id, the ordered slug list (roster of the 5-card round), the correct count,
+ * and the list of slugs that wobbled during the round. A round where all 5
+ * cards were correct emits `correctCount: 5, wobbledSlugs: []`; any wrong
+ * answer populates `wobbledSlugs` with the distinct slug(s) that wobbled
+ * (cards 1/2/4 reference specific slugs; cards 3 and 5 reference the quest
+ * pattern generally via one of the round's slugs so achievement logic can
+ * still associate wrongs to the pattern).
+ *
+ * Deterministic id format:
+ *   `spelling.pattern.quest-completed:<learnerId>:<sessionId>:<patternId>`.
+ * Emission always runs after the round is finalised (summary phase), so one
+ * session id produces at most one event.
+ */
+export function createSpellingPatternQuestCompletedEvent({
+  learnerId,
+  session,
+  patternId,
+  slugs = [],
+  correctCount = 0,
+  wobbledSlugs = [],
+  createdAt,
+} = {}) {
+  if (!session?.id) return null;
+  if (typeof patternId !== 'string' || !patternId) return null;
+  const safeSlugs = Array.isArray(slugs)
+    ? slugs.filter((slug) => typeof slug === 'string' && slug)
+    : [];
+  const safeWobbled = Array.isArray(wobbledSlugs)
+    ? wobbledSlugs.filter((slug) => typeof slug === 'string' && slug)
+    : [];
+  const safeCorrect = Number.isInteger(Number(correctCount)) && Number(correctCount) >= 0
+    ? Number(correctCount)
+    : 0;
+  return {
+    ...baseSpellingEvent(
+      SPELLING_EVENT_TYPES.PATTERN_QUEST_COMPLETED,
+      { learnerId, session, createdAt },
+      [learnerId || 'default', session.id, patternId],
+    ),
+    patternId,
+    slugs: safeSlugs,
+    correctCount: safeCorrect,
+    wobbledSlugs: safeWobbled,
+  };
+}
+
 export function createSpellingPostMegaUnlockedEvent({
   learnerId,
   unlockedAt,

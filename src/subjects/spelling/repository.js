@@ -1,5 +1,5 @@
 import { cloneSerialisable, normalisePracticeSessionRecord } from '../../platform/core/repositories/helpers.js';
-import { normaliseGuardianMap, normalisePostMegaRecord } from './service-contract.js';
+import { normaliseGuardianMap, normalisePatternMap, normalisePostMegaRecord } from './service-contract.js';
 
 const SUBJECT_ID = 'spelling';
 const PREF_STORAGE_PREFIX = 'ks2-platform-v2.spelling-prefs.';
@@ -8,6 +8,9 @@ const GUARDIAN_STORAGE_PREFIX = 'ks2-spell-guardian-';
 // P2 U2: sticky-graduation sibling. Mirrors POST_MEGA_KEY_PREFIX in
 // shared/spelling/service.js — must stay byte-identical with that constant.
 const POST_MEGA_STORAGE_PREFIX = 'ks2-spell-post-mega-';
+// P2 U11: Pattern Quest wobble sibling. Mirrors PATTERN_KEY_PREFIX in
+// shared/spelling/service.js — must stay byte-identical with that constant.
+const PATTERN_STORAGE_PREFIX = 'ks2-spell-pattern-';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function todayDayForNow(now) {
@@ -41,6 +44,10 @@ function postMegaKey(learnerId) {
   return `${POST_MEGA_STORAGE_PREFIX}${learnerId || 'default'}`;
 }
 
+function patternKey(learnerId) {
+  return `${PATTERN_STORAGE_PREFIX}${learnerId || 'default'}`;
+}
+
 function parseStorageKey(key) {
   if (typeof key !== 'string') return null;
   if (key.startsWith(PREF_STORAGE_PREFIX)) {
@@ -55,6 +62,11 @@ function parseStorageKey(key) {
   // second-segment prefix check (`post-mega`) to disambiguate.
   if (key.startsWith(POST_MEGA_STORAGE_PREFIX)) {
     return { type: 'postMega', learnerId: key.slice(POST_MEGA_STORAGE_PREFIX.length) || 'default' };
+  }
+  // P2 U11: `ks2-spell-pattern-` also starts with `ks2-spell-p`. Check before
+  // the progress prefix so a pattern-sibling key is never mis-routed.
+  if (key.startsWith(PATTERN_STORAGE_PREFIX)) {
+    return { type: 'pattern', learnerId: key.slice(PATTERN_STORAGE_PREFIX.length) || 'default' };
   }
   if (key.startsWith(PROGRESS_STORAGE_PREFIX)) {
     return { type: 'progress', learnerId: key.slice(PROGRESS_STORAGE_PREFIX.length) || 'default' };
@@ -96,6 +108,12 @@ export function normaliseSpellingSubjectData(rawValue, todayDay = 0) {
   // for pre-graduation learners (no `postMega` key at all).
   const postMega = normalisePostMegaRecord(raw.postMega);
   if (postMega) output.postMega = postMega;
+  // P2 U11: `pattern` is the Pattern Quest wobble sibling — parallel to
+  // `guardian.wobbling` but keyed by Pattern Quest slugs. Only attached when
+  // at least one wobble record exists so pre-U11 learners keep a stable
+  // bundle shape (no `pattern` key at all).
+  const pattern = normalisePatternMap(raw.pattern);
+  if (pattern && Object.keys(pattern.wobbling).length > 0) output.pattern = pattern;
   return output;
 }
 
@@ -113,15 +131,16 @@ function writeSpellingData(repositories, learnerId, nextData, todayDay = 0) {
 function buildActiveRecord(learnerId, state, now) {
   const session = state?.session;
   if (!session) return null;
-  // Boss Dictation (`session.mode === 'boss'`) and Guardian Mission
-  // (`session.mode === 'guardian'`) are both "post-Mega" modes that override
-  // `session.type` with a shape-only value ('test' for Boss, 'learning' for
-  // Guardian). Persisting `sessionKind: session.type` would lose the post-Mega
-  // mode and make the Resume button route back to SATs Test / Smart Review.
-  // Prefer `session.mode` for those modes so `activeSession.sessionKind` keeps
-  // the real identity across refresh; fall back to `session.type` for
+  // Boss Dictation (`session.mode === 'boss'`), Guardian Mission
+  // (`session.mode === 'guardian'`), and Pattern Quest
+  // (`session.mode === 'pattern-quest'`) are all post-Mega modes that
+  // override `session.type` with a shape-only value. Persisting
+  // `sessionKind: session.type` would lose the post-Mega identity and make
+  // the Resume button route back to SATs Test / Smart Review. Prefer
+  // `session.mode` for those modes so `activeSession.sessionKind` keeps the
+  // real identity across refresh; fall back to `session.type` for
   // session-shape-preserved modes (smart / trouble / test / single).
-  const sessionKind = session.mode === 'boss' || session.mode === 'guardian'
+  const sessionKind = session.mode === 'boss' || session.mode === 'guardian' || session.mode === 'pattern-quest'
     ? session.mode
     : session.type;
   return normalisePracticeSessionRecord({
@@ -202,6 +221,11 @@ export function createSpellingPersistence({ repositories, now } = {}) {
       // P2 U2: postMega is null for never-graduated learners; stringify
       // preserves null-vs-object distinction for the service-layer reader.
       if (parsed.type === 'postMega') return data.postMega ? JSON.stringify(data.postMega) : 'null';
+      // P2 U11: Pattern Quest wobble sibling. Returns an empty
+      // `{ wobbling: {} }` shape when the learner has never wobbled so
+      // the service reader can treat a missing record identically to an
+      // empty record.
+      if (parsed.type === 'pattern') return JSON.stringify(data.pattern || { wobbling: {} });
       return null;
     },
     setItem(key, value) {
@@ -245,6 +269,17 @@ export function createSpellingPersistence({ repositories, now } = {}) {
           }, day);
         }
       }
+      if (parsed.type === 'pattern') {
+        // P2 U11: straight last-writer-wins for Pattern Quest wobble. Unlike
+        // postMega (sticky by contract), pattern.wobbling entries flip
+        // freely as the learner wobbles and recovers; same semantics as
+        // guardian.wobbling. The `parseStoredJson` default { wobbling: {} }
+        // keeps an absent body from collapsing the sibling into null.
+        writeSpellingData(repositories, parsed.learnerId, {
+          ...current,
+          pattern: parseStoredJson(value, { wobbling: {} }),
+        }, day);
+      }
       const afterError = readPersistenceError();
       if (errorSignatureChanged(beforeError, afterError)) {
         const message = afterError?.message || 'storage-setItem-failed';
@@ -268,6 +303,13 @@ export function createSpellingPersistence({ repositories, now } = {}) {
       if (parsed.type === 'guardian') {
         writeSpellingData(repositories, parsed.learnerId, { ...current, guardian: {} }, day);
       }
+      // P2 U11: pattern sibling is clearable through removeItem so
+      // resetLearner and explicit clear paths work symmetrically with the
+      // guardian + progress siblings. (Unlike postMega, pattern.wobbling is
+      // not sticky.)
+      if (parsed.type === 'pattern') {
+        writeSpellingData(repositories, parsed.learnerId, { ...current, pattern: { wobbling: {} } }, day);
+      }
       // P2 U2: postMega cannot be removed through this path — sticky is
       // permanent by contract. `resetLearner` (below) is the only surface
       // that clears postMega, and it goes through writeSpellingData with an
@@ -281,6 +323,7 @@ export function createSpellingPersistence({ repositories, now } = {}) {
     prefsKey,
     guardianKey,
     postMegaKey,
+    patternKey,
     // U8 review fix: expose the platform persistence channel's `lastError`
     // signal so the spelling service can detect legacy-engine's silent-
     // swallow on Smart Review / SATs submits. Legacy-engine's
