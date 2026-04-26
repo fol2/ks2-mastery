@@ -1485,9 +1485,18 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     // `session.results` is consumed by testSummary; initialise the array so
     // `submitBossAnswer` can push per-answer results deterministically.
     created.session.results = [];
-    // Remember the seed selection so the BOSS_COMPLETED event reports the
-    // exact ordered slug list even if the session is resumed / decorated.
-    created.session.bossSeedSlugs = selectedSlugs.slice();
+    // Seed-roster contract: uniqueWords is the roster for Boss. A Boss
+    // session is strict FIFO over selectBossWords — no card is ever
+    // re-queued (engine.advanceCard test-typed path at
+    // legacy-engine.js:586-591 just shifts the queue head), so
+    // uniqueWords is identical at start and at finalise-time. The
+    // BOSS_COMPLETED event factory reads session.uniqueWords.slice() as
+    // the seedSlugs payload; bossEventsForSession passes a fresh slice
+    // through. We deliberately do NOT stamp a separate `bossSeedSlugs`
+    // field on the session — buildResumeSession enumerates session
+    // fields explicitly and any unlisted field would be dropped on
+    // rehydration, so an orphan `bossSeedSlugs` would quietly disappear
+    // after an in-flight session resume and mask its own loss.
 
     // For a test-typed session, engine.advanceCard shifts the queue head via
     // strict FIFO (`legacy-engine.js:586-591`). Use that path — no custom
@@ -1800,10 +1809,20 @@ export function createSpellingService({ repository, storage, tts, now, random, c
 
     // Update progress.attempts / correct / wrong only. Stage / dueDay /
     // lastDay / lastResult are preserved — Boss never demotes Mega.
+    //
+    // Mega-never-revoked guard: if `progressMap[currentSlug]` is missing or
+    // malformed (e.g. a storage-clear race between selectBossWords and the
+    // first submit), we REFUSE the write rather than synthesise a fresh
+    // `{ stage: 0, ... }` seed. Writing stage:0 for a word that selectBossWords
+    // only offered because it was at Mega (stage:4) would silently demote
+    // Mega and contradict the invariant the summary copy and footer note
+    // already advertise. Return an error transition so the UI surfaces the
+    // inconsistency instead of masking it.
     const progressMap = loadProgressFromStorage(learnerId);
-    const existingProgress = progressMap[currentSlug] && typeof progressMap[currentSlug] === 'object'
-      ? progressMap[currentSlug]
-      : { stage: 0, attempts: 0, correct: 0, wrong: 0, dueDay: 0, lastDay: null, lastResult: null };
+    const existingProgress = progressMap[currentSlug];
+    if (!existingProgress || typeof existingProgress !== 'object' || Array.isArray(existingProgress)) {
+      return invalidSessionTransition('This Boss Dictation word lost its Mega progress mid-round. The round was stopped to protect your Mega count.');
+    }
     const nextProgress = { ...existingProgress };
     nextProgress.attempts = (nextProgress.attempts || 0) + 1;
     if (correct) nextProgress.correct = (nextProgress.correct || 0) + 1;
@@ -1993,9 +2012,17 @@ export function createSpellingService({ repository, storage, tts, now, random, c
   // U9: Boss Dictation round-end event fan-out. Emits the standard
   // SESSION_COMPLETED (so legacy consumers that watch for any spelling round
   // still see the event) plus a Boss-specific `spelling.boss.completed` event
-  // carrying the per-round score and the exact ordered seed-slug list. The
-  // seed list mirrors the selection returned by `selectBossWords` at round
-  // start.
+  // carrying the per-round score and the exact ordered seed-slug list.
+  //
+  // Seed roster contract: `session.uniqueWords` IS the seed roster for Boss.
+  // Unlike SATs test sessions (where uniqueWords gets mutated by re-queueing
+  // of wrong answers), a Boss session is strict FIFO over the selectBossWords
+  // output — no card is ever re-queued (see submitBossAnswer + engine.advanceCard
+  // test-typed path at legacy-engine.js:586-591). That means uniqueWords at
+  // finalise-time is identical to the initial selection. We pass it through as
+  // seedSlugs so downstream consumers don't have to separately track a seed
+  // copy; the event factory also falls back to uniqueWords when seedSlugs is
+  // null/missing, so the invariant is double-locked.
   function bossEventsForSession(learnerId, session, summary, createdAt) {
     if (session?.mode !== 'boss') return [];
     const results = Array.isArray(session.results) ? session.results : [];
@@ -2017,11 +2044,56 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       learnerId,
       session,
       summary: { correct, wrong },
-      seedSlugs: Array.isArray(session.bossSeedSlugs) ? session.bossSeedSlugs.slice() : null,
+      // uniqueWords is the seed roster for Boss (test-typed sessions don't
+      // mutate uniqueWords). Passing a fresh slice here keeps the event
+      // payload immutable with respect to later session mutations, even
+      // though Boss never mutates uniqueWords after start.
+      seedSlugs: Array.isArray(session.uniqueWords) ? session.uniqueWords.slice() : null,
       createdAt,
     });
     if (bossCompleted) events.push(bossCompleted);
     return events;
+  }
+
+  // U9 blocker fix: Override the `testSummary()` copy for Boss rounds. Boss
+  // rides as `session.type = 'test'` to reuse the single-attempt UI, so
+  // `engine.finalise()` routes to `testSummary()` which emits SATs-style
+  // demotion copy ("pushed back into the learner's due queue", "Marked due
+  // again today"). Both statements are FALSE for Boss — Boss is Mega-safe:
+  // wrong answers never demote stage and never schedule a word due-soon.
+  // We override the message and the "Needs more work" card's sub label so the
+  // summary matches the Mega-never-revoked invariant the footer note already
+  // advertises (session-ui.js spellingSessionFooterNote).
+  //
+  // Kept at the service layer (not in legacy-engine.js) per plan rule: Boss
+  // bypasses submitTest without modifying legacy.
+  function overrideBossSummary(summary) {
+    if (!summary || summary.mode !== 'boss') return summary;
+    const total = Number.isInteger(summary.totalWords) ? summary.totalWords : 0;
+    const correct = Number.isInteger(summary.correct) ? summary.correct : 0;
+    const bossMessage = correct === total
+      ? `Boss round complete — ${correct} of ${total} Mega words landed. Every Mega word stays Mega.`
+      : `Boss round complete — ${correct} of ${total} Mega words landed. Your Mega words stay Mega — review the missed ones on your own.`;
+    const cards = Array.isArray(summary.cards)
+      ? summary.cards.map((card) => {
+          if (card?.label === 'Needs more work') {
+            return { ...card, sub: 'Practice these on your own — Mega stays intact.' };
+          }
+          if (card?.label === 'Correct') {
+            // Keep "Correct" sub positive without implying SATs-style scheduling.
+            return { ...card, sub: 'Strong on the day' };
+          }
+          if (card?.label === 'Accuracy') {
+            return { ...card, sub: 'Single attempt per word' };
+          }
+          return card;
+        })
+      : summary.cards;
+    return {
+      ...summary,
+      message: bossMessage,
+      cards,
+    };
   }
 
   function continueSession(learnerId, rawState) {
@@ -2040,7 +2112,11 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       : engine.advanceCard(session, learnerId);
 
     if (advanced.done) {
-      const summary = normaliseSummary(engine.finalise(session), isRuntimeKnownSlug);
+      const rawSummary = normaliseSummary(engine.finalise(session), isRuntimeKnownSlug);
+      // Boss rides as test-typed so engine.finalise routes to testSummary(),
+      // which emits SATs demotion copy. overrideBossSummary swaps in
+      // Mega-safe copy without modifying legacy-engine.js.
+      const summary = session.mode === 'boss' ? overrideBossSummary(rawSummary) : rawSummary;
       const nextState = {
         version: SPELLING_SERVICE_STATE_VERSION,
         phase: 'summary',

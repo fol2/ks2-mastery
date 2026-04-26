@@ -497,3 +497,175 @@ test('Alt+5 gate parity: module-level boss-start on allWordsMega=false is a no-o
   const transition = service.startSession('learner-a', { mode: 'boss', length: 10 });
   assert.equal(transition.ok, false);
 });
+
+// -----------------------------------------------------------------------------
+// Summary copy — Boss must NOT leak SATs demotion strings (blocker fix)
+// -----------------------------------------------------------------------------
+
+test('Boss summary: message contains Mega-safe copy, not SATs demotion copy', () => {
+  // Boss rides as type:'test' for single-attempt UI reuse, which means
+  // engine.finalise() routes to testSummary(). The SATs testSummary() emits
+  // "pushed back into the learner's due queue" and "Marked due again today" —
+  // both FALSE for Boss. This test locks in the Boss summary override so every
+  // Boss round surfaces Mega-safe copy instead, matching the Mega-never-revoked
+  // invariant the footer note (session-ui.js) already advertises.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: makeSeededRandom(42) });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'boss', length: 10 });
+
+  // Miss 3 words so the "Needs more work" card appears with sub copy.
+  let cardCount = 0;
+  const { state: summaryState } = runBossRoundUntilSummary(
+    service,
+    'learner-a',
+    started.state,
+    (slug, state) => {
+      cardCount += 1;
+      if (cardCount <= 3) return 'definitely-wrong';
+      return state.session.currentCard.word.word;
+    },
+  );
+
+  assert.equal(summaryState.phase, 'summary');
+  const summary = summaryState.summary;
+  assert.ok(summary, 'summary is set');
+  assert.equal(summary.mode, 'boss', 'summary.mode is boss');
+
+  // Negative: no SATs demotion copy.
+  assert.doesNotMatch(summary.message, /pushed back/i,
+    'summary.message must not claim the missed words are pushed back');
+  assert.doesNotMatch(summary.message, /due queue/i,
+    'summary.message must not mention the due queue');
+
+  // Positive: Boss-appropriate copy that reflects Mega-never-revoked.
+  assert.match(summary.message, /Mega/i,
+    'summary.message reassures that Mega words stay Mega');
+
+  // Needs-more-work card sub must not use SATs demotion language.
+  const needsMoreCard = summary.cards.find((card) => card.label === 'Needs more work');
+  assert.ok(needsMoreCard, '"Needs more work" card is present when there are misses');
+  assert.doesNotMatch(needsMoreCard.sub, /marked due again/i,
+    '"Needs more work" sub must not claim the missed words are marked due again');
+  assert.match(needsMoreCard.sub, /Mega/i,
+    '"Needs more work" sub should reference the Mega invariant');
+});
+
+test('Boss summary: all-correct round still uses Mega-safe message wording', () => {
+  // Full-marks case still gets the Boss override — the SATs all-correct
+  // message ("This learner scored full marks on this SATs-style round") would
+  // leak SATs framing to a Boss summary otherwise.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: makeSeededRandom(42) });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'boss', length: 10 });
+  const { state: summaryState } = runBossRoundUntilSummary(
+    service,
+    'learner-a',
+    started.state,
+    (slug, state) => state.session.currentCard.word.word,
+  );
+
+  assert.equal(summaryState.phase, 'summary');
+  const summary = summaryState.summary;
+  assert.equal(summary.mode, 'boss');
+  assert.doesNotMatch(summary.message, /SATs/i,
+    'all-correct Boss summary must not reference SATs');
+  assert.match(summary.message, /Mega/i,
+    'all-correct Boss summary references Mega');
+});
+
+// -----------------------------------------------------------------------------
+// uniqueWords-as-seed invariant — rehydration must preserve the seed roster
+// -----------------------------------------------------------------------------
+
+test('BOSS_COMPLETED seedSlugs survives session rehydration (uniqueWords is the seed)', () => {
+  // The Boss seed roster lives on session.uniqueWords — not on a separate
+  // bossSeedSlugs field — because buildResumeSession enumerates session
+  // fields explicitly and any unlisted field would be stripped on rehydration.
+  // This test confirms that after a rehydration cycle, BOSS_COMPLETED still
+  // reports the original selectBossWords output as seedSlugs.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: makeSeededRandom(42) });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'boss', length: 10 });
+  const originalSlugs = started.state.session.uniqueWords.slice();
+
+  // Round-trip through initState (the rehydration entry point).
+  const rehydrated = service.initState(started.state, 'learner-a');
+  assert.equal(rehydrated.phase, 'session', 'rehydrated as a live session');
+  assert.deepEqual(
+    rehydrated.session.uniqueWords,
+    originalSlugs,
+    'uniqueWords survives rehydration unchanged',
+  );
+
+  // Complete the round from the rehydrated state and confirm BOSS_COMPLETED
+  // reports the same seed roster.
+  const { events } = runBossRoundUntilSummary(
+    service,
+    'learner-a',
+    rehydrated,
+    (slug, state) => state.session.currentCard.word.word,
+  );
+  const bossCompleted = events.find((e) => e.type === SPELLING_EVENT_TYPES.BOSS_COMPLETED);
+  assert.ok(bossCompleted, 'BOSS_COMPLETED fired');
+  assert.deepEqual(
+    bossCompleted.seedSlugs,
+    originalSlugs,
+    'BOSS_COMPLETED seedSlugs preserved across rehydration',
+  );
+});
+
+// -----------------------------------------------------------------------------
+// Fallback stage guard — mid-round progress loss must NOT silently demote Mega
+// -----------------------------------------------------------------------------
+
+test('Boss submitBossAnswer refuses the write if progress is cleared mid-round', () => {
+  // Under a storage-clear race (learner resets progress mid-round, another tab
+  // overwrites the progress map, etc.) the progressMap could be missing the
+  // current Boss slug. The prior implementation synthesised a
+  // `{ stage: 0, ... }` seed and wrote it — silently demoting a word that had
+  // been Mega at round-start and violating the Mega-never-revoked invariant.
+  //
+  // The fix is to refuse the write and return an invalid-session transition,
+  // so the UI shows an error instead of masking the demotion.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS);
+  const storage = installMemoryStorage();
+  const { service, repositories } = makeServiceWithSeed({ now, random: makeSeededRandom(42), storage });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'boss', length: 10 });
+  assert.equal(started.ok, true);
+  const firstSlug = started.state.session.currentCard.slug;
+
+  // Simulate the storage-clear race: wipe the progress map after the round
+  // has started but before the first submit.
+  repositories.subjectStates.writeData('learner-a', 'spelling', { progress: {} });
+
+  const submitted = service.submitAnswer('learner-a', started.state, 'anything');
+  assert.equal(submitted.ok, false,
+    'submit is refused when progress is missing for the current slug');
+
+  // Verify no demotion landed — the progress map should still be empty
+  // (not seeded with stage:0). Reading back through the service's progress
+  // snapshot confirms no silent write happened for the current slug.
+  const row = service.getAnalyticsSnapshot('learner-a').wordGroups
+    .flatMap((g) => g.words)
+    .find((w) => w.slug === firstSlug);
+  // After the wipe the analytics row defaults to stage 0 for any slug not
+  // present in the (now-empty) progress map — but the critical guarantee is
+  // that submit did not write a new entry. The before/after state remains
+  // "progress missing"; the service did not invent a stage:0 row.
+  assert.equal(row.progress.attempts, 0,
+    'no write landed for the current slug (attempts stays at 0)');
+  assert.equal(row.progress.wrong, 0,
+    'no write landed for the current slug (wrong stays at 0)');
+});
