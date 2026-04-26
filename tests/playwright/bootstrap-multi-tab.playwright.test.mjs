@@ -188,13 +188,23 @@ test.describe('U8 bootstrap multi-tab coordination telemetry', () => {
       for (const meta of [leaderMeta, follower1Meta, follower2Meta]) {
         expect(meta, 'capacity meta counters must exist on every page').toBeTruthy();
       }
+      // U8 round 1 adv-u8-r1-003: strict leader-count invariant.
+      // Plan contract is "exactly one tab claims leadership" per
+      // coordination window — the 3-tab race must collapse to a
+      // single bump across all tabs. `>= 1` would mask a double-leader
+      // coordination break (two tabs both think they are leader); the
+      // per-tab `acquireBootstrapCoordination` path guarantees at most
+      // one bump per tab (single-increment semantics, verified by
+      // tests/capacity-meta-counters.test.js), so the sum is either
+      // 0 (contention lost to another tab, handled by follower path)
+      // or exactly 1 (the winning leader). We pin `=== 1`.
       const leaderAcquiredTotal = leaderMeta.bootstrapLeaderAcquired
         + follower1Meta.bootstrapLeaderAcquired
         + follower2Meta.bootstrapLeaderAcquired;
       expect(
         leaderAcquiredTotal,
         `exactly one tab must claim leadership across three coordinated reloads, got ${leaderAcquiredTotal}`,
-      ).toBeGreaterThanOrEqual(1);
+      ).toBe(1);
 
       const followerWaitedTotal = leaderMeta.bootstrapFollowerWaited
         + follower1Meta.bootstrapFollowerWaited
@@ -262,6 +272,28 @@ test.describe('U8 bootstrap multi-tab coordination telemetry', () => {
         bootstrapTotal,
         `five tabs must coordinate to strictly less than naive fan-out (5), got ${bootstrapTotal}`,
       ).toBeLessThanOrEqual(4);
+
+      // U8 round 1 adv-u8-r1-003: leader-count invariant is distinct
+      // from the network-count tolerance. The `<= 4` request budget
+      // above tolerates leader-handoff chains (one tab releases its
+      // lease and another acquires in the same race window); the
+      // per-tab leader counter is strict single-increment by
+      // construction. Summing across 5 tabs yields exactly one leader
+      // bump per coordination window. If a future regression breaks
+      // the lease-arbitration contract, this sum would rise to 2+
+      // even while the network-count stays within the `<= 4` budget.
+      const tabMetas = await Promise.all(tabs.map((tab) => readCapacityMeta(tab)));
+      for (const meta of tabMetas) {
+        expect(meta, 'capacity meta counters must exist on every tab').toBeTruthy();
+      }
+      const leaderAcquiredTotal = tabMetas.reduce(
+        (acc, meta) => acc + meta.bootstrapLeaderAcquired,
+        0,
+      );
+      expect(
+        leaderAcquiredTotal,
+        `exactly one tab must claim leadership across five coordinated tabs, got ${leaderAcquiredTotal}`,
+      ).toBe(1);
 
       // Coherent cache: every tab sees a rendered subject grid and the
       // same cached learners snapshot shape. We scan for whichever
