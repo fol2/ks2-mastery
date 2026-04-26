@@ -218,6 +218,7 @@ export const spellingModule = {
       // Review round. `service.getPostMasteryState` is defined on the canonical
       // spelling service; the client-read-model facade returns a conservative
       // `allWordsMega: false` shape so the gate fails safe under remote-sync.
+      // TODO(U10/future): consider migrating Alt+4 gate to postMastery.guardianMissionAvailable — plan R1 kept the guardianDueCount fallback intentionally
       if (mode === 'guardian') {
         const postMastery = typeof service.getPostMasteryState === 'function'
           ? service.getPostMasteryState(learnerId)

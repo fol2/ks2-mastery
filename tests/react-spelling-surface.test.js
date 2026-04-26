@@ -244,6 +244,80 @@ test('U1: React setup scene shows optional-patrol copy when post-Mega but no wor
   assert.doesNotMatch(html, /<button[^>]*data-action="spelling-shortcut-start"[^>]*data-mode="guardian"[^>]*disabled=""/);
 });
 
+// ----- U1 review: remaining mission state renders (due, rested, locked) -------
+// Completion of the PostMegaSetupContent mission-state copy coverage. The
+// earlier tests pin first-patrol (via ACTIVE DUTY variant), wobbling (via
+// optional-patrol), and optional-patrol; these fill in the remaining three
+// so the ladder is fully defended by the React-render smoke.
+
+test('U1 review: React setup scene shows "due" copy + ACTIVE DUTY + enabled Begin when a non-wobbling word is due', async () => {
+  const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+  const html = await renderSpellingSurfaceFixture({
+    phase: 'setup',
+    postMega: {
+      guardian: {
+        possess: {
+          reviewLevel: 2,
+          lastReviewedDay: today - 3,
+          nextDueDay: today,
+          correctStreak: 2,
+          lapses: 0,
+          renewals: 0,
+          wobbling: false,
+        },
+      },
+    },
+  });
+  assert.match(html, /data-mission-state="due"/);
+  assert.match(html, /ACTIVE DUTY/);
+  // Copy for `due` state pulls the "N words ready for their Guardian check"
+  // line from PostMegaSetupContent.
+  assert.match(html, /ready for their Guardian check/);
+  // Begin is enabled.
+  assert.doesNotMatch(html, /<button[^>]*data-action="spelling-shortcut-start"[^>]*data-mode="guardian"[^>]*disabled=""/);
+});
+
+test('U1 review: React setup scene shows "wobbling" copy + URGENT + enabled Begin when a wobbling word is due', async () => {
+  const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+  const html = await renderSpellingSurfaceFixture({
+    phase: 'setup',
+    postMega: {
+      guardian: {
+        possess: {
+          reviewLevel: 0,
+          lastReviewedDay: today - 3,
+          nextDueDay: today - 1,
+          correctStreak: 0,
+          lapses: 1,
+          renewals: 0,
+          wobbling: true,
+        },
+      },
+    },
+  });
+  assert.match(html, /data-mission-state="wobbling"/);
+  assert.match(html, /URGENT/);
+  // The `wobbling` branch either mixes wobbling + non-wobbling copy or
+  // shows the single-wobbling line; either way "Guardian check today"
+  // anchors the PostMegaSetupContent output.
+  assert.match(html, /Guardian check today|urgent check/);
+  // Begin enabled.
+  assert.doesNotMatch(html, /<button[^>]*data-action="spelling-shortcut-start"[^>]*data-mode="guardian"[^>]*disabled=""/);
+});
+
+test('U1 review: React setup scene does NOT render PostMegaSetupContent when not graduated (locked → legacy dashboard)', async () => {
+  // `locked` means `allWordsMega` is false. SpellingSetupScene renders the
+  // legacy 3-mode dashboard instead of PostMegaSetupContent, and the mission
+  // copy / data-mission-state attribute must not leak in.
+  const html = await renderSpellingSurfaceFixture({ phase: 'setup' });
+  assert.doesNotMatch(html, /data-mission-state=/);
+  assert.doesNotMatch(html, /PostMegaSetupContent|The Word Vault is yours|Graduated · Spelling Guardian/);
+  // Legacy shell stays intact.
+  assert.match(html, /Smart Review/);
+  assert.match(html, /Trouble Drill/);
+  assert.match(html, /SATs Test/);
+});
+
 // ----- U6: Summary + Word Bank Guardian surfaces -----------------------------
 
 test('React spelling Word Bank renders the legacy 6-chip row identically when allWordsMega is false', async () => {

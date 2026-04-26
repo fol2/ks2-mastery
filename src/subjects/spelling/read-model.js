@@ -1,12 +1,12 @@
 import { WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from './data/word-data.js';
 import {
   GUARDIAN_SECURE_STAGE,
-  isGuardianEligibleSlug,
   normaliseGuardianMap,
   normaliseYearFilter,
 } from './service-contract.js';
 import {
   computeGuardianMissionState,
+  deriveGuardianAggregates,
   selectGuardianWords,
 } from '../../../shared/spelling/service.js';
 import { normaliseBufferedGeminiVoice, normaliseTtsProvider } from './tts-providers.js';
@@ -163,47 +163,28 @@ export function getSpellingPostMasteryState({
   // (wobbling-due vs non-wobbling-due) and collect the eligible-entries list
   // so the dashboard state machine (`computeGuardianMissionState`) can branch
   // copy without re-scanning the map.
-  const guardianEntries = Object.entries(guardianMap);
-  const eligibleGuardianEntries = [];
-  let guardianDueCount = 0;
-  let wobblingDueCount = 0;
-  let nonWobblingDueCount = 0;
-  let wobblingCount = 0;
-  let nextGuardianDueDay = null;
-  for (const [slug, record] of guardianEntries) {
-    if (!record) continue;
-    if (!isGuardianEligibleSlug(slug, progressMap, runtime.bySlug)) continue;
-    eligibleGuardianEntries.push({
-      slug,
-      wobbling: record.wobbling === true,
-      nextDueDay: record.nextDueDay,
-    });
-    const isDueToday = record.nextDueDay <= currentDay;
-    if (isDueToday) {
-      guardianDueCount += 1;
-      if (record.wobbling === true) {
-        wobblingDueCount += 1;
-      } else {
-        nonWobblingDueCount += 1;
-      }
-    }
-    if (record.wobbling === true) wobblingCount += 1;
-    if (nextGuardianDueDay === null || record.nextDueDay < nextGuardianDueDay) {
-      nextGuardianDueDay = record.nextDueDay;
-    }
-  }
-
-  // U1: count core-pool Mega slugs that have no guardian record yet. These
-  // drive the 'first-patrol' state and feed `guardianAvailableCount` which
-  // the stat ribbon surfaces as "N patrol words available".
-  let unguardedMegaCount = 0;
-  for (const [slug, entry] of Object.entries(progressMap)) {
-    if (!isGuardianEligibleSlug(slug, progressMap, runtime.bySlug)) continue;
-    if (Object.prototype.hasOwnProperty.call(guardianMap, slug)) continue;
-    unguardedMegaCount += 1;
-    // Keep the void reference so the linter does not complain about `entry`.
-    void entry;
-  }
+  //
+  // The derivation lives in `shared/spelling/service.js::deriveGuardianAggregates`
+  // so the service-layer `getPostMasteryState` and this read-model consume
+  // exactly the same walk — any future refinement (e.g. a richer orphan
+  // predicate) lands in one place. The invariant
+  // `wobblingDueCount + nonWobblingDueCount === guardianDueCount` is
+  // guaranteed by that helper; tests in spelling-guardian.test.js pin it.
+  const aggregates = deriveGuardianAggregates({
+    guardianMap,
+    progressMap,
+    wordBySlug: runtime.bySlug,
+    todayDay: currentDay,
+  });
+  const {
+    eligibleGuardianEntries,
+    guardianDueCount,
+    wobblingDueCount,
+    nonWobblingDueCount,
+    wobblingCount,
+    nextGuardianDueDay,
+    unguardedMegaCount,
+  } = aggregates;
 
   const guardianAvailableCount = unguardedMegaCount + eligibleGuardianEntries.length;
   const guardianMissionState = computeGuardianMissionState({
