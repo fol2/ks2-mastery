@@ -136,6 +136,106 @@ test('hasEvidence ignores stored item snapshots without attempts or sessions', (
   );
 });
 
+test('three units tracked but only one has securedAt — tracked 3, secured 1', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = freshSubjectState();
+  const k1 = masteryKey('endmarks', 'sentence-endings-core');
+  const k2 = masteryKey('apostrophe', 'apostrophe-contractions-core');
+  const k3 = masteryKey('apostrophe', 'apostrophe-possession-core');
+  subjectState.data.progress.rewardUnits[k1] = {
+    masteryKey: k1,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    securedAt: now - 10_000,
+  };
+  // Tracked but securedAt is 0 — not secured
+  subjectState.data.progress.rewardUnits[k2] = {
+    masteryKey: k2,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'apostrophe',
+    rewardUnitId: 'apostrophe-contractions-core',
+    securedAt: 0,
+  };
+  // Tracked but securedAt is absent — not secured
+  subjectState.data.progress.rewardUnits[k3] = {
+    masteryKey: k3,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'apostrophe',
+    rewardUnitId: 'apostrophe-possession-core',
+  };
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+  assert.equal(model.progressSnapshot.trackedRewardUnits, 3, 'three entries exist in the progress store');
+  assert.equal(model.progressSnapshot.securedRewardUnits, 1, 'only the entry with a valid securedAt is secured');
+  assert.equal(model.overview.securedRewardUnits, 1, 'overview must match progressSnapshot');
+  assert.equal(model.releaseDiagnostics.trackedRewardUnitCount, 3, 'diagnostics must reflect tracked count');
+  assert.equal(model.progressSnapshot.deepSecuredRewardUnits, 0, 'deep-secured placeholder is 0 until U3');
+});
+
+test('reward unit entry with null securedAt is tracked but not secured', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = freshSubjectState();
+  const k1 = masteryKey('speech', 'speech-core');
+  subjectState.data.progress.rewardUnits[k1] = {
+    masteryKey: k1,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'speech',
+    rewardUnitId: 'speech-core',
+    securedAt: null,
+  };
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+  assert.equal(model.progressSnapshot.trackedRewardUnits, 1, 'entry exists so tracked');
+  assert.equal(model.progressSnapshot.securedRewardUnits, 0, 'null securedAt must not count as secured');
+  assert.equal(model.overview.securedRewardUnits, 0);
+});
+
+test('module.js pct derives from corrected securedRewardUnits, not tracked count', () => {
+  // Simulate the getDashboardStats logic from module.js using read-model output
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = freshSubjectState();
+  // Add 5 tracked units, only 2 with valid securedAt
+  const units = [
+    { clusterId: 'endmarks', rewardUnitId: 'sentence-endings-core', securedAt: now - 10_000 },
+    { clusterId: 'apostrophe', rewardUnitId: 'apostrophe-contractions-core', securedAt: now - 5_000 },
+    { clusterId: 'apostrophe', rewardUnitId: 'apostrophe-possession-core', securedAt: 0 },
+    { clusterId: 'speech', rewardUnitId: 'speech-core', securedAt: null },
+    { clusterId: 'comma_flow', rewardUnitId: 'list-commas-core' },
+  ];
+  for (const u of units) {
+    const k = masteryKey(u.clusterId, u.rewardUnitId);
+    subjectState.data.progress.rewardUnits[k] = {
+      masteryKey: k,
+      releaseId: CURRENT_RELEASE_ID,
+      clusterId: u.clusterId,
+      rewardUnitId: u.rewardUnitId,
+      ...(u.securedAt !== undefined ? { securedAt: u.securedAt } : {}),
+    };
+  }
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+  // Replicate the module.js getDashboardStats formula:
+  // pct = securedRewardUnits / totalRewardUnits * 100
+  const stats = model.progressSnapshot;
+  const pct = stats.totalRewardUnits
+    ? Math.round((stats.securedRewardUnits / stats.totalRewardUnits) * 100)
+    : 0;
+  // 2 secured out of 14 total = ~14%
+  assert.equal(stats.securedRewardUnits, 2, 'only 2 of 5 tracked units have valid securedAt');
+  assert.equal(stats.trackedRewardUnits, 5);
+  assert.equal(pct, 14, 'dashboard pct must derive from secured count (2/14), not tracked count (5/14)');
+});
+
 test('fourteen published units with zero secured keeps overview and dashboard accurate', () => {
   const model = buildPunctuationLearnerReadModel({
     subjectStateRecord: freshSubjectState(),

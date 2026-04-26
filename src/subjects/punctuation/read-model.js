@@ -435,7 +435,13 @@ export function buildPunctuationLearnerReadModel({
   const secureItems = itemSnapshots.filter((entry) => entry.bucket === 'secure').length;
   const dueItems = itemSnapshots.filter((entry) => entry.bucket === 'due').length;
   const weakItems = itemSnapshots.filter((entry) => entry.bucket === 'weak').length;
-  const publishedRewardUnits = currentPublishedRewardUnits(rewardUnits);
+  const trackedRewardUnitEntries = currentPublishedRewardUnits(rewardUnits);
+  const trackedRewardUnitCount = trackedRewardUnitEntries.length;
+  const securedRewardUnitCount = trackedRewardUnitEntries.filter(
+    (entry) => Number.isFinite(Number(entry.securedAt)) && Number(entry.securedAt) > 0,
+  ).length;
+  // Placeholder for U3 — deep-secure projection not yet wired.
+  const deepSecuredRewardUnitCount = 0;
   const weakestFacets = facetRows(progress, skills, nowTs);
   const skillRows = skillRowsFromAttempts(attempts, skills);
   const strengths = buildStrengths(skillRows);
@@ -504,8 +510,9 @@ export function buildPunctuationLearnerReadModel({
       subjectId: 'punctuation',
       releaseId: CURRENT_RELEASE_ID,
       totalRewardUnits: TOTAL_REWARD_UNITS,
-      trackedRewardUnits: publishedRewardUnits.length,
-      securedRewardUnits: publishedRewardUnits.length,
+      trackedRewardUnits: trackedRewardUnitCount,
+      securedRewardUnits: securedRewardUnitCount,
+      deepSecuredRewardUnits: deepSecuredRewardUnitCount,
       trackedItems: itemSnapshots.length,
       secureItems,
       dueItems,
@@ -518,7 +525,7 @@ export function buildPunctuationLearnerReadModel({
       correct,
       accuracyPercent: accuracy,
       sessionsCompleted: Math.max(0, Number(progress.sessionsCompleted) || 0),
-      securedRewardUnits: publishedRewardUnits.length,
+      securedRewardUnits: securedRewardUnitCount,
       dueItems,
       weakItems,
       lastActivityAt,
@@ -539,7 +546,7 @@ export function buildPunctuationLearnerReadModel({
       releaseId: CURRENT_RELEASE_ID,
       publishedSkillCount: PUNCTUATION_CLIENT_SKILLS.length,
       publishedRewardUnitCount: TOTAL_REWARD_UNITS,
-      trackedRewardUnitCount: publishedRewardUnits.length,
+      trackedRewardUnitCount: trackedRewardUnitCount,
       sessionCount: sessions.length,
       weakPatternCount: patterns.length,
       productionExposureStatus: 'enabled',
