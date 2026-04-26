@@ -1025,6 +1025,119 @@ function PostMegaSetupContent({
           </button>
         ) : null}
       </div>
+      <WorkshopSection
+        prefs={prefs}
+        actions={actions}
+        startDisabled={startDisabled}
+        runtimeReadOnly={runtimeReadOnly}
+      />
     </>
+  );
+}
+
+/* The Workshop — secondary surface that keeps the legacy practice modes
+ * (Smart Review / Trouble Drill / SATs Test) available to a graduated
+ * learner without competing with the primary post-Mega cards.
+ *
+ * Design intent:
+ *  - Place metaphor matches the rest of the post-Mega vocabulary (Word
+ *    Vault, Codex, Meadow). "The Workshop" reads as a tool shed kids
+ *    return to by choice, not a demoted classics rack.
+ *  - Default-collapsed so the post-Mega hierarchy stays loud. The header
+ *    is the discovery affordance; the chevron telegraphs that more lives
+ *    underneath.
+ *  - Cards are list-row (not hero) — they share the post-Mega palette but
+ *    sit on aged-paper tone so the eye reads them as secondary at a glance.
+ *  - Click dispatches `spelling-shortcut-start` (same payload as Alt+1/2/3)
+ *    so the underlying entry-point code path stays unchanged. Whatever
+ *    prefs.roundLength / yearFilter the learner last used is honoured by
+ *    the existing handler.
+ *  - The Alt+1/2/3 hint sits at the bottom as a reward for kids who notice
+ *    keyboard shortcuts; it is aria-hidden (decorative) so a screen reader
+ *    user just hears the cards. */
+function WorkshopSection({ prefs, actions, startDisabled, runtimeReadOnly }) {
+  const [open, setOpen] = React.useState(false);
+  const disabled = Boolean(startDisabled || runtimeReadOnly);
+  const sectionId = 'spelling-workshop-body';
+
+  function handleCardClick(event, modeId) {
+    if (disabled) {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+      return;
+    }
+    renderAction(actions, event, 'spelling-shortcut-start', { mode: modeId });
+  }
+
+  return (
+    <section
+      className={`workshop-section${open ? ' is-open' : ''}`}
+      data-test-id="spelling-workshop"
+      data-state={open ? 'open' : 'closed'}
+    >
+      <button
+        type="button"
+        className="workshop-toggle"
+        aria-expanded={open}
+        aria-controls={sectionId}
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        <span className="workshop-toggle-label">
+          <span className="workshop-eyebrow">Optional · your earlier modes</span>
+          <span className="workshop-title">The Workshop</span>
+        </span>
+        <span className="workshop-toggle-meta">
+          <span className="workshop-toggle-hint">
+            {open ? 'Tuck away' : 'Open the Workshop'}
+          </span>
+          <span className="workshop-chevron" aria-hidden="true" />
+        </span>
+      </button>
+      <div
+        id={sectionId}
+        className="workshop-body"
+        role="region"
+        aria-label="The Workshop — earlier practice modes"
+        hidden={!open}
+      >
+        <p className="workshop-lede">
+          Your toolbox from before graduation — keep them sharp whenever you fancy a
+          familiar drill. Mega never drops.
+        </p>
+        <ul className="workshop-row" data-mode-current={prefs?.mode || ''}>
+          {MODE_CARDS.map((mode) => (
+            <li key={mode.id}>
+              <button
+                type="button"
+                className="workshop-card"
+                data-action="spelling-shortcut-start"
+                data-mode={mode.id}
+                data-test-id={`workshop-card-${mode.id}`}
+                disabled={disabled}
+                onClick={(event) => handleCardClick(event, mode.id)}
+              >
+                <span className="workshop-card-head">
+                  <span className="workshop-card-title">{mode.title}</span>
+                  <span className="workshop-card-arrow" aria-hidden="true">
+                    <ArrowRightIcon />
+                  </span>
+                </span>
+                <span className="workshop-card-desc">{mode.desc}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        <p className="workshop-hint" aria-hidden="true">
+          <span className="workshop-hint-prefix">Quick keys</span>
+          <kbd>Alt</kbd>
+          <span className="workshop-hint-join">+</span>
+          <kbd>1</kbd>
+          <span className="workshop-hint-join">·</span>
+          <kbd>2</kbd>
+          <span className="workshop-hint-join">·</span>
+          <kbd>3</kbd>
+        </p>
+      </div>
+    </section>
   );
 }

@@ -471,3 +471,92 @@ test('U3 edge case: Guardian summary with zero mistakes does not render the Prac
   assert.doesNotMatch(html, /Practice wobbling words/, 'zero-mistake Guardian summary must not render the Practice button');
   assert.doesNotMatch(html, /summary-drill-chips/, 'zero-mistake Guardian summary must not render the drill chips container');
 });
+
+// ----- The Workshop — secondary surface on the post-Mega setup scene ----------
+//
+// Lets a graduated learner reach the legacy practice modes (Smart Review /
+// Trouble Drill / SATs Test) without exiting the post-Mega dashboard. Default
+// collapsed; click-to-expand; cards dispatch `spelling-shortcut-start` with
+// the legacy mode payload so the entry-point parity with Alt+1/2/3 stays
+// byte-identical. Mega never drops because the underlying handler is
+// unchanged.
+
+test('Workshop section renders on the post-Mega setup scene, default-collapsed', async () => {
+  const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+  const html = await renderSpellingSurfaceFixture({
+    phase: 'setup',
+    postMega: {
+      guardian: {
+        possess: {
+          reviewLevel: 2,
+          lastReviewedDay: today - 7,
+          nextDueDay: today,
+          correctStreak: 2,
+          lapses: 0,
+          renewals: 0,
+          wobbling: false,
+        },
+      },
+    },
+  });
+
+  // Section + toggle render alongside the post-Mega dashboard.
+  assert.match(html, /data-test-id="spelling-workshop"/);
+  assert.match(html, /class="workshop-toggle"[^>]*aria-expanded="false"/);
+  assert.match(html, /data-state="closed"/);
+  // Place metaphor + eyebrow microcopy survive the render.
+  assert.match(html, /The Workshop/);
+  assert.match(html, /Optional · your earlier modes/);
+  // Body is hidden on first render — the cards exist in the DOM but the
+  // `hidden` attribute keeps them out of the accessibility tree until the
+  // learner expands the section.
+  assert.match(html, /id="spelling-workshop-body"[^>]*hidden/);
+});
+
+test('Workshop section is absent when the legacy dashboard renders (allWordsMega=false)', async () => {
+  // Pre-Mega learner: setup scene renders the legacy 3-mode row directly. The
+  // Workshop is post-Mega-only — surfacing it on the legacy view would
+  // duplicate the same three cards twice on the same page.
+  const html = await renderSpellingSurfaceFixture({ phase: 'setup' });
+  assert.doesNotMatch(html, /data-test-id="spelling-workshop"/);
+  assert.doesNotMatch(html, /class="workshop-toggle"/);
+});
+
+test('Workshop section card markup wires Smart / Trouble / Test through spelling-shortcut-start', async () => {
+  const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+  const html = await renderSpellingSurfaceFixture({
+    phase: 'setup',
+    postMega: {
+      guardian: {
+        possess: {
+          reviewLevel: 2,
+          lastReviewedDay: today - 7,
+          nextDueDay: today,
+          correctStreak: 2,
+          lapses: 0,
+          renewals: 0,
+          wobbling: false,
+        },
+      },
+    },
+  });
+
+  // All three legacy modes get a card inside the Workshop body, each wired
+  // through the same `spelling-shortcut-start` action that Alt+1/2/3 use.
+  // React's renderer does not preserve a stable JSX-prop attribute order, so
+  // assert each attribute independently rather than as a single ordered run.
+  for (const modeId of ['smart', 'trouble', 'test']) {
+    const cardRegex = new RegExp(`<button[^>]*data-test-id="workshop-card-${modeId}"[^>]*>`);
+    const match = html.match(cardRegex);
+    assert.ok(match, `Workshop card for mode "${modeId}" should render`);
+    const cardOpenTag = match[0];
+    assert.match(cardOpenTag, /data-action="spelling-shortcut-start"/);
+    assert.match(cardOpenTag, new RegExp(`data-mode="${modeId}"`));
+  }
+  // The Alt+1/2/3 quick-key hint sits at the bottom of the body so kids can
+  // discover the keyboard parity without pressing the button.
+  assert.match(html, /<kbd>Alt<\/kbd>/);
+  assert.match(html, /<kbd>1<\/kbd>/);
+  assert.match(html, /<kbd>2<\/kbd>/);
+  assert.match(html, /<kbd>3<\/kbd>/);
+});
