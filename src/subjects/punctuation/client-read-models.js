@@ -27,13 +27,67 @@ function stripForbiddenChildScopeFields(state) {
   return rest;
 }
 
+// Phase 4 U3 (origin R4): derive the `analytics.available` signal from the
+// shape of the raw analytics payload the Worker projected (or didn't). The
+// Punctuation Map branches on this value to distinguish three states that
+// used to be indistinguishable in the UI:
+//
+//   - `true`    — the Worker projected a non-empty `skillRows` array. Real
+//                 evidence is available; the Map renders per-skill status.
+//   - `'empty'` — the projection ran and yielded zero rows (fresh learner,
+//                 legitimately no evidence yet), OR the payload is simply
+//                 absent because the upstream worker has not yet wired its
+//                 availability emission (plan R4 defers the upstream half to
+//                 a future PR). The Map renders every skill as `'new'`,
+//                 preserving the pre-U3 fresh-learner copy.
+//   - `false`   — the upstream EXPLICITLY emitted `available: false` (Worker
+//                 timeout / degraded state / serialiser failure). The Map
+//                 renders every skill as `'unknown'` with a child-friendly
+//                 helper line. `false` requires an explicit upstream signal;
+//                 the client NEVER infers `false` from the absence of a
+//                 payload.
+//
+// **Review follow-on (PR #269)**: the BLOCKING defect in the original shape
+// was that a cold-start learner (no upstream emission wired yet) fell into
+// the null-branch and received `false`, rendering 14 "Unknown" chips and
+// 14 copies of the helper line. That is a visible UX regression worse than
+// the pre-U3 silent-'new' behaviour. The null-branch default now flips to
+// `'empty'` — the honest "no evidence yet" reading — so fresh learners see
+// pre-U3 fresh-learner copy until upstream wires its explicit signal. Once
+// that upstream wiring lands, any degraded emission (`available: false`)
+// flows through untouched and triggers the 'unknown' UX correctly.
+export function deriveAnalyticsAvailability(analytics) {
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) return 'empty';
+  if (analytics.available === true || analytics.available === false || analytics.available === 'empty') {
+    return analytics.available;
+  }
+  if (!Array.isArray(analytics.skillRows)) return 'empty';
+  return analytics.skillRows.length === 0 ? 'empty' : true;
+}
+
+// Phase 4 U3: attach an `analytics.available` signal to the read-model so
+// the Map scene can branch on payload availability without re-inspecting
+// the raw snapshot shape at every render. The returned object is a shallow
+// copy so the caller never mutates a frozen input.
+function withAnalyticsAvailability(state) {
+  if (!state || typeof state !== 'object' || Array.isArray(state)) return state;
+  const rawAnalytics = state.analytics && typeof state.analytics === 'object' && !Array.isArray(state.analytics)
+    ? state.analytics
+    : null;
+  const available = deriveAnalyticsAvailability(rawAnalytics);
+  const nextAnalytics = rawAnalytics
+    ? { ...rawAnalytics, available }
+    : { available };
+  return { ...state, analytics: nextAnalytics };
+}
+
 export function createPunctuationReadModelService({ getState } = {}) {
   return {
     initState(rawState) {
       const base = rawState && typeof rawState === 'object' && !Array.isArray(rawState)
         ? { ...createInitialPunctuationState(), ...clone(rawState) }
         : createInitialPunctuationState();
-      return stripForbiddenChildScopeFields(base);
+      return withAnalyticsAvailability(stripForbiddenChildScopeFields(base));
     },
     getPrefs(learnerId) {
       return normalisePunctuationPrefs(currentUi(getState, learnerId).ui.prefs);

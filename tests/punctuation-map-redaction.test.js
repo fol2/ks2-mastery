@@ -175,11 +175,13 @@ function findForbiddenHits(html) {
 // Map scene sweep — 6 status × 5 monster = 30 render states.
 // ---------------------------------------------------------------------------
 
-test('U7: Map scene SSR is clean across 30 status × monster filter combinations', () => {
+test('U7: Map scene SSR is clean across 35 status × monster filter combinations', () => {
   // Dimensionality lock — if a future unit stretches either filter list,
   // this constant-check forces a deliberate update to the sweep and its
-  // expected combination count in the PR body.
-  assert.equal(PUNCTUATION_MAP_STATUS_FILTER_IDS.length, 6, 'status filter list must stay at 6 entries');
+  // expected combination count in the PR body. Phase 4 U3 review follow-on
+  // (PR #269) added `'unknown'` to the status filter row (6 → 7) so the
+  // degraded-analytics state is filter-reachable.
+  assert.equal(PUNCTUATION_MAP_STATUS_FILTER_IDS.length, 7, 'status filter list must stay at 7 entries');
   assert.equal(PUNCTUATION_MAP_MONSTER_FILTER_IDS.length, 5, 'monster filter list must stay at 5 entries');
 
   const combinations = [];
@@ -188,7 +190,7 @@ test('U7: Map scene SSR is clean across 30 status × monster filter combinations
       combinations.push({ statusFilter, monsterFilter });
     }
   }
-  assert.equal(combinations.length, 30, 'sweep must cover exactly 30 filter combinations');
+  assert.equal(combinations.length, 35, 'sweep must cover exactly 35 filter combinations');
 
   for (const combo of combinations) {
     const harness = createPunctuationHarness();
