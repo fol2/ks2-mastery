@@ -316,7 +316,7 @@ test('Grammar button CSS contract — .btn.xl primary keeps a 44px-friendly tap 
 // contract test rather than a single cross-shell assertion.
 // ----------------------------------------------------------------------------
 
-test('ToastShelf container advertises aria-live=polite + role=status anchored by data-testid for SR announcement', async () => {
+test('ToastShelf container is the single aria-live region anchored by data-testid for SR announcement', async () => {
   const html = await renderSharedSurfaceFixture();
   // Anchor + role + live region + accessible name are the four
   // invariants U10 locks. A copy regression that removes any of them
@@ -327,10 +327,11 @@ test('ToastShelf container advertises aria-live=polite + role=status anchored by
   assert.match(html, /<div class="toast-shelf"[^>]*role="status"/);
   assert.match(html, /<div class="toast-shelf"[^>]*aria-live="polite"/);
   assert.match(html, /<div class="toast-shelf"[^>]*aria-label="Notifications"/);
-  // Each individual toast keeps its own role=status (per-toast
-  // announcement). This was the pre-U10 contract; U10 just adds the
-  // container anchor on top without regressing the existing toast.
-  assert.match(html, /<aside class="toast [^"]*" role="status"/);
+  // U10 review follow-up (adversarial finding #6): the inner <aside>
+  // elements MUST NOT carry their own role=status. Nested live regions
+  // have undefined AT behaviour (NVDA/VoiceOver may double-announce or
+  // skip). The container is the single live region.
+  assert.match(html, /<aside class="toast [^"]*"(?![^>]*role="status")/);
   // The close button is explicitly labelled.
   assert.match(html, /aria-label="Dismiss notification"/);
 });
