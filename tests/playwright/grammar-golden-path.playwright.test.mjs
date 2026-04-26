@@ -696,6 +696,15 @@ test.describe('U9 Flow 5: Grown-up view round-trip (F3)', () => {
 
     // Session state intact: summary shell remounts.
     await expect(page.locator('.grammar-summary-shell')).toBeVisible({ timeout: 10_000 });
+
+    // R17 child-surface invariant: after closing Grown-up view the
+    // summary surface must remain chip-free. The adult confidence chip
+    // renders via `.grammar-adult-confidence` in the analytics scene
+    // only; the child-facing summary must NOT leak it back after the
+    // analytics surface unmounts. Asserting count === 0 pins the
+    // invariant so a regression that reuses the chip on the summary is
+    // caught immediately.
+    await expect(page.locator('.grammar-adult-confidence')).toHaveCount(0);
   });
 });
 
@@ -828,11 +837,18 @@ test.describe('U9 error path: network offline mid-submit preserves draft', () =>
     // slot so the learner does not lose their work.
     await networkOffline(page, async () => {
       await page.locator('[data-action="grammar-save-transfer-evidence"]').first().click();
-      // Wait briefly for the error state to render. The module's
-      // `onError` adapter should populate `grammar.error` with a
-      // translated message; the surface re-renders with the feedback
-      // banner.
-      await page.waitForTimeout(500);
+      // The module's `onError` adapter populates `grammar.error` with
+      // a translated message and the transfer scene renders a
+      // `.grammar-transfer-error feedback bad` banner with
+      // `role="alert"`. Asserting the banner is visible (not just
+      // waiting a fixed timeout) catches a regression that silently
+      // swallows the save failure without surfacing feedback to the
+      // learner. Scoping to `.grammar-transfer-error` avoids colliding
+      // with the Subject-level card `role="alert"` which can also
+      // render on other offline failures.
+      await expect(
+        page.locator('.grammar-transfer-error[role="alert"]'),
+      ).toBeVisible({ timeout: 5_000 });
     });
 
     // Draft text preserved in the textarea after the failed save
