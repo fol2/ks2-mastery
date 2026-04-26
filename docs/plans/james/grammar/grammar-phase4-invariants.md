@@ -41,7 +41,7 @@ When a learner answers incorrectly, the UI shows a short nudge, offers a retry, 
 
 **Why:** R6 (immediate mistake recycling with minimal post-attempt hints) and R7 (supported answers must produce lower mastery gain than unsupported correct responses). Jumping straight to support would flatten the evidence signal and teach learners that asking for help is equivalent to solo recall.
 
-**Enforced by:** U4 `tests/grammar-learning-flow-matrix.test.js` (post-answer-wrong → retry → feedback-with-support sequencing across all modes), U8 `shared/grammar/confidence.js` (`supportLevelAtScoring` is the single authoritative field consumed by both reward and reporting).
+**Enforced by:** U4 `tests/grammar-learning-flow-matrix.test.js` (post-answer-wrong → retry → feedback-with-support sequencing across all modes), `worker/src/subjects/grammar/attempt-support.js:76-117` (the existing deterministic owner of `supportLevelAtScoring`, mapping `supportUsed` → scoring level `0 | 1 | 2` before any evidence row is persisted).
 
 ---
 
@@ -126,6 +126,8 @@ Once Concordium reaches a given `stage` or `caught = true`, those values are sti
 ---
 
 ### 12. Forbidden-keys universal floor is unchanged
+
+> **Plan-to-doc mapping note:** Invariants 1–11 map 1-for-1 to the Phase 4 plan's scope-lock list. Invariant 12 is the one addition — it captures U0's general hardening intent ("no Phase 4 PR silently widens the forbidden-key floor to paper over a leak") rather than a discretely plan-listed invariant, and is pinned here so reviewers can cite it by number alongside the other eleven.
 
 The forbidden-keys universal floor (`tests/helpers/forbidden-keys.mjs`) is never widened or weakened by Phase 4. The client and Worker both respect this floor; neither side may add a new forbidden key to paper over a shape drift, and neither may remove an existing entry to let a leaked field pass.
 
