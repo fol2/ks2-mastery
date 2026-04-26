@@ -372,6 +372,10 @@ test('button labels: every statically extractable label is classified', () => {
     'Hide',
     'Save',
     'Save + next',
+    // P1.5 Phase C (U9): 409 conflict banner resolution buttons on the
+    // account-ops-metadata row.
+    'Keep mine',
+    'Use theirs',
     'Start Guardian mission',
     'Start the drill',
     'Back to Codex',

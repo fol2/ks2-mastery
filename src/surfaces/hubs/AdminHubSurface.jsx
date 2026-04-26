@@ -9,6 +9,21 @@ import { decideDirtyResetOnServerUpdate } from '../../platform/hubs/admin-metada
 import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
 import { AdultConfidenceChip } from '../../subjects/grammar/components/AdultConfidenceChip.jsx';
 import { GRAMMAR_RECENT_ATTEMPT_HORIZON } from '../../../shared/grammar/confidence.js';
+// U9: 409 conflict banner diff helpers live as a plain-JS neighbour so
+// Node tests can import them without a JSX loader.
+import {
+  buildAccountOpsMetadataConflictDiff,
+  formatAccountOpsMetadataConflictValue,
+} from '../../platform/hubs/admin-metadata-conflict-diff.js';
+// C2/C3 (Phase C reviewer fix): the "Keep mine" and "Use theirs" click
+// handlers delegate to pure-function helpers so Node tests can exercise
+// the dispatch payload + state-transition logic without mounting React.
+import {
+  buildKeepMineDispatchPayload,
+  applyUseTheirsStateUpdate,
+} from '../../platform/hubs/admin-metadata-conflict-actions.js';
+export { buildAccountOpsMetadataConflictDiff };
+const formatConflictValue = formatAccountOpsMetadataConflictValue;
 
 function AdminAccountRoles({ model, directory = {}, actions }) {
   const isAdmin = model?.permissions?.platformRole === 'admin';
@@ -339,6 +354,26 @@ function DashboardKpiPanel({ model, actions }) {
   const byStatus = errorEvents.byStatus || {};
   const byOrigin = errorEvents.byOrigin || {};
   const accountOpsUpdates = kpis.accountOpsUpdates || {};
+  // U11: cron reconciliation telemetry. A warn banner fires when the
+  // last failure timestamp is newer than the last success timestamp so
+  // the operator knows automated reconciliation needs attention.
+  // I-RE-1 (re-review Important): the cron also runs a retention sweep;
+  // a retention-only failure must surface distinctly. `cronFailing`
+  // fires when EITHER reconcile OR retention has a fresher failure stamp
+  // than `lastSuccessAt`. The banner copy names which leg degraded.
+  const cronReconcile = kpis.cronReconcile || {};
+  const cronLastSuccessAt = Number(cronReconcile.lastSuccessAt) || 0;
+  const cronLastFailureAt = Number(cronReconcile.lastFailureAt) || 0;
+  const cronRetentionLastFailureAt = Number(cronReconcile.retentionLastFailureAt) || 0;
+  const reconcileFailing = cronLastFailureAt > 0 && cronLastFailureAt > cronLastSuccessAt;
+  const retentionFailing = cronRetentionLastFailureAt > 0 && cronRetentionLastFailureAt > cronLastSuccessAt;
+  const cronFailing = reconcileFailing || retentionFailing;
+  const cronFailureMostRecentAt = Math.max(cronLastFailureAt, cronRetentionLastFailureAt);
+  const cronFailureLegLabel = reconcileFailing && retentionFailing
+    ? 'Reconcile and retention sweeps'
+    : reconcileFailing
+      ? 'Automated reconciliation'
+      : 'Retention sweep';
 
   // P1.5 Phase A (U3): real vs demo split — each counter that can be split
   // by account type renders both sides with a neutral "Real / Demo"
@@ -385,6 +420,18 @@ function DashboardKpiPanel({ model, actions }) {
         refreshError={kpis.refreshError || null}
         onRefresh={() => actions.dispatch('admin-ops-kpi-refresh')}
       />
+      {cronFailing ? (
+        <div
+          className="callout warn small"
+          role="alert"
+          data-testid="dashboard-cron-failure-banner"
+          style={{ marginBottom: 12 }}
+        >
+          <strong>{cronFailureLegLabel} failed</strong> at {formatTimestamp(cronFailureMostRecentAt)}.
+          {' '}Last success at {cronLastSuccessAt > 0 ? formatTimestamp(cronLastSuccessAt) : 'never'}.
+          {' '}Investigate or run <code>npm run admin:reconcile-kpis</code>.
+        </div>
+      ) : null}
       <div className="skill-list">
         {realDemoRows.map(([label, realValue, demoValue]) => renderRealDemo(label, realValue, demoValue))}
         {otherRows.map(([label, value]) => (
@@ -427,6 +474,7 @@ const OPS_STATUS_OPTIONS = ['active', 'suspended', 'payment_hold'];
 // R27: prominent, UK-English non-enforcement notice rendered beside the
 // ops_status control. Do NOT reword — the string is asserted verbatim.
 const ACCOUNT_OPS_R27_CALLOUT = 'Status labels are informational only. Suspension, payment-hold, and deactivation are not currently enforced by sign-in. Enforcement is planned for a later release.';
+
 
 function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions }) {
   const accountId = account.accountId;
@@ -539,6 +587,66 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
     });
   };
 
+  // U9: row-level 409 conflict envelope stamped by the dispatcher. When
+  // present, we render an inline banner above the save button with the
+  // diff between the server's `currentState` and the user's live draft.
+  // The banner offers "Keep mine" (retry with fresh expectedRowVersion)
+  // and "Use theirs" (replace the draft with server state) buttons.
+  const conflict = account.conflict && typeof account.conflict === 'object' ? account.conflict : null;
+  const conflictCurrentState = conflict?.currentState && typeof conflict.currentState === 'object'
+    ? conflict.currentState
+    : null;
+  const liveDraftSnapshot = {
+    opsStatus,
+    planLabel: planLabel.trim() === '' ? null : planLabel.trim(),
+    tags: tagsText
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0)
+      .slice(0, 10),
+    internalNotes: internalNotes.trim() === '' ? null : internalNotes,
+  };
+  const conflictDiffRows = conflictCurrentState
+    ? buildAccountOpsMetadataConflictDiff(liveDraftSnapshot, conflictCurrentState)
+    : [];
+
+  const handleKeepMine = () => {
+    // U9 + C2/C3 (Phase C): delegate to the pure helper so the dispatch
+    // payload — including the fresh CAS pre-image harvested from the 409
+    // banner and the parsed-tag slice — is exercised by Node tests without
+    // the need to mount a React tree.
+    const payload = buildKeepMineDispatchPayload({
+      accountId,
+      currentState: conflictCurrentState,
+      opsStatus,
+      planLabel,
+      tagsText,
+      internalNotes,
+    });
+    if (!payload) return;
+    actions.dispatch(payload.action, payload.data);
+  };
+
+  const handleUseTheirs = () => {
+    // U9 + C2/C3 (Phase C): compute the next component state via the pure
+    // helper. React's `setState` still owns the actual update, but the
+    // decision logic (array normalisation, string defaults, R25 redaction
+    // edge case for ops-role viewers) is covered by the helper's tests.
+    const result = applyUseTheirsStateUpdate({
+      accountId,
+      currentState: conflictCurrentState,
+    });
+    if (!result) return;
+    const { nextState, dispatch } = result;
+    setOpsStatus(nextState.opsStatus);
+    setPlanLabel(nextState.planLabel);
+    setTagsText(nextState.tagsText);
+    setInternalNotes(nextState.internalNotes);
+    dirtyRef.current = false;
+    registerDirty(accountId, false);
+    actions.dispatch(dispatch.action, dispatch.data);
+  };
+
   if (!canManage) {
     // Read-only render preserved verbatim from U4. Ops-role viewers also see
     // the R27 callout so they understand the informational nature of the flag.
@@ -562,6 +670,52 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
 
   return (
     <div className="skill-row" key={accountId}>
+      {conflict && conflictCurrentState ? (
+        <div
+          className="callout warn small"
+          role="alert"
+          data-testid="account-ops-metadata-conflict-banner"
+          data-account-id={accountId}
+          style={{ gridColumn: '1 / -1', marginBottom: 8 }}
+        >
+          <div><strong>This account changed in another tab.</strong> Choose how to resolve the conflict.</div>
+          {conflictDiffRows.length > 0 ? (
+            <ul style={{ margin: '6px 0 8px 16px' }}>
+              {conflictDiffRows.map((row) => (
+                <li key={row.field} data-field={row.field}>
+                  <strong>{row.label}:</strong>{' '}
+                  <span>yours = {formatConflictValue(row.draftValue)}</span>{' · '}
+                  <span>theirs = {formatConflictValue(row.serverValue)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="small muted" style={{ margin: '6px 0 8px' }}>
+              No field-level differences surfaced. Pick a resolution to continue.
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className="btn secondary"
+              type="button"
+              data-action="account-ops-metadata-keep-mine"
+              onClick={handleKeepMine}
+              disabled={isSaving}
+            >
+              Keep mine
+            </button>
+            <button
+              className="btn secondary"
+              type="button"
+              data-action="account-ops-metadata-use-theirs"
+              onClick={handleUseTheirs}
+              disabled={isSaving}
+            >
+              Use theirs
+            </button>
+          </div>
+        </div>
+      ) : null}
       <div>
         <strong>{account.email || accountId}</strong>
         <div className="small muted">{account.displayName || 'No display name'} · {account.platformRole || 'parent'}</div>

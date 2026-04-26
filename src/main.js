@@ -1728,7 +1728,7 @@ function readAdminHubErrorLogSummarySaving() {
 // natural test hook for re-entrancy of these private handlers. The server
 // CAS guard (worker/src/repository.js, Finding 2) is the authoritative
 // double-commit defence; the client guard just avoids unnecessary 409s.
-async function updateAccountOpsMetadata({ accountId, patch }) {
+async function updateAccountOpsMetadata({ accountId, patch, expectedRowVersion = null }) {
   if (!hubApi) return;
   if (!(typeof accountId === 'string' && accountId)) return;
   if (!patch || typeof patch !== 'object') return;
@@ -1736,6 +1736,14 @@ async function updateAccountOpsMetadata({ accountId, patch }) {
   // In-flight guard: refuse dispatch while any ops-metadata save is mid-flight.
   // Double-click protection BEFORE a new requestId is minted.
   if (readAdminHubAccountOpsMetadataSaving()) return;
+
+  // U8 CAS: resolve the expected pre-image. The caller may supply an explicit
+  // `expectedRowVersion` (e.g. the U9 "Keep mine" retry pathway) — otherwise
+  // read the latest value from the current store snapshot.
+  const snapshotEntry = readAccountOpsMetadataEntry(accountId);
+  const resolvedExpectedRowVersion = Number.isInteger(expectedRowVersion) && expectedRowVersion >= 0
+    ? expectedRowVersion
+    : (Number.isInteger(snapshotEntry?.rowVersion) ? snapshotEntry.rowVersion : 0);
 
   const requestId = uid('account-ops-metadata');
   const mutation = { requestId, correlationId: requestId };
@@ -1761,6 +1769,7 @@ async function updateAccountOpsMetadata({ accountId, patch }) {
     const payload = await hubApi.updateAccountOpsMetadata({
       accountId,
       patch,
+      expectedRowVersion: resolvedExpectedRowVersion,
       mutation,
     });
     const entry = payload?.accountOpsMetadataEntry || null;
@@ -1775,6 +1784,11 @@ async function updateAccountOpsMetadata({ accountId, patch }) {
           internalNotes: entry.internalNotes ?? row.internalNotes,
           updatedAt: entry.updatedAt ?? row.updatedAt,
           updatedByAccountId: entry.updatedByAccountId ?? row.updatedByAccountId,
+          // U8 CAS: adopt the server-side bumped row_version so the next
+          // save carries the correct pre-image.
+          rowVersion: Number.isInteger(entry.rowVersion) ? entry.rowVersion : row.rowVersion,
+          // U9: clear any pre-existing conflict banner on successful save.
+          conflict: null,
         };
       }, 'Account ops metadata saved.');
       // P1.5 Phase A (U2): clear the dirty flag for this row now that the
@@ -1791,18 +1805,79 @@ async function updateAccountOpsMetadata({ accountId, patch }) {
     // metadata-panel auto-refresh.
     cascadeAdminOpsRefreshAfterMutation();
   } catch (error) {
-    // Roll back to the snapshot.
-    if (snapshot) {
-      patchAdminHubAccountOpsMetadataEntry((row) => (
-        row.accountId === accountId ? snapshot : row
-      ), '');
+    // U9: 409 `account_ops_metadata_stale` surfaces a row-level conflict
+    // banner; do NOT roll back the draft (preserve the user's work), do NOT
+    // clear the dirty flag (phase A U2 suppression continues to guard the
+    // panel refresh), and do NOT alert. Roll back only on non-conflict
+    // errors so the UX does not discard a user's typing on a network blip.
+    const errorCode = typeof error?.code === 'string' ? error.code : (typeof error?.payload?.code === 'string' ? error.payload.code : '');
+    const currentState = (error?.payload && isPlainObject(error.payload.currentState))
+      ? error.payload.currentState
+      : (isPlainObject(error?.currentState) ? error.currentState : null);
+    if (errorCode === 'account_ops_metadata_stale' && currentState) {
+      patchAdminHubAccountOpsMetadataEntry((row) => {
+        if (row.accountId !== accountId) return row;
+        return {
+          ...row,
+          // Keep the user's draft intact (row values reflect the optimistic
+          // patch) but stamp the conflict envelope so AccountOpsMetadataRow
+          // can render the Keep mine / Use theirs banner.
+          conflict: { currentState, at: Date.now() },
+        };
+      }, 'Account ops metadata has changed — review and resolve.');
+    } else {
+      // Roll back to the snapshot on non-conflict failures.
+      if (snapshot) {
+        patchAdminHubAccountOpsMetadataEntry((row) => (
+          row.accountId === accountId ? snapshot : row
+        ), '');
+      }
+      globalThis.alert?.(`Account ops metadata save failed: ${error?.message || 'Unknown error.'}`);
     }
-    globalThis.alert?.(`Account ops metadata save failed: ${error?.message || 'Unknown error.'}`);
   } finally {
     // Always clear the saving flag, whether success or failure, so the UI
     // re-enables the row's inputs and the next dispatch can proceed.
     patchAdminHubAccountOpsMetadataSaving('');
   }
+}
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function readAccountOpsMetadataEntry(accountId) {
+  const state = store?.getState?.() || null;
+  const directory = state?.adminHub?.accountOpsMetadata || null;
+  const accounts = Array.isArray(directory?.accounts) ? directory.accounts : [];
+  return accounts.find((row) => row.accountId === accountId) || null;
+}
+
+function adoptAccountOpsMetadataServerState({ accountId, currentState }) {
+  if (!(typeof accountId === 'string' && accountId)) return;
+  if (!isPlainObject(currentState)) return;
+  patchAdminHubAccountOpsMetadataEntry((row) => {
+    if (row.accountId !== accountId) return row;
+    return {
+      ...row,
+      opsStatus: typeof currentState.opsStatus === 'string' ? currentState.opsStatus : row.opsStatus,
+      planLabel: typeof currentState.planLabel === 'string' ? currentState.planLabel : (currentState.planLabel === null ? '' : row.planLabel),
+      tags: Array.isArray(currentState.tags) ? currentState.tags : row.tags,
+      // R25: `currentState.internalNotes` is null for ops-role viewers — keep
+      // the row's existing value so we do not overwrite it with the redacted
+      // null. Admin viewers see the real value and we adopt it.
+      internalNotes: currentState.internalNotes === null
+        ? row.internalNotes
+        : (typeof currentState.internalNotes === 'string' ? currentState.internalNotes : row.internalNotes),
+      updatedAt: Number.isInteger(currentState.updatedAt) ? currentState.updatedAt : row.updatedAt,
+      updatedByAccountId: typeof currentState.updatedByAccountId === 'string'
+        ? currentState.updatedByAccountId
+        : row.updatedByAccountId,
+      rowVersion: Number.isInteger(currentState.rowVersion) ? currentState.rowVersion : row.rowVersion,
+      // Dismiss the banner envelope now that the draft has been replaced.
+      conflict: null,
+    };
+  }, 'Account ops metadata — server state adopted.');
+  registerAccountOpsMetadataRowDirty(accountId, false);
 }
 
 // R10, R21: admin-only error event status mutation with optimistic update + rollback.
@@ -2424,6 +2499,22 @@ function handleGlobalAction(action, data) {
     updateAccountOpsMetadata({
       accountId: data?.accountId,
       patch: data?.patch,
+      expectedRowVersion: Number.isInteger(data?.expectedRowVersion) && data.expectedRowVersion >= 0
+        ? data.expectedRowVersion
+        : null,
+    });
+    return true;
+  }
+
+  if (action === 'account-ops-metadata-use-theirs') {
+    // U9: adopt the server's `currentState` from the 409 conflict envelope.
+    // The row has already updated its local inputs via setState; we mirror
+    // the adoption into the store so the dirty flag and conflict envelope
+    // are cleared, the row_version catches up to the server, and the
+    // banner dismisses on the next render.
+    adoptAccountOpsMetadataServerState({
+      accountId: data?.accountId,
+      currentState: data?.currentState,
     });
     return true;
   }

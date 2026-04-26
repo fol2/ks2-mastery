@@ -172,15 +172,24 @@ export function createHubApi({
       const url = buildRequestUrl(baseUrl, '/api/admin/ops/accounts-metadata');
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
-    async updateAccountOpsMetadata({ accountId, patch, mutation } = {}) {
+    async updateAccountOpsMetadata({ accountId, patch, expectedRowVersion = null, mutation } = {}) {
       const url = buildRequestUrl(
         baseUrl,
         `/api/admin/accounts/${encodeURIComponent(accountId)}/ops-metadata`,
       );
+      // U8 CAS: include the client-observed `expectedRowVersion` so the
+      // Worker helper can reject stale writes with 409 and echo
+      // `currentState`. The field is always sent (never omitted) so the
+      // Worker's mutation-payload hash is stable across clients.
+      const body = {
+        patch,
+        expectedRowVersion,
+        mutation,
+      };
       return fetchHubJson(fetch, url, {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ patch, mutation }),
+        body: JSON.stringify(body),
       }, authSession);
     },
     async updateOpsErrorEventStatus({

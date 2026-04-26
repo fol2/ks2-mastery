@@ -88,6 +88,22 @@ function normaliseRealDemoScalar(raw) {
 // ternary whose both branches evaluated to `{}`. Removed; the practice-
 // session demo sibling is now conditional on `practiceDemo != null` only.
 
+function normaliseCronReconcile(rawValue) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  return {
+    lastSuccessAt: asTs(raw.lastSuccessAt, 0),
+    lastFailureAt: asTs(raw.lastFailureAt, 0),
+    successCount: toNonNegativeInt(raw.successCount),
+    // I-RE-1 (re-review Important): retention-sweep failure timestamp. The
+    // cron runs reconcile + retention in the same trigger; retention
+    // failures alone (with reconcile healthy) previously left the banner
+    // silent. The DashboardKpiPanel predicate now fires when EITHER
+    // reconcile OR retention has a fresher failure stamp than
+    // lastSuccessAt.
+    retentionLastFailureAt: asTs(raw.retentionLastFailureAt, 0),
+  };
+}
+
 export function normaliseDashboardKpis(rawValue) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const accounts = isPlainObject(raw.accounts) ? raw.accounts : {};
@@ -159,6 +175,10 @@ export function normaliseDashboardKpis(rawValue) {
       } : {}),
     },
     accountOpsUpdates: { total: toNonNegativeInt(accountOpsUpdates.total) },
+    // U11: cron-driven reconciliation telemetry. When `lastFailureAt`
+    // exceeds `lastSuccessAt` the dashboard renders a warn banner so
+    // operators can rerun the manual reconcile script.
+    cronReconcile: normaliseCronReconcile(raw.cronReconcile),
   };
   // Preserve the P1.5 Phase A (U1) refresh envelope siblings when the caller
   // re-normalises after a patch. They are not part of the server payload
@@ -226,6 +246,10 @@ function normaliseAccountOpsMetadataEntry(rawEntry) {
   if (typeof raw.internalNotes === 'string') {
     internalNotes = raw.internalNotes;
   }
+  // U8 CAS: `rowVersion` is the monotonic CAS pre-image the row editor must
+  // round-trip back to the server. Server writes default to 0 for fresh rows.
+  const rowVersionRaw = Number(raw.rowVersion);
+  const rowVersion = Number.isInteger(rowVersionRaw) && rowVersionRaw >= 0 ? rowVersionRaw : 0;
   return {
     accountId: typeof raw.accountId === 'string' ? raw.accountId : '',
     email: typeof raw.email === 'string' ? raw.email : '',
@@ -237,6 +261,10 @@ function normaliseAccountOpsMetadataEntry(rawEntry) {
     internalNotes,
     updatedAt: asTs(raw.updatedAt, 0),
     updatedByAccountId: typeof raw.updatedByAccountId === 'string' ? raw.updatedByAccountId : '',
+    rowVersion,
+    // U9 UX: per-row conflict envelope carried by the dispatcher when 409
+    // fires. Null when no conflict; shape `{ currentState, at }` when set.
+    conflict: isPlainObject(raw.conflict) ? raw.conflict : null,
   };
 }
 
