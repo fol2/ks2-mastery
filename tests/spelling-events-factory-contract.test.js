@@ -1,12 +1,7 @@
-// Contract tests for `src/subjects/spelling/events.js` factories and the
-// `__setDefaultSpellingWordBySlug` test-only setter introduced in the
-// 2026-04-26 hotfix that decoupled events.js from the content dataset.
-//
-// Deliberately does NOT import `tests/helpers/seed-spelling-events-default.js`
-// — these tests own the seed lifecycle via the setter and assert both the
-// seeded and unseeded paths. Node's `--test` runs each test file in its own
-// subprocess, so the setter's module-scoped state is scoped to this file
-// and cannot leak into other test files.
+// Contract tests for `__setDefaultSpellingWordBySlug` and the fallback
+// path in `src/subjects/spelling/events.js`. Deliberately does NOT import
+// `tests/helpers/seed-spelling-events-default.js` — these tests own the
+// seed lifecycle via the setter and assert both seeded and unseeded paths.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -52,8 +47,13 @@ test('seeded default is used when no explicit wordMeta is passed', () => {
   const event = createSpellingGuardianRenewedEvent({
     learnerId: 'a', session: SESSION, slug: 'possess', reviewLevel: 1, createdAt: 1,
   });
-  assert.ok(event);
-  assert.equal(event.wordSlug, 'possess');
+  // Pin against the real seeded record (not just truthiness) so a future
+  // fallback stub returning `{ wordSlug: slug }` cannot pass silently.
+  const seeded = WORD_BY_SLUG.possess;
+  assert.equal(event.wordSlug, seeded.slug);
+  assert.equal(event.word, seeded.word);
+  assert.equal(event.family, seeded.family);
+  assert.equal(event.yearBand, seeded.year);
   resetSeed();
 });
 
@@ -66,9 +66,9 @@ test('__setDefaultSpellingWordBySlug(null) clears the seed', () => {
   assert.equal(event, null);
 });
 
-// Coercion contract — every non-plain-object input must collapse to the
-// "no-map" state (factories return null). This prevents a future refactor
-// that "helpfully" accepts Maps/arrays from silently changing behaviour.
+// Coercion contract — every non-object primitive must collapse to the
+// "no-map" state at the setter boundary (factories return null). Object-
+// shaped misuse (Arrays, Maps) is covered separately below.
 const NON_OBJECT_INPUTS = [
   ['undefined', undefined],
   ['string', 'not-a-map'],

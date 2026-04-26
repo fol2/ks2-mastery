@@ -430,10 +430,11 @@ test('worker spelling runtime imports the shared domain service instead of the b
 //
 // The regex is path-anchored (not import-keyword-anchored) so it catches
 // every reachable form: static `import`, `import ... from`, re-export
-// (`export ... from`), dynamic `await import(...)`, and side-effect
-// import. Every one of those produces an esbuild edge that `audit:client`
-// would reject, and every one of them is caught by `WORD_DATA_PIN_REGEX`.
-const WORD_DATA_PIN_REGEX = /['"]\.\/data\/(?:word-data|content-data)\.js['"]/;
+// (`export ... from`), dynamic `await import(...)`, side-effect import,
+// and template-literal dynamic import (esbuild bundles these when they
+// contain no interpolation). Every one of those produces an esbuild edge
+// that `audit:client` would reject, and every one is caught here.
+const WORD_DATA_PIN_REGEX = /['"`]\.\/data\/(?:word-data|content-data)\.js['"`]/;
 
 test('spelling events factory does not reference the spelling content dataset', async () => {
   const events = await readFile('src/subjects/spelling/events.js', 'utf8');
@@ -458,6 +459,7 @@ const FORBIDDEN_EVENTS_DATASET_SOURCE_FIXTURES = [
   `export { WORD_BY_SLUG } from './data/word-data.js';`,
   `const { WORD_BY_SLUG } = await import('./data/word-data.js');`,
   `import './data/word-data.js';`,
+  'const { WORD_BY_SLUG } = await import(`./data/word-data.js`);',
 ];
 
 for (const fixture of FORBIDDEN_EVENTS_DATASET_SOURCE_FIXTURES) {
