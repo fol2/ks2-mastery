@@ -346,13 +346,22 @@ export function createStore(subjects, { repositories, cacheSubjectUiWrites = fal
     const previousRoute = state.route;
     const previousMonsterCelebrations = state.monsterCelebrations;
     const nextState = stateFromRepositories(registry, resolvedRepositories);
+    // adv-219-006: `reloadFromRepositories` re-reads every subject UI entry
+    // from the persisted `subjectStates` snapshot, which makes this a
+    // rehydrate path just like bootstrap (createStore) and learner-switch
+    // (subjectUiForLearner). Without `rehydrate: true` the persisted entry
+    // would shallow-merge straight over defaults, echoing
+    // `phase: 'map'` + `mapUi` back into in-memory state — defeating the
+    // bootstrap sanitiser on persistence-retry, learner-deletion,
+    // server-synced settings, clear-all-progress, import-snapshot, and the
+    // Punctuation command response adapter. Thread the flag through.
     state = sanitiseState({
       ...nextState,
       route: preserveRoute ? previousRoute : nextState.route,
       monsterCelebrations: preserveMonsterCelebrations
         ? previousMonsterCelebrations
         : nextState.monsterCelebrations,
-    }, registry);
+    }, registry, { rehydrate: true });
     notify();
     return state;
   }

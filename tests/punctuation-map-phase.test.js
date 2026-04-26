@@ -577,3 +577,180 @@ test('U5 normalisePunctuationMapUi: rejects detailOpenSkillId not in PUNCTUATION
   const ui = normalisePunctuationMapUi({ detailOpenSkillId: 'nonexistent_xyz' });
   assert.equal(ui.detailOpenSkillId, null);
 });
+
+// ---------------------------------------------------------------------------
+// Adversarial reviewer HIGH adv-219-006 — `reloadFromRepositories` must
+// rehydrate through the sanitiser. Bootstrap already strips `phase: 'map'` +
+// `mapUi`, but the production hot paths (persistence retry, learner deletion,
+// settings sync, clear-all-progress, import-snapshot, Punctuation command
+// response) all call `reloadFromRepositories` which re-reads persisted UI and
+// MUST apply the same rehydrate sanitiser. Without this, the Map phase and
+// its filter state survive across reload paths mid-session.
+// ---------------------------------------------------------------------------
+
+test('U5 reloadFromRepositories strips persisted phase=map + mapUi (adv-219-006)', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({
+    storage,
+    subjectExposureGates: { [SUBJECT_EXPOSURE_GATES.punctuation]: true },
+  });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-open-map');
+  harness.dispatch('punctuation-map-status-filter', { value: 'weak' });
+  harness.dispatch('punctuation-map-monster-filter', { value: 'pealark' });
+  harness.dispatch('punctuation-skill-detail-open', { skillId: 'speech' });
+
+  // Pre-condition: Map phase + filters are live in memory AND persisted.
+  const pre = harness.store.getState().subjectUi.punctuation;
+  assert.equal(pre.phase, 'map');
+  assert.equal(pre.mapUi.statusFilter, 'weak');
+  assert.equal(pre.mapUi.monsterFilter, 'pealark');
+  assert.equal(pre.mapUi.detailOpenSkillId, 'speech');
+
+  // Hot path: reloadFromRepositories is called by persistence-retry,
+  // learner-deletion, settings-switch, clear-all-progress, import-snapshot
+  // and the Punctuation command response adapter. It re-reads persisted UI
+  // and must sanitise the rehydrate exactly like bootstrap does.
+  harness.store.reloadFromRepositories({ preserveRoute: true });
+
+  const post = harness.store.getState().subjectUi.punctuation;
+  assert.notEqual(
+    post.phase,
+    'map',
+    'phase "map" must NOT survive reloadFromRepositories',
+  );
+  assert.equal(
+    post.phase,
+    'setup',
+    'phase must coerce to "setup" on reload rehydrate',
+  );
+  // mapUi either stripped entirely or defaulted — either is acceptable per
+  // the rehydrate sanitiser contract.
+  const mapUi = post.mapUi;
+  const isStrippedOrDefault = mapUi === undefined
+    || (
+      mapUi.statusFilter === 'all'
+      && mapUi.monsterFilter === 'all'
+      && mapUi.detailOpenSkillId === null
+    );
+  assert.ok(
+    isStrippedOrDefault,
+    `mapUi must NOT carry persisted state after reload, got ${JSON.stringify(mapUi)}`,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Adversarial reviewer HIGH adv-219-007 — the five Map-scoped handlers must
+// gate on `ui.phase === 'map'`. Without the guard, a dispatch from Setup /
+// active-item / feedback / summary / unavailable / error lands `mapUi` in
+// state + localStorage, which then tempts the rehydrate path into restoring
+// filter state even when the reload sanitiser would otherwise clear it.
+// Handlers return `false` so the caller treats the dispatch as a miss.
+// ---------------------------------------------------------------------------
+
+test('U5 filter handlers refuse to dispatch from setup phase (adv-219-007)', () => {
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  // Pre-condition: phase is setup — NOT map.
+  assert.equal(punctuationState(harness).phase, 'setup');
+  assert.equal(punctuationState(harness).mapUi, undefined);
+
+  const statusResult = harness.handleSubjectAction('punctuation-map-status-filter', { value: 'weak' });
+  assert.equal(statusResult, false, 'status-filter must return false outside map phase');
+  assert.equal(punctuationState(harness).mapUi, undefined);
+
+  const monsterResult = harness.handleSubjectAction('punctuation-map-monster-filter', { value: 'pealark' });
+  assert.equal(monsterResult, false, 'monster-filter must return false outside map phase');
+  assert.equal(punctuationState(harness).mapUi, undefined);
+
+  const detailOpenResult = harness.handleSubjectAction('punctuation-skill-detail-open', { skillId: 'speech' });
+  assert.equal(detailOpenResult, false, 'skill-detail-open must return false outside map phase');
+  assert.equal(punctuationState(harness).mapUi, undefined);
+
+  const detailCloseResult = harness.handleSubjectAction('punctuation-skill-detail-close');
+  assert.equal(detailCloseResult, false, 'skill-detail-close must return false outside map phase');
+  assert.equal(punctuationState(harness).mapUi, undefined);
+
+  const detailTabResult = harness.handleSubjectAction('punctuation-skill-detail-tab', { value: 'practise' });
+  assert.equal(detailTabResult, false, 'skill-detail-tab must return false outside map phase');
+  assert.equal(punctuationState(harness).mapUi, undefined);
+});
+
+test('U5 filter handlers refuse to dispatch from active-item phase (adv-219-007)', () => {
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  // Seed an active-item phase directly — the guard is phase-level and does
+  // not require a real session, only that phase !== 'map'.
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: { id: 'session-1', currentItem: { id: 'item-1' } },
+  });
+  assert.equal(punctuationState(harness).phase, 'active-item');
+
+  const statusResult = harness.handleSubjectAction('punctuation-map-status-filter', { value: 'weak' });
+  assert.equal(statusResult, false);
+  assert.equal(
+    punctuationState(harness).mapUi,
+    undefined,
+    'active-item dispatch must NOT seed mapUi',
+  );
+  // Session must remain intact — the refused dispatch is a true no-op.
+  assert.ok(punctuationState(harness).session);
+
+  const detailOpenResult = harness.handleSubjectAction('punctuation-skill-detail-open', { skillId: 'speech' });
+  assert.equal(detailOpenResult, false);
+  assert.equal(punctuationState(harness).mapUi, undefined);
+});
+
+test('U5 filter handlers refuse to dispatch from feedback phase (adv-219-007)', () => {
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'feedback',
+    feedback: { kind: 'success', headline: 'Great!', body: '' },
+  });
+  assert.equal(punctuationState(harness).phase, 'feedback');
+
+  const monsterResult = harness.handleSubjectAction('punctuation-map-monster-filter', { value: 'pealark' });
+  assert.equal(monsterResult, false);
+  assert.equal(punctuationState(harness).mapUi, undefined);
+  assert.ok(
+    punctuationState(harness).feedback,
+    'feedback payload must remain intact on refused dispatch',
+  );
+});
+
+test('U5 filter handlers refuse to dispatch from summary phase (adv-219-007)', () => {
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'summary',
+    summary: { label: 'Session', total: 0, correct: 0 },
+  });
+  assert.equal(punctuationState(harness).phase, 'summary');
+
+  const tabResult = harness.handleSubjectAction('punctuation-skill-detail-tab', { value: 'practise' });
+  assert.equal(tabResult, false);
+  assert.equal(punctuationState(harness).mapUi, undefined);
+});
+
+test('U5 filter handlers ALLOW dispatch when phase is map (adv-219-007 positive)', () => {
+  // Control: the guard must only refuse non-map phases. Inside map the five
+  // handlers continue to mutate state exactly as before.
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-open-map');
+  assert.equal(punctuationState(harness).phase, 'map');
+
+  assert.equal(
+    harness.handleSubjectAction('punctuation-map-status-filter', { value: 'weak' }),
+    true,
+  );
+  assert.equal(punctuationState(harness).mapUi.statusFilter, 'weak');
+
+  assert.equal(
+    harness.handleSubjectAction('punctuation-skill-detail-open', { skillId: 'speech' }),
+    true,
+  );
+  assert.equal(punctuationState(harness).mapUi.detailOpenSkillId, 'speech');
+});

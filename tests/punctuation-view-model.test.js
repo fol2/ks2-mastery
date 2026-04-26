@@ -687,3 +687,43 @@ test('U1 safety: punctuation-view-model.js does not import react', async () => {
   assert.equal(/from ['"]react['"]/i.test(source), false);
   assert.equal(/require\(['"]react['"]\)/i.test(source), false);
 });
+
+// ---------------------------------------------------------------------------
+// Round-2 maintainability LOW — drift guard between the skill-id list in
+// `service-contract.js` (used by the normaliser + module handler) and the
+// full skill metadata in `read-model.js` (used by the Map scene + selectors).
+// A silent divergence would mean a Map entry exists without a validation
+// counterpart, or vice versa — a class of bug the frozen lists were meant
+// to prevent. One symmetric assertion keeps both files in lock-step.
+// ---------------------------------------------------------------------------
+
+test('U5 drift: PUNCTUATION_CLIENT_SKILL_IDS stays in lock-step with PUNCTUATION_CLIENT_SKILLS', async () => {
+  const { PUNCTUATION_CLIENT_SKILL_IDS } = await import(
+    '../src/subjects/punctuation/service-contract.js'
+  );
+  const { PUNCTUATION_CLIENT_SKILLS } = await import(
+    '../src/subjects/punctuation/read-model.js'
+  );
+  assert.equal(
+    PUNCTUATION_CLIENT_SKILL_IDS.length,
+    PUNCTUATION_CLIENT_SKILLS.length,
+    'skill-id list length diverged from skill metadata list',
+  );
+  const clientIds = new Set(PUNCTUATION_CLIENT_SKILLS.map((skill) => skill.id));
+  for (const id of PUNCTUATION_CLIENT_SKILL_IDS) {
+    assert.ok(
+      clientIds.has(id),
+      `${id} is in PUNCTUATION_CLIENT_SKILL_IDS but not in PUNCTUATION_CLIENT_SKILLS`,
+    );
+  }
+  // Symmetric direction: every skill id in the read-model must also appear
+  // in the validation list — otherwise a Map entry would render with no way
+  // to ever be dispatched by a guarded handler.
+  const contractIds = new Set(PUNCTUATION_CLIENT_SKILL_IDS);
+  for (const skill of PUNCTUATION_CLIENT_SKILLS) {
+    assert.ok(
+      contractIds.has(skill.id),
+      `${skill.id} is in PUNCTUATION_CLIENT_SKILLS but not in PUNCTUATION_CLIENT_SKILL_IDS`,
+    );
+  }
+});

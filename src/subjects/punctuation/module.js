@@ -162,6 +162,14 @@ export const punctuationModule = {
     }
 
     if (action === 'punctuation-map-status-filter') {
+      // adv-219-007: all five Map-scoped handlers below must gate on
+      // `ui.phase === 'map'`. A dispatch from Setup / active-item / feedback
+      // / summary / unavailable / error would otherwise seed `mapUi` into
+      // state + localStorage, which then tempts the rehydrate path into
+      // restoring filter state across reloads that the adv-219-001 /
+      // adv-219-006 sanitiser would otherwise clear. Return false so the
+      // caller treats the dispatch as a miss rather than a silent success.
+      if (ui.phase !== 'map') return false;
       const value = typeof data?.value === 'string' ? data.value : '';
       if (!PUNCTUATION_MAP_STATUS_FILTER_IDS.includes(value)) return false;
       const nextMapUi = {
@@ -173,6 +181,8 @@ export const punctuationModule = {
     }
 
     if (action === 'punctuation-map-monster-filter') {
+      // adv-219-007: phase guard — see punctuation-map-status-filter above.
+      if (ui.phase !== 'map') return false;
       const value = typeof data?.value === 'string' ? data.value : '';
       if (!PUNCTUATION_MAP_MONSTER_FILTER_IDS.includes(value)) return false;
       const nextMapUi = {
@@ -194,6 +204,8 @@ export const punctuationModule = {
     // strict unit boundary.
 
     if (action === 'punctuation-skill-detail-open') {
+      // adv-219-007: phase guard — detail state is Map-scoped.
+      if (ui.phase !== 'map') return false;
       // adv-219-004: skillId must be a published Punctuation skill id so the
       // U6 Skill Detail modal never opens against a rogue payload.
       // `isPublishedPunctuationSkillId` gates both the string shape and the
@@ -214,6 +226,8 @@ export const punctuationModule = {
     }
 
     if (action === 'punctuation-skill-detail-close') {
+      // adv-219-007: phase guard — detail state is Map-scoped.
+      if (ui.phase !== 'map') return false;
       const nextMapUi = {
         ...normalisePunctuationMapUi(ui.mapUi),
         detailOpenSkillId: null,
@@ -223,6 +237,8 @@ export const punctuationModule = {
     }
 
     if (action === 'punctuation-skill-detail-tab') {
+      // adv-219-007: phase guard — detail state is Map-scoped.
+      if (ui.phase !== 'map') return false;
       const rawTab = typeof data?.value === 'string' ? data.value : '';
       if (rawTab !== 'learn' && rawTab !== 'practise') return false;
       const nextMapUi = {
