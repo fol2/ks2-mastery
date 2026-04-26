@@ -1,0 +1,195 @@
+{
+  "id": "grammar-phase3-ux-reset",
+  "source": "docs/plans/2026-04-25-004-feat-grammar-phase3-ux-reset-plan.md",
+  "ownerPlan": "docs/plans/2026-04-25-004-feat-grammar-phase3-ux-reset-plan.md",
+  "status": "in-progress",
+  "contentReleaseId": "grammar-legacy-reviewed-2026-04-24",
+  "phase3": [
+    {
+      "id": "P3-U0",
+      "topic": "Roster 4+3 + writer self-heal + codex landmines",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U0",
+      "landedIn": "PR #184",
+      "supportingTests": [
+        "tests/grammar-monster-roster.test.js",
+        "tests/grammar-rewards.test.js"
+      ],
+      "plannedReason": "Foundational roster flip mirroring Punctuation precedent; read-time normaliser unions retired mastered into Concordium aggregate without mutation; writer self-heal suppresses duplicate reward events; Codex power-rank + featured-entry filters block reserved leaks."
+    },
+    {
+      "id": "P3-U8",
+      "topic": "View-model layer (session-ui + grammar-view-model)",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U8",
+      "landedIn": "PR #186",
+      "supportingTests": [
+        "tests/grammar-ui-model.test.js"
+      ],
+      "plannedReason": "Front-loaded pure helpers so every Phase 3 JSX unit (U1, U2, U3, U4, U5, U6b, U7) consumes one source of truth for visibility, labels, and frozen option lists; GRAMMAR_CHILD_FORBIDDEN_TERMS + isGrammarChildCopy declared here and iterated by downstream absence tests."
+    },
+    {
+      "id": "P3-U6a",
+      "topic": "transferLane client plumbing + save-transfer-evidence dispatcher",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U6a",
+      "landedIn": "PR #191",
+      "supportingTests": [
+        "tests/grammar-transfer-lane.test.js"
+      ],
+      "plannedReason": "Client-side normaliser for transferLane read-model, explicit save-transfer-evidence dispatcher with the {promptId, writing, selfAssessment:[{key,checked}]} contract, four error-code child-copy translations, and recursive redaction scan on reviewCopy/requestId."
+    },
+    {
+      "id": "P3-U1",
+      "topic": "Child dashboard (4 primary modes + Today cards + More practice disclosure)",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U1",
+      "landedIn": "PR #192",
+      "supportingTests": [
+        "tests/react-grammar-surface.test.js"
+      ],
+      "plannedReason": "GrammarSetupScene rewrite: hero copy, four primary mode cards (Smart/Trouble/Mini/Bank), Today tiles with empty-state callout, Writing Try secondary, More practice disclosure, Begin round CTA, Concordium progress string."
+    },
+    {
+      "id": "P3-U2",
+      "topic": "Grammar Bank scene + concept detail modal",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U2",
+      "landedIn": "PR #195",
+      "supportingTests": [
+        "tests/react-grammar-surface.test.js"
+      ],
+      "plannedReason": "Phase 'bank' scene renders 18 concept cards with status chips, cluster filter, search, and per-concept detail modal with Practise this routing via grammar-focus-concept."
+    },
+    {
+      "id": "P3-U3",
+      "topic": "Session redesign (one task, post-answer help only)",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U3",
+      "landedIn": "PR #197",
+      "supportingTests": [
+        "tests/react-grammar-surface.test.js"
+      ],
+      "plannedReason": "GrammarSessionScene trimmed to a single-task layout: pre-answer hides every help surface, post-answer-correct shows Next question only, post-answer-wrong shows repair + Explain another way. All pre-answer help gated behind grammarSessionHelpVisibility."
+    },
+    {
+      "id": "P3-U4",
+      "topic": "Mini-test strictness + post-finish review",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U4",
+      "landedIn": "PR #200",
+      "supportingTests": [
+        "tests/react-grammar-surface.test.js"
+      ],
+      "plannedReason": "Mini-test scene preserves answers across navigation, blocks worked/faded/AI/similar-problem commands during active mini-set, auto-finishes on timer expiry. Post-finish review renders score card + expandable per-question rows with Blank chip (never Wrong) and Practise this later routing."
+    },
+    {
+      "id": "P3-U5",
+      "topic": "Summary redesign (5 cards + mini-test score + Grown-up view)",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U5",
+      "landedIn": "PR #205",
+      "supportingTests": [
+        "tests/react-grammar-surface.test.js"
+      ],
+      "plannedReason": "GrammarSummaryScene: five summary cards (answered, correct, trouble, new-secure, monster-progress), three primary actions (Practise missed / Start another round / Open Grammar Bank), quiet Grown-up view secondary, mini-test summary with score + review + Fix missed concepts."
+    },
+    {
+      "id": "P3-U6b",
+      "topic": "Writing Try scene (non-scored writing with saved history)",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U6b",
+      "landedIn": "PR #220",
+      "supportingTests": [
+        "tests/grammar-transfer-scene.test.js"
+      ],
+      "plannedReason": "GrammarTransferScene renders prompt picker, checklist ticks, draft textarea, saved history list. Save round-trip leaves mastery/retryQueue/misconceptions/session untouched with positive evidence delta and zero reward.monster events."
+    },
+    {
+      "id": "P3-U7",
+      "topic": "Child/adult analytics split with confidence chips",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U7",
+      "landedIn": "PR #222",
+      "supportingTests": [
+        "tests/react-grammar-surface.test.js"
+      ],
+      "plannedReason": "Adult analytics gated behind grammar-open-analytics (phase 'analytics') routed from summary Grown-up view button. Adult surface retains Evidence snapshot / Stage 1 / Bellstorm bridge / Reserved reward routes vocabulary; child scenes never leak adult terms."
+    },
+    {
+      "id": "P3-U9",
+      "topic": "Visual + accessibility pass across Phase 3 scenes",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U9",
+      "landedIn": "PR #226",
+      "supportingTests": [
+        "tests/react-grammar-surface.test.js"
+      ],
+      "plannedReason": "Grammar-specific class prefixes (grammar-bank-*, grammar-transfer-*) — no shared CSS mutation. Focus rings, keyboard nav, aria-current/aria-pressed on mini-test nav. Spelling parity preserved byte-for-byte."
+    },
+    {
+      "id": "P3-U10",
+      "topic": "Regression + absence + fixture-driven invariants",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U10",
+      "landedIn": "PR #227",
+      "supportingTests": [
+        "tests/grammar-phase3-child-copy.test.js",
+        "tests/grammar-phase3-roster.test.js",
+        "tests/grammar-phase3-non-scored.test.js",
+        "tests/grammar-functionality-completeness.test.js"
+      ],
+      "plannedReason": "Phase 3 completeness gate: forbidden-term fixture iterated over every child surface (9 phases), adult-phase inverse-presence check for R7 copy preservation, roster absence + positive registry invariants, Writing Try non-scored invariants with positive transferEvidence delta, baseline fixture asserting zero planned rows at gate time."
+    }
+  ],
+  "invariants": [
+    {
+      "id": "P3-INV-forbidden-terms",
+      "topic": "GRAMMAR_CHILD_FORBIDDEN_TERMS absent from all nine child phases",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U10",
+      "landedIn": "PR #227",
+      "supportingTests": [
+        "tests/grammar-phase3-child-copy.test.js"
+      ],
+      "plannedReason": "Iterates the frozen forbidden-term list across dashboard/session-pre/session-post-correct/session-post-wrong/mini-test-before/mini-test-after/summary/bank/transfer + /\\bWorker\\b/i catch-all. Adult-only analytics phase inverse-checked for Evidence snapshot / Stage 1 / Bellstorm bridge / Reserved reward routes presence."
+    },
+    {
+      "id": "P3-INV-roster-absence",
+      "topic": "Reserved monsters (Glossbloom/Loomrill/Mirrane) absent from child UI and 4 active routes",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U10",
+      "landedIn": "PR #227",
+      "supportingTests": [
+        "tests/grammar-phase3-roster.test.js",
+        "tests/grammar-monster-roster.test.js"
+      ],
+      "plannedReason": "Reserved ids absent from every child-phase HTML rendering. MONSTERS registry retains reserved entries for asset tooling. GRAMMAR_MONSTER_ROUTES.length === 4 and MONSTERS_BY_SUBJECT.grammarReserve.length === 3."
+    },
+    {
+      "id": "P3-INV-non-scored",
+      "topic": "Writing Try save leaves mastery/retryQueue/misconceptions/session byte-equal with zero reward events",
+      "resolutionStatus": "completed",
+      "ownerUnit": "U10",
+      "landedIn": "PR #227",
+      "supportingTests": [
+        "tests/grammar-phase3-non-scored.test.js",
+        "tests/grammar-transfer-scene.test.js"
+      ],
+      "plannedReason": "Full Worker round-trip for save-transfer-evidence: deep-clone + JSON.stringify byte equality on mastery/retryQueue/misconceptions/session. No reward.monster / grammar.answer-submitted / grammar.concept-secured / grammar.misconception-seen events. Positive delta on state.transferEvidence."
+    }
+  ],
+  "phase3ReleaseGate": {
+    "ownerUnit": "U10",
+    "status": "completed",
+    "description": "Phase 3 completeness gate: every P3-U* and P3-INV-* row recorded completed with landedIn PR and supporting test files existing on disk.",
+    "evidence": [
+      "docs/plans/2026-04-25-004-feat-grammar-phase3-ux-reset-plan.md",
+      "tests/fixtures/grammar-phase3-baseline.json",
+      "tests/grammar-phase3-child-copy.test.js",
+      "tests/grammar-phase3-roster.test.js",
+      "tests/grammar-phase3-non-scored.test.js",
+      "tests/grammar-functionality-completeness.test.js"
+    ]
+  }
+}
