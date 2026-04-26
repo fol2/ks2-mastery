@@ -8,20 +8,37 @@ function cleanText(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
 }
 
-function currentPromptParts({ learnerId, state } = {}) {
+function currentPromptParts({ learnerId, state, snapshot = null } = {}) {
   const session = state?.phase === 'session' ? state.session : null;
   const card = session?.currentCard || null;
   const word = card?.word || null;
   const sentence = cleanText(card?.prompt?.sentence);
   if (!session?.id || !word?.word || !sentence) return null;
+  const safeSlug = cleanText(word.slug || card.slug).toLowerCase();
+  const canonicalWord = safeSlug ? snapshot?.wordBySlug?.[safeSlug] : null;
+  const sentenceWord = canonicalWord || word;
   return {
     learnerId,
     sessionId: session.id,
     slug: word.slug || card.slug || '',
     word: cleanText(word.word),
     sentence,
-    sentenceIndex: resolveSentenceIndex(word, sentence),
+    sentenceIndex: resolveSentenceIndex(sentenceWord, sentence),
   };
+}
+
+async function readRuntimeSnapshot({ repository, accountId } = {}) {
+  if (!repository) return null;
+  try {
+    const contentResult = typeof repository.readSpellingRuntimeContent === 'function'
+      ? await repository.readSpellingRuntimeContent(accountId, 'spelling')
+      : await repository.readSubjectContent(accountId, 'spelling');
+    return contentResult.snapshot || resolveRuntimeSnapshot(contentResult.content, {
+      referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+    });
+  } catch {
+    return null;
+  }
 }
 
 async function sessionPromptToken(parts) {
@@ -124,7 +141,8 @@ export async function resolveSpellingAudioRequest({
 
   const runtime = await repository.readSubjectRuntime(accountId, learnerId, 'spelling');
   const state = runtime.subjectRecord?.ui || null;
-  const parts = currentPromptParts({ learnerId, state });
+  const snapshot = await readRuntimeSnapshot({ repository, accountId });
+  const parts = currentPromptParts({ learnerId, state, snapshot });
   if (!parts) {
     const wordBankParts = await wordBankPromptParts({
       repository,
