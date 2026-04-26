@@ -6,7 +6,10 @@ import {
   PUNCTUATION_TELEMETRY_PAYLOAD_ALLOWLIST,
   emitPunctuationEvent,
 } from '../src/subjects/punctuation/telemetry.js';
-import { punctuationSubjectCommandActions } from '../src/subjects/punctuation/command-actions.js';
+import {
+  createPunctuationOnCommandError,
+  punctuationSubjectCommandActions,
+} from '../src/subjects/punctuation/command-actions.js';
 import { createAppHarness } from './helpers/app-harness.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { renderPunctuationSetupSceneStandalone } from './helpers/punctuation-scene-render.js';
@@ -234,15 +237,181 @@ test('PunctuationSetupScene mount emits a card-opened event with the subject id'
   });
 
   const emitted = calls.filter((entry) => entry.action === 'punctuation-record-event');
-  assert.ok(
-    emitted.some((entry) => entry.data && entry.data.kind === 'card-opened'),
-    `Setup mount must emit a card-opened telemetry event; saw ${JSON.stringify(calls)}`,
+  // Testing FIX follow-on (U4 review): tighten from `.some()` → exact-count
+  // equality so a future regression that fires `card-opened` twice per mount
+  // (e.g. a dropped useRef latch, or a StrictMode dual-invoke leaking through)
+  // fails loudly instead of silently doubling the telemetry volume.
+  const cardOpenedEmits = emitted.filter((entry) => entry.data && entry.data.kind === 'card-opened');
+  assert.strictEqual(
+    cardOpenedEmits.length,
+    1,
+    `Setup mount must emit exactly ONE card-opened telemetry event; saw ${cardOpenedEmits.length} in ${JSON.stringify(calls)}`,
   );
-  const cardOpenedCall = emitted.find((entry) => entry.data && entry.data.kind === 'card-opened');
+  const cardOpenedCall = cardOpenedEmits[0];
   assert.equal(cardOpenedCall.data.mutates, false);
   assert.ok(
     cardOpenedCall.data.payload,
     'card-opened payload must be an object',
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Phase 4 U4 review follow-on — testing FIX coverage (HIGH × 2, MEDIUM × 2).
+//
+// The U4 PR shipped the emitter + command-actions mapping + one Setup-mount
+// call site. Reviewers converged on four coverage gaps the original tests
+// missed:
+//
+//   1. HIGH: the `try / catch` swallow at `telemetry.js:122-134` had no test.
+//      A dispatch that throws (e.g. a controller mid-teardown) is supposed to
+//      return `false` without surfacing the error — pin that contract.
+//
+//   2. HIGH: the 256-char string-field cap at `telemetry.js:92` had no test.
+//      A rogue caller pushing a 300-char `skillId` at the Worker would bloat
+//      the U9 `punctuation_events` row without a guard. Pin the cap.
+//
+//   3. BLOCKER regression guard (MEDIUM → promoted): the convergent adv +
+//      correctness finding on PR #280. Without a direct test on
+//      `createPunctuationOnCommandError`, a future refactor could reintroduce
+//      the red-banner cascade. Pin the short-circuit on a
+//      `punctuation-record-event` context.
+//
+//   4. MEDIUM: the `PAYLOAD_ALLOWLIST` freeze contract at `telemetry.js:51`
+//      had no runtime assertion. A future hand-edit that drops `Object.freeze`
+//      on a per-kind entry would let a caller mutate the shared allowlist at
+//      runtime. Pin the freeze at root + per-kind.
+// ---------------------------------------------------------------------------
+
+test('emitPunctuationEvent returns false and does not throw when actions.dispatch throws', () => {
+  // Telemetry invariant (plan R10): fire-and-forget. If `actions.dispatch`
+  // throws mid-dispatch (e.g. the controller tore down between the emit site
+  // and the reducer, or a downstream reducer threw), the emitter must swallow
+  // the error and return `false` — never stall the caller.
+  let result;
+  assert.doesNotThrow(() => {
+    result = emitPunctuationEvent('card-opened', { cardId: 'smart' }, {
+      actions: {
+        dispatch: () => {
+          throw new Error('boom');
+        },
+      },
+      learnerId: 'learner-1',
+    });
+  });
+  assert.strictEqual(result, false, 'dispatch-throws branch must return false');
+});
+
+test('emitPunctuationEvent caps allowlisted string fields at 256 chars', () => {
+  // Plan R10 security invariant: string payload fields are capped at 256
+  // chars before dispatch so a rogue caller cannot push unbounded payloads
+  // at the Worker. The Worker half (U9) re-caps server-side, but the client
+  // emitter is the first line of defence.
+  const calls = [];
+  const longId = 'a'.repeat(300);
+  emitPunctuationEvent('skill-detail-opened', { skillId: longId }, {
+    actions: { dispatch: (action, data) => calls.push({ action, data }) },
+    learnerId: 'learner-1',
+  });
+  assert.strictEqual(calls.length, 1, 'dispatch must fire on a valid kind');
+  assert.strictEqual(
+    calls[0].data.payload.skillId.length,
+    256,
+    'skillId must be truncated to exactly 256 chars',
+  );
+  assert.strictEqual(
+    calls[0].data.payload.skillId,
+    'a'.repeat(256),
+    'truncation must preserve the leading 256 chars verbatim',
+  );
+});
+
+test('PUNCTUATION_TELEMETRY_PAYLOAD_ALLOWLIST is frozen at the root and per-kind', () => {
+  // Defence-in-depth freeze contract (plan R10): the shared allowlist table
+  // and every per-kind entry must be `Object.isFrozen` so a future caller
+  // cannot mutate the table at runtime. Without this pin, a hand-edit that
+  // dropped `Object.freeze` on a per-kind entry would silently open the
+  // door to per-caller allowlist drift.
+  assert.strictEqual(
+    Object.isFrozen(PUNCTUATION_TELEMETRY_PAYLOAD_ALLOWLIST),
+    true,
+    'root allowlist table must be frozen',
+  );
+  for (const kind of PUNCTUATION_TELEMETRY_EVENT_KINDS) {
+    assert.strictEqual(
+      Object.isFrozen(PUNCTUATION_TELEMETRY_PAYLOAD_ALLOWLIST[kind]),
+      true,
+      `allowlist for kind '${kind}' must be frozen`,
+    );
+  }
+});
+
+test('createPunctuationOnCommandError does NOT call setSubjectError for a record-event rejection', () => {
+  // BLOCKER regression guard (convergent adv + correctness finding on PR
+  // #280). Cascade identified: Setup mount → `card-opened` telemetry emit →
+  // `punctuation-record-event` dispatch → Worker
+  // `PUNCTUATION_COMMANDS` allowlist at
+  // `worker/src/subjects/punctuation/commands.js:13` does NOT yet include
+  // `record-event` (U9 scope) → rejection with `subject_command_not_found`.
+  // Without the short-circuit, `setSubjectError` would paint a red
+  // `Subject message: Punctuation command is not available.` banner on every
+  // Setup mount (and re-paint on every session-back).
+  //
+  // Contract: for a rejection landing in `onCommandError` with
+  // `action === 'punctuation-record-event'` (or `command === 'record-event'`)
+  // the handler MUST short-circuit BEFORE calling `setSubjectError`.
+  const setSubjectErrorCalls = [];
+  const updateSubjectUiCalls = [];
+  const onError = createPunctuationOnCommandError({
+    store: {
+      updateSubjectUi(subjectId, patch) {
+        updateSubjectUiCalls.push({ subjectId, patch });
+      },
+    },
+    setSubjectError(message) {
+      setSubjectErrorCalls.push(message);
+    },
+    warn: () => {},
+  });
+  const error = {
+    payload: {
+      code: 'subject_command_not_found',
+      message: 'Punctuation command is not available.',
+    },
+  };
+  onError(error, {
+    action: 'punctuation-record-event',
+    data: { kind: 'card-opened', payload: { cardId: 'smart' } },
+    learnerId: 'learner-1',
+    subjectId: 'punctuation',
+    command: 'record-event',
+    payload: { event: 'card-opened', payload: { cardId: 'smart' } },
+  });
+  assert.strictEqual(
+    setSubjectErrorCalls.length,
+    0,
+    'setSubjectError must NOT fire for a record-event rejection — telemetry is fire-and-forget',
+  );
+  // Non-record-event rejections (e.g. a save-prefs failure) must still
+  // surface — pin the default path stays intact.
+  onError(error, {
+    action: 'punctuation-set-mode',
+    data: {},
+    learnerId: 'learner-1',
+    subjectId: 'punctuation',
+    command: 'save-prefs',
+    payload: {},
+  });
+  assert.strictEqual(
+    setSubjectErrorCalls.length,
+    1,
+    'non-record-event rejections must still surface via setSubjectError',
+  );
+  // The save-prefs branch also clears the prefsMigrated latch — preserved.
+  assert.ok(
+    updateSubjectUiCalls.some(
+      (entry) => entry.subjectId === 'punctuation' && entry.patch && entry.patch.prefsMigrated === false,
+    ),
+    'save-prefs branch must still clear prefsMigrated (preserved behaviour)',
   );
 });
 

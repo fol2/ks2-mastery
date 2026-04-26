@@ -64,6 +64,35 @@ export function createPunctuationOnCommandError({
     if (context?.command === 'save-prefs') {
       store.updateSubjectUi('punctuation', { prefsMigrated: false });
     }
+    // Phase 4 U4 BLOCKER fix (convergent adversarial + correctness finding on
+    // PR #280). Cascade identified: Setup mount → `card-opened` telemetry
+    // emit → `punctuation-record-event` dispatch → Worker
+    // `PUNCTUATION_COMMANDS` allowlist at
+    // `worker/src/subjects/punctuation/commands.js:13` does NOT yet include
+    // `record-event` (U9 scope) → rejection with
+    // `subject_command_not_found` → without this short-circuit,
+    // `setSubjectError` would paint a red `Subject message: Punctuation
+    // command is not available.` banner on every Setup mount (and re-paint
+    // it on every session-back because `cardOpenedRef` is per-mount).
+    //
+    // Telemetry is FIRE-AND-FORGET by design (plan R10 / R11). A dispatch
+    // failure must never surface to the learner. Emit a dev-only
+    // console.debug for ops visibility, then early-return BEFORE the
+    // shared `setSubjectError` path fires.
+    //
+    // Matches the `save-prefs` bespoke branch precedent above (which
+    // adjusts ui state before the shared surfacing path). Difference: this
+    // branch also SKIPS the shared surfacing path entirely.
+    if (context?.action === 'punctuation-record-event' || context?.command === 'record-event') {
+      if (typeof console !== 'undefined' && typeof console?.debug === 'function') {
+        const code = error?.payload?.code || error?.code || '';
+        console.debug('[punctuation.telemetry] record-event dispatch failed', {
+          code,
+          action: context?.action || '',
+        });
+      }
+      return;
+    }
     setSubjectError(error?.payload?.message || error?.message || fallbackMessage);
   };
 }
@@ -154,9 +183,12 @@ export const punctuationSubjectCommandActions = Object.freeze({
   // Today (pre-U9), the Worker's `PUNCTUATION_COMMANDS` list at
   // `worker/src/subjects/punctuation/commands.js:13` does NOT yet
   // include `record-event`, so a real Worker round-trip returns
-  // `subject_command_not_found`. That failure is logged via
-  // `createPunctuationOnCommandError` but never propagates to the
-  // learner — telemetry is fire-and-forget by design.
+  // `subject_command_not_found`. That failure is short-circuited inside
+  // `createPunctuationOnCommandError` (see the
+  // `action === 'punctuation-record-event'` early-return branch) so it
+  // is NEVER surfaced to the learner — telemetry is fire-and-forget by
+  // design. Without that short-circuit, the shared `setSubjectError`
+  // path would paint a red banner on every Setup mount.
   'punctuation-record-event': {
     mutates: false,
     command: 'record-event',

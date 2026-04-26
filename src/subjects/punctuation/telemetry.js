@@ -107,8 +107,11 @@ function buildAllowlistedPayload(kind, payload) {
  * Returns `true` when a dispatch fired, `false` when the kind was not
  * on the whitelist or the context was too degraded to dispatch. The
  * emitter is fire-and-forget: any downstream failure (Worker 4xx / 5xx /
- * network timeout) is handled by the existing `onCommandError` path in
- * `command-actions.js` and never propagates to the learner.
+ * network timeout) is routed through
+ * `createPunctuationOnCommandError`, which has a dedicated early-return
+ * branch for `punctuation-record-event` that short-circuits BEFORE the
+ * shared `setSubjectError` path fires — so telemetry dispatch failures
+ * never surface to the learner.
  *
  * @param {string} kind One of PUNCTUATION_TELEMETRY_EVENT_KINDS.
  * @param {object} payload Raw payload; non-allowlisted fields are stripped.
