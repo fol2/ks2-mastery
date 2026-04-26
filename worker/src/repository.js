@@ -4381,18 +4381,29 @@ async function listPublicBootstrapEventRows(db, learnerIds) {
 // per the plan (line 792: "never a password hash").
 //
 // Input format is strictly:
-//   accountRevision:<N>;selectedLearnerRevision:<M>;bootstrapCapacityVersion:<V>;accountLearnerListRevision:<L>
+//   accountId:<id>;accountRevision:<N>;selectedLearnerRevision:<M>;bootstrapCapacityVersion:<V>;accountLearnerListRevision:<L>
+//
+// The `accountId` prefix (U7 adv-u7-r1-002) salts the hash per account so
+// two accounts with identical (N,M,V,L) tuples no longer collide. Without
+// this salt, an operator correlating hashes across requests could infer
+// state-equivalence between accounts. No user data leaks either way
+// because session scope already isolates responses, but the hash-level
+// privacy hardening closes the side-channel.
 //
 // Changing this input format (or the truncation length) is equivalent to
 // bumping `BOOTSTRAP_CAPACITY_VERSION` — stale clients will silently
-// reject `notModified` responses via the schema check.
+// reject `notModified` responses via the schema check. The version bump
+// in U7 from 1→2 already forces pre-U7 clients to miss, so adding the
+// accountId salt costs no extra roundtrip on rollout.
 export async function computeBootstrapRevisionHash({
+  accountId,
   accountRevision,
   selectedLearnerRevision,
   bootstrapCapacityVersion,
   accountLearnerListRevision,
 }) {
   const input = [
+    `accountId:${String(accountId || '')}`,
     `accountRevision:${Number(accountRevision) || 0}`,
     `selectedLearnerRevision:${Number(selectedLearnerRevision) || 0}`,
     `bootstrapCapacityVersion:${Number(bootstrapCapacityVersion) || 0}`,
@@ -4591,6 +4602,7 @@ async function bootstrapBundle(db, accountId, {
   const selectedLearnerRevision = selectedId ? (learnerRevisions[selectedId] || 0) : 0;
   const revisionHash = revisionEnvelope
     ? await computeBootstrapRevisionHash({
+      accountId,
       accountRevision: accountRevisionValue,
       selectedLearnerRevision,
       bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
@@ -4774,6 +4786,7 @@ async function bootstrapNotModifiedProbe(db, accountId, {
     : null;
   const selectedLearnerRevision = Number(selectedRow?.state_revision) || 0;
   const serverHash = await computeBootstrapRevisionHash({
+    accountId,
     accountRevision: accountRevisionValue,
     selectedLearnerRevision,
     bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,

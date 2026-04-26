@@ -171,11 +171,13 @@ test('U7 scenario 15: envelope shape snapshot matches BOOTSTRAP_CAPACITY_VERSION
 
 // ---------------------------------------------------------------------------
 // Scenario 23: hash function is SHA-256 truncated to 16 bytes hex. Input
-// format is strictly `accountRevision:N;selectedLearnerRevision:M;
-// bootstrapCapacityVersion:V;accountLearnerListRevision:L`.
+// format is strictly `accountId:<id>;accountRevision:N;selectedLearnerRevision:M;
+// bootstrapCapacityVersion:V;accountLearnerListRevision:L`. The accountId
+// salt (U7 adv-u7-r1-002) prevents cross-account hash collisions.
 // ---------------------------------------------------------------------------
 test('U7 scenario 23: computeBootstrapRevisionHash is SHA-256 truncated 16 bytes hex', async () => {
   const hash = await computeBootstrapRevisionHash({
+    accountId: 'adult-u7',
     accountRevision: 3,
     selectedLearnerRevision: 7,
     bootstrapCapacityVersion: 2,
@@ -187,6 +189,7 @@ test('U7 scenario 23: computeBootstrapRevisionHash is SHA-256 truncated 16 bytes
 
   // Same inputs → same hash; different inputs → different hashes.
   const again = await computeBootstrapRevisionHash({
+    accountId: 'adult-u7',
     accountRevision: 3,
     selectedLearnerRevision: 7,
     bootstrapCapacityVersion: 2,
@@ -195,12 +198,109 @@ test('U7 scenario 23: computeBootstrapRevisionHash is SHA-256 truncated 16 bytes
   assert.equal(hash, again, 'Deterministic.');
 
   const different = await computeBootstrapRevisionHash({
+    accountId: 'adult-u7',
     accountRevision: 3,
     selectedLearnerRevision: 7,
     bootstrapCapacityVersion: 2,
     accountLearnerListRevision: 2,
   });
   assert.notEqual(hash, different, 'accountLearnerListRevision change flips hash.');
+});
+
+// ---------------------------------------------------------------------------
+// U7 adv-u7-r1-002: revision hash MUST include the accountId salt so two
+// accounts at identical (N,M,V,L) tuples produce DIFFERENT hashes. This
+// closes the operator-log state-equivalence oracle where fresh accounts at
+// (0,0,2,0) would otherwise hash identically.
+// ---------------------------------------------------------------------------
+test('U7 adv-u7-r1-002: hash salts by accountId (no cross-account collision)', async () => {
+  const accountA = await computeBootstrapRevisionHash({
+    accountId: 'adult-a',
+    accountRevision: 0,
+    selectedLearnerRevision: 0,
+    bootstrapCapacityVersion: 2,
+    accountLearnerListRevision: 0,
+  });
+  const accountB = await computeBootstrapRevisionHash({
+    accountId: 'adult-b',
+    accountRevision: 0,
+    selectedLearnerRevision: 0,
+    bootstrapCapacityVersion: 2,
+    accountLearnerListRevision: 0,
+  });
+  assert.notEqual(accountA, accountB,
+    'Fresh accounts A and B with identical tuples must not collide.');
+
+  // Same accountId + same tuple still gives the same hash (cacheable).
+  const accountAAgain = await computeBootstrapRevisionHash({
+    accountId: 'adult-a',
+    accountRevision: 0,
+    selectedLearnerRevision: 0,
+    bootstrapCapacityVersion: 2,
+    accountLearnerListRevision: 0,
+  });
+  assert.equal(accountA, accountAAgain,
+    'Same accountId with same tuple is deterministic (cacheable).');
+
+  // Active accounts with identical (N,M,V,L) tuples must also differ when
+  // accountId differs.
+  const activeA = await computeBootstrapRevisionHash({
+    accountId: 'adult-a',
+    accountRevision: 10,
+    selectedLearnerRevision: 25,
+    bootstrapCapacityVersion: 2,
+    accountLearnerListRevision: 3,
+  });
+  const activeB = await computeBootstrapRevisionHash({
+    accountId: 'adult-b',
+    accountRevision: 10,
+    selectedLearnerRevision: 25,
+    bootstrapCapacityVersion: 2,
+    accountLearnerListRevision: 3,
+  });
+  assert.notEqual(activeA, activeB,
+    'Active accounts with identical tuples must not collide either.');
+});
+
+// ---------------------------------------------------------------------------
+// U7 adv-u7-r1-002: end-to-end — two accounts in the same worker with
+// identical revision tuples must produce different hash fields in the
+// bootstrap response.
+// ---------------------------------------------------------------------------
+test('U7 adv-u7-r1-002: two fresh accounts emit different revision.hash values', async () => {
+  const server = createServer();
+  try {
+    runSql(server, `
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, created_at, updated_at, selected_learner_id)
+      VALUES ('adult-other', 'other@test', 'Other Adult', 'parent', ?, ?, NULL)
+    `, [NOW, NOW]);
+    insertLearner(server, 'adult-u7', { id: 'learner-u7', name: 'U7 Solo', sortIndex: 0, selected: true });
+    insertLearner(server, 'adult-other', { id: 'learner-other', name: 'Other Solo', sortIndex: 0, selected: true });
+
+    // Caller session is adult-u7 (default accountId in createServer).
+    const firstResponse = await getBootstrap(server);
+    const firstPayload = await readJsonBody(firstResponse);
+    const hashA = firstPayload.revision.hash;
+
+    // Switch the session to adult-other via the dev-stub account header so
+    // the worker attributes the bootstrap to a different accountId while
+    // keeping state structurally identical.
+    const secondResponse = await server.fetchAs('adult-other', `${BASE_URL}/api/bootstrap`, {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+        'x-ks2-public-read-models': '1',
+      },
+    });
+    const secondPayload = await readJsonBody(secondResponse);
+    const hashB = secondPayload.revision.hash;
+
+    assert.ok(hashA && hashB);
+    assert.notEqual(hashA, hashB,
+      'Two fresh accounts with identical (N,M,V,L) must produce different hashes.');
+  } finally {
+    server.close();
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -439,6 +539,7 @@ test('U7 scenario 13: server schema mismatch — full bundle on stale version', 
     // with the current BOOTSTRAP_CAPACITY_VERSION; a v1-based hash therefore
     // cannot match even if the rest of the state is unchanged.
     const staleHash = await computeBootstrapRevisionHash({
+      accountId: 'adult-u7',
       accountRevision: 0,
       selectedLearnerRevision: 0,
       bootstrapCapacityVersion: 1,
