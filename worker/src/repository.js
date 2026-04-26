@@ -2122,7 +2122,8 @@ async function readAccountOpsMetadataDirectory(db, { now, actorAccountId, actorP
         COALESCE(om.tags_json, '[]') AS tags_json,
         om.internal_notes AS internal_notes,
         COALESCE(om.updated_at, a.updated_at) AS updated_at,
-        om.updated_by_account_id AS updated_by_account_id
+        om.updated_by_account_id AS updated_by_account_id,
+        COALESCE(om.row_version, 0) AS row_version
       FROM adult_accounts a
       LEFT JOIN account_ops_metadata om ON om.account_id = a.id
       WHERE COALESCE(a.account_type, 'real') <> 'demo'
@@ -2143,7 +2144,8 @@ async function readAccountOpsMetadataDirectory(db, { now, actorAccountId, actorP
         '[]' AS tags_json,
         NULL AS internal_notes,
         updated_at AS updated_at,
-        NULL AS updated_by_account_id
+        NULL AS updated_by_account_id,
+        0 AS row_version
       FROM adult_accounts
       WHERE COALESCE(account_type, 'real') <> 'demo'
       ORDER BY updated_at DESC, id ASC
@@ -2169,6 +2171,9 @@ async function readAccountOpsMetadataDirectory(db, { now, actorAccountId, actorP
         : null,
       updatedAt: Number(row?.updated_at) || 0,
       updatedByAccountId: typeof row?.updated_by_account_id === 'string' ? row.updated_by_account_id : null,
+      // U8 CAS: surface the row_version alongside every admin row so the
+      // client can carry it as `expectedRowVersion` on the next mutation.
+      rowVersion: Math.max(0, Number(row?.row_version) || 0),
     })),
   };
 }
@@ -2433,10 +2438,60 @@ function validateAccountOpsPatch(rawPatch) {
 async function loadAccountOpsMetadataRow(db, targetAccountId) {
   return first(db, `
     SELECT account_id, ops_status, plan_label, tags_json, internal_notes,
-           updated_at, updated_by_account_id
+           updated_at, updated_by_account_id, row_version
     FROM account_ops_metadata
     WHERE account_id = ?
   `, [targetAccountId]);
+}
+
+// U8 CAS helper: normalise the incoming `expectedRowVersion`. Accepts
+// non-negative integers only. Omission is treated as `null` so the mutation
+// payload hash remains stable for legacy (pre-CAS) callers during the
+// transitional window between worker deploy and client update. On the
+// mutation path a null value signals "no CAS pre-image was supplied" and
+// is rejected with a 400 so the client is forced to integrate the field.
+function normaliseExpectedRowVersion(value) {
+  if (value === null || value === undefined) return null;
+  const numeric = Number(value);
+  if (!Number.isInteger(numeric) || numeric < 0) {
+    throw new BadRequestError('Expected row version must be a non-negative integer.', {
+      code: 'validation_failed',
+      field: 'expectedRowVersion',
+    });
+  }
+  return numeric;
+}
+
+// U8 CAS helper: build the redacted `currentState` echo that accompanies a
+// 409 response. `internal_notes` is admin-only (R25); ops-role viewers see
+// `null` for that field while all other fields surface unchanged so the
+// 409 diff banner can still show them where the row sits.
+function buildAccountOpsMetadataConflictState(row, actorPlatformRole, targetAccountId) {
+  const includeNotes = actorPlatformRole === 'admin';
+  if (!row) {
+    return {
+      accountId: targetAccountId,
+      opsStatus: 'active',
+      planLabel: null,
+      tags: [],
+      internalNotes: null,
+      updatedAt: 0,
+      updatedByAccountId: null,
+      rowVersion: 0,
+    };
+  }
+  return {
+    accountId: typeof row.account_id === 'string' ? row.account_id : targetAccountId,
+    opsStatus: typeof row.ops_status === 'string' ? row.ops_status : 'active',
+    planLabel: typeof row.plan_label === 'string' ? row.plan_label : null,
+    tags: normaliseTagsJson(row.tags_json),
+    internalNotes: includeNotes
+      ? (typeof row.internal_notes === 'string' ? row.internal_notes : null)
+      : null,
+    updatedAt: Number(row.updated_at) || 0,
+    updatedByAccountId: typeof row.updated_by_account_id === 'string' ? row.updated_by_account_id : null,
+    rowVersion: Math.max(0, Number(row.row_version) || 0),
+  };
 }
 
 function accountOpsMetadataRowToModel(row, targetAccountId, includeNotes) {
@@ -2468,6 +2523,7 @@ async function updateAccountOpsMetadata(db, {
   actorAccountId,
   targetAccountId,
   patch: rawPatch,
+  expectedRowVersion = null,
   mutation,
   nowTs,
 } = {}) {
@@ -2480,6 +2536,21 @@ async function updateAccountOpsMetadata(db, {
   requireAccountRoleManager(actor);
 
   const patch = validateAccountOpsPatch(rawPatch);
+  // U8 CAS: `expectedRowVersion` is required on every mutation envelope. It
+  // is a non-negative integer representing the `account_ops_metadata.row_version`
+  // the client observed at read time. On success, `row_version` bumps by 1;
+  // on mismatch, the helper responds with 409 `account_ops_metadata_stale`.
+  // Including the field in the payload hash ensures a 409-retry carrying a
+  // fresh `expectedRowVersion` is not idempotency-replayed as the original
+  // stale attempt.
+  const normalisedExpectedRowVersion = normaliseExpectedRowVersion(expectedRowVersion);
+  if (normalisedExpectedRowVersion === null) {
+    throw new BadRequestError('Expected row version is required for account ops metadata updates.', {
+      code: 'validation_failed',
+      field: 'expectedRowVersion',
+    });
+  }
+  const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
   const { requestId, correlationId } = normaliseMutationEnvelope(mutation, {
     scopeType: 'account',
     scopeId: targetAccountId,
@@ -2488,6 +2559,7 @@ async function updateAccountOpsMetadata(db, {
   const requestHash = mutationPayloadHash(ACCOUNT_OPS_METADATA_MUTATION_KIND, {
     targetAccountId,
     patch,
+    expectedRowVersion: normalisedExpectedRowVersion,
   });
 
   // Idempotency preflight — replay-safe without relying on savepoints.
@@ -2529,6 +2601,37 @@ async function updateAccountOpsMetadata(db, {
   }
 
   const existingRow = await loadAccountOpsMetadataRow(db, targetAccountId);
+  const existingRowVersion = Math.max(0, Number(existingRow?.row_version) || 0);
+
+  // U8 CAS layer 1 — pre-check. Compare the client-supplied expected pre-image
+  // against the on-disk `row_version`. The common-case path rejects here so
+  // the subsequent batch is never composed when the read-modify-write lost
+  // the race (mirrors `updateOpsErrorEventStatus` pattern).
+  if (existingRow && existingRowVersion !== normalisedExpectedRowVersion) {
+    throw new ConflictError('Account ops metadata has changed since it was last read. Re-read and retry.', {
+      code: 'account_ops_metadata_stale',
+      retryable: true,
+      accountId: targetAccountId,
+      expected: normalisedExpectedRowVersion,
+      current: existingRowVersion,
+      currentState: buildAccountOpsMetadataConflictState(existingRow, actorPlatformRole, targetAccountId),
+    });
+  }
+  // Fresh-row edit: the migration defaults `row_version` to 0, and the first
+  // UPSERT must therefore supply `expectedRowVersion = 0`. Reject any other
+  // value as stale so a mis-configured client never silently wins on a
+  // missing row.
+  if (!existingRow && normalisedExpectedRowVersion !== 0) {
+    throw new ConflictError('Account ops metadata has changed since it was last read. Re-read and retry.', {
+      code: 'account_ops_metadata_stale',
+      retryable: true,
+      accountId: targetAccountId,
+      expected: normalisedExpectedRowVersion,
+      current: 0,
+      currentState: buildAccountOpsMetadataConflictState(null, actorPlatformRole, targetAccountId),
+    });
+  }
+
   const existingTags = normaliseTagsJson(existingRow?.tags_json);
   const mergedOpsStatus = Object.prototype.hasOwnProperty.call(patch, 'opsStatus')
     ? patch.opsStatus
@@ -2543,6 +2646,7 @@ async function updateAccountOpsMetadata(db, {
     ? patch.internalNotes
     : (typeof existingRow?.internal_notes === 'string' ? existingRow.internal_notes : null);
   const mergedTagsJson = JSON.stringify(mergedTags);
+  const nextRowVersion = normalisedExpectedRowVersion + 1;
 
   const appliedRow = {
     accountId: targetAccountId,
@@ -2552,6 +2656,7 @@ async function updateAccountOpsMetadata(db, {
     internalNotes: mergedInternalNotes,
     updatedAt: ts,
     updatedByAccountId: actorAccountId,
+    rowVersion: nextRowVersion,
   };
   const mutationMeta = {
     policyVersion: MUTATION_POLICY_VERSION,
@@ -2562,12 +2667,20 @@ async function updateAccountOpsMetadata(db, {
     correlationId,
     appliedAt: ts,
     replayed: false,
+    rowVersion: nextRowVersion,
   };
   const response = {
     accountOpsMetadataEntry: appliedRow,
     opsMetadataMutation: mutationMeta,
   };
 
+  // U8 CAS layer 2 — SQL guard. The UPSERT carries `row_version = ?` in the
+  // ON CONFLICT branch. A concurrent write that beat the pre-check SELECT
+  // produces zero affected rows; the post-batch verify (layer 3) then
+  // surfaces 409. The insert branch fires only on the fresh-row path
+  // (expectedRowVersion = 0 → nextRowVersion = 1). NOTE: Phase D's U15
+  // will extend this UPDATE to bump `status_revision` when `ops_status`
+  // changes — Phase C must NOT touch that column (see plan §Phase D).
   // R21 batch atomicity: UPSERT + receipt + counter bump commit together.
   await batch(db, [
     bindStatement(db, `
@@ -2578,16 +2691,19 @@ async function updateAccountOpsMetadata(db, {
         tags_json,
         internal_notes,
         updated_at,
-        updated_by_account_id
+        updated_by_account_id,
+        row_version
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(account_id) DO UPDATE SET
         ops_status = excluded.ops_status,
         plan_label = excluded.plan_label,
         tags_json = excluded.tags_json,
         internal_notes = excluded.internal_notes,
         updated_at = excluded.updated_at,
-        updated_by_account_id = excluded.updated_by_account_id
+        updated_by_account_id = excluded.updated_by_account_id,
+        row_version = account_ops_metadata.row_version + 1
+      WHERE account_ops_metadata.row_version = ?
     `, [
       targetAccountId,
       mergedOpsStatus,
@@ -2596,6 +2712,8 @@ async function updateAccountOpsMetadata(db, {
       mergedInternalNotes,
       ts,
       actorAccountId,
+      nextRowVersion,
+      normalisedExpectedRowVersion,
     ]),
     storeMutationReceiptStatement(db, {
       accountId: actorAccountId,
@@ -2610,6 +2728,23 @@ async function updateAccountOpsMetadata(db, {
     }),
     bumpAdminKpiMetricStatement(db, KPI_ACCOUNT_OPS_UPDATES_METRIC_KEY, ts, 1),
   ]);
+
+  // U8 CAS layer 3 — post-batch verify. Catches the narrow window between
+  // the pre-check SELECT and the batch commit where a concurrent writer
+  // could have raced through. Counter deltas already committed in that
+  // tail window (accepted drift; KPI reconciliation from U10 closes it).
+  const postBatchRow = await loadAccountOpsMetadataRow(db, targetAccountId);
+  const postBatchRowVersion = Math.max(0, Number(postBatchRow?.row_version) || 0);
+  if (postBatchRowVersion !== nextRowVersion) {
+    throw new ConflictError('Account ops metadata write lost to a concurrent update. Re-read and retry.', {
+      code: 'account_ops_metadata_stale',
+      retryable: true,
+      accountId: targetAccountId,
+      expected: nextRowVersion,
+      current: postBatchRowVersion,
+      currentState: buildAccountOpsMetadataConflictState(postBatchRow, actorPlatformRole, targetAccountId),
+    });
+  }
 
   // Return the merged shape so callers (and optimistic clients) get the final row.
   return response;
@@ -6454,11 +6589,17 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         nowTs: nowFactory(),
       });
     },
-    async updateAccountOpsMetadata(accountId, { targetAccountId, patch, mutation = {} } = {}) {
+    async updateAccountOpsMetadata(accountId, {
+      targetAccountId,
+      patch,
+      expectedRowVersion = null,
+      mutation = {},
+    } = {}) {
       return updateAccountOpsMetadata(db, {
         actorAccountId: accountId,
         targetAccountId,
         patch,
+        expectedRowVersion,
         mutation,
         nowTs: nowFactory(),
       });

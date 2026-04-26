@@ -121,7 +121,21 @@ function kpiValue(server, key) {
   return row ? Number(row.metric_count) : 0;
 }
 
-async function putOpsMetadata(server, as, targetAccountId, { patch, mutation, role = null }) {
+function readOpsMetadataRowVersion(server, targetAccountId) {
+  const row = server.DB.db.prepare(
+    'SELECT row_version FROM account_ops_metadata WHERE account_id = ?',
+  ).get(targetAccountId);
+  if (!row) return 0;
+  return Math.max(0, Number(row.row_version) || 0);
+}
+
+async function putOpsMetadata(server, as, targetAccountId, { patch, mutation, role = null, expectedRowVersion = undefined }) {
+  // U8 CAS: auto-resolve the client-observed pre-image from the DB state
+  // when the caller does not pin a specific value. Tests that exercise the
+  // CAS path pin `expectedRowVersion` explicitly.
+  const resolvedExpectedRowVersion = expectedRowVersion === undefined
+    ? readOpsMetadataRowVersion(server, targetAccountId)
+    : expectedRowVersion;
   return server.fetchAs(as, `https://repo.test/api/admin/accounts/${encodeURIComponent(targetAccountId)}/ops-metadata`, {
     method: 'PUT',
     headers: {
@@ -129,7 +143,7 @@ async function putOpsMetadata(server, as, targetAccountId, { patch, mutation, ro
       origin: 'https://repo.test',
       'x-ks2-dev-platform-role': role || 'admin',
     },
-    body: JSON.stringify({ patch, mutation }),
+    body: JSON.stringify({ patch, expectedRowVersion: resolvedExpectedRowVersion, mutation }),
   });
 }
 
@@ -257,9 +271,14 @@ test('U5 idempotency — same requestId + same payload returns stored response a
     const now = Date.now();
     seedCore(server, now);
 
+    // U8 CAS: pin `expectedRowVersion = 0` on both calls so the replay carries
+    // the identical request hash as the original, keeping the idempotent
+    // replay contract (the server's row_version has bumped to 1 but the
+    // idempotency table preflight short-circuits before the CAS pre-check).
     const body = {
       patch: { opsStatus: 'suspended', planLabel: 'Trial' },
       mutation: { requestId: 'req-idem-1', correlationId: 'corr-idem-1' },
+      expectedRowVersion: 0,
     };
 
     const first = await putOpsMetadata(server, 'adult-admin', 'adult-parent', body);

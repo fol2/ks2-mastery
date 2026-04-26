@@ -226,6 +226,10 @@ function normaliseAccountOpsMetadataEntry(rawEntry) {
   if (typeof raw.internalNotes === 'string') {
     internalNotes = raw.internalNotes;
   }
+  // U8 CAS: `rowVersion` is the monotonic CAS pre-image the row editor must
+  // round-trip back to the server. Server writes default to 0 for fresh rows.
+  const rowVersionRaw = Number(raw.rowVersion);
+  const rowVersion = Number.isInteger(rowVersionRaw) && rowVersionRaw >= 0 ? rowVersionRaw : 0;
   return {
     accountId: typeof raw.accountId === 'string' ? raw.accountId : '',
     email: typeof raw.email === 'string' ? raw.email : '',
@@ -237,6 +241,10 @@ function normaliseAccountOpsMetadataEntry(rawEntry) {
     internalNotes,
     updatedAt: asTs(raw.updatedAt, 0),
     updatedByAccountId: typeof raw.updatedByAccountId === 'string' ? raw.updatedByAccountId : '',
+    rowVersion,
+    // U9 UX: per-row conflict envelope carried by the dispatcher when 409
+    // fires. Null when no conflict; shape `{ currentState, at }` when set.
+    conflict: isPlainObject(raw.conflict) ? raw.conflict : null,
   };
 }
 
