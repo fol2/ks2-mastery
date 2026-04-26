@@ -41,6 +41,7 @@ import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
   bellstormSceneForPhase,
   composeIsDisabled,
+  composeIsNavigationDisabled,
   punctuationChildMisconceptionLabel,
   punctuationMonsterDisplayName,
   punctuationSummaryHeadline,
@@ -290,13 +291,24 @@ function GpsReviewBlock({ gps }) {
 // --- Next-action buttons ---------------------------------------------------
 
 function NextActionRow({ ui, actions }) {
-  // SH2-U1: JSX-layer guard for all four non-destructive next-action
-  // buttons. Sharing one lock means a double-tap across the row (an
-  // unlikely but possible "thumb drift" pattern on narrow mobile
-  // viewports) early-returns the second dispatch — which is the right
-  // UX outcome since any of these actions unmounts the summary.
+  // Phase 4 U6: mutation controls keep `composeIsDisabled` — they pause while
+  // a command is in flight or the runtime is degraded / unavailable / read-
+  // only. Navigation ("Back to dashboard") threads the sibling
+  // `composeIsNavigationDisabled` so a stalled `pendingCommand` or a
+  // degraded runtime never traps the child on the Summary scene (plan R7 /
+  // AE7). The ghost-button divergence is the canonical example the Map
+  // top-bar and Skill Detail close mirror.
+  //
+  // SH2-U1 (from main): JSX-layer guard for all four non-destructive next-
+  // action buttons. Sharing one lock means a double-tap across the row (an
+  // unlikely but possible "thumb drift" pattern on narrow mobile viewports)
+  // early-returns the second dispatch — which is the right UX outcome
+  // since any of these actions unmounts the summary. The lock OR's into
+  // the mutation `isDisabled` only — navigation deliberately stays
+  // escape-hatch-live (a stuck lock must not trap the child on Summary).
   const submitLock = useSubmitLock();
   const isDisabled = composeIsDisabled(ui) || submitLock.locked;
+  const isNavigationDisabled = composeIsNavigationDisabled(ui);
   return (
     <div className="actions punctuation-summary-actions" style={{ marginTop: 16 }}>
       <button
@@ -331,7 +343,8 @@ function NextActionRow({ ui, actions }) {
       <button
         className="btn ghost"
         type="button"
-        disabled={isDisabled}
+        disabled={isNavigationDisabled}
+        aria-disabled={isNavigationDisabled ? 'true' : 'false'}
         data-action="punctuation-back"
         onClick={() => submitLock.run(async () => actions.dispatch('punctuation-back'))}
       >

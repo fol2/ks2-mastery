@@ -125,6 +125,22 @@ export function composeIsDisabled(ui) {
     || availabilityStatus === 'unavailable';
 }
 
+// Navigation controls (Summary Back to dashboard, Map top-bar Back, Skill
+// Detail modal close) must remain reachable under every mutation-side signal
+// that `composeIsDisabled` trips on. Trapping a child on a Summary /Map /
+// modal scene when `pendingCommand` hangs or availability flips is the exact
+// Phase 4 U6 failure mode this helper fixes (plan R7 / AE7). The only
+// structural guard is the null-`ui` fail-closed: if the UI shape is missing
+// entirely there is nothing to dispatch from, so the button renders disabled
+// rather than emitting an attention-free "enabled" affordance. Every call
+// site is the paired Back / close button on the Summary, Map, and Skill
+// Detail Modal surfaces — mutation buttons on the same scenes continue to
+// use `composeIsDisabled` unchanged.
+export function composeIsNavigationDisabled(ui) {
+  if (ui === null || ui === undefined) return true;
+  return false;
+}
+
 // --- Primary mode cards (Setup scene) --------------------------------------
 
 // The dashboard's three primary journey cards. `smart` sits first as the

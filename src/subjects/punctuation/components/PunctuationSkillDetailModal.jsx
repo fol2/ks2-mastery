@@ -57,6 +57,7 @@ import {
   PUNCTUATION_MAP_DETAIL_TAB_IDS,
   PUNCTUATION_SKILL_MODAL_PREFERRED_EXAMPLE,
   composeIsDisabled,
+  composeIsNavigationDisabled,
   punctuationSkillHasMultiSkillItems,
   punctuationSkillModalContent,
   punctuationSkillModalPreferredExample,
@@ -178,7 +179,13 @@ export function PunctuationSkillDetailModal({ skillId, detailTab = 'learn', ui, 
   if (typeof skillId !== 'string' || !skillId) return null;
   const content = punctuationSkillModalContent(skillId);
   if (!content) return null;
+  // Phase 4 U6: `disabled` threads through the Practise this mutation
+  // control (unchanged). `navigationDisabled` governs the modal close
+  // button so a stalled command or degraded availability never traps the
+  // learner inside the modal (plan R7). Mirrors the Summary + Map top-bar
+  // pattern; both helpers flow from the same `ui` shape.
   const disabled = composeIsDisabled(ui);
+  const navigationDisabled = composeIsNavigationDisabled(ui);
   const preferredExample = punctuationSkillModalPreferredExample(skillId);
   const safeTab = detailTab === 'practise' ? 'practise' : 'learn';
   const skillName = skillNameFor(skillId);
@@ -233,6 +240,8 @@ export function PunctuationSkillDetailModal({ skillId, detailTab = 'learn', ui, 
             type="button"
             ref={closeButtonRef}
             className="punctuation-skill-modal-close"
+            disabled={navigationDisabled}
+            aria-disabled={navigationDisabled ? 'true' : 'false'}
             data-action="punctuation-skill-detail-close"
             data-autofocus="true"
             aria-label="Close skill detail"
