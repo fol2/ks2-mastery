@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import { GrammarMiniTestReview } from './GrammarMiniTestReview.jsx';
 import { grammarSummaryCards } from './grammar-view-model.js';
 import { grammarMissedConceptFromUi } from '../module.js';
@@ -84,6 +85,13 @@ function ScoreCard({ summary }) {
 }
 
 function PrimaryActions({ buttons, disabled }) {
+  // SH2-U1: child component hosts the hook so a double-tap on any
+  // summary next-action early-returns the second dispatch. The button
+  // list is 2-3 items; sharing a single lock is correct because tapping
+  // two different actions in the same frame would be a user mistake
+  // (e.g. accidentally hitting both "Start again" and "Open bank") —
+  // absorbing the second click here prevents a double navigation.
+  const submitLock = useSubmitLock();
   return (
     <div className="grammar-summary-primary-actions" role="group" aria-label="Next steps">
       {buttons.map((button) => (
@@ -92,8 +100,8 @@ function PrimaryActions({ buttons, disabled }) {
           type="button"
           className={`btn ${button.variant || 'primary'}`}
           data-action={button.action}
-          disabled={disabled || button.disabled === true}
-          onClick={button.onClick}
+          disabled={disabled || button.disabled === true || submitLock.locked}
+          onClick={() => submitLock.run(async () => button.onClick())}
         >
           {button.label}
         </button>

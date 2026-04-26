@@ -2,6 +2,7 @@ import React from 'react';
 import { AdultLearnerSelect } from './AdultLearnerSelect.jsx';
 import { ReadOnlyLearnerNotice } from './ReadOnlyLearnerNotice.jsx';
 import { AccessDeniedCard, formatTimestamp, isBlocked, selectedWritableLearner } from './hub-utils.js';
+import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
 
 function snapshotSubjectId(snapshot = {}) {
   if (snapshot.subjectId) return snapshot.subjectId;
@@ -401,6 +402,15 @@ function SectionHead({ title, note }) {
 }
 
 export function ParentHubSurface({ appState, model, hubState = {}, accessContext = {}, actions }) {
+  // SH2-U1: JSX-layer guard for the export action buttons. Parent Hub
+  // today has no destructive save buttons (the hub is read-only vs the
+  // server); the export buttons are the only user-initiated dispatches
+  // on this surface. The hook is belt-and-braces — the export action
+  // handler already rate-limits on the adapter side via the adapter's
+  // pendingKeys set, but a fast double-click on touch devices can still
+  // emit two dispatches before the pendingKeys round-trip lands. The
+  // hook closes that window.
+  const submitLock = useSubmitLock();
   const loadingRemote = accessContext?.shellAccess?.source === 'worker-session' && hubState.status === 'loading' && !model;
   if (loadingRemote) {
     return (
@@ -542,9 +552,9 @@ export function ParentHubSurface({ appState, model, hubState = {}, accessContext
               <button
                 className="btn secondary"
                 type="button"
-                disabled={isBlocked(entry.action, accessContext)}
-                aria-disabled={isBlocked(entry.action, accessContext)}
-                onClick={() => actions.dispatch(entry.action)}
+                disabled={isBlocked(entry.action, accessContext) || submitLock.locked}
+                aria-disabled={isBlocked(entry.action, accessContext) || submitLock.locked}
+                onClick={() => submitLock.run(async () => actions.dispatch(entry.action))}
                 key={entry.action}
               >
                 {entry.label}
