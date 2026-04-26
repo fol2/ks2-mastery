@@ -635,7 +635,9 @@ test('CSP_POLICY_VALUE includes all baseline directives', () => {
   assert.match(policy, /frame-ancestors 'none'/);
   assert.match(policy, /base-uri 'none'/);
   assert.match(policy, /object-src 'none'/);
-  assert.match(policy, /upgrade-insecure-requests/);
+  // `upgrade-insecure-requests` is intentionally omitted in Report-Only
+  // (ignored by browsers per CSP3); the enforcement-flip PR re-adds it.
+  assert.ok(!policy.includes('upgrade-insecure-requests'));
   assert.match(policy, /report-uri \/api\/security\/csp-report/);
   assert.match(policy, /report-to csp-endpoint/);
 });

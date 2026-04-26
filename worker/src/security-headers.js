@@ -80,7 +80,12 @@ const CSP_DIRECTIVES = Object.freeze([
   "object-src 'none'",
   "manifest-src 'self'",
   "worker-src 'none'",
-  'upgrade-insecure-requests',
+  // `upgrade-insecure-requests` is intentionally omitted while the policy
+  // ships under `Content-Security-Policy-Report-Only`: per CSP3 the
+  // directive is ignored in Report-Only delivery (Chrome emits a console
+  // warning). HSTS `includeSubDomains` + HTTPS-only origin allowlists
+  // already provide the upgrade in practice. Restore this directive in the
+  // same PR that flips the header name to `Content-Security-Policy`.
   'report-uri /api/security/csp-report',
   'report-to csp-endpoint',
 ]);
