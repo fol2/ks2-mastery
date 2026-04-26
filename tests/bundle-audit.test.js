@@ -917,6 +917,108 @@ test('production bundle audit walks dynamic import chunks referenced only via im
   }
 });
 
+// SH2-U10 reviewer-follow-up (BLOCKER-1): the production bundle audit MUST
+// walk chunks referenced via minified zero-whitespace static imports. The
+// pre-follow-up regex required `\s+` between `import` and the clause, which
+// missed esbuild's real minified output of `import{X as Y}from"./chunk-X.js"`
+// — leaving every shared `chunk-*.js` un-scanned in production. This test
+// stages a stub origin serving the exact zero-whitespace form and asserts
+// the auditor follows the reference into the referenced chunk and reports
+// the forbidden token. Also covers the side-effect form `import"./side.js"`
+// with zero whitespace.
+test('production audit walks chunks referenced via minified static imports (no whitespace)', async () => {
+  const server = createServer((request, response) => {
+    const url = request.url || '/';
+    if (url === '/' || url === '/index.html') {
+      response.writeHead(200, { 'content-type': 'text/html', 'cache-control': 'no-store' });
+      response.end('<!doctype html><script type="module" src="/src/bundles/app.bundle.js"></script>');
+      return;
+    }
+    if (url === '/src/bundles/app.bundle.js') {
+      // Exactly the minified form esbuild emits: zero whitespace between
+      // `import`, the clause, and `from`. Two chunk refs here — a named
+      // static import AND a side-effect import — both zero-whitespace.
+      response.writeHead(200, {
+        'content-type': 'application/javascript',
+        'cache-control': 'public, max-age=31536000, immutable',
+      });
+      response.end(
+        'import{X as a,Y as b}from"./chunk-static.js";import"./side-effect.js";console.log(a,b);',
+      );
+      return;
+    }
+    if (url === '/src/bundles/chunk-static.js') {
+      // Forbidden token in the minified-static-import-referenced chunk.
+      response.writeHead(200, {
+        'content-type': 'application/javascript',
+        'cache-control': 'public, max-age=31536000, immutable',
+      });
+      response.end('const x="PUNCTUATION_CONTENT_MANIFEST";export{x as X,x as Y};');
+      return;
+    }
+    if (url === '/src/bundles/side-effect.js') {
+      // Separate forbidden token in the side-effect-import-referenced chunk.
+      response.writeHead(200, {
+        'content-type': 'application/javascript',
+        'cache-control': 'public, max-age=31536000, immutable',
+      });
+      response.end('console.log("createPunctuationService");');
+      return;
+    }
+    if (url === '/assets/app-icons/favicon-32.png') {
+      response.writeHead(200, {
+        'content-type': 'image/png',
+        'cache-control': 'public, max-age=31536000, immutable',
+      });
+      response.end('');
+      return;
+    }
+    if (url === '/manifest.webmanifest') {
+      response.writeHead(200, {
+        'content-type': 'application/manifest+json',
+        'cache-control': 'public, max-age=3600',
+      });
+      response.end('{}');
+      return;
+    }
+    response.writeHead(404, { 'content-type': 'text/plain' });
+    response.end('not found');
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      // Both chunks must be visited + scanned. If the regex misses either
+      // form, the corresponding forbidden token never lands in stderr.
+      assert.match(
+        error.stderr,
+        /Production bundle \/src\/bundles\/chunk-static\.js includes forbidden deployed token: PUNCTUATION_CONTENT_MANIFEST/,
+        `expected minified static-import chunk to be scanned; stderr: ${error.stderr}`,
+      );
+      assert.match(
+        error.stderr,
+        /Production bundle \/src\/bundles\/side-effect\.js includes forbidden deployed token: createPunctuationService/,
+        `expected minified side-effect-import chunk to be scanned; stderr: ${error.stderr}`,
+      );
+      return true;
+    });
+  } finally {
+    server.closeAllConnections?.();
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+  }
+});
+
 // SH2-U10 CLS: monster image primitives must declare intrinsic `width` +
 // `height` so the browser reserves the sprite box before the .webp decodes.
 // The grep-backed list keeps the intent static: each file is checked against

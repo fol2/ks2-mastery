@@ -1,10 +1,41 @@
 import { build } from 'esbuild';
 import path from 'node:path';
 import { execSync as nodeExecSync } from 'node:child_process';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 
 const rootDir = process.cwd();
 const outputDir = path.join(rootDir, 'src', 'bundles');
+
+// SH2-U10 reviewer-follow-up (BLOCKER-2): defence-in-depth guard for
+// `cleanOutputDir()`. The unconditional `rm -rf` below would be catastrophic
+// if `outputDir` ever resolved to the repo root or a sibling, so we assert
+// the resolved path ends in `src/bundles` (Unix or Windows separator) under
+// the supplied root. The guard accepts any caller-supplied `rootDir` so
+// tests can stage a tmpdir/src/bundles fixture and verify the clean step
+// without running esbuild. Refusals surface a pointed error instead of a
+// silent widening of the blast radius.
+const EXPECTED_OUTPUT_RELATIVE = path.join('src', 'bundles');
+export function assertOutputDirIsBundlesSubtree(dir, rootDirArg = rootDir) {
+  const resolved = path.resolve(dir);
+  const expected = path.resolve(rootDirArg, EXPECTED_OUTPUT_RELATIVE);
+  if (resolved !== expected) {
+    throw new Error(
+      `cleanOutputDir safety guard: expected ${expected} but got ${resolved}. `
+      + 'Refusing to rm -rf outside src/bundles/.',
+    );
+  }
+}
+
+// SH2-U10 reviewer-follow-up (BLOCKER-2): exported clean-before-build helper
+// so tests can exercise the `rm -rf` + `mkdir` sequence without running the
+// heavy esbuild pass. `rootDirArg` defaults to the module-level `rootDir`
+// captured at import time; tests supply a tmpdir so the stage-stale-then-
+// clean scenario is fully isolated.
+export async function cleanOutputDir(dir = outputDir, rootDirArg = rootDir) {
+  assertOutputDirIsBundlesSubtree(dir, rootDirArg);
+  await rm(dir, { recursive: true, force: true });
+  await mkdir(dir, { recursive: true });
+}
 
 // U16: derive `__BUILD_HASH__` from `git rev-parse --short HEAD` so the client
 // bundle can stamp every error-capture POST with the release it shipped from.
@@ -42,7 +73,21 @@ function resolveBuildHash({ execSync = nodeExecSync } = {}) {
 }
 
 export async function runBuildClient({ buildHash } = {}) {
-  await mkdir(outputDir, { recursive: true });
+  // SH2-U10 reviewer-follow-up (BLOCKER-2): clean the outdir BEFORE esbuild
+  // writes new chunks. Esbuild does not clean `outdir` before emitting, and
+  // `chunkNames: '[name]-[hash]'` produces a different filename per build
+  // — so a stale chunk from a prior build (e.g.
+  // `AdminHubSurface-AAAA.js`) can linger under `src/bundles/` and be
+  // blanket-copied into `dist/public/` by `scripts/build-public.mjs`
+  // alongside the current build's `AdminHubSurface-BBBB.js`. The stale
+  // file is NOT in the new build's metafile, so the local audit
+  // (`scripts/audit-client-bundle.mjs`) walks only the current build's
+  // chunks and misses the stale file — which then ships to production
+  // unscrubbed for forbidden tokens. Pre-split builds were safe because
+  // a single `outfile` overwrite replaced `app.bundle.js`; splitting
+  // broke that invariant. The safety guard inside `cleanOutputDir`
+  // keeps the `rm -rf` scoped to the intended subtree.
+  await cleanOutputDir();
   const resolvedHash = buildHash !== undefined ? buildHash : resolveBuildHash();
 
   // SH2-U10: esbuild code-splitting is enabled so adult-only surfaces

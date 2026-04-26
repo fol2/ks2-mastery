@@ -159,47 +159,51 @@ test('runClientBundleAudit fails with bundle-budget-exceeded prefix when the bud
 });
 
 test('runClientBundleAudit walks every .js chunk under src/bundles/ from the metafile (S-01)', async () => {
-  // The audit script resolves chunk paths against a `rootDir` captured
-  // at module import time from `process.cwd()`, so a synthetic scenario
-  // cannot drive it from a tmpdir — `path.resolve(rootDir, ...)` would
-  // never reach the fixture. Instead we stage the synthetic bundle +
-  // split chunk under the REAL `src/bundles/` tree with a test-only
-  // filename prefix (`test-u10-fixture-...`). Real build outputs use
-  // `app.bundle.js` or content-hashed chunk names, so the prefix
-  // guarantees no collision. `npm run build` clears `src/bundles/`
-  // fresh each time, and the test's `finally` removes the fixture so
-  // a subsequent `audit:client` run never sees it. The `publicDir` is
-  // redirected to an empty tmpdir so `auditPublicFiles` doesn't scan
-  // real deploy output.
-  const publicDir = await mkdtemp(path.join(tmpdir(), 'ks2-bundle-multi-chunk-'));
-  const bundlesRealDir = path.join(REPO_ROOT, 'src', 'bundles');
-  await mkdir(bundlesRealDir, { recursive: true });
-  const realMain = path.join(bundlesRealDir, 'test-u10-fixture-app.bundle.js');
-  const realChunk = path.join(bundlesRealDir, 'test-u10-fixture-chunk-CAFEBABE.js');
-  const realMeta = path.join(bundlesRealDir, 'test-u10-fixture-app.bundle.meta.json');
-  await writeFile(realMain, 'console.log("main");\n');
+  // SH2-U10 reviewer-follow-up (ADV-H1): fully-isolated mkdtemp fixture.
+  // `runClientBundleAudit` now accepts a caller-supplied `rootDir` so the
+  // synthetic bundle + split chunk can live in a throwaway tmpdir tree
+  // instead of the real `src/bundles/` tree. Benefits:
+  //   - a crashed / aborted test no longer leaves `test-u10-fixture-*.js`
+  //     under the live build tree (prior design leaked on SIGINT).
+  //   - concurrent test-runner invocations cannot collide on shared paths.
+  //   - the isolation is obvious from the test code without a filename
+  //     convention that future contributors might miss.
+  const stagingRoot = await mkdtemp(path.join(tmpdir(), 'ks2-u10-audit-'));
+  const bundlesFixtureDir = path.join(stagingRoot, 'src', 'bundles');
+  const publicDir = path.join(stagingRoot, 'public');
+  await mkdir(bundlesFixtureDir, { recursive: true });
+  await mkdir(publicDir, { recursive: true });
+
+  const mainBundleRelative = 'src/bundles/app.bundle.js';
+  const chunkRelative = 'src/bundles/chunk-CAFEBABE.js';
+  const metafileRelative = 'src/bundles/app.bundle.meta.json';
+  await writeFile(path.join(stagingRoot, mainBundleRelative), 'console.log("main");\n');
   // The forbidden token sits in a SPLIT chunk, not the main bundle —
   // the pre-U10 auditText call only scanned `bundlePath`, so this
   // scenario proves S-01's walk-all-chunks fix actually runs.
-  await writeFile(realChunk, 'console.log("PUNCTUATION_CONTENT_MANIFEST");\n');
-  await writeFile(realMeta, JSON.stringify({
+  await writeFile(
+    path.join(stagingRoot, chunkRelative),
+    'console.log("PUNCTUATION_CONTENT_MANIFEST");\n',
+  );
+  await writeFile(path.join(stagingRoot, metafileRelative), JSON.stringify({
     inputs: { 'src/main.js': { bytes: 1 } },
     outputs: {
-      'src/bundles/test-u10-fixture-app.bundle.js': { imports: [], bytes: 100 },
-      'src/bundles/test-u10-fixture-chunk-CAFEBABE.js': { imports: [], bytes: 200 },
+      [mainBundleRelative]: { imports: [], bytes: 100 },
+      [chunkRelative]: { imports: [], bytes: 200 },
     },
   }));
 
   try {
     const result = await runClientBundleAudit({
-      bundlePath: 'src/bundles/test-u10-fixture-app.bundle.js',
-      metafilePath: 'src/bundles/test-u10-fixture-app.bundle.meta.json',
-      publicDir,
+      bundlePath: mainBundleRelative,
+      metafilePath: metafileRelative,
+      publicDir: 'public',
       mainBundleGzipBudgetBytes: 10_000_000,
+      rootDir: stagingRoot,
     });
     assert.equal(result.ok, false, 'forbidden token in a split chunk must trip the audit');
     const chunkFailure = result.failures.find((line) => (
-      line.includes('test-u10-fixture-chunk-CAFEBABE.js')
+      line.includes('chunk-CAFEBABE.js')
       && line.includes('PUNCTUATION_CONTENT_MANIFEST')
     ));
     assert.ok(
@@ -208,19 +212,16 @@ test('runClientBundleAudit walks every .js chunk under src/bundles/ from the met
     );
     const scanned = new Set(result.checked.scannedChunks.map((entry) => entry.split(path.sep).join('/')));
     assert.ok(
-      scanned.has('src/bundles/test-u10-fixture-app.bundle.js'),
+      scanned.has(mainBundleRelative),
       'main bundle must be in scannedChunks',
     );
     assert.ok(
-      scanned.has('src/bundles/test-u10-fixture-chunk-CAFEBABE.js'),
+      scanned.has(chunkRelative),
       'split chunk must be in scannedChunks',
     );
   } finally {
-    // Clean up fixture files so subsequent runs of `npm run build`
-    // + `npm run audit:client` don't pick them up as real chunks.
+    // Remove the whole staging tree — nothing leaked into the real repo.
     const { rm } = await import('node:fs/promises');
-    await rm(realMain, { force: true });
-    await rm(realChunk, { force: true });
-    await rm(realMeta, { force: true });
+    await rm(stagingRoot, { recursive: true, force: true });
   }
 });

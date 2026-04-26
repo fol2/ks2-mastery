@@ -131,9 +131,27 @@ function scriptSources(html) {
 // requests. The caller resolves returned specifiers relative to the
 // referring chunk URL and dedupes against a visited set so cycles
 // terminate.
+//
+// SH2-U10 reviewer-follow-up (BLOCKER-1): the static + side-effect
+// patterns MUST allow zero whitespace. Esbuild's minified output emits
+// `import{X as Y}from"./chunk-X.js"` with no gap between `import` and
+// the clause — the earlier `\s+` requirement silently missed every
+// minified static import, leaving the shared `chunk-*.js` chunks
+// un-scanned in production. The new static pattern accepts either a
+// braced named-import clause (`{X as Y}` / `{a,b}` / mixed
+// `a,{X}`) or a non-braced specifier (default / namespace) with
+// OPTIONAL whitespace on both sides of the clause and around `from`.
+// The side-effect pattern accepts optional whitespace so `import"./x"`
+// (minified) matches alongside `import "./x"`. Neither the named-clause
+// regex nor the default-import regex matches unquoted JavaScript (the
+// capture group is anchored to `"..."` / `'...'`), so benign code like
+// `const import_from = "./x.js"` cannot false-positive. Verified
+// against the real post-split `src/bundles/app.bundle.js`: old regex
+// yielded 2 chunks (dynamic only); new regex yields 5 chunks at the
+// entry and the BFS walker discovers all 6 transitively.
 const IMPORT_PATTERN_DYNAMIC = /import\s*\(\s*["']([^"')]+?)["']\s*\)/g;
-const IMPORT_PATTERN_STATIC = /import\s+[^'"()]*\s+from\s*["']([^"')]+?)["']/g;
-const IMPORT_PATTERN_SIDE_EFFECT = /import\s+["']([^"')]+?)["']/g;
+const IMPORT_PATTERN_STATIC = /import\s*(?:\{[^{}]*\}|[^'"()]*?)\s*from\s*["']([^"')]+?)["']/g;
+const IMPORT_PATTERN_SIDE_EFFECT = /import\s*["']([^"')]+?)["']/g;
 
 function extractSameOriginJsImports(code) {
   const results = new Set();

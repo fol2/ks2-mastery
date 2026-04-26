@@ -3,7 +3,14 @@ import { gzipSync } from 'node:zlib';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const rootDir = process.cwd();
+// SH2-U10 reviewer-follow-up (ADV-H1): `rootDir` is a default captured at
+// module-load time so the CLI path behaves as before, but `runClientBundleAudit`
+// accepts a caller-supplied `rootDir` override. This lets tests stage
+// synthetic bundle fixtures inside an isolated `mkdtemp` tree rather than
+// writing into the real `src/bundles/` tree — a crashed test no longer
+// leaves stale `test-u10-fixture-*.js` files under the live build tree,
+// and concurrent runs cannot collide on shared paths.
+const DEFAULT_ROOT_DIR = process.cwd();
 
 const DEFAULT_BUNDLE = 'src/bundles/app.bundle.js';
 const DEFAULT_METAFILE = 'src/bundles/app.bundle.meta.json';
@@ -225,6 +232,10 @@ export async function runClientBundleAudit({
   metafilePath = DEFAULT_METAFILE,
   publicDir = DEFAULT_PUBLIC_DIR,
   mainBundleGzipBudgetBytes = DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES,
+  // SH2-U10 reviewer-follow-up (ADV-H1): accept a caller-supplied rootDir
+  // so tests can stage fixtures in an isolated mkdtemp tree. Defaults to
+  // the process cwd captured at module load so the CLI path is unchanged.
+  rootDir = DEFAULT_ROOT_DIR,
 } = {}) {
   const failures = [];
   const notes = [];

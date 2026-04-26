@@ -18,6 +18,9 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
 import { redactClientErrorEvent } from '../src/platform/ops/error-capture.js';
 
@@ -192,5 +195,68 @@ test('U16 — captureClientError forwards a non-SHA literal unchanged (Worker re
     // eslint-disable-next-line no-undef
     delete globalThis.__BUILD_HASH__;
     _resetErrorCaptureState();
+  }
+});
+
+// SH2-U10 reviewer-follow-up (BLOCKER-2): `scripts/build-client.mjs` must
+// clean `src/bundles/` BEFORE running esbuild. With `splitting: true` +
+// `chunkNames: '[name]-[hash]'` the per-build chunk filenames change, so
+// a stale chunk from a prior build would linger under `src/bundles/` and
+// be blanket-copied by `scripts/build-public.mjs` into `dist/public/`
+// alongside the current build's chunks — shipping un-audited JavaScript
+// to production. The clean-before-build step below wipes the output dir
+// first so only current-build outputs ever reach `dist/public/`. Tests
+// drive `cleanOutputDir()` directly against a tmpdir so the scenario
+// stays isolated from the real repo tree.
+test('U10 — cleanOutputDir removes stale chunks from a prior build before the next build writes', async () => {
+  const { cleanOutputDir } = await import('../scripts/build-client.mjs');
+  const fakeRoot = await mkdtemp(path.join(tmpdir(), 'ks2-u10-clean-'));
+  const fakeOutdir = path.join(fakeRoot, 'src', 'bundles');
+  try {
+    await mkdir(fakeOutdir, { recursive: true });
+    // Stage a stale chunk as if emitted by a previous build. The filename
+    // hash intentionally differs from anything the current build would
+    // emit, which is exactly the scenario the clean step exists to solve.
+    const staleChunk = path.join(fakeOutdir, 'AdminHubSurface-STALEAAAA.js');
+    await writeFile(staleChunk, 'console.log("stale build artifact");\n');
+    const staleMeta = path.join(fakeOutdir, 'app.bundle.meta.json');
+    await writeFile(staleMeta, '{"old":"metafile"}\n');
+    const before = await readdir(fakeOutdir);
+    assert.ok(before.includes('AdminHubSurface-STALEAAAA.js'), 'pre-condition: stale file staged');
+    assert.ok(before.includes('app.bundle.meta.json'), 'pre-condition: stale metafile staged');
+
+    // Clean step wipes + recreates the outdir. `rootDirArg` threads a
+    // synthetic root through the safety guard so the test never touches
+    // the real `src/bundles/` tree.
+    await cleanOutputDir(fakeOutdir, fakeRoot);
+
+    const after = await readdir(fakeOutdir);
+    assert.equal(after.length, 0, `outdir must be empty after clean; got: ${after.join(', ')}`);
+  } finally {
+    await rm(fakeRoot, { recursive: true, force: true });
+  }
+});
+
+test('U10 — cleanOutputDir safety guard refuses to rm -rf outside src/bundles/', async () => {
+  const { cleanOutputDir } = await import('../scripts/build-client.mjs');
+  const fakeRoot = await mkdtemp(path.join(tmpdir(), 'ks2-u10-guard-'));
+  try {
+    // A hostile / buggy caller passes a path that is NOT `<root>/src/bundles`.
+    // The guard must reject, NOT rm the hostile path.
+    const hostilePath = path.join(fakeRoot, 'hostile-directory');
+    await mkdir(hostilePath, { recursive: true });
+    const canary = path.join(hostilePath, 'canary.txt');
+    await writeFile(canary, 'must not be deleted\n');
+
+    await assert.rejects(
+      () => cleanOutputDir(hostilePath, fakeRoot),
+      /Refusing to rm -rf outside src\/bundles\//,
+    );
+
+    // Canary must still exist — the guard rejected before rm ran.
+    const contents = await readdir(hostilePath);
+    assert.ok(contents.includes('canary.txt'), 'canary file must survive a rejected clean');
+  } finally {
+    await rm(fakeRoot, { recursive: true, force: true });
   }
 });
