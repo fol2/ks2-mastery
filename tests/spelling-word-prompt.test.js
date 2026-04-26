@@ -208,3 +208,21 @@ test('Worker geminiPrompt(wordOnly) returns the same string as the shared helper
   assert.equal(worker, helper);
   assert.equal(worker, ACCIDENT_PROMPT);
 });
+
+test('Worker geminiPrompt(wordOnly) applies cleanText collapse identically to the shared helper', () => {
+  // testing-1 review pin (PR #286, anchor 60): the Worker entry point
+  // `geminiPrompt({ wordOnly: true, transcript })` flows `transcript`
+  // through `cleanText()` in `resolveSpellingAudioRequest` upstream, so
+  // by the time the helper sees `wordText` it should already be
+  // collapsed. This assertion pins the contract at the Worker boundary
+  // so that if a future refactor accidentally bypasses cleanText for
+  // the wordOnly lane (or the helper stops re-applying it), CI fails
+  // before pre-fill cache and live-regen cache silently diverge on
+  // dirty inputs.
+  const dirtyWorker = geminiPrompt({ wordOnly: true, transcript: '  accident demo  ' });
+  const dirtyHelper = buildBufferedWordSpeechPrompt({ wordText: '  accident demo  ' });
+  const cleanHelper = buildBufferedWordSpeechPrompt({ wordText: 'accident demo' });
+  assert.equal(dirtyWorker, dirtyHelper);
+  assert.equal(dirtyWorker, cleanHelper);
+  assert.equal(dirtyWorker, ACCIDENT_DEMO_PROMPT);
+});

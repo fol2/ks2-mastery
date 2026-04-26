@@ -1368,3 +1368,26 @@ completion report)
 * `wrangler r2 object get --info` flag claim → removed (does not exist
   in wrangler 4.x; recommend Cloudflare dashboard inspection for
   customMetadata forensics).
+
+### Tech debt deferred from U1 review (2026-04-26)
+
+* **maint-001 — Test-only re-exports from `worker/src/tts.js`.**
+  Currently `bufferedAudioMetadata`, `bufferedAudioKey`, `geminiPrompt`
+  are re-exported solely for `tests/spelling-word-prompt.test.js` to
+  assert key/hash parity. Tradeoff: test coupling vs. larger refactor.
+  Two cleaner shapes: (a) move helpers into `shared/spelling-audio.js`
+  so the test imports from shared (the natural direction now that
+  `buildBufferedWordSpeechPrompt` already lives there); (b) test parity
+  at the `handleTextToSpeechRequest` boundary with a stub R2 bucket
+  recording put/get keys. Pick (a) when U2 lands its generator (which
+  will need the same key parity test). Revisit during U2 PR review.
+* **maint-002 — `buildLegacyAudioAssetKey` two-layer indirection.**
+  One production caller via `legacyBufferedAudioKey` adaptor whose only
+  added value is the `kind === 'word'` null-guard. Inline once a second
+  consumer is confirmed not to materialise during U2/U3.
+* **Correctness residual — Worker geminiPrompt cleanText parity through
+  full request path.** Helper-level parity is pinned in U1; full
+  `handleTextToSpeechRequest → geminiPrompt → Gemini call` round-trip
+  is not directly asserted. Defensible because resolveSpellingAudioRequest
+  is the only code path that constructs `transcript`, and
+  worker-tts.test.js covers that path's outputs.
