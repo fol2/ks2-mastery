@@ -2,11 +2,33 @@ import React from 'react';
 import { useMonsterVisualConfig } from '../../platform/game/MonsterVisualConfigContext.jsx';
 import { resolveMonsterVisual } from '../../platform/game/monster-visual-config.js';
 import { eggBreatheStyle } from './data.js';
+// SH2-U5: fresh learners land on the home hero with zero caught monsters.
+// Before the re-skin the meadow rendered `null`, which meant learners saw
+// an empty stretch of grass with no copy explaining the state. The shared
+// primitive surfaces the canonical three-part copy (what happened /
+// progress safe / what action).
+import { EmptyState } from '../../platform/ui/EmptyState.jsx';
 
 export function MonsterMeadow({ monsters = [], maxSlots = 10 }) {
   const monsterVisualConfig = useMonsterVisualConfig();
   const shown = monsters.slice(0, maxSlots);
-  if (!shown.length) return null;
+  if (!shown.length) {
+    // The fresh-meadow empty branch uses a dedicated wrapper instead of
+    // reusing `.monster-meadow` because the base meadow class declares
+    // `position: absolute` + `pointer-events: none`. Those constraints
+    // are correct for the decorative sprite layer but would make the
+    // empty-state card non-interactive and invisible behind the hero
+    // copy. `.monster-meadow-empty` is a static-flow block that sits in
+    // the hero's normal layout order; the primitive keeps its role=status.
+    return (
+      <div className="monster-meadow-empty" aria-label="Meadow is empty">
+        <EmptyState
+          title="Nothing caught yet"
+          body="Nothing caught yet. Your meadow stays tidy. Finish a round to see your first monster appear."
+        />
+      </div>
+    );
+  }
   return (
     <div className="monster-meadow" aria-label={`${shown.length} codex creatures in the hero meadow`}>
       {shown.map((m) => {

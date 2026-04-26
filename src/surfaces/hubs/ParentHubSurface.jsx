@@ -4,6 +4,11 @@ import { ReadOnlyLearnerNotice } from './ReadOnlyLearnerNotice.jsx';
 import { AccessDeniedCard, formatTimestamp, isBlocked, selectedWritableLearner } from './hub-utils.js';
 import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
 import { AdultConfidenceChip } from '../../subjects/grammar/components/AdultConfidenceChip.jsx';
+// SH2-U5: the `RecentSessionList` + `CurrentFocus` empty branches re-skin
+// through the shared primitive so the three-part copy pattern (what
+// happened / is progress safe / what action is available) is consistent
+// with MonsterMeadow, Codex, WordBank, Grammar dashboard.
+import { EmptyState } from '../../platform/ui/EmptyState.jsx';
 
 function snapshotSubjectId(snapshot = {}) {
   if (snapshot.subjectId) return snapshot.subjectId;
@@ -81,14 +86,24 @@ function CurrentFocus({ items }) {
             </li>
           ))}
         </ol>
-      ) : <p className="parent-hub-empty small muted">No due work is surfaced yet.</p>}
+      ) : (
+        <EmptyState
+          title="No due work yet"
+          body="No due work is surfaced yet. Progress is recorded safely. Check back after a few rounds complete."
+        />
+      )}
     </div>
   );
 }
 
 function RecentSessionList({ sessions }) {
   if (!sessions.length) {
-    return <p className="parent-hub-empty small muted">No completed or active sessions are stored yet.</p>;
+    return (
+      <EmptyState
+        title="No sessions yet"
+        body="No completed or active sessions are stored yet. Progress stays safe. You'll see activity here as learners practise."
+      />
+    );
   }
   return (
     <ol className="parent-hub-session-list">

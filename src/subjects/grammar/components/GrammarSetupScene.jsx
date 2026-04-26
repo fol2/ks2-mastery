@@ -11,6 +11,12 @@ import {
   GRAMMAR_PRIMARY_MODE_CARDS,
   buildGrammarDashboardModel,
 } from './grammar-view-model.js';
+// SH2-U5: fresh-learner `dashboard.isEmpty` branch surfaces the canonical
+// three-part copy through the shared primitive. The pre-U5 bespoke
+// `.grammar-today-empty` div kept a single sentence and no reassurance —
+// the primitive also preserves the existing `data-testid` so the
+// grammar-phase3-child-copy test continues to find the anchor.
+import { EmptyState } from '../../../platform/ui/EmptyState.jsx';
 
 // Phase 3 U1: Child-facing Grammar dashboard. Every label, mode id, and
 // card comes from the U8 view-model (`grammar-view-model.js`). The JSX
@@ -157,7 +163,10 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
       <section className="grammar-today" aria-label="Today at a glance">
         {dashboard.isEmpty ? (
           <div className="grammar-today-empty" data-testid="grammar-today-empty">
-            Start your first round to see your scores here.
+            <EmptyState
+              title="Grammar is ready"
+              body="Grammar is ready. Progress is saved as you practise. Start your first round to see your scores here."
+            />
           </div>
         ) : (
           <div className="grammar-today-grid">
