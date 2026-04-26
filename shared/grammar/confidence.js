@@ -111,7 +111,12 @@ function normaliseMasteryNodeForStatus(value) {
  * Returns one of: `'new' | 'weak' | 'due' | 'secured' | 'learning'`.
  */
 export function grammarConceptStatus(node, now = Date.now()) {
-  const current = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  // Preserve the pre-U8 Worker semantics exactly: `Number(now) || Date.now()`
+  // treats 0 (and NaN / non-numeric) as "missing" and falls back to the
+  // real wall clock. A stricter `Number.isFinite` check would silently
+  // honour `0` as the Unix epoch, which no production caller passes but
+  // which would be a subtle behavioural regression versus the original.
+  const current = Number(now) || Date.now();
   const value = normaliseMasteryNodeForStatus(node);
   if (!value.attempts) return 'new';
   if (value.strength < 0.42 || value.wrong > value.correct + 1) return 'weak';

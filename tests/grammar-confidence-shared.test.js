@@ -182,6 +182,51 @@ test('U8: grammarConceptStatus threshold pin — 0.82 / 7-day / streak-3 boundar
   }, now), 'weak', 'wrong > correct + 1 forces weak even with high strength');
 });
 
+test('U8: grammarConceptStatus(now=0) falls back to Date.now() — preserves pre-U8 Worker semantics', () => {
+  // Pre-U8 Worker code used `Number(now) || Date.now()`, which treats 0 as
+  // "missing" and falls back to the real wall clock. The shared refactor
+  // must preserve this contract: callers that pass literal 0 must NOT be
+  // silently anchored to the Unix epoch (1970-01-01), which would mark
+  // every non-zero `dueAt` as "due" even when the true wall clock is
+  // decades later. This test pins the contract so the drift cannot
+  // re-occur.
+  //
+  // Construct a node whose `dueAt` is a normal present-day timestamp
+  // (well past epoch but in the "not yet due" future relative to the real
+  // wall clock). If `now=0` were honoured literally, `dueAt <= current`
+  // would be true (dueAt >> 0) and the status would be 'due'. With the
+  // fallback, `current = Date.now()` and `dueAt > current`, so the node
+  // lands in its natural status ('secured' here, given the thresholds).
+  const realNow = Date.now();
+  const futureDueAt = realNow + 7 * 24 * 60 * 60 * 1000; // +7 days
+  const securedNode = {
+    attempts: 10,
+    strength: 0.9,
+    correct: 9,
+    wrong: 1,
+    correctStreak: 5,
+    intervalDays: 10,
+    dueAt: futureDueAt,
+  };
+  assert.equal(
+    grammarConceptStatus(securedNode, 0),
+    'secured',
+    'now=0 must fall back to Date.now(); a future dueAt must not be reported as due',
+  );
+  // Same expectation for NaN / non-numeric — the falsy-fallback covers
+  // both shapes uniformly (this mirrors the pre-U8 Worker behaviour).
+  assert.equal(
+    grammarConceptStatus(securedNode, Number.NaN),
+    'secured',
+    'now=NaN must fall back to Date.now()',
+  );
+  assert.equal(
+    grammarConceptStatus(securedNode, 'not-a-number'),
+    'secured',
+    'now=non-numeric string must fall back to Date.now()',
+  );
+});
+
 // --- Drift guard ----------------------------------------------------------
 // After U8, the five-label taxonomy must live in exactly ONE place in
 // production code: `shared/grammar/confidence.js`. Any additional
