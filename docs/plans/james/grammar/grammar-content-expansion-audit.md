@@ -126,7 +126,7 @@ Each thin-pool concept below has five proposed new templates. Proposals are writ
 
 ### subject_object (currently `identify`, SR 2 / CR 0) — HIGHEST priority
 
-1. **`subject_object_choice`** — `choose` — Pick which of four sentences has a particular noun as its subject (distinct from the existing `identify` pattern which asks for the subject in one named sentence). `answerSpec.kind: exact`.
+1. **`subject_object_choice`** — `choose` — Pick which of four sentences has a particular noun as its subject (distinct from the existing `identify` pattern which asks for the subject in one named sentence). `answerSpec.kind: exact`. (Rename to `subject_object_choose_between` — see collision note below.)
 2. **`subject_object_fill`** — `fill` — Complete a sentence by filling the subject slot with a noun phrase that fits the context. `answerSpec.kind: normalisedText`.
 3. **`subject_object_rewrite_topicalise`** — `rewrite` — Rewrite a sentence so that the original object becomes the subject (topicalisation; an active-to-passive-adjacent skill). `answerSpec.kind: acceptedSet`.
 4. **`subject_object_classify_table`** — `classify` — Tick `subject`, `object`, or `neither` for each of four underlined noun phrases across four sentences. `answerSpec.kind: multiField`.
@@ -187,7 +187,7 @@ When Phase 5 lands any of these proposals, the PR author must:
 - Templates audited: **51**
 - Thin-pool concepts (ground truth): **6**
 - Single-question-type thin-pool concepts (HIGHEST priority): **2** (`active_passive`, `subject_object`)
-- Concepts with an `explain` template today: **2** (`adverbials` via `explain_reason_choice`; `boundary_punctuation` via `proc2_boundary_punctuation_explain`; `standard_english` also shares `explain_reason_choice` so it is counted as 3 concept rows with `explain` coverage in the table above, but only two templates carry the type)
+- Concepts with an `explain` template today: **3 (represented by 2 templates)** — `adverbials` and `standard_english` both via `explain_reason_choice`; `boundary_punctuation` via `proc2_boundary_punctuation_explain`. The concept-table shows three rows with `explain` coverage, but only two distinct templates carry the type.
 - New template ideas proposed: **30** (five per thin-pool concept × six thin-pool concepts)
 - Phase 5 release-id bumps implied (one per new-template PR landed, assuming each ships atomically): up to **30**
 - `contentReleaseId` bumps produced by this audit: **0**

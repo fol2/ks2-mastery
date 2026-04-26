@@ -28,6 +28,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { GRAMMAR_AGGREGATE_CONCEPTS } from '../src/platform/game/mastery/grammar.js';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DOC_PATH = path.resolve(
   __dirname,
@@ -39,26 +41,10 @@ const DOC_PATH = path.resolve(
   'grammar-content-expansion-audit.md',
 );
 
-const EXPECTED_CONCEPTS = [
-  'sentence_functions',
-  'word_classes',
-  'noun_phrases',
-  'adverbials',
-  'clauses',
-  'relative_clauses',
-  'tense_aspect',
-  'standard_english',
-  'pronouns_cohesion',
-  'formality',
-  'active_passive',
-  'subject_object',
-  'modal_verbs',
-  'parenthesis_commas',
-  'speech_punctuation',
-  'apostrophes_possession',
-  'boundary_punctuation',
-  'hyphen_ambiguity',
-];
+// Import from the source of truth so a Phase 5 bump of
+// GRAMMAR_AGGREGATE_CONCEPTS (e.g. 18 -> 19) surfaces drift in both the
+// doc and this gate at the same time rather than silently passing here.
+const EXPECTED_CONCEPTS = [...GRAMMAR_AGGREGATE_CONCEPTS];
 
 const EXPECTED_THIN_POOL = new Set([
   'pronouns_cohesion',
