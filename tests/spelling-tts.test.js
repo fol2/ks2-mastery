@@ -192,6 +192,83 @@ test('platform TTS plays cached Gemini audio before the selected provider', asyn
   }
 });
 
+test('platform TTS uses cached Gemini audio for word-bank word replay', async () => {
+  const originalAudio = globalThis.Audio;
+  const originalCreateObjectUrl = URL.createObjectURL;
+  const originalRevokeObjectUrl = URL.revokeObjectURL;
+  const played = [];
+
+  globalThis.Audio = class MockAudio {
+    constructor(src) {
+      this.src = src;
+      this.onended = null;
+      this.onerror = null;
+    }
+
+    play() {
+      played.push(this.src);
+      setTimeout(() => this.onended?.(), 0);
+      return Promise.resolve();
+    }
+
+    pause() {}
+    removeAttribute() {}
+    load() {}
+  };
+  URL.createObjectURL = () => 'blob:cached-word-audio';
+  URL.revokeObjectURL = () => {};
+
+  const calls = [];
+  const tts = createPlatformTts({
+    remoteEnabled: true,
+    provider: 'openai',
+    fetchFn: async (url, init = {}) => {
+      calls.push({
+        url,
+        body: JSON.parse(init.body),
+      });
+      return new Response(new Blob([new Uint8Array([5, 4, 3])], { type: 'audio/mpeg' }), {
+        status: 200,
+        headers: {
+          'content-type': 'audio/mpeg',
+          'x-ks2-tts-cache': 'hit',
+        },
+      });
+    },
+  });
+
+  try {
+    const result = await tts.speak({
+      learnerId: 'learner-a',
+      promptToken: 'word-bank-token',
+      slug: 'early',
+      scope: 'word-bank',
+      word: 'early',
+      wordOnly: true,
+    });
+
+    assert.equal(result, true);
+    assert.deepEqual(played, ['blob:cached-word-audio']);
+    assert.equal(calls.length, 1);
+    assert.deepEqual(calls[0].body, {
+      learnerId: 'learner-a',
+      promptToken: 'word-bank-token',
+      slow: false,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Iapetus',
+      wordOnly: true,
+      cacheLookupOnly: true,
+      slug: 'early',
+      scope: 'word-bank',
+    });
+  } finally {
+    tts.stop();
+    globalThis.Audio = originalAudio;
+    URL.createObjectURL = originalCreateObjectUrl;
+    URL.revokeObjectURL = originalRevokeObjectUrl;
+  }
+});
+
 test('platform TTS does not warm or fall back after cancelled cache lookup', async () => {
   const originalAudio = globalThis.Audio;
   globalThis.Audio = class MockAudio {};

@@ -188,7 +188,6 @@ export function createPlatformTts({
     if (
       providerId === 'gemini'
       || isProviderTestPayload(payload)
-      || payload.wordOnly
       || !remoteEnabled
       || typeof fetchFn !== 'function'
       || !payload.promptToken
@@ -214,8 +213,7 @@ export function createPlatformTts({
 
   async function speakWithCachedBufferedAudio(payload = {}, bufferedVoiceId, token) {
     if (
-      payload.wordOnly
-      || !remoteEnabled
+      !remoteEnabled
       || typeof fetchFn !== 'function'
       || typeof Audio === 'undefined'
       || typeof URL === 'undefined'
