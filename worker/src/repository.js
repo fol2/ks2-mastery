@@ -34,12 +34,20 @@ import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system
 import { buildSpellingProgressPools, buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
 import {
   activityFeedRowFromEventRow,
+  appendRecentEventTokens,
   COMMAND_PROJECTION_MODEL_KEY,
+  COMMAND_PROJECTION_SCHEMA_VERSION,
   emptyLearnerReadModel,
+  mergeRecentEventTokens,
   normaliseActivityFeedRow,
+  normaliseCommandProjectionPayload,
   normaliseLearnerReadModelRow,
   normaliseReadModelKey,
+  RECENT_EVENT_TOKEN_RING_LIMIT,
 } from './read-models/learner-read-models.js';
+import {
+  eventToken as eventTokenForDedupe,
+} from './projections/events.js';
 import { buildSpellingAudioCue } from './subjects/spelling/audio.js';
 import { buildPunctuationReadModel } from './subjects/punctuation/read-models.js';
 import { createPunctuationService } from '../../shared/punctuation/service.js';
@@ -60,6 +68,7 @@ import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
+  ProjectionUnavailableError,
 } from './errors.js';
 import {
   all,
@@ -832,7 +841,9 @@ function storeMutationReceiptStatement(db, {
 
 async function ensureAccount(db, session, nowTs) {
   const platformRole = normalisePlatformRole(session?.platformRole);
-  await run(db, `
+  // U6 queryCount budget: RETURNING * folds the post-write SELECT into
+  // the UPSERT so per-command ensureAccount runs a single query.
+  return first(db, `
     INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at)
     VALUES (?, ?, ?, ?, NULL, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
@@ -840,9 +851,8 @@ async function ensureAccount(db, session, nowTs) {
       display_name = COALESCE(excluded.display_name, adult_accounts.display_name),
       platform_role = COALESCE(excluded.platform_role, adult_accounts.platform_role),
       updated_at = excluded.updated_at
+    RETURNING *
   `, [session.accountId, session.email, session.displayName, platformRole, nowTs, nowTs]);
-
-  return first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [session.accountId]);
 }
 
 async function listMembershipRows(db, accountId, { writableOnly = false } = {}) {
@@ -1394,7 +1404,31 @@ async function readLearnerReadModel(db, learnerId, modelKey) {
   return row ? normaliseLearnerReadModelRow(row, key) : emptyLearnerReadModel(key);
 }
 
+// U6 hot-path optimisation: every subject command called
+// `capacityReadModelTablesAvailable(db)` which issued a SELECT against
+// sqlite_master. The presence of the capacity read-model tables does
+// not change across the lifetime of a Worker isolate (migrations only
+// add them once), so cache the result per underlying DB handle — but
+// only the *true* outcome. A transient false would be re-checked on
+// the next request so a mid-lifetime migration can unlock the feature
+// without restarting the isolate. WeakMap keying on the raw D1 handle
+// survives the capacity-wrapped proxy used by `withCapacityCollector`
+// because the wrapper exposes `originalDatabase` on its prototype; we
+// resolve to the underlying handle before caching.
+const capacityReadModelTablesCache = new WeakMap();
+
+function underlyingDbHandle(db) {
+  // The capacity-collector wrapper forwards most calls via prototype
+  // but keeps a reference to the unwrapped handle on `__rawDb` (set in
+  // d1.js). Fall back to `db` itself for raw handles.
+  return db && db.__rawDb ? db.__rawDb : db;
+}
+
 async function capacityReadModelTablesAvailable(db) {
+  const cacheKey = underlyingDbHandle(db);
+  if (cacheKey && capacityReadModelTablesCache.has(cacheKey)) {
+    return capacityReadModelTablesCache.get(cacheKey);
+  }
   try {
     const rows = await all(db, `
       SELECT name
@@ -1403,7 +1437,11 @@ async function capacityReadModelTablesAvailable(db) {
         AND name IN (${sqlPlaceholders(CAPACITY_READ_MODEL_TABLES.length)})
     `, CAPACITY_READ_MODEL_TABLES);
     const tableNames = new Set(rows.map((row) => row.name).filter(Boolean));
-    return CAPACITY_READ_MODEL_TABLES.every((tableName) => tableNames.has(tableName));
+    const available = CAPACITY_READ_MODEL_TABLES.every((tableName) => tableNames.has(tableName));
+    if (available && cacheKey) {
+      capacityReadModelTablesCache.set(cacheKey, true);
+    }
+    return available;
   } catch (error) {
     if (isMissingCapacityReadModelTableError(error)) return false;
     throw error;
@@ -1498,14 +1536,59 @@ function bindLearnerActivityFeedUpsertStatement(db, row, { guard = null } = {}) 
   }
 }
 
-function commandProjectionReadModelFromRuntime(runtime, events, nowTs) {
+function commandProjectionReadModelFromRuntime(runtime, events, nowTs, {
+  existingTokens = [],
+  previousProjection = null,
+} = {}) {
   const gameState = runtime?.gameState && typeof runtime.gameState === 'object' && !Array.isArray(runtime.gameState)
     ? runtime.gameState
     : {};
-  const rewardState = cloneSerialisable(gameState[PUBLIC_MONSTER_CODEX_SYSTEM_ID]) || {};
+  // U6 regression fix: `runtime.gameState` (sourced from
+  // `runtimeWrite.gameState`) only contains the *changed* slice —
+  // `projectSpellingRewards` returns `{}` when the command did not
+  // touch `monster-codex`. A naive `cloneSerialisable(gameState[...])`
+  // would therefore clobber a previously persisted `rewards.state`
+  // with `{}`, losing `{inklet: {mastered: [...]}}` on every
+  // non-mastering follow-up command. When the runtime did not carry
+  // codex state, inherit the previous projection's `rewards.state`
+  // so the sub-shape (`{inklet, glimmerbug, phaeton, vellhorn}`)
+  // survives round-trips.
+  const hasCodexUpdate = Object.prototype.hasOwnProperty.call(gameState, PUBLIC_MONSTER_CODEX_SYSTEM_ID);
+  const previousRewardState = previousProjection
+    && typeof previousProjection === 'object'
+    && !Array.isArray(previousProjection)
+    && previousProjection.rewards
+    && typeof previousProjection.rewards === 'object'
+    && !Array.isArray(previousProjection.rewards)
+    && previousProjection.rewards.state
+    && typeof previousProjection.rewards.state === 'object'
+    && !Array.isArray(previousProjection.rewards.state)
+    ? cloneSerialisable(previousProjection.rewards.state)
+    : null;
+  const rewardState = hasCodexUpdate
+    ? (cloneSerialisable(gameState[PUBLIC_MONSTER_CODEX_SYSTEM_ID]) || {})
+    : (previousRewardState || {});
   const eventList = Array.isArray(events) ? events : [];
+  // U6: append each newly-persisted event's token to the ring so the next
+  // command can dedupe from the read model without re-scanning event_log.
+  const incomingTokens = eventList
+    .map((event) => eventTokenForDedupe(event))
+    .filter((token) => typeof token === 'string' && token);
+  const recentEventTokens = appendRecentEventTokens(existingTokens, incomingTokens, {
+    tokenRingLimit: RECENT_EVENT_TOKEN_RING_LIMIT,
+  });
+  // U6: preserve any non-v1 fields from an existing projection so a rollback
+  // reader cannot silently delete a newer writer's payload.
+  const extraFields = {};
+  if (previousProjection && typeof previousProjection === 'object' && !Array.isArray(previousProjection)) {
+    for (const [key, value] of Object.entries(previousProjection)) {
+      if (['version', 'generatedAt', 'rewards', 'eventCounts', 'recentEventTokens'].includes(key)) continue;
+      extraFields[key] = value;
+    }
+  }
   return {
-    version: COMMAND_PROJECTION_READ_MODEL_VERSION,
+    ...extraFields,
+    version: COMMAND_PROJECTION_SCHEMA_VERSION,
     generatedAt: Math.max(0, Number(nowTs) || Date.now()),
     rewards: {
       systemId: PUBLIC_MONSTER_CODEX_SYSTEM_ID,
@@ -1516,6 +1599,7 @@ function commandProjectionReadModelFromRuntime(runtime, events, nowTs) {
       domain: eventList.filter((event) => typeof event?.type === 'string' && !event.type.startsWith('reward.')).length,
       reactions: eventList.filter((event) => typeof event?.type === 'string' && event.type.startsWith('reward.')).length,
     },
+    recentEventTokens,
   };
 }
 
@@ -4226,8 +4310,18 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
   };
 }
 
-async function readSubjectRuntimeBundle(db, accountId, learnerId, subjectId = 'spelling') {
-  await requireLearnerWriteAccess(db, accountId, learnerId);
+async function readSubjectRuntimeBundle(db, accountId, learnerId, subjectId = 'spelling', {
+  // U6 hot-path optimisation: subject command handlers already ran
+  // through `runSubjectCommandMutation` which called
+  // `requireLearnerWriteAccess`. Skip the duplicate
+  // `account_learner_memberships` SELECT so hot-path queryCount stays
+  // within ≤12. External callers (worker routes that bypass the
+  // command path) MUST omit this flag.
+  skipAccessCheck = false,
+} = {}) {
+  if (!skipAccessCheck) {
+    await requireLearnerWriteAccess(db, accountId, learnerId);
+  }
   const row = await first(db, `
     SELECT learner_id, subject_id, ui_json, data_json, updated_at
     FROM child_subject_state
@@ -4285,6 +4379,141 @@ async function readLearnerProjectionBundle(db, accountId, learnerId) {
     readModels: {
       commandProjection: commandProjectionReadModel,
     },
+  };
+}
+
+// U6: bounded-fallback rehydrate. Reads the current game state, the most
+// recent PROJECTION_RECENT_EVENT_LIMIT events, and returns both. Throws the
+// caller's error unchanged so `readLearnerProjectionInput` can classify the
+// failure path.
+async function readLearnerProjectionBoundedFallback(db, learnerId) {
+  const gameRows = await all(db, `
+    SELECT learner_id, system_id, state_json, updated_at
+    FROM child_game_state
+    WHERE learner_id = ?
+  `, [learnerId]);
+  const eventRows = await all(db, `
+    SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+    FROM event_log
+    WHERE learner_id = ?
+    ORDER BY created_at DESC, id DESC
+    LIMIT ?
+  `, [learnerId, PROJECTION_RECENT_EVENT_LIMIT]);
+  const gameState = Object.fromEntries(gameRows.map((row) => [row.system_id, gameStateRowToRecord(row)]));
+  const events = normaliseEventLog(
+    sortEventRowsAscending(eventRows).map(eventRowToRecord).filter(Boolean),
+  );
+  return { gameState, events };
+}
+
+/**
+ * U6 hot-path projection reader. Returns one of:
+ *   - `{mode: 'hit', projection, sourceRevision, rawRow}` — persisted row
+ *     present and `sourceRevision >= currentRevision - PROJECTION_RECENT_EVENT_LIMIT`
+ *   - `{mode: 'miss-rehydrated', projection, sourceRevision, fallbackDurationMs,
+ *       bootstrap: {gameState, events}}` — row absent or unusable; bounded
+ *     200-event fallback rebuilt the read surface
+ *   - `{mode: 'stale-catchup', projection, sourceRevision, fallbackDurationMs,
+ *       bootstrap: {gameState, events}}` — row present but stale; bounded
+ *     catch-up refreshed it
+ *   - `{mode: 'newer-opaque', projection, sourceRevision, rawRow}` — persisted
+ *     row version is newer than reader knows; command continues without the
+ *     tokens optimisation and MUST NOT overwrite the row
+ *
+ * Throws `ProjectionUnavailableError` when the persisted row is missing AND
+ * the bounded fallback itself fails.
+ */
+async function readLearnerProjectionInput(db, accountId, learnerId, {
+  currentRevision = 0,
+  now = Date.now,
+  // U6 hot-path optimisation: when the caller has already verified
+  // writable-learner access (e.g. `runSubjectCommandMutation` did it
+  // on entry), allow skipping the per-call `account_learner_memberships`
+  // SELECT to keep the per-command query count within the ≤12 budget.
+  // External callers (public API, admin paths) MUST omit this flag.
+  skipAccessCheck = false,
+} = {}) {
+  if (!skipAccessCheck) {
+    await requireLearnerWriteAccess(db, accountId, learnerId);
+  }
+  const readerVersion = COMMAND_PROJECTION_SCHEMA_VERSION;
+  const effectiveRevision = Math.max(0, Number(currentRevision) || 0);
+  const minAcceptableRevision = Math.max(0, effectiveRevision - PROJECTION_RECENT_EVENT_LIMIT);
+  const startFallback = () => {
+    const ts = typeof now === 'function' ? Number(now()) : Number(now);
+    return Number.isFinite(ts) ? ts : Date.now();
+  };
+
+  const existingRow = await readLearnerReadModel(db, learnerId, COMMAND_PROJECTION_MODEL_KEY);
+  const missing = !existingRow || existingRow.missing;
+  const rawPayload = missing ? null : existingRow.model;
+  const normalised = rawPayload
+    ? normaliseCommandProjectionPayload(rawPayload, { fallbackVersion: 0 })
+    : null;
+  const persistedVersion = normalised ? Number(normalised.version) || 0 : 0;
+  const persistedRevision = existingRow ? Number(existingRow.sourceRevision) || 0 : 0;
+
+  // Rollback safety: persisted writer is newer than this reader. Never
+  // overwrite; hand the caller an opaque input so the command runs without
+  // the token-dedupe optimisation.
+  if (!missing && persistedVersion > readerVersion) {
+    return {
+      mode: 'newer-opaque',
+      projection: normalised,
+      sourceRevision: persistedRevision,
+      rawRow: existingRow,
+    };
+  }
+
+  // Happy path: row present, version compatible, and not too stale.
+  if (!missing && persistedVersion === readerVersion && persistedRevision >= minAcceptableRevision) {
+    return {
+      mode: 'hit',
+      projection: normalised,
+      sourceRevision: persistedRevision,
+      rawRow: existingRow,
+    };
+  }
+
+  // Migration path: persisted older than reader. Treat as miss-rehydrated
+  // and rebuild from the bounded fallback so the next write upgrades the
+  // row to the current shape.
+  const fallbackStartedAt = startFallback();
+  let bootstrap;
+  try {
+    bootstrap = await readLearnerProjectionBoundedFallback(db, learnerId);
+  } catch (error) {
+    throw new ProjectionUnavailableError(
+      'Command projection bounded fallback rejected.',
+      { cause: error?.message || 'unknown', learnerId },
+    );
+  }
+  const fallbackDurationMs = Math.max(0, startFallback() - fallbackStartedAt);
+
+  // Two sub-cases for miss-rehydrated vs stale-catchup.
+  const isStaleCatchup = !missing && persistedVersion <= readerVersion && persistedRevision < minAcceptableRevision;
+  const fallbackProjection = {
+    version: readerVersion,
+    rewards: {
+      systemId: PUBLIC_MONSTER_CODEX_SYSTEM_ID,
+      state: cloneSerialisable(bootstrap.gameState?.[PUBLIC_MONSTER_CODEX_SYSTEM_ID]) || {},
+      events: [],
+      toastEvents: [],
+    },
+    eventCounts: { domain: 0, reactions: 0, toasts: 0 },
+    recentEventTokens: bootstrap.events
+      .map((event) => eventTokenForDedupe(event))
+      .filter((token) => typeof token === 'string' && token)
+      .slice(-RECENT_EVENT_TOKEN_RING_LIMIT),
+  };
+
+  return {
+    mode: isStaleCatchup ? 'stale-catchup' : 'miss-rehydrated',
+    projection: fallbackProjection,
+    sourceRevision: persistedRevision,
+    fallbackDurationMs,
+    bootstrap,
+    rawRow: existingRow,
   };
 }
 
@@ -4361,6 +4590,17 @@ function guardedWhere(guard) {
 function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs, {
   guard = null,
   includeCapacityReadModels = true,
+  // U6: caller passes the projection input it already loaded so the
+  // persisted token ring inherits the prior `recentEventTokens` set and
+  // any non-v1 fields from a newer writer are preserved rather than
+  // silently deleted on overwrite.
+  projectionContext = null,
+  // U6 queryCount budget: when the caller knows the current latest
+  // active session id (loaded via readSubjectRuntime earlier in the
+  // request), skip the "abandon siblings" UPDATE when the runtime
+  // write targets the SAME session id. The UPDATE has no effect in
+  // that case but still counts towards queryCount on the hot path.
+  currentActiveSessionId = null,
 } = {}) {
   const nextState = normaliseSubjectStateRecord({
     ui: runtime?.state || null,
@@ -4391,7 +4631,13 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
     ? normalisePracticeSessionRecord(runtime.practiceSession)
     : null;
   if (session?.id && session.learnerId === learnerId && session.subjectId === subjectId) {
-    if (session.status === 'active') {
+    // U6 queryCount budget: skip the no-op "abandon siblings" UPDATE
+    // when the caller confirmed the current active session id is the
+    // same one we are about to upsert. The UPDATE's `id <> ?` filter
+    // means it would match zero rows in that case.
+    const shouldEmitAbandon = session.status === 'active'
+      && (currentActiveSessionId == null || currentActiveSessionId !== session.id);
+    if (shouldEmitAbandon) {
       statements.push(bindStatement(db, `
         UPDATE practice_sessions
         SET status = 'abandoned',
@@ -4514,21 +4760,43 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
       if (activityStatement) statements.push(activityStatement);
     }
   }
-  if (includeCapacityReadModels && Object.prototype.hasOwnProperty.call(gameState, PUBLIC_MONSTER_CODEX_SYSTEM_ID)) {
-    const commandProjectionReadModel = commandProjectionReadModelFromRuntime(runtime, persistedEvents, nowTs);
-    const readModelStatement = bindLearnerReadModelUpsertStatement(
-      db,
-      learnerId,
-      COMMAND_PROJECTION_MODEL_KEY,
-      commandProjectionReadModel,
-      {
-        sourceRevision: guard ? guard.expectedRevision + 1 : 0,
-        generatedAt: nowTs,
-        updatedAt: nowTs,
-        guard,
-      },
-    );
-    if (readModelStatement) statements.push(readModelStatement);
+  // U6: always write the projection read model when the capacity tables
+  // exist and `projectionContext` was supplied by the caller. A fresh
+  // `start-session` may not emit any reward state yet, but the token ring
+  // still accumulates so the next command can stay on the hot path. When
+  // the caller did not supply `projectionContext` (legacy direct
+  // `persistSubjectRuntime` callers), keep the Phase 1 behaviour of only
+  // writing when monster-codex state is present so we do not drift the
+  // schema unintentionally.
+  const shouldWriteProjection = includeCapacityReadModels && (
+    projectionContext != null
+    || Object.prototype.hasOwnProperty.call(gameState, PUBLIC_MONSTER_CODEX_SYSTEM_ID)
+  );
+  if (shouldWriteProjection) {
+    const existingTokens = projectionContext?.projection?.recentEventTokens || [];
+    // U6: `newer-opaque` MUST NOT overwrite — honour the rollback-safety
+    // contract from the plan section.
+    const previousProjection = projectionContext?.projection || null;
+    const projectionMode = projectionContext?.mode || null;
+    if (projectionMode !== 'newer-opaque') {
+      const commandProjectionReadModel = commandProjectionReadModelFromRuntime(runtime, persistedEvents, nowTs, {
+        existingTokens,
+        previousProjection,
+      });
+      const readModelStatement = bindLearnerReadModelUpsertStatement(
+        db,
+        learnerId,
+        COMMAND_PROJECTION_MODEL_KEY,
+        commandProjectionReadModel,
+        {
+          sourceRevision: guard ? guard.expectedRevision + 1 : 0,
+          generatedAt: nowTs,
+          updatedAt: nowTs,
+          guard,
+        },
+      );
+      if (readModelStatement) statements.push(readModelStatement);
+    }
   }
 
   const summary = {
@@ -4872,7 +5140,52 @@ async function runSubjectCommandMutation(db, {
   const requestHash = mutationPayloadHash(kind, payload);
 
   await requireLearnerWriteAccess(db, accountId, command.learnerId);
-  const existingReceipt = await loadMutationReceipt(db, accountId, nextMutation.requestId);
+
+  // U6 queryCount budget: fold the mutation-receipt idempotency lookup
+  // and the learner revision read into a single LEFT JOIN so the hot
+  // path issues one SELECT instead of two. NULL-padded columns signal
+  // "no existing receipt" and a missing `learner_id` signals "learner
+  // not found" (and the request terminates the same way as the prior
+  // two-query flow).
+  const combinedRow = await first(db, `
+    SELECT
+      l.id AS learner_id,
+      l.state_revision AS learner_state_revision,
+      r.account_id AS receipt_account_id,
+      r.request_id AS receipt_request_id,
+      r.scope_type AS receipt_scope_type,
+      r.scope_id AS receipt_scope_id,
+      r.mutation_kind AS receipt_mutation_kind,
+      r.request_hash AS receipt_request_hash,
+      r.response_json AS receipt_response_json,
+      r.status_code AS receipt_status_code,
+      r.correlation_id AS receipt_correlation_id,
+      r.applied_at AS receipt_applied_at
+    FROM learner_profiles l
+    LEFT JOIN mutation_receipts r
+      ON r.account_id = ? AND r.request_id = ?
+    WHERE l.id = ?
+  `, [accountId, nextMutation.requestId, command.learnerId]);
+
+  if (!combinedRow || !combinedRow.learner_id) {
+    throw new NotFoundError('Learner was not found.', { learnerId: command.learnerId });
+  }
+
+  const existingReceipt = combinedRow.receipt_request_id
+    ? {
+      account_id: combinedRow.receipt_account_id,
+      request_id: combinedRow.receipt_request_id,
+      scope_type: combinedRow.receipt_scope_type,
+      scope_id: combinedRow.receipt_scope_id,
+      mutation_kind: combinedRow.receipt_mutation_kind,
+      request_hash: combinedRow.receipt_request_hash,
+      response_json: combinedRow.receipt_response_json,
+      status_code: combinedRow.receipt_status_code,
+      correlation_id: combinedRow.receipt_correlation_id,
+      applied_at: combinedRow.receipt_applied_at,
+    }
+    : null;
+
   if (existingReceipt) {
     if (existingReceipt.request_hash !== requestHash) {
       throw idempotencyReuseError({
@@ -4903,12 +5216,17 @@ async function runSubjectCommandMutation(db, {
     return replayed;
   }
 
-  const learner = await first(db, 'SELECT id, state_revision FROM learner_profiles WHERE id = ?', [command.learnerId]);
-  if (!learner) throw new NotFoundError('Learner was not found.', { learnerId: command.learnerId });
+  const learner = {
+    id: combinedRow.learner_id,
+    state_revision: combinedRow.learner_state_revision,
+  };
 
   const appliedRaw = await applyCommand();
   const appliedPayload = isPlainObject(appliedRaw) ? appliedRaw : {};
-  const { runtimeWrite = null, ...applied } = appliedPayload;
+  // U6: `projectionContext` travels alongside `runtimeWrite` so the
+  // persistence plan can preserve the token ring and any non-v1 fields
+  // from a newer writer.
+  const { runtimeWrite = null, projectionContext = null, ...applied } = appliedPayload;
   const currentRevision = Number(learner.state_revision) || 0;
   const mutatesLearnerState = Boolean(runtimeWrite) || applied.changed !== false;
   const appliedRevision = mutatesLearnerState ? nextMutation.expectedRevision + 1 : currentRevision;
@@ -4946,6 +5264,11 @@ async function runSubjectCommandMutation(db, {
     const plan = buildSubjectRuntimePersistencePlan(db, accountId, command.learnerId, command.subjectId, runtimeWrite, nowTs, {
       guard,
       includeCapacityReadModels,
+      projectionContext,
+      // U6 queryCount budget: subject handlers bubble up the currently
+      // active session id they observed during `readSubjectRuntime`
+      // so the persistence plan can skip the no-op abandon UPDATE.
+      currentActiveSessionId: runtimeWrite.previousActiveSessionId || null,
     });
     statements.push(...plan.statements);
   }
@@ -5009,8 +5332,11 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
   return {
     async ensureAccount(session) {
       const nowTs = nowFactory();
-      await ensureAccount(db, session, nowTs);
-      return first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [session.accountId]);
+      // U6 queryCount budget: the inner `ensureAccount` helper already
+      // returns the row via `SELECT * FROM adult_accounts WHERE id = ?`
+      // so forwarding its return value avoids the duplicate SELECT that
+      // used to run in every command request.
+      return ensureAccount(db, session, nowTs);
     },
     async readSession(accountId) {
       return first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
@@ -5028,11 +5354,22 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       }
       return bundle;
     },
-    async readSubjectRuntime(accountId, learnerId, subjectId = 'spelling') {
-      return readSubjectRuntimeBundle(db, accountId, learnerId, subjectId);
+    async readSubjectRuntime(accountId, learnerId, subjectId = 'spelling', options = {}) {
+      return readSubjectRuntimeBundle(db, accountId, learnerId, subjectId, options);
     },
     async readLearnerProjectionState(accountId, learnerId) {
       return readLearnerProjectionBundle(db, accountId, learnerId);
+    },
+    // U6 hot-path reader. Prefer this over `readLearnerProjectionState`
+    // inside subject command handlers — it returns a closed-union
+    // `{mode, projection, sourceRevision, ...}` payload and throws
+    // `ProjectionUnavailableError` when both the row and the bounded
+    // fallback are unusable.
+    async readLearnerProjectionInput(accountId, learnerId, options = {}) {
+      return readLearnerProjectionInput(db, accountId, learnerId, {
+        now: nowFactory,
+        ...options,
+      });
     },
     async readLearnerEventLogEvents(accountId, learnerId, filters = {}) {
       return readLearnerEventLogEvents(db, accountId, learnerId, filters);
