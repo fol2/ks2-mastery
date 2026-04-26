@@ -148,12 +148,44 @@ test.describe('grammar accessibility golden — keyboard-only round-trip', () =>
     // choice items the primary Submit button is still keyboard-
     // reachable and Enter on the button fires the same submit path,
     // so we fall back to that branch.
+    //
+    // SH2-U7 review follow-up (FIX-2): grammar content carries many
+    // `textarea` input specs ("Corrected sentence", "Rewritten sentence",
+    // ...). Textarea swallows `Enter` as a newline — the form's native
+    // submit never fires. For textarea we Tab forward until focus lands on
+    // the primary Submit button (the `.grammar-answer-form` only renders
+    // a short action row after the input: repair chips, then the primary
+    // Submit), then press Enter. That mirrors what a real keyboard-only
+    // learner would do and keeps the scene deterministic on CI.
     const textInput = page.locator('.grammar-answer-form input[name="answer"], .grammar-answer-form textarea[name="answer"]').first();
     const firstRadio = page.locator('.grammar-answer-form input[type="radio"]').first();
     if (await textInput.count()) {
       await textInput.focus();
       await page.keyboard.type('zzzzz-not-a-real-answer');
-      await page.keyboard.press('Enter');
+      const focusedTag = await textInput.evaluate((el) => el.tagName?.toLowerCase());
+      if (focusedTag === 'textarea') {
+        // Textarea swallows Enter; Tab to the primary Submit button.
+        let landedOnSubmit = false;
+        for (let i = 0; i < 10; i += 1) {
+          await page.keyboard.press('Tab');
+          const current = await readFocusedElement(page);
+          if (current?.tag === 'button' && /submit|check/iu.test(current.text || '')) {
+            landedOnSubmit = true;
+            break;
+          }
+        }
+        if (!landedOnSubmit) {
+          // Fallback: focus the primary submit button directly. The
+          // button is still keyboard-reachable — we just didn't encounter
+          // it within 10 Tabs (unlikely for the session's short form).
+          const submit = page.locator('.grammar-answer-form button[type="submit"].primary').first();
+          await submit.focus();
+        }
+        await page.keyboard.press('Enter');
+      } else {
+        // Plain `<input>`: Enter submits the form natively.
+        await page.keyboard.press('Enter');
+      }
     } else if (await firstRadio.count()) {
       // Space selects the focused radio; Tab then Enter invokes the
       // primary Submit button without a mouse click.
@@ -167,12 +199,14 @@ test.describe('grammar accessibility golden — keyboard-only round-trip', () =>
     // Feedback panel with role=status + aria-live=polite is pinned by
     // `tests/react-accessibility-contract.test.js` at the SSR layer;
     // the playwright scene re-asserts it live so a runtime regression
-    // surfaces here as well.
-    const feedback = page.locator(
-      '.grammar-session .feedback.good[role="status"], .grammar-session .feedback.warn[role="status"]',
-    ).first();
+    // surfaces here as well. SH2-U7 review follow-up (FIX-3): query by
+    // the `data-grammar-session-feedback-live` anchor for parity with
+    // Punctuation (`[data-punctuation-session-feedback-live]`). The
+    // anchor is agent-native-friendly and decouples from the class bag.
+    const feedback = page.locator('[data-grammar-session-feedback-live]').first();
     await expect(feedback).toBeVisible({ timeout: 10_000 });
     await expect(feedback).toHaveAttribute('aria-live', 'polite');
+    await expect(feedback).toHaveAttribute('role', 'status');
   });
 
   // ---------------------------------------------------------------

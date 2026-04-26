@@ -207,6 +207,181 @@ test('Grammar session error banner carries role="alert" so assistive tech announ
   );
 });
 
+// ----------------------------------------------------------------------------
+// SH2-U7 review follow-up (FIX-1): the `aria-describedby` + `aria-invalid`
+// linkage must thread to ALL five GrammarInput branches, not just text /
+// textarea. Grammar content carries `single_choice`, `checkbox_list`,
+// `table_choice`, `multi` specs alongside the text branches (see
+// `worker/src/subjects/grammar/content.js`). Before this fix, a learner
+// whose session raised a `grammar.error` on a choice / table / multi item
+// had no aria-describedby linkage on the interactive wrapper —
+// screen-reader users could not discover the error text announced by the
+// banner without hunting for it. The wrapper element for each shape now
+// carries `aria-describedby` + `aria-invalid` so any inner input that
+// receives focus inherits the banner reference transitively.
+//
+// Each test seeds a session with the matching `inputSpec.type` and asserts
+// the banner id + `aria-describedby` + `aria-invalid` linkage holds. Pattern
+// mirrors the existing text-input test above — only the input shape
+// differs.
+// ----------------------------------------------------------------------------
+
+function seedGrammarSessionWithError(harness, learnerId, inputSpec) {
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.store.updateSubjectUiForLearner(learnerId, 'grammar', (previous) => ({
+    ...normaliseGrammarReadModel(previous, learnerId),
+    phase: 'session',
+    error: 'Grammar is unavailable right now.',
+    session: {
+      id: 'sess-a11y',
+      currentIndex: 0,
+      targetCount: 1,
+      answered: 0,
+      currentItem: {
+        promptText: 'Answer the question.',
+        inputSpec,
+      },
+    },
+  }));
+}
+
+test('Grammar session single_choice input carries aria-describedby linkage to the error banner', () => {
+  const harness = createGrammarHarness({ storage: installMemoryStorage() });
+  const learnerId = harness.store.getState().learners.selectedId;
+  seedGrammarSessionWithError(harness, learnerId, {
+    type: 'single_choice',
+    options: [
+      { value: 'yes', label: 'Yes' },
+      { value: 'no', label: 'No' },
+    ],
+  });
+  const html = harness.render();
+  assert.match(html, /role="alert"/);
+  const bannerIdMatch = html.match(/id="(grammar-session-error-[A-Za-z0-9_-]+)"/);
+  assert.ok(bannerIdMatch, 'banner must carry a session-scoped id for aria-describedby linkage');
+  const bannerId = bannerIdMatch[1];
+  // The `ChoiceList` wrapper renders `<div class="grammar-choice-list ..."
+  // role="radiogroup" aria-describedby=... aria-invalid="true">`.
+  const expectedPattern = new RegExp(
+    `role="radiogroup"[^>]*aria-describedby="${bannerId}"[^>]*aria-invalid="true"|aria-describedby="${bannerId}"[^>]*aria-invalid="true"[^>]*role="radiogroup"`,
+  );
+  assert.match(
+    html,
+    expectedPattern,
+    'single_choice radiogroup wrapper must describe the error banner and carry aria-invalid',
+  );
+});
+
+test('Grammar session checkbox_list input carries aria-describedby linkage to the error banner', () => {
+  const harness = createGrammarHarness({ storage: installMemoryStorage() });
+  const learnerId = harness.store.getState().learners.selectedId;
+  seedGrammarSessionWithError(harness, learnerId, {
+    type: 'checkbox_list',
+    options: [
+      { value: 'a', label: 'Alpha' },
+      { value: 'b', label: 'Beta' },
+    ],
+  });
+  const html = harness.render();
+  const bannerIdMatch = html.match(/id="(grammar-session-error-[A-Za-z0-9_-]+)"/);
+  assert.ok(bannerIdMatch, 'banner must carry a session-scoped id');
+  const bannerId = bannerIdMatch[1];
+  // Checkbox_list renders `role="group"` (no canonical "checkboxgroup" role
+  // in ARIA — `group` is the correct generic wrapper).
+  const expectedPattern = new RegExp(
+    `role="group"[^>]*aria-describedby="${bannerId}"[^>]*aria-invalid="true"|aria-describedby="${bannerId}"[^>]*aria-invalid="true"[^>]*role="group"`,
+  );
+  assert.match(
+    html,
+    expectedPattern,
+    'checkbox_list group wrapper must describe the error banner and carry aria-invalid',
+  );
+});
+
+test('Grammar session table_choice input carries aria-describedby linkage to the error banner', () => {
+  const harness = createGrammarHarness({ storage: installMemoryStorage() });
+  const learnerId = harness.store.getState().learners.selectedId;
+  seedGrammarSessionWithError(harness, learnerId, {
+    type: 'table_choice',
+    columns: ['statement', 'question'],
+    rows: [
+      { key: 'row0', label: 'Sentence one.' },
+      { key: 'row1', label: 'Sentence two?' },
+    ],
+  });
+  const html = harness.render();
+  const bannerIdMatch = html.match(/id="(grammar-session-error-[A-Za-z0-9_-]+)"/);
+  assert.ok(bannerIdMatch, 'banner must carry a session-scoped id');
+  const bannerId = bannerIdMatch[1];
+  // The table-choice wrapper is `<div class="grammar-table-wrap"
+  // aria-describedby=... aria-invalid="true">`.
+  const expectedPattern = new RegExp(
+    `class="grammar-table-wrap"[^>]*aria-describedby="${bannerId}"[^>]*aria-invalid="true"`,
+  );
+  assert.match(
+    html,
+    expectedPattern,
+    'table_choice wrapper must describe the error banner and carry aria-invalid',
+  );
+});
+
+test('Grammar session multi input carries aria-describedby linkage to the error banner', () => {
+  const harness = createGrammarHarness({ storage: installMemoryStorage() });
+  const learnerId = harness.store.getState().learners.selectedId;
+  seedGrammarSessionWithError(harness, learnerId, {
+    type: 'multi',
+    fields: [
+      {
+        key: 'row0',
+        label: 'Sentence 1',
+        kind: 'radio',
+        options: [['a', 'A'], ['b', 'B']],
+      },
+    ],
+  });
+  const html = harness.render();
+  const bannerIdMatch = html.match(/id="(grammar-session-error-[A-Za-z0-9_-]+)"/);
+  assert.ok(bannerIdMatch, 'banner must carry a session-scoped id');
+  const bannerId = bannerIdMatch[1];
+  // The multi wrapper is `<div class="grammar-multi-fields" role="group"
+  // aria-describedby=... aria-invalid="true">`.
+  const expectedPattern = new RegExp(
+    `class="grammar-multi-fields"[^>]*role="group"[^>]*aria-describedby="${bannerId}"[^>]*aria-invalid="true"|class="grammar-multi-fields"[^>]*aria-describedby="${bannerId}"[^>]*aria-invalid="true"`,
+  );
+  assert.match(
+    html,
+    expectedPattern,
+    'multi fields wrapper must describe the error banner and carry aria-invalid',
+  );
+});
+
+test('Grammar FeedbackPanel carries data-grammar-session-feedback-live anchor for agent-native parity with Punctuation', () => {
+  // SH2-U7 review follow-up (FIX-3): the Punctuation scene anchors its
+  // feedback-phase live region on `[data-punctuation-session-feedback-live]`.
+  // Grammar previously carried `role="status"` + `aria-live="polite"` on the
+  // `.feedback.good|warn` panel but no data attribute. This test pins the
+  // cross-subject symmetry so an agent-native probe can query either subject
+  // with the same pattern.
+  const harness = createGrammarHarness({ storage: installMemoryStorage() });
+  const sample = grammarOracleSample();
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: { roundLength: 1, templateId: sample.id, seed: sample.sample.seed },
+  });
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData(sample.correctResponse),
+  });
+  const html = harness.render();
+  // The anchor sits on the same `<div>` that carries `role="status"` +
+  // `aria-live="polite"`. Both orderings are valid — React's renderer is
+  // deterministic per release but the order is an implementation detail.
+  assert.match(
+    html,
+    /data-grammar-session-feedback-live[^>]*role="status"[^>]*aria-live="polite"|role="status"[^>]*aria-live="polite"[^>]*data-grammar-session-feedback-live/,
+    'grammar feedback panel must carry data-grammar-session-feedback-live alongside role=status + aria-live',
+  );
+});
+
 test('Grammar mini-test nav exposes aria-current=step + aria-pressed for assistive tech', () => {
   const harness = createGrammarHarness({ storage: installMemoryStorage() });
   harness.dispatch('open-subject', { subjectId: 'grammar' });
