@@ -302,7 +302,35 @@ function subjectUiForLearner(registry, repositories, learnerId) {
   return buildSubjectUiTree(registry, persistedUi, { rehydrate: true });
 }
 
-export function createStore(subjects, { repositories, cacheSubjectUiWrites = false } = {}) {
+// U2 follow-up (M1): "empty cache" fidelity. A bare Object.keys(...).length > 0
+// treats `{ spelling: undefined }` as "has state" — but an undefined subject
+// slot is effectively empty. We require at least one subject record to be a
+// truthy object before skipping the fetch.
+function hasAnySubjectState(cachedStates) {
+  if (!cachedStates || typeof cachedStates !== 'object') return false;
+  return Object.values(cachedStates).some((record) => record && typeof record === 'object');
+}
+
+export function createStore(
+  subjects,
+  {
+    repositories,
+    cacheSubjectUiWrites = false,
+    // U2 hotfix (bootstrap-multi-learner-stats, 2026-04-26):
+    // Optional hook that fetches subject_state for a learner that has no
+    // cached entry locally. Invoked by `selectLearner` when the target
+    // learner's `subjectStates.readForLearner(learnerId)` comes back
+    // empty. The hook is expected to hit the server and write the result
+    // into the client cache (e.g., via the existing
+    // `applyCommandResultToCache` path in `repositories/api.js`).
+    //
+    // When not provided, selectLearner behaves exactly as before
+    // (fully back-compat — existing tests construct stores with only
+    // `{ repositories }`). Spec:
+    // docs/superpowers/specs/2026-04-26-bootstrap-learner-stats-hotfix-design.md
+    fetchLearnerSubjectState = null,
+  } = {},
+) {
   const registry = buildSubjectRegistry(subjects);
   const resolvedRepositories = validatePlatformRepositories(repositories);
   // Initial bootstrap reads every subject UI from the persisted snapshot —
@@ -315,6 +343,22 @@ export function createStore(subjects, { repositories, cacheSubjectUiWrites = fal
     { rehydrate: true },
   );
   const listeners = new Set();
+  // U2 hotfix: in-flight guard for selectLearner's auto-refetch. Keyed by
+  // learnerId so parallel switches between N distinct learners can fire
+  // up to N fetches in flight, but rapid repeated selects on the same
+  // learner collapse to a single fetch.
+  const inFlightLearnerFetches = new Set();
+  // U2 follow-up (R2): sticky per-session "we already tried" record.
+  // If a learner's fetch resolves with no cache-repopulation (e.g., the
+  // server legitimately has no state for them, or the response failed),
+  // the cache stays empty. Without this guard, every subsequent select
+  // on that learner would re-fire the fetch — an infinite refetch loop
+  // when the user toggles between learners. Adding learnerId here at
+  // fire-time (regardless of eventual outcome) means "one attempt per
+  // learner per session". A future Worker command that fills the cache
+  // via a different code path will naturally bypass this guard because
+  // the empty-check short-circuits before we consult it.
+  const attemptedLearnerFetches = new Set();
 
   function notify() {
     for (const listener of listeners) {
@@ -496,6 +540,80 @@ export function createStore(subjects, { repositories, cacheSubjectUiWrites = fal
         subjectUi: subjectUiForLearner(registry, resolvedRepositories, learnerId),
         monsterCelebrations: emptyMonsterCelebrations(),
       }));
+
+      // U2 hotfix — auto-refetch missing subject_state (defence-in-depth).
+      // If the learner's local cache is empty AND the composition root
+      // wired a fetcher AND no fetch is already in-flight for this
+      // learner AND we haven't already tried this session, fire an
+      // idempotent fetch. On resolution, if the user is still on this
+      // learner, re-read subjectUi from the (now populated) repo cache.
+      // Fetch errors and post-fetch rebuild errors are both swallowed —
+      // stats stay at 0 but the store is still consistent.
+      if (typeof fetchLearnerSubjectState !== 'function') return;
+      if (inFlightLearnerFetches.has(learnerId)) return;
+      // U2 follow-up (R2): sticky "already attempted this session" guard
+      // prevents the infinite refetch loop when the server legitimately
+      // returns no state for a learner. First attempt fires; subsequent
+      // selects skip.
+      if (attemptedLearnerFetches.has(learnerId)) return;
+      const cachedStates = resolvedRepositories.subjectStates.readForLearner(learnerId);
+      if (hasAnySubjectState(cachedStates)) return;
+
+      inFlightLearnerFetches.add(learnerId);
+      // R2: record the attempt at fire-time (regardless of eventual
+      // outcome). Even if the fetch rejects or returns empty, we don't
+      // retry within this session.
+      attemptedLearnerFetches.add(learnerId);
+      // Invoke the fetcher synchronously so the in-flight guard races
+      // the call site (rapid-switch duplicate selects collapse) and so
+      // observers see the call on the same turn. We wrap the result in
+      // `Promise.resolve(...)` to tolerate fetchers that are thenables,
+      // plain promises, or rare synchronous returns.
+      let pending;
+      try {
+        pending = Promise.resolve(fetchLearnerSubjectState(learnerId));
+      } catch (_syncThrow) {
+        inFlightLearnerFetches.delete(learnerId);
+        return;
+      }
+      // R1: the previous `.then(ok, err).then(cleanup)` chain leaked the
+      // in-flight guard AND propagated an unhandled rejection whenever
+      // the success handler itself threw (e.g., a poisoned repo read
+      // inside subjectUiForLearner, or a sanitiseState crash on
+      // malformed persisted state). The chained fulfilled-only
+      // `.then(cleanup)` bypasses the rejection, so cleanup never runs.
+      // Replace with an explicit .catch for the success-handler error
+      // path, then a .finally that clears the guard on every path:
+      // success, rejection, success-throw, or setState-throw.
+      pending
+        .then(
+          () => {
+            // Only rebuild subjectUi if the user is STILL on this learner.
+            // If they navigated away (e.g., to a different learner) while
+            // the fetch was pending, writing back would clobber the newly
+            // selected learner's UI.
+            if (state.learners.selectedId !== learnerId) return;
+            setState((current) => ({
+              ...current,
+              subjectUi: subjectUiForLearner(registry, resolvedRepositories, learnerId),
+            }));
+          },
+          () => {
+            // Swallow — a failed fetch means stats stay at 0, not a fatal
+            // UX failure. Any upstream observer (error reporter, toast
+            // surface) should be handled by the fetcher itself.
+          },
+        )
+        .catch(() => {
+          // Swallow any error thrown by the success handler itself
+          // (e.g., subjectUiForLearner throws on a poisoned repo, or a
+          // setState pipeline error). Without this, the rejection
+          // bypasses the chained fulfilled-only cleanup and leaks the
+          // in-flight guard.
+        })
+        .finally(() => {
+          inFlightLearnerFetches.delete(learnerId);
+        });
     },
     createLearner(payload = {}) {
       const learner = {

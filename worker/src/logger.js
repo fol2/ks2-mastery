@@ -67,6 +67,13 @@ const SIGNAL_ALLOWED_TOKENS = new Set([
 // `worker/src/repository.js` can emit today: version, mode, limits,
 // learners, practiceSessions, eventLog. Unknown keys are dropped silently
 // and counted via `bootstrapCapacityDroppedKeys`.
+// U1 follow-up 2026-04-26: extended with `subjectStatesBounded` (boolean
+// contract marker stamped whenever the bootstrap envelope has a subject-
+// state query shape — `false` nominal, `true` if a future author re-
+// bounds) and `subjectStatesFallbackMode` (diagnostic — `'degraded-to-
+// selected'` when the widened SELECT trips a D1 failure and the B2
+// defensive fallback shrinks the query). Both belong on the public
+// meta.capacity surface so tests + ops dashboards can observe them.
 const BOOTSTRAP_CAPACITY_ALLOWED_KEYS = new Set([
   'version',
   'mode',
@@ -74,6 +81,8 @@ const BOOTSTRAP_CAPACITY_ALLOWED_KEYS = new Set([
   'learners',
   'practiceSessions',
   'eventLog',
+  'subjectStatesBounded',
+  'subjectStatesFallbackMode',
 ]);
 
 // U3 round 1 (P1 #05): closed allowlist of `bootstrapMode` strings. Any

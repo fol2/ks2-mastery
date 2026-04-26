@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { sha256 } from '../worker/src/auth.js';
+import { WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
 import {
   buildSpellingWordBankAudioCue,
   resolveSpellingAudioRequest,
@@ -409,6 +410,176 @@ test('TTS route reads legacy batch-generated spelling audio keys', async () => {
     globalThis.fetch = originalFetch;
     server.close();
   }
+});
+
+test('spelling session TTS uses canonical sentence index when runtime carries only one sentence (no prompt.accepted)', async () => {
+  const learnerId = 'learner-a';
+  const sessionId = 'session-a';
+  const word = WORD_BY_SLUG.parliament;
+  const sentence = 'Parliament voted on the change.';
+  const promptToken = await sha256([
+    'spelling-prompt-v1',
+    learnerId,
+    sessionId,
+    word.slug,
+    word.word,
+    sentence,
+  ].join('|'));
+  const decoratedWord = {
+    ...word,
+    sentence,
+    sentences: [sentence],
+  };
+  const repository = {
+    async readSubjectRuntime() {
+      return {
+        subjectRecord: {
+          ui: {
+            phase: 'session',
+            session: {
+              id: sessionId,
+              currentCard: {
+                slug: word.slug,
+                word: decoratedWord,
+                prompt: {
+                  sentence,
+                  cloze: '__________ voted on the change.',
+                },
+              },
+            },
+          },
+        },
+      };
+    },
+    async readSpellingRuntimeContent() {
+      return {
+        snapshot: {
+          wordBySlug: {
+            [word.slug]: word,
+          },
+        },
+      };
+    },
+  };
+
+  const request = await resolveSpellingAudioRequest({
+    repository,
+    accountId: 'adult-a',
+    body: {
+      learnerId,
+      promptToken,
+    },
+  });
+
+  assert.equal(request.sentence, sentence);
+  assert.equal(request.sentenceIndex, 5);
+});
+
+test('spelling session TTS avoids content reads when runtime word sentences are complete', async () => {
+  const learnerId = 'learner-a';
+  const sessionId = 'session-a';
+  const word = WORD_BY_SLUG.parliament;
+  const sentence = 'Parliament voted on the change.';
+  const promptToken = await sha256([
+    'spelling-prompt-v1',
+    learnerId,
+    sessionId,
+    word.slug,
+    word.word,
+    sentence,
+  ].join('|'));
+  let contentReads = 0;
+  const repository = {
+    async readSubjectRuntime() {
+      return {
+        subjectRecord: {
+          ui: {
+            phase: 'session',
+            session: {
+              id: sessionId,
+              currentCard: {
+                slug: word.slug,
+                word,
+                prompt: {
+                  sentence,
+                  cloze: '__________ voted on the change.',
+                },
+              },
+            },
+          },
+        },
+      };
+    },
+    async readSpellingRuntimeContent() {
+      contentReads += 1;
+      throw new Error('Session TTS should not read content when runtime sentences are complete.');
+    },
+  };
+
+  const request = await resolveSpellingAudioRequest({
+    repository,
+    accountId: 'adult-a',
+    body: {
+      learnerId,
+      promptToken,
+    },
+  });
+
+  assert.equal(request.sentenceIndex, 5);
+  assert.equal(contentReads, 0);
+});
+
+test('spelling session TTS may read content once for a genuine single-sentence card (trade-off for correctness elsewhere)', async () => {
+  const learnerId = 'learner-a';
+  const sessionId = 'session-a';
+  const word = {
+    slug: 'genuine-one',
+    word: 'only',
+    sentence: 'A single-sentence item.',
+    sentences: ['A single-sentence item.'],
+  };
+  const sentence = word.sentence;
+  const promptToken = await sha256([
+    'spelling-prompt-v1',
+    learnerId,
+    sessionId,
+    word.slug,
+    word.word,
+    sentence,
+  ].join('|'));
+  let contentReads = 0;
+  const repository = {
+    async readSubjectRuntime() {
+      return {
+        subjectRecord: {
+          ui: {
+            phase: 'session',
+            session: {
+              id: sessionId,
+              currentCard: {
+                slug: word.slug,
+                word,
+                prompt: { sentence, cloze: 'A _________-sentence item.' },
+              },
+            },
+          },
+        },
+      };
+    },
+    async readSpellingRuntimeContent() {
+      contentReads += 1;
+      return { snapshot: { wordBySlug: { [word.slug]: word } } };
+    },
+  };
+
+  const request = await resolveSpellingAudioRequest({
+    repository,
+    accountId: 'adult-a',
+    body: { learnerId, promptToken },
+  });
+
+  assert.equal(request.sentenceIndex, 0);
+  assert.equal(contentReads, 1);
 });
 
 test('TTS route serves cached audio for lookup-only requests before selected provider fallback', async () => {

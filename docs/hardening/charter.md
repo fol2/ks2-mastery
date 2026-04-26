@@ -59,6 +59,8 @@ This pass ships HSTS with `max-age=63072000; includeSubDomains` only. The `prelo
 
 Submitting `eugnel.uk` to the HSTS preload list is a one-way commitment that forces every subdomain of `eugnel.uk` to serve HTTPS-only for two years. Without a signed subdomain-tree audit confirming every existing and planned subdomain can meet that requirement, preload is unsafe. The preload flip is a separate PR with a signed `eugnel.uk` subdomain-tree audit as its entry requirement.
 
+HSTS preload audit reference: `docs/hardening/hsts-preload-audit.md` (SH2-U9).
+
 ### COOP `same-origin-allow-popups` choice
 
 This pass ships `Cross-Origin-Opener-Policy: same-origin-allow-popups` rather than the stricter `same-origin`. OAuth popup flows (social login) may retain cross-origin window references to the popup opener; the strict `same-origin` value would sever that reference and break the popup-based OAuth redirect path.

@@ -30,6 +30,15 @@ export default {
   // test-only flag) and bump this back up.
   workers: 1,
   timeout: 30_000,
+  // SH2-U6 (sys-hardening p2): never auto-write snapshots on CI. The
+  // dev loop opts in explicitly via `npx playwright test
+  // --update-snapshots` when regenerating baselines (typically after a
+  // deliberate visual change), and the SH2-U11 Linux-CI baseline pass
+  // will do a one-PR regenerate on the Linux host. Keeping this at
+  // `'none'` guarantees that a flaky test on CI cannot silently rewrite
+  // the committed baseline — the failing PR shows a visual diff report
+  // and the change must be reviewed before a human regenerates.
+  updateSnapshots: 'none',
   expect: {
     // Start conservative; tune per viewport as real baselines accumulate.
     // Follow-up units (U9 / U10 / U12) extend the matrix to all five
@@ -52,7 +61,11 @@ export default {
     command: 'node ./scripts/build-bundles.mjs && node ./scripts/build-public.mjs && node ./tests/helpers/browser-app-server.js --serve-only --port 4173 --with-worker-api',
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: !process.env.CI,
-    timeout: 60_000,
+    // SH2-U6: extended from 60s to 180s because the build pipeline
+    // (esbuild bundle + public copy) can exceed 60s on a cold cache or
+    // when multiple worktrees share the same host. Failed webserver
+    // startup blocks the entire matrix, so we err on the side of waiting.
+    timeout: 180_000,
     // U9 follow-up (review major-1): defence-in-depth env gate for the
     // fault-injection middleware. `isFaultInjectionAllowed()` checks
     // `KS2_TEST_HARNESS=1` in addition to the per-request header opt-in

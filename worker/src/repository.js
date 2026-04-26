@@ -122,10 +122,18 @@ const PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER = 1;
 const PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LOOKUP_LIMIT_PER_LEARNER = 5;
 const PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER = 50;
 // U7: bumped from 1 → 2 when the selected-learner-bounded envelope landed.
+// U1 hotfix follow-up 2026-04-26: bumped 2 → 3 in the same PR that:
+//   - adds `bootstrapCapacity.subjectStatesBounded` (required-field addition
+//     per the capacity release-gate plan, docs/plans/2026-04-25-002...),
+//   - extends the revision-hash input set with
+//     `writableLearnerStatesDigest` (a state_revision digest across every
+//     writable learner) so sibling subject_state writes invalidate the
+//     `bootstrapNotModifiedProbe` short-circuit (B1 blocker).
+// Stale v2 clients will naturally miss, re-fetch, and bind to the v3 hash.
 // Any additive required field on the bootstrap envelope MUST bump this in
 // the same PR. `tests/worker-bootstrap-v2.test.js` has a snapshot test that
 // fails if the envelope shape changes without a version bump (scenario 15).
-const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 2;
+const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 3;
 export const BOOTSTRAP_CAPACITY_VERSION = PUBLIC_BOOTSTRAP_CAPACITY_VERSION;
 
 // U7: closed union for `meta.capacity.bootstrapMode` when the public
@@ -6358,32 +6366,44 @@ async function listPublicBootstrapEventRows(db, learnerIds) {
   return sortEventRowsAscending(rows);
 }
 
-// U7: SHA-256 revision hash over the stable four-part signature. Truncated
-// to 16 bytes hex (32 chars). NOT a password hash — purely a cache-tag
+// U7: SHA-256 revision hash over the stable signature. Truncated to 16
+// bytes hex (32 chars). NOT a password hash — purely a cache-tag
 // identifier; `crypto.subtle.digest('SHA-256', ...)` is fine for this use
 // per the plan (line 792: "never a password hash").
 //
 // Input format is strictly:
-//   accountId:<id>;accountRevision:<N>;selectedLearnerRevision:<M>;bootstrapCapacityVersion:<V>;accountLearnerListRevision:<L>
+//   accountId:<id>;accountRevision:<N>;selectedLearnerRevision:<M>;
+//   bootstrapCapacityVersion:<V>;accountLearnerListRevision:<L>;
+//   writableLearnerStatesDigest:<D>
 //
 // The `accountId` prefix (U7 adv-u7-r1-002) salts the hash per account so
-// two accounts with identical (N,M,V,L) tuples no longer collide. Without
-// this salt, an operator correlating hashes across requests could infer
-// state-equivalence between accounts. No user data leaks either way
-// because session scope already isolates responses, but the hash-level
-// privacy hardening closes the side-channel.
+// two accounts with identical (N,M,V,L,D) tuples no longer collide. The
+// `writableLearnerStatesDigest` slot (U1 follow-up 2026-04-26, B1 blocker)
+// pins EVERY writable learner's `learner_profiles.state_revision` into
+// the hash input, so a sibling (non-selected) `writeSubjectState` →
+// `withLearnerMutation` bump forces `bootstrapNotModifiedProbe` to miss
+// and the client gets a fresh full bundle. Without this slot, the
+// 4-input hash (N,M,V,L) was insensitive to sibling writes and the U1
+// hotfix was silently defeated when Nelson/James finished a round on a
+// second device while Eugenia was selected.
 //
 // Changing this input format (or the truncation length) is equivalent to
 // bumping `BOOTSTRAP_CAPACITY_VERSION` — stale clients will silently
 // reject `notModified` responses via the schema check. The version bump
-// in U7 from 1→2 already forces pre-U7 clients to miss, so adding the
-// accountId salt costs no extra roundtrip on rollout.
+// in this PR from 2→3 forces v2 clients to miss once and re-bind.
 export async function computeBootstrapRevisionHash({
   accountId,
   accountRevision,
   selectedLearnerRevision,
   bootstrapCapacityVersion,
   accountLearnerListRevision,
+  // U1 follow-up 2026-04-26: digest over every writable learner's
+  // `state_revision` (sorted by id, joined as `id:rev,id:rev`, SHA-256 →
+  // 16 bytes hex). Computed by `computeWritableLearnerStatesDigest()`.
+  // Optional for historical callers; defaults to `0` which matches the
+  // old 4-input hash when no digest is passed (migration-safe for any
+  // internal test that only exercises the raw hash helper).
+  writableLearnerStatesDigest = '',
 }) {
   const input = [
     `accountId:${String(accountId || '')}`,
@@ -6391,8 +6411,39 @@ export async function computeBootstrapRevisionHash({
     `selectedLearnerRevision:${Number(selectedLearnerRevision) || 0}`,
     `bootstrapCapacityVersion:${Number(bootstrapCapacityVersion) || 0}`,
     `accountLearnerListRevision:${Number(accountLearnerListRevision) || 0}`,
+    `writableLearnerStatesDigest:${String(writableLearnerStatesDigest || '')}`,
   ].join(';');
   const bytes = new TextEncoder().encode(input);
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+  const out = new Uint8Array(digest).slice(0, 16);
+  let hex = '';
+  for (let i = 0; i < out.length; i += 1) {
+    hex += out[i].toString(16).padStart(2, '0');
+  }
+  return hex;
+}
+
+// U1 follow-up 2026-04-26 (B1 blocker): deterministic digest over every
+// writable learner's `state_revision`. Input rows are sorted by learner
+// id so addition/removal/reorder is captured by the upstream
+// `accountLearnerListRevision` rather than here. Per-learner bumps
+// (sibling `writeSubjectState` etc.) flow through this slot so the
+// `bootstrapNotModifiedProbe` short-circuit invalidates correctly.
+//
+// Returns 16 bytes hex (32 chars). Empty input returns an empty string;
+// `computeBootstrapRevisionHash` stamps that case as
+// `writableLearnerStatesDigest:` which is distinguishable from a real
+// digest.
+async function computeWritableLearnerStatesDigest(membershipRows) {
+  if (!Array.isArray(membershipRows) || !membershipRows.length) return '';
+  const entries = membershipRows
+    .map((row) => ({ id: String(row.id || ''), revision: Number(row.state_revision) || 0 }))
+    .filter((entry) => entry.id)
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+    .map((entry) => `${entry.id}:${entry.revision}`)
+    .join(',');
+  if (!entries) return '';
+  const bytes = new TextEncoder().encode(entries);
   const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
   const out = new Uint8Array(digest).slice(0, 16);
   let hex = '';
@@ -6458,6 +6509,20 @@ function bootstrapCapacityMeta({
   learnerCount,
   sessionRows,
   eventRows,
+  // U1 follow-up 2026-04-26 (B4): derive rather than hardcode. Caller
+  // must pass the actual query-shape boolean
+  // (`subjectStateLearnerIds.length === learnerIds.length` in the
+  // happy path; `false` when unbounded, `true` if a future re-bound
+  // mode is introduced or the B2 fallback shrinks the query). Keeping
+  // the parameter explicit means a future author cannot silently
+  // re-bound subject states without tripping both the caller shape
+  // and this contract.
+  subjectStatesBounded,
+  // U1 follow-up 2026-04-26 (B2): optional diagnostic stamped when the
+  // wider IN-clause degraded to the bounded fallback. `null` means the
+  // nominal path (every writable learner). `'degraded-to-selected'`
+  // means the widened SELECT failed and we fell back to [selectedId].
+  subjectStatesFallbackMode = null,
 }) {
   if (!publicReadModels) return null;
   const sessionActiveLimit = learnerCount * PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER;
@@ -6486,6 +6551,20 @@ function bootstrapCapacityMeta({
       bounded: true,
       atOrAboveRecentLimit: learnerCount > 0 && eventRows.length >= eventRecentLimit,
     },
+    // U1 hotfix 2026-04-26: child_subject_state + child_game_state ship for
+    // every writable learner even in selected-learner-bounded mode, so the
+    // Spelling/Grammar/Punctuation "Where You Stand" setup stats no longer
+    // show 0 for non-selected learners. Spec:
+    // docs/superpowers/specs/2026-04-26-bootstrap-learner-stats-hotfix-
+    // design.md. U1 follow-up (B4): value is derived from the caller's
+    // actual query shape — a drift-prone hardcoded `false` would silently
+    // lie if a future author re-bounded subject states.
+    subjectStatesBounded: Boolean(subjectStatesBounded),
+    // U1 follow-up (B2) defensive fallback. Omitted (undefined) when the
+    // widened SELECTs succeeded; `'degraded-to-selected'` when they
+    // tripped a D1 failure and we fell back to [selectedId] so the
+    // bootstrap still returns rather than 500s.
+    ...(subjectStatesFallbackMode ? { subjectStatesFallbackMode } : {}),
   };
 }
 
@@ -6574,6 +6653,14 @@ async function bootstrapBundle(db, accountId, {
   // bounded mode degrades to the empty-learners branch further down.
   const boundedToSelected = publicReadModels && selectedLearnerBounded && selectedId;
   const queryLearnerIds = boundedToSelected ? [selectedId] : learnerIds;
+  // U1 hotfix 2026-04-26: child_subject_state + child_game_state are
+  // small per-(learner,subject) slots (typically < 3 KB each) and are
+  // load-bearing for the Spelling/Grammar/Punctuation "Where You Stand"
+  // setup stats. Keep them unbounded even in selected-learner-bounded
+  // mode so learner switching does not show 0-stats until the user
+  // triggers a Worker command. See docs/superpowers/specs/2026-04-26-
+  // bootstrap-learner-stats-hotfix-design.md.
+  const subjectStateLearnerIds = learnerIds;
 
   // U7: precompute the revision-envelope ingredients so that both the
   // empty and non-empty branches can stamp them consistently. These
@@ -6583,6 +6670,12 @@ async function bootstrapBundle(db, accountId, {
     ? await readAccountLearnerListRevision(db, accountId)
     : 0;
   const selectedLearnerRevision = selectedId ? (learnerRevisions[selectedId] || 0) : 0;
+  // U1 follow-up 2026-04-26 (B1): pin every writable learner's
+  // state_revision into the hash input so sibling writes invalidate the
+  // `bootstrapNotModifiedProbe` short-circuit.
+  const writableLearnerStatesDigest = revisionEnvelope
+    ? await computeWritableLearnerStatesDigest(membershipRows)
+    : '';
   const revisionHash = revisionEnvelope
     ? await computeBootstrapRevisionHash({
       accountId,
@@ -6590,6 +6683,7 @@ async function bootstrapBundle(db, accountId, {
       selectedLearnerRevision,
       bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
       accountLearnerListRevision,
+      writableLearnerStatesDigest,
     })
     : null;
 
@@ -6610,6 +6704,10 @@ async function bootstrapBundle(db, accountId, {
       learnerCount: 0,
       sessionRows: [],
       eventRows: [],
+      // No learners → `subjectStateLearnerIds.length === learnerIds.length`
+      // vacuously. Stamp the contract marker as `false` (unbounded) to
+      // stay consistent with the non-empty branch's nominal shape.
+      subjectStatesBounded: false,
     }) : null;
     if (capacityMeta && emptyMode) capacityMeta.bootstrapMode = emptyMode;
     return {
@@ -6645,11 +6743,60 @@ async function bootstrapBundle(db, accountId, {
   }
 
   const placeholders = sqlPlaceholders(queryLearnerIds.length);
-  const subjectRows = await all(db, `
-    SELECT learner_id, subject_id, ui_json, data_json, updated_at
-    FROM child_subject_state
-    WHERE learner_id IN (${placeholders})
-  `, queryLearnerIds);
+  // U1 hotfix 2026-04-26: subject/game state SELECTs use the full writable
+  // learner list so non-selected siblings retain their Spelling/Grammar/
+  // Punctuation stats in the bounded envelope. Separate placeholder string
+  // because the length differs from queryLearnerIds in bounded mode.
+  // U1 follow-up 2026-04-26 (B2 defensive): if a widened IN-clause trips
+  // an unexpected D1 failure (extremely unlikely — same table, same row
+  // shape, just more placeholders), fall back to the bounded [selectedId]
+  // shape so the bootstrap still returns rather than 500s. Sibling stats
+  // will show the pre-hotfix 0 until the next Worker command refetches,
+  // but the account stays usable. Stamp `subjectStatesFallbackMode` on
+  // the capacity meta so operators can observe the degradation.
+  let subjectStateIdsUsed = subjectStateLearnerIds;
+  let subjectStatesFallbackMode = null;
+  let subjectRows;
+  let gameRows;
+  try {
+    const subjectStatePlaceholders = sqlPlaceholders(subjectStateLearnerIds.length);
+    subjectRows = await all(db, `
+      SELECT learner_id, subject_id, ui_json, data_json, updated_at
+      FROM child_subject_state
+      WHERE learner_id IN (${subjectStatePlaceholders})
+    `, subjectStateLearnerIds);
+    gameRows = await all(db, `
+      SELECT learner_id, system_id, state_json, updated_at
+      FROM child_game_state
+      WHERE learner_id IN (${subjectStatePlaceholders})
+    `, subjectStateLearnerIds);
+  } catch (error) {
+    // Only fall back when a selectedId exists — empty/no-learner paths
+    // are handled by the earlier `!learnerIds.length` branch, and a
+    // null selectedId here would mean an account with writable
+    // learners but no resolved selection (shouldn't reach this
+    // branch), in which case re-throwing is the correct behaviour.
+    if (!boundedToSelected || !selectedId) throw error;
+    logMutation('warn', 'bootstrap.subject_state_fallback', {
+      accountId,
+      learnerCount: subjectStateLearnerIds.length,
+      selectedId,
+      error: String(error?.message || error),
+    });
+    subjectStateIdsUsed = [selectedId];
+    subjectStatesFallbackMode = 'degraded-to-selected';
+    const fallbackPlaceholders = sqlPlaceholders(subjectStateIdsUsed.length);
+    subjectRows = await all(db, `
+      SELECT learner_id, subject_id, ui_json, data_json, updated_at
+      FROM child_subject_state
+      WHERE learner_id IN (${fallbackPlaceholders})
+    `, subjectStateIdsUsed);
+    gameRows = await all(db, `
+      SELECT learner_id, system_id, state_json, updated_at
+      FROM child_game_state
+      WHERE learner_id IN (${fallbackPlaceholders})
+    `, subjectStateIdsUsed);
+  }
   const sessionRows = publicReadModels
     ? await listPublicBootstrapSessionRows(db, queryLearnerIds)
     : await all(db, `
@@ -6658,11 +6805,6 @@ async function bootstrapBundle(db, accountId, {
       WHERE learner_id IN (${placeholders})
       ORDER BY updated_at DESC, id DESC
     `, queryLearnerIds);
-  const gameRows = await all(db, `
-    SELECT learner_id, system_id, state_json, updated_at
-    FROM child_game_state
-    WHERE learner_id IN (${placeholders})
-  `, queryLearnerIds);
   const eventRows = publicReadModels
     ? await listPublicBootstrapEventRows(db, queryLearnerIds)
     : await all(db, `
@@ -6703,6 +6845,14 @@ async function bootstrapBundle(db, accountId, {
     learnerCount: queryLearnerIds.length,
     sessionRows,
     eventRows,
+    // U1 follow-up 2026-04-26 (B4): derive the contract marker from the
+    // actual query shape. `subjectStatesBounded === false` whenever we
+    // SELECTed every writable learner (the nominal hotfix shape);
+    // `=== true` only if a future author re-introduces bounding OR the
+    // B2 fallback shrinks the query to [selectedId]. Explicit derivation
+    // beats a hardcoded literal — a drift here would trip this test.
+    subjectStatesBounded: subjectStateIdsUsed.length !== learnerIds.length,
+    subjectStatesFallbackMode,
   }) : null;
   if (capacityMeta && boundedToSelected) capacityMeta.bootstrapMode = 'selected-learner-bounded';
 
@@ -6768,12 +6918,20 @@ async function bootstrapNotModifiedProbe(db, accountId, {
     ? membershipRows.find((row) => String(row.id) === String(writableSelectedId))
     : null;
   const selectedLearnerRevision = Number(selectedRow?.state_revision) || 0;
+  // U1 follow-up 2026-04-26 (B1): include every writable learner's
+  // state_revision in the hash input so sibling writes are visible to
+  // the probe. Must use the SAME `membershipRows` shape as
+  // `bootstrapBundle` (from `listMembershipRows(db, accountId,
+  // { writableOnly: true })`) for deterministic agreement between the
+  // probe and the full-bundle hash.
+  const writableLearnerStatesDigest = await computeWritableLearnerStatesDigest(membershipRows);
   const serverHash = await computeBootstrapRevisionHash({
     accountId,
     accountRevision: accountRevisionValue,
     selectedLearnerRevision,
     bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
     accountLearnerListRevision,
+    writableLearnerStatesDigest,
   });
   if (serverHash !== lastKnownRevision) return null;
   return {

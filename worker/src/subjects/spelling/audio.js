@@ -8,20 +8,59 @@ function cleanText(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
 }
 
-function currentPromptParts({ learnerId, state } = {}) {
+/**
+ * The session card can carry a `wordForPrompt` view-model where `word.sentences`
+ * is collapsed to a single display sentence, which makes `resolveSentenceIndex` fall
+ * back to 0. We only trust `word.sentences` when it clearly contains the active
+ * sentence in a list with more than one entry.
+ *
+ * Do not use `prompt.accepted` (or other prompt fields) to infer truncation:
+ * stored runtime prompts may legitimately omit those fields, which would skip the
+ * canonical snapshot and reintroduce the wrong-audio key bug.
+ */
+function shouldResolveSessionSentenceCanonically(state = null) {
+  const session = state?.phase === 'session' ? state.session : null;
+  const card = session?.currentCard || null;
+  const word = card?.word || null;
+  const sentence = cleanText(card?.prompt?.sentence);
+  if (!word || !sentence) return false;
+  const rawSentences = Array.isArray(word.sentences) ? word.sentences : [];
+  const sentences = rawSentences.map((item) => cleanText(item)).filter(Boolean);
+  if (sentences.length <= 1) return true;
+  return !sentences.includes(sentence);
+}
+
+function currentPromptParts({ learnerId, state, snapshot = null } = {}) {
   const session = state?.phase === 'session' ? state.session : null;
   const card = session?.currentCard || null;
   const word = card?.word || null;
   const sentence = cleanText(card?.prompt?.sentence);
   if (!session?.id || !word?.word || !sentence) return null;
+  const safeSlug = cleanText(word.slug || card.slug).toLowerCase();
+  const canonicalWord = safeSlug ? snapshot?.wordBySlug?.[safeSlug] : null;
+  const sentenceWord = canonicalWord || word;
   return {
     learnerId,
     sessionId: session.id,
     slug: word.slug || card.slug || '',
     word: cleanText(word.word),
     sentence,
-    sentenceIndex: resolveSentenceIndex(word, sentence),
+    sentenceIndex: resolveSentenceIndex(sentenceWord, sentence),
   };
+}
+
+async function readRuntimeSnapshot({ repository, accountId } = {}) {
+  if (!repository) return null;
+  try {
+    const contentResult = typeof repository.readSpellingRuntimeContent === 'function'
+      ? await repository.readSpellingRuntimeContent(accountId, 'spelling')
+      : await repository.readSubjectContent(accountId, 'spelling');
+    return contentResult.snapshot || resolveRuntimeSnapshot(contentResult.content, {
+      referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+    });
+  } catch {
+    return null;
+  }
 }
 
 async function sessionPromptToken(parts) {
@@ -124,7 +163,11 @@ export async function resolveSpellingAudioRequest({
 
   const runtime = await repository.readSubjectRuntime(accountId, learnerId, 'spelling');
   const state = runtime.subjectRecord?.ui || null;
-  const parts = currentPromptParts({ learnerId, state });
+  let parts = currentPromptParts({ learnerId, state });
+  if (parts && shouldResolveSessionSentenceCanonically(state)) {
+    const snapshot = await readRuntimeSnapshot({ repository, accountId });
+    parts = currentPromptParts({ learnerId, state, snapshot });
+  }
   if (!parts) {
     const wordBankParts = await wordBankPromptParts({
       repository,
