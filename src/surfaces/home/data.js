@@ -774,6 +774,113 @@ function subjectPriority(subjectId) {
   return idx === -1 ? 999 : idx;
 }
 
+/**
+ * Phase 4 U2 — pick the subject that should drive today's hero CTA.
+ *
+ * Pure helper over `model.dashboardStats` (which is keyed by subjectId and
+ * holds the `{ pct, due, streak, nextUp }` projection each subject module
+ * emits from `getDashboardStats`). Ranks subjects by the `due` scalar
+ * descending, clamped to a non-negative integer. Ties are broken by
+ * `SUBJECT_PRIORITY_ORDER` so Spelling wins a straight three-way tie
+ * (preserves the pre-U2 Spelling-first CTA for fresh learners whose stats
+ * happen to collide on due counts). The caller can override the tiebreak
+ * via `options.tiebreakSubjectId` — e.g. a future phase that wants to
+ * promote Punctuation first while Bellstorm launches.
+ *
+ * Ranking is intentionally `due`-only. A future cross-subject extension
+ * will add a `wobbly` / `weak` scalar to each subject module's
+ * `getDashboardStats`; once that ships, `selectTodaysBestRound` will
+ * consume it as a secondary ranking key. Until then the plan (R2) locks
+ * ranking to the scalar that already exists on every module.
+ *
+ * Returns `{ subjectId, subjectName, due, monsterCompanion }` when at
+ * least one subject has a positive due count; returns `null` when every
+ * subject has zero (or missing) due work. The caller is expected to fall
+ * back to the pre-U2 hero copy + Spelling CTA when the result is `null`.
+ *
+ * `monsterCompanion` is the learner's highest-stage caught monster for the
+ * recommended subject (used in the "Today's best round: {Subject}.
+ * {Companion} has {due} skills due." card copy). It is `null` when no
+ * monster is caught for that subject — the consumer then hides the
+ * companion clause. We never invent a companion from uncaught monsters:
+ * the card prefers honesty over filler.
+ */
+export function selectTodaysBestRound(dashboardStats, options = {}) {
+  const tiebreakSubjectId = typeof options.tiebreakSubjectId === 'string'
+    ? options.tiebreakSubjectId
+    : 'spelling';
+  const monsterSummary = Array.isArray(options.monsterSummary) ? options.monsterSummary : [];
+
+  if (!dashboardStats || typeof dashboardStats !== 'object') return null;
+
+  const entries = [];
+  for (const subjectId of SUBJECT_PRIORITY_ORDER) {
+    const stats = dashboardStats[subjectId];
+    const due = clampDue(stats && stats.due);
+    if (due > 0) entries.push({ subjectId, due });
+  }
+  if (!entries.length) return null;
+
+  entries.sort((left, right) => {
+    if (left.due !== right.due) return right.due - left.due;
+    // Tiebreak: preferred subject first, otherwise canonical priority order.
+    const leftPreferred = left.subjectId === tiebreakSubjectId ? 0 : 1;
+    const rightPreferred = right.subjectId === tiebreakSubjectId ? 0 : 1;
+    if (leftPreferred !== rightPreferred) return leftPreferred - rightPreferred;
+    return subjectPriority(left.subjectId) - subjectPriority(right.subjectId);
+  });
+
+  const winner = entries[0];
+  return {
+    subjectId: winner.subjectId,
+    subjectName: subjectName(winner.subjectId),
+    due: winner.due,
+    monsterCompanion: pickSubjectCompanion(monsterSummary, winner.subjectId),
+  };
+}
+
+function clampDue(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  return Math.max(0, Math.floor(numeric));
+}
+
+function pickSubjectCompanion(monsterSummary, subjectId) {
+  if (!Array.isArray(monsterSummary) || !monsterSummary.length || !subjectId) return null;
+  const rosterIds = MONSTERS_BY_SUBJECT[subjectId] || [];
+  if (!rosterIds.length) return null;
+  const rosterSet = new Set(rosterIds);
+  let best = null;
+  for (const entry of monsterSummary) {
+    const monsterId = entry?.monster?.id;
+    const progress = entry?.progress;
+    if (!monsterId || !progress?.caught) continue;
+    // Roster membership is the hard gate — stale state may carry an explicit
+    // `entry.subjectId` annotation for a reserved monster id (e.g. pre-flip
+    // `{ monster.id:'colisk', subjectId:'punctuation' }`), which would
+    // otherwise bypass the active roster via the annotation branch alone.
+    // Require the monster id to appear in `MONSTERS_BY_SUBJECT[subjectId]`
+    // first; then accept either explicit subject annotation or legacy
+    // unannotated Spelling entries that rely on roster membership. Mirrors
+    // plan U2 R6's "reserved monsters are never learner-facing" invariant.
+    if (!rosterSet.has(monsterId)) continue;
+    const isForSubject = entry.subjectId
+      ? entry.subjectId === subjectId
+      : true;
+    if (!isForSubject) continue;
+    const stage = Math.max(0, Math.min(4, Number(progress.stage) || 0));
+    if (!best || stage > best.stage) {
+      best = { monster: entry.monster, stage };
+    }
+  }
+  if (!best) return null;
+  const { monster, stage } = best;
+  if (Array.isArray(monster.nameByStage) && monster.nameByStage[stage]) {
+    return monster.nameByStage[stage];
+  }
+  return monster.name || null;
+}
+
 function secureProgressLabel(subjectId, mastered) {
   const count = Math.max(0, Number(mastered) || 0);
   if (subjectId === 'punctuation' || subjectId === 'grammar') {
