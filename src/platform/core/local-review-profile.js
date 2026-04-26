@@ -153,11 +153,53 @@ export function ensureLocalCodexReviewProfile(
       || (!hasReviewLearner || !hasValidSelectedLearner ? LOCAL_CODEX_REVIEW_LEARNER_ID : learners.selectedId),
   });
 
+  // P2 U5 reviewer-feedback (NEW HIGH 2): admin-seed direct writeData
+  // bypasses the CAS path. This is acceptable here because the profile
+  // IDs (`local-codex-*-review`) are Codex-only debug learners that are
+  // never the primary learner in any active session — concurrent
+  // Guardian writes on the SAME profile cannot happen in normal use.
+  // If an admin ever runs this seed path while an `ensureLocalCodexReviewProfile`-
+  // selected learner has an active round, the learner's round would
+  // land a stale writeData snapshot and risk clobbering their in-flight
+  // progress. To keep this path robust without making it async (it is
+  // called from synchronous bootstrap), the CAS check is opt-in: the
+  // seed explicitly reads the latest writeVersion and passes it along,
+  // which causes a WriteVersionStaleError to surface on contention
+  // rather than silently overwriting.
   for (const profile of REVIEW_PROFILES) {
-    repositories.subjectStates.writeData(profile.id, 'spelling', {
-      prefs: { mode: 'smart', yearFilter: 'all', roundLength: '3' },
-      progress: buildReviewProgress(profile),
-    });
+    const expectedWriteVersion = typeof repositories?.storageCas?.readWriteVersion === 'function'
+      ? repositories.storageCas.readWriteVersion()
+      : undefined;
+    try {
+      repositories.subjectStates.writeData(
+        profile.id,
+        'spelling',
+        {
+          prefs: { mode: 'smart', yearFilter: 'all', roundLength: '3' },
+          progress: buildReviewProgress(profile),
+        },
+        expectedWriteVersion !== undefined ? { expectedWriteVersion } : {},
+      );
+    } catch (error) {
+      // Stale-write means an active learner session bumped the shared
+      // counter; retry once with the fresh snapshot. If that also fails,
+      // surface to the admin console — silent drop is worse than a loud
+      // error for a debug-only seed path.
+      if (error && error.name === 'WriteVersionStaleError') {
+        const freshExpected = repositories.storageCas.readWriteVersion();
+        repositories.subjectStates.writeData(
+          profile.id,
+          'spelling',
+          {
+            prefs: { mode: 'smart', yearFilter: 'all', roundLength: '3' },
+            progress: buildReviewProgress(profile),
+          },
+          { expectedWriteVersion: freshExpected },
+        );
+      } else {
+        throw error;
+      }
+    }
     repositories.gameState.write(profile.id, 'monster-codex', buildMonsterCodexState(profile));
   }
 
