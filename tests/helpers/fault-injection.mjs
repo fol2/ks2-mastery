@@ -49,6 +49,11 @@ const PLAN_QUERY_PARAM = '__ks2_fault';
 const PLAN_HEADER = 'x-ks2-fault-plan';
 const OPT_IN_HEADER = 'x-ks2-fault-opt-in';
 const OPT_IN_VALUE = '1';
+// U9 follow-up (review blocker-2): `once: true` requires across-request
+// memory on the server process. Scenes may ship a deterministic `planId`
+// so the middleware can tally consumption per plan without guessing.
+// When absent, the middleware falls back to a hash of kind + pathPattern.
+const PLAN_ID_HEADER = 'x-ks2-fault-plan-id';
 
 /**
  * Decode a base64-encoded JSON plan into a shape we validate before
@@ -65,10 +70,12 @@ function decodePlan(encoded) {
     if (!FAULT_KINDS.includes(kind)) return null;
     const pathPattern = typeof parsed.pathPattern === 'string' ? parsed.pathPattern : '';
     if (!pathPattern) return null;
+    const planId = typeof parsed.planId === 'string' && parsed.planId ? parsed.planId : '';
     return {
       kind,
       pathPattern,
       once: Boolean(parsed.once),
+      planId,
     };
   } catch {
     return null;
@@ -85,7 +92,21 @@ function encodePlan(plan) {
     pathPattern: plan?.pathPattern,
     once: Boolean(plan?.once),
   };
+  if (typeof plan?.planId === 'string' && plan.planId) {
+    canonical.planId = plan.planId;
+  }
   return Buffer.from(JSON.stringify(canonical), 'utf8').toString('base64');
+}
+
+/**
+ * Compute a deterministic identifier for a plan. When the scene does
+ * not supply one, derive it from `kind + pathPattern`. The stability
+ * lets the middleware tally consumption deterministically per plan.
+ */
+function planIdentity(plan) {
+  if (!plan) return '';
+  if (typeof plan.planId === 'string' && plan.planId) return plan.planId;
+  return `${plan.kind}|${plan.pathPattern}`;
 }
 
 /**
@@ -247,6 +268,76 @@ function extractPathname(request) {
 }
 
 /**
+ * Create a per-process consumption registry for `once: true` plans.
+ *
+ * `applyFault()` itself stays pure — it reports whether a fault
+ * WOULD fire. The registry wraps the pure function and enforces the
+ * "once" contract by recording the first time a given plan identity
+ * is consumed and short-circuiting any subsequent match.
+ *
+ * Scope: per server process. A fresh process restart clears all
+ * consumption records, which matches how chaos scenes spin up a
+ * dedicated test server per Playwright run.
+ */
+function createFaultRegistry() {
+  const consumed = new Set();
+
+  return Object.freeze({
+    /**
+     * Probe a request against a plan. Returns the same decision object
+     * `applyFault()` produces. For `once: true` plans, each plan
+     * identity may only fire once — subsequent matches return
+     * `{ action: 'forward' }` so the real dispatcher handles them.
+     */
+    decide(plan, request) {
+      if (!plan) return { action: 'forward' };
+      if (plan.once) {
+        const identity = planIdentity(plan);
+        if (identity && consumed.has(identity)) {
+          return { action: 'forward' };
+        }
+        const pathname = extractPathname(request);
+        if (pathMatches(pathname, plan.pathPattern)) {
+          if (identity) consumed.add(identity);
+        }
+      }
+      return applyFault(plan, request);
+    },
+    /**
+     * Clear all consumption records. Exposed for unit tests that
+     * need to re-run the `once: true` path without recreating the
+     * registry.
+     */
+    reset() {
+      consumed.clear();
+    },
+    /** Number of plan identities that have been consumed. */
+    get size() {
+      return consumed.size;
+    },
+  });
+}
+
+/**
+ * Defense-in-depth env gate. The per-request header opt-in is the
+ * primary safety, but we also refuse to honour any fault plan unless
+ * the host process is demonstrably a test harness. Production builds
+ * never set any of these — accidental leakage lands every fault into
+ * a no-op `forward` even if the header somehow survived.
+ *
+ * We read the ambient `process.env` at call time (not at module load)
+ * so tests that flip env vars mid-run take effect immediately.
+ */
+function isFaultInjectionAllowed(env = (typeof process !== 'undefined' ? process.env : {}) || {}) {
+  return (
+    env.NODE_ENV === 'test'
+    || env.NODE_TEST_CONTEXT === 'child'
+    || env.PLAYWRIGHT_TEST === '1'
+    || env.KS2_TEST_HARNESS === '1'
+  );
+}
+
+/**
  * Uniquely-named named export. The production bundle audit
  * (`scripts/audit-client-bundle.mjs` + `scripts/production-bundle-audit.mjs`)
  * forbids this token, so any accidental import of this module into a
@@ -256,10 +347,14 @@ export const __ks2_injectFault_TESTS_ONLY__ = Object.freeze({
   FAULT_KINDS,
   PLAN_QUERY_PARAM,
   PLAN_HEADER,
+  PLAN_ID_HEADER,
   OPT_IN_HEADER,
   OPT_IN_VALUE,
   parseFaultPlan,
   applyFault,
   encodePlan,
   decodePlan,
+  planIdentity,
+  createFaultRegistry,
+  isFaultInjectionAllowed,
 });
