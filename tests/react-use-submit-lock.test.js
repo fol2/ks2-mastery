@@ -98,12 +98,30 @@ test('useSubmitLock: run(fn) once resolves to fn result and transitions locked f
     (async () => {
       const initialHtml = renderToStaticMarkup(React.createElement(Probe));
       console.log('initial=' + initialHtml);
-      const result = await captured.run(async () => 42);
+      // Review follow-up (correctness nit #2 + testing nit #1):
+      // assert the locked-during-run contract in-flight. The hook
+      // contract says locked transitions false -> true -> false,
+      // but without an intra-run probe only the final false state
+      // is observed, and a regression that drops setLocked(true)
+      // would still pass scenario 1. Under SSR the state is not
+      // re-rendered between scheduling and reading, so reading
+      // captured.locked alone cannot prove the state went true.
+      // Instead we assert a side-observable of the true state: a
+      // nested run() while pendingRef.current === true early-returns
+      // undefined. That branch is ONLY taken when the lock is held,
+      // so in-run-nested=undefined proves locked==true during fn.
+      let inRunNested = 'unobserved';
+      const result = await captured.run(async () => {
+        inRunNested = await captured.run(async () => 'should-not-run');
+        return 42;
+      });
+      console.log('in-run-nested=' + String(inRunNested));
       console.log('result=' + result);
       console.log('post-locked=' + captured.locked);
     })().catch((err) => { console.error(err); process.exit(1); });
   `);
   assert.match(output, /initial=<div data-locked="false"><\/div>/);
+  assert.match(output, /in-run-nested=undefined/);
   assert.match(output, /result=42/);
   assert.match(output, /post-locked=false/);
 });

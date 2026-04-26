@@ -5,19 +5,28 @@
 // (`page.tap()` twice within 100 ms) on a non-destructive button produce
 // exactly ONE visible transition and ONE network command.
 //
-// The scene targets spelling's Continue button as the primary case — it
-// is the most frequently used advance button across the three subjects
-// and sits behind the `data-action="spelling-continue"` testid. Secondary
-// scenes cover Enter-key repeat on the spelling form submit and an
-// auth-flow double-click (which exercises the `useSubmitLock` call site
-// in AuthSurface.jsx).
+// Coverage matrix (review follow-up, BLOCKER-1):
+//   - Spelling Continue double-click + Enter-key + mobile double-tap
+//   - Grammar Continue double-click (awaiting-advance path after two
+//     wrong answers that exercise the `grammar-continue` dispatch)
+//   - Punctuation Continue double-click (same awaiting-advance shape)
+//   - Auth login form double-click (`/api/auth/login` — proves the
+//     `submitLock.run()` wrapper on AuthSurface blocks the second submit)
+//   - Parent Hub export double-click (proves the module-scope
+//     `runExportOnce()` guard in src/main.js absorbs the second click
+//     even though `downloadJson()` is fully synchronous — the hook alone
+//     cannot close this window because run() resolves inside the same
+//     microtask, so the second click races the finally block)
 //
 // Network assertion strategy: we use `page.on('request', ...)` to record
-// every `/api/subjects/spelling/command` request the page fires during a
-// double-click burst. After the burst, we assert the count is exactly 1.
+// every command-endpoint request the page fires during a double-click
+// burst. After the burst, we assert the count is exactly 1 — NOT <=1
+// (review follow-up, BLOCKER-2): a <=1 assertion silently passes when
+// delta=0, which is the regression shape where a button disables itself
+// permanently and never dispatches. `toBe(1)` catches both 0 and 2.
 // We do NOT use `page.waitForRequest` alone because a second late
-// dispatch would be missed — the waiter resolves on the first match. The
-// explicit count-during-a-window assertion is the correct contract.
+// dispatch would be missed — the waiter resolves on the first match.
+// The explicit count-during-a-window assertion is the correct contract.
 //
 // Mobile-390 coverage: the `mobile-390` Playwright project applies the
 // 390-px viewport. Running this scene under that project gives us the
@@ -34,7 +43,9 @@ import { test, expect } from '@playwright/test';
 import {
   applyDeterminism,
   createDemoSession,
+  grammarAnswer,
   openSubject,
+  punctuationAnswer,
   spellingAnswer,
 } from './shared.mjs';
 
@@ -45,9 +56,10 @@ test.describe('SH2-U1 double-submit guard', () => {
 
   test('rapid double-click on Continue produces exactly one spelling command', async ({ page }) => {
     // Record every command POST the page fires. The assertion pins the
-    // count at exactly 1 after the burst; a regression would surface
-    // as 2 (adapter-layer dedup was bypassed) or 0 (the Continue
-    // button never fired at all).
+    // count at exactly 1 after the burst — expected exactly one request
+    // — <1 means the button never fired (regression path: button
+    // disabled itself and ships green with a broken flow), >1 means
+    // double-submit bypass (the hazard this test guards against).
     const commandRequests = [];
     page.on('request', (request) => {
       if (request.url().includes('/api/subjects/spelling/command') && request.method() === 'POST') {
@@ -105,7 +117,7 @@ test.describe('SH2-U1 double-submit guard', () => {
     // exactly one new request (the first click fired, the second
     // early-returned).
     const delta = commandRequests.length - before;
-    expect(delta).toBeLessThanOrEqual(1);
+    expect(delta).toBe(1);
   });
 
   test('Enter-key repeat on spelling submit produces exactly one submit-answer command', async ({ page }) => {
@@ -142,7 +154,7 @@ test.describe('SH2-U1 double-submit guard', () => {
     await page.waitForTimeout(500);
 
     const delta = commandRequests.length - before;
-    expect(delta).toBeLessThanOrEqual(1);
+    expect(delta).toBe(1);
   });
 
   test('mobile-390 double-tap on Continue produces exactly one spelling command', async ({ page }, testInfo) => {
@@ -193,6 +205,198 @@ test.describe('SH2-U1 double-submit guard', () => {
     await page.waitForTimeout(500);
 
     const delta = commandRequests.length - before;
-    expect(delta).toBeLessThanOrEqual(1);
+    expect(delta).toBe(1);
+  });
+
+  // ---------------------------------------------------------------
+  // BLOCKER-1 review follow-up: extend coverage to Grammar, Punctuation,
+  // Auth, and Parent Hub. The plan line 345 promises "three subjects +
+  // Auth + Parent Hub" and the original PR only covered spelling.
+  // Each scene asserts exactly one network dispatch after a rapid
+  // double-click (50 ms) — the same `toBe(1)` contract as above.
+  // ---------------------------------------------------------------
+
+  test('rapid double-click on Grammar Continue produces exactly one grammar command', async ({ page }) => {
+    // Grammar Continue surfaces on the feedback slot after a non-mini
+    // round answer. We drive the demo learner into awaiting-advance by
+    // starting a smart round (default mode in GrammarDashboard) and
+    // submitting one answer — any response is accepted because the
+    // feedback frame follows submit regardless of correctness.
+    const commandRequests = [];
+    page.on('request', (request) => {
+      if (request.url().includes('/api/subjects/grammar/command') && request.method() === 'POST') {
+        commandRequests.push(request.url());
+      }
+    });
+
+    await createDemoSession(page);
+    await openSubject(page, 'grammar');
+
+    const dashboard = page.locator('.grammar-dashboard');
+    await expect(dashboard).toBeVisible({ timeout: 15_000 });
+
+    // Drive into an in-session round: smart mode is the default
+    // GrammarDashboard entry point. Fall back to any "Begin round"
+    // button the dashboard exposes first.
+    const beginRound = page.getByRole('button', { name: /Begin round/ });
+    await expect(beginRound.first()).toBeVisible({ timeout: 10_000 });
+    await beginRound.first().click();
+
+    const session = page.locator('.grammar-answer-form').first();
+    await expect(session).toBeVisible({ timeout: 15_000 });
+
+    // Submit an empty-ish answer to force a wrong, which lands us on
+    // the feedback frame where Continue is visible. Grammar accepts a
+    // short text answer on most question types.
+    await grammarAnswer(page, { typed: 'x' });
+
+    // Wait for feedback frame with Continue / Next question button.
+    const continueBtn = page.locator('.grammar-answer-form button.secondary[type="button"]').first();
+    await expect(continueBtn).toBeVisible({ timeout: 15_000 });
+    await expect(continueBtn).toBeEnabled();
+
+    const before = commandRequests.length;
+    await Promise.all([
+      continueBtn.click({ force: true, noWaitAfter: true }),
+      continueBtn.click({ force: true, noWaitAfter: true }),
+    ]);
+
+    await page.waitForTimeout(500);
+
+    const delta = commandRequests.length - before;
+    expect(delta).toBe(1);
+  });
+
+  test('rapid double-click on Punctuation Continue produces exactly one punctuation command', async ({ page }) => {
+    const commandRequests = [];
+    page.on('request', (request) => {
+      if (request.url().includes('/api/subjects/punctuation/command') && request.method() === 'POST') {
+        commandRequests.push(request.url());
+      }
+    });
+
+    await createDemoSession(page);
+    await openSubject(page, 'punctuation');
+
+    const startBtn = page.locator('[data-punctuation-start]');
+    await expect(startBtn).toBeVisible({ timeout: 15_000 });
+    await startBtn.click();
+
+    // Submit one attempt so the feedback frame (with Continue) mounts.
+    await punctuationAnswer(page, {
+      typed: 'not a sentence that matches the answer',
+      choiceIndex: 0,
+    });
+
+    const continueBtn = page.locator('[data-punctuation-continue]');
+    await expect(continueBtn).toBeVisible({ timeout: 10_000 });
+    await expect(continueBtn).toBeEnabled();
+
+    const before = commandRequests.length;
+    await Promise.all([
+      continueBtn.click({ force: true, noWaitAfter: true }),
+      continueBtn.click({ force: true, noWaitAfter: true }),
+    ]);
+
+    await page.waitForTimeout(500);
+
+    const delta = commandRequests.length - before;
+    expect(delta).toBe(1);
+  });
+
+  test('rapid double-click on Auth login submit produces exactly one /api/auth/login', async ({ page }) => {
+    // The Auth surface renders when `/api/auth/session` returns no
+    // session. We clear any seeded cookies by navigating to a fresh
+    // page origin and then forcing the sign-out endpoint. The demo
+    // helper (`createDemoSession`) would set the demo cookie; we do
+    // NOT call it here. `applyDeterminism` still fires reducedMotion.
+    const loginRequests = [];
+    page.on('request', (request) => {
+      if (request.url().includes('/api/auth/login') && request.method() === 'POST') {
+        loginRequests.push(request.url());
+      }
+    });
+
+    // Hard navigation to root with no demo cookie: session lookup
+    // 401s, bootstrap falls back to AuthSurface.
+    await page.context().clearCookies();
+    await page.goto('/', { waitUntil: 'networkidle' });
+
+    // The AuthSurface form mounts when there is no session. We fill
+    // the email + password with dummy credentials and click submit
+    // twice rapidly. The worker's email auth rate limit (10/ip +
+    // 8/email) is well above our 2-click burst so both clicks reach
+    // the dispatch stage; the hook absorbs the second.
+    const emailInput = page.locator('input[type="email"][name="email"]');
+    await expect(emailInput).toBeVisible({ timeout: 15_000 });
+    await emailInput.fill('doesnotexist@ks2-mastery.test');
+
+    const passwordInput = page.locator('input[type="password"][name="password"]');
+    await passwordInput.fill('doesnotmatter-12345');
+
+    const submitBtn = page.locator('form.auth-form button[type="submit"]');
+    await expect(submitBtn).toBeVisible();
+    await expect(submitBtn).toBeEnabled();
+
+    const before = loginRequests.length;
+    await Promise.all([
+      submitBtn.click({ force: true, noWaitAfter: true }),
+      submitBtn.click({ force: true, noWaitAfter: true }),
+    ]);
+
+    // Auth is async — the server enforces Argon2id hash on a lookup
+    // miss and can take ~200 ms. Wait long enough for both clicks to
+    // settle through the fetch.
+    await page.waitForTimeout(1000);
+
+    const delta = loginRequests.length - before;
+    expect(delta).toBe(1);
+  });
+
+  test('rapid double-click on Parent Hub export produces exactly one JSON download', async ({ page }) => {
+    // BLOCKER-3 coverage: the export button handler is fully
+    // SYNCHRONOUS. The `useSubmitLock` hook acquires + releases its
+    // lock inside the same microtask, so the hook alone cannot absorb
+    // a 50 ms double-click. The module-scope `runExportOnce()` guard
+    // in `src/main.js` is what closes the window. This test proves
+    // that guard is wired correctly: two rapid clicks produce exactly
+    // one `download` event.
+    //
+    // We count Playwright download events — `downloadJson()` builds
+    // an object URL and programmatically clicks an anchor with the
+    // `download` attribute, which triggers Playwright's download
+    // interception. Two clicks without the guard would fire two
+    // downloads.
+    const downloads = [];
+    page.on('download', (download) => {
+      downloads.push(download.suggestedFilename());
+    });
+
+    await createDemoSession(page);
+    await expect(page.locator('.subject-grid')).toBeVisible();
+
+    // Navigate to Parent Hub via the section link on home.
+    const parentHubLink = page.getByRole('button', { name: /Parent hub/ });
+    await expect(parentHubLink.first()).toBeVisible({ timeout: 15_000 });
+    await parentHubLink.first().click();
+
+    // Wait for the export buttons to mount under the snapshot card.
+    const exportButton = page.locator('.parent-hub-snapshot-actions button').first();
+    await expect(exportButton).toBeVisible({ timeout: 15_000 });
+    await expect(exportButton).toBeEnabled();
+
+    const before = downloads.length;
+    await Promise.all([
+      exportButton.click({ force: true, noWaitAfter: true }),
+      exportButton.click({ force: true, noWaitAfter: true }),
+    ]);
+
+    // Allow both clicks to propagate and any pending download events
+    // to resolve. The guard uses a 300 ms debounce window; we wait
+    // 500 ms to be safe.
+    await page.waitForTimeout(500);
+
+    const delta = downloads.length - before;
+    expect(delta).toBe(1);
   });
 });
