@@ -338,10 +338,28 @@ test('U1 H8 scrub: slugs outside /^[a-z][a-z0-9-]+$/ never reach the preview', (
   assert.deepEqual(state.postMasteryDebug.blockingCoreSlugsPreview, ['core-001']);
 });
 
-test('U1 H8 scrub: word.published === false excludes the slug from the preview', () => {
+test('U1 H8 scrub: regex + length cap rejects misshapen slugs', () => {
+  // Reviewer feedback: content producers do not set `word.published`
+  // per-word in production — the previous test fixture used
+  // `published: false` which gave false confidence in a guard that is
+  // vacuously true in production. Re-author the fixture so the tightened
+  // regex alone is responsible for dropping the rude slug, and add
+  // coverage for each shape defect (double-hyphen, trailing-hyphen,
+  // uppercase, over-length).
   const core1 = makeCoreWord(1);
-  const unpublishedSlug = { ...makeCoreWord(2), slug: 'rude-word-test-do-not-ship', published: false };
-  const words = [core1, unpublishedSlug];
+  const rudeLongSlug = { ...makeCoreWord(2), slug: 'rude-word-test-do-not-ship' }; // 5 segments, >32 chars
+  const doubleHyphenSlug = { ...makeCoreWord(3), slug: 'abc---def' };
+  const trailingHyphenSlug = { ...makeCoreWord(4), slug: 'a-' };
+  const upperCaseSlug = { ...makeCoreWord(5), slug: 'TESTING-UPPER' };
+  const overLengthSlug = { ...makeCoreWord(6), slug: 'x'.repeat(40) };
+  const words = [
+    core1,
+    rudeLongSlug,
+    doubleHyphenSlug,
+    trailingHyphenSlug,
+    upperCaseSlug,
+    overLengthSlug,
+  ];
   const runtimeSnapshot = {
     words,
     wordBySlug: Object.fromEntries(words.map((w) => [w.slug, w])),
@@ -354,6 +372,65 @@ test('U1 H8 scrub: word.published === false excludes the slug from the preview',
     now: NOW_MS,
   });
   assert.deepEqual(state.postMasteryDebug.blockingCoreSlugsPreview, ['core-001']);
+});
+
+test('U1 H8 scrub: legitimate 3-segment curriculum slugs pass the filter', () => {
+  // Defensive positive-case coverage — the tightened regex must still
+  // accept realistic KS2 curriculum slugs like `prefix-un-in-im`
+  // (3 hyphens, 4 segments) and `i-before-e` (2 hyphens, 3 segments).
+  const wordA = { ...makeCoreWord(1), slug: 'prefix-un-in-im' };
+  const wordB = { ...makeCoreWord(2), slug: 'i-before-e' };
+  const wordC = { ...makeCoreWord(3), slug: 'suffix-tion' };
+  const words = [wordA, wordB, wordC];
+  const runtimeSnapshot = {
+    words,
+    wordBySlug: Object.fromEntries(words.map((w) => [w.slug, w])),
+    coreWords: words,
+    extraWords: [],
+  };
+  const state = getSpellingPostMasteryState({
+    subjectStateRecord: makeSubjectStateRecord({}),
+    runtimeSnapshot,
+    now: NOW_MS,
+  });
+  assert.deepEqual(
+    [...state.postMasteryDebug.blockingCoreSlugsPreview].sort((a, b) => a.localeCompare(b)),
+    ['i-before-e', 'prefix-un-in-im', 'suffix-tion'],
+  );
+});
+
+test('U1 defensive: publishedCoreCount matches core-word count regardless of word-level fields', () => {
+  // M-2 reviewer finding: publishedCoreCount and blockingCoreSlugsPreview
+  // must count / filter consistently. Both ignore `word.published` now —
+  // this defensive test pins that invariant by asserting the count equals
+  // the number of core-pool runtime words even when every word carries
+  // spurious word-level fields that a future change might read.
+  const words = [
+    { ...makeCoreWord(1), published: false, draft: true, internal: true },
+    { ...makeCoreWord(2), published: true },
+    { ...makeCoreWord(3) },
+    { ...makeCoreWord(4), published: false },
+    { ...makeCoreWord(5), draft: false },
+  ];
+  const runtimeSnapshot = {
+    words,
+    wordBySlug: Object.fromEntries(words.map((w) => [w.slug, w])),
+    coreWords: words,
+    extraWords: [],
+  };
+  const state = getSpellingPostMasteryState({
+    subjectStateRecord: makeSubjectStateRecord({}),
+    runtimeSnapshot,
+    now: NOW_MS,
+  });
+  // Count is purely pool-based — all 5 words are in the core pool.
+  assert.equal(state.postMasteryDebug.publishedCoreCount, 5);
+  // Preview is purely shape-based — all 5 slugs pass the regex + length.
+  assert.equal(state.postMasteryDebug.blockingCoreSlugsPreview.length, 5);
+  assert.deepEqual(
+    state.postMasteryDebug.blockingCoreSlugsPreview,
+    ['core-001', 'core-002', 'core-003', 'core-004', 'core-005'],
+  );
 });
 
 // --------------------------------------------------------------------------
@@ -488,14 +565,22 @@ function makeAdminHubLearner(id = 'learner-a') {
 }
 
 test('U1 integration: admin hub response includes postMasteryDebug for admin-role viewer', () => {
+  // M-3 reviewer finding: the earlier `runtimeSnapshots: {}` envelope left
+  // the selector with no runtime words, which locked `publishedCoreCount`
+  // at zero and hid any counts-match regression. Build a minimal 5-word
+  // runtime snapshot that mirrors the shape produced by
+  // `runtimeSnapshotForBundle` in production (`{ words, wordBySlug }`),
+  // then assert the publishedCoreCount matches the bundle.
   const learner = makeAdminHubLearner();
+  const runtime = makeRuntimeSnapshot({ coreCount: 5 });
+  const runtimeSnapshot = { words: runtime.words, wordBySlug: runtime.wordBySlug };
   const model = buildAdminHubReadModel({
     account: { id: 'adult-admin', selectedLearnerId: learner.id, platformRole: 'admin' },
     platformRole: 'admin',
     spellingContentBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
     memberships: [{ learnerId: learner.id, learner, role: 'owner' }],
     learnerBundles: { [learner.id]: { subjectStates: { spelling: { data: { progress: {} } } } } },
-    runtimeSnapshots: {},
+    runtimeSnapshots: { spelling: runtimeSnapshot },
     selectedLearnerId: learner.id,
     now: () => NOW_MS,
   });
@@ -504,6 +589,10 @@ test('U1 integration: admin hub response includes postMasteryDebug for admin-rol
   assert.equal(typeof model.postMasteryDebug.source, 'string');
   assert.equal(model.postMasteryDebug.source, 'service');
   assert.equal(model.reality.postMasteryDebug, 'real');
+  // Lock in that the counts match the provided bundle — the earlier
+  // `runtimeSnapshots: {}` fixture would have hidden this assertion.
+  assert.equal(model.postMasteryDebug.publishedCoreCount, 5);
+  assert.equal(model.postMasteryDebug.blockingCoreCount, 5);
 });
 
 test('U1 integration: admin hub response returns empty postMasteryDebug envelope for parent-role viewer', () => {

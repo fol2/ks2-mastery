@@ -115,12 +115,27 @@ const POST_MASTERY_PREVIEW_LENGTH = 8;
 // and (b) browser URL history could cache a malformed slug that survives
 // beyond the in-memory admin state. Every slug is scrubbed through this
 // regex before it joins the preview array — anything outside the expected
-// KS2-slug shape (e.g. an editor's accidental `rude-word-test-do-not-ship`)
-// is dropped, not rendered. The pattern matches a lowercase start, then
-// one or more lowercase letters / digits / hyphens. Uppercase, underscores,
-// whitespace, and empty strings all fail. H8 adversarial finding from the
-// P2 plan §U1.
-const BLOCKING_CORE_SLUG_PATTERN = /^[a-z][a-z0-9-]+$/;
+// KS2-slug shape is dropped, not rendered. H8 adversarial finding from the
+// P2 plan §U1 reviewer pass.
+//
+// The tightened shape accepts only lowercase-letter/digit segments separated
+// by single hyphens, each segment >=1 char, with at most 3 hyphens (i.e.
+// up to 4 segments total). Overall length is capped at 32 characters. This
+// keeps realistic KS2 curriculum slugs like `suffix-tion`, `i-before-e`,
+// `prefix-un-in-im` but rejects editorial accidents such as
+// `rude-word-test-do-not-ship` (5 segments, >32 chars), `abc---def`
+// (double hyphen), `a-` (trailing hyphen), `TESTING-UPPER` (uppercase),
+// `admin_internal` (underscore).
+//
+// Note: release-level publication state is enforced by the publisher; per-
+// word publication is not a production contract (content producers do not
+// set `word.published` per-word — `published` lives at release level only).
+// Relying on a `word.published !== false` guard here would be vacuously true
+// in production and give false confidence. The scrub therefore relies on
+// shape + length only. A future follow-up could add a slug allowlist at
+// the bundle publisher layer; that is out of scope for U1.
+const BLOCKING_CORE_SLUG_PATTERN = /^[a-z][a-z0-9]*(-[a-z0-9]+){0,3}$/;
+const BLOCKING_CORE_SLUG_MAX_LENGTH = 32;
 const BLOCKING_CORE_SLUGS_PREVIEW_LIMIT = 10;
 
 /**
@@ -253,8 +268,10 @@ export function getSpellingPostMasteryState({
   //  - `blockingCoreSlugsPreview`: first N=10 core slugs (alphabetical)
   //     whose `progress[slug]?.stage !== 4` — i.e. what's preventing
   //     graduation. Filtered through `BLOCKING_CORE_SLUG_PATTERN` and
-  //     dropped unless `word.published !== false` so unreleased / test /
-  //     misshapen slugs never surface in admin screenshots.
+  //     `BLOCKING_CORE_SLUG_MAX_LENGTH` (shape + length scrub only —
+  //     release-level publication is enforced by the publisher; per-word
+  //     `published` is not a production contract) so misshapen slugs
+  //     never surface in admin screenshots.
   //  - `extraWordsIgnoredCount`: count of progress entries whose word is
   //     in the extra pool. `allWordsMega` excludes the extra pool from
   //     either side of its comparison, so this value confirms the
@@ -279,9 +296,11 @@ export function getSpellingPostMasteryState({
       if (!word || typeof word !== 'object') continue;
       const pool = word.spellingPool === 'extra' ? 'extra' : 'core';
       if (pool !== 'core') continue;
-      if (word.published === false) continue;
+      // Release-level publication state is enforced by the publisher; per-
+      // word publication is not a production contract — the shape + length
+      // scrub below is the only line of defence in this selector.
       const slug = typeof word.slug === 'string' ? word.slug : '';
-      if (!slug || !BLOCKING_CORE_SLUG_PATTERN.test(slug)) continue;
+      if (!slug || slug.length > BLOCKING_CORE_SLUG_MAX_LENGTH || !BLOCKING_CORE_SLUG_PATTERN.test(slug)) continue;
       const stage = stageBySlug[slug];
       if (Number.isFinite(stage) && stage >= SECURE_STAGE) continue;
       blocking.push(slug);
