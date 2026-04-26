@@ -1852,6 +1852,34 @@ function readAccountOpsMetadataEntry(accountId) {
   return accounts.find((row) => row.accountId === accountId) || null;
 }
 
+function adoptAccountOpsMetadataServerState({ accountId, currentState }) {
+  if (!(typeof accountId === 'string' && accountId)) return;
+  if (!isPlainObject(currentState)) return;
+  patchAdminHubAccountOpsMetadataEntry((row) => {
+    if (row.accountId !== accountId) return row;
+    return {
+      ...row,
+      opsStatus: typeof currentState.opsStatus === 'string' ? currentState.opsStatus : row.opsStatus,
+      planLabel: typeof currentState.planLabel === 'string' ? currentState.planLabel : (currentState.planLabel === null ? '' : row.planLabel),
+      tags: Array.isArray(currentState.tags) ? currentState.tags : row.tags,
+      // R25: `currentState.internalNotes` is null for ops-role viewers — keep
+      // the row's existing value so we do not overwrite it with the redacted
+      // null. Admin viewers see the real value and we adopt it.
+      internalNotes: currentState.internalNotes === null
+        ? row.internalNotes
+        : (typeof currentState.internalNotes === 'string' ? currentState.internalNotes : row.internalNotes),
+      updatedAt: Number.isInteger(currentState.updatedAt) ? currentState.updatedAt : row.updatedAt,
+      updatedByAccountId: typeof currentState.updatedByAccountId === 'string'
+        ? currentState.updatedByAccountId
+        : row.updatedByAccountId,
+      rowVersion: Number.isInteger(currentState.rowVersion) ? currentState.rowVersion : row.rowVersion,
+      // Dismiss the banner envelope now that the draft has been replaced.
+      conflict: null,
+    };
+  }, 'Account ops metadata — server state adopted.');
+  registerAccountOpsMetadataRowDirty(accountId, false);
+}
+
 // R10, R21: admin-only error event status mutation with optimistic update + rollback.
 //
 // U5 review follow-up (Finding 1): wire savingEventId BEFORE the fetch so the
@@ -2471,6 +2499,22 @@ function handleGlobalAction(action, data) {
     updateAccountOpsMetadata({
       accountId: data?.accountId,
       patch: data?.patch,
+      expectedRowVersion: Number.isInteger(data?.expectedRowVersion) && data.expectedRowVersion >= 0
+        ? data.expectedRowVersion
+        : null,
+    });
+    return true;
+  }
+
+  if (action === 'account-ops-metadata-use-theirs') {
+    // U9: adopt the server's `currentState` from the 409 conflict envelope.
+    // The row has already updated its local inputs via setState; we mirror
+    // the adoption into the store so the dirty flag and conflict envelope
+    // are cleared, the row_version catches up to the server, and the
+    // banner dismisses on the next render.
+    adoptAccountOpsMetadataServerState({
+      accountId: data?.accountId,
+      currentState: data?.currentState,
     });
     return true;
   }

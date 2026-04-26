@@ -9,6 +9,14 @@ import { decideDirtyResetOnServerUpdate } from '../../platform/hubs/admin-metada
 import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
 import { AdultConfidenceChip } from '../../subjects/grammar/components/AdultConfidenceChip.jsx';
 import { GRAMMAR_RECENT_ATTEMPT_HORIZON } from '../../../shared/grammar/confidence.js';
+// U9: 409 conflict banner diff helpers live as a plain-JS neighbour so
+// Node tests can import them without a JSX loader.
+import {
+  buildAccountOpsMetadataConflictDiff,
+  formatAccountOpsMetadataConflictValue,
+} from '../../platform/hubs/admin-metadata-conflict-diff.js';
+export { buildAccountOpsMetadataConflictDiff };
+const formatConflictValue = formatAccountOpsMetadataConflictValue;
 
 function AdminAccountRoles({ model, directory = {}, actions }) {
   const isAdmin = model?.permissions?.platformRole === 'admin';
@@ -428,6 +436,7 @@ const OPS_STATUS_OPTIONS = ['active', 'suspended', 'payment_hold'];
 // ops_status control. Do NOT reword — the string is asserted verbatim.
 const ACCOUNT_OPS_R27_CALLOUT = 'Status labels are informational only. Suspension, payment-hold, and deactivation are not currently enforced by sign-in. Enforcement is planned for a later release.';
 
+
 function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions }) {
   const accountId = account.accountId;
   const isSaving = savingAccountId === accountId;
@@ -539,6 +548,68 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
     });
   };
 
+  // U9: row-level 409 conflict envelope stamped by the dispatcher. When
+  // present, we render an inline banner above the save button with the
+  // diff between the server's `currentState` and the user's live draft.
+  // The banner offers "Keep mine" (retry with fresh expectedRowVersion)
+  // and "Use theirs" (replace the draft with server state) buttons.
+  const conflict = account.conflict && typeof account.conflict === 'object' ? account.conflict : null;
+  const conflictCurrentState = conflict?.currentState && typeof conflict.currentState === 'object'
+    ? conflict.currentState
+    : null;
+  const liveDraftSnapshot = {
+    opsStatus,
+    planLabel: planLabel.trim() === '' ? null : planLabel.trim(),
+    tags: tagsText
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0)
+      .slice(0, 10),
+    internalNotes: internalNotes.trim() === '' ? null : internalNotes,
+  };
+  const conflictDiffRows = conflictCurrentState
+    ? buildAccountOpsMetadataConflictDiff(liveDraftSnapshot, conflictCurrentState)
+    : [];
+
+  const handleKeepMine = () => {
+    if (!conflictCurrentState) return;
+    const parsedTags = tagsText
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0)
+      .slice(0, 10);
+    // U9: fresh CAS pre-image from the banner envelope. The dispatcher
+    // mints a brand-new requestId on every click so receipt-caching does
+    // not serve a cached 409-retry result to a later retry.
+    actions.dispatch('account-ops-metadata-save', {
+      accountId,
+      expectedRowVersion: Number.isInteger(conflictCurrentState.rowVersion) ? conflictCurrentState.rowVersion : 0,
+      patch: {
+        opsStatus,
+        planLabel: planLabel.trim() === '' ? null : planLabel.trim(),
+        tags: parsedTags,
+        internalNotes: internalNotes.trim() === '' ? null : internalNotes,
+      },
+    });
+  };
+
+  const handleUseTheirs = () => {
+    if (!conflictCurrentState) return;
+    // Adopt the server's state verbatim, clear the dirty flag, and dismiss
+    // the banner by publishing an action the dispatcher listens to.
+    const currentStateTags = Array.isArray(conflictCurrentState.tags) ? conflictCurrentState.tags : [];
+    setOpsStatus(typeof conflictCurrentState.opsStatus === 'string' ? conflictCurrentState.opsStatus : 'active');
+    setPlanLabel(typeof conflictCurrentState.planLabel === 'string' ? conflictCurrentState.planLabel : '');
+    setTagsText(currentStateTags.join(', '));
+    setInternalNotes(typeof conflictCurrentState.internalNotes === 'string' ? conflictCurrentState.internalNotes : '');
+    dirtyRef.current = false;
+    registerDirty(accountId, false);
+    actions.dispatch('account-ops-metadata-use-theirs', {
+      accountId,
+      currentState: conflictCurrentState,
+    });
+  };
+
   if (!canManage) {
     // Read-only render preserved verbatim from U4. Ops-role viewers also see
     // the R27 callout so they understand the informational nature of the flag.
@@ -562,6 +633,52 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
 
   return (
     <div className="skill-row" key={accountId}>
+      {conflict && conflictCurrentState ? (
+        <div
+          className="callout warn small"
+          role="alert"
+          data-testid="account-ops-metadata-conflict-banner"
+          data-account-id={accountId}
+          style={{ gridColumn: '1 / -1', marginBottom: 8 }}
+        >
+          <div><strong>This account changed in another tab.</strong> Choose how to resolve the conflict.</div>
+          {conflictDiffRows.length > 0 ? (
+            <ul style={{ margin: '6px 0 8px 16px' }}>
+              {conflictDiffRows.map((row) => (
+                <li key={row.field} data-field={row.field}>
+                  <strong>{row.label}:</strong>{' '}
+                  <span>yours = {formatConflictValue(row.draftValue)}</span>{' · '}
+                  <span>theirs = {formatConflictValue(row.serverValue)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="small muted" style={{ margin: '6px 0 8px' }}>
+              No field-level differences surfaced. Pick a resolution to continue.
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className="btn secondary"
+              type="button"
+              data-action="account-ops-metadata-keep-mine"
+              onClick={handleKeepMine}
+              disabled={isSaving}
+            >
+              Keep mine
+            </button>
+            <button
+              className="btn secondary"
+              type="button"
+              data-action="account-ops-metadata-use-theirs"
+              onClick={handleUseTheirs}
+              disabled={isSaving}
+            >
+              Use theirs
+            </button>
+          </div>
+        </div>
+      ) : null}
       <div>
         <strong>{account.email || accountId}</strong>
         <div className="small muted">{account.displayName || 'No display name'} · {account.platformRole || 'parent'}</div>
