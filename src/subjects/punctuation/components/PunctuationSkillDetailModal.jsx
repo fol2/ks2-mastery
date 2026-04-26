@@ -241,6 +241,7 @@ export function PunctuationSkillDetailModal({ skillId, detailTab = 'learn', ui, 
             ref={closeButtonRef}
             className="punctuation-skill-modal-close"
             disabled={navigationDisabled}
+            aria-disabled={navigationDisabled ? 'true' : 'false'}
             data-action="punctuation-skill-detail-close"
             data-autofocus="true"
             aria-label="Close skill detail"

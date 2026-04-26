@@ -4,6 +4,11 @@ import { readFile } from 'node:fs/promises';
 
 import { createAppHarness } from './helpers/app-harness.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
+import {
+  renderPunctuationMapSceneStandalone,
+  renderPunctuationSessionSceneStandalone,
+  renderPunctuationSummarySceneStandalone,
+} from './helpers/punctuation-scene-render.js';
 import { PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
 import { SUBJECT_EXPOSURE_GATES } from '../src/platform/core/subject-availability.js';
 import {
@@ -2599,9 +2604,11 @@ test('Punctuation summary scene: composeIsDisabled=true disables mutation contro
     'Open Punctuation Map must be disabled under pendingCommand',
   );
   // U6 inversion: Back to dashboard is NOT disabled under pendingCommand.
+  // Boundary-pinned regex avoids false-positive on the sibling
+  // `aria-disabled` attribute introduced by the U6 review follow-on.
   assert.doesNotMatch(
     html,
-    /<button[^>]*disabled[^>]*data-action="punctuation-back"|<button[^>]*data-action="punctuation-back"[^>]*disabled/,
+    /<button[^>]*\sdisabled(?:=""|\s|>)[^>]*data-action="punctuation-back"|<button[^>]*data-action="punctuation-back"[^>]*\sdisabled(?:=""|\s|>)/,
     'Back to dashboard must remain enabled under pendingCommand (plan R7 / U6)',
   );
 });
@@ -3856,10 +3863,17 @@ const NAV_STRESS_UI_PATCH = Object.freeze({
 
 function disabledAttrPresentFor(html, dataAction) {
   // Order-independent match: attributes may appear before or after `disabled`.
-  // A dedicated helper keeps the assertion expressive and locates the
-  // per-action button by its `data-action` anchor.
-  const beforeRe = new RegExp(`<button[^>]*disabled[^>]*data-action="${dataAction}"`);
-  const afterRe = new RegExp(`<button[^>]*data-action="${dataAction}"[^>]*disabled`);
+  // The U6 review follow-on introduced sibling `aria-disabled` attributes
+  // that also contain the substring `disabled`, so the regex must pin on a
+  // boundary — either whitespace before `disabled` (with an `=""` or
+  // `>` after it), never preceded by `aria-` or another identifier char.
+  // React SSR emits bare boolean attributes as `disabled=""`.
+  const beforeRe = new RegExp(
+    `<button[^>]*\\sdisabled(?:=""|\\s|>)[^>]*data-action="${dataAction}"`,
+  );
+  const afterRe = new RegExp(
+    `<button[^>]*data-action="${dataAction}"[^>]*\\sdisabled(?:=""|\\s|>)`,
+  );
   return beforeRe.test(html) || afterRe.test(html);
 }
 
@@ -4007,5 +4021,197 @@ test('U6 Summary scene: Back button also stays enabled under readOnly runtime', 
     disabledAttrPresentFor(html, 'punctuation-back'),
     false,
     'Summary Back to dashboard must stay enabled under runtime.readOnly',
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Phase 4 U6 review follow-on (FINDING B, MEDIUM — design-lens) — AE7 requires
+// the Back affordance to surface its state to assistive tech via
+// `aria-disabled`. React omits the HTML `disabled` attribute entirely when
+// the prop is `false`, so a plain button has no state signal for AT. The
+// scenes now render an `aria-disabled` attribute alongside the `disabled`
+// prop. Tests assert both values.
+// ---------------------------------------------------------------------------
+
+function hasAriaDisabledFalseFor(html, dataAction) {
+  // Match any `<button ...>` whose attributes include both
+  // `data-action="<dataAction>"` and `aria-disabled="false"` in either order.
+  const attrBlockRe = new RegExp(
+    `<button[^>]*(?:data-action="${dataAction}"[^>]*aria-disabled="false"|aria-disabled="false"[^>]*data-action="${dataAction}")`,
+  );
+  return attrBlockRe.test(html);
+}
+
+function hasAriaDisabledTrueFor(html, dataAction) {
+  const attrBlockRe = new RegExp(
+    `<button[^>]*(?:data-action="${dataAction}"[^>]*aria-disabled="true"|aria-disabled="true"[^>]*data-action="${dataAction}")`,
+  );
+  return attrBlockRe.test(html);
+}
+
+test('U6 review follow-on (AE7): Summary Back renders aria-disabled="false" when ui is well-formed', () => {
+  // Four-axis sweep — every active runtime state (normal, pending, degraded,
+  // unavailable) keeps `aria-disabled="false"` on the Summary Back button.
+  // The helper only hard-disables on structural ui absence (null/undefined),
+  // covered by the paired test below.
+  const baseCases = [
+    { label: 'normal', patch: {} },
+    { label: 'pending', patch: { pendingCommand: 'punctuation-submit-form' } },
+    {
+      label: 'degraded',
+      patch: { availability: { status: 'degraded', code: 'runtime_degraded', message: 'paused' } },
+    },
+    {
+      label: 'unavailable',
+      patch: { availability: { status: 'unavailable', code: 'runtime_unavailable', message: 'down' } },
+    },
+  ];
+  for (const { label, patch } of baseCases) {
+    const harness = createPunctuationHarness();
+    openSummaryScene(harness);
+    if (Object.keys(patch).length) harness.store.updateSubjectUi('punctuation', patch);
+    const html = harness.render();
+    assert.equal(
+      hasAriaDisabledFalseFor(html, 'punctuation-back'),
+      true,
+      `Summary Back must render aria-disabled="false" under ${label} ui (AE7 observable)`,
+    );
+  }
+});
+
+test('U6 review follow-on (AE7): Summary Back renders aria-disabled="true" when ui is null', () => {
+  // Structural fail-closed: when `ui` is null the helper returns `true` and
+  // the Back button must reflect that via `aria-disabled="true"` so AT reads
+  // the correct state.
+  const html = renderPunctuationSummarySceneStandalone({
+    ui: null,
+    actions: { dispatch() {} },
+  });
+  assert.equal(
+    hasAriaDisabledTrueFor(html, 'punctuation-back'),
+    true,
+    'Summary Back must render aria-disabled="true" when ui is null (structural fail-closed)',
+  );
+});
+
+test('U6 review follow-on (AE7): Map Back renders aria-disabled="false" when ui is well-formed', () => {
+  const baseCases = [
+    { label: 'normal', patch: {} },
+    { label: 'pending', patch: { pendingCommand: 'punctuation-submit-form' } },
+    {
+      label: 'degraded',
+      patch: { availability: { status: 'degraded', code: 'runtime_degraded', message: 'paused' } },
+    },
+    {
+      label: 'unavailable',
+      patch: { availability: { status: 'unavailable', code: 'runtime_unavailable', message: 'down' } },
+    },
+  ];
+  for (const { label, patch } of baseCases) {
+    const harness = createPunctuationHarness();
+    openMapScene(harness);
+    if (Object.keys(patch).length) harness.store.updateSubjectUi('punctuation', patch);
+    const html = harness.render();
+    assert.equal(
+      hasAriaDisabledFalseFor(html, 'punctuation-close-map'),
+      true,
+      `Map top-bar Back must render aria-disabled="false" under ${label} ui (AE7 observable)`,
+    );
+  }
+});
+
+test('U6 review follow-on (AE7): Map Back renders aria-disabled="true" when ui is null', () => {
+  // The Map scene reads `mapUi` from `ui.mapUi` via the normaliser; passing
+  // `ui={null}` is the canonical null-ui regression — `composeIsNavigationDisabled`
+  // short-circuits to `true` before the filter/reward branches run.
+  const html = renderPunctuationMapSceneStandalone({
+    ui: null,
+    actions: { dispatch() {} },
+  });
+  assert.equal(
+    hasAriaDisabledTrueFor(html, 'punctuation-close-map'),
+    true,
+    'Map top-bar Back must render aria-disabled="true" when ui is null (structural fail-closed)',
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Phase 4 U6 review follow-on (FINDING C, HIGH — design-lens) — R7 explicitly
+// names a Feedback Back affordance ("the navigation guard applies to every
+// scene's Back affordance — Map back button, Skill Detail close, Feedback
+// back"). Audit result: `PunctuationSessionScene`'s feedback-phase JSX
+// (both the minimal `!help.showFeedback` branch and the full feedback card)
+// carries Continue + Finish now as the only actions — no Back affordance
+// exists today. This regression guard asserts that invariant: if a future
+// unit adds a Back-shaped button into the feedback JSX, the guard fails
+// with a reminder to thread `composeIsNavigationDisabled` through it.
+// ---------------------------------------------------------------------------
+
+test('U6 review follow-on (FINDING C): feedback phase renders no Back affordance', () => {
+  // Seed a well-formed feedback-phase ui so the session scene lands on the
+  // feedback branch (`phase === 'feedback'`). The guard asserts neither the
+  // minimal GPS-style branch nor the full feedback card contains a button
+  // whose `data-action` matches any known Back-shaped dispatch, and no
+  // button carries `aria-label="Back"` / `aria-label*="Back"`. If a future
+  // unit adds one without threading `composeIsNavigationDisabled`, this test
+  // fails as the reminder to extend the R7 scope.
+  const ui = {
+    phase: 'feedback',
+    session: {
+      id: 'feedback-regression-guard',
+      mode: 'endmarks',
+      length: 1,
+      index: 0,
+      feedback: {
+        kind: 'success',
+        headline: 'Feedback',
+        body: 'Nice work.',
+        displayCorrection: '',
+        facets: [],
+        misconceptionTags: [],
+      },
+      currentItem: null,
+    },
+    feedback: {
+      kind: 'success',
+      headline: 'Feedback',
+      body: 'Nice work.',
+      displayCorrection: '',
+      facets: [],
+      misconceptionTags: [],
+    },
+  };
+  const html = renderPunctuationSessionSceneStandalone({
+    ui,
+    actions: { dispatch() {} },
+  });
+
+  // Sanity: the feedback phase rendered.
+  assert.match(
+    html,
+    /data-punctuation-phase="feedback"/,
+    'feedback-phase JSX must render for this harness to prove the invariant',
+  );
+
+  // No `punctuation-back` or `punctuation-close-map` dispatcher anywhere in
+  // the feedback-phase output. If either appears, a future unit added a
+  // Back affordance — thread `composeIsNavigationDisabled` through it.
+  assert.doesNotMatch(
+    html,
+    /data-action="punctuation-back"/,
+    'feedback phase must not surface a punctuation-back affordance; if added, thread composeIsNavigationDisabled (R7 scope)',
+  );
+  assert.doesNotMatch(
+    html,
+    /data-action="punctuation-close-map"/,
+    'feedback phase must not surface a punctuation-close-map affordance; if added, thread composeIsNavigationDisabled (R7 scope)',
+  );
+
+  // Belt-and-braces: no button with aria-label containing "Back" either.
+  // Case-insensitive so "Back to dashboard" and "Back" both trip the guard.
+  assert.doesNotMatch(
+    html,
+    /<button[^>]*aria-label="[^"]*Back[^"]*"/i,
+    'feedback phase must not surface a Back-labelled button; if added, thread composeIsNavigationDisabled (R7 scope)',
   );
 });

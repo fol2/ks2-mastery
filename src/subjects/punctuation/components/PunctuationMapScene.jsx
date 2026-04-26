@@ -325,6 +325,7 @@ export function PunctuationMapScene({ ui, actions }) {
           type="button"
           className="btn ghost sm"
           disabled={navigationDisabled}
+          aria-disabled={navigationDisabled ? 'true' : 'false'}
           data-action="punctuation-close-map"
           onClick={() => actions.dispatch('punctuation-close-map')}
         >

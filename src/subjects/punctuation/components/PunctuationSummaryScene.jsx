@@ -334,6 +334,7 @@ function NextActionRow({ ui, actions }) {
         className="btn ghost"
         type="button"
         disabled={isNavigationDisabled}
+        aria-disabled={isNavigationDisabled ? 'true' : 'false'}
         data-action="punctuation-back"
         onClick={() => actions.dispatch('punctuation-back')}
       >
