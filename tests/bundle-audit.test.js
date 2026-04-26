@@ -422,6 +422,26 @@ test('worker spelling runtime imports the shared domain service instead of the b
   assert.match(browserService, /shared\/spelling\/service\.js/);
 });
 
+// Regression for the 2026-04-26 deploy failure. `src/subjects/spelling/
+// events.js` was statically importing `./data/word-data.js` to provide a
+// default for `wordMeta`. That pulled the 200k-line spelling content
+// dataset into `src/bundles/app.bundle.js` via the chain
+// `entry.jsx -> main.js -> create-app-controller -> spelling/shortcuts
+//  -> service-contract -> achievements -> events.js -> data/word-data.js`
+// and failed `audit:client` on deploy. This source-level pin fires at
+// `npm test` without a build step, so a future edit that reinstates the
+// static import is caught before it ever reaches wrangler.
+test('spelling events factory does not static-import the word dataset', async () => {
+  const events = await readFile('src/subjects/spelling/events.js', 'utf8');
+  assert.doesNotMatch(
+    events,
+    /^\s*import[\s\S]*?['"].\/data\/word-data\.js['"]/m,
+    'src/subjects/spelling/events.js must not import ./data/word-data.js — '
+      + 'the dataset is reachable from the client entry and would inflate '
+      + 'app.bundle.js past the audit boundary (see scripts/audit-client-bundle.mjs).',
+  );
+});
+
 test('worker-first asset routing keeps demo and source lockdown routes out of SPA fallback', async () => {
   const expectedRoutes = [
     '/api/*',

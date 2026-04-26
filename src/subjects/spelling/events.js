@@ -1,4 +1,31 @@
-import { WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from './data/word-data.js';
+// Hotfix (2026-04-26): a previous version statically imported
+// `WORD_BY_SLUG` from `./data/word-data.js` to provide a default for
+// `wordMeta`. That import dragged the full 200k-line spelling content
+// dataset (`data/word-data.js` -> `data/content-data.js`) into
+// `src/bundles/app.bundle.js` through the chain
+// `entry.jsx -> main.js -> create-app-controller -> spelling/shortcuts
+//  -> service-contract -> achievements -> events.js -> data/word-data.js`.
+// The `audit:client` check fails the deploy because the dataset modules
+// are on `FORBIDDEN_MODULES` in `scripts/audit-client-bundle.mjs`.
+//
+// Production server callers in `shared/spelling/service.js` already pass
+// `wordMeta: runtimeWordBySlug` at every call site, so they are unaffected.
+// Tests that previously relied on the implicit default now seed it once via
+// `__setDefaultSpellingWordBySlug` from
+// `tests/helpers/seed-spelling-events-default.js`.
+let __defaultWordBySlug = null;
+
+/**
+ * Seed the module-scoped fallback `wordMeta` map used by factories below.
+ * Only invoked by a test-support helper; production callers always pass
+ * `wordMeta` explicitly. Accepts `null` to clear the seed (useful in tests
+ * that need to assert the "no-map" path). Values other than objects are
+ * coerced to `null` so a misuse surfaces as "unknown slug -> null event"
+ * rather than a silent `undefined` dereference.
+ */
+export function __setDefaultSpellingWordBySlug(wordBySlug) {
+  __defaultWordBySlug = wordBySlug && typeof wordBySlug === 'object' ? wordBySlug : null;
+}
 
 export const SPELLING_EVENT_TYPES = Object.freeze({
   RETRY_CLEARED: 'spelling.retry-cleared',
@@ -21,8 +48,10 @@ function safeTimestamp(value) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : Date.now();
 }
 
-function wordFields(slug, wordMeta = DEFAULT_WORD_BY_SLUG) {
-  const word = wordMeta[slug];
+function wordFields(slug, wordMeta) {
+  const map = wordMeta || __defaultWordBySlug;
+  if (!map) return null;
+  const word = map[slug];
   if (!word) return null;
   return {
     wordSlug: word.slug,
