@@ -454,8 +454,89 @@ async function ensureAccountRow(db, {
   return first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
 }
 
+/**
+ * Phase D / U13 sentinel thrown by `createSession` when the target account's
+ * `ops_status` is `suspended`. Callers (OAuth callback, email login,
+ * email register, demo bootstrap) catch this and issue a 302 redirect to
+ * `/?auth=account_suspended` with NO cookie set, rather than minting a
+ * session that would immediately 403 on the next authenticated request.
+ *
+ * We do not throw a structured HTTP error because the UX is a redirect,
+ * not a JSON envelope — the user lands on the unauthenticated shell with a
+ * banner explaining the state.
+ */
+export class SessionCreationSuspendedError extends Error {
+  constructor(accountId) {
+    super('Session creation refused — account is suspended.');
+    this.name = 'SessionCreationSuspendedError';
+    this.code = 'account_suspended';
+    this.accountId = accountId;
+  }
+}
+
+// Phase D / U13: read ops_status + status_revision so createSession can
+// (a) refuse suspended accounts and (b) stamp status_revision_at_issue.
+// Missing row → treated as active with revision 0 (legacy accounts
+// predate migration 0011). Missing column (partial migration) → soft-fail
+// to active/0 so deploy order is not load-bearing.
+async function readAccountOpsStatusForSession(db, accountId) {
+  if (!accountId) return { opsStatus: 'active', statusRevision: 0 };
+  try {
+    const row = await first(
+      db,
+      'SELECT ops_status, status_revision FROM account_ops_metadata WHERE account_id = ?',
+      [accountId],
+    );
+    if (!row) return { opsStatus: 'active', statusRevision: 0 };
+    return {
+      opsStatus: typeof row.ops_status === 'string' && row.ops_status
+        ? row.ops_status
+        : 'active',
+      statusRevision: Math.max(0, Number(row.status_revision) || 0),
+    };
+  } catch (error) {
+    const message = String(error?.message || '').toLowerCase();
+    if (message.includes('no such column') || message.includes('no such table')) {
+      // Migration 0011 not yet applied on this instance — fall through to
+      // pre-Phase-D semantics so partial-deploy ordering is not a
+      // lockout risk. Next deploy snaps back to enforced.
+      try {
+        // eslint-disable-next-line no-console
+        console.log(JSON.stringify({
+          event: 'capacity.auth.enforcement_unavailable',
+          reason: 'missing_column_or_table',
+          phase: 'create_session',
+        }));
+      } catch {
+        // Swallow — telemetry is best-effort.
+      }
+      return { opsStatus: 'active', statusRevision: 0 };
+    }
+    throw error;
+  }
+}
+
 export async function createSession(env, accountId, provider, now = Date.now(), options = {}) {
   const db = requireDatabase(env);
+  // U13: pre-check ops_status BEFORE minting token/hash/row so a suspended
+  // account never produces a session artefact. payment_hold still gets a
+  // session (user needs to reach billing UI — U14 enforces mutation
+  // capability at the request boundary).
+  const { opsStatus, statusRevision } = await readAccountOpsStatusForSession(db, accountId);
+  if (opsStatus === 'suspended') {
+    try {
+      // Capacity telemetry: repeated rejections signal a returning-after-
+      // suspend flow and should be visible to ops.
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify({
+        event: 'capacity.auth.session_creation_refused.suspended',
+        provider: provider || null,
+      }));
+    } catch {
+      // Swallow — telemetry is best-effort.
+    }
+    throw new SessionCreationSuspendedError(accountId);
+  }
   const token = randomToken(32);
   const hash = await sha256(token);
   const sessionId = `session-${randomToken(12)}`;
@@ -463,11 +544,41 @@ export async function createSession(env, accountId, provider, now = Date.now(), 
     ? Number(options.expiresAt)
     : now + SESSION_TTL_MS;
   const sessionKind = cleanText(options.sessionKind) || (provider === 'demo' ? 'demo' : 'real');
-  await run(db, `
-    INSERT INTO account_sessions (id, account_id, session_hash, provider, created_at, expires_at, session_kind)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `, [sessionId, accountId, hash, provider, now, expiresAt, sessionKind]);
-  return { token, hash, sessionId, expiresAt, sessionKind };
+  // U13: stamp the account's current `status_revision` so U14's per-request
+  // comparison can invalidate this session on the next transition. Legacy
+  // accounts / missing-migration paths stamp 0, which remains valid until
+  // the account's revision bumps above 0.
+  try {
+    await run(db, `
+      INSERT INTO account_sessions (
+        id, account_id, session_hash, provider, created_at, expires_at,
+        session_kind, status_revision_at_issue
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [sessionId, accountId, hash, provider, now, expiresAt, sessionKind, statusRevision]);
+  } catch (error) {
+    const message = String(error?.message || '').toLowerCase();
+    if (!(message.includes('no such column') || message.includes('has no column'))) {
+      throw error;
+    }
+    // Partial migration: the column isn't there yet. Fall back to the
+    // pre-Phase-D INSERT shape so the deploy ordering remains safe.
+    try {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify({
+        event: 'capacity.auth.enforcement_unavailable',
+        reason: 'missing_column_on_insert',
+        phase: 'create_session',
+      }));
+    } catch {
+      // Swallow.
+    }
+    await run(db, `
+      INSERT INTO account_sessions (id, account_id, session_hash, provider, created_at, expires_at, session_kind)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [sessionId, accountId, hash, provider, now, expiresAt, sessionKind]);
+  }
+  return { token, hash, sessionId, expiresAt, sessionKind, statusRevisionAtIssue: statusRevision };
 }
 
 async function accountSessionFromToken(env, token, now = Date.now(), capacity = null) {
