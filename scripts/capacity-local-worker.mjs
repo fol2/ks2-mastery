@@ -182,8 +182,13 @@ export function parseLocalWorkerArgs(argv = []) {
 function rejectConflictingDriverArgs(driverArgs) {
   const reserved = new Set(['--origin', '--url', '--local-fixture', '--demo-sessions']);
   for (const arg of driverArgs) {
-    if (reserved.has(arg)) {
-      throw new Error(`operator passthrough must not include ${arg}; the orchestrator owns this flag (run with --help for details).`);
+    // Canonicalise both space-form (`--origin x`) and equals-form (`--origin=x`)
+    // before set lookup. adv-u4-r2-001: equals-form previously bypassed the
+    // reject, letting migrations/spawn/readiness waste multiple minutes before
+    // the driver itself threw an Unknown option error.
+    const flag = arg.startsWith('--') ? arg.split('=', 1)[0] : arg;
+    if (reserved.has(flag)) {
+      throw new Error(`operator passthrough must not include ${flag}; the orchestrator owns this flag (run with --help for details).`);
     }
   }
 }

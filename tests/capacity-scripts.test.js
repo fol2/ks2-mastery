@@ -2041,3 +2041,22 @@ test('capacity-local-worker orchestrator: rejects operator --origin in driver pa
   assert.equal(result.exitCode, 2);
   assert.ok(result.error && /origin/i.test(result.error), `expected origin collision error, got ${result.error}`);
 });
+
+// adv-u4-r2-001 P1: equals-form (`--origin=http://evil`) previously slipped
+// through because the reject used Set.has(arg) on the raw token. Normalising
+// via `arg.split('=', 1)[0]` closes the regression.
+test('capacity-local-worker orchestrator: rejects equals-form --origin=... upfront (adv-u4-r2-001)', async () => {
+  const result = await runLocalWorkerOrchestrator(['--', '--origin=http://evil.com'], {
+    platform: 'linux',
+    spawn: () => { throw new Error('spawn MUST NOT run on --origin=value collision'); },
+    runMigrations: () => { throw new Error('migration MUST NOT run on --origin=value collision'); },
+    probePort: createFakePortProbe(new Set()),
+    fetch: createReadyFetch(),
+    runDriver: () => { throw new Error('driver MUST NOT run on --origin=value collision'); },
+    killChild: () => Promise.resolve(),
+    nowMs: () => 0,
+    sleep: () => Promise.resolve(),
+  });
+  assert.equal(result.exitCode, 2);
+  assert.ok(result.error && /origin/i.test(result.error), `expected origin collision error, got ${result.error}`);
+});
