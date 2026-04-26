@@ -104,6 +104,11 @@ function PostMegaModeCard({
 
 function GraduationStatRibbon({ postMastery, secureCount }) {
   const dueCount = Math.max(0, Number(postMastery?.guardianDueCount) || 0);
+  const wobblingDueCount = Math.max(0, Number(postMastery?.wobblingDueCount) || 0);
+  const nonWobblingDueCount = Math.max(0, Number(postMastery?.nonWobblingDueCount) || 0);
+  // Fallback for legacy callers (e.g. tests injecting a pre-U1 postMastery
+  // shape): if the decomposed counts are missing, fall back to the single
+  // `wobblingCount` so the ribbon still renders something sensible.
   const wobblingCount = Math.max(0, Number(postMastery?.wobblingCount) || 0);
   const today = Number.isFinite(Number(postMastery?.todayDay)) ? Math.floor(Number(postMastery.todayDay)) : 0;
   const nextDue = Number.isFinite(Number(postMastery?.nextGuardianDueDay)) ? Math.floor(Number(postMastery.nextGuardianDueDay)) : null;
@@ -113,13 +118,19 @@ function GraduationStatRibbon({ postMastery, secureCount }) {
   if (Number.isFinite(secureCount) && secureCount > 0) {
     items.push({ label: 'Words secured', value: String(secureCount) });
   }
-  items.push({
-    label: 'Due today',
-    value: String(dueCount),
-    accent: dueCount > 0 ? 'due' : null,
-  });
-  if (wobblingCount > 0) {
-    items.push({ label: 'Wobbling', value: String(wobblingCount), accent: 'wobbling' });
+  // U1: decomposed "N urgent + M patrol" when a wobbling/due mix exists.
+  if (wobblingDueCount > 0 && nonWobblingDueCount > 0) {
+    items.push({ label: 'Urgent checks', value: String(wobblingDueCount), accent: 'wobbling' });
+    items.push({ label: 'Patrol words', value: String(nonWobblingDueCount), accent: 'due' });
+  } else {
+    items.push({
+      label: 'Due today',
+      value: String(dueCount),
+      accent: dueCount > 0 ? 'due' : null,
+    });
+    if (wobblingCount > 0 && wobblingDueCount === 0) {
+      items.push({ label: 'Wobbling', value: String(wobblingCount), accent: 'wobbling' });
+    }
   }
   if (nextDueDelta !== null && dueCount === 0) {
     items.push({
@@ -492,16 +503,77 @@ function PostMegaSetupContent({
 }) {
   const guardianCard = POST_MEGA_MODE_CARDS.find((mode) => mode.id === 'guardian') || POST_MEGA_MODE_CARDS[0];
   const otherCards = POST_MEGA_MODE_CARDS.filter((mode) => mode.id !== 'guardian');
+  // U1: branch copy + gating on `guardianMissionState`. Fall back to the
+  // legacy `guardianDueCount > 0` signal when the read-model has not yet
+  // populated the new scalars so remote-sync and any pre-U1 caller remain
+  // stable.
+  const missionState = typeof postMastery?.guardianMissionState === 'string'
+    ? postMastery.guardianMissionState
+    : null;
   const dueCount = Math.max(0, Number(postMastery?.guardianDueCount) || 0);
   const wobblingCount = Math.max(0, Number(postMastery?.wobblingCount) || 0);
-  const guardianActive = dueCount > 0;
+  const wobblingDueCount = Math.max(0, Number(postMastery?.wobblingDueCount) || 0);
+  const nonWobblingDueCount = Math.max(0, Number(postMastery?.nonWobblingDueCount) || 0);
+  const unguardedMegaCount = Math.max(0, Number(postMastery?.unguardedMegaCount) || 0);
+  const today = Number.isFinite(Number(postMastery?.todayDay)) ? Math.floor(Number(postMastery.todayDay)) : 0;
+  const nextDue = Number.isFinite(Number(postMastery?.nextGuardianDueDay)) ? Math.floor(Number(postMastery.nextGuardianDueDay)) : null;
+  const nextDueDelta = nextDue == null ? null : Math.max(0, nextDue - today);
   const secureCount = Number(stats?.secure) || 0;
-  const guardianDescription = guardianActive
-    ? wobblingCount > 0
+
+  // `guardianMissionAvailable` is the single Begin-button gate. Legacy
+  // fallback: `guardianDueCount > 0` keeps old tests green if a caller passes
+  // a postMastery object without the new scalars.
+  const availableFromState = typeof postMastery?.guardianMissionAvailable === 'boolean'
+    ? postMastery.guardianMissionAvailable
+    : dueCount > 0;
+  const guardianActive = availableFromState;
+
+  const nextDueLabel = nextDueDelta == null
+    ? 'soon'
+    : nextDueDelta <= 0 ? 'today' : nextDueDelta === 1 ? 'tomorrow' : `in ${nextDueDelta} days`;
+
+  // Copy ladder — branches on the canonical U1 state when present, falls
+  // back to the pre-U1 counts otherwise.
+  let guardianDescription;
+  let missionBadge;
+  if (missionState === 'first-patrol') {
+    const remaining = Math.max(1, unguardedMegaCount);
+    guardianDescription = `First Guardian patrol ready — ${remaining} word${remaining === 1 ? '' : 's'} from your Word Vault.`;
+    missionBadge = 'FIRST PATROL';
+  } else if (missionState === 'wobbling') {
+    if (wobblingDueCount > 0 && nonWobblingDueCount > 0) {
+      guardianDescription = `${wobblingDueCount} urgent check${wobblingDueCount === 1 ? '' : 's'} + ${nonWobblingDueCount} patrol word${nonWobblingDueCount === 1 ? '' : 's'}.`;
+    } else {
+      guardianDescription = `${wobblingDueCount || dueCount} wobbling word${(wobblingDueCount || dueCount) === 1 ? '' : 's'} need a Guardian check today.`;
+    }
+    missionBadge = 'URGENT';
+  } else if (missionState === 'due') {
+    guardianDescription = `${dueCount} word${dueCount === 1 ? '' : 's'} ready for their Guardian check.`;
+    missionBadge = 'ACTIVE DUTY';
+  } else if (missionState === 'optional-patrol') {
+    guardianDescription = 'No urgent duties. Optional patrol available to keep the Vault warm.';
+    missionBadge = 'OPTIONAL PATROL';
+  } else if (missionState === 'rested') {
+    guardianDescription = `All guardians rested. Next check ${nextDueLabel}.`;
+    missionBadge = 'ALL RESTED';
+  } else if (missionState === 'locked') {
+    // Defensive: 'locked' means allWordsMega is false, so PostMegaSetupContent
+    // should not be rendered. If a caller hits this branch anyway, render a
+    // sensible fallback rather than crashing.
+    guardianDescription = 'Guardian Mission unlocks once every core word is secure.';
+    missionBadge = 'LOCKED';
+  } else if (guardianActive) {
+    // Pre-U1 fallback: compose copy from the legacy counts.
+    guardianDescription = wobblingCount > 0
       ? `${dueCount} word${dueCount === 1 ? '' : 's'} need a check today — ${wobblingCount} wobbling.`
-      : `${dueCount} word${dueCount === 1 ? '' : 's'} ready for their Guardian check.`
-    : 'All guardians rested — return tomorrow to patrol the Vault again.';
-  const missionBadge = guardianActive ? 'ACTIVE DUTY' : 'ALL RESTED';
+      : `${dueCount} word${dueCount === 1 ? '' : 's'} ready for their Guardian check.`;
+    missionBadge = 'ACTIVE DUTY';
+  } else {
+    // Pre-U1 fallback: no due, legacy rested copy.
+    guardianDescription = 'All guardians rested — return tomorrow to patrol the Vault again.';
+    missionBadge = 'ALL RESTED';
+  }
+
   const beginDisabled = startDisabled || runtimeReadOnly || !guardianActive;
   const beginText = pendingCommand === 'start-session'
     ? 'Starting...'
@@ -527,7 +599,11 @@ function PostMegaSetupContent({
         words you already own. Smart Review, Trouble Drill, and the SATs Test have done their work.
       </p>
       <GraduationStatRibbon postMastery={postMastery} secureCount={secureCount} />
-      <div className="mode-row mode-row-post-mega" data-variant={guardianActive ? 'active' : 'rested'}>
+      <div
+        className="mode-row mode-row-post-mega"
+        data-variant={guardianActive ? 'active' : 'rested'}
+        data-mission-state={missionState || undefined}
+      >
         <PostMegaModeCard
           mode={guardianCard}
           variant={guardianActive ? 'active' : 'rested'}

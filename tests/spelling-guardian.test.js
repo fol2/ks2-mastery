@@ -24,11 +24,17 @@ import { normaliseServerSpellingData } from '../worker/src/subjects/spelling/eng
 import {
   advanceGuardianOnCorrect,
   advanceGuardianOnWrong,
+  computeGuardianMissionState,
+  deriveGuardianAggregates,
   ensureGuardianRecord,
   isGuardianEligibleSlug,
   selectGuardianWords,
 } from '../shared/spelling/service.js';
-import { GUARDIAN_SECURE_STAGE } from '../src/subjects/spelling/service-contract.js';
+import {
+  GUARDIAN_MISSION_STATES,
+  GUARDIAN_SECURE_STAGE,
+  createLockedPostMasteryState,
+} from '../src/subjects/spelling/service-contract.js';
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
@@ -2981,4 +2987,717 @@ test('U2 read-model: legacy-demoted slug (stage < GUARDIAN_SECURE_STAGE) exclude
   const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
   assert.equal(state.guardianDueCount, 1, 'stage-3 record excluded; only w1 remains');
   assert.equal(state.wobblingCount, 0, 'stage-3 record excluded from wobbling count');
+});
+
+// ----- U1: computeGuardianMissionState truth table ---------------------------
+// `computeGuardianMissionState` is a pure helper the selector reuses. Tests
+// below hit every documented branch of the state machine (locked, first-patrol,
+// wobbling, due, optional-patrol, rested) under the canonical policy
+// `{ allowOptionalPatrol: true }`. Changing the branches without updating this
+// block is intended to fail loudly.
+
+test('U1: GUARDIAN_MISSION_STATES is the frozen canonical list', () => {
+  assert.equal(Object.isFrozen(GUARDIAN_MISSION_STATES), true);
+  // Order now reflects the real state-machine priority:
+  // locked > first-patrol > wobbling > due > optional-patrol > rested.
+  assert.deepEqual(
+    [...GUARDIAN_MISSION_STATES],
+    ['locked', 'first-patrol', 'wobbling', 'due', 'optional-patrol', 'rested'],
+  );
+});
+
+test('U1 state machine: not post-Mega → locked', () => {
+  const state = computeGuardianMissionState({
+    allWordsMega: false,
+    eligibleGuardianEntries: [],
+    unguardedMegaCount: 0,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: true },
+  });
+  assert.equal(state, 'locked');
+});
+
+test('U1 state machine: not post-Mega even when guardians look plausible → locked (aggregate gate wins)', () => {
+  const state = computeGuardianMissionState({
+    allWordsMega: false,
+    eligibleGuardianEntries: [
+      { slug: 'possess', wobbling: true, nextDueDay: TODAY - 1 },
+    ],
+    unguardedMegaCount: 5,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: true },
+  });
+  assert.equal(state, 'locked');
+});
+
+test('U1 state machine: post-Mega + empty guardian map + unguarded Mega words → first-patrol', () => {
+  const state = computeGuardianMissionState({
+    allWordsMega: true,
+    eligibleGuardianEntries: [],
+    unguardedMegaCount: 8,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: true },
+  });
+  assert.equal(state, 'first-patrol');
+});
+
+test('U1 state machine: first-patrol requires combined pool >= GUARDIAN_MIN_ROUND_LENGTH', () => {
+  // Short-round invariant (sev 60): if the combined pool of unguarded Mega
+  // words + existing guardian entries cannot fill a minimum-length round,
+  // the dashboard must not offer 'first-patrol' — the learner would tap
+  // Begin and receive a 1-4 word Guardian. Collapse to 'rested' instead.
+  const state = computeGuardianMissionState({
+    allWordsMega: true,
+    eligibleGuardianEntries: [],
+    unguardedMegaCount: 1,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: true },
+  });
+  assert.equal(state, 'rested');
+});
+
+test('U1 state machine: first-patrol with unguarded just below MIN_ROUND_LENGTH → rested', () => {
+  // Exactly 4 unguarded Mega + zero guardian entries → 4 < MIN (5) → rested.
+  const state = computeGuardianMissionState({
+    allWordsMega: true,
+    eligibleGuardianEntries: [],
+    unguardedMegaCount: GUARDIAN_MIN_ROUND_LENGTH - 1,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: true },
+  });
+  assert.equal(state, 'rested');
+});
+
+test('U1 state machine: first-patrol with unguardedMegaCount >= MIN_ROUND_LENGTH → first-patrol', () => {
+  // Clean first-patrol scenario: 5 unguarded Mega + zero guardian entries →
+  // 5 >= MIN (5) → first-patrol as documented.
+  const state = computeGuardianMissionState({
+    allWordsMega: true,
+    eligibleGuardianEntries: [],
+    unguardedMegaCount: GUARDIAN_MIN_ROUND_LENGTH,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: true },
+  });
+  assert.equal(state, 'first-patrol');
+});
+
+test('U1 state machine: exactly GUARDIAN_MIN_ROUND_LENGTH unguarded Mega + zero due → first-patrol', () => {
+  const state = computeGuardianMissionState({
+    allWordsMega: true,
+    eligibleGuardianEntries: [],
+    unguardedMegaCount: GUARDIAN_MIN_ROUND_LENGTH,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: true },
+  });
+  assert.equal(state, 'first-patrol');
+});
+
+test('U1 state machine: any wobbling-due eligible entry → wobbling (dominates due/first-patrol)', () => {
+  const state = computeGuardianMissionState({
+    allWordsMega: true,
+    eligibleGuardianEntries: [
+      { slug: 'accommodate', wobbling: true, nextDueDay: TODAY - 1 },
+      { slug: 'believe', wobbling: false, nextDueDay: TODAY },
+    ],
+    unguardedMegaCount: 3,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: true },
+  });
+  assert.equal(state, 'wobbling');
+});
+
+test('U1 state machine: wobbling not due yet does NOT trigger wobbling state', () => {
+  const state = computeGuardianMissionState({
+    allWordsMega: true,
+    eligibleGuardianEntries: [
+      { slug: 'accommodate', wobbling: true, nextDueDay: TODAY + 3 },
+      { slug: 'believe', wobbling: false, nextDueDay: TODAY },
+    ],
+    unguardedMegaCount: 0,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: true },
+  });
+  // wobbling scheduled in future → the only due entry is `believe` (non-wobbling)
+  assert.equal(state, 'due');
+});
+
+test('U1 state machine: due entries with no wobbling → due', () => {
+  const state = computeGuardianMissionState({
+    allWordsMega: true,
+    eligibleGuardianEntries: [
+      { slug: 'believe', wobbling: false, nextDueDay: TODAY - 1 },
+      { slug: 'bicycle', wobbling: false, nextDueDay: TODAY },
+      { slug: 'breath', wobbling: false, nextDueDay: TODAY + 7 },
+    ],
+    unguardedMegaCount: 0,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: true },
+  });
+  assert.equal(state, 'due');
+});
+
+test('U1 state machine: zero due but unguarded Mega available → optional-patrol (policy on)', () => {
+  // 1 entry + 4 unguarded = 5, which meets GUARDIAN_MIN_ROUND_LENGTH → optional-patrol.
+  const state = computeGuardianMissionState({
+    allWordsMega: true,
+    eligibleGuardianEntries: [
+      { slug: 'believe', wobbling: false, nextDueDay: TODAY + 14 },
+    ],
+    unguardedMegaCount: 4,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: true },
+  });
+  assert.equal(state, 'optional-patrol');
+});
+
+test('U1 state machine: optional-patrol requires combined pool >= MIN_ROUND_LENGTH (sev 60)', () => {
+  // 3 non-due entries only → combined pool = 3, below MIN (5) → rested.
+  // If the dashboard offered optional-patrol here the learner would tap
+  // Begin and receive a 3-word round.
+  const state = computeGuardianMissionState({
+    allWordsMega: true,
+    eligibleGuardianEntries: [
+      { slug: 'believe', wobbling: false, nextDueDay: TODAY + 14 },
+      { slug: 'bicycle', wobbling: false, nextDueDay: TODAY + 30 },
+      { slug: 'breath', wobbling: false, nextDueDay: TODAY + 45 },
+    ],
+    unguardedMegaCount: 0,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: true },
+  });
+  assert.equal(state, 'rested');
+});
+
+test('U1 state machine: zero due, only non-due guardians but pool >= MIN → optional-patrol (top-up producible)', () => {
+  // 5 non-due entries → combined pool = 5 meets MIN → optional-patrol.
+  const state = computeGuardianMissionState({
+    allWordsMega: true,
+    eligibleGuardianEntries: [
+      { slug: 'believe', wobbling: false, nextDueDay: TODAY + 14 },
+      { slug: 'bicycle', wobbling: false, nextDueDay: TODAY + 30 },
+      { slug: 'breath', wobbling: false, nextDueDay: TODAY + 45 },
+      { slug: 'business', wobbling: false, nextDueDay: TODAY + 50 },
+      { slug: 'calendar', wobbling: false, nextDueDay: TODAY + 60 },
+    ],
+    unguardedMegaCount: 0,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: true },
+  });
+  assert.equal(state, 'optional-patrol');
+});
+
+test('U1 state machine: zero due + zero unguarded + zero guardians → rested', () => {
+  const state = computeGuardianMissionState({
+    allWordsMega: true,
+    eligibleGuardianEntries: [],
+    unguardedMegaCount: 0,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: true },
+  });
+  assert.equal(state, 'rested');
+});
+
+test('U1 state machine: zero due, top-up available, but allowOptionalPatrol=false → rested', () => {
+  // Pool of 1 entry + 5 unguarded = 6 (>= MIN), but policy.allowOptionalPatrol
+  // is false so the optional path collapses to 'rested'.
+  const state = computeGuardianMissionState({
+    allWordsMega: true,
+    eligibleGuardianEntries: [
+      { slug: 'believe', wobbling: false, nextDueDay: TODAY + 14 },
+    ],
+    unguardedMegaCount: 5,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: false },
+  });
+  assert.equal(state, 'rested');
+});
+
+test('U1 state machine: defaults to allowOptionalPatrol=true when policy is absent', () => {
+  // Combined pool = 5 (meets MIN) → first-patrol (empty entries + unguarded).
+  const state = computeGuardianMissionState({
+    allWordsMega: true,
+    eligibleGuardianEntries: [],
+    unguardedMegaCount: GUARDIAN_MIN_ROUND_LENGTH,
+    todayDay: TODAY,
+  });
+  assert.equal(state, 'first-patrol');
+});
+
+test('U1 state machine: wrong-typed inputs fall back to locked (defensive)', () => {
+  // Garbage shape should not throw; defensive read-time contract.
+  assert.equal(computeGuardianMissionState({}), 'locked');
+  assert.equal(computeGuardianMissionState(null), 'locked');
+  assert.equal(computeGuardianMissionState(undefined), 'locked');
+});
+
+// ----- U1: getSpellingPostMasteryState return shape ---------------------------
+
+test('U1 read-model: getSpellingPostMasteryState exposes U1 fields for fresh graduate (first-patrol)', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+    guardian: {},
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.allWordsMega, true);
+  assert.equal(state.guardianMissionState, 'first-patrol');
+  assert.equal(state.guardianMissionAvailable, true);
+  assert.equal(state.unguardedMegaCount, 10, 'all 10 core Mega slugs are unguarded');
+  assert.equal(state.guardianAvailableCount, 10);
+  assert.equal(state.wobblingDueCount, 0);
+  assert.equal(state.nonWobblingDueCount, 0);
+  assert.equal(state.guardianDueCount, 0);
+});
+
+test('U1 read-model: wobbling state with decomposed counts for 2 wobbling-due + 3 non-wobbling-due', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const [w0, w1, w2, w3, w4] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+    guardian: {
+      [w0.slug]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+      [w1.slug]: { reviewLevel: 1, lastReviewedDay: TODAY - 2, nextDueDay: TODAY, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+      [w2.slug]: { reviewLevel: 2, lastReviewedDay: TODAY - 4, nextDueDay: TODAY - 1, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+      [w3.slug]: { reviewLevel: 1, lastReviewedDay: TODAY - 3, nextDueDay: TODAY, correctStreak: 1, lapses: 0, renewals: 0, wobbling: false },
+      [w4.slug]: { reviewLevel: 0, lastReviewedDay: TODAY - 1, nextDueDay: TODAY, correctStreak: 0, lapses: 0, renewals: 0, wobbling: false },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.guardianMissionState, 'wobbling');
+  assert.equal(state.guardianMissionAvailable, true);
+  assert.equal(state.wobblingDueCount, 2);
+  assert.equal(state.nonWobblingDueCount, 3);
+  assert.equal(state.guardianDueCount, 5);
+  assert.equal(state.unguardedMegaCount, 5, '5 core Mega slugs still unguarded');
+  assert.equal(state.guardianAvailableCount, 10);
+});
+
+test('U1 read-model: due state (no wobbling, any due)', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const [w0, w1] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+    guardian: {
+      [w0.slug]: { reviewLevel: 2, lastReviewedDay: TODAY - 4, nextDueDay: TODAY - 1, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+      [w1.slug]: { reviewLevel: 1, lastReviewedDay: TODAY - 3, nextDueDay: TODAY, correctStreak: 1, lapses: 0, renewals: 0, wobbling: false },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.guardianMissionState, 'due');
+  assert.equal(state.guardianMissionAvailable, true);
+  assert.equal(state.wobblingDueCount, 0);
+  assert.equal(state.nonWobblingDueCount, 2);
+});
+
+test('U1 read-model: optional-patrol (0 due, 3 unguarded Mega)', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const [w0, w1] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+    guardian: {
+      // Two guardians, both future-due so not counted as due today.
+      [w0.slug]: { reviewLevel: 3, lastReviewedDay: TODAY - 1, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+      [w1.slug]: { reviewLevel: 2, lastReviewedDay: TODAY - 3, nextDueDay: TODAY + 14, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.guardianMissionState, 'optional-patrol');
+  assert.equal(state.guardianMissionAvailable, true);
+  assert.equal(state.guardianDueCount, 0);
+  assert.equal(state.unguardedMegaCount, 8, '10 secure - 2 guarded = 8 unguarded Mega');
+});
+
+test('U1 read-model: rested (0 due, 0 unguarded, pool below MIN → collapsed to rested)', () => {
+  // Only 2 core words; both are already in the guardian map with future due
+  // days. Combined pool = 2 (below GUARDIAN_MIN_ROUND_LENGTH = 5) → rested
+  // even under the default allowOptionalPatrol=true policy, because the
+  // selector could not produce a minimum-length round.
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 2 });
+  const [w0, w1] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+    guardian: {
+      [w0.slug]: { reviewLevel: 3, lastReviewedDay: TODAY - 1, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+      [w1.slug]: { reviewLevel: 2, lastReviewedDay: TODAY - 3, nextDueDay: TODAY + 14, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.guardianMissionState, 'rested',
+    'combined pool < MIN_ROUND_LENGTH collapses optional-patrol to rested (short-round invariant)');
+  assert.equal(state.guardianMissionAvailable, false);
+
+  // And of course, explicitly disabling the optional-patrol policy also yields
+  // 'rested' — but with a 2-entry + 0-unguarded pool we are already there
+  // under the default policy thanks to the short-round invariant.
+  const restedExplicit = computeGuardianMissionState({
+    allWordsMega: true,
+    eligibleGuardianEntries: [
+      { slug: w0.slug, wobbling: false, nextDueDay: TODAY + 30 },
+      { slug: w1.slug, wobbling: false, nextDueDay: TODAY + 14 },
+    ],
+    unguardedMegaCount: 0,
+    todayDay: TODAY,
+    policy: { allowOptionalPatrol: false },
+  });
+  assert.equal(restedExplicit, 'rested');
+});
+
+test('U1 read-model: all-rested scenario (no guardians, no unguarded) → rested + not available', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 0 });
+  const subjectStateRecord = makeSubjectStateRecord({ progress: {}, guardian: {} });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  // No core words at all → allWordsMega = false → locked.
+  assert.equal(state.allWordsMega, false);
+  assert.equal(state.guardianMissionState, 'locked');
+  assert.equal(state.guardianMissionAvailable, false);
+});
+
+test('U1 read-model: locked state (not post-Mega) exposes U1 fields with safe defaults', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  // Secure 5/10 → not post-Mega.
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords.slice(0, 5)),
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.allWordsMega, false);
+  assert.equal(state.guardianMissionState, 'locked');
+  assert.equal(state.guardianMissionAvailable, false);
+  assert.equal(state.unguardedMegaCount, 5, 'unguardedMegaCount reports raw Mega-but-unguarded count regardless of state');
+  assert.equal(state.guardianAvailableCount, 5);
+  assert.equal(state.wobblingDueCount, 0);
+  assert.equal(state.nonWobblingDueCount, 0);
+});
+
+test('U1 read-model: content rollback (168/170 → stage=3 on 2 words) flips allWordsMega=false → locked', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 170 });
+  const progress = secureProgressEntries(runtimeSnapshot.coreWords);
+  // Pretend content rollback — 2 words dropped to stage 3.
+  progress[runtimeSnapshot.coreWords[0].slug] = { ...progress[runtimeSnapshot.coreWords[0].slug], stage: 3 };
+  progress[runtimeSnapshot.coreWords[1].slug] = { ...progress[runtimeSnapshot.coreWords[1].slug], stage: 3 };
+  const subjectStateRecord = makeSubjectStateRecord({ progress });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.allWordsMega, false);
+  assert.equal(state.guardianMissionState, 'locked');
+  assert.equal(state.guardianMissionAvailable, false);
+});
+
+test('U1 read-model: orphan guardian entry does not inflate decomposed counts', () => {
+  // The orphan ghostword is present only in the guardian map (content
+  // hot-swap removed the slug from runtime + progress). A real rollback
+  // scenario: storage keeps the guardian record but progress no longer lists
+  // the slug. The learner remains post-Mega because `publishedCoreCount`
+  // matches `secureCoreCount` across the 10 core words.
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const [w0] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+    guardian: {
+      [w0.slug]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+      // Orphan wobbling-due must not feed wobblingDueCount.
+      ghostword: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 2, renewals: 0, wobbling: true },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.allWordsMega, true, 'learner still counts as post-Mega on the 10 core slugs');
+  assert.equal(state.wobblingDueCount, 1, 'orphan skipped from wobbling-due count');
+  assert.equal(state.nonWobblingDueCount, 0);
+  assert.equal(state.guardianMissionState, 'wobbling');
+});
+
+test('U1 read-model integration: postMastery field on buildSpellingLearnerReadModel mirrors selector state', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const [w0] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: secureProgressEntries(runtimeSnapshot.coreWords),
+    guardian: {
+      [w0.slug]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+    },
+  });
+  const output = buildSpellingLearnerReadModel({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(output.postMastery.guardianMissionState, 'wobbling');
+  assert.equal(output.postMastery.guardianMissionAvailable, true);
+  assert.equal(output.postMastery.wobblingDueCount, 1);
+  assert.equal(output.postMastery.nonWobblingDueCount, 0);
+  assert.equal(output.postMastery.unguardedMegaCount, 9);
+  assert.equal(output.postMastery.guardianAvailableCount, 10);
+});
+
+// ----- U1 review: deriveGuardianAggregates helper ------------------------------
+// The aggregate helper is the single source of truth for the seven derived
+// scalars the service and the read-model both expose. These tests pin the
+// shape (particularly the `wobblingDueCount + nonWobblingDueCount === guardianDueCount`
+// invariant) and the orphan-sanitiser contract.
+
+test('U1 review: deriveGuardianAggregates returns all 7 documented fields', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const [w0, w1] = runtimeSnapshot.coreWords;
+  const progressMap = secureProgressEntries(runtimeSnapshot.coreWords);
+  const guardianMap = {
+    [w0.slug]: { reviewLevel: 1, lastReviewedDay: TODAY - 3, nextDueDay: TODAY, correctStreak: 1, lapses: 0, renewals: 0, wobbling: false },
+    [w1.slug]: { reviewLevel: 0, lastReviewedDay: TODAY - 4, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+  };
+  const aggregates = deriveGuardianAggregates({
+    guardianMap,
+    progressMap,
+    wordBySlug: runtimeSnapshot.wordBySlug,
+    todayDay: TODAY,
+  });
+  assert.deepEqual(Object.keys(aggregates).sort(), [
+    'eligibleGuardianEntries',
+    'guardianDueCount',
+    'nextGuardianDueDay',
+    'nonWobblingDueCount',
+    'unguardedMegaCount',
+    'wobblingCount',
+    'wobblingDueCount',
+  ]);
+});
+
+test('U1 review: deriveGuardianAggregates invariant — wobblingDueCount + nonWobblingDueCount === guardianDueCount', () => {
+  // Matrix fixture: 8 different scenarios cover the combinatorial space
+  // (no guardians, all due, no due, mix of wobbling and non-wobbling, orphan
+  // slugs, future due). Each must honour the invariant.
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const progressMap = secureProgressEntries(runtimeSnapshot.coreWords);
+  const slugs = runtimeSnapshot.coreWords.map((word) => word.slug);
+
+  const matrix = [
+    { name: 'empty guardian map', guardian: {} },
+    {
+      name: 'single wobbling due',
+      guardian: {
+        [slugs[0]]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+      },
+    },
+    {
+      name: 'single non-wobbling due',
+      guardian: {
+        [slugs[0]]: { reviewLevel: 2, lastReviewedDay: TODAY - 2, nextDueDay: TODAY, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+      },
+    },
+    {
+      name: 'mix of wobbling-due + non-wobbling-due + non-due',
+      guardian: {
+        [slugs[0]]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+        [slugs[1]]: { reviewLevel: 2, lastReviewedDay: TODAY - 2, nextDueDay: TODAY, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+        [slugs[2]]: { reviewLevel: 3, lastReviewedDay: TODAY - 1, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+        [slugs[3]]: { reviewLevel: 1, lastReviewedDay: TODAY - 5, nextDueDay: TODAY + 7, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+      },
+    },
+    {
+      name: 'all due (all wobbling)',
+      guardian: Object.fromEntries(slugs.map((slug) => [
+        slug,
+        { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+      ])),
+    },
+    {
+      name: 'all due (none wobbling)',
+      guardian: Object.fromEntries(slugs.map((slug) => [
+        slug,
+        { reviewLevel: 2, lastReviewedDay: TODAY - 2, nextDueDay: TODAY, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+      ])),
+    },
+    {
+      name: 'all future-due (none due today)',
+      guardian: Object.fromEntries(slugs.map((slug) => [
+        slug,
+        { reviewLevel: 3, lastReviewedDay: TODAY - 1, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+      ])),
+    },
+    {
+      name: 'orphan slug mixed in (must NOT count)',
+      guardian: {
+        [slugs[0]]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+        ghostword: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 2, renewals: 0, wobbling: true },
+      },
+    },
+  ];
+
+  for (const scenario of matrix) {
+    const aggregates = deriveGuardianAggregates({
+      guardianMap: scenario.guardian,
+      progressMap,
+      wordBySlug: runtimeSnapshot.wordBySlug,
+      todayDay: TODAY,
+    });
+    assert.equal(
+      aggregates.wobblingDueCount + aggregates.nonWobblingDueCount,
+      aggregates.guardianDueCount,
+      `invariant failed for scenario "${scenario.name}": ${aggregates.wobblingDueCount} + ${aggregates.nonWobblingDueCount} !== ${aggregates.guardianDueCount}`,
+    );
+  }
+});
+
+test('U1 review: deriveGuardianAggregates returns zero counts + null nextDue for empty inputs', () => {
+  const aggregates = deriveGuardianAggregates({});
+  assert.deepEqual(aggregates.eligibleGuardianEntries, []);
+  assert.equal(aggregates.guardianDueCount, 0);
+  assert.equal(aggregates.wobblingDueCount, 0);
+  assert.equal(aggregates.nonWobblingDueCount, 0);
+  assert.equal(aggregates.wobblingCount, 0);
+  assert.equal(aggregates.unguardedMegaCount, 0);
+  assert.equal(aggregates.nextGuardianDueDay, null);
+});
+
+test('U1 review: deriveGuardianAggregates tolerates null/garbage inputs without throwing', () => {
+  assert.doesNotThrow(() => deriveGuardianAggregates({ guardianMap: null, progressMap: null, wordBySlug: null, todayDay: 'oops' }));
+  const aggregates = deriveGuardianAggregates({ guardianMap: null, progressMap: null, wordBySlug: null, todayDay: 'oops' });
+  assert.equal(aggregates.guardianDueCount, 0);
+  assert.equal(aggregates.unguardedMegaCount, 0);
+});
+
+// ----- U1 review: createLockedPostMasteryState factory --------------------------
+// The factory is the single source for the three parallel "locked" fallback
+// objects that used to live inline in client-read-models.js, spelling-view-model.js,
+// and as an implicit `computeGuardianMissionState({allWordsMega: false})` result.
+
+test('U1 review: createLockedPostMasteryState returns structurally complete locked shape', () => {
+  const state = createLockedPostMasteryState();
+  assert.equal(state.allWordsMega, false);
+  assert.equal(state.guardianMissionState, 'locked');
+  assert.equal(state.guardianMissionAvailable, false);
+  assert.equal(state.guardianDueCount, 0);
+  assert.equal(state.wobblingCount, 0);
+  assert.equal(state.wobblingDueCount, 0);
+  assert.equal(state.nonWobblingDueCount, 0);
+  assert.equal(state.unguardedMegaCount, 0);
+  assert.equal(state.guardianAvailableCount, 0);
+  assert.equal(state.nextGuardianDueDay, null);
+  assert.equal(state.todayDay, 0);
+  assert.deepEqual(state.guardianMap, {});
+  assert.deepEqual(state.recommendedWords, []);
+});
+
+test('U1 review: createLockedPostMasteryState fields match computeGuardianMissionState({allWordsMega: false}) result', () => {
+  // If `computeGuardianMissionState` would produce 'locked' for a no-content
+  // learner, the factory's `guardianMissionState` must match. This is the
+  // invariant the review called out — if the two paths drift, the remote-sync
+  // dashboard disagrees with the canonical state machine.
+  const locked = computeGuardianMissionState({ allWordsMega: false });
+  const factory = createLockedPostMasteryState();
+  assert.equal(factory.guardianMissionState, locked);
+  assert.equal(factory.guardianMissionAvailable, false);
+});
+
+test('U1 review: createLockedPostMasteryState returns fresh objects — mutating one does not affect another', () => {
+  const first = createLockedPostMasteryState();
+  first.guardianMap.mutated = 'yes';
+  first.recommendedWords.push('should-not-leak');
+  const second = createLockedPostMasteryState();
+  assert.deepEqual(second.guardianMap, {});
+  assert.deepEqual(second.recommendedWords, []);
+});
+
+// ----- U1 review: runtime validator on GUARDIAN_MISSION_STATES ------------------
+
+test('U1 review: GUARDIAN_MISSION_STATES matches all computeGuardianMissionState outputs across a matrix', () => {
+  // Every documented branch of the state machine must return a label that
+  // lives in GUARDIAN_MISSION_STATES. The machine now enforces this via a
+  // throw-on-unknown-state guard; this test locks in the complement (every
+  // branch returns something valid).
+  const cases = [
+    { allWordsMega: false, eligibleGuardianEntries: [], unguardedMegaCount: 0, todayDay: TODAY },
+    { allWordsMega: true, eligibleGuardianEntries: [], unguardedMegaCount: 0, todayDay: TODAY },
+    { allWordsMega: true, eligibleGuardianEntries: [], unguardedMegaCount: GUARDIAN_MIN_ROUND_LENGTH, todayDay: TODAY },
+    { allWordsMega: true, eligibleGuardianEntries: [{ slug: 'a', wobbling: true, nextDueDay: TODAY - 1 }], unguardedMegaCount: 5, todayDay: TODAY },
+    { allWordsMega: true, eligibleGuardianEntries: [{ slug: 'a', wobbling: false, nextDueDay: TODAY }], unguardedMegaCount: 4, todayDay: TODAY },
+    { allWordsMega: true, eligibleGuardianEntries: [
+      { slug: 'a', wobbling: false, nextDueDay: TODAY + 10 },
+      { slug: 'b', wobbling: false, nextDueDay: TODAY + 20 },
+      { slug: 'c', wobbling: false, nextDueDay: TODAY + 30 },
+      { slug: 'd', wobbling: false, nextDueDay: TODAY + 40 },
+      { slug: 'e', wobbling: false, nextDueDay: TODAY + 50 },
+    ], unguardedMegaCount: 0, todayDay: TODAY },
+  ];
+  for (const ctx of cases) {
+    const state = computeGuardianMissionState(ctx);
+    assert.ok(
+      GUARDIAN_MISSION_STATES.includes(state),
+      `computeGuardianMissionState produced "${state}" for ctx=${JSON.stringify(ctx)} which is not in GUARDIAN_MISSION_STATES`,
+    );
+  }
+});
+
+// ----- U1 review: service/read-model parity -----------------------------------
+// Feed the exact same fixture through both selectors and assert the U1 field
+// prefix is byte-identical. Catches drift like "service rounded nextGuardianDueDay
+// but read-model didn't".
+
+function makeParityService({ now, storage = installMemoryStorage() } = {}) {
+  const repositories = createLocalPlatformRepositories({ storage });
+  const spoken = [];
+  const service = createSpellingService({
+    repository: createSpellingPersistence({ repositories, now }),
+    now,
+    random: () => 0.5,
+    tts: {
+      speak(payload) {
+        spoken.push(payload);
+      },
+      stop() {},
+      warmup() {},
+    },
+  });
+  return { storage, repositories, service };
+}
+
+test('U1 review parity: service.getPostMasteryState and read-model getSpellingPostMasteryState return identical U1 fields', () => {
+  // Setup: a realistic 170-core-word learner with a mix of wobbling-due,
+  // non-wobbling-due, future-due, and unguarded Mega slugs. Both selectors
+  // see the same storage + runtime and must agree on every U1 scalar.
+  const now = () => Date.UTC(2026, 0, 10);
+  const todayForService = Math.floor(now() / DAY_MS);
+  const { service, repositories } = makeParityService({ now });
+
+  // Hand-build the progress + guardian map the service will read.
+  const coreWords = WORDS.filter((word) => word.spellingPool === 'core');
+  const progress = Object.fromEntries(coreWords.map((word) => [word.slug, {
+    stage: 4,
+    attempts: 6,
+    correct: 5,
+    wrong: 1,
+    dueDay: todayForService + 60,
+    lastDay: todayForService - 7,
+    lastResult: true,
+  }]));
+  const guardian = {
+    [coreWords[0].slug]: { reviewLevel: 0, lastReviewedDay: todayForService - 3, nextDueDay: todayForService - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+    [coreWords[1].slug]: { reviewLevel: 2, lastReviewedDay: todayForService - 2, nextDueDay: todayForService, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+    [coreWords[2].slug]: { reviewLevel: 3, lastReviewedDay: todayForService - 1, nextDueDay: todayForService + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+  };
+  repositories.subjectStates.writeData('learner-a', 'spelling', { progress, guardian });
+
+  const serviceSnapshot = service.getPostMasteryState('learner-a');
+
+  // Read-model consumes the subject-state record shape directly. Build it
+  // from the repository's view so the two callers see the same data.
+  const subjectStateRecord = repositories.subjectStates.read('learner-a', 'spelling');
+  const readModelSnapshot = getSpellingPostMasteryState({
+    subjectStateRecord,
+    runtimeSnapshot: { words: WORDS, wordBySlug: WORD_BY_SLUG },
+    now: todayForService * DAY_MS,
+  });
+
+  // Assert every U1 field matches. The read-model also emits `recommendedWords`
+  // which the service omits; we intentionally ignore that delta here.
+  const u1Fields = [
+    'allWordsMega',
+    'guardianDueCount',
+    'wobblingCount',
+    'wobblingDueCount',
+    'nonWobblingDueCount',
+    'unguardedMegaCount',
+    'guardianAvailableCount',
+    'guardianMissionState',
+    'guardianMissionAvailable',
+    'nextGuardianDueDay',
+  ];
+  for (const field of u1Fields) {
+    assert.deepEqual(
+      serviceSnapshot[field],
+      readModelSnapshot[field],
+      `parity drift on field "${field}": service=${JSON.stringify(serviceSnapshot[field])} vs readModel=${JSON.stringify(readModelSnapshot[field])}`,
+    );
+  }
 });
