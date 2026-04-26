@@ -109,6 +109,61 @@ test('spelling replay uses a server audio cue when the prompt word is redacted',
   assert.deepEqual(spoken, [{ ...audio, slow: true }]);
 });
 
+// ----- U8: persistenceWarning banner renders above the card --------------------
+//
+// Wires a happy-path session into the harness, then patches the spelling UI
+// state to inject `feedback.persistenceWarning`. The scene must render a
+// polite-live banner with the planned copy, and NOT render it on the
+// happy-path where persistenceWarning is absent.
+
+test('U8 session scene renders storage-failure banner when feedback.persistenceWarning is present', () => {
+  const harness = createAppHarness({ storage: installMemoryStorage() });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-start');
+
+  // Happy path render: banner absent.
+  const happyHtml = harness.render();
+  assert.doesNotMatch(happyHtml, /spelling-persistence-warning/,
+    'banner absent when feedback has no persistenceWarning');
+
+  // Patch the spelling UI to inject a persistenceWarning on the current
+  // feedback. This simulates a state where U8's service code has set the
+  // warning after a storage throw.
+  harness.store.patch((current) => ({
+    subjectUi: {
+      ...current.subjectUi,
+      spelling: {
+        ...current.subjectUi.spelling,
+        feedback: {
+          kind: 'info',
+          headline: 'Guardian strong.',
+          answer: 'possess',
+          attemptedAnswer: '',
+          body: '',
+          footer: '',
+          familyWords: [],
+          persistenceWarning: { reason: 'storage-save-failed' },
+        },
+      },
+    },
+  }));
+
+  const warningHtml = harness.render();
+  assert.match(warningHtml, /spelling-persistence-warning/,
+    'banner element renders when feedback.persistenceWarning is set');
+  assert.match(warningHtml, /Progress could not be saved on this device\./,
+    'banner copy matches the planned wording');
+  assert.match(warningHtml, /role="status"/,
+    'banner uses role="status" (ARIA live-polite)');
+  assert.match(warningHtml, /aria-live="polite"/,
+    'banner announces once via aria-live="polite"');
+  assert.match(warningHtml, /data-testid="spelling-persistence-warning"/,
+    'banner exposes a data-testid for downstream integration tests');
+});
+
 test('word-bank modal spike keeps drill isolated and Escape closes back to the word bank', () => {
   const harness = createAppHarness({ storage: installMemoryStorage() });
   const learnerId = harness.store.getState().learners.selectedId;

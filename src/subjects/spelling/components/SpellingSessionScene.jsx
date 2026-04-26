@@ -116,6 +116,17 @@ export function SpellingSessionScene({
   const sessionClasses = ['spelling-in-session'];
   sessionClasses.push(questionRevealed ? 'is-question-revealed' : 'is-entering-session');
 
+  // U8: storage-failure warning surface. The service attaches
+  // `feedback.persistenceWarning` on submit when a local-storage write fails
+  // (progress or guardian). We render a subtle polite-live banner above the
+  // card so the warning is announced once per submit (the aria-live region
+  // reads the new content on mount); Mega is never demoted. On the next
+  // successful submit the feedback re-renders without the warning and the
+  // banner unmounts. Accepted MVP gap: if the child closes the tab before
+  // another submit, the warning does not persist across sessions — a durable
+  // cross-session surface is deferred to a later plan.
+  const persistenceWarning = ui.feedback?.persistenceWarning || null;
+
   return (
     <div className={sessionClasses.join(' ')} style={{ gridColumn: '1/-1', ...heroBgStyle(heroBg) }}>
       <SpellingHeroBackdrop url={heroBg} previousUrl={previousHeroBg} />
@@ -124,6 +135,17 @@ export function SpellingSessionScene({
           <PathProgress done={pathDone} current={pathCurrent} total={progressTotal} />
           <span className="path-count">Word {progressCurrent} of {progressTotal}</span>
         </header>
+
+        {persistenceWarning ? (
+          <div
+            className="spelling-persistence-warning"
+            role="status"
+            aria-live="polite"
+            data-testid="spelling-persistence-warning"
+          >
+            Progress could not be saved on this device. Export or free storage.
+          </div>
+        ) : null}
 
         <AnimatedPromptCard heightKey={questionLayoutKey} lockHeightToKey>
           {infoChips.length ? (

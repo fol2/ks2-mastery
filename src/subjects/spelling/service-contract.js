@@ -137,8 +137,26 @@ export function normaliseStringArray(value, filterFn = null) {
     .filter((entry) => (typeof filterFn === 'function' ? filterFn(entry) : true));
 }
 
+/**
+ * U8: Storage-failure warning surface.
+ *
+ * Allowed reason strings for `feedback.persistenceWarning`. Kept as a frozen
+ * allow-list so a renamed or typo'd reason never reaches the UI. The only
+ * reason today is `storage-save-failed`; new entries land here before the
+ * service + UI accept them.
+ */
+export const SPELLING_PERSISTENCE_WARNING_REASONS = Object.freeze(['storage-save-failed']);
+
+function normalisePersistenceWarning(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const reason = typeof raw.reason === 'string' ? raw.reason : '';
+  if (!SPELLING_PERSISTENCE_WARNING_REASONS.includes(reason)) return null;
+  return { reason };
+}
+
 export function normaliseFeedback(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const persistenceWarning = normalisePersistenceWarning(value.persistenceWarning);
   const feedback = {
     kind: SPELLING_FEEDBACK_KINDS.includes(value.kind) ? value.kind : 'info',
     headline: normaliseString(value.headline),
@@ -149,9 +167,22 @@ export function normaliseFeedback(value) {
     familyWords: normaliseStringArray(value.familyWords),
   };
 
-  if (!feedback.headline && !feedback.answer && !feedback.attemptedAnswer && !feedback.body && !feedback.footer && !feedback.familyWords.length) {
+  if (
+    !feedback.headline
+    && !feedback.answer
+    && !feedback.attemptedAnswer
+    && !feedback.body
+    && !feedback.footer
+    && !feedback.familyWords.length
+    && !persistenceWarning
+  ) {
     return null;
   }
+
+  // U8: attach persistenceWarning only when present so the happy-path feedback
+  // shape stays byte-identical for downstream consumers that JSON-serialise or
+  // structural-compare the feedback object.
+  if (persistenceWarning) feedback.persistenceWarning = persistenceWarning;
 
   return feedback;
 }
