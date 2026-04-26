@@ -950,6 +950,16 @@ export function buildSpellingContext({ appState, service, repositories, subject 
         ...createLockedPostMasteryState(),
         todayDay: Math.floor(Date.now() / DAY_MS),
       };
+  // P2 U9: durable persistence-warning sibling. Read on every context build
+  // so the banner surfaces the instant the service writes a new record
+  // (submit-path failure) and disappears the instant it is acknowledged.
+  // The normaliser in service-contract.js drops garbage back to null, so
+  // `persistenceWarning` is either a `{ reason, occurredAt, acknowledged }`
+  // record or `null`. Setup + session scenes branch on `!acknowledged` to
+  // decide whether to render the banner.
+  const persistenceWarning = typeof service.getPersistenceWarning === 'function'
+    ? service.getPersistenceWarning(learner.id)
+    : null;
   return {
     learner,
     ui,
@@ -957,6 +967,7 @@ export function buildSpellingContext({ appState, service, repositories, subject 
     prefs: service.getPrefs(learner.id),
     analytics,
     postMastery,
+    persistenceWarning,
     codex: ui.phase === 'dashboard' && analytics
       ? monsterSummaryFromSpellingAnalytics(analytics, {
           learnerId: learner.id,

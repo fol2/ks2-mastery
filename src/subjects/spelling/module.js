@@ -511,6 +511,34 @@ export const spellingModule = {
       return true;
     }
 
+    // P2 U9: "I understand" button on the durable persistence-warning banner
+    // dispatches this action. The service sets `acknowledged: true` on the
+    // persisted `data.persistenceWarning` record; the banner re-renders as
+    // absent on the next tick because `buildSpellingContext` re-reads the
+    // record each call. A subsequent new failure overwrites with
+    // `acknowledged: false`, re-surfacing the banner.
+    //
+    // Reviewer-feedback fix (PR #279 HIGH): when the service reports
+    // `{ ok: false }` (storage is still broken during the ack write), we
+    // MUST surface a runtime error so the click does not silently drop.
+    // The banner will re-render on the next selector pass because storage
+    // still records `acknowledged: false`, which is honest — but the
+    // learner now sees a clear "try again" message rather than a mystery.
+    if (action === 'spelling-acknowledge-persistence-warning') {
+      let ackResult = { ok: true };
+      if (typeof service.acknowledgePersistenceWarning === 'function') {
+        ackResult = service.acknowledgePersistenceWarning(learnerId) || { ok: true };
+      }
+      const nextError = ackResult.ok === false
+        ? 'Could not save — try again when storage is available.'
+        : '';
+      // Touch the subject UI so the view-model selector re-runs. The error
+      // slot reflects whether the ack persisted: on success we clear, on
+      // failure we surface child-friendly copy.
+      store.updateSubjectUi('spelling', { error: nextError });
+      return true;
+    }
+
     return false;
   },
 };

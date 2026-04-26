@@ -4,6 +4,7 @@ import {
 } from '../../../../src/platform/core/repositories/helpers.js';
 import {
   createInitialSpellingState,
+  normaliseDurablePersistenceWarning,
   normaliseGuardianMap,
   normalisePostMegaRecord,
 } from '../../../../src/subjects/spelling/service-contract.js';
@@ -20,6 +21,8 @@ const PROGRESS_STORAGE_PREFIX = 'ks2-spell-progress-';
 const GUARDIAN_STORAGE_PREFIX = 'ks2-spell-guardian-';
 // P2 U2: mirror client POST_MEGA_STORAGE_PREFIX in src/subjects/spelling/repository.js.
 const POST_MEGA_STORAGE_PREFIX = 'ks2-spell-post-mega-';
+// P2 U9: mirror client PERSISTENCE_WARNING_STORAGE_PREFIX in src/subjects/spelling/repository.js.
+const PERSISTENCE_WARNING_STORAGE_PREFIX = 'ks2-spell-persistence-warning-';
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -53,6 +56,11 @@ export function normaliseServerSpellingData(rawValue, nowTs = Date.now()) {
   // through Worker commands without loss.
   const postMega = normalisePostMegaRecord(raw.postMega);
   if (postMega) output.postMega = postMega;
+  // P2 U9: persistenceWarning sibling survives through the Worker twin so
+  // a learner who saw a local storage failure and switched tabs to a
+  // remote-sync session does not lose their banner.
+  const persistenceWarning = normaliseDurablePersistenceWarning(raw.persistenceWarning);
+  if (persistenceWarning) output.persistenceWarning = persistenceWarning;
   return output;
 }
 
@@ -63,6 +71,11 @@ function parseStorageKey(key) {
   }
   if (key.startsWith(GUARDIAN_STORAGE_PREFIX)) {
     return { type: 'guardian', learnerId: key.slice(GUARDIAN_STORAGE_PREFIX.length) || 'default' };
+  }
+  // P2 U9: persistence-warning prefix must be checked before post-mega and
+  // progress for the same reason — all three start with `ks2-spell-p`.
+  if (key.startsWith(PERSISTENCE_WARNING_STORAGE_PREFIX)) {
+    return { type: 'persistenceWarning', learnerId: key.slice(PERSISTENCE_WARNING_STORAGE_PREFIX.length) || 'default' };
   }
   // P2 U2: post-mega prefix must be checked before progress because the two
   // share the first 10 chars (`ks2-spell-`) but diverge at the 11th.
@@ -173,6 +186,12 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
         // null vs object distinction so the service-layer reader can gate
         // on it without special-casing the string literal.
         if (parsed.type === 'postMega') return current.postMega ? JSON.stringify(current.postMega) : 'null';
+        // P2 U9: persistenceWarning is null for learners who have never
+        // encountered a local-storage failure; null vs object distinction
+        // lets the service-layer reader skip the banner cleanly.
+        if (parsed.type === 'persistenceWarning') {
+          return current.persistenceWarning ? JSON.stringify(current.persistenceWarning) : 'null';
+        }
         return null;
       },
       setItem(key, value) {
@@ -208,6 +227,15 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
             }, resolveNow());
           }
         }
+        if (parsed.type === 'persistenceWarning') {
+          // P2 U9: persistence-warning is overwrite-ful. A new failure
+          // overwrites `reason` + `occurredAt` and resets acknowledged; an
+          // acknowledge dispatcher overwrites with `acknowledged: true`.
+          nextData = normaliseServerSpellingData({
+            ...nextData,
+            persistenceWarning: parseStoredJson(value, null),
+          }, resolveNow());
+        }
       },
       removeItem(key) {
         const parsed = parseStorageKey(key);
@@ -215,6 +243,13 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
         if (parsed.type === 'prefs') nextData = normaliseServerSpellingData({ ...nextData, prefs: {} }, resolveNow());
         if (parsed.type === 'progress') nextData = normaliseServerSpellingData({ ...nextData, progress: {} }, resolveNow());
         if (parsed.type === 'guardian') nextData = normaliseServerSpellingData({ ...nextData, guardian: {} }, resolveNow());
+        if (parsed.type === 'persistenceWarning') {
+          // P2 U9: removable — e.g. a future admin-ops tool may want to
+          // clear a resolved warning. Strip the sibling from the bundle.
+          const stripped = { ...nextData };
+          delete stripped.persistenceWarning;
+          nextData = normaliseServerSpellingData(stripped, resolveNow());
+        }
         // postMega intentionally not removable — sticky by contract.
       },
     },
@@ -356,6 +391,13 @@ export function createServerSpellingEngine({
       } else if (command === 'reset-learner') {
         service.resetLearner(learnerId);
         transition = buildTransition(createInitialSpellingState());
+      } else if (command === 'acknowledge-persistence-warning') {
+        // P2 U9: durable-warning acknowledgement. Service sets
+        // `data.persistenceWarning.acknowledged: true` but keeps the record
+        // for audit. Worker twin honours the same contract so remote-sync
+        // learners can dismiss the banner without a local-storage write.
+        service.acknowledgePersistenceWarning(learnerId);
+        transition = buildTransition(currentState, { events: [], audio: null });
       } else {
         throw new BadRequestError('Unsupported spelling command.', {
           code: 'spelling_command_unsupported',
