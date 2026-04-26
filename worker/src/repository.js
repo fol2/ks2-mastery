@@ -6486,6 +6486,14 @@ function bootstrapCapacityMeta({
       bounded: true,
       atOrAboveRecentLimit: learnerCount > 0 && eventRows.length >= eventRecentLimit,
     },
+    // U1 hotfix 2026-04-26: child_subject_state + child_game_state ship for
+    // every writable learner even in selected-learner-bounded mode, so the
+    // Spelling/Grammar/Punctuation "Where You Stand" setup stats no longer
+    // show 0 for non-selected learners. Hardcoded false contract marker —
+    // flip to `true` only if we ever re-bound subject states. Spec:
+    // docs/superpowers/specs/2026-04-26-bootstrap-learner-stats-hotfix-
+    // design.md.
+    subjectStatesBounded: false,
   };
 }
 
@@ -6574,6 +6582,14 @@ async function bootstrapBundle(db, accountId, {
   // bounded mode degrades to the empty-learners branch further down.
   const boundedToSelected = publicReadModels && selectedLearnerBounded && selectedId;
   const queryLearnerIds = boundedToSelected ? [selectedId] : learnerIds;
+  // U1 hotfix 2026-04-26: child_subject_state + child_game_state are
+  // small per-(learner,subject) slots (typically < 3 KB each) and are
+  // load-bearing for the Spelling/Grammar/Punctuation "Where You Stand"
+  // setup stats. Keep them unbounded even in selected-learner-bounded
+  // mode so learner switching does not show 0-stats until the user
+  // triggers a Worker command. See docs/superpowers/specs/2026-04-26-
+  // bootstrap-learner-stats-hotfix-design.md.
+  const subjectStateLearnerIds = learnerIds;
 
   // U7: precompute the revision-envelope ingredients so that both the
   // empty and non-empty branches can stamp them consistently. These
@@ -6645,11 +6661,16 @@ async function bootstrapBundle(db, accountId, {
   }
 
   const placeholders = sqlPlaceholders(queryLearnerIds.length);
+  // U1 hotfix 2026-04-26: subject/game state SELECTs use the full writable
+  // learner list so non-selected siblings retain their Spelling/Grammar/
+  // Punctuation stats in the bounded envelope. Separate placeholder string
+  // because the length differs from queryLearnerIds in bounded mode.
+  const subjectStatePlaceholders = sqlPlaceholders(subjectStateLearnerIds.length);
   const subjectRows = await all(db, `
     SELECT learner_id, subject_id, ui_json, data_json, updated_at
     FROM child_subject_state
-    WHERE learner_id IN (${placeholders})
-  `, queryLearnerIds);
+    WHERE learner_id IN (${subjectStatePlaceholders})
+  `, subjectStateLearnerIds);
   const sessionRows = publicReadModels
     ? await listPublicBootstrapSessionRows(db, queryLearnerIds)
     : await all(db, `
@@ -6661,8 +6682,8 @@ async function bootstrapBundle(db, accountId, {
   const gameRows = await all(db, `
     SELECT learner_id, system_id, state_json, updated_at
     FROM child_game_state
-    WHERE learner_id IN (${placeholders})
-  `, queryLearnerIds);
+    WHERE learner_id IN (${subjectStatePlaceholders})
+  `, subjectStateLearnerIds);
   const eventRows = publicReadModels
     ? await listPublicBootstrapEventRows(db, queryLearnerIds)
     : await all(db, `

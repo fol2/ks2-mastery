@@ -413,13 +413,26 @@ test('U7 scenario 2: 30-learner bounded bootstrap ≤ 150 KB; others in learnerL
     assert.equal(payload.ok, true);
     assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
 
-    // Only the selected learner's subject state + sessions ship.
+    // U1 hotfix 2026-04-26: subject states ship for every writable learner
+    // (unbounded) so Setup stats are correct on learner switch. Sessions +
+    // events remain bounded to the selected learner — those are the heavy
+    // payloads the bounded envelope is protecting against.
     const selectedLearnerId = payload.account.selectedLearnerId;
     assert.equal(selectedLearnerId, 'learner-00');
     const subjectKeys = Object.keys(payload.subjectStates || {});
+    assert.equal(subjectKeys.length, 30,
+      'U1: all 30 learners have a spelling subject state row');
     for (const key of subjectKeys) {
-      assert.ok(key.startsWith('learner-00:'), `Only selected learner's subject state: got ${key}`);
+      assert.ok(key.endsWith('::spelling'), `expected spelling subject state key, got ${key}`);
     }
+    // Sessions + events bounded: only learner-00 ships (the only one seeded
+    // with sessions/events anyway — assertion is a defence-in-depth check).
+    assert.ok(payload.practiceSessions.every((s) => s.learnerId === 'learner-00'),
+      'U1: practiceSessions still bounded to selected learner');
+    assert.ok(payload.eventLog.every((e) => e.learnerId === 'learner-00'),
+      'U1: eventLog still bounded to selected learner');
+    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false,
+      'U1: subjectStatesBounded contract marker stamped false');
 
     // account.learnerList has the other 29.
     assert.equal(payload.account.learnerList.length, 29);
@@ -771,6 +784,163 @@ test('U7 scenario 22: POST notModified does not rotate session cookies', async (
     assert.equal(response.headers.get('set-cookie'), null);
     const payload = await readJsonBody(response);
     assert.equal(payload.notModified, true);
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// U1 hotfix 2026-04-26: child_subject_state must ship for EVERY writable
+// learner on a multi-learner account, not just the selected one. The
+// selected-learner-bounded envelope still bounds practice_sessions and
+// event_log (those are the payloads that blow past 150 KB), but
+// child_subject_state is a compact per-(learner,subject) slot that powers
+// the Spelling/Grammar/Punctuation "Where You Stand" setup stats. Without
+// this carve-out, switching between siblings shows 0 stats until the user
+// triggers a Worker command that refetches.
+//
+// New contract marker: bootstrapCapacity.subjectStatesBounded === false.
+// Spec: docs/superpowers/specs/2026-04-26-bootstrap-learner-stats-hotfix-
+// design.md.
+// ---------------------------------------------------------------------------
+
+function insertSubjectStateFor(server, accountId, learnerId, subjectId) {
+  runSql(server, `
+    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `, [
+    learnerId,
+    subjectId,
+    JSON.stringify({ phase: 'idle' }),
+    JSON.stringify({ prefs: { mode: 'smart' }, progress: { possess: { stage: 3 } } }),
+    NOW,
+    accountId,
+  ]);
+}
+
+function insertPracticeSessionFor(server, accountId, learnerId, { id, subjectId = 'spelling' }) {
+  runSql(server, `
+    INSERT INTO practice_sessions (id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at, updated_by_account_id)
+    VALUES (?, ?, ?, 'learning', 'completed', ?, ?, ?, ?, ?)
+  `, [
+    id,
+    learnerId,
+    subjectId,
+    JSON.stringify({}),
+    JSON.stringify({ cards: [] }),
+    NOW,
+    NOW,
+    accountId,
+  ]);
+}
+
+function insertEventFor(server, accountId, learnerId, { id }) {
+  runSql(server, `
+    INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
+    VALUES (?, ?, 'spelling', 'spelling', 'spelling.word-secured', ?, ?, ?)
+  `, [
+    id,
+    learnerId,
+    JSON.stringify({ id, type: 'spelling.word-secured', learnerId, secureCount: 1 }),
+    NOW,
+    accountId,
+  ]);
+}
+
+test('U1 hotfix: child_subject_state ships for all writable learners (multi-learner account)', async () => {
+  const server = createServer();
+  try {
+    // A is selected; B + C are siblings.
+    insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
+    insertLearner(server, 'adult-u7', { id: 'learner-b', name: 'Beta', sortIndex: 1 });
+    insertLearner(server, 'adult-u7', { id: 'learner-c', name: 'Gamma', sortIndex: 2 });
+
+    // Non-default subject state across two subjects for each learner.
+    for (const learnerId of ['learner-a', 'learner-b', 'learner-c']) {
+      insertSubjectStateFor(server, 'adult-u7', learnerId, 'spelling');
+      insertSubjectStateFor(server, 'adult-u7', learnerId, 'grammar');
+    }
+
+    // Sessions + events for all three (only A's should ship).
+    for (const learnerId of ['learner-a', 'learner-b', 'learner-c']) {
+      insertPracticeSessionFor(server, 'adult-u7', learnerId, { id: `${learnerId}-sess-1` });
+      insertEventFor(server, 'adult-u7', learnerId, { id: `${learnerId}-event-1` });
+    }
+
+    const response = await postBootstrap(server, {});
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    // subjectStates MUST contain every (learner, subject) pair, keyed by
+    // subjectStateKey(learnerId, subjectId) → `${learner}::${subject}`.
+    const subjectKeys = Object.keys(payload.subjectStates || {}).sort();
+    const expectedKeys = [
+      'learner-a::grammar',
+      'learner-a::spelling',
+      'learner-b::grammar',
+      'learner-b::spelling',
+      'learner-c::grammar',
+      'learner-c::spelling',
+    ];
+    assert.deepEqual(subjectKeys, expectedKeys,
+      `U1: subjectStates must include all writable learners across both subjects, got ${JSON.stringify(subjectKeys)}`);
+
+    // practiceSessions stays bounded to the selected learner only.
+    assert.equal(payload.practiceSessions.length, 1, 'only learner-a session ships');
+    assert.equal(payload.practiceSessions[0].learnerId, 'learner-a');
+
+    // eventLog stays bounded to the selected learner only.
+    assert.equal(payload.eventLog.length, 1, 'only learner-a event ships');
+    assert.equal(payload.eventLog[0].learnerId, 'learner-a');
+
+    // bootstrapMode label unchanged (describes sessions/events bound).
+    assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
+
+    // New contract marker: subjectStatesBounded === false.
+    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false,
+      'bootstrapCapacity.subjectStatesBounded must be stamped false (U1 contract)');
+  } finally {
+    server.close();
+  }
+});
+
+test('U1 hotfix: GET /api/bootstrap also ships child_subject_state for all writable learners', async () => {
+  const server = createServer();
+  try {
+    insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
+    insertLearner(server, 'adult-u7', { id: 'learner-b', name: 'Beta', sortIndex: 1 });
+    insertLearner(server, 'adult-u7', { id: 'learner-c', name: 'Gamma', sortIndex: 2 });
+
+    for (const learnerId of ['learner-a', 'learner-b', 'learner-c']) {
+      insertSubjectStateFor(server, 'adult-u7', learnerId, 'spelling');
+      insertSubjectStateFor(server, 'adult-u7', learnerId, 'grammar');
+      insertPracticeSessionFor(server, 'adult-u7', learnerId, { id: `${learnerId}-sess-1` });
+      insertEventFor(server, 'adult-u7', learnerId, { id: `${learnerId}-event-1` });
+    }
+
+    const response = await getBootstrap(server);
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    const subjectKeys = Object.keys(payload.subjectStates || {}).sort();
+    assert.deepEqual(subjectKeys, [
+      'learner-a::grammar',
+      'learner-a::spelling',
+      'learner-b::grammar',
+      'learner-b::spelling',
+      'learner-c::grammar',
+      'learner-c::spelling',
+    ], 'GET path: subjectStates unbounded across all writable learners');
+
+    assert.equal(payload.practiceSessions.length, 1);
+    assert.equal(payload.practiceSessions[0].learnerId, 'learner-a');
+    assert.equal(payload.eventLog.length, 1);
+    assert.equal(payload.eventLog[0].learnerId, 'learner-a');
+
+    assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
+    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false);
   } finally {
     server.close();
   }
