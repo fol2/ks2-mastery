@@ -981,6 +981,42 @@ function ErrorLogCentrePanel({ model, actions }) {
   // R10: status transitions are admin-only. Ops-role viewers keep the chip.
   const canManage = model?.permissions?.platformRole === 'admin';
   const savingEventId = summary.savingEventId || '';
+  // U19: controlled filter fields live on local panel state so the
+  // user can compose multiple filters before dispatching a single
+  // refresh. On submit we dispatch the combined filter payload;
+  // "Reset" clears every field back to the broad list view.
+  const [filterRoute, setFilterRoute] = React.useState('');
+  const [filterKind, setFilterKind] = React.useState('');
+  const [filterLastSeenAfter, setFilterLastSeenAfter] = React.useState('');
+  const [filterLastSeenBefore, setFilterLastSeenBefore] = React.useState('');
+  const [filterRelease, setFilterRelease] = React.useState('');
+  const [filterReopened, setFilterReopened] = React.useState(false);
+
+  const dispatchFilter = (statusOverride) => {
+    const payload = {
+      status: statusOverride || null,
+      route: filterRoute.trim() || null,
+      kind: filterKind.trim() || null,
+      release: filterRelease.trim() || null,
+      reopenedAfterResolved: Boolean(filterReopened),
+    };
+    const afterTs = Date.parse(filterLastSeenAfter);
+    if (Number.isFinite(afterTs)) payload.lastSeenAfter = afterTs;
+    const beforeTs = Date.parse(filterLastSeenBefore);
+    if (Number.isFinite(beforeTs)) payload.lastSeenBefore = beforeTs;
+    actions.dispatch('admin-ops-error-events-refresh', payload);
+  };
+
+  const clearFilters = () => {
+    setFilterRoute('');
+    setFilterKind('');
+    setFilterLastSeenAfter('');
+    setFilterLastSeenBefore('');
+    setFilterRelease('');
+    setFilterReopened(false);
+    actions.dispatch('admin-ops-error-events-refresh', { status: null });
+  };
+
   const headerExtras = (
     <>
       <div className="chip-row" style={{ marginTop: 8 }}>
@@ -1000,6 +1036,95 @@ function ErrorLogCentrePanel({ model, actions }) {
             Show {status}
           </button>
         ))}
+      </div>
+      <div
+        className="filters"
+        style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}
+        data-testid="error-centre-filters"
+      >
+        <label className="field">
+          <span>Route contains</span>
+          <input
+            type="text"
+            className="input"
+            name="errorFilterRoute"
+            value={filterRoute}
+            maxLength={64}
+            onChange={(event) => setFilterRoute(event.target.value)}
+            placeholder="/api/"
+          />
+        </label>
+        <label className="field">
+          <span>Kind</span>
+          <input
+            type="text"
+            className="input"
+            name="errorFilterKind"
+            value={filterKind}
+            maxLength={128}
+            onChange={(event) => setFilterKind(event.target.value)}
+            placeholder="TypeError"
+          />
+        </label>
+        <label className="field">
+          <span>Last seen after</span>
+          <input
+            type="datetime-local"
+            className="input"
+            name="errorFilterLastSeenAfter"
+            value={filterLastSeenAfter}
+            onChange={(event) => setFilterLastSeenAfter(event.target.value)}
+          />
+        </label>
+        <label className="field">
+          <span>Last seen before</span>
+          <input
+            type="datetime-local"
+            className="input"
+            name="errorFilterLastSeenBefore"
+            value={filterLastSeenBefore}
+            onChange={(event) => setFilterLastSeenBefore(event.target.value)}
+          />
+        </label>
+        <label className="field">
+          <span>New in release (SHA)</span>
+          <input
+            type="text"
+            className="input"
+            name="errorFilterRelease"
+            value={filterRelease}
+            maxLength={40}
+            onChange={(event) => setFilterRelease(event.target.value)}
+            placeholder="abc1234"
+          />
+        </label>
+        <label className="field" style={{ alignSelf: 'end' }}>
+          <span>Reopened after resolved</span>
+          <input
+            type="checkbox"
+            name="errorFilterReopened"
+            checked={filterReopened}
+            onChange={(event) => setFilterReopened(event.target.checked)}
+          />
+        </label>
+      </div>
+      <div className="chip-row" style={{ marginTop: 8 }}>
+        <button
+          className="btn"
+          type="button"
+          data-testid="error-centre-filter-apply"
+          onClick={() => dispatchFilter(null)}
+        >
+          Apply filters
+        </button>
+        <button
+          className="btn ghost"
+          type="button"
+          data-testid="error-centre-filter-reset"
+          onClick={clearFilters}
+        >
+          Clear filters
+        </button>
       </div>
     </>
   );

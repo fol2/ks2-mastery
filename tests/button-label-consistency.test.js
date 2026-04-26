@@ -479,6 +479,11 @@ test('button labels: every statically extractable label is classified', () => {
     // passes end-to-end; a follow-up polish unit can triage the wording.
     'I understand',
     'Apply seed',
+    // P1.5 Phase E (U19): error-centre filter panel buttons. Bespoke
+    // "Apply filters" / "Clear filters" CTAs paired with the inline
+    // filter form (route / kind / date-range / release / reopened).
+    'Apply filters',
+    'Clear filters',
   ]);
   // Additional unknowns: dump and fail with the full list so U12+ can
   // decide which to promote and which to allowlist. Do NOT add to

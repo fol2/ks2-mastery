@@ -2425,12 +2425,135 @@ function emptyOpsErrorEventSummary(generatedAt) {
   };
 }
 
-async function readOpsErrorEventSummary(db, { now, actorAccountId, status = null, limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT } = {}) {
+// U19: bound on user-supplied filter inputs. 64 chars is generous for a
+// route substring; a tighter cap keeps the LIKE pattern short so a
+// hostile client cannot force a heavy table scan with a pathological
+// trigraph. Values above this cap throw `validation_failed` rather than
+// silently truncating — no ambiguity at the dispatch boundary.
+const OPS_ERROR_FILTER_ROUTE_MAX_CHARS = 64;
+const OPS_ERROR_FILTER_KIND_MAX_CHARS = 128;
+// Date range is clamped to the last 90 days. Older events are pruned
+// from `ops_error_events` by the retention sweep anyway; a wider
+// window would just return empty results with a slow scan.
+const OPS_ERROR_FILTER_MAX_WINDOW_MS = 90 * 24 * 60 * 60 * 1000;
+
+function validateOpsErrorFilterString(value, field, maxChars) {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value !== 'string') {
+    throw new BadRequestError(`Filter field ${field} must be a string.`, {
+      code: 'validation_failed',
+      field,
+    });
+  }
+  if (value.length > maxChars) {
+    throw new BadRequestError(`Filter field ${field} exceeds the ${maxChars}-char limit.`, {
+      code: 'validation_failed',
+      field,
+      maxChars,
+    });
+  }
+  return value;
+}
+
+function validateOpsErrorFilterTimestamp(value, field) {
+  if (value === null || value === undefined || value === '') return null;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    throw new BadRequestError(`Filter field ${field} must be a finite timestamp.`, {
+      code: 'validation_failed',
+      field,
+    });
+  }
+  if (numeric < 0) {
+    throw new BadRequestError(`Filter field ${field} must be non-negative.`, {
+      code: 'validation_failed',
+      field,
+    });
+  }
+  return numeric;
+}
+
+function normaliseOpsErrorFilter(rawFilter, { nowTs }) {
+  const filter = isPlainObject(rawFilter) ? rawFilter : {};
+  const statusValue = typeof filter.status === 'string' && OPS_ERROR_STATUSES.includes(filter.status)
+    ? filter.status
+    : null;
+  const routeValue = validateOpsErrorFilterString(filter.route, 'route', OPS_ERROR_FILTER_ROUTE_MAX_CHARS);
+  const kindValue = validateOpsErrorFilterString(filter.kind, 'kind', OPS_ERROR_FILTER_KIND_MAX_CHARS);
+  const lastSeenAfter = validateOpsErrorFilterTimestamp(filter.lastSeenAfter, 'lastSeenAfter');
+  const lastSeenBefore = validateOpsErrorFilterTimestamp(filter.lastSeenBefore, 'lastSeenBefore');
+  if (lastSeenAfter !== null && lastSeenBefore !== null && lastSeenAfter > lastSeenBefore) {
+    throw new BadRequestError('Filter lastSeenAfter must be <= lastSeenBefore.', {
+      code: 'validation_failed',
+      field: 'lastSeenAfter',
+    });
+  }
+  // Reject insanely-old bounds that would trigger a full-table scan. 90d
+  // is the retention window, so anything older is definitionally empty.
+  const safeNow = Number.isFinite(nowTs) ? nowTs : Date.now();
+  const minBound = safeNow - OPS_ERROR_FILTER_MAX_WINDOW_MS;
+  if (lastSeenAfter !== null && lastSeenAfter < minBound) {
+    throw new BadRequestError(`Filter lastSeenAfter cannot be more than ${OPS_ERROR_FILTER_MAX_WINDOW_MS / (24 * 60 * 60 * 1000)} days in the past.`, {
+      code: 'validation_failed',
+      field: 'lastSeenAfter',
+    });
+  }
+  // Allow lastSeenBefore in the future (client clock skew + schedule-ahead
+  // resolved transitions) but clamp to a 1-day future window so a bogus
+  // value cannot slip through as a sentinel.
+  const maxFutureBound = safeNow + (24 * 60 * 60 * 1000);
+  if (lastSeenBefore !== null && lastSeenBefore > maxFutureBound) {
+    throw new BadRequestError('Filter lastSeenBefore cannot be more than 1 day in the future.', {
+      code: 'validation_failed',
+      field: 'lastSeenBefore',
+    });
+  }
+  // U19: `release` filter reuses the tightened U16 regex so a garbage
+  // value cannot poison the WHERE clause. Null passes through.
+  let releaseValue = null;
+  if (filter.release != null && filter.release !== '') {
+    if (typeof filter.release !== 'string' || !OPS_ERROR_RELEASE_REGEX.test(filter.release)) {
+      throw new BadRequestError('Filter release must be a SHA-shaped hex string.', {
+        code: 'validation_failed',
+        field: 'release',
+      });
+    }
+    releaseValue = filter.release;
+  }
+  const reopenedAfterResolved = filter.reopenedAfterResolved === true
+    || filter.reopenedAfterResolved === 'true'
+    || filter.reopenedAfterResolved === '1';
+  return {
+    status: statusValue,
+    route: routeValue,
+    kind: kindValue,
+    lastSeenAfter,
+    lastSeenBefore,
+    release: releaseValue,
+    reopenedAfterResolved,
+  };
+}
+
+async function readOpsErrorEventSummary(db, {
+  now,
+  actorAccountId,
+  status = null,
+  limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT,
+  filter = null,
+} = {}) {
   const actor = await assertAdminHubActor(db, actorAccountId);
   const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
   const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
   const safeLimit = Math.max(1, Math.min(OPS_ERROR_EVENTS_MAX_LIMIT, Number(limit) || OPS_ERROR_EVENTS_DEFAULT_LIMIT));
-  const statusFilter = typeof status === 'string' && OPS_ERROR_STATUSES.includes(status) ? status : null;
+  // U19: the legacy `status` arg stays supported for backwards-compat
+  // — it collapses into the new filter object when the caller has not
+  // supplied an explicit filter. Filter fields take precedence when both
+  // are provided.
+  const explicitFilter = filter ? normaliseOpsErrorFilter(filter, { nowTs }) : null;
+  const legacyStatusFilter = typeof status === 'string' && OPS_ERROR_STATUSES.includes(status)
+    ? status
+    : null;
+  const resolvedFilter = explicitFilter || normaliseOpsErrorFilter({ status: legacyStatusFilter }, { nowTs });
 
   try {
     const totalsRows = await all(db, `
@@ -2454,32 +2577,66 @@ async function readOpsErrorEventSummary(db, { now, actorAccountId, status = null
       totals.all += count;
     }
 
-    // U18: drawer-ready SELECT pulls the full column set per row so the
-    // client can render an expandable <details> with release-tracking
-    // timestamps and per-role redaction. The SELECT columns stay a
-    // flat list because the filter-narrowed and total-list paths share
-    // the same shape (U19 wires filter predicates through the same
-    // projection). Ordering: last_seen DESC to match the triage view.
-    const entryRows = statusFilter
-      ? await all(db, `
-        SELECT id, error_kind, message_first_line, first_frame, route_name, user_agent,
-               account_id, occurrence_count, first_seen, last_seen, status,
-               first_seen_release, last_seen_release, resolved_in_release,
-               last_status_change_at
-        FROM ops_error_events
-        WHERE status = ?
-        ORDER BY last_seen DESC, id DESC
-        LIMIT ?
-      `, [statusFilter, safeLimit])
-      : await all(db, `
-        SELECT id, error_kind, message_first_line, first_frame, route_name, user_agent,
-               account_id, occurrence_count, first_seen, last_seen, status,
-               first_seen_release, last_seen_release, resolved_in_release,
-               last_status_change_at
-        FROM ops_error_events
-        ORDER BY last_seen DESC, id DESC
-        LIMIT ?
-      `, [safeLimit]);
+    // U18 / U19: drawer-ready SELECT pulls the full column set per row so
+    // the client can render an expandable <details> with release-tracking
+    // timestamps and per-role redaction. U19 builds the WHERE clause
+    // dynamically from the validated filter object — route uses a
+    // case-insensitive LIKE substring; kind uses an exact match; date-
+    // range uses `last_seen BETWEEN ?`; release uses first_seen_release;
+    // reopenedAfterResolved composites three predicates. All placeholders
+    // are parameterised so SQL-metacharacters in user input cannot
+    // escape the WHERE clause.
+    const whereClauses = [];
+    const whereParams = [];
+    if (resolvedFilter.status) {
+      whereClauses.push('status = ?');
+      whereParams.push(resolvedFilter.status);
+    }
+    if (resolvedFilter.route) {
+      // Case-insensitive substring match. The route column is normalised
+      // by `normaliseRouteNameServer` on write so it is already lowercase
+      // where it came from the client. Admins may still type upper-case
+      // (e.g. `/API/`) which we lower to match.
+      whereClauses.push('lower(route_name) LIKE lower(?)');
+      whereParams.push(`%${resolvedFilter.route}%`);
+    }
+    if (resolvedFilter.kind) {
+      whereClauses.push('error_kind = ?');
+      whereParams.push(resolvedFilter.kind);
+    }
+    if (resolvedFilter.lastSeenAfter !== null) {
+      whereClauses.push('last_seen >= ?');
+      whereParams.push(resolvedFilter.lastSeenAfter);
+    }
+    if (resolvedFilter.lastSeenBefore !== null) {
+      whereClauses.push('last_seen <= ?');
+      whereParams.push(resolvedFilter.lastSeenBefore);
+    }
+    if (resolvedFilter.release) {
+      whereClauses.push('first_seen_release = ?');
+      whereParams.push(resolvedFilter.release);
+    }
+    if (resolvedFilter.reopenedAfterResolved) {
+      // "Reopened after resolved" = the row is currently `open` AND it
+      // has a resolved_in_release stamp (so it WAS resolved at some
+      // point) AND last_status_change_at is set (a transition has
+      // occurred since the release stamp).
+      whereClauses.push("status = 'open'");
+      whereClauses.push('resolved_in_release IS NOT NULL');
+      whereClauses.push('last_status_change_at IS NOT NULL');
+    }
+    const whereSql = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+    const entryRows = await all(db, `
+      SELECT id, error_kind, message_first_line, first_frame, route_name, user_agent,
+             account_id, occurrence_count, first_seen, last_seen, status,
+             first_seen_release, last_seen_release, resolved_in_release,
+             last_status_change_at
+      FROM ops_error_events
+      ${whereSql}
+      ORDER BY last_seen DESC, id DESC
+      LIMIT ?
+    `, [...whereParams, safeLimit]);
 
     // U18 R25 redaction matrix: admin sees every field. ops-role sees the
     // same metadata but with `accountIdMasked` blanked to null. Public /
@@ -8422,12 +8579,13 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         limit,
       });
     },
-    async readAdminOpsErrorEvents(accountId, { status = null, limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT } = {}) {
+    async readAdminOpsErrorEvents(accountId, { status = null, limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT, filter = null } = {}) {
       return readOpsErrorEventSummary(db, {
         now: nowFactory(),
         actorAccountId: accountId,
         status,
         limit,
+        filter,
       });
     },
     // PR #188 H1: dedicated narrow read that mirrors the other three admin
