@@ -309,7 +309,7 @@ function GpsDelayedFeedbackChips({ session }) {
   return (
     <div className="chip-row" style={{ marginTop: 14 }}>
       <span className="chip">GPS check</span>
-      <span className="chip">Test mode: answers at the end.</span>
+      <span className="chip punctuation-test-mode-banner" data-gps-banner>Test mode: answers at the end.</span>
       {length > 0 ? <span className="chip">{Math.min(length, answered + 1)} of {length}</span> : null}
     </div>
   );

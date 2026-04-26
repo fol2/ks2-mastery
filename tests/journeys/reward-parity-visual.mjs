@@ -30,10 +30,13 @@ function parseCounts(html) {
 }
 
 export default async function run({ driver, artifacts, log, assert }) {
+  // FINDING A fix: clearStorage FIRST, then /demo.
+  log('clearStorage (cookies + localStorage from prior journey)');
+  await driver.clearStorage();
+
   log('open /demo');
   await driver.open('/demo');
   await driver.waitForSelector('.subject-grid', 15_000);
-  await driver.clearStorage();
 
   log('enter Punctuation and drive a Smart Review to Summary');
   await driver.click('[data-action="open-subject"][data-subject-id="punctuation"]');
@@ -100,18 +103,22 @@ export default async function run({ driver, artifacts, log, assert }) {
   // skipped (documented above). Parity is the key invariant: whatever
   // mastered count Setup reports, Map must report the same for the same
   // monster total.
+  //
+  // FINDING C fix (review follow-on): mastered equality is now STRICT.
+  // Previously a mastered mismatch was log-only, so an R6 regression
+  // (slice drift) would print NOTE and still pass green. If a legitimate
+  // slice difference ever documents itself, it must land as an explicit
+  // narrow allowlist with a data-driven reason — silent acceptance is
+  // the bug this catches.
   if (setupCounts && mapCounts) {
     assert(setupCounts.total === mapCounts.total,
       'Reward parity: Setup and Map must agree on total published units ' +
       `(saw ${setupCounts.total} vs ${mapCounts.total}).`);
-    // Mastered counts should match when both surfaces read the same
-    // projection slice; if the seeded cohort produces different slices,
-    // we log rather than fail (future seeding control lands with
-    // U9 telemetry).
-    if (setupCounts.mastered !== mapCounts.mastered) {
-      log(`NOTE: mastered mismatch (${setupCounts.mastered} vs ${mapCounts.mastered}); ` +
-        'log-only because surfaces may read distinct monster slices.');
-    }
+    assert(setupCounts.mastered === mapCounts.mastered,
+      'Reward parity: Setup and Map must agree on mastered count ' +
+      `(saw ${setupCounts.mastered} vs ${mapCounts.mastered}). If a ` +
+      'real slice difference exists it must be declared explicitly, not ' +
+      'silently absorbed.');
   } else {
     log('Parity assertion skipped: one or more surfaces did not expose the "N/M secure" phrase.');
   }

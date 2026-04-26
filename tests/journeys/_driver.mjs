@@ -234,35 +234,19 @@ function createBbAdapter(cli, origin) {
      * Open `url` in the current tab. We navigate the existing tab rather
      * than opening a new one so the daemon stays stable across journeys.
      *
-     * Cross-journey isolation: before loading `url`, we navigate the tab
-     * to the SAME origin at `/` so the defensive wipe below can clear
-     * localStorage / cookies for that origin without cross-origin access
-     * constraints. That wipes any cookie the previous journey's `/demo`
-     * path set, so every journey starts cold.
+     * FINDING A fix (review follow-on): `open()` NO LONGER wipes storage
+     * implicitly. The previous behaviour (navigate to origin root → wipe
+     * → navigate to target) wiped the auth cookie that `/demo` had just
+     * set when the spec's pre-amble ran `open('/demo')` → `clearStorage()`.
+     * Downstream API calls then 401'd and bb-browser wedged. Callers who
+     * want to start cold MUST call `clearStorage()` BEFORE `open('/demo')`
+     * so the sequence is `wipe → seed fresh cookie`.
      *
      * bb-browser's `open <url>` reuses the current tab — no new-tab
      * side effect.
      */
     async open(url) {
       const target = url.startsWith('http') ? url : `${origin}${url}`;
-      // Step 1: navigate to origin root to get a page context we can
-      // eval against; no-op if we're already there.
-      const pre = await bb(['open', `${origin}/`]);
-      if (pre.ok) {
-        const wipe =
-          `(() => {` +
-            ` try { localStorage.clear(); sessionStorage.clear(); } catch (e) {}` +
-            ` try {` +
-              ` document.cookie.split(';').forEach(c => {` +
-                ` const n = c.split('=')[0].trim();` +
-                ` if (n) document.cookie = n + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/';` +
-              ` });` +
-            ` } catch (e) {}` +
-            ` return 'ok';` +
-          ` })()`;
-        try { await evalJs(wipe); } catch { /* eval may fail on about:blank — ignored */ }
-      }
-      // Step 2: navigate to the actual target URL.
       const res = await bb(['open', target]);
       if (!res.ok) {
         throw new Error(`bb-browser open failed: ${res.stderr || res.stdout}`);
@@ -308,23 +292,27 @@ function createBbAdapter(cli, origin) {
     },
 
     async clearStorage() {
-      // Clear a broader set of auth-touching storage keys + sessionStorage
-      // + cookies for the tab's origin, so artefact captures never embed
-      // real dev credentials and each journey starts cold.
+      // FINDING A fix (review follow-on): this is the sole cookie-wipe
+      // entry point. Callers invoke it FIRST (before `open('/demo')`) so
+      // the sequence is wipe → seed fresh /demo cookie → navigate. For
+      // cookies / localStorage to be addressable we need a page on the
+      // target origin; we navigate to origin root first, then wipe. That
+      // root page carries no auth by itself, so the wipe has no undoing
+      // side effect.
+      try { await bb(['open', `${origin}/`]); } catch { /* noop */ }
       const js =
         `(() => {` +
+          ` try { localStorage.clear(); sessionStorage.clear(); } catch (e) {}` +
           ` try {` +
-            ` const keys = ['ks2_session','oauth_token','oauth_refresh','access_token','refresh_token'];` +
-            ` keys.forEach(k => { try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch (e) {} });` +
             ` document.cookie.split(';').forEach(c => {` +
               ` const name = c.split('=')[0].trim();` +
               ` if (!name) return;` +
               ` document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/';` +
             ` });` +
-            ` return 'ok';` +
-          ` } catch (e) { return 'err:' + e.message; }` +
+          ` } catch (e) {}` +
+          ` return 'ok';` +
         ` })()`;
-      await evalJs(js);
+      try { await evalJs(js); } catch { /* eval may fail pre-navigation — ignored */ }
     },
 
     waitForSelector,
@@ -372,23 +360,10 @@ function createAgAdapter(cli, origin) {
     origin,
 
     async open(url) {
+      // FINDING A fix: do NOT wipe implicitly. Callers must call
+      // clearStorage() BEFORE `open('/demo')` if a cold start is required;
+      // /demo's auth cookie must survive downstream.
       const target = url.startsWith('http') ? url : `${origin}${url}`;
-      // Same cross-journey cookie wipe as the bb-browser path.
-      const pre = await ag(['open', `${origin}/`]);
-      if (pre.ok) {
-        const wipe =
-          `(() => {` +
-            ` try { localStorage.clear(); sessionStorage.clear(); } catch (e) {}` +
-            ` try {` +
-              ` document.cookie.split(';').forEach(c => {` +
-                ` const n = c.split('=')[0].trim();` +
-                ` if (n) document.cookie = n + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/';` +
-              ` });` +
-            ` } catch (e) {}` +
-            ` return 'ok';` +
-          ` })()`;
-        try { await evalJs(wipe); } catch { /* noop */ }
-      }
       const res = await ag(['open', target]);
       if (!res.ok) {
         throw new Error(`agent-browser open failed: ${res.stderr || res.stdout}`);
@@ -429,9 +404,23 @@ function createAgAdapter(cli, origin) {
     },
 
     async clearStorage() {
+      // FINDING A fix: same contract as bb-browser adapter. Prime a page
+      // on the origin first so cookies + localStorage become addressable,
+      // then wipe. Callers invoke this BEFORE `open('/demo')`.
+      try { await ag(['open', `${origin}/`]); } catch { /* noop */ }
       const js =
-        `(() => { try { ['ks2_session','oauth_token','oauth_refresh','access_token','refresh_token'].forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); }); return 'ok'; } catch (e) { return 'err:' + e.message; } })()`;
-      await evalJs(js);
+        `(() => {` +
+          ` try { localStorage.clear(); sessionStorage.clear(); } catch (e) {}` +
+          ` try {` +
+            ` document.cookie.split(';').forEach(c => {` +
+              ` const name = c.split('=')[0].trim();` +
+              ` if (!name) return;` +
+              ` document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/';` +
+            ` });` +
+          ` } catch (e) {}` +
+          ` return 'ok';` +
+        ` })()`;
+      try { await evalJs(js); } catch { /* noop */ }
     },
 
     waitForSelector,

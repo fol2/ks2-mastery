@@ -11,10 +11,13 @@
 // `{ mode: 'guided', skillId }` from the modal's "Practise this" button.
 
 export default async function run({ driver, artifacts, log, assert }) {
+  // FINDING A fix: clearStorage FIRST, then /demo.
+  log('clearStorage (cookies + localStorage from prior journey)');
+  await driver.clearStorage();
+
   log('open /demo');
   await driver.open('/demo');
   await driver.waitForSelector('.subject-grid', 15_000);
-  await driver.clearStorage();
   await driver.screenshot(artifacts.path('01-home'));
 
   log('click Punctuation subject card');

@@ -10,21 +10,26 @@
 // bug shipped green. This spec clicks the real button.
 //
 // Flow:
-//   1. Open /demo — seeds a demo learner and redirects to /.
-//   2. Clear auth-related storage keys before any screenshot.
+//   1. clearStorage() — wipe prior journey's cookies + localStorage.
+//   2. Open /demo — seeds a demo learner and redirects to /.
 //   3. Click Home's Punctuation card ([data-subject-id="punctuation"]).
 //   4. Click the Smart Review primary-mode card
 //      ([data-action="punctuation-start"][data-mode-id="smart"]).
 //   5. Assert the Session scene is mounted: the `[data-punctuation-submit]`
 //      button appears within 10s (this is the first child-visible proof
 //      that Q1 has rendered — Setup never shows the submit button).
-//   6. Screenshot each step into artifacts/.
+//   6. Screenshot each step into artefacts/.
+//
+// FINDING A fix (review follow-on): order is clearStorage BEFORE open('/demo')
+// so the fresh auth cookie /demo sets survives. The prior order wiped it.
 
 export default async function run({ driver, artifacts, log, assert }) {
+  log('clearStorage (cookies + localStorage from prior journey)');
+  await driver.clearStorage();
+
   log('open /demo (seeds demo learner + redirects to /)');
   await driver.open('/demo');
   await driver.waitForSelector('.subject-grid', 15_000);
-  await driver.clearStorage();
   await driver.screenshot(artifacts.path('01-home'));
 
   log('click Punctuation subject card');

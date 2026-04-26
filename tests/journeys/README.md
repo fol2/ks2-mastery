@@ -20,10 +20,10 @@ under `tests/playwright/` are orthogonal and keep working.
 | Script                              | Journey                                                  |
 | ----------------------------------- | -------------------------------------------------------- |
 | `smart-review.mjs`                  | Home -> Punctuation -> Smart Review -> Q1 renders        |
-| `wobbly-spots.mjs`                  | Home -> Punctuation -> Wobbly Spots -> Q1 OR empty state |
+| `wobbly-spots.mjs`                  | Home -> Punctuation -> Wobbly Spots -> Q1 OR left-setup  |
 | `gps-check.mjs`                     | Home -> Punctuation -> GPS Check -> Q1 with test banner  |
 | `map-guided-skill.mjs`              | Map -> skill card -> Practise this -> Guided Q1          |
-| `summary-back-while-pending.mjs`    | Summary Back stays enabled while a command is pending    |
+| `summary-back-while-pending.mjs`    | SKIPPED: needs dev-only stall endpoint (see below)       |
 | `reward-parity-visual.mjs`          | Map + Setup + Summary reward-state parity                |
 
 ## Prerequisites
@@ -54,24 +54,62 @@ npm run journey -- smart-review
 # Run against an already-running dev server.
 BROWSER_APP_SERVER_ORIGIN=http://127.0.0.1:4173 npm run journey -- smart-review
 
-# Pick a non-default port if 4173 is busy.
+# Pick a non-default port if 4173 is busy. The runner ALSO auto-probes
+# for the next free port from `JOURNEY_PORT` upward if the given port
+# EADDRINUSEs (FINDING E review fix), so collisions with the Playwright
+# `webServer` on 4173 no longer block a local journey run.
 JOURNEY_PORT=41777 npm run journey
 ```
 
+### Parallel safety
+
+`npm run journey` is **serial-only**. A single bb-browser daemon + single
+dev server port back the run, so two concurrent invocations in the same
+shell profile will step on each other's CDP. If you must run two journey
+flights side-by-side, set distinct `JOURNEY_PORT` values and use separate
+bb-browser profiles — that's a future-unit exercise, not something today's
+scaffold supports.
+
 The runner:
-1. Probes for bb-browser, then agent-browser. Exits non-zero with install
-   instructions if neither responds.
+1. Probes for bb-browser, then agent-browser. If the probe fails AND a
+   stale `~/.bb-browser/browser/cdp-port` exists, the runner deletes it
+   and probes once more (FINDING G auto-recovery). Exits non-zero with
+   install instructions if neither driver responds.
 2. Starts `tests/helpers/browser-app-server.js` on the port from
    `JOURNEY_PORT` (default 4173) with `--with-worker-api` so `/api/*` and
-   `/demo` route through the in-memory worker.
-3. For each journey: clears auth-related localStorage keys + cookies for
-   the target origin (see "Artifacts hygiene" below), seeds learner state
-   via the `/demo` endpoint, performs the real click sequence, asserts
-   each step, writes a screenshot to
-   `tests/journeys/artifacts/<journey>-<step>.png`, and tears the driver
-   tab down.
-4. On failure: captures a final screenshot, logs the selector / step that
-   failed, and exits non-zero.
+   `/demo` route through the in-memory worker. Auto-increments on
+   EADDRINUSE up to `port + 10` (FINDING E).
+3. For each journey: invokes the journey's default export which
+   (per FINDING A fix) calls `clearStorage()` FIRST, THEN `open('/demo')`
+   so the fresh auth cookie survives downstream API calls.
+4. Writes a screenshot to
+   `tests/journeys/artefacts/<journey>-<step>.png` per asserted step.
+5. On failure: captures a final screenshot, logs the selector / step that
+   failed, records the failure in the structured JSON manifest, and
+   exits non-zero.
+
+### Structured output
+
+At the end of every run the runner writes
+`tests/journeys/artefacts/results.json` AND emits a final stdout line
+starting with `JOURNEY_RESULT_JSON ` followed by the same payload. Agent
+scrapers can parse either. Shape:
+
+```json
+{
+  "driver": "bb-browser",
+  "origin": "http://127.0.0.1:4173",
+  "generatedAt": "2026-04-26T12:34:56.000Z",
+  "results": [
+    { "name": "smart-review", "ok": true,  "status": "PASS", "ms": 4321, "screenshots": ["smart-review-01-home.png", "smart-review-02-setup.png", "smart-review-03-session-q1.png"] },
+    { "name": "summary-back-while-pending", "ok": null, "status": "SKIPPED", "reason": "pending-command injection requires dev-only stall endpoint; deferred to follow-on unit", "ms": 12, "screenshots": [] },
+    { "name": "wobbly-spots", "ok": false, "status": "FAIL", "ms": 7890, "error": "selector timeout: .subject-grid", "screenshots": ["wobbly-spots-_failure.png"] }
+  ]
+}
+```
+
+`ok` is `true` for PASS, `false` for FAIL, `null` for SKIP. Exit code is
+non-zero only when at least one FAIL is present.
 
 ## Seeding
 
@@ -81,38 +119,44 @@ Journey specs reuse the **existing `/demo` endpoint** exposed by
 session primes learner state, sets the auth cookie, and redirects to `/` —
 the same path the Playwright golden-path uses.
 
-For journey 5 (`summary-back-while-pending`), we additionally drive
-through the real Summary flow and verify the Back button's disabled
-attribute on that scene. The spec documents the plug-point for a richer
-pending-command injection once a dev-only `stall-command` fault plan
-ships under the `x-ks2-fault-opt-in` gate.
+## Summary-Back-while-pending SKIP
+
+`summary-back-while-pending.mjs` emits `status: 'SKIPPED'` (FINDING B fix).
+The earlier revision asserted that Back was not disabled on a CLEAN
+Summary render, which is a tautology — U6's real invariant is that Back
+stays enabled DURING an in-flight pendingCommand. Producing legitimate
+evidence requires a dev-only stall endpoint (`x-ks2-fault-opt-in` +
+`stall-command` plan) which has not landed; we emit SKIP to avoid shipping
+a false-green assertion. The spec body is preserved as documentation and
+future-executable scaffold — once the stall hook ships in a follow-on
+unit, the early-return flips to a gated live assertion.
 
 ## Artefacts hygiene
 
-- `tests/journeys/artifacts/` is gitignored. Screenshots never land in the
-  tree.
-- Before each `open()`, the driver adapter navigates to the target origin's
-  root and clears localStorage / sessionStorage / cookies for that origin
-  so developer browser state never leaks into artefacts.
+- `tests/journeys/artefacts/` is gitignored (both `artefacts/` and the
+  historical `artifacts/` spelling). Screenshots never land in the tree.
+- The driver adapter's `clearStorage()` primes a page on the target
+  origin, then wipes cookies + localStorage + sessionStorage. Callers
+  invoke it BEFORE `open('/demo')` (FINDING A order).
+- Retention: the runner prunes files older than 7 days at start so the
+  directory does not grow unbounded without a cron dependency.
 - Seeding goes through the `/demo` endpoint, not bb-browser `eval`, to
   avoid JS evaluation against real-session localStorage.
 
 ## Debugging
 
 - **bb-browser daemon wedged** ("Daemon did not start in time / Chrome
-  CDP is reachable, but the daemon process failed to initialize"): this
-  is a known bb-browser state where Chrome's CDP port is held by a
-  prior daemon's Chrome child that did not shut down cleanly. Recovery:
-  1. Close any manually-opened Chrome windows launched via bb-browser.
-  2. Delete `~/.bb-browser/browser/cdp-port` (per bb-browser SKILL.md).
-  3. Re-run `npm run journey`. The daemon starts a fresh Chrome.
-- **CDP port busy**: bb-browser's SKILL.md suggests clearing
-  `~/.bb-browser/browser/cdp-port` and retrying.
-- **Dev server already running on 4173**: the runner detects and reuses
-  via `BROWSER_APP_SERVER_ORIGIN`. Or pick a different port via
-  `JOURNEY_PORT`.
+  CDP is reachable, but the daemon process failed to initialize"): the
+  runner now detects the startup failure, deletes
+  `~/.bb-browser/browser/cdp-port`, and retries once (FINDING G). If
+  that doesn't clear it, close any manually-opened Chrome windows
+  launched via bb-browser and re-run.
+- **CDP port busy**: see above — auto-recovery handles the common case.
+- **Dev server already running on 4173**: the runner auto-probes the
+  next port (4174, 4175 ...) up to +10. You can also reuse via
+  `BROWSER_APP_SERVER_ORIGIN` or pick a specific `JOURNEY_PORT`.
 - **View artefacts**: after a run, open
-  `tests/journeys/artifacts/<journey>-*.png` in order — the screenshots
+  `tests/journeys/artefacts/<journey>-*.png` in order — the screenshots
   tell the same story a human watching the screen would. Chrome
   occasionally returns "Page.captureScreenshot: Internal error" mid-
   navigation; the runner treats screenshot failures as non-fatal so
@@ -133,33 +177,44 @@ U8 / R9).
 ```
 tests/journeys/
   README.md                            <- this file
-  _runner.mjs                          <- driver probe + orchestration + shared assertions
+  _runner.mjs                          <- driver probe + orchestration + JSON results
   _driver.mjs                          <- bb-browser / agent-browser adapter
-  _server.mjs                          <- browser-app-server lifecycle helper
+  _server.mjs                          <- browser-app-server lifecycle + port auto-probe
   smart-review.mjs                     <- journey 1
   wobbly-spots.mjs                     <- journey 2
   gps-check.mjs                        <- journey 3
   map-guided-skill.mjs                 <- journey 4
-  summary-back-while-pending.mjs       <- journey 5
+  summary-back-while-pending.mjs       <- journey 5 (SKIP; future-executable scaffold)
   reward-parity-visual.mjs             <- journey 6
-  artifacts/                           <- gitignored screenshot output
+  artefacts/                           <- gitignored screenshot + results.json output
 ```
 
-## Verified-live status
+## Review follow-on (2026-04-26)
 
-At commit time:
-- `smart-review.mjs` ran **green live** against bb-browser 0.11.3 on
-  Windows with a freshly-built `dist/public`. The journey opened `/demo`,
-  clicked the Punctuation subject card, clicked the Smart Review primary-
-  mode card, and asserted the Session scene's `[data-punctuation-submit]`
-  rendered.
-- `wobbly-spots`, `gps-check`, `map-guided-skill`,
-  `summary-back-while-pending`, `reward-parity-visual` ship as
-  scaffolded scripts that mirror the smart-review contract. They did not
-  complete in the same `npm run journey` invocation because the
-  bb-browser daemon wedged after the first journey. They run on their
-  own after a daemon reset (see Debugging above).
+The four-reviewer convergent pass surfaced eight findings; all convergent
+items were addressed in the follow-on commit:
 
-In all cases, each spec loads cleanly as an ESM module and exports a
-`default` async function — structural correctness verified by
-`node -e "import('./tests/journeys/<name>.mjs')"` in local testing.
+- **A (BLOCKER-tier)**: Reorder journey pre-amble — `clearStorage` FIRST,
+  `open('/demo')` SECOND — plus removal of the implicit wipe from
+  `_driver.mjs open()`. This was the root cause of the "daemon wedged
+  mid-run" the worker attributed to bb-browser flakiness.
+- **B (HIGH)**: `summary-back-while-pending` emits `SKIPPED` instead of
+  false-green PASS on a tautological assertion.
+- **C (HIGH)**: `reward-parity-visual` strict-asserts mastered count
+  equality between Setup and Map (was log-only).
+- **D (MEDIUM)**: GPS chip gained `punctuation-test-mode-banner` +
+  `data-gps-banner` hooks (1-line src edit). Dead-branch selectors
+  dropped from `wobbly-spots` + `summary-back-while-pending`.
+- **E (HIGH)**: `_server.mjs` auto-probes ports on EADDRINUSE.
+- **F (HIGH)**: Runner emits structured JSON (`results.json` +
+  `JOURNEY_RESULT_JSON` stdout line).
+- **G (MEDIUM)**: Wedge auto-recovery (remove `cdp-port` + retry once).
+- **H (MEDIUM)**: Serial-only documented; `JOURNEY_PORT` override
+  clarified.
+
+Deferred (acknowledged, not fixed):
+
+- Driver probe cache invalidation (re-runs per invocation — acceptable).
+- Single-journey `--list` mode (nice-to-have).
+- Dev-only stall endpoint for `summary-back-while-pending` real
+  assertion (future unit).

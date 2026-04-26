@@ -10,24 +10,54 @@
 // button is tappable (not `disabled`, not `aria-disabled="true"`) while
 // we inject a pendingCommand-like state.
 //
-// Injection strategy: we reach the Summary scene via the real child
-// journey (Smart Review -> submit enough answers -> Summary), then assert
-// that the Back button remains enabled under an injected pending-command
-// flag. We inject by setting a store-level flag via the global app hook
-// rather than via network-delay, because the journey must not depend on
-// a chaos middleware that may or may not be available in CI.
+// FINDING B fix (review follow-on): this spec previously asserted Back
+// was not disabled on a CLEAN Summary render — that proves nothing about
+// U6's invariant (which is that Back stays enabled DURING an in-flight
+// pendingCommand). Asserting on a clean render is a tautology.
 //
-// Plug point: once a dev-only `stall-command` fault plan lands under the
-// `x-ks2-fault-opt-in` gate, the injection block below can switch to
-// calling `fetch()` with that opt-in header and a real command delay.
-// For now we verify the UI contract (Back stays enabled through a
-// render that carries a pendingCommand-like signal).
+// Correct evidence requires a dev-only stall endpoint (x-ks2-fault-opt-in
+// + stall-command plan) which has NOT landed. Until that hook ships, this
+// spec returns the SKIPPED sentinel so the runner reports SKIP (not PASS),
+// preserving the spec as documentation + future-executable scaffold
+// without shipping a false-green assertion.
+//
+// The runner recognises the sentinel shape `{ status: 'SKIPPED', reason }`
+// from a default-export run() and tags the result accordingly in
+// machine-readable JSON + the prose summary.
 
-export default async function run({ driver, artifacts, log, assert }) {
+export const JOURNEY_SKIP_SENTINEL = Symbol.for('ks2.journey.skipped');
+
+export default async function run({ driver, artifacts, log }) {
+  // FINDING B fix: emit SKIP sentinel. A live assertion on a clean render
+  // is a tautology — a real test requires a dev-only stall endpoint to
+  // hold a command in flight while we inspect the Back button. That hook
+  // is deferred to a follow-on unit (see header).
+  log('SKIPPED: pending-command injection requires a dev-only stall ' +
+    'endpoint (x-ks2-fault-opt-in + stall-command plan) which has not ' +
+    'landed. Asserting on a clean Summary render would be a tautology. ' +
+    'Spec preserved as documentation + future-executable scaffold.');
+  return {
+    [JOURNEY_SKIP_SENTINEL]: true,
+    status: 'SKIPPED',
+    reason: 'pending-command injection requires dev-only stall endpoint; deferred to follow-on unit',
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Future-executable body (kept for reference; invoked by /* disabled */ so
+// no network / selector work fires). Once the stall endpoint lands, swap
+// the early-return above for a gate on hook availability and run this.
+// ---------------------------------------------------------------------------
+
+/* eslint-disable no-unused-vars */
+async function _futureRun({ driver, artifacts, log, assert }) {
+  // FINDING A fix: clearStorage FIRST, then /demo.
+  log('clearStorage (cookies + localStorage from prior journey)');
+  await driver.clearStorage();
+
   log('open /demo');
   await driver.open('/demo');
   await driver.waitForSelector('.subject-grid', 15_000);
-  await driver.clearStorage();
 
   log('navigate to Punctuation Setup');
   await driver.click('[data-action="open-subject"][data-subject-id="punctuation"]');
@@ -39,17 +69,12 @@ export default async function run({ driver, artifacts, log, assert }) {
   await driver.waitForSelector('[data-punctuation-submit]', 15_000);
   await driver.screenshot(artifacts.path('02-session-q1'));
 
-  // Click Finish Now if present — the Session scene exposes a
-  // "finish early" CTA. If not present (depends on seeded cohort), we
-  // answer a few items to reach Summary organically.
-  const finishResult = await driver.eval(
-    "(() => {" +
-      " const finish = document.querySelector('[data-action=\\\"punctuation-finish-now\\\"], [data-punctuation-finish]');" +
-      " if (finish && !finish.disabled) { finish.click(); return 'clicked'; }" +
-      " return 'no-finish';" +
-    " })()",
-  );
-  log(`finish-now: ${finishResult}`);
+  // FINDING D fix (review follow-on): dropped `[data-punctuation-finish]`
+  // — no src hits. `data-action="punctuation-finish-now"` is also absent
+  // from src today; once the real Finish Now CTA lands its data-action
+  // MUST match whatever the production component uses. For now the
+  // organic drive-through loop below covers the Summary-reach path.
+  log('finish-now: no src hook yet — using organic drive-through below');
 
   // Poll for Summary.
   const summaryStart = Date.now();

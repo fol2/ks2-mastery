@@ -9,10 +9,14 @@
 // the Setup scene (the regression we are guarding against).
 
 export default async function run({ driver, artifacts, log, assert }) {
+  // FINDING A fix: clearStorage FIRST, then /demo (so /demo's auth cookie
+  // survives — prior ordering wiped it and downstream API calls 401'd).
+  log('clearStorage (cookies + localStorage from prior journey)');
+  await driver.clearStorage();
+
   log('open /demo');
   await driver.open('/demo');
   await driver.waitForSelector('.subject-grid', 15_000);
-  await driver.clearStorage();
   await driver.screenshot(artifacts.path('01-home'));
 
   log('click Punctuation subject card');
@@ -30,11 +34,13 @@ export default async function run({ driver, artifacts, log, assert }) {
   const start = Date.now();
   let outcome = null;
   while (Date.now() - start < 15_000) {
+    // FINDING D fix (review follow-on): dropped `.punctuation-empty-state`
+    // branch — no src hits. Accept Session, Summary, or generic "left
+    // Setup" as proof of a mode-switch.
     const state = await driver.eval(
       "(() => {" +
         " if (document.querySelector('[data-punctuation-submit]')) return 'session';" +
         " if (document.querySelector('[data-punctuation-phase=\\\"summary\\\"]')) return 'summary';" +
-        " if (document.querySelector('.punctuation-empty-state')) return 'empty';" +
         " if (!document.querySelector('[data-punctuation-phase=\\\"setup\\\"]')) return 'left-setup';" +
         " return 'still-setup';" +
       " })()",
