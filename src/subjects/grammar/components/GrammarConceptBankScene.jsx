@@ -186,7 +186,11 @@ export function GrammarConceptBankScene({ grammar, actions }) {
     : `Showing ${totalMatches} of ${bankModel.total} concepts.`;
 
   return (
-    <section className="grammar-bank-scene" aria-labelledby="grammar-bank-title">
+    <section
+      className="grammar-bank-scene"
+      aria-labelledby="grammar-bank-title"
+      data-grammar-phase-root="bank"
+    >
       <header className="grammar-bank-topbar">
         <button
           type="button"
