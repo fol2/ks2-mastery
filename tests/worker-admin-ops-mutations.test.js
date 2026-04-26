@@ -1061,6 +1061,56 @@ test('H3 role last-admin — demoting the sole admin still surfaces 409 last_adm
     assert.equal(payload.code, 'last_admin_required');
     const roleNow = server.DB.db.prepare('SELECT platform_role FROM adult_accounts WHERE id = ?').get('adult-admin').platform_role;
     assert.equal(roleNow, 'admin');
+
+    // B-RE-1 (re-review Blocker): the receipt INSERT is EXISTS-guarded on
+    // the post-bump `(platform_role, repo_revision, updated_at)` tuple, so
+    // when the last-admin guard blocks the UPDATE (rowsAffected=0) the
+    // receipt does not land. Without this guard, a retry with the same
+    // requestId would replay the phantom 409 body as an idempotent
+    // response — masking the retry's outcome from the caller.
+    assert.equal(receiptRows(server, 'req-role-last-admin').length, 0, 'last-admin-guard failure must NOT persist a mutation_receipt');
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// B-RE-1 (re-review Blocker): retry after last-admin block. The first
+// attempt is blocked by the last-admin guard and must NOT persist a
+// receipt. A second attempt with the same requestId but a fresh target
+// (not the last admin) must succeed with a fresh 200, not a replayed
+// phantom 409.
+// ---------------------------------------------------------------------------
+test('B-RE-1 retry after last-admin — same requestId against a different target succeeds with a fresh commit', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedCore(server, now);
+
+    // First attempt: demote the sole admin → 409 last_admin_required, no
+    // receipt stored.
+    const first = await putRole(server, 'adult-admin', 'adult-admin', {
+      platformRole: 'parent',
+      requestId: 'req-role-retry',
+    });
+    assert.equal(first.status, 409);
+    assert.equal(receiptRows(server, 'req-role-retry').length, 0, 'no receipt must land on last-admin guard failure');
+
+    // Second attempt: same requestId, different target (adult-parent → ops).
+    // Payload hash differs (target changed), so the idempotency preflight
+    // would surface `idempotency_reuse` if a receipt HAD persisted. With
+    // the B-RE-1 guard, no receipt exists → the retry proceeds to a fresh
+    // commit. Seed a second admin first so the unrelated demote does not
+    // trip the last-admin guard.
+    seedAdultAccount(server, { id: 'adult-admin-2', platformRole: 'admin', now });
+    const retry = await putRole(server, 'adult-admin', 'adult-parent', {
+      platformRole: 'ops',
+      requestId: 'req-role-retry',
+    });
+    assert.equal(retry.status, 200);
+    const retryPayload = await retry.json();
+    assert.equal(retryPayload.roleMutation.replayed, false, 'retry must be a fresh commit, not a phantom replay');
+    assert.equal(retryPayload.updatedAccount.platformRole, 'ops');
   } finally {
     server.close();
   }

@@ -2317,17 +2317,35 @@ async function bumpAdminKpiMetric(db, key, nowTs, delta = 1) {
   }
 }
 
-function bumpAdminKpiMetricStatement(db, key, nowTs, delta = 1) {
+function bumpAdminKpiMetricStatement(db, key, nowTs, delta = 1, { exists = null } = {}) {
   const resolvedDelta = Number.isFinite(Number(delta)) ? Number(delta) : 1;
   const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
   const seedCount = Math.max(0, resolvedDelta);
+  const valueParams = [key, seedCount, ts];
+  // B-RE-1: when an `exists` guard is supplied, the row is inserted via
+  // `INSERT INTO ... SELECT <values> WHERE EXISTS (<guard>) ON CONFLICT`. If
+  // the guard does not match (e.g. the caller's UPSERT lost a CAS race and
+  // the post-bump row_version does not exist on disk), the SELECT yields
+  // zero rows, nothing is inserted and no ON CONFLICT branch fires — the
+  // counter bump is a true no-op. The batch commits semantically but the
+  // counter was never moved, eliminating drift between successful receipts
+  // and `account_ops_metadata.updates` / `admin.account_role.updates`.
+  if (exists) {
+    return bindStatement(db, `
+      INSERT INTO admin_kpi_metrics (metric_key, metric_count, updated_at)
+      ${guardedExistsValueSource(valueParams.length, exists.sql)}
+      ON CONFLICT(metric_key) DO UPDATE SET
+        metric_count = MAX(0, admin_kpi_metrics.metric_count + ?),
+        updated_at = ?
+    `, [...guardedExistsParams(valueParams, exists), resolvedDelta, ts]);
+  }
   return bindStatement(db, `
     INSERT INTO admin_kpi_metrics (metric_key, metric_count, updated_at)
     VALUES (?, ?, ?)
     ON CONFLICT(metric_key) DO UPDATE SET
       metric_count = MAX(0, admin_kpi_metrics.metric_count + ?),
       updated_at = ?
-  `, [key, seedCount, ts, resolvedDelta, ts]);
+  `, [...valueParams, resolvedDelta, ts]);
 }
 
 // ---------------------------------------------------------------------------
@@ -3071,6 +3089,26 @@ async function updateAccountOpsMetadata(db, {
   // when `ops_status` changes — Phase C must NOT touch that column (see
   // plan §Phase D).
   // R21 batch atomicity: UPSERT + receipt + counter bump commit together.
+  // B-RE-1 (re-review Blocker): the receipt INSERT and counter bump are
+  // EXISTS-guarded on a write-signature tuple `(updated_at, updated_by,
+  // row_version)` that uniquely identifies THIS batch's UPSERT output.
+  // Guarding only on `row_version = nextRowVersion` would not suffice —
+  // two writers pre-checking at the same pre-image both compute the same
+  // `nextRowVersion`, and the race-winner's commit satisfies the loser's
+  // EXISTS check. Adding `updated_at = ts` discriminates the race loser
+  // (whose `ts` was never written) from the winner. `batch()` atomicity
+  // fires on SQL errors, not on zero-match UPSERTs, so without these
+  // guards the receipt + counter would persist against a phantom
+  // `appliedRow` and a retry with the same requestId would replay the
+  // phantom 200.
+  const receiptAndCounterExists = {
+    sql: `SELECT 1 FROM account_ops_metadata
+          WHERE account_id = ?
+            AND updated_at = ?
+            AND updated_by_account_id = ?
+            AND row_version = ?`,
+    params: [targetAccountId, ts, actorAccountId, nextRowVersion],
+  };
   const batchResult = await batch(db, [
     bindStatement(db, `
       INSERT INTO account_ops_metadata (
@@ -3114,8 +3152,8 @@ async function updateAccountOpsMetadata(db, {
       response,
       correlationId,
       appliedAt: ts,
-    }),
-    bumpAdminKpiMetricStatement(db, KPI_ACCOUNT_OPS_UPDATES_METRIC_KEY, ts, 1),
+    }, { exists: receiptAndCounterExists }),
+    bumpAdminKpiMetricStatement(db, KPI_ACCOUNT_OPS_UPDATES_METRIC_KEY, ts, 1, { exists: receiptAndCounterExists }),
   ]);
 
   // U8 CAS layer 3 (C1 fix) — post-batch verify via batch result rowsAffected.
@@ -3130,9 +3168,17 @@ async function updateAccountOpsMetadata(db, {
   // The authoritative signal is the UPSERT statement's own `meta.changes`:
   // the WHERE-guarded ON CONFLICT branch produces `changes = 0` on a race
   // loss. The insert branch and an unguarded update both produce
-  // `changes = 1`. The batch is atomic, so when the UPSERT changes count
-  // is zero the mutation_receipts INSERT + counter bump also rolled back
-  // (they share the same txn) — no drift.
+  // `changes = 1`. I-RE-2 (re-review Important): the receipt INSERT and
+  // counter bump above are EXISTS-guarded on a write-signature tuple
+  // `(account_id, updated_at, updated_by_account_id, row_version)` that
+  // uniquely identifies THIS batch's UPSERT output (matching on
+  // `row_version` alone would not suffice — two racing writers both
+  // computing the same `nextRowVersion` would both pass the guard once
+  // the winner commits). When the UPSERT loses the CAS, the guard SELECT
+  // matches zero rows and the receipt + counter statements each INSERT
+  // zero rows. `batch()` atomicity is preserved semantically: a
+  // race-loser's batch commits but writes nothing. No drift, no phantom
+  // receipt, no replay hazard.
   const upsertChanges = Math.max(0, Number(batchResult?.[0]?.meta?.changes) || 0);
   if (upsertChanges !== 1) {
     // Race-lost. Read the freshest row so the 409 currentState echo is
@@ -4859,6 +4905,26 @@ async function updateManagedAccountRole(db, {
     roleMutation: mutationMeta,
   };
 
+  // B-RE-1 (re-review Blocker): guard the receipt INSERT on a
+  // write-signature tuple `(platform_role, repo_revision, updated_at)`
+  // that uniquely identifies THIS batch's UPDATE output. Guarding only
+  // on `repo_revision = nextRepoRevision` would not suffice if two
+  // writers pre-checking at the same pre-image both compute the same
+  // `nextRepoRevision`: the race-winner's commit satisfies the loser's
+  // EXISTS check. Adding `platform_role = nextRole AND updated_at = nowTs`
+  // discriminates the loser (whose row was never touched). Without this
+  // guard, both the stale-revision failure mode and the last-admin
+  // failure mode would persist a receipt whose response describes a
+  // commit that never happened (`batch()` atomicity fires on SQL errors,
+  // not on zero-match UPDATEs).
+  const receiptExists = {
+    sql: `SELECT 1 FROM adult_accounts
+          WHERE id = ?
+            AND platform_role = ?
+            AND repo_revision = ?
+            AND updated_at = ?`,
+    params: [targetAccountId, nextRole, nextRepoRevision, nowTs],
+  };
   const batchResult = await batch(db, [
     bindStatement(db, updateSql, updateParams),
     storeMutationReceiptStatement(db, {
@@ -4871,14 +4937,16 @@ async function updateManagedAccountRole(db, {
       response: receiptBody,
       correlationId,
       appliedAt: nowTs,
-    }),
+    }, { exists: receiptExists }),
   ]);
   const updateChanges = Math.max(0, Number(batchResult?.[0]?.meta?.changes) || 0);
   if (updateChanges !== 1) {
     // rowsAffected=0 can mean (a) stale repo_revision, or (b) last-admin
     // guard blocked the demotion. Distinguish via a follow-up SELECT so the
-    // 409 body names the right failure mode. The batch was atomic — the
-    // receipt INSERT rolled back with the UPDATE, so no drift.
+    // 409 body names the right failure mode. The receipt INSERT is
+    // EXISTS-guarded on the post-bump `repo_revision` above, so on either
+    // failure mode it wrote zero rows — no phantom receipt, no replay
+    // hazard (see B-RE-1 commentary).
     const fresh = await first(db, 'SELECT repo_revision, platform_role FROM adult_accounts WHERE id = ?', [targetAccountId]);
     const freshRepoRevision = Math.max(0, Number(fresh?.repo_revision) || 0);
     if (freshRepoRevision !== currentRepoRevision) {

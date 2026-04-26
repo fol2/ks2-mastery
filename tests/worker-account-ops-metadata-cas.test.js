@@ -413,6 +413,12 @@ test('C1 TOCTOU — concurrent writer commits between pre-check and batch; loser
     const d1 = server.DB;
     const originalBatch = d1.batch.bind(d1);
     let batchCalls = 0;
+    // Use a distinguishable timestamp for writer A's simulated commit so it
+    // cannot collide with writer B's `ts` on the EXISTS write-signature
+    // guard (see B-RE-1 in repository.js::updateAccountOpsMetadata — the
+    // guard now matches on (account_id, updated_at, updated_by_account_id,
+    // row_version) to discriminate race loser from race winner).
+    const racerAUpdatedAt = Date.now() - 10_000;
     d1.batch = async (statements) => {
       batchCalls += 1;
       if (batchCalls === 1) {
@@ -428,7 +434,7 @@ test('C1 TOCTOU — concurrent writer commits between pre-check and batch; loser
               updated_by_account_id = 'adult-admin',
               row_version = row_version + 1
           WHERE account_id = ?
-        `).run(Date.now(), 'adult-parent');
+        `).run(racerAUpdatedAt, 'adult-parent');
       }
       return originalBatch(statements);
     };
@@ -461,16 +467,109 @@ test('C1 TOCTOU — concurrent writer commits between pre-check and batch; loser
     assert.equal(dbRow.plan_label, 'Plan-RacerA');
     assert.equal(dbRow.row_version, 2);
 
-    // Note: the mutation_receipts row + counter bump DO land for writer B
-    // because a zero-match UPSERT is not a SQL error and the batch commits.
-    // This is accepted drift — KPI reconciliation (U10) collapses it. The
-    // critical invariant is that writer B's STATE was not applied, which the
-    // DB assertions above confirm. Documenting the behaviour here so a future
-    // reviewer does not treat the receipt landing as a bug.
-    const loserReceipt = server.DB.db.prepare(
-      'SELECT request_id FROM mutation_receipts WHERE request_id = ?',
-    ).get('req-toctou-loser');
-    assert.ok(loserReceipt, 'the 409-loser receipt IS persisted (accepted drift); U10 reconciles counters');
+    // B-RE-1 (re-review Blocker): the mutation_receipts row and counter bump
+    // are EXISTS-guarded on the UPSERT's write-signature tuple (updated_at,
+    // updated_by, row_version). Writer A's commit wrote a different
+    // (updated_at) value, so writer B's EXISTS checks yield zero rows — no
+    // receipt, no counter bump. A retry with the same requestId cannot
+    // replay a phantom 200 because there is no stored receipt.
+    const loserReceiptCount = Number(server.DB.db.prepare(
+      'SELECT COUNT(*) AS n FROM mutation_receipts WHERE request_id = ? AND account_id = ?',
+    ).get('req-toctou-loser', 'adult-admin').n);
+    assert.equal(loserReceiptCount, 0, 'CAS loser must NOT persist a mutation_receipt (would enable replay-serves-phantom-200)');
+
+    // The account_ops_metadata.updates counter must reflect writer A's commit
+    // only. Writer B's EXISTS-guarded bump is a no-op on the race-loss.
+    // Writer A's simulated commit bypassed the counter (it was a raw UPDATE
+    // not routed through the helper), so the counter reflects only the
+    // helper-mediated seed call earlier in this test (req-toctou-seed).
+    const updatesCount = Number(server.DB.db.prepare(
+      'SELECT metric_count FROM admin_kpi_metrics WHERE metric_key = ?',
+    ).get('account_ops_metadata.updates').metric_count);
+    assert.equal(updatesCount, 1, 'counter bump must NOT fire for the CAS loser');
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// B-RE-1 (re-review Blocker): retry after TOCTOU loss. The first call with
+// requestId=R loses the CAS race and must NOT persist a mutation_receipt.
+// A second call with the same requestId=R but a fresh expectedRowVersion
+// must succeed with a fresh 200 (NOT a replayed-phantom response). This
+// proves the receipt-absence invariant closes the replay vector.
+// ---------------------------------------------------------------------------
+test('B-RE-1 retry after TOCTOU — same requestId with fresh expectedRowVersion lands a fresh 200, not a phantom replay', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedCore(server, Date.now());
+    // Seed a row at row_version = 1.
+    const seeded = await putMetadata(server, 'adult-admin', 'adult-parent', {
+      patch: { opsStatus: 'suspended', planLabel: 'Plan-A' },
+      expectedRowVersion: 0,
+      mutation: { requestId: 'req-recap-seed', correlationId: 'corr-recap-seed' },
+    });
+    assert.equal(seeded.status, 200);
+    assert.equal(rowVersion(server, 'adult-parent'), 1);
+
+    // First call: monkey-patch d1.batch to simulate a concurrent writer A
+    // committing between writer B's pre-check and batch. Writer B loses the
+    // CAS race; the receipt for `req-recap` must NOT persist.
+    const d1 = server.DB;
+    const originalBatch = d1.batch.bind(d1);
+    let batchCalls = 0;
+    const racerAUpdatedAt = Date.now() - 10_000;
+    d1.batch = async (statements) => {
+      batchCalls += 1;
+      if (batchCalls === 1) {
+        d1.db.prepare(`
+          UPDATE account_ops_metadata
+          SET ops_status = 'payment_hold',
+              updated_at = ?,
+              updated_by_account_id = 'adult-admin',
+              row_version = row_version + 1
+          WHERE account_id = ?
+        `).run(racerAUpdatedAt, 'adult-parent');
+      }
+      return originalBatch(statements);
+    };
+
+    const first = await putMetadata(server, 'adult-admin', 'adult-parent', {
+      patch: { opsStatus: 'active' },
+      expectedRowVersion: 1,
+      mutation: { requestId: 'req-recap', correlationId: 'corr-recap' },
+    });
+    assert.equal(first.status, 409);
+
+    // No receipt stored → no replay hazard.
+    const receiptCount = Number(server.DB.db.prepare(
+      'SELECT COUNT(*) AS n FROM mutation_receipts WHERE request_id = ?',
+    ).get('req-recap').n);
+    assert.equal(receiptCount, 0);
+
+    // Restore original batch (writer A is now done; no more simulated race).
+    d1.batch = originalBatch;
+
+    // Second call: same requestId, fresh expectedRowVersion = 2 (the
+    // post-race value). Must succeed with a fresh 200, not a phantom
+    // replay. If the first call had persisted a receipt, the idempotency
+    // preflight would return the stale `{ opsMetadataMutation: { replayed:
+    // true, ... } }` shape (serving a commit that never happened).
+    const retry = await putMetadata(server, 'adult-admin', 'adult-parent', {
+      patch: { opsStatus: 'active' },
+      expectedRowVersion: 2,
+      mutation: { requestId: 'req-recap', correlationId: 'corr-recap' },
+    });
+    assert.equal(retry.status, 200);
+    const retryPayload = await retry.json();
+    assert.equal(retryPayload.opsMetadataMutation.replayed, false, 'retry must be a fresh commit, not a phantom replay');
+    assert.equal(retryPayload.accountOpsMetadataEntry.opsStatus, 'active');
+    assert.equal(retryPayload.accountOpsMetadataEntry.rowVersion, 3);
+
+    // DB reflects the retry's commit.
+    const dbRow = metadataRow(server, 'adult-parent');
+    assert.equal(dbRow.ops_status, 'active');
+    assert.equal(dbRow.row_version, 3);
   } finally {
     server.close();
   }
