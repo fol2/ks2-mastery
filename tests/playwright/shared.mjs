@@ -92,12 +92,23 @@ export async function createDemoSession(page) {
 /**
  * Open a subject from the home grid. Accepts `spelling`, `grammar`, or
  * `punctuation`.
+ *
+ * SH2-U6 review blocker-6: `[data-action="open-subject"][data-subject-id]`
+ * matches TWO elements on the home surface — the hero CTA button
+ * (`.btn.primary.xl` that auto-targets the recommended subject) AND the
+ * subject-grid card. The hero CTA was added by PR #273 and breaks
+ * Playwright's strict-mode click with "locator resolved to 2 elements".
+ * Scope to `.subject-card` so the grid card is the sole target; the
+ * hero CTA path is still exercised by tests that want it explicitly via
+ * `.hero-cta-row .btn.primary.xl` selectors.
  */
 export async function openSubject(page, subjectId) {
   if (!SUBJECT_IDS.includes(subjectId)) {
     throw new Error(`openSubject: unknown subjectId ${subjectId}`);
   }
-  const card = page.locator(`[data-action="open-subject"][data-subject-id="${subjectId}"]`);
+  const card = page.locator(
+    `.subject-card[data-action="open-subject"][data-subject-id="${subjectId}"]`,
+  );
   await expect(card).toBeVisible();
   await card.click();
 }
@@ -248,11 +259,20 @@ export function defaultMasks(page) {
     // SH2-U6 extensions — the grammar + punctuation prompt texts are
     // per-session random. Masking them keeps baselines stable across
     // demo runs (the prompt word changes each time /demo mints a new
-    // learner). All three locators are small inline-text regions —
-    // well under the 30% coverage limit even when all three are
-    // matched across a viewport.
+    // learner). All locators are small inline-text regions — well
+    // under the 30% coverage limit even when matched across a
+    // viewport.
     page.locator('.grammar-prompt'),
-    page.locator('.punctuation-prompt, .punctuation-question'),
+    // SH2-U6 review nit-1 fix: the punctuation session renders its
+    // prompt as `<h2 className="section-title">` inside the
+    // `.punctuation-strip` header. The item source text lives in
+    // `[data-punctuation-session-source]` (a `<blockquote>`); both
+    // carry per-item variable content. `.punctuation-prompt` /
+    // `.punctuation-question` never existed in the DOM — removing
+    // the phantom selectors so the default-mask audit (NIT-2) shows
+    // every entry resolves to ≥1 element.
+    page.locator('[data-punctuation-session-source]'),
+    page.locator('.punctuation-strip .section-title'),
   ];
 }
 

@@ -35,14 +35,27 @@
 // Contract
 // --------
 //
-// `assertMaskCoverage(page, masks, viewport, maxRatio = 0.30)` reads the
-// bounding box for every locator in the supplied array, sums the total
-// masked area, divides by the viewport area (width × height), and
-// asserts the ratio is at or below `maxRatio`. If any mask resolves to
-// more than one element (e.g. `.cloze` appearing twice in the DOM), the
-// helper iterates over every matching element via
+// `assertMaskCoverage(page, masks, viewport, maxRatio = 0.30, { targetBbox })`
+// reads the bounding box for every locator in the supplied array, sums
+// the total masked area, divides by EITHER the viewport area or the
+// caller-supplied `targetBbox` area (whichever is smaller / non-zero),
+// and asserts the ratio is at or below `maxRatio`. If any mask resolves
+// to more than one element (e.g. `.cloze` appearing twice in the DOM),
+// the helper iterates over every matching element via
 // `locator.all()` and sums each rect. Off-screen / invisible masks
 // (`boundingBox()` returns `null`) contribute zero area.
+//
+// Scoped-target denominator (SH2-U6 review blocker-2)
+// ---------------------------------------------------
+//
+// Most scenes capture with `toHaveScreenshot(target)` — a scoped shot of
+// a specific card or panel — so the viewport area badly OVERstates the
+// meaningful surface. A mask covering 100% of a 320x480 panel on a
+// 1440x900 desktop viewport is only ~11% of-viewport (well below 30%)
+// but 100% of-target (silent green). Passing the target bounding box
+// via `{ targetBbox }` flips the denominator to whichever surface is
+// smaller so the guard triggers on the right scale for scoped captures,
+// while non-scoped full-page captures retain the viewport denominator.
 //
 // Rectangle-overlap note: this helper intentionally uses the simple
 // "sum of bounding boxes" approach rather than a pixel-accurate union.
@@ -57,8 +70,23 @@ import { expect } from '@playwright/test';
 
 /**
  * Compute the mask-coverage ratio for a set of Playwright locator
- * masks against a supplied viewport. Returns a Number in [0, 1+] (the
- * simple sum means overlapping masks can exceed 1 before clamping).
+ * masks against a supplied viewport (or optionally a scoped target
+ * bounding box — see below). Returns a Number in [0, 1+] (the simple
+ * sum means overlapping masks can exceed 1 before clamping).
+ *
+ * SH2-U6 review blocker-2: when the screenshot capture is scoped to
+ * a `target` locator (e.g. `toHaveScreenshot` on a `.auth-panel`
+ * rather than the full page), the meaningful denominator for mask
+ * coverage is the target's bounding box, NOT the viewport. A mask
+ * covering 100% of a 320x480 auth panel on a 1440x900 viewport is
+ * an 11.85% of-viewport ratio but a 100% of-target ratio —
+ * precisely the P1 U5 silent-green hazard at a scoped-capture scale.
+ * Callers pass `targetBbox` via
+ * `assertMaskCoverage(page, masks, viewport, maxRatio, { targetBbox })`
+ * and the helper uses whichever denominator is smaller (the tighter
+ * surface) so both guard paths stay in play. When `targetBbox` is
+ * null the behaviour is identical to the pre-blocker contract
+ * (viewport denominator).
  *
  * @param {import('@playwright/test').Page} page - Playwright page.
  * @param {Array<import('@playwright/test').Locator>} masks - mask
@@ -67,17 +95,58 @@ import { expect } from '@playwright/test';
  * @param {{ width: number, height: number }} viewport - the project's
  *   viewport (Playwright's `testInfo.project.use.viewport` or the
  *   runtime `page.viewportSize()`).
+ * @param {{ targetBbox?: { width: number, height: number } | null }}
+ *   [options] - optional scoped-capture target bounding box. When
+ *   present and smaller than the viewport, its area replaces the
+ *   viewport area in the ratio computation.
  * @returns {Promise<{ ratio: number, maskedArea: number,
- *   viewportArea: number }>} raw numbers for callers that want to
- *   instrument the ratio.
+ *   totalArea: number, viewportArea: number, targetArea: number,
+ *   denominator: 'viewport' | 'target' }>} raw numbers for callers
+ *   that want to instrument the ratio. `totalArea` is whichever
+ *   denominator was picked; `viewportArea` + `targetArea` are the
+ *   raw figures for diagnostics.
  */
-export async function measureMaskCoverage(page, masks, viewport) {
+export async function measureMaskCoverage(page, masks, viewport, options = {}) {
   const width = Number(viewport?.width) || 0;
   const height = Number(viewport?.height) || 0;
   const viewportArea = width * height;
-  if (!Array.isArray(masks) || !masks.length || viewportArea <= 0) {
-    return { ratio: 0, maskedArea: 0, viewportArea };
+  const bbox = options?.targetBbox || null;
+  const targetArea = bbox
+    ? Math.max(0, Number(bbox.width) || 0) * Math.max(0, Number(bbox.height) || 0)
+    : 0;
+  // Pick the smaller of the two non-zero denominators so a scoped
+  // target surface always measures against itself. Fall back to the
+  // viewport when no target is supplied; fall back to the target when
+  // the viewport is zero (defensive — upstream callers always supply
+  // a sane viewport but we want a useful ratio even in degenerate
+  // test-harness conditions).
+  let totalArea;
+  let denominator;
+  if (targetArea > 0 && (viewportArea <= 0 || targetArea < viewportArea)) {
+    totalArea = targetArea;
+    denominator = 'target';
+  } else {
+    totalArea = viewportArea;
+    denominator = 'viewport';
   }
+  if (!Array.isArray(masks) || !masks.length || totalArea <= 0) {
+    return {
+      ratio: 0,
+      maskedArea: 0,
+      totalArea,
+      viewportArea,
+      targetArea,
+      denominator,
+    };
+  }
+  // When the denominator is the scoped target, masks that live OUTSIDE
+  // the target bbox are irrelevant to the capture's silent-green risk
+  // — they will not paint magenta inside the target region. Count only
+  // the portion of each mask that INTERSECTS the target bbox. For the
+  // viewport denominator, every on-screen mask contributes the full
+  // bounding-box area as before. Rectangle-overlap helper is the
+  // standard `max(0, ...)` clipped width/height.
+  const useTargetDenom = denominator === 'target' && bbox;
   let maskedArea = 0;
   for (const mask of masks) {
     if (!mask || typeof mask.all !== 'function') continue;
@@ -89,14 +158,36 @@ export async function measureMaskCoverage(page, masks, viewport) {
     for (const element of elements) {
       const box = await element.boundingBox().catch(() => null);
       if (!box) continue;
-      const area = Math.max(0, Number(box.width) || 0) * Math.max(0, Number(box.height) || 0);
-      maskedArea += area;
+      if (useTargetDenom) {
+        // Intersection of mask bbox with target bbox. Non-overlapping
+        // masks contribute zero — they cannot leak pixels into the
+        // target's captured region.
+        const left = Math.max(Number(bbox.x) || 0, Number(box.x) || 0);
+        const top = Math.max(Number(bbox.y) || 0, Number(box.y) || 0);
+        const right = Math.min(
+          (Number(bbox.x) || 0) + (Number(bbox.width) || 0),
+          (Number(box.x) || 0) + (Number(box.width) || 0),
+        );
+        const bottom = Math.min(
+          (Number(bbox.y) || 0) + (Number(bbox.height) || 0),
+          (Number(box.y) || 0) + (Number(box.height) || 0),
+        );
+        const width = Math.max(0, right - left);
+        const height = Math.max(0, bottom - top);
+        maskedArea += width * height;
+      } else {
+        const area = Math.max(0, Number(box.width) || 0) * Math.max(0, Number(box.height) || 0);
+        maskedArea += area;
+      }
     }
   }
   return {
-    ratio: viewportArea > 0 ? maskedArea / viewportArea : 0,
+    ratio: totalArea > 0 ? maskedArea / totalArea : 0,
     maskedArea,
+    totalArea,
     viewportArea,
+    targetArea,
+    denominator,
   };
 }
 
@@ -114,19 +205,20 @@ export async function measureMaskCoverage(page, masks, viewport) {
  * @throws When the ratio exceeds `maxRatio`. Surfaces `ratio` + `limit`
  *   in the error message so CI logs show the over-budget percentage.
  */
-export async function assertMaskCoverage(page, masks, viewport, maxRatio = 0.30) {
-  const { ratio, maskedArea, viewportArea } = await measureMaskCoverage(page, masks, viewport);
+export async function assertMaskCoverage(page, masks, viewport, maxRatio = 0.30, options = {}) {
+  const result = await measureMaskCoverage(page, masks, viewport, options);
+  const { ratio, maskedArea, totalArea, denominator } = result;
   if (ratio > maxRatio) {
     const ratioPct = (ratio * 100).toFixed(1);
     const limitPct = (maxRatio * 100).toFixed(1);
     throw new Error(
       `Mask coverage ${ratioPct}% exceeds ${limitPct}% limit ` +
-      `(masked ${Math.round(maskedArea)}px² of ${Math.round(viewportArea)}px² viewport). ` +
+      `(masked ${Math.round(maskedArea)}px² of ${Math.round(totalArea)}px² ${denominator}). ` +
       `Tighten mask selectors so non-deterministic regions are targeted narrowly — ` +
       `see the P1 U5 silent-green defect (docs/hardening/p1-baseline.md).`,
     );
   }
-  return { ratio, maskedArea, viewportArea };
+  return result;
 }
 
 /**
@@ -137,8 +229,8 @@ export async function assertMaskCoverage(page, masks, viewport, maxRatio = 0.30)
  * throw. Prefer `assertMaskCoverage` when the caller wants to surface
  * the ratio back to its own logs or aggregate the violation count.
  */
-export async function expectMaskCoverageWithinLimit(page, masks, viewport, maxRatio = 0.30) {
-  const { ratio } = await measureMaskCoverage(page, masks, viewport);
+export async function expectMaskCoverageWithinLimit(page, masks, viewport, maxRatio = 0.30, options = {}) {
+  const { ratio } = await measureMaskCoverage(page, masks, viewport, options);
   expect(
     ratio,
     `mask coverage ${(ratio * 100).toFixed(1)}% must be within ${(maxRatio * 100).toFixed(1)}% limit ` +
