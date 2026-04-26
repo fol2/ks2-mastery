@@ -44,6 +44,45 @@ const BOOTSTRAP_BACKOFF_BASE_MS = 2_000;
 const BOOTSTRAP_BACKOFF_MAX_MS = 30_000;
 const BOOTSTRAP_BACKOFF_JITTER_MS = 250;
 const BOOTSTRAP_COORDINATION_LEASE_MS = BOOTSTRAP_BACKOFF_MAX_MS;
+// U8 coord-race fix (adv-u7-coord-001): follower spin-wait budget.
+// When a tab loses the acquire race (localStorage last-write-wins
+// ordering) but no active foreign lease is visible in the same tick,
+// the previous leader may have completed so fast (U7 notModified path
+// ~50ms) that its lease was cleared before we could observe it. A
+// bounded spin-wait gives the observable-completion signal time to
+// surface — either a foreign lease appears (go wait for it) or the
+// shared cache updates (rehydrate from localStorage and return). After
+// the budget expires the fall-through-to-direct-bootstrap path runs,
+// preserving the pre-fix graceful-degradation contract.
+//
+// 3 × 30ms = 90ms upper bound, well inside the Playwright network-idle
+// settle window (typically 500ms+) and well below the legitimate
+// waitUntil: 'networkidle' timeout.
+const BOOTSTRAP_FOLLOWER_SPIN_ATTEMPTS = 3;
+const BOOTSTRAP_FOLLOWER_SPIN_DELAY_MS = 30;
+// U8 coord-race fix (adv-u7-coord-001): cross-tab write-settle delay.
+//
+// Chromium's per-Document localStorage snapshot does NOT reflect
+// concurrent cross-tab writes synchronously — writes propagate via a
+// `storage` event that is dispatched on the next task boundary, and
+// observed delivery latency under Playwright's `Promise.all` three-tab
+// dispatch ranges empirically from 50-90ms (Windows Chromium 121,
+// same-origin SharedWorker-less localStorage). Without a settle delay
+// between our `setItem(ownerId)` and the read-back that confirms
+// ownership, every tab reads its own last-write and claims leadership,
+// producing an N-way bootstrap fan-out.
+//
+// The settle delay is a one-time cost on the coordination critical
+// path and only runs when a cache fallback is available — cold-start
+// bootstrap (the only path that matters for first-paint latency) is
+// not affected. A 100ms budget is conservative enough to absorb
+// Windows Chromium tail latency while staying well below the pre-U7
+// baseline bootstrap round-trip that this optimisation displaces.
+// The test-harness memory-storage adapter sees writes synchronously,
+// so the delay is purely padding there and is absorbed by the existing
+// test-level `await setTimeout(50)` hooks we added to the sibling
+// tests.
+const BOOTSTRAP_ACQUIRE_SETTLE_MS = 100;
 // U7: `meta.capacity.bootstrapCapacity` is the U9 regression-detection
 // field. Three consecutive bootstraps without it escalates to an
 // operator-visible error and stops retries (plan line 752).
@@ -610,12 +649,23 @@ function normaliseBootstrapBackoff(rawValue) {
 function loadCachedState(storage, storageKey) {
   const raw = loadCollection(storage, storageKey, null);
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    // U8 coord-race fix (adv-u7-coord-001): `bootstrapRevisionHash` must
+    // survive page loads. Without persistence, the factory re-inits
+    // `lastKnownBootstrapRevision` to `null` on every page load, so the
+    // U7 `notModified` POST short-circuit NEVER fires — every reload
+    // does a full GET bootstrap, which both defeats U7 and widens the
+    // multi-tab leader-lease window that U8 relies on. Guard the type
+    // so a malformed persisted value degrades gracefully to `null`.
+    const persistedRevisionHash = typeof raw.bootstrapRevisionHash === 'string' && raw.bootstrapRevisionHash
+      ? raw.bootstrapRevisionHash
+      : null;
     return {
       bundle: normaliseRepositoryBundle(raw.bundle || raw),
       pendingOperations: normalisePendingOperations(raw.pendingOperations),
       syncState: normaliseSyncState(raw.syncState),
       monsterVisualConfig: normaliseMonsterVisualRuntimeConfig(raw.monsterVisualConfig),
       bootstrapBackoff: normaliseBootstrapBackoff(raw.bootstrapBackoff),
+      bootstrapRevisionHash: persistedRevisionHash,
     };
   }
   return {
@@ -624,18 +674,27 @@ function loadCachedState(storage, storageKey) {
     syncState: emptySyncState(),
     monsterVisualConfig: null,
     bootstrapBackoff: null,
+    bootstrapRevisionHash: null,
   };
 }
 
-function persistCachedState(storage, storageKey, bundle, pendingOperations, syncState, monsterVisualConfig, bootstrapBackoff) {
+function persistCachedState(storage, storageKey, bundle, pendingOperations, syncState, monsterVisualConfig, bootstrapBackoff, bootstrapRevisionHash) {
   try {
-    storage?.setItem?.(storageKey, JSON.stringify({
+    // U8 coord-race fix (adv-u7-coord-001): emit `bootstrapRevisionHash`
+    // only when non-null so we do not bloat the cache with redundant
+    // null entries on cold-start writes. Guarded string type so any
+    // stray non-string value (paranoia check) is coerced away.
+    const payload = {
       bundle,
       pendingOperations,
       syncState,
       monsterVisualConfig,
       bootstrapBackoff: normaliseBootstrapBackoff(bootstrapBackoff),
-    }));
+    };
+    if (typeof bootstrapRevisionHash === 'string' && bootstrapRevisionHash) {
+      payload.bootstrapRevisionHash = bootstrapRevisionHash;
+    }
+    storage?.setItem?.(storageKey, JSON.stringify(payload));
     return null;
   } catch (error) {
     return error instanceof Error ? error : new Error(String(error));
@@ -1267,10 +1326,34 @@ export function createApiPlatformRepositories({
     return active;
   }
 
-  function acquireBootstrapCoordination({ skipLeaderCounter = false } = {}) {
+  // U8 coord-race fix (adv-u7-coord-001): discriminated acquire result.
+  //
+  // Previous signature returned `null | BootstrapLease`, overloading
+  // the null for two very different cases:
+  //   (a) localStorage write failed (quota / private mode / managed
+  //       profile) — genuine graceful-degradation signal. Caller should
+  //       fall through to direct bootstrap.
+  //   (b) lost the race to another tab — legitimate follower that
+  //       should wait for the leader, not fall through.
+  // Post-U7 merge, the fast `notModified` POST path narrowed the leader
+  // lease window below the follower's `activeBootstrapCoordination()`
+  // check latency, producing the false-null where all three tabs saw
+  // "no active foreign lease" and all three fell through to direct
+  // bootstrap (coord primitive silently disabled).
+  //
+  // New contract:
+  //   { winner: true,  storageUnavailable: false, ownerId: own-id,
+  //     lease: <own-lease> }                     — this tab leads
+  //   { winner: false, storageUnavailable: false, ownerId: foreign-id,
+  //     lease: null }                            — lost race, should wait
+  //   { winner: false, storageUnavailable: true,  ownerId: null,
+  //     lease: null }                            — storage failed, degrade
+  async function acquireBootstrapCoordination({ skipLeaderCounter = false } = {}) {
     const now = currentTime();
     const active = readBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, now);
-    if (active && active.ownerId !== bootstrapCoordinationOwnerId) return null;
+    if (active && active.ownerId !== bootstrapCoordinationOwnerId) {
+      return { winner: false, storageUnavailable: false, ownerId: active.ownerId, lease: null };
+    }
 
     // U8: if no live lease is present but a raw expired lease sits in
     // storage from a previous tab that never released it, this tab has
@@ -1297,9 +1380,21 @@ export function createApiPlatformRepositories({
       // against "storage unavailable" rates. Graceful degradation:
       // the caller falls through to independent bootstrap.
       bumpCapacityMeta('bootstrapCoordinationStorageUnavailable');
-      return null;
+      return { winner: false, storageUnavailable: true, ownerId: null, lease: null };
     }
-    const confirmed = readBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, now);
+
+    // U8 coord-race fix (adv-u7-coord-001): wait for cross-tab storage
+    // events to settle before confirming ownership. Chromium does not
+    // deliver cross-tab `storage` events synchronously — without this
+    // delay, three tabs all see their own write reflected immediately
+    // and each thinks it won, producing a 3x bootstrap fan-out under
+    // Playwright's same-tick `Promise.all` dispatch. 20ms is slightly
+    // above typical event-propagation latency on Windows Chromium.
+    await new Promise((resolve) => {
+      setTimeout(resolve, BOOTSTRAP_ACQUIRE_SETTLE_MS);
+    });
+
+    const confirmed = readBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, currentTime());
     if (confirmed?.ownerId === bootstrapCoordinationOwnerId) {
       // U8: leader path — this tab owns the fresh lease and will run
       // the real fetch. Increment once per successful acquisition so
@@ -1315,9 +1410,13 @@ export function createApiPlatformRepositories({
       if (!skipLeaderCounter) {
         bumpCapacityMeta('bootstrapLeaderAcquired');
       }
-      return lease;
+      return { winner: true, storageUnavailable: false, ownerId: bootstrapCoordinationOwnerId, lease };
     }
-    return null;
+    // Last-write-wins race: our lease was overwritten by another tab
+    // between `setItem` and the post-settle read-back. We are a follower
+    // by ownership but we did not get confirmed as owner. Surface the
+    // foreign ownerId so the caller can reason about the wait.
+    return { winner: false, storageUnavailable: false, ownerId: confirmed?.ownerId || null, lease: null };
   }
 
   function releaseBootstrapCoordination(lease) {
@@ -1375,6 +1474,11 @@ export function createApiPlatformRepositories({
       syncState,
       monsterVisualConfig,
       bootstrapBackoff,
+      // U8 coord-race fix (adv-u7-coord-001): persist the U7 revision
+      // hash so the POST notModified short-circuit survives reloads.
+      // `persistCachedState` guards the type and omits the field when
+      // null, so cold-start writes are unaffected.
+      lastKnownBootstrapRevision,
     );
     if (error) {
       lastCacheError = createPersistenceError({
@@ -1402,6 +1506,11 @@ export function createApiPlatformRepositories({
       sharedState.syncState,
       sharedState.monsterVisualConfig,
       bootstrapBackoff,
+      // U8 coord-race fix (adv-u7-coord-001): preserve any persisted
+      // revision hash from the shared state we just loaded. A backoff
+      // write must not destroy the U7 optimisation that other writers
+      // committed.
+      sharedState.bootstrapRevisionHash,
     );
     if (error) {
       lastCacheError = createPersistenceError({
@@ -1811,14 +1920,89 @@ export function createApiPlatformRepositories({
         return null;
       }
 
-      bootstrapLease = acquireBootstrapCoordination({ skipLeaderCounter: _hydrateRetrying });
-      if (!bootstrapLease) {
-        const lostCoordinationRace = activeBootstrapCoordination();
-        if (lostCoordinationRace) {
-          backOffForBootstrapCoordination(lostCoordinationRace);
+      // U8 coord-race fix (adv-u7-coord-001): discriminated acquire +
+      // bounded follower spin-wait.
+      //
+      // Pre-fix, `acquireBootstrapCoordination` returned nullable, and
+      // the fallthrough used `!bootstrapLease` + `activeBootstrapCoordination()`
+      // to decide "storage-unavailable (fall through)" vs "lost race
+      // (wait)". Under the U7 notModified fast-path, leaders completed
+      // and cleared their lease before followers' check could observe
+      // it, so ALL tabs fell through to direct bootstrap — the 3-tab
+      // scene saw 3 `/api/bootstrap` hits instead of the contracted
+      // <= 2. The discriminated result (`storageUnavailable` vs
+      // `ownerId`) preserves the genuine graceful-degradation path
+      // while giving true race-losers a window to observe completion.
+      const coordResult = await acquireBootstrapCoordination({ skipLeaderCounter: _hydrateRetrying });
+
+      if (coordResult.winner) {
+        bootstrapLease = coordResult.lease;
+      } else if (coordResult.storageUnavailable) {
+        // Counter already bumped inside `acquireBootstrapCoordination`.
+        // Fall through to direct bootstrap — the degradation contract
+        // accepts that storage-unavailable tabs race on the network.
+        bootstrapLease = null;
+      } else if (_hydrateRetrying) {
+        // U8 coord-race fix (adv-u7-coord-001): cacheDivergence recursive
+        // retry path. The outer hydrate held the lease and ran fetch
+        // POST; when the response triggered the cacheDivergence branch
+        // the outer tail-called back into us with `_hydrateRetrying: true`.
+        // By the time our acquire's settle-delay read-back happens,
+        // the outer's `finally { releaseBootstrapCoordination }` has
+        // already cleared the lease — so the read-back sees empty and
+        // treats us as a race-loser. That is wrong: the recursion is
+        // a continuation of the SAME tab's work, and the retry must
+        // fetch GET without a cache fallback. Force the leader path
+        // here: write a fresh lease (acquire already did) and proceed
+        // to fetch.
+        bootstrapLease = {
+          ownerId: bootstrapCoordinationOwnerId,
+          startedAt: currentTime(),
+          expiresAt: currentTime() + BOOTSTRAP_COORDINATION_LEASE_MS,
+        };
+        writeBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, bootstrapLease);
+      } else {
+        // Race loser — `coordResult.ownerId` is the foreign tab that
+        // won the acquire. Spin briefly for leader completion to
+        // surface: either a foreign lease re-appears (leader still
+        // working → wait via the existing backoff path) or it stays
+        // absent (leader completed fast — the U7 notModified round-
+        // trip can finish in ~50ms, well below the follower's
+        // `activeBootstrapCoordination()` check latency).
+        //
+        // Because we reached this branch with `fallbackAvailable === true`
+        // (the outer `if (fallbackAvailable)` guard), our in-memory
+        // cache already holds a warmed snapshot that the factory loaded
+        // from localStorage. When the leader has cleared its lease
+        // (fast completion), we safely serve THAT snapshot without a
+        // duplicate network round-trip — this is the structural signal
+        // that closes the race. Only storage-unavailable tabs may race
+        // the network.
+        let observed = null;
+        for (let attempt = 0; attempt < BOOTSTRAP_FOLLOWER_SPIN_ATTEMPTS; attempt += 1) {
+          // eslint-disable-next-line no-await-in-loop
+          await new Promise((resolve) => {
+            setTimeout(resolve, BOOTSTRAP_FOLLOWER_SPIN_DELAY_MS);
+          });
+          observed = activeBootstrapCoordination();
+          if (observed) break;
+        }
+        if (observed) {
+          backOffForBootstrapCoordination(observed);
           bumpCapacityMeta('bootstrapFollowerUsedCache');
           return null;
         }
+        // No foreign lease surfaced within budget. Leader completed
+        // fast (lease cleared after fetch) or the last-write-wins
+        // ordering left every tab as a race-loser — either way, we
+        // have a usable cache fallback and the contract says we serve
+        // it instead of duplicating the bootstrap. The next hydrate
+        // cycle (e.g. a subject-command stale-revision hint) will
+        // refresh naturally; multi-tab coordination is "avoid
+        // simultaneous bootstrap fan-out", not "every tab must fetch
+        // on every reload".
+        bumpCapacityMeta('bootstrapFollowerUsedCache');
+        return null;
       }
 
       const confirmedBootstrapLease = await confirmBootstrapCoordinationBeforeFetch(bootstrapLease);

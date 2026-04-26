@@ -679,7 +679,12 @@ test('bootstrap hydrate backs off when another tab is already refreshing a usabl
   pauseNextBootstrap = true;
   const refreshingTab = createApiPlatformRepositories(commonOptions);
   const refreshPromise = refreshingTab.hydrate();
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  // U8 coord-race fix (adv-u7-coord-001): `acquireBootstrapCoordination`
+  // now awaits a cross-tab storage-event settle window (~100ms) before
+  // confirming ownership. The refreshing tab must traverse that window
+  // + dispatch its paused fetch before the second tab checks the lease.
+  // 150ms is comfortably above the 100ms settle budget on typical CI.
+  await new Promise((resolve) => setTimeout(resolve, 150));
 
   const backedOffTab = createApiPlatformRepositories(commonOptions);
   await backedOffTab.hydrate();
@@ -840,7 +845,11 @@ test('bootstrap coordination lease covers a slow in-flight refresh', async () =>
   pauseNextBootstrap = true;
   const refreshingTab = createApiPlatformRepositories(commonOptions);
   const refreshPromise = refreshingTab.hydrate();
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  // U8 coord-race fix (adv-u7-coord-001): see comment on the sibling
+  // test above; settle-window latency means we need >100ms real-time
+  // yield to let the refreshing tab's acquire + fetch kick off before
+  // the second tab hydrates.
+  await new Promise((resolve) => setTimeout(resolve, 150));
   now += 2_501;
 
   const backedOffTab = createApiPlatformRepositories(commonOptions);
