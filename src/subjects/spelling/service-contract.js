@@ -8,6 +8,24 @@ export const GUARDIAN_MAX_REVIEW_LEVEL = GUARDIAN_INTERVALS.length - 1;
 export const GUARDIAN_MIN_ROUND_LENGTH = 5;
 export const GUARDIAN_MAX_ROUND_LENGTH = 8;
 export const GUARDIAN_DEFAULT_ROUND_LENGTH = 8;
+
+/**
+ * Canonical set of dashboard/selector-facing Guardian mission states. Order
+ * matches the state-machine priority: 'locked' (not post-Mega) takes
+ * precedence over 'first-patrol' which takes precedence over 'wobbling' etc.
+ * The 'rested' terminal state disables the Begin button; every other state
+ * opens it. Consumers should derive the `guardianMissionAvailable` boolean
+ * from this set via `!== 'locked' && !== 'rested'` rather than re-enumerating
+ * enabled states.
+ */
+export const GUARDIAN_MISSION_STATES = Object.freeze([
+  'locked',
+  'first-patrol',
+  'due',
+  'wobbling',
+  'optional-patrol',
+  'rested',
+]);
 // Canonical secure-stage threshold shared by the service layer, the
 // post-mastery read-model, and the Word Bank view-model. Prior to U2 this
 // constant was duplicated as `GUARDIAN_SECURE_STAGE` in shared/spelling/service.js

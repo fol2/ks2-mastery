@@ -762,3 +762,91 @@ test('smartBucket routes secure-stage words with historical wrongs to fragile be
   assert.equal(result.ok, true);
   assert.deepEqual(result.session.uniqueWords, [fragileSlug]);
 });
+
+// ----- U1: service-side getPostMasteryState mirror ----------------------------
+// The service's live `getPostMasteryState` feeds the Alt+4 module gate and the
+// setup-scene render. U1 extends it with the same new fields the read-model
+// selector returns (`guardianMissionState`, `guardianMissionAvailable`,
+// `unguardedMegaCount`, `guardianAvailableCount`, `wobblingDueCount`,
+// `nonWobblingDueCount`). These tests drive a core-sized learner through the
+// service and spot-check the derived fields.
+
+function seedFullCoreMega({ repositories, learnerId, today, guardian = {} }) {
+  const progress = Object.fromEntries(WORDS
+    .filter((word) => word.spellingPool === 'core')
+    .map((word) => [word.slug, {
+      stage: 4,
+      attempts: 6,
+      correct: 5,
+      wrong: 1,
+      dueDay: today + 60,
+      lastDay: today - 7,
+      lastResult: true,
+    }]));
+  repositories.subjectStates.writeData(learnerId, 'spelling', {
+    progress,
+    guardian,
+  });
+  return progress;
+}
+
+test('U1 service: getPostMasteryState exposes all U1 fields for fresh graduate', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / (24 * 60 * 60 * 1000));
+  const { service, repositories } = makeService({ now, random: makeSeededRandom(1) });
+  seedFullCoreMega({ repositories, learnerId: 'learner-a', today, guardian: {} });
+
+  const snapshot = service.getPostMasteryState('learner-a');
+  assert.equal(snapshot.allWordsMega, true);
+  assert.equal(snapshot.guardianMissionState, 'first-patrol');
+  assert.equal(snapshot.guardianMissionAvailable, true);
+  assert.equal(snapshot.guardianDueCount, 0);
+  assert.equal(snapshot.wobblingDueCount, 0);
+  assert.equal(snapshot.nonWobblingDueCount, 0);
+  assert.ok(snapshot.unguardedMegaCount > 0, 'all Mega core slugs are unguarded');
+  assert.equal(snapshot.guardianAvailableCount, snapshot.unguardedMegaCount);
+});
+
+test('U1 service: getPostMasteryState mirrors read-model for wobbling scenario', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / (24 * 60 * 60 * 1000));
+  const { service, repositories } = makeService({ now, random: makeSeededRandom(1) });
+  const guardian = {
+    possess: { reviewLevel: 0, lastReviewedDay: today - 3, nextDueDay: today - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+    believe: { reviewLevel: 2, lastReviewedDay: today - 2, nextDueDay: today, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+  };
+  seedFullCoreMega({ repositories, learnerId: 'learner-a', today, guardian });
+
+  const snapshot = service.getPostMasteryState('learner-a');
+  assert.equal(snapshot.guardianMissionState, 'wobbling');
+  assert.equal(snapshot.guardianMissionAvailable, true);
+  assert.equal(snapshot.wobblingDueCount, 1);
+  assert.equal(snapshot.nonWobblingDueCount, 1);
+  assert.equal(snapshot.guardianDueCount, 2);
+});
+
+test('U1 service: getPostMasteryState returns locked state when learner has not graduated', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const { service } = makeService({ now, random: makeSeededRandom(1) });
+  // No seed — learner-a has no progress.
+  const snapshot = service.getPostMasteryState('learner-a');
+  assert.equal(snapshot.allWordsMega, false);
+  assert.equal(snapshot.guardianMissionState, 'locked');
+  assert.equal(snapshot.guardianMissionAvailable, false);
+});
+
+test('U1 service: optional-patrol when some Mega words are still unguarded but none due', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / (24 * 60 * 60 * 1000));
+  const { service, repositories } = makeService({ now, random: makeSeededRandom(1) });
+  const guardian = {
+    possess: { reviewLevel: 3, lastReviewedDay: today - 1, nextDueDay: today + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+    believe: { reviewLevel: 2, lastReviewedDay: today - 2, nextDueDay: today + 14, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+  };
+  seedFullCoreMega({ repositories, learnerId: 'learner-a', today, guardian });
+  const snapshot = service.getPostMasteryState('learner-a');
+  assert.equal(snapshot.guardianDueCount, 0, 'nothing due');
+  assert.equal(snapshot.guardianMissionState, 'optional-patrol');
+  assert.equal(snapshot.guardianMissionAvailable, true);
+  assert.ok(snapshot.unguardedMegaCount > 0);
+});

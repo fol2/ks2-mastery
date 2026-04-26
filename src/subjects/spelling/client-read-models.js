@@ -118,6 +118,13 @@ export function createSpellingReadModelService({ getState = () => null } = {}) {
       // through the next cached command response which carries the real
       // state via the Worker engine. This keeps the Setup render stable
       // while the first round trip is in flight.
+      //
+      // U1 critical: the Setup scene gates the Begin button on
+      // `guardianMissionAvailable`; without the defaults below, the
+      // remote-sync dashboard would read `undefined` for the gate and stay
+      // permanently disabled. The defaults mirror the 'locked' state so the
+      // legacy dashboard renders until the first command round-trip
+      // populates `subjectUi.spelling.postMastery`.
       const cached = readModel(learnerId).postMastery;
       if (cached && typeof cached === 'object' && !Array.isArray(cached)) {
         return cloneSerialisable(cached);
@@ -126,6 +133,12 @@ export function createSpellingReadModelService({ getState = () => null } = {}) {
         allWordsMega: false,
         guardianDueCount: 0,
         wobblingCount: 0,
+        wobblingDueCount: 0,
+        nonWobblingDueCount: 0,
+        unguardedMegaCount: 0,
+        guardianAvailableCount: 0,
+        guardianMissionState: 'locked',
+        guardianMissionAvailable: false,
         nextGuardianDueDay: null,
         todayDay: Math.floor(Date.now() / (24 * 60 * 60 * 1000)),
         guardianMap: {},

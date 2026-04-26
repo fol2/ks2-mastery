@@ -53,6 +53,76 @@ import {
 // free of the full word dataset (see audit-client-bundle.mjs).
 export { isGuardianEligibleSlug };
 
+/**
+ * Pure dashboard state machine (U1). Derives the Guardian mission state from
+ * aggregate counts so the Setup scene, the module shortcut gate, and any
+ * downstream consumer can branch their copy on a single labelled value.
+ *
+ * Contract:
+ *   - `allWordsMega` false → 'locked' (dashboard renders legacy setup).
+ *   - Empty guardian map + any unguarded Mega slug → 'first-patrol' (fresh
+ *     graduate has never run Guardian; even a single unguarded Mega word
+ *     opens the first patrol).
+ *   - Any eligible wobbling-due entry → 'wobbling' (urgent recovery check).
+ *   - Any eligible due entry → 'due' (the normal daily patrol).
+ *   - No due entries, but a round CAN be produced via top-up or lazy-create
+ *     AND policy allows optional patrol → 'optional-patrol'.
+ *   - Everything guarded, nothing due, no top-up policy → 'rested'
+ *     (Begin disabled, copy shows next check in N days).
+ *
+ * The helper is tolerant of null/garbage inputs: if `ctx` is falsy or
+ * `allWordsMega` is not strictly true, the result is 'locked'. This lets
+ * the remote-sync client-read-models stub default to 'locked' without a
+ * special-case code path.
+ *
+ * @param {object} ctx
+ * @param {boolean} ctx.allWordsMega
+ * @param {Array<{slug: string, wobbling: boolean, nextDueDay: number}>} ctx.eligibleGuardianEntries
+ *   Guardian records whose slugs have already been run through
+ *   `isGuardianEligibleSlug` — orphan slugs must be excluded by the caller
+ *   before passing in. The helper trusts this contract rather than
+ *   re-filtering (keeps the helper decoupled from `wordBySlug` / `progressMap`).
+ * @param {number} ctx.unguardedMegaCount
+ *   Number of core-pool Mega slugs that have no entry in the guardian map.
+ *   Zero when every Mega word is already being tracked.
+ * @param {number} ctx.todayDay   Integer day (Math.floor(ts/DAY_MS)).
+ * @param {object} [ctx.policy]
+ * @param {boolean} [ctx.policy.allowOptionalPatrol=true]  If false, the
+ *   'optional-patrol' branch collapses into 'rested' so the Begin button
+ *   stays disabled when the only available round is non-urgent.
+ * @returns {string}  One of `GUARDIAN_MISSION_STATES`.
+ */
+export function computeGuardianMissionState(ctx) {
+  if (!ctx || typeof ctx !== 'object' || Array.isArray(ctx)) return 'locked';
+  if (ctx.allWordsMega !== true) return 'locked';
+
+  const todayDay = Number.isFinite(Number(ctx.todayDay)) ? Math.floor(Number(ctx.todayDay)) : 0;
+  const entries = Array.isArray(ctx.eligibleGuardianEntries) ? ctx.eligibleGuardianEntries : [];
+  const unguardedMegaCount = Number.isFinite(Number(ctx.unguardedMegaCount))
+    ? Math.max(0, Math.floor(Number(ctx.unguardedMegaCount)))
+    : 0;
+  const policy = ctx.policy && typeof ctx.policy === 'object' && !Array.isArray(ctx.policy) ? ctx.policy : {};
+  const allowOptionalPatrol = policy.allowOptionalPatrol !== false; // default true
+
+  // Fresh graduate: has never run Guardian AND has Mega words to patrol.
+  if (entries.length === 0 && unguardedMegaCount > 0) return 'first-patrol';
+
+  const wobblingDue = entries.some((entry) => entry?.wobbling === true && Number(entry?.nextDueDay) <= todayDay);
+  if (wobblingDue) return 'wobbling';
+
+  const anyDue = entries.some((entry) => Number(entry?.nextDueDay) <= todayDay);
+  if (anyDue) return 'due';
+
+  // Nothing due. `optional-patrol` is only offered when a round CAN be
+  // produced — either by lazy-creating from an unguarded Mega slug OR by
+  // topping up from a non-due guardian (selector's bucket 4). If neither is
+  // possible, OR the caller explicitly disabled the optional path, we are
+  // 'rested'.
+  const canProduceTopUpRound = unguardedMegaCount > 0 || entries.length > 0;
+  if (allowOptionalPatrol && canProduceTopUpRound) return 'optional-patrol';
+  return 'rested';
+}
+
 const PREF_KEY = 'ks2-platform-v2.spelling-prefs';
 const GUARDIAN_PROGRESS_KEY_PREFIX = 'ks2-spell-guardian-';
 const PROGRESS_KEY_PREFIX = 'ks2-spell-progress-';
@@ -785,10 +855,16 @@ export function createSpellingService({ repository, storage, tts, now, random, c
    * service state so the Setup scene, Alt+4 gate, and summary copy see a
    * consistent view without drilling a read-model through the container tree.
    *
-   * Returns: { allWordsMega, guardianDueCount, wobblingCount, nextGuardianDueDay, todayDay, guardianMap }
+   * Returns: { allWordsMega, guardianDueCount, wobblingCount, nextGuardianDueDay,
+   *            todayDay, guardianMap, wobblingDueCount, nonWobblingDueCount,
+   *            unguardedMegaCount, guardianAvailableCount, guardianMissionState,
+   *            guardianMissionAvailable }
    * The raw `guardianMap` is included so UI consumers can compute per-word
    * labels (e.g. "Wobbling — due tomorrow") via `guardianLabel` without a
-   * second round-trip to storage.
+   * second round-trip to storage. U1 additions mirror the read-model selector
+   * shape so the dashboard gate (`guardianMissionAvailable`) and the labelled
+   * state (`guardianMissionState`) read the same value whether they are fed
+   * by the live service or the pre-computed read-model.
    */
   function getPostMasteryState(learnerId) {
     const progressStore = progressSnapshot(learnerId) || {};
@@ -800,23 +876,67 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     // Guardian candidate (known in runtime, stage >= Mega, pool !== extra).
     // Persisted orphan records stay intact; they simply drop out of counts
     // and the earliest-due calculation.
+    // U1: collect decomposed counts + eligible-entries list so the dashboard
+    // state machine can branch without re-scanning the map.
+    const eligibleGuardianEntries = [];
     let guardianDueCount = 0;
     let wobblingCount = 0;
+    let wobblingDueCount = 0;
+    let nonWobblingDueCount = 0;
     let nextGuardianDueDay = null;
     for (const [slug, record] of Object.entries(guardianMap)) {
       if (!record) continue;
       if (!isGuardianEligibleSlug(slug, progressStore, runtimeWordBySlug)) continue;
-      if (record.nextDueDay <= today) guardianDueCount += 1;
+      eligibleGuardianEntries.push({
+        slug,
+        wobbling: record.wobbling === true,
+        nextDueDay: record.nextDueDay,
+      });
+      const isDueToday = record.nextDueDay <= today;
+      if (isDueToday) {
+        guardianDueCount += 1;
+        if (record.wobbling === true) {
+          wobblingDueCount += 1;
+        } else {
+          nonWobblingDueCount += 1;
+        }
+      }
       if (record.wobbling === true) wobblingCount += 1;
       if (nextGuardianDueDay === null || record.nextDueDay < nextGuardianDueDay) {
         nextGuardianDueDay = record.nextDueDay;
       }
     }
 
+    // U1: core-pool Mega slugs that have no guardian record yet. Drives the
+    // 'first-patrol' state and `guardianAvailableCount` ("N patrol words
+    // available" copy).
+    let unguardedMegaCount = 0;
+    for (const [slug] of Object.entries(progressStore)) {
+      if (!isGuardianEligibleSlug(slug, progressStore, runtimeWordBySlug)) continue;
+      if (Object.prototype.hasOwnProperty.call(guardianMap, slug)) continue;
+      unguardedMegaCount += 1;
+    }
+
+    const guardianAvailableCount = unguardedMegaCount + eligibleGuardianEntries.length;
+    const guardianMissionState = computeGuardianMissionState({
+      allWordsMega,
+      eligibleGuardianEntries,
+      unguardedMegaCount,
+      todayDay: today,
+      policy: { allowOptionalPatrol: true },
+    });
+    const guardianMissionAvailable = guardianMissionState !== 'locked' && guardianMissionState !== 'rested';
+
     return {
       allWordsMega,
       guardianDueCount,
       wobblingCount,
+      wobblingDueCount,
+      nonWobblingDueCount,
+      unguardedMegaCount,
+      guardianAvailableCount,
+      guardianMissionState,
+      guardianMissionAvailable,
       nextGuardianDueDay,
       todayDay: today,
       guardianMap,

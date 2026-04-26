@@ -5,7 +5,10 @@ import {
   normaliseGuardianMap,
   normaliseYearFilter,
 } from './service-contract.js';
-import { selectGuardianWords } from '../../../shared/spelling/service.js';
+import {
+  computeGuardianMissionState,
+  selectGuardianWords,
+} from '../../../shared/spelling/service.js';
 import { normaliseBufferedGeminiVoice, normaliseTtsProvider } from './tts-providers.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -155,19 +158,62 @@ export function getSpellingPostMasteryState({
   // the counts or the earliest-due calculation. Persisted orphan records are
   // preserved in `data.guardian`; they simply stay out of the numbers until
   // the content bundle re-publishes their slug at core-pool + stage >= Mega.
+  //
+  // U1: alongside the legacy aggregate counts we derive decomposed counts
+  // (wobbling-due vs non-wobbling-due) and collect the eligible-entries list
+  // so the dashboard state machine (`computeGuardianMissionState`) can branch
+  // copy without re-scanning the map.
   const guardianEntries = Object.entries(guardianMap);
+  const eligibleGuardianEntries = [];
   let guardianDueCount = 0;
+  let wobblingDueCount = 0;
+  let nonWobblingDueCount = 0;
   let wobblingCount = 0;
   let nextGuardianDueDay = null;
   for (const [slug, record] of guardianEntries) {
     if (!record) continue;
     if (!isGuardianEligibleSlug(slug, progressMap, runtime.bySlug)) continue;
-    if (record.nextDueDay <= currentDay) guardianDueCount += 1;
+    eligibleGuardianEntries.push({
+      slug,
+      wobbling: record.wobbling === true,
+      nextDueDay: record.nextDueDay,
+    });
+    const isDueToday = record.nextDueDay <= currentDay;
+    if (isDueToday) {
+      guardianDueCount += 1;
+      if (record.wobbling === true) {
+        wobblingDueCount += 1;
+      } else {
+        nonWobblingDueCount += 1;
+      }
+    }
     if (record.wobbling === true) wobblingCount += 1;
     if (nextGuardianDueDay === null || record.nextDueDay < nextGuardianDueDay) {
       nextGuardianDueDay = record.nextDueDay;
     }
   }
+
+  // U1: count core-pool Mega slugs that have no guardian record yet. These
+  // drive the 'first-patrol' state and feed `guardianAvailableCount` which
+  // the stat ribbon surfaces as "N patrol words available".
+  let unguardedMegaCount = 0;
+  for (const [slug, entry] of Object.entries(progressMap)) {
+    if (!isGuardianEligibleSlug(slug, progressMap, runtime.bySlug)) continue;
+    if (Object.prototype.hasOwnProperty.call(guardianMap, slug)) continue;
+    unguardedMegaCount += 1;
+    // Keep the void reference so the linter does not complain about `entry`.
+    void entry;
+  }
+
+  const guardianAvailableCount = unguardedMegaCount + eligibleGuardianEntries.length;
+  const guardianMissionState = computeGuardianMissionState({
+    allWordsMega,
+    eligibleGuardianEntries,
+    unguardedMegaCount,
+    todayDay: currentDay,
+    policy: { allowOptionalPatrol: true },
+  });
+  const guardianMissionAvailable = guardianMissionState !== 'locked' && guardianMissionState !== 'rested';
 
   // Recommended words — a deterministic preview for UI consumers. We only
   // produce this when the learner has actually graduated; otherwise the
@@ -190,6 +236,12 @@ export function getSpellingPostMasteryState({
     allWordsMega,
     guardianDueCount,
     wobblingCount,
+    wobblingDueCount,
+    nonWobblingDueCount,
+    unguardedMegaCount,
+    guardianAvailableCount,
+    guardianMissionState,
+    guardianMissionAvailable,
     recommendedWords,
     nextGuardianDueDay,
   };
