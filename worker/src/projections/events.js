@@ -110,11 +110,27 @@ export function toastEvents(events) {
   return asEvents(events).filter((event) => Boolean(event?.toast?.title || event?.toast?.body || event?.monster?.name));
 }
 
-export function combineCommandEvents({ domainEvents = [], reactionEvents = [], existingEvents = [] } = {}) {
+export function combineCommandEvents({
+  domainEvents = [],
+  reactionEvents = [],
+  existingEvents = [],
+  // U6: `seedTokens` is the persisted `recentEventTokens` ring from the
+  // hot-path projection read model. When provided, dedupe uses it as the
+  // seed set so no full event_log read is needed on the hit path. The
+  // legacy `existingEvents` path still works (miss-rehydrated /
+  // stale-catchup) and the token set is additive — dedupe will skip a
+  // token that appears in either source.
+  seedTokens = [],
+} = {}) {
   const existing = asEvents(existingEvents);
   const seenTokens = new Set(existing.map(eventToken).filter(Boolean));
   const seenTerminalTokens = new Set(existing.map(terminalRewardToken).filter(Boolean));
   const seenGrammarConceptTokens = new Set(existing.map(grammarTerminalConceptToken).filter(Boolean));
+  if (Array.isArray(seedTokens)) {
+    for (const token of seedTokens) {
+      if (typeof token === 'string' && token) seenTokens.add(token);
+    }
+  }
   const domain = dedupeEvents(domainEvents, seenTokens, seenTerminalTokens, seenGrammarConceptTokens);
   const reactions = dedupeEvents(reactionEvents, seenTokens, seenTerminalTokens, seenGrammarConceptTokens);
   return {
