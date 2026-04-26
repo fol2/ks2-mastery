@@ -122,7 +122,11 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
   const concordium = dashboard.concordiumProgress;
 
   return (
-    <section className="grammar-dashboard" aria-labelledby="grammar-dashboard-title">
+    <section
+      className="grammar-dashboard"
+      aria-labelledby="grammar-dashboard-title"
+      data-grammar-phase-root="dashboard"
+    >
       <div
         className="grammar-hero"
         style={{ '--grammar-hero-bg': `url(${GRAMMAR_REGION_IMAGE})` }}

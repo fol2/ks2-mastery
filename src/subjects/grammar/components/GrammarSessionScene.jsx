@@ -493,7 +493,11 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
   const submitLabel = grammarSessionSubmitLabel(session, grammar.awaitingAdvance);
 
   return (
-    <section className="grammar-session" aria-labelledby="grammar-session-title">
+    <section
+      className="grammar-session"
+      aria-labelledby="grammar-session-title"
+      data-grammar-phase-root="session"
+    >
       <div className="grammar-session-head">
         <div>
           <div className="eyebrow">Grammar practice</div>

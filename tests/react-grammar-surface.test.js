@@ -8,6 +8,7 @@ import {
 } from './helpers/grammar-subject-harness.js';
 import { readGrammarLegacyOracle } from './helpers/grammar-legacy-oracle.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
+import { scopeSummary } from './helpers/grammar-phase3-renders.js';
 import {
   grammarModule,
   GRAMMAR_TRANSFER_ERROR_COPY,
@@ -2520,10 +2521,13 @@ function u5RunRegularToSummary() {
 }
 
 function u5ScopeToSummaryHtml(html) {
-  const match = html.match(/<div class="grammar-summary-shell[^"]*">[\s\S]*?<\/div><\/main>/);
-  assert.ok(match, 'summary shell was rendered');
-  // Trim trailing `</main>` so the returned HTML is the summary subtree.
-  return match[0].replace(/<\/main>$/, '');
+  // Phase 4 U2: delegate to the exported, landmark-based `scopeSummary`
+  // helper so the local surface test and the Phase 3 forbidden-term
+  // sweep share a single source of truth for what "the summary subtree"
+  // means. The helper throws on a missing
+  // `data-grammar-phase-root="summary"` landmark, so a DOM refactor that
+  // drops the attribute surfaces a loud failure here too.
+  return scopeSummary(html);
 }
 
 test('U5: regular summary renders exactly five summary cards', () => {

@@ -260,44 +260,111 @@ const PHASE_RENDERERS = Object.freeze({
 //
 // Each scope helper returns only the child-facing subtree. The adult
 // disclosure is swept separately via the `analytics` phase.
+//
+// Phase 4 U2 hardening: the scope helpers assert on the
+// `data-grammar-phase-root="<phase>"` semantic landmark on the scene's
+// existing root element (added in the six `Grammar*Scene.jsx` components).
+// A DOM refactor that drops a CSS class would otherwise silently
+// fall back to the full HTML and turn the forbidden-term sweep into a
+// false-positive silencer — the exact test-harness-vs-production defect
+// class the Phase 4 plan's invariant 12 floor is defending. On no-match
+// every scoper throws a named error so drift is loud and visible.
+//
+// Per-phase regex notes:
+//   * `dashboard` and `transfer` contain nested `<section>` elements, so
+//     a lazy `</section>` match needs a stable following-sibling lookahead
+//     (`<details class="grammar-grown-up-view">` and `</div></main>`
+//     respectively) to bind to the *root* section close rather than the
+//     first nested close.
+//   * `summary`'s root is a `<div class="grammar-summary-shell...">`
+//     which wraps many nested `<div>`s. Lookahead to `</main>` pins the
+//     match to the shell's own closing `</div>`.
+//   * `session`, `bank`, `analytics` have no nested same-type tag so a
+//     simple lazy `</section>` match is unambiguous.
 
-function scopeDashboard(html) {
-  // Dashboard section ends right before the `<details
-  // class="grammar-grown-up-view">` sibling.
-  const match = html.match(/<section class="grammar-dashboard"[\s\S]*?<\/section>(?=<details class="grammar-grown-up-view">)/);
-  if (match) return match[0];
-  const fallback = html.match(/<section class="grammar-dashboard"[\s\S]*?<\/section>/);
-  return fallback ? fallback[0] : html;
+export function scopeDashboard(html) {
+  // Dashboard root section ends right before the sibling
+  // `<details class="grammar-grown-up-view">` disclosure.
+  const match = html.match(
+    /<section[^>]*data-grammar-phase-root="dashboard"[\s\S]*?<\/section>(?=<details class="grammar-grown-up-view">)/,
+  );
+  if (!match) {
+    throw new Error(
+      'scopeDashboard: no data-grammar-phase-root="dashboard" landmark found in rendered HTML',
+    );
+  }
+  return match[0];
 }
 
-function scopeSession(html) {
-  const match = html.match(/<section class="grammar-session"[\s\S]*?<\/section>/);
-  return match ? match[0] : html;
+export function scopeSession(html) {
+  const match = html.match(
+    /<section[^>]*data-grammar-phase-root="session"[\s\S]*?<\/section>/,
+  );
+  if (!match) {
+    throw new Error(
+      'scopeSession: no data-grammar-phase-root="session" landmark found in rendered HTML',
+    );
+  }
+  return match[0];
 }
 
-function scopeSummary(html) {
-  // Summary shell — stop before the `<details class="grammar-grown-up-view">`
-  // (Grown-up view disclosure) so the child scope is tight.
-  const shellOnly = html.match(/<div class="grammar-summary-shell[^"]*">[\s\S]*?(?=<details class="grammar-grown-up-view">|<\/div><\/main>)/);
-  if (shellOnly) return shellOnly[0];
-  const fallback = html.match(/<div class="grammar-summary-shell[^"]*">[\s\S]*?<\/div><\/main>/);
-  return fallback ? fallback[0].replace(/<\/main>$/, '') : html;
+export function scopeSummary(html) {
+  // Summary shell root `<div>` closes just before `</main>`. The lookahead
+  // binds to that main close so the lazy match consumes the shell's full
+  // contents rather than the first inner `</div>`.
+  const match = html.match(
+    /<div[^>]*data-grammar-phase-root="summary"[\s\S]*?<\/div>(?=<\/main>)/,
+  );
+  if (!match) {
+    throw new Error(
+      'scopeSummary: no data-grammar-phase-root="summary" landmark found in rendered HTML',
+    );
+  }
+  return match[0];
 }
 
-function scopeBank(html) {
-  const match = html.match(/<section class="grammar-bank[\s\S]*?<\/section>/);
-  return match ? match[0] : html;
+export function scopeBank(html) {
+  const match = html.match(
+    /<section[^>]*data-grammar-phase-root="bank"[\s\S]*?<\/section>/,
+  );
+  if (!match) {
+    throw new Error(
+      'scopeBank: no data-grammar-phase-root="bank" landmark found in rendered HTML',
+    );
+  }
+  return match[0];
 }
 
-function scopeTransfer(html) {
-  const match = html.match(/<section class="grammar-transfer-scene"[\s\S]*?<\/section>/);
-  return match ? match[0] : html;
+export function scopeTransfer(html) {
+  // Transfer root contains nested `<section>` siblings (write, saved,
+  // orphaned). Lookahead to `</div></main>` pins the match to the root
+  // transfer scene close.
+  const match = html.match(
+    /<section[^>]*data-grammar-phase-root="transfer"[\s\S]*?<\/section>(?=<\/div><\/main>)/,
+  );
+  if (!match) {
+    throw new Error(
+      'scopeTransfer: no data-grammar-phase-root="transfer" landmark found in rendered HTML',
+    );
+  }
+  return match[0];
 }
 
-function scopeAnalytics(html) {
-  // Adult-facing — no scoping; inverse-presence sweep reads the whole
-  // rendered surface.
-  return html;
+export function scopeAnalytics(html) {
+  // Adult-facing — still asserts the landmark exists so the adult surface
+  // cannot silently lose its root and turn inverse-presence into a
+  // no-op. Returns the narrowed landmark-scoped substring; the adult
+  // inverse-presence sweep reads `rawHtml` (not this scoped value) so
+  // no downstream assertion is affected by the narrowing.
+  const match = html.match(
+    /<section[^>]*data-grammar-phase-root="analytics"[\s\S]*?<\/section>/,
+  );
+  if (!match) {
+    throw new Error(
+      'scopeAnalytics: no data-grammar-phase-root="analytics" landmark found in rendered HTML',
+    );
+  }
+  return match[0];
 }
 
 const PHASE_SCOPERS = Object.freeze({
