@@ -1,4 +1,5 @@
 import React from 'react';
+import { isGrammarConfidenceLabel } from '../../../../shared/grammar/confidence.js';
 import { progressForGrammarMonster } from '../../../platform/game/monster-system.js';
 import { monsterAsset, monsterAssetSrcSet } from '../../../platform/game/monsters.js';
 import {
@@ -91,21 +92,16 @@ function ParentSummaryDraft({ enrichment }) {
 // sampleSize}` shape or the older flat `confidenceLabel` that some fixtures
 // still seed; falls back to `status` if neither is present so the chip always
 // renders something diagnostic.
-const ADULT_CONFIDENCE_LABELS = new Set([
-  'emerging',
-  'building',
-  'needs-repair',
-  'consolidating',
-  'secure',
-]);
-
+//
+// The set of valid labels comes from `shared/grammar/confidence.js`
+// (U8) — this component only validates, never redefines.
 function adultConfidenceFromRow(row) {
   if (!row || typeof row !== 'object') return null;
   const confidence = isPlainObject(row.confidence) ? row.confidence : null;
   const rawLabel = (typeof confidence?.label === 'string' && confidence.label)
     || (typeof row.confidenceLabel === 'string' && row.confidenceLabel)
     || '';
-  const label = ADULT_CONFIDENCE_LABELS.has(rawLabel) ? rawLabel : '';
+  const label = isGrammarConfidenceLabel(rawLabel) ? rawLabel : '';
   const rawSample = confidence?.sampleSize ?? row.attempts;
   const sampleSize = Number.isFinite(Number(rawSample)) ? Number(rawSample) : 0;
   if (!label && sampleSize <= 0) return null;
