@@ -2,6 +2,7 @@ import { WORDS as DEFAULT_WORDS, WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from '..
 import { createLegacySpellingEngine } from './legacy-engine.js';
 import {
   SPELLING_MASTERY_MILESTONES,
+  createSpellingBossCompletedEvent,
   createSpellingGuardianMissionCompletedEvent,
   createSpellingGuardianRecoveredEvent,
   createSpellingGuardianRenewedEvent,
@@ -16,11 +17,15 @@ import {
   normaliseTtsProvider,
 } from '../../src/subjects/spelling/tts-providers.js';
 import {
+  BOSS_DEFAULT_ROUND_LENGTH,
+  BOSS_MAX_ROUND_LENGTH,
+  BOSS_MIN_ROUND_LENGTH,
   GUARDIAN_DEFAULT_ROUND_LENGTH,
   GUARDIAN_INTERVALS,
   GUARDIAN_MAX_REVIEW_LEVEL,
   GUARDIAN_MAX_ROUND_LENGTH,
   GUARDIAN_MIN_ROUND_LENGTH,
+  GUARDIAN_MISSION_STATES,
   GUARDIAN_SECURE_STAGE,
   cloneSerialisable,
   createInitialSpellingState,
@@ -40,6 +45,7 @@ import {
   normaliseSummary,
   normaliseTimestamp,
   normaliseYearFilter,
+  SPELLING_PERSISTENCE_WARNING_REASON,
   SPELLING_ROOT_PHASES,
   SPELLING_SERVICE_STATE_VERSION,
   SPELLING_SESSION_PHASES,
@@ -52,6 +58,220 @@ import {
 // `service-contract.js` to keep the Word Bank view-model's client bundle
 // free of the full word dataset (see audit-client-bundle.mjs).
 export { isGuardianEligibleSlug };
+
+/**
+ * Pure dashboard state machine (U1). Derives the Guardian mission state from
+ * aggregate counts so the Setup scene, the module shortcut gate, and any
+ * downstream consumer can branch their copy on a single labelled value.
+ *
+ * Contract:
+ *   - `allWordsMega` false → 'locked' (dashboard renders legacy setup).
+ *   - Empty guardian map + unguarded Mega slugs AND the combined pool can
+ *     fill a minimum-length round (`>= GUARDIAN_MIN_ROUND_LENGTH`) →
+ *     'first-patrol'. Below that threshold `selectGuardianWords` would
+ *     produce a short round, so we collapse to 'rested' to keep Begin
+ *     disabled rather than ship a 1-4 word Guardian.
+ *   - Any eligible wobbling-due entry → 'wobbling' (urgent recovery check).
+ *     Wobbling always dominates 'due' so a single recovery drill rides even
+ *     under the round-length minimum (the selector tops up from non-due
+ *     guardians if needed).
+ *   - Any eligible due entry → 'due' (the normal daily patrol). Same
+ *     top-up reasoning as wobbling — a short due round top-ups from the
+ *     non-due bucket.
+ *   - No due entries, but a round CAN be produced via top-up or lazy-create
+ *     AND the combined pool hits `GUARDIAN_MIN_ROUND_LENGTH`, AND policy
+ *     allows optional patrol → 'optional-patrol'.
+ *   - Everything guarded, nothing due, no top-up policy (or pool too small)
+ *     → 'rested' (Begin disabled, copy shows next check in N days).
+ *
+ * Short-round invariant (adversarial sev 60/50): `selectGuardianWords` walks
+ * four buckets (wobbling-due, non-wobbling-due, lazy-create, top-up) and
+ * stops at `GUARDIAN_MIN_ROUND_LENGTH`. If the dashboard advertises
+ * 'first-patrol' or 'optional-patrol' without the combined pool reaching
+ * that threshold, the learner would tap Begin and receive a 1-4 word round
+ * — below the Guardian minimum. This helper therefore gates both states on
+ * `unguardedMegaCount + entries.length >= GUARDIAN_MIN_ROUND_LENGTH`. The
+ * 'wobbling' and 'due' states skip this check because a single wobbling or
+ * due entry plus the selector's own top-up fallback always fills the round.
+ *
+ * The helper is tolerant of null/garbage inputs: if `ctx` is falsy or
+ * `allWordsMega` is not strictly true, the result is 'locked'. This lets
+ * the remote-sync client-read-models stub default to 'locked' without a
+ * special-case code path.
+ *
+ * @param {object} ctx
+ * @param {boolean} ctx.allWordsMega
+ * @param {Array<{slug: string, wobbling: boolean, nextDueDay: number}>} ctx.eligibleGuardianEntries
+ *   Guardian records whose slugs have already been run through
+ *   `isGuardianEligibleSlug` — orphan slugs must be excluded by the caller
+ *   before passing in. The helper trusts this contract rather than
+ *   re-filtering (keeps the helper decoupled from `wordBySlug` / `progressMap`).
+ * @param {number} ctx.unguardedMegaCount
+ *   Number of core-pool Mega slugs that have no entry in the guardian map.
+ *   Zero when every Mega word is already being tracked.
+ * @param {number} ctx.todayDay   Integer day (Math.floor(ts/DAY_MS)).
+ * @param {object} [ctx.policy]
+ * @param {boolean} [ctx.policy.allowOptionalPatrol=true]  If false, the
+ *   'optional-patrol' branch collapses into 'rested' so the Begin button
+ *   stays disabled when the only available round is non-urgent.
+ * @returns {string}  One of `GUARDIAN_MISSION_STATES`.
+ */
+export function computeGuardianMissionState(ctx) {
+  const resolved = resolveGuardianMissionState(ctx);
+  // Runtime sanity check — if the state-machine above ever returns an
+  // unknown label (e.g. a typo like 'fist-patrol'), refuse to leak the
+  // garbage into UI copy. Throwing here is loud on purpose: the dashboard
+  // branches on this value and would otherwise render the defensive fallback
+  // silently, hiding the bug.
+  if (!GUARDIAN_MISSION_STATES.includes(resolved)) {
+    throw new Error(`computeGuardianMissionState: unknown state "${resolved}"`);
+  }
+  return resolved;
+}
+
+function resolveGuardianMissionState(ctx) {
+  if (!ctx || typeof ctx !== 'object' || Array.isArray(ctx)) return 'locked';
+  if (ctx.allWordsMega !== true) return 'locked';
+
+  const todayDay = Number.isFinite(Number(ctx.todayDay)) ? Math.floor(Number(ctx.todayDay)) : 0;
+  const entries = Array.isArray(ctx.eligibleGuardianEntries) ? ctx.eligibleGuardianEntries : [];
+  const unguardedMegaCount = Number.isFinite(Number(ctx.unguardedMegaCount))
+    ? Math.max(0, Math.floor(Number(ctx.unguardedMegaCount)))
+    : 0;
+  const policy = ctx.policy && typeof ctx.policy === 'object' && !Array.isArray(ctx.policy) ? ctx.policy : {};
+  const allowOptionalPatrol = policy.allowOptionalPatrol !== false; // default true
+
+  // Combined-pool size fed to the selector. `selectGuardianWords` walks
+  // wobbling-due → non-wobbling-due → lazy-create → top-up and stops at
+  // GUARDIAN_MIN_ROUND_LENGTH (5). The dashboard therefore must not offer
+  // 'first-patrol' or 'optional-patrol' unless the pool reaches that
+  // minimum — otherwise the learner would click Begin and receive a short
+  // round with fewer than 5 words, violating the Guardian round invariant.
+  const combinedPoolSize = unguardedMegaCount + entries.length;
+  const canFillRound = combinedPoolSize >= GUARDIAN_MIN_ROUND_LENGTH;
+
+  // Fresh graduate: has never run Guardian AND has Mega words to patrol.
+  // Requires enough combined pool to fill the round; otherwise the learner
+  // is effectively 'rested' until more words graduate.
+  if (entries.length === 0 && unguardedMegaCount > 0) {
+    if (canFillRound) return 'first-patrol';
+    return 'rested';
+  }
+
+  const wobblingDue = entries.some((entry) => entry?.wobbling === true && Number(entry?.nextDueDay) <= todayDay);
+  if (wobblingDue) return 'wobbling';
+
+  const anyDue = entries.some((entry) => Number(entry?.nextDueDay) <= todayDay);
+  if (anyDue) return 'due';
+
+  // Nothing due. `optional-patrol` is only offered when a round CAN be
+  // produced — either by lazy-creating from an unguarded Mega slug OR by
+  // topping up from a non-due guardian (selector's bucket 4). If neither is
+  // possible, OR the caller explicitly disabled the optional path, OR the
+  // combined pool is below the minimum round length, we are 'rested'.
+  const canProduceTopUpRound = unguardedMegaCount > 0 || entries.length > 0;
+  if (allowOptionalPatrol && canProduceTopUpRound && canFillRound) return 'optional-patrol';
+  return 'rested';
+}
+
+/**
+ * Pure aggregate helper. Walks `guardianMap` once to produce the filtered
+ * eligible-entries list and the decomposed due-count scalars; walks
+ * `progressMap` once to produce `unguardedMegaCount`. Returning all seven
+ * fields from a single helper means `getPostMasteryState` (service) and
+ * `getSpellingPostMasteryState` (read-model) cannot drift — they consume
+ * the same derivation.
+ *
+ * The helper trusts that `isGuardianEligibleSlug` is the single orphan
+ * predicate (U2 contract). Callers pass in the ambient `wordBySlug`
+ * (runtime content) and `progressMap` (learner state) so the predicate can
+ * filter orphan records without the helper itself needing to import word
+ * data.
+ *
+ * Invariant guaranteed by the implementation:
+ *   `wobblingDueCount + nonWobblingDueCount === guardianDueCount`
+ *
+ * @param {object} params
+ * @param {object} params.guardianMap   slug -> normalised guardian record
+ * @param {object} params.progressMap   slug -> legacy progress record
+ * @param {object} params.wordBySlug    slug -> published word metadata
+ * @param {number} params.todayDay      integer day (Math.floor(ts/DAY_MS))
+ * @returns {{
+ *   eligibleGuardianEntries: Array<{slug: string, wobbling: boolean, nextDueDay: number}>,
+ *   guardianDueCount: number,
+ *   wobblingDueCount: number,
+ *   nonWobblingDueCount: number,
+ *   wobblingCount: number,
+ *   nextGuardianDueDay: number|null,
+ *   unguardedMegaCount: number,
+ * }}
+ */
+export function deriveGuardianAggregates({
+  guardianMap = {},
+  progressMap = {},
+  wordBySlug = {},
+  todayDay = 0,
+} = {}) {
+  const safeGuardianMap = guardianMap && typeof guardianMap === 'object' && !Array.isArray(guardianMap)
+    ? guardianMap
+    : {};
+  const safeProgressMap = progressMap && typeof progressMap === 'object' && !Array.isArray(progressMap)
+    ? progressMap
+    : {};
+  const safeWordBySlug = wordBySlug && typeof wordBySlug === 'object' && !Array.isArray(wordBySlug)
+    ? wordBySlug
+    : {};
+  const safeToday = Number.isFinite(Number(todayDay)) ? Math.floor(Number(todayDay)) : 0;
+
+  const eligibleGuardianEntries = [];
+  let guardianDueCount = 0;
+  let wobblingCount = 0;
+  let wobblingDueCount = 0;
+  let nonWobblingDueCount = 0;
+  let nextGuardianDueDay = null;
+
+  for (const [slug, record] of Object.entries(safeGuardianMap)) {
+    if (!record) continue;
+    if (!isGuardianEligibleSlug(slug, safeProgressMap, safeWordBySlug)) continue;
+    const isWobbling = record.wobbling === true;
+    const entryDueDay = Number(record.nextDueDay);
+    eligibleGuardianEntries.push({
+      slug,
+      wobbling: isWobbling,
+      nextDueDay: entryDueDay,
+    });
+    const isDueToday = entryDueDay <= safeToday;
+    if (isDueToday) {
+      guardianDueCount += 1;
+      if (isWobbling) {
+        wobblingDueCount += 1;
+      } else {
+        nonWobblingDueCount += 1;
+      }
+    }
+    if (isWobbling) wobblingCount += 1;
+    if (nextGuardianDueDay === null || entryDueDay < nextGuardianDueDay) {
+      nextGuardianDueDay = entryDueDay;
+    }
+  }
+
+  let unguardedMegaCount = 0;
+  for (const [slug] of Object.entries(safeProgressMap)) {
+    if (!isGuardianEligibleSlug(slug, safeProgressMap, safeWordBySlug)) continue;
+    if (Object.prototype.hasOwnProperty.call(safeGuardianMap, slug)) continue;
+    unguardedMegaCount += 1;
+  }
+
+  return {
+    eligibleGuardianEntries,
+    guardianDueCount,
+    wobblingDueCount,
+    nonWobblingDueCount,
+    wobblingCount,
+    nextGuardianDueDay,
+    unguardedMegaCount,
+  };
+}
 
 const PREF_KEY = 'ks2-platform-v2.spelling-prefs';
 const GUARDIAN_PROGRESS_KEY_PREFIX = 'ks2-spell-guardian-';
@@ -153,6 +373,20 @@ function clampSelectionLength(length) {
   const base = Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : GUARDIAN_DEFAULT_ROUND_LENGTH;
   if (base < GUARDIAN_MIN_ROUND_LENGTH) return GUARDIAN_MIN_ROUND_LENGTH;
   if (base > GUARDIAN_MAX_ROUND_LENGTH) return GUARDIAN_MAX_ROUND_LENGTH;
+  return base;
+}
+
+// Boss Dictation round-length clamp (U9). Defaults to
+// BOSS_DEFAULT_ROUND_LENGTH (10) when the caller omits a length or passes a
+// non-finite value. Otherwise clamped into [BOSS_MIN_ROUND_LENGTH,
+// BOSS_MAX_ROUND_LENGTH] = [8, 12]. The clamp lives here so both
+// `selectBossWords` and `startSession({ mode: 'boss' })` agree on the bounds
+// without duplicating the logic.
+function clampBossRoundLength(length) {
+  const parsed = Number(length);
+  const base = Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : BOSS_DEFAULT_ROUND_LENGTH;
+  if (base < BOSS_MIN_ROUND_LENGTH) return BOSS_MIN_ROUND_LENGTH;
+  if (base > BOSS_MAX_ROUND_LENGTH) return BOSS_MAX_ROUND_LENGTH;
   return base;
 }
 
@@ -287,6 +521,42 @@ export function selectGuardianWords({
   return selected;
 }
 
+/**
+ * Pure Boss Dictation word selector (U9). Draws a uniform random sample of
+ * core-pool Mega slugs from the learner's progress map. Extra-pool words are
+ * excluded (Mega is a core-pool concept — same rule as `selectGuardianWords`);
+ * slugs not published by the current content bundle are also excluded so an
+ * orphan progress record from a content hot-swap can never leak into a Boss
+ * round.
+ *
+ * @param {object} params
+ * @param {object} params.progressMap  slug -> legacy progress record
+ * @param {object} params.wordBySlug   slug -> word metadata (spellingPool, etc.)
+ * @param {number} params.length       desired round length (clamped 8..12)
+ * @param {Function} params.random     injected random; used for deterministic shuffle
+ * @returns {string[]} selected slugs (array of strings)
+ */
+export function selectBossWords({
+  progressMap = {},
+  wordBySlug = {},
+  length = BOSS_DEFAULT_ROUND_LENGTH,
+  random = Math.random,
+} = {}) {
+  const target = clampBossRoundLength(length);
+  // Candidate filter shares the Mega eligibility predicate with Guardian so
+  // extra-pool slugs and orphan content records drop out consistently.
+  const candidates = [];
+  for (const [slug] of Object.entries(progressMap || {})) {
+    if (!isGuardianEligibleSlug(slug, progressMap, wordBySlug)) continue;
+    candidates.push(slug);
+  }
+  if (!candidates.length) return [];
+  // Alphabetical baseline makes the shuffle deterministic under a seeded rng.
+  candidates.sort();
+  const shuffled = deterministicShuffle(candidates, random);
+  return shuffled.slice(0, Math.min(target, shuffled.length));
+}
+
 function loadJson(storage, key, fallback) {
   try {
     const raw = storage.getItem(key);
@@ -297,11 +567,30 @@ function loadJson(storage, key, fallback) {
   }
 }
 
+// U8: Storage-failure warning surface.
+//
+// `saveJson` now returns `{ ok, reason? }` instead of swallowing errors
+// silently. The legacy swallow is preserved in spirit (the write still never
+// throws up to the caller), but the caller can now inspect `ok` and surface a
+// `feedback.persistenceWarning` to the learner. The reason string is not
+// user-facing — it is captured for future diagnostic hooks.
+//
+// Every existing caller must either consume the boolean or destructure it
+// explicitly; relying on a truthy/falsy check against the raw return value is
+// a contract violation (the return value is always an object, so `!!saveJson`
+// is always truthy).
+//
+// Known non-self-heal case (documented, accepted MVP gap): if the child
+// closes the tab before the next submit, the warning dies. A durable cross-
+// session warning surface is deferred to a later plan.
 function saveJson(storage, key, value) {
   try {
     storage.setItem(key, JSON.stringify(value));
-  } catch {
-    // local persistence is best-effort in the reference rebuild.
+    return { ok: true };
+  } catch (error) {
+    // Storage quota / private mode / disk-full / IO error all land here.
+    // The caller decides whether this should surface in the UI.
+    return { ok: false, reason: 'setItem-threw', error: error instanceof Error ? error : new Error(String(error)) };
   }
 }
 
@@ -383,6 +672,7 @@ function defaultLabelForMode(mode) {
   if (mode === 'single') return 'Single-word drill';
   if (mode === 'test') return 'SATs 20 test';
   if (mode === 'guardian') return 'Guardian Mission';
+  if (mode === 'boss') return 'Boss Dictation';
   return 'Smart review';
 }
 
@@ -563,6 +853,30 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     resetLearner() {},
   };
   const resolvedStorage = persistence.storage || storage || globalThis.localStorage || createNoopStorage();
+  // U8 review fix: read the platform persistence channel's `lastError`
+  // snapshot when the host exposes it. This is the only reliable way to
+  // observe legacy-engine's silent-swallow on Smart Review / SATs submits
+  // in production, where `storage` is the `createSpellingPersistence`
+  // proxy whose `setItem` DOES throw on persistAll failure (so the
+  // service's own `saveJson` catches it) but legacy-engine's `saveProgress`
+  // catches that throw internally. Comparing the channel's before/after
+  // snapshot on each submit surfaces that hidden failure without probing
+  // storage a second time.
+  //
+  // Bare-storage test hosts (no platform repositories) do not expose this
+  // adapter — `readPersistenceError()` returns null everywhere, and the
+  // submit path falls back to the explicit `saveProgressToStorage` write,
+  // whose `saveJson` try/catch still returns `{ ok: false }` when the
+  // underlying `storage.setItem` throws.
+  const readPersistenceError = typeof persistence.readPersistenceError === 'function'
+    ? () => persistence.readPersistenceError()
+    : () => null;
+  function persistenceErrorSignatureChanged(before, after) {
+    if (!after) return false;
+    if (!before) return true;
+    if (Number(before.at) !== Number(after.at)) return true;
+    return before.message !== after.message;
+  }
   const randomFn = typeof random === 'function' ? random : Math.random;
   const runtimeWords = Array.isArray(contentSnapshot?.words)
     ? cloneSerialisable(contentSnapshot.words)
@@ -586,6 +900,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
 
   function savePrefs(learnerId, prefs) {
     const next = normalisePrefs({ ...getPrefs(learnerId), ...(prefs || {}) });
+    // U8: prefs writes propagate the `{ ok, reason? }` shape through the
+    // storage boundary, but prefs-save is not a submit-path surface (no
+    // persistenceWarning banner), so the result is currently unconsumed.
+    // Kept consistent so every saveJson caller has the same contract shape.
     saveJson(resolvedStorage, prefsKey(learnerId), next);
     return next;
   }
@@ -693,8 +1011,13 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return normaliseGuardianMap(raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}, currentTodayDay());
   }
 
+  // U8: returns `{ ok, reason? }` so callers (submitGuardianAnswer,
+  // skipGuardianWord, resetLearner) can decide whether to surface a
+  // persistenceWarning. The `resetLearner` caller ignores the return because
+  // a warning on a reset path is not actionable. The submit paths consume
+  // it.
   function saveGuardianMap(learnerId, map) {
-    saveJson(resolvedStorage, guardianMapKey(learnerId), map || {});
+    return saveJson(resolvedStorage, guardianMapKey(learnerId), map || {});
   }
 
   // U7 merge-save: per-slug guardian writer.
@@ -725,13 +1048,21 @@ export function createSpellingService({ repository, storage, tts, now, random, c
   // go through the merge-save path.
   function saveGuardianRecord(learnerId, slug, record) {
     const safeSlug = typeof slug === 'string' ? slug : '';
-    if (!safeSlug) return;
+    // U8: preserve the existing no-op contract for empty slugs, but now return
+    // the `{ ok, reason? }` shape so callers don't have to special-case a
+    // `void` return against the boolean from real writes. An empty-slug call
+    // is treated as a benign success — nothing was requested to persist.
+    if (!safeSlug) return { ok: true };
     // Reload from storage so any write performed earlier on this same service
     // instance (possibly via a DIFFERENT slug) is preserved through the merge.
     const latest = loadGuardianMap(learnerId);
     // Normalise on write so malformed records don't leak past one load cycle.
     latest[safeSlug] = normaliseGuardianRecord(record, currentTodayDay());
-    saveGuardianMap(learnerId, latest);
+    // U8: propagate persistence outcome. The U7 merge-save path writes twice
+    // in ordinary flow (one load, one save); a failure at the save step is the
+    // only observable persistence error, and we forward it so the submit-path
+    // caller can flag the round with `feedback.persistenceWarning`.
+    return saveGuardianMap(learnerId, latest);
   }
 
   function loadProgressFromStorage(learnerId) {
@@ -739,8 +1070,13 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
   }
 
+  // U8: returns `{ ok, reason? }` so submit paths can raise a
+  // persistenceWarning. The non-Guardian Smart Review / SATs path writes
+  // progress through the legacy engine's own setProgress (not this helper);
+  // submitAnswer uses a light probe via this helper to detect the same
+  // underlying storage failure without mutating state (see submitAnswer).
   function saveProgressToStorage(learnerId, map) {
-    saveJson(resolvedStorage, progressMapKey(learnerId), map || {});
+    return saveJson(resolvedStorage, progressMapKey(learnerId), map || {});
   }
 
   function coreWordCount() {
@@ -785,10 +1121,16 @@ export function createSpellingService({ repository, storage, tts, now, random, c
    * service state so the Setup scene, Alt+4 gate, and summary copy see a
    * consistent view without drilling a read-model through the container tree.
    *
-   * Returns: { allWordsMega, guardianDueCount, wobblingCount, nextGuardianDueDay, todayDay, guardianMap }
+   * Returns: { allWordsMega, guardianDueCount, wobblingCount, nextGuardianDueDay,
+   *            todayDay, guardianMap, wobblingDueCount, nonWobblingDueCount,
+   *            unguardedMegaCount, guardianAvailableCount, guardianMissionState,
+   *            guardianMissionAvailable }
    * The raw `guardianMap` is included so UI consumers can compute per-word
    * labels (e.g. "Wobbling — due tomorrow") via `guardianLabel` without a
-   * second round-trip to storage.
+   * second round-trip to storage. U1 additions mirror the read-model selector
+   * shape so the dashboard gate (`guardianMissionAvailable`) and the labelled
+   * state (`guardianMissionState`) read the same value whether they are fed
+   * by the live service or the pre-computed read-model.
    */
   function getPostMasteryState(learnerId) {
     const progressStore = progressSnapshot(learnerId) || {};
@@ -796,28 +1138,39 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const today = currentTodayDay();
     const allWordsMega = isAllWordsMega(progressStore);
 
-    // U2: orphan sanitiser — count only entries whose slug is still a valid
-    // Guardian candidate (known in runtime, stage >= Mega, pool !== extra).
-    // Persisted orphan records stay intact; they simply drop out of counts
-    // and the earliest-due calculation.
-    let guardianDueCount = 0;
-    let wobblingCount = 0;
-    let nextGuardianDueDay = null;
-    for (const [slug, record] of Object.entries(guardianMap)) {
-      if (!record) continue;
-      if (!isGuardianEligibleSlug(slug, progressStore, runtimeWordBySlug)) continue;
-      if (record.nextDueDay <= today) guardianDueCount += 1;
-      if (record.wobbling === true) wobblingCount += 1;
-      if (nextGuardianDueDay === null || record.nextDueDay < nextGuardianDueDay) {
-        nextGuardianDueDay = record.nextDueDay;
-      }
-    }
+    // Shared derivation — same helper feeds `getSpellingPostMasteryState`
+    // in the read-model so service and read-model cannot drift. U2 orphan
+    // sanitiser lives inside the helper (via `isGuardianEligibleSlug`), so
+    // a content hot-swap removing a slug automatically drops it from the
+    // counts here and in the read-model.
+    const aggregates = deriveGuardianAggregates({
+      guardianMap,
+      progressMap: progressStore,
+      wordBySlug: runtimeWordBySlug,
+      todayDay: today,
+    });
+
+    const guardianAvailableCount = aggregates.unguardedMegaCount + aggregates.eligibleGuardianEntries.length;
+    const guardianMissionState = computeGuardianMissionState({
+      allWordsMega,
+      eligibleGuardianEntries: aggregates.eligibleGuardianEntries,
+      unguardedMegaCount: aggregates.unguardedMegaCount,
+      todayDay: today,
+      policy: { allowOptionalPatrol: true },
+    });
+    const guardianMissionAvailable = guardianMissionState !== 'locked' && guardianMissionState !== 'rested';
 
     return {
       allWordsMega,
-      guardianDueCount,
-      wobblingCount,
-      nextGuardianDueDay,
+      guardianDueCount: aggregates.guardianDueCount,
+      wobblingCount: aggregates.wobblingCount,
+      wobblingDueCount: aggregates.wobblingDueCount,
+      nonWobblingDueCount: aggregates.nonWobblingDueCount,
+      unguardedMegaCount: aggregates.unguardedMegaCount,
+      guardianAvailableCount,
+      guardianMissionState,
+      guardianMissionAvailable,
+      nextGuardianDueDay: aggregates.nextGuardianDueDay,
       todayDay: today,
       guardianMap,
     };
@@ -1122,10 +1475,129 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return buildTransition(nextState, { audio: activeAudioCue(learnerId, nextState) });
   }
 
+  // U9: Boss Dictation entry point. Mirrors `startGuardianSession` but the
+  // word-selection rule is "uniform random sample of core-pool Mega slugs" and
+  // the session is forcibly shaped as `type: 'test'` (single-attempt, no cloze,
+  // no skip). Round-length clamp lives in `clampBossRoundLength`.
+  //
+  // The critical bridge is `words: preSelectedWordObjects` on the
+  // `engine.createSession` call — without it the engine falls through to
+  // `chooseSmartWords` at `legacy-engine.js:461` and the Boss round becomes a
+  // Smart Review sample of due/weak words instead of a Mega-only round.
+  function startBossSession(learnerId, options = {}) {
+    const progressStore = progressSnapshot(learnerId) || {};
+    if (!isAllWordsMega(progressStore)) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        feedback: {
+          kind: 'warn',
+          headline: 'Boss Dictation unlocks after every core word is secure',
+          body: 'Keep reviewing Smart Review and Trouble Drill until every core word is secure — then Boss Dictation opens.',
+        },
+      }, { ok: false });
+    }
+
+    const desiredLength = options.length === 'all'
+      ? BOSS_MAX_ROUND_LENGTH
+      : clampBossRoundLength(options.length);
+
+    const selectedSlugs = selectBossWords({
+      progressMap: progressStore,
+      wordBySlug: runtimeWordBySlug,
+      length: desiredLength,
+      random: randomFn,
+    });
+
+    if (!selectedSlugs.length) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        error: 'Boss Dictation could not resolve any words.',
+      }, { ok: false });
+    }
+
+    const selectedWords = selectedSlugs.map((slug) => runtimeWordBySlug[slug]).filter(Boolean);
+    if (!selectedWords.length) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        error: 'Boss Dictation could not resolve any words.',
+      }, { ok: false });
+    }
+
+    const created = engine.createSession({
+      profileId: learnerId,
+      mode: 'boss',
+      yearFilter: 'core',
+      length: selectedWords.length,
+      words: selectedWords, // load-bearing: without this the engine falls through to chooseSmartWords
+      practiceOnly: false,
+      extraWordFamilies: false,
+    });
+
+    if (!created.ok) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        error: created.reason || 'Could not start Boss Dictation.',
+      }, { ok: false });
+    }
+
+    // Type override is mandatory. `legacy-engine.js:490` forces
+    // `type: 'learning'` for any non-TEST mode. Boss must explicitly overwrite
+    // `session.type = 'test'` so the session-UI helpers, engine.advanceCard
+    // (test-typed FIFO path), and engine.finalise (testSummary) all treat this
+    // as a test-shaped round. Mirrors Guardian's override at the same spot.
+    created.session.type = 'test';
+    created.session.mode = 'boss';
+    created.session.label = 'Boss Dictation';
+    // `session.results` is consumed by testSummary; initialise the array so
+    // `submitBossAnswer` can push per-answer results deterministically.
+    created.session.results = [];
+    // Seed-roster contract: uniqueWords is the roster for Boss. A Boss
+    // session is strict FIFO over selectBossWords — no card is ever
+    // re-queued (engine.advanceCard test-typed path at
+    // legacy-engine.js:586-591 just shifts the queue head), so
+    // uniqueWords is identical at start and at finalise-time. The
+    // BOSS_COMPLETED event factory reads session.uniqueWords.slice() as
+    // the seedSlugs payload; bossEventsForSession passes a fresh slice
+    // through. We deliberately do NOT stamp a separate `bossSeedSlugs`
+    // field on the session — buildResumeSession enumerates session
+    // fields explicitly and any unlisted field would be dropped on
+    // rehydration, so an orphan `bossSeedSlugs` would quietly disappear
+    // after an in-flight session resume and mask its own loss.
+
+    // For a test-typed session, engine.advanceCard shifts the queue head via
+    // strict FIFO (`legacy-engine.js:586-591`). Use that path — no custom
+    // advancer is needed because Boss's FIFO-over-presorted-queue contract
+    // matches the engine's test path exactly.
+    const firstCard = engine.advanceCard(created.session, learnerId, created.progressStore);
+    if (firstCard.done) {
+      return buildTransition({
+        ...createInitialSpellingState(),
+        error: 'Boss Dictation could not prepare the first card.',
+      }, { ok: false });
+    }
+
+    const session = decorateSession(engine, learnerId, created.session, runtimeWordBySlug, created.progressStore);
+    const nextState = {
+      version: SPELLING_SERVICE_STATE_VERSION,
+      phase: 'session',
+      session,
+      feedback: null,
+      summary: null,
+      error: '',
+      awaitingAdvance: false,
+    };
+
+    persistence.syncPracticeSession(learnerId, nextState);
+    return buildTransition(nextState, { audio: activeAudioCue(learnerId, nextState) });
+  }
+
   function startSession(learnerId, options = {}) {
     const mode = normaliseMode(options.mode, 'smart');
     if (mode === 'guardian') {
       return startGuardianSession(learnerId, options);
+    }
+    if (mode === 'boss') {
+      return startBossSession(learnerId, options);
     }
     const yearFilter = mode === 'test'
       ? 'core'
@@ -1255,7 +1727,21 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     if (correct) nextProgress.correct = (nextProgress.correct || 0) + 1;
     else nextProgress.wrong = (nextProgress.wrong || 0) + 1;
     progressMap[currentSlug] = nextProgress;
-    saveProgressToStorage(learnerId, progressMap);
+    // U8: capture persistence outcomes for both writes so a single warning can
+    // be surfaced on either failure, without demoting Mega. The session
+    // continues in-memory whatever the storage outcome — the invariant
+    // "stage >= 4" holds across the wrong-answer path already, and the
+    // warning is additive on top of feedback.
+    //
+    // U8 review fix: we also snapshot the platform persistence channel's
+    // `lastError` before the writes so a transient failure that the proxy
+    // masked (e.g. a partial bundle write fault) still surfaces even if
+    // the explicit saveJson returns `ok: true`. In production the proxy
+    // rethrows a fresh error via `errorSignatureChanged`, so saveJson
+    // catches it; this pre/post snapshot is belt-and-braces for hosts
+    // that might add extra wrappers in the future.
+    const beforeError = readPersistenceError();
+    const progressSave = saveProgressToStorage(learnerId, progressMap);
 
     // Advance the guardian record. Lazy-create if this is the first Guardian
     // touch for the slug. We load a mutable copy for the read-side
@@ -1291,7 +1777,21 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const updatedRecord = correct
       ? advanceGuardianOnCorrect(beforeRecord, todayDay)
       : advanceGuardianOnWrong(beforeRecord, todayDay);
-    saveGuardianRecord(learnerId, currentSlug, updatedRecord);
+    const guardianSave = saveGuardianRecord(learnerId, currentSlug, updatedRecord);
+    // U8: a single persistenceWarning deduped across progress + guardian
+    // saves. Whichever failed first is sufficient signal for the UI; the
+    // banner is deduped per submit so a double failure still surfaces only
+    // once.
+    //
+    // U8 review fix: also dedupe-in any lastError-channel change. The
+    // sibling write helpers return `ok: false` on direct throw, but if a
+    // host wraps the proxy with its own swallow, the channel diff still
+    // catches the failure.
+    const afterError = readPersistenceError();
+    const lastErrorChanged = persistenceErrorSignatureChanged(beforeError, afterError);
+    const persistenceWarning = (!progressSave?.ok || !guardianSave?.ok || lastErrorChanged)
+      ? { reason: SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED }
+      : null;
 
     // Record the per-word outcome so the finalisation step can emit the
     // mission-completed event with accurate aggregate counts.
@@ -1353,6 +1853,89 @@ export function createSpellingService({ repository, storage, tts, now, random, c
           body: 'Mega stays, but this word will return tomorrow for a Guardian check.',
           attemptedAnswer: rawTyped,
         };
+    // U8: attach persistenceWarning so the UI can surface a subtle banner
+    // without demoting Mega. The feedback normaliser accepts the optional
+    // field; when null it is stripped from the feedback object.
+    if (persistenceWarning) feedback.persistenceWarning = persistenceWarning;
+
+    const nextState = {
+      version: SPELLING_SERVICE_STATE_VERSION,
+      phase: 'session',
+      session: decorateSession(engine, learnerId, session, runtimeWordBySlug),
+      feedback: normaliseFeedback(feedback),
+      summary: null,
+      error: '',
+      awaitingAdvance: true,
+    };
+
+    persistence.syncPracticeSession(learnerId, nextState);
+    return buildTransition(nextState, { events });
+  }
+
+  // U9: Boss Dictation submit path. Mirrors `submitGuardianAnswer` in shape
+  // but does NOT touch the guardian map, and does NOT touch
+  // `progress.stage` / `dueDay` / `lastDay` / `lastResult` — Boss's core
+  // contract is Mega-never-revoked, same invariant that Guardian enforces via
+  // its separate submit path.
+  //
+  // Critical routing rule: `submitAnswer` must call this BEFORE the
+  // `session.type === 'test'` check that routes legacy SATs submissions to
+  // `engine.submitTest → applyTestOutcome`. Because Boss sessions are
+  // `type: 'test'`-shaped, falling through to the legacy path would demote
+  // Mega on a wrong answer.
+  function submitBossAnswer(learnerId, current, rawTyped) {
+    const session = cloneSerialisable(current.session);
+    const currentSlug = session.currentSlug;
+    const baseWord = runtimeWordBySlug[currentSlug];
+    if (!baseWord) {
+      return invalidSessionTransition('This Boss Dictation card is missing its word metadata.');
+    }
+    const promptWord = wordForPrompt(baseWord, session.currentPrompt);
+    const graded = engine.grade(promptWord, rawTyped);
+    const correct = Boolean(graded.correct);
+
+    // Record the per-answer entry on the test-typed `session.results` array so
+    // the engine's `testSummary` renders the score card `correct/total` on
+    // round-end. The engine's native `submitTest` does this too; we mirror the
+    // shape exactly so the summary payload is indistinguishable from a SATs
+    // test (minus the demotion) at the UI layer.
+    session.results = Array.isArray(session.results) ? session.results : [];
+    session.results.push({ slug: currentSlug, answer: rawTyped, correct });
+
+    session.phase = 'question';
+    session.promptCount = (session.promptCount || 0) + 1;
+
+    // Update progress.attempts / correct / wrong only. Stage / dueDay /
+    // lastDay / lastResult are preserved — Boss never demotes Mega.
+    //
+    // Mega-never-revoked guard: if `progressMap[currentSlug]` is missing or
+    // malformed (e.g. a storage-clear race between selectBossWords and the
+    // first submit), we REFUSE the write rather than synthesise a fresh
+    // `{ stage: 0, ... }` seed. Writing stage:0 for a word that selectBossWords
+    // only offered because it was at Mega (stage:4) would silently demote
+    // Mega and contradict the invariant the summary copy and footer note
+    // already advertise. Return an error transition so the UI surfaces the
+    // inconsistency instead of masking it.
+    const progressMap = loadProgressFromStorage(learnerId);
+    const existingProgress = progressMap[currentSlug];
+    if (!existingProgress || typeof existingProgress !== 'object' || Array.isArray(existingProgress)) {
+      return invalidSessionTransition('This Boss Dictation word lost its Mega progress mid-round. The round was stopped to protect your Mega count.');
+    }
+    const nextProgress = { ...existingProgress };
+    nextProgress.attempts = (nextProgress.attempts || 0) + 1;
+    if (correct) nextProgress.correct = (nextProgress.correct || 0) + 1;
+    else nextProgress.wrong = (nextProgress.wrong || 0) + 1;
+    progressMap[currentSlug] = nextProgress;
+    saveProgressToStorage(learnerId, progressMap);
+
+    const events = [];
+    // Feedback mirrors the legacy test-mode "Saved." prompt so the Boss UI
+    // inherits the same "no retry, no correction" microcopy as SATs but the
+    // Boss context note + info chip (U5) already distinguish the surfaces for
+    // children. The one-shot contract is enforced by awaitingAdvance=true.
+    const feedback = correct
+      ? { kind: 'info', headline: 'Saved.', answer: promptWord.word, body: 'Moving to the next word.' }
+      : { kind: 'warn', headline: 'Saved.', answer: promptWord.word, body: 'Mega stays. Moving to the next word.', attemptedAnswer: rawTyped };
 
     const nextState = {
       version: SPELLING_SERVICE_STATE_VERSION,
@@ -1392,13 +1975,35 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       });
     }
 
+    // Dispatcher routing — ORDER IS CRITICAL.
+    //
+    //   mode === 'guardian' → submitGuardianAnswer (Mega-safe)
+    //   mode === 'boss'     → submitBossAnswer     (Mega-safe) — MUST come
+    //                                                before the type === 'test'
+    //                                                check; otherwise a wrong
+    //                                                answer routes to
+    //                                                engine.submitTest and
+    //                                                applyTestOutcome demotes
+    //                                                stage from 4 to 3.
+    //   type === 'test'     → engine.submitTest    (legacy SATs, demotion-aware)
+    //   otherwise           → engine.submitLearning
     if (current.session.mode === 'guardian') {
       return submitGuardianAnswer(learnerId, current, rawTyped);
+    }
+    if (current.session.mode === 'boss') {
+      return submitBossAnswer(learnerId, current, rawTyped);
     }
 
     const session = cloneSerialisable(current.session);
     const entryPhase = session.phase;
     const currentSlug = session.currentSlug;
+    // U8 review fix: snapshot the platform persistence channel's lastError
+    // BEFORE calling legacy-engine so we can diff after the engine's write.
+    // Legacy-engine's `saveProgress` has an internal try/catch that swallows
+    // storage throws from the spelling persistence proxy. The channel's
+    // lastError (set by `persistAll` inside `createLocalPlatformRepositories`)
+    // is the authoritative signal for a silent swallow.
+    const beforeError = readPersistenceError();
     const result = session.type === 'test'
       ? engine.submitTest(session, learnerId, rawTyped)
       : engine.submitLearning(session, learnerId, rawTyped);
@@ -1419,6 +2024,39 @@ export function createSpellingService({ repository, storage, tts, now, random, c
         awaitingAdvance: false,
       });
     }
+
+    // U8 review fix: dual-mode persistence detection for Smart Review / SATs.
+    //
+    // (1) Production path: the platform persistence channel's `lastError`
+    //     bumps its `at` timestamp every time `persistAll` fails, even when
+    //     legacy-engine swallows the proxy throw. We capture the channel
+    //     state IMMEDIATELY after `engine.submitLearning` returns — before
+    //     the probe write — because a successful probe would clear the
+    //     error and the before/after comparison across the probe would miss
+    //     a transient failure blip. The mid-submit snapshot is the
+    //     authoritative signal for legacy-engine's silent swallow.
+    //
+    // (2) Bare-storage test path: the service is wired to a raw
+    //     MemoryStorage (no platform repositories / persistence channel), so
+    //     `readPersistenceError()` returns null. To still surface the
+    //     warning on legacy-engine's silent swallow, we write progress once
+    //     through `saveProgressToStorage`, whose `saveJson` try/catch
+    //     returns `{ ok: false }` on throw. On production this is also a
+    //     valid secondary check — if storage recovered between legacy-engine
+    //     and this write, the write succeeds and no warning is surfaced
+    //     (which is the correct behaviour — storage IS consistent now).
+    //
+    // The probe's `progressSnapshot` was previously documented as
+    // idempotent — with the proxy throw-on-error fix in `repository.js`,
+    // it now genuinely detects a broken storage backing on the same submit.
+    // Either signal firing raises the warning.
+    const midError = readPersistenceError();
+    const midErrorChanged = persistenceErrorSignatureChanged(beforeError, midError);
+    const probeProgress = progressSnapshot(learnerId);
+    const probeSave = probeProgress ? saveProgressToStorage(learnerId, probeProgress) : { ok: true };
+    const persistenceWarning = (!probeSave?.ok || midErrorChanged)
+      ? { reason: SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED }
+      : null;
 
     const eventTime = clock();
     const events = [];
@@ -1463,6 +2101,8 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       feedback: normaliseFeedback({
         ...result.feedback,
         ...(session.type !== 'test' && result.correct === false ? { attemptedAnswer: rawTyped } : {}),
+        // U8: attach warning from the probe. Normaliser strips it when null.
+        persistenceWarning,
       }),
       summary: null,
       error: '',
@@ -1509,6 +2149,93 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return events;
   }
 
+  // U9: Boss Dictation round-end event fan-out. Emits the standard
+  // SESSION_COMPLETED (so legacy consumers that watch for any spelling round
+  // still see the event) plus a Boss-specific `spelling.boss.completed` event
+  // carrying the per-round score and the exact ordered seed-slug list.
+  //
+  // Seed roster contract: `session.uniqueWords` IS the seed roster for Boss.
+  // Unlike SATs test sessions (where uniqueWords gets mutated by re-queueing
+  // of wrong answers), a Boss session is strict FIFO over the selectBossWords
+  // output — no card is ever re-queued (see submitBossAnswer + engine.advanceCard
+  // test-typed path at legacy-engine.js:586-591). That means uniqueWords at
+  // finalise-time is identical to the initial selection. We pass it through as
+  // seedSlugs so downstream consumers don't have to separately track a seed
+  // copy; the event factory also falls back to uniqueWords when seedSlugs is
+  // null/missing, so the invariant is double-locked.
+  function bossEventsForSession(learnerId, session, summary, createdAt) {
+    if (session?.mode !== 'boss') return [];
+    const results = Array.isArray(session.results) ? session.results : [];
+    let correct = 0;
+    let wrong = 0;
+    for (const entry of results) {
+      if (entry?.correct === true) correct += 1;
+      else wrong += 1;
+    }
+    const events = [];
+    const sessionCompleted = createSpellingSessionCompletedEvent({
+      learnerId,
+      session,
+      summary,
+      createdAt,
+    });
+    if (sessionCompleted) events.push(sessionCompleted);
+    const bossCompleted = createSpellingBossCompletedEvent({
+      learnerId,
+      session,
+      summary: { correct, wrong },
+      // uniqueWords is the seed roster for Boss (test-typed sessions don't
+      // mutate uniqueWords). Passing a fresh slice here keeps the event
+      // payload immutable with respect to later session mutations, even
+      // though Boss never mutates uniqueWords after start.
+      seedSlugs: Array.isArray(session.uniqueWords) ? session.uniqueWords.slice() : null,
+      createdAt,
+    });
+    if (bossCompleted) events.push(bossCompleted);
+    return events;
+  }
+
+  // U9 blocker fix: Override the `testSummary()` copy for Boss rounds. Boss
+  // rides as `session.type = 'test'` to reuse the single-attempt UI, so
+  // `engine.finalise()` routes to `testSummary()` which emits SATs-style
+  // demotion copy ("pushed back into the learner's due queue", "Marked due
+  // again today"). Both statements are FALSE for Boss — Boss is Mega-safe:
+  // wrong answers never demote stage and never schedule a word due-soon.
+  // We override the message and the "Needs more work" card's sub label so the
+  // summary matches the Mega-never-revoked invariant the footer note already
+  // advertises (session-ui.js spellingSessionFooterNote).
+  //
+  // Kept at the service layer (not in legacy-engine.js) per plan rule: Boss
+  // bypasses submitTest without modifying legacy.
+  function overrideBossSummary(summary) {
+    if (!summary || summary.mode !== 'boss') return summary;
+    const total = Number.isInteger(summary.totalWords) ? summary.totalWords : 0;
+    const correct = Number.isInteger(summary.correct) ? summary.correct : 0;
+    const bossMessage = correct === total
+      ? `Boss round complete — ${correct} of ${total} Mega words landed. Every Mega word stays Mega.`
+      : `Boss round complete — ${correct} of ${total} Mega words landed. Your Mega words stay Mega — review the missed ones on your own.`;
+    const cards = Array.isArray(summary.cards)
+      ? summary.cards.map((card) => {
+          if (card?.label === 'Needs more work') {
+            return { ...card, sub: 'Practice these on your own — Mega stays intact.' };
+          }
+          if (card?.label === 'Correct') {
+            // Keep "Correct" sub positive without implying SATs-style scheduling.
+            return { ...card, sub: 'Strong on the day' };
+          }
+          if (card?.label === 'Accuracy') {
+            return { ...card, sub: 'Single attempt per word' };
+          }
+          return card;
+        })
+      : summary.cards;
+    return {
+      ...summary,
+      message: bossMessage,
+      cards,
+    };
+  }
+
   function continueSession(learnerId, rawState) {
     const current = initState(rawState, learnerId);
     if (current.phase !== 'session' || !current.session) {
@@ -1525,7 +2252,11 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       : engine.advanceCard(session, learnerId);
 
     if (advanced.done) {
-      const summary = normaliseSummary(engine.finalise(session), isRuntimeKnownSlug);
+      const rawSummary = normaliseSummary(engine.finalise(session), isRuntimeKnownSlug);
+      // Boss rides as test-typed so engine.finalise routes to testSummary(),
+      // which emits SATs demotion copy. overrideBossSummary swaps in
+      // Mega-safe copy without modifying legacy-engine.js.
+      const summary = session.mode === 'boss' ? overrideBossSummary(rawSummary) : rawSummary;
       const nextState = {
         version: SPELLING_SERVICE_STATE_VERSION,
         phase: 'summary',
@@ -1537,9 +2268,14 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       };
       persistence.syncPracticeSession(learnerId, nextState);
       const createdAt = clock();
-      const events = session.mode === 'guardian'
-        ? guardianMissionEventsForSession(learnerId, session, summary, createdAt)
-        : sessionCompletedEvents({ learnerId, session, summary, createdAt });
+      let events;
+      if (session.mode === 'guardian') {
+        events = guardianMissionEventsForSession(learnerId, session, summary, createdAt);
+      } else if (session.mode === 'boss') {
+        events = bossEventsForSession(learnerId, session, summary, createdAt);
+      } else {
+        events = sessionCompletedEvents({ learnerId, session, summary, createdAt });
+      }
       return buildTransition(nextState, { events });
     }
 
@@ -1618,7 +2354,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     nextProgress.attempts = (nextProgress.attempts || 0) + 1;
     nextProgress.wrong = (nextProgress.wrong || 0) + 1;
     progressMap[currentSlug] = nextProgress;
-    saveProgressToStorage(learnerId, progressMap);
+    // U8 review fix: snapshot lastError before the writes so we can catch
+    // a wrapped-host swallow. Mirrors submitGuardianAnswer's check.
+    const beforeError = readPersistenceError();
+    const progressSave = saveProgressToStorage(learnerId, progressMap);
 
     // Advance the guardian record the same way a wrong answer does.
     const todayDay = currentTodayDay();
@@ -1626,7 +2365,15 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const beforeRecord = ensureGuardianRecord(guardianMap, currentSlug, todayDay);
     const updatedRecord = advanceGuardianOnWrong(beforeRecord, todayDay);
     guardianMap[currentSlug] = updatedRecord;
-    saveGuardianMap(learnerId, guardianMap);
+    const guardianSave = saveGuardianMap(learnerId, guardianMap);
+    // U8: propagate persistence failures from the "I don't know" branch the
+    // same way submitGuardianAnswer does. A single banner surfaces if either
+    // write failed; the session continues in-memory and Mega is untouched.
+    const afterError = readPersistenceError();
+    const lastErrorChanged = persistenceErrorSignatureChanged(beforeError, afterError);
+    const persistenceWarning = (!progressSave?.ok || !guardianSave?.ok || lastErrorChanged)
+      ? { reason: SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED }
+      : null;
 
     // Record the per-word outcome so guardianMissionEventsForSession counts
     // this as a wobble on the final mission-completed event.
@@ -1659,6 +2406,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
         headline: 'Wobbling.',
         answer: baseWord.word,
         body: 'Mega stays, but this word will return tomorrow for a Guardian check.',
+        // U8: attach the warning into the feedback shape so the React banner
+        // surfaces on the "I don't know" branch too. normaliseFeedback drops
+        // it when null/undefined, preserving the pre-U8 shape on happy paths.
+        persistenceWarning,
       }),
       summary: null,
       error: '',
@@ -1747,6 +2498,9 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const currentPrefs = getPrefs(learnerId);
     engine.resetProgress(learnerId);
     persistence.resetLearner?.(learnerId);
+    // U8: reset ignores the saveJson/saveGuardianMap return value — a warning
+    // on a reset path is not actionable, and there is no current submit to
+    // attach feedback to. The shape change is additive here.
     saveJson(resolvedStorage, prefsKey(learnerId), {
       ...defaultSpellingPrefs(),
       ttsProvider: currentPrefs.ttsProvider,

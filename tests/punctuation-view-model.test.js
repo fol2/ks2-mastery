@@ -18,11 +18,13 @@ import {
   ACTIVE_PUNCTUATION_MONSTER_DISPLAY_NAMES,
   ACTIVE_PUNCTUATION_MONSTER_IDS,
   PUNCTUATION_CHILD_FORBIDDEN_TERMS,
+  PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER,
   PUNCTUATION_DASHBOARD_HERO,
   PUNCTUATION_MAP_MONSTER_FILTER_IDS,
   PUNCTUATION_MAP_STATUS_FILTER_IDS,
   PUNCTUATION_PRIMARY_MODE_CARDS,
   PUNCTUATION_PRIMARY_MODE_IDS,
+  PUNCTUATION_SKILL_MODAL_CONTENT,
   PUNCTUATION_SKILL_MODAL_PREFERRED_EXAMPLE,
   bellstormSceneForPhase,
   buildPunctuationDashboardModel,
@@ -37,9 +39,12 @@ import {
   punctuationMonsterDisplayName,
   punctuationPhaseLabel,
   punctuationPrimaryModeFromPrefs,
+  punctuationSkillHasMultiSkillItems,
+  punctuationSkillModalContent,
   punctuationSkillModalPreferredExample,
 } from '../src/subjects/punctuation/components/punctuation-view-model.js';
 import { MONSTERS_BY_SUBJECT } from '../src/platform/game/monsters.js';
+import { PUNCTUATION_CLUSTERS, PUNCTUATION_ITEMS, PUNCTUATION_SKILLS } from '../shared/punctuation/content.js';
 
 // ---------------------------------------------------------------------------
 // composeIsDisabled (R11) — moved from PunctuationPracticeSurface.jsx in U1.
@@ -644,6 +649,34 @@ test('U1 view-model: buildPunctuationMapModel output shape is frozen end-to-end'
 });
 
 // ---------------------------------------------------------------------------
+// PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER — drift guard against the Worker's
+// canonical `PUNCTUATION_CLUSTERS.monsterId` table in
+// `shared/punctuation/content.js`. The client mirror is forbidden from
+// importing the shared content in the browser bundle (bundle-audit rule);
+// tests allow the import so the mapping stays locked in step.
+// ---------------------------------------------------------------------------
+
+test('U5 drift: PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER matches shared PUNCTUATION_CLUSTERS', () => {
+  for (const cluster of PUNCTUATION_CLUSTERS) {
+    const clientMapped = PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER[cluster.id];
+    assert.equal(
+      clientMapped,
+      cluster.monsterId,
+      `client mirror drifted for cluster "${cluster.id}": expected "${cluster.monsterId}", got "${clientMapped}"`,
+    );
+  }
+  // Also guard against the client mirror carrying any cluster id not present
+  // in the shared canonical list.
+  const canonicalIds = new Set(PUNCTUATION_CLUSTERS.map((cluster) => cluster.id));
+  for (const clientId of Object.keys(PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER)) {
+    assert.ok(
+      canonicalIds.has(clientId),
+      `client mirror carries unknown cluster id "${clientId}"`,
+    );
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Pure-module safety: no React imports in the view-model file.
 // ---------------------------------------------------------------------------
 
@@ -656,4 +689,210 @@ test('U1 safety: punctuation-view-model.js does not import react', async () => {
   const source = fs.readFileSync(path, 'utf8');
   assert.equal(/from ['"]react['"]/i.test(source), false);
   assert.equal(/require\(['"]react['"]\)/i.test(source), false);
+});
+
+// ---------------------------------------------------------------------------
+// Round-2 maintainability LOW — drift guard between the skill-id list in
+// `service-contract.js` (used by the normaliser + module handler) and the
+// full skill metadata in `read-model.js` (used by the Map scene + selectors).
+// A silent divergence would mean a Map entry exists without a validation
+// counterpart, or vice versa — a class of bug the frozen lists were meant
+// to prevent. One symmetric assertion keeps both files in lock-step.
+// ---------------------------------------------------------------------------
+
+test('U5 drift: PUNCTUATION_CLIENT_SKILL_IDS stays in lock-step with PUNCTUATION_CLIENT_SKILLS', async () => {
+  const { PUNCTUATION_CLIENT_SKILL_IDS } = await import(
+    '../src/subjects/punctuation/service-contract.js'
+  );
+  const { PUNCTUATION_CLIENT_SKILLS } = await import(
+    '../src/subjects/punctuation/read-model.js'
+  );
+  assert.equal(
+    PUNCTUATION_CLIENT_SKILL_IDS.length,
+    PUNCTUATION_CLIENT_SKILLS.length,
+    'skill-id list length diverged from skill metadata list',
+  );
+  const clientIds = new Set(PUNCTUATION_CLIENT_SKILLS.map((skill) => skill.id));
+  for (const id of PUNCTUATION_CLIENT_SKILL_IDS) {
+    assert.ok(
+      clientIds.has(id),
+      `${id} is in PUNCTUATION_CLIENT_SKILL_IDS but not in PUNCTUATION_CLIENT_SKILLS`,
+    );
+  }
+  // Symmetric direction: every skill id in the read-model must also appear
+  // in the validation list — otherwise a Map entry would render with no way
+  // to ever be dispatched by a guarded handler.
+  const contractIds = new Set(PUNCTUATION_CLIENT_SKILL_IDS);
+  for (const skill of PUNCTUATION_CLIENT_SKILLS) {
+    assert.ok(
+      contractIds.has(skill.id),
+      `${skill.id} is in PUNCTUATION_CLIENT_SKILLS but not in PUNCTUATION_CLIENT_SKILL_IDS`,
+    );
+  }
+});
+
+// ---------------------------------------------------------------------------
+// U6 — PUNCTUATION_SKILL_MODAL_CONTENT drift against shared/punctuation/content.js
+// ---------------------------------------------------------------------------
+//
+// Review-follower HIGH 1 relaxation. The client mirror intentionally diverges
+// from the shared source on TWO axes:
+//
+//   1. `workedGood` + `contrastGood` — 6 skills had shared values that were
+//      byte-for-byte identical to a `PUNCTUATION_ITEMS.accepted[*]` string
+//      for that skill (plus `hyphen.contrastGood`). The Modal would leak
+//      accepted answers before a Practise round. The mirror authors fresh
+//      KS2-friendly examples that are disjoint from the item bank.
+//   2. `rule` — 4 skills (semicolon, colon_list, dash_clause,
+//      fronted_adverbial) had shared rules phrased in adult register
+//      ("main clauses", "opening clause", "fronted adverbial"). The
+//      mirror rewrites these in Year 3-5 child register.
+//
+// `contrastBad` stays canonical (the Learn tab's "Common mix-up" shows the
+// specific pattern the marking engine also penalises — it must match the
+// marking-side source exactly). The red-team disjoint test below replaces
+// the blanket drift test for the two example fields + rule.
+
+test('U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT.contrastBad mirrors PUNCTUATION_SKILLS byte-for-byte', () => {
+  // `contrastBad` stays canonical — the Learn tab's "Common mix-up" must
+  // match the shared source (which the marking engine also consumes).
+  for (const skill of PUNCTUATION_SKILLS) {
+    const mirror = PUNCTUATION_SKILL_MODAL_CONTENT[skill.id];
+    assert.ok(mirror, `client mirror missing entry for ${skill.id}`);
+    assert.strictEqual(
+      mirror.contrastBad,
+      skill.contrastBad,
+      `PUNCTUATION_SKILL_MODAL_CONTENT.${skill.id}.contrastBad drifted from shared/punctuation/content.js`,
+    );
+  }
+});
+
+test('U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT.rule is non-empty, child-safe, and within reasonable length for every skill', () => {
+  // The mirror's rule field may diverge from the shared source (child
+  // register rewrite). But every rule must be non-empty, a plain string,
+  // within a sensible length budget, and pass the forbidden-term filter so
+  // no adult jargon leaks via this axis.
+  for (const skill of PUNCTUATION_SKILLS) {
+    const mirror = PUNCTUATION_SKILL_MODAL_CONTENT[skill.id];
+    assert.ok(mirror, `client mirror missing entry for ${skill.id}`);
+    assert.equal(typeof mirror.rule, 'string');
+    assert.ok(mirror.rule.length > 0, `${skill.id}.rule must be non-empty`);
+    assert.ok(mirror.rule.length <= 240, `${skill.id}.rule must fit KS2 reading budget`);
+    assert.ok(
+      isPunctuationChildCopy(mirror.rule),
+      `${skill.id}.rule contains a forbidden term: ${JSON.stringify(mirror.rule)}`,
+    );
+  }
+});
+
+test('U6 red-team: PUNCTUATION_SKILL_MODAL_CONTENT example fields are disjoint from PUNCTUATION_ITEMS.accepted[*] for the owning skill', () => {
+  // Review-follower HIGH 1 — the modal example fields (workedGood +
+  // contrastGood) AND the common mix-up (contrastBad) must NOT be
+  // byte-for-byte identical to any `accepted[*]` string from a
+  // PUNCTUATION_ITEMS entry that includes this skill. Otherwise the Learn
+  // tab leaks an accepted answer before the learner has attempted a
+  // Practise round on it.
+  for (const [skillId, mirror] of Object.entries(PUNCTUATION_SKILL_MODAL_CONTENT)) {
+    const acceptedSet = new Set();
+    for (const item of PUNCTUATION_ITEMS) {
+      if (!Array.isArray(item.skillIds) || !item.skillIds.includes(skillId)) continue;
+      if (!Array.isArray(item.accepted)) continue;
+      for (const entry of item.accepted) acceptedSet.add(entry);
+    }
+    for (const field of ['workedGood', 'contrastGood', 'contrastBad']) {
+      const value = mirror[field];
+      assert.equal(typeof value, 'string');
+      assert.ok(value.length > 0, `${skillId}.${field} must be non-empty`);
+      assert.ok(
+        !acceptedSet.has(value),
+        `${skillId}.${field} ("${value}") leaks a PUNCTUATION_ITEMS.accepted[*] string — the Modal would render an accepted answer. Author a fresh KS2-friendly example.`,
+      );
+    }
+  }
+});
+
+test('U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT covers every published skill', () => {
+  // Symmetric direction: no stale client entry whose source was removed.
+  const sharedIds = new Set(PUNCTUATION_SKILLS.map((skill) => skill.id));
+  for (const id of Object.keys(PUNCTUATION_SKILL_MODAL_CONTENT)) {
+    assert.ok(
+      sharedIds.has(id),
+      `${id} is in PUNCTUATION_SKILL_MODAL_CONTENT but not in shared PUNCTUATION_SKILLS`,
+    );
+  }
+  assert.equal(
+    Object.keys(PUNCTUATION_SKILL_MODAL_CONTENT).length,
+    PUNCTUATION_SKILLS.length,
+    'client mirror count diverged from shared source',
+  );
+});
+
+test('U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT entries expose only 4 pedagogy keys', () => {
+  // No other field (workedBad, phase, prereq, published, clusterId, name, id)
+  // leaks into the modal mirror. Keeps the modal payload structurally
+  // incapable of rendering an adult-surface key.
+  const allowedKeys = new Set(['rule', 'workedGood', 'contrastGood', 'contrastBad']);
+  for (const [id, entry] of Object.entries(PUNCTUATION_SKILL_MODAL_CONTENT)) {
+    for (const key of Object.keys(entry)) {
+      assert.ok(
+        allowedKeys.has(key),
+        `${id} exposes disallowed key "${key}" — modal must ship only rule + workedGood + contrastGood + contrastBad`,
+      );
+    }
+  }
+});
+
+test('U6: punctuationSkillModalContent returns null for unknown ids', () => {
+  assert.strictEqual(punctuationSkillModalContent(''), null);
+  assert.strictEqual(punctuationSkillModalContent(null), null);
+  assert.strictEqual(punctuationSkillModalContent('not_a_skill'), null);
+});
+
+test('U6: punctuationSkillModalContent returns the 4-field entry for a published skill', () => {
+  const entry = punctuationSkillModalContent('speech');
+  assert.ok(entry);
+  assert.equal(typeof entry.rule, 'string');
+  assert.equal(typeof entry.workedGood, 'string');
+  assert.equal(typeof entry.contrastGood, 'string');
+  assert.equal(typeof entry.contrastBad, 'string');
+});
+
+// ---------------------------------------------------------------------------
+// U6 — punctuationSkillHasMultiSkillItems drift against PUNCTUATION_ITEMS.
+// ---------------------------------------------------------------------------
+
+test('U6 drift: punctuationSkillHasMultiSkillItems matches every multi-skill PUNCTUATION_ITEMS entry', () => {
+  // Derive the expected set from the live shared source — every skill that
+  // appears in an item with `skillIds.length > 1`. The helper must report
+  // true for exactly that set and false for every other published skill.
+  const expected = new Set();
+  for (const item of PUNCTUATION_ITEMS) {
+    if (Array.isArray(item.skillIds) && item.skillIds.length > 1) {
+      for (const id of item.skillIds) expected.add(id);
+    }
+  }
+  // Every skill in the expected set must return true.
+  for (const id of expected) {
+    assert.strictEqual(
+      punctuationSkillHasMultiSkillItems(id),
+      true,
+      `${id} appears in a multi-skill PUNCTUATION_ITEMS entry but helper returned false`,
+    );
+  }
+  // Every published skill NOT in the expected set must return false.
+  for (const skill of PUNCTUATION_SKILLS) {
+    if (expected.has(skill.id)) continue;
+    assert.strictEqual(
+      punctuationSkillHasMultiSkillItems(skill.id),
+      false,
+      `${skill.id} has no multi-skill PUNCTUATION_ITEMS entry but helper returned true`,
+    );
+  }
+});
+
+test('U6: punctuationSkillHasMultiSkillItems returns false for non-string / empty / unknown input', () => {
+  assert.strictEqual(punctuationSkillHasMultiSkillItems(''), false);
+  assert.strictEqual(punctuationSkillHasMultiSkillItems(null), false);
+  assert.strictEqual(punctuationSkillHasMultiSkillItems(undefined), false);
+  assert.strictEqual(punctuationSkillHasMultiSkillItems('not_a_skill'), false);
 });

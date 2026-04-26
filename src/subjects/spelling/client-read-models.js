@@ -1,6 +1,7 @@
 import {
   cloneSerialisable,
   createInitialSpellingState,
+  createLockedPostMasteryState,
   normaliseBoolean,
   normaliseMode,
   normaliseRoundLength,
@@ -118,17 +119,27 @@ export function createSpellingReadModelService({ getState = () => null } = {}) {
       // through the next cached command response which carries the real
       // state via the Worker engine. This keeps the Setup render stable
       // while the first round trip is in flight.
+      //
+      // U1 critical: the Setup scene gates the Begin button on
+      // `guardianMissionAvailable`; without the defaults below, the
+      // remote-sync dashboard would read `undefined` for the gate and stay
+      // permanently disabled. The defaults mirror the 'locked' state so the
+      // legacy dashboard renders until the first command round-trip
+      // populates `subjectUi.spelling.postMastery`.
+      //
+      // Uses the shared `createLockedPostMasteryState()` factory (defined in
+      // `service-contract.js`) so this stub, the session-phase shortcut in
+      // `spelling-view-model.js`, and the `computeGuardianMissionState`
+      // 'locked' result never drift. `todayDay` is populated from the live
+      // clock so UI copy that formats "next check in N days" renders a
+      // sensible (albeit zero-delta) value before hydration.
       const cached = readModel(learnerId).postMastery;
       if (cached && typeof cached === 'object' && !Array.isArray(cached)) {
         return cloneSerialisable(cached);
       }
       return {
-        allWordsMega: false,
-        guardianDueCount: 0,
-        wobblingCount: 0,
-        nextGuardianDueDay: null,
+        ...createLockedPostMasteryState(),
         todayDay: Math.floor(Date.now() / (24 * 60 * 60 * 1000)),
-        guardianMap: {},
       };
     },
     getAudioCue(learnerId) {

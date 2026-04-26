@@ -1,13 +1,87 @@
 export const SPELLING_SERVICE_STATE_VERSION = 2;
 
 export const SPELLING_ROOT_PHASES = Object.freeze(['dashboard', 'session', 'summary', 'word-bank']);
-export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single', 'guardian']);
+export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single', 'guardian', 'boss']);
 
 export const GUARDIAN_INTERVALS = Object.freeze([3, 7, 14, 30, 60, 90]);
 export const GUARDIAN_MAX_REVIEW_LEVEL = GUARDIAN_INTERVALS.length - 1;
 export const GUARDIAN_MIN_ROUND_LENGTH = 5;
 export const GUARDIAN_MAX_ROUND_LENGTH = 8;
 export const GUARDIAN_DEFAULT_ROUND_LENGTH = 8;
+
+// Boss Dictation round bounds (U9). A Boss round draws a uniform random sample
+// from the learner's Mega core-pool slugs and rides as a `type: 'test'`-shaped
+// session (no retry, no cloze, no skip) with a dedicated `submitBossAnswer`
+// path that NEVER demotes `progress.stage` / `dueDay` / `lastDay` / `lastResult`.
+// See docs/plans/2026-04-25-005-feat-post-mega-spelling-guardian-hardening-plan.md (U9).
+export const BOSS_MIN_ROUND_LENGTH = 8;
+export const BOSS_MAX_ROUND_LENGTH = 12;
+export const BOSS_DEFAULT_ROUND_LENGTH = 10;
+
+/**
+ * Canonical set of dashboard/selector-facing Guardian mission states. Order
+ * matches the state-machine priority as enforced in `computeGuardianMissionState`:
+ * 'locked' (not post-Mega) > 'first-patrol' (fresh graduate, empty map) >
+ * 'wobbling' (urgent recovery dominates due) > 'due' (normal daily patrol) >
+ * 'optional-patrol' (nothing due but a round can be produced) > 'rested'
+ * (terminal — Begin disabled).
+ *
+ * The 'rested' terminal state disables the Begin button; every other state
+ * opens it. Consumers should derive the `guardianMissionAvailable` boolean
+ * from this set via `!== 'locked' && !== 'rested'` rather than re-enumerating
+ * enabled states.
+ *
+ * `computeGuardianMissionState` uses this frozen list at runtime as a
+ * sanity check: the returned state must be a member of this set, otherwise
+ * a typo in the state-machine implementation is caught immediately rather
+ * than leaking an unknown label into UI copy.
+ */
+export const GUARDIAN_MISSION_STATES = Object.freeze([
+  'locked',
+  'first-patrol',
+  'wobbling',
+  'due',
+  'optional-patrol',
+  'rested',
+]);
+/**
+ * Single-source factory for the "locked" post-mastery snapshot. Three fallbacks
+ * used to be duplicated in-line:
+ *   1. `client-read-models.js::getPostMasteryState` (remote-sync stub before
+ *      the first command round-trip hydrates `subjectUi.spelling.postMastery`).
+ *   2. `spelling-view-model.js::buildSpellingViewModel` (session-phase shortcut
+ *      when `getPostMasteryState` is not worth calling).
+ *   3. `computeGuardianMissionState(...) === 'locked'` (the state-machine
+ *      return value).
+ *
+ * Any future field we add to the post-mastery shape must be defaulted in one
+ * place, or the remote-sync dashboard risks reading `undefined` for a
+ * gating scalar. Callers that want to override a field (e.g. populate
+ * `todayDay` from the live clock) can spread the factory output:
+ *
+ *   { ...createLockedPostMasteryState(), todayDay: currentDay }
+ *
+ * The factory returns a fresh object every call so callers can mutate the
+ * result without aliasing hazards.
+ */
+export function createLockedPostMasteryState() {
+  return {
+    allWordsMega: false,
+    guardianDueCount: 0,
+    wobblingCount: 0,
+    wobblingDueCount: 0,
+    nonWobblingDueCount: 0,
+    unguardedMegaCount: 0,
+    guardianAvailableCount: 0,
+    guardianMissionState: 'locked',
+    guardianMissionAvailable: false,
+    nextGuardianDueDay: null,
+    todayDay: 0,
+    guardianMap: {},
+    recommendedWords: [],
+  };
+}
+
 // Canonical secure-stage threshold shared by the service layer, the
 // post-mastery read-model, and the Word Bank view-model. Prior to U2 this
 // constant was duplicated as `GUARDIAN_SECURE_STAGE` in shared/spelling/service.js
@@ -137,8 +211,49 @@ export function normaliseStringArray(value, filterFn = null) {
     .filter((entry) => (typeof filterFn === 'function' ? filterFn(entry) : true));
 }
 
+/**
+ * U8: Storage-failure warning surface.
+ *
+ * Allowed reason strings for `feedback.persistenceWarning`. Kept as a frozen
+ * allow-list so a renamed or typo'd reason never reaches the UI. The only
+ * reason today is `storage-save-failed`; new entries land here before the
+ * service + UI accept them.
+ *
+ * `SPELLING_PERSISTENCE_WARNING_REASONS` is the frozen array (iteration /
+ * contains). `SPELLING_PERSISTENCE_WARNING_REASON` is a frozen record of
+ * named constants so every call site can refer to the reason symbolically
+ * rather than duplicating the literal — review-fix for the sev-60
+ * maintainability finding.
+ */
+export const SPELLING_PERSISTENCE_WARNING_REASONS = Object.freeze(['storage-save-failed']);
+export const SPELLING_PERSISTENCE_WARNING_REASON = Object.freeze({
+  STORAGE_SAVE_FAILED: 'storage-save-failed',
+});
+
+/**
+ * U8 review fix: banner copy extracted so future wording tweaks live in one
+ * place. The wording was updated from the original "Progress could not be
+ * saved on this device. Export or free storage." to the more accurate
+ * partial-write message below. On a Guardian submit where the progress
+ * write succeeded but the guardian write failed (or vice versa), the
+ * learner's answer WAS counted in-memory for this round, but the storage
+ * state is partially stale — they may see the same word re-appear after a
+ * reload. The copy acknowledges that accurately.
+ */
+export const SPELLING_PERSISTENCE_WARNING_COPY = Object.freeze({
+  STORAGE_SAVE_FAILED: 'We could not save your progress on this device. Your answer counted for this round, but you may see this word again after a reload. Free up storage or export your progress.',
+});
+
+function normalisePersistenceWarning(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const reason = typeof raw.reason === 'string' ? raw.reason : '';
+  if (!SPELLING_PERSISTENCE_WARNING_REASONS.includes(reason)) return null;
+  return { reason };
+}
+
 export function normaliseFeedback(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const persistenceWarning = normalisePersistenceWarning(value.persistenceWarning);
   const feedback = {
     kind: SPELLING_FEEDBACK_KINDS.includes(value.kind) ? value.kind : 'info',
     headline: normaliseString(value.headline),
@@ -149,9 +264,22 @@ export function normaliseFeedback(value) {
     familyWords: normaliseStringArray(value.familyWords),
   };
 
-  if (!feedback.headline && !feedback.answer && !feedback.attemptedAnswer && !feedback.body && !feedback.footer && !feedback.familyWords.length) {
+  if (
+    !feedback.headline
+    && !feedback.answer
+    && !feedback.attemptedAnswer
+    && !feedback.body
+    && !feedback.footer
+    && !feedback.familyWords.length
+    && !persistenceWarning
+  ) {
     return null;
   }
+
+  // U8: attach persistenceWarning only when present so the happy-path feedback
+  // shape stays byte-identical for downstream consumers that JSON-serialise or
+  // structural-compare the feedback object.
+  if (persistenceWarning) feedback.persistenceWarning = persistenceWarning;
 
   return feedback;
 }

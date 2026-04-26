@@ -19,6 +19,21 @@
 
 import { resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
 import { MONSTERS_BY_SUBJECT } from '../../../platform/game/monsters.js';
+import {
+  PUNCTUATION_MAP_DETAIL_TAB_IDS,
+  PUNCTUATION_MAP_MONSTER_FILTER_IDS,
+  PUNCTUATION_MAP_STATUS_FILTER_IDS,
+} from '../service-contract.js';
+
+// U5 layer fix (adv-219-005): the Map filter + detail-tab id lists are the
+// service-contract's single source of truth. The view-model re-exports them
+// under their existing names so renderers / tests keep their current import
+// paths while the one-way `contract → view-model` dependency is restored.
+export {
+  PUNCTUATION_MAP_DETAIL_TAB_IDS,
+  PUNCTUATION_MAP_MONSTER_FILTER_IDS,
+  PUNCTUATION_MAP_STATUS_FILTER_IDS,
+};
 
 const BELLSTORM_BASE = '/assets/regions/bellstorm-coast';
 
@@ -135,19 +150,63 @@ export const PUNCTUATION_PRIMARY_MODE_CARDS = Object.freeze([
 ]);
 
 // --- Punctuation Map filter lists ------------------------------------------
+//
+// Status, monster, and detail-tab id lists moved to service-contract.js in U5
+// (adv-219-005 layer fix). The view-model re-exports them via the top-of-file
+// `export { ... }` block so downstream imports keep working.
 
-// Map status chips. Order matches the plan: All / New / Learning / Due /
-// Wobbly / Secure. Child copy — the `weak` id reads as "Wobbly" in the UI.
-export const PUNCTUATION_MAP_STATUS_FILTER_IDS = Object.freeze([
-  'all', 'new', 'learning', 'due', 'weak', 'secure',
-]);
+// Short, child-facing rule one-liners for the Punctuation Map scene's skill
+// cards. Each line is a single sentence in KS2-friendly copy — no dotted
+// misconception tags, no adult jargon. Map scene renders one per card; U6's
+// Skill Detail modal reaches for richer content (rule + worked example +
+// contrast) rather than these one-liners. A missing skill falls back to
+// `'Practise this punctuation skill.'` so the card never renders empty.
+const PUNCTUATION_SKILL_RULE_ONE_LINERS = Object.freeze({
+  sentence_endings: 'Start with a capital; end with . ! or ? — no gaps.',
+  list_commas: 'Put a comma between each item in a list.',
+  apostrophe_contractions: "Slot the mark in where the missing letters belong.",
+  apostrophe_possession: "Add 's to show belonging; a plural ending in s takes one mark.",
+  speech: 'Speech marks wrap the spoken words; the end mark sits inside.',
+  fronted_adverbial: 'Put a comma after the opener when it comes before the main clause.',
+  parenthesis: 'Mark an extra idea with two commas, two brackets, or two dashes — one pair only.',
+  comma_clarity: 'Add a comma when it stops the sentence from being misread.',
+  colon_list: 'Use a colon to introduce a list after a complete clause.',
+  semicolon: 'Use a semi-colon to link two closely-related complete clauses.',
+  dash_clause: 'Use a pair of dashes to break off a side thought.',
+  semicolon_list: 'Use semi-colons between long list items that already contain commas.',
+  bullet_points: 'Keep bullet punctuation consistent across every item in the list.',
+  hyphen: 'Hyphenate word pairs before a noun when they act as one idea.',
+});
 
-// Map monster chips. Order matches the plan / codebase active roster. Reserved
-// monsters (Colisk / Hyphang / Carillon) are intentionally absent so a rogue
-// payload cannot surface a retired name as a filter option.
-export const PUNCTUATION_MAP_MONSTER_FILTER_IDS = Object.freeze([
-  'all', 'pealark', 'claspin', 'curlune', 'quoral',
-]);
+/**
+ * Returns the child-facing rule one-liner for a skill id, used by U5's Map
+ * scene skill cards. Unknown ids fall back to a generic "Practise this" line
+ * rather than surfacing the raw id. Output is always a single sentence
+ * suitable for a KS2 reader.
+ */
+export function punctuationSkillRuleOneLiner(skillId) {
+  if (typeof skillId !== 'string' || !skillId) return 'Practise this punctuation skill.';
+  const line = PUNCTUATION_SKILL_RULE_ONE_LINERS[skillId];
+  return typeof line === 'string' && line ? line : 'Practise this punctuation skill.';
+}
+
+// Client-safe cluster → monster mapping. The Worker canonical source of truth
+// is `shared/punctuation/content.js`'s `PUNCTUATION_CLUSTERS`, which the
+// bundle-audit rules forbid from the browser bundle. This constant is the
+// client mirror of that mapping for U5's Map scene — it must stay in lock-step
+// with the shared content's `monsterId` field on every cluster. Skills whose
+// cluster maps to `structure` land on Curlune (List / Structure cluster); the
+// grand monster (Quoral) is reserved for the "published release" aggregate
+// and is the fallback target for any skill whose cluster is unknown (see
+// `buildPunctuationMapModel`).
+export const PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER = Object.freeze({
+  endmarks: 'pealark',
+  speech: 'pealark',
+  boundary: 'pealark',
+  apostrophe: 'claspin',
+  comma_flow: 'curlune',
+  structure: 'curlune',
+});
 
 // --- Active monster roster -------------------------------------------------
 
@@ -458,6 +517,164 @@ export function punctuationSkillModalPreferredExample(skillId) {
   if (typeof skillId !== 'string' || !skillId) return 'workedGood';
   const value = PUNCTUATION_SKILL_MODAL_PREFERRED_EXAMPLE[skillId];
   return value === 'contrastGood' ? 'contrastGood' : 'workedGood';
+}
+
+// --- Skill Detail modal pedagogy content (client mirror) --------------------
+//
+// U6: the Skill Detail modal renders exactly 3 pedagogy fields per skill —
+// `rule`, `contrastBad`, and one of `workedGood` OR `contrastGood`. The
+// canonical source for `rule` + `contrastBad` is `shared/punctuation/content.js`'s
+// `PUNCTUATION_SKILLS` roster, which the bundle-audit rule forbids from
+// reaching the browser bundle. The two example fields (`workedGood` +
+// `contrastGood`) are authored FRESH for the client mirror: for several
+// skills the shared `workedGood` / `contrastGood` are byte-for-byte identical
+// to `PUNCTUATION_ITEMS.accepted[*]` strings (a learner would see the exact
+// answer string in the Modal before a Practise round that expects them to
+// produce it). The client mirror deliberately diverges on the two example
+// fields so no rendered example collides with any accepted-answer string
+// for the owning skill. A red-team test in
+// `tests/punctuation-view-model.test.js` guards the disjoint property; a
+// narrower drift test still pins `rule` + `contrastBad` byte-for-byte.
+//
+// Child register: rules and examples use Year 3-5 vocabulary. No adult
+// register terms ("main clause", "fronted adverbial", "opening clause") —
+// those live only in the shared content for the marking engine.
+//
+// No other field from `PUNCTUATION_SKILLS` ships (no `workedBad`, no `phase`,
+// no `prereq`, no `published`). The modal's 3-field contract is enforced in
+// the component — this map just supplies the raw strings.
+export const PUNCTUATION_SKILL_MODAL_CONTENT = Object.freeze({
+  sentence_endings: Object.freeze({
+    rule: 'Start each sentence with a capital letter and end it with the right mark: full stop, question mark or exclamation mark.',
+    workedGood: 'Where is my reading record?',
+    contrastGood: 'We won the match!',
+    contrastBad: 'We won the match?',
+  }),
+  list_commas: Object.freeze({
+    rule: 'Use commas to separate items in a list. In standard KS2 examples, the final comma before and is usually not needed.',
+    workedGood: 'The team brought bats, balls and cones.',
+    contrastGood: 'The team brought bats, balls and cones.',
+    contrastBad: 'We packed, torches maps, and water.',
+  }),
+  apostrophe_contractions: Object.freeze({
+    rule: "Use an apostrophe to show missing letters in contractions, such as can't, didn't and we're.",
+    workedGood: "We can't go because we're late.",
+    contrastGood: "We can't go because we're late.",
+    contrastBad: "We cant go because we're late.",
+  }),
+  apostrophe_possession: Object.freeze({
+    rule: "Use apostrophes to show belonging: the girl's coat, the girls' coats, the children's books.",
+    workedGood: "The girl's coat was on the bench.",
+    contrastGood: "The girls' coats were on the bench.",
+    contrastBad: 'The girls coat was on the bench.',
+  }),
+  speech: Object.freeze({
+    rule: 'Put spoken words inside inverted commas. Use the correct punctuation inside the closing inverted comma when the punctuation belongs to the spoken words.',
+    workedGood: 'Mia said, "Come here."',
+    contrastGood: '"Where are you going?" asked Zara.',
+    contrastBad: '"Where are you going"? asked Zara.',
+  }),
+  fronted_adverbial: Object.freeze({
+    rule: 'Put a comma after the opening phrase that tells when, where, or how the action happens.',
+    workedGood: 'Before lunch, we finished the poster.',
+    contrastGood: 'Before lunch, we finished the poster.',
+    contrastBad: 'Before lunch we, finished the poster.',
+  }),
+  parenthesis: Object.freeze({
+    rule: 'Parenthesis adds extra information. It can be marked with commas, brackets or dashes.',
+    workedGood: 'Mr Patel, our coach, arrived early.',
+    contrastGood: 'Mr Patel (our coach) arrived early.',
+    contrastBad: 'Mr Patel our coach, arrived early.',
+  }),
+  comma_clarity: Object.freeze({
+    rule: 'A comma can make meaning clearer and avoid ambiguity.',
+    workedGood: "Let's eat, Grandma.",
+    contrastGood: 'After tea, the garden looked peaceful.',
+    contrastBad: 'Most of the time travellers worry about delays.',
+  }),
+  colon_list: Object.freeze({
+    rule: 'A colon comes before a list, after a short sentence.',
+    workedGood: 'The bag held four items: a ruler, a pencil, a rubber and a book.',
+    contrastGood: 'The bag held four items: a ruler, a pencil, a rubber and a book.',
+    contrastBad: 'We needed: three things a torch, a map and a whistle.',
+  }),
+  semicolon: Object.freeze({
+    rule: 'A semicolon joins two short sentences that go together.',
+    workedGood: 'The bell rang; the class fell silent.',
+    contrastGood: 'The bell rang; the class fell silent.',
+    contrastBad: 'The rain had stopped; and the pitch was still slippery.',
+  }),
+  dash_clause: Object.freeze({
+    rule: 'A dash shows a sharp pause between two short sentences.',
+    workedGood: 'The bus was late - we walked instead.',
+    contrastGood: 'The bus was late - we walked instead.',
+    contrastBad: 'The path was flooded -and we took the longer route.',
+  }),
+  semicolon_list: Object.freeze({
+    rule: 'Use semi-colons to separate list items when each item already contains commas.',
+    workedGood: 'We invited Ava, our captain; Zane, our goalie; and Priya, our coach.',
+    contrastGood: 'We invited Ava, our captain; Zane, our goalie; and Priya, our coach.',
+    contrastBad: 'We visited York, England, Cardiff, Wales; and Belfast, Northern Ireland.',
+  }),
+  bullet_points: Object.freeze({
+    rule: 'Use a colon after the opening stem when appropriate, and punctuate bullets consistently.',
+    workedGood: 'Pack:\n- your shoes\n- your bottle\n- your book',
+    contrastGood: 'Pack:\n- your shoes\n- your bottle\n- your book',
+    contrastBad: 'Bring\n- a drink\n- a hat\n- a sketchbook',
+  }),
+  hyphen: Object.freeze({
+    rule: 'A hyphen can stop a phrase from being misunderstood, such as man-eating shark versus man eating shark.',
+    workedGood: 'We saw a man-eating shark.',
+    contrastGood: 'The ten-year-old jumper still fits.',
+    contrastBad: 'The little used room was locked.',
+  }),
+});
+
+/**
+ * Client-safe accessor for the three modal pedagogy fields of a skill.
+ * Returns `null` for unknown / non-string skill ids so the caller can short-
+ * circuit the render rather than leaking a rogue payload. Pairs with
+ * `punctuationSkillModalPreferredExample` — the caller chooses
+ * `workedGood` vs `contrastGood` and pipes the selection through `rule` +
+ * `contrastBad` + the chosen example.
+ */
+export function punctuationSkillModalContent(skillId) {
+  if (typeof skillId !== 'string' || !skillId) return null;
+  const entry = PUNCTUATION_SKILL_MODAL_CONTENT[skillId];
+  return entry || null;
+}
+
+// --- Multi-skill paragraph caveat -------------------------------------------
+
+// U6: skills that appear in at least one `PUNCTUATION_ITEMS` entry whose
+// `skillIds.length > 1`. When the modal opens on one of these, the Practise
+// tab renders a child-facing footnote — "Some practice questions may also
+// include other punctuation skills." — so a learner who chose Guided focus
+// on (say) Speech isn't surprised when a paragraph-repair item also tests
+// Fronted Adverbials. Derived by hand from the cross-skill rows in
+// `shared/punctuation/content.js`'s PUNCTUATION_ITEMS:
+//   sp_fa_transfer_at_last_speech → speech + fronted_adverbial
+//   cl_lc_transfer_toolkit        → colon_list + list_commas
+//   pg_fronted_speech             → fronted_adverbial + speech
+//   pg_parenthesis_speech         → parenthesis + speech
+//   pg_colon_semicolon            → colon_list + semicolon
+//   pg_apostrophe_mix             → apostrophe_contractions + apostrophe_possession
+// A drift test in `tests/punctuation-view-model.test.js` verifies this set
+// matches the live multi-skill items when the shared content evolves.
+const PUNCTUATION_MULTI_SKILL_ITEM_SKILLS = Object.freeze(new Set([
+  'speech',
+  'fronted_adverbial',
+  'colon_list',
+  'list_commas',
+  'parenthesis',
+  'semicolon',
+  'apostrophe_contractions',
+  'apostrophe_possession',
+]));
+
+export function punctuationSkillHasMultiSkillItems(skillId) {
+  if (typeof skillId !== 'string' || !skillId) return false;
+  return PUNCTUATION_MULTI_SKILL_ITEM_SKILLS.has(skillId);
 }
 
 // --- Dashboard model builder -----------------------------------------------

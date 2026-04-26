@@ -77,6 +77,81 @@ async function postCommand(server, {
   };
 }
 
+// U9 — Boss Dictation parity across the reference service and the Worker
+// server engine. Both sides wrap `createSpellingService` over the same
+// runtime content snapshot, so identical seeded random + identical Mega
+// progress seed must produce identical slug ordering. This guards against
+// the `words` bridge regressing on the server path — without the bridge, the
+// engine would fall through to `chooseSmartWords` and the server Boss round
+// would no longer match the reference.
+function seedAllCoreMegaForSnapshot(snapshot) {
+  const progress = {};
+  const todayDay = Math.floor(Date.UTC(2026, 0, 1) / (24 * 60 * 60 * 1000));
+  for (const word of snapshot.words) {
+    if (word.spellingPool === 'extra') continue;
+    progress[word.slug] = {
+      stage: 4,
+      attempts: 6,
+      correct: 5,
+      wrong: 1,
+      dueDay: todayDay + 60,
+      lastDay: todayDay - 7,
+      lastResult: 'correct',
+    };
+  }
+  return progress;
+}
+
+test('server spelling engine matches reference Boss selection under the same seed', () => {
+  const now = () => Date.UTC(2026, 0, 1);
+  const learnerId = 'learner-a';
+  const snap = contentSnapshot();
+
+  // Seed the reference service's persistent storage with all-core Mega so
+  // `isAllWordsMega` returns true and `startSession({mode:"boss"})` is unlocked.
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  repositories.subjectStates.writeData(learnerId, 'spelling', {
+    progress: seedAllCoreMegaForSnapshot(snap),
+  });
+  const reference = createSpellingService({
+    repository: createSpellingPersistence({ repositories, now }),
+    now,
+    random: makeSeededRandom(42),
+    contentSnapshot: snap,
+  });
+
+  const server = createServerSpellingEngine({
+    now,
+    random: makeSeededRandom(42),
+    contentSnapshot: snap,
+  });
+  const serverSubjectData = {
+    progress: seedAllCoreMegaForSnapshot(snap),
+  };
+
+  const referenceStarted = reference.startSession(learnerId, { mode: 'boss', length: 10 });
+  const serverStarted = server.apply({
+    learnerId,
+    subjectRecord: { ui: null, data: serverSubjectData },
+    latestSession: null,
+    command: 'start-session',
+    payload: { mode: 'boss', length: 10 },
+  });
+
+  assert.equal(referenceStarted.ok, true);
+  assert.equal(serverStarted.ok, true);
+  assert.equal(serverStarted.state.session.mode, 'boss');
+  assert.equal(serverStarted.state.session.type, 'test', 'server Boss session overridden to type:test');
+  assert.equal(serverStarted.state.session.label, 'Boss Dictation');
+  // Parity under the shared seed: same ordered slug list.
+  assert.deepEqual(
+    serverStarted.state.session.uniqueWords,
+    referenceStarted.state.session.uniqueWords,
+    'server and reference Boss rounds must select identical slug order under makeSeededRandom(42)',
+  );
+});
+
 test('server spelling engine preserves deterministic selection and retry progression parity', () => {
   const now = () => Date.UTC(2026, 0, 1);
   const learnerId = 'learner-a';

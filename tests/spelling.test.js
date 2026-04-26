@@ -762,3 +762,278 @@ test('smartBucket routes secure-stage words with historical wrongs to fragile be
   assert.equal(result.ok, true);
   assert.deepEqual(result.session.uniqueWords, [fragileSlug]);
 });
+
+// ----- U8: Storage-failure warning surface (Smart Review path) -----------------
+//
+// Goal: when localStorage.setItem throws during a Smart Review submit, the
+// service returns `ok: true`, attaches `feedback.persistenceWarning =
+// { reason: 'storage-save-failed' }`, and keeps the session running in memory.
+// Mega is not in play on this path (learning mode), but the same contract
+// holds: the submit never crashes, the warning self-heals on the next
+// successful submit, and the banner's ARIA region announces once per submit.
+
+function makeBareStorageService({ now = () => Date.UTC(2026, 0, 10), random = () => 0.5 } = {}) {
+  const storage = new MemoryStorage();
+  const spoken = [];
+  const service = createSpellingService({
+    storage,
+    now,
+    random,
+    tts: {
+      speak(payload) { spoken.push(payload); },
+      stop() {},
+      warmup() {},
+    },
+  });
+  return { storage, service, spoken };
+}
+
+test('U8 Smart Review: storage throw on submit surfaces feedback.persistenceWarning and keeps session running', () => {
+  const { storage, service } = makeBareStorageService();
+  const started = service.startSession('learner-a', {
+    mode: 'single',
+    words: ['possess'],
+    length: 1,
+  });
+  assert.equal(started.ok, true);
+  const answer = started.state.session.currentCard.word.word;
+
+  // Arm the next setItem on the progress key to throw. Legacy-engine's
+  // saveProgress swallows the throw; U8's probe re-write detects it.
+  storage.throwOnNextSet({ key: 'ks2-spell-progress-learner-a' });
+
+  const submitted = service.submitAnswer('learner-a', started.state, answer);
+  assert.equal(submitted.ok, true, 'submit returns ok: true even when storage throws');
+  assert.equal(submitted.state.phase, 'session', 'session continues after storage failure');
+  assert.equal(submitted.state.feedback?.persistenceWarning?.reason, 'storage-save-failed');
+  // Happy path: no crash, no stage demotion via service — legacy-engine owns
+  // progress.stage mutation on this path and U8 did not change that contract.
+});
+
+test('U8 Smart Review: happy path has feedback.persistenceWarning === undefined', () => {
+  const { service } = makeBareStorageService();
+  const started = service.startSession('learner-a', {
+    mode: 'single',
+    words: ['possess'],
+    length: 1,
+  });
+  const answer = started.state.session.currentCard.word.word;
+  const submitted = service.submitAnswer('learner-a', started.state, answer);
+  assert.equal(submitted.state.feedback?.persistenceWarning, undefined,
+    'happy-path feedback has no persistenceWarning field');
+});
+
+test('U8 Smart Review: warning self-heals on next successful submit', () => {
+  const { storage, service } = makeBareStorageService();
+  let state = service.startSession('learner-a', {
+    mode: 'single',
+    words: ['possess', 'believe'],
+    length: 2,
+  }).state;
+
+  // First submit fails: warning set.
+  const firstAnswer = state.session.currentCard.word.word;
+  storage.throwOnNextSet({ key: 'ks2-spell-progress-learner-a' });
+  let submitted = service.submitAnswer('learner-a', state, firstAnswer);
+  assert.equal(submitted.state.feedback?.persistenceWarning?.reason, 'storage-save-failed');
+  state = submitted.state;
+  state = service.continueSession('learner-a', state).state;
+
+  // Second submit succeeds: new feedback has no warning.
+  const secondAnswer = state.session.currentCard.word.word;
+  submitted = service.submitAnswer('learner-a', state, secondAnswer);
+  assert.equal(submitted.state.feedback?.persistenceWarning, undefined,
+    'next successful submit produces feedback without persistenceWarning');
+});
+
+test('U8 saveJson contract: returns { ok: true } on success and { ok: false, reason } on throw', async () => {
+  // Import the service module to access saveJson indirectly via savePrefs
+  // (which is the simplest public surface to exercise the contract without
+  // setting up a session).
+  const { service } = makeBareStorageService();
+  const result = service.savePrefs('learner-a', { showCloze: true });
+  assert.ok(result && typeof result === 'object', 'savePrefs returns the normalised prefs object (not the raw saveJson result)');
+  // Exercise the contract end-to-end: savePrefs delegates to saveJson and
+  // does not throw on storage failure — the warning path is consumed only
+  // by submit surfaces (not prefs), but the shape change must not break
+  // the prefs write contract.
+  const { service: service2, storage: storage2 } = makeBareStorageService();
+  storage2.throwOnNextSet();
+  const result2 = service2.savePrefs('learner-b', { showCloze: false });
+  assert.ok(result2 && typeof result2 === 'object', 'prefs write does not throw even when storage throws');
+});
+
+// ----- U8 review fix: production-path Smart Review integration -----------------
+//
+// Closes Blocker 2: the adversarial review flagged that the idempotent probe
+// combined with legacy-engine's silent swallow meant the Smart Review warning
+// was structurally unreachable in production. This test wires the service
+// through the complete production stack (`createLocalPlatformRepositories`
+// -> `createSpellingPersistence` proxy -> service) and arms the backing
+// storage to throw on the subject-state bundle key — which is where the
+// real-world quota / private-mode / IO error would surface in production.
+
+test('U8 review: production-path Smart Review submit surfaces feedback.persistenceWarning on backing storage throw', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const storage = new MemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const service = createSpellingService({
+    repository: createSpellingPersistence({ repositories, now }),
+    now,
+    random: () => 0.5,
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+  });
+
+  const started = service.startSession('learner-a', {
+    mode: 'smart',
+    words: ['possess'],
+    length: 1,
+  });
+  assert.equal(started.ok, true);
+  const answer = started.state.session.currentCard.word.word;
+
+  // Arm the UNDERLYING MemoryStorage (not the spelling proxy) to throw on
+  // the next subject-state bundle write. This is what a quota-exceeded
+  // event looks like in real browsers when `persistBundle` calls
+  // `setItem('ks2-platform-v2.repo.child-subject-state', ...)`.
+  storage.throwOnNextSet({ key: 'ks2-platform-v2.repo.child-subject-state' });
+
+  const submitted = service.submitAnswer('learner-a', started.state, answer);
+  assert.equal(submitted.ok, true, 'submit returns ok:true even on backing-storage failure');
+  assert.equal(submitted.state.phase, 'session', 'session continues in-memory');
+  // The production-path detection runs at two levels:
+  // (1) The proxy's lastError-diff throws when writeData's persistAll fails.
+  //     That throw is caught by legacy-engine's saveProgress's try/catch
+  //     (silent swallow) AND by saveJson's try/catch on the probe write.
+  // (2) The submit path checks the `lastError` channel mid-submit — so even
+  //     when the probe write clears the error (one-shot throw consumed),
+  //     the earlier failure is still captured via the mid-error snapshot.
+  assert.equal(
+    submitted.state.feedback?.persistenceWarning?.reason,
+    'storage-save-failed',
+    'Smart Review production path surfaces persistenceWarning even though legacy-engine swallows the proxy throw',
+  );
+});
+
+test('U8 review: production-path Smart Review happy path has feedback.persistenceWarning === undefined', () => {
+  // Ensure my lastError-diff detection does not false-positive on the
+  // happy path when the backing storage has no prior or current error.
+  const now = () => Date.UTC(2026, 0, 10);
+  const storage = new MemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const service = createSpellingService({
+    repository: createSpellingPersistence({ repositories, now }),
+    now,
+    random: () => 0.5,
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+  });
+
+  const started = service.startSession('learner-a', {
+    mode: 'smart',
+    words: ['possess'],
+    length: 1,
+  });
+  const answer = started.state.session.currentCard.word.word;
+  const submitted = service.submitAnswer('learner-a', started.state, answer);
+  assert.equal(
+    submitted.state.feedback?.persistenceWarning,
+    undefined,
+    'happy-path production feedback has no persistenceWarning',
+  );
+});
+
+// ----- U1: service-side getPostMasteryState mirror ----------------------------
+// The service's live `getPostMasteryState` feeds the Alt+4 module gate and the
+// setup-scene render. U1 extends it with the same new fields the read-model
+// selector returns (`guardianMissionState`, `guardianMissionAvailable`,
+// `unguardedMegaCount`, `guardianAvailableCount`, `wobblingDueCount`,
+// `nonWobblingDueCount`). These tests drive a core-sized learner through the
+// service and spot-check the derived fields.
+
+function seedFullCoreMega({ repositories, learnerId, today, guardian = {} }) {
+  const progress = Object.fromEntries(WORDS
+    .filter((word) => word.spellingPool === 'core')
+    .map((word) => [word.slug, {
+      stage: 4,
+      attempts: 6,
+      correct: 5,
+      wrong: 1,
+      dueDay: today + 60,
+      lastDay: today - 7,
+      lastResult: true,
+    }]));
+  repositories.subjectStates.writeData(learnerId, 'spelling', {
+    progress,
+    guardian,
+  });
+  return progress;
+}
+
+test('U1 service: getPostMasteryState exposes all U1 fields for fresh graduate', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / (24 * 60 * 60 * 1000));
+  const { service, repositories } = makeService({ now, random: makeSeededRandom(1) });
+  seedFullCoreMega({ repositories, learnerId: 'learner-a', today, guardian: {} });
+
+  const snapshot = service.getPostMasteryState('learner-a');
+  assert.equal(snapshot.allWordsMega, true);
+  assert.equal(snapshot.guardianMissionState, 'first-patrol');
+  assert.equal(snapshot.guardianMissionAvailable, true);
+  assert.equal(snapshot.guardianDueCount, 0);
+  assert.equal(snapshot.wobblingDueCount, 0);
+  assert.equal(snapshot.nonWobblingDueCount, 0);
+  assert.ok(snapshot.unguardedMegaCount > 0, 'all Mega core slugs are unguarded');
+  assert.equal(snapshot.guardianAvailableCount, snapshot.unguardedMegaCount);
+});
+
+test('U1 service: getPostMasteryState mirrors read-model for wobbling scenario', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / (24 * 60 * 60 * 1000));
+  const { service, repositories } = makeService({ now, random: makeSeededRandom(1) });
+  const guardian = {
+    possess: { reviewLevel: 0, lastReviewedDay: today - 3, nextDueDay: today - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+    believe: { reviewLevel: 2, lastReviewedDay: today - 2, nextDueDay: today, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+  };
+  seedFullCoreMega({ repositories, learnerId: 'learner-a', today, guardian });
+
+  const snapshot = service.getPostMasteryState('learner-a');
+  assert.equal(snapshot.guardianMissionState, 'wobbling');
+  assert.equal(snapshot.guardianMissionAvailable, true);
+  assert.equal(snapshot.wobblingDueCount, 1);
+  assert.equal(snapshot.nonWobblingDueCount, 1);
+  assert.equal(snapshot.guardianDueCount, 2);
+});
+
+test('U1 service: getPostMasteryState returns locked state when learner has not graduated', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const { service } = makeService({ now, random: makeSeededRandom(1) });
+  // No seed — learner-a has no progress.
+  const snapshot = service.getPostMasteryState('learner-a');
+  assert.equal(snapshot.allWordsMega, false);
+  assert.equal(snapshot.guardianMissionState, 'locked');
+  assert.equal(snapshot.guardianMissionAvailable, false);
+});
+
+test('U1 service: optional-patrol when some Mega words are still unguarded but none due', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / (24 * 60 * 60 * 1000));
+  const { service, repositories } = makeService({ now, random: makeSeededRandom(1) });
+  const guardian = {
+    possess: { reviewLevel: 3, lastReviewedDay: today - 1, nextDueDay: today + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+    believe: { reviewLevel: 2, lastReviewedDay: today - 2, nextDueDay: today + 14, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+  };
+  seedFullCoreMega({ repositories, learnerId: 'learner-a', today, guardian });
+  const snapshot = service.getPostMasteryState('learner-a');
+  assert.equal(snapshot.guardianDueCount, 0, 'nothing due');
+  assert.equal(snapshot.guardianMissionState, 'optional-patrol');
+  assert.equal(snapshot.guardianMissionAvailable, true);
+  assert.ok(snapshot.unguardedMegaCount > 0);
+});

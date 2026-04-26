@@ -2,9 +2,9 @@ import React, { useMemo, useState } from 'react';
 import {
   bellstormSceneForPhase,
   composeIsDisabled,
-  currentItemInstruction,
-  punctuationPhaseLabel,
 } from './punctuation-view-model.js';
+import { PunctuationMapScene } from './PunctuationMapScene.jsx';
+import { PunctuationSessionScene } from './PunctuationSessionScene.jsx';
 
 function learnerName(appState, learnerId) {
   return appState?.learners?.byId?.[learnerId]?.name || 'Learner';
@@ -91,181 +91,6 @@ function SetupView({ learner, stats, ui, actions }) {
   );
 }
 
-function WeakFocusChips({ focus }) {
-  if (!focus) return null;
-  const label = focus.bucket === 'weak'
-    ? 'Weak focus'
-    : (focus.bucket === 'due' ? 'Due review' : 'Mixed review');
-  return (
-    <div className="chip-row" style={{ marginTop: 14 }}>
-      <span className={`chip ${focus.bucket === 'weak' ? 'warn' : ''}`}>{label}</span>
-      {focus.skillName ? <span className="chip">{focus.skillName}</span> : null}
-      {focus.mode ? <span className="chip">{focus.mode}</span> : null}
-    </div>
-  );
-}
-
-function GuidedTeachBox({ guided }) {
-  const box = guided?.teachBox;
-  if (!box) return null;
-  return (
-    <div className="callout punctuation-guided-teach" style={{ marginTop: 14 }}>
-      <strong>{box.name}</strong>
-      {box.rule ? <p style={{ marginTop: 8 }}>{box.rule}</p> : null}
-      {box.workedExample?.before || box.workedExample?.after ? (
-        <div className="small" style={{ marginTop: 8 }}>
-          <strong>Worked example</strong>
-          <div style={newlineTextStyle(box.workedExample.before)}>{box.workedExample.before}</div>
-          <div style={newlineTextStyle(box.workedExample.after)}>{box.workedExample.after}</div>
-        </div>
-      ) : null}
-      {box.contrastExample?.before || box.contrastExample?.after ? (
-        <div className="small" style={{ marginTop: 8 }}>
-          <strong>Common mistake</strong>
-          <div style={newlineTextStyle(box.contrastExample.before)}>{box.contrastExample.before}</div>
-          <div style={newlineTextStyle(box.contrastExample.after)}>{box.contrastExample.after}</div>
-        </div>
-      ) : null}
-      {box.selfCheckPrompt ? <div className="small muted" style={{ marginTop: 8 }}>{box.selfCheckPrompt}</div> : null}
-    </div>
-  );
-}
-
-function ChoiceItem({ item, disabled, onSubmit }) {
-  const [choiceIndex, setChoiceIndex] = useState('');
-  return (
-    <form
-      style={{ display: 'grid', gap: 12 }}
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSubmit({ choiceIndex });
-      }}
-    >
-      <div className="choice-list" role="radiogroup" aria-label="Punctuation choices">
-        {(item.options || []).map((option) => (
-          <label className="choice-card" key={`${item.id}-${option.index}`}>
-            <input
-              type="radio"
-              name="choiceIndex"
-              value={option.index}
-              checked={String(choiceIndex) === String(option.index)}
-              onChange={() => setChoiceIndex(String(option.index))}
-            />
-            <span style={newlineTextStyle(option.text)}>{option.text}</span>
-          </label>
-        ))}
-      </div>
-      <div className="actions">
-        <button className="btn primary" type="submit" disabled={disabled || choiceIndex === ''} data-punctuation-submit>Submit answer</button>
-      </div>
-    </form>
-  );
-}
-
-function TextItem({ item, disabled, onSubmit }) {
-  const [typed, setTyped] = useState(item.stem || '');
-  return (
-    <form
-      style={{ display: 'grid', gap: 12 }}
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSubmit({ typed });
-      }}
-    >
-      <label className="field">
-        <span>Your answer</span>
-        <textarea
-          className="input"
-          name="typed"
-          value={typed}
-          rows={item.mode === 'paragraph' ? 6 : 4}
-          data-autofocus="true"
-          onChange={(event) => setTyped(event.target.value)}
-        />
-      </label>
-      <div className="actions">
-        <button className="btn primary" type="submit" disabled={disabled} data-punctuation-submit>Submit answer</button>
-        <button className="btn secondary" type="button" disabled={disabled} onClick={() => setTyped(item.stem || '')}>Reset text</button>
-      </div>
-    </form>
-  );
-}
-
-function ActiveItemView({ ui, actions }) {
-  const item = ui.session?.currentItem || {};
-  const scene = bellstormSceneForPhase('active-item');
-  const progress = ui.session?.length ? Math.round(((ui.session.answeredCount || 0) / ui.session.length) * 100) : 0;
-  const submit = (payload) => actions.dispatch('punctuation-submit-form', payload);
-  const isGps = ui.session?.mode === 'gps';
-  const isDisabled = composeIsDisabled(ui);
-
-  return (
-    <section className="card border-top punctuation-surface" style={{ borderTopColor: '#B8873F' }}>
-      <div className="punctuation-strip">
-        <img src={scene.src} srcSet={scene.srcSet} sizes="(max-width: 980px) 100vw, 960px" alt="" aria-hidden="true" />
-        <div>
-          <div className="eyebrow">{punctuationPhaseLabel(ui.phase)}</div>
-          <h2 className="section-title">{item.prompt || 'Punctuation practice'}</h2>
-          <p className="subtitle">{currentItemInstruction(item)}</p>
-        </div>
-      </div>
-      <WeakFocusChips focus={ui.session?.weakFocus} />
-      {isGps ? (
-        <div className="chip-row" style={{ marginTop: 14 }}>
-          <span className="chip">GPS test</span>
-          <span className="chip">Delayed feedback</span>
-          <span className="chip">{(ui.session?.answeredCount || 0) + 1} of {ui.session?.length || 0}</span>
-        </div>
-      ) : null}
-      <GuidedTeachBox guided={ui.session?.guided} />
-      {item.stem ? <div className="callout" style={{ marginTop: 14, ...newlineTextStyle(item.stem) }}>{item.stem}</div> : null}
-      <div className="progress" style={{ marginTop: 14 }}><span style={{ width: `${progress}%` }} /></div>
-      <div style={{ marginTop: 16 }}>
-        {item.inputKind === 'choice'
-          ? <ChoiceItem item={item} disabled={isDisabled} onSubmit={submit} />
-          : <TextItem key={item.id || item.prompt} item={item} disabled={isDisabled} onSubmit={submit} />}
-      </div>
-      <div className="actions" style={{ marginTop: 16 }}>
-        <button className="btn ghost" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-skip')}>Skip</button>
-        <button className="btn ghost" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-end-early')}>End session</button>
-      </div>
-    </section>
-  );
-}
-
-function FeedbackView({ ui, actions }) {
-  const feedback = ui.feedback || {};
-  const scene = bellstormSceneForPhase('feedback');
-  const isDisabled = composeIsDisabled(ui);
-  return (
-    <section className="card border-top punctuation-surface" style={{ borderTopColor: feedback.kind === 'success' ? '#2E8479' : '#B8873F' }}>
-      <div className="punctuation-strip">
-        <img src={scene.src} srcSet={scene.srcSet} sizes="(max-width: 980px) 100vw, 960px" alt="" aria-hidden="true" />
-        <div>
-          <div className="eyebrow">Feedback</div>
-          <h2 className="section-title">{feedback.headline || 'Feedback'}</h2>
-          <p className="subtitle">{feedback.body}</p>
-        </div>
-      </div>
-      {feedback.displayCorrection ? (
-        <div className={`feedback ${feedback.kind === 'success' ? 'good' : 'warn'}`} style={{ marginTop: 14 }}>
-          <strong>Model</strong>
-          <div style={{ marginTop: 8 }}>{feedback.displayCorrection}</div>
-        </div>
-      ) : null}
-      {feedback.facets?.length ? (
-        <div className="chip-row" style={{ marginTop: 14 }}>
-          {feedback.facets.map((facet) => <span className={`chip ${facet.ok ? 'good' : 'warn'}`} key={facet.id}>{facet.label}</span>)}
-        </div>
-      ) : null}
-      <div className="actions" style={{ marginTop: 16 }}>
-        <button className="btn primary" type="button" disabled={isDisabled} data-punctuation-continue onClick={() => actions.dispatch('punctuation-continue')}>Continue</button>
-        <button className="btn secondary" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-end-early')}>Finish now</button>
-      </div>
-    </section>
-  );
-}
-
 function SummaryView({ ui, actions }) {
   const summary = ui.summary || {};
   const scene = bellstormSceneForPhase('summary');
@@ -326,9 +151,14 @@ export function PunctuationPracticeSurface({ appState, service, actions }) {
   const stats = useMemo(() => service?.getStats?.(learnerId) || ui.stats || {}, [learnerId, service, ui.stats]);
   const learner = learnerName(appState, learnerId);
 
-  if (ui.phase === 'active-item') return <ActiveItemView ui={ui} actions={actions} />;
-  if (ui.phase === 'feedback') return <FeedbackView ui={ui} actions={actions} />;
+  // Phase 3 U3: `active-item` + `feedback` route through the consolidated
+  // `PunctuationSessionScene`. Summary stays inline until U4; Map routes
+  // to the U5 scene; Setup remains the default SetupView (U2 owns redesign).
+  if (ui.phase === 'active-item' || ui.phase === 'feedback') {
+    return <PunctuationSessionScene ui={ui} actions={actions} />;
+  }
   if (ui.phase === 'summary') return <SummaryView ui={ui} actions={actions} />;
+  if (ui.phase === 'map') return <PunctuationMapScene ui={ui} actions={actions} />;
 
   return <SetupView learner={learner} stats={stats} ui={ui} actions={actions} />;
 }

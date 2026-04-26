@@ -502,6 +502,8 @@ function eventRowToRecord(row) {
 
 function publicPracticeLabel(sessionKind) {
   if (sessionKind === 'test') return 'SATs 20 test';
+  if (sessionKind === 'boss') return 'Boss Dictation';
+  if (sessionKind === 'guardian') return 'Guardian Mission';
   return 'Smart Review';
 }
 
@@ -1227,6 +1229,12 @@ function recentSessionLabel(record) {
   if (record?.summary?.label) return record.summary.label;
   if (record?.subjectId === 'grammar') return `Grammar ${record.sessionKind || 'practice'}`;
   if (record?.subjectId === 'punctuation') return `Punctuation ${record.sessionKind || 'practice'}`;
+  // Post-Mega spelling modes must not leak as 'SATs 20 test' on the parent
+  // hub — Boss and Guardian are distinct from the legacy SATs test path and
+  // the recent-session summary copy has to match the scene the child actually
+  // ran.
+  if (record?.sessionKind === 'boss') return 'Boss Dictation';
+  if (record?.sessionKind === 'guardian') return 'Guardian Mission';
   if (record?.sessionKind === 'test') return 'SATs 20 test';
   return 'Smart Review';
 }

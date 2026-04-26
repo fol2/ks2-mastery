@@ -62,6 +62,69 @@ test('client spelling read model preserves word-family variant preference', () =
   assert.equal(service.getPrefs('learner-a').extraWordFamilies, true);
 });
 
+// ----- U1: remote-sync fallback getPostMasteryState stub ---------------------
+// The Setup scene reads `postMastery` via the runtime service. Under
+// remote-sync runtime, the client shell does not have direct access to the
+// learner's guardian map, so `createSpellingReadModelService#getPostMasteryState`
+// returns a defensive stub until the first command response carries the
+// real state. U1 adds new dashboard-gating scalars; the stub must expose
+// them with safe defaults (locked state, begin disabled) so the remote-sync
+// dashboard does not render with `undefined` gating scalars.
+
+test('U1 client-read-models stub: getPostMasteryState returns locked defaults for all U1 fields', () => {
+  const service = createSpellingReadModelService({
+    getState: () => ({}),
+  });
+  const snapshot = service.getPostMasteryState('learner-a');
+  assert.equal(snapshot.allWordsMega, false);
+  assert.equal(snapshot.guardianDueCount, 0);
+  assert.equal(snapshot.wobblingCount, 0);
+  assert.equal(snapshot.nextGuardianDueDay, null);
+  // U1 additions — critical: without these, the remote-sync dashboard
+  // would read `undefined` for the Begin gate and stay permanently disabled.
+  assert.equal(snapshot.guardianMissionState, 'locked');
+  assert.equal(snapshot.guardianMissionAvailable, false);
+  assert.equal(snapshot.unguardedMegaCount, 0);
+  assert.equal(snapshot.guardianAvailableCount, 0);
+  assert.equal(snapshot.wobblingDueCount, 0);
+  assert.equal(snapshot.nonWobblingDueCount, 0);
+});
+
+test('U1 client-read-models stub: cached postMastery from app state wins over defaults', () => {
+  const cached = {
+    allWordsMega: true,
+    guardianDueCount: 2,
+    wobblingCount: 1,
+    nextGuardianDueDay: 12345,
+    todayDay: 18000,
+    guardianMap: {},
+    guardianMissionState: 'wobbling',
+    guardianMissionAvailable: true,
+    unguardedMegaCount: 0,
+    guardianAvailableCount: 2,
+    wobblingDueCount: 1,
+    nonWobblingDueCount: 1,
+  };
+  const service = createSpellingReadModelService({
+    getState: () => ({
+      subjectUi: {
+        spelling: {
+          subjectId: 'spelling',
+          learnerId: 'learner-a',
+          version: 2,
+          phase: 'dashboard',
+          postMastery: cached,
+        },
+      },
+    }),
+  });
+  const snapshot = service.getPostMasteryState('learner-a');
+  assert.equal(snapshot.guardianMissionState, 'wobbling');
+  assert.equal(snapshot.guardianMissionAvailable, true);
+  assert.equal(snapshot.wobblingDueCount, 1);
+  assert.equal(snapshot.nonWobblingDueCount, 1);
+});
+
 test('React spelling session scene preserves input, replay, and submit affordances', async () => {
   const html = await renderSpellingSurfaceFixture({ phase: 'session' });
 
@@ -144,10 +207,12 @@ test('React spelling setup scene renders the post-Mega dashboard with Guardian M
   assert.doesNotMatch(html, /Choose today/);
 });
 
-test('React spelling setup scene shows "All guardians rested" copy when allWordsMega && guardianDueCount === 0', async () => {
-  // Seed guardians but schedule them all for the future so nothing is due
-  // today. The Begin button should be inert and the card should read as a
-  // quiet signal rather than a greyed-out state.
+test('U1: React setup scene shows optional-patrol copy when post-Mega but no word is due today', async () => {
+  // Fresh post-Mega learner with one existing guardian record scheduled for
+  // the future, and (by seeding) 212 other core Mega words not yet in the
+  // guardian map. Per the U1 state machine: zero due + top-up available →
+  // 'optional-patrol'. The dashboard advertises an optional patrol rather
+  // than a flat "All rested" because a round CAN still be produced.
   const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
   const html = await renderSpellingSurfaceFixture({
     phase: 'setup',
@@ -168,13 +233,89 @@ test('React spelling setup scene shows "All guardians rested" copy when allWords
 
   assert.match(html, /Graduated · Spelling Guardian/);
   assert.match(html, /Guardian Mission/);
-  assert.match(html, /All guardians rested/);
-  assert.match(html, /ALL RESTED/);
-  // The primary begin CTA must be disabled so clicking it does nothing.
-  assert.match(html, /<button[^>]*data-action="spelling-shortcut-start"[^>]*data-mode="guardian"[^>]*disabled=""/);
-  // The rested-state "Rested" chip appears on the Guardian card frame itself.
-  assert.match(html, /mode-card-post-status/);
-  assert.match(html, /Rested/);
+  // U1 state machine wins: the dashboard advertises an optional patrol
+  // because the selector can top up from non-due + unguarded Mega slugs.
+  assert.match(html, /No urgent duties\. Optional patrol available/);
+  assert.match(html, /OPTIONAL PATROL/);
+  assert.match(html, /data-mission-state="optional-patrol"/);
+  // The Begin CTA must be enabled in optional-patrol so the learner can
+  // choose to run a warm-up round.
+  assert.match(html, /<button[^>]*data-action="spelling-shortcut-start"[^>]*data-mode="guardian"[^>]*>Begin Guardian Mission/);
+  assert.doesNotMatch(html, /<button[^>]*data-action="spelling-shortcut-start"[^>]*data-mode="guardian"[^>]*disabled=""/);
+});
+
+// ----- U1 review: remaining mission state renders (due, rested, locked) -------
+// Completion of the PostMegaSetupContent mission-state copy coverage. The
+// earlier tests pin first-patrol (via ACTIVE DUTY variant), wobbling (via
+// optional-patrol), and optional-patrol; these fill in the remaining three
+// so the ladder is fully defended by the React-render smoke.
+
+test('U1 review: React setup scene shows "due" copy + ACTIVE DUTY + enabled Begin when a non-wobbling word is due', async () => {
+  const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+  const html = await renderSpellingSurfaceFixture({
+    phase: 'setup',
+    postMega: {
+      guardian: {
+        possess: {
+          reviewLevel: 2,
+          lastReviewedDay: today - 3,
+          nextDueDay: today,
+          correctStreak: 2,
+          lapses: 0,
+          renewals: 0,
+          wobbling: false,
+        },
+      },
+    },
+  });
+  assert.match(html, /data-mission-state="due"/);
+  assert.match(html, /ACTIVE DUTY/);
+  // Copy for `due` state pulls the "N words ready for their Guardian check"
+  // line from PostMegaSetupContent.
+  assert.match(html, /ready for their Guardian check/);
+  // Begin is enabled.
+  assert.doesNotMatch(html, /<button[^>]*data-action="spelling-shortcut-start"[^>]*data-mode="guardian"[^>]*disabled=""/);
+});
+
+test('U1 review: React setup scene shows "wobbling" copy + URGENT + enabled Begin when a wobbling word is due', async () => {
+  const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+  const html = await renderSpellingSurfaceFixture({
+    phase: 'setup',
+    postMega: {
+      guardian: {
+        possess: {
+          reviewLevel: 0,
+          lastReviewedDay: today - 3,
+          nextDueDay: today - 1,
+          correctStreak: 0,
+          lapses: 1,
+          renewals: 0,
+          wobbling: true,
+        },
+      },
+    },
+  });
+  assert.match(html, /data-mission-state="wobbling"/);
+  assert.match(html, /URGENT/);
+  // The `wobbling` branch either mixes wobbling + non-wobbling copy or
+  // shows the single-wobbling line; either way "Guardian check today"
+  // anchors the PostMegaSetupContent output.
+  assert.match(html, /Guardian check today|urgent check/);
+  // Begin enabled.
+  assert.doesNotMatch(html, /<button[^>]*data-action="spelling-shortcut-start"[^>]*data-mode="guardian"[^>]*disabled=""/);
+});
+
+test('U1 review: React setup scene does NOT render PostMegaSetupContent when not graduated (locked → legacy dashboard)', async () => {
+  // `locked` means `allWordsMega` is false. SpellingSetupScene renders the
+  // legacy 3-mode dashboard instead of PostMegaSetupContent, and the mission
+  // copy / data-mission-state attribute must not leak in.
+  const html = await renderSpellingSurfaceFixture({ phase: 'setup' });
+  assert.doesNotMatch(html, /data-mission-state=/);
+  assert.doesNotMatch(html, /PostMegaSetupContent|The Word Vault is yours|Graduated · Spelling Guardian/);
+  // Legacy shell stays intact.
+  assert.match(html, /Smart Review/);
+  assert.match(html, /Trouble Drill/);
+  assert.match(html, /SATs Test/);
 });
 
 // ----- U6: Summary + Word Bank Guardian surfaces -----------------------------
