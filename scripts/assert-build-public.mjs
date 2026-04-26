@@ -127,12 +127,19 @@ if (unsafeFiles.length) {
   throw new Error(`Unexpected macOS metadata in public output: ${unsafeFiles.join(', ')}`);
 }
 
-const rawSourceFiles = (await walk()).filter((file) => (
-  file.startsWith('src/')
-  && file !== 'src/bundles/app.bundle.js'
-));
+// SH2-U10: widen to admit every `.js` chunk under `src/bundles/`, not just
+// `app.bundle.js`. Esbuild `splitting: true` emits the entry + shared +
+// lazy-entry chunks (content-hashed filenames) all under the same folder;
+// the allowlist must cover them without opening the gate for arbitrary
+// raw source under `src/`.
+const rawSourceFiles = (await walk()).filter((file) => {
+  if (!file.startsWith('src/')) return false;
+  const normalised = file.split(path.sep).join('/');
+  if (normalised.startsWith('src/bundles/') && normalised.endsWith('.js')) return false;
+  return true;
+});
 if (rawSourceFiles.length) {
-  throw new Error(`Public output must only expose the built app bundle under src/: ${rawSourceFiles.join(', ')}`);
+  throw new Error(`Public output must only expose built app bundle chunks under src/: ${rawSourceFiles.join(', ')}`);
 }
 
 const rawAssetPngs = (await walk()).filter((file) => (

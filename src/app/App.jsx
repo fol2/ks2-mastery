@@ -1,21 +1,40 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { HomeSurface } from '../surfaces/home/HomeSurface.jsx';
 import { CodexSurface } from '../surfaces/home/CodexSurface.jsx';
 import { TopNav } from '../surfaces/shell/TopNav.jsx';
 import { PersistenceBanner } from '../surfaces/shell/PersistenceBanner.jsx';
 import { ToastShelf } from '../surfaces/shell/ToastShelf.jsx';
 import { ProfileSettingsSurface } from '../surfaces/profile/ProfileSettingsSurface.jsx';
-import { ParentHubSurface } from '../surfaces/hubs/ParentHubSurface.jsx';
-import { AdminHubSurface } from '../surfaces/hubs/AdminHubSurface.jsx';
 import { SubjectRoute } from '../surfaces/subject/SubjectRoute.jsx';
 import { MonsterVisualConfigProvider } from '../platform/game/MonsterVisualConfigContext.jsx';
 import { MonsterEffectConfigProvider } from '../platform/game/MonsterEffectConfigContext.jsx';
 import { ErrorBoundary } from '../platform/react/ErrorBoundary.jsx';
+import { LoadingSkeleton } from '../platform/ui/LoadingSkeleton.jsx';
 import { captureClientError } from '../platform/ops/error-capture.js';
 import { usePlatformStore } from '../platform/react/use-platform-store.js';
 import { CelebrationLayer } from '../platform/game/render/CelebrationLayer.jsx';
 import { runtimeRegistration } from '../platform/game/render/runtime-registration.js';
 import { __registerCelebrationTemplates } from '../platform/game/render/effect-templates/index.js';
+
+// SH2-U10: adult-only hub surfaces load lazily via `React.lazy()`. Esbuild
+// emits these three entry graphs as separate `.js` chunks under
+// `src/bundles/` (via `splitting: true` in `scripts/build-client.mjs`), so a
+// learner-only practice flow never downloads admin/parent hub JS. The
+// `MonsterVisualConfigPanel` is reached only through `AdminHubSurface`, so
+// splitting the admin hub drags the config panel into the same lazy chunk
+// — no second lazy entry-point needed, and the ParentHub/AdminHub chunks
+// stay disjoint. The imports below stay as side-effect-free dynamic
+// imports so the main bundle's static analysis sees no reference.
+const AdminHubSurface = React.lazy(() =>
+  import('../surfaces/hubs/AdminHubSurface.jsx').then((module) => ({
+    default: module.AdminHubSurface,
+  })),
+);
+const ParentHubSurface = React.lazy(() =>
+  import('../surfaces/hubs/ParentHubSurface.jsx').then((module) => ({
+    default: module.ParentHubSurface,
+  })),
+);
 // JSX-bearing templates: the bundler (esbuild) compiles their JSX cleanly.
 // We pre-register them via the synchronous test seam so the templates are
 // already in the registry's lookup table when `runtimeRegistration()` walks
@@ -229,13 +248,15 @@ export function App({ controller, runtime }) {
         <div className="app-shell">
           <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
-          <ParentHubSurface
-            appState={appState}
-            model={context.parentHub}
-            hubState={context.parentHubState}
-            accessContext={context}
-            actions={actions}
-          />
+          <Suspense fallback={<LoadingSkeleton rows={6} />}>
+            <ParentHubSurface
+              appState={appState}
+              model={context.parentHub}
+              hubState={context.parentHubState}
+              accessContext={context}
+              actions={actions}
+            />
+          </Suspense>
           <SharedOverlays appState={appState} actions={actions} controller={controller} />
         </div>
       )}
@@ -244,14 +265,16 @@ export function App({ controller, runtime }) {
         <div className="app-shell">
           <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
-          <AdminHubSurface
-            appState={appState}
-            model={context.adminHub}
-            hubState={context.adminHubState}
-            accountDirectory={context.adminAccountDirectory}
-            accessContext={context}
-            actions={actions}
-          />
+          <Suspense fallback={<LoadingSkeleton rows={6} />}>
+            <AdminHubSurface
+              appState={appState}
+              model={context.adminHub}
+              hubState={context.adminHubState}
+              accountDirectory={context.adminAccountDirectory}
+              accessContext={context}
+              actions={actions}
+            />
+          </Suspense>
           <SharedOverlays appState={appState} actions={actions} controller={controller} />
         </div>
       )}

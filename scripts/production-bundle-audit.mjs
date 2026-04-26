@@ -124,6 +124,67 @@ function scriptSources(html) {
   return sources;
 }
 
+// SH2-U10 (S-01 mirror): extract the set of same-origin chunk paths that a
+// shipped ES-module chunk imports. Esbuild splitting emits
+// `import("./chunk-XXXX.js")` for lazy-loaded entries and shared chunks,
+// plus static `import ... from "..."` / side-effect `import "..."`
+// forms for top-level imports. Three narrow patterns (one per form)
+// keep the scanner robust — a quote mismatch in one form cannot blind
+// the auditor to another. Specifiers must start with `./`, `../`, or
+// `/` and end in `.js`; anything else (bare specifiers, data/blob URLs,
+// cross-origin URLs) is dropped so the walker never follows off-origin
+// requests. The caller resolves returned specifiers relative to the
+// referring chunk URL and dedupes against a visited set so cycles
+// terminate.
+//
+// SH2-U10 reviewer-follow-up (BLOCKER-1): the static + side-effect
+// patterns MUST allow zero whitespace. Esbuild's minified output emits
+// `import{X as Y}from"./chunk-X.js"` with no gap between `import` and
+// the clause — the earlier `\s+` requirement silently missed every
+// minified static import, leaving the shared `chunk-*.js` chunks
+// un-scanned in production. The new static pattern accepts either a
+// braced named-import clause (`{X as Y}` / `{a,b}` / mixed
+// `a,{X}`) or a non-braced specifier (default / namespace) with
+// OPTIONAL whitespace on both sides of the clause and around `from`.
+// The side-effect pattern accepts optional whitespace so `import"./x"`
+// (minified) matches alongside `import "./x"`. Neither the named-clause
+// regex nor the default-import regex matches unquoted JavaScript (the
+// capture group is anchored to `"..."` / `'...'`), so benign code like
+// `const import_from = "./x.js"` cannot false-positive. Verified
+// against the real post-split `src/bundles/app.bundle.js`: old regex
+// yielded 2 chunks (dynamic only); new regex yields 5 chunks at the
+// entry and the BFS walker discovers all 6 transitively.
+const IMPORT_PATTERN_DYNAMIC = /import\s*\(\s*["']([^"')]+?)["']\s*\)/g;
+const IMPORT_PATTERN_STATIC = /import\s*(?:\{[^{}]*\}|[^'"()]*?)\s*from\s*["']([^"')]+?)["']/g;
+const IMPORT_PATTERN_SIDE_EFFECT = /import\s*["']([^"')]+?)["']/g;
+
+function extractSameOriginJsImports(code) {
+  const results = new Set();
+  for (const pattern of [
+    IMPORT_PATTERN_DYNAMIC,
+    IMPORT_PATTERN_STATIC,
+    IMPORT_PATTERN_SIDE_EFFECT,
+  ]) {
+    // `g`-flagged regexes keep `lastIndex` state across calls; reset so
+    // a second call (different chunk text) walks from the top of the
+    // new input rather than mid-stream of the previous one.
+    pattern.lastIndex = 0;
+    let match = pattern.exec(code);
+    while (match) {
+      const specifier = match[1];
+      if (
+        typeof specifier === 'string'
+        && /\.js$/.test(specifier)
+        && /^(?:\.\.?\/|\/)/.test(specifier)
+      ) {
+        results.add(specifier);
+      }
+      match = pattern.exec(code);
+    }
+  }
+  return Array.from(results);
+}
+
 async function fetchText(url) {
   const response = await fetch(url, { headers: { accept: 'text/html,application/javascript,*/*' } });
   const text = await response.text().catch(() => '');
@@ -156,14 +217,50 @@ async function auditProduction(origin) {
     .filter((src) => !/^https?:\/\//i.test(src) || new URL(src, base).origin === base.origin);
   if (!scripts.length) failures.push('Production HTML did not reference any same-origin script bundle.');
 
-  for (const src of scripts) {
+  // SH2-U10 (S-01 mirror): walk every `.js` chunk served under `/src/bundles/`
+  // rather than only the chunk(s) referenced from the HTML entry. Esbuild
+  // splitting emits `app.bundle.js` (the HTML-referenced entry) plus split
+  // chunks (shared chunk-XXXX.js and lazy-entry admin-hub / parent-hub
+  // chunks) that the HTML never names directly — they are only pulled in by
+  // `import()` from other chunks. The walker starts from the HTML-referenced
+  // scripts and follows each discovered `import("./...js")` reference to
+  // unknown-at-fetch-time chunk URLs, deduping against a visited set so
+  // cycles terminate. Every shipped chunk is then scanned for forbidden
+  // tokens, not just the entry. The visited set keys on pathname so query-
+  // string variations do not defeat dedup.
+  const visitedChunks = new Set();
+  const bundleQueue = [...scripts];
+  let scannedBundleCount = 0;
+  while (bundleQueue.length) {
+    const src = bundleQueue.shift();
     const bundleUrl = new URL(src, base);
+    if (bundleUrl.origin !== base.origin) continue;
+    const key = bundleUrl.pathname;
+    if (visitedChunks.has(key)) continue;
+    visitedChunks.add(key);
+
     const bundle = await fetchText(bundleUrl.href);
     if (bundle.status < 200 || bundle.status >= 300) {
       failures.push(`Production bundle fetch failed: ${bundle.status} ${bundleUrl.href}`);
       continue;
     }
     assertNoForbiddenText(`Production bundle ${bundleUrl.pathname}`, bundle.text, failures);
+    scannedBundleCount += 1;
+
+    // Only follow dynamic imports out of chunks already served under
+    // `/src/bundles/` — the project's production chunk prefix. External
+    // script entries (e.g. third-party asset paths) are scanned but not
+    // traversed, because we cannot reason about their module graph.
+    if (bundleUrl.pathname.startsWith('/src/bundles/')) {
+      for (const specifier of extractSameOriginJsImports(bundle.text)) {
+        const resolved = new URL(specifier, bundleUrl);
+        if (resolved.origin !== base.origin) continue;
+        if (!resolved.pathname.startsWith('/src/bundles/')) continue;
+        if (!resolved.pathname.endsWith('.js')) continue;
+        if (visitedChunks.has(resolved.pathname)) continue;
+        bundleQueue.push(resolved.href);
+      }
+    }
   }
 
   for (const path of DIRECT_DENIAL_PATHS) {
@@ -339,6 +436,8 @@ async function auditProduction(origin) {
     checked: {
       origin: base.href,
       scriptCount: scripts.length,
+      scannedBundleCount,
+      scannedBundlePaths: Array.from(visitedChunks).sort(),
       directPathCount: DIRECT_DENIAL_PATHS.length,
       matrixDemoChecked: demoChecked,
       securityHeaderChecksPassed: headerChecksPassed,
@@ -377,7 +476,8 @@ if (!result?.ok) {
 }
 console.log(
   `Production bundle audit passed for ${result.checked.origin} `
-  + `(${result.checked.scriptCount} bundle(s), `
+  + `(${result.checked.scriptCount} HTML-referenced bundle(s), `
+  + `${result.checked.scannedBundleCount} chunk(s) scanned transitively, `
   + `${result.checked.directPathCount} direct paths, `
   + `matrix demo check: ${result.checked.matrixDemoChecked ? 'ok' : 'skipped'}, `
   + `security-header checks: ${result.checked.securityHeaderChecksPassed}/${result.checked.securityHeaderChecksTotal}, `
