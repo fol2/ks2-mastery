@@ -126,6 +126,25 @@ test('U6 principle: a due concept is picked more often than an equivalent non-du
     dueTotal += dueCount;
     notDueTotal += notDueCount;
     perConcept.push({ conceptId: concept.id, due: dueCount, notDue: notDueCount });
+    // Pointwise per-concept guard (MEDIUM fix). A single concept silently
+    // reversing (due < notDue) could be masked by the 18-concept aggregate —
+    // e.g., 17 healthy concepts could pump `dueTotal` past `notDueTotal *
+    // 1.5` while 1 concept regresses severely. This per-concept assertion
+    // inside the loop surfaces any drastic single-concept reversal.
+    //
+    // A strict `due >= notDue` per-concept gate is too tight for a
+    // stochastic weighted sampler: with only 8 seeds and 2-5 templates per
+    // concept out of 51 total, low-volume concepts can swing +/-2 picks by
+    // chance alone (e.g., adverbials currently: due=3 notDue=5, a 2-pick
+    // sampler jitter). We therefore use a tolerance-based equivalent: a
+    // per-concept regression must be bounded by BOTH an absolute slack
+    // (`+3`) AND a relative factor (`2x`). This catches a real per-concept
+    // reversal (e.g., due=2, notDue=12) while tolerating sampler variance.
+    assert.ok(
+      notDueCount <= dueCount + 3 && notDueCount <= (dueCount + 1) * 2,
+      `concept ${concept.id} due=${dueCount} notDue=${notDueCount} — `
+      + `per-concept due-outranks regression beyond sampler-variance tolerance`,
+    );
   }
   assert.ok(
     dueTotal > notDueTotal,
