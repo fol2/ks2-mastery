@@ -14,6 +14,7 @@ import {
 import {
   unacknowledgedMonsterCelebrationEvents,
 } from '../../platform/game/monster-celebration-acks.js';
+import { isPostMasteryMode } from './service-contract.js';
 
 const READ_ONLY_MESSAGE = 'Practice is read-only while sync is degraded. Retry sync before continuing.';
 const SETUP_PREF_SAVE_DEBOUNCE_MS = 120;
@@ -881,7 +882,11 @@ export function createRemoteSpellingActionHandler({
       // bypass the local `allWordsMega` guard — adversarial review of U3
       // surfaced the same omission for Guardian, so U9 extends both gates in
       // lockstep to prevent the Boss surface from regressing the same way.
-      if (mode === 'guardian' || mode === 'boss') {
+      // U6: uses the shared `isPostMasteryMode` predicate so future post-Mega
+      // modes (Pattern Quest in U11, Word Detective later) extend this gate
+      // in one place — service-contract.js — rather than hunting across
+      // `module.js` and `remote-actions.js` and other dispatchers.
+      if (isPostMasteryMode(mode)) {
         const postMastery = typeof spelling?.getPostMasteryState === 'function'
           ? spelling.getPostMasteryState(learnerId)
           : null;

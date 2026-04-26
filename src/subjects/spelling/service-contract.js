@@ -129,6 +129,95 @@ export function isGuardianEligibleSlug(slug, progressMap, wordBySlug) {
   if (!Number.isFinite(stage) || stage < GUARDIAN_SECURE_STAGE) return false;
   return true;
 }
+
+/**
+ * Shared mode predicates (U6). Post-Mega modes are the subset of
+ * `SPELLING_MODES` that require `postMastery.allWordsMega === true` before
+ * a session may start. They also share Mega-safety semantics downstream:
+ * no wrong answer may demote `progress.stage` / `dueDay` / `lastDay` /
+ * `lastResult`, and the session runs single-attempt (no retry, no cloze,
+ * no skip) with dedicated submit paths (`submitGuardianAnswer` /
+ * `submitBossAnswer`).
+ *
+ * Before U6 the literal `mode === 'guardian' || mode === 'boss'` was
+ * duplicated across `module.js::spelling-shortcut-start` and
+ * `remote-actions.js::spelling-shortcut-start`. Duplicating the gate is a
+ * hazard for future post-Mega modes (Pattern Quest lands in U11,
+ * Word Detective later): a new mode would need to be added in both
+ * dispatchers AND any other gating call-site, and a missed site would
+ * silently regress the Mega-safety contract.
+ *
+ * Contract: **add a new post-Mega mode here and it applies everywhere**.
+ * When U11 extends Pattern Quest, `isPostMasteryMode` gains
+ * `|| mode === 'pattern-quest'` at the single predicate below; the 2
+ * existing literal call-sites (and any future ones) automatically pick
+ * up the new mode without edits elsewhere.
+ *
+ * Three helpers, three shapes:
+ *   - `isPostMasteryMode(mode)` — "this mode requires graduation"
+ *     (shortcut-start gate, dashboard visibility).
+ *   - `isMegaSafeMode(mode, options)` — "this mode cannot demote
+ *     `progress.stage`". Includes the Trouble Drill practice-only branch
+ *     (U3) where a trouble round with `practiceOnly: true` is Mega-safe.
+ *   - `isSingleAttemptMegaSafeMode(mode)` — "this mode runs single-attempt
+ *     no-retry". Same shape as `isPostMasteryMode` today; kept separate
+ *     because future post-Mega modes (e.g. Pattern Quest choose-card
+ *     multi-step) may expand `isPostMasteryMode` without being
+ *     single-attempt.
+ *
+ * Pre-U11 note: `isPostMasteryMode('pattern-quest')` returns `false` so
+ * no dispatcher accidentally routes a mode the service layer does not
+ * yet understand. U11 flips it to `true` at the same time `SPELLING_MODES`
+ * learns the string.
+ *
+ * @param {string} mode   A spelling `session.mode` value.
+ * @returns {boolean}     `true` iff this is a post-Mega graduated mode.
+ */
+export function isPostMasteryMode(mode) {
+  return mode === 'guardian' || mode === 'boss';
+}
+
+/**
+ * "Mega-safe" means a wrong answer during this mode MUST NOT demote
+ * `progress.stage` / `dueDay` / `lastDay` / `lastResult`. The set covers
+ * the post-Mega modes (Guardian / Boss) plus the Trouble Drill
+ * practice-only branch added in U3 — a practice-only trouble round is a
+ * deliberate "practice without punishment" surface so a learner who
+ * drills a mistake list cannot accidentally demote a Mega slug that
+ * happened to land in trouble via FSRS scheduling.
+ *
+ * `options.practiceOnly` is strict boolean — any non-true value (falsy
+ * coercion, missing key, numeric 1) is rejected so a stray `practiceOnly: 1`
+ * from an optimistic-patch round-trip cannot accidentally unlock
+ * Mega-safety for a regular trouble round.
+ *
+ * @param {string} mode                  A spelling `session.mode` value.
+ * @param {object} [options]             Optional flags from the session.
+ * @param {boolean} [options.practiceOnly]  True iff the trouble round is
+ *   a practice-only surface (never demote).
+ * @returns {boolean}                    `true` iff this mode cannot demote.
+ */
+export function isMegaSafeMode(mode, options = {}) {
+  if (isPostMasteryMode(mode)) return true;
+  if (mode !== 'trouble') return false;
+  if (!options || typeof options !== 'object') return false;
+  return options.practiceOnly === true;
+}
+
+/**
+ * "Single-attempt Mega-safe" means this mode runs one submit per card with
+ * no retry phase and no cloze hint — the entire round is assessed on the
+ * first typed answer. Shares the same set as `isPostMasteryMode` today
+ * but kept as a separate predicate because future post-Mega modes (e.g.
+ * Pattern Quest's multi-step choose-card flow) may extend
+ * `isPostMasteryMode` without extending this one.
+ *
+ * @param {string} mode   A spelling `session.mode` value.
+ * @returns {boolean}     `true` iff this mode is single-attempt no-retry.
+ */
+export function isSingleAttemptMegaSafeMode(mode) {
+  return mode === 'guardian' || mode === 'boss';
+}
 export const SPELLING_YEAR_FILTERS = Object.freeze(['core', 'y3-4', 'y5-6', 'extra']);
 export const LEGACY_SPELLING_YEAR_FILTER_ALIASES = Object.freeze({
   all: 'core',

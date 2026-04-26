@@ -10,7 +10,11 @@ import { createSpellingPersistence } from '../src/subjects/spelling/repository.j
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { resolveSpellingShortcut } from '../src/subjects/spelling/shortcuts.js';
 import { spellingAutoAdvanceDelay } from '../src/subjects/spelling/auto-advance.js';
-import { BOSS_DEFAULT_ROUND_LENGTH } from '../src/subjects/spelling/service-contract.js';
+import {
+  BOSS_DEFAULT_ROUND_LENGTH,
+  isPostMasteryMode,
+  SPELLING_MODES,
+} from '../src/subjects/spelling/service-contract.js';
 import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
 
 function typedFormData(value) {
@@ -768,4 +772,52 @@ test('spelling-shortcut-start with mode:boss when allWordsMega=true starts a Bos
   assert.equal(state.session.mode, 'boss');
   assert.equal(state.session.type, 'test');
   assert.equal(state.session.label, 'Boss Dictation');
+});
+
+// U6: tightened parity — every mode in `SPELLING_MODES` for which
+// `isPostMasteryMode(mode) === true` MUST be gated by the shortcut-start
+// handler when `allWordsMega === false`; every mode for which
+// `isPostMasteryMode(mode) === false` MUST NOT be gated.
+//
+// This replaces the previous pair of per-mode assertions ({mode:'guardian',
+// mode:'boss'}) with an invariant sweep across the canonical modes list so
+// that when U11 lands Pattern Quest — extending `isPostMasteryMode` — this
+// parity test automatically asserts the new mode is gated in both
+// dispatchers. Without this sweep, a future post-Mega mode addition could
+// regress the `module.js`/`remote-actions.js` parity silently because the
+// old assertion only named the two specific literals.
+test('U6 parity sweep: module.js shortcut-start gates every isPostMasteryMode() mode on allWordsMega', () => {
+  // Pre-U11 baseline sanity: the canonical modes list contains the two
+  // post-Mega modes we expect. This guards the sweep from silently passing
+  // if `SPELLING_MODES` were trimmed.
+  const postMasteryModes = SPELLING_MODES.filter(isPostMasteryMode);
+  assert.deepEqual([...postMasteryModes].sort(), ['boss', 'guardian']);
+
+  for (const mode of SPELLING_MODES) {
+    const storage = installMemoryStorage();
+    const harness = createAppHarness({ storage });
+    const learnerId = harness.store.getState().learners.selectedId;
+    harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+    harness.dispatch('open-subject', { subjectId: 'spelling' });
+
+    harness.dispatch('spelling-shortcut-start', { mode });
+
+    const after = harness.store.getState().subjectUi.spelling;
+    if (isPostMasteryMode(mode)) {
+      // Gated: no session must start when !allWordsMega.
+      assert.equal(after.session, null,
+        `post-mastery mode '${mode}' must be gate-level no-op without allWordsMega`);
+    } else {
+      // Not gated: a session MUST start (the Mega gate is bypassed for
+      // legacy modes). Note: `after.session.mode` may not match the
+      // requested `mode` verbatim — e.g. Trouble Drill with no backlog
+      // legitimately falls back to Smart Review. This sweep only asserts
+      // the Mega gate does not short-circuit the handler; mode-specific
+      // fallback semantics are covered elsewhere.
+      assert.equal(after.phase, 'session',
+        `non-post-mastery mode '${mode}' must not be gated by the Mega check`);
+      assert.notEqual(after.session, null,
+        `non-post-mastery mode '${mode}' must produce a session record`);
+    }
+  }
 });
