@@ -38,7 +38,10 @@ import { createSubjectCommandActionHandler } from './platform/runtime/subject-co
 import { createSubjectCommandClient } from './platform/runtime/subject-command-client.js';
 import { createReadModelClient } from './platform/runtime/read-model-client.js';
 import { createPunctuationReadModelService } from './subjects/punctuation/client-read-models.js';
-import { punctuationSubjectCommandActions } from './subjects/punctuation/command-actions.js';
+import {
+  createPunctuationOnCommandError,
+  punctuationSubjectCommandActions,
+} from './subjects/punctuation/command-actions.js';
 import { createRemoteSpellingActionHandler } from './subjects/spelling/remote-actions.js';
 import { createPlatformTts } from './subjects/spelling/tts.js';
 import {
@@ -2694,10 +2697,13 @@ const punctuationCommandActions = createSubjectCommandActionHandler({
   setSubjectError: setPunctuationRuntimeError,
   pendingKeys: pendingPunctuationCommandKeys,
   onCommandResult: applyPunctuationCommandResponse,
-  onCommandError(error) {
-    globalThis.console?.warn?.('Punctuation command failed.', error);
-    setPunctuationRuntimeError(error?.payload?.message || error?.message || 'The punctuation command could not be completed.');
-  },
+  // adv-234-006 MEDIUM: on `save-prefs` failure, clear the `prefsMigrated`
+  // latch so the Setup scene's one-shot stale-prefs migration can retry
+  // on the next render. See `createPunctuationOnCommandError`.
+  onCommandError: createPunctuationOnCommandError({
+    store,
+    setSubjectError: setPunctuationRuntimeError,
+  }),
   actions: punctuationSubjectCommandActions,
 });
 

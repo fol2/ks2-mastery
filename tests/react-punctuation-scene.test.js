@@ -2484,3 +2484,123 @@ test('punctuation remote dispatch (adv-234 HIGH 1): production-shape routing lat
   const savePrefsCallsAfterSecondMount = sent.filter((request) => request.command === 'save-prefs');
   assert.equal(savePrefsCallsAfterSecondMount.length, 0, 'second mount must not re-fire the save-prefs Worker call');
 });
+
+test('punctuation remote dispatch (adv-234-006 MEDIUM): Worker save-prefs failure rearms prefsMigrated latch', async () => {
+  // adv-234-006: if the Worker `save-prefs` command rejects (network /
+  // 5xx / offline) after the Setup scene has latched
+  // `ui.prefsMigrated: true` CLIENT-SIDE (the adv-234 HIGH 1 fix), the
+  // stored prefs on the repo remain on the legacy cluster mode but the
+  // client latch persists as true. Without reversing the latch on
+  // failure, every subsequent Setup render sees `legacyCluster=true`
+  // AND `prefsMigrated=true` — the migration never re-fires and the
+  // learner is stuck with the Smart Review aria-pressed state while
+  // each session runs the stored cluster mode.
+  //
+  // The fix wires `createSubjectCommandActionHandler`'s onCommandError
+  // through `createPunctuationOnCommandError`, which clears
+  // `prefsMigrated` back to false when the failing command is
+  // `save-prefs`. A subsequent Setup render can then retry migration.
+  //
+  // This test mirrors the adv-234 HIGH 1 production-dispatch pattern
+  // above but swaps the mock subjectCommands for a rejecting one and
+  // wires the real factory so we exercise the production contract.
+
+  const { createSubjectCommandActionHandler } = await import(
+    '../src/platform/runtime/subject-command-actions.js'
+  );
+  const {
+    createPunctuationOnCommandError,
+    punctuationSubjectCommandActions,
+  } = await import('../src/subjects/punctuation/command-actions.js');
+
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'endmarks', roundLength: '4' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+
+  // Rejecting subjectCommands — every `send` fails with a network error.
+  const sent = [];
+  const subjectCommands = {
+    send(request) {
+      sent.push(request);
+      return Promise.reject(new Error('network failure'));
+    },
+  };
+
+  // Capture subject-error strings the factory forwards to set-error.
+  const subjectErrors = [];
+
+  // Wire the PRODUCTION onCommandError factory so the test exercises the
+  // same code path as main.js — not a test-only inline copy.
+  const punctuationCommandHandler = createSubjectCommandActionHandler({
+    subjectId: 'punctuation',
+    subjectCommands,
+    getState: () => harness.store.getState(),
+    actions: punctuationSubjectCommandActions,
+    onCommandError: createPunctuationOnCommandError({
+      store: harness.store,
+      setSubjectError: (message) => {
+        subjectErrors.push(message);
+      },
+      warn: () => {},
+    }),
+  });
+
+  function prodDispatch(action, data = {}) {
+    const handled = punctuationCommandHandler.handle(action, data);
+    if (!handled) {
+      harness.handleSubjectAction(action, data);
+    }
+  }
+
+  const { renderPunctuationSetupSceneStandalone } = await import(
+    './helpers/punctuation-scene-render.js'
+  );
+  renderPunctuationSetupSceneStandalone({
+    ui: harness.store.getState().subjectUi.punctuation,
+    actions: {
+      dispatch: prodDispatch,
+      updateSubjectUi: (subjectId, updater) => harness.store.updateSubjectUi(subjectId, updater),
+    },
+    prefs: { mode: 'endmarks', roundLength: '4' },
+    stats: {},
+    learner: null,
+    rewardState: {},
+  });
+
+  // The migration dispatch latches `prefsMigrated: true` BEFORE the
+  // Worker send fires — mirror of the adv-234 HIGH 1 invariant.
+  assert.equal(
+    harness.store.getState().subjectUi.punctuation.prefsMigrated,
+    true,
+    'migration must latch `prefsMigrated: true` before dispatch',
+  );
+
+  // Exactly one save-prefs request reaches the (rejecting) mock.
+  const savePrefsCalls = sent.filter((request) => request.command === 'save-prefs');
+  assert.equal(savePrefsCalls.length, 1, `expected exactly one save-prefs Worker call, got ${savePrefsCalls.length}`);
+
+  // Flush queued microtasks so the reject + onCommandError settle.
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+
+  // Core adv-234-006 assertion: the latch is CLEARED so the next render
+  // can retry the migration. Without the fix, the latch stays true and
+  // the learner is stranded with a stored cluster mode.
+  assert.equal(
+    harness.store.getState().subjectUi.punctuation.prefsMigrated,
+    false,
+    'save-prefs failure must clear `prefsMigrated` so the migration can retry',
+  );
+
+  // Stored prefs on the repo are unchanged — the Worker rejection means
+  // no persistence happened — so the next render's legacyCluster check
+  // still matches and a retry is warranted.
+  const repoPrefs = harness.services.punctuation.getPrefs(learnerId);
+  assert.equal(repoPrefs.mode, 'endmarks', 'stored prefs.mode must remain on the legacy cluster after the Worker rejection');
+
+  // A subject-error message is surfaced so the learner/UX knows the
+  // command failed — factory keeps parity with the previous behaviour.
+  assert.ok(subjectErrors.length >= 1, 'save-prefs failure must surface a subject error');
+});
